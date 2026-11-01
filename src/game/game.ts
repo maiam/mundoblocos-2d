@@ -1,25 +1,30 @@
 import { LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
+import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
 import { toChunk } from '../world/coords';
 import { World } from '../world/world';
 import { Camera } from './camera';
 import { type ActionMode, Hud, type HudState } from './hud';
+import { Joystick } from './joystick';
+import { Player } from './player';
 
 /** Duração de um dia completo em segundos. */
 const DAY_LENGTH_S = 480;
-const PAN_SPEED = 700;
-const DRAG_THRESHOLD = 6;
+/** Alcance para quebrar/colocar, em células (do centro do personagem ao centro da célula). */
+const REACH = 4.5;
+const TAP_THRESHOLD = 10;
 
-
-/** Orquestra mundo, câmera, input, render e HUD. Não contém regra de domínio. */
+/** Orquestra mundo, personagem, câmera, input, render e HUD. Sem regra de domínio. */
 export class Game {
   readonly world: World;
   readonly camera = new Camera();
+  readonly player: Player;
   private readonly renderer: Renderer;
   private readonly hud: Hud;
+  private readonly joystick: Joystick;
   private readonly keys = new Set<string>();
-  private showChunkBorders = true;
+  private showChunkBorders = false;
   private selected = 0;
   private mode: ActionMode = 'break';
   private time = 0.31;
@@ -27,27 +32,28 @@ export class Game {
   private last = performance.now();
   private fps = 60;
   private unloadTimer = 0;
-  private pointer: { x: number; y: number; inside: boolean } = { x: 0, y: 0, inside: false };
-  private drag: { id: number; sx: number; sy: number; cx: number; cy: number; moved: boolean; button: number } | null = null;
+  private pointer = { x: 0, y: 0, inside: false };
+  private press: { id: number; sx: number; sy: number; button: number } | null = null;
   private running = true;
   private readonly cleanup: (() => void)[] = [];
 
   constructor(private readonly canvas: HTMLCanvasElement, seed: number, private readonly onNewWorld: () => void) {
     this.world = new World(seed);
+    const [sx, sy] = this.world.findSpawn();
+    this.player = new Player(sx + 0.5, sy + 0.6);
     this.renderer = new Renderer(canvas, this.world);
     this.hud = new Hud({
       icons: HOTBAR_BLOCKS.map((id) => this.renderer.iconFor(id)),
       onSelect: (i) => this.select(i),
-      onToggleChunks: () => this.toggleChunks(),
+      onToggleChunks: () => (this.showChunkBorders = !this.showChunkBorders),
       onNewWorld: () => this.onNewWorld(),
       onToggleMode: () => this.toggleMode(),
       onSkipTime: () => this.skipTime(),
     });
-    this.camera.x = 0;
-    this.camera.y = (this.world.generator.surfaceY(0) - 4) * TILE;
+    this.joystick = new Joystick(this.hud.root);
     this.resize();
+    this.camera.follow(...this.cameraTarget(), 0, true);
     this.bindInput();
-    this.hud.update(this.hudState());
     requestAnimationFrame(this.frame);
   }
 
@@ -66,16 +72,17 @@ export class Game {
     this.mode = 'place';
   }
 
-  private toggleChunks(): void {
-    this.showChunkBorders = !this.showChunkBorders;
-  }
-
   private toggleMode(): void {
     this.mode = this.mode === 'break' ? 'place' : 'break';
   }
 
   private skipTime(): void {
-    this.time = (Math.floor(this.time * 4) + 1) / 4 + 0.01;
+    this.time = ((Math.floor(this.time * 4) + 1) / 4 + 0.01) % 1;
+  }
+
+  /** Alvo da câmera: posição lógica do personagem (centro do corpo), sem balanço. */
+  private cameraTarget(): [number, number] {
+    return [this.player.x * TILE, this.player.y * TILE - CHARACTER_H * 0.4];
   }
 
   private resize = (): void => {
@@ -98,9 +105,9 @@ export class Game {
     const c = this.canvas;
     this.listen(window, 'resize', this.resize);
     this.listen(window, 'keydown', (e) => {
-      if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
       this.keys.add(e.code);
-      if (e.code === 'KeyG') this.toggleChunks();
+      if (e.repeat) return;
+      if (e.code === 'KeyG') this.showChunkBorders = !this.showChunkBorders;
       if (e.code === 'KeyF') this.toggleMode();
       if (e.code === 'KeyT') this.skipTime();
       if (e.code.startsWith('Digit')) {
@@ -115,36 +122,52 @@ export class Game {
     this.listen(c, 'contextmenu', (e) => e.preventDefault());
     this.listen(c, 'wheel', (e) => {
       e.preventDefault();
-      this.camera.zoomAt(Math.exp(-e.deltaY * 0.0015), e.offsetX, e.offsetY);
+      this.camera.zoomBy(Math.exp(-e.deltaY * 0.0012));
     }, { passive: false });
 
     this.listen(c, 'pointerdown', (e) => {
-      c.setPointerCapture(e.pointerId);
-      this.drag = { id: e.pointerId, sx: e.offsetX, sy: e.offsetY, cx: this.camera.x, cy: this.camera.y, moved: false, button: e.button };
+      this.press = { id: e.pointerId, sx: e.offsetX, sy: e.offsetY, button: e.button };
+      this.pointer = { x: e.offsetX, y: e.offsetY, inside: true };
     });
     this.listen(c, 'pointermove', (e) => {
-      this.pointer = { x: e.offsetX, y: e.offsetY, inside: true };
-      const d = this.drag;
-      if (!d || d.id !== e.pointerId) return;
-      const dx = e.offsetX - d.sx;
-      const dy = e.offsetY - d.sy;
-      if (!d.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) d.moved = true;
-      if (d.moved) {
-        this.camera.x = d.cx - dx / this.camera.zoom;
-        this.camera.y = d.cy - dy / this.camera.zoom;
-      }
+      this.pointer = { x: e.offsetX, y: e.offsetY, inside: e.pointerType === 'mouse' || !!this.press };
     });
     this.listen(c, 'pointerup', (e) => {
-      const d = this.drag;
-      this.drag = null;
-      if (!d || d.id !== e.pointerId || d.moved) return;
-      const [bx, by] = this.camera.screenToBlock(e.offsetX, e.offsetY);
-      const place = d.button === 2 || (d.button === 0 && this.mode === 'place');
-      if (place) this.world.placeBlock(bx, by, this.selectedBlock);
-      else this.world.breakBlock(bx, by);
+      const p = this.press;
+      this.press = null;
+      if (e.pointerType !== 'mouse') this.pointer.inside = false;
+      if (!p || p.id !== e.pointerId) return;
+      if (Math.hypot(e.offsetX - p.sx, e.offsetY - p.sy) > TAP_THRESHOLD) return;
+      const place = p.button === 2 || (p.button === 0 && this.mode === 'place');
+      this.act(e.offsetX, e.offsetY, place);
     });
-    this.listen(c, 'pointercancel', () => (this.drag = null));
+    this.listen(c, 'pointercancel', () => (this.press = null));
     this.listen(c, 'pointerleave', () => (this.pointer.inside = false));
+  }
+
+  /** Resolve o alvo do clique/toque e aplica a regra do domínio. */
+  private target(sx: number, sy: number, place: boolean): { x: number; y: number; valid: boolean } {
+    const picked = this.renderer.pick(this.camera, sx, sy);
+    let { x, y } = picked;
+    if (place && picked.hasObject && blockDef(this.world.getObject(x, y)).shape !== 'decoration') {
+      // Clicou num objeto: coloca na célula de chão sob o cursor.
+      const [wx, wy] = this.camera.screenToWorld(sx, sy);
+      x = Math.floor(wx / TILE);
+      y = Math.floor(wy / TILE);
+    }
+    const dist = Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4));
+    const inReach = dist <= REACH;
+    const valid = inReach && (place
+      ? this.world.canPlace(x, y, this.selectedBlock) && !this.player.occupies(x, y)
+      : this.world.canBreak(x, y));
+    return { x, y, valid };
+  }
+
+  private act(sx: number, sy: number, place: boolean): void {
+    const t = this.target(sx, sy, place);
+    if (!t.valid) return;
+    if (place) this.world.placeBlock(t.x, t.y, this.selectedBlock);
+    else this.world.breakBlock(t.x, t.y);
   }
 
   private frame = (now: number): void => {
@@ -155,19 +178,22 @@ export class Game {
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
     this.fps += (1 / Math.max(dt, 1e-3) - this.fps) * 0.05;
 
-    this.updateCamera(dt);
+    const [ix, iy] = this.input();
+    this.player.update(dt, ix, iy, this.world);
+    this.camera.follow(...this.cameraTarget(), dt);
 
     const loadRect = this.camera.visibleChunks(LOAD_MARGIN);
     this.world.ensureChunks(loadRect, MAX_CHUNK_GEN_PER_FRAME);
     this.unloadTimer += dt;
     if (this.unloadTimer > 1) {
       this.unloadTimer = 0;
-      if (this.world.unloadFar(loadRect).length) this.renderer.prune();
+      this.world.unloadFar(loadRect);
     }
 
     this.renderer.draw(this.camera, {
+      player: this.player,
       showChunkBorders: this.showChunkBorders,
-      hover: this.hoverInfo(),
+      hover: this.pointer.inside && !this.joystick.active ? this.target(this.pointer.x, this.pointer.y, this.mode === 'place') : null,
       time: this.time,
       elapsed: this.elapsed,
       dt,
@@ -176,53 +202,41 @@ export class Game {
     requestAnimationFrame(this.frame);
   };
 
-  private updateCamera(dt: number): void {
+  /** Teclado + joystick, ambos em direções de tela. */
+  private input(): [number, number] {
     const k = this.keys;
-    const speed = (PAN_SPEED * (k.has('ShiftLeft') || k.has('ShiftRight') ? 2.5 : 1) * dt) / this.camera.zoom;
-    if (k.has('KeyA') || k.has('ArrowLeft')) this.camera.x -= speed;
-    if (k.has('KeyD') || k.has('ArrowRight')) this.camera.x += speed;
-    if (k.has('KeyW') || k.has('ArrowUp')) this.camera.y -= speed;
-    if (k.has('KeyS') || k.has('ArrowDown')) this.camera.y += speed;
-    const cx = this.camera.width / 2;
-    const cy = this.camera.height / 2;
-    if (k.has('KeyE') || k.has('Equal')) this.camera.zoomAt(1 + dt * 1.5, cx, cy);
-    if (k.has('KeyQ') || k.has('Minus')) this.camera.zoomAt(1 / (1 + dt * 1.5), cx, cy);
-  }
-
-  private hoverInfo(): { x: number; y: number; valid: boolean } | null {
-    if (!this.pointer.inside || this.drag?.moved) return null;
-    const [x, y] = this.camera.screenToBlock(this.pointer.x, this.pointer.y);
-    const valid = this.mode === 'place' ? this.world.canPlace(x, y, this.selectedBlock) : this.world.canBreak(x, y);
-    return { x, y, valid };
+    let x = this.joystick.x;
+    let y = this.joystick.y;
+    if (k.has('KeyA') || k.has('ArrowLeft')) x -= 1;
+    if (k.has('KeyD') || k.has('ArrowRight')) x += 1;
+    if (k.has('KeyW') || k.has('ArrowUp')) y -= 1;
+    if (k.has('KeyS') || k.has('ArrowDown')) y += 1;
+    if (k.has('KeyE') || k.has('Equal')) this.camera.zoomBy(1.02);
+    if (k.has('KeyQ') || k.has('Minus')) this.camera.zoomBy(1 / 1.02);
+    return [x, y];
   }
 
   private hudState(): HudState {
-    const [wx, wy] = this.camera.screenToWorld(this.camera.width / 2, this.camera.height / 2);
-    const bx = Math.floor(wx / TILE);
-    const by = Math.floor(wy / TILE);
+    const bx = this.player.cellX;
+    const by = this.player.cellY;
     let hoverName: string | null = null;
     if (this.pointer.inside) {
-      const [hx, hy] = this.camera.screenToBlock(this.pointer.x, this.pointer.y);
-      hoverName = blockName(this.world.getBlock(hx, hy));
+      const picked = this.renderer.pick(this.camera, this.pointer.x, this.pointer.y);
+      if (picked.hasObject) hoverName = blockDef(this.world.getObject(picked.x, picked.y)).name;
     }
     return {
       seed: this.world.seed,
       block: [bx, by],
       chunk: [toChunk(bx), toChunk(by)],
-      biome: this.world.biomeAt(bx).name,
+      biome: this.world.biomeAt(bx, by).name,
       loaded: this.world.loadedCount,
       fps: Math.round(this.fps),
-      zoom: this.camera.zoom,
       time: this.time,
       selected: this.selected,
-      selectedName: blockName(this.selectedBlock),
+      selectedName: blockDef(this.selectedBlock).name,
       mode: this.mode,
       chunkBorders: this.showChunkBorders,
       hoverName,
     };
   }
-}
-
-function blockName(id: number): string {
-  return blockDef(id).name;
 }

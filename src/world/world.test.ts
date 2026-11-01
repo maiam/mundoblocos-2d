@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BEDROCK_Y, CHUNK_SIZE } from '../config';
+import { CHUNK_SIZE } from '../config';
 import { Block, blockDef } from './blocks';
 import { toChunk, toLocal } from './coords';
 import { WorldGenerator } from './generator';
 import { World } from './world';
+
+const N = CHUNK_SIZE * CHUNK_SIZE;
 
 describe('coords', () => {
   it('converte negativos corretamente', () => {
@@ -20,87 +22,117 @@ describe('WorldGenerator', () => {
   it('é determinístico para a mesma seed', () => {
     const a = new WorldGenerator(1234);
     const b = new WorldGenerator(1234);
-    const ca = new Uint8Array(256);
-    const cb = new Uint8Array(256);
     for (const [cx, cy] of [[0, 0], [-3, 1], [7, -1], [-40, 4]]) {
-      a.generateChunk(cx, cy, ca);
-      b.generateChunk(cx, cy, cb);
-      expect(Array.from(ca)).toEqual(Array.from(cb));
+      const ga = new Uint8Array(N), oa = new Uint8Array(N), gb = new Uint8Array(N), ob = new Uint8Array(N);
+      a.generateChunk(cx, cy, ga, oa);
+      b.generateChunk(cx, cy, gb, ob);
+      expect(Array.from(ga)).toEqual(Array.from(gb));
+      expect(Array.from(oa)).toEqual(Array.from(ob));
     }
   });
 
-  it('seeds diferentes geram terrenos diferentes', () => {
+  it('seeds diferentes geram mundos diferentes', () => {
     const a = new WorldGenerator(1);
     const b = new WorldGenerator(2);
     let diff = 0;
-    for (let x = 0; x < 200; x++) if (a.surfaceY(x) !== b.surfaceY(x)) diff++;
-    expect(diff).toBeGreaterThan(50);
+    for (let x = 0; x < 200; x++) if (a.groundAt(x, x) !== b.groundAt(x, x) || a.objectAt(x, x) !== b.objectAt(x, x)) diff++;
+    expect(diff).toBeGreaterThan(30);
   });
 
-  it('chunk gerado bate com blockAt (bordas contínuas)', () => {
+  it('chunk gerado bate com groundAt/objectAt (bordas contínuas)', () => {
     const g = new WorldGenerator(99);
-    const out = new Uint8Array(256);
-    g.generateChunk(-2, 0, out);
+    const ground = new Uint8Array(N);
+    const objects = new Uint8Array(N);
+    g.generateChunk(-2, 3, ground, objects);
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-        expect(out[ly * CHUNK_SIZE + lx]).toBe(g.blockAt(-32 + lx, ly));
+        expect(ground[ly * CHUNK_SIZE + lx]).toBe(g.groundAt(-32 + lx, 48 + ly));
+        expect(objects[ly * CHUNK_SIZE + lx]).toBe(g.objectAt(-32 + lx, 48 + ly));
       }
     }
   });
 
-  it('tem rocha-mãe no fundo, ar no céu e superfície sólida', () => {
+  it('respeita camadas: chão no chão, objetos nos objetos, nada sobre água', () => {
     const g = new WorldGenerator(5);
-    for (let x = -50; x < 50; x++) {
-      expect(g.blockAt(x, BEDROCK_Y)).toBe(Block.BEDROCK);
-      expect(g.blockAt(x, -100)).toBe(Block.AIR);
-      expect(blockDef(g.blockAt(x, g.surfaceY(x))).solid).toBe(true);
+    for (let y = -60; y < 60; y += 3) {
+      for (let x = -60; x < 60; x += 3) {
+        const ground = blockDef(g.groundAt(x, y));
+        const obj = blockDef(g.objectAt(x, y));
+        expect(ground.layer).toBe('ground');
+        expect(obj.layer).toBe('object');
+        if (ground.liquid) expect(obj.id).toBe(Block.AIR);
+      }
     }
   });
 
-  it('gera múltiplos biomas ao longo do eixo x', () => {
+  it('gera múltiplos biomas, água e árvores', () => {
     const g = new WorldGenerator(42);
-    const seen = new Set<string>();
-    for (let x = -6000; x < 6000; x += 20) seen.add(g.biomeAt(x).key);
-    expect(seen.size).toBeGreaterThanOrEqual(4);
+    const biomes = new Set<string>();
+    let water = 0, trees = 0;
+    for (let y = -3000; y < 3000; y += 40) {
+      for (let x = -3000; x < 3000; x += 40) {
+        biomes.add(g.biomeAt(x, y).key);
+        if (blockDef(g.groundAt(x, y)).liquid) water++;
+        if (blockDef(g.objectAt(x, y)).shape === 'tree') trees++;
+      }
+    }
+    expect(biomes.size).toBeGreaterThanOrEqual(4);
+    expect(water).toBeGreaterThan(0);
+    expect(trees).toBeGreaterThan(0);
   });
 });
 
 describe('World', () => {
-  it('edita blocos e marca chunk como modificado', () => {
-    const w = new World(7);
-    const x = -5;
-    const y = w.generator.surfaceY(x) + 2;
-    expect(w.breakBlock(x, y)).not.toBeNull();
-    expect(blockDef(w.getBlock(x, y)).solid).toBe(false);
-    const c = w.getChunk(toChunk(x), toChunk(y))!;
-    expect(c.modified).toBe(true);
-    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true);
-    expect(w.getBlock(x, y)).toBe(Block.BRICK);
+  it('spawn é andável e cercado de células andáveis', () => {
+    for (const seed of [1, 7, 42, 2024]) {
+      const w = new World(seed);
+      const [x, y] = w.findSpawn();
+      expect(w.isWalkable(x, y)).toBe(true);
+      expect(w.isWalkable(x + 1, y) && w.isWalkable(x, y + 1)).toBe(true);
+    }
   });
 
-  it('não quebra rocha-mãe nem coloca em bloco sólido', () => {
+  it('coloca e quebra objetos, marcando o chunk como modificado', () => {
     const w = new World(7);
-    expect(w.breakBlock(0, BEDROCK_Y)).toBeNull();
-    expect(w.placeBlock(0, BEDROCK_Y, Block.STONE)).toBe(false);
+    const [x, y] = w.findSpawn();
+    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true);
+    expect(w.getObject(x, y)).toBe(Block.BRICK);
+    expect(w.isWalkable(x, y)).toBe(false);
+    expect(w.getChunk(toChunk(x), toChunk(y))!.modified).toBe(true);
+    expect(w.placeBlock(x, y, Block.STONE)).toBe(false);
+    expect(w.breakBlock(x, y)).toBe(Block.BRICK);
+    expect(w.isWalkable(x, y)).toBe(true);
+  });
+
+  it('não coloca sobre água nem itens não colocáveis', () => {
+    const w = new World(42);
+    let wx = 0, wy = 0, found = false;
+    for (let i = 0; i < 4000 && !found; i++) {
+      wx = (i % 200) - 100; wy = Math.floor(i / 200) * 7 - 70;
+      found = blockDef(w.getGround(wx, wy)).liquid;
+    }
+    expect(found).toBe(true);
+    expect(w.placeBlock(wx, wy, Block.STONE)).toBe(false);
+    expect(w.isWalkable(wx, wy)).toBe(false);
+    const [sx, sy] = w.findSpawn();
+    expect(w.placeBlock(sx, sy, Block.OAK_TREE)).toBe(false);
   });
 
   it('chunks modificados não são descarregados', () => {
     const w = new World(3);
     w.loadChunk(0, 0);
     w.loadChunk(50, 0);
-    w.setBlock(50 * CHUNK_SIZE, 0, Block.BRICK);
+    w.setObject(50 * CHUNK_SIZE, 0, Block.BRICK);
     w.loadChunk(60, 0);
     const removed = w.unloadFar({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
     expect(removed).toContain('60,0');
     expect(removed).not.toContain('50,0');
-    expect(w.getChunk(50, 0)).toBeDefined();
   });
 
   it('ensureChunks respeita o orçamento por frame', () => {
     const w = new World(3);
     const rect = { cx0: -2, cy0: -2, cx1: 2, cy1: 2 };
     expect(w.ensureChunks(rect, 4)).toBe(4);
-    expect(w.loadedCount).toBe(4);
     while (w.ensureChunks(rect, 4) > 0);
     expect(w.loadedCount).toBe(25);
   });

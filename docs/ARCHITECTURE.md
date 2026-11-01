@@ -1,39 +1,49 @@
 # Arquitetura
 
+Vista superior inclinada (3/4). Ver [ADR 0003](adr/0003-vista-superior-inclinada.md).
+
 ```
+assets-src/heroine-sheet.png   folha original da personagem (fundo branco, 4×4)
+scripts/process-sprite.py      gera src/assets/heroine.png (transparente, quadros uniformes)
+scripts/build-artifact.mjs     HTML de arquivo único a partir de dist/
 src/
-  config.ts            constantes globais (TILE, CHUNK_SIZE, limites verticais, orçamentos)
+  config.ts            constantes (TILE, CUBE_FRONT, CHUNK_SIZE, orçamentos)
   main.ts              bootstrap + seed via URL
+  assets/heroine.png   folha processada (importada com ?inline)
   world/   (domínio — sem DOM)
-    random.ts          PRNG mulberry32, hash2, seedFromString
-    noise.ts           Perlin 1D/2D + fBm
-    blocks.ts          registro de blocos (propriedades de domínio)
-    biomes.ts          biomas e seleção por temperatura/umidade
-    generator.ts       WorldGenerator: blockAt(x,y) PURO, generateChunk
-    coords.ts          bloco ↔ chunk/local (seguro p/ negativos)
-    chunk.ts           Chunk 16×16 (Uint8Array, modified, version)
-    world.ts           World: chunks carregados, edições, regras quebrar/colocar, ciclo de vida
+    random.ts, noise.ts   PRNG/hash e Perlin + fBm com seed
+    blocks.ts          registro de blocos: camada (chão/objeto), forma, sólido, etc.
+    biomes.ts          biomas (chão, água, árvore, enfeites)
+    generator.ts       WorldGenerator: groundAt/objectAt PUROS, generateChunk
+    coords.ts          célula ↔ chunk/local (seguro p/ negativos)
+    chunk.ts           Chunk 16×16 com camadas ground/objects, modified, version
+    world.ts           World: chunks, edições, isWalkable, quebrar/colocar, spawn, ciclo de vida
   render/  (apresentação — lê o domínio, nunca escreve)
-    color.ts           utilitários de cor (sombras puxam para índigo)
-    textures.ts        texturas procedurais por id de bloco
-    chunkRenderer.ts   cache offscreen por chunk (invalidação por version)
-    background.ts      céu, sol/lua, nuvens, montanhas, ilhas flutuantes
+    color.ts           utilitários de cor
+    textures.ts        chão (variações), cubos 3/4, árvores, enfeites, ícones
+    chunkRenderer.ts   cache offscreen do CHÃO por chunk (barrancas, espuma, grade, sombras)
+    character.ts       desenho da heroína (linha por direção, quadro por tempo de caminhada)
+    daycycle.ts        tinta do ciclo dia/noite
     particles.ts       partículas ambientes por bioma
-    renderer.ts        frame: fundo → chunks → brilhos → tinta dia/noite → partículas → overlays
-  game/    (orquestração)
-    camera.ts          câmera 2D, zoom, retângulo de chunks visíveis
-    game.ts            loop, input, carregamento/descarregamento, liga render e HUD
-    hud.ts             overlay HTML (apenas apresentação)
+    renderer.ts        frame + pick (objeto sob o cursor)
+  game/    (orquestração e entidades)
+    player.ts          posição, direção, colisão (via World.isWalkable), animação
+    camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
+    joystick.ts        joystick virtual em direções de tela
+    game.ts            loop, input, alcance, carregamento de chunks, liga render/HUD
+    hud.ts             overlay HTML
 ```
 
-## Fluxo de dados
-1. `Game.frame` calcula o retângulo visível (+`LOAD_MARGIN`) e chama `World.ensureChunks` com orçamento
-   (`MAX_CHUNK_GEN_PER_FRAME`). A cada 1s, `World.unloadFar` descarta chunks **não modificados** distantes.
-2. `Renderer.draw` desenha cada chunk carregado via `ChunkRenderer` (re-render limitado a 3/frame).
-3. Input → `World.breakBlock/placeBlock` (regras no domínio) → `chunk.version++` (+ vizinhos na borda) →
-   cache do chunk invalidado automaticamente.
+## Fluxo de um frame
+1. Input (teclado + joystick, já em direções de tela) → `Player.update` (colisão consulta `World`).
+2. `Camera.follow` mira a posição **lógica** do personagem (sem o balanço do sprite).
+3. `World.ensureChunks` (orçamento por frame) e `unloadFar` a cada 1 s.
+4. `Renderer.draw`: chão (cache por chunk, máx. 2 re-renders/frame) → objetos e personagem por linha
+   (de trás para frente) → sombras de nuvens → brilhos/tinta dia-noite → partículas → overlays.
+5. Clique/toque → `Renderer.pick` → regras em `World.breakBlock/placeBlock` (+ alcance e "não sobre a
+   personagem" no `Game`) → `chunk.version++` invalida o cache.
 
 ## Regras de dependência
 - `world/` não importa de `render/` nem `game/` e não usa DOM (testável em Node).
-- `render/` depende de `world/` só para leitura. `game/` orquestra ambos.
-- Sem backend; nenhuma regra de negócio duplicada fora de `world/`.
+- `render/` só lê `world/` (e tipos de `game/`). `game/` orquestra.
+- Sem backend; regra de domínio só em `world/`.

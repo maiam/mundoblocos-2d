@@ -9,7 +9,6 @@ export interface HudState {
   biome: string;
   loaded: number;
   fps: number;
-  zoom: number;
   time: number;
   selected: number;
   selectedName: string;
@@ -40,7 +39,7 @@ function periodName(t: number): string {
 }
 
 export class Hud {
-  private readonly root: HTMLElement;
+  readonly root: HTMLElement;
   private readonly fields: Record<string, HTMLElement> = {};
   private readonly slots: HTMLButtonElement[] = [];
   private readonly btnChunks: HTMLButtonElement;
@@ -55,7 +54,7 @@ export class Hud {
         <h1>Mundo<span>Blocos</span></h1>
         <dl>
           <dt>Bioma</dt><dd data-f="biome"></dd>
-          <dt>Bloco</dt><dd data-f="block"></dd>
+          <dt>Posição</dt><dd data-f="block"></dd>
           <dt>Chunk</dt><dd data-f="chunk"></dd>
           <dt>Chunks carregados</dt><dd data-f="loaded"></dd>
           <dt>Período</dt><dd data-f="time"></dd>
@@ -71,7 +70,7 @@ export class Hud {
       </section>
       <div class="tooltip" data-f="hover"></div>
       <nav class="hotbar"></nav>
-      <p class="help">WASD/setas: mover · arrastar: mover · roda/Q/E: zoom · clique esq.: quebrar · clique dir.: colocar · 1–9: bloco</p>
+      <p class="help">WASD/setas ou joystick: andar · clique/toque: quebrar ou colocar (F alterna) · clique dir.: colocar · 1–9: bloco · roda/Q/E: zoom</p>
     `;
     document.body.appendChild(this.root);
     this.root.querySelectorAll<HTMLElement>('[data-f]').forEach((el) => (this.fields[el.dataset.f!] = el));
@@ -104,7 +103,7 @@ export class Hud {
     this.fields.time.textContent = periodName(s.time);
     this.fields.seed.textContent = String(s.seed);
     this.fields.fps.textContent = String(s.fps);
-    this.fields.hover.textContent = s.hoverName && s.hoverName !== 'Ar' ? s.hoverName : '';
+    this.fields.hover.textContent = s.hoverName ?? '';
     this.slots.forEach((b, i) => b.classList.toggle('active', i === s.selected));
     this.btnChunks.classList.toggle('on', s.chunkBorders);
     this.btnMode.innerHTML = s.mode === 'break' ? 'Quebrar <kbd>F</kbd>' : `Colocar: ${s.selectedName} <kbd>F</kbd>`;

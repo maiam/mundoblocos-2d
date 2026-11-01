@@ -2,18 +2,21 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
-## Direção de arte — "ilustração digital de fantasia, RPG/anime"
-- Cada bloco é um **cubo**: gradiente vertical, face superior clara (4px), lateral direita/base em sombra,
-  filete de luz interno, cantos levemente arredondados, contorno na própria cor escurecida.
-- Sombras puxam para índigo (`#1b1640`), luzes para creme (`#fffaf0`).
-- Brilhos em estrela de 4 pontas (neve, ouro, cristais, flores). Blocos `glow` ganham halo aditivo pulsante.
-- Paleta: grama `#6fd35a`, terra `#a86b42`, pedra `#8a90a6`, sakura `#ffa9cf`, musgo encantado `#45d6c4`,
-  folhas mágicas `#6a6cf0`, cristal `#b26cff`.
+## Direção de arte — "ilustração digital de fantasia, RPG/anime" em 3/4
+- Cubos: face superior clara (gradiente cima-esquerda, filete de luz), face frontal mais escura, aresta clara
+  entre faces, contorno na cor escurecida. Árvores: copa em "nuvens" cel-shaded sobre tronco; pinheiros com neve.
+- Sombras e contornos puxam para índigo; brilhos em estrela para neve, ouro, cristais, água.
+- Texturas em resolução 2× (`TEX_RES`) para nitidez com zoom ~2.
 
 ## Pipeline
-- `ChunkRenderer` pinta cada chunk num canvas 512×(512+pad) e só repinta quando `chunk.version` muda
-  (máx. 3 por frame). Passos: parede de fundo (caverna) → tile → sombra de contato → bordas expostas →
-  escurecimento por profundidade → tufos de grama (transbordam para a célula de cima; daí o `CHUNK_PAD_TOP`).
-- Grama coberta por bloco opaco é desenhada como terra.
-- Ordem do frame: fundo → chunks (cima→baixo) → brilhos → tinta dia/noite (+ brilhos de novo) → partículas →
-  bordas de chunk → destaque do cursor.
+- `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):
+  variação de tile por hash → barranca no lado norte da água → espuma nas margens → grade sutil → sombras
+  projetadas por cubos e árvores.
+- Por frame: objetos linha a linha (de cima para baixo da tela); a personagem é desenhada logo após a linha
+  dos seus pés. Água ganha brilhos animados; nuvens projetam sombras que derivam.
+- `pick()` escolhe o objeto sob o cursor testando as linhas da frente primeiro (sprites sobem acima da célula).
+
+## Personagem
+- `assets-src/heroine-sheet.png` → `scripts/process-sprite.py` → `src/assets/heroine.png` (fundo e sombra
+  removidos por flood fill, caixa comum a todos os quadros, 4×4 de 115×144 px).
+- Linhas: frente, esquerda, direita, costas. Parado = quadro 0; andando = 7 quadros/s. Sombra própria fixa nos pés.

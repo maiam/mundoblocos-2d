@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — 2026-11-01
+- **Vista superior inclinada (3/4)** substitui a vista lateral (ADR 0003): mundo com camadas chão/objeto,
+  gerador 2D (elevação, rios, montanhas com minérios, florestas), cubos com face superior + frontal.
+- **Personagem jogável** a partir da folha de sprites fornecida (`scripts/process-sprite.py` remove o fundo e
+  uniformiza quadros), colisão, 4 direções e animação de caminhada.
+- **Câmera** segue a posição lógica com suavização (sem balanço), zoom automático com personagem grande.
+- **Joystick virtual** alinhado às direções da tela.
+- Alcance de interação; spawn em bioma acolhedor; clima deslocado por seed.
+- Removidos: céu/parallax lateral (`background.ts`), rocha-mãe, cavernas. Novos: `daycycle.ts`,
+  `character.ts`, `player.ts`, `joystick.ts`, sombras de nuvens.
+
 ## 0.1.1 — 2026-11-01
 - `npm run build:artifact`: build em arquivo único publicado como Artifact para teste no navegador.
 - Canvas usa `100%` em vez de `100vw/100vh` (respeita a área segura do host).

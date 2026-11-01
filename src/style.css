@@ -142,10 +142,52 @@ kbd {
 }
 
 @media (max-width: 640px) {
-  .info { min-width: 0; padding: 8px 12px; }
+  .info { min-width: 0; max-width: calc(100vw - 168px); padding: 8px 12px; }
   .info dl { font-size: 11px; }
   .info h1 { font-size: 16px; }
-  .actions { top: auto; bottom: 108px; right: 16px; left: 16px; justify-content: center; }
+  /* Linhas técnicas ficam só no desktop. */
+  .info dt:nth-of-type(n + 4), .info dd:nth-of-type(n + 4) { display: none; }
+  .actions { flex-direction: column; align-items: stretch; width: 136px; }
+  .actions button { font-size: 12px; padding: 6px 8px; }
   .slot { width: 40px; height: 40px; }
   .help { display: none; }
+  .joystick { bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 84px)); left: max(20px, env(safe-area-inset-left, 0px)); }
+}
+
+.joystick {
+  position: absolute;
+  left: max(28px, env(safe-area-inset-left, 0px));
+  bottom: max(110px, calc(env(safe-area-inset-bottom, 0px) + 96px));
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.16), rgba(28, 22, 64, 0.45) 70%);
+  border: 2px solid rgba(255, 220, 160, 0.5);
+  box-shadow: 0 6px 20px rgba(10, 6, 30, 0.4), inset 0 0 18px rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+.joystick.active { opacity: 1; }
+.joystick::before {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+}
+.joystick-knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #ffd46b 45%, #c98a2a);
+  border: 2px solid #6e4518;
+  box-shadow: 0 3px 0 #6e4518, 0 0 14px rgba(255, 212, 107, 0.5);
+  pointer-events: none;
+}
+@media (pointer: fine) {
+  .joystick { opacity: 0.45; }
 }

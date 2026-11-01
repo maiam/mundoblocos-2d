@@ -1,28 +1,28 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.1.0_
+_Atualizado em 2026-11-01 — v0.2.0_
 
 ## Funcional
-- Mundo procedural por seed (`?seed=`), chunks 16×16 gerados sob demanda e descarregados quando distantes
-  (chunks editados permanecem em memória).
-- Terreno com colinas/montanhas, lagos no nível do mar (gelo na tundra), cavernas (túneis + salões),
-  minérios (carvão, ouro, cristal de mana) por profundidade, rocha-mãe irregular.
-- 5 biomas: Tundra Gélida, Campos Verdejantes, Bosque de Sakura, Floresta Encantada, Dunas Douradas,
-  com árvores (copa redonda, pinheiro, cacto) e enfeites (capim, flor, cogumelo luminoso) contínuos entre chunks.
-- Render estilo RPG/anime: 25 blocos com texturas procedurais, bevel de cubo, tufos de grama, sombra de contato,
-  parede de fundo em cavernas, escurecimento por profundidade, brilho pulsante de blocos mágicos.
-- Fundo parallax: ciclo dia/noite (8 min), sol/lua, estrelas, nuvens cel-shaded, montanhas, ilhas flutuantes.
-- Partículas por bioma (pétalas, vagalumes, neve, poeira, pólen).
-- Interação: quebrar/colocar blocos, hotbar 1–9, zoom, pan por teclado/arrasto, overlay de chunks (G).
-- HUD com bioma, coordenadas de bloco/chunk, chunks carregados, período, seed, FPS.
-
+- **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
+  ordenação por profundidade (linha) entre objetos e personagem.
+- **Heroína jogável** (sprite 4 direções × 4 quadros), ~2,2 células de altura; colisão com objetos sólidos e água.
+- **Câmera** sem rotação, zoom automático (~10 células na vertical, ajustável), acompanhamento suave da
+  posição lógica — sem balanço de caminhada.
+- **Joystick virtual** alinhado às direções da tela (+ WASD/setas).
+- Mundo por seed (`?seed=`) em chunks 16×16 nos dois eixos, carregados/descarregados sob demanda.
+- Geração: elevação → água/praia/montanhas (pedra, carvão, ouro, cristal de mana), rios, 5 biomas
+  (Tundra com lagos congelados, Campos, Sakura, Floresta Encantada, Dunas), manchas de floresta, arbustos,
+  pedregulhos, enfeites. Spawn em bioma acolhedor; o clima é deslocado por seed.
+- Render: chão com variações, barrancas e espuma nas margens, grade sutil, sombras projetadas, brilho de
+  água, sombras de nuvens, ciclo dia/noite (8 min), halos mágicos, partículas por bioma.
+- Interação: quebrar/colocar com alcance de 4,5 células, hotbar 1–9, overlay de chunks (G), tempo (T).
 - Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
 
 ## Limitações conhecidas
-- Edições não são persistidas (perdem-se ao recarregar).
-- Sem personagem/física; câmera livre.
-- Água é estática (sem fluxo).
-- Iluminação é aproximação por profundidade em relação ao terreno **gerado** (escavar não "ilumina").
+- Edições não são persistidas.
+- Sem altura de terreno (montanhas são paredes de blocos; não há subir/descer).
+- Transições entre tipos de chão são em degrau (sem blending).
+- Água estática.
 
 ## Qualidade
-- `npm test`: 10 testes do domínio world passando. `npm run build` limpo.
+- `npm test`: 13 testes (world + player) passando. `npm run build` limpo.

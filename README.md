@@ -1,8 +1,8 @@
 # MundoBlocos 2D
 
-Mundo 2D procedural, dividido em **chunks 16×16** no estilo Minecraft, com grade de blocos-cubo
-pintados no estilo **ilustração digital moderna de fantasia (RPG/anime)**: cel-shading, contornos
-coloridos, brilhos em estrela, céu com ciclo dia/noite, ilhas flutuantes e partículas por bioma.
+Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
+com grade de blocos-cubo pintados no estilo **ilustração digital moderna de fantasia (RPG/anime)** e uma
+heroína jogável. Ciclo dia/noite, sombras de nuvens, brilhos mágicos e partículas por bioma.
 
 ## Rodar
 
@@ -18,9 +18,9 @@ npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/off
 
 | Ação | Entrada |
 |---|---|
-| Mover câmera | WASD / setas (Shift acelera) ou arrastar |
+| Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
-| Quebrar / colocar | clique esquerdo / clique direito (F alterna o modo do clique esquerdo — útil no toque) |
+| Quebrar / colocar (alcance 4,5 células) | clique/toque / clique direito (F alterna o modo do clique/toque) |
 | Escolher bloco | 1–9 ou clicar na hotbar |
 | Bordas dos chunks | G |
 | Avançar período do dia | T |

@@ -1,92 +1,103 @@
 /**
  * Registro de blocos — fonte de verdade das PROPRIEDADES DE DOMÍNIO de cada bloco.
- * A aparência (cores/texturas) vive em `src/render/textures.ts`, indexada pelo mesmo id.
+ * A aparência vive em `src/render/textures.ts`, indexada pelo mesmo id.
+ *
+ * Vista superior: cada célula tem uma camada de CHÃO (ground) e uma de OBJETO (object).
  */
 
 export const Block = {
   AIR: 0,
+  // --- chão ---
   GRASS: 1,
-  DIRT: 2,
-  STONE: 3,
-  SAND: 4,
-  SANDSTONE: 5,
-  SNOW: 6,
+  ENCHANTED_GRASS: 2,
+  SAND: 3,
+  SNOW: 4,
+  DIRT: 5,
+  WATER: 6,
   ICE: 7,
-  WATER: 8,
-  LOG: 9,
-  LEAVES: 10,
-  SAKURA_LEAVES: 11,
-  MAGIC_LEAVES: 12,
-  COAL_ORE: 13,
-  GOLD_ORE: 14,
-  MANA_CRYSTAL: 15,
-  BEDROCK: 16,
-  PLANKS: 17,
-  BRICK: 18,
-  TALL_GRASS: 19,
-  FLOWER: 20,
-  GLOW_MUSHROOM: 21,
-  CACTUS: 22,
-  ENCHANTED_GRASS: 23,
-  PINE_LEAVES: 24,
+  // --- objetos (cubos) ---
+  STONE: 20,
+  COAL_ORE: 21,
+  GOLD_ORE: 22,
+  MANA_CRYSTAL: 23,
+  SANDSTONE: 24,
+  LOG: 25,
+  PLANKS: 26,
+  BRICK: 27,
+  LEAVES: 28,
+  SAKURA_LEAVES: 29,
+  MAGIC_LEAVES: 30,
+  CACTUS: 31,
+  // --- árvores (objeto alto) ---
+  OAK_TREE: 40,
+  SAKURA_TREE: 41,
+  MAGIC_TREE: 42,
+  PINE_TREE: 43,
+  // --- enfeites (não bloqueiam passagem) ---
+  TALL_GRASS: 50,
+  FLOWER: 51,
+  GLOW_MUSHROOM: 52,
 } as const;
 
 export type BlockId = (typeof Block)[keyof typeof Block];
+
+export type BlockLayer = 'ground' | 'object';
+/** Como o objeto é desenhado: cubo, árvore alta ou enfeite plano. */
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration';
 
 export interface BlockDef {
   id: BlockId;
   /** Nome exibido na UI (pt-BR). */
   name: string;
-  /** Ocupa a célula inteira e bloqueia passagem. */
+  layer: BlockLayer;
+  shape: BlockShape;
+  /** Chão: pode-se andar sobre ele. Objeto: bloqueia passagem quando `solid`. */
   solid: boolean;
-  /** Esconde o fundo atrás dele (usado na iluminação/parede de caverna). */
-  opaque: boolean;
-  /** Planta/enfeite: não-sólido, precisa de bloco sólido embaixo. */
-  decoration: boolean;
   liquid: boolean;
   breakable: boolean;
   /** Aparece na hotbar para ser colocado. */
   placeable: boolean;
-  /** Emite brilho próprio (efeito visual + luz em cavernas). */
+  /** Emite brilho próprio. */
   glow: boolean;
 }
 
-const defaults = {
-  solid: true,
-  opaque: true,
-  decoration: false,
-  liquid: false,
-  breakable: true,
-  placeable: true,
-  glow: false,
-};
+const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
+  id, name, layer: 'ground', shape: 'flat', solid: false, liquid: false,
+  breakable: false, placeable: false, glow: false, ...extra,
+});
+const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
+  id, name, layer: 'object', shape: 'cube', solid: true, liquid: false,
+  breakable: true, placeable: true, glow: false, ...extra,
+});
 
 const defs: BlockDef[] = [
-  { ...defaults, id: Block.AIR, name: 'Ar', solid: false, opaque: false, breakable: false, placeable: false },
-  { ...defaults, id: Block.GRASS, name: 'Grama' },
-  { ...defaults, id: Block.DIRT, name: 'Terra' },
-  { ...defaults, id: Block.STONE, name: 'Pedra' },
-  { ...defaults, id: Block.SAND, name: 'Areia' },
-  { ...defaults, id: Block.SANDSTONE, name: 'Arenito' },
-  { ...defaults, id: Block.SNOW, name: 'Neve' },
-  { ...defaults, id: Block.ICE, name: 'Gelo', opaque: false },
-  { ...defaults, id: Block.WATER, name: 'Água', solid: false, opaque: false, liquid: true, breakable: false, placeable: false },
-  { ...defaults, id: Block.LOG, name: 'Tronco' },
-  { ...defaults, id: Block.LEAVES, name: 'Folhas', opaque: false },
-  { ...defaults, id: Block.SAKURA_LEAVES, name: 'Folhas de Sakura', opaque: false },
-  { ...defaults, id: Block.MAGIC_LEAVES, name: 'Folhas Encantadas', opaque: false, glow: true },
-  { ...defaults, id: Block.COAL_ORE, name: 'Minério de Carvão' },
-  { ...defaults, id: Block.GOLD_ORE, name: 'Minério de Ouro' },
-  { ...defaults, id: Block.MANA_CRYSTAL, name: 'Cristal de Mana', glow: true },
-  { ...defaults, id: Block.BEDROCK, name: 'Rocha-mãe', breakable: false, placeable: false },
-  { ...defaults, id: Block.PLANKS, name: 'Tábuas' },
-  { ...defaults, id: Block.BRICK, name: 'Tijolos' },
-  { ...defaults, id: Block.TALL_GRASS, name: 'Capim', solid: false, opaque: false, decoration: true },
-  { ...defaults, id: Block.FLOWER, name: 'Flor', solid: false, opaque: false, decoration: true },
-  { ...defaults, id: Block.GLOW_MUSHROOM, name: 'Cogumelo Lumen', solid: false, opaque: false, decoration: true, glow: true },
-  { ...defaults, id: Block.CACTUS, name: 'Cacto', opaque: false },
-  { ...defaults, id: Block.ENCHANTED_GRASS, name: 'Musgo Encantado' },
-  { ...defaults, id: Block.PINE_LEAVES, name: 'Folhas de Pinheiro', opaque: false },
+  { ...object(Block.AIR, 'Vazio'), solid: false, breakable: false, placeable: false },
+  ground(Block.GRASS, 'Grama'),
+  ground(Block.ENCHANTED_GRASS, 'Musgo Encantado'),
+  ground(Block.SAND, 'Areia'),
+  ground(Block.SNOW, 'Neve'),
+  ground(Block.DIRT, 'Terra'),
+  ground(Block.WATER, 'Água', { liquid: true }),
+  ground(Block.ICE, 'Gelo'),
+  object(Block.STONE, 'Pedra'),
+  object(Block.COAL_ORE, 'Minério de Carvão', { placeable: false }),
+  object(Block.GOLD_ORE, 'Minério de Ouro', { placeable: false }),
+  object(Block.MANA_CRYSTAL, 'Cristal de Mana', { glow: true }),
+  object(Block.SANDSTONE, 'Arenito'),
+  object(Block.LOG, 'Tronco'),
+  object(Block.PLANKS, 'Tábuas'),
+  object(Block.BRICK, 'Tijolos'),
+  object(Block.LEAVES, 'Arbusto'),
+  object(Block.SAKURA_LEAVES, 'Arbusto de Sakura'),
+  object(Block.MAGIC_LEAVES, 'Arbusto Encantado', { glow: true }),
+  object(Block.CACTUS, 'Cacto', { placeable: false }),
+  object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false }),
+  object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false }),
+  object(Block.MAGIC_TREE, 'Árvore Encantada', { shape: 'tree', placeable: false, glow: true }),
+  object(Block.PINE_TREE, 'Pinheiro', { shape: 'tree', placeable: false }),
+  object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false }),
+  object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false }),
+  object(Block.GLOW_MUSHROOM, 'Cogumelo Lumen', { shape: 'decoration', solid: false, placeable: false, glow: true }),
 ];
 
 /** Tabela indexada por id para acesso O(1). */
@@ -100,15 +111,17 @@ export function blockDef(id: number): BlockDef {
   return BLOCKS[id] ?? BLOCKS[Block.AIR];
 }
 
+export const ALL_BLOCK_IDS: readonly BlockId[] = defs.map((d) => d.id);
+
 /** Ids que aparecem na hotbar, na ordem exibida. */
 export const HOTBAR_BLOCKS: BlockId[] = [
-  Block.GRASS,
-  Block.DIRT,
   Block.STONE,
   Block.PLANKS,
   Block.BRICK,
   Block.LOG,
+  Block.LEAVES,
   Block.SAKURA_LEAVES,
+  Block.MAGIC_LEAVES,
   Block.MANA_CRYSTAL,
-  Block.SAND,
+  Block.FLOWER,
 ];

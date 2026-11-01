@@ -26,10 +26,10 @@ const KIND_BY_BIOME: Record<Biome['key'], Kind> = {
 export class Particles {
   private list: Particle[] = [];
 
-  update(dt: number, w: number, h: number, biome: Biome, night: number, underground: boolean): void {
+  update(dt: number, w: number, h: number, biome: Biome, night: number): void {
     let kind = KIND_BY_BIOME[biome.key];
     if (kind === 'pollen' && night > 0.4) kind = 'firefly';
-    const target = underground ? 0 : kind === 'snow' ? 90 : kind === 'firefly' ? 40 : 55;
+    const target = kind === 'snow' ? 90 : kind === 'firefly' ? 40 : 55;
     while (this.list.length < target) this.list.push(spawn(kind, w, h, this.list.length < target / 2));
     for (const p of this.list) {
       // Partículas de outro bioma desaparecem suavemente.

@@ -1,14 +1,17 @@
 # Convenções
 
-- TypeScript estrito, ES modules, sem framework. Código e identificadores em inglês; textos de UI,
-  comentários e docs em pt-BR.
-- Coordenadas: `x` → direita, `y` → **para baixo**. Unidade de mundo = bloco; pixels de mundo = bloco × `TILE`.
-- Conversão bloco↔chunk **sempre** via `world/coords.ts` (`toChunk`, `toLocal`, `chunkKey`).
-- Toda aleatoriedade do mundo deriva da seed (`random.ts`/`noise.ts`). Nunca `Math.random()` em `world/`
-  (permitido apenas em efeitos visuais efêmeros, ex.: partículas).
-- Propriedades de bloco em `world/blocks.ts`; aparência em `render/textures.ts`, indexada pelo mesmo id.
-  Novo bloco = entrada nos dois lugares.
-- Estilo visual: contornos e sombras em tons de índigo (`shade()`), nunca preto puro; luz vem de cima-esquerda;
-  brilhos em estrela de 4 pontas para materiais mágicos/especulares.
-- Mutação de chunk só via `World.setBlock` (garante `version` e invalidação dos vizinhos).
-- Testes do domínio em `src/**/*.test.ts` (Vitest, ambiente Node).
+- TypeScript estrito, ES modules, sem framework. Identificadores em inglês; UI, comentários e docs em pt-BR.
+- Coordenadas: `x` → direita, `y` → **baixo na tela** (= sul no mapa). Unidade = célula; px de mundo = célula × `TILE`.
+  A câmera nunca rota: direção de tela = direção do mapa (joystick e teclado usam o mesmo vetor).
+- Conversão célula↔chunk **sempre** via `world/coords.ts`.
+- Toda aleatoriedade do mundo deriva da seed. Nunca `Math.random()` em `world/` (só em efeitos efêmeros).
+- Cada célula tem **duas camadas**: chão (`layer: 'ground'`) e objeto (`layer: 'object'`, `AIR` = vazio).
+  Formas de objeto: `cube`, `tree`, `decoration` (não sólido).
+- Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo bloco = os dois lugares.
+- Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a
+  base da célula (necessário para a ordenação por linha). Cubos: face superior `TILE`, face frontal `CUBE_FRONT`.
+- Personagem: posição = centro dos pés. Quadros da folha compartilham a mesma ancoragem (pés na base);
+  a câmera segue a posição lógica, nunca o sprite.
+- Estilo: sombras puxam para índigo, luz de cima-esquerda, contornos coloridos, brilhos em estrela.
+- Mutação de objeto só via `World.setObject/placeBlock/breakBlock`.
+- Testes em `src/**/*.test.ts` (Vitest, Node).

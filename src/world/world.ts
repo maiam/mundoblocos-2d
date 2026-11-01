@@ -14,7 +14,7 @@ export interface ChunkRect {
 
 /**
  * Fonte de verdade do estado do mundo: chunks carregados + edições do jogador.
- * Toda leitura/escrita de bloco passa por aqui; regras de quebrar/colocar também.
+ * Toda leitura/escrita de bloco passa por aqui; regras de quebrar/colocar/andar também.
  */
 export class World {
   readonly generator: WorldGenerator;
@@ -42,29 +42,31 @@ export class World {
     let chunk = this.chunks.get(key);
     if (!chunk) {
       chunk = new Chunk(cx, cy);
-      this.generator.generateChunk(cx, cy, chunk.blocks);
+      this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects);
       this.chunks.set(key, chunk);
     }
     return chunk;
   }
 
-  /**
-   * Lê um bloco. Se o chunk não estiver carregado, consulta o gerador (puro)
-   * — útil para vizinhos na borda sem forçar carregamento.
-   */
-  getBlock(x: number, y: number): BlockId {
+  /** Chão da célula. Fora de chunk carregado consulta o gerador (puro). */
+  getGround(x: number, y: number): BlockId {
     const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
-    if (chunk) return chunk.get(toLocal(x), toLocal(y));
-    return this.generator.blockAt(x, y);
+    return chunk ? chunk.getGround(toLocal(x), toLocal(y)) : this.generator.groundAt(x, y);
   }
 
-  setBlock(x: number, y: number, id: BlockId): void {
+  /** Objeto da célula (AIR se vazio). */
+  getObject(x: number, y: number): BlockId {
+    const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
+    return chunk ? chunk.getObject(toLocal(x), toLocal(y)) : this.generator.objectAt(x, y);
+  }
+
+  setObject(x: number, y: number, id: BlockId): void {
     const cx = toChunk(x);
     const cy = toChunk(y);
     const lx = toLocal(x);
     const ly = toLocal(y);
-    this.loadChunk(cx, cy).set(lx, ly, id);
-    // Bordas: vizinhos dependem deste bloco para contorno/sombra.
+    this.loadChunk(cx, cy).setObject(lx, ly, id);
+    // Vizinhos usam esta célula para sombras/bordas.
     if (lx === 0) this.touch(cx - 1, cy);
     if (lx === CHUNK_SIZE - 1) this.touch(cx + 1, cy);
     if (ly === 0) this.touch(cx, cy - 1);
@@ -76,67 +78,90 @@ export class World {
     if (c) c.version++;
   }
 
-  /** Bloco abaixo do terreno natural (para parede de fundo de cavernas). */
-  isUnderground(x: number, y: number): boolean {
-    return y > this.generator.surfaceY(x);
+  biomeAt(x: number, y: number): Biome {
+    return this.generator.biomeAt(x, y);
   }
 
-  biomeAt(x: number): Biome {
-    return this.generator.biomeAt(x);
+  /** Pode-se ficar de pé na célula? */
+  isWalkable(x: number, y: number): boolean {
+    if (blockDef(this.getGround(x, y)).liquid) return false;
+    return !blockDef(this.getObject(x, y)).solid;
   }
 
   // ---- Regras de interação (domínio) ----
 
   canBreak(x: number, y: number): boolean {
-    return blockDef(this.getBlock(x, y)).breakable;
+    return blockDef(this.getObject(x, y)).breakable;
   }
 
-  /** Quebra um bloco. Enfeites sem apoio acima também caem. Retorna o id quebrado ou null. */
+  /** Remove o objeto da célula. Retorna o id removido ou null. */
   breakBlock(x: number, y: number): BlockId | null {
-    const id = this.getBlock(x, y);
+    const id = this.getObject(x, y);
     if (!blockDef(id).breakable) return null;
-    this.setBlock(x, y, this.fillAfterRemoval(x, y));
-    const above = this.getBlock(x, y - 1);
-    if (blockDef(above).decoration) this.setBlock(x, y - 1, Block.AIR);
+    this.setObject(x, y, Block.AIR);
     return id;
   }
 
+  /** Objetos só vão em chão firme e célula sem objeto sólido (enfeites são substituídos). */
   canPlace(x: number, y: number, id: BlockId): boolean {
     const def = blockDef(id);
-    if (!def.placeable) return false;
-    const target = blockDef(this.getBlock(x, y));
-    if (target.solid) return false;
-    if (def.decoration && !blockDef(this.getBlock(x, y + 1)).solid) return false;
-    return true;
+    if (!def.placeable || def.layer !== 'object') return false;
+    if (blockDef(this.getGround(x, y)).liquid) return false;
+    const current = blockDef(this.getObject(x, y));
+    return current.id === Block.AIR || current.shape === 'decoration';
   }
 
   placeBlock(x: number, y: number, id: BlockId): boolean {
     if (!this.canPlace(x, y, id)) return false;
-    this.setBlock(x, y, id);
+    this.setObject(x, y, id);
     return true;
   }
 
-  /** Ao remover um bloco abaixo do nível do mar em lago, a água ocupa o espaço. */
-  private fillAfterRemoval(x: number, y: number): BlockId {
-    const neighbors = [this.getBlock(x, y - 1), this.getBlock(x - 1, y), this.getBlock(x + 1, y)];
-    return neighbors.some((n) => blockDef(n).liquid) ? Block.WATER : Block.AIR;
+  /**
+   * Ponto inicial: procura (em anéis de 24 células) um bioma acolhedor perto da
+   * origem e devolve a célula andável mais próxima dele.
+   */
+  findSpawn(): [number, number] {
+    const welcoming = new Set(['meadow', 'sakura', 'enchanted']);
+    for (let r = 0; r <= 60; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const x = dx * 24;
+          const y = dy * 24;
+          if (welcoming.has(this.biomeAt(x, y).key)) return this.nearestWalkable(x, y);
+        }
+      }
+    }
+    return this.nearestWalkable(0, 0);
+  }
+
+  /** Célula andável (com vizinhos andáveis) mais próxima de (x0, y0), em espiral. */
+  nearestWalkable(x0: number, y0: number, maxRadius = 200): [number, number] {
+    const ok = (x: number, y: number) =>
+      this.isWalkable(x, y) && this.isWalkable(x + 1, y) && this.isWalkable(x - 1, y) &&
+      this.isWalkable(x, y + 1) && this.isWalkable(x, y - 1);
+    for (let r = 0; r <= maxRadius; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          if (ok(x0 + dx, y0 + dy)) return [x0 + dx, y0 + dy];
+        }
+      }
+    }
+    return [x0, y0];
   }
 
   // ---- Ciclo de vida de chunks ----
 
-  /**
-   * Gera até `budget` chunks faltantes dentro do retângulo, priorizando os mais
-   * próximos do centro. Retorna quantos foram gerados.
-   */
+  /** Gera até `budget` chunks faltantes no retângulo, do centro para fora. Retorna quantos. */
   ensureChunks(rect: ChunkRect, budget: number): number {
     const ccx = (rect.cx0 + rect.cx1) / 2;
     const ccy = (rect.cy0 + rect.cy1) / 2;
     const missing: [number, number, number][] = [];
     for (let cy = rect.cy0; cy <= rect.cy1; cy++) {
       for (let cx = rect.cx0; cx <= rect.cx1; cx++) {
-        if (!this.chunks.has(chunkKey(cx, cy))) {
-          missing.push([cx, cy, (cx - ccx) ** 2 + (cy - ccy) ** 2]);
-        }
+        if (!this.chunks.has(chunkKey(cx, cy))) missing.push([cx, cy, (cx - ccx) ** 2 + (cy - ccy) ** 2]);
       }
     }
     missing.sort((a, b) => a[2] - b[2]);
