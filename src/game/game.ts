@@ -1,7 +1,7 @@
 import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
-import { blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
+import { Block, blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
 import { toChunk } from '../world/coords';
 import { World } from '../world/world';
 import { Camera } from './camera';
@@ -160,9 +160,10 @@ export class Game {
     }
     const dist = Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4));
     const inReach = dist <= REACH;
+    // Não se coloca bloco sobre a personagem nem se cava o chão sob seus pés.
     const valid = inReach && (place
       ? this.world.canPlace(x, y, this.selectedBlock) && !this.player.occupies(x, y)
-      : this.world.canBreak(x, y));
+      : this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.player.occupies(x, y)));
     return { x, y, valid };
   }
 
@@ -228,6 +229,7 @@ export class Game {
       const picked = this.renderer.pick(this.camera, this.pointer.x, this.pointer.y);
       const top = picked.hasObject ? this.world.topBlock(picked.x, picked.y) : null;
       if (top) hoverName = blockDef(top.id).name;
+      else if (this.world.getGround(picked.x, picked.y) === Block.HOLE) hoverName = blockDef(Block.HOLE).name;
     }
     return {
       seed: this.world.seed,

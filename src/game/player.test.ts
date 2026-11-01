@@ -23,7 +23,7 @@ describe('Player', () => {
     const [sx, sy] = w.findSpawn();
     for (let dx = -1; dx <= 6; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
-        while (w.breakBlock(sx + dx, sy + dy) !== null);
+        while (w.topBlock(sx + dx, sy + dy)) w.breakBlock(sx + dx, sy + dy);
         w.setObject(sx + dx, sy + dy, dy === 0 ? Block.AIR : Block.OAK_TREE);
       }
     }
@@ -50,6 +50,19 @@ describe('Player', () => {
     expect(p.x).toBeLessThan(sx + 2);
     expect(p.z).toBe(0);
     expect(p.occupies(sx + 1, sy)).toBe(true);
+  });
+
+  it('não entra em buraco', () => {
+    const [w, sx, sy] = corridor(7);
+    w.breakBlock(sx + 2, sy);
+    expect(w.getGround(sx + 2, sy)).toBe(Block.HOLE);
+    const p = new Player(sx + 0.5, sy + 0.5);
+    for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
+    expect(p.x).toBeLessThan(sx + 2);
+    w.placeBlock(sx + 2, sy, Block.PLANKS); // tapado: vira piso e libera a passagem
+    for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
+    expect(p.x).toBeGreaterThan(sx + 3);
+    expect(p.z).toBe(0);
   });
 
   it('não atravessa árvores', () => {

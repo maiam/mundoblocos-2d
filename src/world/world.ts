@@ -85,7 +85,7 @@ export class World {
    * (água, árvore, cacto). Cubos são superfícies: altura = nº de cubos.
    */
   standHeight(x: number, y: number): number | null {
-    if (blockDef(this.getGround(x, y)).liquid) return null;
+    if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
     if (base.shape === 'cube') return this.stackHeight(x, y);
     return base.solid ? null : 0;
@@ -96,12 +96,14 @@ export class World {
     this.setLevel(x, y, 0, id);
   }
 
-  private setLevel(x: number, y: number, level: 0 | 1, id: BlockId): void {
+  private setLevel(x: number, y: number, level: 0 | 1 | 'ground', id: BlockId): void {
     const cx = toChunk(x);
     const cy = toChunk(y);
     const lx = toLocal(x);
     const ly = toLocal(y);
-    this.loadChunk(cx, cy).setLevel(lx, ly, level, id);
+    const chunk = this.loadChunk(cx, cy);
+    if (level === 'ground') chunk.setGround(lx, ly, id);
+    else chunk.setLevel(lx, ly, level, id);
     // Vizinhos usam esta célula para sombras/bordas.
     if (lx === 0) this.touch(cx - 1, cy);
     if (lx === CHUNK_SIZE - 1) this.touch(cx + 1, cy);
@@ -118,6 +120,15 @@ export class World {
     return this.generator.biomeAt(x, y);
   }
 
+  /**
+   * O chão aguenta personagens/animais? Falso para água e buraco. Um cubo
+   * colocado num buraco vira piso e volta a ser pisável.
+   */
+  isGroundStandable(x: number, y: number): boolean {
+    const g = blockDef(this.getGround(x, y));
+    return g.layer === 'object' ? g.shape === 'cube' : g.standable;
+  }
+
   /** Célula livre no nível do chão (sem cubos, água ou árvore)? */
   isWalkable(x: number, y: number): boolean {
     return this.standHeight(x, y) === 0;
@@ -125,28 +136,47 @@ export class World {
 
   // ---- Regras de interação (domínio) ----
 
-  canBreak(x: number, y: number): boolean {
+  /**
+   * O que um golpe na célula quebraria: o objeto do topo ou, com a célula vazia,
+   * o próprio chão (que vira buraco). null se nada pode ser quebrado.
+   */
+  breakTarget(x: number, y: number): 'object' | 'ground' | null {
     const top = this.topBlock(x, y);
-    return !!top && blockDef(top.id).breakable;
+    if (top) return blockDef(top.id).breakable ? 'object' : null;
+    return blockDef(this.getGround(x, y)).breakable ? 'ground' : null;
   }
 
-  /** Remove o bloco do topo da célula (o empilhado primeiro). Retorna o id removido ou null. */
+  canBreak(x: number, y: number): boolean {
+    return this.breakTarget(x, y) !== null;
+  }
+
+  /** Quebra o topo da célula (empilhado → objeto → chão). Retorna o id removido ou null. */
   breakBlock(x: number, y: number): BlockId | null {
-    const top = this.topBlock(x, y);
-    if (!top || !blockDef(top.id).breakable) return null;
-    this.setLevel(x, y, top.level, Block.AIR);
-    return top.id;
+    const target = this.breakTarget(x, y);
+    if (target === 'object') {
+      const top = this.topBlock(x, y)!;
+      this.setLevel(x, y, top.level, Block.AIR);
+      return top.id;
+    }
+    if (target === 'ground') {
+      const id = this.getGround(x, y);
+      this.setLevel(x, y, 'ground', Block.HOLE);
+      return id;
+    }
+    return null;
   }
 
   /**
-   * Nível em que o bloco seria colocado, ou null se não pode.
+   * Onde o bloco seria colocado, ou null se não pode.
+   * 'ground': preenche um buraco — só cubos, que viram piso nivelado.
    * Nível 0: chão firme, célula vazia ou com enfeite (substituído).
    * Nível 1: cubo sobre cubo, até MAX_STACK. Enfeites e árvores só no chão.
    */
-  placementLevel(x: number, y: number, id: BlockId): 0 | 1 | null {
+  placementLevel(x: number, y: number, id: BlockId): 'ground' | 0 | 1 | null {
     const def = blockDef(id);
     if (!def.placeable || def.layer !== 'object') return null;
-    if (blockDef(this.getGround(x, y)).liquid) return null;
+    if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
+    if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
     if (base.id === Block.AIR || base.shape === 'decoration') return 0;
     if (def.shape === 'cube' && base.shape === 'cube' && this.stackHeight(x, y) < MAX_STACK) return 1;

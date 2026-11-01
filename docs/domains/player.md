@@ -11,4 +11,5 @@
   rota, isso é também a direção no mapa.
 - Câmera: alvo = pés − 0,4 × altura do personagem; suavização exponencial (k = 9/s). Por usar a posição
   lógica, o balanço dos quadros de caminhada não move a câmera.
-- Interação: alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem.
+- Interação: alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o
+  chão sob ela (regra de ocupação no `Game`; o domínio garante que buraco não é pisável).

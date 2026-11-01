@@ -12,6 +12,8 @@ Apenas apresentação; lê `World`, nunca escreve.
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):
   variação de tile por hash → barranca no lado norte da água → espuma nas margens → grade sutil → sombras
   projetadas por cubos e árvores.
+- Chão especial: `HOLE` = fundo escuro + parede de terra no lado norte (onde o vizinho não é buraco) + contornos;
+  cubo como piso = face superior do sprite do cubo desenhada plana na célula.
 - Pilhas: cada nível é desenhado `CUBE_FRONT` px acima do anterior (mesmo sprite de cubo); sombra no chão cresce
   com a altura. `pick()` considera a pilha inteira clicável; clicar num cubo com espaço empilha nele.
 - Por frame: objetos linha a linha (de cima para baixo da tela); a personagem é desenhada logo após a linha

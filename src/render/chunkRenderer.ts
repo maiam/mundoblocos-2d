@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, TILE } from '../config';
-import { type BlockId, blockDef } from '../world/blocks';
+import { Block, type BlockId, blockDef } from '../world/blocks';
 import type { Chunk } from '../world/chunk';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
@@ -9,6 +9,8 @@ import { type BlockTextures, groundVariant, TEX_RES } from './textures';
 const CHUNK_PX = CHUNK_SIZE * TILE;
 /** Altura da barranca (face frontal do chão) vista sobre a água. */
 const BANK_H = 7;
+/** Altura da parede interna visível de um buraco. */
+const WALL_H = 13;
 /** Frames sem uso antes de liberar o cache de um chunk. */
 const IDLE_FRAMES = 90;
 
@@ -55,6 +57,35 @@ export class ChunkRenderer {
     return canvas;
   }
 
+  /** Buraco: fundo escuro, parede interna ao norte (vista 3/4) e bordas com contorno. */
+  private drawHole(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, py: number): void {
+    const hole = (bx: number, by: number) => this.world.getGround(bx, by) === Block.HOLE;
+    const g = ctx.createLinearGradient(0, py, 0, py + TILE);
+    g.addColorStop(0, '#2b2040');
+    g.addColorStop(1, '#3a2c4a');
+    ctx.fillStyle = g;
+    ctx.fillRect(px, py, TILE, TILE);
+    if (!hole(x, y - 1)) {
+      // Parede de terra visível do lado norte.
+      const wall = ctx.createLinearGradient(0, py, 0, py + WALL_H);
+      wall.addColorStop(0, '#9a6a42');
+      wall.addColorStop(1, '#5e3c2a');
+      ctx.fillStyle = wall;
+      ctx.fillRect(px, py, TILE, WALL_H);
+      ctx.fillStyle = 'rgba(255, 230, 190, 0.35)';
+      ctx.fillRect(px, py, TILE, 1.5);
+      ctx.fillStyle = 'rgba(40, 24, 50, 0.5)';
+      for (let i = 0; i < 3; i++) ctx.fillRect(px + 5 + i * 10, py + 5 + (i % 2) * 4, 3, 2);
+    }
+    ctx.fillStyle = 'rgba(20, 12, 36, 0.55)';
+    if (!hole(x - 1, y)) ctx.fillRect(px, py, 2.5, TILE);
+    if (!hole(x + 1, y)) ctx.fillRect(px + TILE - 2.5, py, 2.5, TILE);
+    if (!hole(x, y + 1)) {
+      ctx.fillStyle = 'rgba(255, 240, 210, 0.4)';
+      ctx.fillRect(px, py + TILE - 1.5, TILE, 1.5);
+    }
+  }
+
   isFresh(chunk: Chunk): boolean {
     return this.cache.get(chunk)?.version === chunk.version;
   }
@@ -76,8 +107,18 @@ export class ChunkRenderer {
         const px = lx * TILE;
         const py = ly * TILE;
         const g = chunk.getGround(lx, ly);
-        const tile = groundVariant(this.tex, g, hash2(seed, x, y));
-        if (tile) ctx.drawImage(tile, px, py, TILE, TILE);
+        if (g === Block.HOLE) {
+          this.drawHole(ctx, x, y, px, py);
+        } else if (blockDef(g).layer === 'object') {
+          // Cubo colocado num buraco: vira piso (face superior nivelada com o chão).
+          const s = this.tex.objects.get(g);
+          if (s) ctx.drawImage(s.canvas, 0, 0, TILE * TEX_RES, TILE * TEX_RES, px, py, TILE, TILE);
+          ctx.fillStyle = 'rgba(30, 20, 60, 0.08)';
+          ctx.fillRect(px, py, TILE, TILE);
+        } else {
+          const tile = groundVariant(this.tex, g, hash2(seed, x, y));
+          if (tile) ctx.drawImage(tile, px, py, TILE, TILE);
+        }
 
         if (liquid(g)) {
           // Barranca: o chão ao norte parece mais alto que a água.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-11-01
+- Chão quebrável: quebrar célula vazia cria `HOLE` (não pisável por personagem/animais, não quebrável).
+- Buraco só aceita cubo novo, que vira piso nivelado (pisável e empilhável); quebrar o piso reabre o buraco.
+- Bloqueado cavar sob a personagem. Água continua inquebrável.
+- Render de buraco (parede interna 3/4) e de piso de cubo.
+
 ## 0.3.0 — 2026-11-01
 - Cubos empilháveis (máx. 2 por célula, `MAX_STACK`); quebrar remove o de cima.
 - Personagem sobe 1 nível por vez (`STEP_HEIGHT`) e desce livremente; altura suavizada no sprite e na câmera;

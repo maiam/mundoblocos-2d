@@ -15,6 +15,8 @@ export const Block = {
   DIRT: 5,
   WATER: 6,
   ICE: 7,
+  /** Chão quebrado: ninguém pisa; só aceita um bloco novo (que vira piso). */
+  HOLE: 8,
   // --- objetos (cubos) ---
   STONE: 20,
   COAL_ORE: 21,
@@ -51,8 +53,10 @@ export interface BlockDef {
   name: string;
   layer: BlockLayer;
   shape: BlockShape;
-  /** Chão: pode-se andar sobre ele. Objeto: bloqueia passagem quando `solid`. */
+  /** Objeto: bloqueia passagem quando `solid`. */
   solid: boolean;
+  /** Chão: personagens/animais podem ficar sobre ele. */
+  standable: boolean;
   liquid: boolean;
   breakable: boolean;
   /** Aparece na hotbar para ser colocado. */
@@ -62,11 +66,11 @@ export interface BlockDef {
 }
 
 const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
-  id, name, layer: 'ground', shape: 'flat', solid: false, liquid: false,
-  breakable: false, placeable: false, glow: false, ...extra,
+  id, name, layer: 'ground', shape: 'flat', solid: false, standable: true, liquid: false,
+  breakable: true, placeable: false, glow: false, ...extra,
 });
 const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
-  id, name, layer: 'object', shape: 'cube', solid: true, liquid: false,
+  id, name, layer: 'object', shape: 'cube', solid: true, standable: false, liquid: false,
   breakable: true, placeable: true, glow: false, ...extra,
 });
 
@@ -77,8 +81,9 @@ const defs: BlockDef[] = [
   ground(Block.SAND, 'Areia'),
   ground(Block.SNOW, 'Neve'),
   ground(Block.DIRT, 'Terra'),
-  ground(Block.WATER, 'Água', { liquid: true }),
+  ground(Block.WATER, 'Água', { liquid: true, standable: false, breakable: false }),
   ground(Block.ICE, 'Gelo'),
+  ground(Block.HOLE, 'Buraco', { standable: false, breakable: false }),
   object(Block.STONE, 'Pedra'),
   object(Block.COAL_ORE, 'Minério de Carvão', { placeable: false }),
   object(Block.GOLD_ORE, 'Minério de Ouro', { placeable: false }),

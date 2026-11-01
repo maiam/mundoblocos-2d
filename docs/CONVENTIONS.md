@@ -6,7 +6,8 @@
 - Conversão célula↔chunk **sempre** via `world/coords.ts`.
 - Toda aleatoriedade do mundo deriva da seed. Nunca `Math.random()` em `world/` (só em efeitos efêmeros).
 - Cada célula tem chão (`layer: 'ground'`) e até 2 níveis de objeto (`layer: 'object'`, `AIR` = vazio); o nível 1
-  só aceita cubo sobre cubo. Altura de pé/colisão sempre via `World.standHeight`.
+  só aceita cubo sobre cubo. Altura de pé/colisão sempre via `World.standHeight` (inclui buracos).
+- A camada de chão pode conter um id de cubo (piso feito num buraco); ler "é pisável" via `isGroundStandable`.
   Formas de objeto: `cube`, `tree`, `decoration` (não sólido).
 - Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo bloco = os dois lugares.
 - Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a

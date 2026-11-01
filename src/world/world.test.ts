@@ -138,6 +138,44 @@ describe('World', () => {
     expect(w.standHeight(x + 1, y)).toBeNull();
   });
 
+  it('quebrar célula vazia cava o chão; buraco só aceita cubo, que vira piso', () => {
+    const w = new World(7);
+    const [x, y] = w.findSpawn();
+    while (w.topBlock(x, y)) w.breakBlock(x, y); // tira enfeite, se houver
+    const original = w.getGround(x, y);
+    expect(w.breakTarget(x, y)).toBe('ground');
+    expect(w.breakBlock(x, y)).toBe(original);
+    expect(w.getGround(x, y)).toBe(Block.HOLE);
+    expect(w.standHeight(x, y)).toBeNull(); // ninguém pisa no buraco
+    expect(w.canBreak(x, y)).toBe(false);
+    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false); // só blocos novos
+    expect(w.placementLevel(x, y, Block.STONE)).toBe('ground');
+    expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
+    expect(w.getGround(x, y)).toBe(Block.STONE);
+    expect(w.getObject(x, y)).toBe(Block.AIR);
+    expect(w.standHeight(x, y)).toBe(0); // piso nivelado
+    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true); // e aceita cubo por cima
+    expect(w.stackHeight(x, y)).toBe(1);
+    w.breakBlock(x, y);
+    expect(w.breakBlock(x, y)).toBe(Block.STONE); // quebrar o piso reabre o buraco
+    expect(w.getGround(x, y)).toBe(Block.HOLE);
+  });
+
+  it('não cava o chão sob um objeto nem quebra água', () => {
+    const w = new World(42);
+    const [x, y] = w.findSpawn();
+    while (w.topBlock(x, y)) w.breakBlock(x, y);
+    w.placeBlock(x, y, Block.STONE);
+    expect(w.breakTarget(x, y)).toBe('object');
+    let found = false, wx = 0, wy = 0;
+    for (let i = 0; i < 4000 && !found; i++) {
+      wx = (i % 200) - 100; wy = Math.floor(i / 200) * 7 - 70;
+      found = blockDef(w.getGround(wx, wy)).liquid;
+    }
+    expect(found).toBe(true);
+    expect(w.canBreak(wx, wy)).toBe(false);
+  });
+
   it('não coloca sobre água nem itens não colocáveis', () => {
     const w = new World(42);
     let wx = 0, wy = 0, found = false;

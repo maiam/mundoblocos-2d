@@ -28,6 +28,13 @@ export class Chunk {
     return this.upper[ly * CHUNK_SIZE + lx] as BlockId;
   }
 
+  /** Define o chão (buraco ao quebrar, ou cubo usado como piso). */
+  setGround(lx: number, ly: number, id: BlockId): void {
+    this.ground[ly * CHUNK_SIZE + lx] = id;
+    this.modified = true;
+    this.version++;
+  }
+
   /** Define o bloco do nível 0 ou 1 da célula. */
   setLevel(lx: number, ly: number, level: 0 | 1, id: BlockId): void {
     (level === 0 ? this.objects : this.upper)[ly * CHUNK_SIZE + lx] = id;
