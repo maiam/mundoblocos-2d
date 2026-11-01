@@ -12,6 +12,8 @@
 - Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo bloco = os dois lugares.
 - Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a
   base da célula (necessário para a ordenação por linha). Cubos: face superior `TILE`, face frontal `CUBE_FRONT`.
+- Ações do jogador: regra por célula no `Game` (`canUseAt/canBreakAt/applyUse`, que delegam ao `World`);
+  a origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.
 - Itens contáveis vivem em `world/items.ts`; o inventário (quantidades) em `game/inventory.ts`. Blocos de
   construção continuam infinitos. O que um bloco devolve ao quebrar vem de `dropsFor`.
 - `BlockId` aceita os estágios intermediários do trigo (61–74); usar `isWheat/wheatStage/wheatId`.

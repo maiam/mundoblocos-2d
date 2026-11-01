@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.9.0_
+_Atualizado em 2026-11-01 — v0.10.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -8,6 +8,8 @@ _Atualizado em 2026-11-01 — v0.9.0_
 - **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
   transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
 - **Cavar o chão**: célula vazia + quebrar → buraco intransponível; só um bloco novo o preenche, virando piso.
+- **Botão de ação (em teste)** no celular: toque usa, segurar 2 s quebra o bloco à frente; alvo com contorno
+  quando a personagem está parada; mostra o item selecionado ou a mão. Espaço faz o mesmo no desktop.
 - **Ferramentas** (espada, enxada, picareta, pá, machado) na hotbar (1–5): selecionar equipa e a heroína anda
   com ela nas 4 direções. Ainda sem ação própria.
 - **Cultivo de trigo**: semente plantada na terra cresce em 16 estágios (~1,5 min); colher (segurar 2 s) solta
@@ -29,7 +31,7 @@ _Atualizado em 2026-11-01 — v0.9.0_
   permite: Android/Chrome); em retrato, a camada "Gire o aparelho" bloqueia o jogo (cobre iOS/iframes).
   PWA instalável abre em tela cheia e paisagem. Controles compactos em paisagem de pouca altura.
 - **Tela limpa**: só a hotbar na parte inferior (+ joystick em telas de toque). Sem painéis de informação/botões.
-- Interação: toque/clique curto coloca; segurar 2 s quebra (rachaduras + anel de progresso); alcance de 4,5
+- Interação pelo mouse: clique curto coloca; segurar 2 s quebra (rachaduras + anel de progresso); alcance de 4,5
   células; hotbar 1–9; atalhos de depuração G (chunks) e T (tempo).
 - Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
 

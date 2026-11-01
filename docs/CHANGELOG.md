@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 — 2026-11-01
+- Botão de ação (toque) com aro vazado: toque curto usa o selecionado no alvo à frente; segurar 2 s quebra.
+  Ícone = espaço selecionado ou mão; anel de progresso no próprio botão. Espaço faz o mesmo no desktop.
+- Alvo à frente da personagem parada com cantoneiras pulsantes; nenhum alvo ao andar.
+- Mão vazia: tocar no espaço selecionado (ou Esc) solta; o jogo começa com a mão vazia.
+- No toque, tocar direto no mundo não age mais (só o botão). Mouse inalterado.
+- Regras de ação unificadas por célula (`canUseAt/canBreakAt/applyUse`) para cursor e botão.
+- `setPointerCapture` defensivo no botão e no joystick.
+
 ## 0.9.0 — 2026-11-01
 - Ferramentas como itens selecionáveis (`TOOLS`): espada, enxada, picareta, pá, machado, com ícones fornecidos.
 - Equipar ao selecionar: heroína usa a folha da ferramenta ao andar (5 folhas fornecidas, normalizadas).

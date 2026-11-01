@@ -40,6 +40,7 @@ src/
     drops.ts           itens caídos no chão e coleta
     camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
     joystick.ts        joystick virtual em direções de tela
+    actionButton.ts    botão de ação (toque): usa/quebra o alvo à frente; ícone do selecionado ou mão
     screenMode.ts      toque: tela cheia + trava em paisagem no 1º gesto; camada "Gire o aparelho" em retrato
     game.ts            loop, input, alcance, carregamento de chunks, liga render/HUD
     hud.ts             overlay HTML mínimo: só a hotbar (joystick em telas de toque)

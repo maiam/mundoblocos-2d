@@ -1,5 +1,8 @@
 # Próximos passos
 
+- **Avaliar o teste do botão de ação**: tempo de 2 s ainda adequado? Mão vazia + toque poderia colher trigo maduro
+  ou fazer carinho na ovelha; alvo "à frente" poderia considerar a diagonal do joystick.
+
 - **Ações das ferramentas** (próximo): enxada prepara a terra (plantio só em terra arada?), picareta/pá/machado
   aceleram a quebra do material certo (e o restante fica mais lento), espada para combate futuro. Sprites de
   ação (golpe) ainda não existem.

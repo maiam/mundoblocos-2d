@@ -25,7 +25,7 @@ export class Joystick {
     this.el.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this.pointerId = e.pointerId;
-      this.el.setPointerCapture(e.pointerId);
+      try { this.el.setPointerCapture(e.pointerId); } catch { /* ponteiro já liberado: segue sem captura */ }
       this.el.classList.add('active');
       this.move(e);
     });

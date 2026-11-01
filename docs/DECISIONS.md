@@ -16,6 +16,7 @@
 | — | Ícones: monte de sementes e feixe com laço | `domains/farming.md` |
 | — | Ferramenta equipada = espaço selecionado; sem ação até definirmos o uso de cada uma | `domains/player.md` |
 | — | Pá sem folha para a direita: espelho da esquerda | `domains/render.md` |
+| — | Ação no celular pelo botão de ação sobre o alvo à frente; toque no mundo desativado no toque | `domains/player.md` |
 | — | Câmera sem rotação + joystick em direções de tela | `domains/player.md` |
 | — | Sem backend neste repositório; persistência futura via core | `PROJECT_CONTEXT.md` |
 | — | Chunks quadrados 16×16 nos dois eixos do mapa | `domains/world.md` |

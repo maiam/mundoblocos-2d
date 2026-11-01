@@ -27,6 +27,8 @@ export interface RenderOptions {
   breaking: { x: number; y: number; progress: number } | null;
   /** Itens caídos no chão (colheita). */
   drops: ItemDrop[];
+  /** Alvo à frente da personagem parada (botão de ação): contorno de seleção. */
+  focus: { x: number; y: number; valid: boolean } | null;
   /** Ovelha sob o cursor quando o trigo está selecionado (posição dos pés, em células). */
   hoverSheep: { x: number; y: number; valid: boolean } | null;
   time: number;
@@ -152,6 +154,7 @@ export class Renderer {
     this.particles.draw(ctx);
 
     if (opts.showChunkBorders) this.drawChunkBorders(cam, rect);
+    if (opts.focus) this.drawFocus(cam, opts.focus, opts.elapsed);
     if (opts.hover) this.drawHover(cam, opts.hover);
     if (opts.breaking) this.drawBreaking(cam, opts.breaking);
   }
@@ -325,6 +328,37 @@ export class Renderer {
       w: r.w * cam.zoom,
       h: r.h * cam.zoom,
     };
+  }
+
+  /**
+   * Seleção do alvo à frente: cantoneiras que "respiram" ao redor do bloco do
+   * topo (ou da célula), douradas se há ação possível, rosadas se não.
+   */
+  private drawFocus(cam: Camera, f: NonNullable<RenderOptions['focus']>, elapsed: number): void {
+    const ctx = this.ctx;
+    const { sx, sy, w, h } = this.cellScreenRect(cam, f.x, f.y);
+    const pulse = 1 + 0.06 * Math.sin(elapsed * 5);
+    const cx = sx + w / 2;
+    const cy = sy + h / 2;
+    const hw = (w / 2) * pulse + 2;
+    const hh = (h / 2) * pulse + 2;
+    const len = Math.min(w, h) * 0.28;
+    ctx.save();
+    ctx.lineWidth = Math.max(2.5, cam.zoom * 1.4);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = f.valid ? '#ffe9a8' : 'rgba(255, 150, 170, 0.9)';
+    ctx.shadowColor = f.valid ? 'rgba(255, 212, 107, 0.95)' : 'rgba(255, 80, 120, 0.7)';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    for (const [sxn, syn] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) {
+      const x = cx + sxn * hw;
+      const y = cy + syn * hh;
+      ctx.moveTo(x, y - syn * len);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x - sxn * len, y);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   /** Rachaduras que crescem com o progresso + anel de carregamento. */

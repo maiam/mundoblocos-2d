@@ -18,7 +18,15 @@
   e o `Game` zera entrada/quebra (`ScreenMode.blocked`). Desktop não é afetado.
 - Câmera: alvo = pés − 0,4 × altura do personagem; suavização exponencial (k = 9/s). Por usar a posição
   lógica, o balanço dos quadros de caminhada não move a câmera.
-- Interação: **toque/clique curto (≤ 0,3 s, ≤ 10 px) coloca**; **segurar 2 s (`BREAK_HOLD_S`) sobre o mesmo alvo
+- **Botão de ação** (`game/actionButton.ts`, lado direito, só toque; no desktop: barra de espaço): age no
+  **alvo à frente** — a célula vizinha na direção em que a personagem olha (ou a ovelha logo à frente, com
+  trigo). Toque curto = usar o selecionado (colocar/plantar/alimentar); segurar 2 s = quebrar (anel no botão +
+  rachaduras no bloco). Personagem parada: cantoneiras pulsantes no alvo (douradas = há ação possível; rosadas
+  = não); andando, nenhum alvo. O botão mostra o ícone do espaço selecionado ou uma mão (mão vazia).
+- **Mão vazia**: tocar de novo no espaço selecionado (ou Esc) solta; começa com a mão vazia.
+- No toque, tocar/segurar direto no mundo **não age** (só o botão); o mouse mantém clique/segurar no cursor.
+- Regras por célula (`canUseAt`, `canBreakAt`, `canFeed`, `applyUse`) são as mesmas para cursor e botão.
+- Interação pelo mouse: **clique curto (≤ 0,3 s, ≤ 10 px) coloca**; **segurar 2 s (`BREAK_HOLD_S`) sobre o mesmo alvo
   quebra** (o progresso reinicia se o alvo mudar ou ficar inválido; ao quebrar, continua no que está por baixo).
   Feedback no canvas: rachaduras progressivas + anel. Alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o
   chão sob ela (regra de ocupação no `Game`; o domínio garante que buraco não é pisável).

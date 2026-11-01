@@ -2,7 +2,7 @@ import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../confi
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
-import { blockDef, type BlockId } from '../world/blocks';
+import { blockDef } from '../world/blocks';
 import { dropsFor, ITEMS, TOOLS } from '../world/items';
 import { World } from '../world/world';
 import { Camera } from './camera';
@@ -15,6 +15,8 @@ import type { Sheep } from './sheep';
 import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
 import { Player } from './player';
+import { ActionButton, HAND_ICON } from './actionButton';
+import type { Facing } from './walker';
 
 /** Duração de um dia completo em segundos. */
 const DAY_LENGTH_S = 480;
@@ -27,16 +29,25 @@ const TAP_MAX_S = 0.3;
 /** Tempo segurando sobre o mesmo alvo para quebrar (s). */
 export const BREAK_HOLD_S = 2;
 
-interface Press {
-  id: number;
-  sx: number;
-  sy: number;
-  moved: boolean;
+/** Um "segurar" em andamento (dedo/mouse na tela ou botão de ação). */
+interface Hold {
   held: number;
   /** Célula sendo quebrada e progresso 0..1 (reinicia ao trocar de alvo). */
   target: { x: number; y: number } | null;
   progress: number;
 }
+
+interface Press extends Hold {
+  id: number;
+  sx: number;
+  sy: number;
+  moved: boolean;
+}
+
+type CellTarget = { x: number; y: number; valid: boolean };
+
+/** Deslocamento da célula "à frente" para cada direção do sprite. */
+const FACING_DIR: Record<Facing, [number, number]> = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
 
 /** Orquestra mundo, personagem, câmera, input, render e HUD. Sem regra de domínio. */
 export class Game {
@@ -51,7 +62,11 @@ export class Game {
   private readonly joystick: Joystick;
   private readonly keys = new Set<string>();
   private showChunkBorders = false;
-  private selected = 0;
+  /** Espaço selecionado na hotbar; null = mão vazia. */
+  private selected: number | null = null;
+  private readonly actionButton: ActionButton;
+  /** Botão de ação (ou Espaço) pressionado: toque curto usa, segurar 2 s quebra o alvo à frente. */
+  private action: Hold | null = null;
   private time = 0.31;
   private elapsed = 0;
   private last = performance.now();
@@ -76,7 +91,7 @@ export class Game {
       onSelect: (i) => this.select(i),
     });
     this.joystick = new Joystick(this.hud.root);
-    this.select(this.selected);
+    this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.endAction());
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
     this.bindInput();
@@ -89,15 +104,26 @@ export class Game {
     this.hud.destroy();
   }
 
-  private get slot(): HotbarSlot {
-    return HOTBAR[this.selected];
+  private get slot(): HotbarSlot | null {
+    return this.selected === null ? null : HOTBAR[this.selected];
   }
 
-  /** Seleciona um espaço; ferramenta selecionada = ferramenta equipada (muda o sprite). */
-  private select(i: number): void {
-    this.selected = Math.max(0, Math.min(HOTBAR.length - 1, i));
-    const slot = HOTBAR[this.selected];
-    this.player.equipped = slot.kind === 'tool' ? slot.tool : null;
+  /**
+   * Seleciona um espaço; selecionar de novo o mesmo solta (mão vazia).
+   * Ferramenta selecionada = ferramenta equipada (muda o sprite).
+   */
+  private select(i: number | null): void {
+    this.selected = i === null || i === this.selected ? null : Math.max(0, Math.min(HOTBAR.length - 1, i));
+    const slot = this.slot;
+    this.player.equipped = slot?.kind === 'tool' ? slot.tool : null;
+    this.actionButton.setIcon(this.slotIcon(slot));
+  }
+
+  private slotIcon(slot: HotbarSlot | null): string {
+    if (!slot) return HAND_ICON;
+    if (slot.kind === 'tool') return TOOL_ICON_URLS[slot.tool];
+    if (slot.kind === 'item') return ITEM_ICON_URLS[slot.item];
+    return this.renderer.iconFor(slot.block);
   }
 
   private skipTime(): void {
@@ -138,10 +164,18 @@ export class Game {
         const n = Number(e.code.slice(5)) || 10; // tecla 0 = 10º espaço
         if (n <= HOTBAR.length) this.select(n - 1);
       }
+      if (e.code === 'Escape') this.select(null);
+      if (e.code === 'Space') this.startAction();
       if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
     });
-    this.listen(window, 'keyup', (e) => this.keys.delete(e.code));
-    this.listen(window, 'blur', () => this.keys.clear());
+    this.listen(window, 'keyup', (e) => {
+      this.keys.delete(e.code);
+      if (e.code === 'Space') this.endAction();
+    });
+    this.listen(window, 'blur', () => {
+      this.keys.clear();
+      this.action = null;
+    });
 
     this.listen(c, 'contextmenu', (e) => e.preventDefault());
     this.listen(c, 'wheel', (e) => {
@@ -150,8 +184,9 @@ export class Game {
     }, { passive: false });
 
     // Toque/clique curto = colocar. Segurar 2 s sobre o mesmo alvo = quebrar.
+    // No toque, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela).
     this.listen(c, 'pointerdown', (e) => {
-      if (this.press) return;
+      if (this.press || e.pointerType === 'touch') return;
       c.setPointerCapture(e.pointerId);
       this.press = { id: e.pointerId, sx: e.offsetX, sy: e.offsetY, moved: false, held: 0, target: null, progress: 0 };
       this.pointer = { x: e.offsetX, y: e.offsetY, inside: true };
@@ -176,13 +211,48 @@ export class Game {
     return Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4)) <= REACH;
   }
 
+  // ---- Regras por célula (iguais para cursor e botão de ação) ----
+
+  /** Pode quebrar aqui? Não se cava o chão sob nenhuma entidade. */
+  private canBreakAt(x: number, y: number): boolean {
+    return this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y));
+  }
+
+  /** Pode usar o espaço selecionado (bloco/semente) nesta célula? Ovelha: ver `canFeed`. */
+  private canUseAt(slot: HotbarSlot | null, x: number, y: number): boolean {
+    if (!slot || slot.kind === 'tool') return false;
+    if (slot.kind === 'block') return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
+    if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
+    return false;
+  }
+
+  private canFeed(sheep: Sheep): boolean {
+    return sheep.canEat && this.inventory.count('wheat') > 0;
+  }
+
+  /** Aplica o espaço selecionado: coloca bloco, planta ou alimenta. */
+  private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
+    if (!slot || slot.kind === 'tool') return; // mão vazia e ferramentas ainda não têm ação
+    if (slot.kind === 'block') {
+      if (!this.canUseAt(slot, x, y)) return;
+      this.world.placeBlock(x, y, slot.block);
+      this.entities.settleAll(this.world);
+      return;
+    }
+    const def = ITEMS[slot.item];
+    if (def.plants) {
+      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item)) this.world.plant(x, y);
+    } else if (def.feeds === 'sheep' && sheep && this.canFeed(sheep) && this.inventory.take(slot.item)) {
+      sheep.feed();
+    }
+  }
+
+  // ---- Alvo pelo cursor (mouse) ----
+
   /** Alvo de quebra sob o ponto da tela (objeto do topo ou o chão). */
-  private breakTarget(sx: number, sy: number): { x: number; y: number; valid: boolean } {
+  private breakTarget(sx: number, sy: number): CellTarget {
     const { x, y } = this.renderer.pick(this.camera, sx, sy);
-    // Não se cava o chão sob nenhuma entidade.
-    const valid = this.inReach(x, y) && this.world.canBreak(x, y) &&
-      !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y));
-    return { x, y, valid };
+    return { x, y, valid: this.inReach(x, y) && this.canBreakAt(x, y) };
   }
 
   /** Célula de chão sob o ponto da tela (ignora objetos altos à frente). */
@@ -191,85 +261,119 @@ export class Game {
     return [Math.floor(wx / TILE), Math.floor(wy / TILE)];
   }
 
-  /** Alvo de colocar um bloco: empilha se tocou num cubo com espaço; senão, no chão sob o cursor. */
-  private blockTarget(sx: number, sy: number, block: BlockId): { x: number; y: number; valid: boolean } {
-    const picked = this.renderer.pick(this.camera, sx, sy);
-    let { x, y } = picked;
-    const top = picked.hasObject ? this.world.topBlock(x, y) : null;
-    const stackable = top && blockDef(top.id).shape === 'cube' && this.world.canPlace(x, y, block);
-    if (top && blockDef(top.id).shape !== 'decoration' && !stackable) [x, y] = this.groundCell(sx, sy);
-    // Não se coloca bloco sobre nenhuma entidade.
-    const valid = this.inReach(x, y) && this.world.canPlace(x, y, block) && !this.entities.occupies(x, y);
-    return { x, y, valid };
+  /** Célula onde o espaço selecionado agiria sob o cursor (bloco empilha se tocou num cubo com espaço). */
+  private useTarget(sx: number, sy: number): CellTarget | null {
+    const slot = this.slot;
+    if (!slot || slot.kind === 'tool' || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
+    let [x, y] = this.groundCell(sx, sy);
+    if (slot.kind === 'block') {
+      const picked = this.renderer.pick(this.camera, sx, sy);
+      const top = picked.hasObject ? this.world.topBlock(picked.x, picked.y) : null;
+      if (top && (blockDef(top.id).shape === 'decoration' || this.world.canPlace(picked.x, picked.y, slot.block))) {
+        [x, y] = [picked.x, picked.y];
+      }
+    }
+    return { x, y, valid: this.inReach(x, y) && this.canUseAt(slot, x, y) };
   }
 
-  /** Alvo de plantar a semente: a célula de chão sob o cursor. */
-  private plantTarget(sx: number, sy: number): { x: number; y: number; valid: boolean } {
-    const [x, y] = this.groundCell(sx, sy);
-    const valid = this.inReach(x, y) && this.inventory.count('wheat_seed') > 0 && this.world.canPlant(x, y);
-    return { x, y, valid };
-  }
-
-  /** Ovelha sob o cursor para dar trigo. */
-  private feedTarget(sx: number, sy: number): { sheep: Sheep; valid: boolean } | null {
+  /** Ovelha sob o cursor (com trigo selecionado). */
+  private sheepUnderCursor(sx: number, sy: number): Sheep | null {
     const [wx, wy] = this.camera.screenToWorld(sx, sy);
     const sheep = this.entities.sheepAt(wx / TILE, wy / TILE);
-    if (!sheep) return null;
-    const near = Math.hypot(sheep.x - this.player.x, sheep.y - this.player.y) <= REACH;
-    return { sheep, valid: near && sheep.canEat && this.inventory.count('wheat') > 0 };
+    return sheep && Math.hypot(sheep.x - this.player.x, sheep.y - this.player.y) <= REACH ? sheep : null;
   }
 
-  /** Toque/clique curto: usa o que está selecionado na hotbar. */
+  /** Clique curto do mouse. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
-    if (slot.kind === 'tool') return; // ferramentas ainda não têm ação
-    if (slot.kind === 'block') {
-      const t = this.blockTarget(sx, sy, slot.block);
-      if (!t.valid) return;
-      this.world.placeBlock(t.x, t.y, slot.block);
-      this.entities.settleAll(this.world);
+    if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
+      this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
       return;
     }
-    const def = ITEMS[slot.item];
-    if (def.plants) {
-      const t = this.plantTarget(sx, sy);
-      if (t.valid && this.inventory.take(slot.item)) this.world.plant(t.x, t.y);
+    const t = this.useTarget(sx, sy);
+    if (t?.valid) this.applyUse(slot, t.x, t.y, null);
+  }
+
+  // ---- Alvo à frente da personagem (botão de ação) ----
+
+  /** Célula imediatamente à frente da personagem, na direção em que ela olha. */
+  private frontCell(): [number, number] {
+    const [dx, dy] = FACING_DIR[this.player.facing];
+    return [this.player.cellX + dx, this.player.cellY + dy];
+  }
+
+  /** Ovelha logo à frente da personagem (para dar trigo). */
+  private frontSheep(): Sheep | null {
+    const [dx, dy] = FACING_DIR[this.player.facing];
+    const px = this.player.x + dx * 0.9;
+    const py = this.player.y + dy * 0.9;
+    let best: Sheep | null = null;
+    let bestD = 0.8;
+    for (const s of this.entities.npcs) {
+      const d = Math.hypot(s.x - px, s.y - py);
+      if (d < bestD) { best = s; bestD = d; }
+    }
+    return best;
+  }
+
+  private startAction(): void {
+    if (this.screenMode?.blocked || this.action) return;
+    this.action = { held: 0, target: null, progress: 0 };
+  }
+
+  /** Soltou o botão: se foi um toque curto, usa o selecionado no alvo à frente. */
+  private endAction(): void {
+    const a = this.action;
+    this.action = null;
+    if (!a || a.held > TAP_MAX_S) return;
+    const slot = this.slot;
+    if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
+      this.applyUse(slot, 0, 0, this.frontSheep());
       return;
     }
-    if (def.feeds === 'sheep') {
-      const f = this.feedTarget(sx, sy);
-      if (f?.valid && this.inventory.take(slot.item)) f.sheep.feed();
-    }
+    const [x, y] = this.frontCell();
+    this.applyUse(slot, x, y, null);
   }
 
   /**
-   * Avança a quebra enquanto o dedo/mouse segue pressionado. O progresso só
-   * acumula num alvo válido e reinicia se o alvo mudar; ao completar, quebra e
-   * continua no que estiver por baixo (ex.: bloco de baixo da pilha, depois o chão).
+   * Avança um "segurar": o progresso só acumula num alvo válido e reinicia se
+   * o alvo mudar; ao completar, quebra e continua no que estiver por baixo
+   * (ex.: bloco de baixo da pilha, depois o chão).
    */
-  private updateBreaking(dt: number): void {
-    const p = this.press;
-    if (!p) return;
-    p.held += dt;
-    if (p.held <= TAP_MAX_S) return;
-    const t = this.breakTarget(this.pointer.x, this.pointer.y);
+  private advanceHold(h: Hold, t: CellTarget, dt: number): void {
     if (!t.valid) {
-      p.target = null;
-      p.progress = 0;
+      h.target = null;
+      h.progress = 0;
       return;
     }
-    if (!p.target || p.target.x !== t.x || p.target.y !== t.y) {
-      p.target = { x: t.x, y: t.y };
-      p.progress = 0;
+    if (!h.target || h.target.x !== t.x || h.target.y !== t.y) {
+      h.target = { x: t.x, y: t.y };
+      h.progress = 0;
     }
-    p.progress += dt / BREAK_HOLD_S;
-    if (p.progress >= 1) {
+    h.progress += dt / BREAK_HOLD_S;
+    if (h.progress >= 1) {
       const broken = this.world.breakBlock(t.x, t.y);
       // Colheita: o que o mundo devolve cai no chão para ser coletado.
       if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, dropsFor(broken));
       this.entities.settleAll(this.world);
-      p.target = null;
-      p.progress = 0;
+      h.target = null;
+      h.progress = 0;
+    }
+  }
+
+  private updateBreaking(dt: number): void {
+    const p = this.press;
+    if (p) {
+      p.held += dt;
+      if (p.held > TAP_MAX_S) this.advanceHold(p, this.breakTarget(this.pointer.x, this.pointer.y), dt);
+    }
+    const a = this.action;
+    if (a) {
+      a.held += dt;
+      if (a.held > TAP_MAX_S) {
+        const [x, y] = this.frontCell();
+        this.advanceHold(a, { x, y, valid: this.canBreakAt(x, y) }, dt);
+      }
     }
   }
 
@@ -282,7 +386,10 @@ export class Game {
 
     // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
     const blocked = this.screenMode?.blocked ?? false;
-    if (blocked) this.press = null;
+    if (blocked) {
+      this.press = null;
+      this.action = null;
+    }
     const [ix, iy] = blocked ? [0, 0] : this.input();
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
@@ -305,13 +412,17 @@ export class Game {
       showChunkBorders: this.showChunkBorders,
       hover: this.hoverTarget(),
       hoverSheep: this.hoverSheep(),
-      breaking: this.press?.target ? { ...this.press.target, progress: this.press.progress } : null,
+      focus: this.focusTarget(),
+      breaking: this.breakingState(),
       drops: this.drops.list,
       time: this.time,
       elapsed: this.elapsed,
       dt,
     });
-    this.hud.update(this.selected, HOTBAR.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
+    this.hud.update(this.selected ?? -1, HOTBAR.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
+    const slot = this.slot;
+    this.actionButton.update(this.action && this.action.held > TAP_MAX_S ? this.action.progress : 0,
+      slot?.kind === 'item' && this.inventory.count(slot.item) === 0);
     requestAnimationFrame(this.frame);
   };
 
@@ -329,24 +440,44 @@ export class Game {
     return [x, y];
   }
 
-  /** Destaque: durante a quebra, o alvo da quebra; senão, onde um toque agiria com o item/bloco selecionado. */
-  private hoverTarget(): { x: number; y: number; valid: boolean } | null {
+  private breakingState(): { x: number; y: number; progress: number } | null {
+    const h = this.action?.target ? this.action : this.press?.target ? this.press : null;
+    return h?.target ? { ...h.target, progress: h.progress } : null;
+  }
+
+  /** Destaque do mouse: durante a quebra, o alvo da quebra; senão, onde o clique agiria. */
+  private hoverTarget(): CellTarget | null {
     if (!this.pointer.inside || this.joystick.active) return null;
     const { x, y } = this.pointer;
     const p = this.press;
     if (p && p.held > TAP_MAX_S) return this.breakTarget(x, y);
-    const slot = this.slot;
-    if (slot.kind === 'tool') return null;
-    if (slot.kind === 'block') return this.blockTarget(x, y, slot.block);
-    if (ITEMS[slot.item].plants) return this.plantTarget(x, y);
-    return null; // trigo: o destaque é o anel na ovelha
+    return this.useTarget(x, y);
   }
 
-  private hoverSheep(): { x: number; y: number; valid: boolean } | null {
+  /** Anel na ovelha alvo do trigo: sob o mouse ou, com a personagem parada, à frente dela. */
+  private hoverSheep(): CellTarget | null {
     const slot = this.slot;
-    if (!this.pointer.inside || this.joystick.active || slot.kind !== 'item' || !ITEMS[slot.item].feeds) return null;
-    if (this.press && this.press.held > TAP_MAX_S) return null;
-    const f = this.feedTarget(this.pointer.x, this.pointer.y);
-    return f ? { x: f.sheep.x, y: f.sheep.y, valid: f.valid } : null;
+    if (slot?.kind !== 'item' || !ITEMS[slot.item].feeds) return null;
+    let sheep: Sheep | null = null;
+    if (this.pointer.inside && !this.joystick.active) {
+      if (this.press && this.press.held > TAP_MAX_S) return null;
+      sheep = this.sheepUnderCursor(this.pointer.x, this.pointer.y);
+    } else if (!this.player.moving) {
+      sheep = this.frontSheep();
+    }
+    return sheep ? { x: sheep.x, y: sheep.y, valid: this.canFeed(sheep) } : null;
+  }
+
+  /**
+   * Alvo do botão de ação: com a personagem parada, a célula à frente ganha um
+   * contorno de seleção (válido se dá para usar o selecionado ou quebrar).
+   * Andando, nada fica selecionado. Com o mouse sobre o mundo, vale o destaque do mouse.
+   */
+  private focusTarget(): CellTarget | null {
+    if (this.pointer.inside || this.player.moving) return null;
+    const slot = this.slot;
+    if (slot?.kind === 'item' && ITEMS[slot.item].feeds && this.frontSheep()) return null; // anel na ovelha
+    const [x, y] = this.frontCell();
+    return { x, y, valid: this.canUseAt(slot, x, y) || this.canBreakAt(x, y) };
   }
 }
