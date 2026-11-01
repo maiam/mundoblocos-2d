@@ -19,12 +19,14 @@ src/
     generator.ts       WorldGenerator: groundAt/objectAt PUROS, generateChunk
     coords.ts          célula ↔ chunk/local (seguro p/ negativos)
     chunk.ts           Chunk 16×16 com camadas ground/objects, modified, version
-    world.ts           World: chunks, edições, isWalkable, quebrar/colocar, spawn, ciclo de vida
+    world.ts           World: chunks, edições, standHeight, quebrar/colocar, plantar/crescer, spawn
+    items.ts           itens contáveis (semente, trigo) e o que cada bloco devolve ao quebrar
   render/  (apresentação — lê o domínio, nunca escreve)
     color.ts           utilitários de cor
     textures.ts        chão (variações), cubos 3/4, árvores, enfeites, ícones
     chunkRenderer.ts   cache offscreen do CHÃO por chunk (barrancas, espuma, grade, sombras)
-    character.ts       folhas de sprite dos atores (heroína, ovelha): linha por direção, quadro por caminhada
+    character.ts       folhas de sprite dos atores (heroína, ovelha, filhote, namoro) + coração
+    itemArt.ts         sprites do trigo por estágio e ícones dos itens
     daycycle.ts        tinta do ciclo dia/noite
     particles.ts       partículas ambientes por bioma
     renderer.ts        frame + pick (objeto sob o cursor)
@@ -32,7 +34,10 @@ src/
     walker.ts          base de quem anda: posição, z, direção, colisão (World.standHeight + degrau), animação
     player.ts          Walker controlado pelo jogador (sobe 1 nível)
     sheep.ts           NPC ovelha: pasta/passeia perto de casa (não sobe em cubos)
-    entities.ts        personagem + NPCs: update, colisão entre entidades, ocupação de células, rebanho inicial
+    entities.ts        personagem + NPCs: update, colisão, reprodução, ocupação de células, rebanho inicial
+    inventory.ts       quantidades de itens do jogador
+    hotbar.ts          espaços da hotbar (itens e blocos)
+    drops.ts           itens caídos no chão e coleta
     camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
     joystick.ts        joystick virtual em direções de tela
     screenMode.ts      toque: tela cheia + trava em paisagem no 1º gesto; camada "Gire o aparelho" em retrato
@@ -47,7 +52,8 @@ src/
 3. `World.ensureChunks` (orçamento por frame) e `unloadFar` a cada 1 s.
 4. `Renderer.draw`: chão (cache por chunk, máx. 2 re-renders/frame) → objetos e atores por linha
    (de trás para frente) → sombras de nuvens → brilhos/tinta dia-noite → partículas → overlays.
-5. Toque curto (colocar) ou segurar 2 s (quebrar, progresso em `Game.updateBreaking`) → `Renderer.pick` → regras em `World.breakBlock/placeBlock` (+ alcance e "não sobre a
+5. `World.tick` (crescimento) e `Drops.update` (coleta) a cada frame.
+6. Toque curto (bloco / semente / trigo conforme a hotbar) ou segurar 2 s (quebrar, progresso em `Game.updateBreaking`) → `Renderer.pick` → regras em `World.breakBlock/placeBlock` (+ alcance e "não sobre a
    personagem" no `Game`) → `chunk.version++` invalida o cache.
 
 ## Regras de dependência

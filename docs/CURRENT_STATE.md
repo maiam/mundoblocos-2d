@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.7.0_
+_Atualizado em 2026-11-01 — v0.8.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -8,6 +8,9 @@ _Atualizado em 2026-11-01 — v0.7.0_
 - **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
   transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
 - **Cavar o chão**: célula vazia + quebrar → buraco intransponível; só um bloco novo o preenche, virando piso.
+- **Cultivo de trigo**: semente plantada na terra cresce em 16 estágios (~1,5 min); colher (segurar 2 s) solta
+  trigo + sementes que a personagem coleta. Inventário com contador na hotbar (começa com 5 sementes e 2 trigos).
+- **Ovelhas comem trigo e se reproduzem**: apaixonadas (coração) → par → namoro animado → filhote, que cresce.
 - **Primeiro NPC: ovelhas** — rebanho de até 4 perto do spawn, pastando e passeando (4 direções animadas),
   sem subir em cubos, com colisão entre entidades. Ainda sem interação do personagem.
 - **Heroína jogável** (sprite 4 direções × 4 quadros), ~2,2 células de altura; colisão com objetos sólidos e água.
@@ -32,10 +35,11 @@ _Atualizado em 2026-11-01 — v0.7.0_
 - iPhone/Safari no navegador não oferece tela cheia para páginas nem trava de orientação: lá vale a camada de
   rotação (ou instalar na tela inicial). Dentro do Artifact (iframe) a tela cheia pode ser recusada.
 - O toque que ativa a tela cheia também conta como ação de colocar bloco.
-- Edições não são persistidas; NPCs existem só perto do spawn (sem spawn por chunk).
+- Edições, inventário, plantações e ovelhas não são persistidos; NPCs existem só perto do spawn.
+- Sob a folha de trigo resta um filete claro da sombra original do desenho.
 - Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
 - Transições entre tipos de chão são em degrau (sem blending).
 - Água estática.
 
 ## Qualidade
-- `npm test`: 25 testes (world + player) passando. `npm run build` limpo.
+- `npm test`: 38 testes (world + player) passando. `npm run build` limpo.

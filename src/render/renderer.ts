@@ -1,11 +1,13 @@
 import { CHUNK_SIZE, CUBE_FRONT, TILE } from '../config';
 import type { Camera } from '../game/camera';
+import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
-import { ActorSprites } from './character';
+import { ActorSprites, drawHeart } from './character';
+import { ItemIcons, loadCropSprites } from './itemArt';
 import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
@@ -23,6 +25,10 @@ export interface RenderOptions {
   hover: { x: number; y: number; valid: boolean } | null;
   /** Quebra em andamento (segurando): célula e progresso 0..1. */
   breaking: { x: number; y: number; progress: number } | null;
+  /** Itens caídos no chão (colheita). */
+  drops: ItemDrop[];
+  /** Ovelha sob o cursor quando o trigo está selecionado (posição dos pés, em células). */
+  hoverSheep: { x: number; y: number; valid: boolean } | null;
   time: number;
   elapsed: number;
   dt: number;
@@ -43,6 +49,7 @@ export class Renderer {
   readonly textures: BlockTextures;
   private readonly chunks: ChunkRenderer;
   private readonly actorSprites = new ActorSprites();
+  private readonly itemIcons = new ItemIcons();
   private readonly particles = new Particles();
   private readonly ctx: CanvasRenderingContext2D;
   sky: SkyState = skyAt(0.3);
@@ -51,6 +58,7 @@ export class Renderer {
     this.ctx = canvas.getContext('2d')!;
     this.textures = createBlockTextures();
     this.chunks = new ChunkRenderer(world, this.textures);
+    loadCropSprites(this.textures.objects);
   }
 
   draw(cam: Camera, opts: RenderOptions): void {
@@ -94,12 +102,19 @@ export class Renderer {
     const by1 = Math.floor(wy1 / TILE) + 3; // sprites altos/pilhas sobem até ~2 células
     const glows: Glow[] = [];
     const p = opts.player;
-    // Atores agrupados pela linha dos pés; dentro da linha, de trás para frente.
-    const byRow = new Map<number, Actor[]>();
-    for (const a of opts.actors) {
-      const row = Math.min(by1, Math.max(by0, Math.floor(a.walker.y)));
+    // Atores e itens caídos agrupados pela linha da base; dentro da linha, de trás para frente.
+    type Drawable = { y: number; draw: () => void };
+    const byRow = new Map<number, Drawable[]>();
+    const enqueue = (y: number, draw: () => void) => {
+      const row = Math.min(by1, Math.max(by0, Math.floor(y)));
       const list = byRow.get(row);
-      if (list) list.push(a); else byRow.set(row, [a]);
+      if (list) list.push({ y, draw }); else byRow.set(row, [{ y, draw }]);
+    };
+    for (const a of opts.actors) enqueue(a.y, () => this.drawActor(cam, a, opts.elapsed));
+    for (const d of opts.drops) enqueue(d.y, () => this.drawDrop(cam, d, opts.elapsed));
+    if (opts.hoverSheep) {
+      const hs = opts.hoverSheep;
+      enqueue(hs.y - 0.01, () => this.drawSheepRing(cam, hs));
     }
 
     for (let y = by0; y <= by1; y++) {
@@ -113,10 +128,10 @@ export class Renderer {
           this.waterGlint(cam, x, y, opts.elapsed);
         }
       }
-      const actors = byRow.get(y);
-      if (actors) {
-        actors.sort((a, b) => a.walker.y - b.walker.y);
-        for (const a of actors) this.drawActor(cam, a);
+      const items = byRow.get(y);
+      if (items) {
+        items.sort((a, b) => a.y - b.y);
+        for (const it of items) it.draw();
       }
     }
 
@@ -159,11 +174,53 @@ export class Renderer {
     this.ctx.drawImage(s.canvas, sx, sy, Math.round(s.w * z), Math.round(s.h * z));
   }
 
-  private drawActor(cam: Camera, a: Actor): void {
-    const w = a.walker;
-    const fx = cam.worldToScreenX(w.x * TILE);
-    const fy = cam.worldToScreenY(w.y * TILE - w.visualZ * CUBE_FRONT);
-    this.actorSprites.get(a.kind).draw(this.ctx, fx, fy, cam.zoom, w.facing, w.moving, w.walkTime);
+  private drawActor(cam: Camera, a: Actor, elapsed: number): void {
+    const fx = cam.worldToScreenX(a.x * TILE);
+    const fy = cam.worldToScreenY(a.y * TILE - a.visualZ * CUBE_FRONT);
+    const sheet = this.actorSprites.get(a.kind);
+    sheet.draw(this.ctx, fx, fy, cam.zoom, a);
+    if (a.inLove) {
+      // Coração flutuando acima da cabeça enquanto está apaixonada.
+      const bob = Math.sin(elapsed * 3 + a.x) * 3 * cam.zoom;
+      const size = 9 * cam.zoom * (1 + 0.08 * Math.sin(elapsed * 6));
+      drawHeart(this.ctx, fx, fy - sheet.drawHeight * cam.zoom - 4 * cam.zoom + bob, size);
+    }
+  }
+
+  /** Item caído: ícone pequeno quicando, com sombra. */
+  private drawDrop(cam: Camera, d: ItemDrop, elapsed: number): void {
+    const img = this.itemIcons.get(d.item);
+    const fx = cam.worldToScreenX(d.x * TILE);
+    const fy = cam.worldToScreenY(d.y * TILE);
+    const z = cam.zoom;
+    // Pulo de saída (primeiros 0,4 s) + flutuação.
+    const pop = d.age < 0.4 ? Math.sin((d.age / 0.4) * Math.PI) * 10 : 0;
+    const bob = 2 + Math.sin(elapsed * 4 + d.x * 3) * 1.5;
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(30, 20, 70, 0.28)';
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 6 * z, 2.2 * z, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (!img) return;
+    const s = 15 * z;
+    const ratio = img.naturalWidth / img.naturalHeight;
+    ctx.drawImage(img, fx - (s * ratio) / 2, fy - s - (bob + pop) * z, s * ratio, s);
+  }
+
+  /** Anel sob a ovelha indicando que ela pode (ou não) receber trigo. */
+  private drawSheepRing(cam: Camera, hs: NonNullable<RenderOptions['hoverSheep']>): void {
+    const ctx = this.ctx;
+    const fx = cam.worldToScreenX(hs.x * TILE);
+    const fy = cam.worldToScreenY(hs.y * TILE);
+    ctx.save();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = hs.valid ? 'rgba(255, 236, 160, 0.95)' : 'rgba(255, 120, 140, 0.9)';
+    ctx.shadowColor = hs.valid ? 'rgba(255, 212, 107, 0.9)' : 'rgba(255, 80, 120, 0.8)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 0.5 * TILE * cam.zoom, 0.2 * TILE * cam.zoom, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   private waterGlint(cam: Camera, x: number, y: number, elapsed: number): void {

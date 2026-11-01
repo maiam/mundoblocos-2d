@@ -1,9 +1,14 @@
 import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef } from './blocks';
+import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk } from './chunk';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { WorldGenerator } from './generator';
+
+/** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
+export const WHEAT_STAGE_SECONDS = 6;
+/** Chãos onde a semente pode ser plantada ("terra"). */
+const SOIL = new Set<number>([Block.GRASS, Block.ENCHANTED_GRASS, Block.DIRT]);
 
 export interface ChunkRect {
   cx0: number;
@@ -19,6 +24,8 @@ export interface ChunkRect {
 export class World {
   readonly generator: WorldGenerator;
   private readonly chunks = new Map<string, Chunk>();
+  /** Células com trigo plantado (crescem com o tempo). Só existem em chunks modificados, que não descarregam. */
+  private readonly crops = new Set<string>();
 
   constructor(seed: number) {
     this.generator = new WorldGenerator(seed);
@@ -104,6 +111,10 @@ export class World {
     const chunk = this.loadChunk(cx, cy);
     if (level === 'ground') chunk.setGround(lx, ly, id);
     else chunk.setLevel(lx, ly, level, id);
+    if (level === 0) {
+      if (isWheat(id)) this.crops.add(chunkKey(x, y));
+      else this.crops.delete(chunkKey(x, y));
+    }
     // Vizinhos usam esta célula para sombras/bordas.
     if (lx === 0) this.touch(cx - 1, cy);
     if (lx === CHUNK_SIZE - 1) this.touch(cx + 1, cy);
@@ -211,6 +222,40 @@ export class World {
       }
     }
     return this.nearestWalkable(0, 0);
+  }
+
+  // ---- Plantação ----
+
+  /** A semente pode ser plantada aqui? Terra (grama/terra) com a célula vazia ou com enfeite. */
+  canPlant(x: number, y: number): boolean {
+    if (!SOIL.has(this.getGround(x, y))) return false;
+    const base = blockDef(this.getObject(x, y));
+    return base.id === Block.AIR || base.shape === 'decoration';
+  }
+
+  plant(x: number, y: number): boolean {
+    if (!this.canPlant(x, y)) return false;
+    this.setLevel(x, y, 0, Block.WHEAT_0);
+    return true;
+  }
+
+  get cropCount(): number {
+    return this.crops.size;
+  }
+
+  /**
+   * Avança o tempo das plantações: cada trigo não maduro sobe um estágio com
+   * probabilidade dt / WHEAT_STAGE_SECONDS (crescimento natural, não sincronizado).
+   */
+  tick(dt: number, rand: () => number = Math.random): void {
+    const p = dt / WHEAT_STAGE_SECONDS;
+    for (const key of [...this.crops]) {
+      const [x, y] = key.split(',').map(Number);
+      const id = this.getObject(x, y);
+      if (!isWheat(id)) { this.crops.delete(key); continue; }
+      const stage = wheatStage(id);
+      if (stage < WHEAT_STAGES - 1 && rand() < p) this.setLevel(x, y, 0, wheatId(stage + 1));
+    }
   }
 
   /** Célula andável (com vizinhos andáveis) mais próxima de (x0, y0), em espiral. */

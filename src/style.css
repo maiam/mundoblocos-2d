@@ -195,3 +195,22 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .rotate-phone { animation: none; transform: rotate(-90deg); }
 }
+
+/* Quantidade de itens contáveis (sementes, trigo) na hotbar. */
+.slot { position: relative; }
+.slot .count {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  min-width: 16px;
+  padding: 0 3px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  color: #fff7ea;
+  text-shadow: 0 1px 0 #241b5c, 0 0 3px #241b5c;
+  font-variant-numeric: tabular-nums;
+}
+.slot .count[hidden] { display: none; }
+.slot.empty img { opacity: 0.35; filter: grayscale(0.6); }

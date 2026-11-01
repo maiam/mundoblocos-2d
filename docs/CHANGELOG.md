@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0 — 2026-11-01
+- Itens contáveis (`world/items.ts`): Semente de Trigo e Trigo; inventário, hotbar com contador, itens caídos com coleta.
+- Trigo plantável na terra, 16 estágios de crescimento por tempo (`World.tick`), colheita com drops.
+- Ovelhas comem trigo, formam par, namoram (animação fornecida) e têm filhote (sprite fornecido) que cresce.
+- Desvio lateral das ovelhas ao contornar obstáculos a caminho do par.
+- `process-sprite.py` com argumentos nomeados (`--cols/--rows/--region/--sat/--min/--frame-h`).
+- `window.__game` exposto apenas em desenvolvimento para testes no navegador.
+
 ## 0.7.0 — 2026-11-01
 - Jogo garantidamente horizontal em toque: tela cheia + `screen.orientation.lock('landscape')` no 1º gesto
   (repetido se o jogador sair), camada "Gire o aparelho" em retrato que pausa a entrada.

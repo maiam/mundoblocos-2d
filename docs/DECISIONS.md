@@ -11,6 +11,9 @@
 | 0004 | Entidades andantes compartilham `Walker`; NPCs em `game/` como estado de execução | [adr/0004](adr/0004-entidades-walker.md) |
 | — | Ovelha não sobe em cubos (stepHeight 0): blocos servem de cerca | `domains/npc.md` |
 | — | Horizontal garantido por camada de rotação; tela cheia/trava só como melhoria quando o navegador permite | `domains/player.md` |
+| 0005 | Itens contáveis separados dos blocos infinitos; inventário em `game/` | [adr/0005](adr/0005-itens-e-inventario.md) |
+| — | Crescimento do trigo probabilístico por tempo (média 6 s/estágio) | `domains/farming.md` |
+| — | Ícones: monte de sementes e feixe com laço | `domains/farming.md` |
 | — | Câmera sem rotação + joystick em direções de tela | `domains/player.md` |
 | — | Sem backend neste repositório; persistência futura via core | `PROJECT_CONTEXT.md` |
 | — | Chunks quadrados 16×16 nos dois eixos do mapa | `domains/world.md` |

@@ -1,36 +1,46 @@
+import { CUBE_FRONT, TILE } from '../config';
 import { Block } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import type { Player } from './player';
-import { Sheep } from './sheep';
-import type { Walker } from './walker';
+import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
+import type { Facing, Walker } from './walker';
 
-export type ActorKind = 'heroine' | 'sheep';
+export type ActorKind = 'heroine' | 'sheep' | 'lamb' | 'sheep-love';
 
+/** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
-  walker: Walker;
   kind: ActorKind;
+  x: number;
+  y: number;
+  visualZ: number;
+  facing: Facing;
+  moving: boolean;
+  walkTime: number;
+  /** Ovelha apaixonada: desenha coração flutuando. */
+  inLove?: boolean;
+  /** Quadro da animação de namoro (0..3). */
+  frame?: number;
 }
 
 const FLOCK_SIZE = 4;
+/** Distância (células) em que duas ovelhas apaixonadas se encontram. */
+const PAIR_RANGE = 6;
+/** Distância (células) para começar a namorar. */
+const COURT_DISTANCE = 1.5;
+/** Limite de ovelhas para a população não explodir. */
+export const MAX_SHEEP = 16;
 
 /**
- * Entidades vivas da sessão (personagem + NPCs): atualização, colisão entre
- * elas e consulta de ocupação de células. Estado de execução, não persistido.
+ * Entidades vivas da sessão (personagem + ovelhas): atualização, colisão entre
+ * elas, reprodução e ocupação de células. Estado de execução, não persistido.
  */
 export class Entities {
   readonly npcs: Sheep[] = [];
 
-  constructor(private readonly player: Player) {}
+  constructor(private readonly player: Player, private readonly rand: () => number = Math.random) {}
 
-  get actors(): Actor[] {
-    return [{ walker: this.player, kind: 'heroine' }, ...this.npcs.map((s) => ({ walker: s, kind: 'sheep' as const }))];
-  }
-
-  /**
-   * Rebanho inicial perto do ponto (x, y): posições determinísticas pela seed,
-   * em grama andável a 2–8 células de distância.
-   */
+  /** Rebanho inicial perto de (x, y): posições pela seed, em grama andável a 2–8 células. */
   spawnFlock(world: World, x: number, y: number): void {
     const grass = new Set<number>([Block.GRASS, Block.ENCHANTED_GRASS]);
     for (let i = 0; i < 400 && this.npcs.length < FLOCK_SIZE; i++) {
@@ -49,13 +59,12 @@ export class Entities {
     return [this.player, ...this.npcs];
   }
 
-  /**
-   * Bloqueio entre entidades: impede entrar na caixa de outra. Se já estavam
-   * sobrepostas (ex.: nasceram juntas), deixa se afastar.
-   */
+  /** Bloqueio entre entidades; se já estavam sobrepostas, deixa se afastar. */
   readonly blocker = (self: Walker, x: number, y: number): boolean => {
     for (const other of this.all()) {
       if (other === self) continue;
+      // Par apaixonado pode encostar um no outro para namorar.
+      if (self instanceof Sheep && other instanceof Sheep && self.partner === other) continue;
       if (self.overlapsAt(x, y, other) && !self.overlapsAt(self.x, self.y, other)) return true;
     }
     return false;
@@ -63,6 +72,90 @@ export class Entities {
 
   update(dt: number, world: World): void {
     for (const s of this.npcs) s.update(dt, world, this.blocker);
+    // Ordem importa: concluir antes de (re)começar, senão o par namoraria de novo.
+    this.finishCourtships(world);
+    this.formPairs();
+    this.startCourtships();
+  }
+
+  /** Ovelhas apaixonadas e livres procuram a mais próxima na mesma situação. */
+  private formPairs(): void {
+    if (this.npcs.length >= MAX_SHEEP) return;
+    for (const a of this.npcs) {
+      if (!a.inLove || a.partner || a.baby || a.courtship > 0) continue;
+      let best: Sheep | null = null;
+      let bestD = PAIR_RANGE;
+      for (const b of this.npcs) {
+        if (b === a || !b.inLove || b.partner || b.baby || b.courtship > 0) continue;
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < bestD) { best = b; bestD = d; }
+      }
+      if (best) { a.partner = best; best.partner = a; }
+    }
+  }
+
+  /** Par próximo o bastante: param, se viram um para o outro e namoram. */
+  private startCourtships(): void {
+    for (const a of this.npcs) {
+      const b = a.partner;
+      if (!b || a.courtship > 0 || b.partner !== a || this.courting.has(a) || this.courting.has(b)) continue;
+      if (Math.hypot(a.x - b.x, a.y - b.y) > COURT_DISTANCE) continue;
+      a.courtship = b.courtship = COURTSHIP_SECONDS;
+      this.courting.add(a);
+      const aLeft = a.x <= b.x;
+      a.facing = aLeft ? 'right' : 'left';
+      b.facing = aLeft ? 'left' : 'right';
+    }
+  }
+
+  /** Pares que começaram a namorar (o filhote nasce quando a animação termina). */
+  private readonly courting = new Set<Sheep>();
+
+  /** Fim do namoro: nasce um filhote entre os dois; ambos entram em espera. */
+  private finishCourtships(world: World): void {
+    for (const a of [...this.courting]) {
+      const b = a.partner;
+      if (!b || b.partner !== a) {
+        this.courting.delete(a);
+        continue;
+      }
+      if (a.courtship > 0 || b.courtship > 0) continue;
+      this.courting.delete(a);
+      this.spawnLamb(world, (a.x + b.x) / 2, (a.y + b.y) / 2, a);
+      for (const s of [a, b]) {
+        s.love = 0;
+        s.cooldown = BREED_COOLDOWN;
+        s.partner = null;
+      }
+    }
+  }
+
+  private spawnLamb(world: World, x: number, y: number, parent: Sheep): void {
+    const cx = Math.floor(x);
+    const cy = Math.floor(y);
+    for (let r = 0; r <= 2; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (!world.isWalkable(cx + dx, cy + dy)) continue;
+          this.npcs.push(new Sheep(cx + dx + 0.5, cy + dy + 0.5, parent.homeX, parent.homeY, this.rand, true));
+          return;
+        }
+      }
+    }
+  }
+
+  /** Ovelha sob o ponto (em células), considerando a altura do sprite; a mais à frente vence. */
+  sheepAt(wx: number, wy: number): Sheep | null {
+    let hit: Sheep | null = null;
+    for (const s of this.npcs) {
+      const h = s.baby ? 0.85 : 1.15;
+      const half = s.baby ? 0.35 : 0.45;
+      const lift = (s.visualZ * CUBE_FRONT) / TILE;
+      if (Math.abs(wx - s.x) < half && wy > s.y - lift - h && wy < s.y - lift + 0.2) {
+        if (!hit || s.y > hit.y) hit = s;
+      }
+    }
+    return hit;
   }
 
   /** Alguma entidade ocupa a célula? (não se coloca bloco nem se cava sob elas). */
@@ -72,5 +165,35 @@ export class Entities {
 
   settleAll(world: World): void {
     for (const w of this.all()) w.settle(world);
+  }
+
+  get actors(): Actor[] {
+    const p = this.player;
+    const out: Actor[] = [{ kind: 'heroine', x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime }];
+    const drawnCouples = new Set<Sheep>();
+    for (const s of this.npcs) {
+      if (s.courtship > 0 && s.partner) {
+        if (drawnCouples.has(s)) continue;
+        drawnCouples.add(s).add(s.partner);
+        const progress = 1 - s.courtship / COURTSHIP_SECONDS;
+        out.push({
+          kind: 'sheep-love',
+          x: (s.x + s.partner.x) / 2,
+          y: Math.max(s.y, s.partner.y),
+          visualZ: 0,
+          facing: 'down',
+          moving: false,
+          walkTime: 0,
+          frame: Math.min(3, Math.floor(progress * 4)),
+        });
+        continue;
+      }
+      out.push({
+        kind: s.baby ? 'lamb' : 'sheep',
+        x: s.x, y: s.y, visualZ: s.visualZ, facing: s.facing, moving: s.moving, walkTime: s.walkTime,
+        inLove: s.inLove,
+      });
+    }
+    return out;
   }
 }

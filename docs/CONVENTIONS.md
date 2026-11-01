@@ -12,6 +12,9 @@
 - Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo bloco = os dois lugares.
 - Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a
   base da célula (necessário para a ordenação por linha). Cubos: face superior `TILE`, face frontal `CUBE_FRONT`.
+- Itens contáveis vivem em `world/items.ts`; o inventário (quantidades) em `game/inventory.ts`. Blocos de
+  construção continuam infinitos. O que um bloco devolve ao quebrar vem de `dropsFor`.
+- `BlockId` aceita os estágios intermediários do trigo (61–74); usar `isWheat/wheatStage/wheatId`.
 - Toda entidade que anda estende `Walker` (nada de colisão própria); NPCs ficam em `game/` e entram em
   `Entities`. Ocupação de célula (colocar/cavar) consulta `Entities.occupies`, não só a personagem.
 - Folhas de sprite novas: 4×4 (frente, esquerda, direita, costas), processadas por `scripts/process-sprite.py`;

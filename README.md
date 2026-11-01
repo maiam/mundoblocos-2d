@@ -26,6 +26,9 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
 | Colocar bloco (alcance 4,5 células) | clique / toque curto |
+| Plantar semente de trigo (na terra) | semente selecionada + toque curto no chão |
+| Dar trigo à ovelha | trigo selecionado + toque curto na ovelha |
+| Colher trigo | segurar 2 s sobre a plantação (itens caem e são coletados ao chegar perto) |
 | Quebrar bloco ou cavar o chão | segurar o clique / dedo por 2 s sobre o alvo |
 | Escolher bloco | 1–9 ou tocar na hotbar |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |

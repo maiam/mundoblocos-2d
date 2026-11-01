@@ -8,9 +8,16 @@
 - Comportamento: alterna **parada** (1,5–5 s) e **passeio** (1–3,5 s, direção aleatória, ritmo 60–100%,
   desacelera no fim). Se travar por 0,3 s, volta a parar. A mais de 7 células de casa, o próximo passeio
   aponta para casa.
-- **Sem interação com o personagem** por enquanto (apenas colisão física entre entidades).
+- **Comer e reproduzir**: trigo → apaixonada por 25 s (coração flutuando). Duas apaixonadas a até 6 células
+  formam par, andam uma até a outra (desviando de obstáculos simples) e, a 1,5 célula, **namoram** por 3,6 s
+  (folha `sheep-love.png`, 4 etapas com corações). Ao fim nasce um **filhote** entre elas; os pais ficam 45 s
+  sem poder comer. Limite de 16 ovelhas.
+- **Filhote** (`lamb.png`, ~0,9 célula): mais rápido e menor; vira adulto em 120 s. Não come trigo.
 
 ## Gerência (`game/entities.ts`)
+- Formação de pares, início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
+  `Sheep` guarda estado (apaixonada, espera, par, namoro, idade) e movimento.
+- `actors` gera a lista para o render (o par namorando vira um único ator `sheep-love`).
 - Rebanho inicial de até 4 ovelhas a 2–8 células do spawn, em grama andável, posições determinísticas pela seed.
 - Colisão entre entidades: não se entra na caixa de outra; se já estavam sobrepostas, podem se afastar.
 - Estado de execução, não persistido (some ao recarregar; renasce igual pela seed).

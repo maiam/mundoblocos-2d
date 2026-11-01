@@ -13,6 +13,8 @@ function start(seed: number): void {
   url.searchParams.set('seed', String(seed));
   window.history.replaceState(null, '', url);
   game = new Game(canvas, seed, screenMode);
+  // Só em desenvolvimento: acesso para testes automatizados no navegador.
+  if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
 }
 
 const param = new URLSearchParams(window.location.search).get('seed');

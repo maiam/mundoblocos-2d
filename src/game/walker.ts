@@ -32,6 +32,7 @@ export class Walker {
   z = 0;
   visualZ = 0;
 
+  /** Especificação física (mutável: o filhote cresce). */
   constructor(public x: number, public y: number, readonly spec: WalkerSpec) {}
 
   /**

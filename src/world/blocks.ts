@@ -39,13 +39,34 @@ export const Block = {
   TALL_GRASS: 50,
   FLOWER: 51,
   GLOW_MUSHROOM: 52,
+  // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
+  WHEAT_0: 60,
+  WHEAT_15: 75,
 } as const;
 
-export type BlockId = (typeof Block)[keyof typeof Block];
+/** Número de estágios de crescimento do trigo e primeiro id da sequência. */
+export const WHEAT_STAGES = 16;
+export const WHEAT_FIRST = 60;
+
+export function isWheat(id: number): boolean {
+  return id >= WHEAT_FIRST && id < WHEAT_FIRST + WHEAT_STAGES;
+}
+
+/** Estágio 0..15 de um id de trigo. */
+export function wheatStage(id: number): number {
+  return id - WHEAT_FIRST;
+}
+
+export function wheatId(stage: number): BlockId {
+  return (WHEAT_FIRST + Math.max(0, Math.min(WHEAT_STAGES - 1, stage))) as BlockId;
+}
+
+/** Ids nomeados + estágios intermediários do trigo (61..74). */
+export type BlockId = (typeof Block)[keyof typeof Block] | (number & { readonly __wheatStage?: true });
 
 export type BlockLayer = 'ground' | 'object';
-/** Como o objeto é desenhado: cubo, árvore alta ou enfeite plano. */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration';
+/** Como o objeto é desenhado: cubo, árvore alta, enfeite plano ou plantação. */
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop';
 
 export interface BlockDef {
   id: BlockId;
@@ -103,6 +124,11 @@ const defs: BlockDef[] = [
   object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false }),
   object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false }),
   object(Block.GLOW_MUSHROOM, 'Cogumelo Lumen', { shape: 'decoration', solid: false, placeable: false, glow: true }),
+  // Trigo: não bloqueia passagem, não aceita nada por cima, só entra plantando a semente.
+  ...Array.from({ length: WHEAT_STAGES }, (_, s) =>
+    object(WHEAT_FIRST + s, s === WHEAT_STAGES - 1 ? 'Trigo Maduro' : 'Trigo em crescimento', {
+      shape: 'crop', solid: false, placeable: false,
+    })),
 ];
 
 /** Tabela indexada por id para acesso O(1). */
