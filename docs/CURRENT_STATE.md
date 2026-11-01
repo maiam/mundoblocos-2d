@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.8.0_
+_Atualizado em 2026-11-01 — v0.9.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -8,6 +8,8 @@ _Atualizado em 2026-11-01 — v0.8.0_
 - **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
   transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
 - **Cavar o chão**: célula vazia + quebrar → buraco intransponível; só um bloco novo o preenche, virando piso.
+- **Ferramentas** (espada, enxada, picareta, pá, machado) na hotbar (1–5): selecionar equipa e a heroína anda
+  com ela nas 4 direções. Ainda sem ação própria.
 - **Cultivo de trigo**: semente plantada na terra cresce em 16 estágios (~1,5 min); colher (segurar 2 s) solta
   trigo + sementes que a personagem coleta. Inventário com contador na hotbar (começa com 5 sementes e 2 trigos).
 - **Ovelhas comem trigo e se reproduzem**: apaixonadas (coração) → par → namoro animado → filhote, que cresce.
@@ -42,4 +44,4 @@ _Atualizado em 2026-11-01 — v0.8.0_
 - Água estática.
 
 ## Qualidade
-- `npm test`: 38 testes (world + player) passando. `npm run build` limpo.
+- `npm test`: 40 testes (world + player) passando. `npm run build` limpo.

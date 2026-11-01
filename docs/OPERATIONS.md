@@ -14,6 +14,11 @@
   `$P assets-src/wheat-growth-sheet.png src/assets/wheat-crop.png --frame-h 96 --sat 30 --min 196`
   `$P assets-src/wheat-icons-sheet.png src/assets/icon-wheat-seed.png --cols 1 --rows 1 --region 45,210,310,402 --frame-h 64 --sat 50 --min 190`
   `$P assets-src/wheat-icons-sheet.png src/assets/icon-wheat.png --cols 1 --rows 1 --region 645,555,905,835 --frame-h 64 --sat 50 --min 190`
+  `for t in sword hoe pickaxe axe; do $P assets-src/heroine-$t-sheet.png src/assets/heroine-$t.png --frame-h 144 --rows-map 0,3,1,2; done`
+  `$P assets-src/heroine-shovel-sheet.png src/assets/heroine-shovel.png --frame-h 144 --rows-map 0,1,1m,2`
+  Ícones (regiões da prancha `tool-icons-sheet.png`, `--cols 1 --rows 1 --frame-h 64 --sat 34 --min 175`):
+  espada `75,105,455,490` · enxada `535,105,915,490` · picareta `995,105,1375,490` · pá `285,590,680,985` ·
+  machado `770,590,1165,985`.
 - Em `npm run dev`, `window.__game` dá acesso ao jogo para testes automatizados (não existe no build).
 - Ícones do PWA: `python3 scripts/make-icons.py` (Pillow). `public/` é copiado para `dist/` (manifest e ícones);
   o build de Artifact é arquivo único e não leva manifest.

@@ -26,6 +26,9 @@ ap.add_argument('--rows', type=int, default=4)
 ap.add_argument('--sat', type=int, default=16, help='saturação máxima do fundo/sombra')
 ap.add_argument('--min', type=int, default=140, help='claridade mínima do fundo/sombra')
 ap.add_argument('--region', default=None, help='x0,y0,x1,y1: recorte da folha antes de dividir em grade')
+ap.add_argument('--rows-map', default=None,
+                help='linhas de saída a partir das de entrada, ex. "0,3,1,2"; sufixo m espelha ("0,1,1m,2"). '
+                     'Use para normalizar na ordem canônica frente, esquerda, direita, costas.')
 args = ap.parse_args()
 
 src = Image.open(args.src).convert('RGB')
@@ -80,6 +83,15 @@ for r in range(args.rows):
         a = remove_bg(x0, y0, x1, y1)
         cells.append(np.dstack([img[y0:y1, x0:x1].astype(np.uint8), a]))
 
+if args.rows_map:
+    remapped = []
+    for spec in args.rows_map.split(','):
+        r = int(spec.rstrip('m'))
+        for c in range(args.cols):
+            cell = cells[r * args.cols + c]
+            remapped.append(cell[:, ::-1].copy() if spec.endswith('m') else cell)
+    cells = remapped
+
 # Caixa comum a todos os quadros (mantém a ancoragem estável entre quadros).
 mh = min(cell.shape[0] for cell in cells)
 mw = min(cell.shape[1] for cell in cells)
@@ -100,4 +112,5 @@ for i, cell in enumerate(cells):
     frame = crop.convert('RGBa').resize((fw, args.frame_h), Image.LANCZOS).convert('RGBA')
     sheet.paste(frame, ((i % args.cols) * fw, (i // args.cols) * args.frame_h))
 sheet.save(args.out, optimize=True)
-print(f'{args.out}: quadros {fw}x{args.frame_h}, folha {sheet.size}')
+print(f'{args.out}: quadros {fw}x{args.frame_h}, folha {sheet.size}, '
+      f'altura do desenho na origem {bottom - top}px (célula {mh}px)')

@@ -44,3 +44,34 @@ export function dropsFor(id: BlockId, rand: () => number = Math.random): Drop[] 
   }
   return [{ item: Item.WHEAT_SEED, count: 1 }];
 }
+
+/**
+ * Ferramentas: itens únicos (sem quantidade) que a personagem equipa.
+ * Por enquanto só mudam a aparência; as ações de cada uma virão depois.
+ */
+export const Tool = {
+  SWORD: 'sword',
+  HOE: 'hoe',
+  PICKAXE: 'pickaxe',
+  SHOVEL: 'shovel',
+  AXE: 'axe',
+} as const;
+
+export type ToolId = (typeof Tool)[keyof typeof Tool];
+
+export interface ToolDef {
+  id: ToolId;
+  name: string;
+  /** Uso planejado (documentação; ainda sem efeito no jogo). */
+  plannedUse: string;
+}
+
+export const TOOLS: Record<ToolId, ToolDef> = {
+  sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'combate' },
+  hoe: { id: Tool.HOE, name: 'Enxada', plannedUse: 'preparar a terra para plantar' },
+  pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra e minérios' },
+  shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão' },
+  axe: { id: Tool.AXE, name: 'Machado', plannedUse: 'cortar árvores e madeira' },
+};
+
+export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];

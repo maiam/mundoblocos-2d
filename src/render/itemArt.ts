@@ -1,15 +1,29 @@
+import axeIconUrl from '../assets/icon-axe.png?inline';
+import hoeIconUrl from '../assets/icon-hoe.png?inline';
+import pickaxeIconUrl from '../assets/icon-pickaxe.png?inline';
+import shovelIconUrl from '../assets/icon-shovel.png?inline';
+import swordIconUrl from '../assets/icon-sword.png?inline';
 import seedIconUrl from '../assets/icon-wheat-seed.png?inline';
 import wheatIconUrl from '../assets/icon-wheat.png?inline';
 import cropUrl from '../assets/wheat-crop.png?inline';
 import { TILE } from '../config';
 import { WHEAT_FIRST, WHEAT_STAGES } from '../world/blocks';
-import type { ItemId } from '../world/items';
+import type { ItemId, ToolId } from '../world/items';
 import { TEX_RES, type Sprite } from './textures';
 
 /** Ícones dos itens (hotbar e itens caídos). */
 export const ITEM_ICON_URLS: Record<ItemId, string> = {
   wheat_seed: seedIconUrl,
   wheat: wheatIconUrl,
+};
+
+/** Ícones das ferramentas (hotbar). */
+export const TOOL_ICON_URLS: Record<ToolId, string> = {
+  sword: swordIconUrl,
+  hoe: hoeIconUrl,
+  pickaxe: pickaxeIconUrl,
+  shovel: shovelIconUrl,
+  axe: axeIconUrl,
 };
 
 /** Largura do canteiro de trigo em células (o monte de terra ocupa a célula toda). */

@@ -30,7 +30,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Dar trigo à ovelha | trigo selecionado + toque curto na ovelha |
 | Colher trigo | segurar 2 s sobre a plantação (itens caem e são coletados ao chegar perto) |
 | Quebrar bloco ou cavar o chão | segurar o clique / dedo por 2 s sobre o alvo |
-| Escolher bloco | 1–9 ou tocar na hotbar |
+| Escolher na hotbar | 1–9, 0 ou tocar (1–5 ferramentas: equipa; 6 semente; 7 trigo; depois blocos) |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |
 
 ## Documentação

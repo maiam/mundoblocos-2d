@@ -1,3 +1,8 @@
+import heroineAxeUrl from '../assets/heroine-axe.png?inline';
+import heroineHoeUrl from '../assets/heroine-hoe.png?inline';
+import heroinePickaxeUrl from '../assets/heroine-pickaxe.png?inline';
+import heroineShovelUrl from '../assets/heroine-shovel.png?inline';
+import heroineSwordUrl from '../assets/heroine-sword.png?inline';
 import heroineUrl from '../assets/heroine.png?inline';
 import lambUrl from '../assets/lamb.png?inline';
 import sheepLoveUrl from '../assets/sheep-love.png?inline';
@@ -8,7 +13,8 @@ import type { Facing } from '../game/walker';
 
 /**
  * Sprites de atores (folhas geradas por scripts/process-sprite.py).
- * Folhas 4×4: linhas frente, esquerda, direita, costas; 4 quadros por linha.
+ * Folhas 4×4 na ordem canônica: frente, esquerda, direita, costas (as folhas das
+ * ferramentas vêm em outra ordem e são normalizadas no processamento com --rows-map).
  * Folha de namoro: 4×1 (quadro = etapa da animação, corações crescendo).
  * Todos os quadros de uma folha compartilham a ancoragem (base na base do quadro).
  */
@@ -30,6 +36,12 @@ interface SheetSpec {
 
 const SPECS: Record<ActorKind, SheetSpec> = {
   heroine: { url: heroineUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  // Heroína com ferramenta: mesma escala (altura do desenho igual à folha base).
+  'heroine-sword': { url: heroineSwordUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-hoe': { url: heroineHoeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-pickaxe': { url: heroinePickaxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-shovel': { url: heroineShovelUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-axe': { url: heroineAxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   sheep: { url: sheepUrl, cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { url: lambUrl, cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.

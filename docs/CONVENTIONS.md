@@ -17,7 +17,8 @@
 - `BlockId` aceita os estágios intermediários do trigo (61–74); usar `isWheat/wheatStage/wheatId`.
 - Toda entidade que anda estende `Walker` (nada de colisão própria); NPCs ficam em `game/` e entram em
   `Entities`. Ocupação de célula (colocar/cavar) consulta `Entities.occupies`, não só a personagem.
-- Folhas de sprite novas: 4×4 (frente, esquerda, direita, costas), processadas por `scripts/process-sprite.py`;
+- Folhas de sprite novas: 4×4 normalizadas para frente, esquerda, direita, costas (`--rows-map` quando a
+  origem vier em outra ordem; sufixo `m` espelha), processadas por `scripts/process-sprite.py`;
   ajustar `sat_max/min_claro` quando a sombra do desenho for mais escura/saturada.
 - Personagem: posição = centro dos pés. Quadros da folha compartilham a mesma ancoragem (pés na base);
   a câmera segue a posição lógica, nunca o sprite.

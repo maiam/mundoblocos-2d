@@ -1,5 +1,10 @@
 # Próximos passos
 
+- **Ações das ferramentas** (próximo): enxada prepara a terra (plantio só em terra arada?), picareta/pá/machado
+  aceleram a quebra do material certo (e o restante fica mais lento), espada para combate futuro. Sprites de
+  ação (golpe) ainda não existem.
+- Hotbar com 16 espaços está no limite do celular deitado: considerar inventário/painel de ferramentas.
+
 0. Feedback discreto sem HUD: vibração (`navigator.vibrate`) ao quebrar no celular e som opcional; menu
    recolhível para "novo mundo"/ciclo do dia, se fizer falta.
 

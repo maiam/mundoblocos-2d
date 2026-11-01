@@ -1,5 +1,10 @@
 # Domínio: cultivo e itens
 
+## Ferramentas (`world/items.ts` → `TOOLS`)
+- Espada, Enxada, Picareta, Pá, Machado: itens únicos, sem quantidade, equipados ao selecionar.
+- Uso planejado (sem efeito ainda): espada = combate; enxada = preparar terra; picareta = pedra/minério;
+  pá = cavar; machado = árvores/madeira.
+
 ## Itens (`world/items.ts`) — fonte de verdade
 - **Itens contáveis** ≠ blocos: blocos de construção são infinitos; itens têm quantidade no inventário.
 - `Semente de Trigo` (planta `WHEAT_0`) e `Trigo` (alimenta ovelhas).
@@ -16,7 +21,7 @@
 
 ## Inventário e coleta (`game/`)
 - `Inventory`: quantidades de itens; começa com 5 sementes e 2 trigos. Não persistido.
-- Hotbar (`game/hotbar.ts`): sementes e trigo nos espaços 1–2 (com contador), blocos depois.
+- Hotbar (`game/hotbar.ts`): ferramentas 1–5, semente 6 e trigo 7 (com contador), blocos depois.
 - `Drops`: o que cai da colheita fica no chão (pulinho + flutuação) e voa até a personagem a < 1,6 célula.
 
 ## Ações (toque curto, conforme o item selecionado)

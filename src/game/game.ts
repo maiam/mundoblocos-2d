@@ -1,9 +1,9 @@
 import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
-import { ITEM_ICON_URLS } from '../render/itemArt';
+import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
 import { blockDef, type BlockId } from '../world/blocks';
-import { dropsFor, ITEMS } from '../world/items';
+import { dropsFor, ITEMS, TOOLS } from '../world/items';
 import { World } from '../world/world';
 import { Camera } from './camera';
 import { Drops } from './drops';
@@ -69,11 +69,14 @@ export class Game {
     this.entities.spawnFlock(this.world, sx, sy);
     this.renderer = new Renderer(canvas, this.world);
     this.hud = new Hud({
-      icons: HOTBAR.map((s) => (s.kind === 'item' ? ITEM_ICON_URLS[s.item] : this.renderer.iconFor(s.block))),
-      names: HOTBAR.map((s) => (s.kind === 'item' ? ITEMS[s.item].name : blockDef(s.block).name)),
+      icons: HOTBAR.map((s) =>
+        s.kind === 'tool' ? TOOL_ICON_URLS[s.tool] : s.kind === 'item' ? ITEM_ICON_URLS[s.item] : this.renderer.iconFor(s.block)),
+      names: HOTBAR.map((s) =>
+        s.kind === 'tool' ? TOOLS[s.tool].name : s.kind === 'item' ? ITEMS[s.item].name : blockDef(s.block).name),
       onSelect: (i) => this.select(i),
     });
     this.joystick = new Joystick(this.hud.root);
+    this.select(this.selected);
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
     this.bindInput();
@@ -90,8 +93,11 @@ export class Game {
     return HOTBAR[this.selected];
   }
 
+  /** Seleciona um espaço; ferramenta selecionada = ferramenta equipada (muda o sprite). */
   private select(i: number): void {
     this.selected = Math.max(0, Math.min(HOTBAR.length - 1, i));
+    const slot = HOTBAR[this.selected];
+    this.player.equipped = slot.kind === 'tool' ? slot.tool : null;
   }
 
   private skipTime(): void {
@@ -216,6 +222,7 @@ export class Game {
   /** Toque/clique curto: usa o que está selecionado na hotbar. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
+    if (slot.kind === 'tool') return; // ferramentas ainda não têm ação
     if (slot.kind === 'block') {
       const t = this.blockTarget(sx, sy, slot.block);
       if (!t.valid) return;
@@ -329,6 +336,7 @@ export class Game {
     const p = this.press;
     if (p && p.held > TAP_MAX_S) return this.breakTarget(x, y);
     const slot = this.slot;
+    if (slot.kind === 'tool') return null;
     if (slot.kind === 'block') return this.blockTarget(x, y, slot.block);
     if (ITEMS[slot.item].plants) return this.plantTarget(x, y);
     return null; // trigo: o destaque é o anel na ovelha

@@ -21,6 +21,9 @@ Apenas apresentação; lê `World`, nunca escreve.
 - `pick()` escolhe o objeto sob o cursor testando as linhas da frente primeiro (sprites sobem acima da célula).
 
 ## Personagem
+- Folhas canônicas: frente, esquerda, direita, costas. As folhas com ferramenta chegaram como frente, direita,
+  costas, esquerda (e a da pá sem lado direito); `process-sprite.py --rows-map` normaliza (a pá usa espelho
+  da esquerda). Mesma altura de desenho da folha base → mesma escala (`CHARACTER_H`).
 - `assets-src/heroine-sheet.png` → `scripts/process-sprite.py` → `src/assets/heroine.png` (fundo e sombra
   removidos por flood fill, caixa comum a todos os quadros, 4×4 de 115×144 px).
 - Linhas: frente, esquerda, direita, costas. Parado = quadro 0; andando = 7 quadros/s. Sombra própria fixa nos pés.

@@ -1,5 +1,8 @@
 # Domínio: player (game)
 
+- **Ferramentas**: `Player.equipped` = ferramenta do espaço selecionado na hotbar (ou null). Muda só o sprite
+  (`heroine-<ferramenta>`); ainda não há ação de ferramenta (toque com ferramenta não faz nada; segurar 2 s
+  continua quebrando como antes, com qualquer seleção).
 - `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).

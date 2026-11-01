@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 — 2026-11-01
+- Ferramentas como itens selecionáveis (`TOOLS`): espada, enxada, picareta, pá, machado, com ícones fornecidos.
+- Equipar ao selecionar: heroína usa a folha da ferramenta ao andar (5 folhas fornecidas, normalizadas).
+- Hotbar: ferramentas 1–5, semente 6, trigo 7, blocos depois. Joystick acima da hotbar em paisagem baixa.
+- `process-sprite.py --rows-map` (reordenar/espelhar linhas) e altura do desenho no relatório.
+
 ## 0.8.0 — 2026-11-01
 - Itens contáveis (`world/items.ts`): Semente de Trigo e Trigo; inventário, hotbar com contador, itens caídos com coleta.
 - Trigo plantável na terra, 16 estágios de crescimento por tempo (`World.tick`), colheita com drops.

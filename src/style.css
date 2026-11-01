@@ -134,7 +134,8 @@ html, body {
     width: 112px;
     height: 112px;
     left: max(20px, env(safe-area-inset-left, 0px));
-    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    /* Acima da hotbar (que ficou mais larga com as ferramentas). */
+    bottom: max(62px, calc(env(safe-area-inset-bottom, 0px) + 56px));
   }
   .joystick::before { inset: 18px; }
   .joystick-knob { width: 46px; height: 46px; }

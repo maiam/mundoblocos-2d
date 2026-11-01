@@ -20,7 +20,7 @@ src/
     coords.ts          célula ↔ chunk/local (seguro p/ negativos)
     chunk.ts           Chunk 16×16 com camadas ground/objects, modified, version
     world.ts           World: chunks, edições, standHeight, quebrar/colocar, plantar/crescer, spawn
-    items.ts           itens contáveis (semente, trigo) e o que cada bloco devolve ao quebrar
+    items.ts           itens contáveis (semente, trigo), ferramentas e o que cada bloco devolve ao quebrar
   render/  (apresentação — lê o domínio, nunca escreve)
     color.ts           utilitários de cor
     textures.ts        chão (variações), cubos 3/4, árvores, enfeites, ícones
@@ -36,7 +36,7 @@ src/
     sheep.ts           NPC ovelha: pasta/passeia perto de casa (não sobe em cubos)
     entities.ts        personagem + NPCs: update, colisão, reprodução, ocupação de células, rebanho inicial
     inventory.ts       quantidades de itens do jogador
-    hotbar.ts          espaços da hotbar (itens e blocos)
+    hotbar.ts          espaços da hotbar (ferramentas, itens e blocos)
     drops.ts           itens caídos no chão e coleta
     camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
     joystick.ts        joystick virtual em direções de tela

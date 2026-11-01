@@ -14,6 +14,8 @@
 | 0005 | Itens contáveis separados dos blocos infinitos; inventário em `game/` | [adr/0005](adr/0005-itens-e-inventario.md) |
 | — | Crescimento do trigo probabilístico por tempo (média 6 s/estágio) | `domains/farming.md` |
 | — | Ícones: monte de sementes e feixe com laço | `domains/farming.md` |
+| — | Ferramenta equipada = espaço selecionado; sem ação até definirmos o uso de cada uma | `domains/player.md` |
+| — | Pá sem folha para a direita: espelho da esquerda | `domains/render.md` |
 | — | Câmera sem rotação + joystick em direções de tela | `domains/player.md` |
 | — | Sem backend neste repositório; persistência futura via core | `PROJECT_CONTEXT.md` |
 | — | Chunks quadrados 16×16 nos dois eixos do mapa | `domains/world.md` |

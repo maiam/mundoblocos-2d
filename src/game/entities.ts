@@ -6,7 +6,9 @@ import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
 import type { Facing, Walker } from './walker';
 
-export type ActorKind = 'heroine' | 'sheep' | 'lamb' | 'sheep-love';
+import type { ToolId } from '../world/items';
+
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | 'sheep' | 'lamb' | 'sheep-love';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -169,7 +171,7 @@ export class Entities {
 
   get actors(): Actor[] {
     const p = this.player;
-    const out: Actor[] = [{ kind: 'heroine', x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime }];
+    const out: Actor[] = [{ kind: p.equipped ? `heroine-${p.equipped}` : 'heroine', x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime }];
     const drawnCouples = new Set<Sheep>();
     for (const s of this.npcs) {
       if (s.courtship > 0 && s.partner) {
