@@ -1,114 +1,42 @@
-/** Interface HTML sobreposta ao canvas. Apenas apresentação; estado vem do Game. */
-
-export type ActionMode = 'break' | 'place';
-
-export interface HudState {
-  seed: number;
-  block: [number, number];
-  /** Nível em que o personagem está (0 = chão). */
-  level: number;
-  chunk: [number, number];
-  biome: string;
-  loaded: number;
-  fps: number;
-  time: number;
-  selected: number;
-  selectedName: string;
-  mode: ActionMode;
-  chunkBorders: boolean;
-  hoverName: string | null;
-}
-
+/**
+ * Interface mínima sobre o canvas: apenas a hotbar (grade de blocos) na parte
+ * inferior. Apresentação pura; o estado vem do Game.
+ */
 export interface HudHandlers {
   icons: string[];
+  names: string[];
   onSelect(i: number): void;
-  onToggleChunks(): void;
-  onNewWorld(): void;
-  onToggleMode(): void;
-  onSkipTime(): void;
-}
-
-const PERIODS: [number, string][] = [
-  [0.22, 'Noite'],
-  [0.3, 'Aurora'],
-  [0.7, 'Dia'],
-  [0.8, 'Crepúsculo'],
-  [1.01, 'Noite'],
-];
-
-function periodName(t: number): string {
-  return PERIODS.find(([limit]) => t < limit)![1];
 }
 
 export class Hud {
   readonly root: HTMLElement;
-  private readonly fields: Record<string, HTMLElement> = {};
   private readonly slots: HTMLButtonElement[] = [];
-  private readonly btnChunks: HTMLButtonElement;
-  private readonly btnMode: HTMLButtonElement;
-  private last = '';
+  private selected = -1;
 
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
-    this.root.innerHTML = `
-      <section class="panel info">
-        <h1>Mundo<span>Blocos</span></h1>
-        <dl>
-          <dt>Bioma</dt><dd data-f="biome"></dd>
-          <dt>Posição</dt><dd data-f="block"></dd>
-          <dt>Chunk</dt><dd data-f="chunk"></dd>
-          <dt>Chunks carregados</dt><dd data-f="loaded"></dd>
-          <dt>Período</dt><dd data-f="time"></dd>
-          <dt>Seed</dt><dd data-f="seed"></dd>
-          <dt>FPS</dt><dd data-f="fps"></dd>
-        </dl>
-      </section>
-      <section class="panel actions">
-        <button data-a="chunks" title="Mostrar/ocultar bordas dos chunks (G)">Chunks <kbd>G</kbd></button>
-        <button data-a="mode" title="Alternar quebrar/colocar (F)"></button>
-        <button data-a="time" title="Avançar período do dia (T)">Tempo <kbd>T</kbd></button>
-        <button data-a="new" title="Gerar um novo mundo">Novo mundo</button>
-      </section>
-      <div class="tooltip" data-f="hover"></div>
-      <nav class="hotbar"></nav>
-      <p class="help">WASD/setas ou joystick: andar · clique/toque: quebrar ou colocar (F alterna) · clique dir.: colocar · 1–9: bloco · roda/Q/E: zoom</p>
-    `;
-    document.body.appendChild(this.root);
-    this.root.querySelectorAll<HTMLElement>('[data-f]').forEach((el) => (this.fields[el.dataset.f!] = el));
-    const hotbar = this.root.querySelector('.hotbar')!;
+    const hotbar = document.createElement('nav');
+    hotbar.className = 'hotbar';
+    hotbar.setAttribute('aria-label', 'Blocos');
     h.icons.forEach((src, i) => {
       const b = document.createElement('button');
       b.className = 'slot';
-      b.innerHTML = `<img alt="" src="${src}"><span>${i + 1}</span>`;
+      b.title = h.names[i];
+      b.setAttribute('aria-label', h.names[i]);
+      b.innerHTML = `<img alt="" src="${src}">`;
       b.addEventListener('click', () => h.onSelect(i));
       hotbar.appendChild(b);
       this.slots.push(b);
     });
-    const btn = (a: string) => this.root.querySelector<HTMLButtonElement>(`[data-a="${a}"]`)!;
-    this.btnChunks = btn('chunks');
-    this.btnMode = btn('mode');
-    this.btnChunks.addEventListener('click', h.onToggleChunks);
-    this.btnMode.addEventListener('click', h.onToggleMode);
-    btn('time').addEventListener('click', h.onSkipTime);
-    btn('new').addEventListener('click', h.onNewWorld);
+    this.root.appendChild(hotbar);
+    document.body.appendChild(this.root);
   }
 
-  update(s: HudState): void {
-    const key = JSON.stringify([s.level, s.block, s.biome, s.loaded, s.fps, s.selected, s.mode, s.chunkBorders, s.hoverName, periodName(s.time)]);
-    if (key === this.last) return;
-    this.last = key;
-    this.fields.biome.textContent = s.biome;
-    this.fields.block.textContent = `${s.block[0]}, ${s.block[1]}${s.level ? ` · nível ${s.level}` : ''}`;
-    this.fields.chunk.textContent = `${s.chunk[0]}, ${s.chunk[1]}`;
-    this.fields.loaded.textContent = String(s.loaded);
-    this.fields.time.textContent = periodName(s.time);
-    this.fields.seed.textContent = String(s.seed);
-    this.fields.fps.textContent = String(s.fps);
-    this.fields.hover.textContent = s.hoverName ?? '';
-    this.slots.forEach((b, i) => b.classList.toggle('active', i === s.selected));
-    this.btnChunks.classList.toggle('on', s.chunkBorders);
-    this.btnMode.innerHTML = s.mode === 'break' ? 'Quebrar <kbd>F</kbd>' : `Colocar: ${s.selectedName} <kbd>F</kbd>`;
+  update(selected: number): void {
+    if (selected === this.selected) return;
+    this.selected = selected;
+    this.slots.forEach((b, i) => b.classList.toggle('active', i === selected));
   }
 
   destroy(): void {

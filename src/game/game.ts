@@ -1,11 +1,10 @@
 import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
-import { Block, blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
-import { toChunk } from '../world/coords';
+import { blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
 import { World } from '../world/world';
 import { Camera } from './camera';
-import { type ActionMode, Hud, type HudState } from './hud';
+import { Hud } from './hud';
 import { Joystick } from './joystick';
 import { Player } from './player';
 
@@ -13,7 +12,23 @@ import { Player } from './player';
 const DAY_LENGTH_S = 480;
 /** Alcance para quebrar/colocar, em células (do centro do personagem ao centro da célula). */
 const REACH = 4.5;
+/** Deslocamento máximo (px) para um toque/clique contar como "colocar". */
 const TAP_THRESHOLD = 10;
+/** Duração máxima de um toque/clique de colocar (s); acima disso é "segurar". */
+const TAP_MAX_S = 0.3;
+/** Tempo segurando sobre o mesmo alvo para quebrar (s). */
+export const BREAK_HOLD_S = 2;
+
+interface Press {
+  id: number;
+  sx: number;
+  sy: number;
+  moved: boolean;
+  held: number;
+  /** Célula sendo quebrada e progresso 0..1 (reinicia ao trocar de alvo). */
+  target: { x: number; y: number } | null;
+  progress: number;
+}
 
 /** Orquestra mundo, personagem, câmera, input, render e HUD. Sem regra de domínio. */
 export class Game {
@@ -26,29 +41,24 @@ export class Game {
   private readonly keys = new Set<string>();
   private showChunkBorders = false;
   private selected = 0;
-  private mode: ActionMode = 'break';
   private time = 0.31;
   private elapsed = 0;
   private last = performance.now();
-  private fps = 60;
   private unloadTimer = 0;
   private pointer = { x: 0, y: 0, inside: false };
-  private press: { id: number; sx: number; sy: number; button: number } | null = null;
+  private press: Press | null = null;
   private running = true;
   private readonly cleanup: (() => void)[] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, seed: number, private readonly onNewWorld: () => void) {
+  constructor(private readonly canvas: HTMLCanvasElement, seed: number) {
     this.world = new World(seed);
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
     this.renderer = new Renderer(canvas, this.world);
     this.hud = new Hud({
       icons: HOTBAR_BLOCKS.map((id) => this.renderer.iconFor(id)),
+      names: HOTBAR_BLOCKS.map((id) => blockDef(id).name),
       onSelect: (i) => this.select(i),
-      onToggleChunks: () => (this.showChunkBorders = !this.showChunkBorders),
-      onNewWorld: () => this.onNewWorld(),
-      onToggleMode: () => this.toggleMode(),
-      onSkipTime: () => this.skipTime(),
     });
     this.joystick = new Joystick(this.hud.root);
     this.resize();
@@ -69,11 +79,6 @@ export class Game {
 
   private select(i: number): void {
     this.selected = Math.max(0, Math.min(HOTBAR_BLOCKS.length - 1, i));
-    this.mode = 'place';
-  }
-
-  private toggleMode(): void {
-    this.mode = this.mode === 'break' ? 'place' : 'break';
   }
 
   private skipTime(): void {
@@ -109,7 +114,6 @@ export class Game {
       this.keys.add(e.code);
       if (e.repeat) return;
       if (e.code === 'KeyG') this.showChunkBorders = !this.showChunkBorders;
-      if (e.code === 'KeyF') this.toggleMode();
       if (e.code === 'KeyT') this.skipTime();
       if (e.code.startsWith('Digit')) {
         const n = Number(e.code.slice(5));
@@ -126,21 +130,24 @@ export class Game {
       this.camera.zoomBy(Math.exp(-e.deltaY * 0.0012));
     }, { passive: false });
 
+    // Toque/clique curto = colocar. Segurar 2 s sobre o mesmo alvo = quebrar.
     this.listen(c, 'pointerdown', (e) => {
-      this.press = { id: e.pointerId, sx: e.offsetX, sy: e.offsetY, button: e.button };
+      if (this.press) return;
+      c.setPointerCapture(e.pointerId);
+      this.press = { id: e.pointerId, sx: e.offsetX, sy: e.offsetY, moved: false, held: 0, target: null, progress: 0 };
       this.pointer = { x: e.offsetX, y: e.offsetY, inside: true };
     });
     this.listen(c, 'pointermove', (e) => {
       this.pointer = { x: e.offsetX, y: e.offsetY, inside: e.pointerType === 'mouse' || !!this.press };
+      const p = this.press;
+      if (p && p.id === e.pointerId && Math.hypot(e.offsetX - p.sx, e.offsetY - p.sy) > TAP_THRESHOLD) p.moved = true;
     });
     this.listen(c, 'pointerup', (e) => {
       const p = this.press;
+      if (!p || p.id !== e.pointerId) return;
       this.press = null;
       if (e.pointerType !== 'mouse') this.pointer.inside = false;
-      if (!p || p.id !== e.pointerId) return;
-      if (Math.hypot(e.offsetX - p.sx, e.offsetY - p.sy) > TAP_THRESHOLD) return;
-      const place = p.button === 2 || (p.button === 0 && this.mode === 'place');
-      this.act(e.offsetX, e.offsetY, place);
+      if (!p.moved && p.held <= TAP_MAX_S) this.place(e.offsetX, e.offsetY);
     });
     this.listen(c, 'pointercancel', () => (this.press = null));
     this.listen(c, 'pointerleave', () => (this.pointer.inside = false));
@@ -167,12 +174,40 @@ export class Game {
     return { x, y, valid };
   }
 
-  private act(sx: number, sy: number, place: boolean): void {
-    const t = this.target(sx, sy, place);
+  private place(sx: number, sy: number): void {
+    const t = this.target(sx, sy, true);
     if (!t.valid) return;
-    if (place) this.world.placeBlock(t.x, t.y, this.selectedBlock);
-    else this.world.breakBlock(t.x, t.y);
+    this.world.placeBlock(t.x, t.y, this.selectedBlock);
     this.player.settle(this.world);
+  }
+
+  /**
+   * Avança a quebra enquanto o dedo/mouse segue pressionado. O progresso só
+   * acumula num alvo válido e reinicia se o alvo mudar; ao completar, quebra e
+   * continua no que estiver por baixo (ex.: bloco de baixo da pilha, depois o chão).
+   */
+  private updateBreaking(dt: number): void {
+    const p = this.press;
+    if (!p) return;
+    p.held += dt;
+    if (p.held <= TAP_MAX_S) return;
+    const t = this.target(this.pointer.x, this.pointer.y, false);
+    if (!t.valid) {
+      p.target = null;
+      p.progress = 0;
+      return;
+    }
+    if (!p.target || p.target.x !== t.x || p.target.y !== t.y) {
+      p.target = { x: t.x, y: t.y };
+      p.progress = 0;
+    }
+    p.progress += dt / BREAK_HOLD_S;
+    if (p.progress >= 1) {
+      this.world.breakBlock(t.x, t.y);
+      this.player.settle(this.world);
+      p.target = null;
+      p.progress = 0;
+    }
   }
 
   private frame = (now: number): void => {
@@ -181,11 +216,11 @@ export class Game {
     this.last = now;
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
-    this.fps += (1 / Math.max(dt, 1e-3) - this.fps) * 0.05;
 
     const [ix, iy] = this.input();
     this.player.update(dt, ix, iy, this.world);
     this.camera.follow(...this.cameraTarget(), dt);
+    this.updateBreaking(dt);
 
     const loadRect = this.camera.visibleChunks(LOAD_MARGIN);
     this.world.ensureChunks(loadRect, MAX_CHUNK_GEN_PER_FRAME);
@@ -198,12 +233,13 @@ export class Game {
     this.renderer.draw(this.camera, {
       player: this.player,
       showChunkBorders: this.showChunkBorders,
-      hover: this.pointer.inside && !this.joystick.active ? this.target(this.pointer.x, this.pointer.y, this.mode === 'place') : null,
+      hover: this.hoverTarget(),
+      breaking: this.press?.target ? { ...this.press.target, progress: this.press.progress } : null,
       time: this.time,
       elapsed: this.elapsed,
       dt,
     });
-    this.hud.update(this.hudState());
+    this.hud.update(this.selected);
     requestAnimationFrame(this.frame);
   };
 
@@ -221,30 +257,11 @@ export class Game {
     return [x, y];
   }
 
-  private hudState(): HudState {
-    const bx = this.player.cellX;
-    const by = this.player.cellY;
-    let hoverName: string | null = null;
-    if (this.pointer.inside) {
-      const picked = this.renderer.pick(this.camera, this.pointer.x, this.pointer.y);
-      const top = picked.hasObject ? this.world.topBlock(picked.x, picked.y) : null;
-      if (top) hoverName = blockDef(top.id).name;
-      else if (this.world.getGround(picked.x, picked.y) === Block.HOLE) hoverName = blockDef(Block.HOLE).name;
-    }
-    return {
-      seed: this.world.seed,
-      block: [bx, by],
-      level: this.player.z,
-      chunk: [toChunk(bx), toChunk(by)],
-      biome: this.world.biomeAt(bx, by).name,
-      loaded: this.world.loadedCount,
-      fps: Math.round(this.fps),
-      time: this.time,
-      selected: this.selected,
-      selectedName: blockDef(this.selectedBlock).name,
-      mode: this.mode,
-      chunkBorders: this.showChunkBorders,
-      hoverName,
-    };
+  /** Destaque: durante a quebra, o alvo da quebra; senão, onde um toque colocaria o bloco. */
+  private hoverTarget(): { x: number; y: number; valid: boolean } | null {
+    if (!this.pointer.inside || this.joystick.active) return null;
+    const p = this.press;
+    if (p && p.held > TAP_MAX_S) return this.target(this.pointer.x, this.pointer.y, false);
+    return this.target(this.pointer.x, this.pointer.y, true);
   }
 }

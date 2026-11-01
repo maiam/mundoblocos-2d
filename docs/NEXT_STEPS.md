@@ -1,5 +1,8 @@
 # Próximos passos
 
+0. Feedback discreto sem HUD: vibração (`navigator.vibrate`) ao quebrar no celular e som opcional; menu
+   recolhível para "novo mundo"/ciclo do dia, se fizer falta.
+
 1. **Persistência de edições** — curto prazo em `localStorage` (seed + chunks modificados). Contas/mundos
    salvos exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste recomendado para o core**.
 2. Inventário real (coletar o que quebra, gastar o que coloca).

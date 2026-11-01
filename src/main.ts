@@ -10,7 +10,7 @@ function start(seed: number): void {
   const url = new URL(window.location.href);
   url.searchParams.set('seed', String(seed));
   window.history.replaceState(null, '', url);
-  game = new Game(canvas, seed, () => start(Math.floor(Math.random() * 2 ** 31)));
+  game = new Game(canvas, seed);
 }
 
 const param = new URLSearchParams(window.location.search).get('seed');

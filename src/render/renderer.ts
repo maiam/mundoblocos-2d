@@ -18,6 +18,8 @@ export interface RenderOptions {
   player: Player;
   showChunkBorders: boolean;
   hover: { x: number; y: number; valid: boolean } | null;
+  /** Quebra em andamento (segurando): célula e progresso 0..1. */
+  breaking: { x: number; y: number; progress: number } | null;
   time: number;
   elapsed: number;
   dt: number;
@@ -128,6 +130,7 @@ export class Renderer {
 
     if (opts.showChunkBorders) this.drawChunkBorders(cam, rect);
     if (opts.hover) this.drawHover(cam, opts.hover);
+    if (opts.breaking) this.drawBreaking(cam, opts.breaking);
   }
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
@@ -241,6 +244,71 @@ export class Renderer {
         ctx.fillText(label, sx + 10, sy + 17);
       }
     }
+    ctx.restore();
+  }
+
+  /** Retângulo de tela do que está no topo da célula (objeto, ou o chão). */
+  private cellScreenRect(cam: Camera, x: number, y: number): { sx: number; sy: number; w: number; h: number } {
+    const top = this.world.topBlock(x, y);
+    const sprite = top ? this.textures.objects.get(top.id) : undefined;
+    const r = sprite?.hit ?? { x: 0, y: 0, w: TILE, h: TILE };
+    const lift = (top?.level ?? 0) * CUBE_FRONT;
+    return {
+      sx: cam.worldToScreenX(x * TILE + r.x),
+      sy: cam.worldToScreenY(y * TILE + r.y - lift),
+      w: r.w * cam.zoom,
+      h: r.h * cam.zoom,
+    };
+  }
+
+  /** Rachaduras que crescem com o progresso + anel de carregamento. */
+  private drawBreaking(cam: Camera, b: NonNullable<RenderOptions['breaking']>): void {
+    const ctx = this.ctx;
+    const { sx, sy, w, h } = this.cellScreenRect(cam, b.x, b.y);
+    const cx = sx + w / 2;
+    const cy = sy + h / 2;
+    const p = Math.min(1, b.progress);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(sx, sy, w, h);
+    ctx.clip();
+    ctx.fillStyle = `rgba(20, 12, 40, ${0.25 * p})`;
+    ctx.fillRect(sx, sy, w, h);
+    // Rachaduras determinísticas a partir do centro; mais ramos conforme avança.
+    ctx.strokeStyle = `rgba(30, 18, 50, ${0.5 + 0.4 * p})`;
+    ctx.lineWidth = Math.max(1.5, cam.zoom);
+    ctx.lineCap = 'round';
+    const branches = Math.ceil(p * 7);
+    const reach = Math.max(w, h) * 0.55 * p;
+    for (let i = 0; i < branches; i++) {
+      const a = (i / 7) * Math.PI * 2 + hash2(b.x * 31 + i, b.y, 5) * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      let px = cx;
+      let py = cy;
+      for (let k = 1; k <= 3; k++) {
+        const jitter = (hash2(b.x + k, b.y + i, 9) - 0.5) * 0.9;
+        px = cx + Math.cos(a + jitter) * reach * (k / 3);
+        py = cy + Math.sin(a + jitter) * reach * (k / 3);
+        ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const r = Math.max(14, Math.min(w, h) * 0.32);
+    ctx.save();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(28, 22, 64, 0.55)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffd46b';
+    ctx.shadowColor = 'rgba(255, 212, 107, 0.8)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
   }
 

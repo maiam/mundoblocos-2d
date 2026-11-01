@@ -31,7 +31,7 @@ src/
     camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
     joystick.ts        joystick virtual em direções de tela
     game.ts            loop, input, alcance, carregamento de chunks, liga render/HUD
-    hud.ts             overlay HTML
+    hud.ts             overlay HTML mínimo: só a hotbar (joystick em telas de toque)
 ```
 
 ## Fluxo de um frame
@@ -40,7 +40,7 @@ src/
 3. `World.ensureChunks` (orçamento por frame) e `unloadFar` a cada 1 s.
 4. `Renderer.draw`: chão (cache por chunk, máx. 2 re-renders/frame) → objetos e personagem por linha
    (de trás para frente) → sombras de nuvens → brilhos/tinta dia-noite → partículas → overlays.
-5. Clique/toque → `Renderer.pick` → regras em `World.breakBlock/placeBlock` (+ alcance e "não sobre a
+5. Toque curto (colocar) ou segurar 2 s (quebrar, progresso em `Game.updateBreaking`) → `Renderer.pick` → regras em `World.breakBlock/placeBlock` (+ alcance e "não sobre a
    personagem" no `Game`) → `chunk.version++` invalida o cache.
 
 ## Regras de dependência

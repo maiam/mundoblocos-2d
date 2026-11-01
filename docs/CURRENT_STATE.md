@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.4.0_
+_Atualizado em 2026-11-01 — v0.5.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -18,7 +18,9 @@ _Atualizado em 2026-11-01 — v0.4.0_
   pedregulhos, enfeites. Spawn em bioma acolhedor; o clima é deslocado por seed.
 - Render: chão com variações, barrancas e espuma nas margens, grade sutil, sombras projetadas, brilho de
   água, sombras de nuvens, ciclo dia/noite (8 min), halos mágicos, partículas por bioma.
-- Interação: quebrar/colocar com alcance de 4,5 células, hotbar 1–9, overlay de chunks (G), tempo (T).
+- **Tela limpa**: só a hotbar na parte inferior (+ joystick em telas de toque). Sem painéis de informação/botões.
+- Interação: toque/clique curto coloca; segurar 2 s quebra (rachaduras + anel de progresso); alcance de 4,5
+  células; hotbar 1–9; atalhos de depuração G (chunks) e T (tempo).
 - Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
 
 ## Limitações conhecidas

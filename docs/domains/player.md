@@ -11,5 +11,7 @@
   rota, isso é também a direção no mapa.
 - Câmera: alvo = pés − 0,4 × altura do personagem; suavização exponencial (k = 9/s). Por usar a posição
   lógica, o balanço dos quadros de caminhada não move a câmera.
-- Interação: alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o
+- Interação: **toque/clique curto (≤ 0,3 s, ≤ 10 px) coloca**; **segurar 2 s (`BREAK_HOLD_S`) sobre o mesmo alvo
+  quebra** (o progresso reinicia se o alvo mudar ou ficar inválido; ao quebrar, continua no que está por baixo).
+  Feedback no canvas: rachaduras progressivas + anel. Alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o
   chão sob ela (regra de ocupação no `Game`; o domínio garante que buraco não é pisável).

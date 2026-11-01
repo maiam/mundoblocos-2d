@@ -2,9 +2,7 @@
   --panel: rgba(28, 22, 64, 0.72);
   --panel-border: rgba(255, 220, 160, 0.45);
   --text: #fff7ea;
-  --muted: #c9c2f0;
   --accent: #ffd46b;
-  --accent-2: #ff8fc0;
   color-scheme: dark;
 }
 
@@ -25,60 +23,26 @@ html, body {
   height: 100%;
   touch-action: none;
   cursor: crosshair;
+  /* Segurar para quebrar: sem seleção de texto nem menu de toque longo. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.hud { position: fixed; inset: 0; pointer-events: none; }
-.hud button, .hud .panel { pointer-events: auto; }
-
-.panel {
-  position: absolute;
-  background: var(--panel);
-  border: 1.5px solid var(--panel-border);
-  border-radius: 14px;
-  box-shadow: 0 6px 24px rgba(10, 6, 30, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(6px);
-}
-
-.info { top: 16px; left: 16px; padding: 12px 16px 10px; min-width: 210px; }
-.info h1 {
-  margin: 0 0 6px;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 0 #3b2a7a;
-}
-.info h1 span { color: var(--accent); margin-left: 2px; }
-.info dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 13px; }
-.info dt { color: var(--muted); }
-.info dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-
-.actions { top: 16px; right: 16px; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100vw - 32px); }
-.actions button {
-  font: inherit;
-  font-size: 13px;
-  color: var(--text);
-  background: linear-gradient(180deg, #5a4bb0, #3a2f86);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-  box-shadow: 0 2px 0 #241b5c;
-}
-.actions button:hover { filter: brightness(1.15); }
-.actions button.on { background: linear-gradient(180deg, #e0a93a, #b9792a); box-shadow: 0 2px 0 #6e4518; }
-kbd {
-  font: inherit;
-  font-size: 11px;
-  padding: 0 4px;
-  margin-left: 4px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
+/* HUD mínimo: só a grade de blocos (e o joystick em telas de toque). */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .hotbar {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
   transform: translateX(-50%);
   display: flex;
   gap: 6px;
@@ -87,11 +51,13 @@ kbd {
   border: 1.5px solid var(--panel-border);
   border-radius: 16px;
   box-shadow: 0 6px 24px rgba(10, 6, 30, 0.45);
+  backdrop-filter: blur(6px);
   max-width: calc(100vw - 32px);
   overflow-x: auto;
+  pointer-events: auto;
 }
+
 .slot {
-  position: relative;
   width: 48px;
   height: 48px;
   flex: none;
@@ -102,14 +68,8 @@ kbd {
   cursor: pointer;
   transition: transform 0.12s ease;
 }
-.slot img { width: 100%; height: 100%; display: block; }
-.slot span {
-  position: absolute;
-  top: 1px;
-  left: 4px;
-  font-size: 10px;
-  color: var(--muted);
-}
+.slot img { width: 100%; height: 100%; display: block; pointer-events: none; }
+.slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .slot.active {
   border-color: var(--accent);
   background: rgba(255, 212, 107, 0.18);
@@ -117,47 +77,10 @@ kbd {
   box-shadow: 0 0 14px rgba(255, 212, 107, 0.6);
 }
 
-.tooltip {
-  position: absolute;
-  left: 50%;
-  bottom: 112px;
-  transform: translateX(-50%);
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-  text-shadow: 0 2px 4px rgba(10, 6, 30, 0.9);
-}
-
-.help {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-  margin: 0;
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  padding: 0 16px;
-}
-
-@media (max-width: 640px) {
-  .info { min-width: 0; max-width: calc(100vw - 168px); padding: 8px 12px; }
-  .info dl { font-size: 11px; }
-  .info h1 { font-size: 16px; }
-  /* Linhas técnicas ficam só no desktop. */
-  .info dt:nth-of-type(n + 4), .info dd:nth-of-type(n + 4) { display: none; }
-  .actions { flex-direction: column; align-items: stretch; width: 136px; }
-  .actions button { font-size: 12px; padding: 6px 8px; }
-  .slot { width: 40px; height: 40px; }
-  .help { display: none; }
-  .joystick { bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 84px)); left: max(20px, env(safe-area-inset-left, 0px)); }
-}
-
 .joystick {
   position: absolute;
   left: max(28px, env(safe-area-inset-left, 0px));
-  bottom: max(110px, calc(env(safe-area-inset-bottom, 0px) + 96px));
+  bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 86px));
   width: 132px;
   height: 132px;
   border-radius: 50%;
@@ -188,6 +111,20 @@ kbd {
   box-shadow: 0 3px 0 #6e4518, 0 0 14px rgba(255, 212, 107, 0.5);
   pointer-events: none;
 }
-@media (pointer: fine) {
-  .joystick { opacity: 0.45; }
+
+/* Joystick só em telas de toque; no desktop anda-se pelo teclado. */
+@media (hover: hover) and (pointer: fine) {
+  .joystick { display: none; }
+}
+
+@media (max-width: 640px) {
+  .slot { width: 40px; height: 40px; }
+  .joystick {
+    left: max(20px, env(safe-area-inset-left, 0px));
+    bottom: max(84px, calc(env(safe-area-inset-bottom, 0px) + 76px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot, .joystick { transition: none; }
 }

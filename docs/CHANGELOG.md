@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 — 2026-11-01
+- Tela limpa: removidos painel de informações, botões (Chunks/Modo/Tempo/Novo mundo), dica de nome e texto de
+  ajuda. Fica só a hotbar; o joystick aparece apenas em telas de toque.
+- Quebrar passa a exigir segurar 2 s sobre o alvo (rachaduras + anel); colocar é toque/clique curto. Removido o
+  modo Quebrar/Colocar (tecla F) e a diferença entre botões do mouse.
+- Novo mundo agora só via `?seed=` (sem botão).
+
 ## 0.4.0 — 2026-11-01
 - Chão quebrável: quebrar célula vazia cria `HOLE` (não pisável por personagem/animais, não quebrável).
 - Buraco só aceita cubo novo, que vira piso nivelado (pisável e empilhável); quebrar o piso reabre o buraco.

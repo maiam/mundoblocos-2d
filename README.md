@@ -20,10 +20,10 @@ npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/off
 |---|---|
 | Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
-| Quebrar / colocar (alcance 4,5 células) | clique/toque / clique direito (F alterna o modo do clique/toque) |
-| Escolher bloco | 1–9 ou clicar na hotbar |
-| Bordas dos chunks | G |
-| Avançar período do dia | T |
+| Colocar bloco (alcance 4,5 células) | clique / toque curto |
+| Quebrar bloco ou cavar o chão | segurar o clique / dedo por 2 s sobre o alvo |
+| Escolher bloco | 1–9 ou tocar na hotbar |
+| Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |
 
 ## Documentação
 
