@@ -5,7 +5,8 @@
   A câmera nunca rota: direção de tela = direção do mapa (joystick e teclado usam o mesmo vetor).
 - Conversão célula↔chunk **sempre** via `world/coords.ts`.
 - Toda aleatoriedade do mundo deriva da seed. Nunca `Math.random()` em `world/` (só em efeitos efêmeros).
-- Cada célula tem **duas camadas**: chão (`layer: 'ground'`) e objeto (`layer: 'object'`, `AIR` = vazio).
+- Cada célula tem chão (`layer: 'ground'`) e até 2 níveis de objeto (`layer: 'object'`, `AIR` = vazio); o nível 1
+  só aceita cubo sobre cubo. Altura de pé/colisão sempre via `World.standHeight`.
   Formas de objeto: `cube`, `tree`, `decoration` (não sólido).
 - Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo bloco = os dois lugares.
 - Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a

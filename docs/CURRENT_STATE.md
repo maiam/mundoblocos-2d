@@ -1,10 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.2.0_
+_Atualizado em 2026-11-01 — v0.3.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
   ordenação por profundidade (linha) entre objetos e personagem.
+- **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
+  transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
 - **Heroína jogável** (sprite 4 direções × 4 quadros), ~2,2 células de altura; colisão com objetos sólidos e água.
 - **Câmera** sem rotação, zoom automático (~10 células na vertical, ajustável), acompanhamento suave da
   posição lógica — sem balanço de caminhada.
@@ -20,9 +22,9 @@ _Atualizado em 2026-11-01 — v0.2.0_
 
 ## Limitações conhecidas
 - Edições não são persistidas.
-- Sem altura de terreno (montanhas são paredes de blocos; não há subir/descer).
+- Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
 - Transições entre tipos de chão são em degrau (sem blending).
 - Água estática.
 
 ## Qualidade
-- `npm test`: 13 testes (world + player) passando. `npm run build` limpo.
+- `npm test`: 17 testes (world + player) passando. `npm run build` limpo.

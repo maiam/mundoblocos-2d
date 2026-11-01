@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, TILE } from '../config';
+import { CHUNK_SIZE, CUBE_FRONT, TILE } from '../config';
 import type { Camera } from '../game/camera';
 import type { Player } from '../game/player';
 import { Block, blockDef, type BlockId } from '../world/blocks';
@@ -86,7 +86,7 @@ export class Renderer {
     const bx0 = Math.floor(wx0 / TILE) - 1;
     const bx1 = Math.floor(wx1 / TILE) + 1;
     const by0 = Math.floor(wy0 / TILE) - 1;
-    const by1 = Math.floor(wy1 / TILE) + 3; // sprites altos sobem até 2 células
+    const by1 = Math.floor(wy1 / TILE) + 3; // sprites altos/pilhas sobem até ~2 células
     const glows: Glow[] = [];
     const p = opts.player;
     const playerRow = Math.floor(p.y);
@@ -96,10 +96,9 @@ export class Renderer {
       for (let x = bx0; x <= bx1; x++) {
         const id = this.world.getObject(x, y);
         if (id !== Block.AIR) {
-          const sprite = this.textures.objects.get(id);
-          if (sprite) this.drawSprite(cam, sprite, x, y);
-          const glow = this.textures.glowColor.get(id);
-          if (glow) glows.push({ x: x + 0.5, y: y + (blockDef(id).shape === 'tree' ? -0.9 : 0.1), color: glow });
+          this.drawObject(cam, id, x, y, 0, glows);
+          const up = this.world.getUpper(x, y);
+          if (up !== Block.AIR) this.drawObject(cam, up, x, y, 1, glows);
         } else if (blockDef(this.world.getGround(x, y)).liquid) {
           this.waterGlint(cam, x, y, opts.elapsed);
         }
@@ -131,16 +130,27 @@ export class Renderer {
     if (opts.hover) this.drawHover(cam, opts.hover);
   }
 
-  private drawSprite(cam: Camera, s: Sprite, x: number, y: number): void {
+  private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
+    const sprite = this.textures.objects.get(id);
+    if (sprite) this.drawSprite(cam, sprite, x, y, level);
+    const glow = this.textures.glowColor.get(id);
+    if (glow) {
+      const lift = blockDef(id).shape === 'tree' ? -0.9 : 0.1 - (level * CUBE_FRONT) / TILE;
+      glows.push({ x: x + 0.5, y: y + lift, color: glow });
+    }
+  }
+
+  /** Desenha um sprite na célula; cada nível de pilha sobe CUBE_FRONT px. */
+  private drawSprite(cam: Camera, s: Sprite, x: number, y: number, level = 0): void {
     const z = cam.zoom;
     const sx = Math.round(cam.worldToScreenX(x * TILE + s.ox));
-    const sy = Math.round(cam.worldToScreenY(y * TILE + s.oy));
+    const sy = Math.round(cam.worldToScreenY(y * TILE + s.oy - level * CUBE_FRONT));
     this.ctx.drawImage(s.canvas, sx, sy, Math.round(s.w * z), Math.round(s.h * z));
   }
 
   private drawPlayer(cam: Camera, p: Player): void {
     const fx = cam.worldToScreenX(p.x * TILE);
-    const fy = cam.worldToScreenY(p.y * TILE);
+    const fy = cam.worldToScreenY(p.y * TILE - p.visualZ * CUBE_FRONT);
     this.character.draw(this.ctx, fx, fy, cam.zoom, p.facing, p.moving, p.walkTime);
   }
 
@@ -236,11 +246,12 @@ export class Renderer {
 
   private drawHover(cam: Camera, hover: NonNullable<RenderOptions['hover']>): void {
     const ctx = this.ctx;
-    const id = this.world.getObject(hover.x, hover.y);
-    const sprite = id !== Block.AIR ? this.textures.objects.get(id) : undefined;
+    const top = this.world.topBlock(hover.x, hover.y);
+    const sprite = top ? this.textures.objects.get(top.id) : undefined;
     const r = sprite?.hit ?? { x: 0, y: 0, w: TILE, h: TILE };
+    const lift = (top?.level ?? 0) * CUBE_FRONT;
     const sx = cam.worldToScreenX(hover.x * TILE + r.x);
-    const sy = cam.worldToScreenY(hover.y * TILE + r.y);
+    const sy = cam.worldToScreenY(hover.y * TILE + r.y - lift);
     ctx.save();
     ctx.lineWidth = 2;
     ctx.strokeStyle = hover.valid ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 120, 140, 0.9)';
@@ -258,15 +269,18 @@ export class Renderer {
     const [wx, wy] = cam.screenToWorld(sx, sy);
     const gx = Math.floor(wx / TILE);
     const gy = Math.floor(wy / TILE);
-    for (let y = gy + 2; y >= gy; y--) {
+    for (let y = gy + 3; y >= gy; y--) {
       for (const x of [gx, gx - 1, gx + 1]) {
-        const id: BlockId = this.world.getObject(x, y);
+        const height = this.world.getUpper(x, y) !== Block.AIR ? 1 : 0;
+        const id: BlockId = height ? this.world.getUpper(x, y) : this.world.getObject(x, y);
         if (id === Block.AIR) continue;
         const s = this.textures.objects.get(id);
         if (!s) continue;
+        // A pilha inteira é clicável: do topo do bloco de cima até a base da célula.
         const lx = wx - x * TILE;
         const ly = wy - y * TILE;
-        if (lx >= s.hit.x && lx < s.hit.x + s.hit.w && ly >= s.hit.y && ly < s.hit.y + s.hit.h) {
+        const top = s.hit.y - height * CUBE_FRONT;
+        if (lx >= s.hit.x && lx < s.hit.x + s.hit.w && ly >= top && ly < s.hit.y + s.hit.h) {
           return { x, y, hasObject: true };
         }
       }

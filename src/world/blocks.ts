@@ -71,7 +71,7 @@ const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): Block
 });
 
 const defs: BlockDef[] = [
-  { ...object(Block.AIR, 'Vazio'), solid: false, breakable: false, placeable: false },
+  { ...object(Block.AIR, 'Vazio'), shape: 'flat', solid: false, breakable: false, placeable: false },
   ground(Block.GRASS, 'Grama'),
   ground(Block.ENCHANTED_GRASS, 'Musgo Encantado'),
   ground(Block.SAND, 'Areia'),

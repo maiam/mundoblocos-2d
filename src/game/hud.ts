@@ -5,6 +5,8 @@ export type ActionMode = 'break' | 'place';
 export interface HudState {
   seed: number;
   block: [number, number];
+  /** Nível em que o personagem está (0 = chão). */
+  level: number;
   chunk: [number, number];
   biome: string;
   loaded: number;
@@ -93,11 +95,11 @@ export class Hud {
   }
 
   update(s: HudState): void {
-    const key = JSON.stringify([s.block, s.biome, s.loaded, s.fps, s.selected, s.mode, s.chunkBorders, s.hoverName, periodName(s.time)]);
+    const key = JSON.stringify([s.level, s.block, s.biome, s.loaded, s.fps, s.selected, s.mode, s.chunkBorders, s.hoverName, periodName(s.time)]);
     if (key === this.last) return;
     this.last = key;
     this.fields.biome.textContent = s.biome;
-    this.fields.block.textContent = `${s.block[0]}, ${s.block[1]}`;
+    this.fields.block.textContent = `${s.block[0]}, ${s.block[1]}${s.level ? ` · nível ${s.level}` : ''}`;
     this.fields.chunk.textContent = `${s.chunk[0]}, ${s.chunk[1]}`;
     this.fields.loaded.textContent = String(s.loaded);
     this.fields.time.textContent = periodName(s.time);

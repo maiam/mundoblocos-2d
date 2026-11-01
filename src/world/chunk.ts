@@ -1,10 +1,14 @@
 import { CHUNK_SIZE } from '../config';
 import type { BlockId } from './blocks';
 
-/** Seção 16×16 do mundo com duas camadas: chão e objeto (índice = ly * 16 + lx). */
+/**
+ * Seção 16×16 do mundo com três camadas (índice = ly * 16 + lx):
+ * chão, objeto (nível 0) e cubo empilhado (nível 1).
+ */
 export class Chunk {
   readonly ground = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE);
   readonly objects = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE);
+  readonly upper = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE);
   /** True se o jogador alterou algo (chunk não pode ser descartado). */
   modified = false;
   /** Incrementado a cada mudança visível (inclusive vizinhos na borda); invalida caches. */
@@ -20,8 +24,13 @@ export class Chunk {
     return this.objects[ly * CHUNK_SIZE + lx] as BlockId;
   }
 
-  setObject(lx: number, ly: number, id: BlockId): void {
-    this.objects[ly * CHUNK_SIZE + lx] = id;
+  getUpper(lx: number, ly: number): BlockId {
+    return this.upper[ly * CHUNK_SIZE + lx] as BlockId;
+  }
+
+  /** Define o bloco do nível 0 ou 1 da célula. */
+  setLevel(lx: number, ly: number, level: 0 | 1, id: BlockId): void {
+    (level === 0 ? this.objects : this.upper)[ly * CHUNK_SIZE + lx] = id;
     this.modified = true;
     this.version++;
   }

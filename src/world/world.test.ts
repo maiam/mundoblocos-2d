@@ -23,9 +23,11 @@ describe('WorldGenerator', () => {
     const a = new WorldGenerator(1234);
     const b = new WorldGenerator(1234);
     for (const [cx, cy] of [[0, 0], [-3, 1], [7, -1], [-40, 4]]) {
-      const ga = new Uint8Array(N), oa = new Uint8Array(N), gb = new Uint8Array(N), ob = new Uint8Array(N);
-      a.generateChunk(cx, cy, ga, oa);
-      b.generateChunk(cx, cy, gb, ob);
+      const ga = new Uint8Array(N), oa = new Uint8Array(N), ua = new Uint8Array(N);
+      const gb = new Uint8Array(N), ob = new Uint8Array(N), ub = new Uint8Array(N);
+      a.generateChunk(cx, cy, ga, oa, ua);
+      b.generateChunk(cx, cy, gb, ob, ub);
+      expect(Array.from(ua)).toEqual(Array.from(ub));
       expect(Array.from(ga)).toEqual(Array.from(gb));
       expect(Array.from(oa)).toEqual(Array.from(ob));
     }
@@ -43,11 +45,13 @@ describe('WorldGenerator', () => {
     const g = new WorldGenerator(99);
     const ground = new Uint8Array(N);
     const objects = new Uint8Array(N);
-    g.generateChunk(-2, 3, ground, objects);
+    const upper = new Uint8Array(N);
+    g.generateChunk(-2, 3, ground, objects, upper);
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         expect(ground[ly * CHUNK_SIZE + lx]).toBe(g.groundAt(-32 + lx, 48 + ly));
         expect(objects[ly * CHUNK_SIZE + lx]).toBe(g.objectAt(-32 + lx, 48 + ly));
+        expect(upper[ly * CHUNK_SIZE + lx]).toBe(g.upperAt(-32 + lx, 48 + ly));
       }
     }
   });
@@ -61,6 +65,8 @@ describe('WorldGenerator', () => {
         expect(ground.layer).toBe('ground');
         expect(obj.layer).toBe('object');
         if (ground.liquid) expect(obj.id).toBe(Block.AIR);
+        // Nível 1 só existe sobre cubo.
+        if (g.upperAt(x, y) !== Block.AIR) expect(obj.shape).toBe('cube');
       }
     }
   });
@@ -99,9 +105,37 @@ describe('World', () => {
     expect(w.getObject(x, y)).toBe(Block.BRICK);
     expect(w.isWalkable(x, y)).toBe(false);
     expect(w.getChunk(toChunk(x), toChunk(y))!.modified).toBe(true);
-    expect(w.placeBlock(x, y, Block.STONE)).toBe(false);
+    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false);
     expect(w.breakBlock(x, y)).toBe(Block.BRICK);
     expect(w.isWalkable(x, y)).toBe(true);
+  });
+
+  it('empilha no máximo 2 cubos e quebra de cima para baixo', () => {
+    const w = new World(7);
+    const [x, y] = w.findSpawn();
+    expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
+    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true);
+    expect(w.stackHeight(x, y)).toBe(2);
+    expect(w.standHeight(x, y)).toBe(2);
+    expect(w.placeBlock(x, y, Block.PLANKS)).toBe(false);
+    expect(w.breakBlock(x, y)).toBe(Block.BRICK);
+    expect(w.stackHeight(x, y)).toBe(1);
+    expect(w.breakBlock(x, y)).toBe(Block.STONE);
+    expect(w.standHeight(x, y)).toBe(0);
+  });
+
+  it('enfeites só no chão e nada empilha sobre enfeite/árvore', () => {
+    const w = new World(7);
+    const [x, y] = w.findSpawn();
+    expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
+    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false);
+    w.breakBlock(x, y);
+    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(true);
+    expect(w.placeBlock(x, y, Block.STONE)).toBe(true); // substitui o enfeite no nível 0
+    expect(w.stackHeight(x, y)).toBe(1);
+    w.setObject(x + 1, y, Block.OAK_TREE);
+    expect(w.placeBlock(x + 1, y, Block.STONE)).toBe(false);
+    expect(w.standHeight(x + 1, y)).toBeNull();
   });
 
   it('não coloca sobre água nem itens não colocáveis', () => {

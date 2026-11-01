@@ -107,9 +107,11 @@ export class ChunkRenderer {
         // Sombra projetada pelos objetos (luz de cima-esquerda → sombra ao sul/leste).
         const obj = blockDef(chunk.getObject(lx, ly));
         if (obj.shape === 'cube') {
-          ctx.fillStyle = 'rgba(30, 20, 70, 0.28)';
+          // Pilhas mais altas projetam sombra maior.
+          const tall = chunk.getUpper(lx, ly) !== 0 ? 1.45 : 1;
+          ctx.fillStyle = `rgba(30, 20, 70, ${0.26 * tall})`;
           ctx.beginPath();
-          ctx.ellipse(px + TILE * 0.6, py + TILE - 1, TILE * 0.55, 6, 0, 0, Math.PI * 2);
+          ctx.ellipse(px + TILE * 0.6 + (tall - 1) * 6, py + TILE - 1, TILE * 0.55 * tall, 6 * tall, 0, 0, Math.PI * 2);
           ctx.fill();
         } else if (obj.shape === 'tree') {
           ctx.fillStyle = 'rgba(30, 20, 70, 0.24)';

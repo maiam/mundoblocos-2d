@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 — 2026-11-01
+- Cubos empilháveis (máx. 2 por célula, `MAX_STACK`); quebrar remove o de cima.
+- Personagem sobe 1 nível por vez (`STEP_HEIGHT`) e desce livremente; altura suavizada no sprite e na câmera;
+  HUD mostra o nível.
+- Montanhas geradas com 1–2 níveis (minério no cubo exposto).
+- Correção: `AIR` herdava `shape: 'cube'` da fábrica de objetos.
+
 ## 0.2.0 — 2026-11-01
 - **Vista superior inclinada (3/4)** substitui a vista lateral (ADR 0003): mundo com camadas chão/objeto,
   gerador 2D (elevação, rios, montanhas com minérios, florestas), cubos com face superior + frontal.

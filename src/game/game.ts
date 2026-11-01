@@ -1,4 +1,4 @@
-import { LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
+import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
@@ -82,7 +82,8 @@ export class Game {
 
   /** Alvo da câmera: posição lógica do personagem (centro do corpo), sem balanço. */
   private cameraTarget(): [number, number] {
-    return [this.player.x * TILE, this.player.y * TILE - CHARACTER_H * 0.4];
+    // Usa a altura suavizada: subir num bloco desloca a câmera sem trancos.
+    return [this.player.x * TILE, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4];
   }
 
   private resize = (): void => {
@@ -149,8 +150,10 @@ export class Game {
   private target(sx: number, sy: number, place: boolean): { x: number; y: number; valid: boolean } {
     const picked = this.renderer.pick(this.camera, sx, sy);
     let { x, y } = picked;
-    if (place && picked.hasObject && blockDef(this.world.getObject(x, y)).shape !== 'decoration') {
-      // Clicou num objeto: coloca na célula de chão sob o cursor.
+    const pickedTop = picked.hasObject ? this.world.topBlock(x, y) : null;
+    const stackable = pickedTop && blockDef(pickedTop.id).shape === 'cube' && this.world.canPlace(x, y, this.selectedBlock);
+    if (place && pickedTop && blockDef(pickedTop.id).shape !== 'decoration' && !stackable) {
+      // Objeto que não aceita pilha (árvore, pilha cheia): coloca no chão sob o cursor.
       const [wx, wy] = this.camera.screenToWorld(sx, sy);
       x = Math.floor(wx / TILE);
       y = Math.floor(wy / TILE);
@@ -168,6 +171,7 @@ export class Game {
     if (!t.valid) return;
     if (place) this.world.placeBlock(t.x, t.y, this.selectedBlock);
     else this.world.breakBlock(t.x, t.y);
+    this.player.settle(this.world);
   }
 
   private frame = (now: number): void => {
@@ -222,11 +226,13 @@ export class Game {
     let hoverName: string | null = null;
     if (this.pointer.inside) {
       const picked = this.renderer.pick(this.camera, this.pointer.x, this.pointer.y);
-      if (picked.hasObject) hoverName = blockDef(this.world.getObject(picked.x, picked.y)).name;
+      const top = picked.hasObject ? this.world.topBlock(picked.x, picked.y) : null;
+      if (top) hoverName = blockDef(top.id).name;
     }
     return {
       seed: this.world.seed,
       block: [bx, by],
+      level: this.player.z,
       chunk: [toChunk(bx), toChunk(by)],
       biome: this.world.biomeAt(bx, by).name,
       loaded: this.world.loadedCount,

@@ -17,13 +17,46 @@ describe('Player', () => {
     expect(p.moving).toBe(false);
   });
 
-  it('não atravessa blocos sólidos', () => {
-    const w = new World(7);
+  /** Corredor horizontal limpo à direita do spawn, com bordas de árvore. */
+  function corridor(seed: number): [World, number, number] {
+    const w = new World(seed);
     const [sx, sy] = w.findSpawn();
-    w.placeBlock(sx + 1, sy, Block.STONE);
+    for (let dx = -1; dx <= 6; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        while (w.breakBlock(sx + dx, sy + dy) !== null);
+        w.setObject(sx + dx, sy + dy, dy === 0 ? Block.AIR : Block.OAK_TREE);
+      }
+    }
+    return [w, sx, sy];
+  }
+
+  it('sobe 1 bloco, depois outro, e desce livremente', () => {
+    const [w, sx, sy] = corridor(7);
+    w.placeBlock(sx + 2, sy, Block.STONE); // degrau de 1
+    w.placeBlock(sx + 3, sy, Block.STONE);
+    w.placeBlock(sx + 3, sy, Block.STONE); // pilha de 2
     const p = new Player(sx + 0.5, sy + 0.5);
-    for (let i = 0; i < 60; i++) p.update(1 / 60, 1, 0, w);
-    expect(p.x).toBeLessThan(sx + 1);
-    expect(p.occupies(sx, sy)).toBe(true);
+    for (let i = 0; i < 120; i++) p.update(1 / 60, 1, 0, w);
+    expect(p.x).toBeGreaterThan(sx + 4); // passou por cima e desceu do outro lado
+    expect(p.z).toBe(0);
+  });
+
+  it('não sobe 2 blocos de uma vez', () => {
+    const [w, sx, sy] = corridor(7);
+    w.placeBlock(sx + 2, sy, Block.STONE);
+    w.placeBlock(sx + 2, sy, Block.STONE);
+    const p = new Player(sx + 0.5, sy + 0.5);
+    for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
+    expect(p.x).toBeLessThan(sx + 2);
+    expect(p.z).toBe(0);
+    expect(p.occupies(sx + 1, sy)).toBe(true);
+  });
+
+  it('não atravessa árvores', () => {
+    const [w, sx, sy] = corridor(7);
+    w.setObject(sx + 2, sy, Block.OAK_TREE);
+    const p = new Player(sx + 0.5, sy + 0.5);
+    for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
+    expect(p.x).toBeLessThan(sx + 2);
   });
 });

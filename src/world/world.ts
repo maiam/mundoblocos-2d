@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, UNLOAD_MARGIN } from '../config';
+import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
 import { Block, type BlockId, blockDef } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk } from './chunk';
@@ -42,7 +42,7 @@ export class World {
     let chunk = this.chunks.get(key);
     if (!chunk) {
       chunk = new Chunk(cx, cy);
-      this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects);
+      this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects, chunk.upper);
       this.chunks.set(key, chunk);
     }
     return chunk;
@@ -54,18 +54,54 @@ export class World {
     return chunk ? chunk.getGround(toLocal(x), toLocal(y)) : this.generator.groundAt(x, y);
   }
 
-  /** Objeto da célula (AIR se vazio). */
+  /** Objeto do nível 0 da célula (AIR se vazio). */
   getObject(x: number, y: number): BlockId {
     const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
     return chunk ? chunk.getObject(toLocal(x), toLocal(y)) : this.generator.objectAt(x, y);
   }
 
+  /** Cubo empilhado no nível 1 (AIR se não houver). */
+  getUpper(x: number, y: number): BlockId {
+    const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
+    return chunk ? chunk.getUpper(toLocal(x), toLocal(y)) : this.generator.upperAt(x, y);
+  }
+
+  /** Bloco visível no topo da célula e seu nível (null se vazia). */
+  topBlock(x: number, y: number): { id: BlockId; level: 0 | 1 } | null {
+    const up = this.getUpper(x, y);
+    if (up !== Block.AIR) return { id: up, level: 1 };
+    const base = this.getObject(x, y);
+    return base !== Block.AIR ? { id: base, level: 0 } : null;
+  }
+
+  /** Quantos cubos há empilhados na célula (0..MAX_STACK). */
+  stackHeight(x: number, y: number): number {
+    if (blockDef(this.getObject(x, y)).shape !== 'cube') return 0;
+    return this.getUpper(x, y) !== Block.AIR ? 2 : 1;
+  }
+
+  /**
+   * Altura em que se fica de pé na célula, ou null se não dá para ficar
+   * (água, árvore, cacto). Cubos são superfícies: altura = nº de cubos.
+   */
+  standHeight(x: number, y: number): number | null {
+    if (blockDef(this.getGround(x, y)).liquid) return null;
+    const base = blockDef(this.getObject(x, y));
+    if (base.shape === 'cube') return this.stackHeight(x, y);
+    return base.solid ? null : 0;
+  }
+
+  /** Mantido para o objeto do nível 0 (testes/ferramentas). */
   setObject(x: number, y: number, id: BlockId): void {
+    this.setLevel(x, y, 0, id);
+  }
+
+  private setLevel(x: number, y: number, level: 0 | 1, id: BlockId): void {
     const cx = toChunk(x);
     const cy = toChunk(y);
     const lx = toLocal(x);
     const ly = toLocal(y);
-    this.loadChunk(cx, cy).setObject(lx, ly, id);
+    this.loadChunk(cx, cy).setLevel(lx, ly, level, id);
     // Vizinhos usam esta célula para sombras/bordas.
     if (lx === 0) this.touch(cx - 1, cy);
     if (lx === CHUNK_SIZE - 1) this.touch(cx + 1, cy);
@@ -82,38 +118,49 @@ export class World {
     return this.generator.biomeAt(x, y);
   }
 
-  /** Pode-se ficar de pé na célula? */
+  /** Célula livre no nível do chão (sem cubos, água ou árvore)? */
   isWalkable(x: number, y: number): boolean {
-    if (blockDef(this.getGround(x, y)).liquid) return false;
-    return !blockDef(this.getObject(x, y)).solid;
+    return this.standHeight(x, y) === 0;
   }
 
   // ---- Regras de interação (domínio) ----
 
   canBreak(x: number, y: number): boolean {
-    return blockDef(this.getObject(x, y)).breakable;
+    const top = this.topBlock(x, y);
+    return !!top && blockDef(top.id).breakable;
   }
 
-  /** Remove o objeto da célula. Retorna o id removido ou null. */
+  /** Remove o bloco do topo da célula (o empilhado primeiro). Retorna o id removido ou null. */
   breakBlock(x: number, y: number): BlockId | null {
-    const id = this.getObject(x, y);
-    if (!blockDef(id).breakable) return null;
-    this.setObject(x, y, Block.AIR);
-    return id;
+    const top = this.topBlock(x, y);
+    if (!top || !blockDef(top.id).breakable) return null;
+    this.setLevel(x, y, top.level, Block.AIR);
+    return top.id;
   }
 
-  /** Objetos só vão em chão firme e célula sem objeto sólido (enfeites são substituídos). */
-  canPlace(x: number, y: number, id: BlockId): boolean {
+  /**
+   * Nível em que o bloco seria colocado, ou null se não pode.
+   * Nível 0: chão firme, célula vazia ou com enfeite (substituído).
+   * Nível 1: cubo sobre cubo, até MAX_STACK. Enfeites e árvores só no chão.
+   */
+  placementLevel(x: number, y: number, id: BlockId): 0 | 1 | null {
     const def = blockDef(id);
-    if (!def.placeable || def.layer !== 'object') return false;
-    if (blockDef(this.getGround(x, y)).liquid) return false;
-    const current = blockDef(this.getObject(x, y));
-    return current.id === Block.AIR || current.shape === 'decoration';
+    if (!def.placeable || def.layer !== 'object') return null;
+    if (blockDef(this.getGround(x, y)).liquid) return null;
+    const base = blockDef(this.getObject(x, y));
+    if (base.id === Block.AIR || base.shape === 'decoration') return 0;
+    if (def.shape === 'cube' && base.shape === 'cube' && this.stackHeight(x, y) < MAX_STACK) return 1;
+    return null;
+  }
+
+  canPlace(x: number, y: number, id: BlockId): boolean {
+    return this.placementLevel(x, y, id) !== null;
   }
 
   placeBlock(x: number, y: number, id: BlockId): boolean {
-    if (!this.canPlace(x, y, id)) return false;
-    this.setObject(x, y, id);
+    const level = this.placementLevel(x, y, id);
+    if (level === null) return false;
+    this.setLevel(x, y, level, id);
     return true;
   }
 

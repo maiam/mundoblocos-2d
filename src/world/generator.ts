@@ -9,10 +9,13 @@ const WATER_LEVEL = -0.26;
 const BEACH_LEVEL = -0.2;
 const MOUNTAIN_LEVEL = 0.36;
 const DEEP_MOUNTAIN = 0.5;
+/** Acima disto a montanha tem 2 cubos de altura (escalável a partir das bordas de 1). */
+const HIGH_MOUNTAIN = 0.43;
 
 export interface Cell {
   ground: BlockId;
   object: BlockId;
+  upper: BlockId;
 }
 
 /**
@@ -71,17 +74,29 @@ export class WorldGenerator {
     return biome.ground;
   }
 
-  objectAt(x: number, y: number): BlockId {
-    const { e, biome, wet } = this.terrainAt(x, y);
-    if (wet || e < BEACH_LEVEL) return Block.AIR;
-
-    if (e > MOUNTAIN_LEVEL) {
+  /** Rocha/minério de montanha conforme a elevação (minérios ficam no bloco exposto). */
+  private mountainBlock(x: number, y: number, e: number, biome: Biome, exposed: boolean): BlockId {
+    if (exposed) {
       const ore = this.detail.noise2(x / 4.5 + 300, y / 4.5);
       if (e > DEEP_MOUNTAIN && ore > 0.55) return Block.MANA_CRYSTAL;
       if (e > DEEP_MOUNTAIN - 0.05 && this.detail.noise2(x / 4 - 700, y / 4) > 0.58) return Block.GOLD_ORE;
       if (ore < -0.5) return Block.COAL_ORE;
-      return biome.key === 'desert' ? Block.SANDSTONE : Block.STONE;
     }
+    return biome.key === 'desert' ? Block.SANDSTONE : Block.STONE;
+  }
+
+  /** Segundo cubo da pilha (nível 1): só em montanhas altas. */
+  upperAt(x: number, y: number): BlockId {
+    const { e, biome, wet } = this.terrainAt(x, y);
+    if (wet || e <= HIGH_MOUNTAIN) return Block.AIR;
+    return this.mountainBlock(x, y, e, biome, true);
+  }
+
+  objectAt(x: number, y: number): BlockId {
+    const { e, biome, wet } = this.terrainAt(x, y);
+    if (wet || e < BEACH_LEVEL) return Block.AIR;
+
+    if (e > MOUNTAIN_LEVEL) return this.mountainBlock(x, y, e, biome, e <= HIGH_MOUNTAIN);
 
     const r = hash2(this.seed, x, y);
     const forest = this.detail.fbm2(x / 38 + 50, y / 38 - 50, 2);
@@ -100,11 +115,11 @@ export class WorldGenerator {
   }
 
   cellAt(x: number, y: number): Cell {
-    return { ground: this.groundAt(x, y), object: this.objectAt(x, y) };
+    return { ground: this.groundAt(x, y), object: this.objectAt(x, y), upper: this.upperAt(x, y) };
   }
 
   /** Preenche as camadas 16×16 (linha a linha) do chunk (cx, cy). */
-  generateChunk(cx: number, cy: number, ground: Uint8Array, objects: Uint8Array): void {
+  generateChunk(cx: number, cy: number, ground: Uint8Array, objects: Uint8Array, upper: Uint8Array): void {
     const x0 = cx * CHUNK_SIZE;
     const y0 = cy * CHUNK_SIZE;
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
@@ -112,6 +127,7 @@ export class WorldGenerator {
         const i = ly * CHUNK_SIZE + lx;
         ground[i] = this.groundAt(x0 + lx, y0 + ly);
         objects[i] = this.objectAt(x0 + lx, y0 + ly);
+        upper[i] = this.upperAt(x0 + lx, y0 + ly);
       }
     }
   }
