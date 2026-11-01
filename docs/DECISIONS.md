@@ -10,6 +10,7 @@
 | — | HUD mínimo (só hotbar; joystick só em toque); quebrar = segurar 2 s, colocar = toque curto | `domains/player.md` |
 | 0004 | Entidades andantes compartilham `Walker`; NPCs em `game/` como estado de execução | [adr/0004](adr/0004-entidades-walker.md) |
 | — | Ovelha não sobe em cubos (stepHeight 0): blocos servem de cerca | `domains/npc.md` |
+| — | Horizontal garantido por camada de rotação; tela cheia/trava só como melhoria quando o navegador permite | `domains/player.md` |
 | — | Câmera sem rotação + joystick em direções de tela | `domains/player.md` |
 | — | Sem backend neste repositório; persistência futura via core | `PROJECT_CONTEXT.md` |
 | — | Chunks quadrados 16×16 nos dois eixos do mapa | `domains/world.md` |

@@ -18,6 +18,9 @@
   ajustar `sat_max/min_claro` quando a sombra do desenho for mais escura/saturada.
 - Personagem: posição = centro dos pés. Quadros da folha compartilham a mesma ancoragem (pés na base);
   a câmera segue a posição lógica, nunca o sprite.
+- O jogo é **horizontal**: qualquer layout novo deve funcionar em paisagem de pouca altura (≥ 360 px) e
+  respeitar `env(safe-area-inset-*)`. Em retrato no toque o jogo fica bloqueado (`ScreenMode.blocked`).
+- Elementos com `display` próprio que usam `hidden` precisam de regra `[hidden] { display: none }` explícita.
 - Estilo: sombras puxam para índigo, luz de cima-esquerda, contornos coloridos, brilhos em estrela.
 - Mutação de objeto só via `World.setObject/placeBlock/breakBlock`.
 - Testes em `src/**/*.test.ts` (Vitest, Node).

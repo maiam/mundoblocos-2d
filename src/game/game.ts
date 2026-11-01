@@ -7,6 +7,7 @@ import { Camera } from './camera';
 import { Hud } from './hud';
 import { Entities } from './entities';
 import { Joystick } from './joystick';
+import type { ScreenMode } from './screenMode';
 import { Player } from './player';
 
 /** Duração de um dia completo em segundos. */
@@ -52,7 +53,7 @@ export class Game {
   private running = true;
   private readonly cleanup: (() => void)[] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, seed: number) {
+  constructor(private readonly canvas: HTMLCanvasElement, seed: number, private readonly screenMode?: ScreenMode) {
     this.world = new World(seed);
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
@@ -221,7 +222,10 @@ export class Game {
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
 
-    const [ix, iy] = this.input();
+    // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
+    const blocked = this.screenMode?.blocked ?? false;
+    if (blocked) this.press = null;
+    const [ix, iy] = blocked ? [0, 0] : this.input();
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
     this.camera.follow(...this.cameraTarget(), dt);

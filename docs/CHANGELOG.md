@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 — 2026-11-01
+- Jogo garantidamente horizontal em toque: tela cheia + `screen.orientation.lock('landscape')` no 1º gesto
+  (repetido se o jogador sair), camada "Gire o aparelho" em retrato que pausa a entrada.
+- PWA: `manifest.webmanifest` (fullscreen, landscape), ícones, metas iOS/Android, `viewport-fit=cover`.
+- Layout compacto para paisagem com até 500 px de altura (hotbar e joystick menores).
+- Correção: camada com `display: grid` ignorava `hidden` e capturava toques.
+
 ## 0.6.0 — 2026-11-01
 - Primeiro NPC: ovelha (sprite fornecido, 4 direções × 4 quadros) com IA de pastar/passear e retorno a casa.
 - `Walker`: base comum de movimento/colisão/altura extraída do `Player` (sem duplicar regra para NPCs).

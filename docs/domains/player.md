@@ -10,6 +10,9 @@
 - Direção do sprite pelo eixo dominante do vetor de entrada, com histerese para não tremular na diagonal.
 - Entrada: joystick virtual + WASD/setas somados no mesmo vetor **em direções de tela**; como a câmera não
   rota, isso é também a direção no mapa.
+- Tela (`game/screenMode.ts`): só em aparelhos de toque. 1º `pointerup` → `requestFullscreen` →
+  `screen.orientation.lock('landscape')`; falhas ignoradas. Em retrato, a camada "Gire o aparelho" cobre o jogo
+  e o `Game` zera entrada/quebra (`ScreenMode.blocked`). Desktop não é afetado.
 - Câmera: alvo = pés − 0,4 × altura do personagem; suavização exponencial (k = 9/s). Por usar a posição
   lógica, o balanço dos quadros de caminhada não move a câmera.
 - Interação: **toque/clique curto (≤ 0,3 s, ≤ 10 px) coloca**; **segurar 2 s (`BREAK_HOLD_S`) sobre o mesmo alvo

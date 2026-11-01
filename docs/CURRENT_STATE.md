@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.6.0_
+_Atualizado em 2026-11-01 — v0.7.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -20,12 +20,18 @@ _Atualizado em 2026-11-01 — v0.6.0_
   pedregulhos, enfeites. Spawn em bioma acolhedor; o clima é deslocado por seed.
 - Render: chão com variações, barrancas e espuma nas margens, grade sutil, sombras projetadas, brilho de
   água, sombras de nuvens, ciclo dia/noite (8 min), halos mágicos, partículas por bioma.
+- **Sempre na horizontal**: no celular, o 1º toque pede tela cheia e trava em paisagem (onde o navegador
+  permite: Android/Chrome); em retrato, a camada "Gire o aparelho" bloqueia o jogo (cobre iOS/iframes).
+  PWA instalável abre em tela cheia e paisagem. Controles compactos em paisagem de pouca altura.
 - **Tela limpa**: só a hotbar na parte inferior (+ joystick em telas de toque). Sem painéis de informação/botões.
 - Interação: toque/clique curto coloca; segurar 2 s quebra (rachaduras + anel de progresso); alcance de 4,5
   células; hotbar 1–9; atalhos de depuração G (chunks) e T (tempo).
 - Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
 
 ## Limitações conhecidas
+- iPhone/Safari no navegador não oferece tela cheia para páginas nem trava de orientação: lá vale a camada de
+  rotação (ou instalar na tela inicial). Dentro do Artifact (iframe) a tela cheia pode ser recusada.
+- O toque que ativa a tela cheia também conta como ação de colocar bloco.
 - Edições não são persistidas; NPCs existem só perto do spawn (sem spawn por chunk).
 - Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
 - Transições entre tipos de chão são em degrau (sem blending).

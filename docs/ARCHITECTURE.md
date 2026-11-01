@@ -6,6 +6,8 @@ Vista superior inclinada (3/4). Ver [ADR 0003](adr/0003-vista-superior-inclinada
 assets-src/*-sheet.png         folhas originais (heroína, ovelha; fundo claro, 4×4)
 scripts/process-sprite.py      gera src/assets/*.png (transparente, quadros uniformes)
 scripts/build-artifact.mjs     HTML de arquivo único a partir de dist/
+scripts/make-icons.py          gera public/icon-192/512.png a partir da heroína
+public/manifest.webmanifest    PWA: display fullscreen, orientation landscape
 src/
   config.ts            constantes (TILE, CUBE_FRONT, CHUNK_SIZE, orçamentos)
   main.ts              bootstrap + seed via URL
@@ -33,6 +35,7 @@ src/
     entities.ts        personagem + NPCs: update, colisão entre entidades, ocupação de células, rebanho inicial
     camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
     joystick.ts        joystick virtual em direções de tela
+    screenMode.ts      toque: tela cheia + trava em paisagem no 1º gesto; camada "Gire o aparelho" em retrato
     game.ts            loop, input, alcance, carregamento de chunks, liga render/HUD
     hud.ts             overlay HTML mínimo: só a hotbar (joystick em telas de toque)
 ```

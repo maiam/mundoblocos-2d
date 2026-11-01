@@ -9,5 +9,7 @@
 - Sprites (requer Pillow e numpy):
   `python3 scripts/process-sprite.py assets-src/heroine-sheet.png src/assets/heroine.png 144`
   `python3 scripts/process-sprite.py assets-src/sheep-sheet.png src/assets/sheep.png 96 23 128`
+- Ícones do PWA: `python3 scripts/make-icons.py` (Pillow). `public/` é copiado para `dist/` (manifest e ícones);
+  o build de Artifact é arquivo único e não leva manifest.
 - Não há variáveis de ambiente nem `env.example` (nenhuma configuração externa necessária).
 - Fonte Nunito via Google Fonts (com fallback `system-ui` se offline).

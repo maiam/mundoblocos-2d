@@ -14,6 +14,11 @@ npm run build      # typecheck + build estático em dist/
 npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/offline)
 ```
 
+## Celular
+
+Jogado sempre na horizontal. O primeiro toque coloca em tela cheia e trava a orientação onde o navegador
+permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial (abre em tela cheia, deitado).
+
 ## Controles
 
 | Ação | Entrada |
