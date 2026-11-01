@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 — 2026-11-01
+- `npm run build:artifact`: build em arquivo único publicado como Artifact para teste no navegador.
+- Canvas usa `100%` em vez de `100vw/100vh` (respeita a área segura do host).
+
 ## 0.1.0 — 2026-11-01
 - Projeto criado (Vite + TypeScript, sem framework).
 - Domínio `world`: PRNG/ruído com seed, registro de blocos, biomas, gerador puro, chunks 16×16, `World`

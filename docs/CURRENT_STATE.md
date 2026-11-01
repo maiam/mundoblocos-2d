@@ -16,6 +16,8 @@ _Atualizado em 2026-11-01 — v0.1.0_
 - Interação: quebrar/colocar blocos, hotbar 1–9, zoom, pan por teclado/arrasto, overlay de chunks (G).
 - HUD com bioma, coordenadas de bloco/chunk, chunks carregados, período, seed, FPS.
 
+- Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
+
 ## Limitações conhecidas
 - Edições não são persistidas (perdem-se ao recarregar).
 - Sem personagem/física; câmera livre.

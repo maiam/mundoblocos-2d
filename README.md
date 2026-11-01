@@ -11,6 +11,7 @@ npm install
 npm run dev        # http://localhost:5173  (aceita ?seed=<número|texto>)
 npm test           # testes do domínio world (Vitest)
 npm run build      # typecheck + build estático em dist/
+npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/offline)
 ```
 
 ## Controles
