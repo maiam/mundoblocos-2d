@@ -1,5 +1,6 @@
 # Domínio: player (game)
 
+- `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).
 - **Altura**: `z` = nível de apoio (0–2). Um passo é aceito se todas as células sob os pés têm `standHeight` não

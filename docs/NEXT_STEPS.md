@@ -9,6 +9,7 @@
 3. Transições suaves entre tipos de chão (autotile por vizinhança).
 4. Alturas: blocos de meia altura/escadas, e mostrar a borda de queda (sombra ao descer de 2 níveis).
 5. Sprite sheet: reduzir peso do PNG (quantização) e adicionar animação de ação (quebrar/colocar).
-6. Animais (usar `World.standHeight` para movimento — buracos/água já bloqueados).
+6. NPCs: interação do personagem com a ovelha (ex.: tosar/carinho), spawn por chunk/bioma com limite de
+   população e persistência junto com as edições.
 7. Água animada e pontes (colocar tábuas sobre água).
 8. Geração em Web Worker se o custo por chunk crescer.

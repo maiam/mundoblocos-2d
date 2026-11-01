@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 — 2026-11-01
+- Primeiro NPC: ovelha (sprite fornecido, 4 direções × 4 quadros) com IA de pastar/passear e retorno a casa.
+- `Walker`: base comum de movimento/colisão/altura extraída do `Player` (sem duplicar regra para NPCs).
+- `Entities`: personagem + NPCs, colisão entre entidades, ocupação de células para colocar/cavar, rebanho inicial.
+- Renderer desenha todos os atores com ordenação por profundidade; `character.ts` generalizado para folhas de atores.
+- `process-sprite.py` aceita altura do quadro e limiares de fundo/sombra.
+
 ## 0.5.0 — 2026-11-01
 - Tela limpa: removidos painel de informações, botões (Chunks/Modo/Tempo/Novo mundo), dica de nome e texto de
   ajuda. Fica só a hotbar; o joystick aparece apenas em telas de toque.

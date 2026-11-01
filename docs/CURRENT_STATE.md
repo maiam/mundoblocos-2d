@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.5.0_
+_Atualizado em 2026-11-01 — v0.6.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -8,6 +8,8 @@ _Atualizado em 2026-11-01 — v0.5.0_
 - **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
   transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
 - **Cavar o chão**: célula vazia + quebrar → buraco intransponível; só um bloco novo o preenche, virando piso.
+- **Primeiro NPC: ovelhas** — rebanho de até 4 perto do spawn, pastando e passeando (4 direções animadas),
+  sem subir em cubos, com colisão entre entidades. Ainda sem interação do personagem.
 - **Heroína jogável** (sprite 4 direções × 4 quadros), ~2,2 células de altura; colisão com objetos sólidos e água.
 - **Câmera** sem rotação, zoom automático (~10 células na vertical, ajustável), acompanhamento suave da
   posição lógica — sem balanço de caminhada.
@@ -24,10 +26,10 @@ _Atualizado em 2026-11-01 — v0.5.0_
 - Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
 
 ## Limitações conhecidas
-- Edições não são persistidas.
+- Edições não são persistidas; NPCs existem só perto do spawn (sem spawn por chunk).
 - Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
 - Transições entre tipos de chão são em degrau (sem blending).
 - Água estática.
 
 ## Qualidade
-- `npm test`: 20 testes (world + player) passando. `npm run build` limpo.
+- `npm test`: 25 testes (world + player) passando. `npm run build` limpo.

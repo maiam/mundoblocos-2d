@@ -5,6 +5,7 @@ import { blockDef, HOTBAR_BLOCKS, type BlockId } from '../world/blocks';
 import { World } from '../world/world';
 import { Camera } from './camera';
 import { Hud } from './hud';
+import { Entities } from './entities';
 import { Joystick } from './joystick';
 import { Player } from './player';
 
@@ -35,6 +36,7 @@ export class Game {
   readonly world: World;
   readonly camera = new Camera();
   readonly player: Player;
+  readonly entities: Entities;
   private readonly renderer: Renderer;
   private readonly hud: Hud;
   private readonly joystick: Joystick;
@@ -54,6 +56,8 @@ export class Game {
     this.world = new World(seed);
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
+    this.entities = new Entities(this.player);
+    this.entities.spawnFlock(this.world, sx, sy);
     this.renderer = new Renderer(canvas, this.world);
     this.hud = new Hud({
       icons: HOTBAR_BLOCKS.map((id) => this.renderer.iconFor(id)),
@@ -167,10 +171,10 @@ export class Game {
     }
     const dist = Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4));
     const inReach = dist <= REACH;
-    // Não se coloca bloco sobre a personagem nem se cava o chão sob seus pés.
+    // Não se coloca bloco sobre nenhuma entidade nem se cava o chão sob seus pés.
     const valid = inReach && (place
-      ? this.world.canPlace(x, y, this.selectedBlock) && !this.player.occupies(x, y)
-      : this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.player.occupies(x, y)));
+      ? this.world.canPlace(x, y, this.selectedBlock) && !this.entities.occupies(x, y)
+      : this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y)));
     return { x, y, valid };
   }
 
@@ -178,7 +182,7 @@ export class Game {
     const t = this.target(sx, sy, true);
     if (!t.valid) return;
     this.world.placeBlock(t.x, t.y, this.selectedBlock);
-    this.player.settle(this.world);
+    this.entities.settleAll(this.world);
   }
 
   /**
@@ -204,7 +208,7 @@ export class Game {
     p.progress += dt / BREAK_HOLD_S;
     if (p.progress >= 1) {
       this.world.breakBlock(t.x, t.y);
-      this.player.settle(this.world);
+      this.entities.settleAll(this.world);
       p.target = null;
       p.progress = 0;
     }
@@ -218,7 +222,8 @@ export class Game {
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
 
     const [ix, iy] = this.input();
-    this.player.update(dt, ix, iy, this.world);
+    this.player.update(dt, ix, iy, this.world, this.entities.blocker);
+    this.entities.update(dt, this.world);
     this.camera.follow(...this.cameraTarget(), dt);
     this.updateBreaking(dt);
 
@@ -232,6 +237,7 @@ export class Game {
 
     this.renderer.draw(this.camera, {
       player: this.player,
+      actors: this.entities.actors,
       showChunkBorders: this.showChunkBorders,
       hover: this.hoverTarget(),
       breaking: this.press?.target ? { ...this.press.target, progress: this.press.progress } : null,

@@ -1,10 +1,11 @@
 import { CHUNK_SIZE, CUBE_FRONT, TILE } from '../config';
 import type { Camera } from '../game/camera';
+import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
-import { CharacterSprite } from './character';
+import { ActorSprites } from './character';
 import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
@@ -16,6 +17,8 @@ const MAX_CHUNK_RENDERS_PER_FRAME = 2;
 
 export interface RenderOptions {
   player: Player;
+  /** Todos os atores (personagem + NPCs), desenhados com ordenação por profundidade. */
+  actors: Actor[];
   showChunkBorders: boolean;
   hover: { x: number; y: number; valid: boolean } | null;
   /** Quebra em andamento (segurando): célula e progresso 0..1. */
@@ -39,7 +42,7 @@ interface Glow {
 export class Renderer {
   readonly textures: BlockTextures;
   private readonly chunks: ChunkRenderer;
-  private readonly character = new CharacterSprite();
+  private readonly actorSprites = new ActorSprites();
   private readonly particles = new Particles();
   private readonly ctx: CanvasRenderingContext2D;
   sky: SkyState = skyAt(0.3);
@@ -91,8 +94,13 @@ export class Renderer {
     const by1 = Math.floor(wy1 / TILE) + 3; // sprites altos/pilhas sobem até ~2 células
     const glows: Glow[] = [];
     const p = opts.player;
-    const playerRow = Math.floor(p.y);
-    let playerDrawn = false;
+    // Atores agrupados pela linha dos pés; dentro da linha, de trás para frente.
+    const byRow = new Map<number, Actor[]>();
+    for (const a of opts.actors) {
+      const row = Math.min(by1, Math.max(by0, Math.floor(a.walker.y)));
+      const list = byRow.get(row);
+      if (list) list.push(a); else byRow.set(row, [a]);
+    }
 
     for (let y = by0; y <= by1; y++) {
       for (let x = bx0; x <= bx1; x++) {
@@ -105,12 +113,12 @@ export class Renderer {
           this.waterGlint(cam, x, y, opts.elapsed);
         }
       }
-      if (y === playerRow) {
-        this.drawPlayer(cam, p);
-        playerDrawn = true;
+      const actors = byRow.get(y);
+      if (actors) {
+        actors.sort((a, b) => a.walker.y - b.walker.y);
+        for (const a of actors) this.drawActor(cam, a);
       }
     }
-    if (!playerDrawn) this.drawPlayer(cam, p);
 
     // 3) Sombras de nuvens passando.
     this.drawCloudShadows(cam, opts.elapsed, wx0, wy0, wx1, wy1);
@@ -151,10 +159,11 @@ export class Renderer {
     this.ctx.drawImage(s.canvas, sx, sy, Math.round(s.w * z), Math.round(s.h * z));
   }
 
-  private drawPlayer(cam: Camera, p: Player): void {
-    const fx = cam.worldToScreenX(p.x * TILE);
-    const fy = cam.worldToScreenY(p.y * TILE - p.visualZ * CUBE_FRONT);
-    this.character.draw(this.ctx, fx, fy, cam.zoom, p.facing, p.moving, p.walkTime);
+  private drawActor(cam: Camera, a: Actor): void {
+    const w = a.walker;
+    const fx = cam.worldToScreenX(w.x * TILE);
+    const fy = cam.worldToScreenY(w.y * TILE - w.visualZ * CUBE_FRONT);
+    this.actorSprites.get(a.kind).draw(this.ctx, fx, fy, cam.zoom, w.facing, w.moving, w.walkTime);
   }
 
   private waterGlint(cam: Camera, x: number, y: number, elapsed: number): void {

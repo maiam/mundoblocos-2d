@@ -1,7 +1,11 @@
-"""Converte a folha de sprites da heroína (fundo branco, 4x4) em PNG transparente
+"""Converte uma folha de sprites 4x4 (fundo claro e neutro) em PNG transparente
 com quadros de tamanho uniforme e ancoragem comum (pés na base do quadro).
 
-Uso: python3 scripts/process-sprite.py [entrada] [saída]
+Uso: python3 scripts/process-sprite.py [entrada] [saída] [altura_do_quadro] [sat_max] [min_claro]
+  heroína: python3 scripts/process-sprite.py assets-src/heroine-sheet.png src/assets/heroine.png 144
+  ovelha:  python3 scripts/process-sprite.py assets-src/sheep-sheet.png src/assets/sheep.png 96 23 128
+sat_max/min_claro definem o que conta como fundo/sombra (pouco saturado e claro); a
+remoção só avança a partir das bordas da célula, então o contorno do desenho a contém.
 Linhas da folha: 0 = frente (baixo), 1 = esquerda, 2 = direita, 3 = costas (cima).
 """
 import sys
@@ -13,7 +17,7 @@ from PIL import Image
 SRC = sys.argv[1] if len(sys.argv) > 1 else 'assets-src/heroine-sheet.png'
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'src/assets/heroine.png'
 GRID = 4
-FRAME_H = 144  # altura final do quadro em px
+FRAME_H = int(sys.argv[3]) if len(sys.argv) > 3 else 144  # altura final do quadro em px
 
 img = np.asarray(Image.open(SRC).convert('RGB')).astype(np.int16)
 H, W, _ = img.shape
@@ -21,8 +25,10 @@ cw, ch = W / GRID, H / GRID
 
 mx = img.max(axis=2)
 mn = img.min(axis=2)
+SAT_MAX = int(sys.argv[4]) if len(sys.argv) > 4 else 16
+MIN_LIGHT = int(sys.argv[5]) if len(sys.argv) > 5 else 140
 # Fundo: claro e pouco saturado (inclui a sombra cinza projetada).
-bg_like = ((mx - mn) < 16) & (mn > 140)
+bg_like = ((mx - mn) < SAT_MAX) & (mn > MIN_LIGHT)
 
 def remove_bg(x0, y0, x1, y1):
     """Flood fill a partir das bordas da célula; retorna alpha (0..255)."""

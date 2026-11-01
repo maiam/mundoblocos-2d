@@ -12,6 +12,10 @@
 - Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo bloco = os dois lugares.
 - Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a
   base da célula (necessário para a ordenação por linha). Cubos: face superior `TILE`, face frontal `CUBE_FRONT`.
+- Toda entidade que anda estende `Walker` (nada de colisão própria); NPCs ficam em `game/` e entram em
+  `Entities`. Ocupação de célula (colocar/cavar) consulta `Entities.occupies`, não só a personagem.
+- Folhas de sprite novas: 4×4 (frente, esquerda, direita, costas), processadas por `scripts/process-sprite.py`;
+  ajustar `sat_max/min_claro` quando a sombra do desenho for mais escura/saturada.
 - Personagem: posição = centro dos pés. Quadros da folha compartilham a mesma ancoragem (pés na base);
   a câmera segue a posição lógica, nunca o sprite.
 - Estilo: sombras puxam para índigo, luz de cima-esquerda, contornos coloridos, brilhos em estrela.
