@@ -3,7 +3,7 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { ITEMS, monsterDrops, type StackId, TOOLS } from '../world/items';
+import { canCraft, ITEMS, monsterDrops, type Recipe, type StackId, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { inRect } from '../world/dungeon';
 import { World } from '../world/world';
@@ -13,6 +13,7 @@ import { Drops } from './drops';
 import { Entities } from './entities';
 import { bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import { BagPanel, type BagEntry } from './bag';
+import { setProfessionIcon, SkillsPanel } from './skills';
 import type { SlotView } from './hud';
 import { Hud } from './hud';
 import { Inventory } from './inventory';
@@ -50,6 +51,7 @@ export class Game {
   /** Grade deste mundo: 8 espaços + bolsa (com coleta) ou lista fixa do perfil (Santuário). */
   readonly hotbar: Hotbar;
   private readonly bag: BagPanel;
+  private readonly skills: SkillsPanel;
   /** Materiais precisam ser coletados neste mundo (perfil). */
   private readonly collect: boolean;
   readonly drops = new Drops();
@@ -71,8 +73,6 @@ export class Game {
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
   private lastHp = 0;
-  /** Ponto inicial (renascer). */
-  private readonly spawn: [number, number];
   private last = performance.now();
   private unloadTimer = 0;
   private running = true;
@@ -97,7 +97,6 @@ export class Game {
     this.entities.spawnMonsters(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
-    this.spawn = [sx, sy];
     this.lastHp = this.player.hp;
     this.renderer = new Renderer(canvas, this.world);
     this.actions = new ActionController({
@@ -111,17 +110,26 @@ export class Game {
     this.hud = new Hud({
       slots: this.hotbar.length,
       onSelect: (i) => this.onSlot(i),
-      bag: this.hotbar.dynamic ? { icon: art().uiIcons?.bag ?? '', onOpen: () => this.toggleBag() } : undefined,
+      menu: this.hotbar.dynamic
+        ? {
+          character: art().uiIcons?.character ?? '', skills: art().uiIcons?.skills ?? '', bag: art().uiIcons?.bag ?? '',
+          onSkills: () => this.toggleSkills(), onBag: () => this.toggleBag(),
+        }
+        : undefined,
       // Corações só em mundo com dungeon.
       maxHp: profile.dungeon ? MAX_HP : 0,
     });
     this.bag = new BagPanel(this.hud.bagSection);
+    setProfessionIcon('builder', art().uiIcons?.builder ?? '');
+    this.skills = new SkillsPanel(this.hud.recipesSection, this.hud.professionsSection,
+      (id) => { const v = this.stackView(id, null); return { icon: v.icon, name: v.name }; },
+      (r) => this.craft(r));
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     this.menu = new Menu(this.hud.root, {
       seed,
       status: () => this.saveStatus(),
-      onOpenChange: (open) => { if (open) { this.toggleBag(false); this.actions.cancelAll(); this.saveNow(); } },
+      onOpenChange: (open) => { if (open) { this.toggleBag(false); this.toggleSkills(false); this.actions.cancelAll(); this.saveNow(); } },
       onNewWorld: options.onNewWorld,
       onRestart: options.onRestart,
     });
@@ -174,12 +182,48 @@ export class Game {
     if (!this.hotbar.dynamic) return;
     const open = force ?? !this.bag.isOpen;
     if (open === this.bag.isOpen) return;
+    if (open) this.toggleSkills(false); // um painel por vez acima da grade
     this.bag.setOpen(open);
     this.hud.setBagOpen(open);
     if (open) {
       this.actions.cancelAll();
       this.bag.render(this.bagEntries());
     }
+  }
+
+  /** Abre/fecha habilidades (receitas + profissões); pausa o jogo como a bolsa. */
+  private toggleSkills(force?: boolean): void {
+    if (!this.hotbar.dynamic) return;
+    const open = force ?? !this.skills.isOpen;
+    if (open === this.skills.isOpen) return;
+    if (open) this.toggleBag(false);
+    this.skills.setOpen(open);
+    this.hud.setSkillsOpen(open);
+    if (open) {
+      this.actions.cancelAll();
+      this.skills.render((id) => this.inventory.count(id));
+    }
+  }
+
+  /**
+   * Cria 1 vez a receita: gasta os ingredientes e o resultado entra na mão/bolsa. Se o resultado for de um tipo novo
+   * e não houver lugar (mão e bolsa cheias), não cria.
+   */
+  private craft(r: Recipe): void {
+    const count = (id: StackId) => this.inventory.count(id);
+    if (!canCraft(r, count)) return;
+    const out = r.output.item;
+    // Se os ingredientes acabarem, liberam espaço; o resultado precisa caber depois do gasto.
+    const after = new Map(r.inputs.map((i) => [i.item, count(i.item) - i.count]));
+    const freed = [...after.values()].filter((n) => n <= 0).length;
+    const isNew = count(out) <= 0;
+    if (isNew && !canCarry(this.inventory, this.hotbar, out) && freed === 0) return;
+    for (const i of r.inputs) this.inventory.take(i.item, i.count);
+    this.hotbar.prune(this.inventory);
+    this.inventory.add(out, r.output.count);
+    this.hotbar.autoPlace(out);
+    this.refreshSelection();
+    this.skills.render(count);
   }
 
   /** O que está na bolsa (fora da grade), para os 18 espaços dela. */
@@ -210,6 +254,7 @@ export class Game {
   private onCollected(id: StackId): void {
     this.hotbar.autoPlace(id);
     if (this.bag.isOpen) this.bag.render(this.bagEntries());
+    if (this.skills.isOpen) this.skills.render((id) => this.inventory.count(id));
   }
 
   /**
@@ -266,12 +311,14 @@ export class Game {
       if (e.code === 'KeyT') this.skipTime();
       if (e.code.startsWith('Digit')) {
         const n = Number(e.code.slice(5)) || 10; // tecla 0 = 10º espaço
-        if (this.hotbar.dynamic && n === 9) this.toggleBag();
-        else if (n <= this.hotbar.length) this.onSlot(n - 1);
+        if (n <= this.hotbar.length) this.onSlot(n - 1);
       }
       if (e.code === 'KeyI' || e.code === 'KeyB') this.toggleBag();
+      if (e.code === 'KeyK') this.toggleSkills();
+      // KeyC: reservado para o painel do personagem (em breve).
       if (e.code === 'Escape') {
-        if (this.bag.isOpen) this.toggleBag(false);
+        if (this.skills.isOpen) this.toggleSkills(false);
+        else if (this.bag.isOpen) this.toggleBag(false);
         else this.select(null);
       }
       if (e.code === 'Space') this.startAction();
@@ -321,14 +368,15 @@ export class Game {
     const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
-    const dt = this.menu.isOpen || this.bag.isOpen ? 0 : realDt;
+    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen;
+    const dt = paused ? 0 : realDt;
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
     this.saveTimer += dt;
     if (this.saveTimer >= AUTOSAVE_S) this.saveNow();
 
     // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
-    const blocked = (this.screenMode?.blocked ?? false) || this.menu.isOpen || this.bag.isOpen;
+    const blocked = (this.screenMode?.blocked ?? false) || paused;
     if (blocked) this.actions.cancelAll();
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
@@ -416,7 +464,9 @@ export class Game {
         this.hotbar.prune(this.inventory);
         this.refreshSelection();
       }
-      this.player.respawn(this.spawn[0] + 0.5, this.spawn[1] + 0.6);
+      // Renasce ao lado da última tenda (se de pé), senão no início.
+      const [rx, ry] = this.world.respawnPoint();
+      this.player.respawn(rx + 0.5, ry + 0.6);
       this.camera.follow(...this.cameraTarget(), 0, true);
       this.hurtFlash = 1;
     }

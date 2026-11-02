@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getTentSprite, getWaterArt } from './blockArt';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
@@ -441,6 +441,19 @@ export function createBlockTextures(): BlockTextures {
   const variants = new Map<BlockId, Sprite[]>();
   const stackDraw = new Map<BlockId, number>();
   if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
+  // Tenda: sprite com a largura da célula (um pouco maior), base na borda de baixo; ícone do pacote.
+  const tentImg = getTentSprite();
+  if (tentImg) {
+    const w = T * 1.25;
+    const h = w * (tentImg.height / tentImg.width);
+    const c = document.createElement('canvas');
+    c.width = tentImg.width;
+    c.height = tentImg.height;
+    c.getContext('2d')!.drawImage(tentImg, 0, 0);
+    const oy = T - h + 2;
+    objects.set(Block.TENT, { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } });
+    icons.set(Block.TENT, pack.tent?.icon ?? '');
+  }
   const doorFrames = getOakDoorSheet() ? doorSprites() : [];
   if (doorFrames.length) {
     objects.set(Block.OAK_DOOR, doorFrames[0]);

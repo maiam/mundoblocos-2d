@@ -19,7 +19,7 @@ import type { Facing } from './walker';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface SaveData {
   v: number;
@@ -29,6 +29,8 @@ export interface SaveData {
   time: number;
   selected: number | null;
   player: { x: number; y: number; z: number; hp: number; facing: Facing };
+  /** Última tenda colocada (ponto de renascer). */
+  tent: [number, number] | null;
   /** Tudo que a heroína carrega (itens, materiais coletados, ferramentas). */
   inventory: Partial<Record<StackId, number>>;
   /** Grade de 8 espaços (mundo com coleta); null = grade fixa do perfil. */
@@ -72,6 +74,7 @@ export function captureSave(s: GameState): SaveData {
     time: s.time,
     selected: s.selected,
     player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing },
+    tent: s.world.tent,
     inventory: Object.fromEntries(s.inventory.entries()),
     hotbar: s.hotbar,
     chunks: s.world.modifiedChunks().map((c) => ({ cx: c.cx, cy: c.cy, ground: toB64(c.ground), levels: c.levels.map(toB64) })),
@@ -101,8 +104,10 @@ export function migrate(raw: unknown): SaveData | null {
       for (const t of ['sword', 'hoe', 'pickaxe', 'shovel', 'axe']) inventory[`tool:${t}`] = 1;
       inventory[`block:${Block.OAK_DOOR}`] = 1;
     }
-    return { ...d, v: SAVE_VERSION, inventory, hotbar: d.world === 'principal' ? startingGrid() : null, selected: null };
+    return { ...d, v: SAVE_VERSION, inventory, hotbar: d.world === 'principal' ? startingGrid() : null, selected: null, tent: null };
   }
+  // v2 → v3: grade da mão com 9 espaços (o 9º vazio) e tenda.
+  if (d.v === 2) return { ...d, v: SAVE_VERSION, hotbar: d.hotbar ? [...d.hotbar.slice(0, 8), null] : null, tent: null };
   return d.v === SAVE_VERSION ? d : null;
 }
 
@@ -113,6 +118,7 @@ export function migrate(raw: unknown): SaveData | null {
 export function applySave(d: SaveData, s: GameState, rand: () => number = Math.random): { time: number; selected: number | null } {
   for (const c of d.chunks) s.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
   s.world.settleWater(); // buracos vizinhos de água voltam a encher
+  s.world.tent = d.tent ?? null;
   const p = s.player;
   p.x = d.player.x;
   p.y = d.player.y;

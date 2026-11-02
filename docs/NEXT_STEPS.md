@@ -21,7 +21,7 @@ _Revisado em 2026-11-02 (v0.28.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | 🔴 | principal **3,01 MB — passou da meta de 3 MB** (o alerta do build mede só o JS e não disparou); Santuário 0,7 MB |
+| Peso dos artefatos | 🔴 | principal **3,07 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -49,8 +49,8 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 ### Fase 3 — Recursos e progressão
 1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;
    morte perde os materiais.
-2. **Receitas — próximo passo** (tora → piso, trigo → pão, seda/presa/Coração da Rainha → ?), interface de criação
-   simples (provavelmente na própria bolsa). Também é o caminho para obter **mais portas** (hoje só a inicial).
+2. ✅ **Receitas** (v0.31.0): Construtor — Tábua, Porta, Tenda (ponto de renascer). Próximas: mais profissões e
+   receitas (trigo → pão? Coração da Rainha → ?), painel do **Personagem** (vida, armaduras — ícone já na grade).
 3. ✅ **Painel de inventário** (bolsa no 9º espaço).
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
 
@@ -76,7 +76,8 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 | Decisão | Afeta |
 |---|---|
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
-| Receitas: quais e onde criar (bolsa? bancada?) | Fase 3 |
+| Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
+| Painel do Personagem: o que mostrar (vida, armaduras, …) | Fase 3/4 |
 | Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
@@ -87,7 +88,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 - **Arte**: (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Peso do artefato principal: 3,01 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
+- **Peso do artefato principal: 3,07 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
   folha grande estoura. Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
   virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
   separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.

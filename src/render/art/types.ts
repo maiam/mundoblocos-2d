@@ -27,7 +27,9 @@ export interface ArtPack {
   itemIcons: Partial<Record<ItemId, string>>;
   /** Água (`extract-water.py`): topo do bloco (chão de água) e quadros de enchimento (4 direções × 4). */
   water?: { top: string; flow: string };
+  /** Tenda (ponto de renascer): ícone da grade e sprite do mundo. */
+  tent?: { icon: string; sprite: string };
   /** Ícones de interface (bolsa do inventário). */
-  uiIcons?: { bag: string };
+  uiIcons?: { bag: string; character: string; skills: string; builder: string };
   toolIcons: Partial<Record<ToolId, string>>;
 }

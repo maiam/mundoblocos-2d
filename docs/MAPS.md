@@ -143,6 +143,7 @@ flowchart LR
 | Geração do mapa/biomas | `world/generator.ts` (`cellAt`), `world/biomes.ts` + `npm run bench` | world |
 | Novo item ou ferramenta | `world/items.ts` (`StackId`, drops), `game/inventory.ts` (começo), `game/hotbar.ts`, `render/art/<mundo>.ts` (ícone) | farming |
 | Água (substituir, encher buracos) | `world/world.ts` (`REPLACES_WATER`, `scheduleFlow/tickWater`), `render/renderer.ts` (`drawWaterFlows`) | world, render |
+| Receita / profissão nova | `world/items.ts` (`RECIPES`, `PROFESSIONS`), ícone em `render/art/<mundo>.ts`; tela em `game/skills.ts` | farming |
 | O que um bloco devolve ao quebrar | `world/items.ts` (`blockDrops/breakDrops`) | farming |
 | Ação de ferramenta / toque / clique | `game/actionController.ts` (`canUseAt/applyUse/advanceHold`), `world/world.ts` | player, farming, MAPS §6 |
 | Arte nova (qualquer) | gerar em `src/assets/`, importar no pacote do mundo `render/art/<mundo>.ts` (+ campo em `types.ts` se for tipo novo) | render, OPERATIONS, ADR 0010 |

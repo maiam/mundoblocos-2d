@@ -178,7 +178,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT]);
 
 /**
  * O que um bloco quebrado devolve como material (mundos com coleta): o próprio material (cubo ou chão;
@@ -204,4 +204,46 @@ export const BREAK_HOLD_TOOL_S = 1;
 /** Quanto tempo segurar para quebrar: ferramenta 1 s, mão ou item 2 s. */
 export function breakSeconds(tool: ToolId | null): number {
   return tool ? BREAK_HOLD_TOOL_S : BREAK_HOLD_HAND_S;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Profissões e receitas (fonte de verdade). A interface fica em game/; aqui só o que cada receita pede e dá.
+// ---------------------------------------------------------------------------------------------
+
+export type ProfessionId = 'builder';
+
+export interface Profession {
+  id: ProfessionId;
+  name: string;
+}
+
+export const PROFESSIONS: Profession[] = [{ id: 'builder', name: 'Construtor' }];
+
+export interface Recipe {
+  id: string;
+  name: string;
+  profession: ProfessionId;
+  inputs: Drop[];
+  output: Drop;
+}
+
+export const RECIPES: Recipe[] = [
+  {
+    id: 'oak-planks', name: 'Tábua de Carvalho', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_LOG), count: 1 }], output: { item: blockStack(Block.OAK_PLANKS), count: 2 },
+  },
+  {
+    id: 'oak-door', name: 'Porta de Carvalho', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.OAK_DOOR), count: 1 },
+  },
+  {
+    id: 'tent', name: 'Tenda', profession: 'builder',
+    inputs: [{ item: Item.SILK, count: 10 }, { item: blockStack(Block.OAK_PLANKS), count: 10 }, { item: Item.FANG, count: 4 }],
+    output: { item: blockStack(Block.TENT), count: 1 },
+  },
+];
+
+/** Há todos os ingredientes? `count(id)` = quantidade carregada. */
+export function canCraft(r: Recipe, count: (id: StackId) => number): boolean {
+  return r.inputs.every((i) => count(i.item) >= i.count);
 }

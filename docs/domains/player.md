@@ -1,6 +1,7 @@
 # Domínio: player (game)
 
-- **Grade**: 8 espaços + bolsa (ver `domains/farming.md`); tocar num espaço seleciona (de novo = mão vazia).
+- **Grade**: 9 itens + Personagem + Habilidades + Bolsa (ver `domains/farming.md`); tocar num item seleciona (de novo =
+  mão vazia). Ao cair, renasce ao lado da última tenda (ou no início).
 - **Ferramentas**: `Player.equipped` = ferramenta do espaço selecionado na hotbar (ou null); muda o sprite
   (`heroine-<ferramenta>`). **Enxada** (folha de ação `heroine-hoe-attack`): toque curto toca a
   animação de arar e troca Terra/Terra com Grama → Terra Arada (`World.till`). Segurar 1 s **quebra só plantas e

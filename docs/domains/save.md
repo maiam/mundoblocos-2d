@@ -3,14 +3,15 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 2)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 3)
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
 | Chunks editados | `World.modifiedChunks()` | chão + 3 níveis em base64; plantações reconstruídas |
 | Heroína | `Player` | posição, nível, vida, direção |
 | Item selecionado, inventário | `Game`, `Inventory` | por `StackId`: itens, espólios, materiais, ferramentas |
-| Grade (8 espaços) | `Hotbar.layout()` | null no Santuário (grade fixa) |
+| Grade (9 itens) | `Hotbar.layout()` | null no Santuário (grade fixa) |
+| Tenda (ponto de renascer) | `World.tent` | — |
 | Ovelhas | `Entities.npcs` | posição, casa, filhote, idade, paixão, espera (namoro em curso não) |
 | Dungeon | `Entities.monsters/respawns` | vivos com vida; renascimentos com o tempo restante |
 | Não salvo | — | itens caídos no chão, animações, mapa de distâncias |
@@ -29,6 +30,7 @@ Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
 
 ## Migrações
 - v1 → v2 (coleta): ganha as ferramentas e 1 porta no inventário e a grade inicial.
+- v2 → v3 (receitas): grade da mão com 9 espaços (9º vazio) e `tent: null`.
 
 ## Regras para quem mexer
 - Estado novo que deva persistir → campo em `SaveData` + `captureSave/applySave` + teste de ida e volta.

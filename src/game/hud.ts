@@ -13,8 +13,8 @@ export interface HudHandlers {
   /** Quantidade de espaços da grade. */
   slots: number;
   onSelect(i: number): void;
-  /** Bolsa no fim da grade (mundo com coleta). */
-  bag?: { icon: string; onOpen(): void };
+  /** Mundo com coleta: personagem (10), habilidades (11) e bolsa (12) depois dos 9 itens, após um separador. */
+  menu?: { character: string; skills: string; bag: string; onSkills(): void; onBag(): void };
   /** Vida máxima em meios corações (0 = sem corações neste mundo). */
   maxHp?: number;
 }
@@ -28,8 +28,12 @@ export class Hud {
   readonly root: HTMLElement;
   private readonly slots: HTMLButtonElement[] = [];
   private readonly bagButton: HTMLButtonElement | null = null;
-  /** Seção da bolsa dentro do cartão da grade (2 fileiras acima da mão), preenchida pelo `BagPanel`. */
+  private readonly skillsButton: HTMLButtonElement | null = null;
+  /** Painel acima dos 9 itens (mesma largura): bolsa ou receitas. */
   readonly bagSection: HTMLElement;
+  readonly recipesSection: HTMLElement;
+  /** Card acima dos 3 botões do menu: profissões. */
+  readonly professionsSection: HTMLElement;
   private selected = -1;
   private views: string[] = [];
   private readonly hearts: HTMLElement;
@@ -39,15 +43,21 @@ export class Hud {
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
-    // Um só cartão: bolsa (oculta até abrir) em cima e a fileira da mão embaixo — mesma largura e mesmos espaços.
+    // Cartão em grade: coluna esquerda = painel de cima (bolsa/receitas) + 9 itens; coluna direita = profissões +
+    // personagem/habilidades/bolsa. Separador vertical entre os 9 itens e os botões.
     const card = document.createElement('nav');
     card.className = 'hotbar';
     card.setAttribute('aria-label', 'Grade');
-    this.bagSection = document.createElement('div');
-    this.bagSection.className = 'bag-section';
-    card.appendChild(this.bagSection);
+    const panel = (cls: string) => { const e = document.createElement('div'); e.className = `panel-section ${cls}`; e.hidden = true; return e; };
+    this.bagSection = panel('bag-section');
+    this.recipesSection = panel('recipes-section');
+    this.professionsSection = panel('professions-section');
+    const top = document.createElement('div');
+    top.className = 'hotbar-top';
+    top.append(this.bagSection, this.recipesSection);
+    card.append(top, this.professionsSection);
     const hotbar = document.createElement('div');
-    hotbar.className = 'hotbar-row';
+    hotbar.className = 'hotbar-row hand';
     card.appendChild(hotbar);
     for (let i = 0; i < h.slots; i++) {
       const b = document.createElement('button');
@@ -57,15 +67,26 @@ export class Hud {
       hotbar.appendChild(b);
       this.slots.push(b);
     }
-    if (h.bag) {
-      const bag = document.createElement('button');
-      bag.className = 'slot bag';
-      bag.title = 'Bolsa (9)';
-      bag.setAttribute('aria-label', 'Abrir ou fechar a bolsa');
-      bag.innerHTML = `<img alt="" src="${h.bag.icon}">`;
-      bag.addEventListener('click', () => h.bag!.onOpen());
-      hotbar.appendChild(bag);
-      this.bagButton = bag;
+    if (h.menu) {
+      const m = h.menu;
+      const menu = document.createElement('div');
+      menu.className = 'hotbar-row menu-row';
+      const btn = (cls: string, icon: string, title: string, label: string, onClick?: () => void) => {
+        const b = document.createElement('button');
+        b.className = `slot ${cls}`;
+        b.title = title;
+        b.setAttribute('aria-label', label);
+        b.innerHTML = `<img alt="" src="${icon}">`;
+        if (onClick) b.addEventListener('click', onClick);
+        else b.setAttribute('aria-disabled', 'true');
+        menu.appendChild(b);
+        return b;
+      };
+      btn('ui character', m.character, 'Personagem (em breve)', 'Personagem (em breve)');
+      this.skillsButton = btn('ui skills', m.skills, 'Habilidades (K)', 'Abrir ou fechar habilidades e receitas', m.onSkills);
+      this.bagButton = btn('ui bag', m.bag, 'Bolsa (B)', 'Abrir ou fechar a bolsa', m.onBag);
+      card.appendChild(menu);
+      card.classList.add('with-menu');
     }
     this.root.appendChild(card);
     this.maxHp = h.maxHp ?? 0;
@@ -109,6 +130,12 @@ export class Hud {
   setBagOpen(open: boolean): void {
     this.bagButton?.classList.toggle('active', open);
     this.root.classList.toggle('bag-open', open);
+  }
+
+  /** Destaca habilidades aberta (receitas + profissões). */
+  setSkillsOpen(open: boolean): void {
+    this.skillsButton?.classList.toggle('active', open);
+    this.root.classList.toggle('skills-open', open);
   }
 
   /** Vida em meios corações; `visible` mostra a fileira (ferida ou na dungeon). */

@@ -37,7 +37,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |
 | Colocar bloco com o mouse (alcance 4,5 células) | clique curto (empilha até 3 cubos) |
 | Abrir/fechar Porta de Carvalho | ação com a porta à frente, ou clique nela (qualquer item em mãos) |
-| Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Piso de Carvalho) ou de Pedra, à esquerda e à direita |
+| Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Tábua de Carvalho) ou de Pedra, à esquerda e à direita |
 | Dungeon (Covil das Aranhas) | labirinto murado perto do início, entrada voltada para você; a Rainha espera no fundo; lá dentro nada quebra — só luta |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem; aranhas perdem vida); não quebra nada |
 | Menu ☰ (canto superior direito) | continuar, novo mundo, recomeçar este mundo; o progresso é salvo sozinho a cada 10 s |
@@ -50,8 +50,10 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Dar trigo à ovelha | trigo selecionado + ação com a ovelha à frente (ou clique nela) |
 | Colher trigo | segurar a ação 2 s (itens caem e são coletados ao chegar perto) |
 | Quebrar bloco ou cavar o chão | segurar o clique / dedo sobre o alvo: 2 s com a mão/item, 1 s com ferramenta |
-| Escolher na grade | 1–8 ou tocar (começa com ferramentas 1–5, semente 6, trigo 7, 8º livre) |
-| Bolsa (inventário) | 9, I ou B, ou tocar na bolsa: 18 espaços acima da grade; toque num item e num espaço da grade para trocar |
+| Escolher na grade | 1–9 ou tocar (começa com ferramentas 1–5, semente 6, trigo 7) |
+| Habilidades (receitas) | K ou tocar no 11º ícone: Construtor — Tábua, Porta e Tenda; tocar na receita cria |
+| Tenda | criada nas receitas; colocada no chão vira o seu ponto de renascer |
+| Bolsa (inventário) | B ou I, ou tocar no 12º ícone: 18 espaços acima da grade (27 com a mão); toque num item e num espaço da grade para trocar |
 | Água | não quebra; qualquer terra (Terra, Grama, Arada, Caminho), Pedra ou Tora a substituem; cavar ao lado da água faz o buraco encher sozinho |
 | Materiais | quebrar solta o bloco para coletar (árvore dá toras); colocar gasta; ao cair, perde os materiais |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |

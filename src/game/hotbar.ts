@@ -12,9 +12,9 @@ export type HotbarSlot =
   | { kind: 'item'; item: ItemId }
   | { kind: 'block'; block: BlockId };
 
-/** Espaços livres da grade em mundo com coleta (o 9º é a bolsa). */
-export const GRID_SLOTS = 8;
-/** Espaços da bolsa: 2 fileiras de 9 acima da grade (com a grade, 3 fileiras de 9 na tela). */
+/** Espaços de item da grade da mão em mundo com coleta (depois deles: personagem, habilidades e bolsa). */
+export const GRID_SLOTS = 9;
+/** Espaços da bolsa: 2 fileiras de 9 acima da grade (com a mão, 27 itens: 3 fileiras de 9). */
 export const BAG_SLOTS = 18;
 /** Tipos de item que a heroína carrega ao todo (mão + bolsa). */
 export const CARRY_LIMIT = GRID_SLOTS + BAG_SLOTS;
@@ -60,9 +60,9 @@ export function hotbarFor(profile: WorldProfile): HotbarSlot[] {
   ];
 }
 
-/** Grade inicial do mundo com coleta: ferramentas 1–5, semente 6, trigo 7, 8º livre (a porta começa na bolsa). */
+/** Grade inicial do mundo com coleta: ferramentas 1–5, semente 6, trigo 7, 8º e 9º livres (a porta vai na bolsa). */
 export function startingGrid(): (StackId | null)[] {
-  return [...TOOL_ORDER.map(toolStack), Item.WHEAT_SEED, Item.WHEAT, null];
+  return [...TOOL_ORDER.map(toolStack), Item.WHEAT_SEED, Item.WHEAT, null, null];
 }
 
 /**

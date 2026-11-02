@@ -22,6 +22,8 @@ export interface DungeonArt {
 let dungeon: DungeonArt | null = null;
 /** Água: topo do bloco e quadros de enchimento (null = água procedural, ex.: mundos sem a arte). */
 let water: { top: HTMLImageElement; flow: HTMLImageElement } | null = null;
+/** Tenda (sprite do mundo). */
+let tent: HTMLImageElement | null = null;
 
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -39,6 +41,7 @@ export async function loadBlockArt(): Promise<void> {
   const a = art();
   const d = a.dungeon;
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
+  if (a.tent) tent = await load(a.tent.sprite);
   if (a.water) {
     const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
     water = { top, flow };
@@ -68,4 +71,8 @@ export function getDungeonArt(): DungeonArt | null {
 
 export function getWaterArt(): { top: HTMLImageElement; flow: HTMLImageElement } | null {
   return water;
+}
+
+export function getTentSprite(): HTMLImageElement | null {
+  return tent;
 }

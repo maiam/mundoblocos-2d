@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
-import { blockDrops, blockStack, breakDrops, toolStack } from '../world/items';
+import { blockDrops, blockStack, breakDrops, canCraft, PROFESSIONS, RECIPES, toolStack } from '../world/items';
 import { WORLD_PROFILES } from '../world/profiles';
 import { mulberry32 } from '../world/random';
 import { BAG_SLOTS, bagHasRoom, bagStacks, CARRY_LIMIT, canCarry, GRID_SLOTS, Hotbar, startingGrid } from './hotbar';
@@ -23,7 +23,7 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(breakDrops(null, Block.STONE, false, r)).toEqual([]); // mundo sem coleta
   });
 
-  it('começa com ferramentas, semente, trigo e 1 porta (na bolsa); grade 8 espaços + bolsa', () => {
+  it('começa com ferramentas, semente, trigo e 1 porta (na bolsa); grade de 9 itens', () => {
     const inv = new Inventory();
     expect(inv.count(toolStack('pickaxe'))).toBe(1);
     expect(inv.count(blockStack(Block.OAK_DOOR))).toBe(1);
@@ -40,6 +40,8 @@ describe('Coleta de materiais (Fase 3)', () => {
     const grid = new Hotbar(WORLD_PROFILES.principal);
     inv.add(blockStack(Block.DIRT), 3);
     expect(grid.autoPlace(blockStack(Block.DIRT))).toBe(7); // 8º espaço livre
+    inv.add(blockStack(Block.SAND));
+    expect(grid.autoPlace(blockStack(Block.SAND))).toBe(8); // 9º espaço livre
     inv.add(blockStack(Block.STONE));
     expect(grid.autoPlace(blockStack(Block.STONE))).toBe(-1); // grade cheia → bolsa
     expect(grid.autoPlace(blockStack(Block.DIRT))).toBe(7); // já está na grade: soma lá
@@ -76,22 +78,39 @@ describe('Coleta de materiais (Fase 3)', () => {
 
   it('bolsa com 18 espaços (3 fileiras de 9 contando a mão): tipo novo só entra se houver lugar', () => {
     expect(BAG_SLOTS).toBe(18);
-    expect(CARRY_LIMIT).toBe(26); // 8 na mão + 18 na bolsa
+    expect(CARRY_LIMIT).toBe(27); // 9 na mão + 18 na bolsa
     const inv = new Inventory();
     const grid = new Hotbar(WORLD_PROFILES.principal);
     expect(bagStacks(inv, grid)).toEqual([blockStack(Block.OAK_DOOR)]); // a porta começa na bolsa
-    // Com o 8º espaço da mão livre, tipo novo cabe (vai para a mão) mesmo com a bolsa cheia.
+    // Com espaços da mão livres (8º e 9º), tipo novo cabe (vai para a mão) mesmo com a bolsa cheia.
     let id = 200;
     while (bagStacks(inv, grid).length < BAG_SLOTS) inv.add(blockStack(id++ as never), 1);
-    expect(canCarry(inv, grid, blockStack(Block.STONE))).toBe(true);
-    inv.add(blockStack(Block.STONE));
-    grid.autoPlace(blockStack(Block.STONE));
+    for (const b of [Block.STONE, Block.DIRT]) {
+      expect(canCarry(inv, grid, blockStack(b))).toBe(true);
+      inv.add(blockStack(b));
+      grid.autoPlace(blockStack(b));
+    }
     // Mão e bolsa cheias: tipo novo não cabe (fica no chão); pilha que ela já tem sempre soma.
     expect(inv.entries().length).toBe(CARRY_LIMIT);
     expect(canCarry(inv, grid, blockStack(Block.SAND))).toBe(false);
     expect(canCarry(inv, grid, 'wheat')).toBe(true);
     expect(bagHasRoom(inv, grid)).toBe(false); // não dá para guardar um item da mão na bolsa
     expect(bagStacks(inv, grid)).toHaveLength(BAG_SLOTS);
+  });
+
+  it('receitas do Construtor: tora → 2 tábuas, 4 tábuas → porta, 10 sedas + 10 tábuas + 4 presas → tenda', () => {
+    const byId = Object.fromEntries(RECIPES.map((r) => [r.id, r]));
+    expect(byId['oak-planks'].output).toEqual({ item: blockStack(Block.OAK_PLANKS), count: 2 });
+    expect(byId['oak-door'].inputs).toEqual([{ item: blockStack(Block.OAK_PLANKS), count: 4 }]);
+    expect(byId.tent.output.item).toBe(blockStack(Block.TENT));
+    expect(RECIPES.every((r) => PROFESSIONS.some((p) => p.id === r.profession))).toBe(true);
+    const inv = new Inventory({ [blockStack(Block.OAK_LOG)]: 1, silk: 10, fang: 4 });
+    const c = (id: Parameters<typeof inv.count>[0]) => inv.count(id);
+    expect(canCraft(byId['oak-planks'], c)).toBe(true);
+    expect(canCraft(byId['oak-door'], c)).toBe(false);
+    expect(canCraft(byId.tent, c)).toBe(false);
+    inv.add(blockStack(Block.OAK_PLANKS), 10);
+    expect(canCraft(byId.tent, c)).toBe(true);
   });
 });
 

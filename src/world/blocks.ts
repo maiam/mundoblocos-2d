@@ -28,6 +28,8 @@ export const Block = {
   OAK_DOOR: 28,
   /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
   OAK_DOOR_OPEN: 29,
+  /** Tenda: ponto de renascer (criada por receita). */
+  TENT: 30,
   CACTUS: 31,
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
@@ -147,9 +149,10 @@ const defs: BlockDef[] = [
   object(Block.SAND, 'Areia', { soft: true }),
   object(Block.STONE, 'Pedra'),
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
-  object(Block.OAK_PLANKS, 'Piso de Carvalho', { organic: 'wood' }),
+  object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
+  object(Block.TENT, 'Tenda', { shape: 'rock' }),
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -227,7 +230,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 ];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
-export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR];
+export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT];
 
 /** Porta (aberta ou fechada)? */
 export function isDoor(id: BlockId): boolean {

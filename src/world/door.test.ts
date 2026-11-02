@@ -86,3 +86,19 @@ describe('Porta de Carvalho', () => {
     expect(w.isWalkable(x, y)).toBe(true);
   });
 });
+
+describe('Tenda', () => {
+  it('colocada vira o ponto de renascer (ao lado dela); quebrada, volta o início', () => {
+    const w = new World(7);
+    const [sx, sy] = w.findSpawn();
+    const [x, y] = [sx + 3, sy];
+    while (w.topBlock(x, y)) w.breakBlock(x, y);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) while (w.topBlock(x + dx, y + dy)) w.breakBlock(x + dx, y + dy);
+    expect(w.placeBlock(x, y, Block.TENT)).toBe(true);
+    expect(w.standHeight(x, y)).toBeNull(); // bloqueia
+    const [rx, ry] = w.respawnPoint();
+    expect(Math.abs(rx - x) + Math.abs(ry - y)).toBeLessThanOrEqual(2);
+    expect(w.breakBlock(x, y)).toBe(Block.TENT);
+    expect(w.respawnPoint()).toEqual([sx, sy]);
+  });
+});

@@ -367,7 +367,7 @@ export class World {
 
   // ---- Portas ----
 
-  /** Cubo de madeira (Tora ou Piso de Carvalho) ou de Pedra no nível 0 — serve de batente para a porta. */
+  /** Cubo de madeira (Tora ou Tábua de Carvalho) ou de Pedra no nível 0 — serve de batente para a porta. */
   private isDoorJamb(x: number, y: number): boolean {
     const d = blockDef(this.getObject(x, y));
     return d.shape === 'cube' && (d.organic === 'wood' || d.id === Block.STONE);
@@ -405,7 +405,23 @@ export class World {
     const level = this.placementLevel(x, y, id);
     if (level === null) return false;
     this.setLevel(x, y, level, id);
+    if (id === Block.TENT) this.tent = [x, y];
     return true;
+  }
+
+  /** Última tenda colocada (ponto de renascer), se ainda estiver de pé. */
+  tent: [number, number] | null = null;
+
+  /** Onde renascer: ao lado da última tenda (se ainda existir), senão o início. */
+  respawnPoint(): [number, number] {
+    const t = this.tent;
+    if (t && this.getObject(t[0], t[1]) === Block.TENT) {
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1], [1, 1], [-1, 1]]) {
+        if (this.isWalkable(t[0] + dx, t[1] + dy)) return [t[0] + dx, t[1] + dy];
+      }
+    }
+    this.tent = null;
+    return this.findSpawn();
   }
 
   /**

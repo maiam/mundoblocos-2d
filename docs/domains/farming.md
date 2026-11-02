@@ -23,18 +23,33 @@
 
 ## Inventário e grade (`game/inventory.ts`, `game/hotbar.ts`, `game/bag.ts`)
 - **Inventário**: pilhas por `StackId`, sem limite de quantidade. Começo: 5 ferramentas, 5 sementes, 2 trigos, 1 Porta de Carvalho.
-- **Grade**: 8 espaços + **bolsa** no 9º (tecla 9, I ou B). Começa com ferramentas 1–5, semente 6, trigo 7 e o 8º
-  livre (a porta começa na bolsa). Coletado vai para a grade se já estiver nela ou houver espaço livre; senão, bolsa.
-  Pilha que acaba libera o espaço (`Hotbar.prune`).
-- **Bolsa**: **18 espaços** (2 fileiras de 9) que abrem dentro do mesmo cartão da grade, acima dela — com a mão, 3
+- **Grade da mão** (12 espaços): **9 itens** (teclas 1–9) · separador duplo · **10 Personagem** (ícone, sem ação ainda;
+  tecla C reservada) · **11 Habilidades** (K) · **12 Bolsa** (B/I). Começa com ferramentas 1–5, semente 6, trigo 7,
+  8º e 9º livres (a porta começa na bolsa). Coletado vai para a mão se já estiver nela ou houver espaço livre; senão,
+  bolsa. Pilha que acaba libera o espaço (`Hotbar.prune`).
+- **Bolsa**: **18 espaços** (2 fileiras de 9; com os 9 da mão, **27 itens**) que abrem dentro do mesmo cartão da grade, acima dela — com a mão, 3
   fileiras de 9 do mesmo tamanho; só o título "Bolsa". Mostra o que a heroína carrega e não está na grade. Toque num
   item e depois num espaço da grade → coloca lá (o que estava volta para a bolsa; se já estava em outro espaço,
   trocam). Sem item escolhido, tocar num espaço da grade guarda-o na bolsa (se houver lugar). Pausa o jogo; fecha
   pelo ícone da bolsa, tecla 9/I/B ou Esc.
 - **Capacidade** (`canCarry`): pilha que ela já tem sempre soma (sem limite); tipo novo entra num espaço vazio da mão
-  ou na bolsa, se houver lugar — senão fica no chão até liberar espaço. No máximo 26 tipos (8 + 18).
+  ou na bolsa, se houver lugar — senão fica no chão até liberar espaço. No máximo 27 tipos (9 + 18).
 - **Morte**: perde **todos os materiais** (`Inventory.dropMaterials`); ferramentas, sementes, trigo e espólios ficam.
-- Receitas: próximo passo (Fase 3 seguinte).
+
+## Habilidades: profissões e receitas (`world/items.ts` → `PROFESSIONS`, `RECIPES`; tela em `game/skills.ts`)
+- Botão **Habilidades** (11º, tecla K): sobem acima da grade **Receitas** (4 fileiras de 9, alinhadas aos 9 itens) e,
+  à direita, **Profissões** (4 fileiras de 2, sobre os 3 botões). Um painel por vez (bolsa ou habilidades); pausa.
+- Profissão: **Construtor** (única por enquanto). Receitas do Construtor:
+
+  | Receita | Ingredientes | Resultado |
+  |---|---|---|
+  | Tábua de Carvalho | 1 Tora de Carvalho | 2 Tábuas |
+  | Porta de Carvalho | 4 Tábuas | 1 Porta |
+  | Tenda | 10 Sedas + 10 Tábuas + 4 Presas | 1 Tenda |
+- **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
+  no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
+- **Tenda** (`Block.TENT`): colocada no chão (bloqueia, devolve a tenda ao quebrar). A última colocada é o **ponto de
+  renascer** (`World.tent`, `respawnPoint`: célula livre ao lado dela; quebrada → volta o início). Salva (save v3).
 - `Semente de Trigo` (planta `WHEAT_0`) e `Trigo` (alimenta ovelhas).
 - `dropsFor(bloco)`: trigo maduro → 1 trigo + 1–2 sementes; trigo verde → devolve 1 semente; demais blocos → nada.
 - **Espólios** (`loot: true`, `LOOT_ITEMS`): Seda de Aranha, Presa de Aranha, Coração da Rainha — sem uso ainda

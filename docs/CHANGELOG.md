@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.31.0 — 2026-11-02 (Fase 3 — receitas)
+- **Grade de 12**: 9 itens (1–9) · separador duplo · **Personagem** (ícone, ação em breve) · **Habilidades** (K) ·
+  **Bolsa** (B/I). A bolsa passa a guardar **27 itens** (9 na mão + 18).
+- **Habilidades**: acima da grade, **Receitas** (4×9, alinhadas aos 9 itens) e, à direita, **Profissões** (4×2).
+  Profissão **Construtor** com 3 receitas — Tábua de Carvalho (1 tora → 2), Porta de Carvalho (4 tábuas → 1), **Tenda**
+  (10 sedas + 10 tábuas + 4 presas). Tocar cria 1; sem ingredientes, a receita fica apagada.
+- **Tenda**: colocada no chão, vira o **ponto de renascer** (ao lado da última tenda; quebrada, volta o início).
+- **Nova arte da Tábua de Carvalho** (prancha fornecida; o bloco "Piso de Carvalho" passa a se chamar Tábua de
+  Carvalho) e ícones de Personagem, Habilidades, Construtor e Tenda. `scripts/extract-ui.py`. Salvamento v3 (grade de 9
+  + tenda; migra a v2). 3 testes novos (100).
+
 ## 0.30.0 — 2026-11-02
 - **Novo visual da bolsa**: abre dentro do mesmo cartão da grade — 2 fileiras de 9 espaços acima da mão, do mesmo
   tamanho e largura dos 9 da grade (3 fileiras de 9 no total). Só o título "Bolsa" (sem textos de ajuda nem ✕).

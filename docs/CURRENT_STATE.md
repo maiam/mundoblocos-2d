@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.30.0_
+_Atualizado em 2026-11-02 — v0.31.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -13,7 +13,7 @@ _Atualizado em 2026-11-02 — v0.30.0_
   longe (chunks editados ficam em memória).
 - Vista superior inclinada (3/4): chão + cubos com topo e frente; árvores altas; ordenação por profundidade.
 - **8 materiais** (prancha 3/4 fornecida): Terra, Terra com Grama, Terra Arada, Caminho de Terra, Areia, Pedra,
-  Tora de Carvalho, Piso de Carvalho. São os únicos blocos de construção e também o chão natural.
+  Tora de Carvalho, Tábua de Carvalho. São os únicos blocos de construção e também o chão natural.
 - Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
 - **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto do spawn, com
@@ -35,7 +35,8 @@ _Atualizado em 2026-11-02 — v0.30.0_
   segurar quebra (2 s com a mão/item, **1 s com ferramenta**). Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
 - Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar quebra: 2 s mão, 1 s ferramenta), Q/E/roda = zoom.
 - Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
-- Tela limpa: a grade de **8 espaços + bolsa** (começa com ferramentas 1–5, semente 6, trigo 7, 8º livre); corações
+- Tela limpa: grade de **12** — 9 itens · Personagem (sem ação ainda) · Habilidades · Bolsa (começa com ferramentas
+  1–5, semente 6, trigo 7); corações
   só quando importam; menu ☰.
 
 ## Sistemas
@@ -45,9 +46,11 @@ _Atualizado em 2026-11-02 — v0.30.0_
   (animação de cavar) amassa Terra/Grama/Arada → Caminho de Terra e, segurando, cava só blocos macios (terra, areia…)
   e destrói plantas **sem drop**; não ataca; a **picareta** (animação de minerar), segurando, quebra qualquer
   bloco e plantas (sem drop), menos madeira/árvore; não ataca.
-- **Porta de Carvalho**: colocada no chão **entre dois batentes de madeira ou pedra** (Tora/Piso de Carvalho ou Pedra à esquerda e à
+- **Porta de Carvalho**: colocada no chão **entre dois batentes de madeira ou pedra** (Tora/Tábua de Carvalho ou Pedra à esquerda e à
   direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
+- **Habilidades** (Construtor): receitas de Tábua (1 tora → 2), Porta (4 tábuas) e Tenda (10 sedas + 10 tábuas + 4
+  presas) — tocar cria. **Tenda** = ponto de renascer. Bolsa com 27 itens (9 na mão + 18).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
 - **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
@@ -76,6 +79,6 @@ _Atualizado em 2026-11-02 — v0.30.0_
 - 88 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,01 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,07 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

@@ -357,19 +357,41 @@ html, body {
 /* Grade com coleta: espaço vazio e bolsa (9º). */
 .slot.vacant { background: rgba(255, 255, 255, 0.03); border-style: dashed; }
 .slot img[hidden] { display: none; }
-.slot.bag { border-color: rgba(255, 212, 107, 0.45); }
-.hud.bag-open .hotbar > .hotbar-row .slot:not(.bag) { border-color: rgba(195, 140, 255, 0.85); }
-
-/* Bolsa: 2 fileiras de 9 dentro do mesmo cartão da grade (mesma largura e mesmos espaços da mão). */
-.hotbar { flex-direction: column; }
+/*
+ * Cartão da grade em 2 colunas: esquerda = painel de cima (bolsa 2×9 ou receitas 4×9) + 9 itens da mão;
+ * direita = profissões (4×2) + personagem/habilidades/bolsa. Separador duplo entre os 9 itens e o menu.
+ */
+.hotbar { display: grid; grid-template-columns: auto; align-items: end; }
+.hotbar.with-menu { grid-template-columns: auto auto; }
+.hotbar-top { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: inherit; }
+.hotbar-top:not(:has(.panel-section:not([hidden]))) { display: none; }
+.professions-section { grid-column: 2; grid-row: 1; }
 .hotbar-row { display: flex; gap: inherit; }
-.bag-section { display: flex; flex-direction: column; gap: inherit; padding-bottom: 4px; margin-bottom: 2px; border-bottom: 1px solid var(--panel-border); }
-.bag-section[hidden] { display: none; }
-.bag-section h2 { margin: 0 0 2px 4px; font-size: 15px; font-weight: 800; color: var(--accent); }
+.hotbar-row.hand { grid-column: 1; grid-row: 2; }
+.menu-row { grid-column: 2; grid-row: 2; padding-left: 10px; margin-left: 2px; position: relative; }
+.menu-row::before {
+  content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 5px;
+  border-left: 1.5px solid var(--panel-border); border-right: 1.5px solid var(--panel-border);
+}
+.panel-section { display: flex; flex-direction: column; gap: inherit; padding-bottom: 4px; margin-bottom: 2px; border-bottom: 1px solid var(--panel-border); }
+.panel-section[hidden] { display: none; }
+.professions-section { padding-left: 12px; align-self: end; }
+.panel-section h2 { margin: 0 0 2px 4px; font-size: 15px; font-weight: 800; color: var(--accent); }
+.slot.ui { border-color: rgba(255, 212, 107, 0.45); padding: 3px; }
+.slot.ui[aria-disabled='true'] { cursor: default; }
+.slot.unavailable img { opacity: 0.35; filter: grayscale(0.7); }
 .slot.picked { border-color: var(--accent); background: rgba(255, 212, 107, 0.22); box-shadow: 0 0 12px rgba(255, 212, 107, 0.6); }
+.hud.bag-open .hotbar-row.hand .slot { border-color: rgba(195, 140, 255, 0.85); }
 @media (max-height: 500px) and (orientation: landscape) {
-  .bag-section h2 { font-size: 13px; margin-bottom: 0; }
+  .panel-section h2 { font-size: 12px; margin-bottom: 0; }
+  .menu-row { padding-left: 7px; }
+  .professions-section { padding-left: 8px; }
+}
+/* Telas baixas: 4 fileiras de receitas + mão precisam caber (~360 px). */
+@media (max-height: 420px) and (orientation: landscape) {
+  .hud.skills-open .slot { width: 30px; height: 30px; padding: 2px; }
 }
 
 /* Bolsa aberta (jogo pausado): joystick e botão de ação saem da frente do painel. */
-.hud.bag-open .joystick, .hud.bag-open .action-button { visibility: hidden; }
+.hud.bag-open .joystick, .hud.bag-open .action-button,
+.hud.skills-open .joystick, .hud.skills-open .action-button { visibility: hidden; }
