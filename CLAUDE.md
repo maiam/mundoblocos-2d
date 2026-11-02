@@ -19,8 +19,10 @@ operacional e faz parte da entrega.
   terreno não editado → `WorldGenerator` (função pura da seed); propriedades de bloco → `world/blocks.ts`;
   itens/ferramentas/drops → `world/items.ts`; aparência → `src/render/`.
 - `src/world/` **não usa DOM nem `Math.random()`** (testável em Node, determinístico por seed).
-- `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `Game` por célula
+- `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula
   (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; cursor e botão de ação só escolhem a célula.
+- **Arte por mundo:** `?inline` só em `src/render/art/<mundo>.ts` (ADR 0010); nunca importe arte direto em
+  módulos de render — senão o artefato do outro mundo volta a carregá-la.
 - Toda entidade que anda estende `Walker`; colisão com o mapa sempre via `World.standHeight`.
 - Jogo **horizontal**; layout deve caber em paisagem com ~360 px de altura e respeitar safe-area.
 - Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**.
@@ -37,7 +39,7 @@ npx tsc --noEmit            # typecheck
 npm run bench               # benchmarks de geração/leitura de chunks
 npm run build:artifact      # mundo principal → artifact/mundoblocos.html (publicar = mesma URL)
 npm run build:artifact:santuario   # Santuário → artifact/santuario.html (rode o build do mundo antes de publicá-lo)
-python3 scripts/optimize-assets.py   # SEMPRE após gerar sprites/atlas (PNG → WebP)
+python3 scripts/optimize-assets.py   # SEMPRE após gerar sprites/atlas (PNG → WebP q84); --recompress regrava WebP grandes
 ```
 Pipeline completo de assets: `docs/OPERATIONS.md`.
 

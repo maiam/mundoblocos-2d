@@ -20,8 +20,8 @@ bench/perf.bench.ts            benchmarks (npm run bench)
 public/                        manifest PWA + ícones
 src/
   config.ts                    TILE, CUBE_FRONT, CHUNK_SIZE, MAX_STACK, STEP_HEIGHT, orçamentos
-  main.ts                      escolhe o mundo (perfil), carrega a arte, lê ?seed=, cria o Game (__game só no dev)
-  assets/*.webp                sprites, atlas e ícones (importados com ?inline)
+  main.ts                      escolhe o mundo (perfil), carrega o pacote de arte e as imagens de bloco, lê ?seed=, cria o Game (__game só no dev)
+  assets/*.webp                sprites, atlas e ícones (importados com ?inline só pelos pacotes em render/art/)
   world/   domínio — sem DOM, sem Math.random
     random.ts, noise.ts        PRNG/hash e Perlin + fBm com seed
     blocks.ts                  registro de blocos (MATERIALS, formas, camadas, trigo 60–75)
@@ -36,7 +36,8 @@ src/
     world.ts                   World(seed, perfil): limites, chunks, standHeight, quebrar/colocar/plantar, tick, spawn
     items.ts                   itens contáveis, ferramentas, dropsFor
   render/  apresentação — só lê o mundo
-    blockArt.ts                carrega os atlas e a folha da porta antes do jogo
+    art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
+    blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
     textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
@@ -45,7 +46,8 @@ src/
     daycycle.ts, particles.ts, color.ts
     renderer.ts                frame + pick (objeto sob o cursor)
   game/    orquestração e entidades
-    game.ts                    loop, entrada, alvos, regras de ação por célula, quebra segurando
+    game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
+    actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render
     walker.ts → player.ts, sheep.ts, monster.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe/vida, atores p/ render
     inventory.ts, hotbar.ts, drops.ts
@@ -64,6 +66,7 @@ Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 ## Regras de dependência
 - `world/` não importa `render/` nem `game/`; não usa DOM; aleatoriedade só por seed.
 - `render/` só lê o mundo (e tipos de `game/`). `game/` orquestra; regra de domínio fica em `world/`.
+- Arte (`?inline`) só em `render/art/<mundo>.ts`; o resto do código lê o pacote carregado (`art()`).
 - Sem backend; persistência futura via core.
 
 ## Desempenho
@@ -74,7 +77,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único, cada mundo) | ~3,84 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
+| Artefato (HTML único, cada mundo) | principal ~2,63 MB, Santuário ~0,68 MB (arte por mundo, ADR 0010) | aviso do build acima de 2,8 MB |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

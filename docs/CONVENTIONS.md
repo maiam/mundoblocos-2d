@@ -23,7 +23,7 @@
 - Mundo limitado: fora dos limites é `VOID`; nada carrega fora (`clampRect`). Blocos colocáveis = `profile.blocks`.
 
 ## Jogo
-- Regra de ação do jogador por célula no `Game` (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; a
+- Regra de ação do jogador por célula no `ActionController` (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; a
   origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.
 - Itens contáveis em `world/items.ts`; quantidades em `game/inventory.ts`; materiais são infinitos; o que um
   bloco devolve vem de `dropsFor`.
@@ -45,7 +45,8 @@
   ordem dos nomes de `extract-blocks.py`.
 - Sprites de objeto: `ox/oy` relativos ao canto da célula; base do sprite = base da célula (ordenação por linha).
   Cubos: topo `TILE`, frente `CUBE_FRONT`.
-- O código importa só `src/assets/*.webp?inline`; depois de gerar PNG, rodar `scripts/optimize-assets.py`.
+- `src/assets/*.webp?inline` só é importado nos pacotes de arte (`render/art/principal.ts`, `santuario.ts`): arte nova
+  entra no pacote do mundo que a usa. Depois de gerar PNG, rodar `scripts/optimize-assets.py`.
 - Originais ficam em `assets-src/` (versionados) e os comandos de processamento em `OPERATIONS.md`.
 
 ## Documentação

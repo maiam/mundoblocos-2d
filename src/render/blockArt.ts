@@ -1,16 +1,9 @@
-import atlasUrl from '../assets/blocks-atlas.webp?inline';
-import celestialAtlasUrl from '../assets/celestial-atlas.webp?inline';
-import oakDoorUrl from '../assets/oak-door.webp?inline';
-import dungeonGroundUrl from '../assets/dungeon-ground.webp?inline';
-import dungeonMountainsUrl from '../assets/dungeon-mountains.webp?inline';
-import dungeonPropsUrl from '../assets/dungeon-props.webp?inline';
-import dungeonRocksUrl from '../assets/dungeon-rocks.webp?inline';
-import dungeonWallsUrl from '../assets/dungeon-walls.webp?inline';
+import { art } from './art';
 
 /**
- * Atlas dos blocos (scripts/extract-blocks.py): materiais do mundo principal e blocos
- * celestiais do Santuário. Carregados uma vez antes do jogo começar, para que chão e
- * cubos já nasçam com a arte (sem trocar de visual depois).
+ * Imagens de blocos carregadas antes do jogo começar (para chão e cubos já nascerem com a arte), a partir do
+ * pacote de arte do mundo (`render/art`): atlas dos materiais (scripts/extract-blocks.py), atlas celestial,
+ * folha da porta e arte da dungeon. Só o que o pacote traz é carregado; o resto fica null.
  * Layout de cada atlas: linha 0 = topo do cubo (64×64), linha 1 = frente (64×36),
  * linha 2 = topo contínuo para o chão (64×64); uma coluna por bloco.
  */
@@ -18,7 +11,7 @@ let atlas: HTMLImageElement | null = null;
 let celestial: HTMLImageElement | null = null;
 /** Porta de Carvalho: 8 quadros (4×2) — 0..3 abrindo, 4..7 fechando (scripts/process-sprite.py). */
 let oakDoor: HTMLImageElement | null = null;
-/** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras e blocos decorados. */
+/** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras, blocos decorados e paredes. */
 export interface DungeonArt {
   ground: HTMLImageElement;
   mountains: HTMLImageElement;
@@ -37,30 +30,32 @@ function load(url: string): Promise<HTMLImageElement> {
   });
 }
 
+const maybe = (url: string | undefined) => (url ? load(url) : Promise.resolve(null));
+
+/** Carrega as imagens de bloco do pacote de arte já carregado (`loadArtPack`). */
 export async function loadBlockArt(): Promise<void> {
-  if (atlas && celestial && oakDoor && dungeon) return;
-  const [a, c, d, g, m, r, p, w] = await Promise.all([atlasUrl, celestialAtlasUrl, oakDoorUrl, dungeonGroundUrl,
-    dungeonMountainsUrl, dungeonRocksUrl, dungeonPropsUrl, dungeonWallsUrl].map(load));
-  [atlas, celestial, oakDoor] = [a, c, d];
-  dungeon = { ground: g, mountains: m, rocks: r, props: p, walls: w };
+  const a = art();
+  const d = a.dungeon;
+  [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
+  if (d) {
+    const [ground, mountains, rocks, props, walls] = await Promise.all([d.ground, d.mountains, d.rocks, d.props, d.walls].map(load));
+    dungeon = { ground, mountains, rocks, props, walls };
+  }
 }
 
-export function getBlockAtlas(): HTMLImageElement {
-  if (!atlas) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
+/** Atlas dos materiais (null se o mundo não tem materiais). */
+export function getBlockAtlas(): HTMLImageElement | null {
   return atlas;
 }
 
-export function getCelestialAtlas(): HTMLImageElement {
-  if (!celestial) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
+export function getCelestialAtlas(): HTMLImageElement | null {
   return celestial;
 }
 
-export function getOakDoorSheet(): HTMLImageElement {
-  if (!oakDoor) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
+export function getOakDoorSheet(): HTMLImageElement | null {
   return oakDoor;
 }
 
-export function getDungeonArt(): DungeonArt {
-  if (!dungeon) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
+export function getDungeonArt(): DungeonArt | null {
   return dungeon;
 }

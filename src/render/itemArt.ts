@@ -1,30 +1,18 @@
-import axeIconUrl from '../assets/icon-axe.webp?inline';
-import hoeIconUrl from '../assets/icon-hoe.webp?inline';
-import pickaxeIconUrl from '../assets/icon-pickaxe.webp?inline';
-import shovelIconUrl from '../assets/icon-shovel.webp?inline';
-import swordIconUrl from '../assets/icon-sword.webp?inline';
-import seedIconUrl from '../assets/icon-wheat-seed.webp?inline';
-import wheatIconUrl from '../assets/icon-wheat.webp?inline';
-import cropUrl from '../assets/wheat-crop.webp?inline';
 import { TILE } from '../config';
 import { WHEAT_FIRST, WHEAT_STAGES } from '../world/blocks';
 import type { ItemId, ToolId } from '../world/items';
+import { art } from './art';
 import { TEX_RES, type Sprite } from './textures';
 
-/** Ícones dos itens (hotbar e itens caídos). */
-export const ITEM_ICON_URLS: Record<ItemId, string> = {
-  wheat_seed: seedIconUrl,
-  wheat: wheatIconUrl,
-};
+/** Ícone de um item (hotbar e itens caídos), do pacote de arte do mundo ('' se o mundo não tem o item). */
+export function itemIconUrl(id: ItemId): string {
+  return art().itemIcons[id] ?? '';
+}
 
-/** Ícones das ferramentas (hotbar). */
-export const TOOL_ICON_URLS: Record<ToolId, string> = {
-  sword: swordIconUrl,
-  hoe: hoeIconUrl,
-  pickaxe: pickaxeIconUrl,
-  shovel: shovelIconUrl,
-  axe: axeIconUrl,
-};
+/** Ícone de uma ferramenta (hotbar), do pacote de arte do mundo. */
+export function toolIconUrl(id: ToolId): string {
+  return art().toolIcons[id] ?? '';
+}
 
 /** Lado do quadro do trigo em células (quadro quadrado; a planta madura ocupa ~1,2 célula). */
 const CROP_W = 1.25;
@@ -36,6 +24,8 @@ const CROP_BASE = 0.8;
  * sprite por estágio no mapa de objetos. Até carregar, o trigo simplesmente não aparece.
  */
 export function loadCropSprites(objects: Map<number, Sprite>): void {
+  const url = art().wheatCrop;
+  if (!url) return; // mundo sem cultivo
   const img = new Image();
   img.onload = () => {
     const fw = img.width / 4;
@@ -58,7 +48,7 @@ export function loadCropSprites(objects: Map<number, Sprite>): void {
       });
     }
   };
-  img.src = cropUrl;
+  img.src = url;
 }
 
 /** Imagens dos ícones para desenhar itens caídos no canvas. */
@@ -66,7 +56,7 @@ export class ItemIcons {
   private readonly imgs = new Map<ItemId, HTMLImageElement>();
 
   constructor() {
-    for (const [id, url] of Object.entries(ITEM_ICON_URLS) as [ItemId, string][]) {
+    for (const [id, url] of Object.entries(art().itemIcons) as [ItemId, string][]) {
       const img = new Image();
       img.src = url;
       this.imgs.set(id, img);

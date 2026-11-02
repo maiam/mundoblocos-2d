@@ -1,16 +1,9 @@
-import dirtIcon from '../assets/icon-block-dirt.webp?inline';
-import grassIcon from '../assets/icon-block-grass.webp?inline';
-import oakLogIcon from '../assets/icon-block-oak-log.webp?inline';
-import oakPlanksIcon from '../assets/icon-block-oak-planks.webp?inline';
-import pathIcon from '../assets/icon-block-path.webp?inline';
-import sandIcon from '../assets/icon-block-sand.webp?inline';
-import stoneIcon from '../assets/icon-block-stone.webp?inline';
-import tilledIcon from '../assets/icon-block-tilled.webp?inline';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
-import { getBlockAtlas, getDungeonArt, getOakDoorSheet } from './blockArt';
-import { CELESTIAL_ICONS, celestialFaces, CELESTIAL_STYLE } from './celestialArt';
+import { art } from './art';
+import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet } from './blockArt';
+import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
 /**
@@ -85,7 +78,7 @@ function shadeSprite(s: Sprite, color: string): Sprite {
 }
 
 function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>, stackDraw: Map<BlockId, number>): void {
-  const art = getDungeonArt();
+  const art = getDungeonArt()!;
   [Block.DUNGEON_DIRT, Block.DUNGEON_WEB, Block.DUNGEON_BONES, Block.DUNGEON_MOSS].forEach((id, i) => {
     const [c, ctx] = canvas(T, T);
     ctx.drawImage(art.ground, i * 64, 0, 64, 64, 0, 0, T, T);
@@ -119,7 +112,7 @@ const DOOR_BASE_Y = 112;
  * célula (como a frente de um cubo) e dobradiça à esquerda. Altura resultante ≈ 3 frentes de cubo.
  */
 function doorSprites(): Sprite[] {
-  const sheet = getOakDoorSheet();
+  const sheet = getOakDoorSheet()!;
   const s = T / DOOR_BODY_W;
   const w = DOOR_FRAME_W * s;
   const h = DOOR_FRAME_H * s;
@@ -134,18 +127,6 @@ function doorSprites(): Sprite[] {
     return { canvas: c, ox, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } };
   });
 }
-
-/** Ícones da hotbar: o cubo da prancha inteiro. */
-const MATERIAL_ICONS: Record<number, string> = {
-  [Block.DIRT]: dirtIcon,
-  [Block.GRASS]: grassIcon,
-  [Block.TILLED]: tilledIcon,
-  [Block.PATH]: pathIcon,
-  [Block.SAND]: sandIcon,
-  [Block.STONE]: stoneIcon,
-  [Block.OAK_LOG]: oakLogIcon,
-  [Block.OAK_PLANKS]: oakPlanksIcon,
-};
 
 function canvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
   const c = document.createElement('canvas');
@@ -210,13 +191,13 @@ const ATLAS_FRONT = F * TEX_RES;
 function materialTop(index: number): HTMLCanvasElement {
   const [c, ctx] = canvas(T, T);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(getBlockAtlas(), index * ATLAS_TOP, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, ATLAS_TOP, 0, 0, c.width, c.height);
+  ctx.drawImage(getBlockAtlas()!, index * ATLAS_TOP, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, ATLAS_TOP, 0, 0, c.width, c.height);
   return c;
 }
 
 /** Cubo 3/4 com a arte da prancha: topo em [0, T) e face frontal em [T, T + F), mais contorno. */
 function materialCube(index: number, outline: string): Sprite {
-  const atlas = getBlockAtlas();
+  const atlas = getBlockAtlas()!;
   return composeCube(
     (ctx) => ctx.drawImage(atlas, index * ATLAS_TOP, 0, ATLAS_TOP, ATLAS_TOP, 0, 0, T, T),
     (ctx) => ctx.drawImage(atlas, index * ATLAS_TOP, ATLAS_TOP, ATLAS_TOP, ATLAS_FRONT, 0, T, T, F),
@@ -421,17 +402,21 @@ export function createBlockTextures(): BlockTextures {
   const groundTop = new Map<BlockId, HTMLCanvasElement>();
   const objects = new Map<BlockId, Sprite>();
   const icons = new Map<BlockId, string>();
-  MATERIALS.forEach((id, i) => {
-    groundTop.set(id, materialTop(i));
-    objects.set(id, materialCube(i, OUTLINE[id] ?? '#3a2a20'));
-    icons.set(id, MATERIAL_ICONS[id]);
-  });
+  // Cada grupo só é montado se o pacote de arte do mundo trouxe a imagem (ex.: Santuário não tem materiais).
+  const pack = art();
+  if (getBlockAtlas()) {
+    MATERIALS.forEach((id, i) => {
+      groundTop.set(id, materialTop(i));
+      objects.set(id, materialCube(i, OUTLINE[id] ?? '#3a2a20'));
+      icons.set(id, pack.materialIcons[id] ?? '');
+    });
+  }
   const water = Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
   // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
-  for (const id of CELESTIAL_BLOCKS) {
+  for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {
     const { top, front, ground } = celestialFaces(id);
     groundTop.set(id, ground);
     objects.set(id, composeCube(
@@ -439,15 +424,17 @@ export function createBlockTextures(): BlockTextures {
       (ctx) => ctx.drawImage(front, 0, T, T, F),
       CELESTIAL_STYLE[id].outline,
     ));
-    icons.set(id, CELESTIAL_ICONS[id]);
+    icons.set(id, pack.celestialIcons[id] ?? '');
   }
   const variants = new Map<BlockId, Sprite[]>();
   const stackDraw = new Map<BlockId, number>();
-  dungeonTextures(groundTop, objects, variants, stackDraw);
-  const doorFrames = doorSprites();
-  objects.set(Block.OAK_DOOR, doorFrames[0]);
-  objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
-  icons.set(Block.OAK_DOOR, doorFrames[0].canvas.toDataURL());
+  if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
+  const doorFrames = getOakDoorSheet() ? doorSprites() : [];
+  if (doorFrames.length) {
+    objects.set(Block.OAK_DOOR, doorFrames[0]);
+    objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
+    icons.set(Block.OAK_DOOR, doorFrames[0].canvas.toDataURL());
+  }
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],

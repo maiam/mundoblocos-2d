@@ -11,7 +11,7 @@ Os sprites entram embutidos no bundle (`?inline`) para o build de arquivo único
   converte `src/assets/*.png` em WebP e remove os PNG.
 - Sprites e atlas: WebP com perdas q90 e alfa sem perdas (comparação lado a lado sem diferença visível);
   ícones: WebP sem perdas.
-- O código importa só `*.webp?inline`. Os ícones do PWA (`public/`) seguem em PNG por compatibilidade.
+- O código importa só `*.webp?inline` (desde a ADR 0010, apenas nos pacotes `render/art/<mundo>.ts`; sprites em q84/alfa q85). Os ícones do PWA (`public/`) seguem em PNG por compatibilidade.
 
 ## Consequências
 - Assets: 3,4 MB → 1,1 MB; artefato: 4,7 MB → 1,5 MB.

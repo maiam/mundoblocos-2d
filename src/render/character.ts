@@ -1,27 +1,10 @@
-import goddessFloatUrl from '../assets/goddess-float.webp?inline';
-import heroineSwordAttackUrl from '../assets/heroine-sword-attack.webp?inline';
-import heroineAxeAttackUrl from '../assets/heroine-axe-attack.webp?inline';
-import heroineHoeAttackUrl from '../assets/heroine-hoe-attack.webp?inline';
-import heroineShovelAttackUrl from '../assets/heroine-shovel-attack.webp?inline';
-import heroinePickaxeAttackUrl from '../assets/heroine-pickaxe-attack.webp?inline';
-import heroineAxeUrl from '../assets/heroine-axe.webp?inline';
-import heroineHoeUrl from '../assets/heroine-hoe.webp?inline';
-import heroinePickaxeUrl from '../assets/heroine-pickaxe.webp?inline';
-import heroineShovelUrl from '../assets/heroine-shovel.webp?inline';
-import heroineSwordUrl from '../assets/heroine-sword.webp?inline';
-import heroineUrl from '../assets/heroine.webp?inline';
-import lambUrl from '../assets/lamb.webp?inline';
-import sheepLoveUrl from '../assets/sheep-love.webp?inline';
-import sheepUrl from '../assets/sheep.webp?inline';
-import spiderBigUrl from '../assets/spider-big.webp?inline';
-import spiderBossUrl from '../assets/spider-boss.webp?inline';
-import spiderSmallUrl from '../assets/spider-small.webp?inline';
+import { art } from './art';
 import { TILE } from '../config';
 import type { Actor, ActorKind } from '../game/entities';
 import type { Facing } from '../game/walker';
 
 /**
- * Sprites de atores (folhas geradas por scripts/process-sprite.py).
+ * Sprites de atores (folhas geradas por scripts/process-sprite.py); URLs vêm do pacote de arte do mundo (`render/art`).
  * Folhas 4×4 na ordem canônica: frente, esquerda, direita, costas (as folhas das
  * ferramentas vêm em outra ordem e são normalizadas no processamento com --rows-map).
  * Folha de namoro: 4×1 (quadro = etapa da animação, corações crescendo).
@@ -33,7 +16,6 @@ const ROW: Record<Facing, number> = { down: 0, left: 1, right: 2, up: 3 };
 export const CHARACTER_H = TILE * 2.2;
 
 interface SheetSpec {
-  url: string;
   cols: number;
   rows: number;
   /** Altura desenhada (px de mundo). */
@@ -61,53 +43,54 @@ interface SheetSpec {
 const SPECS: Record<ActorKind, SheetSpec> = {
   // Deusa da Vida: flutua (folha 7×4 de flutuação; asas abertas, sem chão na arte).
   goddess: {
-    url: goddessFloatUrl, cols: 7, rows: 4, height: TILE * 2.3, shadow: [0.34, 0.11], walkFps: 0,
+    cols: 7, rows: 4, height: TILE * 2.3, shadow: [0.34, 0.11], walkFps: 0,
     float: { lift: 0.32, bob: 3, fps: 7, movingFps: 10 },
   },
-  heroine: { url: heroineUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  heroine: { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   // Heroína com ferramenta: mesma escala (altura do desenho igual à folha base).
-  'heroine-sword': { url: heroineSwordUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'heroine-hoe': { url: heroineHoeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'heroine-pickaxe': { url: heroinePickaxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'heroine-shovel': { url: heroineShovelUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-sword': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-hoe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'heroine-shovel': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   // Golpe de espada: desenho 297 px contra 288 da caminhada → mesma escala da personagem.
   'heroine-sword-attack': {
-    url: heroineSwordAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (297 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+    cols: 4, rows: 4, height: CHARACTER_H * (297 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   // Golpe de machado: o desenho inclui o machado erguido (313 px contra 288 da caminhada).
   'heroine-axe-attack': {
-    url: heroineAxeAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (313 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+    cols: 4, rows: 4, height: CHARACTER_H * (313 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   // Arar com enxada (306 px de desenho contra 288 da caminhada).
   'heroine-hoe-attack': {
-    url: heroineHoeAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (306 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+    cols: 4, rows: 4, height: CHARACTER_H * (306 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   // Cavar com pá (306 px de desenho contra 288 da caminhada).
   'heroine-shovel-attack': {
-    url: heroineShovelAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (306 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+    cols: 4, rows: 4, height: CHARACTER_H * (306 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   // Minerar com picareta: o desenho inclui a picareta erguida (362 px contra 288 da caminhada).
   'heroine-pickaxe-attack': {
-    url: heroinePickaxeAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (362 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+    cols: 4, rows: 4, height: CHARACTER_H * (362 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
-  'heroine-axe': { url: heroineAxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  sheep: { url: sheepUrl, cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
-  lamb: { url: lambUrl, cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
+  'heroine-axe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  sheep: { cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
+  lamb: { cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.
   // Aranhas da dungeon (scripts/extract-dungeon.py): 8 quadros de caminhada, arte de frente/esquerda.
-  'spider-small': { url: spiderSmallUrl, cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true } },
-  'spider-big': { url: spiderBigUrl, cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true } },
-  'spider-boss': { url: spiderBossUrl, cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true } },
-  'sheep-love': { url: sheepLoveUrl, cols: 4, rows: 1, height: TILE * 1.75, shadow: [0.9, 0.16], walkFps: 0 },
+  'spider-small': { cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true } },
+  'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true } },
+  'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true } },
+  'sheep-love': { cols: 4, rows: 1, height: TILE * 1.75, shadow: [0.9, 0.16], walkFps: 0 },
 };
 
 class SpriteSheet {
   private readonly img = new Image();
   private ready = false;
 
-  constructor(private readonly spec: SheetSpec) {
+  /** `url` ausente = o mundo não tem este ator (só a sombra seria desenhada; na prática ele não aparece). */
+  constructor(private readonly spec: SheetSpec, url: string | undefined) {
     this.img.onload = () => (this.ready = true);
-    this.img.src = spec.url;
+    if (url) this.img.src = url;
   }
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
@@ -192,7 +175,7 @@ class SpriteSheet {
 
 export class ActorSprites {
   private readonly sheets = Object.fromEntries(
-    (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(SPECS[k])]),
+    (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(SPECS[k], art().actors[k])]),
   ) as Record<ActorKind, SpriteSheet>;
 
   get(kind: ActorKind): SpriteSheet {

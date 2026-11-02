@@ -7,7 +7,8 @@ Setas = "importa/usa". `world/` é a base e não conhece ninguém acima dele.
 
 ```mermaid
 flowchart TD
-  main[main.ts] --> blockArt[render/blockArt]
+  main[main.ts] --> art[render/art pacote do mundo]
+  main --> blockArt[render/blockArt]
   main --> game[game/game.ts]
   main --> screen[game/screenMode]
   game --> ent[game/entities] --> sheep[game/sheep] --> walker[game/walker]
@@ -16,6 +17,7 @@ flowchart TD
   game --> drops[game/drops]
   game --> hud[game/hud + hotbar]
   game --> ui[game/joystick + actionButton]
+  game --> act[game/actionController]
   game --> cam[game/camera]
   game --> renderer[render/renderer]
   renderer --> chunkR[render/chunkRenderer]
@@ -107,7 +109,7 @@ stateDiagram-v2
 sequenceDiagram
   participant U as Jogador
   participant B as Botão de ação / mouse
-  participant G as Game
+  participant G as ActionController
   participant W as World
   U->>B: toque curto
   B->>G: alvo = célula à frente (ou sob o cursor)
@@ -126,9 +128,10 @@ flowchart LR
   S1[assets-src/*-sheet.png<br/>folhas 4×4] -->|process-sprite.py<br/>fundo, ancoragem, --rows-map| P[src/assets/*.png]
   S2[assets-src/blocks-sheet-34.png<br/>prancha 3/4] -->|extract-blocks.py| P
   P -->|optimize-assets.py| WB[src/assets/*.webp]
-  WB -->|import ?inline| JS[bundle Vite]
+  WB -->|import ?inline em render/art/mundo.ts| JS[bundle Vite]
   JS -->|npm run build| D[dist/ site estático]
-  JS -->|build:artifact| A[artifact/mundoblocos.html]
+  JS -->|build:artifact VITE_WORLD=principal| A[artifact/mundoblocos.html]
+  JS -->|build:artifact:santuario| A2[artifact/santuario.html]
   P2[src/assets/heroine.webp] -->|make-icons.py| PW[public/icon-*.png PWA]
 ```
 
@@ -139,7 +142,8 @@ flowchart LR
 | Regra de colocar/quebrar/pisar | `world/world.ts` (`placementLevel`, `breakTarget`, `standHeight`) + testes | world, MAPS §3 |
 | Geração do mapa/biomas | `world/generator.ts` (`cellAt`), `world/biomes.ts` + `npm run bench` | world |
 | Novo item ou ferramenta | `world/items.ts`, `game/hotbar.ts`, `render/itemArt.ts`, ícone | farming |
-| Ação de ferramenta | `game/game.ts` (`canUseAt/applyUse/advanceHold`), `world/world.ts` | player, farming, MAPS §6 |
+| Ação de ferramenta / toque / clique | `game/actionController.ts` (`canUseAt/applyUse/advanceHold`), `world/world.ts` | player, farming, MAPS §6 |
+| Arte nova (qualquer) | gerar em `src/assets/`, importar no pacote do mundo `render/art/<mundo>.ts` (+ campo em `types.ts` se for tipo novo) | render, OPERATIONS, ADR 0010 |
 | Novo animal/NPC | `game/<animal>.ts` estendendo `Walker`, `game/entities.ts`, `render/character.ts` (`ActorKind`) | npc, MAPS §5 |
 | Sprite da personagem | `assets-src/`, `process-sprite.py`, `optimize-assets.py`, `render/character.ts` | render, OPERATIONS |
 | HUD / controles na tela | `game/hud.ts`, `game/actionButton.ts`, `game/joystick.ts`, `style.css` | player, README |

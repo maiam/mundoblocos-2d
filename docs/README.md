@@ -20,7 +20,7 @@ Documentação viva do MundoBlocos 2D. Agentes de IA: comece por [`../CLAUDE.md`
 |---|---|---|
 | Mundo: blocos, geração, regras de pisar/colocar/quebrar | `src/world/` (`World`, `WorldGenerator`, `blocks.ts`) | [world.md](domains/world.md) |
 | Cultivo, itens, ferramentas, inventário | `world/items.ts`, `World` (plantio), `game/inventory.ts` | [farming.md](domains/farming.md) |
-| Jogador: movimento, câmera, entrada, botão de ação, tela | `game/player.ts`, `game/walker.ts`, `game/game.ts` | [player.md](domains/player.md) |
+| Jogador: movimento, câmera, entrada, botão de ação, tela | `game/player.ts`, `game/walker.ts`, `game/game.ts`, `game/actionController.ts` | [player.md](domains/player.md) |
 | NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
 | Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Dungeon e monstros: área protegida, aranhas, chefe | `world/dungeon.ts`, `game/monster.ts`, `game/entities.ts` | [dungeon.md](domains/dungeon.md) |

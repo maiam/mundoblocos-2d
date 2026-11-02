@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.25.0 — 2026-11-02 (Fase 0 do plano)
+- **Arte separada por mundo** (ADR 0010): pacotes `render/art/principal.ts` e `santuario.ts`; o build de cada
+  artefato só leva a arte do seu mundo. Sprites em WebP q84/alfa q85. **Mundo principal 3,84 → 2,63 MB; Santuário
+  3,29 → 0,68 MB**; o build não avisa mais de tamanho.
+- **`ActionController`** (`game/actionController.ts`): regras de ação por célula, toque/clique/segurar, porta,
+  quebra e alvos para o render saíram do `Game` (611 → 290 linhas), sem mudar comportamento (regressão completa no
+  navegador: arar, plantar, amassar, colocar, quebrar com mão e ferramenta, porta, alimentar, golpe, Santuário).
+- Santuário republicado com o motor atual.
+
 ## Docs — 2026-11-02
 - `NEXT_STEPS.md` reorganizado em **plano por fases** (panorama, fases 0–5, decisões pendentes, dependências
   externas, riscos); itens já feitos removidos (monstros, quebra mais rápida com ferramenta). Números atualizados

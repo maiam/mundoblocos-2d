@@ -25,7 +25,12 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 - `artifact/` não é versionado. O manifest PWA não entra no arquivo único.
 
 ## Pipeline de arte
-Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP e apaga os PNG).
+Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP q84/alfa q85 e apaga os
+PNG; `--recompress` regrava no nível atual os WebP de sprite ≥ 60 kB). Depois, **importar o asset no pacote do mundo**
+(`src/render/art/principal.ts` ou `santuario.ts`, ADR 0010) — é o único lugar com `?inline`.
+
+**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`) e `npm run build:artifact:santuario`; cada um
+só leva a arte do seu mundo. Gere o build de um mundo imediatamente antes de publicá-lo (mesmo `dist/`).
 
 **Sprites** — `P="python3 scripts/process-sprite.py"`:
 ```bash

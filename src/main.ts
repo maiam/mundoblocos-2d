@@ -1,5 +1,6 @@
 import './style.css';
 import { Game } from './game/game';
+import { loadArtPack } from './render/art';
 import { loadBlockArt } from './render/blockArt';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { ScreenMode } from './game/screenMode';
@@ -23,5 +24,7 @@ function start(seed: number): void {
 }
 
 const param = new URLSearchParams(window.location.search).get('seed');
-// A arte dos blocos precisa estar carregada antes de montar chão e cubos.
-void loadBlockArt().then(() => start(param ? seedFromString(param) : Math.floor(Math.random() * 2 ** 31)));
+// Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
+void loadArtPack(profile.id)
+  .then(() => loadBlockArt())
+  .then(() => start(param ? seedFromString(param) : Math.floor(Math.random() * 2 ** 31)));

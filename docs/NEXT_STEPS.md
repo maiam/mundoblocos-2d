@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-02 (v0.24.0)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-02 (v0.25.0 — Fase 0 concluída)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -20,21 +20,15 @@ _Revisado em 2026-11-02 (v0.24.0)._ Fonte única do que falta fazer. Itens concl
 | Salvar progresso | ❌ | nada persiste ao recarregar |
 | Sons, música, vibração, menu | ❌ | — |
 | Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
+| Peso dos artefatos | ✅ | principal 2,63 MB, Santuário 0,68 MB (arte por mundo) |
 
 ## 2. Plano por fases
 
 Cada fase fecha um ciclo jogável. A ordem respeita dependências; dentro da fase, a ordem é a sugerida.
 
-### Fase 0 — Saúde do projeto (antes de novas folhas de arte)
-1. **Separar a arte por mundo — URGENTE.** Artefato principal com **3,84 MB** (alerta do build em 2,8 MB): os dois
-   mundos levam a arte um do outro e cada folha nova soma 100–150 kB. Build por `VITE_WORLD` importando só a arte
-   do perfil (ex.: módulo de assets por mundo + import dinâmico resolvido no build). Meta: mundo principal < 3 MB,
-   Santuário < 1,5 MB.
-2. **Extrair `ActionController` de `game/game.ts`** (611 linhas: entrada, alvo, regras de ação, porta, quebra).
-   Pré-requisito para vida/dano e novas interações sem inchar o `Game`.
-3. **Republicar o Santuário** com o build atual (o publicado é de antes da dungeon; comportamento igual, motor
-   defasado).
-4. **Integração da branch** `feat/mundo-chunks-fantasia` (29 commits, sem PR) — decisão do dono do repositório.
+### Fase 0 — Saúde do projeto ✅ (v0.25.0)
+Arte separada por mundo (ADR 0010; 2,63 MB / 0,68 MB), `ActionController` extraído do `Game`, Santuário
+republicado, PR da branch de trabalho para `main` aberto. Detalhes no `CHANGELOG`.
 
 ### Fase 1 — Combate jogável (fecha o loop da dungeon)
 1. **Vida da personagem** + HUD mínimo (corações, discreto, respeitando a tela limpa) e **morte → renascer no
@@ -89,7 +83,6 @@ Cada fase fecha um ciclo jogável. A ordem respeita dependências; dentro da fas
 | Chefe renasce? Aranhas renascem em quanto tempo? | Fase 1 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
-| Integração da branch / PR | Fase 0 |
 
 ## 4. Dependências externas
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
@@ -97,8 +90,9 @@ Cada fase fecha um ciclo jogável. A ordem respeita dependências; dentro da fas
 - **Arte**: morte/dano das aranhas, drops, (opcional) aranhas por direção, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- Peso dos artefatos (Fase 0.1).
-- `game/game.ts` concentrando responsabilidades (Fase 0.2).
+- Peso dos artefatos: resolvido por mundo (ADR 0010); o mundo principal (2,63 MB) volta a se aproximar do alerta
+  (2,8 MB) com ~2 folhas novas — próxima alavanca: carregar arte da dungeon só ao se aproximar dela.
+- `ActionController` (465 linhas) vai crescer com vida/dano: separar combate (golpe, dano) em módulo próprio na Fase 1.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.
 - Monstros sempre atualizados (~39 no labirinto): ok hoje; com várias dungeons, atualizar só os próximos.
 - Pipeline de brilho (`glowColor`) sem uso desde a remoção dos blocos mágicos (mantido para tochas/vaga-lumes).

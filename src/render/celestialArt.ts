@@ -1,21 +1,3 @@
-import iconCloudEthereal from '../assets/icon-celestial-cloud-ethereal.webp?inline';
-import iconCloudSolid from '../assets/icon-celestial-cloud-solid.webp?inline';
-import iconCrystalLife from '../assets/icon-celestial-crystal-life.webp?inline';
-import iconEarthCultivated from '../assets/icon-celestial-earth-cultivated.webp?inline';
-import iconEarthFloral from '../assets/icon-celestial-earth-floral.webp?inline';
-import iconEarthSacred from '../assets/icon-celestial-earth-sacred.webp?inline';
-import iconFoliageGolden from '../assets/icon-celestial-foliage-golden.webp?inline';
-import iconGrassCelestial from '../assets/icon-celestial-grass-celestial.webp?inline';
-import iconGrassFlowery from '../assets/icon-celestial-grass-flowery.webp?inline';
-import iconLightBlock from '../assets/icon-celestial-light-block.webp?inline';
-import iconMarbleCelestial from '../assets/icon-celestial-marble-celestial.webp?inline';
-import iconMarbleOrnate from '../assets/icon-celestial-marble-ornate.webp?inline';
-import iconMossLuminous from '../assets/icon-celestial-moss-luminous.webp?inline';
-import iconStoneCelestial from '../assets/icon-celestial-stone-celestial.webp?inline';
-import iconStoneGolden from '../assets/icon-celestial-stone-golden.webp?inline';
-import iconWaterCrystal from '../assets/icon-celestial-water-crystal.webp?inline';
-import iconWaterSacred from '../assets/icon-celestial-water-sacred.webp?inline';
-import iconWoodCelestial from '../assets/icon-celestial-wood-celestial.webp?inline';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block, CELESTIAL_BLOCKS } from '../world/blocks';
 import { getCelestialAtlas } from './blockArt';
@@ -23,7 +5,7 @@ import { getCelestialAtlas } from './blockArt';
 /**
  * Blocos do Santuário Celestial — arte da prancha 3/4 fornecida
  * (assets-src/celestial-blocks-34.png → scripts/extract-blocks.py --celestial):
- * atlas com topo/frente/chão contínuo + ícones do cubo inteiro.
+ * atlas com topo/frente/chão contínuo. Os ícones do cubo inteiro vêm do pacote de arte (`render/art/santuario.ts`).
  */
 
 interface Style {
@@ -60,27 +42,6 @@ export const CELESTIAL_STYLE: Record<number, Style> = {
   [Block.FOLIAGE_GOLDEN]: { outline: '#8a6418' },
 };
 
-export const CELESTIAL_ICONS: Record<number, string> = {
-  [Block.CLOUD_SOLID]: iconCloudSolid,
-  [Block.CLOUD_ETHEREAL]: iconCloudEthereal,
-  [Block.MARBLE_CELESTIAL]: iconMarbleCelestial,
-  [Block.MARBLE_ORNATE]: iconMarbleOrnate,
-  [Block.STONE_CELESTIAL]: iconStoneCelestial,
-  [Block.STONE_GOLDEN]: iconStoneGolden,
-  [Block.GRASS_CELESTIAL]: iconGrassCelestial,
-  [Block.GRASS_FLOWERY]: iconGrassFlowery,
-  [Block.MOSS_LUMINOUS]: iconMossLuminous,
-  [Block.EARTH_SACRED]: iconEarthSacred,
-  [Block.EARTH_FLORAL]: iconEarthFloral,
-  [Block.EARTH_CULTIVATED]: iconEarthCultivated,
-  [Block.WATER_SACRED]: iconWaterSacred,
-  [Block.WATER_CRYSTAL]: iconWaterCrystal,
-  [Block.CRYSTAL_LIFE]: iconCrystalLife,
-  [Block.LIGHT_BLOCK]: iconLightBlock,
-  [Block.WOOD_CELESTIAL]: iconWoodCelestial,
-  [Block.FOLIAGE_GOLDEN]: iconFoliageGolden,
-};
-
 const ATLAS_TOP = T * RES;
 const ATLAS_FRONT = F * RES;
 
@@ -102,7 +63,7 @@ export function celestialFaces(id: number): { top: HTMLCanvasElement; front: HTM
   let faces = cache.get(id);
   if (!faces) {
     const col = CELESTIAL_BLOCKS.indexOf(id);
-    const atlas = getCelestialAtlas();
+    const atlas = getCelestialAtlas()!; // só chamado quando o pacote do mundo traz o atlas celestial
     faces = {
       top: slice(atlas, col, 0, ATLAS_TOP, T, T),
       front: slice(atlas, col, ATLAS_TOP, ATLAS_FRONT, T, F),

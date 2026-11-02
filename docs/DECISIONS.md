@@ -12,6 +12,7 @@
 | 0007 | Assets em WebP gerados por script; PNG só como etapa intermediária | [0007](adr/0007-assets-webp.md) |
 | 0008 | Perfis de mundo: um motor, vários mundos (Santuário Celestial) | [0008](adr/0008-perfis-de-mundo.md) |
 | 0009 | Dungeon como sobreposição pura do terreno; monstros como `Walker` em `Entities` | [0009](adr/0009-dungeon-sobreposta.md) |
+| 0010 | Pacotes de arte por mundo (build de cada artefato só com a arte do seu mundo) | [0010](adr/0010-pacotes-de-arte-por-mundo.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |

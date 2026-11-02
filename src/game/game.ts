@@ -1,9 +1,9 @@
 import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
-import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
+import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { breakSeconds, ITEMS, toolCanBreak, toolDrops, TOOLS, type ToolId } from '../world/items';
+import { ITEMS, TOOLS } from '../world/items';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
@@ -12,43 +12,18 @@ import { Entities } from './entities';
 import { hotbarFor, type HotbarSlot } from './hotbar';
 import { Hud } from './hud';
 import { Inventory } from './inventory';
-import type { Sheep } from './sheep';
 import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
 import { Player } from './player';
 import { ActionButton, HAND_ICON } from './actionButton';
-import type { Facing } from './walker';
+import { ActionController } from './actionController';
 
 /** Duração de um dia completo em segundos. */
 const DAY_LENGTH_S = 480;
-/** Alcance para quebrar/colocar, em células (do centro do personagem ao centro da célula). */
-const REACH = 4.5;
-/** Deslocamento máximo (px) para um toque/clique contar como "colocar". */
-const TAP_THRESHOLD = 10;
-/** Duração máxima de um toque/clique de colocar (s); acima disso é "segurar". */
-const TAP_MAX_S = 0.3;
-
-/** Um "segurar" em andamento (dedo/mouse na tela ou botão de ação). */
-interface Hold {
-  held: number;
-  /** Célula sendo quebrada e progresso 0..1 (reinicia ao trocar de alvo). */
-  target: { x: number; y: number } | null;
-  progress: number;
-}
-
-interface Press extends Hold {
-  id: number;
-  sx: number;
-  sy: number;
-  moved: boolean;
-}
-
-type CellTarget = { x: number; y: number; valid: boolean };
-
-/** Deslocamento da célula "à frente" para cada direção do sprite. */
-const FACING_DIR: Record<Facing, [number, number]> = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
-
-/** Orquestra mundo, personagem, câmera, input, render e HUD. Sem regra de domínio. */
+/**
+ * Orquestra mundo, personagem, câmera, entrada, render e HUD. Sem regra de domínio: o que cada toque/clique
+ * faz fica no `ActionController`; as regras do mundo, no `World`.
+ */
 export class Game {
   readonly world: World;
   readonly camera = new Camera();
@@ -66,14 +41,11 @@ export class Game {
   /** Espaço selecionado na hotbar; null = mão vazia. */
   private selected: number | null = null;
   private readonly actionButton: ActionButton;
-  /** Botão de ação (ou Espaço) pressionado: toque curto usa, segurar 2 s quebra o alvo à frente. */
-  private action: Hold | null = null;
+  readonly actions: ActionController;
   private time = 0.31;
   private elapsed = 0;
   private last = performance.now();
   private unloadTimer = 0;
-  private pointer = { x: 0, y: 0, inside: false };
-  private press: Press | null = null;
   private running = true;
   private readonly cleanup: (() => void)[] = [];
 
@@ -93,15 +65,21 @@ export class Game {
     if (profile.sheep) this.entities.spawnFlock(this.world, sx, sy);
     this.entities.spawnMonsters(this.world);
     this.renderer = new Renderer(canvas, this.world);
+    this.actions = new ActionController({
+      world: this.world, entities: this.entities, player: this.player, inventory: this.inventory,
+      drops: this.drops, camera: this.camera, renderer: this.renderer,
+      slot: () => this.slot,
+      joystickActive: () => this.joystick.active,
+    });
     this.hud = new Hud({
       icons: this.hotbar.map((s) =>
-        s.kind === 'tool' ? TOOL_ICON_URLS[s.tool] : s.kind === 'item' ? ITEM_ICON_URLS[s.item] : this.renderer.iconFor(s.block)),
+        s.kind === 'tool' ? toolIconUrl(s.tool) : s.kind === 'item' ? itemIconUrl(s.item) : this.renderer.iconFor(s.block)),
       names: this.hotbar.map((s) =>
         s.kind === 'tool' ? TOOLS[s.tool].name : s.kind === 'item' ? ITEMS[s.item].name : blockDef(s.block).name),
       onSelect: (i) => this.select(i),
     });
     this.joystick = new Joystick(this.hud.root);
-    this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.endAction());
+    this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
     this.bindInput();
@@ -131,8 +109,8 @@ export class Game {
 
   private slotIcon(slot: HotbarSlot | null): string {
     if (!slot) return HAND_ICON;
-    if (slot.kind === 'tool') return TOOL_ICON_URLS[slot.tool];
-    if (slot.kind === 'item') return ITEM_ICON_URLS[slot.item];
+    if (slot.kind === 'tool') return toolIconUrl(slot.tool);
+    if (slot.kind === 'item') return itemIconUrl(slot.item);
     return this.renderer.iconFor(slot.block);
   }
 
@@ -180,11 +158,11 @@ export class Game {
     });
     this.listen(window, 'keyup', (e) => {
       this.keys.delete(e.code);
-      if (e.code === 'Space') this.endAction();
+      if (e.code === 'Space') this.actions.endAction();
     });
     this.listen(window, 'blur', () => {
       this.keys.clear();
-      this.action = null;
+      this.actions.cancelAll();
     });
 
     this.listen(c, 'contextmenu', (e) => e.preventDefault());
@@ -196,287 +174,20 @@ export class Game {
     // Toque/clique curto = colocar. Segurar 2 s sobre o mesmo alvo = quebrar.
     // No toque, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela).
     this.listen(c, 'pointerdown', (e) => {
-      if (this.press || e.pointerType === 'touch') return;
-      c.setPointerCapture(e.pointerId);
-      this.press = { id: e.pointerId, sx: e.offsetX, sy: e.offsetY, moved: false, held: 0, target: null, progress: 0 };
-      this.pointer = { x: e.offsetX, y: e.offsetY, inside: true };
+      if (e.pointerType === 'touch') return;
+      if (!this.actions.pointerDown(e.pointerId, e.offsetX, e.offsetY)) return;
+      try { c.setPointerCapture(e.pointerId); } catch { /* ponteiro já liberado */ }
     });
-    this.listen(c, 'pointermove', (e) => {
-      this.pointer = { x: e.offsetX, y: e.offsetY, inside: e.pointerType === 'mouse' || !!this.press };
-      const p = this.press;
-      if (p && p.id === e.pointerId && Math.hypot(e.offsetX - p.sx, e.offsetY - p.sy) > TAP_THRESHOLD) p.moved = true;
-    });
-    this.listen(c, 'pointerup', (e) => {
-      const p = this.press;
-      if (!p || p.id !== e.pointerId) return;
-      this.press = null;
-      if (e.pointerType !== 'mouse') this.pointer.inside = false;
-      if (!p.moved && p.held <= TAP_MAX_S) this.place(e.offsetX, e.offsetY);
-    });
-    this.listen(c, 'pointercancel', () => (this.press = null));
-    this.listen(c, 'pointerleave', () => (this.pointer.inside = false));
+    this.listen(c, 'pointermove', (e) => this.actions.pointerMove(e.pointerId, e.offsetX, e.offsetY, e.pointerType === 'mouse'));
+    this.listen(c, 'pointerup', (e) => this.actions.pointerUp(e.pointerId, e.offsetX, e.offsetY, e.pointerType === 'mouse'));
+    this.listen(c, 'pointercancel', () => this.actions.pointerCancel());
+    this.listen(c, 'pointerleave', () => this.actions.pointerLeave());
   }
 
-  private inReach(x: number, y: number): boolean {
-    return Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4)) <= REACH;
-  }
 
-  // ---- Regras por célula (iguais para cursor e botão de ação) ----
-
-  /** Ferramenta em mãos (null = mão vazia, item ou bloco). */
-  private get tool(): ToolId | null {
-    const s = this.slot;
-    return s?.kind === 'tool' ? s.tool : null;
-  }
-
-  /** Ferramenta de golpe em mãos? (espada, machado: toque curto = golpe em entidades). */
-  private get strikerInHand(): boolean {
-    const t = this.tool;
-    return !!t && TOOLS[t].strikes;
-  }
-
-  /** Ferramenta com animação de ação que também quebra algo (machado, enxada, pá, picareta): anima enquanto quebra. */
-  private get swingsWhileBreaking(): boolean {
-    const t = this.tool;
-    return !!t && TOOLS[t].swings && TOOLS[t].breaks !== 'none';
-  }
-
-  /**
-   * Pode quebrar aqui? Respeita a restrição da ferramenta (`toolCanBreak`: espada nada, machado orgânico,
-   * enxada só planta) e não cava o chão sob nenhuma entidade.
-   */
-  private canBreakAt(x: number, y: number): boolean {
-    const id = this.world.breakTargetId(x, y);
-    if (id === null || !toolCanBreak(this.tool, id)) return false;
-    return this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y));
-  }
-
-  /** Dá para abrir/fechar a porta desta célula? Fechar exige a célula livre de entidades. */
-  private canToggleDoorAt(x: number, y: number): boolean {
-    if (!this.world.isDoor(x, y)) return false;
-    return !this.world.isDoorOpen(x, y) || !this.entities.occupies(x, y);
-  }
-
-  /** Toque numa porta: abre/fecha (qualquer item em mãos). Retorna true se havia porta (o toque foi usado). */
-  private useDoorAt(x: number, y: number): boolean {
-    if (!this.world.isDoor(x, y)) return false;
-    if (this.inReach(x, y) && this.canToggleDoorAt(x, y)) this.world.toggleDoor(x, y);
-    return true;
-  }
-
-  /** Pode usar o espaço selecionado (bloco/semente) nesta célula? Ovelha: ver `canFeed`. */
-  private canUseAt(slot: HotbarSlot | null, x: number, y: number): boolean {
-    if (!slot) return false;
-    if (slot.kind === 'tool') {
-      const use = TOOLS[slot.tool].groundUse;
-      if (use === 'till') return this.world.canTill(x, y);
-      if (use === 'flatten') return this.world.canFlatten(x, y);
-      return false;
-    }
-    if (slot.kind === 'block') return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
-    if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
-    return false;
-  }
-
-  private canFeed(sheep: Sheep): boolean {
-    return sheep.canEat && this.inventory.count('wheat') > 0;
-  }
-
-  /** Aplica o espaço selecionado: coloca bloco, planta ou alimenta. */
-  private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
-    if (!slot) return; // mão vazia ainda não tem ação
-    if (slot.kind === 'tool') {
-      // Ferramenta com ação (enxada, pá, picareta): animação sempre; enxada/pá trocam o chão se o alvo for válido.
-      const use = TOOLS[slot.tool].groundUse;
-      if (TOOLS[slot.tool].swings) this.player.startAttack(slot.tool);
-      if (!use || !this.canUseAt(slot, x, y)) return;
-      if (use === 'till') this.world.till(x, y);
-      else this.world.flatten(x, y);
-      return;
-    }
-    if (slot.kind === 'block') {
-      if (!this.canUseAt(slot, x, y)) return;
-      this.world.placeBlock(x, y, slot.block);
-      this.entities.settleAll(this.world);
-      return;
-    }
-    const def = ITEMS[slot.item];
-    if (def.plants) {
-      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item)) this.world.plant(x, y);
-    } else if (def.feeds === 'sheep' && sheep && this.canFeed(sheep) && this.inventory.take(slot.item)) {
-      sheep.feed();
-    }
-  }
-
-  // ---- Alvo pelo cursor (mouse) ----
-
-  /** Alvo de quebra sob o ponto da tela (objeto do topo ou o chão). */
-  private breakTarget(sx: number, sy: number): CellTarget {
-    const { x, y } = this.renderer.pick(this.camera, sx, sy);
-    return { x, y, valid: this.inReach(x, y) && this.canBreakAt(x, y) };
-  }
-
-  /** Célula de chão sob o ponto da tela (ignora objetos altos à frente). */
-  private groundCell(sx: number, sy: number): [number, number] {
-    const [wx, wy] = this.camera.screenToWorld(sx, sy);
-    return [Math.floor(wx / TILE), Math.floor(wy / TILE)];
-  }
-
-  /** Célula onde o espaço selecionado agiria sob o cursor (bloco empilha se tocou num cubo com espaço). */
-  private useTarget(sx: number, sy: number): CellTarget | null {
-    const slot = this.slot;
-    if (!slot || (slot.kind === 'tool' && !TOOLS[slot.tool].groundUse) || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
-    let [x, y] = this.groundCell(sx, sy);
-    if (slot.kind === 'block') {
-      const picked = this.renderer.pick(this.camera, sx, sy);
-      const top = picked.hasObject ? this.world.topBlock(picked.x, picked.y) : null;
-      if (top && (blockDef(top.id).shape === 'decoration' || this.world.canPlace(picked.x, picked.y, slot.block))) {
-        [x, y] = [picked.x, picked.y];
-      }
-    }
-    return { x, y, valid: this.inReach(x, y) && this.canUseAt(slot, x, y) };
-  }
-
-  /** Ovelha sob o cursor (com trigo selecionado). */
-  private sheepUnderCursor(sx: number, sy: number): Sheep | null {
-    const [wx, wy] = this.camera.screenToWorld(sx, sy);
-    const sheep = this.entities.sheepAt(wx / TILE, wy / TILE);
-    return sheep && Math.hypot(sheep.x - this.player.x, sheep.y - this.player.y) <= REACH ? sheep : null;
-  }
-
-  /** Golpe (espada/machado) na direção em que a personagem olha (o acerto sai no meio da animação). */
-  private attack(): void {
-    this.player.startAttack();
-  }
-
-  /** Vira a personagem para o ponto da tela (eixo dominante), para o golpe pelo mouse. */
-  private faceToward(sx: number, sy: number): void {
-    const [wx, wy] = this.camera.screenToWorld(sx, sy);
-    const dx = wx / TILE - this.player.x;
-    const dy = wy / TILE - (this.player.y - 0.4);
-    if (Math.abs(dx) > Math.abs(dy)) this.player.facing = dx < 0 ? 'left' : 'right';
-    else this.player.facing = dy < 0 ? 'up' : 'down';
-  }
-
-  /** Clique curto do mouse. */
-  private place(sx: number, sy: number): void {
-    const slot = this.slot;
-    const picked = this.renderer.pick(this.camera, sx, sy);
-    if (picked.hasObject && this.useDoorAt(picked.x, picked.y)) return;
-    if (this.strikerInHand) {
-      if (!this.player.attacking) this.faceToward(sx, sy);
-      this.attack();
-      return;
-    }
-    if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
-      this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
-      return;
-    }
-    if (slot?.kind === 'tool' && TOOLS[slot.tool].swings) {
-      // Pelo mouse: vira para o cursor e toca a ação (ara/amassa só se o alvo for válido).
-      const t = this.useTarget(sx, sy);
-      if (!this.player.attacking) this.faceToward(sx, sy);
-      if (t?.valid) this.applyUse(slot, t.x, t.y, null);
-      else this.player.startAttack(slot.tool); // alvo fora de alcance/inválido: só a animação
-      return;
-    }
-    const t = this.useTarget(sx, sy);
-    if (t?.valid) this.applyUse(slot, t.x, t.y, null);
-  }
-
-  // ---- Alvo à frente da personagem (botão de ação) ----
-
-  /** Célula imediatamente à frente da personagem, na direção em que ela olha. */
-  private frontCell(): [number, number] {
-    const [dx, dy] = FACING_DIR[this.player.facing];
-    return [this.player.cellX + dx, this.player.cellY + dy];
-  }
-
-  /** Ovelha logo à frente da personagem (para dar trigo). */
-  private frontSheep(): Sheep | null {
-    const [dx, dy] = FACING_DIR[this.player.facing];
-    const px = this.player.x + dx * 0.9;
-    const py = this.player.y + dy * 0.9;
-    let best: Sheep | null = null;
-    let bestD = 0.8;
-    for (const s of this.entities.npcs) {
-      const d = Math.hypot(s.x - px, s.y - py);
-      if (d < bestD) { best = s; bestD = d; }
-    }
-    return best;
-  }
-
+  /** Botão de ação/Espaço: ignorado com a tela bloqueada ("Gire o aparelho"). */
   private startAction(): void {
-    if (this.screenMode?.blocked || this.action) return;
-    this.action = { held: 0, target: null, progress: 0 };
-  }
-
-  /** Soltou o botão: se foi um toque curto, usa o selecionado no alvo à frente. */
-  private endAction(): void {
-    const a = this.action;
-    this.action = null;
-    if (!a || a.held > TAP_MAX_S) return;
-    const slot = this.slot;
-    const [fx, fy] = this.frontCell();
-    if (this.useDoorAt(fx, fy)) return;
-    if (this.strikerInHand) {
-      this.attack();
-      return;
-    }
-    if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
-      this.applyUse(slot, 0, 0, this.frontSheep());
-      return;
-    }
-    this.applyUse(slot, fx, fy, null);
-  }
-
-  /**
-   * Avança um "segurar": o progresso só acumula num alvo válido e reinicia se
-   * o alvo mudar; ao completar, quebra e continua no que estiver por baixo
-   * (ex.: bloco de baixo da pilha, depois o chão).
-   */
-  private advanceHold(h: Hold, t: CellTarget, dt: number): void {
-    if (!t.valid) {
-      h.target = null;
-      h.progress = 0;
-      return;
-    }
-    if (!h.target || h.target.x !== t.x || h.target.y !== t.y) {
-      h.target = { x: t.x, y: t.y };
-      h.progress = 0;
-    }
-    h.progress += dt / breakSeconds(this.tool); // ferramenta 1 s, mão/item 2 s
-    // Machado/enxada/pá/picareta: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
-    if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
-    if (h.progress >= 1) {
-      const broken = this.world.breakBlock(t.x, t.y);
-      // Colheita: o que o mundo devolve cai no chão para ser coletado (pá e picareta destroem plantas sem drop).
-      if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, toolDrops(this.tool, broken));
-      this.entities.settleAll(this.world);
-      h.target = null;
-      h.progress = 0;
-    }
-  }
-
-  private updateBreaking(dt: number): void {
-    const p = this.press;
-    if (p) {
-      p.held += dt;
-      if (p.held > TAP_MAX_S) {
-        const t = this.breakTarget(this.pointer.x, this.pointer.y);
-        // Cortando pelo mouse: vira para o alvo antes do golpe.
-        if (t.valid && this.swingsWhileBreaking && !this.player.attacking) this.faceToward(this.pointer.x, this.pointer.y);
-        this.advanceHold(p, t, dt);
-      }
-    }
-    const a = this.action;
-    if (a) {
-      a.held += dt;
-      if (a.held > TAP_MAX_S) {
-        const [x, y] = this.frontCell();
-        this.advanceHold(a, { x, y, valid: this.canBreakAt(x, y) }, dt);
-      }
-    }
+    if (!this.screenMode?.blocked) this.actions.startAction();
   }
 
   private frame = (now: number): void => {
@@ -488,10 +199,7 @@ export class Game {
 
     // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
     const blocked = this.screenMode?.blocked ?? false;
-    if (blocked) {
-      this.press = null;
-      this.action = null;
-    }
+    if (blocked) this.actions.cancelAll();
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
@@ -502,7 +210,7 @@ export class Game {
     this.world.tick(dt);
     this.drops.update(dt, this.player, this.inventory);
     this.camera.follow(...this.cameraTarget(), dt);
-    this.updateBreaking(dt);
+    this.actions.update(dt);
 
     const loadRect = this.camera.visibleChunks(LOAD_MARGIN);
     this.world.ensureChunks(loadRect, MAX_CHUNK_GEN_PER_FRAME);
@@ -516,10 +224,7 @@ export class Game {
       player: this.player,
       actors: this.entities.actors,
       showChunkBorders: this.showChunkBorders,
-      hover: this.hoverTarget(),
-      hoverSheep: this.hoverSheep(),
-      focus: this.focusTarget(),
-      breaking: this.breakingState(),
+      ...this.actions.targets(),
       drops: this.drops.list,
       time: this.time,
       elapsed: this.elapsed,
@@ -527,7 +232,7 @@ export class Game {
     });
     this.hud.update(this.selected ?? -1, this.hotbar.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
     const slot = this.slot;
-    this.actionButton.update(this.action && this.action.held > TAP_MAX_S ? this.action.progress : 0,
+    this.actionButton.update(this.actions.actionProgress,
       slot?.kind === 'item' && this.inventory.count(slot.item) === 0);
     requestAnimationFrame(this.frame);
   };
@@ -548,64 +253,4 @@ export class Game {
     return [x, y];
   }
 
-  private breakingState(): { x: number; y: number; progress: number } | null {
-    const h = this.action?.target ? this.action : this.press?.target ? this.press : null;
-    return h?.target ? { ...h.target, progress: h.progress } : null;
-  }
-
-  /** Destaque do mouse: durante a quebra, o alvo da quebra; senão, onde o clique agiria. */
-  private hoverTarget(): CellTarget | null {
-    if (!this.pointer.inside || this.joystick.active) return null;
-    const { x, y } = this.pointer;
-    const p = this.press;
-    if (p && p.held > TAP_MAX_S) return this.tool === 'sword' ? null : this.breakTarget(x, y);
-    // Porta sob o cursor: o clique abre/fecha com qualquer item.
-    const picked = this.renderer.pick(this.camera, x, y);
-    if (picked.hasObject && this.world.isDoor(picked.x, picked.y)) {
-      return { x: picked.x, y: picked.y, valid: this.inReach(picked.x, picked.y) && this.canToggleDoorAt(picked.x, picked.y) };
-    }
-    // Espada: o alvo é a entidade (anel), nunca a célula. Machado: só mostra a célula ao segurar.
-    if (this.tool === 'sword') return null;
-    if (this.strikerInHand) return null;
-    return this.useTarget(x, y);
-  }
-
-  /** Anel na ovelha alvo do trigo (ou do golpe): sob o mouse ou, com a personagem parada, à frente dela. */
-  private hoverSheep(): (CellTarget & { attack?: boolean }) | null {
-    if (this.strikerInHand) {
-      const t = this.entities.strikeTargets(this.player.facing)[0];
-      return t ? { x: t.x, y: t.y, valid: true, attack: true } : null;
-    }
-    const slot = this.slot;
-    if (slot?.kind !== 'item' || !ITEMS[slot.item].feeds) return null;
-    let sheep: Sheep | null = null;
-    if (this.pointer.inside && !this.joystick.active) {
-      if (this.press && this.press.held > TAP_MAX_S) return null;
-      sheep = this.sheepUnderCursor(this.pointer.x, this.pointer.y);
-    } else if (!this.player.moving) {
-      sheep = this.frontSheep();
-    }
-    return sheep ? { x: sheep.x, y: sheep.y, valid: this.canFeed(sheep) } : null;
-  }
-
-  /**
-   * Alvo do botão de ação: com a personagem parada, a célula à frente ganha um
-   * contorno de seleção (válido se dá para usar o selecionado ou quebrar).
-   * Andando, nada fica selecionado. Com o mouse sobre o mundo, vale o destaque do mouse.
-   */
-  private focusTarget(): CellTarget | null {
-    if (this.pointer.inside || this.player.moving) return null;
-    const [dx, dy] = this.frontCell();
-    if (this.world.isDoor(dx, dy)) return { x: dx, y: dy, valid: this.canToggleDoorAt(dx, dy) };
-    if (this.tool === 'sword') return null;
-    const slot = this.slot;
-    if (this.strikerInHand) {
-      // Machado: só destaca o que dá para cortar (madeira/árvore/planta) à frente.
-      const [x, y] = this.frontCell();
-      return this.canBreakAt(x, y) ? { x, y, valid: true } : null;
-    }
-    if (slot?.kind === 'item' && ITEMS[slot.item].feeds && this.frontSheep()) return null; // anel na ovelha
-    const [x, y] = this.frontCell();
-    return { x, y, valid: this.canUseAt(slot, x, y) || this.canBreakAt(x, y) };
-  }
 }
