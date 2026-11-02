@@ -29,8 +29,9 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 11. Geração em Web Worker se o custo por chunk voltar a crescer (hoje ~0,07 ms).
 
 ## Riscos e dívidas técnicas
-- **Peso dos artefatos** (~2,65 MB cada): cada folha de sprite nova soma ~150 kB e os dois mundos levam a arte um
-  do outro. Separar assets por mundo (build por `VITE_WORLD` só com a arte do perfil) antes de passar de ~3 MB.
+- **Peso dos artefatos — URGENTE** (~2,83 MB cada; o build já avisa acima de 2,8 MB): cada folha nova soma
+  ~150 kB e os dois mundos levam a arte um do outro. Separar assets por mundo (build por `VITE_WORLD` só com a
+  arte do perfil) antes da próxima folha de sprite.
 - `game/game.ts` (~490 linhas) concentra entrada, alvo e regras de ação: separar `ActionController` quando as
   ferramentas ganharem ação.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.

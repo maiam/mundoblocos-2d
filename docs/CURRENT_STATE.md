@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.16.0_
+_Atualizado em 2026-11-02 — v0.17.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -29,8 +29,8 @@ _Atualizado em 2026-11-02 — v0.16.0_
 - Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15).
 
 ## Sistemas
-- **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara Terra/Terra
-  com Grama → Terra Arada; a **espada** golpeia (animação própria) e faz sumir animais à frente — não quebra
+- **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara (animação própria) Terra/Terra
+  com Grama → Terra Arada e não quebra nem ataca; a **espada** golpeia (animação própria) e faz sumir animais à frente — não quebra
   blocos, itens nem elementos; o **machado** também golpeia e, segurando, corta só madeira/árvore/planta.
   Pá e picareta ainda sem ação.
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
@@ -50,7 +50,7 @@ _Atualizado em 2026-11-02 — v0.16.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 56 testes (Vitest) passando; typecheck e build sem avisos.
+- 58 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~2,65 MB cada (um bundle com a arte dos dois mundos).
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~2,83 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

@@ -1,7 +1,9 @@
 # Domínio: player (game)
 
 - **Ferramentas**: `Player.equipped` = ferramenta do espaço selecionado na hotbar (ou null); muda o sprite
-  (`heroine-<ferramenta>`). **Enxada** com toque curto ara o alvo (regra em `canUseAt/applyUse`).
+  (`heroine-<ferramenta>`). **Enxada** (folha de ação `heroine-hoe-attack`): toque curto toca a
+  animação de arar e **só** troca Terra/Terra com Grama → Terra Arada (`World.till`); **não quebra** blocos, itens
+  nem elementos (segurar não faz nada) e **não acerta** entidades.
 - **Espada**: toque/clique curto = **golpe** (`Player.startAttack`, 0,36 s, 4 quadros da folha de ataque). O acerto
   sai uma vez no meio do golpe (`consumeHit`) na direção em que ela olhava (fixa durante o golpe; pelo mouse ela
   vira para o cursor antes). Alvos: entidades num arco à frente (`Entities.strikeTargets`, alcance 1,45 célula,
@@ -12,8 +14,9 @@
   (animais somem). Segurar 2 s **corta só o que é de madeira, árvore ou planta** (`BlockDef.choppable`: tora,
   piso de carvalho, carvalho, cerejeira, cacto, capim, flor, trigo); enquanto corta, a animação de golpe repete
   (e acerta entidades no arco). Pedra, terra, areia etc. não quebram. Foco/cursor só destacam o que dá para cortar.
-- Restrição por ferramenta: `TOOLS[tool].breaks` (`any` | `none` | `choppable`) via `toolCanBreak`, aplicada em
-  `Game.canBreakAt` com o bloco de `World.breakTargetId`. Pá e picareta ainda sem ação própria (quebram tudo).
+- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `choppable`, via
+  `toolCanBreak` em `Game.canBreakAt`), `swings` (tem animação de ação) e `strikes` (o golpe acerta entidades —
+  espada e machado sim, enxada não). Pá e picareta ainda sem ação própria (quebram tudo).
 - `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).

@@ -69,18 +69,23 @@ export interface ToolDef {
    * Fonte de verdade da restrição por ferramenta.
    */
   breaks: 'any' | 'none' | 'choppable';
-  /** Toque curto dá um golpe (animação de ataque) que acerta entidades à frente. */
+  /** Toque curto toca a animação de ação da ferramenta (golpe, arar…). */
+  swings: boolean;
+  /** O golpe acerta entidades à frente (animais/monstros). */
   strikes: boolean;
 }
 
 export const TOOLS: Record<ToolId, ToolDef> = {
-  sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'golpe em animais/monstros; não quebra nada', breaks: 'none', strikes: true },
-  hoe: { id: Tool.HOE, name: 'Enxada', plannedUse: 'ara Terra/Terra com Grama → Terra Arada', breaks: 'any', strikes: false },
-  pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)', breaks: 'any', strikes: false },
-  shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão (futuro)', breaks: 'any', strikes: false },
+  sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'golpe em animais/monstros; não quebra nada', breaks: 'none', swings: true, strikes: true },
+  hoe: {
+    id: Tool.HOE, name: 'Enxada', plannedUse: 'só ara Terra/Terra com Grama → Terra Arada; não quebra nem ataca',
+    breaks: 'none', swings: true, strikes: false,
+  },
+  pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)', breaks: 'any', swings: false, strikes: false },
+  shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão (futuro)', breaks: 'any', swings: false, strikes: false },
   axe: {
     id: Tool.AXE, name: 'Machado', plannedUse: 'golpe em animais/monstros; corta só madeira/árvore/planta',
-    breaks: 'choppable', strikes: true,
+    breaks: 'choppable', swings: true, strikes: true,
   },
 };
 

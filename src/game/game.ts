@@ -263,8 +263,11 @@ export class Game {
   private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
     if (!slot) return; // mão vazia ainda não tem ação
     if (slot.kind === 'tool') {
-      // Enxada ara a terra; as demais ferramentas ainda não têm ação.
-      if (slot.tool === 'hoe' && this.canUseAt(slot, x, y)) this.world.till(x, y);
+      // Enxada: toca a animação de arar e só troca Terra/Terra com Grama → Terra Arada.
+      if (slot.tool === 'hoe') {
+        this.player.startAttack('hoe');
+        if (this.canUseAt(slot, x, y)) this.world.till(x, y);
+      }
       return;
     }
     if (slot.kind === 'block') {
@@ -341,6 +344,14 @@ export class Game {
     }
     if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
       this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
+      return;
+    }
+    if (slot?.kind === 'tool' && slot.tool === 'hoe') {
+      // Pelo mouse: vira para o cursor, ara (animação sempre; troca só se o alvo for válido).
+      const t = this.useTarget(sx, sy);
+      if (!this.player.attacking) this.faceToward(sx, sy);
+      if (t?.valid) this.applyUse(slot, t.x, t.y, null);
+      else this.player.startAttack('hoe'); // alvo fora de alcance/inválido: só a animação
       return;
     }
     const t = this.useTarget(sx, sy);
@@ -457,7 +468,10 @@ export class Game {
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
-    if (this.player.consumeHit()) this.entities.strike(this.player.facing);
+    // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
+    if (this.player.consumeHit() && this.player.attackTool && TOOLS[this.player.attackTool].strikes) {
+      this.entities.strike(this.player.facing);
+    }
     this.world.tick(dt);
     this.drops.update(dt, this.player, this.inventory);
     this.camera.follow(...this.cameraTarget(), dt);

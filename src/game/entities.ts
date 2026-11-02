@@ -9,10 +9,10 @@ import { type Facing, type Walker } from './walker';
 import type { ToolId } from '../world/items';
 import type { CharacterId } from '../world/profiles';
 
-/** Ferramentas com folha de golpe. */
-export type StrikeTool = 'sword' | 'axe';
+/** Ferramentas com folha de ação (golpe/arar). */
+export type SwingTool = 'sword' | 'axe' | 'hoe';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${StrikeTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -224,7 +224,7 @@ export class Entities {
   get actors(): Actor[] {
     const p = this.player;
     const kind: ActorKind = this.character === 'goddess' ? 'goddess'
-      : p.attacking && (p.attackTool === 'sword' || p.attackTool === 'axe') ? `heroine-${p.attackTool}-attack`
+      : p.attacking && (p.attackTool === 'sword' || p.attackTool === 'axe' || p.attackTool === 'hoe') ? `heroine-${p.attackTool}-attack`
       : p.equipped ? `heroine-${p.equipped}` : 'heroine';
     const out: Actor[] = [{
       kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,

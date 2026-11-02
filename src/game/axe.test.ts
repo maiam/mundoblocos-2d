@@ -55,3 +55,24 @@ describe('Machado', () => {
     void w;
   });
 });
+
+describe('Enxada', () => {
+  it('não quebra nada, não ataca e tem animação de ação', () => {
+    for (const id of [Block.STONE, Block.DIRT, Block.GRASS, Block.OAK_TREE, Block.WHEAT_15, Block.FLOWER, Block.OAK_LOG]) {
+      expect(toolCanBreak('hoe', id)).toBe(false);
+    }
+    expect(TOOLS.hoe.swings).toBe(true);
+    expect(TOOLS.hoe.strikes).toBe(false);
+  });
+
+  it('animação de arar usa a folha própria', () => {
+    const w = new World(7);
+    const [sx, sy] = w.findSpawn();
+    const p = new Player(sx + 0.5, sy + 0.5);
+    const e = new Entities(p, mulberry32(1));
+    p.equipped = 'hoe';
+    expect(e.actors[0].kind).toBe('heroine-hoe');
+    p.startAttack('hoe');
+    expect(e.actors[0].kind).toBe('heroine-hoe-attack');
+  });
+});

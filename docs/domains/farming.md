@@ -2,8 +2,9 @@
 
 ## Ferramentas (`world/items.ts` → `TOOLS`)
 - Espada, Enxada, Picareta, Pá, Machado: itens únicos, sem quantidade, equipados ao selecionar.
-- **Enxada (ativa):** toque/clique com a enxada numa célula de chão Terra ou Terra com Grama, sem nada em cima
-  (capim/flor são removidos) → chão vira **Terra Arada** (`World.canTill/till`). Alvo: célula à frente (botão de
+- **Enxada (ativa):** toque/clique com a enxada (animação de arar) numa célula de chão Terra ou Terra com Grama,
+  sem nada em cima (capim/flor são removidos) → chão vira **Terra Arada** (`World.canTill/till`). Não quebra
+  nada nem ataca. Alvo: célula à frente (botão de
   ação) ou sob o cursor; mesmo alcance de 4,5 células.
 - **Espada (ativa):** golpeia entidades (ver `domains/player.md`); não quebra nada do mundo.
 - **Machado (ativo):** golpeia entidades; segurando, corta só madeira/árvore/planta (`choppable`). Cortar árvore

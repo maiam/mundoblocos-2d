@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.0 — 2026-11-02
+- **Enxada**: animação de arar (folha fornecida) a cada toque; só troca Terra/Terra com Grama → Terra Arada.
+- **Restrição**: enxada não quebra blocos, itens nem elementos (`breaks: 'none'`) e não acerta entidades.
+- Registro de ferramentas ganha `swings` (tem animação de ação) separado de `strikes` (acerta entidades).
+- 2 testes novos.
+
 ## 0.16.0 — 2026-11-02
 - **Machado**: toque = golpe com a folha fornecida (animais somem, como a espada); segurar 2 s corta só o que é de
   madeira, árvore ou planta, repetindo a animação de golpe enquanto corta.
