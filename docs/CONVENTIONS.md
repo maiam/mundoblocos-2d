@@ -1,34 +1,49 @@
 # Convenções
 
+## Código
 - TypeScript estrito, ES modules, sem framework. Identificadores em inglês; UI, comentários e docs em pt-BR.
-- Coordenadas: `x` → direita, `y` → **baixo na tela** (= sul no mapa). Unidade = célula; px de mundo = célula × `TILE`.
+- Coordenadas: `x` → direita, `y` → **baixo na tela** (= sul). Unidade = célula; px de mundo = célula × `TILE`.
   A câmera nunca rota: direção de tela = direção do mapa (joystick e teclado usam o mesmo vetor).
 - Conversão célula↔chunk **sempre** via `world/coords.ts`.
-- Toda aleatoriedade do mundo deriva da seed. Nunca `Math.random()` em `world/` (só em efeitos efêmeros).
-- Cada célula tem chão (`layer: 'ground'`) e até 2 níveis de objeto (`layer: 'object'`, `AIR` = vazio); o nível 1
-  só aceita cubo sobre cubo. Altura de pé/colisão sempre via `World.standHeight` (inclui buracos).
-- A camada de chão pode conter um id de cubo (piso feito num buraco); ler "é pisável" via `isGroundStandable`.
-  Formas de objeto: `cube`, `tree`, `decoration` (não sólido).
-- Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo material = entrada em
-  `MATERIALS` + cubo na prancha **3/4** (topo + frente, mesmo enquadramento) + `extract-blocks.py` (nome na mesma ordem).
-- Material tem um id só para chão e cubo; para "é pisável" use `isGroundStandable`, nunca o `layer`.
-- Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a
-  base da célula (necessário para a ordenação por linha). Cubos: face superior `TILE`, face frontal `CUBE_FRONT`.
-- Ações do jogador: regra por célula no `Game` (`canUseAt/canBreakAt/applyUse`, que delegam ao `World`);
-  a origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.
-- Itens contáveis vivem em `world/items.ts`; o inventário (quantidades) em `game/inventory.ts`. Blocos de
-  construção continuam infinitos. O que um bloco devolve ao quebrar vem de `dropsFor`.
-- `BlockId` aceita os estágios intermediários do trigo (61–74); usar `isWheat/wheatStage/wheatId`.
-- Toda entidade que anda estende `Walker` (nada de colisão própria); NPCs ficam em `game/` e entram em
-  `Entities`. Ocupação de célula (colocar/cavar) consulta `Entities.occupies`, não só a personagem.
-- Folhas de sprite novas: 4×4 normalizadas para frente, esquerda, direita, costas (`--rows-map` quando a
-  origem vier em outra ordem; sufixo `m` espelha), processadas por `scripts/process-sprite.py`;
-  ajustar `sat_max/min_claro` quando a sombra do desenho for mais escura/saturada.
-- Personagem: posição = centro dos pés. Quadros da folha compartilham a mesma ancoragem (pés na base);
-  a câmera segue a posição lógica, nunca o sprite.
-- O jogo é **horizontal**: qualquer layout novo deve funcionar em paisagem de pouca altura (≥ 360 px) e
-  respeitar `env(safe-area-inset-*)`. Em retrato no toque o jogo fica bloqueado (`ScreenMode.blocked`).
-- Elementos com `display` próprio que usam `hidden` precisam de regra `[hidden] { display: none }` explícita.
-- Estilo: sombras puxam para índigo, luz de cima-esquerda, contornos coloridos, brilhos em estrela.
-- Mutação de objeto só via `World.setObject/placeBlock/breakBlock`.
-- Testes em `src/**/*.test.ts` (Vitest, Node).
+- Aleatoriedade do mundo só pela seed (`random.ts`/`noise.ts`); `Math.random()` só em efeitos e IA de NPC.
+- Movimento/animação dependentes de tempo usam `dt` (nunca "por frame").
+- Testes em `src/**/*.test.ts` (Vitest, Node); benchmarks em `bench/`.
+
+## Mundo e regras
+- Célula: chão + objeto nível 0 + cubo nível 1 (nível 1 só sobre cubo). `AIR` = vazio.
+- Material tem **um id** para chão e cubo; "é pisável" via `isGroundStandable`, nunca pelo `layer`.
+- Altura de pé/colisão sempre via `World.standHeight` (inclui água, buracos, árvores).
+- Mutação só por `World.setObject/placeBlock/breakBlock/plant` (garante `version` e vizinhos).
+- Geração: novos campos do mapa entram em `WorldGenerator.cellAt` (uma avaliação de ruído por célula); não
+  chamar `groundAt/objectAt/upperAt` em sequência dentro do gerador.
+- `BlockId` aceita os estágios do trigo (61–74): usar `isWheat/wheatStage/wheatId`.
+
+## Jogo
+- Regra de ação do jogador por célula no `Game` (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; a
+  origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.
+- Itens contáveis em `world/items.ts`; quantidades em `game/inventory.ts`; materiais são infinitos; o que um
+  bloco devolve vem de `dropsFor`.
+- Toda entidade que anda estende `Walker`; NPCs entram em `Entities`; ocupação de célula via `Entities.occupies`.
+- Personagem: posição = centro dos pés; a câmera segue a posição lógica, nunca o sprite.
+
+## Interface
+- Jogo **horizontal**: layout cabe em paisagem com ~360 px de altura e respeita `env(safe-area-inset-*)`.
+  Em retrato no toque o jogo fica bloqueado (`ScreenMode.blocked`).
+- Elemento com `display` próprio que usa `hidden` precisa de `[hidden] { display: none }` explícito.
+- Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
+
+## Arte e assets
+- Estilo: ilustração de fantasia RPG/anime; sombras puxam para índigo, luz de cima-esquerda, contornos
+  coloridos, brilhos em estrela.
+- Folhas 4×4 na ordem frente, esquerda, direita, costas (`--rows-map` normaliza; `m` espelha); quadros com a
+  mesma ancoragem (pés na base). Ajustar `--sat/--min` quando a sombra do desenho for escura/saturada.
+- Blocos novos: cubo na prancha **3/4** (topo + frente, mesmo enquadramento) + entrada em `MATERIALS` na mesma
+  ordem dos nomes de `extract-blocks.py`.
+- Sprites de objeto: `ox/oy` relativos ao canto da célula; base do sprite = base da célula (ordenação por linha).
+  Cubos: topo `TILE`, frente `CUBE_FRONT`.
+- O código importa só `src/assets/*.webp?inline`; depois de gerar PNG, rodar `scripts/optimize-assets.py`.
+- Originais ficam em `assets-src/` (versionados) e os comandos de processamento em `OPERATIONS.md`.
+
+## Documentação
+- Documentos descrevem o **estado atual**; histórico vai para CHANGELOG/ADRs.
+- Toda entrega atualiza CURRENT_STATE, NEXT_STEPS e CHANGELOG; mapas (`MAPS.md`) acompanham mudanças de fluxo.

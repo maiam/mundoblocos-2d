@@ -57,53 +57,53 @@ export class WorldGenerator {
     return Math.abs(this.terrain.fbm2(x / 230 + 400, y / 230 - 400, 3)) < 0.022;
   }
 
-  /** Classe do terreno sem objetos: usada pelo chão e pelos objetos. */
-  private terrainAt(x: number, y: number): { e: number; biome: Biome; wet: boolean } {
+  /**
+   * Célula completa numa única avaliação de ruído (elevação, clima, rio, trilha).
+   * `groundAt/objectAt/upperAt` derivam daqui — antes cada um recalculava o terreno
+   * (até 5× por célula ao gerar um chunk).
+   */
+  cellAt(x: number, y: number): Cell {
     const e = this.elevation(x, y);
+    if (e < WATER_LEVEL || (e < MOUNTAIN_LEVEL - 0.04 && this.isRiver(x, y))) {
+      return { ground: Block.WATER, object: Block.AIR, upper: Block.AIR };
+    }
     const biome = this.biomeAt(x, y);
-    const wet = e < WATER_LEVEL || (e < MOUNTAIN_LEVEL - 0.04 && this.isRiver(x, y));
-    return { e, biome, wet };
-  }
+    if (e < BEACH_LEVEL) return { ground: Block.SAND, object: Block.AIR, upper: Block.AIR };
 
-  groundAt(x: number, y: number): BlockId {
-    const { e, biome, wet } = this.terrainAt(x, y);
-    if (wet) return Block.WATER;
-    if (e < BEACH_LEVEL) return Block.SAND;
-    if (e > MOUNTAIN_LEVEL - 0.05 && biome.key !== 'desert') return Block.DIRT;
-    // Trilhas naturais de terra batida cortando os campos.
-    if (biome.key !== 'desert' && Math.abs(this.detail.fbm2(x / 90 - 300, y / 90 + 300, 2)) < 0.012) return Block.PATH;
-    return biome.ground;
-  }
+    let ground: BlockId = biome.ground;
+    if (e > MOUNTAIN_LEVEL - 0.05 && biome.key !== 'desert') ground = Block.DIRT;
+    // Trilhas naturais de terra batida cortando os campos (sempre livres).
+    else if (biome.key !== 'desert' && Math.abs(this.detail.fbm2(x / 90 - 300, y / 90 + 300, 2)) < 0.012) {
+      return { ground: Block.PATH, object: Block.AIR, upper: Block.AIR };
+    }
 
-  /** Segundo cubo da pilha (nível 1): só em montanhas altas. */
-  upperAt(x: number, y: number): BlockId {
-    const { e, wet } = this.terrainAt(x, y);
-    if (wet || e <= HIGH_MOUNTAIN) return Block.AIR;
-    return Block.STONE;
-  }
-
-  objectAt(x: number, y: number): BlockId {
-    const { e, biome, wet } = this.terrainAt(x, y);
-    if (wet || e < BEACH_LEVEL) return Block.AIR;
-
-    if (e > MOUNTAIN_LEVEL) return Block.STONE;
+    if (e > MOUNTAIN_LEVEL) {
+      return { ground, object: Block.STONE, upper: e > HIGH_MOUNTAIN ? Block.STONE : Block.AIR };
+    }
 
     const r = hash2(this.seed, x, y);
     const forest = this.detail.fbm2(x / 38 + 50, y / 38 - 50, 2);
     const density = biome.treeDensity * (forest > 0.05 ? 1 : 0.12);
-    if (r < density) return biome.tree;
-    // Pedregulhos ocasionais (fora das trilhas).
-    if (r > 0.994 && this.groundAt(x, y) !== Block.PATH) return Block.STONE;
-    if (this.groundAt(x, y) === Block.PATH) return Block.AIR;
-    const d = hash2(this.seed, x, y + 7919);
-    if (d < biome.decoChance) {
-      return biome.decorations[Math.floor(hash2(this.seed, x - 31, y) * biome.decorations.length)];
+    let object: BlockId = Block.AIR;
+    if (r < density) object = biome.tree;
+    else if (r > 0.994) object = Block.STONE; // pedregulhos ocasionais
+    else if (hash2(this.seed, x, y + 7919) < biome.decoChance) {
+      object = biome.decorations[Math.floor(hash2(this.seed, x - 31, y) * biome.decorations.length)];
     }
-    return Block.AIR;
+    return { ground, object, upper: Block.AIR };
   }
 
-  cellAt(x: number, y: number): Cell {
-    return { ground: this.groundAt(x, y), object: this.objectAt(x, y), upper: this.upperAt(x, y) };
+  groundAt(x: number, y: number): BlockId {
+    return this.cellAt(x, y).ground;
+  }
+
+  objectAt(x: number, y: number): BlockId {
+    return this.cellAt(x, y).object;
+  }
+
+  /** Segundo cubo da pilha (nível 1): só em montanhas altas. */
+  upperAt(x: number, y: number): BlockId {
+    return this.cellAt(x, y).upper;
   }
 
   /** Preenche as camadas 16×16 (linha a linha) do chunk (cx, cy). */
@@ -113,9 +113,10 @@ export class WorldGenerator {
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const i = ly * CHUNK_SIZE + lx;
-        ground[i] = this.groundAt(x0 + lx, y0 + ly);
-        objects[i] = this.objectAt(x0 + lx, y0 + ly);
-        upper[i] = this.upperAt(x0 + lx, y0 + ly);
+        const c = this.cellAt(x0 + lx, y0 + ly);
+        ground[i] = c.ground;
+        objects[i] = c.object;
+        upper[i] = c.upper;
       }
     }
   }

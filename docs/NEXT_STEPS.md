@@ -1,27 +1,34 @@
 # Próximos passos
 
-- Ferramentas sobre os novos materiais: enxada transforma grama/terra em **Terra Arada** (plantio só nela?),
-  pá transforma em **Caminho de Terra**; machado em árvores dá **Tora de Carvalho** (e o piso via receita).
-- Pedir à arte (em 3/4): árvores/cacto/água no estilo da prancha; topos menos achatados evitariam o esticamento.
+Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 
-- **Avaliar o teste do botão de ação**: tempo de 2 s ainda adequado? Mão vazia + toque poderia colher trigo maduro
-  ou fazer carinho na ovelha; alvo "à frente" poderia considerar a diagonal do joystick.
+## Agora
+1. **Avaliar o botão de ação no celular** (teste em andamento): 2 s ainda confortável? Mão vazia + toque
+   poderia colher trigo maduro ou fazer carinho na ovelha; alvo poderia considerar a diagonal do joystick.
+2. **Ações das ferramentas** sobre os materiais:
+   - Enxada: grama/terra → Terra Arada (decidir se plantio passa a exigir terra arada).
+   - Pá: grama/terra → Caminho de Terra; cava mais rápido.
+   - Picareta: quebra pedra mais rápido; Machado: corta árvore → Tora de Carvalho.
+   - Espada: reservada para combate. Falta arte de golpe (sprites de ação).
+3. **Salvar o progresso no navegador** (`localStorage`): seed + chunks modificados + inventário + plantações +
+   ovelhas. Contas e mundos na nuvem exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste
+   recomendado para o core**, não criar backend aqui.
 
-- **Ações das ferramentas** (próximo): enxada prepara a terra (plantio só em terra arada?), picareta/pá/machado
-  aceleram a quebra do material certo (e o restante fica mais lento), espada para combate futuro. Sprites de
-  ação (golpe) ainda não existem.
-- Hotbar com 16 espaços está no limite do celular deitado: considerar inventário/painel de ferramentas.
+## Em seguida
+4. Inventário/painel: a hotbar (15 espaços) está no limite do celular deitado.
+5. Ovelhas em outros chunks (spawn por bioma com limite) e tosar → lã.
+6. Arte em 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
+7. Feedback sem HUD: vibração ao quebrar no celular, sons opcionais, menu recolhível (novo mundo, ciclo do dia).
 
-0. Feedback discreto sem HUD: vibração (`navigator.vibrate`) ao quebrar no celular e som opcional; menu
-   recolhível para "novo mundo"/ciclo do dia, se fizer falta.
+## Depois
+8. Receitas (tora → piso, trigo → pão), mais culturas, regar/adubar.
+9. Transições suaves entre tipos de chão (autotile), água animada, pontes.
+10. Alturas: meio bloco/escadas; indicar borda de queda.
+11. Geração em Web Worker se o custo por chunk voltar a crescer (hoje ~0,07 ms).
 
-1. **Persistência de edições** — curto prazo em `localStorage` (seed + chunks modificados). Contas/mundos
-   salvos exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste recomendado para o core**.
-2. Inventário real (coletar o que quebra, gastar o que coloca).
-3. Transições suaves entre tipos de chão (autotile por vizinhança).
-4. Alturas: blocos de meia altura/escadas, e mostrar a borda de queda (sombra ao descer de 2 níveis).
-5. Sprite sheet: reduzir peso do PNG (quantização) e adicionar animação de ação (quebrar/colocar).
-6. NPCs: tosar a ovelha (lã), spawn por chunk/bioma; persistir inventário, plantações e rebanho com as edições.
-   Cultivo: regar/adubar, mais culturas, trigo como receita (pão).
-7. Água animada e pontes (colocar tábuas sobre água).
-8. Geração em Web Worker se o custo por chunk crescer.
+## Riscos e dívidas técnicas
+- `game/game.ts` (~490 linhas) concentra entrada, alvo e regras de ação: separar `ActionController` quando as
+  ferramentas ganharem ação.
+- Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.
+- Pipeline de render de brilho (`glowColor`) está sem uso desde a remoção dos blocos mágicos (mantido para
+  futuros efeitos, ex.: vaga-lumes/tochas).

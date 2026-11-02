@@ -1,15 +1,16 @@
 # MundoBlocos 2D
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
-com grade de blocos-cubo pintados no estilo **ilustração digital moderna de fantasia (RPG/anime)** e uma
-heroína jogável. Ciclo dia/noite, sombras de nuvens, brilhos mágicos e partículas por bioma.
+com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**, uma heroína jogável com
+ferramentas, cultivo de trigo e ovelhas que se reproduzem. Ciclo dia/noite, sombras de nuvens e partículas.
 
 ## Rodar
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173  (aceita ?seed=<número|texto>)
-npm test           # testes do domínio world (Vitest)
+npm test           # testes (Vitest)
+npm run bench      # benchmarks de geração/leitura de chunks
 npm run build      # typecheck + build estático em dist/
 npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/offline)
 ```
@@ -37,5 +38,6 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 
 ## Documentação
 
-Comece por [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) e [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
-Arquitetura em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); domínios em [`docs/domains/`](docs/domains/).
+- Índice e ordem de leitura: [`docs/README.md`](docs/README.md) · mapas do sistema: [`docs/MAPS.md`](docs/MAPS.md)
+- Instruções para agentes de IA: [`CLAUDE.md`](CLAUDE.md)
+- Estado atual: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) · próximos passos: [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md)

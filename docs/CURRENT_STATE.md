@@ -1,52 +1,45 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.11.1_
+_Atualizado em 2026-11-02 — v0.12.0_
 
-## Funcional
-- **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
-  ordenação por profundidade (linha) entre objetos e personagem.
-- **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
-  transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
-- **Cavar o chão**: célula vazia + quebrar → buraco intransponível; só um bloco novo o preenche, virando piso.
-- **Blocos da prancha**: só 8 materiais (terra, grama, arada, caminho, areia, pedra, tora e piso de carvalho),
-  com a arte fornecida; também formam o chão do mundo. Biomas reduzidos a Campos, Sakura e Dunas.
-- **Botão de ação (em teste)** no celular: toque usa, segurar 2 s quebra o bloco à frente; alvo com contorno
-  quando a personagem está parada; mostra o item selecionado ou a mão. Espaço faz o mesmo no desktop.
-- **Ferramentas** (espada, enxada, picareta, pá, machado) na hotbar (1–5): selecionar equipa e a heroína anda
-  com ela nas 4 direções. Ainda sem ação própria.
-- **Cultivo de trigo**: semente plantada na terra cresce em 16 estágios (~1,5 min); colher (segurar 2 s) solta
-  trigo + sementes que a personagem coleta. Inventário com contador na hotbar (começa com 5 sementes e 2 trigos).
-- **Ovelhas comem trigo e se reproduzem**: apaixonadas (coração) → par → namoro animado → filhote, que cresce.
-- **Primeiro NPC: ovelhas** — rebanho de até 4 perto do spawn, pastando e passeando (4 direções animadas),
-  sem subir em cubos, com colisão entre entidades. Ainda sem interação do personagem.
-- **Heroína jogável** (sprite 4 direções × 4 quadros), ~2,2 células de altura; colisão com objetos sólidos e água.
-- **Câmera** sem rotação, zoom automático (~10 células na vertical, ajustável), acompanhamento suave da
-  posição lógica — sem balanço de caminhada.
-- **Joystick virtual** alinhado às direções da tela (+ WASD/setas).
-- Mundo por seed (`?seed=`) em chunks 16×16 nos dois eixos, carregados/descarregados sob demanda.
-- Geração: elevação → água/praia/montanhas (pedra, carvão, ouro, cristal de mana), rios, 5 biomas
-  (Tundra com lagos congelados, Campos, Sakura, Floresta Encantada, Dunas), manchas de floresta, arbustos,
-  pedregulhos, enfeites. Spawn em bioma acolhedor; o clima é deslocado por seed.
-- Render: chão com variações, barrancas e espuma nas margens, grade sutil, sombras projetadas, brilho de
-  água, sombras de nuvens, ciclo dia/noite (8 min), halos mágicos, partículas por bioma.
-- **Sempre na horizontal**: no celular, o 1º toque pede tela cheia e trava em paisagem (onde o navegador
-  permite: Android/Chrome); em retrato, a camada "Gire o aparelho" bloqueia o jogo (cobre iOS/iframes).
-  PWA instalável abre em tela cheia e paisagem. Controles compactos em paisagem de pouca altura.
-- **Tela limpa**: só a hotbar na parte inferior (+ joystick em telas de toque). Sem painéis de informação/botões.
-- Interação pelo mouse: clique curto coloca; segurar 2 s quebra (rachaduras + anel de progresso); alcance de 4,5
-  células; hotbar 1–9; atalhos de depuração G (chunks) e T (tempo).
-- Versão jogável publicada como Artifact (ver `OPERATIONS.md`).
+## Mundo
+- Gerado por seed (`?seed=`), em chunks 16×16 nos dois eixos, carregados sob demanda e descarregados quando
+  longe (chunks editados ficam em memória).
+- Vista superior inclinada (3/4): chão + cubos com topo e frente; árvores altas; ordenação por profundidade.
+- **8 materiais** (prancha 3/4 fornecida): Terra, Terra com Grama, Terra Arada, Caminho de Terra, Areia, Pedra,
+  Tora de Carvalho, Piso de Carvalho. São os únicos blocos de construção e também o chão natural.
+- Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
+  pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
+- Pilhas de até 2 cubos; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
+
+## Personagem e controles
+- Heroína com sprite em 4 direções, ~2,2 células; sobe 1 nível por vez e desce livre; colide com água, buracos,
+  árvores e outras entidades.
+- Câmera sem rotação, zoom automático, acompanhamento suave sem o balanço da caminhada.
+- Celular: joystick (esquerda) + **botão de ação** (direita): toque usa o item selecionado no alvo à frente,
+  segurar 2 s quebra. Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
+- Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar 2 s quebra), Q/E/roda = zoom.
+- Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
+- Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15).
+
+## Sistemas
+- **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite; ainda sem ação.
+- **Cultivo**: semente na grama/terra/arada cresce em 16 estágios (~1,5 min); colheita solta trigo + sementes.
+- **Inventário** de itens contáveis (começa com 5 sementes e 2 trigos); materiais são infinitos.
+- **Ovelhas**: rebanho perto do spawn; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
+- Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
 ## Limitações conhecidas
-- iPhone/Safari no navegador não oferece tela cheia para páginas nem trava de orientação: lá vale a camada de
-  rotação (ou instalar na tela inicial). Dentro do Artifact (iframe) a tela cheia pode ser recusada.
-- O toque que ativa a tela cheia também conta como ação de colocar bloco.
-- Edições, inventário, plantações e ovelhas não são persistidos; NPCs existem só perto do spawn.
-- Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem o padrão no chão.
+- Nada é salvo (edições, inventário, plantações, ovelhas).
+- Ovelhas só nascem perto do spawn; não há animais em outros chunks.
+- Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
 - Sob a folha de trigo resta um filete claro da sombra original do desenho.
-- Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
-- Transições entre tipos de chão são em degrau (sem blending).
-- Água estática.
+- iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a
+  instalação na tela inicial); dentro do Artifact a tela cheia pode ser recusada.
+- Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
-## Qualidade
-- `npm test`: 40 testes (world + player) passando. `npm run build` limpo.
+## Qualidade e desempenho
+- 40 testes (Vitest) passando; typecheck e build sem avisos.
+- Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefato ~1,5 MB.
+- Publicado como Artifact: ver `OPERATIONS.md`.

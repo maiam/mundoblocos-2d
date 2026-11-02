@@ -2,7 +2,7 @@
 Uso: python3 scripts/make-icons.py (requer Pillow)."""
 from PIL import Image, ImageDraw
 
-sheet = Image.open('src/assets/heroine.png').convert('RGBA')
+sheet = Image.open('src/assets/heroine.webp').convert('RGBA')
 fw, fh = sheet.width // 4, sheet.height // 4
 frame = sheet.crop((0, 0, fw, fh))
 for size in (192, 512):

@@ -1,4 +1,4 @@
-import atlasUrl from '../assets/blocks-atlas.png?inline';
+import atlasUrl from '../assets/blocks-atlas.webp?inline';
 
 /**
  * Atlas dos materiais (scripts/extract-blocks.py). Carregado uma vez antes do jogo

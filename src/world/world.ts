@@ -10,6 +10,11 @@ export const WHEAT_STAGE_SECONDS = 6;
 /** Chãos onde a semente pode ser plantada ("terra"): grama, terra e terra arada. */
 const SOIL = new Set<number>([Block.GRASS, Block.DIRT, Block.TILLED]);
 
+/** Chave numérica exata do chunk (|cy| < 2^20 chunks ≈ 16 milhões de células). */
+function numKey(cx: number, cy: number): number {
+  return cx * 2097152 + cy;
+}
+
 export interface ChunkRect {
   cx0: number;
   cy0: number;
@@ -23,7 +28,10 @@ export interface ChunkRect {
  */
 export class World {
   readonly generator: WorldGenerator;
-  private readonly chunks = new Map<string, Chunk>();
+  /** Chunks por chave numérica (`numKey`): evita criar strings a cada leitura de célula. */
+  private readonly chunks = new Map<number, Chunk>();
+  /** Último chunk acessado (leituras vizinhas costumam cair no mesmo). */
+  private last: Chunk | null = null;
   /** Células com trigo plantado (crescem com o tempo). Só existem em chunks modificados, que não descarregam. */
   private readonly crops = new Set<string>();
 
@@ -40,12 +48,21 @@ export class World {
   }
 
   getChunk(cx: number, cy: number): Chunk | undefined {
-    return this.chunks.get(chunkKey(cx, cy));
+    const l = this.last;
+    if (l && l.cx === cx && l.cy === cy) return l;
+    const c = this.chunks.get(numKey(cx, cy));
+    if (c) this.last = c;
+    return c;
+  }
+
+  /** Chunk que contém a célula (x, y), se carregado. */
+  private chunkAt(x: number, y: number): Chunk | undefined {
+    return this.getChunk(toChunk(x), toChunk(y));
   }
 
   /** Retorna o chunk, gerando-o de forma síncrona se necessário. */
   loadChunk(cx: number, cy: number): Chunk {
-    const key = chunkKey(cx, cy);
+    const key = numKey(cx, cy);
     let chunk = this.chunks.get(key);
     if (!chunk) {
       chunk = new Chunk(cx, cy);
@@ -57,19 +74,19 @@ export class World {
 
   /** Chão da célula. Fora de chunk carregado consulta o gerador (puro). */
   getGround(x: number, y: number): BlockId {
-    const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
+    const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getGround(toLocal(x), toLocal(y)) : this.generator.groundAt(x, y);
   }
 
   /** Objeto do nível 0 da célula (AIR se vazio). */
   getObject(x: number, y: number): BlockId {
-    const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
+    const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getObject(toLocal(x), toLocal(y)) : this.generator.objectAt(x, y);
   }
 
   /** Cubo empilhado no nível 1 (AIR se não houver). */
   getUpper(x: number, y: number): BlockId {
-    const chunk = this.chunks.get(chunkKey(toChunk(x), toChunk(y)));
+    const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getUpper(toLocal(x), toLocal(y)) : this.generator.upperAt(x, y);
   }
 
@@ -283,7 +300,7 @@ export class World {
     const missing: [number, number, number][] = [];
     for (let cy = rect.cy0; cy <= rect.cy1; cy++) {
       for (let cx = rect.cx0; cx <= rect.cx1; cx++) {
-        if (!this.chunks.has(chunkKey(cx, cy))) missing.push([cx, cy, (cx - ccx) ** 2 + (cy - ccy) ** 2]);
+        if (!this.chunks.has(numKey(cx, cy))) missing.push([cx, cy, (cx - ccx) ** 2 + (cy - ccy) ** 2]);
       }
     }
     missing.sort((a, b) => a[2] - b[2]);
@@ -302,7 +319,8 @@ export class World {
         c.cy < rect.cy0 - UNLOAD_MARGIN || c.cy > rect.cy1 + UNLOAD_MARGIN
       ) {
         this.chunks.delete(key);
-        removed.push(key);
+        if (this.last === c) this.last = null;
+        removed.push(chunkKey(c.cx, c.cy));
       }
     }
     return removed;

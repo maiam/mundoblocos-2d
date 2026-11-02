@@ -390,7 +390,7 @@ export class Game {
       this.press = null;
       this.action = null;
     }
-    const [ix, iy] = blocked ? [0, 0] : this.input();
+    const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
     this.world.tick(dt);
@@ -427,7 +427,7 @@ export class Game {
   };
 
   /** Teclado + joystick, ambos em direções de tela. */
-  private input(): [number, number] {
+  private input(dt: number): [number, number] {
     const k = this.keys;
     let x = this.joystick.x;
     let y = this.joystick.y;
@@ -435,8 +435,10 @@ export class Game {
     if (k.has('KeyD') || k.has('ArrowRight')) x += 1;
     if (k.has('KeyW') || k.has('ArrowUp')) y -= 1;
     if (k.has('KeyS') || k.has('ArrowDown')) y += 1;
-    if (k.has('KeyE') || k.has('Equal')) this.camera.zoomBy(1.02);
-    if (k.has('KeyQ') || k.has('Minus')) this.camera.zoomBy(1 / 1.02);
+    // Zoom contínuo independente da taxa de quadros (~1,35× por segundo).
+    const z = Math.exp(0.3 * dt);
+    if (k.has('KeyE') || k.has('Equal')) this.camera.zoomBy(z);
+    if (k.has('KeyQ') || k.has('Minus')) this.camera.zoomBy(1 / z);
     return [x, y];
   }
 

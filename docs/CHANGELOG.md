@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.12.0 — 2026-11-02
+**Desempenho**
+- Gerador: uma avaliação de ruído por célula (`cellAt`) → gerar chunk 3,5× mais rápido (0,26 → 0,07 ms).
+- `World`: chunks com chave numérica + cache do último chunk → leituras 1,4× mais rápidas.
+- Assets em WebP (`scripts/optimize-assets.py`, ADR 0007): 3,4 → 1,1 MB; artefato 4,7 → 1,5 MB.
+- `npm run bench` com benchmarks de geração e leitura.
+
+**Correções**
+- Zoom pelo teclado (Q/E) dependia da taxa de quadros; agora usa `dt`.
+- Árvores podiam nascer sobre as trilhas de caminho de terra.
+- `make-icons.py` lia o PNG antigo da heroína.
+- Aviso de tamanho do bundle no build ajustado ao arquivo único (limite 1,8 MB, documentado).
+
+**Documentação**
+- `CLAUDE.md` (instruções para IA, armadilhas conhecidas) + `AGENTS.md`; `docs/README.md` (índice);
+  `docs/MAPS.md` (módulos, frame, regras, ciclos, assets, "onde mexer para…").
+- CURRENT_STATE, NEXT_STEPS, ARCHITECTURE (seção Desempenho), OPERATIONS, CONVENTIONS e DECISIONS
+  reorganizados; conteúdo obsoleto removido dos domínios.
+
+**Verificação**: sessão automatizada (3 seeds, desktop/celular, 120 ações aleatórias cada) sem erros.
+
 ## 0.11.1 — 2026-11-02
 - Arte dos blocos trocada pela prancha 3/4 fornecida (`blocks-sheet-34.png`) após comparação no jogo com a extração
   da prancha isométrica: frente sem distorção, terra arada/pedra/piso mais legíveis, grama mais calma no chão.

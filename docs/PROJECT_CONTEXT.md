@@ -7,9 +7,10 @@ e uma personagem jogável (heroína chibi).
 
 ## Objetivos
 - Mundo "infinito" em ambos os eixos do mapa, carregado sob demanda por chunks.
-- Identidade visual própria e coerente: blocos/cenário procedurais; personagem como sprite desenhado (asset do projeto).
+- Identidade visual própria e coerente: personagem, animais, plantas e blocos desenhados (assets do projeto);
+  água, árvores e efeitos procedurais no mesmo estilo.
 - Controle confortável no celular (joystick alinhado à tela) e no desktop (teclado).
-- Base sólida para evoluir para jogo (personagem, inventário, salvamento).
+- Base sólida para evoluir o jogo (ferramentas com ação, salvamento, mais animais e receitas).
 
 ## Posição no ecossistema
 - Repositório **apenas frontend** (site estático, Vite + TypeScript, sem framework).

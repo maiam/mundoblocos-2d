@@ -1,65 +1,73 @@
 # Arquitetura
 
-Vista superior inclinada (3/4). Ver [ADR 0003](adr/0003-vista-superior-inclinada.md).
+Site estático (Vite + TypeScript, sem framework), vista superior inclinada (3/4). Diagramas em
+[MAPS.md](MAPS.md). Decisões em [DECISIONS.md](DECISIONS.md).
 
+## Estrutura
 ```
-assets-src/*-sheet.png         folhas originais (heroína, ovelha; fundo claro, 4×4)
-scripts/process-sprite.py      gera src/assets/*.png (transparente, quadros uniformes)
-scripts/build-artifact.mjs     HTML de arquivo único a partir de dist/
-scripts/extract-blocks.py      prancha isométrica de blocos → atlas 3/4 + ícones
-scripts/make-icons.py          gera public/icon-192/512.png a partir da heroína
-public/manifest.webmanifest    PWA: display fullscreen, orientation landscape
+CLAUDE.md / AGENTS.md          instruções para agentes de IA
+assets-src/                    arte original (folhas 4×4, pranchas de blocos, ícones)
+scripts/
+  process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region…)
+  extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
+  optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
+  make-icons.py                ícones do PWA (public/)
+  build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)
+bench/perf.bench.ts            benchmarks (npm run bench)
+public/                        manifest PWA + ícones
 src/
-  config.ts            constantes (TILE, CUBE_FRONT, CHUNK_SIZE, orçamentos)
-  main.ts              bootstrap + seed via URL
-  assets/heroine.png, sheep.png   folhas processadas (importadas com ?inline)
-  world/   (domínio — sem DOM)
-    random.ts, noise.ts   PRNG/hash e Perlin + fBm com seed
-    blocks.ts          registro de blocos: camada (chão/objeto), forma, sólido, etc.
-    biomes.ts          biomas (chão, água, árvore, enfeites)
-    generator.ts       WorldGenerator: groundAt/objectAt PUROS, generateChunk
-    coords.ts          célula ↔ chunk/local (seguro p/ negativos)
-    chunk.ts           Chunk 16×16 com camadas ground/objects, modified, version
-    world.ts           World: chunks, edições, standHeight, quebrar/colocar, plantar/crescer, spawn
-    items.ts           itens contáveis (semente, trigo), ferramentas e o que cada bloco devolve ao quebrar
-  render/  (apresentação — lê o domínio, nunca escreve)
-    color.ts           utilitários de cor
-    textures.ts        materiais (atlas da prancha) em 3/4, água, árvores, cacto, enfeites, ícones
-    blockArt.ts        carrega o atlas dos blocos antes do jogo
-    chunkRenderer.ts   cache offscreen do CHÃO por chunk (barrancas, espuma, grade, sombras)
-    character.ts       folhas de sprite dos atores (heroína, ovelha, filhote, namoro) + coração
-    itemArt.ts         sprites do trigo por estágio e ícones dos itens
-    daycycle.ts        tinta do ciclo dia/noite
-    particles.ts       partículas ambientes por bioma
-    renderer.ts        frame + pick (objeto sob o cursor)
-  game/    (orquestração e entidades)
-    walker.ts          base de quem anda: posição, z, direção, colisão (World.standHeight + degrau), animação
-    player.ts          Walker controlado pelo jogador (sobe 1 nível)
-    sheep.ts           NPC ovelha: pasta/passeia perto de casa (não sobe em cubos)
-    entities.ts        personagem + NPCs: update, colisão, reprodução, ocupação de células, rebanho inicial
-    inventory.ts       quantidades de itens do jogador
-    hotbar.ts          espaços da hotbar (ferramentas, itens e blocos)
-    drops.ts           itens caídos no chão e coleta
-    camera.ts          câmera sem rotação, zoom automático, acompanhamento suave
-    joystick.ts        joystick virtual em direções de tela
-    actionButton.ts    botão de ação (toque): usa/quebra o alvo à frente; ícone do selecionado ou mão
-    screenMode.ts      toque: tela cheia + trava em paisagem no 1º gesto; camada "Gire o aparelho" em retrato
-    game.ts            loop, input, alcance, carregamento de chunks, liga render/HUD
-    hud.ts             overlay HTML mínimo: só a hotbar (joystick em telas de toque)
+  config.ts                    TILE, CUBE_FRONT, CHUNK_SIZE, MAX_STACK, STEP_HEIGHT, orçamentos
+  main.ts                      carrega a arte dos blocos, lê ?seed=, cria o Game (window.__game só no dev)
+  assets/*.webp                sprites, atlas e ícones (importados com ?inline)
+  world/   domínio — sem DOM, sem Math.random
+    random.ts, noise.ts        PRNG/hash e Perlin + fBm com seed
+    blocks.ts                  registro de blocos (MATERIALS, formas, camadas, trigo 60–75)
+    biomes.ts                  Campos, Sakura, Dunas
+    generator.ts               WorldGenerator.cellAt (uma avaliação de ruído por célula), generateChunk
+    coords.ts                  célula ↔ chunk/local (seguro p/ negativos)
+    chunk.ts                   Chunk 16×16: ground/objects/upper, modified, version
+    world.ts                   World: chunks, standHeight, quebrar/colocar/plantar, tick, spawn
+    items.ts                   itens contáveis, ferramentas, dropsFor
+  render/  apresentação — só lê o mundo
+    blockArt.ts                carrega o atlas antes do jogo
+    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones
+    chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
+    character.ts               folhas dos atores (heroína ±ferramenta, ovelha, filhote, namoro) + coração
+    itemArt.ts                 trigo por estágio, ícones de itens/ferramentas
+    daycycle.ts, particles.ts, color.ts
+    renderer.ts                frame + pick (objeto sob o cursor)
+  game/    orquestração e entidades
+    game.ts                    loop, entrada, alvos, regras de ação por célula, quebra segurando
+    walker.ts → player.ts, sheep.ts   movimento/colisão/altura compartilhados
+    entities.ts                personagem + ovelhas: colisão, reprodução, ocupação, atores p/ render
+    inventory.ts, hotbar.ts, drops.ts
+    camera.ts, joystick.ts, actionButton.ts, screenMode.ts, hud.ts
 ```
 
 ## Fluxo de um frame
-1. Input (teclado + joystick, já em direções de tela) → `Player.update`; `Entities.update` move os NPCs.
-   Todos usam `Walker.move` (mapa via `World.standHeight`, entidades via `Entities.blocker`).
-2. `Camera.follow` mira a posição **lógica** do personagem (sem o balanço do sprite).
-3. `World.ensureChunks` (orçamento por frame) e `unloadFar` a cada 1 s.
-4. `Renderer.draw`: chão (cache por chunk, máx. 2 re-renders/frame) → objetos e atores por linha
-   (de trás para frente) → sombras de nuvens → brilhos/tinta dia-noite → partículas → overlays.
-5. `World.tick` (crescimento) e `Drops.update` (coleta) a cada frame.
-6. Toque curto (bloco / semente / trigo conforme a hotbar) ou segurar 2 s (quebrar, progresso em `Game.updateBreaking`) → `Renderer.pick` → regras em `World.breakBlock/placeBlock` (+ alcance e "não sobre a
-   personagem" no `Game`) → `chunk.version++` invalida o cache.
+1. Entrada (teclado + joystick em direções de tela) → `Player.update`; `Entities.update` (ovelhas, pares,
+   filhotes); `World.tick` (trigo); `Drops.update` (coleta); `Camera.follow` (posição lógica).
+2. `updateBreaking`: segurar (mouse ou botão de ação) acumula progresso no alvo; ao completar quebra e solta drops.
+3. `World.ensureChunks` (até 4 por frame, do centro para fora); `unloadFar` a cada 1 s.
+4. `Renderer.draw`: chão em cache por chunk (até 2 re-renders/frame) → objetos e atores por linha → sombras de
+   nuvens → dia/noite → partículas → foco/cursor/rachaduras. Depois HUD e botão de ação.
+Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 
 ## Regras de dependência
-- `world/` não importa de `render/` nem `game/` e não usa DOM (testável em Node).
-- `render/` só lê `world/` (e tipos de `game/`). `game/` orquestra.
-- Sem backend; regra de domínio só em `world/`.
+- `world/` não importa `render/` nem `game/`; não usa DOM; aleatoriedade só por seed.
+- `render/` só lê o mundo (e tipos de `game/`). `game/` orquestra; regra de domínio fica em `world/`.
+- Sem backend; persistência futura via core.
+
+## Desempenho
+Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
+
+| Métrica | Valor | Orçamento |
+|---|---|---|
+| Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
+| Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
+| `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
+| Artefato (HTML único) | ~1,5 MB (era 4,7 MB) | aviso do build acima de 1,8 MB |
+
+Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
+chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;
+assets em WebP. Memória: cada canvas de chão em cache tem ~4 MB (2×), liberado após ~90 frames sem uso.
