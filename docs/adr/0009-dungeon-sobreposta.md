@@ -14,6 +14,10 @@ editado precisa continuar sendo função pura da seed (ADR 0001), e mundos difer
 - Monstros são `Walker` (ADR 0004) em `game/monster.ts`, presos ao interior pela própria caixa dos pés;
   o golpe passa pelo mesmo `Entities.strike` dos animais, com vida por tipo.
 
+## Atualização (0.24.0)
+O Covil virou labirinto procedural em três etapas puras (área → `buildMaze` → `decorateDungeon`), seguindo a spec
+do usuário; a sobreposição por `DungeonTerrain` e a proteção pelo `World` continuam iguais.
+
 ## Consequências
 - O mapa da área muda o terreno de todas as seeds dentro do retângulo; o spawn não muda.
 - Outras dungeons = outra chamada de `buildDungeon` com outro tema/lista de monstros (generalizar quando houver

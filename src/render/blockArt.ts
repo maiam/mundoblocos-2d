@@ -5,6 +5,7 @@ import dungeonGroundUrl from '../assets/dungeon-ground.webp?inline';
 import dungeonMountainsUrl from '../assets/dungeon-mountains.webp?inline';
 import dungeonPropsUrl from '../assets/dungeon-props.webp?inline';
 import dungeonRocksUrl from '../assets/dungeon-rocks.webp?inline';
+import dungeonWallsUrl from '../assets/dungeon-walls.webp?inline';
 
 /**
  * Atlas dos blocos (scripts/extract-blocks.py): materiais do mundo principal e blocos
@@ -23,6 +24,7 @@ export interface DungeonArt {
   mountains: HTMLImageElement;
   rocks: HTMLImageElement;
   props: HTMLImageElement;
+  walls: HTMLImageElement;
 }
 let dungeon: DungeonArt | null = null;
 
@@ -37,10 +39,10 @@ function load(url: string): Promise<HTMLImageElement> {
 
 export async function loadBlockArt(): Promise<void> {
   if (atlas && celestial && oakDoor && dungeon) return;
-  const [a, c, d, g, m, r, p] = await Promise.all([atlasUrl, celestialAtlasUrl, oakDoorUrl, dungeonGroundUrl,
-    dungeonMountainsUrl, dungeonRocksUrl, dungeonPropsUrl].map(load));
+  const [a, c, d, g, m, r, p, w] = await Promise.all([atlasUrl, celestialAtlasUrl, oakDoorUrl, dungeonGroundUrl,
+    dungeonMountainsUrl, dungeonRocksUrl, dungeonPropsUrl, dungeonWallsUrl].map(load));
   [atlas, celestial, oakDoor] = [a, c, d];
-  dungeon = { ground: g, mountains: m, rocks: r, props: p };
+  dungeon = { ground: g, mountains: m, rocks: r, props: p, walls: w };
 }
 
 export function getBlockAtlas(): HTMLImageElement {

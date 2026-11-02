@@ -180,7 +180,10 @@ export class Renderer {
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
     const vars = this.textures.variants.get(id);
     const sprite = vars ? vars[Math.floor(hash2(this.world.seed, x * 7 + 3, y * 13 - 1) * vars.length)] : this.textures.objects.get(id);
-    if (sprite) this.drawSprite(cam, sprite, x, y, level);
+    if (sprite) {
+      const n = this.textures.stackDraw.get(id) ?? 1;
+      for (let k = 0; k < n; k++) this.drawSprite(cam, sprite, x, y, level + k);
+    }
     const glow = this.textures.glowColor.get(id);
     if (glow) {
       const lift = blockDef(id).shape === 'tree' ? -0.9 : 0.1 - (level * CUBE_FRONT) / TILE;

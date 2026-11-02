@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.24.0 — 2026-11-02
+- **Covil das Aranhas vira um labirinto procedural** (~9× maior: 96–108 × 66–78 blocos, tamanho pela seed):
+  caminhos sinuosos (árvore "growing tree"), bifurcações, circuitos, becos sem saída, câmaras com bordas
+  irregulares, corredores de 2–3 blocos com curvas, **uma única entrada** e a **câmara da Rainha** (~17×17) no
+  ponto mais fundo, com **uma única passagem**. Validação de navegação na própria geração.
+- Geração em etapas separadas: área (`dungeonSize/planDungeon`) → labirinto (`buildMaze`: só chão e paredes) →
+  conteúdo (`decorateDungeon`: blocos, obstáculos nas câmaras, monstros proporcionais ao chão, ~39 na seed 42).
+- Paredes = cubo de pedra escura da prancha (`DUNGEON_WALL`, 2 de altura no desenho, `textures.stackDraw`);
+  montanhas só no anel externo. Chefe preso à câmara da Rainha.
+- Testes da dungeon reescritos para as regras da spec (6 casos, 5 seeds). 81 testes.
+
 ## 0.23.0 — 2026-11-02
 - **Primeira dungeon — Covil das Aranhas** (mundo principal, a ~26–60 células do spawn): área 34 × 24 murada por
   montanhas com **uma única entrada** voltada para o spawn; chão de caverna (terra, musgo, teias, ossos); pedras,

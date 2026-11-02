@@ -47,6 +47,8 @@
 | Celular: botão de ação sobre o alvo à frente; toque no mundo não age | domains/player |
 | Quebrar = segurar 2 s com a mão/item, 1 s com ferramenta (`breakSeconds`); colocar = toque/clique curto | domains/player |
 | Dungeon: área protegida (nada quebra/coloca), uma entrada voltada para o spawn, monstros presos ao interior, sem dano à personagem por enquanto | domains/dungeon |
+| Covil das Aranhas = labirinto procedural (spec do usuário): área → labirinto (só chão/paredes) → conteúdo; Rainha no nó mais fundo com uma passagem; chefe preso à câmara | domains/dungeon |
+| Parede do labirinto = cubo escuro com 2 de altura no desenho (legibilidade); montanhas só no anel externo | domains/render |
 | Aranhas: arte de frente única; espelhada ao andar para a direita | domains/render |
 | Porta só entre batentes de madeira à esquerda e à direita (cubo `organic: 'wood'` no nível 0); quebrar um batente depois não derruba a porta | domains/world |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |

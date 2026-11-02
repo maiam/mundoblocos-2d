@@ -18,7 +18,7 @@ function setup(seed = 42) {
 describe('Monstros da dungeon', () => {
   it('nascem os 16 da dungeon e nunca saem do interior (passeando ou perseguindo)', () => {
     const { w, d, p, e } = setup();
-    expect(e.monsters).toHaveLength(16);
+    expect(e.monsters).toHaveLength(d.spawns.length);
     // Personagem parada logo fora da entrada: ninguém atravessa a muralha nem a entrada.
     for (let t = 0; t < 1500; t++) e.update(1 / 30, w);
     for (const m of e.monsters) {
@@ -54,7 +54,7 @@ describe('Monstros da dungeon', () => {
       if (e.monsters.includes(boss)) expect(boss.hurt).toBeGreaterThan(0);
     }
     expect(hits).toBe(MONSTERS['spider-boss'].hp);
-    expect(e.monsters).toHaveLength(15);
+    expect(e.monsters).toHaveLength(d.spawns.length - 1);
     void d;
   });
 

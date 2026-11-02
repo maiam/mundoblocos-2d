@@ -18,7 +18,8 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 ## Em seguida
 - **Dungeon/combate:** vida da personagem e dano por contato/mordida dos monstros (com recuo e invencibilidade
   curta); morte com animação e drops (seda, presas); recompensa do chefe; respawn das aranhas com o tempo; música/
-  sons e luz mais escura dentro da área; marcador da entrada (o jogador hoje a encontra explorando ~30 células).
+  sons e luz mais escura dentro da área; marcador da entrada (o jogador hoje a encontra explorando); busca de caminho
+  (BFS no mapa da dungeon) para os monstros perseguirem pelos corredores; minimapa do labirinto explorado.
 - **Porta:** quebrar um batente não derruba a porta (decidir se deve); orientação lateral (parede leste–oeste) usando o quadro de lado; ovelhas não abrem portas (ok) — decidir
   se a porta deve fechar sozinha; atalho de teclado só vai até 9 (porta = 16º espaço, por clique/toque).
 4. Inventário/painel: a hotbar (16 espaços, já reduzida em telas ≤ 700 px) está no limite do celular deitado.

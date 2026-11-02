@@ -55,6 +55,8 @@ export interface BlockTextures {
   doorFrames: Sprite[];
   /** Objetos com várias artes (montanhas, pedras): o render escolhe uma por célula (hash). */
   variants: Map<BlockId, Sprite[]>;
+  /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
+  stackDraw: Map<BlockId, number>;
 }
 
 /** Quadros de uma folha em tira → sprites com a base no pé da célula (largura `w` px de mundo). */
@@ -72,14 +74,30 @@ function stripSprites(img: HTMLImageElement, count: number, w: number, sink: num
 }
 
 /** Dungeon: chão (4 topos), muralha de montanhas, pedras e blocos decorados (ovos, cogumelos, espinhos, raízes). */
-function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
+/** Escurece o desenho do sprite (só onde há tinta). */
+function shadeSprite(s: Sprite, color: string): Sprite {
+  const ctx = s.canvas.getContext('2d')!;
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, s.canvas.width, s.canvas.height);
+  ctx.globalCompositeOperation = 'source-over';
+  return s;
+}
+
+function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>, stackDraw: Map<BlockId, number>): void {
   const art = getDungeonArt();
   [Block.DUNGEON_DIRT, Block.DUNGEON_WEB, Block.DUNGEON_BONES, Block.DUNGEON_MOSS].forEach((id, i) => {
     const [c, ctx] = canvas(T, T);
     ctx.drawImage(art.ground, i * 64, 0, 64, 64, 0, 0, T, T);
     groundTop.set(id, c);
   });
-  const mountains = stripSprites(art.mountains, 8, T * 2.7, 6);
+  const mountains = stripSprites(art.mountains, 8, T * 2.2, 6);
+  // Parede do labirinto: cubo com a largura da célula (emenda com os vizinhos), escurecido para se separar do
+  // chão e desenhado com 2 níveis de altura (`stackDraw`). Liso na maioria; musgo e teia de vez em quando.
+  const walls = stripSprites(art.walls, 4, T, 0).map((s) => shadeSprite(s, 'rgba(28, 14, 40, 0.38)'));
+  variants.set(Block.DUNGEON_WALL, [...Array(10).fill(walls[0]), walls[3], walls[1]]);
+  objects.set(Block.DUNGEON_WALL, walls[0]);
+  stackDraw.set(Block.DUNGEON_WALL, 2);
   const rocks = stripSprites(art.rocks, 8, T * 1.5, 4);
   const props = stripSprites(art.props, 4, T * 1.15, 2);
   variants.set(Block.DUNGEON_MOUNTAIN, mountains);
@@ -424,7 +442,8 @@ export function createBlockTextures(): BlockTextures {
     icons.set(id, CELESTIAL_ICONS[id]);
   }
   const variants = new Map<BlockId, Sprite[]>();
-  dungeonTextures(groundTop, objects, variants);
+  const stackDraw = new Map<BlockId, number>();
+  dungeonTextures(groundTop, objects, variants, stackDraw);
   const doorFrames = doorSprites();
   objects.set(Block.OAK_DOOR, doorFrames[0]);
   objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
@@ -442,5 +461,5 @@ export function createBlockTextures(): BlockTextures {
     [Block.SAND, '#d9b06a'],
     [Block.STONE, '#6a6676'],
   ]);
-  return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames, variants };
+  return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames, variants, stackDraw };
 }

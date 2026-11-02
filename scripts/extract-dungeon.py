@@ -10,6 +10,7 @@ Depois fica só o maior pedaço (descarta números, molduras e respingos) com os
 Saídas (src/assets/, depois `python3 scripts/optimize-assets.py`):
   dungeon-ground.png    4 topos 64×64 para o chão (terra, teia, ossos, musgo) — da prancha de blocos
   dungeon-props.png     4 blocos com enfeite alto (ovos, cogumelo, espinhos, raízes), quadros 96×128
+  dungeon-walls.png     4 cubos de parede (terra, teia, ossos, musgo), quadros 64×100
   dungeon-mountains.png 8 montanhas, quadros 192×192 · dungeon-rocks.png 8 pedras, quadros 128×112
   spider-small.png / spider-big.png / spider-boss.png  8 quadros de caminhada (4×2), base comum
 
@@ -192,6 +193,18 @@ blocks = Image.open(SRC + 'dungeon-blocks-sheet.png')
 bcells = [cut(blocks, b, 'alpha', 0.5) for b in grid(*blocks.size, 4, 2, y_edges=[0, 440, 887])]
 ground_tops([bcells[i] for i in (0, 1, 4, 7)], [True, False, False, True])   # terra, teia, ossos, musgo
 variants([bcells[i] for i in (2, 3, 5, 6)], 96, 128, 'dungeon-props.png')  # ovos, cogumelo, espinhos, raízes
+
+
+def walls(cells, name):
+    """Paredes do labirinto: cubo inteiro esticado para a proporção do cubo do jogo (TILE × (TILE + CUBE_FRONT))."""
+    sheet = Image.new('RGBA', (64 * len(cells), 100))
+    for i, im in enumerate(cells):
+        sheet.alpha_composite(im.crop(bbox(im)).resize((64, 100), Image.LANCZOS), (i * 64, 0))
+    sheet.save(OUT + name, optimize=True)
+    print(OUT + name, sheet.size)
+
+
+walls([bcells[i] for i in (0, 1, 4, 7)], 'dungeon-walls.png')  # terra, teia, ossos, musgo
 
 # ---- Aranhas (8 quadros de caminhada cada) ----
 small = Image.open(SRC + 'spider-small-sheet.png')

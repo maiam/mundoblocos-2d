@@ -47,6 +47,8 @@ export const Block = {
   DUNGEON_MUSHROOM: 107,
   DUNGEON_SPIKES: 108,
   DUNGEON_ROOTS: 109,
+  /** Parede do labirinto: cubo de pedra escura (variantes por célula). */
+  DUNGEON_WALL: 110,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -162,6 +164,7 @@ const defs: BlockDef[] = [
   ...([
     [Block.DUNGEON_MOUNTAIN, 'Montanha'], [Block.DUNGEON_ROCK, 'Rocha'], [Block.DUNGEON_EGGS, 'Ninho de Ovos'],
     [Block.DUNGEON_MUSHROOM, 'Cogumelos'], [Block.DUNGEON_SPIKES, 'Espinhos de Pedra'], [Block.DUNGEON_ROOTS, 'Raízes'],
+    [Block.DUNGEON_WALL, 'Parede da Caverna'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'rock', breakable: false, placeable: false })),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),

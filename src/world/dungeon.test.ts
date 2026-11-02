@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
-import { DUNGEON_H, DUNGEON_W, inRect, MONSTER_COUNTS } from './dungeon';
+import { buildMaze, dungeonSize, inRect, type Side } from './dungeon';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
 const SEEDS = [1, 7, 42, 1234, 98765];
 
-/** Células andáveis alcançáveis a partir de (sx, sy), limitadas a uma caixa. */
+/** Células andáveis alcançáveis a partir de (sx, sy), limitadas a uma caixa (inclui a borda dela). */
 function reachable(w: World, sx: number, sy: number, box: { x0: number; y0: number; x1: number; y1: number }): Set<string> {
   const seen = new Set<string>([`${sx},${sy}`]);
   const q: Array<[number, number]> = [[sx, sy]];
-  while (q.length) {
-    const [x, y] = q.shift()!;
+  for (let h = 0; h < q.length; h++) {
+    const [x, y] = q[h];
     for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
       const k = `${nx},${ny}`;
       if (seen.has(k) || !inRect(box, nx, ny) || w.standHeight(nx, ny) !== 0) continue;
@@ -22,68 +22,119 @@ function reachable(w: World, sx: number, sy: number, box: { x0: number; y0: numb
   return seen;
 }
 
-describe('Dungeon', () => {
-  it('só no mundo principal; mesma seed → mesma dungeon; spawn fora dela', () => {
+describe('Covil das Aranhas — labirinto procedural', () => {
+  it('só no mundo principal; tamanho ~9× a versão anterior, sorteado pela seed; mesma seed → mesmo labirinto', () => {
     expect(new World(7, WORLD_PROFILES.santuario).dungeon).toBeNull();
+    const sizes = new Set<string>();
     for (const seed of SEEDS) {
+      const [w, h] = dungeonSize(seed);
+      sizes.add(`${w}x${h}`);
+      expect(w * h).toBeGreaterThan(7 * 816);
+      expect(w * h).toBeLessThan(11 * 816);
       const a = new World(seed).dungeon!;
       const b = new World(seed).dungeon!;
       expect(a.area).toEqual(b.area);
+      expect(Array.from(a.objects)).toEqual(Array.from(b.objects));
       expect(a.spawns).toEqual(b.spawns);
-      expect(a.area.x1 - a.area.x0 + 1).toBe(DUNGEON_W);
-      expect(a.area.y1 - a.area.y0 + 1).toBe(DUNGEON_H);
       const [sx, sy] = new World(seed).findSpawn();
       expect(inRect(a.area, sx, sy)).toBe(false);
     }
+    expect(sizes.size).toBeGreaterThan(1); // o tamanho varia entre gerações
   });
 
-  it('muralha fechada com uma única entrada; todo o interior livre é alcançável por ela', () => {
+  it('uma única entrada no perímetro; nenhuma outra saída; todo o chão alcançável por ela (plano)', () => {
     for (const seed of SEEDS) {
       const w = new World(seed);
       const d = w.dungeon!;
-      const { area, interior } = d;
-      // Na borda externa, só as células da entrada são andáveis.
+      const { area } = d;
       const open: string[] = [];
       for (let x = area.x0; x <= area.x1; x++) for (const y of [area.y0, area.y1]) if (w.standHeight(x, y) === 0) open.push(`${x},${y}`);
       for (let y = area.y0 + 1; y < area.y1; y++) for (const x of [area.x0, area.x1]) if (w.standHeight(x, y) === 0) open.push(`${x},${y}`);
       expect(open).toHaveLength(3);
-      // A partir da frente da entrada, alcança todas as células livres do interior.
       const seen = reachable(w, ...d.doorstep, area);
-      for (let y = interior.y0; y <= interior.y1; y++) {
-        for (let x = interior.x0; x <= interior.x1; x++) {
-          if (w.standHeight(x, y) === 0) expect(seen.has(`${x},${y}`)).toBe(true);
+      let floor = 0;
+      for (let y = area.y0; y <= area.y1; y++) {
+        for (let x = area.x0; x <= area.x1; x++) {
+          const h = w.standHeight(x, y);
+          expect(h === null || h === 0).toBe(true); // terreno plano: nada para subir
+          if (h === 0 && w.getObject(x, y) === Block.AIR) {
+            floor++;
+            expect(seen.has(`${x},${y}`)).toBe(true);
+          }
         }
       }
+      expect(floor).toBeGreaterThan(2000);
     }
   });
 
-  it('monstros: 10 aranhas pequenas, 5 grandes e 1 chefe, todos em células livres do interior', () => {
+  it('labirinto: becos sem saída, bifurcações e câmaras; paredes sólidas', () => {
+    const sides: Side[] = ['west', 'east', 'north', 'south'];
+    for (const [k, seed] of SEEDS.entries()) {
+      const m = buildMaze(seed, 102, 72, sides[k % 4]);
+      let deadEnds = 0;
+      let forks = 0;
+      for (let y = 1; y < m.h - 1; y++) {
+        for (let x = 1; x < m.w - 1; x++) {
+          if (!m.floor[y * m.w + x]) continue;
+          const n = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => m.floor[(y + dy) * m.w + x + dx]).length;
+          if (n === 1) deadEnds++;
+          if (n >= 3) forks++;
+        }
+      }
+      expect(deadEnds).toBeGreaterThan(5);
+      expect(forks).toBeGreaterThan(20);
+      expect(m.chambers.length).toBeGreaterThanOrEqual(3);
+    }
+    expect(new World(42).getObject(new World(42).dungeon!.area.x0 + 1, new World(42).dungeon!.area.y0 + 1)).toBe(Block.DUNGEON_WALL);
+  });
+
+  it('câmara da Rainha: terminal, com uma única passagem, e o chefe dentro dela', () => {
     for (const seed of SEEDS) {
       const w = new World(seed);
       const d = w.dungeon!;
-      const count = (k: string) => d.spawns.filter((s) => s.kind === k).length;
-      expect(count('spider-small')).toBe(MONSTER_COUNTS['spider-small']);
-      expect(count('spider-big')).toBe(MONSTER_COUNTS['spider-big']);
-      expect(count('spider-boss')).toBe(1);
+      const r = d.bossRoom;
+      // Células de chão no anel logo fora da câmara = a passagem (2 células vizinhas, em linha).
+      const ring: Array<[number, number]> = [];
+      for (let x = r.x0 - 1; x <= r.x1 + 1; x++) for (const y of [r.y0 - 1, r.y1 + 1]) if (w.standHeight(x, y) === 0) ring.push([x, y]);
+      for (let y = r.y0; y <= r.y1; y++) for (const x of [r.x0 - 1, r.x1 + 1]) if (w.standHeight(x, y) === 0) ring.push([x, y]);
+      expect(ring).toHaveLength(2);
+      expect(Math.abs(ring[0][0] - ring[1][0]) + Math.abs(ring[0][1] - ring[1][1])).toBe(1);
+      expect((r.x1 - r.x0 + 1) * (r.y1 - r.y0 + 1)).toBeGreaterThan(200); // área maior
+      const boss = d.spawns.filter((s) => s.kind === 'spider-boss');
+      expect(boss).toHaveLength(1);
+      expect(inRect(r, Math.floor(boss[0].x), Math.floor(boss[0].y))).toBe(true);
+      // A Rainha é alcançável pela entrada.
+      expect(reachable(w, ...d.doorstep, d.area).has(`${d.bossHome[0]},${d.bossHome[1]}`)).toBe(true);
+    }
+  });
+
+  it('monstros proporcionais ao labirinto, em chão livre do interior, fora da câmara da Rainha', () => {
+    for (const seed of SEEDS) {
+      const w = new World(seed);
+      const d = w.dungeon!;
+      const small = d.spawns.filter((s) => s.kind === 'spider-small').length;
+      const big = d.spawns.filter((s) => s.kind === 'spider-big').length;
+      expect(small).toBeGreaterThan(15);
+      expect(big).toBeGreaterThan(4);
       for (const s of d.spawns) {
-        expect(inRect(d.interior, Math.floor(s.x), Math.floor(s.y))).toBe(true);
-        expect(w.standHeight(Math.floor(s.x), Math.floor(s.y))).toBe(0);
+        const [x, y] = [Math.floor(s.x), Math.floor(s.y)];
+        expect(inRect(d.interior, x, y)).toBe(true);
+        expect(w.standHeight(x, y)).toBe(0);
+        if (s.kind !== 'spider-boss') expect(inRect(d.bossRoom, x, y)).toBe(false);
       }
     }
   });
 
   it('área protegida: nada quebra, nada é colocado, arado, amassado nem plantado', () => {
     const w = new World(42);
-    const { interior, area } = w.dungeon!;
-    const [x, y] = [interior.x0 + 2, interior.y0 + 2];
-    const wallCell: [number, number] = [area.x0, area.y0];
+    const d = w.dungeon!;
+    const [x, y] = d.bossHome;
     expect(w.canBreak(x, y)).toBe(false);
     expect(w.breakBlock(x, y)).toBeNull();
-    expect(w.breakBlock(...wallCell)).toBeNull();
-    expect(w.getObject(...wallCell)).toBe(Block.DUNGEON_MOUNTAIN);
+    expect(w.breakBlock(d.area.x0, d.area.y0)).toBeNull();
+    expect(w.getObject(d.area.x0, d.area.y0)).toBe(Block.DUNGEON_MOUNTAIN);
     expect(w.canPlace(x, y, Block.STONE)).toBe(false);
     expect(w.canTill(x, y) || w.canFlatten(x, y) || w.canPlant(x, y)).toBe(false);
-    // Fora da área, tudo segue normal.
     const [sx, sy] = w.findSpawn();
     expect(w.canBreak(sx, sy) || w.canPlace(sx, sy, Block.STONE)).toBe(true);
   });

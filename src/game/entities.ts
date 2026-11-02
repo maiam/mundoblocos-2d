@@ -83,7 +83,8 @@ export class Entities {
   spawnMonsters(world: World): void {
     const d = world.dungeon;
     if (!d) return;
-    for (const s of d.spawns) this.monsters.push(new Monster(s.kind, s.x, s.y, d.interior, this.rand));
+    // O chefe fica na câmara da Rainha; os demais andam pelo labirinto inteiro.
+    for (const s of d.spawns) this.monsters.push(new Monster(s.kind, s.x, s.y, s.kind === 'spider-boss' ? d.bossRoom : d.interior, this.rand));
   }
 
   private all(): Walker[] {

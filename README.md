@@ -38,7 +38,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Colocar bloco com o mouse (alcance 4,5 células) | clique curto (empilha até 3 cubos) |
 | Abrir/fechar Porta de Carvalho | ação com a porta à frente, ou clique nela (qualquer item em mãos) |
 | Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Piso de Carvalho) à esquerda e à direita |
-| Dungeon (Covil das Aranhas) | murada por montanhas perto do início, entrada voltada para você; lá dentro nada quebra — só luta |
+| Dungeon (Covil das Aranhas) | labirinto murado perto do início, entrada voltada para você; a Rainha espera no fundo; lá dentro nada quebra — só luta |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem; aranhas perdem vida); não quebra nada |
 | Machado | toque: golpe (como a espada) · segurar 1 s: corta só madeira, árvore ou planta |
 | Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 1 s: quebra só plantas (capim, flor, trigo, cacto) |
