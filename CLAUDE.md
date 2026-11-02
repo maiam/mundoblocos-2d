@@ -28,6 +28,8 @@ operacional e faz parte da entrega.
 - Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**.
 - **Dungeon:** área de `world/dungeon.ts` é protegida pelo `World` (`isProtected`: nada quebra/coloca) e monstros
   nunca saem do interior (`Monster.insideAt`). Mudar `buildDungeon`/`planDungeon` muda o mapa das seeds: rode os testes.
+- **Salvamento:** estado que deve persistir passa por `game/save.ts` (ADR 0011); mudou o formato → suba
+  `SAVE_VERSION`. Nada de backend: nuvem é do core.
 - **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é
   limitado a 10 chunks e só aceita os 18 blocos celestiais e a Deusa — não misture conteúdo entre mundos.
 

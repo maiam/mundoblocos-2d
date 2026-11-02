@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.26.1_
+_Atualizado em 2026-11-02 — v0.27.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -51,8 +51,13 @@ _Atualizado em 2026-11-02 — v0.26.1_
 - **Ovelhas**: rebanho perto do spawn; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
+## Salvamento
+- **Automático no navegador** (a cada 10 s, ao esconder/sair): mapa editado, plantações, heroína, inventário,
+  ovelhas, aranhas e hora do dia; um salvamento por mundo e seed. Menu ☰: continuar, novo mundo, recomeçar.
+  Ver `domains/save.md`.
+
 ## Limitações conhecidas
-- Nada é salvo (edições, inventário, plantações, ovelhas).
+- Salvamento só neste navegador/aparelho (nuvem depende do core); itens caídos no chão não são salvos.
 - Animais atingidos pela espada só somem (sem animação de morte nem drops). Corações da HUD ainda vetoriais
   (provisórios); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
@@ -63,7 +68,7 @@ _Atualizado em 2026-11-02 — v0.26.1_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 86 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 88 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
 - Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,87 MB** (meta < 3 MB, sem folga),

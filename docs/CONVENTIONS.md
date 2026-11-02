@@ -52,3 +52,5 @@
 ## Documentação
 - Documentos descrevem o **estado atual**; histórico vai para CHANGELOG/ADRs.
 - Toda entrega atualiza CURRENT_STATE, NEXT_STEPS e CHANGELOG; mapas (`MAPS.md`) acompanham mudanças de fluxo.
+- Estado de jogo novo que deva sobreviver ao recarregar entra em `game/save.ts` (`SaveData` + teste de ida e volta);
+  mudar o formato exige subir `SAVE_VERSION`.

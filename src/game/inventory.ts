@@ -25,6 +25,17 @@ export class Inventory {
     this.counts.set(id, this.count(id) + n);
   }
 
+  /** Todas as quantidades (salvamento). */
+  entries(): Array<[ItemId, number]> {
+    return [...this.counts.entries()];
+  }
+
+  /** Substitui todas as quantidades (carregar um salvamento). */
+  replaceAll(counts: Partial<Record<ItemId, number>>): void {
+    this.counts.clear();
+    for (const [id, n] of Object.entries(counts)) this.counts.set(id as ItemId, n ?? 0);
+  }
+
   /** Gasta `n` unidades; false (sem gastar nada) se não houver o suficiente. */
   take(id: ItemId, n = 1): boolean {
     if (this.count(id) < n) return false;

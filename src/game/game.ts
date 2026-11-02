@@ -18,9 +18,22 @@ import type { ScreenMode } from './screenMode';
 import { MAX_HP, Player } from './player';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { ActionController } from './actionController';
+import { Menu } from './menu';
+import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 
 /** Duração de um dia completo em segundos. */
 const DAY_LENGTH_S = 480;
+/** Duração entre salvamentos automáticos (s). */
+const AUTOSAVE_S = 10;
+
+/** Opções da sessão: salvamento para restaurar, armazenamento e ações do menu (vêm do main). */
+export interface GameOptions {
+  save?: SaveData | null;
+  store?: SaveStore;
+  onNewWorld?(): void;
+  onRestart?(): void;
+}
+
 /**
  * Orquestra mundo, personagem, câmera, entrada, render e HUD. Sem regra de domínio: o que cada toque/clique
  * faz fica no `ActionController`; as regras do mundo, no `World`.
@@ -42,6 +55,10 @@ export class Game {
   /** Espaço selecionado na hotbar; null = mão vazia. */
   private selected: number | null = null;
   private readonly actionButton: ActionButton;
+  private readonly menu: Menu;
+  private saveTimer = 0;
+  /** Momento do último salvamento bem-sucedido (ms), 0 = ainda não salvou nesta sessão. */
+  private lastSaved = 0;
   readonly actions: ActionController;
   private time = 0.31;
   private elapsed = 0;
@@ -60,6 +77,7 @@ export class Game {
     seed: number,
     private readonly screenMode?: ScreenMode,
     profile: WorldProfile = WORLD_PROFILES.principal,
+    private readonly options: GameOptions = {},
   ) {
     this.world = new World(seed, profile);
     this.hotbar = hotbarFor(profile);
@@ -93,6 +111,24 @@ export class Game {
     });
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
+    this.menu = new Menu(this.hud.root, {
+      seed,
+      status: () => this.saveStatus(),
+      onOpenChange: (open) => { if (open) { this.actions.cancelAll(); this.saveNow(); } },
+      onNewWorld: options.onNewWorld,
+      onRestart: options.onRestart,
+    });
+    // Continua de onde parou (mesmo mundo e seed).
+    if (options.save) {
+      const r = applySave(options.save, {
+        world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
+        time: this.time, selected: this.selected,
+      });
+      this.time = r.time;
+      if (r.selected !== null && r.selected < this.hotbar.length) this.select(r.selected);
+      this.lastHp = this.player.hp;
+      this.lastSaved = options.save.savedAt;
+    }
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
     this.bindInput();
@@ -100,6 +136,7 @@ export class Game {
   }
 
   destroy(): void {
+    this.saveNow();
     this.running = false;
     for (const fn of this.cleanup) fn();
     this.hud.destroy();
@@ -173,6 +210,11 @@ export class Game {
       this.keys.delete(e.code);
       if (e.code === 'Space') this.actions.endAction();
     });
+    // Salva ao esconder a aba ou fechar a página (celular troca de app sem aviso).
+    this.listen(window, 'pagehide', () => this.saveNow());
+    const onVisibility = (): void => { if (document.visibilityState === 'hidden') this.saveNow(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    this.cleanup.push(() => document.removeEventListener('visibilitychange', onVisibility));
     this.listen(window, 'blur', () => {
       this.keys.clear();
       this.actions.cancelAll();
@@ -205,13 +247,17 @@ export class Game {
 
   private frame = (now: number): void => {
     if (!this.running) return;
-    const dt = Math.min(0.1, (now - this.last) / 1000);
+    const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
+    // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
+    const dt = this.menu.isOpen ? 0 : realDt;
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
+    this.saveTimer += dt;
+    if (this.saveTimer >= AUTOSAVE_S) this.saveNow();
 
     // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
-    const blocked = this.screenMode?.blocked ?? false;
+    const blocked = (this.screenMode?.blocked ?? false) || this.menu.isOpen;
     if (blocked) this.actions.cancelAll();
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
@@ -256,6 +302,26 @@ export class Game {
       slot?.kind === 'item' && this.inventory.count(slot.item) === 0);
     requestAnimationFrame(this.frame);
   };
+
+  /** Salva agora (silencioso se o navegador não permitir). */
+  private saveNow(): void {
+    this.saveTimer = 0;
+    const store = this.options.store;
+    if (!store || !this.running) return;
+    const data = captureSave({
+      world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
+      time: this.time, selected: this.selected,
+    });
+    if (store.save(data)) this.lastSaved = data.savedAt;
+  }
+
+  /** Texto do menu sobre o salvamento automático. */
+  private saveStatus(): string {
+    if (!this.options.store?.available) return 'Este navegador não permite salvar: o progresso some ao fechar.';
+    if (!this.lastSaved) return 'Progresso salvo automaticamente a cada 10 s.';
+    const s = Math.max(0, Math.round((Date.now() - this.lastSaved) / 1000));
+    return `Progresso salvo automaticamente · último salvamento há ${s} s.`;
+  }
 
   /** Personagem dentro da dungeon? (corações visíveis, penumbra, sem seta para a entrada). */
   private get inDungeon(): boolean {

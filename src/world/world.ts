@@ -490,4 +490,30 @@ export class World {
   forEachChunk(fn: (c: Chunk) => void): void {
     for (const c of this.chunks.values()) fn(c);
   }
+
+  // ---- Persistência (o salvamento em si fica em game/save.ts) ----
+
+  /** Chunks editados pelo jogador: o único estado do mapa que precisa ser salvo (o resto vem da seed). */
+  modifiedChunks(): Chunk[] {
+    return [...this.chunks.values()].filter((c) => c.modified);
+  }
+
+  /**
+   * Restaura um chunk salvo (substitui o gerado pela seed) e reconstrói as plantações dele.
+   * Camadas a mais que o motor atual são ignoradas; a menos ficam vazias.
+   */
+  restoreChunk(cx: number, cy: number, ground: Uint8Array, levels: Uint8Array[]): void {
+    const c = new Chunk(cx, cy);
+    c.ground.set(ground.subarray(0, c.ground.length));
+    levels.forEach((l, i) => { if (i < c.levels.length) c.levels[i].set(l.subarray(0, c.levels[i].length)); });
+    c.modified = true;
+    c.version++;
+    this.chunks.set(numKey(cx, cy), c);
+    this.last = null;
+    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        if (isWheat(c.getObject(lx, ly))) this.crops.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
+      }
+    }
+  }
 }

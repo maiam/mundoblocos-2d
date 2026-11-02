@@ -24,6 +24,7 @@ Documentação viva do MundoBlocos 2D. Agentes de IA: comece por [`../CLAUDE.md`
 | NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
 | Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Dungeon e monstros: área protegida, aranhas, chefe | `world/dungeon.ts`, `game/monster.ts`, `game/entities.ts` | [dungeon.md](domains/dungeon.md) |
+| Salvamento e menu | `game/save.ts`, `game/menu.ts`, `main.ts` | [save.md](domains/save.md) |
 | Render e arte | `src/render/`, `assets-src/`, `scripts/` | [render.md](domains/render.md) |
 
 ## ADRs

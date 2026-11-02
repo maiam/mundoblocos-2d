@@ -48,6 +48,7 @@ src/
   game/    orquestração e entidades
     game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
     actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render
+    save.ts, menu.ts           salvamento automático (localStorage, ADR 0011) e menu ☰
     walker.ts → player.ts, sheep.ts, monster.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
                                morte/renascimento dos monstros, atores p/ render
@@ -68,7 +69,7 @@ Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 - `world/` não importa `render/` nem `game/`; não usa DOM; aleatoriedade só por seed.
 - `render/` só lê o mundo (e tipos de `game/`). `game/` orquestra; regra de domínio fica em `world/`.
 - Arte (`?inline`) só em `render/art/<mundo>.ts`; o resto do código lê o pacote carregado (`art()`).
-- Sem backend; persistência futura via core.
+- Sem backend: salvamento local no navegador (`game/save.ts`); nuvem futura via core.
 
 ## Desempenho
 Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):

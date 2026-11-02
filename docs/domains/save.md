@@ -1,0 +1,31 @@
+# Domínio: salvamento (persistência local)
+
+Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
+`Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
+
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 1)
+| Parte | Origem | Observação |
+|---|---|---|
+| Seed, mundo, hora do dia | `World`, `Game` | — |
+| Chunks editados | `World.modifiedChunks()` | chão + 3 níveis em base64; plantações reconstruídas |
+| Heroína | `Player` | posição, nível, vida, direção |
+| Item selecionado, inventário | `Game`, `Inventory` | inclui espólios |
+| Ovelhas | `Entities.npcs` | posição, casa, filhote, idade, paixão, espera (namoro em curso não) |
+| Dungeon | `Entities.monsters/respawns` | vivos com vida; renascimentos com o tempo restante |
+| Não salvo | — | itens caídos no chão, animações, mapa de distâncias |
+
+## Quando salva
+A cada 10 s de jogo, ao esconder a aba, ao sair da página, ao abrir o menu e ao trocar/recomeçar mundo.
+
+## Seeds e chaves
+- `mundoblocos:save:<mundo>:<seed>` (um por seed) e `mundoblocos:last:<mundo>`.
+- `main.ts`: `?seed=` na URL → essa seed (continua se houver salvamento dela); sem parâmetro → última jogada;
+  nenhuma → seed aleatória.
+
+## Menu (☰, canto superior direito)
+Continuar · Novo mundo (o atual continua salvo) · Recomeçar este mundo (apaga só o salvamento desta seed).
+Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
+
+## Regras para quem mexer
+- Estado novo que deva persistir → campo em `SaveData` + `captureSave/applySave` + teste de ida e volta.
+- Mudou a estrutura → subir `SAVE_VERSION` e tratar em `migrate` (ou aceitar que salvamentos antigos recomecem).

@@ -13,6 +13,7 @@
 | 0008 | Perfis de mundo: um motor, vários mundos (Santuário Celestial) | [0008](adr/0008-perfis-de-mundo.md) |
 | 0009 | Dungeon como sobreposição pura do terreno; monstros como `Walker` em `Entities` | [0009](adr/0009-dungeon-sobreposta.md) |
 | 0010 | Pacotes de arte por mundo (build de cada artefato só com a arte do seu mundo) | [0010](adr/0010-pacotes-de-arte-por-mundo.md) |
+| 0011 | Salvamento automático no navegador, por mundo e seed, formato versionado | [0011](adr/0011-salvamento-local.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |

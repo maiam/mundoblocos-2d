@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.27.0 — 2026-11-02 (Fase 2 do plano — salvamento automático)
+- **Salvamento automático no navegador** (ADR 0011): chunks editados, plantações, heroína (posição, vida), item
+  selecionado, inventário (com espólios), ovelhas, aranhas vivas e renascimentos pendentes, hora do dia. A cada
+  10 s, ao esconder a aba, ao sair e ao abrir o menu. Um salvamento por mundo e seed; abrir sem `?seed=` continua o
+  último. Navegador sem armazenamento → o jogo segue e o menu avisa.
+- **Menu** (☰): continuar, novo mundo, recomeçar este mundo; mostra a semente e o último salvamento; pausa o jogo.
+- `game/save.ts`, `game/menu.ts`, `World.modifiedChunks/restoreChunk`. 2 testes novos (88).
+
 ## 0.26.1 — 2026-11-02
 - **Arte final de combate** (pranchas fornecidas): ícones de Seda, Presa e Coração da Rainha; **folhas de morte** das
   três aranhas (8, 8 e 16 quadros: reação → colapso → fumaça), na mesma escala da caminhada. Substituem a arte

@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-02 (v0.26.1 — Fases 0 e 1 concluídas)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-02 (v0.27.0 — Fases 0, 1 e 2 concluídas)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -17,8 +17,9 @@ _Revisado em 2026-11-02 (v0.26.1 — Fases 0 e 1 concluídas)._ Fonte única do 
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ estrutura | **combate incompleto** (aranhas não causam dano) |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
 | Vida da heroína, dano, morte e renascimento | ✅ | 5 corações; arte dos corações provisória |
-| Salvar progresso | ❌ | nada persiste ao recarregar |
-| Sons, música, vibração, menu | ❌ | — |
+| Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do core |
+| Menu | ✅ | continuar, novo mundo, recomeçar |
+| Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
 | Peso dos artefatos | 🟡 | principal 2,87 MB (meta < 3 MB, alerta do build em ~3 MB), Santuário 0,69 MB |
 
@@ -39,12 +40,11 @@ penumbra. Pendências que ficaram desta fase:
 - **Minimapa** do labirinto explorado.
 - **Animais**: animação de morte e drops (lã/carne? — decisão pendente).
 
-### Fase 2 — Persistência
-1. **Salvar no navegador** (IndexedDB ou `localStorage`): seed, chunks modificados, inventário (inclui espólios),
-   plantações, ovelhas, vida, estado da dungeon (monstros derrotados e tempo até renascer). Versão do formato para migrações.
-2. Menu recolhível: continuar, **novo mundo** (nova seed), apagar progresso.
-- **Dependência externa:** contas e mundos na nuvem exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste
-  recomendado para o core**; nada de backend neste repositório.
+### Fase 2 — Persistência ✅ (v0.27.0)
+Salvamento automático no navegador (ADR 0011, `domains/save.md`) e menu ☰ (continuar, novo mundo, recomeçar).
+Pendências: **contas e mundos na nuvem** exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste recomendado
+para o core**, nada de backend aqui; exportar/importar o salvamento como arquivo (troca de aparelho sem nuvem);
+migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 
 ### Fase 3 — Recursos e progressão
 1. **Decidir: materiais infinitos ou coletados.** Se coletados: blocos quebrados vão para o inventário, árvore solta
