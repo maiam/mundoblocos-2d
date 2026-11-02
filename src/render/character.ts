@@ -2,6 +2,7 @@ import goddessFloatUrl from '../assets/goddess-float.webp?inline';
 import heroineSwordAttackUrl from '../assets/heroine-sword-attack.webp?inline';
 import heroineAxeAttackUrl from '../assets/heroine-axe-attack.webp?inline';
 import heroineHoeAttackUrl from '../assets/heroine-hoe-attack.webp?inline';
+import heroineShovelAttackUrl from '../assets/heroine-shovel-attack.webp?inline';
 import heroineAxeUrl from '../assets/heroine-axe.webp?inline';
 import heroineHoeUrl from '../assets/heroine-hoe.webp?inline';
 import heroinePickaxeUrl from '../assets/heroine-pickaxe.webp?inline';
@@ -71,6 +72,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   // Arar com enxada (306 px de desenho contra 288 da caminhada).
   'heroine-hoe-attack': {
     url: heroineHoeAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (306 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+  },
+  // Cavar com pá (306 px de desenho contra 288 da caminhada).
+  'heroine-shovel-attack': {
+    url: heroineShovelAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (306 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   'heroine-axe': { url: heroineAxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   sheep: { url: sheepUrl, cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },

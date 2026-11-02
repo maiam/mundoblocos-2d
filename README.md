@@ -39,6 +39,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem); não quebra nada |
 | Machado | toque: golpe (como a espada) · segurar 2 s: corta só madeira, árvore ou planta |
 | Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 2 s: quebra só plantas (capim, flor, trigo, cacto) |
+| Pá | toque: Terra/Grama/Arada → Caminho de Terra · segurar 2 s: cava só terra/areia e destrói plantas sem drop; não ataca |
 | Plantar semente de trigo (só em Terra Arada) | semente selecionada + ação no chão à frente (ou clique) |
 | Dar trigo à ovelha | trigo selecionado + ação com a ovelha à frente (ou clique nela) |
 | Colher trigo | segurar a ação 2 s (itens caem e são coletados ao chegar perto) |

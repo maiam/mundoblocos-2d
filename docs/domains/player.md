@@ -15,9 +15,14 @@
   (animais somem). Segurar 2 s **corta só o que é orgânico** (`BlockDef.organic` = `wood` ou `plant`: tora,
   piso de carvalho, carvalho, cerejeira, cacto, capim, flor, trigo); enquanto corta, a animação de golpe repete
   (e acerta entidades no arco). Pedra, terra, areia etc. não quebram. Foco/cursor só destacam o que dá para cortar.
-- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `organic` | `plant`, via
-  `toolCanBreak` em `Game.canBreakAt`), `swings` (tem animação de ação) e `strikes` (o golpe acerta entidades —
-  espada e machado sim, enxada não). Pá e picareta ainda sem ação própria (quebram tudo).
+- **Pá** (folha `heroine-shovel-attack`): toque curto toca a animação de cavar e troca Terra/Terra com Grama/Terra
+  Arada livre → Caminho de Terra (`World.flatten`). Segurar 2 s cava **só blocos macios** (`BlockDef.soft`: terra,
+  grama, arada, caminho, areia) e **plantas, destruídas sem drop** (`toolDrops`); não quebra pedra, madeira,
+  árvores; **não acerta** entidades.
+- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `organic` | `plant` | `soft`,
+  via `toolCanBreak` em `Game.canBreakAt`), `destroysPlants` (sem drop, via `toolDrops`), `groundUse` (`till` |
+  `flatten`: o que o toque faz no chão), `swings` (tem animação de ação; define o ator `heroine-<t>-attack`) e
+  `strikes` (o golpe acerta entidades — espada e machado sim, enxada e pá não). Picareta ainda sem ação (quebra tudo).
 - `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).

@@ -65,10 +65,14 @@ export interface ToolDef {
   /** Uso (documentação). */
   plannedUse: string;
   /**
-   * O que a ferramenta pode quebrar segurando: tudo, nada, orgânico (madeira, árvore e planta) ou só planta.
-   * Fonte de verdade da restrição por ferramenta.
+   * O que a ferramenta pode quebrar segurando: tudo, nada, orgânico (madeira, árvore e planta), só planta
+   * ou macio (blocos macios — terra, areia — e plantas). Fonte de verdade da restrição por ferramenta.
    */
-  breaks: 'any' | 'none' | 'organic' | 'plant';
+  breaks: 'any' | 'none' | 'organic' | 'plant' | 'soft';
+  /** Plantas quebradas por esta ferramenta são destruídas sem soltar nada (pá). */
+  destroysPlants: boolean;
+  /** Toque curto num chão: 'till' = ara (enxada), 'flatten' = vira Caminho de Terra (pá), null = nada. */
+  groundUse: 'till' | 'flatten' | null;
   /** Toque curto toca a animação de ação da ferramenta (golpe, arar…). */
   swings: boolean;
   /** O golpe acerta entidades à frente (animais/monstros). */
@@ -76,16 +80,25 @@ export interface ToolDef {
 }
 
 export const TOOLS: Record<ToolId, ToolDef> = {
-  sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'golpe em animais/monstros; não quebra nada', breaks: 'none', swings: true, strikes: true },
+  sword: {
+    id: Tool.SWORD, name: 'Espada', plannedUse: 'golpe em animais/monstros; não quebra nada',
+    breaks: 'none', destroysPlants: false, groundUse: null, swings: true, strikes: true,
+  },
   hoe: {
     id: Tool.HOE, name: 'Enxada', plannedUse: 'ara Terra/Terra com Grama → Terra Arada; quebra só plantas; não ataca',
-    breaks: 'plant', swings: true, strikes: false,
+    breaks: 'plant', destroysPlants: false, groundUse: 'till', swings: true, strikes: false,
   },
-  pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)', breaks: 'any', swings: false, strikes: false },
-  shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão (futuro)', breaks: 'any', swings: false, strikes: false },
+  pickaxe: {
+    id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)',
+    breaks: 'any', destroysPlants: false, groundUse: null, swings: false, strikes: false,
+  },
+  shovel: {
+    id: Tool.SHOVEL, name: 'Pá', plannedUse: 'Terra/Grama/Arada → Caminho de Terra; cava só macios e plantas (sem drop); não ataca',
+    breaks: 'soft', destroysPlants: true, groundUse: 'flatten', swings: true, strikes: false,
+  },
   axe: {
     id: Tool.AXE, name: 'Machado', plannedUse: 'golpe em animais/monstros; corta só madeira/árvore/planta',
-    breaks: 'organic', swings: true, strikes: true,
+    breaks: 'organic', destroysPlants: false, groundUse: null, swings: true, strikes: true,
   },
 };
 
@@ -93,11 +106,18 @@ export const TOOLS: Record<ToolId, ToolDef> = {
 export function toolCanBreak(tool: ToolId | null, id: BlockId): boolean {
   if (!tool) return true;
   const rule = TOOLS[tool].breaks;
-  const organic = blockDef(id).organic;
+  const { organic, soft } = blockDef(id);
   if (rule === 'any') return true;
   if (rule === 'organic') return organic !== null;
   if (rule === 'plant') return organic === 'plant';
+  if (rule === 'soft') return soft || organic === 'plant';
   return false;
+}
+
+/** O que cai ao quebrar este bloco com esta ferramenta: a pá destrói plantas sem soltar nada. */
+export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number = Math.random): Drop[] {
+  if (tool && TOOLS[tool].destroysPlants && blockDef(id).organic === 'plant') return [];
+  return dropsFor(id, rand);
 }
 
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];

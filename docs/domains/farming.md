@@ -9,7 +9,10 @@
 - **Espada (ativa):** golpeia entidades (ver `domains/player.md`); não quebra nada do mundo.
 - **Machado (ativo):** golpeia entidades; segurando, corta madeira, árvore e planta (`organic`). Cortar árvore
   ainda não solta Tora (drops de madeira: próximo passo).
-- Uso planejado (sem efeito ainda): picareta = pedra; pá = cavar / Caminho de Terra.
+- **Pá (ativa):** toque/clique (animação de cavar) em chão Terra, Terra com Grama ou Terra Arada sem nada em cima
+  (enfeites removidos; trigo plantado impede) → **Caminho de Terra** (`World.canFlatten/flatten`). Segurando, cava
+  só blocos macios e destrói plantas — inclusive trigo maduro — **sem soltar nada**. Não ataca.
+- Uso planejado (sem efeito ainda): picareta = pedra.
 
 ## Itens (`world/items.ts`) — fonte de verdade
 - **Itens contáveis** ≠ blocos: blocos de construção são infinitos; itens têm quantidade no inventário.

@@ -32,6 +32,8 @@
 | Machado ataca entidades e quebra orgânico (madeira/árvore/planta); regra por ferramenta em `items.ts` | domains/player |
 | Enxada ara (Terra/Terra com Grama → Terra Arada) e quebra só plantas (`organic: 'plant'`); não ataca | domains/player |
 | Cacto é planta (não árvore): enxada e machado quebram | domains/player |
+| Pá: toque amassa Terra/Grama/Arada → Caminho; quebra só `soft` + planta; planta quebrada pela pá não dropa; não ataca | domains/player |
+| Ação de chão das ferramentas vem do registro (`TOOLS.groundUse`), não de `if (tool === …)` no `Game` | domains/player |
 | Regra de combate em `Entities` (estado de execução), não no `World` | domains/player |
 
 ## Interface e controles

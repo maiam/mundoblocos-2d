@@ -55,7 +55,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
   asas), `--grid-offset-y`. Confira a "altura do desenho" no relatório: igual à célula = recorte errado.
 - Folha de ação com pedaços de quadros vizinhos (relatório "altura do desenho = célula"): use `--largest`.
 - Combate fica em `Entities` (estado de execução). O que cada ferramenta pode quebrar vem de `TOOLS[tool].breaks`
-  (`toolCanBreak` em `world/items.ts`) — não espalhe `if (ferramenta === …)` pelo `Game`.
+  (`toolCanBreak` em `world/items.ts`), o toque no chão de `TOOLS[tool].groundUse` e o drop de `toolDrops` — não
+  espalhe `if (ferramenta === …)` pelo `Game`.
 - Os dois artefatos usam o mesmo `dist/`: gere o build do mundo imediatamente antes de publicá-lo.
 - Testes no navegador: Playwright já instalado (`require('playwright')`); use `window.__game` no dev.
 

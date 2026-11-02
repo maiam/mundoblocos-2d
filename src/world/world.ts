@@ -14,6 +14,8 @@ export const WHEAT_STAGE_SECONDS = 6;
 const PLANTABLE_GROUND: number = Block.TILLED;
 /** Chãos que a enxada transforma em Terra Arada. */
 const TILLABLE = new Set<number>([Block.DIRT, Block.GRASS]);
+/** Chãos que a pá amassa em Caminho de Terra. */
+const FLATTENABLE = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED]);
 
 /** Chave numérica exata do chunk (|cy| < 2^20 chunks ≈ 16 milhões de células). */
 function numKey(cx: number, cy: number): number {
@@ -314,6 +316,24 @@ export class World {
     if (!this.canTill(x, y)) return false;
     if (this.getObject(x, y) !== Block.AIR) this.setLevel(x, y, 0, Block.AIR);
     this.setLevel(x, y, 'ground', Block.TILLED);
+    return true;
+  }
+
+  /**
+   * A pá pode amassar aqui? Chão de Terra, Terra com Grama ou Terra Arada, sem nada em cima
+   * (enfeites são removidos; trigo plantado impede).
+   */
+  canFlatten(x: number, y: number): boolean {
+    if (!FLATTENABLE.has(this.getGround(x, y))) return false;
+    const base = blockDef(this.getObject(x, y));
+    return base.id === Block.AIR || base.shape === 'decoration';
+  }
+
+  /** Amassa o chão: Terra/Terra com Grama/Terra Arada → Caminho de Terra. */
+  flatten(x: number, y: number): boolean {
+    if (!this.canFlatten(x, y)) return false;
+    if (this.getObject(x, y) !== Block.AIR) this.setLevel(x, y, 0, Block.AIR);
+    this.setLevel(x, y, 'ground', Block.PATH);
     return true;
   }
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.19.0 — 2026-11-02
+- **Pá**: toque (animação de cavar, folha fornecida) em Terra, Terra com Grama ou Terra Arada livre → **Caminho de
+  Terra** (`World.canFlatten/flatten`). Segurar 2 s cava **só blocos macios** (terra, grama, arada, caminho, areia —
+  cubo ou chão, que vira buraco) e **plantas, destruídas sem drop**; não quebra pedra, madeira, árvore; não ataca.
+- Registro de ferramentas: `breaks: 'soft'`, `destroysPlants`, `groundUse: 'till' | 'flatten'` (o `Game` não testa
+  mais `=== 'hoe'`); `toolDrops(tool, id)` aplica a regra de drop. `BlockDef.soft` nos 5 materiais macios.
+- Atores de ação derivados de `TOOLS[t].swings`. 5 testes novos (63 no total).
+
 ## 0.18.0 — 2026-11-02
 - **Enxada quebra plantas e derivados** (capim, flor, trigo — colheita —, cacto) segurando 2 s, com a animação de
   arar repetindo; continua sem quebrar madeira/árvore/blocos e sem atacar.

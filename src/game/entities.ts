@@ -6,11 +6,12 @@ import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
 import { type Facing, type Walker } from './walker';
 
-import type { ToolId } from '../world/items';
+import { TOOLS, type ToolId } from '../world/items';
 import type { CharacterId } from '../world/profiles';
 
 /** Ferramentas com folha de ação (golpe/arar). */
-export type SwingTool = 'sword' | 'axe' | 'hoe';
+/** Ferramentas com folha de ação (`TOOLS[t].swings`). */
+export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel';
 
 export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
 
@@ -224,7 +225,7 @@ export class Entities {
   get actors(): Actor[] {
     const p = this.player;
     const kind: ActorKind = this.character === 'goddess' ? 'goddess'
-      : p.attacking && (p.attackTool === 'sword' || p.attackTool === 'axe' || p.attackTool === 'hoe') ? `heroine-${p.attackTool}-attack`
+      : p.attacking && p.attackTool && TOOLS[p.attackTool].swings ? `heroine-${p.attackTool as SwingTool}-attack`
       : p.equipped ? `heroine-${p.equipped}` : 'heroine';
     const out: Actor[] = [{
       kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,

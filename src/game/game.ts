@@ -3,7 +3,7 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { dropsFor, ITEMS, toolCanBreak, TOOLS, type ToolId } from '../world/items';
+import { ITEMS, toolCanBreak, toolDrops, TOOLS, type ToolId } from '../world/items';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
@@ -236,7 +236,7 @@ export class Game {
     return !!t && TOOLS[t].strikes;
   }
 
-  /** Ferramenta com animação de ação que também quebra algo (machado, enxada): anima enquanto quebra. */
+  /** Ferramenta com animação de ação que também quebra algo (machado, enxada, pá): anima enquanto quebra. */
   private get swingsWhileBreaking(): boolean {
     const t = this.tool;
     return !!t && TOOLS[t].swings && TOOLS[t].breaks !== 'none';
@@ -255,7 +255,12 @@ export class Game {
   /** Pode usar o espaço selecionado (bloco/semente) nesta célula? Ovelha: ver `canFeed`. */
   private canUseAt(slot: HotbarSlot | null, x: number, y: number): boolean {
     if (!slot) return false;
-    if (slot.kind === 'tool') return slot.tool === 'hoe' && this.world.canTill(x, y);
+    if (slot.kind === 'tool') {
+      const use = TOOLS[slot.tool].groundUse;
+      if (use === 'till') return this.world.canTill(x, y);
+      if (use === 'flatten') return this.world.canFlatten(x, y);
+      return false;
+    }
     if (slot.kind === 'block') return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
     if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
     return false;
@@ -269,11 +274,13 @@ export class Game {
   private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
     if (!slot) return; // mão vazia ainda não tem ação
     if (slot.kind === 'tool') {
-      // Enxada: toca a animação de arar e só troca Terra/Terra com Grama → Terra Arada.
-      if (slot.tool === 'hoe') {
-        this.player.startAttack('hoe');
-        if (this.canUseAt(slot, x, y)) this.world.till(x, y);
-      }
+      // Ferramenta de chão (enxada ara, pá amassa em caminho): animação sempre; troca só se o alvo for válido.
+      const use = TOOLS[slot.tool].groundUse;
+      if (!use) return;
+      this.player.startAttack(slot.tool);
+      if (!this.canUseAt(slot, x, y)) return;
+      if (use === 'till') this.world.till(x, y);
+      else this.world.flatten(x, y);
       return;
     }
     if (slot.kind === 'block') {
@@ -307,7 +314,7 @@ export class Game {
   /** Célula onde o espaço selecionado agiria sob o cursor (bloco empilha se tocou num cubo com espaço). */
   private useTarget(sx: number, sy: number): CellTarget | null {
     const slot = this.slot;
-    if (!slot || (slot.kind === 'tool' && slot.tool !== 'hoe') || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
+    if (!slot || (slot.kind === 'tool' && !TOOLS[slot.tool].groundUse) || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
     let [x, y] = this.groundCell(sx, sy);
     if (slot.kind === 'block') {
       const picked = this.renderer.pick(this.camera, sx, sy);
@@ -352,12 +359,12 @@ export class Game {
       this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
       return;
     }
-    if (slot?.kind === 'tool' && slot.tool === 'hoe') {
-      // Pelo mouse: vira para o cursor, ara (animação sempre; troca só se o alvo for válido).
+    if (slot?.kind === 'tool' && TOOLS[slot.tool].groundUse) {
+      // Pelo mouse: vira para o cursor, ara/amassa (animação sempre; troca só se o alvo for válido).
       const t = this.useTarget(sx, sy);
       if (!this.player.attacking) this.faceToward(sx, sy);
       if (t?.valid) this.applyUse(slot, t.x, t.y, null);
-      else this.player.startAttack('hoe'); // alvo fora de alcance/inválido: só a animação
+      else this.player.startAttack(slot.tool); // alvo fora de alcance/inválido: só a animação
       return;
     }
     const t = this.useTarget(sx, sy);
@@ -425,12 +432,12 @@ export class Game {
       h.progress = 0;
     }
     h.progress += dt / BREAK_HOLD_S;
-    // Machado/enxada: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
+    // Machado/enxada/pá: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
     if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {
       const broken = this.world.breakBlock(t.x, t.y);
-      // Colheita: o que o mundo devolve cai no chão para ser coletado.
-      if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, dropsFor(broken));
+      // Colheita: o que o mundo devolve cai no chão para ser coletado (a pá destrói plantas sem drop).
+      if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, toolDrops(this.tool, broken));
       this.entities.settleAll(this.world);
       h.target = null;
       h.progress = 0;

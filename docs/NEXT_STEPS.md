@@ -7,8 +7,8 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
    ações/ferramentas próprias e se flutuar deve ter efeito de jogo (ex.: passar sobre buracos/subir 2 níveis); (arte) uma variação de nuvem feita para chão contínuo eliminaria a repetição.
 1. **Avaliar o botão de ação no celular** (teste em andamento): 2 s ainda confortável? Mão vazia + toque
    poderia colher trigo maduro ou fazer carinho na ovelha; alvo poderia considerar a diagonal do joystick.
-2. **Ações das ferramentas** restantes (enxada já ara):
-   - Pá: grama/terra → Caminho de Terra; cava mais rápido.
+2. **Ações das ferramentas** restantes (enxada, pá, espada e machado já agem):
+   - Pá: feito (caminho + cava macios, planta sem drop); falta cavar mais rápido que a mão e soltar o bloco cavado?
    - Picareta: quebra pedra mais rápido. Machado: feito (golpe + corta só madeira/planta); falta árvore soltar
      Tora de Carvalho e talvez cortar mais rápido que a mão.
    - Espada: feito o golpe; faltam animação de morte dos animais, drops (lã/carne?), vida e monstros.
@@ -29,9 +29,9 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 11. Geração em Web Worker se o custo por chunk voltar a crescer (hoje ~0,07 ms).
 
 ## Riscos e dívidas técnicas
-- **Peso dos artefatos — URGENTE** (~2,83 MB cada; o build já avisa acima de 2,8 MB): cada folha nova soma
-  ~150 kB e os dois mundos levam a arte um do outro. Separar assets por mundo (build por `VITE_WORLD` só com a
-  arte do perfil) antes da próxima folha de sprite.
+- **Peso dos artefatos — URGENTE** (~3,0 MB cada após a folha da pá; o build avisa acima de 2,8 MB): cada folha
+  nova soma ~150 kB e os dois mundos levam a arte um do outro. Separar assets por mundo (build por `VITE_WORLD` só
+  com a arte do perfil) antes da próxima folha de sprite.
 - `game/game.ts` (~490 linhas) concentra entrada, alvo e regras de ação: separar `ActionController` quando as
   ferramentas ganharem ação.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.

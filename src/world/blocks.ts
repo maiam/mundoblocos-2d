@@ -100,15 +100,17 @@ export interface BlockDef {
    * Define o que machado (wood + plant) e enxada (só plant) podem quebrar.
    */
   organic: 'wood' | 'plant' | null;
+  /** Bloco macio (terra, areia…): o que a pá consegue cavar além das plantas. */
+  soft: boolean;
 }
 
 const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'ground', shape: 'flat', solid: false, standable: true, liquid: false,
-  breakable: true, placeable: false, glow: false, organic: null, ...extra,
+  breakable: true, placeable: false, glow: false, organic: null, soft: false, ...extra,
 });
 const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'object', shape: 'cube', solid: true, standable: false, liquid: false,
-  breakable: true, placeable: true, glow: false, organic: null, ...extra,
+  breakable: true, placeable: true, glow: false, organic: null, soft: false, ...extra,
 });
 
 const defs: BlockDef[] = [
@@ -117,11 +119,11 @@ const defs: BlockDef[] = [
   ground(Block.HOLE, 'Buraco', { standable: false, breakable: false }),
   ground(Block.VOID, 'Céu Aberto', { standable: false, breakable: false }),
   // Materiais: um único id serve de cubo (camada de objeto) e de chão (camada de chão).
-  object(Block.DIRT, 'Terra'),
-  object(Block.GRASS, 'Terra com Grama'),
-  object(Block.TILLED, 'Terra Arada'),
-  object(Block.PATH, 'Caminho de Terra'),
-  object(Block.SAND, 'Areia'),
+  object(Block.DIRT, 'Terra', { soft: true }),
+  object(Block.GRASS, 'Terra com Grama', { soft: true }),
+  object(Block.TILLED, 'Terra Arada', { soft: true }),
+  object(Block.PATH, 'Caminho de Terra', { soft: true }),
+  object(Block.SAND, 'Areia', { soft: true }),
   object(Block.STONE, 'Pedra'),
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
   object(Block.OAK_PLANKS, 'Piso de Carvalho', { organic: 'wood' }),
