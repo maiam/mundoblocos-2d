@@ -15,7 +15,7 @@ function field(seed = 7): [World, number, number] {
   for (let dy = -2; dy <= 2; dy++) {
     for (let dx = -4; dx <= 4; dx++) {
       while (w.topBlock(sx + dx, sy + dy)) w.breakBlock(sx + dx, sy + dy);
-      if (w.getGround(sx + dx, sy + dy) === Block.WATER) w.placeBlock(sx + dx, sy + dy, Block.PLANKS);
+      if (w.getGround(sx + dx, sy + dy) === Block.WATER) w.placeBlock(sx + dx, sy + dy, Block.OAK_PLANKS);
     }
   }
   return [w, sx, sy];

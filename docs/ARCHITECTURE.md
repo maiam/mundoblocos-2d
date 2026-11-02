@@ -6,6 +6,7 @@ Vista superior inclinada (3/4). Ver [ADR 0003](adr/0003-vista-superior-inclinada
 assets-src/*-sheet.png         folhas originais (heroína, ovelha; fundo claro, 4×4)
 scripts/process-sprite.py      gera src/assets/*.png (transparente, quadros uniformes)
 scripts/build-artifact.mjs     HTML de arquivo único a partir de dist/
+scripts/extract-blocks.py      prancha isométrica de blocos → atlas 3/4 + ícones
 scripts/make-icons.py          gera public/icon-192/512.png a partir da heroína
 public/manifest.webmanifest    PWA: display fullscreen, orientation landscape
 src/
@@ -23,7 +24,8 @@ src/
     items.ts           itens contáveis (semente, trigo), ferramentas e o que cada bloco devolve ao quebrar
   render/  (apresentação — lê o domínio, nunca escreve)
     color.ts           utilitários de cor
-    textures.ts        chão (variações), cubos 3/4, árvores, enfeites, ícones
+    textures.ts        materiais (atlas da prancha) em 3/4, água, árvores, cacto, enfeites, ícones
+    blockArt.ts        carrega o atlas dos blocos antes do jogo
     chunkRenderer.ts   cache offscreen do CHÃO por chunk (barrancas, espuma, grade, sombras)
     character.ts       folhas de sprite dos atores (heroína, ovelha, filhote, namoro) + coração
     itemArt.ts         sprites do trigo por estágio e ícones dos itens

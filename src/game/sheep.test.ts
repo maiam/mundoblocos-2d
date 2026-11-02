@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, blockDef } from '../world/blocks';
+import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities } from './entities';
@@ -45,7 +45,7 @@ describe('Sheep', () => {
       for (let dx = -1; dx <= 1; dx++) {
         if (dx === 0 && dy === 0) continue;
         while (w.topBlock(sx + dx, sy + dy)) w.breakBlock(sx + dx, sy + dy);
-        if (blockDef(w.getGround(sx + dx, sy + dy)).standable) w.placeBlock(sx + dx, sy + dy, Block.STONE);
+        if (w.isGroundStandable(sx + dx, sy + dy)) w.placeBlock(sx + dx, sy + dy, Block.STONE);
       }
     }
     const s = new Sheep(sx + 0.5, sy + 0.5, sx + 0.5, sy + 0.5, mulberry32(3));

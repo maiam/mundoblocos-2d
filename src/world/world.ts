@@ -7,8 +7,8 @@ import { WorldGenerator } from './generator';
 
 /** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
 export const WHEAT_STAGE_SECONDS = 6;
-/** Chãos onde a semente pode ser plantada ("terra"). */
-const SOIL = new Set<number>([Block.GRASS, Block.ENCHANTED_GRASS, Block.DIRT]);
+/** Chãos onde a semente pode ser plantada ("terra"): grama, terra e terra arada. */
+const SOIL = new Set<number>([Block.GRASS, Block.DIRT, Block.TILLED]);
 
 export interface ChunkRect {
   cx0: number;

@@ -8,6 +8,14 @@ Apenas apresentação; lê `World`, nunca escreve.
 - Sombras e contornos puxam para índigo; brilhos em estrela para neve, ouro, cristais, água.
 - Texturas em resolução 2× (`TEX_RES`) para nitidez com zoom ~2.
 
+## Arte dos blocos (prancha)
+- `assets-src/blocks-sheet.png` (isométrica) → `scripts/extract-blocks.py` → `src/assets/blocks-atlas.png`
+  (linha 0: topo do cubo 64×64; linha 1: face frontal 64×36; linha 2: chão contínuo) + `icon-block-*.png`.
+- Geometria por gabarito medido no cubo de terra, ancorado na base de cada cubo (a grama transborda o contorno).
+- Chão: miolo do topo sem contorno, misturado com cópia deslocada meia célula (sem emendas); terra/grama/
+  caminho/areia/pedra giram/espelham por célula; arado, tora e piso mantêm a orientação.
+- `render/blockArt.ts` carrega o atlas antes do jogo começar (`main.ts`).
+
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):
   variação de tile por hash → barranca no lado norte da água → espuma nas margens → grade sutil → sombras

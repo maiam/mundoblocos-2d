@@ -1,5 +1,9 @@
 # Próximos passos
 
+- Ferramentas sobre os novos materiais: enxada transforma grama/terra em **Terra Arada** (plantio só nela?),
+  pá transforma em **Caminho de Terra**; machado em árvores dá **Tora de Carvalho** (e o piso via receita).
+- Pedir à arte: variação de grama com menos flores para o chão; árvores/cacto/água no estilo da prancha.
+
 - **Avaliar o teste do botão de ação**: tempo de 2 s ainda adequado? Mão vazia + toque poderia colher trigo maduro
   ou fazer carinho na ovelha; alvo "à frente" poderia considerar a diagonal do joystick.
 

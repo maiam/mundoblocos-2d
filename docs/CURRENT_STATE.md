@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.10.0_
+_Atualizado em 2026-11-01 — v0.11.0_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -8,6 +8,8 @@ _Atualizado em 2026-11-01 — v0.10.0_
 - **Pilhas de até 2 cubos**; a personagem sobe 1 nível por vez (chão → 1 → 2) e desce livremente, com
   transição suave. Montanhas geradas têm 1 e 2 níveis e viram terreno escalável.
 - **Cavar o chão**: célula vazia + quebrar → buraco intransponível; só um bloco novo o preenche, virando piso.
+- **Blocos da prancha**: só 8 materiais (terra, grama, arada, caminho, areia, pedra, tora e piso de carvalho),
+  com a arte fornecida; também formam o chão do mundo. Biomas reduzidos a Campos, Sakura e Dunas.
 - **Botão de ação (em teste)** no celular: toque usa, segurar 2 s quebra o bloco à frente; alvo com contorno
   quando a personagem está parada; mostra o item selecionado ou a mão. Espaço faz o mesmo no desktop.
 - **Ferramentas** (espada, enxada, picareta, pá, machado) na hotbar (1–5): selecionar equipa e a heroína anda
@@ -40,6 +42,7 @@ _Atualizado em 2026-11-01 — v0.10.0_
   rotação (ou instalar na tela inicial). Dentro do Artifact (iframe) a tela cheia pode ser recusada.
 - O toque que ativa a tela cheia também conta como ação de colocar bloco.
 - Edições, inventário, plantações e ovelhas não são persistidos; NPCs existem só perto do spawn.
+- Chão de grama repete as flores da arte (bem florido); materiais orientados repetem o padrão.
 - Sob a folha de trigo resta um filete claro da sombra original do desenho.
 - Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
 - Transições entre tipos de chão são em degrau (sem blending).

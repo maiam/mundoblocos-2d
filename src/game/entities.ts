@@ -44,7 +44,7 @@ export class Entities {
 
   /** Rebanho inicial perto de (x, y): posições pela seed, em grama andável a 2–8 células. */
   spawnFlock(world: World, x: number, y: number): void {
-    const grass = new Set<number>([Block.GRASS, Block.ENCHANTED_GRASS]);
+    const grass = new Set<number>([Block.GRASS]);
     for (let i = 0; i < 400 && this.npcs.length < FLOCK_SIZE; i++) {
       const a = hash2(world.seed, i, 71) * Math.PI * 2;
       const r = 2 + hash2(world.seed, i, 72) * 6;

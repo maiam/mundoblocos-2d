@@ -17,8 +17,6 @@ interface Particle {
 
 const KIND_BY_BIOME: Record<Biome['key'], Kind> = {
   sakura: 'petal',
-  enchanted: 'firefly',
-  tundra: 'snow',
   desert: 'dust',
   meadow: 'pollen',
 };

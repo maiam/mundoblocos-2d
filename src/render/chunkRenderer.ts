@@ -4,11 +4,13 @@ import type { Chunk } from '../world/chunk';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { rgba } from './color';
-import { type BlockTextures, groundVariant, TEX_RES } from './textures';
+import { type BlockTextures, TEX_RES } from './textures';
 
 const CHUNK_PX = CHUNK_SIZE * TILE;
 /** Altura da barranca (face frontal do chão) vista sobre a água. */
 const BANK_H = 7;
+/** Materiais cuja arte tem direção (tábuas, sulcos, anéis): não giram no chão. */
+const ORIENTED = new Set<number>([Block.OAK_PLANKS, Block.TILLED, Block.OAK_LOG]);
 /** Altura da parede interna visível de um buraco. */
 const WALL_H = 13;
 /** Frames sem uso antes de liberar o cache de um chunk. */
@@ -107,17 +109,30 @@ export class ChunkRenderer {
         const px = lx * TILE;
         const py = ly * TILE;
         const g = chunk.getGround(lx, ly);
+        const h = hash2(seed, x, y);
         if (g === Block.HOLE) {
           this.drawHole(ctx, x, y, px, py);
-        } else if (blockDef(g).layer === 'object') {
-          // Cubo colocado num buraco: vira piso (face superior nivelada com o chão).
-          const s = this.tex.objects.get(g);
-          if (s) ctx.drawImage(s.canvas, 0, 0, TILE * TEX_RES, TILE * TEX_RES, px, py, TILE, TILE);
-          ctx.fillStyle = 'rgba(30, 20, 60, 0.08)';
-          ctx.fillRect(px, py, TILE, TILE);
+        } else if (g === Block.WATER) {
+          const w = this.tex.water;
+          ctx.drawImage(w[Math.floor(h * w.length) % w.length], px, py, TILE, TILE);
         } else {
-          const tile = groundVariant(this.tex, g, hash2(seed, x, y));
-          if (tile) ctx.drawImage(tile, px, py, TILE, TILE);
+          // Material como chão: topo da arte da prancha. Materiais naturais giram/espelham
+          // por célula para o padrão não repetir; piso, tora e arado mantêm a orientação.
+          const top = this.tex.groundTop.get(g);
+          if (top) {
+            if (ORIENTED.has(g)) {
+              ctx.drawImage(top, px, py, TILE, TILE);
+            } else {
+              const turn = Math.floor(h * 4);
+              const flip = hash2(seed, x + 17, y - 5) < 0.5 ? -1 : 1;
+              ctx.save();
+              ctx.translate(px + TILE / 2, py + TILE / 2);
+              ctx.rotate((turn * Math.PI) / 2);
+              ctx.scale(flip, 1);
+              ctx.drawImage(top, -TILE / 2, -TILE / 2, TILE, TILE);
+              ctx.restore();
+            }
+          }
         }
 
         if (liquid(g)) {

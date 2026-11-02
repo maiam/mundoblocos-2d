@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHUNK_SIZE } from '../config';
-import { Block, blockDef } from './blocks';
+import { Block, blockDef, MATERIALS } from './blocks';
 import { toChunk, toLocal } from './coords';
 import { WorldGenerator } from './generator';
 import { World } from './world';
@@ -62,7 +62,8 @@ describe('WorldGenerator', () => {
       for (let x = -60; x < 60; x += 3) {
         const ground = blockDef(g.groundAt(x, y));
         const obj = blockDef(g.objectAt(x, y));
-        expect(ground.layer).toBe('ground');
+        // Chão: água/buraco ou um material da prancha (mesmo id do cubo).
+        expect(ground.layer === 'ground' || MATERIALS.includes(ground.id)).toBe(true);
         expect(obj.layer).toBe('object');
         if (ground.liquid) expect(obj.id).toBe(Block.AIR);
         // Nível 1 só existe sobre cubo.
@@ -75,14 +76,14 @@ describe('WorldGenerator', () => {
     const g = new WorldGenerator(42);
     const biomes = new Set<string>();
     let water = 0, trees = 0;
-    for (let y = -3000; y < 3000; y += 40) {
-      for (let x = -3000; x < 3000; x += 40) {
+    for (let y = -6000; y < 6000; y += 60) {
+      for (let x = -6000; x < 6000; x += 60) {
         biomes.add(g.biomeAt(x, y).key);
         if (blockDef(g.groundAt(x, y)).liquid) water++;
         if (blockDef(g.objectAt(x, y)).shape === 'tree') trees++;
       }
     }
-    expect(biomes.size).toBeGreaterThanOrEqual(4);
+    expect(biomes.size).toBe(3);
     expect(water).toBeGreaterThan(0);
     expect(trees).toBeGreaterThan(0);
   });
@@ -101,12 +102,12 @@ describe('World', () => {
   it('coloca e quebra objetos, marcando o chunk como modificado', () => {
     const w = new World(7);
     const [x, y] = w.findSpawn();
-    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true);
-    expect(w.getObject(x, y)).toBe(Block.BRICK);
+    expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true);
+    expect(w.getObject(x, y)).toBe(Block.OAK_LOG);
     expect(w.isWalkable(x, y)).toBe(false);
     expect(w.getChunk(toChunk(x), toChunk(y))!.modified).toBe(true);
     expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false);
-    expect(w.breakBlock(x, y)).toBe(Block.BRICK);
+    expect(w.breakBlock(x, y)).toBe(Block.OAK_LOG);
     expect(w.isWalkable(x, y)).toBe(true);
   });
 
@@ -114,11 +115,11 @@ describe('World', () => {
     const w = new World(7);
     const [x, y] = w.findSpawn();
     expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
-    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true);
+    expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true);
     expect(w.stackHeight(x, y)).toBe(2);
     expect(w.standHeight(x, y)).toBe(2);
-    expect(w.placeBlock(x, y, Block.PLANKS)).toBe(false);
-    expect(w.breakBlock(x, y)).toBe(Block.BRICK);
+    expect(w.placeBlock(x, y, Block.OAK_PLANKS)).toBe(false);
+    expect(w.breakBlock(x, y)).toBe(Block.OAK_LOG);
     expect(w.stackHeight(x, y)).toBe(1);
     expect(w.breakBlock(x, y)).toBe(Block.STONE);
     expect(w.standHeight(x, y)).toBe(0);
@@ -128,9 +129,9 @@ describe('World', () => {
     const w = new World(7);
     const [x, y] = w.findSpawn();
     expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
-    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false);
+    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false); // enfeite não é bloco de construção
     w.breakBlock(x, y);
-    expect(w.placeBlock(x, y, Block.FLOWER)).toBe(true);
+    w.setObject(x, y, Block.FLOWER); // flor natural
     expect(w.placeBlock(x, y, Block.STONE)).toBe(true); // substitui o enfeite no nível 0
     expect(w.stackHeight(x, y)).toBe(1);
     w.setObject(x + 1, y, Block.OAK_TREE);
@@ -154,7 +155,7 @@ describe('World', () => {
     expect(w.getGround(x, y)).toBe(Block.STONE);
     expect(w.getObject(x, y)).toBe(Block.AIR);
     expect(w.standHeight(x, y)).toBe(0); // piso nivelado
-    expect(w.placeBlock(x, y, Block.BRICK)).toBe(true); // e aceita cubo por cima
+    expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true); // e aceita cubo por cima
     expect(w.stackHeight(x, y)).toBe(1);
     w.breakBlock(x, y);
     expect(w.breakBlock(x, y)).toBe(Block.STONE); // quebrar o piso reabre o buraco
@@ -194,7 +195,7 @@ describe('World', () => {
     const w = new World(3);
     w.loadChunk(0, 0);
     w.loadChunk(50, 0);
-    w.setObject(50 * CHUNK_SIZE, 0, Block.BRICK);
+    w.setObject(50 * CHUNK_SIZE, 0, Block.OAK_LOG);
     w.loadChunk(60, 0);
     const removed = w.unloadFar({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
     expect(removed).toContain('60,0');

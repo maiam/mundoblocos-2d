@@ -59,7 +59,7 @@ describe('Player', () => {
     const p = new Player(sx + 0.5, sy + 0.5);
     for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
     expect(p.x).toBeLessThan(sx + 2);
-    w.placeBlock(sx + 2, sy, Block.PLANKS); // tapado: vira piso e libera a passagem
+    w.placeBlock(sx + 2, sy, Block.OAK_PLANKS); // tapado: vira piso e libera a passagem
     for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
     expect(p.x).toBeGreaterThan(sx + 3);
     expect(p.z).toBe(0);

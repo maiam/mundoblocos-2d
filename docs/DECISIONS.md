@@ -17,6 +17,7 @@
 | — | Ferramenta equipada = espaço selecionado; sem ação até definirmos o uso de cada uma | `domains/player.md` |
 | — | Pá sem folha para a direita: espelho da esquerda | `domains/render.md` |
 | — | Ação no celular pelo botão de ação sobre o alvo à frente; toque no mundo desativado no toque | `domains/player.md` |
+| 0006 | Blocos = materiais da prancha; mesmo id como chão e cubo; arte por extração do isométrico | [adr/0006](adr/0006-materiais-da-prancha.md) |
 | — | Câmera sem rotação + joystick em direções de tela | `domains/player.md` |
 | — | Sem backend neste repositório; persistência futura via core | `PROJECT_CONTEXT.md` |
 | — | Chunks quadrados 16×16 nos dois eixos do mapa | `domains/world.md` |

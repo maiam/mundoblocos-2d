@@ -50,7 +50,7 @@ describe('Trigo', () => {
     clearCell(w, x, y);
     w.breakBlock(x, y); // buraco
     expect(w.canPlant(x, y)).toBe(false);
-    w.placeBlock(x, y, Block.PLANKS); // piso de tábuas
+    w.placeBlock(x, y, Block.OAK_PLANKS); // piso de tábuas
     expect(w.canPlant(x, y)).toBe(false);
   });
 

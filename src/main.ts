@@ -1,5 +1,6 @@
 import './style.css';
 import { Game } from './game/game';
+import { loadBlockArt } from './render/blockArt';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 
@@ -18,4 +19,5 @@ function start(seed: number): void {
 }
 
 const param = new URLSearchParams(window.location.search).get('seed');
-start(param ? seedFromString(param) : Math.floor(Math.random() * 2 ** 31));
+// A arte dos blocos precisa estar carregada antes de montar chão e cubos.
+void loadBlockArt().then(() => start(param ? seedFromString(param) : Math.floor(Math.random() * 2 ** 31)));
