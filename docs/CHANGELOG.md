@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.33.1 — 2026-11-02
+- **Machado quebra a tenda** (a tenda passa a ser de madeira; com isso a picareta, que não quebra madeira, deixa de
+  quebrá-la; a mão continua).
+- **Morte: perde tudo menos as ferramentas** (materiais, sementes, trigo e espólios se perdem). 1 teste novo (107).
+
 ## 0.33.0 — 2026-11-02
 - **Baú de Carvalho** (arte fornecida; receita do Construtor: 8 tábuas): 27 espaços. Tocar nele abre o Baú (3×9) e a
   Bolsa acima da mão; troca tocando no item e depois no destino (pilha inteira, mão ↔ bolsa ↔ baú). Quebrar o baú

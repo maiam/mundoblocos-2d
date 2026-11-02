@@ -34,7 +34,7 @@
   pelo ícone da bolsa, tecla 9/I/B ou Esc.
 - **Capacidade** (`canCarry`): pilha que ela já tem sempre soma (sem limite); tipo novo entra num espaço vazio da mão
   ou na bolsa, se houver lugar — senão fica no chão até liberar espaço. No máximo 27 tipos (9 + 18).
-- **Morte**: perde **todos os materiais** (`Inventory.dropMaterials`); ferramentas, sementes, trigo e espólios ficam.
+- **Morte**: perde **tudo** — materiais, sementes, trigo, espólios (`Inventory.dropOnDeath`); **só as ferramentas ficam**.
 
 ## Habilidades: profissões e receitas (`world/items.ts` → `PROFESSIONS`, `RECIPES`; tela em `game/skills.ts`)
 - Botão **Habilidades** (11º, tecla K): sobem acima da grade **Receitas** (4 fileiras de 9, alinhadas aos 9 itens) e,
@@ -49,7 +49,7 @@
   | Tenda | 10 Sedas + 10 Tábuas + 4 Presas | 1 Tenda |
 - **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
   no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
-- **Tenda** (`Block.TENT`, **2×2**): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`
+- **Tenda** (`Block.TENT`, **2×2**, madeira: machado e mão quebram; picareta não): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`
   (bloqueiam, sem arte). Precisa das 4 livres em chão firme **e sem ninguém** (`ActionController.placeAnchor` escolhe, entre as 4 posições 2×2 que
   cobrem a célula alvo, a que não pega entidades e fica mais longe da heroína); quebrar qualquer parte derruba a tenda e devolve 1. A última colocada é o **ponto de
   renascer** (`World.tent`, `respawnPoint`: célula livre ao lado dela). Cada tenda colocada mostra "Ponto de

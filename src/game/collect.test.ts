@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
-import { blockDrops, blockStack, breakDrops, canCraft, PROFESSIONS, RECIPES, toolStack } from '../world/items';
+import { blockDrops, blockStack, breakDrops, canCraft, PROFESSIONS, RECIPES, toolCanBreak, toolStack } from '../world/items';
 import { WORLD_PROFILES } from '../world/profiles';
 import { mulberry32 } from '../world/random';
 import { BAG_SLOTS, bagHasRoom, bagStacks, CARRY_LIMIT, canCarry, GRID_SLOTS, Hotbar, startingGrid } from './hotbar';
@@ -56,16 +56,23 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(grid.stack(7)).toBeNull(); // acabou → espaço livre
   });
 
-  it('ao morrer perde todos os materiais; ferramentas, itens e espólios ficam', () => {
+  it('ao morrer perde tudo; só as ferramentas ficam', () => {
     const inv = new Inventory();
     inv.add(blockStack(Block.OAK_LOG), 12);
     inv.add('silk', 2);
-    inv.dropMaterials();
+    inv.dropOnDeath();
     expect(inv.count(blockStack(Block.OAK_LOG))).toBe(0);
     expect(inv.count(blockStack(Block.OAK_DOOR))).toBe(0);
-    expect(inv.count('silk')).toBe(2);
-    expect(inv.count(toolStack('sword'))).toBe(1);
-    expect(inv.count('wheat_seed')).toBe(5);
+    expect(inv.count('silk')).toBe(0);
+    expect(inv.count('wheat_seed')).toBe(0);
+    expect(inv.count('wheat')).toBe(0);
+    for (const t of ['sword', 'hoe', 'pickaxe', 'shovel', 'axe'] as const) expect(inv.count(toolStack(t))).toBe(1);
+    expect(inv.entries()).toHaveLength(5);
+  });
+
+  it('machado quebra a tenda (madeira)', () => {
+    expect(toolCanBreak('axe', Block.TENT)).toBe(true);
+    expect(toolCanBreak('axe', Block.TENT_PART)).toBe(true);
   });
 
   it('Santuário continua infinito: grade fixa com os 18 blocos, sem bolsa', () => {

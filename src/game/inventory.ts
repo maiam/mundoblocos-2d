@@ -1,5 +1,5 @@
 import { Block } from '../world/blocks';
-import { blockStack, Item, isMaterialStack, type StackId, TOOL_ORDER, toolStack } from '../world/items';
+import { blockStack, Item, type StackId, TOOL_ORDER, toolStack } from '../world/items';
 
 /** Começo no mundo com coleta: as 5 ferramentas, 5 sementes, 2 trigos e 1 Porta de Carvalho (sem materiais). */
 export const STARTING_ITEMS: Partial<Record<StackId, number>> = {
@@ -46,8 +46,8 @@ export class Inventory {
     for (const [id, n] of Object.entries(counts)) if (n) this.counts.set(id as StackId, n);
   }
 
-  /** Perde todos os materiais de construção (morte); ferramentas, itens e espólios ficam. */
-  dropMaterials(): void {
-    for (const id of [...this.counts.keys()]) if (isMaterialStack(id)) this.counts.delete(id);
+  /** Morte: perde tudo (materiais, sementes, trigo, espólios); só as ferramentas ficam. */
+  dropOnDeath(): void {
+    for (const id of [...this.counts.keys()]) if (!id.startsWith('tool:')) this.counts.delete(id);
   }
 }

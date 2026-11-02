@@ -597,9 +597,9 @@ export class Game {
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.5);
     if (this.player.dead) {
       this.actions.cancelAll();
-      // Ao cair, perde todos os materiais de construção (ferramentas, itens e espólios ficam).
+      // Ao cair, perde tudo; só as ferramentas ficam.
       if (this.collect) {
-        this.inventory.dropMaterials();
+        this.inventory.dropOnDeath();
         this.hotbar.prune(this.inventory);
         this.refreshSelection();
       }

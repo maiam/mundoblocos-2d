@@ -48,7 +48,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 
 ### Fase 3 — Recursos e progressão
 1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;
-   morte perde os materiais.
+   morte perde tudo menos as ferramentas.
 2. ✅ **Receitas** (v0.31.0): Construtor — Tábua, Porta, Tenda (ponto de renascer). Próximas: mais profissões e
    receitas (trigo → pão? Coração da Rainha → ?), painel do **Personagem** (vida, armaduras — ícone já na grade).
 3. ✅ **Painel de inventário** (bolsa no 9º espaço).

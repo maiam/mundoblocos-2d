@@ -156,8 +156,8 @@ const defs: BlockDef[] = [
   object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
-  object(Block.TENT, 'Tenda', { shape: 'rock' }),
-  object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false }),
+  object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
+  object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
   object(Block.CHEST, 'Baú de Carvalho', { shape: 'rock', organic: 'wood' }),
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
