@@ -43,6 +43,9 @@ Apenas apresentação; lê `World`, nunca escreve.
 - Combate (`RenderOptions.hurtFlash/inDungeon/entrance`): vinheta vermelha de dano; penumbra radial dentro da
   dungeon; farol na entrada (`drawBeacon`) ou seta na borda da tela. Heroína invencível pisca (`Actor.hurt`).
 - HUD (`game/hud.ts`): corações SVG e contador de espólios no canto superior esquerdo (safe-area).
+- Água (`blockArt.getWaterArt`, `extract-water.py`): chão = topo do bloco de água (ladrilho contínuo, sem espelhar);
+  sem a arte, procedural. Enchimento (`Renderer.drawWaterFlows`): quadro 0–3 da linha da direção (oeste, leste, sul,
+  norte) sobre a célula do buraco, entre o chão e os objetos.
 - Por frame: objetos linha a linha (de cima para baixo da tela); a personagem é desenhada logo após a linha
   dos seus pés. Água ganha brilhos animados; nuvens projetam sombras que derivam.
 - `pick()` escolhe o objeto sob o cursor testando as linhas da frente primeiro (sprites sobem acima da célula).

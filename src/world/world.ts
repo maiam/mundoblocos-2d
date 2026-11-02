@@ -17,6 +17,22 @@ const PLANTABLE_GROUND: number = Block.TILLED;
 const TILLABLE = new Set<number>([Block.DIRT, Block.GRASS]);
 /** Chãos que a pá amassa em Caminho de Terra. */
 const FLATTENABLE = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED]);
+/** Blocos que podem substituir a água (viram o chão da célula). */
+export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.STONE, Block.OAK_LOG]);
+/** Tempo para a água encher um buraco vizinho (s). */
+export const FLOW_SECONDS = 0.6;
+
+/** De que lado a água chega numa célula que está enchendo. */
+export type FlowFrom = 'west' | 'east' | 'south' | 'north';
+const FLOW_DIRS: Array<[FlowFrom, number, number]> = [['west', -1, 0], ['east', 1, 0], ['north', 0, -1], ['south', 0, 1]];
+
+/** Célula enchendo de água: progresso 0..1 e lado de onde a água vem. */
+export interface WaterFlow {
+  x: number;
+  y: number;
+  from: FlowFrom;
+  t: number;
+}
 
 /** Chave numérica exata do chunk (|cy| < 2^20 chunks ≈ 16 milhões de células). */
 function numKey(cx: number, cy: number): number {
@@ -47,6 +63,8 @@ export class World {
   private readonly crops = new Set<string>();
   /** Dungeon deste mundo (perfil com `dungeon`), ou null. Área protegida: só se luta lá dentro. */
   readonly dungeon: DungeonLayout | null = null;
+  /** Buracos enchendo de água (estado de execução; ao carregar, `settleWater` reagenda). */
+  private readonly flows = new Map<string, WaterFlow>();
   /** Spawn calculado no terreno base (a dungeon é posta longe dele e não o altera). */
   private spawn: [number, number] | null = null;
 
@@ -261,6 +279,7 @@ export class World {
     if (target === 'ground') {
       const id = this.getGround(x, y);
       this.setLevel(x, y, 'ground', Block.HOLE);
+      this.scheduleFlow(x, y); // vizinho de água: o buraco enche sozinho
       return id;
     }
     return null;
@@ -278,6 +297,8 @@ export class World {
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
     if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
+    // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
+    if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
     if (base.id === Block.AIR || base.shape === 'decoration') {
@@ -289,6 +310,59 @@ export class World {
       return h < MAX_STACK ? h : null;
     }
     return null;
+  }
+
+  // ---- Água ----
+
+  /**
+   * Agenda o enchimento de um buraco vizinho de água (ou de outro buraco já enchendo não conta: só água pronta).
+   * O lado de onde a água vem segue uma ordem fixa (oeste, leste, norte, sul) — determinístico.
+   */
+  private scheduleFlow(x: number, y: number): void {
+    if (this.getGround(x, y) !== Block.HOLE || this.flows.has(chunkKey(x, y))) return;
+    for (const [from, dx, dy] of FLOW_DIRS) {
+      if (this.getGround(x + dx, y + dy) === Block.WATER) {
+        this.flows.set(chunkKey(x, y), { x, y, from, t: 0 });
+        return;
+      }
+    }
+  }
+
+  /** Avança o enchimento: buraco cheio vira água e passa a encher os buracos vizinhos (em cadeia). */
+  private tickWater(dt: number): void {
+    if (!this.flows.size) return;
+    const done: WaterFlow[] = [];
+    for (const [key, f] of this.flows) {
+      // Tapado no meio do caminho (bloco colocado no buraco): desiste.
+      if (this.getGround(f.x, f.y) !== Block.HOLE) {
+        this.flows.delete(key);
+        continue;
+      }
+      f.t += dt / FLOW_SECONDS;
+      if (f.t >= 1) done.push(f);
+    }
+    for (const f of done) {
+      this.flows.delete(chunkKey(f.x, f.y));
+      this.setLevel(f.x, f.y, 'ground', Block.WATER);
+      for (const [, dx, dy] of FLOW_DIRS) this.scheduleFlow(f.x + dx, f.y + dy);
+    }
+  }
+
+  /** Células enchendo agora (para a animação do render). */
+  waterFlows(): Iterable<WaterFlow> {
+    return this.flows.values();
+  }
+
+  /** Reagenda buracos vizinhos de água nos chunks editados (depois de carregar um salvamento). */
+  settleWater(): void {
+    for (const c of this.chunks.values()) {
+      if (!c.modified) continue;
+      for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+          if (c.getGround(lx, ly) === Block.HOLE) this.scheduleFlow(c.cx * CHUNK_SIZE + lx, c.cy * CHUNK_SIZE + ly);
+        }
+      }
+    }
   }
 
   // ---- Portas ----
@@ -424,6 +498,7 @@ export class World {
    * probabilidade dt / WHEAT_STAGE_SECONDS (crescimento natural, não sincronizado).
    */
   tick(dt: number, rand: () => number = Math.random): void {
+    this.tickWater(dt);
     const p = dt / WHEAT_STAGE_SECONDS;
     for (const key of [...this.crops]) {
       const [x, y] = key.split(',').map(Number);

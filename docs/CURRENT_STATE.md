@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.28.0_
+_Atualizado em 2026-11-02 — v0.29.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -23,6 +23,8 @@ _Atualizado em 2026-11-02 — v0.28.0_
   soltam seda/presas (Rainha: Coração da Rainha) e renascem com o tempo. Farol + seta indicam a entrada.
 - **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, renasce no início com os itens.
   Ver `domains/dungeon.md`.
+- **Água**: inquebrável; Terra/Pedra/Tora a substituem; buraco vizinho de água enche sozinho (animação) e enche os
+  vizinhos em cadeia. Ver `domains/world.md`.
 - Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
 ## Personagem e controles
@@ -67,12 +69,13 @@ _Atualizado em 2026-11-02 — v0.28.0_
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
 - iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a
   instalação na tela inicial); dentro do Artifact a tela cheia pode ser recusada.
-- Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
+- Sem pulo, queda com dano ou transições suaves entre tipos de chão. Água parada (sem correnteza nem nado); só enche
+  buracos, não se espalha sobre terra firme.
 
 ## Qualidade e desempenho
 - 88 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,97 MB** (meta < 3 MB, no limite),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,01 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

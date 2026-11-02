@@ -20,6 +20,8 @@ export interface DungeonArt {
   walls: HTMLImageElement;
 }
 let dungeon: DungeonArt | null = null;
+/** Água: topo do bloco e quadros de enchimento (null = água procedural, ex.: mundos sem a arte). */
+let water: { top: HTMLImageElement; flow: HTMLImageElement } | null = null;
 
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -37,6 +39,10 @@ export async function loadBlockArt(): Promise<void> {
   const a = art();
   const d = a.dungeon;
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
+  if (a.water) {
+    const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
+    water = { top, flow };
+  }
   if (d) {
     const [ground, mountains, rocks, props, walls] = await Promise.all([d.ground, d.mountains, d.rocks, d.props, d.walls].map(load));
     dungeon = { ground, mountains, rocks, props, walls };
@@ -58,4 +64,8 @@ export function getOakDoorSheet(): HTMLImageElement | null {
 
 export function getDungeonArt(): DungeonArt | null {
   return dungeon;
+}
+
+export function getWaterArt(): { top: HTMLImageElement; flow: HTMLImageElement } | null {
+  return water;
 }

@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getWaterArt } from './blockArt';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
@@ -246,6 +246,15 @@ const OUTLINE: Record<number, string> = {
 
 // ---------------------------------------------------------------- água
 
+/** Ladrilho de água a partir do topo do bloco da arte; `v` espelha (bit 0: horizontal, bit 1: vertical). */
+function artWaterTile(top: HTMLImageElement, v: number): HTMLCanvasElement {
+  const [c, ctx] = canvas(T, T);
+  ctx.translate(v & 1 ? T : 0, v & 2 ? T : 0);
+  ctx.scale(v & 1 ? -1 : 1, v & 2 ? -1 : 1);
+  ctx.drawImage(top, 0, 0, T, T);
+  return c;
+}
+
 function waterTile(variant: number): HTMLCanvasElement {
   const [c, ctx] = canvas(T, T);
   const rand = mulberry32(6 * 131 + variant * 7 + 1);
@@ -411,7 +420,10 @@ export function createBlockTextures(): BlockTextures {
       icons.set(id, pack.materialIcons[id] ?? '');
     });
   }
-  const water = Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
+  // Água: topo do bloco de água da arte, ladrilho contínuo sempre na mesma orientação (espelhar por célula
+  // quebra a continuidade e forma um quadriculado); sem arte, procedural.
+  const wa = getWaterArt();
+  const water = wa ? [artWaterTile(wa.top, 0)] : Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));

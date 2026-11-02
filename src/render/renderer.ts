@@ -8,6 +8,7 @@ import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
 import { ItemIcons, itemIconUrl, loadCropSprites } from './itemArt';
+import { getWaterArt } from './blockArt';
 import { type ItemId, stackBlock } from '../world/items';
 import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
@@ -118,6 +119,9 @@ export class Renderer {
         ctx.drawImage(img, sx0, sy0, sx1 - sx0, sy1 - sy0);
       }
     }
+
+    // Buracos enchendo de água (animação da arte; o chão vira água no fim).
+    this.drawWaterFlows(cam);
 
     // 2) Objetos + personagem por linha (de trás para frente).
     const [wx0, wy0] = cam.screenToWorld(0, 0);
@@ -256,6 +260,22 @@ export class Renderer {
     ctx.fill();
     ctx.stroke();
     ctx.restore();
+  }
+
+  /** Quadro da animação de enchimento sobre cada buraco que está enchendo (linha pela direção da água). */
+  private drawWaterFlows(cam: Camera): void {
+    const art = getWaterArt();
+    if (!art) return;
+    const fw = art.flow.width / 4;
+    const fh = art.flow.height / 4;
+    const row = { west: 0, east: 1, south: 2, north: 3 } as const;
+    for (const f of this.world.waterFlows()) {
+      const frame = Math.min(3, Math.floor(f.t * 4));
+      const sx = Math.round(cam.worldToScreenX(f.x * TILE));
+      const sy = Math.round(cam.worldToScreenY(f.y * TILE));
+      const s = Math.round(TILE * cam.zoom);
+      this.ctx.drawImage(art.flow, frame * fw, row[f.from] * fh, fw, fh, sx, sy, s, s);
+    }
   }
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {

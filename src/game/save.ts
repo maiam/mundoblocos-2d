@@ -112,6 +112,7 @@ export function migrate(raw: unknown): SaveData | null {
  */
 export function applySave(d: SaveData, s: GameState, rand: () => number = Math.random): { time: number; selected: number | null } {
   for (const c of d.chunks) s.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
+  s.world.settleWater(); // buracos vizinhos de água voltam a encher
   const p = s.player;
   p.x = d.player.x;
   p.y = d.player.y;

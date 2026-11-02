@@ -79,7 +79,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único, cada mundo) | principal ~2,97 MB, Santuário ~0,7 MB (arte por mundo, ADR 0010) | meta < 3 MB; aviso do build acima de 3.000 kB de JS |
+| Artefato (HTML único, cada mundo) | principal ~3,01 MB (**acima da meta**), Santuário ~0,7 MB (arte por mundo, ADR 0010) | meta < 3 MB; aviso do build acima de 3.000 kB de JS |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

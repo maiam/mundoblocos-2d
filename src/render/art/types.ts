@@ -25,6 +25,8 @@ export interface ArtPack {
   /** Trigo (16 estágios) e ícones de itens/ferramentas. */
   wheatCrop?: string;
   itemIcons: Partial<Record<ItemId, string>>;
+  /** Água (`extract-water.py`): topo do bloco (chão de água) e quadros de enchimento (4 direções × 4). */
+  water?: { top: string; flow: string };
   /** Ícones de interface (bolsa do inventário). */
   uiIcons?: { bag: string };
   toolIcons: Partial<Record<ToolId, string>>;

@@ -180,7 +180,7 @@ describe('World', () => {
     expect(w.canBreak(wx, wy)).toBe(false);
   });
 
-  it('não coloca sobre água nem itens não colocáveis', () => {
+  it('sobre água só Terra/Pedra/Tora (substituem); nada de itens não colocáveis', () => {
     const w = new World(42);
     let wx = 0, wy = 0, found = false;
     for (let i = 0; i < 4000 && !found; i++) {
@@ -188,8 +188,8 @@ describe('World', () => {
       found = blockDef(w.getGround(wx, wy)).liquid;
     }
     expect(found).toBe(true);
-    expect(w.placeBlock(wx, wy, Block.STONE)).toBe(false);
     expect(w.isWalkable(wx, wy)).toBe(false);
+    expect(w.placeBlock(wx, wy, Block.SAND)).toBe(false); // areia não substitui água (ver water.test.ts)
     const [sx, sy] = w.findSpawn();
     expect(w.placeBlock(sx, sy, Block.OAK_TREE)).toBe(false);
   });
