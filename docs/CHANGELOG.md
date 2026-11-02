@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.1 — 2026-11-02
+- Santuário: arte provisória dos 18 blocos celestiais substituída pela prancha 3/4 fornecida
+  (`extract-blocks.py --celestial` → `celestial-atlas.webp` + ícones refeitos do cubo inteiro).
+- Chão: blocos com desenho central não giram; nuvens sem giro/espelho e com contraste suavizado.
+- `blockArt.ts` carrega os dois atlas; `celestialArt.ts` deixa de ter pintura procedural.
+
 ## 0.13.0 — 2026-11-02
 - **Santuário Celestial da Deusa da Vida**: novo mundo com 10 chunks (5×2), chão todo de Nuvem Sólida, Deusa da Vida
   como única personagem e 18 blocos celestiais como únicos blocos de construção. Sem ferramentas, cultivo ou ovelhas.

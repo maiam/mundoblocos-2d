@@ -42,9 +42,9 @@ $P assets-src/goddess-sheet.png        src/assets/goddess.png     --alpha --fram
 ```
 `--alpha`: folha já transparente (usa o alfa); `--grid-offset-y`: sobe a grade quando o desenho invade a linha de cima.
 
-**Ícones do Santuário** (prancha transparente 6×3):
-`python3 scripts/slice-icons.py assets-src/celestial-blocks-iso.png 6 3 icon-celestial <18 nomes>` (lista em
-`render/celestialArt.ts`, mesma ordem de `CELESTIAL_BLOCKS`).
+**Blocos do Santuário** (prancha 3/4 transparente 6×3): `python3 scripts/extract-blocks.py --celestial` →
+`celestial-atlas.png` + `icon-celestial-*.png` (ordem = `CELESTIAL_BLOCKS`). `slice-icons.py` recorta ícones de
+qualquer prancha em grade, se precisar.
 
 **Ícones** (`--cols 1 --rows 1 --frame-h 64`):
 - Trigo (`wheat-icons-sheet.png`, `--sat 50 --min 190`): semente `45,210,310,402` · trigo `645,555,905,835`.

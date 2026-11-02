@@ -3,9 +3,8 @@
 Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 
 ## Agora
-0. **Santuário:** receber a prancha 3/4 dos 18 blocos e trocar a arte provisória (gerar atlas como em
-   `extract-blocks.py`); hospedar o build em `santuario.<domínio>` para o subdomínio real; definir se a Deusa
-   terá ações/ferramentas próprias.
+0. **Santuário:** hospedar o build em `santuario.<domínio>` para o subdomínio real; definir se a Deusa terá
+   ações/ferramentas próprias; (arte) uma variação de nuvem feita para chão contínuo eliminaria a repetição.
 1. **Avaliar o botão de ação no celular** (teste em andamento): 2 s ainda confortável? Mão vazia + toque
    poderia colher trigo maduro ou fazer carinho na ovelha; alvo poderia considerar a diagonal do joystick.
 2. **Ações das ferramentas** sobre os materiais:

@@ -12,6 +12,8 @@ A geometria vem de um gabarito medido no cubo de terra e é ancorada no centro d
 base de cada cubo (as folhas do cubo de grama passam do contorno e enganariam a medição).
 
 Uso: python3 scripts/extract-blocks.py [--iso | --sheet34 PRANCHA] [--out ATLAS]   (requer Pillow e numpy)
+  Santuário (prancha 3/4 com fundo transparente, grade 6×3):
+  python3 scripts/extract-blocks.py --celestial   → src/assets/celestial-atlas.png + icon-celestial-*.png
   --sheet34: prancha já em 3/4 (topo + frente, sem lateral). Topo e frente são recortados direto
   (sem perspectiva); o topo, desenhado achatado, é esticado para a célula quadrada do jogo.
 """
@@ -24,11 +26,24 @@ from PIL import Image
 _ap = argparse.ArgumentParser()
 _ap.add_argument('--sheet34', default='assets-src/blocks-sheet-34.png')
 _ap.add_argument('--iso', action='store_true', help='usar a prancha isométrica antiga')
+_ap.add_argument('--celestial', action='store_true', help='prancha 3/4 transparente do Santuário (6×3)')
 _ap.add_argument('--out', default='src/assets/blocks-atlas.png')
 _ap.add_argument('--icons', action='store_true', default=True)
 ARGS = _ap.parse_args()
 if ARGS.iso:
     ARGS.sheet34 = None
+
+CELESTIAL_NAMES = [
+    'cloud-solid', 'cloud-ethereal', 'marble-celestial', 'marble-ornate', 'stone-celestial', 'stone-golden',
+    'grass-celestial', 'grass-flowery', 'moss-luminous', 'earth-sacred', 'earth-floral', 'earth-cultivated',
+    'water-sacred', 'water-crystal', 'crystal-life', 'light-block', 'wood-celestial', 'foliage-golden',
+]
+# Desenhos com direção/centro (molduras, sulcos, anéis, emblemas): no chão não giram nem misturam.
+CELESTIAL_ORIENTED = {'marble-ornate', 'stone-golden', 'earth-cultivated', 'water-crystal', 'crystal-life',
+                      'light-block', 'wood-celestial'}
+CELESTIAL_TOP_RATIO = 0.46
+# Chão que cobre áreas enormes (nuvens): contraste reduzido para a repetição não formar padrão.
+CELESTIAL_SOFT_GROUND = {'cloud-solid', 'cloud-ethereal'}  # topo ≈ 46% da altura do cubo (medido na prancha)
 SRC = ARGS.sheet34 or 'assets-src/blocks-sheet.png'
 NAMES = ['dirt', 'grass', 'tilled', 'path', 'sand', 'stone', 'oak-log', 'oak-planks']
 TOP = 64           # lado do topo (TILE × TEX_RES)
@@ -133,7 +148,7 @@ for i, name in enumerate(NAMES):
     icon = Image.fromarray(rgba[yy.min():yy.max() + 1, xx.min():xx.max() + 1], 'RGBA')
     k = 64 / max(icon.size)
     icon = icon.convert('RGBa').resize((round(icon.width * k), round(icon.height * k)), Image.LANCZOS).convert('RGBA')
-    if ARGS.out == 'src/assets/blocks-atlas.png':
+    if ARGS.out == 'src/assets/blocks-atlas.png' and not ARGS.celestial:
         icon.save(f'src/assets/icon-block-{name}.png', optimize=True)
 
 def seamless(tile):
@@ -154,5 +169,80 @@ for i in range(len(NAMES)):
     atlas.paste(fronts[i], (i * TOP, TOP))
     g = grounds[i] if NAMES[i] in ORIENTED else seamless(grounds[i])
     atlas.paste(g, (i * TOP, TOP + FRONT_H))
-atlas.save(ARGS.out, optimize=True)
-print(ARGS.out, atlas.size)
+if not ARGS.celestial:
+    atlas.save(ARGS.out, optimize=True)
+    print(ARGS.out, atlas.size)
+
+
+def soften(tile, strength=0.55):
+    """Aproxima o tile da sua média (borrada) — mantém a textura, tira o padrão marcado."""
+    from PIL import ImageFilter
+    blur = tile.filter(ImageFilter.GaussianBlur(3))
+    mean = Image.new('RGB', tile.size, tuple(int(v) for v in np.asarray(tile).reshape(-1, 3).mean(0)))
+    calm = Image.blend(blur, mean, 0.4)
+    return Image.blend(tile, calm, strength)
+
+
+def _longest_run(idx):
+    best, start, prev = (idx[0], idx[0]), idx[0], idx[0]
+    for v in list(idx[1:]) + [None]:
+        if v is None or v != prev + 1:
+            if prev - start > best[1] - best[0]:
+                best = (start, prev)
+            if v is not None:
+                start = v
+        if v is not None:
+            prev = v
+    return best
+
+
+def extract_celestial(src='assets-src/celestial-blocks-34.png', out='src/assets/celestial-atlas.png'):
+    """Prancha 3/4 transparente em grade 6×3: caixa do cubo pelo maior trecho opaco contínuo de cada célula
+    (ignora respingos e o vizinho que invade a célula); topo/frente cortados pela proporção medida."""
+    sheet = Image.open(src).convert('RGBA')
+    rgba = np.asarray(sheet).copy()
+    rgba[..., 3][rgba[..., 3] < 40] = 0
+    sheet = Image.fromarray(rgba, 'RGBA')
+    al = rgba[..., 3]
+    Hs, Ws = al.shape
+    rows = [(0, Hs // 3 + 28), (Hs // 3 + 28, 2 * Hs // 3 - 24), (2 * Hs // 3 - 24, Hs)]
+    tops_c, fronts_c, grounds_c = [], [], []
+    for i, name in enumerate(CELESTIAL_NAMES):
+        r, c = divmod(i, 6)
+        y0, y1 = rows[r]
+        x0, x1 = max(0, int(c * Ws / 6) - 30), min(Ws, int((c + 1) * Ws / 6) + 30)
+        m = al[y0:y1, x0:x1] > 200
+        cx0, cx1 = _longest_run(np.nonzero(m.sum(0) > m.shape[0] * 0.35)[0])
+        cy0, cy1 = _longest_run(np.nonzero(m.sum(1) > m.shape[1] * 0.2)[0])
+        bx0, bx1, by0, by1 = cx0 + x0, cx1 + x0, cy0 + y0, cy1 + y0
+        split = by0 + CELESTIAL_TOP_RATIO * (by1 - by0)
+        k = (bx1 - bx0) * 0.035
+        quad = lambda xa, ya, xb, yb: [(xa, ya), (xa, yb), (xb, yb), (xb, ya)]
+        warp_s = lambda q, size: sheet.transform(size, Image.QUAD, [v for p in q for v in p], Image.BICUBIC)
+        tops_c.append(warp_s(quad(bx0 + k, by0 + k, bx1 - k, split), (TOP, TOP)))
+        g = (bx1 - bx0) * 0.1
+        grounds_c.append(warp_s(quad(bx0 + g, by0 + g * 0.6, bx1 - g, split - g * 0.4), (TOP, TOP)))
+        fronts_c.append(warp_s(quad(bx0 + k * 0.6, split, bx1 - k * 0.6, by1 - k * 0.6), (TOP, FRONT_H)))
+        # Ícone: o cubo inteiro (com o que transborda por cima, ex.: folhagem).
+        cell = sheet.crop((x0, y0, x1, y1))
+        ca = np.asarray(cell)[..., 3]
+        ys, xs = np.nonzero(ca > 0)
+        icon = cell.crop((max(cx0 - 6, xs.min()), ys.min(), min(cx1 + 7, xs.max() + 1), ys.max() + 1))
+        f = 64 / max(icon.size)
+        icon = icon.convert('RGBa').resize((round(icon.width * f), round(icon.height * f)), Image.LANCZOS).convert('RGBA')
+        icon.save(f'src/assets/icon-celestial-{name}.png', optimize=True)
+    atlas_c = Image.new('RGBA', (TOP * len(CELESTIAL_NAMES), TOP + FRONT_H + TOP))
+    for i, name in enumerate(CELESTIAL_NAMES):
+        atlas_c.paste(tops_c[i], (i * TOP, 0))
+        atlas_c.paste(fronts_c[i], (i * TOP, TOP))
+        gr = grounds_c[i].convert('RGB')
+        gr = gr if name in CELESTIAL_ORIENTED else seamless(gr)
+        if name in CELESTIAL_SOFT_GROUND:
+            gr = soften(gr)
+        atlas_c.paste(gr, (i * TOP, TOP + FRONT_H))
+    atlas_c.convert('RGB').save(out, optimize=True)
+    print(out, atlas_c.size, '+ 18 ícones')
+
+
+if ARGS.celestial:
+    extract_celestial()

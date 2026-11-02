@@ -3,6 +3,7 @@ import { Block, type BlockId, blockDef } from '../world/blocks';
 import type { Chunk } from '../world/chunk';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
+import { CELESTIAL_STYLE } from './celestialArt';
 import { rgba } from './color';
 import { type BlockTextures, TEX_RES } from './textures';
 
@@ -10,7 +11,17 @@ const CHUNK_PX = CHUNK_SIZE * TILE;
 /** Altura da barranca (face frontal do chão) vista sobre a água. */
 const BANK_H = 7;
 /** Materiais cuja arte tem direção (tábuas, sulcos, anéis): não giram no chão. */
-const ORIENTED = new Set<number>([Block.OAK_PLANKS, Block.TILLED, Block.OAK_LOG]);
+const ORIENTED = new Set<number>([
+  Block.OAK_PLANKS, Block.TILLED, Block.OAK_LOG,
+  ...Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.oriented).map(([id]) => Number(id)),
+]);
+/**
+ * Materiais em faixas levemente inclinadas (nuvens): girar ou espelhar forma losangos/"V".
+ * Ficam na orientação original; o topo contínuo do atlas emenda sem costura.
+ */
+const MIRROR_ONLY = new Set<number>(
+  Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.mirrorOnly).map(([id]) => Number(id)),
+);
 /** Altura da parede interna visível de um buraco. */
 const WALL_H = 13;
 /** Frames sem uso antes de liberar o cache de um chunk. */
@@ -148,8 +159,8 @@ export class ChunkRenderer {
             if (ORIENTED.has(g)) {
               ctx.drawImage(top, px, py, TILE, TILE);
             } else {
-              const turn = Math.floor(h * 4);
-              const flip = hash2(seed, x + 17, y - 5) < 0.5 ? -1 : 1;
+              const turn = MIRROR_ONLY.has(g) ? 0 : Math.floor(h * 4);
+              const flip = !MIRROR_ONLY.has(g) && hash2(seed, x + 17, y - 5) < 0.5 ? -1 : 1;
               ctx.save();
               ctx.translate(px + TILE / 2, py + TILE / 2);
               ctx.rotate((turn * Math.PI) / 2);

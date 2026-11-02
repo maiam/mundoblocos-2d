@@ -29,8 +29,13 @@ Nuvem Sólida, Nuvem Etérea, Mármore Celestial, Mármore Ornamentado, Pedra Ce
 Grama Florida, Musgo Luminoso*, Terra Sagrada, Terra Floral, Terra Cultivada, Água Sagrada, Água Cristalina,
 Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham à noite.)
 - Todos são cubos sólidos de construção (as águas são blocos decorativos, não líquido).
-- **Arte:** ícones = prancha fornecida (`celestial-blocks-iso.png`); faces no mundo = **provisórias**
-  (`render/celestialArt.ts`) até chegar a prancha em 3/4 (decisão do usuário: não converter a isométrica).
+- **Arte:** prancha 3/4 fornecida (`assets-src/celestial-blocks-34.png`, fundo transparente, 6×3) →
+  `python3 scripts/extract-blocks.py --celestial` → `src/assets/celestial-atlas.webp` (topo, frente, chão contínuo)
+  + `icon-celestial-*.webp` (cubo inteiro). Topo ≈ 46 % da altura do cubo (medido).
+- Chão: blocos com desenho central/moldura (mármore ornamentado, pedra dourada, terra cultivada, água cristalina,
+  cristal, bloco de luz, madeira) não giram; nuvens não giram nem espelham (formariam "V") e têm o chão com
+  contraste reduzido (`soften`), porque cobrem o mapa inteiro. Demais giram/espelham por célula.
+- A prancha isométrica (`celestial-blocks-iso.png`) fica só como referência.
 
 ## Deusa da Vida
 - Folha `assets-src/goddess-sheet.png` (4×4, já transparente, ordem canônica) → `process-sprite.py --alpha

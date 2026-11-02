@@ -1,12 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.13.0_
+_Atualizado em 2026-11-02 — v0.13.1_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
   Sólida, só a Deusa, só os 18 blocos celestiais para construir, sem ferramentas/cultivo/ovelhas. Escolhido por
-  subdomínio `santuario.`, `?mundo=santuario` ou artefato próprio. Faces dos blocos celestiais **provisórias**
-  (aguardando prancha 3/4); ícones já com a arte final. Ver `domains/worlds.md`.
+  subdomínio `santuario.`, `?mundo=santuario` ou artefato próprio. Blocos celestiais com a arte final
+  (prancha 3/4). Ver `domains/worlds.md`.
 
 ## Mundo principal
 - Gerado por seed (`?seed=`), em chunks 16×16 nos dois eixos, carregados sob demanda e descarregados quando
@@ -38,7 +38,7 @@ _Atualizado em 2026-11-02 — v0.13.0_
 ## Limitações conhecidas
 - Nada é salvo (edições, inventário, plantações, ovelhas).
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
-- Santuário: blocos celestiais com arte provisória; subdomínio real ainda não hospedado (só artefato e `?mundo=`).
+- Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
 - Sob a folha de trigo resta um filete claro da sombra original do desenho.
 - iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a

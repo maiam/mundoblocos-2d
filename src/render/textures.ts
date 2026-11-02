@@ -348,10 +348,10 @@ export function createBlockTextures(): BlockTextures {
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
-  // Santuário Celestial: arte provisória procedural (até chegar a prancha 3/4) + ícones da prancha.
+  // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
   for (const id of CELESTIAL_BLOCKS) {
-    const { top, front } = celestialFaces(id);
-    groundTop.set(id, top);
+    const { top, front, ground } = celestialFaces(id);
+    groundTop.set(id, ground);
     objects.set(id, composeCube(
       (ctx) => ctx.drawImage(top, 0, 0, T, T),
       (ctx) => ctx.drawImage(front, 0, T, T, F),

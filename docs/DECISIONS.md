@@ -19,7 +19,8 @@
 | Chunks quadrados 16×16 nos dois eixos | domains/world |
 | Santuário: 10 chunks em 5×2; só Deusa; só 18 blocos; sem ferramentas/cultivo/ovelhas | domains/worlds |
 | Subdomínio `santuario`; artefato próprio enquanto não há hospedagem | domains/worlds |
-| Blocos celestiais: aguardar prancha 3/4 (sem converter a isométrica); faces provisórias até lá | domains/worlds |
+| Blocos celestiais: arte da prancha 3/4 (a isométrica não foi convertida) | domains/worlds |
+| Chão de nuvem sem giro/espelho e com contraste suavizado (cobre o mapa todo) | domains/worlds |
 | Pilha máx. 2 cubos; personagem sobe 1 nível por passo; descer é livre | domains/player |
 | Chão quebrado vira buraco; só bloco novo ocupa e vira piso nivelado | domains/world |
 | Ovelha não sobe em cubos: blocos servem de cerca | domains/npc |
