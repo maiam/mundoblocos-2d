@@ -16,6 +16,11 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: 'landscape') => Prom
 
 export class ScreenMode {
   readonly isTouch = window.matchMedia('(pointer: coarse)').matches;
+  /**
+   * Tablet: tela de toque cujo lado menor tem ≥ 600 px (celular deitado fica em ~360–430 px; iPad/tablets ≥ 744).
+   * No tablet o toque na tela age como o clique do computador e o botão de ação some (o joystick fica).
+   */
+  readonly isTablet = isTabletScreen(this.isTouch, window.screen.width, window.screen.height);
   private readonly portraitQuery = window.matchMedia('(orientation: portrait)');
   private readonly overlay: HTMLElement;
   private readonly cleanup: (() => void)[] = [];
@@ -80,4 +85,9 @@ export class ScreenMode {
     for (const fn of this.cleanup) fn();
     this.overlay.remove();
   }
+}
+
+/** Lado menor da tela ≥ 600 px num aparelho de toque = tablet (função pura, testável). */
+export function isTabletScreen(touch: boolean, w: number, h: number): boolean {
+  return touch && Math.min(w, h) >= 600;
 }

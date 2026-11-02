@@ -395,3 +395,6 @@ html, body {
 /* Bolsa aberta (jogo pausado): joystick e botão de ação saem da frente do painel. */
 .hud.bag-open .joystick, .hud.bag-open .action-button,
 .hud.skills-open .joystick, .hud.skills-open .action-button { visibility: hidden; }
+
+/* Tablet: o toque na tela age como o clique; botão de ação some (joystick fica). */
+.hud.tablet .action-button { display: none; }

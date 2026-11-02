@@ -33,6 +33,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 |---|---|
 | Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
+| Tablet | joystick para andar; tocar no mundo usa o item, segurar quebra (como o mouse); sem botão de ação |
 | Botão de ação (celular) / Espaço (desktop) | toque: usa o selecionado no bloco à frente · segurar: quebra (2 s com a mão, 1 s com ferramenta) |
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |
 | Colocar bloco com o mouse (alcance 4,5 células) | clique curto (empilha até 3 cubos) |

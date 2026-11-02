@@ -58,6 +58,8 @@
 - No toque, tocar/segurar direto no mundo **não age** (só o botão); o mouse mantém clique/segurar no cursor.
 - Regras por célula (`canUseAt`, `canBreakAt`, `canFeed`, `applyUse`) ficam no `ActionController`
   (`game/actionController.ts`) e são as mesmas para cursor e botão; o `Game` só repassa a entrada.
+- **Tablet** (`ScreenMode.isTablet`: toque e lado menor da tela ≥ 600 px): o canvas aceita toque como clique (tocar =
+  usar, segurar = quebrar, mesmas regras do mouse) e o botão de ação some (`.hud.tablet`); o joystick fica.
 - Interação pelo mouse: **clique curto (≤ 0,3 s, ≤ 10 px) coloca**; **segurar sobre o mesmo alvo (`breakSeconds`: 2 s mão/item, 1 s ferramenta)
   quebra** (o progresso reinicia se o alvo mudar ou ficar inválido; ao quebrar, continua no que está por baixo).
   Feedback no canvas: rachaduras progressivas + anel. Alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o

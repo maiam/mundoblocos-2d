@@ -73,3 +73,14 @@ describe('Player', () => {
     expect(p.x).toBeLessThan(sx + 2);
   });
 });
+
+import { isTabletScreen } from './screenMode';
+describe('Tablet', () => {
+  it('toque com lado menor ≥ 600 px é tablet; celular deitado e computador não', () => {
+    expect(isTabletScreen(true, 1180, 820)).toBe(true); // iPad Air
+    expect(isTabletScreen(true, 1280, 800)).toBe(true); // tablet Android
+    expect(isTabletScreen(true, 844, 390)).toBe(false); // iPhone deitado
+    expect(isTabletScreen(true, 915, 412)).toBe(false); // Android deitado
+    expect(isTabletScreen(false, 1920, 1080)).toBe(false); // computador
+  });
+});

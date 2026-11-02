@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.32.0 — 2026-11-02
+- **Tablet**: detectado como tela de toque com lado menor ≥ 600 px (`ScreenMode.isTablet`). Mantém o joystick, tira o
+  botão de ação e o toque no mundo age como o clique do computador (tocar usa, segurar quebra). Celular não muda.
+  1 teste novo (101).
+
 ## 0.31.2 — 2026-11-02
 - **Tábua de Carvalho também substitui a água** (vira o chão da célula, como terra, pedra e tora).
 

@@ -126,6 +126,7 @@ export class Game {
       (r) => this.craft(r));
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
+    if (screenMode?.isTablet) this.hud.root.classList.add('tablet'); // sem botão de ação; toque age na tela
     this.menu = new Menu(this.hud.root, {
       seed,
       status: () => this.saveStatus(),
@@ -344,10 +345,11 @@ export class Game {
       this.camera.zoomBy(Math.exp(-e.deltaY * 0.0012));
     }, { passive: false });
 
-    // Toque/clique curto = colocar. Segurar 2 s sobre o mesmo alvo = quebrar.
-    // No toque, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela).
+    // Toque/clique curto = usar. Segurar sobre o mesmo alvo = quebrar.
+    // No celular, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela); no tablet, o toque
+    // na tela age como o clique do computador e não há botão de ação.
     this.listen(c, 'pointerdown', (e) => {
-      if (e.pointerType === 'touch') return;
+      if (e.pointerType === 'touch' && !this.screenMode?.isTablet) return;
       if (!this.actions.pointerDown(e.pointerId, e.offsetX, e.offsetY)) return;
       try { c.setPointerCapture(e.pointerId); } catch { /* ponteiro já liberado */ }
     });

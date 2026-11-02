@@ -55,7 +55,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - Remoção de fundo: ajuste `--sat/--min` quando a sombra do desenho for escura/saturada; confira sobre fundo
   colorido antes de usar.
 - `Entities.update`: ordem **concluir namoro → parear → iniciar**, senão o namoro reinicia em loop.
-- No toque, o canvas ignora `pointerType === 'touch'` (ação só pelo botão); testes de toque devem usar o botão.
+- No celular, o canvas ignora `pointerType === 'touch'` (ação só pelo botão); no **tablet** (`ScreenMode.isTablet`) o
+  toque age como clique e não há botão. Testes de toque: celular pelo botão; tablet por `touchscreen.tap`.
 - Mudar o gerador muda o mapa de todas as seeds: avise o usuário e rode os testes de determinismo/spawn.
 - Folhas que já vêm transparentes: `process-sprite.py --alpha`; se o desenho invade a linha de cima (auréolas,
   asas), `--grid-offset-y`. Confira a "altura do desenho" no relatório: igual à célula = recorte errado.
