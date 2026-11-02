@@ -38,6 +38,11 @@ interface SheetSpec {
    * `flipRight` espelha o desenho quando o ator olha para a direita.
    */
   cycle?: { flipRight: boolean };
+  /**
+   * Folha de morte (monstros): `cols × rows` quadros em sequência; `ratio` = altura da caixa da morte em relação à
+   * do quadro de caminhada (o 1º quadro tem a aranha na mesma escala). URL vem do pacote (`monsterDeaths`).
+   */
+  death?: { cols: number; rows: number; ratio: number };
 }
 
 const SPECS: Record<ActorKind, SheetSpec> = {
@@ -77,9 +82,9 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   lamb: { cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.
   // Aranhas da dungeon (scripts/extract-dungeon.py): 8 quadros de caminhada, arte de frente/esquerda.
-  'spider-small': { cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true } },
-  'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true } },
-  'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true } },
+  'spider-small': { cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.034 } },
+  'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.0 } },
+  'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true }, death: { cols: 8, rows: 2, ratio: 1.012 } },
   'sheep-love': { cols: 4, rows: 1, height: TILE * 1.75, shadow: [0.9, 0.16], walkFps: 0 },
 };
 
@@ -87,10 +92,15 @@ class SpriteSheet {
   private readonly img = new Image();
   private ready = false;
 
+  private readonly deathImg = new Image();
+  private deathReady = false;
+
   /** `url` ausente = o mundo não tem este ator (só a sombra seria desenhada; na prática ele não aparece). */
-  constructor(private readonly spec: SheetSpec, url: string | undefined) {
+  constructor(private readonly spec: SheetSpec, url: string | undefined, deathUrl?: string) {
     this.img.onload = () => (this.ready = true);
     if (url) this.img.src = url;
+    this.deathImg.onload = () => (this.deathReady = true);
+    if (deathUrl) this.deathImg.src = deathUrl;
   }
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
@@ -137,7 +147,7 @@ class SpriteSheet {
   /** Monstro: ciclo de 8 quadros (andando) ou respiração lenta (parado), espelho à direita, pisca ferido. */
   private drawCycle(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed: number): void {
     const { height, shadow, walkFps, cols, rows, cycle } = this.spec;
-    ctx.fillStyle = 'rgba(30, 20, 70, 0.3)';
+    ctx.fillStyle = `rgba(30, 20, 70, ${0.3 * (1 - (a.dying ?? 0))})`; // a sombra some junto na morte
     ctx.beginPath();
     ctx.ellipse(fx, fy, shadow[0] * TILE * zoom, shadow[1] * TILE * zoom, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -150,8 +160,24 @@ class SpriteSheet {
     const w = Math.round(h * (fw / fh));
     const dy = Math.round(fy - h + 3 * zoom);
     const visible = !a.hurt || Math.floor(elapsed * 16) % 2 === 0;
+    if (a.dying !== undefined && this.deathReady && this.spec.death) {
+      // Morte com a folha própria: quadros em sequência, mesma escala da caminhada, espelhada à direita.
+      const dd = this.spec.death;
+      const n = dd.cols * dd.rows;
+      const k = Math.min(n - 1, Math.floor(a.dying * n));
+      const dfw = this.deathImg.width / dd.cols;
+      const dfh = this.deathImg.height / dd.rows;
+      const dh = Math.round(height * dd.ratio * zoom);
+      const dw = Math.round(dh * (dfw / dfh));
+      ctx.save();
+      ctx.translate(Math.round(fx), 0);
+      if (cycle?.flipRight && a.facing === 'right') ctx.scale(-1, 1);
+      ctx.drawImage(this.deathImg, (k % dd.cols) * dfw, Math.floor(k / dd.cols) * dfh, dfw, dfh, -Math.round(dw / 2), Math.round(fy - dh + 3 * zoom), dw, dh);
+      ctx.restore();
+      return;
+    }
     if (a.dying !== undefined) {
-      // Morte (provisória até haver folha própria): encolhe, achata, desbota e solta faíscas roxas.
+      // Morte provisória (sem folha própria): encolhe, achata, desbota e solta faíscas roxas.
       const d = a.dying;
       ctx.save();
       ctx.globalAlpha = Math.max(0, 1 - d);
@@ -199,7 +225,7 @@ class SpriteSheet {
 
 export class ActorSprites {
   private readonly sheets = Object.fromEntries(
-    (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(SPECS[k], art().actors[k])]),
+    (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k])]),
   ) as Record<ActorKind, SpriteSheet>;
 
   get(kind: ActorKind): SpriteSheet {

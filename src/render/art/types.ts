@@ -1,4 +1,5 @@
 import type { ActorKind } from '../../game/entities';
+import type { MonsterKind } from '../../world/dungeon';
 import type { ItemId, ToolId } from '../../world/items';
 
 /**
@@ -19,6 +20,8 @@ export interface ArtPack {
   oakDoor?: string;
   /** Dungeon (`extract-dungeon.py`). */
   dungeon?: { ground: string; mountains: string; rocks: string; props: string; walls: string };
+  /** Folhas de morte dos monstros (`extract-dungeon.py`); sem elas, morte provisória procedural. */
+  monsterDeaths?: Partial<Record<MonsterKind, string>>;
   /** Trigo (16 estágios) e ícones de itens/ferramentas. */
   wheatCrop?: string;
   itemIcons: Partial<Record<ItemId, string>>;

@@ -38,8 +38,6 @@ export interface Actor {
   dying?: number;
 }
 
-/** Duração da animação de morte de um monstro (s). */
-export const DEATH_SECONDS = 0.5;
 /** Recalcula o mapa de distâncias da dungeon a cada … (s). */
 const FLOW_EVERY = 0.25;
 /** Monstro só renasce com a personagem a mais de … células do ponto de nascimento. */
@@ -133,7 +131,7 @@ export class Entities {
       }
     }
     for (let i = this.dying.length - 1; i >= 0; i--) {
-      this.dying[i].t += dt / DEATH_SECONDS;
+      this.dying[i].t += dt / MONSTERS[this.dying[i].kind].deathSeconds;
       if (this.dying[i].t >= 1) this.dying.splice(i, 1);
     }
     this.updateRespawns(dt);

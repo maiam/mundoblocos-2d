@@ -56,7 +56,7 @@ passagem e o chefe dentro; monstros em chão livre do interior; área protegida.
   e anda para a célula vizinha mais próxima dela; encostado (`reach`), pára e **morde** (`tryBite`).
 - **Mordida**: dano do tipo na heroína (`Player.hurt`), que fica invencível 0,9 s e recua.
 - Golpe (espada/machado, `Entities.strike`): −1 de vida, pisca 0,35 s, recua; barra de vida quando ferido.
-- **Derrotado**: sai do jogo, toca a morte (0,5 s, provisória: encolhe/desbota com faíscas), chama
+- **Derrotado**: sai do jogo, toca a morte (folha própria: 0,7 / 0,9 / 1,6 s por tipo, `MONSTERS.deathSeconds`), chama
   `Entities.onMonsterKilled` (o `Game` solta os espólios de `monsterDrops`) e agenda o **renascimento** no ponto de
   nascimento após o tempo do tipo — **todos renascem, inclusive a Rainha** — só com a heroína a > 10 células
   (senão tenta de novo a cada 5 s). Estado de execução: ao recarregar, renascem todos.

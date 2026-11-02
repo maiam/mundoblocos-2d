@@ -215,3 +215,86 @@ walk([cut(big, b, 'light', 0.5, shadow=120, holes=12) for b in grid(*big.size, 4
 boss = Image.open(SRC + 'spider-boss-sheet.png')
 walk([cut(boss, b, 'dark', 0.6, holes=40) for b in grid(*boss.size, 4, 2, x_edges=[620, 1000, 1390, 1760, 2150],
                                                           y_edges=[95, 312, 390, 612])], 144, 'spider-boss.png')
+
+
+# ---- Espólios e mortes (pranchas transparentes; quadros separados por colunas vazias) ----
+def runs(mask, min_w=15):
+    """Trechos contínuos de colunas com tinta."""
+    col = mask.any(0)
+    out, s = [], None
+    for x, v in enumerate(col):
+        if v and s is None:
+            s = x
+        if not v and s is not None:
+            if x - s > min_w:
+                out.append((s, x))
+            s = None
+    if s is not None:
+        out.append((s, len(col)))
+    return out
+
+
+def frames_by_gaps(img, rows):
+    """Caixas dos quadros: por linha, os trechos de colunas com alfa ≥ 100 (o vão entre quadros separa)."""
+    a = np.asarray(img.convert('RGBA'))[..., 3] >= 100
+    H = a.shape[0]
+    boxes = []
+    for r in range(rows):
+        y0, y1 = round(r * H / rows), round((r + 1) * H / rows)
+        for x0, x1 in runs(a[y0:y1]):
+            boxes.append((x0, y0, x1, y1))
+    return boxes
+
+
+def clean_alpha(im):
+    """Tira a franja colorida de baixa opacidade (rosa/azul) que as pranchas trazem nas bordas."""
+    a = np.asarray(im.convert('RGBA')).copy()
+    a[..., 3][a[..., 3] < 70] = 0
+    return Image.fromarray(a, 'RGBA')
+
+
+def icons(sheet_name, names):
+    sheet = clean_alpha(Image.open(SRC + sheet_name))
+    for (x0, y0, x1, y1), name in zip(frames_by_gaps(sheet, 1), names):
+        im = sheet.crop((x0, y0, x1, y1))
+        im = im.crop(bbox(im))
+        k = 60 / max(im.size)
+        im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+        out = Image.new('RGBA', (64, 64))
+        out.alpha_composite(im, ((64 - im.width) // 2, (64 - im.height) // 2))
+        out.save(OUT + f'icon-{name}.png', optimize=True)
+        print(OUT + f'icon-{name}.png')
+
+
+def death(sheet_name, rows, cols, walk_h, name):
+    """
+    Morte de um monstro: quadros na ordem da prancha, caixa comum (base e centro alinhados) para não tremer.
+    Escala: o 1º quadro (aranha em pé) fica com a mesma altura do quadro de caminhada (`walk_h` px na folha de
+    caminhada); a razão caixa/aranha vai para `SheetSpec.death.ratio` em render/character.ts.
+    """
+    sheet = clean_alpha(Image.open(SRC + sheet_name))
+    cells = []
+    for b in frames_by_gaps(sheet, rows):
+        im = sheet.crop(b)
+        cells.append((im, bbox(im)))
+    assert len(cells) == rows * cols, (name, len(cells))
+    w = max(bx[2] - bx[0] for _, bx in cells)
+    h = max(bx[3] - bx[1] for _, bx in cells)
+    first = cells[0][1][3] - cells[0][1][1]
+    ratio = h / first
+    fh = round(walk_h * ratio)
+    k = fh / h
+    fw = round(w * k)
+    out = Image.new('RGBA', (fw * cols, fh * rows))
+    for i, (im, bx) in enumerate(cells):
+        cx = (bx[0] + bx[2]) / 2
+        part = im.crop((round(cx - w / 2), bx[3] - h, round(cx - w / 2) + w, bx[3])).resize((fw, fh), Image.LANCZOS)
+        out.alpha_composite(part, ((i % cols) * fw, (i // cols) * fh))
+    out.save(OUT + name, optimize=True)
+    print(OUT + name, out.size, f'quadro {fw}x{fh}', f'ratio {ratio:.3f}')
+
+
+icons('spider-loot-icons-sheet.png', ['silk', 'fang', 'queen-heart'])
+death('spider-small-death-sheet.png', 2, 4, 72, 'spider-small-death.png')
+death('spider-big-death-sheet.png', 2, 4, 96, 'spider-big-death.png')
+death('spider-boss-death-sheet.png', 2, 8, 144, 'spider-boss-death.png')

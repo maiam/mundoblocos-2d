@@ -37,8 +37,9 @@ Apenas apresentação; lê `World`, nunca escreve.
   pedras 1,5, blocos decorados 1,15 (ovos/cogumelo/espinhos/raízes). **Parede do labirinto**: cubo da prancha
   esticado para T × (T + F), escurecido e desenhado 2 níveis (`textures.stackDraw`); liso na maioria, musgo/teia raros.
 - Monstros (`SheetSpec.cycle`): 8 quadros em sequência (4×2) sem linha por direção; espelhados ao olhar para a
-  direita; parados alternam 2 quadros; piscam ao levar golpe; barra de vida quando feridos; **morte provisória**
-  (`Actor.dying`: encolhe/achata/desbota + faíscas).
+  direita; parados alternam 2 quadros; piscam ao levar golpe; barra de vida quando feridos. **Morte**
+  (`Actor.dying`): folha própria (`SheetSpec.death`: quadros em sequência, `ratio` mantém a escala da caminhada;
+  URL em `ArtPack.monsterDeaths`); sem ela, reserva procedural (encolhe/desbota + faíscas). A sombra some junto.
 - Combate (`RenderOptions.hurtFlash/inDungeon/entrance`): vinheta vermelha de dano; penumbra radial dentro da
   dungeon; farol na entrada (`drawBeacon`) ou seta na borda da tela. Heroína invencível pisca (`Actor.hurt`).
 - HUD (`game/hud.ts`): corações SVG e contador de espólios no canto superior esquerdo (safe-area).

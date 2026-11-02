@@ -14,13 +14,15 @@ interface MonsterDef {
   biteEvery: number;
   /** Tempo até renascer depois de derrotado (s). */
   respawn: number;
+  /** Duração da animação de morte (s; acompanha os quadros da folha de morte). */
+  deathSeconds: number;
 }
 
 /** Atributos por tipo de monstro (fonte única). */
 export const MONSTERS: Record<MonsterKind, MonsterDef> = {
-  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, hp: 2, sight: 6, leash: 5, damage: 1, biteEvery: 1.0, respawn: 40 },
-  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, hp: 4, sight: 7, leash: 5, damage: 2, biteEvery: 1.2, respawn: 60 },
-  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, hp: 14, sight: 9, leash: 4, damage: 4, biteEvery: 1.6, respawn: 300 },
+  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, hp: 2, sight: 6, leash: 5, damage: 1, biteEvery: 1.0, respawn: 40, deathSeconds: 0.7 },
+  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, hp: 4, sight: 7, leash: 5, damage: 2, biteEvery: 1.2, respawn: 60, deathSeconds: 0.9 },
+  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, hp: 14, sight: 9, leash: 4, damage: 4, biteEvery: 1.6, respawn: 300, deathSeconds: 1.6 },
 };
 
 /** Tempo piscando depois de levar um golpe (s). */

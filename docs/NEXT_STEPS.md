@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-02 (v0.26.0 — Fases 0 e 1 concluídas)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-02 (v0.26.1 — Fases 0 e 1 concluídas)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -15,12 +15,12 @@ _Revisado em 2026-11-02 (v0.26.0 — Fases 0 e 1 concluídas)._ Fonte única do 
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só perto do spawn; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ estrutura | **combate incompleto** (aranhas não causam dano) |
-| Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte de morte provisória |
+| Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
 | Vida da heroína, dano, morte e renascimento | ✅ | 5 corações; arte dos corações provisória |
 | Salvar progresso | ❌ | nada persiste ao recarregar |
 | Sons, música, vibração, menu | ❌ | — |
 | Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | ✅ | principal 2,63 MB, Santuário 0,68 MB (arte por mundo) |
+| Peso dos artefatos | 🟡 | principal 2,87 MB (meta < 3 MB, alerta do build em ~3 MB), Santuário 0,69 MB |
 
 ## 2. Plano por fases
 
@@ -34,8 +34,8 @@ republicado, PR da branch de trabalho para `main` aberto. Detalhes no `CHANGELOG
 Vida da heroína (5 ♥, renasce no início com os itens), mordida das aranhas, busca de caminho no labirinto, morte com
 espólios (seda, presa, Coração da Rainha), renascimento de todas (Rainha em 5 min), farol + seta da entrada,
 penumbra. Pendências que ficaram desta fase:
-- **Arte final** (provisória hoje): ícones de Seda/Presa/Coração da Rainha, corações da HUD, folha de morte das
-  aranhas, (opcional) heroína levando dano e aranhas nas 4 direções.
+- **Arte**: ícones dos espólios e mortes das aranhas ✅ (v0.26.1). Faltam (opcionais): corações da HUD em arte
+  própria (hoje vetoriais), heroína levando dano e aranhas nas 4 direções.
 - **Minimapa** do labirinto explorado.
 - **Animais**: animação de morte e drops (lã/carne? — decisão pendente).
 
@@ -82,12 +82,13 @@ penumbra. Pendências que ficaram desta fase:
 ## 4. Dependências externas
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
 - **Hospedagem** do build estático para o subdomínio `santuario.`.
-- **Arte**: ícones dos espólios, corações, morte das aranhas (substituem a arte provisória), (opcional) aranhas por
-  direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
+- **Arte**: (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- Peso dos artefatos: resolvido por mundo (ADR 0010); o mundo principal (2,63 MB) volta a se aproximar do alerta
-  (2,8 MB) com ~2 folhas novas — próxima alavanca: carregar arte da dungeon só ao se aproximar dela.
+- **Peso do artefato principal: 2,87 MB, sem folga** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
+  folha grande estoura. Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
+  virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
+  separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.
 - `ActionController` (465 linhas) vai crescer com vida/dano: separar combate (golpe, dano) em módulo próprio na Fase 1.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.
 - Monstros sempre atualizados (~39 no labirinto): ok hoje; com várias dungeons, atualizar só os próximos.

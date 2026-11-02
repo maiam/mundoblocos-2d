@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.26.0_
+_Atualizado em 2026-11-02 — v0.26.1_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -53,8 +53,8 @@ _Atualizado em 2026-11-02 — v0.26.0_
 
 ## Limitações conhecidas
 - Nada é salvo (edições, inventário, plantações, ovelhas).
-- Animais atingidos pela espada só somem (sem animação de morte nem drops). Arte de combate **provisória** (ícones
-  dos espólios, corações, morte das aranhas); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
+- Animais atingidos pela espada só somem (sem animação de morte nem drops). Corações da HUD ainda vetoriais
+  (provisórios); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
@@ -66,6 +66,6 @@ _Atualizado em 2026-11-02 — v0.26.0_
 - 86 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,63 MB**, Santuário **0,68 MB** (alerta do
-  build em 2,8 MB, sem aviso). Ambos publicados com o motor atual.
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,87 MB** (meta < 3 MB, sem folga),
+  Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

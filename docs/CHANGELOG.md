@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.1 — 2026-11-02
+- **Arte final de combate** (pranchas fornecidas): ícones de Seda, Presa e Coração da Rainha; **folhas de morte** das
+  três aranhas (8, 8 e 16 quadros: reação → colapso → fumaça), na mesma escala da caminhada. Substituem a arte
+  provisória (a morte procedural fica só como reserva). Duração da morte por tipo (0,7 / 0,9 / 1,6 s); a sombra some
+  junto. `extract-dungeon.py` ganhou `icons()` e `death()` (quadros pelos vãos entre colunas, franja colorida removida).
+
 ## 0.26.0 — 2026-11-02 (Fase 1 do plano — combate jogável)
 - **Vida da heroína**: 5 corações, invencibilidade curta e recuo ao levar dano, regeneração fora de combate;
   derrotada, **renasce no início mantendo os itens**. Corações na HUD só quando importam.

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { monsterDrops } from '../world/items';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
-import { DEATH_SECONDS, Entities } from './entities';
+import { Entities } from './entities';
 import { MONSTERS } from './monster';
 import { HURT_INVULN_S, MAX_HP, Player, REGEN_DELAY_S, REGEN_EVERY_S } from './player';
 
@@ -116,7 +116,7 @@ describe('Combate — monstros', () => {
     expect(e.dying).toHaveLength(1);
     expect(e.actors.some((a) => a.kind === 'spider-boss' && a.dying !== undefined)).toBe(true);
     // Heroína perto do ponto: não renasce mesmo depois do tempo.
-    for (let t = 0; t < DEATH_SECONDS + 0.1; t += 0.1) e.update(0.1, w);
+    for (let t = 0; t < MONSTERS['spider-boss'].deathSeconds + 0.1; t += 0.1) e.update(0.1, w);
     expect(e.dying).toHaveLength(0);
     e.respawns[0].timer = 0;
     p.x = d.bossHome[0] + 0.5; p.y = d.bossHome[1] + 2.5; p.invuln = 999;
