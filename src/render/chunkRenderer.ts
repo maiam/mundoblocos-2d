@@ -207,7 +207,7 @@ export class ChunkRenderer {
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.6 + (tall - 1) * 6, py + TILE - 1, TILE * 0.55 * tall, 6 * tall, 0, 0, Math.PI * 2);
           ctx.fill();
-        } else if (obj.shape === 'rock') {
+        } else if (obj.shape === 'rock' && obj.id !== Block.TENT_PART) {
           ctx.fillStyle = 'rgba(30, 20, 70, 0.28)';
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.55, py + TILE - 3, TILE * 0.62, 7, 0, 0, Math.PI * 2);

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.31.1 — 2026-11-02
+- **Tenda ocupa 2×2 blocos**: a célula escolhida é o canto inferior esquerdo; precisa das 4 livres em chão firme;
+  as outras 3 bloqueiam (`TENT_PART`, sem arte); quebrar qualquer parte derruba a tenda inteira e devolve 1. Sprite
+  com ~2 células de largura; renascer em volta da tenda.
+
 ## 0.31.0 — 2026-11-02 (Fase 3 — receitas)
 - **Grade de 12**: 9 itens (1–9) · separador duplo · **Personagem** (ícone, ação em breve) · **Habilidades** (K) ·
   **Bolsa** (B/I). A bolsa passa a guardar **27 itens** (9 na mão + 18).

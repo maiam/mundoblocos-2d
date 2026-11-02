@@ -441,17 +441,18 @@ export function createBlockTextures(): BlockTextures {
   const variants = new Map<BlockId, Sprite[]>();
   const stackDraw = new Map<BlockId, number>();
   if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
-  // Tenda: sprite com a largura da célula (um pouco maior), base na borda de baixo; ícone do pacote.
+  // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
   const tentImg = getTentSprite();
   if (tentImg) {
-    const w = T * 1.25;
+    // 2×2: sprite com 2 células de largura sobre o canto inferior esquerdo (as partes não têm arte).
+    const w = T * 2.1;
     const h = w * (tentImg.height / tentImg.width);
     const c = document.createElement('canvas');
     c.width = tentImg.width;
     c.height = tentImg.height;
     c.getContext('2d')!.drawImage(tentImg, 0, 0);
     const oy = T - h + 2;
-    objects.set(Block.TENT, { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } });
+    objects.set(Block.TENT, { canvas: c, ox: (2 * T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: 2 * T, h: T - oy } });
     icons.set(Block.TENT, pack.tent?.icon ?? '');
   }
   const doorFrames = getOakDoorSheet() ? doorSprites() : [];

@@ -88,17 +88,25 @@ describe('Porta de Carvalho', () => {
 });
 
 describe('Tenda', () => {
-  it('colocada vira o ponto de renascer (ao lado dela); quebrada, volta o início', () => {
+  it('ocupa 2×2: precisa das 4 células livres; bloqueia as 4; qualquer parte derruba a tenda inteira', () => {
     const w = new World(7);
     const [sx, sy] = w.findSpawn();
-    const [x, y] = [sx + 3, sy];
-    while (w.topBlock(x, y)) w.breakBlock(x, y);
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) while (w.topBlock(x + dx, y + dy)) w.breakBlock(x + dx, y + dy);
+    const [x, y] = [sx + 3, sy + 1];
+    for (let dy = -2; dy <= 1; dy++) for (let dx = -1; dx <= 2; dx++) while (w.topBlock(x + dx, y + dy)) w.breakBlock(x + dx, y + dy);
+    w.placeBlock(x + 1, y - 1, Block.STONE); // ocupa uma das 4
+    expect(w.canPlace(x, y, Block.TENT)).toBe(false);
+    w.breakBlock(x + 1, y - 1);
     expect(w.placeBlock(x, y, Block.TENT)).toBe(true);
-    expect(w.standHeight(x, y)).toBeNull(); // bloqueia
+    expect(w.getObject(x, y)).toBe(Block.TENT);
+    for (const [cx, cy] of [[x + 1, y], [x, y - 1], [x + 1, y - 1]]) {
+      expect(w.getObject(cx, cy)).toBe(Block.TENT_PART);
+      expect(w.standHeight(cx, cy)).toBeNull();
+      expect(w.breakTargetId(cx, cy)).toBe(Block.TENT);
+    }
     const [rx, ry] = w.respawnPoint();
-    expect(Math.abs(rx - x) + Math.abs(ry - y)).toBeLessThanOrEqual(2);
-    expect(w.breakBlock(x, y)).toBe(Block.TENT);
+    expect(Math.abs(rx - x) + Math.abs(ry - y)).toBeLessThanOrEqual(3);
+    expect(w.breakBlock(x + 1, y - 1)).toBe(Block.TENT); // parte de trás derruba tudo
+    for (const [cx, cy] of [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]]) expect(w.getObject(cx, cy)).toBe(Block.AIR);
     expect(w.respawnPoint()).toEqual([sx, sy]);
   });
 });

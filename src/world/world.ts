@@ -18,6 +18,11 @@ const TILLABLE = new Set<number>([Block.DIRT, Block.GRASS]);
 /** Chãos que a pá amassa em Caminho de Terra. */
 const FLATTENABLE = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED]);
 /** Blocos que podem substituir a água (viram o chão da célula): todo tipo de terra, Pedra e Tora. */
+/** Células da tenda 2×2 com canto inferior esquerdo em (x, y): o próprio canto primeiro. */
+export function tentCells(x: number, y: number): Array<[number, number]> {
+  return [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]];
+}
+
 export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG]);
 /** Tempo para a água encher um buraco vizinho (s). */
 export const FLOW_SECONDS = 0.6;
@@ -263,7 +268,10 @@ export class World {
   /** Bloco que um golpe de quebra atingiria (topo do objeto ou o chão), ou null. */
   breakTargetId(x: number, y: number): BlockId | null {
     const t = this.breakTarget(x, y);
-    if (t === 'object') return this.topBlock(x, y)!.id;
+    if (t === 'object') {
+      const id = this.topBlock(x, y)!.id;
+      return id === Block.TENT_PART ? Block.TENT : id; // parte da tenda = a tenda
+    }
     if (t === 'ground') return this.getGround(x, y);
     return null;
   }
@@ -273,6 +281,13 @@ export class World {
     const target = this.breakTarget(x, y);
     if (target === 'object') {
       const top = this.topBlock(x, y)!;
+      if (top.id === Block.TENT || top.id === Block.TENT_PART) {
+        // Tenda 2×2: qualquer parte derruba a tenda inteira.
+        const a = this.tentAnchor(x, y);
+        if (a) for (const [cx, cy] of tentCells(a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
+        else this.setLevel(x, y, 0, Block.AIR);
+        return Block.TENT;
+      }
       this.setLevel(x, y, top.level, Block.AIR);
       return top.id;
     }
@@ -303,6 +318,8 @@ export class World {
     const base = blockDef(this.getObject(x, y));
     if (base.id === Block.AIR || base.shape === 'decoration') {
       if (def.shape === 'door' && !this.hasDoorFrame(x, y)) return null;
+      // Tenda ocupa 2×2 (esta célula = canto inferior esquerdo): as 4 precisam estar livres em chão firme.
+      if (id === Block.TENT && !tentCells(x, y).every(([cx, cy]) => this.isFootprintFree(cx, cy))) return null;
       return 0;
     }
     if (def.shape === 'cube' && base.shape === 'cube') {
@@ -405,8 +422,26 @@ export class World {
     const level = this.placementLevel(x, y, id);
     if (level === null) return false;
     this.setLevel(x, y, level, id);
-    if (id === Block.TENT) this.tent = [x, y];
+    if (id === Block.TENT) {
+      for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
+      this.tent = [x, y];
+    }
     return true;
+  }
+
+  /** Célula livre (vazia ou com enfeite) em chão firme, fora da dungeon — para objetos de várias células. */
+  private isFootprintFree(x: number, y: number): boolean {
+    if (this.isProtected(x, y) || !this.isGroundStandable(x, y) || this.getGround(x, y) === Block.HOLE) return false;
+    const b = blockDef(this.getObject(x, y));
+    return b.id === Block.AIR || b.shape === 'decoration';
+  }
+
+  /** Canto (TENT) da tenda que contém a célula, ou null. */
+  tentAnchor(x: number, y: number): [number, number] | null {
+    for (const [dx, dy] of [[0, 0], [-1, 0], [0, 1], [-1, 1]]) {
+      if (this.getObject(x + dx, y + dy) === Block.TENT) return [x + dx, y + dy];
+    }
+    return null;
   }
 
   /** Última tenda colocada (ponto de renascer), se ainda estiver de pé. */
@@ -416,7 +451,8 @@ export class World {
   respawnPoint(): [number, number] {
     const t = this.tent;
     if (t && this.getObject(t[0], t[1]) === Block.TENT) {
-      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1], [1, 1], [-1, 1]]) {
+      // Em volta da tenda 2×2 (frente primeiro).
+      for (const [dx, dy] of [[0, 1], [1, 1], [-1, 0], [2, 0], [-1, 1], [2, 1], [0, -2], [1, -2]]) {
         if (this.isWalkable(t[0] + dx, t[1] + dy)) return [t[0] + dx, t[1] + dy];
       }
     }
