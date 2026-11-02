@@ -22,13 +22,17 @@
   → porta) e colocar gasta 1. No Santuário seguem infinitos. `breakDrops` = colheita (`toolDrops`) + material.
 
 ## Inventário e grade (`game/inventory.ts`, `game/hotbar.ts`, `game/bag.ts`)
-- **Inventário**: pilhas por `StackId`, sem limite. Começo: 5 ferramentas, 5 sementes, 2 trigos, 1 Porta de Carvalho.
+- **Inventário**: pilhas por `StackId`, sem limite de quantidade. Começo: 5 ferramentas, 5 sementes, 2 trigos, 1 Porta de Carvalho.
 - **Grade**: 8 espaços + **bolsa** no 9º (tecla 9, I ou B). Começa com ferramentas 1–5, semente 6, trigo 7 e o 8º
   livre (a porta começa na bolsa). Coletado vai para a grade se já estiver nela ou houver espaço livre; senão, bolsa.
   Pilha que acaba libera o espaço (`Hotbar.prune`).
-- **Bolsa**: painel com tudo que a heroína carrega (número do espaço quando está na grade). Toque num item e depois
-  num espaço da grade → coloca lá (o que estava volta para a bolsa; se o item já estava em outro espaço, trocam).
-  Sem item escolhido, tocar num espaço da grade guarda-o na bolsa. Com a bolsa aberta o jogo pausa.
+- **Bolsa**: **18 espaços** (2 fileiras de 9) que abrem dentro do mesmo cartão da grade, acima dela — com a mão, 3
+  fileiras de 9 do mesmo tamanho; só o título "Bolsa". Mostra o que a heroína carrega e não está na grade. Toque num
+  item e depois num espaço da grade → coloca lá (o que estava volta para a bolsa; se já estava em outro espaço,
+  trocam). Sem item escolhido, tocar num espaço da grade guarda-o na bolsa (se houver lugar). Pausa o jogo; fecha
+  pelo ícone da bolsa, tecla 9/I/B ou Esc.
+- **Capacidade** (`canCarry`): pilha que ela já tem sempre soma (sem limite); tipo novo entra num espaço vazio da mão
+  ou na bolsa, se houver lugar — senão fica no chão até liberar espaço. No máximo 26 tipos (8 + 18).
 - **Morte**: perde **todos os materiais** (`Inventory.dropMaterials`); ferramentas, sementes, trigo e espólios ficam.
 - Receitas: próximo passo (Fase 3 seguinte).
 - `Semente de Trigo` (planta `WHEAT_0`) e `Trigo` (alimenta ovelhas).

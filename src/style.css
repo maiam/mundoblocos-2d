@@ -357,37 +357,19 @@ html, body {
 /* Grade com coleta: espaço vazio e bolsa (9º). */
 .slot.vacant { background: rgba(255, 255, 255, 0.03); border-style: dashed; }
 .slot img[hidden] { display: none; }
-.slot.bag { margin-left: 4px; border-color: rgba(255, 212, 107, 0.45); }
-.hud.bag-open .slot:not(.bag) { border-color: rgba(195, 140, 255, 0.85); }
+.slot.bag { border-color: rgba(255, 212, 107, 0.45); }
+.hud.bag-open .hotbar > .hotbar-row .slot:not(.bag) { border-color: rgba(195, 140, 255, 0.85); }
 
-/* Painel da bolsa (acima da grade; cabe com ~360 px de altura). */
-.bag-panel {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(max(16px, env(safe-area-inset-bottom, 0px) + 10px) + 76px);
-  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 140px); overflow: auto;
-  padding: 12px 14px; border-radius: 16px; border: 1.5px solid var(--panel-border);
-  background: rgba(28, 22, 64, 0.95); box-shadow: 0 10px 40px rgba(10, 6, 30, 0.6); pointer-events: auto;
-}
-.bag-panel[hidden] { display: none; }
-.bag-panel header { display: flex; align-items: center; justify-content: space-between; }
-.bag-panel h2 { margin: 0; font-size: 17px; font-weight: 800; color: var(--accent); }
-.bag-close { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--panel-border); background: transparent; color: var(--text); font-size: 16px; cursor: pointer; }
-.bag-hint { margin: 6px 0 10px; font-size: 12px; opacity: 0.8; }
-.bag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
-.bag-item {
-  position: relative; aspect-ratio: 1; padding: 6px; border-radius: 10px; cursor: pointer;
-  border: 2px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.06);
-}
-.bag-item img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-.bag-item b { position: absolute; right: 3px; bottom: 1px; font-size: 12px; font-weight: 800; color: #fff7ea; text-shadow: 0 1px 0 #241b5c, 0 0 3px #241b5c; font-variant-numeric: tabular-nums; }
-.bag-item i { position: absolute; left: 4px; top: 2px; font-size: 10px; font-style: normal; font-weight: 800; color: var(--accent); }
-.bag-item.picked { border-color: var(--accent); background: rgba(255, 212, 107, 0.22); box-shadow: 0 0 12px rgba(255, 212, 107, 0.6); }
-.bag-item.in-grid { opacity: 0.75; }
-.bag-empty { margin: 0; font-size: 13px; opacity: 0.7; }
+/* Bolsa: 2 fileiras de 9 dentro do mesmo cartão da grade (mesma largura e mesmos espaços da mão). */
+.hotbar { flex-direction: column; }
+.hotbar-row { display: flex; gap: inherit; }
+.bag-section { display: flex; flex-direction: column; gap: inherit; padding-bottom: 4px; margin-bottom: 2px; border-bottom: 1px solid var(--panel-border); }
+.bag-section[hidden] { display: none; }
+.bag-section h2 { margin: 0 0 2px 4px; font-size: 15px; font-weight: 800; color: var(--accent); }
+.slot.picked { border-color: var(--accent); background: rgba(255, 212, 107, 0.22); box-shadow: 0 0 12px rgba(255, 212, 107, 0.6); }
 @media (max-height: 500px) and (orientation: landscape) {
-  .bag-panel { bottom: calc(max(8px, env(safe-area-inset-bottom, 0px)) + 52px); max-height: calc(100vh - 70px); padding: 8px 10px; }
-  .bag-hint { margin: 2px 0 6px; }
-  .bag-grid { grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); }
+  .bag-section h2 { font-size: 13px; margin-bottom: 0; }
 }
+
 /* Bolsa aberta (jogo pausado): joystick e botão de ação saem da frente do painel. */
 .hud.bag-open .joystick, .hud.bag-open .action-button { visibility: hidden; }

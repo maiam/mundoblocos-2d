@@ -28,6 +28,8 @@ export class Hud {
   readonly root: HTMLElement;
   private readonly slots: HTMLButtonElement[] = [];
   private readonly bagButton: HTMLButtonElement | null = null;
+  /** Seção da bolsa dentro do cartão da grade (2 fileiras acima da mão), preenchida pelo `BagPanel`. */
+  readonly bagSection: HTMLElement;
   private selected = -1;
   private views: string[] = [];
   private readonly hearts: HTMLElement;
@@ -37,9 +39,16 @@ export class Hud {
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
-    const hotbar = document.createElement('nav');
-    hotbar.className = 'hotbar';
-    hotbar.setAttribute('aria-label', 'Grade');
+    // Um só cartão: bolsa (oculta até abrir) em cima e a fileira da mão embaixo — mesma largura e mesmos espaços.
+    const card = document.createElement('nav');
+    card.className = 'hotbar';
+    card.setAttribute('aria-label', 'Grade');
+    this.bagSection = document.createElement('div');
+    this.bagSection.className = 'bag-section';
+    card.appendChild(this.bagSection);
+    const hotbar = document.createElement('div');
+    hotbar.className = 'hotbar-row';
+    card.appendChild(hotbar);
     for (let i = 0; i < h.slots; i++) {
       const b = document.createElement('button');
       b.className = 'slot';
@@ -52,13 +61,13 @@ export class Hud {
       const bag = document.createElement('button');
       bag.className = 'slot bag';
       bag.title = 'Bolsa (9)';
-      bag.setAttribute('aria-label', 'Abrir a bolsa');
+      bag.setAttribute('aria-label', 'Abrir ou fechar a bolsa');
       bag.innerHTML = `<img alt="" src="${h.bag.icon}">`;
       bag.addEventListener('click', () => h.bag!.onOpen());
       hotbar.appendChild(bag);
       this.bagButton = bag;
     }
-    this.root.appendChild(hotbar);
+    this.root.appendChild(card);
     this.maxHp = h.maxHp ?? 0;
     const status = document.createElement('div');
     status.className = 'status';

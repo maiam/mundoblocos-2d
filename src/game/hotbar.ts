@@ -14,6 +14,30 @@ export type HotbarSlot =
 
 /** Espaços livres da grade em mundo com coleta (o 9º é a bolsa). */
 export const GRID_SLOTS = 8;
+/** Espaços da bolsa: 2 fileiras de 9 acima da grade (com a grade, 3 fileiras de 9 na tela). */
+export const BAG_SLOTS = 18;
+/** Tipos de item que a heroína carrega ao todo (mão + bolsa). */
+export const CARRY_LIMIT = GRID_SLOTS + BAG_SLOTS;
+
+/**
+ * Cabe coletar `id`? Pilha que ela já tem sempre soma; tipo novo entra num espaço vazio da mão (vai direto para lá)
+ * ou na bolsa, se ela tiver lugar. Assim a bolsa nunca passa dos 18 espaços.
+ */
+export function canCarry(inv: Inventory, grid: Hotbar, id: StackId): boolean {
+  if (inv.count(id) > 0) return true;
+  if (grid.hasFree) return true;
+  return bagStacks(inv, grid).length < BAG_SLOTS;
+}
+
+/** Pilhas que estão na bolsa (o que ela carrega e não está na grade), na ordem em que foram obtidas. */
+export function bagStacks(inv: Inventory, grid: Hotbar): StackId[] {
+  return inv.entries().map(([id]) => id).filter((id) => grid.indexOf(id) < 0);
+}
+
+/** A bolsa tem lugar para mais uma pilha (ex.: guardar um item da grade)? */
+export function bagHasRoom(inv: Inventory, grid: Hotbar): boolean {
+  return bagStacks(inv, grid).length < BAG_SLOTS;
+}
 
 export function slotStack(s: HotbarSlot): StackId {
   return s.kind === 'tool' ? toolStack(s.tool) : s.kind === 'block' ? blockStack(s.block) : s.item;
@@ -78,6 +102,11 @@ export class Hotbar {
 
   indexOf(id: StackId): number {
     return this.slots.indexOf(id);
+  }
+
+  /** Há espaço vazio na grade? */
+  get hasFree(): boolean {
+    return this.dynamic && this.slots.includes(null);
   }
 
   /** Coletou `id`: se não está na grade e há espaço livre, ocupa o primeiro. Devolve o índice ou -1 (bolsa). */

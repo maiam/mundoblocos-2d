@@ -29,14 +29,15 @@ export class Drops {
   }
 
   /** Atualiza e coleta; `onCollect` avisa o que entrou no inventário (a grade decide se ocupa um espaço). */
-  update(dt: number, collector: Walker, inventory: Inventory, onCollect?: (id: StackId) => void): void {
+  /** `canTake`: há lugar para este item (mão/bolsa)? Senão ele fica no chão até liberar espaço. */
+  update(dt: number, collector: Walker, inventory: Inventory, onCollect?: (id: StackId) => void, canTake: (id: StackId) => boolean = () => true): void {
     for (let i = this.list.length - 1; i >= 0; i--) {
       const d = this.list[i];
       d.age += dt;
       const dx = collector.x - d.x;
       const dy = collector.y - d.y;
       const dist = Math.hypot(dx, dy);
-      if (d.age > PICKUP_DELAY && dist < MAGNET) {
+      if (d.age > PICKUP_DELAY && dist < MAGNET && canTake(d.item)) {
         const speed = Math.min(dist, dt * 6 * (1 + (MAGNET - dist) * 2));
         d.x += (dx / (dist || 1)) * speed;
         d.y += (dy / (dist || 1)) * speed;

@@ -77,7 +77,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 |---|---|
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Receitas: quais e onde criar (bolsa? bancada?) | Fase 3 |
-| Limite de pilha/bolsa (hoje sem limite) | Fase 3 |
+| Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
 

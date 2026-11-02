@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.30.0 — 2026-11-02
+- **Novo visual da bolsa**: abre dentro do mesmo cartão da grade — 2 fileiras de 9 espaços acima da mão, do mesmo
+  tamanho e largura dos 9 da grade (3 fileiras de 9 no total). Só o título "Bolsa" (sem textos de ajuda nem ✕).
+- **Bolsa com 18 espaços**: o que não está na mão ocupa um espaço; item de tipo novo só é coletado se houver espaço
+  vazio na mão ou na bolsa (senão fica no chão); pilhas que ela já tem sempre somam. Guardar um item da mão na bolsa
+  exige lugar. `BAG_SLOTS`, `canCarry`, `bagStacks`, `bagHasRoom`. 1 teste novo (98).
+
 ## 0.29.1 — 2026-11-02
 - **Porta também entre blocos de Pedra**: batentes podem ser de madeira (Tora/Piso de Carvalho) ou Pedra, inclusive
   misturados.

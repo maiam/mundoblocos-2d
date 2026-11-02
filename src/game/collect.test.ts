@@ -3,7 +3,7 @@ import { Block } from '../world/blocks';
 import { blockDrops, blockStack, breakDrops, toolStack } from '../world/items';
 import { WORLD_PROFILES } from '../world/profiles';
 import { mulberry32 } from '../world/random';
-import { GRID_SLOTS, Hotbar, startingGrid } from './hotbar';
+import { BAG_SLOTS, bagHasRoom, bagStacks, CARRY_LIMIT, canCarry, GRID_SLOTS, Hotbar, startingGrid } from './hotbar';
 import { Inventory, STARTING_ITEMS } from './inventory';
 
 describe('Coleta de materiais (Fase 3)', () => {
@@ -73,4 +73,25 @@ describe('Coleta de materiais (Fase 3)', () => {
     grid.assign(0, null);
     expect(grid.stack(0)).toBe(blockStack(Block.CLOUD_SOLID));
   });
+
+  it('bolsa com 18 espaços (3 fileiras de 9 contando a mão): tipo novo só entra se houver lugar', () => {
+    expect(BAG_SLOTS).toBe(18);
+    expect(CARRY_LIMIT).toBe(26); // 8 na mão + 18 na bolsa
+    const inv = new Inventory();
+    const grid = new Hotbar(WORLD_PROFILES.principal);
+    expect(bagStacks(inv, grid)).toEqual([blockStack(Block.OAK_DOOR)]); // a porta começa na bolsa
+    // Com o 8º espaço da mão livre, tipo novo cabe (vai para a mão) mesmo com a bolsa cheia.
+    let id = 200;
+    while (bagStacks(inv, grid).length < BAG_SLOTS) inv.add(blockStack(id++ as never), 1);
+    expect(canCarry(inv, grid, blockStack(Block.STONE))).toBe(true);
+    inv.add(blockStack(Block.STONE));
+    grid.autoPlace(blockStack(Block.STONE));
+    // Mão e bolsa cheias: tipo novo não cabe (fica no chão); pilha que ela já tem sempre soma.
+    expect(inv.entries().length).toBe(CARRY_LIMIT);
+    expect(canCarry(inv, grid, blockStack(Block.SAND))).toBe(false);
+    expect(canCarry(inv, grid, 'wheat')).toBe(true);
+    expect(bagHasRoom(inv, grid)).toBe(false); // não dá para guardar um item da mão na bolsa
+    expect(bagStacks(inv, grid)).toHaveLength(BAG_SLOTS);
+  });
 });
+

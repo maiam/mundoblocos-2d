@@ -1,4 +1,5 @@
 import type { StackId } from '../world/items';
+import { BAG_SLOTS } from './hotbar';
 
 export interface BagEntry {
   id: StackId;
@@ -6,34 +7,39 @@ export interface BagEntry {
   name: string;
   /** null = ferramenta (sem quantidade). */
   count: number | null;
-  /** Já está na grade (espaço 1–8)? */
-  inGrid: number;
 }
 
+/** Espaços por fileira (igual à grade da mão: 8 + bolsa). */
+const PER_ROW = 9;
+
 /**
- * Painel da bolsa: tudo que a heroína carrega. Tocar num item o escolhe; depois, tocar num espaço da grade
- * coloca-o lá (o que estava volta para a bolsa). Com nada escolhido, tocar num espaço da grade guarda-o na bolsa.
- * Apresentação pura; a troca é feita pelo Game (`Hotbar.assign`).
+ * Bolsa: 2 fileiras de 9 espaços dentro do mesmo cartão da grade (acima dela), do mesmo tamanho dos espaços da mão,
+ * só com o título "Bolsa". Mostra o que a heroína carrega e não está na grade. Tocar num item o escolhe; depois,
+ * tocar num espaço da grade coloca-o lá (o Game faz a troca com `Hotbar.assign`).
  */
 export class BagPanel {
-  private readonly el: HTMLElement;
-  private readonly grid: HTMLElement;
-  private readonly hint: HTMLElement;
+  private readonly slots: HTMLButtonElement[] = [];
   private open = false;
+  private entries: BagEntry[] = [];
   picked: StackId | null = null;
 
-  constructor(root: HTMLElement, private readonly onClose: () => void) {
-    this.el = document.createElement('div');
-    this.el.className = 'bag-panel';
-    this.el.hidden = true;
-    this.el.setAttribute('role', 'dialog');
-    this.el.setAttribute('aria-label', 'Bolsa');
-    this.el.innerHTML = `<header><h2>Bolsa</h2><button class="bag-close" aria-label="Fechar a bolsa">✕</button></header>
-      <p class="bag-hint"></p><div class="bag-grid"></div>`;
-    this.grid = this.el.querySelector('.bag-grid')!;
-    this.hint = this.el.querySelector('.bag-hint')!;
-    this.el.querySelector('.bag-close')!.addEventListener('click', () => this.onClose());
-    root.appendChild(this.el);
+  constructor(private readonly section: HTMLElement) {
+    section.hidden = true;
+    section.innerHTML = '<h2>Bolsa</h2>';
+    for (let r = 0; r < BAG_SLOTS / PER_ROW; r++) {
+      const row = document.createElement('div');
+      row.className = 'hotbar-row';
+      for (let c = 0; c < PER_ROW; c++) {
+        const b = document.createElement('button');
+        b.className = 'slot vacant';
+        b.innerHTML = '<img alt="" hidden><span class="count" hidden></span>';
+        const i = this.slots.length;
+        b.addEventListener('click', () => this.pick(i));
+        row.appendChild(b);
+        this.slots.push(b);
+      }
+      section.appendChild(row);
+    }
   }
 
   get isOpen(): boolean {
@@ -42,33 +48,31 @@ export class BagPanel {
 
   setOpen(open: boolean): void {
     this.open = open;
-    this.el.hidden = !open;
+    this.section.hidden = !open;
     if (!open) this.picked = null;
   }
 
-  /** Redesenha a lista. */
+  private pick(i: number): void {
+    const e = this.entries[i];
+    this.picked = !e || this.picked === e.id ? null : e.id;
+    this.render(this.entries);
+  }
+
+  /** Redesenha os 18 espaços (vazios ficam tracejados). */
   render(entries: BagEntry[]): void {
-    this.hint.textContent = this.picked
-      ? 'Agora toque num espaço da grade para colocar o item lá.'
-      : 'Toque num item e depois num espaço da grade. Tocar num espaço da grade guarda o item na bolsa.';
-    this.grid.innerHTML = '';
-    if (!entries.length) {
-      this.grid.innerHTML = '<p class="bag-empty">A bolsa está vazia.</p>';
-      return;
-    }
-    for (const e of entries) {
-      const b = document.createElement('button');
-      b.className = 'bag-item';
-      b.classList.toggle('picked', e.id === this.picked);
-      b.classList.toggle('in-grid', e.inGrid >= 0);
-      b.title = e.name;
-      b.setAttribute('aria-label', `${e.name}${e.count !== null ? `: ${e.count}` : ''}${e.inGrid >= 0 ? ` (na grade, espaço ${e.inGrid + 1})` : ''}`);
-      b.innerHTML = `<img alt="" src="${e.icon}">${e.count !== null ? `<b>${e.count}</b>` : ''}${e.inGrid >= 0 ? `<i>${e.inGrid + 1}</i>` : ''}`;
-      b.addEventListener('click', () => {
-        this.picked = this.picked === e.id ? null : e.id;
-        this.render(entries);
-      });
-      this.grid.appendChild(b);
-    }
+    this.entries = entries.slice(0, BAG_SLOTS);
+    this.slots.forEach((b, i) => {
+      const e = this.entries[i];
+      const img = b.querySelector('img')!;
+      const badge = b.querySelector<HTMLElement>('.count')!;
+      b.classList.toggle('vacant', !e);
+      b.classList.toggle('picked', !!e && e.id === this.picked);
+      b.title = e ? e.name : 'Espaço vazio da bolsa';
+      b.setAttribute('aria-label', e ? `${e.name}${e.count !== null ? `: ${e.count}` : ''}` : 'Espaço vazio da bolsa');
+      img.hidden = !e;
+      if (e && img.getAttribute('src') !== e.icon) img.src = e.icon;
+      badge.hidden = !e || e.count === null;
+      badge.textContent = e && e.count !== null ? String(e.count) : '';
+    });
   }
 }

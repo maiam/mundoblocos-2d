@@ -51,7 +51,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Colher trigo | segurar a ação 2 s (itens caem e são coletados ao chegar perto) |
 | Quebrar bloco ou cavar o chão | segurar o clique / dedo sobre o alvo: 2 s com a mão/item, 1 s com ferramenta |
 | Escolher na grade | 1–8 ou tocar (começa com ferramentas 1–5, semente 6, trigo 7, 8º livre) |
-| Bolsa (inventário) | 9, I ou B, ou tocar na bolsa: tudo que você carrega; toque num item e num espaço da grade para trocar |
+| Bolsa (inventário) | 9, I ou B, ou tocar na bolsa: 18 espaços acima da grade; toque num item e num espaço da grade para trocar |
 | Água | não quebra; qualquer terra (Terra, Grama, Arada, Caminho), Pedra ou Tora a substituem; cavar ao lado da água faz o buraco encher sozinho |
 | Materiais | quebrar solta o bloco para coletar (árvore dá toras); colocar gasta; ao cair, perde os materiais |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |

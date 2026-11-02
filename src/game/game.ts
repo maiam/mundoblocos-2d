@@ -11,7 +11,7 @@ import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
 import { Drops } from './drops';
 import { Entities } from './entities';
-import { Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
+import { bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import { BagPanel, type BagEntry } from './bag';
 import type { SlotView } from './hud';
 import { Hud } from './hud';
@@ -115,7 +115,7 @@ export class Game {
       // Corações só em mundo com dungeon.
       maxHp: profile.dungeon ? MAX_HP : 0,
     });
-    this.bag = new BagPanel(this.hud.root, () => this.toggleBag(false));
+    this.bag = new BagPanel(this.hud.bagSection);
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     this.menu = new Menu(this.hud.root, {
@@ -160,7 +160,9 @@ export class Game {
       this.select(i);
       return;
     }
-    // Bolsa aberta: põe o item escolhido no espaço (o que estava volta para a bolsa) ou guarda o espaço na bolsa.
+    // Bolsa aberta: põe o item escolhido no espaço (o que estava volta para a bolsa) ou guarda o espaço na bolsa
+    // (só se a bolsa tiver lugar).
+    if (!this.bag.picked && this.hotbar.stack(i) && !bagHasRoom(this.inventory, this.hotbar)) return;
     this.hotbar.assign(i, this.bag.picked);
     this.bag.picked = null;
     this.refreshSelection();
@@ -180,11 +182,12 @@ export class Game {
     }
   }
 
-  /** Tudo que a heroína carrega, para o painel da bolsa. */
+  /** O que está na bolsa (fora da grade), para os 18 espaços dela. */
   private bagEntries(): BagEntry[] {
-    return this.inventory.entries().map(([id, n]) => {
+    return bagStacks(this.inventory, this.hotbar).map((id) => {
+      const n = this.inventory.count(id);
       const v = this.stackView(id, n);
-      return { id, icon: v.icon, name: v.name, count: id.startsWith('tool:') ? null : n, inGrid: this.hotbar.indexOf(id) };
+      return { id, icon: v.icon, name: v.name, count: id.startsWith('tool:') ? null : n };
     });
   }
 
@@ -336,7 +339,8 @@ export class Game {
       this.entities.strike(this.player.facing, this.world);
     }
     this.world.tick(dt);
-    this.drops.update(dt, this.player, this.inventory, (id) => this.onCollected(id));
+    this.drops.update(dt, this.player, this.inventory, (id) => this.onCollected(id),
+      (id) => !this.collect || canCarry(this.inventory, this.hotbar, id));
     this.camera.follow(...this.cameraTarget(), dt);
     this.actions.update(dt);
 

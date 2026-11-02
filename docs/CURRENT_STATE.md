@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.29.1_
+_Atualizado em 2026-11-02 — v0.30.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -50,8 +50,8 @@ _Atualizado em 2026-11-02 — v0.29.1_
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
-- **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Inventário sem
-  limite por pilha; **bolsa** com tudo e troca para a grade. Ao cair, perde os materiais. Santuário segue infinito.
+- **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
+  limite; **bolsa** de 18 espaços (3 fileiras de 9 com a mão), troca para a grade; tipo novo só entra se houver lugar. Ao cair, perde os materiais. Santuário segue infinito.
 - **Ovelhas**: rebanho perto do spawn; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
