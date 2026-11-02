@@ -190,7 +190,7 @@ export class Renderer {
     const fx = cam.worldToScreenX(a.x * TILE);
     const fy = cam.worldToScreenY(a.y * TILE - a.visualZ * CUBE_FRONT);
     const sheet = this.actorSprites.get(a.kind);
-    sheet.draw(this.ctx, fx, fy, cam.zoom, a);
+    sheet.draw(this.ctx, fx, fy, cam.zoom, a, elapsed);
     if (a.inLove) {
       // Coração flutuando acima da cabeça enquanto está apaixonada.
       const bob = Math.sin(elapsed * 3 + a.x) * 3 * cam.zoom;

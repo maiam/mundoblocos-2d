@@ -1,12 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.13.1_
+_Atualizado em 2026-11-02 — v0.13.2_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
   Sólida, só a Deusa, só os 18 blocos celestiais para construir, sem ferramentas/cultivo/ovelhas. Escolhido por
   subdomínio `santuario.`, `?mundo=santuario` ou artefato próprio. Blocos celestiais com a arte final
-  (prancha 3/4). Ver `domains/worlds.md`.
+  (prancha 3/4). A Deusa **flutua** (7 quadros por direção, balanço suave) em vez de caminhar. Ver `domains/worlds.md`.
 
 ## Mundo principal
 - Gerado por seed (`?seed=`), em chunks 16×16 nos dois eixos, carregados sob demanda e descarregados quando

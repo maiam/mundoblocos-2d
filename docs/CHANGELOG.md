@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.2 — 2026-11-02
+- Deusa da Vida passa a **flutuar** em vez de caminhar (a caminhada travava): folha de flutuação 7×4 fornecida,
+  quadros em vai-e-volta contínuo, pairando acima da sombra com balanço suave; câmera sem balanço.
+- `SheetSpec.float` no render de atores (reutilizável para outros personagens voadores).
+- Folha de caminhada da Deusa removida do jogo (mantida em `assets-src/` como referência).
+
 ## 0.13.1 — 2026-11-02
 - Santuário: arte provisória dos 18 blocos celestiais substituída pela prancha 3/4 fornecida
   (`extract-blocks.py --celestial` → `celestial-atlas.webp` + ícones refeitos do cubo inteiro).

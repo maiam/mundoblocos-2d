@@ -21,6 +21,7 @@
 | Subdomínio `santuario`; artefato próprio enquanto não há hospedagem | domains/worlds |
 | Blocos celestiais: arte da prancha 3/4 (a isométrica não foi convertida) | domains/worlds |
 | Chão de nuvem sem giro/espelho e com contraste suavizado (cobre o mapa todo) | domains/worlds |
+| Deusa flutua (só visual): mesma física do `Walker`, animação contínua e balanço sem mover a câmera | domains/worlds |
 | Pilha máx. 2 cubos; personagem sobe 1 nível por passo; descer é livre | domains/player |
 | Chão quebrado vira buraco; só bloco novo ocupa e vira piso nivelado | domains/world |
 | Ovelha não sobe em cubos: blocos servem de cerca | domains/npc |

@@ -38,10 +38,16 @@ Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham 
 - A prancha isométrica (`celestial-blocks-iso.png`) fica só como referência.
 
 ## Deusa da Vida
-- Folha `assets-src/goddess-sheet.png` (4×4, já transparente, ordem canônica) → `process-sprite.py --alpha
-  --grid-offset-y 22` (as auréolas invadem a linha de cima) → `src/assets/goddess.webp`.
-- Desenhada com 2,7 células (auréola + asas); a sombra vem na própria arte (`footPad`).
-- `goddess-walk-side-board.png` (caminhada lateral em 8 quadros) guardada como referência; não usada.
+- **Flutua em vez de caminhar.** Folha `assets-src/goddess-float-sheet.png` (7 quadros × 4 direções, fundo branco,
+  legendas à esquerda, linhas frente/direita/trás/esquerda) → `process-sprite.py --cols 7 --rows 4
+  --region 130,0,1470,1000 --rows-map 0,3,1,2 --frame-h 160 --sat 16 --min 228` → `src/assets/goddess-float.webp`.
+- Animação (`SheetSpec.float` em `render/character.ts`): quadros sempre rodando em vai-e-volta (7 q/s parada,
+  10 q/s em movimento); paira 0,32 célula acima do chão com balanço de 3 px (senoide contínua, não zera ao
+  parar); sombra no chão encolhe quando ela sobe. A câmera segue a posição lógica, então não balança.
+- Altura desenhada 2,3 células (+0,32 de flutuação). A física continua a mesma (`Walker`): colide e sobe
+  degraus como a heroína — flutuar é só visual por enquanto.
+- A folha de caminhada antiga (`goddess-sheet.png`) e a prancha lateral ficam só como referência
+  (a caminhada travava: 4 quadros com poses muito diferentes). A folha de flutuação não tem auréola.
 - Ainda sem ferramentas nem ações próprias.
 
 ## Publicação

@@ -1,4 +1,4 @@
-import goddessUrl from '../assets/goddess.webp?inline';
+import goddessFloatUrl from '../assets/goddess-float.webp?inline';
 import heroineAxeUrl from '../assets/heroine-axe.webp?inline';
 import heroineHoeUrl from '../assets/heroine-hoe.webp?inline';
 import heroinePickaxeUrl from '../assets/heroine-pickaxe.webp?inline';
@@ -35,11 +35,20 @@ interface SheetSpec {
   walkFps: number;
   /** Fração do quadro abaixo dos pés (sombra desenhada na própria arte). */
   footPad?: number;
+  /**
+   * Flutuação (em vez de caminhada): os quadros rodam sempre, em vai-e-volta, e o sprite
+   * paira `lift` células acima do chão balançando `bob` px. A sombra fica no chão e encolhe
+   * quando o sprite sobe. A câmera não balança (segue a posição lógica).
+   */
+  float?: { lift: number; bob: number; fps: number; movingFps: number };
 }
 
 const SPECS: Record<ActorKind, SheetSpec> = {
-  // Deusa da Vida: quadro inclui auréola e asas (desenho ~15% maior que a heroína) e a própria sombra.
-  goddess: { url: goddessUrl, cols: 4, rows: 4, height: TILE * 2.7, shadow: [0.2, 0.07], walkFps: 7, footPad: 0.045 },
+  // Deusa da Vida: flutua (folha 7×4 de flutuação; asas abertas, sem chão na arte).
+  goddess: {
+    url: goddessFloatUrl, cols: 7, rows: 4, height: TILE * 2.3, shadow: [0.34, 0.11], walkFps: 0,
+    float: { lift: 0.32, bob: 3, fps: 7, movingFps: 10 },
+  },
   heroine: { url: heroineUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   // Heroína com ferramenta: mesma escala (altura do desenho igual à folha base).
   'heroine-sword': { url: heroineSwordUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
@@ -63,25 +72,43 @@ class SpriteSheet {
   }
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
-  draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor): void {
-    const { height, shadow, walkFps, cols, rows, footPad = 0 } = this.spec;
+  draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0): void {
+    const { height, shadow, walkFps, cols, rows, footPad = 0, float } = this.spec;
+    // Flutuação: fase contínua (não zera ao parar) → sem trancos entre parado e andando.
+    const wave = float ? Math.sin(elapsed * 2.4) : 0;
+    const shadowScale = float ? 1 - 0.12 * (wave + 1) / 2 : 1;
     // Sombra fixa no chão (não acompanha o balanço do sprite).
-    ctx.fillStyle = 'rgba(30, 20, 70, 0.3)';
+    ctx.fillStyle = float ? 'rgba(30, 20, 70, 0.22)' : 'rgba(30, 20, 70, 0.3)';
     ctx.beginPath();
-    ctx.ellipse(fx, fy, shadow[0] * TILE * zoom, shadow[1] * TILE * zoom, 0, 0, Math.PI * 2);
+    ctx.ellipse(fx, fy, shadow[0] * TILE * zoom * shadowScale, shadow[1] * TILE * zoom * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
     if (!this.ready) return;
     const h = height * zoom;
     const fw = this.img.width / cols;
     const fh = this.img.height / rows;
     const w = h * (fw / fh);
-    const col = rows === 1 ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
+    let col: number;
+    let lift = 0;
+    if (float) {
+      // Vai-e-volta pelos quadros (0…n-1…1): sem salto do último para o primeiro.
+      const span = cols * 2 - 2;
+      const step = Math.floor(elapsed * (a.moving ? float.movingFps : float.fps)) % span;
+      col = step < cols ? step : span - step;
+      lift = float.lift * TILE * zoom + (wave + 1) * 0.5 * float.bob * zoom;
+    } else {
+      col = rows === 1 ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
+    }
     const row = rows === 1 ? 0 : ROW[a.facing];
-    ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(fx - w / 2), Math.round(fy - h + 2 * zoom + h * footPad), Math.round(w), Math.round(h));
+    // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.
+    const dx = fx - w / 2;
+    const dy = fy - h + 2 * zoom + h * footPad - lift;
+    if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
+    else ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
   }
 
+  /** Altura total na tela (px de mundo), incluindo o quanto paira acima do chão. */
   get drawHeight(): number {
-    return this.spec.height;
+    return this.spec.height + (this.spec.float ? this.spec.float.lift * TILE : 0);
   }
 }
 
