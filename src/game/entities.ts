@@ -4,12 +4,12 @@ import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
-import type { Facing, Walker } from './walker';
+import { type Facing, type Walker } from './walker';
 
 import type { ToolId } from '../world/items';
 import type { CharacterId } from '../world/profiles';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | 'heroine-sword-attack' | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -27,6 +27,10 @@ export interface Actor {
 }
 
 const FLOCK_SIZE = 4;
+/** Alcance do golpe de espada (células, do centro dos pés) e abertura do arco (cosseno mínimo). */
+export const SWORD_REACH = 1.45;
+const SWORD_ARC_COS = 0.3;
+const FACING_VEC: Record<Facing, [number, number]> = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
 /** Distância (células) em que duas ovelhas apaixonadas se encontram. */
 const PAIR_RANGE = 6;
 /** Distância (células) para começar a namorar. */
@@ -152,6 +156,45 @@ export class Entities {
     }
   }
 
+  /** Entidades (exceto a personagem) dentro do arco do golpe: à frente, até SWORD_REACH. */
+  strikeTargets(facing: Facing): Sheep[] {
+    const [fx, fy] = FACING_VEC[facing];
+    const p = this.player;
+    return this.npcs.filter((s) => {
+      const dx = s.x - p.x;
+      const dy = s.y - p.y;
+      const d = Math.hypot(dx, dy);
+      if (d > SWORD_REACH) return false;
+      return d < 0.35 || (dx * fx + dy * fy) / d >= SWORD_ARC_COS;
+    });
+  }
+
+  /**
+   * Golpe de espada: aplica o acerto a cada alvo no arco e retorna quantos foram
+   * atingidos. Animais ainda não têm animação de morte: somem do mundo.
+   * (Monstros, quando existirem, recebem dano aqui pelo mesmo caminho.)
+   */
+  strike(facing: Facing): number {
+    const hit = this.strikeTargets(facing);
+    for (const s of hit) this.removeAnimal(s);
+    return hit.length;
+  }
+
+  /** Remove um animal e desfaz vínculos (par, namoro) de quem dependia dele. */
+  private removeAnimal(s: Sheep): void {
+    const i = this.npcs.indexOf(s);
+    if (i < 0) return;
+    this.npcs.splice(i, 1);
+    this.courting.delete(s);
+    for (const o of this.npcs) {
+      if (o.partner === s) {
+        o.partner = null;
+        o.courtship = 0;
+        this.courting.delete(o);
+      }
+    }
+  }
+
   /** Ovelha sob o ponto (em células), considerando a altura do sprite; a mais à frente vence. */
   sheepAt(wx: number, wy: number): Sheep | null {
     let hit: Sheep | null = null;
@@ -177,8 +220,13 @@ export class Entities {
 
   get actors(): Actor[] {
     const p = this.player;
-    const kind: ActorKind = this.character === 'goddess' ? 'goddess' : p.equipped ? `heroine-${p.equipped}` : 'heroine';
-    const out: Actor[] = [{ kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime }];
+    const kind: ActorKind = this.character === 'goddess' ? 'goddess'
+      : p.attacking ? 'heroine-sword-attack'
+      : p.equipped ? `heroine-${p.equipped}` : 'heroine';
+    const out: Actor[] = [{
+      kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
+      frame: p.attacking ? p.attackFrame : undefined,
+    }];
     const drawnCouples = new Set<Sheep>();
     for (const s of this.npcs) {
       if (s.courtship > 0 && s.partner) {

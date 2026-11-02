@@ -53,6 +53,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - Mudar o gerador muda o mapa de todas as seeds: avise o usuário e rode os testes de determinismo/spawn.
 - Folhas que já vêm transparentes: `process-sprite.py --alpha`; se o desenho invade a linha de cima (auréolas,
   asas), `--grid-offset-y`. Confira a "altura do desenho" no relatório: igual à célula = recorte errado.
+- Folha de ação com pedaços de quadros vizinhos (relatório "altura do desenho = célula"): use `--largest`.
+- Combate fica em `Entities` (estado de execução); a espada nunca quebra nada do mundo (`canBreakAt`).
 - Os dois artefatos usam o mesmo `dist/`: gere o build do mundo imediatamente antes de publicá-lo.
 - Testes no navegador: Playwright já instalado (`require('playwright')`); use `window.__game` no dev.
 

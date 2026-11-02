@@ -1,8 +1,14 @@
 # Domínio: player (game)
 
 - **Ferramentas**: `Player.equipped` = ferramenta do espaço selecionado na hotbar (ou null); muda o sprite
-  (`heroine-<ferramenta>`). **Enxada** com toque curto ara o alvo (regra em `canUseAt/applyUse`); as demais ainda
-  não têm ação. Segurar 2 s continua quebrando com qualquer seleção.
+  (`heroine-<ferramenta>`). **Enxada** com toque curto ara o alvo (regra em `canUseAt/applyUse`).
+- **Espada**: toque/clique curto = **golpe** (`Player.startAttack`, 0,36 s, 4 quadros da folha de ataque). O acerto
+  sai uma vez no meio do golpe (`consumeHit`) na direção em que ela olhava (fixa durante o golpe; pelo mouse ela
+  vira para o cursor antes). Alvos: entidades num arco à frente (`Entities.strikeTargets`, alcance 1,45 célula,
+  cosseno ≥ 0,3). **Animais atingidos somem** (sem animação de morte ainda); monstros futuros entram pelo mesmo
+  `Entities.strike`. **A espada não quebra blocos, itens nem elementos** (`canBreakAt` = false; segurar não faz
+  nada) e não tem alvo de célula; o alvo é marcado por anel vermelho na entidade à frente.
+- Pá, picareta e machado ainda sem ação; segurar 2 s quebra com qualquer seleção exceto a espada.
 - `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).

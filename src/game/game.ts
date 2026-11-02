@@ -224,8 +224,15 @@ export class Game {
 
   // ---- Regras por célula (iguais para cursor e botão de ação) ----
 
-  /** Pode quebrar aqui? Não se cava o chão sob nenhuma entidade. */
+  /** A espada está em mãos? (ataca entidades; não quebra blocos, itens nem elementos). */
+  private get swordInHand(): boolean {
+    const s = this.slot;
+    return s?.kind === 'tool' && s.tool === 'sword';
+  }
+
+  /** Pode quebrar aqui? Não com a espada; não se cava o chão sob nenhuma entidade. */
   private canBreakAt(x: number, y: number): boolean {
+    if (this.swordInHand) return false;
     return this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y));
   }
 
@@ -300,9 +307,28 @@ export class Game {
     return sheep && Math.hypot(sheep.x - this.player.x, sheep.y - this.player.y) <= REACH ? sheep : null;
   }
 
+  /** Golpe de espada na direção em que a personagem olha (o acerto sai no meio da animação). */
+  private attack(): void {
+    this.player.startAttack();
+  }
+
+  /** Vira a personagem para o ponto da tela (eixo dominante), para o golpe pelo mouse. */
+  private faceToward(sx: number, sy: number): void {
+    const [wx, wy] = this.camera.screenToWorld(sx, sy);
+    const dx = wx / TILE - this.player.x;
+    const dy = wy / TILE - (this.player.y - 0.4);
+    if (Math.abs(dx) > Math.abs(dy)) this.player.facing = dx < 0 ? 'left' : 'right';
+    else this.player.facing = dy < 0 ? 'up' : 'down';
+  }
+
   /** Clique curto do mouse. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
+    if (this.swordInHand) {
+      if (!this.player.attacking) this.faceToward(sx, sy);
+      this.attack();
+      return;
+    }
     if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
       this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
       return;
@@ -344,6 +370,10 @@ export class Game {
     this.action = null;
     if (!a || a.held > TAP_MAX_S) return;
     const slot = this.slot;
+    if (this.swordInHand) {
+      this.attack();
+      return;
+    }
     if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
       this.applyUse(slot, 0, 0, this.frontSheep());
       return;
@@ -410,6 +440,7 @@ export class Game {
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
+    if (this.player.consumeHit()) this.entities.strike(this.player.facing);
     this.world.tick(dt);
     this.drops.update(dt, this.player, this.inventory);
     this.camera.follow(...this.cameraTarget(), dt);
@@ -469,12 +500,17 @@ export class Game {
     if (!this.pointer.inside || this.joystick.active) return null;
     const { x, y } = this.pointer;
     const p = this.press;
+    if (this.swordInHand) return null; // espada: o alvo é a entidade (anel), não a célula
     if (p && p.held > TAP_MAX_S) return this.breakTarget(x, y);
     return this.useTarget(x, y);
   }
 
-  /** Anel na ovelha alvo do trigo: sob o mouse ou, com a personagem parada, à frente dela. */
-  private hoverSheep(): CellTarget | null {
+  /** Anel na ovelha alvo do trigo (ou do golpe): sob o mouse ou, com a personagem parada, à frente dela. */
+  private hoverSheep(): (CellTarget & { attack?: boolean }) | null {
+    if (this.swordInHand) {
+      const t = this.entities.strikeTargets(this.player.facing)[0];
+      return t ? { x: t.x, y: t.y, valid: true, attack: true } : null;
+    }
     const slot = this.slot;
     if (slot?.kind !== 'item' || !ITEMS[slot.item].feeds) return null;
     let sheep: Sheep | null = null;
@@ -493,7 +529,7 @@ export class Game {
    * Andando, nada fica selecionado. Com o mouse sobre o mundo, vale o destaque do mouse.
    */
   private focusTarget(): CellTarget | null {
-    if (this.pointer.inside || this.player.moving) return null;
+    if (this.pointer.inside || this.player.moving || this.swordInHand) return null;
     const slot = this.slot;
     if (slot?.kind === 'item' && ITEMS[slot.item].feeds && this.frontSheep()) return null; // anel na ovelha
     const [x, y] = this.frontCell();

@@ -14,6 +14,9 @@
   sem poder comer. Limite de 16 ovelhas.
 - **Filhote** (`lamb.webp`, ~0,9 célula): mais rápido e menor; vira adulto em 120 s. Não come trigo.
 
+- **Golpe de espada**: a ovelha (adulta ou filhote) atingida some do mundo; par/namoro da outra é desfeito
+  (`Entities.removeAnimal`). Animação de morte fica para quando houver arte.
+
 ## Gerência (`game/entities.ts`)
 - Formação de pares, início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
   `Sheep` guarda estado (apaixonada, espera, par, namoro, idade) e movimento.

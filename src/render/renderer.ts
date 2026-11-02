@@ -30,7 +30,7 @@ export interface RenderOptions {
   /** Alvo à frente da personagem parada (botão de ação): contorno de seleção. */
   focus: { x: number; y: number; valid: boolean } | null;
   /** Ovelha sob o cursor quando o trigo está selecionado (posição dos pés, em células). */
-  hoverSheep: { x: number; y: number; valid: boolean } | null;
+  hoverSheep: { x: number; y: number; valid: boolean; attack?: boolean } | null;
   time: number;
   elapsed: number;
   dt: number;
@@ -224,16 +224,23 @@ export class Renderer {
     const ctx = this.ctx;
     const fx = cam.worldToScreenX(hs.x * TILE);
     const fy = cam.worldToScreenY(hs.y * TILE);
+    // Dourado = pode receber trigo; rosado = não pode; vermelho = alvo do golpe de espada.
+    const [stroke, glow] = hs.attack
+      ? ['rgba(255, 70, 70, 0.95)', 'rgba(255, 40, 40, 0.85)']
+      : hs.valid
+        ? ['rgba(255, 236, 160, 0.95)', 'rgba(255, 212, 107, 0.9)']
+        : ['rgba(255, 120, 140, 0.9)', 'rgba(255, 80, 120, 0.8)'];
     ctx.save();
     ctx.lineWidth = 2.5;
-    ctx.strokeStyle = hs.valid ? 'rgba(255, 236, 160, 0.95)' : 'rgba(255, 120, 140, 0.9)';
-    ctx.shadowColor = hs.valid ? 'rgba(255, 212, 107, 0.9)' : 'rgba(255, 80, 120, 0.8)';
+    ctx.strokeStyle = stroke;
+    ctx.shadowColor = glow;
     ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.ellipse(fx, fy, 0.5 * TILE * cam.zoom, 0.2 * TILE * cam.zoom, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
+
 
   private waterGlint(cam: Camera, x: number, y: number, elapsed: number): void {
     const hsh = hash2(this.world.seed, x, y);

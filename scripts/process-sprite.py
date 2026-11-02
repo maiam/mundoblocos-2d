@@ -28,6 +28,8 @@ ap.add_argument('--min', type=int, default=140, help='claridade mínima do fundo
 ap.add_argument('--region', default=None, help='x0,y0,x1,y1: recorte da folha antes de dividir em grade')
 ap.add_argument('--grid-offset-y', type=int, default=0,
                 help='desloca a grade para cima (px) quando o desenho de uma linha invade a de cima (ex.: auréolas)')
+ap.add_argument('--largest', action='store_true',
+                help='mantém só o maior pedaço conectado de cada quadro (descarta fragmentos de quadros vizinhos)')
 ap.add_argument('--alpha', action='store_true',
                 help='a folha já tem transparência: usa o alfa da imagem em vez de remover o fundo')
 ap.add_argument('--rows-map', default=None,
@@ -81,6 +83,39 @@ def remove_bg(x0, y0, x1, y1):
     return alpha.astype(np.uint8)
 
 
+def keep_largest(a):
+    """Zera o alfa fora do maior componente conectado (8-vizinhança) com alfa ≥ 64."""
+    m = a >= 64
+    h, w = m.shape
+    label = np.zeros((h, w), np.int32)
+    best, best_n, cur = 0, 0, 0
+    for sy, sx in zip(*np.nonzero(m)):
+        if label[sy, sx]:
+            continue
+        cur += 1
+        label[sy, sx] = cur
+        q, n = deque([(sy, sx)]), 0
+        while q:
+            y, x = q.popleft()
+            n += 1
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < h and 0 <= nx < w and m[ny, nx] and not label[ny, nx]:
+                        label[ny, nx] = cur
+                        q.append((ny, nx))
+        if n > best_n:
+            best, best_n = cur, n
+    keep = label == best
+    # Mantém a borda suave: pixels fracos encostados no componente principal.
+    grown = keep.copy()
+    grown[1:, :] |= keep[:-1, :]; grown[:-1, :] |= keep[1:, :]
+    grown[:, 1:] |= keep[:, :-1]; grown[:, :-1] |= keep[:, 1:]
+    out = a.copy()
+    out[~grown] = 0
+    return out
+
+
 cells = []
 for r in range(args.rows):
     for c in range(args.cols):
@@ -92,6 +127,8 @@ for r in range(args.rows):
             a[a < 48] = 0
         else:
             a = remove_bg(x0, y0, x1, y1)
+        if args.largest:
+            a = keep_largest(a)
         cells.append(np.dstack([img[y0:y1, x0:x1].astype(np.uint8), a]))
 
 if args.rows_map:

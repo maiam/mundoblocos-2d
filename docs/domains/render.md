@@ -39,5 +39,8 @@ Apenas apresentação; lê `World`, nunca escreve.
 - `assets-src/heroine-sheet.png` → `scripts/process-sprite.py` → `optimize-assets.py` → `src/assets/heroine.webp` (fundo e sombra
   removidos por flood fill, caixa comum a todos os quadros, 4×4 de 115×144 px).
 - Linhas: frente, esquerda, direita, costas. Parado = quadro 0; andando = 7 quadros/s. Sombra própria fixa nos pés.
+- Folhas de ação (`SheetSpec.action`, hoje o golpe de espada `heroine-sword-attack`): quadro vem de `Actor.frame`.
+  Recorte com `--alpha --largest` (o maior pedaço por quadro descarta fragmentos de quadros vizinhos);
+  altura ajustada pela razão de desenho (297/288) para manter a escala da personagem.
 - Personagens que flutuam (`SheetSpec.float`, hoje a Deusa): quadros em vai-e-volta contínuo, sprite pairando
   com balanço senoidal sub-pixel, sombra no chão que encolhe ao subir.

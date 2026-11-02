@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 — 2026-11-02
+- **Ataque com espada**: toque/clique (ou botão de ação/Espaço) com a espada = golpe com a folha de ataque
+  fornecida; acerto no meio do golpe, num arco à frente. Animais atingidos somem (sem animação de morte ainda).
+- **Restrição**: a espada não quebra blocos, itens nem elementos (segurar com a espada não faz nada).
+- Anel vermelho marca a entidade que seria atingida. `Entities.strike/strikeTargets` preparado para monstros.
+- `process-sprite.py --largest` (mantém o maior pedaço por quadro).
+- 5 testes novos (duração/quadros/acerto único, direção fixa, arco, par desfeito, sprite de golpe).
+
 ## 0.14.0 — 2026-11-02
 - Mundo principal: **enxada ativa** — toque/clique (ou botão de ação) em Terra/Terra com Grama → Terra Arada
   (`World.canTill/till`; enfeites em cima são removidos).

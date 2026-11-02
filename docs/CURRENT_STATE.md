@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.14.0_
+_Atualizado em 2026-11-02 — v0.15.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -30,7 +30,8 @@ _Atualizado em 2026-11-02 — v0.14.0_
 
 ## Sistemas
 - **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara Terra/Terra
-  com Grama → Terra Arada; as demais ainda sem ação.
+  com Grama → Terra Arada; a **espada** golpeia (animação própria) e faz sumir animais à frente — não quebra
+  blocos, itens nem elementos. Pá, picareta e machado ainda sem ação.
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
 - **Inventário** de itens contáveis (começa com 5 sementes e 2 trigos); materiais são infinitos.
@@ -39,6 +40,7 @@ _Atualizado em 2026-11-02 — v0.14.0_
 
 ## Limitações conhecidas
 - Nada é salvo (edições, inventário, plantações, ovelhas).
+- Animais atingidos pela espada só somem (sem animação de morte, drops ou vida); ainda não há monstros.
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
@@ -47,7 +49,7 @@ _Atualizado em 2026-11-02 — v0.14.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 47 testes (Vitest) passando; typecheck e build sem avisos.
+- 52 testes (Vitest) passando; typecheck e build sem avisos.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~2 MB cada (um bundle com a arte dos dois mundos).
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~2,45 MB cada (um bundle com a arte dos dois mundos).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

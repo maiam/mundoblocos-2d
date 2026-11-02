@@ -1,4 +1,5 @@
 import goddessFloatUrl from '../assets/goddess-float.webp?inline';
+import heroineSwordAttackUrl from '../assets/heroine-sword-attack.webp?inline';
 import heroineAxeUrl from '../assets/heroine-axe.webp?inline';
 import heroineHoeUrl from '../assets/heroine-hoe.webp?inline';
 import heroinePickaxeUrl from '../assets/heroine-pickaxe.webp?inline';
@@ -41,6 +42,8 @@ interface SheetSpec {
    * quando o sprite sobe. A câmera não balança (segue a posição lógica).
    */
   float?: { lift: number; bob: number; fps: number; movingFps: number };
+  /** Folha de ação (ex.: golpe): o quadro vem de `Actor.frame`, a linha da direção. */
+  action?: boolean;
 }
 
 const SPECS: Record<ActorKind, SheetSpec> = {
@@ -55,6 +58,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'heroine-hoe': { url: heroineHoeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   'heroine-pickaxe': { url: heroinePickaxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   'heroine-shovel': { url: heroineShovelUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  // Golpe de espada: desenho 297 px contra 288 da caminhada → mesma escala da personagem.
+  'heroine-sword-attack': {
+    url: heroineSwordAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (297 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+  },
   'heroine-axe': { url: heroineAxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   sheep: { url: sheepUrl, cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { url: lambUrl, cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
@@ -73,7 +80,7 @@ class SpriteSheet {
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
   draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0): void {
-    const { height, shadow, walkFps, cols, rows, footPad = 0, float } = this.spec;
+    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action } = this.spec;
     // Flutuação: fase contínua (não zera ao parar) → sem trancos entre parado e andando.
     const wave = float ? Math.sin(elapsed * 2.4) : 0;
     const shadowScale = float ? 1 - 0.12 * (wave + 1) / 2 : 1;
@@ -96,7 +103,7 @@ class SpriteSheet {
       col = step < cols ? step : span - step;
       lift = float.lift * TILE * zoom + (wave + 1) * 0.5 * float.bob * zoom;
     } else {
-      col = rows === 1 ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
+      col = rows === 1 || action ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
     }
     const row = rows === 1 ? 0 : ROW[a.facing];
     // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.

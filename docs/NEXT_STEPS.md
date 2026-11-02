@@ -10,7 +10,7 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 2. **Ações das ferramentas** restantes (enxada já ara):
    - Pá: grama/terra → Caminho de Terra; cava mais rápido.
    - Picareta: quebra pedra mais rápido; Machado: corta árvore → Tora de Carvalho.
-   - Espada: reservada para combate. Falta arte de golpe (sprites de ação).
+   - Espada: feito o golpe; faltam animação de morte dos animais, drops (lã/carne?), vida e monstros.
 3. **Salvar o progresso no navegador** (`localStorage`): seed + chunks modificados + inventário + plantações +
    ovelhas. Contas e mundos na nuvem exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste
    recomendado para o core**, não criar backend aqui.
@@ -28,6 +28,8 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 11. Geração em Web Worker se o custo por chunk voltar a crescer (hoje ~0,07 ms).
 
 ## Riscos e dívidas técnicas
+- **Peso dos artefatos** (~2,45 MB cada): cada folha de sprite nova soma ~150 kB e os dois mundos levam a arte um
+  do outro. Separar assets por mundo (build por `VITE_WORLD` só com a arte do perfil) antes de passar de ~3 MB.
 - `game/game.ts` (~490 linhas) concentra entrada, alvo e regras de ação: separar `ActionController` quando as
   ferramentas ganharem ação.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.

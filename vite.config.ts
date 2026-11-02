@@ -4,9 +4,9 @@ export default defineConfig({
   base: './',
   build: {
     // Os sprites entram embutidos (?inline) para o build de arquivo único (Artifact):
-    // o bundle passa de 500 kB por design. Limite acima do tamanho atual (~1,5 MB, dois mundos) para
+    // o bundle passa de 500 kB por design. Limite acima do tamanho atual (~1,85 MB, dois mundos) para
     // que o aviso volte a aparecer se os assets crescerem demais.
-    chunkSizeWarningLimit: 2300,
+    chunkSizeWarningLimit: 2800,
   },
   test: {
     environment: 'node',

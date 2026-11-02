@@ -5,7 +5,8 @@
 - **Enxada (ativa):** toque/clique com a enxada numa célula de chão Terra ou Terra com Grama, sem nada em cima
   (capim/flor são removidos) → chão vira **Terra Arada** (`World.canTill/till`). Alvo: célula à frente (botão de
   ação) ou sob o cursor; mesmo alcance de 4,5 células.
-- Uso planejado (sem efeito ainda): espada = combate; picareta = pedra; pá = cavar / Caminho de Terra;
+- **Espada (ativa):** golpeia entidades (ver `domains/player.md`); não quebra nada do mundo.
+- Uso planejado (sem efeito ainda): picareta = pedra; pá = cavar / Caminho de Terra;
   machado = árvores → Tora de Carvalho.
 
 ## Itens (`world/items.ts`) — fonte de verdade
