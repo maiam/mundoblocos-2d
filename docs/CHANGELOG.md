@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.0 — 2026-11-02
+- **Enxada quebra plantas e derivados** (capim, flor, trigo — colheita —, cacto) segurando 2 s, com a animação de
+  arar repetindo; continua sem quebrar madeira/árvore/blocos e sem atacar.
+- `BlockDef.choppable` substituído por `organic: 'wood' | 'plant' | null`; regras `breaks: 'organic'` (machado) e
+  `'plant'` (enxada). Animação durante a quebra vale para qualquer ferramenta com ação que quebre algo.
+
 ## 0.17.0 — 2026-11-02
 - **Enxada**: animação de arar (folha fornecida) a cada toque; só troca Terra/Terra com Grama → Terra Arada.
 - **Restrição**: enxada não quebra blocos, itens nem elementos (`breaks: 'none'`) e não acerta entidades.

@@ -65,10 +65,10 @@ export interface ToolDef {
   /** Uso (documentação). */
   plannedUse: string;
   /**
-   * O que a ferramenta pode quebrar segurando: tudo, nada ou só o que é de madeira/árvore/planta.
+   * O que a ferramenta pode quebrar segurando: tudo, nada, orgânico (madeira, árvore e planta) ou só planta.
    * Fonte de verdade da restrição por ferramenta.
    */
-  breaks: 'any' | 'none' | 'choppable';
+  breaks: 'any' | 'none' | 'organic' | 'plant';
   /** Toque curto toca a animação de ação da ferramenta (golpe, arar…). */
   swings: boolean;
   /** O golpe acerta entidades à frente (animais/monstros). */
@@ -78,14 +78,14 @@ export interface ToolDef {
 export const TOOLS: Record<ToolId, ToolDef> = {
   sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'golpe em animais/monstros; não quebra nada', breaks: 'none', swings: true, strikes: true },
   hoe: {
-    id: Tool.HOE, name: 'Enxada', plannedUse: 'só ara Terra/Terra com Grama → Terra Arada; não quebra nem ataca',
-    breaks: 'none', swings: true, strikes: false,
+    id: Tool.HOE, name: 'Enxada', plannedUse: 'ara Terra/Terra com Grama → Terra Arada; quebra só plantas; não ataca',
+    breaks: 'plant', swings: true, strikes: false,
   },
   pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)', breaks: 'any', swings: false, strikes: false },
   shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão (futuro)', breaks: 'any', swings: false, strikes: false },
   axe: {
     id: Tool.AXE, name: 'Machado', plannedUse: 'golpe em animais/monstros; corta só madeira/árvore/planta',
-    breaks: 'choppable', swings: true, strikes: true,
+    breaks: 'organic', swings: true, strikes: true,
   },
 };
 
@@ -93,7 +93,11 @@ export const TOOLS: Record<ToolId, ToolDef> = {
 export function toolCanBreak(tool: ToolId | null, id: BlockId): boolean {
   if (!tool) return true;
   const rule = TOOLS[tool].breaks;
-  return rule === 'any' || (rule === 'choppable' && blockDef(id).choppable);
+  const organic = blockDef(id).organic;
+  if (rule === 'any') return true;
+  if (rule === 'organic') return organic !== null;
+  if (rule === 'plant') return organic === 'plant';
+  return false;
 }
 
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];

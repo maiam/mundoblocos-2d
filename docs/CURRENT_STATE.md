@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.17.0_
+_Atualizado em 2026-11-02 — v0.18.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -30,7 +30,7 @@ _Atualizado em 2026-11-02 — v0.17.0_
 
 ## Sistemas
 - **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara (animação própria) Terra/Terra
-  com Grama → Terra Arada e não quebra nem ataca; a **espada** golpeia (animação própria) e faz sumir animais à frente — não quebra
+  com Grama → Terra Arada e, segurando, quebra só plantas (não madeira/árvore); não ataca; a **espada** golpeia (animação própria) e faz sumir animais à frente — não quebra
   blocos, itens nem elementos; o **machado** também golpeia e, segurando, corta só madeira/árvore/planta.
   Pá e picareta ainda sem ação.
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);

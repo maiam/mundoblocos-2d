@@ -236,9 +236,15 @@ export class Game {
     return !!t && TOOLS[t].strikes;
   }
 
+  /** Ferramenta com animação de ação que também quebra algo (machado, enxada): anima enquanto quebra. */
+  private get swingsWhileBreaking(): boolean {
+    const t = this.tool;
+    return !!t && TOOLS[t].swings && TOOLS[t].breaks !== 'none';
+  }
+
   /**
-   * Pode quebrar aqui? Respeita a restrição da ferramenta (`toolCanBreak`: espada não quebra nada,
-   * machado só madeira/árvore/planta) e não cava o chão sob nenhuma entidade.
+   * Pode quebrar aqui? Respeita a restrição da ferramenta (`toolCanBreak`: espada nada, machado orgânico,
+   * enxada só planta) e não cava o chão sob nenhuma entidade.
    */
   private canBreakAt(x: number, y: number): boolean {
     const id = this.world.breakTargetId(x, y);
@@ -419,8 +425,8 @@ export class Game {
       h.progress = 0;
     }
     h.progress += dt / BREAK_HOLD_S;
-    // Machado: enquanto corta, repete a animação de golpe (que também acerta entidades no arco).
-    if (this.strikerInHand && !this.player.attacking) this.player.startAttack();
+    // Machado/enxada: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
+    if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {
       const broken = this.world.breakBlock(t.x, t.y);
       // Colheita: o que o mundo devolve cai no chão para ser coletado.
@@ -438,7 +444,7 @@ export class Game {
       if (p.held > TAP_MAX_S) {
         const t = this.breakTarget(this.pointer.x, this.pointer.y);
         // Cortando pelo mouse: vira para o alvo antes do golpe.
-        if (t.valid && this.strikerInHand && !this.player.attacking) this.faceToward(this.pointer.x, this.pointer.y);
+        if (t.valid && this.swingsWhileBreaking && !this.player.attacking) this.faceToward(this.pointer.x, this.pointer.y);
         this.advanceHold(p, t, dt);
       }
     }

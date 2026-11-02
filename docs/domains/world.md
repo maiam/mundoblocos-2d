@@ -21,7 +21,7 @@
 - `standHeight(x, y)`: 0 chão, 1–2 sobre cubos, `null` (água, buraco, árvore, cacto). Regra única de entidades.
 - `isGroundStandable`: material como chão é pisável; água/buraco não.
 - Quebrar (`breakTarget`/`breakTargetId`): nível 1 → nível 0 → chão (vira buraco). Água não quebra. Restrição por
-  ferramenta fica em `world/items.ts` (`toolCanBreak`), usando `BlockDef.choppable` (madeira/árvore/planta).
+  ferramenta fica em `world/items.ts` (`toolCanBreak`), usando `BlockDef.organic` (`wood` = madeira/árvore; `plant` = plantas e derivados).
 - Colocar (`placementLevel`): só materiais. Em buraco vira piso nivelado; senão nível 0 (substitui enfeite) ou
   nível 1 sobre cubo.
 - Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.

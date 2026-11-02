@@ -15,7 +15,7 @@ describe('Machado', () => {
       expect(toolCanBreak('axe', id)).toBe(false);
     }
     // Materiais da prancha: só tora e piso são de madeira.
-    expect(MATERIALS.filter((m) => BLOCKS[m].choppable)).toEqual([Block.OAK_LOG, Block.OAK_PLANKS]);
+    expect(MATERIALS.filter((m) => BLOCKS[m].organic !== null)).toEqual([Block.OAK_LOG, Block.OAK_PLANKS]);
   });
 
   it('espada não quebra nada; mão vazia/itens e demais ferramentas quebram tudo', () => {
@@ -57,8 +57,11 @@ describe('Machado', () => {
 });
 
 describe('Enxada', () => {
-  it('não quebra nada, não ataca e tem animação de ação', () => {
-    for (const id of [Block.STONE, Block.DIRT, Block.GRASS, Block.OAK_TREE, Block.WHEAT_15, Block.FLOWER, Block.OAK_LOG]) {
+  it('quebra só plantas e derivados (não madeira nem árvore), não ataca e tem animação de ação', () => {
+    for (const id of [Block.TALL_GRASS, Block.FLOWER, Block.CACTUS, Block.WHEAT_0, Block.WHEAT_15]) {
+      expect(toolCanBreak('hoe', id)).toBe(true);
+    }
+    for (const id of [Block.OAK_TREE, Block.SAKURA_TREE, Block.OAK_LOG, Block.OAK_PLANKS, Block.STONE, Block.DIRT, Block.GRASS, Block.TILLED]) {
       expect(toolCanBreak('hoe', id)).toBe(false);
     }
     expect(TOOLS.hoe.swings).toBe(true);
