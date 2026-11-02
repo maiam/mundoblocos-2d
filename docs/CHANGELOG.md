@@ -1,5 +1,10 @@
 # Changelog
 
+## Docs — 2026-11-02
+- `NEXT_STEPS.md` reorganizado em **plano por fases** (panorama, fases 0–5, decisões pendentes, dependências
+  externas, riscos); itens já feitos removidos (monstros, quebra mais rápida com ferramenta). Números atualizados
+  em `CURRENT_STATE`/`ARCHITECTURE` (artefato 3,84 MB, render ~0,4 ms).
+
 ## 0.24.0 — 2026-11-02
 - **Covil das Aranhas vira um labirinto procedural** (~9× maior: 96–108 × 66–78 blocos, tamanho pela seed):
   caminhos sinuosos (árvore "growing tree"), bifurcações, circuitos, becos sem saída, câmaras com bordas

@@ -62,5 +62,7 @@ _Atualizado em 2026-11-02 — v0.24.0_
 ## Qualidade e desempenho
 - 81 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,6 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
+- Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto);
+  artefato principal **3,84 MB** — o build avisa (limite de alerta 2,8 MB; um bundle com a arte dos dois mundos).
+  Santuário publicado é um build anterior à dungeon (republicar: `NEXT_STEPS` Fase 0).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.
