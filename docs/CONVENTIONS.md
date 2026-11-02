@@ -18,6 +18,10 @@
   chamar `groundAt/objectAt/upperAt` em sequência dentro do gerador.
 - `BlockId` aceita os estágios do trigo (61–74): usar `isWheat/wheatStage/wheatId`.
 
+## Mundos
+- Diferenças entre mundos vêm **só** de campos do `WorldProfile` (`world/profiles.ts`); não espalhar `if (mundo === …)`.
+- Mundo limitado: fora dos limites é `VOID`; nada carrega fora (`clampRect`). Blocos colocáveis = `profile.blocks`.
+
 ## Jogo
 - Regra de ação do jogador por célula no `Game` (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; a
   origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.

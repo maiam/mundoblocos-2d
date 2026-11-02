@@ -59,6 +59,31 @@ export class ChunkRenderer {
     return canvas;
   }
 
+  /**
+   * Borda do mundo limitado: onde o vizinho é céu aberto (VOID), a nuvem ganha
+   * uma orla fofa (embaixo: "barriga" sombreada da nuvem; nas laterais/topo: brilho).
+   */
+  private drawSkyEdges(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, py: number): void {
+    const voidAt = (bx: number, by: number) => this.world.getGround(bx, by) === Block.VOID;
+    if (voidAt(x, y + 1)) {
+      const g = ctx.createLinearGradient(0, py + TILE - 10, 0, py + TILE);
+      g.addColorStop(0, 'rgba(140, 150, 220, 0)');
+      g.addColorStop(1, 'rgba(120, 128, 205, 0.55)');
+      ctx.fillStyle = g;
+      ctx.fillRect(px, py + TILE - 10, TILE, 10);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        ctx.arc(px + 4 + k * 8, py + TILE - 3, 4.2, Math.PI, 0);
+        ctx.fill();
+      }
+    }
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    if (voidAt(x, y - 1)) ctx.fillRect(px, py, TILE, 2);
+    if (voidAt(x - 1, y)) ctx.fillRect(px, py, 2, TILE);
+    if (voidAt(x + 1, y)) ctx.fillRect(px + TILE - 2, py, 2, TILE);
+  }
+
   /** Buraco: fundo escuro, parede interna ao norte (vista 3/4) e bordas com contorno. */
   private drawHole(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, py: number): void {
     const hole = (bx: number, by: number) => this.world.getGround(bx, by) === Block.HOLE;
@@ -134,6 +159,8 @@ export class ChunkRenderer {
             }
           }
         }
+
+        if (g !== Block.VOID && g !== Block.HOLE) this.drawSkyEdges(ctx, x, y, px, py);
 
         if (liquid(g)) {
           // Barranca: o chão ao norte parece mais alto que a água.

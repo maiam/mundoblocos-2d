@@ -7,8 +7,9 @@ import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
 import type { Facing, Walker } from './walker';
 
 import type { ToolId } from '../world/items';
+import type { CharacterId } from '../world/profiles';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | 'sheep' | 'lamb' | 'sheep-love';
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -40,7 +41,12 @@ export const MAX_SHEEP = 16;
 export class Entities {
   readonly npcs: Sheep[] = [];
 
-  constructor(private readonly player: Player, private readonly rand: () => number = Math.random) {}
+  constructor(
+    private readonly player: Player,
+    private readonly rand: () => number = Math.random,
+    /** Personagem jogável do mundo (perfil). */
+    private readonly character: CharacterId = 'heroine',
+  ) {}
 
   /** Rebanho inicial perto de (x, y): posições pela seed, em grama andável a 2–8 células. */
   spawnFlock(world: World, x: number, y: number): void {
@@ -171,7 +177,8 @@ export class Entities {
 
   get actors(): Actor[] {
     const p = this.player;
-    const out: Actor[] = [{ kind: p.equipped ? `heroine-${p.equipped}` : 'heroine', x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime }];
+    const kind: ActorKind = this.character === 'goddess' ? 'goddess' : p.equipped ? `heroine-${p.equipped}` : 'heroine';
+    const out: Actor[] = [{ kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime }];
     const drawnCouples = new Set<Sheep>();
     for (const s of this.npcs) {
       if (s.courtship > 0 && s.partner) {

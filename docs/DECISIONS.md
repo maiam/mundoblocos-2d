@@ -10,12 +10,16 @@
 | 0005 | Itens contáveis separados dos blocos infinitos; inventário em `game/` | [0005](adr/0005-itens-e-inventario.md) |
 | 0006 | Blocos = 8 materiais da prancha; mesmo id como chão e cubo; prancha 3/4 como fonte | [0006](adr/0006-materiais-da-prancha.md) |
 | 0007 | Assets em WebP gerados por script; PNG só como etapa intermediária | [0007](adr/0007-assets-webp.md) |
+| 0008 | Perfis de mundo: um motor, vários mundos (Santuário Celestial) | [0008](adr/0008-perfis-de-mundo.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
 |---|---|
 | Sem backend neste repositório; persistência futura via core | PROJECT_CONTEXT |
 | Chunks quadrados 16×16 nos dois eixos | domains/world |
+| Santuário: 10 chunks em 5×2; só Deusa; só 18 blocos; sem ferramentas/cultivo/ovelhas | domains/worlds |
+| Subdomínio `santuario`; artefato próprio enquanto não há hospedagem | domains/worlds |
+| Blocos celestiais: aguardar prancha 3/4 (sem converter a isométrica); faces provisórias até lá | domains/worlds |
 | Pilha máx. 2 cubos; personagem sobe 1 nível por passo; descer é livre | domains/player |
 | Chão quebrado vira buraco; só bloco novo ocupa e vira piso nivelado | domains/world |
 | Ovelha não sobe em cubos: blocos servem de cerca | domains/npc |

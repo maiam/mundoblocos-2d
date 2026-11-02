@@ -1,8 +1,14 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.12.0_
+_Atualizado em 2026-11-02 — v0.13.0_
 
-## Mundo
+## Mundos
+- **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
+  Sólida, só a Deusa, só os 18 blocos celestiais para construir, sem ferramentas/cultivo/ovelhas. Escolhido por
+  subdomínio `santuario.`, `?mundo=santuario` ou artefato próprio. Faces dos blocos celestiais **provisórias**
+  (aguardando prancha 3/4); ícones já com a arte final. Ver `domains/worlds.md`.
+
+## Mundo principal
 - Gerado por seed (`?seed=`), em chunks 16×16 nos dois eixos, carregados sob demanda e descarregados quando
   longe (chunks editados ficam em memória).
 - Vista superior inclinada (3/4): chão + cubos com topo e frente; árvores altas; ordenação por profundidade.
@@ -32,6 +38,7 @@ _Atualizado em 2026-11-02 — v0.12.0_
 ## Limitações conhecidas
 - Nada é salvo (edições, inventário, plantações, ovelhas).
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
+- Santuário: blocos celestiais com arte provisória; subdomínio real ainda não hospedado (só artefato e `?mundo=`).
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
 - Sob a folha de trigo resta um filete claro da sombra original do desenho.
 - iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a
@@ -39,7 +46,7 @@ _Atualizado em 2026-11-02 — v0.12.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 40 testes (Vitest) passando; typecheck e build sem avisos.
+- 47 testes (Vitest) passando; typecheck e build sem avisos.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefato ~1,5 MB.
-- Publicado como Artifact: ver `OPERATIONS.md`.
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~2 MB cada (um bundle com a arte dos dois mundos).
+- Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

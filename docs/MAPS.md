@@ -30,6 +30,8 @@ flowchart TD
     W[world.ts] --> G[generator.ts] --> N[noise + random]
     W --> C[chunk + coords]
     W --> B[blocks + biomes + items]
+    W --> PR[profiles: principal · santuario]
+    W --> FG[flatGenerator]
   end
 ```
 
@@ -143,4 +145,5 @@ flowchart LR
 | HUD / controles na tela | `game/hud.ts`, `game/actionButton.ts`, `game/joystick.ts`, `style.css` | player, README |
 | Câmera / zoom | `game/camera.ts` | player |
 | Visual do chão | `render/chunkRenderer.ts` (cache por chunk) | render |
+| Novo mundo / mudar um mundo | `world/profiles.ts` (perfil), `world/flatGenerator.ts` ou gerador próprio, `render/character.ts` (personagem), script `build:artifact:<mundo>` | worlds, ADR 0008, OPERATIONS |
 | Desempenho | `bench/perf.bench.ts`, `world/generator.ts`, `world/world.ts`, `render/renderer.ts` | ARCHITECTURE §Desempenho |

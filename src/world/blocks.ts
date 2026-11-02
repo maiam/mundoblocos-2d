@@ -13,6 +13,8 @@ export const Block = {
   WATER: 6,
   /** Chão quebrado: ninguém pisa; só aceita um bloco novo (que vira piso). */
   HOLE: 8,
+  /** Fora dos limites de um mundo limitado: céu aberto, intransponível. */
+  VOID: 9,
   // --- materiais (prancha de blocos): cubos colocáveis que também formam o chão ---
   DIRT: 20,
   GRASS: 21,
@@ -32,6 +34,25 @@ export const Block = {
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
+  // --- Santuário Celestial (prancha "Blocos do Mundo Celestial") ---
+  CLOUD_SOLID: 80,
+  CLOUD_ETHEREAL: 81,
+  MARBLE_CELESTIAL: 82,
+  MARBLE_ORNATE: 83,
+  STONE_CELESTIAL: 84,
+  STONE_GOLDEN: 85,
+  GRASS_CELESTIAL: 86,
+  GRASS_FLOWERY: 87,
+  MOSS_LUMINOUS: 88,
+  EARTH_SACRED: 89,
+  EARTH_FLORAL: 90,
+  EARTH_CULTIVATED: 91,
+  WATER_SACRED: 92,
+  WATER_CRYSTAL: 93,
+  CRYSTAL_LIFE: 94,
+  LIGHT_BLOCK: 95,
+  WOOD_CELESTIAL: 96,
+  FOLIAGE_GOLDEN: 97,
 } as const;
 
 /** Número de estágios de crescimento do trigo e primeiro id da sequência. */
@@ -89,6 +110,7 @@ const defs: BlockDef[] = [
   { ...object(Block.AIR, 'Vazio'), shape: 'flat', solid: false, breakable: false, placeable: false },
   ground(Block.WATER, 'Água', { liquid: true, standable: false, breakable: false }),
   ground(Block.HOLE, 'Buraco', { standable: false, breakable: false }),
+  ground(Block.VOID, 'Céu Aberto', { standable: false, breakable: false }),
   // Materiais: um único id serve de cubo (camada de objeto) e de chão (camada de chão).
   object(Block.DIRT, 'Terra'),
   object(Block.GRASS, 'Terra com Grama'),
@@ -103,6 +125,25 @@ const defs: BlockDef[] = [
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false }),
   object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false }),
   object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false, placeable: false }),
+  // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
+  object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
+  object(Block.CLOUD_ETHEREAL, 'Nuvem Etérea'),
+  object(Block.MARBLE_CELESTIAL, 'Mármore Celestial'),
+  object(Block.MARBLE_ORNATE, 'Mármore Ornamentado'),
+  object(Block.STONE_CELESTIAL, 'Pedra Celestial'),
+  object(Block.STONE_GOLDEN, 'Pedra Dourada'),
+  object(Block.GRASS_CELESTIAL, 'Grama Celestial'),
+  object(Block.GRASS_FLOWERY, 'Grama Florida'),
+  object(Block.MOSS_LUMINOUS, 'Musgo Luminoso', { glow: true }),
+  object(Block.EARTH_SACRED, 'Terra Sagrada'),
+  object(Block.EARTH_FLORAL, 'Terra Floral'),
+  object(Block.EARTH_CULTIVATED, 'Terra Cultivada'),
+  object(Block.WATER_SACRED, 'Água Sagrada'),
+  object(Block.WATER_CRYSTAL, 'Água Cristalina'),
+  object(Block.CRYSTAL_LIFE, 'Cristal da Vida', { glow: true }),
+  object(Block.LIGHT_BLOCK, 'Bloco de Luz', { glow: true }),
+  object(Block.WOOD_CELESTIAL, 'Madeira Celestial'),
+  object(Block.FOLIAGE_GOLDEN, 'Folhagem Dourada'),
   // Trigo: não bloqueia passagem, não aceita nada por cima, só entra plantando a semente.
   ...Array.from({ length: WHEAT_STAGES }, (_, s) =>
     object(WHEAT_FIRST + s, s === WHEAT_STAGES - 1 ? 'Trigo Maduro' : 'Trigo em crescimento', {
@@ -133,6 +174,15 @@ export const MATERIALS: BlockId[] = [
   Block.STONE,
   Block.OAK_LOG,
   Block.OAK_PLANKS,
+];
+
+/** Blocos do Santuário Celestial, na ordem da prancha (e da hotbar do Santuário). */
+export const CELESTIAL_BLOCKS: BlockId[] = [
+  Block.CLOUD_SOLID, Block.CLOUD_ETHEREAL, Block.MARBLE_CELESTIAL, Block.MARBLE_ORNATE,
+  Block.STONE_CELESTIAL, Block.STONE_GOLDEN, Block.GRASS_CELESTIAL, Block.GRASS_FLOWERY,
+  Block.MOSS_LUMINOUS, Block.EARTH_SACRED, Block.EARTH_FLORAL, Block.EARTH_CULTIVATED,
+  Block.WATER_SACRED, Block.WATER_CRYSTAL, Block.CRYSTAL_LIFE, Block.LIGHT_BLOCK,
+  Block.WOOD_CELESTIAL, Block.FOLIAGE_GOLDEN,
 ];
 
 /** Ids que aparecem na hotbar, na ordem exibida. */

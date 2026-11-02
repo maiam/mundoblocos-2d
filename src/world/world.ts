@@ -3,7 +3,10 @@ import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatId, wheatSta
 import type { Biome } from './biomes';
 import { Chunk } from './chunk';
 import { chunkKey, toChunk, toLocal } from './coords';
+import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
+import { WORLD_PROFILES, type WorldProfile } from './profiles';
+import type { TerrainSource } from './terrain';
 
 /** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
 export const WHEAT_STAGE_SECONDS = 6;
@@ -27,7 +30,10 @@ export interface ChunkRect {
  * Toda leitura/escrita de bloco passa por aqui; regras de quebrar/colocar/andar também.
  */
 export class World {
-  readonly generator: WorldGenerator;
+  readonly generator: TerrainSource;
+  readonly profile: WorldProfile;
+  /** Limites em células (inclusivos) quando o perfil limita o mundo. */
+  private readonly cellBounds: { x0: number; y0: number; x1: number; y1: number } | null;
   /** Chunks por chave numérica (`numKey`): evita criar strings a cada leitura de célula. */
   private readonly chunks = new Map<number, Chunk>();
   /** Último chunk acessado (leituras vizinhas costumam cair no mesmo). */
@@ -35,8 +41,29 @@ export class World {
   /** Células com trigo plantado (crescem com o tempo). Só existem em chunks modificados, que não descarregam. */
   private readonly crops = new Set<string>();
 
-  constructor(seed: number) {
-    this.generator = new WorldGenerator(seed);
+  constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
+    this.profile = profile;
+    this.generator = profile.terrain.kind === 'flat'
+      ? new FlatGenerator(seed, profile.terrain.ground)
+      : new WorldGenerator(seed);
+    const b = profile.bounds;
+    this.cellBounds = b
+      ? { x0: b.cx0 * CHUNK_SIZE, y0: b.cy0 * CHUNK_SIZE, x1: (b.cx1 + 1) * CHUNK_SIZE - 1, y1: (b.cy1 + 1) * CHUNK_SIZE - 1 }
+      : null;
+  }
+
+  /** A célula está dentro dos limites do mundo? (sempre true em mundo ilimitado) */
+  inBounds(x: number, y: number): boolean {
+    const b = this.cellBounds;
+    return !b || (x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1);
+  }
+
+  /** Retângulo de chunks recortado aos limites do mundo (null se não sobra nada). */
+  clampRect(rect: ChunkRect): ChunkRect | null {
+    const b = this.profile.bounds;
+    if (!b) return rect;
+    const r = { cx0: Math.max(rect.cx0, b.cx0), cy0: Math.max(rect.cy0, b.cy0), cx1: Math.min(rect.cx1, b.cx1), cy1: Math.min(rect.cy1, b.cy1) };
+    return r.cx0 > r.cx1 || r.cy0 > r.cy1 ? null : r;
   }
 
   get seed(): number {
@@ -72,20 +99,23 @@ export class World {
     return chunk;
   }
 
-  /** Chão da célula. Fora de chunk carregado consulta o gerador (puro). */
+  /** Chão da célula. Fora de chunk carregado consulta o gerador (puro); fora dos limites, céu. */
   getGround(x: number, y: number): BlockId {
+    if (!this.inBounds(x, y)) return Block.VOID;
     const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getGround(toLocal(x), toLocal(y)) : this.generator.groundAt(x, y);
   }
 
   /** Objeto do nível 0 da célula (AIR se vazio). */
   getObject(x: number, y: number): BlockId {
+    if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getObject(toLocal(x), toLocal(y)) : this.generator.objectAt(x, y);
   }
 
   /** Cubo empilhado no nível 1 (AIR se não houver). */
   getUpper(x: number, y: number): BlockId {
+    if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getUpper(toLocal(x), toLocal(y)) : this.generator.upperAt(x, y);
   }
@@ -203,6 +233,8 @@ export class World {
   placementLevel(x: number, y: number, id: BlockId): 'ground' | 0 | 1 | null {
     const def = blockDef(id);
     if (!def.placeable || def.layer !== 'object') return null;
+    // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
+    if (!this.profile.blocks.includes(id)) return null;
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
@@ -227,6 +259,13 @@ export class World {
    * origem e devolve a célula andável mais próxima dele.
    */
   findSpawn(): [number, number] {
+    const b = this.profile.bounds;
+    if (b) {
+      // Mundo limitado: centro da área.
+      const cx = Math.floor(((b.cx0 + b.cx1 + 1) * CHUNK_SIZE) / 2);
+      const cy = Math.floor(((b.cy0 + b.cy1 + 1) * CHUNK_SIZE) / 2);
+      return this.nearestWalkable(cx, cy, 64);
+    }
     const welcoming = new Set(['meadow', 'sakura', 'enchanted']);
     for (let r = 0; r <= 60; r++) {
       for (let dy = -r; dy <= r; dy++) {
@@ -294,7 +333,9 @@ export class World {
   // ---- Ciclo de vida de chunks ----
 
   /** Gera até `budget` chunks faltantes no retângulo, do centro para fora. Retorna quantos. */
-  ensureChunks(rect: ChunkRect, budget: number): number {
+  ensureChunks(area: ChunkRect, budget: number): number {
+    const rect = this.clampRect(area);
+    if (!rect) return 0;
     const ccx = (rect.cx0 + rect.cx1) / 2;
     const ccy = (rect.cy0 + rect.cy1) / 2;
     const missing: [number, number, number][] = [];

@@ -15,6 +15,13 @@ npm run build      # typecheck + build estático em dist/
 npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/offline)
 ```
 
+## Mundos
+
+| Mundo | Como abrir | Jogável |
+|---|---|---|
+| MundoBlocos (principal) | domínio principal | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
+| Santuário Celestial da Deusa da Vida | subdomínio `santuario.` ou `?mundo=santuario` | [Artifact](https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb) |
+
 ## Celular
 
 Jogado sempre na horizontal. O primeiro toque coloca em tela cheia e trava a orientação onde o navegador

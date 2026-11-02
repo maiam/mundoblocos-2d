@@ -26,14 +26,20 @@ ap.add_argument('--rows', type=int, default=4)
 ap.add_argument('--sat', type=int, default=16, help='saturação máxima do fundo/sombra')
 ap.add_argument('--min', type=int, default=140, help='claridade mínima do fundo/sombra')
 ap.add_argument('--region', default=None, help='x0,y0,x1,y1: recorte da folha antes de dividir em grade')
+ap.add_argument('--grid-offset-y', type=int, default=0,
+                help='desloca a grade para cima (px) quando o desenho de uma linha invade a de cima (ex.: auréolas)')
+ap.add_argument('--alpha', action='store_true',
+                help='a folha já tem transparência: usa o alfa da imagem em vez de remover o fundo')
 ap.add_argument('--rows-map', default=None,
                 help='linhas de saída a partir das de entrada, ex. "0,3,1,2"; sufixo m espelha ("0,1,1m,2"). '
                      'Use para normalizar na ordem canônica frente, esquerda, direita, costas.')
 args = ap.parse_args()
 
-src = Image.open(args.src).convert('RGB')
+src_rgba = Image.open(args.src).convert('RGBA')
 if args.region:
-    src = src.crop(tuple(int(v) for v in args.region.split(',')))
+    src_rgba = src_rgba.crop(tuple(int(v) for v in args.region.split(',')))
+src_alpha = np.asarray(src_rgba)[..., 3]
+src = src_rgba.convert('RGB')
 img = np.asarray(src).astype(np.int16)
 H, W, _ = img.shape
 cw, ch = W / args.cols, H / args.rows
@@ -78,9 +84,14 @@ def remove_bg(x0, y0, x1, y1):
 cells = []
 for r in range(args.rows):
     for c in range(args.cols):
-        x0, y0 = round(c * cw), round(r * ch)
-        x1, y1 = round((c + 1) * cw), round((r + 1) * ch)
-        a = remove_bg(x0, y0, x1, y1)
+        x0, y0 = round(c * cw), max(0, round(r * ch) - args.grid_offset_y)
+        x1, y1 = round((c + 1) * cw), min(H, round((r + 1) * ch) - args.grid_offset_y)
+        if args.alpha:
+            # Alfa original; resíduos fracos do fundo (< 48) viram transparência total.
+            a = src_alpha[y0:y1, x0:x1].copy()
+            a[a < 48] = 0
+        else:
+            a = remove_bg(x0, y0, x1, y1)
         cells.append(np.dstack([img[y0:y1, x0:x1].astype(np.uint8), a]))
 
 if args.rows_map:

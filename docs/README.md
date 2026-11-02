@@ -22,11 +22,12 @@ Documentação viva do MundoBlocos 2D. Agentes de IA: comece por [`../CLAUDE.md`
 | Cultivo, itens, ferramentas, inventário | `world/items.ts`, `World` (plantio), `game/inventory.ts` | [farming.md](domains/farming.md) |
 | Jogador: movimento, câmera, entrada, botão de ação, tela | `game/player.ts`, `game/walker.ts`, `game/game.ts` | [player.md](domains/player.md) |
 | NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
+| Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Render e arte | `src/render/`, `assets-src/`, `scripts/` | [render.md](domains/render.md) |
 
 ## ADRs
 0001 geração pura e chunks · 0002 texturas procedurais (parcialmente substituída) · 0003 vista 3/4 ·
-0004 entidades `Walker` · 0005 itens e inventário · 0006 materiais da prancha · 0007 assets em WebP.
+0004 entidades `Walker` · 0005 itens e inventário · 0006 materiais da prancha · 0007 assets em WebP · 0008 perfis de mundo.
 
 ## Histórico
 Mudanças antigas (vista lateral, cavernas, biomas removidos) aparecem só no CHANGELOG e nas ADRs, como

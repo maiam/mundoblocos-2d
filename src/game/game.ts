@@ -5,10 +5,11 @@ import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
 import { dropsFor, ITEMS, TOOLS } from '../world/items';
 import { World } from '../world/world';
+import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
 import { Drops } from './drops';
 import { Entities } from './entities';
-import { HOTBAR, type HotbarSlot } from './hotbar';
+import { hotbarFor, type HotbarSlot } from './hotbar';
 import { Hud } from './hud';
 import { Inventory } from './inventory';
 import type { Sheep } from './sheep';
@@ -55,7 +56,9 @@ export class Game {
   readonly camera = new Camera();
   readonly player: Player;
   readonly entities: Entities;
-  readonly inventory = new Inventory();
+  readonly inventory: Inventory;
+  /** Espaços da hotbar deste mundo (perfil). */
+  private readonly hotbar: HotbarSlot[];
   readonly drops = new Drops();
   private readonly renderer: Renderer;
   private readonly hud: Hud;
@@ -76,17 +79,25 @@ export class Game {
   private running = true;
   private readonly cleanup: (() => void)[] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, seed: number, private readonly screenMode?: ScreenMode) {
-    this.world = new World(seed);
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    seed: number,
+    private readonly screenMode?: ScreenMode,
+    profile: WorldProfile = WORLD_PROFILES.principal,
+  ) {
+    this.world = new World(seed, profile);
+    this.hotbar = hotbarFor(profile);
+    // Sem cultivo, não há itens contáveis (Santuário: só blocos).
+    this.inventory = profile.farming ? new Inventory() : new Inventory({});
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
-    this.entities = new Entities(this.player);
-    this.entities.spawnFlock(this.world, sx, sy);
+    this.entities = new Entities(this.player, Math.random, profile.character);
+    if (profile.sheep) this.entities.spawnFlock(this.world, sx, sy);
     this.renderer = new Renderer(canvas, this.world);
     this.hud = new Hud({
-      icons: HOTBAR.map((s) =>
+      icons: this.hotbar.map((s) =>
         s.kind === 'tool' ? TOOL_ICON_URLS[s.tool] : s.kind === 'item' ? ITEM_ICON_URLS[s.item] : this.renderer.iconFor(s.block)),
-      names: HOTBAR.map((s) =>
+      names: this.hotbar.map((s) =>
         s.kind === 'tool' ? TOOLS[s.tool].name : s.kind === 'item' ? ITEMS[s.item].name : blockDef(s.block).name),
       onSelect: (i) => this.select(i),
     });
@@ -105,7 +116,7 @@ export class Game {
   }
 
   private get slot(): HotbarSlot | null {
-    return this.selected === null ? null : HOTBAR[this.selected];
+    return this.selected === null ? null : this.hotbar[this.selected];
   }
 
   /**
@@ -113,7 +124,7 @@ export class Game {
    * Ferramenta selecionada = ferramenta equipada (muda o sprite).
    */
   private select(i: number | null): void {
-    this.selected = i === null || i === this.selected ? null : Math.max(0, Math.min(HOTBAR.length - 1, i));
+    this.selected = i === null || i === this.selected ? null : Math.max(0, Math.min(this.hotbar.length - 1, i));
     const slot = this.slot;
     this.player.equipped = slot?.kind === 'tool' ? slot.tool : null;
     this.actionButton.setIcon(this.slotIcon(slot));
@@ -162,7 +173,7 @@ export class Game {
       if (e.code === 'KeyT') this.skipTime();
       if (e.code.startsWith('Digit')) {
         const n = Number(e.code.slice(5)) || 10; // tecla 0 = 10º espaço
-        if (n <= HOTBAR.length) this.select(n - 1);
+        if (n <= this.hotbar.length) this.select(n - 1);
       }
       if (e.code === 'Escape') this.select(null);
       if (e.code === 'Space') this.startAction();
@@ -419,7 +430,7 @@ export class Game {
       elapsed: this.elapsed,
       dt,
     });
-    this.hud.update(this.selected ?? -1, HOTBAR.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
+    this.hud.update(this.selected ?? -1, this.hotbar.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
     const slot = this.slot;
     this.actionButton.update(this.action && this.action.held > TAP_MAX_S ? this.action.progress : 0,
       slot?.kind === 'item' && this.inventory.count(slot.item) === 0);

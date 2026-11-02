@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.0 — 2026-11-02
+- **Santuário Celestial da Deusa da Vida**: novo mundo com 10 chunks (5×2), chão todo de Nuvem Sólida, Deusa da Vida
+  como única personagem e 18 blocos celestiais como únicos blocos de construção. Sem ferramentas, cultivo ou ovelhas.
+- Perfis de mundo (`world/profiles.ts`, ADR 0008): terreno, limites, personagem, blocos e sistemas por mundo;
+  seleção por `VITE_WORLD` → subdomínio `santuario.` → `?mundo=santuario`.
+- `World` com limites (`VOID` fora, carregamento recortado, spawn central) e blocos permitidos por perfil.
+- `FlatGenerator` + interface `TerrainSource`; bioma `celestial`; partículas douradas (`sparkle`); céu em degradê e
+  orla de nuvem nas bordas do mundo.
+- Arte: Deusa (folha transparente; `process-sprite.py --alpha --grid-offset-y`), 18 ícones da prancha
+  (`scripts/slice-icons.py`), faces provisórias procedurais (`render/celestialArt.ts`), `composeCube` reutilizável.
+- Artefato próprio do Santuário (`npm run build:artifact:santuario`); `build-artifact.mjs` aceita nome e título.
+- 7 testes novos (perfis, limites, blocos permitidos, buraco, spawn, personagem, hotbar).
+
 ## 0.12.0 — 2026-11-02
 **Desempenho**
 - Gerador: uma avaliação de ruído por célula (`cellAt`) → gerar chunk 3,5× mais rápido (0,26 → 0,07 ms).

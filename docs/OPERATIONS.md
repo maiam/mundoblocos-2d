@@ -13,10 +13,15 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | `npm run bench` | Benchmarks de geração/leitura de chunks (`bench/`) |
 | `npm run build` | Typecheck + `dist/` estático (`base: './'`, qualquer subcaminho/CDN; inclui PWA) |
 | `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (arquivo único, sem esqueleto `<html>`) |
+| `npm run build:artifact:santuario` | build com `VITE_WORLD=santuario` → `artifact/santuario.html` |
 
-## Artifact (versão jogável)
-- URL: https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn (privada; compartilhar pelo menu Share).
-- Atualizar: `npm run build:artifact` e publicar o mesmo arquivo (`artifact/mundoblocos.html`) para manter a URL.
+## Artifacts (versões jogáveis, privadas — compartilhar pelo menu Share)
+| Mundo | URL | Atualizar |
+|---|---|---|
+| Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` |
+| Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` |
+- Rode **o build de cada mundo antes de publicá-lo** (os dois usam `dist/`). No dev: `?mundo=santuario`.
+- Subdomínio real: hospedar `dist/` (build normal) em `santuario.<domínio>`; o jogo reconhece pelo hostname.
 - `artifact/` não é versionado. O manifest PWA não entra no arquivo único.
 
 ## Pipeline de arte
@@ -33,7 +38,14 @@ $P assets-src/sheep-sheet.png          src/assets/sheep.png       --frame-h 96 -
 $P assets-src/lamb-sheet.png           src/assets/lamb.png        --frame-h 80 --sat 36 --min 128
 $P assets-src/sheep-love-sheet.png     src/assets/sheep-love.png  --cols 4 --rows 1 --region 0,0,2172,490 --frame-h 120 --sat 20 --min 140
 $P assets-src/wheat-growth-sheet.png   src/assets/wheat-crop.png  --frame-h 96 --sat 30 --min 196
+$P assets-src/goddess-sheet.png        src/assets/goddess.png     --alpha --frame-h 160 --grid-offset-y 22
 ```
+`--alpha`: folha já transparente (usa o alfa); `--grid-offset-y`: sobe a grade quando o desenho invade a linha de cima.
+
+**Ícones do Santuário** (prancha transparente 6×3):
+`python3 scripts/slice-icons.py assets-src/celestial-blocks-iso.png 6 3 icon-celestial <18 nomes>` (lista em
+`render/celestialArt.ts`, mesma ordem de `CELESTIAL_BLOCKS`).
+
 **Ícones** (`--cols 1 --rows 1 --frame-h 64`):
 - Trigo (`wheat-icons-sheet.png`, `--sat 50 --min 190`): semente `45,210,310,402` · trigo `645,555,905,835`.
 - Ferramentas (`tool-icons-sheet.png`, `--sat 34 --min 175`): espada `75,105,455,490` · enxada `535,105,915,490` ·

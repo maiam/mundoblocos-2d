@@ -1,3 +1,4 @@
+import goddessUrl from '../assets/goddess.webp?inline';
 import heroineAxeUrl from '../assets/heroine-axe.webp?inline';
 import heroineHoeUrl from '../assets/heroine-hoe.webp?inline';
 import heroinePickaxeUrl from '../assets/heroine-pickaxe.webp?inline';
@@ -32,9 +33,13 @@ interface SheetSpec {
   /** Raios da sombra no chão (em células). */
   shadow: [number, number];
   walkFps: number;
+  /** Fração do quadro abaixo dos pés (sombra desenhada na própria arte). */
+  footPad?: number;
 }
 
 const SPECS: Record<ActorKind, SheetSpec> = {
+  // Deusa da Vida: quadro inclui auréola e asas (desenho ~15% maior que a heroína) e a própria sombra.
+  goddess: { url: goddessUrl, cols: 4, rows: 4, height: TILE * 2.7, shadow: [0.2, 0.07], walkFps: 7, footPad: 0.045 },
   heroine: { url: heroineUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   // Heroína com ferramenta: mesma escala (altura do desenho igual à folha base).
   'heroine-sword': { url: heroineSwordUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
@@ -59,7 +64,7 @@ class SpriteSheet {
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
   draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor): void {
-    const { height, shadow, walkFps, cols, rows } = this.spec;
+    const { height, shadow, walkFps, cols, rows, footPad = 0 } = this.spec;
     // Sombra fixa no chão (não acompanha o balanço do sprite).
     ctx.fillStyle = 'rgba(30, 20, 70, 0.3)';
     ctx.beginPath();
@@ -72,7 +77,7 @@ class SpriteSheet {
     const w = h * (fw / fh);
     const col = rows === 1 ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
     const row = rows === 1 ? 0 : ROW[a.facing];
-    ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(fx - w / 2), Math.round(fy - h + 2 * zoom), Math.round(w), Math.round(h));
+    ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(fx - w / 2), Math.round(fy - h + 2 * zoom + h * footPad), Math.round(w), Math.round(h));
   }
 
   get drawHeight(): number {

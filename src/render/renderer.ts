@@ -71,7 +71,16 @@ export class Renderer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.fillStyle = '#1b1838';
+    // Fundo (visível além das bordas de mundos limitados): céu do perfil.
+    const [skyTop, skyBottom] = this.world.profile.sky;
+    if (skyTop === skyBottom) {
+      ctx.fillStyle = skyTop;
+    } else {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, skyTop);
+      g.addColorStop(1, skyBottom);
+      ctx.fillStyle = g;
+    }
     ctx.fillRect(0, 0, w, h);
 
     // 1) Chão.

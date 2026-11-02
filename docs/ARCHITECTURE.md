@@ -11,26 +11,31 @@ scripts/
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
+  slice-icons.py               prancha em grade com transparência → um ícone por célula
   make-icons.py                ícones do PWA (public/)
   build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)
 bench/perf.bench.ts            benchmarks (npm run bench)
 public/                        manifest PWA + ícones
 src/
   config.ts                    TILE, CUBE_FRONT, CHUNK_SIZE, MAX_STACK, STEP_HEIGHT, orçamentos
-  main.ts                      carrega a arte dos blocos, lê ?seed=, cria o Game (window.__game só no dev)
+  main.ts                      escolhe o mundo (perfil), carrega a arte, lê ?seed=, cria o Game (__game só no dev)
   assets/*.webp                sprites, atlas e ícones (importados com ?inline)
   world/   domínio — sem DOM, sem Math.random
     random.ts, noise.ts        PRNG/hash e Perlin + fBm com seed
     blocks.ts                  registro de blocos (MATERIALS, formas, camadas, trigo 60–75)
-    biomes.ts                  Campos, Sakura, Dunas
+    profiles.ts                perfis de mundo (principal, santuario) + resolveWorldId
+    biomes.ts                  Campos, Sakura, Dunas, Celestial
+    terrain.ts                 interface TerrainSource (cellAt, biomeAt, generateChunk)
     generator.ts               WorldGenerator.cellAt (uma avaliação de ruído por célula), generateChunk
+    flatGenerator.ts           FlatGenerator: chão de um bloco só (Santuário)
     coords.ts                  célula ↔ chunk/local (seguro p/ negativos)
     chunk.ts                   Chunk 16×16: ground/objects/upper, modified, version
-    world.ts                   World: chunks, standHeight, quebrar/colocar/plantar, tick, spawn
+    world.ts                   World(seed, perfil): limites, chunks, standHeight, quebrar/colocar/plantar, tick, spawn
     items.ts                   itens contáveis, ferramentas, dropsFor
   render/  apresentação — só lê o mundo
     blockArt.ts                carrega o atlas antes do jogo
-    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones
+    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
+    celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
     character.ts               folhas dos atores (heroína ±ferramenta, ovelha, filhote, namoro) + coração
     itemArt.ts                 trigo por estágio, ícones de itens/ferramentas
@@ -66,7 +71,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único) | ~1,5 MB (era 4,7 MB) | aviso do build acima de 1,8 MB |
+| Artefato (HTML único, cada mundo) | ~2,0 MB (era 4,7 MB antes do WebP) | aviso do build acima de 2,3 MB |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

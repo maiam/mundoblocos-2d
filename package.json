@@ -1,7 +1,7 @@
 {
   "name": "mundoblocos-2d",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build:artifact": "npm run build && node scripts/build-artifact.mjs",
-    "bench": "vitest bench --run --config bench/vitest.config.ts"
+    "bench": "vitest bench --run --config bench/vitest.config.ts",
+    "build:artifact:santuario": "VITE_WORLD=santuario npm run build && node scripts/build-artifact.mjs santuario \"Santuário Celestial\""
   },
   "devDependencies": {
     "typescript": "~5.9.0",

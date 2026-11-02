@@ -24,6 +24,8 @@ operacional e faz parte da entrega.
 - Toda entidade que anda estende `Walker`; colisão com o mapa sempre via `World.standHeight`.
 - Jogo **horizontal**; layout deve caber em paisagem com ~360 px de altura e respeitar safe-area.
 - Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**.
+- **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é
+  limitado a 10 chunks e só aceita os 18 blocos celestiais e a Deusa — não misture conteúdo entre mundos.
 
 ## 3. Comandos
 ```bash
@@ -31,7 +33,8 @@ npm run dev                 # http://localhost:5173/?seed=42  (window.__game exp
 npm test                    # Vitest (domínio + entidades)
 npx tsc --noEmit            # typecheck
 npm run bench               # benchmarks de geração/leitura de chunks
-npm run build:artifact      # HTML único em artifact/ → publicar no Artifact (mesmo arquivo = mesma URL)
+npm run build:artifact      # mundo principal → artifact/mundoblocos.html (publicar = mesma URL)
+npm run build:artifact:santuario   # Santuário → artifact/santuario.html (rode o build do mundo antes de publicá-lo)
 python3 scripts/optimize-assets.py   # SEMPRE após gerar sprites/atlas (PNG → WebP)
 ```
 Pipeline completo de assets: `docs/OPERATIONS.md`.
@@ -48,6 +51,9 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - `Entities.update`: ordem **concluir namoro → parear → iniciar**, senão o namoro reinicia em loop.
 - No toque, o canvas ignora `pointerType === 'touch'` (ação só pelo botão); testes de toque devem usar o botão.
 - Mudar o gerador muda o mapa de todas as seeds: avise o usuário e rode os testes de determinismo/spawn.
+- Folhas que já vêm transparentes: `process-sprite.py --alpha`; se o desenho invade a linha de cima (auréolas,
+  asas), `--grid-offset-y`. Confira a "altura do desenho" no relatório: igual à célula = recorte errado.
+- Os dois artefatos usam o mesmo `dist/`: gere o build do mundo imediatamente antes de publicá-lo.
 - Testes no navegador: Playwright já instalado (`require('playwright')`); use `window.__game` no dev.
 
 ## 5. Ao terminar (definição de pronto)

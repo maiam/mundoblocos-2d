@@ -3,6 +3,7 @@ import { Block, type BlockId } from './blocks';
 import { type Biome, pickBiome } from './biomes';
 import { Noise } from './noise';
 import { hash2 } from './random';
+import type { Cell, TerrainSource } from './terrain';
 
 /** Limiares de elevação (ruído ~[-1, 1]). */
 const WATER_LEVEL = -0.26;
@@ -11,17 +12,13 @@ const MOUNTAIN_LEVEL = 0.36;
 /** Acima disto a montanha tem 2 cubos de altura (escalável a partir das bordas de 1). */
 const HIGH_MOUNTAIN = 0.43;
 
-export interface Cell {
-  ground: BlockId;
-  object: BlockId;
-  upper: BlockId;
-}
+export type { Cell } from './terrain';
 
 /**
  * Gerador procedural determinístico para o plano visto de cima. `cellAt(x, y)`
  * é função PURA da seed — chunks são contínuos nas bordas sem costura.
  */
-export class WorldGenerator {
+export class WorldGenerator implements TerrainSource {
   readonly seed: number;
   private readonly terrain: Noise;
   private readonly climate: Noise;

@@ -7,9 +7,10 @@ import sandIcon from '../assets/icon-block-sand.webp?inline';
 import stoneIcon from '../assets/icon-block-stone.webp?inline';
 import tilledIcon from '../assets/icon-block-tilled.webp?inline';
 import { CUBE_FRONT, TILE } from '../config';
-import { Block, type BlockId, MATERIALS } from '../world/blocks';
+import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { getBlockAtlas } from './blockArt';
+import { CELESTIAL_ICONS, celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
 /**
@@ -133,16 +134,28 @@ function materialTop(index: number): HTMLCanvasElement {
 
 /** Cubo 3/4 com a arte da prancha: topo em [0, T) e face frontal em [T, T + F), mais contorno. */
 function materialCube(index: number, outline: string): Sprite {
-  const [c, ctx] = canvas(T, T + F);
   const atlas = getBlockAtlas();
+  return composeCube(
+    (ctx) => ctx.drawImage(atlas, index * ATLAS_TOP, 0, ATLAS_TOP, ATLAS_TOP, 0, 0, T, T),
+    (ctx) => ctx.drawImage(atlas, index * ATLAS_TOP, ATLAS_TOP, ATLAS_TOP, ATLAS_FRONT, 0, T, T, F),
+    outline,
+  );
+}
+
+/**
+ * Monta um cubo 3/4 a partir de duas faces: `drawTop` pinta [0, T) e `drawFront`
+ * pinta [T, T + F). Aplica sombra na frente, aresta clara e contorno.
+ */
+export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string): Sprite {
+  const [c, ctx] = canvas(T, T + F);
   ctx.save();
   roundRect(ctx, 0.5, 0.5, T - 1, T + F - 1, 3);
   ctx.clip();
-  ctx.drawImage(atlas, index * ATLAS_TOP, ATLAS_TOP, ATLAS_TOP, ATLAS_FRONT, 0, T, T, F);
+  drawFront(ctx);
   // Face frontal um pouco mais escura (luz vem de cima).
   ctx.fillStyle = 'rgba(30, 20, 60, 0.18)';
   ctx.fillRect(0, T, T, F);
-  ctx.drawImage(atlas, index * ATLAS_TOP, 0, ATLAS_TOP, ATLAS_TOP, 0, 0, T, T);
+  drawTop(ctx);
   // Aresta clara entre topo e frente + filete de luz no topo.
   ctx.fillStyle = 'rgba(255, 250, 230, 0.45)';
   ctx.fillRect(0, T - 1, T, 1);
@@ -335,7 +348,22 @@ export function createBlockTextures(): BlockTextures {
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
-  const glowColor = new Map<BlockId, string>();
+  // Santuário Celestial: arte provisória procedural (até chegar a prancha 3/4) + ícones da prancha.
+  for (const id of CELESTIAL_BLOCKS) {
+    const { top, front } = celestialFaces(id);
+    groundTop.set(id, top);
+    objects.set(id, composeCube(
+      (ctx) => ctx.drawImage(top, 0, 0, T, T),
+      (ctx) => ctx.drawImage(front, 0, T, T, F),
+      CELESTIAL_STYLE[id].outline,
+    ));
+    icons.set(id, CELESTIAL_ICONS[id]);
+  }
+  const glowColor = new Map<BlockId, string>([
+    [Block.MOSS_LUMINOUS, '#c8ff8a'],
+    [Block.CRYSTAL_LIFE, '#ff9be6'],
+    [Block.LIGHT_BLOCK, '#ffe08a'],
+  ]);
   const bankColor = new Map<BlockId, string>([
     [Block.GRASS, '#8a5a36'],
     [Block.DIRT, '#8a5a36'],

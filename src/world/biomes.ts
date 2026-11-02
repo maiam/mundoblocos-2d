@@ -1,7 +1,7 @@
 import { Block, type BlockId } from './blocks';
 
 export interface Biome {
-  key: 'meadow' | 'sakura' | 'desert';
+  key: 'meadow' | 'sakura' | 'desert' | 'celestial';
   name: string;
   ground: BlockId;
   tree: BlockId;
@@ -26,6 +26,10 @@ export const BIOMES: Record<Biome['key'], Biome> = {
   desert: {
     key: 'desert', name: 'Dunas Douradas', ground: Block.SAND,
     tree: Block.CACTUS, treeDensity: 0.06, decorations: [], decoChance: 0,
+  },
+  celestial: {
+    key: 'celestial', name: 'Santuário Celestial', ground: Block.CLOUD_SOLID,
+    tree: Block.AIR, treeDensity: 0, decorations: [], decoChance: 0,
   },
 };
 
