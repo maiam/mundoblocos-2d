@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.32.1_
+_Atualizado em 2026-11-02 — v0.33.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -52,7 +52,8 @@ _Atualizado em 2026-11-02 — v0.32.1_
   direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Habilidades** (Construtor): receitas de Tábua (1 tora → 2), Porta (4 tábuas) e Tenda (10 sedas + 10 tábuas + 4
-  presas) — tocar cria. **Tenda** (2×2) = ponto de renascer. Bolsa com 27 itens (9 na mão + 18).
+  presas) — tocar cria. **Baú de Carvalho** (8 tábuas; 27 espaços). **Tenda** (2×2) = ponto de
+  renascer, com aviso na tela; derrubar a última volta ao início. Bolsa com 27 itens (9 na mão + 18).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
 - **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
@@ -81,6 +82,6 @@ _Atualizado em 2026-11-02 — v0.32.1_
 - 88 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,07 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,09 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

@@ -1,6 +1,7 @@
 """Ícones de interface, tenda e a nova Tábua de Carvalho → arte do jogo.
 
   ui-character.png / ui-skills.png / ui-builder.png (transparentes, com brilho fraco) → icon-ui-*.png 96×96
+  chest-angled.png / chest-front.png → icon-block-chest.png (ícone) e chest.png (sprite do mundo)
   tent.jpg (fundo branco) → icon-block-tent.png (64×64, hotbar) e tent.png (sprite do mundo, 96 de altura)
   oak-planks-cube.png (cubo 3/4 transparente) → substitui a coluna da Tábua no blocks-atlas (topo, frente, chão)
       e o ícone icon-block-oak-planks.png
@@ -54,6 +55,12 @@ def square(im, n, margin=0.04):
 for name, mode in [('character', 'alpha'), ('skills', 'alpha'), ('builder', 'alpha')]:
     square(cutout(SRC + f'ui-{name}.png', mode), 96).save(OUT + f'icon-ui-{name}.png', optimize=True)
     print(OUT + f'icon-ui-{name}.png')
+
+# Baú de Carvalho: vista inclinada → ícone; vista de frente → sprite do mundo (combina com a câmera 3/4).
+square(cutout(SRC + 'chest-angled.png', 'alpha'), 64).save(OUT + 'icon-block-chest.png', optimize=True)
+chest = cutout(SRC + 'chest-front.png', 'alpha', scale=0.12)
+chest.save(OUT + 'chest.png', optimize=True)
+print(OUT + 'icon-block-chest.png', OUT + 'chest.png', chest.size)
 
 tent = cutout(SRC + 'tent.jpg', 'light', scale=1.0)
 square(tent, 64).save(OUT + 'icon-block-tent.png', optimize=True)

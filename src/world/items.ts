@@ -178,7 +178,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST]);
 
 /**
  * O que um bloco quebrado devolve como material (mundos com coleta): o próprio material (cubo ou chão;
@@ -235,6 +235,10 @@ export const RECIPES: Recipe[] = [
   {
     id: 'oak-door', name: 'Porta de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.OAK_DOOR), count: 1 },
+  },
+  {
+    id: 'oak-chest', name: 'Baú de Carvalho', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 8 }], output: { item: blockStack(Block.CHEST), count: 1 },
   },
   {
     id: 'tent', name: 'Tenda', profession: 'builder',

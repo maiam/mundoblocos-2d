@@ -49,6 +49,8 @@ import skillsIcon from '../../assets/icon-ui-skills.webp?inline';
 import builderIcon from '../../assets/icon-ui-builder.webp?inline';
 import tentIcon from '../../assets/icon-block-tent.webp?inline';
 import tentSprite from '../../assets/tent.webp?inline';
+import chestIcon from '../../assets/icon-block-chest.webp?inline';
+import chestSprite from '../../assets/chest.webp?inline';
 import waterTop from '../../assets/water-top.webp?inline';
 import waterFlow from '../../assets/water-flow.webp?inline';
 import wheatCrop from '../../assets/wheat-crop.webp?inline';
@@ -93,6 +95,7 @@ const pack: ArtPack = {
   dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls },
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
   tent: { icon: tentIcon, sprite: tentSprite },
+  chest: { icon: chestIcon, sprite: chestSprite },
   water: { top: waterTop, flow: waterFlow },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,

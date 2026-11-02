@@ -24,6 +24,11 @@ export function tentCells(x: number, y: number): Array<[number, number]> {
 }
 
 /** Blocos que substituem a água (viram o chão da célula): todo tipo de terra, Pedra, Tora e Tábua. */
+/** Espaços de um baú. */
+export const CHEST_SLOTS = 27;
+/** Um espaço de baú: pilha (id do que se carrega + quantidade) ou vazio. */
+export type ChestSlots = Array<{ item: string; count: number } | null>;
+
 export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS]);
 /** Tempo para a água encher um buraco vizinho (s). */
 export const FLOW_SECONDS = 0.6;
@@ -282,9 +287,11 @@ export class World {
     const target = this.breakTarget(x, y);
     if (target === 'object') {
       const top = this.topBlock(x, y)!;
+      if (top.id === Block.CHEST) this.chests.delete(chunkKey(x, y)); // quem quebra lê o conteúdo antes (chestAt)
       if (top.id === Block.TENT || top.id === Block.TENT_PART) {
-        // Tenda 2×2: qualquer parte derruba a tenda inteira.
+        // Tenda 2×2: qualquer parte derruba a tenda inteira; se era a última colocada, o renascer volta ao início.
         const a = this.tentAnchor(x, y);
+        if (a && this.tent && a[0] === this.tent[0] && a[1] === this.tent[1]) this.tent = null;
         if (a) for (const [cx, cy] of tentCells(a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
         else this.setLevel(x, y, 0, Block.AIR);
         return Block.TENT;
@@ -460,6 +467,20 @@ export class World {
 
   /** Última tenda colocada (ponto de renascer), se ainda estiver de pé. */
   tent: [number, number] | null = null;
+
+  /** Conteúdo dos baús, por célula ("x,y"): 27 espaços (pilha ou null). Parte do estado do mundo (salvo). */
+  readonly chests = new Map<string, ChestSlots>();
+
+  /** Espaços do baú da célula (null se não há baú). */
+  chestAt(x: number, y: number): ChestSlots | null {
+    return this.getObject(x, y) === Block.CHEST ? this.chests.get(chunkKey(x, y)) ?? this.newChest(x, y) : null;
+  }
+
+  private newChest(x: number, y: number): ChestSlots {
+    const c: ChestSlots = Array(CHEST_SLOTS).fill(null);
+    this.chests.set(chunkKey(x, y), c);
+    return c;
+  }
 
   /** Onde renascer: ao lado da última tenda (se ainda existir), senão o início. */
   respawnPoint(): [number, number] {

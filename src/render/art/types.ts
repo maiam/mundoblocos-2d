@@ -29,6 +29,8 @@ export interface ArtPack {
   water?: { top: string; flow: string };
   /** Tenda (ponto de renascer): ícone da grade e sprite do mundo. */
   tent?: { icon: string; sprite: string };
+  /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
+  chest?: { icon: string; sprite: string };
   /** Ícones de interface (bolsa do inventário). */
   uiIcons?: { bag: string; character: string; skills: string; builder: string };
   toolIcons: Partial<Record<ToolId, string>>;

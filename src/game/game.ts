@@ -13,6 +13,7 @@ import { Drops } from './drops';
 import { Entities } from './entities';
 import { bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import { BagPanel, type BagEntry } from './bag';
+import { ChestPanel } from './chest';
 import { setProfessionIcon, SkillsPanel } from './skills';
 import type { SlotView } from './hud';
 import { Hud } from './hud';
@@ -52,6 +53,9 @@ export class Game {
   readonly hotbar: Hotbar;
   private readonly bag: BagPanel;
   private readonly skills: SkillsPanel;
+  private readonly chest: ChestPanel;
+  /** Pilha da heroína escolhida (da mão ou da bolsa) para levar ao baú. */
+  private heroPicked: StackId | null = null;
   /** Materiais precisam ser coletados neste mundo (perfil). */
   private readonly collect: boolean;
   readonly drops = new Drops();
@@ -106,6 +110,8 @@ export class Game {
       joystickActive: () => this.joystick.active,
       collectBlocks: profile.collectBlocks,
       onConsumed: () => this.hotbar.prune(this.inventory),
+      onOpenChest: (x, y) => this.openChest(x, y),
+      notify: (text) => this.hud.toast(text),
     });
     this.hud = new Hud({
       slots: this.hotbar.length,
@@ -119,7 +125,8 @@ export class Game {
       // Corações só em mundo com dungeon.
       maxHp: profile.dungeon ? MAX_HP : 0,
     });
-    this.bag = new BagPanel(this.hud.bagSection);
+    this.bag = new BagPanel(this.hud.bagSection, (i, e) => this.onBagTap(i, e));
+    this.chest = new ChestPanel(this.hud.chestSection, (i) => this.onChestTap(i));
     setProfessionIcon('builder', art().uiIcons?.builder ?? '');
     this.skills = new SkillsPanel(this.hud.recipesSection, this.hud.professionsSection,
       (id) => { const v = this.stackView(id, null); return { icon: v.icon, name: v.name }; },
@@ -169,6 +176,10 @@ export class Game {
       this.select(i);
       return;
     }
+    if (this.chest.isOpen) {
+      this.onHandTapWithChest(i);
+      return;
+    }
     // Bolsa aberta: põe o item escolhido no espaço (o que estava volta para a bolsa) ou guarda o espaço na bolsa
     // (só se a bolsa tiver lugar).
     if (!this.bag.picked && this.hotbar.stack(i) && !bagHasRoom(this.inventory, this.hotbar)) return;
@@ -184,12 +195,137 @@ export class Game {
     const open = force ?? !this.bag.isOpen;
     if (open === this.bag.isOpen) return;
     if (open) this.toggleSkills(false); // um painel por vez acima da grade
+    if (!open) this.closeChest();
     this.bag.setOpen(open);
     this.hud.setBagOpen(open);
     if (open) {
       this.actions.cancelAll();
       this.bag.render(this.bagEntries());
     }
+  }
+
+  // ---- Baú (tocar no item e depois no destino) ----
+
+  /** Abre o baú da célula: painel do baú + bolsa acima da mão (pausa o jogo). */
+  private openChest(x: number, y: number): void {
+    if (!this.world.chestAt(x, y)) return;
+    this.toggleSkills(false);
+    this.toggleBag(true);
+    this.chest.setOpen([x, y]);
+    this.hud.setChestOpen(true);
+    this.heroPicked = null;
+    this.refreshChestUi();
+  }
+
+  private closeChest(): void {
+    if (!this.chest.isOpen) return;
+    this.chest.setOpen(null);
+    this.hud.setChestOpen(false);
+    this.heroPicked = null;
+    this.hud.setHandPicked(-1);
+  }
+
+  private get chestSlots() {
+    const at = this.chest.at;
+    return at ? this.world.chestAt(at[0], at[1]) : null;
+  }
+
+  private refreshChestUi(): void {
+    const slots = this.chestSlots;
+    if (!slots) return this.closeChest();
+    this.chest.render(slots, (id) => {
+      const v = this.stackView(id, null);
+      return { icon: v.icon, name: v.name, tool: id.startsWith('tool:') };
+    });
+    this.bag.picked = this.heroPicked && this.hotbar.indexOf(this.heroPicked) < 0 ? this.heroPicked : null;
+    this.bag.render(this.bagEntries());
+    this.hud.setHandPicked(this.heroPicked ? this.hotbar.indexOf(this.heroPicked) : -1);
+  }
+
+  /** Recebe uma pilha do baú: soma se já tem; tipo novo só com lugar (na mão em `hand`, senão na bolsa). */
+  private receiveFromChest(item: StackId, count: number, hand: number | null): boolean {
+    const has = this.inventory.count(item) > 0;
+    if (hand !== null) {
+      const displaced = this.hotbar.stack(hand);
+      if (!has && displaced && displaced !== item && !bagHasRoom(this.inventory, this.hotbar)) return false;
+      this.inventory.add(item, count);
+      this.hotbar.assign(hand, item);
+      return true;
+    }
+    if (!has && !bagHasRoom(this.inventory, this.hotbar)) return false;
+    this.inventory.add(item, count);
+    return true;
+  }
+
+  private onChestTap(j: number): void {
+    const slots = this.chestSlots;
+    if (!slots) return;
+    const here = slots[j];
+    if (this.heroPicked) {
+      // Da heroína para o baú: espaço vazio ou com o mesmo item (soma).
+      const id = this.heroPicked;
+      if (!here || here.item === id) {
+        const n = this.inventory.count(id);
+        this.inventory.take(id, n);
+        slots[j] = { item: id, count: (here?.count ?? 0) + n };
+        this.hotbar.prune(this.inventory);
+        this.refreshSelection();
+        this.heroPicked = null;
+      } else {
+        this.heroPicked = null;
+        this.chest.picked = j;
+      }
+    } else if (this.chest.picked !== null) {
+      // Dentro do baú: troca de lugar (ou soma se for o mesmo item).
+      const p = this.chest.picked;
+      if (p !== j) {
+        const from = slots[p]!;
+        if (here && here.item === from.item) { here.count += from.count; slots[p] = null; }
+        else { slots[p] = here; slots[j] = from; }
+      }
+      this.chest.picked = null;
+    } else if (here) {
+      this.chest.picked = j;
+    }
+    this.refreshChestUi();
+  }
+
+  /** Mão com o baú aberto: recebe o item escolhido do baú, ou escolhe a pilha para levar. */
+  private onHandTapWithChest(i: number): void {
+    const slots = this.chestSlots!;
+    const p = this.chest.picked;
+    if (p !== null) {
+      const s = slots[p]!;
+      if (this.receiveFromChest(s.item as StackId, s.count, i)) slots[p] = null;
+      else this.hud.toast('Sem espaço na bolsa');
+      this.chest.picked = null;
+      this.refreshSelection();
+    } else if (this.heroPicked) {
+      this.hotbar.assign(i, this.heroPicked); // da bolsa (ou outro espaço) para este espaço da mão
+      this.heroPicked = null;
+      this.refreshSelection();
+    } else {
+      const id = this.hotbar.stack(i);
+      this.heroPicked = id;
+    }
+    this.refreshChestUi();
+  }
+
+  /** Bolsa com o baú aberto: recebe o item escolhido do baú, ou escolhe a pilha para levar. */
+  private onBagTap(_i: number, e: BagEntry | undefined): boolean {
+    if (!this.chest.isOpen) return false;
+    const slots = this.chestSlots!;
+    const p = this.chest.picked;
+    if (p !== null) {
+      const s = slots[p]!;
+      if (this.receiveFromChest(s.item as StackId, s.count, null)) slots[p] = null;
+      else this.hud.toast('Sem espaço na bolsa');
+      this.chest.picked = null;
+    } else {
+      this.heroPicked = e && this.heroPicked !== e.id ? e.id : null;
+    }
+    this.refreshChestUi();
+    return true;
   }
 
   /** Abre/fecha habilidades (receitas + profissões); pausa o jogo como a bolsa. */
@@ -254,7 +390,8 @@ export class Game {
   /** Coletou algo do chão: vai para a grade se já estiver nela ou houver espaço livre. */
   private onCollected(id: StackId): void {
     this.hotbar.autoPlace(id);
-    if (this.bag.isOpen) this.bag.render(this.bagEntries());
+    if (this.chest.isOpen) this.refreshChestUi();
+    else if (this.bag.isOpen) this.bag.render(this.bagEntries());
     if (this.skills.isOpen) this.skills.render((id) => this.inventory.count(id));
   }
 

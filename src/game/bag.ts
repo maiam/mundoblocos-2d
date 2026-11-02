@@ -23,7 +23,8 @@ export class BagPanel {
   private entries: BagEntry[] = [];
   picked: StackId | null = null;
 
-  constructor(private readonly section: HTMLElement) {
+  /** `onTap`: o Game trata o toque primeiro (ex.: baú aberto); retorna true se tratou. */
+  constructor(private readonly section: HTMLElement, private readonly onTap?: (i: number, e: BagEntry | undefined) => boolean) {
     section.hidden = true;
     section.innerHTML = '<h2>Bolsa</h2>';
     for (let r = 0; r < BAG_SLOTS / PER_ROW; r++) {
@@ -54,6 +55,7 @@ export class BagPanel {
 
   private pick(i: number): void {
     const e = this.entries[i];
+    if (this.onTap?.(i, e)) return;
     this.picked = !e || this.picked === e.id ? null : e.id;
     this.render(this.entries);
   }

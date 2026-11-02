@@ -1,7 +1,7 @@
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
-import { blockDef, type BlockId } from '../world/blocks';
-import { blockStack, breakDrops, breakSeconds, ITEMS, toolCanBreak, TOOLS, type ToolId } from '../world/items';
+import { Block, blockDef, type BlockId } from '../world/blocks';
+import { blockStack, breakDrops, breakSeconds, ITEMS, type StackId, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
 import type { Drops } from './drops';
@@ -56,6 +56,10 @@ export interface ActionContext {
   collectBlocks: boolean;
   /** Algo do inventário foi gasto (a grade libera espaços vazios). */
   onConsumed(): void;
+  /** Tocou num baú ao alcance: o Game abre o painel dele. */
+  onOpenChest(x: number, y: number): void;
+  /** Mensagem curta na tela (ex.: "Ponto de renascimento alterado"). */
+  notify(text: string): void;
 }
 
 /** Alvos para o render (destaque do mouse, anel na entidade, foco do botão de ação, quebra em andamento). */
@@ -175,6 +179,11 @@ export class ActionController {
 
   /** Toque numa porta: abre/fecha (qualquer item em mãos). Retorna true se havia porta (o toque foi usado). */
   private useDoorAt(x: number, y: number): boolean {
+    if (this.world.getObject(x, y) === Block.CHEST) {
+      // Baú: toque (qualquer item em mãos) abre o painel dele.
+      if (this.inReach(x, y)) this.ctx.onOpenChest(x, y);
+      return true;
+    }
     if (!this.world.isDoor(x, y)) return false;
     if (this.inReach(x, y) && this.canToggleDoorAt(x, y)) this.world.toggleDoor(x, y);
     return true;
@@ -232,7 +241,9 @@ export class ActionController {
     if (slot.kind === 'block') {
       if (!this.canUseAt(slot, x, y)) return;
       const [ax, ay] = this.placeAnchor(slot.block, x, y)!;
-      if (this.world.placeBlock(ax, ay, slot.block) && this.ctx.collectBlocks) {
+      const placed = this.world.placeBlock(ax, ay, slot.block);
+      if (placed && slot.block === Block.TENT) this.ctx.notify('Ponto de renascimento alterado');
+      if (placed && this.ctx.collectBlocks) {
         this.inventory.take(blockStack(slot.block));
         this.ctx.onConsumed();
       }
@@ -389,7 +400,13 @@ export class ActionController {
     // Machado/enxada/pá/picareta: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
     if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {
+      // Baú quebrado: o conteúdo cai no chão junto com o baú.
+      const contents = (this.world.chestAt(t.x, t.y) ?? []).filter((c) => c !== null)
+        .map((c) => ({ item: c!.item as StackId, count: c!.count }));
+      const hadTent = this.world.tent;
       const broken = this.world.breakBlock(t.x, t.y);
+      if (contents.length) this.drops.spawn(t.x + 0.5, t.y + 0.7, contents);
+      if (hadTent && !this.world.tent) this.ctx.notify('Ponto de renascimento voltou ao início');
       // O que cai no chão para ser coletado: colheita (pá e picareta destroem plantas sem drop) e, com coleta,
       // o próprio material (árvore dá toras).
       if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, breakDrops(this.tool, broken, this.ctx.collectBlocks));

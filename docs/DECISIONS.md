@@ -53,6 +53,7 @@
 | Parede do labirinto = cubo escuro com 2 de altura no desenho (legibilidade); montanhas só no anel externo | domains/render |
 | Aranhas: arte de frente única; espelhada ao andar para a direita | domains/render |
 | Água: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua substituem (areia não); só enche buracos vizinhos (0,6 s, cadeia, ordem fixa), nunca terra firme | domains/world |
+| Baú: 8 tábuas, 27 espaços, abre com Bolsa acima da mão, troca tocando item e destino (pilha inteira), quebrar solta o conteúdo; Tenda: aviso a cada colocação, vale a última, derrubar a última volta ao início | domains/farming |
 | Grade 12 (9 itens · Personagem · Habilidades · Bolsa); Habilidades = Receitas 4×9 + Profissões 4×2 acima da grade; tocar cria 1; Tenda = ponto de renascer; atalhos B/I, K, C (reservado) | domains/farming |
 | Bolsa: 18 espaços (2×9) no mesmo cartão da grade, mesmos espaços da mão (3 fileiras de 9 no total), só o título; tipo novo só entra com espaço livre; pilhas sem limite | domains/farming |
 | Tablet (toque, lado menor ≥ 600 px): toque na tela = clique do computador, sem botão de ação; celular segue com o botão | domains/player |

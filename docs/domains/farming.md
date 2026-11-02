@@ -45,13 +45,20 @@
   |---|---|---|
   | Tábua de Carvalho | 1 Tora de Carvalho | 2 Tábuas |
   | Porta de Carvalho | 4 Tábuas | 1 Porta |
+  | Baú de Carvalho | 8 Tábuas | 1 Baú |
   | Tenda | 10 Sedas + 10 Tábuas + 4 Presas | 1 Tenda |
 - **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
   no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
 - **Tenda** (`Block.TENT`, **2×2**): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`
   (bloqueiam, sem arte). Precisa das 4 livres em chão firme **e sem ninguém** (`ActionController.placeAnchor` escolhe, entre as 4 posições 2×2 que
   cobrem a célula alvo, a que não pega entidades e fica mais longe da heroína); quebrar qualquer parte derruba a tenda e devolve 1. A última colocada é o **ponto de
-  renascer** (`World.tent`, `respawnPoint`: célula livre ao lado dela; quebrada → volta o início). Salva (save v3).
+  renascer** (`World.tent`, `respawnPoint`: célula livre ao lado dela). Cada tenda colocada mostra "Ponto de
+  renascimento alterado" e vale sempre a última; derrubar **a última** volta o renascer ao início ("Ponto de
+  renascimento voltou ao início"), mesmo com tendas antigas de pé. Salva.
+- **Baú de Carvalho** (`Block.CHEST`, madeira): 27 espaços (`World.chests`, `chestAt`; salvo). Tocar nele (ação/clique,
+  qualquer item) abre **Baú (3×9) + Bolsa (2×9) acima da mão** (pausa). Trocas: tocar num item (mão, bolsa ou baú) e
+  depois no destino — pilha inteira; baú→mão/bolsa só com lugar ("Sem espaço na bolsa"); dentro do baú, troca de
+  lugar/soma. Quebrar o baú: ele volta como item e o conteúdo cai no chão.
 - `Semente de Trigo` (planta `WHEAT_0`) e `Trigo` (alimenta ovelhas).
 - `dropsFor(bloco)`: trigo maduro → 1 trigo + 1–2 sementes; trigo verde → devolve 1 semente; demais blocos → nada.
 - **Espólios** (`loot: true`, `LOOT_ITEMS`): Seda de Aranha, Presa de Aranha, Coração da Rainha — sem uso ainda

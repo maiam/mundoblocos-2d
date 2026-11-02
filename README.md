@@ -53,7 +53,8 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Quebrar bloco ou cavar o chão | segurar o clique / dedo sobre o alvo: 2 s com a mão/item, 1 s com ferramenta |
 | Escolher na grade | 1–9 ou tocar (começa com ferramentas 1–5, semente 6, trigo 7) |
 | Habilidades (receitas) | K ou tocar no 11º ícone: Construtor — Tábua, Porta e Tenda; tocar na receita cria |
-| Tenda | criada nas receitas; colocada no chão vira o seu ponto de renascer |
+| Tenda | criada nas receitas; colocada no chão vira o seu ponto de renascer (aviso na tela; vale a última) |
+| Baú de Carvalho | 8 tábuas nas receitas; tocar nele abre 27 espaços — toque num item e no destino para guardar/pegar |
 | Bolsa (inventário) | B ou I, ou tocar no 12º ícone: 18 espaços acima da grade (27 com a mão); toque num item e num espaço da grade para trocar |
 | Água | não quebra; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua a substituem; cavar ao lado da água faz o buraco encher sozinho |
 | Materiais | quebrar solta o bloco para coletar (árvore dá toras); colocar gasta; ao cair, perde os materiais |

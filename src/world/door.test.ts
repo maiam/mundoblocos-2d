@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Block, BLOCKS, HOTBAR_BLOCKS } from './blocks';
-import { breakSeconds, toolCanBreak } from './items';
+import { breakSeconds, RECIPES, toolCanBreak } from './items';
 import { WORLD_PROFILES } from './profiles';
-import { World } from './world';
+import { CHEST_SLOTS, World } from './world';
 
 function freeCell(w: World): [number, number] {
   const [x, y] = w.findSpawn();
@@ -119,3 +119,47 @@ describe('Tenda', () => {
   });
 });
 
+
+describe('Baú de Carvalho', () => {
+  it('receita 8 tábuas; 27 espaços por baú; quebrar apaga o conteúdo (quem quebra o lê antes)', () => {
+    expect(RECIPES.find((r) => r.id === 'oak-chest')).toMatchObject({
+      inputs: [{ item: `block:${Block.OAK_PLANKS}`, count: 8 }], output: { item: `block:${Block.CHEST}`, count: 1 },
+    });
+    const w = new World(7);
+    const [sx, sy] = w.findSpawn();
+    const [x, y] = [sx + 2, sy];
+    while (w.topBlock(x, y)) w.breakBlock(x, y);
+    expect(w.placeBlock(x, y, Block.CHEST)).toBe(true);
+    const slots = w.chestAt(x, y)!;
+    expect(slots).toHaveLength(CHEST_SLOTS);
+    slots[4] = { item: 'silk', count: 3 };
+    expect(w.chestAt(x, y)![4]).toEqual({ item: 'silk', count: 3 });
+    expect(w.breakBlock(x, y)).toBe(Block.CHEST);
+    expect(w.chests.size).toBe(0);
+    expect(w.chestAt(x, y)).toBeNull();
+  });
+});
+
+describe('Tenda — ponto de renascimento', () => {
+  it('vale a última colocada; derrubar a última volta ao início mesmo com outras tendas de pé', () => {
+    const w = new World(7);
+    const [sx, sy] = w.findSpawn();
+    // Dois lugares onde a tenda 2×2 cabe (procurados em volta do início).
+    const spots: Array<[number, number]> = [];
+    for (let r = 3; r < 60 && spots.length < 2; r++) {
+      for (const [x, y] of [[sx + r, sy], [sx - r, sy], [sx, sy + r], [sx, sy - r]] as Array<[number, number]>) {
+        if (spots.length < 2 && w.canPlace(x, y, Block.TENT) && spots.every(([ox, oy]) => Math.abs(ox - x) > 3 || Math.abs(oy - y) > 3)) spots.push([x, y]);
+      }
+    }
+    expect(spots).toHaveLength(2);
+    expect(w.placeBlock(...spots[0], Block.TENT)).toBe(true);
+    expect(w.tent).toEqual(spots[0]);
+    expect(w.placeBlock(...spots[1], Block.TENT)).toBe(true);
+    expect(w.tent).toEqual(spots[1]); // vale sempre a última
+    w.breakBlock(...spots[0]); // derrubar uma antiga não muda nada
+    expect(w.tent).toEqual(spots[1]);
+    w.breakBlock(...spots[1]);
+    expect(w.tent).toBeNull();
+    expect(w.respawnPoint()).toEqual([sx, sy]);
+  });
+});

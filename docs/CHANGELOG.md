@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.33.0 — 2026-11-02
+- **Baú de Carvalho** (arte fornecida; receita do Construtor: 8 tábuas): 27 espaços. Tocar nele abre o Baú (3×9) e a
+  Bolsa acima da mão; troca tocando no item e depois no destino (pilha inteira, mão ↔ bolsa ↔ baú). Quebrar o baú
+  devolve o baú e derruba o conteúdo no chão. Conteúdo salvo (salvamento v4).
+- **Tenda — aviso e regra do renascer**: cada tenda colocada mostra "Ponto de renascimento alterado" e vale sempre a
+  última; derrubar a última volta o renascer ao início ("…voltou ao início"), mesmo com tendas antigas de pé.
+- Mensagem curta na tela (`Hud.toast`). 4 testes novos (106).
+
 ## 0.32.1 — 2026-11-02
 - **Correção: tenda prendia a heroína.** Ao colocar, só a célula alvo era conferida, mas a tenda ocupa 2×2 e uma parte
   podia cair sobre a heroína (ex.: olhando para a esquerda). Agora as 4 células precisam estar sem ninguém, e o jogo

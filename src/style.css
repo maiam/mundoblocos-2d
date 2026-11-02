@@ -398,3 +398,21 @@ html, body {
 
 /* Tablet: o toque na tela age como o clique; botão de ação some (joystick fica). */
 .hud.tablet .action-button { display: none; }
+
+/* Baú aberto (3×9 acima da bolsa) e mensagem curta no alto da tela. */
+.hud.chest-open .joystick, .hud.chest-open .action-button { visibility: hidden; }
+.hud.chest-open .slot { width: 40px; height: 40px; padding: 4px; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .hud.chest-open .slot { width: 26px; height: 26px; padding: 2px; }
+  .hud.chest-open .panel-section h2 { font-size: 11px; }
+  .hud.chest-open .slot .count { font-size: 10px; line-height: 12px; }
+}
+.toast {
+  position: absolute; left: 50%; top: max(14px, env(safe-area-inset-top, 0px));
+  transform: translate(-50%, -8px); opacity: 0; pointer-events: none;
+  padding: 8px 16px; border-radius: 12px; border: 1.5px solid var(--panel-border); background: rgba(28, 22, 64, 0.92);
+  color: var(--accent); font: 800 15px Nunito, system-ui, sans-serif; white-space: nowrap;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.toast.shown { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }

@@ -32,6 +32,10 @@ export class Hud {
   /** Painel acima dos 9 itens (mesma largura): bolsa ou receitas. */
   readonly bagSection: HTMLElement;
   readonly recipesSection: HTMLElement;
+  /** Baú aberto (3×9), acima da bolsa. */
+  readonly chestSection: HTMLElement;
+  private readonly toastEl: HTMLElement;
+  private toastTimer = 0;
   /** Card acima dos 3 botões do menu: profissões. */
   readonly professionsSection: HTMLElement;
   private selected = -1;
@@ -51,10 +55,11 @@ export class Hud {
     const panel = (cls: string) => { const e = document.createElement('div'); e.className = `panel-section ${cls}`; e.hidden = true; return e; };
     this.bagSection = panel('bag-section');
     this.recipesSection = panel('recipes-section');
+    this.chestSection = panel('chest-section');
     this.professionsSection = panel('professions-section');
     const top = document.createElement('div');
     top.className = 'hotbar-top';
-    top.append(this.bagSection, this.recipesSection);
+    top.append(this.chestSection, this.bagSection, this.recipesSection);
     card.append(top, this.professionsSection);
     const hotbar = document.createElement('div');
     hotbar.className = 'hotbar-row hand';
@@ -97,6 +102,11 @@ export class Hud {
     this.hearts.setAttribute('role', 'img');
     status.appendChild(this.hearts);
     this.root.appendChild(status);
+    this.toastEl = document.createElement('div');
+    this.toastEl.className = 'toast';
+    this.toastEl.setAttribute('role', 'status');
+    this.toastEl.setAttribute('aria-live', 'polite');
+    this.root.appendChild(this.toastEl);
     document.body.appendChild(this.root);
   }
 
@@ -147,6 +157,24 @@ export class Hud {
     for (let i = 0; i < this.maxHp / 2; i++) html.push(HEART(hp >= i * 2 + 2 ? 'full' : hp === i * 2 + 1 ? 'half' : 'empty'));
     this.hearts.innerHTML = html.join('');
     this.hearts.setAttribute('aria-label', `Vida: ${hp / 2} de ${this.maxHp / 2} corações`);
+  }
+
+  /** Mensagem curta no alto da tela (some sozinha em ~2,5 s). */
+  toast(text: string): void {
+    this.toastEl.textContent = text;
+    this.toastEl.classList.add('shown');
+    window.clearTimeout(this.toastTimer);
+    this.toastTimer = window.setTimeout(() => this.toastEl.classList.remove('shown'), 2500);
+  }
+
+  /** Marca o espaço da mão escolhido para levar ao baú (-1 = nenhum). */
+  setHandPicked(i: number): void {
+    this.slots.forEach((b, k) => b.classList.toggle('picked', k === i));
+  }
+
+  /** Baú aberto: destaca e ativa o modo de troca. */
+  setChestOpen(open: boolean): void {
+    this.root.classList.toggle('chest-open', open);
   }
 
   destroy(): void {

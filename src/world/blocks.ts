@@ -32,6 +32,8 @@ export const Block = {
   TENT: 30,
   /** Parte da tenda 2×2 (as 3 células além do canto inferior esquerdo, onde fica `TENT`): bloqueia, sem arte. */
   TENT_PART: 32,
+  /** Baú de Carvalho: guarda 27 pilhas (conteúdo no World). */
+  CHEST: 33,
   CACTUS: 31,
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
@@ -156,6 +158,7 @@ const defs: BlockDef[] = [
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock' }),
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false }),
+  object(Block.CHEST, 'Baú de Carvalho', { shape: 'rock', organic: 'wood' }),
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -233,7 +236,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 ];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
-export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT];
+export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST];
 
 /** Porta (aberta ou fechada)? */
 export function isDoor(id: BlockId): boolean {

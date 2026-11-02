@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getTentSprite, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getWaterArt } from './blockArt';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
@@ -454,6 +454,19 @@ export function createBlockTextures(): BlockTextures {
     const oy = T - h + 2;
     objects.set(Block.TENT, { canvas: c, ox: (2 * T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: 2 * T, h: T - oy } });
     icons.set(Block.TENT, pack.tent?.icon ?? '');
+  }
+  // Baú: sprite de frente, ~1 célula de largura, base na borda de baixo da célula; ícone do pacote.
+  const chestImg = getChestSprite();
+  if (chestImg) {
+    const w = T * 1.05;
+    const h = w * (chestImg.height / chestImg.width);
+    const c = document.createElement('canvas');
+    c.width = chestImg.width;
+    c.height = chestImg.height;
+    c.getContext('2d')!.drawImage(chestImg, 0, 0);
+    const oy = T - h + 1;
+    objects.set(Block.CHEST, { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } });
+    icons.set(Block.CHEST, pack.chest?.icon ?? '');
   }
   const doorFrames = getOakDoorSheet() ? doorSprites() : [];
   if (doorFrames.length) {

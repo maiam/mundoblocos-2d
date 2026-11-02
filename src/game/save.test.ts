@@ -145,5 +145,18 @@ describe('Salvamento automático', () => {
     applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, time: 0, selected: null, hotbar: null });
     expect(b.player.isStuck(b.world)).toBe(false);
   });
+
+  it('baús e tenda vão e voltam no salvamento', () => {
+    const a = session();
+    const [x, y] = grassCells(a.world, a.sx, a.sy, 1)[0];
+    expect(a.world.placeBlock(x, y, Block.CHEST)).toBe(true);
+    a.world.chestAt(x, y)![0] = { item: 'fang', count: 2 };
+    a.world.tent = [x + 5, y];
+    const data = JSON.parse(JSON.stringify(captureSave({ ...a, time: 0.3, selected: null, hotbar: null })));
+    const b = session();
+    applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, time: 0, selected: null, hotbar: null });
+    expect(b.world.chestAt(x, y)![0]).toEqual({ item: 'fang', count: 2 });
+    expect(b.world.tent).toEqual([x + 5, y]);
+  });
 });
 
