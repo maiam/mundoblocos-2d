@@ -146,4 +146,5 @@ flowchart LR
 | Câmera / zoom | `game/camera.ts` | player |
 | Visual do chão | `render/chunkRenderer.ts` (cache por chunk) | render |
 | Novo mundo / mudar um mundo | `world/profiles.ts` (perfil), `world/flatGenerator.ts` ou gerador próprio, `render/character.ts` (personagem), script `build:artifact:<mundo>` | worlds, ADR 0008, OPERATIONS |
+| Dungeon / monstro novo | `world/dungeon.ts` (área, spawns), `game/monster.ts` (`MONSTERS`), `game/entities.ts`, `render/character.ts` (`cycle`), `scripts/extract-dungeon.py` | dungeon, render, OPERATIONS, ADR 0009 |
 | Desempenho | `bench/perf.bench.ts`, `world/generator.ts`, `world/world.ts`, `render/renderer.ts` | ARCHITECTURE §Desempenho |

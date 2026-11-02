@@ -11,6 +11,7 @@
 | 0006 | Blocos = 8 materiais da prancha; mesmo id como chão e cubo; prancha 3/4 como fonte | [0006](adr/0006-materiais-da-prancha.md) |
 | 0007 | Assets em WebP gerados por script; PNG só como etapa intermediária | [0007](adr/0007-assets-webp.md) |
 | 0008 | Perfis de mundo: um motor, vários mundos (Santuário Celestial) | [0008](adr/0008-perfis-de-mundo.md) |
+| 0009 | Dungeon como sobreposição pura do terreno; monstros como `Walker` em `Entities` | [0009](adr/0009-dungeon-sobreposta.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
@@ -45,6 +46,8 @@
 | HUD mínimo: só a hotbar (joystick e botão de ação só em toque) | domains/player |
 | Celular: botão de ação sobre o alvo à frente; toque no mundo não age | domains/player |
 | Quebrar = segurar 2 s com a mão/item, 1 s com ferramenta (`breakSeconds`); colocar = toque/clique curto | domains/player |
+| Dungeon: área protegida (nada quebra/coloca), uma entrada voltada para o spawn, monstros presos ao interior, sem dano à personagem por enquanto | domains/dungeon |
+| Aranhas: arte de frente única; espelhada ao andar para a direita | domains/render |
 | Porta só entre batentes de madeira à esquerda e à direita (cubo `organic: 'wood'` no nível 0); quebrar um batente depois não derruba a porta | domains/world |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |
 

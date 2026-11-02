@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.23.0 — 2026-11-02
+- **Primeira dungeon — Covil das Aranhas** (mundo principal, a ~26–60 células do spawn): área 34 × 24 murada por
+  montanhas com **uma única entrada** voltada para o spawn; chão de caverna (terra, musgo, teias, ossos); pedras,
+  ninhos de ovos, cogumelos, espinhos e raízes como obstáculos que nunca bloqueiam o caminho.
+- **Área protegida**: nada quebra, nada é colocado, arado, amassado ou plantado lá dentro — só combate.
+- **Monstros**: 10 aranhas pequenas, 5 grandes e **1 Aranha Gigante (chefe, 14 golpes)**. Passeiam, perseguem a
+  personagem dentro da dungeon e **nunca saem dela**. Espada/machado tiram vida (pisca, recua, barra de vida);
+  sem vida, somem. Ainda não causam dano.
+- Arte das 6 pranchas fornecidas via `scripts/extract-dungeon.py` (3 modos de recorte de fundo); sprites de cenário
+  com variantes por célula; folhas de monstro em ciclo único (8 quadros) espelhadas para a direita.
+- `world/dungeon.ts` (`buildDungeon/planDungeon/DungeonTerrain`), `World.isProtected/dungeon`, `game/monster.ts`,
+  perfil `dungeon`, ADR 0009. 8 testes novos (79 no total).
+
 ## 0.22.0 — 2026-11-02
 - **Porta só entre batentes de madeira**: as células da esquerda e da direita precisam de um cubo de madeira no
   nível 0 (Tora ou Piso de Carvalho; `World.hasDoorFrame`, por `BlockDef` cubo + `organic: 'wood'`).

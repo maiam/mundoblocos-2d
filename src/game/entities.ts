@@ -4,6 +4,8 @@ import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
+import { Monster } from './monster';
+import type { MonsterKind } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
 
 import { TOOLS, type ToolId } from '../world/items';
@@ -13,7 +15,7 @@ import type { CharacterId } from '../world/profiles';
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love' | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -28,6 +30,10 @@ export interface Actor {
   inLove?: boolean;
   /** Quadro da animação de namoro (0..3). */
   frame?: number;
+  /** Monstro: piscando após levar golpe. */
+  hurt?: boolean;
+  /** Monstro ferido: fração de vida restante (barra acima dele). */
+  hp?: number;
 }
 
 const FLOCK_SIZE = 4;
@@ -48,6 +54,8 @@ export const MAX_SHEEP = 16;
  */
 export class Entities {
   readonly npcs: Sheep[] = [];
+  /** Monstros da dungeon (presos no interior dela). */
+  readonly monsters: Monster[] = [];
 
   constructor(
     private readonly player: Player,
@@ -71,8 +79,15 @@ export class Entities {
     }
   }
 
+  /** Monstros nos pontos da dungeon (posições pela seed; o sorteio do passeio usa `rand`). */
+  spawnMonsters(world: World): void {
+    const d = world.dungeon;
+    if (!d) return;
+    for (const s of d.spawns) this.monsters.push(new Monster(s.kind, s.x, s.y, d.interior, this.rand));
+  }
+
   private all(): Walker[] {
-    return [this.player, ...this.npcs];
+    return [this.player, ...this.npcs, ...this.monsters];
   }
 
   /** Bloqueio entre entidades; se já estavam sobrepostas, deixa se afastar. */
@@ -88,6 +103,7 @@ export class Entities {
 
   update(dt: number, world: World): void {
     for (const s of this.npcs) s.update(dt, world, this.blocker);
+    for (const m of this.monsters) m.update(dt, world, this.player, this.blocker);
     // Ordem importa: concluir antes de (re)começar, senão o par namoraria de novo.
     this.finishCourtships(world);
     this.formPairs();
@@ -160,27 +176,38 @@ export class Entities {
     }
   }
 
-  /** Entidades (exceto a personagem) dentro do arco do golpe (espada ou machado): à frente, até SWORD_REACH. */
-  strikeTargets(facing: Facing): Sheep[] {
+  /**
+   * Entidades (exceto a personagem) dentro do arco do golpe (espada ou machado): à frente, até SWORD_REACH
+   * da borda do corpo (monstro grande é atingido de mais longe).
+   */
+  strikeTargets(facing: Facing): Array<Sheep | Monster> {
     const [fx, fy] = FACING_VEC[facing];
     const p = this.player;
-    return this.npcs.filter((s) => {
+    return [...this.npcs, ...this.monsters].filter((s) => {
       const dx = s.x - p.x;
       const dy = s.y - p.y;
       const d = Math.hypot(dx, dy);
-      if (d > SWORD_REACH) return false;
-      return d < 0.35 || (dx * fx + dy * fy) / d >= SWORD_ARC_COS;
+      const body = s instanceof Monster ? s.spec.halfW : 0;
+      if (d - body > SWORD_REACH) return false;
+      return d < 0.35 + body || (dx * fx + dy * fy) / d >= SWORD_ARC_COS;
     });
   }
 
   /**
-   * Golpe (espada ou machado): aplica o acerto a cada alvo no arco e retorna quantos foram
-   * atingidos. Animais ainda não têm animação de morte: somem do mundo.
-   * (Monstros, quando existirem, recebem dano aqui pelo mesmo caminho.)
+   * Golpe (espada ou machado): aplica o acerto a cada alvo no arco e retorna quantos foram atingidos.
+   * Animais somem (sem animação de morte ainda). Monstros perdem 1 de vida, piscam e recuam; sem vida, somem.
    */
-  strike(facing: Facing): number {
+  strike(facing: Facing, world?: World): number {
     const hit = this.strikeTargets(facing);
-    for (const s of hit) this.removeAnimal(s);
+    for (const s of hit) {
+      if (!(s instanceof Monster)) {
+        this.removeAnimal(s);
+        continue;
+      }
+      if (world) s.takeHit(this.player.x, this.player.y, world, this.blocker);
+      else s.hp -= 1;
+      if (s.dead) this.monsters.splice(this.monsters.indexOf(s), 1);
+    }
     return hit.length;
   }
 
@@ -253,6 +280,12 @@ export class Entities {
         kind: s.baby ? 'lamb' : 'sheep',
         x: s.x, y: s.y, visualZ: s.visualZ, facing: s.facing, moving: s.moving, walkTime: s.walkTime,
         inLove: s.inLove,
+      });
+    }
+    for (const m of this.monsters) {
+      out.push({
+        kind: m.kind, x: m.x, y: m.y, visualZ: m.visualZ, facing: m.facing, moving: m.moving, walkTime: m.walkTime,
+        hurt: m.hurt > 0, hp: m.hp < m.maxHp ? m.hp / m.maxHp : undefined,
       });
     }
     return out;

@@ -2,6 +2,7 @@ import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
 import { Block, type BlockId, blockDef, isDoor, isWheat, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
+import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
@@ -44,6 +45,10 @@ export class World {
   private last: Chunk | null = null;
   /** Células com trigo plantado (crescem com o tempo). Só existem em chunks modificados, que não descarregam. */
   private readonly crops = new Set<string>();
+  /** Dungeon deste mundo (perfil com `dungeon`), ou null. Área protegida: só se luta lá dentro. */
+  readonly dungeon: DungeonLayout | null = null;
+  /** Spawn calculado no terreno base (a dungeon é posta longe dele e não o altera). */
+  private spawn: [number, number] | null = null;
 
   constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
     this.profile = profile;
@@ -54,6 +59,17 @@ export class World {
     this.cellBounds = b
       ? { x0: b.cx0 * CHUNK_SIZE, y0: b.cy0 * CHUNK_SIZE, x1: (b.cx1 + 1) * CHUNK_SIZE - 1, y1: (b.cy1 + 1) * CHUNK_SIZE - 1 }
       : null;
+    if (profile.dungeon) {
+      const base = this.generator;
+      const [sx, sy] = (this.spawn = this.findSpawn());
+      this.dungeon = planDungeon(base, sx, sy);
+      this.generator = new DungeonTerrain(base, this.dungeon);
+    }
+  }
+
+  /** Célula dentro da dungeon (muralha incluída)? Lá nada é quebrado, colocado, arado nem plantado. */
+  isProtected(x: number, y: number): boolean {
+    return !!this.dungeon && inRect(this.dungeon.area, x, y);
   }
 
   /** A célula está dentro dos limites do mundo? (sempre true em mundo ilimitado) */
@@ -216,6 +232,7 @@ export class World {
    * o próprio chão (que vira buraco). null se nada pode ser quebrado.
    */
   breakTarget(x: number, y: number): 'object' | 'ground' | null {
+    if (this.isProtected(x, y)) return null;
     const top = this.topBlock(x, y);
     if (top) return blockDef(top.id).breakable ? 'object' : null;
     return blockDef(this.getGround(x, y)).breakable ? 'ground' : null;
@@ -259,7 +276,7 @@ export class World {
     const def = blockDef(id);
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
-    if (!this.profile.blocks.includes(id)) return null;
+    if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
@@ -322,6 +339,7 @@ export class World {
    * origem e devolve a célula andável mais próxima dele.
    */
   findSpawn(): [number, number] {
+    if (this.spawn) return this.spawn;
     const b = this.profile.bounds;
     if (b) {
       // Mundo limitado: centro da área.
@@ -347,6 +365,7 @@ export class World {
 
   /** A semente pode ser plantada aqui? Só em chão de Terra Arada, com a célula livre (ou com enfeite). */
   canPlant(x: number, y: number): boolean {
+    if (this.isProtected(x, y)) return false;
     if (this.getGround(x, y) !== PLANTABLE_GROUND) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
@@ -357,6 +376,7 @@ export class World {
    * (enfeites como capim/flor são removidos ao arar).
    */
   canTill(x: number, y: number): boolean {
+    if (this.isProtected(x, y)) return false;
     if (!TILLABLE.has(this.getGround(x, y))) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
@@ -375,6 +395,7 @@ export class World {
    * (enfeites são removidos; trigo plantado impede).
    */
   canFlatten(x: number, y: number): boolean {
+    if (this.isProtected(x, y)) return false;
     if (!FLATTENABLE.has(this.getGround(x, y))) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';

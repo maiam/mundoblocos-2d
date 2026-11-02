@@ -62,6 +62,10 @@ qualquer prancha em grade, se precisar.
 - Ferramentas (`tool-icons-sheet.png`, `--sat 34 --min 175`): espada `75,105,455,490` · enxada `535,105,915,490` ·
   picareta `995,105,1375,490` · pá `285,590,680,985` · machado `770,590,1165,985`.
 
+**Dungeon** (montanhas, pedras, blocos, 3 aranhas; fontes `assets-src/dungeon-*-sheet.png` e `spider-*-sheet.png`):
+`python3 scripts/extract-dungeon.py` e depois `optimize-assets.py`. Caixas de cada prancha e modo de recorte
+(alpha/light/dark) estão no fim do script; a aranha gigante usa a prancha de 2172 px (o retrato à esquerda é ignorado).
+
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
 

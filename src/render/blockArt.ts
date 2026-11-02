@@ -1,6 +1,10 @@
 import atlasUrl from '../assets/blocks-atlas.webp?inline';
 import celestialAtlasUrl from '../assets/celestial-atlas.webp?inline';
 import oakDoorUrl from '../assets/oak-door.webp?inline';
+import dungeonGroundUrl from '../assets/dungeon-ground.webp?inline';
+import dungeonMountainsUrl from '../assets/dungeon-mountains.webp?inline';
+import dungeonPropsUrl from '../assets/dungeon-props.webp?inline';
+import dungeonRocksUrl from '../assets/dungeon-rocks.webp?inline';
 
 /**
  * Atlas dos blocos (scripts/extract-blocks.py): materiais do mundo principal e blocos
@@ -13,6 +17,14 @@ let atlas: HTMLImageElement | null = null;
 let celestial: HTMLImageElement | null = null;
 /** Porta de Carvalho: 8 quadros (4×2) — 0..3 abrindo, 4..7 fechando (scripts/process-sprite.py). */
 let oakDoor: HTMLImageElement | null = null;
+/** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras e blocos decorados. */
+export interface DungeonArt {
+  ground: HTMLImageElement;
+  mountains: HTMLImageElement;
+  rocks: HTMLImageElement;
+  props: HTMLImageElement;
+}
+let dungeon: DungeonArt | null = null;
 
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -24,8 +36,11 @@ function load(url: string): Promise<HTMLImageElement> {
 }
 
 export async function loadBlockArt(): Promise<void> {
-  if (atlas && celestial && oakDoor) return;
-  [atlas, celestial, oakDoor] = await Promise.all([load(atlasUrl), load(celestialAtlasUrl), load(oakDoorUrl)]);
+  if (atlas && celestial && oakDoor && dungeon) return;
+  const [a, c, d, g, m, r, p] = await Promise.all([atlasUrl, celestialAtlasUrl, oakDoorUrl, dungeonGroundUrl,
+    dungeonMountainsUrl, dungeonRocksUrl, dungeonPropsUrl].map(load));
+  [atlas, celestial, oakDoor] = [a, c, d];
+  dungeon = { ground: g, mountains: m, rocks: r, props: p };
 }
 
 export function getBlockAtlas(): HTMLImageElement {
@@ -41,4 +56,9 @@ export function getCelestialAtlas(): HTMLImageElement {
 export function getOakDoorSheet(): HTMLImageElement {
   if (!oakDoor) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
   return oakDoor;
+}
+
+export function getDungeonArt(): DungeonArt {
+  if (!dungeon) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
+  return dungeon;
 }

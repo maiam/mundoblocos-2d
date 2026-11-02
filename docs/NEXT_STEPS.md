@@ -16,6 +16,9 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
    recomendado para o core**, não criar backend aqui.
 
 ## Em seguida
+- **Dungeon/combate:** vida da personagem e dano por contato/mordida dos monstros (com recuo e invencibilidade
+  curta); morte com animação e drops (seda, presas); recompensa do chefe; respawn das aranhas com o tempo; música/
+  sons e luz mais escura dentro da área; marcador da entrada (o jogador hoje a encontra explorando ~30 células).
 - **Porta:** quebrar um batente não derruba a porta (decidir se deve); orientação lateral (parede leste–oeste) usando o quadro de lado; ovelhas não abrem portas (ok) — decidir
   se a porta deve fechar sozinha; atalho de teclado só vai até 9 (porta = 16º espaço, por clique/toque).
 4. Inventário/painel: a hotbar (16 espaços, já reduzida em telas ≤ 700 px) está no limite do celular deitado.
@@ -30,7 +33,7 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 11. Geração em Web Worker se o custo por chunk voltar a crescer (hoje ~0,07 ms).
 
 ## Riscos e dívidas técnicas
-- **Peso dos artefatos — URGENTE** (~3,2 MB cada após pá, picareta e porta; o build avisa acima de 2,8 MB): cada folha
+- **Peso dos artefatos — URGENTE** (~3,6 MB cada após pá, picareta, porta e dungeon; o build avisa acima de 2,8 MB): cada folha
   nova soma ~150 kB e os dois mundos levam a arte um do outro. Separar assets por mundo (build por `VITE_WORLD` só
   com a arte do perfil) antes da próxima folha de sprite.
 - `game/game.ts` (~490 linhas) concentra entrada, alvo e regras de ação: separar `ActionController` quando as

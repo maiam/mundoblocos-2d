@@ -10,6 +10,7 @@ assets-src/                    arte original (folhas 4×4, pranchas de blocos, �
 scripts/
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region, --respace…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
+  extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
   slice-icons.py               prancha em grade com transparência → um ícone por célula
@@ -27,6 +28,7 @@ src/
     profiles.ts                perfis de mundo (principal, santuario) + resolveWorldId
     biomes.ts                  Campos, Sakura, Dunas, Celestial
     terrain.ts                 interface TerrainSource (cellAt, biomeAt, generateChunk)
+    dungeon.ts                 dungeon: área pura da seed (buildDungeon/planDungeon) + DungeonTerrain (sobreposição)
     generator.ts               WorldGenerator.cellAt (uma avaliação de ruído por célula), generateChunk
     flatGenerator.ts           FlatGenerator: chão de um bloco só (Santuário)
     coords.ts                  célula ↔ chunk/local (seguro p/ negativos)
@@ -44,8 +46,8 @@ src/
     renderer.ts                frame + pick (objeto sob o cursor)
   game/    orquestração e entidades
     game.ts                    loop, entrada, alvos, regras de ação por célula, quebra segurando
-    walker.ts → player.ts, sheep.ts   movimento/colisão/altura compartilhados
-    entities.ts                personagem + ovelhas: colisão, reprodução, ocupação, atores p/ render
+    walker.ts → player.ts, sheep.ts, monster.ts   movimento/colisão/altura compartilhados
+    entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe/vida, atores p/ render
     inventory.ts, hotbar.ts, drops.ts
     camera.ts, joystick.ts, actionButton.ts, screenMode.ts, hud.ts
 ```
@@ -72,7 +74,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único, cada mundo) | ~3,2 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
+| Artefato (HTML único, cada mundo) | ~3,6 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

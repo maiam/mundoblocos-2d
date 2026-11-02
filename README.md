@@ -2,7 +2,7 @@
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
 com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**, uma heroína jogável com
-ferramentas, cultivo de trigo e ovelhas que se reproduzem. Ciclo dia/noite, sombras de nuvens e partículas.
+ferramentas, cultivo de trigo, ovelhas que se reproduzem e uma dungeon de aranhas com chefe. Ciclo dia/noite, sombras de nuvens e partículas.
 
 ## Rodar
 
@@ -38,7 +38,8 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Colocar bloco com o mouse (alcance 4,5 células) | clique curto (empilha até 3 cubos) |
 | Abrir/fechar Porta de Carvalho | ação com a porta à frente, ou clique nela (qualquer item em mãos) |
 | Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Piso de Carvalho) à esquerda e à direita |
-| Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem); não quebra nada |
+| Dungeon (Covil das Aranhas) | murada por montanhas perto do início, entrada voltada para você; lá dentro nada quebra — só luta |
+| Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem; aranhas perdem vida); não quebra nada |
 | Machado | toque: golpe (como a espada) · segurar 1 s: corta só madeira, árvore ou planta |
 | Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 1 s: quebra só plantas (capim, flor, trigo, cacto) |
 | Picareta | segurar 1 s: quebra qualquer bloco e plantas (sem drop), menos madeira/árvore; não ataca |

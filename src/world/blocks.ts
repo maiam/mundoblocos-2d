@@ -35,6 +35,18 @@ export const Block = {
   // --- enfeites (não bloqueiam passagem) ---
   TALL_GRASS: 50,
   FLOWER: 51,
+  // --- dungeon (área protegida: nada quebra nem é colocado) ---
+  DUNGEON_DIRT: 100,
+  DUNGEON_WEB: 101,
+  DUNGEON_BONES: 102,
+  DUNGEON_MOSS: 103,
+  /** Montanha da muralha (sprite grande; bloqueia). */
+  DUNGEON_MOUNTAIN: 104,
+  DUNGEON_ROCK: 105,
+  DUNGEON_EGGS: 106,
+  DUNGEON_MUSHROOM: 107,
+  DUNGEON_SPIKES: 108,
+  DUNGEON_ROOTS: 109,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -80,8 +92,11 @@ export function wheatId(stage: number): BlockId {
 export type BlockId = (typeof Block)[keyof typeof Block] | (number & { readonly __wheatStage?: true });
 
 export type BlockLayer = 'ground' | 'object';
-/** Como o objeto é desenhado: cubo, árvore alta, enfeite plano, plantação ou porta (3 níveis, abre/fecha). */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door';
+/**
+ * Como o objeto é desenhado: cubo, árvore alta, enfeite plano, plantação, porta (3 níveis, abre/fecha) ou
+ * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon).
+ */
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'rock';
 
 export interface BlockDef {
   id: BlockId;
@@ -139,6 +154,15 @@ const defs: BlockDef[] = [
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false, organic: 'plant' }),
   object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false, placeable: false, organic: 'plant' }),
+  // Dungeon: chão e cenário fixos (inquebráveis; o World também protege a área inteira).
+  ground(Block.DUNGEON_DIRT, 'Chão da Caverna', { breakable: false }),
+  ground(Block.DUNGEON_WEB, 'Chão com Teia', { breakable: false }),
+  ground(Block.DUNGEON_BONES, 'Chão com Ossos', { breakable: false }),
+  ground(Block.DUNGEON_MOSS, 'Chão com Musgo', { breakable: false }),
+  ...([
+    [Block.DUNGEON_MOUNTAIN, 'Montanha'], [Block.DUNGEON_ROCK, 'Rocha'], [Block.DUNGEON_EGGS, 'Ninho de Ovos'],
+    [Block.DUNGEON_MUSHROOM, 'Cogumelos'], [Block.DUNGEON_SPIKES, 'Espinhos de Pedra'], [Block.DUNGEON_ROOTS, 'Raízes'],
+  ] as const).map(([id, name]) => object(id, name, { shape: 'rock', breakable: false, placeable: false })),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
   object(Block.CLOUD_ETHEREAL, 'Nuvem Etérea'),

@@ -207,6 +207,11 @@ export class ChunkRenderer {
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.6 + (tall - 1) * 6, py + TILE - 1, TILE * 0.55 * tall, 6 * tall, 0, 0, Math.PI * 2);
           ctx.fill();
+        } else if (obj.shape === 'rock') {
+          ctx.fillStyle = 'rgba(30, 20, 70, 0.28)';
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.55, py + TILE - 3, TILE * 0.62, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
         } else if (obj.shape === 'door') {
           // Porta: sombra estreita ao pé (fechada) — aberta, só a lâmina de lado.
           ctx.fillStyle = 'rgba(30, 20, 70, 0.22)';

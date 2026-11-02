@@ -26,6 +26,8 @@ export interface WorldProfile {
   farming: boolean;
   /** Rebanho de ovelhas no início. */
   sheep: boolean;
+  /** Dungeon das aranhas perto do spawn (área protegida com monstros). */
+  dungeon: boolean;
   /** Cores do fundo além das bordas do mundo (céu). */
   sky: [string, string];
 }
@@ -41,6 +43,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     tools: true,
     farming: true,
     sheep: true,
+    dungeon: true,
     sky: ['#1b1838', '#1b1838'],
   },
   santuario: {
@@ -54,6 +57,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     tools: false,
     farming: false,
     sheep: false,
+    dungeon: false,
     sky: ['#8fb8ff', '#f6d9ff'],
   },
 };

@@ -11,6 +11,8 @@
   cosseno ≥ 0,3). **Animais atingidos somem** (sem animação de morte ainda); monstros futuros entram pelo mesmo
   `Entities.strike`. **A espada não quebra blocos, itens nem elementos** (`canBreakAt` = false; segurar não faz
   nada) e não tem alvo de célula; o alvo é marcado por anel vermelho na entidade à frente.
+- **Golpe em monstros** (espada/machado): tira 1 de vida da aranha no arco (alcance contado da borda do corpo);
+  anel vermelho marca o alvo. Ver `domains/dungeon.md`.
 - **Machado**: toque curto = **golpe** (folha `heroine-axe-attack`), igual à espada: acerta entidades no arco
   (animais somem). Segurar 1 s **corta só o que é orgânico** (`BlockDef.organic` = `wood` ou `plant`: tora,
   piso de carvalho, carvalho, cerejeira, cacto, capim, flor, trigo); enquanto corta, a animação de golpe repete

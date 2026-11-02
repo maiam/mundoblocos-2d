@@ -1,0 +1,109 @@
+import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
+import type { World } from '../world/world';
+import { type Blocker, Walker, type WalkerSpec } from './walker';
+
+interface MonsterDef {
+  spec: WalkerSpec;
+  hp: number;
+  /** Distância (células) em que percebe a personagem e vai atrás dela. */
+  sight: number;
+  /** Quanto se afasta de casa passeando (células). */
+  leash: number;
+}
+
+/** Atributos por tipo de monstro (fonte única). */
+export const MONSTERS: Record<MonsterKind, MonsterDef> = {
+  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, hp: 2, sight: 5, leash: 5 },
+  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, hp: 4, sight: 5.5, leash: 5 },
+  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, hp: 14, sight: 7, leash: 4 },
+};
+
+/** Tempo piscando depois de levar um golpe (s). */
+export const HURT_SECONDS = 0.35;
+
+type State = { kind: 'idle'; timer: number } | { kind: 'walk'; timer: number; dx: number; dy: number };
+
+/**
+ * Monstro da dungeon. Passeia perto de onde nasceu e vai atrás da personagem quando ela entra no seu raio
+ * de visão. **Nunca sai do interior da dungeon**: a caixa dos pés é bloqueada fora de `bounds` (a entrada
+ * fica fora do interior, então ele não a atravessa). Vida em golpes; ainda não causa dano.
+ */
+export class Monster extends Walker {
+  hp: number;
+  readonly maxHp: number;
+  hurt = 0;
+  private state: State;
+
+  constructor(
+    readonly kind: MonsterKind,
+    x: number,
+    y: number,
+    /** Interior da dungeon: limite do movimento. */
+    readonly bounds: Rect,
+    private readonly rand: () => number = Math.random,
+    readonly homeX = x,
+    readonly homeY = y,
+  ) {
+    super(x, y, { ...MONSTERS[kind].spec });
+    this.hp = this.maxHp = MONSTERS[kind].hp;
+    this.state = { kind: 'idle', timer: 0.5 + rand() * 2 };
+  }
+
+  get dead(): boolean {
+    return this.hp <= 0;
+  }
+
+  /** A caixa dos pés em (x, y) fica toda dentro do interior? */
+  insideAt(x: number, y: number): boolean {
+    const { halfW, halfD } = this.spec;
+    const b = this.bounds;
+    return x - halfW >= b.x0 && x + halfW <= b.x1 + 1 && y - halfD >= b.y0 && y + halfD <= b.y1 + 1;
+  }
+
+  /** Leva um golpe: perde vida, pisca e é empurrado para longe de (fromX, fromY). */
+  takeHit(fromX: number, fromY: number, world: World, blocked?: Blocker): void {
+    this.hp -= 1;
+    this.hurt = HURT_SECONDS;
+    const d = Math.hypot(this.x - fromX, this.y - fromY) || 1;
+    const facing = this.facing;
+    this.move(0.25, (this.x - fromX) / d, (this.y - fromY) / d, world, this.confine(blocked));
+    this.facing = facing;
+  }
+
+  /** Bloqueio entre entidades + limite do interior. */
+  private confine(blocked?: Blocker): Blocker {
+    return (self, x, y) => !this.insideAt(x, y) || !!blocked?.(self, x, y);
+  }
+
+  update(dt: number, world: World, target: { x: number; y: number }, blocked?: Blocker): void {
+    this.hurt = Math.max(0, this.hurt - dt);
+    const def = MONSTERS[this.kind];
+    const fence = this.confine(blocked);
+    const tx = target.x - this.x;
+    const ty = target.y - this.y;
+    const dist = Math.hypot(tx, ty);
+    const targetInside = inRect(this.bounds, Math.floor(target.x), Math.floor(target.y));
+    if (targetInside && dist < def.sight) {
+      // Persegue até encostar (sem dano ainda); pára a ~1 célula da personagem.
+      const reach = 0.7 + this.spec.halfW;
+      this.move(dt, dist > reach ? tx / dist : 0, dist > reach ? ty / dist : 0, world, fence);
+      if (dist <= reach) this.facing = Math.abs(tx) > Math.abs(ty) ? (tx < 0 ? 'left' : 'right') : ty < 0 ? 'up' : 'down';
+      return;
+    }
+    const s = this.state;
+    s.timer -= dt;
+    if (s.kind === 'idle') {
+      this.move(dt, 0, 0, world, fence);
+      if (s.timer <= 0) {
+        const hx = this.homeX - this.x;
+        const hy = this.homeY - this.y;
+        const far = Math.hypot(hx, hy) > def.leash;
+        const a = far ? Math.atan2(hy, hx) : this.rand() * Math.PI * 2;
+        this.state = { kind: 'walk', timer: 0.8 + this.rand() * 1.8, dx: Math.cos(a), dy: Math.sin(a) };
+      }
+      return;
+    }
+    const moved = this.move(dt, s.dx * 0.6, s.dy * 0.6, world, fence);
+    if (s.timer <= 0 || moved < 1e-4) this.state = { kind: 'idle', timer: 0.6 + this.rand() * 2.2 };
+  }
+}

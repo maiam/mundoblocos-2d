@@ -17,6 +17,9 @@
 - **Golpe de espada**: a ovelha (adulta ou filhote) atingida some do mundo; par/namoro da outra é desfeito
   (`Entities.removeAnimal`). Animação de morte fica para quando houver arte.
 
+## Monstros
+- Aranhas da dungeon: ver `domains/dungeon.md` (`game/monster.ts`).
+
 ## Gerência (`game/entities.ts`)
 - Formação de pares, início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
   `Sheep` guarda estado (apaixonada, espera, par, namoro, idade) e movimento.

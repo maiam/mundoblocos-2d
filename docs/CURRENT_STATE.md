@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.22.0_
+_Atualizado em 2026-11-02 — v0.23.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -16,6 +16,9 @@ _Atualizado em 2026-11-02 — v0.22.0_
   Tora de Carvalho, Piso de Carvalho. São os únicos blocos de construção e também o chão natural.
 - Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
+- **Dungeon — Covil das Aranhas**: área murada por montanhas perto do spawn, uma entrada voltada para ele; nada
+  quebra nem é colocado lá dentro. 10 aranhas pequenas, 5 grandes e 1 Aranha Gigante (chefe) que perseguem a
+  personagem e nunca saem da área; espada/machado tiram vida (chefe: 14 golpes). Ver `domains/dungeon.md`.
 - Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
 ## Personagem e controles
@@ -46,7 +49,8 @@ _Atualizado em 2026-11-02 — v0.22.0_
 
 ## Limitações conhecidas
 - Nada é salvo (edições, inventário, plantações, ovelhas).
-- Animais atingidos pela espada só somem (sem animação de morte, drops ou vida); ainda não há monstros.
+- Animais atingidos pela espada só somem (sem animação de morte, drops ou vida). Monstros têm vida mas não causam
+  dano (a personagem não tem vida), não deixam drops e renascem ao recarregar; arte das aranhas só de frente.
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
@@ -55,7 +59,7 @@ _Atualizado em 2026-11-02 — v0.22.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 71 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 79 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,2 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,6 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

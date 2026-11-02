@@ -91,6 +91,7 @@ export class Game {
     this.player = new Player(sx + 0.5, sy + 0.6);
     this.entities = new Entities(this.player, Math.random, profile.character);
     if (profile.sheep) this.entities.spawnFlock(this.world, sx, sy);
+    this.entities.spawnMonsters(this.world);
     this.renderer = new Renderer(canvas, this.world);
     this.hud = new Hud({
       icons: this.hotbar.map((s) =>
@@ -496,7 +497,7 @@ export class Game {
     this.entities.update(dt, this.world);
     // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
     if (this.player.consumeHit() && this.player.attackTool && TOOLS[this.player.attackTool].strikes) {
-      this.entities.strike(this.player.facing);
+      this.entities.strike(this.player.facing, this.world);
     }
     this.world.tick(dt);
     this.drops.update(dt, this.player, this.inventory);

@@ -32,6 +32,11 @@ Apenas apresentação; lê `World`, nunca escreve.
   fechada com a largura da célula, base na borda inferior (altura ≈ 3 × `CUBE_FRONT`), dobradiça à esquerda.
   Quadros 0–3 abrindo, 4–7 fechando; `Renderer.drawDoor` guarda quando cada porta mudou de estado (só aparência) e
   anima 0,32 s. Ícone da hotbar = quadro 0.
+- Dungeon (`blockArt.getDungeonArt`, `textures.dungeonTextures`): 4 topos de chão; `shape: 'rock'` com
+  **variantes por célula** (`textures.variants`, escolha por hash): montanhas 2,7 células de largura, pedras 1,5,
+  blocos decorados 1,15 (ovos/cogumelo/espinhos/raízes). Sombra própria no `ChunkRenderer`.
+- Monstros (`SheetSpec.cycle`): 8 quadros em sequência (4×2) sem linha por direção; espelhados ao olhar para a
+  direita; parados alternam 2 quadros; piscam ao levar golpe; barra de vida quando feridos.
 - Por frame: objetos linha a linha (de cima para baixo da tela); a personagem é desenhada logo após a linha
   dos seus pés. Água ganha brilhos animados; nuvens projetam sombras que derivam.
 - `pick()` escolhe o objeto sob o cursor testando as linhas da frente primeiro (sprites sobem acima da célula).

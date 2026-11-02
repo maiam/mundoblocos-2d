@@ -13,6 +13,9 @@ import heroineUrl from '../assets/heroine.webp?inline';
 import lambUrl from '../assets/lamb.webp?inline';
 import sheepLoveUrl from '../assets/sheep-love.webp?inline';
 import sheepUrl from '../assets/sheep.webp?inline';
+import spiderBigUrl from '../assets/spider-big.webp?inline';
+import spiderBossUrl from '../assets/spider-boss.webp?inline';
+import spiderSmallUrl from '../assets/spider-small.webp?inline';
 import { TILE } from '../config';
 import type { Actor, ActorKind } from '../game/entities';
 import type { Facing } from '../game/walker';
@@ -48,6 +51,11 @@ interface SheetSpec {
   float?: { lift: number; bob: number; fps: number; movingFps: number };
   /** Folha de ação (ex.: golpe): o quadro vem de `Actor.frame`, a linha da direção. */
   action?: boolean;
+  /**
+   * Ciclo único (monstros): `cols × rows` quadros em sequência, sem linha por direção (arte de frente).
+   * `flipRight` espelha o desenho quando o ator olha para a direita.
+   */
+  cycle?: { flipRight: boolean };
 }
 
 const SPECS: Record<ActorKind, SheetSpec> = {
@@ -86,6 +94,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   sheep: { url: sheepUrl, cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { url: lambUrl, cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.
+  // Aranhas da dungeon (scripts/extract-dungeon.py): 8 quadros de caminhada, arte de frente/esquerda.
+  'spider-small': { url: spiderSmallUrl, cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true } },
+  'spider-big': { url: spiderBigUrl, cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true } },
+  'spider-boss': { url: spiderBossUrl, cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true } },
   'sheep-love': { url: sheepLoveUrl, cols: 4, rows: 1, height: TILE * 1.75, shadow: [0.9, 0.16], walkFps: 0 },
 };
 
@@ -100,7 +112,11 @@ class SpriteSheet {
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
   draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0): void {
-    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action } = this.spec;
+    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action, cycle } = this.spec;
+    if (cycle) {
+      this.drawCycle(ctx, fx, fy, zoom, a, elapsed);
+      return;
+    }
     // Flutuação: fase contínua (não zera ao parar) → sem trancos entre parado e andando.
     const wave = float ? Math.sin(elapsed * 2.4) : 0;
     const shadowScale = float ? 1 - 0.12 * (wave + 1) / 2 : 1;
@@ -131,6 +147,41 @@ class SpriteSheet {
     const dy = fy - h + 2 * zoom + h * footPad - lift;
     if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
     else ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
+  }
+
+  /** Monstro: ciclo de 8 quadros (andando) ou respiração lenta (parado), espelho à direita, pisca ferido. */
+  private drawCycle(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed: number): void {
+    const { height, shadow, walkFps, cols, rows, cycle } = this.spec;
+    ctx.fillStyle = 'rgba(30, 20, 70, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, shadow[0] * TILE * zoom, shadow[1] * TILE * zoom, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (!this.ready) return;
+    const n = cols * rows;
+    const i = a.moving ? Math.floor(a.walkTime * walkFps) % n : Math.floor(elapsed * 2) % 2;
+    const fw = this.img.width / cols;
+    const fh = this.img.height / rows;
+    const h = Math.round(height * zoom);
+    const w = Math.round(h * (fw / fh));
+    const dy = Math.round(fy - h + 3 * zoom);
+    const visible = !a.hurt || Math.floor(elapsed * 16) % 2 === 0;
+    if (visible) {
+      ctx.save();
+      ctx.translate(Math.round(fx), 0);
+      if (cycle?.flipRight && a.facing === 'right') ctx.scale(-1, 1);
+      ctx.drawImage(this.img, (i % cols) * fw, Math.floor(i / cols) * fh, fw, fh, -Math.round(w / 2), dy, w, h);
+      ctx.restore();
+    }
+    if (a.hp !== undefined) {
+      // Barra de vida acima do monstro ferido.
+      const bw = Math.max(18, w * 0.5);
+      const bx = Math.round(fx - bw / 2);
+      const by = dy - 6 * zoom;
+      ctx.fillStyle = 'rgba(20, 12, 40, 0.75)';
+      ctx.fillRect(bx - 1, by - 1, bw + 2, 4 * zoom + 2);
+      ctx.fillStyle = a.hp > 0.35 ? '#ff6b8a' : '#ffb347';
+      ctx.fillRect(bx, by, Math.round(bw * a.hp), 4 * zoom);
+    }
   }
 
   /** Altura total na tela (px de mundo), incluindo o quanto paira acima do chão. */

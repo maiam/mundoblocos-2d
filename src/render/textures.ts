@@ -9,7 +9,7 @@ import tilledIcon from '../assets/icon-block-tilled.webp?inline';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
-import { getBlockAtlas, getOakDoorSheet } from './blockArt';
+import { getBlockAtlas, getDungeonArt, getOakDoorSheet } from './blockArt';
 import { CELESTIAL_ICONS, celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
@@ -53,6 +53,40 @@ export interface BlockTextures {
   bankColor: Map<BlockId, string>;
   /** Porta de Carvalho: 8 quadros (0..3 abrindo, 4..7 fechando); fechada = 0, aberta = 3. */
   doorFrames: Sprite[];
+  /** Objetos com várias artes (montanhas, pedras): o render escolhe uma por célula (hash). */
+  variants: Map<BlockId, Sprite[]>;
+}
+
+/** Quadros de uma folha em tira → sprites com a base no pé da célula (largura `w` px de mundo). */
+function stripSprites(img: HTMLImageElement, count: number, w: number, sink: number): Sprite[] {
+  const fw = img.width / count;
+  const h = w * (img.height / fw);
+  return Array.from({ length: count }, (_, i) => {
+    const c = document.createElement('canvas');
+    c.width = fw;
+    c.height = img.height;
+    c.getContext('2d')!.drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height);
+    const oy = T - h + sink;
+    return { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: Math.max(oy, -T), w: T, h: T - Math.max(oy, -T) } };
+  });
+}
+
+/** Dungeon: chão (4 topos), muralha de montanhas, pedras e blocos decorados (ovos, cogumelos, espinhos, raízes). */
+function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
+  const art = getDungeonArt();
+  [Block.DUNGEON_DIRT, Block.DUNGEON_WEB, Block.DUNGEON_BONES, Block.DUNGEON_MOSS].forEach((id, i) => {
+    const [c, ctx] = canvas(T, T);
+    ctx.drawImage(art.ground, i * 64, 0, 64, 64, 0, 0, T, T);
+    groundTop.set(id, c);
+  });
+  const mountains = stripSprites(art.mountains, 8, T * 2.7, 6);
+  const rocks = stripSprites(art.rocks, 8, T * 1.5, 4);
+  const props = stripSprites(art.props, 4, T * 1.15, 2);
+  variants.set(Block.DUNGEON_MOUNTAIN, mountains);
+  variants.set(Block.DUNGEON_ROCK, rocks);
+  objects.set(Block.DUNGEON_MOUNTAIN, mountains[0]);
+  objects.set(Block.DUNGEON_ROCK, rocks[0]);
+  [Block.DUNGEON_EGGS, Block.DUNGEON_MUSHROOM, Block.DUNGEON_SPIKES, Block.DUNGEON_ROOTS].forEach((id, i) => objects.set(id, props[i]));
 }
 
 /** Geometria da folha `oak-door` (quadros 70×120): corpo da porta fechada em x 8..69, base em y 112. */
@@ -389,6 +423,8 @@ export function createBlockTextures(): BlockTextures {
     ));
     icons.set(id, CELESTIAL_ICONS[id]);
   }
+  const variants = new Map<BlockId, Sprite[]>();
+  dungeonTextures(groundTop, objects, variants);
   const doorFrames = doorSprites();
   objects.set(Block.OAK_DOOR, doorFrames[0]);
   objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
@@ -406,5 +442,5 @@ export function createBlockTextures(): BlockTextures {
     [Block.SAND, '#d9b06a'],
     [Block.STONE, '#6a6676'],
   ]);
-  return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames };
+  return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames, variants };
 }
