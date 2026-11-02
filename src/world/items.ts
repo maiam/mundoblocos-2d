@@ -68,7 +68,7 @@ export interface ToolDef {
 
 export const TOOLS: Record<ToolId, ToolDef> = {
   sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'combate' },
-  hoe: { id: Tool.HOE, name: 'Enxada', plannedUse: 'preparar a terra para plantar' },
+  hoe: { id: Tool.HOE, name: 'Enxada', plannedUse: 'ara Terra/Terra com Grama → Terra Arada (ativa)' },
   pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra e minérios' },
   shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão' },
   axe: { id: Tool.AXE, name: 'Machado', plannedUse: 'cortar árvores e madeira' },

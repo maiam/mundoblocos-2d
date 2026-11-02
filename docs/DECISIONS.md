@@ -26,7 +26,8 @@
 | Chão quebrado vira buraco; só bloco novo ocupa e vira piso nivelado | domains/world |
 | Ovelha não sobe em cubos: blocos servem de cerca | domains/npc |
 | Crescimento do trigo probabilístico (média 6 s/estágio) | domains/farming |
-| Ferramenta equipada = espaço selecionado; sem ação até definir o uso de cada uma | domains/player |
+| Ferramenta equipada = espaço selecionado; cada ferramenta ganha ação quando definida (enxada: arar) | domains/player |
+| Plantio só em Terra Arada; arar = enxada em Terra/Terra com Grama livre | domains/farming |
 
 ## Interface e controles
 | Decisão | Onde |

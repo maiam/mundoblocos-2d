@@ -22,10 +22,16 @@ function soil(w: World): [number, number] {
 }
 
 describe('Trigo', () => {
-  it('semente só vai na terra (grama/terra), em célula livre', () => {
+  it('semente só vai em Terra Arada; a enxada ara terra e grama', () => {
     const w = new World(7);
     const [x, y] = soil(w);
     clearCell(w, x, y);
+    expect(w.getGround(x, y)).toBe(Block.GRASS);
+    expect(w.canPlant(x, y)).toBe(false); // grama não aceita semente
+    expect(w.canTill(x, y)).toBe(true);
+    expect(w.till(x, y)).toBe(true);
+    expect(w.getGround(x, y)).toBe(Block.TILLED);
+    expect(w.canTill(x, y)).toBe(false); // já arada
     expect(w.canPlant(x, y)).toBe(true);
     expect(w.plant(x, y)).toBe(true);
     expect(w.getObject(x, y)).toBe(Block.WHEAT_0);
@@ -34,10 +40,19 @@ describe('Trigo', () => {
     expect(w.standHeight(x, y)).toBe(0); // dá para andar entre as plantas
     clearCell(w, x + 1, y);
     w.placeBlock(x + 1, y, Block.STONE);
-    expect(w.canPlant(x + 1, y)).toBe(false); // cubo ocupando
+    expect(w.canTill(x + 1, y)).toBe(false); // cubo ocupando
+    expect(w.canPlant(x + 1, y)).toBe(false);
+    // Terra (sem grama) também pode ser arada; enfeite em cima é removido.
+    w.breakBlock(x + 1, y);
+    w.breakBlock(x + 1, y); // vira buraco
+    w.placeBlock(x + 1, y, Block.DIRT); // piso de terra
+    w.setObject(x + 1, y, Block.FLOWER);
+    expect(w.till(x + 1, y)).toBe(true);
+    expect(w.getObject(x + 1, y)).toBe(Block.AIR);
+    expect(w.getGround(x + 1, y)).toBe(Block.TILLED);
   });
 
-  it('não planta em areia, neve, piso de bloco nem buraco', () => {
+  it('não ara nem planta em areia, pedra, piso de madeira nem buraco', () => {
     const w = new World(42);
     let sand: [number, number] | null = null;
     for (let i = 0; i < 6000 && !sand; i++) {
@@ -46,18 +61,22 @@ describe('Trigo', () => {
     }
     expect(sand).not.toBeNull();
     expect(w.canPlant(...sand!)).toBe(false);
+    expect(w.canTill(...sand!)).toBe(false);
     const [x, y] = soil(w);
     clearCell(w, x, y);
     w.breakBlock(x, y); // buraco
     expect(w.canPlant(x, y)).toBe(false);
+    expect(w.canTill(x, y)).toBe(false);
     w.placeBlock(x, y, Block.OAK_PLANKS); // piso de tábuas
     expect(w.canPlant(x, y)).toBe(false);
+    expect(w.canTill(x, y)).toBe(false);
   });
 
   it('cresce com o tempo até maduro e para', () => {
     const w = new World(7);
     const [x, y] = soil(w);
     clearCell(w, x, y);
+    w.till(x, y);
     w.plant(x, y);
     expect(w.cropCount).toBe(1);
     for (let i = 0; i < 40; i++) w.tick(10, () => 0); // rand 0 → sempre avança
@@ -70,6 +89,7 @@ describe('Trigo', () => {
     const w = new World(7);
     const [x, y] = soil(w);
     clearCell(w, x, y);
+    w.till(x, y);
     w.plant(x, y);
     w.tick(1, () => 0.99);
     expect(w.getObject(x, y)).toBe(Block.WHEAT_0);

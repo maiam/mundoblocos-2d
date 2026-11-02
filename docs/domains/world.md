@@ -23,5 +23,5 @@
 - Quebrar (`breakTarget`): nível 1 → nível 0 → chão (vira buraco). Água não quebra.
 - Colocar (`placementLevel`): só materiais. Em buraco vira piso nivelado; senão nível 0 (substitui enfeite) ou
   nível 1 sobre cubo.
-- Plantar: grama, terra ou terra arada.
+- Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.
 - Chunks `modified` nunca são descarregados.

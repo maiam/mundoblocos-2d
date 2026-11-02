@@ -26,8 +26,10 @@ export const TOOL_ICON_URLS: Record<ToolId, string> = {
   axe: axeIconUrl,
 };
 
-/** Largura do canteiro de trigo em células (o monte de terra ocupa a célula toda). */
-const CROP_W = 1.15;
+/** Lado do quadro do trigo em células (quadro quadrado; a planta madura ocupa ~1,2 célula). */
+const CROP_W = 1.25;
+/** Altura da base do caule dentro da célula (vista 3/4: um pouco abaixo do centro). */
+const CROP_BASE = 0.8;
 
 /**
  * Carrega a folha de crescimento do trigo (4×4 = 16 estágios) e registra um
@@ -47,12 +49,12 @@ export function loadCropSprites(objects: Map<number, Sprite>): void {
       const ctx = c.getContext('2d')!;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, (s % 4) * fw, Math.floor(s / 4) * fh, fw, fh, 0, 0, c.width, c.height);
-      // Base do canteiro levemente abaixo do centro da célula (vista 3/4).
-      const oy = TILE - h + 2;
+      // Base do caule (fundo do quadro) um pouco abaixo do centro da célula, sobre a terra arada.
+      const oy = TILE * CROP_BASE - h;
       objects.set(WHEAT_FIRST + s, {
         canvas: c, ox: (TILE - w) / 2, oy, w, h,
         // Área clicável: do alto da planta (limitado) até a base da célula.
-        hit: { x: 2, y: Math.max(oy, -TILE * 0.7), w: TILE - 4, h: TILE - Math.max(oy, -TILE * 0.7) },
+        hit: { x: 2, y: Math.max(oy + h * 0.3, -TILE * 0.5), w: TILE - 4, h: TILE - Math.max(oy + h * 0.3, -TILE * 0.5) },
       });
     }
   };

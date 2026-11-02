@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.13.2_
+_Atualizado em 2026-11-02 — v0.14.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -29,8 +29,10 @@ _Atualizado em 2026-11-02 — v0.13.2_
 - Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15).
 
 ## Sistemas
-- **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite; ainda sem ação.
-- **Cultivo**: semente na grama/terra/arada cresce em 16 estágios (~1,5 min); colheita solta trigo + sementes.
+- **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara Terra/Terra
+  com Grama → Terra Arada; as demais ainda sem ação.
+- **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
+  colheita solta trigo + sementes.
 - **Inventário** de itens contáveis (começa com 5 sementes e 2 trigos); materiais são infinitos.
 - **Ovelhas**: rebanho perto do spawn; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
@@ -40,7 +42,6 @@ _Atualizado em 2026-11-02 — v0.13.2_
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
-- Sob a folha de trigo resta um filete claro da sombra original do desenho.
 - iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a
   instalação na tela inicial); dentro do Artifact a tela cheia pode ser recusada.
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.

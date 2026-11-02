@@ -231,7 +231,8 @@ export class Game {
 
   /** Pode usar o espaço selecionado (bloco/semente) nesta célula? Ovelha: ver `canFeed`. */
   private canUseAt(slot: HotbarSlot | null, x: number, y: number): boolean {
-    if (!slot || slot.kind === 'tool') return false;
+    if (!slot) return false;
+    if (slot.kind === 'tool') return slot.tool === 'hoe' && this.world.canTill(x, y);
     if (slot.kind === 'block') return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
     if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
     return false;
@@ -243,7 +244,12 @@ export class Game {
 
   /** Aplica o espaço selecionado: coloca bloco, planta ou alimenta. */
   private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
-    if (!slot || slot.kind === 'tool') return; // mão vazia e ferramentas ainda não têm ação
+    if (!slot) return; // mão vazia ainda não tem ação
+    if (slot.kind === 'tool') {
+      // Enxada ara a terra; as demais ferramentas ainda não têm ação.
+      if (slot.tool === 'hoe' && this.canUseAt(slot, x, y)) this.world.till(x, y);
+      return;
+    }
     if (slot.kind === 'block') {
       if (!this.canUseAt(slot, x, y)) return;
       this.world.placeBlock(x, y, slot.block);
@@ -275,7 +281,7 @@ export class Game {
   /** Célula onde o espaço selecionado agiria sob o cursor (bloco empilha se tocou num cubo com espaço). */
   private useTarget(sx: number, sy: number): CellTarget | null {
     const slot = this.slot;
-    if (!slot || slot.kind === 'tool' || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
+    if (!slot || (slot.kind === 'tool' && slot.tool !== 'hoe') || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
     let [x, y] = this.groundCell(sx, sy);
     if (slot.kind === 'block') {
       const picked = this.renderer.pick(this.camera, sx, sy);

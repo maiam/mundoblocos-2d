@@ -2,8 +2,11 @@
 
 ## Ferramentas (`world/items.ts` → `TOOLS`)
 - Espada, Enxada, Picareta, Pá, Machado: itens únicos, sem quantidade, equipados ao selecionar.
-- Uso planejado (sem efeito ainda): espada = combate; enxada = grama/terra → Terra Arada; picareta = pedra;
-  pá = cavar / Caminho de Terra; machado = árvores → Tora de Carvalho.
+- **Enxada (ativa):** toque/clique com a enxada numa célula de chão Terra ou Terra com Grama, sem nada em cima
+  (capim/flor são removidos) → chão vira **Terra Arada** (`World.canTill/till`). Alvo: célula à frente (botão de
+  ação) ou sob o cursor; mesmo alcance de 4,5 células.
+- Uso planejado (sem efeito ainda): espada = combate; picareta = pedra; pá = cavar / Caminho de Terra;
+  machado = árvores → Tora de Carvalho.
 
 ## Itens (`world/items.ts`) — fonte de verdade
 - **Itens contáveis** ≠ blocos: blocos de construção são infinitos; itens têm quantidade no inventário.
@@ -13,7 +16,8 @@
 ## Plantação (`world/world.ts`, `world/blocks.ts`)
 - Trigo = 16 ids consecutivos (`WHEAT_FIRST` = 60 … 75), forma `crop`: não bloqueia passagem, não aceita bloco
   por cima, não se coloca pela hotbar (só plantando).
-- `canPlant`: chão de **terra** (Terra com Grama, Terra ou Terra Arada) com célula vazia ou com enfeite.
+- `canPlant`: **só chão de Terra Arada** (arado pela enxada ou piso de Terra Arada colocado num buraco), com a
+  célula vazia ou com enfeite. Grama e terra comuns não aceitam semente.
 - Crescimento: `World.tick(dt)` avança cada trigo um estágio com probabilidade `dt / WHEAT_STAGE_SECONDS` (6 s)
   → ~1,5 min da semente ao maduro, sem sincronia entre plantas. O `World` guarda as células plantadas
   (só em chunks modificados, que não descarregam).
@@ -29,5 +33,8 @@
 - Trigo → dá para a ovelha à frente (ou sob o cursor). Anel dourado = pode comer; vermelho = não.
 
 ## Arte
-- `assets-src/wheat-growth-sheet.png` → `src/assets/wheat-crop.webp` (16 estágios; canteiro ~1,15 célula).
+- `assets-src/wheat-growth-sheet-v2.png` (16 estágios, só a planta, sem monte de terra) →
+  `scripts/process-crop.py` → `src/assets/wheat-crop.webp`: cada quadro ancorado pela **base do caule** e todos na
+  mesma escala (a planta cresce no lugar). Quadro de 1,25 célula com a base a 0,8 célula da célula, sobre a terra
+  arada. A folha antiga (`wheat-growth-sheet.png`, com monte de terra) fica só como referência.
 - Ícones escolhidos da prancha: **monte de sementes** (Semente de Trigo) e **feixe com laço** (Trigo).

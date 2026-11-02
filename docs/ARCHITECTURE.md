@@ -11,6 +11,7 @@ scripts/
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
+  process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
   slice-icons.py               prancha em grade com transparência → um ícone por célula
   make-icons.py                ícones do PWA (public/)
   build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)

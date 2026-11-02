@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0 — 2026-11-02
+- Mundo principal: **enxada ativa** — toque/clique (ou botão de ação) em Terra/Terra com Grama → Terra Arada
+  (`World.canTill/till`; enfeites em cima são removidos).
+- **Semente de trigo só em Terra Arada** (antes: grama, terra ou arada).
+- Novos sprites de crescimento do trigo (16 estágios, sem monte de terra), processados por
+  `scripts/process-crop.py` com base do caule ancorada e escala comum.
+- Testes de cultivo atualizados (arar antes de plantar; não ara areia/pedra/piso/buraco).
+
 ## 0.13.2 — 2026-11-02
 - Deusa da Vida passa a **flutuar** em vez de caminhar (a caminhada travava): folha de flutuação 7×4 fornecida,
   quadros em vai-e-volta contínuo, pairando acima da sombra com balanço suave; câmera sem balanço.

@@ -7,8 +7,7 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
    ações/ferramentas próprias e se flutuar deve ter efeito de jogo (ex.: passar sobre buracos/subir 2 níveis); (arte) uma variação de nuvem feita para chão contínuo eliminaria a repetição.
 1. **Avaliar o botão de ação no celular** (teste em andamento): 2 s ainda confortável? Mão vazia + toque
    poderia colher trigo maduro ou fazer carinho na ovelha; alvo poderia considerar a diagonal do joystick.
-2. **Ações das ferramentas** sobre os materiais:
-   - Enxada: grama/terra → Terra Arada (decidir se plantio passa a exigir terra arada).
+2. **Ações das ferramentas** restantes (enxada já ara):
    - Pá: grama/terra → Caminho de Terra; cava mais rápido.
    - Picareta: quebra pedra mais rápido; Machado: corta árvore → Tora de Carvalho.
    - Espada: reservada para combate. Falta arte de golpe (sprites de ação).

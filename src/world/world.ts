@@ -10,8 +10,10 @@ import type { TerrainSource } from './terrain';
 
 /** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
 export const WHEAT_STAGE_SECONDS = 6;
-/** Chãos onde a semente pode ser plantada ("terra"): grama, terra e terra arada. */
-const SOIL = new Set<number>([Block.GRASS, Block.DIRT, Block.TILLED]);
+/** Único chão onde a semente pode ser plantada. */
+const PLANTABLE_GROUND: number = Block.TILLED;
+/** Chãos que a enxada transforma em Terra Arada. */
+const TILLABLE = new Set<number>([Block.DIRT, Block.GRASS]);
 
 /** Chave numérica exata do chunk (|cy| < 2^20 chunks ≈ 16 milhões de células). */
 function numKey(cx: number, cy: number): number {
@@ -282,11 +284,29 @@ export class World {
 
   // ---- Plantação ----
 
-  /** A semente pode ser plantada aqui? Terra (grama/terra) com a célula vazia ou com enfeite. */
+  /** A semente pode ser plantada aqui? Só em chão de Terra Arada, com a célula livre (ou com enfeite). */
   canPlant(x: number, y: number): boolean {
-    if (!SOIL.has(this.getGround(x, y))) return false;
+    if (this.getGround(x, y) !== PLANTABLE_GROUND) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
+  }
+
+  /**
+   * A enxada pode arar aqui? Chão de Terra ou Terra com Grama, sem nada em cima
+   * (enfeites como capim/flor são removidos ao arar).
+   */
+  canTill(x: number, y: number): boolean {
+    if (!TILLABLE.has(this.getGround(x, y))) return false;
+    const base = blockDef(this.getObject(x, y));
+    return base.id === Block.AIR || base.shape === 'decoration';
+  }
+
+  /** Ara o chão: Terra/Terra com Grama → Terra Arada. */
+  till(x: number, y: number): boolean {
+    if (!this.canTill(x, y)) return false;
+    if (this.getObject(x, y) !== Block.AIR) this.setLevel(x, y, 0, Block.AIR);
+    this.setLevel(x, y, 'ground', Block.TILLED);
+    return true;
   }
 
   plant(x: number, y: number): boolean {
