@@ -65,11 +65,12 @@ export interface ToolDef {
   /** Uso (documentação). */
   plannedUse: string;
   /**
-   * O que a ferramenta pode quebrar segurando: tudo, nada, orgânico (madeira, árvore e planta), só planta
-   * ou macio (blocos macios — terra, areia — e plantas). Fonte de verdade da restrição por ferramenta.
+   * O que a ferramenta pode quebrar segurando: tudo, nada, orgânico (madeira, árvore e planta), só planta,
+   * macio (blocos macios — terra, areia — e plantas) ou tudo menos madeira/árvore (`nonWood`).
+   * Fonte de verdade da restrição por ferramenta.
    */
-  breaks: 'any' | 'none' | 'organic' | 'plant' | 'soft';
-  /** Plantas quebradas por esta ferramenta são destruídas sem soltar nada (pá). */
+  breaks: 'any' | 'none' | 'organic' | 'plant' | 'soft' | 'nonWood';
+  /** Plantas quebradas por esta ferramenta são destruídas sem soltar nada (pá, picareta). */
   destroysPlants: boolean;
   /** Toque curto num chão: 'till' = ara (enxada), 'flatten' = vira Caminho de Terra (pá), null = nada. */
   groundUse: 'till' | 'flatten' | null;
@@ -89,8 +90,8 @@ export const TOOLS: Record<ToolId, ToolDef> = {
     breaks: 'plant', destroysPlants: false, groundUse: 'till', swings: true, strikes: false,
   },
   pickaxe: {
-    id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)',
-    breaks: 'any', destroysPlants: false, groundUse: null, swings: false, strikes: false,
+    id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'minera qualquer bloco menos madeira/árvore; plantas sem drop; não ataca',
+    breaks: 'nonWood', destroysPlants: true, groundUse: null, swings: true, strikes: false,
   },
   shovel: {
     id: Tool.SHOVEL, name: 'Pá', plannedUse: 'Terra/Grama/Arada → Caminho de Terra; cava só macios e plantas (sem drop); não ataca',
@@ -111,10 +112,11 @@ export function toolCanBreak(tool: ToolId | null, id: BlockId): boolean {
   if (rule === 'organic') return organic !== null;
   if (rule === 'plant') return organic === 'plant';
   if (rule === 'soft') return soft || organic === 'plant';
+  if (rule === 'nonWood') return organic !== 'wood';
   return false;
 }
 
-/** O que cai ao quebrar este bloco com esta ferramenta: a pá destrói plantas sem soltar nada. */
+/** O que cai ao quebrar este bloco com esta ferramenta: pá e picareta destroem plantas sem soltar nada. */
 export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number = Math.random): Drop[] {
   if (tool && TOOLS[tool].destroysPlants && blockDef(id).organic === 'plant') return [];
   return dropsFor(id, rand);

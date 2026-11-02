@@ -8,7 +8,7 @@ Site estático (Vite + TypeScript, sem framework), vista superior inclinada (3/4
 CLAUDE.md / AGENTS.md          instruções para agentes de IA
 assets-src/                    arte original (folhas 4×4, pranchas de blocos, ícones)
 scripts/
-  process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region…)
+  process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region, --respace…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
@@ -72,7 +72,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único, cada mundo) | ~3,0 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
+| Artefato (HTML único, cada mundo) | ~3,1 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

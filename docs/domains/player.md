@@ -19,10 +19,13 @@
   Arada livre → Caminho de Terra (`World.flatten`). Segurar 2 s cava **só blocos macios** (`BlockDef.soft`: terra,
   grama, arada, caminho, areia) e **plantas, destruídas sem drop** (`toolDrops`); não quebra pedra, madeira,
   árvores; **não acerta** entidades.
-- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `organic` | `plant` | `soft`,
+- **Picareta** (folha `heroine-pickaxe-attack`): toque curto toca a animação de minerar (sem efeito no mundo).
+  Segurar 2 s quebra **qualquer bloco** (pedra, terra, areia… cubo ou chão) e plantas — **sem drop** —, menos
+  madeira e árvores (`breaks: 'nonWood'`); **não acerta** entidades.
+- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `organic` | `plant` | `soft` | `nonWood`,
   via `toolCanBreak` em `Game.canBreakAt`), `destroysPlants` (sem drop, via `toolDrops`), `groundUse` (`till` |
   `flatten`: o que o toque faz no chão), `swings` (tem animação de ação; define o ator `heroine-<t>-attack`) e
-  `strikes` (o golpe acerta entidades — espada e machado sim, enxada e pá não). Picareta ainda sem ação (quebra tudo).
+  `strikes` (o golpe acerta entidades — espada e machado sim, enxada, pá e picareta não).
 - `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).

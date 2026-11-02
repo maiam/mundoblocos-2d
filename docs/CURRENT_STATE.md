@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.19.0_
+_Atualizado em 2026-11-02 — v0.20.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -33,7 +33,8 @@ _Atualizado em 2026-11-02 — v0.19.0_
   com Grama → Terra Arada e, segurando, quebra só plantas (não madeira/árvore); não ataca; a **espada** golpeia (animação própria) e faz sumir animais à frente — não quebra
   blocos, itens nem elementos; o **machado** também golpeia e, segurando, corta só madeira/árvore/planta; a **pá**
   (animação de cavar) amassa Terra/Grama/Arada → Caminho de Terra e, segurando, cava só blocos macios (terra, areia…)
-  e destrói plantas **sem drop**; não ataca. Picareta ainda sem ação.
+  e destrói plantas **sem drop**; não ataca; a **picareta** (animação de minerar), segurando, quebra qualquer
+  bloco e plantas (sem drop), menos madeira/árvore; não ataca.
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
 - **Inventário** de itens contáveis (começa com 5 sementes e 2 trigos); materiais são infinitos.
@@ -51,7 +52,7 @@ _Atualizado em 2026-11-02 — v0.19.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 63 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 66 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,0 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,1 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

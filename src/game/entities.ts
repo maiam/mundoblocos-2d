@@ -11,7 +11,7 @@ import type { CharacterId } from '../world/profiles';
 
 /** Ferramentas com folha de ação (golpe/arar). */
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
-export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel';
+export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
 export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
 

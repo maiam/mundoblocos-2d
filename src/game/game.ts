@@ -236,7 +236,7 @@ export class Game {
     return !!t && TOOLS[t].strikes;
   }
 
-  /** Ferramenta com animação de ação que também quebra algo (machado, enxada, pá): anima enquanto quebra. */
+  /** Ferramenta com animação de ação que também quebra algo (machado, enxada, pá, picareta): anima enquanto quebra. */
   private get swingsWhileBreaking(): boolean {
     const t = this.tool;
     return !!t && TOOLS[t].swings && TOOLS[t].breaks !== 'none';
@@ -274,11 +274,10 @@ export class Game {
   private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
     if (!slot) return; // mão vazia ainda não tem ação
     if (slot.kind === 'tool') {
-      // Ferramenta de chão (enxada ara, pá amassa em caminho): animação sempre; troca só se o alvo for válido.
+      // Ferramenta com ação (enxada, pá, picareta): animação sempre; enxada/pá trocam o chão se o alvo for válido.
       const use = TOOLS[slot.tool].groundUse;
-      if (!use) return;
-      this.player.startAttack(slot.tool);
-      if (!this.canUseAt(slot, x, y)) return;
+      if (TOOLS[slot.tool].swings) this.player.startAttack(slot.tool);
+      if (!use || !this.canUseAt(slot, x, y)) return;
       if (use === 'till') this.world.till(x, y);
       else this.world.flatten(x, y);
       return;
@@ -359,8 +358,8 @@ export class Game {
       this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
       return;
     }
-    if (slot?.kind === 'tool' && TOOLS[slot.tool].groundUse) {
-      // Pelo mouse: vira para o cursor, ara/amassa (animação sempre; troca só se o alvo for válido).
+    if (slot?.kind === 'tool' && TOOLS[slot.tool].swings) {
+      // Pelo mouse: vira para o cursor e toca a ação (ara/amassa só se o alvo for válido).
       const t = this.useTarget(sx, sy);
       if (!this.player.attacking) this.faceToward(sx, sy);
       if (t?.valid) this.applyUse(slot, t.x, t.y, null);
@@ -432,11 +431,11 @@ export class Game {
       h.progress = 0;
     }
     h.progress += dt / BREAK_HOLD_S;
-    // Machado/enxada/pá: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
+    // Machado/enxada/pá/picareta: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
     if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {
       const broken = this.world.breakBlock(t.x, t.y);
-      // Colheita: o que o mundo devolve cai no chão para ser coletado (a pá destrói plantas sem drop).
+      // Colheita: o que o mundo devolve cai no chão para ser coletado (pá e picareta destroem plantas sem drop).
       if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, toolDrops(this.tool, broken));
       this.entities.settleAll(this.world);
       h.target = null;

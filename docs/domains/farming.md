@@ -12,7 +12,8 @@
 - **Pá (ativa):** toque/clique (animação de cavar) em chão Terra, Terra com Grama ou Terra Arada sem nada em cima
   (enfeites removidos; trigo plantado impede) → **Caminho de Terra** (`World.canFlatten/flatten`). Segurando, cava
   só blocos macios e destrói plantas — inclusive trigo maduro — **sem soltar nada**. Não ataca.
-- Uso planejado (sem efeito ainda): picareta = pedra.
+- **Picareta (ativa):** segurando, minera qualquer bloco e destrói plantas (trigo inclusive) **sem drop**; não
+  quebra madeira/árvore; não ataca.
 
 ## Itens (`world/items.ts`) — fonte de verdade
 - **Itens contáveis** ≠ blocos: blocos de construção são infinitos; itens têm quantidade no inventário.

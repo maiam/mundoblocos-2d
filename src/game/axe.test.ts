@@ -18,11 +18,10 @@ describe('Machado', () => {
     expect(MATERIALS.filter((m) => BLOCKS[m].organic !== null)).toEqual([Block.OAK_LOG, Block.OAK_PLANKS]);
   });
 
-  it('espada não quebra nada; mão vazia/itens e demais ferramentas quebram tudo', () => {
+  it('espada não quebra nada; mão vazia/itens quebram tudo', () => {
     for (const id of [Block.STONE, Block.OAK_TREE, Block.WHEAT_15, Block.FLOWER]) {
       expect(toolCanBreak('sword', id)).toBe(false);
       expect(toolCanBreak(null, id)).toBe(true);
-      expect(toolCanBreak('pickaxe', id)).toBe(true);
     }
     expect(TOOLS.axe.strikes && TOOLS.sword.strikes).toBe(true);
     expect(TOOLS.hoe.strikes).toBe(false);

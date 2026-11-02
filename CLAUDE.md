@@ -53,7 +53,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - Mudar o gerador muda o mapa de todas as seeds: avise o usuário e rode os testes de determinismo/spawn.
 - Folhas que já vêm transparentes: `process-sprite.py --alpha`; se o desenho invade a linha de cima (auréolas,
   asas), `--grid-offset-y`. Confira a "altura do desenho" no relatório: igual à célula = recorte errado.
-- Folha de ação com pedaços de quadros vizinhos (relatório "altura do desenho = célula"): use `--largest`.
+- Folha de ação com pedaços de quadros vizinhos (relatório "altura do desenho = célula"): use `--largest`; se os
+  quadros transbordam a grade para cima e para baixo em colunas diferentes (ex.: picareta), `--respace 40`.
 - Combate fica em `Entities` (estado de execução). O que cada ferramenta pode quebrar vem de `TOOLS[tool].breaks`
   (`toolCanBreak` em `world/items.ts`), o toque no chão de `TOOLS[tool].groundUse` e o drop de `toolDrops` — não
   espalhe `if (ferramenta === …)` pelo `Game`.

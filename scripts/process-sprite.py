@@ -35,11 +35,46 @@ ap.add_argument('--alpha', action='store_true',
 ap.add_argument('--rows-map', default=None,
                 help='linhas de saída a partir das de entrada, ex. "0,3,1,2"; sufixo m espelha ("0,1,1m,2"). '
                      'Use para normalizar na ordem canônica frente, esquerda, direita, costas.')
+ap.add_argument('--respace', type=int, default=0, metavar='PAD',
+                help='(com --alpha) corta cada coluna no vão vazio mais próximo de cada divisa de linha e reespaça os '
+                     'quadros com PAD px de folga em cima/embaixo, mantendo a posição relativa. Use quando os quadros '
+                     'transbordam a grade para cima e para baixo em colunas diferentes (sem corte reto comum).')
 args = ap.parse_args()
 
 src_rgba = Image.open(args.src).convert('RGBA')
 if args.region:
     src_rgba = src_rgba.crop(tuple(int(v) for v in args.region.split(',')))
+if args.respace:
+    assert args.alpha, '--respace exige --alpha'
+    arr = np.asarray(src_rgba)
+    ink = arr[..., 3] >= 48
+    h0, w0 = ink.shape
+    ch0, cw0, pad = h0 / args.rows, w0 / args.cols, args.respace
+    nh = round(ch0 + 2 * pad)
+    out = np.zeros((nh * args.rows, w0, 4), np.uint8)
+    for c in range(args.cols):
+        x0, x1 = round(c * cw0), round((c + 1) * cw0)
+        empty = ~ink[:, x0:x1].any(axis=1)
+        cuts = [0]
+        for k in range(1, args.rows):
+            nominal = round(k * ch0)
+            cand = [y for y in range(max(0, nominal - int(ch0 / 2)), min(h0, nominal + int(ch0 / 2))) if empty[y]]
+            if not cand:
+                raise SystemExit(f'coluna {c}: sem vão vazio perto da divisa {k}')
+            # Centro do trecho vazio mais próximo da divisa nominal.
+            y = min(cand, key=lambda v: abs(v - nominal))
+            lo = hi = y
+            while lo > 0 and empty[lo - 1]: lo -= 1
+            while hi < h0 - 1 and empty[hi + 1]: hi += 1
+            cuts.append((lo + hi) // 2)
+        cuts.append(h0)
+        for k in range(args.rows):
+            a, b = cuts[k], cuts[k + 1]
+            dst = k * nh + pad + (a - round(k * ch0))
+            if dst < k * nh or dst + (b - a) > (k + 1) * nh:
+                raise SystemExit(f'quadro ({k},{c}) não cabe: aumente PAD')
+            out[dst:dst + (b - a), x0:x1] = arr[a:b, x0:x1]
+    src_rgba = Image.fromarray(out, 'RGBA')
 src_alpha = np.asarray(src_rgba)[..., 3]
 src = src_rgba.convert('RGB')
 img = np.asarray(src).astype(np.int16)
