@@ -54,7 +54,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Habilidades (receitas) | K ou tocar no 11º ícone: Construtor — Tábua, Porta e Tenda; tocar na receita cria |
 | Tenda | criada nas receitas; colocada no chão vira o seu ponto de renascer |
 | Bolsa (inventário) | B ou I, ou tocar no 12º ícone: 18 espaços acima da grade (27 com a mão); toque num item e num espaço da grade para trocar |
-| Água | não quebra; qualquer terra (Terra, Grama, Arada, Caminho), Pedra ou Tora a substituem; cavar ao lado da água faz o buraco encher sozinho |
+| Água | não quebra; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua a substituem; cavar ao lado da água faz o buraco encher sozinho |
 | Materiais | quebrar solta o bloco para coletar (árvore dá toras); colocar gasta; ao cair, perde os materiais |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |
 

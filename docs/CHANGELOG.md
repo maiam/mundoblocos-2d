@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.31.2 — 2026-11-02
+- **Tábua de Carvalho também substitui a água** (vira o chão da célula, como terra, pedra e tora).
+
 ## 0.31.1 — 2026-11-02
 - **Tenda ocupa 2×2 blocos**: a célula escolhida é o canto inferior esquerdo; precisa das 4 livres em chão firme;
   as outras 3 bloqueiam (`TENT_PART`, sem arte); quebrar qualquer parte derruba a tenda inteira e devolve 1. Sprite

@@ -23,7 +23,8 @@ export function tentCells(x: number, y: number): Array<[number, number]> {
   return [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]];
 }
 
-export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG]);
+/** Blocos que substituem a água (viram o chão da célula): todo tipo de terra, Pedra, Tora e Tábua. */
+export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS]);
 /** Tempo para a água encher um buraco vizinho (s). */
 export const FLOW_SECONDS = 0.6;
 

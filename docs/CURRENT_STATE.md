@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.31.1_
+_Atualizado em 2026-11-02 — v0.31.2_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -23,7 +23,7 @@ _Atualizado em 2026-11-02 — v0.31.1_
   soltam seda/presas (Rainha: Coração da Rainha) e renascem com o tempo. Farol + seta indicam a entrada.
 - **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, renasce no início com os itens.
   Ver `domains/dungeon.md`.
-- **Água**: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra ou Tora a substituem; buraco vizinho de água enche sozinho (animação) e enche os
+- **Água**: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua a substituem; buraco vizinho de água enche sozinho (animação) e enche os
   vizinhos em cadeia. Ver `domains/world.md`.
 - Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
