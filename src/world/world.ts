@@ -210,6 +210,14 @@ export class World {
     return this.breakTarget(x, y) !== null;
   }
 
+  /** Bloco que um golpe de quebra atingiria (topo do objeto ou o chão), ou null. */
+  breakTargetId(x: number, y: number): BlockId | null {
+    const t = this.breakTarget(x, y);
+    if (t === 'object') return this.topBlock(x, y)!.id;
+    if (t === 'ground') return this.getGround(x, y);
+    return null;
+  }
+
   /** Quebra o topo da célula (empilhado → objeto → chão). Retorna o id removido ou null. */
   breakBlock(x: number, y: number): BlockId | null {
     const target = this.breakTarget(x, y);

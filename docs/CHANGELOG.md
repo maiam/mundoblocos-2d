@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.0 — 2026-11-02
+- **Machado**: toque = golpe com a folha fornecida (animais somem, como a espada); segurar 2 s corta só o que é de
+  madeira, árvore ou planta, repetindo a animação de golpe enquanto corta.
+- Restrição de quebra por ferramenta no registro (`TOOLS.breaks`, `toolCanBreak`) + `BlockDef.choppable` +
+  `World.breakTargetId`. Golpe genérico por ferramenta (`Player.attackTool`, `ActorKind heroine-<tool>-attack`).
+- 4 testes novos.
+
 ## 0.15.0 — 2026-11-02
 - **Ataque com espada**: toque/clique (ou botão de ação/Espaço) com a espada = golpe com a folha de ataque
   fornecida; acerto no meio do golpe, num arco à frente. Animais atingidos somem (sem animação de morte ainda).

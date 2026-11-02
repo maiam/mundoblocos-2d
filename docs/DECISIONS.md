@@ -29,6 +29,7 @@
 | Ferramenta equipada = espaço selecionado; cada ferramenta ganha ação quando definida (enxada: arar) | domains/player |
 | Plantio só em Terra Arada; arar = enxada em Terra/Terra com Grama livre | domains/farming |
 | Espada só ataca entidades (animais somem por enquanto); nunca quebra blocos, itens ou elementos | domains/player |
+| Machado ataca entidades e quebra só madeira/árvore/planta (`choppable`); regra por ferramenta em `items.ts` | domains/player |
 | Regra de combate em `Entities` (estado de execução), não no `World` | domains/player |
 
 ## Interface e controles

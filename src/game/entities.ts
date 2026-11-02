@@ -9,7 +9,10 @@ import { type Facing, type Walker } from './walker';
 import type { ToolId } from '../world/items';
 import type { CharacterId } from '../world/profiles';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | 'heroine-sword-attack' | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
+/** Ferramentas com folha de golpe. */
+export type StrikeTool = 'sword' | 'axe';
+
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${StrikeTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -156,7 +159,7 @@ export class Entities {
     }
   }
 
-  /** Entidades (exceto a personagem) dentro do arco do golpe: à frente, até SWORD_REACH. */
+  /** Entidades (exceto a personagem) dentro do arco do golpe (espada ou machado): à frente, até SWORD_REACH. */
   strikeTargets(facing: Facing): Sheep[] {
     const [fx, fy] = FACING_VEC[facing];
     const p = this.player;
@@ -170,7 +173,7 @@ export class Entities {
   }
 
   /**
-   * Golpe de espada: aplica o acerto a cada alvo no arco e retorna quantos foram
+   * Golpe (espada ou machado): aplica o acerto a cada alvo no arco e retorna quantos foram
    * atingidos. Animais ainda não têm animação de morte: somem do mundo.
    * (Monstros, quando existirem, recebem dano aqui pelo mesmo caminho.)
    */
@@ -221,7 +224,7 @@ export class Entities {
   get actors(): Actor[] {
     const p = this.player;
     const kind: ActorKind = this.character === 'goddess' ? 'goddess'
-      : p.attacking ? 'heroine-sword-attack'
+      : p.attacking && (p.attackTool === 'sword' || p.attackTool === 'axe') ? `heroine-${p.attackTool}-attack`
       : p.equipped ? `heroine-${p.equipped}` : 'heroine';
     const out: Actor[] = [{
       kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,

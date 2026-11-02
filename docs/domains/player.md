@@ -8,7 +8,12 @@
   cosseno ≥ 0,3). **Animais atingidos somem** (sem animação de morte ainda); monstros futuros entram pelo mesmo
   `Entities.strike`. **A espada não quebra blocos, itens nem elementos** (`canBreakAt` = false; segurar não faz
   nada) e não tem alvo de célula; o alvo é marcado por anel vermelho na entidade à frente.
-- Pá, picareta e machado ainda sem ação; segurar 2 s quebra com qualquer seleção exceto a espada.
+- **Machado**: toque curto = **golpe** (folha `heroine-axe-attack`), igual à espada: acerta entidades no arco
+  (animais somem). Segurar 2 s **corta só o que é de madeira, árvore ou planta** (`BlockDef.choppable`: tora,
+  piso de carvalho, carvalho, cerejeira, cacto, capim, flor, trigo); enquanto corta, a animação de golpe repete
+  (e acerta entidades no arco). Pedra, terra, areia etc. não quebram. Foco/cursor só destacam o que dá para cortar.
+- Restrição por ferramenta: `TOOLS[tool].breaks` (`any` | `none` | `choppable`) via `toolCanBreak`, aplicada em
+  `Game.canBreakAt` com o bloco de `World.breakTargetId`. Pá e picareta ainda sem ação própria (quebram tudo).
 - `Player` estende `Walker` (`game/walker.ts`, base compartilhada com NPCs) e é bloqueado por outras entidades.
 - `Player`: posição em células no **centro dos pés**, velocidade 4,2 células/s, caixa de colisão dos pés
   0,54 × 0,30 célula, movimento separado por eixo (desliza em paredes).

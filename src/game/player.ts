@@ -15,7 +15,7 @@ export const ATTACK_FRAMES = 4;
 /**
  * Personagem jogável: anda pela entrada do jogador (teclado/joystick, em
  * direções de tela) e sobe até STEP_HEIGHT nível por passo; descer é livre.
- * Com a espada, pode golpear: a animação dura ATTACK_SECONDS e o acerto acontece
+ * Com ferramenta de golpe (espada, machado), pode golpear: a animação dura ATTACK_SECONDS e o acerto acontece
  * uma única vez no meio do golpe (`consumeHit`), na direção em que ela olhava ao atacar.
  */
 export class Player extends Walker {
@@ -23,6 +23,8 @@ export class Player extends Walker {
   equipped: ToolId | null = null;
   /** Tempo restante do golpe em andamento (0 = sem golpe). */
   attackTime = 0;
+  /** Ferramenta do golpe em andamento (define a folha de animação). */
+  attackTool: ToolId | null = null;
   private hitDone = true;
 
   constructor(x: number, y: number) {
@@ -40,8 +42,9 @@ export class Player extends Walker {
   }
 
   /** Começa um golpe (se não houver outro em andamento). */
-  startAttack(): boolean {
+  startAttack(tool: ToolId | null = this.equipped): boolean {
     if (this.attacking) return false;
+    this.attackTool = tool;
     this.attackTime = ATTACK_SECONDS;
     this.hitDone = false;
     return true;

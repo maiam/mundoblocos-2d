@@ -6,8 +6,9 @@
   (capim/flor são removidos) → chão vira **Terra Arada** (`World.canTill/till`). Alvo: célula à frente (botão de
   ação) ou sob o cursor; mesmo alcance de 4,5 células.
 - **Espada (ativa):** golpeia entidades (ver `domains/player.md`); não quebra nada do mundo.
-- Uso planejado (sem efeito ainda): picareta = pedra; pá = cavar / Caminho de Terra;
-  machado = árvores → Tora de Carvalho.
+- **Machado (ativo):** golpeia entidades; segurando, corta só madeira/árvore/planta (`choppable`). Cortar árvore
+  ainda não solta Tora (drops de madeira: próximo passo).
+- Uso planejado (sem efeito ainda): picareta = pedra; pá = cavar / Caminho de Terra.
 
 ## Itens (`world/items.ts`) — fonte de verdade
 - **Itens contáveis** ≠ blocos: blocos de construção são infinitos; itens têm quantidade no inventário.

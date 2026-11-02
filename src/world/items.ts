@@ -1,4 +1,4 @@
-import { Block, type BlockId, isWheat, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatStage } from './blocks';
 
 /**
  * Itens contáveis (diferentes dos blocos de construção, que são infinitos).
@@ -62,16 +62,33 @@ export type ToolId = (typeof Tool)[keyof typeof Tool];
 export interface ToolDef {
   id: ToolId;
   name: string;
-  /** Uso planejado (documentação; ainda sem efeito no jogo). */
+  /** Uso (documentação). */
   plannedUse: string;
+  /**
+   * O que a ferramenta pode quebrar segurando: tudo, nada ou só o que é de madeira/árvore/planta.
+   * Fonte de verdade da restrição por ferramenta.
+   */
+  breaks: 'any' | 'none' | 'choppable';
+  /** Toque curto dá um golpe (animação de ataque) que acerta entidades à frente. */
+  strikes: boolean;
 }
 
 export const TOOLS: Record<ToolId, ToolDef> = {
-  sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'combate' },
-  hoe: { id: Tool.HOE, name: 'Enxada', plannedUse: 'ara Terra/Terra com Grama → Terra Arada (ativa)' },
-  pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra e minérios' },
-  shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão' },
-  axe: { id: Tool.AXE, name: 'Machado', plannedUse: 'cortar árvores e madeira' },
+  sword: { id: Tool.SWORD, name: 'Espada', plannedUse: 'golpe em animais/monstros; não quebra nada', breaks: 'none', strikes: true },
+  hoe: { id: Tool.HOE, name: 'Enxada', plannedUse: 'ara Terra/Terra com Grama → Terra Arada', breaks: 'any', strikes: false },
+  pickaxe: { id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'quebrar pedra (futuro)', breaks: 'any', strikes: false },
+  shovel: { id: Tool.SHOVEL, name: 'Pá', plannedUse: 'cavar o chão (futuro)', breaks: 'any', strikes: false },
+  axe: {
+    id: Tool.AXE, name: 'Machado', plannedUse: 'golpe em animais/monstros; corta só madeira/árvore/planta',
+    breaks: 'choppable', strikes: true,
+  },
 };
+
+/** A ferramenta (ou mão/item, `null`) pode quebrar este bloco? */
+export function toolCanBreak(tool: ToolId | null, id: BlockId): boolean {
+  if (!tool) return true;
+  const rule = TOOLS[tool].breaks;
+  return rule === 'any' || (rule === 'choppable' && blockDef(id).choppable);
+}
 
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];

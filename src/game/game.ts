@@ -3,7 +3,7 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { dropsFor, ITEMS, TOOLS } from '../world/items';
+import { dropsFor, ITEMS, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
@@ -224,15 +224,25 @@ export class Game {
 
   // ---- Regras por célula (iguais para cursor e botão de ação) ----
 
-  /** A espada está em mãos? (ataca entidades; não quebra blocos, itens nem elementos). */
-  private get swordInHand(): boolean {
+  /** Ferramenta em mãos (null = mão vazia, item ou bloco). */
+  private get tool(): ToolId | null {
     const s = this.slot;
-    return s?.kind === 'tool' && s.tool === 'sword';
+    return s?.kind === 'tool' ? s.tool : null;
   }
 
-  /** Pode quebrar aqui? Não com a espada; não se cava o chão sob nenhuma entidade. */
+  /** Ferramenta de golpe em mãos? (espada, machado: toque curto = golpe em entidades). */
+  private get strikerInHand(): boolean {
+    const t = this.tool;
+    return !!t && TOOLS[t].strikes;
+  }
+
+  /**
+   * Pode quebrar aqui? Respeita a restrição da ferramenta (`toolCanBreak`: espada não quebra nada,
+   * machado só madeira/árvore/planta) e não cava o chão sob nenhuma entidade.
+   */
   private canBreakAt(x: number, y: number): boolean {
-    if (this.swordInHand) return false;
+    const id = this.world.breakTargetId(x, y);
+    if (id === null || !toolCanBreak(this.tool, id)) return false;
     return this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y));
   }
 
@@ -307,7 +317,7 @@ export class Game {
     return sheep && Math.hypot(sheep.x - this.player.x, sheep.y - this.player.y) <= REACH ? sheep : null;
   }
 
-  /** Golpe de espada na direção em que a personagem olha (o acerto sai no meio da animação). */
+  /** Golpe (espada/machado) na direção em que a personagem olha (o acerto sai no meio da animação). */
   private attack(): void {
     this.player.startAttack();
   }
@@ -324,7 +334,7 @@ export class Game {
   /** Clique curto do mouse. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
-    if (this.swordInHand) {
+    if (this.strikerInHand) {
       if (!this.player.attacking) this.faceToward(sx, sy);
       this.attack();
       return;
@@ -370,7 +380,7 @@ export class Game {
     this.action = null;
     if (!a || a.held > TAP_MAX_S) return;
     const slot = this.slot;
-    if (this.swordInHand) {
+    if (this.strikerInHand) {
       this.attack();
       return;
     }
@@ -398,6 +408,8 @@ export class Game {
       h.progress = 0;
     }
     h.progress += dt / BREAK_HOLD_S;
+    // Machado: enquanto corta, repete a animação de golpe (que também acerta entidades no arco).
+    if (this.strikerInHand && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {
       const broken = this.world.breakBlock(t.x, t.y);
       // Colheita: o que o mundo devolve cai no chão para ser coletado.
@@ -412,7 +424,12 @@ export class Game {
     const p = this.press;
     if (p) {
       p.held += dt;
-      if (p.held > TAP_MAX_S) this.advanceHold(p, this.breakTarget(this.pointer.x, this.pointer.y), dt);
+      if (p.held > TAP_MAX_S) {
+        const t = this.breakTarget(this.pointer.x, this.pointer.y);
+        // Cortando pelo mouse: vira para o alvo antes do golpe.
+        if (t.valid && this.strikerInHand && !this.player.attacking) this.faceToward(this.pointer.x, this.pointer.y);
+        this.advanceHold(p, t, dt);
+      }
     }
     const a = this.action;
     if (a) {
@@ -500,14 +517,16 @@ export class Game {
     if (!this.pointer.inside || this.joystick.active) return null;
     const { x, y } = this.pointer;
     const p = this.press;
-    if (this.swordInHand) return null; // espada: o alvo é a entidade (anel), não a célula
+    // Espada: o alvo é a entidade (anel), nunca a célula. Machado: só mostra a célula ao segurar.
+    if (this.tool === 'sword') return null;
     if (p && p.held > TAP_MAX_S) return this.breakTarget(x, y);
+    if (this.strikerInHand) return null;
     return this.useTarget(x, y);
   }
 
   /** Anel na ovelha alvo do trigo (ou do golpe): sob o mouse ou, com a personagem parada, à frente dela. */
   private hoverSheep(): (CellTarget & { attack?: boolean }) | null {
-    if (this.swordInHand) {
+    if (this.strikerInHand) {
       const t = this.entities.strikeTargets(this.player.facing)[0];
       return t ? { x: t.x, y: t.y, valid: true, attack: true } : null;
     }
@@ -529,8 +548,13 @@ export class Game {
    * Andando, nada fica selecionado. Com o mouse sobre o mundo, vale o destaque do mouse.
    */
   private focusTarget(): CellTarget | null {
-    if (this.pointer.inside || this.player.moving || this.swordInHand) return null;
+    if (this.pointer.inside || this.player.moving || this.tool === 'sword') return null;
     const slot = this.slot;
+    if (this.strikerInHand) {
+      // Machado: só destaca o que dá para cortar (madeira/árvore/planta) à frente.
+      const [x, y] = this.frontCell();
+      return this.canBreakAt(x, y) ? { x, y, valid: true } : null;
+    }
     if (slot?.kind === 'item' && ITEMS[slot.item].feeds && this.frontSheep()) return null; // anel na ovelha
     const [x, y] = this.frontCell();
     return { x, y, valid: this.canUseAt(slot, x, y) || this.canBreakAt(x, y) };

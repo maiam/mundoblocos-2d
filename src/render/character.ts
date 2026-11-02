@@ -1,5 +1,6 @@
 import goddessFloatUrl from '../assets/goddess-float.webp?inline';
 import heroineSwordAttackUrl from '../assets/heroine-sword-attack.webp?inline';
+import heroineAxeAttackUrl from '../assets/heroine-axe-attack.webp?inline';
 import heroineAxeUrl from '../assets/heroine-axe.webp?inline';
 import heroineHoeUrl from '../assets/heroine-hoe.webp?inline';
 import heroinePickaxeUrl from '../assets/heroine-pickaxe.webp?inline';
@@ -61,6 +62,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   // Golpe de espada: desenho 297 px contra 288 da caminhada → mesma escala da personagem.
   'heroine-sword-attack': {
     url: heroineSwordAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (297 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
+  },
+  // Golpe de machado: o desenho inclui o machado erguido (313 px contra 288 da caminhada).
+  'heroine-axe-attack': {
+    url: heroineAxeAttackUrl, cols: 4, rows: 4, height: CHARACTER_H * (313 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   'heroine-axe': { url: heroineAxeUrl, cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   sheep: { url: sheepUrl, cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },

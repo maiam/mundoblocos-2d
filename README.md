@@ -37,6 +37,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |
 | Colocar bloco com o mouse (alcance 4,5 células) | clique curto |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem); não quebra nada |
+| Machado | toque: golpe (como a espada) · segurar 2 s: corta só madeira, árvore ou planta |
 | Arar a terra (enxada) | enxada selecionada + ação em Terra/Terra com Grama → Terra Arada |
 | Plantar semente de trigo (só em Terra Arada) | semente selecionada + ação no chão à frente (ou clique) |
 | Dar trigo à ovelha | trigo selecionado + ação com a ovelha à frente (ou clique nela) |

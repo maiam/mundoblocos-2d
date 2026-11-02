@@ -95,15 +95,17 @@ export interface BlockDef {
   placeable: boolean;
   /** Emite brilho próprio. */
   glow: boolean;
+  /** Derivado de madeira, árvore ou planta (o machado só quebra estes). */
+  choppable: boolean;
 }
 
 const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'ground', shape: 'flat', solid: false, standable: true, liquid: false,
-  breakable: true, placeable: false, glow: false, ...extra,
+  breakable: true, placeable: false, glow: false, choppable: false, ...extra,
 });
 const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'object', shape: 'cube', solid: true, standable: false, liquid: false,
-  breakable: true, placeable: true, glow: false, ...extra,
+  breakable: true, placeable: true, glow: false, choppable: false, ...extra,
 });
 
 const defs: BlockDef[] = [
@@ -118,13 +120,13 @@ const defs: BlockDef[] = [
   object(Block.PATH, 'Caminho de Terra'),
   object(Block.SAND, 'Areia'),
   object(Block.STONE, 'Pedra'),
-  object(Block.OAK_LOG, 'Tora de Carvalho'),
-  object(Block.OAK_PLANKS, 'Piso de Carvalho'),
-  object(Block.CACTUS, 'Cacto', { placeable: false }),
-  object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false }),
-  object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false }),
-  object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false }),
-  object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false, placeable: false }),
+  object(Block.OAK_LOG, 'Tora de Carvalho', { choppable: true }),
+  object(Block.OAK_PLANKS, 'Piso de Carvalho', { choppable: true }),
+  object(Block.CACTUS, 'Cacto', { placeable: false, choppable: true }),
+  object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, choppable: true }),
+  object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, choppable: true }),
+  object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false, choppable: true }),
+  object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false, placeable: false, choppable: true }),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
   object(Block.CLOUD_ETHEREAL, 'Nuvem Etérea'),
@@ -147,7 +149,7 @@ const defs: BlockDef[] = [
   // Trigo: não bloqueia passagem, não aceita nada por cima, só entra plantando a semente.
   ...Array.from({ length: WHEAT_STAGES }, (_, s) =>
     object(WHEAT_FIRST + s, s === WHEAT_STAGES - 1 ? 'Trigo Maduro' : 'Trigo em crescimento', {
-      shape: 'crop', solid: false, placeable: false,
+      shape: 'crop', solid: false, placeable: false, choppable: true,
     })),
 ];
 
