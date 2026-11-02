@@ -109,4 +109,13 @@ describe('Tenda', () => {
     for (const [cx, cy] of [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]]) expect(w.getObject(cx, cy)).toBe(Block.AIR);
     expect(w.respawnPoint()).toEqual([sx, sy]);
   });
+
+  it('cantos possíveis para cobrir uma célula: a tenda pode se estender para os 4 lados (quem coloca evita a heroína)', () => {
+    const w = new World(7);
+    const anchors = w.footprintAnchors(Block.TENT, 10, 10);
+    expect(anchors).toHaveLength(4);
+    for (const [ax, ay] of anchors) expect(w.footprint(Block.TENT, ax, ay)).toContainEqual([10, 10]);
+    expect(w.footprintAnchors(Block.STONE, 3, 4)).toEqual([[3, 4]]);
+  });
 });
+

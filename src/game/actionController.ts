@@ -1,6 +1,6 @@
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
-import { blockDef } from '../world/blocks';
+import { blockDef, type BlockId } from '../world/blocks';
 import { blockStack, breakDrops, breakSeconds, ITEMS, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
@@ -191,10 +191,26 @@ export class ActionController {
     }
     if (slot.kind === 'block') {
       if (this.ctx.collectBlocks && this.inventory.count(blockStack(slot.block)) <= 0) return false;
-      return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
+      return this.placeAnchor(slot.block, x, y) !== null;
     }
     if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
     return false;
+  }
+
+  /**
+   * Onde colocar o bloco para cobrir a célula alvo: o canto válido cujas células não pegam nenhuma entidade
+   * (objetos de várias células, como a tenda 2×2, nunca prendem a heroína). Entre as opções, a que fica mais longe
+   * dela. null = não dá.
+   */
+  private placeAnchor(id: BlockId, x: number, y: number): [number, number] | null {
+    const p = this.player;
+    const options = this.world.footprintAnchors(id, x, y)
+      .filter(([ax, ay]) => this.world.canPlace(ax, ay, id)
+        && this.world.footprint(id, ax, ay).every(([cx, cy]) => !this.entities.occupies(cx, cy)));
+    const dist = ([ax, ay]: [number, number]) => this.world.footprint(id, ax, ay)
+      .reduce((m, [cx, cy]) => Math.min(m, Math.hypot(cx + 0.5 - p.x, cy + 0.5 - p.y)), Infinity);
+    options.sort((a, b) => dist(b) - dist(a));
+    return options[0] ?? null;
   }
 
   private canFeed(sheep: Sheep): boolean {
@@ -215,7 +231,8 @@ export class ActionController {
     }
     if (slot.kind === 'block') {
       if (!this.canUseAt(slot, x, y)) return;
-      if (this.world.placeBlock(x, y, slot.block) && this.ctx.collectBlocks) {
+      const [ax, ay] = this.placeAnchor(slot.block, x, y)!;
+      if (this.world.placeBlock(ax, ay, slot.block) && this.ctx.collectBlocks) {
         this.inventory.take(blockStack(slot.block));
         this.ctx.onConsumed();
       }

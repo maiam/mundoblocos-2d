@@ -76,7 +76,7 @@ describe('Salvamento automático', () => {
       player.x = entities.monsters[2].x; player.y = entities.monsters[2].y - 1; player.facing = 'down';
       entities.strike('down', world);
     }
-    player.x = sx + 1.75; player.y = sy + 0.6; player.facing = 'left';
+    player.x = sx + 0.5; player.y = sy + 0.6; player.facing = 'left';
     const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, time: 0.62, selected: 3, hotbar: ['tool:sword', null, 'block:20', null, null, null, null, 'silk'] })));
     expect(data.v).toBe(SAVE_VERSION);
 
@@ -89,7 +89,7 @@ describe('Salvamento automático', () => {
     expect(b.world.getObject(px, py)).toBe(Block.WHEAT_0);
     expect(b.world.cropCount).toBe(1); // plantação volta a crescer
     expect(b.world.getObject(far[0], far[1])).toBe(Block.SAND);
-    expect([b.player.x, b.player.y, b.player.hp, b.player.facing]).toEqual([sx + 1.75, sy + 0.6, 6, 'left']);
+    expect([b.player.x, b.player.y, b.player.hp, b.player.facing]).toEqual([sx + 0.5, sy + 0.6, 6, 'left']);
     expect(b.inventory.count('silk')).toBe(4);
     expect(b.inventory.count('wheat_seed')).toBe(inventory.count('wheat_seed'));
     expect(b.entities.npcs).toHaveLength(entities.npcs.length);
@@ -134,4 +134,16 @@ describe('Salvamento automático', () => {
     expect(blocked.save(d1)).toBe(false);
     expect(blocked.load(42)).toBeNull();
   });
+
+  it('ao carregar, heroína presa dentro de um objeto (salvamento antigo) vai para a célula livre mais perto', () => {
+    const a = session();
+    const { world, player } = a;
+    const [cx, cy] = [Math.floor(player.x), Math.floor(player.y)];
+    world.setObject(cx, cy, Block.STONE); // objeto sob os pés
+    const data = JSON.parse(JSON.stringify(captureSave({ ...a, time: 0.3, selected: null, hotbar: null })));
+    const b = session();
+    applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, time: 0, selected: null, hotbar: null });
+    expect(b.player.isStuck(b.world)).toBe(false);
+  });
 });
+

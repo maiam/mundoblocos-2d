@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.32.1 — 2026-11-02
+- **Correção: tenda prendia a heroína.** Ao colocar, só a célula alvo era conferida, mas a tenda ocupa 2×2 e uma parte
+  podia cair sobre a heroína (ex.: olhando para a esquerda). Agora as 4 células precisam estar sem ninguém, e o jogo
+  escolhe a posição 2×2 que cobre a célula à frente e se estende para longe dela. Ao carregar um salvamento com a
+  heroína presa, ela vai para a célula livre mais perto. 2 testes novos (103).
+
 ## 0.32.0 — 2026-11-02
 - **Tablet**: detectado como tela de toque com lado menor ≥ 600 px (`ScreenMode.isTablet`). Mantém o joystick, tira o
   botão de ação e o toque no mundo age como o clique do computador (tocar usa, segurar quebra). Celular não muda.

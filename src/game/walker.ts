@@ -91,6 +91,11 @@ export class Walker {
     return top;
   }
 
+  /** A posição atual está bloqueada pelo mapa (ex.: um objeto foi parar sob os pés)? */
+  isStuck(world: World): boolean {
+    return this.supportHeight(this.x, this.y, world) === null;
+  }
+
   /** Recalcula o apoio no lugar (ex.: o bloco sob os pés foi quebrado). */
   settle(world: World): void {
     const h = this.supportHeight(this.x, this.y, world);

@@ -49,7 +49,8 @@
 - **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
   no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
 - **Tenda** (`Block.TENT`, **2×2**): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`
-  (bloqueiam, sem arte). Precisa das 4 livres em chão firme; quebrar qualquer parte derruba a tenda e devolve 1. A última colocada é o **ponto de
+  (bloqueiam, sem arte). Precisa das 4 livres em chão firme **e sem ninguém** (`ActionController.placeAnchor` escolhe, entre as 4 posições 2×2 que
+  cobrem a célula alvo, a que não pega entidades e fica mais longe da heroína); quebrar qualquer parte derruba a tenda e devolve 1. A última colocada é o **ponto de
   renascer** (`World.tent`, `respawnPoint`: célula livre ao lado dela; quebrada → volta o início). Salva (save v3).
 - `Semente de Trigo` (planta `WHEAT_0`) e `Trigo` (alimenta ovelhas).
 - `dropsFor(bloco)`: trigo maduro → 1 trigo + 1–2 sementes; trigo verde → devolve 1 semente; demais blocos → nada.

@@ -28,6 +28,10 @@ A cada 10 s de jogo, ao esconder a aba, ao sair da página, ao abrir o menu e ao
 Continuar · Novo mundo (o atual continua salvo) · Recomeçar este mundo (apaga só o salvamento desta seed).
 Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
 
+## Ao carregar
+- Heroína presa dentro de um objeto (`Walker.isStuck`, ex.: salvamento feito com a tenda sobre ela) vai para a célula
+  livre mais perto.
+
 ## Migrações
 - v1 → v2 (coleta): ganha as ferramentas e 1 porta no inventário e a grade inicial.
 - v2 → v3 (receitas): grade da mão com 9 espaços (9º vazio) e `tent: null`.

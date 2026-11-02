@@ -437,6 +437,19 @@ export class World {
     return b.id === Block.AIR || b.shape === 'decoration';
   }
 
+  /** Células que um bloco ocupa ao ser colocado em (x, y) (tenda 2×2; os demais, 1). */
+  footprint(id: BlockId, x: number, y: number): Array<[number, number]> {
+    return id === Block.TENT ? tentCells(x, y) : [[x, y]];
+  }
+
+  /**
+   * Cantos possíveis para um objeto de várias células cobrir a célula (x, y) (tenda: 4 opções).
+   * Quem coloca escolhe o que não pega ninguém; blocos de 1 célula têm só (x, y).
+   */
+  footprintAnchors(id: BlockId, x: number, y: number): Array<[number, number]> {
+    return id === Block.TENT ? [[x, y], [x - 1, y], [x, y + 1], [x - 1, y + 1]] : [[x, y]];
+  }
+
   /** Canto (TENT) da tenda que contém a célula, ou null. */
   tentAnchor(x: number, y: number): [number, number] | null {
     for (const [dx, dy] of [[0, 0], [-1, 0], [0, 1], [-1, 1]]) {

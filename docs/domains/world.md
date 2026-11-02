@@ -33,7 +33,7 @@
   agendado (`scheduleFlow`, lado de origem em ordem fixa oeste/leste/norte/sul); `tick` → `tickWater` avança
   (`FLOW_SECONDS` = 0,6 s) e, ao encher, agenda os buracos vizinhos (cadeia). Terra firme nunca é inundada; buraco
   tapado antes desiste. Estado em execução (`waterFlows`); `settleWater` reagenda após carregar (save.ts).
-- **Tenda 2×2** (`tentCells`, `tentAnchor`, `isFootprintFree`): canto `TENT` + 3 `TENT_PART`; `breakTargetId` de uma
+- **Tenda 2×2** (`tentCells`, `tentAnchor`, `isFootprintFree`, `footprint`/`footprintAnchors` para quem coloca): canto `TENT` + 3 `TENT_PART`; `breakTargetId` de uma
   parte = `TENT`; `breakBlock` remove as 4.
 - Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira (Tora/Piso) ou de Pedra no nível 0 (`hasDoorFrame`; pode misturar).
 - Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`

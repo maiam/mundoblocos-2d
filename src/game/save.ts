@@ -145,6 +145,13 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
     e.respawns.splice(0, e.respawns.length, ...d.dungeon.respawns.map((r) => ({ ...r, bounds: bounds(r.kind) })));
   }
   e.settleAll(s.world);
+  // Salvamento de antes da correção da tenda: heroína presa dentro de um objeto → vai para a célula livre mais perto.
+  if (p.isStuck(s.world)) {
+    const [fx, fy] = s.world.nearestWalkable(Math.floor(p.x), Math.floor(p.y), 20);
+    p.x = fx + 0.5;
+    p.y = fy + 0.6;
+    p.z = p.visualZ = 0;
+  }
   return { time: d.time, selected: d.selected };
 }
 
