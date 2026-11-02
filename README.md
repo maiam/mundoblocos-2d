@@ -33,19 +33,20 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 |---|---|
 | Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
-| Botão de ação (celular) / Espaço (desktop) | toque: usa o selecionado no bloco à frente · segurar 2 s: quebra |
+| Botão de ação (celular) / Espaço (desktop) | toque: usa o selecionado no bloco à frente · segurar: quebra (2 s com a mão, 1 s com ferramenta) |
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |
 | Colocar bloco com o mouse (alcance 4,5 células) | clique curto (empilha até 3 cubos) |
 | Abrir/fechar Porta de Carvalho | ação com a porta à frente, ou clique nela (qualquer item em mãos) |
+| Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Piso de Carvalho) à esquerda e à direita |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem); não quebra nada |
-| Machado | toque: golpe (como a espada) · segurar 2 s: corta só madeira, árvore ou planta |
-| Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 2 s: quebra só plantas (capim, flor, trigo, cacto) |
-| Picareta | segurar 2 s: quebra qualquer bloco e plantas (sem drop), menos madeira/árvore; não ataca |
-| Pá | toque: Terra/Grama/Arada → Caminho de Terra · segurar 2 s: cava só terra/areia e destrói plantas sem drop; não ataca |
+| Machado | toque: golpe (como a espada) · segurar 1 s: corta só madeira, árvore ou planta |
+| Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 1 s: quebra só plantas (capim, flor, trigo, cacto) |
+| Picareta | segurar 1 s: quebra qualquer bloco e plantas (sem drop), menos madeira/árvore; não ataca |
+| Pá | toque: Terra/Grama/Arada → Caminho de Terra · segurar 1 s: cava só terra/areia e destrói plantas sem drop; não ataca |
 | Plantar semente de trigo (só em Terra Arada) | semente selecionada + ação no chão à frente (ou clique) |
 | Dar trigo à ovelha | trigo selecionado + ação com a ovelha à frente (ou clique nela) |
 | Colher trigo | segurar a ação 2 s (itens caem e são coletados ao chegar perto) |
-| Quebrar bloco ou cavar o chão | segurar o clique / dedo por 2 s sobre o alvo |
+| Quebrar bloco ou cavar o chão | segurar o clique / dedo sobre o alvo: 2 s com a mão/item, 1 s com ferramenta |
 | Escolher na hotbar | 1–9, 0 ou tocar (1–5 ferramentas: equipa; 6 semente; 7 trigo; depois os 8 blocos) |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |
 

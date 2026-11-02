@@ -26,6 +26,7 @@
   arada, caminho, areia: o que a pá cava). `canFlatten/flatten`: Terra/Grama/Arada → Caminho (pá).
 - Colocar (`placementLevel`): só materiais. Em buraco vira piso nivelado; senão nível 0 (substitui enfeite) ou
   próximo nível sobre cubo (até 3). Porta (`shape: 'door'`): só nível 0, nada empilha sobre ela.
+- Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira no nível 0 (`hasDoorFrame`).
 - Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`
   só fecha se a célula estiver livre de entidades (`canToggleDoorAt`).
 - Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.

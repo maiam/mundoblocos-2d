@@ -3,7 +3,7 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { ITEM_ICON_URLS, TOOL_ICON_URLS } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { ITEMS, toolCanBreak, toolDrops, TOOLS, type ToolId } from '../world/items';
+import { breakSeconds, ITEMS, toolCanBreak, toolDrops, TOOLS, type ToolId } from '../world/items';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
@@ -27,8 +27,6 @@ const REACH = 4.5;
 const TAP_THRESHOLD = 10;
 /** Duração máxima de um toque/clique de colocar (s); acima disso é "segurar". */
 const TAP_MAX_S = 0.3;
-/** Tempo segurando sobre o mesmo alvo para quebrar (s). */
-export const BREAK_HOLD_S = 2;
 
 /** Um "segurar" em andamento (dedo/mouse na tela ou botão de ação). */
 interface Hold {
@@ -446,7 +444,7 @@ export class Game {
       h.target = { x: t.x, y: t.y };
       h.progress = 0;
     }
-    h.progress += dt / BREAK_HOLD_S;
+    h.progress += dt / breakSeconds(this.tool); // ferramenta 1 s, mão/item 2 s
     // Machado/enxada/pá/picareta: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
     if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {

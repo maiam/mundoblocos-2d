@@ -44,7 +44,8 @@
 | Câmera sem rotação; joystick e teclado em direções de tela | domains/player |
 | HUD mínimo: só a hotbar (joystick e botão de ação só em toque) | domains/player |
 | Celular: botão de ação sobre o alvo à frente; toque no mundo não age | domains/player |
-| Quebrar = segurar 2 s; colocar = toque/clique curto | domains/player |
+| Quebrar = segurar 2 s com a mão/item, 1 s com ferramenta (`breakSeconds`); colocar = toque/clique curto | domains/player |
+| Porta só entre batentes de madeira à esquerda e à direita (cubo `organic: 'wood'` no nível 0); quebrar um batente depois não derruba a porta | domains/world |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |
 
 ## Arte

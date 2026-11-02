@@ -263,7 +263,10 @@ export class World {
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
-    if (base.id === Block.AIR || base.shape === 'decoration') return 0;
+    if (base.id === Block.AIR || base.shape === 'decoration') {
+      if (def.shape === 'door' && !this.hasDoorFrame(x, y)) return null;
+      return 0;
+    }
     if (def.shape === 'cube' && base.shape === 'cube') {
       const h = this.stackHeight(x, y);
       return h < MAX_STACK ? h : null;
@@ -272,6 +275,17 @@ export class World {
   }
 
   // ---- Portas ----
+
+  /** Cubo de madeira (Tora ou Piso de Carvalho) no nível 0 — serve de batente para a porta. */
+  private isDoorJamb(x: number, y: number): boolean {
+    const d = blockDef(this.getObject(x, y));
+    return d.shape === 'cube' && d.organic === 'wood';
+  }
+
+  /** A porta só vai entre dois batentes de madeira: células da esquerda e da direita. */
+  hasDoorFrame(x: number, y: number): boolean {
+    return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
+  }
 
   isDoor(x: number, y: number): boolean {
     return isDoor(this.getObject(x, y));

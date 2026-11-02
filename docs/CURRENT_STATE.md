@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.21.0_
+_Atualizado em 2026-11-02 — v0.22.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -23,8 +23,8 @@ _Atualizado em 2026-11-02 — v0.21.0_
   árvores e outras entidades.
 - Câmera sem rotação, zoom automático, acompanhamento suave sem o balanço da caminhada.
 - Celular: joystick (esquerda) + **botão de ação** (direita): toque usa o item selecionado no alvo à frente,
-  segurar 2 s quebra. Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
-- Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar 2 s quebra), Q/E/roda = zoom.
+  segurar quebra (2 s com a mão/item, **1 s com ferramenta**). Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
+- Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar quebra: 2 s mão, 1 s ferramenta), Q/E/roda = zoom.
 - Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
 - Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15, porta 16).
 
@@ -35,7 +35,8 @@ _Atualizado em 2026-11-02 — v0.21.0_
   (animação de cavar) amassa Terra/Grama/Arada → Caminho de Terra e, segurando, cava só blocos macios (terra, areia…)
   e destrói plantas **sem drop**; não ataca; a **picareta** (animação de minerar), segurando, quebra qualquer
   bloco e plantas (sem drop), menos madeira/árvore; não ataca.
-- **Porta de Carvalho**: colocada no chão, 3 blocos de altura; toque abre/fecha com animação (qualquer item em
+- **Porta de Carvalho**: colocada no chão **entre dois blocos de madeira** (Tora/Piso de Carvalho à esquerda e à
+  direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
@@ -54,7 +55,7 @@ _Atualizado em 2026-11-02 — v0.21.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 69 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 71 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,2 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

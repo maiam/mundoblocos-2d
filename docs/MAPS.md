@@ -44,7 +44,7 @@ flowchart LR
   C --> D[World.tick<br/>trigo cresce]
   D --> E[Drops.update<br/>coleta]
   E --> F[Camera.follow<br/>posição lógica]
-  F --> G[updateBreaking<br/>segurar 2 s]
+  F --> G[updateBreaking<br/>segurar 2 s mão · 1 s ferramenta]
   G --> H[World.ensureChunks<br/>4 por frame · unloadFar 1/s]
   H --> I[Renderer.draw]
   I --> I1[chão: cache por chunk<br/>≤ 2 re-renders/frame]
@@ -113,7 +113,7 @@ sequenceDiagram
   B->>G: alvo = célula à frente (ou sob o cursor)
   G->>G: canUseAt(slot, célula)?
   G->>W: placeBlock / plant  (ou Sheep.feed)
-  U->>B: segurar 2 s
+  U->>B: segurar 2 s (1 s com ferramenta)
   B->>G: advanceHold (progresso, reinicia se o alvo mudar)
   G->>W: breakBlock → dropsFor → Drops
   W-->>G: chunk.version++ (cache do chão invalida)

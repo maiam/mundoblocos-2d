@@ -28,7 +28,7 @@
 - Crescimento: `World.tick(dt)` avança cada trigo um estágio com probabilidade `dt / WHEAT_STAGE_SECONDS` (6 s)
   → ~1,5 min da semente ao maduro, sem sincronia entre plantas. O `World` guarda as células plantadas
   (só em chunks modificados, que não descarregam).
-- Colher = quebrar segurando 2 s (mesma regra de qualquer quebra).
+- Colher = quebrar segurando (2 s com a mão/item, 1 s com ferramenta — mesma regra de qualquer quebra).
 
 ## Inventário e coleta (`game/`)
 - `Inventory`: quantidades de itens; começa com 5 sementes e 2 trigos. Não persistido.

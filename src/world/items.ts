@@ -123,3 +123,13 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 }
 
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
+
+/** Tempo segurando para quebrar com a mão/item (s). */
+export const BREAK_HOLD_HAND_S = 2;
+/** Tempo segurando para quebrar com uma ferramenta que pode quebrar o alvo (s). */
+export const BREAK_HOLD_TOOL_S = 1;
+
+/** Quanto tempo segurar para quebrar: ferramenta 1 s, mão ou item 2 s. */
+export function breakSeconds(tool: ToolId | null): number {
+  return tool ? BREAK_HOLD_TOOL_S : BREAK_HOLD_HAND_S;
+}

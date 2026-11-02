@@ -5,7 +5,7 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 ## Agora
 0. **Santuário:** hospedar o build em `santuario.<domínio>` para o subdomínio real; definir se a Deusa terá
    ações/ferramentas próprias e se flutuar deve ter efeito de jogo (ex.: passar sobre buracos/subir 2 níveis); (arte) uma variação de nuvem feita para chão contínuo eliminaria a repetição.
-1. **Avaliar o botão de ação no celular** (teste em andamento): 2 s ainda confortável? Mão vazia + toque
+1. **Avaliar o botão de ação no celular** (teste em andamento): 2 s (mão) / 1 s (ferramenta) confortáveis? Mão vazia + toque
    poderia colher trigo maduro ou fazer carinho na ovelha; alvo poderia considerar a diagonal do joystick.
 2. **Ações das ferramentas** (todas as 5 já agem); refinamentos:
    - Pá/picareta: quebrar mais rápido que a mão (pá em macios, picareta em pedra)? Blocos quebrados soltarem o bloco?
@@ -16,7 +16,7 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
    recomendado para o core**, não criar backend aqui.
 
 ## Em seguida
-- **Porta:** orientação lateral (parede leste–oeste) usando o quadro de lado; ovelhas não abrem portas (ok) — decidir
+- **Porta:** quebrar um batente não derruba a porta (decidir se deve); orientação lateral (parede leste–oeste) usando o quadro de lado; ovelhas não abrem portas (ok) — decidir
   se a porta deve fechar sozinha; atalho de teclado só vai até 9 (porta = 16º espaço, por clique/toque).
 4. Inventário/painel: a hotbar (16 espaços, já reduzida em telas ≤ 700 px) está no limite do celular deitado.
 5. Ovelhas em outros chunks (spawn por bioma com limite) e tosar → lã.

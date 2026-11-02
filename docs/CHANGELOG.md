@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.22.0 — 2026-11-02
+- **Porta só entre batentes de madeira**: as células da esquerda e da direita precisam de um cubo de madeira no
+  nível 0 (Tora ou Piso de Carvalho; `World.hasDoorFrame`, por `BlockDef` cubo + `organic: 'wood'`).
+- **Quebrar com ferramenta leva 1 s** (mão/item continua 2 s): `breakSeconds(tool)` em `world/items.ts` substitui
+  `BREAK_HOLD_S` do `Game`. 2 testes novos (71 no total).
+
 ## 0.21.0 — 2026-11-02
 - **Pilha de até 3 cubos** (`MAX_STACK` = 3): `Chunk.levels` (um array por nível), `World.getLevel/topBlock/
   stackHeight/placementLevel` genéricos; render, sombra e `pick()` iteram os níveis. A personagem sobe até o nível 3
