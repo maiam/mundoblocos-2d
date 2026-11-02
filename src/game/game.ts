@@ -252,6 +252,19 @@ export class Game {
     return this.world.canBreak(x, y) && !(this.world.breakTarget(x, y) === 'ground' && this.entities.occupies(x, y));
   }
 
+  /** Dá para abrir/fechar a porta desta célula? Fechar exige a célula livre de entidades. */
+  private canToggleDoorAt(x: number, y: number): boolean {
+    if (!this.world.isDoor(x, y)) return false;
+    return !this.world.isDoorOpen(x, y) || !this.entities.occupies(x, y);
+  }
+
+  /** Toque numa porta: abre/fecha (qualquer item em mãos). Retorna true se havia porta (o toque foi usado). */
+  private useDoorAt(x: number, y: number): boolean {
+    if (!this.world.isDoor(x, y)) return false;
+    if (this.inReach(x, y) && this.canToggleDoorAt(x, y)) this.world.toggleDoor(x, y);
+    return true;
+  }
+
   /** Pode usar o espaço selecionado (bloco/semente) nesta célula? Ovelha: ver `canFeed`. */
   private canUseAt(slot: HotbarSlot | null, x: number, y: number): boolean {
     if (!slot) return false;
@@ -349,6 +362,8 @@ export class Game {
   /** Clique curto do mouse. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
+    const picked = this.renderer.pick(this.camera, sx, sy);
+    if (picked.hasObject && this.useDoorAt(picked.x, picked.y)) return;
     if (this.strikerInHand) {
       if (!this.player.attacking) this.faceToward(sx, sy);
       this.attack();
@@ -403,6 +418,8 @@ export class Game {
     this.action = null;
     if (!a || a.held > TAP_MAX_S) return;
     const slot = this.slot;
+    const [fx, fy] = this.frontCell();
+    if (this.useDoorAt(fx, fy)) return;
     if (this.strikerInHand) {
       this.attack();
       return;
@@ -411,8 +428,7 @@ export class Game {
       this.applyUse(slot, 0, 0, this.frontSheep());
       return;
     }
-    const [x, y] = this.frontCell();
-    this.applyUse(slot, x, y, null);
+    this.applyUse(slot, fx, fy, null);
   }
 
   /**
@@ -543,9 +559,14 @@ export class Game {
     if (!this.pointer.inside || this.joystick.active) return null;
     const { x, y } = this.pointer;
     const p = this.press;
+    if (p && p.held > TAP_MAX_S) return this.tool === 'sword' ? null : this.breakTarget(x, y);
+    // Porta sob o cursor: o clique abre/fecha com qualquer item.
+    const picked = this.renderer.pick(this.camera, x, y);
+    if (picked.hasObject && this.world.isDoor(picked.x, picked.y)) {
+      return { x: picked.x, y: picked.y, valid: this.inReach(picked.x, picked.y) && this.canToggleDoorAt(picked.x, picked.y) };
+    }
     // Espada: o alvo é a entidade (anel), nunca a célula. Machado: só mostra a célula ao segurar.
     if (this.tool === 'sword') return null;
-    if (p && p.held > TAP_MAX_S) return this.breakTarget(x, y);
     if (this.strikerInHand) return null;
     return this.useTarget(x, y);
   }
@@ -574,7 +595,10 @@ export class Game {
    * Andando, nada fica selecionado. Com o mouse sobre o mundo, vale o destaque do mouse.
    */
   private focusTarget(): CellTarget | null {
-    if (this.pointer.inside || this.player.moving || this.tool === 'sword') return null;
+    if (this.pointer.inside || this.player.moving) return null;
+    const [dx, dy] = this.frontCell();
+    if (this.world.isDoor(dx, dy)) return { x: dx, y: dy, valid: this.canToggleDoorAt(dx, dy) };
+    if (this.tool === 'sword') return null;
     const slot = this.slot;
     if (this.strikerInHand) {
       // Machado: só destaca o que dá para cortar (madeira/árvore/planta) à frente.

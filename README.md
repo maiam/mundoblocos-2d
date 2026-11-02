@@ -35,7 +35,8 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Zoom | roda do mouse, Q / E |
 | Botão de ação (celular) / Espaço (desktop) | toque: usa o selecionado no bloco à frente · segurar 2 s: quebra |
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |
-| Colocar bloco com o mouse (alcance 4,5 células) | clique curto |
+| Colocar bloco com o mouse (alcance 4,5 células) | clique curto (empilha até 3 cubos) |
+| Abrir/fechar Porta de Carvalho | ação com a porta à frente, ou clique nela (qualquer item em mãos) |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem); não quebra nada |
 | Machado | toque: golpe (como a espada) · segurar 2 s: corta só madeira, árvore ou planta |
 | Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 2 s: quebra só plantas (capim, flor, trigo, cacto) |

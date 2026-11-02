@@ -22,7 +22,8 @@
 | Blocos celestiais: arte da prancha 3/4 (a isométrica não foi convertida) | domains/worlds |
 | Chão de nuvem sem giro/espelho e com contraste suavizado (cobre o mapa todo) | domains/worlds |
 | Deusa flutua (só visual): mesma física do `Walker`, animação contínua e balanço sem mover a câmera | domains/worlds |
-| Pilha máx. 2 cubos; personagem sobe 1 nível por passo; descer é livre | domains/player |
+| Pilha máx. 3 cubos (era 2); personagem sobe 1 nível por passo; descer é livre | domains/player |
+| Porta: objeto `shape: 'door'` só no nível 0, estado aberto/fechado no id (`OAK_DOOR_OPEN` passável); animação só no render; toque abre/fecha com qualquer item | domains/world |
 | Chão quebrado vira buraco; só bloco novo ocupa e vira piso nivelado | domains/world |
 | Ovelha não sobe em cubos: blocos servem de cerca | domains/npc |
 | Crescimento do trigo probabilístico (média 6 s/estágio) | domains/farming |

@@ -1,5 +1,6 @@
 import atlasUrl from '../assets/blocks-atlas.webp?inline';
 import celestialAtlasUrl from '../assets/celestial-atlas.webp?inline';
+import oakDoorUrl from '../assets/oak-door.webp?inline';
 
 /**
  * Atlas dos blocos (scripts/extract-blocks.py): materiais do mundo principal e blocos
@@ -10,6 +11,8 @@ import celestialAtlasUrl from '../assets/celestial-atlas.webp?inline';
  */
 let atlas: HTMLImageElement | null = null;
 let celestial: HTMLImageElement | null = null;
+/** Porta de Carvalho: 8 quadros (4×2) — 0..3 abrindo, 4..7 fechando (scripts/process-sprite.py). */
+let oakDoor: HTMLImageElement | null = null;
 
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -21,8 +24,8 @@ function load(url: string): Promise<HTMLImageElement> {
 }
 
 export async function loadBlockArt(): Promise<void> {
-  if (atlas && celestial) return;
-  [atlas, celestial] = await Promise.all([load(atlasUrl), load(celestialAtlasUrl)]);
+  if (atlas && celestial && oakDoor) return;
+  [atlas, celestial, oakDoor] = await Promise.all([load(atlasUrl), load(celestialAtlasUrl), load(oakDoorUrl)]);
 }
 
 export function getBlockAtlas(): HTMLImageElement {
@@ -33,4 +36,9 @@ export function getBlockAtlas(): HTMLImageElement {
 export function getCelestialAtlas(): HTMLImageElement {
   if (!celestial) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
   return celestial;
+}
+
+export function getOakDoorSheet(): HTMLImageElement {
+  if (!oakDoor) throw new Error('loadBlockArt() precisa terminar antes de criar as texturas');
+  return oakDoor;
 }

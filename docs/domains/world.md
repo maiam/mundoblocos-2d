@@ -3,7 +3,8 @@
 **Fonte de verdade:** `World` (estado em execução) + `WorldGenerator` (terreno não editado, puro por seed).
 
 ## Modelo
-- Célula com três camadas: **chão**, **objeto nível 0** e **cubo nível 1** (pilha de até `MAX_STACK` = 2).
+- Célula: **chão** + níveis de pilha (`Chunk.levels`, `World.getLevel`): **objeto nível 0** e **cubos nos níveis 1–2**
+  (pilha de até `MAX_STACK` = 3). O gerador só preenche os níveis 0 e 1; o nível 2 é só do jogador.
 - **Materiais** (prancha de blocos, únicos blocos de construção): Terra, Terra com Grama, Terra Arada,
   Caminho de Terra, Areia, Pedra, Tora de Carvalho, Piso de Carvalho (`MATERIALS`). O **mesmo id** serve de
   chão natural (camada de chão) e de cubo (camada de objeto).
@@ -18,12 +19,14 @@
 - Árvores por hash × densidade × manchas de floresta; pedregulhos raros; enfeites.
 
 ## Regras
-- `standHeight(x, y)`: 0 chão, 1–2 sobre cubos, `null` (água, buraco, árvore, cacto). Regra única de entidades.
+- `standHeight(x, y)`: 0 chão (ou porta aberta), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.
 - `isGroundStandable`: material como chão é pisável; água/buraco não.
-- Quebrar (`breakTarget`/`breakTargetId`): nível 1 → nível 0 → chão (vira buraco). Água não quebra. Restrição por
+- Quebrar (`breakTarget`/`breakTargetId`): topo da pilha → … → nível 0 → chão (vira buraco). Água não quebra. Restrição por
   ferramenta fica em `world/items.ts` (`toolCanBreak`), usando `BlockDef.organic` (`wood` = madeira/árvore; `plant` = plantas e derivados) e `BlockDef.soft` (terra, grama,
   arada, caminho, areia: o que a pá cava). `canFlatten/flatten`: Terra/Grama/Arada → Caminho (pá).
 - Colocar (`placementLevel`): só materiais. Em buraco vira piso nivelado; senão nível 0 (substitui enfeite) ou
-  nível 1 sobre cubo.
+  próximo nível sobre cubo (até 3). Porta (`shape: 'door'`): só nível 0, nada empilha sobre ela.
+- Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`
+  só fecha se a célula estiver livre de entidades (`canToggleDoorAt`).
 - Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.
 - Chunks `modified` nunca são descarregados.

@@ -30,11 +30,11 @@ src/
     generator.ts               WorldGenerator.cellAt (uma avaliação de ruído por célula), generateChunk
     flatGenerator.ts           FlatGenerator: chão de um bloco só (Santuário)
     coords.ts                  célula ↔ chunk/local (seguro p/ negativos)
-    chunk.ts                   Chunk 16×16: ground/objects/upper, modified, version
+    chunk.ts                   Chunk 16×16: ground + levels[MAX_STACK], modified, version
     world.ts                   World(seed, perfil): limites, chunks, standHeight, quebrar/colocar/plantar, tick, spawn
     items.ts                   itens contáveis, ferramentas, dropsFor
   render/  apresentação — só lê o mundo
-    blockArt.ts                carrega o atlas antes do jogo
+    blockArt.ts                carrega os atlas e a folha da porta antes do jogo
     textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
@@ -72,7 +72,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único, cada mundo) | ~3,1 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
+| Artefato (HTML único, cada mundo) | ~3,2 MB (era 4,7 MB antes do WebP) — **acima do alerta** | aviso do build acima de 2,8 MB |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

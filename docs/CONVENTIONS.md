@@ -10,7 +10,7 @@
 - Testes em `src/**/*.test.ts` (Vitest, Node); benchmarks em `bench/`.
 
 ## Mundo e regras
-- Célula: chão + objeto nível 0 + cubo nível 1 (nível 1 só sobre cubo). `AIR` = vazio.
+- Célula: chão + níveis 0..`MAX_STACK`-1 (3): objeto no nível 0, cubos empilhados acima (só sobre cubo). `AIR` = vazio.
 - Material tem **um id** para chão e cubo; "é pisável" via `isGroundStandable`, nunca pelo `layer`.
 - Altura de pé/colisão sempre via `World.standHeight` (inclui água, buracos, árvores).
 - Mutação só por `World.setObject/placeBlock/breakBlock/plant` (garante `version` e vizinhos).

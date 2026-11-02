@@ -26,8 +26,12 @@ Apenas apresentação; lê `World`, nunca escreve.
   material → topo contínuo do atlas (girado/espelhado por célula, exceto orientados) · água → tile procedural ·
   `HOLE` → fundo escuro + parede de terra no lado norte; depois barranca e espuma nas margens, grade sutil e
   sombras projetadas por cubos e árvores.
-- Pilhas: cada nível é desenhado `CUBE_FRONT` px acima do anterior (mesmo sprite de cubo); sombra no chão cresce
+- Pilhas (até 3): cada nível é desenhado `CUBE_FRONT` px acima do anterior (mesmo sprite de cubo); sombra no chão cresce
   com a altura. `pick()` considera a pilha inteira clicável; clicar num cubo com espaço empilha nele.
+- Porta (`textures.doorFrames`, folha `oak-door` 4×2 carregada com os atlas em `blockArt.ts`): corpo da porta
+  fechada com a largura da célula, base na borda inferior (altura ≈ 3 × `CUBE_FRONT`), dobradiça à esquerda.
+  Quadros 0–3 abrindo, 4–7 fechando; `Renderer.drawDoor` guarda quando cada porta mudou de estado (só aparência) e
+  anima 0,32 s. Ícone da hotbar = quadro 0.
 - Por frame: objetos linha a linha (de cima para baixo da tela); a personagem é desenhada logo após a linha
   dos seus pés. Água ganha brilhos animados; nuvens projetam sombras que derivam.
 - `pick()` escolhe o objeto sob o cursor testando as linhas da frente primeiro (sprites sobem acima da célula).

@@ -16,7 +16,9 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
    recomendado para o core**, não criar backend aqui.
 
 ## Em seguida
-4. Inventário/painel: a hotbar (15 espaços) está no limite do celular deitado.
+- **Porta:** orientação lateral (parede leste–oeste) usando o quadro de lado; ovelhas não abrem portas (ok) — decidir
+  se a porta deve fechar sozinha; atalho de teclado só vai até 9 (porta = 16º espaço, por clique/toque).
+4. Inventário/painel: a hotbar (16 espaços, já reduzida em telas ≤ 700 px) está no limite do celular deitado.
 5. Ovelhas em outros chunks (spawn por bioma com limite) e tosar → lã.
 6. Arte em 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
 7. Feedback sem HUD: vibração ao quebrar no celular, sons opcionais, menu recolhível (novo mundo, ciclo do dia).
@@ -28,7 +30,7 @@ Ordenado por prioridade. Itens concluídos saem daqui e vão para o CHANGELOG.
 11. Geração em Web Worker se o custo por chunk voltar a crescer (hoje ~0,07 ms).
 
 ## Riscos e dívidas técnicas
-- **Peso dos artefatos — URGENTE** (~3,1 MB cada após as folhas da pá e da picareta; o build avisa acima de 2,8 MB): cada folha
+- **Peso dos artefatos — URGENTE** (~3,2 MB cada após pá, picareta e porta; o build avisa acima de 2,8 MB): cada folha
   nova soma ~150 kB e os dois mundos levam a arte um do outro. Separar assets por mundo (build por `VITE_WORLD` só
   com a arte do perfil) antes da próxima folha de sprite.
 - `game/game.ts` (~490 linhas) concentra entrada, alvo e regras de ação: separar `ActionController` quando as

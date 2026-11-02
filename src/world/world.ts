@@ -1,7 +1,7 @@
 import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, isDoor, isWheat, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
 import type { Biome } from './biomes';
-import { Chunk } from './chunk';
+import { Chunk, type Level } from './chunk';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
@@ -121,26 +121,39 @@ export class World {
   getUpper(x: number, y: number): BlockId {
     if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
-    return chunk ? chunk.getUpper(toLocal(x), toLocal(y)) : this.generator.upperAt(x, y);
+    return chunk ? chunk.getLevel(toLocal(x), toLocal(y), 1) : this.generator.upperAt(x, y);
+  }
+
+  /** Bloco de um nível da pilha (0 = objeto no chão). O gerador só preenche os níveis 0 e 1. */
+  getLevel(x: number, y: number, level: Level): BlockId {
+    if (level === 0) return this.getObject(x, y);
+    if (level === 1) return this.getUpper(x, y);
+    if (!this.inBounds(x, y)) return Block.AIR;
+    const chunk = this.chunkAt(x, y);
+    return chunk ? chunk.getLevel(toLocal(x), toLocal(y), level) : Block.AIR;
   }
 
   /** Bloco visível no topo da célula e seu nível (null se vazia). */
-  topBlock(x: number, y: number): { id: BlockId; level: 0 | 1 } | null {
-    const up = this.getUpper(x, y);
-    if (up !== Block.AIR) return { id: up, level: 1 };
-    const base = this.getObject(x, y);
-    return base !== Block.AIR ? { id: base, level: 0 } : null;
+  topBlock(x: number, y: number): { id: BlockId; level: Level } | null {
+    for (let level = MAX_STACK - 1; level >= 0; level--) {
+      const id = this.getLevel(x, y, level);
+      if (id !== Block.AIR) return { id, level };
+    }
+    return null;
   }
 
   /** Quantos cubos há empilhados na célula (0..MAX_STACK). */
   stackHeight(x: number, y: number): number {
     if (blockDef(this.getObject(x, y)).shape !== 'cube') return 0;
-    return this.getUpper(x, y) !== Block.AIR ? 2 : 1;
+    let n = 1;
+    while (n < MAX_STACK && this.getLevel(x, y, n) !== Block.AIR) n++;
+    return n;
   }
 
   /**
    * Altura em que se fica de pé na célula, ou null se não dá para ficar
-   * (água, árvore, cacto). Cubos são superfícies: altura = nº de cubos.
+   * (água, árvore, cacto, porta fechada). Cubos são superfícies: altura = nº de cubos.
+   * Porta aberta é passável no nível do chão.
    */
   standHeight(x: number, y: number): number | null {
     if (!this.isGroundStandable(x, y)) return null;
@@ -154,7 +167,7 @@ export class World {
     this.setLevel(x, y, 0, id);
   }
 
-  private setLevel(x: number, y: number, level: 0 | 1 | 'ground', id: BlockId): void {
+  private setLevel(x: number, y: number, level: Level | 'ground', id: BlockId): void {
     const cx = toChunk(x);
     const cy = toChunk(y);
     const lx = toLocal(x);
@@ -240,9 +253,9 @@ export class World {
    * Onde o bloco seria colocado, ou null se não pode.
    * 'ground': preenche um buraco — só cubos, que viram piso nivelado.
    * Nível 0: chão firme, célula vazia ou com enfeite (substituído).
-   * Nível 1: cubo sobre cubo, até MAX_STACK. Enfeites e árvores só no chão.
+   * Níveis 1..MAX_STACK-1: cubo sobre cubo. Enfeites, árvores e portas só no chão; nada empilha sobre porta.
    */
-  placementLevel(x: number, y: number, id: BlockId): 'ground' | 0 | 1 | null {
+  placementLevel(x: number, y: number, id: BlockId): 'ground' | Level | null {
     const def = blockDef(id);
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
@@ -251,8 +264,32 @@ export class World {
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
     if (base.id === Block.AIR || base.shape === 'decoration') return 0;
-    if (def.shape === 'cube' && base.shape === 'cube' && this.stackHeight(x, y) < MAX_STACK) return 1;
+    if (def.shape === 'cube' && base.shape === 'cube') {
+      const h = this.stackHeight(x, y);
+      return h < MAX_STACK ? h : null;
+    }
     return null;
+  }
+
+  // ---- Portas ----
+
+  isDoor(x: number, y: number): boolean {
+    return isDoor(this.getObject(x, y));
+  }
+
+  isDoorOpen(x: number, y: number): boolean {
+    return this.getObject(x, y) === Block.OAK_DOOR_OPEN;
+  }
+
+  /**
+   * Abre/fecha a porta da célula (o id guarda o estado: fechada bloqueia, aberta deixa passar).
+   * Quem chama garante que ninguém está na célula ao fechar. Retorna false se não há porta.
+   */
+  toggleDoor(x: number, y: number): boolean {
+    const id = this.getObject(x, y);
+    if (!isDoor(id)) return false;
+    this.setLevel(x, y, 0, id === Block.OAK_DOOR ? Block.OAK_DOOR_OPEN : Block.OAK_DOOR);
+    return true;
   }
 
   canPlace(x: number, y: number, id: BlockId): boolean {

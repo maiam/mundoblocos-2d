@@ -9,7 +9,7 @@ import tilledIcon from '../assets/icon-block-tilled.webp?inline';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
-import { getBlockAtlas } from './blockArt';
+import { getBlockAtlas, getOakDoorSheet } from './blockArt';
 import { CELESTIAL_ICONS, celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 
@@ -51,6 +51,36 @@ export interface BlockTextures {
   glowColor: Map<BlockId, string>;
   /** Cor da "barranca" (face frontal do chão elevado) mostrada sobre a água. */
   bankColor: Map<BlockId, string>;
+  /** Porta de Carvalho: 8 quadros (0..3 abrindo, 4..7 fechando); fechada = 0, aberta = 3. */
+  doorFrames: Sprite[];
+}
+
+/** Geometria da folha `oak-door` (quadros 70×120): corpo da porta fechada em x 8..69, base em y 112. */
+const DOOR_FRAME_W = 70;
+const DOOR_FRAME_H = 120;
+const DOOR_BODY_X = 8;
+const DOOR_BODY_W = 61;
+const DOOR_BASE_Y = 112;
+
+/**
+ * Quadros da porta: corpo da porta fechada com a largura de uma célula, base na borda de baixo da
+ * célula (como a frente de um cubo) e dobradiça à esquerda. Altura resultante ≈ 3 frentes de cubo.
+ */
+function doorSprites(): Sprite[] {
+  const sheet = getOakDoorSheet();
+  const s = T / DOOR_BODY_W;
+  const w = DOOR_FRAME_W * s;
+  const h = DOOR_FRAME_H * s;
+  const ox = -DOOR_BODY_X * s;
+  const oy = T - DOOR_BASE_Y * s;
+  return Array.from({ length: 8 }, (_, i) => {
+    const c = document.createElement('canvas');
+    c.width = DOOR_FRAME_W;
+    c.height = DOOR_FRAME_H;
+    c.getContext('2d')!.drawImage(sheet, (i % 4) * DOOR_FRAME_W, Math.floor(i / 4) * DOOR_FRAME_H,
+      DOOR_FRAME_W, DOOR_FRAME_H, 0, 0, DOOR_FRAME_W, DOOR_FRAME_H);
+    return { canvas: c, ox, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } };
+  });
 }
 
 /** Ícones da hotbar: o cubo da prancha inteiro. */
@@ -359,6 +389,10 @@ export function createBlockTextures(): BlockTextures {
     ));
     icons.set(id, CELESTIAL_ICONS[id]);
   }
+  const doorFrames = doorSprites();
+  objects.set(Block.OAK_DOOR, doorFrames[0]);
+  objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
+  icons.set(Block.OAK_DOOR, doorFrames[0].canvas.toDataURL());
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],
@@ -372,5 +406,5 @@ export function createBlockTextures(): BlockTextures {
     [Block.SAND, '#d9b06a'],
     [Block.STONE, '#6a6676'],
   ]);
-  return { groundTop, water, objects, icons, glowColor, bankColor };
+  return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames };
 }

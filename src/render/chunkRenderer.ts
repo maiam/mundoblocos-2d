@@ -202,10 +202,16 @@ export class ChunkRenderer {
         const obj = blockDef(chunk.getObject(lx, ly));
         if (obj.shape === 'cube') {
           // Pilhas mais altas projetam sombra maior.
-          const tall = chunk.getUpper(lx, ly) !== 0 ? 1.45 : 1;
+          const tall = 1 + 0.45 * (chunk.filledLevels(lx, ly) - 1);
           ctx.fillStyle = `rgba(30, 20, 70, ${0.26 * tall})`;
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.6 + (tall - 1) * 6, py + TILE - 1, TILE * 0.55 * tall, 6 * tall, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obj.shape === 'door') {
+          // Porta: sombra estreita ao pé (fechada) — aberta, só a lâmina de lado.
+          ctx.fillStyle = 'rgba(30, 20, 70, 0.22)';
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.55, py + TILE - 2, TILE * (obj.solid ? 0.55 : 0.25), 4, 0, 0, Math.PI * 2);
           ctx.fill();
         } else if (obj.shape === 'tree') {
           ctx.fillStyle = 'rgba(30, 20, 70, 0.24)';

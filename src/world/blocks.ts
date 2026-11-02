@@ -2,7 +2,7 @@
  * Registro de blocos — fonte de verdade das PROPRIEDADES DE DOMÍNIO de cada bloco.
  * A aparência vive em `src/render/textures.ts`, indexada pelo mesmo id.
  *
- * Vista superior: cada célula tem uma camada de CHÃO (ground) e até dois níveis de OBJETO.
+ * Vista superior: cada célula tem uma camada de CHÃO (ground) e até MAX_STACK (3) níveis de OBJETO.
  * Os materiais (terra, grama, pedra…) usam o mesmo id nas duas camadas: no chão são o piso
  * natural; como objeto, são cubos.
  */
@@ -24,6 +24,10 @@ export const Block = {
   STONE: 25,
   OAK_LOG: 26,
   OAK_PLANKS: 27,
+  // --- porta (objeto de 3 níveis de altura; o id guarda o estado) ---
+  OAK_DOOR: 28,
+  /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
+  OAK_DOOR_OPEN: 29,
   CACTUS: 31,
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
@@ -76,8 +80,8 @@ export function wheatId(stage: number): BlockId {
 export type BlockId = (typeof Block)[keyof typeof Block] | (number & { readonly __wheatStage?: true });
 
 export type BlockLayer = 'ground' | 'object';
-/** Como o objeto é desenhado: cubo, árvore alta, enfeite plano ou plantação. */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop';
+/** Como o objeto é desenhado: cubo, árvore alta, enfeite plano, plantação ou porta (3 níveis, abre/fecha). */
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door';
 
 export interface BlockDef {
   id: BlockId;
@@ -127,6 +131,9 @@ const defs: BlockDef[] = [
   object(Block.STONE, 'Pedra'),
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
   object(Block.OAK_PLANKS, 'Piso de Carvalho', { organic: 'wood' }),
+  // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
+  object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
+  object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -192,5 +199,10 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
   Block.WOOD_CELESTIAL, Block.FOLIAGE_GOLDEN,
 ];
 
-/** Ids que aparecem na hotbar, na ordem exibida. */
-export const HOTBAR_BLOCKS: BlockId[] = MATERIALS;
+/** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
+export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR];
+
+/** Porta (aberta ou fechada)? */
+export function isDoor(id: BlockId): boolean {
+  return id === Block.OAK_DOOR || id === Block.OAK_DOOR_OPEN;
+}

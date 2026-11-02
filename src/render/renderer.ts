@@ -1,9 +1,9 @@
-import { CHUNK_SIZE, CUBE_FRONT, TILE } from '../config';
+import { CHUNK_SIZE, CUBE_FRONT, MAX_STACK, TILE } from '../config';
 import type { Camera } from '../game/camera';
 import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
-import { Block, blockDef, type BlockId } from '../world/blocks';
+import { Block, blockDef, type BlockId, isDoor } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
@@ -16,6 +16,8 @@ import { createBlockTextures, type BlockTextures, type Sprite } from './textures
 
 /** Máximo de chunks (chão) re-renderizados por frame. */
 const MAX_CHUNK_RENDERS_PER_FRAME = 2;
+/** Duração da animação de abrir/fechar a porta (s). */
+const DOOR_ANIM_S = 0.32;
 
 export interface RenderOptions {
   player: Player;
@@ -55,6 +57,8 @@ export class Renderer {
   private readonly particles = new Particles();
   private readonly ctx: CanvasRenderingContext2D;
   sky: SkyState = skyAt(0.3);
+  /** Estado visto por porta (aparência apenas): quando mudou de aberta/fechada, para animar. */
+  private readonly doorAnim = new Map<number, { open: boolean; since: number }>();
 
   constructor(canvas: HTMLCanvasElement, private readonly world: World) {
     this.ctx = canvas.getContext('2d')!;
@@ -110,7 +114,7 @@ export class Renderer {
     const bx0 = Math.floor(wx0 / TILE) - 1;
     const bx1 = Math.floor(wx1 / TILE) + 1;
     const by0 = Math.floor(wy0 / TILE) - 1;
-    const by1 = Math.floor(wy1 / TILE) + 3; // sprites altos/pilhas sobem até ~2 células
+    const by1 = Math.floor(wy1 / TILE) + 4; // sprites altos/pilhas de 3/portas sobem até ~2,5 células
     const glows: Glow[] = [];
     const p = opts.player;
     // Atores e itens caídos agrupados pela linha da base; dentro da linha, de trás para frente.
@@ -131,10 +135,15 @@ export class Renderer {
     for (let y = by0; y <= by1; y++) {
       for (let x = bx0; x <= bx1; x++) {
         const id = this.world.getObject(x, y);
-        if (id !== Block.AIR) {
+        if (isDoor(id)) {
+          this.drawDoor(cam, id, x, y, opts.elapsed);
+        } else if (id !== Block.AIR) {
           this.drawObject(cam, id, x, y, 0, glows);
-          const up = this.world.getUpper(x, y);
-          if (up !== Block.AIR) this.drawObject(cam, up, x, y, 1, glows);
+          for (let level = 1; level < MAX_STACK; level++) {
+            const up = this.world.getLevel(x, y, level);
+            if (up === Block.AIR) break;
+            this.drawObject(cam, up, x, y, level, glows);
+          }
         } else if (blockDef(this.world.getGround(x, y)).liquid) {
           this.waterGlint(cam, x, y, opts.elapsed);
         }
@@ -176,6 +185,25 @@ export class Renderer {
       const lift = blockDef(id).shape === 'tree' ? -0.9 : 0.1 - (level * CUBE_FRONT) / TILE;
       glows.push({ x: x + 0.5, y: y + lift, color: glow });
     }
+  }
+
+  /** Porta: quadro estático (fechada/aberta) ou da animação logo após mudar de estado. */
+  private drawDoor(cam: Camera, id: BlockId, x: number, y: number, elapsed: number): void {
+    const open = id === Block.OAK_DOOR_OPEN;
+    const key = x * 100003 + y;
+    let st = this.doorAnim.get(key);
+    if (!st) {
+      if (this.doorAnim.size > 1024) this.doorAnim.clear();
+      st = { open, since: -Infinity }; // primeira vez vista: sem animação
+      this.doorAnim.set(key, st);
+    } else if (st.open !== open) {
+      st.open = open;
+      st.since = elapsed;
+    }
+    const t = (elapsed - st.since) / DOOR_ANIM_S;
+    const step = Math.min(3, Math.floor(t * 4));
+    const frame = t < 1 ? (open ? step : 4 + step) : open ? 3 : 0;
+    this.drawSprite(cam, this.textures.doorFrames[frame], x, y);
   }
 
   /** Desenha um sprite na célula; cada nível de pilha sobe CUBE_FRONT px. */
@@ -455,9 +483,10 @@ export class Renderer {
     const gy = Math.floor(wy / TILE);
     for (let y = gy + 3; y >= gy; y--) {
       for (const x of [gx, gx - 1, gx + 1]) {
-        const height = this.world.getUpper(x, y) !== Block.AIR ? 1 : 0;
-        const id: BlockId = height ? this.world.getUpper(x, y) : this.world.getObject(x, y);
-        if (id === Block.AIR) continue;
+        const stackTop = this.world.topBlock(x, y);
+        if (!stackTop) continue;
+        const height = stackTop.level;
+        const id: BlockId = stackTop.id;
         const s = this.textures.objects.get(id);
         if (!s) continue;
         // A pilha inteira é clicável: do topo do bloco de cima até a base da célula.

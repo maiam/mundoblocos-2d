@@ -141,6 +141,12 @@ html, body {
   .joystick-knob { width: 46px; height: 46px; }
 }
 
+/* Celulares deitados estreitos (≤ 700 px): 16 espaços (com a porta) ainda cabem sem rolar. */
+@media (max-height: 500px) and (max-width: 700px) and (orientation: landscape) {
+  .hotbar { gap: 3px; }
+  .slot { width: 34px; height: 34px; padding: 3px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .slot, .joystick { transition: none; }
 }

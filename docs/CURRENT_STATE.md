@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.20.0_
+_Atualizado em 2026-11-02 — v0.21.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -16,7 +16,7 @@ _Atualizado em 2026-11-02 — v0.20.0_
   Tora de Carvalho, Piso de Carvalho. São os únicos blocos de construção e também o chão natural.
 - Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
-- Pilhas de até 2 cubos; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
+- Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
 ## Personagem e controles
 - Heroína com sprite em 4 direções, ~2,2 células; sobe 1 nível por vez e desce livre; colide com água, buracos,
@@ -26,7 +26,7 @@ _Atualizado em 2026-11-02 — v0.20.0_
   segurar 2 s quebra. Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
 - Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar 2 s quebra), Q/E/roda = zoom.
 - Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
-- Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15).
+- Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15, porta 16).
 
 ## Sistemas
 - **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara (animação própria) Terra/Terra
@@ -35,6 +35,8 @@ _Atualizado em 2026-11-02 — v0.20.0_
   (animação de cavar) amassa Terra/Grama/Arada → Caminho de Terra e, segurando, cava só blocos macios (terra, areia…)
   e destrói plantas **sem drop**; não ataca; a **picareta** (animação de minerar), segurando, quebra qualquer
   bloco e plantas (sem drop), menos madeira/árvore; não ataca.
+- **Porta de Carvalho**: colocada no chão, 3 blocos de altura; toque abre/fecha com animação (qualquer item em
+  mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
 - **Inventário** de itens contáveis (começa com 5 sementes e 2 trigos); materiais são infinitos.
@@ -52,7 +54,7 @@ _Atualizado em 2026-11-02 — v0.20.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 66 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 69 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
-- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,1 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
+- Geração de chunk ~0,07 ms; render ~0,5 ms/quadro (média, Chromium headless); artefatos ~3,2 MB cada — o build avisa (limite de alerta 2,8 MB) (um bundle com a arte dos dois mundos).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

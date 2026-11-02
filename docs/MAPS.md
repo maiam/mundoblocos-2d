@@ -59,17 +59,17 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph Célula
-    U[nível 1: cubo empilhado] --> O[nível 0: cubo · árvore · enfeite · trigo]
+    U[níveis 1–2: cubos empilhados] --> O[nível 0: cubo · árvore · enfeite · trigo · porta]
     O --> GR[chão: material · água · buraco]
   end
-  Q{standHeight} -->|água, buraco, árvore, cacto| X[null: bloqueado]
-  Q -->|chão livre| Z0[0]
-  Q -->|1 ou 2 cubos| Z12[1 / 2]
-  BR[quebrar] --> BR1[nível 1] --> BR2[nível 0] --> BR3[chão vira buraco]
+  Q{standHeight} -->|água, buraco, árvore, cacto, porta fechada| X[null: bloqueado]
+  Q -->|chão livre / porta aberta| Z0[0]
+  Q -->|1 a 3 cubos| Z12[1 / 2 / 3]
+  BR[quebrar] --> BR1[topo da pilha] --> BR2[nível 0] --> BR3[chão vira buraco]
   PL[colocar material] --> P1{alvo}
   P1 -->|buraco| PF[vira piso nivelado]
   P1 -->|vazio/enfeite| P0[nível 0]
-  P1 -->|cubo com espaço| P2[nível 1 · máx. 2]
+  P1 -->|cubo com espaço| P2[próximo nível · máx. 3]
 ```
 
 ## 4. Ciclo do trigo
