@@ -11,6 +11,14 @@ export const ATTACK_SECONDS = 0.36;
 export const ATTACK_HIT_AT = 0.45;
 /** Quadros da animação de ataque. */
 export const ATTACK_FRAMES = 4;
+/** Vida máxima em meios corações (5 corações). */
+export const MAX_HP = 10;
+/** Invencibilidade depois de levar dano (s) e depois de renascer. */
+export const HURT_INVULN_S = 0.9;
+export const RESPAWN_INVULN_S = 2;
+/** Regeneração: começa após REGEN_DELAY_S sem levar dano; +½ coração a cada REGEN_EVERY_S. */
+export const REGEN_DELAY_S = 6;
+export const REGEN_EVERY_S = 3;
 
 /**
  * Personagem jogável: anda pela entrada do jogador (teclado/joystick, em
@@ -26,6 +34,13 @@ export class Player extends Walker {
   /** Ferramenta do golpe em andamento (define a folha de animação). */
   attackTool: ToolId | null = null;
   private hitDone = true;
+  /** Vida em meios corações (0 = derrotada; o Game a faz renascer). */
+  hp = MAX_HP;
+  /** Invencibilidade restante (pisca na tela). */
+  invuln = 0;
+  /** Tempo desde o último dano (regeneração). */
+  private sinceHurt = Infinity;
+  private regen = 0;
 
   constructor(x: number, y: number) {
     super(x, y, { speed: 4.2, halfW: 0.27, halfD: 0.15, stepHeight: STEP_HEIGHT });
@@ -58,7 +73,53 @@ export class Player extends Walker {
     return true;
   }
 
+  get dead(): boolean {
+    return this.hp <= 0;
+  }
+
+  /**
+   * Leva dano de (fromX, fromY): perde `damage` meios corações, fica invencível por um instante e recua.
+   * Ignorado se invencível ou já derrotada. Retorna true se o dano entrou.
+   */
+  hurt(damage: number, fromX: number, fromY: number, world: World, blocked?: Blocker): boolean {
+    if (this.invuln > 0 || this.dead) return false;
+    this.hp = Math.max(0, this.hp - damage);
+    this.invuln = HURT_INVULN_S;
+    this.sinceHurt = 0;
+    this.regen = 0;
+    const d = Math.hypot(this.x - fromX, this.y - fromY) || 1;
+    const facing = this.facing;
+    this.move(0.12, (this.x - fromX) / d, (this.y - fromY) / d, world, blocked);
+    this.facing = facing;
+    return true;
+  }
+
+  /** Renasce em (x, y) com vida cheia (itens ficam com ela). */
+  respawn(x: number, y: number): void {
+    this.x = x;
+    this.y = y;
+    this.z = this.visualZ = 0;
+    this.hp = MAX_HP;
+    this.invuln = RESPAWN_INVULN_S;
+    this.sinceHurt = Infinity;
+    this.attackTime = 0;
+    this.hitDone = true;
+  }
+
+  /** Invencibilidade e regeneração fora de combate. */
+  private tickHealth(dt: number): void {
+    this.invuln = Math.max(0, this.invuln - dt);
+    this.sinceHurt += dt;
+    if (this.hp <= 0 || this.hp >= MAX_HP || this.sinceHurt < REGEN_DELAY_S) return;
+    this.regen += dt;
+    if (this.regen >= REGEN_EVERY_S) {
+      this.regen = 0;
+      this.hp += 1;
+    }
+  }
+
   update(dt: number, ix: number, iy: number, world: World, blocked?: Blocker): void {
+    this.tickHealth(dt);
     // Durante o golpe ela continua podendo andar, mas a direção do golpe não muda.
     const facing = this.facing;
     this.move(dt, ix, iy, world, blocked);

@@ -1,4 +1,5 @@
 import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatStage } from './blocks';
+import type { MonsterKind } from './dungeon';
 
 /**
  * Itens contáveis (diferentes dos blocos de construção, que são infinitos).
@@ -7,6 +8,10 @@ import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatStage } from
 export const Item = {
   WHEAT_SEED: 'wheat_seed',
   WHEAT: 'wheat',
+  /** Espólios das aranhas (sem uso ainda — futuras receitas). */
+  SILK: 'silk',
+  FANG: 'fang',
+  QUEEN_HEART: 'queen_heart',
 } as const;
 
 export type ItemId = (typeof Item)[keyof typeof Item];
@@ -18,12 +23,38 @@ export interface ItemDef {
   plants?: BlockId;
   /** Animal que come este item. */
   feeds?: 'sheep';
+  /** Espólio de monstro: não ocupa a hotbar; aparece no contador de espólios da HUD. */
+  loot?: boolean;
 }
 
 export const ITEMS: Record<ItemId, ItemDef> = {
   wheat_seed: { id: Item.WHEAT_SEED, name: 'Semente de Trigo', plants: Block.WHEAT_0 },
   wheat: { id: Item.WHEAT, name: 'Trigo', feeds: 'sheep' },
+  silk: { id: Item.SILK, name: 'Seda de Aranha', loot: true },
+  fang: { id: Item.FANG, name: 'Presa de Aranha', loot: true },
+  queen_heart: { id: Item.QUEEN_HEART, name: 'Coração da Rainha', loot: true },
 };
+
+/** Espólios, na ordem exibida na HUD. */
+export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART];
+
+/**
+ * O que cada monstro deixa ao morrer. Pequena: 1 seda (60%). Grande: 1–2 sedas + presa (35%).
+ * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha.
+ */
+export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
+  if (kind === 'spider-small') return rand() < 0.6 ? [{ item: Item.SILK, count: 1 }] : [];
+  if (kind === 'spider-big') {
+    const out: Drop[] = [{ item: Item.SILK, count: 1 + (rand() < 0.5 ? 1 : 0) }];
+    if (rand() < 0.35) out.push({ item: Item.FANG, count: 1 });
+    return out;
+  }
+  return [
+    { item: Item.SILK, count: 5 + Math.floor(rand() * 3) },
+    { item: Item.FANG, count: 2 + (rand() < 0.5 ? 1 : 0) },
+    { item: Item.QUEEN_HEART, count: 1 },
+  ];
+}
 
 export interface Drop {
   item: ItemId;

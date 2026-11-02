@@ -4,8 +4,8 @@ import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
-import { Monster } from './monster';
-import type { MonsterKind } from '../world/dungeon';
+import { type FlowField, Monster, MONSTERS } from './monster';
+import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
 
 import { TOOLS, type ToolId } from '../world/items';
@@ -34,7 +34,16 @@ export interface Actor {
   hurt?: boolean;
   /** Monstro ferido: fração de vida restante (barra acima dele). */
   hp?: number;
+  /** Monstro derrotado: progresso 0..1 da animação de morte (encolhe e desbota). */
+  dying?: number;
 }
+
+/** Duração da animação de morte de um monstro (s). */
+export const DEATH_SECONDS = 0.5;
+/** Recalcula o mapa de distâncias da dungeon a cada … (s). */
+const FLOW_EVERY = 0.25;
+/** Monstro só renasce com a personagem a mais de … células do ponto de nascimento. */
+const RESPAWN_CLEARANCE = 10;
 
 const FLOCK_SIZE = 4;
 /** Alcance do golpe de espada (células, do centro dos pés) e abertura do arco (cosseno mínimo). */
@@ -56,6 +65,16 @@ export class Entities {
   readonly npcs: Sheep[] = [];
   /** Monstros da dungeon (presos no interior dela). */
   readonly monsters: Monster[] = [];
+  /** Monstros derrotados tocando a animação de morte. */
+  readonly dying: Array<{ kind: MonsterKind; x: number; y: number; facing: Facing; t: number }> = [];
+  /** Renascimentos agendados (todos os tipos, inclusive a Rainha, cada um no seu tempo). */
+  readonly respawns: Array<{ kind: MonsterKind; x: number; y: number; bounds: Rect; timer: number }> = [];
+  /** Chamado quando um monstro é derrotado (o Game solta os espólios). */
+  onMonsterKilled: ((m: Monster) => void) | null = null;
+  /** Mapa de distâncias (passos) até a personagem dentro da dungeon; null fora dela. */
+  private flow: Int32Array | null = null;
+  private flowArea: Rect | null = null;
+  private flowTimer = 0;
 
   constructor(
     private readonly player: Player,
@@ -104,7 +123,20 @@ export class Entities {
 
   update(dt: number, world: World): void {
     for (const s of this.npcs) s.update(dt, world, this.blocker);
-    for (const m of this.monsters) m.update(dt, world, this.player, this.blocker);
+    this.updateFlow(dt, world);
+    const flow = this.flow ? this.flowAt : undefined;
+    for (const m of this.monsters) m.update(dt, world, this.player, this.blocker, flow);
+    // Mordidas: monstro encostado e pronto morde (a personagem fica invencível por um instante).
+    if (!this.player.dead) {
+      for (const m of this.monsters) {
+        if (m.tryBite(this.player)) this.player.hurt(MONSTERS[m.kind].damage, m.x, m.y, world, this.blocker);
+      }
+    }
+    for (let i = this.dying.length - 1; i >= 0; i--) {
+      this.dying[i].t += dt / DEATH_SECONDS;
+      if (this.dying[i].t >= 1) this.dying.splice(i, 1);
+    }
+    this.updateRespawns(dt);
     // Ordem importa: concluir antes de (re)começar, senão o par namoraria de novo.
     this.finishCourtships(world);
     this.formPairs();
@@ -207,10 +239,82 @@ export class Entities {
       }
       if (world) s.takeHit(this.player.x, this.player.y, world, this.blocker);
       else s.hp -= 1;
-      if (s.dead) this.monsters.splice(this.monsters.indexOf(s), 1);
+      if (s.dead) this.killMonster(s);
     }
     return hit.length;
   }
+
+  /** Monstro derrotado: sai do jogo, toca a animação de morte, solta espólios e agenda o renascimento. */
+  private killMonster(m: Monster): void {
+    const i = this.monsters.indexOf(m);
+    if (i < 0) return;
+    this.monsters.splice(i, 1);
+    this.dying.push({ kind: m.kind, x: m.x, y: m.y, facing: m.facing, t: 0 });
+    this.respawns.push({ kind: m.kind, x: m.homeX, y: m.homeY, bounds: m.bounds, timer: MONSTERS[m.kind].respawn });
+    this.onMonsterKilled?.(m);
+  }
+
+  /** Renasce quando o tempo passou e a personagem está longe do ponto (senão tenta de novo em 5 s). */
+  private updateRespawns(dt: number): void {
+    for (let i = this.respawns.length - 1; i >= 0; i--) {
+      const r = this.respawns[i];
+      r.timer -= dt;
+      if (r.timer > 0) continue;
+      const p = this.player;
+      const m = new Monster(r.kind, r.x, r.y, r.bounds, this.rand);
+      if (Math.hypot(p.x - r.x, p.y - r.y) < RESPAWN_CLEARANCE || this.all().some((w) => m.overlapsAt(m.x, m.y, w))) {
+        r.timer = 5;
+        continue;
+      }
+      this.respawns.splice(i, 1);
+      this.monsters.push(m);
+    }
+  }
+
+  /** Mapa de distâncias pelo chão da dungeon até a personagem (BFS), só com ela lá dentro. */
+  private updateFlow(dt: number, world: World): void {
+    const d = world.dungeon;
+    const p = this.player;
+    if (!d || !inRect(d.area, Math.floor(p.x), Math.floor(p.y))) {
+      this.flow = null;
+      return;
+    }
+    this.flowTimer -= dt;
+    if (this.flow && this.flowTimer > 0) return;
+    this.flowTimer = FLOW_EVERY;
+    const a = d.area;
+    const w = a.x1 - a.x0 + 1;
+    const h = a.y1 - a.y0 + 1;
+    const dist = this.flow && this.flow.length === w * h ? this.flow.fill(-1) : new Int32Array(w * h).fill(-1);
+    const start = (Math.floor(p.y) - a.y0) * w + (Math.floor(p.x) - a.x0);
+    dist[start] = 0;
+    const q = new Int32Array(w * h);
+    let head = 0;
+    let tail = 0;
+    q[tail++] = start;
+    while (head < tail) {
+      const i = q[head++];
+      const x = i % w;
+      const y = (i - x) / w;
+      for (let k = 0; k < 4; k++) {
+        const nx = x + (k === 0 ? 1 : k === 1 ? -1 : 0);
+        const ny = y + (k === 2 ? 1 : k === 3 ? -1 : 0);
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const j = ny * w + nx;
+        if (dist[j] >= 0 || world.standHeight(a.x0 + nx, a.y0 + ny) !== 0) continue;
+        dist[j] = dist[i] + 1;
+        q[tail++] = j;
+      }
+    }
+    this.flow = dist;
+    this.flowArea = a;
+  }
+
+  private readonly flowAt: FlowField = (x, y) => {
+    const a = this.flowArea;
+    if (!this.flow || !a || x < a.x0 || y < a.y0 || x > a.x1 || y > a.y1) return -1;
+    return this.flow[(y - a.y0) * (a.x1 - a.x0 + 1) + (x - a.x0)];
+  };
 
   /** Remove um animal e desfaz vínculos (par, namoro) de quem dependia dele. */
   private removeAnimal(s: Sheep): void {
@@ -258,6 +362,7 @@ export class Entities {
     const out: Actor[] = [{
       kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
       frame: p.attacking ? p.attackFrame : undefined,
+      hurt: p.invuln > 0,
     }];
     const drawnCouples = new Set<Sheep>();
     for (const s of this.npcs) {
@@ -288,6 +393,9 @@ export class Entities {
         kind: m.kind, x: m.x, y: m.y, visualZ: m.visualZ, facing: m.facing, moving: m.moving, walkTime: m.walkTime,
         hurt: m.hurt > 0, hp: m.hp < m.maxHp ? m.hp / m.maxHp : undefined,
       });
+    }
+    for (const d of this.dying) {
+      out.push({ kind: d.kind, x: d.x, y: d.y, visualZ: 0, facing: d.facing, moving: false, walkTime: 0, dying: d.t });
     }
     return out;
   }

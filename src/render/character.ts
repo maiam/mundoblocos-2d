@@ -128,6 +128,8 @@ class SpriteSheet {
     // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.
     const dx = fx - w / 2;
     const dy = fy - h + 2 * zoom + h * footPad - lift;
+    // Invencível depois de levar dano: pisca.
+    if (a.hurt && Math.floor(elapsed * 14) % 2 === 1) return;
     if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
     else ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
   }
@@ -148,6 +150,28 @@ class SpriteSheet {
     const w = Math.round(h * (fw / fh));
     const dy = Math.round(fy - h + 3 * zoom);
     const visible = !a.hurt || Math.floor(elapsed * 16) % 2 === 0;
+    if (a.dying !== undefined) {
+      // Morte (provisória até haver folha própria): encolhe, achata, desbota e solta faíscas roxas.
+      const d = a.dying;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - d);
+      ctx.translate(Math.round(fx), Math.round(fy));
+      ctx.scale((cycle?.flipRight && a.facing === 'right' ? -1 : 1) * (1 + d * 0.15), 1 - d * 0.6);
+      ctx.drawImage(this.img, 0, 0, fw, fh, -Math.round(w / 2), dy - Math.round(fy), w, h);
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - d);
+      for (let k = 0; k < 8; k++) {
+        const ang = (k / 8) * Math.PI * 2 + a.x;
+        const r = (6 + d * w * 0.6) * (0.7 + (k % 3) * 0.15);
+        ctx.fillStyle = k % 2 ? '#c38cff' : '#ff8ab0';
+        ctx.beginPath();
+        ctx.arc(fx + Math.cos(ang) * r, fy - h * 0.35 + Math.sin(ang) * r * 0.6, (2.2 - d * 1.2) * zoom, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      return;
+    }
     if (visible) {
       ctx.save();
       ctx.translate(Math.round(fx), 0);

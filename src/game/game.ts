@@ -3,7 +3,8 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { ITEMS, TOOLS } from '../world/items';
+import { ITEMS, LOOT_ITEMS, monsterDrops, TOOLS } from '../world/items';
+import { inRect } from '../world/dungeon';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
@@ -14,7 +15,7 @@ import { Hud } from './hud';
 import { Inventory } from './inventory';
 import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
-import { Player } from './player';
+import { MAX_HP, Player } from './player';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { ActionController } from './actionController';
 
@@ -44,6 +45,11 @@ export class Game {
   readonly actions: ActionController;
   private time = 0.31;
   private elapsed = 0;
+  /** Flash vermelho ao levar dano (1 → 0). */
+  private hurtFlash = 0;
+  private lastHp = 0;
+  /** Ponto inicial (renascer). */
+  private readonly spawn: [number, number];
   private last = performance.now();
   private unloadTimer = 0;
   private running = true;
@@ -64,6 +70,10 @@ export class Game {
     this.entities = new Entities(this.player, Math.random, profile.character);
     if (profile.sheep) this.entities.spawnFlock(this.world, sx, sy);
     this.entities.spawnMonsters(this.world);
+    // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
+    this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
+    this.spawn = [sx, sy];
+    this.lastHp = this.player.hp;
     this.renderer = new Renderer(canvas, this.world);
     this.actions = new ActionController({
       world: this.world, entities: this.entities, player: this.player, inventory: this.inventory,
@@ -77,6 +87,9 @@ export class Game {
       names: this.hotbar.map((s) =>
         s.kind === 'tool' ? TOOLS[s.tool].name : s.kind === 'item' ? ITEMS[s.item].name : blockDef(s.block).name),
       onSelect: (i) => this.select(i),
+      // Combate (corações e espólios) só em mundo com dungeon.
+      maxHp: profile.dungeon ? MAX_HP : 0,
+      loot: profile.dungeon ? LOOT_ITEMS.map((id) => ({ icon: itemIconUrl(id), name: ITEMS[id].name })) : [],
     });
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
@@ -203,6 +216,7 @@ export class Game {
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     this.entities.update(dt, this.world);
+    this.updateHealth(dt);
     // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
     if (this.player.consumeHit() && this.player.attackTool && TOOLS[this.player.attackTool].strikes) {
       this.entities.strike(this.player.facing, this.world);
@@ -226,16 +240,41 @@ export class Game {
       showChunkBorders: this.showChunkBorders,
       ...this.actions.targets(),
       drops: this.drops.list,
+      hurtFlash: this.hurtFlash,
+      inDungeon: this.inDungeon,
+      entrance: this.world.dungeon && !this.inDungeon ? this.world.dungeon.doorstep : null,
       time: this.time,
       elapsed: this.elapsed,
       dt,
     });
     this.hud.update(this.selected ?? -1, this.hotbar.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
+    // Corações só quando importam (ferida ou na dungeon) — tela limpa no resto do tempo.
+    this.hud.setHealth(this.player.hp, this.inDungeon || this.player.hp < MAX_HP);
+    this.hud.setLoot(LOOT_ITEMS.map((id) => this.inventory.count(id)));
     const slot = this.slot;
     this.actionButton.update(this.actions.actionProgress,
       slot?.kind === 'item' && this.inventory.count(slot.item) === 0);
     requestAnimationFrame(this.frame);
   };
+
+  /** Personagem dentro da dungeon? (corações visíveis, penumbra, sem seta para a entrada). */
+  private get inDungeon(): boolean {
+    const d = this.world.dungeon;
+    return !!d && inRect(d.area, this.player.cellX, this.player.cellY);
+  }
+
+  /** Flash ao levar dano; derrotada → renasce no início com vida cheia (itens ficam com ela). */
+  private updateHealth(dt: number): void {
+    if (this.player.hp < this.lastHp) this.hurtFlash = 1;
+    this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.5);
+    if (this.player.dead) {
+      this.actions.cancelAll();
+      this.player.respawn(this.spawn[0] + 0.5, this.spawn[1] + 0.6);
+      this.camera.follow(...this.cameraTarget(), 0, true);
+      this.hurtFlash = 1;
+    }
+    this.lastHp = this.player.hp;
+  }
 
   /** Teclado + joystick, ambos em direções de tela. */
   private input(dt: number): [number, number] {

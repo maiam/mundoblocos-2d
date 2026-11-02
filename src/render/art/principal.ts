@@ -41,6 +41,22 @@ import wheatCrop from '../../assets/wheat-crop.webp?inline';
 import { Block } from '../../world/blocks';
 import type { ArtPack } from './types';
 
+/**
+ * Ícones PROVISÓRIOS dos espólios das aranhas (vetoriais, no estilo do jogo) até chegar a arte final:
+ * trocar por `import x from '../../assets/icon-<item>.webp?inline'` sem mexer em mais nada.
+ */
+const svg = (body: string) => `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${body}</svg>`)}`;
+const silkIcon = svg(`<ellipse cx="32" cy="36" rx="18" ry="20" fill="#f4ecff" stroke="#5a3d7a" stroke-width="3"/>
+<path d="M18 28c8 4 20 4 28 0M16 38c10 5 22 5 32 0M20 48c8 3 16 3 24 0" fill="none" stroke="#b9a2d6" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M32 16V6" stroke="#e6dbf7" stroke-width="2.5" stroke-linecap="round"/><circle cx="25" cy="27" r="3" fill="#fff"/>`);
+const fangIcon = svg(`<path d="M22 8c10 2 22 2 26 0-2 16-8 34-17 48C26 40 22 24 22 8Z" fill="#f6ead2" stroke="#5a3d2a" stroke-width="3" stroke-linejoin="round"/>
+<path d="M27 14c2 12 4 22 4 32" fill="none" stroke="#d6c39d" stroke-width="3" stroke-linecap="round"/>
+<path d="M20 8h30" stroke="#7a2f4a" stroke-width="5" stroke-linecap="round"/>`);
+const queenHeartIcon = svg(`<path d="M32 56 9 33A13 13 0 0 1 32 15a13 13 0 0 1 23 18Z" fill="#c23a6e" stroke="#3a1230" stroke-width="3" stroke-linejoin="round"/>
+<path d="M32 50 15 33a8 8 0 0 1 4-12" fill="none" stroke="#ff8fb6" stroke-width="3" stroke-linecap="round"/>
+<path d="M22 22l6 6-6 6M42 22l-6 6 6 6" fill="none" stroke="#2a0d24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="32" cy="34" r="4" fill="#ffd36b"/>`);
+
 /** Mundo principal: heroína e ferramentas, materiais, porta, trigo, ovelhas e a dungeon das aranhas. */
 const pack: ArtPack = {
   actors: {
@@ -77,7 +93,7 @@ const pack: ArtPack = {
   oakDoor,
   dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls },
   wheatCrop,
-  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon },
+  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
 };
 export default pack;

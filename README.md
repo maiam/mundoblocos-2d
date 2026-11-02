@@ -40,6 +40,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Piso de Carvalho) à esquerda e à direita |
 | Dungeon (Covil das Aranhas) | labirinto murado perto do início, entrada voltada para você; a Rainha espera no fundo; lá dentro nada quebra — só luta |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem; aranhas perdem vida); não quebra nada |
+| Vida | 5 corações (aparecem na dungeon ou ferida); regenera fora de combate; ao cair, volta ao início com os itens |
 | Machado | toque: golpe (como a espada) · segurar 1 s: corta só madeira, árvore ou planta |
 | Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 1 s: quebra só plantas (capim, flor, trigo, cacto) |
 | Picareta | segurar 1 s: quebra qualquer bloco e plantas (sem drop), menos madeira/árvore; não ataca |

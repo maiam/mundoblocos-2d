@@ -9,19 +9,27 @@ interface MonsterDef {
   sight: number;
   /** Quanto se afasta de casa passeando (células). */
   leash: number;
+  /** Dano da mordida (meios corações) e intervalo mínimo entre mordidas (s). */
+  damage: number;
+  biteEvery: number;
+  /** Tempo até renascer depois de derrotado (s). */
+  respawn: number;
 }
 
 /** Atributos por tipo de monstro (fonte única). */
 export const MONSTERS: Record<MonsterKind, MonsterDef> = {
-  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, hp: 2, sight: 5, leash: 5 },
-  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, hp: 4, sight: 5.5, leash: 5 },
-  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, hp: 14, sight: 7, leash: 4 },
+  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, hp: 2, sight: 6, leash: 5, damage: 1, biteEvery: 1.0, respawn: 40 },
+  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, hp: 4, sight: 7, leash: 5, damage: 2, biteEvery: 1.2, respawn: 60 },
+  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, hp: 14, sight: 9, leash: 4, damage: 4, biteEvery: 1.6, respawn: 300 },
 };
 
 /** Tempo piscando depois de levar um golpe (s). */
 export const HURT_SECONDS = 0.35;
 
 type State = { kind: 'idle'; timer: number } | { kind: 'walk'; timer: number; dx: number; dy: number };
+
+/** Distância em passos pelo chão da dungeon até a personagem (-1 = inalcançável/fora do mapa). */
+export type FlowField = (x: number, y: number) => number;
 
 /**
  * Monstro da dungeon. Passeia perto de onde nasceu e vai atrás da personagem quando ela entra no seu raio
@@ -32,6 +40,8 @@ export class Monster extends Walker {
   hp: number;
   readonly maxHp: number;
   hurt = 0;
+  /** Espera até poder morder de novo (s). */
+  private biteCd = 0;
   private state: State;
 
   constructor(
@@ -75,19 +85,62 @@ export class Monster extends Walker {
     return (self, x, y) => !this.insideAt(x, y) || !!blocked?.(self, x, y);
   }
 
-  update(dt: number, world: World, target: { x: number; y: number }, blocked?: Blocker): void {
+  /** Distância de mordida (centro a centro). */
+  get reach(): number {
+    return 0.7 + this.spec.halfW;
+  }
+
+  /** Encostado na personagem e pronto para morder? Se sim, consome a espera e devolve true. */
+  tryBite(target: { x: number; y: number }): boolean {
+    if (this.dead || this.biteCd > 0 || this.hurt > 0) return false;
+    if (Math.hypot(target.x - this.x, target.y - this.y) > this.reach + 0.15) return false;
+    this.biteCd = MONSTERS[this.kind].biteEvery;
+    return true;
+  }
+
+  /**
+   * Passeia; com a personagem dentro do seu limite e perto (pelo caminho, se houver `flow`), persegue.
+   * Com `flow` (mapa de distâncias da dungeon) segue os corredores: anda para a célula vizinha mais próxima
+   * da personagem; encostado, vai direto e pára a `reach`.
+   */
+  update(dt: number, world: World, target: { x: number; y: number }, blocked?: Blocker, flow?: FlowField): void {
     this.hurt = Math.max(0, this.hurt - dt);
+    this.biteCd = Math.max(0, this.biteCd - dt);
     const def = MONSTERS[this.kind];
     const fence = this.confine(blocked);
     const tx = target.x - this.x;
     const ty = target.y - this.y;
     const dist = Math.hypot(tx, ty);
     const targetInside = inRect(this.bounds, Math.floor(target.x), Math.floor(target.y));
-    if (targetInside && dist < def.sight) {
-      // Persegue até encostar (sem dano ainda); pára a ~1 célula da personagem.
-      const reach = 0.7 + this.spec.halfW;
-      this.move(dt, dist > reach ? tx / dist : 0, dist > reach ? ty / dist : 0, world, fence);
-      if (dist <= reach) this.facing = Math.abs(tx) > Math.abs(ty) ? (tx < 0 ? 'left' : 'right') : ty < 0 ? 'up' : 'down';
+    const cx = Math.floor(this.x);
+    const cy = Math.floor(this.y);
+    const steps = flow ? flow(cx, cy) : -1;
+    const chasing = targetInside && (flow ? steps >= 0 && steps <= def.sight * 1.6 : dist < def.sight);
+    if (chasing) {
+      const reach = this.reach;
+      if (dist <= reach) {
+        this.move(dt, 0, 0, world, fence);
+        this.facing = Math.abs(tx) > Math.abs(ty) ? (tx < 0 ? 'left' : 'right') : ty < 0 ? 'up' : 'down';
+        return;
+      }
+      let dx = tx / dist;
+      let dy = ty / dist;
+      if (flow && steps > 1) {
+        // Próximo passo pelo corredor: vizinho com menor distância até a personagem.
+        let best = steps;
+        let nx = cx;
+        let ny = cy;
+        for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const d = flow(cx + ox, cy + oy);
+          if (d >= 0 && d < best) { best = d; nx = cx + ox; ny = cy + oy; }
+        }
+        const gx = nx + 0.5 - this.x;
+        const gy = ny + 0.5 - this.y;
+        const gl = Math.hypot(gx, gy) || 1;
+        dx = gx / gl;
+        dy = gy / gl;
+      }
+      this.move(dt, dx, dy, world, fence);
       return;
     }
     const s = this.state;

@@ -49,7 +49,8 @@ src/
     game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
     actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render
     walker.ts → player.ts, sheep.ts, monster.ts   movimento/colisão/altura compartilhados
-    entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe/vida, atores p/ render
+    entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
+                               morte/renascimento dos monstros, atores p/ render
     inventory.ts, hotbar.ts, drops.ts
     camera.ts, joystick.ts, actionButton.ts, screenMode.ts, hud.ts
 ```

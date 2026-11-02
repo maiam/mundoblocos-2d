@@ -36,6 +36,12 @@ export interface RenderOptions {
   time: number;
   elapsed: number;
   dt: number;
+  /** Flash vermelho de dano (1 → 0). */
+  hurtFlash: number;
+  /** Personagem dentro da dungeon: penumbra com luz ao redor dela. */
+  inDungeon: boolean;
+  /** Célula diante da entrada da dungeon (farol + seta na borda da tela), ou null. */
+  entrance: [number, number] | null;
 }
 
 interface Glow {
@@ -167,6 +173,19 @@ export class Renderer {
       this.drawGlows(glows, cam, opts.elapsed, sky.night);
     }
 
+    // Farol na entrada da dungeon (visível também à noite).
+    if (opts.entrance) this.drawBeacon(cam, opts.entrance, opts.elapsed, w, h);
+    // Dentro da dungeon: penumbra, com luz ao redor da personagem.
+    if (opts.inDungeon) {
+      const px = cam.worldToScreenX(p.x * TILE);
+      const py = cam.worldToScreenY(p.y * TILE - 20);
+      const g = ctx.createRadialGradient(px, py, TILE * cam.zoom * 1.6, px, py, Math.max(w, h) * 0.6);
+      g.addColorStop(0, 'rgba(18, 8, 30, 0)');
+      g.addColorStop(1, 'rgba(18, 8, 30, 0.7)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+
     // 5) Partículas do bioma onde o personagem está.
     this.particles.update(opts.dt, w, h, this.world.biomeAt(p.cellX, p.cellY), sky.night);
     this.particles.draw(ctx);
@@ -175,6 +194,63 @@ export class Renderer {
     if (opts.focus) this.drawFocus(cam, opts.focus, opts.elapsed);
     if (opts.hover) this.drawHover(cam, opts.hover);
     if (opts.breaking) this.drawBreaking(cam, opts.breaking);
+    // Dano: vinheta vermelha.
+    if (opts.hurtFlash > 0) {
+      const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
+      g.addColorStop(0, 'rgba(255, 40, 80, 0)');
+      g.addColorStop(1, `rgba(255, 40, 80, ${0.45 * opts.hurtFlash})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
+  /**
+   * Entrada da dungeon: coluna de luz roxa pulsando sobre a célula da frente; fora da tela, uma seta na borda
+   * aponta para ela (o jogador a encontra a partir do início).
+   */
+  private drawBeacon(cam: Camera, [ex, ey]: [number, number], elapsed: number, w: number, h: number): void {
+    const ctx = this.ctx;
+    const z = cam.zoom;
+    const sx = cam.worldToScreenX((ex + 0.5) * TILE);
+    const sy = cam.worldToScreenY((ey + 0.5) * TILE);
+    const pulse = 0.75 + 0.25 * Math.sin(elapsed * 3);
+    const margin = 28;
+    if (sx > -40 && sx < w + 40 && sy > -40 && sy < h + 40) {
+      const colH = TILE * 3.2 * z;
+      const g = ctx.createLinearGradient(0, sy - colH, 0, sy);
+      g.addColorStop(0, 'rgba(190, 120, 255, 0)');
+      g.addColorStop(1, `rgba(190, 120, 255, ${0.8 * pulse})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(sx - 9 * z, sy - colH, 18 * z, colH);
+      ctx.fillStyle = `rgba(255, 245, 255, ${0.55 * pulse})`;
+      ctx.fillRect(sx - 2.5 * z, sy - colH * 0.8, 5 * z, colH * 0.8);
+      ctx.fillStyle = `rgba(230, 200, 255, ${0.8 * pulse})`;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 12 * z, 4.5 * z, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    // Seta na borda da tela, na direção da entrada.
+    const ang = Math.atan2(sy - h / 2, sx - w / 2);
+    const k = Math.min((w / 2 - margin) / Math.abs(Math.cos(ang) || 1e-6), (h / 2 - margin * 2.6) / Math.abs(Math.sin(ang) || 1e-6)); // longe da hotbar
+    const ax = w / 2 + Math.cos(ang) * k;
+    const ay = h / 2 + Math.sin(ang) * k;
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.rotate(ang);
+    ctx.globalAlpha = 0.6 + 0.4 * pulse;
+    ctx.fillStyle = '#c38cff';
+    ctx.strokeStyle = '#2a1a48';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(14, 0);
+    ctx.lineTo(-8, -10);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(-8, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {

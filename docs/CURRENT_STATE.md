@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.25.0_
+_Atualizado em 2026-11-02 — v0.26.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -19,7 +19,10 @@ _Atualizado em 2026-11-02 — v0.25.0_
 - **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto do spawn, com
   uma única entrada voltada para ele, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só
   passagem. Nada quebra nem é colocado lá dentro. Aranhas pequenas e grandes em quantidade proporcional ao
-  labirinto (~38) + Aranha Gigante (chefe, 14 golpes); perseguem a personagem e nunca saem. Ver `domains/dungeon.md`.
+  labirinto (~38) + Aranha Gigante (chefe, 14 golpes); perseguem pelos corredores, **mordem** e nunca saem; derrotadas
+  soltam seda/presas (Rainha: Coração da Rainha) e renascem com o tempo. Farol + seta indicam a entrada.
+- **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, renasce no início com os itens.
+  Ver `domains/dungeon.md`.
 - Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
 ## Personagem e controles
@@ -50,8 +53,8 @@ _Atualizado em 2026-11-02 — v0.25.0_
 
 ## Limitações conhecidas
 - Nada é salvo (edições, inventário, plantações, ovelhas).
-- Animais atingidos pela espada só somem (sem animação de morte, drops ou vida). Monstros têm vida mas não causam
-  dano (a personagem não tem vida), não deixam drops e renascem ao recarregar; arte das aranhas só de frente.
+- Animais atingidos pela espada só somem (sem animação de morte nem drops). Arte de combate **provisória** (ícones
+  dos espólios, corações, morte das aranhas); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
 - Ovelhas só nascem perto do spawn; não há animais em outros chunks.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
@@ -60,7 +63,7 @@ _Atualizado em 2026-11-02 — v0.25.0_
 - Sem pulo, queda com dano, água animada ou transições suaves entre tipos de chão.
 
 ## Qualidade e desempenho
-- 81 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 86 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
 - Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,63 MB**, Santuário **0,68 MB** (alerta do

@@ -19,6 +19,9 @@
 - **Itens contáveis** ≠ blocos: blocos de construção são infinitos; itens têm quantidade no inventário.
 - `Semente de Trigo` (planta `WHEAT_0`) e `Trigo` (alimenta ovelhas).
 - `dropsFor(bloco)`: trigo maduro → 1 trigo + 1–2 sementes; trigo verde → devolve 1 semente; demais blocos → nada.
+- **Espólios** (`loot: true`, `LOOT_ITEMS`): Seda de Aranha, Presa de Aranha, Coração da Rainha — sem uso ainda
+  (futuras receitas); não ocupam a hotbar, aparecem no contador da HUD. `monsterDrops(tipo)`: pequena 1 seda (60%);
+  grande 1–2 sedas + presa (35%); Rainha 5–7 sedas, 2–3 presas e o Coração. Ícones **provisórios** (SVG no pacote).
 
 ## Plantação (`world/world.ts`, `world/blocks.ts`)
 - Trigo = 16 ids consecutivos (`WHEAT_FIRST` = 60 … 75), forma `crop`: não bloqueia passagem, não aceita bloco

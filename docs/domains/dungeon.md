@@ -44,11 +44,29 @@ passagem e o chefe dentro; monstros em chão livre do interior; área protegida.
   **chefe fica preso à câmara da Rainha** (`bounds = bossRoom`).
 
 ## Monstros (`game/monster.ts`)
-- `Monster extends Walker`; atributos em `MONSTERS`: aranha pequena 2 golpes, grande 4, **chefe 14** (caixa 1,8 × 0,9).
-- Passeiam perto de onde nasceram; com a personagem dentro da dungeon e no raio de visão, vão atrás dela em linha
-  reta (param nas paredes; ainda sem busca de caminho) e param encostados. **Ainda não causam dano.**
-- Golpe (espada/machado, `Entities.strike`): −1 de vida, pisca 0,35 s, recua; sem vida, some; barra de vida quando
-  feridos. Estado de execução: ao recarregar, renascem todos.
+- `Monster extends Walker`; atributos em `MONSTERS` (fonte única):
+
+  | Tipo | Vida (golpes) | Mordida (½ corações) | Intervalo | Visão (passos ≈ ×1,6) | Renasce em |
+  |---|---|---|---|---|---|
+  | Aranha pequena | 2 | 1 (½ ♥) | 1,0 s | 6 | 40 s |
+  | Aranha grande | 4 | 2 (1 ♥) | 1,2 s | 7 | 60 s |
+  | Rainha (chefe) | 14 | 4 (2 ♥) | 1,6 s | 9 | 300 s |
+- **Perseguição pelos corredores**: com a personagem dentro da dungeon, `Entities` recalcula a cada 0,25 s um mapa de
+  distâncias (BFS pelo chão da área, a partir da célula dela); o monstro persegue se estiver a até ~visão×1,6 passos
+  e anda para a célula vizinha mais próxima dela; encostado (`reach`), pára e **morde** (`tryBite`).
+- **Mordida**: dano do tipo na heroína (`Player.hurt`), que fica invencível 0,9 s e recua.
+- Golpe (espada/machado, `Entities.strike`): −1 de vida, pisca 0,35 s, recua; barra de vida quando ferido.
+- **Derrotado**: sai do jogo, toca a morte (0,5 s, provisória: encolhe/desbota com faíscas), chama
+  `Entities.onMonsterKilled` (o `Game` solta os espólios de `monsterDrops`) e agenda o **renascimento** no ponto de
+  nascimento após o tempo do tipo — **todos renascem, inclusive a Rainha** — só com a heroína a > 10 células
+  (senão tenta de novo a cada 5 s). Estado de execução: ao recarregar, renascem todos.
+
+## Heroína em combate (`game/player.ts`)
+- **5 corações** (`MAX_HP` = 10 meios). Regenera ½ coração a cada 3 s depois de 6 s sem dano.
+- **Derrotada → renasce no início** com vida cheia e **mantém os itens** (2 s de invencibilidade).
+- HUD: corações no canto superior esquerdo só quando importam (na dungeon ou ferida); contador de espólios coletados.
+- Render: heroína pisca invencível; vinheta vermelha ao levar dano; **penumbra** dentro da dungeon; **farol** roxo na
+  entrada e **seta** na borda da tela apontando para ela quando fora de vista.
 
 ## Arte
 - `scripts/extract-dungeon.py` (comando em `OPERATIONS.md`); detalhes de render em `render.md`.

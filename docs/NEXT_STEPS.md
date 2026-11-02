@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-02 (v0.25.0 — Fase 0 concluída)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-02 (v0.26.0 — Fases 0 e 1 concluídas)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -15,8 +15,8 @@ _Revisado em 2026-11-02 (v0.25.0 — Fase 0 concluída)._ Fonte única do que fa
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só perto do spawn; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ estrutura | **combate incompleto** (aranhas não causam dano) |
-| Monstros: vida, golpe, recuo, barra de vida | 🟡 | sem dano, sem busca de caminho, sem morte/drops |
-| Vida da personagem, dano, morte | ❌ | bloqueia o loop da dungeon |
+| Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte de morte provisória |
+| Vida da heroína, dano, morte e renascimento | ✅ | 5 corações; arte dos corações provisória |
 | Salvar progresso | ❌ | nada persiste ao recarregar |
 | Sons, música, vibração, menu | ❌ | — |
 | Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
@@ -30,21 +30,18 @@ Cada fase fecha um ciclo jogável. A ordem respeita dependências; dentro da fas
 Arte separada por mundo (ADR 0010; 2,63 MB / 0,68 MB), `ActionController` extraído do `Game`, Santuário
 republicado, PR da branch de trabalho para `main` aberto. Detalhes no `CHANGELOG`.
 
-### Fase 1 — Combate jogável (fecha o loop da dungeon)
-1. **Vida da personagem** + HUD mínimo (corações, discreto, respeitando a tela limpa) e **morte → renascer no
-   spawn** (regra de perda a decidir).
-2. **Dano dos monstros** por contato/mordida, com recuo e invencibilidade curta; valores por tipo em `MONSTERS`.
-3. **Busca de caminho** (BFS no mapa lógico da dungeon) para as aranhas perseguirem pelos corredores.
-4. **Morte de monstro com animação + drops** (seda, presas) → itens em `world/items.ts`; **recompensa do chefe**.
-5. **Respawn** das aranhas com o tempo (o chefe só depois de um intervalo longo ou nunca — decidir).
-6. **Marcador da entrada** (trilha/placa) e, depois, **minimapa** do labirinto explorado; luz mais escura e
-   partículas próprias dentro da área.
-7. Animais: animação de morte e drops (lã/carne?) usando o mesmo caminho da morte de monstro.
-- Depende de **arte**: animação de morte/dano das aranhas; (opcional) aranhas nas 4 direções; ícones dos drops.
+### Fase 1 — Combate jogável ✅ (v0.26.0)
+Vida da heroína (5 ♥, renasce no início com os itens), mordida das aranhas, busca de caminho no labirinto, morte com
+espólios (seda, presa, Coração da Rainha), renascimento de todas (Rainha em 5 min), farol + seta da entrada,
+penumbra. Pendências que ficaram desta fase:
+- **Arte final** (provisória hoje): ícones de Seda/Presa/Coração da Rainha, corações da HUD, folha de morte das
+  aranhas, (opcional) heroína levando dano e aranhas nas 4 direções.
+- **Minimapa** do labirinto explorado.
+- **Animais**: animação de morte e drops (lã/carne? — decisão pendente).
 
 ### Fase 2 — Persistência
-1. **Salvar no navegador** (IndexedDB ou `localStorage`): seed, chunks modificados, inventário, plantações,
-   ovelhas, estado da dungeon (monstros mortos, chefe derrotado). Versão do formato para migrações.
+1. **Salvar no navegador** (IndexedDB ou `localStorage`): seed, chunks modificados, inventário (inclui espólios),
+   plantações, ovelhas, vida, estado da dungeon (monstros derrotados e tempo até renascer). Versão do formato para migrações.
 2. Menu recolhível: continuar, **novo mundo** (nova seed), apagar progresso.
 - **Dependência externa:** contas e mundos na nuvem exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste
   recomendado para o core**; nada de backend neste repositório.
@@ -52,7 +49,7 @@ republicado, PR da branch de trabalho para `main` aberto. Detalhes no `CHANGELOG
 ### Fase 3 — Recursos e progressão
 1. **Decidir: materiais infinitos ou coletados.** Se coletados: blocos quebrados vão para o inventário, árvore solta
    Tora de Carvalho, colocar consome.
-2. **Receitas** (tora → piso, trigo → pão, seda → ?), interface de criação simples.
+2. **Receitas** (tora → piso, trigo → pão, seda/presa/Coração da Rainha → ?), interface de criação simples.
 3. **Painel de inventário**: a hotbar (16 espaços) está no limite do celular deitado.
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
 
@@ -78,16 +75,15 @@ republicado, PR da branch de trabalho para `main` aberto. Detalhes no `CHANGELOG
 | Decisão | Afeta |
 |---|---|
 | Materiais infinitos ou coletados? | Fase 3 inteira |
-| O que acontece ao morrer (perde itens? volta ao spawn?) | Fase 1 |
-| O que cada monstro/animal dropa; recompensa do chefe | Fase 1 |
-| Chefe renasce? Aranhas renascem em quanto tempo? | Fase 1 |
+| O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
 
 ## 4. Dependências externas
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
 - **Hospedagem** do build estático para o subdomínio `santuario.`.
-- **Arte**: morte/dano das aranhas, drops, (opcional) aranhas por direção, árvores/água 3/4, nuvem contínua.
+- **Arte**: ícones dos espólios, corações, morte das aranhas (substituem a arte provisória), (opcional) aranhas por
+  direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
 - Peso dos artefatos: resolvido por mundo (ADR 0010); o mundo principal (2,63 MB) volta a se aproximar do alerta

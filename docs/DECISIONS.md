@@ -51,6 +51,8 @@
 | Covil das Aranhas = labirinto procedural (spec do usuário): área → labirinto (só chão/paredes) → conteúdo; Rainha no nó mais fundo com uma passagem; chefe preso à câmara | domains/dungeon |
 | Parede do labirinto = cubo escuro com 2 de altura no desenho (legibilidade); montanhas só no anel externo | domains/render |
 | Aranhas: arte de frente única; espelhada ao andar para a direita | domains/render |
+| Combate: 5 ♥; mordidas ½/1/2 ♥; morte → renasce no início com os itens; espólios seda/presa/Coração da Rainha; todas as aranhas renascem (Rainha 300 s) longe da heroína; arte provisória até as pranchas | domains/dungeon |
+| Perseguição por mapa de distâncias (BFS a cada 0,25 s) em `Entities`, não por monstro | domains/dungeon |
 | Porta só entre batentes de madeira à esquerda e à direita (cubo `organic: 'wood'` no nível 0); quebrar um batente depois não derruba a porta | domains/world |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |
 

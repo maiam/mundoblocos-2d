@@ -13,6 +13,8 @@
   nada) e não tem alvo de célula; o alvo é marcado por anel vermelho na entidade à frente.
 - **Golpe em monstros** (espada/machado): tira 1 de vida da aranha no arco (alcance contado da borda do corpo);
   anel vermelho marca o alvo. Ver `domains/dungeon.md`.
+- **Vida**: 5 corações (`Player.hp`, meios corações), `hurt` (invencível 0,9 s + recuo), regeneração fora de
+  combate e `respawn` (o `Game` a faz renascer no início, com os itens). Detalhes em `domains/dungeon.md`.
 - **Machado**: toque curto = **golpe** (folha `heroine-axe-attack`), igual à espada: acerta entidades no arco
   (animais somem). Segurar 1 s **corta só o que é orgânico** (`BlockDef.organic` = `wood` ou `plant`: tora,
   piso de carvalho, carvalho, cerejeira, cacto, capim, flor, trigo); enquanto corta, a animação de golpe repete

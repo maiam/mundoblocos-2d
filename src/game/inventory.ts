@@ -1,7 +1,7 @@
 import { Item, type ItemId } from '../world/items';
 
 /** Quantidades iniciais para começar a plantar e testar a alimentação das ovelhas. */
-export const STARTING_ITEMS: Record<ItemId, number> = {
+export const STARTING_ITEMS: Partial<Record<ItemId, number>> = {
   [Item.WHEAT_SEED]: 5,
   [Item.WHEAT]: 2,
 };

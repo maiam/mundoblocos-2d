@@ -291,3 +291,30 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .action-button { transition: none; }
 }
+
+/* Vida e espólios (canto superior esquerdo): corações só quando importam; espólios só os coletados. */
+.status {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.hearts { display: flex; gap: 2px; opacity: 0; transform: translateY(-4px); transition: opacity .25s ease, transform .25s ease; }
+.hearts.shown { opacity: 1; transform: none; }
+.hearts svg { width: 22px; height: 20px; filter: drop-shadow(0 1px 1px rgba(20, 12, 40, .6)); }
+.loot { display: flex; gap: 6px; }
+.loot-item {
+  display: flex; align-items: center; gap: 3px; padding: 2px 7px 2px 3px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--panel-border);
+  font-size: 12px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums;
+}
+.loot-item[hidden] { display: none; }
+.loot-item img { width: 20px; height: 20px; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .hearts svg { width: 18px; height: 16px; }
+  .loot-item img { width: 16px; height: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .hearts { transition: none; } }
