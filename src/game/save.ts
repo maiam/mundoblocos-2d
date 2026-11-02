@@ -1,5 +1,7 @@
 import type { MonsterKind } from '../world/dungeon';
-import type { ItemId } from '../world/items';
+import type { StackId } from '../world/items';
+import { Block } from '../world/blocks';
+import { startingGrid } from './hotbar';
 import type { WorldId } from '../world/profiles';
 import type { World } from '../world/world';
 import type { Entities } from './entities';
@@ -17,7 +19,7 @@ import type { Facing } from './walker';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface SaveData {
   v: number;
@@ -27,7 +29,10 @@ export interface SaveData {
   time: number;
   selected: number | null;
   player: { x: number; y: number; z: number; hp: number; facing: Facing };
-  inventory: Partial<Record<ItemId, number>>;
+  /** Tudo que a heroína carrega (itens, materiais coletados, ferramentas). */
+  inventory: Partial<Record<StackId, number>>;
+  /** Grade de 8 espaços (mundo com coleta); null = grade fixa do perfil. */
+  hotbar: (StackId | null)[] | null;
   /** Chunks editados: chão e níveis em base64. */
   chunks: Array<{ cx: number; cy: number; ground: string; levels: string[] }>;
   sheep: Array<{ x: number; y: number; homeX: number; homeY: number; baby: boolean; age: number; love: number; cooldown: number }>;
@@ -45,6 +50,8 @@ export interface GameState {
   inventory: Inventory;
   time: number;
   selected: number | null;
+  /** Layout da grade dinâmica (null = grade fixa). */
+  hotbar: (StackId | null)[] | null;
 }
 
 const toB64 = (a: Uint8Array): string => {
@@ -66,6 +73,7 @@ export function captureSave(s: GameState): SaveData {
     selected: s.selected,
     player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing },
     inventory: Object.fromEntries(s.inventory.entries()),
+    hotbar: s.hotbar,
     chunks: s.world.modifiedChunks().map((c) => ({ cx: c.cx, cy: c.cy, ground: toB64(c.ground), levels: c.levels.map(toB64) })),
     sheep: s.entities.npcs.map((o) => ({
       x: o.x, y: o.y, homeX: o.homeX, homeY: o.homeY, baby: o.baby, age: o.age, love: o.love, cooldown: o.cooldown,
@@ -79,11 +87,23 @@ export function captureSave(s: GameState): SaveData {
   };
 }
 
-/** Converte salvamentos antigos para a versão atual (null = incompatível, começa do zero). */
+/**
+ * Converte salvamentos antigos para a versão atual (null = incompatível, começa do zero).
+ * v1 → v2 (Fase 3, coleta de materiais): o inventário ganha as ferramentas e 1 porta (materiais eram infinitos e
+ * não havia o que salvar deles) e a grade volta ao layout inicial.
+ */
 export function migrate(raw: unknown): SaveData | null {
-  const d = raw as SaveData | null;
-  if (!d || typeof d !== 'object' || d.v !== SAVE_VERSION) return null;
-  return d;
+  const d = raw as (SaveData & { v: number }) | null;
+  if (!d || typeof d !== 'object') return null;
+  if (d.v === 1) {
+    const inventory: Partial<Record<StackId, number>> = { ...d.inventory };
+    if (d.world === 'principal') {
+      for (const t of ['sword', 'hoe', 'pickaxe', 'shovel', 'axe']) inventory[`tool:${t}`] = 1;
+      inventory[`block:${Block.OAK_DOOR}`] = 1;
+    }
+    return { ...d, v: SAVE_VERSION, inventory, hotbar: d.world === 'principal' ? startingGrid() : null, selected: null };
+  }
+  return d.v === SAVE_VERSION ? d : null;
 }
 
 /**

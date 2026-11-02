@@ -43,6 +43,7 @@ import spiderBossDeath from '../../assets/spider-boss-death.webp?inline';
 import silkIcon from '../../assets/icon-silk.webp?inline';
 import fangIcon from '../../assets/icon-fang.webp?inline';
 import queenHeartIcon from '../../assets/icon-queen-heart.webp?inline';
+import bagIcon from '../../assets/icon-bag.webp?inline';
 import wheatCrop from '../../assets/wheat-crop.webp?inline';
 import { Block } from '../../world/blocks';
 import type { ArtPack } from './types';
@@ -83,6 +84,7 @@ const pack: ArtPack = {
   celestialIcons: {},
   oakDoor,
   dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls },
+  uiIcons: { bag: bagIcon },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,
   itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon },

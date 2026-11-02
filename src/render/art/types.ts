@@ -25,5 +25,7 @@ export interface ArtPack {
   /** Trigo (16 estágios) e ícones de itens/ferramentas. */
   wheatCrop?: string;
   itemIcons: Partial<Record<ItemId, string>>;
+  /** Ícones de interface (bolsa do inventário). */
+  uiIcons?: { bag: string };
   toolIcons: Partial<Record<ToolId, string>>;
 }

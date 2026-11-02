@@ -77,11 +77,11 @@ describe('Salvamento automático', () => {
       entities.strike('down', world);
     }
     player.x = sx + 1.75; player.y = sy + 0.6; player.facing = 'left';
-    const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, time: 0.62, selected: 3 })));
+    const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, time: 0.62, selected: 3, hotbar: ['tool:sword', null, 'block:20', null, null, null, null, 'silk'] })));
     expect(data.v).toBe(SAVE_VERSION);
 
     const b = session();
-    const r = applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, time: 0, selected: null }, mulberry32(5));
+    const r = applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, time: 0, selected: null, hotbar: null }, mulberry32(5));
     expect(r).toEqual({ time: 0.62, selected: 3 });
     expect(b.world.stackHeight(ax, ay)).toBe(2);
     expect(b.world.getLevel(ax, ay, 1)).toBe(Block.OAK_LOG);
@@ -107,8 +107,8 @@ describe('Salvamento automático', () => {
     expect(store.lastSeed()).toBeNull();
     const s1 = session(42);
     const s2 = session(7);
-    const d1 = captureSave({ ...s1, time: 0.3, selected: null });
-    const d2 = captureSave({ ...s2, time: 0.5, selected: 1 });
+    const d1 = captureSave({ ...s1, time: 0.3, selected: null, hotbar: null });
+    const d2 = captureSave({ ...s2, time: 0.5, selected: 1, hotbar: null });
     expect(store.save(d1)).toBe(true);
     expect(store.save(d2)).toBe(true);
     expect(store.lastSeed()).toBe(7);
@@ -118,6 +118,13 @@ describe('Salvamento automático', () => {
     store.clear(42);
     expect(store.load(42)).toBeNull();
     expect(store.load(7)).not.toBeNull();
+    // v1 (antes da coleta) → v2: ganha ferramentas, 1 porta e a grade inicial.
+    const v1 = migrate({ ...d2, v: 1, hotbar: undefined, inventory: { wheat: 3 } })!;
+    expect(v1.v).toBe(SAVE_VERSION);
+    expect(v1.inventory['tool:axe']).toBe(1);
+    expect(v1.inventory['block:28']).toBe(1);
+    expect(v1.inventory.wheat).toBe(3);
+    expect(v1.hotbar?.slice(0, 2)).toEqual(['tool:sword', 'tool:hoe']);
     // Versão desconhecida → começa do zero; armazenamento bloqueado → jogo segue sem salvar.
     expect(migrate({ ...d2, v: 999 })).toBeNull();
     storage.setItem('mundoblocos:save:principal:9', '{quebrado');

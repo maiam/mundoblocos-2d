@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, isWheat, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, isDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import type { MonsterKind } from './dungeon';
 
 /**
@@ -56,8 +56,30 @@ export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random
   ];
 }
 
+/**
+ * Identificador de tudo que a heroína carrega (inventário, grade, itens caídos): item contável (`'wheat'`),
+ * bloco de construção coletado (`'block:20'`) ou ferramenta (`'tool:sword'`).
+ */
+export type StackId = ItemId | `block:${number}` | `tool:${string}`;
+
+export const blockStack = (id: BlockId): StackId => `block:${id}`;
+export const toolStack = (tool: ToolId): StackId => `tool:${tool}`;
+
+/** Bloco de um StackId de bloco (null se não for bloco). */
+export function stackBlock(s: StackId): BlockId | null {
+  return s.startsWith('block:') ? (Number(s.slice(6)) as BlockId) : null;
+}
+
+/** Ferramenta de um StackId de ferramenta (null se não for ferramenta). */
+export function stackTool(s: StackId): ToolId | null {
+  return s.startsWith('tool:') ? (s.slice(5) as ToolId) : null;
+}
+
+/** É material de construção (o que se perde ao morrer)? */
+export const isMaterialStack = (s: StackId): boolean => s.startsWith('block:');
+
 export interface Drop {
-  item: ItemId;
+  item: StackId;
   count: number;
 }
 
@@ -154,6 +176,25 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 }
 
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
+
+/** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR]);
+
+/**
+ * O que um bloco quebrado devolve como material (mundos com coleta): o próprio material (cubo ou chão;
+ * Terra com Grama volta como Terra com Grama), árvores dão 2–3 Toras de Carvalho, porta volta porta.
+ * Plantas, enfeites e blocos de outros mundos não devolvem material (plantas: ver `toolDrops`).
+ */
+export function blockDrops(id: BlockId, rand: () => number = Math.random): Drop[] {
+  if (id === Block.OAK_TREE || id === Block.SAKURA_TREE) return [{ item: blockStack(Block.OAK_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }];
+  if (isDoor(id)) return [{ item: blockStack(Block.OAK_DOOR), count: 1 }];
+  return COLLECTABLE.has(id) ? [{ item: blockStack(id), count: 1 }] : [];
+}
+
+/** Tudo que cai ao quebrar: colheita/plantas (`toolDrops`) + material, se o mundo coleta blocos. */
+export function breakDrops(tool: ToolId | null, id: BlockId, collect: boolean, rand: () => number = Math.random): Drop[] {
+  return [...toolDrops(tool, id, rand), ...(collect ? blockDrops(id, rand) : [])];
+}
 
 /** Tempo segurando para quebrar com a mão/item (s). */
 export const BREAK_HOLD_HAND_S = 2;

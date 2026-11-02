@@ -3,14 +3,17 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
-import { ITEMS, LOOT_ITEMS, monsterDrops, TOOLS } from '../world/items';
+import { ITEMS, monsterDrops, type StackId, TOOLS } from '../world/items';
+import { art } from '../render/art';
 import { inRect } from '../world/dungeon';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import { Camera } from './camera';
 import { Drops } from './drops';
 import { Entities } from './entities';
-import { hotbarFor, type HotbarSlot } from './hotbar';
+import { Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
+import { BagPanel, type BagEntry } from './bag';
+import type { SlotView } from './hud';
 import { Hud } from './hud';
 import { Inventory } from './inventory';
 import { Joystick } from './joystick';
@@ -44,8 +47,11 @@ export class Game {
   readonly player: Player;
   readonly entities: Entities;
   readonly inventory: Inventory;
-  /** Espaços da hotbar deste mundo (perfil). */
-  private readonly hotbar: HotbarSlot[];
+  /** Grade deste mundo: 8 espaços + bolsa (com coleta) ou lista fixa do perfil (Santuário). */
+  readonly hotbar: Hotbar;
+  private readonly bag: BagPanel;
+  /** Materiais precisam ser coletados neste mundo (perfil). */
+  private readonly collect: boolean;
   readonly drops = new Drops();
   private readonly renderer: Renderer;
   private readonly hud: Hud;
@@ -80,9 +86,10 @@ export class Game {
     private readonly options: GameOptions = {},
   ) {
     this.world = new World(seed, profile);
-    this.hotbar = hotbarFor(profile);
-    // Sem cultivo, não há itens contáveis (Santuário: só blocos).
-    this.inventory = profile.farming ? new Inventory() : new Inventory({});
+    this.collect = profile.collectBlocks;
+    this.hotbar = new Hotbar(profile, options.save?.hotbar ?? undefined);
+    // Sem cultivo nem coleta, não há itens contáveis (Santuário: só blocos infinitos).
+    this.inventory = profile.collectBlocks || profile.farming ? new Inventory() : new Inventory({});
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
     this.entities = new Entities(this.player, Math.random, profile.character);
@@ -98,23 +105,23 @@ export class Game {
       drops: this.drops, camera: this.camera, renderer: this.renderer,
       slot: () => this.slot,
       joystickActive: () => this.joystick.active,
+      collectBlocks: profile.collectBlocks,
+      onConsumed: () => this.hotbar.prune(this.inventory),
     });
     this.hud = new Hud({
-      icons: this.hotbar.map((s) =>
-        s.kind === 'tool' ? toolIconUrl(s.tool) : s.kind === 'item' ? itemIconUrl(s.item) : this.renderer.iconFor(s.block)),
-      names: this.hotbar.map((s) =>
-        s.kind === 'tool' ? TOOLS[s.tool].name : s.kind === 'item' ? ITEMS[s.item].name : blockDef(s.block).name),
-      onSelect: (i) => this.select(i),
-      // Combate (corações e espólios) só em mundo com dungeon.
+      slots: this.hotbar.length,
+      onSelect: (i) => this.onSlot(i),
+      bag: this.hotbar.dynamic ? { icon: art().uiIcons?.bag ?? '', onOpen: () => this.toggleBag() } : undefined,
+      // Corações só em mundo com dungeon.
       maxHp: profile.dungeon ? MAX_HP : 0,
-      loot: profile.dungeon ? LOOT_ITEMS.map((id) => ({ icon: itemIconUrl(id), name: ITEMS[id].name })) : [],
     });
+    this.bag = new BagPanel(this.hud.root, () => this.toggleBag(false));
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     this.menu = new Menu(this.hud.root, {
       seed,
       status: () => this.saveStatus(),
-      onOpenChange: (open) => { if (open) { this.actions.cancelAll(); this.saveNow(); } },
+      onOpenChange: (open) => { if (open) { this.toggleBag(false); this.actions.cancelAll(); this.saveNow(); } },
       onNewWorld: options.onNewWorld,
       onRestart: options.onRestart,
     });
@@ -122,9 +129,10 @@ export class Game {
     if (options.save) {
       const r = applySave(options.save, {
         world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
-        time: this.time, selected: this.selected,
+        time: this.time, selected: this.selected, hotbar: null,
       });
       this.time = r.time;
+      this.hotbar.prune(this.inventory);
       if (r.selected !== null && r.selected < this.hotbar.length) this.select(r.selected);
       this.lastHp = this.player.hp;
       this.lastSaved = options.save.savedAt;
@@ -143,7 +151,62 @@ export class Game {
   }
 
   private get slot(): HotbarSlot | null {
-    return this.selected === null ? null : this.hotbar[this.selected];
+    return this.selected === null ? null : this.hotbar.get(this.selected);
+  }
+
+  /** Toque num espaço da grade: com a bolsa aberta, troca; senão, seleciona. */
+  private onSlot(i: number): void {
+    if (!this.bag.isOpen) {
+      this.select(i);
+      return;
+    }
+    // Bolsa aberta: põe o item escolhido no espaço (o que estava volta para a bolsa) ou guarda o espaço na bolsa.
+    this.hotbar.assign(i, this.bag.picked);
+    this.bag.picked = null;
+    this.refreshSelection();
+    this.bag.render(this.bagEntries());
+  }
+
+  /** Abre/fecha a bolsa (pausa o jogo enquanto aberta). */
+  private toggleBag(force?: boolean): void {
+    if (!this.hotbar.dynamic) return;
+    const open = force ?? !this.bag.isOpen;
+    if (open === this.bag.isOpen) return;
+    this.bag.setOpen(open);
+    this.hud.setBagOpen(open);
+    if (open) {
+      this.actions.cancelAll();
+      this.bag.render(this.bagEntries());
+    }
+  }
+
+  /** Tudo que a heroína carrega, para o painel da bolsa. */
+  private bagEntries(): BagEntry[] {
+    return this.inventory.entries().map(([id, n]) => {
+      const v = this.stackView(id, n);
+      return { id, icon: v.icon, name: v.name, count: id.startsWith('tool:') ? null : n, inGrid: this.hotbar.indexOf(id) };
+    });
+  }
+
+  /** Ícone, nome e quantidade de uma pilha. */
+  private stackView(id: StackId, n: number | null): SlotView {
+    const s = stackSlotOf(id);
+    if (s.kind === 'tool') return { icon: toolIconUrl(s.tool), name: TOOLS[s.tool].name, count: null };
+    if (s.kind === 'item') return { icon: itemIconUrl(s.item), name: ITEMS[s.item].name, count: n };
+    return { icon: this.renderer.iconFor(s.block), name: blockDef(s.block).name, count: this.collect ? n : null };
+  }
+
+  /** O espaço selecionado esvaziou (material acabou, troca na bolsa)? Atualiza ferramenta equipada e ícone. */
+  private refreshSelection(): void {
+    const slot = this.slot;
+    this.player.equipped = slot?.kind === 'tool' ? slot.tool : null;
+    this.actionButton.setIcon(this.slotIcon(slot));
+  }
+
+  /** Coletou algo do chão: vai para a grade se já estiver nela ou houver espaço livre. */
+  private onCollected(id: StackId): void {
+    this.hotbar.autoPlace(id);
+    if (this.bag.isOpen) this.bag.render(this.bagEntries());
   }
 
   /**
@@ -200,9 +263,14 @@ export class Game {
       if (e.code === 'KeyT') this.skipTime();
       if (e.code.startsWith('Digit')) {
         const n = Number(e.code.slice(5)) || 10; // tecla 0 = 10º espaço
-        if (n <= this.hotbar.length) this.select(n - 1);
+        if (this.hotbar.dynamic && n === 9) this.toggleBag();
+        else if (n <= this.hotbar.length) this.onSlot(n - 1);
       }
-      if (e.code === 'Escape') this.select(null);
+      if (e.code === 'KeyI' || e.code === 'KeyB') this.toggleBag();
+      if (e.code === 'Escape') {
+        if (this.bag.isOpen) this.toggleBag(false);
+        else this.select(null);
+      }
       if (e.code === 'Space') this.startAction();
       if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
     });
@@ -250,14 +318,14 @@ export class Game {
     const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
-    const dt = this.menu.isOpen ? 0 : realDt;
+    const dt = this.menu.isOpen || this.bag.isOpen ? 0 : realDt;
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
     this.saveTimer += dt;
     if (this.saveTimer >= AUTOSAVE_S) this.saveNow();
 
     // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
-    const blocked = (this.screenMode?.blocked ?? false) || this.menu.isOpen;
+    const blocked = (this.screenMode?.blocked ?? false) || this.menu.isOpen || this.bag.isOpen;
     if (blocked) this.actions.cancelAll();
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
@@ -268,7 +336,7 @@ export class Game {
       this.entities.strike(this.player.facing, this.world);
     }
     this.world.tick(dt);
-    this.drops.update(dt, this.player, this.inventory);
+    this.drops.update(dt, this.player, this.inventory, (id) => this.onCollected(id));
     this.camera.follow(...this.cameraTarget(), dt);
     this.actions.update(dt);
 
@@ -293,13 +361,16 @@ export class Game {
       elapsed: this.elapsed,
       dt,
     });
-    this.hud.update(this.selected ?? -1, this.hotbar.map((s) => (s.kind === 'item' ? this.inventory.count(s.item) : null)));
+    this.hud.setSlots(Array.from({ length: this.hotbar.length }, (_, i) => {
+      const id = this.hotbar.stack(i);
+      return id ? this.stackView(id, this.inventory.count(id)) : null;
+    }));
+    this.hud.update(this.selected ?? -1);
     // Corações só quando importam (ferida ou na dungeon) — tela limpa no resto do tempo.
     this.hud.setHealth(this.player.hp, this.inDungeon || this.player.hp < MAX_HP);
-    this.hud.setLoot(LOOT_ITEMS.map((id) => this.inventory.count(id)));
     const slot = this.slot;
     this.actionButton.update(this.actions.actionProgress,
-      slot?.kind === 'item' && this.inventory.count(slot.item) === 0);
+      !!slot && slot.kind !== 'tool' && (slot.kind === 'item' || this.collect) && this.inventory.count(slotStack(slot)) === 0);
     requestAnimationFrame(this.frame);
   };
 
@@ -310,7 +381,7 @@ export class Game {
     if (!store || !this.running) return;
     const data = captureSave({
       world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
-      time: this.time, selected: this.selected,
+      time: this.time, selected: this.selected, hotbar: this.hotbar.dynamic ? this.hotbar.layout() : null,
     });
     if (store.save(data)) this.lastSaved = data.savedAt;
   }
@@ -335,6 +406,12 @@ export class Game {
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.5);
     if (this.player.dead) {
       this.actions.cancelAll();
+      // Ao cair, perde todos os materiais de construção (ferramentas, itens e espólios ficam).
+      if (this.collect) {
+        this.inventory.dropMaterials();
+        this.hotbar.prune(this.inventory);
+        this.refreshSelection();
+      }
       this.player.respawn(this.spawn[0] + 0.5, this.spawn[1] + 0.6);
       this.camera.follow(...this.cameraTarget(), 0, true);
       this.hurtFlash = 1;

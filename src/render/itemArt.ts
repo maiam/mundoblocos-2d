@@ -1,6 +1,6 @@
 import { TILE } from '../config';
 import { WHEAT_FIRST, WHEAT_STAGES } from '../world/blocks';
-import type { ItemId, ToolId } from '../world/items';
+import type { ItemId, StackId, ToolId } from '../world/items';
 import { art } from './art';
 import { TEX_RES, type Sprite } from './textures';
 
@@ -51,20 +51,21 @@ export function loadCropSprites(objects: Map<number, Sprite>): void {
   img.src = url;
 }
 
-/** Imagens dos ícones para desenhar itens caídos no canvas. */
+/** Imagens dos ícones para desenhar itens caídos no canvas (itens, espólios e materiais coletados). */
 export class ItemIcons {
-  private readonly imgs = new Map<ItemId, HTMLImageElement>();
+  private readonly imgs = new Map<StackId, HTMLImageElement>();
 
-  constructor() {
-    for (const [id, url] of Object.entries(art().itemIcons) as [ItemId, string][]) {
-      const img = new Image();
-      img.src = url;
+  /** `urlFor`: URL do ícone de uma pilha (itens do pacote; blocos pelo ícone da hotbar). */
+  constructor(private readonly urlFor: (id: StackId) => string) {}
+
+  get(id: StackId): HTMLImageElement | undefined {
+    let img = this.imgs.get(id);
+    if (!img) {
+      img = new Image();
+      const url = this.urlFor(id);
+      if (url) img.src = url;
       this.imgs.set(id, img);
     }
-  }
-
-  get(id: ItemId): HTMLImageElement | undefined {
-    const img = this.imgs.get(id);
-    return img && img.complete && img.naturalWidth > 0 ? img : undefined;
+    return img.complete && img.naturalWidth > 0 ? img : undefined;
   }
 }

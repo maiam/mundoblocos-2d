@@ -1,5 +1,6 @@
 # Domínio: player (game)
 
+- **Grade**: 8 espaços + bolsa (ver `domains/farming.md`); tocar num espaço seleciona (de novo = mão vazia).
 - **Ferramentas**: `Player.equipped` = ferramenta do espaço selecionado na hotbar (ou null); muda o sprite
   (`heroine-<ferramenta>`). **Enxada** (folha de ação `heroine-hoe-attack`): toque curto toca a
   animação de arar e troca Terra/Terra com Grama → Terra Arada (`World.till`). Segurar 1 s **quebra só plantas e

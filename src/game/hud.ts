@@ -1,13 +1,20 @@
 /**
- * Interface mínima sobre o canvas: apenas a hotbar (grade de blocos) na parte
- * inferior. Apresentação pura; o estado vem do Game.
+ * Interface mínima sobre o canvas: a grade (hotbar) na parte inferior — 8 espaços + bolsa no 9º no mundo com
+ * coleta — e os corações no canto. Apresentação pura; o estado vem do Game.
  */
+/** O que um espaço da grade mostra (null = vazio). `count` null = infinito (sem número). */
+export interface SlotView {
+  icon: string;
+  name: string;
+  count: number | null;
+}
+
 export interface HudHandlers {
-  icons: string[];
-  names: string[];
+  /** Quantidade de espaços da grade. */
+  slots: number;
   onSelect(i: number): void;
-  /** Espólios (ícone + nome), na ordem de `setLoot`. Vazio = mundo sem combate. */
-  loot?: Array<{ icon: string; name: string }>;
+  /** Bolsa no fim da grade (mundo com coleta). */
+  bag?: { icon: string; onOpen(): void };
   /** Vida máxima em meios corações (0 = sem corações neste mundo). */
   maxHp?: number;
 }
@@ -20,13 +27,11 @@ ${fill === 'empty' ? '' : `<path ${fill === 'half' ? 'clip-path="url(#hh)"' : ''
 export class Hud {
   readonly root: HTMLElement;
   private readonly slots: HTMLButtonElement[] = [];
+  private readonly bagButton: HTMLButtonElement | null = null;
   private selected = -1;
-  private counts: (number | null)[] = [];
-  private readonly status: HTMLElement;
+  private views: string[] = [];
   private readonly hearts: HTMLElement;
-  private readonly lootEls: HTMLElement[] = [];
   private lastHp = -1;
-  private lastLoot: number[] = [];
   private readonly maxHp: number;
 
   constructor(h: HudHandlers) {
@@ -34,56 +39,67 @@ export class Hud {
     this.root.className = 'hud';
     const hotbar = document.createElement('nav');
     hotbar.className = 'hotbar';
-    hotbar.setAttribute('aria-label', 'Blocos');
-    h.icons.forEach((src, i) => {
+    hotbar.setAttribute('aria-label', 'Grade');
+    for (let i = 0; i < h.slots; i++) {
       const b = document.createElement('button');
       b.className = 'slot';
-      b.title = h.names[i];
-      b.setAttribute('aria-label', h.names[i]);
-      b.innerHTML = `<img alt="" src="${src}"><span class="count" hidden></span>`;
+      b.innerHTML = '<img alt=""><span class="count" hidden></span>';
       b.addEventListener('click', () => h.onSelect(i));
       hotbar.appendChild(b);
       this.slots.push(b);
-    });
+    }
+    if (h.bag) {
+      const bag = document.createElement('button');
+      bag.className = 'slot bag';
+      bag.title = 'Bolsa (9)';
+      bag.setAttribute('aria-label', 'Abrir a bolsa');
+      bag.innerHTML = `<img alt="" src="${h.bag.icon}">`;
+      bag.addEventListener('click', () => h.bag!.onOpen());
+      hotbar.appendChild(bag);
+      this.bagButton = bag;
+    }
     this.root.appendChild(hotbar);
-    // Canto superior esquerdo: corações (aparecem só quando importam) e espólios coletados (só os que há).
     this.maxHp = h.maxHp ?? 0;
-    this.status = document.createElement('div');
-    this.status.className = 'status';
+    const status = document.createElement('div');
+    status.className = 'status';
     this.hearts = document.createElement('div');
     this.hearts.className = 'hearts';
     this.hearts.setAttribute('role', 'img');
-    this.status.appendChild(this.hearts);
-    const loot = document.createElement('div');
-    loot.className = 'loot';
-    for (const it of h.loot ?? []) {
-      const el = document.createElement('span');
-      el.className = 'loot-item';
-      el.title = it.name;
-      el.hidden = true;
-      el.innerHTML = `<img alt="${it.name}" src="${it.icon}"><b></b>`;
-      loot.appendChild(el);
-      this.lootEls.push(el);
-    }
-    this.status.appendChild(loot);
-    this.root.appendChild(this.status);
+    status.appendChild(this.hearts);
+    this.root.appendChild(status);
     document.body.appendChild(this.root);
   }
 
-  /** `counts[i]`: quantidade do item no espaço i, ou null para blocos (infinitos). */
-  update(selected: number, counts: (number | null)[]): void {
-    if (selected !== this.selected) {
-      this.selected = selected;
-      this.slots.forEach((b, i) => b.classList.toggle('active', i === selected));
-    }
-    counts.forEach((n, i) => {
-      if (n === this.counts[i]) return;
-      this.counts[i] = n;
-      const badge = this.slots[i].querySelector<HTMLElement>('.count')!;
-      badge.hidden = n === null;
-      badge.textContent = n === null ? '' : String(n);
-      this.slots[i].classList.toggle('empty', n === 0);
+  /** Conteúdo dos espaços (só redesenha o que mudou). */
+  setSlots(views: (SlotView | null)[]): void {
+    views.forEach((v, i) => {
+      const key = v ? `${v.icon}|${v.name}|${v.count}` : '';
+      if (key === this.views[i] || !this.slots[i]) return;
+      this.views[i] = key;
+      const b = this.slots[i];
+      const img = b.querySelector('img')!;
+      const badge = b.querySelector<HTMLElement>('.count')!;
+      b.classList.toggle('vacant', !v);
+      b.title = v ? `${v.name} (${i + 1})` : `Espaço ${i + 1} vazio`;
+      b.setAttribute('aria-label', v ? v.name : `Espaço ${i + 1} vazio`);
+      img.hidden = !v;
+      if (v && img.getAttribute('src') !== v.icon) img.src = v.icon;
+      badge.hidden = !v || v.count === null;
+      badge.textContent = v && v.count !== null ? String(v.count) : '';
+      b.classList.toggle('empty', !!v && v.count === 0);
     });
+  }
+
+  update(selected: number): void {
+    if (selected === this.selected) return;
+    this.selected = selected;
+    this.slots.forEach((b, i) => b.classList.toggle('active', i === selected));
+  }
+
+  /** Destaca a bolsa aberta e os espaços como alvo de troca. */
+  setBagOpen(open: boolean): void {
+    this.bagButton?.classList.toggle('active', open);
+    this.root.classList.toggle('bag-open', open);
   }
 
   /** Vida em meios corações; `visible` mostra a fileira (ferida ou na dungeon). */
@@ -95,16 +111,6 @@ export class Hud {
     for (let i = 0; i < this.maxHp / 2; i++) html.push(HEART(hp >= i * 2 + 2 ? 'full' : hp === i * 2 + 1 ? 'half' : 'empty'));
     this.hearts.innerHTML = html.join('');
     this.hearts.setAttribute('aria-label', `Vida: ${hp / 2} de ${this.maxHp / 2} corações`);
-  }
-
-  /** Quantidade de cada espólio (mostra só os que já foram coletados). */
-  setLoot(counts: number[]): void {
-    counts.forEach((n, i) => {
-      if (n === this.lastLoot[i] || !this.lootEls[i]) return;
-      this.lastLoot[i] = n;
-      this.lootEls[i].hidden = n <= 0;
-      this.lootEls[i].querySelector('b')!.textContent = String(n);
-    });
   }
 
   destroy(): void {

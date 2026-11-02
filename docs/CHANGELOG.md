@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.28.0 — 2026-11-02 (Fase 3 — coleta de materiais)
+- **Materiais coletados** no mundo principal: quebrar solta o próprio bloco (cubo ou chão), árvores soltam 2–3 Toras
+  de Carvalho, porta volta porta; colocar gasta 1. Santuário continua infinito (perfil `collectBlocks`).
+- **Grade de 8 espaços + bolsa no 9º** (ícone fornecido): ferramentas, itens e materiais dividem os 8 espaços; o que é
+  coletado soma na grade (se já estiver nela ou houver espaço livre) ou vai para a bolsa. **Bolsa**: tudo que a
+  heroína carrega; toque num item e num espaço para trocar; pausa o jogo. Teclas 1–8, 9/I/B (bolsa), Esc.
+- **Ao cair, perde todos os materiais** (ferramentas, sementes, trigo e espólios ficam).
+- Começo: ferramentas, 5 sementes, 2 trigos e 1 Porta de Carvalho (na bolsa). Contador de espólios saiu da HUD
+  (estão na bolsa). Salvamento v2 (grade + materiais; migra a v1). 5 testes novos (93).
+
 ## 0.27.0 — 2026-11-02 (Fase 2 do plano — salvamento automático)
 - **Salvamento automático no navegador** (ADR 0011): chunks editados, plantações, heroína (posição, vida), item
   selecionado, inventário (com espólios), ovelhas, aranhas vivas e renascimentos pendentes, hora do dia. A cada

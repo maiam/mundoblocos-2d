@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-02 (v0.27.0 — Fases 0, 1 e 2 concluídas)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-02 (v0.28.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -8,7 +8,7 @@ _Revisado em 2026-11-02 (v0.27.0 — Fases 0, 1 e 2 concluídas)._ Fonte única 
 | Sistema | Estado | Observação |
 |---|---|---|
 | Mundo procedural em chunks 16×16, vista 3/4, biomas, água, montanhas | ✅ sólido | determinístico por seed, ~0,08 ms/chunk |
-| Construção: 8 materiais, pilha de 3, buracos, porta de carvalho | ✅ | materiais **infinitos** (sem coleta) |
+| Construção: 8 materiais, pilha de 3, buracos, porta de carvalho | ✅ | materiais **coletados** (grade 8 + bolsa) |
 | Personagem: movimento, câmera, joystick, botão de ação, paisagem/tela cheia | ✅ | teste do botão no celular ainda em avaliação |
 | Ferramentas (espada, enxada, picareta, pá, machado) com ação e restrições | ✅ | quebrar com ferramenta 1 s, mão 2 s |
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
@@ -21,7 +21,7 @@ _Revisado em 2026-11-02 (v0.27.0 — Fases 0, 1 e 2 concluídas)._ Fonte única 
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | 🟡 | principal 2,87 MB (meta < 3 MB, alerta do build em ~3 MB), Santuário 0,69 MB |
+| Peso dos artefatos | 🟡 | principal 2,97 MB — **no limite** da meta de 3 MB (alerta do build = meta), Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -47,10 +47,11 @@ para o core**, nada de backend aqui; exportar/importar o salvamento como arquivo
 migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 
 ### Fase 3 — Recursos e progressão
-1. **Decidir: materiais infinitos ou coletados.** Se coletados: blocos quebrados vão para o inventário, árvore solta
-   Tora de Carvalho, colocar consome.
-2. **Receitas** (tora → piso, trigo → pão, seda/presa/Coração da Rainha → ?), interface de criação simples.
-3. **Painel de inventário**: a hotbar (16 espaços) está no limite do celular deitado.
+1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;
+   morte perde os materiais.
+2. **Receitas — próximo passo** (tora → piso, trigo → pão, seda/presa/Coração da Rainha → ?), interface de criação
+   simples (provavelmente na própria bolsa). Também é o caminho para obter **mais portas** (hoje só a inicial).
+3. ✅ **Painel de inventário** (bolsa no 9º espaço).
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
 
 ### Fase 4 — Mundo vivo e conteúdo
@@ -74,8 +75,9 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 ## 3. Decisões pendentes (do dono do produto)
 | Decisão | Afeta |
 |---|---|
-| Materiais infinitos ou coletados? | Fase 3 inteira |
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
+| Receitas: quais e onde criar (bolsa? bancada?) | Fase 3 |
+| Limite de pilha/bolsa (hoje sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
 
@@ -85,7 +87,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 - **Arte**: (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Peso do artefato principal: 2,87 MB, sem folga** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
+- **Peso do artefato principal: 2,97 MB, no limite** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
   folha grande estoura. Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
   virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
   separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.

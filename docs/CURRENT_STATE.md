@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.27.0_
+_Atualizado em 2026-11-02 — v0.28.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -33,7 +33,8 @@ _Atualizado em 2026-11-02 — v0.27.0_
   segurar quebra (2 s com a mão/item, **1 s com ferramenta**). Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
 - Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar quebra: 2 s mão, 1 s ferramenta), Q/E/roda = zoom.
 - Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
-- Tela limpa: só a hotbar (ferramentas 1–5, semente 6, trigo 7, materiais 8–15, porta 16).
+- Tela limpa: a grade de **8 espaços + bolsa** (começa com ferramentas 1–5, semente 6, trigo 7, 8º livre); corações
+  só quando importam; menu ☰.
 
 ## Sistemas
 - **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara (animação própria) Terra/Terra
@@ -47,7 +48,8 @@ _Atualizado em 2026-11-02 — v0.27.0_
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
-- **Inventário** de itens contáveis (começa com 5 sementes e 2 trigos); materiais são infinitos.
+- **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Inventário sem
+  limite por pilha; **bolsa** com tudo e troca para a grade. Ao cair, perde os materiais. Santuário segue infinito.
 - **Ovelhas**: rebanho perto do spawn; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
@@ -71,6 +73,6 @@ _Atualizado em 2026-11-02 — v0.27.0_
 - 88 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,87 MB** (meta < 3 MB, sem folga),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **2,97 MB** (meta < 3 MB, no limite),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

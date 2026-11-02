@@ -7,7 +7,8 @@ import { Block, blockDef, type BlockId, isDoor } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
-import { ItemIcons, loadCropSprites } from './itemArt';
+import { ItemIcons, itemIconUrl, loadCropSprites } from './itemArt';
+import { type ItemId, stackBlock } from '../world/items';
 import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
@@ -59,7 +60,11 @@ export class Renderer {
   readonly textures: BlockTextures;
   private readonly chunks: ChunkRenderer;
   private readonly actorSprites = new ActorSprites();
-  private readonly itemIcons = new ItemIcons();
+  /** Ícones dos itens caídos: itens pelo pacote de arte; materiais pelo ícone do bloco. */
+  private readonly itemIcons = new ItemIcons((id) => {
+    const b = stackBlock(id);
+    return b !== null ? this.iconFor(b) : itemIconUrl(id as ItemId);
+  });
   private readonly particles = new Particles();
   private readonly ctx: CanvasRenderingContext2D;
   sky: SkyState = skyAt(0.3);

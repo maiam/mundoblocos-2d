@@ -1,4 +1,4 @@
-import type { Drop, ItemId } from '../world/items';
+import type { Drop, StackId } from '../world/items';
 import type { Inventory } from './inventory';
 import type { Walker } from './walker';
 
@@ -10,13 +10,13 @@ const PICKUP_DELAY = 0.45;
 const LIFETIME = 300;
 
 export interface ItemDrop {
-  item: ItemId;
+  item: StackId;
   x: number;
   y: number;
   age: number;
 }
 
-/** Itens caídos no chão (colheita). O personagem coleta ao chegar perto. */
+/** Itens caídos no chão (colheita, espólios, materiais quebrados). O personagem coleta ao chegar perto. */
 export class Drops {
   readonly list: ItemDrop[] = [];
 
@@ -28,7 +28,8 @@ export class Drops {
     }
   }
 
-  update(dt: number, collector: Walker, inventory: Inventory): void {
+  /** Atualiza e coleta; `onCollect` avisa o que entrou no inventário (a grade decide se ocupa um espaço). */
+  update(dt: number, collector: Walker, inventory: Inventory, onCollect?: (id: StackId) => void): void {
     for (let i = this.list.length - 1; i >= 0; i--) {
       const d = this.list[i];
       d.age += dt;
@@ -41,6 +42,7 @@ export class Drops {
         d.y += (dy / (dist || 1)) * speed;
         if (Math.hypot(collector.x - d.x, collector.y - d.y) < COLLECT) {
           inventory.add(d.item);
+          onCollect?.(d.item);
           this.list.splice(i, 1);
           continue;
         }

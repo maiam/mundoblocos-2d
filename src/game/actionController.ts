@@ -1,7 +1,7 @@
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
 import { blockDef } from '../world/blocks';
-import { breakSeconds, ITEMS, toolCanBreak, toolDrops, TOOLS, type ToolId } from '../world/items';
+import { blockStack, breakDrops, breakSeconds, ITEMS, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
 import type { Drops } from './drops';
@@ -52,6 +52,10 @@ export interface ActionContext {
   slot(): HotbarSlot | null;
   /** Joystick em uso (esconde o destaque do mouse). */
   joystickActive(): boolean;
+  /** Materiais coletados (colocar gasta, quebrar solta o bloco) — perfil `collectBlocks`. */
+  collectBlocks: boolean;
+  /** Algo do inventário foi gasto (a grade libera espaços vazios). */
+  onConsumed(): void;
 }
 
 /** Alvos para o render (destaque do mouse, anel na entidade, foco do botão de ação, quebra em andamento). */
@@ -185,7 +189,10 @@ export class ActionController {
       if (use === 'flatten') return this.world.canFlatten(x, y);
       return false;
     }
-    if (slot.kind === 'block') return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
+    if (slot.kind === 'block') {
+      if (this.ctx.collectBlocks && this.inventory.count(blockStack(slot.block)) <= 0) return false;
+      return this.world.canPlace(x, y, slot.block) && !this.entities.occupies(x, y);
+    }
     if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
     return false;
   }
@@ -208,7 +215,10 @@ export class ActionController {
     }
     if (slot.kind === 'block') {
       if (!this.canUseAt(slot, x, y)) return;
-      this.world.placeBlock(x, y, slot.block);
+      if (this.world.placeBlock(x, y, slot.block) && this.ctx.collectBlocks) {
+        this.inventory.take(blockStack(slot.block));
+        this.ctx.onConsumed();
+      }
       this.entities.settleAll(this.world);
       return;
     }
@@ -218,6 +228,7 @@ export class ActionController {
     } else if (def.feeds === 'sheep' && sheep && this.canFeed(sheep) && this.inventory.take(slot.item)) {
       sheep.feed();
     }
+    this.ctx.onConsumed();
   }
 
   // ---- Alvo pelo cursor (mouse) ----
@@ -362,8 +373,9 @@ export class ActionController {
     if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {
       const broken = this.world.breakBlock(t.x, t.y);
-      // Colheita: o que o mundo devolve cai no chão para ser coletado (pá e picareta destroem plantas sem drop).
-      if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, toolDrops(this.tool, broken));
+      // O que cai no chão para ser coletado: colheita (pá e picareta destroem plantas sem drop) e, com coleta,
+      // o próprio material (árvore dá toras).
+      if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, breakDrops(this.tool, broken, this.ctx.collectBlocks));
       this.entities.settleAll(this.world);
       h.target = null;
       h.progress = 0;
