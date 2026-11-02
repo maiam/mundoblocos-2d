@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-01 — v0.11.0_
+_Atualizado em 2026-11-02 — v0.11.1_
 
 ## Funcional
 - **Vista superior inclinada (3/4)**: chão plano + objetos-cubo com face superior e frontal, árvores altas,
@@ -42,7 +42,7 @@ _Atualizado em 2026-11-01 — v0.11.0_
   rotação (ou instalar na tela inicial). Dentro do Artifact (iframe) a tela cheia pode ser recusada.
 - O toque que ativa a tela cheia também conta como ação de colocar bloco.
 - Edições, inventário, plantações e ovelhas não são persistidos; NPCs existem só perto do spawn.
-- Chão de grama repete as flores da arte (bem florido); materiais orientados repetem o padrão.
+- Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem o padrão no chão.
 - Sob a folha de trigo resta um filete claro da sombra original do desenho.
 - Altura limitada a 2 níveis de cubo; não há queda com dano nem pulo.
 - Transições entre tipos de chão são em degrau (sem blending).

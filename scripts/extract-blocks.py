@@ -1,5 +1,7 @@
-"""Extrai as faces dos cubos da prancha isométrica (assets-src/blocks-sheet.png)
-para a vista 3/4 do jogo:
+"""Extrai as faces dos cubos da prancha de blocos para a vista 3/4 do jogo.
+
+Fonte padrão: assets-src/blocks-sheet-34.png (prancha já em 3/4, escolhida). A prancha
+isométrica antiga (assets-src/blocks-sheet.png) continua suportada com --iso:
 
 - topo (losango T-R-C-L) → quadrado 64×64 (usado como chão e como topo do cubo);
 - face esquerda (L-C-B-BL) → retângulo 64×36 (face frontal do cubo), usando só a
@@ -9,20 +11,34 @@ para a vista 3/4 do jogo:
 A geometria vem de um gabarito medido no cubo de terra e é ancorada no centro da
 base de cada cubo (as folhas do cubo de grama passam do contorno e enganariam a medição).
 
-Uso: python3 scripts/extract-blocks.py   (requer Pillow e numpy)
+Uso: python3 scripts/extract-blocks.py [--iso | --sheet34 PRANCHA] [--out ATLAS]   (requer Pillow e numpy)
+  --sheet34: prancha já em 3/4 (topo + frente, sem lateral). Topo e frente são recortados direto
+  (sem perspectiva); o topo, desenhado achatado, é esticado para a célula quadrada do jogo.
 """
+import argparse
 from collections import deque
 
 import numpy as np
 from PIL import Image
 
-SRC = 'assets-src/blocks-sheet.png'
+_ap = argparse.ArgumentParser()
+_ap.add_argument('--sheet34', default='assets-src/blocks-sheet-34.png')
+_ap.add_argument('--iso', action='store_true', help='usar a prancha isométrica antiga')
+_ap.add_argument('--out', default='src/assets/blocks-atlas.png')
+_ap.add_argument('--icons', action='store_true', default=True)
+ARGS = _ap.parse_args()
+if ARGS.iso:
+    ARGS.sheet34 = None
+SRC = ARGS.sheet34 or 'assets-src/blocks-sheet.png'
 NAMES = ['dirt', 'grass', 'tilled', 'path', 'sand', 'stone', 'oak-log', 'oak-planks']
 TOP = 64           # lado do topo (TILE × TEX_RES)
 FRONT_H = 36       # altura da face frontal (CUBE_FRONT × TEX_RES)
 FRONT_FRACTION = 0.62  # parte da face lateral usada (de cima para baixo)
 INSET = 0.06       # recuo para deixar de fora o contorno escuro da arte
 GROUND_INSET = 0.14  # recuo maior para o chão: só o miolo da face
+# Prancha 3/4 (medida): corpo ≈ 1,17 × largura; topo ≈ 51,5% do corpo.
+TOP34_BODY = 1.17
+TOP34_RATIO = 0.515
 # Materiais com direção (sulcos, anéis, tábuas): no chão não giram nem são misturados.
 ORIENTED = {'tilled', 'oak-log', 'oak-planks'}
 
@@ -75,7 +91,7 @@ def warp(quad, size):
 
 
 tops, fronts, grounds = [], [], []
-rows = [(220, 640), (640, 1060)]
+rows = [(150, 600), (600, 1060)] if ARGS.sheet34 else [(220, 640), (640, 1060)]
 for i, name in enumerate(NAMES):
     r, c = divmod(i, 4)
     x0, x1 = int(c * W / 4), int((c + 1) * W / 4)
@@ -88,14 +104,26 @@ for i, name in enumerate(NAMES):
     blx, brx = xs[low].min() + x0, xs[low].max() + x0
     cx = (blx + brx) / 2
     s = (brx - blx) / REF_W
-    P = {k: (cx + v[0] * s, ymax + v[1] * s) for k, v in TPL.items()}
-
-    top = warp(inset_quad([P['L'], P['C'], P['R'], P['T']], INSET), (TOP, TOP))
-    # Chão: miolo do topo, sem nenhum contorno (base da versão contínua).
-    grounds.append(warp(inset_quad([P['L'], P['C'], P['R'], P['T']], GROUND_INSET), (TOP, TOP)))
-    bottom_l = lerp(P['L'], P['BL'], FRONT_FRACTION)
-    bottom_r = lerp(P['C'], P['B'], FRONT_FRACTION)
-    front = warp(inset_quad([P['L'], bottom_l, bottom_r, P['C']], INSET * 0.6), (TOP, FRONT_H))
+    if ARGS.sheet34:
+        # Prancha 3/4: caixa do corpo (a grama transborda por cima → topo pela base do cubo).
+        bx0, bx1 = xs.min() + x0, xs.max() + x0
+        body_h = TOP34_BODY * (bx1 - bx0)
+        ty = ymax - body_h
+        split = ty + TOP34_RATIO * body_h
+        ix = (bx1 - bx0) * 0.03
+        q = lambda xa, ya, xb, yb: [(xa, ya), (xa, yb), (xb, yb), (xb, ya)]
+        top = warp(q(bx0 + ix, ty + ix, bx1 - ix, split), (TOP, TOP))
+        gi = (bx1 - bx0) * 0.09
+        grounds.append(warp(q(bx0 + gi, ty + gi * 0.7, bx1 - gi, split - gi * 0.5), (TOP, TOP)))
+        front = warp(q(bx0 + ix * 0.6, split, bx1 - ix * 0.6, ymax - ix * 0.6), (TOP, FRONT_H))
+    else:
+        P = {k: (cx + v[0] * s, ymax + v[1] * s) for k, v in TPL.items()}
+        top = warp(inset_quad([P['L'], P['C'], P['R'], P['T']], INSET), (TOP, TOP))
+        # Chão: miolo do topo, sem nenhum contorno (base da versão contínua).
+        grounds.append(warp(inset_quad([P['L'], P['C'], P['R'], P['T']], GROUND_INSET), (TOP, TOP)))
+        bottom_l = lerp(P['L'], P['BL'], FRONT_FRACTION)
+        bottom_r = lerp(P['C'], P['B'], FRONT_FRACTION)
+        front = warp(inset_quad([P['L'], bottom_l, bottom_r, P['C']], INSET * 0.6), (TOP, FRONT_H))
     tops.append(top)
     fronts.append(front)
 
@@ -105,7 +133,8 @@ for i, name in enumerate(NAMES):
     icon = Image.fromarray(rgba[yy.min():yy.max() + 1, xx.min():xx.max() + 1], 'RGBA')
     k = 64 / max(icon.size)
     icon = icon.convert('RGBa').resize((round(icon.width * k), round(icon.height * k)), Image.LANCZOS).convert('RGBA')
-    icon.save(f'src/assets/icon-block-{name}.png', optimize=True)
+    if ARGS.out == 'src/assets/blocks-atlas.png':
+        icon.save(f'src/assets/icon-block-{name}.png', optimize=True)
 
 def seamless(tile):
     """Versão contínua para o chão: mistura o topo com ele mesmo deslocado meia
@@ -125,5 +154,5 @@ for i in range(len(NAMES)):
     atlas.paste(fronts[i], (i * TOP, TOP))
     g = grounds[i] if NAMES[i] in ORIENTED else seamless(grounds[i])
     atlas.paste(g, (i * TOP, TOP + FRONT_H))
-atlas.save('src/assets/blocks-atlas.png', optimize=True)
-print('src/assets/blocks-atlas.png', atlas.size, '+ 8 ícones')
+atlas.save(ARGS.out, optimize=True)
+print(ARGS.out, atlas.size)

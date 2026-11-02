@@ -10,7 +10,7 @@
 - A camada de chão pode conter um id de cubo (piso feito num buraco); ler "é pisável" via `isGroundStandable`.
   Formas de objeto: `cube`, `tree`, `decoration` (não sólido).
 - Propriedades em `world/blocks.ts`; aparência em `render/textures.ts` pelo mesmo id. Novo material = entrada em
-  `MATERIALS` + cubo na prancha + `extract-blocks.py` (nome na mesma ordem).
+  `MATERIALS` + cubo na prancha **3/4** (topo + frente, mesmo enquadramento) + `extract-blocks.py` (nome na mesma ordem).
 - Material tem um id só para chão e cubo; para "é pisável" use `isGroundStandable`, nunca o `layer`.
 - Sprites de objeto: posicionados por `ox/oy` relativos ao canto da célula; a base do sprite coincide com a
   base da célula (necessário para a ordenação por linha). Cubos: face superior `TILE`, face frontal `CUBE_FRONT`.

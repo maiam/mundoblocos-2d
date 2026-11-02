@@ -19,7 +19,8 @@
   Ícones (regiões da prancha `tool-icons-sheet.png`, `--cols 1 --rows 1 --frame-h 64 --sat 34 --min 175`):
   espada `75,105,455,490` · enxada `535,105,915,490` · picareta `995,105,1375,490` · pá `285,590,680,985` ·
   machado `770,590,1165,985`.
-- Blocos: `python3 scripts/extract-blocks.py` (prancha `assets-src/blocks-sheet.png` → atlas + ícones).
+- Blocos: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones;
+  `--iso` usa a isométrica antiga; `--out X.png` gera só o atlas, sem ícones, para comparar).
 - Em `npm run dev`, `window.__game` dá acesso ao jogo para testes automatizados (não existe no build).
 - Ícones do PWA: `python3 scripts/make-icons.py` (Pillow). `public/` é copiado para `dist/` (manifest e ícones);
   o build de Artifact é arquivo único e não leva manifest.

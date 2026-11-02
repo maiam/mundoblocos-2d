@@ -9,9 +9,13 @@ Apenas apresentação; lê `World`, nunca escreve.
 - Texturas em resolução 2× (`TEX_RES`) para nitidez com zoom ~2.
 
 ## Arte dos blocos (prancha)
-- `assets-src/blocks-sheet.png` (isométrica) → `scripts/extract-blocks.py` → `src/assets/blocks-atlas.png`
-  (linha 0: topo do cubo 64×64; linha 1: face frontal 64×36; linha 2: chão contínuo) + `icon-block-*.png`.
-- Geometria por gabarito medido no cubo de terra, ancorado na base de cada cubo (a grama transborda o contorno).
+- Fonte: `assets-src/blocks-sheet-34.png` (prancha já em 3/4, topo + frente) → `scripts/extract-blocks.py` →
+  `src/assets/blocks-atlas.png` (linha 0: topo do cubo 64×64; linha 1: face frontal 64×36; linha 2: chão
+  contínuo) + `icon-block-*.png`.
+- Recorte direto por proporção medida (corpo ≈ 1,17 × largura, topo ≈ 51,5 % do corpo), ancorado na base do cubo
+  (a grama transborda por cima). A frente encaixa sem distorção; o topo, desenhado achatado, é esticado ~1,6× na
+  vertical para a célula quadrada.
+- A prancha isométrica anterior (`blocks-sheet.png`) segue suportada com `--iso` (comparação registrada no CHANGELOG).
 - Chão: miolo do topo sem contorno, misturado com cópia deslocada meia célula (sem emendas); terra/grama/
   caminho/areia/pedra giram/espelham por célula; arado, tora e piso mantêm a orientação.
 - `render/blockArt.ts` carrega o atlas antes do jogo começar (`main.ts`).
