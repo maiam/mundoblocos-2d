@@ -17,8 +17,8 @@ const PLANTABLE_GROUND: number = Block.TILLED;
 const TILLABLE = new Set<number>([Block.DIRT, Block.GRASS]);
 /** Chãos que a pá amassa em Caminho de Terra. */
 const FLATTENABLE = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED]);
-/** Blocos que podem substituir a água (viram o chão da célula). */
-export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.STONE, Block.OAK_LOG]);
+/** Blocos que podem substituir a água (viram o chão da célula): todo tipo de terra, Pedra e Tora. */
+export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG]);
 /** Tempo para a água encher um buraco vizinho (s). */
 export const FLOW_SECONDS = 0.6;
 
@@ -367,13 +367,13 @@ export class World {
 
   // ---- Portas ----
 
-  /** Cubo de madeira (Tora ou Piso de Carvalho) no nível 0 — serve de batente para a porta. */
+  /** Cubo de madeira (Tora ou Piso de Carvalho) ou de Pedra no nível 0 — serve de batente para a porta. */
   private isDoorJamb(x: number, y: number): boolean {
     const d = blockDef(this.getObject(x, y));
-    return d.shape === 'cube' && d.organic === 'wood';
+    return d.shape === 'cube' && (d.organic === 'wood' || d.id === Block.STONE);
   }
 
-  /** A porta só vai entre dois batentes de madeira: células da esquerda e da direita. */
+  /** A porta só vai entre dois batentes (madeira ou pedra, podem misturar): células da esquerda e da direita. */
   hasDoorFrame(x: number, y: number): boolean {
     return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
   }

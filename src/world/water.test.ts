@@ -27,7 +27,7 @@ function shore(w: World): [number, number] {
 const run = (w: World, s: number) => { for (let t = 0; t < s; t += 0.05) w.tick(0.05, () => 1); };
 
 describe('Água', () => {
-  it('não quebra; Terra, Pedra ou Tora a substituem (viram chão); outros blocos não', () => {
+  it('não quebra; todo tipo de terra, Pedra ou Tora a substituem (viram chão); outros blocos não', () => {
     const w = new World(42);
     const [x, y] = shore(w);
     const [wx, wy] = [x - 1, y];
@@ -35,7 +35,9 @@ describe('Água', () => {
     expect(w.breakBlock(wx, wy)).toBeNull();
     expect(w.canPlace(wx, wy, Block.SAND)).toBe(false);
     expect(w.canPlace(wx, wy, Block.OAK_PLANKS)).toBe(false);
-    for (const id of [Block.DIRT, Block.STONE, Block.OAK_LOG]) expect(w.canPlace(wx, wy, id)).toBe(true);
+    for (const id of [Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG]) {
+      expect(w.canPlace(wx, wy, id)).toBe(true);
+    }
     expect(w.placeBlock(wx, wy, Block.STONE)).toBe(true);
     expect(w.getGround(wx, wy)).toBe(Block.STONE);
     expect(w.standHeight(wx, wy)).toBe(0); // vira chão pisável

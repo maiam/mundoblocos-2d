@@ -28,12 +28,12 @@
   próximo nível sobre cubo (até 3). Porta (`shape: 'door'`): só nível 0, nada empilha sobre ela.
 - **Dungeon** (`world/dungeon.ts`, perfil `dungeon`): `DungeonTerrain` sobrepõe a área ao gerador; `isProtected`
   bloqueia quebrar/colocar/arar/amassar/plantar na área inteira. Ver `domains/dungeon.md`.
-- **Água** (`Block.WATER`, chão líquido): inquebrável e não pisável. `placementLevel`: Terra, Pedra ou Tora
+- **Água** (`Block.WATER`, chão líquido): inquebrável e não pisável. `placementLevel`: qualquer terra (Terra, Terra com Grama, Terra Arada, Caminho de Terra), Pedra ou Tora
   (`REPLACES_WATER`) substituem a água como chão (`'ground'`). **Enchimento**: buraco (`HOLE`) com água vizinha é
   agendado (`scheduleFlow`, lado de origem em ordem fixa oeste/leste/norte/sul); `tick` → `tickWater` avança
   (`FLOW_SECONDS` = 0,6 s) e, ao encher, agenda os buracos vizinhos (cadeia). Terra firme nunca é inundada; buraco
   tapado antes desiste. Estado em execução (`waterFlows`); `settleWater` reagenda após carregar (save.ts).
-- Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira no nível 0 (`hasDoorFrame`).
+- Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira (Tora/Piso) ou de Pedra no nível 0 (`hasDoorFrame`; pode misturar).
 - Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`
   só fecha se a célula estiver livre de entidades (`canToggleDoorAt`).
 - Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.

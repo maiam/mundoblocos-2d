@@ -28,14 +28,20 @@ describe('Porta de Carvalho', () => {
     expect(toolCanBreak('pickaxe', Block.OAK_DOOR)).toBe(false);
   });
 
-  it('só vai entre batentes de madeira (tora ou piso) à esquerda e à direita', () => {
+  it('só vai entre batentes de madeira (tora/piso) ou pedra à esquerda e à direita', () => {
     const w = new World(7);
     const [x, y] = freeCell(w);
     expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(false); // sem batentes
     w.placeBlock(x - 1, y, Block.OAK_LOG);
     expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(false); // só um lado
+    w.placeBlock(x + 1, y, Block.SAND);
+    expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(false); // areia não é batente
+    w.breakBlock(x + 1, y);
     w.placeBlock(x + 1, y, Block.STONE);
-    expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(false); // pedra não é madeira
+    expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(true); // tora + pedra (misturar vale)
+    w.breakBlock(x - 1, y);
+    w.placeBlock(x - 1, y, Block.STONE);
+    expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(true); // pedra + pedra
     w.breakBlock(x + 1, y);
     w.placeBlock(x + 1, y, Block.OAK_PLANKS);
     expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(true);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.29.1 — 2026-11-02
+- **Porta também entre blocos de Pedra**: batentes podem ser de madeira (Tora/Piso de Carvalho) ou Pedra, inclusive
+  misturados.
+- **Qualquer tipo de terra substitui a água**: Terra, Terra com Grama, Terra Arada e Caminho de Terra (além de Pedra e
+  Tora). Areia continua sem substituir.
+
 ## 0.29.0 — 2026-11-02
 - **Água como bloco do mundo** (arte fornecida): o chão de água usa o topo do bloco de água (ladrilho contínuo).
   Continua **inquebrável**, mas **Terra, Pedra ou Tora a substituem** (viram o chão da célula; gastam o material).

@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-02 — v0.29.0_
+_Atualizado em 2026-11-02 — v0.29.1_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -23,7 +23,7 @@ _Atualizado em 2026-11-02 — v0.29.0_
   soltam seda/presas (Rainha: Coração da Rainha) e renascem com o tempo. Farol + seta indicam a entrada.
 - **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, renasce no início com os itens.
   Ver `domains/dungeon.md`.
-- **Água**: inquebrável; Terra/Pedra/Tora a substituem; buraco vizinho de água enche sozinho (animação) e enche os
+- **Água**: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra ou Tora a substituem; buraco vizinho de água enche sozinho (animação) e enche os
   vizinhos em cadeia. Ver `domains/world.md`.
 - Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
@@ -45,7 +45,7 @@ _Atualizado em 2026-11-02 — v0.29.0_
   (animação de cavar) amassa Terra/Grama/Arada → Caminho de Terra e, segurando, cava só blocos macios (terra, areia…)
   e destrói plantas **sem drop**; não ataca; a **picareta** (animação de minerar), segurando, quebra qualquer
   bloco e plantas (sem drop), menos madeira/árvore; não ataca.
-- **Porta de Carvalho**: colocada no chão **entre dois blocos de madeira** (Tora/Piso de Carvalho à esquerda e à
+- **Porta de Carvalho**: colocada no chão **entre dois batentes de madeira ou pedra** (Tora/Piso de Carvalho ou Pedra à esquerda e à
   direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
