@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.35.3 — 2026-11-03
+- **Nova arte da casa de telhado vermelho** (telhado com 6 fileiras e parede de dois andares: madeira sobre pedra).
+- **Arbustos da cidade com arte fornecida** (`assets-src/town-bushes.png`): a cerca viva usa 3 arbustos (redondo,
+  alto e largo com flores), sorteados por posição (fixos como a cidade); mesma escala, base no pé da célula.
+
 ## 0.35.2 — 2026-11-03
 - **Casa de telhado vermelho com a arte fornecida** (`assets-src/town-house-red.png` → `scripts/extract-town.py`):
   todas as casas vermelhas da cidade usam a imagem, em qualquer tamanho (parede na largura da casa; telhado remontado

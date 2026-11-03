@@ -22,7 +22,7 @@ _Revisado em 2026-11-03 (v0.35.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 116 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | 🔴 | principal **3,14 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
+| Peso dos artefatos | 🔴 | principal **3,16 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -99,7 +99,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 - **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Peso do artefato principal: 3,14 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
+- **Peso do artefato principal: 3,16 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
   folha grande estoura. Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
   virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
   separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.

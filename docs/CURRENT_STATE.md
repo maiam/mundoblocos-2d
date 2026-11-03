@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.35.2_
+_Atualizado em 2026-11-03 — v0.35.3_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -20,7 +20,7 @@ _Atualizado em 2026-11-03 — v0.35.2_
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
 - **Cidade do Despertar** (`domains/town.md`): cidade fixa (igual em toda seed) de 108 × 78 blocos ao norte da
   origem — muralha com torres e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda, Hospedaria,
-  Ferreiro, lojas e casas (sem interiores nem NPCs ainda). Casas vermelhas com a arte fornecida; o resto pintado em código. **Início e renascer sem tenda** na praça inicial. Área
+  Ferreiro, lojas e casas (sem interiores nem NPCs ainda). Casas vermelhas e arbustos com a arte fornecida; o resto pintado em código. **Início e renascer sem tenda** na praça inicial. Área
   protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
 - **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto do spawn, com
   uma única entrada voltada para ele, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só
@@ -88,6 +88,6 @@ _Atualizado em 2026-11-03 — v0.35.2_
 - 116 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,14 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,16 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

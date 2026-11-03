@@ -13,13 +13,17 @@ import type { Sprite } from './textures';
  */
 
 /** Imagens da cidade vindas do pacote de arte (null = pinta em código). */
-export interface TownImages { houseRed: HTMLImageElement | null }
+export interface TownImages { houseRed: HTMLImageElement | null; bushes: HTMLImageElement | null }
 
 /**
  * Faixas da imagem da casa vermelha (px da imagem de 320 de largura, `scripts/extract-town.py`): telhado em fileiras
  * de telhas (a fileira do meio se repete para cobrir casas mais fundas) e parede abaixo do beiral.
  */
-const HOUSE_RED = { roofTop: [0, 27], roofMid: [27, 54], roofBottom: [54, 120], wall: [120, 261], wallX: [0.026, 0.972] } as const;
+const HOUSE_RED = { roofTop: [0, 21], roofMid: [21, 43], roofBottom: [88, 148], wall: [148, 302], wallX: [0.028, 0.97] } as const;
+/** Tira dos arbustos (`town-bushes`): 3 quadros de 120 × 96 px (redondo, alto, largo) na mesma escala. */
+const BUSH_CELL = { w: 120, h: 96 } as const;
+/** Largura de mundo de 1 px da tira: o arbusto redondo (78 px) fica ~1,05 célula. */
+const BUSH_PX = (1.05 * TILE) / 78;
 
 type Ctx = CanvasRenderingContext2D;
 const T = TILE;
@@ -631,6 +635,17 @@ const hedge = () => prop(30, (ctx, cx, b) => {
   ctx.beginPath(); ctx.arc(cx - 7, b - 10, 9, Math.PI * 0.6, Math.PI * 1.3); ctx.arc(cx, b - 16, 10, Math.PI * 1.15, Math.PI * 1.85); ctx.arc(cx + 7, b - 10, 9, Math.PI * 1.7, Math.PI * 0.4); ctx.stroke();
 });
 
+/** Arbusto `i` da tira: escala única, centrado na célula, base no pé dela (o largo transborda para os lados). */
+function bushSprite(img: HTMLImageElement, i: number): Sprite {
+  const k = img.width / (BUSH_CELL.w * 3);
+  const w = BUSH_CELL.w * BUSH_PX;
+  const h = BUSH_CELL.h * BUSH_PX;
+  const [c, ctx] = makeCanvas(w, h);
+  shadow(ctx, w / 2 + 2, h - 3, 0.5 * TILE, 4);
+  ctx.drawImage(img, i * BUSH_CELL.w * k, 0, BUSH_CELL.w * k, BUSH_CELL.h * k, 0, 0, w, h);
+  return { canvas: c, ox: (TILE - w) / 2, oy: TILE - h + 1, w, h, hit: { x: 0, y: TILE - h, w: TILE, h } };
+}
+
 /** Sprites (com variações) de todas as construções e enfeites da cidade. */
 export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
   const m = new Map<BlockId, Sprite[]>();
@@ -658,7 +673,8 @@ export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
   m.set(Block.BARREL, [barrel()]);
   m.set(Block.CRATES, [crates()]);
   m.set(Block.SIGNPOST, [signpost()]);
-  m.set(Block.HEDGE, [hedge()]);
+  // Cerca viva: arbustos da imagem (redondo 2×, alto, largo) ou o desenho em código sem o pacote.
+  m.set(Block.HEDGE, images.bushes ? [0, 0, 1, 2].map((i) => bushSprite(images.bushes!, i)) : [hedge()]);
   return m;
 }
 

@@ -28,6 +28,8 @@ let tent: HTMLImageElement | null = null;
 let chest: HTMLImageElement | null = null;
 /** Cidade: casa de telhado vermelho (imagem fornecida). */
 let townHouseRed: HTMLImageElement | null = null;
+/** Cidade: tira de arbustos (cerca viva). */
+let townBushes: HTMLImageElement | null = null;
 
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -47,7 +49,7 @@ export async function loadBlockArt(): Promise<void> {
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
-  if (a.town) townHouseRed = await load(a.town.houseRed);
+  if (a.town) [townHouseRed, townBushes] = await Promise.all([load(a.town.houseRed), load(a.town.bushes)]);
   if (a.water) {
     const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
     water = { top, flow };
@@ -89,4 +91,8 @@ export function getChestSprite(): HTMLImageElement | null {
 
 export function getTownHouseRed(): HTMLImageElement | null {
   return townHouseRed;
+}
+
+export function getTownBushes(): HTMLImageElement | null {
+  return townBushes;
 }

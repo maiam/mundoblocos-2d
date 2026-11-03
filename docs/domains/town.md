@@ -53,7 +53,8 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
 ## Arte (`render/townArt.ts`)
 **Casa de telhado vermelho: imagem fornecida** (`town-house-red`, no pacote de arte do mundo principal, ADR 0010),
 ajustada a cada tamanho — parede com escala uniforme na largura da casa e telhado remontado em fileiras (topo +
-fileira do meio repetida + beiral; faixas em `HOUSE_RED`). O restante é pintado em canvas (ilustração RPG/anime: contorno quente, luz de cima-esquerda, janelas acesas): **não pesa no
+fileira do meio repetida + beiral; faixas em `HOUSE_RED`). **Cerca viva: arbustos fornecidos** (`town-bushes`,
+tira de 3 quadros: redondo, alto, largo com flores; o redondo vale por 2 no sorteio). O restante é pintado em canvas (ilustração RPG/anime: contorno quente, luz de cima-esquerda, janelas acesas): **não pesa no
 artefato**. Casas com 6 variações (telhado vermelho/azul/alaranjado, oitão ou duas águas, enxaimel ou pedra,
 chaminé), castelo com torres de telhado cônico azul e estandartes, torres redondas com ameias, guilda (escudo com
 espadas), hospedaria (placa de cama), ferreiro (forja acesa, bigorna, fumaça), lojas com toldos, fonte, poço,
