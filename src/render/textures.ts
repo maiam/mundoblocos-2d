@@ -5,7 +5,7 @@ import { art } from './art';
 import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownBushes, getTownHouseRed, getWaterArt } from './blockArt';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
-import { townSprites } from './townArt';
+import { townHouseImages, townSprites } from './townArt';
 
 /**
  * Texturas do mundo em vista 3/4.
@@ -482,7 +482,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     [Block.LIGHT_BLOCK, '#ffe08a'],
     [Block.LAMP, '#ffd27a'],
   ]);
-  if (opts.town) for (const [id, sprites] of townSprites({ houseRed: getTownHouseRed(), bushes: getTownBushes() })) variants.set(id, sprites);
+  if (opts.town) for (const [id, sprites] of townSprites({ houseRed: townHouseImages(getTownHouseRed()), bushes: getTownBushes() })) variants.set(id, sprites);
   const bankColor = new Map<BlockId, string>([
     [Block.GRASS, '#8a5a36'],
     [Block.DIRT, '#8a5a36'],

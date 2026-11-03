@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.35.4 — 2026-11-03
+- **Correção: casa vermelha deformada.** Com uma só imagem para todos os tamanhos, o telhado era remontado
+  (fileiras repetidas + ajuste vertical) para cobrir a profundidade — parecia esticado/duplicado. Agora há **uma
+  imagem por tamanho** (3×2, 4×3, 5×3, desenhadas pelo dono do produto), desenhada sem alteração: só reduzida para a
+  parede medir a largura da casa. A casa 4×2 (sem imagem) não usa vermelho (azul/alaranjado pintados).
+
 ## 0.35.3 — 2026-11-03
 - **Nova arte da casa de telhado vermelho** (telhado com 6 fileiras e parede de dois andares: madeira sobre pedra).
 - **Arbustos da cidade com arte fornecida** (`assets-src/town-bushes.png`): a cerca viva usa 3 arbustos (redondo,

@@ -27,7 +27,7 @@ let tent: HTMLImageElement | null = null;
 /** Baú (sprite do mundo). */
 let chest: HTMLImageElement | null = null;
 /** Cidade: casa de telhado vermelho (imagem fornecida). */
-let townHouseRed: HTMLImageElement | null = null;
+const townHouseRed = new Map<string, HTMLImageElement>();
 /** Cidade: tira de arbustos (cerca viva). */
 let townBushes: HTMLImageElement | null = null;
 
@@ -49,7 +49,10 @@ export async function loadBlockArt(): Promise<void> {
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
-  if (a.town) [townHouseRed, townBushes] = await Promise.all([load(a.town.houseRed), load(a.town.bushes)]);
+  if (a.town) {
+    townBushes = await load(a.town.bushes);
+    for (const [size, url] of Object.entries(a.town.houseRed)) if (url) townHouseRed.set(size, await load(url));
+  }
   if (a.water) {
     const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
     water = { top, flow };
@@ -89,7 +92,8 @@ export function getChestSprite(): HTMLImageElement | null {
   return chest;
 }
 
-export function getTownHouseRed(): HTMLImageElement | null {
+/** Casas vermelhas por tamanho ("3x2", "4x3", "5x3"). */
+export function getTownHouseRed(): Map<string, HTMLImageElement> {
   return townHouseRed;
 }
 

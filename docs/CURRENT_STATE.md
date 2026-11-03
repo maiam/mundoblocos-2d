@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.35.3_
+_Atualizado em 2026-11-03 — v0.35.4_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -88,6 +88,6 @@ _Atualizado em 2026-11-03 — v0.35.3_
 - 116 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,16 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,19 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

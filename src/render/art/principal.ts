@@ -59,7 +59,9 @@ import tentIcon from '../../assets/icon-block-tent.webp?inline';
 import tentSprite from '../../assets/tent.webp?inline';
 import chestIcon from '../../assets/icon-block-chest.webp?inline';
 import chestSprite from '../../assets/chest.webp?inline';
-import townHouseRed from '../../assets/town-house-red.webp?inline';
+import townHouseRed3x2 from '../../assets/town-house-red-3x2.webp?inline';
+import townHouseRed4x3 from '../../assets/town-house-red-4x3.webp?inline';
+import townHouseRed5x3 from '../../assets/town-house-red-5x3.webp?inline';
 import townBushes from '../../assets/town-bushes.webp?inline';
 import waterTop from '../../assets/water-top.webp?inline';
 import waterFlow from '../../assets/water-flow.webp?inline';
@@ -114,7 +116,7 @@ const pack: ArtPack = {
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
   tent: { icon: tentIcon, sprite: tentSprite },
   chest: { icon: chestIcon, sprite: chestSprite },
-  town: { houseRed: townHouseRed, bushes: townBushes },
+  town: { houseRed: { '3x2': townHouseRed3x2, '4x3': townHouseRed4x3, '5x3': townHouseRed5x3 }, bushes: townBushes },
   water: { top: waterTop, flow: waterFlow },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,

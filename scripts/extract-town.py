@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Arte da Cidade do Despertar: recorta e reduz as imagens de construção fornecidas.
+"""Arte da Cidade do Despertar: recorta e reduz as imagens fornecidas.
 
-assets-src/town-house-red.png (casa de telhado vermelho, fundo transparente) → src/assets/town-house-red.png
-(largura 320 px = 5 células em 2×).
+assets-src/town-house-red-sizes.png (casas de telhado vermelho 3×2, 4×3 e 5×3 lado a lado, com legendas embaixo)
+→ src/assets/town-house-red-{3x2,4x3,5x3}.png: cada casa reduzida para a PAREDE medir exatamente w × 64 px
+(w células em 2×), com 24 px de margem de cada lado para o beiral; base da casa no pé da imagem. Sem esticar nem
+repetir partes — o render só posiciona (render/townArt.ts, HOUSE_RED_PAD).
 assets-src/town-bushes.png (3 arbustos lado a lado: redondo, alto, largo) → src/assets/town-bushes.png: tira de
 3 quadros de 120 × 96 px, mesma escala para todos, cada um centrado e com a base no pé do quadro.
 Depois rode scripts/optimize-assets.py (PNG → WebP).
-Imprime as linhas do recorte (telhado/parede) usadas em src/render/townArt.ts (HOUSE_RED_SLICES).
 """
 from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / 'assets-src' / 'town-house-red.png'
-OUT = ROOT / 'src' / 'assets' / 'town-house-red.png'
-WIDTH = 320
+HOUSES_SRC = ROOT / 'assets-src' / 'town-house-red-sizes.png'
+HOUSE_SIZES = [(3, 2), (4, 3), (5, 3)]
+CELL = 64
+PAD = 24
 BUSHES_SRC = ROOT / 'assets-src' / 'town-bushes.png'
 BUSHES_OUT = ROOT / 'src' / 'assets' / 'town-bushes.png'
 BUSH_CELL = (120, 96)
@@ -31,19 +33,47 @@ def solid_bbox(im: Image.Image, min_count: int = 8):
     return cols[0], rows[0], cols[-1] + 1, rows[-1] + 1
 
 
+def runs_of(filled, min_len=40):
+    out, start = [], None
+    for x, f in enumerate(list(filled) + [False]):
+        if f and start is None:
+            start = x
+        if not f and start is not None:
+            if x - start > min_len:
+                out.append((start, x))
+            start = None
+    return out
+
+
+def houses() -> None:
+    """Separa as casas pelas colunas vazias; corta a legenda (primeira linha vazia abaixo da casa)."""
+    im = Image.open(HOUSES_SRC).convert('RGBA')
+    a = im.getchannel('A').point(lambda v: 255 if v > 128 else 0)
+    w, h = a.size
+    px = a.load()
+    top_band = int(h * 0.65)  # legendas ficam abaixo disto
+    cols = [sum(1 for y in range(0, top_band, 2) if px[x, y]) > 3 for x in range(w)]
+    found = runs_of(cols)
+    assert len(found) == len(HOUSE_SIZES), found
+    for (x0, x1), (cw, cd) in zip(found, HOUSE_SIZES):
+        count = lambda y: sum(1 for x in range(x0, x1, 2) if px[x, y])
+        y0 = next(y for y in range(h) if count(y) > 3)
+        bottom = next(y for y in range(int(h * 0.4), h) if count(y) == 0)
+        wall_row = bottom - 20
+        xs = [x for x in range(x0, x1) if px[x, wall_row]]
+        wl, wr = xs[0], xs[-1] + 1
+        s = (cw * CELL) / (wr - wl)
+        crop = im.crop((x0, y0, x1, bottom))
+        scaled = crop.resize((round(crop.width * s), round(crop.height * s)), Image.LANCZOS)
+        canvas = Image.new('RGBA', (cw * CELL + 2 * PAD, scaled.height))
+        canvas.alpha_composite(scaled, (PAD - round((wl - x0) * s), 0))
+        out = ROOT / 'src' / 'assets' / f'town-house-red-{cw}x{cd}.png'
+        canvas.save(out)
+        print(f'casa {cw}x{cd}: {canvas.size}')
+
+
 def main() -> None:
-    im = Image.open(SRC).convert('RGBA')
-    box = solid_bbox(im)
-    crop = im.crop(box)
-    s = WIDTH / crop.width
-    out = crop.resize((WIDTH, round(crop.height * s)), Image.LANCZOS)
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    out.save(OUT)
-    # Fim do telhado (beiral): primeira linha, de baixo para cima no terço superior, com madeira no centro.
-    px = crop.load()
-    cx = crop.width // 2 - 150
-    eave = next(y for y in range(int(crop.height * 0.3), crop.height) if px[cx, y][0] < 180 and px[cx, y][1] > 60)
-    print(f'recorte {box} → {out.size}; beiral em y={round(eave * s)} (de {out.height})')
+    houses()
     bushes()
 
 

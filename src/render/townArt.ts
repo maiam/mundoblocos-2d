@@ -9,17 +9,14 @@ import type { Sprite } from './textures';
  * Cada construção é UM sprite sobre o canto inferior esquerdo da área que ocupa (as outras células são
  * `TOWN_PART`, sem arte): topo = telhado visto de cima (profundidade × TILE) e frente = parede (altura própria).
  * Variações (cor do telhado, estilo, chaminé) são escolhidas pelo render por posição, fixas como a cidade.
- * Casas de telhado vermelho usam a imagem fornecida (`town-house-red`, via pacote de arte), ajustada ao tamanho.
+ * Casas de telhado vermelho usam as imagens fornecidas, uma por tamanho (`town-house-red-WxD`, via pacote de arte).
  */
 
 /** Imagens da cidade vindas do pacote de arte (null = pinta em código). */
-export interface TownImages { houseRed: HTMLImageElement | null; bushes: HTMLImageElement | null }
+export interface TownImages { houseRed: Map<BlockId, HTMLImageElement>; bushes: HTMLImageElement | null }
 
-/**
- * Faixas da imagem da casa vermelha (px da imagem de 320 de largura, `scripts/extract-town.py`): telhado em fileiras
- * de telhas (a fileira do meio se repete para cobrir casas mais fundas) e parede abaixo do beiral.
- */
-const HOUSE_RED = { roofTop: [0, 21], roofMid: [21, 43], roofBottom: [88, 148], wall: [148, 302], wallX: [0.028, 0.97] } as const;
+/** Margem (px da imagem, cada lado) além da parede nas imagens das casas vermelhas (`scripts/extract-town.py`). */
+const HOUSE_RED_PAD = 24;
 /** Tira dos arbustos (`town-bushes`): 3 quadros de 120 × 96 px (redondo, alto, largo) na mesma escala. */
 const BUSH_CELL = { w: 120, h: 96 } as const;
 /** Largura de mundo de 1 px da tira: o arbusto redondo (78 px) fica ~1,05 célula. */
@@ -270,33 +267,19 @@ function buildingSprite(w: number, d: number, wallH: number, headroom: number, d
 }
 
 /**
- * Casa a partir da imagem: a parede ocupa a largura da construção (escala uniforme); o telhado é remontado em
- * fileiras (topo + fileiras do meio repetidas + fileira do beiral) até cobrir a profundidade, com ajuste fino final.
+ * Casa a partir da imagem do tamanho dela (desenhada para w × d pelo dono do produto): só posiciona, sem esticar.
+ * A imagem tem a parede com exatamente w × 64 px e `HOUSE_RED_PAD` px de margem de cada lado (beiral), em 2×;
+ * a base fica no pé da célula do canto inferior esquerdo.
  */
 function imageHouse(img: HTMLImageElement, w: number, d: number): Sprite {
-  const k = img.width / 320; // imagem pode ter outra resolução: faixas são em px da versão de 320
-  const [wx0, wx1] = HOUSE_RED.wallX;
-  const drawW = (w * T) / (wx1 - wx0);
-  const s = drawW / img.width;
-  const band = (b: readonly [number, number]) => (b[1] - b[0]) * k * s;
-  const wallH = band(HOUSE_RED.wall);
-  const fixed = band(HOUSE_RED.roofTop) + band(HOUSE_RED.roofBottom);
-  const mid = band(HOUSE_RED.roofMid);
-  const reps = Math.max(0, Math.round((d * T - fixed) / mid));
-  const natural = fixed + reps * mid;
-  const fit = (d * T) / natural;
-  return buildingSprite(w, d, wallH, 4, (ctx, pad, total) => {
-    const x = pad - drawW * wx0;
-    shadow(ctx, pad + (w * T) / 2 + 4, total - 2, (w * T) / 2 + 3, 6);
-    const draw = (b: readonly [number, number], y: number, h: number) =>
-      ctx.drawImage(img, 0, b[0] * k, img.width, (b[1] - b[0]) * k, x, y, drawW, h);
-    draw(HOUSE_RED.wall, total - wallH, wallH);
-    let y = total - wallH - d * T;
-    draw(HOUSE_RED.roofTop, y, band(HOUSE_RED.roofTop) * fit);
-    y += band(HOUSE_RED.roofTop) * fit;
-    for (let r = 0; r < reps; r++) { draw(HOUSE_RED.roofMid, y, mid * fit); y += mid * fit; }
-    draw(HOUSE_RED.roofBottom, y, band(HOUSE_RED.roofBottom) * fit + 0.5);
-  });
+  const scale = (w * T) / (img.width - 2 * HOUSE_RED_PAD); // px da imagem → px de mundo (parede = w células)
+  const sw = img.width * scale;
+  const sh = img.height * scale;
+  const pad = HOUSE_RED_PAD * scale;
+  const [c, ctx] = makeCanvas(sw, sh);
+  shadow(ctx, pad + (w * T) / 2 + 4, sh - 2, (w * T) / 2 + 3, 6);
+  ctx.drawImage(img, 0, 0, sw, sh);
+  return { canvas: c, ox: -pad, oy: T - sh, w: sw, h: sh, hit: { x: 0, y: T - Math.min(sh, d * T + T), w: w * T, h: Math.min(sh, d * T + T) } };
 }
 
 function houseVariants(id: BlockId, images: TownImages): Sprite[] {
@@ -304,8 +287,17 @@ function houseVariants(id: BlockId, images: TownImages): Sprite[] {
   const out: Sprite[] = [];
   for (let v = 0; v < 6; v++) {
     const roof = ROOFS[v % ROOFS.length];
-    // Telhado vermelho: imagem fornecida (quando o pacote traz); as outras cores seguem pintadas em código.
-    if (images.houseRed && roof.base === ROOFS[0].base) { out.push(imageHouse(images.houseRed, w, d)); continue; }
+    // Telhado vermelho: imagem fornecida para este tamanho; sem imagem do tamanho (4×2), as vagas vermelhas viram
+    // azul/alaranjado pintados (não mistura casa vermelha pintada com a de imagem).
+    const img = images.houseRed.get(id);
+    if (roof.base === ROOFS[0].base) {
+      if (img) { out.push(imageHouse(img, w, d)); continue; }
+      if (images.houseRed.size) {
+        const alt = ROOFS[v % 2 ? 1 : 2];
+        out.push(buildingSprite(w, d, 44, 26, (ctx, pad, total) => house(ctx, w, d, 44, { roof: alt, gable: v % 2 === 0, stone: v === 3, chimney: true }, pad, total)));
+        continue;
+      }
+    }
     const o: HouseOpts = { roof, gable: v % 2 === 0, stone: v === 3, chimney: v % 3 !== 1, smoke: v === 2 };
     out.push(buildingSprite(w, d, 44, 26, (ctx, pad, total) => house(ctx, w, d, 44, o, pad, total)));
   }
@@ -644,6 +636,17 @@ function bushSprite(img: HTMLImageElement, i: number): Sprite {
   shadow(ctx, w / 2 + 2, h - 3, 0.5 * TILE, 4);
   ctx.drawImage(img, i * BUSH_CELL.w * k, 0, BUSH_CELL.w * k, BUSH_CELL.h * k, 0, 0, w, h);
   return { canvas: c, ox: (TILE - w) / 2, oy: TILE - h + 1, w, h, hit: { x: 0, y: TILE - h, w: TILE, h } };
+}
+
+/** Imagens das casas vermelhas por tamanho ("3x2") → por id de construção (tamanho em `TOWN_SIZES`). */
+export function townHouseImages(bySize: Map<string, HTMLImageElement>): Map<BlockId, HTMLImageElement> {
+  const out = new Map<BlockId, HTMLImageElement>();
+  for (const id of [Block.HOUSE_S, Block.HOUSE_M, Block.HOUSE_L, Block.HOUSE_XL]) {
+    const [w, d] = townSize(id);
+    const img = bySize.get(`${w}x${d}`);
+    if (img) out.set(id, img);
+  }
+  return out;
 }
 
 /** Sprites (com variações) de todas as construções e enfeites da cidade. */
