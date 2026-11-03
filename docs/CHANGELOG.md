@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.34.1 — 2026-11-03
+- **Porta entre qualquer madeira ou pedra**: as 8 pedras servem de batente (antes só a Pedra Bruta). Propriedade nova
+  `stone` em `BlockDef` (fonte única do que é pedra); teste da porta cobre as 7 variações.
+
 ## 0.34.0 — 2026-11-03
 - **8 variações de pedra** (prancha 3/4 fornecida, `scripts/extract-stones.py`): a pedra do mundo passa a ser a
   **Pedra Bruta** (mesmo id 25; montanhas, pedregulhos, batente de porta e água seguem iguais) e entram 7 blocos novos:

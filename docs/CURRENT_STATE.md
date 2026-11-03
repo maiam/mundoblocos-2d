@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.34.0_
+_Atualizado em 2026-11-03 — v0.34.1_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -50,7 +50,7 @@ _Atualizado em 2026-11-03 — v0.34.0_
   (animação de cavar) amassa Terra/Grama/Arada → Caminho de Terra e, segurando, cava só blocos macios (terra, areia…)
   e destrói plantas **sem drop**; não ataca; a **picareta** (animação de minerar), segurando, quebra qualquer
   bloco e plantas (sem drop), menos madeira/árvore; não ataca.
-- **Porta de Carvalho**: colocada no chão **entre dois batentes de madeira ou pedra** (Tora/Tábua de Carvalho ou Pedra à esquerda e à
+- **Porta de Carvalho**: colocada no chão **entre dois batentes de madeira ou pedra** (qualquer madeira ou qualquer uma das 8 pedras à esquerda e à
   direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Habilidades** (Construtor): receitas de Tábua (1 tora → 2), Porta (4 tábuas) e Tenda (10 sedas + 10 tábuas + 4

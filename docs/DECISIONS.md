@@ -61,7 +61,7 @@
 | Coleta: materiais coletados (bloco volta como item, árvore → 2–3 toras), grade de 8 compartilhada + bolsa no 9º, troca tocando item e espaço, morte perde só os materiais, começo com 1 porta, Santuário infinito | domains/farming |
 | Combate: 5 ♥; mordidas ½/1/2 ♥; morte → renasce no início com os itens; espólios seda/presa/Coração da Rainha; todas as aranhas renascem (Rainha 300 s) longe da heroína; arte provisória até as pranchas | domains/dungeon |
 | Perseguição por mapa de distâncias (BFS a cada 0,25 s) em `Entities`, não por monstro | domains/dungeon |
-| Porta só entre batentes à esquerda e à direita: cubo de madeira (`organic: 'wood'`) ou de Pedra no nível 0, podendo misturar; quebrar um batente depois não derruba a porta | domains/world |
+| Porta só entre batentes à esquerda e à direita: cubo de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`, as 8 variações) no nível 0, podendo misturar; quebrar um batente depois não derruba a porta | domains/world |
 | Pedras: a pedra do mundo vira Pedra Bruta (mesmo id, salvamentos intactos); 7 variações são materiais novos; receitas 1:1 só para Irregular, Tijolo e Chão; Lisa, Polida, Rachada e Tijolo Rachado ficam para receitas/construções futuras | domains/world, domains/farming |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |
 

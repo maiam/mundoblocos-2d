@@ -8,7 +8,7 @@
 - **Materiais** (prancha de blocos, únicos blocos de construção): Terra, Terra com Grama, Terra Arada,
   Caminho de Terra, Areia, Pedra Bruta, Tora de Carvalho, Tábua de Carvalho e 7 variações de pedra (Irregular, Tijolo,
   Chão, Lisa, Polida, Rachada, Tijolo Rachado — ids 34–39 e 42) (`MATERIALS`; coluna do atlas = índice na lista).
-  O gerador só usa a Pedra Bruta; batente de porta e substituir água aceitam só ela entre as pedras. O **mesmo id** serve de
+  O gerador só usa a Pedra Bruta; substituir água aceita só ela entre as pedras; **qualquer pedra** (`stone: true`) serve de batente de porta. O **mesmo id** serve de
   chão natural (camada de chão) e de cubo (camada de objeto).
 - Só-chão: Água (líquida) e Buraco. Objetos naturais: Carvalho, Cerejeira, Cacto, Capim, Flor, Trigo.
 - Chunk = 16×16 células, chave `"cx,cy"`, nos dois eixos do mapa (sem limite).
@@ -39,7 +39,7 @@
   quebra lê antes para soltar os itens). Tenda: derrubar a atual zera `World.tent`.
 - **Tenda 2×2** (`tentCells`, `tentAnchor`, `isFootprintFree`, `footprint`/`footprintAnchors` para quem coloca): canto `TENT` + 3 `TENT_PART`; `breakTargetId` de uma
   parte = `TENT`; `breakBlock` remove as 4.
-- Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira (Tora/Piso) ou de Pedra no nível 0 (`hasDoorFrame`; pode misturar).
+- Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`) no nível 0 (`hasDoorFrame`; pode misturar).
 - Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`
   só fecha se a célula estiver livre de entidades (`canToggleDoorAt`).
 - Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.

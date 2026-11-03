@@ -395,10 +395,10 @@ export class World {
   /** Cubo de madeira (Tora ou Tábua de Carvalho) ou de Pedra no nível 0 — serve de batente para a porta. */
   private isDoorJamb(x: number, y: number): boolean {
     const d = blockDef(this.getObject(x, y));
-    return d.shape === 'cube' && (d.organic === 'wood' || d.id === Block.STONE);
+    return d.shape === 'cube' && (d.organic === 'wood' || d.stone);
   }
 
-  /** A porta só vai entre dois batentes (madeira ou pedra, podem misturar): células da esquerda e da direita. */
+  /** A porta só vai entre dois batentes (qualquer bloco de madeira ou de pedra, podem misturar): células da esquerda e da direita. */
   hasDoorFrame(x: number, y: number): boolean {
     return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
   }

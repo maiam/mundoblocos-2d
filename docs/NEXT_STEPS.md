@@ -55,7 +55,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
 5. **Fonte das pedras sem receita** (Lisa, Polida, Rachada, Tijolo Rachado): receitas futuras ou **construções prontas**
    (ruínas/estruturas geradas pela seed — mudam o mapa; rodar os testes de determinismo). Decidir também se as
-   variações valem como batente de porta e se substituem água (hoje só a Pedra Bruta).
+   variações substituem água (hoje só a Pedra Bruta; batente de porta já aceita todas).
 
 ### Fase 4 — Mundo vivo e conteúdo
 1. Ovelhas (e novos animais) em outros chunks, por bioma, com limite.
@@ -80,7 +80,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 |---|---|
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
-| Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; contam como batente/substituem água? | Fase 3 |
+| Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; substituem água? | Fase 3 |
 | Painel do Personagem: o que mostrar (vida, armaduras, …) | Fase 3/4 |
 | Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |

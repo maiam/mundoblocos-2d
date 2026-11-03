@@ -139,15 +139,17 @@ export interface BlockDef {
   organic: 'wood' | 'plant' | null;
   /** Bloco macio (terra, areia…): o que a pá consegue cavar além das plantas. */
   soft: boolean;
+  /** Bloco de pedra (Pedra Bruta e variações): serve de batente de porta, como a madeira. */
+  stone: boolean;
 }
 
 const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'ground', shape: 'flat', solid: false, standable: true, liquid: false,
-  breakable: true, placeable: false, glow: false, organic: null, soft: false, ...extra,
+  breakable: true, placeable: false, glow: false, organic: null, soft: false, stone: false, ...extra,
 });
 const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'object', shape: 'cube', solid: true, standable: false, liquid: false,
-  breakable: true, placeable: true, glow: false, organic: null, soft: false, ...extra,
+  breakable: true, placeable: true, glow: false, organic: null, soft: false, stone: false, ...extra,
 });
 
 const defs: BlockDef[] = [
@@ -161,14 +163,14 @@ const defs: BlockDef[] = [
   object(Block.TILLED, 'Terra Arada', { soft: true }),
   object(Block.PATH, 'Caminho de Terra', { soft: true }),
   object(Block.SAND, 'Areia', { soft: true }),
-  object(Block.STONE, 'Pedra Bruta'),
-  object(Block.STONE_COBBLE, 'Pedra Irregular'),
-  object(Block.STONE_BRICK, 'Tijolo de Pedra'),
-  object(Block.STONE_FLOOR, 'Chão de Pedra'),
-  object(Block.STONE_SMOOTH, 'Pedra Lisa'),
-  object(Block.STONE_POLISHED, 'Pedra Polida'),
-  object(Block.STONE_CRACKED, 'Pedra Rachada'),
-  object(Block.STONE_BRICK_CRACKED, 'Tijolo de Pedra Rachado'),
+  object(Block.STONE, 'Pedra Bruta', { stone: true }),
+  object(Block.STONE_COBBLE, 'Pedra Irregular', { stone: true }),
+  object(Block.STONE_BRICK, 'Tijolo de Pedra', { stone: true }),
+  object(Block.STONE_FLOOR, 'Chão de Pedra', { stone: true }),
+  object(Block.STONE_SMOOTH, 'Pedra Lisa', { stone: true }),
+  object(Block.STONE_POLISHED, 'Pedra Polida', { stone: true }),
+  object(Block.STONE_CRACKED, 'Pedra Rachada', { stone: true }),
+  object(Block.STONE_BRICK_CRACKED, 'Tijolo de Pedra Rachado', { stone: true }),
 
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
   object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),

@@ -28,7 +28,7 @@ describe('Porta de Carvalho', () => {
     expect(toolCanBreak('pickaxe', Block.OAK_DOOR)).toBe(false);
   });
 
-  it('só vai entre batentes de madeira (tora/piso) ou pedra à esquerda e à direita', () => {
+  it('só vai entre batentes de madeira ou de qualquer pedra à esquerda e à direita', () => {
     const w = new World(7);
     const [x, y] = freeCell(w);
     expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(false); // sem batentes
@@ -45,6 +45,12 @@ describe('Porta de Carvalho', () => {
     w.breakBlock(x + 1, y);
     w.placeBlock(x + 1, y, Block.OAK_PLANKS);
     expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(true);
+    // Qualquer variação de pedra serve de batente.
+    for (const s of [Block.STONE_COBBLE, Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_SMOOTH, Block.STONE_POLISHED, Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED]) {
+      w.breakBlock(x - 1, y);
+      w.placeBlock(x - 1, y, s);
+      expect(w.canPlace(x, y, Block.OAK_DOOR), BLOCKS[s].name).toBe(true);
+    }
     // Batentes acima/abaixo não contam (só esquerda e direita).
     const [ax, ay] = [x + 5, y];
     w.placeBlock(ax, ay - 1, Block.OAK_LOG);
