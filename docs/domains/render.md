@@ -27,7 +27,7 @@ Apenas apresentação; lê `World`, nunca escreve.
 
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):
-  material → topo contínuo do atlas (girado/espelhado por célula, exceto orientados — Tábua, Tijolo, Chão e Tijolo Rachado de Pedra, Pedra Polida) · água → tile procedural ·
+  material → topo contínuo do atlas **sempre na direção desenhada** (nunca gira nem espelha; só a variação, quando há mais de uma, é sorteada por célula) · água → tile procedural ·
   `HOLE` → fundo escuro + parede de terra no lado norte; depois barranca e espuma nas margens, grade sutil e
   sombras projetadas por cubos e árvores.
 - Pilhas (até 3): cada nível é desenhado `CUBE_FRONT` px acima do anterior (mesmo sprite de cubo); sombra no chão cresce

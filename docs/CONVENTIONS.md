@@ -38,6 +38,9 @@
 - Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
 
 ## Arte e assets
+- **Texturas sempre na direção em que foram desenhadas** (regra do dono do produto, 2026-11-03): chão, cubos e
+  construções nunca giram nem espelham por célula — ele planeja a arte contando com essa direção. Para variar, ele
+  envia **variações** (ex.: 3 gramas), sorteadas por célula, cada uma na direção desenhada.
 - Estilo: ilustração de fantasia RPG/anime; sombras puxam para índigo, luz de cima-esquerda, contornos
   coloridos, brilhos em estrela.
 - Folhas 4×4 na ordem frente, esquerda, direita, costas (`--rows-map` normaliza; `m` espelha); quadros com a

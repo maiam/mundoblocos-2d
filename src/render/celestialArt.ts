@@ -11,10 +11,6 @@ import { getCelestialAtlas } from './blockArt';
 interface Style {
   /** Contorno desenhado ao redor do cubo (cor escura do próprio material). */
   outline: string;
-  /** Desenho com direção/centro: no chão não gira nem espelha. */
-  oriented?: boolean;
-  /** Textura em faixas (nuvens): no chão não gira nem espelha (emenda pelo topo contínuo). */
-  mirrorOnly?: boolean;
 }
 
 const RES = 2; // mesma resolução das demais texturas (TEX_RES)
@@ -22,23 +18,23 @@ const T = TILE;
 const F = CUBE_FRONT;
 
 export const CELESTIAL_STYLE: Record<number, Style> = {
-  [Block.CLOUD_SOLID]: { outline: '#8b90c8', mirrorOnly: true },
-  [Block.CLOUD_ETHEREAL]: { outline: '#5c64b8', mirrorOnly: true },
+  [Block.CLOUD_SOLID]: { outline: '#8b90c8' },
+  [Block.CLOUD_ETHEREAL]: { outline: '#5c64b8' },
   [Block.MARBLE_CELESTIAL]: { outline: '#a8957a' },
-  [Block.MARBLE_ORNATE]: { outline: '#a9813a', oriented: true },
+  [Block.MARBLE_ORNATE]: { outline: '#a9813a' },
   [Block.STONE_CELESTIAL]: { outline: '#8f857a' },
-  [Block.STONE_GOLDEN]: { outline: '#a07a30', oriented: true },
+  [Block.STONE_GOLDEN]: { outline: '#a07a30' },
   [Block.GRASS_CELESTIAL]: { outline: '#4a6a24' },
   [Block.GRASS_FLOWERY]: { outline: '#4a6a24' },
   [Block.MOSS_LUMINOUS]: { outline: '#5f8a2a' },
   [Block.EARTH_SACRED]: { outline: '#5a3420' },
   [Block.EARTH_FLORAL]: { outline: '#5a3420' },
-  [Block.EARTH_CULTIVATED]: { outline: '#4e2e1a', oriented: true },
+  [Block.EARTH_CULTIVATED]: { outline: '#4e2e1a' },
   [Block.WATER_SACRED]: { outline: '#1f7fae' },
-  [Block.WATER_CRYSTAL]: { outline: '#1a6aa0', oriented: true },
-  [Block.CRYSTAL_LIFE]: { outline: '#9a4aa8', oriented: true },
-  [Block.LIGHT_BLOCK]: { outline: '#b8862a', oriented: true },
-  [Block.WOOD_CELESTIAL]: { outline: '#9a8264', oriented: true },
+  [Block.WATER_CRYSTAL]: { outline: '#1a6aa0' },
+  [Block.CRYSTAL_LIFE]: { outline: '#9a4aa8' },
+  [Block.LIGHT_BLOCK]: { outline: '#b8862a' },
+  [Block.WOOD_CELESTIAL]: { outline: '#9a8264' },
   [Block.FOLIAGE_GOLDEN]: { outline: '#8a6418' },
 };
 

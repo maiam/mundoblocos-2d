@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.39.1 — 2026-11-03
+- **Texturas sempre na direção desenhada** (pedido do dono do produto): o chão deixava alguns materiais girados ou
+  espelhados ao acaso por célula para disfarçar a repetição; agora todo bloco aparece exatamente como a arte foi
+  criada. A variedade passa a vir só das variações enviadas (ex.: 3 gramas), cada uma na direção original.
+
 ## 0.39.0 — 2026-11-03
 - **Vida e dano com números (Fase P, entrega 1).** Heroína com **100 de vida** numa **barra com número** (no lugar dos
   corações), ataque 5 e defesa 2. Dano = ataque + poder da arma − defesa (mínimo 1), **±10%** de variação e **5% de
