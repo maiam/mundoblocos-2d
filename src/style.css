@@ -302,9 +302,22 @@ html, body {
   gap: 6px;
   pointer-events: none;
 }
-.hearts { display: flex; gap: 2px; opacity: 0; transform: translateY(-4px); transition: opacity .25s ease, transform .25s ease; }
-.hearts.shown { opacity: 1; transform: none; }
-.hearts svg { width: 22px; height: 20px; filter: drop-shadow(0 1px 1px rgba(20, 12, 40, .6)); }
+.health {
+  position: relative; width: 168px; height: 18px; border-radius: 9px; overflow: hidden;
+  background: rgba(28, 16, 48, .85); border: 1.5px solid #1c1030; box-shadow: 0 1px 2px rgba(20, 12, 40, .6);
+  opacity: 0; transform: translateY(-4px); transition: opacity .25s ease, transform .25s ease;
+}
+.health.shown { opacity: 1; transform: none; }
+.health-fill {
+  position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: 8px;
+  background: linear-gradient(180deg, #ff8aa0 0%, #ff4d6d 55%, #d93556 100%); transition: width .2s ease;
+}
+.health.low .health-fill { background: linear-gradient(180deg, #ffb36b 0%, #ff6a3d 55%, #d9412b 100%); }
+.health-text {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 1px rgba(20, 12, 40, .9);
+}
 .loot { display: flex; gap: 6px; }
 .loot-item {
   display: flex; align-items: center; gap: 3px; padding: 2px 7px 2px 3px; border-radius: 10px;
@@ -314,10 +327,11 @@ html, body {
 .loot-item[hidden] { display: none; }
 .loot-item img { width: 20px; height: 20px; }
 @media (max-height: 500px) and (orientation: landscape) {
-  .hearts svg { width: 18px; height: 16px; }
+  .health { width: 140px; height: 16px; }
+  .health-text { font-size: 10px; }
   .loot-item img { width: 16px; height: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .hearts { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .health, .health-fill { transition: none; } }
 
 /* Menu (☰ no canto superior direito) e painel. */
 .menu-button {

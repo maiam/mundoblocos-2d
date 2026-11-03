@@ -23,6 +23,7 @@
 | Sem backend neste repositório; persistência futura via core | PROJECT_CONTEXT |
 | Nome oficial: **Orvalis** (mundo de fantasia); site em `orvalis.pensamentos.online` (Hostinger; provisório — `maiamapps.com.br` indisponível por enquanto); repositório, pacote e chaves de salvamento mantêm "mundoblocos" | PROJECT_CONTEXT, OPERATIONS |
 | Fluxo de publicação: `main` = site no ar; um PR por entrega com título de versão; merge automático (método *merge*) no fim da entrega, depois da Verificação (GitHub Actions) passar | CONVENTIONS, OPERATIONS |
+| Fórmula de dano única (`world/progression.ts`): ataque + arma − defesa, mínimo 1, ±10%, crítico 5% ×1,5; heroína nível 1 = 100 vida/5 ataque/2 defesa; espada 12, machado 7; regeneração 5%/1,5 s após 6 s | domains/dungeon |
 | Progressão (Fase P): vida em barra com número; atributos sobem sozinhos ao subir de nível; morte perde 10% do XP do nível atual sem descer de nível; profissões iniciais Lenhador, Minerador, Agricultor e Construtor | NEXT_STEPS Fase P |
 | Visão: mundo de progressão — cidades e dungeons por faixa de nível; Cidade 1 recebe novatos e os personagens migram para cidades de nível maior conforme evoluem | PROJECT_CONTEXT, NEXT_STEPS Fase 6 |
 | Chunks quadrados 16×16 nos dois eixos | domains/world |
@@ -65,7 +66,7 @@
 | Tablet (toque, lado menor ≥ 600 px): toque na tela = clique do computador, sem botão de ação; celular segue com o botão | domains/player |
 | Morte: perde tudo menos as ferramentas (substitui "perde só os materiais"); Tenda é madeira (machado quebra) e a picareta também a quebra por exceção (`alsoBreaks`) | domains/farming |
 | Coleta: materiais coletados (bloco volta como item, árvore → 2–3 toras), grade de 8 compartilhada + bolsa no 9º, troca tocando item e espaço, morte perde só os materiais, começo com 1 porta, Santuário infinito | domains/farming |
-| Combate: 5 ♥; mordidas ½/1/2 ♥; morte → renasce no início com os itens; espólios seda/presa/Coração da Rainha; todas as aranhas renascem (Rainha 300 s) longe da heroína; arte provisória até as pranchas | domains/dungeon |
+| Combate (v0.26; vida e dano refeitos na v0.39, ver Progressão): 5 ♥; mordidas ½/1/2 ♥; morte → renasce no início com os itens; espólios seda/presa/Coração da Rainha; todas as aranhas renascem (Rainha 300 s) longe da heroína; arte provisória até as pranchas | domains/dungeon |
 | Perseguição por mapa de distâncias (BFS a cada 0,25 s) em `Entities`, não por monstro | domains/dungeon |
 | Porta só entre batentes à esquerda e à direita: cubo de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`, as 8 variações) no nível 0, podendo misturar; quebrar um batente depois não derruba a porta | domains/world |
 | Cidade do Despertar: 108 × 78, igual em toda seed, início e renascer sem tenda; nada quebra/coloca dentro; ruas de Pedra Irregular + Rachada, muralha de Tijolo + Tijolo Rachado; arte das construções criada livremente (pintada em código); sem NPCs/interiores na V1 | domains/town, adr/0012 |

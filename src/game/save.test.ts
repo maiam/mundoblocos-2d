@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
+import { MONSTER_STATS } from '../world/progression';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities } from './entities';
@@ -125,6 +126,14 @@ describe('Salvamento automático', () => {
     expect(v1.inventory['block:28']).toBe(1);
     expect(v1.inventory.wheat).toBe(3);
     expect(v1.hotbar?.slice(0, 2)).toEqual(['tool:sword', 'tool:hoe']);
+    // v4 → v5 (vida com números): heroína de meios corações para pontos; monstros de golpes para pontos.
+    const v4 = migrate({
+      ...d2, v: 4, player: { ...d2.player, hp: 6 },
+      dungeon: { monsters: [{ kind: 'spider-big', x: 0, y: 0, homeX: 0, homeY: 0, hp: 2 }], respawns: [] },
+    })!;
+    expect(v4.v).toBe(5);
+    expect(v4.player.hp).toBe(60);
+    expect(v4.dungeon!.monsters[0].hp).toBe(Math.round(MONSTER_STATS['spider-big'].hp / 2));
     // Versão desconhecida → começa do zero; armazenamento bloqueado → jogo segue sem salvar.
     expect(migrate({ ...d2, v: 999 })).toBeNull();
     storage.setItem('mundoblocos:save:principal:9', '{quebrado');

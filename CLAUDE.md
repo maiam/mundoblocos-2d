@@ -17,7 +17,8 @@ operacional e faz parte da entrega.
   documente a dependência em `NEXT_STEPS.md` em vez de criar servidor aqui.
 - **Fontes de verdade:** mapa e regras de pisar/colocar/quebrar/plantar → `World` (`src/world/world.ts`);
   terreno não editado → `WorldGenerator` (função pura da seed); propriedades de bloco → `world/blocks.ts`;
-  itens/ferramentas/drops → `world/items.ts`; aparência → `src/render/`.
+  itens/ferramentas/drops → `world/items.ts`; números de vida, dano, atributos e progressão → `world/progression.ts`;
+  aparência → `src/render/`.
 - `src/world/` **não usa DOM nem `Math.random()`** (testável em Node, determinístico por seed).
 - `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula
   (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; cursor e botão de ação só escolhem a célula.

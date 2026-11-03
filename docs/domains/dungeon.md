@@ -45,27 +45,35 @@ passagem e o chefe dentro; monstros em chão livre do interior; área protegida.
   **chefe fica preso à câmara da Rainha** (`bounds = bossRoom`).
 
 ## Monstros (`game/monster.ts`)
-- `Monster extends Walker`; atributos em `MONSTERS` (fonte única):
+- `Monster extends Walker`. **Comportamento** em `MONSTERS` (`game/monster.ts`: movimento, visão, intervalo da mordida,
+  renascimento, morte); **ficha de combate** em `MONSTER_STATS` (`world/progression.ts`, fonte única de números):
 
-  | Tipo | Vida (golpes) | Mordida (½ corações) | Intervalo | Visão (passos ≈ ×1,6) | Renasce em |
-  |---|---|---|---|---|---|
-  | Aranha pequena | 2 | 1 (½ ♥) | 1,0 s | 6 | 40 s |
-  | Aranha grande | 4 | 2 (1 ♥) | 1,2 s | 7 | 60 s |
-  | Rainha (chefe) | 14 | 4 (2 ♥) | 1,6 s | 9 | 300 s |
+  | Tipo | Vida | Ataque | Defesa | Intervalo | Visão (passos ≈ ×1,6) | Renasce em |
+  |---|---|---|---|---|---|---|
+  | Aranha pequena | 20 | 8 | 0 | 1,0 s | 6 | 40 s |
+  | Aranha grande | 45 | 14 | 2 | 1,2 s | 7 | 60 s |
+  | Rainha (chefe) | 180 | 36 | 6 | 1,6 s | 9 | 300 s |
 - **Perseguição pelos corredores**: com a personagem dentro da dungeon, `Entities` recalcula a cada 0,25 s um mapa de
   distâncias (BFS pelo chão da área, a partir da célula dela); o monstro persegue se estiver a até ~visão×1,6 passos
   e anda para a célula vizinha mais próxima dela; encostado (`reach`), pára e **morde** (`tryBite`).
-- **Mordida**: dano do tipo na heroína (`Player.hurt`), que fica invencível 0,9 s e recua.
-- Golpe (espada/machado, `Entities.strike`): −1 de vida, pisca 0,35 s, recua; barra de vida quando ferido.
+- **Dano (fórmula única, `rollDamage`)**: ataque − defesa do alvo (mínimo 1), ±10% de variação, 5% de crítico (×1,5).
+- **Mordida**: ataque da aranha − defesa da heroína (`Player.hurt`), que fica invencível 0,9 s e recua.
+- Golpe (espada/machado, `Entities.strike`): ataque da heroína + poder da arma (espada 12, machado 7) − defesa da aranha;
+  pisca 0,35 s, recua; barra de vida quando ferido. Com a espada: pequena ~2 golpes, grande ~3, Rainha ~16.
+- Cada dano que entra avisa o `Game` (`Entities.onDamage`) e aparece como **número subindo** (render
+  `DamageNumbers`): branco no inimigo, vermelho na heroína, amarelo e maior no crítico.
 - **Derrotado**: sai do jogo, toca a morte (folha própria: 0,7 / 0,9 / 1,6 s por tipo, `MONSTERS.deathSeconds`), chama
   `Entities.onMonsterKilled` (o `Game` solta os espólios de `monsterDrops`) e agenda o **renascimento** no ponto de
   nascimento após o tempo do tipo — **todos renascem, inclusive a Rainha** — só com a heroína a > 10 células
   (senão tenta de novo a cada 5 s). Estado de execução: ao recarregar, renascem todos.
 
 ## Heroína em combate (`game/player.ts`)
-- **5 corações** (`MAX_HP` = 10 meios). Regenera ½ coração a cada 3 s depois de 6 s sem dano.
-- **Derrotada → renasce no início** com vida cheia e **mantém os itens** (2 s de invencibilidade).
-- HUD: corações no canto superior esquerdo só quando importam (na dungeon ou ferida); contador de espólios coletados.
+- **Vida em pontos** (`Player.stats`, de `playerStats` em `world/progression.ts`): nível 1 = 100 de vida, ataque 5,
+  defesa 2. Regenera 5% da vida máxima a cada 1,5 s depois de 6 s sem dano (`REGEN`).
+- **Derrotada → renasce** (última tenda ou praça inicial da cidade) com vida cheia, perdendo tudo menos as
+  ferramentas (2 s de invencibilidade).
+- HUD: **barra de vida com número** ("85 / 100"; laranja abaixo de 30%) no canto superior esquerdo só quando importa
+  (na dungeon ou ferida); contador de espólios coletados.
 - Render: heroína pisca invencível; vinheta vermelha ao levar dano; **penumbra** dentro da dungeon; **farol** roxo na
   entrada e **seta** na borda da tela apontando para ela quando fora de vista.
 

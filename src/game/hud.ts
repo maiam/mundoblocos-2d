@@ -15,14 +15,9 @@ export interface HudHandlers {
   onSelect(i: number): void;
   /** Mundo com coleta: personagem (10), habilidades (11) e bolsa (12) depois dos 9 itens, após um separador. */
   menu?: { character: string; skills: string; bag: string; onSkills(): void; onBag(): void };
-  /** Vida máxima em meios corações (0 = sem corações neste mundo). */
-  maxHp?: number;
+  /** Mostra a barra de vida (mundos com combate). */
+  health?: boolean;
 }
-
-const HEART = (fill: 'full' | 'half' | 'empty') => `<svg viewBox="0 0 24 22" aria-hidden="true"><defs><clipPath id="hh"><rect width="12" height="22"/></clipPath></defs>
-<path d="M12 21 2.6 11.8A5.6 5.6 0 0 1 12 4.2a5.6 5.6 0 0 1 9.4 7.6Z" fill="#3a2350" stroke="#1c1030" stroke-width="1.6"/>
-${fill === 'empty' ? '' : `<path ${fill === 'half' ? 'clip-path="url(#hh)"' : ''} d="M12 21 2.6 11.8A5.6 5.6 0 0 1 12 4.2a5.6 5.6 0 0 1 9.4 7.6Z" fill="#ff5c7a"/>
-<path ${fill === 'half' ? 'clip-path="url(#hh)"' : ''} d="M6.5 7.5c1.2-1.4 3-1.2 3.8.2" fill="none" stroke="#ffd0da" stroke-width="1.6" stroke-linecap="round"/>`}</svg>`;
 
 export class Hud {
   readonly root: HTMLElement;
@@ -40,9 +35,12 @@ export class Hud {
   readonly professionsSection: HTMLElement;
   private selected = -1;
   private views: string[] = [];
-  private readonly hearts: HTMLElement;
-  private lastHp = -1;
-  private readonly maxHp: number;
+  /** Barra de vida (preenchimento + "85 / 100"). */
+  private readonly healthBar: HTMLElement;
+  private readonly healthFill: HTMLElement;
+  private readonly healthText: HTMLElement;
+  private readonly hasHealth: boolean;
+  private lastHealth = '';
 
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
@@ -94,13 +92,16 @@ export class Hud {
       card.classList.add('with-menu');
     }
     this.root.appendChild(card);
-    this.maxHp = h.maxHp ?? 0;
+    this.hasHealth = !!h.health;
     const status = document.createElement('div');
     status.className = 'status';
-    this.hearts = document.createElement('div');
-    this.hearts.className = 'hearts';
-    this.hearts.setAttribute('role', 'img');
-    status.appendChild(this.hearts);
+    this.healthBar = document.createElement('div');
+    this.healthBar.className = 'health';
+    this.healthBar.setAttribute('role', 'meter');
+    this.healthBar.innerHTML = '<span class="health-fill"></span><span class="health-text"></span>';
+    this.healthFill = this.healthBar.querySelector('.health-fill')!;
+    this.healthText = this.healthBar.querySelector('.health-text')!;
+    status.appendChild(this.healthBar);
     this.root.appendChild(status);
     this.toastEl = document.createElement('div');
     this.toastEl.className = 'toast';
@@ -148,15 +149,19 @@ export class Hud {
     this.root.classList.toggle('skills-open', open);
   }
 
-  /** Vida em meios corações; `visible` mostra a fileira (ferida ou na dungeon). */
-  setHealth(hp: number, visible: boolean): void {
-    this.hearts.classList.toggle('shown', visible && this.maxHp > 0);
-    if (hp === this.lastHp || this.maxHp === 0) return;
-    this.lastHp = hp;
-    const html: string[] = [];
-    for (let i = 0; i < this.maxHp / 2; i++) html.push(HEART(hp >= i * 2 + 2 ? 'full' : hp === i * 2 + 1 ? 'half' : 'empty'));
-    this.hearts.innerHTML = html.join('');
-    this.hearts.setAttribute('aria-label', `Vida: ${hp / 2} de ${this.maxHp / 2} corações`);
+  /** Vida em pontos numa barra com número; `visible` mostra a barra (ferida ou na dungeon). */
+  setHealth(hp: number, maxHp: number, visible: boolean): void {
+    this.healthBar.classList.toggle('shown', visible && this.hasHealth);
+    const key = `${hp}/${maxHp}`;
+    if (key === this.lastHealth || !this.hasHealth) return;
+    this.lastHealth = key;
+    const f = maxHp > 0 ? Math.max(0, Math.min(1, hp / maxHp)) : 0;
+    this.healthFill.style.width = `${f * 100}%`;
+    this.healthBar.classList.toggle('low', f <= 0.3);
+    this.healthText.textContent = `${Math.ceil(hp)} / ${maxHp}`;
+    this.healthBar.setAttribute('aria-label', `Vida: ${Math.ceil(hp)} de ${maxHp}`);
+    this.healthBar.setAttribute('aria-valuenow', String(Math.ceil(hp)));
+    this.healthBar.setAttribute('aria-valuemax', String(maxHp));
   }
 
   /** Mensagem curta no alto da tela (some sozinha em ~2,5 s). */

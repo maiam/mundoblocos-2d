@@ -32,6 +32,7 @@ src/
     biomes.ts                  Campos, Sakura, Dunas, Celestial
     terrain.ts                 interface TerrainSource (cellAt, biomeAt, generateChunk)
     dungeon.ts                 dungeon: área pura da seed (buildDungeon/planDungeon) + DungeonTerrain (sobreposição)
+    progression.ts             regras numéricas da progressão: atributos, armas, ficha dos monstros, fórmula de dano
     town.ts                    Cidade do Despertar: mapa fixo (townLayout, semente própria) + TownTerrain (sobreposição)
     generator.ts               WorldGenerator.cellAt (uma avaliação de ruído por célula), generateChunk
     flatGenerator.ts           FlatGenerator: chão de um bloco só (Santuário)
@@ -44,6 +45,7 @@ src/
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
     textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
+    damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
     character.ts               folhas dos atores (heroína ±ferramenta, ovelha, filhote, namoro) + coração

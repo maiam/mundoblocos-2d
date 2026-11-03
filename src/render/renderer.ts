@@ -17,6 +17,8 @@ import { Particles } from './particles';
 import { addDungeonTextures, createBlockTextures, type BlockTextures, type Sprite } from './textures';
 import { loadDungeonArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
+import { DamageNumbers } from './damageNumbers';
+import type { Hit } from '../world/progression';
 
 /** Máximo de chunks (chão) re-renderizados por frame. */
 const MAX_CHUNK_RENDERS_PER_FRAME = 2;
@@ -69,6 +71,7 @@ export class Renderer {
     return b !== null ? this.iconFor(b) : itemIconUrl(id as ItemId);
   });
   private readonly particles = new Particles();
+  private readonly damageNumbers = new DamageNumbers();
   private readonly ctx: CanvasRenderingContext2D;
   sky: SkyState = skyAt(0.3);
   /** Estado visto por porta (aparência apenas): quando mudou de aberta/fechada, para animar. */
@@ -191,6 +194,9 @@ export class Renderer {
       ctx.fillRect(0, 0, w, h);
       this.drawGlows(glows, cam, opts.elapsed, sky.night);
     }
+
+    // Números de dano (por cima da noite, para ler sempre).
+    this.damageNumbers.draw(ctx, cam, opts.dt);
 
     // Farol na entrada da dungeon (visível também à noite).
     if (opts.entrance) this.drawBeacon(cam, opts.entrance, opts.elapsed, w, h);
@@ -629,6 +635,11 @@ export class Renderer {
     }
     if (building) return { ...building, hasObject: true };
     return { x: gx, y: gy, hasObject: false };
+  }
+
+  /** Mostra o número de um dano que entrou (chamado pelo jogo a cada acerto). */
+  addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void {
+    this.damageNumbers.add(x, y, hit, target);
   }
 
   iconFor(id: BlockId): string {
