@@ -70,9 +70,13 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(inv.entries()).toHaveLength(5);
   });
 
-  it('machado quebra a tenda (madeira)', () => {
-    expect(toolCanBreak('axe', Block.TENT)).toBe(true);
-    expect(toolCanBreak('axe', Block.TENT_PART)).toBe(true);
+  it('machado e picareta quebram a tenda (picareta por exceção; segue sem quebrar outras madeiras)', () => {
+    for (const t of ['axe', 'pickaxe'] as const) {
+      expect(toolCanBreak(t, Block.TENT)).toBe(true);
+      expect(toolCanBreak(t, Block.TENT_PART)).toBe(true);
+    }
+    expect(toolCanBreak('pickaxe', Block.OAK_LOG)).toBe(false);
+    expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
   it('Santuário continua infinito: grade fixa com os 18 blocos, sem bolsa', () => {

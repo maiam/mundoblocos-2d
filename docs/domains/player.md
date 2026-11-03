@@ -28,7 +28,7 @@
 - **Picareta** (folha `heroine-pickaxe-attack`): toque curto toca a animação de minerar (sem efeito no mundo).
   Segurar 1 s quebra **qualquer bloco** (pedra, terra, areia… cubo ou chão) e plantas — **sem drop** —, menos
   madeira e árvores (`breaks: 'nonWood'`); **não acerta** entidades.
-- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `organic` | `plant` | `soft` | `nonWood`,
+- Restrição por ferramenta no registro (`world/items.ts`): `breaks` (`any` | `none` | `organic` | `plant` | `soft` | `nonWood`; exceções em `alsoBreaks`, ex.: picareta → tenda;
   via `toolCanBreak` em `Game.canBreakAt`), `destroysPlants` (sem drop, via `toolDrops`), `groundUse` (`till` |
   `flatten`: o que o toque faz no chão), `swings` (tem animação de ação; define o ator `heroine-<t>-attack`) e
   `strikes` (o golpe acerta entidades — espada e machado sim, enxada, pá e picareta não).

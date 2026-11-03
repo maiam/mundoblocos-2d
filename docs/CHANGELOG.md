@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.33.2 — 2026-11-03
+- **Picareta também quebra a tenda**: exceção por ferramenta no registro (`ToolDef.alsoBreaks`); a picareta segue sem
+  quebrar as outras madeiras (tora, tábua, porta, baú, árvores).
+
 ## 0.33.1 — 2026-11-02
 - **Machado quebra a tenda** (a tenda passa a ser de madeira; com isso a picareta, que não quebra madeira, deixa de
   quebrá-la; a mão continua).

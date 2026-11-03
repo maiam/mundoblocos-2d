@@ -123,6 +123,8 @@ export interface ToolDef {
    * Fonte de verdade da restrição por ferramenta.
    */
   breaks: 'any' | 'none' | 'organic' | 'plant' | 'soft' | 'nonWood';
+  /** Exceções: blocos que esta ferramenta quebra além da regra `breaks` (ex.: picareta quebra a tenda de madeira). */
+  alsoBreaks?: BlockId[];
   /** Plantas quebradas por esta ferramenta são destruídas sem soltar nada (pá, picareta). */
   destroysPlants: boolean;
   /** Toque curto num chão: 'till' = ara (enxada), 'flatten' = vira Caminho de Terra (pá), null = nada. */
@@ -144,7 +146,7 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   },
   pickaxe: {
     id: Tool.PICKAXE, name: 'Picareta', plannedUse: 'minera qualquer bloco menos madeira/árvore; plantas sem drop; não ataca',
-    breaks: 'nonWood', destroysPlants: true, groundUse: null, swings: true, strikes: false,
+    breaks: 'nonWood', alsoBreaks: [Block.TENT, Block.TENT_PART], destroysPlants: true, groundUse: null, swings: true, strikes: false,
   },
   shovel: {
     id: Tool.SHOVEL, name: 'Pá', plannedUse: 'Terra/Grama/Arada → Caminho de Terra; cava só macios e plantas (sem drop); não ataca',
@@ -160,6 +162,7 @@ export const TOOLS: Record<ToolId, ToolDef> = {
 export function toolCanBreak(tool: ToolId | null, id: BlockId): boolean {
   if (!tool) return true;
   const rule = TOOLS[tool].breaks;
+  if (TOOLS[tool].alsoBreaks?.includes(id)) return true;
   const { organic, soft } = blockDef(id);
   if (rule === 'any') return true;
   if (rule === 'organic') return organic !== null;
