@@ -3,7 +3,8 @@
 ## Nome
 **Orvalis** (decisão do dono do produto, 2026-11-03; antes "MundoBlocos 2D"). É o nome do **mundo de fantasia**
 onde o jogo acontece — de *orvalho*: o mundo que desperta a cada manhã, como os novatos na Cidade do Despertar. As
-cidades e regiões futuras ganham nomes próprios dentro de Orvalis. Endereço: `orvalis.maiamapps.com.br` (Hostinger).
+cidades e regiões futuras ganham nomes próprios dentro de Orvalis. Endereço provisório: `orvalis.pensamentos.online`
+(Hostinger; `maiamapps.com.br` não pode ser usado por enquanto).
 O repositório, o pacote npm e as chaves de salvamento (`mundoblocos:save:…`) mantêm o nome antigo de propósito:
 trocá-las apagaria os salvamentos dos jogadores.
 

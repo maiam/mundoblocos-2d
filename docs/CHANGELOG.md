@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.37.2 — 2026-11-03
+- **Site próprio em `orvalis.pensamentos.online`** (Hostinger, provisório no lugar de `maiamapps.com.br`):
+  `npm run pack:site` gera `orvalis-site.zip` (build com os dois mundos + `.htaccess` com tipos MIME e cache) e o passo
+  a passo do hPanel está em `OPERATIONS`.
+
 ## 0.37.1 — 2026-11-03
 - **Nome oficial: Orvalis** (título da página, menu, app instalável e Artifact). Repositório, pacote e chaves de
   salvamento mantêm "mundoblocos" para não apagar os jogos salvos.

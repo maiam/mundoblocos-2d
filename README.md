@@ -1,7 +1,7 @@
 # Orvalis
 
-> Nome oficial do jogo (antes "MundoBlocos 2D"; o repositório segue `mundoblocos-2d`). Endereço planejado:
-> `orvalis.maiamapps.com.br`.
+> Nome oficial do jogo (antes "MundoBlocos 2D"; o repositório segue `mundoblocos-2d`). Endereço (provisório):
+> `https://orvalis.pensamentos.online` — publicar com `npm run pack:site` (ver `docs/OPERATIONS.md`).
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
 com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**, uma heroína jogável com
@@ -16,6 +16,7 @@ npm run dev        # http://localhost:5173  (aceita ?seed=<número|texto>)
 npm test           # testes (Vitest)
 npm run bench      # benchmarks de geração/leitura de chunks
 npm run build      # typecheck + build estático em dist/
+npm run pack:site       # site pronto para a Hostinger em orvalis-site.zip
 npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos separados, ADR 0013)
 ```
 
@@ -23,8 +24,8 @@ npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos 
 
 | Mundo | Como abrir | Jogável |
 |---|---|---|
-| Orvalis (principal) | `orvalis.maiamapps.com.br` (planejado) | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
-| Santuário Celestial da Deusa da Vida | `santuario.orvalis.maiamapps.com.br` (planejado) ou `?mundo=santuario` | [Artifact](https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb) |
+| Orvalis (principal) | `orvalis.pensamentos.online` | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
+| Santuário Celestial da Deusa da Vida | `?mundo=santuario` (ou subdomínio `santuario.orvalis.pensamentos.online`) | [Artifact](https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb) |
 
 ## Celular
 

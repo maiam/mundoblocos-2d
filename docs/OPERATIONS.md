@@ -21,26 +21,34 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
 | Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` com `files` de `artifact/santuario-files.json` |
 - Rode **o build de cada mundo antes de publicá-lo** (os dois usam `dist/`). No dev: `?mundo=santuario`.
-- Subdomínio real: ver "Hospedagem própria" abaixo; o jogo reconhece o Santuário pelo hostname (`santuario.`).
+- Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`); o jogo reconhece o Santuário pelo hostname (`santuario.`).
 
-## Hospedagem própria — `orvalis.maiamapps.com.br` (Hostinger)
-Site estático: nenhum servidor/backend (contas e nuvem continuam no core).
-1. `npm run build` (**sem** `VITE_WORLD`: o build traz os dois mundos e escolhe pelo endereço) → pasta `dist/`
-   (`index.html`, `manifest.webmanifest`, ícones e `assets/` com JS, CSS e imagens).
-2. hPanel → Domínios → **Subdomínios**: criar `orvalis` em `maiamapps.com.br` (pasta, ex.: `public_html/orvalis`).
-3. Enviar o **conteúdo** de `dist/` para essa pasta (Gerenciador de Arquivos ou FTP), substituindo o anterior.
-4. hPanel → **SSL**: ativar o certificado para `orvalis.maiamapps.com.br` (HTTPS é necessário para instalar como app).
-5. Santuário (opcional): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta — o jogo abre o
-   Santuário pelo primeiro nome do endereço. Sem ele, `?mundo=santuario` funciona.
-6. Conferir: abrir o endereço no celular (deitado), jogar, recarregar (continua salvo) e instalar na tela inicial.
-Arquivos com hash no nome podem ficar em cache por muito tempo; o `index.html` não deve ficar (cache curto).
-- `artifact/` não é versionado. O manifest PWA não entra no Artifact.
-- **Publicação com arquivos separados (ADR 0013)**: as imagens vão no parâmetro `files` (caminho publicado = nome do
-  arquivo, ao lado da página; até 255 por publicação). Publicar só o HTML deixa o jogo sem imagens. Nomes têm hash:
-  arquivos antigos podem ser removidos com `null` no `files` quando sumirem do manifesto.
-- **Orçamento**: o build imprime "início" (página + imagens que o jogo espera) e avisa se passar de 3 MB; o total
-  pode crescer. Arte nova que não é usada no começo deve carregar em segundo plano (padrão `loadDungeonArt`).
-- Teste local no formato do Artifact: página + imagens na mesma pasta servidas por `python3 -m http.server`.
+## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
+Endereço **provisório**: o domínio `maiamapps.com.br` não pode ser usado por enquanto; o jogo fica num subdomínio de
+`pensamentos.online`, também na Hostinger. Site estático: nenhum servidor/backend (contas e nuvem seguem no core).
+
+**Pacote**: `npm run pack:site` → `npm run build` (sem `VITE_WORLD`: os dois mundos, escolhidos pelo endereço) e
+`orvalis-site.zip` na raiz do repositório (não versionado) com o **conteúdo** de `dist/`: `index.html`,
+`manifest.webmanifest`, ícones, `.htaccess` (tipos MIME e cache: página `no-cache`, arquivos com hash 1 ano) e `assets/`.
+
+**Primeira vez (hPanel)**:
+1. **Sites** → `pensamentos.online` → **Painel** → menu **Domínios** → **Subdomínios**: criar `orvalis`. Deixe a
+   pasta padrão (`public_html/orvalis`, ou `domains/pensamentos.online/public_html/orvalis` conforme o plano).
+   Se o DNS de `pensamentos.online` **não** usa os nameservers da Hostinger, crie também um registro **A** `orvalis`
+   apontando para o IP do servidor (hPanel → Painel → "Detalhes do plano"/IP).
+2. **Arquivos** → **Gerenciador de Arquivos** → abrir a pasta do subdomínio → apagar o `default.php`/`index.php` de
+   boas-vindas, se existir → **Enviar** `orvalis-site.zip` → clicar com o botão direito → **Extrair** aqui (os arquivos
+   devem ficar direto na pasta, com `index.html` na raiz dela) → apagar o `.zip`.
+3. **Segurança** → **SSL**: conferir/instalar o certificado grátis para `orvalis.pensamentos.online` (pode levar
+   alguns minutos até horas) e ativar **Forçar HTTPS**. HTTPS é necessário para instalar como app.
+4. Santuário (opcional): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
+   Santuário pelo primeiro nome do endereço). Sem ele, `https://orvalis.pensamentos.online/?mundo=santuario` funciona.
+5. Conferir: abrir no celular (deitado), jogar, recarregar (continua salvo), instalar na tela inicial.
+
+**Atualizar**: `npm run pack:site` → no Gerenciador de Arquivos, apagar a pasta `assets/` e o `index.html` antigos →
+enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só ocupam espaço.)
+
+**Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
 
 ## Pipeline de arte
 Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP q84/alfa q85 e apaga os
