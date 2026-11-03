@@ -76,6 +76,19 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 3. Alturas: meio bloco/escadas; indicar borda de queda.
 4. Geração em Web Worker só se o custo por chunk voltar a crescer.
 
+### Fase 6 — Mundo de progressão (visão do dono do produto, `PROJECT_CONTEXT`)
+Cidades e dungeons que acompanham a evolução dos personagens: Cidade 1 para novatos; cidades de nível mais alto mais
+longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de dependência):
+1. **Níveis e experiência** do personagem (o que dá XP: monstros, receitas, missões?) e o que o nível muda
+   (vida, dano, acesso a regiões/receitas). Painel do Personagem mostra nível e XP.
+2. **Faixa de nível** em dungeons e monstros (`MONSTERS` por faixa; dungeon generalizada por tema e nível — Fase 4.2).
+3. **Mapa de regiões**: posições fixas das cidades (iguais em toda seed, como a Cidade 1) e das dungeons de cada
+   faixa, distância crescente a partir da Cidade 1; terreno entre elas segue procedural.
+4. **Cidade 2** (primeira cidade de nível intermediário) reutilizando o gerador da cidade com outra planta/tema.
+5. **Viagem** entre cidades (estradas, marcos no mapa, talvez portais/carruagens desbloqueados por nível) e
+   **renascer** na cidade da faixa do personagem (hoje: tenda ou Cidade 1).
+6. Arte por região carregada **sob demanda** ao se aproximar (ADR 0013) — o mundo maior não pesa no início.
+
 ### Santuário Celestial (trilha paralela)
 - Hospedar o build em `santuario.<domínio>` (**dependência externa**: hospedagem).
 - Definir ações da Deusa e se flutuar tem efeito de jogo (passar sobre buracos, subir 2 níveis).
@@ -84,6 +97,9 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 ## 3. Decisões pendentes (do dono do produto)
 | Decisão | Afeta |
 |---|---|
+| **Nome oficial do jogo** (mundo de fantasia; vira subdomínio em maiamapps.com.br, hospedado na Hostinger) | Lançamento |
+| Níveis: como se ganha XP, o que o nível muda, quantas faixas/cidades | Fase 6 |
+| Mapa de regiões: onde ficam as próximas cidades, como se viaja entre elas, onde renasce | Fase 6 |
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
 | Cidade: NPCs (quem, falas), interiores, o que as lojas vendem, hospedaria como ponto de retorno | Fase 4 |

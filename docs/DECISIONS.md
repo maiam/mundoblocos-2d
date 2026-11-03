@@ -21,6 +21,7 @@
 | Decisão | Onde |
 |---|---|
 | Sem backend neste repositório; persistência futura via core | PROJECT_CONTEXT |
+| Visão: mundo de progressão — cidades e dungeons por faixa de nível; Cidade 1 recebe novatos e os personagens migram para cidades de nível maior conforme evoluem | PROJECT_CONTEXT, NEXT_STEPS Fase 6 |
 | Chunks quadrados 16×16 nos dois eixos | domains/world |
 | Santuário: 10 chunks em 5×2; só Deusa; só 18 blocos; sem ferramentas/cultivo/ovelhas | domains/worlds |
 | Subdomínio `santuario`; artefato próprio enquanto não há hospedagem | domains/worlds |

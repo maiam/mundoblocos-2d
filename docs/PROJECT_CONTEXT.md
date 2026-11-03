@@ -13,6 +13,20 @@ pequeno de construção sobre nuvens com personagem e blocos próprios (perfis d
 - Controle confortável no celular (joystick alinhado à tela) e no desktop (teclado).
 - Base sólida para evoluir o jogo (ferramentas com ação, salvamento, mais animais e receitas).
 
+## Visão de longo prazo — mundo de progressão (dono do produto, 2026-11-03)
+O mundo vai crescer em **cidades e dungeons que acompanham a evolução dos personagens**:
+- A **Cidade do Despertar** (Cidade 1) recebe os **novatos**: é onde todo personagem nasce e aprende o básico, com
+  dungeons de nível inicial por perto (o Covil das Aranhas é a primeira).
+- À medida que os personagens **sobem de nível**, eles passam a se concentrar em **outras cidades**, mais distantes e
+  mais desafiadoras, cada uma com suas dungeons, monstros, lojas e missões da sua faixa de nível.
+- Resultado: um **mundo maior**, organizado em regiões por faixa de nível, em que a jornada do personagem é também
+  uma viagem de cidade em cidade.
+
+O que isso pede (ainda não existe; ver `NEXT_STEPS`, Fase 6): sistema de **níveis/experiência** do personagem,
+**faixas de nível** por região (cidades, dungeons e monstros), um **mapa de regiões** (onde fica cada cidade,
+igual em toda seed como a Cidade 1, ADR 0012), **viagem** entre cidades e conteúdo que libera com o nível. Com
+jogadores online, a concentração por cidade vira também ponto de encontro (multiplayer = core).
+
 ## Posição no ecossistema
 - Repositório **apenas frontend** (site estático, Vite + TypeScript, sem framework).
 - Não há backend próprio e **não deve ser criado** aqui. Se/quando houver persistência de mundos,
