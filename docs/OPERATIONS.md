@@ -34,7 +34,7 @@ Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em
 | Campo | Valor |
 |---|---|
 | Configuração predefinida | Vite |
-| Branch | `main` (publicar = mesclar o PR da entrega em `main`, quando o dono do produto pedir — `CONVENTIONS`) |
+| Branch | `main` (publicar = mesclar o PR da entrega em `main` após a Verificação passar — `CONVENTIONS`) |
 | Versão do Node | 22.x |
 | Diretório raiz | `./` |
 | Comando de construção | `npm run build` (typecheck + build) |

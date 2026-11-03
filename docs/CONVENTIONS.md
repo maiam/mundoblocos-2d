@@ -55,11 +55,13 @@
 - Trabalho na branch `feat/mundo-chunks-fantasia`: commits pequenos, em pt-BR, explicando o **porquê**.
 - **Um PR para `main` por entrega** pronta (tsc, testes, build e conferência no navegador feitos), com título de versão
   (ex.: "Orvalis v0.37.3: …") e resumo do que muda para o jogador. Correções miúdas podem esperar e ir juntas.
-- **Merge só quando o dono do produto pedir** ("publica" ou equivalente). Nunca mesclar por conta própria.
+- **Merge automático no fim de cada entrega** (decisão do dono do produto): abrir o PR, esperar a **Verificação**
+  (GitHub Actions) passar e mesclar. Verificação vermelha = não mescla; corrigir na branch e repetir.
 - Método de merge: **merge** (commit de merge), nunca squash/rebase — a branch de trabalho continua viva e o squash
   criaria divergência e conflitos falsos nas próximas entregas.
-- Opcionais ainda não adotados: verificação automática nos PRs (GitHub Actions: tsc, testes, `npm audit`) e proteção
-  da `main` no GitHub (só por PR).
+- **Verificação** (`.github/workflows/ci.yml`) em todo PR para `main` e em cada atualização dela: `npm ci`, `tsc`,
+  testes, `npm run build` (como a Hostinger) e `npm audit --audit-level=moderate`.
+- Opcional ainda não adotado: proteção da `main` no GitHub (exigir PR e Verificação verde) — configuração do dono.
 
 ## Documentação
 - Documentos descrevem o **estado atual**; histórico vai para CHANGELOG/ADRs.
