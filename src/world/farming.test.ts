@@ -9,7 +9,7 @@ function clearCell(w: World, x: number, y: number) {
 
 /** Célula de grama (terra plantável) andável perto do spawn. */
 function soil(w: World): [number, number] {
-  const [sx, sy] = w.findSpawn();
+  const [sx, sy] = w.outsideGate();
   for (let r = 0; r < 30; r++) {
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {

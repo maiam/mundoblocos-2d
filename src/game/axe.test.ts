@@ -29,7 +29,7 @@ describe('Machado', () => {
 
   it('World informa o bloco que seria quebrado (topo ou chão)', () => {
     const w = new World(7);
-    const [x, y] = w.findSpawn();
+    const [x, y] = w.outsideGate();
     while (w.topBlock(x, y)) w.breakBlock(x, y);
     expect(w.breakTargetId(x, y)).toBe(w.getGround(x, y));
     w.placeBlock(x, y, Block.OAK_LOG);
@@ -40,7 +40,7 @@ describe('Machado', () => {
 
   it('golpe com machado usa a folha própria e faz animais sumirem', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     const e = new Entities(p, mulberry32(1));
     p.equipped = 'axe';
@@ -69,7 +69,7 @@ describe('Enxada', () => {
 
   it('animação de arar usa a folha própria', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     const e = new Entities(p, mulberry32(1));
     p.equipped = 'hoe';

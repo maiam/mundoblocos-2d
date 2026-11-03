@@ -15,6 +15,7 @@ import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
 import { Particles } from './particles';
 import { createBlockTextures, type BlockTextures, type Sprite } from './textures';
+import { isTownArt, TOWN_REACH } from './townArt';
 
 /** Máximo de chunks (chão) re-renderizados por frame. */
 const MAX_CHUNK_RENDERS_PER_FRAME = 2;
@@ -74,7 +75,7 @@ export class Renderer {
 
   constructor(canvas: HTMLCanvasElement, private readonly world: World) {
     this.ctx = canvas.getContext('2d')!;
-    this.textures = createBlockTextures();
+    this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     loadCropSprites(this.textures.objects);
   }
@@ -147,9 +148,15 @@ export class Renderer {
       enqueue(hs.y - 0.01, () => this.drawSheepRing(cam, hs));
     }
 
-    for (let y = by0; y <= by1; y++) {
-      for (let x = bx0; x <= bx1; x++) {
+    // Construções da cidade são sprites largos/altos ancorados no canto inferior esquerdo: varre além da tela
+    // (à esquerda e abaixo) só para elas.
+    const town = !!this.world.town;
+    const sx0 = town ? bx0 - TOWN_REACH.right : bx0;
+    const sy1 = town ? by1 + TOWN_REACH.up : by1;
+    for (let y = by0; y <= sy1; y++) {
+      for (let x = sx0; x <= bx1; x++) {
         const id = this.world.getObject(x, y);
+        if ((x < bx0 || y > by1) && !isTownArt(id)) continue;
         if (isDoor(id)) {
           this.drawDoor(cam, id, x, y, opts.elapsed);
         } else if (id !== Block.AIR) {
@@ -280,7 +287,9 @@ export class Renderer {
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
     const vars = this.textures.variants.get(id);
-    const sprite = vars ? vars[Math.floor(hash2(this.world.seed, x * 7 + 3, y * 13 - 1) * vars.length)] : this.textures.objects.get(id);
+    // Variação por célula; na cidade, independente da seed (a cidade é sempre a mesma).
+    const salt = isTownArt(id) ? 0x7041 : this.world.seed;
+    const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : this.textures.objects.get(id);
     if (sprite) {
       const n = this.textures.stackDraw.get(id) ?? 1;
       for (let k = 0; k < n; k++) this.drawSprite(cam, sprite, x, y, level + k);
@@ -603,6 +612,8 @@ export class Renderer {
         }
       }
     }
+    // Construção da cidade sob o cursor (as células dela não têm sprite próprio).
+    if (this.world.townBuildingAt(gx, gy)) return { x: gx, y: gy, hasObject: true };
     return { x: gx, y: gy, hasObject: false };
   }
 

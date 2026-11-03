@@ -5,7 +5,7 @@ import { WORLD_PROFILES } from './profiles';
 import { CHEST_SLOTS, World } from './world';
 
 function freeCell(w: World): [number, number] {
-  const [x, y] = w.findSpawn();
+  const [x, y] = w.outsideGate();
   for (let dx = -2; dx <= 2; dx++) while (w.topBlock(x + dx, y)) w.breakBlock(x + dx, y);
   return [x, y];
 }
@@ -96,7 +96,7 @@ describe('Porta de Carvalho', () => {
 describe('Tenda', () => {
   it('ocupa 2×2: precisa das 4 células livres; bloqueia as 4; qualquer parte derruba a tenda inteira', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const [x, y] = [sx + 3, sy + 1];
     for (let dy = -2; dy <= 1; dy++) for (let dx = -1; dx <= 2; dx++) while (w.topBlock(x + dx, y + dy)) w.breakBlock(x + dx, y + dy);
     w.placeBlock(x + 1, y - 1, Block.STONE); // ocupa uma das 4
@@ -113,7 +113,7 @@ describe('Tenda', () => {
     expect(Math.abs(rx - x) + Math.abs(ry - y)).toBeLessThanOrEqual(3);
     expect(w.breakBlock(x + 1, y - 1)).toBe(Block.TENT); // parte de trás derruba tudo
     for (const [cx, cy] of [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]]) expect(w.getObject(cx, cy)).toBe(Block.AIR);
-    expect(w.respawnPoint()).toEqual([sx, sy]);
+    expect(w.respawnPoint()).toEqual(w.findSpawn()); // sem tenda: praça inicial da cidade
   });
 
   it('cantos possíveis para cobrir uma célula: a tenda pode se estender para os 4 lados (quem coloca evita a heroína)', () => {
@@ -132,7 +132,7 @@ describe('Baú de Carvalho', () => {
       inputs: [{ item: `block:${Block.OAK_PLANKS}`, count: 8 }], output: { item: `block:${Block.CHEST}`, count: 1 },
     });
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const [x, y] = [sx + 2, sy];
     while (w.topBlock(x, y)) w.breakBlock(x, y);
     expect(w.placeBlock(x, y, Block.CHEST)).toBe(true);
@@ -149,7 +149,7 @@ describe('Baú de Carvalho', () => {
 describe('Tenda — ponto de renascimento', () => {
   it('vale a última colocada; derrubar a última volta ao início mesmo com outras tendas de pé', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     // Dois lugares onde a tenda 2×2 cabe (procurados em volta do início).
     const spots: Array<[number, number]> = [];
     for (let r = 3; r < 60 && spots.length < 2; r++) {
@@ -166,6 +166,6 @@ describe('Tenda — ponto de renascimento', () => {
     expect(w.tent).toEqual(spots[1]);
     w.breakBlock(...spots[1]);
     expect(w.tent).toBeNull();
-    expect(w.respawnPoint()).toEqual([sx, sy]);
+    expect(w.respawnPoint()).toEqual(w.findSpawn()); // sem tenda: praça inicial da cidade
   });
 });

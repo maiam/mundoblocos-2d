@@ -14,6 +14,7 @@ Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.mo
 | Tenda (ponto de renascer) | `World.tent` | — |
 | Baús | `World.chests` | 27 espaços cada |
 | Ovelhas | `Entities.npcs` | posição, casa, filhote, idade, paixão, espera (namoro em curso não) |
+| Cidade | (nada) | fixa; ao carregar, células protegidas de chunks salvos voltam do gerador e baús inexistentes são descartados |
 | Dungeon | `Entities.monsters/respawns` | vivos com vida; renascimentos com o tempo restante |
 | Não salvo | — | itens caídos no chão, animações, mapa de distâncias |
 

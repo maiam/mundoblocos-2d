@@ -11,7 +11,7 @@ import { BREED_COOLDOWN, COURTSHIP_SECONDS, GROW_UP_SECONDS, Sheep } from './she
 /** Campo aberto 9×5 limpo ao redor do spawn. */
 function field(seed = 7): [World, number, number] {
   const w = new World(seed);
-  const [sx, sy] = w.findSpawn();
+  const [sx, sy] = w.outsideGate();
   for (let dy = -2; dy <= 2; dy++) {
     for (let dx = -4; dx <= 4; dx++) {
       while (w.topBlock(sx + dx, sy + dy)) w.breakBlock(sx + dx, sy + dy);

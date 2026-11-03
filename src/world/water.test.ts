@@ -4,7 +4,7 @@ import { FLOW_SECONDS, World } from './world';
 
 /** Margem de lago: célula de terra firme (grama/terra/areia) com água a oeste e mais 4 células de terra a leste. */
 function shore(w: World): [number, number] {
-  const [sx, sy] = w.findSpawn();
+  const [sx, sy] = w.outsideGate();
   const land = (x: number, y: number) => {
     const g = w.getGround(x, y);
     return g !== Block.WATER && g !== Block.HOLE && !w.isProtected(x, y) && w.getObject(x, y) === Block.AIR;

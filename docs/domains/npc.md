@@ -24,6 +24,6 @@
 - Formação de pares, início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
   `Sheep` guarda estado (apaixonada, espera, par, namoro, idade) e movimento.
 - `actors` gera a lista para o render (o par namorando vira um único ator `sheep-love`).
-- Rebanho inicial de até 4 ovelhas a 2–8 células do spawn, em grama andável, posições determinísticas pela seed.
+- Rebanho inicial de até 4 ovelhas a 2–8 células de um ponto 8 células ao sul do portão da cidade (`World.outsideGate`), em grama andável, posições determinísticas pela seed.
 - Colisão entre entidades: não se entra na caixa de outra; se já estavam sobrepostas, podem se afastar.
 - Estado de execução, não persistido (some ao recarregar; renasce igual pela seed).

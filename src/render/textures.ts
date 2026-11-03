@@ -5,6 +5,7 @@ import { art } from './art';
 import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getWaterArt } from './blockArt';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
+import { townSprites } from './townArt';
 
 /**
  * Texturas do mundo em vista 3/4.
@@ -407,7 +408,8 @@ function decorationSprite(id: BlockId): Sprite {
   return { canvas: c, ox: 0, oy: -6, w: T, h: T, hit: { x: 0, y: -6, w: T, h: T } };
 }
 
-export function createBlockTextures(): BlockTextures {
+/** `town`: o mundo tem a Cidade do Despertar (pinta as construções dela). */
+export function createBlockTextures(opts: { town?: boolean } = {}): BlockTextures {
   const groundTop = new Map<BlockId, HTMLCanvasElement>();
   const objects = new Map<BlockId, Sprite>();
   const icons = new Map<BlockId, string>();
@@ -478,7 +480,9 @@ export function createBlockTextures(): BlockTextures {
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],
     [Block.LIGHT_BLOCK, '#ffe08a'],
+    [Block.LAMP, '#ffd27a'],
   ]);
+  if (opts.town) for (const [id, sprites] of townSprites()) variants.set(id, sprites);
   const bankColor = new Map<BlockId, string>([
     [Block.GRASS, '#8a5a36'],
     [Block.DIRT, '#8a5a36'],

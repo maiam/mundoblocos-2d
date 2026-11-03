@@ -32,7 +32,7 @@ describe('Combate — espólios', () => {
 describe('Combate — vida da heroína', () => {
   it('dano tira meios corações, invencibilidade curta, regenera fora de combate e renasce cheia', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     expect(p.hp).toBe(MAX_HP);
     expect(p.hurt(2, p.x + 1, p.y, w)).toBe(true);

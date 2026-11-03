@@ -13,7 +13,7 @@ function run(n: number, fn: () => void) {
 describe('Sheep', () => {
   it('alterna entre parar e passear, sem sair do mapa andável', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const s = new Sheep(sx + 0.5, sy + 0.5, sx + 0.5, sy + 0.5, mulberry32(1));
     let movedFrames = 0, idleFrames = 0;
     run(60 * 40, () => {
@@ -27,7 +27,7 @@ describe('Sheep', () => {
 
   it('volta para perto de casa', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const s = new Sheep(sx + 0.5, sy + 0.5, sx + 0.5, sy + 0.5, mulberry32(2));
     let maxDist = 0;
     run(60 * 120, () => {
@@ -39,7 +39,7 @@ describe('Sheep', () => {
 
   it('não sobe em cubos: blocos funcionam como cerca', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     // Cerca 3×3 em volta da célula da ovelha.
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
@@ -59,7 +59,7 @@ describe('Sheep', () => {
 describe('Entities', () => {
   it('rebanho nasce em grama andável perto do spawn', () => {
     const w = new World(42);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const e = new Entities(new Player(sx + 0.5, sy + 0.6));
     e.spawnFlock(w, sx, sy);
     expect(e.npcs.length).toBeGreaterThan(0);
@@ -72,7 +72,7 @@ describe('Entities', () => {
 
   it('personagem não atravessa a ovelha e ocupação conta para todos', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     const e = new Entities(p);
     const s = new Sheep(sx + 1.6, sy + 0.5, sx + 1.6, sy + 0.5, () => 0.99);

@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-03 (v0.34.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-03 (v0.35.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -14,14 +14,15 @@ _Revisado em 2026-11-03 (v0.34.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só perto do spawn; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
+| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | sem NPCs, interiores nem missões |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ estrutura | **combate incompleto** (aranhas não causam dano) |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
 | Vida da heroína, dano, morte e renascimento | ✅ | 5 corações; arte dos corações provisória |
 | Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do core |
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
-| Qualidade | ✅ | 108 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | 🔴 | principal **3,09 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
+| Qualidade | ✅ | 116 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
+| Peso dos artefatos | 🔴 | principal **3,11 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -58,6 +59,11 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
    variações substituem água (hoje só a Pedra Bruta; batente de porta já aceita todas).
 
 ### Fase 4 — Mundo vivo e conteúdo
+0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`): NPCs que apresentam o mundo na praça
+   inicial, moradores que circulam e voltam às casas, guardas na muralha/castelo, ferreiro de dia, hospedaria à
+   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); interiores (guilda com quadro de missões,
+   lojas com compra/venda, hospedaria como ponto de retorno opcional); lampiões acendendo ao anoitecer e
+   movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
 1. Ovelhas (e novos animais) em outros chunks, por bioma, com limite.
 2. **Mais dungeons**: generalizar `buildDungeon/decorateDungeon` por tema (arte + monstros + chefe), várias pelo mapa.
 3. Porta: orientação lateral (quadro de lado), cair sem batente?, fechar sozinha?; atalho de teclado além do 9.
@@ -80,6 +86,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 |---|---|
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
+| Cidade: NPCs (quem, falas), interiores, o que as lojas vendem, hospedaria como ponto de retorno | Fase 4 |
 | Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; substituem água? | Fase 3 |
 | Painel do Personagem: o que mostrar (vida, armaduras, …) | Fase 3/4 |
 | Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
@@ -89,10 +96,10 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 ## 4. Dependências externas
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
 - **Hospedagem** do build estático para o subdomínio `santuario.`.
-- **Arte**: (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
+- **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Peso do artefato principal: 3,09 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
+- **Peso do artefato principal: 3,11 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
   folha grande estoura. Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
   virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
   separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.

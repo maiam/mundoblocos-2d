@@ -2,7 +2,8 @@
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
 com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**, uma heroína jogável com
-ferramentas, cultivo de trigo, ovelhas que se reproduzem e uma dungeon de aranhas com chefe. Ciclo dia/noite, sombras de nuvens e partículas.
+ferramentas, cultivo de trigo, ovelhas que se reproduzem, a Cidade do Despertar (cidade fortificada de partida, igual
+em toda seed) e uma dungeon de aranhas com chefe. Ciclo dia/noite, sombras de nuvens e partículas.
 
 ## Rodar
 

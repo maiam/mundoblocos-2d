@@ -28,6 +28,8 @@ export interface WorldProfile {
   sheep: boolean;
   /** Dungeon das aranhas perto do spawn (área protegida com monstros). */
   dungeon: boolean;
+  /** Cidade do Despertar: início e renascer sem tenda (área protegida, igual em toda seed). */
+  town: boolean;
   /**
    * Materiais precisam ser coletados (quebrar devolve o bloco, colocar gasta) e a grade tem 8 espaços + bolsa.
    * false = construção infinita com a grade fixa do perfil (Santuário).
@@ -49,6 +51,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     farming: true,
     sheep: true,
     dungeon: true,
+    town: true,
     collectBlocks: true,
     sky: ['#1b1838', '#1b1838'],
   },
@@ -64,6 +67,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     farming: false,
     sheep: false,
     dungeon: false,
+    town: false,
     collectBlocks: false,
     sky: ['#8fb8ff', '#f6d9ff'],
   },

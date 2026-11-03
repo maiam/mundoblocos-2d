@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.35.0 — 2026-11-03
+- **Cidade do Despertar** (Cidade 1, `world/town.ts`, ADR 0012, `domains/town.md`): cidade medieval fortificada de
+  108 × 78 blocos, **igual em qualquer seed** (procedural com semente própria fixa), onde todo jogador começa e para
+  onde volta ao morrer sem tenda. Muralha de Tijolo de Pedra (inteiro/rachado) com torres e um só portão ao sul,
+  castelo com pátio ao norte, labirinto de ruas de Pedra Irregular/Rachada (caminho principal sinuoso, ruas
+  secundárias, laços, becos), praças inicial/central/do castelo, Guilda, Hospedaria, Ferreiro, 3 lojas, ~60 casas,
+  fonte, poço, barracas, lampiões (brilham à noite), cercas vivas e jardins.
+- **Nada quebra nem é colocado dentro da cidade** (área protegida). Tocar numa construção/placa mostra o nome.
+- Arte das construções pintada em código (`render/townArt.ts`): nenhum byte a mais no artefato.
+- **Muda o mapa de todas as seeds**: início dentro da cidade, dungeon replanejada fora dela, ovelhas do lado de
+  fora do portão. Salvamentos antigos carregam (células da cidade voltam do gerador). 8 testes novos (116).
+
 ## 0.34.1 — 2026-11-03
 - **Porta entre qualquer madeira ou pedra**: as 8 pedras servem de batente (antes só a Pedra Bruta). Propriedade nova
   `stone` em `BlockDef` (fonte única do que é pedra); teste da porta cobre as 7 variações.

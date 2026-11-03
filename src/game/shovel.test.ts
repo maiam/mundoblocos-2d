@@ -10,7 +10,7 @@ import { Sheep } from './sheep';
 let next = 0;
 /** Célula livre perto do spawn com o chão trocado pelo id pedido (cava e preenche o buraco com o bloco). */
 function cellWithGround(w: World, ground: number): [number, number] {
-  const [sx, sy] = w.findSpawn();
+  const [sx, sy] = w.outsideGate();
   const x = sx + 2 + (next++ % 6), y = sy;
   while (w.topBlock(x, y)) w.breakBlock(x, y);
   if (w.getGround(x, y) !== Block.HOLE) w.breakBlock(x, y);

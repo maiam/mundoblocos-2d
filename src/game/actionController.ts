@@ -179,6 +179,15 @@ export class ActionController {
 
   /** Toque numa porta: abre/fecha (qualquer item em mãos). Retorna true se havia porta (o toque foi usado). */
   private useDoorAt(x: number, y: number): boolean {
+    const building = this.world.townBuildingAt(x, y);
+    if (building) {
+      // Cidade: tocar numa construção ou placa mostra o nome/texto (interiores e NPCs vêm depois).
+      // Alcance até a célula da construção mais perto da personagem (construções grandes).
+      const nx = Math.max(building.x, Math.min(building.x + building.w - 1, Math.floor(this.player.x)));
+      const ny = Math.max(building.y - building.d + 1, Math.min(building.y, Math.floor(this.player.y)));
+      if (this.inReach(nx, ny)) this.ctx.notify(building.name);
+      return true;
+    }
     if (this.world.getObject(x, y) === Block.CHEST) {
       // Baú: toque (qualquer item em mãos) abre o painel dele.
       if (this.inReach(x, y)) this.ctx.onOpenChest(x, y);

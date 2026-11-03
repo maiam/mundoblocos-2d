@@ -3,6 +3,7 @@ import { Block, type BlockId, blockDef, isDoor, isWheat, WHEAT_STAGES, wheatId, 
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
+import { grow, TOWN_MARGIN, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
@@ -74,6 +75,8 @@ export class World {
   private readonly crops = new Set<string>();
   /** Dungeon deste mundo (perfil com `dungeon`), ou null. Área protegida: só se luta lá dentro. */
   readonly dungeon: DungeonLayout | null = null;
+  /** Cidade do Despertar (perfil com `town`), ou null. Área protegida; início e renascer sem tenda. */
+  readonly town: TownLayout | null = null;
   /** Buracos enchendo de água (estado de execução; ao carregar, `settleWater` reagenda). */
   private readonly flows = new Map<string, WaterFlow>();
   /** Spawn calculado no terreno base (a dungeon é posta longe dele e não o altera). */
@@ -88,17 +91,36 @@ export class World {
     this.cellBounds = b
       ? { x0: b.cx0 * CHUNK_SIZE, y0: b.cy0 * CHUNK_SIZE, x1: (b.cx1 + 1) * CHUNK_SIZE - 1, y1: (b.cy1 + 1) * CHUNK_SIZE - 1 }
       : null;
+    if (profile.town) {
+      // A cidade é a mesma em toda seed; o início fica na praça logo dentro do portão.
+      this.town = townLayout();
+      this.generator = new TownTerrain(this.generator, this.town);
+      this.spawn = this.town.start;
+    }
     if (profile.dungeon) {
       const base = this.generator;
       const [sx, sy] = (this.spawn = this.findSpawn());
-      this.dungeon = planDungeon(base, sx, sy);
+      this.dungeon = planDungeon(base, sx, sy, this.town ? grow(this.town.area, TOWN_MARGIN + 4) : null);
       this.generator = new DungeonTerrain(base, this.dungeon);
     }
   }
 
-  /** Célula dentro da dungeon (muralha incluída)? Lá nada é quebrado, colocado, arado nem plantado. */
+  /** Célula dentro da dungeon ou da cidade (muralhas incluídas)? Lá nada é quebrado, colocado, arado nem plantado. */
   isProtected(x: number, y: number): boolean {
-    return !!this.dungeon && inRect(this.dungeon.area, x, y);
+    return (!!this.dungeon && inRect(this.dungeon.area, x, y)) || (!!this.town && inRect(this.town.area, x, y));
+  }
+
+  /** Construção (ou placa) da cidade que ocupa a célula, ou null. */
+  townBuildingAt(x: number, y: number): TownBuilding | null {
+    const t = this.town;
+    if (!t || !inRect(t.area, x, y)) return null;
+    const k = t.buildingAt[(y - t.area.y0) * t.w + (x - t.area.x0)];
+    return k >= 0 ? t.buildings[k] : null;
+  }
+
+  /** Do lado de fora do portão da cidade (na estrada); sem cidade, o início. */
+  outsideGate(): [number, number] {
+    return this.town ? this.town.doorstep : this.findSpawn();
   }
 
   /** A célula está dentro dos limites do mundo? (sempre true em mundo ilimitado) */
@@ -668,6 +690,17 @@ export class World {
     const c = new Chunk(cx, cy);
     c.ground.set(ground.subarray(0, c.ground.length));
     levels.forEach((l, i) => { if (i < c.levels.length) c.levels[i].set(l.subarray(0, c.levels[i].length)); });
+    // Áreas protegidas (cidade/dungeon) sempre voltam do gerador: salvamentos antigos podem ter outro terreno ali.
+    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        const x = cx * CHUNK_SIZE + lx;
+        const y = cy * CHUNK_SIZE + ly;
+        if (!this.isProtected(x, y)) continue;
+        const cell = this.generator.cellAt(x, y);
+        c.setGround(lx, ly, cell.ground);
+        c.levels.forEach((l, i) => { l[ly * CHUNK_SIZE + lx] = i === 0 ? cell.object : i === 1 ? cell.upper : Block.AIR; });
+      }
+    }
     c.modified = true;
     c.version++;
     this.chunks.set(numKey(cx, cy), c);

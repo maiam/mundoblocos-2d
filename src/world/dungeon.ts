@@ -420,10 +420,10 @@ export function sideFacing(area: Rect, px: number, py: number): Side {
 }
 
 /**
- * Etapa 1 — onde a dungeon fica: perto do spawn, com pouca água na área e terra firme diante da entrada.
+ * Etapa 1 — onde a dungeon fica: perto do spawn (fora da área `avoid`, ex.: a cidade), com pouca água na área e terra firme diante da entrada.
  * Determinístico (ordem fixa de tentativas); a entrada fica voltada para o spawn.
  */
-export function planDungeon(base: TerrainSource, spawnX: number, spawnY: number): DungeonLayout {
+export function planDungeon(base: TerrainSource, spawnX: number, spawnY: number, avoid: Rect | null = null): DungeonLayout {
   const [w, h] = dungeonSize(base.seed);
   const dirs: Array<[number, number]> = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
   const land = (x: number, y: number) => base.groundAt(x, y) !== Block.WATER;
@@ -434,6 +434,8 @@ export function planDungeon(base: TerrainSource, spawnX: number, spawnY: number)
       const y0 = spawnY + Math.round(dy * dist) - Math.floor(h / 2);
       const area = { x0, y0, x1: x0 + w - 1, y1: y0 + h - 1 };
       if (inRect({ x0: area.x0 - 6, y0: area.y0 - 6, x1: area.x1 + 6, y1: area.y1 + 6 }, spawnX, spawnY)) continue;
+      // Nunca sobre a cidade (nem colada nela).
+      if (avoid && area.x0 <= avoid.x1 && area.x1 >= avoid.x0 && area.y0 <= avoid.y1 && area.y1 >= avoid.y0) continue;
       let water = 0;
       let total = 0;
       for (let y = area.y0; y <= area.y1; y += 4) for (let x = area.x0; x <= area.x1; x += 4) { total++; if (!land(x, y)) water++; }

@@ -127,7 +127,8 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   for (const c of d.chunks) s.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
   s.world.settleWater(); // buracos vizinhos de água voltam a encher
   s.world.tent = d.tent ?? null;
-  for (const c of d.chests ?? []) s.world.chests.set(`${c.x},${c.y}`, c.slots);
+  // Baús que não existem mais no mapa (ex.: salvamento antigo com um baú onde hoje é a cidade) são descartados.
+  for (const c of d.chests ?? []) if (s.world.getObject(c.x, c.y) === Block.CHEST) s.world.chests.set(`${c.x},${c.y}`, c.slots);
   const p = s.player;
   p.x = d.player.x;
   p.y = d.player.y;

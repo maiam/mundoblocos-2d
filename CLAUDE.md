@@ -26,6 +26,9 @@ operacional e faz parte da entrega.
 - Toda entidade que anda estende `Walker`; colisão com o mapa sempre via `World.standHeight`.
 - Jogo **horizontal**; layout deve caber em paisagem com ~360 px de altura e respeitar safe-area.
 - Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**.
+- **Cidade do Despertar** (`world/town.ts`, ADR 0012): igual em toda seed (semente própria); área protegida (nada
+  quebra/coloca); início/renascer sem tenda = `town.start`. Testes que constroem perto do início usam
+  `World.outsideGate()`. Mudar `buildTown` muda a cidade de todos: rode `town.test.ts`.
 - **Dungeon:** área de `world/dungeon.ts` é protegida pelo `World` (`isProtected`: nada quebra/coloca) e monstros
   nunca saem do interior (`Monster.insideAt`). Mudar `buildDungeon`/`planDungeon` muda o mapa das seeds: rode os testes.
 - **Salvamento:** estado que deve persistir passa por `game/save.ts` (ADR 0011); mudou o formato → suba

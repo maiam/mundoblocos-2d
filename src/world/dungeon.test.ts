@@ -135,7 +135,7 @@ describe('Covil das Aranhas — labirinto procedural', () => {
     expect(w.getObject(d.area.x0, d.area.y0)).toBe(Block.DUNGEON_MOUNTAIN);
     expect(w.canPlace(x, y, Block.STONE)).toBe(false);
     expect(w.canTill(x, y) || w.canFlatten(x, y) || w.canPlant(x, y)).toBe(false);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     expect(w.canBreak(sx, sy) || w.canPlace(sx, sy, Block.STONE)).toBe(true);
   });
 });

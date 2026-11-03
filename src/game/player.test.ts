@@ -6,7 +6,7 @@ import { Player } from './player';
 describe('Player', () => {
   it('anda nas direções da tela e vira o sprite pelo eixo dominante', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     p.update(0.05, 1, 0, w);
     expect(p.x).toBeGreaterThan(sx + 0.5);
@@ -20,7 +20,7 @@ describe('Player', () => {
   /** Corredor horizontal limpo à direita do spawn, com bordas de árvore. */
   function corridor(seed: number): [World, number, number] {
     const w = new World(seed);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     for (let dx = -1; dx <= 6; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         while (w.topBlock(sx + dx, sy + dy)) w.breakBlock(sx + dx, sy + dy);

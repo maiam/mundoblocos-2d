@@ -101,7 +101,7 @@ describe('World', () => {
 
   it('coloca e quebra objetos, marcando o chunk como modificado', () => {
     const w = new World(7);
-    const [x, y] = w.findSpawn();
+    const [x, y] = w.outsideGate();
     expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true);
     expect(w.getObject(x, y)).toBe(Block.OAK_LOG);
     expect(w.isWalkable(x, y)).toBe(false);
@@ -113,7 +113,7 @@ describe('World', () => {
 
   it('empilha no máximo 3 cubos e quebra de cima para baixo', () => {
     const w = new World(7);
-    const [x, y] = w.findSpawn();
+    const [x, y] = w.outsideGate();
     expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
     expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true);
     expect(w.placeBlock(x, y, Block.SAND)).toBe(true);
@@ -130,7 +130,7 @@ describe('World', () => {
 
   it('enfeites só no chão e nada empilha sobre enfeite/árvore', () => {
     const w = new World(7);
-    const [x, y] = w.findSpawn();
+    const [x, y] = w.outsideGate();
     expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
     expect(w.placeBlock(x, y, Block.FLOWER)).toBe(false); // enfeite não é bloco de construção
     w.breakBlock(x, y);
@@ -144,7 +144,7 @@ describe('World', () => {
 
   it('quebrar célula vazia cava o chão; buraco só aceita cubo, que vira piso', () => {
     const w = new World(7);
-    const [x, y] = w.findSpawn();
+    const [x, y] = w.outsideGate();
     while (w.topBlock(x, y)) w.breakBlock(x, y); // tira enfeite, se houver
     const original = w.getGround(x, y);
     expect(w.breakTarget(x, y)).toBe('ground');
@@ -167,7 +167,7 @@ describe('World', () => {
 
   it('não cava o chão sob um objeto nem quebra água', () => {
     const w = new World(42);
-    const [x, y] = w.findSpawn();
+    const [x, y] = w.outsideGate();
     while (w.topBlock(x, y)) w.breakBlock(x, y);
     w.placeBlock(x, y, Block.STONE);
     expect(w.breakTarget(x, y)).toBe('object');
@@ -190,7 +190,7 @@ describe('World', () => {
     expect(found).toBe(true);
     expect(w.isWalkable(wx, wy)).toBe(false);
     expect(w.placeBlock(wx, wy, Block.SAND)).toBe(false); // areia não substitui água (ver water.test.ts)
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     expect(w.placeBlock(sx, sy, Block.OAK_TREE)).toBe(false);
   });
 

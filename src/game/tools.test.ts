@@ -18,7 +18,7 @@ describe('Ferramentas', () => {
 
   it('ferramenta equipada troca o sprite da heroína; mãos livres usam o sprite base', () => {
     const w = new World(7);
-    const [sx, sy] = w.findSpawn();
+    const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     const e = new Entities(p);
     expect(e.actors[0].kind).toBe('heroine');

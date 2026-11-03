@@ -14,6 +14,7 @@
 | 0009 | Dungeon como sobreposição pura do terreno; monstros como `Walker` em `Entities` | [0009](adr/0009-dungeon-sobreposta.md) |
 | 0010 | Pacotes de arte por mundo (build de cada artefato só com a arte do seu mundo) | [0010](adr/0010-pacotes-de-arte-por-mundo.md) |
 | 0011 | Salvamento automático no navegador, por mundo e seed, formato versionado | [0011](adr/0011-salvamento-local.md) |
+| 0012 | Cidade do Despertar: semente fixa, sobreposta ao terreno, área protegida, arte pintada em código | [0012](adr/0012-cidade-fixa.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
@@ -62,6 +63,7 @@
 | Combate: 5 ♥; mordidas ½/1/2 ♥; morte → renasce no início com os itens; espólios seda/presa/Coração da Rainha; todas as aranhas renascem (Rainha 300 s) longe da heroína; arte provisória até as pranchas | domains/dungeon |
 | Perseguição por mapa de distâncias (BFS a cada 0,25 s) em `Entities`, não por monstro | domains/dungeon |
 | Porta só entre batentes à esquerda e à direita: cubo de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`, as 8 variações) no nível 0, podendo misturar; quebrar um batente depois não derruba a porta | domains/world |
+| Cidade do Despertar: 108 × 78, igual em toda seed, início e renascer sem tenda; nada quebra/coloca dentro; ruas de Pedra Irregular + Rachada, muralha de Tijolo + Tijolo Rachado; arte das construções criada livremente (pintada em código); sem NPCs/interiores na V1 | domains/town, adr/0012 |
 | Pedras: a pedra do mundo vira Pedra Bruta (mesmo id, salvamentos intactos); 7 variações são materiais novos; receitas 1:1 só para Irregular, Tijolo e Chão; Lisa, Polida, Rachada e Tijolo Rachado ficam para receitas/construções futuras | domains/world, domains/farming |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |
 

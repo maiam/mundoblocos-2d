@@ -97,7 +97,11 @@ export class Game {
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
     this.entities = new Entities(this.player, Math.random, profile.character);
-    if (profile.sheep) this.entities.spawnFlock(this.world, sx, sy);
+    if (profile.sheep) {
+      // Rebanho no campo, do lado de fora do portão da cidade.
+      const [gx, gy] = this.world.outsideGate();
+      this.entities.spawnFlock(this.world, gx, gy + (this.world.town ? 8 : 0));
+    }
     this.entities.spawnMonsters(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));

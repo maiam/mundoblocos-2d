@@ -65,6 +65,30 @@ export const Block = {
   DUNGEON_ROOTS: 109,
   /** Parede do labirinto: cubo de pedra escura (variantes por célula). */
   DUNGEON_WALL: 110,
+  // --- Cidade do Despertar (área protegida: construções fixas, nada quebra nem é colocado) ---
+  /** Célula ocupada por uma construção além do canto inferior esquerdo (onde fica o id dela): bloqueia, sem arte. */
+  TOWN_PART: 120,
+  CASTLE: 121,
+  GUILD: 122,
+  INN: 123,
+  SMITHY: 124,
+  SHOP_POTION: 125,
+  SHOP_GOODS: 126,
+  SHOP_TOOLS: 127,
+  HOUSE_S: 128,
+  HOUSE_M: 129,
+  HOUSE_L: 130,
+  HOUSE_XL: 131,
+  WATCHTOWER: 132,
+  WELL: 133,
+  FOUNTAIN: 134,
+  LAMP: 135,
+  BENCH: 136,
+  BARREL: 137,
+  CRATES: 138,
+  SIGNPOST: 139,
+  HEDGE: 140,
+  STALL: 141,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -112,9 +136,10 @@ export type BlockId = (typeof Block)[keyof typeof Block] | (number & { readonly 
 export type BlockLayer = 'ground' | 'object';
 /**
  * Como o objeto é desenhado: cubo, árvore alta, enfeite plano, plantação, porta (3 níveis, abre/fecha) ou
- * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon).
+ * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon) ou
+ * construção (sprite de várias células da cidade, com sombra própria; as outras células são `TOWN_PART`).
  */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'rock';
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'rock' | 'building';
 
 export interface BlockDef {
   id: BlockId;
@@ -195,6 +220,19 @@ const defs: BlockDef[] = [
     [Block.DUNGEON_MUSHROOM, 'Cogumelos'], [Block.DUNGEON_SPIKES, 'Espinhos de Pedra'], [Block.DUNGEON_ROOTS, 'Raízes'],
     [Block.DUNGEON_WALL, 'Parede da Caverna'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'rock', breakable: false, placeable: false })),
+  // Cidade do Despertar: construções (várias células) e enfeites fixos; o World protege a área inteira.
+  object(Block.TOWN_PART, 'Construção', { shape: 'building', breakable: false, placeable: false }),
+  ...([
+    [Block.CASTLE, 'Castelo'], [Block.GUILD, 'Guilda dos Aventureiros'], [Block.INN, 'Hospedaria'],
+    [Block.SMITHY, 'Ferreiro'], [Block.SHOP_POTION, 'Loja de Poções'], [Block.SHOP_GOODS, 'Armazém'],
+    [Block.SHOP_TOOLS, 'Loja de Ferramentas'], [Block.HOUSE_S, 'Casa'], [Block.HOUSE_M, 'Casa'], [Block.HOUSE_L, 'Casa'],
+    [Block.HOUSE_XL, 'Casa'], [Block.WATCHTOWER, 'Torre de Vigia'], [Block.WELL, 'Poço'], [Block.FOUNTAIN, 'Fonte'],
+    [Block.STALL, 'Barraca'],
+  ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false })),
+  ...([
+    [Block.LAMP, 'Lampião'], [Block.BENCH, 'Banco'], [Block.BARREL, 'Barril'], [Block.CRATES, 'Caixotes'],
+    [Block.SIGNPOST, 'Placa'], [Block.HEDGE, 'Cerca Viva'],
+  ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false })),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
   object(Block.CLOUD_ETHEREAL, 'Nuvem Etérea'),

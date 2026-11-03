@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.34.1_
+_Atualizado em 2026-11-03 — v0.35.0_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -18,6 +18,10 @@ _Atualizado em 2026-11-03 — v0.34.1_
   Pedra saem de receita (1 Pedra Bruta → 1); as outras 4 ainda não têm fonte no jogo (só pelo código/salvamento).
 - Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
+- **Cidade do Despertar** (`domains/town.md`): cidade fixa (igual em toda seed) de 108 × 78 blocos ao norte da
+  origem — muralha com torres e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda, Hospedaria,
+  Ferreiro, lojas e casas (sem interiores nem NPCs ainda). **Início e renascer sem tenda** na praça inicial. Área
+  protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
 - **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto do spawn, com
   uma única entrada voltada para ele, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só
   passagem. Nada quebra nem é colocado lá dentro. Aranhas pequenas e grandes em quantidade proporcional ao
@@ -60,7 +64,7 @@ _Atualizado em 2026-11-03 — v0.34.1_
   colheita solta trigo + sementes.
 - **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
   limite; **bolsa** de 18 espaços (3 fileiras de 9 com a mão), troca para a grade; tipo novo só entra se houver lugar. Ao cair, perde tudo menos as ferramentas. Santuário segue infinito.
-- **Ovelhas**: rebanho perto do spawn; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
+- **Ovelhas**: rebanho no campo, do lado de fora do portão da cidade; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
 ## Salvamento
@@ -81,9 +85,9 @@ _Atualizado em 2026-11-03 — v0.34.1_
   buracos, não se espalha sobre terra firme.
 
 ## Qualidade e desempenho
-- 88 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 116 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
-- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,09 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
+- Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,11 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).
 - Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.

@@ -10,7 +10,7 @@ import { Sheep } from './sheep';
 
 function session(seed = 42) {
   const world = new World(seed);
-  const [sx, sy] = world.findSpawn();
+  const [sx, sy] = world.outsideGate();
   const player = new Player(sx + 0.5, sy + 0.6);
   const entities = new Entities(player, mulberry32(1));
   entities.spawnMonsters(world);
