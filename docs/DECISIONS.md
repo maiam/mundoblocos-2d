@@ -15,6 +15,7 @@
 | 0010 | Pacotes de arte por mundo (build de cada artefato só com a arte do seu mundo) | [0010](adr/0010-pacotes-de-arte-por-mundo.md) |
 | 0011 | Salvamento automático no navegador, por mundo e seed, formato versionado | [0011](adr/0011-salvamento-local.md) |
 | 0012 | Cidade do Despertar: semente fixa, sobreposta ao terreno, área protegida, arte pintada em código | [0012](adr/0012-cidade-fixa.md) |
+| 0013 | Imagens em arquivos separados ao lado da página; código embutido; orçamento de **início** < 3 MB; arte de regiões em segundo plano | [0013](adr/0013-imagens-em-arquivos-separados.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |

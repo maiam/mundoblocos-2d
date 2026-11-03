@@ -13,7 +13,7 @@ npm run dev        # http://localhost:5173  (aceita ?seed=<número|texto>)
 npm test           # testes (Vitest)
 npm run bench      # benchmarks de geração/leitura de chunks
 npm run build      # typecheck + build estático em dist/
-npm run build:artifact  # HTML de arquivo único em artifact/ (para Artifact/offline)
+npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos separados, ADR 0013)
 ```
 
 ## Mundos

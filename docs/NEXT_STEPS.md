@@ -22,7 +22,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 117 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | 🔴 | principal **3,95 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
+| Peso dos artefatos | ✅ | imagens em arquivos separados (ADR 0013): **início ~2,5 MB** (orçamento < 3 MB), dungeon em segundo plano; Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -99,9 +99,9 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 - **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Peso do artefato principal: 3,95 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A arte da cidade (v0.36) somou ~0,8 MB (castelo ~0,28 MB). Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
-  virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
-  separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.
+- **Orçamento de início (ADR 0013)**: hoje ~2,5 MB de 3 MB. Próximos a ir para segundo plano quando crescer: folhas da
+  heroína com ferramenta (~1 MB, carregar ao equipar) e arte de cidades/dungeons novas (carregar ao se aproximar).
+  Hospedagem própria (CDN/domínio) usa o mesmo `dist/`.
 - `ActionController` (465 linhas) vai crescer com vida/dano: separar combate (golpe, dano) em módulo próprio na Fase 1.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.
 - Monstros sempre atualizados (~39 no labirinto): ok hoje; com várias dungeons, atualizar só os próximos.

@@ -83,7 +83,7 @@ Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
 | Gerar 1 chunk (256 células) | ~0,07 ms (era 0,26 ms) | 4 chunks/frame ≪ 16 ms |
 | Ler 3.000 células carregadas | ~0,36 ms (era 0,50 ms) | — |
 | `Renderer.draw` | ~0,5 ms média, 0,8 ms p95 | 16 ms (60 FPS) |
-| Artefato (HTML único, cada mundo) | principal ~3,95 MB (**acima da meta; decisão em discussão, ver NEXT_STEPS**), Santuário ~0,7 MB (arte por mundo, ADR 0010) | meta < 3 MB; aviso do build acima de 3.000 kB de JS |
+| Artefato (página + imagens em arquivos, ADR 0013) | principal: página 205 kB + 2,8 MB de imagens; **início ~2,5 MB**, dungeon/aranhas ~0,5 MB depois; Santuário ~0,7 MB | orçamento: início < 3 MB (o build avisa); total pode crescer |
 
 Técnicas: uma avaliação de ruído por célula (`cellAt`); chunks em `Map` com chave numérica + cache do último
 chunk; cache offscreen do chão invalidado por `version`; orçamento de geração e re-render por frame;

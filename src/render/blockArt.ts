@@ -3,7 +3,8 @@ import { art } from './art';
 /**
  * Imagens de blocos carregadas antes do jogo começar (para chão e cubos já nascerem com a arte), a partir do
  * pacote de arte do mundo (`render/art`): atlas dos materiais (scripts/extract-blocks.py), atlas celestial,
- * folha da porta e arte da dungeon. Só o que o pacote traz é carregado; o resto fica null.
+ * folha da porta, água, tenda, baú e cidade. A arte da dungeon vem depois, em segundo plano (`loadDungeonArt`).
+ * Só o que o pacote traz é carregado; o resto fica null.
  * Layout de cada atlas: linha 0 = topo do cubo (64×64), linha 1 = frente (64×36),
  * linha 2 = topo contínuo para o chão (64×64); uma coluna por bloco.
  */
@@ -43,7 +44,6 @@ const maybe = (url: string | undefined) => (url ? load(url) : Promise.resolve(nu
 /** Carrega as imagens de bloco do pacote de arte já carregado (`loadArtPack`). */
 export async function loadBlockArt(): Promise<void> {
   const a = art();
-  const d = a.dungeon;
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
@@ -56,10 +56,19 @@ export async function loadBlockArt(): Promise<void> {
     const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
     water = { top, flow };
   }
-  if (d) {
-    const [ground, mountains, rocks, props, walls] = await Promise.all([d.ground, d.mountains, d.rocks, d.props, d.walls].map(load));
-    dungeon = { ground, mountains, rocks, props, walls };
-  }
+}
+
+/**
+ * Arte da dungeon, carregada DEPOIS do início (fora do caminho crítico, ADR 0013): o jogo abre na cidade e a
+ * dungeon fica longe; quando chega, o render injeta as texturas (`addDungeonTextures`) e redesenha o chão.
+ * Resolve null se o mundo não tem dungeon.
+ */
+export async function loadDungeonArt(): Promise<DungeonArt | null> {
+  const d = art().dungeon;
+  if (!d || dungeon) return dungeon;
+  const [ground, mountains, rocks, props, walls] = await Promise.all([d.ground, d.mountains, d.rocks, d.props, d.walls].map(load));
+  dungeon = { ground, mountains, rocks, props, walls };
+  return dungeon;
 }
 
 /** Atlas dos materiais (null se o mundo não tem materiais). */

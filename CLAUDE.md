@@ -21,8 +21,10 @@ operacional e faz parte da entrega.
 - `src/world/` **não usa DOM nem `Math.random()`** (testável em Node, determinístico por seed).
 - `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula
   (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; cursor e botão de ação só escolhem a célula.
-- **Arte por mundo:** `?inline` só em `src/render/art/<mundo>.ts` (ADR 0010); nunca importe arte direto em
-  módulos de render — senão o artefato do outro mundo volta a carregá-la.
+- **Arte por mundo:** imagens só são importadas em `src/render/art/<mundo>.ts` (ADR 0010), como URL — viram arquivos
+  separados no Artifact (ADR 0013); nunca importe arte direto em módulos de render. **Nunca leia um canvas**
+  (`toDataURL`/`getImageData`): com imagens em outro arquivo a leitura pode ser bloqueada. Orçamento: o que o jogo
+  espera para começar < 3 MB (o build avisa); arte de outras regiões carrega em segundo plano (`loadDungeonArt`).
 - Toda entidade que anda estende `Walker`; colisão com o mapa sempre via `World.standHeight`.
 - Jogo **horizontal**; layout deve caber em paisagem com ~360 px de altura e respeitar safe-area.
 - Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**.
@@ -42,7 +44,7 @@ npm run dev                 # http://localhost:5173/?seed=42  (window.__game exp
 npm test                    # Vitest (domínio + entidades)
 npx tsc --noEmit            # typecheck
 npm run bench               # benchmarks de geração/leitura de chunks
-npm run build:artifact      # mundo principal → artifact/mundoblocos.html (publicar = mesma URL)
+npm run build:artifact      # mundo principal → artifact/mundoblocos.html + -assets/ + -files.json (publicar com files, mesma URL)
 npm run build:artifact:santuario   # Santuário → artifact/santuario.html (rode o build do mundo antes de publicá-lo)
 python3 scripts/optimize-assets.py   # SEMPRE após gerar sprites/atlas (PNG → WebP q84); --recompress regrava WebP grandes
 ```
@@ -78,7 +80,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - Verificar no navegador (captura de tela) quando a mudança é visual ou de interação.
 - Atualizar: `docs/CURRENT_STATE.md`, `docs/NEXT_STEPS.md`, `docs/CHANGELOG.md` e, se houver impacto,
   `ARCHITECTURE`, `CONVENTIONS`, `DECISIONS` (+ ADR), `OPERATIONS`, `MAPS`, domínios e `README.md`.
-- Republicar o Artifact se o jogo mudou (`npm run build:artifact` + publicar `artifact/mundoblocos.html`).
+- Republicar o Artifact se o jogo mudou (`npm run build:artifact` + publicar `artifact/mundoblocos.html` com `files`
+  = `artifact/mundoblocos-files.json`).
 - Commit em pt-BR descrevendo o porquê; push na branch de trabalho.
 - Resumo final ao usuário: implementado, arquivos, docs atualizados (e quais não, com motivo), decisões,
   inconsistências encontradas, próximos passos.

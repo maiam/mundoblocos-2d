@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.37.0 — 2026-11-03
+- **Imagens em arquivos separados (ADR 0013, decisão do dono do produto).** O Artifact deixa de ser um HTML único com
+  tudo em base64: a página leva só o código (205 kB) e as 75 imagens são publicadas ao lado dela (cache do navegador
+  entre versões). Novo orçamento: o que o jogo **espera para começar** < 3 MB (hoje ~2,5 MB); o total pode crescer.
+- **Arte da dungeon em segundo plano**: carrega depois do início e entra nas texturas quando chega.
+- Ícone da Porta de Carvalho virou arquivo (`icon-block-oak-door`; não se lê mais nenhum canvas).
+- **Correção**: poço, fonte, bancos e barracas estavam sobre quadrados de grama no meio das praças (v0.36).
+
 ## 0.36.1 — 2026-11-03
 - **Correção: dungeon em cima da estrada do portão.** Em ~70% das seeds (43 de 60 testadas) a dungeon ficava logo ao
   sul do portão, cobrindo o fim da estrada e o campo onde o rebanho nasce. Agora ela evita também esse campo

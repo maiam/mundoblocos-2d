@@ -177,8 +177,9 @@ function buildTown(): TownLayout {
     for (let yy = y; yy < y + d; yy++) {
       for (let xx = x; xx < x + w; xx++) {
         const i = idx(xx, yy);
-        // Grama sob a construção (sobre a muralha, mantém a pedra): cantos transparentes da arte mostram jardim.
-        if (use[i] !== WALLED) ground[i] = Block.GRASS;
+        // Grama sob a construção (cantos transparentes da arte mostram jardim); sobre muralha, rua ou praça
+        // (poço, fonte, bancos, barracas) o piso continua o mesmo.
+        if (use[i] !== WALLED && use[i] !== PLAZA && use[i] !== STREET) ground[i] = Block.GRASS;
         use[i] = BUILT;
         objects[i] = Block.TOWN_PART;
         upper[i] = Block.AIR;

@@ -14,7 +14,8 @@ import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
 import { Particles } from './particles';
-import { createBlockTextures, type BlockTextures, type Sprite } from './textures';
+import { addDungeonTextures, createBlockTextures, type BlockTextures, type Sprite } from './textures';
+import { loadDungeonArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
 
 /** Máximo de chunks (chão) re-renderizados por frame. */
@@ -76,6 +77,8 @@ export class Renderer {
   constructor(canvas: HTMLCanvasElement, private readonly world: World) {
     this.ctx = canvas.getContext('2d')!;
     this.textures = createBlockTextures({ town: !!world.town });
+    // Arte da dungeon em segundo plano (não atrasa o início): quando chega, entra nas texturas e o chão redesenha.
+    void loadDungeonArt().then((d) => { if (d && addDungeonTextures(this.textures)) this.chunks.invalidateAll(); });
     this.chunks = new ChunkRenderer(world, this.textures);
     loadCropSprites(this.textures.objects);
   }

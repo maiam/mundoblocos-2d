@@ -1,6 +1,7 @@
 # ADR 0010 — Pacotes de arte por mundo
 
-**Status:** aceito (2026-11-02)
+**Status:** aceito (2026-11-02). A parte `?inline`/arquivo único foi substituída pela ADR 0013 (imagens em arquivos
+separados); os pacotes por mundo continuam valendo.
 
 ## Contexto
 Cada artefato (HTML de arquivo único) levava a arte dos dois mundos: o principal chegou a 3,84 MB e o Santuário a

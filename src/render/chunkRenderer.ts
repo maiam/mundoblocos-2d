@@ -58,6 +58,11 @@ export class ChunkRenderer {
     }
   }
 
+  /** Marca todos os chunks para redesenhar (ex.: chegou arte que estava carregando em segundo plano). */
+  invalidateAll(): void {
+    for (const entry of this.cache.values()) entry.version = -1;
+  }
+
   get(chunk: Chunk, allowRender: boolean): HTMLCanvasElement | null {
     const cached = this.cache.get(chunk);
     if (cached && cached.version === chunk.version) {

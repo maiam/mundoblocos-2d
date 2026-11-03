@@ -3,7 +3,7 @@ import type { MonsterKind } from '../../world/dungeon';
 import type { ItemId, ToolId } from '../../world/items';
 
 /**
- * Pacote de arte de um mundo: URLs (embutidas, `?inline`) só do que aquele mundo usa.
+ * Pacote de arte de um mundo: URLs das imagens (arquivos separados no Artifact, ADR 0013) só do que aquele mundo usa.
  * Cada mundo tem o seu (`principal.ts`, `santuario.ts`); o build do artefato de um mundo só leva o pacote dele.
  * Campos ausentes = o mundo não tem aquilo (o render pula o que não veio).
  */

@@ -83,3 +83,10 @@ atlas.save(OUT + 'blocks-atlas.png', optimize=True)
 icon = cube.crop(cube.getbbox())
 square(icon, 64, margin=0.02).save(OUT + 'icon-block-oak-planks.png', optimize=True)
 print(OUT + 'blocks-atlas.png (coluna da Tábua substituída)', OUT + 'icon-block-oak-planks.png')
+
+# ---- Ícone da Porta de Carvalho (quadro fechado da folha; antes saía de um canvas, que não pode ser lido quando as
+# imagens vêm como arquivos separados — ADR 0013) ----
+door = Image.open(OUT + 'oak-door.webp').convert('RGBA')
+frame = door.crop((0, 0, door.width // 4, door.height // 2))
+square(frame.crop(frame.getbbox()), 64, margin=0.04).save(OUT + 'icon-block-oak-door.png', optimize=True)
+print(OUT + 'icon-block-oak-door.png')

@@ -12,25 +12,31 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | `npx tsc --noEmit` | Typecheck |
 | `npm run bench` | Benchmarks de geração/leitura de chunks (`bench/`) |
 | `npm run build` | Typecheck + `dist/` estático (`base: './'`, qualquer subcaminho/CDN; inclui PWA) |
-| `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (arquivo único, sem esqueleto `<html>`) |
-| `npm run build:artifact:santuario` | build com `VITE_WORLD=santuario` → `artifact/santuario.html` |
+| `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (código embutido, sem esqueleto `<html>`) + imagens em `artifact/mundoblocos-assets/` + mapa `artifact/mundoblocos-files.json` (ADR 0013) |
+| `npm run build:artifact:santuario` | build com `VITE_WORLD=santuario` → `artifact/santuario.html` + `-assets/` + `-files.json` |
 
 ## Artifacts (versões jogáveis, privadas — compartilhar pelo menu Share)
 | Mundo | URL | Atualizar |
 |---|---|---|
-| Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` |
-| Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` |
+| Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
+| Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` com `files` de `artifact/santuario-files.json` |
 - Rode **o build de cada mundo antes de publicá-lo** (os dois usam `dist/`). No dev: `?mundo=santuario`.
 - Subdomínio real: hospedar `dist/` (build normal) em `santuario.<domínio>`; o jogo reconhece pelo hostname.
-- `artifact/` não é versionado. O manifest PWA não entra no arquivo único.
+- `artifact/` não é versionado. O manifest PWA não entra no Artifact.
+- **Publicação com arquivos separados (ADR 0013)**: as imagens vão no parâmetro `files` (caminho publicado = nome do
+  arquivo, ao lado da página; até 255 por publicação). Publicar só o HTML deixa o jogo sem imagens. Nomes têm hash:
+  arquivos antigos podem ser removidos com `null` no `files` quando sumirem do manifesto.
+- **Orçamento**: o build imprime "início" (página + imagens que o jogo espera) e avisa se passar de 3 MB; o total
+  pode crescer. Arte nova que não é usada no começo deve carregar em segundo plano (padrão `loadDungeonArt`).
+- Teste local no formato do Artifact: página + imagens na mesma pasta servidas por `python3 -m http.server`.
 
 ## Pipeline de arte
 Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP q84/alfa q85 e apaga os
 PNG; `--recompress` regrava no nível atual os WebP de sprite ≥ 60 kB). Depois, **importar o asset no pacote do mundo**
-(`src/render/art/principal.ts` ou `santuario.ts`, ADR 0010) — é o único lugar com `?inline`.
+(`src/render/art/principal.ts` ou `santuario.ts`, ADR 0010) — é o único lugar que importa imagens (como URL, ADR 0013).
 
 **Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`) e `npm run build:artifact:santuario`; cada um
-só leva a arte do seu mundo. Gere o build de um mundo imediatamente antes de publicá-lo (mesmo `dist/`).
+só leva a arte do seu mundo, em arquivos ao lado da página (ADR 0013). Gere o build de um mundo imediatamente antes de publicá-lo (mesmo `dist/`).
 
 **Sprites** — `P="python3 scripts/process-sprite.py"`:
 ```bash

@@ -80,6 +80,13 @@ function shadeSprite(s: Sprite, color: string): Sprite {
   return s;
 }
 
+/** Injeta a arte da dungeon nas texturas (depois que ela termina de carregar em segundo plano). */
+export function addDungeonTextures(t: BlockTextures): boolean {
+  if (!getDungeonArt() || t.variants.has(Block.DUNGEON_WALL)) return false;
+  dungeonTextures(t.groundTop, t.objects, t.variants, t.stackDraw);
+  return true;
+}
+
 function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>, stackDraw: Map<BlockId, number>): void {
   const art = getDungeonArt()!;
   [Block.DUNGEON_DIRT, Block.DUNGEON_WEB, Block.DUNGEON_BONES, Block.DUNGEON_MOSS].forEach((id, i) => {
@@ -476,7 +483,8 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   if (doorFrames.length) {
     objects.set(Block.OAK_DOOR, doorFrames[0]);
     objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
-    icons.set(Block.OAK_DOOR, doorFrames[0].canvas.toDataURL());
+    // Ícone em arquivo próprio: ler um canvas desenhado com imagem de outro arquivo pode ser bloqueado (ADR 0013).
+    icons.set(Block.OAK_DOOR, pack.materialIcons[Block.OAK_DOOR] ?? '');
   }
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],

@@ -19,7 +19,9 @@ Apenas apresentação; lê `World`, nunca escreve.
 - A prancha isométrica anterior (`blocks-sheet.png`) segue suportada com `--iso` (comparação registrada no CHANGELOG).
 - Chão: miolo do topo sem contorno, misturado com cópia deslocada meia célula (sem emendas); terra/grama/
   caminho/areia/pedra giram/espelham por célula; arado, tora e piso mantêm a orientação.
-- `render/blockArt.ts` carrega os atlas (materiais e celestiais) antes do jogo começar (`main.ts`).
+- `render/blockArt.ts` carrega os atlas (materiais e celestiais), porta, água, tenda, baú e cidade antes do jogo começar
+  (`main.ts`); a arte da dungeon vem depois (`loadDungeonArt` → `addDungeonTextures` → `ChunkRenderer.invalidateAll`,
+  ADR 0013). Imagens são URLs de arquivos ao lado da página; o render nunca lê pixels de canvas.
 
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):

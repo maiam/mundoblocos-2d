@@ -3,12 +3,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   base: './',
   build: {
-    // Os sprites entram embutidos (?inline) para o build de arquivo único (Artifact):
-    // o bundle passa de 500 kB por design. Limite = meta de < 3 MB por artefato (principal hoje ~3,95 MB, acima — decisão em NEXT_STEPS; só a arte dele — ADR 0010), para
-    // que o aviso volte a aparecer se os assets crescerem demais.
-    chunkSizeWarningLimit: 3000,
-    // Um único JS (o artefato é um HTML de arquivo único): o pacote de arte do mundo, importado dinamicamente,
-    // entra no mesmo bundle; com VITE_WORLD fixo, só o do mundo escolhido.
+    // As imagens saem como arquivos separados (ADR 0013); o JS (código) fica pequeno e entra embutido no HTML do
+    // Artifact. O aviso padrão de 500 kB vale para o código.
+    // Um único JS (embutido no HTML do Artifact): o pacote de arte do mundo, importado dinamicamente, entra no mesmo
+    // bundle; com VITE_WORLD fixo, só o do mundo escolhido (ADR 0010).
     rollupOptions: { output: { inlineDynamicImports: true } },
   },
   test: {
