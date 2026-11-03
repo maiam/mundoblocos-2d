@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.37.2 — 2026-11-03
+- Publicação pela integração GitHub da Hostinger (branch `main`, Vite, Node 22, `npm run build`, saída `dist`, sem
+  variáveis de ambiente) documentada em `OPERATIONS`.
 - **Site próprio em `orvalis.pensamentos.online`** (Hostinger, provisório no lugar de `maiamapps.com.br`):
   `npm run pack:site` gera `orvalis-site.zip` (build com os dois mundos + `.htaccess` com tipos MIME e cache) e o passo
   a passo do hPanel está em `OPERATIONS`.

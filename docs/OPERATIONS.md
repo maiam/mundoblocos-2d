@@ -27,7 +27,21 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 Endereço **provisório**: o domínio `maiamapps.com.br` não pode ser usado por enquanto; o jogo fica num subdomínio de
 `pensamentos.online`, também na Hostinger. Site estático: nenhum servidor/backend (contas e nuvem seguem no core).
 
-**Pacote**: `npm run pack:site` → `npm run build` (sem `VITE_WORLD`: os dois mundos, escolhidos pelo endereço) e
+**Publicação pelo GitHub (forma principal)**: a Hostinger compila o repositório a cada push na branch escolhida.
+Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em Node 22):
+
+| Campo | Valor |
+|---|---|
+| Configuração predefinida | Vite |
+| Branch | `main` (publicar = fazer merge da branch de trabalho em `main`) |
+| Versão do Node | 22.x |
+| Diretório raiz | `./` |
+| Comando de construção | `npm run build` (typecheck + build) |
+| Gerenciador de pacotes | npm (usa o `package-lock.json`) |
+| Diretório de saída | `dist` |
+| Variáveis de ambiente | nenhuma — **não** defina `VITE_WORLD` (sem ela, o site traz os dois mundos e escolhe pelo endereço) |
+
+**Pacote manual (alternativa)**: `npm run pack:site` → `npm run build` (sem `VITE_WORLD`: os dois mundos, escolhidos pelo endereço) e
 `orvalis-site.zip` na raiz do repositório (não versionado) com o **conteúdo** de `dist/`: `index.html`,
 `manifest.webmanifest`, ícones, `.htaccess` (tipos MIME e cache: página `no-cache`, arquivos com hash 1 ano) e `assets/`.
 

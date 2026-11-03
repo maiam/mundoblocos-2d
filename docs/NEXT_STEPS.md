@@ -110,8 +110,8 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 
 ## 4. Dependências externas
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
-- **Hospedagem**: `orvalis.pensamentos.online` na Hostinger (provisório; passos em `OPERATIONS`, feito pelo dono do
-  produto no hPanel com o `orvalis-site.zip`). Voltar a `maiamapps.com.br` quando possível.
+- **Hospedagem**: `orvalis.pensamentos.online` na Hostinger (provisório; publicação pelo GitHub a cada merge em `main`,
+  configurada pelo dono do produto no hPanel — ver `OPERATIONS`). Voltar a `maiamapps.com.br` quando possível.
 - **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
