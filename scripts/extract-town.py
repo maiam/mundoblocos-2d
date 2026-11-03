@@ -1,107 +1,182 @@
 #!/usr/bin/env python3
-"""Arte da Cidade do Despertar: recorta e reduz as imagens fornecidas.
+"""Arte da Cidade do Despertar: recorta as pranchas fornecidas (assets-src/town/*.png) em sprites prontos.
 
-assets-src/town-house-red-sizes.png (casas de telhado vermelho 3×2, 4×3 e 5×3 lado a lado, com legendas embaixo)
-→ src/assets/town-house-red-{3x2,4x3,5x3}.png: cada casa reduzida para a PAREDE medir exatamente w × 64 px
-(w células em 2×), com 24 px de margem de cada lado para o beiral; base da casa no pé da imagem. Sem esticar nem
-repetir partes — o render só posiciona (render/townArt.ts, HOUSE_RED_PAD).
-assets-src/town-bushes.png (3 arbustos lado a lado: redondo, alto, largo) → src/assets/town-bushes.png: tira de
-3 quadros de 120 × 96 px, mesma escala para todos, cada um centrado e com a base no pé do quadro.
-Depois rode scripts/optimize-assets.py (PNG → WebP).
+Cada objeto da tabela OBJECTS sai como src/assets/town-<nome>.png com escala fixa de PX_PER_CELL px por célula e o
+CENTRO da área de encaixe no centro horizontal da imagem; a base do desenho fica no pé da imagem. O render só
+posiciona (render/townArt.ts, TOWN_PX_PER_CELL): nada é esticado nem repetido.
+
+Encaixe (`fit`):
+- ('base', cells, frac): a largura do desenho na linha `frac` da altura (0 = topo, 1 = pé) mede `cells` células
+  (ex.: a parede/fundação da casa = largura da área; o beiral transborda);
+- ('full', cells): a largura total do desenho mede `cells` células.
+Fundo: as pranchas já vêm transparentes; `bg=True` remove fundo escuro/semitransparente ligado à borda do recorte
+(guarita). Em todos, sobram só as partes grandes (legendas, setas e textos pequenos somem).
+
+Depois rode scripts/optimize-assets.py (PNG → WebP). `--preview` grava uma folha de conferência com a área de cada
+objeto desenhada sob ele (scratch/town-preview.png).
 """
+import sys
+from collections import deque
 from pathlib import Path
-from PIL import Image
+
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
-HOUSES_SRC = ROOT / 'assets-src' / 'town-house-red-sizes.png'
-HOUSE_SIZES = [(3, 2), (4, 3), (5, 3)]
-CELL = 64
-PAD = 24
-BUSHES_SRC = ROOT / 'assets-src' / 'town-bushes.png'
-BUSHES_OUT = ROOT / 'src' / 'assets' / 'town-bushes.png'
-BUSH_CELL = (120, 96)
-BUSH_SCALE = 0.2
+SRC = ROOT / 'assets-src' / 'town'
+OUT = ROOT / 'src' / 'assets'
+PX_PER_CELL = 48
+
+# nome, prancha, recorte (x0, y0, x1, y1) em px da prancha, encaixe, área (w, d) só para a prévia, remover fundo
+OBJECTS = [
+    ('house-red-1f', 'houses-red', (0, 0, 724, 690), ('base', 5, 0.95), (5, 5), False),
+    ('house-red-2f', 'houses-red', (724, 0, 1448, 690), ('base', 5, 0.95), (5, 5), False),
+    ('house-blue-1f', 'houses-blue', (0, 0, 720, 668), ('base', 5, 0.95), (5, 5), False),
+    ('house-blue-2f', 'houses-blue', (720, 0, 1448, 668), ('base', 5, 0.95), (5, 5), False),
+    ('house-brown-1f', 'houses-brown', (150, 150, 722, 722), ('base', 5, 0.95), (5, 5), False),
+    ('house-brown-2f', 'houses-brown', (760, 0, 1370, 722), ('base', 5, 0.95), (5, 5), False),
+    ('shop-1f', 'shops', (0, 0, 860, 640), ('base', 5, 0.95), (5, 5), False),
+    ('shop-2f', 'shops', (860, 0, 1774, 640), ('base', 5, 0.95), (5, 5), False),
+    ('smithy', 'smithy', (200, 0, 1336, 750), ('base', 8, 0.9), (8, 5), False),
+    ('guild', 'guild', (0, 0, 1254, 955), ('base', 9, 0.82), (9, 9), False),
+    ('castle', 'castle-moat', (0, 0, 1200, 1024), ('full', 26), (26, 17), False),
+    ('watchtower', 'watchtower', (90, 0, 670, 1290), ('base', 4, 0.9), (4, 6), True),
+    ('bench-3', 'benches', (0, 100, 1010, 660), ('full', 3.7), (3, 1), False),
+    ('bench-2', 'benches', (1020, 100, 1774, 660), ('full', 2.5), (2, 1), False),
+    ('lamp-stone', 'lamps', (0, 0, 500, 800), ('base', 0.62, 0.7), (1, 1), False),
+    ('lamp-wood', 'lamps', (500, 0, 1000, 800), ('base', 0.62, 0.7), (1, 1), False),
+    ('lamp-mixed', 'lamps', (990, 0, 1536, 800), ('base', 0.62, 0.7), (1, 1), False),
+    ('bush-round', 'bushes', (0, 300, 450, 850), ('full', 1.05), (1, 1), False),
+    ('bush-tall', 'bushes', (450, 300, 810, 850), ('full', 0.86), (1, 1), False),
+    ('bush-wide', 'bushes', (810, 300, 1448, 850), ('full', 1.6), (1, 1), False),
+]
 
 
-def solid_bbox(im: Image.Image, min_count: int = 8):
-    """Caixa das colunas/linhas com pelo menos `min_count` pixels opacos (ignora poeira na borda)."""
-    a = im.getchannel('A').point(lambda v: 255 if v > 128 else 0)
-    w, h = a.size
-    px = a.load()
-    cols = [x for x in range(w) if sum(1 for y in range(0, h, 2) if px[x, y]) >= min_count]
-    rows = [y for y in range(h) if sum(1 for x in range(0, w, 2) if px[x, y]) >= min_count]
-    return cols[0], rows[0], cols[-1] + 1, rows[-1] + 1
+def solid(px, x, y, a_min=128):
+    return px[x, y][3] >= a_min
 
 
-def runs_of(filled, min_len=40):
-    out, start = [], None
-    for x, f in enumerate(list(filled) + [False]):
-        if f and start is None:
-            start = x
-        if not f and start is not None:
-            if x - start > min_len:
-                out.append((start, x))
-            start = None
-    return out
+def remove_background(im: Image.Image, step: int = 14) -> None:
+    """Fundo ligado à borda do recorte: avança por pixels semitransparentes ou por vizinhos de cor quase igual
+    (degradê/halo liso). O contorno escuro do desenho é uma borda forte e segura o avanço (guarita)."""
+    w, h = im.size
+    px = im.load()
+    seen = bytearray(w * h)
+    q = deque()
+    for x in range(w):
+        q.extend([(x, 0, None), (x, h - 1, None)])
+    for y in range(h):
+        q.extend([(0, y, None), (w - 1, y, None)])
+    orig = im.copy().load()
+    while q:
+        x, y, prev = q.popleft()
+        if x < 0 or y < 0 or x >= w or y >= h or seen[y * w + x]:
+            continue
+        r, g, b, a = orig[x, y]
+        if a >= 200 and prev is not None:
+            pr, pg, pb = prev
+            if abs(r - pr) + abs(g - pg) + abs(b - pb) > step:
+                continue
+        seen[y * w + x] = 1
+        px[x, y] = (0, 0, 0, 0)
+        c = (r, g, b)
+        q.extend([(x + 1, y, c), (x - 1, y, c), (x, y + 1, c), (x, y - 1, c)])
 
 
-def houses() -> None:
-    """Separa as casas pelas colunas vazias; corta a legenda (primeira linha vazia abaixo da casa)."""
-    im = Image.open(HOUSES_SRC).convert('RGBA')
-    a = im.getchannel('A').point(lambda v: 255 if v > 128 else 0)
-    w, h = a.size
-    px = a.load()
-    top_band = int(h * 0.65)  # legendas ficam abaixo disto
-    cols = [sum(1 for y in range(0, top_band, 2) if px[x, y]) > 3 for x in range(w)]
-    found = runs_of(cols)
-    assert len(found) == len(HOUSE_SIZES), found
-    for (x0, x1), (cw, cd) in zip(found, HOUSE_SIZES):
-        count = lambda y: sum(1 for x in range(x0, x1, 2) if px[x, y])
-        y0 = next(y for y in range(h) if count(y) > 3)
-        bottom = next(y for y in range(int(h * 0.4), h) if count(y) == 0)
-        wall_row = bottom - 20
-        xs = [x for x in range(x0, x1) if px[x, wall_row]]
-        wl, wr = xs[0], xs[-1] + 1
-        s = (cw * CELL) / (wr - wl)
-        crop = im.crop((x0, y0, x1, bottom))
-        scaled = crop.resize((round(crop.width * s), round(crop.height * s)), Image.LANCZOS)
-        canvas = Image.new('RGBA', (cw * CELL + 2 * PAD, scaled.height))
-        canvas.alpha_composite(scaled, (PAD - round((wl - x0) * s), 0))
-        out = ROOT / 'src' / 'assets' / f'town-house-red-{cw}x{cd}.png'
-        canvas.save(out)
-        print(f'casa {cw}x{cd}: {canvas.size}')
+def keep_large(im: Image.Image, min_share=0.04) -> None:
+    """Apaga componentes opacos pequenos (legendas, setas, textos) — fica o desenho principal."""
+    w, h = im.size
+    px = im.load()
+    label = [0] * (w * h)
+    sizes = {}
+    cur = 0
+    for y in range(h):
+        for x in range(w):
+            if label[y * w + x] or not solid(px, x, y, 40):
+                continue
+            cur += 1
+            n = 0
+            q = deque([(x, y)])
+            label[y * w + x] = cur
+            while q:
+                cx, cy = q.popleft()
+                n += 1
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not label[ny * w + nx] and solid(px, nx, ny, 40):
+                        label[ny * w + nx] = cur
+                        q.append((nx, ny))
+            sizes[cur] = n
+    if not sizes:
+        return
+    big = max(sizes.values())
+    keep = {k for k, n in sizes.items() if n >= big * min_share}
+    for y in range(h):
+        for x in range(w):
+            if label[y * w + x] not in keep:
+                px[x, y] = (0, 0, 0, 0)
+
+
+def extract(name, sheet, box, fit, bg):
+    im = Image.open(SRC / f'{sheet}.png').convert('RGBA').crop(box)
+    if bg:
+        remove_background(im)
+    keep_large(im)
+    bb = im.getchannel('A').point(lambda v: 255 if v >= 40 else 0).getbbox()
+    im = im.crop(bb)
+    px = im.load()
+    if fit[0] == 'base':
+        _, cells, frac = fit
+        y = min(im.height - 1, int(im.height * frac))
+        xs = [x for x in range(im.width) if solid(px, x, y)]
+        x0, x1 = xs[0], xs[-1] + 1
+    else:
+        _, cells = fit
+        x0, x1 = 0, im.width
+    s = cells * PX_PER_CELL / (x1 - x0)
+    im = im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
+    cx = (x0 + x1) / 2 * s  # centro da área de encaixe na imagem reduzida
+    half = max(cx, im.width - cx)
+    canvas = Image.new('RGBA', (int(2 * half + 2), im.height))
+    canvas.alpha_composite(im, (round(canvas.width / 2 - cx), 0))
+    canvas.save(OUT / f'town-{name}.png')
+    return canvas
 
 
 def main() -> None:
-    houses()
-    bushes()
-
-
-def bushes() -> None:
-    """Separa os arbustos pelas colunas vazias entre eles e monta a tira com escala única."""
-    im = Image.open(BUSHES_SRC).convert('RGBA')
-    a = im.getchannel('A').point(lambda v: 255 if v > 128 else 0)
-    w, h = a.size
-    px = a.load()
-    filled = [sum(1 for y in range(0, h, 2) if px[x, y]) > 3 for x in range(w)]
-    runs, start = [], None
-    for x, f in enumerate(filled + [False]):
-        if f and start is None:
-            start = x
-        if not f and start is not None:
-            if x - start > 40:
-                runs.append((start, x))
-            start = None
-    cw, ch = BUSH_CELL
-    strip = Image.new('RGBA', (cw * len(runs), ch))
-    for i, (x0, x1) in enumerate(runs):
-        part = im.crop((x0, 0, x1, h))
-        bb = solid_bbox(part, 2)
-        part = part.crop(bb)
-        part = part.resize((round(part.width * BUSH_SCALE), round(part.height * BUSH_SCALE)), Image.LANCZOS)
-        strip.alpha_composite(part, (i * cw + (cw - part.width) // 2, ch - part.height))
-        print(f'arbusto {i}: {part.size}')
-    strip.save(BUSHES_OUT)
+    preview = '--preview' in sys.argv
+    out = []
+    for name, sheet, box, fit, area, bg in OBJECTS:
+        img = extract(name, sheet, box, fit, bg)
+        print(f'{name}: {img.size} → {img.width / PX_PER_CELL:.2f} × {img.height / PX_PER_CELL:.2f} células')
+        out.append((name, img, area))
+    if preview:
+        cols = 5
+        cw, ch = 26 * PX_PER_CELL // 2 + 20, 0
+        tiles = []
+        for name, img, (w, d) in out:
+            t = Image.new('RGBA', (img.width + 20, img.height + d * PX_PER_CELL + 30), (60, 120, 60, 255))
+            dr = ImageDraw.Draw(t)
+            gx = t.width / 2 - w * PX_PER_CELL / 2
+            gy = img.height + 10 - d * PX_PER_CELL  # área no chão: termina no pé do desenho
+            for i in range(w + 1):
+                dr.line([(gx + i * PX_PER_CELL, gy), (gx + i * PX_PER_CELL, gy + d * PX_PER_CELL)], fill=(255, 255, 0, 255))
+            for j in range(d + 1):
+                dr.line([(gx, gy + j * PX_PER_CELL), (gx + w * PX_PER_CELL, gy + j * PX_PER_CELL)], fill=(255, 255, 0, 255))
+            t.alpha_composite(img, (10, 10))
+            dr.text((4, t.height - 16), name, fill=(255, 255, 255, 255))
+            tiles.append(t)
+        W = 2600
+        rows, x, y, rh = [], 0, 0, 0
+        sheet = Image.new('RGBA', (W, 4000), (30, 30, 30, 255))
+        for t in tiles:
+            if x + t.width > W:
+                x, y, rh = 0, y + rh + 10, 0
+            sheet.alpha_composite(t, (x, y))
+            x += t.width + 10
+            rh = max(rh, t.height)
+        sheet = sheet.crop((0, 0, W, y + rh))
+        dest = Path(sys.argv[sys.argv.index('--preview') + 1]) if len(sys.argv) > sys.argv.index('--preview') + 1 else ROOT / 'town-preview.png'
+        sheet.save(dest)
+        print('prévia:', dest)
 
 
 if __name__ == '__main__':

@@ -26,10 +26,8 @@ let water: { top: HTMLImageElement; flow: HTMLImageElement } | null = null;
 let tent: HTMLImageElement | null = null;
 /** Baú (sprite do mundo). */
 let chest: HTMLImageElement | null = null;
-/** Cidade: casa de telhado vermelho (imagem fornecida). */
-const townHouseRed = new Map<string, HTMLImageElement>();
-/** Cidade: tira de arbustos (cerca viva). */
-let townBushes: HTMLImageElement | null = null;
+/** Cidade: imagens por nome (`town-<nome>`). */
+const townImages = new Map<string, HTMLImageElement>();
 
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -50,8 +48,9 @@ export async function loadBlockArt(): Promise<void> {
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
   if (a.town) {
-    townBushes = await load(a.town.bushes);
-    for (const [size, url] of Object.entries(a.town.houseRed)) if (url) townHouseRed.set(size, await load(url));
+    const entries = Object.entries(a.town);
+    const imgs = await Promise.all(entries.map(([, url]) => load(url)));
+    entries.forEach(([name], i) => townImages.set(name, imgs[i]));
   }
   if (a.water) {
     const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
@@ -92,11 +91,7 @@ export function getChestSprite(): HTMLImageElement | null {
   return chest;
 }
 
-/** Casas vermelhas por tamanho ("3x2", "4x3", "5x3"). */
-export function getTownHouseRed(): Map<string, HTMLImageElement> {
-  return townHouseRed;
-}
-
-export function getTownBushes(): HTMLImageElement | null {
-  return townBushes;
+/** Imagens da cidade por nome (vazio fora do mundo principal). */
+export function getTownImages(): Map<string, HTMLImageElement> {
+  return townImages;
 }

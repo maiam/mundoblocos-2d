@@ -32,7 +32,7 @@ export interface ArtPack {
   /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
   chest?: { icon: string; sprite: string };
   /** Cidade do Despertar: construções em imagem (`scripts/extract-town.py`); o resto é pintado em código. */
-  town?: { houseRed: Partial<Record<'3x2' | '4x3' | '5x3', string>>; bushes: string };
+  town?: Record<string, string>;
   /** Ícones de interface (bolsa do inventário). */
   uiIcons?: { bag: string; character: string; skills: string; builder: string };
   toolIcons: Partial<Record<ToolId, string>>;

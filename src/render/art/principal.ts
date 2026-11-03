@@ -59,10 +59,26 @@ import tentIcon from '../../assets/icon-block-tent.webp?inline';
 import tentSprite from '../../assets/tent.webp?inline';
 import chestIcon from '../../assets/icon-block-chest.webp?inline';
 import chestSprite from '../../assets/chest.webp?inline';
-import townHouseRed3x2 from '../../assets/town-house-red-3x2.webp?inline';
-import townHouseRed4x3 from '../../assets/town-house-red-4x3.webp?inline';
-import townHouseRed5x3 from '../../assets/town-house-red-5x3.webp?inline';
-import townBushes from '../../assets/town-bushes.webp?inline';
+import townHouseRed1f from '../../assets/town-house-red-1f.webp?inline';
+import townHouseRed2f from '../../assets/town-house-red-2f.webp?inline';
+import townHouseBlue1f from '../../assets/town-house-blue-1f.webp?inline';
+import townHouseBlue2f from '../../assets/town-house-blue-2f.webp?inline';
+import townHouseBrown1f from '../../assets/town-house-brown-1f.webp?inline';
+import townHouseBrown2f from '../../assets/town-house-brown-2f.webp?inline';
+import townShop1f from '../../assets/town-shop-1f.webp?inline';
+import townShop2f from '../../assets/town-shop-2f.webp?inline';
+import townSmithy from '../../assets/town-smithy.webp?inline';
+import townGuild from '../../assets/town-guild.webp?inline';
+import townCastle from '../../assets/town-castle.webp?inline';
+import townWatchtower from '../../assets/town-watchtower.webp?inline';
+import townBench2 from '../../assets/town-bench-2.webp?inline';
+import townBench3 from '../../assets/town-bench-3.webp?inline';
+import townLampStone from '../../assets/town-lamp-stone.webp?inline';
+import townLampWood from '../../assets/town-lamp-wood.webp?inline';
+import townLampMixed from '../../assets/town-lamp-mixed.webp?inline';
+import townBushRound from '../../assets/town-bush-round.webp?inline';
+import townBushTall from '../../assets/town-bush-tall.webp?inline';
+import townBushWide from '../../assets/town-bush-wide.webp?inline';
 import waterTop from '../../assets/water-top.webp?inline';
 import waterFlow from '../../assets/water-flow.webp?inline';
 import wheatCrop from '../../assets/wheat-crop.webp?inline';
@@ -116,7 +132,8 @@ const pack: ArtPack = {
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
   tent: { icon: tentIcon, sprite: tentSprite },
   chest: { icon: chestIcon, sprite: chestSprite },
-  town: { houseRed: { '3x2': townHouseRed3x2, '4x3': townHouseRed4x3, '5x3': townHouseRed5x3 }, bushes: townBushes },
+  // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
+  town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide },
   water: { top: waterTop, flow: waterFlow },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,

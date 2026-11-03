@@ -22,7 +22,7 @@ _Revisado em 2026-11-03 (v0.35.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 116 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | 🔴 | principal **3,19 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
+| Peso dos artefatos | 🔴 | principal **3,95 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -61,7 +61,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 ### Fase 4 — Mundo vivo e conteúdo
 0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`): NPCs que apresentam o mundo na praça
    inicial, moradores que circulam e voltam às casas, guardas na muralha/castelo, ferreiro de dia, hospedaria à
-   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); interiores (guilda com quadro de missões,
+   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte da hospedaria, fonte, poço e barracas** (ainda pintados em código); interiores (guilda com quadro de missões,
    lojas com compra/venda, hospedaria como ponto de retorno opcional); lampiões acendendo ao anoitecer e
    movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
 1. Ovelhas (e novos animais) em outros chunks, por bioma, com limite.
@@ -99,8 +99,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 - **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Peso do artefato principal: 3,19 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A próxima
-  folha grande estoura. Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
+- **Peso do artefato principal: 3,95 MB, acima da meta (decisão pendente)** (meta < 3 MB; o alerta do build foi alinhado à meta). A arte da cidade (v0.36) somou ~0,8 MB (castelo ~0,28 MB). Alavancas, da menos à mais invasiva: (1) folhas da heroína com ferramenta (10 folhas, ~1 MB)
   virarem a heroína base + sprite da ferramenta sobreposto (decisão de arte); (2) servir os assets como arquivos
   separados fora do Artifact (hospedagem própria); (3) baixar a qualidade das folhas grandes.
 - `ActionController` (465 linhas) vai crescer com vida/dano: separar combate (golpe, dano) em módulo próprio na Fase 1.

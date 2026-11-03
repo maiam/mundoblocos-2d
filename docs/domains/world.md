@@ -10,7 +10,7 @@
   Chão, Lisa, Polida, Rachada, Tijolo Rachado — ids 34–39 e 42) (`MATERIALS`; coluna do atlas = índice na lista).
   O gerador só usa a Pedra Bruta; substituir água aceita só ela entre as pedras; **qualquer pedra** (`stone: true`) serve de batente de porta. O **mesmo id** serve de
   chão natural (camada de chão) e de cubo (camada de objeto).
-- Cidade do Despertar: construções (ids 121–134, forma `building`, id no canto inferior esquerdo + `TOWN_PART`) e
+- Cidade do Despertar: construções (ids 121–134 e bancos 136/142, forma `building`, id no canto inferior esquerdo + `TOWN_PART`) e
   enfeites fixos (135–141); ver `domains/town.md`.
 - Só-chão: Água (líquida) e Buraco. Objetos naturais: Carvalho, Cerejeira, Cacto, Capim, Flor, Trigo.
 - Chunk = 16×16 células, chave `"cx,cy"`, nos dois eixos do mapa (sem limite).

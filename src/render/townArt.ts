@@ -1,6 +1,6 @@
 import { TILE } from '../config';
 import { Block, type BlockId } from '../world/blocks';
-import { townSize } from '../world/town';
+import { townSize, townSolid } from '../world/town';
 import type { Sprite } from './textures';
 
 /**
@@ -12,15 +12,28 @@ import type { Sprite } from './textures';
  * Casas de telhado vermelho usam as imagens fornecidas, uma por tamanho (`town-house-red-WxD`, via pacote de arte).
  */
 
-/** Imagens da cidade vindas do pacote de arte (null = pinta em código). */
-export interface TownImages { houseRed: Map<BlockId, HTMLImageElement>; bushes: HTMLImageElement | null }
+/** Imagens da cidade vindas do pacote de arte, por nome (`town-<nome>`, `scripts/extract-town.py`). */
+export type TownImages = Map<string, HTMLImageElement>;
 
-/** Margem (px da imagem, cada lado) além da parede nas imagens das casas vermelhas (`scripts/extract-town.py`). */
-const HOUSE_RED_PAD = 24;
-/** Tira dos arbustos (`town-bushes`): 3 quadros de 120 × 96 px (redondo, alto, largo) na mesma escala. */
-const BUSH_CELL = { w: 120, h: 96 } as const;
-/** Largura de mundo de 1 px da tira: o arbusto redondo (78 px) fica ~1,05 célula. */
-const BUSH_PX = (1.05 * TILE) / 78;
+/** Escala das imagens da cidade: px da imagem por célula (o recorte já sai nesta escala). */
+export const TOWN_PX_PER_CELL = 48;
+
+/** Construções/enfeites desenhados com imagem fornecida: variações sorteadas por posição. */
+const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
+  [Block.HOUSE]: ['house-red-1f', 'house-blue-1f', 'house-brown-1f'],
+  [Block.HOUSE_TALL]: ['house-red-2f', 'house-blue-2f', 'house-brown-2f'],
+  [Block.SHOP_POTION]: ['shop-1f'],
+  [Block.SHOP_GOODS]: ['shop-2f'],
+  [Block.SHOP_TOOLS]: ['shop-1f'],
+  [Block.SMITHY]: ['smithy'],
+  [Block.GUILD]: ['guild'],
+  [Block.CASTLE]: ['castle'],
+  [Block.WATCHTOWER]: ['watchtower'],
+  [Block.BENCH]: ['bench-2'],
+  [Block.BENCH_LONG]: ['bench-3'],
+  [Block.LAMP]: ['lamp-stone', 'lamp-wood', 'lamp-mixed'],
+  [Block.HEDGE]: ['bush-round', 'bush-round', 'bush-tall', 'bush-wide'],
+};
 
 type Ctx = CanvasRenderingContext2D;
 const T = TILE;
@@ -138,13 +151,6 @@ function plaque(ctx: Ctx, cx: number, cy: number, text: string, size = 7): void 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, cx, cy + 0.5);
-}
-
-function banner(ctx: Ctx, x: number, y: number, w = 8, h = 16): void {
-  poly(ctx, [[x, y], [x + w, y], [x + w, y + h], [x + w / 2, y + h - 3], [x, y + h]], '#2f4d9e', INK, 1);
-  poly(ctx, [[x + w / 2, y + 4], [x + w / 2 + 2.2, y + 7], [x + w / 2, y + 10], [x + w / 2 - 2.2, y + 7]], '#f2c94c', null);
-  ctx.fillStyle = '#c9a23a';
-  ctx.fillRect(x - 1, y - 1.5, w + 2, 1.6);
 }
 
 /** Telhado em duas águas com cumeeira horizontal, visto de cima (área x0..x1 × y0..y1). */
@@ -266,58 +272,6 @@ function buildingSprite(w: number, d: number, wallH: number, headroom: number, d
   return { canvas: c, ox: -pad, oy: T - totalH, w: w * T + pad * 2, h: totalH, hit: { x: 0, y: T - d * T - wallH, w: w * T, h: d * T + wallH } };
 }
 
-/**
- * Casa a partir da imagem do tamanho dela (desenhada para w × d pelo dono do produto): só posiciona, sem esticar.
- * A imagem tem a parede com exatamente w × 64 px e `HOUSE_RED_PAD` px de margem de cada lado (beiral), em 2×;
- * a base fica no pé da célula do canto inferior esquerdo.
- */
-function imageHouse(img: HTMLImageElement, w: number, d: number): Sprite {
-  const scale = (w * T) / (img.width - 2 * HOUSE_RED_PAD); // px da imagem → px de mundo (parede = w células)
-  const sw = img.width * scale;
-  const sh = img.height * scale;
-  const pad = HOUSE_RED_PAD * scale;
-  const [c, ctx] = makeCanvas(sw, sh);
-  shadow(ctx, pad + (w * T) / 2 + 4, sh - 2, (w * T) / 2 + 3, 6);
-  ctx.drawImage(img, 0, 0, sw, sh);
-  return { canvas: c, ox: -pad, oy: T - sh, w: sw, h: sh, hit: { x: 0, y: T - Math.min(sh, d * T + T), w: w * T, h: Math.min(sh, d * T + T) } };
-}
-
-function houseVariants(id: BlockId, images: TownImages): Sprite[] {
-  const [w, d] = townSize(id);
-  const out: Sprite[] = [];
-  for (let v = 0; v < 6; v++) {
-    const roof = ROOFS[v % ROOFS.length];
-    // Telhado vermelho: imagem fornecida para este tamanho; sem imagem do tamanho (4×2), as vagas vermelhas viram
-    // azul/alaranjado pintados (não mistura casa vermelha pintada com a de imagem).
-    const img = images.houseRed.get(id);
-    if (roof.base === ROOFS[0].base) {
-      if (img) { out.push(imageHouse(img, w, d)); continue; }
-      if (images.houseRed.size) {
-        const alt = ROOFS[v % 2 ? 1 : 2];
-        out.push(buildingSprite(w, d, 44, 26, (ctx, pad, total) => house(ctx, w, d, 44, { roof: alt, gable: v % 2 === 0, stone: v === 3, chimney: true }, pad, total)));
-        continue;
-      }
-    }
-    const o: HouseOpts = { roof, gable: v % 2 === 0, stone: v === 3, chimney: v % 3 !== 1, smoke: v === 2 };
-    out.push(buildingSprite(w, d, 44, 26, (ctx, pad, total) => house(ctx, w, d, 44, o, pad, total)));
-  }
-  return out;
-}
-
-function guild(): Sprite {
-  const [w, d] = townSize(Block.GUILD);
-  return buildingSprite(w, d, 60, 30, (ctx, pad, total) => house(ctx, w, d, 60, { roof: ROOFS[1], gable: true, stone: false, chimney: true }, pad, total, (wallTop, x0, x1) => {
-    banner(ctx, x0 + 10, wallTop + 6, 10, 22);
-    banner(ctx, x1 - 20, wallTop + 6, 10, 22);
-    // Escudo com espadas cruzadas sobre a porta.
-    const cx = (x0 + x1) / 2;
-    poly(ctx, [[cx - 9, wallTop - 20], [cx + 9, wallTop - 20], [cx + 9, wallTop - 10], [cx, wallTop - 2], [cx - 9, wallTop - 10]], '#2f4d9e');
-    ctx.strokeStyle = '#e8e8f0'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx - 6, wallTop - 17); ctx.lineTo(cx + 6, wallTop - 6); ctx.moveTo(cx + 6, wallTop - 17); ctx.lineTo(cx - 6, wallTop - 6); ctx.stroke();
-    plaque(ctx, cx, wallTop + 9, 'Guilda', 8);
-  }));
-}
-
 function inn(): Sprite {
   const [w, d] = townSize(Block.INN);
   return buildingSprite(w, d, 60, 30, (ctx, pad, total) => house(ctx, w, d, 60, { roof: ROOFS[0], gable: false, stone: false, chimney: true, smoke: true }, pad, total, (wallTop, x0, x1) => {
@@ -330,173 +284,6 @@ function inn(): Sprite {
     ctx.fillStyle = '#ffd36b';
     for (const lx of [x0 + 6, x1 - 8]) { ctx.beginPath(); ctx.arc(lx, wallTop + 22, 2.5, 0, Math.PI * 2); ctx.fill(); }
   }));
-}
-
-function smithy(): Sprite {
-  const [w, d] = townSize(Block.SMITHY);
-  return buildingSprite(w, d, 54, 40, (ctx, pad, total) => {
-    house(ctx, w, d, 54, { roof: { base: '#5b5d6e', dark: '#3a3b49', light: '#8b8da0' }, gable: false, stone: true, chimney: false }, pad, total, (wallTop, x0, x1) => {
-      chimney(ctx, x0 + 14, wallTop - d * T + 2, true);
-      // Forja acesa à esquerda e bigorna.
-      const fx = x0 + T * 1.6;
-      ctx.beginPath(); ctx.moveTo(fx - 12, total - 1); ctx.lineTo(fx - 12, total - 18); ctx.arc(fx, total - 18, 12, Math.PI, 0); ctx.lineTo(fx + 12, total - 1); ctx.closePath();
-      const g = ctx.createRadialGradient(fx, total - 8, 2, fx, total - 10, 16);
-      g.addColorStop(0, '#fff2a8'); g.addColorStop(0.5, '#ff9a3c'); g.addColorStop(1, '#a8361f');
-      ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
-      plaque(ctx, (x0 + x1) / 2, wallTop + 8, 'Ferreiro', 8);
-      const ax = x1 - T * 1.2;
-      poly(ctx, [[ax - 9, total - 12], [ax + 9, total - 12], [ax + 5, total - 8], [ax + 3, total - 2], [ax - 3, total - 2], [ax - 5, total - 8]], '#4a4b57');
-    });
-  });
-}
-
-function shop(id: BlockId, stripe: string, icon: (ctx: Ctx, x: number, y: number) => void, label?: string): Sprite {
-  const [w, d] = townSize(id);
-  return buildingSprite(w, d, 48, 34, (ctx, pad, total) => house(ctx, w, d, 48, { roof: ROOFS[id === Block.SHOP_GOODS ? 1 : 0], gable: true, stone: false, chimney: false }, pad, total, (wallTop, x0, x1) => {
-    // Toldo listrado sobre a frente.
-    const ay = wallTop + 14;
-    for (let k = 0; k < 8; k++) {
-      const sx = x0 - 2 + ((x1 - x0 + 4) * k) / 8;
-      const sw = (x1 - x0 + 4) / 8;
-      poly(ctx, [[sx, ay], [sx + sw, ay], [sx + sw, ay + 8], [sx, ay + 8]], k % 2 ? '#ffffff' : stripe, null);
-    }
-    ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.strokeRect(x0 - 2, ay, x1 - x0 + 4, 8);
-    box(ctx, (x0 + x1) / 2 - 8, wallTop + 1, 16, 12, '#f7e7c1', '#5a3a22', 1.1);
-    icon(ctx, (x0 + x1) / 2, wallTop + 7);
-    if (label) plaque(ctx, (x0 + x1) / 2, wallTop - d * T + 4, label, 8);
-  }));
-}
-
-function tower(): Sprite {
-  const [w, d] = townSize(Block.WATCHTOWER);
-  const wallH = 70;
-  return buildingSprite(w, d, wallH, 10, (ctx, pad, total) => {
-    const cx = pad + (w * T) / 2;
-    const r = (w * T) / 2 - 3;
-    const bottom = total;
-    const top = bottom - wallH;
-    shadow(ctx, cx + 4, bottom - 3, r + 4, 8);
-    // Corpo cilíndrico com fiadas e sombreado lateral.
-    ctx.save();
-    ctx.beginPath(); ctx.rect(cx - r, top, r * 2, wallH); ctx.clip();
-    stoneCourses(ctx, cx - r, top - 4, r * 2, wallH + 4);
-    const g = ctx.createLinearGradient(cx - r, 0, cx + r, 0);
-    g.addColorStop(0, 'rgba(255,255,255,0.18)'); g.addColorStop(0.45, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(30,20,60,0.35)');
-    ctx.fillStyle = g; ctx.fillRect(cx - r, top, r * 2, wallH);
-    ctx.restore();
-    ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.strokeRect(cx - r, top, r * 2, wallH);
-    // Topo: plataforma redonda de lajes, com ameias em volta e mastro com estandarte.
-    const ry = (d * T) / 2 - 4;
-    const ty = top - ry;
-    const merlon = (a: number) => {
-      const mx = cx + Math.cos(a) * (r - 1);
-      const my = ty + Math.sin(a) * (ry - 1);
-      box(ctx, mx - 4, my - 9, 8, 9, STONE, INK, 1.1);
-      ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(mx - 4, my - 9, 8, 1.5);
-    };
-    for (let k = 0; k < 14; k++) { const a = Math.PI + (k / 14) * Math.PI; merlon(a); } // fundo
-    ctx.beginPath(); ctx.ellipse(cx, ty, r, ry, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#a39daa'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(cx, ty + 2, r - 9, ry - 9, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#8f8998'; ctx.fill();
-    ctx.strokeStyle = 'rgba(70,60,80,0.35)'; ctx.lineWidth = 0.8;
-    for (const f of [0.35, 0.65]) { ctx.beginPath(); ctx.ellipse(cx, ty + 2, (r - 9) * f, (ry - 9) * f, 0, 0, Math.PI * 2); ctx.stroke(); }
-    for (let k = 0; k < 8; k++) {
-      const a = (k / 8) * Math.PI * 2;
-      ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (r - 9) * 0.35, ty + 2 + Math.sin(a) * (ry - 9) * 0.35); ctx.lineTo(cx + Math.cos(a) * (r - 9), ty + 2 + Math.sin(a) * (ry - 9)); ctx.stroke();
-    }
-    box(ctx, cx - 1.2, ty - 30, 2.4, 32, '#5a3a22', null);
-    poly(ctx, [[cx + 1, ty - 30], [cx + 18, ty - 26], [cx + 1, ty - 21]], '#2f4d9e', INK, 1);
-    for (let k = 0; k <= 12; k++) { const a = (k / 12) * Math.PI; merlon(a); } // frente
-    windowLit(ctx, cx - 4, top + 22, 8, 12, true);
-    banner(ctx, cx - 5, top + 40, 10, 18);
-  });
-}
-
-function castle(): Sprite {
-  const [w, d] = townSize(Block.CASTLE);
-  const wallH = 96;
-  return buildingSprite(w, d, wallH, 70, (ctx, pad, total) => {
-    const x0 = pad;
-    const x1 = pad + w * T;
-    const cx = (x0 + x1) / 2;
-    const bottom = total;
-    const top = bottom - wallH;
-    shadow(ctx, cx + 6, bottom - 3, (x1 - x0) / 2 + 4, 9);
-    // Pátio interno (topo) de lajes, muralhas laterais e do fundo, jardins nos cantos e torre de menagem.
-    const inTop = top - d * T;
-    box(ctx, x0, inTop, x1 - x0, d * T, '#a29cab');
-    ctx.strokeStyle = '#8b8596'; ctx.lineWidth = 0.8;
-    for (let yy = inTop + 16; yy < top; yy += 16) { ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); }
-    for (let yy = inTop, r = 0; yy < top; yy += 16, r++) {
-      for (let xx = x0 + (r % 2 ? 12 : 0); xx < x1; xx += 24) { ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx, Math.min(top, yy + 16)); ctx.stroke(); }
-    }
-    for (const gx of [x0 + 20, x1 - 120]) {
-      box(ctx, gx, top - 70, 100, 50, '#6fbf4a', '#3f7d2a', 1.2);
-      for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#f6a5c0' : '#fff2a8'; ctx.beginPath(); ctx.arc(gx + 12 + k * 15, top - 45 + (k % 2) * 8, 3, 0, Math.PI * 2); ctx.fill(); }
-      for (const tx of [gx + 15, gx + 85]) {
-        ctx.fillStyle = '#2f7d3a'; ctx.beginPath(); ctx.ellipse(tx, top - 62, 8, 14, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#1f5a2a'; ctx.lineWidth = 1; ctx.stroke();
-      }
-    }
-    const curtain = (x: number, y: number, w: number, h: number) => {
-      stoneCourses(ctx, x, y, w, h, '#aaa5b4', '#7f7a8a', 6);
-      ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.strokeRect(x, y, w, h);
-    };
-    curtain(x0, inTop - 14, x1 - x0, 20);
-    for (let xx = x0; xx < x1 - 4; xx += 14) box(ctx, xx, inTop - 21, 8, 7, '#aaa5b4', INK, 1);
-    curtain(x0, inTop, 12, d * T);
-    curtain(x1 - 12, inTop, 12, d * T);
-    const kx0 = x0 + (x1 - x0) * 0.2;
-    const kx1 = x1 - (x1 - x0) * 0.2;
-    const kBottom = top - 20;
-    const kTop = kBottom - 110;
-    box(ctx, kx0, kTop - 110, kx1 - kx0, 110, '#9d97a6');
-    ctx.strokeStyle = '#8b8596'; ctx.lineWidth = 0.8;
-    for (let yy = kTop - 94; yy < kTop; yy += 16) { ctx.beginPath(); ctx.moveTo(kx0, yy); ctx.lineTo(kx1, yy); ctx.stroke(); }
-    stoneCourses(ctx, kx0, kTop, kx1 - kx0, kBottom - kTop);
-    ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.strokeRect(kx0, kTop, kx1 - kx0, kBottom - kTop);
-    for (let xx = kx0; xx < kx1 - 4; xx += 14) box(ctx, xx, kTop - 9, 8, 9, STONE);
-    for (let k = 0; k < 6; k++) windowLit(ctx, kx0 + 22 + k * ((kx1 - kx0 - 44) / 5) - 5, kTop + 30, 10, 16, true);
-    // Torres com telhado cônico azul.
-    const spire = (tx: number, base: number, height: number, rw: number) => {
-      ctx.save();
-      ctx.beginPath(); ctx.rect(tx - rw, base - height, rw * 2, height); ctx.clip();
-      stoneCourses(ctx, tx - rw, base - height, rw * 2, height);
-      const g = ctx.createLinearGradient(tx - rw, 0, tx + rw, 0);
-      g.addColorStop(0, 'rgba(255,255,255,0.2)'); g.addColorStop(0.5, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(30,20,60,0.35)');
-      ctx.fillStyle = g; ctx.fillRect(tx - rw, base - height, rw * 2, height);
-      ctx.restore();
-      ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.strokeRect(tx - rw, base - height, rw * 2, height);
-      poly(ctx, [[tx - rw - 4, base - height + 2], [tx, base - height - rw * 2.3], [tx + rw + 4, base - height + 2]], '#3f5fa8');
-      poly(ctx, [[tx, base - height - rw * 2.3], [tx + rw + 4, base - height + 2], [tx + 2, base - height + 2]], '#2c4580', null);
-      ctx.strokeStyle = '#c9a23a'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(tx, base - height - rw * 2.3); ctx.lineTo(tx, base - height - rw * 2.3 - 8); ctx.stroke();
-      poly(ctx, [[tx, base - height - rw * 2.3 - 8], [tx + 7, base - height - rw * 2.3 - 6], [tx, base - height - rw * 2.3 - 4]], '#f2c94c', null);
-      windowLit(ctx, tx - 4, base - height + 14, 8, 12, true);
-    };
-    spire(kx0 + 6, kBottom, 150, 14);
-    spire(kx1 - 6, kBottom, 150, 14);
-    spire(cx - 70, kBottom - 60, 120, 12);
-    spire(cx + 70, kBottom - 60, 120, 12);
-    spire(cx, kBottom - 30, 170, 17);
-    // Muralha da frente com ameias, estandartes e portão.
-    stoneCourses(ctx, x0, top, x1 - x0, wallH, '#aaa5b4', '#7f7a8a', 8);
-    ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(x0, top, x1 - x0, wallH);
-    for (let xx = x0; xx < x1 - 4; xx += 14) box(ctx, xx, top - 9, 8, 9, '#aaa5b4');
-    for (const bx of [x0 + 70, x0 + 150, x1 - 160, x1 - 80]) banner(ctx, bx, top + 18, 14, 34);
-    for (let k = 0; k < 10; k++) if (k !== 4 && k !== 5) windowLit(ctx, x0 + 40 + k * ((x1 - x0 - 80) / 9) - 5, top + 62, 9, 13, true);
-    // Portão em arco.
-    const gw = 44;
-    ctx.beginPath(); ctx.moveTo(cx - gw / 2 - 5, bottom); ctx.lineTo(cx - gw / 2 - 5, bottom - 50); ctx.arc(cx, bottom - 50, gw / 2 + 5, Math.PI, 0); ctx.lineTo(cx + gw / 2 + 5, bottom); ctx.closePath();
-    ctx.fillStyle = '#8a8494'; ctx.fill(); ctx.strokeStyle = INK; ctx.stroke();
-    door(ctx, cx, bottom - 1, gw, 66, '#7a4626');
-    ctx.fillStyle = '#3a3b49';
-    for (let yy = bottom - 50; yy < bottom - 4; yy += 10) for (let xx = cx - gw / 2 + 5; xx < cx + gw / 2 - 2; xx += 8) ctx.fillRect(xx, yy, 1.6, 1.6);
-    // Torres da frente.
-    for (const tx of [x0 + 14, x0 + 260, x1 - 260, x1 - 14]) spire(tx, bottom, wallH + 26, 16);
-    plaque(ctx, cx, top + 16, 'Castelo', 11);
-  });
 }
 
 function fountain(): Sprite {
@@ -570,22 +357,6 @@ function prop(h: number, draw: (ctx: Ctx, cx: number, bottom: number) => void): 
   return { canvas: c, ox: -4, oy: T - h, w, h, hit: { x: 0, y: T - h, w: T, h } };
 }
 
-const lamp = () => prop(58, (ctx, cx, b) => {
-  shadow(ctx, cx + 3, b - 2, 7, 3);
-  box(ctx, cx - 4, b - 6, 8, 5, '#3a3b49');
-  box(ctx, cx - 1.5, b - 42, 3, 37, '#3a3b49', null);
-  box(ctx, cx - 6, b - 54, 12, 13, '#ffe08a', '#2a2b36', 1.4);
-  ctx.fillStyle = '#fff6c8'; ctx.fillRect(cx - 3, b - 51, 6, 7);
-  poly(ctx, [[cx - 8, b - 54], [cx, b - 60], [cx + 8, b - 54]], '#2a2b36', null);
-});
-
-const bench = () => prop(26, (ctx, cx, b) => {
-  shadow(ctx, cx + 2, b - 2, 13, 3);
-  box(ctx, cx - 13, b - 14, 26, 5, '#a8703f');
-  box(ctx, cx - 13, b - 22, 26, 5, '#b98050');
-  for (const s of [-11, 9]) box(ctx, cx + s, b - 9, 3, 8, '#5a3a22', null);
-});
-
 const barrel = () => prop(30, (ctx, cx, b) => {
   shadow(ctx, cx + 2, b - 2, 9, 3);
   ctx.beginPath(); ctx.ellipse(cx, b - 4, 9, 3.5, 0, 0, Math.PI); ctx.lineTo(cx - 9, b - 22); ctx.ellipse(cx, b - 22, 9, 3.5, 0, Math.PI, 0); ctx.closePath();
@@ -615,76 +386,46 @@ const signpost = () => prop(40, (ctx, cx, b) => {
   ctx.beginPath(); ctx.moveTo(cx - 9, b - 29); ctx.lineTo(cx + 7, b - 29); ctx.stroke();
 });
 
-const hedge = () => prop(30, (ctx, cx, b) => {
-  shadow(ctx, cx + 2, b - 3, 15, 4);
-  const blob = (x: number, y: number, r: number, c: string) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); };
-  ctx.save();
-  blob(cx - 7, b - 10, 9, '#2f7d3a'); blob(cx + 7, b - 10, 9, '#2f7d3a'); blob(cx, b - 16, 10, '#3a9147');
-  ctx.globalCompositeOperation = 'source-atop';
-  blob(cx - 4, b - 20, 6, '#5bb85e'); blob(cx + 8, b - 14, 4, '#4caa52');
-  ctx.restore();
-  ctx.strokeStyle = '#1f5a2a'; ctx.lineWidth = 1.1;
-  ctx.beginPath(); ctx.arc(cx - 7, b - 10, 9, Math.PI * 0.6, Math.PI * 1.3); ctx.arc(cx, b - 16, 10, Math.PI * 1.15, Math.PI * 1.85); ctx.arc(cx + 7, b - 10, 9, Math.PI * 1.7, Math.PI * 0.4); ctx.stroke();
-});
-
-/** Arbusto `i` da tira: escala única, centrado na célula, base no pé dela (o largo transborda para os lados). */
-function bushSprite(img: HTMLImageElement, i: number): Sprite {
-  const k = img.width / (BUSH_CELL.w * 3);
-  const w = BUSH_CELL.w * BUSH_PX;
-  const h = BUSH_CELL.h * BUSH_PX;
-  const [c, ctx] = makeCanvas(w, h);
-  shadow(ctx, w / 2 + 2, h - 3, 0.5 * TILE, 4);
-  ctx.drawImage(img, i * BUSH_CELL.w * k, 0, BUSH_CELL.w * k, BUSH_CELL.h * k, 0, 0, w, h);
-  return { canvas: c, ox: (TILE - w) / 2, oy: TILE - h + 1, w, h, hit: { x: 0, y: TILE - h, w: TILE, h } };
-}
-
-/** Imagens das casas vermelhas por tamanho ("3x2") → por id de construção (tamanho em `TOWN_SIZES`). */
-export function townHouseImages(bySize: Map<string, HTMLImageElement>): Map<BlockId, HTMLImageElement> {
-  const out = new Map<BlockId, HTMLImageElement>();
-  for (const id of [Block.HOUSE_S, Block.HOUSE_M, Block.HOUSE_L, Block.HOUSE_XL]) {
-    const [w, d] = townSize(id);
-    const img = bySize.get(`${w}x${d}`);
-    if (img) out.set(id, img);
-  }
-  return out;
+/**
+ * Sprite de uma imagem da cidade: escala fixa (TOWN_PX_PER_CELL), centro da imagem no centro da largura da
+ * construção, base no pé da célula do canto inferior esquerdo. Nada é esticado.
+ */
+function imageSprite(img: HTMLImageElement, id: BlockId): Sprite {
+  const [w] = townSize(id);
+  const d = townSolid(id);
+  const k = T / TOWN_PX_PER_CELL;
+  const sw = img.width * k;
+  const sh = img.height * k;
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  c.getContext('2d')!.drawImage(img, 0, 0);
+  return { canvas: c, ox: (w * T - sw) / 2, oy: T - sh + 1, w: sw, h: sh, hit: { x: 0, y: T - d * T, w: w * T, h: d * T } };
 }
 
 /** Sprites (com variações) de todas as construções e enfeites da cidade. */
 export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
   const m = new Map<BlockId, Sprite[]>();
-  for (const id of [Block.HOUSE_S, Block.HOUSE_M, Block.HOUSE_L, Block.HOUSE_XL]) m.set(id, houseVariants(id, images));
-  m.set(Block.CASTLE, [castle()]);
-  m.set(Block.GUILD, [guild()]);
+  for (const [key, names] of Object.entries(IMAGE_ART)) {
+    const id = Number(key) as BlockId;
+    const sprites = names!.map((n) => images.get(n)).filter((i): i is HTMLImageElement => !!i).map((i) => imageSprite(i, id));
+    if (sprites.length) m.set(id, sprites);
+  }
+  // Sem imagem fornecida (ainda): pintados em código.
   m.set(Block.INN, [inn()]);
-  m.set(Block.SMITHY, [smithy()]);
-  m.set(Block.SHOP_POTION, [shop(Block.SHOP_POTION, '#d9483b', (ctx, x, y) => {
-    ctx.beginPath(); ctx.arc(x, y + 1.5, 3.6, 0, Math.PI * 2); ctx.fillStyle = '#e8574a'; ctx.fill(); ctx.fillStyle = '#ddd'; ctx.fillRect(x - 1.2, y - 4.5, 2.4, 3);
-  })]);
-  m.set(Block.SHOP_GOODS, [shop(Block.SHOP_GOODS, '#3f6fc0', (ctx, x, y) => {
-    ctx.beginPath(); ctx.ellipse(x, y + 1.5, 4.2, 3.6, 0, 0, Math.PI * 2); ctx.fillStyle = '#b07a3e'; ctx.fill(); ctx.fillStyle = '#f2c94c'; ctx.fillRect(x - 1, y - 3.5, 2, 2);
-  }, 'Lojas')]);
-  m.set(Block.SHOP_TOOLS, [shop(Block.SHOP_TOOLS, '#d9483b', (ctx, x, y) => {
-    ctx.strokeStyle = '#6e4a30'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - 4, y + 4); ctx.lineTo(x + 3, y - 3); ctx.stroke();
-    ctx.strokeStyle = '#8a8d99'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x + 1, y - 5); ctx.lineTo(x + 5, y - 1); ctx.stroke();
-  })]);
-  m.set(Block.WATCHTOWER, [tower()]);
   m.set(Block.FOUNTAIN, [fountain()]);
   m.set(Block.WELL, [well()]);
   m.set(Block.STALL, [stall()]);
-  m.set(Block.LAMP, [lamp()]);
-  m.set(Block.BENCH, [bench()]);
   m.set(Block.BARREL, [barrel()]);
   m.set(Block.CRATES, [crates()]);
   m.set(Block.SIGNPOST, [signpost()]);
-  // Cerca viva: arbustos da imagem (redondo 2×, alto, largo) ou o desenho em código sem o pacote.
-  m.set(Block.HEDGE, images.bushes ? [0, 0, 1, 2].map((i) => bushSprite(images.bushes!, i)) : [hedge()]);
   return m;
 }
 
 /** Ids desenhados pela arte da cidade (o render escolhe a variação por posição, fixa como a cidade). */
 export function isTownArt(id: number): boolean {
-  return id >= Block.CASTLE && id <= Block.STALL;
+  return id >= Block.CASTLE && id <= Block.BENCH_LONG;
 }
 
 /** Maior alcance de um sprite da cidade além da célula âncora (células): à direita e para cima. */
-export const TOWN_REACH = { right: 27, up: 18 };
+export const TOWN_REACH = { right: 28, up: 22 };

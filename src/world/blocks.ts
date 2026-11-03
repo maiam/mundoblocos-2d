@@ -75,15 +75,17 @@ export const Block = {
   SHOP_POTION: 125,
   SHOP_GOODS: 126,
   SHOP_TOOLS: 127,
-  HOUSE_S: 128,
-  HOUSE_M: 129,
-  HOUSE_L: 130,
-  HOUSE_XL: 131,
+  /** Casa térrea 5×5 (a última fileira fica livre: quintal atrás do telhado). */
+  HOUSE: 128,
+  /** Casa de 2 andares 5×5. */
+  HOUSE_TALL: 129,
   WATCHTOWER: 132,
   WELL: 133,
   FOUNTAIN: 134,
   LAMP: 135,
+  /** Banco de madeira 2×1 e 3×1. */
   BENCH: 136,
+  BENCH_LONG: 142,
   BARREL: 137,
   CRATES: 138,
   SIGNPOST: 139,
@@ -225,12 +227,12 @@ const defs: BlockDef[] = [
   ...([
     [Block.CASTLE, 'Castelo'], [Block.GUILD, 'Guilda dos Aventureiros'], [Block.INN, 'Hospedaria'],
     [Block.SMITHY, 'Ferreiro'], [Block.SHOP_POTION, 'Loja de Poções'], [Block.SHOP_GOODS, 'Armazém'],
-    [Block.SHOP_TOOLS, 'Loja de Ferramentas'], [Block.HOUSE_S, 'Casa'], [Block.HOUSE_M, 'Casa'], [Block.HOUSE_L, 'Casa'],
-    [Block.HOUSE_XL, 'Casa'], [Block.WATCHTOWER, 'Torre de Vigia'], [Block.WELL, 'Poço'], [Block.FOUNTAIN, 'Fonte'],
-    [Block.STALL, 'Barraca'],
+    [Block.SHOP_TOOLS, 'Loja de Ferramentas'], [Block.HOUSE, 'Casa'], [Block.HOUSE_TALL, 'Casa'],
+    [Block.WATCHTOWER, 'Guarita'], [Block.WELL, 'Poço'], [Block.FOUNTAIN, 'Fonte'],
+    [Block.STALL, 'Barraca'], [Block.BENCH, 'Banco'], [Block.BENCH_LONG, 'Banco'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false })),
   ...([
-    [Block.LAMP, 'Lampião'], [Block.BENCH, 'Banco'], [Block.BARREL, 'Barril'], [Block.CRATES, 'Caixotes'],
+    [Block.LAMP, 'Poste de Luz'], [Block.BARREL, 'Barril'], [Block.CRATES, 'Caixotes'],
     [Block.SIGNPOST, 'Placa'], [Block.HEDGE, 'Cerca Viva'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false })),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).

@@ -17,6 +17,10 @@ de construções.
 5. **Arte pintada em canvas** (`render/townArt.ts`), sem imagens: custo zero no artefato; pode ser trocada por
    pranchas depois sem mudar o domínio.
 
+## Atualização (v0.36)
+A arte das construções passou a ser **imagens fornecidas** (pacote de arte do mundo principal, escala única, uma
+imagem por tamanho); o pintado em código ficou só para o que ainda não tem arte. Custo: ~0,8 MB no artefato.
+
 ## Consequências
 - O início muda para dentro da cidade em todas as seeds; a dungeon muda de lugar (planejada fora da cidade).
 - Testes que constroem perto do início usam `World.outsideGate()` (fora da área protegida).

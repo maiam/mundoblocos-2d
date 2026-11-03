@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.36.0 — 2026-11-03
+- **Cidade maior e construções com arte fornecida.** Novos tamanhos (definidos pelo dono do produto): casas 5×5
+  (térrea ou de 2 andares, telhado vermelho/azul/marrom), lojas 5×5, ferreiro 8×5, guilda 9×9, castelo 26×17 (com
+  fosso e ponte), guaritas 4×6, bancos 2×1 e 3×1, postes de luz (pedra, madeira, madeira e pedra). A cidade passa de
+  108 × 78 para **164 × 132** para caber tudo na proporção (90 casas). Térreas bloqueiam 4 das 5 fileiras: a de trás é
+  quintal andável.
+- `scripts/extract-town.py` refeito: tabela de objetos (recorte, encaixe por largura, remoção do fundo da guarita,
+  limpeza de legendas) → `town-<nome>.webp` em escala única (48 px/célula). Hospedaria, fonte, poço e barracas seguem
+  pintados em código.
+- **Muda a cidade de todos** (e a posição da dungeon, planejada fora dela). Artefato: 3,95 MB.
+
 ## 0.35.4 — 2026-11-03
 - **Correção: casa vermelha deformada.** Com uma só imagem para todos os tamanhos, o telhado era remontado
   (fileiras repetidas + ajuste vertical) para cobrir a profundidade — parecia esticado/duplicado. Agora há **uma

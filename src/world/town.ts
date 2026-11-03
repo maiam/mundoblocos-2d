@@ -14,10 +14,10 @@ import type { Cell, TerrainSource } from './terrain';
  * A área inteira (muralha incluída) é protegida pelo `World`: nada quebra nem é colocado.
  */
 
-export const TOWN_W = 108;
-export const TOWN_H = 78;
+export const TOWN_W = 164;
+export const TOWN_H = 132;
 /** Canto noroeste da cidade no mundo: o portão fica logo ao norte da origem. */
-const TOWN_X0 = -54;
+const TOWN_X0 = -TOWN_W / 2;
 const TOWN_Y0 = -TOWN_H;
 const TOWN_SEED = 0x0de59e7a;
 /** Anel ao redor da muralha onde o terreno vira terra firme (sem água) e, perto dela, fica livre de objetos. */
@@ -63,27 +63,38 @@ export interface TownLayout {
   street: Uint8Array;
 }
 
-/** Construções e seus tamanhos (células): fonte única para gerador e render. */
-export const TOWN_SIZES: Partial<Record<BlockId, [number, number]>> = {
-  [Block.CASTLE]: [26, 9],
-  [Block.GUILD]: [9, 5],
-  [Block.INN]: [9, 5],
-  [Block.SMITHY]: [8, 4],
-  [Block.SHOP_POTION]: [4, 3],
-  [Block.SHOP_GOODS]: [4, 3],
-  [Block.SHOP_TOOLS]: [4, 3],
-  [Block.HOUSE_S]: [3, 2],
-  [Block.HOUSE_M]: [4, 2],
-  [Block.HOUSE_L]: [4, 3],
-  [Block.HOUSE_XL]: [5, 3],
-  [Block.WATCHTOWER]: [4, 4],
-  [Block.WELL]: [2, 2],
-  [Block.FOUNTAIN]: [3, 3],
-  [Block.STALL]: [2, 1],
+/**
+ * Construções: [largura, profundidade do lote, fileiras bloqueadas a partir da frente] em células — fonte única para
+ * gerador e render (tamanhos definidos pelo dono do produto junto com a arte). Quando o desenho é mais baixo que o
+ * lote (casa/loja térrea), as fileiras de trás ficam livres: quintal andável atrás do telhado.
+ */
+export const TOWN_SIZES: Partial<Record<BlockId, [number, number, number]>> = {
+  [Block.CASTLE]: [26, 17, 17],
+  [Block.GUILD]: [9, 9, 9],
+  [Block.INN]: [9, 5, 5],
+  [Block.SMITHY]: [8, 5, 5],
+  [Block.SHOP_POTION]: [5, 5, 4],
+  [Block.SHOP_GOODS]: [5, 5, 5],
+  [Block.SHOP_TOOLS]: [5, 5, 4],
+  [Block.HOUSE]: [5, 5, 4],
+  [Block.HOUSE_TALL]: [5, 5, 5],
+  [Block.WATCHTOWER]: [4, 6, 6],
+  [Block.WELL]: [2, 2, 2],
+  [Block.FOUNTAIN]: [3, 3, 3],
+  [Block.STALL]: [2, 1, 1],
+  [Block.BENCH]: [2, 1, 1],
+  [Block.BENCH_LONG]: [3, 1, 1],
 };
 
+/** Largura e profundidade do lote. */
 export function townSize(id: BlockId): [number, number] {
-  return TOWN_SIZES[id] ?? [1, 1];
+  const s = TOWN_SIZES[id];
+  return s ? [s[0], s[1]] : [1, 1];
+}
+
+/** Fileiras bloqueadas (a partir da frente). */
+export function townSolid(id: BlockId): number {
+  return TOWN_SIZES[id]?.[2] ?? 1;
 }
 
 /** Textos das placas de orientação (tocar mostra o texto). */
@@ -102,6 +113,8 @@ const BUILT = 4;
 const RESERVED = 5;
 const WALKWAY = 6;
 const DECOR = 7;
+/** Quintal atrás de casa térrea: não recebe outra construção; vira jardim andável. */
+const YARD = 8;
 
 let cached: TownLayout | null = null;
 
@@ -143,21 +156,30 @@ function buildTown(): TownLayout {
     }
   }
 
-  /** Coloca uma construção com o canto superior esquerdo em (x, y) (relativo). */
+  /**
+   * Coloca uma construção com o canto superior esquerdo do LOTE em (x, y) (relativo). Só as `townSolid` fileiras da
+   * frente bloqueiam; as de trás viram quintal. `d` do registro = fileiras bloqueadas.
+   */
   const place = (id: BlockId, x: number, y: number, name: string, door: boolean): TownBuilding => {
-    const [w, d] = townSize(id);
+    const [w, lot] = townSize(id);
+    const d = townSolid(id);
     const b: TownBuilding = {
-      id, name, x: TOWN_X0 + x, y: TOWN_Y0 + y + d - 1, w, d,
-      door: door ? [TOWN_X0 + x + Math.floor(w / 2), TOWN_Y0 + y + d] : null,
+      id, name, x: TOWN_X0 + x, y: TOWN_Y0 + y + lot - 1, w, d,
+      door: door ? [TOWN_X0 + x + Math.floor(w / 2), TOWN_Y0 + y + lot] : null,
     };
     const k = buildings.push(b) - 1;
+    for (let yy = y; yy < y + lot - d; yy++) {
+      for (let xx = x; xx < x + w; xx++) if (use[idx(xx, yy)] === FREE || use[idx(xx, yy)] === RESERVED) use[idx(xx, yy)] = YARD;
+    }
+    y += lot - d;
     for (let yy = y; yy < y + d; yy++) {
       for (let xx = x; xx < x + w; xx++) {
         const i = idx(xx, yy);
+        // Grama sob a construção (sobre a muralha, mantém a pedra): cantos transparentes da arte mostram jardim.
+        if (use[i] !== WALLED) ground[i] = Block.GRASS;
         use[i] = BUILT;
         objects[i] = Block.TOWN_PART;
         upper[i] = Block.AIR;
-        ground[i] = Block.STONE_COBBLE;
         buildingAt[i] = k;
       }
     }
@@ -168,38 +190,44 @@ function buildTown(): TownLayout {
     for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++) fn(x, y, idx(x, y));
   };
 
-  // Torres de vigia: cantos e as duas que ladeiam o portão.
-  place(Block.WATCHTOWER, 0, 0, 'Torre de Vigia', false);
-  place(Block.WATCHTOWER, W - 4, 0, 'Torre de Vigia', false);
-  place(Block.WATCHTOWER, 0, H - 4, 'Torre de Vigia', false);
-  place(Block.WATCHTOWER, W - 4, H - 4, 'Torre de Vigia', false);
-  place(Block.WATCHTOWER, GX0 - 4, H - 4, 'Torre de Vigia', false);
-  place(Block.WATCHTOWER, GX1 + 1, H - 4, 'Torre de Vigia', false);
+  // Guaritas (4×6): cantos e as duas que ladeiam o portão.
+  const TW = 4;
+  const TD = 6;
+  place(Block.WATCHTOWER, 0, 0, 'Guarita', false);
+  place(Block.WATCHTOWER, W - TW, 0, 'Guarita', false);
+  place(Block.WATCHTOWER, 0, H - TD, 'Guarita', false);
+  place(Block.WATCHTOWER, W - TW, H - TD, 'Guarita', false);
+  place(Block.WATCHTOWER, GX0 - TW, H - TD, 'Guarita', false);
+  place(Block.WATCHTOWER, GX1 + 1, H - TD, 'Guarita', false);
 
-  // --- 3) Castelo no fundo (norte), oposto ao portão, com pátio na frente ---
+  // --- 3) Castelo (26×17) no fundo (norte), oposto ao portão, com pátio na frente ---
   const CX0 = W / 2 - 13;
-  rect(CX0 - 2, WALL, CX0 + 27, 13, (_x, _y, i) => { if (use[i] === FREE) use[i] = RESERVED; });
+  const CY1 = 3 + 17; // primeira fileira abaixo do castelo
+  const COURT_Y1 = CY1 + 7; // última fileira do pátio
+  rect(CX0 - 2, WALL, CX0 + 27, COURT_Y1, (_x, _y, i) => { if (use[i] === FREE) use[i] = RESERVED; });
   const castle = place(Block.CASTLE, CX0, 3, 'Castelo', true);
   const plaza = (x0: number, y0: number, x1: number, y1: number, floor: BlockId) =>
     rect(x0, y0, x1, y1, (_x, _y, i) => { use[i] = PLAZA; ground[i] = floor; });
-  plaza(CX0 + 2, 12, CX0 + 23, 19, Block.STONE_POLISHED); // pátio do castelo (Setor 6)
-  plaza(W / 2 - 7, 34, W / 2 + 7, 44, Block.STONE_FLOOR); // praça central (Setor 4)
-  plaza(W / 2 - 8, 64, W / 2 + 7, H - 3, Block.STONE_FLOOR); // praça inicial (Setor 1)
-  rect(GX0, H - 4, GX1, H - 1, (_x, _y, i) => { use[i] = STREET; ground[i] = Block.STONE_COBBLE; }); // vão do portão
+  const MID = 70; // linha central da praça central
+  const START_Y = H - 12;
+  plaza(CX0 + 2, CY1, CX0 + 23, COURT_Y1, Block.STONE_POLISHED); // pátio do castelo (Setor 6)
+  plaza(W / 2 - 9, MID - 6, W / 2 + 9, MID + 6, Block.STONE_FLOOR); // praça central (Setor 4)
+  plaza(W / 2 - 9, H - 17, W / 2 + 8, H - TD - 1, Block.STONE_FLOOR); // praça inicial (Setor 1)
+  rect(GX0, H - TD, GX1, H - 1, (_x, _y, i) => { use[i] = STREET; ground[i] = Block.STONE_COBBLE; }); // vão do portão
 
   // --- 5a) Construções obrigatórias reservadas ANTES das ruas (Setores 3, 4 e 5) ---
   const required: TownBuilding[] = [
-    place(Block.GUILD, 31, 33, 'Guilda dos Aventureiros', true),
-    place(Block.INN, 68, 33, 'Hospedaria', true),
-    place(Block.SMITHY, 24, 49, 'Ferreiro', true),
-    place(Block.SHOP_POTION, 67, 50, 'Loja de Poções', true),
-    place(Block.SHOP_GOODS, 71, 50, 'Armazém', true),
-    place(Block.SHOP_TOOLS, 75, 50, 'Loja de Ferramentas', true),
+    place(Block.GUILD, W / 2 - 28, MID - 8, 'Guilda dos Aventureiros', true),
+    place(Block.INN, W / 2 + 20, MID - 4, 'Hospedaria', true),
+    place(Block.SMITHY, 30, MID + 18, 'Ferreiro', true),
+    place(Block.SHOP_POTION, W / 2 + 22, MID + 18, 'Loja de Poções', true),
+    place(Block.SHOP_GOODS, W / 2 + 27, MID + 18, 'Armazém', true),
+    place(Block.SHOP_TOOLS, W / 2 + 32, MID + 18, 'Loja de Ferramentas', true),
   ];
   for (const b of required) {
     const x0 = b.x - TOWN_X0;
     const y1 = b.y - TOWN_Y0;
-    rect(x0 - 1, y1 - b.d, x0 + b.w, y1 + 1, (_x, _y, i) => { keepOff[i] = 1; });
+    rect(x0 - 1, y1 - townSize(b.id)[1], x0 + b.w, y1 + 1, (_x, _y, i) => { keepOff[i] = 1; });
     // A frente da porta fica livre para a rua chegar.
     const [dx, dy] = b.door!;
     rect(dx - TOWN_X0 - 1, dy - TOWN_Y0, dx - TOWN_X0 + 1, dy - TOWN_Y0, (_x, _y, i) => { if (use[i] === FREE) use[i] = RESERVED; });
@@ -207,7 +235,7 @@ function buildTown(): TownLayout {
 
   // --- 4) Labirinto de ruas: grade de nós com deslocamento, árvore + laços, caminho principal largo ---
   const carvable = (x: number, y: number) => inside(x, y) && (use[idx(x, y)] === FREE || use[idx(x, y)] === STREET
-    || use[idx(x, y)] === PLAZA || (use[idx(x, y)] === RESERVED && y > 13));
+    || use[idx(x, y)] === PLAZA || (use[idx(x, y)] === RESERVED && y > COURT_Y1));
   /** Células do trecho entre dois pontos em Z (dobra no meio), com a largura dada. */
   const segment = (ax: number, ay: number, bx: number, by: number, width: number, jog: number): Array<[number, number]> => {
     const out: Array<[number, number]> = [];
@@ -227,19 +255,22 @@ function buildTown(): TownLayout {
     }
     return out;
   };
-  const GW = 10;
-  const GH = 8;
+  // Passo 15 × 13: entre ruas cabem duas casas 5×5 lado a lado e uma fileira de lotes com quintal.
+  const SX = 15;
+  const SY = 13;
+  const GW = Math.floor((W - 16) / SX) + 1;
+  const GH = Math.floor((H - 28) / SY) + 1;
   type Node = { x: number; y: number; ok: boolean };
   const nodes: Node[] = [];
   for (let j = 0; j < GH; j++) {
     for (let i = 0; i < GW; i++) {
-      const x = 6 + 10 * i + ri(5) - 2;
-      const y = 6 + 9 * j + ri(5) - 2;
+      const x = 8 + SX * i + ri(5) - 2;
+      const y = 8 + SY * j + ri(5) - 2;
       nodes.push({ x, y, ok: carvable(x, y) && carvable(x + 1, y + 1) && use[idx(x, y)] !== RESERVED });
     }
   }
   // Nó virtual do pátio do castelo (ligado aos nós logo abaixo dele).
-  const COURT = nodes.push({ x: W / 2, y: 19, ok: true }) - 1;
+  const COURT = nodes.push({ x: W / 2, y: COURT_Y1, ok: true }) - 1;
   /** Aresta: células com largura 3 (caminho principal) e 2 (ruas secundárias), mesma dobra. */
   type Edge = { a: number; b: number; cells: Array<[number, number]>; narrow: Array<[number, number]> };
   const edges: Edge[] = [];
@@ -259,7 +290,7 @@ function buildTown(): TownLayout {
     }
   }
   for (let n = 0; n < GW * GH; n++) {
-    if (nodes[n].ok && nodes[n].y > 19 && nodes[n].y < 28 && Math.abs(nodes[n].x - W / 2) <= 9) tryEdge(COURT, n, 3);
+    if (nodes[n].ok && nodes[n].y > COURT_Y1 && nodes[n].y < COURT_Y1 + 10 && Math.abs(nodes[n].x - W / 2) <= 14) tryEdge(COURT, n, 3);
   }
   const adj = new Map<number, Edge[]>();
   for (const e of edges) {
@@ -304,8 +335,8 @@ function buildTown(): TownLayout {
     }
     return out.reverse();
   };
-  const startNode = nearestNode(W / 2, 66);
-  const plazaNode = nearestNode(W / 2, 39);
+  const startNode = nearestNode(W / 2, H - 18);
+  const plazaNode = nearestNode(W / 2, MID);
   const mainEdges = [...route(startNode, plazaNode), ...route(plazaNode, COURT)];
   const inTree = new Set<number>();
   const chosen = new Set<Edge>(mainEdges);
@@ -368,7 +399,7 @@ function buildTown(): TownLayout {
   const alleyEnds: Array<[number, number]> = [];
   for (let n = 0; n < 400 && alleyEnds.length < 10; n++) {
     const x = 4 + ri(W - 8);
-    const y = 20 + ri(H - 26);
+    const y = COURT_Y1 + 2 + ri(H - COURT_Y1 - 22);
     if (use[idx(x, y)] !== STREET || main[idx(x, y)]) continue;
     const [ox, oy] = [[1, 0], [-1, 0], [0, 1], [0, -1]][ri(4)];
     const len = 3 + ri(3);
@@ -389,7 +420,7 @@ function buildTown(): TownLayout {
     for (const [cx, cy] of cells) use[idx(cx, cy)] = STREET;
     alleyEnds.push(cells[cells.length - 1]);
   }
-  rect(0, 0, W - 1, H - 1, (_x, _y, i) => { if (use[i] === RESERVED && i > idx(0, 13)) use[i] = FREE; });
+  rect(0, 0, W - 1, H - 1, (_x, _y, i) => { if (use[i] === RESERVED && i > idx(0, COURT_Y1)) use[i] = FREE; });
 
   // Pavimento: ruas com Pedra Irregular e Pedra Rachada misturadas.
   rect(0, 0, W - 1, H - 1, (x, y, i) => {
@@ -405,38 +436,45 @@ function buildTown(): TownLayout {
     use[i] = DECOR;
   };
   const nearStreet = (x: number, y: number) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ox, oy]) => isWalk(x + ox, y + oy));
-  // Praças: fonte, poço, bancos, placas, lampiões e barracas.
+  // Praças: fonte, poço, bancos, placas, postes de luz e barracas.
   const fx = W / 2 - 1;
-  place(Block.FOUNTAIN, fx, 38, 'Fonte', false);
-  place(Block.WELL, W / 2 + 3, 66, 'Poço', false);
-  place(Block.STALL, W / 2 - 6, 36, 'Barraca', false);
-  place(Block.STALL, W / 2 + 4, 42, 'Barraca', false);
-  for (const [x, y] of [[fx - 2, 39], [fx + 4, 39], [W / 2 - 7, 69], [W / 2 + 6, 70], [CX0 + 5, 16], [CX0 + 20, 16]]) setDecor(x, y, Block.BENCH);
-  for (const [x, y] of [[W / 2 - 7, 34], [W / 2 + 7, 34], [W / 2 - 7, 44], [W / 2 + 7, 44], [W / 2 - 8, 64], [W / 2 + 7, 64],
-    [CX0 + 2, 12], [CX0 + 23, 12], [CX0 + 2, 19], [CX0 + 23, 19], [GX0 - 1, H - 5], [GX1 + 1, H - 5]]) setDecor(x, y, Block.LAMP);
-  for (const x of [CX0 + 3, CX0 + 4, CX0 + 21, CX0 + 22]) for (const y of [13, 14]) setDecor(x, y, Block.HEDGE);
-  for (const x of [CX0 + 7, CX0 + 9, CX0 + 16, CX0 + 18]) setDecor(x, 13, Block.FLOWER);
-  const signs: Array<[number, number, string]> = [[W / 2 - 4, 67, SIGNS[0]], [W / 2 - 7, 40, SIGNS[1]], [W / 2 + 6, 46 - 1, SIGNS[2]]];
+  place(Block.FOUNTAIN, fx, MID - 1, 'Fonte', false);
+  place(Block.WELL, W / 2 + 4, H - 15, 'Poço', false);
+  place(Block.STALL, W / 2 - 7, MID - 4, 'Barraca', false);
+  place(Block.STALL, W / 2 + 5, MID + 4, 'Barraca', false);
+  place(Block.BENCH, fx - 4, MID + 1, 'Banco', false);
+  place(Block.BENCH, fx + 5, MID + 1, 'Banco', false);
+  place(Block.BENCH_LONG, W / 2 - 8, H - 11, 'Banco', false);
+  place(Block.BENCH_LONG, W / 2 + 5, H - 9, 'Banco', false);
+  place(Block.BENCH_LONG, CX0 + 5, CY1 + 4, 'Banco', false);
+  place(Block.BENCH_LONG, CX0 + 18, CY1 + 4, 'Banco', false);
+  for (const [x, y] of [[W / 2 - 9, MID - 6], [W / 2 + 9, MID - 6], [W / 2 - 9, MID + 6], [W / 2 + 9, MID + 6], [W / 2 - 9, H - 17],
+    [W / 2 + 8, H - 17], [CX0 + 2, CY1], [CX0 + 23, CY1], [CX0 + 2, COURT_Y1], [CX0 + 23, COURT_Y1], [GX0 - 1, H - TD - 1],
+    [GX1 + 1, H - TD - 1]]) setDecor(x, y, Block.LAMP);
+  for (const x of [CX0 + 3, CX0 + 4, CX0 + 21, CX0 + 22]) for (const y of [CY1 + 1, CY1 + 2]) setDecor(x, y, Block.HEDGE);
+  for (const x of [CX0 + 7, CX0 + 9, CX0 + 16, CX0 + 18]) setDecor(x, CY1 + 1, Block.FLOWER);
+  const signs: Array<[number, number, string]> = [[W / 2 - 5, H - 15, SIGNS[0]], [W / 2 - 9, MID + 2, SIGNS[1]], [W / 2 + 8, MID + 7, SIGNS[2]]];
   for (const [x, y, text] of signs) {
     const k = buildings.push({ id: Block.SIGNPOST, name: text, x: TOWN_X0 + x, y: TOWN_Y0 + y, w: 1, d: 1, door: null }) - 1;
     setDecor(x, y, Block.SIGNPOST);
     buildingAt[idx(x, y)] = k;
   }
   // --- 5b) Casas: encaixadas junto às ruas, porta voltada para a rua (ou por um caminho curto do quintal) ---
-  const HOUSES: BlockId[] = [Block.HOUSE_XL, Block.HOUSE_L, Block.HOUSE_M, Block.HOUSE_S];
+  // Casas 5×5: térrea (quintal atrás) ou de 2 andares, sorteada por lote.
   const order: number[] = [];
   for (let y = WALL + 1; y < H - WALL - 1; y++) for (let x = WALL + 1; x < W - WALL - 1; x++) order.push(idx(x, y));
   for (let k = order.length - 1; k > 0; k--) { const j = ri(k + 1); [order[k], order[j]] = [order[j], order[k]]; }
-  for (const id of HOUSES) {
-    const [w, d] = townSize(id);
+  {
+    const [w, d] = townSize(Block.HOUSE);
     for (const c of order) {
       const x = c % W;
       const y = Math.floor(c / W);
+      const id = h(x, y, 11) < 0.5 ? Block.HOUSE : Block.HOUSE_TALL;
       let ok = true;
       for (let yy = y - 1; yy <= y + d && ok; yy++) {
         for (let xx = x - 1; xx <= x + w && ok; xx++) {
           const inner = xx >= x && xx < x + w && yy >= y && yy < y + d;
-          if (inner ? !isFree(xx, yy) : inside(xx, yy) && use[idx(xx, yy)] === BUILT) ok = false;
+          if (inner ? !isFree(xx, yy) : inside(xx, yy) && (use[idx(xx, yy)] === BUILT || use[idx(xx, yy)] === YARD)) ok = false;
         }
       }
       if (!ok) continue;
@@ -493,6 +531,12 @@ function buildTown(): TownLayout {
     else if (r < 0.42) objects[i] = Block.TALL_GRASS;
   });
   rect(0, 0, W - 1, H - 1, (_x, _y, i) => { if (use[i] === RESERVED) use[i] = FREE; });
+  // Quintais atrás das casas/lojas térreas: jardim andável (flores e capim, sem bloquear).
+  rect(0, 0, W - 1, H - 1, (x, y, i) => {
+    if (use[i] !== YARD) return;
+    const r = h(x, y, 12);
+    objects[i] = r < 0.2 ? Block.FLOWER : r < 0.32 ? Block.TALL_GRASS : Block.AIR;
+  });
 
   const street = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) street[i] = use[i] === STREET || use[i] === PLAZA || use[i] === WALKWAY ? 1 : 0;
@@ -500,7 +544,7 @@ function buildTown(): TownLayout {
     w: W, h: H,
     area: { x0: TOWN_X0, y0: TOWN_Y0, x1: TOWN_X0 + W - 1, y1: TOWN_Y0 + H - 1 },
     gate: { x0: TOWN_X0 + GX0, y0: TOWN_Y0 + H - WALL, x1: TOWN_X0 + GX1, y1: TOWN_Y0 + H - 1 },
-    start: [TOWN_X0 + W / 2, TOWN_Y0 + 71],
+    start: [TOWN_X0 + W / 2, TOWN_Y0 + START_Y],
     doorstep: [TOWN_X0 + W / 2, TOWN_Y0 + H + 4],
     castleDoor: castle.door!,
     buildings, ground, objects, upper, buildingAt, street,

@@ -24,12 +24,12 @@ function reach(w: World, x: number, y: number): Set<string> {
 }
 
 describe('Cidade do Despertar', () => {
-  it('é igual em qualquer seed (semente própria) e tem 108 × 78 blocos', () => {
+  it('é igual em qualquer seed (semente própria) e tem 164 × 132 blocos', () => {
     const a = new World(1);
     const b = new World(987654);
     const t = a.town!;
     expect(t.w * t.h).toBe(TOWN_W * TOWN_H);
-    expect(t.w * t.h).toBe(8424);
+    expect(t.w * t.h).toBe(21648);
     for (let y = t.area.y0; y <= t.area.y1; y += 3) {
       for (let x = t.area.x0; x <= t.area.x1; x += 3) {
         expect(a.getGround(x, y)).toBe(b.getGround(x, y));
@@ -73,7 +73,8 @@ describe('Cidade do Despertar', () => {
     const w = new World(5);
     const t = w.town!;
     const castle = t.buildings.find((b) => b.id === Block.CASTLE)!;
-    expect(castle.y).toBeLessThan(t.area.y0 + 15);
+    expect(castle.y).toBeLessThan(t.area.y0 + 25);
+    expect([castle.w, castle.d]).toEqual([26, 17]);
     expect(t.gate.y1).toBe(t.area.y1);
     const ok = reach(w, ...t.start);
     expect(ok.has(`${t.castleDoor[0]},${t.castleDoor[1]}`)).toBe(true);
@@ -81,7 +82,13 @@ describe('Cidade do Despertar', () => {
       expect(t.buildings.filter((b) => b.id === id)).toHaveLength(1);
     }
     for (const b of t.buildings.filter((x) => x.door)) expect(ok.has(`${b.door![0]},${b.door![1]}`), b.name).toBe(true);
-    expect(t.buildings.filter((b) => b.name === 'Casa').length).toBeGreaterThan(30);
+    const houses = t.buildings.filter((b) => b.name === 'Casa');
+    expect(houses.length).toBeGreaterThan(40);
+    // Casas com no mínimo 5×5 (térrea: 4 fileiras bloqueadas + quintal andável atrás).
+    for (const b of houses) {
+      expect(b.w).toBeGreaterThanOrEqual(5);
+      if (b.id === Block.HOUSE) expect(w.isWalkable(b.x + 2, b.y - b.d)).toBe(true);
+    }
   });
 
   it('nada quebra nem é colocado dentro da cidade; fora do portão, sim', () => {

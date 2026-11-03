@@ -84,11 +84,12 @@ qualquer prancha em grade, se precisar.
 → ícones `icon-block-stone*` e colunas 5 (Pedra Bruta) e 8–14 do `blocks-atlas` (rode **depois** de
 `extract-blocks.py` e `extract-ui.py`) → `optimize-assets.py`. Ordem total: blocks → ui → stones → optimize.
 
-**Cidade — arte em imagem** (`assets-src/town-house-red-sizes.png` com as casas 3×2, 4×3 e 5×3 lado a lado, e
-`town-bushes.png`; fundo transparente): `python3 scripts/extract-town.py` → `src/assets/town-house-red-WxD.png` (parede
-com exatamente w × 64 px + 24 px de margem por lado; legendas embaixo são descartadas) e `town-bushes.png` (tira de 3
-quadros 120 × 96, mesma escala) → `optimize-assets.py`. Importadas só em `render/art/principal.ts` (`town.houseRed`,
-`town.bushes`). Uma imagem **por tamanho** de construção: o render nunca estica nem repete partes.
+**Cidade — arte em imagem** (pranchas em `assets-src/town/*.png`, transparentes ou com fundo liso): `python3
+scripts/extract-town.py [--preview arquivo.png]` → `src/assets/town-<nome>.png` → `optimize-assets.py`. Cada objeto é
+uma linha de `OBJECTS` (prancha, recorte em px, encaixe `('base', células, linha)` ou `('full', células)`, área,
+remover fundo). Escala única de 48 px/célula, centro da área no centro da imagem; legendas/setas somem (só ficam as
+partes grandes). A prévia desenha a área de cada objeto sob ele para conferir. Novo nome → registrar em
+`render/art/principal.ts` (`town`) e em `IMAGE_ART` de `render/townArt.ts`. Uma imagem **por tamanho** de construção.
 
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
