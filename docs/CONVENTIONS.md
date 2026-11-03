@@ -7,7 +7,8 @@
 - Conversão célula↔chunk **sempre** via `world/coords.ts`.
 - Aleatoriedade do mundo só pela seed (`random.ts`/`noise.ts`); `Math.random()` só em efeitos e IA de NPC.
 - Movimento/animação dependentes de tempo usam `dt` (nunca "por frame").
-- Testes em `src/**/*.test.ts` (Vitest, Node); benchmarks em `bench/`.
+- Testes em `src/**/*.test.ts` (Vitest, Node); benchmarks em `bench/` no formato do Vitest 5: dentro de um `test`, com
+  `bench` do contexto (`test('…', async ({ bench }) => { await bench('nome', fn).run(); })`).
 
 ## Mundo e regras
 - Célula: chão + níveis 0..`MAX_STACK`-1 (3): objeto no nível 0, cubos empilhados acima (só sobre cubo). `AIR` = vazio.

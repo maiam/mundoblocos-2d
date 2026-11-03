@@ -1,6 +1,6 @@
 # Arquitetura
 
-Site estático (Vite + TypeScript, sem framework), vista superior inclinada (3/4). Diagramas em
+Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node ≥ 22.12), vista superior inclinada (3/4). Diagramas em
 [MAPS.md](MAPS.md). Decisões em [DECISIONS.md](DECISIONS.md).
 
 ## Estrutura
