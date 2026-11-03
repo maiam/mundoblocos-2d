@@ -136,6 +136,11 @@ remover fundo). Escala única de 48 px/célula, centro da área no centro da ima
 partes grandes). A prévia desenha a área de cada objeto sob ele para conferir. Novo nome → registrar em
 `render/art/principal.ts` (`town`) e em `IMAGE_ART` de `render/townArt.ts`. Uma imagem **por tamanho** de construção.
 
+**Terra com Grama** (`assets-src/grass-variants-34.png`, 3 cubos lado a lado): `python3 scripts/extract-grass.py` →
+coluna 1 (variação 1) e colunas extras 15–16 do `blocks-atlas` + `icon-block-grass` (rode **depois** de
+`extract-blocks.py`, `extract-ui.py` e `extract-stones.py`) → `optimize-assets.py`. Ordem total: blocks → ui → stones →
+grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `render/textures.ts`.
+
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
 

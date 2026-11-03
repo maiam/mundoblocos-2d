@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.38.0 — 2026-11-03
+- **Terra com Grama com arte nova** (prancha fornecida, `scripts/extract-grass.py`): 3 variações sorteadas por célula,
+  no chão e nos cubos (o chão fica menos repetido).
+- **Plano de progressão registrado** (`NEXT_STEPS`, Fase P): vida e dano com números, nível e XP, profissões com
+  proficiência (Lenhador, Minerador, Agricultor, Construtor), comida e cura. Decisões do dono do produto em `DECISIONS`.
+
 ## 0.37.3 — 2026-11-03
 - **Regra de publicação** registrada (`CONVENTIONS`): um PR para `main` por entrega, mesclado automaticamente (método
   *merge*) depois que a **Verificação** passa.

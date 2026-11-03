@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.37.3 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-03 — v0.38.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -14,7 +14,7 @@ _Atualizado em 2026-11-03 — v0.37.3 · jogo: **Orvalis** (`orvalis.pensamentos
 - Vista superior inclinada (3/4): chão + cubos com topo e frente; árvores altas; ordenação por profundidade.
 - **15 materiais** (pranchas 3/4 fornecidas): Terra, Terra com Grama, Terra Arada, Caminho de Terra, Areia, Pedra Bruta,
   Tora de Carvalho, Tábua de Carvalho e as variações de pedra (Irregular, Tijolo, Chão, Lisa, Polida, Rachada, Tijolo
-  Rachado). São os únicos blocos de construção; a Pedra Bruta é a pedra natural do mundo. Irregular, Tijolo e Chão de
+  Rachado). A Terra com Grama tem 3 artes, sorteadas por célula. São os únicos blocos de construção; a Pedra Bruta é a pedra natural do mundo. Irregular, Tijolo e Chão de
   Pedra saem de receita (1 Pedra Bruta → 1); as outras 4 ainda não têm fonte no jogo (só pelo código/salvamento).
 - Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.

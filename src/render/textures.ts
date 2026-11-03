@@ -39,6 +39,8 @@ export interface Sprite {
 export interface BlockTextures {
   /** Topo de cada material, usado como chão (TILE×TILE em resolução TEX_RES). */
   groundTop: Map<BlockId, HTMLCanvasElement>;
+  /** Materiais com várias artes de chão (ex.: Terra com Grama): o chão escolhe uma por célula (hash da seed). */
+  groundVariants: Map<BlockId, HTMLCanvasElement[]>;
   water: HTMLCanvasElement[];
   objects: Map<BlockId, Sprite>;
   icons: Map<BlockId, string>;
@@ -197,6 +199,11 @@ function blade(ctx: Ctx, x: number, baseY: number, h: number, lean: number, w: n
  */
 const ATLAS_TOP = T * TEX_RES;
 const ATLAS_FRONT = F * TEX_RES;
+/**
+ * Variações extras de um material: colunas do atlas depois dos materiais (scripts/extract-grass.py). A coluna normal
+ * do material é a 1ª variação; chão e cubo sorteiam uma por célula.
+ */
+const MATERIAL_VARIANT_COLS: Partial<Record<BlockId, number[]>> = { [Block.GRASS]: [15, 16] };
 
 function materialTop(index: number): HTMLCanvasElement {
   const [c, ctx] = canvas(T, T);
@@ -420,6 +427,7 @@ function decorationSprite(id: BlockId): Sprite {
 /** `town`: o mundo tem a Cidade do Despertar (pinta as construções dela). */
 export function createBlockTextures(opts: { town?: boolean } = {}): BlockTextures {
   const groundTop = new Map<BlockId, HTMLCanvasElement>();
+  const groundVariants = new Map<BlockId, HTMLCanvasElement[]>();
   const objects = new Map<BlockId, Sprite>();
   const icons = new Map<BlockId, string>();
   // Cada grupo só é montado se o pacote de arte do mundo trouxe a imagem (ex.: Santuário não tem materiais).
@@ -452,6 +460,16 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   const variants = new Map<BlockId, Sprite[]>();
   const stackDraw = new Map<BlockId, number>();
   if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
+  // Materiais com mais de uma arte (Terra com Grama): chão e cubo sorteiam a variação por célula.
+  if (getBlockAtlas()) {
+    for (const [key, cols] of Object.entries(MATERIAL_VARIANT_COLS)) {
+      const id = Number(key) as BlockId;
+      const i = MATERIALS.indexOf(id);
+      if (i < 0 || !cols || getBlockAtlas()!.width < (Math.max(...cols) + 1) * ATLAS_TOP) continue;
+      groundVariants.set(id, [groundTop.get(id)!, ...cols.map(materialTop)]);
+      variants.set(id, [objects.get(id)!, ...cols.map((c) => materialCube(c, OUTLINE[id] ?? '#3a2a20'))]);
+    }
+  }
   // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
   const tentImg = getTentSprite();
   if (tentImg) {
@@ -510,5 +528,5 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   ]);
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]]]);
-  return { groundTop, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw };
+  return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw };
 }

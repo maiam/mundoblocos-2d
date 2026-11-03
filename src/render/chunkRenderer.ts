@@ -160,7 +160,8 @@ export class ChunkRenderer {
         } else {
           // Material como chão: topo da arte da prancha. Materiais naturais giram/espelham
           // por célula para o padrão não repetir; piso, tora e arado mantêm a orientação.
-          const top = this.tex.groundTop.get(g);
+          const vars = this.tex.groundVariants.get(g);
+          const top = vars ? vars[Math.floor(hash2(seed, x * 3 + 1, y * 5 + 2) * vars.length)] : this.tex.groundTop.get(g);
           if (top) {
             if (ORIENTED.has(g)) {
               ctx.drawImage(top, px, py, TILE, TILE);

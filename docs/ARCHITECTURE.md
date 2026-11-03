@@ -11,6 +11,7 @@ scripts/
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region, --respace…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
   extract-town.py              pranchas da cidade (assets-src/town) → sprites em escala única (tabela OBJECTS)
+  extract-grass.py             prancha da Terra com Grama → 3 variações (coluna 1 + colunas 15–16 do atlas) + ícone
   extract-stones.py            prancha das 8 pedras → ícones + colunas da Pedra Bruta e das variações no atlas
   extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
