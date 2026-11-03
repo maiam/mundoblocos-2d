@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block } from '../world/blocks';
+import { Block, BLOCKS, MATERIALS } from '../world/blocks';
 import { blockDrops, blockStack, breakDrops, canCraft, PROFESSIONS, RECIPES, toolCanBreak, toolStack } from '../world/items';
 import { WORLD_PROFILES } from '../world/profiles';
 import { mulberry32 } from '../world/random';
@@ -122,6 +122,27 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(canCraft(byId.tent, c)).toBe(false);
     inv.add(blockStack(Block.OAK_PLANKS), 10);
     expect(canCraft(byId.tent, c)).toBe(true);
+  });
+
+  it('pedras: Pedra Bruta é a pedra do mundo; receitas 1:1 de Irregular, Tijolo e Chão; picareta quebra, voltam como item', () => {
+    expect(BLOCKS[Block.STONE].name).toBe('Pedra Bruta');
+    for (const [id, out] of [['stone-cobble', Block.STONE_COBBLE], ['stone-brick', Block.STONE_BRICK], ['stone-floor', Block.STONE_FLOOR]] as const) {
+      const r = RECIPES.find((x) => x.id === id)!;
+      expect(r.inputs).toEqual([{ item: blockStack(Block.STONE), count: 1 }]);
+      expect(r.output).toEqual({ item: blockStack(out), count: 1 });
+    }
+    const variants = [Block.STONE_COBBLE, Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_SMOOTH, Block.STONE_POLISHED,
+      Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED];
+    for (const v of variants) {
+      expect(MATERIALS).toContain(v);
+      expect(toolCanBreak('pickaxe', v)).toBe(true);
+      expect(toolCanBreak('shovel', v)).toBe(false);
+      expect(blockDrops(v)).toEqual([{ item: blockStack(v), count: 1 }]);
+    }
+    // Lisa, Polida, Rachada e Tijolo Rachado ainda sem receita.
+    for (const v of [Block.STONE_SMOOTH, Block.STONE_POLISHED, Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED]) {
+      expect(RECIPES.some((r) => r.output.item === blockStack(v))).toBe(false);
+    }
   });
 });
 

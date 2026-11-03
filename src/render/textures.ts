@@ -486,6 +486,13 @@ export function createBlockTextures(): BlockTextures {
     [Block.PATH, '#a07040'],
     [Block.SAND, '#d9b06a'],
     [Block.STONE, '#6a6676'],
+    [Block.STONE_COBBLE, '#6a6676'],
+    [Block.STONE_BRICK, '#6a6676'],
+    [Block.STONE_FLOOR, '#6a6676'],
+    [Block.STONE_SMOOTH, '#6a6676'],
+    [Block.STONE_POLISHED, '#6a6676'],
+    [Block.STONE_CRACKED, '#6a6676'],
+    [Block.STONE_BRICK_CRACKED, '#6a6676'],
   ]);
   return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames, variants, stackDraw };
 }

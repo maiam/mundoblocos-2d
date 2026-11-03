@@ -46,6 +46,9 @@
   | Tábua de Carvalho | 1 Tora de Carvalho | 2 Tábuas |
   | Porta de Carvalho | 4 Tábuas | 1 Porta |
   | Baú de Carvalho | 8 Tábuas | 1 Baú |
+  | Pedra Irregular | 1 Pedra Bruta | 1 Pedra Irregular |
+  | Tijolo de Pedra | 1 Pedra Bruta | 1 Tijolo de Pedra |
+  | Chão de Pedra | 1 Pedra Bruta | 1 Chão de Pedra |
   | Tenda | 10 Sedas + 10 Tábuas + 4 Presas | 1 Tenda |
 - **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
   no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.

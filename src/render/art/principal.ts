@@ -23,6 +23,14 @@ import oakPlanksIcon from '../../assets/icon-block-oak-planks.webp?inline';
 import pathIcon from '../../assets/icon-block-path.webp?inline';
 import sandIcon from '../../assets/icon-block-sand.webp?inline';
 import stoneIcon from '../../assets/icon-block-stone.webp?inline';
+import stoneCobbleIcon from '../../assets/icon-block-stone-cobble.webp?inline';
+import stoneBrickIcon from '../../assets/icon-block-stone-brick.webp?inline';
+import stoneFloorIcon from '../../assets/icon-block-stone-floor.webp?inline';
+import stoneSmoothIcon from '../../assets/icon-block-stone-smooth.webp?inline';
+import stonePolishedIcon from '../../assets/icon-block-stone-polished.webp?inline';
+import stoneCrackedIcon from '../../assets/icon-block-stone-cracked.webp?inline';
+import stoneBrickCrackedIcon from '../../assets/icon-block-stone-brick-cracked.webp?inline';
+
 import tilledIcon from '../../assets/icon-block-tilled.webp?inline';
 import hoeIcon from '../../assets/icon-hoe.webp?inline';
 import pickaxeIcon from '../../assets/icon-pickaxe.webp?inline';
@@ -87,6 +95,14 @@ const pack: ArtPack = {
     [Block.PATH]: pathIcon,
     [Block.SAND]: sandIcon,
     [Block.STONE]: stoneIcon,
+    [Block.STONE_COBBLE]: stoneCobbleIcon,
+    [Block.STONE_BRICK]: stoneBrickIcon,
+    [Block.STONE_FLOOR]: stoneFloorIcon,
+    [Block.STONE_SMOOTH]: stoneSmoothIcon,
+    [Block.STONE_POLISHED]: stonePolishedIcon,
+    [Block.STONE_CRACKED]: stoneCrackedIcon,
+    [Block.STONE_BRICK_CRACKED]: stoneBrickCrackedIcon,
+
     [Block.OAK_LOG]: oakLogIcon,
     [Block.OAK_PLANKS]: oakPlanksIcon,
   },

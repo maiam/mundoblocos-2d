@@ -21,6 +21,7 @@ export const Block = {
   TILLED: 22,
   PATH: 23,
   SAND: 24,
+  /** Pedra Bruta (pedra padrão do mundo). */
   STONE: 25,
   OAK_LOG: 26,
   OAK_PLANKS: 27,
@@ -35,6 +36,15 @@ export const Block = {
   /** Baú de Carvalho: guarda 27 pilhas (conteúdo no World). */
   CHEST: 33,
   CACTUS: 31,
+  // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
+  STONE_COBBLE: 34,
+  STONE_BRICK: 35,
+  STONE_FLOOR: 36,
+  STONE_SMOOTH: 37,
+  STONE_POLISHED: 38,
+  STONE_CRACKED: 39,
+  STONE_BRICK_CRACKED: 42,
+
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
   SAKURA_TREE: 41,
@@ -151,7 +161,15 @@ const defs: BlockDef[] = [
   object(Block.TILLED, 'Terra Arada', { soft: true }),
   object(Block.PATH, 'Caminho de Terra', { soft: true }),
   object(Block.SAND, 'Areia', { soft: true }),
-  object(Block.STONE, 'Pedra'),
+  object(Block.STONE, 'Pedra Bruta'),
+  object(Block.STONE_COBBLE, 'Pedra Irregular'),
+  object(Block.STONE_BRICK, 'Tijolo de Pedra'),
+  object(Block.STONE_FLOOR, 'Chão de Pedra'),
+  object(Block.STONE_SMOOTH, 'Pedra Lisa'),
+  object(Block.STONE_POLISHED, 'Pedra Polida'),
+  object(Block.STONE_CRACKED, 'Pedra Rachada'),
+  object(Block.STONE_BRICK_CRACKED, 'Tijolo de Pedra Rachado'),
+
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
   object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
@@ -224,6 +242,14 @@ export const MATERIALS: BlockId[] = [
   Block.STONE,
   Block.OAK_LOG,
   Block.OAK_PLANKS,
+  // Variações de pedra (colunas 8+ do atlas, scripts/extract-stones.py).
+  Block.STONE_COBBLE,
+  Block.STONE_BRICK,
+  Block.STONE_FLOOR,
+  Block.STONE_SMOOTH,
+  Block.STONE_POLISHED,
+  Block.STONE_CRACKED,
+  Block.STONE_BRICK_CRACKED,
 ];
 
 /** Blocos do Santuário Celestial, na ordem da prancha (e da hotbar do Santuário). */

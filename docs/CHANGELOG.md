@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.34.0 — 2026-11-03
+- **8 variações de pedra** (prancha 3/4 fornecida, `scripts/extract-stones.py`): a pedra do mundo passa a ser a
+  **Pedra Bruta** (mesmo id 25; montanhas, pedregulhos, batente de porta e água seguem iguais) e entram 7 blocos novos:
+  Pedra Irregular, Tijolo de Pedra, Chão de Pedra, Pedra Lisa, Pedra Polida, Pedra Rachada e Tijolo de Pedra Rachado
+  (ids 34–39 e 42). Todos são materiais: colocam, quebram com picareta/pá/mão e voltam como item.
+- **Receitas do Construtor 1:1**: Pedra Bruta → Pedra Irregular, Tijolo de Pedra ou Chão de Pedra. As outras 4 ficam
+  para receitas futuras ou construções prontas. 1 teste novo (108).
+
 ## 0.33.2 — 2026-11-03
 - **Picareta também quebra a tenda**: exceção por ferramenta no registro (`ToolDef.alsoBreaks`); a picareta segue sem
   quebrar as outras madeiras (tora, tábua, porta, baú, árvores).

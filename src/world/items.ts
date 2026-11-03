@@ -239,6 +239,14 @@ export const RECIPES: Recipe[] = [
     id: 'oak-door', name: 'Porta de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.OAK_DOOR), count: 1 },
   },
+  ...([
+    ['stone-cobble', 'Pedra Irregular', Block.STONE_COBBLE],
+    ['stone-brick', 'Tijolo de Pedra', Block.STONE_BRICK],
+    ['stone-floor', 'Chão de Pedra', Block.STONE_FLOOR],
+  ] as const).map(([id, name, out]): Recipe => ({
+    id, name, profession: 'builder',
+    inputs: [{ item: blockStack(Block.STONE), count: 1 }], output: { item: blockStack(out), count: 1 },
+  })),
   {
     id: 'oak-chest', name: 'Baú de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 8 }], output: { item: blockStack(Block.CHEST), count: 1 },

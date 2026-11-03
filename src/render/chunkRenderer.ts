@@ -13,6 +13,7 @@ const BANK_H = 7;
 /** Materiais cuja arte tem direção (tábuas, sulcos, anéis): não giram no chão. */
 const ORIENTED = new Set<number>([
   Block.OAK_PLANKS, Block.TILLED, Block.OAK_LOG,
+  Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_POLISHED, Block.STONE_BRICK_CRACKED,
   ...Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.oriented).map(([id]) => Number(id)),
 ]);
 /**

@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-02 (v0.28.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-03 (v0.34.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -8,7 +8,7 @@ _Revisado em 2026-11-02 (v0.28.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Sistema | Estado | Observação |
 |---|---|---|
 | Mundo procedural em chunks 16×16, vista 3/4, biomas, água, montanhas | ✅ sólido | determinístico por seed, ~0,08 ms/chunk |
-| Construção: 8 materiais, pilha de 3, buracos, porta de carvalho | ✅ | materiais **coletados** (grade 8 + bolsa) |
+| Construção: 15 materiais (8 pedras), pilha de 3, buracos, porta, tenda, baú | ✅ | materiais **coletados** (grade 9 + bolsa) |
 | Personagem: movimento, câmera, joystick, botão de ação, paisagem/tela cheia | ✅ | teste do botão no celular ainda em avaliação |
 | Ferramentas (espada, enxada, picareta, pá, machado) com ação e restrições | ✅ | quebrar com ferramenta 1 s, mão 2 s |
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
@@ -20,7 +20,7 @@ _Revisado em 2026-11-02 (v0.28.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do core |
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
-| Qualidade | ✅ | 81 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
+| Qualidade | ✅ | 108 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
 | Peso dos artefatos | 🔴 | principal **3,09 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
 
 ## 2. Plano por fases
@@ -53,6 +53,9 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
    receitas (trigo → pão? Coração da Rainha → ?), painel do **Personagem** (vida, armaduras — ícone já na grade).
 3. ✅ **Painel de inventário** (bolsa no 9º espaço).
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
+5. **Fonte das pedras sem receita** (Lisa, Polida, Rachada, Tijolo Rachado): receitas futuras ou **construções prontas**
+   (ruínas/estruturas geradas pela seed — mudam o mapa; rodar os testes de determinismo). Decidir também se as
+   variações valem como batente de porta e se substituem água (hoje só a Pedra Bruta).
 
 ### Fase 4 — Mundo vivo e conteúdo
 1. Ovelhas (e novos animais) em outros chunks, por bioma, com limite.
@@ -77,6 +80,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 |---|---|
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
+| Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; contam como batente/substituem água? | Fase 3 |
 | Painel do Personagem: o que mostrar (vida, armaduras, …) | Fase 3/4 |
 | Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
