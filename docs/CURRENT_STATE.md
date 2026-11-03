@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.36.0_
+_Atualizado em 2026-11-03 — v0.36.1_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -19,17 +19,20 @@ _Atualizado em 2026-11-03 — v0.36.0_
 - Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
 - **Cidade do Despertar** (`domains/town.md`): cidade fixa (igual em toda seed) de 164 × 132 blocos ao norte da
-  origem — muralha com torres e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda, Hospedaria,
-  Ferreiro, lojas e casas (sem interiores nem NPCs ainda). Construções, bancos, postes e arbustos com a arte fornecida (casas 5×5 em 3 cores, térreas e de 2 andares; castelo 26×17; guilda 9×9; ferreiro 8×5; lojas 5×5; guaritas 4×6); hospedaria, fonte, poço e barracas pintados em código. **Início e renascer sem tenda** na praça inicial. Área
-  protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
-- **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto do spawn, com
-  uma única entrada voltada para ele, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só
+  origem — muralha com guaritas e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda,
+  Hospedaria, Ferreiro, 3 lojas e ~90 casas (sem interiores nem NPCs ainda). Arte fornecida: casas 5×5 em 3 cores
+  (térreas e de 2 andares), lojas 5×5, ferreiro 8×5, guilda 9×9, castelo 26×17, guaritas 4×6, bancos, postes de luz
+  (acendem à noite) e arbustos; hospedaria, fonte, poço e barracas ainda pintados em código. **Início e renascer sem
+  tenda** na praça inicial. Área protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
+- **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto da cidade (nunca
+  sobre ela, a estrada do portão ou o campo do rebanho), com uma única entrada voltada para o início, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só
   passagem. Nada quebra nem é colocado lá dentro. Aranhas pequenas e grandes em quantidade proporcional ao
   labirinto (~38) + Aranha Gigante (chefe, 14 golpes); perseguem pelos corredores, **mordem** e nunca saem; derrotadas
   soltam seda/presas (Rainha: Coração da Rainha) e renascem com o tempo. Farol + seta indicam a entrada.
-- **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, renasce no início com os itens.
+- **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, perde tudo menos as ferramentas e renasce
+  na última tenda ou, sem tenda, na praça inicial da cidade.
   Ver `domains/dungeon.md`.
-- **Água**: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua a substituem; buraco vizinho de água enche sozinho (animação) e enche os
+- **Água**: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra Bruta, Tora ou Tábua a substituem; buraco vizinho de água enche sozinho (animação) e enche os
   vizinhos em cadeia. Ver `domains/world.md`.
 - Pilhas de até **3 cubos**; quebrar a célula vazia cava o chão (buraco que só um bloco novo preenche, virando piso).
 
@@ -57,8 +60,8 @@ _Atualizado em 2026-11-03 — v0.36.0_
 - **Porta de Carvalho**: colocada no chão **entre dois batentes de madeira ou pedra** (qualquer madeira ou qualquer uma das 8 pedras à esquerda e à
   direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
-- **Habilidades** (Construtor): receitas de Tábua (1 tora → 2), Porta (4 tábuas) e Tenda (10 sedas + 10 tábuas + 4
-  presas) — tocar cria. **Baú de Carvalho** (8 tábuas; 27 espaços). **Tenda** (2×2) = ponto de
+- **Habilidades** (Construtor): receitas de Tábua (1 tora → 2), Porta (4 tábuas), Tenda (10 sedas + 10 tábuas + 4
+  presas), Baú e Pedra Irregular / Tijolo de Pedra / Chão de Pedra (1 Pedra Bruta → 1) — tocar cria. **Baú de Carvalho** (8 tábuas; 27 espaços). **Tenda** (2×2) = ponto de
   renascer, com aviso na tela; derrubar a última volta ao início. Bolsa com 27 itens (9 na mão + 18).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
@@ -76,7 +79,8 @@ _Atualizado em 2026-11-03 — v0.36.0_
 - Salvamento só neste navegador/aparelho (nuvem depende do core); itens caídos no chão não são salvos.
 - Animais atingidos pela espada só somem (sem animação de morte nem drops). Corações da HUD ainda vetoriais
   (provisórios); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
-- Ovelhas só nascem perto do spawn; não há animais em outros chunks.
+- Ovelhas só nascem no campo ao sul do portão; não há animais em outros chunks.
+- Cidade sem NPCs nem interiores; tocar numa construção só mostra o nome.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
 - iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a
@@ -85,8 +89,9 @@ _Atualizado em 2026-11-03 — v0.36.0_
   buracos, não se espalha sobre terra firme.
 
 ## Qualidade e desempenho
-- 116 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
-- Sessão automatizada longa (3 seeds, desktop e celular, 120 ações aleatórias cada) sem erros.
+- 117 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- Sessão automatizada (v0.36.1: 3 seeds, desktop e celular, 160 ações aleatórias cada, entrando na cidade e na
+  dungeon) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).
 - Artefatos com **só a arte do próprio mundo** (ADR 0010): principal **3,95 MB** (acima da meta de 3 MB — ver `NEXT_STEPS`),
   Santuário **0,69 MB**. Alerta do build alinhado à meta (~3 MB de HTML).

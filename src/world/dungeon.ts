@@ -1,5 +1,5 @@
 import type { Biome } from './biomes';
-import { Block, type BlockId } from './blocks';
+import { Block, type BlockId, blockDef } from './blocks';
 import { hash2, mulberry32 } from './random';
 import type { Cell, TerrainSource } from './terrain';
 
@@ -452,7 +452,17 @@ export function planDungeon(base: TerrainSource, spawnX: number, spawnY: number,
 
 /** Terreno com a dungeon sobreposta: dentro da área usa o mapa da dungeon; fora, o terreno base. */
 export class DungeonTerrain implements TerrainSource {
-  constructor(private readonly base: TerrainSource, readonly layout: DungeonLayout) {}
+  /** Diante da entrada (fora da área): terra firme e sem objetos, para a entrada nunca ficar bloqueada. */
+  private readonly front: Rect;
+
+  constructor(private readonly base: TerrainSource, readonly layout: DungeonLayout) {
+    const [dx, dy] = layout.doorstep;
+    this.front = { x0: dx - 2, y0: dy - 2, x1: dx + 2, y1: dy + 2 };
+  }
+
+  private clearFront(c: Cell): Cell {
+    return { ground: blockDef(c.ground).liquid || c.ground === Block.HOLE ? Block.GRASS : c.ground, object: Block.AIR, upper: Block.AIR };
+  }
 
   get seed(): number {
     return this.base.seed;
@@ -460,7 +470,7 @@ export class DungeonTerrain implements TerrainSource {
 
   cellAt(x: number, y: number): Cell {
     const l = this.layout;
-    if (!inRect(l.area, x, y)) return this.base.cellAt(x, y);
+    if (!inRect(l.area, x, y)) return inRect(this.front, x, y) ? this.clearFront(this.base.cellAt(x, y)) : this.base.cellAt(x, y);
     const i = (y - l.area.y0) * l.w + (x - l.area.x0);
     return { ground: l.ground[i] as BlockId, object: l.objects[i] as BlockId, upper: Block.AIR };
   }
@@ -485,17 +495,21 @@ export class DungeonTerrain implements TerrainSource {
   generateChunk(cx: number, cy: number, ground: Uint8Array, objects: Uint8Array, upper: Uint8Array): void {
     this.base.generateChunk(cx, cy, ground, objects, upper);
     const l = this.layout.area;
+    const f = this.front;
     const S = Math.round(Math.sqrt(ground.length));
     const x0 = cx * S;
     const y0 = cy * S;
-    if (x0 > l.x1 || x0 + S - 1 < l.x0 || y0 > l.y1 || y0 + S - 1 < l.y0) return;
+    const misses = (r: Rect) => x0 > r.x1 || x0 + S - 1 < r.x0 || y0 > r.y1 || y0 + S - 1 < r.y0;
+    if (misses(l) && misses(f)) return;
     for (let ly = 0; ly < S; ly++) {
       for (let lx = 0; lx < S; lx++) {
         const x = x0 + lx;
         const y = y0 + ly;
-        if (!inRect(l, x, y)) continue;
-        const c = this.cellAt(x, y);
         const i = ly * S + lx;
+        let c: Cell;
+        if (inRect(l, x, y)) c = this.cellAt(x, y);
+        else if (inRect(f, x, y)) c = this.clearFront({ ground: ground[i] as BlockId, object: objects[i] as BlockId, upper: upper[i] as BlockId });
+        else continue;
         ground[i] = c.ground;
         objects[i] = c.object;
         upper[i] = c.upper;

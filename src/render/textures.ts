@@ -43,6 +43,8 @@ export interface BlockTextures {
   objects: Map<BlockId, Sprite>;
   icons: Map<BlockId, string>;
   glowColor: Map<BlockId, string>;
+  /** Onde fica a luz no sprite (células a partir do centro da base), quando não é no pé (ex.: lanterna do poste). */
+  glowAt: Map<BlockId, [number, number]>;
   /** Cor da "barranca" (face frontal do chão elevado) mostrada sobre a água. */
   bankColor: Map<BlockId, string>;
   /** Porta de Carvalho: 8 quadros (0..3 abrindo, 4..7 fechando); fechada = 0, aberta = 3. */
@@ -498,5 +500,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     [Block.STONE_CRACKED, '#6a6676'],
     [Block.STONE_BRICK_CRACKED, '#6a6676'],
   ]);
-  return { groundTop, water, objects, icons, glowColor, bankColor, doorFrames, variants, stackDraw };
+  // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
+  const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]]]);
+  return { groundTop, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw };
 }

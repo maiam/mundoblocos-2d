@@ -51,6 +51,10 @@ Apenas apresentação; lê `World`, nunca escreve.
 - Por frame: objetos linha a linha (de cima para baixo da tela); a personagem é desenhada logo após a linha
   dos seus pés. Água ganha brilhos animados; nuvens projetam sombras que derivam.
 - `pick()` escolhe o objeto sob o cursor testando as linhas da frente primeiro (sprites sobem acima da célula).
+  Construções da cidade valem pelo desenho inteiro (telhado incluído); objeto atrás delas não ganha o toque.
+- Cidade (`render/townArt.ts`): imagens em escala única (`TOWN_PX_PER_CELL`), variação por posição com sal fixo; o
+  quadro varre `TOWN_REACH` além da tela para sprites grandes. Brilho noturno: `glowColor` + `glowAt` (posição da luz
+  no sprite, ex.: lanterna do poste).
 
 ## Personagem
 - Folhas canônicas: frente, esquerda, direita, costas. As folhas com ferramenta chegaram como frente, direita,

@@ -4,7 +4,7 @@ export default defineConfig({
   base: './',
   build: {
     // Os sprites entram embutidos (?inline) para o build de arquivo único (Artifact):
-    // o bundle passa de 500 kB por design. Limite = meta de < 3 MB por artefato (principal ~2,97 MB, só a arte dele — ADR 0010), para
+    // o bundle passa de 500 kB por design. Limite = meta de < 3 MB por artefato (principal hoje ~3,95 MB, acima — decisão em NEXT_STEPS; só a arte dele — ADR 0010), para
     // que o aviso volte a aparecer se os assets crescerem demais.
     chunkSizeWarningLimit: 3000,
     // Um único JS (o artefato é um HTML de arquivo único): o pacote de arte do mundo, importado dinamicamente,

@@ -16,7 +16,8 @@ A Cidade do Despertar · V1.0" (pedido do dono do produto, 2026-11-03).
   noroeste em (−82, −132): o portão (sul) fica logo ao norte da origem.
 - **Anel de 8 células** em volta da muralha: água vira grama (terra firme sempre) e, nas 3 mais próximas, sem
   objetos. **Estrada de terra** de 14 células sai do portão para o sul (atravessa água se houver).
-- A dungeon é planejada fora da cidade + anel + 4 (`planDungeon(..., avoid)`), com a entrada voltada para o início.
+- A dungeon é planejada fora da cidade + anel + 4 e do **campo ao sul do portão** (estrada + rebanho,
+  `TOWN_SOUTH_FIELD` = 28 células abaixo da muralha) (`planDungeon(..., avoid)`), com a entrada voltada para o início.
 
 ## Geração (ordem da spec)
 1. **Território** fechado (retângulo fixo).

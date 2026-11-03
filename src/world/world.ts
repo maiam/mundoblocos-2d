@@ -3,7 +3,7 @@ import { Block, type BlockId, blockDef, isDoor, isWheat, WHEAT_STAGES, wheatId, 
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
-import { grow, TOWN_MARGIN, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
+import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
@@ -100,7 +100,10 @@ export class World {
     if (profile.dungeon) {
       const base = this.generator;
       const [sx, sy] = (this.spawn = this.findSpawn());
-      this.dungeon = planDungeon(base, sx, sy, this.town ? grow(this.town.area, TOWN_MARGIN + 4) : null);
+      // Fora da cidade, do anel em volta, da estrada do portão e do campo do rebanho (ao sul do portão).
+      const keep = this.town ? grow(this.town.area, TOWN_MARGIN + 4) : null;
+      if (keep) keep.y1 = this.town!.area.y1 + TOWN_SOUTH_FIELD;
+      this.dungeon = planDungeon(base, sx, sy, keep);
       this.generator = new DungeonTerrain(base, this.dungeon);
     }
   }

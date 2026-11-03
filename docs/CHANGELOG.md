@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.36.1 — 2026-11-03
+- **Correção: dungeon em cima da estrada do portão.** Em ~70% das seeds (43 de 60 testadas) a dungeon ficava logo ao
+  sul do portão, cobrindo o fim da estrada e o campo onde o rebanho nasce. Agora ela evita também esse campo
+  (`TOWN_SOUTH_FIELD`, 28 células abaixo da muralha). Teste novo com 40 seeds (117).
+- **Correção: entrada da dungeon bloqueada** em algumas seeds (árvore/água diante dela): as células diante da entrada
+  ficam sempre livres e em terra firme (`DungeonTerrain`).
+- **Correção: luz do poste no pé dele** — à noite o brilho agora sai da lanterna (`glowAt` nas texturas).
+- **Correção: tocar no telhado** de uma construção alta pegava a planta atrás dela; vale o desenho inteiro da
+  construção e a da frente vence.
+- Documentação revisada (estado, plano, regras de morte/renascer, receitas, dungeon).
+
 ## 0.36.0 — 2026-11-03
 - **Cidade maior e construções com arte fornecida.** Novos tamanhos (definidos pelo dono do produto): casas 5×5
   (térrea ou de 2 andares, telhado vermelho/azul/marrom), lojas 5×5, ferreiro 8×5, guilda 9×9, castelo 26×17 (com

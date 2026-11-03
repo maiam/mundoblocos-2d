@@ -25,6 +25,8 @@ export const TOWN_MARGIN = 8;
 const TOWN_CLEAR = 3;
 /** Estrada de terra que sai do portão para o sul. */
 const ROAD_LEN = 14;
+/** Campo ao sul do portão (estrada + rebanho inicial) que a dungeon não pode ocupar (células abaixo da muralha). */
+export const TOWN_SOUTH_FIELD = 28;
 const WALL = 2;
 
 export interface TownBuilding {

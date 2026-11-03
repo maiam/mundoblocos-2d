@@ -296,8 +296,9 @@ export class Renderer {
     }
     const glow = this.textures.glowColor.get(id);
     if (glow) {
+      const at = this.textures.glowAt.get(id);
       const lift = blockDef(id).shape === 'tree' ? -0.9 : 0.1 - (level * CUBE_FRONT) / TILE;
-      glows.push({ x: x + 0.5, y: y + lift, color: glow });
+      glows.push(at ? { x: x + 0.5 + at[0], y: y + 1 + at[1], color: glow } : { x: x + 0.5, y: y + lift, color: glow });
     }
   }
 
@@ -595,6 +596,15 @@ export class Renderer {
     const [wx, wy] = cam.screenToWorld(sx, sy);
     const gx = Math.floor(wx / TILE);
     const gy = Math.floor(wy / TILE);
+    // Construção da cidade sob o cursor pelo desenho inteiro (telhado incluído); a mais ao sul (da frente) vence.
+    let building: { x: number; y: number } | null = null;
+    for (const b of this.world.town?.buildings ?? []) {
+      const s = this.textures.variants.get(b.id)?.[0];
+      if (!s) continue;
+      const lx = wx - b.x * TILE;
+      const ly = wy - b.y * TILE;
+      if (lx >= s.ox && lx < s.ox + s.w && ly >= s.oy && ly < TILE && (!building || b.y > building.y)) building = { x: b.x, y: b.y };
+    }
     for (let y = gy + 3; y >= gy; y--) {
       for (const x of [gx, gx - 1, gx + 1]) {
         const stackTop = this.world.topBlock(x, y);
@@ -608,12 +618,13 @@ export class Renderer {
         const ly = wy - y * TILE;
         const top = s.hit.y - height * CUBE_FRONT;
         if (lx >= s.hit.x && lx < s.hit.x + s.hit.w && ly >= top && ly < s.hit.y + s.hit.h) {
+          // Objeto atrás da construção (mais ao norte) fica escondido por ela: vale a construção.
+          if (building && building.y >= y) return { ...building, hasObject: true };
           return { x, y, hasObject: true };
         }
       }
     }
-    // Construção da cidade sob o cursor (as células dela não têm sprite próprio).
-    if (this.world.townBuildingAt(gx, gy)) return { x: gx, y: gy, hasObject: true };
+    if (building) return { ...building, hasObject: true };
     return { x: gx, y: gy, hasObject: false };
   }
 

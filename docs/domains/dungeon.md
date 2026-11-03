@@ -7,8 +7,9 @@ spawn. Modelo de conexões, não uma planta fixa: tamanho, caminhos, câmaras e 
 A estrutura lógica completa é gerada antes de qualquer chunk; cada chunk só copia a sua parte.
 
 1. **Área** — `dungeonSize(seed)`: 96–108 × 66–78 blocos (~9× a primeira versão, ~29 chunks em área).
-   `planDungeon(base, spawn, avoid)`: fora da cidade (+ anel + 4); tenta 8 direções × distâncias crescentes do spawn; aceita a primeira com ≤ 30% de
-   água e terra firme diante da entrada. A entrada fica voltada para o spawn (`sideFacing`).
+   `planDungeon(base, spawn, avoid)`: fora da cidade (+ anel + 4 e o campo ao sul do portão); tenta 8 direções × distâncias crescentes do spawn; aceita a primeira com ≤ 30% de
+   água e terra firme diante da entrada. A entrada fica voltada para o spawn (`sideFacing`). `DungeonTerrain` mantém
+   5 × 5 células diante da entrada sempre livres e em terra firme (nunca bloqueada por árvore, pedra ou água).
 2. **Labirinto** — `buildMaze(seed, w, h, side)` define **só chão e paredes**:
    - Grade lógica de nós (passo de 6 blocos; centros deslocados ±1 para não haver simetria). A coluna/linha 0 de
      cada célula de nó é sempre parede, então só arestas abertas atravessam entre nós.

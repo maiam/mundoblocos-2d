@@ -1,6 +1,6 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-03 (v0.35.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
+_Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
 `CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
@@ -12,16 +12,16 @@ _Revisado em 2026-11-03 (v0.35.0 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Personagem: movimento, câmera, joystick, botão de ação, paisagem/tela cheia | ✅ | teste do botão no celular ainda em avaliação |
 | Ferramentas (espada, enxada, picareta, pá, machado) com ação e restrições | ✅ | quebrar com ferramenta 1 s, mão 2 s |
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
-| Ovelhas: pastar, comer, namorar, filhotes | ✅ | só perto do spawn; espada as faz sumir |
+| Ovelhas: pastar, comer, namorar, filhotes | ✅ | só no campo ao sul do portão; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
 | Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | sem NPCs, interiores nem missões |
-| Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ estrutura | **combate incompleto** (aranhas não causam dano) |
+| Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ | fora da cidade; aranhas só com arte de frente |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
 | Vida da heroína, dano, morte e renascimento | ✅ | 5 corações; arte dos corações provisória |
 | Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do core |
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
-| Qualidade | ✅ | 116 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
+| Qualidade | ✅ | 117 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
 | Peso dos artefatos | 🔴 | principal **3,95 MB — acima da meta de 3 MB** (o build avisa); Santuário 0,7 MB |
 
 ## 2. Plano por fases

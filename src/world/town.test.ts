@@ -126,6 +126,20 @@ describe('Cidade do Despertar', () => {
     }
   });
 
+  it('a dungeon nunca ocupa a estrada do portão nem o campo do rebanho; a entrada dela fica livre', () => {
+    for (let k = 1; k <= 40; k++) {
+      const seed = k * 7919;
+      const w = new World(seed);
+      const d = w.dungeon!.area;
+      const t = w.town!;
+      const [gx] = w.outsideGate();
+      for (let y = t.area.y1 + 1; y <= t.area.y1 + 22; y++) {
+        for (let x = gx - 8; x <= gx + 8; x++) expect(inRect(d, x, y), `seed ${seed}`).toBe(false);
+      }
+      expect(w.isWalkable(...w.dungeon!.doorstep), `seed ${seed}`).toBe(true);
+    }
+  });
+
   it('salvamento antigo com terreno na área da cidade volta à cidade ao carregar', () => {
     const w = new World(13);
     const [x, y] = w.town!.start;
