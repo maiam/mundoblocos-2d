@@ -10,7 +10,8 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | `npm run dev` | Servidor local em `http://localhost:5173` (`?seed=<número|texto>`); expõe `window.__game` |
 | `npm test` | Testes Vitest (`src/**/*.test.ts`) |
 | `npx tsc --noEmit` | Typecheck |
-| `npm run bench` | Benchmarks de geração/leitura de chunks (`bench/`) |
+| `npm run bench` | Benchmarks de geração/leitura de chunks (`bench/`, `vitest bench`) |
+| `npm audit` | Deve mostrar 0 vulnerabilidades (a Hostinger também verifica as dependências do repositório) |
 | `npm run build` | Typecheck + `dist/` estático (`base: './'`, qualquer subcaminho/CDN; inclui PWA) |
 | `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (código embutido, sem esqueleto `<html>`) + imagens em `artifact/mundoblocos-assets/` + mapa `artifact/mundoblocos-files.json` (ADR 0013) |
 | `npm run build:artifact:santuario` | build com `VITE_WORLD=santuario` → `artifact/santuario.html` + `-assets/` + `-files.json` |
@@ -33,13 +34,17 @@ Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em
 | Campo | Valor |
 |---|---|
 | Configuração predefinida | Vite |
-| Branch | `main` (publicar = fazer merge da branch de trabalho em `main`) |
+| Branch | `main` (publicar = mesclar o PR da entrega em `main` após a Verificação passar — `CONVENTIONS`) |
 | Versão do Node | 22.x |
 | Diretório raiz | `./` |
 | Comando de construção | `npm run build` (typecheck + build) |
 | Gerenciador de pacotes | npm (usa o `package-lock.json`) |
 | Diretório de saída | `dist` |
 | Variáveis de ambiente | nenhuma — **não** defina `VITE_WORLD` (sem ela, o site traz os dois mundos e escolhe pelo endereço) |
+
+**No ar desde 2026-11-03** (conferido de fora: HTTPS, LiteSpeed; `index.html` com `no-cache`, `assets/` com cache de
+1 ano, manifesto como `application/manifest+json`, `.htaccess` inacessível (403); jogo, celular e Santuário sem erros).
+A Hostinger também lista vulnerabilidades das dependências do repositório: mantenha `npm audit` em 0.
 
 **Pacote manual (alternativa)**: `npm run pack:site` → `npm run build` (sem `VITE_WORLD`: os dois mundos, escolhidos pelo endereço) e
 `orvalis-site.zip` na raiz do repositório (não versionado) com o **conteúdo** de `dist/`: `index.html`,

@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.37.2 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-03 — v0.37.3 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -96,4 +96,6 @@ _Atualizado em 2026-11-03 — v0.37.2 · jogo: **Orvalis** (`orvalis.pensamentos
 - Artefatos com **só a arte do próprio mundo** (ADR 0010) e **imagens em arquivos separados** (ADR 0013): principal =
   página de 205 kB + 75 imagens (2,8 MB); o jogo espera ~2,5 MB para começar (orçamento < 3 MB) e a arte da dungeon
   chega em segundo plano. Santuário ~0,7 MB.
-- Publicados como Artifacts (mundo principal e Santuário): ver `OPERATIONS.md`.
+- **No ar em `https://orvalis.pensamentos.online`** (Hostinger, publicação pelo GitHub a cada merge em `main`); também
+  publicados como Artifacts (versão de teste). Ver `OPERATIONS.md`.
+- Dependências: Vite 7.3, Vitest 5.1, `npm audit` sem vulnerabilidades.

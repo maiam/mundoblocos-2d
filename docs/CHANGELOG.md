@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.37.3 — 2026-11-03
+- **Regra de publicação** registrada (`CONVENTIONS`): um PR para `main` por entrega, mesclado automaticamente (método
+  *merge*) depois que a **Verificação** passa.
+- **Verificação no GitHub Actions** (`.github/workflows/ci.yml`): `npm ci`, tipos, testes, build e `npm audit` em todo PR
+  para `main`.
+- **Dependências sem vulnerabilidades** (alerta da Hostinger: 6, sendo 2 críticas em `tinypool`): Vite 6.4 → **7.3**
+  (esbuild 0.28) e Vitest 3.2 → **5.1**. Eram só ferramentas de teste/build — o site publicado não as contém —, mas
+  `npm audit` agora mostra 0. Node mínimo: **22.12** (`engines`; a Hostinger usa 22.x).
+- Benchmark migrado para a API do Vitest 5 (`bench` do contexto do teste, `benchmark.include`); números iguais aos de
+  antes (~0,08 ms por chunk).
+
 ## 0.37.2 — 2026-11-03
 - Publicação pela integração GitHub da Hostinger (branch `main`, Vite, Node 22, `npm run build`, saída `dist`, sem
   variáveis de ambiente) documentada em `OPERATIONS`.

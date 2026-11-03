@@ -7,7 +7,8 @@
 - Conversão célula↔chunk **sempre** via `world/coords.ts`.
 - Aleatoriedade do mundo só pela seed (`random.ts`/`noise.ts`); `Math.random()` só em efeitos e IA de NPC.
 - Movimento/animação dependentes de tempo usam `dt` (nunca "por frame").
-- Testes em `src/**/*.test.ts` (Vitest, Node); benchmarks em `bench/`.
+- Testes em `src/**/*.test.ts` (Vitest, Node); benchmarks em `bench/` no formato do Vitest 5: dentro de um `test`, com
+  `bench` do contexto (`test('…', async ({ bench }) => { await bench('nome', fn).run(); })`).
 
 ## Mundo e regras
 - Célula: chão + níveis 0..`MAX_STACK`-1 (3): objeto no nível 0, cubos empilhados acima (só sobre cubo). `AIR` = vazio.
@@ -48,6 +49,19 @@
 - `src/assets/*.webp?inline` só é importado nos pacotes de arte (`render/art/principal.ts`, `santuario.ts`): arte nova
   entra no pacote do mundo que a usa. Depois de gerar PNG, rodar `scripts/optimize-assets.py`.
 - Originais ficam em `assets-src/` (versionados) e os comandos de processamento em `OPERATIONS.md`.
+
+## Commits, PRs e publicação (regra do dono do produto, 2026-11-03)
+- `main` = **o que está no ar** (a Hostinger publica `orvalis.pensamentos.online` a cada atualização dela).
+- Trabalho na branch `feat/mundo-chunks-fantasia`: commits pequenos, em pt-BR, explicando o **porquê**.
+- **Um PR para `main` por entrega** pronta (tsc, testes, build e conferência no navegador feitos), com título de versão
+  (ex.: "Orvalis v0.37.3: …") e resumo do que muda para o jogador. Correções miúdas podem esperar e ir juntas.
+- **Merge automático no fim de cada entrega** (decisão do dono do produto): abrir o PR, esperar a **Verificação**
+  (GitHub Actions) passar e mesclar. Verificação vermelha = não mescla; corrigir na branch e repetir.
+- Método de merge: **merge** (commit de merge), nunca squash/rebase — a branch de trabalho continua viva e o squash
+  criaria divergência e conflitos falsos nas próximas entregas.
+- **Verificação** (`.github/workflows/ci.yml`) em todo PR para `main` e em cada atualização dela: `npm ci`, `tsc`,
+  testes, `npm run build` (como a Hostinger) e `npm audit --audit-level=moderate`.
+- Opcional ainda não adotado: proteção da `main` no GitHub (exigir PR e Verificação verde) — configuração do dono.
 
 ## Documentação
 - Documentos descrevem o **estado atual**; histórico vai para CHANGELOG/ADRs.

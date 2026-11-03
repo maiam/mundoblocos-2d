@@ -1,0 +1,33 @@
+# Verificação de cada PR para a main (e de cada atualização da main): a main é o site no ar.
+# Ver docs/CONVENTIONS.md § "Commits, PRs e publicação".
+name: Verificação
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    name: Tipos, testes, build e dependências
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Tipos (tsc)
+        run: npx tsc --noEmit
+      - name: Testes (Vitest)
+        run: npm test
+      - name: Build do site (como a Hostinger)
+        run: npm run build
+      - name: Vulnerabilidades nas dependências
+        run: npm audit --audit-level=moderate
