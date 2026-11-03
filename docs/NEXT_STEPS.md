@@ -58,6 +58,23 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
    (ruínas/estruturas geradas pela seed — mudam o mapa; rodar os testes de determinismo). Decidir também se as
    variações substituem água (hoje só a Pedra Bruta; batente de porta já aceita todas).
 
+### Fase P — Progressão do personagem (prioridade atual: diversão) — decisões do dono do produto em 2026-11-03
+Objetivo: dar sensação de crescimento. Regras puras em `world/progression.ts` (curva de XP, fórmula de dano,
+atributos por nível, benefícios das profissões; testável, sem DOM/aleatório solto); estado no `Player`; combate segue
+em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga começa no nível 1, sem perder nada).
+1. **Vida e dano com números** — vida em pontos (~100 no início) numa **barra com o número** (no lugar dos corações);
+   atributos Vida máx., Ataque e Defesa; dano = ataque da arma + bônus − defesa, ±10% e 5% de crítico (×1,5);
+   espada mais forte que machado; números de dano subindo na tela; aranhas com ficha (vida/ataque/defesa) rebalanceadas.
+2. **Nível e XP** — XP por monstros (mais para os fortes) e um pouco por receitas; curva crescente, teto 20 nesta
+   etapa; **atributos sobem sozinhos** ao subir (pontos para distribuir, talvez depois); vida cheia e aviso
+   "Subiu de nível!"; barra de XP; painel do **Personagem** (nível, atributos, XP); nível visível sobre os monstros.
+3. **Profissões com proficiência** (nível próprio por uso): **Lenhador** (cortar madeira: quebra mais rápido, tora
+   extra), **Minerador** (pedra: quebra mais rápido, pedra extra, libera Pedra Lisa/Polida), **Agricultor** (arar,
+   plantar, colher: colheita maior, trigo mais rápido), **Construtor** (receitas: libera receitas novas). Nível de cada
+   uma no painel Habilidades.
+4. **Comida, cura e equilíbrio** — cozinhar (pão de trigo, carne) para curar; Covil das Aranhas ajustado para a faixa
+   1–5; **morte perde 10% do XP do nível atual, sem nunca descer de nível** (continua perdendo tudo menos as ferramentas).
+
 ### Fase 4 — Mundo vivo e conteúdo
 0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`): NPCs que apresentam o mundo na praça
    inicial, moradores que circulam e voltam às casas, guardas na muralha/castelo, ferreiro de dia, hospedaria à
@@ -97,13 +114,13 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 ## 3. Decisões pendentes (do dono do produto)
 | Decisão | Afeta |
 |---|---|
-| Níveis: como se ganha XP, o que o nível muda, quantas faixas/cidades | Fase 6 |
+| Níveis: faixas por cidade (a Fase P define XP, curva e teto 20 da Cidade 1) | Fase 6 |
 | Mapa de regiões: onde ficam as próximas cidades, como se viaja entre elas, onde renasce | Fase 6 |
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
 | Cidade: NPCs (quem, falas), interiores, o que as lojas vendem, hospedaria como ponto de retorno | Fase 4 |
 | Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; substituem água? | Fase 3 |
-| Painel do Personagem: o que mostrar (vida, armaduras, …) | Fase 3/4 |
+| Painel do Personagem: além de nível/atributos/XP (Fase P), armaduras? | Fase P/4 |
 | Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |

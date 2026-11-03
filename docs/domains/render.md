@@ -19,6 +19,8 @@ Apenas apresentação; lê `World`, nunca escreve.
 - A prancha isométrica anterior (`blocks-sheet.png`) segue suportada com `--iso` (comparação registrada no CHANGELOG).
 - Chão: miolo do topo sem contorno, misturado com cópia deslocada meia célula (sem emendas); terra/grama/
   caminho/areia/pedra giram/espelham por célula; arado, tora e piso mantêm a orientação.
+- Materiais com várias artes (`MATERIAL_VARIANT_COLS`, hoje a Terra com Grama): `textures.groundVariants` (chão) e
+  `variants` (cubo); o chão e o cubo sorteiam a variação por célula com a seed.
 - `render/blockArt.ts` carrega os atlas (materiais e celestiais), porta, água, tenda, baú e cidade antes do jogo começar
   (`main.ts`); a arte da dungeon vem depois (`loadDungeonArt` → `addDungeonTextures` → `ChunkRenderer.invalidateAll`,
   ADR 0013). Imagens são URLs de arquivos ao lado da página; o render nunca lê pixels de canvas.

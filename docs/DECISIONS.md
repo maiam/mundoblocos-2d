@@ -23,6 +23,7 @@
 | Sem backend neste repositório; persistência futura via core | PROJECT_CONTEXT |
 | Nome oficial: **Orvalis** (mundo de fantasia); site em `orvalis.pensamentos.online` (Hostinger; provisório — `maiamapps.com.br` indisponível por enquanto); repositório, pacote e chaves de salvamento mantêm "mundoblocos" | PROJECT_CONTEXT, OPERATIONS |
 | Fluxo de publicação: `main` = site no ar; um PR por entrega com título de versão; merge automático (método *merge*) no fim da entrega, depois da Verificação (GitHub Actions) passar | CONVENTIONS, OPERATIONS |
+| Progressão (Fase P): vida em barra com número; atributos sobem sozinhos ao subir de nível; morte perde 10% do XP do nível atual sem descer de nível; profissões iniciais Lenhador, Minerador, Agricultor e Construtor | NEXT_STEPS Fase P |
 | Visão: mundo de progressão — cidades e dungeons por faixa de nível; Cidade 1 recebe novatos e os personagens migram para cidades de nível maior conforme evoluem | PROJECT_CONTEXT, NEXT_STEPS Fase 6 |
 | Chunks quadrados 16×16 nos dois eixos | domains/world |
 | Santuário: 10 chunks em 5×2; só Deusa; só 18 blocos; sem ferramentas/cultivo/ovelhas | domains/worlds |
@@ -80,3 +81,4 @@
 | Ícones do trigo: monte de sementes e feixe com laço | domains/farming |
 | Pá sem folha para a direita: espelho da esquerda | domains/render |
 | Prancha 3/4 venceu a extração isométrica (comparação no jogo) | adr/0006 |
+| Terra com Grama: arte nova com 3 variações sorteadas por célula (chão e cubo); colunas extras 15–16 do atlas | domains/render, OPERATIONS |
