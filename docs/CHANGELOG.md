@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.37.1 — 2026-11-03
+- **Nome oficial: Orvalis** (título da página, menu, app instalável e Artifact). Repositório, pacote e chaves de
+  salvamento mantêm "mundoblocos" para não apagar os jogos salvos.
+- Passo a passo de hospedagem em `orvalis.maiamapps.com.br` (Hostinger) em `OPERATIONS`.
+
 ## 0.37.0 — 2026-11-03
 - **Imagens em arquivos separados (ADR 0013, decisão do dono do produto).** O Artifact deixa de ser um HTML único com
   tudo em base64: a página leva só o código (205 kB) e as 75 imagens são publicadas ao lado dela (cache do navegador

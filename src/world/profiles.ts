@@ -42,7 +42,7 @@ export interface WorldProfile {
 export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
   principal: {
     id: 'principal',
-    name: 'MundoBlocos',
+    name: 'Orvalis',
     terrain: { kind: 'procedural' },
     bounds: null,
     character: 'heroine',

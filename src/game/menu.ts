@@ -40,7 +40,7 @@ export class Menu {
     this.panel.setAttribute('role', 'dialog');
     this.panel.setAttribute('aria-label', 'Menu do jogo');
     this.panel.innerHTML = `
-      <h2>MundoBlocos</h2>
+      <h2>Orvalis</h2>
       <p class="menu-status"></p>
       <p class="menu-seed">Semente do mundo: <b>${h.seed}</b></p>
       <button data-act="continue" class="primary">Continuar</button>

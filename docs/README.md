@@ -1,6 +1,6 @@
 # Documentação — índice
 
-Documentação viva do MundoBlocos 2D. Agentes de IA: comece por [`../CLAUDE.md`](../CLAUDE.md).
+Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece por [`../CLAUDE.md`](../CLAUDE.md).
 
 ## Ordem de leitura
 | # | Documento | Para quê | Atualizar quando |

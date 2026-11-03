@@ -90,14 +90,13 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 6. Arte por região carregada **sob demanda** ao se aproximar (ADR 0013) — o mundo maior não pesa no início.
 
 ### Santuário Celestial (trilha paralela)
-- Hospedar o build em `santuario.<domínio>` (**dependência externa**: hospedagem).
+- Hospedar o build em `santuario.orvalis.maiamapps.com.br` (mesma pasta do jogo; passos em `OPERATIONS`).
 - Definir ações da Deusa e se flutuar tem efeito de jogo (passar sobre buracos, subir 2 níveis).
 - (Arte) variação de nuvem feita para chão contínuo (elimina a repetição diagonal).
 
 ## 3. Decisões pendentes (do dono do produto)
 | Decisão | Afeta |
 |---|---|
-| **Nome oficial do jogo** (mundo de fantasia; vira subdomínio em maiamapps.com.br, hospedado na Hostinger) | Lançamento |
 | Níveis: como se ganha XP, o que o nível muda, quantas faixas/cidades | Fase 6 |
 | Mapa de regiões: onde ficam as próximas cidades, como se viaja entre elas, onde renasce | Fase 6 |
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
@@ -111,7 +110,8 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 
 ## 4. Dependências externas
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
-- **Hospedagem** do build estático para o subdomínio `santuario.`.
+- **Hospedagem**: criar `orvalis.maiamapps.com.br` na Hostinger e enviar o `dist/` (passos em `OPERATIONS`; feito pelo
+  dono do produto no hPanel).
 - **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas

@@ -170,6 +170,7 @@ export class SaveStore {
   constructor(private readonly world: WorldId, private readonly storage: Storage | null = safeStorage()) {}
 
   private key(seed: number): string {
+    // Prefixo do nome antigo (MundoBlocos) mantido de propósito: trocar apagaria os salvamentos existentes.
     return `mundoblocos:save:${this.world}:${seed}`;
   }
 

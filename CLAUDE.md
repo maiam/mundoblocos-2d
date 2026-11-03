@@ -1,4 +1,4 @@
-# Instruções para agentes de IA — MundoBlocos 2D
+# Instruções para agentes de IA — Orvalis (repositório mundoblocos-2d)
 
 Este arquivo é a porta de entrada para qualquer IA que trabalhe no repositório (Claude Code e outros; o
 `AGENTS.md` aponta para cá). O projeto é tratado como **sistema vivo**: a documentação em `docs/` é memória

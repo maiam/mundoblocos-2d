@@ -1,4 +1,7 @@
-# MundoBlocos 2D
+# Orvalis
+
+> Nome oficial do jogo (antes "MundoBlocos 2D"; o repositório segue `mundoblocos-2d`). Endereço planejado:
+> `orvalis.maiamapps.com.br`.
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
 com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**, uma heroína jogável com
@@ -20,8 +23,8 @@ npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos 
 
 | Mundo | Como abrir | Jogável |
 |---|---|---|
-| MundoBlocos (principal) | domínio principal | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
-| Santuário Celestial da Deusa da Vida | subdomínio `santuario.` ou `?mundo=santuario` | [Artifact](https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb) |
+| Orvalis (principal) | `orvalis.maiamapps.com.br` (planejado) | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
+| Santuário Celestial da Deusa da Vida | `santuario.orvalis.maiamapps.com.br` (planejado) ou `?mundo=santuario` | [Artifact](https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb) |
 
 ## Celular
 

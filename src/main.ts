@@ -11,7 +11,7 @@ const canvas = document.getElementById('world') as HTMLCanvasElement;
 const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
-document.title = profile.id === 'principal' ? 'MundoBlocos 2D' : profile.name;
+document.title = profile.name;
 let game: Game | null = null;
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
 const store = new SaveStore(profile.id);

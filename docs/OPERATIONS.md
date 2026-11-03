@@ -21,7 +21,19 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
 | Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` com `files` de `artifact/santuario-files.json` |
 - Rode **o build de cada mundo antes de publicá-lo** (os dois usam `dist/`). No dev: `?mundo=santuario`.
-- Subdomínio real: hospedar `dist/` (build normal) em `santuario.<domínio>`; o jogo reconhece pelo hostname.
+- Subdomínio real: ver "Hospedagem própria" abaixo; o jogo reconhece o Santuário pelo hostname (`santuario.`).
+
+## Hospedagem própria — `orvalis.maiamapps.com.br` (Hostinger)
+Site estático: nenhum servidor/backend (contas e nuvem continuam no core).
+1. `npm run build` (**sem** `VITE_WORLD`: o build traz os dois mundos e escolhe pelo endereço) → pasta `dist/`
+   (`index.html`, `manifest.webmanifest`, ícones e `assets/` com JS, CSS e imagens).
+2. hPanel → Domínios → **Subdomínios**: criar `orvalis` em `maiamapps.com.br` (pasta, ex.: `public_html/orvalis`).
+3. Enviar o **conteúdo** de `dist/` para essa pasta (Gerenciador de Arquivos ou FTP), substituindo o anterior.
+4. hPanel → **SSL**: ativar o certificado para `orvalis.maiamapps.com.br` (HTTPS é necessário para instalar como app).
+5. Santuário (opcional): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta — o jogo abre o
+   Santuário pelo primeiro nome do endereço. Sem ele, `?mundo=santuario` funciona.
+6. Conferir: abrir o endereço no celular (deitado), jogar, recarregar (continua salvo) e instalar na tela inicial.
+Arquivos com hash no nome podem ficar em cache por muito tempo; o `index.html` não deve ficar (cache curto).
 - `artifact/` não é versionado. O manifest PWA não entra no Artifact.
 - **Publicação com arquivos separados (ADR 0013)**: as imagens vão no parâmetro `files` (caminho publicado = nome do
   arquivo, ao lado da página; até 255 por publicação). Publicar só o HTML deixa o jogo sem imagens. Nomes têm hash:

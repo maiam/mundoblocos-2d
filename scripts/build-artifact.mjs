@@ -3,7 +3,7 @@
 // `new URL("x.webp", import.meta.url)`, e num <script type="module"> embutido import.meta.url é o endereço da página).
 // O navegador guarda as imagens em cache entre versões e o jogo só espera o que precisa para começar.
 // Uso: node scripts/build-artifact.mjs [nome] [título]
-//   mundo principal: mundoblocos "MundoBlocos 2D" (padrão)
+//   mundo principal: mundoblocos "Orvalis" (padrão; o nome do arquivo segue o do repositório)
 //   Santuário:       santuario "Santuário Celestial" (build com VITE_WORLD=santuario)
 // Saída: artifact/<nome>.html, artifact/<nome>-assets/* e artifact/<nome>-files.json (mapa para publicar:
 // caminho publicado → arquivo local; passe-o em `files` ao publicar a página).
@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, copyFileSy
 import { join } from 'node:path';
 
 const name = process.argv[2] ?? 'mundoblocos';
-const title = process.argv[3] ?? 'MundoBlocos 2D';
+const title = process.argv[3] ?? 'Orvalis';
 const assets = join('dist', 'assets');
 const files = readdirSync(assets);
 const js = files.filter((f) => f.endsWith('.js')).map((f) => readFileSync(join(assets, f), 'utf8')).join('\n');
