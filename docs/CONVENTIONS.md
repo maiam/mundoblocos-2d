@@ -50,6 +50,17 @@
   entra no pacote do mundo que a usa. Depois de gerar PNG, rodar `scripts/optimize-assets.py`.
 - Originais ficam em `assets-src/` (versionados) e os comandos de processamento em `OPERATIONS.md`.
 
+## Commits, PRs e publicação (regra do dono do produto, 2026-11-03)
+- `main` = **o que está no ar** (a Hostinger publica `orvalis.pensamentos.online` a cada atualização dela).
+- Trabalho na branch `feat/mundo-chunks-fantasia`: commits pequenos, em pt-BR, explicando o **porquê**.
+- **Um PR para `main` por entrega** pronta (tsc, testes, build e conferência no navegador feitos), com título de versão
+  (ex.: "Orvalis v0.37.3: …") e resumo do que muda para o jogador. Correções miúdas podem esperar e ir juntas.
+- **Merge só quando o dono do produto pedir** ("publica" ou equivalente). Nunca mesclar por conta própria.
+- Método de merge: **merge** (commit de merge), nunca squash/rebase — a branch de trabalho continua viva e o squash
+  criaria divergência e conflitos falsos nas próximas entregas.
+- Opcionais ainda não adotados: verificação automática nos PRs (GitHub Actions: tsc, testes, `npm audit`) e proteção
+  da `main` no GitHub (só por PR).
+
 ## Documentação
 - Documentos descrevem o **estado atual**; histórico vai para CHANGELOG/ADRs.
 - Toda entrega atualiza CURRENT_STATE, NEXT_STEPS e CHANGELOG; mapas (`MAPS.md`) acompanham mudanças de fluxo.

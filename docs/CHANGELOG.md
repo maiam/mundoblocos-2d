@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.37.3 — 2026-11-03
+- **Regra de publicação** registrada (`CONVENTIONS`): um PR para `main` por entrega; merge só a pedido do dono do
+  produto, sempre com método *merge*.
 - **Dependências sem vulnerabilidades** (alerta da Hostinger: 6, sendo 2 críticas em `tinypool`): Vite 6.4 → **7.3**
   (esbuild 0.28) e Vitest 3.2 → **5.1**. Eram só ferramentas de teste/build — o site publicado não as contém —, mas
   `npm audit` agora mostra 0. Node mínimo: **22.12** (`engines`; a Hostinger usa 22.x).

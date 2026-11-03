@@ -83,5 +83,7 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - Republicar o Artifact se o jogo mudou (`npm run build:artifact` + publicar `artifact/mundoblocos.html` com `files`
   = `artifact/mundoblocos-files.json`).
 - Commit em pt-BR descrevendo o porquê; push na branch de trabalho.
+- **Publicação** (`docs/CONVENTIONS.md` § Commits): entrega pronta → abrir **um PR para `main`** com título de versão;
+  **mesclar só quando o dono do produto pedir**, sempre com método *merge* (nunca squash). `main` = site no ar.
 - Resumo final ao usuário: implementado, arquivos, docs atualizados (e quais não, com motivo), decisões,
   inconsistências encontradas, próximos passos.
