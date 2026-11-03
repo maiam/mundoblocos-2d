@@ -2,9 +2,7 @@
   --panel: rgba(28, 22, 64, 0.72);
   --panel-border: rgba(255, 220, 160, 0.45);
   --text: #fff7ea;
-  --muted: #c9c2f0;
   --accent: #ffd46b;
-  --accent-2: #ff8fc0;
   color-scheme: dark;
 }
 
@@ -21,64 +19,30 @@ html, body {
 
 #world {
   display: block;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   touch-action: none;
   cursor: crosshair;
+  /* Segurar para quebrar: sem seleção de texto nem menu de toque longo. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.hud { position: fixed; inset: 0; pointer-events: none; }
-.hud button, .hud .panel { pointer-events: auto; }
-
-.panel {
-  position: absolute;
-  background: var(--panel);
-  border: 1.5px solid var(--panel-border);
-  border-radius: 14px;
-  box-shadow: 0 6px 24px rgba(10, 6, 30, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(6px);
-}
-
-.info { top: 16px; left: 16px; padding: 12px 16px 10px; min-width: 210px; }
-.info h1 {
-  margin: 0 0 6px;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 0 #3b2a7a;
-}
-.info h1 span { color: var(--accent); margin-left: 2px; }
-.info dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 13px; }
-.info dt { color: var(--muted); }
-.info dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-
-.actions { top: 16px; right: 16px; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100vw - 32px); }
-.actions button {
-  font: inherit;
-  font-size: 13px;
-  color: var(--text);
-  background: linear-gradient(180deg, #5a4bb0, #3a2f86);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-  box-shadow: 0 2px 0 #241b5c;
-}
-.actions button:hover { filter: brightness(1.15); }
-.actions button.on { background: linear-gradient(180deg, #e0a93a, #b9792a); box-shadow: 0 2px 0 #6e4518; }
-kbd {
-  font: inherit;
-  font-size: 11px;
-  padding: 0 4px;
-  margin-left: 4px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
+/* HUD mínimo: só a grade de blocos (e o joystick em telas de toque). */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .hotbar {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
   transform: translateX(-50%);
   display: flex;
   gap: 6px;
@@ -87,11 +51,13 @@ kbd {
   border: 1.5px solid var(--panel-border);
   border-radius: 16px;
   box-shadow: 0 6px 24px rgba(10, 6, 30, 0.45);
+  backdrop-filter: blur(6px);
   max-width: calc(100vw - 32px);
   overflow-x: auto;
+  pointer-events: auto;
 }
+
 .slot {
-  position: relative;
   width: 48px;
   height: 48px;
   flex: none;
@@ -102,14 +68,8 @@ kbd {
   cursor: pointer;
   transition: transform 0.12s ease;
 }
-.slot img { width: 100%; height: 100%; display: block; }
-.slot span {
-  position: absolute;
-  top: 1px;
-  left: 4px;
-  font-size: 10px;
-  color: var(--muted);
-}
+.slot img { width: 100%; height: 100%; display: block; pointer-events: none; }
+.slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .slot.active {
   border-color: var(--accent);
   background: rgba(255, 212, 107, 0.18);
@@ -117,35 +77,345 @@ kbd {
   box-shadow: 0 0 14px rgba(255, 212, 107, 0.6);
 }
 
-.tooltip {
+.joystick {
   position: absolute;
-  left: 50%;
-  bottom: 112px;
-  transform: translateX(-50%);
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-  text-shadow: 0 2px 4px rgba(10, 6, 30, 0.9);
+  left: max(28px, env(safe-area-inset-left, 0px));
+  bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 86px));
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.16), rgba(28, 22, 64, 0.45) 70%);
+  border: 2px solid rgba(255, 220, 160, 0.5);
+  box-shadow: 0 6px 20px rgba(10, 6, 30, 0.4), inset 0 0 18px rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+.joystick.active { opacity: 1; }
+.joystick::before {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+}
+.joystick-knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #ffd46b 45%, #c98a2a);
+  border: 2px solid #6e4518;
+  box-shadow: 0 3px 0 #6e4518, 0 0 14px rgba(255, 212, 107, 0.5);
+  pointer-events: none;
 }
 
-.help {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-  margin: 0;
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  padding: 0 16px;
+/* Joystick só em telas de toque; no desktop anda-se pelo teclado. */
+@media (hover: hover) and (pointer: fine) {
+  .joystick { display: none; }
 }
 
 @media (max-width: 640px) {
-  .info { min-width: 0; padding: 8px 12px; }
-  .info dl { font-size: 11px; }
-  .info h1 { font-size: 16px; }
-  .actions { top: auto; bottom: 108px; right: 16px; left: 16px; justify-content: center; }
   .slot { width: 40px; height: 40px; }
-  .help { display: none; }
+  .joystick {
+    left: max(20px, env(safe-area-inset-left, 0px));
+    bottom: max(84px, calc(env(safe-area-inset-bottom, 0px) + 76px));
+  }
 }
+
+/* Celular deitado (pouca altura): controles compactos para sobrar tela para o mundo. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hotbar { gap: 4px; padding: 5px; border-radius: 12px; bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+  .slot { width: 36px; height: 36px; padding: 4px; border-radius: 8px; }
+  .slot.active { transform: translateY(-2px); }
+  .joystick {
+    width: 112px;
+    height: 112px;
+    left: max(20px, env(safe-area-inset-left, 0px));
+    /* Acima da hotbar (que ficou mais larga com as ferramentas). */
+    bottom: max(62px, calc(env(safe-area-inset-bottom, 0px) + 56px));
+  }
+  .joystick::before { inset: 18px; }
+  .joystick-knob { width: 46px; height: 46px; }
+}
+
+/* Celulares deitados estreitos (≤ 700 px): 16 espaços (com a porta) ainda cabem sem rolar. */
+@media (max-height: 500px) and (max-width: 700px) and (orientation: landscape) {
+  .hotbar { gap: 3px; }
+  .slot { width: 34px; height: 34px; padding: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot, .joystick { transition: none; }
+}
+
+/* Camada "Gire o aparelho": cobre o jogo em retrato nos aparelhos de toque. */
+.rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 20px;
+  padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+  background: radial-gradient(circle at 50% 35%, #3a2f86, #120f2c 70%);
+  color: var(--text);
+  text-align: center;
+  touch-action: none;
+}
+.rotate-overlay[hidden] { display: none; }
+.rotate-overlay p {
+  margin: 0;
+  max-width: 22ch;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-wrap: balance;
+  text-shadow: 0 2px 0 #241b5c;
+}
+.rotate-phone {
+  width: 54px;
+  height: 92px;
+  border: 4px solid var(--accent);
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 0 0 18px rgba(255, 212, 107, 0.45);
+  animation: rotate-hint 2.4s ease-in-out infinite;
+}
+.rotate-phone span {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 12px;
+  height: 4px;
+  margin-left: -6px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+@keyframes rotate-hint {
+  0%, 25% { transform: rotate(0deg); }
+  55%, 100% { transform: rotate(-90deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotate-phone { animation: none; transform: rotate(-90deg); }
+}
+
+/* Quantidade de itens contáveis (sementes, trigo) na hotbar. */
+.slot { position: relative; }
+.slot .count {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  min-width: 16px;
+  padding: 0 3px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  color: #fff7ea;
+  text-shadow: 0 1px 0 #241b5c, 0 0 3px #241b5c;
+  font-variant-numeric: tabular-nums;
+}
+.slot .count[hidden] { display: none; }
+.slot.empty img { opacity: 0.35; filter: grayscale(0.6); }
+
+/* Botão de ação: aro dourado "vazado" (centro translúcido mostrando o mundo), ícone no meio
+   e anel de progresso ao segurar para quebrar. Só em telas de toque, como o joystick. */
+.action-button {
+  --progress: 0;
+  position: absolute;
+  right: max(28px, env(safe-area-inset-right, 0px));
+  bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 86px));
+  width: 96px;
+  height: 96px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Centro vazado: só um véu leve; o aro é desenhado pelas camadas abaixo. */
+  background: radial-gradient(circle, rgba(28, 22, 64, 0.18) 52%, transparent 53%);
+  display: grid;
+  place-items: center;
+  transition: transform 0.08s ease;
+}
+.action-button::before {
+  /* Aro: anel dourado com contorno escuro por dentro e por fora. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 54%, #6e4518 55%, #ffd46b 58%, #c98a2a 70%, #6e4518 72%, transparent 73%);
+  filter: drop-shadow(0 3px 0 rgba(36, 27, 92, 0.6)) drop-shadow(0 0 8px rgba(255, 212, 107, 0.35));
+}
+.action-button::after {
+  /* Progresso da quebra: arco claro percorrendo o aro. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(#fff6c8 calc(var(--progress) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 57%, #000 69%, transparent 70%);
+  mask: radial-gradient(circle, transparent 56%, #000 57%, #000 69%, transparent 70%);
+  opacity: 0;
+}
+.action-button.charging::after { opacity: 1; }
+.action-button img {
+  position: relative;
+  width: 46%;
+  height: 46%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(20, 12, 40, 0.5));
+}
+.action-button.pressed { transform: scale(0.94); }
+.action-button.empty img { opacity: 0.35; filter: grayscale(0.6); }
+.action-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .action-button { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .action-button {
+    width: 84px;
+    height: 84px;
+    right: max(22px, env(safe-area-inset-right, 0px));
+    bottom: max(62px, calc(env(safe-area-inset-bottom, 0px) + 56px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-button { transition: none; }
+}
+
+/* Vida e espólios (canto superior esquerdo): corações só quando importam; espólios só os coletados. */
+.status {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.hearts { display: flex; gap: 2px; opacity: 0; transform: translateY(-4px); transition: opacity .25s ease, transform .25s ease; }
+.hearts.shown { opacity: 1; transform: none; }
+.hearts svg { width: 22px; height: 20px; filter: drop-shadow(0 1px 1px rgba(20, 12, 40, .6)); }
+.loot { display: flex; gap: 6px; }
+.loot-item {
+  display: flex; align-items: center; gap: 3px; padding: 2px 7px 2px 3px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--panel-border);
+  font-size: 12px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums;
+}
+.loot-item[hidden] { display: none; }
+.loot-item img { width: 20px; height: 20px; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .hearts svg { width: 18px; height: 16px; }
+  .loot-item img { width: 16px; height: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .hearts { transition: none; } }
+
+/* Menu (☰ no canto superior direito) e painel. */
+.menu-button {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  width: 38px; height: 38px; padding: 9px 8px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  border-radius: 12px; border: 1.5px solid var(--panel-border); background: var(--panel);
+  cursor: pointer; pointer-events: auto;
+}
+.menu-button span { display: block; height: 3px; border-radius: 2px; background: var(--text); }
+.menu-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.menu-panel {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(320px, calc(100vw - 32px)); max-height: calc(100vh - 24px); overflow: auto;
+  display: flex; flex-direction: column; gap: 10px; padding: 18px;
+  border-radius: 18px; border: 1.5px solid var(--panel-border); background: rgba(28, 22, 64, 0.94);
+  box-shadow: 0 10px 40px rgba(10, 6, 30, 0.6); pointer-events: auto; text-align: center;
+}
+.menu-panel[hidden] { display: none; }
+.menu-panel h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--accent); }
+.menu-panel p { margin: 0; font-size: 13px; line-height: 1.35; }
+.menu-panel .menu-seed { opacity: 0.75; }
+.menu-panel button {
+  min-height: 42px; border-radius: 12px; border: 1.5px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.08); color: var(--text); font: 800 15px Nunito, system-ui, sans-serif; cursor: pointer;
+}
+.menu-panel button.primary { background: var(--accent); color: #2a1a48; border-color: transparent; }
+.menu-panel button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.menu-panel button.confirming { background: #e8574a; border-color: #ffb0a6; color: #fff; }
+.menu-panel .menu-confirm { color: #ffd0c8; }
+.menu-panel .menu-confirm[hidden] { display: none; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .menu-button { width: 34px; height: 34px; padding: 8px 7px; }
+  .menu-panel { gap: 7px; padding: 12px; }
+  .menu-panel button { min-height: 36px; }
+}
+
+/* Grade com coleta: espaço vazio e bolsa (9º). */
+.slot.vacant { background: rgba(255, 255, 255, 0.03); border-style: dashed; }
+.slot img[hidden] { display: none; }
+/*
+ * Cartão da grade em 2 colunas: esquerda = painel de cima (bolsa 2×9 ou receitas 4×9) + 9 itens da mão;
+ * direita = profissões (4×2) + personagem/habilidades/bolsa. Separador duplo entre os 9 itens e o menu.
+ */
+.hotbar { display: grid; grid-template-columns: auto; align-items: end; }
+.hotbar.with-menu { grid-template-columns: auto auto; }
+.hotbar-top { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: inherit; }
+.hotbar-top:not(:has(.panel-section:not([hidden]))) { display: none; }
+.professions-section { grid-column: 2; grid-row: 1; }
+.hotbar-row { display: flex; gap: inherit; }
+.hotbar-row.hand { grid-column: 1; grid-row: 2; }
+.menu-row { grid-column: 2; grid-row: 2; padding-left: 10px; margin-left: 2px; position: relative; }
+.menu-row::before {
+  content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 5px;
+  border-left: 1.5px solid var(--panel-border); border-right: 1.5px solid var(--panel-border);
+}
+.panel-section { display: flex; flex-direction: column; gap: inherit; padding-bottom: 4px; margin-bottom: 2px; border-bottom: 1px solid var(--panel-border); }
+.panel-section[hidden] { display: none; }
+.professions-section { padding-left: 12px; align-self: end; }
+.panel-section h2 { margin: 0 0 2px 4px; font-size: 15px; font-weight: 800; color: var(--accent); }
+.slot.ui { border-color: rgba(255, 212, 107, 0.45); padding: 3px; }
+.slot.ui[aria-disabled='true'] { cursor: default; }
+.slot.unavailable img { opacity: 0.35; filter: grayscale(0.7); }
+.slot.picked { border-color: var(--accent); background: rgba(255, 212, 107, 0.22); box-shadow: 0 0 12px rgba(255, 212, 107, 0.6); }
+.hud.bag-open .hotbar-row.hand .slot { border-color: rgba(195, 140, 255, 0.85); }
+@media (max-height: 500px) and (orientation: landscape) {
+  .panel-section h2 { font-size: 12px; margin-bottom: 0; }
+  .menu-row { padding-left: 7px; }
+  .professions-section { padding-left: 8px; }
+}
+/* Telas baixas: 4 fileiras de receitas + mão precisam caber (~360 px). */
+@media (max-height: 420px) and (orientation: landscape) {
+  .hud.skills-open .slot { width: 30px; height: 30px; padding: 2px; }
+}
+
+/* Bolsa aberta (jogo pausado): joystick e botão de ação saem da frente do painel. */
+.hud.bag-open .joystick, .hud.bag-open .action-button,
+.hud.skills-open .joystick, .hud.skills-open .action-button { visibility: hidden; }
+
+/* Tablet: o toque na tela age como o clique; botão de ação some (joystick fica). */
+.hud.tablet .action-button { display: none; }
+
+/* Baú aberto (3×9 acima da bolsa) e mensagem curta no alto da tela. */
+.hud.chest-open .joystick, .hud.chest-open .action-button { visibility: hidden; }
+.hud.chest-open .slot { width: 40px; height: 40px; padding: 4px; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .hud.chest-open .slot { width: 26px; height: 26px; padding: 2px; }
+  .hud.chest-open .panel-section h2 { font-size: 11px; }
+  .hud.chest-open .slot .count { font-size: 10px; line-height: 12px; }
+}
+.toast {
+  position: absolute; left: 50%; top: max(14px, env(safe-area-inset-top, 0px));
+  transform: translate(-50%, -8px); opacity: 0; pointer-events: none;
+  padding: 8px 16px; border-radius: 12px; border: 1.5px solid var(--panel-border); background: rgba(28, 22, 64, 0.92);
+  color: var(--accent); font: 800 15px Nunito, system-ui, sans-serif; white-space: nowrap;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.toast.shown { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }

@@ -1,20 +1,46 @@
 # Contexto do projeto
 
+## Nome
+**Orvalis** (decisão do dono do produto, 2026-11-03; antes "MundoBlocos 2D"). É o nome do **mundo de fantasia**
+onde o jogo acontece — de *orvalho*: o mundo que desperta a cada manhã, como os novatos na Cidade do Despertar. As
+cidades e regiões futuras ganham nomes próprios dentro de Orvalis. Endereço provisório: `orvalis.pensamentos.online`
+(Hostinger; `maiamapps.com.br` não pode ser usado por enquanto).
+O repositório, o pacote npm e as chaves de salvamento (`mundoblocos:save:…`) mantêm o nome antigo de propósito:
+trocá-las apagaria os salvamentos dos jogadores.
+
 ## O que é
-MundoBlocos 2D é um mundo sandbox 2D (vista lateral) gerado proceduralmente por seed, dividido em
-chunks 16×16 como no Minecraft, com estética de **ilustração digital de fantasia estilo RPG/anime**.
+Orvalis é um mundo sandbox em **vista superior inclinada (3/4)**, gerado proceduralmente por seed,
+dividido em chunks 16×16 como no Minecraft, com estética de **ilustração digital de fantasia estilo RPG/anime**
+e uma personagem jogável (heroína chibi). Tem também o **Santuário Celestial da Deusa da Vida**, um mundo
+pequeno de construção sobre nuvens com personagem e blocos próprios (perfis de mundo, ADR 0008).
 
 ## Objetivos
-- Mundo "infinito" na horizontal, limitado verticalmente (céu → rocha-mãe), carregado sob demanda por chunks.
-- Identidade visual própria e coerente, 100% procedural (sem assets externos).
-- Base sólida para evoluir para jogo (personagem, inventário, salvamento).
+- Mundo "infinito" em ambos os eixos do mapa, carregado sob demanda por chunks.
+- Identidade visual própria e coerente: personagem, animais, plantas e blocos desenhados (assets do projeto);
+  água, árvores e efeitos procedurais no mesmo estilo.
+- Controle confortável no celular (joystick alinhado à tela) e no desktop (teclado).
+- Base sólida para evoluir o jogo (ferramentas com ação, salvamento, mais animais e receitas).
+
+## Visão de longo prazo — mundo de progressão (dono do produto, 2026-11-03)
+O mundo vai crescer em **cidades e dungeons que acompanham a evolução dos personagens**:
+- A **Cidade do Despertar** (Cidade 1) recebe os **novatos**: é onde todo personagem nasce e aprende o básico, com
+  dungeons de nível inicial por perto (o Covil das Aranhas é a primeira).
+- À medida que os personagens **sobem de nível**, eles passam a se concentrar em **outras cidades**, mais distantes e
+  mais desafiadoras, cada uma com suas dungeons, monstros, lojas e missões da sua faixa de nível.
+- Resultado: um **mundo maior**, organizado em regiões por faixa de nível, em que a jornada do personagem é também
+  uma viagem de cidade em cidade.
+
+O que isso pede (ainda não existe; ver `NEXT_STEPS`, Fase 6): sistema de **níveis/experiência** do personagem,
+**faixas de nível** por região (cidades, dungeons e monstros), um **mapa de regiões** (onde fica cada cidade,
+igual em toda seed como a Cidade 1, ADR 0012), **viagem** entre cidades e conteúdo que libera com o nível. Com
+jogadores online, a concentração por cidade vira também ponto de encontro (multiplayer = core).
 
 ## Posição no ecossistema
 - Repositório **apenas frontend** (site estático, Vite + TypeScript, sem framework).
 - Não há backend próprio e **não deve ser criado** aqui. Se/quando houver persistência de mundos,
   contas ou multiplayer, isso pertence ao core (`core.maiamapps.com.br`) — ver `docs/NEXT_STEPS.md`.
 - A fonte de verdade do estado do mundo em tempo de execução é a classe `World` (`src/world/world.ts`);
-  o terreno não editado é uma função pura da seed (`WorldGenerator`).
+  o terreno não editado é uma função pura da seed (`WorldGenerator`). Ver ADR 0003 (vista superior).
 
 ## Público
 Jogadores casuais no navegador (desktop e mobile).

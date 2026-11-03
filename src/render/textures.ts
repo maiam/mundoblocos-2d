@@ -1,36 +1,149 @@
-import { TILE } from '../config';
-import { Block, type BlockId } from '../world/blocks';
+import { CUBE_FRONT, TILE } from '../config';
+import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
-import { mix, rgba, shade } from './color';
+import { art } from './art';
+import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownImages, getWaterArt } from './blockArt';
+import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
+import { rgba, shade } from './color';
+import { townSprites } from './townArt';
 
 /**
- * Texturas procedurais no estilo ilustração digital de fantasia (RPG/anime):
- * cel-shading com gradientes suaves, contorno colorido (nunca preto puro),
- * brilho especular, bevel de cubo (face superior clara, lateral sombreada).
+ * Texturas do mundo em vista 3/4.
+ * - Materiais (terra, grama, arada, caminho, areia, pedra, tora, piso): arte da prancha de
+ *   blocos (atlas gerado por scripts/extract-blocks.py) → topo quadrado + face frontal.
+ *   O topo também é o chão natural.
+ * - Água, árvores, cacto e enfeites: pintura procedural no mesmo estilo (cel-shading,
+ *   contorno colorido, brilhos em estrela).
  * Aparência é responsabilidade exclusiva do render; propriedades vivem em world/blocks.
  */
 
 type Ctx = CanvasRenderingContext2D;
 
-export interface BlockTextures {
-  /** Textura principal do bloco (TILE×TILE). */
-  tile: Map<BlockId, HTMLCanvasElement>;
-  /** Versão escurecida e sem contorno usada como parede de fundo das cavernas. */
-  wall: Map<BlockId, HTMLCanvasElement>;
-  /** Tufos de grama que "transbordam" para a célula de cima (TILE×GRASS_TUFT_H). */
-  tufts: Map<BlockId, HTMLCanvasElement>;
-  /** Cor de brilho para blocos luminosos. */
-  glowColor: Map<BlockId, string>;
+/** Resolução das texturas em relação aos pixels de mundo (nitidez com zoom ~2×). */
+export const TEX_RES = 2;
+const T = TILE;
+const F = CUBE_FRONT;
+const WATER_VARIANTS = 3;
+
+/** Sprite posicionado em relação ao canto superior-esquerdo da célula (px de mundo). */
+export interface Sprite {
+  canvas: HTMLCanvasElement;
+  ox: number;
+  oy: number;
+  w: number;
+  h: number;
+  /** Retângulo clicável relativo à célula (para escolher o objeto sob o cursor). */
+  hit: { x: number; y: number; w: number; h: number };
 }
 
-export const GRASS_TUFT_H = 8;
-const S = TILE;
+export interface BlockTextures {
+  /** Topo de cada material, usado como chão (TILE×TILE em resolução TEX_RES). */
+  groundTop: Map<BlockId, HTMLCanvasElement>;
+  water: HTMLCanvasElement[];
+  objects: Map<BlockId, Sprite>;
+  icons: Map<BlockId, string>;
+  glowColor: Map<BlockId, string>;
+  /** Onde fica a luz no sprite (células a partir do centro da base), quando não é no pé (ex.: lanterna do poste). */
+  glowAt: Map<BlockId, [number, number]>;
+  /** Cor da "barranca" (face frontal do chão elevado) mostrada sobre a água. */
+  bankColor: Map<BlockId, string>;
+  /** Porta de Carvalho: 8 quadros (0..3 abrindo, 4..7 fechando); fechada = 0, aberta = 3. */
+  doorFrames: Sprite[];
+  /** Objetos com várias artes (montanhas, pedras): o render escolhe uma por célula (hash). */
+  variants: Map<BlockId, Sprite[]>;
+  /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
+  stackDraw: Map<BlockId, number>;
+}
 
-function canvas(w = S, h = S): [HTMLCanvasElement, Ctx] {
+/** Quadros de uma folha em tira → sprites com a base no pé da célula (largura `w` px de mundo). */
+function stripSprites(img: HTMLImageElement, count: number, w: number, sink: number): Sprite[] {
+  const fw = img.width / count;
+  const h = w * (img.height / fw);
+  return Array.from({ length: count }, (_, i) => {
+    const c = document.createElement('canvas');
+    c.width = fw;
+    c.height = img.height;
+    c.getContext('2d')!.drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height);
+    const oy = T - h + sink;
+    return { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: Math.max(oy, -T), w: T, h: T - Math.max(oy, -T) } };
+  });
+}
+
+/** Dungeon: chão (4 topos), muralha de montanhas, pedras e blocos decorados (ovos, cogumelos, espinhos, raízes). */
+/** Escurece o desenho do sprite (só onde há tinta). */
+function shadeSprite(s: Sprite, color: string): Sprite {
+  const ctx = s.canvas.getContext('2d')!;
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, s.canvas.width, s.canvas.height);
+  ctx.globalCompositeOperation = 'source-over';
+  return s;
+}
+
+/** Injeta a arte da dungeon nas texturas (depois que ela termina de carregar em segundo plano). */
+export function addDungeonTextures(t: BlockTextures): boolean {
+  if (!getDungeonArt() || t.variants.has(Block.DUNGEON_WALL)) return false;
+  dungeonTextures(t.groundTop, t.objects, t.variants, t.stackDraw);
+  return true;
+}
+
+function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>, stackDraw: Map<BlockId, number>): void {
+  const art = getDungeonArt()!;
+  [Block.DUNGEON_DIRT, Block.DUNGEON_WEB, Block.DUNGEON_BONES, Block.DUNGEON_MOSS].forEach((id, i) => {
+    const [c, ctx] = canvas(T, T);
+    ctx.drawImage(art.ground, i * 64, 0, 64, 64, 0, 0, T, T);
+    groundTop.set(id, c);
+  });
+  const mountains = stripSprites(art.mountains, 8, T * 2.2, 6);
+  // Parede do labirinto: cubo com a largura da célula (emenda com os vizinhos), escurecido para se separar do
+  // chão e desenhado com 2 níveis de altura (`stackDraw`). Liso na maioria; musgo e teia de vez em quando.
+  const walls = stripSprites(art.walls, 4, T, 0).map((s) => shadeSprite(s, 'rgba(28, 14, 40, 0.38)'));
+  variants.set(Block.DUNGEON_WALL, [...Array(10).fill(walls[0]), walls[3], walls[1]]);
+  objects.set(Block.DUNGEON_WALL, walls[0]);
+  stackDraw.set(Block.DUNGEON_WALL, 2);
+  const rocks = stripSprites(art.rocks, 8, T * 1.5, 4);
+  const props = stripSprites(art.props, 4, T * 1.15, 2);
+  variants.set(Block.DUNGEON_MOUNTAIN, mountains);
+  variants.set(Block.DUNGEON_ROCK, rocks);
+  objects.set(Block.DUNGEON_MOUNTAIN, mountains[0]);
+  objects.set(Block.DUNGEON_ROCK, rocks[0]);
+  [Block.DUNGEON_EGGS, Block.DUNGEON_MUSHROOM, Block.DUNGEON_SPIKES, Block.DUNGEON_ROOTS].forEach((id, i) => objects.set(id, props[i]));
+}
+
+/** Geometria da folha `oak-door` (quadros 70×120): corpo da porta fechada em x 8..69, base em y 112. */
+const DOOR_FRAME_W = 70;
+const DOOR_FRAME_H = 120;
+const DOOR_BODY_X = 8;
+const DOOR_BODY_W = 61;
+const DOOR_BASE_Y = 112;
+
+/**
+ * Quadros da porta: corpo da porta fechada com a largura de uma célula, base na borda de baixo da
+ * célula (como a frente de um cubo) e dobradiça à esquerda. Altura resultante ≈ 3 frentes de cubo.
+ */
+function doorSprites(): Sprite[] {
+  const sheet = getOakDoorSheet()!;
+  const s = T / DOOR_BODY_W;
+  const w = DOOR_FRAME_W * s;
+  const h = DOOR_FRAME_H * s;
+  const ox = -DOOR_BODY_X * s;
+  const oy = T - DOOR_BASE_Y * s;
+  return Array.from({ length: 8 }, (_, i) => {
+    const c = document.createElement('canvas');
+    c.width = DOOR_FRAME_W;
+    c.height = DOOR_FRAME_H;
+    c.getContext('2d')!.drawImage(sheet, (i % 4) * DOOR_FRAME_W, Math.floor(i / 4) * DOOR_FRAME_H,
+      DOOR_FRAME_W, DOOR_FRAME_H, 0, 0, DOOR_FRAME_W, DOOR_FRAME_H);
+    return { canvas: c, ox, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } };
+  });
+}
+
+function canvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
   const c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
+  c.width = Math.ceil(w * TEX_RES);
+  c.height = Math.ceil(h * TEX_RES);
   const ctx = c.getContext('2d')!;
+  ctx.scale(TEX_RES, TEX_RES);
   return [c, ctx];
 }
 
@@ -44,75 +157,7 @@ function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: numb
   ctx.closePath();
 }
 
-interface CubeOpts {
-  base: string;
-  /** Inset lateral (cacto é mais estreito). */
-  inset?: number;
-  radius?: number;
-  alpha?: number;
-}
-
-/** Corpo do "cubo": gradiente vertical + face superior + lateral direita sombreada + contorno. */
-function cube(ctx: Ctx, { base, inset = 0, radius = 3, alpha = 1 }: CubeOpts): void {
-  const x = inset + 0.5;
-  const w = S - inset * 2 - 1;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  const g = ctx.createLinearGradient(0, 0, 0, S);
-  g.addColorStop(0, shade(base, 0.12));
-  g.addColorStop(0.55, base);
-  g.addColorStop(1, shade(base, -0.22));
-  roundRect(ctx, x, 0.5, w, S - 1, radius);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.clip();
-  // Face superior do cubo (luz de cima).
-  ctx.fillStyle = rgba(shade(base, 0.45), 0.55);
-  ctx.fillRect(x, 0, w, 4);
-  // Lateral direita e base em sombra (luz vindo da esquerda-cima).
-  ctx.fillStyle = rgba(shade(base, -0.45), 0.35);
-  ctx.fillRect(x + w - 4, 0, 4, S);
-  ctx.fillRect(x, S - 4, w, 4);
-  // Filete de luz interno (rim light).
-  ctx.strokeStyle = rgba('#ffffff', 0.35);
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x + 2, S - 5);
-  ctx.lineTo(x + 2, 5);
-  ctx.lineTo(x + w - 5, 5);
-  ctx.stroke();
-  ctx.restore();
-  outline(ctx, base, inset, radius, alpha);
-}
-
-function outline(ctx: Ctx, base: string, inset = 0, radius = 3, alpha = 1): void {
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  roundRect(ctx, inset + 0.5, 0.5, S - inset * 2 - 1, S - 1, radius);
-  ctx.strokeStyle = shade(base, -0.62);
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-}
-
-/** Manchas pintadas (pinceladas suaves) dentro do tile. */
-function speckles(ctx: Ctx, rand: () => number, color: string, count: number, rMin: number, rMax: number, alpha = 0.6): void {
-  ctx.save();
-  roundRect(ctx, 1, 1, S - 2, S - 2, 3);
-  ctx.clip();
-  for (let i = 0; i < count; i++) {
-    const r = rMin + rand() * (rMax - rMin);
-    ctx.fillStyle = rgba(color, alpha * (0.5 + rand() * 0.5));
-    ctx.beginPath();
-    ctx.ellipse(3 + rand() * (S - 6), 5 + rand() * (S - 9), r, r * (0.6 + rand() * 0.4), rand() * Math.PI, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-/** Pequeno brilho em estrela de 4 pontas (marca registrada do estilo anime). */
 function sparkle(ctx: Ctx, x: number, y: number, r: number, color = '#ffffff', alpha = 0.9): void {
-  ctx.save();
   ctx.fillStyle = rgba(color, alpha);
   ctx.beginPath();
   ctx.moveTo(x, y - r);
@@ -121,199 +166,19 @@ function sparkle(ctx: Ctx, x: number, y: number, r: number, color = '#ffffff', a
   ctx.quadraticCurveTo(x, y, x - r, y);
   ctx.quadraticCurveTo(x, y, x, y - r);
   ctx.fill();
-  ctx.restore();
 }
 
-function facetedStone(ctx: Ctx, rand: () => number, base: string): void {
-  cube(ctx, { base });
-  ctx.save();
-  roundRect(ctx, 1, 1, S - 2, S - 2, 3);
-  ctx.clip();
-  // Facetas poligonais claras/escuras (pedra pintada).
-  for (let i = 0; i < 5; i++) {
-    const cx = 4 + rand() * (S - 8);
-    const cy = 6 + rand() * (S - 12);
-    const r = 4 + rand() * 5;
-    ctx.fillStyle = rgba(rand() < 0.5 ? shade(base, 0.25) : shade(base, -0.2), 0.45);
+function blobs(ctx: Ctx, rand: () => number, color: string, n: number, rMin: number, rMax: number, x0: number, y0: number, w: number, h: number, alpha = 0.5): void {
+  for (let i = 0; i < n; i++) {
+    const r = rMin + rand() * (rMax - rMin);
+    ctx.fillStyle = rgba(color, alpha * (0.5 + rand() * 0.5));
     ctx.beginPath();
-    const n = 5;
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * Math.PI * 2 + rand() * 0.6;
-      const rr = r * (0.7 + rand() * 0.4);
-      const px = cx + Math.cos(a) * rr;
-      const py = cy + Math.sin(a) * rr * 0.8;
-      if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
+    ctx.ellipse(x0 + rand() * w, y0 + rand() * h, r, r * (0.55 + rand() * 0.4), rand() * Math.PI, 0, Math.PI * 2);
     ctx.fill();
   }
-  // Rachaduras finas.
-  ctx.strokeStyle = rgba(shade(base, -0.5), 0.55);
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 2; i++) {
-    let x = 4 + rand() * (S - 8);
-    let y = 6 + rand() * (S - 14);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    for (let k = 0; k < 3; k++) {
-      x += (rand() - 0.5) * 8;
-      y += 2 + rand() * 4;
-      ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
-  ctx.restore();
-  outline(ctx, base);
 }
 
-function gem(ctx: Ctx, x: number, y: number, r: number, color: string, rand: () => number): void {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate((rand() - 0.5) * 0.8);
-  ctx.beginPath();
-  ctx.moveTo(0, -r);
-  ctx.lineTo(r * 0.75, -r * 0.2);
-  ctx.lineTo(r * 0.5, r * 0.8);
-  ctx.lineTo(-r * 0.5, r * 0.8);
-  ctx.lineTo(-r * 0.75, -r * 0.2);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(-r, -r, r, r);
-  g.addColorStop(0, shade(color, 0.55));
-  g.addColorStop(0.5, color);
-  g.addColorStop(1, shade(color, -0.35));
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.strokeStyle = shade(color, -0.6);
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.fillStyle = rgba('#ffffff', 0.7);
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.2, -r * 0.7);
-  ctx.lineTo(r * 0.05, -r * 0.2);
-  ctx.lineTo(-r * 0.45, -r * 0.15);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-}
-
-function ore(ctx: Ctx, rand: () => number, color: string, count: number, size: number, sparkles: boolean): void {
-  facetedStone(ctx, rand, '#8a90a6');
-  for (let i = 0; i < count; i++) {
-    gem(ctx, 6 + rand() * (S - 12), 8 + rand() * (S - 15), size * (0.7 + rand() * 0.5), color, rand);
-  }
-  if (sparkles) {
-    sparkle(ctx, 6 + rand() * 20, 6 + rand() * 12, 3);
-    sparkle(ctx, 12 + rand() * 14, 16 + rand() * 10, 2);
-  }
-}
-
-function leafCluster(ctx: Ctx, rand: () => number, base: string, accent: string | null, opts: { petals?: boolean; glowDots?: string } = {}): void {
-  // Cubo de folhagem: massa pintada com tufos de folhas em camadas (sombra → luz).
-  cube(ctx, { base: shade(base, -0.12), radius: 5 });
-  ctx.save();
-  roundRect(ctx, 1, 1, S - 2, S - 2, 5);
-  ctx.clip();
-  const clump = (x: number, y: number, r: number, color: string) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    for (let k = 0; k < 5; k++) {
-      const a = Math.PI + (k / 4) * Math.PI; // arco superior recortado (scallop)
-      ctx.arc(x + Math.cos(a) * r * 0.7, y + Math.sin(a) * r * 0.35, r * 0.45, 0, Math.PI * 2);
-    }
-    ctx.fill();
-  };
-  for (let i = 0; i < 4; i++) clump(4 + rand() * 24, 10 + rand() * 20, 9 + rand() * 4, rgba(shade(base, -0.4), 0.55));
-  for (let i = 0; i < 4; i++) clump(4 + rand() * 24, 6 + rand() * 18, 8 + rand() * 4, base);
-  for (let i = 0; i < 3; i++) clump(4 + rand() * 22, 4 + rand() * 12, 6 + rand() * 3, shade(base, 0.28));
-  // Recortes de folha (traços de luz em meia-lua, estilo cel).
-  ctx.strokeStyle = rgba(shade(base, 0.6), 0.85);
-  ctx.lineWidth = 1.2;
-  for (let i = 0; i < 4; i++) {
-    const x = 5 + rand() * 22;
-    const y = 5 + rand() * 20;
-    ctx.beginPath();
-    ctx.arc(x, y, 3 + rand() * 2, Math.PI * 1.1, Math.PI * 1.7);
-    ctx.stroke();
-  }
-  if (accent) speckles(ctx, rand, accent, 5, 0.8, 1.6, 0.9);
-  if (opts.petals) {
-    for (let i = 0; i < 4; i++) {
-      const x = 4 + rand() * (S - 8);
-      const y = 4 + rand() * (S - 8);
-      ctx.fillStyle = rgba('#ffffff', 0.85);
-      ctx.beginPath();
-      ctx.ellipse(x, y, 1.8, 1.1, rand() * Math.PI, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  if (opts.glowDots) {
-    for (let i = 0; i < 4; i++) sparkle(ctx, 4 + rand() * (S - 8), 4 + rand() * (S - 8), 2 + rand() * 1.5, opts.glowDots, 0.95);
-  }
-  ctx.restore();
-  outline(ctx, base, 0, 5);
-}
-
-function grassTop(ctx: Ctx, rand: () => number, grass: string, dirt: string, glow?: string): void {
-  cube(ctx, { base: dirt });
-  speckles(ctx, rand, shade(dirt, -0.3), 6, 1, 2);
-  speckles(ctx, rand, shade(dirt, 0.25), 4, 0.8, 1.4);
-  ctx.save();
-  roundRect(ctx, 0.5, 0.5, S - 1, S - 1, 3);
-  ctx.clip();
-  // Camada de grama com borda ondulada e "gotas".
-  const g = ctx.createLinearGradient(0, 0, 0, 12);
-  g.addColorStop(0, shade(grass, 0.25));
-  g.addColorStop(1, grass);
-  ctx.fillStyle = shade(grass, -0.5);
-  drawGrassEdge(ctx, 1.2);
-  ctx.fillStyle = g;
-  drawGrassEdge(ctx, 0);
-  ctx.fillStyle = rgba(shade(grass, 0.6), 0.7);
-  ctx.fillRect(1, 1, S - 2, 2);
-  if (glow) for (let i = 0; i < 3; i++) sparkle(ctx, 4 + rand() * (S - 8), 3 + rand() * 5, 1.8, glow);
-  ctx.restore();
-  outline(ctx, mix(grass, dirt, 0.5));
-}
-
-let edgeSeed = 0;
-function drawGrassEdge(ctx: Ctx, extra: number): void {
-  // Usa um gerador fixo para que contorno e preenchimento coincidam.
-  const r = mulberry32(1000 + edgeSeed);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(S, 0);
-  let x = S;
-  ctx.lineTo(S, 8 + extra);
-  while (x > 0) {
-    const w = 4 + r() * 4;
-    const depth = 7 + r() * 6;
-    ctx.quadraticCurveTo(x - w / 2, depth + extra + 2, x - w, 8 + extra);
-    x -= w;
-  }
-  ctx.lineTo(0, 0);
-  ctx.closePath();
-  ctx.fill();
-}
-
-function tuft(base: string, flowers: string[] = []): HTMLCanvasElement {
-  const [c, ctx] = canvas(S, GRASS_TUFT_H + 2);
-  const r = mulberry32(77);
-  const H = GRASS_TUFT_H + 2;
-  for (let i = 0; i < 9; i++) {
-    const x = 2 + i * 3.4 + r() * 2;
-    const h = 3 + r() * (GRASS_TUFT_H - 3);
-    const lean = (r() - 0.5) * 3;
-    ctx.fillStyle = shade(base, -0.5);
-    blade(ctx, x, H, h + 1, lean, 2.6);
-    ctx.fillStyle = shade(base, 0.1 + r() * 0.2);
-    blade(ctx, x, H, h, lean, 1.8);
-  }
-  for (const f of flowers) {
-    if (r() < 0.5) continue;
-    sparkle(ctx, 4 + r() * (S - 8), 3 + r() * 3, 2, f, 1);
-  }
-  return c;
-}
+// ---------------------------------------------------------------- chão
 
 function blade(ctx: Ctx, x: number, baseY: number, h: number, lean: number, w: number): void {
   ctx.beginPath();
@@ -324,292 +189,326 @@ function blade(ctx: Ctx, x: number, baseY: number, h: number, lean: number, w: n
   ctx.fill();
 }
 
-function makeTile(id: BlockId): HTMLCanvasElement | null {
-  const [c, ctx] = canvas();
-  const rand = mulberry32(id * 7919 + 13);
-  edgeSeed = id;
-  switch (id) {
-    case Block.GRASS:
-      grassTop(ctx, rand, '#6fd35a', '#a86b42');
-      break;
-    case Block.ENCHANTED_GRASS:
-      grassTop(ctx, rand, '#45d6c4', '#a86b42', '#c9fffb');
-      break;
-    case Block.DIRT:
-      cube(ctx, { base: '#a86b42' });
-      speckles(ctx, rand, '#6e3f25', 7, 1, 2.2);
-      speckles(ctx, rand, '#d29a68', 5, 0.8, 1.5);
-      break;
-    case Block.STONE:
-      facetedStone(ctx, rand, '#8a90a6');
-      break;
-    case Block.SAND: {
-      cube(ctx, { base: '#f3d48e' });
-      ctx.strokeStyle = rgba('#fff4cf', 0.8);
+// ---------------------------------------------------------------- materiais (prancha)
+
+/**
+ * Atlas: linha 0 = topos do cubo (64×64), linha 1 = faces frontais (64×36),
+ * linha 2 = versão contínua do topo para o chão (sem emendas), na ordem de MATERIALS.
+ */
+const ATLAS_TOP = T * TEX_RES;
+const ATLAS_FRONT = F * TEX_RES;
+
+function materialTop(index: number): HTMLCanvasElement {
+  const [c, ctx] = canvas(T, T);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(getBlockAtlas()!, index * ATLAS_TOP, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, ATLAS_TOP, 0, 0, c.width, c.height);
+  return c;
+}
+
+/** Cubo 3/4 com a arte da prancha: topo em [0, T) e face frontal em [T, T + F), mais contorno. */
+function materialCube(index: number, outline: string): Sprite {
+  const atlas = getBlockAtlas()!;
+  return composeCube(
+    (ctx) => ctx.drawImage(atlas, index * ATLAS_TOP, 0, ATLAS_TOP, ATLAS_TOP, 0, 0, T, T),
+    (ctx) => ctx.drawImage(atlas, index * ATLAS_TOP, ATLAS_TOP, ATLAS_TOP, ATLAS_FRONT, 0, T, T, F),
+    outline,
+  );
+}
+
+/**
+ * Monta um cubo 3/4 a partir de duas faces: `drawTop` pinta [0, T) e `drawFront`
+ * pinta [T, T + F). Aplica sombra na frente, aresta clara e contorno.
+ */
+export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string): Sprite {
+  const [c, ctx] = canvas(T, T + F);
+  ctx.save();
+  roundRect(ctx, 0.5, 0.5, T - 1, T + F - 1, 3);
+  ctx.clip();
+  drawFront(ctx);
+  // Face frontal um pouco mais escura (luz vem de cima).
+  ctx.fillStyle = 'rgba(30, 20, 60, 0.18)';
+  ctx.fillRect(0, T, T, F);
+  drawTop(ctx);
+  // Aresta clara entre topo e frente + filete de luz no topo.
+  ctx.fillStyle = 'rgba(255, 250, 230, 0.45)';
+  ctx.fillRect(0, T - 1, T, 1);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+  ctx.fillRect(0, 0, T, 1.5);
+  ctx.restore();
+  roundRect(ctx, 0.5, 0.5, T - 1, T + F - 1, 3);
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  return { canvas: c, ox: 0, oy: -F, w: T, h: T + F, hit: { x: 0, y: -F, w: T, h: T + F } };
+}
+
+/** Contorno de cada material (cor escura da própria arte). */
+const OUTLINE: Record<number, string> = {
+  [Block.DIRT]: '#4a2a18',
+  [Block.GRASS]: '#2f4a1c',
+  [Block.TILLED]: '#4a2a18',
+  [Block.PATH]: '#5a3a20',
+  [Block.SAND]: '#8a6a3a',
+  [Block.STONE]: '#3e3a48',
+  [Block.OAK_LOG]: '#3e2414',
+  [Block.OAK_PLANKS]: '#4e3018',
+};
+
+// ---------------------------------------------------------------- água
+
+/** Ladrilho de água a partir do topo do bloco da arte; `v` espelha (bit 0: horizontal, bit 1: vertical). */
+function artWaterTile(top: HTMLImageElement, v: number): HTMLCanvasElement {
+  const [c, ctx] = canvas(T, T);
+  ctx.translate(v & 1 ? T : 0, v & 2 ? T : 0);
+  ctx.scale(v & 1 ? -1 : 1, v & 2 ? -1 : 1);
+  ctx.drawImage(top, 0, 0, T, T);
+  return c;
+}
+
+function waterTile(variant: number): HTMLCanvasElement {
+  const [c, ctx] = canvas(T, T);
+  const rand = mulberry32(6 * 131 + variant * 7 + 1);
+
+      const g = ctx.createLinearGradient(0, 0, T, T);
+      g.addColorStop(0, '#46b4f0');
+      g.addColorStop(1, '#2f8fd8');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, T, T);
+      ctx.strokeStyle = rgba('#c4f1ff', 0.5);
       ctx.lineWidth = 1.2;
-      for (let i = 0; i < 3; i++) {
-        const y = 8 + i * 8 + rand() * 2;
-        ctx.beginPath();
-        ctx.moveTo(4, y);
-        ctx.bezierCurveTo(10, y - 3, 18, y + 3, 27, y - 1);
-        ctx.stroke();
-      }
-      speckles(ctx, rand, '#c99c55', 6, 0.6, 1.1);
-      break;
-    }
-    case Block.SANDSTONE: {
-      cube(ctx, { base: '#e2b46e' });
-      ctx.fillStyle = rgba('#b9824a', 0.55);
-      for (let y = 9; y < S - 2; y += 8) ctx.fillRect(2, y, S - 4, 2);
-      ctx.fillStyle = rgba('#fbe0a8', 0.6);
-      for (let y = 6; y < S - 2; y += 8) ctx.fillRect(2, y, S - 4, 1);
-      break;
-    }
-    case Block.SNOW: {
-      cube(ctx, { base: '#e6f1ff' });
-      speckles(ctx, rand, '#b9cfee', 5, 1.5, 3, 0.5);
-      sparkle(ctx, 9, 9, 3);
-      sparkle(ctx, 22, 19, 2);
-      break;
-    }
-    case Block.ICE: {
-      cube(ctx, { base: '#9fe3ff', alpha: 0.82 });
-      ctx.strokeStyle = rgba('#ffffff', 0.75);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(6, 22); ctx.lineTo(18, 8);
-      ctx.moveTo(12, 26); ctx.lineTo(22, 14);
-      ctx.stroke();
-      sparkle(ctx, 24, 8, 2.5);
-      break;
-    }
-    case Block.WATER: {
-      ctx.fillStyle = rgba('#3aa7e8', 0.62);
-      ctx.fillRect(0, 0, S, S);
-      ctx.strokeStyle = rgba('#bff0ff', 0.45);
-      ctx.lineWidth = 1;
       for (let i = 0; i < 2; i++) {
-        const y = 10 + i * 12 + rand() * 3;
+        const y = 8 + i * 13 + rand() * 4;
+        const x = 2 + rand() * 12;
         ctx.beginPath();
-        ctx.moveTo(4 + rand() * 4, y);
-        ctx.quadraticCurveTo(16, y - 2, 26, y);
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + 6, y - 2, x + 12, y);
         ctx.stroke();
       }
-      break;
-    }
-    case Block.LOG: {
-      cube(ctx, { base: '#8a5a3a', inset: 3, radius: 2 });
-      ctx.save();
-      ctx.strokeStyle = rgba('#5a3420', 0.7);
-      ctx.lineWidth = 1.2;
-      for (let i = 0; i < 4; i++) {
-        const x = 8 + i * 5 + rand() * 2;
-        ctx.beginPath();
-        ctx.moveTo(x, 2);
-        ctx.bezierCurveTo(x - 2, 10, x + 2, 20, x, S - 2);
-        ctx.stroke();
-      }
-      ctx.strokeStyle = rgba('#c48d62', 0.6);
+        return c;
+}
+
+// ---------------------------------------------------------------- árvores e enfeites
+
+function treeSprite(kind: BlockId): Sprite {
+  const W = T * 2;
+  const H = T * 3;
+  const [c, ctx] = canvas(W, H);
+  const rand = mulberry32(kind * 17);
+  const cx = W / 2;
+  const baseY = H; // pé do tronco = base da célula
+  // Tronco.
+  const trunkTop = baseY - T * 1.25;
+  ctx.fillStyle = '#5a3420';
+  roundRect(ctx, cx - 6, trunkTop, 12, baseY - trunkTop - 2, 3);
+  ctx.fill();
+  const tg = ctx.createLinearGradient(cx - 5, 0, cx + 5, 0);
+  tg.addColorStop(0, '#b07a4e');
+  tg.addColorStop(1, '#7a4c2c');
+  ctx.fillStyle = tg;
+  roundRect(ctx, cx - 5, trunkTop, 10, baseY - trunkTop - 3, 2.5);
+  ctx.fill();
+  // Raízes.
+  ctx.fillStyle = '#7a4c2c';
+  ctx.beginPath();
+  ctx.ellipse(cx, baseY - 3, 9, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  {
+    const palette: Record<number, [string, string]> = {
+      [Block.OAK_TREE]: ['#5cc565', '#c8f7a0'],
+      [Block.SAKURA_TREE]: ['#ffa9cf', '#ffffff'],
+    };
+    const [base, accent] = palette[kind];
+    const ccy = baseY - T * 1.85;
+    const puffs: [number, number, number][] = [
+      [-14, 6, 15], [14, 6, 15], [0, 10, 16], [-9, -9, 15], [10, -9, 15], [0, -16, 13], [-20, -4, 11], [20, -4, 11],
+    ];
+    // Contorno.
+    ctx.fillStyle = shade(base, -0.62);
+    for (const [x, y, r] of puffs) { ctx.beginPath(); ctx.arc(cx + x, ccy + y, r + 1.4, 0, Math.PI * 2); ctx.fill(); }
+    // Massa em sombra.
+    ctx.fillStyle = shade(base, -0.22);
+    for (const [x, y, r] of puffs) { ctx.beginPath(); ctx.arc(cx + x, ccy + y, r, 0, Math.PI * 2); ctx.fill(); }
+    // Luz (deslocada para cima-esquerda).
+    ctx.fillStyle = base;
+    for (const [x, y, r] of puffs) { ctx.beginPath(); ctx.arc(cx + x - 2, ccy + y - 3, r * 0.82, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = shade(base, 0.3);
+    for (const [x, y, r] of puffs.slice(3, 6)) { ctx.beginPath(); ctx.arc(cx + x - 4, ccy + y - 5, r * 0.45, 0, Math.PI * 2); ctx.fill(); }
+    // Recortes de folha em meia-lua.
+    ctx.strokeStyle = rgba(shade(base, 0.6), 0.85);
+    ctx.lineWidth = 1.3;
+    for (let i = 0; i < 6; i++) {
       ctx.beginPath();
-      ctx.moveTo(7, 3); ctx.lineTo(7, S - 3);
+      ctx.arc(cx - 20 + rand() * 40, ccy - 14 + rand() * 26, 3 + rand() * 2, Math.PI * 1.1, Math.PI * 1.7);
       ctx.stroke();
-      ctx.restore();
-      break;
     }
-    case Block.LEAVES:
-      leafCluster(ctx, rand, '#4fbf5a', '#c8f7a0');
-      break;
-    case Block.SAKURA_LEAVES:
-      leafCluster(ctx, rand, '#ffa9cf', '#fff0f6', { petals: true });
-      break;
-    case Block.MAGIC_LEAVES:
-      leafCluster(ctx, rand, '#6a6cf0', null, { glowDots: '#9ffcff' });
-      break;
-    case Block.PINE_LEAVES: {
-      leafCluster(ctx, rand, '#2f8f78', null);
-      // Neve acumulada no topo.
-      ctx.fillStyle = rgba('#f4fbff', 0.95);
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.ellipse(6 + i * 10, 3, 5, 2.4, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      break;
-    }
-    case Block.COAL_ORE:
-      ore(ctx, rand, '#3a3550', 4, 5.5, false);
-      break;
-    case Block.GOLD_ORE:
-      ore(ctx, rand, '#ffc93c', 4, 4, true);
-      break;
-    case Block.MANA_CRYSTAL:
-      ore(ctx, rand, '#b26cff', 3, 6, true);
-      break;
-    case Block.BEDROCK: {
-      facetedStone(ctx, rand, '#3d3552');
-      speckles(ctx, rand, '#1a1530', 6, 1.5, 3);
-      break;
-    }
-    case Block.PLANKS: {
-      cube(ctx, { base: '#d39a5c' });
-      ctx.save();
-      for (let i = 1; i < 4; i++) {
-        ctx.fillStyle = rgba('#7b4d2a', 0.8);
-        ctx.fillRect(1, i * 8 - 1, S - 2, 1.5);
-        ctx.fillStyle = rgba('#f4c48a', 0.7);
-        ctx.fillRect(1, i * 8 + 0.5, S - 2, 1);
-      }
-      ctx.fillStyle = rgba('#7b4d2a', 0.6);
-      for (let i = 0; i < 4; i++) {
-        const x = i % 2 === 0 ? 10 : 22;
-        ctx.fillRect(x, i * 8 + 1, 1.2, 6);
-      }
-      ctx.restore();
-      break;
-    }
-    case Block.BRICK: {
-      cube(ctx, { base: '#c4554a' });
-      ctx.save();
-      ctx.strokeStyle = rgba('#f1d2b8', 0.85);
-      ctx.lineWidth = 1.5;
-      for (let row = 0; row < 4; row++) {
-        const y = row * 8;
-        ctx.beginPath();
-        ctx.moveTo(1, y + 0.5); ctx.lineTo(S - 1, y + 0.5);
-        const off = row % 2 === 0 ? 8 : 16;
-        for (let x = off; x < S; x += 16) {
-          ctx.moveTo(x, y); ctx.lineTo(x, y + 8);
-        }
-        ctx.stroke();
-      }
-      ctx.restore();
-      speckles(ctx, rand, '#ff8c7a', 4, 1, 2, 0.4);
-      break;
-    }
-    case Block.TALL_GRASS: {
-      const r = mulberry32(5);
+    blobs(ctx, rand, accent, kind === Block.SAKURA_TREE ? 9 : 6, 1, 1.8, cx - 22, ccy - 18, 44, 32, 0.9);
+  }
+  return {
+    canvas: c, ox: -T / 2, oy: T - H, w: W, h: H,
+    hit: { x: -T * 0.3, y: T - H * 0.92, w: T * 1.6, h: H * 0.92 },
+  };
+}
+
+function cactusSprite(): Sprite {
+  const W = T;
+  const H = T * 1.7;
+  const [c, ctx] = canvas(W, H);
+  const body = (x: number, y: number, w: number, h: number) => {
+    roundRect(ctx, x, y, w, h, w / 2);
+    ctx.fillStyle = '#2c7a3a';
+    ctx.fill();
+    roundRect(ctx, x + 1, y + 1, w - 2, h - 2, w / 2 - 1);
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, '#7fd67f');
+    g.addColorStop(0.5, '#4fb35a');
+    g.addColorStop(1, '#3a9248');
+    ctx.fillStyle = g;
+    ctx.fill();
+  };
+  body(4, H * 0.42, 7, 16);
+  body(21, H * 0.3, 7, 14);
+  body(10, 2, 12, H - 6);
+  ctx.strokeStyle = rgba('#2c7a3a', 0.8);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(16, 6); ctx.lineTo(16, H - 6);
+  ctx.stroke();
+  ctx.fillStyle = '#ff8fb8';
+  ctx.beginPath();
+  ctx.arc(16, 4, 3, 0, Math.PI * 2);
+  ctx.fill();
+  return { canvas: c, ox: 0, oy: T - H, w: W, h: H, hit: { x: 4, y: T - H, w: T - 8, h: H } };
+}
+
+function decorationSprite(id: BlockId): Sprite {
+  const [c, ctx] = canvas(T, T);
+  const r = mulberry32(id * 3);
+  switch (id) {
+    case Block.TALL_GRASS:
       for (let i = 0; i < 7; i++) {
-        const x = 5 + i * 3.5 + r() * 2;
-        const h = 10 + r() * 14;
+        const x = 6 + i * 3.3 + r() * 2;
+        const h = 9 + r() * 10;
         const lean = (r() - 0.5) * 6;
         ctx.fillStyle = '#2a6b34';
-        blade(ctx, x, S, h + 1.5, lean, 3.2);
-        ctx.fillStyle = shade('#6fd35a', r() * 0.3);
-        blade(ctx, x, S, h, lean, 2.2);
+        blade(ctx, x, T - 4, h + 1.4, lean, 3);
+        ctx.fillStyle = shade('#79d265', r() * 0.3);
+        blade(ctx, x, T - 4, h, lean, 2);
       }
       break;
-    }
-    case Block.FLOWER: {
-      ctx.strokeStyle = '#3c8f45';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(16, S); ctx.quadraticCurveTo(13, 22, 16, 13);
-      ctx.stroke();
-      ctx.fillStyle = '#5fc46a';
-      ctx.beginPath();
-      ctx.ellipse(12, 24, 4, 2, -0.6, 0, Math.PI * 2);
-      ctx.fill();
-      const petal = '#ff7fb5';
-      for (let k = 0; k < 5; k++) {
-        const a = (k / 5) * Math.PI * 2;
-        ctx.fillStyle = shade(petal, -0.45);
-        ctx.beginPath();
-        ctx.ellipse(16 + Math.cos(a) * 4.5, 11 + Math.sin(a) * 4.5, 4, 3, a, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = petal;
-        ctx.beginPath();
-        ctx.ellipse(16 + Math.cos(a) * 4.5, 11 + Math.sin(a) * 4.5, 3.2, 2.3, a, 0, Math.PI * 2);
-        ctx.fill();
+    case Block.FLOWER:
+      for (const [fx, fy, color] of [[11, 16, '#ff7fb5'], [21, 21, '#ffd23f']] as const) {
+        ctx.strokeStyle = '#3c8f45';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(fx, T - 4); ctx.lineTo(fx, fy); ctx.stroke();
+        for (let k = 0; k < 5; k++) {
+          const a = (k / 5) * Math.PI * 2;
+          ctx.fillStyle = shade(color, -0.45);
+          ctx.beginPath(); ctx.ellipse(fx + Math.cos(a) * 3.4, fy + Math.sin(a) * 3.4, 3, 2.2, a, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = color;
+          ctx.beginPath(); ctx.ellipse(fx + Math.cos(a) * 3.4, fy + Math.sin(a) * 3.4, 2.4, 1.7, a, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = '#fff6c8';
+        ctx.beginPath(); ctx.arc(fx, fy, 1.8, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.fillStyle = '#ffe066';
-      ctx.beginPath();
-      ctx.arc(16, 11, 2.6, 0, Math.PI * 2);
-      ctx.fill();
-      sparkle(ctx, 24, 5, 2.5);
+      sparkle(ctx, 26, 8, 2.2);
       break;
-    }
-    case Block.GLOW_MUSHROOM: {
-      ctx.fillStyle = '#e9e2ff';
-      roundRect(ctx, 13.5, 16, 5, 16, 2);
-      ctx.fill();
-      ctx.strokeStyle = '#6b5f9e';
-      ctx.stroke();
-      const g = ctx.createRadialGradient(13, 11, 1, 16, 14, 11);
-      g.addColorStop(0, '#d8ffff');
-      g.addColorStop(0.5, '#4fe3ff');
-      g.addColorStop(1, '#2a7fd6');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(4, 18);
-      ctx.quadraticCurveTo(5, 5, 16, 5);
-      ctx.quadraticCurveTo(27, 5, 28, 18);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#1d4f9c';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = rgba('#ffffff', 0.9);
-      for (const [x, y, r] of [[10, 11, 1.8], [18, 9, 1.4], [23, 14, 1.6]] as const) {
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      break;
-    }
-    case Block.CACTUS: {
-      cube(ctx, { base: '#4fb35a', inset: 4, radius: 5 });
-      ctx.strokeStyle = rgba('#2c7a3a', 0.8);
-      ctx.lineWidth = 1.2;
-      for (const x of [11, 16, 21]) {
-        ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x, S - 2); ctx.stroke();
-      }
-      ctx.strokeStyle = '#fff6d6';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 6; i++) {
-        const y = 4 + i * 5;
-        const left = i % 2 === 0;
-        ctx.beginPath();
-        ctx.moveTo(left ? 5 : 27, y);
-        ctx.lineTo(left ? 2 : 30, y - 1);
-        ctx.stroke();
-      }
-      break;
-    }
-    default:
-      return null;
   }
-  return c;
+  return { canvas: c, ox: 0, oy: -6, w: T, h: T, hit: { x: 0, y: -6, w: T, h: T } };
 }
 
-/** Versão de fundo (parede de caverna): escurecida, dessaturada, sem contorno forte. */
-function makeWall(src: HTMLCanvasElement): HTMLCanvasElement {
-  const [c, ctx] = canvas();
-  ctx.drawImage(src, 0, 0);
-  ctx.globalCompositeOperation = 'source-atop';
-  ctx.fillStyle = 'rgba(28, 22, 58, 0.62)';
-  ctx.fillRect(0, 0, S, S);
-  return c;
-}
-
-export function createBlockTextures(): BlockTextures {
-  const tile = new Map<BlockId, HTMLCanvasElement>();
-  const ids = Object.values(Block) as BlockId[];
-  for (const id of ids) {
-    const t = makeTile(id);
-    if (t) tile.set(id, t);
+/** `town`: o mundo tem a Cidade do Despertar (pinta as construções dela). */
+export function createBlockTextures(opts: { town?: boolean } = {}): BlockTextures {
+  const groundTop = new Map<BlockId, HTMLCanvasElement>();
+  const objects = new Map<BlockId, Sprite>();
+  const icons = new Map<BlockId, string>();
+  // Cada grupo só é montado se o pacote de arte do mundo trouxe a imagem (ex.: Santuário não tem materiais).
+  const pack = art();
+  if (getBlockAtlas()) {
+    MATERIALS.forEach((id, i) => {
+      groundTop.set(id, materialTop(i));
+      objects.set(id, materialCube(i, OUTLINE[id] ?? '#3a2a20'));
+      icons.set(id, pack.materialIcons[id] ?? '');
+    });
   }
-  const wall = new Map<BlockId, HTMLCanvasElement>();
-  for (const id of [Block.DIRT, Block.STONE, Block.SANDSTONE, Block.SAND] as BlockId[]) {
-    wall.set(id, makeWall(tile.get(id)!));
+  // Água: topo do bloco de água da arte, ladrilho contínuo sempre na mesma orientação (espelhar por célula
+  // quebra a continuidade e forma um quadriculado); sem arte, procedural.
+  const wa = getWaterArt();
+  const water = wa ? [artWaterTile(wa.top, 0)] : Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
+  for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
+  objects.set(Block.CACTUS, cactusSprite());
+  for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
+  // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
+  for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {
+    const { top, front, ground } = celestialFaces(id);
+    groundTop.set(id, ground);
+    objects.set(id, composeCube(
+      (ctx) => ctx.drawImage(top, 0, 0, T, T),
+      (ctx) => ctx.drawImage(front, 0, T, T, F),
+      CELESTIAL_STYLE[id].outline,
+    ));
+    icons.set(id, pack.celestialIcons[id] ?? '');
   }
-  const tufts = new Map<BlockId, HTMLCanvasElement>([
-    [Block.GRASS, tuft('#6fd35a', ['#ffffff', '#ffe066'])],
-    [Block.ENCHANTED_GRASS, tuft('#45d6c4', ['#c9fffb'])],
-  ]);
+  const variants = new Map<BlockId, Sprite[]>();
+  const stackDraw = new Map<BlockId, number>();
+  if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
+  // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
+  const tentImg = getTentSprite();
+  if (tentImg) {
+    // 2×2: sprite com 2 células de largura sobre o canto inferior esquerdo (as partes não têm arte).
+    const w = T * 2.1;
+    const h = w * (tentImg.height / tentImg.width);
+    const c = document.createElement('canvas');
+    c.width = tentImg.width;
+    c.height = tentImg.height;
+    c.getContext('2d')!.drawImage(tentImg, 0, 0);
+    const oy = T - h + 2;
+    objects.set(Block.TENT, { canvas: c, ox: (2 * T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: 2 * T, h: T - oy } });
+    icons.set(Block.TENT, pack.tent?.icon ?? '');
+  }
+  // Baú: sprite de frente, ~1 célula de largura, base na borda de baixo da célula; ícone do pacote.
+  const chestImg = getChestSprite();
+  if (chestImg) {
+    const w = T * 1.05;
+    const h = w * (chestImg.height / chestImg.width);
+    const c = document.createElement('canvas');
+    c.width = chestImg.width;
+    c.height = chestImg.height;
+    c.getContext('2d')!.drawImage(chestImg, 0, 0);
+    const oy = T - h + 1;
+    objects.set(Block.CHEST, { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } });
+    icons.set(Block.CHEST, pack.chest?.icon ?? '');
+  }
+  const doorFrames = getOakDoorSheet() ? doorSprites() : [];
+  if (doorFrames.length) {
+    objects.set(Block.OAK_DOOR, doorFrames[0]);
+    objects.set(Block.OAK_DOOR_OPEN, doorFrames[3]);
+    // Ícone em arquivo próprio: ler um canvas desenhado com imagem de outro arquivo pode ser bloqueado (ADR 0013).
+    icons.set(Block.OAK_DOOR, pack.materialIcons[Block.OAK_DOOR] ?? '');
+  }
   const glowColor = new Map<BlockId, string>([
-    [Block.MANA_CRYSTAL, '#c38bff'],
-    [Block.GLOW_MUSHROOM, '#5fe8ff'],
-    [Block.MAGIC_LEAVES, '#8fa0ff'],
+    [Block.MOSS_LUMINOUS, '#c8ff8a'],
+    [Block.CRYSTAL_LIFE, '#ff9be6'],
+    [Block.LIGHT_BLOCK, '#ffe08a'],
+    [Block.LAMP, '#ffd27a'],
   ]);
-  return { tile, wall, tufts, glowColor };
+  if (opts.town) for (const [id, sprites] of townSprites(getTownImages())) variants.set(id, sprites);
+  const bankColor = new Map<BlockId, string>([
+    [Block.GRASS, '#8a5a36'],
+    [Block.DIRT, '#8a5a36'],
+    [Block.TILLED, '#7a4a2a'],
+    [Block.PATH, '#a07040'],
+    [Block.SAND, '#d9b06a'],
+    [Block.STONE, '#6a6676'],
+    [Block.STONE_COBBLE, '#6a6676'],
+    [Block.STONE_BRICK, '#6a6676'],
+    [Block.STONE_FLOOR, '#6a6676'],
+    [Block.STONE_SMOOTH, '#6a6676'],
+    [Block.STONE_POLISHED, '#6a6676'],
+    [Block.STONE_CRACKED, '#6a6676'],
+    [Block.STONE_BRICK_CRACKED, '#6a6676'],
+  ]);
+  // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
+  const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]]]);
+  return { groundTop, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw };
 }

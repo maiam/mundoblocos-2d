@@ -2,7 +2,7 @@ import type { Biome } from '../world/biomes';
 
 /** Partículas ambientes em espaço de tela, temáticas por bioma. */
 
-type Kind = 'petal' | 'firefly' | 'snow' | 'dust' | 'pollen';
+type Kind = 'petal' | 'firefly' | 'snow' | 'dust' | 'pollen' | 'sparkle';
 
 interface Particle {
   x: number;
@@ -17,19 +17,18 @@ interface Particle {
 
 const KIND_BY_BIOME: Record<Biome['key'], Kind> = {
   sakura: 'petal',
-  enchanted: 'firefly',
-  tundra: 'snow',
   desert: 'dust',
   meadow: 'pollen',
+  celestial: 'sparkle', // cintilações douradas subindo no Santuário
 };
 
 export class Particles {
   private list: Particle[] = [];
 
-  update(dt: number, w: number, h: number, biome: Biome, night: number, underground: boolean): void {
+  update(dt: number, w: number, h: number, biome: Biome, night: number): void {
     let kind = KIND_BY_BIOME[biome.key];
     if (kind === 'pollen' && night > 0.4) kind = 'firefly';
-    const target = underground ? 0 : kind === 'snow' ? 90 : kind === 'firefly' ? 40 : 55;
+    const target = kind === 'snow' ? 90 : kind === 'firefly' ? 40 : 55;
     while (this.list.length < target) this.list.push(spawn(kind, w, h, this.list.length < target / 2));
     for (const p of this.list) {
       // Partículas de outro bioma desaparecem suavemente.
@@ -95,6 +94,20 @@ export class Particles {
           ctx.arc(0, 0, p.size * 0.8, 0, Math.PI * 2);
           ctx.fill();
           break;
+        case 'sparkle': {
+          // Estrela de 4 pontas dourada que pisca.
+          const a = fade * (0.45 + 0.55 * Math.abs(Math.sin(p.phase * 3)));
+          const r = p.size * 1.6;
+          ctx.fillStyle = `rgba(255, 226, 140, ${a})`;
+          ctx.beginPath();
+          ctx.moveTo(0, -r);
+          ctx.quadraticCurveTo(0, 0, r, 0);
+          ctx.quadraticCurveTo(0, 0, 0, r);
+          ctx.quadraticCurveTo(0, 0, -r, 0);
+          ctx.quadraticCurveTo(0, 0, 0, -r);
+          ctx.fill();
+          break;
+        }
       }
       ctx.restore();
     }
@@ -113,6 +126,7 @@ function spawn(kind: Kind, w: number, h: number, anywhere: boolean): Particle {
     case 'dust': base.vx = 60 + r() * 60; base.vy = -5 + r() * 15; base.size = 1.5 + r() * 1.5; break;
     case 'pollen': base.vx = 10 + r() * 10; base.vy = -4 + r() * 10; break;
     case 'firefly': base.y = r() * h; base.size = 1.5 + r(); break;
+    case 'sparkle': base.y = r() * h; base.vx = -4 + r() * 8; base.vy = -10 - r() * 12; base.size = 1.2 + r() * 1.6; break;
   }
   return base;
 }

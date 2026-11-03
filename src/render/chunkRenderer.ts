@@ -1,144 +1,243 @@
 import { CHUNK_SIZE, TILE } from '../config';
 import { Block, type BlockId, blockDef } from '../world/blocks';
 import type { Chunk } from '../world/chunk';
+import { hash2 } from '../world/random';
 import type { World } from '../world/world';
-import { type BlockTextures, GRASS_TUFT_H } from './textures';
+import { CELESTIAL_STYLE } from './celestialArt';
+import { rgba } from './color';
+import { type BlockTextures, TEX_RES } from './textures';
 
-/** Margem superior do canvas do chunk para tufos que transbordam para cima. */
-export const CHUNK_PAD_TOP = GRASS_TUFT_H + 2;
 const CHUNK_PX = CHUNK_SIZE * TILE;
-
-export interface GlowPoint {
-  x: number;
-  y: number;
-  color: string;
-}
+/** Altura da barranca (face frontal do chão) vista sobre a água. */
+const BANK_H = 7;
+/** Materiais cuja arte tem direção (tábuas, sulcos, anéis): não giram no chão. */
+const ORIENTED = new Set<number>([
+  Block.OAK_PLANKS, Block.TILLED, Block.OAK_LOG,
+  Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_POLISHED, Block.STONE_BRICK_CRACKED,
+  ...Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.oriented).map(([id]) => Number(id)),
+]);
+/**
+ * Materiais em faixas levemente inclinadas (nuvens): girar ou espelhar forma losangos/"V".
+ * Ficam na orientação original; o topo contínuo do atlas emenda sem costura.
+ */
+const MIRROR_ONLY = new Set<number>(
+  Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.mirrorOnly).map(([id]) => Number(id)),
+);
+/** Altura da parede interna visível de um buraco. */
+const WALL_H = 13;
+/** Frames sem uso antes de liberar o cache de um chunk. */
+const IDLE_FRAMES = 90;
 
 interface CachedChunk {
   canvas: HTMLCanvasElement;
   version: number;
-  glows: GlowPoint[];
+  lastUsed: number;
 }
 
 /**
- * Pré-renderiza cada chunk em um canvas offscreen (cache invalidado pela
- * `version` do chunk). Desenhar o mundo vira um drawImage por chunk.
+ * Pré-renderiza a camada de CHÃO de cada chunk (com barrancas, espuma, grade
+ * e sombras dos objetos) em um canvas offscreen, invalidado pela `version`.
+ * Objetos e personagem são desenhados por frame, ordenados por profundidade.
  */
 export class ChunkRenderer {
   private readonly cache = new Map<Chunk, CachedChunk>();
   private readonly pool: HTMLCanvasElement[] = [];
+  private frame = 0;
 
   constructor(private readonly world: World, private readonly tex: BlockTextures) {}
 
-  /** Retorna o cache válido; re-renderiza se houver orçamento. */
-  get(chunk: Chunk, allowRender: boolean): CachedChunk | null {
-    const cached = this.cache.get(chunk);
-    if (cached && cached.version === chunk.version) return cached;
-    if (!allowRender) return cached ?? null;
-    const canvas = cached?.canvas ?? this.pool.pop() ?? createChunkCanvas();
-    const glows = this.render(chunk, canvas);
-    const entry = { canvas, version: chunk.version, glows };
-    this.cache.set(chunk, entry);
-    return entry;
-  }
-
-  /** Libera canvases de chunks que não estão mais carregados. */
-  prune(isLoaded: (c: Chunk) => boolean): void {
-    for (const [chunk, entry] of this.cache) {
-      if (!isLoaded(chunk)) {
-        this.cache.delete(chunk);
-        if (this.pool.length < 32) this.pool.push(entry.canvas);
+  beginFrame(): void {
+    this.frame++;
+    if (this.frame % 30 === 0) {
+      for (const [chunk, entry] of this.cache) {
+        if (this.frame - entry.lastUsed > IDLE_FRAMES) {
+          this.cache.delete(chunk);
+          if (this.pool.length < 8) this.pool.push(entry.canvas);
+        }
       }
     }
   }
 
-  private render(chunk: Chunk, canvas: HTMLCanvasElement): GlowPoint[] {
+  /** Marca todos os chunks para redesenhar (ex.: chegou arte que estava carregando em segundo plano). */
+  invalidateAll(): void {
+    for (const entry of this.cache.values()) entry.version = -1;
+  }
+
+  get(chunk: Chunk, allowRender: boolean): HTMLCanvasElement | null {
+    const cached = this.cache.get(chunk);
+    if (cached && cached.version === chunk.version) {
+      cached.lastUsed = this.frame;
+      return cached.canvas;
+    }
+    if (!allowRender) return cached?.canvas ?? null;
+    const canvas = cached?.canvas ?? this.pool.pop() ?? createChunkCanvas();
+    this.render(chunk, canvas);
+    this.cache.set(chunk, { canvas, version: chunk.version, lastUsed: this.frame });
+    return canvas;
+  }
+
+  /**
+   * Borda do mundo limitado: onde o vizinho é céu aberto (VOID), a nuvem ganha
+   * uma orla fofa (embaixo: "barriga" sombreada da nuvem; nas laterais/topo: brilho).
+   */
+  private drawSkyEdges(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, py: number): void {
+    const voidAt = (bx: number, by: number) => this.world.getGround(bx, by) === Block.VOID;
+    if (voidAt(x, y + 1)) {
+      const g = ctx.createLinearGradient(0, py + TILE - 10, 0, py + TILE);
+      g.addColorStop(0, 'rgba(140, 150, 220, 0)');
+      g.addColorStop(1, 'rgba(120, 128, 205, 0.55)');
+      ctx.fillStyle = g;
+      ctx.fillRect(px, py + TILE - 10, TILE, 10);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        ctx.arc(px + 4 + k * 8, py + TILE - 3, 4.2, Math.PI, 0);
+        ctx.fill();
+      }
+    }
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    if (voidAt(x, y - 1)) ctx.fillRect(px, py, TILE, 2);
+    if (voidAt(x - 1, y)) ctx.fillRect(px, py, 2, TILE);
+    if (voidAt(x + 1, y)) ctx.fillRect(px + TILE - 2, py, 2, TILE);
+  }
+
+  /** Buraco: fundo escuro, parede interna ao norte (vista 3/4) e bordas com contorno. */
+  private drawHole(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, py: number): void {
+    const hole = (bx: number, by: number) => this.world.getGround(bx, by) === Block.HOLE;
+    const g = ctx.createLinearGradient(0, py, 0, py + TILE);
+    g.addColorStop(0, '#2b2040');
+    g.addColorStop(1, '#3a2c4a');
+    ctx.fillStyle = g;
+    ctx.fillRect(px, py, TILE, TILE);
+    if (!hole(x, y - 1)) {
+      // Parede de terra visível do lado norte.
+      const wall = ctx.createLinearGradient(0, py, 0, py + WALL_H);
+      wall.addColorStop(0, '#9a6a42');
+      wall.addColorStop(1, '#5e3c2a');
+      ctx.fillStyle = wall;
+      ctx.fillRect(px, py, TILE, WALL_H);
+      ctx.fillStyle = 'rgba(255, 230, 190, 0.35)';
+      ctx.fillRect(px, py, TILE, 1.5);
+      ctx.fillStyle = 'rgba(40, 24, 50, 0.5)';
+      for (let i = 0; i < 3; i++) ctx.fillRect(px + 5 + i * 10, py + 5 + (i % 2) * 4, 3, 2);
+    }
+    ctx.fillStyle = 'rgba(20, 12, 36, 0.55)';
+    if (!hole(x - 1, y)) ctx.fillRect(px, py, 2.5, TILE);
+    if (!hole(x + 1, y)) ctx.fillRect(px + TILE - 2.5, py, 2.5, TILE);
+    if (!hole(x, y + 1)) {
+      ctx.fillStyle = 'rgba(255, 240, 210, 0.4)';
+      ctx.fillRect(px, py + TILE - 1.5, TILE, 1.5);
+    }
+  }
+
+  isFresh(chunk: Chunk): boolean {
+    return this.cache.get(chunk)?.version === chunk.version;
+  }
+
+  private render(chunk: Chunk, canvas: HTMLCanvasElement): void {
     const ctx = canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(TEX_RES, 0, 0, TEX_RES, 0, 0);
+    ctx.clearRect(0, 0, CHUNK_PX, CHUNK_PX);
     const world = this.world;
-    const gen = world.generator;
+    const seed = world.seed;
     const x0 = chunk.cx * CHUNK_SIZE;
     const y0 = chunk.cy * CHUNK_SIZE;
-    const glows: GlowPoint[] = [];
-    const tufts: [number, number, BlockId][] = [];
+    const liquid = (id: BlockId) => blockDef(id).liquid;
 
-    for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-      const x = x0 + lx;
-      const surface = gen.surfaceY(x);
-      const desert = gen.biomeAt(x).key === 'desert';
-      for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        const x = x0 + lx;
         const y = y0 + ly;
         const px = lx * TILE;
-        const py = CHUNK_PAD_TOP + ly * TILE;
-        let id = chunk.get(lx, ly);
-        const def = blockDef(id);
-        const depth = y - surface;
-        const above = world.getBlock(x, y - 1);
-        const aboveDef = blockDef(above);
-
-        // 1) Parede de fundo em cavernas (atrás de ar, água, folhas, enfeites).
-        if (!def.opaque && depth > 0) {
-          const wallId = depth <= 4 ? (desert ? Block.SANDSTONE : Block.DIRT) : Block.STONE;
-          ctx.drawImage(this.tex.wall.get(wallId)!, px, py);
+        const py = ly * TILE;
+        const g = chunk.getGround(lx, ly);
+        const h = hash2(seed, x, y);
+        if (g === Block.HOLE) {
+          this.drawHole(ctx, x, y, px, py);
+        } else if (g === Block.WATER) {
+          const w = this.tex.water;
+          ctx.drawImage(w[Math.floor(h * w.length) % w.length], px, py, TILE, TILE);
+        } else {
+          // Material como chão: topo da arte da prancha. Materiais naturais giram/espelham
+          // por célula para o padrão não repetir; piso, tora e arado mantêm a orientação.
+          const top = this.tex.groundTop.get(g);
+          if (top) {
+            if (ORIENTED.has(g)) {
+              ctx.drawImage(top, px, py, TILE, TILE);
+            } else {
+              const turn = MIRROR_ONLY.has(g) ? 0 : Math.floor(h * 4);
+              const flip = !MIRROR_ONLY.has(g) && hash2(seed, x + 17, y - 5) < 0.5 ? -1 : 1;
+              ctx.save();
+              ctx.translate(px + TILE / 2, py + TILE / 2);
+              ctx.rotate((turn * Math.PI) / 2);
+              ctx.scale(flip, 1);
+              ctx.drawImage(top, -TILE / 2, -TILE / 2, TILE, TILE);
+              ctx.restore();
+            }
+          }
         }
 
-        // 2) Grama coberta por bloco opaco vira terra.
-        if ((id === Block.GRASS || id === Block.ENCHANTED_GRASS) && aboveDef.opaque) id = Block.DIRT;
+        if (g !== Block.VOID && g !== Block.HOLE) this.drawSkyEdges(ctx, x, y, px, py);
 
-        const t = this.tex.tile.get(id);
-        if (t) ctx.drawImage(t, px, py);
-
-        // 3) Sombra de contato sob blocos sólidos (oclusão de ambiente).
-        if (!def.solid && aboveDef.solid && aboveDef.opaque) {
-          const g = ctx.createLinearGradient(0, py, 0, py + 12);
-          g.addColorStop(0, 'rgba(20, 14, 48, 0.42)');
-          g.addColorStop(1, 'rgba(20, 14, 48, 0)');
-          ctx.fillStyle = g;
-          ctx.fillRect(px, py, TILE, 12);
+        if (liquid(g)) {
+          // Barranca: o chão ao norte parece mais alto que a água.
+          const north = world.getGround(x, y - 1);
+          if (!liquid(north)) {
+            const bank = this.tex.bankColor.get(north) ?? '#9a6a42';
+            const grad = ctx.createLinearGradient(0, py, 0, py + BANK_H);
+            grad.addColorStop(0, bank);
+            grad.addColorStop(1, rgba(bank, 0.75));
+            ctx.fillStyle = grad;
+            ctx.fillRect(px, py, TILE, BANK_H);
+            ctx.fillStyle = 'rgba(30, 20, 60, 0.35)';
+            ctx.fillRect(px, py + BANK_H, TILE, 3);
+          }
+          // Espuma nas margens laterais e sul.
+          ctx.fillStyle = 'rgba(235, 252, 255, 0.7)';
+          if (!liquid(world.getGround(x - 1, y))) ctx.fillRect(px, py, 2, TILE);
+          if (!liquid(world.getGround(x + 1, y))) ctx.fillRect(px + TILE - 2, py, 2, TILE);
+          if (!liquid(world.getGround(x, y + 1))) ctx.fillRect(px, py + TILE - 2, TILE, 2);
         }
 
-        // Bordas expostas ganham traço mais forte (silhueta do terreno).
-        if (def.solid && def.opaque) this.exposedEdges(ctx, x, y, px, py);
+        // Grade sutil de blocos.
+        ctx.fillStyle = 'rgba(40, 30, 80, 0.07)';
+        ctx.fillRect(px, py, TILE, 1);
+        ctx.fillRect(px, py, 1, TILE);
 
-        // 4) Escurecimento por profundidade (exceto blocos luminosos).
-        if (depth > 3 && !def.glow) {
-          const a = Math.min(0.6, (depth - 3) / 30);
-          ctx.fillStyle = `rgba(14, 10, 34, ${a})`;
-          ctx.fillRect(px, py, TILE, TILE);
+        // Sombra projetada pelos objetos (luz de cima-esquerda → sombra ao sul/leste).
+        const obj = blockDef(chunk.getObject(lx, ly));
+        if (obj.shape === 'cube') {
+          // Pilhas mais altas projetam sombra maior.
+          const tall = 1 + 0.45 * (chunk.filledLevels(lx, ly) - 1);
+          ctx.fillStyle = `rgba(30, 20, 70, ${0.26 * tall})`;
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.6 + (tall - 1) * 6, py + TILE - 1, TILE * 0.55 * tall, 6 * tall, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obj.shape === 'rock' && obj.id !== Block.TENT_PART) {
+          ctx.fillStyle = 'rgba(30, 20, 70, 0.28)';
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.55, py + TILE - 3, TILE * 0.62, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obj.shape === 'door') {
+          // Porta: sombra estreita ao pé (fechada) — aberta, só a lâmina de lado.
+          ctx.fillStyle = 'rgba(30, 20, 70, 0.22)';
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.55, py + TILE - 2, TILE * (obj.solid ? 0.55 : 0.25), 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obj.shape === 'tree') {
+          ctx.fillStyle = 'rgba(30, 20, 70, 0.24)';
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.62, py + TILE * 0.82, TILE * 0.75, TILE * 0.32, 0, 0, Math.PI * 2);
+          ctx.fill();
         }
-
-        if (def.glow) {
-          const color = this.tex.glowColor.get(id);
-          if (color) glows.push({ x: x + 0.5, y: y + 0.5, color });
-        }
-        if (this.tex.tufts.has(id) && above === Block.AIR) tufts.push([px, py, id]);
       }
-    }
-
-    // 5) Tufos de grama transbordando para a célula de cima (por último, por cima de tudo).
-    for (const [px, py, id] of tufts) {
-      const tuft = this.tex.tufts.get(id)!;
-      ctx.drawImage(tuft, px, py - tuft.height + 2);
-    }
-    return glows;
-  }
-
-  private exposedEdges(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, py: number): void {
-    const open = (bx: number, by: number) => !blockDef(this.world.getBlock(bx, by)).opaque;
-    ctx.fillStyle = 'rgba(30, 20, 60, 0.55)';
-    if (open(x - 1, y)) ctx.fillRect(px, py, 1.5, TILE);
-    if (open(x + 1, y)) ctx.fillRect(px + TILE - 1.5, py, 1.5, TILE);
-    if (open(x, y + 1)) ctx.fillRect(px, py + TILE - 1.5, TILE, 1.5);
-    if (open(x, y - 1)) {
-      ctx.fillStyle = 'rgba(255, 250, 230, 0.35)';
-      ctx.fillRect(px + 2, py + 1, TILE - 4, 1);
     }
   }
 }
 
 function createChunkCanvas(): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = CHUNK_PX;
-  c.height = CHUNK_PX + CHUNK_PAD_TOP;
+  c.width = CHUNK_PX * TEX_RES;
+  c.height = CHUNK_PX * TEX_RES;
   return c;
 }

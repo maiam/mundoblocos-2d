@@ -1,22 +1,22 @@
 /**
  * Constantes globais do mundo. Fonte única para dimensões de bloco/chunk.
- * Coordenadas: x cresce para a direita, y cresce para BAIXO (convenção de canvas).
+ * Vista superior inclinada (3/4): x → direita, y → para baixo na tela (= "sul" no mapa).
  */
 
-/** Tamanho de um bloco em pixels no zoom 1. */
+/** Tamanho de uma célula em pixels de mundo (zoom 1). */
 export const TILE = 32;
 
-/** Lado de um chunk em blocos (chunks são 16×16, como as seções do Minecraft). */
+/** Altura visível da face frontal de um cubo (efeito 3/4), em pixels de mundo. */
+export const CUBE_FRONT = 18;
+
+/** Máximo de cubos empilhados numa célula. */
+export const MAX_STACK = 3;
+
+/** Quantos níveis o personagem consegue subir de uma vez. */
+export const STEP_HEIGHT = 1;
+
+/** Lado de um chunk em células (chunks 16×16, como no Minecraft). */
 export const CHUNK_SIZE = 16;
-
-/** Nível do mar (em blocos). Colunas cujo terreno fica abaixo disso viram lagos. */
-export const SEA_LEVEL = 4;
-
-/** Linha da rocha-mãe (indestrutível). Abaixo dela só existe rocha-mãe. */
-export const BEDROCK_Y = 120;
-
-/** Acima desta linha o mundo é sempre ar (otimização de geração). */
-export const SKY_LIMIT_Y = -64;
 
 /** Chunks extras carregados ao redor da área visível. */
 export const LOAD_MARGIN = 1;

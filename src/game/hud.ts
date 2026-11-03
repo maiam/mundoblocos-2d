@@ -1,113 +1,180 @@
-/** Interface HTML sobreposta ao canvas. Apenas apresentação; estado vem do Game. */
-
-export type ActionMode = 'break' | 'place';
-
-export interface HudState {
-  seed: number;
-  block: [number, number];
-  chunk: [number, number];
-  biome: string;
-  loaded: number;
-  fps: number;
-  zoom: number;
-  time: number;
-  selected: number;
-  selectedName: string;
-  mode: ActionMode;
-  chunkBorders: boolean;
-  hoverName: string | null;
+/**
+ * Interface mínima sobre o canvas: a grade (hotbar) na parte inferior — 8 espaços + bolsa no 9º no mundo com
+ * coleta — e os corações no canto. Apresentação pura; o estado vem do Game.
+ */
+/** O que um espaço da grade mostra (null = vazio). `count` null = infinito (sem número). */
+export interface SlotView {
+  icon: string;
+  name: string;
+  count: number | null;
 }
 
 export interface HudHandlers {
-  icons: string[];
+  /** Quantidade de espaços da grade. */
+  slots: number;
   onSelect(i: number): void;
-  onToggleChunks(): void;
-  onNewWorld(): void;
-  onToggleMode(): void;
-  onSkipTime(): void;
+  /** Mundo com coleta: personagem (10), habilidades (11) e bolsa (12) depois dos 9 itens, após um separador. */
+  menu?: { character: string; skills: string; bag: string; onSkills(): void; onBag(): void };
+  /** Vida máxima em meios corações (0 = sem corações neste mundo). */
+  maxHp?: number;
 }
 
-const PERIODS: [number, string][] = [
-  [0.22, 'Noite'],
-  [0.3, 'Aurora'],
-  [0.7, 'Dia'],
-  [0.8, 'Crepúsculo'],
-  [1.01, 'Noite'],
-];
-
-function periodName(t: number): string {
-  return PERIODS.find(([limit]) => t < limit)![1];
-}
+const HEART = (fill: 'full' | 'half' | 'empty') => `<svg viewBox="0 0 24 22" aria-hidden="true"><defs><clipPath id="hh"><rect width="12" height="22"/></clipPath></defs>
+<path d="M12 21 2.6 11.8A5.6 5.6 0 0 1 12 4.2a5.6 5.6 0 0 1 9.4 7.6Z" fill="#3a2350" stroke="#1c1030" stroke-width="1.6"/>
+${fill === 'empty' ? '' : `<path ${fill === 'half' ? 'clip-path="url(#hh)"' : ''} d="M12 21 2.6 11.8A5.6 5.6 0 0 1 12 4.2a5.6 5.6 0 0 1 9.4 7.6Z" fill="#ff5c7a"/>
+<path ${fill === 'half' ? 'clip-path="url(#hh)"' : ''} d="M6.5 7.5c1.2-1.4 3-1.2 3.8.2" fill="none" stroke="#ffd0da" stroke-width="1.6" stroke-linecap="round"/>`}</svg>`;
 
 export class Hud {
-  private readonly root: HTMLElement;
-  private readonly fields: Record<string, HTMLElement> = {};
+  readonly root: HTMLElement;
   private readonly slots: HTMLButtonElement[] = [];
-  private readonly btnChunks: HTMLButtonElement;
-  private readonly btnMode: HTMLButtonElement;
-  private last = '';
+  private readonly bagButton: HTMLButtonElement | null = null;
+  private readonly skillsButton: HTMLButtonElement | null = null;
+  /** Painel acima dos 9 itens (mesma largura): bolsa ou receitas. */
+  readonly bagSection: HTMLElement;
+  readonly recipesSection: HTMLElement;
+  /** Baú aberto (3×9), acima da bolsa. */
+  readonly chestSection: HTMLElement;
+  private readonly toastEl: HTMLElement;
+  private toastTimer = 0;
+  /** Card acima dos 3 botões do menu: profissões. */
+  readonly professionsSection: HTMLElement;
+  private selected = -1;
+  private views: string[] = [];
+  private readonly hearts: HTMLElement;
+  private lastHp = -1;
+  private readonly maxHp: number;
 
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
-    this.root.innerHTML = `
-      <section class="panel info">
-        <h1>Mundo<span>Blocos</span></h1>
-        <dl>
-          <dt>Bioma</dt><dd data-f="biome"></dd>
-          <dt>Bloco</dt><dd data-f="block"></dd>
-          <dt>Chunk</dt><dd data-f="chunk"></dd>
-          <dt>Chunks carregados</dt><dd data-f="loaded"></dd>
-          <dt>Período</dt><dd data-f="time"></dd>
-          <dt>Seed</dt><dd data-f="seed"></dd>
-          <dt>FPS</dt><dd data-f="fps"></dd>
-        </dl>
-      </section>
-      <section class="panel actions">
-        <button data-a="chunks" title="Mostrar/ocultar bordas dos chunks (G)">Chunks <kbd>G</kbd></button>
-        <button data-a="mode" title="Alternar quebrar/colocar (F)"></button>
-        <button data-a="time" title="Avançar período do dia (T)">Tempo <kbd>T</kbd></button>
-        <button data-a="new" title="Gerar um novo mundo">Novo mundo</button>
-      </section>
-      <div class="tooltip" data-f="hover"></div>
-      <nav class="hotbar"></nav>
-      <p class="help">WASD/setas: mover · arrastar: mover · roda/Q/E: zoom · clique esq.: quebrar · clique dir.: colocar · 1–9: bloco</p>
-    `;
-    document.body.appendChild(this.root);
-    this.root.querySelectorAll<HTMLElement>('[data-f]').forEach((el) => (this.fields[el.dataset.f!] = el));
-    const hotbar = this.root.querySelector('.hotbar')!;
-    h.icons.forEach((src, i) => {
+    // Cartão em grade: coluna esquerda = painel de cima (bolsa/receitas) + 9 itens; coluna direita = profissões +
+    // personagem/habilidades/bolsa. Separador vertical entre os 9 itens e os botões.
+    const card = document.createElement('nav');
+    card.className = 'hotbar';
+    card.setAttribute('aria-label', 'Grade');
+    const panel = (cls: string) => { const e = document.createElement('div'); e.className = `panel-section ${cls}`; e.hidden = true; return e; };
+    this.bagSection = panel('bag-section');
+    this.recipesSection = panel('recipes-section');
+    this.chestSection = panel('chest-section');
+    this.professionsSection = panel('professions-section');
+    const top = document.createElement('div');
+    top.className = 'hotbar-top';
+    top.append(this.chestSection, this.bagSection, this.recipesSection);
+    card.append(top, this.professionsSection);
+    const hotbar = document.createElement('div');
+    hotbar.className = 'hotbar-row hand';
+    card.appendChild(hotbar);
+    for (let i = 0; i < h.slots; i++) {
       const b = document.createElement('button');
       b.className = 'slot';
-      b.innerHTML = `<img alt="" src="${src}"><span>${i + 1}</span>`;
+      b.innerHTML = '<img alt=""><span class="count" hidden></span>';
       b.addEventListener('click', () => h.onSelect(i));
       hotbar.appendChild(b);
       this.slots.push(b);
-    });
-    const btn = (a: string) => this.root.querySelector<HTMLButtonElement>(`[data-a="${a}"]`)!;
-    this.btnChunks = btn('chunks');
-    this.btnMode = btn('mode');
-    this.btnChunks.addEventListener('click', h.onToggleChunks);
-    this.btnMode.addEventListener('click', h.onToggleMode);
-    btn('time').addEventListener('click', h.onSkipTime);
-    btn('new').addEventListener('click', h.onNewWorld);
+    }
+    if (h.menu) {
+      const m = h.menu;
+      const menu = document.createElement('div');
+      menu.className = 'hotbar-row menu-row';
+      const btn = (cls: string, icon: string, title: string, label: string, onClick?: () => void) => {
+        const b = document.createElement('button');
+        b.className = `slot ${cls}`;
+        b.title = title;
+        b.setAttribute('aria-label', label);
+        b.innerHTML = `<img alt="" src="${icon}">`;
+        if (onClick) b.addEventListener('click', onClick);
+        else b.setAttribute('aria-disabled', 'true');
+        menu.appendChild(b);
+        return b;
+      };
+      btn('ui character', m.character, 'Personagem (em breve)', 'Personagem (em breve)');
+      this.skillsButton = btn('ui skills', m.skills, 'Habilidades (K)', 'Abrir ou fechar habilidades e receitas', m.onSkills);
+      this.bagButton = btn('ui bag', m.bag, 'Bolsa (B)', 'Abrir ou fechar a bolsa', m.onBag);
+      card.appendChild(menu);
+      card.classList.add('with-menu');
+    }
+    this.root.appendChild(card);
+    this.maxHp = h.maxHp ?? 0;
+    const status = document.createElement('div');
+    status.className = 'status';
+    this.hearts = document.createElement('div');
+    this.hearts.className = 'hearts';
+    this.hearts.setAttribute('role', 'img');
+    status.appendChild(this.hearts);
+    this.root.appendChild(status);
+    this.toastEl = document.createElement('div');
+    this.toastEl.className = 'toast';
+    this.toastEl.setAttribute('role', 'status');
+    this.toastEl.setAttribute('aria-live', 'polite');
+    this.root.appendChild(this.toastEl);
+    document.body.appendChild(this.root);
   }
 
-  update(s: HudState): void {
-    const key = JSON.stringify([s.block, s.biome, s.loaded, s.fps, s.selected, s.mode, s.chunkBorders, s.hoverName, periodName(s.time)]);
-    if (key === this.last) return;
-    this.last = key;
-    this.fields.biome.textContent = s.biome;
-    this.fields.block.textContent = `${s.block[0]}, ${s.block[1]}`;
-    this.fields.chunk.textContent = `${s.chunk[0]}, ${s.chunk[1]}`;
-    this.fields.loaded.textContent = String(s.loaded);
-    this.fields.time.textContent = periodName(s.time);
-    this.fields.seed.textContent = String(s.seed);
-    this.fields.fps.textContent = String(s.fps);
-    this.fields.hover.textContent = s.hoverName && s.hoverName !== 'Ar' ? s.hoverName : '';
-    this.slots.forEach((b, i) => b.classList.toggle('active', i === s.selected));
-    this.btnChunks.classList.toggle('on', s.chunkBorders);
-    this.btnMode.innerHTML = s.mode === 'break' ? 'Quebrar <kbd>F</kbd>' : `Colocar: ${s.selectedName} <kbd>F</kbd>`;
+  /** Conteúdo dos espaços (só redesenha o que mudou). */
+  setSlots(views: (SlotView | null)[]): void {
+    views.forEach((v, i) => {
+      const key = v ? `${v.icon}|${v.name}|${v.count}` : '';
+      if (key === this.views[i] || !this.slots[i]) return;
+      this.views[i] = key;
+      const b = this.slots[i];
+      const img = b.querySelector('img')!;
+      const badge = b.querySelector<HTMLElement>('.count')!;
+      b.classList.toggle('vacant', !v);
+      b.title = v ? `${v.name} (${i + 1})` : `Espaço ${i + 1} vazio`;
+      b.setAttribute('aria-label', v ? v.name : `Espaço ${i + 1} vazio`);
+      img.hidden = !v;
+      if (v && img.getAttribute('src') !== v.icon) img.src = v.icon;
+      badge.hidden = !v || v.count === null;
+      badge.textContent = v && v.count !== null ? String(v.count) : '';
+      b.classList.toggle('empty', !!v && v.count === 0);
+    });
+  }
+
+  update(selected: number): void {
+    if (selected === this.selected) return;
+    this.selected = selected;
+    this.slots.forEach((b, i) => b.classList.toggle('active', i === selected));
+  }
+
+  /** Destaca a bolsa aberta e os espaços como alvo de troca. */
+  setBagOpen(open: boolean): void {
+    this.bagButton?.classList.toggle('active', open);
+    this.root.classList.toggle('bag-open', open);
+  }
+
+  /** Destaca habilidades aberta (receitas + profissões). */
+  setSkillsOpen(open: boolean): void {
+    this.skillsButton?.classList.toggle('active', open);
+    this.root.classList.toggle('skills-open', open);
+  }
+
+  /** Vida em meios corações; `visible` mostra a fileira (ferida ou na dungeon). */
+  setHealth(hp: number, visible: boolean): void {
+    this.hearts.classList.toggle('shown', visible && this.maxHp > 0);
+    if (hp === this.lastHp || this.maxHp === 0) return;
+    this.lastHp = hp;
+    const html: string[] = [];
+    for (let i = 0; i < this.maxHp / 2; i++) html.push(HEART(hp >= i * 2 + 2 ? 'full' : hp === i * 2 + 1 ? 'half' : 'empty'));
+    this.hearts.innerHTML = html.join('');
+    this.hearts.setAttribute('aria-label', `Vida: ${hp / 2} de ${this.maxHp / 2} corações`);
+  }
+
+  /** Mensagem curta no alto da tela (some sozinha em ~2,5 s). */
+  toast(text: string): void {
+    this.toastEl.textContent = text;
+    this.toastEl.classList.add('shown');
+    window.clearTimeout(this.toastTimer);
+    this.toastTimer = window.setTimeout(() => this.toastEl.classList.remove('shown'), 2500);
+  }
+
+  /** Marca o espaço da mão escolhido para levar ao baú (-1 = nenhum). */
+  setHandPicked(i: number): void {
+    this.slots.forEach((b, k) => b.classList.toggle('picked', k === i));
+  }
+
+  /** Baú aberto: destaca e ativa o modo de troca. */
+  setChestOpen(open: boolean): void {
+    this.root.classList.toggle('chest-open', open);
   }
 
   destroy(): void {
