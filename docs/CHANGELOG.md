@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.35.1 — 2026-11-03
+- **Correção: "Novo mundo" (e "Recomeçar") não faziam nada no Artifact.** A confirmação usava `window.confirm`, que o
+  iframe do Artifact bloqueia (devolve "não" sem mostrar a janela). Agora a confirmação é no próprio menu: o botão
+  fica vermelho ("Toque de novo para criar") e o segundo toque, em até 5 s, executa. Ao abrir o mundo novo aparece
+  "Novo mundo criado · semente N" — todo mundo começa na mesma cidade, então sem aviso parecia que nada mudou.
+
 ## 0.35.0 — 2026-11-03
 - **Cidade do Despertar** (Cidade 1, `world/town.ts`, ADR 0012, `domains/town.md`): cidade medieval fortificada de
   108 × 78 blocos, **igual em qualquer seed** (procedural com semente própria fixa), onde todo jogador começa e para

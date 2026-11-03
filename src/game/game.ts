@@ -37,6 +37,8 @@ export interface GameOptions {
   store?: SaveStore;
   onNewWorld?(): void;
   onRestart?(): void;
+  /** Aviso curto mostrado ao abrir (ex.: "Novo mundo criado"). */
+  notice?: string;
 }
 
 /**
@@ -160,6 +162,7 @@ export class Game {
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
     this.bindInput();
+    if (options.notice) this.hud.toast(options.notice);
     requestAnimationFrame(this.frame);
   }
 

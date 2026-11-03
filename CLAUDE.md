@@ -69,6 +69,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
   (`toolCanBreak` em `world/items.ts`), o toque no chão de `TOOLS[tool].groundUse` e o drop de `toolDrops` — não
   espalhe `if (ferramenta === …)` pelo `Game`.
 - Os dois artefatos usam o mesmo `dist/`: gere o build do mundo imediatamente antes de publicá-lo.
+- **Nunca use `window.confirm/alert/prompt`**: o iframe do Artifact bloqueia e devolve falso sem mostrar nada (o botão
+  "Novo mundo" já parou assim). Confirme na própria UI (ex.: tocar de novo, `Menu.ask`).
 - Testes no navegador: Playwright já instalado (`require('playwright')`); use `window.__game` no dev.
 
 ## 5. Ao terminar (definição de pronto)

@@ -28,6 +28,9 @@ A cada 10 s de jogo, ao esconder a aba, ao sair da página, ao abrir o menu e ao
 
 ## Menu (☰, canto superior direito)
 Continuar · Novo mundo (o atual continua salvo) · Recomeçar este mundo (apaga só o salvamento desta seed).
+Novo mundo e Recomeçar pedem **confirmação no próprio botão** (tocar de novo em até 5 s) — nunca `window.confirm`,
+que o iframe do Artifact bloqueia sem mostrar nada. Depois, um aviso na tela confirma ("Novo mundo criado ·
+semente N" / "Mundo recomeçado do zero"): como todo mundo começa na Cidade do Despertar, sem o aviso parecia que nada mudou.
 Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
 
 ## Ao carregar

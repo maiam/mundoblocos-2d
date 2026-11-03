@@ -17,7 +17,7 @@ let game: Game | null = null;
 const store = new SaveStore(profile.id);
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
 
-function start(seed: number): void {
+function start(seed: number, notice?: string): void {
   game?.destroy(); // salva o mundo que estava aberto
   const url = new URL(window.location.href);
   url.searchParams.set('seed', String(seed));
@@ -25,12 +25,17 @@ function start(seed: number): void {
   game = new Game(canvas, seed, screenMode, profile, {
     save: store.load(seed),
     store,
-    onNewWorld: () => start(randomSeed()),
+    notice,
+    // Toda seed começa na Cidade do Despertar (igual em todas): o aviso confirma que o mundo é outro.
+    onNewWorld: () => {
+      const next = randomSeed();
+      start(next, `Novo mundo criado · semente ${next}`);
+    },
     onRestart: () => {
       game?.destroy();
       game = null;
       store.clear(seed);
-      start(seed);
+      start(seed, 'Mundo recomeçado do zero');
     },
   });
   // Só em desenvolvimento: acesso para testes automatizados no navegador.

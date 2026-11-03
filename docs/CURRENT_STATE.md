@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.35.0_
+_Atualizado em 2026-11-03 — v0.35.1_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -69,7 +69,7 @@ _Atualizado em 2026-11-03 — v0.35.0_
 
 ## Salvamento
 - **Automático no navegador** (a cada 10 s, ao esconder/sair): mapa editado, plantações, heroína, inventário,
-  ovelhas, aranhas e hora do dia; um salvamento por mundo e seed. Menu ☰: continuar, novo mundo, recomeçar.
+  ovelhas, aranhas e hora do dia; um salvamento por mundo e seed. Menu ☰: continuar, novo mundo, recomeçar (confirmação tocando de novo no botão; aviso com a semente nova).
   Ver `domains/save.md`.
 
 ## Limitações conhecidas
