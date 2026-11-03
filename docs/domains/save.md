@@ -3,7 +3,7 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 4)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 5)
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
@@ -41,6 +41,8 @@ Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
 - v1 → v2 (coleta): ganha as ferramentas e 1 porta no inventário e a grade inicial.
 - v2 → v3 (receitas): grade da mão com 9 espaços (9º vazio) e `tent: null`.
 - v3 → v4 (baú): `chests: []`.
+- v4 → v5 (vida com números, Fase P): vida da heroína de meios corações (máx. 10) para pontos (×10 da vida máxima) e
+  vida das aranhas de golpes para pontos, na mesma proporção (`MONSTER_STATS`).
 
 ## Regras para quem mexer
 - Estado novo que deva persistir → campo em `SaveData` + `captureSave/applySave` + teste de ida e volta.

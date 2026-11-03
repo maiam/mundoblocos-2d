@@ -1,6 +1,7 @@
 import { CUBE_FRONT, TILE } from '../config';
 import { Block } from '../world/blocks';
 import { hash2 } from '../world/random';
+import { type Hit, MONSTER_STATS, rollDamage, weaponPower } from '../world/progression';
 import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
@@ -69,6 +70,8 @@ export class Entities {
   readonly respawns: Array<{ kind: MonsterKind; x: number; y: number; bounds: Rect; timer: number }> = [];
   /** Chamado quando um monstro é derrotado (o Game solta os espólios). */
   onMonsterKilled: ((m: Monster) => void) | null = null;
+  /** Dano que entrou (para os números na tela): onde, quanto, se foi crítico e em quem ('enemy' ou 'player'). */
+  onDamage: ((x: number, y: number, hit: Hit, target: 'enemy' | 'player') => void) | null = null;
   /** Mapa de distâncias (passos) até a personagem dentro da dungeon; null fora dela. */
   private flow: Int32Array | null = null;
   private flowArea: Rect | null = null;
@@ -127,7 +130,9 @@ export class Entities {
     // Mordidas: monstro encostado e pronto morde (a personagem fica invencível por um instante).
     if (!this.player.dead) {
       for (const m of this.monsters) {
-        if (m.tryBite(this.player)) this.player.hurt(MONSTERS[m.kind].damage, m.x, m.y, world, this.blocker);
+        if (!m.tryBite(this.player)) continue;
+        const hit = rollDamage(MONSTER_STATS[m.kind].attack, this.player.stats.defense, this.rand);
+        if (this.player.hurt(hit.amount, m.x, m.y, world, this.blocker)) this.onDamage?.(this.player.x, this.player.y, hit, 'player');
       }
     }
     for (let i = this.dying.length - 1; i >= 0; i--) {
@@ -226,17 +231,21 @@ export class Entities {
 
   /**
    * Golpe (espada ou machado): aplica o acerto a cada alvo no arco e retorna quantos foram atingidos.
-   * Animais somem (sem animação de morte ainda). Monstros perdem 1 de vida, piscam e recuam; sem vida, somem.
+   * Animais somem (sem animação de morte ainda). Monstros levam o dano da fórmula (ataque + poder da arma − defesa,
+   * com variação e crítico — `world/progression.ts`), piscam e recuam; sem vida, somem.
    */
-  strike(facing: Facing, world?: World): number {
+  strike(facing: Facing, world?: World, tool: ToolId | null = this.player.attackTool ?? this.player.equipped): number {
+    const attack = this.player.stats.attack + weaponPower(tool);
     const hit = this.strikeTargets(facing);
     for (const s of hit) {
       if (!(s instanceof Monster)) {
         this.removeAnimal(s);
         continue;
       }
-      if (world) s.takeHit(this.player.x, this.player.y, world, this.blocker);
-      else s.hp -= 1;
+      const dmg = rollDamage(attack, MONSTER_STATS[s.kind].defense, this.rand);
+      if (world) s.takeHit(dmg.amount, this.player.x, this.player.y, world, this.blocker);
+      else s.hp -= dmg.amount;
+      this.onDamage?.(s.x, s.y, dmg, 'enemy');
       if (s.dead) this.killMonster(s);
     }
     return hit.length;

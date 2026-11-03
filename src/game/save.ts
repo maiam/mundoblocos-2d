@@ -1,4 +1,5 @@
 import type { MonsterKind } from '../world/dungeon';
+import { BASE_STATS, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
 import { Block } from '../world/blocks';
 import { startingGrid } from './hotbar';
@@ -19,7 +20,7 @@ import type { Facing } from './walker';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface SaveData {
   v: number;
@@ -102,21 +103,43 @@ export function captureSave(s: GameState): SaveData {
  * não havia o que salvar deles) e a grade volta ao layout inicial.
  */
 export function migrate(raw: unknown): SaveData | null {
-  const d = raw as (SaveData & { v: number }) | null;
+  let d = raw as (SaveData & { v: number }) | null;
   if (!d || typeof d !== 'object') return null;
+  d = upToV4(d);
+  if (!d) return null;
+  // v4 → v5 (Fase P, vida e dano com números): vida da heroína de meios corações (máx. 10) para pontos, e vida dos
+  // monstros de golpes para pontos — na mesma proporção.
+  if (d.v === 4) {
+    const OLD_MONSTER_HP: Record<MonsterKind, number> = { 'spider-small': 2, 'spider-big': 4, 'spider-boss': 14 };
+    d = {
+      ...d, v: 5,
+      player: { ...d.player, hp: Math.round((d.player.hp / 10) * BASE_STATS.maxHp) },
+      dungeon: d.dungeon && {
+        ...d.dungeon,
+        monsters: d.dungeon.monsters.map((m) => ({
+          ...m, hp: Math.max(1, Math.round((m.hp / OLD_MONSTER_HP[m.kind]) * MONSTER_STATS[m.kind].hp)),
+        })),
+      },
+    };
+  }
+  return d.v === SAVE_VERSION ? d : null;
+}
+
+/** Migrações antigas até o formato v4. */
+function upToV4(d: SaveData & { v: number }): SaveData & { v: number } {
   if (d.v === 1) {
     const inventory: Partial<Record<StackId, number>> = { ...d.inventory };
     if (d.world === 'principal') {
       for (const t of ['sword', 'hoe', 'pickaxe', 'shovel', 'axe']) inventory[`tool:${t}`] = 1;
       inventory[`block:${Block.OAK_DOOR}`] = 1;
     }
-    return { ...d, v: SAVE_VERSION, inventory, hotbar: d.world === 'principal' ? startingGrid() : null, selected: null, tent: null, chests: [] };
+    return { ...d, v: 4, inventory, hotbar: d.world === 'principal' ? startingGrid() : null, selected: null, tent: null, chests: [] };
   }
   // v2 → v3: grade da mão com 9 espaços (o 9º vazio) e tenda.
-  if (d.v === 2) return { ...d, v: SAVE_VERSION, hotbar: d.hotbar ? [...d.hotbar.slice(0, 8), null] : null, tent: null, chests: [] };
+  if (d.v === 2) return { ...d, v: 4, hotbar: d.hotbar ? [...d.hotbar.slice(0, 8), null] : null, tent: null, chests: [] };
   // v3 → v4: baús.
-  if (d.v === 3) return { ...d, v: SAVE_VERSION, chests: [] };
-  return d.v === SAVE_VERSION ? d : null;
+  if (d.v === 3) return { ...d, v: 4, chests: [] };
+  return d;
 }
 
 /**
@@ -133,7 +156,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.x = d.player.x;
   p.y = d.player.y;
   p.z = p.visualZ = d.player.z;
-  p.hp = Math.max(1, d.player.hp);
+  p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;

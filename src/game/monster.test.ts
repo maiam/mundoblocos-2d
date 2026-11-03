@@ -1,9 +1,10 @@
+import { MONSTER_STATS } from '../world/progression';
 import { describe, expect, it } from 'vitest';
 import { inRect } from '../world/dungeon';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities } from './entities';
-import { Monster, MONSTERS } from './monster';
+import { Monster } from './monster';
 import { Player } from './player';
 
 function setup(seed = 42) {
@@ -39,21 +40,23 @@ describe('Monstros da dungeon', () => {
     expect(Math.hypot(p.x - small.x, p.y - small.y)).toBeLessThan(before);
   });
 
-  it('golpe tira 1 de vida, pisca e empurra; sem vida, o monstro some. Chefe aguenta mais', () => {
+  it('golpe tira vida pela fórmula, pisca e empurra; sem vida, o monstro some. Chefe aguenta mais', () => {
     const { w, d, p, e } = setup();
     const boss = e.monsters.find((m) => m.kind === 'spider-boss')!;
-    expect(boss.maxHp).toBeGreaterThan(MONSTERS['spider-big'].hp);
+    expect(boss.maxHp).toBeGreaterThan(MONSTER_STATS['spider-big'].hp);
     p.x = boss.x;
     p.y = boss.y - 1.2;
     p.facing = 'down';
     let hits = 0;
     while (e.monsters.includes(boss) && hits < 50) {
       p.x = boss.x; p.y = boss.y - 1.2; // segue o chefe (o golpe o empurra)
-      expect(e.strike('down', w)).toBeGreaterThan(0);
+      expect(e.strike('down', w, 'sword')).toBeGreaterThan(0);
       hits++;
       if (e.monsters.includes(boss)) expect(boss.hurt).toBeGreaterThan(0);
     }
-    expect(hits).toBe(MONSTERS['spider-boss'].hp);
+    // Espada: ataque 5 + 12 − defesa 6 = 11 por golpe (±10%, crítico às vezes) contra 180 de vida → ~14–20 golpes.
+    expect(hits).toBeGreaterThanOrEqual(12);
+    expect(hits).toBeLessThanOrEqual(20);
     expect(e.monsters).toHaveLength(d.spawns.length - 1);
     void d;
   });

@@ -3,8 +3,11 @@ import { monsterDrops } from '../world/items';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities } from './entities';
+import { BASE_STATS, MONSTER_STATS, REGEN } from '../world/progression';
 import { MONSTERS } from './monster';
-import { HURT_INVULN_S, MAX_HP, Player, REGEN_DELAY_S, REGEN_EVERY_S } from './player';
+import { HURT_INVULN_S, Player } from './player';
+
+const MAX_HP = BASE_STATS.maxHp;
 
 function setup(seed = 42) {
   const w = new World(seed);
@@ -30,23 +33,23 @@ describe('Combate — espólios', () => {
 });
 
 describe('Combate — vida da heroína', () => {
-  it('dano tira meios corações, invencibilidade curta, regenera fora de combate e renasce cheia', () => {
+  it('dano tira pontos de vida, invencibilidade curta, regenera fora de combate e renasce cheia', () => {
     const w = new World(7);
     const [sx, sy] = w.outsideGate();
     const p = new Player(sx + 0.5, sy + 0.5);
     expect(p.hp).toBe(MAX_HP);
-    expect(p.hurt(2, p.x + 1, p.y, w)).toBe(true);
-    expect(p.hp).toBe(MAX_HP - 2);
-    expect(p.hurt(2, p.x + 1, p.y, w)).toBe(false); // invencível
+    expect(p.hurt(20, p.x + 1, p.y, w)).toBe(true);
+    expect(p.hp).toBe(MAX_HP - 20);
+    expect(p.hurt(20, p.x + 1, p.y, w)).toBe(false); // invencível
     for (let t = 0; t < HURT_INVULN_S + 0.05; t += 0.05) p.update(0.05, 0, 0, w);
-    expect(p.hurt(1, p.x + 1, p.y, w)).toBe(true);
-    expect(p.hp).toBe(MAX_HP - 3);
-    // Regenera ½ coração a cada REGEN_EVERY_S depois de REGEN_DELAY_S sem dano.
-    for (let t = 0; t < REGEN_DELAY_S + REGEN_EVERY_S + 0.1; t += 0.05) p.update(0.05, 0, 0, w);
-    expect(p.hp).toBe(MAX_HP - 2);
+    expect(p.hurt(10, p.x + 1, p.y, w)).toBe(true);
+    expect(p.hp).toBe(MAX_HP - 30);
+    // Regenera 5% da vida máxima a cada REGEN.every depois de REGEN.delay sem dano.
+    for (let t = 0; t < REGEN.delay + REGEN.every + 0.1; t += 0.05) p.update(0.05, 0, 0, w);
+    expect(p.hp).toBe(MAX_HP - 30 + Math.round(MAX_HP * REGEN.fraction));
     p.hp = 1;
     p.invuln = 0;
-    p.hurt(4, p.x + 1, p.y, w);
+    p.hurt(40, p.x + 1, p.y, w);
     expect(p.dead).toBe(true);
     p.respawn(sx + 0.5, sy + 0.5);
     expect(p.hp).toBe(MAX_HP);
@@ -55,17 +58,23 @@ describe('Combate — vida da heroína', () => {
 });
 
 describe('Combate — monstros', () => {
-  it('monstro encostado morde (dano do tipo) respeitando o intervalo', () => {
+  it('monstro encostado morde (ataque do tipo − defesa da heroína, ±10%/crítico) respeitando o intervalo', () => {
     const { w, p, e } = setup();
     const big = e.monsters.find((m) => m.kind === 'spider-big')!;
     e.monsters.splice(0, e.monsters.length, big);
     p.x = big.x + big.reach - 0.1;
     p.y = big.y;
+    const hits: number[] = [];
+    e.onDamage = (_x, _y, hit, target) => { if (target === 'player') hits.push(hit.amount); };
     e.update(1 / 60, w);
-    expect(p.hp).toBe(MAX_HP - MONSTERS['spider-big'].damage);
+    const base = MONSTER_STATS['spider-big'].attack - BASE_STATS.defense;
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toBeGreaterThanOrEqual(Math.floor(base * 0.9));
+    expect(hits[0]).toBeLessThanOrEqual(Math.ceil(base * 1.1 * 1.5));
+    expect(p.hp).toBe(MAX_HP - hits[0]);
     p.invuln = 0;
     e.update(1 / 60, w); // ainda no intervalo da mordida
-    expect(p.hp).toBe(MAX_HP - MONSTERS['spider-big'].damage);
+    expect(p.hp).toBe(MAX_HP - hits[0]);
   });
 
   it('persegue pelos corredores (mapa de distâncias): aproxima-se pelo caminho, não em linha reta', () => {
@@ -110,7 +119,7 @@ describe('Combate — monstros', () => {
     let n = 0;
     while (e.monsters.includes(boss) && n++ < 50) {
       p.x = boss.x; p.y = boss.y - 1.2; p.facing = 'down';
-      e.strike('down', w);
+      e.strike('down', w, 'sword');
     }
     expect(killed).toEqual(['spider-boss']);
     expect(e.dying).toHaveLength(1);

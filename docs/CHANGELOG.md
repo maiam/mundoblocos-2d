@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.39.0 — 2026-11-03
+- **Vida e dano com números (Fase P, entrega 1).** Heroína com **100 de vida** numa **barra com número** (no lugar dos
+  corações), ataque 5 e defesa 2. Dano = ataque + poder da arma − defesa (mínimo 1), **±10%** de variação e **5% de
+  crítico** (×1,5). Espada (12) bate mais que machado (7). Regeneração: 5% da vida a cada 1,5 s após 6 s sem dano.
+- **Números de dano subindo na tela**: branco no inimigo, vermelho na heroína, amarelo e maior no crítico.
+- **Aranhas com ficha** (vida/ataque/defesa): pequena 20/8/0, grande 45/14/2, Rainha 180/36/6 — com a espada, ~2, ~3 e
+  ~16 golpes.
+- Regras numéricas num só lugar: `world/progression.ts` (puro, testado). Salvamento **v5**: vida antiga convertida na
+  mesma proporção (heroína e aranhas). 4 testes novos (121).
+
 ## 0.38.0 — 2026-11-03
 - **Terra com Grama com arte nova** (prancha fornecida, `scripts/extract-grass.py`): 3 variações sorteadas por célula,
   no chão e nos cubos (o chão fica menos repetido).

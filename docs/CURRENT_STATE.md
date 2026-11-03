@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.38.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-03 — v0.39.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -27,9 +27,10 @@ _Atualizado em 2026-11-03 — v0.38.0 · jogo: **Orvalis** (`orvalis.pensamentos
 - **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto da cidade (nunca
   sobre ela, a estrada do portão ou o campo do rebanho), com uma única entrada voltada para o início, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só
   passagem. Nada quebra nem é colocado lá dentro. Aranhas pequenas e grandes em quantidade proporcional ao
-  labirinto (~38) + Aranha Gigante (chefe, 14 golpes); perseguem pelos corredores, **mordem** e nunca saem; derrotadas
+  labirinto (~38) + Aranha Gigante (chefe, 180 de vida); perseguem pelos corredores, **mordem** e nunca saem; derrotadas
   soltam seda/presas (Rainha: Coração da Rainha) e renascem com o tempo. Farol + seta indicam a entrada.
-- **Vida da heroína**: 5 corações, regeneração fora de combate; derrotada, perde tudo menos as ferramentas e renasce
+- **Vida e dano com números** (Fase P, entrega 1): heroína com 100 de vida (barra com número), ataque e defesa;
+  dano = ataque + arma − defesa, ±10% e 5% de crítico; números de dano subindo na tela; regeneração fora de combate; derrotada, perde tudo menos as ferramentas e renasce
   na última tenda ou, sem tenda, na praça inicial da cidade.
   Ver `domains/dungeon.md`.
 - **Água**: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra Bruta, Tora ou Tábua a substituem; buraco vizinho de água enche sozinho (animação) e enche os
@@ -47,8 +48,8 @@ _Atualizado em 2026-11-03 — v0.38.0 · jogo: **Orvalis** (`orvalis.pensamentos
 - Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar quebra: 2 s mão, 1 s ferramenta), Q/E/roda = zoom.
 - Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
 - Tela limpa: grade de **12** — 9 itens · Personagem (sem ação ainda) · Habilidades · Bolsa (começa com ferramentas
-  1–5, semente 6, trigo 7); corações
-  só quando importam; menu ☰.
+  1–5, semente 6, trigo 7); barra de vida
+  só quando importa; menu ☰.
 
 ## Sistemas
 - **Ferramentas** (espada, enxada, picareta, pá, machado): equipam e mudam o sprite. A **enxada** ara (animação própria) Terra/Terra

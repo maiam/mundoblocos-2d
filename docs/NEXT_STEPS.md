@@ -17,7 +17,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | sem NPCs, interiores nem missões |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ | fora da cidade; aranhas só com arte de frente |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
-| Vida da heroína, dano, morte e renascimento | ✅ | 5 corações; arte dos corações provisória |
+| Vida da heroína, dano, morte e renascimento | ✅ | vida em pontos com barra, fórmula de dano e números na tela (Fase P.1) |
 | Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do core |
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
@@ -36,8 +36,7 @@ republicado, PR da branch de trabalho para `main` aberto. Detalhes no `CHANGELOG
 Vida da heroína (5 ♥, renasce no início com os itens), mordida das aranhas, busca de caminho no labirinto, morte com
 espólios (seda, presa, Coração da Rainha), renascimento de todas (Rainha em 5 min), farol + seta da entrada,
 penumbra. Pendências que ficaram desta fase:
-- **Arte**: ícones dos espólios e mortes das aranhas ✅ (v0.26.1). Faltam (opcionais): corações da HUD em arte
-  própria (hoje vetoriais), heroína levando dano e aranhas nas 4 direções.
+- **Arte**: ícones dos espólios e mortes das aranhas ✅ (v0.26.1). Faltam (opcionais): heroína levando dano e aranhas nas 4 direções.
 - **Minimapa** do labirinto explorado.
 - **Animais**: animação de morte e drops (lã/carne? — decisão pendente).
 
@@ -62,7 +61,7 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 Objetivo: dar sensação de crescimento. Regras puras em `world/progression.ts` (curva de XP, fórmula de dano,
 atributos por nível, benefícios das profissões; testável, sem DOM/aleatório solto); estado no `Player`; combate segue
 em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga começa no nível 1, sem perder nada).
-1. **Vida e dano com números** — vida em pontos (~100 no início) numa **barra com o número** (no lugar dos corações);
+1. ✅ (v0.39.0) **Vida e dano com números** — vida em pontos (~100 no início) numa **barra com o número** (no lugar dos corações);
    atributos Vida máx., Ataque e Defesa; dano = ataque da arma + bônus − defesa, ±10% e 5% de crítico (×1,5);
    espada mais forte que machado; números de dano subindo na tela; aranhas com ficha (vida/ataque/defesa) rebalanceadas.
 2. **Nível e XP** — XP por monstros (mais para os fortes) e um pouco por receitas; curva crescente, teto 20 nesta
@@ -129,7 +128,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
 - **Hospedagem** ✅ no ar em `https://orvalis.pensamentos.online` (Hostinger, provisório; publica a cada merge em
   `main` — ver `OPERATIONS`). Voltar a `maiamapps.com.br` quando possível.
-- **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) corações da HUD, aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
+- **Arte**: folhas 4×4 de NPCs da cidade (moradores, guardas, ferreiro, mercadores); (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
 - **Orçamento de início (ADR 0013)**: hoje ~2,5 MB de 3 MB. Próximos a ir para segundo plano quando crescer: folhas da

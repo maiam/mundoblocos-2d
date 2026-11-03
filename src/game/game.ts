@@ -20,7 +20,7 @@ import { Hud } from './hud';
 import { Inventory } from './inventory';
 import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
-import { MAX_HP, Player } from './player';
+import { Player } from './player';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
@@ -107,6 +107,7 @@ export class Game {
     this.entities.spawnMonsters(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
+    this.entities.onDamage = (x, y, hit, target) => this.renderer.addDamage(x, y, hit, target);
     this.lastHp = this.player.hp;
     this.renderer = new Renderer(canvas, this.world);
     this.actions = new ActionController({
@@ -129,7 +130,7 @@ export class Game {
         }
         : undefined,
       // Corações só em mundo com dungeon.
-      maxHp: profile.dungeon ? MAX_HP : 0,
+      health: profile.dungeon,
     });
     this.bag = new BagPanel(this.hud.bagSection, (i, e) => this.onBagTap(i, e));
     this.chest = new ChestPanel(this.hud.chestSection, (i) => this.onChestTap(i));
@@ -565,7 +566,7 @@ export class Game {
     }));
     this.hud.update(this.selected ?? -1);
     // Corações só quando importam (ferida ou na dungeon) — tela limpa no resto do tempo.
-    this.hud.setHealth(this.player.hp, this.inDungeon || this.player.hp < MAX_HP);
+    this.hud.setHealth(this.player.hp, this.player.maxHp, this.inDungeon || this.player.hp < this.player.maxHp);
     const slot = this.slot;
     this.actionButton.update(this.actions.actionProgress,
       !!slot && slot.kind !== 'tool' && (slot.kind === 'item' || this.collect) && this.inventory.count(slotStack(slot)) === 0);

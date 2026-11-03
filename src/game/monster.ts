@@ -1,16 +1,15 @@
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
+import { MONSTER_STATS } from '../world/progression';
 import type { World } from '../world/world';
 import { type Blocker, Walker, type WalkerSpec } from './walker';
 
 interface MonsterDef {
   spec: WalkerSpec;
-  hp: number;
   /** Distância (células) em que percebe a personagem e vai atrás dela. */
   sight: number;
   /** Quanto se afasta de casa passeando (células). */
   leash: number;
-  /** Dano da mordida (meios corações) e intervalo mínimo entre mordidas (s). */
-  damage: number;
+  /** Intervalo mínimo entre mordidas (s). Vida, ataque e defesa: `MONSTER_STATS` (world/progression.ts). */
   biteEvery: number;
   /** Tempo até renascer depois de derrotado (s). */
   respawn: number;
@@ -18,11 +17,11 @@ interface MonsterDef {
   deathSeconds: number;
 }
 
-/** Atributos por tipo de monstro (fonte única). */
+/** Comportamento por tipo de monstro (movimento, visão, ritmo); a ficha de combate fica em `MONSTER_STATS`. */
 export const MONSTERS: Record<MonsterKind, MonsterDef> = {
-  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, hp: 2, sight: 6, leash: 5, damage: 1, biteEvery: 1.0, respawn: 40, deathSeconds: 0.7 },
-  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, hp: 4, sight: 7, leash: 5, damage: 2, biteEvery: 1.2, respawn: 60, deathSeconds: 0.9 },
-  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, hp: 14, sight: 9, leash: 4, damage: 4, biteEvery: 1.6, respawn: 300, deathSeconds: 1.6 },
+  'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, sight: 6, leash: 5, biteEvery: 1.0, respawn: 40, deathSeconds: 0.7 },
+  'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, sight: 7, leash: 5, biteEvery: 1.2, respawn: 60, deathSeconds: 0.9 },
+  'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, sight: 9, leash: 4, biteEvery: 1.6, respawn: 300, deathSeconds: 1.6 },
 };
 
 /** Tempo piscando depois de levar um golpe (s). */
@@ -36,7 +35,7 @@ export type FlowField = (x: number, y: number) => number;
 /**
  * Monstro da dungeon. Passeia perto de onde nasceu e vai atrás da personagem quando ela entra no seu raio
  * de visão. **Nunca sai do interior da dungeon**: a caixa dos pés é bloqueada fora de `bounds` (a entrada
- * fica fora do interior, então ele não a atravessa). Vida em golpes; ainda não causa dano.
+ * fica fora do interior, então ele não a atravessa). Vida e mordida pela ficha de `MONSTER_STATS`.
  */
 export class Monster extends Walker {
   hp: number;
@@ -57,7 +56,7 @@ export class Monster extends Walker {
     readonly homeY = y,
   ) {
     super(x, y, { ...MONSTERS[kind].spec });
-    this.hp = this.maxHp = MONSTERS[kind].hp;
+    this.hp = this.maxHp = MONSTER_STATS[kind].hp;
     this.state = { kind: 'idle', timer: 0.5 + rand() * 2 };
   }
 
@@ -72,9 +71,9 @@ export class Monster extends Walker {
     return x - halfW >= b.x0 && x + halfW <= b.x1 + 1 && y - halfD >= b.y0 && y + halfD <= b.y1 + 1;
   }
 
-  /** Leva um golpe: perde vida, pisca e é empurrado para longe de (fromX, fromY). */
-  takeHit(fromX: number, fromY: number, world: World, blocked?: Blocker): void {
-    this.hp -= 1;
+  /** Leva um golpe de `damage` pontos: perde vida, pisca e é empurrado para longe de (fromX, fromY). */
+  takeHit(damage: number, fromX: number, fromY: number, world: World, blocked?: Blocker): void {
+    this.hp -= damage;
     this.hurt = HURT_SECONDS;
     const d = Math.hypot(this.x - fromX, this.y - fromY) || 1;
     const facing = this.facing;
