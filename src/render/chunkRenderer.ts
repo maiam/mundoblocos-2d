@@ -3,26 +3,12 @@ import { Block, type BlockId, blockDef } from '../world/blocks';
 import type { Chunk } from '../world/chunk';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
-import { CELESTIAL_STYLE } from './celestialArt';
 import { rgba } from './color';
 import { type BlockTextures, TEX_RES } from './textures';
 
 const CHUNK_PX = CHUNK_SIZE * TILE;
 /** Altura da barranca (face frontal do chão) vista sobre a água. */
 const BANK_H = 7;
-/** Materiais cuja arte tem direção (tábuas, sulcos, anéis): não giram no chão. */
-const ORIENTED = new Set<number>([
-  Block.OAK_PLANKS, Block.TILLED, Block.OAK_LOG,
-  Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_POLISHED, Block.STONE_BRICK_CRACKED,
-  ...Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.oriented).map(([id]) => Number(id)),
-]);
-/**
- * Materiais em faixas levemente inclinadas (nuvens): girar ou espelhar forma losangos/"V".
- * Ficam na orientação original; o topo contínuo do atlas emenda sem costura.
- */
-const MIRROR_ONLY = new Set<number>(
-  Object.entries(CELESTIAL_STYLE).filter(([, s]) => s.mirrorOnly).map(([id]) => Number(id)),
-);
 /** Altura da parede interna visível de um buraco. */
 const WALL_H = 13;
 /** Frames sem uso antes de liberar o cache de um chunk. */
@@ -158,24 +144,11 @@ export class ChunkRenderer {
           const w = this.tex.water;
           ctx.drawImage(w[Math.floor(h * w.length) % w.length], px, py, TILE, TILE);
         } else {
-          // Material como chão: topo da arte da prancha. Materiais naturais giram/espelham
-          // por célula para o padrão não repetir; piso, tora e arado mantêm a orientação.
+          // Material como chão: topo da arte da prancha SEMPRE na direção em que foi desenhado (regra do dono do
+          // produto: nada gira nem espelha). Só a variação, quando o material tem mais de uma, é sorteada por célula.
           const vars = this.tex.groundVariants.get(g);
           const top = vars ? vars[Math.floor(hash2(seed, x * 3 + 1, y * 5 + 2) * vars.length)] : this.tex.groundTop.get(g);
-          if (top) {
-            if (ORIENTED.has(g)) {
-              ctx.drawImage(top, px, py, TILE, TILE);
-            } else {
-              const turn = MIRROR_ONLY.has(g) ? 0 : Math.floor(h * 4);
-              const flip = !MIRROR_ONLY.has(g) && hash2(seed, x + 17, y - 5) < 0.5 ? -1 : 1;
-              ctx.save();
-              ctx.translate(px + TILE / 2, py + TILE / 2);
-              ctx.rotate((turn * Math.PI) / 2);
-              ctx.scale(flip, 1);
-              ctx.drawImage(top, -TILE / 2, -TILE / 2, TILE, TILE);
-              ctx.restore();
-            }
-          }
+          if (top) ctx.drawImage(top, px, py, TILE, TILE);
         }
 
         if (g !== Block.VOID && g !== Block.HOLE) this.drawSkyEdges(ctx, x, y, px, py);

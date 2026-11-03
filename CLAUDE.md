@@ -28,7 +28,8 @@ operacional e faz parte da entrega.
   espera para começar < 3 MB (o build avisa); arte de outras regiões carrega em segundo plano (`loadDungeonArt`).
 - Toda entidade que anda estende `Walker`; colisão com o mapa sempre via `World.standHeight`.
 - Jogo **horizontal**; layout deve caber em paisagem com ~360 px de altura e respeitar safe-area.
-- Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**.
+- Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas; blocos novos em prancha **3/4**. **Texturas
+  sempre na direção desenhada**: nunca girar/espelhar blocos ou chão por célula (variedade = variações enviadas).
 - **Cidade do Despertar** (`world/town.ts`, ADR 0012): igual em toda seed (semente própria); área protegida (nada
   quebra/coloca); início/renascer sem tenda = `town.start`. Testes que constroem perto do início usam
   `World.outsideGate()`. Mudar `buildTown` muda a cidade de todos: rode `town.test.ts`.

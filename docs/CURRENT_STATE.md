@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.39.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
@@ -83,7 +83,8 @@ _Atualizado em 2026-11-03 — v0.39.0 · jogo: **Orvalis** (`orvalis.pensamentos
 - Ovelhas só nascem no campo ao sul do portão; não há animais em outros chunks.
 - Cidade sem NPCs nem interiores; tocar numa construção só mostra o nome.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
-- Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); materiais orientados repetem no chão.
+- Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada). Texturas do chão sempre na direção desenhada:
+  materiais com uma só arte repetem o mesmo padrão (variedade vem de variações enviadas).
 - iPhone/Safari no navegador não permite tela cheia nem trava de orientação (vale a camada de rotação ou a
   instalação na tela inicial); dentro do Artifact a tela cheia pode ser recusada.
 - Sem pulo, queda com dano ou transições suaves entre tipos de chão. Água parada (sem correnteza nem nado); só enche

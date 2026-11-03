@@ -82,4 +82,5 @@
 | Ícones do trigo: monte de sementes e feixe com laço | domains/farming |
 | Pá sem folha para a direita: espelho da esquerda | domains/render |
 | Prancha 3/4 venceu a extração isométrica (comparação no jogo) | adr/0006 |
+| Texturas de blocos/chão sempre na direção desenhada (nada gira nem espelha por célula); variedade só por variações enviadas | CONVENTIONS, domains/render |
 | Terra com Grama: arte nova com 3 variações sorteadas por célula (chão e cubo); colunas extras 15–16 do atlas | domains/render, OPERATIONS |
