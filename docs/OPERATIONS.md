@@ -84,6 +84,10 @@ qualquer prancha em grade, se precisar.
 → ícones `icon-block-stone*` e colunas 5 (Pedra Bruta) e 8–14 do `blocks-atlas` (rode **depois** de
 `extract-blocks.py` e `extract-ui.py`) → `optimize-assets.py`. Ordem total: blocks → ui → stones → optimize.
 
+**Cidade — construções em imagem** (`assets-src/town-house-red.png`, fundo transparente): `python3 scripts/extract-town.py`
+→ `src/assets/town-house-red.png` (320 px de largura; imprime a linha do beiral usada em `HOUSE_RED` de
+`render/townArt.ts`) → `optimize-assets.py`. Importada só em `render/art/principal.ts` (`town.houseRed`).
+
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
 

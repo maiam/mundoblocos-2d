@@ -51,7 +51,9 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   salvos onde não há mais baú são descartados — salvamentos antigos não "furam" a cidade. Formato inalterado (v4).
 
 ## Arte (`render/townArt.ts`)
-Pintada em canvas (ilustração RPG/anime: contorno quente, luz de cima-esquerda, janelas acesas): **não pesa no
+**Casa de telhado vermelho: imagem fornecida** (`town-house-red`, no pacote de arte do mundo principal, ADR 0010),
+ajustada a cada tamanho — parede com escala uniforme na largura da casa e telhado remontado em fileiras (topo +
+fileira do meio repetida + beiral; faixas em `HOUSE_RED`). O restante é pintado em canvas (ilustração RPG/anime: contorno quente, luz de cima-esquerda, janelas acesas): **não pesa no
 artefato**. Casas com 6 variações (telhado vermelho/azul/alaranjado, oitão ou duas águas, enxaimel ou pedra,
 chaminé), castelo com torres de telhado cônico azul e estandartes, torres redondas com ameias, guilda (escudo com
 espadas), hospedaria (placa de cama), ferreiro (forja acesa, bigorna, fumaça), lojas com toldos, fonte, poço,

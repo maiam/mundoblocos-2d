@@ -9,7 +9,17 @@ import type { Sprite } from './textures';
  * Cada construção é UM sprite sobre o canto inferior esquerdo da área que ocupa (as outras células são
  * `TOWN_PART`, sem arte): topo = telhado visto de cima (profundidade × TILE) e frente = parede (altura própria).
  * Variações (cor do telhado, estilo, chaminé) são escolhidas pelo render por posição, fixas como a cidade.
+ * Casas de telhado vermelho usam a imagem fornecida (`town-house-red`, via pacote de arte), ajustada ao tamanho.
  */
+
+/** Imagens da cidade vindas do pacote de arte (null = pinta em código). */
+export interface TownImages { houseRed: HTMLImageElement | null }
+
+/**
+ * Faixas da imagem da casa vermelha (px da imagem de 320 de largura, `scripts/extract-town.py`): telhado em fileiras
+ * de telhas (a fileira do meio se repete para cobrir casas mais fundas) e parede abaixo do beiral.
+ */
+const HOUSE_RED = { roofTop: [0, 27], roofMid: [27, 54], roofBottom: [54, 120], wall: [120, 261], wallX: [0.026, 0.972] } as const;
 
 type Ctx = CanvasRenderingContext2D;
 const T = TILE;
@@ -255,11 +265,44 @@ function buildingSprite(w: number, d: number, wallH: number, headroom: number, d
   return { canvas: c, ox: -pad, oy: T - totalH, w: w * T + pad * 2, h: totalH, hit: { x: 0, y: T - d * T - wallH, w: w * T, h: d * T + wallH } };
 }
 
-function houseVariants(id: BlockId): Sprite[] {
+/**
+ * Casa a partir da imagem: a parede ocupa a largura da construção (escala uniforme); o telhado é remontado em
+ * fileiras (topo + fileiras do meio repetidas + fileira do beiral) até cobrir a profundidade, com ajuste fino final.
+ */
+function imageHouse(img: HTMLImageElement, w: number, d: number): Sprite {
+  const k = img.width / 320; // imagem pode ter outra resolução: faixas são em px da versão de 320
+  const [wx0, wx1] = HOUSE_RED.wallX;
+  const drawW = (w * T) / (wx1 - wx0);
+  const s = drawW / img.width;
+  const band = (b: readonly [number, number]) => (b[1] - b[0]) * k * s;
+  const wallH = band(HOUSE_RED.wall);
+  const fixed = band(HOUSE_RED.roofTop) + band(HOUSE_RED.roofBottom);
+  const mid = band(HOUSE_RED.roofMid);
+  const reps = Math.max(0, Math.round((d * T - fixed) / mid));
+  const natural = fixed + reps * mid;
+  const fit = (d * T) / natural;
+  return buildingSprite(w, d, wallH, 4, (ctx, pad, total) => {
+    const x = pad - drawW * wx0;
+    shadow(ctx, pad + (w * T) / 2 + 4, total - 2, (w * T) / 2 + 3, 6);
+    const draw = (b: readonly [number, number], y: number, h: number) =>
+      ctx.drawImage(img, 0, b[0] * k, img.width, (b[1] - b[0]) * k, x, y, drawW, h);
+    draw(HOUSE_RED.wall, total - wallH, wallH);
+    let y = total - wallH - d * T;
+    draw(HOUSE_RED.roofTop, y, band(HOUSE_RED.roofTop) * fit);
+    y += band(HOUSE_RED.roofTop) * fit;
+    for (let r = 0; r < reps; r++) { draw(HOUSE_RED.roofMid, y, mid * fit); y += mid * fit; }
+    draw(HOUSE_RED.roofBottom, y, band(HOUSE_RED.roofBottom) * fit + 0.5);
+  });
+}
+
+function houseVariants(id: BlockId, images: TownImages): Sprite[] {
   const [w, d] = townSize(id);
   const out: Sprite[] = [];
   for (let v = 0; v < 6; v++) {
-    const o: HouseOpts = { roof: ROOFS[v % ROOFS.length], gable: v % 2 === 0, stone: v === 3, chimney: v % 3 !== 1, smoke: v === 2 };
+    const roof = ROOFS[v % ROOFS.length];
+    // Telhado vermelho: imagem fornecida (quando o pacote traz); as outras cores seguem pintadas em código.
+    if (images.houseRed && roof.base === ROOFS[0].base) { out.push(imageHouse(images.houseRed, w, d)); continue; }
+    const o: HouseOpts = { roof, gable: v % 2 === 0, stone: v === 3, chimney: v % 3 !== 1, smoke: v === 2 };
     out.push(buildingSprite(w, d, 44, 26, (ctx, pad, total) => house(ctx, w, d, 44, o, pad, total)));
   }
   return out;
@@ -589,9 +632,9 @@ const hedge = () => prop(30, (ctx, cx, b) => {
 });
 
 /** Sprites (com variações) de todas as construções e enfeites da cidade. */
-export function townSprites(): Map<BlockId, Sprite[]> {
+export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
   const m = new Map<BlockId, Sprite[]>();
-  for (const id of [Block.HOUSE_S, Block.HOUSE_M, Block.HOUSE_L, Block.HOUSE_XL]) m.set(id, houseVariants(id));
+  for (const id of [Block.HOUSE_S, Block.HOUSE_M, Block.HOUSE_L, Block.HOUSE_XL]) m.set(id, houseVariants(id, images));
   m.set(Block.CASTLE, [castle()]);
   m.set(Block.GUILD, [guild()]);
   m.set(Block.INN, [inn()]);

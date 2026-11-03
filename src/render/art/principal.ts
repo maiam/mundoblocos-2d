@@ -59,6 +59,7 @@ import tentIcon from '../../assets/icon-block-tent.webp?inline';
 import tentSprite from '../../assets/tent.webp?inline';
 import chestIcon from '../../assets/icon-block-chest.webp?inline';
 import chestSprite from '../../assets/chest.webp?inline';
+import townHouseRed from '../../assets/town-house-red.webp?inline';
 import waterTop from '../../assets/water-top.webp?inline';
 import waterFlow from '../../assets/water-flow.webp?inline';
 import wheatCrop from '../../assets/wheat-crop.webp?inline';
@@ -112,6 +113,7 @@ const pack: ArtPack = {
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
   tent: { icon: tentIcon, sprite: tentSprite },
   chest: { icon: chestIcon, sprite: chestSprite },
+  town: { houseRed: townHouseRed },
   water: { top: waterTop, flow: waterFlow },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,

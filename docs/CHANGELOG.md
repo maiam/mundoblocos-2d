@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.35.2 — 2026-11-03
+- **Casa de telhado vermelho com a arte fornecida** (`assets-src/town-house-red.png` → `scripts/extract-town.py`):
+  todas as casas vermelhas da cidade usam a imagem, em qualquer tamanho (parede na largura da casa; telhado remontado
+  em fileiras de telhas até cobrir a profundidade). As outras cores seguem pintadas em código.
+
 ## 0.35.1 — 2026-11-03
 - **Correção: "Novo mundo" (e "Recomeçar") não faziam nada no Artifact.** A confirmação usava `window.confirm`, que o
   iframe do Artifact bloqueia (devolve "não" sem mostrar a janela). Agora a confirmação é no próprio menu: o botão

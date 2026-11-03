@@ -10,6 +10,7 @@ assets-src/                    arte original (folhas 4×4, pranchas de blocos, �
 scripts/
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region, --respace…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
+  extract-town.py              imagens de construções da cidade (casa vermelha) → recorte reduzido
   extract-stones.py            prancha das 8 pedras → ícones + colunas da Pedra Bruta e das variações no atlas
   extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)

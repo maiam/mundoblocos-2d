@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownHouseRed, getWaterArt } from './blockArt';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 import { townSprites } from './townArt';
@@ -482,7 +482,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     [Block.LIGHT_BLOCK, '#ffe08a'],
     [Block.LAMP, '#ffd27a'],
   ]);
-  if (opts.town) for (const [id, sprites] of townSprites()) variants.set(id, sprites);
+  if (opts.town) for (const [id, sprites] of townSprites({ houseRed: getTownHouseRed() })) variants.set(id, sprites);
   const bankColor = new Map<BlockId, string>([
     [Block.GRASS, '#8a5a36'],
     [Block.DIRT, '#8a5a36'],
