@@ -31,7 +31,8 @@ Continuar · Novo mundo (o atual continua salvo) · Recomeçar este mundo (apaga
 Novo mundo e Recomeçar pedem **confirmação no próprio botão** (tocar de novo em até 5 s) — nunca `window.confirm`,
 que o iframe do Artifact bloqueia sem mostrar nada. Depois, um aviso na tela confirma ("Novo mundo criado ·
 semente N" / "Mundo recomeçado do zero"): como todo mundo começa na Cidade do Despertar, sem o aviso parecia que nada mudou.
-Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
+Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa. Em tela baixa (celular deitado), o menu e
+"Jogar com amigos" ficam lado a lado; o painel rola com o dedo se faltar altura (o canvas tem `touch-action: none`).
 
 ## Ao carregar
 - Heroína presa dentro de um objeto (`Walker.isStuck`, ex.: salvamento feito com a tenda sobre ela) vai para a célula
