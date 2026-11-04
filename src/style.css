@@ -347,11 +347,14 @@ html, body {
 .menu-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .menu-panel {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: min(320px, calc(100vw - 32px)); max-height: calc(100vh - 24px); overflow: auto;
+  width: min(320px, calc(100vw - 32px)); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow: auto;
   display: flex; flex-direction: column; gap: 10px; padding: 18px;
   border-radius: 18px; border: 1.5px solid var(--panel-border); background: rgba(28, 22, 64, 0.94);
   box-shadow: 0 10px 40px rgba(10, 6, 30, 0.6); pointer-events: auto; text-align: center;
+  /* Se ainda faltar altura, o painel rola com o dedo (o canvas embaixo bloqueia gestos: touch-action none). */
+  touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
+.menu-main { display: flex; flex-direction: column; gap: inherit; }
 .menu-panel[hidden] { display: none; }
 .menu-panel h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--accent); }
 .menu-panel p { margin: 0; font-size: 13px; line-height: 1.35; }
@@ -378,6 +381,12 @@ html, body {
   .menu-button { width: 34px; height: 34px; padding: 8px 7px; }
   .menu-panel { gap: 7px; padding: 12px; }
   .menu-panel button { min-height: 36px; }
+  /* Celular deitado (~360 px de altura): menu e "Jogar com amigos" lado a lado, tudo visível sem rolar. */
+  .menu-panel:has(.menu-online) { flex-direction: row; align-items: stretch; width: min(620px, calc(100vw - 24px)); gap: 14px; }
+  .menu-panel:has(.menu-online) > * { flex: 1 1 0; min-width: 0; }
+  .menu-online { border-top: 0; padding-top: 0; padding-left: 14px; border-left: 1.5px solid var(--panel-border); justify-content: center; gap: 7px; }
+  .menu-online input { min-height: 36px; }
+  .menu-panel h2 { font-size: 18px; }
 }
 
 /* Grade com coleta: espaço vazio e bolsa (9º). */

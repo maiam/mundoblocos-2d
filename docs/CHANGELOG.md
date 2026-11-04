@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.47.1 — 2026-11-04
+- **Menu no celular deitado**: com "Jogar com amigos" o painel passou da altura da tela e o botão "Entrar com código"
+  ficava inalcançável (o painel não rolava com o dedo). Agora, em telas baixas, o menu e "Jogar com amigos" ficam
+  **lado a lado** e cabem inteiros (~340 px de altura); se ainda faltar espaço (ex.: teclado aberto), o painel rola com
+  o dedo e usa a altura visível de verdade (`dvh`).
+
 ## 0.47.0 — 2026-11-04
 - **Jogar com amigos** (Fase M, etapa 3; servidor `orvalis-servidor.pensamentos.online`): no menu ☰, escreva seu nome
   e **crie uma sala** (aparece um código de 6 letras para passar aos amigos) ou **entre com o código** de alguém. Até 4

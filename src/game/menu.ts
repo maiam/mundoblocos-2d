@@ -52,7 +52,9 @@ export class Menu {
     this.panel.hidden = true;
     this.panel.setAttribute('role', 'dialog');
     this.panel.setAttribute('aria-label', 'Menu do jogo');
+    // Duas partes: o menu do jogo e "Jogar com amigos" — no celular deitado ficam lado a lado (cabem sem rolar).
     this.panel.innerHTML = `
+      <div class="menu-main">
       <h2>Orvalis</h2>
       <p class="menu-status"></p>
       <p class="menu-seed">Semente do mundo: <b>${h.seed}</b></p>
@@ -60,6 +62,7 @@ export class Menu {
       ${h.online?.room ? '' : `<button data-act="new">Novo mundo</button>
       <button data-act="restart">Recomeçar este mundo</button>`}
       <p class="menu-confirm" hidden></p>
+      </div>
       ${h.online ? onlineSection(h.online) : ''}`;
     this.statusEl = this.panel.querySelector('.menu-status')!;
     this.confirmEl = this.panel.querySelector('.menu-confirm')!;
