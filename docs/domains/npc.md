@@ -17,6 +17,27 @@
 - **Golpe de espada**: a ovelha (adulta ou filhote) atingida some do mundo; par/namoro da outra é desfeito
   (`Entities.removeAnimal`). Animação de morte fica para quando houver arte.
 
+## Wanderer (`game/wanderer.ts`)
+- Passeio comum (parar ↔ andar numa direção sorteada, desacelerar no fim, voltar a casa além da `leash`). Ovelha,
+  cavalo e morador estendem `Wanderer` (que estende `Walker`) e só mudam o ritmo (`WanderPace`) e a caixa.
+
+## Cavalo (`game/horse.ts`)
+- Folha `assets-src/horse-sheet.png` → `horse.webp` (`process-sprite.py --alpha --largest --frame-h 112`), desenhado
+  com 1,6 célula. Velocidade 1,8, não sobe em cubos, leash 10. Um cavalo (`Entities.spawnHorse`) no campo ao sul do
+  portão, ~9 células a leste do rebanho, em grama, posição pela seed. O golpe o tira do mundo, como as ovelhas.
+  Estado de execução (não salvo). Montaria: ideia em NEXT_STEPS.
+
+## Moradores (`game/villager.ts`)
+- **Personagem-base + roupa**: cada morador é uma folha de roupa branca (`villager-<cabelo>`: blond, brown, black,
+  silver) e uma roupa (`outfit-<id>`: denim, varsity) desenhada por cima no mesmo quadro (`Actor.outfit`,
+  `render/character.ts`). `scripts/extract-villagers.py` processa todas as folhas com a mesma grade, recorte e escala
+  e apaga a cabeça careca das folhas de roupa (acima do queixo vale a cabeça do personagem).
+- Roupa sorteada pela seed (`villagerOutfit`); um morador por personagem-base. **Roupa nova**: folha em
+  `assets-src/villagers/outfit-<id>-sheet.png` → rodar o script → id em `OUTFITS` → import em `render/art/principal.ts`.
+- Pontos de casa fixos (praça inicial ×2, meio do caminho até o castelo, pátio do castelo); andam só por células de
+  rua/praça da cidade (`TownLayout.street`) acima do portão — nunca saem da muralha. Velocidade 1,4, leash 6.
+- O golpe não os atinge (`strikeTargets` ignora moradores). Sem falas ainda. Estado de execução (não salvo).
+
 ## Monstros
 - Aranhas da dungeon: ver `domains/dungeon.md` (`game/monster.ts`).
 

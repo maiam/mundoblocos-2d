@@ -20,7 +20,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
 - **Cidade do Despertar** (`domains/town.md`): cidade fixa (igual em toda seed) de 164 × 132 blocos ao norte da
   origem — muralha com guaritas e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda,
-  Hospedaria, Ferreiro, 3 lojas e ~90 casas (sem interiores nem NPCs ainda). Arte fornecida: casas 5×5 em 3 cores
+  Hospedaria, Ferreiro, 3 lojas e ~90 casas (sem interiores ainda). **4 moradores** passeiam pelas ruas e praças, cada um com uma roupa sorteada pela seed (roupas em camadas sobre o personagem de roupa branca). Arte fornecida: casas 5×5 em 3 cores
   (térreas e de 2 andares), lojas 5×5, ferreiro 8×5, guilda 9×9, castelo 26×17, guaritas 4×6, bancos, postes de luz
   (acendem à noite) e arbustos; hospedaria, fonte, poço e barracas ainda pintados em código. **Início e renascer sem
   tenda** na praça inicial. Área protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
@@ -69,6 +69,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 - **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
   limite; **bolsa** de 18 espaços (3 fileiras de 9 com a mão), troca para a grade; tipo novo só entra se houver lugar. Ao cair, perde tudo menos as ferramentas. Santuário segue infinito.
 - **Ovelhas**: rebanho no campo, do lado de fora do portão da cidade; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
+- **Cavalo**: um no mesmo campo; só passeia (sem montaria ainda).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
 ## Salvamento
@@ -80,8 +81,9 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 - Salvamento só neste navegador/aparelho (nuvem depende do core); itens caídos no chão não são salvos.
 - Animais atingidos pela espada só somem (sem animação de morte nem drops). Corações da HUD ainda vetoriais
   (provisórios); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
-- Ovelhas só nascem no campo ao sul do portão; não há animais em outros chunks.
-- Cidade sem NPCs nem interiores; tocar numa construção só mostra o nome.
+- Ovelhas e o cavalo só nascem no campo ao sul do portão; não há animais em outros chunks. Moradores, cavalo e
+  ovelhas não são salvos (renascem iguais pela seed).
+- Moradores ainda não falam nem reagem ao toque; cidade sem interiores; tocar numa construção só mostra o nome.
 - Santuário: subdomínio real ainda não hospedado (só artefato e `?mundo=`); chão de nuvem mostra leve repetição diagonal.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada). Texturas do chão sempre na direção desenhada:
   materiais com uma só arte repetem o mesmo padrão (variedade vem de variações enviadas).

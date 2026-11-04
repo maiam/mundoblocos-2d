@@ -5,6 +5,8 @@ import { type Hit, MONSTER_STATS, rollDamage, weaponPower } from '../world/progr
 import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
+import { Horse } from './horse';
+import { VILLAGER_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId } from './villager';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
@@ -16,7 +18,7 @@ import type { CharacterId } from '../world/profiles';
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love' | MonsterKind;
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love' | 'horse' | `villager-${VillagerBase}` | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -37,6 +39,8 @@ export interface Actor {
   hp?: number;
   /** Monstro derrotado: progresso 0..1 da animação de morte (encolhe e desbota). */
   dying?: number;
+  /** Morador: roupa desenhada por cima da folha-base (mesma grade). */
+  outfit?: OutfitId;
 }
 
 /** Recalcula o mapa de distâncias da dungeon a cada … (s). */
@@ -62,6 +66,10 @@ export const MAX_SHEEP = 16;
  */
 export class Entities {
   readonly npcs: Sheep[] = [];
+  /** Cavalos do campo (passeiam; golpe os tira do mundo, como as ovelhas). */
+  readonly horses: Horse[] = [];
+  /** Moradores da cidade (só andam por ruas e praças; o golpe não os atinge). */
+  readonly villagers: Villager[] = [];
   /** Monstros da dungeon (presos no interior dela). */
   readonly monsters: Monster[] = [];
   /** Monstros derrotados tocando a animação de morte. */
@@ -99,6 +107,55 @@ export class Entities {
     }
   }
 
+  /** Um cavalo perto de (x, y): posição pela seed, em grama andável a 3–9 células. */
+  spawnHorse(world: World, x: number, y: number): void {
+    for (let i = 0; i < 400; i++) {
+      const a = hash2(world.seed, i, 81) * Math.PI * 2;
+      const r = 3 + hash2(world.seed, i, 82) * 6;
+      const cx = Math.floor(x + Math.cos(a) * r);
+      const cy = Math.floor(y + Math.sin(a) * r);
+      if (!world.isWalkable(cx, cy) || world.getGround(cx, cy) !== Block.GRASS) continue;
+      const horse = new Horse(cx + 0.5, cy + 0.5, this.rand);
+      if (this.all().some((w) => horse.overlapsAt(horse.x, horse.y, w))) continue;
+      this.horses.push(horse);
+      return;
+    }
+  }
+
+  /**
+   * Moradores da cidade: um de cada personagem-base, em pontos fixos (praça inicial, caminho da praça central e pátio
+   * do castelo), cada um com uma roupa sorteada pela seed. Só andam por ruas/praças dentro da muralha (fora do portão).
+   */
+  spawnVillagers(world: World): void {
+    const t = world.town;
+    if (!t) return;
+    const a = t.area;
+    const onStreet = (cx: number, cy: number): boolean =>
+      cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < t.gate.y0 && t.street[(cy - a.y0) * t.w + (cx - a.x0)] === 1;
+    const [sx, sy] = t.start;
+    const [kx, ky] = t.castleDoor;
+    const homes: Array<[number, number]> = [
+      [sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2],
+    ];
+    homes.forEach(([hx, hy], i) => {
+      // Rua/praça andável e livre mais perto do ponto.
+      for (let r = 0; r <= 12; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+            const cx = hx + dx;
+            const cy = hy + dy;
+            if (!onStreet(cx, cy) || !world.isWalkable(cx, cy)) continue;
+            const v = new Villager(cx + 0.5, cy + 0.5, VILLAGER_BASES[i % VILLAGER_BASES.length], villagerOutfit(world.seed, i), onStreet, this.rand);
+            if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
+            this.villagers.push(v);
+            return;
+          }
+        }
+      }
+    });
+  }
+
   /** Monstros nos pontos da dungeon (posições pela seed; o sorteio do passeio usa `rand`). */
   spawnMonsters(world: World): void {
     const d = world.dungeon;
@@ -108,7 +165,7 @@ export class Entities {
   }
 
   private all(): Walker[] {
-    return [this.player, ...this.npcs, ...this.monsters];
+    return [this.player, ...this.npcs, ...this.horses, ...this.villagers, ...this.monsters];
   }
 
   /** Bloqueio entre entidades; se já estavam sobrepostas, deixa se afastar. */
@@ -124,6 +181,8 @@ export class Entities {
 
   update(dt: number, world: World): void {
     for (const s of this.npcs) s.update(dt, world, this.blocker);
+    for (const h of this.horses) h.update(dt, world, this.blocker);
+    for (const v of this.villagers) v.update(dt, world, this.blocker);
     this.updateFlow(dt, world);
     const flow = this.flow ? this.flowAt : undefined;
     for (const m of this.monsters) m.update(dt, world, this.player, this.blocker, flow);
@@ -216,10 +275,10 @@ export class Entities {
    * Entidades (exceto a personagem) dentro do arco do golpe (espada ou machado): à frente, até SWORD_REACH
    * da borda do corpo (monstro grande é atingido de mais longe).
    */
-  strikeTargets(facing: Facing): Array<Sheep | Monster> {
+  strikeTargets(facing: Facing): Array<Sheep | Horse | Monster> {
     const [fx, fy] = FACING_VEC[facing];
     const p = this.player;
-    return [...this.npcs, ...this.monsters].filter((s) => {
+    return [...this.npcs, ...this.horses, ...this.monsters].filter((s) => {
       const dx = s.x - p.x;
       const dy = s.y - p.y;
       const d = Math.hypot(dx, dy);
@@ -324,7 +383,11 @@ export class Entities {
   };
 
   /** Remove um animal e desfaz vínculos (par, namoro) de quem dependia dele. */
-  private removeAnimal(s: Sheep): void {
+  private removeAnimal(s: Sheep | Horse): void {
+    if (s instanceof Horse) {
+      this.horses.splice(this.horses.indexOf(s), 1);
+      return;
+    }
     const i = this.npcs.indexOf(s);
     if (i < 0) return;
     this.npcs.splice(i, 1);
@@ -393,6 +456,15 @@ export class Entities {
         kind: s.baby ? 'lamb' : 'sheep',
         x: s.x, y: s.y, visualZ: s.visualZ, facing: s.facing, moving: s.moving, walkTime: s.walkTime,
         inLove: s.inLove,
+      });
+    }
+    for (const h of this.horses) {
+      out.push({ kind: 'horse', x: h.x, y: h.y, visualZ: h.visualZ, facing: h.facing, moving: h.moving, walkTime: h.walkTime });
+    }
+    for (const v of this.villagers) {
+      out.push({
+        kind: `villager-${v.base}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime,
+        outfit: v.outfit,
       });
     }
     for (const m of this.monsters) {

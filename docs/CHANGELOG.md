@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.40.0 — 2026-11-04
+- **Moradores na cidade**: 4 moradores (cabelo loiro, castanho, preto e prateado) passeiam pelas ruas e praças da
+  Cidade do Despertar (praça inicial, caminho da praça central e pátio do castelo) e nunca saem delas; o golpe não os
+  atinge. **Roupas em camadas**: o dono do produto passa a desenhar personagens de roupa branca + folhas de caminhada só
+  de roupa; cada morador veste uma roupa sorteada pela seed (jaqueta jeans ou jaqueta de time, por enquanto), desenhada
+  por cima no mesmo quadro (`scripts/extract-villagers.py` alinha tudo na mesma grade e escala).
+- **Cavalo** no campo ao sul do portão, perto do rebanho: passeia e, como as ovelhas, não sobe em cubos.
+- Passeio dos animais/moradores extraído para `game/wanderer.ts` (ovelha, cavalo e morador usam o mesmo).
+- Folhas de moradores, roupas e cavalo não atrasam o início (cada um aparece quando a folha chega); o build conta-as
+  fora do orçamento de início (~2,5 MB).
+
 ## 0.39.1 — 2026-11-03
 - **Texturas sempre na direção desenhada** (pedido do dono do produto): o chão deixava alguns materiais girados ou
   espelhados ao acaso por célula para disfarçar a repetição; agora todo bloco aparece exatamente como a arte foi

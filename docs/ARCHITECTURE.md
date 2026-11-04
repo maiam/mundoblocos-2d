@@ -56,7 +56,7 @@ src/
     game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
     actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render
     save.ts, menu.ts           salvamento automático (localStorage, ADR 0011) e menu ☰
-    walker.ts → player.ts, sheep.ts, monster.ts   movimento/colisão/altura compartilhados
+    walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts, villager.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
                                morte/renascimento dos monstros, atores p/ render
     inventory.ts, hotbar.ts, bag.ts, chest.ts, skills.ts, drops.ts   inventário, grade, bolsa, baú, receitas, itens caídos

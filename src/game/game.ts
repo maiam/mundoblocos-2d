@@ -103,7 +103,10 @@ export class Game {
       // Rebanho no campo, do lado de fora do portão da cidade.
       const [gx, gy] = this.world.outsideGate();
       this.entities.spawnFlock(this.world, gx, gy + (this.world.town ? 8 : 0));
+      // Cavalo no mesmo campo, um pouco mais longe da estrada.
+      this.entities.spawnHorse(this.world, gx + 9, gy + (this.world.town ? 10 : 2));
     }
+    this.entities.spawnVillagers(this.world);
     this.entities.spawnMonsters(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));

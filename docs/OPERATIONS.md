@@ -100,6 +100,12 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 `--largest`: mantém só o maior pedaço por quadro (fragmentos de quadros vizinhos); `--alpha`: folha já transparente (usa o alfa); `--grid-offset-y`: sobe a grade quando o desenho invade a linha de cima
 (foi o caso da folha de caminhada da Deusa, hoje só referência: `--alpha --frame-h 160 --grid-offset-y 22`).
 
+**Cavalo**: `$P assets-src/horse-sheet.png src/assets/horse.png --alpha --largest --frame-h 112`
+
+**Moradores e roupas** (`assets-src/villagers/villager-*-sheet.png` e `outfit-*-sheet.png`, 4×4 transparentes):
+`python3 scripts/extract-villagers.py [--preview <png>]` → `villager-*.png` + `outfit-*.png` na mesma grade/escala
+(a roupa perde a cabeça careca) → `optimize-assets.py`. A prévia mostra cada morador com cada roupa.
+
 **Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
 `python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`
 

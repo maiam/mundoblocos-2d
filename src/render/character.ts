@@ -86,6 +86,12 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.0 } },
   'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true }, death: { cols: 8, rows: 2, ratio: 1.012 } },
   'sheep-love': { cols: 4, rows: 1, height: TILE * 1.75, shadow: [0.9, 0.16], walkFps: 0 },
+  horse: { cols: 4, rows: 4, height: TILE * 1.6, shadow: [0.5, 0.15], walkFps: 7 },
+  // Moradores (scripts/extract-villagers.py): mesma escala da heroína; a roupa vem por cima (`Actor.outfit`).
+  'villager-blond': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'villager-brown': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'villager-black': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'villager-silver': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
 };
 
 class SpriteSheet {
@@ -95,10 +101,19 @@ class SpriteSheet {
   private readonly deathImg = new Image();
   private deathReady = false;
 
+  /** Camadas desenhadas por cima no mesmo quadro (roupas dos moradores), por id. */
+  private readonly layers = new Map<string, HTMLImageElement>();
+
   /** `url` ausente = o mundo não tem este ator (só a sombra seria desenhada; na prática ele não aparece). */
-  constructor(private readonly spec: SheetSpec, url: string | undefined, deathUrl?: string) {
+  constructor(private readonly spec: SheetSpec, url: string | undefined, deathUrl?: string, layers?: Partial<Record<string, string>>) {
     this.img.onload = () => (this.ready = true);
     if (url) this.img.src = url;
+    for (const [id, src] of Object.entries(layers ?? {})) {
+      if (!src) continue;
+      const im = new Image();
+      im.src = src;
+      this.layers.set(id, im);
+    }
     this.deathImg.onload = () => (this.deathReady = true);
     if (deathUrl) this.deathImg.src = deathUrl;
   }
@@ -142,6 +157,13 @@ class SpriteSheet {
     if (a.hurt && Math.floor(elapsed * 14) % 2 === 1) return;
     if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
     else ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
+    // Roupa: mesmo quadro da folha de roupa (mesma grade e escala da base — extract-villagers.py).
+    const layer = a.outfit ? this.layers.get(a.outfit) : undefined;
+    if (layer?.complete && layer.naturalWidth) {
+      const lw = layer.naturalWidth / cols;
+      const lh = layer.naturalHeight / rows;
+      ctx.drawImage(layer, col * lw, row * lh, lw, lh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
+    }
   }
 
   /** Monstro: ciclo de 8 quadros (andando) ou respiração lenta (parado), espelho à direita, pisca ferido. */
@@ -225,7 +247,10 @@ class SpriteSheet {
 
 export class ActorSprites {
   private readonly sheets = Object.fromEntries(
-    (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k])]),
+    (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(
+      SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k],
+      k.startsWith('villager-') ? art().outfits : undefined,
+    )]),
   ) as Record<ActorKind, SpriteSheet>;
 
   get(kind: ActorKind): SpriteSheet {
