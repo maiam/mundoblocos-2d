@@ -26,6 +26,7 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.SHOP_GOODS]: ['shop-2f'],
   [Block.SHOP_TOOLS]: ['shop-1f'],
   [Block.SMITHY]: ['smithy'],
+  [Block.INN]: ['inn'],
   [Block.GUILD]: ['guild'],
   [Block.CASTLE]: ['castle'],
   [Block.WATCHTOWER]: ['watchtower'],
@@ -47,11 +48,8 @@ const ROOFS: Roof[] = [
   { base: '#b5643a', dark: '#7a3b1f', light: '#d98c5c' }, // telha alaranjada
   { base: '#c9583f', dark: '#8f3326', light: '#e8846a' },
 ];
-const PLASTER = '#f3e4c4';
-const PLASTER_SHADE = '#dcc59c';
 const TIMBER = '#6e4a30';
 const STONE = '#b4aeb0';
-const STONE_DARK = '#8a8389';
 
 function makeCanvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
   const c = document.createElement('canvas');
@@ -84,185 +82,6 @@ function shadow(ctx: Ctx, cx: number, cy: number, rx: number, ry: number): void 
   ctx.fill();
 }
 
-/** Pedras em fiadas (muralha, fundações). */
-function stoneCourses(ctx: Ctx, x: number, y: number, w: number, h: number, fill = STONE, joint = STONE_DARK, course = 7): void {
-  box(ctx, x, y, w, h, fill, null);
-  ctx.strokeStyle = joint;
-  ctx.lineWidth = 0.8;
-  for (let r = 0, yy = y + course; yy < y + h; r++, yy += course) {
-    ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke();
-  }
-  for (let r = 0, yy = y; yy < y + h; r++, yy += course) {
-    for (let xx = x + (r % 2 ? 6 : 0); xx < x + w; xx += 12) {
-      ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx, Math.min(y + h, yy + course)); ctx.stroke();
-    }
-  }
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.fillRect(x, y, w, 1.2);
-}
-
-function windowLit(ctx: Ctx, x: number, y: number, w = 9, h = 10, arch = false): void {
-  ctx.beginPath();
-  if (arch) {
-    ctx.moveTo(x, y + h); ctx.lineTo(x, y + w / 2); ctx.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w, y + h);
-  } else ctx.rect(x, y, w, h);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(x, y, x, y + h);
-  g.addColorStop(0, '#fff3b0');
-  g.addColorStop(1, '#f2b84b');
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-  ctx.strokeStyle = TIMBER;
-  ctx.lineWidth = 0.9;
-  ctx.beginPath();
-  ctx.moveTo(x + w / 2, y + (arch ? 1 : 0)); ctx.lineTo(x + w / 2, y + h);
-  ctx.moveTo(x, y + h * 0.55); ctx.lineTo(x + w, y + h * 0.55);
-  ctx.stroke();
-}
-
-function door(ctx: Ctx, cx: number, bottom: number, w = 13, h = 20, color = '#8a5530'): void {
-  const x = cx - w / 2;
-  const y = bottom - h;
-  ctx.beginPath();
-  ctx.moveTo(x, bottom); ctx.lineTo(x, y + w / 2); ctx.arc(cx, y + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w, bottom);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.4;
-  ctx.stroke();
-  ctx.strokeStyle = 'rgba(40,20,10,0.45)';
-  ctx.lineWidth = 0.8;
-  for (let k = 1; k < 3; k++) { ctx.beginPath(); ctx.moveTo(x + (w * k) / 3, y + 3); ctx.lineTo(x + (w * k) / 3, bottom); ctx.stroke(); }
-  ctx.fillStyle = '#f2c94c';
-  ctx.beginPath(); ctx.arc(cx + w * 0.28, bottom - h * 0.42, 1.1, 0, Math.PI * 2); ctx.fill();
-}
-
-/** Plaquinha com texto (nome do estabelecimento). */
-function plaque(ctx: Ctx, cx: number, cy: number, text: string, size = 7): void {
-  ctx.font = `bold ${size}px Georgia, 'Times New Roman', serif`;
-  const w = ctx.measureText(text).width + 8;
-  const h = size + 5;
-  box(ctx, cx - w / 2, cy - h / 2, w, h, '#f7e7c1', '#5a3a22', 1.2);
-  ctx.fillStyle = '#4a2c18';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, cx, cy + 0.5);
-}
-
-/** Telhado em duas águas com cumeeira horizontal, visto de cima (área x0..x1 × y0..y1). */
-function sideRoof(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, r: Roof): void {
-  const ridge = y0 + (y1 - y0) * 0.36;
-  poly(ctx, [[x0 + 3, y0], [x1 - 3, y0], [x1, ridge], [x0, ridge]], r.dark);
-  poly(ctx, [[x0, ridge], [x1, ridge], [x1 + 2, y1], [x0 - 2, y1]], r.base);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x0 - 2, ridge, x1 - x0 + 4, y1 - ridge);
-  ctx.clip();
-  ctx.strokeStyle = r.dark;
-  ctx.lineWidth = 0.9;
-  for (let yy = ridge + 5; yy < y1; yy += 5) {
-    for (let xx = x0 - 2; xx < x1 + 2; xx += 6) {
-      ctx.beginPath(); ctx.arc(xx + 3, yy, 3, 0, Math.PI); ctx.stroke();
-    }
-  }
-  ctx.restore();
-  ctx.strokeStyle = r.light;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(x0 + 1, ridge); ctx.lineTo(x1 - 1, ridge); ctx.stroke();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.moveTo(x0 - 2, y1); ctx.lineTo(x1 + 2, y1); ctx.stroke();
-}
-
-/** Telhado com cumeeira para o fundo e oitão (triângulo) na frente sobre a parede. */
-function gableRoof(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, r: Roof, wallTop: number, gable: (cx: number, apex: number) => void): void {
-  const cx = (x0 + x1) / 2;
-  poly(ctx, [[x0 - 2, y1], [x0 + 2, y0 + 2], [cx, y0 - 2], [cx, y1 - (y1 - y0) * 0.1]], r.dark);
-  poly(ctx, [[cx, y0 - 2], [x1 - 2, y0 + 2], [x1 + 2, y1], [cx, y1 - (y1 - y0) * 0.1]], r.base);
-  ctx.strokeStyle = r.dark;
-  ctx.lineWidth = 0.8;
-  for (let k = 1; k < 6; k++) {
-    const t = k / 6;
-    ctx.beginPath(); ctx.moveTo(cx + (x1 - cx) * t, y0 + 1); ctx.lineTo(cx + (x1 + 2 - cx) * t, y1 - 1); ctx.stroke();
-  }
-  const apex = Math.max(y0 + 4, wallTop - Math.min((x1 - x0) * 0.42, (wallTop - y0) * 0.9));
-  // Oitão: parede triangular + beiral grosso do telhado.
-  poly(ctx, [[x0 + 3, wallTop], [cx, apex], [x1 - 3, wallTop]], PLASTER);
-  gable(cx, apex);
-  ctx.strokeStyle = r.base;
-  ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(x0 - 3, wallTop + 3); ctx.lineTo(cx, apex - 2); ctx.lineTo(x1 + 3, wallTop + 3); ctx.stroke();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.moveTo(x0 - 4, wallTop + 1); ctx.lineTo(cx, apex - 4.5); ctx.lineTo(x1 + 4, wallTop + 1); ctx.stroke();
-}
-
-function chimney(ctx: Ctx, x: number, y: number, smoke: boolean): void {
-  box(ctx, x, y, 7, 13, '#9c5a46');
-  box(ctx, x - 1, y - 2, 9, 3, '#6d3a2c');
-  if (!smoke) return;
-  ctx.fillStyle = 'rgba(235,235,240,0.75)';
-  for (const [dx, dy, r] of [[3, -6, 3.2], [6, -12, 4], [3, -19, 4.6]]) {
-    ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2); ctx.fill();
-  }
-}
-
-/** Parede de enxaimel (reboco + madeira) com fundação de pedra. */
-function timberWall(ctx: Ctx, x: number, y: number, w: number, h: number, stoneBase: boolean): void {
-  box(ctx, x, y, w, h, PLASTER);
-  ctx.fillStyle = PLASTER_SHADE;
-  ctx.fillRect(x + 1, y + 1, w - 2, 3);
-  const base = stoneBase ? 8 : 4;
-  stoneCourses(ctx, x, y + h - base, w, base, STONE, STONE_DARK, 4);
-  ctx.strokeStyle = TIMBER;
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  for (let xx = x + 1.5; xx <= x + w; xx += T / 2) { ctx.moveTo(xx, y); ctx.lineTo(xx, y + h - base); }
-  ctx.moveTo(x, y + 1.5); ctx.lineTo(x + w, y + 1.5);
-  ctx.moveTo(x, y + (h - base) * 0.48); ctx.lineTo(x + w, y + (h - base) * 0.48);
-  ctx.stroke();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.4;
-  ctx.strokeRect(x, y, w, h);
-}
-
-interface HouseOpts { roof: Roof; gable: boolean; stone: boolean; chimney: boolean; smoke?: boolean }
-
-/** Casa w×d: parede com porta na coluna central e janelas; telhado em duas águas ou com oitão. */
-function house(ctx: Ctx, w: number, d: number, wallH: number, o: HouseOpts, pad: number, totalH: number, extras?: (wallTop: number, x0: number, x1: number) => void): void {
-  const x0 = pad;
-  const x1 = pad + w * T;
-  const bottom = totalH;
-  const wallTop = bottom - wallH;
-  const roofTop = wallTop - d * T + 6;
-  shadow(ctx, (x0 + x1) / 2 + 4, bottom - 2, (x1 - x0) / 2 + 3, 6);
-  if (o.stone) {
-    stoneCourses(ctx, x0, wallTop, x1 - x0, wallH);
-    ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.strokeRect(x0, wallTop, x1 - x0, wallH);
-  } else timberWall(ctx, x0, wallTop, x1 - x0, wallH, true);
-  // Janelas nas células sem porta; porta na coluna central.
-  const doorCol = Math.floor(w / 2);
-  for (let c = 0; c < w; c++) {
-    if (c === doorCol) continue;
-    windowLit(ctx, x0 + c * T + (T - 10) / 2, wallTop + wallH * 0.28, 10, 11);
-  }
-  door(ctx, x0 + doorCol * T + T / 2, bottom - 1);
-  if (o.chimney) chimney(ctx, x1 - T * 0.9, roofTop - 6, o.smoke ?? false);
-  if (o.gable) {
-    gableRoof(ctx, x0, roofTop, x1, wallTop + 4, o.roof, wallTop + 2, (cx, apex) => {
-      ctx.strokeStyle = TIMBER;
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx, apex + 2); ctx.lineTo(cx, wallTop + 2); ctx.stroke();
-      if (wallTop - apex > 16) windowLit(ctx, cx - 4, apex + (wallTop - apex) * 0.38, 8, 8, true);
-    });
-  } else sideRoof(ctx, x0 - 2, roofTop, x1 + 2, wallTop + 4, o.roof);
-  extras?.(wallTop, x0, x1);
-}
-
 /** Sprite sobre o canto inferior esquerdo de uma construção w×d (base na borda de baixo da célula). */
 function buildingSprite(w: number, d: number, wallH: number, headroom: number, draw: (ctx: Ctx, pad: number, totalH: number) => void): Sprite {
   const pad = 6;
@@ -270,20 +89,6 @@ function buildingSprite(w: number, d: number, wallH: number, headroom: number, d
   const [c, ctx] = makeCanvas(w * T + pad * 2, totalH);
   draw(ctx, pad, totalH);
   return { canvas: c, ox: -pad, oy: T - totalH, w: w * T + pad * 2, h: totalH, hit: { x: 0, y: T - d * T - wallH, w: w * T, h: d * T + wallH } };
-}
-
-function inn(): Sprite {
-  const [w, d] = townSize(Block.INN);
-  return buildingSprite(w, d, 60, 30, (ctx, pad, total) => house(ctx, w, d, 60, { roof: ROOFS[0], gable: false, stone: false, chimney: true, smoke: true }, pad, total, (wallTop, x0, x1) => {
-    const cx = (x0 + x1) / 2;
-    plaque(ctx, cx, wallTop - 4, 'Hospedaria', 8);
-    // Placa de cama pendurada.
-    box(ctx, x1 - 26, wallTop + 6, 16, 12, '#f7e7c1', '#5a3a22', 1.1);
-    box(ctx, x1 - 23, wallTop + 11, 10, 4, '#c9583f', null);
-    box(ctx, x1 - 23, wallTop + 9, 3, 3, '#ffffff', null);
-    ctx.fillStyle = '#ffd36b';
-    for (const lx of [x0 + 6, x1 - 8]) { ctx.beginPath(); ctx.arc(lx, wallTop + 22, 2.5, 0, Math.PI * 2); ctx.fill(); }
-  }));
 }
 
 function fountain(): Sprite {
@@ -412,7 +217,6 @@ export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
     if (sprites.length) m.set(id, sprites);
   }
   // Sem imagem fornecida (ainda): pintados em código.
-  m.set(Block.INN, [inn()]);
   m.set(Block.FOUNTAIN, [fountain()]);
   m.set(Block.WELL, [well()]);
   m.set(Block.STALL, [stall()]);

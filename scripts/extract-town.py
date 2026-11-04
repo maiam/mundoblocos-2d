@@ -12,7 +12,7 @@ Encaixe (`fit`):
 Fundo: as pranchas já vêm transparentes; `bg=True` remove fundo escuro/semitransparente ligado à borda do recorte
 (guarita). Em todos, sobram só as partes grandes (legendas, setas e textos pequenos somem).
 
-Depois rode scripts/optimize-assets.py (PNG → WebP). `--preview` grava uma folha de conferência com a área de cada
+Depois rode scripts/optimize-assets.py (PNG → WebP). `--only a,b` recorta só esses objetos. `--preview` grava uma folha de conferência com a área de cada
 objeto desenhada sob ele (scratch/town-preview.png).
 """
 import sys
@@ -39,6 +39,7 @@ OBJECTS = [
     ('smithy', 'smithy', (200, 0, 1336, 750), ('base', 8, 0.9), (8, 5), False),
     ('guild', 'guild', (0, 0, 1254, 955), ('base', 9, 0.82), (9, 9), False),
     ('castle', 'castle-moat', (0, 0, 1200, 1024), ('full', 26), (26, 17), False),
+    ('inn', 'inn', (150, 0, 1390, 752), ('base', 9, 0.95), (9, 5), False),
     ('watchtower', 'watchtower', (90, 0, 670, 1290), ('base', 4, 0.9), (4, 6), True),
     ('bench-3', 'benches', (0, 100, 1010, 660), ('full', 3.7), (3, 1), False),
     ('bench-2', 'benches', (1020, 100, 1774, 660), ('full', 2.5), (2, 1), False),
@@ -143,8 +144,12 @@ def extract(name, sheet, box, fit, bg):
 
 def main() -> None:
     preview = '--preview' in sys.argv
+    # `--only nome1,nome2`: recorta só esses objetos (não regrava os demais).
+    only = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else None
     out = []
     for name, sheet, box, fit, area, bg in OBJECTS:
+        if only and name not in only:
+            continue
         img = extract(name, sheet, box, fit, bg)
         print(f'{name}: {img.size} → {img.width / PX_PER_CELL:.2f} × {img.height / PX_PER_CELL:.2f} células')
         out.append((name, img, area))
