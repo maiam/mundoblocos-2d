@@ -27,7 +27,10 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 ## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
 Endereço **provisório** até o domínio próprio do Orvalis (ADR 0015: sem maiamapps): subdomínio de `pensamentos.online`,
 na Hostinger. Site estático: nenhum servidor aqui; o servidor do jogo será outro app num subdomínio próprio
-(ex.: `servidor.orvalis.pensamentos.online`), publicado do repositório do backend.
+`orvalis-servidor.pensamentos.online`, publicado do repositório `maiam/orvalis-servidor` (app web Node.js na Hostinger,
+Node 22, entrada `server.js`, sem build; porta de `PORT`). WebSocket de entrada **validado** em 2026-11-04 (página de
+teste em `/`, saúde em `/saude`, eco em `/ws`). O app do jogo continua app Node.js (preset Vite) por causa do build
+automático a cada merge.
 
 **Publicação pelo GitHub (forma principal)**: a Hostinger compila o repositório a cada push na branch escolhida.
 Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em Node 22):

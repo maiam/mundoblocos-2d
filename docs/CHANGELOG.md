@@ -1,6 +1,9 @@
 # Changelog
 
 ## Sem versão (docs) — 2026-11-04
+- **Servidor do Orvalis no ar (Etapa 0 do multiplayer)**: repositório `maiam/orvalis-servidor`, publicado em
+  `orvalis-servidor.pensamentos.online` (app web Node.js da Hostinger). O teste de WebSocket conectou: a hospedagem
+  aceita conexões em tempo real.
 - **Orvalis independente do maiamapps** (ADR 0015, decisão do dono do produto): o jogo não usa nem acessa o
   maiamapps; terá domínio próprio e, até lá, `pensamentos.online`. Multiplayer, contas e nuvem pertencem a um
   **backend próprio do Orvalis**, em repositório separado e subdomínio próprio. Plano do multiplayer registrado
