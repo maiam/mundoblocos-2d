@@ -53,7 +53,7 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   **quintal andável** (sem faixa "invisível" bloqueada atrás do telhado).
   **Tocar** numa construção ou placa mostra o nome/texto (`Hud.toast`); interiores ainda não existem.
 - **Zona segura**: monstros não existem fora da dungeon. Ovelhas e o cavalo nascem no campo, do lado de fora do portão.
-- **Moradores** (`domains/npc.md`): 3 passeiam só por ruas e praças (`street`), com roupas sorteadas pela seed; o
+- **Moradores** (`domains/npc.md`): 4 passeiam só por ruas e praças (`street`), com roupas sorteadas pela seed; o
   ferreiro atende dentro da Ferraria.
 
 ## Interiores (`world/interiors.ts`, ADR 0014)
@@ -74,7 +74,8 @@ cobre os 26×17), guarita, bancos 2×1 e 3×1, **3 postes de luz** (pedra, madei
 3 arbustos da cerca viva. Todas na mesma escala (`TOWN_PX_PER_CELL` = 48 px por célula), centradas na largura da
 construção e com a base no pé da célula — **nunca esticadas nem remontadas** (uma imagem por tamanho; remontar já
 deformou a casa). Da prancha do castelo "Senhor Feudal" (também 26×17) não foi usada: é uma fachada que cobre só ~11
-das 17 fileiras. **Hospedaria** 9×5 de 2 andares (prancha já transparente: recorte pelo alfa, sem remoção de fundo). Ainda **pintados em código**: fonte, poço, barracas, barris, caixotes e placas.
+das 17 fileiras. **Hospedaria** 9×5 de 2 andares (prancha já transparente: recorte pelo alfa, sem remoção de fundo). **Fonte** 3×3, **poço** 2×2 (desenho ~4 células de altura com o telhado), **barraca de frutas** 2×1 e **barril** 1×1 também
+vêm de pranchas. Ainda **pintados em código**: caixotes e placas.
 Render varre colunas à esquerda/linhas abaixo da tela só para esses sprites (`TOWN_REACH`).
 
 ## Pendências (ver NEXT_STEPS)

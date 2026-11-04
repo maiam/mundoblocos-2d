@@ -14,7 +14,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só no campo ao sul do portão; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
-| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 3 moradores + ferreiro de visual único (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
+| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 4 moradores + ferreiro de visual único (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
 | Cavalo no campo | ✅ passeio | sem montaria nem interação |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ | fora da cidade; aranhas só com arte de frente |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
@@ -82,7 +82,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    NPCs que apresentam o mundo na praça inicial, moradores que voltam às casas,
    mais moradores/roupas conforme chegarem folhas (roupa = folha de caminhada só de roupa, mesma grade —
    `extract-villagers.py`), guardas na muralha/castelo, ferreiro de dia, hospedaria à
-   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte da fonte, poço e barracas** (ainda pintados em código; hospedaria ✅ v0.40.1); interiores (guilda com quadro de missões,
+   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte dos caixotes e placas** (ainda pintados em código; hospedaria ✅ v0.40.1, fonte/poço/barraca/barril ✅ v0.43); interiores (guilda com quadro de missões,
    lojas com compra/venda, hospedaria como ponto de retorno opcional); lampiões acendendo ao anoitecer e
    movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
 1. Ovelhas e cavalos (e novos animais) em outros chunks, por bioma, com limite. Cavalo: montaria (andar mais rápido).

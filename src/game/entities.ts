@@ -138,7 +138,7 @@ export class Entities {
     const [sx, sy] = t.start;
     const [kx, ky] = t.castleDoor;
     type Person = { at: [number, number]; base: VillagerBase; outfit: OutfitId; walk: (cx: number, cy: number) => boolean; role?: VillagerRole };
-    const homes: Array<[number, number]> = [[sx - 5, sy - 1], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]];
+    const homes: Array<[number, number]> = [[sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]];
     const people: Person[] = TOWNSFOLK_BASES.map((base, i) => ({ at: homes[i % homes.length], base, outfit: villagerOutfit(world.seed, i), walk: onStreet }));
     const smithLook = ROLE_LOOK.smith;
     // Ferreiro: dentro da Ferraria, atrás do balcão (só anda nas linhas do ofício); sem interior, diante da porta.
