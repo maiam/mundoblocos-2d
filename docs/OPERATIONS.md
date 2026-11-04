@@ -109,6 +109,9 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 **Moradores e roupas** (`assets-src/villagers/villager-*-sheet.png` e `outfit-*-sheet.png`, 4×4 transparentes):
 `python3 scripts/extract-villagers.py [--preview <png>]` → `villager-*.png` + `outfit-*.png` na mesma grade/escala
 (a roupa perde a cabeça careca) → `optimize-assets.py`. A prévia mostra cada morador com cada roupa.
+O mesmo script gera as **expressões** (`assets-src/expressions/`, 16 rostos × frente/esquerda/direita) → `expr-<id>`,
+`expr-<id>-fx` e `villager-<cabelo>-bangs`; `--expr-preview <png>` mostra as 16 expressões em cada personagem. Folha de
+expressão nova com outro molde: medir de novo `CALIB` (escala e deslocamento da expressão 0 até o morador loiro).
 
 **Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
 `python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`

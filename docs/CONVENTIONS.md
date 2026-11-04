@@ -47,6 +47,7 @@
   mesma ancoragem (pés na base). Ajustar `--sat/--min` quando a sombra do desenho for escura/saturada.
 - **Personagens em camadas** (moradores): personagem de **roupa branca** + folhas de caminhada **só de roupa** na mesma
   grade 4×4; processar todas juntas com `scripts/extract-villagers.py` (mesma escala) e desenhar a roupa por cima.
+  **Expressões** em camada: rosto → franja → efeitos → roupa (`render/character.ts`).
   **Ofício = visual único**: personagem e roupa de um ofício (`ROLE_LOOK`) não aparecem em mais ninguém.
 - Blocos novos: cubo na prancha **3/4** (topo + frente, mesmo enquadramento) + entrada em `MATERIALS` na mesma
   ordem dos nomes de `extract-blocks.py`.

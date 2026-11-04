@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.44.0 — 2026-11-04
+- **16 expressões nos moradores** (pranchas do dono do produto: personagem careca com 16 rostos de frente, de lado e do
+  outro lado): sereno, alegre, sorriso, risada, surpreso, piscadela, contente, animado, triste, assustado, bravo,
+  convencido, gargalhada, neutro, tímido e sonolento. O script isola cada rosto e o encaixa em todos os personagens
+  (5 cabelos), em todos os quadros da caminhada, redesenhando a franja de cada cabelo por cima. Os efeitos fora do rosto
+  (zzz, veia de raiva, tracinhos de susto) viram uma camada própria.
+- Cada morador tem uma **expressão de repouso** sorteada pela seed (o ferreiro fica sempre sorridente) e **reage ao
+  conversar** (risada, animado, piscadela ou gargalhada) por 3 s.
+- Camadas do morador: personagem → rosto → franja → efeitos → roupa. Tudo carrega em segundo plano (início ~2,6 MB).
+
 ## 0.43.1 — 2026-11-04
 - **Fonte maior** (arte nova do dono do produto): a fonte da praça central passa de 3×3 para **5×5**, centralizada na
   praça; bancos e barracas em volta continuam nos mesmos lugares. Muda a praça central (igual em toda seed); salvamentos

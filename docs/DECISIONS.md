@@ -89,3 +89,4 @@
 | Roupas de ofício (ferreiro) fora do sorteio: vestem só o morador daquele ofício | domains/npc |
 | Ferraria: ferreiro mora dentro (atrás do balcão), só fala por enquanto; entrar andando para cima diante da porta | adr/0014, domains/town |
 | Ofícios com visual único: personagem e roupa do ofício não se repetem (ferreiro = cabelo preto + roupa de ferreiro) | domains/npc, CONVENTIONS |
+| Expressões em camada (rosto, franja por cabelo, efeitos) extraídas das folhas careca; repouso pela seed, reação ao conversar | domains/npc, OPERATIONS |

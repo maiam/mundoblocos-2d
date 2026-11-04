@@ -1,7 +1,7 @@
 import type { ActorKind } from '../../game/entities';
 import type { MonsterKind } from '../../world/dungeon';
 import type { ItemId, ToolId } from '../../world/items';
-import type { OutfitId } from '../../game/villager';
+import type { ExpressionId, OutfitId, VillagerBase } from '../../game/villager';
 
 /**
  * Pacote de arte de um mundo: URLs das imagens (arquivos separados no Artifact, ADR 0013) só do que aquele mundo usa.
@@ -13,6 +13,10 @@ export interface ArtPack {
   actors: Partial<Record<ActorKind, string>>;
   /** Roupas dos moradores (`extract-villagers.py`), desenhadas por cima da folha-base no mesmo quadro. */
   outfits?: Partial<Record<OutfitId, string>>;
+  /** Expressões dos moradores: rosto (todas as direções na grade 4×4) e, em algumas, efeitos por cima do cabelo. */
+  expressions?: Partial<Record<ExpressionId, { face: string; fx?: string }>>;
+  /** Franja de cada personagem-base, redesenhada por cima da expressão. */
+  bangs?: Partial<Record<VillagerBase, string>>;
   /** Atlas 3/4 dos 8 materiais (`extract-blocks.py`) e ícones da hotbar por bloco. */
   blockAtlas?: string;
   materialIcons: Partial<Record<number, string>>;

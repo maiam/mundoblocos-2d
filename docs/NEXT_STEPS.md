@@ -77,7 +77,8 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 
 ### Fase 4 — Mundo vivo e conteúdo
 0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`; 4 moradores passeando desde v0.40.0):
-   ~~fala ao tocar~~ ✅ v0.42 (falas fixas), **interiores das outras construções** (hospedaria, guilda, lojas, casas:
+   ~~fala ao tocar~~ ✅ v0.42 (falas fixas), expressões ✅ v0.44 (usar mais: sonolento à noite, assustado perto de
+   monstros, bravo se golpeado; folhas de cabelo separadas eliminariam as manchinhas dos perfis), **interiores das outras construções** (hospedaria, guilda, lojas, casas:
    imagem + mapa, ADR 0014), **loja do ferreiro** (comprar/melhorar ferramentas — depende de moedas/profissões),
    NPCs que apresentam o mundo na praça inicial, moradores que voltam às casas,
    mais moradores/roupas conforme chegarem folhas (roupa = folha de caminhada só de roupa, mesma grade —
