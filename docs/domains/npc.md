@@ -37,9 +37,13 @@
   porta da Ferraria. **Roupa nova**: folha em `assets-src/villagers/outfit-<id>-sheet.png` → rodar o script → id em
   `CASUAL_OUTFITS` (ou só em `OUTFITS`, se for de ofício) → import em `render/art/principal.ts`. Folha sem
   transparência (fundo claro) é limpa pelo script (`remove_bg`).
-- Pontos de casa fixos (praça inicial ×2, meio do caminho até o castelo, pátio do castelo, porta da Ferraria); andam só por células de
+- Pontos de casa fixos (praça inicial ×2, meio do caminho até o castelo, pátio do castelo, porta da Ferraria — hoje dentro dela); andam só por células de
   rua/praça da cidade (`TownLayout.street`) acima do portão — nunca saem da muralha. Velocidade 1,4, leash 6.
-- O golpe não os atinge (`strikeTargets` ignora moradores). Sem falas ainda. Estado de execução (não salvo).
+- O golpe não os atinge (`strikeTargets` ignora moradores). **Falam ao toque** (`Villager.speak`; clique sobre o
+  morador ou botão de ação com ele à frente): moradores revezam dicas; ofício tem fala própria e atende do outro lado
+  do balcão (alcance 3,2). Estado de execução (não salvo).
+- **Ferreiro** mora no interior da Ferraria (`InteriorLayout.keeper`, ADR 0014): anda só no chão do cômodo, nas
+  linhas do ofício; sem interior (mundo sem cidade), volta para a frente da porta.
 
 ## Monstros
 - Aranhas da dungeon: ver `domains/dungeon.md` (`game/monster.ts`).

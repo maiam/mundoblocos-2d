@@ -19,6 +19,8 @@ import { loadDungeonArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
 import type { Hit } from '../world/progression';
+import type { InteriorLayout } from '../world/interiors';
+import { art } from './art';
 
 /** Máximo de chunks (chão) re-renderizados por frame. */
 const MAX_CHUNK_RENDERS_PER_FRAME = 2;
@@ -48,6 +50,10 @@ export interface RenderOptions {
   inDungeon: boolean;
   /** Célula diante da entrada da dungeon (farol + seta na borda da tela), ou null. */
   entrance: [number, number] | null;
+  /** Cômodo onde a personagem está (ADR 0014): desenha só a arte dele e os atores, sem mundo em volta. */
+  interior?: InteriorLayout | null;
+  /** Escurecer ao passar por uma porta (1 → 0). */
+  fade?: number;
 }
 
 interface Glow {
@@ -74,6 +80,8 @@ export class Renderer {
   private readonly damageNumbers = new DamageNumbers();
   private readonly ctx: CanvasRenderingContext2D;
   sky: SkyState = skyAt(0.3);
+  /** Arte dos interiores por id (carrega em segundo plano; sem ela, o cômodo aparece só com o chão escuro). */
+  private readonly interiorArt = new Map<string, HTMLImageElement>();
   /** Estado visto por porta (aparência apenas): quando mudou de aberta/fechada, para animar. */
   private readonly doorAnim = new Map<number, { open: boolean; since: number }>();
 
@@ -84,6 +92,12 @@ export class Renderer {
     void loadDungeonArt().then((d) => { if (d && addDungeonTextures(this.textures)) this.chunks.invalidateAll(); });
     this.chunks = new ChunkRenderer(world, this.textures);
     loadCropSprites(this.textures.objects);
+    for (const [id, url] of Object.entries(art().interiors ?? {})) {
+      if (!url) continue;
+      const img = new Image();
+      img.src = url;
+      this.interiorArt.set(id, img);
+    }
   }
 
   draw(cam: Camera, opts: RenderOptions): void {
@@ -105,6 +119,11 @@ export class Renderer {
       ctx.fillStyle = g;
     }
     ctx.fillRect(0, 0, w, h);
+
+    if (opts.interior) {
+      this.drawInterior(cam, opts, opts.interior);
+      return;
+    }
 
     // 1) Chão.
     this.chunks.beginFrame();
@@ -216,6 +235,14 @@ export class Renderer {
     this.particles.draw(ctx);
 
     if (opts.showChunkBorders) this.drawChunkBorders(cam, rect);
+    this.drawOverlays(cam, opts);
+  }
+
+  /** Seleção, quebra, vinheta de dano e escurecer de porta (comuns ao mundo e aos interiores). */
+  private drawOverlays(cam: Camera, opts: RenderOptions): void {
+    const ctx = this.ctx;
+    const w = cam.width;
+    const h = cam.height;
     if (opts.focus) this.drawFocus(cam, opts.focus, opts.elapsed);
     if (opts.hover) this.drawHover(cam, opts.hover);
     if (opts.breaking) this.drawBreaking(cam, opts.breaking);
@@ -227,6 +254,39 @@ export class Renderer {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
+    if (opts.fade) {
+      ctx.fillStyle = `rgba(10, 6, 16, ${Math.min(1, opts.fade)})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
+  /**
+   * Interior: fundo escuro, a arte do cômodo cobrindo a área dele (a grade do mapa divide a imagem em partes iguais) e
+   * os atores lá dentro por profundidade. Sem chão do mundo, céu, nuvens, noite nem partículas.
+   */
+  private drawInterior(cam: Camera, opts: RenderOptions, room: InteriorLayout): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = '#120c18';
+    ctx.fillRect(0, 0, cam.width, cam.height);
+    const a = room.area;
+    const x0 = Math.round(cam.worldToScreenX(a.x0 * TILE));
+    const y0 = Math.round(cam.worldToScreenY(a.y0 * TILE));
+    const x1 = Math.round(cam.worldToScreenX((a.x1 + 1) * TILE));
+    const y1 = Math.round(cam.worldToScreenY((a.y1 + 1) * TILE));
+    const img = this.interiorArt.get(room.def.id);
+    if (img?.complete && img.naturalWidth) ctx.drawImage(img, x0, y0, x1 - x0, y1 - y0);
+    else {
+      ctx.fillStyle = '#7a4a2a';
+      ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    }
+    const inside = (x: number, y: number) => x >= a.x0 && x <= a.x1 + 1 && y >= a.y0 && y <= a.y1 + 1;
+    const items: Array<{ y: number; draw: () => void }> = [];
+    for (const act of opts.actors) if (inside(act.x, act.y)) items.push({ y: act.y, draw: () => this.drawActor(cam, act, opts.elapsed) });
+    for (const d of opts.drops) if (inside(d.x, d.y)) items.push({ y: d.y, draw: () => this.drawDrop(cam, d, opts.elapsed) });
+    items.sort((p, q) => p.y - q.y);
+    for (const it of items) it.draw();
+    this.damageNumbers.draw(ctx, cam, opts.dt);
+    this.drawOverlays(cam, opts);
   }
 
   /**

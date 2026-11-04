@@ -36,6 +36,8 @@ operacional e faz parte da entrega.
   `World.outsideGate()`. Mudar `buildTown` muda a cidade de todos: rode `town.test.ts`.
 - **Dungeon:** área de `world/dungeon.ts` é protegida pelo `World` (`isProtected`: nada quebra/coloca) e monstros
   nunca saem do interior (`Monster.insideAt`). Mudar `buildDungeon`/`planDungeon` muda o mapa das seeds: rode os testes.
+- **Interiores** (`world/interiors.ts`, ADR 0014): cômodos isolados do mesmo `World` em coordenadas fixas ao norte,
+  protegidos; mapa lógico (`#`/`.`/`E`) sobre a arte; entrar pela rua diante da porta, sair pelo capacho.
 - **Salvamento:** estado que deve persistir passa por `game/save.ts` (ADR 0011); mudou o formato → suba
   `SAVE_VERSION`. Nada de backend: nuvem é do core.
 - **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é

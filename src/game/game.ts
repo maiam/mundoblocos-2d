@@ -8,6 +8,7 @@ import { art } from '../render/art';
 import { inRect } from '../world/dungeon';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
+import type { Facing } from './walker';
 import { Camera } from './camera';
 import { Drops } from './drops';
 import { Entities } from './entities';
@@ -78,6 +79,8 @@ export class Game {
   private elapsed = 0;
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
+  /** Escurecer rápido ao passar por uma porta de interior (1 → 0). */
+  private fade = 0;
   private lastHp = 0;
   private last = performance.now();
   private unloadTimer = 0;
@@ -162,6 +165,9 @@ export class Game {
       if (r.selected !== null && r.selected < this.hotbar.length) this.select(r.selected);
       this.lastHp = this.player.hp;
       this.lastSaved = options.save.savedAt;
+      // Salvo dentro de um interior: volta para a rua, diante da porta (o cômodo não guarda estado).
+      const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
+      if (room) this.moveTo(room.outside, 'down');
     }
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
@@ -530,6 +536,8 @@ export class Game {
     if (blocked) this.actions.cancelAll();
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
+    if (!blocked) this.updateInteriors(iy);
+    this.fade = Math.max(0, this.fade - dt * 2.5);
     this.entities.update(dt, this.world);
     this.updateHealth(dt);
     // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
@@ -550,6 +558,7 @@ export class Game {
       this.world.unloadFar(loadRect);
     }
 
+    const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
     this.renderer.draw(this.camera, {
       player: this.player,
       actors: this.entities.actors,
@@ -558,7 +567,9 @@ export class Game {
       drops: this.drops.list,
       hurtFlash: this.hurtFlash,
       inDungeon: this.inDungeon,
-      entrance: this.world.dungeon && !this.inDungeon ? this.world.dungeon.doorstep : null,
+      entrance: this.world.dungeon && !this.inDungeon && !room ? this.world.dungeon.doorstep : null,
+      interior: room,
+      fade: this.fade,
       time: this.time,
       elapsed: this.elapsed,
       dt,
@@ -594,6 +605,36 @@ export class Game {
     if (!this.lastSaved) return 'Progresso salvo automaticamente a cada 10 s.';
     const s = Math.max(0, Math.round((Date.now() - this.lastSaved) / 1000));
     return `Progresso salvo automaticamente · último salvamento há ${s} s.`;
+  }
+
+  /**
+   * Interiores (ADR 0014): andar para cima na célula diante da porta entra no cômodo (aparece logo acima do capacho);
+   * pisar no capacho volta para a rua, diante da porta.
+   */
+  private updateInteriors(iy: number): void {
+    const p = this.player;
+    const room = this.world.interiorAt(p.cellX, p.cellY);
+    if (room) {
+      if (p.cellX === room.exit[0] && p.cellY === room.exit[1]) this.moveTo(room.outside, 'down');
+      return;
+    }
+    const door = iy < -0.3 ? this.world.interiorEntrance(p.cellX, p.cellY) : null;
+    if (door) {
+      this.moveTo(door.entry, 'up');
+      this.hud.toast(door.def.name);
+    }
+  }
+
+  /** Leva a personagem para a célula (centro), virada para `facing`, com a câmera junto e um escurecer rápido. */
+  private moveTo([x, y]: [number, number], facing: Facing): void {
+    const p = this.player;
+    p.x = x + 0.5;
+    p.y = y + 0.5;
+    p.facing = facing;
+    p.settle(this.world);
+    this.actions.cancelAll();
+    this.camera.follow(...this.cameraTarget(), 0, true);
+    this.fade = 1;
   }
 
   /** Personagem dentro da dungeon? (corações visíveis, penumbra, sem seta para a entrada). */

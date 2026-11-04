@@ -24,11 +24,12 @@ describe('Moradores da cidade e cavalo', () => {
     const town = e.villagers.slice(0, 4);
     expect(town.map((v) => v.base)).toEqual([...VILLAGER_BASES]);
     for (const v of town) expect(CASUAL_OUTFITS).toContain(v.outfit);
-    // Ferreiro: roupa de ferreiro, perto da porta da Ferraria.
+    // Ferreiro: roupa de ferreiro, dentro da Ferraria (interior), atrás do balcão.
     const smith = e.villagers[4];
     expect(smith.outfit).toBe('smith');
-    const door = w.town!.buildings.find((b) => b.id === Block.SMITHY)!.door!;
-    expect(Math.hypot(smith.x - door[0], smith.y - door[1])).toBeLessThan(4);
+    expect(smith.role).toBe('smith');
+    expect(w.interiorAt(smith.cellX, smith.cellY)?.def.id).toBe('smithy');
+    expect(smith.speak()).toContain('Ferreiro');
     expect(setup(42).e.villagers.map((v) => v.outfit)).toEqual(e.villagers.map((v) => v.outfit));
     // Seeds diferentes variam as roupas.
     const looks = new Set<string>();
@@ -43,7 +44,12 @@ describe('Moradores da cidade e cavalo', () => {
       for (let f = 0; f < 60 * 90; f++) {
         e.update(1 / 60, w);
         if (f % 30) continue;
-        for (const v of e.villagers) {
+        // O ferreiro fica no interior: só anda nas linhas do ofício, no chão do cômodo.
+        const smith = e.villagers.find((v) => v.role === 'smith')!;
+        const room = w.interiorAt(smith.cellX, smith.cellY)!;
+        expect(smith.cellY).toBeGreaterThanOrEqual(room.keeper!.rows[0]);
+        expect(smith.cellY).toBeLessThanOrEqual(room.keeper!.rows[1]);
+        for (const v of e.villagers.filter((x) => !x.role)) {
           expect(inRect(t.area, v.cellX, v.cellY)).toBe(true);
           expect(v.cellY).toBeLessThan(t.gate.y0);
           expect(t.street[(v.cellY - t.area.y0) * t.w + (v.cellX - t.area.x0)]).toBe(1);

@@ -428,7 +428,8 @@ html, body {
   position: absolute; left: 50%; top: max(14px, env(safe-area-inset-top, 0px));
   transform: translate(-50%, -8px); opacity: 0; pointer-events: none;
   padding: 8px 16px; border-radius: 12px; border: 1.5px solid var(--panel-border); background: rgba(28, 22, 64, 0.92);
-  color: var(--accent); font: 800 15px Nunito, system-ui, sans-serif; white-space: nowrap;
+  color: var(--accent); font: 800 15px Nunito, system-ui, sans-serif; text-align: center;
+  width: max-content; max-width: min(88vw, 560px); /* falas longas quebram linha no celular */
   transition: opacity .25s ease, transform .25s ease;
 }
 .toast.shown { opacity: 1; transform: translate(-50%, 0); }

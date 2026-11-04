@@ -16,6 +16,7 @@
 | 0011 | Salvamento automático no navegador, por mundo e seed, formato versionado | [0011](adr/0011-salvamento-local.md) |
 | 0012 | Cidade do Despertar: semente fixa, sobreposta ao terreno, área protegida, arte pintada em código | [0012](adr/0012-cidade-fixa.md) |
 | 0013 | Imagens em arquivos separados ao lado da página; código embutido; orçamento de **início** < 3 MB; arte de regiões em segundo plano | [0013](adr/0013-imagens-em-arquivos-separados.md) |
+| 0014 | Interiores = cômodos isolados do mesmo `World` (coordenadas fixas ao norte, protegidos), mapa lógico sobre a arte, porta pela rua, capacho para sair | [0014](adr/0014-interiores.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
@@ -86,3 +87,4 @@
 | Terra com Grama: arte nova com 3 variações sorteadas por célula (chão e cubo); colunas extras 15–16 do atlas | domains/render, OPERATIONS |
 | Moradores = personagem de roupa branca + roupa em camada (sorteada pela seed), mesma grade e escala; cavalo só passeia por enquanto | domains/npc, CONVENTIONS |
 | Roupas de ofício (ferreiro) fora do sorteio: vestem só o morador daquele ofício | domains/npc |
+| Ferraria: ferreiro mora dentro (atrás do balcão), só fala por enquanto; entrar andando para cima diante da porta | adr/0014, domains/town |

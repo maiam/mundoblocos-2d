@@ -321,6 +321,13 @@ export class ActionController {
   /** Clique curto do mouse. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
+    // Clique num morador ao alcance: conversa.
+    const [wx, wy] = this.camera.screenToWorld(sx, sy);
+    const talker = this.entities.villagerAt(wx / TILE, wy / TILE);
+    if (talker && Math.hypot(talker.x - this.player.x, talker.y - this.player.y) <= REACH) {
+      this.ctx.notify(talker.speak());
+      return;
+    }
     const picked = this.renderer.pick(this.camera, sx, sy);
     if (picked.hasObject && this.useDoorAt(picked.x, picked.y)) return;
     if (this.strikerInHand) {
@@ -377,6 +384,12 @@ export class ActionController {
     this.action = null;
     if (!a || a.held > TAP_MAX_S) return;
     const slot = this.slot;
+    // Morador à frente: conversa (antes de golpear/usar).
+    const talker = this.entities.villagerInFront();
+    if (talker) {
+      this.ctx.notify(talker.speak());
+      return;
+    }
     const [fx, fy] = this.frontCell();
     if (this.useDoorAt(fx, fy)) return;
     if (this.strikerInHand) {

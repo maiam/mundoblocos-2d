@@ -54,7 +54,15 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   **Tocar** numa construção ou placa mostra o nome/texto (`Hud.toast`); interiores ainda não existem.
 - **Zona segura**: monstros não existem fora da dungeon. Ovelhas e o cavalo nascem no campo, do lado de fora do portão.
 - **Moradores** (`domains/npc.md`): 4 passeiam só por ruas e praças (`street`), com roupas sorteadas pela seed; o
-  ferreiro fica diante da Ferraria.
+  ferreiro atende dentro da Ferraria.
+
+## Interiores (`world/interiors.ts`, ADR 0014)
+- Cômodo isolado do mapa em coordenadas fixas ao norte (`INTERIOR_ORIGIN`), sobreposição `InteriorTerrain`, protegido.
+  Mapa lógico (`InteriorDef.map`: `#` bloqueado, `.` chão, `E` capacho) desenhado sobre a arte (grade em partes iguais).
+- **Ferraria** 9 × 18 (`assets-src/interiors/smithy.png`): forja, bigorna, armeiro, estantes, caixotes e balcão; o
+  ferreiro (`keeper`) anda só nas linhas 9–11 (tapete, atrás do balcão).
+- Entrar: andar para cima na célula diante da porta (`TownBuilding.door`); sair: pisar no capacho (volta à rua). Salvo
+  lá dentro → carrega na rua. Interior novo: imagem + `InteriorDef` + `scripts/extract-interiors.py` + import da arte.
 - Salvamentos: ao carregar, as células protegidas de chunks salvos voltam do gerador (`World.restoreChunk`), e baús
   salvos onde não há mais baú são descartados — salvamentos antigos não "furam" a cidade. Formato inalterado (v4).
 

@@ -164,12 +164,12 @@ export class Hud {
     this.healthBar.setAttribute('aria-valuemax', String(maxHp));
   }
 
-  /** Mensagem curta no alto da tela (some sozinha em ~2,5 s). */
+  /** Mensagem no alto da tela: some sozinha em ~2,5 s (falas longas ficam mais, para dar tempo de ler). */
   toast(text: string): void {
     this.toastEl.textContent = text;
     this.toastEl.classList.add('shown');
     window.clearTimeout(this.toastTimer);
-    this.toastTimer = window.setTimeout(() => this.toastEl.classList.remove('shown'), 2500);
+    this.toastTimer = window.setTimeout(() => this.toastEl.classList.remove('shown'), 2500 + Math.max(0, text.length - 30) * 45);
   }
 
   /** Marca o espaço da mão escolhido para levar ao baú (-1 = nenhum). */

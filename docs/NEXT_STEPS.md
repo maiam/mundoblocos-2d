@@ -14,7 +14,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só no campo ao sul do portão; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
-| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 4 moradores + ferreiro (v0.41, 6 roupas); sem falas, interiores nem missões |
+| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 4 moradores + ferreiro (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
 | Cavalo no campo | ✅ passeio | sem montaria nem interação |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ | fora da cidade; aranhas só com arte de frente |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
@@ -77,7 +77,9 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 
 ### Fase 4 — Mundo vivo e conteúdo
 0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`; 4 moradores passeando desde v0.40.0):
-   tocar no morador para uma fala, NPCs que apresentam o mundo na praça inicial, moradores que voltam às casas,
+   ~~fala ao tocar~~ ✅ v0.42 (falas fixas), **interiores das outras construções** (hospedaria, guilda, lojas, casas:
+   imagem + mapa, ADR 0014), **loja do ferreiro** (comprar/melhorar ferramentas — depende de moedas/profissões),
+   NPCs que apresentam o mundo na praça inicial, moradores que voltam às casas,
    mais moradores/roupas conforme chegarem folhas (roupa = folha de caminhada só de roupa, mesma grade —
    `extract-villagers.py`), guardas na muralha/castelo, ferreiro de dia, hospedaria à
    noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte da fonte, poço e barracas** (ainda pintados em código; hospedaria ✅ v0.40.1); interiores (guilda com quadro de missões,
