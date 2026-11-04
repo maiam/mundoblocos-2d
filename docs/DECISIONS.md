@@ -88,3 +88,4 @@
 | Moradores = personagem de roupa branca + roupa em camada (sorteada pela seed), mesma grade e escala; cavalo só passeia por enquanto | domains/npc, CONVENTIONS |
 | Roupas de ofício (ferreiro) fora do sorteio: vestem só o morador daquele ofício | domains/npc |
 | Ferraria: ferreiro mora dentro (atrás do balcão), só fala por enquanto; entrar andando para cima diante da porta | adr/0014, domains/town |
+| Ofícios com visual único: personagem e roupa do ofício não se repetem (ferreiro = cabelo preto + roupa de ferreiro) | domains/npc, CONVENTIONS |

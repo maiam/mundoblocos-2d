@@ -14,7 +14,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Cultivo de trigo + inventário de itens contáveis | ✅ básico | só uma cultura, sem receitas |
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só no campo ao sul do portão; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
-| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 4 moradores + ferreiro (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
+| Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 3 moradores + ferreiro de visual único (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
 | Cavalo no campo | ✅ passeio | sem montaria nem interação |
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ | fora da cidade; aranhas só com arte de frente |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
