@@ -23,7 +23,7 @@ describe('Moradores da cidade e cavalo', () => {
     const { w, e } = setup(42);
     const town = e.villagers.filter((v) => !v.role);
     expect(town.map((v) => v.base)).toEqual(TOWNSFOLK_BASES);
-    expect(TOWNSFOLK_BASES).toEqual(['blond', 'brown', 'silver']);
+    expect(TOWNSFOLK_BASES).toEqual(['blond', 'brown', 'silver', 'red']);
     for (const v of town) expect(CASUAL_OUTFITS).toContain(v.outfit);
     // Ferreiro: cabelo preto + roupa de ferreiro, dentro da Ferraria (interior), atrás do balcão.
     const smith = e.villagers.find((v) => v.role === 'smith')!;
@@ -73,7 +73,7 @@ describe('Moradores da cidade e cavalo', () => {
     p.x = v.x - 0.8;
     p.y = v.y;
     expect(e.strike('right', w, 'sword')).toBe(0);
-    expect(e.villagers).toHaveLength(4);
+    expect(e.villagers).toHaveLength(5);
   });
 
   it('um cavalo no campo fora da cidade, em grama, que passeia', () => {
@@ -86,6 +86,6 @@ describe('Moradores da cidade e cavalo', () => {
     for (let f = 0; f < 60 * 30; f++) e.update(1 / 60, w);
     expect(Math.hypot(h.x - x0, h.y - y0)).toBeGreaterThan(0.3);
     expect(e.actors.some((a) => a.kind === 'horse')).toBe(true);
-    expect(e.actors.filter((a) => a.kind.startsWith('villager-') && a.outfit)).toHaveLength(4);
+    expect(e.actors.filter((a) => a.kind.startsWith('villager-') && a.outfit)).toHaveLength(5);
   });
 });

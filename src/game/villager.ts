@@ -4,7 +4,7 @@ import type { Blocker } from './walker';
 import { Wanderer } from './wanderer';
 
 /** Personagens-base dos moradores (roupa branca; arte `villager-<id>`). */
-export const VILLAGER_BASES = ['blond', 'brown', 'black', 'silver'] as const;
+export const VILLAGER_BASES = ['blond', 'brown', 'black', 'silver', 'red'] as const;
 export type VillagerBase = (typeof VILLAGER_BASES)[number];
 /**
  * Roupas vestidas por cima (arte `outfit-<id>`, mesma grade). Roupa nova: folha + id aqui + import no pacote de arte.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.0 — 2026-11-04
+- **Fonte, poço, barraca de frutas e barril com arte nova** (pranchas do dono do produto), no lugar da pintura em
+  código. Os tamanhos dos lotes não mudaram: fonte 3×3, poço 2×2, barraca 2×1 e barril 1×1. Só os caixotes e as placas
+  continuam pintados.
+- **Personagem ruivo** (`villager-red`): a cidade volta a ter 4 moradores comuns (loiro, castanho, prateado e ruivo)
+  e mais o ferreiro.
+
 ## 0.42.1 — 2026-11-04
 - **Ferreiro com visual fixo e único** (regra do dono do produto): sempre o personagem de **cabelo preto** com a
   **roupa de ferreiro**. Nenhum outro morador usa esse personagem nem essa roupa. A cidade fica com 3 moradores
