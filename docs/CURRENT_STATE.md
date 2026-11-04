@@ -78,7 +78,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
   Ver `domains/save.md`.
 
 ## Limitações conhecidas
-- Salvamento só neste navegador/aparelho (nuvem depende do core); itens caídos no chão não são salvos.
+- Salvamento só neste navegador/aparelho (nuvem depende do backend do Orvalis, ADR 0015); itens caídos no chão não são salvos.
 - Animais atingidos pela espada só somem (sem animação de morte nem drops). Corações da HUD ainda vetoriais
   (provisórios); aranhas só com arte de frente. Espólios ainda sem uso (receitas).
 - Ovelhas e o cavalo só nascem no campo ao sul do portão; não há animais em outros chunks. Moradores, cavalo e

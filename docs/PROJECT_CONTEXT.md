@@ -4,7 +4,7 @@
 **Orvalis** (decisão do dono do produto, 2026-11-03; antes "MundoBlocos 2D"). É o nome do **mundo de fantasia**
 onde o jogo acontece — de *orvalho*: o mundo que desperta a cada manhã, como os novatos na Cidade do Despertar. As
 cidades e regiões futuras ganham nomes próprios dentro de Orvalis. Endereço provisório: `orvalis.pensamentos.online`
-(Hostinger; `maiamapps.com.br` não pode ser usado por enquanto).
+(Hostinger) até o **domínio próprio** do Orvalis. O Orvalis é **independente do maiamapps** (ADR 0015).
 O repositório, o pacote npm e as chaves de salvamento (`mundoblocos:save:…`) mantêm o nome antigo de propósito:
 trocá-las apagaria os salvamentos dos jogadores.
 
@@ -33,12 +33,12 @@ O mundo vai crescer em **cidades e dungeons que acompanham a evolução dos pers
 O que isso pede (ainda não existe; ver `NEXT_STEPS`, Fase 6): sistema de **níveis/experiência** do personagem,
 **faixas de nível** por região (cidades, dungeons e monstros), um **mapa de regiões** (onde fica cada cidade,
 igual em toda seed como a Cidade 1, ADR 0012), **viagem** entre cidades e conteúdo que libera com o nível. Com
-jogadores online, a concentração por cidade vira também ponto de encontro (multiplayer = core).
+jogadores online, a concentração por cidade vira também ponto de encontro (multiplayer = backend do Orvalis).
 
 ## Posição no ecossistema
 - Repositório **apenas frontend** (site estático, Vite + TypeScript, sem framework).
-- Não há backend próprio e **não deve ser criado** aqui. Se/quando houver persistência de mundos,
-  contas ou multiplayer, isso pertence ao core (`core.maiamapps.com.br`) — ver `docs/NEXT_STEPS.md`.
+- Não há backend **neste** repositório e não deve ser criado aqui. Multiplayer, contas e mundos na nuvem pertencem ao
+  **backend do Orvalis**, em repositório separado e subdomínio próprio (ADR 0015). **Sem acesso ao maiamapps.**
 - A fonte de verdade do estado do mundo em tempo de execução é a classe `World` (`src/world/world.ts`);
   o terreno não editado é uma função pura da seed (`WorldGenerator`). Ver ADR 0003 (vista superior).
 

@@ -16,7 +16,7 @@ import type { Facing } from './walker';
  * Salvamento automático no navegador (Fase 2). Salva só o que a seed não reconstrói:
  * chunks editados, personagem, inventário, ovelhas, monstros da dungeon e a hora do dia.
  * Estado do mundo continua tendo o `World` como fonte de verdade; aqui só se copia e se restaura.
- * Contas e mundos na nuvem dependem do core (`core.maiamapps.com.br`) — nada de backend aqui.
+ * Contas e mundos na nuvem dependem do backend do Orvalis (repositório separado, ADR 0015) — nada de backend aqui.
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */

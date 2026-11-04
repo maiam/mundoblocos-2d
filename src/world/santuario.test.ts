@@ -11,8 +11,8 @@ const S = WORLD_PROFILES.santuario;
 
 describe('Perfis de mundo', () => {
   it('escolhe o mundo por build fixo, subdomínio e ?mundo=', () => {
-    expect(resolveWorldId('santuario.maiamapps.com.br', '')).toBe('santuario');
-    expect(resolveWorldId('maiamapps.com.br', '?mundo=santuario')).toBe('santuario');
+    expect(resolveWorldId('santuario.orvalis.pensamentos.online', '')).toBe('santuario');
+    expect(resolveWorldId('orvalis.pensamentos.online', '?mundo=santuario')).toBe('santuario');
     expect(resolveWorldId('localhost', '')).toBe('principal');
     expect(resolveWorldId('santuario.com', '')).toBe('principal'); // domínio de 2 partes não é subdomínio
     expect(resolveWorldId('localhost', '?mundo=xyz')).toBe('principal');

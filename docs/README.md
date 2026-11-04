@@ -5,7 +5,7 @@ Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece
 ## Ordem de leitura
 | # | Documento | Para quê | Atualizar quando |
 |---|---|---|---|
-| 1 | [PROJECT_CONTEXT](PROJECT_CONTEXT.md) | O que é, objetivos, lugar no ecossistema maiamapps | Muda o propósito ou o escopo |
+| 1 | [PROJECT_CONTEXT](PROJECT_CONTEXT.md) | O que é, objetivos, independência (ADR 0015) | Muda o propósito ou o escopo |
 | 2 | [CURRENT_STATE](CURRENT_STATE.md) | O que funciona hoje e limitações | **Toda entrega** |
 | 3 | [ARCHITECTURE](ARCHITECTURE.md) | Módulos, fluxo do frame, dependências, desempenho | Arquivo/módulo novo ou fluxo alterado |
 | 4 | [MAPS](MAPS.md) | Diagramas: módulos, frame, regras, ciclos, assets, "onde mexer" | Junto com ARCHITECTURE/domínios |

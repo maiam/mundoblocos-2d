@@ -13,8 +13,9 @@ operacional e faz parte da entrega.
 4. Faça um plano curto; só então implemente.
 
 ## 2. Invariantes (não quebrar)
-- **Sem backend neste repositório.** Persistência/contas futuras pertencem ao core (`core.maiamapps.com.br`):
-  documente a dependência em `NEXT_STEPS.md` em vez de criar servidor aqui.
+- **Sem backend neste repositório.** O Orvalis é independente do maiamapps (ADR 0015): multiplayer, contas e nuvem
+  pertencem ao **backend do Orvalis**, em repositório separado (subdomínio de `pensamentos.online` até o domínio
+  próprio). Nunca chame `maiamapps`. Documente dependências do servidor em `NEXT_STEPS.md`.
 - **Fontes de verdade:** mapa e regras de pisar/colocar/quebrar/plantar → `World` (`src/world/world.ts`);
   terreno não editado → `WorldGenerator` (função pura da seed); propriedades de bloco → `world/blocks.ts`;
   itens/ferramentas/drops → `world/items.ts`; números de vida, dano, atributos e progressão → `world/progression.ts`;
@@ -39,7 +40,7 @@ operacional e faz parte da entrega.
 - **Interiores** (`world/interiors.ts`, ADR 0014): cômodos isolados do mesmo `World` em coordenadas fixas ao norte,
   protegidos; mapa lógico (`#`/`.`/`E`) sobre a arte; entrar pela rua diante da porta, sair pelo capacho.
 - **Salvamento:** estado que deve persistir passa por `game/save.ts` (ADR 0011); mudou o formato → suba
-  `SAVE_VERSION`. Nada de backend: nuvem é do core.
+  `SAVE_VERSION`. Nada de backend aqui: nuvem é do backend do Orvalis.
 - **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é
   limitado a 10 chunks e só aceita os 18 blocos celestiais e a Deusa — não misture conteúdo entre mundos.
 

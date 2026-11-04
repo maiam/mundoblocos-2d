@@ -1,5 +1,11 @@
 # Changelog
 
+## Sem versão (docs) — 2026-11-04
+- **Orvalis independente do maiamapps** (ADR 0015, decisão do dono do produto): o jogo não usa nem acessa o
+  maiamapps; terá domínio próprio e, até lá, `pensamentos.online`. Multiplayer, contas e nuvem pertencem a um
+  **backend próprio do Orvalis**, em repositório separado e subdomínio próprio. Plano do multiplayer registrado
+  (NEXT_STEPS, Fase M). Nenhuma mudança no jogo.
+
 ## 0.44.0 — 2026-11-04
 - **16 expressões nos moradores** (pranchas do dono do produto: personagem careca com 16 rostos de frente, de lado e do
   outro lado): sereno, alegre, sorriso, risada, surpreso, piscadela, contente, animado, triste, assustado, bravo,
