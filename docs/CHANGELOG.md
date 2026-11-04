@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.45.0 — 2026-11-04
+- **Base do multiplayer** (Fase M, etapa 1; ADR 0016 com as decisões do dono do produto: co-op com código de convite
+  até 4 jogadores, convidado só com nome, sem combate entre jogadores). Ações do jogador como dados aplicadas pelas
+  regras do `World` (`world/actions.ts`), protocolo de mensagens (`net/protocol.ts`), sala autoritativa pura
+  (`net/room.ts`) que o servidor vai usar, sessão do jogo (`net/session.ts`) e um servidor de teste dentro do próprio
+  jogo (`net/loopback.ts`). Testado com vários jogadores: edições iguais para todos, quem chega depois recebe o que já
+  foi feito, cidade protegida recusada, sala cheia, nome e versão inválidos. Ainda não aparece no jogo (Etapa 3).
+
 ## Sem versão (docs) — 2026-11-04
 - **Servidor do Orvalis no ar (Etapa 0 do multiplayer)**: repositório `maiam/orvalis-servidor`, publicado em
   `orvalis-servidor.pensamentos.online` (app web Node.js da Hostinger). O teste de WebSocket conectou: a hospedagem

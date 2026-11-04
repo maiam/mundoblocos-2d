@@ -18,6 +18,7 @@
 | 0013 | Imagens em arquivos separados ao lado da página; código embutido; orçamento de **início** < 3 MB; arte de regiões em segundo plano | [0013](adr/0013-imagens-em-arquivos-separados.md) |
 | 0014 | Interiores = cômodos isolados do mesmo `World` (coordenadas fixas ao norte, protegidos), mapa lógico sobre a arte, porta pela rua, capacho para sair | [0014](adr/0014-interiores.md) |
 | 0015 | Orvalis independente do maiamapps: backend próprio (repositório separado) em subdomínio de `pensamentos.online` até o domínio próprio; regras do mundo compartilhadas com o servidor, não copiadas | [0015](adr/0015-orvalis-independente.md) |
+| 0016 | Multiplayer co-op com código de convite (até 4), convidados só com nome, sem PvP; servidor autoritativo com `Room`/protocolo compartilhados (`src/net`, `world/actions.ts`) | [0016](adr/0016-multiplayer-coop.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |

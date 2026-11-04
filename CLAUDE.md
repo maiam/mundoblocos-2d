@@ -21,6 +21,8 @@ operacional e faz parte da entrega.
   itens/ferramentas/drops → `world/items.ts`; números de vida, dano, atributos e progressão → `world/progression.ts`;
   aparência → `src/render/`.
 - `src/world/` **não usa DOM nem `Math.random()`** (testável em Node, determinístico por seed).
+- **Multiplayer** (ADR 0016): `src/net/` e `world/actions.ts` são compartilhados com o servidor — sem DOM; mensagem
+  incompatível → suba `PROTOCOL_VERSION`. Ação que muda o mapa só vale quando o servidor confirma (`applied`).
 - `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula
   (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; cursor e botão de ação só escolhem a célula.
 - **Arte por mundo:** imagens só são importadas em `src/render/art/<mundo>.ts` (ADR 0010), como URL — viram arquivos

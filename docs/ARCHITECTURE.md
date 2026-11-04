@@ -41,6 +41,12 @@ src/
     chunk.ts                   Chunk 16×16: ground + levels[MAX_STACK], modified, version
     world.ts                   World(seed, perfil): limites, chunks, standHeight, quebrar/colocar/plantar, tick, spawn
     items.ts                   itens contáveis, ferramentas, dropsFor
+    actions.ts                 ações do jogador como dados + applyAction (pelas regras do World) — multiplayer (ADR 0016)
+  net/     multiplayer — sem DOM; usado pelo jogo e pelo servidor (ADR 0016)
+    protocol.ts                mensagens, versão, código de convite, nome de convidado, leitura segura da rede
+    room.ts                    Room: sala autoritativa pura (World da sala, jogadores, edições)
+    session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
+    loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
