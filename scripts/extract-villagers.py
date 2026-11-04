@@ -5,6 +5,7 @@ Fontes em assets-src/villagers/ (folhas 4×4 transparentes, ordem frente, esquer
 - villager-<cabelo>-sheet.png → src/assets/villager-<cabelo>.png (personagem com roupa branca);
 - outfit-<nome>-sheet.png     → src/assets/outfit-<nome>.png (só a roupa: a cabeça careca da prancha é removida).
 
+Folha que não veio transparente (fundo claro): o fundo ligado à borda de cada quadro é removido (`remove_bg`).
 Todas as folhas passam pela MESMA grade, o MESMO recorte e a MESMA escala (caixa comum a todas), para que a roupa
 desenhada por cima do personagem caia exatamente no lugar (render/character.ts desenha base + roupa).
 Remoção da cabeça da roupa: em cada quadro acha a cabeça (maior região cor de pele ligada ao topo do desenho) e apaga
@@ -27,13 +28,39 @@ COLS = ROWS = 4
 ALPHA_MIN = 48  # resíduos fracos do fundo (os pontinhos vermelhos têm alfa 1) viram transparência
 
 
+def remove_bg(cell):
+    """Fundo claro/semitransparente ligado à borda do quadro (folha que não veio transparente): flood fill por pixels
+    de alfa < 235 ou claros e pouco saturados. O contorno escuro do desenho segura o avanço (a camisa branca fica)."""
+    rgb = cell[..., :3].astype(int)
+    mx, mn = rgb.max(axis=2), rgb.min(axis=2)
+    like = (cell[..., 3] < 235) | ((mn > 190) & (mx - mn < 24))
+    h, w = like.shape
+    bg = np.zeros((h, w), bool)
+    q = deque((y, x) for y in range(h) for x in (0, w - 1) if like[y, x])
+    q.extend((y, x) for x in range(w) for y in (0, h - 1) if like[y, x])
+    for y, x in q:
+        bg[y, x] = True
+    while q:
+        y, x = q.popleft()
+        for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+            if 0 <= ny < h and 0 <= nx < w and like[ny, nx] and not bg[ny, nx]:
+                bg[ny, nx] = True
+                q.append((ny, nx))
+    cell[..., 3][bg] = 0
+
+
 def cells_of(path: Path):
     a = np.asarray(Image.open(path).convert('RGBA')).copy()
+    opaque = (a[..., 3] < ALPHA_MIN).mean() < 0.4  # folha sem transparência de verdade (fundo claro)
     a[..., 3][a[..., 3] < ALPHA_MIN] = 0
     H, W = a.shape[:2]
     ch, cw = H / ROWS, W / COLS
-    return [a[round(r * ch):round((r + 1) * ch), round(c * cw):round((c + 1) * cw)].copy()
-            for r in range(ROWS) for c in range(COLS)]
+    cells = [a[round(r * ch):round((r + 1) * ch), round(c * cw):round((c + 1) * cw)].copy()
+             for r in range(ROWS) for c in range(COLS)]
+    if opaque:
+        for c in cells:
+            remove_bg(c)
+    return cells
 
 
 def keep_largest(cell):

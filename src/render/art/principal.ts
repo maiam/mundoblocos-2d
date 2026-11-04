@@ -50,6 +50,10 @@ import villagerBlack from '../../assets/villager-black.webp';
 import villagerSilver from '../../assets/villager-silver.webp';
 import outfitDenim from '../../assets/outfit-denim.webp';
 import outfitVarsity from '../../assets/outfit-varsity.webp';
+import outfitFarmer from '../../assets/outfit-farmer.webp';
+import outfitVest from '../../assets/outfit-vest.webp';
+import outfitHoodie from '../../assets/outfit-hoodie.webp';
+import outfitSmith from '../../assets/outfit-smith.webp';
 import spiderBig from '../../assets/spider-big.webp';
 import spiderBoss from '../../assets/spider-boss.webp';
 import spiderSmall from '../../assets/spider-small.webp';
@@ -121,7 +125,7 @@ const pack: ArtPack = {
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
   },
-  outfits: { denim: outfitDenim, varsity: outfitVarsity },
+  outfits: { denim: outfitDenim, varsity: outfitVarsity, farmer: outfitFarmer, vest: outfitVest, hoodie: outfitHoodie, smith: outfitSmith },
   blockAtlas,
   materialIcons: {
     [Block.OAK_DOOR]: oakDoorIcon,

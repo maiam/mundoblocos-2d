@@ -85,3 +85,4 @@
 | Texturas de blocos/chão sempre na direção desenhada (nada gira nem espelha por célula); variedade só por variações enviadas | CONVENTIONS, domains/render |
 | Terra com Grama: arte nova com 3 variações sorteadas por célula (chão e cubo); colunas extras 15–16 do atlas | domains/render, OPERATIONS |
 | Moradores = personagem de roupa branca + roupa em camada (sorteada pela seed), mesma grade e escala; cavalo só passeia por enquanto | domains/npc, CONVENTIONS |
+| Roupas de ofício (ferreiro) fora do sorteio: vestem só o morador daquele ofício | domains/npc |

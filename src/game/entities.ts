@@ -6,7 +6,7 @@ import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
 import { Horse } from './horse';
-import { VILLAGER_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId } from './villager';
+import { smithBase, VILLAGER_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId } from './villager';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
@@ -124,7 +124,8 @@ export class Entities {
 
   /**
    * Moradores da cidade: um de cada personagem-base, em pontos fixos (praça inicial, caminho da praça central e pátio
-   * do castelo), cada um com uma roupa sorteada pela seed. Só andam por ruas/praças dentro da muralha (fora do portão).
+   * do castelo), cada um com uma roupa sorteada pela seed, e o **ferreiro** (roupa de ferreiro) diante da Ferraria.
+   * Só andam por ruas/praças dentro da muralha (nunca pelo portão).
    */
   spawnVillagers(world: World): void {
     const t = world.town;
@@ -134,10 +135,12 @@ export class Entities {
       cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < t.gate.y0 && t.street[(cy - a.y0) * t.w + (cx - a.x0)] === 1;
     const [sx, sy] = t.start;
     const [kx, ky] = t.castleDoor;
-    const homes: Array<[number, number]> = [
+    const people: Array<{ at: [number, number]; base: VillagerBase; outfit: OutfitId }> = [
       [sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2],
-    ];
-    homes.forEach(([hx, hy], i) => {
+    ].map((at, i) => ({ at: at as [number, number], base: VILLAGER_BASES[i], outfit: villagerOutfit(world.seed, i) }));
+    const smithy = t.buildings.find((b) => b.id === Block.SMITHY);
+    if (smithy?.door) people.push({ at: smithy.door, base: smithBase(world.seed), outfit: 'smith' });
+    people.forEach(({ at: [hx, hy], base, outfit }) => {
       // Rua/praça andável e livre mais perto do ponto.
       for (let r = 0; r <= 12; r++) {
         for (let dy = -r; dy <= r; dy++) {
@@ -146,7 +149,7 @@ export class Entities {
             const cx = hx + dx;
             const cy = hy + dy;
             if (!onStreet(cx, cy) || !world.isWalkable(cx, cy)) continue;
-            const v = new Villager(cx + 0.5, cy + 0.5, VILLAGER_BASES[i % VILLAGER_BASES.length], villagerOutfit(world.seed, i), onStreet, this.rand);
+            const v = new Villager(cx + 0.5, cy + 0.5, base, outfit, onStreet, this.rand);
             if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
             this.villagers.push(v);
             return;
