@@ -102,6 +102,10 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 
 **Cavalo**: `$P assets-src/horse-sheet.png src/assets/horse.png --alpha --largest --frame-h 112`
 
+**Interiores** (`assets-src/interiors/<id>.png`, imagem inteira = cômodo): `python3 scripts/extract-interiors.py
+[--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
+`--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
+
 **Moradores e roupas** (`assets-src/villagers/villager-*-sheet.png` e `outfit-*-sheet.png`, 4×4 transparentes):
 `python3 scripts/extract-villagers.py [--preview <png>]` → `villager-*.png` + `outfit-*.png` na mesma grade/escala
 (a roupa perde a cabeça careca) → `optimize-assets.py`. A prévia mostra cada morador com cada roupa.

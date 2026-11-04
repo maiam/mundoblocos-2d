@@ -6,7 +6,8 @@ import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
 import { Horse } from './horse';
-import { smithBase, VILLAGER_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId } from './villager';
+import { smithBase, VILLAGER_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId, type VillagerRole } from './villager';
+import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
@@ -135,12 +136,21 @@ export class Entities {
       cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < t.gate.y0 && t.street[(cy - a.y0) * t.w + (cx - a.x0)] === 1;
     const [sx, sy] = t.start;
     const [kx, ky] = t.castleDoor;
-    const people: Array<{ at: [number, number]; base: VillagerBase; outfit: OutfitId }> = [
+    type Person = { at: [number, number]; base: VillagerBase; outfit: OutfitId; walk: (cx: number, cy: number) => boolean; role?: VillagerRole };
+    const people: Person[] = [
       [sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2],
-    ].map((at, i) => ({ at: at as [number, number], base: VILLAGER_BASES[i], outfit: villagerOutfit(world.seed, i) }));
+    ].map((at, i) => ({ at: at as [number, number], base: VILLAGER_BASES[i], outfit: villagerOutfit(world.seed, i), walk: onStreet }));
+    // Ferreiro: dentro da Ferraria, atrás do balcão (só anda nas linhas do ofício); sem interior, diante da porta.
+    const forge = world.interiors.find((l) => l.def.building === Block.SMITHY);
     const smithy = t.buildings.find((b) => b.id === Block.SMITHY);
-    if (smithy?.door) people.push({ at: smithy.door, base: smithBase(world.seed), outfit: 'smith' });
-    people.forEach(({ at: [hx, hy], base, outfit }) => {
+    if (forge?.keeper) {
+      const k = forge.keeper;
+      const walk = (cx: number, cy: number) => cy >= k.rows[0] && cy <= k.rows[1] && interiorFloor(forge, cx, cy);
+      people.push({ at: k.at, base: smithBase(world.seed), outfit: 'smith', walk, role: 'smith' });
+    } else if (smithy?.door) {
+      people.push({ at: smithy.door, base: smithBase(world.seed), outfit: 'smith', walk: onStreet, role: 'smith' });
+    }
+    people.forEach(({ at: [hx, hy], base, outfit, walk, role }) => {
       // Rua/praça andável e livre mais perto do ponto.
       for (let r = 0; r <= 12; r++) {
         for (let dy = -r; dy <= r; dy++) {
@@ -148,8 +158,8 @@ export class Entities {
             if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
             const cx = hx + dx;
             const cy = hy + dy;
-            if (!onStreet(cx, cy) || !world.isWalkable(cx, cy)) continue;
-            const v = new Villager(cx + 0.5, cy + 0.5, base, outfit, onStreet, this.rand);
+            if (!walk(cx, cy) || !world.isWalkable(cx, cy)) continue;
+            const v = new Villager(cx + 0.5, cy + 0.5, base, outfit, walk, this.rand, role);
             if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
             this.villagers.push(v);
             return;
@@ -416,6 +426,35 @@ export class Entities {
       }
     }
     return hit;
+  }
+
+  /** Morador sob o ponto (em células), pela altura do sprite; o mais à frente vence. */
+  villagerAt(wx: number, wy: number): Villager | null {
+    let hit: Villager | null = null;
+    for (const v of this.villagers) {
+      const lift = (v.visualZ * CUBE_FRONT) / TILE;
+      if (Math.abs(wx - v.x) < 0.45 && wy > v.y - lift - 2.1 && wy < v.y - lift + 0.2 && (!hit || v.y > hit.y)) hit = v;
+    }
+    return hit;
+  }
+
+  /**
+   * Morador logo à frente da personagem (no arco para onde ela olha), para conversar: até 1,8 célula; quem tem ofício
+   * atende do outro lado do balcão (até 3,2).
+   */
+  villagerInFront(): Villager | null {
+    const p = this.player;
+    const [fx, fy] = FACING_VEC[p.facing];
+    let best: Villager | null = null;
+    let bestD = Infinity;
+    for (const v of this.villagers) {
+      const dx = v.x - p.x;
+      const dy = v.y - p.y;
+      const d = Math.hypot(dx, dy);
+      if (d > (v.role ? 3.2 : 1.8) || d >= bestD) continue;
+      if (d < 0.4 || (dx * fx + dy * fy) / d >= 0.3) { best = v; bestD = d; }
+    }
+    return best;
   }
 
   /** Alguma entidade ocupa a célula? (não se coloca bloco nem se cava sob elas). */

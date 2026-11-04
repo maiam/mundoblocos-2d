@@ -34,6 +34,8 @@ export interface ArtPack {
   tent?: { icon: string; sprite: string };
   /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
   chest?: { icon: string; sprite: string };
+  /** Interiores (`scripts/extract-interiors.py`), por id de `world/interiors.ts`; carregam em segundo plano. */
+  interiors?: Record<string, string>;
   /** Cidade do Despertar: construções em imagem (`scripts/extract-town.py`); o resto é pintado em código. */
   town?: Record<string, string>;
   /** Ícones de interface (bolsa do inventário). */

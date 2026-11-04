@@ -5,6 +5,7 @@ import { Chunk, type Level } from './chunk';
 import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
 import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
+import { type InteriorLayout, interiorLayouts, InteriorTerrain } from './interiors';
 import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
@@ -77,6 +78,8 @@ export class World {
   readonly dungeon: DungeonLayout | null = null;
   /** Cidade do Despertar (perfil com `town`), ou null. Área protegida; início e renascer sem tenda. */
   readonly town: TownLayout | null = null;
+  /** Interiores das construções da cidade (ADR 0014): cômodos isolados e protegidos. Vazio sem cidade. */
+  readonly interiors: InteriorLayout[] = [];
   /** Buracos enchendo de água (estado de execução; ao carregar, `settleWater` reagenda). */
   private readonly flows = new Map<string, WaterFlow>();
   /** Spawn calculado no terreno base (a dungeon é posta longe dele e não o altera). */
@@ -106,11 +109,26 @@ export class World {
       this.dungeon = planDungeon(base, sx, sy, keep);
       this.generator = new DungeonTerrain(base, this.dungeon);
     }
+    if (this.town) {
+      this.interiors = interiorLayouts(this.town);
+      this.generator = new InteriorTerrain(this.generator, this.interiors);
+    }
   }
 
-  /** Célula dentro da dungeon ou da cidade (muralhas incluídas)? Lá nada é quebrado, colocado, arado nem plantado. */
+  /** Célula dentro da dungeon, da cidade (muralhas incluídas) ou de um interior? Lá nada é quebrado, colocado, arado nem plantado. */
   isProtected(x: number, y: number): boolean {
-    return (!!this.dungeon && inRect(this.dungeon.area, x, y)) || (!!this.town && inRect(this.town.area, x, y));
+    return (!!this.dungeon && inRect(this.dungeon.area, x, y)) || (!!this.town && inRect(this.town.area, x, y))
+      || this.interiors.some((l) => inRect(l.guard, x, y));
+  }
+
+  /** Interior (cômodo) que contém a célula, ou null. */
+  interiorAt(x: number, y: number): InteriorLayout | null {
+    return this.interiors.find((l) => inRect(l.area, x, y)) ?? null;
+  }
+
+  /** Interior cuja porta fica diante desta célula da rua (andar para cima nela = entrar), ou null. */
+  interiorEntrance(x: number, y: number): InteriorLayout | null {
+    return this.interiors.find((l) => l.outside[0] === x && l.outside[1] === y) ?? null;
   }
 
   /** Construção (ou placa) da cidade que ocupa a célula, ou null. */

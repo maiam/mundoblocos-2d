@@ -81,6 +81,7 @@ import townShop1f from '../../assets/town-shop-1f.webp';
 import townShop2f from '../../assets/town-shop-2f.webp';
 import townSmithy from '../../assets/town-smithy.webp';
 import townInn from '../../assets/town-inn.webp';
+import interiorSmithy from '../../assets/interior-smithy.webp';
 import townGuild from '../../assets/town-guild.webp';
 import townCastle from '../../assets/town-castle.webp';
 import townWatchtower from '../../assets/town-watchtower.webp';
@@ -125,6 +126,7 @@ const pack: ArtPack = {
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
   },
+  interiors: { smithy: interiorSmithy },
   outfits: { denim: outfitDenim, varsity: outfitVarsity, farmer: outfitFarmer, vest: outfitVest, hoodie: outfitHoodie, smith: outfitSmith },
   blockAtlas,
   materialIcons: {

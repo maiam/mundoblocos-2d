@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.42.0 — 2026-11-04
+- **Interior da Ferraria** (arte do dono do produto): andar para cima diante da porta da Ferraria leva para dentro
+  (escurece rápido e mostra "Ferraria"); pisar no capacho volta para a rua. Lá dentro: forja, bigorna, armeiro,
+  estantes e balcão; paredes e móveis bloqueiam, o chão e o tapete são andáveis. Cômodo isolado do mapa e protegido
+  (ADR 0014).
+- **O ferreiro mora na Ferraria**, atrás do balcão; tocar nele (ou o botão de ação diante do balcão) mostra a fala dele.
+  **Moradores também falam** quando tocados (dicas sobre a cidade).
+- Mensagens longas no alto da tela quebram linha no celular e ficam mais tempo.
+- Salvo dentro de um interior, o jogo volta na rua, diante da porta. Formato do salvamento inalterado.
+
 ## 0.41.0 — 2026-11-04
 - **4 roupas novas** (prancha do dono do produto): jardineira de lavrador, colete social, moletom verde e a
   **roupa de ferreiro**. As 3 primeiras entram no sorteio dos moradores (agora 5 roupas casuais).

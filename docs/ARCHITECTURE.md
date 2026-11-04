@@ -34,6 +34,7 @@ src/
     dungeon.ts                 dungeon: área pura da seed (buildDungeon/planDungeon) + DungeonTerrain (sobreposição)
     progression.ts             regras numéricas da progressão: atributos, armas, ficha dos monstros, fórmula de dano
     town.ts                    Cidade do Despertar: mapa fixo (townLayout, semente própria) + TownTerrain (sobreposição)
+    interiors.ts               interiores das construções: cômodos isolados (mapa lógico #/./E) + InteriorTerrain (ADR 0014)
     generator.ts               WorldGenerator.cellAt (uma avaliação de ruído por célula), generateChunk
     flatGenerator.ts           FlatGenerator: chão de um bloco só (Santuário)
     coords.ts                  célula ↔ chunk/local (seguro p/ negativos)

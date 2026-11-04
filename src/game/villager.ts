@@ -14,6 +14,20 @@ export const CASUAL_OUTFITS = ['denim', 'varsity', 'farmer', 'vest', 'hoodie'] a
 export const OUTFITS = [...CASUAL_OUTFITS, 'smith'] as const;
 export type OutfitId = (typeof OUTFITS)[number];
 
+/** Ofícios com morador próprio. */
+export type VillagerRole = 'smith';
+const ROLE_NAME: Record<VillagerRole, string> = { smith: 'Ferreiro' };
+const ROLE_LINE: Record<VillagerRole, string> = {
+  smith: 'Bem-vinda à Ferraria! Logo vou forjar ferramentas e armas para você.',
+};
+/** Dicas dos moradores (conteúdo; vira diálogo de verdade com NPCs/missões). */
+const VILLAGER_LINES = [
+  'Bem-vinda à Cidade do Despertar! Aqui dentro da muralha nada se quebra.',
+  'Dizem que há aranhas numa caverna lá fora. Leve a espada!',
+  'O ferreiro trabalha dentro da Ferraria. Entre pela porta.',
+  'Uma tenda armada lá fora vira seu ponto de renascer.',
+];
+
 /**
  * Morador da Cidade do Despertar: passeia pelas ruas e praças perto de casa e **nunca sai delas** (a caixa dos pés
  * só entra em células que `onStreet` aceita — a cidade decide; ver `Entities.spawnVillagers`). Visual = base + roupa.
@@ -26,8 +40,18 @@ export class Villager extends Wanderer {
     readonly outfit: OutfitId,
     private readonly onStreet: (cx: number, cy: number) => boolean,
     rand: () => number = Math.random,
+    /** Ofício (fala própria); sem ofício = morador. */
+    readonly role: VillagerRole | null = null,
   ) {
-    super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: 6 });
+    super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: role ? 3 : 6 });
+  }
+
+  /** O que diz ao ser tocado: ofício tem fala própria; moradores revezam dicas (na ordem). */
+  private said = 0;
+  speak(): string {
+    if (this.role) return `${ROLE_NAME[this.role]}: “${ROLE_LINE[this.role]}”`;
+    const line = VILLAGER_LINES[(this.said++ + VILLAGER_BASES.indexOf(this.base)) % VILLAGER_LINES.length];
+    return `Morador: “${line}”`;
   }
 
   /** A caixa dos pés inteira fica em rua/praça? */
