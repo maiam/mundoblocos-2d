@@ -49,6 +49,30 @@ import villagerBrown from '../../assets/villager-brown.webp';
 import villagerBlack from '../../assets/villager-black.webp';
 import villagerSilver from '../../assets/villager-silver.webp';
 import villagerRed from '../../assets/villager-red.webp';
+import exprCalm from '../../assets/expr-calm.webp';
+import exprHappy from '../../assets/expr-happy.webp';
+import exprSmile from '../../assets/expr-smile.webp';
+import exprLaugh from '../../assets/expr-laugh.webp';
+import exprSurprised from '../../assets/expr-surprised.webp';
+import exprWink from '../../assets/expr-wink.webp';
+import exprContent from '../../assets/expr-content.webp';
+import exprExcited from '../../assets/expr-excited.webp';
+import exprSad from '../../assets/expr-sad.webp';
+import exprScared from '../../assets/expr-scared.webp';
+import exprScaredFx from '../../assets/expr-scared-fx.webp';
+import exprAngry from '../../assets/expr-angry.webp';
+import exprAngryFx from '../../assets/expr-angry-fx.webp';
+import exprSmug from '../../assets/expr-smug.webp';
+import exprGuffaw from '../../assets/expr-guffaw.webp';
+import exprNeutral from '../../assets/expr-neutral.webp';
+import exprShy from '../../assets/expr-shy.webp';
+import exprSleepy from '../../assets/expr-sleepy.webp';
+import exprSleepyFx from '../../assets/expr-sleepy-fx.webp';
+import bangsBlond from '../../assets/villager-blond-bangs.webp';
+import bangsBrown from '../../assets/villager-brown-bangs.webp';
+import bangsBlack from '../../assets/villager-black-bangs.webp';
+import bangsSilver from '../../assets/villager-silver-bangs.webp';
+import bangsRed from '../../assets/villager-red-bangs.webp';
 import outfitDenim from '../../assets/outfit-denim.webp';
 import outfitVarsity from '../../assets/outfit-varsity.webp';
 import outfitFarmer from '../../assets/outfit-farmer.webp';
@@ -133,6 +157,8 @@ const pack: ArtPack = {
     'spider-boss': spiderBoss,
   },
   interiors: { smithy: interiorSmithy },
+  expressions: { calm: { face: exprCalm }, happy: { face: exprHappy }, smile: { face: exprSmile }, laugh: { face: exprLaugh }, surprised: { face: exprSurprised }, wink: { face: exprWink }, content: { face: exprContent }, excited: { face: exprExcited }, sad: { face: exprSad }, scared: { face: exprScared, fx: exprScaredFx }, angry: { face: exprAngry, fx: exprAngryFx }, smug: { face: exprSmug }, guffaw: { face: exprGuffaw }, neutral: { face: exprNeutral }, shy: { face: exprShy }, sleepy: { face: exprSleepy, fx: exprSleepyFx } },
+  bangs: { blond: bangsBlond, brown: bangsBrown, black: bangsBlack, silver: bangsSilver, red: bangsRed },
   outfits: { denim: outfitDenim, varsity: outfitVarsity, farmer: outfitFarmer, vest: outfitVest, hoodie: outfitHoodie, smith: outfitSmith },
   blockAtlas,
   materialIcons: {

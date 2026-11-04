@@ -5,7 +5,7 @@ import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities } from './entities';
 import { Player } from './player';
-import { CASUAL_OUTFITS, ROLE_LOOK, TOWNSFOLK_BASES, villagerOutfit } from './villager';
+import { CASUAL_OUTFITS, EXPRESSIONS, ROLE_LOOK, TOWNSFOLK_BASES, villagerOutfit } from './villager';
 
 function setup(seed: number) {
   const w = new World(seed);
@@ -65,6 +65,20 @@ describe('Moradores da cidade e cavalo', () => {
       }
       expect(e.villagers.some((v) => Math.hypot(v.x - v.homeX, v.y - v.homeY) > 0.5)).toBe(true);
     }
+  });
+
+  it('expressões: cada morador tem uma de repouso (pela seed) e reage ao conversar, voltando depois', () => {
+    const { w, e } = setup(42);
+    for (const v of e.villagers) expect(EXPRESSIONS).toContain(v.expression);
+    expect(e.villagers.find((v) => v.role === 'smith')!.expression).toBe(ROLE_LOOK.smith.expression);
+    expect(setup(42).e.villagers.map((v) => v.expression)).toEqual(e.villagers.map((v) => v.expression));
+    const v = e.villagers[0];
+    const rest = v.expression;
+    v.speak();
+    expect(v.expression).not.toBe(rest);
+    for (let f = 0; f < 60 * 4; f++) e.update(1 / 60, w);
+    expect(v.expression).toBe(rest);
+    expect(e.actors.filter((a) => a.expression)).toHaveLength(e.villagers.length);
   });
 
   it('o golpe não atinge moradores', () => {

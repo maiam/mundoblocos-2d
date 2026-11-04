@@ -2,6 +2,7 @@ import { art } from './art';
 import { TILE } from '../config';
 import type { Actor, ActorKind } from '../game/entities';
 import type { Facing } from '../game/walker';
+import type { VillagerBase } from '../game/villager';
 
 /**
  * Sprites de atores (folhas geradas por scripts/process-sprite.py); URLs vêm do pacote de arte do mundo (`render/art`).
@@ -102,7 +103,10 @@ class SpriteSheet {
   private readonly deathImg = new Image();
   private deathReady = false;
 
-  /** Camadas desenhadas por cima no mesmo quadro (roupas dos moradores), por id. */
+  /**
+   * Camadas desenhadas por cima no mesmo quadro (moradores), por chave: `face:<expr>`, `bangs`, `fx:<expr>`,
+   * `outfit:<id>`. Ordem: base → rosto → franja → efeitos → roupa.
+   */
   private readonly layers = new Map<string, HTMLImageElement>();
 
   /** `url` ausente = o mundo não tem este ator (só a sombra seria desenhada; na prática ele não aparece). */
@@ -158,9 +162,12 @@ class SpriteSheet {
     if (a.hurt && Math.floor(elapsed * 14) % 2 === 1) return;
     if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
     else ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
-    // Roupa: mesmo quadro da folha de roupa (mesma grade e escala da base — extract-villagers.py).
-    const layer = a.outfit ? this.layers.get(a.outfit) : undefined;
-    if (layer?.complete && layer.naturalWidth) {
+    // Camadas do morador: mesmo quadro de cada folha (mesma grade e escala da base — extract-villagers.py).
+    const keys = a.expression ? [`face:${a.expression}`, 'bangs', `fx:${a.expression}`] : [];
+    if (a.outfit) keys.push(`outfit:${a.outfit}`);
+    for (const key of keys) {
+      const layer = this.layers.get(key);
+      if (!layer?.complete || !layer.naturalWidth) continue;
       const lw = layer.naturalWidth / cols;
       const lh = layer.naturalHeight / rows;
       ctx.drawImage(layer, col * lw, row * lh, lw, lh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
@@ -246,11 +253,26 @@ class SpriteSheet {
   }
 }
 
+/** Camadas de um personagem-base de morador (ver `SpriteSheet.layers`), do pacote de arte do mundo. */
+function villagerLayers(base: VillagerBase): Record<string, string> {
+  const a = art();
+  const out: Record<string, string> = {};
+  for (const [id, url] of Object.entries(a.outfits ?? {})) if (url) out[`outfit:${id}`] = url;
+  for (const [id, e] of Object.entries(a.expressions ?? {})) {
+    if (!e) continue;
+    out[`face:${id}`] = e.face;
+    if (e.fx) out[`fx:${id}`] = e.fx;
+  }
+  const bangs = a.bangs?.[base];
+  if (bangs) out.bangs = bangs;
+  return out;
+}
+
 export class ActorSprites {
   private readonly sheets = Object.fromEntries(
     (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(
       SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k],
-      k.startsWith('villager-') ? art().outfits : undefined,
+      k.startsWith('villager-') ? villagerLayers(k.slice('villager-'.length) as VillagerBase) : undefined,
     )]),
   ) as Record<ActorKind, SpriteSheet>;
 

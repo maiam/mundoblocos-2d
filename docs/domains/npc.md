@@ -32,6 +32,13 @@
   silver, red) e uma roupa (`outfit-<id>`: denim, varsity, farmer, vest, hoodie; ofício: smith) desenhada por cima no mesmo quadro (`Actor.outfit`,
   `render/character.ts`). `scripts/extract-villagers.py` processa todas as folhas com a mesma grade, recorte e escala
   e apaga a cabeça careca das folhas de roupa (acima do queixo vale a cabeça do personagem).
+- **Expressões** (`EXPRESSIONS`, 16, ordem das folhas `assets-src/expressions/expressions-<front|left|right>-sheet.png`):
+  rosto em camada sobre o personagem-base (`expr-<id>`), franja de cada cabelo redesenhada por cima
+  (`villager-<cabelo>-bangs`) e efeitos fora do rosto (`expr-<id>-fx`: assustado, bravo, sonolento). Gerados por
+  `extract-villagers.py` (calibração `CALIB` medida uma vez por sobreposição; deslocamento por quadro da caminhada por
+  semelhança). Repouso sorteado pela seed (`villagerExpression`, só as tranquilas); ofício tem a sua (`ROLE_LOOK`);
+  ao falar (`speak`) mostra uma de conversa por 3 s. Limitação: nos perfis de cabelo escuro sobram manchinhas de pele
+  na franja (a folha careca vem de outro molde).
 - **Ofícios têm visual único** (regra do dono do produto, `ROLE_LOOK`): personagem-base e roupa do ofício não se
   repetem em nenhum outro morador. **Ferreiro = cabelo preto (`black`) + roupa `smith`**. Os moradores comuns usam os
   personagens livres (`TOWNSFOLK_BASES`: blond, brown, silver, red — um de cada) e uma roupa sorteada pela seed entre as
