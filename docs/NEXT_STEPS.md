@@ -46,19 +46,21 @@ Salvamento automático no navegador (ADR 0011, `domains/save.md`) e menu ☰ (co
 Pendências: **contas e mundos na nuvem** exigem o **backend do Orvalis** (ADR 0015) — nada de backend aqui; exportar/importar o salvamento como arquivo (troca de aparelho sem nuvem);
 migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 
-### Fase M — Multiplayer (planejamento; decisões em aberto)
+### Fase M — Multiplayer (ADR 0015 e 0016)
 Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositório separado, usando as regras de
 `src/world/` (o terreno é função da seed: só as edições trafegam). Jogo e servidor em apps/subdomínios separados.
 0. ~~Validar hospedagem~~ ✅ 2026-11-04: eco WebSocket do `maiam/orvalis-servidor` em
    `orvalis-servidor.pensamentos.online` (app web Node.js na Hostinger) conecta. Falta medir limites (conexões
    simultâneas, tempo de conexão parada) quando houver jogadores; VPS é o plano B.
-1. **Preparar o cliente (este repositório, sem servidor)**: ações do jogador como mensagens (andar, colocar, quebrar,
-   usar), protocolo tipado (`src/net/`), conexão de teste local (dois jogadores na mesma tela).
-2. **Servidor**: salas por mundo/seed, valida ações com `src/world/`, guarda as edições (formato por chunk do save).
+1. ✅ **Base no jogo** (v0.45.0): ações como dados (`world/actions.ts`), protocolo (`net/protocol.ts`), sala pura
+   (`net/room.ts`), sessão do jogo (`net/session.ts`) e servidor de teste local (`net/loopback.ts`), com testes.
+   Falta (vai com a Etapa 3): ligar ao `Game` e a tela de entrar/criar sala.
+2. **Servidor**: pacote compilado `world`+`net` instalado pelo `orvalis-servidor` (por versão), WebSocket → `Room`,
+   salas em memória, edições guardadas por chunk.
 3. **Co-op**: outros jogadores visíveis (interpolados), blocos sincronizados, monstros/itens no servidor.
 4. **Encontro nas cidades**: chat, grupos (visão de progressão).
-Decisões pendentes do dono do produto: co-op com convite × mundo único permanente; conta × convidado; PvP; como o
-servidor reaproveita `src/world/` (pacote × submódulo); ~~repositório do servidor~~ ✅ (`maiam/orvalis-servidor`).
+Decidido (ADR 0016): co-op com código de convite (até 4), convidado só com nome, sem PvP, servidor autoritativo,
+servidor reaproveita `world`+`net` como pacote compilado. Repositório do servidor: `maiam/orvalis-servidor`.
 
 ### Fase 3 — Recursos e progressão
 1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;

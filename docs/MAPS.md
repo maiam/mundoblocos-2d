@@ -149,6 +149,7 @@ flowchart LR
 | Arte nova (qualquer) | gerar em `src/assets/`, importar no pacote do mundo `render/art/<mundo>.ts` (+ campo em `types.ts` se for tipo novo); se não for usada no começo, carregar em segundo plano | render, OPERATIONS, ADR 0010/0013 |
 | Novo animal/NPC | `game/<animal>.ts` estendendo `Wanderer` (passeio) ou `Walker`, `game/entities.ts`, `render/character.ts` (`ActorKind`) | npc, MAPS §5 |
 | Interior de construção | `assets-src/interiors/<id>.png`, `world/interiors.ts` (`InteriorDef`: mapa, construção, morador), `scripts/extract-interiors.py --grid`, `render/art/principal.ts` (`interiors`) | town, ADR 0014, OPERATIONS |
+| Multiplayer (mensagem nova, regra de sala, ação nova) | `src/net/protocol.ts` (+ `PROTOCOL_VERSION` se incompatível), `src/net/room.ts`, `src/world/actions.ts`, `src/net/net.test.ts`; o servidor (`maiam/orvalis-servidor`) atualiza o pacote | ADR 0016, NEXT_STEPS Fase M |
 | Morador / roupa nova | `assets-src/villagers/`, `scripts/extract-villagers.py`, `game/villager.ts` (`VILLAGER_BASES`, `OUTFITS`), `render/art/principal.ts` | npc, OPERATIONS |
 | Sprite da personagem | `assets-src/`, `process-sprite.py`, `optimize-assets.py`, `render/character.ts` | render, OPERATIONS |
 | HUD / controles na tela | `game/hud.ts`, `game/actionButton.ts`, `game/joystick.ts`, `style.css` | player, README |
