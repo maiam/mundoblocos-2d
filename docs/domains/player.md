@@ -59,7 +59,8 @@
 - Regras por célula (`canUseAt`, `canBreakAt`, `canFeed`, `applyUse`) ficam no `ActionController`
   (`game/actionController.ts`) e são as mesmas para cursor e botão; o `Game` só repassa a entrada.
 - **Tablet** (`ScreenMode.isTablet`: toque e lado menor da tela ≥ 600 px): o canvas aceita toque como clique (tocar =
-  usar, segurar = quebrar, mesmas regras do mouse) e o botão de ação some (`.hud.tablet`); o joystick fica.
+  usar, segurar = quebrar, mesmas regras do mouse); o **botão de ação e o joystick ficam** (o botão voltou em v0.47.2 a
+  pedido do dono do produto). Tocar num campo de texto (ex.: nome no menu) não pede tela cheia (`ScreenMode`).
 - Interação pelo mouse: **clique curto (≤ 0,3 s, ≤ 10 px) coloca**; **segurar sobre o mesmo alvo (`breakSeconds`: 2 s mão/item, 1 s ferramenta)
   quebra** (o progresso reinicia se o alvo mudar ou ficar inválido; ao quebrar, continua no que está por baixo).
   Feedback no canvas: rachaduras progressivas + anel. Alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o

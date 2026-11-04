@@ -432,7 +432,6 @@ html, body {
 .hud.skills-open .joystick, .hud.skills-open .action-button { visibility: hidden; }
 
 /* Tablet: o toque na tela age como o clique; botão de ação some (joystick fica). */
-.hud.tablet .action-button { display: none; }
 
 /* Baú aberto (3×9 acima da bolsa) e mensagem curta no alto da tela. */
 .hud.chest-open .joystick, .hud.chest-open .action-button { visibility: hidden; }

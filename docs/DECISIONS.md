@@ -66,7 +66,7 @@
 | Baú: 8 tábuas, 27 espaços, abre com Bolsa acima da mão, troca tocando item e destino (pilha inteira), quebrar solta o conteúdo; Tenda: aviso a cada colocação, vale a última, derrubar a última volta ao início | domains/farming |
 | Grade 12 (9 itens · Personagem · Habilidades · Bolsa); Habilidades = Receitas 4×9 + Profissões 4×2 acima da grade; tocar cria 1; Tenda = ponto de renascer; atalhos B/I, K, C (reservado) | domains/farming |
 | Bolsa: 18 espaços (2×9) no mesmo cartão da grade, mesmos espaços da mão (3 fileiras de 9 no total), só o título; tipo novo só entra com espaço livre; pilhas sem limite | domains/farming |
-| Tablet (toque, lado menor ≥ 600 px): toque na tela = clique do computador, sem botão de ação; celular segue com o botão | domains/player |
+| Tablet (toque, lado menor ≥ 600 px): toque na tela = clique do computador **e** botão de ação (voltou em v0.47.2); celular só com o botão | domains/player |
 | Morte: perde tudo menos as ferramentas (substitui "perde só os materiais"); Tenda é madeira (machado quebra) e a picareta também a quebra por exceção (`alsoBreaks`) | domains/farming |
 | Coleta: materiais coletados (bloco volta como item, árvore → 2–3 toras), grade de 8 compartilhada + bolsa no 9º, troca tocando item e espaço, morte perde só os materiais, começo com 1 porta, Santuário infinito | domains/farming |
 | Combate (v0.26; vida e dano refeitos na v0.39, ver Progressão): 5 ♥; mordidas ½/1/2 ♥; morte → renasce no início com os itens; espólios seda/presa/Coração da Rainha; todas as aranhas renascem (Rainha 300 s) longe da heroína; arte provisória até as pranchas | domains/dungeon |
