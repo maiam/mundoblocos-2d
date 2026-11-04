@@ -161,7 +161,7 @@ export class Game {
       (r) => this.craft(r));
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
-    if (screenMode?.isTablet) this.hud.root.classList.add('tablet'); // sem botão de ação; toque age na tela
+    if (screenMode?.isTablet) this.hud.root.classList.add('tablet'); // toque na tela também age (além do botão)
     this.menu = new Menu(this.hud.root, {
       seed,
       status: () => this.saveStatus(),
@@ -530,7 +530,7 @@ export class Game {
 
     // Toque/clique curto = usar. Segurar sobre o mesmo alvo = quebrar.
     // No celular, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela); no tablet, o toque
-    // na tela age como o clique do computador e não há botão de ação.
+    // na tela age como o clique do computador e o botão de ação também fica.
     this.listen(c, 'pointerdown', (e) => {
       if (e.pointerType === 'touch' && !this.screenMode?.isTablet) return;
       if (!this.actions.pointerDown(e.pointerId, e.offsetX, e.offsetY)) return;

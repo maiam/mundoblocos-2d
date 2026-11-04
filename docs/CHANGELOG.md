@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.47.2 — 2026-11-04
+- **Tablet: botão de ação de volta** (pedido do dono do produto). O toque na tela continua agindo como o clique.
+- **Digitar no menu do tablet/celular**: ao tocar no campo do nome (ou do código), o jogo pedia tela cheia; o teclado
+  na tela tira o navegador da tela cheia, e o toque seguinte pedia de novo — o teclado não chegava a abrir e a tela
+  alternava entre tela cheia e navegador. Agora tocar num campo de texto (ou com um campo em foco) não pede tela cheia.
+
 ## 0.47.1 — 2026-11-04
 - **Menu no celular deitado**: com "Jogar com amigos" o painel passou da altura da tela e o botão "Entrar com código"
   ficava inalcançável (o painel não rolava com o dedo). Agora, em telas baixas, o menu e "Jogar com amigos" ficam

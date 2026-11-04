@@ -43,8 +43,8 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 - Câmera sem rotação, zoom automático, acompanhamento suave sem o balanço da caminhada.
 - Celular: joystick (esquerda) + **botão de ação** (direita): toque usa o item selecionado no alvo à frente,
   segurar quebra (2 s com a mão/item, **1 s com ferramenta**). Alvo com cantoneiras quando parada. Mão vazia ao tocar de novo no item.
-- **Tablet** (toque com lado menor ≥ 600 px): joystick + **toque na tela age como o clique** (tocar usa, segurar
-  quebra); sem botão de ação.
+- **Tablet** (toque com lado menor ≥ 600 px): joystick + **botão de ação** + toque na tela também age como o clique
+  (tocar usa, segurar quebra).
 - Desktop: WASD/setas, Espaço = botão de ação, mouse (clique coloca, segurar quebra: 2 s mão, 1 s ferramenta), Q/E/roda = zoom.
 - Sempre na horizontal: tela cheia + trava em paisagem quando o navegador permite; "Gire o aparelho" em retrato.
 - Tela limpa: grade de **12** — 9 itens · Personagem (sem ação ainda) · Habilidades · Bolsa (começa com ferramentas

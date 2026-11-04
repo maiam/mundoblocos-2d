@@ -6,7 +6,9 @@
  * - Onde o navegador não permite (ex.: Safari no iPhone, iframes restritos),
  *   a garantia é a camada "Gire o aparelho", que cobre o jogo enquanto o
  *   aparelho estiver em retrato.
- * - Se o jogador sair da tela cheia, o próximo toque volta a pedi-la.
+ * - Se o jogador sair da tela cheia, o próximo toque volta a pedi-la — menos ao tocar num campo de texto ou com um
+ *   campo em foco: o teclado na tela tira o navegador da tela cheia, e pedi-la de novo fechava o teclado em loop
+ *   (não dava para digitar o nome no "Jogar com amigos" no tablet).
  * No desktop nada muda (janela já é horizontal; F11 fica a critério do usuário).
  */
 
@@ -18,7 +20,7 @@ export class ScreenMode {
   readonly isTouch = window.matchMedia('(pointer: coarse)').matches;
   /**
    * Tablet: tela de toque cujo lado menor tem ≥ 600 px (celular deitado fica em ~360–430 px; iPad/tablets ≥ 744).
-   * No tablet o toque na tela age como o clique do computador e o botão de ação some (o joystick fica).
+   * No tablet o toque na tela também age como o clique do computador (além do botão de ação e do joystick).
    */
   readonly isTablet = isTabletScreen(this.isTouch, window.screen.width, window.screen.height);
   private readonly portraitQuery = window.matchMedia('(orientation: portrait)');
@@ -42,7 +44,10 @@ export class ScreenMode {
       window.removeEventListener('resize', update);
     });
     if (this.isTouch) {
-      const onGesture = () => void this.enterLandscapeFullscreen();
+      const onGesture = (e: Event) => {
+        if (isTextField(e.target) || isTextField(document.activeElement)) return; // digitando: deixa o teclado em paz
+        void this.enterLandscapeFullscreen();
+      };
       window.addEventListener('pointerup', onGesture, true);
       this.cleanup.push(() => window.removeEventListener('pointerup', onGesture, true));
     }
@@ -85,6 +90,11 @@ export class ScreenMode {
     for (const fn of this.cleanup) fn();
     this.overlay.remove();
   }
+}
+
+/** Campo onde se digita (abre o teclado na tela). */
+function isTextField(el: EventTarget | Element | null): boolean {
+  return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable);
 }
 
 /** Lado menor da tela ≥ 600 px num aparelho de toque = tablet (função pura, testável). */

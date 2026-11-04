@@ -69,7 +69,9 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
   colorido antes de usar.
 - `Entities.update`: ordem **concluir namoro → parear → iniciar**, senão o namoro reinicia em loop.
 - No celular, o canvas ignora `pointerType === 'touch'` (ação só pelo botão); no **tablet** (`ScreenMode.isTablet`) o
-  toque age como clique e não há botão. Testes de toque: celular pelo botão; tablet por `touchscreen.tap`.
+  toque age como clique **e** o botão de ação fica. Testes de toque: celular pelo botão; tablet pelos dois.
+- Tela cheia em toque (`ScreenMode`): nunca pedir tela cheia ao tocar num campo de texto (o teclado sai da tela cheia
+  e pedir de novo fecha o teclado em loop).
 - Mudar o gerador muda o mapa de todas as seeds: avise o usuário e rode os testes de determinismo/spawn.
 - Folhas que já vêm transparentes: `process-sprite.py --alpha`; se o desenho invade a linha de cima (auréolas,
   asas), `--grid-offset-y`. Confira a "altura do desenho" no relatório: igual à célula = recorte errado.
