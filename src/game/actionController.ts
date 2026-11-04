@@ -1,3 +1,4 @@
+import type { PlayerAction } from '../world/actions';
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
 import { Block, blockDef, type BlockId } from '../world/blocks';
@@ -60,6 +61,8 @@ export interface ActionContext {
   onOpenChest(x: number, y: number): void;
   /** Mensagem curta na tela (ex.: "Ponto de renascimento alterado"). */
   notify(text: string): void;
+  /** Ação que mudou o mapa, já aplicada no `World` local (multiplayer: vai para o servidor, ADR 0016). */
+  onAction?(a: PlayerAction): void;
 }
 
 /** Alvos para o render (destaque do mouse, anel na entidade, foco do botão de ação, quebra em andamento). */
@@ -194,7 +197,7 @@ export class ActionController {
       return true;
     }
     if (!this.world.isDoor(x, y)) return false;
-    if (this.inReach(x, y) && this.canToggleDoorAt(x, y)) this.world.toggleDoor(x, y);
+    if (this.inReach(x, y) && this.canToggleDoorAt(x, y) && this.world.toggleDoor(x, y)) this.ctx.onAction?.({ kind: 'door', x, y });
     return true;
   }
 
@@ -243,14 +246,14 @@ export class ActionController {
       const use = TOOLS[slot.tool].groundUse;
       if (TOOLS[slot.tool].swings) this.player.startAttack(slot.tool);
       if (!use || !this.canUseAt(slot, x, y)) return;
-      if (use === 'till') this.world.till(x, y);
-      else this.world.flatten(x, y);
+      if (use === 'till' ? this.world.till(x, y) : this.world.flatten(x, y)) this.ctx.onAction?.({ kind: use, x, y });
       return;
     }
     if (slot.kind === 'block') {
       if (!this.canUseAt(slot, x, y)) return;
       const [ax, ay] = this.placeAnchor(slot.block, x, y)!;
       const placed = this.world.placeBlock(ax, ay, slot.block);
+      if (placed) this.ctx.onAction?.({ kind: 'place', x: ax, y: ay, block: slot.block });
       if (placed && slot.block === Block.TENT) this.ctx.notify('Ponto de renascimento alterado');
       if (placed && this.ctx.collectBlocks) {
         this.inventory.take(blockStack(slot.block));
@@ -261,7 +264,7 @@ export class ActionController {
     }
     const def = ITEMS[slot.item];
     if (def.plants) {
-      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item)) this.world.plant(x, y);
+      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item) && this.world.plant(x, y)) this.ctx.onAction?.({ kind: 'plant', x, y });
     } else if (def.feeds === 'sheep' && sheep && this.canFeed(sheep) && this.inventory.take(slot.item)) {
       sheep.feed();
     }
@@ -427,6 +430,7 @@ export class ActionController {
         .map((c) => ({ item: c!.item as StackId, count: c!.count }));
       const hadTent = this.world.tent;
       const broken = this.world.breakBlock(t.x, t.y);
+      if (broken !== null) this.ctx.onAction?.({ kind: 'break', x: t.x, y: t.y, tool: this.tool });
       if (contents.length) this.drops.spawn(t.x + 0.5, t.y + 0.7, contents);
       if (hadTent && !this.world.tent) this.ctx.notify('Ponto de renascimento voltou ao início');
       // O que cai no chão para ser coletado: colheita (pá e picareta destroem plantas sem drop) e, com coleta,

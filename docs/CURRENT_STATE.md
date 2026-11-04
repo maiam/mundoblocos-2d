@@ -75,6 +75,9 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 ## Salvamento
 - **Automático no navegador** (a cada 10 s, ao esconder/sair): mapa editado, plantações, heroína, inventário,
   ovelhas, aranhas e hora do dia; um salvamento por mundo e seed. Menu ☰: continuar, novo mundo, recomeçar (confirmação tocando de novo no botão; aviso com a semente nova).
+- **Jogar com amigos** (ADR 0016): no menu ☰, criar sala ou entrar com código de convite (até 4, convidados só com
+  nome). Os outros aparecem com o nome em cima e as edições do mapa valem para todos; na sala nada é salvo no aparelho.
+  Monstros, animais, moradores e itens caídos ainda são de cada jogador.
   Ver `domains/save.md`.
 
 ## Limitações conhecidas

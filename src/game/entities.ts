@@ -44,6 +44,8 @@ export interface Actor {
   outfit?: OutfitId;
   /** Morador: expressão (rosto em camada, com franja e efeitos por cima). */
   expression?: ExpressionId;
+  /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
+  label?: string;
 }
 
 /** Recalcula o mapa de distâncias da dungeon a cada … (s). */

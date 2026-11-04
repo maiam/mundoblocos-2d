@@ -14,9 +14,11 @@ código. O servidor roda num app Node.js da Hostinger (`orvalis-servidor.pensame
 3. **Sem combate entre jogadores**: golpes não atingem outros jogadores.
 
 ## Decisão técnica
-1. **Servidor autoritativo**: o jogo pede (`action`), o servidor aplica pelas regras do `World` (`world/actions.ts`,
-   `applyAction`) e devolve `applied` para todos — inclusive quem pediu. Recusou (ex.: cidade protegida) → `rejected`
-   só para quem pediu. O jogo **não aplica antes da confirmação** (edições de bloco toleram ~100 ms; evita desfazer).
+1. **Servidor autoritativo**: o jogo manda a ação (`action`), o servidor aplica pelas regras do `World`
+   (`world/actions.ts`, `applyAction`) e devolve `applied` para todos. Recusou (ex.: cidade protegida) → `rejected` só
+   para quem mandou. **Revisto na Etapa 3**: quem age aplica na hora no próprio mundo (mesmas regras — o
+   `ActionController` não muda, só avisa `onAction`) e ignora o próprio `applied`; esperar a rede deixava a quebra e a
+   colocação com atraso visível. Recusa só acontece em corrida (dois na mesma célula) e hoje só gera um aviso.
    A posição de cada um (`state`) é do próprio jogo, repassada aos outros (sem validação de movimento por enquanto).
 2. **Código compartilhado, não copiado**: `src/world/actions.ts` (ações como dados + `applyAction`), `src/net/protocol.ts`
    (mensagens, códigos, nomes, leitura segura de texto da rede) e `src/net/room.ts` (`Room`: sala pura, sem rede nem

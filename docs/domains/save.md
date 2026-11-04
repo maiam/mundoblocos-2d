@@ -47,3 +47,8 @@ Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa.
 ## Regras para quem mexer
 - Estado novo que deva persistir → campo em `SaveData` + `captureSave/applySave` + teste de ida e volta.
 - Mudou a estrutura → subir `SAVE_VERSION` e tratar em `migrate` (ou aceitar que salvamentos antigos recomecem).
+
+## Multiplayer (ADR 0016)
+- Numa sala ("Jogar com amigos") **nada é salvo no aparelho**: o mundo é o da sala (seed dela), e o salvamento do
+  mundo solo fica intacto — "Sair da sala" volta a ele. As edições da sala vivem no servidor só enquanto alguém está
+  nela (guardar salas é pendência da Fase M). O nome de convidado fica em `localStorage` (`mundoblocos:nome`).

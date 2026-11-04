@@ -5,6 +5,8 @@ import { type Outgoing, Room } from './room';
 export interface Transport {
   send(text: string): void;
   onMessage: ((m: ServerMessage) => void) | null;
+  /** Conexão fechada (pelo servidor, pela rede ou por `close`). */
+  onClose: (() => void) | null;
   close(): void;
 }
 
@@ -24,6 +26,7 @@ export class LoopbackServer {
     const deliver = (m: ServerMessage) => queueMicrotask(() => t.onMessage?.(JSON.parse(JSON.stringify(m)) as ServerMessage));
     const t: Transport & { deliverTo: (m: ServerMessage) => void } = {
       onMessage: null,
+      onClose: null,
       deliverTo: deliver,
       send: (text) => {
         const m = parseClientMessage(text);
@@ -56,6 +59,7 @@ export class LoopbackServer {
         this.route(room, id, room.leave(id), deliver);
         if (room.size === 0) this.rooms.delete(roomCode);
         id = null;
+        queueMicrotask(() => t.onClose?.());
       },
     };
     return t;

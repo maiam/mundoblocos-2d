@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
-import { parseAction } from '../world/actions';
+import { applyAction, parseAction } from '../world/actions';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { LoopbackServer } from './loopback';
@@ -55,7 +55,10 @@ describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
     let spot: [number, number] = [x, y];
     for (let k = 1; k < 200 && !room.world.canPlace(...spot, Block.STONE); k++) spot = [x + (k % 15) - 7, y + 2 + Math.floor(k / 15)];
     expect(room.world.canPlace(...spot, Block.STONE)).toBe(true);
-    a.s.act({ kind: 'place', x: spot[0], y: spot[1], block: Block.STONE });
+    // O jogo aplica na hora e só informa (o servidor confere e repassa).
+    const place = { kind: 'place' as const, x: spot[0], y: spot[1], block: Block.STONE };
+    expect(applyAction(a.box.world!, place)).toBe(true);
+    a.s.sent(place);
     await flush();
     for (const w of [room.world, a.box.world!, b.box.world!]) expect(w.getObject(...spot)).toBe(Block.STONE);
 
@@ -88,7 +91,7 @@ describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
     const [sx, sy] = room.world.town!.start;
     const rejected: unknown[] = [];
     a.s.onRejected = (act) => rejected.push(act);
-    a.s.act({ kind: 'break', x: sx, y: sy, tool: 'pickaxe' });
+    a.s.sent({ kind: 'break', x: sx, y: sy, tool: 'pickaxe' });
     await flush();
     expect(rejected).toHaveLength(1);
     expect(room.edits).toHaveLength(0);

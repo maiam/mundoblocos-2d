@@ -10,6 +10,8 @@ import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import type { Facing } from './walker';
 import { Camera } from './camera';
+import type { NetSession } from '../net/session';
+import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { Entities } from './entities';
 import { bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
@@ -40,6 +42,13 @@ export interface GameOptions {
   onRestart?(): void;
   /** Aviso curto mostrado ao abrir (ex.: "Novo mundo criado"). */
   notice?: string;
+  /**
+   * Multiplayer (ADR 0016): sessão já na sala (o mundo usa a seed dela). Sem salvamento local nesse modo; as ações do
+   * mapa vão ao servidor e as dos outros chegam por ela.
+   */
+  net?: NetSession;
+  /** Menu "Jogar com amigos": criar/entrar (jogando sozinho) e sair (na sala). Ausente = sem multiplayer (Santuário). */
+  online?: { name: string; onCreate(name: string): void; onJoin(name: string, code: string): void; onLeave(): void };
 }
 
 /**
@@ -79,6 +88,11 @@ export class Game {
   private elapsed = 0;
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
+  /** Outros jogadores da sala (multiplayer). */
+  private readonly remotes = new RemotePlayers();
+  /** Tempo até mandar a próxima posição ao servidor e a última mandada. */
+  private stateTimer = 0;
+  private lastState = '';
   /** Escurecer rápido ao passar por uma porta de interior (1 → 0). */
   private fade = 0;
   private lastHp = 0;
@@ -125,6 +139,7 @@ export class Game {
       onConsumed: () => this.hotbar.prune(this.inventory),
       onOpenChest: (x, y) => this.openChest(x, y),
       notify: (text) => this.hud.toast(text),
+      onAction: (a) => options.net?.sent(a),
     });
     this.hud = new Hud({
       slots: this.hotbar.length,
@@ -151,9 +166,21 @@ export class Game {
       seed,
       status: () => this.saveStatus(),
       onOpenChange: (open) => { if (open) { this.toggleBag(false); this.toggleSkills(false); this.actions.cancelAll(); this.saveNow(); } },
-      onNewWorld: options.onNewWorld,
-      onRestart: options.onRestart,
+      onNewWorld: options.net ? undefined : options.onNewWorld,
+      onRestart: options.net ? undefined : options.onRestart,
+      online: options.online && {
+        ...options.online,
+        room: options.net?.room ?? undefined,
+        players: () => 1 + (options.net?.others.size ?? 0),
+      },
     });
+    if (options.net) {
+      // Na sala: o mundo recebe as edições já feitas; as dos outros chegam depois (e ninguém fica preso num bloco).
+      const net = options.net;
+      net.attach(this.world);
+      net.onApplied = () => this.entities.settleAll(this.world);
+      net.onRejected = () => this.hud.toast('Ação não aceita pela sala');
+    }
     // Continua de onde parou (mesmo mundo e seed).
     if (options.save) {
       const r = applySave(options.save, {
@@ -460,6 +487,8 @@ export class Game {
     const c = this.canvas;
     this.listen(window, 'resize', this.resize);
     this.listen(window, 'keydown', (e) => {
+      // Digitando num campo (nome, código de convite): as teclas são do campo, não do jogo.
+      if (e.target instanceof HTMLInputElement) return;
       this.keys.add(e.code);
       if (e.repeat) return;
       if (e.code === 'KeyG') this.showChunkBorders = !this.showChunkBorders;
@@ -539,6 +568,7 @@ export class Game {
     if (!blocked) this.updateInteriors(iy);
     this.fade = Math.max(0, this.fade - dt * 2.5);
     this.entities.update(dt, this.world);
+    this.updateNet(realDt);
     this.updateHealth(dt);
     // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
     if (this.player.consumeHit() && this.player.attackTool && TOOLS[this.player.attackTool].strikes) {
@@ -561,7 +591,7 @@ export class Game {
     const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
     this.renderer.draw(this.camera, {
       player: this.player,
-      actors: this.entities.actors,
+      actors: this.remotes.size ? [...this.entities.actors, ...this.remotes.actors] : this.entities.actors,
       showChunkBorders: this.showChunkBorders,
       ...this.actions.targets(),
       drops: this.drops.list,
@@ -587,6 +617,32 @@ export class Game {
     requestAnimationFrame(this.frame);
   };
 
+  /**
+   * Multiplayer: acompanha os outros jogadores e manda a minha posição ~10×/s quando muda (pausado também: o jogo
+   * dos outros continua). Sem sessão, nada.
+   */
+  private updateNet(dt: number): void {
+    const net = this.options.net;
+    if (!net) return;
+    this.remotes.sync(net.others);
+    this.remotes.update(dt, this.world);
+    this.stateTimer -= dt;
+    if (this.stateTimer > 0) return;
+    this.stateTimer = 0.1;
+    const p = this.player;
+    const s = { x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100, facing: p.facing, moving: p.moving };
+    const key = JSON.stringify(s);
+    if (key === this.lastState) return;
+    this.lastState = key;
+    net.sendState(s);
+  }
+
+  /** Mensagem curta na tela e na área "Jogar com amigos" do menu (erros de conexão/sala). */
+  notify(text: string): void {
+    this.hud.toast(text);
+    this.menu.onlineMessage(text);
+  }
+
   /** Salva agora (silencioso se o navegador não permitir). */
   private saveNow(): void {
     this.saveTimer = 0;
@@ -601,6 +657,7 @@ export class Game {
 
   /** Texto do menu sobre o salvamento automático. */
   private saveStatus(): string {
+    if (this.options.net) return 'Jogando com amigos: o que muda nesta sala não é salvo neste aparelho.';
     if (!this.options.store?.available) return 'Este navegador não permite salvar: o progresso some ao fechar.';
     if (!this.lastSaved) return 'Progresso salvo automaticamente a cada 10 s.';
     const s = Math.max(0, Math.round((Date.now() - this.lastSaved) / 1000));
