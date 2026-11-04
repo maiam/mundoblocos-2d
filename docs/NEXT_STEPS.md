@@ -49,15 +49,16 @@ migrar para IndexedDB se os mundos editados passarem de ~5 MB.
 ### Fase M — Multiplayer (planejamento; decisões em aberto)
 Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositório separado, usando as regras de
 `src/world/` (o terreno é função da seed: só as edições trafegam). Jogo e servidor em apps/subdomínios separados.
-0. **Validar hospedagem**: app Node.js mínimo de eco WebSocket em `servidor.orvalis.pensamentos.online` (Hostinger);
-   sem suporte a WebSocket de entrada → VPS.
+0. ~~Validar hospedagem~~ ✅ 2026-11-04: eco WebSocket do `maiam/orvalis-servidor` em
+   `orvalis-servidor.pensamentos.online` (app web Node.js na Hostinger) conecta. Falta medir limites (conexões
+   simultâneas, tempo de conexão parada) quando houver jogadores; VPS é o plano B.
 1. **Preparar o cliente (este repositório, sem servidor)**: ações do jogador como mensagens (andar, colocar, quebrar,
    usar), protocolo tipado (`src/net/`), conexão de teste local (dois jogadores na mesma tela).
 2. **Servidor**: salas por mundo/seed, valida ações com `src/world/`, guarda as edições (formato por chunk do save).
 3. **Co-op**: outros jogadores visíveis (interpolados), blocos sincronizados, monstros/itens no servidor.
 4. **Encontro nas cidades**: chat, grupos (visão de progressão).
 Decisões pendentes do dono do produto: co-op com convite × mundo único permanente; conta × convidado; PvP; como o
-servidor reaproveita `src/world/` (pacote × submódulo); criação do repositório do servidor.
+servidor reaproveita `src/world/` (pacote × submódulo); ~~repositório do servidor~~ ✅ (`maiam/orvalis-servidor`).
 
 ### Fase 3 — Recursos e progressão
 1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;

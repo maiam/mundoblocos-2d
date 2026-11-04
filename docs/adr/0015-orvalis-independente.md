@@ -15,7 +15,7 @@ Orvalis**. O Orvalis será um produto com **domínio próprio** no futuro; até 
    servidor). Ele é a fonte de verdade de tudo que é compartilhado: salas/mundos multijogador, sincronização em
    tempo real e, depois, contas e salvamento na nuvem.
 3. **Endereços** (provisórios, até o domínio próprio): jogo em `orvalis.pensamentos.online` (já no ar); servidor num
-   **subdomínio próprio** de `pensamentos.online` (ex.: `servidor.orvalis.pensamentos.online`), como app separado do
+   **subdomínio próprio** de `pensamentos.online` (criado: `orvalis-servidor.pensamentos.online`), como app separado do
    site — publicar o jogo não reinicia o servidor nem derruba quem está jogando. Endereços entram por configuração
    (`VITE_SERVER_URL`), nunca fixos no código, para a troca de domínio ser só configuração.
 4. **Regras do mundo compartilhadas, não copiadas**: o servidor usa o mesmo código de `src/world/` (puro, sem DOM —
@@ -25,8 +25,9 @@ Orvalis**. O Orvalis será um produto com **domínio próprio** no futuro; até 
 ## Consequências
 - Docs e CLAUDE.md passam a apontar "backend do Orvalis" no lugar de "core". O salvamento local (ADR 0011) segue como
   está; nuvem e contas virão do backend do Orvalis.
-- Hospedagem do servidor: primeiro validar WebSocket de entrada num app Node.js da Hostinger (servidor mínimo de
-  eco no subdomínio). Sem suporte, plano B é VPS (mesmo código). Ver NEXT_STEPS, Fase M.
+- Hospedagem do servidor: WebSocket de entrada **validado** num app web Node.js da Hostinger (2026-11-04, servidor de
+  eco do `maiam/orvalis-servidor`). O carregador da hospedagem faz `require` do arquivo de entrada: o servidor liga
+  sempre em `server.js` (CommonJS). VPS fica como plano B se a hospedagem limitar conexões. Ver NEXT_STEPS, Fase M.
 - Troca para o domínio próprio: novo apontamento na Hostinger + `VITE_SERVER_URL`; salvamentos locais continuam (as
   chaves `mundoblocos:save:…` não dependem do domínio, mas o navegador separa armazenamento por endereço — migrar
   exigirá exportar/importar ou a nuvem).
