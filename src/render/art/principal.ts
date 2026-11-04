@@ -43,6 +43,13 @@ import oakDoor from '../../assets/oak-door.webp';
 import oakDoorIcon from '../../assets/icon-block-oak-door.webp';
 import sheepLove from '../../assets/sheep-love.webp';
 import sheep from '../../assets/sheep.webp';
+import horse from '../../assets/horse.webp';
+import villagerBlond from '../../assets/villager-blond.webp';
+import villagerBrown from '../../assets/villager-brown.webp';
+import villagerBlack from '../../assets/villager-black.webp';
+import villagerSilver from '../../assets/villager-silver.webp';
+import outfitDenim from '../../assets/outfit-denim.webp';
+import outfitVarsity from '../../assets/outfit-varsity.webp';
 import spiderBig from '../../assets/spider-big.webp';
 import spiderBoss from '../../assets/spider-boss.webp';
 import spiderSmall from '../../assets/spider-small.webp';
@@ -104,10 +111,16 @@ const pack: ArtPack = {
     sheep,
     lamb,
     'sheep-love': sheepLove,
+    horse,
+    'villager-blond': villagerBlond,
+    'villager-brown': villagerBrown,
+    'villager-black': villagerBlack,
+    'villager-silver': villagerSilver,
     'spider-small': spiderSmall,
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
   },
+  outfits: { denim: outfitDenim, varsity: outfitVarsity },
   blockAtlas,
   materialIcons: {
     [Block.OAK_DOOR]: oakDoorIcon,

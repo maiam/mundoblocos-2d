@@ -52,7 +52,8 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   loja **térreas** bloqueiam 4 das 5 fileiras: o desenho é mais baixo que o lote, então a fileira de trás vira
   **quintal andável** (sem faixa "invisível" bloqueada atrás do telhado).
   **Tocar** numa construção ou placa mostra o nome/texto (`Hud.toast`); interiores ainda não existem.
-- **Zona segura**: monstros não existem fora da dungeon. Ovelhas nascem no campo, do lado de fora do portão.
+- **Zona segura**: monstros não existem fora da dungeon. Ovelhas e o cavalo nascem no campo, do lado de fora do portão.
+- **Moradores** (`domains/npc.md`): 4 passeiam só por ruas e praças (`street`), com roupas sorteadas pela seed.
 - Salvamentos: ao carregar, as células protegidas de chunks salvos voltam do gerador (`World.restoreChunk`), e baús
   salvos onde não há mais baú são descartados — salvamentos antigos não "furam" a cidade. Formato inalterado (v4).
 
@@ -68,6 +69,6 @@ das 17 fileiras. Ainda **pintados em código**: hospedaria, fonte, poço, barrac
 Render varre colunas à esquerda/linhas abaixo da tela só para esses sprites (`TOWN_REACH`).
 
 ## Pendências (ver NEXT_STEPS)
-NPCs (moradores, guardas, ferreiro de dia, hospedaria à noite, mercadores), interiores, quadro de missões da guilda,
+Falas dos moradores, NPCs (guardas, ferreiro de dia, hospedaria à noite, mercadores), interiores, quadro de missões da guilda,
 hospedaria como ponto de retorno opcional, **arte da hospedaria** (9×5 ou outro tamanho), lampiões acendendo ao anoitecer com a movimentação diminuindo; arte final
 por pranchas se o dono quiser substituir a pintura em código.
