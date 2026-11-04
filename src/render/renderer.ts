@@ -403,6 +403,19 @@ export class Renderer {
     const fy = cam.worldToScreenY(a.y * TILE - a.visualZ * CUBE_FRONT);
     const sheet = this.actorSprites.get(a.kind);
     sheet.draw(this.ctx, fx, fy, cam.zoom, a, elapsed);
+    if (a.label) {
+      // Nome de outro jogador acima da cabeça (multiplayer).
+      const ctx = this.ctx;
+      const ty = fy - sheet.drawHeight * cam.zoom - 4 * cam.zoom;
+      ctx.font = `800 ${Math.round(11 * cam.zoom)}px Nunito, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.lineWidth = 3 * cam.zoom;
+      ctx.strokeStyle = 'rgba(28, 22, 64, 0.9)';
+      ctx.strokeText(a.label, fx, ty);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(a.label, fx, ty);
+    }
     if (a.inLove) {
       // Coração flutuando acima da cabeça enquanto está apaixonada.
       const bob = Math.sin(elapsed * 3 + a.x) * 3 * cam.zoom;

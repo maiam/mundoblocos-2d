@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.47.0 — 2026-11-04
+- **Jogar com amigos** (Fase M, etapa 3; servidor `orvalis-servidor.pensamentos.online`): no menu ☰, escreva seu nome
+  e **crie uma sala** (aparece um código de 6 letras para passar aos amigos) ou **entre com o código** de alguém. Até 4
+  jogadores no mesmo mundo: cada um vê os outros andando, com o nome em cima, e o que alguém quebra, coloca, ara,
+  planta ou abre aparece para todos. "Sair da sala" volta ao seu mundo de sempre (salvo). O nome fica lembrado no
+  aparelho. Na sala nada é salvo no aparelho; monstros, animais e moradores ainda são de cada um.
+- Teclas digitadas nos campos do menu não movem mais a heroína.
+
 ## 0.46.0 — 2026-11-04
 - **Pacote do multiplayer para o servidor** (Fase M, etapa 2): `npm run build:net` gera `dist-net/orvalis-net.cjs`
   (sala, protocolo e regras do mundo num arquivo para Node, sem dependências; versão e commit no cabeçalho). A

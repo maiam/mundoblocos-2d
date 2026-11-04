@@ -365,6 +365,15 @@ html, body {
 .menu-panel button.confirming { background: #e8574a; border-color: #ffb0a6; color: #fff; }
 .menu-panel .menu-confirm { color: #ffd0c8; }
 .menu-panel .menu-confirm[hidden] { display: none; }
+.menu-online { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1.5px solid var(--panel-border); }
+.menu-online h3 { margin: 0; font-size: 15px; font-weight: 800; color: var(--accent); }
+.menu-online input {
+  min-height: 40px; border-radius: 12px; border: 1.5px solid var(--panel-border); padding: 0 12px;
+  background: rgba(255, 255, 255, 0.92); color: #2a1a48; font: 700 15px Nunito, system-ui, sans-serif; text-align: center;
+}
+.menu-online .menu-room { font-size: 20px; letter-spacing: 3px; color: var(--accent); }
+.menu-online .menu-online-msg { color: #ffd0c8; }
+.menu-online .menu-online-msg[hidden] { display: none; }
 @media (max-height: 500px) and (orientation: landscape) {
   .menu-button { width: 34px; height: 34px; padding: 8px 7px; }
   .menu-panel { gap: 7px; padding: 12px; }

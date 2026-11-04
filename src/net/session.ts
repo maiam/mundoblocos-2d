@@ -4,9 +4,10 @@ import type { Transport } from './loopback';
 import { type ClientMessage, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type ServerMessage } from './protocol';
 
 /**
- * Sessão multiplayer do lado do jogo (ADR 0016). O servidor manda: ações do mapa só valem quando voltam como
- * `applied` (inclusive as minhas) e são aplicadas no `World` local pelas mesmas regras. Guarda os outros jogadores para
- * o render. Sem DOM: o `Game` liga isto à tela na Etapa 3.
+ * Sessão multiplayer do lado do jogo (ADR 0016). O servidor manda no mapa da sala: as ações dos outros chegam como
+ * `applied` e são aplicadas no `World` local pelas mesmas regras. As minhas o jogo já aplicou na hora (mesmas regras,
+ * sem esperar a rede) e só as **informa** (`sent`); o `applied` delas volta e é ignorado aqui. Recusa (rara: corrida
+ * com outro jogador na mesma célula) chega em `onRejected`. Guarda os outros jogadores para o render.
  */
 export class NetSession {
   /** Meu id e a sala, depois do `welcome`. */
@@ -20,13 +21,20 @@ export class NetSession {
   private seq = 0;
   /** Chamado quando a sala responde (o jogo cria o `World` com `seed` e chama `attach`). */
   onWelcome: ((seed: number) => void) | null = null;
-  /** Ação minha que o servidor recusou (o jogo pode avisar e devolver o item). */
+  /** Ação minha que o servidor recusou (o jogo avisa; o mapa local pode ter ficado diferente do da sala). */
   onRejected: ((a: PlayerAction) => void) | null = null;
+  /** Erro do servidor (entrada recusada, mensagem inválida…). */
+  onError: ((message: string) => void) | null = null;
+  /** Conexão caiu ou foi fechada. */
+  onClose: (() => void) | null = null;
+  /** Ação de outro jogador aplicada no mundo local (o jogo reacomoda quem estava na célula). */
+  onApplied: (() => void) | null = null;
   private readonly pending = new Map<number, PlayerAction>();
   private backlog: PlayerAction[] = [];
 
   constructor(private readonly transport: Transport) {
     transport.onMessage = (m) => this.receive(m);
+    transport.onClose = () => this.onClose?.();
   }
 
   /** Entra: sem `room` cria sala nova (o código vem no `welcome`), com `room` entra pelo convite. */
@@ -41,8 +49,8 @@ export class NetSession {
     this.backlog = [];
   }
 
-  /** Pede uma ação ao servidor (não aplica aqui: espera o `applied`). */
-  act(a: PlayerAction): void {
+  /** Informa uma ação que o jogo já aplicou no `World` local (o servidor confere e repassa aos outros). */
+  sent(a: PlayerAction): void {
     const seq = ++this.seq;
     this.pending.set(seq, a);
     this.send({ t: 'action', seq, a });
@@ -87,8 +95,13 @@ export class NetSession {
         break;
       }
       case 'applied':
-        if (m.by === this.you) for (const [k, a] of this.pending) if (sameAction(a, m.action)) { this.pending.delete(k); break; }
+        if (m.by === this.you) {
+          // Já aplicada aqui na hora: só confirma.
+          for (const [k, a] of this.pending) if (sameAction(a, m.action)) { this.pending.delete(k); break; }
+          break;
+        }
         this.apply(m.action);
+        this.onApplied?.();
         break;
       case 'rejected': {
         const a = this.pending.get(m.seq);
@@ -98,6 +111,7 @@ export class NetSession {
       }
       case 'error':
         this.error = m.message;
+        this.onError?.(m.message);
         break;
     }
   }

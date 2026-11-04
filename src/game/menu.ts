@@ -1,3 +1,5 @@
+import { MAX_PLAYERS, NAME_MAX, normalizeRoomCode, sanitizeName } from '../net/protocol';
+
 /**
  * Menu recolhível (☰ no canto superior direito): continuar, novo mundo, recomeçar este mundo.
  * Mostra se o progresso está sendo salvo automaticamente. Apresentação pura; ações vêm do Game/main.
@@ -16,6 +18,17 @@ export interface MenuHandlers {
   onOpenChange(open: boolean): void;
   onNewWorld?(): void;
   onRestart?(): void;
+  /** Multiplayer (ADR 0016): sem `online` o menu não mostra "Jogar com amigos" (ex.: Santuário). */
+  online?: {
+    /** Na sala: código e quantos estão nela (sem `room` = jogando sozinho). */
+    room?: string;
+    players?(): number;
+    /** Nome usado da última vez (lembrado no aparelho). */
+    name: string;
+    onCreate(name: string): void;
+    onJoin(name: string, code: string): void;
+    onLeave(): void;
+  };
 }
 
 export class Menu {
@@ -44,17 +57,42 @@ export class Menu {
       <p class="menu-status"></p>
       <p class="menu-seed">Semente do mundo: <b>${h.seed}</b></p>
       <button data-act="continue" class="primary">Continuar</button>
-      <button data-act="new">Novo mundo</button>
-      <button data-act="restart">Recomeçar este mundo</button>
-      <p class="menu-confirm" hidden></p>`;
+      ${h.online?.room ? '' : `<button data-act="new">Novo mundo</button>
+      <button data-act="restart">Recomeçar este mundo</button>`}
+      <p class="menu-confirm" hidden></p>
+      ${h.online ? onlineSection(h.online) : ''}`;
     this.statusEl = this.panel.querySelector('.menu-status')!;
     this.confirmEl = this.panel.querySelector('.menu-confirm')!;
+    this.onlineMsg = this.panel.querySelector('.menu-online-msg');
     this.panel.addEventListener('click', (e) => {
       const act = (e.target as HTMLElement).closest('button')?.dataset.act;
       if (act === 'continue') this.toggle(false);
       if (act === 'new' || act === 'restart') this.ask(act);
+      if (act === 'create' || act === 'join') this.goOnline(act);
+      if (act === 'leave') this.h.online?.onLeave();
     });
     root.append(this.button, this.panel);
+  }
+
+  private readonly onlineMsg: HTMLElement | null;
+
+  /** Mensagem na área "Jogar com amigos" (ex.: "Conectando…", erro do servidor). */
+  onlineMessage(text: string): void {
+    if (!this.onlineMsg) return;
+    this.onlineMsg.textContent = text;
+    this.onlineMsg.hidden = !text;
+  }
+
+  private goOnline(act: 'create' | 'join'): void {
+    const o = this.h.online;
+    if (!o) return;
+    const name = this.panel.querySelector<HTMLInputElement>('.menu-name')!.value;
+    const code = this.panel.querySelector<HTMLInputElement>('.menu-code')!.value;
+    if (!sanitizeName(name)) return this.onlineMessage('Nome: de 2 a 16 letras ou números.');
+    if (act === 'join' && !normalizeRoomCode(code)) return this.onlineMessage('Código de convite: 6 letras ou números.');
+    this.onlineMessage('Conectando…');
+    if (act === 'create') o.onCreate(name);
+    else o.onJoin(name, code);
   }
 
   /** 1º toque: pede confirmação no próprio botão; 2º toque (em até 5 s): executa. */
@@ -95,6 +133,31 @@ export class Menu {
     this.panel.hidden = !this.open;
     this.button.setAttribute('aria-expanded', String(this.open));
     this.h.onOpenChange(this.open); // abrir salva; o estado mostrado já reflete esse salvamento
-    if (this.open) this.statusEl.textContent = this.h.status();
+    if (this.open) {
+      this.statusEl.textContent = this.h.status();
+      const count = this.panel.querySelector('.menu-players');
+      if (count && this.h.online?.players) count.textContent = String(this.h.online.players());
+    }
   }
+}
+
+const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+/** Área "Jogar com amigos": criar sala / entrar com código, ou (na sala) o código e sair. */
+function onlineSection(o: NonNullable<MenuHandlers['online']>): string {
+  if (o.room) {
+    return `<div class="menu-online">
+      <h3>Jogando com amigos</h3>
+      <p>Código de convite: <b class="menu-room">${esc(o.room)}</b><br>Na sala: <b class="menu-players">1</b> de ${MAX_PLAYERS}</p>
+      <button data-act="leave">Sair da sala</button>
+    </div>`;
+  }
+  return `<div class="menu-online">
+      <h3>Jogar com amigos</h3>
+      <input class="menu-name" maxlength="${NAME_MAX}" placeholder="Seu nome" value="${esc(o.name)}" autocomplete="nickname">
+      <button data-act="create">Criar sala</button>
+      <input class="menu-code" maxlength="8" placeholder="Código de convite" autocapitalize="characters" autocomplete="off">
+      <button data-act="join">Entrar com código</button>
+      <p class="menu-online-msg" hidden></p>
+    </div>`;
 }
