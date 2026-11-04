@@ -17,6 +17,15 @@ export type OutfitId = (typeof OUTFITS)[number];
 /** Ofícios com morador próprio. */
 export type VillagerRole = 'smith';
 const ROLE_NAME: Record<VillagerRole, string> = { smith: 'Ferreiro' };
+/**
+ * Visual de cada ofício — **único** (regra do dono do produto): o personagem-base e a roupa de um ofício não aparecem em
+ * mais ninguém. Ferreiro = cabelo preto + roupa de ferreiro.
+ */
+export const ROLE_LOOK: Record<VillagerRole, { base: VillagerBase; outfit: OutfitId }> = {
+  smith: { base: 'black', outfit: 'smith' },
+};
+/** Personagens-base livres para os moradores comuns (sem os reservados aos ofícios). */
+export const TOWNSFOLK_BASES: VillagerBase[] = VILLAGER_BASES.filter((b) => !Object.values(ROLE_LOOK).some((l) => l.base === b));
 const ROLE_LINE: Record<VillagerRole, string> = {
   smith: 'Bem-vinda à Ferraria! Logo vou forjar ferramentas e armas para você.',
 };
@@ -71,9 +80,4 @@ export class Villager extends Wanderer {
 /** Roupa de cada morador: sorteio fixo pela seed do mundo (a cidade é igual em toda seed; as roupas variam). */
 export function villagerOutfit(seed: number, i: number): OutfitId {
   return CASUAL_OUTFITS[Math.floor(hash2(seed, i, 913) * CASUAL_OUTFITS.length)];
-}
-
-/** Personagem-base do ferreiro: sorteio fixo pela seed (a roupa é sempre a de ferreiro). */
-export function smithBase(seed: number): VillagerBase {
-  return VILLAGER_BASES[Math.floor(hash2(seed, 5, 914) * VILLAGER_BASES.length)];
 }

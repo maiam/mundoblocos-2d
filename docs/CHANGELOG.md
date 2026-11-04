@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.42.1 — 2026-11-04
+- **Ferreiro com visual fixo e único** (regra do dono do produto): sempre o personagem de **cabelo preto** com a
+  **roupa de ferreiro**. Nenhum outro morador usa esse personagem nem essa roupa. A cidade fica com 3 moradores
+  comuns (loiro, castanho e prateado), cada um com roupa casual sorteada pela seed, e o ferreiro na Ferraria.
+
 ## 0.42.0 — 2026-11-04
 - **Interior da Ferraria** (arte do dono do produto): andar para cima diante da porta da Ferraria leva para dentro
   (escurece rápido e mostra "Ferraria"); pisar no capacho volta para a rua. Lá dentro: forja, bigorna, armeiro,

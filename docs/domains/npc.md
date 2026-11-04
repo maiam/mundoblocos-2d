@@ -32,12 +32,13 @@
   silver) e uma roupa (`outfit-<id>`: denim, varsity, farmer, vest, hoodie; ofício: smith) desenhada por cima no mesmo quadro (`Actor.outfit`,
   `render/character.ts`). `scripts/extract-villagers.py` processa todas as folhas com a mesma grade, recorte e escala
   e apaga a cabeça careca das folhas de roupa (acima do queixo vale a cabeça do personagem).
-- Roupa sorteada pela seed entre as `CASUAL_OUTFITS` (`villagerOutfit`); um morador por personagem-base. Roupas de
-  **ofício** ficam fora do sorteio: o **ferreiro** (5º morador, cabelo por `smithBase`) veste `smith` e passeia diante da
-  porta da Ferraria. **Roupa nova**: folha em `assets-src/villagers/outfit-<id>-sheet.png` → rodar o script → id em
+- **Ofícios têm visual único** (regra do dono do produto, `ROLE_LOOK`): personagem-base e roupa do ofício não se
+  repetem em nenhum outro morador. **Ferreiro = cabelo preto (`black`) + roupa `smith`**. Os moradores comuns usam os
+  personagens livres (`TOWNSFOLK_BASES`: blond, brown, silver — um de cada) e uma roupa sorteada pela seed entre as
+  `CASUAL_OUTFITS` (`villagerOutfit`). **Roupa nova**: folha em `assets-src/villagers/outfit-<id>-sheet.png` → rodar o script → id em
   `CASUAL_OUTFITS` (ou só em `OUTFITS`, se for de ofício) → import em `render/art/principal.ts`. Folha sem
   transparência (fundo claro) é limpa pelo script (`remove_bg`).
-- Pontos de casa fixos (praça inicial ×2, meio do caminho até o castelo, pátio do castelo, porta da Ferraria — hoje dentro dela); andam só por células de
+- Pontos de casa fixos (praça inicial, meio do caminho até o castelo, pátio do castelo; ferreiro dentro da Ferraria); andam só por células de
   rua/praça da cidade (`TownLayout.street`) acima do portão — nunca saem da muralha. Velocidade 1,4, leash 6.
 - O golpe não os atinge (`strikeTargets` ignora moradores). **Falam ao toque** (`Villager.speak`; clique sobre o
   morador ou botão de ação com ele à frente): moradores revezam dicas; ofício tem fala própria e atende do outro lado

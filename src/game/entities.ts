@@ -6,7 +6,7 @@ import type { World } from '../world/world';
 import type { Player } from './player';
 import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
 import { Horse } from './horse';
-import { smithBase, VILLAGER_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId, type VillagerRole } from './villager';
+import { ROLE_LOOK, TOWNSFOLK_BASES, Villager, type VillagerBase, villagerOutfit, type OutfitId, type VillagerRole } from './villager';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
@@ -124,9 +124,10 @@ export class Entities {
   }
 
   /**
-   * Moradores da cidade: um de cada personagem-base, em pontos fixos (praça inicial, caminho da praça central e pátio
-   * do castelo), cada um com uma roupa sorteada pela seed, e o **ferreiro** (roupa de ferreiro) diante da Ferraria.
-   * Só andam por ruas/praças dentro da muralha (nunca pelo portão).
+   * Moradores da cidade: um de cada personagem-base livre (`TOWNSFOLK_BASES`, sem os reservados aos ofícios), em pontos
+   * fixos (praça inicial, caminho até o castelo, pátio do castelo), cada um com uma roupa casual sorteada pela seed, e o
+   * **ferreiro** com o visual único do ofício (`ROLE_LOOK`) dentro da Ferraria. Os comuns só andam por ruas/praças dentro
+   * da muralha (nunca pelo portão).
    */
   spawnVillagers(world: World): void {
     const t = world.town;
@@ -137,18 +138,18 @@ export class Entities {
     const [sx, sy] = t.start;
     const [kx, ky] = t.castleDoor;
     type Person = { at: [number, number]; base: VillagerBase; outfit: OutfitId; walk: (cx: number, cy: number) => boolean; role?: VillagerRole };
-    const people: Person[] = [
-      [sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2],
-    ].map((at, i) => ({ at: at as [number, number], base: VILLAGER_BASES[i], outfit: villagerOutfit(world.seed, i), walk: onStreet }));
+    const homes: Array<[number, number]> = [[sx - 5, sy - 1], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]];
+    const people: Person[] = TOWNSFOLK_BASES.map((base, i) => ({ at: homes[i % homes.length], base, outfit: villagerOutfit(world.seed, i), walk: onStreet }));
+    const smithLook = ROLE_LOOK.smith;
     // Ferreiro: dentro da Ferraria, atrás do balcão (só anda nas linhas do ofício); sem interior, diante da porta.
     const forge = world.interiors.find((l) => l.def.building === Block.SMITHY);
     const smithy = t.buildings.find((b) => b.id === Block.SMITHY);
     if (forge?.keeper) {
       const k = forge.keeper;
       const walk = (cx: number, cy: number) => cy >= k.rows[0] && cy <= k.rows[1] && interiorFloor(forge, cx, cy);
-      people.push({ at: k.at, base: smithBase(world.seed), outfit: 'smith', walk, role: 'smith' });
+      people.push({ at: k.at, ...smithLook, walk, role: 'smith' });
     } else if (smithy?.door) {
-      people.push({ at: smithy.door, base: smithBase(world.seed), outfit: 'smith', walk: onStreet, role: 'smith' });
+      people.push({ at: smithy.door, ...smithLook, walk: onStreet, role: 'smith' });
     }
     people.forEach(({ at: [hx, hy], base, outfit, walk, role }) => {
       // Rua/praça andável e livre mais perto do ponto.
