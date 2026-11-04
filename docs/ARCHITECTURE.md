@@ -47,6 +47,7 @@ src/
     room.ts                    Room: sala autoritativa pura (World da sala, jogadores, edições)
     session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
     loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
+    index.ts                   o que vai no pacote do servidor (npm run build:net → dist-net/orvalis-net.cjs)
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo

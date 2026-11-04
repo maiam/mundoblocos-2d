@@ -55,8 +55,10 @@ Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositó
 1. ✅ **Base no jogo** (v0.45.0): ações como dados (`world/actions.ts`), protocolo (`net/protocol.ts`), sala pura
    (`net/room.ts`), sessão do jogo (`net/session.ts`) e servidor de teste local (`net/loopback.ts`), com testes.
    Falta (vai com a Etapa 3): ligar ao `Game` e a tela de entrar/criar sala.
-2. **Servidor**: pacote compilado `world`+`net` instalado pelo `orvalis-servidor` (por versão), WebSocket → `Room`,
-   salas em memória, edições guardadas por chunk.
+2. ✅ **Servidor** (v0.46.0 / orvalis-servidor 0.2.0): `npm run build:net` gera `dist-net/orvalis-net.cjs` (sala +
+   protocolo + regras do mundo); o servidor guarda uma cópia em `vendor/` (`npm run sync-net`) e liga WebSocket →
+   `Room`. Limites de mensagens, origens permitidas, salas só na memória (acabam vazias). Falta: guardar as edições
+   das salas (por chunk) para sobreviver a reinícios.
 3. **Co-op**: outros jogadores visíveis (interpolados), blocos sincronizados, monstros/itens no servidor.
 4. **Encontro nas cidades**: chat, grupos (visão de progressão).
 Decidido (ADR 0016): co-op com código de convite (até 4), convidado só com nome, sem PvP, servidor autoritativo,

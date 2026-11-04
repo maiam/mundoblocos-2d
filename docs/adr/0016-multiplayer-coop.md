@@ -20,8 +20,10 @@ código. O servidor roda num app Node.js da Hostinger (`orvalis-servidor.pensame
    A posição de cada um (`state`) é do próprio jogo, repassada aos outros (sem validação de movimento por enquanto).
 2. **Código compartilhado, não copiado**: `src/world/actions.ts` (ações como dados + `applyAction`), `src/net/protocol.ts`
    (mensagens, códigos, nomes, leitura segura de texto da rede) e `src/net/room.ts` (`Room`: sala pura, sem rede nem
-   relógio) são usados pelo jogo e pelo servidor. O servidor só embrulha `Room` num WebSocket. Para isso o jogo vai
-   publicar um pacote compilado (`world` + `net`) que o servidor instala do GitHub por versão (Etapa 2).
+   relógio) são usados pelo jogo e pelo servidor. O servidor só embrulha `Room` num WebSocket. **Pacote**: `npm run
+   build:net` (esbuild) gera `dist-net/orvalis-net.cjs` — um arquivo CommonJS sem dependências, com versão e commit
+   no cabeçalho; o servidor guarda uma cópia em `vendor/` (`npm run sync-net`), sem instalar o repositório do jogo
+   (que tem arte pesada). A Verificação do jogo garante que o pacote compila.
 3. **Teste sem servidor**: `src/net/loopback.ts` (`LoopbackServer`) roda salas dentro do próprio jogo, passando as
    mensagens por JSON como na rede; `src/net/session.ts` (`NetSession`) é o lado do jogo (aplica `applied`, guarda os
    outros jogadores). Testes em `src/net/net.test.ts`.
