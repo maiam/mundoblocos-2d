@@ -46,7 +46,7 @@ OBJECTS = [
     ('lamp-stone', 'lamps', (0, 0, 500, 800), ('base', 0.62, 0.7), (1, 1), False),
     ('lamp-wood', 'lamps', (500, 0, 1000, 800), ('base', 0.62, 0.7), (1, 1), False),
     ('lamp-mixed', 'lamps', (990, 0, 1536, 800), ('base', 0.62, 0.7), (1, 1), False),
-    ('fountain', 'fountain', (0, 0, 1283, 1226), ('full', 3), (3, 3), False),
+    ('fountain', 'fountain', (0, 0, 1254, 1254), ('full', 5), (5, 5), False),
     ('well', 'well', (0, 0, 1024, 1536), ('full', 2.5), (2, 2), False),
     ('stall', 'stall', (0, 0, 1261, 1247), ('full', 2.6), (2, 1), False),
     ('barrel', 'barrel', (0, 0, 1254, 1254), ('full', 0.8), (1, 1), False),

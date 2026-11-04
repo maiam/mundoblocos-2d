@@ -82,7 +82,7 @@ export const TOWN_SIZES: Partial<Record<BlockId, [number, number, number]>> = {
   [Block.HOUSE_TALL]: [5, 5, 5],
   [Block.WATCHTOWER]: [4, 6, 6],
   [Block.WELL]: [2, 2, 2],
-  [Block.FOUNTAIN]: [3, 3, 3],
+  [Block.FOUNTAIN]: [5, 5, 5],
   [Block.STALL]: [2, 1, 1],
   [Block.BENCH]: [2, 1, 1],
   [Block.BENCH_LONG]: [3, 1, 1],
@@ -441,7 +441,7 @@ function buildTown(): TownLayout {
   const nearStreet = (x: number, y: number) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ox, oy]) => isWalk(x + ox, y + oy));
   // Praças: fonte, poço, bancos, placas, postes de luz e barracas.
   const fx = W / 2 - 1;
-  place(Block.FOUNTAIN, fx, MID - 1, 'Fonte', false);
+  place(Block.FOUNTAIN, W / 2 - 2, MID - 2, 'Fonte', false); // 5×5 no centro da praça
   place(Block.WELL, W / 2 + 4, H - 15, 'Poço', false);
   place(Block.STALL, W / 2 - 7, MID - 4, 'Barraca', false);
   place(Block.STALL, W / 2 + 5, MID + 4, 'Barraca', false);
