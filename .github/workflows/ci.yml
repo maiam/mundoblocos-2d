@@ -29,5 +29,7 @@ jobs:
         run: npm test
       - name: Build do site (como a Hostinger)
         run: npm run build
+      - name: Pacote do multiplayer para o servidor (ADR 0016)
+        run: npm run build:net
       - name: Vulnerabilidades nas dependências
         run: npm audit --audit-level=moderate

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.46.0 — 2026-11-04
+- **Pacote do multiplayer para o servidor** (Fase M, etapa 2): `npm run build:net` gera `dist-net/orvalis-net.cjs`
+  (sala, protocolo e regras do mundo num arquivo para Node, sem dependências; versão e commit no cabeçalho). A
+  Verificação compila o pacote em todo PR. O servidor (`maiam/orvalis-servidor` 0.2.0) passa a abrir salas co-op de
+  verdade com ele: criar sala, entrar pelo código, ações confirmadas para todos, limites de mensagens e de origem.
+  O jogo ainda não mostra o multiplayer (Etapa 3).
+
 ## 0.45.0 — 2026-11-04
 - **Base do multiplayer** (Fase M, etapa 1; ADR 0016 com as decisões do dono do produto: co-op com código de convite
   até 4 jogadores, convidado só com nome, sem combate entre jogadores). Ações do jogador como dados aplicadas pelas

@@ -32,6 +32,10 @@ Node 22, entrada `server.js`, sem build; porta de `PORT`). WebSocket de entrada 
 teste em `/`, saúde em `/saude`, eco em `/ws`). O app do jogo continua app Node.js (preset Vite) por causa do build
 automático a cada merge.
 
+**Multiplayer: mudou `src/net/` ou `src/world/`?** `npm run build:net` aqui → no servidor `npm run sync-net --
+../mundoblocos-2d` → PR no servidor. Mudança incompatível de mensagem: suba `PROTOCOL_VERSION` e publique jogo e
+servidor juntos (versões diferentes recebem "recarregue a página").
+
 **Publicação pelo GitHub (forma principal)**: a Hostinger compila o repositório a cada push na branch escolhida.
 Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em Node 22):
 
