@@ -35,7 +35,7 @@ A Cidade do Despertar · V1.0" (pedido do dono do produto, 2026-11-03).
    de Poções / Armazém / Loja de Ferramentas (5×5 cada, sudeste). **Casas 5×5** (térrea ou de 2 andares) preenchem os
    terrenos junto às ruas, com 1 célula de folga entre si e **porta voltada para a rua** (ou por um caminho curto de
    até 3 células pelo quintal).
-6. **Decoração**: praças primeiro (fonte 3×3 na praça central, poço 2×2 na praça inicial, barracas, bancos 2×1 e 3×1,
+6. **Decoração**: praças primeiro (fonte 5×5 no centro da praça central, poço 2×2 na praça inicial, barracas, bancos 2×1 e 3×1,
    placas, postes de luz) — nenhuma porta fica atrás de um enfeite; depois lampiões ao longo do caminho principal (≥ 7 células
    entre si), barris/caixotes nas oficinas, **cerca viva** na beira das ruas (~62%, as falhas são atalhos),
    carvalhos/cerejeiras, flores e capim nos jardins.
@@ -74,7 +74,7 @@ cobre os 26×17), guarita, bancos 2×1 e 3×1, **3 postes de luz** (pedra, madei
 3 arbustos da cerca viva. Todas na mesma escala (`TOWN_PX_PER_CELL` = 48 px por célula), centradas na largura da
 construção e com a base no pé da célula — **nunca esticadas nem remontadas** (uma imagem por tamanho; remontar já
 deformou a casa). Da prancha do castelo "Senhor Feudal" (também 26×17) não foi usada: é uma fachada que cobre só ~11
-das 17 fileiras. **Hospedaria** 9×5 de 2 andares (prancha já transparente: recorte pelo alfa, sem remoção de fundo). **Fonte** 3×3, **poço** 2×2 (desenho ~4 células de altura com o telhado), **barraca de frutas** 2×1 e **barril** 1×1 também
+das 17 fileiras. **Hospedaria** 9×5 de 2 andares (prancha já transparente: recorte pelo alfa, sem remoção de fundo). **Fonte** 5×5 (v0.43.1), **poço** 2×2 (desenho ~4 células de altura com o telhado), **barraca de frutas** 2×1 e **barril** 1×1 também
 vêm de pranchas. Ainda **pintados em código**: caixotes e placas.
 Render varre colunas à esquerda/linhas abaixo da tela só para esses sprites (`TOWN_REACH`).
 

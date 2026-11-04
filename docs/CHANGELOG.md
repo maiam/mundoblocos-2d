@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.43.1 — 2026-11-04
+- **Fonte maior** (arte nova do dono do produto): a fonte da praça central passa de 3×3 para **5×5**, centralizada na
+  praça; bancos e barracas em volta continuam nos mesmos lugares. Muda a praça central (igual em toda seed); salvamentos
+  antigos se ajustam sozinhos (a área da cidade volta do gerador).
+
 ## 0.43.0 — 2026-11-04
 - **Fonte, poço, barraca de frutas e barril com arte nova** (pranchas do dono do produto), no lugar da pintura em
   código. Os tamanhos dos lotes não mudaram: fonte 3×3, poço 2×2, barraca 2×1 e barril 1×1. Só os caixotes e as placas
