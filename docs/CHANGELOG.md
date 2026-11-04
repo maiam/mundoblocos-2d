@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.0 — 2026-11-04
+- **4 roupas novas** (prancha do dono do produto): jardineira de lavrador, colete social, moletom verde e a
+  **roupa de ferreiro**. As 3 primeiras entram no sorteio dos moradores (agora 5 roupas casuais).
+- **Ferreiro**: 5º morador, sempre com a roupa de ferreiro, diante da porta da Ferraria (cabelo sorteado pela seed).
+  Roupas de ofício (`smith`) ficam fora do sorteio e vestem só quem tem o ofício.
+- `extract-villagers.py` remove o fundo claro de folhas que não vêm transparentes (a do colete veio com fundo cinza).
+
 ## 0.40.1 — 2026-11-04
 - **Hospedaria com arte nova** (9×5, 2 andares, prancha do dono do produto): substitui a pintura em código. A prancha
   já vem transparente; o recorte usa o alfa dela. `extract-town.py --only <nomes>` recorta só os objetos pedidos.

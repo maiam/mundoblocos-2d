@@ -6,8 +6,12 @@ import { Wanderer } from './wanderer';
 /** Personagens-base dos moradores (roupa branca; arte `villager-<id>`). */
 export const VILLAGER_BASES = ['blond', 'brown', 'black', 'silver'] as const;
 export type VillagerBase = (typeof VILLAGER_BASES)[number];
-/** Roupas vestidas por cima (arte `outfit-<id>`, mesma grade). Roupa nova: folha + id aqui + import no pacote de arte. */
-export const OUTFITS = ['denim', 'varsity'] as const;
+/**
+ * Roupas vestidas por cima (arte `outfit-<id>`, mesma grade). Roupa nova: folha + id aqui + import no pacote de arte.
+ * `CASUAL_OUTFITS` entram no sorteio dos moradores; as de ofício (ferreiro) vestem só quem tem aquele ofício.
+ */
+export const CASUAL_OUTFITS = ['denim', 'varsity', 'farmer', 'vest', 'hoodie'] as const;
+export const OUTFITS = [...CASUAL_OUTFITS, 'smith'] as const;
 export type OutfitId = (typeof OUTFITS)[number];
 
 /**
@@ -42,5 +46,10 @@ export class Villager extends Wanderer {
 
 /** Roupa de cada morador: sorteio fixo pela seed do mundo (a cidade é igual em toda seed; as roupas variam). */
 export function villagerOutfit(seed: number, i: number): OutfitId {
-  return OUTFITS[Math.floor(hash2(seed, i, 913) * OUTFITS.length)];
+  return CASUAL_OUTFITS[Math.floor(hash2(seed, i, 913) * CASUAL_OUTFITS.length)];
+}
+
+/** Personagem-base do ferreiro: sorteio fixo pela seed (a roupa é sempre a de ferreiro). */
+export function smithBase(seed: number): VillagerBase {
+  return VILLAGER_BASES[Math.floor(hash2(seed, 5, 914) * VILLAGER_BASES.length)];
 }

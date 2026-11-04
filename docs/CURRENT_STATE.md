@@ -20,7 +20,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
 - **Cidade do Despertar** (`domains/town.md`): cidade fixa (igual em toda seed) de 164 × 132 blocos ao norte da
   origem — muralha com guaritas e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda,
-  Hospedaria, Ferreiro, 3 lojas e ~90 casas (sem interiores ainda). **4 moradores** passeiam pelas ruas e praças, cada um com uma roupa sorteada pela seed (roupas em camadas sobre o personagem de roupa branca). Arte fornecida: casas 5×5 em 3 cores
+  Hospedaria, Ferreiro, 3 lojas e ~90 casas (sem interiores ainda). **4 moradores** passeiam pelas ruas e praças, cada um com uma roupa sorteada pela seed entre 5 (roupas em camadas sobre o personagem de roupa branca), e o **ferreiro** fica diante da Ferraria com a roupa de ofício. Arte fornecida: casas 5×5 em 3 cores
   (térreas e de 2 andares), lojas 5×5, ferreiro 8×5, guilda 9×9, castelo 26×17, guaritas 4×6, bancos, postes de luz
   (acendem à noite), arbustos e **hospedaria 9×5**; fonte, poço e barracas ainda pintados em código. **Início e renascer sem
   tenda** na praça inicial. Área protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
