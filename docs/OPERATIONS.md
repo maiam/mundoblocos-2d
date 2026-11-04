@@ -25,8 +25,9 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 - Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`); o jogo reconhece o Santuário pelo hostname (`santuario.`).
 
 ## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
-Endereço **provisório**: o domínio `maiamapps.com.br` não pode ser usado por enquanto; o jogo fica num subdomínio de
-`pensamentos.online`, também na Hostinger. Site estático: nenhum servidor/backend (contas e nuvem seguem no core).
+Endereço **provisório** até o domínio próprio do Orvalis (ADR 0015: sem maiamapps): subdomínio de `pensamentos.online`,
+na Hostinger. Site estático: nenhum servidor aqui; o servidor do jogo será outro app num subdomínio próprio
+(ex.: `servidor.orvalis.pensamentos.online`), publicado do repositório do backend.
 
 **Publicação pelo GitHub (forma principal)**: a Hostinger compila o repositório a cada push na branch escolhida.
 Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em Node 22):

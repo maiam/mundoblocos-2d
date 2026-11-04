@@ -19,7 +19,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Dungeon "Covil das Aranhas": labirinto procedural, área protegida, chefe | ✅ | fora da cidade; aranhas só com arte de frente |
 | Monstros: vida, golpe, mordida, busca de caminho, morte, espólios, renascimento | ✅ | arte final de morte e espólios |
 | Vida da heroína, dano, morte e renascimento | ✅ | vida em pontos com barra, fórmula de dano e números na tela (Fase P.1) |
-| Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do core |
+| Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do backend do Orvalis (ADR 0015) |
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Qualidade | ✅ | 117 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
@@ -43,9 +43,21 @@ penumbra. Pendências que ficaram desta fase:
 
 ### Fase 2 — Persistência ✅ (v0.27.0)
 Salvamento automático no navegador (ADR 0011, `domains/save.md`) e menu ☰ (continuar, novo mundo, recomeçar).
-Pendências: **contas e mundos na nuvem** exigem endpoint no core (`core.maiamapps.com.br`) — **ajuste recomendado
-para o core**, nada de backend aqui; exportar/importar o salvamento como arquivo (troca de aparelho sem nuvem);
+Pendências: **contas e mundos na nuvem** exigem o **backend do Orvalis** (ADR 0015) — nada de backend aqui; exportar/importar o salvamento como arquivo (troca de aparelho sem nuvem);
 migrar para IndexedDB se os mundos editados passarem de ~5 MB.
+
+### Fase M — Multiplayer (planejamento; decisões em aberto)
+Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositório separado, usando as regras de
+`src/world/` (o terreno é função da seed: só as edições trafegam). Jogo e servidor em apps/subdomínios separados.
+0. **Validar hospedagem**: app Node.js mínimo de eco WebSocket em `servidor.orvalis.pensamentos.online` (Hostinger);
+   sem suporte a WebSocket de entrada → VPS.
+1. **Preparar o cliente (este repositório, sem servidor)**: ações do jogador como mensagens (andar, colocar, quebrar,
+   usar), protocolo tipado (`src/net/`), conexão de teste local (dois jogadores na mesma tela).
+2. **Servidor**: salas por mundo/seed, valida ações com `src/world/`, guarda as edições (formato por chunk do save).
+3. **Co-op**: outros jogadores visíveis (interpolados), blocos sincronizados, monstros/itens no servidor.
+4. **Encontro nas cidades**: chat, grupos (visão de progressão).
+Decisões pendentes do dono do produto: co-op com convite × mundo único permanente; conta × convidado; PvP; como o
+servidor reaproveita `src/world/` (pacote × submódulo); criação do repositório do servidor.
 
 ### Fase 3 — Recursos e progressão
 1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;
@@ -131,9 +143,10 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 | Ações próprias da Deusa | Santuário |
 
 ## 4. Dependências externas
-- **Core** (`core.maiamapps.com.br`): contas, mundos na nuvem, multiplayer (futuro).
+- **Backend do Orvalis** (repositório separado, subdomínio de `pensamentos.online`; ADR 0015 — sem maiamapps):
+  multiplayer, contas, mundos na nuvem. Primeiro passo: validar WebSocket na Hostinger (Fase M).
 - **Hospedagem** ✅ no ar em `https://orvalis.pensamentos.online` (Hostinger, provisório; publica a cada merge em
-  `main` — ver `OPERATIONS`). Voltar a `maiamapps.com.br` quando possível.
+  `main` — ver `OPERATIONS`). Depois, domínio próprio do Orvalis (não maiamapps).
 - **Arte**: mais personagens de roupa branca e folhas de roupas (moradores ✅ 4 + 6 roupas, uma de ferreiro); roupas de outros ofícios (guarda, mercador, estalajadeiro); guardas, ferreiro, mercadores; (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas

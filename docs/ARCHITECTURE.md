@@ -77,7 +77,8 @@ Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 - `world/` não importa `render/` nem `game/`; não usa DOM; aleatoriedade só por seed.
 - `render/` só lê o mundo (e tipos de `game/`). `game/` orquestra; regra de domínio fica em `world/`.
 - Arte (`?inline`) só em `render/art/<mundo>.ts`; o resto do código lê o pacote carregado (`art()`).
-- Sem backend: salvamento local no navegador (`game/save.ts`); nuvem futura via core.
+- Sem backend aqui: salvamento local no navegador (`game/save.ts`); multiplayer e nuvem via backend do Orvalis
+  (repositório separado, ADR 0015).
 
 ## Desempenho
 Medido com `npm run bench` (Node) e Playwright (Chromium headless, 1280×760):
