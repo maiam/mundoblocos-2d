@@ -80,7 +80,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    tocar no morador para uma fala, NPCs que apresentam o mundo na praça inicial, moradores que voltam às casas,
    mais moradores/roupas conforme chegarem folhas (roupa = folha de caminhada só de roupa, mesma grade —
    `extract-villagers.py`), guardas na muralha/castelo, ferreiro de dia, hospedaria à
-   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte da hospedaria, fonte, poço e barracas** (ainda pintados em código); interiores (guilda com quadro de missões,
+   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte da fonte, poço e barracas** (ainda pintados em código; hospedaria ✅ v0.40.1); interiores (guilda com quadro de missões,
    lojas com compra/venda, hospedaria como ponto de retorno opcional); lampiões acendendo ao anoitecer e
    movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
 1. Ovelhas e cavalos (e novos animais) em outros chunks, por bioma, com limite. Cavalo: montaria (andar mais rápido).

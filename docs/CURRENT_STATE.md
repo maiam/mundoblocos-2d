@@ -22,7 +22,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
   origem — muralha com guaritas e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda,
   Hospedaria, Ferreiro, 3 lojas e ~90 casas (sem interiores ainda). **4 moradores** passeiam pelas ruas e praças, cada um com uma roupa sorteada pela seed (roupas em camadas sobre o personagem de roupa branca). Arte fornecida: casas 5×5 em 3 cores
   (térreas e de 2 andares), lojas 5×5, ferreiro 8×5, guilda 9×9, castelo 26×17, guaritas 4×6, bancos, postes de luz
-  (acendem à noite) e arbustos; hospedaria, fonte, poço e barracas ainda pintados em código. **Início e renascer sem
+  (acendem à noite), arbustos e **hospedaria 9×5**; fonte, poço e barracas ainda pintados em código. **Início e renascer sem
   tenda** na praça inicial. Área protegida: nada quebra nem é colocado; tocar numa construção mostra o nome.
 - **Dungeon — Covil das Aranhas**: labirinto procedural (~100 × 72 blocos, muda com a seed) perto da cidade (nunca
   sobre ela, a estrada do portão ou o campo do rebanho), com uma única entrada voltada para o início, câmaras, becos e circuitos; câmara da Rainha no ponto mais fundo, com uma só

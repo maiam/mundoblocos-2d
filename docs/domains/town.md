@@ -65,10 +65,10 @@ cobre os 26×17), guarita, bancos 2×1 e 3×1, **3 postes de luz** (pedra, madei
 3 arbustos da cerca viva. Todas na mesma escala (`TOWN_PX_PER_CELL` = 48 px por célula), centradas na largura da
 construção e com a base no pé da célula — **nunca esticadas nem remontadas** (uma imagem por tamanho; remontar já
 deformou a casa). Da prancha do castelo "Senhor Feudal" (também 26×17) não foi usada: é uma fachada que cobre só ~11
-das 17 fileiras. Ainda **pintados em código**: hospedaria, fonte, poço, barracas, barris, caixotes e placas.
+das 17 fileiras. **Hospedaria** 9×5 de 2 andares (prancha já transparente: recorte pelo alfa, sem remoção de fundo). Ainda **pintados em código**: fonte, poço, barracas, barris, caixotes e placas.
 Render varre colunas à esquerda/linhas abaixo da tela só para esses sprites (`TOWN_REACH`).
 
 ## Pendências (ver NEXT_STEPS)
 Falas dos moradores, NPCs (guardas, ferreiro de dia, hospedaria à noite, mercadores), interiores, quadro de missões da guilda,
-hospedaria como ponto de retorno opcional, **arte da hospedaria** (9×5 ou outro tamanho), lampiões acendendo ao anoitecer com a movimentação diminuindo; arte final
+hospedaria como ponto de retorno opcional, lampiões acendendo ao anoitecer com a movimentação diminuindo; arte final
 por pranchas se o dono quiser substituir a pintura em código.

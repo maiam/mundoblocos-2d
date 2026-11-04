@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.40.1 — 2026-11-04
+- **Hospedaria com arte nova** (9×5, 2 andares, prancha do dono do produto): substitui a pintura em código. A prancha
+  já vem transparente; o recorte usa o alfa dela. `extract-town.py --only <nomes>` recorta só os objetos pedidos.
+  Removido o desenho de casa em código que só a hospedaria ainda usava.
+
 ## 0.40.0 — 2026-11-04
 - **Moradores na cidade**: 4 moradores (cabelo loiro, castanho, preto e prateado) passeiam pelas ruas e praças da
   Cidade do Despertar (praça inicial, caminho da praça central e pátio do castelo) e nunca saem delas; o golpe não os
