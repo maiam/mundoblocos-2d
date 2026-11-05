@@ -1,0 +1,12 @@
+{
+  "versao": "v02",
+  "pecas": [],
+  "_exemplo": {
+    "encaixe": "cabelo",
+    "id": "curto-castanho",
+    "partes": ["cabelo-tras", "cabelo-frente"],
+    "acoes": ["caminhada"],
+    "status": "rascunho",
+    "notas": "status: rascunho | revisao | aprovada"
+  }
+}

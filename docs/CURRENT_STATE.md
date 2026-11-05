@@ -2,6 +2,16 @@
 
 _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
+## Personagem modular (humano chibi) — 2026-11-05
+
+- **Contrato v02 fechado** (`assets-src/personagens/CONTRATO.md`, ADR 0017) e exportador mínimo
+  `scripts/export-personagem.py`. `entrega/v02/` tem só `contrato.json`; `catalogo.json` sem peças: **aguardando o
+  piloto artístico** (corpo-base neutro + caminhada nas 4 direções + cabelo, tronco, pernas, pés).
+- v01 arquivado em `_arquivo/v01/` (só local, fora do git): caminhada 8×4 e repouso frontal 6×4, roupa verde embutida.
+  Medido no mundo: cabe na altura da heroína (2,2 células, ~1,1 de largura); convertido pelo exportador, caminhada de
+  5 partes ≈ 300 kB.
+- Nada no jogo: sem `ArtPack`, sem troca da heroína, sem salvamento novo, sem aumento do carregamento inicial.
+
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem
   Sólida, só a Deusa, só os 18 blocos celestiais para construir, sem ferramentas/cultivo/ovelhas. Escolhido por

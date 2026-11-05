@@ -73,3 +73,11 @@ Apenas apresentação; lê `World`, nunca escreve.
   altura ajustada pela razão de desenho (297/288) para manter a escala da personagem.
 - Personagens que flutuam (`SheetSpec.float`, hoje a Deusa): quadros em vai-e-volta contínuo, sprite pairando
   com balanço senoidal sub-pixel, sombra no chão que encolhe ao subir.
+
+## Personagem modular (planejado, ADR 0017)
+
+Contrato em `assets-src/personagens/CONTRATO.md`; `scripts/export-personagem.py` gera, por parte e ação, folhas WebP
+(linhas frente, esquerda, direita, costas; uma coluna por quadro) e `manifesto.json` com quadro, âncora já recortada,
+`escalaMundo`, fps, ciclo e ordem das partes (padrão + por direção). O motor deve desenhar o quadro no tamanho dele ×
+`escalaMundo` × zoom — **não** esticar para uma altura fixa como `SheetSpec.height` — e empilhar as partes pela ordem.
+Ainda não implementado; nenhuma folha modular está no `ArtPack`.

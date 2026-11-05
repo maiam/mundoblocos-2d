@@ -56,6 +56,10 @@
 - `src/assets/*.webp?inline` só é importado nos pacotes de arte (`render/art/principal.ts`, `santuario.ts`): arte nova
   entra no pacote do mundo que a usa. Depois de gerar PNG, rodar `scripts/optimize-assets.py`.
 - Originais ficam em `assets-src/` (versionados) e os comandos de processamento em `OPERATIONS.md`.
+- **Personagem modular** (ADR 0017): seguir `assets-src/personagens/CONTRATO.md`. A arte trabalha em `_trabalho/`
+  (fora do git), publica PNGs em `entrega/<versão>/<encaixe>/<peça>/<ação>__<parte>.png` e atualiza `catalogo.json`;
+  `scripts/export-personagem.py` valida antes de qualquer commit de arte. `.kra`/`.ora`/autosaves nunca sobem.
+  Mudou regra do contrato → atualizar `CONTRATO.md` + `contrato.json` e subir a versão.
 
 ## Commits, PRs e publicação (regra do dono do produto, 2026-11-03)
 - `main` = **o que está no ar** (a Hostinger publica `orvalis.pensamentos.online` a cada atualização dela).
