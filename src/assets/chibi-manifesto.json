@@ -1,0 +1,165 @@
+{
+  "versao": "v02",
+  "direcoes": [
+    "frente",
+    "esquerda",
+    "direita",
+    "costas"
+  ],
+  "ordem": [
+    "cabelo-tras",
+    "corpo",
+    "pes",
+    "pernas",
+    "tronco",
+    "tronco-frente",
+    "cabeca",
+    "rosto",
+    "cabelo-frente"
+  ],
+  "ordemPorDirecao": {},
+  "acoes": {
+    "caminhada": {
+      "quadros": 8,
+      "fps": 8,
+      "ciclo": true,
+      "quadro": [
+        104,
+        176
+      ],
+      "ancora": [
+        52.0,
+        169.2
+      ],
+      "escalaMundo": 0.488889
+    },
+    "repouso": {
+      "quadros": 16,
+      "fps": 8,
+      "ciclo": true,
+      "quadro": [
+        104,
+        176
+      ],
+      "ancora": [
+        52.0,
+        169.2
+      ],
+      "escalaMundo": 0.488889
+    }
+  },
+  "pecas": [
+    {
+      "encaixe": "corpo",
+      "id": "base",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "corpo": "chibi-corpo-base-caminhada-corpo.webp",
+          "cabeca": "chibi-corpo-base-caminhada-cabeca.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "cabelo",
+      "id": "curto-castanho",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "cabelo-tras": "chibi-cabelo-curto-castanho-caminhada-cabelo-tras.webp",
+          "cabelo-frente": "chibi-cabelo-curto-castanho-caminhada-cabelo-frente.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "tronco",
+      "id": "blusa-ocre",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "tronco": "chibi-tronco-blusa-ocre-caminhada-tronco.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "pernas",
+      "id": "shorts-marinho",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "pernas": "chibi-pernas-shorts-marinho-caminhada-pernas.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "pes",
+      "id": "sapatos-couro",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "pes": "chibi-pes-sapatos-couro-caminhada-pes.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "tronco",
+      "id": "colete-verde",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "tronco": "chibi-tronco-colete-verde-caminhada-tronco.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "pernas",
+      "id": "calca-ardosia",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "pernas": "chibi-pernas-calca-ardosia-caminhada-pernas.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "tronco",
+      "id": "tunica-azul",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "tronco": "chibi-tronco-tunica-azul-caminhada-tronco.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "pernas",
+      "id": "shorts-vinho",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "pernas": "chibi-pernas-shorts-vinho-caminhada-pernas.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "tronco",
+      "id": "blusa-lilas",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "tronco": "chibi-tronco-blusa-lilas-caminhada-tronco.webp"
+        }
+      }
+    },
+    {
+      "encaixe": "pernas",
+      "id": "bermuda-verde",
+      "status": "revisao",
+      "folhas": {
+        "caminhada": {
+          "pernas": "chibi-pernas-bermuda-verde-caminhada-pernas.webp"
+        }
+      }
+    }
+  ]
+}

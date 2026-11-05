@@ -17,7 +17,10 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 - v01 arquivado em `_arquivo/v01/` (só local, fora do git): caminhada 8×4 e repouso frontal 6×4, roupa verde embutida.
   Medido no mundo: cabe na altura da heroína (2,2 células, ~1,1 de largura); convertido pelo exportador, caminhada de
   5 partes ≈ 300 kB.
-- Nada no jogo: sem `ArtPack`, sem troca da heroína, sem salvamento novo, sem aumento do carregamento inicial.
+- **Teste no cenário (v0.48.0)**: `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…` troca a heroína do jogador
+  solo pelo chibi (`render/modular.ts` + `modularCharacter.ts`, folhas `src/assets/chibi-*` do exportador). Só a
+  caminhada; parado = quadro 0; ferramentas e golpes não aparecem no chibi. Sem o parâmetro, nada muda; as folhas
+  ficam fora do orçamento de início (só carregam com o chibi). Sem salvamento nem multiplayer da aparência.
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem

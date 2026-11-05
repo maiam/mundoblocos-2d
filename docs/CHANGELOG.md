@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.48.0 — 2026-11-05
+- **Personagem modular no motor** (ADR 0017): `?personagem=chibi` troca a heroína pelo humano chibi, montado pelas
+  partes do guarda-roupa v02 na ordem do manifesto (`&tronco=colete-verde&pernas=calca-ardosia&pes=sapatos-couro`,
+  `&cabelo=…`). O quadro é desenhado no tamanho dele × escala do mestre, com a âncora no chão — sem esticar.
+  Só caminhada (parado = quadro 0), sem ferramentas no chibi; só no jogo solo. Sem o parâmetro, nada muda.
+- `export-personagem.py --out src/assets --prefixo chibi-` gera as 13 folhas (555 kB), carregadas só quando o chibi
+  aparece (fora do orçamento de início).
+
 ## Sem versão — guarda-roupa chibi fantasia 01 — 2026-11-05
 - Seis roupas novas em camadas: colete verde, túnica azul, blusa lilás, calça ardósia, shorts vinho e bermuda verde.
   Catálogo com onze peças/treze folhas; caminhada de oito quadros nas quatro direções.

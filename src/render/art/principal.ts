@@ -1,3 +1,5 @@
+import chibiManifest from '../../assets/chibi-manifesto.json';
+import type { ModularManifest } from '../modular';
 import blockAtlas from '../../assets/blocks-atlas.webp';
 import dungeonGround from '../../assets/dungeon-ground.webp';
 import dungeonMountains from '../../assets/dungeon-mountains.webp';
@@ -130,6 +132,13 @@ import type { ArtPack } from './types';
 
 
 /** Mundo principal: heroína e ferramentas, materiais, porta, trigo, ovelhas e a dungeon das aranhas. */
+// Personagem modular em teste (ADR 0017): `export-personagem.py --out src/assets --prefixo chibi-`. URLs só carregam
+// quando o chibi aparece (`?personagem=chibi`); fora do orçamento de início.
+const chibiSheets = Object.fromEntries(
+  Object.entries(import.meta.glob<string>('../../assets/chibi-*.webp', { eager: true, import: 'default' }))
+    .map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1), url]),
+);
+
 const pack: ArtPack = {
   actors: {
     heroine,
@@ -193,5 +202,6 @@ const pack: ArtPack = {
   wheatCrop,
   itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
+  modular: { manifest: chibiManifest as unknown as ModularManifest, sheets: chibiSheets },
 };
 export default pack;

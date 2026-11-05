@@ -1,3 +1,4 @@
+import type { ModularLook } from '../render/modular';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block } from '../world/blocks';
 import { hash2 } from '../world/random';
@@ -46,6 +47,8 @@ export interface Actor {
   expression?: ExpressionId;
   /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
   label?: string;
+  /** Personagem modular em teste (ADR 0017): peças por encaixe; o render desenha o chibi no lugar da heroína. */
+  look?: ModularLook;
 }
 
 /** Recalcula o mapa de distâncias da dungeon a cada … (s). */
@@ -89,6 +92,9 @@ export class Entities {
   private flow: Int32Array | null = null;
   private flowArea: Rect | null = null;
   private flowTimer = 0;
+
+  /** Aparência modular em teste (`?personagem=chibi`); null = heroína de sempre. */
+  look: ModularLook | null = null;
 
   constructor(
     private readonly player: Player,
@@ -480,6 +486,7 @@ export class Entities {
       kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
       frame: p.attacking ? p.attackFrame : undefined,
       hurt: p.invuln > 0,
+      look: this.character === 'heroine' && this.look ? this.look : undefined,
     }];
     const drawnCouples = new Set<Sheep>();
     for (const s of this.npcs) {

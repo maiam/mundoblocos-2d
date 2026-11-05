@@ -1,3 +1,4 @@
+import { lookFromSearch } from './render/modular';
 import './style.css';
 import { Game } from './game/game';
 import { SaveStore } from './game/save';
@@ -86,6 +87,8 @@ function start(seed: number, notice?: string): void {
       start(seed, 'Mundo recomeçado do zero');
     },
   });
+  // Personagem modular em teste (ADR 0017): `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…`.
+  game.entities.look = lookFromSearch(window.location.search);
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
 }

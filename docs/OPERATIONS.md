@@ -89,8 +89,12 @@ python3 scripts/export-personagem.py                          # valida a entrega
 python3 scripts/export-personagem.py --out /tmp/chibi-export  # valida e exporta WebP + manifesto.json
 ```
 
+Teste no jogo: `python3 scripts/export-personagem.py --out src/assets --prefixo chibi-` (regrava as folhas
+`chibi-*.webp` + `chibi-manifesto.json`; não rodar `optimize-assets.py` nelas, já saem em WebP) e abrir
+`http://localhost:5173/?seed=42&personagem=chibi&tronco=colete-verde&pernas=calca-ardosia&pes=sapatos-couro`.
+
 Precisa de Pillow com WebP (sem numpy). Valida tamanho das folhas, pixels fora da caixa da ação, partes/encaixes
-desconhecidos, contato dos pés e prévias ≤ 1 MB. Até o piloto ser aprovado, a saída não vai para `src/assets/`.
+desconhecidos, contato dos pés e prévias ≤ 1 MB. Peça nova ou revisada só vai ao jogo depois de passar no validador e ser reexportada para `src/assets/`.
 
 Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP q84/alfa q85 e apaga os
 PNG; `--recompress` regrava no nível atual os WebP de sprite ≥ 60 kB). Depois, **importar o asset no pacote do mundo**
