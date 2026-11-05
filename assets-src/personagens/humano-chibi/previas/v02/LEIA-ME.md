@@ -1,11 +1,12 @@
-# Prévias v02
+# Prévias v02 — revisão 2
 
-Comparações e animações escolhidas para revisão (GIF/APNG/PNG). **Cada arquivo ≤ 1 MB** (o validador confere).
-Rascunhos e prévias pesadas ficam em `_trabalho/v02/`.
+Cada arquivo tem no máximo 1 MB, conferido pelo exportador. Histórico e fontes ficam em `_trabalho/v02/`.
 
-- `revisao.html`: montagem das sete folhas mestre, com troca independente das peças, pausa e fundo claro/escuro.
-- `quatro-vistas.png`: conjunto completo, primeiro quadro de cada direção.
-- `quatro-vistas-base.png`: malha bege provisória sem as peças do catálogo sobrepostas.
-- `todos-os-quadros.jpg`: os 32 quadros para conferir poses e encaixes.
-- `caminhada-piloto.gif`: reprodução de um segundo, quatro direções lado a lado.
-- `validacao.json`: checagens e limitações da entrega. Aprovação artística continua pendente.
+- `revisao.html`: base bege sem sapatos por padrão; troca de peças, pausa, reinício e avanço de quadro.
+- `comparacao-sapatos.gif`: acima sem sapatos, abaixo com sapatos, no mesmo quadro e tempo.
+- `caminhada-piloto.gif`: base bege e cabelo, sem sapatos.
+- `caminhada-com-sapatos.gif`: a mesma montagem com os sapatos revisados.
+- `quatro-vistas.png`: primeiro quadro da base bege com cabelo e sapatos.
+- `quatro-vistas-base.png`: base bege sem cabelo ou sapatos.
+- `todos-os-quadros.jpg`: 32 composições com as roupas sobrepostas do catálogo.
+- `validacao.json`: verificações, origem das fontes e limitações. Aprovação do movimento dos sapatos pendente.

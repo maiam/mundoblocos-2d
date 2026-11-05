@@ -83,6 +83,7 @@ Contrato em `assets-src/personagens/CONTRATO.md`; `scripts/export-personagem.py`
 Ainda não implementado; nenhuma folha modular está no `ArtPack`.
 
 O primeiro piloto artístico está em `humano-chibi/entrega/v02/`, com cinco peças e sete folhas de caminhada,
-status `revisao`. A base usa malha bege totalmente coberta (exceção provisória autorizada), sem cumprir ainda o
-objetivo de corpo sem roupa. Usar o exportador para gerar o manifesto local antes do teste optativo no cenário.
+status `revisao`. A revisão 2 usa blusa sem mangas e shorts bege, com braços e pernas descobertos, substituindo
+a malha de corpo inteiro rejeitada; ainda não é um corpo sem roupa. Os sapatos revisados não reposicionam os pés
+por quadro e respeitam a silhueta da referência. Usar o exportador antes do teste optativo no cenário.
 As prévias montam as folhas mestre; não validam integração, colisão ou desempenho no jogo.

@@ -79,10 +79,10 @@ Partes anatômicas (`antebraco_E` etc.) são de um rig futuro e não aparecem no
 
 ### Exceção provisória do primeiro piloto — 05/11/2026
 
-Autorizada pelo dono do projeto: enquanto a base definitiva não estiver disponível, `corpo/base` pode usar
-**malha neutra bege, opaca e totalmente coberta**, incluindo braços e pernas. A base sem roupa não pôde ser
-produzida pela ferramenta de imagens. Esta exceção permite testar grade, encaixe, exportação e composição;
-não cumpre o objetivo definitivo de corpo sem roupa integrada e não valida qualquer corte de roupa.
+**Revisão 2, solicitada pelo dono do projeto:** `corpo/base` usa a **blusa sem mangas e o shorts da base anterior,
+recoloridos em bege**, com braços e pernas descobertos. A malha de corpo inteiro foi rejeitada e permanece no
+histórico local. Esta exceção permite testar grade, encaixe, exportação e composição; não cumpre o objetivo
+definitivo de corpo sem roupa integrada e não valida qualquer corte de roupa.
 O catálogo deve manter a base em `revisao` e explicitar essa limitação. Quadro, escala, âncora, partes,
 caixas, ações e validações do contrato continuam iguais. A exceção não amplia a regra para outras peças.
 

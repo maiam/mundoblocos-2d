@@ -159,6 +159,6 @@
     "caixa": "[x0, y0, x1, y1] no mestre; provisória até o piloto. Pixel fora = peça recusada.",
     "contato": "Ex.: { \"direcao\": \"frente\", \"quadro\": 0, \"pe\": \"E\", \"caixa\": [180, 430, 230, 480] }",
     "ordemPorDirecao": "Ex.: { \"costas\": [\"corpo\", \"pes\", \"pernas\", \"tronco\", \"cabeca\", \"cabelo-frente\"] } — vale para a direção inteira.",
-    "baseProvisoria": "Excecao autorizada em 05/11/2026: malha neutra bege totalmente coberta no corpo-base. Nao equivale a base definitiva sem roupa. Catalogo em revisao."
+    "baseProvisoria": "Revisao 2 autorizada: blusa sem mangas e shorts da base anterior em bege, com bracos e pernas descobertos. A malha de corpo inteiro foi rejeitada. Base definitiva sem roupa integrada continua pendente."
   }
 }

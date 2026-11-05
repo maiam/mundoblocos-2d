@@ -1,5 +1,13 @@
 # Changelog
 
+## Sem versão — revisão 2 da base chibi e dos sapatos — 2026-11-05
+- A pedido do dono do projeto, substituída a malha de corpo inteiro por blusa sem mangas e shorts anteriores
+  recoloridos em bege. Silhueta e pixels dos pés descalços da referência preservados nos 32 quadros.
+- Sapatos menores e simples desenhados sobre as poses completas; removido o reposicionamento automático de
+  componentes por quadro. Recorte limitado à silhueta original com margem de um pixel, sem mudar a fase dos pés.
+- Prévia começa na base bege sem sapatos; comparação sincronizada sem/com sapatos e avanço de quadro quando
+  pausada. Histórico da primeira revisão preservado localmente. Aprovação visual dos sapatos continua pendente.
+
 ## Sem versão — piloto artístico modular v02 — 2026-11-05
 - Cinco peças em revisão: corpo/cabeça, cabelo curto trás/frente, blusa ocre, shorts marinho e sapatos de couro.
   Sete folhas de caminhada 8×4 no contrato, linhas frente/esquerda/direita/costas; oito contatos com pé/região.
