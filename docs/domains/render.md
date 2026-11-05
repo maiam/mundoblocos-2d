@@ -82,8 +82,10 @@ Contrato em `assets-src/personagens/CONTRATO.md`; `scripts/export-personagem.py`
 `escalaMundo` × zoom — **não** esticar para uma altura fixa como `SheetSpec.height` — e empilhar as partes pela ordem.
 Ainda não implementado; nenhuma folha modular está no `ArtPack`.
 
-O primeiro piloto artístico está em `humano-chibi/entrega/v02/`, com cinco peças e sete folhas de caminhada,
-status `revisao`. A revisão 2 usa blusa sem mangas e shorts bege, com braços e pernas descobertos, substituindo
-a malha de corpo inteiro rejeitada; ainda não é um corpo sem roupa. Os sapatos revisados não reposicionam os pés
-por quadro e respeitam a silhueta da referência. Usar o exportador antes do teste optativo no cenário.
-As prévias montam as folhas mestre; não validam integração, colisão ou desempenho no jogo.
+O piloto artístico em `humano-chibi/entrega/v02/` agora tem onze peças e treze folhas de caminhada,
+status `revisao` (guarda-roupa fantasia 01, revisão 3). Há quatro tops e quatro peças de pernas, combináveis
+independentemente: 16 combinações sobrepostas, 25 incluindo a roupa bege da base. A base e as sete folhas
+anteriores foram preservadas. Seletores, sorteio, prancha comparativa e animações em `previas/v02/`.
+Sapatos começam desligados; encaixes, detalhes entre vistas e movimento continuam em revisão.
+Usar o exportador antes do teste optativo no cenário. As prévias montam as folhas mestre; não validam integração,
+colisão ou desempenho no jogo.

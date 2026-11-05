@@ -1,12 +1,12 @@
 {
   "status": "revisao",
-  "revisao": 2,
-  "pecas": 5,
-  "folhas": 7,
+  "revisao": 3,
+  "pecas": 11,
+  "folhas": 13,
   "poses": 32,
   "errosExportador": 0,
   "avisosExportador": 0,
-  "bytesWebP": 375890,
+  "bytesWebP": 567818,
   "contatosVerificados": [
     {
       "direcao": "frente",
@@ -236,7 +236,7 @@
     "movimentoAprovado": false
   },
   "baseProvisoria": "blusa sem mangas e shorts anteriores em bege; malha de corpo inteiro rejeitada",
-  "fonteEditavel": "_trabalho/v02/r02/piloto-r02.ora",
+  "fonteEditavel": "_trabalho/v02/expansao-01/guarda-roupa-fantasia-01.ora",
   "historicoLocal": "_trabalho/v02/revisao-01/",
   "integradoAoJogo": false,
   "previews": {
@@ -254,6 +254,14 @@
       "quadros": 8,
       "duracaoMs": 1000,
       "bytes": 792302
+    },
+    "caminhada-fantasia-01.gif": {
+      "bytes": 583435,
+      "quadros": 8,
+      "duracaoMs": 1000
+    },
+    "combinacoes-fantasia-01.jpg": {
+      "bytes": 201551
     }
   },
   "arquivosEntrega": [
@@ -278,9 +286,24 @@
       "sha256": "39593659cff1502c824c9eb548eb15fa6b6a63b63e14c59852af7e8978e42000"
     },
     {
+      "arquivo": "entrega/v02/pernas/bermuda-verde/caminhada__pernas.png",
+      "bytes": 361798,
+      "sha256": "0db88f6c5c6f84e8a435bec3dc84e25b4f3838f9419ebc0ef04f1dd03fb1e6a1"
+    },
+    {
+      "arquivo": "entrega/v02/pernas/calca-ardosia/caminhada__pernas.png",
+      "bytes": 554126,
+      "sha256": "f590f73f117ffcc67f7a94393c405c77028809db996288b4395dfe784bf0af70"
+    },
+    {
       "arquivo": "entrega/v02/pernas/shorts-marinho/caminhada__pernas.png",
       "bytes": 689845,
       "sha256": "78b5d580e3708c4d369dd0f36f7681fbbb60b831aa4873d94ac305091020ea56"
+    },
+    {
+      "arquivo": "entrega/v02/pernas/shorts-vinho/caminhada__pernas.png",
+      "bytes": 206520,
+      "sha256": "bc232f881c482d2333eb43512ea3d15e3532cf90aa3b4b72a3ee57246b14f915"
     },
     {
       "arquivo": "entrega/v02/pes/sapatos-couro/caminhada__pes.png",
@@ -288,9 +311,24 @@
       "sha256": "9f2880535e71560e608159500237197e9dfe8ab6420f92e5a9c831f5e05c4e4e"
     },
     {
+      "arquivo": "entrega/v02/tronco/blusa-lilas/caminhada__tronco.png",
+      "bytes": 256392,
+      "sha256": "c135a6eeb9d997500ed024865ec926aac6b7eea7387d7836a1841ff8ce762611"
+    },
+    {
       "arquivo": "entrega/v02/tronco/blusa-ocre/caminhada__tronco.png",
       "bytes": 474982,
       "sha256": "22eebfa4875e45cc965e7215873ec7cbbc2d45af1cc5a6c8373d544d0372301b"
+    },
+    {
+      "arquivo": "entrega/v02/tronco/colete-verde/caminhada__tronco.png",
+      "bytes": 217113,
+      "sha256": "2775ac943f9765da6c5f000557c3522117077a43d519fcdc6c710cfbdd72f283"
+    },
+    {
+      "arquivo": "entrega/v02/tronco/tunica-azul/caminhada__tronco.png",
+      "bytes": 308646,
+      "sha256": "4a063dc979b84d398b28d8c88dda953b8b89cc8dde3c38d052253cbf3ec954b6"
     }
   ],
   "verificacaoProjeto": {
@@ -302,13 +340,31 @@
   },
   "verificacaoNavegador": {
     "inicioSemSapatos": true,
-    "inicioNaBaseBege": true,
+    "inicioComColeteECalca": true,
+    "seletoresIndependentes": true,
     "avancoDeQuadro": true,
-    "posesConferidas": [
-      2,
-      6
-    ],
-    "alternanciaSapatos": true,
+    "sorteioRoupas": true,
+    "combinacaoCruzada": "tunica-azul + calca-ardosia",
+    "fundoClaroEEscuro": true,
     "consoleErrosObservados": 0
-  }
+  },
+  "expansao": {
+    "montagensVerificadas": 800,
+    "combinacoesRoupa": 25,
+    "combinacoesSobrepostas": 16,
+    "aprovacaoArtistica": false,
+    "folhasAnterioresIdenticas": 7
+  },
+  "revisaoVisual": {
+    "folhaContato": 96,
+    "correcoes": "Mascaras da blusa e bermuda nas costas e barras da calca corrigidas antes da entrega.",
+    "aprovacaoArtistica": false,
+    "pendencias": [
+      "Coerencia dos detalhes do colete entre vistas",
+      "Golas, cavas e cintura em combinacoes",
+      "Teste no cenario",
+      "Movimento com sapatos"
+    ]
+  },
+  "camadasFonteEditavel": 13
 }

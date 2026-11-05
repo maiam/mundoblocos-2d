@@ -4,15 +4,16 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 
 ## Personagem modular (humano chibi) — 2026-11-05
 
-- **Piloto artístico v02 em revisão** (`assets-src/personagens/CONTRATO.md`, ADR 0017): cinco peças e sete folhas
-  em `entrega/v02/`, caminhada de oito quadros nas quatro direções. Corpo/cabeça, cabelo trás/frente, blusa ocre,
-  shorts marinho e sapatos de couro separados. Catálogo e oito quadros de contato preenchidos.
-- **Revisão 2 solicitada:** voltou a base anterior de blusa sem mangas e shorts, recolorida em bege, com braços e
-  pernas descobertos. Malha de corpo inteiro rejeitada. Sapatos menores, sem reposicionamento automático por quadro;
-  comparação sincronizada sem/com sapatos e opção de avanço de quadro na prévia. Base sem roupa integrada pendente.
-  Prévias em `previas/v02/`; fontes/prompts/ORA e histórico da primeira revisão no `_trabalho/`.
-- `export-personagem.py` valida as sete folhas e exporta WebP + manifesto para a área local, sem importar no jogo.
-  Marcha, contornos, encaixe sobre a malha e transição entre ações continuam em revisão artística.
+- **Guarda-roupa v02, revisão 3** (`assets-src/personagens/CONTRATO.md`, ADR 0017): onze peças e treze folhas
+  de caminhada (oito quadros × quatro direções). Adicionados colete verde, túnica azul, blusa lilás, calça ardósia,
+  shorts vinho e bermuda verde. Quatro blusas × quatro peças de pernas = 16 combinações sobrepostas;
+  25 incluindo as opções bege da base. Todas em `revisao`.
+- Base bege de blusa sem mangas e shorts preservada, assim como cabeça, cabelo e sapatos da revisão 2.
+  Prancha de combinações, três conjuntos em movimento e seletores independentes com sorteio em `previas/v02/`.
+  Sapatos desligados inicialmente; movimento com sapatos e detalhes das roupas entre vistas seguem em revisão.
+- `export-personagem.py` valida as treze folhas e exporta WebP + manifesto para a área local, sem importar no jogo.
+  Fontes/prompts/ORA da expansão em `_trabalho/v02/expansao-01/`, fora do git. As 25 escolhas × 32 poses passam
+  pela montagem de conferência; isso não aprova marcha, encaixe no cenário nem transições entre ações.
 - v01 arquivado em `_arquivo/v01/` (só local, fora do git): caminhada 8×4 e repouso frontal 6×4, roupa verde embutida.
   Medido no mundo: cabe na altura da heroína (2,2 células, ~1,1 de largura); convertido pelo exportador, caminhada de
   5 partes ≈ 300 kB.
