@@ -7,8 +7,10 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 - **Piloto artístico v02 em revisão** (`assets-src/personagens/CONTRATO.md`, ADR 0017): cinco peças e sete folhas
   em `entrega/v02/`, caminhada de oito quadros nas quatro direções. Corpo/cabeça, cabelo trás/frente, blusa ocre,
   shorts marinho e sapatos de couro separados. Catálogo e oito quadros de contato preenchidos.
-- **Exceção autorizada:** base com malha bege opaca cobrindo braços, tronco e pernas. Base definitiva sem roupa
-  integrada ainda pendente. Prévias e página local de montagem em `previas/v02/`; fontes/prompts/ORA no `_trabalho/`.
+- **Revisão 2 solicitada:** voltou a base anterior de blusa sem mangas e shorts, recolorida em bege, com braços e
+  pernas descobertos. Malha de corpo inteiro rejeitada. Sapatos menores, sem reposicionamento automático por quadro;
+  comparação sincronizada sem/com sapatos e opção de avanço de quadro na prévia. Base sem roupa integrada pendente.
+  Prévias em `previas/v02/`; fontes/prompts/ORA e histórico da primeira revisão no `_trabalho/`.
 - `export-personagem.py` valida as sete folhas e exporta WebP + manifesto para a área local, sem importar no jogo.
   Marcha, contornos, encaixe sobre a malha e transição entre ações continuam em revisão artística.
 - v01 arquivado em `_arquivo/v01/` (só local, fora do git): caminhada 8×4 e repouso frontal 6×4, roupa verde embutida.

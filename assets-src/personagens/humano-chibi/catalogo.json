@@ -12,7 +12,7 @@
         "caminhada"
       ],
       "status": "revisao",
-      "notas": "EXCECAO PROVISORIA autorizada: malha bege opaca cobrindo tronco, bracos e pernas. Base definitiva sem roupa ainda pendente."
+      "notas": "Base provisoria autorizada: blusa sem mangas e shorts anteriores recoloridos em bege; bracos, pernas e pes da caminhada anterior preservados. Substitui a malha de corpo inteiro rejeitada."
     },
     {
       "encaixe": "cabelo",
@@ -57,7 +57,9 @@
       "acoes": [
         "caminhada"
       ],
-      "status": "revisao"
+      "status": "revisao",
+      "notas": "Revisao 2: sapatos baixos simples, extraidos de edicao sobre os pes da pose completa; sem reposicionamento automatico. Movimento aguardando nova revisao visual."
     }
-  ]
+  ],
+  "revisao": 2
 }

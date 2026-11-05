@@ -115,8 +115,9 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 ### Fase 5 — Visual e polimento
 0. **Personagem modular (humano chibi v02)** — ADR 0017, `assets-src/personagens/CONTRATO.md`.
    a. _Arte_: piloto de caminhada entregue em revisão (cinco peças, sete folhas, quatro direções e contatos).
-      Base com malha bege totalmente coberta, exceção provisória autorizada; preparar a base definitiva sem roupa
-      integrada e revisar contornos, marcha e encaixes no tamanho de jogo. Prévias em `humano-chibi/previas/v02/`.
+      Revisão 2 com blusa sem mangas/shorts bege e sapatos menores após rejeição da malha inteira e do movimento
+      anterior dos sapatos. Conferir a comparação sincronizada e os oito quadros; depois preparar a base definitiva
+      sem roupa integrada e revisar no tamanho de jogo. Prévias em `humano-chibi/previas/v02/`.
    b. _Motor_: tipo de personagem modular lendo `manifesto.json` (quadro × `escalaMundo`, âncora, ordem por parte e
       por direção, fps por ação); teste no cenário só com a caminhada (parado = quadro 0), sem trocar a heroína.
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
