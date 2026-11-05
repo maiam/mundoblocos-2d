@@ -1,12 +1,63 @@
 {
   "versao": "v02",
-  "pecas": [],
-  "_exemplo": {
-    "encaixe": "cabelo",
-    "id": "curto-castanho",
-    "partes": ["cabelo-tras", "cabelo-frente"],
-    "acoes": ["caminhada"],
-    "status": "rascunho",
-    "notas": "status: rascunho | revisao | aprovada"
-  }
+  "pecas": [
+    {
+      "encaixe": "corpo",
+      "id": "base",
+      "partes": [
+        "corpo",
+        "cabeca"
+      ],
+      "acoes": [
+        "caminhada"
+      ],
+      "status": "revisao",
+      "notas": "EXCECAO PROVISORIA autorizada: malha bege opaca cobrindo tronco, bracos e pernas. Base definitiva sem roupa ainda pendente."
+    },
+    {
+      "encaixe": "cabelo",
+      "id": "curto-castanho",
+      "partes": [
+        "cabelo-tras",
+        "cabelo-frente"
+      ],
+      "acoes": [
+        "caminhada"
+      ],
+      "status": "revisao"
+    },
+    {
+      "encaixe": "tronco",
+      "id": "blusa-ocre",
+      "partes": [
+        "tronco"
+      ],
+      "acoes": [
+        "caminhada"
+      ],
+      "status": "revisao"
+    },
+    {
+      "encaixe": "pernas",
+      "id": "shorts-marinho",
+      "partes": [
+        "pernas"
+      ],
+      "acoes": [
+        "caminhada"
+      ],
+      "status": "revisao"
+    },
+    {
+      "encaixe": "pes",
+      "id": "sapatos-couro",
+      "partes": [
+        "pes"
+      ],
+      "acoes": [
+        "caminhada"
+      ],
+      "status": "revisao"
+    }
+  ]
 }

@@ -77,6 +77,15 @@ Partes anatômicas (`antebraco_E` etc.) são de um rig futuro e não aparecem no
   `tronco-frente`, `cabeca`, `rosto`, `cabelo-frente`.
 - O corpo-base é **neutro**: não traz roupa embutida (nada da regata/shorts verdes do v01); roupa só por peça.
 
+### Exceção provisória do primeiro piloto — 05/11/2026
+
+Autorizada pelo dono do projeto: enquanto a base definitiva não estiver disponível, `corpo/base` pode usar
+**malha neutra bege, opaca e totalmente coberta**, incluindo braços e pernas. A base sem roupa não pôde ser
+produzida pela ferramenta de imagens. Esta exceção permite testar grade, encaixe, exportação e composição;
+não cumpre o objetivo definitivo de corpo sem roupa integrada e não valida qualquer corte de roupa.
+O catálogo deve manter a base em `revisao` e explicitar essa limitação. Quadro, escala, âncora, partes,
+caixas, ações e validações do contrato continuam iguais. A exceção não amplia a regra para outras peças.
+
 ## 5. Arquivos
 
 ```

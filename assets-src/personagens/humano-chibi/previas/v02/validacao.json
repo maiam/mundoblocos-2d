@@ -1,0 +1,288 @@
+{
+  "status": "revisao",
+  "pecas": 5,
+  "folhas": 7,
+  "poses": 32,
+  "contatosVerificados": [
+    {
+      "direcao": "frente",
+      "quadro": 0,
+      "pe": "E",
+      "caixa": [
+        188,
+        435,
+        239,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 472
+    },
+    {
+      "direcao": "frente",
+      "quadro": 0,
+      "pe": "E",
+      "caixa": [
+        188,
+        435,
+        239,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 472
+    },
+    {
+      "direcao": "frente",
+      "quadro": 4,
+      "pe": "D",
+      "caixa": [
+        147,
+        435,
+        193,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 471
+    },
+    {
+      "direcao": "frente",
+      "quadro": 4,
+      "pe": "D",
+      "caixa": [
+        147,
+        435,
+        193,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 471
+    },
+    {
+      "direcao": "esquerda",
+      "quadro": 0,
+      "pe": "E",
+      "caixa": [
+        105,
+        438,
+        167,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 471
+    },
+    {
+      "direcao": "esquerda",
+      "quadro": 0,
+      "pe": "E",
+      "caixa": [
+        105,
+        438,
+        167,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 471
+    },
+    {
+      "direcao": "esquerda",
+      "quadro": 4,
+      "pe": "D",
+      "caixa": [
+        105,
+        438,
+        167,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 469
+    },
+    {
+      "direcao": "esquerda",
+      "quadro": 4,
+      "pe": "D",
+      "caixa": [
+        105,
+        438,
+        167,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 469
+    },
+    {
+      "direcao": "direita",
+      "quadro": 0,
+      "pe": "D",
+      "caixa": [
+        215,
+        438,
+        285,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 472
+    },
+    {
+      "direcao": "direita",
+      "quadro": 0,
+      "pe": "D",
+      "caixa": [
+        215,
+        438,
+        285,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 472
+    },
+    {
+      "direcao": "direita",
+      "quadro": 4,
+      "pe": "E",
+      "caixa": [
+        215,
+        438,
+        285,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 471
+    },
+    {
+      "direcao": "direita",
+      "quadro": 4,
+      "pe": "E",
+      "caixa": [
+        215,
+        438,
+        285,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 471
+    },
+    {
+      "direcao": "costas",
+      "quadro": 0,
+      "pe": "E",
+      "caixa": [
+        148,
+        438,
+        193,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 471
+    },
+    {
+      "direcao": "costas",
+      "quadro": 0,
+      "pe": "E",
+      "caixa": [
+        148,
+        438,
+        193,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 471
+    },
+    {
+      "direcao": "costas",
+      "quadro": 4,
+      "pe": "D",
+      "caixa": [
+        185,
+        438,
+        232,
+        480
+      ],
+      "variante": "corpo",
+      "contatoY": 472
+    },
+    {
+      "direcao": "costas",
+      "quadro": 4,
+      "pe": "D",
+      "caixa": [
+        185,
+        438,
+        232,
+        480
+      ],
+      "variante": "corpo+sapatos",
+      "contatoY": 472
+    }
+  ],
+  "avisosExportador": 0,
+  "errosExportador": 0,
+  "bytesWebP": 380186,
+  "integradoAoJogo": false,
+  "baseProvisoria": "malha bege totalmente coberta, autorizada pelo usuario",
+  "fonteEditavel": "_trabalho/v02/piloto-caminhada-v02.ora",
+  "fonteORA": {
+    "camadas": 7,
+    "quadro": [
+      3072,
+      2048
+    ],
+    "integridadeVerificada": true,
+    "animada": false
+  },
+  "Krita": "Copia KRA pendente: aplicativo nao respondeu durante a abertura. ORA preservado.",
+  "limites": [
+    "base definitiva sem roupa integrada pendente",
+    "marcha e deslizamento ainda em revisao visual",
+    "sem repouso, ferramentas ou expressoes novas"
+  ],
+  "arquivosEntrega": [
+    {
+      "arquivo": "entrega/v02/cabelo/curto-castanho/caminhada__cabelo-frente.png",
+      "bytes": 329688,
+      "sha256": "b4b4dc7f730ab39899211742879848fbcaffafb3602222e4ffb5879f3b306d34"
+    },
+    {
+      "arquivo": "entrega/v02/cabelo/curto-castanho/caminhada__cabelo-tras.png",
+      "bytes": 130028,
+      "sha256": "e1dcae1b6e1a62a043f1303162fbab386166f65d1d7f529ba4e86d6612062409"
+    },
+    {
+      "arquivo": "entrega/v02/corpo/base/caminhada__cabeca.png",
+      "bytes": 319692,
+      "sha256": "5b7dc99f4875ed12e03a27a47db65ff0f1e88fad614f66f119366c7c1cc35f14"
+    },
+    {
+      "arquivo": "entrega/v02/corpo/base/caminhada__corpo.png",
+      "bytes": 1725545,
+      "sha256": "3fe19ae27670011a1c4a248aed56e99c1f050a6ba95c33968b0e9ed70e44ae48"
+    },
+    {
+      "arquivo": "entrega/v02/pernas/shorts-marinho/caminhada__pernas.png",
+      "bytes": 689845,
+      "sha256": "78b5d580e3708c4d369dd0f36f7681fbbb60b831aa4873d94ac305091020ea56"
+    },
+    {
+      "arquivo": "entrega/v02/pes/sapatos-couro/caminhada__pes.png",
+      "bytes": 381656,
+      "sha256": "57735a09edb33c97e3875c813fb89e7604f8ec8b9b869d0b4cc610df0aca990d"
+    },
+    {
+      "arquivo": "entrega/v02/tronco/blusa-ocre/caminhada__tronco.png",
+      "bytes": 474982,
+      "sha256": "22eebfa4875e45cc965e7215873ec7cbbc2d45af1cc5a6c8373d544d0372301b"
+    }
+  ],
+  "verificacaoProjeto": {
+    "typecheck": "passou",
+    "testes": 135,
+    "arquivosTeste": 23,
+    "build": "passou",
+    "codigoDoJogoAlterado": false
+  },
+  "verificacaoNavegador": {
+    "pausaReinicio": true,
+    "trocaPecas": true,
+    "fundoClaroEscuro": true,
+    "consoleErrosObservados": 0,
+    "layoutEstreitoDuasColunas": true
+  }
+}

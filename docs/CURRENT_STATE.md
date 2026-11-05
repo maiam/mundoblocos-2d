@@ -4,9 +4,13 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 
 ## Personagem modular (humano chibi) — 2026-11-05
 
-- **Contrato v02 fechado** (`assets-src/personagens/CONTRATO.md`, ADR 0017) e exportador mínimo
-  `scripts/export-personagem.py`. `entrega/v02/` tem só `contrato.json`; `catalogo.json` sem peças: **aguardando o
-  piloto artístico** (corpo-base neutro + caminhada nas 4 direções + cabelo, tronco, pernas, pés).
+- **Piloto artístico v02 em revisão** (`assets-src/personagens/CONTRATO.md`, ADR 0017): cinco peças e sete folhas
+  em `entrega/v02/`, caminhada de oito quadros nas quatro direções. Corpo/cabeça, cabelo trás/frente, blusa ocre,
+  shorts marinho e sapatos de couro separados. Catálogo e oito quadros de contato preenchidos.
+- **Exceção autorizada:** base com malha bege opaca cobrindo braços, tronco e pernas. Base definitiva sem roupa
+  integrada ainda pendente. Prévias e página local de montagem em `previas/v02/`; fontes/prompts/ORA no `_trabalho/`.
+- `export-personagem.py` valida as sete folhas e exporta WebP + manifesto para a área local, sem importar no jogo.
+  Marcha, contornos, encaixe sobre a malha e transição entre ações continuam em revisão artística.
 - v01 arquivado em `_arquivo/v01/` (só local, fora do git): caminhada 8×4 e repouso frontal 6×4, roupa verde embutida.
   Medido no mundo: cabe na altura da heroína (2,2 células, ~1,1 de largura); convertido pelo exportador, caminhada de
   5 partes ≈ 300 kB.
@@ -106,7 +110,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
   buracos, não se espalha sobre terra firme.
 
 ## Qualidade e desempenho
-- 117 testes (Vitest) passando; typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
+- 135 testes (Vitest) passando (05/11/2026); typecheck limpo; build com 1 aviso intencional de tamanho do bundle.
 - Sessão automatizada (v0.36.1: 3 seeds, desktop e celular, 160 ações aleatórias cada, entrando na cidade e na
   dungeon) sem erros.
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (média, Chromium headless, inclusive dentro do labirinto).

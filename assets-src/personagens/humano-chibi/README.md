@@ -12,8 +12,11 @@ Personagem humano chibi modular (corpo, cabelo, roupas em camadas). Regras: [`..
 
 ## Estado
 
-- **v02**: contrato fechado em 05/11/2026; aguardando o piloto artístico (corpo-base neutro + caminhada nas 4
-  direções + um cabelo, um tronco, umas pernas, um par de pés). Nada integrado ao jogo.
+- **v02**: piloto artístico de caminhada em revisão — cinco peças, sete folhas, quatro direções e oito contatos.
+  Corpo/cabeça, cabelo curto trás/frente, blusa ocre, shorts marinho e sapatos de couro. Base com **malha bege
+  totalmente coberta**, exceção provisória autorizada; base definitiva sem roupa integrada ainda pendente.
+  [Entrega e limites](entrega/v02/LEIA-ME.md) · [Revisão interativa](previas/v02/revisao.html) ·
+  [Caminhada](previas/v02/caminhada-piloto.gif). Nada integrado ao jogo.
 - **v01** (arquivado, só local, ~577 MB): base frontal, 12 expressões e 12 cabelos frontais, testes de encaixe,
   quatro vistas, caminhada 8×4 (linhas frente, costas, esquerda, direita) e repouso frontal 6×4, quadro 384 × 512
   com âncora (192, 470.5), corpo com regata/shorts verdes embutidos. Serve de referência para o v02; não entra no jogo.

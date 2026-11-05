@@ -81,3 +81,8 @@ Contrato em `assets-src/personagens/CONTRATO.md`; `scripts/export-personagem.py`
 `escalaMundo`, fps, ciclo e ordem das partes (padrão + por direção). O motor deve desenhar o quadro no tamanho dele ×
 `escalaMundo` × zoom — **não** esticar para uma altura fixa como `SheetSpec.height` — e empilhar as partes pela ordem.
 Ainda não implementado; nenhuma folha modular está no `ArtPack`.
+
+O primeiro piloto artístico está em `humano-chibi/entrega/v02/`, com cinco peças e sete folhas de caminhada,
+status `revisao`. A base usa malha bege totalmente coberta (exceção provisória autorizada), sem cumprir ainda o
+objetivo de corpo sem roupa. Usar o exportador para gerar o manifesto local antes do teste optativo no cenário.
+As prévias montam as folhas mestre; não validam integração, colisão ou desempenho no jogo.

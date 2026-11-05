@@ -1,5 +1,13 @@
 # Changelog
 
+## Sem versão — piloto artístico modular v02 — 2026-11-05
+- Cinco peças em revisão: corpo/cabeça, cabelo curto trás/frente, blusa ocre, shorts marinho e sapatos de couro.
+  Sete folhas de caminhada 8×4 no contrato, linhas frente/esquerda/direita/costas; oito contatos com pé/região.
+- Malha bege opaca totalmente coberta autorizada provisoriamente para o corpo-base; objetivo definitivo de
+  base sem roupa integrada continua pendente. Exceção registrada no contrato e no catálogo.
+- Prévias pequenas, montagem local interativa e fonte ORA de sete camadas no trabalho local. Nenhuma mudança
+  no renderizador, na heroína, no salvamento ou no multiplayer; não altera a versão jogável.
+
 ## Sem versão — personagem modular: contrato v02 — 2026-11-05
 - **Contrato de arte v02** para personagens modulares (`assets-src/personagens/CONTRATO.md`, ADR 0017), fechado com a
   área de arte: quadro 384 × 512, âncora (192, 471) como raiz, escala fixa do mestre, linhas frente/esquerda/direita/
