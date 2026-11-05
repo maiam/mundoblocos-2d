@@ -1,5 +1,12 @@
 # Changelog
 
+## Sem versão — guarda-roupa chibi fantasia 01 — 2026-11-05
+- Seis roupas novas em camadas: colete verde, túnica azul, blusa lilás, calça ardósia, shorts vinho e bermuda verde.
+  Catálogo com onze peças/treze folhas; caminhada de oito quadros nas quatro direções.
+- Dezesseis combinações sobrepostas (25 com a roupa bege da base), prancha comparativa, conjuntos em movimento,
+  seletores independentes e sorteio na prévia. Corpo, rosto, cabelo e sapatos anteriores preservados.
+- Fontes e ORA em camadas somente na área local. Todas as peças em revisão; jogo e versão jogável inalterados.
+
 ## Sem versão — revisão 2 da base chibi e dos sapatos — 2026-11-05
 - A pedido do dono do projeto, substituída a malha de corpo inteiro por blusa sem mangas e shorts anteriores
   recoloridos em bege. Silhueta e pixels dos pés descalços da referência preservados nos 32 quadros.

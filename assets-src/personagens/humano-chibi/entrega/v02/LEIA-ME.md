@@ -1,57 +1,49 @@
-# Piloto artístico v02 — revisão 2
+# Guarda-roupa fantasia 01 — revisão 3
 
-Estado: **revisão**, 05/11/2026. Cinco peças, sete folhas RGBA de 3072 × 2048 px. Caminhada de oito quadros
-por direção, a 8 fps, ciclo de um segundo. Linhas: frente, esquerda, direita, costas. Quadro mestre 384 × 512,
-âncora (192, 471), caixa compartilhada [62, 48, 322, 488].
+Onze peças no catálogo, treze folhas RGBA de caminhada (3072 × 2048). Oito quadros por direção, 8 fps,
+linhas frente, esquerda, direita, costas. Mantidos o quadro 384 × 512, a âncora (192, 471) e o contrato v02.
+Todas as peças continuam em **revisão**, sem aprovação artística nem integração ao jogo.
 
-## Alterações solicitadas
+## Novas roupas
 
-A base voltou à **blusa sem mangas e ao shorts anteriores, agora em bege**, com braços e pernas descobertos.
-A malha de corpo inteiro foi rejeitada. O corpo continua provisório, com roupa integrada; isso não equivale
-à base definitiva sem roupa. A exceção atual está no contrato e no catálogo.
-
-A ferramenta integrada `image_gen` produziu a recoloração e os sapatos baixos sobre as poses completas.
-A montagem incorpora a recoloração somente nos pixels das roupas originais: a silhueta, os braços, as pernas,
-os pés descalços e todos os pixels fora dessa máscara permanecem iguais à referência v01. Os 32 quadros foram
-conferidos para igualdade de alfa do corpo e igualdade RGBA na região inferior y ≥ 385.
-
-Os sapatos são menores, fechados e sem tiras. São extraídos na posição em que foram desenhados, sem separar,
-recentrar ou realinhar cada pé para o chão a cada quadro. O recorte segue a silhueta original com margem de
-um pixel: limita o excesso da sola sem deslocar o pé nem mudar sua altura ao levantar. O movimento com
-sapatos continua em revisão visual; o teste numérico não substitui a avaliação da caminhada.
-
-## Peças
-
-| Peça | Partes |
+| Encaixe | Peças adicionadas |
 |---|---|
-| `corpo/base` | `corpo`, `cabeca` |
-| `cabelo/curto-castanho` | `cabelo-tras`, `cabelo-frente` |
-| `tronco/blusa-ocre` | `tronco` |
-| `pernas/shorts-marinho` | `pernas` |
-| `pes/sapatos-couro` | `pes` |
+| `tronco` | `colete-verde`, `tunica-azul`, `blusa-lilas` |
+| `pernas` | `calca-ardosia`, `shorts-vinho`, `bermuda-verde` |
 
-Cabeças, cabelo e roupas sobrepostas preservados do piloto anterior. As opções blusa ocre e shorts marinho
-continuam disponíveis sobre a base bege; não são a roupa bege integrada à base. Todas as peças estão em `revisao`.
+Somadas à blusa ocre e ao shorts marinho: quatro opções sobrepostas por encaixe = **16 combinações**.
+Incluindo a opção de usar a roupa bege integrada à base em cada encaixe: **25 combinações de roupa**.
+Cabelo e sapatos são opções independentes; não são contados como roupas novas.
 
 ## Conferir
 
-`../../previas/v02/revisao.html` começa na base bege, com cabelo, sem sapatos nem roupa sobreposta. Permite
-alternar as peças e avançar quadro a quadro quando pausada. `comparacao-sapatos.gif` reproduz as versões sem
-sapatos (acima) e com sapatos (abaixo), com o mesmo índice e o mesmo tempo. Cada ciclo tem oito passos e um segundo.
+Abrir `../../previas/v02/revisao.html` por um servidor local. Blusa e pernas têm seletores independentes,
+com sorteio, pausa e avanço quadro a quadro. A prévia começa com colete verde/calça ardósia; sapatos desligados.
+`combinacoes-fantasia-01.jpg` compara as 16 combinações na mesma pose frontal; `caminhada-fantasia-01.gif`
+mostra os três conjuntos novos nas quatro direções. A comparação anterior dos sapatos foi preservada.
 
-Histórico da primeira revisão: `../../_trabalho/v02/revisao-01/`. Fontes, prompts integrais, registro de montagem
-com as verificações e ORA de sete camadas da revisão atual: `../../_trabalho/v02/r02/`. O ORA é um atlas estático
-editável no Krita, não uma linha do tempo animada. Esses diretórios ficam fora do git.
+A base permanece a **blusa sem mangas e o shorts bege**, com braços/pernas descobertos. As sete folhas anteriores,
+incluindo cabeça, cabelo e sapatos, são preservadas byte a byte. Nenhuma roupa reposiciona o corpo ou os pés.
+As novas roupas foram desenhadas com `image_gen` sobre as oito poses de cada direção, extraídas como camadas
+independentes e montadas sem deslocamento por quadro. Máscaras preservam braços e mãos; os pés continuam vindo da base original, com as barras desenhadas acima deles.
 
-Na raiz do repositório, usar Python com Pillow e WebP:
+Fontes, prompts, montagem, verificações e atlas ORA editável com treze camadas:
+`../../_trabalho/v02/expansao-01/` (somente local, fora do git). O ORA é uma folha em camadas para Krita;
+não contém uma linha do tempo animada. Histórico anterior preservado em `_trabalho/v02/r02/` e `_arquivo/v01/`.
+
+## Validar e exportar
+
+Na raiz, com Python/Pillow e WebP:
 
 ```sh
 /usr/bin/python3 scripts/export-personagem.py
 /usr/bin/python3 scripts/export-personagem.py --out assets-src/personagens/humano-chibi/_trabalho/v02/exportado
 ```
 
-Quadro exportado: 104 × 176 px, âncora (52, 169.2); usar `escalaMundo` do manifesto, sem esticar o quadro a uma
-altura fixa. Resultados em `../../previas/v02/validacao.json`.
+O exportador confere dimensões, caixa compartilhada, transparência, contatos e prévias ≤ 1 MB.
+A montagem local também confere as 25 escolhas × 32 poses (800 montagens) e os hashes das sete folhas existentes.
+Essas verificações não aprovam movimento, volume, detalhes entre vistas nem encaixe no cenário.
 
-Nada integrado ao jogo: sem importação no ArtPack ou substituição da heroína. Repouso, ferramentas, expressões
-novas, base definitiva e revisão da marcha no cenário continuam pendentes.
+Pendentes: revisão visual dos encaixes (gola, cava, cintura e bainhas), detalhes do colete entre frente/costas,
+movimento dos sapatos, base definitiva, repousos, expressões e ferramentas. O motor ainda não lê estas peças;
+nenhuma importação no ArtPack ou substituição da heroína.
