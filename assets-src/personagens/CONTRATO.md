@@ -111,7 +111,8 @@ e reduzida (`escalaExportacao`), mais um `manifesto.json` com tamanho do quadro,
 escala de mundo, quadros, velocidade, ciclo e ordem. O motor desenha cada quadro no **tamanho dele × escala**,
 nunca esticando o quadro para uma altura fixa.
 
-Até o piloto aprovar, a exportação não entra em `src/assets/` nem no carregamento do jogo.
+Para o **teste no cenário** (v0.48.0), a exportação vai para `src/assets/` com o prefixo `chibi-` e só carrega com
+`?personagem=chibi`; fora disso, nada muda no jogo. Trocar a heroína de vez exige a aprovação do piloto.
 
 ## 8. Sequência
 

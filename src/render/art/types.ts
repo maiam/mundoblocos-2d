@@ -1,4 +1,5 @@
 import type { ActorKind } from '../../game/entities';
+import type { ModularManifest } from '../modular';
 import type { MonsterKind } from '../../world/dungeon';
 import type { ItemId, ToolId } from '../../world/items';
 import type { ExpressionId, OutfitId, VillagerBase } from '../../game/villager';
@@ -45,4 +46,6 @@ export interface ArtPack {
   /** Ícones de interface (bolsa do inventário). */
   uiIcons?: { bag: string; character: string; skills: string; builder: string };
   toolIcons: Partial<Record<ToolId, string>>;
+  /** Personagem modular em teste (ADR 0017): manifesto do exportador e URL de cada folha (pelo nome no manifesto). */
+  modular?: { manifest: ModularManifest; sheets: Record<string, string> };
 }

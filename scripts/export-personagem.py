@@ -15,6 +15,7 @@ Uso:
   python3 scripts/export-personagem.py                         # só valida (humano-chibi, v02)
   python3 scripts/export-personagem.py --out /tmp/chibi-export # valida e exporta WebP + manifesto.json
   python3 scripts/export-personagem.py --raiz <pasta do personagem> --versao v02
+  python3 scripts/export-personagem.py --out src/assets --prefixo chibi-   # teste no jogo (?personagem=chibi)
 
 Requer Pillow com WebP (sem numpy).
 """
@@ -191,7 +192,7 @@ def checar_contato(contrato, catalogo, imagens, rel):
                              f'(±{tol} px no mestre) — {nome}')
 
 
-def exportar(contrato, catalogo, imagens, out: Path):
+def exportar(contrato, catalogo, imagens, out: Path, prefixo: str = ''):
     out.mkdir(parents=True, exist_ok=True)
     qw, qh = contrato['quadro']
     ax, ay = contrato['ancora']
@@ -234,12 +235,12 @@ def exportar(contrato, catalogo, imagens, out: Path):
                         ox, oy = q * qw, li * qh
                         recorte = img.crop((ox + x0, oy + y0, ox + x1, oy + y1)).convert('RGBa')
                         folha.paste(recorte.resize((fw, fh), Image.LANCZOS).convert('RGBA'), (q * fw, li * fh))
-                nome = f'{peca["encaixe"]}-{peca["id"]}-{acao}-{parte}.webp'
+                nome = f'{prefixo}{peca["encaixe"]}-{peca["id"]}-{acao}-{parte}.webp'
                 folha.save(out / nome, 'WEBP', quality=84, alpha_quality=85, method=6)
                 total += (out / nome).stat().st_size
                 item['folhas'].setdefault(acao, {})[parte] = nome
         manifesto['pecas'].append(item)
-    (out / 'manifesto.json').write_text(json.dumps(manifesto, ensure_ascii=False, indent=2), encoding='utf-8')
+    (out / f'{prefixo}manifesto.json').write_text(json.dumps(manifesto, ensure_ascii=False, indent=2), encoding='utf-8')
     return total
 
 
@@ -248,6 +249,7 @@ def main():
     ap.add_argument('--raiz', type=Path, default=RAIZ_PADRAO, help='pasta do personagem (com catalogo.json)')
     ap.add_argument('--versao', default='v02')
     ap.add_argument('--out', type=Path, help='pasta de saída (WebP + manifesto.json); sem ela, só valida')
+    ap.add_argument('--prefixo', default='', help='prefixo dos arquivos (ex.: chibi- para src/assets/)')
     args = ap.parse_args()
 
     rel, contrato, catalogo, imagens = validar(args.raiz, args.versao)
@@ -261,7 +263,7 @@ def main():
         sys.exit(1)
     print(f'ok: {pecas} peça(s), {len(imagens)} folha(s), {len(rel.avisos)} aviso(s)')
     if args.out:
-        total = exportar(contrato, catalogo, imagens, args.out)
+        total = exportar(contrato, catalogo, imagens, args.out, args.prefixo)
         print(f'exportado em {args.out}: {total / 1024:.0f} kB de WebP + manifesto.json')
 
 

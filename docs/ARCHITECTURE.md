@@ -10,7 +10,8 @@ assets-src/                    arte original (folhas 4×4, pranchas de blocos, �
   personagens/                 personagem modular: CONTRATO.md + humano-chibi/{entrega,previas}/v02 (git);
                                _trabalho/ e _arquivo/ (Krita, v01) só locais — ADR 0017; ainda fora do runtime
 scripts/
-  export-personagem.py         personagem modular v02 → valida a entrega e exporta WebP + manifesto (ADR 0017)
+  export-personagem.py         personagem modular v02 → valida a entrega e exporta WebP + manifesto (ADR 0017);
+                               --out src/assets --prefixo chibi- alimenta o teste no jogo (render/modular*.ts)
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region, --respace…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
   extract-town.py              pranchas da cidade (assets-src/town) → sprites em escala única (tabela OBJECTS)

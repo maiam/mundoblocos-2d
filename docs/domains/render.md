@@ -74,13 +74,17 @@ Apenas apresentação; lê `World`, nunca escreve.
 - Personagens que flutuam (`SheetSpec.float`, hoje a Deusa): quadros em vai-e-volta contínuo, sprite pairando
   com balanço senoidal sub-pixel, sombra no chão que encolhe ao subir.
 
-## Personagem modular (planejado, ADR 0017)
+## Personagem modular (teste, ADR 0017)
 
 Contrato em `assets-src/personagens/CONTRATO.md`; `scripts/export-personagem.py` gera, por parte e ação, folhas WebP
 (linhas frente, esquerda, direita, costas; uma coluna por quadro) e `manifesto.json` com quadro, âncora já recortada,
 `escalaMundo`, fps, ciclo e ordem das partes (padrão + por direção). O motor deve desenhar o quadro no tamanho dele ×
 `escalaMundo` × zoom — **não** esticar para uma altura fixa como `SheetSpec.height` — e empilhar as partes pela ordem.
-Ainda não implementado; nenhuma folha modular está no `ArtPack`.
+Implementado na v0.48.0: `render/modular.ts` (puro: `modularFrame` escolhe ação, linha, coluna e partes;
+`lookFromSearch` lê `?personagem=chibi`), `render/modularCharacter.ts` (`ModularSprites`: carrega as folhas sob
+demanda e só desenha com todas prontas; senão o `Renderer` usa a folha de sempre). `ArtPack.modular` traz o manifesto
+e as URLs (`import.meta.glob` de `src/assets/chibi-*.webp`). O ator do jogador ganha `Actor.look` quando
+`Entities.look` está definido.
 
 O piloto artístico em `humano-chibi/entrega/v02/` agora tem onze peças e treze folhas de caminhada,
 status `revisao` (guarda-roupa fantasia 01, revisão 3). Há quatro tops e quatro peças de pernas, combináveis

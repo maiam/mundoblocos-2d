@@ -7,6 +7,7 @@ import { Block, blockDef, type BlockId, isDoor } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
+import { ModularSprites } from './modularCharacter';
 import { ItemIcons, itemIconUrl, loadCropSprites } from './itemArt';
 import { getWaterArt } from './blockArt';
 import { type ItemId, stackBlock } from '../world/items';
@@ -71,6 +72,7 @@ export class Renderer {
   readonly textures: BlockTextures;
   private readonly chunks: ChunkRenderer;
   private readonly actorSprites = new ActorSprites();
+  private readonly modular = art().modular ? new ModularSprites(art().modular!.manifest, art().modular!.sheets) : undefined;
   /** Ícones dos itens caídos: itens pelo pacote de arte; materiais pelo ícone do bloco. */
   private readonly itemIcons = new ItemIcons((id) => {
     const b = stackBlock(id);
@@ -402,7 +404,8 @@ export class Renderer {
     const fx = cam.worldToScreenX(a.x * TILE);
     const fy = cam.worldToScreenY(a.y * TILE - a.visualZ * CUBE_FRONT);
     const sheet = this.actorSprites.get(a.kind);
-    sheet.draw(this.ctx, fx, fy, cam.zoom, a, elapsed);
+    // Personagem modular em teste: desenha o chibi; enquanto carrega (ou sem peças), a folha de sempre.
+    if (!this.modular?.draw(this.ctx, fx, fy, cam.zoom, a, elapsed)) sheet.draw(this.ctx, fx, fy, cam.zoom, a, elapsed);
     if (a.label) {
       // Nome de outro jogador acima da cabeça (multiplayer).
       const ctx = this.ctx;

@@ -118,8 +118,9 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       25 incluindo a base). Conferir seletores e sorteio em `humano-chibi/previas/v02/revisao.html`, os 32 quadros,
       cintura/cavas/bainhas e coerência de detalhes frente/costas do colete. Preservada a base bege da revisão 2.
       Aprovação do movimento dos sapatos continua pendente. Próximo marco: teste no cenário antes de nova expansão.
-   b. _Motor_: tipo de personagem modular lendo `manifesto.json` (quadro × `escalaMundo`, âncora, ordem por parte e
-      por direção, fps por ação); teste no cenário só com a caminhada (parado = quadro 0), sem trocar a heroína.
+   b. ~~_Motor_: personagem modular lendo o manifesto~~ — feito na v0.48.0 (`?personagem=chibi`). Falta: conferir
+      no cenário com a área de arte (escala, perspectiva, encaixe), repouso quando houver, ferramentas no chibi,
+      seletor de aparência na interface (hoje só pela URL) e sala multiplayer (o parâmetro vale só no jogo solo).
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
    d. Aparência no salvamento/multiplayer quando a integração exigir (`SAVE_VERSION`/`PROTOCOL_VERSION`).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.

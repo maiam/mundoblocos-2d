@@ -153,6 +153,7 @@ flowchart LR
 | Morador / roupa nova | `assets-src/villagers/`, `scripts/extract-villagers.py`, `game/villager.ts` (`VILLAGER_BASES`, `OUTFITS`), `render/art/principal.ts` | npc, OPERATIONS |
 | Sprite da personagem | `assets-src/`, `process-sprite.py`, `optimize-assets.py`, `render/character.ts` | render, OPERATIONS |
 | Personagem modular (contrato, entrega da arte, exportação) | `assets-src/personagens/CONTRATO.md`, `humano-chibi/entrega/v02/contrato.json`, `humano-chibi/catalogo.json`, `scripts/export-personagem.py` | ADR 0017, render, OPERATIONS |
+| Personagem modular no jogo (desenho, aparência de teste) | `src/render/modular.ts`, `modularCharacter.ts`, `render/art/principal.ts` (`modular`), `game/entities.ts` (`look`), `main.ts` | ADR 0017, render |
 | HUD / controles na tela | `game/hud.ts`, `game/actionButton.ts`, `game/joystick.ts`, `style.css` | player, README |
 | Câmera / zoom | `game/camera.ts` | player |
 | Visual do chão | `render/chunkRenderer.ts` (cache por chunk) | render |

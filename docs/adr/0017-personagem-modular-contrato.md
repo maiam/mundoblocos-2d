@@ -28,6 +28,7 @@ para 10 folhas), mas cada formato diferente viraria caso especial no motor. Aind
    confirmar as regras de sobreposição. Nada entra em `src/assets/` antes da aprovação.
 
 ## Consequências
+- **v0.48.0**: implementado para teste (`render/modular.ts`, `modularCharacter.ts`, `?personagem=chibi`).
 - O motor ganhará um tipo de personagem modular que desenha cada quadro no tamanho dele × `escalaMundo` (sem esticar
   para altura fixa, evitando as razões 297/288 das folhas de ação atuais), com camadas pela ordem do manifesto.
 - Aparência no salvamento (`SAVE_VERSION`) e no multiplayer (`PROTOCOL_VERSION`) só quando a integração exigir.
