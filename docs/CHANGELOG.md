@@ -1,5 +1,14 @@
 # Changelog
 
+## Sem versão — personagem modular: contrato v02 — 2026-11-05
+- **Contrato de arte v02** para personagens modulares (`assets-src/personagens/CONTRATO.md`, ADR 0017), fechado com a
+  área de arte: quadro 384 × 512, âncora (192, 471) como raiz, escala fixa do mestre, linhas frente/esquerda/direita/
+  costas, caixa de recorte por ação, encaixe × peça × parte com ordem por parte, contato dos pés indicado pela arte.
+- **Exportador mínimo** `scripts/export-personagem.py`: valida a entrega (tamanhos, caixa, partes, contato, prévias
+  ≤ 1 MB) e exporta WebP + `manifesto.json`. Testado com o v01 convertido: caminhada de 5 partes ≈ 300 kB.
+- Pastas: `entrega/v02` e `previas/v02` no git; `_trabalho/` e `_arquivo/v01` (Krita/ORA, ~577 MB) só locais pelo
+  `.gitignore`. O humano chibi v01 foi arquivado como referência. Não altera a versão jogável.
+
 ## 0.47.2 — 2026-11-04
 - **Tablet: botão de ação de volta** (pedido do dono do produto). O toque na tela continua agindo como o clique.
 - **Digitar no menu do tablet/celular**: ao tocar no campo do nome (ou do código), o jogo pedia tela cheia; o teclado

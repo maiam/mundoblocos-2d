@@ -5,3 +5,13 @@ dist
 artifact/
 orvalis-site.zip
 dist-net/
+
+# Personagens: trabalho e histórico ficam só no computador da arte (CONTRATO.md)
+/assets-src/personagens/**/_trabalho/
+/assets-src/personagens/**/_arquivo/
+
+# Proteção contra fontes pesadas fora dessas pastas
+/assets-src/personagens/**/*.kra
+/assets-src/personagens/**/*.ora
+/assets-src/personagens/**/*.kra.kra
+/assets-src/personagens/**/*autosave*

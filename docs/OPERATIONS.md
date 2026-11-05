@@ -78,6 +78,20 @@ enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só 
 **Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
 
 ## Pipeline de arte
+### Personagem modular (contrato v02, ADR 0017)
+
+Regras: `assets-src/personagens/CONTRATO.md`. A arte publica em `humano-chibi/entrega/v02/` e atualiza
+`humano-chibi/catalogo.json`; `_trabalho/` e `_arquivo/` (Krita, ORA, v01) ficam só no computador (fora do git —
+manter cópia em nuvem).
+
+```bash
+python3 scripts/export-personagem.py                          # valida a entrega (erro = sai com código 1)
+python3 scripts/export-personagem.py --out /tmp/chibi-export  # valida e exporta WebP + manifesto.json
+```
+
+Precisa de Pillow com WebP (sem numpy). Valida tamanho das folhas, pixels fora da caixa da ação, partes/encaixes
+desconhecidos, contato dos pés e prévias ≤ 1 MB. Até o piloto ser aprovado, a saída não vai para `src/assets/`.
+
 Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP q84/alfa q85 e apaga os
 PNG; `--recompress` regrava no nível atual os WebP de sprite ≥ 60 kB). Depois, **importar o asset no pacote do mundo**
 (`src/render/art/principal.ts` ou `santuario.ts`, ADR 0010) — é o único lugar que importa imagens (como URL, ADR 0013).

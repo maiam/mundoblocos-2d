@@ -113,6 +113,13 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 5. Botão de ação: mão vazia + toque colhe trigo maduro / faz carinho na ovelha; alvo pela diagonal do joystick.
 
 ### Fase 5 — Visual e polimento
+0. **Personagem modular (humano chibi v02)** — ADR 0017, `assets-src/personagens/CONTRATO.md`.
+   a. _Arte_: piloto no contrato — corpo-base neutro + caminhada nas 4 direções, um cabelo (trás/frente), um tronco,
+      umas pernas, um par de pés; quadros de contato no `contrato.json`; `export-personagem.py` sem erros.
+   b. _Motor_: tipo de personagem modular lendo `manifesto.json` (quadro × `escalaMundo`, âncora, ordem por parte e
+      por direção, fps por ação); teste no cenário só com a caminhada (parado = quadro 0), sem trocar a heroína.
+   c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
+   d. Aparência no salvamento/multiplayer quando a integração exigir (`SAVE_VERSION`/`PROTOCOL_VERSION`).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
 2. Transições suaves entre chãos (autotile), água animada, pontes.
 3. Alturas: meio bloco/escadas; indicar borda de queda.

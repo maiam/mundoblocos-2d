@@ -67,6 +67,9 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 
 ## Documentação
 
+- Personagem modular (humano chibi): [contrato de arte v02](assets-src/personagens/CONTRATO.md) e
+  [coleção](assets-src/personagens/humano-chibi/README.md). Aguardando o piloto; ainda não integrado ao jogo.
+
 - Índice e ordem de leitura: [`docs/README.md`](docs/README.md) · mapas do sistema: [`docs/MAPS.md`](docs/MAPS.md)
 - Instruções para agentes de IA: [`CLAUDE.md`](CLAUDE.md)
 - Estado atual: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) · próximos passos: [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md)
