@@ -148,6 +148,13 @@ O mesmo script gera as **expressões** (`assets-src/expressions/`, 16 rostos × 
 `expr-<id>-fx` e `villager-<cabelo>-bangs`; `--expr-preview <png>` mostra as 16 expressões em cada personagem. Folha de
 expressão nova com outro molde: medir de novo `CALIB` (escala e deslocamento da expressão 0 até o morador loiro).
 
+**Hortaliças** (pranchas 8×2 transparentes em `assets-src/crops/<nome>.png`): `python3 scripts/extract-crops.py` →
+`crop-<nome>.png` (4×4 quadros de 128 px, mesmo formato do trigo) → `optimize-assets.py`. Cultura nova: uma linha em
+`CROPS` (blocks), o item que planta (items) e a folha no pacote (`art/principal.ts` → `crops`).
+
+**Ícones soltos de itens** (`assets-src/items/<nome>.png`, desenho transparente): `python3 scripts/extract-items.py`
+→ `icon-item-<nome>.png` 64×64. A segmentação das pranchas (árvores e hortaliças) fica em `scripts/sprite_segments.py`.
+
 **Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
 `python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`
 

@@ -77,6 +77,11 @@
   grande 1–2 sedas + presa (35%); Rainha 5–7 sedas, 2–3 presas e o Coração. Ícones `icon-silk/fang/queen-heart`.
 
 ## Plantação (`world/world.ts`, `world/blocks.ts`)
+- **Culturas** (`CROPS` em `world/blocks.ts`, v0.53.0): trigo, batata, tomate, cenoura — 16 estágios consecutivos
+  cada. Trigo planta pela semente; **hortaliças plantam pelo próprio legume** (`ITEMS.potato.plants` etc.).
+  Madura: trigo → 1 trigo + 1–2 sementes; hortaliça → 2–3 legumes. Verde: devolve o que foi plantado. Tempo por
+  estágio em `CROP_STAGE_SECONDS` (trigo 6 s, batata/cenoura 8 s, tomate 10 s). Capim arrancado solta uma hortaliça
+  ao acaso com 12% (`GRASS_VEGETABLE_CHANCE`). Jogo novo: 2 de cada hortaliça na bolsa (`STARTING_ITEMS`).
 - Trigo = 16 ids consecutivos (`WHEAT_FIRST` = 60 … 75), forma `crop`: não bloqueia passagem, não aceita bloco
   por cima, não se coloca pela hotbar (só plantando).
 - `canPlant`: **só chão de Terra Arada** (arado pela enxada ou piso de Terra Arada colocado num buraco), com a

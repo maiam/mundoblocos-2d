@@ -154,6 +154,7 @@ flowchart LR
 | Sprite da personagem | `assets-src/`, `process-sprite.py`, `optimize-assets.py`, `render/character.ts` | render, OPERATIONS |
 | Personagem modular (contrato, entrega da arte, exportação) | `assets-src/personagens/CONTRATO.md`, `humano-chibi/entrega/v02/contrato.json`, `humano-chibi/catalogo.json`, `scripts/export-personagem.py` | ADR 0017, render, OPERATIONS |
 | Personagem modular no jogo (desenho, aparência de teste) | `src/render/modular.ts`, `modularCharacter.ts`, `render/art/principal.ts` (`modular`), `game/entities.ts` (`look`), `main.ts` | ADR 0017, render |
+| Culturas da horta (trigo, batata, tomate, cenoura) | `world/blocks.ts` (`CROPS`), `world/items.ts` (`ITEMS`, `dropsFor`), `world/world.ts` (`CROP_STAGE_SECONDS`), `render/itemArt.ts` (`loadCropSprites`), `scripts/extract-crops.py` | farming |
 | Árvores que crescem / mudas / maçãs | `world/blocks.ts` (`TREE_NEXT`), `world/world.ts` (`canPlant`, `pick`, `tick`), `world/items.ts` (`treeDrops`, `pickDrops`), `render/textures.ts` (`growthTreeSprites`), `scripts/extract-trees.py` | farming, render |
 | Animais do campo (cavalo, vaca, galinha) | `game/horse.ts` (`FarmAnimal`, `FARM`), `game/entities.ts` (`spawnAnimals`), `render/character.ts` (`SPECS`) | npc |
 | Minimapa e névoa (cores, marcadores, raio, salvamento) | `src/render/minimap.ts`, `render/mapColors.ts`, `game/exploration.ts`, `game/game.ts` (`updateMinimap`, `REVEAL_RADIUS`), `world/profiles.ts` (`minimap`) | render, save |

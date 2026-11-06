@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.53.0 — 2026-11-06
+- **Batata, tomate e cenoura** (pedido do dono do produto): plantados pelo próprio legume em Terra Arada, crescem por
+  16 estágios com a prancha enviada (~2–2,5 min) e, maduros, dão 2–3 legumes (um serve para replantar). Verdes,
+  devolvem o legume. Jogo novo começa com 2 de cada na bolsa; arrancar capim às vezes revela uma hortaliça.
+- **Ícones novos** de maçã, batata, tomate e cenoura na bolsa (arte enviada).
+- Motor: o trigo virou uma das culturas da tabela `CROPS` (blocks) — cultura nova = uma linha + folha de crescimento.
+- Multiplayer: `PROTOCOL_VERSION` 3 (plantar hortaliça precisa da regra nova no servidor; servidor atualizado junto).
+
 ## 0.52.0 — 2026-11-06
 - **Cadeira de Madeira** (Construtor, 4 Tábuas): móvel de 1 célula com a arte enviada; volta à bolsa ao quebrar
   (machado desmonta).

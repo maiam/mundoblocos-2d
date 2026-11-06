@@ -1,6 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.52.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.53.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Hortaliças — v0.53.0
+- Culturas em tabela (`CROPS`/`CROP_KINDS` em `world/blocks.ts`): trigo (60–75), batata (150–165), tomate (170–185),
+  cenoura (190–205). Itens `potato/tomato/carrot` plantam o 1º estágio (`ItemDef.plants`); `World.tick` usa
+  `CROP_STAGE_SECONDS` por cultura. Folhas `crop-<nome>.webp` (`scripts/extract-crops.py`, 8×2 → 4×4) desenhadas por
+  `loadCropSprites`. Ícones `icon-item-{apple,potato,tomato,carrot}` (`scripts/extract-items.py`). Fonte das
+  hortaliças: 2 de cada no início, capim (12%) e a própria colheita. Comer: Fase P.
 
 ## Árvores que crescem, macieiras, vaca, galinha e cadeira — v0.52.0
 - Pranchas de crescimento 4×2 (`scripts/extract-trees.py` → `tree-oak/apple/cactus.webp`): carvalho e macieira com

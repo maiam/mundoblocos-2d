@@ -1,7 +1,7 @@
 import type { PlayerAction } from '../world/actions';
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
-import { Block, blockDef, type BlockId } from '../world/blocks';
+import { Block, blockDef, type BlockId, isCrop } from '../world/blocks';
 import { blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
@@ -225,7 +225,7 @@ export class ActionController {
     const plants = ITEMS[slot.item].plants;
     // Muda de árvore é sólida: não se planta onde há alguém em pé.
     if (plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y, plants)
-      && (plants === Block.WHEAT_0 || !this.entities.occupies(x, y));
+      && (isCrop(plants) || !this.entities.occupies(x, y));
     return false;
   }
 

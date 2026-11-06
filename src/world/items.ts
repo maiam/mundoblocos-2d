@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, isDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import type { MonsterKind } from './dungeon';
 
 /**
@@ -16,6 +16,10 @@ export const Item = {
   OAK_SAPLING: 'oak_sapling',
   APPLE_SAPLING: 'apple_sapling',
   APPLE: 'apple',
+  /** Hortaliças: o próprio legume é o que se planta (e o que se colhe). */
+  POTATO: 'potato',
+  TOMATO: 'tomato',
+  CARROT: 'carrot',
 } as const;
 
 export type ItemId = (typeof Item)[keyof typeof Item];
@@ -40,7 +44,15 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   oak_sapling: { id: Item.OAK_SAPLING, name: 'Muda de Carvalho', plants: Block.OAK_SAPLING },
   apple_sapling: { id: Item.APPLE_SAPLING, name: 'Muda de Macieira', plants: Block.APPLE_SAPLING },
   apple: { id: Item.APPLE, name: 'Maçã' },
+  potato: { id: Item.POTATO, name: 'Batata', plants: Block.POTATO_0 },
+  tomato: { id: Item.TOMATO, name: 'Tomate', plants: Block.TOMATO_0 },
+  carrot: { id: Item.CARROT, name: 'Cenoura', plants: Block.CARROT_0 },
 };
+
+/** Hortaliças que aparecem ao arrancar capim (fonte delas no mundo; o resto vem da colheita). */
+export const VEGETABLES: ItemId[] = [Item.POTATO, Item.TOMATO, Item.CARROT];
+/** Chance de o capim arrancado soltar uma hortaliça. */
+export const GRASS_VEGETABLE_CHANCE = 0.12;
 
 /** Espólios, na ordem exibida na HUD. */
 export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART];
@@ -91,12 +103,23 @@ export interface Drop {
 }
 
 /**
- * O que um bloco quebrado devolve. Trigo maduro: 1 trigo + 1–2 sementes.
- * Trigo verde: devolve a semente. Demais blocos: nada (construção é infinita).
+ * O que um bloco quebrado devolve. Trigo maduro: 1 trigo + 1–2 sementes; verde: devolve a semente. Hortaliça madura:
+ * 2–3 legumes; verde: 1. Capim: às vezes uma hortaliça. Árvores: `treeDrops`. Demais blocos: nada.
  */
 export function dropsFor(id: BlockId, rand: () => number = Math.random): Drop[] {
   const tree = treeDrops(id, rand);
   if (tree) return tree;
+  if (id === Block.TALL_GRASS) {
+    // Capim arrancado às vezes revela uma hortaliça (batata, tomate ou cenoura) para começar a horta.
+    if (rand() >= GRASS_VEGETABLE_CHANCE) return [];
+    return [{ item: VEGETABLES[Math.min(VEGETABLES.length - 1, Math.floor(rand() * VEGETABLES.length))], count: 1 }];
+  }
+  const kind = cropKind(id);
+  if (kind && kind !== 'wheat') {
+    // Hortaliça madura: 2–3 legumes (um deles serve para replantar); verde: devolve o legume plantado.
+    const item = kind as ItemId;
+    return [{ item, count: cropStage(id) === CROP_STAGES - 1 ? 2 + (rand() < 0.5 ? 1 : 0) : 1 }];
+  }
   if (!isWheat(id)) return [];
   if (wheatStage(id) === WHEAT_STAGES - 1) {
     return [

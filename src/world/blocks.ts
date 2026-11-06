@@ -114,6 +114,10 @@ export const Block = {
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
+  // --- hortaliças: 16 estágios consecutivos cada (plantadas pelo próprio legume; ver CROPS) ---
+  POTATO_0: 150,
+  TOMATO_0: 170,
+  CARROT_0: 190,
   // --- Santuário Celestial (prancha "Blocos do Mundo Celestial") ---
   CLOUD_SOLID: 80,
   CLOUD_ETHEREAL: 81,
@@ -152,7 +156,42 @@ export function wheatId(stage: number): BlockId {
   return (WHEAT_FIRST + Math.max(0, Math.min(WHEAT_STAGES - 1, stage))) as BlockId;
 }
 
-/** Ids nomeados + estágios intermediários do trigo (61..74). */
+/** Culturas da plantação: todas com 16 estágios consecutivos a partir de `first` (o último = maduro). */
+export type CropKind = 'wheat' | 'potato' | 'tomato' | 'carrot';
+export const CROP_STAGES = 16;
+export const CROPS: Readonly<Record<CropKind, { first: number; name: string; ripe: string }>> = {
+  wheat: { first: WHEAT_FIRST, name: 'Trigo', ripe: 'Trigo Maduro' },
+  potato: { first: Block.POTATO_0, name: 'Batata', ripe: 'Batata Madura' },
+  tomato: { first: Block.TOMATO_0, name: 'Tomate', ripe: 'Tomate Maduro' },
+  carrot: { first: Block.CARROT_0, name: 'Cenoura', ripe: 'Cenoura Madura' },
+};
+export const CROP_KINDS = Object.keys(CROPS) as CropKind[];
+
+/** Cultura de um id (null = não é plantação). */
+export function cropKind(id: number): CropKind | null {
+  for (const k of CROP_KINDS) if (id >= CROPS[k].first && id < CROPS[k].first + CROP_STAGES) return k;
+  return null;
+}
+
+export function isCrop(id: number): boolean {
+  return cropKind(id) !== null;
+}
+
+/** Estágio 0..15 de um id de plantação (o chamador garante que é plantação). */
+export function cropStage(id: number): number {
+  return id - CROPS[cropKind(id)!].first;
+}
+
+export function cropId(kind: CropKind, stage: number): BlockId {
+  return (CROPS[kind].first + Math.max(0, Math.min(CROP_STAGES - 1, stage))) as BlockId;
+}
+
+/** Primeiro estágio de alguma cultura (o que se planta)? */
+export function isCropSeedling(id: number): boolean {
+  return CROP_KINDS.some((k) => CROPS[k].first === id);
+}
+
+/** Ids nomeados + estágios intermediários das plantações. */
 export type BlockId = (typeof Block)[keyof typeof Block] | (number & { readonly __wheatStage?: true });
 
 export type BlockLayer = 'ground' | 'object';
@@ -286,11 +325,11 @@ const defs: BlockDef[] = [
   object(Block.LIGHT_BLOCK, 'Bloco de Luz', { glow: true }),
   object(Block.WOOD_CELESTIAL, 'Madeira Celestial'),
   object(Block.FOLIAGE_GOLDEN, 'Folhagem Dourada'),
-  // Trigo: não bloqueia passagem, não aceita nada por cima, só entra plantando a semente.
-  ...Array.from({ length: WHEAT_STAGES }, (_, s) =>
-    object(WHEAT_FIRST + s, s === WHEAT_STAGES - 1 ? 'Trigo Maduro' : 'Trigo em crescimento', {
+  // Plantações (trigo, batata, tomate, cenoura): não bloqueiam passagem, não aceitam nada por cima, só entram plantando.
+  ...CROP_KINDS.flatMap((k) => Array.from({ length: CROP_STAGES }, (_, s) =>
+    object(CROPS[k].first + s, s === CROP_STAGES - 1 ? CROPS[k].ripe : `${CROPS[k].name} em crescimento`, {
       shape: 'crop', solid: false, placeable: false, organic: 'plant',
-    })),
+    }))),
 ];
 
 /** Tabela indexada por id para acesso O(1). */

@@ -1,4 +1,4 @@
-import { Block, blockDef, isWheat, type BlockId } from '../world/blocks';
+import { Block, blockDef, isCrop, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 
 /**
@@ -66,7 +66,7 @@ export function mapColor(world: World, x: number, y: number): string {
 function objectColor(world: World, x: number, y: number, id: BlockId): string | null {
   const own = OBJECT[id];
   if (own) return own;
-  if (isWheat(id)) return CROP;
+  if (isCrop(id)) return CROP;
   const def = blockDef(id);
   switch (def.shape) {
     case 'cube': {

@@ -92,7 +92,7 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(CARRY_LIMIT).toBe(27); // 9 na mão + 18 na bolsa
     const inv = new Inventory();
     const grid = new Hotbar(WORLD_PROFILES.principal);
-    expect(bagStacks(inv, grid)).toEqual([blockStack(Block.OAK_DOOR)]); // a porta começa na bolsa
+    expect(bagStacks(inv, grid)).toEqual(['potato', 'tomato', 'carrot', blockStack(Block.OAK_DOOR)]); // hortaliças e porta começam na bolsa
     // Com espaços da mão livres (8º e 9º), tipo novo cabe (vai para a mão) mesmo com a bolsa cheia.
     let id = 200;
     while (bagStacks(inv, grid).length < BAG_SLOTS) inv.add(blockStack(id++ as never), 1);

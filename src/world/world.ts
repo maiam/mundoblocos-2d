@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef, isDoor, isGrowingTree, isWheat, TREE_NEXT, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isDoor, isGrowingTree, TREE_NEXT } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
@@ -13,6 +13,8 @@ import type { TerrainSource } from './terrain';
 
 /** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
 export const WHEAT_STAGE_SECONDS = 6;
+/** Tempo médio (s) por estágio de cada cultura: hortaliças demoram um pouco mais que o trigo (~2–2,5 min). */
+export const CROP_STAGE_SECONDS: Readonly<Record<CropKind, number>> = { wheat: WHEAT_STAGE_SECONDS, potato: 8, carrot: 8, tomato: 10 };
 /** Tempo médio (s) para uma árvore plantada avançar um estágio (~6 min da muda à árvore adulta). */
 export const TREE_STAGE_SECONDS = 120;
 /** Tempo médio (s) para a macieira colhida voltar a ter maçãs. */
@@ -272,7 +274,7 @@ export class World {
     if (level === 'ground') chunk.setGround(lx, ly, id);
     else chunk.setLevel(lx, ly, level, id);
     if (level === 0) {
-      if (isWheat(id)) this.crops.add(chunkKey(x, y));
+      if (isCrop(id)) this.crops.add(chunkKey(x, y));
       else this.crops.delete(chunkKey(x, y));
       if (isGrowingTree(id)) this.trees.add(chunkKey(x, y));
       else this.trees.delete(chunkKey(x, y));
@@ -578,13 +580,14 @@ export class World {
   // ---- Plantação ----
 
   /**
-   * Dá para plantar `id` aqui? Semente de trigo: só em Terra Arada. Muda de árvore: em Terra ou Terra com Grama.
+   * Dá para plantar `id` aqui? Plantação (trigo, batata, tomate, cenoura): só em Terra Arada. Muda de árvore: em Terra
+   * ou Terra com Grama.
    * Sempre com a célula livre (ou só com enfeite).
    */
   canPlant(x: number, y: number, id: BlockId = Block.WHEAT_0): boolean {
     if (this.isProtected(x, y)) return false;
     const sapling = id === Block.OAK_SAPLING || id === Block.APPLE_SAPLING;
-    if (!sapling && id !== Block.WHEAT_0) return false;
+    if (!sapling && !isCropSeedling(id)) return false;
     if (sapling ? !SAPLING_GROUND.has(this.getGround(x, y)) : this.getGround(x, y) !== PLANTABLE_GROUND) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
@@ -656,18 +659,18 @@ export class World {
   }
 
   /**
-   * Avança o tempo das plantações: cada trigo não maduro sobe um estágio com
-   * probabilidade dt / WHEAT_STAGE_SECONDS (crescimento natural, não sincronizado).
+   * Avança o tempo: cada plantação não madura sobe um estágio com probabilidade dt / CROP_STAGE_SECONDS[cultura]
+   * (crescimento natural, não sincronizado); depois as árvores.
    */
   tick(dt: number, rand: () => number = Math.random): void {
     this.tickWater(dt);
-    const p = dt / WHEAT_STAGE_SECONDS;
     for (const key of [...this.crops]) {
       const [x, y] = key.split(',').map(Number);
       const id = this.getObject(x, y);
-      if (!isWheat(id)) { this.crops.delete(key); continue; }
-      const stage = wheatStage(id);
-      if (stage < WHEAT_STAGES - 1 && rand() < p) this.setLevel(x, y, 0, wheatId(stage + 1));
+      const kind = cropKind(id);
+      if (!kind) { this.crops.delete(key); continue; }
+      const stage = cropStage(id);
+      if (stage < CROP_STAGES - 1 && rand() < dt / CROP_STAGE_SECONDS[kind]) this.setLevel(x, y, 0, cropId(kind, stage + 1));
     }
     // Árvores: cada estágio avança com probabilidade dt / tempo do estágio; a macieira colhida volta a dar maçãs.
     for (const key of [...this.trees]) {
@@ -770,7 +773,7 @@ export class World {
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const id = c.getObject(lx, ly);
-        if (isWheat(id)) this.crops.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
+        if (isCrop(id)) this.crops.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
         if (isGrowingTree(id)) this.trees.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
       }
     }
