@@ -51,12 +51,42 @@ export class ScreenMode {
       window.addEventListener('pointerup', onGesture, true);
       this.cleanup.push(() => window.removeEventListener('pointerup', onGesture, true));
     }
+    this.blockPageZoom();
     this.updateOverlay();
   }
 
   /** Em retrato num aparelho de toque, o jogo fica bloqueado pela camada de rotação. */
   get blocked(): boolean {
     return this.isTouch && this.portraitQuery.matches;
+  }
+
+  /**
+   * O jogo nunca deixa o navegador ampliar a página: o Safari (iPhone/iPad) ignora `user-scalable=no` e amplia com
+   * toque duplo ou pinça — tocar rápido no botão de ação ampliava a tela e a deixava "travada" fora do lugar.
+   * Bloqueia o segundo toque rápido, a pinça (`gesture*`, só Safari) e o duplo clique. Campos de texto ficam livres.
+   */
+  private blockPageZoom(): void {
+    let lastTap = 0;
+    const onTouchEnd = (e: TouchEvent) => {
+      // Botões e campos não ampliam (touch-action: manipulation) e precisam do clique de cada toque rápido
+      // (bolsa, grade); o bloqueio vale para o resto da tela.
+      if (e.target instanceof Element && e.target.closest('button, input, textarea, select, a, label')) return;
+      const now = e.timeStamp;
+      if (now - lastTap < DOUBLE_TAP_MS && e.cancelable) e.preventDefault();
+      lastTap = now;
+    };
+    const stop = (e: Event) => { if (e.cancelable) e.preventDefault(); };
+    const pinch = (e: TouchEvent) => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); };
+    document.addEventListener('touchend', onTouchEnd, { passive: false });
+    document.addEventListener('touchmove', pinch, { passive: false });
+    document.addEventListener('dblclick', stop, { passive: false });
+    for (const g of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(g, stop, { passive: false });
+    this.cleanup.push(() => {
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchmove', pinch);
+      document.removeEventListener('dblclick', stop);
+      for (const g of ['gesturestart', 'gesturechange', 'gestureend']) document.removeEventListener(g, stop);
+    });
   }
 
   private updateOverlay(): void {
@@ -93,6 +123,9 @@ export class ScreenMode {
 }
 
 /** Campo onde se digita (abre o teclado na tela). */
+/** Dois toques mais próximos que isto (ms) seriam o "toque duplo" que amplia a página no Safari. */
+const DOUBLE_TAP_MS = 350;
+
 function isTextField(el: EventTarget | Element | null): boolean {
   return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable);
 }

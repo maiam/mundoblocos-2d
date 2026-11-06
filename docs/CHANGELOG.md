@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.55.1 — 2026-11-06
+- **Correção: tocar muito rápido ampliava a tela e ela travava** (iPhone/iPad). O Safari ignora `user-scalable=no` e
+  amplia a página com toque duplo; o jogo agora bloqueia o toque duplo, a pinça e o duplo clique (`ScreenMode`),
+  usa `touch-action: manipulation` na página e nos botões, e o botão de ação e o canvas soltam o toque se o navegador
+  tomar o gesto (`lostpointercapture`), em vez de ficarem presos.
+
 ## 0.55.0 — 2026-11-06
 - **Covil das Aranhas com entrada de caverna** (pedido do dono do produto, arte enviada; ADR 0019): no mundo fica só
   a caverna, a pelo menos 10 chunks do castelo em direção sorteada pela seed. Andar para dentro da boca leva ao

@@ -570,6 +570,8 @@ export class Game {
     this.listen(c, 'pointermove', (e) => this.actions.pointerMove(e.pointerId, e.offsetX, e.offsetY, e.pointerType === 'mouse'));
     this.listen(c, 'pointerup', (e) => this.actions.pointerUp(e.pointerId, e.offsetX, e.offsetY, e.pointerType === 'mouse'));
     this.listen(c, 'pointercancel', () => this.actions.pointerCancel());
+    // Captura perdida sem pointerup (gesto do navegador): cancela, para não ficar quebrando sem ninguém segurar.
+    this.listen(c, 'lostpointercapture', () => this.actions.pointerCancel());
     this.listen(c, 'pointerleave', () => this.actions.pointerLeave());
   }
 
