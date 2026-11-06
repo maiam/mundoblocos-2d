@@ -49,7 +49,8 @@
   | Pedra Irregular | 1 Pedra Bruta | 1 Pedra Irregular |
   | Tijolo de Pedra | 1 Pedra Bruta | 1 Tijolo de Pedra |
   | Chão de Pedra | 1 Pedra Bruta | 1 Chão de Pedra |
-  | Tenda | 10 Sedas + 10 Tábuas + 4 Presas | 1 Tenda |
+  | Pano de Seda | 10 Sedas de Aranha | 1 Pano de Seda |
+  | Tenda | 1 Pano de Seda + 10 Tábuas + 4 Presas | 1 Tenda |
   | Fogueira | 3 Toras de Carvalho | 1 Fogueira |
   | Caldeirão de Pedra | 3 Pedras Brutas + 1 Fogueira | 1 Caldeirão |
   | Forno de Pedra | 6 Pedras Brutas | 1 Forno |

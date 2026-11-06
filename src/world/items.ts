@@ -20,6 +20,8 @@ export const Item = {
   POTATO: 'potato',
   TOMATO: 'tomato',
   CARROT: 'carrot',
+  /** Pano de Seda (10 sedas): ingrediente da tenda. */
+  SILK_CLOTH: 'silk_cloth',
 } as const;
 
 export type ItemId = (typeof Item)[keyof typeof Item];
@@ -47,6 +49,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   potato: { id: Item.POTATO, name: 'Batata', plants: Block.POTATO_0 },
   tomato: { id: Item.TOMATO, name: 'Tomate', plants: Block.TOMATO_0 },
   carrot: { id: Item.CARROT, name: 'Cenoura', plants: Block.CARROT_0 },
+  silk_cloth: { id: Item.SILK_CLOTH, name: 'Pano de Seda' },
 };
 
 /** Hortaliças que aparecem ao arrancar capim (fonte delas no mundo; o resto vem da colheita). */
@@ -327,9 +330,14 @@ export const RECIPES: Recipe[] = [
     id: 'stone-oven', name: 'Forno de Pedra', profession: 'builder',
     inputs: [{ item: blockStack(Block.STONE), count: 6 }], output: { item: blockStack(Block.OVEN), count: 1 },
   },
+  // Pano de Seda (dono do produto, 2026-11-06): 10 sedas viram 1 pano; a tenda passou a pedir o pano.
+  {
+    id: 'silk-cloth', name: 'Pano de Seda', profession: 'builder',
+    inputs: [{ item: Item.SILK, count: 10 }], output: { item: Item.SILK_CLOTH, count: 1 },
+  },
   {
     id: 'tent', name: 'Tenda', profession: 'builder',
-    inputs: [{ item: Item.SILK, count: 10 }, { item: blockStack(Block.OAK_PLANKS), count: 10 }, { item: Item.FANG, count: 4 }],
+    inputs: [{ item: Item.SILK_CLOTH, count: 1 }, { item: blockStack(Block.OAK_PLANKS), count: 10 }, { item: Item.FANG, count: 4 }],
     output: { item: blockStack(Block.TENT), count: 1 },
   },
 ];

@@ -7,6 +7,7 @@ Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node �
 ```
 CLAUDE.md / AGENTS.md          instruções para agentes de IA
 assets-src/                    arte original (folhas 4×4, pranchas de blocos, ícones)
+  ferramentas/                 contrato de arte das ferramentas por material (ADR 0018): CONTRATO.md, catalogo.json, entregas
   personagens/                 personagem modular: CONTRATO.md + humano-chibi/{entrega,previas}/v02 (git);
                                _trabalho/ e _arquivo/ (Krita, v01) só locais — ADR 0017; ainda fora do runtime
 scripts/
