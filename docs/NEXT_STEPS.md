@@ -146,10 +146,13 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
    d. ~~Aparência no salvamento~~ (v0.50.0, `SAVE_VERSION` 6). **Próximo (Etapa 2 da tela de entrada)**: aparência
-      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 6 (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos), validar contra o manifesto no `Room`),
+      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 7 (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos, 6 = cerca), validar contra o manifesto no `Room`),
       `RemotePlayers` desenhando o chibi dos outros; atualizar `orvalis-servidor` junto (`sync-net`).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
+   - **Cerca (v0.59.0)**: pedir à arte o **portão de lado** (fechado e aberto) para cercas verticais — hoje usa o de
+     frente — e, se quiserem refinar, peças separadas (poste, travessa horizontal e vertical de 1 célula). Animais
+     ainda não "moram" no cercado (não há dono/curral): só ficam presos por colisão.
 2. Transições suaves entre chãos (autotile), água animada, pontes.
 3. Alturas: meio bloco/escadas; indicar borda de queda.
 4. Geração em Web Worker só se o custo por chunk voltar a crescer.

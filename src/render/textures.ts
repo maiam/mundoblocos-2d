@@ -2,10 +2,11 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, GATE_FRAME } from './fence';
 import { townSprites } from './townArt';
 
 /**
@@ -64,6 +65,8 @@ export interface BlockTextures {
   variants: Map<BlockId, Sprite[]>;
   /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
   stackDraw: Map<BlockId, number>;
+  /** Peças da cerca (trecho horizontal, vertical, poste grande; `render/fence.ts`), ou null sem a arte. */
+  fencePieces: HTMLCanvasElement[] | null;
 }
 
 /**
@@ -602,6 +605,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     // Ícone em arquivo próprio: ler um canvas desenhado com imagem de outro arquivo pode ser bloqueado (ADR 0013).
     icons.set(Block.OAK_DOOR, pack.materialIcons[Block.OAK_DOOR] ?? '');
   }
+  const fencePieces = fenceTextures(objects, icons);
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],
@@ -630,5 +634,40 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw };
+  return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces };
+}
+
+/**
+ * Cerca e portão (`render/fence.ts`): as 3 peças viram canvases para o render cortar as metades; a cerca também
+ * ganha um sprite (trecho horizontal) para o clique e o destaque. Portão: um sprite por estado.
+ */
+function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>): HTMLCanvasElement[] | null {
+  const a = getFenceArt();
+  const pack = art().fence;
+  if (!a || !pack) return null;
+  const pieces = [0, 1, 2].map((i) => {
+    const c = document.createElement('canvas');
+    c.width = FENCE_FRAME.w;
+    c.height = FENCE_FRAME.h;
+    c.getContext('2d')!.drawImage(a.pieces, i * FENCE_FRAME.w, 0, FENCE_FRAME.w, FENCE_FRAME.h, 0, 0, FENCE_FRAME.w, FENCE_FRAME.h);
+    return c;
+  });
+  const hit = { x: 0, y: -T * 0.1, w: T, h: T * 1.1 };
+  objects.set(Block.FENCE, {
+    canvas: pieces[0], ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: FENCE_FRAME.w * FENCE_SCALE, h: FENCE_FRAME.h * FENCE_SCALE, hit,
+  });
+  const k = T / GATE_FRAME.cell;
+  const w = GATE_FRAME.w * k;
+  const h = GATE_FRAME.h * k;
+  const oy = T - GATE_FRAME.postBase * k;
+  [Block.FENCE_GATE, Block.FENCE_GATE_OPEN].forEach((id, i) => {
+    const c = document.createElement('canvas');
+    c.width = GATE_FRAME.w;
+    c.height = GATE_FRAME.h;
+    c.getContext('2d')!.drawImage(a.gate, i * GATE_FRAME.w, 0, GATE_FRAME.w, GATE_FRAME.h, 0, 0, GATE_FRAME.w, GATE_FRAME.h);
+    objects.set(id, { canvas: c, ox: (T - w) / 2, oy, w, h, hit });
+  });
+  icons.set(Block.FENCE, pack.icon);
+  icons.set(Block.FENCE_GATE, pack.gateIcon);
+  return pieces;
 }

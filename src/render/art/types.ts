@@ -47,6 +47,11 @@ export interface ArtPack {
   craftables?: Partial<Record<CraftableArt, { icon: string; sprite: string }>>;
   /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
   chest?: { icon: string; sprite: string };
+  /**
+   * Cerca de tábuas (`scripts/extract-fence.py`): tira de peças (trecho horizontal, vertical, poste grande) que o
+   * render emenda por vizinhos, portão (fechado, aberto) e os ícones da bolsa.
+   */
+  fence?: { pieces: string; gate: string; icon: string; gateIcon: string };
   /** Pedregulhos: tira de quadros iguais (`scripts/extract-rocks.py`), um sorteado por célula. */
   rocks?: string;
   /** Pranchas de crescimento 4 × 2 (estágios em cima, variantes embaixo; `scripts/extract-trees.py`). */

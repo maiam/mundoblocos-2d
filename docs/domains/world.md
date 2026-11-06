@@ -25,7 +25,9 @@
   arte da prancha de pedras — antes eram cubos de `STONE`; minerados dão 1–3 Pedras Brutas); enfeites.
 
 ## Regras
-- `standHeight(x, y)`: 0 chão (ou porta aberta), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.
+- **Cerca/portão** (v0.59.0): `FENCE` bloqueia; portão abre/fecha como a porta (`toggled`); nada empilha em cima;
+  qualquer célula livre (sem batentes). A emenda entre cercas é só do render.
+- `standHeight(x, y)`: 0 chão (ou porta/portão aberto), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.
 - `isGroundStandable`: material como chão é pisável; água/buraco não.
 - Quebrar (`breakTarget`/`breakTargetId`): topo da pilha → … → nível 0 → chão (vira buraco). Água não quebra. Restrição por
   ferramenta fica em `world/items.ts` (`toolCanBreak`), usando `BlockDef.organic` (`wood` = madeira/árvore; `plant` = plantas e derivados) e `BlockDef.soft` (terra, grama,

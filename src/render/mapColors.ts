@@ -77,7 +77,8 @@ function objectColor(world: World, x: number, y: number, id: BlockId): string | 
     case 'building': return BUILDING;
     case 'rock': return ROCK;
     case 'tree': return OBJECT[Block.OAK_TREE]!;
-    case 'door': return GROUND[Block.OAK_PLANKS]!;
+    case 'door':
+    case 'fence': return GROUND[Block.OAK_PLANKS]!;
     // Capim, flores e enfeites pequenos: o chão aparece por baixo.
     default: return def.solid ? FALLBACK : null;
   }

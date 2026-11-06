@@ -1,6 +1,14 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.58.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.59.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Cerca de tábuas e portão — v0.59.0
+- Blocos `FENCE` (48), `FENCE_GATE` (49) e `FENCE_GATE_OPEN` (76), forma `fence`, madeira; nada empilha em cima.
+  Portão abre/fecha pela mesma ação da porta (`toggled`/`isOpenable` em `blocks.ts`; `World.toggleDoor` serve aos dois).
+- Emenda é só aparência (`render/fence.ts`): cada célula lê os 4 vizinhos (`joinsFence`) e desenha metades das peças
+  (horizontal/vertical) + poste grande; trecho reto usa a peça inteira. Portão é desenhado depois da linha (postes
+  por cima das travessas). Arte: `scripts/extract-fence.py` (moldura + portão de referência). `PROTOCOL_VERSION` 6.
+- Orçamento do início: ~3005 kB de 3072 kB (folga de ~67 kB: a próxima arte grande deve carregar em segundo plano).
 
 ## Pedregulhos — v0.58.0
 - `Block.ROCK_BOULDER` (forma `rock`, sólido, não colocável): o gerador põe nos pontos de pedregulho (0,6% das células
