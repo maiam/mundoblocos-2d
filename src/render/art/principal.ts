@@ -138,6 +138,7 @@ import townWell from '../../assets/town-well.webp';
 import townStall from '../../assets/town-stall.webp';
 import townBarrel from '../../assets/town-barrel.webp';
 import interiorSmithy from '../../assets/interior-smithy.webp';
+import interiorTent from '../../assets/interior-tent.webp';
 import townGuild from '../../assets/town-guild.webp';
 import townCastle from '../../assets/town-castle.webp';
 import townWatchtower from '../../assets/town-watchtower.webp';
@@ -204,7 +205,7 @@ const pack: ArtPack = {
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
   },
-  interiors: { smithy: interiorSmithy },
+  interiors: { smithy: interiorSmithy, tent: interiorTent },
   expressions: { calm: { face: exprCalm }, happy: { face: exprHappy }, smile: { face: exprSmile }, laugh: { face: exprLaugh }, surprised: { face: exprSurprised }, wink: { face: exprWink }, content: { face: exprContent }, excited: { face: exprExcited }, sad: { face: exprSad }, scared: { face: exprScared, fx: exprScaredFx }, angry: { face: exprAngry, fx: exprAngryFx }, smug: { face: exprSmug }, guffaw: { face: exprGuffaw }, neutral: { face: exprNeutral }, shy: { face: exprShy }, sleepy: { face: exprSleepy, fx: exprSleepyFx } },
   bangs: { blond: bangsBlond, brown: bangsBrown, black: bangsBlack, silver: bangsSilver, red: bangsRed },
   outfits: { denim: outfitDenim, varsity: outfitVarsity, farmer: outfitFarmer, vest: outfitVest, hoodie: outfitHoodie, smith: outfitSmith },

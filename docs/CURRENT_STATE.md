@@ -1,6 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.61.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.62.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Interior da tenda e tempo limite da sala — v0.62.0
+- `TENT_INTERIOR` (`world/interiors.ts`, 7 × 7, `tentLayout()`): um cômodo para todas as tendas, no fim da fila de
+  cômodos, em mundos cujo perfil tem `TENT`. `World.tentRoom` e `World.tentDoorAt` (célula logo abaixo da fileira de
+  baixo da tenda). `InteriorLayout.outside` agora pode ser null: o `Game` guarda `tentReturn` e `roomExit` volta para
+  a frente da tenda (salvo lá dentro: diante da última tenda ou o ponto de renascer). Arte `interior-tent.webp`.
+- `main.ts` (`goOnline`): `CONNECT_TIMEOUT_MS` = 10 s, uma nova tentativa automática, depois aviso.
 
 ## "Jogar com amigos" só onde conecta — v0.61.1
 - `onlineAvailable(hostname)` (`net/socket.ts`, lista `ONLINE_HOSTS` = origens aceitas pelo servidor) → `online.available`

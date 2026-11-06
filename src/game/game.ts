@@ -13,6 +13,7 @@ import type { NetSession } from '../net/session';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { Entities } from './entities';
+import type { InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import type { RecipeDestination } from './skills';
 import { BagPanel, type BagEntry } from './bag';
@@ -223,7 +224,7 @@ export class Game {
       this.lastSaved = options.save.savedAt;
       // Salvo dentro de um interior: volta para a rua, diante da porta (o cômodo não guarda estado).
       const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
-      if (room) this.moveTo(room.outside, 'down');
+      if (room) this.moveTo(this.roomExit(room), 'down');
     }
     // Só peças que existem nesta versão da arte (salvamento antigo, arte removida); mundo sem modular = heroína.
     const modular = art().modular?.manifest;
@@ -793,6 +794,9 @@ export class Game {
    * Interiores (ADR 0014): andar para cima na célula diante da porta entra no cômodo (aparece logo acima do capacho);
    * pisar no capacho volta para a rua, diante da porta.
    */
+  /** Frente da tenda por onde se entrou no cômodo da tenda (estado de execução). */
+  private tentReturn: [number, number] | null = null;
+
   private updateInteriors(iy: number): void {
     const p = this.player;
     // Covil das Aranhas (ADR 0019): pisar no vão de saída volta para diante da caverna; andar para cima diante da
@@ -809,14 +813,30 @@ export class Game {
     }
     const room = this.world.interiorAt(p.cellX, p.cellY);
     if (room) {
-      if (p.cellX === room.exit[0] && p.cellY === room.exit[1]) this.moveTo(room.outside, 'down');
+      if (p.cellX === room.exit[0] && p.cellY === room.exit[1]) this.moveTo(this.roomExit(room), 'down');
       return;
     }
-    const door = iy < -0.3 ? this.world.interiorEntrance(p.cellX, p.cellY) : null;
-    if (door) {
-      this.moveTo(door.entry, 'up');
-      this.hud.toast(door.def.name);
-    }
+    if (iy >= -0.3) return;
+    const door = this.world.interiorEntrance(p.cellX, p.cellY);
+    const tentRoom = !door && this.world.tentDoorAt(p.cellX, p.cellY) ? this.world.tentRoom : null;
+    const enter = door ?? tentRoom;
+    if (!enter) return;
+    // Tenda: um cômodo para todas; a volta é para diante da tenda por onde se entrou.
+    if (tentRoom) this.tentReturn = [p.cellX, p.cellY];
+    this.moveTo(enter.entry, 'up');
+    this.hud.toast(enter.def.name);
+  }
+
+  /** Onde a saída do cômodo leva: a porta da construção ou, na tenda, a frente da tenda por onde se entrou. */
+  private roomExit(room: InteriorLayout): [number, number] {
+    if (room.outside) return room.outside;
+    // Tenda: a frente por onde se entrou; sem ela (salvo lá dentro), diante da última tenda ou o ponto de renascer.
+    const back = this.tentReturn;
+    this.tentReturn = null;
+    if (back && this.world.tentDoorAt(back[0], back[1])) return back;
+    const t = this.world.tent;
+    if (t && this.world.isWalkable(t[0], t[1] + 1)) return [t[0], t[1] + 1];
+    return this.world.respawnPoint();
   }
 
   /** Leva a personagem para a célula (centro), virada para `facing`, com a câmera junto e um escurecer rápido. */

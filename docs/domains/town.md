@@ -63,6 +63,9 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   ferreiro (`keeper`) anda só nas linhas 9–11 (tapete, atrás do balcão).
 - Entrar: andar para cima na célula diante da porta (`TownBuilding.door`); sair: pisar no capacho (volta à rua). Salvo
   lá dentro → carrega na rua. Interior novo: imagem + `InteriorDef` + `scripts/extract-interiors.py` + import da arte.
+- **Tenda** 7 × 7 (`assets-src/interiors/tent.png`, v0.62.0): lampião e colchão; um cômodo (`tentLayout`) para todas as
+  tendas do jogador, em qualquer mundo cujo perfil tenha `TENT` (com ou sem cidade). Entra-se andando para cima diante da
+  fileira de baixo de uma tenda (`World.tentDoorAt`); o capacho volta para diante dela (`Game.tentReturn`).
 - Salvamentos: ao carregar, as células protegidas de chunks salvos voltam do gerador (`World.restoreChunk`), e baús
   salvos onde não há mais baú são descartados — salvamentos antigos não "furam" a cidade. Formato inalterado (v4).
 
