@@ -93,3 +93,5 @@
 | Ferraria: ferreiro mora dentro (atrás do balcão), só fala por enquanto; entrar andando para cima diante da porta | adr/0014, domains/town |
 | Ofícios com visual único: personagem e roupa do ofício não se repetem (ferreiro = cabelo preto + roupa de ferreiro) | domains/npc, CONVENTIONS |
 | Expressões em camada (rosto, franja por cabelo, efeitos) extraídas das folhas careca; repouso pela seed, reação ao conversar | domains/npc, OPERATIONS |
+| Tela de entrada dentro do jogo (não página separada): mundo em vitrine atrás, Novo jogo → montar personagem; Continuar só com jogo salvo; `?seed=`/`?personagem=` e Santuário pulam a tela | domains/player, ARCHITECTURE |
+| Aparência do personagem salva por mundo (`SaveData.look`, v6) e levada para mundo novo/sala; heroína continua opção e é o padrão de salvamentos antigos; chibi desenhado a 0,94 para igualar a altura da heroína | domains/save, domains/player |

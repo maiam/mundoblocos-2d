@@ -28,6 +28,7 @@ import { ActionButton, HAND_ICON } from './actionButton';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
+import { cleanLook, type ModularLook } from '../render/modular';
 
 /** Duração de um dia completo em segundos. */
 const DAY_LENGTH_S = 480;
@@ -49,6 +50,13 @@ export interface GameOptions {
   net?: NetSession;
   /** Menu "Jogar com amigos": criar/entrar (jogando sozinho) e sair (na sala). Ausente = sem multiplayer (Santuário). */
   online?: { name: string; onCreate(name: string): void; onJoin(name: string, code: string): void; onLeave(): void };
+  /** Aparência do personagem num mundo novo (o salvamento, se houver, prevalece); null/ausente = heroína. */
+  look?: ModularLook | null;
+  /**
+   * Vitrine da tela de entrada: o mundo roda e se desenha atrás dela, sem HUD, sem entrada e sem salvar
+   * (a câmera passeia devagar pela Cidade do Despertar).
+   */
+  showcase?: boolean;
 }
 
 /**
@@ -116,6 +124,7 @@ export class Game {
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
     this.entities = new Entities(this.player, Math.random, profile.character);
+    this.entities.look = options.look ?? null;
     if (profile.sheep) {
       // Rebanho no campo, do lado de fora do portão da cidade.
       const [gx, gy] = this.world.outsideGate();
@@ -196,9 +205,14 @@ export class Game {
       const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
       if (room) this.moveTo(room.outside, 'down');
     }
+    // Só peças que existem nesta versão da arte (salvamento antigo, arte removida); mundo sem modular = heroína.
+    const modular = art().modular?.manifest;
+    this.entities.look = modular ? cleanLook(modular, this.entities.look) : null;
+    if (options.showcase) this.hud.root.style.display = 'none';
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
-    this.bindInput();
+    if (options.showcase) this.listen(window, 'resize', this.resize);
+    else this.bindInput();
     if (options.notice) this.hud.toast(options.notice);
     requestAnimationFrame(this.frame);
   }
@@ -463,6 +477,11 @@ export class Game {
 
   /** Alvo da câmera: posição lógica do personagem (centro do corpo), sem balanço. */
   private cameraTarget(): [number, number] {
+    if (this.options.showcase) {
+      // Vitrine: passeio lento em volta da praça (a heroína fica parada no início).
+      const t = this.elapsed * 0.07;
+      return [(this.player.x + Math.sin(t) * 7) * TILE, (this.player.y + Math.sin(t * 1.7) * 3 - 2) * TILE];
+    }
     // Usa a altura suavizada: subir num bloco desloca a câmera sem trancos.
     return [this.player.x * TILE, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4];
   }
@@ -593,7 +612,8 @@ export class Game {
       player: this.player,
       actors: this.remotes.size ? [...this.entities.actors, ...this.remotes.actors] : this.entities.actors,
       showChunkBorders: this.showChunkBorders,
-      ...this.actions.targets(),
+      // Vitrine: sem marcação de célula (ninguém está jogando).
+      ...(this.options.showcase ? { hover: null, hoverSheep: null, focus: null, breaking: null } : this.actions.targets()),
       drops: this.drops.list,
       hurtFlash: this.hurtFlash,
       inDungeon: this.inDungeon,

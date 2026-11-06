@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import manifestJson from '../assets/chibi-manifesto.json';
-import { lookFromSearch, modularFrame, type ModularManifest } from './modular';
+import { cleanLook, defaultLook, lookFromSearch, lookOptions, modularFrame, pieceLabel, randomLook, type ModularManifest } from './modular';
 
 const m = manifestJson as unknown as ModularManifest;
 const look = { corpo: 'base', cabelo: 'curto-castanho', tronco: 'colete-verde', pernas: 'calca-ardosia', pes: 'sapatos-couro' };
@@ -46,5 +46,28 @@ describe('personagem modular (ADR 0017)', () => {
     const a = m.acoes.caminhada;
     // 360 px do mestre (corpo-base) × escala de exportação 0,4 × escalaMundo = 2,2 × 32 px de mundo.
     expect(360 * 0.4 * a.escalaMundo).toBeCloseTo(2.2 * 32, 1);
+  });
+
+  it('opções de montagem vêm do manifesto (pés podem ficar descalços)', () => {
+    expect(lookOptions(m, 'tronco')).toContain('tunica-azul');
+    expect(lookOptions(m, 'tronco')).not.toContain(null);
+    expect(lookOptions(m, 'pes').at(-1)).toBeNull();
+    expect(defaultLook(m)).toEqual({ corpo: 'base', cabelo: 'curto-castanho', tronco: 'blusa-ocre', pernas: 'shorts-marinho', pes: 'sapatos-couro' });
+    expect(pieceLabel('pes', null)).toBe('Descalço');
+    expect(pieceLabel('tronco', 'blusa-lilas')).toBe('Blusa lilás');
+  });
+
+  it('sorteio só usa peças existentes', () => {
+    let i = 0;
+    const seq = [0.99, 0.5, 0.7, 0.999];
+    const r = randomLook(m, () => seq[i++ % seq.length]);
+    for (const [k, v] of Object.entries(r)) if (k !== 'corpo') expect(lookOptions(m, k)).toContain(v);
+    expect(r.pes).toBeUndefined(); // último da lista = descalço
+  });
+
+  it('aparência salva é limpa contra o manifesto', () => {
+    expect(cleanLook(m, null)).toBeNull();
+    expect(cleanLook(m, { tronco: 'armadura-dourada', pernas: 'shorts-vinho', pes: 'chinelo' }))
+      .toEqual({ corpo: 'base', cabelo: 'curto-castanho', tronco: 'blusa-ocre', pernas: 'shorts-vinho' });
   });
 });

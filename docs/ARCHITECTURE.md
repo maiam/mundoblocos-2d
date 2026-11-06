@@ -27,7 +27,7 @@ bench/perf.bench.ts            benchmarks (npm run bench)
 public/                        manifest PWA + ícones
 src/
   config.ts                    TILE, CUBE_FRONT, CHUNK_SIZE, MAX_STACK, STEP_HEIGHT, orçamentos
-  main.ts                      escolhe o mundo (perfil), carrega o pacote de arte e as imagens de bloco, lê ?seed=, cria o Game (__game só no dev)
+  main.ts                      escolhe o mundo (perfil), carrega o pacote de arte e as imagens de bloco, lê ?seed=; sem ?seed=/?personagem= no mundo principal mostra a tela de entrada (Game em vitrine), senão cria o Game (__game só no dev)
   assets/*.webp                sprites, atlas e ícones (importados com ?inline só pelos pacotes em render/art/)
   world/   domínio — sem DOM, sem Math.random
     random.ts, noise.ts        PRNG/hash e Perlin + fBm com seed
@@ -61,6 +61,8 @@ src/
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
     character.ts               folhas dos atores (heroína ±ferramenta, ovelha, filhote, namoro) + coração
+    modular.ts, modularCharacter.ts   personagem modular (ADR 0017): manifesto, peças/sorteio/limpeza da aparência, desenho
+    characterPreview.ts        prévia do personagem na tela de entrada (mesmo desenho do jogo, virando nas 4 direções)
     itemArt.ts                 trigo por estágio, ícones de itens/ferramentas
     daycycle.ts, particles.ts, color.ts
     renderer.ts                frame + pick (objeto sob o cursor)
@@ -68,6 +70,7 @@ src/
     game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
     actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render
     save.ts, menu.ts           salvamento automático (localStorage, ADR 0011) e menu ☰
+    title.ts                   tela de entrada (Novo jogo / Continuar) e montagem do personagem; o mundo fica em vitrine atrás
     walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts, villager.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
                                morte/renascimento dos monstros, atores p/ render

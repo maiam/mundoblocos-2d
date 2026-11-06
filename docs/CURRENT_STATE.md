@@ -1,6 +1,16 @@
 # Estado atual
 
-_Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.50.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Tela de entrada e montagem do personagem — v0.50.0
+- O mundo principal abre no título **Orvalis** (`game/title.ts`) com o mundo em vitrine atrás (`GameOptions.showcase`):
+  **Novo jogo** → montar o personagem (**Chibi** com cabelo/roupa/pernas/pés ou **Heroína**, prévia animada,
+  Sortear, Nome) → mundo novo com seed aleatória; **Continuar** só aparece com jogo salvo. `?seed=`, `?personagem=` e
+  o Santuário pulam a tela.
+- Aparência em `Entities.look` → `SaveData.look` (`SAVE_VERSION` 6; antigos = heroína), limpa contra o manifesto ao
+  abrir (`cleanLook`) e levada para Novo mundo, Recomeçar e salas. Chibi desenhado a ×0,94 (`MODULAR_FIT`) para ter a
+  altura da heroína. **Ainda não**: aparência no multiplayer (os outros veem a heroína), ferramentas/ações no chibi,
+  cadastro.
 
 ## Personagem modular (humano chibi) — 2026-11-05
 
@@ -20,7 +30,7 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
 - **Teste no cenário (v0.48.0)**: `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…` troca a heroína do jogador
   solo pelo chibi (`render/modular.ts` + `modularCharacter.ts`, folhas `src/assets/chibi-*` do exportador). Só a
   caminhada; parado = quadro 0; ferramentas e golpes não aparecem no chibi. Sem o parâmetro, nada muda; as folhas
-  ficam fora do orçamento de início (só carregam com o chibi). Sem salvamento nem multiplayer da aparência.
+  ficam fora do orçamento de início (só carregam com o chibi). Desde a v0.50.0 a aparência é escolhida na tela de entrada e salva; multiplayer ainda não.
 
 ## Mundos
 - **Mundo principal** (detalhado abaixo) e **Santuário Celestial da Deusa da Vida**: 10 chunks (5×2) de Nuvem

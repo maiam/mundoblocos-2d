@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.50.0 — 2026-11-06
+- **Tela de entrada** (pedido do dono do produto): o jogo abre no título **Orvalis** com a Cidade do Despertar viva
+  atrás, **Novo jogo** e **Continuar** (só com jogo salvo no aparelho). Espaço reservado para "Jogar com amigos" e
+  "Entrar" (cadastro, backend do Orvalis).
+- **Monte seu personagem** depois de "Novo jogo": **Chibi** (cabelo, roupa, pernas, pés ou descalço) ou **Heroína**,
+  prévia andando e virando nas 4 direções, **Sortear** e **Nome**. "Começar" cria um mundo novo com essa aparência.
+- Aparência salva no aparelho (`SAVE_VERSION` 6): continua em "Novo mundo", "Recomeçar" e nas salas. Salvamentos
+  antigos continuam com a heroína. O chibi foi igualado à altura da heroína (×0,94).
+- `?seed=`, `?personagem=` e o Santuário entram direto no mundo, como antes.
+
 ## 0.49.0 — 2026-11-06
 - **Três receitas novas do Construtor** (pedido do dono do produto): **Fogueira** (3 Toras de Carvalho), **Caldeirão
   de Pedra** (3 Pedras Brutas + 1 Fogueira) e **Forno de Pedra** (6 Pedras Brutas), com a arte enviada. Colocam-se fora
