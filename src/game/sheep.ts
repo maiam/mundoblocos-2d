@@ -13,7 +13,7 @@ const SHEEP: BreedSpec = {
 
 /**
  * Ovelha. Pasta perto de "casa" (passeio do `Wanderer`). Não sobe em cubos (blocos servem de cerca).
- * Come trigo e se reproduz pelo ciclo comum (`Breeder`); o namoro dela tem folha própria (`sheep-love`).
+ * Come trigo e se reproduz pelo ciclo comum (`Breeder`); o namoro é o mesmo dos outros animais (coraçõezinhos).
  */
 export class Sheep extends Breeder {
   constructor(x: number, y: number, homeX = x, homeY = y, rand: () => number = Math.random, baby = false) {

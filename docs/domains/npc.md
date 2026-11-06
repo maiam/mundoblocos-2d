@@ -9,8 +9,8 @@
   desacelera no fim). Se travar por 0,3 s, volta a parar. A mais de 7 células de casa, o próximo passeio
   aponta para casa.
 - **Comer e reproduzir**: trigo → apaixonada por 25 s (coração flutuando). Duas apaixonadas a até 6 células
-  formam par, andam uma até a outra (desviando de obstáculos simples) e, a 1,5 célula, **namoram** por 3,6 s
-  (folha `sheep-love.webp`, 4 etapas com corações). Ao fim nasce um **filhote** entre elas; os pais ficam 45 s
+  formam par, andam uma até a outra (desviando de obstáculos simples) e, a 1,5 célula, **namoram** (coraçõezinhos,
+  como os outros animais). Ao fim nasce um **filhote** entre elas; os pais ficam 45 s
   sem poder comer. Limite de 16 ovelhas.
 - **Filhote** (`lamb.webp`, ~0,9 célula): mais rápido e menor; vira adulto em 120 s. Não come trigo.
 
@@ -30,7 +30,9 @@
   vaca = trigo, galinha = semente de trigo, cavalo = cenoura. Só pareiam com a mesma espécie; limite `MAX_PER_SPECIES`
   (cavalo 6, vaca 10, galinha 12). Filhotes **potro**, **bezerro**, **pintinho** (`BABY_KIND`; folhas
   `assets-src/animals/{foal,calf,chick}.png`, desenhados com 1,1 / 0,95 / 0,6 célula) crescem em 3 dias de jogo
-  (`FARM_GROW_UP_SECONDS`). Namoro sem folha própria: parados, de frente, com coração.
+  (`FARM_GROW_UP_SECONDS`).
+- **Namoro (v0.61.0, todas as espécies)**: parados de frente; os coraçõezinhos (`love-hearts`, 16 quadros) sobem entre
+  os dois por `COURTSHIP_SECONDS` (2,6 s), maiores no cavalo e menores na galinha (`LOVE_SCALE`); o filhote nasce no fim.
 
 ### Cavalo
 - Folha `assets-src/horse-sheet.png` → `horse.webp` (`process-sprite.py --alpha --largest --frame-h 112`), desenhado
@@ -70,7 +72,7 @@
 ## Gerência (`game/entities.ts`)
 - Formação de pares (por espécie), início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
   `Breeder` (base de `Sheep` e `FarmAnimal`) guarda estado (apaixonada, espera, par, namoro, idade) e movimento.
-- `actors` gera a lista para o render (o par namorando vira um único ator `sheep-love`).
+- `actors` gera a lista para o render (o casal namorando aparece de frente e ganha o ator `love-hearts` entre os dois).
 - Rebanho inicial de até 4 ovelhas a 2–8 células de um ponto 8 células ao sul do portão da cidade (`World.outsideGate`), em grama andável, posições determinísticas pela seed.
 - Colisão entre entidades: não se entra na caixa de outra; se já estavam sobrepostas, podem se afastar.
 - Estado de execução, não persistido (some ao recarregar; renasce igual pela seed).

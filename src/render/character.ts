@@ -86,7 +86,8 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'spider-small': { cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.034 } },
   'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.0 } },
   'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true }, death: { cols: 8, rows: 2, ratio: 1.012 } },
-  'sheep-love': { cols: 4, rows: 1, height: TILE * 1.75, shadow: [0.9, 0.16], walkFps: 0 },
+  // Coraçõezinhos do namoro (qualquer animal): 16 quadros numa fileira, sem sombra; tamanho por `Actor.scale`.
+  'love-hearts': { cols: 16, rows: 1, height: TILE * 1.8, shadow: [0, 0], walkFps: 0 },
   horse: { cols: 4, rows: 4, height: TILE * 1.6, shadow: [0.5, 0.15], walkFps: 7 },
   // Vaca e galinha (process-sprite.py --alpha --largest): bichinhos chibi, menores que o cavalo.
   cow: { cols: 4, rows: 4, height: TILE * 1.35, shadow: [0.46, 0.14], walkFps: 6 },
@@ -141,12 +142,14 @@ class SpriteSheet {
     const wave = float ? Math.sin(elapsed * 2.4) : 0;
     const shadowScale = float ? 1 - 0.12 * (wave + 1) / 2 : 1;
     // Sombra fixa no chão (não acompanha o balanço do sprite).
-    ctx.fillStyle = float ? 'rgba(30, 20, 70, 0.22)' : 'rgba(30, 20, 70, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(fx, fy, shadow[0] * TILE * zoom * shadowScale, shadow[1] * TILE * zoom * shadowScale, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (shadow[0] > 0) {
+      ctx.fillStyle = float ? 'rgba(30, 20, 70, 0.22)' : 'rgba(30, 20, 70, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, shadow[0] * TILE * zoom * shadowScale, shadow[1] * TILE * zoom * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     if (!this.ready) return;
-    const h = height * zoom;
+    const h = height * zoom * (a.scale ?? 1);
     const fw = this.img.width / cols;
     const fh = this.img.height / rows;
     const w = h * (fw / fh);

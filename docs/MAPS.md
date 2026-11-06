@@ -95,7 +95,7 @@ stateDiagram-v2
   Parada --> Passeando: timer
   Passeando --> Apaixonada: come trigo (25 s, coração)
   Apaixonada --> ComPar: outra apaixonada a ≤ 6 células
-  ComPar --> Namorando: distância ≤ 1,5 (3,6 s)
+  ComPar --> Namorando: distância ≤ 1,5 (2,6 s, coraçõezinhos)
   ComPar --> Apaixonada: travou 4 s / amor acabou
   Namorando --> Espera: nasce filhote
   Espera --> Passeando: 45 s

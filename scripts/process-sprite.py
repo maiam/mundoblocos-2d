@@ -8,8 +8,6 @@ do desenho contém a remoção.
 Exemplos (ver docs/OPERATIONS.md para a lista completa):
   python3 scripts/process-sprite.py assets-src/heroine-sheet.png src/assets/heroine.png --frame-h 144
   python3 scripts/process-sprite.py assets-src/sheep-sheet.png src/assets/sheep.png --frame-h 96 --sat 23 --min 128
-  python3 scripts/process-sprite.py assets-src/sheep-love-sheet.png src/assets/sheep-love.png \\
-      --cols 4 --rows 1 --region 0,0,2172,490 --frame-h 120
 """
 import argparse
 from collections import deque

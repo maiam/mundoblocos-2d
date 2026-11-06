@@ -21,7 +21,7 @@ import type { CharacterId } from '../world/profiles';
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -48,6 +48,8 @@ export interface Actor {
   expression?: ExpressionId;
   /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
   label?: string;
+  /** Tamanho relativo do desenho (ex.: coraçõezinhos do namoro, pelo tamanho do animal). */
+  scale?: number;
   /** Personagem modular em teste (ADR 0017): peças por encaixe; o render desenha o chibi no lugar da heroína. */
   look?: ModularLook;
 }
@@ -69,6 +71,10 @@ const PICK_BOX: Record<AnimalKind, [[number, number], [number, number]]> = {
   cow: [[1.25, 0.5], [0.95, 0.4]],
   chicken: [[0.8, 0.3], [0.65, 0.26]],
 };
+/** Quadros dos coraçõezinhos do namoro (folha `love-hearts`, `scripts/extract-love.py`). */
+const LOVE_FRAMES = 16;
+/** Tamanho dos coraçõezinhos por espécie (acompanha o tamanho do animal). */
+const LOVE_SCALE: Record<AnimalKind, number> = { sheep: 1, cow: 1.05, chicken: 0.7, horse: 1.25 };
 /** Distância (células) em que dois animais apaixonados se encontram. */
 const PAIR_RANGE = 6;
 /** Distância (células) para começar a namorar. */
@@ -521,35 +527,34 @@ export class Entities {
       hurt: p.invuln > 0,
       look: this.character === 'heroine' && this.look ? this.look : undefined,
     }];
-    const drawnCouples = new Set<Breeder>();
     for (const s of this.npcs) {
-      if (s.courtship > 0 && s.partner) {
-        if (drawnCouples.has(s)) continue;
-        drawnCouples.add(s).add(s.partner);
-        const progress = 1 - s.courtship / COURTSHIP_SECONDS;
-        out.push({
-          kind: 'sheep-love',
-          x: (s.x + s.partner.x) / 2,
-          y: Math.max(s.y, s.partner.y),
-          visualZ: 0,
-          facing: 'down',
-          moving: false,
-          walkTime: 0,
-          frame: Math.min(3, Math.floor(progress * 4)),
-        });
-        continue;
-      }
       out.push({
         kind: s.baby ? 'lamb' : 'sheep',
         x: s.x, y: s.y, visualZ: s.visualZ, facing: s.facing, moving: s.moving, walkTime: s.walkTime,
-        inLove: s.inLove,
+        inLove: s.inLove && s.courtship <= 0,
       });
     }
     for (const h of this.horses) {
-      // Sem folha de namoro: o casal fica parado, de frente um para o outro, com o coração.
       out.push({
         kind: h.baby ? BABY_KIND[h.kind] : h.kind, x: h.x, y: h.y, visualZ: h.visualZ, facing: h.facing,
-        moving: h.moving, walkTime: h.walkTime, inLove: h.inLove || h.courtship > 0,
+        moving: h.moving, walkTime: h.walkTime, inLove: h.inLove && h.courtship <= 0,
+      });
+    }
+    // Namoro (todas as espécies): o casal de frente e os coraçõezinhos subindo entre os dois; o filhote nasce no fim.
+    for (const a of this.courting) {
+      const b = a.partner;
+      if (!b || a.courtship <= 0) continue;
+      const progress = 1 - a.courtship / COURTSHIP_SECONDS;
+      out.push({
+        kind: 'love-hearts',
+        x: (a.x + b.x) / 2,
+        y: Math.max(a.y, b.y) + 0.05, // à frente do casal
+        visualZ: Math.max(a.visualZ, b.visualZ),
+        facing: 'down',
+        moving: false,
+        walkTime: 0,
+        frame: Math.min(LOVE_FRAMES - 1, Math.floor(progress * LOVE_FRAMES)),
+        scale: LOVE_SCALE[a.species],
       });
     }
     for (const v of this.villagers) {

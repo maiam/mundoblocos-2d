@@ -7,8 +7,8 @@ import { Wanderer, type WanderPace } from './wanderer';
 export const LOVE_SECONDS = 25;
 /** Espera após ter um filhote antes de poder namorar de novo (s). */
 export const BREED_COOLDOWN = 45;
-/** Duração do namoro (s). */
-export const COURTSHIP_SECONDS = 3.6;
+/** Duração do namoro (s): os 16 quadros dos coraçõezinhos (~6 por segundo). */
+export const COURTSHIP_SECONDS = 2.6;
 
 /** Corpo de adulto e de filhote e quanto tempo o filhote leva para crescer (s). */
 export interface BreedSpec {

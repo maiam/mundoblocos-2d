@@ -112,7 +112,6 @@ done
 $P assets-src/heroine-shovel-sheet.png src/assets/heroine-shovel.png --frame-h 144 --rows-map 0,1,1m,2
 $P assets-src/sheep-sheet.png          src/assets/sheep.png       --frame-h 96 --sat 23 --min 128
 $P assets-src/lamb-sheet.png           src/assets/lamb.png        --frame-h 80 --sat 36 --min 128
-$P assets-src/sheep-love-sheet.png     src/assets/sheep-love.png  --cols 4 --rows 1 --region 0,0,2172,490 --frame-h 120 --sat 20 --min 140
 $P assets-src/heroine-sword-attack-sheet.png src/assets/heroine-sword-attack.png --alpha --largest --frame-h 144
 $P assets-src/heroine-axe-attack-sheet.png   src/assets/heroine-axe-attack.png   --alpha --largest --frame-h 144
 $P assets-src/heroine-hoe-attack-sheet.png   src/assets/heroine-hoe-attack.png   --alpha --largest --frame-h 144
@@ -131,6 +130,10 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 **Vaca e galinha**: `$P assets-src/animals/cow.png src/assets/cow.png --alpha --largest --frame-h 112` e
 `$P assets-src/animals/chicken.png src/assets/chicken.png --alpha --largest --frame-h 96` (o ruído vermelho do fundo
 da galinha some com `--largest`).
+
+**Coraçõezinhos do namoro** (prancha 4×4 transparente, `assets-src/love-hearts-sheet.png`):
+`python3 scripts/extract-love.py` → `love-hearts.png` (16 quadros numa fileira, mesma janela para todos; clareia o rosa
+onde o desenho desbota) → `optimize-assets.py`.
 
 **Filhotes** (potro, bezerro, pintinho): `$P assets-src/animals/foal.png src/assets/foal.png --alpha --largest
 --frame-h 112`, `calf.png … --frame-h 104` e `chick.png … --frame-h 88` (o ruído vermelho/amarelo do fundo do bezerro
