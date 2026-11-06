@@ -35,6 +35,8 @@ export interface ArtPack {
   monsterDeaths?: Partial<Record<MonsterKind, string>>;
   /** Trigo (16 estágios) e ícones de itens/ferramentas. */
   wheatCrop?: string;
+  /** Folhas de crescimento 4×4 das hortaliças (`scripts/extract-crops.py`), mesmo formato do trigo. */
+  crops?: Partial<Record<'potato' | 'tomato' | 'carrot', string>>;
   itemIcons: Partial<Record<ItemId, string>>;
   /** Água (`extract-water.py`): topo do bloco (chão de água) e quadros de enchimento (4 direções × 4). */
   water?: { top: string; flow: string };

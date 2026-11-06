@@ -19,6 +19,9 @@ scripts/
   extract-stones.py            prancha das 8 pedras → ícones + colunas da Pedra Bruta e das variações no atlas
   extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
+  extract-crops.py             pranchas de hortaliças 8×2 → folha 4×4 (batata, tomate, cenoura)
+  extract-items.py             ícones soltos de itens (maçã, batata, tomate, cenoura) → 64×64
+  sprite_segments.py           recorte de pranchas por pedaços conectados (usado pelos dois acima e por extract-trees)
   extract-trees.py             pranchas de crescimento 4×2 (carvalho, macieira, cacto) → quadros + ícones de mudas/maçã
   extract-craftables.py        objetos de receita (fogueira, caldeirão, forno, cadeira) → sprite + ícone
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala

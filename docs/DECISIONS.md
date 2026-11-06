@@ -99,3 +99,4 @@
 | Árvores crescem de verdade (dono do produto, 2026-11-06): mudas de árvores adultas, estágios no `World.tick`; o gerador só cria adultas (variantes); macieira colhida volta a dar frutas | domains/farming |
 | Macieiras misturadas nos Campos (1/6 das árvores), sem mudar cerejeiras nem a cidade | domains/farming, domains/world |
 | Cavalo, vaca e galinha = um só `FarmAnimal` com ritmo por tipo (não uma classe por bicho) | domains/npc |
+| Hortaliças plantam pelo próprio legume (sem semente separada); culturas numa tabela única (`CROPS`) com o trigo; fonte inicial: 2 de cada + capim (12%) | domains/farming |

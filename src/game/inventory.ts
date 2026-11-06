@@ -1,11 +1,17 @@
 import { Block } from '../world/blocks';
 import { blockStack, Item, type StackId, TOOL_ORDER, toolStack } from '../world/items';
 
-/** Começo no mundo com coleta: as 5 ferramentas, 5 sementes, 2 trigos e 1 Porta de Carvalho (sem materiais). */
+/**
+ * Começo no mundo com coleta: as 5 ferramentas, 5 sementes, 2 trigos, 2 de cada hortaliça (batata, tomate, cenoura —
+ * plantam a si mesmas) e 1 Porta de Carvalho (sem materiais).
+ */
 export const STARTING_ITEMS: Partial<Record<StackId, number>> = {
   ...Object.fromEntries(TOOL_ORDER.map((t) => [toolStack(t), 1])),
   [Item.WHEAT_SEED]: 5,
   [Item.WHEAT]: 2,
+  [Item.POTATO]: 2,
+  [Item.TOMATO]: 2,
+  [Item.CARROT]: 2,
   [blockStack(Block.OAK_DOOR)]: 1,
 };
 
