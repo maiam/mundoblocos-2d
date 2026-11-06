@@ -53,7 +53,7 @@ export interface GameOptions {
    */
   net?: NetSession;
   /** Menu "Jogar com amigos": criar/entrar (jogando sozinho) e sair (na sala). Ausente = sem multiplayer (Santuário). */
-  online?: { name: string; onCreate(name: string): void; onJoin(name: string, code: string): void; onLeave(): void };
+  online?: { name: string; available: boolean; site: string; onCreate(name: string): void; onJoin(name: string, code: string): void; onLeave(): void };
   /** Aparência do personagem num mundo novo (o salvamento, se houver, prevalece); null/ausente = heroína. */
   look?: ModularLook | null;
   /**

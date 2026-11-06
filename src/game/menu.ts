@@ -25,6 +25,10 @@ export interface MenuHandlers {
     players?(): number;
     /** Nome usado da última vez (lembrado no aparelho). */
     name: string;
+    /** Este endereço conecta ao servidor? Falso no Artifact e nas prévias: o menu mostra o link do site. */
+    available: boolean;
+    /** Site onde jogar com amigos (link do aviso). */
+    site: string;
     onCreate(name: string): void;
     onJoin(name: string, code: string): void;
     onLeave(): void;
@@ -153,6 +157,14 @@ function onlineSection(o: NonNullable<MenuHandlers['online']>): string {
       <h3>Jogando com amigos</h3>
       <p>Código de convite: <b class="menu-room">${esc(o.room)}</b><br>Na sala: <b class="menu-players">1</b> de ${MAX_PLAYERS}</p>
       <button data-act="leave">Sair da sala</button>
+    </div>`;
+  }
+  if (!o.available) {
+    return `<div class="menu-online">
+      <h3>Jogar com amigos</h3>
+      <p class="menu-online-off">Aqui só dá para jogar sozinho. Para jogar com amigos, abra o jogo no site:</p>
+      <a class="menu-online-site" href="${esc(o.site)}" target="_blank" rel="noopener" title="Abrir o site do Orvalis"
+        aria-label="Abrir o site do Orvalis para jogar com amigos">🌐 ${esc(o.site.replace(/^https?:\/\//, ''))}</a>
     </div>`;
   }
   return `<div class="menu-online">

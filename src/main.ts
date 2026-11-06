@@ -10,7 +10,7 @@ import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
-import { SocketTransport } from './net/socket';
+import { GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
 
 const canvas = document.getElementById('world') as HTMLCanvasElement;
 const screenMode = new ScreenMode();
@@ -29,6 +29,9 @@ const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
 const online = profile.id === 'principal' ? {
   get name() { return savedName(); },
+  // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
+  available: onlineAvailable(window.location.hostname),
+  site: GAME_SITE,
   onCreate: (name: string) => goOnline(name),
   onJoin: (name: string, code: string) => goOnline(name, code),
   onLeave: () => leaveRoom('Você saiu da sala'),

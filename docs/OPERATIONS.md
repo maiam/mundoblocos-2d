@@ -29,7 +29,10 @@ Endereço **provisório** até o domínio próprio do Orvalis (ADR 0015: sem mai
 na Hostinger. Site estático: nenhum servidor aqui; o servidor do jogo será outro app num subdomínio próprio
 `orvalis-servidor.pensamentos.online`, publicado do repositório `maiam/orvalis-servidor` (app web Node.js na Hostinger,
 Node 22, entrada `server.js`, sem build; porta de `PORT`). WebSocket de entrada **validado** em 2026-11-04 (página de
-teste em `/`, saúde em `/saude`, eco em `/ws`). O app do jogo continua app Node.js (preset Vite) por causa do build
+teste em `/`, saúde em `/saude`, eco em `/ws`).
+**Sala não abre?** `/saude` deve mostrar o `protocolo` igual ao `PROTOCOL_VERSION` do jogo. O servidor só aceita
+conexões das origens da lista dele (`DEFAULT_ORIGINS`, espelhada em `ONLINE_HOSTS` no jogo): o Artifact e as prévias da
+Hostinger jogam só sozinhos (o menu mostra o link do site). O app do jogo continua app Node.js (preset Vite) por causa do build
 automático a cada merge.
 
 **Multiplayer: mudou `src/net/` ou `src/world/`?** `npm run build:net` aqui → no servidor `npm run sync-net --
