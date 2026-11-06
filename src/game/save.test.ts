@@ -6,6 +6,7 @@ import { World } from '../world/world';
 import { Entities } from './entities';
 import { Inventory } from './inventory';
 import { Player } from './player';
+import { Exploration } from './exploration';
 import { applySave, captureSave, migrate, SAVE_VERSION, SaveStore } from './save';
 import { Sheep } from './sheep';
 
@@ -16,7 +17,8 @@ function session(seed = 42) {
   const entities = new Entities(player, mulberry32(1));
   entities.spawnMonsters(world);
   const inventory = new Inventory();
-  return { world, player, entities, inventory, sx, sy };
+  const exploration = new Exploration();
+  return { world, player, entities, inventory, exploration, sx, sy };
 }
 
 /** Células de grama livres perto do spawn (para as edições do teste). */
@@ -52,7 +54,7 @@ function memoryStorage(): Storage {
 describe('Salvamento automático', () => {
   it('ida e volta: mapa editado, plantação, heroína, inventário, ovelhas, monstros e hora do dia', () => {
     const a = session();
-    const { world, player, entities, inventory, sx, sy } = a;
+    const { world, player, entities, inventory, exploration, sx, sy } = a;
     // Edições: cubo empilhado, buraco, trigo plantado e um bloco num chunk distante.
     const [[ax, ay], [hx, hy], [px, py]] = grassCells(world, sx, sy, 3);
     expect(world.placeBlock(ax, ay, Block.STONE)).toBe(true);
@@ -78,12 +80,13 @@ describe('Salvamento automático', () => {
       entities.strike('down', world);
     }
     player.x = sx + 0.5; player.y = sy + 0.6; player.facing = 'left';
+    exploration.revealAround(sx, sy, 5);
     entities.look = { corpo: 'base', cabelo: 'curto-castanho', tronco: 'tunica-azul' };
-    const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, time: 0.62, selected: 3, hotbar: ['tool:sword', null, 'block:20', null, null, null, null, 'silk'] })));
+    const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, exploration, time: 0.62, selected: 3, hotbar: ['tool:sword', null, 'block:20', null, null, null, null, 'silk'] })));
     expect(data.v).toBe(SAVE_VERSION);
 
     const b = session();
-    const r = applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, time: 0, selected: null, hotbar: null }, mulberry32(5));
+    const r = applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, exploration: b.exploration, time: 0, selected: null, hotbar: null }, mulberry32(5));
     expect(r).toEqual({ time: 0.62, selected: 3 });
     expect(b.world.stackHeight(ax, ay)).toBe(2);
     expect(b.world.getLevel(ax, ay, 1)).toBe(Block.OAK_LOG);
@@ -94,6 +97,8 @@ describe('Salvamento automático', () => {
     expect([b.player.x, b.player.y, b.player.hp, b.player.facing]).toEqual([sx + 0.5, sy + 0.6, 6, 'left']);
     expect(b.inventory.count('silk')).toBe(4);
     expect(b.entities.look).toEqual(entities.look);
+    expect(b.exploration.count).toBe(exploration.count);
+    expect(b.exploration.isExplored(sx, sy)).toBe(true);
     expect(b.inventory.count('wheat_seed')).toBe(inventory.count('wheat_seed'));
     expect(b.entities.npcs).toHaveLength(entities.npcs.length);
     expect(b.entities.npcs.some((s) => s.baby)).toBe(true);
@@ -135,7 +140,8 @@ describe('Salvamento automático', () => {
     })!;
     expect(v4.v).toBe(SAVE_VERSION);
     expect(v4.player.hp).toBe(60);
-    expect(v4.look).toBeNull(); // v5 → v6: quem já jogava continua com a heroína
+    expect(v4.look).toBeNull();
+    expect(v4.explored).toEqual([]); // v6 → v7: minimapa começa coberto // v5 → v6: quem já jogava continua com a heroína
     expect(v4.dungeon!.monsters[0].hp).toBe(Math.round(MONSTER_STATS['spider-big'].hp / 2));
     // Versão desconhecida → começa do zero; armazenamento bloqueado → jogo segue sem salvar.
     expect(migrate({ ...d2, v: 999 })).toBeNull();

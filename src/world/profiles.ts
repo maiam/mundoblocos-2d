@@ -35,6 +35,8 @@ export interface WorldProfile {
    * false = construção infinita com a grade fixa do perfil (Santuário).
    */
   collectBlocks: boolean;
+  /** Minimapa com névoa de exploração no canto da tela (mundo grande); false no Santuário (cabe na tela). */
+  minimap: boolean;
   /** Cores do fundo além das bordas do mundo (céu). */
   sky: [string, string];
 }
@@ -53,6 +55,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     dungeon: true,
     town: true,
     collectBlocks: true,
+    minimap: true,
     sky: ['#1b1838', '#1b1838'],
   },
   santuario: {
@@ -69,6 +72,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     dungeon: false,
     town: false,
     collectBlocks: false,
+    minimap: false,
     sky: ['#8fb8ff', '#f6d9ff'],
   },
 };

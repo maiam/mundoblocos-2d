@@ -95,3 +95,4 @@
 | Expressões em camada (rosto, franja por cabelo, efeitos) extraídas das folhas careca; repouso pela seed, reação ao conversar | domains/npc, OPERATIONS |
 | Tela de entrada dentro do jogo (não página separada): mundo em vitrine atrás, Novo jogo → montar personagem; Continuar só com jogo salvo; `?seed=`/`?personagem=` e Santuário pulam a tela | domains/player, ARCHITECTURE |
 | Aparência do personagem salva por mundo (`SaveData.look`, v6) e levada para mundo novo/sala; heroína continua opção e é o padrão de salvamentos antigos; chibi desenhado a 0,94 para igualar a altura da heroína | domains/save, domains/player |
+| Minimapa redondo, norte para cima, névoa por célula (raio 14) salva com o mundo; cor do mapa é aparência (`render/mapColors.ts`), não propriedade do bloco; só no mundo principal (`WorldProfile.minimap`) | domains/render, domains/save |

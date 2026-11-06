@@ -1,6 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.50.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.51.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Minimapa — v0.51.0
+- Minimapa redondo (`render/minimap.ts`, cores em `render/mapColors.ts` lidas do `World`) no canto superior direito,
+  raio de 36 blocos, norte para cima. Névoa por célula em `game/exploration.ts` (bits por chunk), revelada num raio
+  de 14 ao mudar de célula e salva em `SaveData.explored` (`SAVE_VERSION` 7). Marcadores de cidade, dungeon
+  descoberta, tenda e amigos. `WorldProfile.minimap` liga só no mundo principal. Mapa grande ainda não.
 
 ## Tela de entrada e montagem do personagem — v0.50.0
 - O mundo principal abre no título **Orvalis** (`game/title.ts`) com o mundo em vitrine atrás (`GameOptions.showcase`):
