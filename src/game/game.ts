@@ -187,7 +187,8 @@ export class Game {
       (r) => this.craft(r),
       // Ficha da receita aberta: a bolsa aparece à direita (no lugar das profissões) para ver o item entrar.
       (open) => { this.bag.peek(open); if (open) this.bag.render(this.bagEntries()); },
-      (r) => this.craftDestination(r));
+      (r) => this.craftDestination(r),
+      { hand: HAND_ICON, bag: art().uiIcons?.bag ?? '' });
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     if (screenMode?.isTablet) this.hud.root.classList.add('tablet'); // toque na tela também age (além do botão)

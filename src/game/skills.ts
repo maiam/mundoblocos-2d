@@ -1,5 +1,5 @@
 import { blockDef, type BlockId } from '../world/blocks';
-import { canCraft, PROFESSIONS, type ProfessionId, type Recipe, RECIPES, type StackId } from '../world/items';
+import { blockStack, canCraft, PROFESSIONS, type ProfessionId, type Recipe, RECIPES, type StackId } from '../world/items';
 
 /** Ícone e nome de uma pilha (resolvidos pelo Game com a arte do mundo). */
 export type StackLook = (id: StackId) => { icon: string; name: string };
@@ -39,6 +39,8 @@ export class SkillsPanel {
     private readonly onDetail: (open: boolean) => void = () => {},
     /** Para onde vai o item criado (mão/bolsa/sem lugar). */
     private readonly destination: (r: Recipe) => RecipeDestination = () => 'bolsa',
+    /** Ícones da mão e da bolsa (para "vai para" sem depender de leitura). */
+    private readonly destIcons: { hand: string; bag: string } = { hand: '', bag: '' },
   ) {
     recipesEl.innerHTML = '<h2>Receitas</h2>';
     for (let r = 0; r < RECIPE_ROWS; r++) {
@@ -68,8 +70,8 @@ export class SkillsPanel {
         <ul class="recipe-ings"></ul>
         <p class="recipe-meta"></p>
         <div class="recipe-actions">
-          <button type="button" class="confirm">Confirmar</button>
-          <button type="button" class="cancel">Cancelar</button>
+          <button type="button" class="confirm" aria-label="Criar"><span class="ico" aria-hidden="true">✓</span><span>Criar</span></button>
+          <button type="button" class="cancel" aria-label="Voltar"><span class="ico" aria-hidden="true">✕</span><span>Voltar</span></button>
         </div>
       </div>`;
     this.detail.querySelector('.confirm')!.addEventListener('click', () => {
@@ -160,14 +162,27 @@ export class SkillsPanel {
       li.title = `${l.name}: tem ${have}, precisa ${i.count}`;
       ings.appendChild(li);
     }
-    const parts: string[] = [];
+    // Estação e destino como ícones (crianças que ainda não leem): caldeirão ✓/✗ e → mão/bolsa.
+    const meta = d.querySelector('.recipe-meta')!;
+    meta.innerHTML = '';
+    const chip = (icon: string, mark: string, ok: boolean, label: string) => {
+      const c = document.createElement('span');
+      c.className = `recipe-chip ${ok ? 'ok' : 'miss'}`;
+      c.title = label;
+      c.setAttribute('aria-label', label);
+      c.innerHTML = '<img alt=""><b aria-hidden="true"></b>';
+      c.querySelector('img')!.src = icon;
+      c.querySelector('b')!.textContent = mark;
+      meta.appendChild(c);
+    };
     if (r.station !== undefined) {
       const near = nearStation(r.station);
-      parts.push(`<span class="${near ? 'ok' : 'miss'}">Perto de um ${blockDef(r.station).name} ${near ? '✓' : '✗'}</span>`);
+      const name = blockDef(r.station).name;
+      chip(this.look(blockStack(r.station)).icon, near ? '✓' : '✗', near, near ? `Perto de um ${name}` : `Precisa estar perto de um ${name}`);
     }
     const dest = this.destination(r);
-    parts.push(dest ? `Vai para: ${dest}` : '<span class="miss">Sem lugar na mão nem na bolsa</span>');
-    d.querySelector('.recipe-meta')!.innerHTML = parts.join(' · ');
+    if (dest) chip(dest === 'mão' ? this.destIcons.hand : this.destIcons.bag, '→', true, `Vai para a ${dest}`);
+    else chip(this.destIcons.bag, '✗', false, 'Sem lugar na mão nem na bolsa');
     (d.querySelector('.confirm') as HTMLButtonElement).disabled = !canCraft(r, count, nearStation) || !dest;
   }
 
