@@ -29,11 +29,15 @@ import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { cleanLook, type ModularLook } from '../render/modular';
+import { Minimap, type MinimapMarker } from '../render/minimap';
+import { Exploration } from './exploration';
 
 /** Duração de um dia completo em segundos. */
 const DAY_LENGTH_S = 480;
 /** Duração entre salvamentos automáticos (s). */
 const AUTOSAVE_S = 10;
+/** Raio da névoa revelada em volta do jogador (células): cerca da área visível na tela. */
+const REVEAL_RADIUS = 14;
 
 /** Opções da sessão: salvamento para restaurar, armazenamento e ações do menu (vêm do main). */
 export interface GameOptions {
@@ -98,6 +102,11 @@ export class Game {
   private hurtFlash = 0;
   /** Outros jogadores da sala (multiplayer). */
   private readonly remotes = new RemotePlayers();
+  /** Névoa do minimapa: o que o jogador já viu (salvo junto com o mundo). */
+  readonly exploration = new Exploration();
+  private minimap: Minimap | null = null;
+  /** Última célula em que a névoa foi revelada (só revela de novo ao mudar de célula). */
+  private revealedAt = '';
   /** Tempo até mandar a próxima posição ao servidor e a última mandada. */
   private stateTimer = 0;
   private lastState = '';
@@ -162,6 +171,7 @@ export class Game {
       // Corações só em mundo com dungeon.
       health: profile.dungeon,
     });
+    if (profile.minimap) this.minimap = new Minimap(this.hud.root);
     this.bag = new BagPanel(this.hud.bagSection, (i, e) => this.onBagTap(i, e));
     this.chest = new ChestPanel(this.hud.chestSection, (i) => this.onChestTap(i));
     setProfessionIcon('builder', art().uiIcons?.builder ?? '');
@@ -194,7 +204,7 @@ export class Game {
     if (options.save) {
       const r = applySave(options.save, {
         world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
-        time: this.time, selected: this.selected, hotbar: null,
+        exploration: this.exploration, time: this.time, selected: this.selected, hotbar: null,
       });
       this.time = r.time;
       this.hotbar.prune(this.inventory);
@@ -608,6 +618,7 @@ export class Game {
     }
 
     const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
+    this.updateMinimap(room?.def.name ?? null, now);
     this.renderer.draw(this.camera, {
       player: this.player,
       actors: this.remotes.size ? [...this.entities.actors, ...this.remotes.actors] : this.entities.actors,
@@ -636,6 +647,32 @@ export class Game {
       !!slot && slot.kind !== 'tool' && (slot.kind === 'item' || this.collect) && this.inventory.count(slotStack(slot)) === 0);
     requestAnimationFrame(this.frame);
   };
+
+  /** Revela a névoa em volta do jogador (ao mudar de célula, fora dos cômodos) e redesenha o minimapa. */
+  private updateMinimap(place: string | null, now: number): void {
+    if (!this.minimap || this.options.showcase) return;
+    const p = this.player;
+    const cell = `${p.cellX},${p.cellY}`;
+    let force = false;
+    if (!place && cell !== this.revealedAt) {
+      this.revealedAt = cell;
+      force = this.exploration.revealAround(p.cellX, p.cellY, REVEAL_RADIUS);
+    }
+    const markers: MinimapMarker[] = [];
+    const town = this.world.town;
+    if (town) {
+      const a = town.area;
+      markers.push({ kind: 'town', x: (a.x0 + a.x1 + 1) / 2, y: (a.y0 + a.y1 + 1) / 2, pinned: true });
+    }
+    const dg = this.world.dungeon;
+    if (dg && this.exploration.isExplored(dg.doorstep[0], dg.doorstep[1])) {
+      markers.push({ kind: 'dungeon', x: dg.doorstep[0] + 0.5, y: dg.doorstep[1] + 0.5, pinned: true });
+    }
+    const tent = this.world.tent;
+    if (tent) markers.push({ kind: 'tent', x: tent[0] + 0.5, y: tent[1] + 0.5, pinned: true });
+    for (const r of this.remotes.actors) markers.push({ kind: 'friend', x: r.x, y: r.y });
+    this.minimap.update({ world: this.world, exploration: this.exploration, player: p, markers, place }, now, force);
+  }
 
   /**
    * Multiplayer: acompanha os outros jogadores e manda a minha posição ~10×/s quando muda (pausado também: o jogo
@@ -670,7 +707,7 @@ export class Game {
     if (!store || !this.running) return;
     const data = captureSave({
       world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
-      time: this.time, selected: this.selected, hotbar: this.hotbar.dynamic ? this.hotbar.layout() : null,
+      exploration: this.exploration, time: this.time, selected: this.selected, hotbar: this.hotbar.dynamic ? this.hotbar.layout() : null,
     });
     if (store.save(data)) this.lastSaved = data.savedAt;
   }

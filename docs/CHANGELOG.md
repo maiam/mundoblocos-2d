@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.51.0 — 2026-11-06
+- **Minimapa com névoa de exploração** (pedido do dono do produto): mapa redondo no canto superior direito, abaixo
+  do ☰, com o norte para cima e a seta do jogador girando. Começa escuro e vai se revelando num raio de 14 blocos
+  à medida que se anda; o que foi descoberto fica salvo com o mundo (`SAVE_VERSION` 7; antigos começam cobertos).
+- Marcadores: Cidade do Despertar (estrela), entrada da dungeon (depois de descoberta), tenda e amigos na sala.
+  Cidade e tenda ficam presas na borda quando longe. Dentro da Ferraria o mapa mostra só o nome do lugar.
+- Só no mundo principal (o Santuário cabe na tela). Cada chunk vira uma imagem pequena refeita só quando o mapa ou
+  a névoa dele mudam.
+
 ## 0.50.0 — 2026-11-06
 - **Tela de entrada** (pedido do dono do produto): o jogo abre no título **Orvalis** com a Cidade do Despertar viva
   atrás, **Novo jogo** e **Continuar** (só com jogo salvo no aparelho). Espaço reservado para "Jogar com amigos" e

@@ -11,6 +11,7 @@ import { Monster } from './monster';
 import type { Player } from './player';
 import { Sheep } from './sheep';
 import type { Facing } from './walker';
+import type { Exploration } from './exploration';
 import type { ModularLook } from '../render/modular';
 
 /**
@@ -21,7 +22,7 @@ import type { ModularLook } from '../render/modular';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export interface SaveData {
   v: number;
@@ -33,6 +34,8 @@ export interface SaveData {
   player: { x: number; y: number; z: number; hp: number; facing: Facing };
   /** Aparência montada na tela de entrada (personagem modular, ADR 0017); null = heroína. */
   look: ModularLook | null;
+  /** Névoa do minimapa: células já descobertas, por chunk (bits em base64). */
+  explored: Array<{ cx: number; cy: number; bits: string }>;
   /** Última tenda colocada (ponto de renascer). */
   tent: [number, number] | null;
   /** Conteúdo dos baús (27 espaços cada). */
@@ -60,6 +63,8 @@ export interface GameState {
   selected: number | null;
   /** Layout da grade dinâmica (null = grade fixa). */
   hotbar: (StackId | null)[] | null;
+  /** Névoa do minimapa (ausente = mundo sem minimapa). */
+  exploration?: Exploration;
 }
 
 const toB64 = (a: Uint8Array): string => {
@@ -81,6 +86,7 @@ export function captureSave(s: GameState): SaveData {
     selected: s.selected,
     player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing },
     look: s.entities.look,
+    explored: s.exploration?.toSave() ?? [],
     tent: s.world.tent,
     chests: [...s.world.chests.entries()].map(([k, slots]) => {
       const [x, y] = k.split(',').map(Number);
@@ -128,6 +134,8 @@ export function migrate(raw: unknown): SaveData | null {
   }
   // v5 → v6 (tela de entrada): aparência do personagem; quem já jogava continua com a heroína.
   if (d.v === 5) d = { ...d, v: 6, look: null };
+  // v6 → v7 (minimapa): nada descoberto ainda; o Game revela a área em volta ao abrir.
+  if (d.v === 6) d = { ...d, v: 7, explored: [] };
   return d.v === SAVE_VERSION ? d : null;
 }
 
@@ -165,6 +173,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
   s.entities.look = d.look ?? null;
+  s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;
   e.npcs.splice(0, e.npcs.length, ...d.sheep.map((o) => {

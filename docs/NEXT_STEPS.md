@@ -96,6 +96,9 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    1–5; **morte perde 10% do XP do nível atual, sem nunca descer de nível** (continua perdendo tudo menos as ferramentas).
 
 ### Fase 4 — Mundo vivo e conteúdo
+- **Mapa** — minimapa com névoa ✅ v0.51.0. Próximo: tocar no minimapa abre o **mapa grande** (tela cheia, zoom,
+  arrastar), nomes de regiões (biomas, cidade, dungeon) e marcadores do jogador; moldura de pergaminho se a arte
+  enviar. Na sala multiplayer, a névoa é só de quem anda (não salva no aparelho) — juntar a dos amigos é opcional.
 0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`; 4 moradores passeando desde v0.40.0):
    ~~fala ao tocar~~ ✅ v0.42 (falas fixas), expressões ✅ v0.44 (usar mais: sonolento à noite, assustado perto de
    monstros, bravo se golpeado; folhas de cabelo separadas eliminariam as manchinhas dos perfis), **interiores das outras construções** (hospedaria, guilda, lojas, casas:

@@ -62,6 +62,7 @@ src/
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
     character.ts               folhas dos atores (heroína ±ferramenta, ovelha, filhote, namoro) + coração
     modular.ts, modularCharacter.ts   personagem modular (ADR 0017): manifesto, peças/sorteio/limpeza da aparência, desenho
+    minimap.ts, mapColors.ts   minimapa redondo (névoa + marcadores) e cor de cada célula no mapa, lida do World
     characterPreview.ts        prévia do personagem na tela de entrada (mesmo desenho do jogo, virando nas 4 direções)
     itemArt.ts                 trigo por estágio, ícones de itens/ferramentas
     daycycle.ts, particles.ts, color.ts
@@ -70,6 +71,7 @@ src/
     game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
     actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render
     save.ts, menu.ts           salvamento automático (localStorage, ADR 0011) e menu ☰
+    exploration.ts             névoa do minimapa: células já vistas (bits por chunk), salva com o mundo
     title.ts                   tela de entrada (Novo jogo / Continuar) e montagem do personagem; o mundo fica em vitrine atrás
     walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts, villager.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,

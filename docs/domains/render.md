@@ -61,6 +61,15 @@ Apenas apresentação; lê `World`, nunca escreve.
   quadro varre `TOWN_REACH` além da tela para sprites grandes. Brilho noturno: `glowColor` + `glowAt` (posição da luz
   no sprite, ex.: lanterna do poste).
 
+## Minimapa (v0.51.0)
+- `render/minimap.ts`: círculo no canto superior direito (112 px; 84 px no celular deitado), raio de 36 blocos, norte
+  para cima, seta do jogador pela direção. Chunk descoberto = imagem 16 × 16 px (1 px por célula) refeita só quando
+  muda a `version` do chunk do `World` ou a da névoa (`Exploration.chunk`), no máximo 6 por redesenho (10×/s).
+- Cores em `render/mapColors.ts` (aparência, não propriedade do bloco): chão por id, objetos por id ou pela forma
+  (árvore, construção, rocha), cubos pela cor do bloco do topo; enfeites pequenos deixam ver o chão.
+- Marcadores: cidade (estrela), dungeon (quadrado, só depois de descoberta), tenda (triângulo), amigos (círculo);
+  cidade e tenda presas na borda quando longe. Nunca lê pixels de volta (regra do Artifact).
+
 ## Personagem
 - Folhas canônicas: frente, esquerda, direita, costas. As folhas com ferramenta chegaram como frente, direita,
   costas, esquerda (e a da pá sem lado direito); `process-sprite.py --rows-map` normaliza (a pá usa espelho
