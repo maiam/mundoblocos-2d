@@ -50,6 +50,13 @@
   | Tijolo de Pedra | 1 Pedra Bruta | 1 Tijolo de Pedra |
   | Chão de Pedra | 1 Pedra Bruta | 1 Chão de Pedra |
   | Tenda | 10 Sedas + 10 Tábuas + 4 Presas | 1 Tenda |
+  | Fogueira | 3 Toras de Carvalho | 1 Fogueira |
+  | Caldeirão de Pedra | 3 Pedras Brutas + 1 Fogueira | 1 Caldeirão |
+  | Forno de Pedra | 6 Pedras Brutas | 1 Forno |
+
+  Fogueira, Caldeirão e Forno (v0.49.0) são objetos de 1 célula colocados fora da cidade: bloqueiam, brilham à noite e
+  voltam à bolsa ao quebrar (machado desmonta a fogueira; picareta, os de pedra). Ainda não cozinham (Fase P, entrega
+  4: comida).
 - **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
   no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
 - **Tenda** (`Block.TENT`, **2×2**, madeira: machado, picareta e mão quebram): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`

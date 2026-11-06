@@ -2,7 +2,8 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownImages, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownImages, getWaterArt } from './blockArt';
+import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 import { townSprites } from './townArt';
@@ -20,6 +21,13 @@ import { townSprites } from './townArt';
 type Ctx = CanvasRenderingContext2D;
 
 /** Resolução das texturas em relação aos pixels de mundo (nitidez com zoom ~2×). */
+/** Objetos fabricados desenhados com imagem: id → [nome da arte, largura em células]. */
+const CRAFT_PROPS: Partial<Record<BlockId, [CraftableArt, number]>> = {
+  [Block.CAMPFIRE]: ['campfire', 1.05],
+  [Block.CAULDRON]: ['cauldron', 1.1],
+  [Block.OVEN]: ['oven', 1.25],
+};
+
 export const TEX_RES = 2;
 const T = TILE;
 const F = CUBE_FRONT;
@@ -497,6 +505,23 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     objects.set(Block.CHEST, { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } });
     icons.set(Block.CHEST, pack.chest?.icon ?? '');
   }
+  // Objetos fabricados: sprite de frente com a largura em células da tabela, base no pé da célula; ícone do pacote.
+  for (const [key, prop] of Object.entries(CRAFT_PROPS)) {
+    if (!prop) continue;
+    const [name, cells] = prop;
+    const id = Number(key) as BlockId;
+    const img = getCraftableSprite(name);
+    if (!img) continue;
+    const w = T * cells;
+    const h = w * (img.height / img.width);
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    c.getContext('2d')!.drawImage(img, 0, 0);
+    const oy = T - h + 2;
+    objects.set(id, { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } });
+    icons.set(id, pack.craftables?.[name]?.icon ?? '');
+  }
   const doorFrames = getOakDoorSheet() ? doorSprites() : [];
   if (doorFrames.length) {
     objects.set(Block.OAK_DOOR, doorFrames[0]);
@@ -509,6 +534,9 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     [Block.CRYSTAL_LIFE, '#ff9be6'],
     [Block.LIGHT_BLOCK, '#ffe08a'],
     [Block.LAMP, '#ffd27a'],
+    [Block.CAMPFIRE, '#ffab4a'],
+    [Block.CAULDRON, '#ff9a3c'],
+    [Block.OVEN, '#ff9a3c'],
   ]);
   if (opts.town) for (const [id, sprites] of townSprites(getTownImages())) variants.set(id, sprites);
   const bankColor = new Map<BlockId, string>([
@@ -527,6 +555,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     [Block.STONE_BRICK_CRACKED, '#6a6676'],
   ]);
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
-  const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]]]);
+  // Fogo do caldeirão e do forno fica na base do desenho.
+  const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
   return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw };
 }

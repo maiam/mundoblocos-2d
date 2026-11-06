@@ -82,7 +82,8 @@ _Atualizado em 2026-11-03 — v0.39.1 · jogo: **Orvalis** (`orvalis.pensamentos
   direita), 3 blocos de altura; toque abre/fecha com animação (qualquer item em
   mãos); fechada bloqueia, aberta deixa passar; não fecha com alguém dentro. Uma só orientação (de frente).
 - **Habilidades** (Construtor): receitas de Tábua (1 tora → 2), Porta (4 tábuas), Tenda (10 sedas + 10 tábuas + 4
-  presas), Baú e Pedra Irregular / Tijolo de Pedra / Chão de Pedra (1 Pedra Bruta → 1) — tocar cria. **Baú de Carvalho** (8 tábuas; 27 espaços). **Tenda** (2×2) = ponto de
+  presas), **Fogueira** (3 toras), **Caldeirão de Pedra** (3 pedras + 1 fogueira), **Forno de Pedra** (6 pedras; os três
+  só se colocam por enquanto, cozinhar vem com a comida), Baú e Pedra Irregular / Tijolo de Pedra / Chão de Pedra (1 Pedra Bruta → 1) — tocar cria. **Baú de Carvalho** (8 tábuas; 27 espaços). **Tenda** (2×2) = ponto de
   renascer, com aviso na tela; derrubar a última volta ao início. Bolsa com 27 itens (9 na mão + 18).
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.

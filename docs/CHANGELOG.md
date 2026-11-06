@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.49.0 — 2026-11-06
+- **Três receitas novas do Construtor** (pedido do dono do produto): **Fogueira** (3 Toras de Carvalho), **Caldeirão
+  de Pedra** (3 Pedras Brutas + 1 Fogueira) e **Forno de Pedra** (6 Pedras Brutas), com a arte enviada. Colocam-se fora
+  da cidade (1 célula, bloqueiam), brilham à noite e voltam à bolsa ao quebrar (machado desmonta a fogueira, picareta
+  os de pedra). Cozinhar ainda não: vem com a comida (Fase P, entrega 4).
+
 ## 0.48.0 — 2026-11-05
 - **Personagem modular no motor** (ADR 0017): `?personagem=chibi` troca a heroína pelo humano chibi, montado pelas
   partes do guarda-roupa v02 na ordem do manifesto (`&tronco=colete-verde&pernas=calca-ardosia&pes=sapatos-couro`,
