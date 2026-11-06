@@ -64,7 +64,7 @@ describe('Ovelhas: comer, namorar e ter filhote', () => {
     let sawCourtship = false;
     for (let i = 0; i < 60 * 20 && e.npcs.length === 2; i++) {
       e.update(1 / 60, w);
-      if (e.actors.some((x) => x.kind === 'sheep-love')) sawCourtship = true;
+      if (e.actors.some((x) => x.kind === 'love-hearts')) sawCourtship = true;
     }
     expect(sawCourtship).toBe(true);
     expect(e.npcs.length).toBe(3);

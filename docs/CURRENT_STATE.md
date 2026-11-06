@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.60.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.61.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Coraçõezinhos do namoro — v0.61.0
+- Ator `love-hearts` (16 quadros, `scripts/extract-love.py`) entre o casal enquanto namora (`Entities.actors`, a
+  partir de `courting`), com `Actor.scale` por espécie (`LOVE_SCALE`); `COURTSHIP_SECONDS` = 2,6. Removidos a folha
+  `sheep-love` e o caso especial da ovelha. Carrega depois do início.
 
 ## Filhotes e reprodução dos animais do campo — v0.60.0
 - `game/breeder.ts` (`Breeder`): ciclo comum de comer → apaixonar → par da mesma espécie → namoro → filhote → crescer,

@@ -44,7 +44,7 @@ import wheatIcon from '../../assets/icon-wheat.webp';
 import lamb from '../../assets/lamb.webp';
 import oakDoor from '../../assets/oak-door.webp';
 import oakDoorIcon from '../../assets/icon-block-oak-door.webp';
-import sheepLove from '../../assets/sheep-love.webp';
+import loveHearts from '../../assets/love-hearts.webp';
 import sheep from '../../assets/sheep.webp';
 import horse from '../../assets/horse.webp';
 import cow from '../../assets/cow.webp';
@@ -188,7 +188,7 @@ const pack: ArtPack = {
     'heroine-pickaxe-attack': heroinePickaxeAttack,
     sheep,
     lamb,
-    'sheep-love': sheepLove,
+    'love-hearts': loveHearts,
     horse,
     cow,
     chicken,

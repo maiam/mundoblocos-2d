@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.61.0 — 2026-11-06
+- **Namoro com coraçõezinhos** (folha enviada pelo dono do produto), igual para ovelha, vaca, galinha e cavalo: o
+  animal que come fica com um coração; dois apaixonados se procuram, param de frente e sobem coraçõezinhos entre eles
+  (~2,6 s) até o filhote aparecer. Os corações acompanham o tamanho do animal.
+- Sai a animação de namoro própria da ovelha (o casal agora aparece de verdade, como os outros animais).
+
 ## 0.60.0 — 2026-11-06
 - **Filhotes** (folhas enviadas pelo dono do produto): **potro**, **bezerro** e **pintinho**.
 - **Reprodução dos animais do campo**, como a das ovelhas: com o alimento na mão, toque no animal — **vaca come
