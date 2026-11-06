@@ -709,15 +709,25 @@ export class World {
    * Avança o tempo: cada plantação não madura sobe um estágio com probabilidade dt / CROP_STAGE_SECONDS[cultura]
    * (crescimento natural, não sincronizado); depois as árvores.
    */
-  tick(dt: number, rand: () => number = Math.random): void {
+  /**
+   * Avança o tempo do mundo: água sempre; crescimento de plantas/árvores só com `grow` (no multiplayer quem faz crescer
+   * é a sala do servidor, que avisa cada célula pelo `onGrow`).
+   */
+  tick(dt: number, rand: () => number = Math.random, grow = true, onGrow?: (x: number, y: number, id: BlockId) => void): void {
     this.tickWater(dt);
+    if (grow) this.tickGrowth(dt, rand, onGrow);
+  }
+
+  /** Plantas e árvores: cada estágio avança com probabilidade dt / tempo do estágio. */
+  private tickGrowth(dt: number, rand: () => number, onGrow?: (x: number, y: number, id: BlockId) => void): void {
+    const set = (x: number, y: number, id: BlockId) => { this.setLevel(x, y, 0, id); onGrow?.(x, y, id); };
     for (const key of [...this.crops]) {
       const [x, y] = key.split(',').map(Number);
       const id = this.getObject(x, y);
       const kind = cropKind(id);
       if (!kind) { this.crops.delete(key); continue; }
       const stage = cropStage(id);
-      if (stage < CROP_STAGES - 1 && rand() < dt / CROP_STAGE_SECONDS[kind]) this.setLevel(x, y, 0, cropId(kind, stage + 1));
+      if (stage < CROP_STAGES - 1 && rand() < dt / CROP_STAGE_SECONDS[kind]) set(x, y, cropId(kind, stage + 1));
     }
     // Árvores: cada estágio avança com probabilidade dt / tempo do estágio; a macieira colhida volta a dar maçãs.
     for (const key of [...this.trees]) {
@@ -726,8 +736,19 @@ export class World {
       const next = TREE_NEXT[id];
       if (next === undefined) { this.trees.delete(key); continue; }
       const t = id === Block.APPLE_TREE_BARE ? FRUIT_REGROW_SECONDS : TREE_STAGE_SECONDS;
-      if (rand() < dt / t) this.setLevel(x, y, 0, next);
+      if (rand() < dt / t) set(x, y, next);
     }
+  }
+
+  /**
+   * Multiplayer: aplica o crescimento que a sala decidiu (só se a célula ainda tem planta ou árvore que cresce — uma
+   * ação que chegou antes vale). Retorna se aplicou.
+   */
+  applyGrowth(x: number, y: number, id: BlockId): boolean {
+    const cur = this.getObject(x, y);
+    if (!isCrop(cur) && TREE_NEXT[cur] === undefined) return false;
+    this.setLevel(x, y, 0, id);
+    return true;
   }
 
   /** Célula andável (com vizinhos andáveis) mais próxima de (x0, y0), em espiral. */

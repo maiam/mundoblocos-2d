@@ -1,6 +1,12 @@
+import { DAY_LENGTH_S } from '../config';
 import { applyAction } from '../world/actions';
 import { World } from '../world/world';
-import { type Applied, type ClientMessage, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, sanitizeName, type ServerMessage } from './protocol';
+import { type Applied, type ClientMessage, type Grown, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, sanitizeName, type ServerMessage } from './protocol';
+
+/** Hora do dia em que a sala abre (manhã, como o jogo sozinho). */
+export const ROOM_START_TIME = 0.31;
+/** De quanto em quanto tempo a sala manda a hora a todos (s): corrige a diferença dos relógios dos aparelhos. */
+export const TIME_SYNC_SECONDS = 30;
 
 /** Mensagem a entregar: a um jogador, a todos, ou a todos menos um. */
 export type Outgoing = { to: number | 'all' | { except: number }; msg: ServerMessage };
@@ -16,9 +22,36 @@ export class Room {
   /** Ações aplicadas desde que a sala abriu (quem entra depois recebe e reaplica; persistência por chunk vem depois). */
   readonly edits: Applied[] = [];
   private nextId = 1;
+  /** Hora do dia da sala (0..1): a mesma para todos os jogadores. */
+  time = ROOM_START_TIME;
+  /** Células cujo último estado veio do crescimento ("x,y" → bloco); uma ação na célula apaga a entrada. */
+  private readonly grown = new Map<string, Grown>();
+  private syncTimer = TIME_SYNC_SECONDS;
 
-  constructor(readonly code: string, readonly seed: number) {
+  constructor(readonly code: string, readonly seed: number, private readonly rand: () => number = Math.random) {
     this.world = new World(seed);
+  }
+
+  /**
+   * Passa o tempo da sala (o servidor chama ~1×/s com o tempo real): avança a hora, faz plantas e árvores crescerem
+   * (a sala decide; os aparelhos só aplicam) e, de tempos em tempos, manda a hora a todos.
+   */
+  tick(dt: number): Outgoing[] {
+    this.time = (this.time + dt / DAY_LENGTH_S) % 1;
+    const cells: Grown[] = [];
+    this.world.tick(dt, this.rand, true, (x, y, id) => {
+      const g: Grown = [x, y, id];
+      this.grown.set(`${x},${y}`, g);
+      cells.push(g);
+    });
+    const out: Outgoing[] = [];
+    if (cells.length) out.push({ to: 'all', msg: { t: 'grow', cells } });
+    this.syncTimer -= dt;
+    if (this.syncTimer <= 0) {
+      this.syncTimer = TIME_SYNC_SECONDS;
+      out.push({ to: 'all', msg: { t: 'time', time: this.time } });
+    }
+    return this.players.size ? out : [];
   }
 
   get size(): number {
@@ -39,7 +72,7 @@ export class Room {
     return {
       id,
       out: [
-        { to: id, msg: { t: 'welcome', you: id, room: this.code, seed: this.seed, players: others, edits: this.edits } },
+        { to: id, msg: { t: 'welcome', you: id, room: this.code, seed: this.seed, players: others, edits: this.edits, time: this.time, grown: [...this.grown.values()] } },
         { to: { except: id }, msg: { t: 'joined', player } },
       ],
     };
@@ -62,6 +95,7 @@ export class Room {
       if (!applyAction(this.world, m.a)) return [{ to: id, msg: { t: 'rejected', seq: m.seq } }];
       const applied: Applied = { by: id, action: m.a };
       this.edits.push(applied);
+      this.grown.delete(`${m.a.x},${m.a.y}`); // a ação passa a valer para a célula (reaplicada depois do crescimento)
       return [{ to: 'all', msg: { t: 'applied', ...applied } }];
     }
     return [];

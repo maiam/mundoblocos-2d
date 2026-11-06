@@ -108,6 +108,7 @@
 | Fome em barra 0–100 (~12 min); alimentos com pesos (`FOOD`); crus: maçã, cenoura, batata, tomate; pratos só no Caldeirão (Cozinheiro); fome vazia não mata (para em 1 de vida) | domains/player, domains/farming |
 | Receita pode exigir estação por perto (`Recipe.station`), sem novo painel: o Caldeirão é a cozinha | domains/farming |
 | Receitas: tocar abre uma ficha com Confirmar/Cancelar (nada é criado num toque) e a bolsa aparece ao lado; excesso de bolsa de salvamento antigo cai no chão | domains/farming |
+| Sala compartilhada em etapas: o servidor é dono da hora e do crescimento (protocolo 7); itens e entidades depois, sempre com o código do jogo rodando na sala (nunca um jogador "anfitrião") | ADR 0016 |
 | Tenda tem interior (um cômodo para todas as tendas, volta para a frente da tenda por onde se entrou); conexão da sala desiste em 10 s com uma nova tentativa automática | ADR 0014, ADR 0016 |
 | "Jogar com amigos" só aparece onde o servidor aceita a origem; no Artifact e nas prévias, aviso com link do site (lista espelhada do servidor, sem detectar falha por tentativa) | ADR 0016 |
 | Namoro igual para todos os animais: casal parado de frente + coraçõezinhos entre eles (sem folha de namoro por espécie) | domains/npc |

@@ -66,6 +66,15 @@ Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositó
    quantos estão e sair), outros jogadores com nome em cima (posição ~10×/s, suavizada), mapa sincronizado (quebrar,
    colocar, arar, amassar, plantar, porta). Falta: **monstros, animais, moradores e itens caídos ainda são de cada
    jogador** (cada um vê os seus); guardar as salas; recuperar o mapa se uma ação for recusada (corrida rara).
+3b. **Sala compartilhada** (o servidor passa a ser dono do que acontece no mundo, com o mesmo código do jogo):
+   - ✅ **Etapa 1 — mesmo horário e mesmo crescimento** (v0.63.0, protocolo 7): `Room.time`/`Room.tick` (servidor 1×/s),
+     `welcome.time`, `time` a cada 30 s, `grow` com as células que cresceram; o aparelho na sala não cresce sozinho.
+   - **Etapa 2 — itens caídos da sala**: o servidor cria os itens (com id) ao quebrar; pegar é pedido, quem chega
+     primeiro leva e some para todos.
+   - **Etapa 3 — aranhas, animais (e moradores) da sala**: o servidor roda `Entities` da sala e manda posições ~10×/s
+     (desenho suavizado); golpe = intenção (servidor calcula acerto/dano); mordida decidida no servidor; dar comida e
+     reprodução viram ações. Medir CPU na Hostinger (plano B: VPS).
+   - Fora da sala nada muda (tudo roda no aparelho).
 4. **Encontro nas cidades**: chat, grupos (visão de progressão).
 Decidido (ADR 0016): co-op com código de convite (até 4), convidado só com nome, sem PvP, servidor autoritativo,
 servidor reaproveita `world`+`net` como pacote compilado. Repositório do servidor: `maiam/orvalis-servidor`.
@@ -148,7 +157,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
    d. ~~Aparência no salvamento~~ (v0.50.0, `SAVE_VERSION` 6). **Próximo (Etapa 2 da tela de entrada)**: aparência
-      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 7 (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos, 6 = cerca), validar contra o manifesto no `Room`),
+      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 8+ (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos, 6 = cerca, 7 = hora e crescimento da sala), validar contra o manifesto no `Room`),
       `RemotePlayers` desenhando o chibi dos outros; atualizar `orvalis-servidor` junto (`sync-net`).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.

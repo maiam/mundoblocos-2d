@@ -208,6 +208,9 @@ export class Game {
       // Na sala: o mundo recebe as edições já feitas; as dos outros chegam depois (e ninguém fica preso num bloco).
       const net = options.net;
       net.attach(this.world);
+      // Mesmo horário para todos: o relógio segue o da sala (e é acertado a cada sincronização).
+      if (net.time !== null) this.time = net.time;
+      net.onTime = (t) => { this.time = t; };
       net.onApplied = () => this.entities.settleAll(this.world);
       net.onRejected = () => this.hud.toast('Ação não aceita pela sala');
     }
@@ -669,7 +672,8 @@ export class Game {
     if (this.player.consumeHit() && this.player.attackTool && TOOLS[this.player.attackTool].strikes) {
       this.entities.strike(this.player.facing, this.world);
     }
-    this.world.tick(dt);
+    // Na sala, plantas e árvores crescem pelo servidor (mensagens `grow`); aqui só a água.
+    this.world.tick(dt, Math.random, !this.options.net);
     this.drops.update(dt, this.player, this.inventory, (id) => this.onCollected(id),
       (id) => !this.collect || canCarry(this.inventory, this.hotbar, id));
     this.camera.follow(...this.cameraTarget(), dt);

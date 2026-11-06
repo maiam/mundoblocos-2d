@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.63.0 — 2026-11-06
+- **Jogar com amigos — mesmo horário e mesmo crescimento** (Etapa 1 da sala compartilhada): a sala tem a própria hora
+  do dia; quem entra passa a ver a mesma hora que os outros (dia e noite iguais) e o relógio é acertado a cada 30 s.
+  Plantas, árvores e maçãs crescem pelo servidor: todos veem o mesmo estágio, inclusive quem entra depois.
+- Multiplayer: `PROTOCOL_VERSION` 7 (servidor 0.8.0 junto, com o relógio das salas). Itens caídos e aranhas/animais
+  compartilhados vêm nas Etapas 2 e 3.
+
 ## 0.62.0 — 2026-11-06
 - **Interior da tenda** (arte enviada pelo dono do produto): andar para cima diante da frente de qualquer tenda entra
   num cômodo iluminado com lampião e colchão, como na Ferraria; pisar no capacho volta para diante da tenda.

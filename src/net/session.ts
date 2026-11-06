@@ -1,7 +1,7 @@
 import { type PlayerAction, applyAction } from '../world/actions';
 import type { World } from '../world/world';
 import type { Transport } from './loopback';
-import { type ClientMessage, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type ServerMessage } from './protocol';
+import { type ClientMessage, type Grown, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type ServerMessage } from './protocol';
 
 /**
  * Sessão multiplayer do lado do jogo (ADR 0016). O servidor manda no mapa da sala: as ações dos outros chegam como
@@ -29,8 +29,13 @@ export class NetSession {
   onClose: (() => void) | null = null;
   /** Ação de outro jogador aplicada no mundo local (o jogo reacomoda quem estava na célula). */
   onApplied: (() => void) | null = null;
+  /** Hora do dia da sala (0..1), atualizada no `welcome` e a cada `time`; o jogo segue dela. */
+  time: number | null = null;
+  /** A sala mandou a hora (o jogo acerta o relógio). */
+  onTime: ((time: number) => void) | null = null;
   private readonly pending = new Map<number, PlayerAction>();
   private backlog: PlayerAction[] = [];
+  private grownBacklog: Grown[] = [];
 
   constructor(private readonly transport: Transport) {
     transport.onMessage = (m) => this.receive(m);
@@ -47,6 +52,8 @@ export class NetSession {
     this.world = world;
     for (const a of this.backlog) applyAction(world, a);
     this.backlog = [];
+    for (const [x, y, id] of this.grownBacklog) world.applyGrowth(x, y, id);
+    this.grownBacklog = [];
   }
 
   /** Informa uma ação que o jogo já aplicou no `World` local (o servidor confere e repassa aos outros). */
@@ -68,6 +75,12 @@ export class NetSession {
     this.transport.send(JSON.stringify(m));
   }
 
+  /** Crescimento decidido pela sala (antes do `attach`, guardado). */
+  private grow(cells: Grown[]): void {
+    if (!this.world) { this.grownBacklog.push(...cells); return; }
+    for (const [x, y, id] of cells) this.world.applyGrowth(x, y, id);
+  }
+
   private apply(a: PlayerAction): void {
     if (this.world) applyAction(this.world, a);
     else this.backlog.push(a);
@@ -80,8 +93,17 @@ export class NetSession {
         this.room = m.room;
         this.seed = m.seed;
         for (const p of m.players) this.others.set(p.id, p);
+        this.time = m.time;
         for (const e of m.edits) this.apply(e.action);
+        this.grow(m.grown); // depois das edições: o crescimento é o estado mais recente dessas células
         this.onWelcome?.(m.seed);
+        break;
+      case 'time':
+        this.time = m.time;
+        this.onTime?.(m.time);
+        break;
+      case 'grow':
+        this.grow(m.cells);
         break;
       case 'joined':
         this.others.set(m.player.id, m.player);
