@@ -15,7 +15,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só no campo ao sul do portão; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
 | Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 4 moradores + ferreiro de visual único (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
-| Cavalo, vacas e galinhas no campo | ✅ passeio | sem montaria, leite nem ovos |
+| Cavalo, vacas e galinhas no campo | ✅ passeio, reprodução e filhotes (v0.60.0) | sem montaria, leite nem ovos; animais não são salvos (filhotes somem ao recarregar) |
 | Hortaliças (batata, tomate, cenoura) | ✅ v0.53.0 | crus ou no caldeirão (v0.56.0) |
 | Fome, comida e Cozinheiro | ✅ v0.56.0 | barra de fome; pão e macarrão no Caldeirão |
 | Árvores que crescem (carvalho, macieira) e maçãs | ✅ v0.52.0 | crescimento local em cada aparelho (sala multiplayer pode divergir) |
@@ -126,6 +126,8 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
 1. Ovelhas e cavalos (e novos animais) em outros chunks, por bioma, com limite. Cavalo: montaria (andar mais rápido).
    Vaca: leite (balde?); galinha: ovos (aparecem no chão de tempos em tempos) — dependem da comida (Fase P).
+   Salvar os animais (posição, idade dos filhotes) no `game/save.ts` (sobe `SAVE_VERSION`): hoje o rebanho criado some
+   ao recarregar.
    Árvores: comer maçã (Fase P), muda de cerejeira e de cacto se a arte vier, crescimento sincronizado pelo
    servidor na sala multiplayer (hoje cada aparelho sorteia o seu), cadeira para sentar (animação de sentar).
 2. **Mais dungeons**: generalizar `buildDungeon/decorateDungeon` por tema (arte + monstros + chefe), várias pelo mapa.

@@ -1,4 +1,4 @@
-import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
+import { CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
@@ -34,7 +34,6 @@ import { Minimap, type MinimapMarker } from '../render/minimap';
 import { Exploration } from './exploration';
 
 /** Duração de um dia completo em segundos. */
-const DAY_LENGTH_S = 480;
 /** Duração entre salvamentos automáticos (s). */
 const AUTOSAVE_S = 10;
 /** Raio da névoa revelada em volta do jogador (células): cerca da área visível na tela. */

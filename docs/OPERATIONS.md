@@ -132,6 +132,10 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 `$P assets-src/animals/chicken.png src/assets/chicken.png --alpha --largest --frame-h 96` (o ruído vermelho do fundo
 da galinha some com `--largest`).
 
+**Filhotes** (potro, bezerro, pintinho): `$P assets-src/animals/foal.png src/assets/foal.png --alpha --largest
+--frame-h 112`, `calf.png … --frame-h 104` e `chick.png … --frame-h 88` (o ruído vermelho/amarelo do fundo do bezerro
+tem alfa ~1 e some no recorte).
+
 **Pranchas de crescimento** (árvores e cacto, grade 4×2 transparente em `assets-src/trees/<nome>.png`):
 `python3 scripts/extract-trees.py` → `tree-<nome>.png` (quadros de 192 px, mesma escala dentro da prancha, base no pé)
 + ícones das mudas e da maçã → `optimize-assets.py`. A grade da prancha não precisa ser exata: o script separa os 8
