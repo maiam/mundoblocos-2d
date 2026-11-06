@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownImages, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
@@ -26,6 +26,7 @@ const CRAFT_PROPS: Partial<Record<BlockId, [CraftableArt, number]>> = {
   [Block.CAMPFIRE]: ['campfire', 1.05],
   [Block.CAULDRON]: ['cauldron', 1.1],
   [Block.OVEN]: ['oven', 1.25],
+  [Block.CHAIR]: ['chair', 0.9],
 };
 
 export const TEX_RES = 2;
@@ -63,6 +64,30 @@ export interface BlockTextures {
   variants: Map<BlockId, Sprite[]>;
   /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
   stackDraw: Map<BlockId, number>;
+}
+
+/**
+ * Quadros de uma prancha em grade (`cols` × `rows`, quadros quadrados) → sprites com o pé do desenho na base da célula,
+ * `cells` células de largura. Usado pelas pranchas de crescimento (árvores, cacto).
+ */
+function gridSprites(img: HTMLImageElement, cols: number, rows: number, cells: number, sink: number): Sprite[] {
+  const fw = img.width / cols;
+  const fh = img.height / rows;
+  const w = T * cells;
+  const h = w * (fh / fw);
+  const out: Sprite[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cv = document.createElement('canvas');
+      cv.width = fw;
+      cv.height = fh;
+      cv.getContext('2d')!.drawImage(img, c * fw, r * fh, fw, fh, 0, 0, fw, fh);
+      const oy = T - h + sink;
+      const top = Math.max(oy + h * 0.35, -T * 1.5);
+      out.push({ canvas: cv, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: top, w: T, h: T - top } });
+    }
+  }
+  return out;
 }
 
 /** Quadros de uma folha em tira → sprites com a base no pé da célula (largura `w` px de mundo). */
@@ -304,6 +329,35 @@ function waterTile(variant: number): HTMLCanvasElement {
 
 // ---------------------------------------------------------------- árvores e enfeites
 
+/**
+ * Árvores e cactos das pranchas de crescimento (quadros 0–3 = linha de cima, 4–7 = de baixo). Carvalho: muda, jovem,
+ * crescendo e, adulto, uma das variantes (grande, bolotas, flores, outono, musgo). Macieira: muda, jovem florida,
+ * adulta com maçãs (variantes) e colhida (florida, sem frutas). Cacto: as 8 variantes. Sem a arte, ficam as pintadas.
+ */
+function growthTreeSprites(
+  art: { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null, objects: Map<BlockId, Sprite>,
+): Map<BlockId, Sprite[]> {
+  const variants = new Map<BlockId, Sprite[]>();
+  if (!art) return variants;
+  const oak = gridSprites(art.oak, 4, 2, 3.7, 7);
+  const apple = gridSprites(art.apple, 4, 2, 3.7, 7);
+  const cactus = gridSprites(art.cactus, 4, 2, 1.7, 3);
+  const set = (id: BlockId, frames: Sprite[]) => {
+    objects.set(id, frames[0]);
+    if (frames.length > 1) variants.set(id, frames);
+  };
+  set(Block.OAK_SAPLING, [oak[0]]);
+  set(Block.OAK_YOUNG, [oak[1]]);
+  set(Block.OAK_GROWING, [oak[2]]);
+  set(Block.OAK_TREE, [oak[3], oak[4], oak[5], oak[6], oak[7]]);
+  set(Block.APPLE_SAPLING, [apple[0]]);
+  set(Block.APPLE_YOUNG, [apple[1]]);
+  set(Block.APPLE_TREE, [apple[2], apple[3], apple[5], apple[6], apple[7]]);
+  set(Block.APPLE_TREE_BARE, [apple[4]]);
+  set(Block.CACTUS, cactus);
+  return variants;
+}
+
 function treeSprite(kind: BlockId): Sprite {
   const W = T * 2;
   const H = T * 3;
@@ -453,6 +507,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   const water = wa ? [artWaterTile(wa.top, 0)] : Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
+  const treeVariants = growthTreeSprites(getTreeArt(), objects);
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
   // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
   for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {
@@ -465,7 +520,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     ));
     icons.set(id, pack.celestialIcons[id] ?? '');
   }
-  const variants = new Map<BlockId, Sprite[]>();
+  const variants = new Map<BlockId, Sprite[]>(treeVariants);
   const stackDraw = new Map<BlockId, number>();
   if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
   // Materiais com mais de uma arte (Terra com Grama): chão e cubo sorteiam a variação por célula.

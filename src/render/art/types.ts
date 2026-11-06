@@ -10,7 +10,7 @@ import type { ExpressionId, OutfitId, VillagerBase } from '../../game/villager';
  * Campos ausentes = o mundo não tem aquilo (o render pula o que não veio).
  */
 /** Nomes da arte dos objetos fabricados (ver `CRAFT_PROPS` em render/textures.ts). */
-export type CraftableArt = 'campfire' | 'cauldron' | 'oven';
+export type CraftableArt = 'campfire' | 'cauldron' | 'oven' | 'chair';
 
 export interface ArtPack {
   /** Folhas dos atores (personagem, animais, monstros). */
@@ -44,6 +44,8 @@ export interface ArtPack {
   craftables?: Partial<Record<CraftableArt, { icon: string; sprite: string }>>;
   /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
   chest?: { icon: string; sprite: string };
+  /** Pranchas de crescimento 4 × 2 (estágios em cima, variantes embaixo; `scripts/extract-trees.py`). */
+  trees?: { oak: string; apple: string; cactus: string };
   /** Interiores (`scripts/extract-interiors.py`), por id de `world/interiors.ts`; carregam em segundo plano. */
   interiors?: Record<string, string>;
   /** Cidade do Despertar: construções em imagem (`scripts/extract-town.py`); o resto é pintado em código. */

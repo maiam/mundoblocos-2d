@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef, isDoor, isWheat, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, isDoor, isGrowingTree, isWheat, TREE_NEXT, WHEAT_STAGES, wheatId, wheatStage } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
@@ -13,6 +13,12 @@ import type { TerrainSource } from './terrain';
 
 /** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
 export const WHEAT_STAGE_SECONDS = 6;
+/** Tempo médio (s) para uma árvore plantada avançar um estágio (~6 min da muda à árvore adulta). */
+export const TREE_STAGE_SECONDS = 120;
+/** Tempo médio (s) para a macieira colhida voltar a ter maçãs. */
+export const FRUIT_REGROW_SECONDS = 150;
+/** Chãos onde se planta uma muda (terra e grama). */
+const SAPLING_GROUND = new Set<number>([Block.DIRT, Block.GRASS]);
 /** Único chão onde a semente pode ser plantada. */
 const PLANTABLE_GROUND: number = Block.TILLED;
 /** Chãos que a enxada transforma em Terra Arada. */
@@ -74,6 +80,8 @@ export class World {
   private last: Chunk | null = null;
   /** Células com trigo plantado (crescem com o tempo). Só existem em chunks modificados, que não descarregam. */
   private readonly crops = new Set<string>();
+  /** Árvores plantadas crescendo e macieiras colhidas (avançam em `tick`). */
+  private readonly trees = new Set<string>();
   /** Dungeon deste mundo (perfil com `dungeon`), ou null. Área protegida: só se luta lá dentro. */
   readonly dungeon: DungeonLayout | null = null;
   /** Cidade do Despertar (perfil com `town`), ou null. Área protegida; início e renascer sem tenda. */
@@ -266,6 +274,8 @@ export class World {
     if (level === 0) {
       if (isWheat(id)) this.crops.add(chunkKey(x, y));
       else this.crops.delete(chunkKey(x, y));
+      if (isGrowingTree(id)) this.trees.add(chunkKey(x, y));
+      else this.trees.delete(chunkKey(x, y));
     }
     // Vizinhos usam esta célula para sombras/bordas.
     if (lx === 0) this.touch(cx - 1, cy);
@@ -567,10 +577,15 @@ export class World {
 
   // ---- Plantação ----
 
-  /** A semente pode ser plantada aqui? Só em chão de Terra Arada, com a célula livre (ou com enfeite). */
-  canPlant(x: number, y: number): boolean {
+  /**
+   * Dá para plantar `id` aqui? Semente de trigo: só em Terra Arada. Muda de árvore: em Terra ou Terra com Grama.
+   * Sempre com a célula livre (ou só com enfeite).
+   */
+  canPlant(x: number, y: number, id: BlockId = Block.WHEAT_0): boolean {
     if (this.isProtected(x, y)) return false;
-    if (this.getGround(x, y) !== PLANTABLE_GROUND) return false;
+    const sapling = id === Block.OAK_SAPLING || id === Block.APPLE_SAPLING;
+    if (!sapling && id !== Block.WHEAT_0) return false;
+    if (sapling ? !SAPLING_GROUND.has(this.getGround(x, y)) : this.getGround(x, y) !== PLANTABLE_GROUND) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
   }
@@ -613,10 +628,27 @@ export class World {
     return true;
   }
 
-  plant(x: number, y: number): boolean {
-    if (!this.canPlant(x, y)) return false;
-    this.setLevel(x, y, 0, Block.WHEAT_0);
+  plant(x: number, y: number, id: BlockId = Block.WHEAT_0): boolean {
+    if (!this.canPlant(x, y, id)) return false;
+    this.setLevel(x, y, 0, id);
     return true;
+  }
+
+  /** Macieira carregada aqui (tocar colhe)? */
+  canPick(x: number, y: number): boolean {
+    return this.getObject(x, y) === Block.APPLE_TREE && !this.isProtected(x, y);
+  }
+
+  /** Colhe as maçãs: a macieira fica florida e as frutas voltam com o tempo (as maçãs em si: `pickDrops`). */
+  pick(x: number, y: number): boolean {
+    if (!this.canPick(x, y)) return false;
+    this.setLevel(x, y, 0, Block.APPLE_TREE_BARE);
+    return true;
+  }
+
+  /** Árvores plantadas crescendo (testes e depuração). */
+  get growingTreeCount(): number {
+    return this.trees.size;
   }
 
   get cropCount(): number {
@@ -636,6 +668,15 @@ export class World {
       if (!isWheat(id)) { this.crops.delete(key); continue; }
       const stage = wheatStage(id);
       if (stage < WHEAT_STAGES - 1 && rand() < p) this.setLevel(x, y, 0, wheatId(stage + 1));
+    }
+    // Árvores: cada estágio avança com probabilidade dt / tempo do estágio; a macieira colhida volta a dar maçãs.
+    for (const key of [...this.trees]) {
+      const [x, y] = key.split(',').map(Number);
+      const id = this.getObject(x, y);
+      const next = TREE_NEXT[id];
+      if (next === undefined) { this.trees.delete(key); continue; }
+      const t = id === Block.APPLE_TREE_BARE ? FRUIT_REGROW_SECONDS : TREE_STAGE_SECONDS;
+      if (rand() < dt / t) this.setLevel(x, y, 0, next);
     }
   }
 
@@ -728,7 +769,9 @@ export class World {
     this.last = null;
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-        if (isWheat(c.getObject(lx, ly))) this.crops.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
+        const id = c.getObject(lx, ly);
+        if (isWheat(id)) this.crops.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
+        if (isGrowingTree(id)) this.trees.add(chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly));
       }
     }
   }

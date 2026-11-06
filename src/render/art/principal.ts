@@ -46,6 +46,8 @@ import oakDoorIcon from '../../assets/icon-block-oak-door.webp';
 import sheepLove from '../../assets/sheep-love.webp';
 import sheep from '../../assets/sheep.webp';
 import horse from '../../assets/horse.webp';
+import cow from '../../assets/cow.webp';
+import chicken from '../../assets/chicken.webp';
 import villagerBlond from '../../assets/villager-blond.webp';
 import villagerBrown from '../../assets/villager-brown.webp';
 import villagerBlack from '../../assets/villager-black.webp';
@@ -104,6 +106,14 @@ import cauldronIcon from '../../assets/icon-block-cauldron.webp';
 import cauldronSprite from '../../assets/cauldron.webp';
 import ovenIcon from '../../assets/icon-block-oven.webp';
 import ovenSprite from '../../assets/oven.webp';
+import treeOak from '../../assets/tree-oak.webp';
+import treeApple from '../../assets/tree-apple.webp';
+import treeCactus from '../../assets/tree-cactus.webp';
+import oakSaplingIcon from '../../assets/icon-item-oak-sapling.webp';
+import appleSaplingIcon from '../../assets/icon-item-apple-sapling.webp';
+import appleIcon from '../../assets/icon-item-apple.webp';
+import chairIcon from '../../assets/icon-block-chair.webp';
+import chairSprite from '../../assets/chair.webp';
 import townHouseRed1f from '../../assets/town-house-red-1f.webp';
 import townHouseRed2f from '../../assets/town-house-red-2f.webp';
 import townHouseBlue1f from '../../assets/town-house-blue-1f.webp';
@@ -162,6 +172,8 @@ const pack: ArtPack = {
     lamb,
     'sheep-love': sheepLove,
     horse,
+    cow,
+    chicken,
     'villager-blond': villagerBlond,
     'villager-brown': villagerBrown,
     'villager-black': villagerBlack,
@@ -205,13 +217,16 @@ const pack: ArtPack = {
     campfire: { icon: campfireIcon, sprite: campfireSprite },
     cauldron: { icon: cauldronIcon, sprite: cauldronSprite },
     oven: { icon: ovenIcon, sprite: ovenSprite },
+    chair: { icon: chairIcon, sprite: chairSprite },
   },
+  // Pranchas de crescimento (scripts/extract-trees.py): 4 × 2 quadros por árvore.
+  trees: { oak: treeOak, apple: treeApple, cactus: treeCactus },
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
   town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide },
   water: { top: waterTop, flow: waterFlow },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,
-  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon },
+  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, oak_sapling: oakSaplingIcon, apple_sapling: appleSaplingIcon, apple: appleIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
   modular: { manifest: chibiManifest as unknown as ModularManifest, sheets: chibiSheets },
 };

@@ -19,6 +19,8 @@ scripts/
   extract-stones.py            prancha das 8 pedras → ícones + colunas da Pedra Bruta e das variações no atlas
   extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
+  extract-trees.py             pranchas de crescimento 4×2 (carvalho, macieira, cacto) → quadros + ícones de mudas/maçã
+  extract-craftables.py        objetos de receita (fogueira, caldeirão, forno, cadeira) → sprite + ícone
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
   slice-icons.py               prancha em grade com transparência → um ícone por célula
   make-icons.py                ícones do PWA (public/)
@@ -73,7 +75,7 @@ src/
     save.ts, menu.ts           salvamento automático (localStorage, ADR 0011) e menu ☰
     exploration.ts             névoa do minimapa: células já vistas (bits por chunk), salva com o mundo
     title.ts                   tela de entrada (Novo jogo / Continuar) e montagem do personagem; o mundo fica em vitrine atrás
-    walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts, villager.ts   movimento/colisão/altura compartilhados
+    walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts (FarmAnimal: cavalo, vaca, galinha), villager.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
                                morte/renascimento dos monstros, atores p/ render
     inventory.ts, hotbar.ts, bag.ts, chest.ts, skills.ts, drops.ts   inventário, grade, bolsa, baú, receitas, itens caídos

@@ -12,6 +12,10 @@ export const Item = {
   SILK: 'silk',
   FANG: 'fang',
   QUEEN_HEART: 'queen_heart',
+  /** Mudas (cortar a árvore adulta) e a fruta da macieira (comer vem com a comida, Fase P). */
+  OAK_SAPLING: 'oak_sapling',
+  APPLE_SAPLING: 'apple_sapling',
+  APPLE: 'apple',
 } as const;
 
 export type ItemId = (typeof Item)[keyof typeof Item];
@@ -33,6 +37,9 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   silk: { id: Item.SILK, name: 'Seda de Aranha', loot: true },
   fang: { id: Item.FANG, name: 'Presa de Aranha', loot: true },
   queen_heart: { id: Item.QUEEN_HEART, name: 'Coração da Rainha', loot: true },
+  oak_sapling: { id: Item.OAK_SAPLING, name: 'Muda de Carvalho', plants: Block.OAK_SAPLING },
+  apple_sapling: { id: Item.APPLE_SAPLING, name: 'Muda de Macieira', plants: Block.APPLE_SAPLING },
+  apple: { id: Item.APPLE, name: 'Maçã' },
 };
 
 /** Espólios, na ordem exibida na HUD. */
@@ -88,6 +95,8 @@ export interface Drop {
  * Trigo verde: devolve a semente. Demais blocos: nada (construção é infinita).
  */
 export function dropsFor(id: BlockId, rand: () => number = Math.random): Drop[] {
+  const tree = treeDrops(id, rand);
+  if (tree) return tree;
   if (!isWheat(id)) return [];
   if (wheatStage(id) === WHEAT_STAGES - 1) {
     return [
@@ -96,6 +105,27 @@ export function dropsFor(id: BlockId, rand: () => number = Math.random): Drop[] 
     ];
   }
   return [{ item: Item.WHEAT_SEED, count: 1 }];
+}
+
+/**
+ * Árvores que crescem: a muda volta inteira; a árvore adulta derrubada pode deixar uma muda (50%) e a macieira
+ * carregada solta as maçãs. null = não é árvore desse tipo (as toras saem em `blockDrops`).
+ */
+function treeDrops(id: BlockId, rand: () => number): Drop[] | null {
+  const sapling = (item: ItemId): Drop[] => (rand() < 0.5 ? [{ item, count: 1 }] : []);
+  switch (id) {
+    case Block.OAK_SAPLING: return [{ item: Item.OAK_SAPLING, count: 1 }];
+    case Block.APPLE_SAPLING: return [{ item: Item.APPLE_SAPLING, count: 1 }];
+    case Block.OAK_TREE: return sapling(Item.OAK_SAPLING);
+    case Block.APPLE_TREE: return [...pickDrops(rand), ...sapling(Item.APPLE_SAPLING)];
+    case Block.APPLE_TREE_BARE: return sapling(Item.APPLE_SAPLING);
+    default: return null;
+  }
+}
+
+/** Colher a macieira carregada (tocar nela): 2–3 maçãs. */
+export function pickDrops(rand: () => number = Math.random): Drop[] {
+  return [{ item: Item.APPLE, count: 2 + (rand() < 0.5 ? 1 : 0) }];
 }
 
 /**
@@ -181,7 +211,10 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR]);
+
+/** Árvores adultas (dão 2–3 toras). */
+const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.SAKURA_TREE, Block.APPLE_TREE, Block.APPLE_TREE_BARE]);
 
 /**
  * O que um bloco quebrado devolve como material (mundos com coleta): o próprio material (cubo ou chão;
@@ -189,7 +222,8 @@ const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, B
  * Plantas, enfeites e blocos de outros mundos não devolvem material (plantas: ver `toolDrops`).
  */
 export function blockDrops(id: BlockId, rand: () => number = Math.random): Drop[] {
-  if (id === Block.OAK_TREE || id === Block.SAKURA_TREE) return [{ item: blockStack(Block.OAK_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }];
+  if (ADULT_TREES.has(id)) return [{ item: blockStack(Block.OAK_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }];
+  if (id === Block.OAK_YOUNG || id === Block.OAK_GROWING || id === Block.APPLE_YOUNG) return [{ item: blockStack(Block.OAK_LOG), count: 1 }];
   if (isDoor(id)) return [{ item: blockStack(Block.OAK_DOOR), count: 1 }];
   return COLLECTABLE.has(id) ? [{ item: blockStack(id), count: 1 }] : [];
 }
@@ -250,6 +284,11 @@ export const RECIPES: Recipe[] = [
   {
     id: 'oak-chest', name: 'Baú de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 8 }], output: { item: blockStack(Block.CHEST), count: 1 },
+  },
+  // Móveis (dono do produto, 2026-11-06).
+  {
+    id: 'wooden-chair', name: 'Cadeira de Madeira', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.CHAIR), count: 1 },
   },
   // Cozinha (dono do produto, 2026-11-05): por enquanto só se fabricam e se colocam; cozinhar vem com a comida.
   {

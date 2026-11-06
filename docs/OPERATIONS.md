@@ -128,6 +128,15 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 
 **Cavalo**: `$P assets-src/horse-sheet.png src/assets/horse.png --alpha --largest --frame-h 112`
 
+**Vaca e galinha**: `$P assets-src/animals/cow.png src/assets/cow.png --alpha --largest --frame-h 112` e
+`$P assets-src/animals/chicken.png src/assets/chicken.png --alpha --largest --frame-h 96` (o ruído vermelho do fundo
+da galinha some com `--largest`).
+
+**Pranchas de crescimento** (árvores e cacto, grade 4×2 transparente em `assets-src/trees/<nome>.png`):
+`python3 scripts/extract-trees.py` → `tree-<nome>.png` (quadros de 192 px, mesma escala dentro da prancha, base no pé)
++ ícones das mudas e da maçã → `optimize-assets.py`. A grade da prancha não precisa ser exata: o script separa os 8
+desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e descarta o ruído do fundo.
+
 **Interiores** (`assets-src/interiors/<id>.png`, imagem inteira = cômodo): `python3 scripts/extract-interiors.py
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.

@@ -43,6 +43,9 @@ export const Block = {
   CAULDRON: 44,
   /** Forno de Pedra (6 Pedras). */
   OVEN: 45,
+  // --- móveis (por receita) ---
+  /** Cadeira de Madeira (4 Tábuas). */
+  CHAIR: 46,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
   STONE_BRICK: 35,
@@ -55,6 +58,16 @@ export const Block = {
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
   SAKURA_TREE: 41,
+  // --- árvores que crescem (prancha de crescimento): muda → jovem → (crescendo) → adulta ---
+  OAK_SAPLING: 52,
+  OAK_YOUNG: 53,
+  OAK_GROWING: 54,
+  APPLE_SAPLING: 55,
+  APPLE_YOUNG: 56,
+  /** Macieira adulta com maçãs (tocar colhe). */
+  APPLE_TREE: 57,
+  /** Macieira adulta já colhida: florida, as maçãs voltam com o tempo. */
+  APPLE_TREE_BARE: 58,
   // --- enfeites (não bloqueiam passagem) ---
   TALL_GRASS: 50,
   FLOWER: 51,
@@ -213,6 +226,7 @@ const defs: BlockDef[] = [
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
   object(Block.CHEST, 'Baú de Carvalho', { shape: 'rock', organic: 'wood' }),
+  object(Block.CHAIR, 'Cadeira de Madeira', { shape: 'rock', organic: 'wood' }), // madeira: o machado desmonta
   object(Block.CAMPFIRE, 'Fogueira', { shape: 'rock', organic: 'wood', glow: true }), // madeira: o machado desmonta
   object(Block.CAULDRON, 'Caldeirão de Pedra', { shape: 'rock', stone: true, glow: true }),
   object(Block.OVEN, 'Forno de Pedra', { shape: 'rock', stone: true, glow: true }),
@@ -220,6 +234,14 @@ const defs: BlockDef[] = [
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
+  // Mudas são plantas (a enxada arranca); dali em diante, madeira.
+  object(Block.OAK_SAPLING, 'Muda de Carvalho', { shape: 'tree', placeable: false, organic: 'plant' }),
+  object(Block.OAK_YOUNG, 'Carvalho Jovem', { shape: 'tree', placeable: false, organic: 'wood' }),
+  object(Block.OAK_GROWING, 'Carvalho Jovem', { shape: 'tree', placeable: false, organic: 'wood' }),
+  object(Block.APPLE_SAPLING, 'Muda de Macieira', { shape: 'tree', placeable: false, organic: 'plant' }),
+  object(Block.APPLE_YOUNG, 'Macieira Jovem', { shape: 'tree', placeable: false, organic: 'wood' }),
+  object(Block.APPLE_TREE, 'Macieira', { shape: 'tree', placeable: false, organic: 'wood' }),
+  object(Block.APPLE_TREE_BARE, 'Macieira', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false, organic: 'plant' }),
   object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false, placeable: false, organic: 'plant' }),
   // Dungeon: chão e cenário fixos (inquebráveis; o World também protege a área inteira).
@@ -314,7 +336,25 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 ];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
-export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN];
+export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR];
+
+/**
+ * Crescimento das árvores plantadas: estágio → próximo (o `World` avança com o tempo). A macieira colhida volta a
+ * ter maçãs pelo mesmo caminho.
+ */
+export const TREE_NEXT: Readonly<Partial<Record<number, BlockId>>> = {
+  [Block.OAK_SAPLING]: Block.OAK_YOUNG,
+  [Block.OAK_YOUNG]: Block.OAK_GROWING,
+  [Block.OAK_GROWING]: Block.OAK_TREE,
+  [Block.APPLE_SAPLING]: Block.APPLE_YOUNG,
+  [Block.APPLE_YOUNG]: Block.APPLE_TREE,
+  [Block.APPLE_TREE_BARE]: Block.APPLE_TREE,
+};
+
+/** Árvore que ainda cresce (ou macieira esperando as maçãs voltarem)? */
+export function isGrowingTree(id: BlockId): boolean {
+  return TREE_NEXT[id] !== undefined;
+}
 
 /** Porta (aberta ou fechada)? */
 export function isDoor(id: BlockId): boolean {

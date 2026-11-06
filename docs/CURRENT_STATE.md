@@ -1,6 +1,16 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.51.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.52.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Árvores que crescem, macieiras, vaca, galinha e cadeira — v0.52.0
+- Pranchas de crescimento 4×2 (`scripts/extract-trees.py` → `tree-oak/apple/cactus.webp`): carvalho e macieira com
+  estágios (`OAK_SAPLING/YOUNG/GROWING` → `OAK_TREE`; `APPLE_SAPLING/YOUNG` → `APPLE_TREE`) e variantes da adulta;
+  cacto com 8 variantes. `TREE_NEXT` (blocks) + `World.tick` (~120 s por estágio). Macieira carregada: tocar colhe
+  (`World.pick` → `APPLE_TREE_BARE`, maçãs voltam em ~150 s). Mudas saem de árvores adultas (50%) e vão em terra/grama.
+- Gerador: `Biome.altTree` mistura macieiras nos Campos (1/6). Itens novos: Muda de Carvalho, Muda de Macieira, Maçã.
+- `FarmAnimal` (`game/horse.ts`): cavalo, 2 vacas e 4 galinhas no campo do portão. Cadeira de Madeira por receita.
+- Ações de rede `plant` (com `block`) e `pick`: `PROTOCOL_VERSION` 2. O crescimento roda em cada aparelho (como o
+  trigo): numa sala, os estágios podem divergir entre jogadores até alguém editar a célula.
 
 ## Minimapa — v0.51.0
 - Minimapa redondo (`render/minimap.ts`, cores em `render/mapColors.ts` lidas do `World`) no canto superior direito,
@@ -106,7 +116,7 @@ _Atualizado em 2026-11-06 — v0.51.0 · jogo: **Orvalis** (`orvalis.pensamentos
 - **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
   limite; **bolsa** de 18 espaços (3 fileiras de 9 com a mão), troca para a grade; tipo novo só entra se houver lugar. Ao cair, perde tudo menos as ferramentas. Santuário segue infinito.
 - **Ovelhas**: rebanho no campo, do lado de fora do portão da cidade; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
-- **Cavalo**: um no mesmo campo; só passeia (sem montaria ainda).
+- **Cavalo, vacas e galinhas**: no mesmo campo; só passeiam (sem montaria, leite nem ovos ainda).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.
 
 ## Salvamento

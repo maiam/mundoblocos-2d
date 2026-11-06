@@ -140,6 +140,9 @@ export class Game {
       this.entities.spawnFlock(this.world, gx, gy + (this.world.town ? 8 : 0));
       // Cavalo no mesmo campo, um pouco mais longe da estrada.
       this.entities.spawnHorse(this.world, gx + 9, gy + (this.world.town ? 10 : 2));
+      // Vacas e galinhas no mesmo campo, do outro lado da estrada.
+      this.entities.spawnAnimals(this.world, 'cow', gx - 9, gy + (this.world.town ? 10 : 2), 2, 91);
+      this.entities.spawnAnimals(this.world, 'chicken', gx - 6, gy + (this.world.town ? 6 : 1), 4, 97);
     }
     this.entities.spawnVillagers(this.world);
     this.entities.spawnMonsters(this.world);

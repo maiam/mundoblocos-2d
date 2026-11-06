@@ -53,6 +53,7 @@
   | Fogueira | 3 Toras de Carvalho | 1 Fogueira |
   | Caldeirão de Pedra | 3 Pedras Brutas + 1 Fogueira | 1 Caldeirão |
   | Forno de Pedra | 6 Pedras Brutas | 1 Forno |
+  | Cadeira de Madeira | 4 Tábuas | 1 Cadeira |
 
   Fogueira, Caldeirão e Forno (v0.49.0) são objetos de 1 célula colocados fora da cidade: bloqueiam, brilham à noite e
   voltam à bolsa ao quebrar (machado desmonta a fogueira; picareta, os de pedra). Ainda não cozinham (Fase P, entrega
@@ -84,6 +85,20 @@
   → ~1,5 min da semente ao maduro, sem sincronia entre plantas. O `World` guarda as células plantadas
   (só em chunks modificados, que não descarregam).
 - Colher = quebrar segurando (2 s com a mão/item, 1 s com ferramenta — mesma regra de qualquer quebra).
+
+## Árvores que crescem (v0.52.0; `world/blocks.ts` → `TREE_NEXT`, `world/world.ts`, `world/items.ts`)
+- **Carvalho**: Muda → Jovem → Crescendo → Carvalho adulto. **Macieira**: Muda → Jovem (florida) → Macieira com
+  maçãs; colhida vira **Macieira florida** (`APPLE_TREE_BARE`) e as maçãs voltam. Todos os estágios são sólidos
+  (1 célula); a muda é planta (a enxada arranca e devolve), o resto é madeira (machado).
+- **Plantar**: Muda de Carvalho/Macieira (itens com `plants`) em **Terra ou Terra com Grama**, célula livre (ou com
+  enfeite), fora de área protegida e sem ninguém em pé (`World.canPlant(x, y, id)` + `ActionController`).
+- **Crescer**: `World.tick` avança cada estágio com probabilidade `dt / TREE_STAGE_SECONDS` (120 s); a macieira
+  colhida volta a dar frutas com `dt / FRUIT_REGROW_SECONDS` (150 s). Só árvores em chunks editados crescem (as do
+  gerador já nascem adultas); o `World` as reencontra ao restaurar chunks salvos.
+- **Colher maçãs**: tocar (qualquer item em mãos) numa Macieira com maçãs (`World.canPick/pick`) → 2–3 Maçãs
+  caem ao pé (`pickDrops`). Derrubar a macieira carregada também solta as maçãs.
+- **O que cai**: muda volta inteira; adulta → 2–3 toras + Muda (50%); jovem/crescendo → 1 tora.
+- Gerador: carvalhos dos Campos com 1/6 de macieiras (`Biome.altTree`); cerejeiras não mudaram.
 
 ## Inventário e coleta (`game/`)
 - `Inventory`: quantidades de itens; começa com 5 sementes e 2 trigos. Não persistido.
