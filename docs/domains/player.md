@@ -25,6 +25,11 @@
   nada) e não tem alvo de célula; o alvo é marcado por anel vermelho na entidade à frente.
 - **Golpe em monstros** (espada/machado): dano pela fórmula (ataque + poder da arma − defesa, ±10%, crítico) na aranha no arco (alcance contado da borda do corpo);
   anel vermelho marca o alvo. Ver `domains/dungeon.md`.
+- **Fome** (v0.56.0): `Player.hunger` 0–100 (`HUNGER` em `world/progression.ts`), só com `WorldProfile.hunger`. Esvazia
+  ~0,14/s (~12 min); abaixo de `regenMin` (30) não regenera; vazia tira 2 de vida a cada 4 s, parando em 1; `respawn`
+  enche. `eat(pontos)` recusa com a barra cheia. Comer pelo botão/clique com alimento na mão (`ActionController.eatInstead`):
+  se o alimento também planta e o alvo é terra arada livre, planta; senão, come. Pesos: `FOOD` (maçã 15, cenoura 12,
+  batata 10, tomate 8, pão 35, macarrão ao molho 70). Barra na HUD sempre visível, abaixo da vida.
 - **Vida**: pontos (`Player.hp` / `Player.maxHp`, atributos em `Player.stats` — `world/progression.ts`), `hurt`
   (invencível 0,9 s + recuo), regeneração fora de combate e `respawn` (o `Game` a faz renascer na tenda ou na cidade). Detalhes em `domains/dungeon.md`.
 - **Machado**: toque curto = **golpe** (folha `heroine-axe-attack`), igual à espada: acerta entidades no arco

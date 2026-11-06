@@ -39,7 +39,7 @@
 ## Habilidades: profissões e receitas (`world/items.ts` → `PROFESSIONS`, `RECIPES`; tela em `game/skills.ts`)
 - Botão **Habilidades** (11º, tecla K): sobem acima da grade **Receitas** (4 fileiras de 9, alinhadas aos 9 itens) e,
   à direita, **Profissões** (4 fileiras de 2, sobre os 3 botões). Um painel por vez (bolsa ou habilidades); pausa.
-- Profissão: **Construtor** (única por enquanto). Receitas do Construtor:
+- Profissões: **Construtor** e **Cozinheiro** (v0.56.0; tocar na profissão troca a lista). Receitas do Construtor:
 
   | Receita | Ingredientes | Resultado |
   |---|---|---|
@@ -59,6 +59,14 @@
   Fogueira, Caldeirão e Forno (v0.49.0) são objetos de 1 célula colocados fora da cidade: bloqueiam, brilham à noite e
   voltam à bolsa ao quebrar (machado desmonta a fogueira; picareta, os de pedra). Ainda não cozinham (Fase P, entrega
   4: comida).
+- Receitas do **Cozinheiro** (só perto de um **Caldeirão de Pedra** colocado, `Recipe.station`, até 3 células):
+
+  | Receita | Ingredientes | Resultado |
+  |---|---|---|
+  | Pão | 2 Trigos | 1 Pão (+35 de fome) |
+  | Macarrão ao Molho | 4 Trigos + 2 Tomates | 1 Macarrão ao Molho (+70) |
+
+  Longe do caldeirão a receita fica apagada e o toque avisa "Chegue perto de um Caldeirão de Pedra…".
 - **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
   no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
 - **Tenda** (`Block.TENT`, **2×2**, madeira: machado, picareta e mão quebram): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`

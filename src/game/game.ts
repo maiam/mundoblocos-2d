@@ -2,8 +2,8 @@ import { CUBE_FRONT, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../confi
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
-import { blockDef } from '../world/blocks';
-import { canCraft, ITEMS, monsterDrops, type Recipe, type StackId, TOOLS } from '../world/items';
+import { blockDef, type BlockId } from '../world/blocks';
+import { canCraft, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
@@ -28,6 +28,7 @@ import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { cleanLook, type ModularLook } from '../render/modular';
+import { HUNGER } from '../world/progression';
 import { Minimap, type MinimapMarker } from '../render/minimap';
 import { Exploration } from './exploration';
 
@@ -131,6 +132,7 @@ export class Game {
     this.inventory = profile.collectBlocks || profile.farming ? new Inventory() : new Inventory({});
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
+    this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
     this.entities.look = options.look ?? null;
     if (profile.sheep) {
@@ -177,6 +179,8 @@ export class Game {
     this.bag = new BagPanel(this.hud.bagSection, (i, e) => this.onBagTap(i, e));
     this.chest = new ChestPanel(this.hud.chestSection, (i) => this.onChestTap(i));
     setProfessionIcon('builder', art().uiIcons?.builder ?? '');
+    // Cozinheiro: o ícone do Caldeirão (onde se cozinha) até chegar arte própria.
+    setProfessionIcon('cook', art().craftables?.cauldron?.icon ?? '');
     this.skills = new SkillsPanel(this.hud.recipesSection, this.hud.professionsSection,
       (id) => { const v = this.stackView(id, null); return { icon: v.icon, name: v.name }; },
       (r) => this.craft(r));
@@ -408,9 +412,21 @@ export class Game {
     this.hud.setSkillsOpen(open);
     if (open) {
       this.actions.cancelAll();
-      this.skills.render((id) => this.inventory.count(id));
+      this.skills.render((id) => this.inventory.count(id), this.nearStation);
     }
   }
+
+  /** Há um bloco `id` (estação de receita, ex.: Caldeirão) a até `STATION_REACH` células da personagem? */
+  private nearStation = (id: BlockId): boolean => {
+    const p = this.player;
+    const r = STATION_REACH;
+    for (let y = Math.floor(p.y - r); y <= Math.floor(p.y + r); y++) {
+      for (let x = Math.floor(p.x - r); x <= Math.floor(p.x + r); x++) {
+        if (this.world.getObject(x, y) === id && Math.hypot(x + 0.5 - p.x, y + 0.5 - p.y) <= r + 0.5) return true;
+      }
+    }
+    return false;
+  };
 
   /**
    * Cria 1 vez a receita: gasta os ingredientes e o resultado entra na mão/bolsa. Se o resultado for de um tipo novo
@@ -418,7 +434,12 @@ export class Game {
    */
   private craft(r: Recipe): void {
     const count = (id: StackId) => this.inventory.count(id);
-    if (!canCraft(r, count)) return;
+    if (!canCraft(r, count, this.nearStation)) {
+      if (r.station !== undefined && r.inputs.every((i) => count(i.item) >= i.count)) {
+        this.hud.toast(`Chegue perto de um ${blockDef(r.station).name} para fazer ${r.name}`);
+      }
+      return;
+    }
     const out = r.output.item;
     // Se os ingredientes acabarem, liberam espaço; o resultado precisa caber depois do gasto.
     const after = new Map(r.inputs.map((i) => [i.item, count(i.item) - i.count]));
@@ -430,7 +451,7 @@ export class Game {
     this.inventory.add(out, r.output.count);
     this.hotbar.autoPlace(out);
     this.refreshSelection();
-    this.skills.render(count);
+    this.skills.render(count, this.nearStation);
   }
 
   /** O que está na bolsa (fora da grade), para os 18 espaços dela. */
@@ -462,7 +483,7 @@ export class Game {
     this.hotbar.autoPlace(id);
     if (this.chest.isOpen) this.refreshChestUi();
     else if (this.bag.isOpen) this.bag.render(this.bagEntries());
-    if (this.skills.isOpen) this.skills.render((id) => this.inventory.count(id));
+    if (this.skills.isOpen) this.skills.render((id) => this.inventory.count(id), this.nearStation);
   }
 
   /**
@@ -647,6 +668,7 @@ export class Game {
     this.hud.update(this.selected ?? -1);
     // Corações só quando importam (ferida ou na dungeon) — tela limpa no resto do tempo.
     this.hud.setHealth(this.player.hp, this.player.maxHp, this.inDungeon || this.player.hp < this.player.maxHp);
+    this.hud.setHunger(this.player.hungerOn ? this.player.hunger : null, HUNGER.max);
     const slot = this.slot;
     this.actionButton.update(this.actions.actionProgress,
       !!slot && slot.kind !== 'tool' && (slot.kind === 'item' || this.collect) && this.inventory.count(slotStack(slot)) === 0);

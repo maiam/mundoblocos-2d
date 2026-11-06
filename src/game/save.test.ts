@@ -65,6 +65,7 @@ describe('Salvamento automático', () => {
     world.placeBlock(far[0], far[1], Block.SAND);
     player.x += 1.25;
     player.hp = 6;
+    player.hunger = 42;
     player.facing = 'left';
     inventory.add('silk', 4);
     inventory.take('wheat_seed');
@@ -96,6 +97,7 @@ describe('Salvamento automático', () => {
     expect([b.player.x, b.player.y, b.player.hp, b.player.facing]).toEqual([sx + 0.5, sy + 0.6, 6, 'left']);
     expect(b.inventory.count('silk')).toBe(4);
     expect(b.entities.look).toEqual(entities.look);
+    expect(b.player.hunger).toBe(42);
     expect(b.exploration.count).toBe(exploration.count);
     expect(b.exploration.isExplored(sx, sy)).toBe(true);
     expect(b.inventory.count('wheat_seed')).toBe(inventory.count('wheat_seed'));
@@ -141,7 +143,8 @@ describe('Salvamento automático', () => {
     expect(v4.player.hp).toBe(60);
     expect(v4.look).toBeNull();
     expect(v4.explored).toEqual([]); // v6 → v7: minimapa começa coberto (v5 → v6: quem já jogava continua com a heroína)
-    expect(v4.dungeon).toBeNull(); // v7 → v8: covil mudou de lugar, as aranhas voltam completas
+    expect(v4.dungeon).toBeNull();
+    expect(v4.player.hunger).toBe(100); // v8 → v9: quem já jogava começa satisfeito // v7 → v8: covil mudou de lugar, as aranhas voltam completas
     // Versão desconhecida → começa do zero; armazenamento bloqueado → jogo segue sem salvar.
     expect(migrate({ ...d2, v: 999 })).toBeNull();
     storage.setItem('mundoblocos:save:principal:9', '{quebrado');

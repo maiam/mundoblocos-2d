@@ -105,3 +105,5 @@
 | Tenda pede 1 Pano de Seda (receita nova: 10 sedas → 1 pano) em vez de 10 sedas soltas | domains/farming |
 | Níveis de ferramenta enviados em 06/11 entram só depois da camada de mão (contrato de ferramentas); a prancha de pedra não estava no pedido e espera confirmação | ADR 0018 |
 | Cidade 1 = mundo das florestas (sem deserto); próximos mundos (árido, pantanoso…) por portais, cada um com sua cidade | ADR 0019 |
+| Fome em barra 0–100 (~12 min); alimentos com pesos (`FOOD`); crus: maçã, cenoura, batata, tomate; pratos só no Caldeirão (Cozinheiro); fome vazia não mata (para em 1 de vida) | domains/player, domains/farming |
+| Receita pode exigir estação por perto (`Recipe.station`), sem novo painel: o Caldeirão é a cozinha | domains/farming |

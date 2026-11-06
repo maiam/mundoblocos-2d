@@ -321,6 +321,22 @@ html, body {
   font-size: 11px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 1px rgba(20, 12, 40, .9);
 }
+.hunger {
+  position: relative; width: 168px; height: 12px; border-radius: 6px; overflow: hidden;
+  background: rgba(28, 16, 48, .85); border: 1.5px solid #1c1030; box-shadow: 0 1px 2px rgba(20, 12, 40, .6);
+}
+.hunger[hidden] { display: none; }
+.hunger-fill {
+  position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: 5px;
+  background: linear-gradient(180deg, #ffd58a 0%, #f2a33a 55%, #c97a1e 100%); transition: width .3s ease;
+}
+.hunger.low .hunger-fill { background: linear-gradient(180deg, #ffb36b 0%, #ff6a3d 55%, #d9412b 100%); }
+.hunger.empty { animation: hunger-pulse 1s ease-in-out infinite; }
+@keyframes hunger-pulse { 50% { border-color: #ff6a3d; } }
+.hunger-text {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: #fff; letter-spacing: .5px; text-shadow: 0 1px 1px rgba(20, 12, 40, .9);
+}
 .loot { display: flex; gap: 6px; }
 .loot-item {
   display: flex; align-items: center; gap: 3px; padding: 2px 7px 2px 3px; border-radius: 10px;
@@ -331,10 +347,12 @@ html, body {
 .loot-item img { width: 20px; height: 20px; }
 @media (max-height: 500px) and (orientation: landscape) {
   .health { width: 140px; height: 16px; }
+  .hunger { width: 140px; height: 10px; }
+  .hunger-text { font-size: 8px; }
   .health-text { font-size: 10px; }
   .loot-item img { width: 16px; height: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .health, .health-fill { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .health, .health-fill, .hunger-fill { transition: none; } .hunger.empty { animation: none; } }
 
 /* Menu (☰ no canto superior direito) e painel. */
 .menu-button {

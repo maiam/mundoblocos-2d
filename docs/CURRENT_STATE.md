@@ -1,6 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.55.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.56.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Fome, comida e Cozinheiro — v0.56.0
+- `Player.hunger` (`HUNGER` e `FOOD` em `world/progression.ts`), ligada por `WorldProfile.hunger` (só mundo principal);
+  barra na HUD (`Hud.setHunger`). Comer: `ActionController.eatInstead` (alimento na mão e alvo onde não dá para
+  plantar). Profissão `cook` com receitas que pedem estação (`Recipe.station` = Caldeirão a até `STATION_REACH` 3
+  células; `Game.nearStation`). `SAVE_VERSION` 9 (`player.hunger`).
 
 ## Covil isolado e mundo de florestas — v0.55.0
 - Covil das Aranhas isolado em `DUNGEON_ORIGIN`, entrada = caverna (`World.cave`, `DUNGEON_CAVE`) a ≥ 160 células do

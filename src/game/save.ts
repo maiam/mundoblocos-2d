@@ -1,5 +1,5 @@
 import type { MonsterKind } from '../world/dungeon';
-import { BASE_STATS, MONSTER_STATS } from '../world/progression';
+import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
 import { Block } from '../world/blocks';
 import { startingGrid } from './hotbar';
@@ -22,7 +22,7 @@ import type { ModularLook } from '../render/modular';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 export interface SaveData {
   v: number;
@@ -31,7 +31,7 @@ export interface SaveData {
   savedAt: number;
   time: number;
   selected: number | null;
-  player: { x: number; y: number; z: number; hp: number; facing: Facing };
+  player: { x: number; y: number; z: number; hp: number; facing: Facing; hunger: number };
   /** Aparência montada na tela de entrada (personagem modular, ADR 0017); null = heroína. */
   look: ModularLook | null;
   /** Névoa do minimapa: células já descobertas, por chunk (bits em base64). */
@@ -84,7 +84,7 @@ export function captureSave(s: GameState): SaveData {
     savedAt: Date.now(),
     time: s.time,
     selected: s.selected,
-    player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing },
+    player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing, hunger: Math.round(p.hunger * 10) / 10 },
     look: s.entities.look,
     explored: s.exploration?.toSave() ?? [],
     tent: s.world.tent,
@@ -139,6 +139,8 @@ export function migrate(raw: unknown): SaveData | null {
   // v7 → v8 (covil isolado, ADR 0019): o labirinto mudou de lugar — as aranhas voltam completas (posições antigas não
   // valem mais). Quem salvou dentro do covil antigo fica onde estava, agora terreno comum (o Game desprende se preciso).
   if (d.v === 7) d = { ...d, v: 8, dungeon: null };
+  // v8 → v9 (comida, Fase P entrega 4): barra de fome — quem já jogava começa satisfeito.
+  if (d.v === 8) d = { ...d, v: 9, player: { ...d.player, hunger: HUNGER.max } };
   return d.v === SAVE_VERSION ? d : null;
 }
 
@@ -175,6 +177,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.z = p.visualZ = d.player.z;
   p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
+  p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));
   s.entities.look = d.look ?? null;
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
