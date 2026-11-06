@@ -48,6 +48,13 @@ export const Block = {
   CHAIR: 46,
   /** Pedregulho solto no mundo (arte da prancha de pedras, variante por célula); minerado solta Pedra Bruta. */
   ROCK_BOULDER: 47,
+  // --- cerca de tábuas (por receita; o render emenda cada célula com as cercas/portões vizinhos) ---
+  /** Cerca de Madeira: bloqueia a passagem (cercados para animais). */
+  FENCE: 48,
+  /** Portão da cerca, fechado (o id guarda o estado, como a porta). */
+  FENCE_GATE: 49,
+  /** Portão aberto: passável. Só existe no mundo (a bolsa coloca o fechado). */
+  FENCE_GATE_OPEN: 76,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
   STONE_BRICK: 35,
@@ -204,7 +211,7 @@ export type BlockLayer = 'ground' | 'object';
  * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon) ou
  * construção (sprite de várias células da cidade, com sombra própria; as outras células são `TOWN_PART`).
  */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'rock' | 'building';
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'rock' | 'building';
 
 export interface BlockDef {
   id: BlockId;
@@ -275,6 +282,10 @@ const defs: BlockDef[] = [
   object(Block.CAULDRON, 'Caldeirão de Pedra', { shape: 'rock', stone: true, glow: true }),
   object(Block.OVEN, 'Forno de Pedra', { shape: 'rock', stone: true, glow: true }),
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
+  // Cerca e portão: ocupam a célula (nada empilha em cima); madeira: o machado desmonta.
+  object(Block.FENCE, 'Cerca de Madeira', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_GATE, 'Portão de Madeira', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_GATE_OPEN, 'Portão de Madeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -381,7 +392,9 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 ];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
-export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR];
+export const HOTBAR_BLOCKS: BlockId[] = [
+  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_GATE,
+];
 
 /**
  * Crescimento das árvores plantadas: estágio → próximo (o `World` avança com o tempo). A macieira colhida volta a
@@ -404,4 +417,37 @@ export function isGrowingTree(id: BlockId): boolean {
 /** Porta (aberta ou fechada)? */
 export function isDoor(id: BlockId): boolean {
   return id === Block.OAK_DOOR || id === Block.OAK_DOOR_OPEN;
+}
+
+/** Portão da cerca (aberto ou fechado)? */
+export function isGate(id: BlockId): boolean {
+  return id === Block.FENCE_GATE || id === Block.FENCE_GATE_OPEN;
+}
+
+/** Cerca ou portão: as cercas vizinhas se emendam com eles. */
+export function joinsFence(id: BlockId): boolean {
+  return id === Block.FENCE || isGate(id);
+}
+
+/** Abre/fecha com um toque (porta ou portão): estado → estado oposto. */
+const TOGGLES: Readonly<Partial<Record<number, BlockId>>> = {
+  [Block.OAK_DOOR]: Block.OAK_DOOR_OPEN,
+  [Block.OAK_DOOR_OPEN]: Block.OAK_DOOR,
+  [Block.FENCE_GATE]: Block.FENCE_GATE_OPEN,
+  [Block.FENCE_GATE_OPEN]: Block.FENCE_GATE,
+};
+
+/** Porta ou portão (abre e fecha com um toque)? */
+export function isOpenable(id: BlockId): boolean {
+  return TOGGLES[id] !== undefined;
+}
+
+/** Estado oposto da porta/portão (null se o bloco não abre). */
+export function toggled(id: BlockId): BlockId | null {
+  return TOGGLES[id] ?? null;
+}
+
+/** Aberto (porta ou portão)? */
+export function isOpen(id: BlockId): boolean {
+  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN;
 }

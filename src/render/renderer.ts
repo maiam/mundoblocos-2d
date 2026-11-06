@@ -3,7 +3,8 @@ import type { Camera } from '../game/camera';
 import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
-import { Block, blockDef, type BlockId, isDoor } from '../world/blocks';
+import { Block, blockDef, type BlockId, isDoor, isGate, joinsFence } from '../world/blocks';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, fenceParts } from './fence';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
@@ -183,13 +184,19 @@ export class Renderer {
     const town = !!this.world.town;
     const sx0 = town ? bx0 - TOWN_REACH.right : bx0;
     const sy1 = town ? by1 + TOWN_REACH.up : by1;
+    const gates: number[] = [];
     for (let y = by0; y <= sy1; y++) {
+      gates.length = 0;
       for (let x = sx0; x <= bx1; x++) {
         const id = this.world.getObject(x, y);
         // Sprites largos/altos ancorados no canto inferior esquerdo (cidade, caverna do covil): desenhados mesmo com a âncora fora da tela.
         if ((x < bx0 || y > by1) && !isTownArt(id) && id !== Block.DUNGEON_CAVE) continue;
         if (isDoor(id)) {
           this.drawDoor(cam, id, x, y, opts.elapsed);
+        } else if (id === Block.FENCE && this.textures.fencePieces) {
+          this.drawFence(cam, x, y, this.textures.fencePieces);
+        } else if (isGate(id)) {
+          gates.push(x); // depois da linha: os postes do portão cobrem as travessas das cercas vizinhas
         } else if (id !== Block.AIR) {
           this.drawObject(cam, id, x, y, 0, glows);
           for (let level = 1; level < MAX_STACK; level++) {
@@ -201,6 +208,7 @@ export class Renderer {
           this.waterGlint(cam, x, y, opts.elapsed);
         }
       }
+      for (const gx of gates) this.drawObject(cam, this.world.getObject(gx, y), gx, y, 0, glows);
       const items = byRow.get(y);
       if (items) {
         items.sort((a, b) => a.y - b.y);
@@ -391,6 +399,28 @@ export class Renderer {
       const lift = blockDef(id).shape === 'tree' ? -0.9 : 0.1 - (level * CUBE_FRONT) / TILE;
       glows.push(at ? { x: x + 0.5 + at[0], y: y + 1 + at[1], color: glow } : { x: x + 0.5, y: y + lift, color: glow });
     }
+  }
+
+  /** Cerca: emenda com os vizinhos (cerca ou portão) cortando as peças na âncora (`render/fence.ts`). */
+  private drawFence(cam: Camera, x: number, y: number, pieces: HTMLCanvasElement[]): void {
+    const j = (dx: number, dy: number) => joinsFence(this.world.getObject(x + dx, y + dy));
+    const parts = fenceParts(j(0, -1), j(1, 0), j(0, 1), j(-1, 0));
+    const { w, h, ax, ay } = FENCE_FRAME;
+    const z = cam.zoom * FENCE_SCALE;
+    const left = cam.worldToScreenX(x * TILE + FENCE_OFFSET.x);
+    const top = cam.worldToScreenY(y * TILE + FENCE_OFFSET.y);
+    // Recorte (sx, sy, sw, sh) da peça, desenhado na mesma posição do quadro.
+    const piece = (p: number, sx: number, sy: number, sw: number, sh: number) =>
+      this.ctx.drawImage(pieces[p], sx, sy, sw, sh, Math.round(left + sx * z), Math.round(top + sy * z), Math.ceil(sw * z), Math.ceil(sh * z));
+    if (parts.whole !== null) {
+      piece(parts.whole, 0, 0, w, h);
+      return;
+    }
+    if (parts.north) piece(1, 0, 0, w, ay);
+    if (parts.west) piece(0, 0, 0, ax, h);
+    if (parts.east) piece(0, ax, 0, w - ax, h);
+    if (parts.south) piece(1, 0, ay, w, h - ay);
+    if (parts.post) piece(2, 0, 0, w, h);
   }
 
   /** Porta: quadro estático (fechada/aberta) ou da animação logo após mudar de estado. */

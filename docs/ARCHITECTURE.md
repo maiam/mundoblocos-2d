@@ -21,6 +21,7 @@ scripts/
   extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
   extract-rocks.py             prancha de pedras soltas → tira de pedregulhos (40 artes)
+  extract-fence.py             moldura de cerca + portão de referência → peças emendáveis, portão e ícones
   extract-crops.py             pranchas de hortaliças 8×2 → folha 4×4 (batata, tomate, cenoura)
   extract-items.py             ícones soltos de itens (maçã, batata, tomate, cenoura) → 64×64
   sprite_segments.py           recorte de pranchas por pedaços conectados (usado pelos dois acima e por extract-trees)

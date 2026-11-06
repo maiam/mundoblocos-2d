@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isDoor, isGrowingTree, TREE_NEXT } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, toggled, TREE_NEXT } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave } from './dungeon';
@@ -488,22 +488,24 @@ export class World {
     return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
   }
 
+  /** Porta ou portão da cerca (abre e fecha com um toque)? */
   isDoor(x: number, y: number): boolean {
-    return isDoor(this.getObject(x, y));
+    return isOpenable(this.getObject(x, y));
   }
 
+  /** Porta ou portão aberto? */
   isDoorOpen(x: number, y: number): boolean {
-    return this.getObject(x, y) === Block.OAK_DOOR_OPEN;
+    return isOpen(this.getObject(x, y));
   }
 
   /**
-   * Abre/fecha a porta da célula (o id guarda o estado: fechada bloqueia, aberta deixa passar).
-   * Quem chama garante que ninguém está na célula ao fechar. Retorna false se não há porta.
+   * Abre/fecha a porta ou o portão da célula (o id guarda o estado: fechado bloqueia, aberto deixa passar).
+   * Quem chama garante que ninguém está na célula ao fechar. Retorna false se não há porta nem portão.
    */
   toggleDoor(x: number, y: number): boolean {
-    const id = this.getObject(x, y);
-    if (!isDoor(id)) return false;
-    this.setLevel(x, y, 0, id === Block.OAK_DOOR ? Block.OAK_DOOR_OPEN : Block.OAK_DOOR);
+    const next = toggled(this.getObject(x, y));
+    if (next === null) return false;
+    this.setLevel(x, y, 0, next);
     return true;
   }
 

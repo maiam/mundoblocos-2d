@@ -61,6 +61,13 @@ Apenas apresentação; lê `World`, nunca escreve.
   quadro varre `TOWN_REACH` além da tela para sprites grandes. Brilho noturno: `glowColor` + `glowAt` (posição da luz
   no sprite, ex.: lanterna do poste).
 
+## Cerca que se emenda (v0.59.0)
+- `render/fence.ts`: `fenceParts(n, e, s, w)` decide a montagem pelos vizinhos que se emendam (`joinsFence`: cerca ou
+  portão). Trecho reto = peça inteira (com o poste do meio); senão, metades cortadas na âncora (centro da célula) +
+  poste grande por cima. `Renderer.drawFence` corta os canvases das peças (`textures.fencePieces`).
+- Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
+  Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
+
 ## Minimapa (v0.51.0)
 - `render/minimap.ts`: círculo no canto superior direito (112 px; 84 px no celular deitado), raio de 36 blocos, norte
   para cima, seta do jogador pela direção. Chunk descoberto = imagem 16 × 16 px (1 px por célula) refeita só quando

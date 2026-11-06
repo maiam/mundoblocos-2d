@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.59.0 — 2026-11-06
+- **Cerca de Madeira** (referência enviada pelo dono do produto): colocada célula por célula, **emenda sozinha** com as
+  cercas vizinhas — retas, cantos, "T", cruzamentos, pontas e poste solto — e se refaz ao colocar ou tirar uma
+  vizinha. Bloqueia a passagem (cercados para vacas, galinhas e ovelhas). Receita do Construtor: **2 Tábuas → 4 cercas**.
+- **Portão de Madeira**: tocar abre e fecha (como a porta); aberto deixa passar. Emenda com a cerca dos lados.
+  Receita: **4 Tábuas → 1 portão**. Por enquanto o desenho é de frente (fica certo em cerca horizontal); o portão
+  de lado espera arte.
+- O machado desmonta cerca e portão (voltam para a bolsa). Multiplayer: `PROTOCOL_VERSION` 6 (blocos novos; servidor
+  atualizado junto).
+
 ## 0.58.0 — 2026-11-06
 - **Pedregulhos** (prancha de pedras enviada, 40 artes): pedras soltas espalhadas pelo mundo, uma arte sorteada por
   lugar — no lugar dos antigos cubos de pedra avulsos (muda o mapa de todas as sementes só nesses pontos).
