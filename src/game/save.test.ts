@@ -78,6 +78,7 @@ describe('Salvamento automático', () => {
       entities.strike('down', world);
     }
     player.x = sx + 0.5; player.y = sy + 0.6; player.facing = 'left';
+    entities.look = { corpo: 'base', cabelo: 'curto-castanho', tronco: 'tunica-azul' };
     const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, time: 0.62, selected: 3, hotbar: ['tool:sword', null, 'block:20', null, null, null, null, 'silk'] })));
     expect(data.v).toBe(SAVE_VERSION);
 
@@ -92,6 +93,7 @@ describe('Salvamento automático', () => {
     expect(b.world.getObject(far[0], far[1])).toBe(Block.SAND);
     expect([b.player.x, b.player.y, b.player.hp, b.player.facing]).toEqual([sx + 0.5, sy + 0.6, 6, 'left']);
     expect(b.inventory.count('silk')).toBe(4);
+    expect(b.entities.look).toEqual(entities.look);
     expect(b.inventory.count('wheat_seed')).toBe(inventory.count('wheat_seed'));
     expect(b.entities.npcs).toHaveLength(entities.npcs.length);
     expect(b.entities.npcs.some((s) => s.baby)).toBe(true);
@@ -131,8 +133,9 @@ describe('Salvamento automático', () => {
       ...d2, v: 4, player: { ...d2.player, hp: 6 },
       dungeon: { monsters: [{ kind: 'spider-big', x: 0, y: 0, homeX: 0, homeY: 0, hp: 2 }], respawns: [] },
     })!;
-    expect(v4.v).toBe(5);
+    expect(v4.v).toBe(SAVE_VERSION);
     expect(v4.player.hp).toBe(60);
+    expect(v4.look).toBeNull(); // v5 → v6: quem já jogava continua com a heroína
     expect(v4.dungeon!.monsters[0].hp).toBe(Math.round(MONSTER_STATS['spider-big'].hp / 2));
     // Versão desconhecida → começa do zero; armazenamento bloqueado → jogo segue sem salvar.
     expect(migrate({ ...d2, v: 999 })).toBeNull();

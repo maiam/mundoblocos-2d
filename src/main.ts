@@ -1,4 +1,6 @@
-import { lookFromSearch } from './render/modular';
+import { lookFromSearch, type ModularLook } from './render/modular';
+import { art } from './render/art';
+import { TitleScreen } from './game/title';
 import './style.css';
 import { Game } from './game/game';
 import { SaveStore } from './game/save';
@@ -49,8 +51,9 @@ function goOnline(name: string, code?: string): void {
   };
   s.onWelcome = (seed) => {
     net = s;
+    const look = game?.entities.look ?? null; // mesma aparência do jogo sozinho
     game?.destroy(); // salva o mundo de antes
-    game = new Game(canvas, seed, screenMode, profile, { net: s, online, notice: `Sala ${s.room} · passe o código aos amigos` });
+    game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, notice: `Sala ${s.room} · passe o código aos amigos` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   s.join(name, code);
@@ -64,8 +67,10 @@ function leaveRoom(notice: string): void {
   start(soloSeed, notice);
 }
 
-function start(seed: number, notice?: string): void {
+/** Abre um mundo (salvo, se houver). `look` = aparência de um mundo novo; sem ela, a do jogo que estava aberto. */
+function start(seed: number, notice?: string, look?: ModularLook | null): void {
   soloSeed = seed;
+  const keepLook = look !== undefined ? look : game?.entities.look ?? null;
   game?.destroy(); // salva o mundo que estava aberto
   const url = new URL(window.location.href);
   url.searchParams.set('seed', String(seed));
@@ -73,6 +78,7 @@ function start(seed: number, notice?: string): void {
   game = new Game(canvas, seed, screenMode, profile, {
     save: store.load(seed),
     store,
+    look: keepLook,
     notice,
     online,
     // Toda seed começa na Cidade do Despertar (igual em todas): o aviso confirma que o mundo é outro.
@@ -81,20 +87,50 @@ function start(seed: number, notice?: string): void {
       start(next, `Novo mundo criado · semente ${next}`);
     },
     onRestart: () => {
+      const look = game?.entities.look ?? null; // recomeça com a mesma aparência
       game?.destroy();
       game = null;
       store.clear(seed);
-      start(seed, 'Mundo recomeçado do zero');
+      start(seed, 'Mundo recomeçado do zero', look);
     },
   });
-  // Personagem modular em teste (ADR 0017): `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…`.
-  game.entities.look = lookFromSearch(window.location.search);
+  // Atalho de teste (ADR 0017): `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…` troca a aparência.
+  const fromUrl = lookFromSearch(window.location.search);
+  if (fromUrl) game.entities.look = fromUrl;
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
 }
 
-const param = new URLSearchParams(window.location.search).get('seed');
+/**
+ * Tela de entrada com o mundo em vitrine atrás (Cidade do Despertar, igual em toda seed): Novo jogo → montar o
+ * personagem → mundo novo; Continuar → último mundo salvo.
+ */
+function showTitle(): void {
+  const last = store.lastSeed();
+  const canContinue = last !== null && store.load(last) !== null;
+  game = new Game(canvas, last ?? 1, screenMode, profile, { showcase: true });
+  const title = new TitleScreen({
+    canContinue,
+    name: savedName(),
+    manifest: art().modular?.manifest,
+    onContinue: () => {
+      title.destroy();
+      start(last!);
+    },
+    onStart: (look, name) => {
+      if (name) try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento */ }
+      title.destroy();
+      const seed = randomSeed();
+      start(seed, name ? `Bem-vindo a Orvalis, ${name}!` : 'Bem-vindo a Orvalis!', look);
+    },
+  });
+}
+
+const query = new URLSearchParams(window.location.search);
+const param = query.get('seed');
+// Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
+const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal';
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
 void loadArtPack(profile.id)
   .then(() => loadBlockArt())
-  .then(() => start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed()));
+  .then(() => (skipTitle ? start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed()) : showTitle()));

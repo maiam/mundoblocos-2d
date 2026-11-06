@@ -1,5 +1,15 @@
 # Domínio: player (game)
 
+- **Tela de entrada e aparência** (v0.50.0, `game/title.ts`): no mundo principal, sem `?seed=`/`?personagem=`, o jogo
+  abre no título "Orvalis" com o mundo em vitrine atrás (`GameOptions.showcase`: sem HUD, sem entrada, sem salvar,
+  câmera passeando pela praça). **Novo jogo** → montar o personagem: **Chibi** (cabelo, roupa, pernas, pés — peças
+  do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
+  (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
+  um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
+  A aparência fica em `Entities.look` (null = heroína) → `SaveData.look`; vai junto para "Novo mundo", "Recomeçar" e a
+  sala do multiplayer (lá, por enquanto, só a própria tela mostra o chibi: os outros veem a heroína — Etapa 2).
+  O chibi ainda só tem caminhada: ferramentas e golpes funcionam, mas a animação de ação não aparece nele.
+
 - **Grade**: 9 itens + Personagem + Habilidades + Bolsa (ver `domains/farming.md`); tocar num item seleciona (de novo =
   mão vazia). Ao cair, renasce ao lado da última tenda (ou na praça inicial da Cidade do Despertar).
 - **Ferramentas**: `Player.equipped` = ferramenta do espaço selecionado na hotbar (ou null); muda o sprite

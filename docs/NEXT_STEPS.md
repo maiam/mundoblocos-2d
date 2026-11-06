@@ -119,10 +119,13 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       cintura/cavas/bainhas e coerência de detalhes frente/costas do colete. Preservada a base bege da revisão 2.
       Aprovação do movimento dos sapatos continua pendente. Próximo marco: teste no cenário antes de nova expansão.
    b. ~~_Motor_: personagem modular lendo o manifesto~~ — feito na v0.48.0 (`?personagem=chibi`). Falta: conferir
-      no cenário com a área de arte (escala, perspectiva, encaixe), repouso quando houver, ferramentas no chibi,
-      seletor de aparência na interface (hoje só pela URL) e sala multiplayer (o parâmetro vale só no jogo solo).
+      no cenário com a área de arte (perspectiva, encaixe), repouso quando houver, ferramentas no chibi e sala
+      multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
-   d. Aparência no salvamento/multiplayer quando a integração exigir (`SAVE_VERSION`/`PROTOCOL_VERSION`).
+   d. ~~Aparência no salvamento~~ (v0.50.0, `SAVE_VERSION` 6). **Próximo (Etapa 2 da tela de entrada)**: aparência
+      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 2, validar contra o manifesto no `Room`),
+      `RemotePlayers` desenhando o chibi dos outros; atualizar `orvalis-servidor` junto (`sync-net`).
+   e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
 2. Transições suaves entre chãos (autotile), água animada, pontes.
 3. Alturas: meio bloco/escadas; indicar borda de queda.

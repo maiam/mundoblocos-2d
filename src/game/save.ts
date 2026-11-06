@@ -11,6 +11,7 @@ import { Monster } from './monster';
 import type { Player } from './player';
 import { Sheep } from './sheep';
 import type { Facing } from './walker';
+import type { ModularLook } from '../render/modular';
 
 /**
  * Salvamento automático no navegador (Fase 2). Salva só o que a seed não reconstrói:
@@ -20,7 +21,7 @@ import type { Facing } from './walker';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export interface SaveData {
   v: number;
@@ -30,6 +31,8 @@ export interface SaveData {
   time: number;
   selected: number | null;
   player: { x: number; y: number; z: number; hp: number; facing: Facing };
+  /** Aparência montada na tela de entrada (personagem modular, ADR 0017); null = heroína. */
+  look: ModularLook | null;
   /** Última tenda colocada (ponto de renascer). */
   tent: [number, number] | null;
   /** Conteúdo dos baús (27 espaços cada). */
@@ -77,6 +80,7 @@ export function captureSave(s: GameState): SaveData {
     time: s.time,
     selected: s.selected,
     player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing },
+    look: s.entities.look,
     tent: s.world.tent,
     chests: [...s.world.chests.entries()].map(([k, slots]) => {
       const [x, y] = k.split(',').map(Number);
@@ -122,6 +126,8 @@ export function migrate(raw: unknown): SaveData | null {
       },
     };
   }
+  // v5 → v6 (tela de entrada): aparência do personagem; quem já jogava continua com a heroína.
+  if (d.v === 5) d = { ...d, v: 6, look: null };
   return d.v === SAVE_VERSION ? d : null;
 }
 
@@ -158,6 +164,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.z = p.visualZ = d.player.z;
   p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
+  s.entities.look = d.look ?? null;
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;
   e.npcs.splice(0, e.npcs.length, ...d.sheep.map((o) => {

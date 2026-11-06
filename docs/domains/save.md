@@ -3,12 +3,13 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 5)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 6)
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
 | Chunks editados | `World.modifiedChunks()` | chão + 3 níveis em base64; plantações reconstruídas |
 | Heroína | `Player` | posição, nível, vida, direção |
+| Aparência | `Entities.look` | peças do chibi escolhidas na tela de entrada; `null` = heroína (limpa contra o manifesto ao abrir) |
 | Item selecionado, inventário | `Game`, `Inventory` | por `StackId`: itens, espólios, materiais, ferramentas |
 | Grade (9 itens) | `Hotbar.layout()` | null no Santuário (grade fixa) |
 | Tenda (ponto de renascer) | `World.tent` | — |
@@ -44,6 +45,7 @@ Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa. Em te
 - v3 → v4 (baú): `chests: []`.
 - v4 → v5 (vida com números, Fase P): vida da heroína de meios corações (máx. 10) para pontos (×10 da vida máxima) e
   vida das aranhas de golpes para pontos, na mesma proporção (`MONSTER_STATS`).
+- v5 → v6 (tela de entrada, v0.50.0): `look: null` — quem já jogava continua com a heroína.
 
 ## Regras para quem mexer
 - Estado novo que deva persistir → campo em `SaveData` + `captureSave/applySave` + teste de ida e volta.

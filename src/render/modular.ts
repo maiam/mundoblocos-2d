@@ -110,3 +110,61 @@ export function lookFromSearch(search: string): ModularLook | null {
   }
   return look;
 }
+
+/** Encaixes que o jogador escolhe ao montar o chibi (o corpo é sempre `base`), na ordem da tela. */
+export const LOOK_SLOTS = ['cabelo', 'tronco', 'pernas', 'pes'] as const;
+export type LookSlot = (typeof LOOK_SLOTS)[number];
+/** Encaixes que podem ficar vazios (descalço). */
+const OPTIONAL_SLOTS: ReadonlySet<string> = new Set(['pes']);
+
+/** Ids das peças de um encaixe, na ordem do manifesto; `null` no fim = "sem peça" (só nos encaixes opcionais). */
+export function lookOptions(m: ModularManifest, encaixe: string): (string | null)[] {
+  const ids: (string | null)[] = m.pecas.filter((p) => p.encaixe === encaixe).map((p) => p.id);
+  if (OPTIONAL_SLOTS.has(encaixe)) ids.push(null);
+  return ids;
+}
+
+/** Aparência inicial: a primeira peça de cada encaixe. */
+export function defaultLook(m: ModularManifest): ModularLook {
+  const look: ModularLook = { corpo: 'base' };
+  for (const s of LOOK_SLOTS) {
+    const id = lookOptions(m, s)[0];
+    if (id) look[s] = id;
+  }
+  return look;
+}
+
+/** Aparência sorteada (`rand` em [0, 1)). */
+export function randomLook(m: ModularManifest, rand: () => number): ModularLook {
+  const look: ModularLook = { corpo: 'base' };
+  for (const s of LOOK_SLOTS) {
+    const opts = lookOptions(m, s);
+    const id = opts[Math.floor(rand() * opts.length) % opts.length];
+    if (id) look[s] = id;
+  }
+  return look;
+}
+
+/**
+ * Aparência vinda de fora (salvamento, rede) só com peças que existem no manifesto; null se não houver nada válido.
+ * Peça desconhecida (removida numa versão nova da arte) volta para a padrão do encaixe — exceto nos opcionais.
+ */
+export function cleanLook(m: ModularManifest, raw: unknown): ModularLook | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const src = raw as Record<string, unknown>;
+  const look: ModularLook = { corpo: 'base' };
+  for (const s of LOOK_SLOTS) {
+    const opts = lookOptions(m, s);
+    const v = src[s];
+    if (typeof v === 'string' && opts.includes(v)) look[s] = v;
+    else if (!OPTIONAL_SLOTS.has(s) && opts[0]) look[s] = opts[0];
+  }
+  return look;
+}
+
+/** Nome legível de uma peça: `blusa-ocre` → "Blusa ocre"; sem peça → "Descalço" (pés) ou "Nenhum". */
+export function pieceLabel(encaixe: string, id: string | null): string {
+  if (!id) return encaixe === 'pes' ? 'Descalço' : 'Nenhum';
+  const words = id.replace(/-/g, ' ').replace('lilas', 'lilás').replace('ardosia', 'ardósia');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
