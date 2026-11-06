@@ -51,6 +51,9 @@ export class ActionButton {
     };
     this.el.addEventListener('pointerup', end);
     this.el.addEventListener('pointercancel', end);
+    // Se o navegador tomar o toque (gesto, zoom, troca de app) sem mandar pointerup, o botão não pode ficar preso
+    // "apertado" ignorando os próximos toques.
+    this.el.addEventListener('lostpointercapture', end);
     this.el.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 

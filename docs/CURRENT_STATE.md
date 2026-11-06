@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.55.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.55.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 ## Covil isolado e mundo de florestas — v0.55.0
 - Covil das Aranhas isolado em `DUNGEON_ORIGIN`, entrada = caverna (`World.cave`, `DUNGEON_CAVE`) a ≥ 160 células do

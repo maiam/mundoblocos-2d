@@ -7,8 +7,11 @@
 }
 
 * { box-sizing: border-box; }
+button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 html, body {
+  /* Sem zoom por toque duplo (o canvas e os botões do jogo já usam none; painéis mantêm a rolagem). */
+  touch-action: manipulation;
   margin: 0;
   height: 100%;
   overflow: hidden;

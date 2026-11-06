@@ -71,6 +71,9 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 - `Entities.update`: ordem **concluir namoro → parear → iniciar**, senão o namoro reinicia em loop.
 - No celular, o canvas ignora `pointerType === 'touch'` (ação só pelo botão); no **tablet** (`ScreenMode.isTablet`) o
   toque age como clique **e** o botão de ação fica. Testes de toque: celular pelo botão; tablet pelos dois.
+- **Zoom do navegador**: o Safari ignora `user-scalable=no`; o `ScreenMode` bloqueia toque duplo/pinça/duplo clique
+  (fora de botões e campos) e todo botão usa `touch-action: manipulation`. Toda captura de ponteiro trata
+  `lostpointercapture` como fim do toque (senão o botão fica "apertado" e ignora os próximos toques).
 - Tela cheia em toque (`ScreenMode`): nunca pedir tela cheia ao tocar num campo de texto (o teclado sai da tela cheia
   e pedir de novo fecha o teclado em loop).
 - Mudar o gerador muda o mapa de todas as seeds: avise o usuário e rode os testes de determinismo/spawn.

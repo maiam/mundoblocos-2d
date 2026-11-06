@@ -33,7 +33,7 @@
 
 ## Interface
 - Jogo **horizontal**: layout cabe em paisagem com ~360 px de altura e respeita `env(safe-area-inset-*)`.
-  Em retrato no toque o jogo fica bloqueado (`ScreenMode.blocked`).
+  Em retrato no toque o jogo fica bloqueado (`ScreenMode.blocked`). A página nunca amplia (toque duplo, pinça e duplo clique bloqueados no `ScreenMode`; botões com `touch-action: manipulation`).
 - Elemento com `display` próprio que usa `hidden` precisa de `[hidden] { display: none }` explícito.
 - Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
 
