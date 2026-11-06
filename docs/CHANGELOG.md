@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.58.0 — 2026-11-06
+- **Pedregulhos** (prancha de pedras enviada, 40 artes): pedras soltas espalhadas pelo mundo, uma arte sorteada por
+  lugar — no lugar dos antigos cubos de pedra avulsos (muda o mapa de todas as sementes só nesses pontos).
+  Mineradas (picareta, ou na mão) soltam **1–3 Pedras Brutas**, que vão para a mão/bolsa como o bloco de pedra e
+  são colocadas como cubo.
+- Multiplayer: `PROTOCOL_VERSION` 5 (o mapa da sala mudou; servidor atualizado junto).
+
 ## 0.57.1 — 2026-11-06
 - **Ficha de receita sem depender de leitura** (pedido do dono do produto, para crianças que ainda não leem): botões
   com ícone e cor — **✓ Criar** (verde) e **✕ Voltar** (vermelho); a estação vira o ícone do Caldeirão com ✓/✗ e o

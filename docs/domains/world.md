@@ -21,7 +21,8 @@
 - Biomas (umidade; `pickBiome`): Campos (grama + carvalhos, 1/6 macieiras) e Bosque de Sakura (grama + cerejeiras).
   Desde a v0.55.0 o mundo da Cidade 1 é só de florestas (ADR 0019): as Dunas (areia + cactos) ficam no código para um
   mundo árido futuro. Areia só nas praias. Trilhas naturais de Caminho de Terra cortam os campos.
-- Árvores por hash × densidade × manchas de floresta; pedregulhos raros; enfeites.
+- Árvores por hash × densidade × manchas de floresta; **pedregulhos** raros (`ROCK_BOULDER`, desde v0.58.0 com a
+  arte da prancha de pedras — antes eram cubos de `STONE`; minerados dão 1–3 Pedras Brutas); enfeites.
 
 ## Regras
 - `standHeight(x, y)`: 0 chão (ou porta aberta), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.

@@ -108,3 +108,4 @@
 | Fome em barra 0–100 (~12 min); alimentos com pesos (`FOOD`); crus: maçã, cenoura, batata, tomate; pratos só no Caldeirão (Cozinheiro); fome vazia não mata (para em 1 de vida) | domains/player, domains/farming |
 | Receita pode exigir estação por perto (`Recipe.station`), sem novo painel: o Caldeirão é a cozinha | domains/farming |
 | Receitas: tocar abre uma ficha com Confirmar/Cancelar (nada é criado num toque) e a bolsa aparece ao lado; excesso de bolsa de salvamento antigo cai no chão | domains/farming |
+| Pedregulhos soltos (arte da prancha) substituem os cubos de pedra avulsos do gerador; minerados dão 1–3 Pedras Brutas (o item é sempre o bloco de pedra, colocado como cubo) | domains/world, domains/farming |

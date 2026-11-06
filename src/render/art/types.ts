@@ -47,6 +47,8 @@ export interface ArtPack {
   craftables?: Partial<Record<CraftableArt, { icon: string; sprite: string }>>;
   /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
   chest?: { icon: string; sprite: string };
+  /** Pedregulhos: tira de quadros iguais (`scripts/extract-rocks.py`), um sorteado por célula. */
+  rocks?: string;
   /** Pranchas de crescimento 4 × 2 (estágios em cima, variantes embaixo; `scripts/extract-trees.py`). */
   trees?: { oak: string; apple: string; cactus: string };
   /** Interiores (`scripts/extract-interiors.py`), por id de `world/interiors.ts`; carregam em segundo plano. */

@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.57.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.58.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Pedregulhos — v0.58.0
+- `Block.ROCK_BOULDER` (forma `rock`, sólido, não colocável): o gerador põe nos pontos de pedregulho (0,6% das células
+  livres, antes `STONE` cubo). Arte `rocks.webp` (`scripts/extract-rocks.py`, 40 quadros, sorteio por célula em
+  `render/textures.ts`). `blockDrops` → 1–3 `STONE`. `PROTOCOL_VERSION` 5.
 
 ## Bolsa à direita e ficha de receita — v0.57.0
 - Bolsa de 12 (4 × 3) na coluna da direita do cartão (`.hotbar-side`, com as profissões). Receitas: tocar abre a ficha

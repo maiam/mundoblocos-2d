@@ -107,6 +107,7 @@ import cauldronIcon from '../../assets/icon-block-cauldron.webp';
 import cauldronSprite from '../../assets/cauldron.webp';
 import ovenIcon from '../../assets/icon-block-oven.webp';
 import ovenSprite from '../../assets/oven.webp';
+import rocks from '../../assets/rocks.webp';
 import treeOak from '../../assets/tree-oak.webp';
 import treeApple from '../../assets/tree-apple.webp';
 import treeCactus from '../../assets/tree-cactus.webp';
@@ -231,6 +232,7 @@ const pack: ArtPack = {
   },
   // Pranchas de crescimento (scripts/extract-trees.py): 4 × 2 quadros por árvore.
   trees: { oak: treeOak, apple: treeApple, cactus: treeCactus },
+  rocks,
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
   town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide },
   water: { top: waterTop, flow: waterFlow },
