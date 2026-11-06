@@ -22,6 +22,9 @@ export const Item = {
   CARROT: 'carrot',
   /** Pano de Seda (10 sedas): ingrediente da tenda. */
   SILK_CLOTH: 'silk_cloth',
+  /** Pratos do Cozinheiro (feitos no caldeirão; quanto enchem a fome: `FOOD` em progression). */
+  BREAD: 'bread',
+  PASTA_TOMATO: 'pasta_tomato',
 } as const;
 
 export type ItemId = (typeof Item)[keyof typeof Item];
@@ -50,6 +53,8 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   tomato: { id: Item.TOMATO, name: 'Tomate', plants: Block.TOMATO_0 },
   carrot: { id: Item.CARROT, name: 'Cenoura', plants: Block.CARROT_0 },
   silk_cloth: { id: Item.SILK_CLOTH, name: 'Pano de Seda' },
+  bread: { id: Item.BREAD, name: 'Pão' },
+  pasta_tomato: { id: Item.PASTA_TOMATO, name: 'Macarrão ao Molho' },
 };
 
 /** Hortaliças que aparecem ao arrancar capim (fonte delas no mundo; o resto vem da colheita). */
@@ -273,14 +278,14 @@ export function breakSeconds(tool: ToolId | null): number {
 // Profissões e receitas (fonte de verdade). A interface fica em game/; aqui só o que cada receita pede e dá.
 // ---------------------------------------------------------------------------------------------
 
-export type ProfessionId = 'builder';
+export type ProfessionId = 'builder' | 'cook';
 
 export interface Profession {
   id: ProfessionId;
   name: string;
 }
 
-export const PROFESSIONS: Profession[] = [{ id: 'builder', name: 'Construtor' }];
+export const PROFESSIONS: Profession[] = [{ id: 'builder', name: 'Construtor' }, { id: 'cook', name: 'Cozinheiro' }];
 
 export interface Recipe {
   id: string;
@@ -288,7 +293,12 @@ export interface Recipe {
   profession: ProfessionId;
   inputs: Drop[];
   output: Drop;
+  /** Bloco que precisa estar perto da personagem para fazer a receita (ex.: Caldeirão para cozinhar). */
+  station?: BlockId;
 }
+
+/** Distância máxima (células, do centro da personagem ao centro do bloco) para usar uma estação de receita. */
+export const STATION_REACH = 3;
 
 export const RECIPES: Recipe[] = [
   {
@@ -340,9 +350,19 @@ export const RECIPES: Recipe[] = [
     inputs: [{ item: Item.SILK_CLOTH, count: 1 }, { item: blockStack(Block.OAK_PLANKS), count: 10 }, { item: Item.FANG, count: 4 }],
     output: { item: blockStack(Block.TENT), count: 1 },
   },
+  // Cozinheiro (dono do produto, 2026-11-06): cozinhar só perto de um Caldeirão de Pedra colocado no mundo.
+  {
+    id: 'bread', name: 'Pão', profession: 'cook', station: Block.CAULDRON,
+    inputs: [{ item: Item.WHEAT, count: 2 }], output: { item: Item.BREAD, count: 1 },
+  },
+  {
+    id: 'pasta-tomato', name: 'Macarrão ao Molho', profession: 'cook', station: Block.CAULDRON,
+    inputs: [{ item: Item.WHEAT, count: 4 }, { item: Item.TOMATO, count: 2 }], output: { item: Item.PASTA_TOMATO, count: 1 },
+  },
 ];
 
 /** Há todos os ingredientes? `count(id)` = quantidade carregada. */
-export function canCraft(r: Recipe, count: (id: StackId) => number): boolean {
-  return r.inputs.every((i) => count(i.item) >= i.count);
+/** Dá para fazer? Ingredientes suficientes e, se a receita pede estação, `nearStation` diz se ela está perto. */
+export function canCraft(r: Recipe, count: (id: StackId) => number, nearStation: (id: BlockId) => boolean = () => true): boolean {
+  return r.inputs.every((i) => count(i.item) >= i.count) && (r.station === undefined || nearStation(r.station));
 }

@@ -1,5 +1,5 @@
 import type { MonsterKind } from './dungeon';
-import type { ToolId } from './items';
+import type { ItemId, ToolId } from './items';
 
 /**
  * Progressão do personagem (Fase P) — fonte única das REGRAS NUMÉRICAS de vida e dano: atributos, poder das armas,
@@ -61,3 +61,32 @@ export function rollDamage(attack: number, defense: number, rand: () => number):
 
 /** Regeneração fora de combate: começa após `delay` s sem dano; recupera `fraction` da vida máxima a cada `every` s. */
 export const REGEN = { delay: 6, every: 1.5, fraction: 0.05 } as const;
+
+// ---------------------------------------------------------------------------------------------
+// Fome (Fase P, entrega 4 — comida). Números do dono do produto: os alimentos têm pesos diferentes.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Fome: barra de 0 a `max` (cheia = satisfeita) que esvazia `perSecond` por segundo (~12 min de cheia a vazia). Abaixo
+ * de `regenMin` a vida não se recupera sozinha; vazia, a fome tira `starveDamage` de vida a cada `starveEvery` s (sem
+ * nunca derrubar: para em 1). Renascer volta com a fome cheia.
+ */
+export const HUNGER = { max: 100, perSecond: 100 / 720, regenMin: 30, starveEvery: 4, starveDamage: 2 } as const;
+
+/**
+ * Quanto cada alimento enche a barra de fome. Cru: maçã, cenoura, batata e tomate. Feitos no caldeirão (Cozinheiro):
+ * pão (2 trigos) e macarrão ao molho (4 trigos + 2 tomates) — os pratos rendem mais do que os ingredientes crus.
+ */
+export const FOOD: Readonly<Partial<Record<ItemId, number>>> = {
+  apple: 15,
+  carrot: 12,
+  potato: 10,
+  tomato: 8,
+  bread: 35,
+  pasta_tomato: 70,
+};
+
+/** Quanto o item enche a fome (0 = não é comida). */
+export function foodValue(id: ItemId): number {
+  return FOOD[id] ?? 0;
+}

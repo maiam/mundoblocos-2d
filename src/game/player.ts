@@ -1,6 +1,6 @@
 import { STEP_HEIGHT } from '../config';
 import type { ToolId } from '../world/items';
-import { playerStats, REGEN, type Stats } from '../world/progression';
+import { HUNGER, playerStats, REGEN, type Stats } from '../world/progression';
 import type { World } from '../world/world';
 import { type Blocker, Walker } from './walker';
 
@@ -39,6 +39,11 @@ export class Player extends Walker {
   /** Tempo desde o último dano (regeneração). */
   private sinceHurt = Infinity;
   private regen = 0;
+  /** Fome ligada neste mundo (perfil com cultivo); desligada, a barra fica cheia e nada muda. */
+  hungerOn = false;
+  /** Barra de fome (cheia = satisfeita), `HUNGER` em world/progression. */
+  hunger: number = HUNGER.max;
+  private starve = 0;
 
   constructor(x: number, y: number) {
     super(x, y, { speed: 4.2, halfW: 0.27, halfD: 0.15, stepHeight: STEP_HEIGHT });
@@ -102,16 +107,38 @@ export class Player extends Walker {
     this.y = y;
     this.z = this.visualZ = 0;
     this.hp = this.maxHp;
+    this.hunger = HUNGER.max;
     this.invuln = RESPAWN_INVULN_S;
     this.sinceHurt = Infinity;
     this.attackTime = 0;
     this.hitDone = true;
   }
 
-  /** Invencibilidade e regeneração fora de combate. */
+  /** Come: a fome sobe `points` (até cheia). false = sem fome (barra cheia) ou fome desligada. */
+  eat(points: number): boolean {
+    if (!this.hungerOn || points <= 0 || this.hunger >= HUNGER.max - 0.5) return false;
+    this.hunger = Math.min(HUNGER.max, this.hunger + points);
+    this.starve = 0;
+    return true;
+  }
+
+  /** Fome esvaziando; vazia, tira vida aos poucos (para em 1 — a fome sozinha não derruba). */
+  private tickHunger(dt: number): void {
+    if (!this.hungerOn || this.hp <= 0) return;
+    this.hunger = Math.max(0, this.hunger - dt * HUNGER.perSecond);
+    if (this.hunger > 0) { this.starve = 0; return; }
+    this.starve += dt;
+    if (this.starve < HUNGER.starveEvery) return;
+    this.starve = 0;
+    if (this.hp > 1) this.hp = Math.max(1, this.hp - HUNGER.starveDamage);
+  }
+
+  /** Invencibilidade e regeneração fora de combate (com fome abaixo de `HUNGER.regenMin`, não regenera). */
   private tickHealth(dt: number): void {
     this.invuln = Math.max(0, this.invuln - dt);
     this.sinceHurt += dt;
+    this.tickHunger(dt);
+    if (this.hungerOn && this.hunger < HUNGER.regenMin) return;
     if (this.hp <= 0 || this.hp >= this.maxHp || this.sinceHurt < REGEN.delay) return;
     this.regen += dt;
     if (this.regen >= REGEN.every) {

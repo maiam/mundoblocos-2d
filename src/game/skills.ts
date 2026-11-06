@@ -1,3 +1,4 @@
+import { blockDef, type BlockId } from '../world/blocks';
 import { canCraft, PROFESSIONS, type ProfessionId, type Recipe, RECIPES, type StackId } from '../world/items';
 
 /** Ícone e nome de uma pilha (resolvidos pelo Game com a arte do mundo). */
@@ -15,8 +16,12 @@ const PROF_COLS = 2;
  */
 export class SkillsPanel {
   private readonly recipeSlots: HTMLButtonElement[] = [];
+  private readonly professionSlots = new Map<ProfessionId, HTMLButtonElement>();
   private open = false;
   profession: ProfessionId = 'builder';
+  /** Último estado usado para desenhar (para redesenhar ao trocar de profissão). */
+  private lastCount: ((id: StackId) => number) | null = null;
+  private lastNear: (id: BlockId) => boolean = () => true;
 
   constructor(
     private readonly recipesEl: HTMLElement,
@@ -49,10 +54,15 @@ export class SkillsPanel {
       for (let c = 0; c < PROF_COLS; c++) {
         const p = PROFESSIONS[r * PROF_COLS + c];
         const b = document.createElement('button');
-        b.className = p ? 'slot profession active' : 'slot vacant';
+        b.className = p ? `slot profession${p.id === this.profession ? ' active' : ''}` : 'slot vacant';
         b.title = p ? p.name : '';
         b.setAttribute('aria-label', p ? `Profissão: ${p.name}` : 'Profissão ainda não disponível');
         b.innerHTML = p ? `<img alt="" src="${professionIcon(p.id)}">` : '';
+        if (p) {
+          this.professionSlots.set(p.id, b);
+          // Tocar numa profissão mostra as receitas dela.
+          b.addEventListener('click', () => this.selectProfession(p.id));
+        }
         row.appendChild(b);
       }
       professionsEl.appendChild(row);
@@ -69,19 +79,27 @@ export class SkillsPanel {
     this.professionsEl.hidden = !open;
   }
 
+  selectProfession(id: ProfessionId): void {
+    this.profession = id;
+    for (const [pid, b] of this.professionSlots) b.classList.toggle('active', pid === id);
+    if (this.lastCount) this.render(this.lastCount, this.lastNear);
+  }
+
   private recipes(): Recipe[] {
     return RECIPES.filter((r) => r.profession === this.profession);
   }
 
-  /** Redesenha as receitas com o que a heroína tem agora. */
-  render(count: (id: StackId) => number): void {
+  /** Redesenha as receitas com o que a heroína tem agora; `nearStation` = a estação pedida está perto? */
+  render(count: (id: StackId) => number, nearStation: (id: BlockId) => boolean = () => true): void {
+    this.lastCount = count;
+    this.lastNear = nearStation;
     const list = this.recipes();
     this.recipeSlots.forEach((b, i) => {
       const r = list[i];
       const img = b.querySelector('img')!;
       const badge = b.querySelector<HTMLElement>('.count')!;
       b.classList.toggle('vacant', !r);
-      b.classList.toggle('unavailable', !!r && !canCraft(r, count));
+      b.classList.toggle('unavailable', !!r && !canCraft(r, count, nearStation));
       img.hidden = !r;
       badge.hidden = !r || r.output.count <= 1;
       if (!r) {
@@ -93,7 +111,8 @@ export class SkillsPanel {
       if (img.getAttribute('src') !== out.icon) img.src = out.icon;
       badge.textContent = String(r.output.count);
       const ing = r.inputs.map((x) => `${x.count} ${this.look(x.item).name} (tem ${count(x.item)})`).join(' + ');
-      b.title = `${r.name} ×${r.output.count}: ${ing}`;
+      const where = r.station !== undefined ? ` · perto de um ${blockDef(r.station).name}${nearStation(r.station) ? '' : ' (longe)'}` : '';
+      b.title = `${r.name} ×${r.output.count}: ${ing}${where}`;
       b.setAttribute('aria-label', `Criar ${r.output.count} ${r.name} com ${ing}`);
     });
   }

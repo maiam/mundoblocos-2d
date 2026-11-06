@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.56.0 — 2026-11-06
+- **Barra de fome** (pedido do dono do produto): abaixo da vida, esvazia em ~12 min. Com fome abaixo de 30% a vida não
+  se recupera sozinha; vazia, a fome tira vida aos poucos (sem derrubar). Renascer volta satisfeito.
+- **Comer**: com o alimento na mão, o botão de ação (ou clique) come. Crus: maçã (+15), cenoura (+12), batata (+10),
+  tomate (+8) — batata, tomate e cenoura ainda plantam quando o alvo é terra arada livre. Pratos: **Pão** (+35) e
+  **Macarrão ao Molho** (+70), com os ícones enviados.
+- **Profissão Cozinheiro** (toque nela em Habilidades): Pão (2 trigos) e Macarrão ao Molho (4 trigos + 2 tomates),
+  feitos **só perto de um Caldeirão de Pedra** colocado no mundo. As profissões agora trocam a lista de receitas.
+- Salvamento v9 (a fome é salva; quem já jogava começa satisfeito). Sem mudança no multiplayer.
+
 ## 0.55.1 — 2026-11-06
 - **Correção: tocar muito rápido ampliava a tela e ela travava** (iPhone/iPad). O Safari ignora `user-scalable=no` e
   amplia a página com toque duplo; o jogo agora bloqueia o toque duplo, a pinça e o duplo clique (`ScreenMode`),

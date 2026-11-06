@@ -2,6 +2,7 @@ import type { PlayerAction } from '../world/actions';
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
 import { Block, blockDef, type BlockId, isCrop } from '../world/blocks';
+import { foodValue } from '../world/progression';
 import { blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
@@ -249,6 +250,25 @@ export class ActionController {
     return sheep.canEat && this.inventory.count('wheat') > 0;
   }
 
+  /**
+   * Alimento na mão: come se não houver onde plantá-lo (`plantable` false). Batata, tomate e cenoura plantam em terra
+   * arada livre e, fora disso, são comidos crus; maçã, pão e macarrão só se comem. true = o toque foi para comer.
+   */
+  private eatInstead(slot: HotbarSlot | null, plantable: boolean): boolean {
+    if (slot?.kind !== 'item') return false;
+    const points = foodValue(slot.item);
+    if (points <= 0 || plantable || !this.player.hungerOn) return false;
+    if (this.inventory.count(slot.item) <= 0) return true;
+    if (!this.player.eat(points)) {
+      this.ctx.notify('Sem fome agora');
+      return true;
+    }
+    this.inventory.take(slot.item);
+    this.ctx.onConsumed();
+    this.ctx.notify(`Comeu ${ITEMS[slot.item].name} (+${points} de fome)`);
+    return true;
+  }
+
   /** Aplica o espaço selecionado: coloca bloco, planta ou alimenta. */
   private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
     if (!slot) return; // mão vazia ainda não tem ação
@@ -365,6 +385,7 @@ export class ActionController {
       return;
     }
     const t = this.useTarget(sx, sy);
+    if (this.eatInstead(slot, !!t?.valid)) return;
     if (t?.valid) this.applyUse(slot, t.x, t.y, null);
   }
 
@@ -417,6 +438,7 @@ export class ActionController {
       this.applyUse(slot, 0, 0, this.frontSheep());
       return;
     }
+    if (this.eatInstead(slot, this.canUseAt(slot, fx, fy))) return;
     this.applyUse(slot, fx, fy, null);
   }
 

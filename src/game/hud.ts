@@ -41,6 +41,9 @@ export class Hud {
   private readonly healthText: HTMLElement;
   private readonly hasHealth: boolean;
   private lastHealth = '';
+  private readonly hungerBar: HTMLElement;
+  private readonly hungerFill: HTMLElement;
+  private lastHunger = '';
 
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
@@ -102,6 +105,14 @@ export class Hud {
     this.healthFill = this.healthBar.querySelector('.health-fill')!;
     this.healthText = this.healthBar.querySelector('.health-text')!;
     status.appendChild(this.healthBar);
+    // Fome (mundos com cultivo): logo abaixo da vida, sempre visível — esvazia com o tempo, comer enche.
+    this.hungerBar = document.createElement('div');
+    this.hungerBar.className = 'hunger';
+    this.hungerBar.setAttribute('role', 'meter');
+    this.hungerBar.innerHTML = '<span class="hunger-fill"></span><span class="hunger-text">Fome</span>';
+    this.hungerBar.hidden = true;
+    this.hungerFill = this.hungerBar.querySelector('.hunger-fill')!;
+    status.appendChild(this.hungerBar);
     this.root.appendChild(status);
     this.toastEl = document.createElement('div');
     this.toastEl.className = 'toast';
@@ -147,6 +158,22 @@ export class Hud {
   setSkillsOpen(open: boolean): void {
     this.skillsButton?.classList.toggle('active', open);
     this.root.classList.toggle('skills-open', open);
+  }
+
+  /** Barra de fome (0..max, cheia = satisfeita); null esconde (mundo sem fome). */
+  setHunger(value: number | null, max: number): void {
+    this.hungerBar.hidden = value === null;
+    if (value === null) return;
+    const f = Math.max(0, Math.min(1, value / max));
+    const key = `${Math.round(f * 100)}`;
+    if (key === this.lastHunger) return;
+    this.lastHunger = key;
+    this.hungerFill.style.width = `${f * 100}%`;
+    this.hungerBar.classList.toggle('low', f <= 0.3);
+    this.hungerBar.classList.toggle('empty', f <= 0);
+    this.hungerBar.setAttribute('aria-label', `Fome: ${Math.round(value)} de ${max}`);
+    this.hungerBar.setAttribute('aria-valuenow', String(Math.round(value)));
+    this.hungerBar.setAttribute('aria-valuemax', String(max));
   }
 
   /** Vida em pontos numa barra com número; `visible` mostra a barra (ferida ou na dungeon). */
