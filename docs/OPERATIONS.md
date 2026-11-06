@@ -160,6 +160,10 @@ qualquer prancha em grade, se precisar.
 **Água** (`assets-src/water-block.png`, `water-flow-sheet.png`): `python3 scripts/extract-water.py` →
 `water-top` (chão) e `water-flow` (4 direções × 4 quadros, recortes do destino no fim do script) → `optimize-assets.py`.
 
+**Fogueira, caldeirão e forno** (`assets-src/campfire.png`, `cauldron.png`, `oven.png`, transparentes):
+`python3 scripts/extract-craftables.py` → `icon-block-<nome>` (64×64) + `<nome>` (sprite 128 px de largura; a largura em
+células fica em `CRAFT_PROPS`, `render/textures.ts`) → `optimize-assets.py`.
+
 **Interface, tenda e Tábua** (`assets-src/ui-*.png`, `tent.jpg`, `oak-planks-cube.png`): `python3 scripts/extract-ui.py`
 → `icon-ui-character/skills/builder`, `icon-block-tent` + `tent`, e substitui a coluna da Tábua no `blocks-atlas`
 (rode **depois** de `extract-blocks.py`, que regeneraria a coluna antiga) → `optimize-assets.py`.

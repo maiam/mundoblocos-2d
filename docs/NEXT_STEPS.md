@@ -92,7 +92,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    extra), **Minerador** (pedra: quebra mais rápido, pedra extra, libera Pedra Lisa/Polida), **Agricultor** (arar,
    plantar, colher: colheita maior, trigo mais rápido), **Construtor** (receitas: libera receitas novas). Nível de cada
    uma no painel Habilidades.
-4. **Comida, cura e equilíbrio** — cozinhar (pão de trigo, carne) para curar; Covil das Aranhas ajustado para a faixa
+4. **Comida, cura e equilíbrio** — cozinhar (pão de trigo, carne) para curar — **Fogueira, Caldeirão de Pedra e Forno de Pedra já existem** (v0.49.0, só se colocam): cozinhar neles; Covil das Aranhas ajustado para a faixa
    1–5; **morte perde 10% do XP do nível atual, sem nunca descer de nível** (continua perdendo tudo menos as ferramentas).
 
 ### Fase 4 — Mundo vivo e conteúdo
