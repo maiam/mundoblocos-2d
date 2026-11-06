@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.56.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.57.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Bolsa à direita e ficha de receita — v0.57.0
+- Bolsa de 12 (4 × 3) na coluna da direita do cartão (`.hotbar-side`, com as profissões). Receitas: tocar abre a ficha
+  (ingredientes tem/precisa, estação, destino, Confirmar/Cancelar) e a bolsa aparece ao lado (`BagPanel.peek`).
+  Excesso de bolsa de salvamentos antigos cai no chão ao abrir. Descrições dos itens: próxima parte.
 
 ## Fome, comida e Cozinheiro — v0.56.0
 - `Player.hunger` (`HUNGER` e `FOOD` em `world/progression.ts`), ligada por `WorldProfile.hunger` (só mundo principal);
@@ -137,7 +142,7 @@ _Atualizado em 2026-11-06 — v0.56.0 · jogo: **Orvalis** (`orvalis.pensamentos
 - **Cultivo**: semente **só na Terra Arada**; cresce em 16 estágios (~1,5 min, arte nova sem monte de terra);
   colheita solta trigo + sementes.
 - **Materiais coletados** (mundo principal): quebrar solta o bloco (árvore → toras), colocar gasta. Pilhas sem
-  limite; **bolsa** de 18 espaços (3 fileiras de 9 com a mão), troca para a grade; tipo novo só entra se houver lugar. Ao cair, perde tudo menos as ferramentas. Santuário segue infinito.
+  limite; **bolsa** de 12 espaços (4 × 3 à direita, desde v0.57.0; com a mão, 21), troca para a grade; tipo novo só entra se houver lugar. Ao cair, perde tudo menos as ferramentas. Santuário segue infinito.
 - **Ovelhas**: rebanho no campo, do lado de fora do portão da cidade; pastam, comem trigo, namoram e têm filhotes que crescem (máx. 16).
 - **Cavalo, vacas e galinhas**: no mesmo campo; só passeiam (sem montaria, leite nem ovos ainda).
 - Ciclo dia/noite (8 min), sombras de nuvens, partículas por bioma.

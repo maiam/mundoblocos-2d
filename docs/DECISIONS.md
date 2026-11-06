@@ -68,7 +68,7 @@
 | Água: inquebrável; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua substituem (areia não); só enche buracos vizinhos (0,6 s, cadeia, ordem fixa), nunca terra firme | domains/world |
 | Baú: 8 tábuas, 27 espaços, abre com Bolsa acima da mão, troca tocando item e destino (pilha inteira), quebrar solta o conteúdo; Tenda: aviso a cada colocação, vale a última, derrubar a última volta ao início | domains/farming |
 | Grade 12 (9 itens · Personagem · Habilidades · Bolsa); Habilidades = Receitas 4×9 + Profissões 4×2 acima da grade; tocar cria 1; Tenda = ponto de renascer; atalhos B/I, K, C (reservado) | domains/farming |
-| Bolsa: 18 espaços (2×9) no mesmo cartão da grade, mesmos espaços da mão (3 fileiras de 9 no total), só o título; tipo novo só entra com espaço livre; pilhas sem limite | domains/farming |
+| ~~Bolsa: 18 espaços (2×9) acima da mão~~ → v0.57.0: 12 espaços (4×3) à direita, acima dos 3 botões; tipo novo só entra com espaço livre; pilhas sem limite | domains/farming |
 | Tablet (toque, lado menor ≥ 600 px): toque na tela = clique do computador **e** botão de ação (voltou em v0.47.2); celular só com o botão | domains/player |
 | Morte: perde tudo menos as ferramentas (substitui "perde só os materiais"); Tenda é madeira (machado quebra) e a picareta também a quebra por exceção (`alsoBreaks`) | domains/farming |
 | Coleta: materiais coletados (bloco volta como item, árvore → 2–3 toras), grade de 8 compartilhada + bolsa no 9º, troca tocando item e espaço, morte perde só os materiais, começo com 1 porta, Santuário infinito | domains/farming |
@@ -107,3 +107,4 @@
 | Cidade 1 = mundo das florestas (sem deserto); próximos mundos (árido, pantanoso…) por portais, cada um com sua cidade | ADR 0019 |
 | Fome em barra 0–100 (~12 min); alimentos com pesos (`FOOD`); crus: maçã, cenoura, batata, tomate; pratos só no Caldeirão (Cozinheiro); fome vazia não mata (para em 1 de vida) | domains/player, domains/farming |
 | Receita pode exigir estação por perto (`Recipe.station`), sem novo painel: o Caldeirão é a cozinha | domains/farming |
+| Receitas: tocar abre uma ficha com Confirmar/Cancelar (nada é criado num toque) e a bolsa aparece ao lado; excesso de bolsa de salvamento antigo cai no chão | domains/farming |

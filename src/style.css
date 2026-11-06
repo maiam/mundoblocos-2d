@@ -421,7 +421,9 @@ html, body {
 .hotbar.with-menu { grid-template-columns: auto auto; }
 .hotbar-top { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: inherit; }
 .hotbar-top:not(:has(.panel-section:not([hidden]))) { display: none; }
-.professions-section { grid-column: 2; grid-row: 1; }
+/* Coluna da direita: profissões (4 × 2) ou bolsa (4 × 3), acima dos botões personagem/habilidades/bolsa. */
+.hotbar-side { grid-column: 2; grid-row: 1; align-self: end; display: flex; flex-direction: column; gap: inherit; padding-left: 12px; }
+.hotbar-side:not(:has(.panel-section:not([hidden]))) { display: none; }
 .hotbar-row { display: flex; gap: inherit; }
 .hotbar-row.hand { grid-column: 1; grid-row: 2; }
 .menu-row { grid-column: 2; grid-row: 2; padding-left: 10px; margin-left: 2px; position: relative; }
@@ -431,7 +433,36 @@ html, body {
 }
 .panel-section { display: flex; flex-direction: column; gap: inherit; padding-bottom: 4px; margin-bottom: 2px; border-bottom: 1px solid var(--panel-border); }
 .panel-section[hidden] { display: none; }
-.professions-section { padding-left: 12px; align-self: end; }
+/* Ficha da receita (no lugar da lista): ícone grande, ingredientes tem/precisa, estação, destino e confirmar. */
+.recipe-detail { display: flex; gap: 12px; align-items: stretch; padding: 2px 4px; }
+.recipe-detail[hidden] { display: none; }
+.recipe-big {
+  flex: 0 0 auto; width: 96px; height: 96px; align-self: center; position: relative;
+  border-radius: 14px; border: 1.5px solid var(--accent); background: rgba(255, 212, 107, 0.12);
+  display: grid; place-items: center;
+}
+.recipe-big img { width: 72px; height: 72px; object-fit: contain; }
+.recipe-big .count { position: absolute; right: 6px; bottom: 4px; font-size: 14px; }
+.recipe-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.recipe-info h3 { margin: 0; font-size: 16px; font-weight: 800; color: var(--accent); }
+.recipe-ings { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.recipe-ings li {
+  display: flex; align-items: center; gap: 4px; padding: 2px 8px 2px 3px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-border); font-size: 13px; font-weight: 700;
+}
+.recipe-ings li img { width: 24px; height: 24px; }
+.recipe-ings li.miss { border-color: #ff8a7a; color: #ffb0a6; }
+.recipe-ings li b { font-variant-numeric: tabular-nums; }
+.recipe-meta { margin: 0; font-size: 12px; font-weight: 700; opacity: 0.9; }
+.recipe-meta .miss { color: #ffb0a6; }
+.recipe-actions { display: flex; gap: 8px; }
+.recipe-actions button {
+  min-height: 34px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.08); color: var(--text); font: 800 14px Nunito, system-ui, sans-serif; cursor: pointer;
+}
+.recipe-actions .confirm { background: var(--accent); color: #2a1a48; border-color: transparent; }
+.recipe-actions .confirm:disabled { opacity: 0.4; cursor: default; }
+.recipes-section.detail .hotbar-row { display: none; }
 .panel-section h2 { margin: 0 0 2px 4px; font-size: 15px; font-weight: 800; color: var(--accent); }
 .slot.ui { border-color: rgba(255, 212, 107, 0.45); padding: 3px; }
 .slot.ui[aria-disabled='true'] { cursor: default; }
@@ -441,7 +472,15 @@ html, body {
 @media (max-height: 500px) and (orientation: landscape) {
   .panel-section h2 { font-size: 12px; margin-bottom: 0; }
   .menu-row { padding-left: 7px; }
-  .professions-section { padding-left: 8px; }
+  .hotbar-side { padding-left: 8px; }
+  .recipe-big { width: 68px; height: 68px; }
+  .recipe-big img { width: 50px; height: 50px; }
+  .recipe-info { gap: 4px; }
+  .recipe-info h3 { font-size: 14px; }
+  .recipe-ings li { font-size: 11px; padding: 1px 6px 1px 2px; }
+  .recipe-ings li img { width: 18px; height: 18px; }
+  .recipe-meta { font-size: 10px; }
+  .recipe-actions button { min-height: 28px; font-size: 12px; padding: 0 10px; }
 }
 /* Telas baixas: 4 fileiras de receitas + mão precisam caber (~360 px). */
 @media (max-height: 420px) and (orientation: landscape) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.57.0 — 2026-11-06
+- **Bolsa nova** (pedido do dono do produto): 12 espaços em 4 fileiras de 3, à **direita**, logo acima dos botões
+  personagem/habilidades/bolsa — a esquerda fica livre. Com a mão, 21 itens (antes 9 + 18). Quem tinha mais de 12
+  tipos na bolsa encontra o excesso no chão, aos pés da personagem (nada se perde).
+- **Ficha de receita**: tocar numa receita não cria mais na hora — abre a ficha (ícone, ingredientes "tem / precisa",
+  estação ✓/✗ e "Vai para: mão/bolsa") com **Confirmar** e **Cancelar**, e a bolsa aparece ao lado para ver o item
+  entrar. Ao confirmar: "+N Item na mão/na bolsa".
+
 ## 0.56.0 — 2026-11-06
 - **Barra de fome** (pedido do dono do produto): abaixo da vida, esvazia em ~12 min. Com fome abaixo de 30% a vida não
   se recupera sozinha; vazia, a fome tira vida aos poucos (sem derrubar). Renascer volta satisfeito.

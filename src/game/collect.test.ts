@@ -87,9 +87,9 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(grid.stack(0)).toBe(blockStack(Block.CLOUD_SOLID));
   });
 
-  it('bolsa com 18 espaços (3 fileiras de 9 contando a mão): tipo novo só entra se houver lugar', () => {
-    expect(BAG_SLOTS).toBe(18);
-    expect(CARRY_LIMIT).toBe(27); // 9 na mão + 18 na bolsa
+  it('bolsa com 12 espaços (4 × 3 à direita) + 9 na mão: tipo novo só entra se houver lugar', () => {
+    expect(BAG_SLOTS).toBe(12);
+    expect(CARRY_LIMIT).toBe(21); // 9 na mão + 12 na bolsa
     const inv = new Inventory();
     const grid = new Hotbar(WORLD_PROFILES.principal);
     expect(bagStacks(inv, grid)).toEqual(['potato', 'tomato', 'carrot', blockStack(Block.OAK_DOOR)]); // hortaliças e porta começam na bolsa

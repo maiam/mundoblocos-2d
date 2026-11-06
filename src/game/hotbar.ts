@@ -14,14 +14,14 @@ export type HotbarSlot =
 
 /** Espaços de item da grade da mão em mundo com coleta (depois deles: personagem, habilidades e bolsa). */
 export const GRID_SLOTS = 9;
-/** Espaços da bolsa: 2 fileiras de 9 acima da grade (com a mão, 27 itens: 3 fileiras de 9). */
-export const BAG_SLOTS = 18;
+/** Espaços da bolsa: 4 fileiras de 3 à direita, acima dos botões personagem/habilidades/bolsa (com a mão, 21 itens). */
+export const BAG_SLOTS = 12;
 /** Tipos de item que a heroína carrega ao todo (mão + bolsa). */
 export const CARRY_LIMIT = GRID_SLOTS + BAG_SLOTS;
 
 /**
  * Cabe coletar `id`? Pilha que ela já tem sempre soma; tipo novo entra num espaço vazio da mão (vai direto para lá)
- * ou na bolsa, se ela tiver lugar. Assim a bolsa nunca passa dos 18 espaços.
+ * ou na bolsa, se ela tiver lugar. Assim a bolsa nunca passa dos `BAG_SLOTS` espaços.
  */
 export function canCarry(inv: Inventory, grid: Hotbar, id: StackId): boolean {
   if (inv.count(id) > 0) return true;

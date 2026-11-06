@@ -27,8 +27,10 @@
   tecla C reservada) · **11 Habilidades** (K) · **12 Bolsa** (B/I). Começa com ferramentas 1–5, semente 6, trigo 7,
   8º e 9º livres (a porta começa na bolsa). Coletado vai para a mão se já estiver nela ou houver espaço livre; senão,
   bolsa. Pilha que acaba libera o espaço (`Hotbar.prune`).
-- **Bolsa**: **18 espaços** (2 fileiras de 9; com os 9 da mão, **27 itens**) que abrem dentro do mesmo cartão da grade, acima dela — com a mão, 3
-  fileiras de 9 do mesmo tamanho; só o título "Bolsa". Mostra o que a heroína carrega e não está na grade. Toque num
+- **Bolsa** (v0.57.0): **12 espaços** (4 fileiras de 3; com os 9 da mão, **21 itens**) à **direita** do cartão da grade,
+  logo acima dos botões personagem/habilidades/bolsa (`BAG_SLOTS`, `.hotbar-side`); a esquerda fica livre para baú e
+  receitas. Salvamento antigo com mais de 12 tipos na bolsa: o excesso cai no chão aos pés da personagem ao abrir
+  (`Game.spillBagOverflow`), com aviso. Antes: 18 espaços em 2 fileiras de 9 acima da mão. Mostra o que a heroína carrega e não está na grade. Toque num
   item e depois num espaço da grade → coloca lá (o que estava volta para a bolsa; se já estava em outro espaço,
   trocam). Sem item escolhido, tocar num espaço da grade guarda-o na bolsa (se houver lugar). Pausa o jogo; fecha
   pelo ícone da bolsa, tecla 9/I/B ou Esc.
@@ -67,8 +69,11 @@
   | Macarrão ao Molho | 4 Trigos + 2 Tomates | 1 Macarrão ao Molho (+70) |
 
   Longe do caldeirão a receita fica apagada e o toque avisa "Chegue perto de um Caldeirão de Pedra…".
-- **Tocar numa receita cria 1** se houver os ingredientes (`canCraft`); sem ingredientes, apagada. Nome e ingredientes
-  no título do espaço. O resultado entra na mão/bolsa; se for tipo novo sem lugar (e nenhum ingrediente acabar), não cria.
+- **Tocar numa receita abre a ficha dela** (v0.57.0, `SkillsPanel.openDetail`) no lugar da lista: ícone grande e
+  quantidade, ingredientes "tem / precisa" (vermelho quando falta), estação (✓/✗), **"Vai para: mão/bolsa"**
+  (`Game.craftDestination`) e **Confirmar / Cancelar** (Esc também cancela). Enquanto a ficha está aberta, a **bolsa
+  aparece à direita** no lugar das profissões (`BagPanel.peek`, só para ver), e o jogador vê o item entrar; ao
+  confirmar, aviso "+N Item na mão/na bolsa". Confirmar só fica ativo com ingredientes, estação e lugar.
 - **Tenda** (`Block.TENT`, **2×2**, madeira: machado, picareta e mão quebram): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`
   (bloqueiam, sem arte). Precisa das 4 livres em chão firme **e sem ninguém** (`ActionController.placeAnchor` escolhe, entre as 4 posições 2×2 que
   cobrem a célula alvo, a que não pega entidades e fica mais longe da heroína); quebrar qualquer parte derruba a tenda e devolve 1. A última colocada é o **ponto de

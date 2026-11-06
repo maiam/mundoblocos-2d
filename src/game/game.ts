@@ -13,7 +13,8 @@ import type { NetSession } from '../net/session';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { Entities } from './entities';
-import { bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
+import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
+import type { RecipeDestination } from './skills';
 import { BagPanel, type BagEntry } from './bag';
 import { ChestPanel } from './chest';
 import { setProfessionIcon, SkillsPanel } from './skills';
@@ -183,7 +184,10 @@ export class Game {
     setProfessionIcon('cook', art().craftables?.cauldron?.icon ?? '');
     this.skills = new SkillsPanel(this.hud.recipesSection, this.hud.professionsSection,
       (id) => { const v = this.stackView(id, null); return { icon: v.icon, name: v.name }; },
-      (r) => this.craft(r));
+      (r) => this.craft(r),
+      // Ficha da receita aberta: a bolsa aparece à direita (no lugar das profissões) para ver o item entrar.
+      (open) => { this.bag.peek(open); if (open) this.bag.render(this.bagEntries()); },
+      (r) => this.craftDestination(r));
     this.joystick = new Joystick(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     if (screenMode?.isTablet) this.hud.root.classList.add('tablet'); // toque na tela também age (além do botão)
@@ -230,6 +234,8 @@ export class Game {
     if (options.showcase) this.listen(window, 'resize', this.resize);
     else this.bindInput();
     if (options.notice) this.hud.toast(options.notice);
+    const spilled = this.spillBagOverflow();
+    if (spilled) this.hud.toast(`A bolsa agora tem ${BAG_SLOTS} espaços: ${spilled} ${spilled === 1 ? 'item caiu' : 'itens caíram'} no chão aos seus pés`);
     requestAnimationFrame(this.frame);
   }
 
@@ -387,6 +393,7 @@ export class Game {
 
   /** Bolsa com o baú aberto: recebe o item escolhido do baú, ou escolhe a pilha para levar. */
   private onBagTap(_i: number, e: BagEntry | undefined): boolean {
+    if (this.skills.detailOpen) return true; // ficha de receita: a bolsa aparece só para ver
     if (!this.chest.isOpen) return false;
     const slots = this.chestSlots!;
     const p = this.chest.picked;
@@ -452,6 +459,38 @@ export class Game {
     this.hotbar.autoPlace(out);
     this.refreshSelection();
     this.skills.render(count, this.nearStation);
+    if (this.bag.visible) this.bag.render(this.bagEntries());
+    const dest = this.hotbar.indexOf(out) >= 0 ? 'na mão' : 'na bolsa';
+    this.hud.toast(`+${r.output.count} ${this.stackView(out, null).name} ${dest}`);
+  }
+
+  /** Para onde vai o que a receita cria (mesma regra de `craft`): pilha que já existe, espaço livre ou o que os ingredientes liberam. */
+  private craftDestination(r: Recipe): RecipeDestination {
+    const out = r.output.item;
+    const count = (id: StackId) => this.inventory.count(id);
+    if (this.hotbar.indexOf(out) >= 0) return 'mão';
+    if (count(out) > 0) return 'bolsa';
+    if (this.hotbar.hasFree) return 'mão';
+    if (bagHasRoom(this.inventory, this.hotbar)) return 'bolsa';
+    // Mão e bolsa cheias: um ingrediente que acaba libera o lugar dele.
+    const spent = r.inputs.find((i) => count(i.item) > 0 && count(i.item) - i.count <= 0);
+    if (!spent) return null;
+    return this.hotbar.indexOf(spent.item) >= 0 ? 'mão' : 'bolsa';
+  }
+
+  /**
+   * Bolsa menor (v0.57.0: 18 → 12 espaços): o que passar do limite num salvamento antigo cai no chão aos pés da
+   * personagem (nada se perde; dá para pegar de volta ou guardar num baú). Devolve quantos tipos caíram.
+   */
+  private spillBagOverflow(): number {
+    if (!this.hotbar.dynamic) return 0;
+    const extra = bagStacks(this.inventory, this.hotbar).slice(BAG_SLOTS);
+    for (const id of extra) {
+      const n = this.inventory.count(id);
+      this.inventory.take(id, n);
+      this.drops.spawn(this.player.x, this.player.y + 0.3, [{ item: id, count: n }]);
+    }
+    return extra.length;
   }
 
   /** O que está na bolsa (fora da grade), para os 18 espaços dela. */
@@ -553,7 +592,8 @@ export class Game {
       if (e.code === 'KeyK') this.toggleSkills();
       // KeyC: reservado para o painel do personagem (em breve).
       if (e.code === 'Escape') {
-        if (this.skills.isOpen) this.toggleSkills(false);
+        if (this.skills.detailOpen) this.skills.closeDetail();
+        else if (this.skills.isOpen) this.toggleSkills(false);
         else if (this.bag.isOpen) this.toggleBag(false);
         else this.select(null);
       }
