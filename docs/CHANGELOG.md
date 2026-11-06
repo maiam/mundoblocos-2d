@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.57.1 — 2026-11-06
+- **Ficha de receita sem depender de leitura** (pedido do dono do produto, para crianças que ainda não leem): botões
+  com ícone e cor — **✓ Criar** (verde) e **✕ Voltar** (vermelho); a estação vira o ícone do Caldeirão com ✓/✗ e o
+  destino vira o ícone da mão ou da bolsa com →. Os nomes ficam no toque longo/leitor de tela.
+
 ## 0.57.0 — 2026-11-06
 - **Bolsa nova** (pedido do dono do produto): 12 espaços em 4 fileiras de 3, à **direita**, logo acima dos botões
   personagem/habilidades/bolsa — a esquerda fica livre. Com a mão, 21 itens (antes 9 + 18). Quem tinha mais de 12

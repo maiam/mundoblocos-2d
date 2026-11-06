@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.57.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.57.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 ## Bolsa à direita e ficha de receita — v0.57.0
 - Bolsa de 12 (4 × 3) na coluna da direita do cartão (`.hotbar-side`, com as profissões). Receitas: tocar abre a ficha

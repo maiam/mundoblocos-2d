@@ -453,14 +453,24 @@ html, body {
 .recipe-ings li img { width: 24px; height: 24px; }
 .recipe-ings li.miss { border-color: #ff8a7a; color: #ffb0a6; }
 .recipe-ings li b { font-variant-numeric: tabular-nums; }
-.recipe-meta { margin: 0; font-size: 12px; font-weight: 700; opacity: 0.9; }
-.recipe-meta .miss { color: #ffb0a6; }
+.recipe-meta { margin: 0; display: flex; gap: 6px; align-items: center; }
+.recipe-chip {
+  display: flex; align-items: center; gap: 2px; padding: 2px 6px 2px 2px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-border);
+}
+.recipe-chip img { width: 24px; height: 24px; object-fit: contain; }
+.recipe-chip b { font-size: 15px; font-weight: 900; color: #9be38a; }
+.recipe-chip.miss { border-color: #ff8a7a; }
+.recipe-chip.miss b { color: #ff8a7a; }
 .recipe-actions { display: flex; gap: 8px; }
 .recipe-actions button {
   min-height: 34px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--panel-border);
   background: rgba(255, 255, 255, 0.08); color: var(--text); font: 800 14px Nunito, system-ui, sans-serif; cursor: pointer;
 }
-.recipe-actions .confirm { background: var(--accent); color: #2a1a48; border-color: transparent; }
+.recipe-actions button { display: flex; align-items: center; gap: 6px; }
+.recipe-actions .ico { font-size: 20px; font-weight: 900; line-height: 1; }
+.recipe-actions .confirm { background: #4caf50; color: #fff; border-color: #2e7d32; }
+.recipe-actions .cancel { background: #d9534f; color: #fff; border-color: #a5322e; }
 .recipe-actions .confirm:disabled { opacity: 0.4; cursor: default; }
 .recipes-section.detail .hotbar-row { display: none; }
 .panel-section h2 { margin: 0 0 2px 4px; font-size: 15px; font-weight: 800; color: var(--accent); }
@@ -479,7 +489,9 @@ html, body {
   .recipe-info h3 { font-size: 14px; }
   .recipe-ings li { font-size: 11px; padding: 1px 6px 1px 2px; }
   .recipe-ings li img { width: 18px; height: 18px; }
-  .recipe-meta { font-size: 10px; }
+  .recipe-chip img { width: 18px; height: 18px; }
+  .recipe-chip b { font-size: 12px; }
+  .recipe-actions .ico { font-size: 16px; }
   .recipe-actions button { min-height: 28px; font-size: 12px; padding: 0 10px; }
 }
 /* Telas baixas: 4 fileiras de receitas + mão precisam caber (~360 px). */

@@ -71,7 +71,9 @@
   Longe do caldeirão a receita fica apagada e o toque avisa "Chegue perto de um Caldeirão de Pedra…".
 - **Tocar numa receita abre a ficha dela** (v0.57.0, `SkillsPanel.openDetail`) no lugar da lista: ícone grande e
   quantidade, ingredientes "tem / precisa" (vermelho quando falta), estação (✓/✗), **"Vai para: mão/bolsa"**
-  (`Game.craftDestination`) e **Confirmar / Cancelar** (Esc também cancela). Enquanto a ficha está aberta, a **bolsa
+  (`Game.craftDestination`) e **✓ Criar / ✕ Voltar** (Esc também volta). Desde a v0.57.1 a ficha fala por ícones:
+  botões verde/vermelho com ✓/✕, estação = ícone do bloco com ✓/✗, destino = ícone da mão/bolsa com → (nomes em
+  `title`/`aria-label`). Enquanto a ficha está aberta, a **bolsa
   aparece à direita** no lugar das profissões (`BagPanel.peek`, só para ver), e o jogador vê o item entrar; ao
   confirmar, aviso "+N Item na mão/na bolsa". Confirmar só fica ativo com ingredientes, estação e lugar.
 - **Tenda** (`Block.TENT`, **2×2**, madeira: machado, picareta e mão quebram): a célula escolhida é o canto inferior esquerdo; as outras 3 viram `TENT_PART`
