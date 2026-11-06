@@ -48,8 +48,8 @@ export class Hud {
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
     this.root.className = 'hud';
-    // Cartão em grade: coluna esquerda = painel de cima (bolsa/receitas) + 9 itens; coluna direita = profissões +
-    // personagem/habilidades/bolsa. Separador vertical entre os 9 itens e os botões.
+    // Cartão em grade: coluna esquerda = painel de cima (baú/receitas) + 9 itens; coluna direita = profissões ou bolsa
+    // + personagem/habilidades/bolsa. Separador vertical entre os 9 itens e os botões.
     const card = document.createElement('nav');
     card.className = 'hotbar';
     card.setAttribute('aria-label', 'Grade');
@@ -60,8 +60,12 @@ export class Hud {
     this.professionsSection = panel('professions-section');
     const top = document.createElement('div');
     top.className = 'hotbar-top';
-    top.append(this.chestSection, this.bagSection, this.recipesSection);
-    card.append(top, this.professionsSection);
+    top.append(this.chestSection, this.recipesSection);
+    // Coluna da direita (largura dos 3 botões): profissões ou bolsa (4 × 3).
+    const side = document.createElement('div');
+    side.className = 'hotbar-side';
+    side.append(this.professionsSection, this.bagSection);
+    card.append(top, side);
     const hotbar = document.createElement('div');
     hotbar.className = 'hotbar-row hand';
     card.appendChild(hotbar);

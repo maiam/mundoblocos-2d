@@ -105,6 +105,11 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 4. **Comida, cura e equilíbrio** — ✅ v0.56.0: **barra de fome**, alimentos crus (maçã, cenoura, batata, tomate) e pratos do **Cozinheiro** no Caldeirão (pão, macarrão ao molho), pesos em `FOOD`. Falta: carne, forno/fogueira cozinhando, comida que cure direto, arte própria do ícone do Cozinheiro. Original: cozinhar (pão de trigo, carne) para curar — **Fogueira, Caldeirão de Pedra e Forno de Pedra já existem** (v0.49.0, só se colocam): cozinhar neles; Covil das Aranhas ajustado para a faixa
    1–5; **morte perde 10% do XP do nível atual, sem nunca descer de nível** (continua perdendo tudo menos as ferramentas).
 
+### Receitas mais claras (plano de 2026-11-06, em partes)
+1. ✅ v0.57.0 — bolsa 4×3 à direita e ficha de receita com Confirmar/Cancelar mostrando a bolsa ao lado.
+2. **Descrições** dos itens e blocos (`description` em `world/items.ts`/`blocks.ts`) na ficha e na bolsa.
+3. Depois: criar várias (×5), "onde conseguir" cada ingrediente, filtro "posso fazer", item voando até o espaço.
+
 ### Fase 4 — Mundo vivo e conteúdo
 - **Mapa** — minimapa com névoa ✅ v0.51.0. Próximo: tocar no minimapa abre o **mapa grande** (tela cheia, zoom,
   arrastar), nomes de regiões (biomas, cidade, dungeon) e marcadores do jogador; moldura de pergaminho se a arte
@@ -179,7 +184,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 | Cidade: NPCs (quem, falas), interiores, o que as lojas vendem, hospedaria como ponto de retorno | Fase 4 |
 | Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; substituem água? | Fase 3 |
 | Painel do Personagem: além de nível/atributos/XP (Fase P), armaduras? | Fase P/4 |
-| Limite de pilha (bolsa já tem 18 espaços; pilhas sem limite) | Fase 3 |
+| Limite de pilha (bolsa tem 12 espaços desde v0.57.0; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
 

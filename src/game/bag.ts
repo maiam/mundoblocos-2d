@@ -9,17 +9,19 @@ export interface BagEntry {
   count: number | null;
 }
 
-/** Espaços por fileira (igual à grade da mão: 8 + bolsa). */
-const PER_ROW = 9;
+/** Espaços por fileira: a largura dos 3 botões (personagem, habilidades, bolsa) logo abaixo. */
+const PER_ROW = 3;
 
 /**
- * Bolsa: 2 fileiras de 9 espaços dentro do mesmo cartão da grade (acima dela), do mesmo tamanho dos espaços da mão,
- * só com o título "Bolsa". Mostra o que a heroína carrega e não está na grade. Tocar num item o escolhe; depois,
- * tocar num espaço da grade coloca-o lá (o Game faz a troca com `Hotbar.assign`).
+ * Bolsa: 4 fileiras de 3 espaços à direita do cartão da grade, logo acima dos botões personagem/habilidades/bolsa,
+ * do mesmo tamanho dos espaços da mão (a esquerda fica livre para baú e receitas). Mostra o que a heroína carrega e não
+ * está na grade. Tocar num item o escolhe; depois, tocar num espaço da grade coloca-o lá (`Hotbar.assign`).
+ * Também aparece só para ver (`peek`) ao confirmar uma receita: o jogador vê onde o item novo entra.
  */
 export class BagPanel {
   private readonly slots: HTMLButtonElement[] = [];
   private open = false;
+  private peeking = false;
   private entries: BagEntry[] = [];
   picked: StackId | null = null;
 
@@ -49,8 +51,19 @@ export class BagPanel {
 
   setOpen(open: boolean): void {
     this.open = open;
-    this.section.hidden = !open;
+    this.section.hidden = !open && !this.peeking;
     if (!open) this.picked = null;
+  }
+
+  /** Mostra a bolsa só para ver (ficha de receita aberta), sem abri-la. */
+  peek(on: boolean): void {
+    this.peeking = on;
+    this.section.hidden = !this.open && !on;
+  }
+
+  /** Visível agora (aberta ou espiando)? */
+  get visible(): boolean {
+    return this.open || this.peeking;
   }
 
   private pick(i: number): void {
@@ -60,7 +73,7 @@ export class BagPanel {
     this.render(this.entries);
   }
 
-  /** Redesenha os 18 espaços (vazios ficam tracejados). */
+  /** Redesenha os espaços (vazios ficam tracejados). */
   render(entries: BagEntry[]): void {
     this.entries = entries.slice(0, BAG_SLOTS);
     this.slots.forEach((b, i) => {
