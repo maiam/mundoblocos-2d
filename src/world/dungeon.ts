@@ -1,3 +1,4 @@
+import { CHUNK_SIZE } from '../config';
 import type { Biome } from './biomes';
 import { Block, type BlockId, blockDef } from './blocks';
 import { hash2, mulberry32 } from './random';
@@ -5,7 +6,8 @@ import type { Cell, TerrainSource } from './terrain';
 
 /**
  * Dungeon 01 — Covil das Aranhas: LABIRINTO procedural (função pura da seed), em três etapas:
- *  1. Área: tamanho sorteado pela seed (`dungeonSize`) e posição perto do spawn (`planDungeon`).
+ *  1. Área: tamanho sorteado pela seed (`dungeonSize`), num lugar isolado do mapa (`isolatedDungeon`, ADR 0019): no
+ *     mundo só existe a entrada — a caverna (`planCave`), a pelo menos 10 chunks do castelo.
  *  2. Labirinto (`buildMaze`): só chão e paredes — caminhos sinuosos, bifurcações, circuitos, becos sem saída,
  *     câmaras, UMA entrada no perímetro e a câmara da Rainha (chefe) com UMA passagem, no ponto mais fundo.
  *  3. Conteúdo (`decorateDungeon`): blocos de chão/parede, obstáculos nas câmaras e monstros, respeitando a geometria.
@@ -409,55 +411,104 @@ export function buildDungeon(seed: number, x0: number, y0: number, side: Side, s
   return decorateDungeon(seed, buildMaze(seed, size[0], size[1], side), x0, y0);
 }
 
-/** Lado da área voltado para o ponto (px, py): a entrada fica de frente para o jogador. */
-export function sideFacing(area: Rect, px: number, py: number): Side {
-  const cx = (area.x0 + area.x1) / 2;
-  const cy = (area.y0 + area.y1) / 2;
-  const dx = (px - cx) / (area.x1 - area.x0);
-  const dy = (py - cy) / (area.y1 - area.y0);
-  if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'west' : 'east';
-  return dy < 0 ? 'north' : 'south';
+// ---------------------------------------------------------------------------------------------
+// Covil isolado + entrada de caverna no mundo (ADR 0019)
+// ---------------------------------------------------------------------------------------------
+
+/** Canto do covil: coordenadas fixas muito longe de tudo (os interiores ficam em (0, -100000)). */
+export const DUNGEON_ORIGIN: [number, number] = [-100000, -100000];
+/** Anel de montanhas em volta do covil (ninguém sai andando; o render escurece o que fica fora). */
+export const DUNGEON_RIM = 6;
+/** Distância mínima da caverna ao centro do castelo (células): 10 chunks. */
+export const CAVE_MIN_CASTLE_DIST = 10 * CHUNK_SIZE;
+/** Base da caverna no mundo (células): a boca fica no meio da fileira de baixo. */
+export const CAVE_W = 5;
+export const CAVE_D = 3;
+
+/** Entrada do covil no mundo: base da arte da caverna (sólida, protegida) e a célula diante da boca. */
+export interface CaveEntrance {
+  /** Canto inferior esquerdo (onde fica `DUNGEON_CAVE`; as outras células são `TOWN_PART`). */
+  x: number;
+  y: number;
+  footprint: Rect;
+  /** Célula diante da boca: andar para cima nela = entrar; ao sair do covil, volta para cá. */
+  outside: [number, number];
+  /** Área protegida (base + anel) e área limpa diante da boca (sem árvores nem água). */
+  guard: Rect;
+  front: Rect;
+}
+
+/** O labirinto do mundo, sempre com a entrada ao sul, no canto isolado. */
+export function isolatedDungeon(seed: number): DungeonLayout {
+  return buildDungeon(seed, DUNGEON_ORIGIN[0], DUNGEON_ORIGIN[1], 'south');
+}
+
+/** Área do covil com o anel de montanhas (protegida). */
+export function dungeonGuard(l: DungeonLayout): Rect {
+  return { x0: l.area.x0 - DUNGEON_RIM, y0: l.area.y0 - DUNGEON_RIM, x1: l.area.x1 + DUNGEON_RIM, y1: l.area.y1 + DUNGEON_RIM };
+}
+
+/** Onde se chega ao entrar: logo para dentro do vão da entrada, no centro. */
+export function dungeonEntry(l: DungeonLayout): [number, number] {
+  const c = l.gate[l.gate.length - 2]; // anel mais interno do vão, k = 0
+  const inward = { north: [0, 1], south: [0, -1], west: [1, 0], east: [-1, 0] }[l.side];
+  return [c[0] + inward[0], c[1] + inward[1]];
+}
+
+/** Pisar aqui sai do covil: o anel externo do vão (as 3 células da borda). */
+export function isDungeonExit(l: DungeonLayout, x: number, y: number): boolean {
+  return l.gate.slice(0, 3).some(([gx, gy]) => gx === x && gy === y);
+}
+
+function caveAt(x: number, y: number): CaveEntrance {
+  const footprint = { x0: x, y0: y - CAVE_D + 1, x1: x + CAVE_W - 1, y1: y };
+  const outside: [number, number] = [x + (CAVE_W >> 1), y + 1];
+  return {
+    x, y, footprint, outside,
+    guard: { x0: footprint.x0 - 1, y0: footprint.y0 - 1, x1: footprint.x1 + 1, y1: footprint.y1 },
+    front: { x0: outside[0] - 2, y0: outside[1], x1: outside[0] + 2, y1: outside[1] + 2 },
+  };
 }
 
 /**
- * Etapa 1 — onde a dungeon fica: perto do spawn (fora da área `avoid`, ex.: a cidade), com pouca água na área e terra firme diante da entrada.
- * Determinístico (ordem fixa de tentativas); a entrada fica voltada para o spawn.
+ * Onde fica a caverna: direção e distância sorteadas pela seed, sempre a pelo menos `CAVE_MIN_CASTLE_DIST` do centro
+ * do castelo, fora da área a evitar (cidade, estrada, campo do rebanho) e em terra firme (base e frente sem água).
  */
-export function planDungeon(base: TerrainSource, spawnX: number, spawnY: number, avoid: Rect | null = null): DungeonLayout {
-  const [w, h] = dungeonSize(base.seed);
-  const dirs: Array<[number, number]> = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
-  const land = (x: number, y: number) => base.groundAt(x, y) !== Block.WATER;
-  let fallback: DungeonLayout | null = null;
-  for (let dist = Math.ceil(h / 2) + 10; dist <= 170; dist += 8) {
-    for (const [dx, dy] of dirs) {
-      const x0 = spawnX + Math.round(dx * (dist + (w - h) / 2 * Math.abs(dx))) - Math.floor(w / 2);
-      const y0 = spawnY + Math.round(dy * dist) - Math.floor(h / 2);
-      const area = { x0, y0, x1: x0 + w - 1, y1: y0 + h - 1 };
-      if (inRect({ x0: area.x0 - 6, y0: area.y0 - 6, x1: area.x1 + 6, y1: area.y1 + 6 }, spawnX, spawnY)) continue;
-      // Nunca sobre a cidade (nem colada nela).
-      if (avoid && area.x0 <= avoid.x1 && area.x1 >= avoid.x0 && area.y0 <= avoid.y1 && area.y1 >= avoid.y0) continue;
-      let water = 0;
-      let total = 0;
-      for (let y = area.y0; y <= area.y1; y += 4) for (let x = area.x0; x <= area.x1; x += 4) { total++; if (!land(x, y)) water++; }
-      if (water / total > 0.3 && fallback) continue;
-      const layout = buildDungeon(base.seed, x0, y0, sideFacing(area, spawnX, spawnY), [w, h]);
-      fallback ??= layout;
-      const [sx, sy] = layout.doorstep;
-      const front = [-1, 0, 1].every((k) => (layout.side === 'north' || layout.side === 'south' ? land(sx + k, sy) : land(sx, sy + k)));
-      if (water / total <= 0.3 && front) return layout;
+export function planCave(base: TerrainSource, castle: [number, number], avoid: Rect | null): CaveEntrance {
+  const seed = base.seed;
+  const a0 = hash2(seed, 7001, 3) * Math.PI * 2;
+  const overlaps = (r: Rect) => !!avoid && r.x0 <= avoid.x1 && r.x1 >= avoid.x0 && r.y0 <= avoid.y1 && r.y1 >= avoid.y0;
+  let fallback: CaveEntrance | null = null;
+  for (let t = 0; t < 96; t++) {
+    const a = a0 + t * 0.7;
+    const dist = CAVE_MIN_CASTLE_DIST + 8 + hash2(seed, 7002, t) * 80 + Math.floor(t / 9) * 24;
+    const ox = Math.round(castle[0] + Math.cos(a) * dist);
+    const oy = Math.round(castle[1] + Math.sin(a) * dist);
+    const cave = caveAt(ox - (CAVE_W >> 1), oy);
+    if (Math.hypot(cave.outside[0] - castle[0], cave.outside[1] - castle[1]) < CAVE_MIN_CASTLE_DIST) continue;
+    if (overlaps(cave.guard) || overlaps(cave.front)) continue;
+    fallback ??= cave;
+    let dry = true;
+    for (const r of [cave.footprint, cave.front]) {
+      for (let y = r.y0; y <= r.y1 && dry; y++) for (let x = r.x0; x <= r.x1 && dry; x++) if (base.groundAt(x, y) === Block.WATER) dry = false;
     }
+    if (dry) return cave;
   }
   return fallback!;
 }
 
-/** Terreno com a dungeon sobreposta: dentro da área usa o mapa da dungeon; fora, o terreno base. */
+/**
+ * Terreno com o covil e a caverna sobrepostos: no canto isolado, o labirinto cercado por um anel de montanhas (com 3
+ * células de chão diante do vão); no mundo, a base da caverna (sólida) e a frente da boca limpa. Fora disso, o terreno base.
+ */
 export class DungeonTerrain implements TerrainSource {
-  /** Diante da entrada (fora da área): terra firme e sem objetos, para a entrada nunca ficar bloqueada. */
-  private readonly front: Rect;
+  private readonly guard: Rect;
+  private readonly landing: Rect;
 
-  constructor(private readonly base: TerrainSource, readonly layout: DungeonLayout) {
+  constructor(private readonly base: TerrainSource, readonly layout: DungeonLayout, readonly cave: CaveEntrance | null = null) {
+    this.guard = dungeonGuard(layout);
     const [dx, dy] = layout.doorstep;
-    this.front = { x0: dx - 2, y0: dy - 2, x1: dx + 2, y1: dy + 2 };
+    this.landing = layout.side === 'north' || layout.side === 'south' ? { x0: dx - 1, y0: dy, x1: dx + 1, y1: dy } : { x0: dx, y0: dy - 1, x1: dx, y1: dy + 1 };
   }
 
   private clearFront(c: Cell): Cell {
@@ -468,11 +519,29 @@ export class DungeonTerrain implements TerrainSource {
     return this.base.seed;
   }
 
-  cellAt(x: number, y: number): Cell {
+  /** Célula sobreposta, ou null se for terreno base puro. `baseCell` só é calculada quando precisa. */
+  private overlay(x: number, y: number, baseCell: () => Cell): Cell | null {
     const l = this.layout;
-    if (!inRect(l.area, x, y)) return inRect(this.front, x, y) ? this.clearFront(this.base.cellAt(x, y)) : this.base.cellAt(x, y);
-    const i = (y - l.area.y0) * l.w + (x - l.area.x0);
-    return { ground: l.ground[i] as BlockId, object: l.objects[i] as BlockId, upper: Block.AIR };
+    if (inRect(l.area, x, y)) {
+      const i = (y - l.area.y0) * l.w + (x - l.area.x0);
+      return { ground: l.ground[i] as BlockId, object: l.objects[i] as BlockId, upper: Block.AIR };
+    }
+    if (inRect(this.guard, x, y)) {
+      const floor = inRect(this.landing, x, y);
+      return { ground: Block.DUNGEON_DIRT, object: floor ? Block.AIR : Block.DUNGEON_MOUNTAIN, upper: Block.AIR };
+    }
+    const cave = this.cave;
+    if (cave && inRect(cave.footprint, x, y)) {
+      const g = baseCell().ground;
+      const ground = blockDef(g).liquid || g === Block.HOLE ? Block.GRASS : g;
+      return { ground, object: x === cave.x && y === cave.y ? Block.DUNGEON_CAVE : Block.TOWN_PART, upper: Block.AIR };
+    }
+    if (cave && inRect(cave.front, x, y)) return this.clearFront(baseCell());
+    return null;
+  }
+
+  cellAt(x: number, y: number): Cell {
+    return this.overlay(x, y, () => this.base.cellAt(x, y)) ?? this.base.cellAt(x, y);
   }
 
   groundAt(x: number, y: number): BlockId {
@@ -494,25 +563,20 @@ export class DungeonTerrain implements TerrainSource {
   /** Cada chunk copia a sua parte do mapa lógico (corredores seguem sem interrupção entre chunks). */
   generateChunk(cx: number, cy: number, ground: Uint8Array, objects: Uint8Array, upper: Uint8Array): void {
     this.base.generateChunk(cx, cy, ground, objects, upper);
-    const l = this.layout.area;
-    const f = this.front;
     const S = Math.round(Math.sqrt(ground.length));
     const x0 = cx * S;
     const y0 = cy * S;
     const misses = (r: Rect) => x0 > r.x1 || x0 + S - 1 < r.x0 || y0 > r.y1 || y0 + S - 1 < r.y0;
-    if (misses(l) && misses(f)) return;
+    const c = this.cave;
+    if (misses(this.guard) && (!c || (misses(c.footprint) && misses(c.front)))) return;
     for (let ly = 0; ly < S; ly++) {
       for (let lx = 0; lx < S; lx++) {
-        const x = x0 + lx;
-        const y = y0 + ly;
         const i = ly * S + lx;
-        let c: Cell;
-        if (inRect(l, x, y)) c = this.cellAt(x, y);
-        else if (inRect(f, x, y)) c = this.clearFront({ ground: ground[i] as BlockId, object: objects[i] as BlockId, upper: upper[i] as BlockId });
-        else continue;
-        ground[i] = c.ground;
-        objects[i] = c.object;
-        upper[i] = c.upper;
+        const cell = this.overlay(x0 + lx, y0 + ly, () => ({ ground: ground[i] as BlockId, object: objects[i] as BlockId, upper: upper[i] as BlockId }));
+        if (!cell) continue;
+        ground[i] = cell.ground;
+        objects[i] = cell.object;
+        upper[i] = cell.upper;
       }
     }
   }

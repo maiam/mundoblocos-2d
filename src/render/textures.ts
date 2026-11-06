@@ -136,6 +136,17 @@ function dungeonTextures(groundTop: Map<BlockId, HTMLCanvasElement>, objects: Ma
   variants.set(Block.DUNGEON_WALL, [...Array(10).fill(walls[0]), walls[3], walls[1]]);
   objects.set(Block.DUNGEON_WALL, walls[0]);
   stackDraw.set(Block.DUNGEON_WALL, 2);
+  // Entrada do covil no mundo: a caverna sobre a base 5 × 3 (canto inferior esquerdo), boca no meio de baixo.
+  if (art.cave) {
+    const w = T * 4.7;
+    const h = w * (art.cave.height / art.cave.width);
+    const c = document.createElement('canvas');
+    c.width = art.cave.width;
+    c.height = art.cave.height;
+    c.getContext('2d')!.drawImage(art.cave, 0, 0);
+    const oy = T - h + 4;
+    objects.set(Block.DUNGEON_CAVE, { canvas: c, ox: (5 * T - w) / 2, oy, w, h, hit: { x: 0, y: -2 * T, w: 5 * T, h: 3 * T } });
+  }
   const rocks = stripSprites(art.rocks, 8, T * 1.5, 4);
   const props = stripSprites(art.props, 4, T * 1.15, 2);
   variants.set(Block.DUNGEON_MOUNTAIN, mountains);

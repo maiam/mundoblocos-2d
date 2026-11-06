@@ -2,7 +2,7 @@ import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
 import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isDoor, isGrowingTree, TREE_NEXT } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
-import { type DungeonLayout, DungeonTerrain, inRect, planDungeon } from './dungeon';
+import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave } from './dungeon';
 import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { type InteriorLayout, interiorLayouts, InteriorTerrain } from './interiors';
@@ -84,8 +84,13 @@ export class World {
   private readonly crops = new Set<string>();
   /** Árvores plantadas crescendo e macieiras colhidas (avançam em `tick`). */
   private readonly trees = new Set<string>();
-  /** Dungeon deste mundo (perfil com `dungeon`), ou null. Área protegida: só se luta lá dentro. */
+  /**
+   * Covil deste mundo (perfil com `dungeon`), ou null: labirinto isolado do mapa (ADR 0019), protegido; só se luta lá
+   * dentro. No mundo fica só a entrada, a caverna (`cave`).
+   */
   readonly dungeon: DungeonLayout | null = null;
+  /** Entrada do covil no mundo (a pelo menos 10 chunks do castelo), ou null. */
+  readonly cave: CaveEntrance | null = null;
   /** Cidade do Despertar (perfil com `town`), ou null. Área protegida; início e renascer sem tenda. */
   readonly town: TownLayout | null = null;
   /** Interiores das construções da cidade (ADR 0014): cômodos isolados e protegidos. Vazio sem cidade. */
@@ -112,12 +117,16 @@ export class World {
     }
     if (profile.dungeon) {
       const base = this.generator;
-      const [sx, sy] = (this.spawn = this.findSpawn());
-      // Fora da cidade, do anel em volta, da estrada do portão e do campo do rebanho (ao sul do portão).
+      const spawn = (this.spawn = this.findSpawn());
+      // Caverna fora da cidade, do anel em volta, da estrada do portão e do campo do rebanho (ao sul do portão),
+      // a pelo menos 10 chunks do castelo; o labirinto em si fica no canto isolado.
       const keep = this.town ? grow(this.town.area, TOWN_MARGIN + 4) : null;
       if (keep) keep.y1 = this.town!.area.y1 + TOWN_SOUTH_FIELD;
-      this.dungeon = planDungeon(base, sx, sy, keep);
-      this.generator = new DungeonTerrain(base, this.dungeon);
+      const castle = this.town?.buildings.find((b) => b.id === Block.CASTLE);
+      const center: [number, number] = castle ? [castle.x + castle.w / 2, castle.y - castle.d / 2] : spawn;
+      this.dungeon = isolatedDungeon(seed);
+      this.cave = planCave(base, center, keep);
+      this.generator = new DungeonTerrain(base, this.dungeon, this.cave);
     }
     if (this.town) {
       this.interiors = interiorLayouts(this.town);
@@ -127,7 +136,8 @@ export class World {
 
   /** Célula dentro da dungeon, da cidade (muralhas incluídas) ou de um interior? Lá nada é quebrado, colocado, arado nem plantado. */
   isProtected(x: number, y: number): boolean {
-    return (!!this.dungeon && inRect(this.dungeon.area, x, y)) || (!!this.town && inRect(this.town.area, x, y))
+    return (!!this.dungeon && inRect(dungeonGuard(this.dungeon), x, y)) || (!!this.cave && inRect(this.cave.guard, x, y))
+      || (!!this.town && inRect(this.town.area, x, y))
       || this.interiors.some((l) => inRect(l.guard, x, y));
   }
 
@@ -139,6 +149,26 @@ export class World {
   /** Interior cuja porta fica diante desta célula da rua (andar para cima nela = entrar), ou null. */
   interiorEntrance(x: number, y: number): InteriorLayout | null {
     return this.interiors.find((l) => l.outside[0] === x && l.outside[1] === y) ?? null;
+  }
+
+  /** Diante da boca da caverna (andar para cima aqui = entrar no covil)? */
+  isCaveDoor(x: number, y: number): boolean {
+    return !!this.cave && this.cave.outside[0] === x && this.cave.outside[1] === y;
+  }
+
+  /** Dentro do covil (labirinto), sem o anel em volta? */
+  inDungeon(x: number, y: number): boolean {
+    return !!this.dungeon && inRect(this.dungeon.area, x, y);
+  }
+
+  /** Pisar nesta célula sai do covil (anel externo do vão da entrada)? */
+  isDungeonExit(x: number, y: number): boolean {
+    return !!this.dungeon && isDungeonExit(this.dungeon, x, y);
+  }
+
+  /** Onde se chega ao entrar no covil (logo para dentro do vão), ou null sem covil. */
+  dungeonEntry(): [number, number] | null {
+    return this.dungeon ? dungeonEntry(this.dungeon) : null;
   }
 
   /** Construção (ou placa) da cidade que ocupa a célula, ou null. */

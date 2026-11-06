@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.55.0 — 2026-11-06
+- **Covil das Aranhas com entrada de caverna** (pedido do dono do produto, arte enviada; ADR 0019): no mundo fica só
+  a caverna, a pelo menos 10 chunks do castelo em direção sorteada pela seed. Andar para dentro da boca leva ao
+  labirinto; pisar na saída devolve à frente da caverna. De dentro não se vê o mundo (escuridão em volta) e do mundo
+  não se vê o labirinto. O minimapa mostra o labirinto com a névoa lá dentro.
+- **Mundo da Cidade do Despertar só de florestas**: sem deserto — campos (carvalhos e macieiras), bosques de sakura,
+  rios, mares e areia nas praias. Dunas e cacto ficam guardados para um mundo árido futuro.
+- ⚠️ Muda o mapa de todas as sementes (covil antigo vira terreno, desertos viram floresta). Salvamento v8: as aranhas
+  voltam completas. Multiplayer: `PROTOCOL_VERSION` 4 (servidor atualizado junto).
+- Visão registrada: cidades em mundos diferentes ligados por portais ("andares").
+
 ## 0.54.0 — 2026-11-06
 - **Pano de Seda** (Construtor, 10 Sedas de Aranha), com ícone próprio. A **Tenda** passa a pedir **1 Pano de Seda**
   + 10 Tábuas + 4 Presas (antes: 10 sedas soltas).

@@ -1,15 +1,26 @@
 # Domínio: dungeon e monstros
 
-**Dungeon 01 — Covil das Aranhas**: labirinto procedural no mundo principal (perfil `dungeon: true`), perto do
-spawn. Modelo de conexões, não uma planta fixa: tamanho, caminhos, câmaras e monstros mudam com a seed.
+**Dungeon 01 — Covil das Aranhas**: labirinto procedural no mundo principal (perfil `dungeon: true`). Modelo de
+conexões, não uma planta fixa: tamanho, caminhos, câmaras e monstros mudam com a seed. **Desde a v0.55.0 (ADR 0019) é
+um lugar isolado**: no mundo só existe a **entrada — a caverna**, a ≥ 10 chunks do castelo.
+
+## Entrada e saída (v0.55.0, ADR 0019)
+- `isolatedDungeon(seed)`: o labirinto em `DUNGEON_ORIGIN` (−100000, −100000), entrada sempre ao sul, cercado por
+  `DUNGEON_RIM` = 6 células de montanha (3 de chão diante do vão). `dungeonGuard` = área + anel (protegida).
+- `planCave(base, castle, avoid)`: caverna (`DUNGEON_CAVE` no canto inferior esquerdo de uma base 5 × 3 de
+  `TOWN_PART`), direção e distância pela seed, ≥ `CAVE_MIN_CASTLE_DIST` (160) do centro do castelo, fora da
+  cidade/estrada/campo do rebanho, base e frente sem água; a frente da boca (5 × 3) fica limpa.
+- `Game.updateInteriors`: andar para cima em `cave.outside` → `dungeonEntry` (logo dentro do vão, virada para cima,
+  aviso "Covil das Aranhas"); pisar no anel externo do vão (`isDungeonExit`) → volta para `cave.outside`.
+- Render: dentro do covil, tudo fora da área fica escuro (`dungeonArea`); o farol roxo e o marcador do minimapa ficam
+  na boca da caverna. No minimapa, dentro do covil, só o labirinto (sem cidade nem tenda), com a névoa normal.
+- Salvamento v8: aranhas do covil antigo descartadas (voltam completas).
 
 ## Geração (`world/dungeon.ts`) — fonte de verdade, função pura da seed
 A estrutura lógica completa é gerada antes de qualquer chunk; cada chunk só copia a sua parte.
 
 1. **Área** — `dungeonSize(seed)`: 96–108 × 66–78 blocos (~9× a primeira versão, ~29 chunks em área).
-   `planDungeon(base, spawn, avoid)`: fora da cidade (+ anel + 4 e o campo ao sul do portão); tenta 8 direções × distâncias crescentes do spawn; aceita a primeira com ≤ 30% de
-   água e terra firme diante da entrada. A entrada fica voltada para o spawn (`sideFacing`). `DungeonTerrain` mantém
-   5 × 5 células diante da entrada sempre livres e em terra firme (nunca bloqueada por árvore, pedra ou água).
+   Posição: ver "Entrada e saída" acima (até a v0.54.0, `planDungeon` punha o labirinto no mapa, perto do spawn).
 2. **Labirinto** — `buildMaze(seed, w, h, side)` define **só chão e paredes**:
    - Grade lógica de nós (passo de 6 blocos; centros deslocados ±1 para não haver simetria). A coluna/linha 0 de
      cada célula de nó é sempre parede, então só arestas abertas atravessam entre nós.
@@ -31,8 +42,8 @@ A estrutura lógica completa é gerada antes de qualquer chunk; cada chunk só c
    - Monstros: 1 chefe no centro da câmara da Rainha; aranhas grandes = chão livre/320, pequenas = chão livre/110,
      a ≥ 14 passos da entrada, fora da câmara da Rainha, espaçadas (≥ 4).
 - `DungeonTerrain`: `TerrainSource` que sobrepõe o mapa ao terreno base (`generateChunk` copia a parte do chunk).
-- `World`: calcula o spawn no terreno base, planeja a dungeon e troca o gerador pela sobreposição; `findSpawn`
-  devolve o spawn calculado.
+- `World`: calcula o spawn no terreno base, monta o covil isolado e a caverna (`cave`) e troca o gerador pela
+  sobreposição; `findSpawn` devolve o spawn calculado. `isCaveDoor`, `inDungeon`, `isDungeonExit`, `dungeonEntry`.
 
 Testes (`dungeon.test.ts`, 5 seeds): tamanho ~9× e variável; uma única abertura no perímetro; todo o chão
 alcançável pela entrada; terreno plano; becos, bifurcações e câmaras presentes; câmara da Rainha com exatamente uma

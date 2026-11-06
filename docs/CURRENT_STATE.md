@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.54.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.55.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Covil isolado e mundo de florestas — v0.55.0
+- Covil das Aranhas isolado em `DUNGEON_ORIGIN`, entrada = caverna (`World.cave`, `DUNGEON_CAVE`) a ≥ 160 células do
+  castelo; entrar/sair em `Game.updateInteriors`; escuridão fora do labirinto; minimapa do labirinto. ADR 0019.
+- `pickBiome` só Campos e Sakura (mundo da Cidade 1 sem deserto). `SAVE_VERSION` 8, `PROTOCOL_VERSION` 4.
 
 ## Pano de Seda e contrato de ferramentas — v0.54.0
 - Receita `silk-cloth` (10 sedas → `silk_cloth`); `tent` pede 1 pano + 10 tábuas + 4 presas.
@@ -74,7 +79,7 @@ _Atualizado em 2026-11-06 — v0.54.0 · jogo: **Orvalis** (`orvalis.pensamentos
   Tora de Carvalho, Tábua de Carvalho e as variações de pedra (Irregular, Tijolo, Chão, Lisa, Polida, Rachada, Tijolo
   Rachado). A Terra com Grama tem 3 artes, sorteadas por célula. São os únicos blocos de construção; a Pedra Bruta é a pedra natural do mundo. Irregular, Tijolo e Chão de
   Pedra saem de receita (1 Pedra Bruta → 1); as outras 4 ainda não têm fonte no jogo (só pelo código/salvamento).
-- Biomas: Campos (carvalhos), Bosque de Sakura (cerejeiras), Dunas (cactos). Água, rios, praias, montanhas de
+- Biomas (desde a v0.55.0, mundo só de florestas): Campos (carvalhos e macieiras), Bosque de Sakura (cerejeiras); as Dunas (cactos) não aparecem mais. Água, rios, praias, montanhas de
   pedra com 1–2 níveis, trilhas de caminho de terra, pedregulhos, capim e flores.
 - **Cidade do Despertar** (`domains/town.md`): cidade fixa (igual em toda seed) de 164 × 132 blocos ao norte da
   origem — muralha com guaritas e portão único ao sul, castelo ao norte, labirinto de ruas, praças, Guilda,

@@ -155,6 +155,9 @@ expressão nova com outro molde: medir de novo `CALIB` (escala e deslocamento da
 **Ferramentas por material**: a arte segue `assets-src/ferramentas/CONTRATO.md` (ficha em `catalogo.json`, prancha
 de ícones padronizada, camada de mão sobre pose-base). O motor só importa o que passou pela checagem da seção 5.
 
+**Marcos do mundo** (entrada do covil, `assets-src/dungeon-cave.png`): `python3 scripts/extract-landmarks.py` →
+`dungeon-cave.png` (320 px de largura) → `optimize-assets.py`. Carrega com a arte do covil, em segundo plano.
+
 **Ícones soltos de itens** (`assets-src/items/<nome>.png`, desenho transparente): `python3 scripts/extract-items.py`
 → `icon-item-<nome>.png` 64×64. A segmentação das pranchas (árvores e hortaliças) fica em `scripts/sprite_segments.py`.
 

@@ -46,6 +46,7 @@ const OBJECT: Partial<Record<number, string>> = {
   [Block.TENT_PART]: '#d8b36a',
   [Block.DUNGEON_WALL]: '#3b3330',
   [Block.DUNGEON_MOUNTAIN]: '#5d544c',
+  [Block.DUNGEON_CAVE]: '#7a4a7e',
 };
 
 const BUILDING = '#b0573f'; // telhados da cidade

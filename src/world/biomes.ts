@@ -35,9 +35,13 @@ export const BIOMES: Record<Biome['key'], Biome> = {
   },
 };
 
-/** Escolhe o bioma a partir de temperatura e umidade (ambas ~[-1, 1]). */
-export function pickBiome(temperature: number, moisture: number): Biome {
-  if (temperature > 0.32) return BIOMES.desert;
+/**
+ * Escolhe o bioma a partir de temperatura e umidade (ambas ~[-1, 1]). O mundo da Cidade do Despertar é só de
+ * florestas (dono do produto, 2026-11-06): campos com carvalhos/macieiras e bosques de sakura, com rios, mares e areia
+ * nas praias. As Dunas (e o cacto) ficam no projeto para o mundo árido de outra cidade, ligado por portal (ADR 0019).
+ * `temperature` fica na assinatura para esses mundos futuros.
+ */
+export function pickBiome(_temperature: number, moisture: number): Biome {
   if (moisture < -0.18) return BIOMES.sakura;
   return BIOMES.meadow;
 }

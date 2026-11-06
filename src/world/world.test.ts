@@ -72,7 +72,7 @@ describe('WorldGenerator', () => {
     }
   });
 
-  it('gera múltiplos biomas, água e árvores', () => {
+  it('mundo da Cidade 1: só florestas (campos e sakura), água e árvores — sem deserto', () => {
     const g = new WorldGenerator(42);
     const biomes = new Set<string>();
     let water = 0, trees = 0;
@@ -83,7 +83,7 @@ describe('WorldGenerator', () => {
         if (blockDef(g.objectAt(x, y)).shape === 'tree') trees++;
       }
     }
-    expect(biomes.size).toBe(3);
+    expect([...biomes].sort()).toEqual(['meadow', 'sakura']);
     expect(water).toBeGreaterThan(0);
     expect(trees).toBeGreaterThan(0);
   });

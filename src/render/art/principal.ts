@@ -6,6 +6,7 @@ import dungeonMountains from '../../assets/dungeon-mountains.webp';
 import dungeonProps from '../../assets/dungeon-props.webp';
 import dungeonRocks from '../../assets/dungeon-rocks.webp';
 import dungeonWalls from '../../assets/dungeon-walls.webp';
+import dungeonCave from '../../assets/dungeon-cave.webp';
 import heroineAxeAttack from '../../assets/heroine-axe-attack.webp';
 import heroineAxe from '../../assets/heroine-axe.webp';
 import heroineHoeAttack from '../../assets/heroine-hoe-attack.webp';
@@ -216,7 +217,7 @@ const pack: ArtPack = {
   },
   celestialIcons: {},
   oakDoor,
-  dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls },
+  dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls, cave: dungeonCave },
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
   tent: { icon: tentIcon, sprite: tentSprite },
   chest: { icon: chestIcon, sprite: chestSprite },

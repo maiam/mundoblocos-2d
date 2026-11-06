@@ -85,6 +85,8 @@ export const Block = {
   DUNGEON_ROOTS: 109,
   /** Parede do labirinto: cubo de pedra escura (variantes por célula). */
   DUNGEON_WALL: 110,
+  /** Entrada do Covil das Aranhas no mundo (arte da caverna; base 5 × 3, as outras células são `TOWN_PART`). */
+  DUNGEON_CAVE: 111,
   // --- Cidade do Despertar (área protegida: construções fixas, nada quebra nem é colocado) ---
   /** Célula ocupada por uma construção além do canto inferior esquerdo (onde fica o id dela): bloqueia, sem arte. */
   TOWN_PART: 120,
@@ -293,6 +295,7 @@ const defs: BlockDef[] = [
     [Block.DUNGEON_MUSHROOM, 'Cogumelos'], [Block.DUNGEON_SPIKES, 'Espinhos de Pedra'], [Block.DUNGEON_ROOTS, 'Raízes'],
     [Block.DUNGEON_WALL, 'Parede da Caverna'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'rock', breakable: false, placeable: false })),
+  object(Block.DUNGEON_CAVE, 'Covil das Aranhas', { shape: 'building', breakable: false, placeable: false }),
   // Cidade do Despertar: construções (várias células) e enfeites fixos; o World protege a área inteira.
   object(Block.TOWN_PART, 'Construção', { shape: 'building', breakable: false, placeable: false }),
   ...([

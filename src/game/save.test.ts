@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
-import { MONSTER_STATS } from '../world/progression';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities } from './entities';
@@ -141,8 +140,8 @@ describe('Salvamento automático', () => {
     expect(v4.v).toBe(SAVE_VERSION);
     expect(v4.player.hp).toBe(60);
     expect(v4.look).toBeNull();
-    expect(v4.explored).toEqual([]); // v6 → v7: minimapa começa coberto // v5 → v6: quem já jogava continua com a heroína
-    expect(v4.dungeon!.monsters[0].hp).toBe(Math.round(MONSTER_STATS['spider-big'].hp / 2));
+    expect(v4.explored).toEqual([]); // v6 → v7: minimapa começa coberto (v5 → v6: quem já jogava continua com a heroína)
+    expect(v4.dungeon).toBeNull(); // v7 → v8: covil mudou de lugar, as aranhas voltam completas
     // Versão desconhecida → começa do zero; armazenamento bloqueado → jogo segue sem salvar.
     expect(migrate({ ...d2, v: 999 })).toBeNull();
     storage.setItem('mundoblocos:save:principal:9', '{quebrado');

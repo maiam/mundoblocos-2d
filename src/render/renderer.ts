@@ -21,6 +21,7 @@ import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
 import type { Hit } from '../world/progression';
 import type { InteriorLayout } from '../world/interiors';
+import type { Rect } from '../world/dungeon';
 import { art } from './art';
 
 /** Máximo de chunks (chão) re-renderizados por frame. */
@@ -51,6 +52,8 @@ export interface RenderOptions {
   inDungeon: boolean;
   /** Célula diante da entrada da dungeon (farol + seta na borda da tela), ou null. */
   entrance: [number, number] | null;
+  /** Dentro do covil: área do labirinto (o resto da tela fica escuro — de dentro não se vê o mundo). */
+  dungeonArea?: Rect | null;
   /** Cômodo onde a personagem está (ADR 0014): desenha só a arte dele e os atores, sem mundo em volta. */
   interior?: InteriorLayout | null;
   /** Escurecer ao passar por uma porta (1 → 0). */
@@ -183,7 +186,8 @@ export class Renderer {
     for (let y = by0; y <= sy1; y++) {
       for (let x = sx0; x <= bx1; x++) {
         const id = this.world.getObject(x, y);
-        if ((x < bx0 || y > by1) && !isTownArt(id)) continue;
+        // Sprites largos/altos ancorados no canto inferior esquerdo (cidade, caverna do covil): desenhados mesmo com a âncora fora da tela.
+        if ((x < bx0 || y > by1) && !isTownArt(id) && id !== Block.DUNGEON_CAVE) continue;
         if (isDoor(id)) {
           this.drawDoor(cam, id, x, y, opts.elapsed);
         } else if (id !== Block.AIR) {
@@ -221,6 +225,8 @@ export class Renderer {
 
     // Farol na entrada da dungeon (visível também à noite).
     if (opts.entrance) this.drawBeacon(cam, opts.entrance, opts.elapsed, w, h);
+    // Dentro do covil: fora do labirinto é só escuridão (o covil é isolado do mapa).
+    if (opts.dungeonArea) this.darkenOutside(cam, opts.dungeonArea, w, h);
     // Dentro da dungeon: penumbra, com luz ao redor da personagem.
     if (opts.inDungeon) {
       const px = cam.worldToScreenX(p.x * TILE);
@@ -266,6 +272,20 @@ export class Renderer {
    * Interior: fundo escuro, a arte do cômodo cobrindo a área dele (a grade do mapa divide a imagem em partes iguais) e
    * os atores lá dentro por profundidade. Sem chão do mundo, céu, nuvens, noite nem partículas.
    */
+  /** Pinta de escuro tudo fora do retângulo (células). */
+  private darkenOutside(cam: Camera, a: Rect, w: number, h: number): void {
+    const ctx = this.ctx;
+    const x0 = Math.max(0, Math.round(cam.worldToScreenX(a.x0 * TILE)));
+    const y0 = Math.max(0, Math.round(cam.worldToScreenY(a.y0 * TILE)));
+    const x1 = Math.min(w, Math.round(cam.worldToScreenX((a.x1 + 1) * TILE)));
+    const y1 = Math.min(h, Math.round(cam.worldToScreenY((a.y1 + 1) * TILE)));
+    ctx.fillStyle = '#0b0612';
+    ctx.fillRect(0, 0, w, y0);
+    ctx.fillRect(0, y1, w, h - y1);
+    ctx.fillRect(0, y0, x0, y1 - y0);
+    ctx.fillRect(x1, y0, w - x1, y1 - y0);
+  }
+
   private drawInterior(cam: Camera, opts: RenderOptions, room: InteriorLayout): void {
     const ctx = this.ctx;
     ctx.fillStyle = '#120c18';

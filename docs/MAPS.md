@@ -155,6 +155,8 @@ flowchart LR
 | Personagem modular (contrato, entrega da arte, exportação) | `assets-src/personagens/CONTRATO.md`, `humano-chibi/entrega/v02/contrato.json`, `humano-chibi/catalogo.json`, `scripts/export-personagem.py` | ADR 0017, render, OPERATIONS |
 | Personagem modular no jogo (desenho, aparência de teste) | `src/render/modular.ts`, `modularCharacter.ts`, `render/art/principal.ts` (`modular`), `game/entities.ts` (`look`), `main.ts` | ADR 0017, render |
 | Ferramentas novas (níveis/materiais) — contrato de arte | `assets-src/ferramentas/CONTRATO.md`, `catalogo.json`, `world/items.ts` (`TOOLS`), `world/progression.ts` (`WEAPON_POWER`) | ADR 0018, farming |
+| Covil isolado e entrada de caverna (posição, entrar/sair, escuridão) | `world/dungeon.ts` (`isolatedDungeon`, `planCave`, `DungeonTerrain`), `world/world.ts` (`cave`, `isCaveDoor`, `isDungeonExit`), `game/game.ts` (`updateInteriors`), `render/renderer.ts` (`darkenOutside`), `render/textures.ts` (caverna) | dungeon, ADR 0019 |
+| Biomas do mundo da Cidade 1 | `world/biomes.ts` (`pickBiome`) | world, ADR 0019 |
 | Culturas da horta (trigo, batata, tomate, cenoura) | `world/blocks.ts` (`CROPS`), `world/items.ts` (`ITEMS`, `dropsFor`), `world/world.ts` (`CROP_STAGE_SECONDS`), `render/itemArt.ts` (`loadCropSprites`), `scripts/extract-crops.py` | farming |
 | Árvores que crescem / mudas / maçãs | `world/blocks.ts` (`TREE_NEXT`), `world/world.ts` (`canPlant`, `pick`, `tick`), `world/items.ts` (`treeDrops`, `pickDrops`), `render/textures.ts` (`growthTreeSprites`), `scripts/extract-trees.py` | farming, render |
 | Animais do campo (cavalo, vaca, galinha) | `game/horse.ts` (`FarmAnimal`, `FARM`), `game/entities.ts` (`spawnAnimals`), `render/character.ts` (`SPECS`) | npc |

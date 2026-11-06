@@ -140,7 +140,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
    d. ~~Aparência no salvamento~~ (v0.50.0, `SAVE_VERSION` 6). **Próximo (Etapa 2 da tela de entrada)**: aparência
-      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 4 (2 = mudas/maçãs, 3 = hortaliças), validar contra o manifesto no `Room`),
+      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 5 (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado), validar contra o manifesto no `Room`),
       `RemotePlayers` desenhando o chibi dos outros; atualizar `orvalis-servidor` junto (`sync-net`).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
@@ -154,10 +154,12 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 1. **Níveis e experiência** do personagem (o que dá XP: monstros, receitas, missões?) e o que o nível muda
    (vida, dano, acesso a regiões/receitas). Painel do Personagem mostra nível e XP.
 2. **Faixa de nível** em dungeons e monstros (`MONSTERS` por faixa; dungeon generalizada por tema e nível — Fase 4.2).
-3. **Mapa de regiões**: posições fixas das cidades (iguais em toda seed, como a Cidade 1) e das dungeons de cada
-   faixa, distância crescente a partir da Cidade 1; terreno entre elas segue procedural.
+3. **Andares por portais** (ADR 0019, substitui o "mapa de regiões" num mapa só): cada cidade num mundo próprio
+   (`WorldProfile` com bioma, cidade e dungeons da faixa), ligados por portais. Decidir antes: o que destrava o
+   próximo andar (chefe, nível?), se o inventário viaja inteiro, onde renasce em cada andar, seed por andar e salas
+   multiplayer entre andares. Mundo 2 sugerido: árido (Dunas e cacto já existem no código e na arte).
 4. **Cidade 2** (primeira cidade de nível intermediário) reutilizando o gerador da cidade com outra planta/tema.
-5. **Viagem** entre cidades (estradas, marcos no mapa, talvez portais/carruagens desbloqueados por nível) e
+5. **Viagem** entre andares pelos portais (o portal da Cidade 1 é o primeiro marco) e
    **renascer** na cidade da faixa do personagem (hoje: tenda ou Cidade 1).
 6. Arte por região carregada **sob demanda** ao se aproximar (ADR 0013) — o mundo maior não pesa no início.
 
