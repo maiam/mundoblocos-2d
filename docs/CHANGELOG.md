@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.61.1 — 2026-11-06
+- **"Jogar com amigos" fora do site**: no Artifact do claude.ai e nas prévias da Hostinger o servidor recusa a
+  conexão (só aceita o site oficial), e o menu mostrava os botões que falhavam com "Não foi possível conectar". Agora
+  esses endereços mostram o aviso "Aqui só dá para jogar sozinho" com o link 🌐 do site. No site oficial nada muda
+  (criação de sala testada de ponta a ponta: servidor no protocolo 6, sala criada).
+
 ## 0.61.0 — 2026-11-06
 - **Namoro com coraçõezinhos** (folha enviada pelo dono do produto), igual para ovelha, vaca, galinha e cavalo: o
   animal que come fica com um coração; dois apaixonados se procuram, param de frente e sobem coraçõezinhos entre eles

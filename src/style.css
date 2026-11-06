@@ -398,6 +398,12 @@ html, body {
 .menu-online .menu-room { font-size: 20px; letter-spacing: 3px; color: var(--accent); }
 .menu-online .menu-online-msg { color: #ffd0c8; }
 .menu-online .menu-online-msg[hidden] { display: none; }
+.menu-online .menu-online-off { margin: 0; font-size: 13px; line-height: 1.35; }
+.menu-online .menu-online-site {
+  display: flex; align-items: center; justify-content: center; min-height: 40px; border-radius: 12px; padding: 0 12px;
+  background: var(--accent); color: #2a1a48; font: 800 14px Nunito, system-ui, sans-serif; text-decoration: none;
+  touch-action: manipulation;
+}
 @media (max-height: 500px) and (orientation: landscape) {
   .menu-button { width: 34px; height: 34px; padding: 8px 7px; }
   .menu-panel { gap: 7px; padding: 12px; }

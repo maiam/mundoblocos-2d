@@ -1,6 +1,10 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.61.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.61.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## "Jogar com amigos" só onde conecta — v0.61.1
+- `onlineAvailable(hostname)` (`net/socket.ts`, lista `ONLINE_HOSTS` = origens aceitas pelo servidor) → `online.available`
+  no menu; fora dela (Artifact, prévias), aviso com link para `GAME_SITE`. Diagnóstico de 06/11: servidor e site ok.
 
 ## Coraçõezinhos do namoro — v0.61.0
 - Ator `love-hearts` (16 quadros, `scripts/extract-love.py`) entre o casal enquanto namora (`Entities.actors`, a
