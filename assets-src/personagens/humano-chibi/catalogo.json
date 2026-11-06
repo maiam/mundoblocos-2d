@@ -12,7 +12,7 @@
         "caminhada"
       ],
       "status": "revisao",
-      "notas": "Base provisoria autorizada: blusa sem mangas e shorts anteriores recoloridos em bege; bracos, pernas e pes da caminhada anterior preservados. Substitui a malha de corpo inteiro rejeitada."
+      "notas": "Base provisoria com blusa sem mangas e shorts bege; revisao 4 corrige os bracos na caminhada direita. Outras vistas e regiao inferior dos pes preservadas."
     },
     {
       "encaixe": "cabelo",
@@ -147,5 +147,5 @@
       "notas": "Primeira expansão de roupas; quatro direções e oito quadros. Encaixe e movimento aguardam revisão artística no cenário."
     }
   ],
-  "revisao": 3
+  "revisao": 4
 }
