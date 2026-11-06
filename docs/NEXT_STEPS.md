@@ -114,10 +114,12 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 
 ### Fase 5 — Visual e polimento
 0. **Personagem modular (humano chibi v02)** — ADR 0017, `assets-src/personagens/CONTRATO.md`.
-   a. _Arte_: guarda-roupa fantasia 01 em revisão (onze peças, treze folhas, 16 combinações sobrepostas;
+   a. _Arte_: revisão 4 corrige a sequência dos braços à direita e o encaixe das mãos nas roupas. Conferir
+      `previas/v02/direita-antes-depois.gif` e a montagem no cenário. Guarda-roupa fantasia 01 em revisão (onze peças, treze folhas, 16 combinações sobrepostas;
       25 incluindo a base). Conferir seletores e sorteio em `humano-chibi/previas/v02/revisao.html`, os 32 quadros,
       cintura/cavas/bainhas e coerência de detalhes frente/costas do colete. Preservada a base bege da revisão 2.
-      Aprovação do movimento dos sapatos continua pendente. Próximo marco: teste no cenário antes de nova expansão.
+      Aprovação do movimento dos sapatos continua pendente. Caminhada direita conferida no navegador/cenário na v0.50.1;
+      aguardar revisão artística do dono antes de nova expansão.
    b. ~~_Motor_: personagem modular lendo o manifesto~~ — feito na v0.48.0 (`?personagem=chibi`). Falta: conferir
       no cenário com a área de arte (perspectiva, encaixe), repouso quando houver, ferramentas no chibi e sala
       multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
