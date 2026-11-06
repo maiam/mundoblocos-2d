@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.54.0 — 2026-11-06
+- **Pano de Seda** (Construtor, 10 Sedas de Aranha), com ícone próprio. A **Tenda** passa a pedir **1 Pano de Seda**
+  + 10 Tábuas + 4 Presas (antes: 10 sedas soltas).
+- **Ferramentas por material — contrato de arte** (ADR 0018, `assets-src/ferramentas/CONTRATO.md` + `catalogo.json`):
+  as 5 pranchas recebidas (madeira, pedra, madeira + presa, madeira + Coração, presa + Coração) ficam guardadas como
+  referência; entram no jogo quando houver camada de mão (hoje a ferramenta é pintada na folha da heroína).
+
 ## 0.53.0 — 2026-11-06
 - **Batata, tomate e cenoura** (pedido do dono do produto): plantados pelo próprio legume em Terra Arada, crescem por
   16 estágios com a prancha enviada (~2–2,5 min) e, maduros, dão 2–3 legumes (um serve para replantar). Verdes,

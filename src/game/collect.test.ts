@@ -109,7 +109,7 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(bagStacks(inv, grid)).toHaveLength(BAG_SLOTS);
   });
 
-  it('receitas do Construtor: tora → 2 tábuas, 4 tábuas → porta, 10 sedas + 10 tábuas + 4 presas → tenda', () => {
+  it('receitas do Construtor: tora → 2 tábuas, 4 tábuas → porta, 10 sedas → pano; pano + 10 tábuas + 4 presas → tenda', () => {
     const byId = Object.fromEntries(RECIPES.map((r) => [r.id, r]));
     expect(byId['oak-planks'].output).toEqual({ item: blockStack(Block.OAK_PLANKS), count: 2 });
     expect(byId['oak-door'].inputs).toEqual([{ item: blockStack(Block.OAK_PLANKS), count: 4 }]);
@@ -119,8 +119,15 @@ describe('Coleta de materiais (Fase 3)', () => {
     const c = (id: Parameters<typeof inv.count>[0]) => inv.count(id);
     expect(canCraft(byId['oak-planks'], c)).toBe(true);
     expect(canCraft(byId['oak-door'], c)).toBe(false);
+    expect(byId['silk-cloth'].inputs).toEqual([{ item: 'silk', count: 10 }]);
+    expect(byId['silk-cloth'].output).toEqual({ item: 'silk_cloth', count: 1 });
+    expect(byId.tent.inputs).toEqual([{ item: 'silk_cloth', count: 1 }, { item: blockStack(Block.OAK_PLANKS), count: 10 }, { item: 'fang', count: 4 }]);
+    expect(canCraft(byId['silk-cloth'], c)).toBe(true);
     expect(canCraft(byId.tent, c)).toBe(false);
     inv.add(blockStack(Block.OAK_PLANKS), 10);
+    expect(canCraft(byId.tent, c)).toBe(false); // sedas soltas não servem: precisa do pano
+    inv.take('silk', 10);
+    inv.add('silk_cloth', 1);
     expect(canCraft(byId.tent, c)).toBe(true);
   });
 

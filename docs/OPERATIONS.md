@@ -152,6 +152,9 @@ expressão nova com outro molde: medir de novo `CALIB` (escala e deslocamento da
 `crop-<nome>.png` (4×4 quadros de 128 px, mesmo formato do trigo) → `optimize-assets.py`. Cultura nova: uma linha em
 `CROPS` (blocks), o item que planta (items) e a folha no pacote (`art/principal.ts` → `crops`).
 
+**Ferramentas por material**: a arte segue `assets-src/ferramentas/CONTRATO.md` (ficha em `catalogo.json`, prancha
+de ícones padronizada, camada de mão sobre pose-base). O motor só importa o que passou pela checagem da seção 5.
+
 **Ícones soltos de itens** (`assets-src/items/<nome>.png`, desenho transparente): `python3 scripts/extract-items.py`
 → `icon-item-<nome>.png` 64×64. A segmentação das pranchas (árvores e hortaliças) fica em `scripts/sprite_segments.py`.
 

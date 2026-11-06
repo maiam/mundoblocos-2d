@@ -20,6 +20,7 @@
 | 0015 | Orvalis independente do maiamapps: backend próprio (repositório separado) em subdomínio de `pensamentos.online` até o domínio próprio; regras do mundo compartilhadas com o servidor, não copiadas | [0015](adr/0015-orvalis-independente.md) |
 | 0016 | Multiplayer co-op com código de convite (até 4), convidados só com nome, sem PvP; servidor autoritativo com `Room`/protocolo compartilhados (`src/net`, `world/actions.ts`) | [0016](adr/0016-multiplayer-coop.md) |
 | 0017 | Personagem modular: arte segue o contrato v02 (quadro, âncora, escala fixa, caixa por ação, encaixe × peça × parte); exportador valida/exporta; fontes pesadas fora do git | [0017](adr/0017-personagem-modular-contrato.md) |
+| 0018 | Ferramentas por material: tipo × material; arte segue `assets-src/ferramentas/CONTRATO.md` (ficha, ícones padronizados, camada de mão sobre pose-base sem ferramenta) antes de entrar no motor | [0018](adr/0018-ferramentas-por-material.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
@@ -100,3 +101,5 @@
 | Macieiras misturadas nos Campos (1/6 das árvores), sem mudar cerejeiras nem a cidade | domains/farming, domains/world |
 | Cavalo, vaca e galinha = um só `FarmAnimal` com ritmo por tipo (não uma classe por bicho) | domains/npc |
 | Hortaliças plantam pelo próprio legume (sem semente separada); culturas numa tabela única (`CROPS`) com o trigo; fonte inicial: 2 de cada + capim (12%) | domains/farming |
+| Tenda pede 1 Pano de Seda (receita nova: 10 sedas → 1 pano) em vez de 10 sedas soltas | domains/farming |
+| Níveis de ferramenta enviados em 06/11 entram só depois da camada de mão (contrato de ferramentas); a prancha de pedra não estava no pedido e espera confirmação | ADR 0018 |

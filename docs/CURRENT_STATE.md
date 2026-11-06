@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.53.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.54.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Pano de Seda e contrato de ferramentas — v0.54.0
+- Receita `silk-cloth` (10 sedas → `silk_cloth`); `tent` pede 1 pano + 10 tábuas + 4 presas.
+- Ferramentas novas (5 níveis) **ainda não estão no jogo**: análise e contrato em `assets-src/ferramentas/` (ADR 0018).
+  A ferramenta na mão segue pintada nas folhas da heroína; o chibi não tem ferramenta.
 
 ## Hortaliças — v0.53.0
 - Culturas em tabela (`CROPS`/`CROP_KINDS` em `world/blocks.ts`): trigo (60–75), batata (150–165), tomate (170–185),

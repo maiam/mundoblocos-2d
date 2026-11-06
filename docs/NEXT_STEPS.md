@@ -70,9 +70,16 @@ Decidido (ADR 0016): co-op com código de convite (até 4), convidado só com no
 servidor reaproveita `world`+`net` como pacote compilado. Repositório do servidor: `maiam/orvalis-servidor`.
 
 ### Fase 3 — Recursos e progressão
+0. **Ferramentas por material** (ADR 0018, `assets-src/ferramentas/CONTRATO.md`): 5 níveis enviados em 06/11
+   (madeira, pedra, madeira + presa, madeira + Coração, presa + Coração) esperando a arte no contrato.
+   a. _Arte_: refazer as pranchas de ícones no formato (fileira, em pé, mesma escala, alfa limpo); pose-base sem
+      ferramenta da heroína (10 folhas) ou do chibi; camadas de mão do nível madeira (piloto).
+   b. _Dono do produto_: receitas, poder/velocidade por nível e se a pedra entra.
+   c. _Motor_ (depois de a): `ToolId` → tipo + material (migração do salvamento), camada `ferramenta-tras/frente`
+      no render, ícone por material, receitas.
 1. ✅ **Materiais coletados** (v0.28.0): quebrar devolve o bloco, árvore → toras, colocar gasta; grade 8 + bolsa;
    morte perde tudo menos as ferramentas.
-2. ✅ **Receitas** (v0.31.0): Construtor — Tábua, Porta, Tenda (ponto de renascer). Próximas: mais profissões e
+2. ✅ **Receitas** (v0.31.0): Construtor — Tábua, Porta, Tenda (ponto de renascer; pede Pano de Seda desde v0.54.0). Próximas: mais profissões e
    receitas (trigo → pão? Coração da Rainha → ?), painel do **Personagem** (vida, armaduras — ícone já na grade).
 3. ✅ **Painel de inventário** (bolsa no 9º espaço).
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
