@@ -91,6 +91,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   // Vaca e galinha (process-sprite.py --alpha --largest): bichinhos chibi, menores que o cavalo.
   cow: { cols: 4, rows: 4, height: TILE * 1.35, shadow: [0.46, 0.14], walkFps: 6 },
   chicken: { cols: 4, rows: 4, height: TILE * 0.85, shadow: [0.26, 0.09], walkFps: 9 },
+  // Filhotes (process-sprite.py --alpha --largest): potro, bezerro e pintinho, menores e mais ligeiros que os pais.
+  foal: { cols: 4, rows: 4, height: TILE * 1.1, shadow: [0.36, 0.11], walkFps: 8 },
+  calf: { cols: 4, rows: 4, height: TILE * 0.95, shadow: [0.34, 0.11], walkFps: 7 },
+  chick: { cols: 4, rows: 4, height: TILE * 0.6, shadow: [0.2, 0.07], walkFps: 10 },
   // Moradores (scripts/extract-villagers.py): mesma escala da heroína; a roupa vem por cima (`Actor.outfit`).
   'villager-blond': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   'villager-brown': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },

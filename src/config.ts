@@ -3,6 +3,9 @@
  * Vista superior inclinada (3/4): x → direita, y → para baixo na tela (= "sul" no mapa).
  */
 
+/** Duração de um dia de jogo (s): dia e noite completos. */
+export const DAY_LENGTH_S = 480;
+
 /** Tamanho de uma célula em pixels de mundo (zoom 1). */
 export const TILE = 32;
 

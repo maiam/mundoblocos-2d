@@ -25,7 +25,12 @@
 - Um tipo (`FarmKind`) com ritmo próprio (`FARM`): vaca lenta (0,9; leash 8), galinha miúda e ligeira (1,3;
   leash 6). `Entities.spawnAnimals(world, kind, x, y, n, salt)`: 2 vacas ~9 células a oeste do portão e 4 galinhas
   perto, posições pela seed. Folhas `assets-src/animals/{cow,chicken}.png` (`process-sprite.py --alpha --largest`,
-  `--frame-h 112` e `96`), desenhadas com 1,35 e 0,85 célula. Só passeiam; leite e ovos: NEXT_STEPS.
+  `--frame-h 112` e `96`), desenhadas com 1,35 e 0,85 célula. Leite e ovos: NEXT_STEPS.
+- **Reprodução (v0.60.0)**: mesmo ciclo da ovelha (`game/breeder.ts`), pelo alimento da espécie (`ITEMS[item].feeds`):
+  vaca = trigo, galinha = semente de trigo, cavalo = cenoura. Só pareiam com a mesma espécie; limite `MAX_PER_SPECIES`
+  (cavalo 6, vaca 10, galinha 12). Filhotes **potro**, **bezerro**, **pintinho** (`BABY_KIND`; folhas
+  `assets-src/animals/{foal,calf,chick}.png`, desenhados com 1,1 / 0,95 / 0,6 célula) crescem em 3 dias de jogo
+  (`FARM_GROW_UP_SECONDS`). Namoro sem folha própria: parados, de frente, com coração.
 
 ### Cavalo
 - Folha `assets-src/horse-sheet.png` → `horse.webp` (`process-sprite.py --alpha --largest --frame-h 112`), desenhado
@@ -63,8 +68,8 @@
 - Aranhas da dungeon: ver `domains/dungeon.md` (`game/monster.ts`).
 
 ## Gerência (`game/entities.ts`)
-- Formação de pares, início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
-  `Sheep` guarda estado (apaixonada, espera, par, namoro, idade) e movimento.
+- Formação de pares (por espécie), início/fim do namoro (ordem: concluir → parear → iniciar) e nascimento ficam aqui;
+  `Breeder` (base de `Sheep` e `FarmAnimal`) guarda estado (apaixonada, espera, par, namoro, idade) e movimento.
 - `actors` gera a lista para o render (o par namorando vira um único ator `sheep-love`).
 - Rebanho inicial de até 4 ovelhas a 2–8 células de um ponto 8 células ao sul do portão da cidade (`World.outsideGate`), em grama andável, posições determinísticas pela seed.
 - Colisão entre entidades: não se entra na caixa de outra; se já estavam sobrepostas, podem se afastar.

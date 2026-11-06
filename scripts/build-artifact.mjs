@@ -42,8 +42,8 @@ for (const f of files) {
 }
 writeFileSync(join('artifact', `${name}-files.json`), JSON.stringify(manifest, null, 1));
 // Fora do orçamento de início: arte da dungeon e dos monstros (carrega em segundo plano) e folhas de moradores, roupas, expressões,
-// cavalo, interiores e o personagem modular em teste (o jogo não espera por elas: cada um aparece quando a folha chega — render/character.ts).
-const later = Object.keys(manifest).filter((f) => /^(dungeon|spider|villager|outfit|expr|horse|cow|chicken|interior|chibi|crop-|wheat-crop)/.test(f)).reduce((s, f) => s + statSync(join(assets, f)).size, 0);
+// animais do campo e filhotes, interiores e o personagem modular em teste (o jogo não espera por elas: cada um aparece quando a folha chega — render/character.ts).
+const later = Object.keys(manifest).filter((f) => /^(dungeon|spider|villager|outfit|expr|horse|cow|chicken|foal|calf|chick|interior|chibi|crop-|wheat-crop)/.test(f)).reduce((s, f) => s + statSync(join(assets, f)).size, 0);
 const kb = (n) => `${(n / 1024).toFixed(1)} kB`;
 console.log(`artifact/${name}.html (${kb(html.length)}) + ${Object.keys(manifest).length} arquivos em ${outDir} (${kb(total)})`);
 const start = html.length + total - later;

@@ -163,7 +163,7 @@ flowchart LR
 | Biomas do mundo da Cidade 1 | `world/biomes.ts` (`pickBiome`) | world, ADR 0019 |
 | Culturas da horta (trigo, batata, tomate, cenoura) | `world/blocks.ts` (`CROPS`), `world/items.ts` (`ITEMS`, `dropsFor`), `world/world.ts` (`CROP_STAGE_SECONDS`), `render/itemArt.ts` (`loadCropSprites`), `scripts/extract-crops.py` | farming |
 | Árvores que crescem / mudas / maçãs | `world/blocks.ts` (`TREE_NEXT`), `world/world.ts` (`canPlant`, `pick`, `tick`), `world/items.ts` (`treeDrops`, `pickDrops`), `render/textures.ts` (`growthTreeSprites`), `scripts/extract-trees.py` | farming, render |
-| Animais do campo (cavalo, vaca, galinha) | `game/horse.ts` (`FarmAnimal`, `FARM`), `game/entities.ts` (`spawnAnimals`), `render/character.ts` (`SPECS`) | npc |
+| Animais do campo (cavalo, vaca, galinha), filhotes e reprodução | `game/breeder.ts` (`Breeder`), `world/items.ts` (`feeds`), `game/actionController.ts` (`feedInstead`), `game/horse.ts` (`FarmAnimal`, `FARM`, `BABY_KIND`), `game/entities.ts` (`spawnAnimals`), `render/character.ts` (`SPECS`) | npc |
 | Minimapa e névoa (cores, marcadores, raio, salvamento) | `src/render/minimap.ts`, `render/mapColors.ts`, `game/exploration.ts`, `game/game.ts` (`updateMinimap`, `REVEAL_RADIUS`), `world/profiles.ts` (`minimap`) | render, save |
 | Tela de entrada / montar o personagem (peças, sorteio, nome, Continuar) | `src/game/title.ts`, `render/characterPreview.ts`, `render/modular.ts` (`lookOptions`, `randomLook`, `cleanLook`), `game/game.ts` (`showcase`, `look`), `main.ts` (`showTitle`) | player, save |
 | HUD / controles na tela | `game/hud.ts`, `game/actionButton.ts`, `game/joystick.ts`, `style.css` | player, README |

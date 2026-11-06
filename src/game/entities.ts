@@ -5,22 +5,23 @@ import { hash2 } from '../world/random';
 import { type Hit, MONSTER_STATS, rollDamage, weaponPower } from '../world/progression';
 import type { World } from '../world/world';
 import type { Player } from './player';
-import { COURTSHIP_SECONDS, BREED_COOLDOWN, Sheep } from './sheep';
-import { FarmAnimal, type FarmKind } from './horse';
+import { BREED_COOLDOWN, Breeder, COURTSHIP_SECONDS } from './breeder';
+import { Sheep } from './sheep';
+import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { type ExpressionId, ROLE_LOOK, TOWNSFOLK_BASES, Villager, type VillagerBase, villagerExpression, villagerOutfit, type OutfitId, type VillagerRole } from './villager';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
 
-import { TOOLS, type ToolId } from '../world/items';
+import { type AnimalKind, TOOLS, type ToolId } from '../world/items';
 import type { CharacterId } from '../world/profiles';
 
 /** Ferramentas com folha de ação (golpe/arar). */
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love' | FarmKind | `villager-${VillagerBase}` | MonsterKind;
+export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'sheep-love' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -61,12 +62,21 @@ const FLOCK_SIZE = 4;
 export const SWORD_REACH = 1.45;
 const SWORD_ARC_COS = 0.3;
 const FACING_VEC: Record<Facing, [number, number]> = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
-/** Distância (células) em que duas ovelhas apaixonadas se encontram. */
+/** Caixa de toque (altura, meia-largura em células) de adulto e filhote, pelo tamanho do desenho. */
+const PICK_BOX: Record<AnimalKind, [[number, number], [number, number]]> = {
+  sheep: [[1.15, 0.45], [0.85, 0.35]],
+  horse: [[1.5, 0.55], [1.05, 0.4]],
+  cow: [[1.25, 0.5], [0.95, 0.4]],
+  chicken: [[0.8, 0.3], [0.65, 0.26]],
+};
+/** Distância (células) em que dois animais apaixonados se encontram. */
 const PAIR_RANGE = 6;
 /** Distância (células) para começar a namorar. */
 const COURT_DISTANCE = 1.5;
 /** Limite de ovelhas para a população não explodir. */
 export const MAX_SHEEP = 16;
+/** Limite por espécie (filhotes contam): a população não explode. */
+export const MAX_PER_SPECIES: Record<AnimalKind, number> = { sheep: MAX_SHEEP, horse: 6, cow: 10, chicken: 12 };
 
 /**
  * Entidades vivas da sessão (personagem + ovelhas): atualização, colisão entre
@@ -204,7 +214,7 @@ export class Entities {
     for (const other of this.all()) {
       if (other === self) continue;
       // Par apaixonado pode encostar um no outro para namorar.
-      if (self instanceof Sheep && other instanceof Sheep && self.partner === other) continue;
+      if (self instanceof Breeder && self.partner === other) continue;
       if (self.overlapsAt(x, y, other) && !self.overlapsAt(self.x, self.y, other)) return true;
     }
     return false;
@@ -236,15 +246,31 @@ export class Entities {
     this.startCourtships();
   }
 
-  /** Ovelhas apaixonadas e livres procuram a mais próxima na mesma situação. */
+  /** Animais que se reproduzem (ovelhas + animais do campo). */
+  private breeders(): Breeder[] {
+    return [...this.npcs, ...this.horses];
+  }
+
+  /** Animais que comem e se reproduzem (para alimentar à frente da personagem). */
+  get animals(): readonly Breeder[] {
+    return this.breeders();
+  }
+
+  /** Quantos animais da espécie existem (filhotes contam). */
+  count(species: AnimalKind): number {
+    return this.breeders().filter((b) => b.species === species).length;
+  }
+
+  /** Apaixonados e livres procuram o mais próximo da mesma espécie na mesma situação. */
   private formPairs(): void {
-    if (this.npcs.length >= MAX_SHEEP) return;
-    for (const a of this.npcs) {
+    const all = this.breeders();
+    for (const a of all) {
       if (!a.inLove || a.partner || a.baby || a.courtship > 0) continue;
-      let best: Sheep | null = null;
+      if (this.count(a.species) >= MAX_PER_SPECIES[a.species]) continue;
+      let best: Breeder | null = null;
       let bestD = PAIR_RANGE;
-      for (const b of this.npcs) {
-        if (b === a || !b.inLove || b.partner || b.baby || b.courtship > 0) continue;
+      for (const b of all) {
+        if (b === a || b.species !== a.species || !b.inLove || b.partner || b.baby || b.courtship > 0) continue;
         const d = Math.hypot(a.x - b.x, a.y - b.y);
         if (d < bestD) { best = b; bestD = d; }
       }
@@ -254,7 +280,7 @@ export class Entities {
 
   /** Par próximo o bastante: param, se viram um para o outro e namoram. */
   private startCourtships(): void {
-    for (const a of this.npcs) {
+    for (const a of this.breeders()) {
       const b = a.partner;
       if (!b || a.courtship > 0 || b.partner !== a || this.courting.has(a) || this.courting.has(b)) continue;
       if (Math.hypot(a.x - b.x, a.y - b.y) > COURT_DISTANCE) continue;
@@ -266,8 +292,8 @@ export class Entities {
     }
   }
 
-  /** Pares que começaram a namorar (o filhote nasce quando a animação termina). */
-  private readonly courting = new Set<Sheep>();
+  /** Pares que começaram a namorar (o filhote nasce quando o namoro termina). */
+  private readonly courting = new Set<Breeder>();
 
   /** Fim do namoro: nasce um filhote entre os dois; ambos entram em espera. */
   private finishCourtships(world: World): void {
@@ -279,7 +305,7 @@ export class Entities {
       }
       if (a.courtship > 0 || b.courtship > 0) continue;
       this.courting.delete(a);
-      this.spawnLamb(world, (a.x + b.x) / 2, (a.y + b.y) / 2, a);
+      this.spawnBaby(world, (a.x + b.x) / 2, (a.y + b.y) / 2, a);
       for (const s of [a, b]) {
         s.love = 0;
         s.cooldown = BREED_COOLDOWN;
@@ -288,14 +314,18 @@ export class Entities {
     }
   }
 
-  private spawnLamb(world: World, x: number, y: number, parent: Sheep): void {
+  /** Filhote da espécie do pai/mãe na célula andável mais perto do casal (até 2 células). */
+  private spawnBaby(world: World, x: number, y: number, parent: Breeder): void {
     const cx = Math.floor(x);
     const cy = Math.floor(y);
     for (let r = 0; r <= 2; r++) {
       for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
           if (!world.isWalkable(cx + dx, cy + dy)) continue;
-          this.npcs.push(new Sheep(cx + dx + 0.5, cy + dy + 0.5, parent.homeX, parent.homeY, this.rand, true));
+          const bx = cx + dx + 0.5;
+          const by = cy + dy + 0.5;
+          if (parent instanceof FarmAnimal) this.horses.push(new FarmAnimal(parent.kind, bx, by, this.rand, true, parent.homeX, parent.homeY));
+          else this.npcs.push(new Sheep(bx, by, parent.homeX, parent.homeY, this.rand, true));
           return;
         }
       }
@@ -306,7 +336,7 @@ export class Entities {
    * Entidades (exceto a personagem) dentro do arco do golpe (espada ou machado): à frente, até SWORD_REACH
    * da borda do corpo (monstro grande é atingido de mais longe).
    */
-  strikeTargets(facing: Facing): Array<Sheep | FarmAnimal | Monster> {
+  strikeTargets(facing: Facing): Array<Breeder | Monster> {
     const [fx, fy] = FACING_VEC[facing];
     const p = this.player;
     return [...this.npcs, ...this.horses, ...this.monsters].filter((s) => {
@@ -414,16 +444,13 @@ export class Entities {
   };
 
   /** Remove um animal e desfaz vínculos (par, namoro) de quem dependia dele. */
-  private removeAnimal(s: Sheep | FarmAnimal): void {
-    if (s instanceof FarmAnimal) {
-      this.horses.splice(this.horses.indexOf(s), 1);
-      return;
-    }
-    const i = this.npcs.indexOf(s);
+  private removeAnimal(s: Breeder): void {
+    const list: Breeder[] = s instanceof FarmAnimal ? this.horses : this.npcs;
+    const i = list.indexOf(s);
     if (i < 0) return;
-    this.npcs.splice(i, 1);
+    list.splice(i, 1);
     this.courting.delete(s);
-    for (const o of this.npcs) {
+    for (const o of this.breeders()) {
       if (o.partner === s) {
         o.partner = null;
         o.courtship = 0;
@@ -432,12 +459,11 @@ export class Entities {
     }
   }
 
-  /** Ovelha sob o ponto (em células), considerando a altura do sprite; a mais à frente vence. */
-  sheepAt(wx: number, wy: number): Sheep | null {
-    let hit: Sheep | null = null;
-    for (const s of this.npcs) {
-      const h = s.baby ? 0.85 : 1.15;
-      const half = s.baby ? 0.35 : 0.45;
+  /** Animal sob o ponto (em células), considerando a altura do sprite; o mais à frente vence. */
+  animalAt(wx: number, wy: number): Breeder | null {
+    let hit: Breeder | null = null;
+    for (const s of this.breeders()) {
+      const [h, half] = PICK_BOX[s.species][s.baby ? 1 : 0];
       const lift = (s.visualZ * CUBE_FRONT) / TILE;
       if (Math.abs(wx - s.x) < half && wy > s.y - lift - h && wy < s.y - lift + 0.2) {
         if (!hit || s.y > hit.y) hit = s;
@@ -495,7 +521,7 @@ export class Entities {
       hurt: p.invuln > 0,
       look: this.character === 'heroine' && this.look ? this.look : undefined,
     }];
-    const drawnCouples = new Set<Sheep>();
+    const drawnCouples = new Set<Breeder>();
     for (const s of this.npcs) {
       if (s.courtship > 0 && s.partner) {
         if (drawnCouples.has(s)) continue;
@@ -520,7 +546,11 @@ export class Entities {
       });
     }
     for (const h of this.horses) {
-      out.push({ kind: h.kind, x: h.x, y: h.y, visualZ: h.visualZ, facing: h.facing, moving: h.moving, walkTime: h.walkTime });
+      // Sem folha de namoro: o casal fica parado, de frente um para o outro, com o coração.
+      out.push({
+        kind: h.baby ? BABY_KIND[h.kind] : h.kind, x: h.x, y: h.y, visualZ: h.visualZ, facing: h.facing,
+        moving: h.moving, walkTime: h.walkTime, inLove: h.inLove || h.courtship > 0,
+      });
     }
     for (const v of this.villagers) {
       out.push({

@@ -49,6 +49,9 @@ import sheep from '../../assets/sheep.webp';
 import horse from '../../assets/horse.webp';
 import cow from '../../assets/cow.webp';
 import chicken from '../../assets/chicken.webp';
+import foal from '../../assets/foal.webp';
+import calf from '../../assets/calf.webp';
+import chick from '../../assets/chick.webp';
 import villagerBlond from '../../assets/villager-blond.webp';
 import villagerBrown from '../../assets/villager-brown.webp';
 import villagerBlack from '../../assets/villager-black.webp';
@@ -189,6 +192,9 @@ const pack: ArtPack = {
     horse,
     cow,
     chicken,
+    foal,
+    calf,
+    chick,
     'villager-blond': villagerBlond,
     'villager-brown': villagerBrown,
     'villager-black': villagerBlack,

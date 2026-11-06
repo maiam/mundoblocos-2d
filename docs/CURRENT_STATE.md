@@ -1,6 +1,15 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.59.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.60.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Filhotes e reprodução dos animais do campo — v0.60.0
+- `game/breeder.ts` (`Breeder`): ciclo comum de comer → apaixonar → par da mesma espécie → namoro → filhote → crescer,
+  usado por `Sheep` e `FarmAnimal` (antes só na ovelha). `Entities` pareia por espécie (`MAX_PER_SPECIES`) e faz o
+  filhote nascer (`spawnBaby`); casal do campo namora parado com coração (sem folha de namoro).
+- Alimento por espécie em `ITEMS[item].feeds` (`AnimalKind`): ovelha/vaca = trigo, galinha = semente, cavalo = cenoura.
+  `ActionController.feedInstead`: animal que come o item sob o cursor/à frente vem antes de plantar/comer.
+- Filhote do campo cresce em `FARM_GROW_UP_SECONDS` = 3 × `DAY_LENGTH_S` (agora em `config.ts`). Atores `foal`,
+  `calf`, `chick` (carregam depois do início, fora do orçamento). Sem mudança de protocolo nem de salvamento.
 
 ## Cerca de tábuas e portão — v0.59.0
 - Blocos `FENCE` (48), `FENCE_GATE` (49) e `FENCE_GATE_OPEN` (76), forma `fence`, madeira; nada empilha em cima.

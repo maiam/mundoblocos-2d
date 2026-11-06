@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.60.0 — 2026-11-06
+- **Filhotes** (folhas enviadas pelo dono do produto): **potro**, **bezerro** e **pintinho**.
+- **Reprodução dos animais do campo**, como a das ovelhas: com o alimento na mão, toque no animal — **vaca come
+  trigo**, **galinha come semente de trigo**, **cavalo come cenoura**. Dois da mesma espécie apaixonados se encontram,
+  namoram e nasce um filhote. Fora de um animal, semente e cenoura continuam plantando (e a cenoura, sendo comida).
+- **Filhotes crescem em 3 dias de jogo** (24 min) e viram adultos. Limite por espécie: 6 cavalos, 10 vacas,
+  12 galinhas (ovelhas seguem 16).
+- Como as ovelhas, os animais ainda não são salvos: ao recarregar, voltam os iniciais da semente.
+
 ## 0.59.0 — 2026-11-06
 - **Cerca de Madeira** (referência enviada pelo dono do produto): colocada célula por célula, **emenda sozinha** com as
   cercas vizinhas — retas, cantos, "T", cruzamentos, pontas e poste solto — e se refaz ao colocar ou tirar uma

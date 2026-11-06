@@ -29,20 +29,24 @@ export const Item = {
 
 export type ItemId = (typeof Item)[keyof typeof Item];
 
+/** Animais que se reproduzem comendo (ovelha, vaca, galinha, cavalo). */
+export type AnimalKind = 'sheep' | 'horse' | 'cow' | 'chicken';
+
 export interface ItemDef {
   id: ItemId;
   name: string;
   /** Bloco que o item planta ao ser usado no chão (semente). */
   plants?: BlockId;
-  /** Animal que come este item. */
-  feeds?: 'sheep';
+  /** Animais que comem este item (e ficam apaixonados: reprodução). */
+  feeds?: readonly AnimalKind[];
   /** Espólio de monstro: não ocupa a hotbar; aparece no contador de espólios da HUD. */
   loot?: boolean;
 }
 
 export const ITEMS: Record<ItemId, ItemDef> = {
-  wheat_seed: { id: Item.WHEAT_SEED, name: 'Semente de Trigo', plants: Block.WHEAT_0 },
-  wheat: { id: Item.WHEAT, name: 'Trigo', feeds: 'sheep' },
+  // Alimento de cada animal (dono do produto, 2026-11-06): ovelha e vaca = trigo; galinha = semente; cavalo = cenoura.
+  wheat_seed: { id: Item.WHEAT_SEED, name: 'Semente de Trigo', plants: Block.WHEAT_0, feeds: ['chicken'] },
+  wheat: { id: Item.WHEAT, name: 'Trigo', feeds: ['sheep', 'cow'] },
   silk: { id: Item.SILK, name: 'Seda de Aranha', loot: true },
   fang: { id: Item.FANG, name: 'Presa de Aranha', loot: true },
   queen_heart: { id: Item.QUEEN_HEART, name: 'Coração da Rainha', loot: true },
@@ -51,7 +55,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   apple: { id: Item.APPLE, name: 'Maçã' },
   potato: { id: Item.POTATO, name: 'Batata', plants: Block.POTATO_0 },
   tomato: { id: Item.TOMATO, name: 'Tomate', plants: Block.TOMATO_0 },
-  carrot: { id: Item.CARROT, name: 'Cenoura', plants: Block.CARROT_0 },
+  carrot: { id: Item.CARROT, name: 'Cenoura', plants: Block.CARROT_0, feeds: ['horse'] },
   silk_cloth: { id: Item.SILK_CLOTH, name: 'Pano de Seda' },
   bread: { id: Item.BREAD, name: 'Pão' },
   pasta_tomato: { id: Item.PASTA_TOMATO, name: 'Macarrão ao Molho' },

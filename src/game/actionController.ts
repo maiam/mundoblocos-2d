@@ -3,7 +3,7 @@ import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
 import { Block, blockDef, type BlockId, isCrop } from '../world/blocks';
 import { foodValue } from '../world/progression';
-import { blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId } from '../world/items';
+import { blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId, type ItemId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
 import type { Drops } from './drops';
@@ -11,7 +11,7 @@ import type { Entities } from './entities';
 import type { HotbarSlot } from './hotbar';
 import type { Inventory } from './inventory';
 import type { Player } from './player';
-import type { Sheep } from './sheep';
+import type { Breeder } from './breeder';
 import type { Facing } from './walker';
 
 /** Alcance para quebrar/colocar, em células (do centro do personagem ao centro da célula). */
@@ -69,6 +69,7 @@ export interface ActionContext {
 /** Alvos para o render (destaque do mouse, anel na entidade, foco do botão de ação, quebra em andamento). */
 export interface ActionTargets {
   hover: CellTarget | null;
+  /** Anel num animal (alimentar ou golpear). */
   hoverSheep: (CellTarget & { attack?: boolean }) | null;
   focus: CellTarget | null;
   breaking: { x: number; y: number; progress: number } | null;
@@ -246,8 +247,33 @@ export class ActionController {
     return options[0] ?? null;
   }
 
-  private canFeed(sheep: Sheep): boolean {
-    return sheep.canEat && this.inventory.count('wheat') > 0;
+  /** Dá para dar o item da mão a este animal? (é o alimento dele, ele pode comer e há o item). */
+  private canFeed(animal: Breeder, item: ItemId): boolean {
+    return animal.eats(item) && animal.canEat && this.inventory.count(item) > 0;
+  }
+
+  /** Item da mão que algum animal come (trigo, semente de trigo, cenoura), ou null. */
+  private get feedItem(): ItemId | null {
+    const slot = this.slot;
+    return slot?.kind === 'item' && ITEMS[slot.item].feeds ? slot.item : null;
+  }
+
+  /**
+   * Toque com alimento de animal na mão: o animal que come aquele item (sob o cursor ou à frente) come e fica
+   * apaixonado. true = o toque acabou aqui (alimentou, ou o item só serve para alimentar, como o trigo); false = segue
+   * para plantar/comer (semente de trigo e cenoura também plantam; a cenoura também se come).
+   */
+  private feedInstead(animal: Breeder | null): boolean {
+    const item = this.feedItem;
+    if (!item) return false;
+    if (animal && animal.eats(item)) {
+      if (this.canFeed(animal, item) && this.inventory.take(item)) {
+        animal.feed();
+        this.ctx.onConsumed();
+      }
+      return true;
+    }
+    return !ITEMS[item].plants && foodValue(item) <= 0;
   }
 
   /**
@@ -270,7 +296,7 @@ export class ActionController {
   }
 
   /** Aplica o espaço selecionado: coloca bloco, planta ou alimenta. */
-  private applyUse(slot: HotbarSlot | null, x: number, y: number, sheep: Sheep | null): void {
+  private applyUse(slot: HotbarSlot | null, x: number, y: number): void {
     if (!slot) return; // mão vazia ainda não tem ação
     if (slot.kind === 'tool') {
       // Ferramenta com ação (enxada, pá, picareta): animação sempre; enxada/pá trocam o chão se o alvo for válido.
@@ -299,8 +325,6 @@ export class ActionController {
         this.ctx.onAction?.(def.plants === Block.WHEAT_0 ? { kind: 'plant', x, y } : { kind: 'plant', x, y, block: def.plants });
         this.entities.settleAll(this.world); // muda é sólida: ninguém fica preso nela
       }
-    } else if (def.feeds === 'sheep' && sheep && this.canFeed(sheep) && this.inventory.take(slot.item)) {
-      sheep.feed();
     }
     this.ctx.onConsumed();
   }
@@ -335,10 +359,10 @@ export class ActionController {
   }
 
   /** Ovelha sob o cursor (com trigo selecionado). */
-  private sheepUnderCursor(sx: number, sy: number): Sheep | null {
+  private animalUnderCursor(sx: number, sy: number): Breeder | null {
     const [wx, wy] = this.camera.screenToWorld(sx, sy);
-    const sheep = this.entities.sheepAt(wx / TILE, wy / TILE);
-    return sheep && Math.hypot(sheep.x - this.player.x, sheep.y - this.player.y) <= REACH ? sheep : null;
+    const animal = this.entities.animalAt(wx / TILE, wy / TILE);
+    return animal && Math.hypot(animal.x - this.player.x, animal.y - this.player.y) <= REACH ? animal : null;
   }
 
   /** Golpe (espada/machado) na direção em que a personagem olha (o acerto sai no meio da animação). */
@@ -372,21 +396,18 @@ export class ActionController {
       this.attack();
       return;
     }
-    if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
-      this.applyUse(slot, 0, 0, this.sheepUnderCursor(sx, sy));
-      return;
-    }
+    if (this.feedInstead(this.animalUnderCursor(sx, sy))) return;
     if (slot?.kind === 'tool' && TOOLS[slot.tool].swings) {
       // Pelo mouse: vira para o cursor e toca a ação (ara/amassa só se o alvo for válido).
       const t = this.useTarget(sx, sy);
       if (!this.player.attacking) this.faceToward(sx, sy);
-      if (t?.valid) this.applyUse(slot, t.x, t.y, null);
+      if (t?.valid) this.applyUse(slot, t.x, t.y);
       else this.player.startAttack(slot.tool); // alvo fora de alcance/inválido: só a animação
       return;
     }
     const t = this.useTarget(sx, sy);
     if (this.eatInstead(slot, !!t?.valid)) return;
-    if (t?.valid) this.applyUse(slot, t.x, t.y, null);
+    if (t?.valid) this.applyUse(slot, t.x, t.y);
   }
 
   // ---- Alvo à frente da personagem (botão de ação) ----
@@ -397,14 +418,14 @@ export class ActionController {
     return [this.player.cellX + dx, this.player.cellY + dy];
   }
 
-  /** Ovelha logo à frente da personagem (para dar trigo). */
-  private frontSheep(): Sheep | null {
+  /** Animal logo à frente da personagem (para dar o alimento). */
+  private frontAnimal(): Breeder | null {
     const [dx, dy] = FACING_DIR[this.player.facing];
     const px = this.player.x + dx * 0.9;
     const py = this.player.y + dy * 0.9;
-    let best: Sheep | null = null;
+    let best: Breeder | null = null;
     let bestD = 0.8;
-    for (const s of this.entities.npcs) {
+    for (const s of this.entities.animals) {
       const d = Math.hypot(s.x - px, s.y - py);
       if (d < bestD) { best = s; bestD = d; }
     }
@@ -434,12 +455,9 @@ export class ActionController {
       this.attack();
       return;
     }
-    if (slot?.kind === 'item' && ITEMS[slot.item].feeds) {
-      this.applyUse(slot, 0, 0, this.frontSheep());
-      return;
-    }
+    if (this.feedInstead(this.frontAnimal())) return;
     if (this.eatInstead(slot, this.canUseAt(slot, fx, fy))) return;
-    this.applyUse(slot, fx, fy, null);
+    this.applyUse(slot, fx, fy);
   }
 
   /**
@@ -522,22 +540,22 @@ export class ActionController {
     return this.useTarget(x, y);
   }
 
-  /** Anel na ovelha alvo do trigo (ou do golpe): sob o mouse ou, com a personagem parada, à frente dela. */
+  /** Anel no animal alvo do alimento da mão (ou do golpe): sob o mouse ou, com a personagem parada, à frente dela. */
   private hoverSheep(): (CellTarget & { attack?: boolean }) | null {
     if (this.strikerInHand) {
       const t = this.entities.strikeTargets(this.player.facing)[0];
       return t ? { x: t.x, y: t.y, valid: true, attack: true } : null;
     }
-    const slot = this.slot;
-    if (slot?.kind !== 'item' || !ITEMS[slot.item].feeds) return null;
-    let sheep: Sheep | null = null;
+    const item = this.feedItem;
+    if (!item) return null;
+    let animal: Breeder | null = null;
     if (this.pointer.inside && !this.ctx.joystickActive()) {
       if (this.press && this.press.held > TAP_MAX_S) return null;
-      sheep = this.sheepUnderCursor(this.pointer.x, this.pointer.y);
+      animal = this.animalUnderCursor(this.pointer.x, this.pointer.y);
     } else if (!this.player.moving) {
-      sheep = this.frontSheep();
+      animal = this.frontAnimal();
     }
-    return sheep ? { x: sheep.x, y: sheep.y, valid: this.canFeed(sheep) } : null;
+    return animal?.eats(item) ? { x: animal.x, y: animal.y, valid: this.canFeed(animal, item) } : null;
   }
 
   /**
@@ -556,7 +574,8 @@ export class ActionController {
       const [x, y] = this.frontCell();
       return this.canBreakAt(x, y) ? { x, y, valid: true } : null;
     }
-    if (slot?.kind === 'item' && ITEMS[slot.item].feeds && this.frontSheep()) return null; // anel na ovelha
+    const item = this.feedItem;
+    if (item && this.frontAnimal()?.eats(item)) return null; // anel no animal
     const [x, y] = this.frontCell();
     return { x, y, valid: this.canUseAt(slot, x, y) || this.canBreakAt(x, y) };
   }
