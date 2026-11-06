@@ -10,7 +10,7 @@ import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
-import { GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
+import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
 
 const canvas = document.getElementById('world') as HTMLCanvasElement;
 const screenMode = new ScreenMode();
@@ -32,8 +32,8 @@ const online = profile.id === 'principal' ? {
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
   available: onlineAvailable(window.location.hostname),
   site: GAME_SITE,
-  onCreate: (name: string) => goOnline(name),
-  onJoin: (name: string, code: string) => goOnline(name, code),
+  counts: fetchRoomCounts,
+  onJoin: (name: string, room: number) => goOnline(name, room),
   onLeave: () => leaveRoom('Você saiu da sala'),
 } : undefined;
 let net: NetSession | null = null;
@@ -44,11 +44,11 @@ const CONNECT_TIMEOUT_MS = 10_000;
 let connecting: { session: NetSession; timer: number } | null = null;
 
 /**
- * Conecta ao servidor e entra (com código) ou cria uma sala; o jogo troca para o mundo da sala no `welcome`.
+ * Conecta ao servidor e entra numa sala fixa (`ROOMS`); o jogo troca para o mundo da sala no `welcome`.
  * Sem resposta em `CONNECT_TIMEOUT_MS` (ou conexão que cai antes da sala), tenta mais uma vez sozinho e, se de novo
  * nada, avisa — a conexão nunca fica presa em "Conectando…".
  */
-function goOnline(name: string, code?: string, attempt = 1): void {
+function goOnline(name: string, room: number, attempt = 1): void {
   try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento: só não lembra o nome */ }
   if (connecting) { clearTimeout(connecting.timer); connecting.session.onClose = null; connecting.session.leave(); }
   const s = new NetSession(new SocketTransport());
@@ -60,7 +60,7 @@ function goOnline(name: string, code?: string, attempt = 1): void {
     s.leave();
     if (attempt === 1) {
       game?.notify('Conectando… (tentando de novo)');
-      goOnline(name, code, 2);
+      goOnline(name, room, 2);
     } else game?.notify('O servidor não respondeu. Tente de novo em instantes.');
   };
   connecting = { session: s, timer: window.setTimeout(giveUp, CONNECT_TIMEOUT_MS) };
@@ -80,16 +80,17 @@ function goOnline(name: string, code?: string, attempt = 1): void {
     net = s;
     const look = game?.entities.look ?? null; // mesma aparência do jogo sozinho
     game?.destroy(); // salva o mundo de antes
-    game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, notice: `Sala ${s.room} · passe o código aos amigos` });
+    game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
-  s.join(name, code);
+  s.join(name, room);
 }
 
 /** Sai da sala e volta ao mundo que estava jogando sozinho (salvo). */
 function leaveRoom(notice: string): void {
   const s = net;
   net = null;
+  game?.sendBag(true); // a bolsa vai para a sala antes de fechar a conexão
   if (s) { s.onClose = null; s.leave(); }
   start(soloSeed, notice);
 }

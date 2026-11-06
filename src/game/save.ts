@@ -2,6 +2,7 @@ import type { MonsterKind } from '../world/dungeon';
 import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
 import { Block } from '../world/blocks';
+import { fromB64, toB64 } from '../net/b64';
 import { startingGrid } from './hotbar';
 import type { WorldId } from '../world/profiles';
 import type { World } from '../world/world';
@@ -67,12 +68,6 @@ export interface GameState {
   exploration?: Exploration;
 }
 
-const toB64 = (a: Uint8Array): string => {
-  let s = '';
-  for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
-  return btoa(s);
-};
-const fromB64 = (s: string): Uint8Array => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 /** Fotografa o estado atual da sessão. */
 export function captureSave(s: GameState): SaveData {

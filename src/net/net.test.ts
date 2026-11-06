@@ -4,7 +4,7 @@ import { applyAction, parseAction } from '../world/actions';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { LoopbackServer } from './loopback';
-import { MAX_PLAYERS, normalizeRoomCode, parseClientMessage, PROTOCOL_VERSION, sanitizeName } from './protocol';
+import { MAX_PLAYERS, parseBag, parseClientMessage, PROTOCOL_VERSION, ROOMS, sanitizeName } from './protocol';
 import { NetSession } from './session';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -18,10 +18,9 @@ function client(server: LoopbackServer) {
 }
 
 describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
-  it('código de convite e nome de convidado', () => {
-    expect(normalizeRoomCode('ab-cd 23')).toBe('ABCD23');
-    expect(normalizeRoomCode('ABCD1O')).toBeNull(); // 1 e O ficam de fora (confundíveis)
-    expect(normalizeRoomCode('ABC')).toBeNull();
+  it('salas fixas (só a Sala 1, até 10) e nome de jogador', () => {
+    expect(ROOMS.map((r) => r.name)).toEqual(['Sala 1']);
+    expect(MAX_PLAYERS).toBe(10);
     expect(sanitizeName('  Ana   Clara ')).toBe('Ana Clara');
     expect(sanitizeName('Zé_2')).toBe('Zé_2');
     expect(sanitizeName('a')).toBeNull();
@@ -32,18 +31,20 @@ describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
   it('mensagens malformadas viram null (nunca exceção)', () => {
     for (const t of ['', '{', 'null', '[]', '{"t":"action","seq":1,"a":{"kind":"place","x":1,"y":2,"block":9999}}',
       '{"t":"action","seq":1,"a":{"kind":"break","x":1.5,"y":2,"tool":null}}', '{"t":"state","s":{"x":1,"y":2,"facing":"norte","moving":true}}',
-      '{"t":"hello","v":1}']) expect(parseClientMessage(t)).toBeNull();
+      '{"t":"hello","v":1}', '{"t":"hello","v":8,"name":"Ana","room":"ABCDEF"}',
+      '{"t":"bag","bag":{"inventory":{"<script>":1},"hotbar":null,"x":0,"y":0}}']) expect(parseClientMessage(t)).toBeNull();
     expect(parseAction({ kind: 'break', x: 1, y: 2, tool: 'sword' })).toEqual({ kind: 'break', x: 1, y: 2, tool: 'sword' });
   });
 
-  it('dois convidados na mesma sala veem as mesmas edições, inclusive quem chega depois', async () => {
+  it('dois jogadores na mesma sala veem as mesmas edições, inclusive quem chega depois', async () => {
     const server = new LoopbackServer(mulberry32(7));
     const a = client(server);
-    a.s.join('Ana');
+    a.s.join('Ana', 1);
     await flush();
-    expect(a.s.room).toMatch(/^[A-Z2-9]{6}$/);
+    expect(a.s.room).toBe(1);
+    expect(a.s.roomName).toBe('Sala 1');
     const b = client(server);
-    b.s.join('Beto', a.s.room!.toLowerCase());
+    b.s.join('Beto', 1);
     await flush();
     expect(b.s.seed).toBe(a.s.seed);
     expect([...a.s.others.values()].map((p) => p.name)).toEqual(['Beto']);
@@ -82,10 +83,10 @@ describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
   it('o servidor recusa o que as regras do World não permitem (cidade protegida) e só avisa quem tentou', async () => {
     const server = new LoopbackServer(mulberry32(3));
     const a = client(server);
-    a.s.join('Ana');
+    a.s.join('Ana', 1);
     await flush();
     const b = client(server);
-    b.s.join('Bia', a.s.room!);
+    b.s.join('Bia', 1);
     await flush();
     const room = server.rooms.get(a.s.room!)!;
     const [sx, sy] = room.world.town!.start;
@@ -94,30 +95,35 @@ describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
     a.s.sent({ kind: 'break', x: sx, y: sy, tool: 'pickaxe' });
     await flush();
     expect(rejected).toHaveLength(1);
-    expect(room.edits).toHaveLength(0);
+    expect(room.dirty).toBe(false);
     expect(b.box.world!.getGround(sx, sy)).toBe(room.world.getGround(sx, sy));
   });
 
   it('entrada recusada: versão, nome, sala inexistente e sala cheia', async () => {
     const server = new LoopbackServer(mulberry32(5));
     const old = new NetSession(server.connect());
-    (old as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION + 1, name: 'Ana' });
+    (old as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION + 1, name: 'Ana', room: 1 });
     const badName = client(server);
-    badName.s.join('?');
+    badName.s.join('?', 1);
     const noRoom = client(server);
-    noRoom.s.join('Ana', 'ZZZZZZ');
+    noRoom.s.join('Ana', 99);
     await flush();
     expect(old.error).toMatch(/Versão/);
     expect(badName.s.error).toMatch(/Nome/);
     expect(noRoom.s.error).toMatch(/Sala não encontrada/);
     const host = client(server);
-    host.s.join('Ana');
+    host.s.join('Ana', 1);
     await flush();
-    for (let i = 1; i < MAX_PLAYERS; i++) client(server).s.join(`P${i}`, host.s.room!);
+    const twin = client(server);
+    twin.s.join('ana', 1); // mesmo nome (a bolsa é pelo nome)
+    await flush();
+    expect(twin.s.error).toMatch(/Já tem alguém/);
+    for (let i = 1; i < MAX_PLAYERS; i++) client(server).s.join(`P${i}`, 1);
     await flush();
     const extra = client(server);
-    extra.s.join('Extra', host.s.room!);
+    extra.s.join('Extra', 1);
     await flush();
     expect(extra.s.error).toMatch(/cheia/);
+    expect(parseBag({ inventory: { wheat: 3, 'block:27': 5, 'tool:axe': 1 }, hotbar: ['tool:axe', null], x: 1, y: 2 })).not.toBeNull();
   });
 });

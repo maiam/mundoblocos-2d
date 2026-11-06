@@ -30,6 +30,8 @@ na Hostinger. Site estático: nenhum servidor aqui; o servidor do jogo será out
 `orvalis-servidor.pensamentos.online`, publicado do repositório `maiam/orvalis-servidor` (app web Node.js na Hostinger,
 Node 22, entrada `server.js`, sem build; porta de `PORT`). WebSocket de entrada **validado** em 2026-11-04 (página de
 teste em `/`, saúde em `/saude`, eco em `/ws`).
+**Dados das salas** (servidor 0.9.0): `~/orvalis-dados/sala-<n>.json` (ou `DATA_DIR`). Conferir em `/saude` → `dados`
+(pasta, última gravação, `carregadaDoDisco`). Apagar o arquivo (com o servidor parado) recomeça a sala do zero.
 **Sala travada em "Conectando…"** (06/11): o app Node da Hostinger reiniciou sozinho (`/saude` com `segundosNoAr` ~0) e
 voltou em seguida; o jogo agora desiste em 10 s e tenta de novo uma vez. Se ficar frequente: plano B (VPS, Fase M).
 **Sala não abre?** `/saude` deve mostrar o `protocolo` igual ao `PROTOCOL_VERSION` do jogo. O servidor só aceita

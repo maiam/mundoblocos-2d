@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.64.0 — 2026-11-06
+- **Sala fixa e salva** (pedido do dono do produto): "Jogar com amigos" agora lista as salas por número — por enquanto
+  a **Sala 1**, para até **10 jogadores** ao mesmo tempo, mostrando quantos estão nela. Entra e sai quando quiser:
+  tudo o que se faz na sala fica **salvo no servidor** e quem entrar depois vê o mesmo mundo.
+- **A bolsa da sala fica guardada** pelo nome: ao voltar, os itens e o lugar onde você estava continuam lá. Fora da
+  sala, o mundo sozinho segue com a própria bolsa.
+- Saem as salas com código de convite. Multiplayer: `PROTOCOL_VERSION` 8 (servidor 0.9.0 junto).
+
 ## 0.63.0 — 2026-11-06
 - **Jogar com amigos — mesmo horário e mesmo crescimento** (Etapa 1 da sala compartilhada): a sala tem a própria hora
   do dia; quem entra passa a ver a mesma hora que os outros (dia e noite iguais) e o relógio é acertado a cada 30 s.

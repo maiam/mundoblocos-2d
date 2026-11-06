@@ -22,6 +22,7 @@
 | 0017 | Personagem modular: arte segue o contrato v02 (quadro, âncora, escala fixa, caixa por ação, encaixe × peça × parte); exportador valida/exporta; fontes pesadas fora do git | [0017](adr/0017-personagem-modular-contrato.md) |
 | 0018 | Ferramentas por material: tipo × material; arte segue `assets-src/ferramentas/CONTRATO.md` (ficha, ícones padronizados, camada de mão sobre pose-base sem ferramenta) antes de entrar no motor | [0018](adr/0018-ferramentas-por-material.md) |
 | 0019 | Covil isolado (canto fixo) com entrada de caverna a ≥ 10 chunks do castelo; mundo da Cidade 1 só de florestas; visão de andares/mundos ligados por portais | [0019](adr/0019-covil-isolado-e-andares.md) |
+| 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
@@ -108,6 +109,7 @@
 | Fome em barra 0–100 (~12 min); alimentos com pesos (`FOOD`); crus: maçã, cenoura, batata, tomate; pratos só no Caldeirão (Cozinheiro); fome vazia não mata (para em 1 de vida) | domains/player, domains/farming |
 | Receita pode exigir estação por perto (`Recipe.station`), sem novo painel: o Caldeirão é a cozinha | domains/farming |
 | Receitas: tocar abre uma ficha com Confirmar/Cancelar (nada é criado num toque) e a bolsa aparece ao lado; excesso de bolsa de salvamento antigo cai no chão | domains/farming |
+| Salas fixas por número (Sala 1, até 10), abertas a quem tiver o site, mundo e bolsas salvos no servidor; sem salas de convite | ADR 0020 |
 | Sala compartilhada em etapas: o servidor é dono da hora e do crescimento (protocolo 7); itens e entidades depois, sempre com o código do jogo rodando na sala (nunca um jogador "anfitrião") | ADR 0016 |
 | Tenda tem interior (um cômodo para todas as tendas, volta para a frente da tenda por onde se entrou); conexão da sala desiste em 10 s com uma nova tentativa automática | ADR 0014, ADR 0016 |
 | "Jogar com amigos" só aparece onde o servidor aceita a origem; no Artifact e nas prévias, aviso com link do site (lista espelhada do servidor, sem detectar falha por tentativa) | ADR 0016 |

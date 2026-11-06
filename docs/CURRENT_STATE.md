@@ -1,6 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.63.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.64.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Salas fixas salvas no servidor — v0.64.0 (ADR 0020)
+- `ROOMS` (Sala 1, seed 20261106), `MAX_PLAYERS` 10, `hello` com número da sala; `welcome` com `chunks` (mundo da sala),
+  `time` e `bag`; mensagem `bag` (itens, grade, posição). `Room`: sem lista de ações nem convite; `snapshot`/`restore`;
+  nomes repetidos recusados. Servidor 0.9.0: salas abertas ao ligar, `sala-<n>.json` em `DATA_DIR`, `GET /salas`.
+- Jogo: menu com as salas e quantos estão (`fetchRoomCounts`), bolsa/posição da sala no `Game` (envio a cada 5 s e ao
+  sair, `sendBag`). `src/net/b64.ts` compartilhado com o salvamento local.
 
 ## Sala compartilhada, Etapa 1: hora e crescimento — v0.63.0
 - `Room.time` (começa em `ROOM_START_TIME` 0,31) e `Room.tick(dt)` (servidor 1×/s): avança a hora, roda o crescimento
