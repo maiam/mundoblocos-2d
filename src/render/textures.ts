@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getOakDoorSheet, getChestSprite, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
@@ -519,6 +519,13 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   const treeVariants = growthTreeSprites(getTreeArt(), objects);
+  // Pedregulhos: 40 artes da prancha de pedras (quadro de 2 células; as pedrinhas ficam pequenas no meio).
+  const rockArt = getRockArt();
+  if (rockArt) {
+    const frames = stripSprites(rockArt, Math.round(rockArt.width / rockArt.height), T * 2, 4);
+    objects.set(Block.ROCK_BOULDER, frames[0]);
+    treeVariants.set(Block.ROCK_BOULDER, frames);
+  }
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
   // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
   for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {

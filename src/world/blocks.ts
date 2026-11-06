@@ -46,6 +46,8 @@ export const Block = {
   // --- móveis (por receita) ---
   /** Cadeira de Madeira (4 Tábuas). */
   CHAIR: 46,
+  /** Pedregulho solto no mundo (arte da prancha de pedras, variante por célula); minerado solta Pedra Bruta. */
+  ROCK_BOULDER: 47,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
   STONE_BRICK: 35,
@@ -267,6 +269,7 @@ const defs: BlockDef[] = [
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
   object(Block.CHEST, 'Baú de Carvalho', { shape: 'rock', organic: 'wood' }),
+  object(Block.ROCK_BOULDER, 'Pedregulho', { shape: 'rock', placeable: false }),
   object(Block.CHAIR, 'Cadeira de Madeira', { shape: 'rock', organic: 'wood' }), // madeira: o machado desmonta
   object(Block.CAMPFIRE, 'Fogueira', { shape: 'rock', organic: 'wood', glow: true }), // madeira: o machado desmonta
   object(Block.CAULDRON, 'Caldeirão de Pedra', { shape: 'rock', stone: true, glow: true }),

@@ -33,6 +33,8 @@ let chest: HTMLImageElement | null = null;
 const craftables = new Map<string, HTMLImageElement>();
 /** Pranchas de crescimento (carvalho, macieira, cacto). */
 let trees: { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null = null;
+/** Tira de pedregulhos. */
+let rocks: HTMLImageElement | null = null;
 /** Cidade: imagens por nome (`town-<nome>`). */
 const townImages = new Map<string, HTMLImageElement>();
 
@@ -54,6 +56,7 @@ export async function loadBlockArt(): Promise<void> {
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
+  if (a.rocks) rocks = await load(a.rocks);
   if (a.trees) {
     const [oak, apple, cactus] = await Promise.all([load(a.trees.oak), load(a.trees.apple), load(a.trees.cactus)]);
     trees = { oak, apple, cactus };
@@ -110,6 +113,11 @@ export function getTentSprite(): HTMLImageElement | null {
 
 export function getChestSprite(): HTMLImageElement | null {
   return chest;
+}
+
+/** Tira de pedregulhos (null fora do mundo principal). */
+export function getRockArt(): HTMLImageElement | null {
+  return rocks;
 }
 
 /** Pranchas de crescimento das árvores e cactos (null fora do mundo principal). */

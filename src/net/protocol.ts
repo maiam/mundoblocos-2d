@@ -6,7 +6,7 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;
 /** Jogadores por sala (co-op pequeno com convite). */
 export const MAX_PLAYERS = 4;
 /** Código de convite: 6 letras/números sem os confundíveis (0/O, 1/I/L). */

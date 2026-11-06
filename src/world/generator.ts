@@ -87,7 +87,7 @@ export class WorldGenerator implements TerrainSource {
       const alt = biome.altTree;
       object = alt && hash2(this.seed, x + 4409, y - 2027) < alt.share ? alt.id : biome.tree;
     }
-    else if (r > 0.994) object = Block.STONE; // pedregulhos ocasionais
+    else if (r > 0.994) object = Block.ROCK_BOULDER; // pedregulhos ocasionais (arte da prancha de pedras)
     else if (hash2(this.seed, x, y + 7919) < biome.decoChance) {
       object = biome.decorations[Math.floor(hash2(this.seed, x - 31, y) * biome.decorations.length)];
     }
