@@ -9,6 +9,12 @@
 - Só no mundo principal (o Santuário cabe na tela). Cada chunk vira uma imagem pequena refeita só quando o mapa ou
   a névoa dele mudam.
 
+## 0.50.1 — 2026-11-06
+- Corrigido o balanço dos braços na caminhada do chibi para a direita: oito fases contínuas, com retorno ao quadro inicial.
+- Ajustados os recortes das quatro blusas e quatro peças de pernas para a nova posição das mãos. Demais direções,
+  cabeças, cabelos, sapatos e região inferior dos pés preservados; folhas WebP do jogo e prévias reexportadas.
+- Comparação sincronizada antes/depois em `previas/v02/direita-antes-depois.gif`; histórico e ORA editável locais.
+
 ## 0.50.0 — 2026-11-06
 - **Tela de entrada** (pedido do dono do produto): o jogo abre no título **Orvalis** com a Cidade do Despertar viva
   atrás, **Novo jogo** e **Continuar** (só com jogo salvo no aparelho). Espaço reservado para "Jogar com amigos" e

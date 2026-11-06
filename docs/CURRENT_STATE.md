@@ -20,16 +20,16 @@ _Atualizado em 2026-11-06 — v0.51.0 · jogo: **Orvalis** (`orvalis.pensamentos
 
 ## Personagem modular (humano chibi) — 2026-11-05
 
-- **Guarda-roupa v02, revisão 3** (`assets-src/personagens/CONTRATO.md`, ADR 0017): onze peças e treze folhas
+- **Guarda-roupa v02, revisão 4** (`assets-src/personagens/CONTRATO.md`, ADR 0017): onze peças e treze folhas
   de caminhada (oito quadros × quatro direções). Adicionados colete verde, túnica azul, blusa lilás, calça ardósia,
   shorts vinho e bermuda verde. Quatro blusas × quatro peças de pernas = 16 combinações sobrepostas;
   25 incluindo as opções bege da base. Todas em `revisao`.
-- Base bege de blusa sem mangas e shorts preservada, assim como cabeça, cabelo e sapatos da revisão 2.
-  Prancha de combinações, três conjuntos em movimento e seletores independentes com sorteio em `previas/v02/`.
-  Sapatos desligados inicialmente; movimento com sapatos e detalhes das roupas entre vistas seguem em revisão.
-- `export-personagem.py` valida as treze folhas e exporta WebP + manifesto para a área local, sem importar no jogo.
-  Fontes/prompts/ORA da expansão em `_trabalho/v02/expansao-01/`, fora do git. As 25 escolhas × 32 poses passam
-  pela montagem de conferência; isso não aprova marcha, encaixe no cenário nem transições entre ações.
+- **Revisão 4 (06/11):** corrigido o balanço dos braços na caminhada para a direita. Movimento contínuo nos oito
+  quadros; recortes das quatro blusas e quatro peças de pernas ajustados para as mãos. Outras vistas, cabeça,
+  cabelo e sapatos preservados. Comparação antes/depois em `previas/v02/direita-antes-depois.gif`.
+- `export-personagem.py` valida as treze folhas e reexporta WebP + manifesto para `src/assets/` com prefixo `chibi-`.
+  Fontes, histórico, máscaras e ORA da correção ficam em `_trabalho/v02/correcao-direita/`, fora do git.
+  As 25 escolhas × 32 poses passam pela montagem de conferência; movimento e roupas continuam em revisão artística.
 - v01 arquivado em `_arquivo/v01/` (só local, fora do git): caminhada 8×4 e repouso frontal 6×4, roupa verde embutida.
   Medido no mundo: cabe na altura da heroína (2,2 células, ~1,1 de largura); convertido pelo exportador, caminhada de
   5 partes ≈ 300 kB.

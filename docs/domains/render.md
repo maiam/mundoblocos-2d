@@ -96,9 +96,9 @@ e as URLs (`import.meta.glob` de `src/assets/chibi-*.webp`). O ator do jogador g
 `Entities.look` está definido.
 
 O piloto artístico em `humano-chibi/entrega/v02/` agora tem onze peças e treze folhas de caminhada,
-status `revisao` (guarda-roupa fantasia 01, revisão 3). Há quatro tops e quatro peças de pernas, combináveis
-independentemente: 16 combinações sobrepostas, 25 incluindo a roupa bege da base. A base e as sete folhas
-anteriores foram preservadas. Seletores, sorteio, prancha comparativa e animações em `previas/v02/`.
+status `revisao` (guarda-roupa fantasia 01, revisão 4). Há quatro tops e quatro peças de pernas, combináveis
+independentemente: 16 combinações sobrepostas, 25 incluindo a roupa bege da base. A revisão 4 corrige os braços da linha direita e os recortes das roupas;
+frente/esquerda/costas, cabeças, cabelo e sapatos permanecem idênticos. Seletores, sorteio, prancha comparativa e animações em `previas/v02/`.
 Sapatos começam desligados; encaixes, detalhes entre vistas e movimento continuam em revisão.
 Usar o exportador antes do teste optativo no cenário. As prévias montam as folhas mestre; não validam integração,
 colisão ou desempenho no jogo.
