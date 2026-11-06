@@ -36,6 +36,13 @@ export const Block = {
   /** Baú de Carvalho: guarda 27 pilhas (conteúdo no World). */
   CHEST: 33,
   CACTUS: 31,
+  // --- objetos de cozinha (por receita; cozinhar vem com a comida, Fase P entrega 4) ---
+  /** Fogueira (3 Toras). */
+  CAMPFIRE: 43,
+  /** Caldeirão de Pedra (3 Pedras + 1 Fogueira). */
+  CAULDRON: 44,
+  /** Forno de Pedra (6 Pedras). */
+  OVEN: 45,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
   STONE_BRICK: 35,
@@ -206,6 +213,9 @@ const defs: BlockDef[] = [
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
   object(Block.CHEST, 'Baú de Carvalho', { shape: 'rock', organic: 'wood' }),
+  object(Block.CAMPFIRE, 'Fogueira', { shape: 'rock', organic: 'wood', glow: true }), // madeira: o machado desmonta
+  object(Block.CAULDRON, 'Caldeirão de Pedra', { shape: 'rock', stone: true, glow: true }),
+  object(Block.OVEN, 'Forno de Pedra', { shape: 'rock', stone: true, glow: true }),
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -304,7 +314,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 ];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
-export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST];
+export const HOTBAR_BLOCKS: BlockId[] = [...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN];
 
 /** Porta (aberta ou fechada)? */
 export function isDoor(id: BlockId): boolean {

@@ -181,7 +181,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN]);
 
 /**
  * O que um bloco quebrado devolve como material (mundos com coleta): o próprio material (cubo ou chão;
@@ -250,6 +250,20 @@ export const RECIPES: Recipe[] = [
   {
     id: 'oak-chest', name: 'Baú de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 8 }], output: { item: blockStack(Block.CHEST), count: 1 },
+  },
+  // Cozinha (dono do produto, 2026-11-05): por enquanto só se fabricam e se colocam; cozinhar vem com a comida.
+  {
+    id: 'campfire', name: 'Fogueira', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_LOG), count: 3 }], output: { item: blockStack(Block.CAMPFIRE), count: 1 },
+  },
+  {
+    id: 'stone-cauldron', name: 'Caldeirão de Pedra', profession: 'builder',
+    inputs: [{ item: blockStack(Block.STONE), count: 3 }, { item: blockStack(Block.CAMPFIRE), count: 1 }],
+    output: { item: blockStack(Block.CAULDRON), count: 1 },
+  },
+  {
+    id: 'stone-oven', name: 'Forno de Pedra', profession: 'builder',
+    inputs: [{ item: blockStack(Block.STONE), count: 6 }], output: { item: blockStack(Block.OVEN), count: 1 },
   },
   {
     id: 'tent', name: 'Tenda', profession: 'builder',

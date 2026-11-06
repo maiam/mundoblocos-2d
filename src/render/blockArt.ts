@@ -27,6 +27,8 @@ let water: { top: HTMLImageElement; flow: HTMLImageElement } | null = null;
 let tent: HTMLImageElement | null = null;
 /** Baú (sprite do mundo). */
 let chest: HTMLImageElement | null = null;
+/** Objetos fabricados (fogueira, caldeirão, forno), por nome da arte. */
+const craftables = new Map<string, HTMLImageElement>();
 /** Cidade: imagens por nome (`town-<nome>`). */
 const townImages = new Map<string, HTMLImageElement>();
 
@@ -47,6 +49,7 @@ export async function loadBlockArt(): Promise<void> {
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
+  for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
   if (a.town) {
     const entries = Object.entries(a.town);
     const imgs = await Promise.all(entries.map(([, url]) => load(url)));
@@ -98,6 +101,11 @@ export function getTentSprite(): HTMLImageElement | null {
 
 export function getChestSprite(): HTMLImageElement | null {
   return chest;
+}
+
+/** Sprite de um objeto fabricado pelo nome da arte (`campfire`, `cauldron`, `oven`). */
+export function getCraftableSprite(name: string): HTMLImageElement | null {
+  return craftables.get(name) ?? null;
 }
 
 /** Imagens da cidade por nome (vazio fora do mundo principal). */

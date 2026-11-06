@@ -9,6 +9,9 @@ import type { ExpressionId, OutfitId, VillagerBase } from '../../game/villager';
  * Cada mundo tem o seu (`principal.ts`, `santuario.ts`); o build do artefato de um mundo só leva o pacote dele.
  * Campos ausentes = o mundo não tem aquilo (o render pula o que não veio).
  */
+/** Nomes da arte dos objetos fabricados (ver `CRAFT_PROPS` em render/textures.ts). */
+export type CraftableArt = 'campfire' | 'cauldron' | 'oven';
+
 export interface ArtPack {
   /** Folhas dos atores (personagem, animais, monstros). */
   actors: Partial<Record<ActorKind, string>>;
@@ -37,6 +40,8 @@ export interface ArtPack {
   water?: { top: string; flow: string };
   /** Tenda (ponto de renascer): ícone da grade e sprite do mundo. */
   tent?: { icon: string; sprite: string };
+  /** Objetos fabricados (fogueira, caldeirão, forno): ícone e sprite do mundo (`scripts/extract-craftables.py`). */
+  craftables?: Partial<Record<CraftableArt, { icon: string; sprite: string }>>;
   /** Baú de Carvalho: ícone (vista inclinada) e sprite do mundo (de frente). */
   chest?: { icon: string; sprite: string };
   /** Interiores (`scripts/extract-interiors.py`), por id de `world/interiors.ts`; carregam em segundo plano. */
