@@ -82,7 +82,11 @@ export class WorldGenerator implements TerrainSource {
     const forest = this.detail.fbm2(x / 38 + 50, y / 38 - 50, 2);
     const density = biome.treeDensity * (forest > 0.05 ? 1 : 0.12);
     let object: BlockId = Block.AIR;
-    if (r < density) object = biome.tree;
+    if (r < density) {
+      // Árvore da vez: a principal do bioma ou, numa fração, a misturada (macieiras nos Campos).
+      const alt = biome.altTree;
+      object = alt && hash2(this.seed, x + 4409, y - 2027) < alt.share ? alt.id : biome.tree;
+    }
     else if (r > 0.994) object = Block.STONE; // pedregulhos ocasionais
     else if (hash2(this.seed, x, y + 7919) < biome.decoChance) {
       object = biome.decorations[Math.floor(hash2(this.seed, x - 31, y) * biome.decorations.length)];

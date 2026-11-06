@@ -21,7 +21,13 @@
 - Passeio comum (parar ↔ andar numa direção sorteada, desacelerar no fim, voltar a casa além da `leash`). Ovelha,
   cavalo e morador estendem `Wanderer` (que estende `Walker`) e só mudam o ritmo (`WanderPace`) e a caixa.
 
-## Cavalo (`game/horse.ts`)
+## Animais do campo: cavalo, vaca, galinha (`game/horse.ts` → `FarmAnimal`)
+- Um tipo (`FarmKind`) com ritmo próprio (`FARM`): vaca lenta (0,9; leash 8), galinha miúda e ligeira (1,3;
+  leash 6). `Entities.spawnAnimals(world, kind, x, y, n, salt)`: 2 vacas ~9 células a oeste do portão e 4 galinhas
+  perto, posições pela seed. Folhas `assets-src/animals/{cow,chicken}.png` (`process-sprite.py --alpha --largest`,
+  `--frame-h 112` e `96`), desenhadas com 1,35 e 0,85 célula. Só passeiam; leite e ovos: NEXT_STEPS.
+
+### Cavalo
 - Folha `assets-src/horse-sheet.png` → `horse.webp` (`process-sprite.py --alpha --largest --frame-h 112`), desenhado
   com 1,6 célula. Velocidade 1,8, não sobe em cubos, leash 10. Um cavalo (`Entities.spawnHorse`) no campo ao sul do
   portão, ~9 células a leste do rebanho, em grama, posição pela seed. O golpe o tira do mundo, como as ovelhas.

@@ -12,10 +12,11 @@ export type PlayerAction =
   | { kind: 'place'; x: number; y: number; block: BlockId }
   | { kind: 'till'; x: number; y: number }
   | { kind: 'flatten'; x: number; y: number }
-  | { kind: 'plant'; x: number; y: number }
+  | { kind: 'plant'; x: number; y: number; block?: BlockId }
+  | { kind: 'pick'; x: number; y: number }
   | { kind: 'door'; x: number; y: number };
 
-const KINDS = new Set<PlayerAction['kind']>(['break', 'place', 'till', 'flatten', 'plant', 'door']);
+const KINDS = new Set<PlayerAction['kind']>(['break', 'place', 'till', 'flatten', 'plant', 'pick', 'door']);
 const isInt = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && Math.abs(v) < 2 ** 30;
 
 /** Lê uma ação vinda de fora (rede): devolve a ação bem formada ou null. */
@@ -31,8 +32,12 @@ export function parseAction(v: unknown): PlayerAction | null {
     case 'place':
       if (!isInt(a.block) || !blockDef(a.block).placeable) return null;
       return { kind: 'place', x, y, block: a.block as BlockId };
+    case 'plant':
+      // Sem `block` = semente de trigo; com ele, só o que se planta (a regra fina é do World.canPlant).
+      if (a.block === undefined) return { kind: 'plant', x, y };
+      return isInt(a.block) ? { kind: 'plant', x, y, block: a.block as BlockId } : null;
     default:
-      return { kind: a.kind as 'till' | 'flatten' | 'plant' | 'door', x, y };
+      return { kind: a.kind as 'till' | 'flatten' | 'pick' | 'door', x, y };
   }
 }
 
@@ -51,7 +56,9 @@ export function applyAction(world: World, a: PlayerAction): boolean {
     case 'flatten':
       return world.flatten(a.x, a.y);
     case 'plant':
-      return world.plant(a.x, a.y);
+      return world.plant(a.x, a.y, a.block);
+    case 'pick':
+      return world.pick(a.x, a.y);
     case 'door':
       return world.toggleDoor(a.x, a.y);
   }

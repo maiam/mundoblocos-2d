@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.52.0 — 2026-11-06
+- **Cadeira de Madeira** (Construtor, 4 Tábuas): móvel de 1 célula com a arte enviada; volta à bolsa ao quebrar
+  (machado desmonta).
+- **Vaca e galinha**: 2 vacas e 4 galinhas passeiam no campo do lado de fora do portão, perto do rebanho e do cavalo
+  (folhas 4×4 enviadas). Cavalo, vaca e galinha são o mesmo animal do campo (`FarmAnimal`), com ritmo próprio.
+- **Árvores com a prancha de crescimento**: carvalhos adultos sorteiam 5 artes (grande, bolotas, flores, outono,
+  musgo) e os cactos, 8. **Macieiras** misturadas nos Campos (~1 em 6 árvores) — muda o mapa de todas as sementes
+  (só troca carvalhos por macieiras; caminhos e espaços livres iguais).
+- **Mudas que crescem**: derrubar uma árvore adulta pode dar uma Muda de Carvalho ou de Macieira (50%). Plantada em
+  terra ou grama, passa por muda → jovem → (crescendo) → adulta, ~2 min por estágio.
+- **Maçãs**: tocar numa macieira carregada colhe 2–3 Maçãs (caem ao pé); ela fica florida e as frutas voltam em
+  ~2,5 min. Comer vem com a comida (Fase P).
+- Multiplayer: plantar muda e colher maçãs viajam pela sala — `PROTOCOL_VERSION` 2 (servidor atualizado junto).
+
 ## 0.51.0 — 2026-11-06
 - **Minimapa com névoa de exploração** (pedido do dono do produto): mapa redondo no canto superior direito, abaixo
   do ☰, com o norte para cima e a seta do jogador girando. Começa escuro e vai se revelando num raio de 14 blocos

@@ -2,7 +2,7 @@ import type { PlayerAction } from '../world/actions';
 import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
 import { Block, blockDef, type BlockId } from '../world/blocks';
-import { blockStack, breakDrops, breakSeconds, ITEMS, type StackId, toolCanBreak, TOOLS, type ToolId } from '../world/items';
+import { blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
 import type { Drops } from './drops';
@@ -191,6 +191,14 @@ export class ActionController {
       if (this.inReach(nx, ny)) this.ctx.notify(building.name);
       return true;
     }
+    if (this.world.canPick(x, y)) {
+      // Macieira carregada: tocar (qualquer item em mãos) colhe as maçãs; elas caem ao pé da árvore.
+      if (this.inReach(x, y) && this.world.pick(x, y)) {
+        this.drops.spawn(x + 0.5, y + 0.7, pickDrops());
+        this.ctx.onAction?.({ kind: 'pick', x, y });
+      }
+      return true;
+    }
     if (this.world.getObject(x, y) === Block.CHEST) {
       // Baú: toque (qualquer item em mãos) abre o painel dele.
       if (this.inReach(x, y)) this.ctx.onOpenChest(x, y);
@@ -214,7 +222,10 @@ export class ActionController {
       if (this.ctx.collectBlocks && this.inventory.count(blockStack(slot.block)) <= 0) return false;
       return this.placeAnchor(slot.block, x, y) !== null;
     }
-    if (ITEMS[slot.item].plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y);
+    const plants = ITEMS[slot.item].plants;
+    // Muda de árvore é sólida: não se planta onde há alguém em pé.
+    if (plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y, plants)
+      && (plants === Block.WHEAT_0 || !this.entities.occupies(x, y));
     return false;
   }
 
@@ -264,7 +275,10 @@ export class ActionController {
     }
     const def = ITEMS[slot.item];
     if (def.plants) {
-      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item) && this.world.plant(x, y)) this.ctx.onAction?.({ kind: 'plant', x, y });
+      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item) && this.world.plant(x, y, def.plants)) {
+        this.ctx.onAction?.(def.plants === Block.WHEAT_0 ? { kind: 'plant', x, y } : { kind: 'plant', x, y, block: def.plants });
+        this.entities.settleAll(this.world); // muda é sólida: ninguém fica preso nela
+      }
     } else if (def.feeds === 'sheep' && sheep && this.canFeed(sheep) && this.inventory.take(slot.item)) {
       sheep.feed();
     }
