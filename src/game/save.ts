@@ -22,7 +22,7 @@ import type { ModularLook } from '../render/modular';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 export interface SaveData {
   v: number;
@@ -136,6 +136,9 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 5) d = { ...d, v: 6, look: null };
   // v6 → v7 (minimapa): nada descoberto ainda; o Game revela a área em volta ao abrir.
   if (d.v === 6) d = { ...d, v: 7, explored: [] };
+  // v7 → v8 (covil isolado, ADR 0019): o labirinto mudou de lugar — as aranhas voltam completas (posições antigas não
+  // valem mais). Quem salvou dentro do covil antigo fica onde estava, agora terreno comum (o Game desprende se preciso).
+  if (d.v === 7) d = { ...d, v: 8, dungeon: null };
   return d.v === SAVE_VERSION ? d : null;
 }
 

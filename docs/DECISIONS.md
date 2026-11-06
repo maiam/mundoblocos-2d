@@ -21,6 +21,7 @@
 | 0016 | Multiplayer co-op com código de convite (até 4), convidados só com nome, sem PvP; servidor autoritativo com `Room`/protocolo compartilhados (`src/net`, `world/actions.ts`) | [0016](adr/0016-multiplayer-coop.md) |
 | 0017 | Personagem modular: arte segue o contrato v02 (quadro, âncora, escala fixa, caixa por ação, encaixe × peça × parte); exportador valida/exporta; fontes pesadas fora do git | [0017](adr/0017-personagem-modular-contrato.md) |
 | 0018 | Ferramentas por material: tipo × material; arte segue `assets-src/ferramentas/CONTRATO.md` (ficha, ícones padronizados, camada de mão sobre pose-base sem ferramenta) antes de entrar no motor | [0018](adr/0018-ferramentas-por-material.md) |
+| 0019 | Covil isolado (canto fixo) com entrada de caverna a ≥ 10 chunks do castelo; mundo da Cidade 1 só de florestas; visão de andares/mundos ligados por portais | [0019](adr/0019-covil-isolado-e-andares.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
@@ -103,3 +104,4 @@
 | Hortaliças plantam pelo próprio legume (sem semente separada); culturas numa tabela única (`CROPS`) com o trigo; fonte inicial: 2 de cada + capim (12%) | domains/farming |
 | Tenda pede 1 Pano de Seda (receita nova: 10 sedas → 1 pano) em vez de 10 sedas soltas | domains/farming |
 | Níveis de ferramenta enviados em 06/11 entram só depois da camada de mão (contrato de ferramentas); a prancha de pedra não estava no pedido e espera confirmação | ADR 0018 |
+| Cidade 1 = mundo das florestas (sem deserto); próximos mundos (árido, pantanoso…) por portais, cada um com sua cidade | ADR 0019 |

@@ -30,7 +30,8 @@ export interface ArtPack {
   /** Porta de Carvalho (8 quadros). */
   oakDoor?: string;
   /** Dungeon (`extract-dungeon.py`). */
-  dungeon?: { ground: string; mountains: string; rocks: string; props: string; walls: string };
+  /** Arte do covil (carrega em segundo plano); `cave` = entrada da caverna no mundo (`scripts/extract-landmarks.py`). */
+  dungeon?: { ground: string; mountains: string; rocks: string; props: string; walls: string; cave?: string };
   /** Folhas de morte dos monstros (`extract-dungeon.py`); sem elas, morte provisória procedural. */
   monsterDeaths?: Partial<Record<MonsterKind, string>>;
   /** Trigo (16 estágios) e ícones de itens/ferramentas. */

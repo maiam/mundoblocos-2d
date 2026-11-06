@@ -29,6 +29,9 @@ O mundo vai crescer em **cidades e dungeons que acompanham a evolução dos pers
   mais desafiadoras, cada uma com suas dungeons, monstros, lojas e missões da sua faixa de nível.
 - Resultado: um **mundo maior**, organizado em regiões por faixa de nível, em que a jornada do personagem é também
   uma viagem de cidade em cidade.
+- **Andares (2026-11-06, ADR 0019)**: cada cidade fica num **mundo próprio**, com bioma próprio, ligado aos outros
+  por **portais** (inspiração: os andares de Sword Art Online). O mundo da Cidade do Despertar é só de **florestas**,
+  rios, mares e praias — abundante em recursos, por ser o primeiro; os próximos serão áridos, pantanosos etc.
 
 O que isso pede (ainda não existe; ver `NEXT_STEPS`, Fase 6): sistema de **níveis/experiência** do personagem,
 **faixas de nível** por região (cidades, dungeons e monstros), um **mapa de regiões** (onde fica cada cidade,

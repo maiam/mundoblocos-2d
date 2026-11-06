@@ -19,6 +19,8 @@ export interface DungeonArt {
   rocks: HTMLImageElement;
   props: HTMLImageElement;
   walls: HTMLImageElement;
+  /** Entrada da caverna no mundo (null se o pacote não tem). */
+  cave: HTMLImageElement | null;
 }
 let dungeon: DungeonArt | null = null;
 /** Água: topo do bloco e quadros de enchimento (null = água procedural, ex.: mundos sem a arte). */
@@ -76,7 +78,8 @@ export async function loadDungeonArt(): Promise<DungeonArt | null> {
   const d = art().dungeon;
   if (!d || dungeon) return dungeon;
   const [ground, mountains, rocks, props, walls] = await Promise.all([d.ground, d.mountains, d.rocks, d.props, d.walls].map(load));
-  dungeon = { ground, mountains, rocks, props, walls };
+  const cave = d.cave ? await load(d.cave) : null;
+  dungeon = { ground, mountains, rocks, props, walls, cave };
   return dungeon;
 }
 

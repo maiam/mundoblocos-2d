@@ -18,8 +18,9 @@
 ## Geração (`generator.ts`)
 - Elevação = fBm local + continental. `< -0.26` água; `< -0.2` areia (praia); `> 0.31` terra; `> 0.36` cubos de
   pedra; `> 0.43` pedra com 2 níveis (escalável pelas bordas). Rios por |fBm| estreito.
-- Biomas (temperatura/umidade): Campos (grama + carvalhos), Bosque de Sakura (grama + cerejeiras), Dunas
-  (areia + cactos). Trilhas naturais de Caminho de Terra cortam os campos.
+- Biomas (umidade; `pickBiome`): Campos (grama + carvalhos, 1/6 macieiras) e Bosque de Sakura (grama + cerejeiras).
+  Desde a v0.55.0 o mundo da Cidade 1 é só de florestas (ADR 0019): as Dunas (areia + cactos) ficam no código para um
+  mundo árido futuro. Areia só nas praias. Trilhas naturais de Caminho de Terra cortam os campos.
 - Árvores por hash × densidade × manchas de floresta; pedregulhos raros; enfeites.
 
 ## Regras

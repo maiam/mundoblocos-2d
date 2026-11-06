@@ -5,7 +5,6 @@ import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef } from '../world/blocks';
 import { canCraft, ITEMS, monsterDrops, type Recipe, type StackId, TOOLS } from '../world/items';
 import { art } from '../render/art';
-import { inRect } from '../world/dungeon';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import type { Facing } from './walker';
@@ -631,7 +630,8 @@ export class Game {
       drops: this.drops.list,
       hurtFlash: this.hurtFlash,
       inDungeon: this.inDungeon,
-      entrance: this.world.dungeon && !this.inDungeon && !room ? this.world.dungeon.doorstep : null,
+      entrance: this.world.cave && !this.inDungeon && !room ? this.world.cave.outside : null,
+      dungeonArea: this.inDungeon ? this.world.dungeon!.area : null,
       interior: room,
       fade: this.fade,
       time: this.time,
@@ -663,16 +663,17 @@ export class Game {
     }
     const markers: MinimapMarker[] = [];
     const town = this.world.town;
-    if (town) {
+    // No covil o mapa é só o labirinto (a cidade e a tenda ficam em outro lugar do mundo).
+    if (town && !this.inDungeon) {
       const a = town.area;
       markers.push({ kind: 'town', x: (a.x0 + a.x1 + 1) / 2, y: (a.y0 + a.y1 + 1) / 2, pinned: true });
     }
-    const dg = this.world.dungeon;
-    if (dg && this.exploration.isExplored(dg.doorstep[0], dg.doorstep[1])) {
-      markers.push({ kind: 'dungeon', x: dg.doorstep[0] + 0.5, y: dg.doorstep[1] + 0.5, pinned: true });
+    const cave = this.world.cave;
+    if (cave && !this.inDungeon && this.exploration.isExplored(cave.outside[0], cave.outside[1])) {
+      markers.push({ kind: 'dungeon', x: cave.outside[0] + 0.5, y: cave.outside[1] + 0.5, pinned: true });
     }
     const tent = this.world.tent;
-    if (tent) markers.push({ kind: 'tent', x: tent[0] + 0.5, y: tent[1] + 0.5, pinned: true });
+    if (tent && !this.inDungeon) markers.push({ kind: 'tent', x: tent[0] + 0.5, y: tent[1] + 0.5, pinned: true });
     for (const r of this.remotes.actors) markers.push({ kind: 'friend', x: r.x, y: r.y });
     this.minimap.update({ world: this.world, exploration: this.exploration, player: p, markers, place }, now, force);
   }
@@ -730,6 +731,18 @@ export class Game {
    */
   private updateInteriors(iy: number): void {
     const p = this.player;
+    // Covil das Aranhas (ADR 0019): pisar no vão de saída volta para diante da caverna; andar para cima diante da
+    // boca da caverna entra no labirinto.
+    const cave = this.world.cave;
+    if (cave && this.inDungeon) {
+      if (this.world.isDungeonExit(p.cellX, p.cellY)) this.moveTo(cave.outside, 'down');
+      return;
+    }
+    if (cave && iy < -0.3 && this.world.isCaveDoor(p.cellX, p.cellY)) {
+      this.moveTo(this.world.dungeonEntry()!, 'up');
+      this.hud.toast('Covil das Aranhas');
+      return;
+    }
     const room = this.world.interiorAt(p.cellX, p.cellY);
     if (room) {
       if (p.cellX === room.exit[0] && p.cellY === room.exit[1]) this.moveTo(room.outside, 'down');
@@ -756,8 +769,7 @@ export class Game {
 
   /** Personagem dentro da dungeon? (corações visíveis, penumbra, sem seta para a entrada). */
   private get inDungeon(): boolean {
-    const d = this.world.dungeon;
-    return !!d && inRect(d.area, this.player.cellX, this.player.cellY);
+    return this.world.inDungeon(this.player.cellX, this.player.cellY);
   }
 
   /** Flash ao levar dano; derrotada → renasce no início com vida cheia (itens ficam com ela). */
