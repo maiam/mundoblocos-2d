@@ -5,7 +5,7 @@ import { Chunk, type Level } from './chunk';
 import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave } from './dungeon';
 import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
-import { type InteriorLayout, interiorLayouts, InteriorTerrain } from './interiors';
+import { type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
 import { WorldGenerator } from './generator';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
@@ -128,10 +128,10 @@ export class World {
       this.cave = planCave(base, center, keep);
       this.generator = new DungeonTerrain(base, this.dungeon, this.cave);
     }
-    if (this.town) {
-      this.interiors = interiorLayouts(this.town);
-      this.generator = new InteriorTerrain(this.generator, this.interiors);
-    }
+    if (this.town) this.interiors = interiorLayouts(this.town);
+    // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
+    if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
+    if (this.interiors.length) this.generator = new InteriorTerrain(this.generator, this.interiors);
   }
 
   /** Célula dentro da dungeon, da cidade (muralhas incluídas) ou de um interior? Lá nada é quebrado, colocado, arado nem plantado. */
@@ -148,7 +148,22 @@ export class World {
 
   /** Interior cuja porta fica diante desta célula da rua (andar para cima nela = entrar), ou null. */
   interiorEntrance(x: number, y: number): InteriorLayout | null {
-    return this.interiors.find((l) => l.outside[0] === x && l.outside[1] === y) ?? null;
+    return this.interiors.find((l) => l.outside?.[0] === x && l.outside?.[1] === y) ?? null;
+  }
+
+  /** Cômodo da tenda (mundos com tenda), ou null. */
+  get tentRoom(): InteriorLayout | null {
+    return this.interiors.find((l) => l.def.id === 'tent') ?? null;
+  }
+
+  /**
+   * Diante da frente de uma tenda (a célula logo abaixo de uma das duas da fileira de baixo)? Devolve o canto da tenda
+   * (andar para cima aqui = entrar nela), ou null.
+   */
+  tentDoorAt(x: number, y: number): [number, number] | null {
+    if (!this.tentRoom) return null;
+    const a = this.tentAnchor(x, y - 1);
+    return a && a[1] === y - 1 ? a : null;
   }
 
   /** Diante da boca da caverna (andar para cima aqui = entrar no covil)? */

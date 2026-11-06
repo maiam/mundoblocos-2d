@@ -38,11 +38,34 @@ const online = profile.id === 'principal' ? {
 } : undefined;
 let net: NetSession | null = null;
 
-/** Conecta ao servidor e entra (com código) ou cria uma sala; o jogo troca para o mundo da sala no `welcome`. */
-function goOnline(name: string, code?: string): void {
+/** Espera pela sala antes de desistir de uma tentativa (s): o servidor pode estar acordando/reiniciando. */
+const CONNECT_TIMEOUT_MS = 10_000;
+/** Tentativa em andamento (uma por vez: um novo toque em criar/entrar cancela a anterior). */
+let connecting: { session: NetSession; timer: number } | null = null;
+
+/**
+ * Conecta ao servidor e entra (com código) ou cria uma sala; o jogo troca para o mundo da sala no `welcome`.
+ * Sem resposta em `CONNECT_TIMEOUT_MS` (ou conexão que cai antes da sala), tenta mais uma vez sozinho e, se de novo
+ * nada, avisa — a conexão nunca fica presa em "Conectando…".
+ */
+function goOnline(name: string, code?: string, attempt = 1): void {
   try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento: só não lembra o nome */ }
+  if (connecting) { clearTimeout(connecting.timer); connecting.session.onClose = null; connecting.session.leave(); }
   const s = new NetSession(new SocketTransport());
+  const giveUp = () => {
+    if (connecting?.session !== s) return;
+    clearTimeout(connecting.timer);
+    connecting = null;
+    s.onClose = null;
+    s.leave();
+    if (attempt === 1) {
+      game?.notify('Conectando… (tentando de novo)');
+      goOnline(name, code, 2);
+    } else game?.notify('O servidor não respondeu. Tente de novo em instantes.');
+  };
+  connecting = { session: s, timer: window.setTimeout(giveUp, CONNECT_TIMEOUT_MS) };
   s.onError = (message) => {
+    if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
     if (net === s) { game?.notify(message); return; }
     game?.notify(message); // entrada recusada: continua no mundo de antes
     s.onClose = null;
@@ -50,9 +73,10 @@ function goOnline(name: string, code?: string): void {
   };
   s.onClose = () => {
     if (net === s) leaveRoom('Conexão com a sala perdida');
-    else game?.notify('Não foi possível conectar ao servidor.');
+    else giveUp();
   };
   s.onWelcome = (seed) => {
+    if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
     net = s;
     const look = game?.entities.look ?? null; // mesma aparência do jogo sozinho
     game?.destroy(); // salva o mundo de antes

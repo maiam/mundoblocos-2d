@@ -16,8 +16,8 @@ export interface InteriorDef {
   id: string;
   /** Nome mostrado ao entrar. */
   name: string;
-  /** Construção da cidade cuja porta leva ao cômodo. */
-  building: BlockId;
+  /** Construção da cidade cuja porta leva ao cômodo; ausente = cômodo de objeto do jogador (tenda). */
+  building?: BlockId;
   map: string[];
   /** Onde fica o morador do ofício (coluna, linha) e as linhas em que ele pode andar [de, até]. */
   keeper?: { at: [number, number]; rows: [number, number] };
@@ -54,6 +54,25 @@ export const SMITHY_INTERIOR: InteriorDef = {
   keeper: { at: [4, 11], rows: [9, 11] },
 };
 
+/**
+ * Tenda (arte `assets-src/interiors/tent.png`, 7 × 7 células): lampião aceso no canto esquerdo e o colchão à direita.
+ * Um cômodo só para todas as tendas: entra-se pela frente de qualquer tenda e sai-se de volta para diante dela.
+ */
+export const TENT_INTERIOR: InteriorDef = {
+  id: 'tent',
+  name: 'Tenda',
+  map: [
+    '#######', // 0  parede do fundo (cortina)
+    '#######', // 1  pé da cortina do fundo, lampião, cabeceira do colchão
+    '##..###', // 2  lampião | colchão
+    '#...###', // 3
+    '#...###', // 4
+    '#...###', // 5  pé do colchão
+    '###E###', // 6  capacho entre os postes
+  ],
+};
+
+/** Cômodos das construções da cidade. */
 export const INTERIOR_DEFS: InteriorDef[] = [SMITHY_INTERIOR];
 
 /** Canto superior esquerdo do primeiro cômodo e distância entre cômodos (células): longe de tudo o que se gera perto. */
@@ -73,10 +92,32 @@ export interface InteriorLayout {
   /** Onde a personagem aparece ao entrar (logo acima do capacho) e o capacho (pisar = sair). */
   entry: [number, number];
   exit: [number, number];
-  /** Célula da rua diante da porta da construção (andar para cima nela = entrar; ao sair, volta para cá). */
-  outside: [number, number];
+  /**
+   * Célula da rua diante da porta da construção (andar para cima nela = entrar; ao sair, volta para cá); null na tenda
+   * (a volta é para diante da tenda por onde se entrou, guardada pelo jogo).
+   */
+  outside: [number, number] | null;
   /** Morador do ofício em células do mundo, ou null. */
   keeper: { at: [number, number]; rows: [number, number] } | null;
+}
+
+/** Monta o cômodo `k` (posição na fila de cômodos) com a porta da rua dada. */
+function layoutFor(def: InteriorDef, k: number, outside: [number, number] | null): InteriorLayout {
+  const w = def.map[0].length;
+  const h = def.map.length;
+  const x0 = INTERIOR_ORIGIN[0] + k * INTERIOR_SPACING;
+  const y0 = INTERIOR_ORIGIN[1];
+  const row = def.map.findIndex((r) => r.includes('E'));
+  const exit: [number, number] = [x0 + def.map[row].indexOf('E'), y0 + row];
+  const area = { x0, y0, x1: x0 + w - 1, y1: y0 + h - 1 };
+  return {
+    def, w, h, area,
+    guard: { x0: x0 - INTERIOR_MARGIN, y0: y0 - INTERIOR_MARGIN, x1: area.x1 + INTERIOR_MARGIN, y1: area.y1 + INTERIOR_MARGIN },
+    entry: [exit[0], exit[1] - 1],
+    exit,
+    outside,
+    keeper: def.keeper ? { at: [x0 + def.keeper.at[0], y0 + def.keeper.at[1]], rows: [y0 + def.keeper.rows[0], y0 + def.keeper.rows[1]] } : null,
+  };
 }
 
 /** Cômodos cuja construção existe na cidade (com porta), na ordem de `INTERIOR_DEFS`. */
@@ -84,27 +125,14 @@ export function interiorLayouts(town: TownLayout): InteriorLayout[] {
   const out: InteriorLayout[] = [];
   INTERIOR_DEFS.forEach((def, k) => {
     const b = town.buildings.find((x) => x.id === def.building && x.door);
-    if (!b) return;
-    const w = def.map[0].length;
-    const h = def.map.length;
-    const x0 = INTERIOR_ORIGIN[0] + k * INTERIOR_SPACING;
-    const y0 = INTERIOR_ORIGIN[1];
-    const find = (ch: string): [number, number] => {
-      const row = def.map.findIndex((r) => r.includes(ch));
-      return [x0 + def.map[row].indexOf(ch), y0 + row];
-    };
-    const exit = find('E');
-    const area = { x0, y0, x1: x0 + w - 1, y1: y0 + h - 1 };
-    out.push({
-      def, w, h, area,
-      guard: { x0: x0 - INTERIOR_MARGIN, y0: y0 - INTERIOR_MARGIN, x1: area.x1 + INTERIOR_MARGIN, y1: area.y1 + INTERIOR_MARGIN },
-      entry: [exit[0], exit[1] - 1],
-      exit,
-      outside: b.door!,
-      keeper: def.keeper ? { at: [x0 + def.keeper.at[0], y0 + def.keeper.at[1]], rows: [y0 + def.keeper.rows[0], y0 + def.keeper.rows[1]] } : null,
-    });
+    if (b) out.push(layoutFor(def, k, b.door!));
   });
   return out;
+}
+
+/** Cômodo da tenda, depois dos cômodos da cidade (posição fixa para todas as seeds). */
+export function tentLayout(): InteriorLayout {
+  return layoutFor(TENT_INTERIOR, INTERIOR_DEFS.length, null);
 }
 
 /** Célula andável do cômodo (chão ou capacho)? Fora do cômodo: false. */

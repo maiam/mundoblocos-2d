@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { inRect } from './dungeon';
 import { INTERIOR_DEFS, interiorFloor } from './interiors';
+import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
 describe('Interiores (ADR 0014)', () => {
@@ -53,5 +54,29 @@ describe('Interiores (ADR 0014)', () => {
 
   it('igual em toda seed e sem interiores fora do mundo com cidade', () => {
     expect(new World(1).interiors[0].area).toEqual(new World(999).interiors[0].area);
+  });
+});
+
+describe('Tenda (cômodo do objeto do jogador)', () => {
+  it('existe no mundo principal, não no Santuário; entra-se pela frente da tenda', () => {
+    const w = new World(7);
+    const room = w.tentRoom!;
+    expect(room.def.id).toBe('tent');
+    expect(room.outside).toBeNull();
+    expect(w.isWalkable(...room.entry)).toBe(true);
+    expect(w.interiorAt(...room.entry)).toBe(room);
+    expect(w.isProtected(...room.entry)).toBe(true);
+    expect(new World(7, WORLD_PROFILES.santuario).tentRoom).toBeNull();
+    // Tenda colocada fora da cidade: as duas células da frente levam para dentro; as de trás e os lados, não.
+    const [gx, gy] = w.outsideGate();
+    const x = gx + 3;
+    const y = gy + 4;
+    for (let yy = y - 2; yy <= y + 2; yy++) for (let xx = x - 1; xx <= x + 2; xx++) while (w.topBlock(xx, yy)) w.breakBlock(xx, yy);
+    expect(w.placeBlock(x, y, Block.TENT)).toBe(true);
+    expect(w.tentDoorAt(x, y + 1)).toEqual([x, y]);
+    expect(w.tentDoorAt(x + 1, y + 1)).toEqual([x, y]);
+    expect(w.tentDoorAt(x, y)).toBeNull();
+    expect(w.tentDoorAt(x - 1, y + 1)).toBeNull();
+    expect(w.interiorEntrance(x, y + 1)).toBeNull(); // não é porta da cidade
   });
 });

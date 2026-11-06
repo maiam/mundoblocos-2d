@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.62.0 — 2026-11-06
+- **Interior da tenda** (arte enviada pelo dono do produto): andar para cima diante da frente de qualquer tenda entra
+  num cômodo iluminado com lampião e colchão, como na Ferraria; pisar no capacho volta para diante da tenda.
+- **"Jogar com amigos" não trava mais em "Conectando…"**: sem resposta do servidor em 10 s (ou conexão que cai antes da
+  sala), o jogo tenta mais uma vez sozinho e, se de novo nada, avisa "O servidor não respondeu. Tente de novo em
+  instantes." (o servidor da Hostinger às vezes reinicia e a conexão fica pendurada).
+
 ## 0.61.1 — 2026-11-06
 - **"Jogar com amigos" fora do site**: no Artifact do claude.ai e nas prévias da Hostinger o servidor recusa a
   conexão (só aceita o site oficial), e o menu mostrava os botões que falhavam com "Não foi possível conectar". Agora
