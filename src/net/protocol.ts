@@ -6,31 +6,26 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 7;
-/** Jogadores por sala (co-op pequeno com convite). */
-export const MAX_PLAYERS = 4;
-/** Código de convite: 6 letras/números sem os confundíveis (0/O, 1/I/L). */
-export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-export const ROOM_CODE_LENGTH = 6;
+export const PROTOCOL_VERSION = 8;
+/** Jogadores por sala ao mesmo tempo. */
+export const MAX_PLAYERS = 10;
+
+/**
+ * Salas fixas do servidor (dono do produto, 2026-11-06): cada uma é um mundo compartilhado e salvo no servidor, aberto
+ * a quem quiser entrar, a qualquer hora. Por enquanto só a Sala 1. A seed é fixa (o mundo é sempre o mesmo).
+ */
+export const ROOMS: ReadonlyArray<{ id: number; name: string; seed: number }> = [
+  { id: 1, name: 'Sala 1', seed: 20261106 },
+];
+
+export function roomById(id: number): (typeof ROOMS)[number] | undefined {
+  return ROOMS.find((r) => r.id === id);
+}
+
 export const NAME_MIN = 2;
 export const NAME_MAX = 16;
 
-/** Código de convite digitado → forma canônica (maiúsculas, sem espaços/hífens), ou null se inválido. */
-export function normalizeRoomCode(text: string): string | null {
-  const c = text.toUpperCase().replace(/[\s-]/g, '');
-  if (c.length !== ROOM_CODE_LENGTH) return null;
-  for (const ch of c) if (!ROOM_CODE_ALPHABET.includes(ch)) return null;
-  return c;
-}
-
-/** Sorteia um código de convite com o gerador dado (o servidor usa um gerador seguro). */
-export function makeRoomCode(rand: () => number): string {
-  let s = '';
-  for (let i = 0; i < ROOM_CODE_LENGTH; i++) s += ROOM_CODE_ALPHABET[Math.floor(rand() * ROOM_CODE_ALPHABET.length)];
-  return s;
-}
-
-/** Nome de convidado: letras (com acento), números, espaço, - e _; 2 a 16 caracteres. Devolve o nome limpo ou null. */
+/** Nome de jogador: letras (com acento), números, espaço, - e _; 2 a 16 caracteres. Devolve o nome limpo ou null. */
 export function sanitizeName(text: string): string | null {
   const n = text.normalize('NFC').replace(/\s+/g, ' ').trim();
   if (n.length < NAME_MIN || n.length > NAME_MAX) return null;
@@ -58,18 +53,39 @@ export interface Applied {
 }
 
 export type ClientMessage =
-  /** Entrar: sem `room` cria uma sala nova; com `room` entra pelo código de convite. */
-  | { t: 'hello'; v: number; name: string; room?: string }
+  /** Entrar numa sala fixa pelo número (`ROOMS`). */
+  | { t: 'hello'; v: number; name: string; room: number }
   | { t: 'state'; s: PlayerState }
   /** `seq` volta no `rejected`, para o jogo saber qual ação não valeu. */
-  | { t: 'action'; seq: number; a: PlayerAction };
+  | { t: 'action'; seq: number; a: PlayerAction }
+  /** Bolsa e posição do jogador, para a sala guardar (volta no próximo `welcome` com o mesmo nome). */
+  | { t: 'bag'; bag: RoomBag };
+
+/** O que a sala guarda de cada jogador (pelo nome): itens, grade da mão e onde estava. */
+export interface RoomBag {
+  inventory: Record<string, number>;
+  hotbar: Array<string | null> | null;
+  x: number;
+  y: number;
+}
+
+/** Chunk editado do mundo da sala (chão e níveis em base64, como no salvamento local). */
+export interface RoomChunk {
+  cx: number;
+  cy: number;
+  ground: string;
+  levels: string[];
+}
 
 /** Célula que cresceu (planta/árvore) por decisão da sala: x, y e o bloco novo. */
 export type Grown = [number, number, number];
 
 export type ServerMessage =
-  /** `time` = hora do dia da sala (0..1); `grown` = células cujo último estado veio do crescimento (aplicar depois das edições). */
-  | { t: 'welcome'; you: number; room: string; seed: number; players: PlayerInfo[]; edits: Applied[]; time: number; grown: Grown[] }
+  /**
+   * Entrou: `chunks` = mundo da sala como está (chunks editados, crescimento incluso), `time` = hora do dia (0..1),
+   * `bag` = bolsa guardada deste nome (null = primeira vez).
+   */
+  | { t: 'welcome'; you: number; room: number; roomName: string; seed: number; players: PlayerInfo[]; chunks: RoomChunk[]; time: number; bag: RoomBag | null }
   /** Hora do dia da sala (sincroniza o relógio de todos de tempos em tempos). */
   | { t: 'time'; time: number }
   /** Plantas/árvores que cresceram na sala. */
@@ -103,8 +119,12 @@ export function parseClientMessage(text: string): ClientMessage | null {
   const o = m as Record<string, unknown>;
   switch (o.t) {
     case 'hello':
-      if (!Number.isInteger(o.v) || typeof o.name !== 'string' || (o.room !== undefined && typeof o.room !== 'string')) return null;
-      return { t: 'hello', v: o.v as number, name: o.name, room: o.room as string | undefined };
+      if (!Number.isInteger(o.v) || typeof o.name !== 'string' || !Number.isInteger(o.room)) return null;
+      return { t: 'hello', v: o.v as number, name: o.name, room: o.room as number };
+    case 'bag': {
+      const bag = parseBag(o.bag);
+      return bag ? { t: 'bag', bag } : null;
+    }
     case 'state': {
       const s = parseState(o.s);
       return s ? { t: 'state', s } : null;
@@ -116,4 +136,28 @@ export function parseClientMessage(text: string): ClientMessage | null {
     default:
       return null;
   }
+}
+
+const MAX_BAG_ENTRIES = 128;
+const STACK_RE = /^(block:\d{1,4}|tool:[a-z_]{1,24}|[a-z_]{1,32})$/;
+
+/** Lê a bolsa vinda da rede (limites de tamanho e formato; o conteúdo é confiado ao jogo, sem contas ainda). */
+export function parseBag(v: unknown): RoomBag | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  if (!o.inventory || typeof o.inventory !== 'object' || !finite(o.x) || !finite(o.y)) return null;
+  const inventory: Record<string, number> = {};
+  const entries = Object.entries(o.inventory as Record<string, unknown>);
+  if (entries.length > MAX_BAG_ENTRIES) return null;
+  for (const [k, n] of entries) {
+    if (!STACK_RE.test(k) || !Number.isInteger(n) || (n as number) < 0 || (n as number) > 99999) return null;
+    inventory[k] = n as number;
+  }
+  let hotbar: Array<string | null> | null = null;
+  if (o.hotbar !== null && o.hotbar !== undefined) {
+    if (!Array.isArray(o.hotbar) || o.hotbar.length > 64) return null;
+    if (!o.hotbar.every((s) => s === null || (typeof s === 'string' && STACK_RE.test(s)))) return null;
+    hotbar = o.hotbar as Array<string | null>;
+  }
+  return { inventory, hotbar, x: o.x as number, y: o.y as number };
 }

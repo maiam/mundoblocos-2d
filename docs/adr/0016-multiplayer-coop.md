@@ -43,3 +43,4 @@ código. O servidor roda num app Node.js da Hostinger (`orvalis-servidor.pensame
 - Inventário e alcance ainda são conferidos só no jogo; o servidor garante as regras do mapa. Inventário no servidor
   vem com contas/nuvem.
 - O Artifact de teste segue só para um jogador (não deve abrir conexões externas).
+- **Atualização (v0.64.0, ADR 0020)**: o convite por código foi substituído por salas fixas salvas no servidor.

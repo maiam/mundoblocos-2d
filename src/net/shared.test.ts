@@ -21,13 +21,13 @@ describe('Sala compartilhada — mesmo horário e mesmo crescimento (Etapa 1)', 
   it('a hora é da sala: quem entra recebe a hora atual e todos recebem a sincronização', async () => {
     const server = new LoopbackServer(mulberry32(3));
     const a = client(server);
-    a.s.join('Ana');
+    a.s.join('Ana', 1);
     await flush();
     expect(a.s.time).toBeCloseTo(ROOM_START_TIME);
     server.tick(DAY_LENGTH_S / 4); // um quarto de dia
     await flush();
     const b = client(server);
-    b.s.join('Beto', a.s.room!);
+    b.s.join('Beto', 1);
     await flush();
     expect(b.s.time).toBeCloseTo(ROOM_START_TIME + 0.25);
     let synced: number | null = null;
@@ -41,7 +41,7 @@ describe('Sala compartilhada — mesmo horário e mesmo crescimento (Etapa 1)', 
   it('plantas crescem pela sala: todos veem o mesmo estágio, inclusive quem entra depois', async () => {
     const server = new LoopbackServer(mulberry32(5));
     const a = client(server);
-    a.s.join('Ana');
+    a.s.join('Ana', 1);
     await flush();
     const room = server.rooms.get(a.s.room!)!;
     // Ana ara e planta trigo fora da cidade (aplica na hora e informa).
@@ -67,7 +67,7 @@ describe('Sala compartilhada — mesmo horário e mesmo crescimento (Etapa 1)', 
     expect(w.getObject(...spot!)).toBe(room.world.getObject(...spot!));
     // Quem entra depois vê o mesmo estágio.
     const c = client(server);
-    c.s.join('Caio', a.s.room!);
+    c.s.join('Caio', 1);
     await flush();
     expect(c.box.world!.getObject(...spot!)).toBe(room.world.getObject(...spot!));
     // Colhida (quebrada) depois de crescer: quem entra ainda depois não vê a planta voltar.
@@ -76,7 +76,7 @@ describe('Sala compartilhada — mesmo horário e mesmo crescimento (Etapa 1)', 
     a.s.sent(brk);
     await flush();
     const d = client(server);
-    d.s.join('Duda', a.s.room!);
+    d.s.join('Duda', 1);
     await flush();
     expect(isCrop(d.box.world!.getObject(...spot!))).toBe(false);
     expect(Block.AIR).toBe(0);

@@ -75,6 +75,10 @@ Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositó
      (desenho suavizado); golpe = intenção (servidor calcula acerto/dano); mordida decidida no servidor; dar comida e
      reprodução viram ações. Medir CPU na Hostinger (plano B: VPS).
    - Fora da sala nada muda (tudo roda no aparelho).
+   - ✅ **Salas fixas salvas** (v0.64.0, ADR 0020): Sala 1 (até 10), mundo e bolsas no servidor. Falta: conferir que a
+     pasta `~/orvalis-dados` sobrevive ao deploy da Hostinger (`/saude` → `dados.salas.1.carregadaDoDisco` depois de um
+     merge do servidor; senão, MySQL da hospedagem); baús compartilhados (conteúdo) entram com os itens (Etapa 2);
+     comprimir o `welcome` quando o mundo editado crescer; mais salas quando precisar (`ROOMS`).
 4. **Encontro nas cidades**: chat, grupos (visão de progressão).
 Decidido (ADR 0016): co-op com código de convite (até 4), convidado só com nome, sem PvP, servidor autoritativo,
 servidor reaproveita `world`+`net` como pacote compilado. Repositório do servidor: `maiam/orvalis-servidor`.
@@ -157,7 +161,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
    c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
    d. ~~Aparência no salvamento~~ (v0.50.0, `SAVE_VERSION` 6). **Próximo (Etapa 2 da tela de entrada)**: aparência
-      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 8+ (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos, 6 = cerca, 7 = hora e crescimento da sala), validar contra o manifesto no `Room`),
+      no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 9+ (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos, 6 = cerca, 7 = hora e crescimento da sala, 8 = salas fixas), validar contra o manifesto no `Room`),
       `RemotePlayers` desenhando o chibi dos outros; atualizar `orvalis-servidor` junto (`sync-net`).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.

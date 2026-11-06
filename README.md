@@ -46,7 +46,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Colocar Porta de Carvalho | só entre dois blocos de madeira (Tora ou Tábua de Carvalho) ou de Pedra, à esquerda e à direita |
 | Dungeon (Covil das Aranhas) | labirinto murado perto do início, entrada voltada para você; a Rainha espera no fundo; lá dentro nada quebra — só luta |
 | Atacar (espada) | espada selecionada + ação/clique: golpe à frente (animais somem; aranhas perdem vida); não quebra nada |
-| Menu ☰ (canto superior direito) | continuar, novo mundo, recomeçar este mundo; o progresso é salvo sozinho a cada 10 s; **Jogar com amigos** (criar sala ou entrar com o código de convite, até 4 jogadores) |
+| Menu ☰ (canto superior direito) | continuar, novo mundo, recomeçar este mundo; o progresso é salvo sozinho a cada 10 s; **Jogar com amigos** (Sala 1, até 10 jogadores: entra e sai quando quiser; mundo e bolsa ficam salvos no servidor) |
 | Vida | barra com número (100 no início; aparece na dungeon ou ferida); números de dano na tela; regenera fora de combate; ao cair, renasce na tenda ou na cidade, perdendo tudo menos as ferramentas |
 | Machado | toque: golpe (como a espada) · segurar 1 s: corta só madeira, árvore ou planta |
 | Enxada | toque: ara Terra/Terra com Grama → Terra Arada · segurar 1 s: quebra só plantas (capim, flor, trigo, cacto) |

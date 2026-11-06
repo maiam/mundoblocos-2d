@@ -19,6 +19,24 @@ export function onlineAvailable(hostname: string, customServer = !!import.meta.e
   return customServer || ONLINE_HOSTS.has(hostname);
 }
 
+/** Endereço HTTP do servidor (o mesmo do WebSocket, sem o `/ws`). */
+const httpBase = (): string => SERVER_URL.replace(/^ws/, 'http').replace(/\/ws\/?$/, '');
+
+/** Quantos estão em cada sala agora (`GET /salas` do servidor); null se o servidor não respondeu. */
+export async function fetchRoomCounts(): Promise<Record<number, { players: number; max: number }> | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(`${httpBase()}/salas`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const list = (await r.json()) as Array<{ numero: number; jogadores: number; maximo: number }>;
+    return Object.fromEntries(list.map((s) => [s.numero, { players: s.jogadores, max: s.maximo }]));
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Conexão real com o servidor (só no navegador; o pacote do servidor não inclui este arquivo). Mensagens que chegam
  * antes da conexão abrir são guardadas e enviadas ao abrir.

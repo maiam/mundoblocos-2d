@@ -54,7 +54,11 @@ export interface GameOptions {
    */
   net?: NetSession;
   /** Menu "Jogar com amigos": criar/entrar (jogando sozinho) e sair (na sala). Ausente = sem multiplayer (Santuário). */
-  online?: { name: string; available: boolean; site: string; onCreate(name: string): void; onJoin(name: string, code: string): void; onLeave(): void };
+  online?: {
+    name: string; available: boolean; site: string;
+    counts?(): Promise<Record<number, { players: number; max: number }> | null>;
+    onJoin(name: string, room: number): void; onLeave(): void;
+  };
   /** Aparência do personagem num mundo novo (o salvamento, se houver, prevalece); null/ausente = heroína. */
   look?: ModularLook | null;
   /**
@@ -128,7 +132,7 @@ export class Game {
   ) {
     this.world = new World(seed, profile);
     this.collect = profile.collectBlocks;
-    this.hotbar = new Hotbar(profile, options.save?.hotbar ?? undefined);
+    this.hotbar = new Hotbar(profile, (options.save?.hotbar ?? options.net?.bag?.hotbar ?? undefined) as (StackId | null)[] | undefined);
     // Sem cultivo nem coleta, não há itens contáveis (Santuário: só blocos infinitos).
     this.inventory = profile.collectBlocks || profile.farming ? new Inventory() : new Inventory({});
     const [sx, sy] = this.world.findSpawn();
@@ -200,7 +204,7 @@ export class Game {
       onRestart: options.net ? undefined : options.onRestart,
       online: options.online && {
         ...options.online,
-        room: options.net?.room ?? undefined,
+        room: options.net?.roomName ?? undefined,
         players: () => 1 + (options.net?.others.size ?? 0),
       },
     });
@@ -211,6 +215,16 @@ export class Game {
       // Mesmo horário para todos: o relógio segue o da sala (e é acertado a cada sincronização).
       if (net.time !== null) this.time = net.time;
       net.onTime = (t) => { this.time = t; };
+      // Bolsa e lugar guardados na sala para este nome (primeira vez: bolsa inicial, no ponto de início).
+      const bag = net.bag;
+      if (bag) {
+        this.inventory.replaceAll(bag.inventory as Partial<Record<StackId, number>>);
+        this.hotbar.prune(this.inventory);
+        const [bx, by] = this.world.isWalkable(Math.floor(bag.x), Math.floor(bag.y))
+          ? [bag.x, bag.y] : this.world.nearestWalkable(Math.floor(bag.x), Math.floor(bag.y)).map((v) => v + 0.5);
+        this.player.x = bx;
+        this.player.y = by;
+      }
       net.onApplied = () => this.entities.settleAll(this.world);
       net.onRejected = () => this.hud.toast('Ação não aceita pela sala');
     }
@@ -245,6 +259,7 @@ export class Game {
 
   destroy(): void {
     this.saveNow();
+    this.sendBag(true); // na sala: a bolsa fica guardada lá até a próxima entrada
     this.running = false;
     for (const fn of this.cleanup) fn();
     this.hud.destroy();
@@ -756,6 +771,11 @@ export class Game {
     if (!net) return;
     this.remotes.sync(net.others);
     this.remotes.update(dt, this.world);
+    this.bagTimer -= dt;
+    if (this.bagTimer <= 0) {
+      this.bagTimer = 5;
+      this.sendBag();
+    }
     this.stateTimer -= dt;
     if (this.stateTimer > 0) return;
     this.stateTimer = 0.1;
@@ -765,6 +785,27 @@ export class Game {
     if (key === this.lastState) return;
     this.lastState = key;
     net.sendState(s);
+  }
+
+  /** Última bolsa mandada à sala (só manda de novo quando muda). */
+  private lastBag = '';
+  private bagTimer = 0;
+
+  /** Na sala: manda a bolsa e a posição para a sala guardar (a cada 5 s, se mudou, e ao sair). */
+  sendBag(force = false): void {
+    const net = this.options.net;
+    if (!net) return;
+    const p = this.player;
+    const bag = {
+      inventory: Object.fromEntries(this.inventory.entries()) as Record<string, number>,
+      hotbar: this.hotbar.dynamic ? this.hotbar.layout() : null,
+      x: Math.round(p.x * 100) / 100,
+      y: Math.round(p.y * 100) / 100,
+    };
+    const key = JSON.stringify(bag);
+    if (!force && key === this.lastBag) return;
+    this.lastBag = key;
+    net.sendBag(bag);
   }
 
   /** Mensagem curta na tela e na área "Jogar com amigos" do menu (erros de conexão/sala). */
@@ -787,7 +828,7 @@ export class Game {
 
   /** Texto do menu sobre o salvamento automático. */
   private saveStatus(): string {
-    if (this.options.net) return 'Jogando com amigos: o que muda nesta sala não é salvo neste aparelho.';
+    if (this.options.net) return 'Jogando com amigos: o mundo e a sua bolsa ficam salvos na sala (no servidor).';
     if (!this.options.store?.available) return 'Este navegador não permite salvar: o progresso some ao fechar.';
     if (!this.lastSaved) return 'Progresso salvo automaticamente a cada 10 s.';
     const s = Math.max(0, Math.round((Date.now() - this.lastSaved) / 1000));

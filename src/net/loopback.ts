@@ -1,4 +1,4 @@
-import { makeRoomCode, normalizeRoomCode, parseClientMessage, type ServerMessage } from './protocol';
+import { parseClientMessage, ROOMS, roomById, type ServerMessage } from './protocol';
 import { type Outgoing, Room } from './room';
 
 /** Lado do jogo de uma conexão: manda texto, recebe mensagens do servidor. Hoje: `LoopbackServer`; depois: WebSocket. */
@@ -16,12 +16,15 @@ export interface Transport {
  * JSON como na rede de verdade (nada de objeto compartilhado por engano).
  */
 export class LoopbackServer {
-  readonly rooms = new Map<string, Room>();
+  /** Salas fixas (`ROOMS`), abertas desde o início como no servidor real. */
+  readonly rooms = new Map<number, Room>();
 
-  constructor(private readonly rand: () => number = Math.random) {}
+  constructor(rand: () => number = Math.random) {
+    for (const r of ROOMS) this.rooms.set(r.id, new Room(r.id, r.name, r.seed, rand));
+  }
 
   connect(): Transport {
-    let roomCode: string | null = null;
+    let roomId: number | null = null;
     let id: number | null = null;
     const deliver = (m: ServerMessage) => queueMicrotask(() => t.onMessage?.(JSON.parse(JSON.stringify(m)) as ServerMessage));
     const t: Transport & { deliverTo: (m: ServerMessage) => void } = {
@@ -33,31 +36,22 @@ export class LoopbackServer {
         if (!m) return deliver({ t: 'error', code: 'bad', message: 'Mensagem inválida.' });
         if (id === null) {
           if (m.t !== 'hello') return;
-          let room: Room | undefined;
-          if (m.room !== undefined) {
-            const code = normalizeRoomCode(m.room);
-            room = code ? this.rooms.get(code) : undefined;
-            if (!room) return deliver({ t: 'error', code: 'room', message: 'Sala não encontrada: confira o código de convite.' });
-          } else {
-            let code = makeRoomCode(this.rand);
-            while (this.rooms.has(code)) code = makeRoomCode(this.rand);
-            room = new Room(code, Math.floor(this.rand() * 2 ** 31));
-          }
+          const def = roomById(m.room);
+          if (!def) return deliver({ t: 'error', code: 'room', message: 'Sala não encontrada.' });
+          const room = this.rooms.get(def.id)!;
           const r = room.join(m);
-          if (r.id !== null && !this.rooms.has(room.code)) this.rooms.set(room.code, room);
-          if (r.id !== null) { id = r.id; roomCode = room.code; this.links.set(this.key(room.code, id), t); }
+          if (r.id !== null) { id = r.id; roomId = room.id; this.links.set(this.key(room.id, id), t); }
           this.route(room, r.id ?? -1, r.out, deliver);
           return;
         }
-        const room = this.rooms.get(roomCode!)!;
+        const room = this.rooms.get(roomId!)!;
         this.route(room, id, room.handle(id, m), deliver);
       },
       close: () => {
-        if (id === null || roomCode === null) return;
-        const room = this.rooms.get(roomCode)!;
-        this.links.delete(this.key(roomCode, id));
-        this.route(room, id, room.leave(id), deliver);
-        if (room.size === 0) this.rooms.delete(roomCode);
+        if (id === null || roomId === null) return;
+        const room = this.rooms.get(roomId)!;
+        this.links.delete(this.key(roomId, id));
+        this.route(room, id, room.leave(id), deliver); // a sala fica (mundo e bolsas guardados), mesmo vazia
         id = null;
         queueMicrotask(() => t.onClose?.());
       },
@@ -71,8 +65,8 @@ export class LoopbackServer {
   }
 
   private readonly links = new Map<string, { deliverTo: (m: ServerMessage) => void }>();
-  private key(code: string, id: number): string {
-    return `${code}:${id}`;
+  private key(room: number, id: number): string {
+    return `${room}:${id}`;
   }
 
   private route(room: Room, self: number, out: Outgoing[], reply: (m: ServerMessage) => void): void {
@@ -80,7 +74,7 @@ export class LoopbackServer {
       if (o.to === 0) { reply(o.msg); continue; } // erro antes de entrar: só para quem pediu
       for (const [k, link] of this.links) {
         const [code, idText] = k.split(':');
-        if (code !== room.code) continue;
+        if (Number(code) !== room.id) continue;
         const pid = Number(idText);
         const ok = o.to === 'all' || (typeof o.to === 'number' ? o.to === pid : o.to.except !== pid);
         if (ok) link.deliverTo(o.msg);

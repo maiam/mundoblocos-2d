@@ -1,4 +1,4 @@
-import { MAX_PLAYERS, NAME_MAX, normalizeRoomCode, sanitizeName } from '../net/protocol';
+import { MAX_PLAYERS, NAME_MAX, ROOMS, sanitizeName } from '../net/protocol';
 
 /**
  * Menu recolhível (☰ no canto superior direito): continuar, novo mundo, recomeçar este mundo.
@@ -20,7 +20,7 @@ export interface MenuHandlers {
   onRestart?(): void;
   /** Multiplayer (ADR 0016): sem `online` o menu não mostra "Jogar com amigos" (ex.: Santuário). */
   online?: {
-    /** Na sala: código e quantos estão nela (sem `room` = jogando sozinho). */
+    /** Na sala: nome dela e quantos estão nela (sem `room` = jogando sozinho). */
     room?: string;
     players?(): number;
     /** Nome usado da última vez (lembrado no aparelho). */
@@ -29,8 +29,9 @@ export interface MenuHandlers {
     available: boolean;
     /** Site onde jogar com amigos (link do aviso). */
     site: string;
-    onCreate(name: string): void;
-    onJoin(name: string, code: string): void;
+    /** Quantos estão em cada sala agora (mostrado ao abrir o menu); null = servidor sem resposta. */
+    counts?(): Promise<Record<number, { players: number; max: number }> | null>;
+    onJoin(name: string, room: number): void;
     onLeave(): void;
   };
 }
@@ -75,7 +76,7 @@ export class Menu {
       const act = (e.target as HTMLElement).closest('button')?.dataset.act;
       if (act === 'continue') this.toggle(false);
       if (act === 'new' || act === 'restart') this.ask(act);
-      if (act === 'create' || act === 'join') this.goOnline(act);
+      if (act === 'join') this.goOnline(Number((e.target as HTMLElement).closest('button')!.dataset.room));
       if (act === 'leave') this.h.online?.onLeave();
     });
     root.append(this.button, this.panel);
@@ -90,16 +91,23 @@ export class Menu {
     this.onlineMsg.hidden = !text;
   }
 
-  private goOnline(act: 'create' | 'join'): void {
+  private goOnline(room: number): void {
     const o = this.h.online;
     if (!o) return;
     const name = this.panel.querySelector<HTMLInputElement>('.menu-name')!.value;
-    const code = this.panel.querySelector<HTMLInputElement>('.menu-code')!.value;
     if (!sanitizeName(name)) return this.onlineMessage('Nome: de 2 a 16 letras ou números.');
-    if (act === 'join' && !normalizeRoomCode(code)) return this.onlineMessage('Código de convite: 6 letras ou números.');
     this.onlineMessage('Conectando…');
-    if (act === 'create') o.onCreate(name);
-    else o.onJoin(name, code);
+    o.onJoin(name, room);
+  }
+
+  /** Ao abrir: quantos estão em cada sala (sem resposta, fica sem número). */
+  private refreshCounts(): void {
+    void this.h.online?.counts?.().then((c) => {
+      for (const el of this.panel.querySelectorAll<HTMLElement>('.menu-room-count')) {
+        const n = c?.[Number(el.dataset.room)];
+        el.textContent = n ? `${n.players}/${n.max}` : '';
+      }
+    });
   }
 
   /** 1º toque: pede confirmação no próprio botão; 2º toque (em até 5 s): executa. */
@@ -144,18 +152,20 @@ export class Menu {
       this.statusEl.textContent = this.h.status();
       const count = this.panel.querySelector('.menu-players');
       if (count && this.h.online?.players) count.textContent = String(this.h.online.players());
+      if (!this.h.online?.room) this.refreshCounts();
     }
   }
 }
 
 const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
-/** Área "Jogar com amigos": criar sala / entrar com código, ou (na sala) o código e sair. */
+/** Área "Jogar com amigos": salas fixas (entrar quando quiser) ou, na sala, qual é e sair. */
 function onlineSection(o: NonNullable<MenuHandlers['online']>): string {
   if (o.room) {
     return `<div class="menu-online">
       <h3>Jogando com amigos</h3>
-      <p>Código de convite: <b class="menu-room">${esc(o.room)}</b><br>Na sala: <b class="menu-players">1</b> de ${MAX_PLAYERS}</p>
+      <p>Você está na <b class="menu-room">${esc(o.room)}</b><br>Na sala: <b class="menu-players">1</b> de ${MAX_PLAYERS}<br>
+        <small>O que se faz aqui fica salvo na sala, e a sua bolsa fica guardada até você voltar.</small></p>
       <button data-act="leave">Sair da sala</button>
     </div>`;
   }
@@ -167,12 +177,12 @@ function onlineSection(o: NonNullable<MenuHandlers['online']>): string {
         aria-label="Abrir o site do Orvalis para jogar com amigos">🌐 ${esc(o.site.replace(/^https?:\/\//, ''))}</a>
     </div>`;
   }
+  const rooms = ROOMS.map((r) => `<button data-act="join" data-room="${r.id}" class="menu-room-btn" title="Entrar na ${esc(r.name)}"
+        aria-label="Entrar na ${esc(r.name)}">🌍 ${esc(r.name)} <span class="menu-room-count" data-room="${r.id}"></span></button>`).join('');
   return `<div class="menu-online">
       <h3>Jogar com amigos</h3>
       <input class="menu-name" maxlength="${NAME_MAX}" placeholder="Seu nome" value="${esc(o.name)}" autocomplete="nickname">
-      <button data-act="create">Criar sala</button>
-      <input class="menu-code" maxlength="8" placeholder="Código de convite" autocapitalize="characters" autocomplete="off">
-      <button data-act="join">Entrar com código</button>
+      ${rooms}
       <p class="menu-online-msg" hidden></p>
     </div>`;
 }
