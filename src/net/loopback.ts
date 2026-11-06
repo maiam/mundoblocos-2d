@@ -65,6 +65,11 @@ export class LoopbackServer {
     return t;
   }
 
+  /** Passa o tempo de todas as salas (testes: o servidor real faz isso ~1×/s). */
+  tick(dt: number): void {
+    for (const room of this.rooms.values()) this.route(room, -1, room.tick(dt), () => {});
+  }
+
   private readonly links = new Map<string, { deliverTo: (m: ServerMessage) => void }>();
   private key(code: string, id: number): string {
     return `${code}:${id}`;

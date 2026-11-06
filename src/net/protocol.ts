@@ -6,7 +6,7 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 6;
+export const PROTOCOL_VERSION = 7;
 /** Jogadores por sala (co-op pequeno com convite). */
 export const MAX_PLAYERS = 4;
 /** Código de convite: 6 letras/números sem os confundíveis (0/O, 1/I/L). */
@@ -64,8 +64,16 @@ export type ClientMessage =
   /** `seq` volta no `rejected`, para o jogo saber qual ação não valeu. */
   | { t: 'action'; seq: number; a: PlayerAction };
 
+/** Célula que cresceu (planta/árvore) por decisão da sala: x, y e o bloco novo. */
+export type Grown = [number, number, number];
+
 export type ServerMessage =
-  | { t: 'welcome'; you: number; room: string; seed: number; players: PlayerInfo[]; edits: Applied[] }
+  /** `time` = hora do dia da sala (0..1); `grown` = células cujo último estado veio do crescimento (aplicar depois das edições). */
+  | { t: 'welcome'; you: number; room: string; seed: number; players: PlayerInfo[]; edits: Applied[]; time: number; grown: Grown[] }
+  /** Hora do dia da sala (sincroniza o relógio de todos de tempos em tempos). */
+  | { t: 'time'; time: number }
+  /** Plantas/árvores que cresceram na sala. */
+  | { t: 'grow'; cells: Grown[] }
   | { t: 'joined'; player: PlayerInfo }
   | { t: 'left'; id: number }
   | { t: 'state'; id: number; s: PlayerState }

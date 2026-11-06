@@ -31,6 +31,10 @@ código. O servidor roda num app Node.js da Hostinger (`orvalis-servidor.pensame
    outros jogadores). Testes em `src/net/net.test.ts`.
 4. **Versão do protocolo** (`PROTOCOL_VERSION`): mudança incompatível sobe a versão; o servidor recusa versões
    diferentes com mensagem clara ("recarregue a página").
+5. **Sala dona do tempo** (v0.63.0, protocolo 7): `Room` continua sem relógio próprio — o servidor chama
+   `room.tick(dt)` 1×/s com o tempo real. A sala guarda a hora do dia e faz plantas/árvores crescerem; os jogos na sala
+   não crescem sozinhos, só aplicam o `grow`. Itens caídos e entidades seguem o mesmo princípio nas próximas etapas
+   (`NEXT_STEPS`, Fase M 3b): o código do jogo roda na sala, nunca num jogador "anfitrião".
 
 ## Consequências
 - Etapa 2 (servidor): pacote `world`+`net`, WebSocket → `Room`, salas em memória; edições da sala guardadas por chunk.

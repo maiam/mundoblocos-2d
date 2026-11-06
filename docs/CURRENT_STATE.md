@@ -1,6 +1,14 @@
 # Estado atual
 
-_Atualizado em 2026-11-06 — v0.62.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-06 — v0.63.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Sala compartilhada, Etapa 1: hora e crescimento — v0.63.0
+- `Room.time` (começa em `ROOM_START_TIME` 0,31) e `Room.tick(dt)` (servidor 1×/s): avança a hora, roda o crescimento
+  do `World` (`tick(dt, rand, grow, onGrow)`) e manda `grow` (células) e `time` (a cada `TIME_SYNC_SECONDS` 30 s).
+  `welcome` traz `time` e `grown` (células cujo último estado veio do crescimento; ação na célula apaga a entrada).
+- Jogo na sala: `world.tick(..., grow = false)`, relógio = `net.time` (+ `onTime`); `World.applyGrowth` aplica o que
+  a sala decidiu. `LoopbackServer.tick` para testes. Protocolo 7; servidor 0.8.0 (`setInterval` do relógio).
+- Ainda de cada jogador: itens caídos, aranhas, animais, moradores (Etapas 2 e 3 em NEXT_STEPS, Fase M 3b).
 
 ## Interior da tenda e tempo limite da sala — v0.62.0
 - `TENT_INTERIOR` (`world/interiors.ts`, 7 × 7, `tentLayout()`): um cômodo para todas as tendas, no fim da fila de
