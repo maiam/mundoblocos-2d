@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.81.1 — 2026-11-07
+- **Materiais V2 — decisões do dono do produto** (nada muda no jogo): a frente dos cubos **fica em 18** (a comparação
+  com 16 não mostrou diferença que valha a mudança); a franja da grama foi **reduzida aos 32 px** do padrão (veio com
+  60 e cobria quase toda a frente); material **sem frente própria repete o topo**. A cena `?materiais=1` agora compara
+  o atlas antigo com o V2.
+
 ## 0.81.0 — 2026-11-07
 - **Padrão de Materiais V2 — preparação** (nada muda no jogo): o padrão definido com a área de arte entrou no
   repositório (ADR 0023, contrato de entrega em `assets-src/materiais/`) com o pipeline que monta os blocos a partir de

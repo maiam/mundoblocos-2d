@@ -3,8 +3,9 @@
 
 Uso: python3 scripts/import-material.py <material> --top arquivo.png [--front arquivo.png] [--overlay arquivo.png]
 - Qualquer tamanho quadrado vira 128×128 (redução repetindo a imagem em volta: a emenda do original se mantém).
-- Sem --front, a frente usa o próprio topo (contrato 02 § 5: vale se a janela 128×64 funciona como frente).
-- Overlay é copiado como veio (precisa já ter 128×128 com alfa).
+- Sem --front não se grava frente: o pipeline usa o próprio topo (regra do dono do produto, 2026-11-07).
+- Overlay precisa ter 128×128 com alfa. Franja mais alta que 32 px (contrato): --fit-fringe guarda os 32 px de baixo
+  do desenho (onde fica a borda recortada) e sobe para o alto — mantém a proporção das folhas, sem achatar.
 Apaga o PROVISORIO.txt da pasta. Depois: python3 scripts/build-materials.py --preview
 """
 import argparse
@@ -14,6 +15,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 SIZE = 128
+FRINGE = 32  # altura máxima da franja (contrato 02 § 3C)
 
 
 def to128(path: str) -> Image.Image:
@@ -34,16 +36,30 @@ ap.add_argument('material')
 ap.add_argument('--top', required=True)
 ap.add_argument('--front')
 ap.add_argument('--overlay')
+ap.add_argument('--fit-fringe', action='store_true', help='franja > 32 px: guarda os 32 px de baixo do desenho')
 a = ap.parse_args()
 d = ROOT / 'assets-src' / 'materiais' / a.material
 d.mkdir(parents=True, exist_ok=True)
 top = to128(a.top)
 top.save(d / 'top.png')
-(to128(a.front) if a.front else top).save(d / 'front.png')
+if a.front:
+    to128(a.front).save(d / 'front.png')
+else:
+    (d / 'front.png').unlink(missing_ok=True)
 if a.overlay:
     ov = Image.open(a.overlay).convert('RGBA')
     if ov.size != (SIZE, SIZE):
         raise SystemExit(f'overlay precisa ter {SIZE}×{SIZE} (veio {ov.size})')
+    if a.fit_fringe:
+        import numpy as np
+        arr = np.asarray(ov)
+        rows = np.where(arr[..., 3].max(1) > 0)[0]
+        end = int(rows.max()) + 1 if len(rows) else 0
+        if end > FRINGE:
+            out = np.zeros_like(arr)
+            out[:FRINGE] = arr[end - FRINGE:end]
+            ov = Image.fromarray(out, 'RGBA')
+            print(f'franja {end} px → {FRINGE} px (linhas {end - FRINGE}–{end - 1})')
     ov.save(d / 'front_overlay.png')
 (d / 'PROVISORIO.txt').unlink(missing_ok=True)
 print(a.material, 'ok')

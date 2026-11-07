@@ -274,11 +274,10 @@ function materialCube(index: number, outline: string): Sprite {
 
 /**
  * Monta um cubo 3/4 a partir de duas faces: `drawTop` pinta [0, T) e `drawFront`
- * pinta [T, T + front). Aplica sombra na frente, aresta clara e contorno. `front` = altura da frente (padrão
- * `CUBE_FRONT`; a cena `?materiais=1` compara 16 e 18 — ADR 0023).
+ * pinta [T, T + F). Aplica sombra na frente, aresta clara e contorno.
  */
-export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string, front: number = F): Sprite {
-  const F_ = front;
+export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string): Sprite {
+  const F_ = F;
   const [c, ctx] = canvas(T, T + F_);
   ctx.save();
   roundRect(ctx, 0.5, 0.5, T - 1, T + F_ - 1, 3);
@@ -307,7 +306,7 @@ export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) =
  */
 function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
   for (const id of MATERIALS) {
-    const faces = v2Faces(id, T, (F as number) === 16 ? 16 : 18);
+    const faces = v2Faces(id, T, F);
     if (!faces) continue;
     const [c, ctx] = canvas(T, T);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -321,20 +320,20 @@ function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVari
 
 /**
  * Peças avulsas para a cena dos materiais (`?materiais=1`, dev/materialsScene.ts): cubo e chão de um material no atlas
- * legado ou no V2, com a frente pedida. Null se faltar a arte.
+ * legado ou no V2. Null se faltar a arte.
  */
-export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2', front: number): { cube: Sprite; ground: HTMLCanvasElement } | null {
+export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2'): { cube: Sprite; ground: HTMLCanvasElement } | null {
   if (mode === 'legacy') {
     const i = MATERIALS.indexOf(id);
     if (i < 0 || !getBlockAtlas()) return null;
     return { cube: materialCube(i, OUTLINE[id] ?? '#3a2a20'), ground: materialTop(i) };
   }
-  const faces = v2Faces(id, T, front === 16 ? 16 : 18);
+  const faces = v2Faces(id, T, F);
   if (!faces) return null;
   const [c, ctx] = canvas(T, T);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   v2GroundTop(id, ctx, c.width, c.height);
-  return { cube: composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20', front), ground: c };
+  return { cube: composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20'), ground: c };
 }
 
 /** Contorno de cada material (cor escura da própria arte). */

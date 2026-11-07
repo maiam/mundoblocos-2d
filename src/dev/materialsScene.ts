@@ -5,18 +5,17 @@ import { ActorSprites } from '../render/character';
 import { qaMaterial, type Sprite } from '../render/textures';
 
 /**
- * Cena dos materiais V2 (`?materiais=1`, só em desenvolvimento; ADR 0023): três painéis lado a lado com as mesmas peças —
- * atlas legado (frente 18), V2 com frente 18 e V2 com frente 16 — para decidir a altura da frente olhando o jogo,
- * não a arte solta. Cada painel tem chão plano (só topo), cubos soltos, pilha de 3, a heroína no chão e em cima de um
- * cubo, e a grade das células com a linha de apoio. Desenha por conta própria (o `Renderer` só conhece uma altura de
- * frente, `CUBE_FRONT`); para escala de sprites no renderizador real há a cena `?escala=1` (ADR 0022).
+ * Cena dos materiais V2 (`?materiais=1`, só em desenvolvimento; ADR 0023): dois painéis lado a lado com as mesmas peças —
+ * atlas legado e materiais V2 — para conferir cada material migrado no jogo, não na arte solta (a comparação de frente
+ * 16 × 18 já foi decidida: 18). Cada painel tem chão plano (só topo), cubos soltos, pilha de 3, a heroína no chão e em cima de um
+ * cubo, e a grade das células com a linha de apoio. Desenha por conta própria (os dois atlas lado a lado); para escala
+ * de sprites no renderizador real há a cena `?escala=1` (ADR 0022, com `&blocos=v2` para a arte V2).
  */
 const COLS = 6;
 const ROWS = 7;
 const PANELS: Array<{ title: string; mode: 'legacy' | 'v2'; front: number }> = [
-  { title: `Legado · frente ${CUBE_FRONT}`, mode: 'legacy', front: CUBE_FRONT },
-  { title: 'V2 · frente 18', mode: 'v2', front: 18 },
-  { title: 'V2 · frente 16', mode: 'v2', front: 16 },
+  { title: 'Atlas legado', mode: 'legacy', front: CUBE_FRONT },
+  { title: 'Materiais V2', mode: 'v2', front: CUBE_FRONT },
 ];
 /** Chão do painel: linhas de cima em grama, depois terra, areia e pedra (encontros retos: sem transição ainda — Etapa 3). */
 const GROUND: BlockId[] = [Block.GRASS, Block.GRASS, Block.GRASS, Block.DIRT, Block.SAND, Block.SAND, Block.STONE];
@@ -32,9 +31,9 @@ export function showMaterialsScene(canvas: HTMLCanvasElement): () => void {
   let grid = true;
   let raf = 0;
   const parts = new Map<string, { cube: Sprite; ground: HTMLCanvasElement } | null>();
-  const part = (id: BlockId, mode: 'legacy' | 'v2', front: number) => {
-    const k = `${id}:${mode}:${front}`;
-    if (!parts.has(k)) parts.set(k, qaMaterial(id, mode, front));
+  const part = (id: BlockId, mode: 'legacy' | 'v2') => {
+    const k = `${id}:${mode}`;
+    if (!parts.has(k)) parts.set(k, qaMaterial(id, mode));
     return parts.get(k)!;
   };
   const hero = (x: number, y: number, z: number): Actor =>
@@ -86,14 +85,14 @@ export function showMaterialsScene(canvas: HTMLCanvasElement): () => void {
       const S = TILE * zoom;
       // Chão plano: só o topo (contrato de geometria § 6).
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-        const g = part(GROUND[r], p.mode, p.front);
+        const g = part(GROUND[r], p.mode);
         if (g) ctx.drawImage(g.ground, ox + c * S, oy + r * S, S, S);
       }
       // Cubos e personagens em ordem de linha (o de baixo cobre o de cima), pilha de baixo para cima.
       for (let r = 0; r < ROWS; r++) {
         for (const [c, cr, id, n] of CUBES) {
           if (cr !== r) continue;
-          const q = part(id, p.mode, p.front);
+          const q = part(id, p.mode);
           if (!q) continue;
           for (let k = 0; k < n; k++) {
             const s = q.cube;

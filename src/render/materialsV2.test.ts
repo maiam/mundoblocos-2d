@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import manifest from '../assets/materials-v2.json';
+import { CUBE_FRONT, TILE } from '../config';
+import { TEX_RES } from './textures';
 import { blocksV2FromSearch, V2_BLOCKS } from './materialsV2';
 
 describe('Padrão de Materiais V2 (ADR 0023)', () => {
-  it('manifesto gerado bate com a geometria: topo 64, frentes 32/36 no atlas 2×', () => {
-    expect(manifest.cell).toBe(64);
-    expect(manifest.rows.top[1]).toBe(64);
-    expect(manifest.rows.f16[1]).toBe(32);
-    expect(manifest.rows.f18[1]).toBe(36);
-    expect(manifest.rows.o16[1]).toBe(32);
-    expect(manifest.rows.o18[1]).toBe(36);
+  it('manifesto gerado bate com a geometria do motor: topo T×T e frente T×CUBE_FRONT no atlas 2×', () => {
+    expect(manifest.cell).toBe(TILE * TEX_RES);
+    expect(manifest.rows.top[1]).toBe(TILE * TEX_RES);
+    expect(manifest.rows.front[1]).toBe(CUBE_FRONT * TEX_RES);
+    expect(manifest.rows.overlay[1]).toBe(CUBE_FRONT * TEX_RES);
   });
 
   it('todo bloco-piloto aponta para materiais que existem no atlas', () => {

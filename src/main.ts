@@ -199,7 +199,7 @@ void loadArtPack(profile.id)
       });
       return;
     }
-    // Só em desenvolvimento (ADR 0023): `?materiais=1` compara a frente dos cubos (legado 18 · V2 18 · V2 16).
+    // Só em desenvolvimento (ADR 0023): `?materiais=1` põe o atlas legado e os materiais V2 lado a lado.
     if (import.meta.env.DEV && materialsScene) {
       void import('./dev/materialsScene').then((m) => m.showMaterialsScene(canvas));
       return;
