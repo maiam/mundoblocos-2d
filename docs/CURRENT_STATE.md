@@ -1,6 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.68.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.69.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Paredes de materiais — v0.69.0
+- 16 paredes: `WALL_MATERIALS` (8 pedras + Terra, Grama, Arada, Batida, Areia, Pedra Bruta de novo — "Pedra com Musgo" —,
+  Tronco, Tábuas), ids 210 … 225. A definição herda `organic`/`soft` do material (machado/pá/picareta como o bloco).
+- A tira `walls.webp` (16 colunas, as de material achatadas para a altura das de pedra) carrega em segundo plano
+  (`loadWallArt` → `addWallTextures`); os ícones ficam no início. Início ~3056 kB (igual ao da v0.68.0). Protocolo 12.
+- Prancha de materiais sem transparência: `extract-walls.py` recorta pelo contorno escuro de cada bloco.
 
 ## Paredes de pedra — v0.68.0
 - `WALL_0` (210) … 217, forma `wall` (sólida, não é cubo: `standHeight` null, nada empilha), na ordem de `WALL_STONES`;

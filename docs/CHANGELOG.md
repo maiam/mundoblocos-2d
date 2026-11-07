@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.69.0 — 2026-11-07
+- **Paredes de outros materiais** (nova prancha do dono do produto): Terra, Grama, Terra Arada, Terra Batida, Areia,
+  Pedra com Musgo, Tronco e Tábuas — agora são 16 paredes. Mesma regra das de pedra: **3 blocos do material → 1
+  parede**, 3 de altura, muro contínuo (dá para misturar materiais no mesmo muro). A parede de Pedra com Musgo também
+  usa Pedra Bruta (duas receitas: escolha a aparência).
+- Cada parede se desmonta com a ferramenta do material: madeira com o **machado**, terra e areia com a **pá** (ou
+  picareta), pedra com a **picareta**.
+- A imagem das paredes passou a carregar em segundo plano (a bolsa já mostra os ícones desde o início): o jogo abre tão
+  rápido quanto antes.
+- Multiplayer: `PROTOCOL_VERSION` 12 (blocos novos; servidor 0.13.0 junto).
+
 ## 0.68.0 — 2026-11-07
 - **Paredes de pedra** (prancha enviada pelo dono do produto), para separar bloco de parede: o **bloco** continua o
   cubo que se empilha e onde se sobe; a **parede** é uma peça alta (3 de altura) onde não se sobe nem se empilha nada.

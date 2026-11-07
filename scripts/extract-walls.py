@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Paredes de pedra: prancha de 8 pedras (cada uma em 3 alturas) → coluna de 3 de altura de cada uma + ícones.
+"""Paredes: prancha de 8 pedras (cada uma em 3 alturas) + prancha de 8 materiais → coluna alta de cada uma + ícones.
 
   assets-src/stone-walls-sheet.png (4 fileiras × 2 grupos; em cada grupo, cubo baixo, médio e alto) →
   src/assets/walls.png (8 quadros FRAME_W × FRAME_H, base do desenho no pé do quadro, na ordem das pedras do jogo:
   Bruta, Irregular, Tijolo, Chão (lajotas), Lisa, Polida, Rachada, Tijolo Rachado) e src/assets/icon-block-wall-<n>.png.
+  assets-src/material-walls-sheet.png (2 fileiras × 4 colunas sobre fundo escuro, sem transparência: Terra, Grama,
+  Terra Arada, Terra Batida / Areia, Pedra com Musgo, Tronco, Tábuas) → quadros 8…15 da mesma tira e ícones 8…15.
+  O fundo é recortado pelo contorno escuro de cada bloco (`material_parts`).
   Só a coluna mais alta de cada grupo é usada (parede = 3 de altura, decisão do dono do produto). O render tira o
   contorno do lado que encosta em outra parede (parede contínua; render/textures.ts → `wallTextures`).
 Uso: python3 scripts/extract-walls.py && python3 scripts/optimize-assets.py
@@ -49,11 +52,58 @@ for n, x0, y0, x1, y1 in order:
     b = a.copy()
     b[..., 3] = np.where(keep, alpha, 0)
     parts.append(Image.fromarray(b, 'RGBA').crop((x0, y0, x1, y1)))
+
+# Prancha de materiais: caixa de cada bloco (px da prancha, contorno incluído), na ordem de `WALL_MATERIALS` 8…15.
+MATERIAL_BOXES = [(283, 26, 477, 487), (532, 25, 739, 487), (793, 26, 1000, 487), (1053, 26, 1252, 487),
+                  (279, 525, 478, 988), (532, 525, 741, 988), (790, 525, 1004, 988), (1053, 525, 1255, 988)]
+
+
+def first_dark(vals, ref, k=0.7):
+    """Primeiro px bem mais escuro que o fundo logo fora do bloco (o contorno)."""
+    for i, v in enumerate(vals):
+        if v < k * ref:
+            return i
+    return None
+
+
+def material_parts():
+    """Recorta cada bloco da prancha de fundo escuro: de cada borda para dentro até o contorno (linha e coluna)."""
+    src = np.asarray(Image.open(ROOT / 'assets-src' / 'material-walls-sheet.png').convert('RGBA')).copy()
+    lum = src[..., :3].astype(int).sum(2)
+    res = []
+    for x0, y0, x1, y1 in MATERIAL_BOXES:
+        X0, Y0, X1, Y1 = x0 - 8, y0 - 8, x1 + 9, y1 + 9
+        sub = lum[Y0:Y1, X0:X1]
+        h, w = sub.shape
+
+        def scan(lines):
+            def fix(z):  # falhas (tufos de grama, flores) viram a vizinhança; mediana tira picos
+                z = np.array([np.nan if q is None else q for q in z], float)
+                idx = np.arange(len(z))
+                ok = ~np.isnan(z)
+                z = np.interp(idx, idx[ok], z[ok])
+                return np.array([np.median(z[max(0, i - 3):i + 4]) for i in idx]).round().astype(int)
+            return (fix([first_dark(v[:60], v[0]) for v in lines]),
+                    fix([first_dark(v[::-1][:60], v[-1]) for v in lines]))
+        lft, rgt = scan(sub)
+        top, bot = scan(sub.T)
+        xs, ys = np.arange(w)[None, :], np.arange(h)[:, None]
+        keep = (xs >= lft[:, None]) & (xs < w - rgt[:, None]) & (ys >= top[None, :]) & (ys < h - bot[None, :])
+        crop = src[Y0:Y1, X0:X1].copy()
+        crop[..., 3] = np.where(keep, 255, 0)
+        res.append(Image.fromarray(crop, 'RGBA').crop(Image.fromarray(crop, 'RGBA').getbbox()))
+    return res
+
+
+parts += material_parts()
 # Cada parede ocupa a largura inteira do quadro (= 1 célula): vizinhas encostam sem fresta.
-frame_h = max(round(p.height * FRAME_W / p.width) for p in parts)
-strip = Image.new('RGBA', (FRAME_W * 8, frame_h))
+# Todas com a altura das de pedra (parede = 3 de altura): as da prancha de materiais vêm mais esguias e são achatadas.
+stone_h = round(np.median([p.height * FRAME_W / p.width for p in parts[:8]]))
+heights = [round(p.height * FRAME_W / p.width) if i < 8 else stone_h for i, p in enumerate(parts)]
+frame_h = max(heights)
+strip = Image.new('RGBA', (FRAME_W * len(parts), frame_h))
 for i, p in enumerate(parts):
-    q = p.resize((FRAME_W, round(p.height * FRAME_W / p.width)), Image.LANCZOS)
+    q = p.resize((FRAME_W, heights[i]), Image.LANCZOS)
     strip.alpha_composite(q, (i * FRAME_W, frame_h - q.height))
     icon = Image.new('RGBA', (64, 64))
     s = 60 / max(p.size)

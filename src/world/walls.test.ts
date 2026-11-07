@@ -1,31 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { Block, BLOCKS, HOTBAR_BLOCKS, isWall, WALL_STONES, WALLS } from './blocks';
+import { Block, BLOCKS, HOTBAR_BLOCKS, isWall, WALL_MATERIALS, WALLS } from './blocks';
 import { blockDrops, blockStack, RECIPES, toolCanBreak } from './items';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
-describe('Paredes de pedra', () => {
-  it('uma por pedra, no mundo principal (não no Santuário), e a picareta desmonta', () => {
-    expect(WALLS).toHaveLength(8);
-    expect(WALL_STONES).toHaveLength(8);
+describe('Paredes', () => {
+  it('uma por material, no mundo principal (não no Santuário); a ferramenta é a do material', () => {
+    expect(WALLS).toHaveLength(16);
+    expect(WALL_MATERIALS).toHaveLength(16);
     for (const id of WALLS) {
       expect(isWall(id)).toBe(true);
       expect(BLOCKS[id].shape).toBe('wall');
       expect(HOTBAR_BLOCKS).toContain(id);
       expect(WORLD_PROFILES.santuario.blocks).not.toContain(id);
-      expect(toolCanBreak('pickaxe', id)).toBe(true);
-      expect(toolCanBreak('axe', id)).toBe(false);
+      const m = WALL_MATERIALS[WALLS.indexOf(id)];
+      for (const tool of ['pickaxe', 'axe', 'shovel', 'hoe'] as const) expect(toolCanBreak(tool, id)).toBe(toolCanBreak(tool, m));
       expect(blockDrops(id, () => 0)).toEqual([{ item: blockStack(id), count: 1 }]);
     }
     expect(BLOCKS[WALLS[2]].name).toBe('Parede de Tijolo');
+    expect(BLOCKS[WALLS[13]].name).toBe('Parede de Pedra com Musgo');
+    expect(toolCanBreak('axe', WALLS[15])).toBe(true); // tábuas: machado
+    expect(toolCanBreak('pickaxe', WALLS[15])).toBe(false);
+    expect(toolCanBreak('shovel', WALLS[8])).toBe(true); // terra: pá
+    expect(toolCanBreak('pickaxe', WALLS[0])).toBe(true);
+    expect(isWall(WALLS[15] + 1)).toBe(false);
     expect(isWall(Block.STONE)).toBe(false);
   });
 
-  it('receita: 3 blocos da pedra → 1 parede da mesma pedra', () => {
-    WALL_STONES.forEach((stone, i) => {
+  it('receita: 3 blocos do material → 1 parede do mesmo material', () => {
+    WALL_MATERIALS.forEach((material, i) => {
       const r = RECIPES.find((x) => x.id === `wall-${i}`)!;
       expect(r.profession).toBe('builder');
-      expect(r.inputs).toEqual([{ item: blockStack(stone), count: 3 }]);
+      expect(r.inputs).toEqual([{ item: blockStack(material), count: 3 }]);
       expect(r.output).toEqual({ item: blockStack(WALLS[i]), count: 1 });
     });
   });

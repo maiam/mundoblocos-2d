@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, WALL_STONES, WALLS, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, WALL_MATERIALS, WALLS, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import type { MonsterKind } from './dungeon';
 
 /**
@@ -338,10 +338,10 @@ export const RECIPES: Recipe[] = [
     id: 'wooden-fence', name: 'Cerca de Madeira', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 2 }], output: { item: blockStack(Block.FENCE), count: 4 },
   },
-  // Paredes de pedra (dono do produto, 2026-11-07): 3 blocos da pedra → 1 parede da mesma pedra.
-  ...WALL_STONES.map((stone, i): Recipe => ({
+  // Paredes (dono do produto, 2026-11-07): 3 blocos do material → 1 parede do mesmo material.
+  ...WALL_MATERIALS.map((material, i): Recipe => ({
     id: `wall-${i}`, name: blockDef(WALLS[i]).name, profession: 'builder',
-    inputs: [{ item: blockStack(stone), count: 3 }], output: { item: blockStack(WALLS[i]), count: 1 },
+    inputs: [{ item: blockStack(material), count: 3 }], output: { item: blockStack(WALLS[i]), count: 1 },
   })),
   {
     id: 'fence-gate', name: 'Portão de Madeira', profession: 'builder',

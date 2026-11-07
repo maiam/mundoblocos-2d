@@ -143,8 +143,10 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 da galinha some com `--largest`).
 
 **Paredes de pedra** (`assets-src/stone-walls-sheet.png`, 4 fileiras × 2 pedras, cada uma baixa/média/alta,
-transparente): `python3 scripts/extract-walls.py` → `walls.png` (8 colunas altas de 96 px de largura, ordem de
-`WALL_STONES`) + `icon-block-wall-<n>.png` → `optimize-assets.py`.
+transparente) e **paredes de materiais** (`assets-src/material-walls-sheet.png`, 2 × 4 blocos altos sobre fundo escuro,
+sem transparência; caixas em `MATERIAL_BOXES`, recorte pelo contorno): `python3 scripts/extract-walls.py` →
+`walls.png` (16 colunas altas de 96 px de largura, ordem de `WALL_MATERIALS`; as de material achatadas para a altura das
+de pedra) + `icon-block-wall-<n>.png` → `optimize-assets.py`. A tira carrega em segundo plano (fora do orçamento).
 
 **Coraçõezinhos do namoro** (prancha 4×4 transparente, `assets-src/love-hearts-sheet.png`):
 `python3 scripts/extract-love.py` → `love-hearts.png` (16 quadros numa fileira, mesma janela para todos; clareia o rosa

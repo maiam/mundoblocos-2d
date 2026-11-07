@@ -25,8 +25,9 @@
   arte da prancha de pedras — antes eram cubos de `STONE`; minerados dão 1–3 Pedras Brutas); enfeites.
 
 ## Regras
-- **Paredes de pedra** (v0.68.0): `isWall` (forma `wall`): bloqueiam, ninguém sobe, nada empilha em cima; só em chão
-  livre. Diferente do bloco (cubo: empilha até 3 e se sobe nele).
+- **Paredes** (v0.68.0 pedra; v0.69.0 materiais): `isWall` (forma `wall`): bloqueiam, ninguém sobe, nada empilha em
+  cima; só em chão livre. Diferente do bloco (cubo: empilha até 3 e se sobe nele). Cada uma herda do material
+  `organic`/`soft` (qual ferramenta desmonta). Receita `wall-<i>`: 3 blocos de `WALL_MATERIALS[i]`.
 - **Cerca/portão** (v0.59.0): `FENCE` bloqueia; portão abre/fecha como a porta (`toggled`); nada empilha em cima;
   qualquer célula livre (sem batentes). A emenda entre cercas é só do render.
 - `standHeight(x, y)`: 0 chão (ou porta/portão aberto), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.

@@ -55,8 +55,8 @@ export const Block = {
   FENCE_GATE: 49,
   /** Portão aberto: passável. Só existe no mundo (a bolsa coloca o fechado). */
   FENCE_GATE_OPEN: 76,
-  // --- paredes de pedra (por receita): 8 consecutivas, uma por pedra (ordem de `WALL_STONES`) ---
-  /** Primeira parede (Pedra Bruta); as outras seguem `WALL_STONES` (210 … 217). */
+  // --- paredes (por receita): 16 consecutivas, uma por material (ordem de `WALL_MATERIALS`) ---
+  /** Primeira parede (Pedra Bruta); as outras seguem `WALL_MATERIALS` (210 … 225). */
   WALL_0: 210,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
@@ -253,20 +253,25 @@ const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): Block
 });
 
 /**
- * Pedras que viram parede (dono do produto, 2026-11-07: parede = 3 de altura, 3 blocos da pedra), na ordem da prancha
- * de paredes (`scripts/extract-walls.py`) e dos ids `WALL_0 + i`.
+ * Materiais que viram parede (dono do produto, 2026-11-07: parede = 3 de altura, 3 blocos do material), na ordem da tira
+ * de paredes (`scripts/extract-walls.py`) e dos ids `WALL_0 + i`: as 8 pedras e, depois, os 8 materiais da prancha de
+ * paredes de materiais. Pedra Bruta aparece duas vezes: a parede de pedra e a de pedra com musgo (duas receitas).
  */
-export const WALL_STONES: BlockId[] = [
+export const WALL_MATERIALS: BlockId[] = [
   Block.STONE, Block.STONE_COBBLE, Block.STONE_BRICK, Block.STONE_FLOOR,
   Block.STONE_SMOOTH, Block.STONE_POLISHED, Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED,
+  Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.SAND, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS,
 ];
-const WALL_NAMES = ['Pedra Bruta', 'Pedra Irregular', 'Tijolo', 'Lajotas', 'Pedra Lisa', 'Pedra Polida', 'Pedra Rachada', 'Tijolo Rachado'];
-/** Ids das paredes, na ordem de `WALL_STONES`. */
-export const WALLS: BlockId[] = WALL_STONES.map((_, i) => Block.WALL_0 + i);
+const WALL_NAMES = [
+  'Pedra Bruta', 'Pedra Irregular', 'Tijolo', 'Lajotas', 'Pedra Lisa', 'Pedra Polida', 'Pedra Rachada', 'Tijolo Rachado',
+  'Terra', 'Grama', 'Terra Arada', 'Terra Batida', 'Areia', 'Pedra com Musgo', 'Tronco', 'Tábuas',
+];
+/** Ids das paredes, na ordem de `WALL_MATERIALS`. */
+export const WALLS: BlockId[] = WALL_MATERIALS.map((_, i) => Block.WALL_0 + i);
 
-/** Parede de pedra? */
+/** Parede (de qualquer material)? */
 export function isWall(id: BlockId): boolean {
-  return id >= Block.WALL_0 && id < Block.WALL_0 + WALL_STONES.length;
+  return id >= Block.WALL_0 && id < Block.WALL_0 + WALL_MATERIALS.length;
 }
 
 const defs: BlockDef[] = [
@@ -307,7 +312,6 @@ const defs: BlockDef[] = [
   object(Block.FENCE_GATE, 'Portão de Madeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_GATE_OPEN, 'Portão de Madeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
   // Paredes de pedra: altas (3), não se sobe nem se empilha nada nelas; a picareta desmonta.
-  ...WALL_STONES.map((_, i) => object(Block.WALL_0 + i, `Parede de ${WALL_NAMES[i]}`, { shape: 'wall' })),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -372,6 +376,12 @@ const defs: BlockDef[] = [
 ];
 
 /** Tabela indexada por id para acesso O(1). */
+// Paredes herdam do material o que decide a ferramenta (`toolCanBreak`): madeira → machado; terra/areia → pá.
+WALL_MATERIALS.forEach((m, i) => {
+  const { organic, soft } = defs.find((d) => d.id === m)!;
+  defs.push(object(Block.WALL_0 + i, `Parede de ${WALL_NAMES[i]}`, { shape: 'wall', organic, soft }));
+});
+
 export const BLOCKS: readonly BlockDef[] = (() => {
   const table: BlockDef[] = [];
   for (const d of defs) table[d.id] = d;
