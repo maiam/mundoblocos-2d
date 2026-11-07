@@ -4,9 +4,10 @@ import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { LoopbackServer } from './loopback';
-import { parseAppearance, PROTOCOL_VERSION, ROOMS } from './protocol';
+import { parseAppearance, parseState, type PlayerInfo, PROTOCOL_VERSION, ROOMS } from './protocol';
 import { Room } from './room';
 import { NetSession } from './session';
+import { RemotePlayers } from '../game/remotePlayers';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
@@ -113,5 +114,26 @@ describe('Aparência na rede: personagens prontos', () => {
     expect(parseAppearance({ body: 'hood', look: null })).toEqual({ body: 'hood', look: null });
     expect(parseAppearance({ body: 'hero' }).body).toBe('hero');
     expect(parseAppearance({ body: 'dragão' }).body).toBe('heroine');
+  });
+});
+
+describe('Estado na rede: ferramenta e golpe', () => {
+  it('ferramenta conhecida e número de golpes passam; o resto é ignorado', () => {
+    const base = { x: 1, y: 2, facing: 'left', moving: false };
+    expect(parseState({ ...base, tool: 'sword', swing: 3 })).toEqual({ ...base, tool: 'sword', swing: 3 });
+    expect(parseState({ ...base, tool: 'lança', swing: -1 })).toEqual(base);
+  });
+
+  it('o boneco do outro mostra a ferramenta e toca o golpe quando o número muda', () => {
+    const others = new Map<number, PlayerInfo>([[2, { id: 2, name: 'Ana', appearance: { body: 'hood', look: null }, state: { x: 5, y: 5, facing: 'down', moving: false, tool: 'axe' } }]]);
+    const r = new RemotePlayers();
+    r.sync(others);
+    expect(r.actors[0].kind).toBe('hood-axe');
+    others.get(2)!.state!.swing = 1;
+    r.sync(others);
+    expect(r.actors[0].kind).toBe('hood-axe-attack');
+    expect(r.actors[0].frame).toBe(0);
+    r.update(1, new World(7));
+    expect(r.actors[0].kind).toBe('hood-axe'); // o golpe acabou
   });
 });

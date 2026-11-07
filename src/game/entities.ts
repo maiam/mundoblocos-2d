@@ -90,6 +90,15 @@ export const MAX_SHEEP = 16;
 /** Limite por espécie (filhotes contam): a população não explode. */
 export const MAX_PER_SPECIES: Record<AnimalKind, number> = { sheep: MAX_SHEEP, horse: 6, cow: 10, chicken: 12 };
 
+/**
+ * Desenho do personagem pronto: golpe (`<corpo>-<ferramenta>-attack`), andando com a ferramenta na mão
+ * (`<corpo>-<ferramenta>`) ou de mãos vazias. O mesmo para a personagem deste aparelho e para os outros da sala.
+ */
+export function heroActorKind(body: HeroBody, equipped: ToolId | null, attackTool: ToolId | null, attacking: boolean): ActorKind {
+  if (attacking && attackTool && TOOLS[attackTool].swings) return `${body}-${attackTool as SwingTool}-attack`;
+  return equipped ? `${body}-${equipped}` : body;
+}
+
 /** Alvo distante: monstros sem ninguém por perto só passeiam. */
 const NOBODY = { x: 1e9, y: 1e9 };
 
@@ -613,9 +622,7 @@ export class Entities {
     const p = this.player;
     if (p) {
       const b = this.body;
-      const kind: ActorKind = this.character === 'goddess' ? 'goddess'
-        : p.attacking && p.attackTool && TOOLS[p.attackTool].swings ? `${b}-${p.attackTool as SwingTool}-attack`
-        : p.equipped ? `${b}-${p.equipped}` : b;
+      const kind: ActorKind = this.character === 'goddess' ? 'goddess' : heroActorKind(b, p.equipped, p.attackTool, p.attacking);
       out.unshift({
         kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
         frame: p.attacking ? p.attackFrame : undefined,

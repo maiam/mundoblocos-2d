@@ -1,7 +1,9 @@
 import type { PlayerInfo } from '../net/protocol';
 import { cleanLook, type ModularLook, type ModularManifest } from '../render/modular';
 import type { World } from '../world/world';
-import { type Actor, HERO_BODIES, type HeroBody } from './entities';
+import type { ToolId } from '../world/items';
+import { type Actor, HERO_BODIES, type HeroBody, heroActorKind } from './entities';
+import { ATTACK_FRAMES, ATTACK_SECONDS } from './player';
 import type { Facing } from './walker';
 
 interface Remote {
@@ -17,6 +19,11 @@ interface Remote {
   /** Como aparece: personagem pronto ou chibi (peças já conferidas no manifesto deste jogo). */
   body: HeroBody;
   look: ModularLook | null;
+  /** Ferramenta na mão (null = mãos vazias). */
+  tool: ToolId | null;
+  /** Último número de golpes visto; quando muda, toca o golpe aqui (`attackTime`). */
+  swing: number;
+  attackTime: number;
 }
 
 /** Acima disso (células) o outro jogador é teleportado em vez de deslizar (entrou num interior, renasceu…). */
@@ -44,6 +51,7 @@ export class RemotePlayers {
         this.list.set(id, {
           name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
           moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine', look,
+          tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0,
         });
         continue;
       }
@@ -51,6 +59,12 @@ export class RemotePlayers {
       r.ty = p.state.y;
       r.facing = p.state.facing;
       r.moving = p.state.moving;
+      r.tool = p.state.tool ?? null;
+      const swing = p.state.swing ?? 0;
+      if (swing !== r.swing) {
+        r.swing = swing;
+        r.attackTime = ATTACK_SECONDS; // golpe novo: a mesma animação do jogador local
+      }
     }
   }
 
@@ -59,6 +73,7 @@ export class RemotePlayers {
     for (const r of this.list.values()) {
       if (Math.hypot(r.tx - r.x, r.ty - r.y) > SNAP) { r.x = r.tx; r.y = r.ty; } else { r.x += (r.tx - r.x) * k; r.y += (r.ty - r.y) * k; }
       r.walkTime = r.moving ? r.walkTime + dt : 0;
+      r.attackTime = Math.max(0, r.attackTime - dt);
       const h = world.standHeight(Math.floor(r.x), Math.floor(r.y)) ?? 0;
       r.z += (h - r.z) * k;
     }
@@ -69,9 +84,13 @@ export class RemotePlayers {
   }
 
   get actors(): Actor[] {
-    return [...this.list.values()].map((r) => ({
-      kind: r.body, x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving, walkTime: r.walkTime, label: r.name,
-      look: r.look ?? undefined,
-    }));
+    return [...this.list.values()].map((r) => {
+      const attacking = r.attackTime > 0;
+      return {
+        kind: heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
+        walkTime: r.walkTime, label: r.name, look: r.look ?? undefined,
+        frame: attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / ATTACK_SECONDS) * ATTACK_FRAMES)) : undefined,
+      };
+    });
   }
 }

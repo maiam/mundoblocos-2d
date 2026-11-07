@@ -29,6 +29,8 @@ export class Player extends Walker {
   attackTime = 0;
   /** Ferramenta do golpe em andamento (define a folha de animação). */
   attackTool: ToolId | null = null;
+  /** Golpes começados (a sala repassa aos outros, que tocam a animação ao ver o número mudar). */
+  swings = 0;
   private hitDone = true;
   /** Atributos atuais (vida máxima, ataque, defesa — `world/progression.ts`). */
   stats: Stats = playerStats(1);
@@ -64,6 +66,7 @@ export class Player extends Walker {
     if (this.attacking) return false;
     this.attackTool = tool;
     this.attackTime = ATTACK_SECONDS;
+    this.swings++;
     this.hitDone = false;
     return true;
   }
