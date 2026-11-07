@@ -42,6 +42,12 @@
 - **Texturas sempre na direção em que foram desenhadas** (regra do dono do produto, 2026-11-03): chão, cubos e
   construções nunca giram nem espelham por célula — ele planeja a arte contando com essa direção. Para variar, ele
   envia **variações** (ex.: 3 gramas), sorteadas por célula, cada uma na direção desenhada.
+  **Exceção — máscaras de transição** (ADR 0023): máscara é **forma** (só alfa), não textura; o script pode girá-la ou
+  espelhá-la para cobrir as 47 combinações de vizinhos. A textura que aparece através dela nunca gira.
+- **Materiais novos no Padrão V2** (ADR 0023): a arte entrega material plano 128×128 (`top`, `front`, `front_overlay`)
+  em `assets-src/materiais/<material>/` pelo `assets-src/materiais/CONTRATO.md`; o motor monta o cubo. Gerar com
+  `scripts/build-materials.py`; compor o bloco em `render/materialsV2.ts` (`V2_BLOCKS`). Mistura entre materiais só no
+  chão plano e na mesma altura.
 - Estilo: ilustração de fantasia RPG/anime; sombras puxam para índigo, luz de cima-esquerda, contornos
   coloridos, brilhos em estrela.
 - Folhas 4×4 na ordem frente, esquerda, direita, costas (`--rows-map` normaliza; `m` espelha); quadros com a

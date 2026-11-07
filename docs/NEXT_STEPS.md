@@ -179,9 +179,35 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    - **Cerca (v0.59.0)**: pedir à arte o **portão de lado** (fechado e aberto) para cercas verticais — hoje usa o de
      frente — e, se quiserem refinar, peças separadas (poste, travessa horizontal e vertical de 1 célula). Animais
      ainda não "moram" no cercado (não há dono/curral): só ficam presos por colisão.
-2. Transições suaves entre chãos (autotile), água animada, pontes.
+2. ~~Transições suaves entre chãos (autotile)~~ → Fase V, etapa 3. Água animada, pontes.
 3. Alturas: meio bloco/escadas; indicar borda de queda.
 4. Geração em Web Worker só se o custo por chunk voltar a crescer.
+
+### Fase V — Padrão de Materiais V2 (ADR 0023; pacote em `docs/materiais-v2/`)
+Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo intacto até a decisão.
+0. ✅ **Docs** (v0.81.0): ADR 0023, `assets-src/materiais/CONTRATO.md`, exceção das máscaras em CONVENTIONS, pacote
+   original guardado. A cena `?escala=1` citada no pacote é a da ADR 0022 (sprites no renderizador real); a comparação
+   de frentes ficou numa cena própria, `?materiais=1`.
+1. ✅ **Pipeline e geometria** (v0.81.0): `scripts/build-materials.py` → `materials-v2.{webp,json}`;
+   `composeCube(…, front)`; `render/materialsV2.ts` (`V2_BLOCKS`: areia, terra, grama sobre terra com franja);
+   `?blocos=v2` (mundo, frente 18) e `?materiais=1` (só dev, `dev/materialsScene.ts`: legado 18 · V2 18 · V2 16, pilhas, chão,
+   heroína no chão e sobre cubo, grade e linha de apoio).
+2. 🔶 **Arte oficial** (v0.81.0): terra, grama, franja da grama, areia e Pedra Bruta entregues e no pipeline (emendas
+   0–1,24: invisíveis). Pendências para a arte:
+   - **franja da grama com 60 px** (contrato: até 32 da janela de 64) → na frente o verde cobre quase tudo e a terra
+     vira um fio embaixo; decidir se fica assim ou se reduz;
+   - **frentes próprias** (hoje a frente usa o topo: vale pelo contrato, mas pedras/seixos ficam "de cima");
+   - terra e grama chegaram em 1254 px: no jogo cada célula mostra o quadro inteiro (128 → 32 px), então detalhes
+     pequenos somem — conferir a densidade na cena.
+3. **Transições horizontais** só no chão plano e na mesma altura: 8 vizinhos, diagonais só com os 2 cardeais, 47 casos
+   a partir de ~13 formas em `assets-src/materiais/_mascaras/` giradas pelo script; prioridade por material do topo
+   (dado do catálogo, desempate estável); composição no cache do chunk do `ChunkRenderer`, invalidando 3×3 (inclusive
+   chunk vizinho). Testes do pacote (04, § 8). Substitui o item "Transições suaves entre chãos" da Fase 5.
+4. **Decidir frente 16 × 18** na cena (dono do produto + arte). Se 16: `CUBE_FRONT` muda e é preciso revisar câmera
+   (`game.ts`), elevação de entidades (`entities.ts`), `renderer.ts` (pilhas, portas, paredes, seleção), arte
+   celestial (`celestialArt.ts`), portas/paredes/cerca desenhadas para 18 e os testes; a linha `f18` sai do pipeline.
+5. **Migração por lotes** (pedra, tábuas, tronco, caminho, arado; depois celestiais), `?blocos=v2` vira padrão e o
+   atlas legado (ADR 0006) sai quando o último material migrar. Saves não mudam (ids iguais).
 
 ### Fase 6 — Mundo de progressão (visão do dono do produto, `PROJECT_CONTEXT`)
 Cidades e dungeons que acompanham a evolução dos personagens: Cidade 1 para novatos; cidades de nível mais alto mais
@@ -216,6 +242,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 | Limite de pilha (bolsa tem 12 espaços desde v0.57.0; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
+| Frente dos cubos: 16 (padrão V2) ou 18 (atual)? Decidir olhando `?materiais=1` com a arte oficial (mudar para 16 revê também a ADR 0022, item 1) | Fase V |
 
 ## 4. Dependências externas
 - **Backend do Orvalis** (repositório separado, subdomínio de `pensamentos.online`; ADR 0015 — sem maiamapps):

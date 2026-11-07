@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.81.0 — 2026-11-07
+- **Padrão de Materiais V2 — preparação** (nada muda no jogo): o padrão definido com a área de arte entrou no
+  repositório (ADR 0023, contrato de entrega em `assets-src/materiais/`) com o pipeline que monta os blocos a partir de
+  texturas planas. Para comparar a altura da frente dos cubos (16 ou 18), abra o servidor de desenvolvimento com
+  `?materiais=1`; para ver areia,
+  terra, grama e Pedra Bruta no novo formato no mundo, `?blocos=v2`. Já com a **arte oficial** enviada pelo dono do
+  produto (terra, grama, transição da grama, areia e pedra bruta).
+
 ## Sem versão do jogo — 2026-11-07 (documentação e organização)
 - **Docs**: `CURRENT_STATE` reescrito como retrato do estado atual (211 testes, Sala 1 até 10, quatro personagens, sentar, minimapa, fome); o diário técnico por versão foi para `docs/archive/estado-por-versao.md`.
 - **Docs**: novo `domains/multiplayer.md`; índice com os 21 ADRs e mapa de pastas; `NEXT_STEPS` com cabeçalho e panorama atualizados; `ARCHITECTURE` com os scripts que faltavam; `README` da raiz com o personagem modular integrado e os controles novos.

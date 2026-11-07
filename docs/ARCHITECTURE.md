@@ -69,13 +69,15 @@ src/
     session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
     loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
     index.ts                   o que vai no pacote do servidor (npm run build:net → dist-net/orvalis-net.cjs)
-  dev/     só desenvolvimento (`?escala=1`, ADR 0022): cena de escala com o renderizador real; fora do build de produção
+  dev/     só desenvolvimento, fora do build de produção: cena de escala (`?escala=1`, ADR 0022) e dos materiais (`?materiais=1`, ADR 0023)
     scaleLayout.ts             fila de comparação (dados puros, testados)
     scaleScene.ts              cena: grade, âncoras, células bloqueadas, nomes e alturas por cima do quadro real
+    materialsScene.ts          cena ?materiais=1: legado 18 · V2 18 · V2 16 lado a lado (desenha sozinha: o Renderer só tem uma frente)
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
-    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
+    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube(…, frente)
+    materialsV2.ts             Padrão de Materiais V2 em validação: V2_BLOCKS, atlas V2, chave ?blocos=v2 (ADR 0023)
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)

@@ -258,6 +258,14 @@ coluna 1 (variação 1) e colunas extras 15–16 do `blocks-atlas` + `icon-block
 `extract-blocks.py`, `extract-ui.py` e `extract-stones.py`) → `optimize-assets.py`. Ordem total: blocks → ui → stones →
 grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `render/textures.ts`.
 
+**Materiais V2** (ADR 0023, em validação): PNGs 128×128 em `assets-src/materiais/<material>/` (contrato na pasta) →
+`python3 scripts/build-materials.py --preview` → `src/assets/materials-v2.{webp,json}` (já sai em WebP; sem
+`optimize-assets.py`). Ver com `?blocos=v2` (mundo) e `?materiais=1` (cena de comparação, só no `npm run dev`). `?escala=1&blocos=v2` põe a arte V2 na cena de escala
+(ADR 0022, renderizador real). Arte provisória:
+`scripts/make-provisional-materials.py` (tira do atlas antigo; cria `PROVISORIO.txt`). Arte oficial:
+`python3 scripts/import-material.py <material> --top arq.png [--front arq.png] [--overlay arq.png]` (reduz qualquer
+quadrado para 128 como ladrilho; sem `--front` a frente é o topo; apaga o `PROVISORIO.txt`).
+
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
 

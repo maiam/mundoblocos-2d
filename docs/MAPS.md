@@ -139,6 +139,7 @@ flowchart LR
 | Tarefa | Arquivos principais | Docs a atualizar |
 |---|---|---|
 | Novo bloco/material | `world/blocks.ts` (`MATERIALS`), prancha 3/4 + `scripts/extract-blocks.py`, `render/textures.ts` (contorno/barranca) | world, render, CHANGELOG |
+| Material no Padrão V2 (ADR 0023) | `assets-src/materiais/<material>/` + `CONTRATO.md`, `scripts/import-material.py`, `scripts/build-materials.py`, `render/materialsV2.ts` (`V2_BLOCKS`), `render/textures.ts` (`composeCube` com `front`, `applyMaterialsV2`, `qaMaterial`), `render/blockArt.ts` (`loadMaterialsV2`), `dev/materialsScene.ts` (`?materiais=1`), `main.ts` (chaves) | render, ADR 0022, CONVENTIONS |
 | Regra de colocar/quebrar/pisar | `world/world.ts` (`placementLevel`, `breakTarget`, `standHeight`) + testes | world, MAPS §3 |
 | Geração do mapa/biomas | `world/generator.ts` (`cellAt`), `world/biomes.ts` + `npm run bench` | world |
 | Novo item ou ferramenta | `world/items.ts` (`StackId`, drops), `game/inventory.ts` (começo), `game/hotbar.ts`, `render/art/<mundo>.ts` (ícone) | farming |
