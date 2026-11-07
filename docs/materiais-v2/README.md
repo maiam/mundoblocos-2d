@@ -4,8 +4,11 @@ Pacote definido pelo dono do produto com a área de arte (07/11/2026), guardado 
 A decisão do repositório e o que já foi feito estão no [ADR 0023](../adr/0023-padrao-materiais-v2.md); o contrato de
 entrega da arte está em `assets-src/materiais/CONTRATO.md`.
 
+**Diferenças decididas depois** (ADR 0023, 2026-11-07): frente dos cubos **18** px (o pacote fala em 16), logo janela
+útil da frente **128×72**; sem frente própria a frente repete o topo.
+
 Nota: o pacote (05, § 1) cita a cena de escala `?escala=1`. Ela é a da ADR 0022 (sprites no renderizador real, que só
-conhece uma altura de frente); a comparação de frente 16 × 18 ficou numa cena própria, `?materiais=1`
+conhece uma altura de frente); a comparação de frente 16 × 18 foi feita numa cena própria, `?materiais=1`
 (`src/dev/materialsScene.ts`, só em desenvolvimento). O número 0022 citado como "ADR" dentro do pacote não tem relação:
 a decisão do repositório é a ADR 0023.
 

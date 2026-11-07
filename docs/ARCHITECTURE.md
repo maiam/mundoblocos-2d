@@ -72,11 +72,11 @@ src/
   dev/     só desenvolvimento, fora do build de produção: cena de escala (`?escala=1`, ADR 0022) e dos materiais (`?materiais=1`, ADR 0023)
     scaleLayout.ts             fila de comparação (dados puros, testados)
     scaleScene.ts              cena: grade, âncoras, células bloqueadas, nomes e alturas por cima do quadro real
-    materialsScene.ts          cena ?materiais=1: legado 18 · V2 18 · V2 16 lado a lado (desenha sozinha: o Renderer só tem uma frente)
+    materialsScene.ts          cena ?materiais=1: atlas legado × materiais V2 lado a lado (ADR 0023)
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
-    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube(…, frente)
+    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
     materialsV2.ts             Padrão de Materiais V2 em validação: V2_BLOCKS, atlas V2, chave ?blocos=v2 (ADR 0023)
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     damageNumbers.ts           números de dano subindo na tela (apresentação)

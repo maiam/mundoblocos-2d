@@ -44,7 +44,8 @@
   envia **variações** (ex.: 3 gramas), sorteadas por célula, cada uma na direção desenhada.
   **Exceção — máscaras de transição** (ADR 0023): máscara é **forma** (só alfa), não textura; o script pode girá-la ou
   espelhá-la para cobrir as 47 combinações de vizinhos. A textura que aparece através dela nunca gira.
-- **Materiais novos no Padrão V2** (ADR 0023): a arte entrega material plano 128×128 (`top`, `front`, `front_overlay`)
+- **Materiais novos no Padrão V2** (ADR 0023): a arte entrega material plano 128×128 (`top`; `front` e `front_overlay`
+  opcionais — sem `front` a frente repete o topo; frente de 18 px)
   em `assets-src/materiais/<material>/` pelo `assets-src/materiais/CONTRATO.md`; o motor monta o cubo. Gerar com
   `scripts/build-materials.py`; compor o bloco em `render/materialsV2.ts` (`V2_BLOCKS`). Mistura entre materiais só no
   chão plano e na mesma altura.

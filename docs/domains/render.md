@@ -27,9 +27,9 @@ Apenas apresentação; lê `World`, nunca escreve.
 
 ## Padrão de Materiais V2 (em validação, ADR 0023)
 - A arte entrega **material plano** 128×128 (`assets-src/materiais/<material>/{top,front,front_overlay}.png`,
-  contrato na pasta); `scripts/build-materials.py` gera `materials-v2.webp` (linhas top 64, f16 32, f18 36, o16, o18)
-  + `materials-v2.json`. O motor monta o cubo: `composeCube(top, front, contorno, alturaDaFrente)`; ordem interna frente
-  → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
+  contrato na pasta; sem `front` a frente repete o topo; franja ≤ 32 px); `scripts/build-materials.py` gera
+  `materials-v2.webp` (linhas top 64, front 36, overlay 36: frente de 18) + `materials-v2.json`. O motor monta o cubo
+  com `composeCube`; ordem interna frente → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
 - `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco: areia, terra, grama, Pedra Bruta) e o estado do atlas; `textures.applyMaterialsV2` troca os
   blocos-piloto quando `?blocos=v2`; `textures.qaMaterial` serve a cena `?materiais=1` (`dev/materialsScene.ts`, só dev).
 - Transições entre chãos (etapa 3) só no chão plano e na mesma altura; máscaras são formas e podem girar (CONVENTIONS).

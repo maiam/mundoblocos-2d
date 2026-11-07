@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.81.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.81.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.81.0 | `package.json` |
+| Versão do jogo | 0.81.1 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
 | Testes | 217 em 43 arquivos (Vitest), todos passando | `npm test` |
@@ -92,13 +92,14 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Padrão de Materiais V2 (em validação, ADR 0023)
 - **Desligado para o jogador.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato
   na pasta; pacote original em `docs/materiais-v2/`) e o motor monta o cubo (`composeCube` com a altura da frente).
-- Materiais com **arte oficial**: terra, grama (com franja), areia e Pedra Bruta. Frente = o próprio topo (sem frentes
-  próprias ainda); grama = topo de grama + frente de terra + franja. Pipeline: `scripts/import-material.py` →
-  `scripts/build-materials.py` → `materials-v2.webp` (~42 kB, sem perdas) + manifesto.
-- Para ver: `?blocos=v2` troca esses blocos no mundo (frente 18 de hoje, sem as variações da grama legada);
-  `?materiais=1` (só em desenvolvimento) compara lado a lado legado 18 · V2 18 · V2 16.
-- Falta: franja da grama dentro do contrato (60 px contra 32), frentes próprias, transições entre chãos, decisão 16/18
-  e migração dos outros materiais (`NEXT_STEPS`, Fase V).
+- Frente dos cubos **18** (decidido: o pacote propunha 16); janela da frente 128×72; **sem frente própria, a frente
+  repete o topo**; franja até 32 px.
+- Materiais com **arte oficial**: terra, grama (franja reduzida aos 32 px), areia e Pedra Bruta, todos sem frente
+  própria; grama = topo de grama + frente de terra + franja. Pipeline: `scripts/import-material.py` →
+  `scripts/build-materials.py` → `materials-v2.webp` (~36 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
+- Para ver: `?blocos=v2` troca esses blocos no mundo (sem as variações da grama legada); `?materiais=1` (só em
+  desenvolvimento) põe legado e V2 lado a lado; `?escala=1&blocos=v2`, a arte V2 na cena de escala.
+- Falta: transições entre chãos e migração dos outros materiais (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
 - `npx tsc --noEmit` limpo; 217 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
