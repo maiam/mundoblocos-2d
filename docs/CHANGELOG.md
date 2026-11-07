@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.79.2 — 2026-11-07
+- **Sentado no lugar certo**: os pés do Gino ficam na célula da frente do assento e o corpo sobre ele (antes os pés
+  ficavam na célula do banco/cadeira e ele parecia sentado um bloco acima).
+
 ## 0.79.1 — 2026-11-07
 - **Sentar mais natural** (retorno do dono do produto): o Gino anda até o assento, vira de frente e senta abaixando o
   corpo no lugar (antes ele aparecia de uma vez em cima do banco, parecendo subir um bloco). Sentado, fica parado (antes

@@ -19,6 +19,12 @@ export const RESPAWN_INVULN_S = 2;
 export const SIT_SECONDS = 0.5;
 /** Quadro da folha em que ele fica sentado, parado (o último do sentar: sem balanço). */
 export const SEATED_FRAME = 3;
+/**
+ * Onde ficam os pés de quem senta, em relação ao assento (células): na beira de cima da célula da frente. Na vista 3/4
+ * o corpo sentado sobe a partir dos pés, então assim o corpo fica sobre o assento (com os pés na célula do assento, ele
+ * parecia sentado um bloco acima — dono do produto, 07/11).
+ */
+export const SEAT_FEET = 1.05;
 /** Velocidade (células/s) do passo até o assento e de volta. */
 const SEAT_WALK = 3;
 
@@ -184,7 +190,7 @@ export class Player extends Walker {
    */
   sitOn(x: number, y: number): boolean {
     if (this.seat || this.dead || this.attacking) return false;
-    this.seat = { x: x + 0.5, y: y + 0.55, fromX: this.x, fromY: this.y, phase: 'go', t: 0 };
+    this.seat = { x: x + 0.5, y: y + SEAT_FEET, fromX: this.x, fromY: this.y, phase: 'go', t: 0 };
     return true;
   }
 

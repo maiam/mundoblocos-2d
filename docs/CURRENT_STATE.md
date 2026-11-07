@@ -1,6 +1,10 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.79.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.79.2 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Sentado no lugar certo — v0.79.2
+- Quem senta fica com os pés em `assento + SEAT_FEET` (1,05 célula: beira da célula da frente); na vista 3/4 o corpo
+  sentado fica sobre o assento.
 
 ## Sentar mais natural — v0.79.1
 - `Player.seat` com fases `go` (anda até o assento, caminhada) → `down` → `seated` (parado em `SEATED_FRAME` = 3) →

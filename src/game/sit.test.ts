@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block, WALLS, WALL_MATERIALS } from '../world/blocks';
 import { World } from '../world/world';
 import { canSit } from './entities';
-import { Player, SEATED_FRAME } from './player';
+import { Player, SEAT_FEET, SEATED_FRAME } from './player';
 
 /** Lugar livre fora da muralha para construir. */
 function spot(w: World): [number, number] {
@@ -27,7 +27,7 @@ describe('Sentar e levantar', () => {
       p.update(0.05, 0, 0, w);
       if (p.sitting) frames.push(p.sitFrame);
     }
-    expect([p.x, p.y, p.facing]).toEqual([x + 0.5, y + 0.55, 'down']);
+    expect([p.x, p.y, p.facing]).toEqual([x + 0.5, y + SEAT_FEET, 'down']);
     expect(p.seat?.phase).toBe('seated');
     // Senta no lugar (0→3) e fica parado num quadro só (sem balanço).
     expect(frames[0]).toBe(0);
