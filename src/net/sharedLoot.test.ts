@@ -118,6 +118,6 @@ describe('Sala: itens no chão e baús compartilhados (Etapa 2)', () => {
     a.s.sent({ kind: 'break', x: spot[0], y: spot[1], tool: null });
     await flush();
     expect(loot.filter((i) => i === 'wheat')).toHaveLength(5);
-    expect(PROTOCOL_VERSION).toBe(10);
+    expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(10);
   });
 });

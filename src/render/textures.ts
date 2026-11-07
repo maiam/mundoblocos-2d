@@ -1,8 +1,8 @@
 import { CUBE_FRONT, TILE } from '../config';
-import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
+import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS, WALLS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getWallArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
@@ -67,6 +67,8 @@ export interface BlockTextures {
   stackDraw: Map<BlockId, number>;
   /** Peças da cerca (trecho horizontal, vertical, poste grande; `render/fence.ts`), ou null sem a arte. */
   fencePieces: HTMLCanvasElement[] | null;
+  /** Colunas das paredes de pedra por id (o render tira o contorno do lado que encosta em outra parede). */
+  wallSprites: Map<BlockId, Sprite>;
 }
 
 /**
@@ -606,6 +608,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     icons.set(Block.OAK_DOOR, pack.materialIcons[Block.OAK_DOOR] ?? '');
   }
   const fencePieces = fenceTextures(objects, icons);
+  const wallSprites = wallTextures(objects, icons);
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],
@@ -634,7 +637,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces };
+  return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces, wallSprites };
 }
 
 /**
@@ -670,4 +673,30 @@ function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string
   icons.set(Block.FENCE, pack.icon);
   icons.set(Block.FENCE_GATE, pack.gateIcon);
   return pieces;
+}
+
+/** Largura do contorno das colunas de parede na tira (px), tirado do lado que encosta em outra parede. */
+export const WALL_EDGE_PX = 4;
+
+/** Paredes de pedra: uma coluna por pedra, 1 célula de largura, base no pé da célula (sobe ~2 células). */
+function wallTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>): Map<BlockId, Sprite> {
+  const out = new Map<BlockId, Sprite>();
+  const img = getWallArt();
+  const pack = art().walls;
+  if (!img || !pack) return out;
+  const fw = img.width / WALLS.length;
+  const w = T;
+  const h = T * (img.height / fw);
+  const oy = T - h;
+  WALLS.forEach((id, i) => {
+    const c = document.createElement('canvas');
+    c.width = fw;
+    c.height = img.height;
+    c.getContext('2d')!.drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height);
+    const s: Sprite = { canvas: c, ox: 0, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } };
+    out.set(id, s);
+    objects.set(id, s);
+    icons.set(id, pack.icons[i] ?? '');
+  });
+  return out;
 }

@@ -52,6 +52,8 @@ export interface ArtPack {
    * render emenda por vizinhos, portão (fechado, aberto) e os ícones da bolsa.
    */
   fence?: { pieces: string; gate: string; icon: string; gateIcon: string };
+  /** Paredes de pedra (`scripts/extract-walls.py`): tira de 8 colunas altas (ordem de `WALL_STONES`) e os ícones. */
+  walls?: { sprites: string; icons: string[] };
   /** Pedregulhos: tira de quadros iguais (`scripts/extract-rocks.py`), um sorteado por célula. */
   rocks?: string;
   /** Pranchas de crescimento 4 × 2 (estágios em cima, variantes embaixo; `scripts/extract-trees.py`). */

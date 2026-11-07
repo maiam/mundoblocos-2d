@@ -35,6 +35,8 @@ const craftables = new Map<string, HTMLImageElement>();
 let trees: { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null = null;
 /** Tira de pedregulhos. */
 let rocks: HTMLImageElement | null = null;
+/** Paredes de pedra (tira de 8 colunas). */
+let walls: HTMLImageElement | null = null;
 /** Cerca de tábuas: peças emendáveis e portão (fechado, aberto). */
 let fence: { pieces: HTMLImageElement; gate: HTMLImageElement } | null = null;
 /** Cidade: imagens por nome (`town-<nome>`). */
@@ -59,6 +61,7 @@ export async function loadBlockArt(): Promise<void> {
   if (a.chest) chest = await load(a.chest.sprite);
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
   if (a.rocks) rocks = await load(a.rocks);
+  if (a.walls) walls = await load(a.walls.sprites);
   if (a.fence) {
     const [pieces, gate] = await Promise.all([load(a.fence.pieces), load(a.fence.gate)]);
     fence = { pieces, gate };
@@ -124,6 +127,11 @@ export function getChestSprite(): HTMLImageElement | null {
 /** Tira de pedregulhos (null fora do mundo principal). */
 export function getRockArt(): HTMLImageElement | null {
   return rocks;
+}
+
+/** Tira das paredes de pedra (null fora do mundo principal). */
+export function getWallArt(): HTMLImageElement | null {
+  return walls;
 }
 
 /** Peças da cerca e do portão (null fora do mundo principal). */
