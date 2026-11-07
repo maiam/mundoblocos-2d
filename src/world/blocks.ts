@@ -241,6 +241,8 @@ export interface BlockDef {
   soft: boolean;
   /** Bloco de pedra (Pedra Bruta e variações): serve de batente de porta, como a madeira. */
   stone: boolean;
+  /** Assento: dá para sentar (cadeira, banco da cidade — `World.seatAt`). */
+  seat?: boolean;
 }
 
 const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
@@ -302,7 +304,7 @@ const defs: BlockDef[] = [
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
   object(Block.CHEST, 'Baú de Carvalho', { shape: 'rock', organic: 'wood' }),
   object(Block.ROCK_BOULDER, 'Pedregulho', { shape: 'rock', placeable: false }),
-  object(Block.CHAIR, 'Cadeira de Madeira', { shape: 'rock', organic: 'wood' }), // madeira: o machado desmonta
+  object(Block.CHAIR, 'Cadeira de Madeira', { shape: 'rock', organic: 'wood', seat: true }), // madeira: o machado desmonta
   object(Block.CAMPFIRE, 'Fogueira', { shape: 'rock', organic: 'wood', glow: true }), // madeira: o machado desmonta
   object(Block.CAULDRON, 'Caldeirão de Pedra', { shape: 'rock', stone: true, glow: true }),
   object(Block.OVEN, 'Forno de Pedra', { shape: 'rock', stone: true, glow: true }),
@@ -344,7 +346,9 @@ const defs: BlockDef[] = [
     [Block.SHOP_TOOLS, 'Loja de Ferramentas'], [Block.HOUSE, 'Casa'], [Block.HOUSE_TALL, 'Casa'],
     [Block.WATCHTOWER, 'Guarita'], [Block.WELL, 'Poço'], [Block.FOUNTAIN, 'Fonte'],
     [Block.STALL, 'Barraca'], [Block.BENCH, 'Banco'], [Block.BENCH_LONG, 'Banco'],
-  ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false })),
+  ] as const).map(([id, name]) => object(id, name, {
+    shape: 'building', breakable: false, placeable: false, seat: id === Block.BENCH || id === Block.BENCH_LONG,
+  })),
   ...([
     [Block.LAMP, 'Poste de Luz'], [Block.BARREL, 'Barril'], [Block.CRATES, 'Caixotes'],
     [Block.SIGNPOST, 'Placa'], [Block.HEDGE, 'Cerca Viva'],
@@ -376,10 +380,11 @@ const defs: BlockDef[] = [
 ];
 
 /** Tabela indexada por id para acesso O(1). */
-// Paredes herdam do material o que decide a ferramenta (`toolCanBreak`): madeira → machado; terra/areia → pá.
+// Paredes herdam do material o que decide a ferramenta (`toolCanBreak`: madeira → machado; terra/areia → pá) e se
+// servem de batente de porta (madeira e pedra).
 WALL_MATERIALS.forEach((m, i) => {
-  const { organic, soft } = defs.find((d) => d.id === m)!;
-  defs.push(object(Block.WALL_0 + i, `Parede de ${WALL_NAMES[i]}`, { shape: 'wall', organic, soft }));
+  const { organic, soft, stone } = defs.find((d) => d.id === m)!;
+  defs.push(object(Block.WALL_0 + i, `Parede de ${WALL_NAMES[i]}`, { shape: 'wall', organic, soft, stone }));
 });
 
 export const BLOCKS: readonly BlockDef[] = (() => {

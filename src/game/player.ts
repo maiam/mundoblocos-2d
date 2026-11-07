@@ -15,6 +15,20 @@ export const ATTACK_FRAMES = 4;
 /** Invencibilidade depois de levar dano (s) e depois de renascer. */
 export const HURT_INVULN_S = 0.9;
 export const RESPAWN_INVULN_S = 2;
+/** Duração de sentar e de levantar (s): os 4 quadros da 1ª fileira da folha de sentar, para frente e para trás. */
+export const SIT_SECONDS = 0.5;
+/** Quadros por segundo do laço sentado (fileiras 2 e 3 da folha: 8 quadros). */
+export const SEATED_FPS = 3;
+
+/** Sentado: onde (assento) e de onde veio (volta para lá ao levantar). */
+interface Seat {
+  x: number;
+  y: number;
+  fromX: number;
+  fromY: number;
+  phase: 'down' | 'seated' | 'up';
+  t: number;
+}
 
 /**
  * Personagem jogável: anda pela entrada do jogador (teclado/joystick, em
@@ -46,6 +60,8 @@ export class Player extends Walker {
   /** Barra de fome (cheia = satisfeita), `HUNGER` em world/progression. */
   hunger: number = HUNGER.max;
   private starve = 0;
+  /** Sentado num assento (cadeira, banco); null = de pé. */
+  seat: Seat | null = null;
 
   constructor(x: number, y: number) {
     super(x, y, { speed: 4.2, halfW: 0.27, halfD: 0.15, stepHeight: STEP_HEIGHT });
@@ -93,6 +109,12 @@ export class Player extends Walker {
    */
   hurt(damage: number, fromX: number, fromY: number, world: World, blocked?: Blocker): boolean {
     if (this.invuln > 0 || this.dead) return false;
+    if (this.seat) {
+      // Levou dano sentado: levanta na hora (volta para onde estava) e recua dali.
+      this.x = this.seat.fromX;
+      this.y = this.seat.fromY;
+      this.seat = null;
+    }
     this.hp = Math.max(0, this.hp - damage);
     this.invuln = HURT_INVULN_S;
     this.sinceHurt = 0;
@@ -106,6 +128,7 @@ export class Player extends Walker {
 
   /** Renasce em (x, y) com vida cheia (itens ficam com ela). */
   respawn(x: number, y: number): void {
+    this.seat = null;
     this.x = x;
     this.y = y;
     this.z = this.visualZ = 0;
@@ -150,8 +173,59 @@ export class Player extends Walker {
     }
   }
 
+  /**
+   * Senta no assento da célula (x, y): vai para o meio dele, de frente, e toca a animação de sentar. Ao levantar
+   * (andar ou tocar de novo — `standUp`), volta para onde estava.
+   */
+  sitOn(x: number, y: number): boolean {
+    if (this.seat || this.dead || this.attacking) return false;
+    this.seat = { x: x + 0.5, y: y + 0.55, fromX: this.x, fromY: this.y, phase: 'down', t: 0 };
+    this.x = this.seat.x;
+    this.y = this.seat.y;
+    this.facing = 'down';
+    this.moving = false;
+    return true;
+  }
+
+  /** Começa a levantar (se estiver sentado). */
+  standUp(): void {
+    if (this.seat && this.seat.phase !== 'up') this.seat = { ...this.seat, phase: 'up', t: 0 };
+  }
+
+  get sitting(): boolean {
+    return this.seat !== null;
+  }
+
+  /** Quadro da folha de sentar (0–15): 0–3 sentando, 4–11 sentado (laço), 3→0 levantando. */
+  get sitFrame(): number {
+    const s = this.seat;
+    if (!s) return 0;
+    if (s.phase === 'seated') return 4 + (Math.floor(s.t * SEATED_FPS) % 8);
+    const k = Math.min(3, Math.floor((s.t / SIT_SECONDS) * 4));
+    return s.phase === 'down' ? k : 3 - k;
+  }
+
+  /** Sentado: só o tempo passa; mexer o controle levanta; terminado o levantar, volta para onde estava. */
+  private updateSeat(dt: number, ix: number, iy: number): void {
+    const s = this.seat!;
+    s.t += dt;
+    this.moving = false;
+    this.walkTime = 0;
+    if (s.phase === 'down' && s.t >= SIT_SECONDS) { s.phase = 'seated'; s.t = 0; }
+    if (s.phase === 'seated' && Math.hypot(ix, iy) > 0.3) this.standUp();
+    if (this.seat!.phase === 'up' && this.seat!.t >= SIT_SECONDS) {
+      this.x = s.fromX;
+      this.y = s.fromY;
+      this.seat = null;
+    }
+  }
+
   update(dt: number, ix: number, iy: number, world: World, blocked?: Blocker): void {
     this.tickHealth(dt);
+    if (this.seat) {
+      this.updateSeat(dt, ix, iy);
+      return;
+    }
     // Durante o golpe ela continua podendo andar, mas a direção do golpe não muda.
     const facing = this.facing;
     this.move(dt, ix, iy, world, blocked);

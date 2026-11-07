@@ -13,7 +13,7 @@ import type { NetSession } from '../net/session';
 import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
-import { Entities, type HeroBody } from './entities';
+import { canSit, Entities, type HeroBody } from './entities';
 import type { InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import type { RecipeDestination } from './skills';
@@ -169,6 +169,7 @@ export class Game {
       onOpenChest: (x, y) => this.openChest(x, y),
       notify: (text) => this.hud.toast(text),
       onAction: (a) => options.net?.sent(a),
+      canSit: () => profile.character === 'heroine' && !this.entities.look && canSit(this.entities.body),
       onFeed: options.net ? (animal, item) => {
         const id = this.mirror?.idOf(animal);
         if (id) options.net!.feed(id, item);
@@ -827,6 +828,7 @@ export class Game {
     const tool = p.attacking ? p.attackTool : p.equipped;
     if (tool) s.tool = tool;
     if (p.swings) s.swing = p.swings;
+    if (p.seat) s.sit = p.sitFrame;
     const key = JSON.stringify(s);
     if (key === this.lastState) return;
     this.lastState = key;

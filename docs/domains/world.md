@@ -48,7 +48,8 @@
   quebra lê antes para soltar os itens). Tenda: derrubar a atual zera `World.tent`.
 - **Tenda 2×2** (`tentCells`, `tentAnchor`, `isFootprintFree`, `footprint`/`footprintAnchors` para quem coloca): canto `TENT` + 3 `TENT_PART`; `breakTargetId` de uma
   parte = `TENT`; `breakBlock` remove as 4.
-- Porta só vai entre batentes: células da esquerda e da direita com cubo de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`) no nível 0 (`hasDoorFrame`; pode misturar).
+- Porta só vai entre batentes: células da esquerda e da direita com **bloco ou parede** de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`) no nível 0 (`hasDoorFrame`; pode misturar; paredes desde a v0.79.0 — as de terra/grama/areia não servem).
+- **Assentos** (v0.79.0): `BlockDef.seat` (cadeira, bancos da cidade); `World.seatAt(x, y, px, py)` dá a célula onde se senta (no banco, a mais perto de quem senta).
 - Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`
   só fecha se a célula estiver livre de entidades (`canToggleDoorAt`).
 - Plantar: só em chão de Terra Arada. Arar (`till`): chão de Terra/Terra com Grama livre → Terra Arada.

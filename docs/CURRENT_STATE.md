@@ -1,6 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.78.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.79.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Sentar e levantar; porta entre paredes — v0.79.0
+- `BlockDef.seat` + `World.seatAt`; `Player.seat` (fases down/seated/up, `sitFrame`), `sitOn`/`standUp`; `canSit`
+  (`SIT_BODIES` = Gino); `ActionController.sitOrStand` antes de portas/construções; `SheetSpec.sequence` para a folha
+  `gino-sit` (só de frente). `PlayerState.sit` → `RemotePlayers`. Paredes herdam `stone` e servem de batente
+  (`isDoorJamb` aceita forma `wall`). Protocolo 18.
 
 ## Piso da cidade em Tijolo de Pedra — v0.78.0
 - `buildTown`: um piso só (`FLOOR` = `STONE_BRICK`) para ruas, praças, pátio, calçadas, vão do portão e base da muralha.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.79.0 — 2026-11-07
+- **Sentar e levantar** (por enquanto com o Gino): toque numa cadeira ou num banco da cidade para sentar; ande ou
+  toque de novo para levantar. Na sala, os outros veem você sentado.
+- **Porta entre paredes**: a porta de madeira agora também vai entre paredes de madeira ou de pedra (e misturando com
+  blocos), não só entre blocos.
+- Multiplayer: `PROTOCOL_VERSION` 18 (servidor 0.20.0 junto).
+
 ## 0.78.0 — 2026-11-07
 - **Cidade com piso de Tijolo de Pedra**: ruas, praças, pátio do castelo e calçadas das casas passam a ter o mesmo piso
   (antes eram quatro pedras diferentes). Os gramados continuam verdes.

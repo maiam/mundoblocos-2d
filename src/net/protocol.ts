@@ -7,7 +7,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 17;
+export const PROTOCOL_VERSION = 18;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -43,6 +43,8 @@ export interface PlayerState {
   tool?: ToolId;
   /** Golpes começados até agora: quando muda, quem vê toca a animação do golpe com `tool`. */
   swing?: number;
+  /** Sentado: quadro da folha de sentar (0–15); ausente = de pé. */
+  sit?: number;
 }
 
 /**
@@ -191,6 +193,7 @@ export function parseState(v: unknown): PlayerState | null {
   const out: PlayerState = { x: s.x, y: s.y, facing: s.facing as Facing, moving: s.moving };
   if (typeof s.tool === 'string' && s.tool in TOOLS) out.tool = s.tool as ToolId;
   if (Number.isInteger(s.swing) && (s.swing as number) >= 0 && (s.swing as number) < 2 ** 31) out.swing = s.swing as number;
+  if (Number.isInteger(s.sit) && (s.sit as number) >= 0 && (s.sit as number) < 16) out.sit = s.sit as number;
   return out;
 }
 

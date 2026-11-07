@@ -6,6 +6,10 @@
   do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
   (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
   um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
+- **Sentar e levantar** (v0.79.0, só o Gino por enquanto — `SIT_BODIES`/`canSit`): tocar numa cadeira ou num banco da
+  cidade ao alcance senta (`Player.sitOn`: vai para o meio do assento, de frente; folha `gino-sit` em sequência: 0–3
+  sentando, 4–11 laço sentado, 3→0 levantando). Mexer o controle ou tocar de novo levanta (`standUp`) e volta para onde
+  estava; levar dano levanta na hora. Na sala, os outros veem (`PlayerState.sit` = quadro; protocolo 18).
 - **Gino** (v0.77.0): quinto personagem pronto (caminhada, caminhada com as 5 ferramentas, 5 golpes). A lista de
   personagens prontos é uma só: `APPEARANCE_BODIES` (`net/protocol.ts`) = `HERO_BODIES`; nomes em `HERO_NAMES`.
 - **Na sala** (v0.72.0): os outros veem a ferramenta na mão e o golpe (`PlayerState.tool`/`swing` → `RemotePlayers`, o

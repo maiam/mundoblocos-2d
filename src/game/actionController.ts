@@ -71,6 +71,8 @@ export interface ActionContext {
    * Sem isto (jogo sozinho), o animal come aqui.
    */
   onFeed?(animal: Breeder, item: ItemId): void;
+  /** O personagem escolhido senta? (só os que têm folha de sentar — `canSit` em entities). */
+  canSit?(): boolean;
 }
 
 /** Alvos para o render (destaque do mouse, anel na entidade, foco do botão de ação, quebra em andamento). */
@@ -392,9 +394,29 @@ export class ActionController {
     else this.player.facing = dy < 0 ? 'up' : 'down';
   }
 
+  /**
+   * Sentado: qualquer toque levanta. De pé: tocar numa cadeira ou num banco da cidade ao alcance senta (quem tem folha
+   * de sentar). true = o toque acabou aqui.
+   */
+  private sitOrStand(x: number, y: number): boolean {
+    const p = this.player;
+    if (p.seat) {
+      p.standUp();
+      return true;
+    }
+    if (!this.ctx.canSit?.()) return false;
+    const seat = this.world.seatAt(x, y, p.x, p.y);
+    if (!seat || !this.inReach(seat[0], seat[1]) || this.entities.occupiesOther(seat[0], seat[1])) return false;
+    return p.sitOn(seat[0], seat[1]);
+  }
+
   /** Clique curto do mouse. */
   private place(sx: number, sy: number): void {
     const slot = this.slot;
+    if (this.player.seat) {
+      this.player.standUp();
+      return;
+    }
     // Clique num morador ao alcance: conversa.
     const [wx, wy] = this.camera.screenToWorld(sx, sy);
     const talker = this.entities.villagerAt(wx / TILE, wy / TILE);
@@ -403,6 +425,7 @@ export class ActionController {
       return;
     }
     const picked = this.renderer.pick(this.camera, sx, sy);
+    if (picked.hasObject && this.sitOrStand(picked.x, picked.y)) return;
     if (picked.hasObject && this.useDoorAt(picked.x, picked.y)) return;
     if (this.strikerInHand) {
       if (!this.player.attacking) this.faceToward(sx, sy);
@@ -456,6 +479,10 @@ export class ActionController {
     this.action = null;
     if (!a || a.held > TAP_MAX_S) return;
     const slot = this.slot;
+    if (this.player.seat) {
+      this.player.standUp();
+      return;
+    }
     // Morador à frente: conversa (antes de golpear/usar).
     const talker = this.entities.villagerInFront();
     if (talker) {
@@ -463,6 +490,7 @@ export class ActionController {
       return;
     }
     const [fx, fy] = this.frontCell();
+    if (this.sitOrStand(fx, fy)) return;
     if (this.useDoorAt(fx, fy)) return;
     if (this.strikerInHand) {
       this.attack();
