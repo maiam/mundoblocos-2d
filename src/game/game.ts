@@ -828,7 +828,7 @@ export class Game {
     const tool = p.attacking ? p.attackTool : p.equipped;
     if (tool) s.tool = tool;
     if (p.swings) s.swing = p.swings;
-    if (p.seat) s.sit = p.sitFrame;
+    if (p.sitting) s.sit = p.sitFrame;
     const key = JSON.stringify(s);
     if (key === this.lastState) return;
     this.lastState = key;

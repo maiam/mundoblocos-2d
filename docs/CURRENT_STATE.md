@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.79.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.79.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Sentar mais natural — v0.79.1
+- `Player.seat` com fases `go` (anda até o assento, caminhada) → `down` → `seated` (parado em `SEATED_FRAME` = 3) →
+  `up` → `back` (anda de volta). `Player.sitting` = só nas fases da pose (o que vai na rede e escolhe a folha `gino-sit`).
+  As fileiras 2–4 da folha (balanço e de pé) não são usadas.
 
 ## Sentar e levantar; porta entre paredes — v0.79.0
 - `BlockDef.seat` + `World.seatAt`; `Player.seat` (fases down/seated/up, `sitFrame`), `sitOn`/`standUp`; `canSit`

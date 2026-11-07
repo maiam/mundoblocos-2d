@@ -685,7 +685,7 @@ export class Entities {
     const p = this.player;
     if (p) {
       const b = this.body;
-      const sitting = p.seat && canSit(b);
+      const sitting = p.sitting && canSit(b);
       const kind: ActorKind = this.character === 'goddess' ? 'goddess'
         : sitting ? `${b as SitBody}-sit` : heroActorKind(b, p.equipped, p.attackTool, p.attacking);
       out.unshift({
