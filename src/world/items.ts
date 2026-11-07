@@ -25,6 +25,12 @@ export const Item = {
   /** Pratos do Cozinheiro (feitos no caldeirão; quanto enchem a fome: `FOOD` em progression). */
   BREAD: 'bread',
   PASTA_TOMATO: 'pasta_tomato',
+  /** Produtos dos animais (soltos ao serem alimentados: `ANIMAL_PRODUCE`). */
+  MILK: 'milk',
+  EGG: 'egg',
+  /** Pratos com os produtos dos animais. */
+  CHEESE: 'cheese',
+  APPLE_PIE: 'apple_pie',
 } as const;
 
 export type ItemId = (typeof Item)[keyof typeof Item];
@@ -59,7 +65,17 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   silk_cloth: { id: Item.SILK_CLOTH, name: 'Pano de Seda' },
   bread: { id: Item.BREAD, name: 'Pão' },
   pasta_tomato: { id: Item.PASTA_TOMATO, name: 'Macarrão ao Molho' },
+  milk: { id: Item.MILK, name: 'Leite' },
+  egg: { id: Item.EGG, name: 'Ovo' },
+  cheese: { id: Item.CHEESE, name: 'Queijo' },
+  apple_pie: { id: Item.APPLE_PIE, name: 'Torta de Maçã' },
 };
+
+/**
+ * O que cada animal solta ao ser alimentado (dono do produto, 2026-11-07): vaca = leite, galinha = ovo. Os outros não
+ * soltam nada (por enquanto).
+ */
+export const ANIMAL_PRODUCE: Readonly<Partial<Record<AnimalKind, ItemId>>> = { cow: Item.MILK, chicken: Item.EGG };
 
 /** Hortaliças que aparecem ao arrancar capim (fonte delas no mundo; o resto vem da colheita). */
 export const VEGETABLES: ItemId[] = [Item.POTATO, Item.TOMATO, Item.CARROT];
@@ -379,6 +395,16 @@ export const RECIPES: Recipe[] = [
   {
     id: 'pasta-tomato', name: 'Macarrão ao Molho', profession: 'cook', station: Block.CAULDRON,
     inputs: [{ item: Item.WHEAT, count: 4 }, { item: Item.TOMATO, count: 2 }], output: { item: Item.PASTA_TOMATO, count: 1 },
+  },
+  // Com os produtos dos animais (dono do produto, 2026-11-07): queijo no Caldeirão; a torta assa no Forno de Pedra.
+  {
+    id: 'cheese', name: 'Queijo', profession: 'cook', station: Block.CAULDRON,
+    inputs: [{ item: Item.MILK, count: 1 }], output: { item: Item.CHEESE, count: 1 },
+  },
+  {
+    id: 'apple-pie', name: 'Torta de Maçã', profession: 'cook', station: Block.OVEN,
+    inputs: [{ item: Item.WHEAT, count: 2 }, { item: Item.MILK, count: 1 }, { item: Item.APPLE, count: 2 }, { item: Item.EGG, count: 1 }],
+    output: { item: Item.APPLE_PIE, count: 1 },
   },
 ];
 

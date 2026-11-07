@@ -3,7 +3,7 @@ import { TILE } from '../config';
 import type { Renderer } from '../render/renderer';
 import { Block, blockDef, type BlockId, isCrop } from '../world/blocks';
 import { foodValue } from '../world/progression';
-import { blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId, type ItemId } from '../world/items';
+import { ANIMAL_PRODUCE, blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId, type ItemId } from '../world/items';
 import type { World } from '../world/world';
 import type { Camera } from './camera';
 import type { Drops } from './drops';
@@ -277,8 +277,11 @@ export class ActionController {
       if (this.canFeed(animal, item)) {
         if (this.ctx.onFeed) this.ctx.onFeed(animal, item);
         else if (this.inventory.take(item)) {
-          animal.feed();
+          animal.feed(this.player);
           this.ctx.onConsumed();
+          // Vaca solta leite, galinha solta ovo (`ANIMAL_PRODUCE`).
+          const product = ANIMAL_PRODUCE[animal.species];
+          if (product) this.drops.spawn(animal.x, animal.y + 0.3, [{ item: product, count: 1 }]);
         }
       }
       return true;

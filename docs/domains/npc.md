@@ -8,6 +8,9 @@
 - Comportamento: alterna **parada** (1,5–5 s) e **passeio** (1–3,5 s, direção aleatória, ritmo 60–100%,
   desacelera no fim). Se travar por 0,3 s, volta a parar. A mais de 7 células de casa, o próximo passeio
   aponta para casa.
+- **Segue quem deu a comida** (v0.74.0): enquanto está com o coração (e sem par), o animal segue quem o alimentou
+  (`Breeder.leader`, para a 1,6 célula). Quando o coração acaba, a "casa" do passeio passa a ser onde ele ficou — dá
+  para levar os animais até um cercado. Vaca solta leite e galinha solta ovo ao comer (`ANIMAL_PRODUCE`).
 - **Comer e reproduzir**: trigo → apaixonada por 25 s (coração flutuando). Duas apaixonadas a até 6 células
   formam par, andam uma até a outra (desviando de obstáculos simples) e, a 1,5 célula, **namoram** (coraçõezinhos,
   como os outros animais). Ao fim nasce um **filhote** entre elas; os pais ficam 45 s

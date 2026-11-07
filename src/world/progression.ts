@@ -84,6 +84,9 @@ export const FOOD: Readonly<Partial<Record<ItemId, number>>> = {
   tomato: 8,
   bread: 35,
   pasta_tomato: 70,
+  milk: 10,
+  cheese: 25,
+  apple_pie: 60,
 };
 
 /** Quanto o item enche a fome (0 = não é comida). */

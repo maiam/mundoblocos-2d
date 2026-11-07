@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.74.0 — 2026-11-07
+- **Animal alimentado segue você**: enquanto está com o coração na cabeça, o animal vai atrás de quem deu a comida.
+  Quando o coração acaba, ele fica onde você o levou (dá para levar os animais até um cercado).
+- **Leite e ovo**: a vaca solta leite e a galinha solta ovo ao comer. O leite também se bebe.
+- **Receitas novas do Cozinheiro**: Queijo (1 leite, no Caldeirão) e Torta de Maçã (2 trigos, 1 leite, 2 maçãs e
+  1 ovo, no Forno de Pedra).
+- Na sala vale o mesmo para todos (o animal segue quem deu; leite e ovo caem no chão da sala). Multiplayer:
+  `PROTOCOL_VERSION` 16 (servidor 0.18.0 junto).
+
 ## 0.73.0 — 2026-11-07
 - **Animais da sala ficam salvos**: ovelhas, vacas, galinhas e cavalos da Sala 1 (filhotes e crias incluídos) voltam
   onde estavam depois que o servidor reinicia ou é atualizado. Antes, voltavam só os animais do começo. As aranhas
