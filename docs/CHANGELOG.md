@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.73.0 — 2026-11-07
+- **Animais da sala ficam salvos**: ovelhas, vacas, galinhas e cavalos da Sala 1 (filhotes e crias incluídos) voltam
+  onde estavam depois que o servidor reinicia ou é atualizado. Antes, voltavam só os animais do começo. As aranhas
+  continuam renascendo como sempre.
+- Servidor 0.17.0 junto (protocolo continua 15: só o arquivo da sala mudou, `RoomSnapshot` v3).
+
 ## 0.72.0 — 2026-11-07
 - **Na sala, os outros aparecem com a ferramenta na mão e golpeando**: antes o boneco dos outros jogadores andava
   sempre de mãos vazias. Agora mostra a espada, o machado, a enxada, a pá ou a picareta que a pessoa segura e toca a

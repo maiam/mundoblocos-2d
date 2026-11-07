@@ -84,3 +84,30 @@ describe('Sala: bichos compartilhados (Etapa 3)', () => {
     expect(room.handle(ids[0], { t: 'feed', id, item: 'nada' })).toEqual([]);
   });
 });
+
+describe('Sala: animais salvos com o mundo', () => {
+  it('filhotes e crias voltam depois de reiniciar o servidor; monstros renascem pela seed', () => {
+    const { room, ids, at } = setup(['Ana']);
+    const [gx, gy] = room.world.outsideGate();
+    at(ids[0], gx + 0.5, gy + 6.5);
+    const e = room.entities;
+    const lamb = e.animals.find((a) => a.species === 'sheep')!;
+    lamb.baby = true;
+    lamb.age = 50;
+    const before = e.animals.length;
+    const snap = JSON.parse(JSON.stringify(room.snapshot()));
+    expect(snap.animals).toHaveLength(before);
+    // Outro processo do servidor: sala nova, mesma seed.
+    const back = new Room(1, 'Sala 1', 20261106, mulberry32(9));
+    expect(back.restore(snap)).toBe(true);
+    expect(back.entities.animals).toHaveLength(before);
+    const babies = back.entities.animals.filter((a) => a.baby);
+    expect(babies.some((a) => a.species === 'sheep' && a.age === 50)).toBe(true);
+    expect(back.entities.monsters.length).toBeGreaterThan(0);
+    // Lista ruim é ignorada item a item.
+    const bad = { ...snap, animals: [{ k: 'dragão', x: 1, y: 1, hx: 1, hy: 1 }, { k: 'cow', x: 'a' }] };
+    const r3 = new Room(1, 'Sala 1', 20261106);
+    expect(r3.restore(bad)).toBe(true);
+    expect(r3.entities.animals).toHaveLength(0);
+  });
+});

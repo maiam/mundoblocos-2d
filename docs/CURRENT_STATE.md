@@ -1,6 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.72.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.73.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Animais da sala salvos — v0.73.0
+- `RoomSnapshot` v3 ganhou `animals` (`Entities.saveAnimals`: espécie, posição, filhote, idade, casa); `restore`
+  aceita v1–v3 e, com a lista, troca os animais da seed pelos guardados (`Entities.restoreAnimals`, item malformado
+  ignorado, limite por espécie, célula sem chão → andável mais perto). Com gente na sala, `dirty` a cada passo (grava a
+  cada 15 s). Monstros não são salvos. Jogo sozinho continua sem salvar animais.
 
 ## Ferramenta e golpe dos outros na sala — v0.72.0
 - `PlayerState` ganhou `tool` (ferramenta na mão) e `swing` (golpes começados, `Player.swings`); `parseState` só aceita
@@ -22,7 +28,7 @@ _Atualizado em 2026-11-07 — v0.72.0 · jogo: **Orvalis** (`orvalis.pensamentos
 - Aparelho na sala: `Entities.remote` (sem simulação de animais/monstros), `CreatureMirror` (objetos espelhados,
   suavizados; mortes em `dying`, coraçõezinhos em `Entities.extra`); golpe → `net.strike`; comida →
   `ActionController.onFeed` → `net.feed`; mordida → `Entities.biteFrom`.
-- Moradores seguem locais. Bichos não vão para o disco. Protocolo 13; servidor 0.14.0 (`TICK_MS` = 100).
+- Moradores seguem locais. Monstros não vão para o disco (animais desde a v0.73.0). Protocolo 13; servidor 0.14.0 (`TICK_MS` = 100).
 - Conferido no navegador com servidor local e dois jogadores: ovelhas nas mesmas posições, comida, mordida, golpe com
   morte, números e espólio para os dois.
 

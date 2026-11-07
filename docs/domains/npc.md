@@ -78,4 +78,5 @@
 - Estado de execução, não persistido (some ao recarregar; renasce igual pela seed).
 - **Na sala do multiplayer** (ADR 0021): os animais e os monstros são da sala (o servidor roda estas mesmas `Entities`,
   com os jogadores como `avatars`); o aparelho fica em `remote` e o `CreatureMirror` espelha o que a sala manda.
-  Dar comida passa pela sala (`ActionController.onFeed` → `feed`/`fed`). Moradores continuam locais.
+  Dar comida passa pela sala (`ActionController.onFeed` → `feed`/`fed`). Moradores continuam locais. Os animais da sala
+  ficam salvos no servidor (`saveAnimals`/`restoreAnimals`, v0.73.0).
