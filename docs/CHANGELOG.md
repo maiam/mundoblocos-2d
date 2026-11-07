@@ -5,6 +5,9 @@
 - **Docs**: novo `domains/multiplayer.md`; índice com os 21 ADRs e mapa de pastas; `NEXT_STEPS` com cabeçalho e panorama atualizados; `ARCHITECTURE` com os scripts que faltavam; `README` da raiz com o personagem modular integrado e os controles novos.
 - **Repositório**: capturas de tela da raiz foram para `docs/assets/`; `scripts/__pycache__` saiu do git e `__pycache__/` entrou no `.gitignore`.
 
+## Sem versão do jogo — 2026-11-07 (ferramenta de desenvolvimento)
+- **Cena de escala** (ADR 0022): `?escala=1` no servidor de desenvolvimento mostra personagens, animais, monstros, baú, bancos, árvores e uma casa 5×5 sobre a grade com o renderizador real, com grade, âncoras, células bloqueadas e alturas. Reproduzível; não entra no build de produção. Teste novo confere a regra "filhote ≈ 0,7× o adulto". Nada muda para o jogador.
+
 ## 0.80.1 — 2026-11-07
 - **Novo ícone oficial do Orvalis**: o selo redondo (castelo, cachoeira, vila e ponte sob o nome dourado) passa a ser o ícone do jogo instalado na tela inicial e o favicon do navegador. Android ganhou um ícone adaptável (`maskable`) próprio e o iPhone um `apple-touch-icon` de fundo escuro. Antes era a Heroína sobre fundo roxo.
 

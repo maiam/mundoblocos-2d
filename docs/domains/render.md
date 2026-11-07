@@ -61,6 +61,16 @@ Apenas apresentação; lê `World`, nunca escreve.
   quadro varre `TOWN_REACH` além da tela para sprites grandes. Brilho noturno: `glowColor` + `glowAt` (posição da luz
   no sprite, ex.: lanterna do poste).
 
+## Cena de escala (ADR 0022, só em desenvolvimento)
+- `?escala=1` abre uma fila de comparação com o **renderizador real** (`src/dev/scaleScene.ts`; os dados da fila em
+  `scaleLayout.ts`, sem DOM e testados): personagens, animais, monstros, baú, bancos, árvores e uma casa 5×5 sobre a grade
+  de 32 px. Marcações por cima (G grade, A âncoras e altura desenhada, B células bloqueadas e caixa de colisão, L nomes).
+- Reproduzível: seed, hora (0,5), relógio de animação e `Math.random` fixos. Carregada por `import()` dentro de
+  `import.meta.env.DEV`: não vai para o build de produção.
+- Regra de escala conferida em teste: filhote ≈ 0,7× o adulto. Cavalo (1,6) < personagem (2,2): reavaliar antes de montaria.
+- Ao integrar arte nova, compare na cena com o que já existe (ADR 0022; evoluções futuras: catálogo gerado, validação
+  no pipeline, alturas calculadas em vez das razões `297/288` digitadas em `character.ts`).
+
 ## Cerca que se emenda (v0.59.0)
 - `render/fence.ts`: `fenceParts(n, e, s, w)` decide a montagem pelos vizinhos que se emendam (`joinsFence`: cerca ou
   portão). Trecho reto = peça inteira (com o poste do meio); senão, metades cortadas na âncora (centro da célula) +

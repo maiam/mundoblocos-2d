@@ -13,7 +13,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 | Versão do jogo | 0.80.1 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
-| Testes | 211 em 41 arquivos (Vitest), todos passando | `npm test` |
+| Testes | 214 em 42 arquivos (Vitest), todos passando | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,0 MB de 3 MB (desde a v0.74.0) | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
@@ -89,7 +89,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Santuário: chão de nuvem mostra leve repetição diagonal.
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 211 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 214 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
+- **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e
   folhas de personagem/monstro carregam em segundo plano ou sob demanda.
