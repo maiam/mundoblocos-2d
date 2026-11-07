@@ -55,6 +55,9 @@ export const Block = {
   FENCE_GATE: 49,
   /** Portão aberto: passável. Só existe no mundo (a bolsa coloca o fechado). */
   FENCE_GATE_OPEN: 76,
+  // --- paredes de pedra (por receita): 8 consecutivas, uma por pedra (ordem de `WALL_STONES`) ---
+  /** Primeira parede (Pedra Bruta); as outras seguem `WALL_STONES` (210 … 217). */
+  WALL_0: 210,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
   STONE_BRICK: 35,
@@ -211,7 +214,7 @@ export type BlockLayer = 'ground' | 'object';
  * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon) ou
  * construção (sprite de várias células da cidade, com sombra própria; as outras células são `TOWN_PART`).
  */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'rock' | 'building';
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'wall' | 'rock' | 'building';
 
 export interface BlockDef {
   id: BlockId;
@@ -248,6 +251,23 @@ const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): Block
   id, name, layer: 'object', shape: 'cube', solid: true, standable: false, liquid: false,
   breakable: true, placeable: true, glow: false, organic: null, soft: false, stone: false, ...extra,
 });
+
+/**
+ * Pedras que viram parede (dono do produto, 2026-11-07: parede = 3 de altura, 3 blocos da pedra), na ordem da prancha
+ * de paredes (`scripts/extract-walls.py`) e dos ids `WALL_0 + i`.
+ */
+export const WALL_STONES: BlockId[] = [
+  Block.STONE, Block.STONE_COBBLE, Block.STONE_BRICK, Block.STONE_FLOOR,
+  Block.STONE_SMOOTH, Block.STONE_POLISHED, Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED,
+];
+const WALL_NAMES = ['Pedra Bruta', 'Pedra Irregular', 'Tijolo', 'Lajotas', 'Pedra Lisa', 'Pedra Polida', 'Pedra Rachada', 'Tijolo Rachado'];
+/** Ids das paredes, na ordem de `WALL_STONES`. */
+export const WALLS: BlockId[] = WALL_STONES.map((_, i) => Block.WALL_0 + i);
+
+/** Parede de pedra? */
+export function isWall(id: BlockId): boolean {
+  return id >= Block.WALL_0 && id < Block.WALL_0 + WALL_STONES.length;
+}
 
 const defs: BlockDef[] = [
   { ...object(Block.AIR, 'Vazio'), shape: 'flat', solid: false, breakable: false, placeable: false },
@@ -286,6 +306,8 @@ const defs: BlockDef[] = [
   object(Block.FENCE, 'Cerca de Madeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_GATE, 'Portão de Madeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_GATE_OPEN, 'Portão de Madeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
+  // Paredes de pedra: altas (3), não se sobe nem se empilha nada nelas; a picareta desmonta.
+  ...WALL_STONES.map((_, i) => object(Block.WALL_0 + i, `Parede de ${WALL_NAMES[i]}`, { shape: 'wall' })),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -394,6 +416,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
   ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_GATE,
+  ...WALLS,
 ];
 
 /**

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.68.0 — 2026-11-07
+- **Paredes de pedra** (prancha enviada pelo dono do produto), para separar bloco de parede: o **bloco** continua o
+  cubo que se empilha e onde se sobe; a **parede** é uma peça alta (3 de altura) onde não se sobe nem se empilha nada.
+  Uma para cada pedra — Bruta, Irregular, Tijolo, Lajotas, Lisa, Polida, Rachada e Tijolo Rachado —, cada uma com seu
+  ícone. Paredes lado a lado viram um **muro contínuo**. Receita do Construtor: **3 blocos da pedra → 1 parede**.
+  A picareta desmonta (volta a parede para a bolsa).
+- Multiplayer: `PROTOCOL_VERSION` 11 (blocos novos; servidor 0.12.0 junto).
+
 ## 0.67.0 — 2026-11-07
 - **Itens no chão compartilhados na sala** (Etapa 2): ao quebrar um bloco ou colher maçãs na sala, os itens caem para
   todos; quem chega primeiro pega e o item some para os outros.

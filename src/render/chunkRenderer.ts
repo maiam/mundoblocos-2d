@@ -201,6 +201,12 @@ export class ChunkRenderer {
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.55, py + TILE - 2, TILE * (obj.solid ? 0.55 : 0.25), 4, 0, 0, Math.PI * 2);
           ctx.fill();
+        } else if (obj.shape === 'wall') {
+          // Parede alta: sombra larga ao pé.
+          ctx.fillStyle = 'rgba(30, 20, 70, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(px + TILE * 0.6, py + TILE - 1, TILE * 0.62, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
         } else if (obj.shape === 'fence') {
           // Cerca/portão: faixa fina de sombra ao pé.
           ctx.fillStyle = 'rgba(30, 20, 70, 0.18)';

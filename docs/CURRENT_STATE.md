@@ -1,6 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.67.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.68.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Paredes de pedra — v0.68.0
+- `WALL_0` (210) … 217, forma `wall` (sólida, não é cubo: `standHeight` null, nada empilha), na ordem de `WALL_STONES`;
+  `isWall`; receitas `wall-<i>` (3 blocos da pedra). Render: `wallTextures` (tira `walls.webp`, 1 célula de largura,
+  base no pé) e `Renderer.drawWall` (sem o contorno do lado que encosta em outra parede). Protocolo 11.
+- **Orçamento do início: ~3057 kB de 3072 kB** (tira das paredes em 96 px para caber). Próxima arte do início deve ir
+  para segundo plano (ex.: folhas da heroína com ferramenta ao equipar, paredes/cercas sob demanda).
 
 ## Sala compartilhada, Etapa 2: itens no chão e baús — v0.67.0
 - `Room` cria os itens ao aplicar `break` (conteúdo do baú + `breakDrops`) e `pick` (`pickDrops`) e manda `drops`

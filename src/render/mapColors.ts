@@ -75,7 +75,8 @@ function objectColor(world: World, x: number, y: number, id: BlockId): string | 
       return GROUND[top] ?? FALLBACK;
     }
     case 'building': return BUILDING;
-    case 'rock': return ROCK;
+    case 'rock':
+    case 'wall': return ROCK;
     case 'tree': return OBJECT[Block.OAK_TREE]!;
     case 'door':
     case 'fence': return GROUND[Block.OAK_PLANKS]!;

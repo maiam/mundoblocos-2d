@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, WALL_STONES, WALLS, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import type { MonsterKind } from './dungeon';
 
 /**
@@ -246,7 +246,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, ...WALLS]);
 
 /** Árvores adultas (dão 2–3 toras). */
 const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.SAKURA_TREE, Block.APPLE_TREE, Block.APPLE_TREE_BARE]);
@@ -338,6 +338,11 @@ export const RECIPES: Recipe[] = [
     id: 'wooden-fence', name: 'Cerca de Madeira', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 2 }], output: { item: blockStack(Block.FENCE), count: 4 },
   },
+  // Paredes de pedra (dono do produto, 2026-11-07): 3 blocos da pedra → 1 parede da mesma pedra.
+  ...WALL_STONES.map((stone, i): Recipe => ({
+    id: `wall-${i}`, name: blockDef(WALLS[i]).name, profession: 'builder',
+    inputs: [{ item: blockStack(stone), count: 3 }], output: { item: blockStack(WALLS[i]), count: 1 },
+  })),
   {
     id: 'fence-gate', name: 'Portão de Madeira', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.FENCE_GATE), count: 1 },

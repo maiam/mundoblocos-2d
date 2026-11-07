@@ -142,6 +142,10 @@ $P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --r
 `$P assets-src/animals/chicken.png src/assets/chicken.png --alpha --largest --frame-h 96` (o ruído vermelho do fundo
 da galinha some com `--largest`).
 
+**Paredes de pedra** (`assets-src/stone-walls-sheet.png`, 4 fileiras × 2 pedras, cada uma baixa/média/alta,
+transparente): `python3 scripts/extract-walls.py` → `walls.png` (8 colunas altas de 96 px de largura, ordem de
+`WALL_STONES`) + `icon-block-wall-<n>.png` → `optimize-assets.py`.
+
 **Coraçõezinhos do namoro** (prancha 4×4 transparente, `assets-src/love-hearts-sheet.png`):
 `python3 scripts/extract-love.py` → `love-hearts.png` (16 quadros numa fileira, mesma janela para todos; clareia o rosa
 onde o desenho desbota) → `optimize-assets.py`.
