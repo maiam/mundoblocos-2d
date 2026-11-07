@@ -16,8 +16,8 @@ import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
 import { Particles } from './particles';
-import { addDungeonTextures, createBlockTextures, type BlockTextures, type Sprite, WALL_EDGE_PX } from './textures';
-import { loadDungeonArt } from './blockArt';
+import { addDungeonTextures, addWallTextures, createBlockTextures, type BlockTextures, type Sprite, WALL_EDGE_PX } from './textures';
+import { loadDungeonArt, loadWallArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
 import type { Hit } from '../world/progression';
@@ -96,6 +96,7 @@ export class Renderer {
     this.textures = createBlockTextures({ town: !!world.town });
     // Arte da dungeon em segundo plano (não atrasa o início): quando chega, entra nas texturas e o chão redesenha.
     void loadDungeonArt().then((d) => { if (d && addDungeonTextures(this.textures)) this.chunks.invalidateAll(); });
+    void loadWallArt().then(() => addWallTextures(this.textures));
     this.chunks = new ChunkRenderer(world, this.textures);
     loadCropSprites(this.textures.objects);
     for (const [id, url] of Object.entries(art().interiors ?? {})) {

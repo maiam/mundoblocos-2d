@@ -608,7 +608,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     icons.set(Block.OAK_DOOR, pack.materialIcons[Block.OAK_DOOR] ?? '');
   }
   const fencePieces = fenceTextures(objects, icons);
-  const wallSprites = wallTextures(objects, icons);
+  const wallSprites = wallTextures(icons);
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],
@@ -678,12 +678,20 @@ function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string
 /** Largura do contorno das colunas de parede na tira (px), tirado do lado que encosta em outra parede. */
 export const WALL_EDGE_PX = 4;
 
-/** Paredes de pedra: uma coluna por pedra, 1 célula de largura, base no pé da célula (sobe ~2 células). */
-function wallTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>): Map<BlockId, Sprite> {
-  const out = new Map<BlockId, Sprite>();
-  const img = getWallArt();
+/** Paredes: os ícones já no início (bolsa e receitas); os sprites chegam depois (`addWallTextures`). */
+function wallTextures(icons: Map<BlockId, string>): Map<BlockId, Sprite> {
   const pack = art().walls;
-  if (!img || !pack) return out;
+  if (pack) WALLS.forEach((id, i) => icons.set(id, pack.icons[i] ?? ''));
+  return new Map();
+}
+
+/**
+ * Injeta as colunas das paredes (depois que a tira termina de carregar em segundo plano): uma por material, 1 célula
+ * de largura, base no pé da célula (sobe ~2 células). Retorna false se já estavam ou se a tira não chegou.
+ */
+export function addWallTextures(t: BlockTextures): boolean {
+  const img = getWallArt();
+  if (!img || t.wallSprites.size > 0) return false;
   const fw = img.width / WALLS.length;
   const w = T;
   const h = T * (img.height / fw);
@@ -694,9 +702,8 @@ function wallTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>
     c.height = img.height;
     c.getContext('2d')!.drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height);
     const s: Sprite = { canvas: c, ox: 0, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } };
-    out.set(id, s);
-    objects.set(id, s);
-    icons.set(id, pack.icons[i] ?? '');
+    t.wallSprites.set(id, s);
+    t.objects.set(id, s);
   });
-  return out;
+  return true;
 }
