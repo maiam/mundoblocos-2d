@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.75.0 — 2026-11-07
+- **Golpes do Hood**: folhas novas de bater com a espada e o machado, arar com a enxada, minerar com a picareta e cavar
+  com a pá (antes o golpe dele mostrava a caminhada com a ferramenta). Na sala, os outros também veem.
+
 ## 0.74.0 — 2026-11-07
 - **Animal alimentado segue você**: enquanto está com o coração na cabeça, o animal vai atrás de quem deu a comida.
   Quando o coração acaba, ele fica onde você o levou (dá para levar os animais até um cercado).
