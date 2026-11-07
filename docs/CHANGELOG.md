@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.79.1 — 2026-11-07
+- **Sentar mais natural** (retorno do dono do produto): o Gino anda até o assento, vira de frente e senta abaixando o
+  corpo no lugar (antes ele aparecia de uma vez em cima do banco, parecendo subir um bloco). Sentado, fica parado (antes
+  repetia um leve balanço). Para levantar, ergue-se no lugar e anda de volta.
+
 ## 0.79.0 — 2026-11-07
 - **Sentar e levantar** (por enquanto com o Gino): toque numa cadeira ou num banco da cidade para sentar; ande ou
   toque de novo para levantar. Na sala, os outros veem você sentado.

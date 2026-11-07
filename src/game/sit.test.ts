@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block, WALLS, WALL_MATERIALS } from '../world/blocks';
 import { World } from '../world/world';
 import { canSit } from './entities';
-import { Player, SIT_SECONDS } from './player';
+import { Player, SEATED_FRAME } from './player';
 
 /** Lugar livre fora da muralha para construir. */
 function spot(w: World): [number, number] {
@@ -14,23 +14,29 @@ function spot(w: World): [number, number] {
 }
 
 describe('Sentar e levantar', () => {
-  it('cadeira: senta de frente no meio dela, fica parado e, ao mexer o controle, levanta e volta para onde estava', () => {
+  it('cadeira: anda até ela, senta no lugar, fica parado e, ao mexer o controle, levanta e volta andando', () => {
     const w = new World(7);
     const [x, y] = spot(w);
     expect(w.placeBlock(x, y, Block.CHAIR)).toBe(true);
     expect(w.seatAt(x, y, x + 0.5, y + 1.5)).toEqual([x, y]);
     const p = new Player(x + 0.5, y + 1.5);
     expect(p.sitOn(x, y)).toBe(true);
-    expect([p.x, p.facing]).toEqual([x + 0.5, 'down']);
-    expect(p.sitFrame).toBe(0);
-    for (let t = 0; t < SIT_SECONDS + 0.5; t += 0.05) p.update(0.05, 0, 0, w);
+    expect(p.sitting).toBe(false); // primeiro anda até o assento (desenho de caminhada)
+    const frames: number[] = [];
+    for (let t = 0; t < 2; t += 0.05) {
+      p.update(0.05, 0, 0, w);
+      if (p.sitting) frames.push(p.sitFrame);
+    }
+    expect([p.x, p.y, p.facing]).toEqual([x + 0.5, y + 0.55, 'down']);
     expect(p.seat?.phase).toBe('seated');
-    expect(p.sitFrame).toBeGreaterThanOrEqual(4);
-    p.update(0.05, 1, 0, w); // mexeu: levanta (sem andar)
+    // Senta no lugar (0→3) e fica parado num quadro só (sem balanço).
+    expect(frames[0]).toBe(0);
+    expect(new Set(frames.slice(-10))).toEqual(new Set([SEATED_FRAME]));
+    p.update(0.05, 1, 0, w); // mexeu: levanta no lugar
     expect(p.seat?.phase).toBe('up');
-    for (let t = 0; t < SIT_SECONDS + 0.1; t += 0.05) p.update(0.05, 0, 0, w);
+    for (let t = 0; t < 2; t += 0.05) p.update(0.05, 0, 0, w);
     expect(p.seat).toBeNull();
-    expect([p.x, p.y]).toEqual([x + 0.5, y + 1.5]);
+    expect([p.x, p.y]).toEqual([x + 0.5, y + 1.5]); // andou de volta para onde estava
   });
 
   it('banco da cidade: senta na célula do banco mais perto; outros blocos não são assento; só o Gino senta', () => {

@@ -17,16 +17,21 @@ export const HURT_INVULN_S = 0.9;
 export const RESPAWN_INVULN_S = 2;
 /** Duração de sentar e de levantar (s): os 4 quadros da 1ª fileira da folha de sentar, para frente e para trás. */
 export const SIT_SECONDS = 0.5;
-/** Quadros por segundo do laço sentado (fileiras 2 e 3 da folha: 8 quadros). */
-export const SEATED_FPS = 3;
+/** Quadro da folha em que ele fica sentado, parado (o último do sentar: sem balanço). */
+export const SEATED_FRAME = 3;
+/** Velocidade (células/s) do passo até o assento e de volta. */
+const SEAT_WALK = 3;
 
-/** Sentado: onde (assento) e de onde veio (volta para lá ao levantar). */
+/**
+ * Sentado: onde (assento) e de onde veio. Fases: `go` (anda até o assento), `down` (senta no lugar: o corpo desce),
+ * `seated` (parado), `up` (levanta no lugar), `back` (anda de volta para onde estava).
+ */
 interface Seat {
   x: number;
   y: number;
   fromX: number;
   fromY: number;
-  phase: 'down' | 'seated' | 'up';
+  phase: 'go' | 'down' | 'seated' | 'up' | 'back';
   t: number;
 }
 
@@ -179,45 +184,74 @@ export class Player extends Walker {
    */
   sitOn(x: number, y: number): boolean {
     if (this.seat || this.dead || this.attacking) return false;
-    this.seat = { x: x + 0.5, y: y + 0.55, fromX: this.x, fromY: this.y, phase: 'down', t: 0 };
-    this.x = this.seat.x;
-    this.y = this.seat.y;
-    this.facing = 'down';
-    this.moving = false;
+    this.seat = { x: x + 0.5, y: y + 0.55, fromX: this.x, fromY: this.y, phase: 'go', t: 0 };
     return true;
   }
 
-  /** Começa a levantar (se estiver sentado). */
+  /** Começa a levantar (se estiver sentado ou sentando). */
   standUp(): void {
-    if (this.seat && this.seat.phase !== 'up') this.seat = { ...this.seat, phase: 'up', t: 0 };
+    const s = this.seat;
+    if (s && (s.phase === 'seated' || s.phase === 'down')) { s.phase = 'up'; s.t = 0; }
   }
 
+  /** Na pose de sentar (sentando, sentado ou levantando) — andando até o assento ou de volta não conta. */
   get sitting(): boolean {
-    return this.seat !== null;
+    const p = this.seat?.phase;
+    return p === 'down' || p === 'seated' || p === 'up';
   }
 
-  /** Quadro da folha de sentar (0–15): 0–3 sentando, 4–11 sentado (laço), 3→0 levantando. */
+  /** Quadro da folha de sentar: 0–3 sentando, `SEATED_FRAME` parado, 3→0 levantando. */
   get sitFrame(): number {
     const s = this.seat;
     if (!s) return 0;
-    if (s.phase === 'seated') return 4 + (Math.floor(s.t * SEATED_FPS) % 8);
+    if (s.phase === 'seated') return SEATED_FRAME;
     const k = Math.min(3, Math.floor((s.t / SIT_SECONDS) * 4));
-    return s.phase === 'down' ? k : 3 - k;
+    return s.phase === 'up' ? 3 - k : k;
   }
 
-  /** Sentado: só o tempo passa; mexer o controle levanta; terminado o levantar, volta para onde estava. */
+  /** Anda (desenho de caminhada) em linha reta até (tx, ty), atravessando o assento; true = chegou. */
+  private walkTo(dt: number, tx: number, ty: number): boolean {
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    const d = Math.hypot(dx, dy);
+    const step = SEAT_WALK * dt;
+    if (Math.abs(dx) > Math.abs(dy)) this.facing = dx < 0 ? 'left' : 'right';
+    else if (d > 0.01) this.facing = dy < 0 ? 'up' : 'down';
+    if (d <= step) {
+      this.x = tx;
+      this.y = ty;
+      this.moving = false;
+      this.walkTime = 0;
+      return true;
+    }
+    this.x += (dx / d) * step;
+    this.y += (dy / d) * step;
+    this.moving = true;
+    this.walkTime += dt;
+    return false;
+  }
+
+  /**
+   * Sentado: anda até o assento, vira de frente e senta no lugar (o corpo desce); fica parado; mexer o controle (ou
+   * tocar) levanta no lugar e ele anda de volta para onde estava.
+   */
   private updateSeat(dt: number, ix: number, iy: number): void {
     const s = this.seat!;
     s.t += dt;
+    if (s.phase === 'go') {
+      if (this.walkTo(dt, s.x, s.y)) { s.phase = 'down'; s.t = 0; this.facing = 'down'; }
+      return;
+    }
+    if (s.phase === 'back') {
+      if (this.walkTo(dt, s.fromX, s.fromY)) this.seat = null;
+      return;
+    }
     this.moving = false;
     this.walkTime = 0;
+    this.facing = 'down';
     if (s.phase === 'down' && s.t >= SIT_SECONDS) { s.phase = 'seated'; s.t = 0; }
     if (s.phase === 'seated' && Math.hypot(ix, iy) > 0.3) this.standUp();
-    if (this.seat!.phase === 'up' && this.seat!.t >= SIT_SECONDS) {
-      this.x = s.fromX;
-      this.y = s.fromY;
-      this.seat = null;
-    }
+    if (s.phase === 'up' && s.t >= SIT_SECONDS) { s.phase = 'back'; s.t = 0; }
   }
 
   update(dt: number, ix: number, iy: number, world: World, blocked?: Blocker): void {
