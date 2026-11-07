@@ -1,19 +1,32 @@
-"""Gera public/icon-192.png e icon-512.png a partir do quadro parado de frente da heroína.
-Uso: python3 scripts/make-icons.py (requer Pillow)."""
-from PIL import Image, ImageDraw
+"""Gera os ícones do PWA em public/ a partir do ícone oficial do Orvalis (assets-src/icone-orvalis.webp, selo redondo
+com cantos transparentes). Uso: python3 scripts/make-icons.py (requer Pillow).
 
-sheet = Image.open('src/assets/heroine.webp').convert('RGBA')
-fw, fh = sheet.width // 4, sheet.height // 4
-frame = sheet.crop((0, 0, fw, fh))
-for size in (192, 512):
-    icon = Image.new('RGBA', (size, size), (18, 15, 44, 255))
-    d = ImageDraw.Draw(icon)
-    # Disco dourado suave atrás da personagem (área segura para ícone "maskable").
-    r = int(size * 0.40)
-    d.ellipse((size // 2 - r, size // 2 - r, size // 2 + r, size // 2 + r), fill=(90, 75, 176, 255))
-    h = int(size * 0.72)
-    w = int(h * fw / fh)
-    sprite = frame.resize((w, h), Image.LANCZOS)
-    icon.alpha_composite(sprite, ((size - w) // 2, int(size * 0.14)))
-    icon.save(f'public/icon-{size}.png', optimize=True)
-    print(f'public/icon-{size}.png')
+  icon-192.png / icon-512.png       selo inteiro, cantos transparentes (purpose "any"; favicon do navegador)
+  icon-maskable-512.png             selo a 80% sobre fundo escuro: cabe na zona segura dos ícones "maskable" do Android
+  apple-touch-icon.png (180×180)    selo sobre fundo escuro opaco (o iOS pinta a transparência de preto)
+"""
+from PIL import Image
+
+BG = (18, 15, 44, 255)  # #120f2c, a cor do tema em manifest e index.html
+src = Image.open('assets-src/icone-orvalis.webp').convert('RGBA')
+src = src.crop(src.getchannel('A').getbbox())  # tira a margem transparente
+side = max(src.size)
+badge = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+badge.alpha_composite(src, ((side - src.width) // 2, (side - src.height) // 2))
+
+
+def render(size: int, fill: float, background=None) -> Image.Image:
+    icon = Image.new('RGBA', (size, size), background or (0, 0, 0, 0))
+    d = round(size * fill)
+    icon.alpha_composite(badge.resize((d, d), Image.LANCZOS), ((size - d) // 2, (size - d) // 2))
+    return icon
+
+
+for name, icon in {
+    'icon-192.png': render(192, 1.0),
+    'icon-512.png': render(512, 1.0),
+    'icon-maskable-512.png': render(512, 0.80, BG),
+    'apple-touch-icon.png': render(180, 0.92, BG),
+}.items():
+    icon.save(f'public/{name}', optimize=True)
+    print(f'public/{name}')

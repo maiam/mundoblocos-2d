@@ -5,6 +5,9 @@
 - **Docs**: novo `domains/multiplayer.md`; índice com os 21 ADRs e mapa de pastas; `NEXT_STEPS` com cabeçalho e panorama atualizados; `ARCHITECTURE` com os scripts que faltavam; `README` da raiz com o personagem modular integrado e os controles novos.
 - **Repositório**: capturas de tela da raiz foram para `docs/assets/`; `scripts/__pycache__` saiu do git e `__pycache__/` entrou no `.gitignore`.
 
+## 0.80.1 — 2026-11-07
+- **Novo ícone oficial do Orvalis**: o selo redondo (castelo, cachoeira, vila e ponte sob o nome dourado) passa a ser o ícone do jogo instalado na tela inicial e o favicon do navegador. Android ganhou um ícone adaptável (`maskable`) próprio e o iPhone um `apple-touch-icon` de fundo escuro. Antes era a Heroína sobre fundo roxo.
+
 ## 0.80.0 — 2026-11-07
 - **Todos sentam**: Heroína, Herói e Hood ganharam a folha de sentar e levantar (antes só o Gino). Cada um sentado tem o
   mesmo tamanho de quando está em pé; o Gino sentado estava um pouco maior e foi acertado.
