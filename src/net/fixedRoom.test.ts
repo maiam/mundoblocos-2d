@@ -110,8 +110,9 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
 });
 
 describe('Aparência na rede: personagens prontos', () => {
-  it('Heroína, Herói e Hood passam; o resto vira a Heroína', () => {
+  it('Heroína, Herói, Hood e Gino passam; o resto vira a Heroína', () => {
     expect(parseAppearance({ body: 'hood', look: null })).toEqual({ body: 'hood', look: null });
+    expect(parseAppearance({ body: 'gino' }).body).toBe('gino');
     expect(parseAppearance({ body: 'hero' }).body).toBe('hero');
     expect(parseAppearance({ body: 'dragão' }).body).toBe('heroine');
   });

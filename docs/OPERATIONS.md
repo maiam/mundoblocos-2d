@@ -134,6 +134,11 @@ for t in pickaxe shovel; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero
 $P assets-src/hood/hood-sheet.png src/assets/hood.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
 for t in sword axe hoe pickaxe; do $P assets-src/hood/hood-$t-sheet.png src/assets/hood-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
 $P assets-src/hood/hood-shovel-sheet.png src/assets/hood-shovel.png --alpha --largest --frame-h 144 --rows-map 0,3,3m,2
+# Gino (assets-src/gino): caminhadas com fileiras F, D, C, E; golpes já canônicos (picareta e pá passam da célula)
+$P assets-src/gino/gino-sheet.png src/assets/gino.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
+for t in sword axe hoe pickaxe shovel; do $P assets-src/gino/gino-$t-sheet.png src/assets/gino-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+for t in sword axe hoe; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --frame-h 144; done
+for t in pickaxe shovel; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --respace 40 --frame-h 144; done
 # golpes do Hood: já na ordem canônica; a picareta erguida passa da célula
 for t in sword axe hoe shovel; do $P assets-src/hood/hood-$t-attack-sheet.png src/assets/hood-$t-attack.png --alpha --largest --frame-h 144; done
 $P assets-src/hood/hood-pickaxe-attack-sheet.png src/assets/hood-pickaxe-attack.png --alpha --largest --respace 40 --frame-h 144

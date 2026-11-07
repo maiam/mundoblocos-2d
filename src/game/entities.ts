@@ -1,3 +1,4 @@
+import { APPEARANCE_BODIES, type AppearanceBody } from '../net/protocol';
 import type { ModularLook } from '../render/modular';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block } from '../world/blocks';
@@ -21,11 +22,14 @@ import type { CharacterId } from '../world/profiles';
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-/** Personagem pronto (folhas desenhadas inteiras): Heroína, Herói ou Hood. O chibi modular é outro caminho (`look`). */
-export type HeroBody = 'heroine' | 'hero' | 'hood';
-export const HERO_BODIES: readonly HeroBody[] = ['heroine', 'hero', 'hood'];
+/**
+ * Personagem pronto (folhas desenhadas inteiras): Heroína, Herói, Hood ou Gino. O chibi modular é outro caminho
+ * (`look`). Personagem novo: acrescente em `APPEARANCE_BODIES` (rede) e o nome aqui; arte em `render/art` + `SPECS`.
+ */
+export type HeroBody = AppearanceBody;
+export const HERO_BODIES: readonly HeroBody[] = APPEARANCE_BODIES;
 /** Nome de cada personagem pronto na tela de escolha. */
-export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood' };
+export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino' };
 
 export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 

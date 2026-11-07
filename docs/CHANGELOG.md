@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.77.0 — 2026-11-07
+- **Novo personagem: Gino** (folhas do dono do produto), na tela de personagem ao lado de Heroína, Herói e Hood: anda
+  sem ferramenta e segurando cada uma das 5 ferramentas, com os 5 golpes. Na sala, os outros veem o Gino.
+- Correção do registro da 0.76.0: das folhas do Herói, mudaram as 5 caminhadas com ferramenta e os golpes de machado e
+  pá (caminhada base e golpes de espada, enxada e picareta vieram iguais às que já estavam no jogo).
+- Multiplayer: `PROTOCOL_VERSION` 17 (servidor 0.19.0 junto).
+
 ## 0.76.0 — 2026-11-07
 - **Herói redesenhado** (folhas novas do dono do produto): caminhada sem ferramenta, **andar segurando cada uma das
   5 ferramentas** (antes ele andava de mãos vazias com espada, machado, enxada e pá) e os 5 golpes refeitos.
