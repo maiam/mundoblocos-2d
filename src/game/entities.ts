@@ -21,9 +21,11 @@ import type { CharacterId } from '../world/profiles';
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-/** Personagem pronto (folhas desenhadas inteiras): a Heroína ou o Herói. O chibi modular é outro caminho (`look`). */
-export type HeroBody = 'heroine' | 'hero';
-export const HERO_BODIES: readonly HeroBody[] = ['heroine', 'hero'];
+/** Personagem pronto (folhas desenhadas inteiras): Heroína, Herói ou Hood. O chibi modular é outro caminho (`look`). */
+export type HeroBody = 'heroine' | 'hero' | 'hood';
+export const HERO_BODIES: readonly HeroBody[] = ['heroine', 'hero', 'hood'];
+/** Nome de cada personagem pronto na tela de escolha. */
+export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood' };
 
 export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 

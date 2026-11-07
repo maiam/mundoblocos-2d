@@ -4,7 +4,7 @@ import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { LoopbackServer } from './loopback';
-import { PROTOCOL_VERSION, ROOMS } from './protocol';
+import { parseAppearance, PROTOCOL_VERSION, ROOMS } from './protocol';
 import { Room } from './room';
 import { NetSession } from './session';
 
@@ -105,5 +105,13 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
     await flush();
     const caio = [...a.s.others.values()].find((p) => p.name === 'Caio')!;
     expect(caio.appearance).toEqual({ body: 'heroine', look: null });
+  });
+});
+
+describe('Aparência na rede: personagens prontos', () => {
+  it('Heroína, Herói e Hood passam; o resto vira a Heroína', () => {
+    expect(parseAppearance({ body: 'hood', look: null })).toEqual({ body: 'hood', look: null });
+    expect(parseAppearance({ body: 'hero' }).body).toBe('hero');
+    expect(parseAppearance({ body: 'dragão' }).body).toBe('heroine');
   });
 });

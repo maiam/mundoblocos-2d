@@ -3,7 +3,7 @@ import {
   defaultLook, LOOK_SLOTS, lookOptions, pieceLabel, randomLook, type ModularLook, type ModularManifest,
 } from '../render/modular';
 import { sanitizeName } from '../net/protocol';
-import type { HeroBody } from './entities';
+import { HERO_BODIES, HERO_NAMES, type HeroBody } from './entities';
 
 /**
  * Tela de entrada (antes do mundo): título, "Novo jogo" e "Continuar" (só com jogo salvo no aparelho), e a montagem
@@ -52,14 +52,10 @@ export class TitleScreen {
         <div class="title-preview"><canvas aria-label="Prévia do personagem"></canvas></div>
         <div class="title-options">
           <h2>Seu personagem</h2>
-          ${h.manifest ? `<div class="title-kind" role="radiogroup" aria-label="Personagem">
-            <button data-kind="chibi" role="radio">Chibi</button>
-            <button data-kind="heroine" role="radio">Heroína</button>
-            <button data-kind="hero" role="radio">Herói</button>
-          </div>` : `<div class="title-kind" role="radiogroup" aria-label="Personagem">
-            <button data-kind="heroine" role="radio">Heroína</button>
-            <button data-kind="hero" role="radio">Herói</button>
-          </div>`}
+          <div class="title-kind" role="radiogroup" aria-label="Personagem">
+            ${h.manifest ? '<button data-kind="chibi" role="radio">Chibi</button>' : ''}
+            ${HERO_BODIES.map((b) => `<button data-kind="${b}" role="radio">${HERO_NAMES[b]}</button>`).join('')}
+          </div>
           <div class="title-pieces">${h.manifest ? LOOK_SLOTS.map((s) => `
             <div class="title-piece" data-slot="${s}">
               <span class="title-piece-name">${SLOT_NAMES[s]}</span>
@@ -106,7 +102,7 @@ export class TitleScreen {
     }
     if (act === 'start') {
       const name = sanitizeName((this.root.querySelector('.title-name') as HTMLInputElement).value) ?? '';
-      this.h.onStart(this.kind === 'chibi' ? { ...this.look } : null, name, this.kind === 'hero' ? 'hero' : 'heroine');
+      this.h.onStart(this.kind === 'chibi' ? { ...this.look } : null, name, this.body);
     }
     const kind = btn.dataset.kind as Kind | undefined;
     if (kind) {
@@ -126,6 +122,11 @@ export class TitleScreen {
     }
   }
 
+  /** Personagem pronto escolhido (o chibi usa a folha da Heroína por baixo). */
+  private get body(): HeroBody {
+    return this.kind === 'chibi' ? 'heroine' : this.kind;
+  }
+
   private showCreator(on: boolean): void {
     (this.root.querySelector('.title-main') as HTMLElement).hidden = on;
     (this.root.querySelector('.title-creator') as HTMLElement).hidden = !on;
@@ -134,7 +135,7 @@ export class TitleScreen {
   }
 
   private refresh(): void {
-    this.preview.setLook(this.kind === 'chibi' ? this.look : null, this.kind === 'hero' ? 'hero' : 'heroine');
+    this.preview.setLook(this.kind === 'chibi' ? this.look : null, this.body);
     for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-kind]')) {
       b.setAttribute('aria-checked', String(b.dataset.kind === this.kind));
     }

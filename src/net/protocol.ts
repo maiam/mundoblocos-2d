@@ -6,7 +6,7 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 13;
+export const PROTOCOL_VERSION = 14;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -45,7 +45,7 @@ export interface PlayerState {
  * escolhidas. Quem desenha confere as peças no próprio manifesto (`cleanLook`); peça desconhecida vira a padrão.
  */
 export interface Appearance {
-  body: 'heroine' | 'hero';
+  body: 'heroine' | 'hero' | 'hood';
   look: Record<string, string> | null;
 }
 
@@ -254,7 +254,7 @@ const PIECE_RE = /^[a-z0-9-]{1,40}$/;
 export function parseAppearance(v: unknown): Appearance {
   if (!v || typeof v !== 'object') return DEFAULT_APPEARANCE;
   const o = v as Record<string, unknown>;
-  const body = o.body === 'hero' ? 'hero' : 'heroine';
+  const body = o.body === 'hero' || o.body === 'hood' ? o.body : 'heroine';
   let look: Record<string, string> | null = null;
   if (o.look && typeof o.look === 'object') {
     const entries = Object.entries(o.look as Record<string, unknown>);

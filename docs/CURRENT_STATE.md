@@ -1,6 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.70.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.71.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Personagem Hood — v0.71.0
+- `HeroBody` = `heroine` | `hero` | `hood`; `HERO_NAMES` dá o nome dos botões da tela de personagem (gerados de
+  `HERO_BODIES`). Atores `hood`, `hood-<ferramenta>`; `hood-<ferramenta>-attack` = caminhada com a ferramenta.
+- Arte em `assets-src/hood` (6 folhas, ~0,6 MB em WebP, fora do orçamento de início como as do Herói). Pá espelhada
+  para o lado direito (folha veio com os dois lados para a esquerda).
+- `parseAppearance` aceita `hood` → protocolo 14 (servidor antigo trocaria por Heroína).
 
 ## Sala compartilhada, Etapa 3: bichos da sala — v0.70.0 (ADR 0021)
 - `Room` tem `Entities(null)` com os jogadores como `avatars` (`Player` na posição do `state`); `spawnWildlife` (campo +

@@ -1,7 +1,7 @@
 import type { PlayerInfo } from '../net/protocol';
 import { cleanLook, type ModularLook, type ModularManifest } from '../render/modular';
 import type { World } from '../world/world';
-import type { Actor } from './entities';
+import { type Actor, HERO_BODIES, type HeroBody } from './entities';
 import type { Facing } from './walker';
 
 interface Remote {
@@ -15,7 +15,7 @@ interface Remote {
   moving: boolean;
   walkTime: number;
   /** Como aparece: personagem pronto ou chibi (peças já conferidas no manifesto deste jogo). */
-  body: 'heroine' | 'hero';
+  body: HeroBody;
   look: ModularLook | null;
 }
 
@@ -43,7 +43,7 @@ export class RemotePlayers {
         const look = p.appearance?.look && this.manifest ? cleanLook(this.manifest, p.appearance.look) : null;
         this.list.set(id, {
           name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
-          moving: p.state.moving, walkTime: 0, body: p.appearance?.body === 'hero' ? 'hero' : 'heroine', look,
+          moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine', look,
         });
         continue;
       }
