@@ -185,9 +185,14 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
 1. ✅ **Pipeline e geometria** (v0.81.0): `scripts/build-materials.py` → `materials-v2.{webp,json}`;
    `composeCube(…, front)`; `render/materialsV2.ts` (`V2_BLOCKS`: areia, terra, grama sobre terra com franja);
    `?blocos=v2` (mundo, frente 18) e `?escala=1` (`render/scaleScene.ts`: legado 18 · V2 18 · V2 16, pilhas, chão,
-   heroína no chão e sobre cubo, grade e linha de apoio). Texturas **provisórias** (do atlas antigo).
-2. **Arte oficial** de areia, terra e grama (`top`, `front` pintada até a linha 72 enquanto se compara, franja da
-   grama) → rodar o pipeline e conferir na cena (emenda ⚠ do relatório; as provisórias marcam 1,5–2,4).
+   heroína no chão e sobre cubo, grade e linha de apoio).
+2. 🔶 **Arte oficial** (v0.81.0): terra, grama, franja da grama, areia e Pedra Bruta entregues e no pipeline (emendas
+   0–1,24: invisíveis). Pendências para a arte:
+   - **franja da grama com 60 px** (contrato: até 32 da janela de 64) → na frente o verde cobre quase tudo e a terra
+     vira um fio embaixo; decidir se fica assim ou se reduz;
+   - **frentes próprias** (hoje a frente usa o topo: vale pelo contrato, mas pedras/seixos ficam "de cima");
+   - terra e grama chegaram em 1254 px: no jogo cada célula mostra o quadro inteiro (128 → 32 px), então detalhes
+     pequenos somem — conferir a densidade na cena.
 3. **Transições horizontais** só no chão plano e na mesma altura: 8 vizinhos, diagonais só com os 2 cardeais, 47 casos
    a partir de ~13 formas em `assets-src/materiais/_mascaras/` giradas pelo script; prioridade por material do topo
    (dado do catálogo, desempate estável); composição no cache do chunk do `ChunkRenderer`, invalidando 3×3 (inclusive

@@ -25,6 +25,7 @@
   "materials": [
     "areia",
     "grama",
+    "pedra",
     "terra"
   ],
   "overlay": [

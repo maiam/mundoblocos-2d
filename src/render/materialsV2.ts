@@ -5,7 +5,7 @@ import { Block, type BlockId } from '../world/blocks';
  * `scripts/build-materials.py` para um atlas (`materials-v2.webp` + manifesto). O motor monta a geometria: topo 32×32
  * e frente de altura F (16 no padrão; 18 hoje no jogo) — a arte não traz o cubo pronto.
  *
- * Fase de validação: só areia, terra e grama, e só com `?blocos=v2` (jogo) ou na cena `?escala=1`. Sem a chave nada
+ * Fase de validação: só areia, terra, grama e Pedra Bruta, e só com `?blocos=v2` (jogo) ou na cena `?escala=1`. Sem a chave nada
  * muda (atlas legado). Aparência é do render; regras de bloco continuam em `world/blocks.ts`.
  */
 export interface MaterialsV2Manifest {
@@ -27,6 +27,7 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   [Block.SAND]: { top: 'areia', front: 'areia' },
   [Block.DIRT]: { top: 'terra', front: 'terra' },
   [Block.GRASS]: { top: 'grama', front: 'terra', overlay: 'grama' },
+  [Block.STONE]: { top: 'pedra', front: 'pedra' },
 };
 
 /** `?blocos=v2` liga o caminho V2 no jogo (desenvolvimento; padrão desligado). */

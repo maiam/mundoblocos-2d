@@ -17,12 +17,12 @@ const PANELS: Array<{ title: string; mode: 'legacy' | 'v2'; front: number }> = [
   { title: 'V2 · frente 18', mode: 'v2', front: 18 },
   { title: 'V2 · frente 16', mode: 'v2', front: 16 },
 ];
-/** Chão do painel: linhas de cima em grama, depois terra e areia (encontros retos: sem transição ainda — Etapa 3). */
-const GROUND: BlockId[] = [Block.GRASS, Block.GRASS, Block.GRASS, Block.DIRT, Block.SAND, Block.SAND, Block.SAND];
+/** Chão do painel: linhas de cima em grama, depois terra, areia e pedra (encontros retos: sem transição ainda — Etapa 3). */
+const GROUND: BlockId[] = [Block.GRASS, Block.GRASS, Block.GRASS, Block.DIRT, Block.SAND, Block.SAND, Block.STONE];
 /** Cubos: [coluna, linha, bloco, altura da pilha]. */
 const CUBES: Array<[number, number, BlockId, number]> = [
   [1, 2, Block.SAND, 1], [2, 2, Block.DIRT, 1], [3, 2, Block.GRASS, 1],
-  [4, 4, Block.GRASS, 3], [1, 5, Block.DIRT, 2], [2, 5, Block.GRASS, 1],
+  [4, 4, Block.GRASS, 3], [1, 5, Block.DIRT, 2], [2, 5, Block.GRASS, 1], [4, 2, Block.STONE, 1],
 ];
 
 export function showScaleScene(canvas: HTMLCanvasElement): () => void {

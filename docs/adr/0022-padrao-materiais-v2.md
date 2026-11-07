@@ -22,7 +22,7 @@
 4. **Composição por bloco em `render/materialsV2.ts` (`V2_BLOCKS`)**: topo, frente e franja podem vir de materiais
    diferentes (grama = topo de grama + frente de terra + franja de grama). É aparência: regras do bloco seguem em
    `world/blocks.ts`.
-5. **Validação atrás de chave**: `?blocos=v2` troca chão e cubo dos blocos-piloto (areia, terra, grama) no mundo, com a
+5. **Validação atrás de chave**: `?blocos=v2` troca chão e cubo dos blocos-piloto (areia, terra, grama, Pedra Bruta) no mundo, com a
    frente atual (18); `?escala=1` abre a cena de comparação (legado 18 · V2 18 · V2 16). Sem chave o atlas V2 nem baixa.
 6. **Transições horizontais (Etapa 3) só na camada de chão plano**, entre topos da mesma altura; nunca sobre o topo de
    cubos empilhados (onde há degrau vale borda/relevo, não máscara). As máscaras das 47 combinações saem de **~13
@@ -40,7 +40,8 @@
 ## Consequências
 
 - `composeCube` ganhou o parâmetro `front` (padrão `CUBE_FRONT`): nada muda para quem não passa.
-- Texturas provisórias (do atlas antigo, `scripts/make-provisional-materials.py`, marcadas com `PROVISORIO.txt`) só
-  servem para testar o caminho; a arte oficial chega na Etapa 2.
-- O atlas V2 é pequeno (~8 kB) e fora do orçamento de início enquanto a chave estiver desligada.
+- A arte oficial de terra, grama (com franja), areia e Pedra Bruta chegou na mesma versão (`scripts/import-material.py`);
+  `make-provisional-materials.py` fica para testar materiais futuros antes da arte.
+- O atlas V2 sai **sem perdas** e reduzido como ladrilho (o WebP com perdas e a redução do quadro solto criavam fio nas
+  emendas). É pequeno (~42 kB) e fora do orçamento de início enquanto a chave estiver desligada.
 - Pendências: transições (Etapa 3), decisão 16/18 (Etapa 4), migração por lotes e retirada do atlas legado (Etapa 5).

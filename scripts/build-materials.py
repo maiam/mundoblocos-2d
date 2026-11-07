@@ -10,7 +10,7 @@ Lê assets-src/materiais/<material>/{top,front,front_overlay}.png (128×128), va
   src/assets/materials-v2.json   — manifesto {cell, rows: {nome: [y, h]}, materials: [nomes], overlay: [nomes]}
 Relatório: emenda do topo e da frente relativa ao miolo (1,0 = invisível; ⚠ acima de 1,6);
 --preview grava um 3×3 de cada topo e a frente repetida 3× em assets-src/materiais/_preview/ (fora do git).
-Redução: LANCZOS (suavizada; contrato § 7). Já sai em WebP q90 (não precisa de optimize-assets.py).
+Redução: LANCZOS (suavizada; contrato § 7). Já sai em WebP sem perdas (não precisa de optimize-assets.py).
 """
 import argparse
 import json
@@ -35,6 +35,19 @@ def edge_diff(a: np.ndarray, b: np.ndarray) -> float:
     if not m.any():
         return 0.0
     return float(np.abs(a[..., :3].astype(int) - b[..., :3].astype(int))[m].mean())
+
+
+def wrap_resize(img: Image.Image, w: int, h: int, vertical: bool) -> Image.Image:
+    """Reduz como ladrilho: repete a imagem em volta antes de reduzir, para a borda continuar no lado oposto (reduzir
+    o quadro solto 'estica' o pixel da borda e o chão ganha um fio em cada emenda). A frente só repete na horizontal."""
+    iw, ih = img.size
+    ny = 3 if vertical else 1
+    big = Image.new('RGBA', (iw * 3, ih * ny))
+    for i in range(3):
+        for j in range(ny):
+            big.paste(img, (i * iw, j * ih))
+    big = big.resize((w * 3, h * ny), Image.LANCZOS)
+    return big.crop((w, h if vertical else 0, w * 2, h * 2 if vertical else h))
 
 
 def load(path: Path, errors: list[str]) -> Image.Image | None:
@@ -67,8 +80,13 @@ def main() -> int:
         f = np.asarray(front)
         if (f[:64, :, 3] < 255).any():
             errors.append(f'{n}/front.png: a janela útil (0,0,128,64) precisa ser opaca')
-        if over is not None and (np.asarray(over)[72:, :, 3] > 0).any():
-            errors.append(f'{n}/front_overlay.png: tudo abaixo da franja deve ser transparente')
+        fringe = 0
+        if over is not None:
+            oa = np.asarray(over)[..., 3]
+            if (oa[72:] > 0).any():
+                errors.append(f'{n}/front_overlay.png: tudo abaixo da linha 72 deve ser transparente')
+            rows_on = np.where(oa.max(1) > 0)[0]
+            fringe = int(rows_on.max()) + 1 if len(rows_on) else 0
         # Emenda relativa: diferença entre as bordas que se encostam ÷ diferença média entre colunas/linhas vizinhas
         # do miolo (textura pintada sempre varia um pouco de pixel a pixel; 1 = emenda invisível).
         base_x = np.mean([edge_diff(t[:, i:i + 1], t[:, i + 1:i + 2]) for i in range(1, SIZE - 2)]) or 1
@@ -78,7 +96,7 @@ def main() -> int:
         seam_front = edge_diff(f[:64, :1], f[:64, -1:]) / fb
         flag = lambda v: ' ⚠' if v > SEAM_WARN else ''
         print(f'{n:10s} emenda topo {seam_top:4.2f}{flag(seam_top)}  frente {seam_front:4.2f}{flag(seam_front)}'
-              f'  overlay {"sim" if over is not None else "não"}'
+              f'  overlay {f"franja {fringe} px" + (" ⚠ contrato: até 32" if fringe > 32 else "") if over is not None else "não"}'
               f'{"  (PROVISÓRIO)" if (SRC / n / "PROVISORIO.txt").exists() else ""}')
         mats.append((n, top, front, over))
         if args.preview:
@@ -110,9 +128,10 @@ def main() -> int:
                 img = over.crop((0, 0, SIZE, src_h))
             else:
                 continue
-            atlas.paste(img.resize((CELL, h), Image.LANCZOS), (i * CELL, y))
+            atlas.paste(wrap_resize(img, CELL, h, vertical=key == 'top'), (i * CELL, y))
         y += h
-    atlas.save(OUT_IMG, 'WEBP', quality=90, method=6)
+    # Sem perdas: o WebP com perdas mistura a cor da coluna vizinha nas bordas (fio na emenda do chão).
+    atlas.save(OUT_IMG, 'WEBP', lossless=True, method=6)
     manifest = {'cell': CELL, 'rows': rows, 'materials': [m[0] for m in mats],
                 'overlay': [m[0] for m in mats if m[3] is not None]}
     OUT_JSON.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')

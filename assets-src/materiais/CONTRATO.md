@@ -20,10 +20,12 @@ assets-src/materiais/<material>/      nome em pt-BR, minúsculas, sem acento (ar
 ## Gerar
 
 ```bash
+python3 scripts/import-material.py terra --top terra.png            # arte enviada → pasta (reduz para 128 como ladrilho)
+python3 scripts/import-material.py grama --top grama.png --front assets-src/materiais/terra/top.png --overlay franja.png
 python3 scripts/build-materials.py --preview   # valida, gera src/assets/materials-v2.{webp,json}; 3×3 em _preview/
 ```
 
-O relatório mostra a emenda relativa de cada topo/frente (1,0 = invisível; ⚠ acima de 1,6) e recusa arquivos fora do
+O relatório mostra a altura da franja (⚠ acima de 32 px) e a emenda relativa de cada topo/frente (1,0 = invisível; ⚠ acima de 1,6) e recusa arquivos fora do
 contrato (tamanho, transparência no topo ou na janela da frente, franja abaixo da linha 72).
 
 ## Compor blocos

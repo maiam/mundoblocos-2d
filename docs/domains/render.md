@@ -30,7 +30,7 @@ Apenas apresentação; lê `World`, nunca escreve.
   contrato na pasta); `scripts/build-materials.py` gera `materials-v2.webp` (linhas top 64, f16 32, f18 36, o16, o18)
   + `materials-v2.json`. O motor monta o cubo: `composeCube(top, front, contorno, alturaDaFrente)`; ordem interna frente
   → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
-- `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco) e o estado do atlas; `textures.applyMaterialsV2` troca os
+- `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco: areia, terra, grama, Pedra Bruta) e o estado do atlas; `textures.applyMaterialsV2` troca os
   blocos-piloto quando `?blocos=v2`; `textures.qaMaterial` serve a cena `?escala=1` (`render/scaleScene.ts`).
 - Transições entre chãos (etapa 3) só no chão plano e na mesma altura; máscaras são formas e podem girar (CONVENTIONS).
 

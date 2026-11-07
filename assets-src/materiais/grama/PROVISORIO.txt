@@ -1,2 +1,0 @@
-Arte PROVISÓRIA gerada do atlas antigo (scripts/make-provisional-materials.py).
-Substitua pelos PNGs oficiais 128x128 do Padrão V2 e apague este aviso.
