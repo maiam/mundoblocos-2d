@@ -99,6 +99,20 @@ export function heroActorKind(body: HeroBody, equipped: ToolId | null, attackToo
   return equipped ? `${body}-${equipped}` : body;
 }
 
+/** Animal guardado (sala do servidor): espécie, posição, filhote e idade, e a "casa" do passeio. */
+export interface AnimalSave {
+  k: AnimalKind;
+  x: number;
+  y: number;
+  baby: boolean;
+  age: number;
+  hx: number;
+  hy: number;
+}
+
+const ANIMAL_KINDS = new Set<string>(['sheep', 'horse', 'cow', 'chicken']);
+const finiteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 2 ** 30;
+
 /** Alvo distante: monstros sem ninguém por perto só passeiam. */
 const NOBODY = { x: 1e9, y: 1e9 };
 
@@ -350,6 +364,40 @@ export class Entities {
   /** Animais que comem e se reproduzem (para alimentar à frente da personagem). */
   get animals(): readonly Breeder[] {
     return this.breeders();
+  }
+
+  /** Animais como estão (para guardar): os filhotes nascidos e quem já cresceu continuam ao voltar. */
+  saveAnimals(): AnimalSave[] {
+    return this.breeders().map((a) => ({
+      k: a.species, x: Math.round(a.x * 100) / 100, y: Math.round(a.y * 100) / 100, baby: a.baby, age: Math.round(a.age),
+      hx: Math.round(a.homeX * 100) / 100, hy: Math.round(a.homeY * 100) / 100,
+    }));
+  }
+
+  /**
+   * Troca os animais pelos guardados (lista malformada é ignorada item a item; o limite por espécie vale). Quem cai
+   * em célula onde não se anda (o mundo mudou) vai para a andável mais perto. Retorna quantos voltaram.
+   */
+  restoreAnimals(list: unknown, world: World): number {
+    if (!Array.isArray(list)) return 0;
+    this.npcs.length = 0;
+    this.horses.length = 0;
+    this.courting.clear();
+    for (const a of list as Array<Partial<AnimalSave>>) {
+      if (!a || !ANIMAL_KINDS.has(a.k as string) || !finiteNum(a.x) || !finiteNum(a.y) || !finiteNum(a.hx) || !finiteNum(a.hy)) continue;
+      const k = a.k as AnimalKind;
+      if (this.count(k) >= MAX_PER_SPECIES[k]) continue;
+      let [x, y] = [a.x, a.y];
+      if (!world.isWalkable(Math.floor(x), Math.floor(y))) [x, y] = world.nearestWalkable(Math.floor(x), Math.floor(y)).map((v) => v + 0.5);
+      const baby = a.baby === true;
+      const animal = k === 'sheep'
+        ? new Sheep(x, y, a.hx, a.hy, this.rand, baby)
+        : new FarmAnimal(k, x, y, this.rand, baby, a.hx, a.hy);
+      animal.age = finiteNum(a.age) ? Math.max(0, a.age) : 0;
+      if (animal instanceof Sheep) this.npcs.push(animal);
+      else this.horses.push(animal as FarmAnimal);
+    }
+    return this.breeders().length;
   }
 
   /** Quantos animais da espécie existem (filhotes contam). */

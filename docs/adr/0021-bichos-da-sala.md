@@ -23,7 +23,7 @@
 3. **Relógio do servidor a 10×/s** (`TICK_MS`); as plantas continuam crescendo de segundo em segundo; a simulação anda
    em passos de no máximo 0,1 s. Sem ninguém na sala, os bichos ficam parados.
 4. **Moradores continuam locais** (enfeite da cidade, sem efeito no jogo): cada aparelho tem os seus.
-5. Bichos **não vão para o disco**: ao reiniciar o servidor, renascem pela seed (salvar animais fica para depois).
+5. Monstros **não vão para o disco** (renascem pela seed). Os animais vão desde a v0.73.0 (`RoomSnapshot` v3).
 
 ## Consequências
 

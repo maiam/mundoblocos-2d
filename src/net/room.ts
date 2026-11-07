@@ -1,5 +1,5 @@
 import { DAY_LENGTH_S } from '../config';
-import { Entities } from '../game/entities';
+import { type AnimalSave, Entities } from '../game/entities';
 import { Player } from '../game/player';
 import { Sheep } from '../game/sheep';
 import { applyAction } from '../world/actions';
@@ -20,8 +20,8 @@ export type Outgoing = { to: number | 'all' | { except: number }; msg: ServerMes
 export const ROOM_START_TIME = 0.31;
 /** De quanto em quanto tempo a sala manda a hora a todos (s): corrige a diferença dos relógios dos aparelhos. */
 export const TIME_SYNC_SECONDS = 30;
-/** Versão do arquivo da sala no servidor (`RoomSnapshot`): 2 = baús. */
-export const ROOM_SNAPSHOT_VERSION = 2;
+/** Versão do arquivo da sala no servidor (`RoomSnapshot`): 2 = baús; 3 = animais. */
+export const ROOM_SNAPSHOT_VERSION = 3;
 /** Quanto tempo um item fica no chão da sala (s), como no jogo sozinho. */
 export const DROP_LIFETIME = 300;
 /** Distância máxima (células) entre o jogador e o item para pegar. */
@@ -49,6 +49,8 @@ export interface RoomSnapshot {
   bags: Record<string, RoomBag>;
   /** Conteúdo dos baús ("x,y" → espaços). */
   chests: Record<string, ChestSlotsMsg>;
+  /** Animais da sala (v3): filhotes e crias ficam. Monstros não: renascem pela seed. */
+  animals?: AnimalSave[];
 }
 
 /** Chave da bolsa: o nome sem diferença de maiúsculas (Ana = ana). */
@@ -265,8 +267,9 @@ export class Room {
         out.push({ to: 'all', msg: { t: 'grow', cells } });
       }
     }
-    // Bichos: só com gente na sala (sem ninguém, ficam parados onde estão).
+    // Bichos: só com gente na sala (sem ninguém, ficam parados onde estão). Andaram: a sala tem o que gravar.
     if (this.players.size) {
+      this.dirty = true;
       for (const av of this.avatars.values()) this.loadAround(av.x, av.y, LOAD_RADIUS);
       for (let left = dt; left > 1e-6; left -= CREATURE_STEP) this.entities.update(Math.min(CREATURE_STEP, left), this.world);
       out.push(...this.flush());
@@ -368,13 +371,14 @@ export class Room {
       v: ROOM_SNAPSHOT_VERSION, room: this.id, seed: this.seed, time: this.time, savedAt: Date.now(),
       chunks: this.chunks(), bags: Object.fromEntries(this.bags),
       chests: Object.fromEntries(this.world.chests),
+      animals: this.entities.saveAnimals(),
     };
   }
 
   /** Recarrega o que o servidor gravou (só se for desta sala e desta seed; senão, a sala começa do zero). */
   restore(s: RoomSnapshot): boolean {
     // v1 (sem baús) ainda vale: o mundo e as bolsas voltam; os baús ficam vazios.
-    if (!s || (s.v !== ROOM_SNAPSHOT_VERSION && s.v !== 1) || s.room !== this.id || s.seed !== this.seed) return false;
+    if (!s || ![1, 2, ROOM_SNAPSHOT_VERSION].includes(s.v) || s.room !== this.id || s.seed !== this.seed) return false;
     for (const c of s.chunks) this.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
     this.world.settleWater();
     if (Number.isFinite(s.time)) this.time = ((s.time % 1) + 1) % 1;
@@ -382,6 +386,11 @@ export class Room {
     for (const [k, slots] of Object.entries(s.chests ?? {})) {
       const [x, y] = k.split(',').map(Number);
       if (this.world.getObject(x, y) === Block.CHEST && Array.isArray(slots) && slots.length === CHEST_SLOTS) this.world.chests.set(k, slots);
+    }
+    // Animais (v3): sem a lista (arquivo antigo), ficam os nascidos pela seed.
+    if (Array.isArray(s.animals)) {
+      for (const a of s.animals) if (Number.isFinite(a?.x) && Number.isFinite(a?.y) && Math.abs(a.x) + Math.abs(a.y) < 2 ** 30) this.loadAround(a.x, a.y, 4);
+      this.entities.restoreAnimals(s.animals, this.world);
     }
     this.dirty = false;
     return true;
