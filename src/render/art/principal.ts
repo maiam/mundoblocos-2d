@@ -25,6 +25,12 @@ import heroSwordAttack from '../../assets/hero-sword-attack.webp';
 import heroAxeAttack from '../../assets/hero-axe-attack.webp';
 import heroHoeAttack from '../../assets/hero-hoe-attack.webp';
 import heroShovelAttack from '../../assets/hero-shovel-attack.webp';
+import hood from '../../assets/hood.webp';
+import hoodSword from '../../assets/hood-sword.webp';
+import hoodAxe from '../../assets/hood-axe.webp';
+import hoodHoe from '../../assets/hood-hoe.webp';
+import hoodPickaxe from '../../assets/hood-pickaxe.webp';
+import hoodShovel from '../../assets/hood-shovel.webp';
 import axeIcon from '../../assets/icon-axe.webp';
 import dirtIcon from '../../assets/icon-block-dirt.webp';
 import grassIcon from '../../assets/icon-block-grass.webp';
@@ -213,6 +219,18 @@ const pack: ArtPack = {
     'hero-hoe-attack': heroHoeAttack,
     'hero-shovel-attack': heroShovelAttack,
     'hero-pickaxe-attack': heroPickaxeAttack,
+    // Hood: sem folhas de golpe ainda — o golpe usa a caminhada com a ferramenta.
+    hood,
+    'hood-sword': hoodSword,
+    'hood-axe': hoodAxe,
+    'hood-hoe': hoodHoe,
+    'hood-pickaxe': hoodPickaxe,
+    'hood-shovel': hoodShovel,
+    'hood-sword-attack': hoodSword,
+    'hood-axe-attack': hoodAxe,
+    'hood-hoe-attack': hoodHoe,
+    'hood-pickaxe-attack': hoodPickaxe,
+    'hood-shovel-attack': hoodShovel,
     'heroine-sword': heroineSword,
     'heroine-hoe': heroineHoe,
     'heroine-pickaxe': heroinePickaxe,

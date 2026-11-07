@@ -6,6 +6,9 @@
   do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
   (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
   um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
+- **Hood** (v0.71.0): quarto personagem da tela (`HeroBody` ganha `hood`; botões gerados de `HERO_BODIES`/`HERO_NAMES`);
+  caminhada sem ferramenta e com as 5 ferramentas. Sem folhas de golpe ainda: `hood-<ferramenta>-attack` aponta para a
+  caminhada com a ferramenta (pendência da arte). Na sala, aparece como Hood para os outros (protocolo 14).
 - **Herói** (v0.65.0): terceiro personagem da tela (`HeroBody` = `heroine` | `hero` em `Entities.body`, salvo em
   `SaveData.body`); atores `hero`, `hero-<ferramenta>`, `hero-<ferramenta>-attack`. **Novo mundo** no menu do jogo abre
   a mesma escolha de personagem (`TitleScreen` com `creatorOnly`; "Voltar" volta ao mundo de antes).

@@ -93,6 +93,19 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'hero-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (311 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hero-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (313 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hero-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (311 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  // Hood (personagem pronto, assets-src/hood): caminhada sem ferramenta (292 px de desenho) e com as 5 ferramentas.
+  // Ainda sem folhas de golpe: o golpe usa a caminhada com a ferramenta (pendência da arte).
+  hood: { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hood-sword': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hood-hoe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hood-shovel': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 292), shadow: [0.32, 0.12], walkFps: 7 },
+  'hood-axe': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 292), shadow: [0.32, 0.12], walkFps: 7 },
+  'hood-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 292), shadow: [0.32, 0.12], walkFps: 7 },
+  'hood-sword-attack': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hood-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hood-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hood-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hood-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   sheep: { cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.

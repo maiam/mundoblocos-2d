@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.71.0 — 2026-11-07
+- **Novo personagem: Hood** (folhas enviadas pelo dono do produto). Escolha na tela de personagem (início e "Novo
+  mundo"), ao lado de Heroína e Herói. Anda segurando cada ferramenta (espada, machado, enxada, picareta e pá).
+  Ainda sem animação própria de golpe: no golpe ele mostra a ferramenta na mão (falta a arte dos golpes).
+- Na sala, os outros jogadores veem o Hood. Multiplayer: `PROTOCOL_VERSION` 14 (servidor 0.15.0 junto).
+
 ## 0.70.0 — 2026-11-07
 - **Sala compartilhada, Etapa 3: aranhas e animais da sala.** Na Sala 1 todos veem as mesmas ovelhas, vacas, galinhas,
   cavalo e aranhas, nos mesmos lugares: quem roda os bichos agora é o servidor.

@@ -127,6 +127,10 @@ $P assets-src/heroine-shovel-attack-sheet.png src/assets/heroine-shovel-attack.p
 $P assets-src/hero/hero-sheet.png src/assets/hero.png --alpha --largest --frame-h 144
 for t in hoe axe sword shovel pickaxe; do $P assets-src/hero/hero-$t-attack-sheet.png src/assets/hero-$t-attack.png --alpha --largest --frame-h 144; done
 $P assets-src/hero/hero-pickaxe-sheet.png src/assets/hero-pickaxe.png --alpha --largest --frame-h 144 --rows-map 0,1,3,2
+# Hood (assets-src/hood): caminhadas transparentes com fileiras F, D, C, E; a da pá vem com os dois lados para a esquerda
+$P assets-src/hood/hood-sheet.png src/assets/hood.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
+for t in sword axe hoe pickaxe; do $P assets-src/hood/hood-$t-sheet.png src/assets/hood-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+$P assets-src/hood/hood-shovel-sheet.png src/assets/hood-shovel.png --alpha --largest --frame-h 144 --rows-map 0,3,3m,2
 # porta de carvalho (4×2, 0–3 abrindo, 4–7 fechando); geometria em textures.ts (DOOR_*)
 $P assets-src/oak-door-sheet.png src/assets/oak-door.png --alpha --largest --cols 4 --rows 2 --frame-h 120
 # picareta: quadros transbordam a grade (picareta erguida sobe, pés descem) → --respace

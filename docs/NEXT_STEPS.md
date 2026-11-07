@@ -168,6 +168,9 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    f. **Herói (v0.65.0)** — pedir à arte: as folhas de **andar segurando** enxada, machado, espada e pá (hoje anda sem
       ferramenta). ~~Golpe de picareta~~ entregue. A folha de andar com picareta veio com as fileiras na ordem frente,
       esquerda, costas, direita (`--rows-map 0,1,3,2`).
+   g. **Hood (v0.71.0)** — pedir à arte: as 5 folhas de **golpe** (espada, machado, enxada, pá, picareta; hoje o golpe
+      mostra a caminhada com a ferramenta) e a caminhada com pá virada para a direita (hoje espelhada). Confirmar com o
+      dono do produto que a 6ª folha (cabeça de machadinha) é a enxada.
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
    - **Cerca (v0.59.0)**: pedir à arte o **portão de lado** (fechado e aberto) para cercas verticais — hoje usa o de
      frente — e, se quiserem refinar, peças separadas (poste, travessa horizontal e vertical de 1 célula). Animais
