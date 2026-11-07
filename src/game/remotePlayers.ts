@@ -2,7 +2,7 @@ import type { PlayerInfo } from '../net/protocol';
 import { cleanLook, type ModularLook, type ModularManifest } from '../render/modular';
 import type { World } from '../world/world';
 import type { ToolId } from '../world/items';
-import { type Actor, HERO_BODIES, type HeroBody, heroActorKind } from './entities';
+import { type Actor, canSit, HERO_BODIES, type HeroBody, heroActorKind, type SitBody } from './entities';
 import { ATTACK_FRAMES, ATTACK_SECONDS } from './player';
 import type { Facing } from './walker';
 
@@ -24,6 +24,8 @@ interface Remote {
   /** Último número de golpes visto; quando muda, toca o golpe aqui (`attackTime`). */
   swing: number;
   attackTime: number;
+  /** Sentado: quadro da folha de sentar (null = de pé). */
+  sit: number | null;
 }
 
 /** Acima disso (células) o outro jogador é teleportado em vez de deslizar (entrou num interior, renasceu…). */
@@ -51,7 +53,7 @@ export class RemotePlayers {
         this.list.set(id, {
           name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
           moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine', look,
-          tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0,
+          tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0, sit: p.state.sit ?? null,
         });
         continue;
       }
@@ -60,6 +62,7 @@ export class RemotePlayers {
       r.facing = p.state.facing;
       r.moving = p.state.moving;
       r.tool = p.state.tool ?? null;
+      r.sit = p.state.sit ?? null;
       const swing = p.state.swing ?? 0;
       if (swing !== r.swing) {
         r.swing = swing;
@@ -86,10 +89,11 @@ export class RemotePlayers {
   get actors(): Actor[] {
     return [...this.list.values()].map((r) => {
       const attacking = r.attackTime > 0;
+      const sitting = r.sit !== null && canSit(r.body);
       return {
-        kind: heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
+        kind: sitting ? `${r.body as SitBody}-sit` as const : heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
         walkTime: r.walkTime, label: r.name, look: r.look ?? undefined,
-        frame: attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / ATTACK_SECONDS) * ATTACK_FRAMES)) : undefined,
+        frame: sitting ? r.sit! : attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / ATTACK_SECONDS) * ATTACK_FRAMES)) : undefined,
       };
     });
   }

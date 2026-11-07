@@ -28,10 +28,16 @@ export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
  */
 export type HeroBody = AppearanceBody;
 export const HERO_BODIES: readonly HeroBody[] = APPEARANCE_BODIES;
+/** Personagens prontos com folha de sentar (só eles sentam em cadeiras e bancos; dono do produto, 07/11: Gino). */
+export const SIT_BODIES = ['gino'] as const;
+export type SitBody = (typeof SIT_BODIES)[number];
+export function canSit(body: HeroBody): body is SitBody {
+  return (SIT_BODIES as readonly string[]).includes(body);
+}
 /** Nome de cada personagem pronto na tela de escolha. */
 export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino' };
 
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -660,6 +666,11 @@ export class Entities {
     return best;
   }
 
+  /** Outra entidade (não a personagem deste aparelho) ocupa a célula? (assento já tomado). */
+  occupiesOther(cx: number, cy: number): boolean {
+    return this.all().some((w) => w !== this.player && w.occupies(cx, cy));
+  }
+
   /** Alguma entidade ocupa a célula? (não se coloca bloco nem se cava sob elas). */
   occupies(cx: number, cy: number): boolean {
     return this.all().some((w) => w.occupies(cx, cy));
@@ -674,10 +685,12 @@ export class Entities {
     const p = this.player;
     if (p) {
       const b = this.body;
-      const kind: ActorKind = this.character === 'goddess' ? 'goddess' : heroActorKind(b, p.equipped, p.attackTool, p.attacking);
+      const sitting = p.seat && canSit(b);
+      const kind: ActorKind = this.character === 'goddess' ? 'goddess'
+        : sitting ? `${b as SitBody}-sit` : heroActorKind(b, p.equipped, p.attackTool, p.attacking);
       out.unshift({
         kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
-        frame: p.attacking ? p.attackFrame : undefined,
+        frame: sitting ? p.sitFrame : p.attacking ? p.attackFrame : undefined,
         hurt: p.invuln > 0,
         look: this.character === 'heroine' && this.look ? this.look : undefined,
       });

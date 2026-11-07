@@ -492,10 +492,26 @@ export class World {
 
   // ---- Portas ----
 
-  /** Cubo de madeira (Tora ou Tábua de Carvalho) ou de Pedra no nível 0 — serve de batente para a porta. */
+  /**
+   * Batente da porta: qualquer bloco (cubo) ou parede de madeira ou de pedra no nível 0 (dono do produto, 07/11: a porta
+   * vai entre quaisquer blocos de madeira ou pedra, inclusive as paredes).
+   */
   private isDoorJamb(x: number, y: number): boolean {
     const d = blockDef(this.getObject(x, y));
-    return d.shape === 'cube' && (d.organic === 'wood' || d.stone);
+    return (d.shape === 'cube' || d.shape === 'wall') && (d.organic === 'wood' || d.stone);
+  }
+
+  // ---- Assentos ----
+
+  /**
+   * Assento em (x, y) para quem está em (px, py): a cadeira, ou a célula do banco da cidade mais perto de quem senta.
+   * Retorna a célula onde se senta, ou null se ali não há assento.
+   */
+  seatAt(x: number, y: number, px: number, py: number): [number, number] | null {
+    const b = this.townBuildingAt(x, y);
+    if (b) return blockDef(b.id).seat ? [Math.max(b.x, Math.min(b.x + b.w - 1, Math.floor(px))), b.y] : null;
+    void py;
+    return blockDef(this.getObject(x, y)).seat ? [x, y] : null;
   }
 
   /** A porta só vai entre dois batentes (qualquer bloco de madeira ou de pedra, podem misturar): células da esquerda e da direita. */

@@ -44,6 +44,8 @@ interface SheetSpec {
    * do quadro de caminhada (o 1º quadro tem a aranha na mesma escala). URL vem do pacote (`monsterDeaths`).
    */
   death?: { cols: number; rows: number; ratio: number };
+  /** Folha em sequência (sentar): `Actor.frame` percorre a grade inteira (quadro → coluna e fileira), sem direção. */
+  sequence?: boolean;
 }
 
 const SPECS: Record<ActorKind, SheetSpec> = {
@@ -105,6 +107,8 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'hood-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (332 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  // Gino sentando (só de frente): fileira 1 = sentar (0–3), fileiras 2–3 = sentado (laço 4–11), 4 = de pé.
+  'gino-sit': { cols: 4, rows: 4, height: CHARACTER_H * (300 / 297), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
   // Gino (personagem pronto, assets-src/gino): caminhada sem ferramenta (297 px de desenho), com as 5 ferramentas e
   // os 5 golpes; altura de cada folha pelo desenho.
   'gino': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
@@ -193,7 +197,7 @@ class SpriteSheet {
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
   draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0): void {
-    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action, cycle } = this.spec;
+    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action, cycle, sequence } = this.spec;
     if (cycle) {
       this.drawCycle(ctx, fx, fy, zoom, a, elapsed);
       return;
@@ -222,9 +226,9 @@ class SpriteSheet {
       col = step < cols ? step : span - step;
       lift = float.lift * TILE * zoom + (wave + 1) * 0.5 * float.bob * zoom;
     } else {
-      col = rows === 1 || action ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
+      col = sequence ? (a.frame ?? 0) % cols : rows === 1 || action ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
     }
-    const row = rows === 1 ? 0 : ROW[a.facing];
+    const row = sequence ? Math.floor((a.frame ?? 0) / cols) % rows : rows === 1 ? 0 : ROW[a.facing];
     // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.
     const dx = fx - w / 2;
     const dy = fy - h + 2 * zoom + h * footPad - lift;

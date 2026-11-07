@@ -30,6 +30,7 @@ import heroAxeAttack from '../../assets/hero-axe-attack.webp';
 import heroHoeAttack from '../../assets/hero-hoe-attack.webp';
 import heroShovelAttack from '../../assets/hero-shovel-attack.webp';
 import gino from '../../assets/gino.webp';
+import ginoSit from '../../assets/gino-sit.webp';
 import ginoSword from '../../assets/gino-sword.webp';
 import ginoAxe from '../../assets/gino-axe.webp';
 import ginoHoe from '../../assets/gino-hoe.webp';
@@ -243,6 +244,7 @@ const pack: ArtPack = {
     'hero-shovel-attack': heroShovelAttack,
     'hero-pickaxe-attack': heroPickaxeAttack,
     gino: gino,
+    'gino-sit': ginoSit,
     'gino-sword': ginoSword,
     'gino-axe': ginoAxe,
     'gino-hoe': ginoHoe,
