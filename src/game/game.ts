@@ -3,7 +3,7 @@ import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef, type BlockId } from '../world/blocks';
-import { canCraft, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
+import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
@@ -30,7 +30,10 @@ import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { cleanLook, type ModularLook } from '../render/modular';
-import { HUNGER } from '../world/progression';
+import { HUNGER, weaponPower } from '../world/progression';
+import type { MonsterKind } from '../world/dungeon';
+import { CreatureMirror } from './creatureMirror';
+import { MONSTERS } from './monster';
 import { Minimap, type MinimapMarker } from '../render/minimap';
 import { Exploration } from './exploration';
 
@@ -109,6 +112,8 @@ export class Game {
   private hurtFlash = 0;
   /** Outros jogadores da sala (multiplayer). */
   private readonly remotes = new RemotePlayers(art().modular?.manifest);
+  /** Na sala: espelho dos animais e monstros da sala. */
+  private mirror: CreatureMirror | null = null;
   /** Névoa do minimapa: o que o jogador já viu (salvo junto com o mundo). */
   readonly exploration = new Exploration();
   private minimap: Minimap | null = null;
@@ -143,18 +148,10 @@ export class Game {
     this.entities = new Entities(this.player, Math.random, profile.character);
     this.entities.look = options.look ?? null;
     if (options.body) this.entities.body = options.body;
-    if (profile.sheep) {
-      // Rebanho no campo, do lado de fora do portão da cidade.
-      const [gx, gy] = this.world.outsideGate();
-      this.entities.spawnFlock(this.world, gx, gy + (this.world.town ? 8 : 0));
-      // Cavalo no mesmo campo, um pouco mais longe da estrada.
-      this.entities.spawnHorse(this.world, gx + 9, gy + (this.world.town ? 10 : 2));
-      // Vacas e galinhas no mesmo campo, do outro lado da estrada.
-      this.entities.spawnAnimals(this.world, 'cow', gx - 9, gy + (this.world.town ? 10 : 2), 2, 91);
-      this.entities.spawnAnimals(this.world, 'chicken', gx - 6, gy + (this.world.town ? 6 : 1), 4, 97);
-    }
+    // Animais e monstros: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
+    if (options.net) this.entities.remote = true;
+    else this.entities.spawnWildlife(this.world);
     this.entities.spawnVillagers(this.world);
-    this.entities.spawnMonsters(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
     this.entities.onDamage = (x, y, hit, target) => this.renderer.addDamage(x, y, hit, target);
@@ -171,6 +168,10 @@ export class Game {
       onOpenChest: (x, y) => this.openChest(x, y),
       notify: (text) => this.hud.toast(text),
       onAction: (a) => options.net?.sent(a),
+      onFeed: options.net ? (animal, item) => {
+        const id = this.mirror?.idOf(animal);
+        if (id) options.net!.feed(id, item);
+      } : undefined,
     });
     this.hud = new Hud({
       slots: this.hotbar.length,
@@ -242,6 +243,15 @@ export class Game {
         this.player.x = bx;
         this.player.y = by;
       }
+      // Bichos da sala (Etapa 3): a sala roda animais e monstros; aqui só o espelho. Golpe, comida e mordida passam por ela.
+      const mirror = new CreatureMirror(this.entities, this.world);
+      this.mirror = mirror;
+      net.onMobs = (list) => mirror.apply(list);
+      net.onBite = (kind, x, y) => { if (kind in MONSTERS) this.entities.biteFrom(kind as MonsterKind, x, y, this.world); };
+      net.onHits = (list) => { for (const [x, y, amount, crit] of list) this.renderer.addDamage(x, y, { amount, crit: crit === 1 }, 'enemy'); };
+      net.onFed = (_id, item) => {
+        if (item in ITEMS && this.inventory.take(item as ItemId)) this.hotbar.prune(this.inventory);
+      };
       net.onApplied = () => this.entities.settleAll(this.world);
       net.onRejected = () => this.hud.toast('Ação não aceita pela sala');
     }
@@ -714,7 +724,9 @@ export class Game {
     this.updateHealth(dt);
     // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
     if (this.player.consumeHit() && this.player.attackTool && TOOLS[this.player.attackTool].strikes) {
-      this.entities.strike(this.player.facing, this.world);
+      const net = this.options.net;
+      if (net) net.strike(this.player.facing, this.player.stats.attack + weaponPower(this.player.attackTool));
+      else this.entities.strike(this.player.facing, this.world);
     }
     // Na sala, plantas e árvores crescem pelo servidor (mensagens `grow`); aqui só a água.
     this.world.tick(dt, Math.random, !this.options.net);
@@ -800,6 +812,7 @@ export class Game {
     if (!net) return;
     this.remotes.sync(net.others);
     this.remotes.update(dt, this.world);
+    this.mirror?.update(dt);
     this.bagTimer -= dt;
     if (this.bagTimer <= 0) {
       this.bagTimer = 5;

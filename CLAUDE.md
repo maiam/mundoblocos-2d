@@ -23,6 +23,8 @@ operacional e faz parte da entrega.
 - `src/world/` **não usa DOM nem `Math.random()`** (testável em Node, determinístico por seed).
 - **Multiplayer** (ADR 0016): `src/net/` e `world/actions.ts` são compartilhados com o servidor — sem DOM; mensagem
   incompatível → suba `PROTOCOL_VERSION`. Ação que muda o mapa só vale quando o servidor confirma (`applied`).
+  Bichos da sala (ADR 0021): a sala roda as mesmas `game/entities.ts` (e tudo o que ela importa vai para o servidor:
+  sem DOM nem arte); na sala o aparelho só espelha (`CreatureMirror`) e golpe/comida passam pela sala.
 - `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula
   (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; cursor e botão de ação só escolhem a célula.
 - **Arte por mundo:** imagens só são importadas em `src/render/art/<mundo>.ts` (ADR 0010), como URL — viram arquivos
@@ -85,6 +87,8 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
   (`toolCanBreak` em `world/items.ts`), o toque no chão de `TOOLS[tool].groundUse` e o drop de `toolDrops` — não
   espalhe `if (ferramenta === …)` pelo `Game`.
 - Os dois artefatos usam o mesmo `dist/`: gere o build do mundo imediatamente antes de publicá-lo.
+- Ao republicar só os assets novos, a chave de `files` é o **nome do arquivo sem pasta** (como em
+  `mundoblocos-files.json`, ex.: `walls-XXXX.webp`); com `mundoblocos-assets/` na frente a imagem não carrega (v0.68.0).
 - **Nunca use `window.confirm/alert/prompt`**: o iframe do Artifact bloqueia e devolve falso sem mostrar nada (o botão
   "Novo mundo" já parou assim). Confirme na própria UI (ex.: tocar de novo, `Menu.ask`).
 - Testes no navegador: Playwright já instalado (`require('playwright')`); use `window.__game` no dev.

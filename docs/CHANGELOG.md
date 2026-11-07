@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.70.0 — 2026-11-07
+- **Sala compartilhada, Etapa 3: aranhas e animais da sala.** Na Sala 1 todos veem as mesmas ovelhas, vacas, galinhas,
+  cavalo e aranhas, nos mesmos lugares: quem roda os bichos agora é o servidor.
+  - Dar comida, namoro e filhotes valem para todos (o trigo só sai da bolsa quando o animal come de verdade).
+  - Golpe: quem bate vê o dano, e os outros também; aranha derrotada some para todos e o espólio cai no chão da sala
+    (quem chega primeiro pega).
+  - Mordida: a aranha morde quem está encostado nela, e só essa pessoa perde vida.
+  - Moradores da cidade continuam de cada um (são enfeite).
+- Multiplayer: `PROTOCOL_VERSION` 13 (servidor 0.14.0 junto, agora com relógio de 10×/s).
+- Correção: a imagem das paredes de pedra estava publicada numa pasta errada do Artifact (paredes sem desenho na
+  v0.68.0); republicada no lugar certo.
+
 ## 0.69.0 — 2026-11-07
 - **Paredes de outros materiais** (nova prancha do dono do produto): Terra, Grama, Terra Arada, Terra Batida, Areia,
   Pedra com Musgo, Tronco e Tábuas — agora são 16 paredes. Mesma regra das de pedra: **3 blocos do material → 1

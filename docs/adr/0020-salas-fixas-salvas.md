@@ -28,6 +28,6 @@
 - Nome não é conta: quem digitar o mesmo nome pega a mesma bolsa. Contas vêm com o backend de contas (NEXT_STEPS).
 - O `welcome` cresce com o mundo editado (~1,4 kB por chunk editado); comprimir/paginar quando passar de algumas
   centenas de chunks.
-- Ainda locais em cada aparelho: aranhas, animais e moradores — Etapa 3 da sala compartilhada (NEXT_STEPS, Fase M 3b).
+- Aranhas e animais passaram a ser da sala na v0.70.0 (ADR 0021); moradores seguem locais.
   Itens no chão e baús passaram a ser da sala na v0.67.0 (protocolo 10; `RoomSnapshot` v2 guarda os baús).
 - Pasta de dados confirmada em produção (07/11): sobrevive a reinício do app e a deploy do servidor.

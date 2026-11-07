@@ -1,12 +1,16 @@
 import { DAY_LENGTH_S } from '../config';
+import { Entities } from '../game/entities';
+import { Player } from '../game/player';
+import { Sheep } from '../game/sheep';
 import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
-import { breakDrops, type Drop, pickDrops, type StackId } from '../world/items';
+import { toChunk } from '../world/coords';
+import { breakDrops, type Drop, type ItemId, ITEMS, monsterDrops, pickDrops, type StackId } from '../world/items';
 import { CHEST_SLOTS, World } from '../world/world';
 import { fromB64, toB64 } from './b64';
 import {
   type Applied, type ClientMessage, DEFAULT_APPEARANCE, type Grown, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, type RoomBag, type RoomChunk,
-  type ChestSlotsMsg, type RoomDrop, sanitizeName, type ServerMessage,
+  type ChestSlotsMsg, FACING_ORDER, type MobState, type RoomDrop, sanitizeName, type ServerMessage,
 } from './protocol';
 
 /** Mensagem a entregar: a um jogador, a todos, ou a todos menos um. */
@@ -22,6 +26,17 @@ export const ROOM_SNAPSHOT_VERSION = 2;
 export const DROP_LIFETIME = 300;
 /** Distância máxima (células) entre o jogador e o item para pegar. */
 const TAKE_REACH = 3;
+/** De quanto em quanto tempo a sala manda os bichos perto de cada jogador (s). */
+export const MOBS_EVERY = 0.1;
+/** Raio (células) dos bichos mandados a cada jogador (um pouco além da tela). */
+export const MOBS_RADIUS = 22;
+/** Passo máximo da simulação dos bichos (s): servidor atrasado roda em passos curtos, sem atravessar paredes. */
+const CREATURE_STEP = 0.1;
+/** Raio (células) do mundo carregado em volta de cada jogador, para os bichos andarem por ali. */
+const LOAD_RADIUS = 28;
+/** Distância máxima (células) para dar comida a um animal. */
+const FEED_REACH = 3;
+const round2 = (v: number) => Math.round(v * 100) / 100;
 
 /** O que o servidor grava em disco de uma sala: mundo (chunks editados), hora e bolsas por nome. */
 export interface RoomSnapshot {
@@ -60,9 +75,53 @@ export class Room {
   private clock = 0;
   /** Algo mudou desde o último `snapshot` (o servidor só grava quando há o que gravar). */
   dirty = false;
+  /**
+   * Bichos da sala (Etapa 3): as mesmas `Entities` do jogo, sem personagem; cada jogador é um avatar na posição que
+   * manda. Os animais e monstros nascem pela seed; não vão para o disco (renascem se o servidor reiniciar).
+   */
+  readonly entities: Entities;
+  private readonly avatars = new Map<number, Player>();
+  private readonly mobIds = new WeakMap<object, number>();
+  private nextMobId = 1;
+  private mobTimer = 0;
+  private growTimer = 0;
+  /** Mensagens geradas pela simulação dos bichos (mordidas, números de dano, espólios), entregues no próximo retorno. */
+  private pending: Outgoing[] = [];
+  private hits: Array<[number, number, number, 0 | 1]> = [];
 
   constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random) {
     this.world = new World(seed);
+    this.entities = new Entities(null, rand);
+    const e = this.entities;
+    e.onMonsterKilled = (m) => {
+      const list = this.spawnDrops(m.x, m.y + 0.2, monsterDrops(m.kind, rand));
+      if (list.length) this.pending.push({ to: 'all', msg: { t: 'drops', list } });
+    };
+    e.onDamage = (x, y, hit, target) => {
+      if (target === 'enemy') this.hits.push([round2(x), round2(y), hit.amount, hit.crit ? 1 : 0]);
+    };
+    e.onBite = (target, m) => {
+      for (const [pid, av] of this.avatars) {
+        if (av === target) this.pending.push({ to: pid, msg: { t: 'bite', k: m.kind, x: round2(m.x), y: round2(m.y) } });
+      }
+    };
+    // Campo dos animais e covil carregados antes de os bichos nascerem (o mundo do servidor só carrega o que se usa).
+    const [gx, gy] = this.world.outsideGate();
+    this.loadAround(gx, gy + 6, 24);
+    const d = this.world.dungeon;
+    if (d) this.loadRect(d.area.x0, d.area.y0, d.area.x1, d.area.y1);
+    e.spawnWildlife(this.world);
+  }
+
+  /** Carrega (gera) os chunks em volta de (x, y). */
+  private loadAround(x: number, y: number, r: number): void {
+    this.loadRect(x - r, y - r, x + r, y + r);
+  }
+
+  private loadRect(x0: number, y0: number, x1: number, y1: number): void {
+    for (let cy = toChunk(Math.floor(y0)); cy <= toChunk(Math.floor(y1)); cy++) {
+      for (let cx = toChunk(Math.floor(x0)); cx <= toChunk(Math.floor(x1)); cx++) if (!this.world.getChunk(cx, cy)) this.world.loadChunk(cx, cy);
+    }
   }
 
   get size(): number {
@@ -100,6 +159,11 @@ export class Room {
 
   leave(id: number): Outgoing[] {
     if (!this.players.delete(id)) return [];
+    const av = this.avatars.get(id);
+    if (av) {
+      this.avatars.delete(id);
+      this.entities.avatars.splice(this.entities.avatars.indexOf(av), 1);
+    }
     return [{ to: 'all', msg: { t: 'left', id } }];
   }
 
@@ -109,7 +173,33 @@ export class Room {
     if (!p) return [];
     if (m.t === 'state') {
       p.state = m.s;
+      let av = this.avatars.get(id);
+      if (!av) {
+        av = new Player(m.s.x, m.s.y);
+        this.avatars.set(id, av);
+        this.entities.avatars.push(av);
+      }
+      av.x = m.s.x;
+      av.y = m.s.y;
+      av.facing = m.s.facing;
+      av.moving = m.s.moving;
       return [{ to: { except: id }, msg: { t: 'state', id, s: m.s } }];
+    }
+    if (m.t === 'strike') {
+      // A sala calcula o acerto com a posição que o jogador mandou: dano, recuo, morte e espólio valem para todos.
+      const av = this.avatars.get(id);
+      if (!av) return [];
+      av.facing = m.facing;
+      this.entities.strikeFrom(av, m.facing, m.attack, this.world);
+      return this.flush();
+    }
+    if (m.t === 'feed') {
+      const av = this.avatars.get(id);
+      if (!av || !(m.item in ITEMS)) return [];
+      const item = m.item as ItemId;
+      const animal = this.entities.animals.find((a) => this.mobIds.get(a) === m.id);
+      if (!animal || Math.hypot(animal.x - av.x, animal.y - av.y) > FEED_REACH || !animal.eats(item) || !animal.feed()) return [];
+      return [{ to: id, msg: { t: 'fed', id: m.id, item } }];
     }
     if (m.t === 'bag') {
       this.bags.set(bagKey(p.name), m.bag);
@@ -163,17 +253,86 @@ export class Room {
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
     this.clock += dt;
     for (const [k, d] of this.drops) if (this.clock - d.born > DROP_LIFETIME) this.drops.delete(k); // os aparelhos somem sozinhos também
-    const cells: Grown[] = [];
-    this.world.tick(dt, this.rand, true, (x, y, id) => cells.push([x, y, id]));
-    if (cells.length) this.dirty = true;
     const out: Outgoing[] = [];
-    if (cells.length) out.push({ to: 'all', msg: { t: 'grow', cells } });
+    // Plantas: de segundo em segundo (o servidor chama `tick` ~10×/s por causa dos bichos).
+    this.growTimer += dt;
+    if (this.growTimer >= 1) {
+      const cells: Grown[] = [];
+      this.world.tick(this.growTimer, this.rand, true, (x, y, id) => cells.push([x, y, id]));
+      this.growTimer = 0;
+      if (cells.length) {
+        this.dirty = true;
+        out.push({ to: 'all', msg: { t: 'grow', cells } });
+      }
+    }
+    // Bichos: só com gente na sala (sem ninguém, ficam parados onde estão).
+    if (this.players.size) {
+      for (const av of this.avatars.values()) this.loadAround(av.x, av.y, LOAD_RADIUS);
+      for (let left = dt; left > 1e-6; left -= CREATURE_STEP) this.entities.update(Math.min(CREATURE_STEP, left), this.world);
+      out.push(...this.flush());
+      this.mobTimer -= dt;
+      if (this.mobTimer <= 0) {
+        this.mobTimer = MOBS_EVERY;
+        for (const [pid, av] of this.avatars) out.push({ to: pid, msg: { t: 'mobs', list: this.mobsNear(av.x, av.y) } });
+      }
+    }
     this.syncTimer -= dt;
     if (this.syncTimer <= 0) {
       this.syncTimer = TIME_SYNC_SECONDS;
       out.push({ to: 'all', msg: { t: 'time', time: this.time } });
     }
     return this.players.size ? out : [];
+  }
+
+  /** Mensagens que a simulação dos bichos gerou (mordidas, espólios e números de dano). */
+  private flush(): Outgoing[] {
+    const out = this.pending;
+    this.pending = [];
+    if (this.hits.length) {
+      out.push({ to: 'all', msg: { t: 'hits', list: this.hits } });
+      this.hits = [];
+    }
+    return out;
+  }
+
+  private mobId(o: object): number {
+    let id = this.mobIds.get(o);
+    if (id === undefined) {
+      id = this.nextMobId++;
+      this.mobIds.set(o, id);
+    }
+    return id;
+  }
+
+  /** Bichos (e efeitos: mortes e coraçõezinhos) a até `MOBS_RADIUS` de (x, y), no formato curto da rede. */
+  mobsNear(x: number, y: number): MobState[] {
+    const near = (o: { x: number; y: number }) => Math.abs(o.x - x) <= MOBS_RADIUS && Math.abs(o.y - y) <= MOBS_RADIUS;
+    const list: MobState[] = [];
+    const e = this.entities;
+    for (const a of e.animals) {
+      if (!near(a)) continue;
+      const s: MobState = { i: this.mobId(a), k: a instanceof Sheep ? 'sheep' : a.species, x: round2(a.x), y: round2(a.y), f: FACING_ORDER.indexOf(a.facing) };
+      if (a.moving) s.m = 1;
+      if (a.baby) s.b = 1;
+      if (a.inLove && a.courtship <= 0) s.l = 1;
+      if (a.canEat) s.e = 1;
+      list.push(s);
+    }
+    for (const m of e.monsters) {
+      if (!near(m)) continue;
+      const s: MobState = { i: this.mobId(m), k: m.kind, x: round2(m.x), y: round2(m.y), f: FACING_ORDER.indexOf(m.facing) };
+      if (m.moving) s.m = 1;
+      if (m.hp < m.maxHp) s.p = round2(Math.max(0, m.hp / m.maxHp));
+      if (m.hurt > 0) s.h = 1;
+      list.push(s);
+    }
+    for (const d of e.dying) {
+      if (near(d)) list.push({ i: 0, k: d.kind, x: round2(d.x), y: round2(d.y), f: FACING_ORDER.indexOf(d.facing), d: round2(d.t) });
+    }
+    for (const a of e.actors) {
+      if (a.kind === 'love-hearts' && near(a)) list.push({ i: 0, k: a.kind, x: round2(a.x), y: round2(a.y), f: 0, r: a.frame, s: a.scale });
+    }
+    return list;
   }
 
   /** Itens no chão: um por unidade, espalhados um pouco em volta de (x, y) (como `Drops.spawn` no jogo). */
