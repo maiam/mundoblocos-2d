@@ -6,6 +6,9 @@
   do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
   (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
   um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
+- **Herói** (v0.65.0): terceiro personagem da tela (`HeroBody` = `heroine` | `hero` em `Entities.body`, salvo em
+  `SaveData.body`); atores `hero`, `hero-<ferramenta>`, `hero-<ferramenta>-attack`. **Novo mundo** no menu do jogo abre
+  a mesma escolha de personagem (`TitleScreen` com `creatorOnly`; "Voltar" volta ao mundo de antes).
   A aparência fica em `Entities.look` (null = heroína) → `SaveData.look`; vai junto para "Novo mundo", "Recomeçar" e a
   sala do multiplayer (lá, por enquanto, só a própria tela mostra o chibi: os outros veem a heroína — Etapa 2).
   O chibi ainda só tem caminhada: ferramentas e golpes funcionam, mas a animação de ação não aparece nele.

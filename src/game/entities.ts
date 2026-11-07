@@ -21,7 +21,11 @@ import type { CharacterId } from '../world/profiles';
 /** Ferramentas com folha de ação (`TOOLS[t].swings`). */
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
-export type ActorKind = 'heroine' | `heroine-${ToolId}` | `heroine-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
+/** Personagem pronto (folhas desenhadas inteiras): a Heroína ou o Herói. O chibi modular é outro caminho (`look`). */
+export type HeroBody = 'heroine' | 'hero';
+export const HERO_BODIES: readonly HeroBody[] = ['heroine', 'hero'];
+
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -110,8 +114,10 @@ export class Entities {
   private flowArea: Rect | null = null;
   private flowTimer = 0;
 
-  /** Aparência modular em teste (`?personagem=chibi`); null = heroína de sempre. */
+  /** Aparência modular em teste (`?personagem=chibi`); null = personagem pronto (`body`). */
   look: ModularLook | null = null;
+  /** Personagem pronto quando não há `look`: Heroína ou Herói (escolhido na tela de personagem; salvo). */
+  body: HeroBody = 'heroine';
 
   constructor(
     private readonly player: Player,
@@ -518,9 +524,10 @@ export class Entities {
 
   get actors(): Actor[] {
     const p = this.player;
+    const b = this.body;
     const kind: ActorKind = this.character === 'goddess' ? 'goddess'
-      : p.attacking && p.attackTool && TOOLS[p.attackTool].swings ? `heroine-${p.attackTool as SwingTool}-attack`
-      : p.equipped ? `heroine-${p.equipped}` : 'heroine';
+      : p.attacking && p.attackTool && TOOLS[p.attackTool].swings ? `${b}-${p.attackTool as SwingTool}-attack`
+      : p.equipped ? `${b}-${p.equipped}` : b;
     const out: Actor[] = [{
       kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
       frame: p.attacking ? p.attackFrame : undefined,

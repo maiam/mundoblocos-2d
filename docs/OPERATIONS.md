@@ -123,6 +123,10 @@ $P assets-src/heroine-sword-attack-sheet.png src/assets/heroine-sword-attack.png
 $P assets-src/heroine-axe-attack-sheet.png   src/assets/heroine-axe-attack.png   --alpha --largest --frame-h 144
 $P assets-src/heroine-hoe-attack-sheet.png   src/assets/heroine-hoe-attack.png   --alpha --largest --frame-h 144
 $P assets-src/heroine-shovel-attack-sheet.png src/assets/heroine-shovel-attack.png --alpha --largest --frame-h 144
+# Herói (assets-src/hero): caminhada e golpes já transparentes; a picareta vem com as fileiras F, E, C, D
+$P assets-src/hero/hero-sheet.png src/assets/hero.png --alpha --largest --frame-h 144
+for t in hoe axe sword shovel pickaxe; do $P assets-src/hero/hero-$t-attack-sheet.png src/assets/hero-$t-attack.png --alpha --largest --frame-h 144; done
+$P assets-src/hero/hero-pickaxe-sheet.png src/assets/hero-pickaxe.png --alpha --largest --frame-h 144 --rows-map 0,1,3,2
 # porta de carvalho (4×2, 0–3 abrindo, 4–7 fechando); geometria em textures.ts (DOOR_*)
 $P assets-src/oak-door-sheet.png src/assets/oak-door.png --alpha --largest --cols 4 --rows 2 --frame-h 120
 # picareta: quadros transbordam a grade (picareta erguida sobe, pés descem) → --respace

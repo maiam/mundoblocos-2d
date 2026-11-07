@@ -75,7 +75,8 @@ export class Menu {
     this.panel.addEventListener('click', (e) => {
       const act = (e.target as HTMLElement).closest('button')?.dataset.act;
       if (act === 'continue') this.toggle(false);
-      if (act === 'new' || act === 'restart') this.ask(act);
+      if (act === 'new') { this.toggle(false); this.h.onNewWorld?.(); }
+      if (act === 'restart') this.ask(act);
       if (act === 'join') this.goOnline(Number((e.target as HTMLElement).closest('button')!.dataset.room));
       if (act === 'leave') this.h.online?.onLeave();
     });

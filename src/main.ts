@@ -3,6 +3,7 @@ import { art } from './render/art';
 import { TitleScreen } from './game/title';
 import './style.css';
 import { Game } from './game/game';
+import type { HeroBody } from './game/entities';
 import { SaveStore } from './game/save';
 import { loadArtPack } from './render/art';
 import { loadBlockArt } from './render/blockArt';
@@ -96,9 +97,10 @@ function leaveRoom(notice: string): void {
 }
 
 /** Abre um mundo (salvo, se houver). `look` = aparência de um mundo novo; sem ela, a do jogo que estava aberto. */
-function start(seed: number, notice?: string, look?: ModularLook | null): void {
+function start(seed: number, notice?: string, look?: ModularLook | null, body?: HeroBody): void {
   soloSeed = seed;
   const keepLook = look !== undefined ? look : game?.entities.look ?? null;
+  const keepBody = body ?? game?.entities.body ?? 'heroine';
   game?.destroy(); // salva o mundo que estava aberto
   const url = new URL(window.location.href);
   url.searchParams.set('seed', String(seed));
@@ -107,19 +109,19 @@ function start(seed: number, notice?: string, look?: ModularLook | null): void {
     save: store.load(seed),
     store,
     look: keepLook,
+    body: keepBody,
     notice,
     online,
-    // Toda seed começa na Cidade do Despertar (igual em todas): o aviso confirma que o mundo é outro.
-    onNewWorld: () => {
-      const next = randomSeed();
-      start(next, `Novo mundo criado · semente ${next}`);
-    },
+    // Novo mundo: abre a escolha de personagem (por cima do jogo; "Voltar" volta ao mundo de antes). Toda seed começa
+    // na Cidade do Despertar (igual em todas): o aviso confirma que o mundo é outro.
+    onNewWorld: () => chooseCharacterForNewWorld(),
     onRestart: () => {
       const look = game?.entities.look ?? null; // recomeça com a mesma aparência
+      const body = game?.entities.body;
       game?.destroy();
       game = null;
       store.clear(seed);
-      start(seed, 'Mundo recomeçado do zero', look);
+      start(seed, 'Mundo recomeçado do zero', look, body);
     },
   });
   // Atalho de teste (ADR 0017): `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…` troca a aparência.
@@ -127,6 +129,24 @@ function start(seed: number, notice?: string, look?: ModularLook | null): void {
   if (fromUrl) game.entities.look = fromUrl;
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
+}
+
+/** "Novo mundo" no menu: escolha de personagem (Chibi, Heroína ou Herói) e só então o mundo novo. */
+function chooseCharacterForNewWorld(): void {
+  const title = new TitleScreen({
+    canContinue: false,
+    name: savedName(),
+    manifest: art().modular?.manifest,
+    creatorOnly: true,
+    onBack: () => title.destroy(),
+    onContinue: () => title.destroy(),
+    onStart: (look, name, body) => {
+      if (name) try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento */ }
+      title.destroy();
+      const next = randomSeed();
+      start(next, `Novo mundo criado · semente ${next}`, look, body);
+    },
+  });
 }
 
 /**
@@ -145,11 +165,11 @@ function showTitle(): void {
       title.destroy();
       start(last!);
     },
-    onStart: (look, name) => {
+    onStart: (look, name, body) => {
       if (name) try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento */ }
       title.destroy();
       const seed = randomSeed();
-      start(seed, name ? `Bem-vindo a Orvalis, ${name}!` : 'Bem-vindo a Orvalis!', look);
+      start(seed, name ? `Bem-vindo a Orvalis, ${name}!` : 'Bem-vindo a Orvalis!', look, body);
     },
   });
 }

@@ -3,6 +3,7 @@ import {
   defaultLook, LOOK_SLOTS, lookOptions, pieceLabel, randomLook, type ModularLook, type ModularManifest,
 } from '../render/modular';
 import { sanitizeName } from '../net/protocol';
+import type { HeroBody } from './entities';
 
 /**
  * Tela de entrada (antes do mundo): título, "Novo jogo" e "Continuar" (só com jogo salvo no aparelho), e a montagem
@@ -19,11 +20,14 @@ export interface TitleHandlers {
   /** Peças do chibi; ausente = só a heroína (mundo sem personagem modular). */
   manifest?: ModularManifest;
   onContinue(): void;
-  /** Começar um mundo novo com a aparência (null = heroína) e o nome escolhidos. */
-  onStart(look: ModularLook | null, name: string): void;
+  /** Começar um mundo novo com a aparência (null = personagem pronto `body`) e o nome escolhidos. */
+  onStart(look: ModularLook | null, name: string, body: HeroBody): void;
+  /** Abrir direto na escolha de personagem ("Novo mundo" no menu do jogo); "Voltar" chama `onBack`. */
+  creatorOnly?: boolean;
+  onBack?(): void;
 }
 
-type Kind = 'heroine' | 'chibi';
+type Kind = HeroBody | 'chibi';
 
 export class TitleScreen {
   private readonly root: HTMLElement;
@@ -51,7 +55,11 @@ export class TitleScreen {
           ${h.manifest ? `<div class="title-kind" role="radiogroup" aria-label="Personagem">
             <button data-kind="chibi" role="radio">Chibi</button>
             <button data-kind="heroine" role="radio">Heroína</button>
-          </div>` : ''}
+            <button data-kind="hero" role="radio">Herói</button>
+          </div>` : `<div class="title-kind" role="radiogroup" aria-label="Personagem">
+            <button data-kind="heroine" role="radio">Heroína</button>
+            <button data-kind="hero" role="radio">Herói</button>
+          </div>`}
           <div class="title-pieces">${h.manifest ? LOOK_SLOTS.map((s) => `
             <div class="title-piece" data-slot="${s}">
               <span class="title-piece-name">${SLOT_NAMES[s]}</span>
@@ -73,6 +81,7 @@ export class TitleScreen {
     this.root.addEventListener('click', (e) => this.onClick(e.target as HTMLElement));
     document.body.appendChild(this.root);
     this.refresh();
+    if (h.creatorOnly) this.showCreator(true);
   }
 
   destroy(): void {
@@ -86,7 +95,10 @@ export class TitleScreen {
     const act = btn.dataset.act;
     if (act === 'continue') this.h.onContinue();
     if (act === 'new') this.showCreator(true);
-    if (act === 'back') this.showCreator(false);
+    if (act === 'back') {
+      if (this.h.creatorOnly) this.h.onBack?.();
+      else this.showCreator(false);
+    }
     if (act === 'random' && this.h.manifest) {
       this.kind = 'chibi';
       this.look = randomLook(this.h.manifest, Math.random);
@@ -94,7 +106,7 @@ export class TitleScreen {
     }
     if (act === 'start') {
       const name = sanitizeName((this.root.querySelector('.title-name') as HTMLInputElement).value) ?? '';
-      this.h.onStart(this.kind === 'chibi' ? { ...this.look } : null, name);
+      this.h.onStart(this.kind === 'chibi' ? { ...this.look } : null, name, this.kind === 'hero' ? 'hero' : 'heroine');
     }
     const kind = btn.dataset.kind as Kind | undefined;
     if (kind) {
@@ -122,7 +134,7 @@ export class TitleScreen {
   }
 
   private refresh(): void {
-    this.preview.setLook(this.kind === 'chibi' ? this.look : null);
+    this.preview.setLook(this.kind === 'chibi' ? this.look : null, this.kind === 'hero' ? 'hero' : 'heroine');
     for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-kind]')) {
       b.setAttribute('aria-checked', String(b.dataset.kind === this.kind));
     }

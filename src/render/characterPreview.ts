@@ -1,4 +1,4 @@
-import type { Actor } from '../game/entities';
+import type { Actor, HeroBody } from '../game/entities';
 import type { Facing } from '../game/walker';
 import { art } from './art';
 import { ActorSprites, CHARACTER_H } from './character';
@@ -15,7 +15,8 @@ const TURN_EVERY = 1.6;
  */
 export class CharacterPreview {
   private readonly ctx: CanvasRenderingContext2D;
-  private readonly heroine = new ActorSprites().get('heroine');
+  private readonly sprites = new ActorSprites();
+  private body: HeroBody = 'heroine';
   private readonly modular = art().modular ? new ModularSprites(art().modular!.manifest, art().modular!.sheets) : undefined;
   private look: ModularLook | null = null;
   private running = false;
@@ -26,9 +27,10 @@ export class CharacterPreview {
     this.ctx = canvas.getContext('2d')!;
   }
 
-  /** null = heroína. */
-  setLook(look: ModularLook | null): void {
+  /** null = personagem pronto (`body`: Heroína ou Herói). */
+  setLook(look: ModularLook | null, body: HeroBody = 'heroine'): void {
     this.look = look;
+    this.body = body;
   }
 
   start(): void {
@@ -68,10 +70,10 @@ export class CharacterPreview {
     const zoom = (h * 0.8) / CHARACTER_H;
     const facing = TURN[Math.floor(this.t / TURN_EVERY) % TURN.length];
     const a: Actor = {
-      kind: 'heroine', x: 0, y: 0, visualZ: 0, facing, moving: true, walkTime: this.t, look: this.look ?? undefined,
+      kind: this.body, x: 0, y: 0, visualZ: 0, facing, moving: true, walkTime: this.t, look: this.look ?? undefined,
     };
     const fx = w / 2;
     const fy = h * 0.92;
-    if (!this.modular?.draw(ctx, fx, fy, zoom, a, this.t)) this.heroine.draw(ctx, fx, fy, zoom, a, this.t);
+    if (!this.modular?.draw(ctx, fx, fy, zoom, a, this.t)) this.sprites.get(this.body).draw(ctx, fx, fy, zoom, a, this.t);
   }
 }

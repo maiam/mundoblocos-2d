@@ -6,7 +6,7 @@ import { fromB64, toB64 } from '../net/b64';
 import { startingGrid } from './hotbar';
 import type { WorldId } from '../world/profiles';
 import type { World } from '../world/world';
-import type { Entities } from './entities';
+import { type Entities, HERO_BODIES, type HeroBody } from './entities';
 import type { Inventory } from './inventory';
 import { Monster } from './monster';
 import type { Player } from './player';
@@ -23,7 +23,7 @@ import type { ModularLook } from '../render/modular';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 export interface SaveData {
   v: number;
@@ -35,6 +35,8 @@ export interface SaveData {
   player: { x: number; y: number; z: number; hp: number; facing: Facing; hunger: number };
   /** Aparência montada na tela de entrada (personagem modular, ADR 0017); null = heroína. */
   look: ModularLook | null;
+  /** Personagem pronto quando não há `look` (Heroína ou Herói). */
+  body: HeroBody;
   /** Névoa do minimapa: células já descobertas, por chunk (bits em base64). */
   explored: Array<{ cx: number; cy: number; bits: string }>;
   /** Última tenda colocada (ponto de renascer). */
@@ -81,6 +83,7 @@ export function captureSave(s: GameState): SaveData {
     selected: s.selected,
     player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing, hunger: Math.round(p.hunger * 10) / 10 },
     look: s.entities.look,
+    body: s.entities.body,
     explored: s.exploration?.toSave() ?? [],
     tent: s.world.tent,
     chests: [...s.world.chests.entries()].map(([k, slots]) => {
@@ -136,6 +139,8 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 7) d = { ...d, v: 8, dungeon: null };
   // v8 → v9 (comida, Fase P entrega 4): barra de fome — quem já jogava começa satisfeito.
   if (d.v === 8) d = { ...d, v: 9, player: { ...d.player, hunger: HUNGER.max } };
+  // v9 → v10 (Herói): personagem pronto escolhido na tela de personagem; quem já jogava continua com a Heroína.
+  if (d.v === 9) d = { ...d, v: 10, body: 'heroine' };
   return d.v === SAVE_VERSION ? d : null;
 }
 
@@ -174,6 +179,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.facing = d.player.facing;
   p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));
   s.entities.look = d.look ?? null;
+  s.entities.body = HERO_BODIES.includes(d.body) ? d.body : 'heroine';
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;

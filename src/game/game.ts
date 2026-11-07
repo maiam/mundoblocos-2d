@@ -12,7 +12,7 @@ import { Camera } from './camera';
 import type { NetSession } from '../net/session';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
-import { Entities } from './entities';
+import { Entities, type HeroBody } from './entities';
 import type { InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import type { RecipeDestination } from './skills';
@@ -61,6 +61,8 @@ export interface GameOptions {
   };
   /** Aparência do personagem num mundo novo (o salvamento, se houver, prevalece); null/ausente = heroína. */
   look?: ModularLook | null;
+  /** Personagem pronto num mundo novo, quando não há `look` (o salvamento, se houver, prevalece). */
+  body?: HeroBody;
   /**
    * Vitrine da tela de entrada: o mundo roda e se desenha atrás dela, sem HUD, sem entrada e sem salvar
    * (a câmera passeia devagar pela Cidade do Despertar).
@@ -140,6 +142,7 @@ export class Game {
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
     this.entities.look = options.look ?? null;
+    if (options.body) this.entities.body = options.body;
     if (profile.sheep) {
       // Rebanho no campo, do lado de fora do portão da cidade.
       const [gx, gy] = this.world.outsideGate();
