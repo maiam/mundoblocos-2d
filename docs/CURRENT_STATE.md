@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.71.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.72.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Ferramenta e golpe dos outros na sala — v0.72.0
+- `PlayerState` ganhou `tool` (ferramenta na mão) e `swing` (golpes começados, `Player.swings`); `parseState` só aceita
+  ferramenta conhecida. `RemotePlayers` toca o golpe localmente quando `swing` muda (mesma duração e quadros do
+  jogador local) e o desenho sai de `heroActorKind` (função comum com `Entities.actors`). Protocolo 15.
 
 ## Personagem Hood — v0.71.0
 - `HeroBody` = `heroine` | `hero` | `hood`; `HERO_NAMES` dá o nome dos botões da tela de personagem (gerados de

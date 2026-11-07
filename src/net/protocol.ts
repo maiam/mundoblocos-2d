@@ -1,12 +1,13 @@
 import { type PlayerAction, parseAction } from '../world/actions';
 import type { Facing } from '../game/walker';
+import { TOOLS, type ToolId } from '../world/items';
 
 /**
  * Protocolo do multiplayer (ADR 0016): mensagens JSON entre jogo e servidor do Orvalis. Puro (sem DOM): o servidor usa
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 14;
+export const PROTOCOL_VERSION = 15;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -38,6 +39,10 @@ export interface PlayerState {
   y: number;
   facing: Facing;
   moving: boolean;
+  /** Ferramenta na mão (ausente = mãos vazias): os outros a veem no boneco. */
+  tool?: ToolId;
+  /** Golpes começados até agora: quando muda, quem vê toca a animação do golpe com `tool`. */
+  swing?: number;
 }
 
 /**
@@ -179,7 +184,10 @@ export function parseState(v: unknown): PlayerState | null {
   if (!v || typeof v !== 'object') return null;
   const s = v as Record<string, unknown>;
   if (!finite(s.x) || !finite(s.y) || !FACINGS.has(s.facing as string) || typeof s.moving !== 'boolean') return null;
-  return { x: s.x, y: s.y, facing: s.facing as Facing, moving: s.moving };
+  const out: PlayerState = { x: s.x, y: s.y, facing: s.facing as Facing, moving: s.moving };
+  if (typeof s.tool === 'string' && s.tool in TOOLS) out.tool = s.tool as ToolId;
+  if (Number.isInteger(s.swing) && (s.swing as number) >= 0 && (s.swing as number) < 2 ** 31) out.swing = s.swing as number;
+  return out;
 }
 
 /** Lê uma mensagem vinda de um jogador (texto da rede). Qualquer coisa malformada vira null — nunca exceção. */

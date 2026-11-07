@@ -74,8 +74,8 @@ Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositó
    - ✅ **Etapa 3 — aranhas e animais da sala** (v0.70.0, protocolo 13, ADR 0021): o servidor roda as `Entities` da sala
      e manda os bichos perto de cada jogador ~10×/s; golpe, comida e mordida decididos pela sala; espólio de aranha é
      item da sala. Falta: medir CPU/banda na Hostinger com gente de verdade (em Node: ~70 ms por minuto de jogo);
-     moradores seguem locais; bichos não são salvos (renascem pela seed ao reiniciar o servidor); ferramenta e golpe
-     visíveis para os outros (o boneco do outro não mostra a ferramenta nem a animação); descarregar chunks do servidor.
+     moradores seguem locais; bichos não são salvos (renascem pela seed ao reiniciar o servidor); descarregar chunks do
+     servidor. ~~Ferramenta e golpe visíveis para os outros~~ ✅ v0.72.0 (protocolo 15).
    - Fora da sala nada muda (tudo roda no aparelho).
    - ✅ **Salas fixas salvas** (v0.64.0, ADR 0020): Sala 1 (até 10), mundo e bolsas no servidor. Confirmado em 07/11 que
      `~/orvalis-dados` sobrevive a reinício e a deploy do servidor (`carregadaDoDisco` após o merge da v0.10.0);

@@ -6,6 +6,8 @@
   do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
   (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
   um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
+- **Na sala** (v0.72.0): os outros veem a ferramenta na mão e o golpe (`PlayerState.tool`/`swing` → `RemotePlayers`, o
+  mesmo desenho de `heroActorKind`).
 - **Hood** (v0.71.0): quarto personagem da tela (`HeroBody` ganha `hood`; botões gerados de `HERO_BODIES`/`HERO_NAMES`);
   caminhada sem ferramenta e com as 5 ferramentas. Sem folhas de golpe ainda: `hood-<ferramenta>-attack` aponta para a
   caminhada com a ferramenta (pendência da arte). Na sala, aparece como Hood para os outros (protocolo 14).
