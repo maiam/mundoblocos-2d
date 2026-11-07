@@ -193,7 +193,7 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
    (mundo) e `?materiais=1` (só dev, `dev/materialsScene.ts`: pilhas, chão, heroína no chão e sobre cubo, grade e linha
    de apoio).
 2. ✅ **Arte oficial** (v0.81.0–0.81.1): terra, grama, franja da grama (reduzida aos 32 px do padrão), areia e Pedra
-   Bruta. Sem frentes próprias: a frente repete o topo (regra). Conferir na cena a densidade de terra e grama (vieram
+   Bruta, estas três com frente própria desde a v0.81.2 (a grama usa a frente da terra); sem frente, a frente repete o topo. Conferir na cena a densidade de terra e grama (vieram
    em 1254 px; no jogo cada célula mostra o quadro inteiro, detalhes pequenos somem).
 3. **Transições horizontais** só no chão plano e na mesma altura: 8 vizinhos, diagonais só com os 2 cardeais, 47 casos
    a partir de ~13 formas em `assets-src/materiais/_mascaras/` giradas pelo script; prioridade por material do topo
