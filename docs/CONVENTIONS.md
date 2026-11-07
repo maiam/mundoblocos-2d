@@ -38,6 +38,7 @@
 - Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
 
 ## Arte e assets
+- **Escala**: ao integrar arte nova, confira-a na cena de escala (`?escala=1`, ADR 0022) ao lado dos personagens, animais e objetos existentes; não mude `TILE`, chunks nem colisão para "consertar" um desenho — ajuste a escala/âncora do sprite.
 - **Texturas sempre na direção em que foram desenhadas** (regra do dono do produto, 2026-11-03): chão, cubos e
   construções nunca giram nem espelham por célula — ele planeja a arte contando com essa direção. Para variar, ele
   envia **variações** (ex.: 3 gramas), sorteadas por célula, cada uma na direção desenhada.

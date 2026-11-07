@@ -184,4 +184,15 @@ const skipTitle = !!param || query.has('personagem') || profile.id !== 'principa
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
 void loadArtPack(profile.id)
   .then(() => loadBlockArt())
-  .then(() => (skipTitle ? start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed()) : showTitle()));
+  .then(() => {
+    // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
+    // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.
+    if (import.meta.env.DEV && query.has('escala')) {
+      void import('./dev/scaleScene').then((m) => {
+        (window as unknown as { __scaleScene: unknown }).__scaleScene = m.startScaleScene(canvas);
+      });
+      return;
+    }
+    if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
+    else showTitle();
+  });

@@ -30,7 +30,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 | Personagens e tela de entrada | ✅ | Heroína, Herói, Hood, Gino + chibi modular (só caminha); sentar nos quatro prontos (v0.80.0) |
 | Minimapa com névoa | ✅ v0.51.0 | mapa grande ainda não |
 | XP, níveis e profissões com proficiência | ❌ | Fase P, etapas 2 e 3 |
-| Qualidade | ✅ | 211 testes, typecheck limpo, bench, CI (Verificação) a cada PR; verificação no navegador a cada entrega |
+| Qualidade | ✅ | 214 testes, typecheck limpo, bench, CI (Verificação) a cada PR; verificação no navegador a cada entrega |
 | Peso dos artefatos | ✅ | imagens em arquivos separados (ADR 0013): **início ~2,0 MB** (orçamento < 3 MB, desde a v0.74.0), dungeon e folhas de personagem sob demanda; Santuário 0,7 MB |
 
 ## 2. Plano por fases
@@ -154,6 +154,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 5. Botão de ação: mão vazia + toque colhe trigo maduro / faz carinho na ovelha; alvo pela diagonal do joystick.
 
 ### Fase 5 — Visual e polimento
+**Escala visual (ADR 0022):** ✅ cena de escala `?escala=1` (v. CHANGELOG, 07/11). Próximo, **depois de olhar a cena** (a normalização das alturas não é automática): (a) catálogo gerado das escalas existentes; (b) validação no `process-sprite.py` — exige tolerâncias numéricas nos contratos; (c) calcular as razões de altura (`297/288`…) pela altura do corpo em vez de digitar; (d) entrar o chibi modular na fila; (e) reavaliar o cavalo (1,6 vs 2,2) antes de montaria.
 0. **Personagem modular (humano chibi v02)** — ADR 0017, `assets-src/personagens/CONTRATO.md`.
    a. _Arte_: revisão 4 corrige a sequência dos braços à direita e o encaixe das mãos nas roupas. Conferir
       `previas/v02/direita-antes-depois.gif` e a montagem no cenário. Guarda-roupa fantasia 01 em revisão (onze peças, treze folhas, 16 combinações sobrepostas;

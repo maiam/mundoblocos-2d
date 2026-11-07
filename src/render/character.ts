@@ -16,6 +16,11 @@ const ROW: Record<Facing, number> = { down: 0, left: 1, right: 2, up: 3 };
 /** Altura desenhada da heroína em pixels de mundo (~2,2 células). */
 export const CHARACTER_H = TILE * 2.2;
 
+/** Altura desenhada (px de mundo) de um ator: lida pela cena de escala (ADR 0022) e pelos testes. */
+export function actorHeight(kind: ActorKind): number {
+  return SPECS[kind].height;
+}
+
 interface SheetSpec {
   cols: number;
   rows: number;

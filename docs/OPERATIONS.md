@@ -263,6 +263,8 @@ grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `r
 
 **PWA**: `python3 scripts/make-icons.py` (Pillow) gera, a partir do ícone oficial `assets-src/icone-orvalis.webp` (selo redondo, cantos transparentes), `public/icon-192.png`, `icon-512.png` (purpose "any"; o 192 também é o favicon), `icon-maskable-512.png` (selo a 80% sobre fundo `#120f2c`) e `apple-touch-icon.png` (180×180, fundo opaco). Trocar o ícone = substituir o `.webp` e rodar o script.
 
+**Cena de escala** (ADR 0022, só em desenvolvimento): `npm run dev` e abrir `http://localhost:5173/?escala=1` — personagens, animais, monstros, baú, bancos, árvores e uma casa 5×5 sobre a grade, desenhados pelo renderizador real. Teclas: `G` grade · `A` âncoras e alturas · `B` células bloqueadas · `L` nomes · `+`/`−` zoom · setas · `0` reenquadra. Use ao integrar arte nova (compare com o que já existe; a fila é `src/dev/scaleLayout.ts`). Captura de referência: `docs/assets/escala-referencia.jpg` (viewport 1280 × 720). Não entra no build de produção.
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

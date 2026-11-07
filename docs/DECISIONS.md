@@ -24,6 +24,7 @@
 | 0019 | Covil isolado (canto fixo) com entrada de caverna a ≥ 10 chunks do castelo; mundo da Cidade 1 só de florestas; visão de andares/mundos ligados por portais | [0019](adr/0019-covil-isolado-e-andares.md) |
 | 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
 | 0021 | Bichos da sala: o servidor roda as mesmas `Entities` (jogadores como avatares); o aparelho na sala só espelha (`CreatureMirror`); golpe/comida/mordida decididos pela sala; moradores locais | [0021](adr/0021-bichos-da-sala.md) |
+| 0022 | Escala visual: geometria e contratos de arte preservados, sem unidade nova; **cena de escala** `?escala=1` (só dev) compara sprites no renderizador real; catálogo, validação e normalização de alturas ficam para depois | [0022](adr/0022-escala-visual-e-cena-de-escala.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |
