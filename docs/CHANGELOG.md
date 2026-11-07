@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.78.0 — 2026-11-07
+- **Cidade com piso de Tijolo de Pedra**: ruas, praças, pátio do castelo e calçadas das casas passam a ter o mesmo piso
+  (antes eram quatro pedras diferentes). Os gramados continuam verdes.
+
 ## 0.77.0 — 2026-11-07
 - **Novo personagem: Gino** (folhas do dono do produto), na tela de personagem ao lado de Heroína, Herói e Hood: anda
   sem ferramenta e segurando cada uma das 5 ferramentas, com os 5 golpes. Na sala, os outros veem o Gino.

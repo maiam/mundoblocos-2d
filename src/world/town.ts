@@ -133,6 +133,8 @@ function buildTown(): TownLayout {
   const idx = (x: number, y: number) => y * W + x;
   const inside = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H;
   const ground = new Uint8Array(W * H).fill(Block.GRASS);
+  /** Piso de toda a parte pavimentada (ruas, praças, pátio, calçadas, base da muralha): Tijolo de Pedra (dono do produto, 07/11). */
+  const FLOOR = Block.STONE_BRICK;
   const objects = new Uint8Array(W * H);
   const upper = new Uint8Array(W * H);
   const use = new Uint8Array(W * H);
@@ -150,7 +152,7 @@ function buildTown(): TownLayout {
     for (let x = 0; x < W; x++) {
       if (x >= WALL && y >= WALL && x < W - WALL && y < H - WALL) continue;
       const i = idx(x, y);
-      ground[i] = Block.STONE_COBBLE;
+      ground[i] = FLOOR;
       if (y >= H - WALL && x >= GX0 && x <= GX1) { use[i] = STREET; continue; }
       use[i] = WALLED;
       objects[i] = h(x, y, 1) < 0.22 ? Block.STONE_BRICK_CRACKED : Block.STONE_BRICK;
@@ -213,10 +215,10 @@ function buildTown(): TownLayout {
     rect(x0, y0, x1, y1, (_x, _y, i) => { use[i] = PLAZA; ground[i] = floor; });
   const MID = 70; // linha central da praça central
   const START_Y = H - 12;
-  plaza(CX0 + 2, CY1, CX0 + 23, COURT_Y1, Block.STONE_POLISHED); // pátio do castelo (Setor 6)
-  plaza(W / 2 - 9, MID - 6, W / 2 + 9, MID + 6, Block.STONE_FLOOR); // praça central (Setor 4)
-  plaza(W / 2 - 9, H - 17, W / 2 + 8, H - TD - 1, Block.STONE_FLOOR); // praça inicial (Setor 1)
-  rect(GX0, H - TD, GX1, H - 1, (_x, _y, i) => { use[i] = STREET; ground[i] = Block.STONE_COBBLE; }); // vão do portão
+  plaza(CX0 + 2, CY1, CX0 + 23, COURT_Y1, FLOOR); // pátio do castelo (Setor 6)
+  plaza(W / 2 - 9, MID - 6, W / 2 + 9, MID + 6, FLOOR); // praça central (Setor 4)
+  plaza(W / 2 - 9, H - 17, W / 2 + 8, H - TD - 1, FLOOR); // praça inicial (Setor 1)
+  rect(GX0, H - TD, GX1, H - 1, (_x, _y, i) => { use[i] = STREET; ground[i] = FLOOR; }); // vão do portão
 
   // --- 5a) Construções obrigatórias reservadas ANTES das ruas (Setores 3, 4 e 5) ---
   const required: TownBuilding[] = [
@@ -425,9 +427,9 @@ function buildTown(): TownLayout {
   }
   rect(0, 0, W - 1, H - 1, (_x, _y, i) => { if (use[i] === RESERVED && i > idx(0, COURT_Y1)) use[i] = FREE; });
 
-  // Pavimento: ruas com Pedra Irregular e Pedra Rachada misturadas.
-  rect(0, 0, W - 1, H - 1, (x, y, i) => {
-    if (use[i] === STREET) ground[i] = h(x, y, 3) < 0.3 ? Block.STONE_CRACKED : Block.STONE_COBBLE;
+  // Pavimento: as ruas no mesmo piso das praças.
+  rect(0, 0, W - 1, H - 1, (_x, _y, i) => {
+    if (use[i] === STREET) ground[i] = FLOOR;
   });
 
   const isFree = (x: number, y: number) => inside(x, y) && use[idx(x, y)] === FREE && !keepOff[idx(x, y)];
@@ -491,7 +493,7 @@ function buildTown(): TownLayout {
       for (let k = 0; k < path; k++) {
         const i = idx(dx, y + d + k);
         use[i] = WALKWAY;
-        ground[i] = Block.STONE_COBBLE;
+        ground[i] = FLOOR;
       }
       place(id, x, y, 'Casa', true);
     }

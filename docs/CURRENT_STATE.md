@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.77.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.78.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Piso da cidade em Tijolo de Pedra — v0.78.0
+- `buildTown`: um piso só (`FLOOR` = `STONE_BRICK`) para ruas, praças, pátio, calçadas, vão do portão e base da muralha.
+  Muda a cidade de todas as seeds (gerada, igual em toda seed). Chunk na borda da cidade já editado e salvo (local ou na
+  sala) guarda o chão antigo naquele pedaço até ser refeito — caso raro, aceito.
 
 ## Personagem Gino — v0.77.0
 - Lista única de personagens prontos: `APPEARANCE_BODIES` em `net/protocol.ts` (rede) = `HERO_BODIES` (jogo);

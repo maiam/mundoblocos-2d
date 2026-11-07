@@ -47,7 +47,7 @@ describe('Cidade do Despertar', () => {
     expect(w.isWalkable(...t.start)).toBe(true);
   });
 
-  it('muralha fechada com um único portão (sul); ruas de Pedra Irregular/Rachada e muralha de Tijolo', () => {
+  it('muralha fechada com um único portão (sul); ruas, praças e muralha de Tijolo de Pedra', () => {
     const w = new World(3);
     const t = w.town!;
     const a = t.area;
@@ -60,13 +60,11 @@ describe('Cidade do Despertar', () => {
     const wallIds = new Set<number>([Block.STONE_BRICK, Block.STONE_BRICK_CRACKED]);
     expect(wallIds.has(w.getObject(a.x0 + 10, a.y0))).toBe(true);
     expect(wallIds.has(w.getLevel(a.x0 + 10, a.y0, 1))).toBe(true);
-    // Ruas: só pedra irregular e rachada.
+    // Piso pavimentado (ruas, praças, pátio, calçadas): só Tijolo de Pedra (dono do produto, 07/11).
     const L = townLayout();
     const streetIds = new Set<number>();
-    for (let i = 0; i < L.street.length; i++) {
-      if (L.street[i] && L.ground[i] !== Block.STONE_FLOOR && L.ground[i] !== Block.STONE_POLISHED) streetIds.add(L.ground[i]);
-    }
-    expect([...streetIds].sort()).toEqual([Block.STONE_COBBLE, Block.STONE_CRACKED].sort());
+    for (let i = 0; i < L.street.length; i++) if (L.street[i]) streetIds.add(L.ground[i]);
+    expect([...streetIds]).toEqual([Block.STONE_BRICK]);
   });
 
   it('castelo no fundo, oposto ao portão, e alcançável a pé; todas as portas também', () => {
