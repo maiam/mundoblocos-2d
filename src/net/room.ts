@@ -3,7 +3,7 @@ import { applyAction } from '../world/actions';
 import { World } from '../world/world';
 import { fromB64, toB64 } from './b64';
 import {
-  type Applied, type ClientMessage, type Grown, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, type RoomBag, type RoomChunk,
+  type Applied, type ClientMessage, DEFAULT_APPEARANCE, type Grown, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, type RoomBag, type RoomChunk,
   sanitizeName, type ServerMessage,
 } from './protocol';
 
@@ -67,7 +67,7 @@ export class Room {
     // A bolsa é guardada pelo nome: dois ao mesmo tempo com o mesmo nome dividiriam a bolsa.
     if ([...this.players.values()].some((p) => bagKey(p.name) === bagKey(name))) return fail('name', `Já tem alguém com o nome ${name} na sala: escolha outro.`);
     const id = this.nextId++;
-    const player: PlayerInfo = { id, name, state: null };
+    const player: PlayerInfo = { id, name, state: null, appearance: hello.appearance ?? DEFAULT_APPEARANCE };
     const others = [...this.players.values()];
     this.players.set(id, player);
     return {

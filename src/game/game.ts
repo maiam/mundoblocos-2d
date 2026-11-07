@@ -108,7 +108,7 @@ export class Game {
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
   /** Outros jogadores da sala (multiplayer). */
-  private readonly remotes = new RemotePlayers();
+  private readonly remotes = new RemotePlayers(art().modular?.manifest);
   /** Névoa do minimapa: o que o jogador já viu (salvo junto com o mundo). */
   readonly exploration = new Exploration();
   private minimap: Minimap | null = null;

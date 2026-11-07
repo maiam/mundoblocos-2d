@@ -86,7 +86,8 @@ function goOnline(name: string, room: number, attempt = 1): void {
     game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, body, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
-  s.join(name, room);
+  // Como os outros vão me ver: o mesmo personagem do jogo (chibi com as peças, ou Heroína/Herói).
+  s.join(name, room, { body: game?.entities.body ?? 'heroine', look: (game?.entities.look as Record<string, string> | null) ?? null });
 }
 
 /** Sai da sala e volta ao mundo que estava jogando sozinho (salvo). */

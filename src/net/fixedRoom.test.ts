@@ -4,7 +4,7 @@ import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { LoopbackServer } from './loopback';
-import { ROOMS } from './protocol';
+import { PROTOCOL_VERSION, ROOMS } from './protocol';
 import { Room } from './room';
 import { NetSession } from './session';
 
@@ -70,7 +70,7 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
 
   it('o servidor grava e recarrega a sala: mundo, hora e bolsas', () => {
     const r = new Room(1, 'Sala 1', ROOMS[0].seed, mulberry32(1));
-    const j = r.join({ t: 'hello', v: 8, name: 'Ana', room: 1 });
+    const j = r.join({ t: 'hello', v: PROTOCOL_VERSION, name: 'Ana', room: 1 });
     const spot = freeSpot(r.world);
     r.handle(j.id!, { t: 'action', seq: 1, a: { kind: 'place', x: spot[0], y: spot[1], block: Block.STONE } });
     r.handle(j.id!, { t: 'bag', bag: { inventory: { apple: 2 }, hotbar: null, x: 1, y: 2 } });
@@ -82,10 +82,28 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
     expect(back.restore(snap)).toBe(true);
     expect(back.world.getObject(...spot)).toBe(Block.STONE);
     expect(back.time).toBeCloseTo(r.time);
-    const w = back.join({ t: 'hello', v: 8, name: 'ana', room: 1 });
+    const w = back.join({ t: 'hello', v: PROTOCOL_VERSION, name: 'ana', room: 1 });
     const welcome = w.out[0].msg as { t: 'welcome'; bag: unknown };
     expect(welcome.bag).toEqual({ inventory: { apple: 2 }, hotbar: null, x: 1, y: 2 });
     // Arquivo de outra sala/seed não é aplicado.
     expect(new Room(1, 'Sala 1', 123).restore(snap)).toBe(false);
+  });
+
+  it('cada um aparece para os outros com o personagem que escolheu (Herói, chibi com peças)', async () => {
+    const server = new LoopbackServer(mulberry32(6));
+    const a = client(server);
+    a.s.join('Ana', 1, { body: 'hero', look: null });
+    await flush();
+    const b = client(server);
+    b.s.join('Bia', 1, { body: 'heroine', look: { cabelo: 'curto-castanho', tronco: 'blusa-ocre' } });
+    await flush();
+    expect([...b.s.others.values()][0].appearance).toEqual({ body: 'hero', look: null });
+    expect([...a.s.others.values()][0].appearance.look).toEqual({ cabelo: 'curto-castanho', tronco: 'blusa-ocre' });
+    // Aparência estranha vinda da rede vira a padrão.
+    const c = client(server);
+    (c.s as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, name: 'Caio', room: 1, appearance: { body: 'dragão', look: { '<x>': 1 } } });
+    await flush();
+    const caio = [...a.s.others.values()].find((p) => p.name === 'Caio')!;
+    expect(caio.appearance).toEqual({ body: 'heroine', look: null });
   });
 });

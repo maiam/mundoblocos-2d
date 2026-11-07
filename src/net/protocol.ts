@@ -6,7 +6,7 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 8;
+export const PROTOCOL_VERSION = 9;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -40,10 +40,22 @@ export interface PlayerState {
   moving: boolean;
 }
 
+/**
+ * Como o jogador aparece para os outros: personagem pronto (`body`) ou, com `look`, o chibi modular com as peças
+ * escolhidas. Quem desenha confere as peças no próprio manifesto (`cleanLook`); peça desconhecida vira a padrão.
+ */
+export interface Appearance {
+  body: 'heroine' | 'hero';
+  look: Record<string, string> | null;
+}
+
+export const DEFAULT_APPEARANCE: Appearance = { body: 'heroine', look: null };
+
 export interface PlayerInfo {
   id: number;
   name: string;
   state: PlayerState | null;
+  appearance: Appearance;
 }
 
 /** Ação aplicada pelo servidor (vale para todos, inclusive quem fez). */
@@ -54,7 +66,7 @@ export interface Applied {
 
 export type ClientMessage =
   /** Entrar numa sala fixa pelo número (`ROOMS`). */
-  | { t: 'hello'; v: number; name: string; room: number }
+  | { t: 'hello'; v: number; name: string; room: number; appearance?: Appearance }
   | { t: 'state'; s: PlayerState }
   /** `seq` volta no `rejected`, para o jogo saber qual ação não valeu. */
   | { t: 'action'; seq: number; a: PlayerAction }
@@ -120,7 +132,7 @@ export function parseClientMessage(text: string): ClientMessage | null {
   switch (o.t) {
     case 'hello':
       if (!Number.isInteger(o.v) || typeof o.name !== 'string' || !Number.isInteger(o.room)) return null;
-      return { t: 'hello', v: o.v as number, name: o.name, room: o.room as number };
+      return { t: 'hello', v: o.v as number, name: o.name, room: o.room as number, appearance: parseAppearance(o.appearance) };
     case 'bag': {
       const bag = parseBag(o.bag);
       return bag ? { t: 'bag', bag } : null;
@@ -160,4 +172,21 @@ export function parseBag(v: unknown): RoomBag | null {
     hotbar = o.hotbar as Array<string | null>;
   }
   return { inventory, hotbar, x: o.x as number, y: o.y as number };
+}
+
+const PIECE_RE = /^[a-z0-9-]{1,40}$/;
+
+/** Lê a aparência vinda da rede; qualquer coisa estranha vira a padrão (Heroína). */
+export function parseAppearance(v: unknown): Appearance {
+  if (!v || typeof v !== 'object') return DEFAULT_APPEARANCE;
+  const o = v as Record<string, unknown>;
+  const body = o.body === 'hero' ? 'hero' : 'heroine';
+  let look: Record<string, string> | null = null;
+  if (o.look && typeof o.look === 'object') {
+    const entries = Object.entries(o.look as Record<string, unknown>);
+    if (entries.length <= 12 && entries.every(([k, val]) => PIECE_RE.test(k) && typeof val === 'string' && PIECE_RE.test(val))) {
+      look = Object.fromEntries(entries) as Record<string, string>;
+    }
+  }
+  return { body, look };
 }

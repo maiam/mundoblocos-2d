@@ -1,13 +1,17 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.65.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.66.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Aparência de cada jogador na sala — v0.66.0
+- `Appearance` (`body` heroine/hero + `look` do chibi) no `hello` e em `PlayerInfo` (`parseAppearance`: o que vier
+  estranho vira Heroína); `RemotePlayers(manifest)` desenha cada um com o seu personagem (`cleanLook`). Protocolo 9.
 
 ## Herói e escolha de personagem no "Novo mundo" — v0.65.0
 - `HeroBody` (`heroine` | `hero`) em `Entities.body` decide as folhas do personagem pronto (`${body}-${ferramenta}` /
   `-attack`); `SaveData.body` (v10); `GameOptions.body`; `TitleScreen` com Herói e `creatorOnly`/`onBack` (menu →
   `chooseCharacterForNewWorld` em `main.ts`); prévia por `body`. Folhas `hero*.webp` (`assets-src/hero/`), fora do
   orçamento de início. Na sala, o próprio personagem segue o escolhido (v0.65.1: `body` passado ao `Game` da sala em
-  `main.ts`); os outros jogadores ainda são desenhados como Heroína (aparência na rede: NEXT_STEPS).
+  `main.ts`); desde a v0.66.0 os outros também o veem com o personagem escolhido.
 
 ## Salas fixas salvas no servidor — v0.64.0 (ADR 0020)
 - `ROOMS` (Sala 1, seed 20261106), `MAX_PLAYERS` 10, `hello` com número da sala; `welcome` com `chunks` (mundo da sala),
