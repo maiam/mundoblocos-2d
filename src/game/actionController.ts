@@ -56,6 +56,8 @@ export interface ActionContext {
   joystickActive(): boolean;
   /** Materiais coletados (colocar gasta, quebrar solta o bloco) — perfil `collectBlocks`. */
   collectBlocks: boolean;
+  /** Na sala: o que cai ao quebrar/colher é criado pelo servidor (itens da sala), não aqui. */
+  sharedLoot?: boolean;
   /** Algo do inventário foi gasto (a grade libera espaços vazios). */
   onConsumed(): void;
   /** Tocou num baú ao alcance: o Game abre o painel dele. */
@@ -196,7 +198,7 @@ export class ActionController {
     if (this.world.canPick(x, y)) {
       // Macieira carregada: tocar (qualquer item em mãos) colhe as maçãs; elas caem ao pé da árvore.
       if (this.inReach(x, y) && this.world.pick(x, y)) {
-        this.drops.spawn(x + 0.5, y + 0.7, pickDrops());
+        if (!this.ctx.sharedLoot) this.drops.spawn(x + 0.5, y + 0.7, pickDrops());
         this.ctx.onAction?.({ kind: 'pick', x, y });
       }
       return true;
@@ -485,11 +487,11 @@ export class ActionController {
       const hadTent = this.world.tent;
       const broken = this.world.breakBlock(t.x, t.y);
       if (broken !== null) this.ctx.onAction?.({ kind: 'break', x: t.x, y: t.y, tool: this.tool });
-      if (contents.length) this.drops.spawn(t.x + 0.5, t.y + 0.7, contents);
+      if (contents.length && !this.ctx.sharedLoot) this.drops.spawn(t.x + 0.5, t.y + 0.7, contents);
       if (hadTent && !this.world.tent) this.ctx.notify('Ponto de renascimento voltou ao início');
       // O que cai no chão para ser coletado: colheita (pá e picareta destroem plantas sem drop) e, com coleta,
       // o próprio material (árvore dá toras).
-      if (broken !== null) this.drops.spawn(t.x + 0.5, t.y + 0.7, breakDrops(this.tool, broken, this.ctx.collectBlocks));
+      if (broken !== null && !this.ctx.sharedLoot) this.drops.spawn(t.x + 0.5, t.y + 0.7, breakDrops(this.tool, broken, this.ctx.collectBlocks));
       this.entities.settleAll(this.world);
       h.target = null;
       h.progress = 0;
