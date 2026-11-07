@@ -25,6 +25,15 @@ Apenas apresentação; lê `World`, nunca escreve.
   (`main.ts`); a arte da dungeon vem depois (`loadDungeonArt` → `addDungeonTextures` → `ChunkRenderer.invalidateAll`,
   ADR 0013). Imagens são URLs de arquivos ao lado da página; o render nunca lê pixels de canvas.
 
+## Padrão de Materiais V2 (em validação, ADR 0022)
+- A arte entrega **material plano** 128×128 (`assets-src/materiais/<material>/{top,front,front_overlay}.png`,
+  contrato na pasta); `scripts/build-materials.py` gera `materials-v2.webp` (linhas top 64, f16 32, f18 36, o16, o18)
+  + `materials-v2.json`. O motor monta o cubo: `composeCube(top, front, contorno, alturaDaFrente)`; ordem interna frente
+  → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
+- `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco) e o estado do atlas; `textures.applyMaterialsV2` troca os
+  blocos-piloto quando `?blocos=v2`; `textures.qaMaterial` serve a cena `?escala=1` (`render/scaleScene.ts`).
+- Transições entre chãos (etapa 3) só no chão plano e na mesma altura; máscaras são formas e podem girar (CONVENTIONS).
+
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):
   material → topo contínuo do atlas **sempre na direção desenhada** (nunca gira nem espelha; só a variação, quando há mais de uma, é sorteada por célula) · água → tile procedural ·

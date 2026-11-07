@@ -1,6 +1,15 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.80.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.81.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Padrão de Materiais V2, etapas 0 e 1 — v0.81.0 (ADR 0022)
+- Em validação, **desligado para o jogador**. `scripts/build-materials.py` lê `assets-src/materiais/{areia,terra,grama}`
+  (provisórias, tiradas do atlas antigo) e gera `materials-v2.webp` (192×200, ~8 kB) + manifesto (linhas top/f16/f18/
+  o16/o18). `composeCube` aceita a altura da frente. `render/materialsV2.ts`: `V2_BLOCKS` (grama = topo grama + frente
+  terra + franja) e a chave `?blocos=v2` (blocos-piloto no mundo, frente 18, sem as variações legadas da grama).
+- `?escala=1` (`render/scaleScene.ts`): só a cena de comparação legado 18 · V2 18 · V2 16 (chão plano, cubos, pilha de
+  3, heroína no chão e sobre cubo, grade e linhas de apoio/topo da pilha). Sem as chaves o atlas V2 não baixa.
+- Ainda não há transições entre chãos (etapa 3) nem decisão 16/18 (etapa 4).
 
 ## Todos sentam — v0.80.0
 - `SIT_BODIES` = os quatro personagens prontos; folhas `heroine-sit`, `hero-sit`, `hood-sit` (mesma sequência da do

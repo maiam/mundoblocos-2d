@@ -15,3 +15,4 @@ dist-net/
 /assets-src/personagens/**/*.ora
 /assets-src/personagens/**/*.kra.kra
 /assets-src/personagens/**/*autosave*
+/assets-src/materiais/_preview/

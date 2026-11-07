@@ -23,6 +23,7 @@
 | 0018 | Ferramentas por material: tipo × material; arte segue `assets-src/ferramentas/CONTRATO.md` (ficha, ícones padronizados, camada de mão sobre pose-base sem ferramenta) antes de entrar no motor | [0018](adr/0018-ferramentas-por-material.md) |
 | 0019 | Covil isolado (canto fixo) com entrada de caverna a ≥ 10 chunks do castelo; mundo da Cidade 1 só de florestas; visão de andares/mundos ligados por portais | [0019](adr/0019-covil-isolado-e-andares.md) |
 | 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
+| 0022 | Padrão de Materiais V2: a arte entrega texturas planas 128×128 por material; o motor monta topo/frente (`composeCube` com altura da frente); validação atrás de `?blocos=v2` e `?escala=1`; mistura só no chão plano; máscaras = formas giráveis | [0022](adr/0022-padrao-materiais-v2.md) |
 | 0021 | Bichos da sala: o servidor roda as mesmas `Entities` (jogadores como avatares); o aparelho na sala só espelha (`CreatureMirror`); golpe/comida/mordida decididos pela sala; moradores locais | [0021](adr/0021-bichos-da-sala.md) |
 
 ## Produto e regras de jogo

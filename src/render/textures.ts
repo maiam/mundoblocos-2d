@@ -2,6 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS, WALLS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
+import { materialsV2InWorld, v2Faces, v2GroundTop } from './materialsV2';
 import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getWallArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
@@ -273,17 +274,19 @@ function materialCube(index: number, outline: string): Sprite {
 
 /**
  * Monta um cubo 3/4 a partir de duas faces: `drawTop` pinta [0, T) e `drawFront`
- * pinta [T, T + F). Aplica sombra na frente, aresta clara e contorno.
+ * pinta [T, T + front). Aplica sombra na frente, aresta clara e contorno. `front` = altura da frente (padrão
+ * `CUBE_FRONT`; a cena `?escala=1` compara 16 e 18 — ADR 0022).
  */
-export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string): Sprite {
-  const [c, ctx] = canvas(T, T + F);
+export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string, front: number = F): Sprite {
+  const F_ = front;
+  const [c, ctx] = canvas(T, T + F_);
   ctx.save();
-  roundRect(ctx, 0.5, 0.5, T - 1, T + F - 1, 3);
+  roundRect(ctx, 0.5, 0.5, T - 1, T + F_ - 1, 3);
   ctx.clip();
   drawFront(ctx);
   // Face frontal um pouco mais escura (luz vem de cima).
   ctx.fillStyle = 'rgba(30, 20, 60, 0.18)';
-  ctx.fillRect(0, T, T, F);
+  ctx.fillRect(0, T, T, F_);
   drawTop(ctx);
   // Aresta clara entre topo e frente + filete de luz no topo.
   ctx.fillStyle = 'rgba(255, 250, 230, 0.45)';
@@ -291,11 +294,47 @@ export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) =
   ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
   ctx.fillRect(0, 0, T, 1.5);
   ctx.restore();
-  roundRect(ctx, 0.5, 0.5, T - 1, T + F - 1, 3);
+  roundRect(ctx, 0.5, 0.5, T - 1, T + F_ - 1, 3);
   ctx.strokeStyle = outline;
   ctx.lineWidth = 1;
   ctx.stroke();
-  return { canvas: c, ox: 0, oy: -F, w: T, h: T + F, hit: { x: 0, y: -F, w: T, h: T + F } };
+  return { canvas: c, ox: 0, oy: -F_, w: T, h: T + F_, hit: { x: 0, y: -F_, w: T, h: T + F_ } };
+}
+
+/**
+ * `?blocos=v2` (ADR 0022): troca chão e cubo dos blocos-piloto pela montagem V2, com a frente na altura atual do
+ * mundo (F). As variações legadas da grama saem (o V2 ainda não tem variações).
+ */
+function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
+  for (const id of MATERIALS) {
+    const faces = v2Faces(id, T, (F as number) === 16 ? 16 : 18);
+    if (!faces) continue;
+    const [c, ctx] = canvas(T, T);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    v2GroundTop(id, ctx, c.width, c.height);
+    groundTop.set(id, c);
+    objects.set(id, composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20'));
+    groundVariants.delete(id);
+    variants.delete(id);
+  }
+}
+
+/**
+ * Peças avulsas para a cena de escala (`?escala=1`, render/scaleScene.ts): cubo e chão de um material no atlas
+ * legado ou no V2, com a frente pedida. Null se faltar a arte.
+ */
+export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2', front: number): { cube: Sprite; ground: HTMLCanvasElement } | null {
+  if (mode === 'legacy') {
+    const i = MATERIALS.indexOf(id);
+    if (i < 0 || !getBlockAtlas()) return null;
+    return { cube: materialCube(i, OUTLINE[id] ?? '#3a2a20'), ground: materialTop(i) };
+  }
+  const faces = v2Faces(id, T, front === 16 ? 16 : 18);
+  if (!faces) return null;
+  const [c, ctx] = canvas(T, T);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  v2GroundTop(id, ctx, c.width, c.height);
+  return { cube: composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20', front), ground: c };
 }
 
 /** Contorno de cada material (cor escura da própria arte). */
@@ -556,6 +595,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
       variants.set(id, [objects.get(id)!, ...cols.map((c) => materialCube(c, OUTLINE[id] ?? '#3a2a20'))]);
     }
   }
+  if (materialsV2InWorld()) applyMaterialsV2(groundTop, groundVariants, objects, variants);
   // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
   const tentImg = getTentSprite();
   if (tentImg) {

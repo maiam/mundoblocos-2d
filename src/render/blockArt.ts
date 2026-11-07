@@ -1,4 +1,5 @@
 import { art } from './art';
+import { setMaterialsV2 } from './materialsV2';
 
 /**
  * Imagens de blocos carregadas antes do jogo começar (para chão e cubos já nascerem com a arte), a partir do
@@ -78,6 +79,17 @@ export async function loadBlockArt(): Promise<void> {
     const [top, flow] = await Promise.all([load(a.water.top), load(a.water.flow)]);
     water = { top, flow };
   }
+}
+
+/**
+ * Atlas do Padrão de Materiais V2 (ADR 0022), só quando pedido (`?blocos=v2` no jogo, ou a cena `?escala=1`):
+ * `useInWorld` liga os blocos-piloto no mapa. Sem o atlas no pacote, nada acontece.
+ */
+export async function loadMaterialsV2(useInWorld: boolean): Promise<boolean> {
+  const m = art().materialsV2;
+  if (!m) return false;
+  setMaterialsV2(await load(m.atlas), m.manifest, useInWorld);
+  return true;
 }
 
 /**

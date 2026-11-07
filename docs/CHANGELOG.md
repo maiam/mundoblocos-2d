@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.81.0 — 2026-11-07
+- **Padrão de Materiais V2 — preparação** (nada muda no jogo): o padrão definido com a área de arte entrou no
+  repositório (ADR 0022, contrato de entrega em `assets-src/materiais/`) com o pipeline que monta os blocos a partir de
+  texturas planas. Para comparar a altura da frente dos cubos (16 ou 18), abra o jogo com `?escala=1`; para ver areia,
+  terra e grama no novo formato no mundo, `?blocos=v2`. As texturas ainda são provisórias, até chegar a arte oficial.
+
 ## 0.80.0 — 2026-11-07
 - **Todos sentam**: Heroína, Herói e Hood ganharam a folha de sentar e levantar (antes só o Gino). Cada um sentado tem o
   mesmo tamanho de quando está em pé; o Gino sentado estava um pouco maior e foi acertado.

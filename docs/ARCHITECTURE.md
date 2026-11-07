@@ -65,7 +65,9 @@ src/
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
-    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
+    textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube(…, frente)
+    materialsV2.ts             Padrão de Materiais V2 em validação: V2_BLOCKS, atlas V2, chave ?blocos=v2 (ADR 0022)
+    scaleScene.ts              cena ?escala=1: legado 18 · V2 18 · V2 16 lado a lado (ADR 0022)
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)

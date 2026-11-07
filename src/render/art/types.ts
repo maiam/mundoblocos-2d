@@ -24,6 +24,11 @@ export interface ArtPack {
   /** Atlas 3/4 dos 8 materiais (`extract-blocks.py`) e ícones da hotbar por bloco. */
   blockAtlas?: string;
   materialIcons: Partial<Record<number, string>>;
+  /**
+   * Padrão de Materiais V2 em validação (ADR 0022, `scripts/build-materials.py`): atlas + manifesto. Só baixa com
+   * `?blocos=v2` ou na cena `?escala=1` (fora do orçamento de início).
+   */
+  materialsV2?: { atlas: string; manifest: import('../materialsV2').MaterialsV2Manifest };
   /** Atlas e ícones dos blocos celestiais (Santuário). */
   celestialAtlas?: string;
   celestialIcons: Partial<Record<number, string>>;
