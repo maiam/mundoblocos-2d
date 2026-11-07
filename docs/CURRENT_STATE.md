@@ -1,6 +1,10 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.74.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.75.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Golpes do Hood — v0.75.0
+- `hood-<ferramenta>-attack` com folhas próprias (`assets-src/hood/hood-*-attack-sheet.png`, já na ordem frente,
+  esquerda, direita, costas; picareta com `--respace 40`). Altura pelo desenho (298–332 px contra 292 da caminhada).
 
 ## Animais seguem quem alimenta; leite, ovo, queijo e torta — v0.74.0
 - `Breeder.feed(by)` guarda `leader`; apaixonado e sem par → `followLeader` (passo comum `steerTo`, o mesmo do namoro);
