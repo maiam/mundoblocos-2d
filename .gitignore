@@ -19,3 +19,6 @@ dist-net/
 # Python
 __pycache__/
 *.pyc
+
+# Configuração local do Claude Code
+.claude/settings.local.json
