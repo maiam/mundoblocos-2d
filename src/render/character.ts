@@ -105,6 +105,19 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'hood-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (332 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  // Gino (personagem pronto, assets-src/gino): caminhada sem ferramenta (297 px de desenho), com as 5 ferramentas e
+  // os 5 golpes; altura de cada folha pelo desenho.
+  'gino': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'gino-sword': { cols: 4, rows: 4, height: CHARACTER_H * (293 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'gino-axe': { cols: 4, rows: 4, height: CHARACTER_H * (301 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'gino-hoe': { cols: 4, rows: 4, height: CHARACTER_H * (295 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'gino-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'gino-shovel': { cols: 4, rows: 4, height: CHARACTER_H * (293 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'gino-sword-attack': { cols: 4, rows: 4, height: CHARACTER_H * (300 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'gino-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (308 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'gino-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'gino-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (332 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'gino-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (314 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   sheep: { cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.

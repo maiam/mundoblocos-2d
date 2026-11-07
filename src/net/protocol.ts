@@ -7,7 +7,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 16;
+export const PROTOCOL_VERSION = 17;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -49,8 +49,12 @@ export interface PlayerState {
  * Como o jogador aparece para os outros: personagem pronto (`body`) ou, com `look`, o chibi modular com as peças
  * escolhidas. Quem desenha confere as peças no próprio manifesto (`cleanLook`); peça desconhecida vira a padrão.
  */
+/** Personagens prontos que a rede aceita (fonte única: o jogo usa a mesma lista em `HERO_BODIES`). */
+export const APPEARANCE_BODIES = ['heroine', 'hero', 'hood', 'gino'] as const;
+export type AppearanceBody = (typeof APPEARANCE_BODIES)[number];
+
 export interface Appearance {
-  body: 'heroine' | 'hero' | 'hood';
+  body: AppearanceBody;
   look: Record<string, string> | null;
 }
 
@@ -262,7 +266,7 @@ const PIECE_RE = /^[a-z0-9-]{1,40}$/;
 export function parseAppearance(v: unknown): Appearance {
   if (!v || typeof v !== 'object') return DEFAULT_APPEARANCE;
   const o = v as Record<string, unknown>;
-  const body = o.body === 'hero' || o.body === 'hood' ? o.body : 'heroine';
+  const body = (APPEARANCE_BODIES as readonly unknown[]).includes(o.body) ? (o.body as AppearanceBody) : 'heroine';
   let look: Record<string, string> | null = null;
   if (o.look && typeof o.look === 'object') {
     const entries = Object.entries(o.look as Record<string, unknown>);

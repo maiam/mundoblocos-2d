@@ -6,6 +6,8 @@
   do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
   (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
   um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
+- **Gino** (v0.77.0): quinto personagem pronto (caminhada, caminhada com as 5 ferramentas, 5 golpes). A lista de
+  personagens prontos é uma só: `APPEARANCE_BODIES` (`net/protocol.ts`) = `HERO_BODIES`; nomes em `HERO_NAMES`.
 - **Na sala** (v0.72.0): os outros veem a ferramenta na mão e o golpe (`PlayerState.tool`/`swing` → `RemotePlayers`, o
   mesmo desenho de `heroActorKind`).
 - **Hood** (v0.71.0): quarto personagem da tela (`HeroBody` ganha `hood`; botões gerados de `HERO_BODIES`/`HERO_NAMES`);

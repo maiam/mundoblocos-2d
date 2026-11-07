@@ -29,6 +29,17 @@ import heroSwordAttack from '../../assets/hero-sword-attack.webp';
 import heroAxeAttack from '../../assets/hero-axe-attack.webp';
 import heroHoeAttack from '../../assets/hero-hoe-attack.webp';
 import heroShovelAttack from '../../assets/hero-shovel-attack.webp';
+import gino from '../../assets/gino.webp';
+import ginoSword from '../../assets/gino-sword.webp';
+import ginoAxe from '../../assets/gino-axe.webp';
+import ginoHoe from '../../assets/gino-hoe.webp';
+import ginoPickaxe from '../../assets/gino-pickaxe.webp';
+import ginoShovel from '../../assets/gino-shovel.webp';
+import ginoSwordAttack from '../../assets/gino-sword-attack.webp';
+import ginoAxeAttack from '../../assets/gino-axe-attack.webp';
+import ginoHoeAttack from '../../assets/gino-hoe-attack.webp';
+import ginoPickaxeAttack from '../../assets/gino-pickaxe-attack.webp';
+import ginoShovelAttack from '../../assets/gino-shovel-attack.webp';
 import hood from '../../assets/hood.webp';
 import hoodSword from '../../assets/hood-sword.webp';
 import hoodAxe from '../../assets/hood-axe.webp';
@@ -231,6 +242,17 @@ const pack: ArtPack = {
     'hero-hoe-attack': heroHoeAttack,
     'hero-shovel-attack': heroShovelAttack,
     'hero-pickaxe-attack': heroPickaxeAttack,
+    gino: gino,
+    'gino-sword': ginoSword,
+    'gino-axe': ginoAxe,
+    'gino-hoe': ginoHoe,
+    'gino-pickaxe': ginoPickaxe,
+    'gino-shovel': ginoShovel,
+    'gino-sword-attack': ginoSwordAttack,
+    'gino-axe-attack': ginoAxeAttack,
+    'gino-hoe-attack': ginoHoeAttack,
+    'gino-pickaxe-attack': ginoPickaxeAttack,
+    'gino-shovel-attack': ginoShovelAttack,
     hood,
     'hood-sword': hoodSword,
     'hood-axe': hoodAxe,

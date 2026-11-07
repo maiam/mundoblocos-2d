@@ -1,6 +1,12 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.76.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.77.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Personagem Gino — v0.77.0
+- Lista única de personagens prontos: `APPEARANCE_BODIES` em `net/protocol.ts` (rede) = `HERO_BODIES` (jogo);
+  `HERO_NAMES` dá o nome do botão. Personagem novo = acrescentar lá + arte (`render/art`) + `SPECS`.
+- 11 folhas em `assets-src/gino`: caminhadas com fileiras F-D-C-E (`--rows-map 0,3,1,2`), golpes já canônicos;
+  picareta e pá (golpe) com `--respace 40`. Halos coloridos de algumas folhas somem com `--largest`. Protocolo 17.
 
 ## Herói redesenhado — v0.76.0
 - 11 folhas novas em `assets-src/hero` (caminhada, caminhada com as 5 ferramentas, 5 golpes); `hero-<ferramenta>` deixa
