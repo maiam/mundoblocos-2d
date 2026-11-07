@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.66.0 — 2026-11-07
+- **Na sala, cada um aparece com o personagem que escolheu**: Heroína, Herói ou o Chibi com as peças montadas — antes
+  os outros jogadores sempre viam a Heroína. Peça que este jogo não conhece vira a padrão.
+- Multiplayer: `PROTOCOL_VERSION` 9 (servidor 0.10.0 junto).
+
 ## 0.65.1 — 2026-11-07
 - **Correção**: ao entrar na Sala 1, o jogo trocava o Herói pela Heroína (só a aparência do Chibi passava para o mundo
   da sala). Agora o personagem escolhido segue para a sala. Os outros jogadores ainda veem todos como Heroína

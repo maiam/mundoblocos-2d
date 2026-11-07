@@ -1,4 +1,5 @@
 import type { PlayerInfo } from '../net/protocol';
+import { cleanLook, type ModularLook, type ModularManifest } from '../render/modular';
 import type { World } from '../world/world';
 import type { Actor } from './entities';
 import type { Facing } from './walker';
@@ -13,6 +14,9 @@ interface Remote {
   facing: Facing;
   moving: boolean;
   walkTime: number;
+  /** Como aparece: personagem pronto ou chibi (peças já conferidas no manifesto deste jogo). */
+  body: 'heroine' | 'hero';
+  look: ModularLook | null;
 }
 
 /** Acima disso (células) o outro jogador é teleportado em vez de deslizar (entrou num interior, renasceu…). */
@@ -26,6 +30,9 @@ const SNAP = 6;
 export class RemotePlayers {
   private readonly list = new Map<number, Remote>();
 
+  /** `manifest` = peças do chibi neste jogo (sem ele, quem veio de chibi aparece como personagem pronto). */
+  constructor(private readonly manifest?: ModularManifest) {}
+
   /** Acompanha a lista da sessão (entrou, saiu, nova posição). */
   sync(others: ReadonlyMap<number, PlayerInfo>): void {
     for (const id of [...this.list.keys()]) if (!others.has(id)) this.list.delete(id);
@@ -33,7 +40,11 @@ export class RemotePlayers {
       if (!p.state) continue;
       const r = this.list.get(id);
       if (!r) {
-        this.list.set(id, { name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing, moving: p.state.moving, walkTime: 0 });
+        const look = p.appearance?.look && this.manifest ? cleanLook(this.manifest, p.appearance.look) : null;
+        this.list.set(id, {
+          name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
+          moving: p.state.moving, walkTime: 0, body: p.appearance?.body === 'hero' ? 'hero' : 'heroine', look,
+        });
         continue;
       }
       r.tx = p.state.x;
@@ -59,7 +70,8 @@ export class RemotePlayers {
 
   get actors(): Actor[] {
     return [...this.list.values()].map((r) => ({
-      kind: 'heroine', x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving, walkTime: r.walkTime, label: r.name,
+      kind: r.body, x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving, walkTime: r.walkTime, label: r.name,
+      look: r.look ?? undefined,
     }));
   }
 }

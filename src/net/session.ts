@@ -2,7 +2,7 @@ import { type PlayerAction, applyAction } from '../world/actions';
 import type { World } from '../world/world';
 import type { Transport } from './loopback';
 import { fromB64 } from './b64';
-import { type ClientMessage, type Grown, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type RoomBag, type RoomChunk, type ServerMessage } from './protocol';
+import { type Appearance, type ClientMessage, type Grown, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type RoomBag, type RoomChunk, type ServerMessage } from './protocol';
 
 /**
  * Sessão multiplayer do lado do jogo (ADR 0016). O servidor manda no mapa da sala: as ações dos outros chegam como
@@ -48,8 +48,8 @@ export class NetSession {
   }
 
   /** Entra numa sala fixa pelo número (`ROOMS`). */
-  join(name: string, room: number): void {
-    this.send({ t: 'hello', v: PROTOCOL_VERSION, name, room });
+  join(name: string, room: number, appearance?: Appearance): void {
+    this.send({ t: 'hello', v: PROTOCOL_VERSION, name, room, appearance });
   }
 
   /** Manda a bolsa e a posição para a sala guardar (volta na próxima entrada com o mesmo nome). */
