@@ -123,10 +123,13 @@ $P assets-src/heroine-sword-attack-sheet.png src/assets/heroine-sword-attack.png
 $P assets-src/heroine-axe-attack-sheet.png   src/assets/heroine-axe-attack.png   --alpha --largest --frame-h 144
 $P assets-src/heroine-hoe-attack-sheet.png   src/assets/heroine-hoe-attack.png   --alpha --largest --frame-h 144
 $P assets-src/heroine-shovel-attack-sheet.png src/assets/heroine-shovel-attack.png --alpha --largest --frame-h 144
-# Herói (assets-src/hero): caminhada e golpes já transparentes; a picareta vem com as fileiras F, E, C, D
+# Herói (assets-src/hero, refeito em 07/11): golpes e caminhada base já na ordem canônica; caminhadas com ferramenta não
 $P assets-src/hero/hero-sheet.png src/assets/hero.png --alpha --largest --frame-h 144
-for t in hoe axe sword shovel pickaxe; do $P assets-src/hero/hero-$t-attack-sheet.png src/assets/hero-$t-attack.png --alpha --largest --frame-h 144; done
-$P assets-src/hero/hero-pickaxe-sheet.png src/assets/hero-pickaxe.png --alpha --largest --frame-h 144 --rows-map 0,1,3,2
+for t in axe hoe sword pickaxe; do $P assets-src/hero/hero-$t-attack-sheet.png src/assets/hero-$t-attack.png --alpha --largest --frame-h 144; done
+$P assets-src/hero/hero-shovel-attack-sheet.png src/assets/hero-shovel-attack.png --alpha --largest --respace 40 --frame-h 144
+for t in sword axe; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+$P assets-src/hero/hero-hoe-sheet.png src/assets/hero-hoe.png --alpha --largest --respace 40 --frame-h 144 --rows-map 0,3,1,2
+for t in pickaxe shovel; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero-$t.png --alpha --largest --frame-h 144 --rows-map 0,1,3,2; done
 # Hood (assets-src/hood): caminhadas transparentes com fileiras F, D, C, E; a da pá vem com os dois lados para a esquerda
 $P assets-src/hood/hood-sheet.png src/assets/hood.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
 for t in sword axe hoe pickaxe; do $P assets-src/hood/hood-$t-sheet.png src/assets/hood-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done

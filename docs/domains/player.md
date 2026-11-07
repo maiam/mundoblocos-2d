@@ -11,7 +11,7 @@
 - **Hood** (v0.71.0): quarto personagem da tela (`HeroBody` ganha `hood`; botões gerados de `HERO_BODIES`/`HERO_NAMES`);
   caminhada sem ferramenta e com as 5 ferramentas; golpes próprios das 5 desde a v0.75.0 (`hood-<ferramenta>-attack`).
   Na sala, aparece como Hood para os outros (protocolo 14).
-- **Herói** (v0.65.0): terceiro personagem da tela (`HeroBody` = `heroine` | `hero` em `Entities.body`, salvo em
+- **Herói** (v0.65.0; redesenhado com caminhada por ferramenta na v0.76.0): terceiro personagem da tela (`HeroBody` = `heroine` | `hero` em `Entities.body`, salvo em
   `SaveData.body`); atores `hero`, `hero-<ferramenta>`, `hero-<ferramenta>-attack`. **Novo mundo** no menu do jogo abre
   a mesma escolha de personagem (`TitleScreen` com `creatorOnly`; "Voltar" volta ao mundo de antes).
   A aparência fica em `Entities.look` (null = heroína) → `SaveData.look`; vai junto para "Novo mundo", "Recomeçar" e a

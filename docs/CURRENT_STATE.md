@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.75.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.76.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Herói redesenhado — v0.76.0
+- 11 folhas novas em `assets-src/hero` (caminhada, caminhada com as 5 ferramentas, 5 golpes); `hero-<ferramenta>` deixa
+  de apontar para a caminhada sem ferramenta. Fileiras: golpes e caminhada base já canônicas; espada, machado e enxada
+  `0,3,1,2`; picareta e pá `0,1,3,2`; enxada (caminhada) e pá (golpe) com `--respace 40`. Altura pelo desenho (/298).
 
 ## Golpes do Hood — v0.75.0
 - `hood-<ferramenta>-attack` com folhas próprias (`assets-src/hood/hood-*-attack-sheet.png`, já na ordem frente,

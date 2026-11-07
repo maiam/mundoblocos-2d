@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.76.0 — 2026-11-07
+- **Herói redesenhado** (folhas novas do dono do produto): caminhada sem ferramenta, **andar segurando cada uma das
+  5 ferramentas** (antes ele andava de mãos vazias com espada, machado, enxada e pá) e os 5 golpes refeitos.
+
 ## 0.75.0 — 2026-11-07
 - **Golpes do Hood**: folhas novas de bater com a espada e o machado, arar com a enxada, minerar com a picareta e cavar
   com a pá (antes o golpe dele mostrava a caminhada com a ferramenta). Na sala, os outros também veem.
