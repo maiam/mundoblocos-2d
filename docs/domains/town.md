@@ -23,13 +23,15 @@ A Cidade do Despertar · V1.0" (pedido do dono do produto, 2026-11-03).
 1. **Território** fechado (retângulo fixo).
 2. **Muralha**: 2 de espessura × 2 cubos de altura, **Tijolo de Pedra** com ~22% de **Tijolo de Pedra Rachado**.
    **Guaritas** (4×6) nos 4 cantos e ladeando o **único portão** (4 de largura, no meio do lado sul).
-3. **Castelo** (26 × 17) no fundo (norte), oposto ao portão, com **pátio** de Pedra Polida (cercas vivas, flores,
+3. **Castelo** (26 × 17) no fundo (norte), oposto ao portão, com **pátio** (cercas vivas, flores,
    lampiões, bancos).
 4. **Labirinto de ruas**: grade de nós (10 × 9, passo 15 × 13 — entre ruas cabem duas casas 5×5 —, centros deslocados ±2) ligados por trechos em Z
    (curvas). **Caminho principal** = menor caminho com pesos sorteados (sinuoso) portão → praça central → pátio,
    3 de largura; **ruas secundárias** (2 de largura) por árvore aleatória a partir dele (becos nas folhas) + ~16% de
-   laços (atalhos internos); **10 becos extras** curtos terminando em caixotes/barris. Pavimento: **Pedra Irregular**
-   (~70%) e **Pedra Rachada** (~30%). Praças de **Chão de Pedra**.
+   laços (atalhos internos); **10 becos extras** curtos terminando em caixotes/barris. Pavimento: todo o piso pavimentado
+   (ruas, praças, pátio do castelo, calçadas das casas, vão do portão) é **Tijolo de Pedra** (`FLOOR` em `buildTown`;
+   dono do produto, 07/11 — antes ruas de Pedra Irregular/Rachada, praças de Chão de Pedra e pátio de Pedra Polida).
+   Gramados continuam de grama.
 5. **Construções**: as obrigatórias são **reservadas antes das ruas** e ligadas à rede depois (busca em largura):
    Guilda dos Aventureiros (9×9, oeste da praça central), Hospedaria (9×5, leste), Ferreiro (8×5, sudoeste), Loja
    de Poções / Armazém / Loja de Ferramentas (5×5 cada, sudeste). **Casas 5×5** (térrea ou de 2 andares) preenchem os
