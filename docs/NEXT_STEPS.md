@@ -165,9 +165,7 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       `PlayerInfo.appearance`; `RemotePlayers` desenha Heroína/Herói/chibi conferindo as peças com `cleanLook`). Falta:
       mostrar a ferramenta na mão e o golpe dos outros (o estado só tem posição e direção).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
-   f. **Herói (v0.65.0)** — pedir à arte: as folhas de **andar segurando** enxada, machado, espada e pá (hoje anda sem
-      ferramenta). ~~Golpe de picareta~~ entregue. A folha de andar com picareta veio com as fileiras na ordem frente,
-      esquerda, costas, direita (`--rows-map 0,1,3,2`).
+   f. ~~**Herói** — folhas de andar segurando as ferramentas~~ ✅ v0.76.0 (todas as 11 folhas refeitas).
    g. **Hood (v0.71.0)** — ~~folhas de golpe~~ entregues (v0.75.0). Falta: caminhada com pá virada para a direita
       (hoje espelhada); confirmar que a 6ª folha de caminhada (cabeça de machadinha) é a enxada.
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
