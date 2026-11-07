@@ -1,5 +1,10 @@
 # Changelog
 
+## Sem versão do jogo — 2026-11-07 (documentação e organização)
+- **Docs**: `CURRENT_STATE` reescrito como retrato do estado atual (211 testes, Sala 1 até 10, quatro personagens, sentar, minimapa, fome); o diário técnico por versão foi para `docs/archive/estado-por-versao.md`.
+- **Docs**: novo `domains/multiplayer.md`; índice com os 21 ADRs e mapa de pastas; `NEXT_STEPS` com cabeçalho e panorama atualizados; `ARCHITECTURE` com os scripts que faltavam; `README` da raiz com o personagem modular integrado e os controles novos.
+- **Repositório**: capturas de tela da raiz foram para `docs/assets/`; `scripts/__pycache__` saiu do git e `__pycache__/` entrou no `.gitignore`.
+
 ## 0.80.0 — 2026-11-07
 - **Todos sentam**: Heroína, Herói e Hood ganharam a folha de sentar e levantar (antes só o Gino). Cada um sentado tem o
   mesmo tamanho de quando está em pé; o Gino sentado estava um pouco maior e foi acertado.
