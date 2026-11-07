@@ -5,7 +5,7 @@ import { Sheep } from '../game/sheep';
 import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
 import { toChunk } from '../world/coords';
-import { breakDrops, type Drop, type ItemId, ITEMS, monsterDrops, pickDrops, type StackId } from '../world/items';
+import { ANIMAL_PRODUCE, breakDrops, type Drop, type ItemId, ITEMS, monsterDrops, pickDrops, type StackId } from '../world/items';
 import { CHEST_SLOTS, World } from '../world/world';
 import { fromB64, toB64 } from './b64';
 import {
@@ -200,8 +200,13 @@ export class Room {
       if (!av || !(m.item in ITEMS)) return [];
       const item = m.item as ItemId;
       const animal = this.entities.animals.find((a) => this.mobIds.get(a) === m.id);
-      if (!animal || Math.hypot(animal.x - av.x, animal.y - av.y) > FEED_REACH || !animal.eats(item) || !animal.feed()) return [];
-      return [{ to: id, msg: { t: 'fed', id: m.id, item } }];
+      if (!animal || Math.hypot(animal.x - av.x, animal.y - av.y) > FEED_REACH || !animal.eats(item) || !animal.feed(av)) return [];
+      const out: Outgoing[] = [{ to: id, msg: { t: 'fed', id: m.id, item } }];
+      // O animal segue quem deu (o avatar) e solta o produto dele no chão da sala (vaca: leite; galinha: ovo).
+      const product = ANIMAL_PRODUCE[animal.species];
+      const list = product ? this.spawnDrops(animal.x, animal.y + 0.3, [{ item: product, count: 1 }]) : [];
+      if (list.length) out.push({ to: 'all', msg: { t: 'drops', list } });
+      return out;
     }
     if (m.t === 'bag') {
       this.bags.set(bagKey(p.name), m.bag);

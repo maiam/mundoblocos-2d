@@ -31,4 +31,7 @@ opção 1 (arquivos separados + carregar sob demanda).
 - O navegador guarda as imagens em cache: republicar só faz baixar o que mudou (nomes com hash).
 - Publicar = página + `files` do manifesto (até 255 arquivos por publicação; 15 MB por arquivo).
 - Hospedagem própria (CDN, domínio próprio do Orvalis) usa o mesmo `dist/` sem mudança de código.
-- Próximos candidatos a segundo plano: folhas da heroína com ferramenta (~1 MB) e arte de regiões futuras.
+- v0.74.0: cada folha de personagem/monstro só é pedida quando o ator aparece pela primeira vez
+  (`SpriteSheet.request` em `render/character.ts`); personagem pronto com ferramenta ainda baixando usa a folha base.
+  Início ~2,0 MB (as folhas da heroína com ferramenta, ~1 MB, saíram da conta).
+- Próximos candidatos a segundo plano: arte de regiões futuras.

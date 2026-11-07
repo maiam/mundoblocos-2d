@@ -120,3 +120,35 @@ describe('Ovelhas: comer, namorar e ter filhote', () => {
     expect(e.npcs.length).toBe(MAX_SHEEP);
   });
 });
+
+describe('Animal alimentado segue quem deu (com o coração)', () => {
+  it('segue enquanto apaixonado; quando o coração acaba, fica onde foi levado', async () => {
+    const { LOVE_SECONDS, FOLLOW_DISTANCE } = await import('./breeder');
+    const [w, sx, sy] = field();
+    const s = new Sheep(sx - 3.5, sy + 0.5, sx - 3.5, sy + 0.5, mulberry32(2));
+    const leader = { x: sx + 3.5, y: sy + 0.5 };
+    expect(s.feed(leader)).toBe(true);
+    for (let t = 0; t < 8; t += 0.05) s.update(0.05, w);
+    expect(Math.hypot(leader.x - s.x, leader.y - s.y)).toBeLessThan(FOLLOW_DISTANCE + 0.3);
+    for (let t = 0; t < LOVE_SECONDS; t += 0.05) s.update(0.05, w);
+    expect(s.leader).toBeNull();
+    expect(Math.abs(s.homeX - (sx - 3.5))).toBeGreaterThan(3); // a casa mudou para onde foi levada
+  });
+});
+
+describe('Produtos dos animais e receitas novas', () => {
+  it('vaca solta leite, galinha solta ovo; queijo no caldeirão e torta no forno', async () => {
+    const { ANIMAL_PRODUCE, RECIPES, Item } = await import('../world/items');
+    expect(ANIMAL_PRODUCE.cow).toBe(Item.MILK);
+    expect(ANIMAL_PRODUCE.chicken).toBe(Item.EGG);
+    expect(ANIMAL_PRODUCE.sheep).toBeUndefined();
+    const cheese = RECIPES.find((r) => r.id === 'cheese')!;
+    expect(cheese.inputs).toEqual([{ item: Item.MILK, count: 1 }]);
+    expect(cheese.station).toBe(Block.CAULDRON);
+    const pie = RECIPES.find((r) => r.id === 'apple-pie')!;
+    expect(pie.inputs).toEqual([
+      { item: Item.WHEAT, count: 2 }, { item: Item.MILK, count: 1 }, { item: Item.APPLE, count: 2 }, { item: Item.EGG, count: 1 },
+    ]);
+    expect(pie.station).toBe(Block.OVEN);
+  });
+});

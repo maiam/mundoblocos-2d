@@ -1,6 +1,15 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.73.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.74.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Animais seguem quem alimenta; leite, ovo, queijo e torta — v0.74.0
+- `Breeder.feed(by)` guarda `leader`; apaixonado e sem par → `followLeader` (passo comum `steerTo`, o mesmo do namoro);
+  fim do coração → `homeX/Y` = onde está. `ANIMAL_PRODUCE` (vaca = leite, galinha = ovo) em `world/items.ts`: solto no
+  `ActionController` (sozinho) e no `Room.handle('feed')` (sala, item compartilhado).
+- Itens `milk`, `egg`, `cheese`, `apple_pie` (ícones em `assets-src/items`); `FOOD`: leite 10, queijo 25, torta 60;
+  receitas `cheese` (Caldeirão) e `apple-pie` (Forno de Pedra). Protocolo 16.
+- **Orçamento do início: ~2004 kB** (era ~3062 kB e os ícones novos estouravam): `SpriteSheet.request` — folha de
+  personagem/monstro só baixa quando o ator aparece; com ferramenta ainda baixando, usa a folha base do personagem.
 
 ## Animais da sala salvos — v0.73.0
 - `RoomSnapshot` v3 ganhou `animals` (`Entities.saveAnimals`: espécie, posição, filhote, idade, casa); `restore`

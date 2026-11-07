@@ -30,7 +30,8 @@ operacional e faz parte da entrega.
 - **Arte por mundo:** imagens só são importadas em `src/render/art/<mundo>.ts` (ADR 0010), como URL — viram arquivos
   separados no Artifact (ADR 0013); nunca importe arte direto em módulos de render. **Nunca leia um canvas**
   (`toDataURL`/`getImageData`): com imagens em outro arquivo a leitura pode ser bloqueada. Orçamento: o que o jogo
-  espera para começar < 3 MB (o build avisa); arte de outras regiões carrega em segundo plano (`loadDungeonArt`).
+  espera para começar < 3 MB (o build avisa); arte de outras regiões carrega em segundo plano (`loadDungeonArt`) e
+  folhas de personagem/monstro só baixam quando o ator aparece (`SpriteSheet.request`).
 - Toda entidade que anda estende `Walker`; colisão com o mapa sempre via `World.standHeight`.
 - Jogo **horizontal**; layout deve caber em paisagem com ~360 px de altura e respeitar safe-area.
 - Arte nova: folhas 4×4 na ordem frente, esquerda, direita, costas (moradores: roupa branca + roupas em camada,

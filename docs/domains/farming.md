@@ -61,12 +61,16 @@
   Fogueira, Caldeirão e Forno (v0.49.0) são objetos de 1 célula colocados fora da cidade: bloqueiam, brilham à noite e
   voltam à bolsa ao quebrar (machado desmonta a fogueira; picareta, os de pedra). Ainda não cozinham (Fase P, entrega
   4: comida).
-- Receitas do **Cozinheiro** (só perto de um **Caldeirão de Pedra** colocado, `Recipe.station`, até 3 células):
+- **Leite e ovo** (v0.74.0): vaca alimentada solta 1 Leite, galinha alimentada solta 1 Ovo (`ANIMAL_PRODUCE` em
+  `world/items.ts`). Leite se bebe (+10); ovo é só ingrediente.
+- Receitas do **Cozinheiro** (só perto de um **Caldeirão de Pedra** colocado — a torta pede o **Forno de Pedra** —, `Recipe.station`, até 3 células):
 
   | Receita | Ingredientes | Resultado |
   |---|---|---|
   | Pão | 2 Trigos | 1 Pão (+35 de fome) |
   | Macarrão ao Molho | 4 Trigos + 2 Tomates | 1 Macarrão ao Molho (+70) |
+  | Queijo | 1 Leite | 1 Queijo (+25) — Caldeirão |
+  | Torta de Maçã | 2 Trigos, 1 Leite, 2 Maçãs, 1 Ovo | 1 Torta (+60) — **Forno de Pedra** (v0.74.0) |
 
   Longe do caldeirão a receita fica apagada e o toque avisa "Chegue perto de um Caldeirão de Pedra…".
 - **Tocar numa receita abre a ficha dela** (v0.57.0, `SkillsPanel.openDetail`) no lugar da lista: ícone grande e

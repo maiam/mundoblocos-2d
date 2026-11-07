@@ -1,6 +1,6 @@
 import { art } from './art';
 import { TILE } from '../config';
-import type { Actor, ActorKind } from '../game/entities';
+import { type Actor, type ActorKind, HERO_BODIES } from '../game/entities';
 import type { Facing } from '../game/walker';
 import type { VillagerBase } from '../game/villager';
 
@@ -144,18 +144,39 @@ class SpriteSheet {
    */
   private readonly layers = new Map<string, HTMLImageElement>();
 
-  /** `url` ausente = o mundo não tem este ator (só a sombra seria desenhada; na prática ele não aparece). */
-  constructor(private readonly spec: SheetSpec, url: string | undefined, deathUrl?: string, layers?: Partial<Record<string, string>>) {
+  private requested = false;
+
+  /**
+   * `url` ausente = o mundo não tem este ator (só a sombra seria desenhada; na prática ele não aparece).
+   * Nada baixa aqui: a folha só é pedida quando o ator aparece pela primeira vez (`request`), para o início do jogo não
+   * esperar por folhas que talvez nem apareçam (ferramentas, outros personagens, monstros).
+   */
+  constructor(
+    private readonly spec: SheetSpec,
+    private readonly url: string | undefined,
+    private readonly deathUrl?: string,
+    private readonly layerUrls?: Partial<Record<string, string>>,
+  ) {
     this.img.onload = () => (this.ready = true);
-    if (url) this.img.src = url;
-    for (const [id, src] of Object.entries(layers ?? {})) {
+    this.deathImg.onload = () => (this.deathReady = true);
+  }
+
+  /** Começa a baixar a folha (e as camadas e a morte), uma vez só. */
+  request(): void {
+    if (this.requested) return;
+    this.requested = true;
+    if (this.url) this.img.src = this.url;
+    for (const [id, src] of Object.entries(this.layerUrls ?? {})) {
       if (!src) continue;
       const im = new Image();
       im.src = src;
       this.layers.set(id, im);
     }
-    this.deathImg.onload = () => (this.deathReady = true);
-    if (deathUrl) this.deathImg.src = deathUrl;
+    if (this.deathUrl) this.deathImg.src = this.deathUrl;
+  }
+
+  get isReady(): boolean {
+    return this.ready;
   }
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
@@ -313,8 +334,19 @@ export class ActorSprites {
     )]),
   ) as Record<ActorKind, SpriteSheet>;
 
+  /**
+   * Folha do ator (pedida na primeira vez). Personagem pronto com ferramenta ainda baixando: usa a folha base dele
+   * enquanto isso (não some ao equipar pela primeira vez).
+   */
   get(kind: ActorKind): SpriteSheet {
-    return this.sheets[kind];
+    const s = this.sheets[kind];
+    s.request();
+    if (s.isReady) return s;
+    const base = kind.slice(0, kind.indexOf('-')) as ActorKind;
+    const b = kind.includes('-') && (HERO_BODIES as readonly string[]).includes(base) ? this.sheets[base] : undefined;
+    if (!b) return s;
+    b.request();
+    return b.isReady ? b : s;
   }
 }
 

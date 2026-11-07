@@ -111,3 +111,18 @@ describe('Sala: animais salvos com o mundo', () => {
     expect(r3.entities.animals).toHaveLength(0);
   });
 });
+
+describe('Sala: vaca alimentada solta leite para todos e segue quem deu', () => {
+  it('feed → fed + drops (leite) e o animal passa a seguir o avatar', () => {
+    const { room, ids, at } = setup(['Ana']);
+    const cow = room.entities.animals.find((a) => a.species === 'cow' && !a.baby)!;
+    at(ids[0], cow.x, cow.y + 1);
+    const id = room.mobsNear(cow.x, cow.y).find((x) => x.k === 'cow' && x.x === Math.round(cow.x * 100) / 100)!.i;
+    const out = room.handle(ids[0], { t: 'feed', id, item: Item.WHEAT });
+    expect(of(out, 'fed')).toHaveLength(1);
+    const drops = of(out, 'drops');
+    expect(drops[0].to).toBe('all');
+    expect(drops[0].msg.list[0].item).toBe(Item.MILK);
+    expect(cow.leader).not.toBeNull();
+  });
+});

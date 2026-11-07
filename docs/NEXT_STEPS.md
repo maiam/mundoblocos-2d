@@ -15,7 +15,7 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Ovelhas: pastar, comer, namorar, filhotes | ✅ | só no campo ao sul do portão; espada as faz sumir |
 | Santuário Celestial (perfil de mundo, Deusa flutuando, 18 blocos) | ✅ | subdomínio real não hospedado |
 | Cidade do Despertar (início fixo, muralha, ruas, construções) | ✅ estrutura | 4 moradores + ferreiro de visual único (6 roupas), falas curtas, interior da Ferraria (v0.42); sem loja nem missões |
-| Cavalo, vacas e galinhas no campo | ✅ passeio, reprodução e filhotes (v0.60.0) | sem montaria, leite nem ovos; animais não são salvos (filhotes somem ao recarregar) |
+| Cavalo, vacas e galinhas no campo | ✅ passeio, reprodução e filhotes (v0.60.0) | sem montaria; leite e ovo ao alimentar e animais que seguem quem alimenta (v0.74.0); no jogo sozinho os animais não são salvos |
 | Hortaliças (batata, tomate, cenoura) | ✅ v0.53.0 | crus ou no caldeirão (v0.56.0) |
 | Fome, comida e Cozinheiro | ✅ v0.56.0 | barra de fome; pão e macarrão no Caldeirão |
 | Árvores que crescem (carvalho, macieira) e maçãs | ✅ v0.52.0 | crescimento local em cada aparelho (sala multiplayer pode divergir) |
@@ -221,8 +221,9 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - **Arte**: mais personagens de roupa branca e folhas de roupas (moradores ✅ 4 + 6 roupas, uma de ferreiro); roupas de outros ofícios (guarda, mercador, estalajadeiro); guardas, ferreiro, mercadores; (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Orçamento de início (ADR 0013)**: hoje ~3,06 MB de 3 MB (3072 kB) — sem folga (v0.69.0; a tira das paredes já foi para segundo plano). Próximos a ir para segundo plano quando crescer: folhas da
-  heroína com ferramenta (~1 MB, carregar ao equipar) e arte de cidades/dungeons novas (carregar ao se aproximar).
+- **Orçamento de início (ADR 0013)**: ~2,0 MB de 3 MB desde a v0.74.0 (folhas de personagem só baixam quando o ator
+  aparece; antes ~3,06 MB, sem folga). Próximos a ir para segundo plano quando crescer: arte de cidades/dungeons novas
+  (carregar ao se aproximar).
   Hospedagem própria (CDN/domínio) usa o mesmo `dist/`.
 - `ActionController` (465 linhas) vai crescer com vida/dano: separar combate (golpe, dano) em módulo próprio na Fase 1.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.
