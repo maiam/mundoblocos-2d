@@ -16,3 +16,4 @@ dist-net/
 /assets-src/personagens/**/*.kra.kra
 /assets-src/personagens/**/*autosave*
 /assets-src/materiais/_preview/
+__pycache__/
