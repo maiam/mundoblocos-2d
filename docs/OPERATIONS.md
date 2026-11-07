@@ -139,6 +139,9 @@ $P assets-src/gino/gino-sheet.png src/assets/gino.png --alpha --largest --frame-
 for t in sword axe hoe pickaxe shovel; do $P assets-src/gino/gino-$t-sheet.png src/assets/gino-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
 for t in sword axe hoe; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --frame-h 144; done
 $P assets-src/gino/gino-sit-sheet.png src/assets/gino-sit.png --alpha --largest --frame-h 144   # sentar: sequência de frente
+$P assets-src/hero/hero-sit-sheet.png src/assets/hero-sit.png --alpha --largest --frame-h 144
+$P assets-src/hood/hood-sit-sheet.png src/assets/hood-sit.png --alpha --largest --frame-h 144
+$P assets-src/heroine-sit-sheet.png src/assets/heroine-sit.png --alpha --largest --respace 40 --frame-h 144   # botas passam da grade
 for t in pickaxe shovel; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --respace 40 --frame-h 144; done
 # golpes do Hood: já na ordem canônica; a picareta erguida passa da célula
 for t in sword axe hoe shovel; do $P assets-src/hood/hood-$t-attack-sheet.png src/assets/hood-$t-attack.png --alpha --largest --frame-h 144; done

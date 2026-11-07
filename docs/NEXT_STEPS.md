@@ -166,8 +166,8 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       mostrar a ferramenta na mão e o golpe dos outros (o estado só tem posição e direção).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
    f. ~~**Herói** — folhas de andar segurando as ferramentas~~ ✅ v0.76.0 (todas as 11 folhas refeitas).
-   h. **Sentar** (v0.79.0): só o Gino tem folha de sentar (de frente). Pedir à arte as dos outros personagens (Heroína,
-      Herói, Hood) para eles sentarem também; sentar de lado/de costas só se vier arte por direção.
+   h. **Sentar** (v0.79.0; os quatro personagens prontos desde a v0.80.0): falta o chibi modular; sentar de lado/de
+      costas só se vier arte por direção.
    g. **Hood (v0.71.0)** — ~~folhas de golpe~~ entregues (v0.75.0). Falta: caminhada com pá virada para a direita
       (hoje espelhada); confirmar que a 6ª folha de caminhada (cabeça de machadinha) é a enxada.
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.

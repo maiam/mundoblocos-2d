@@ -107,8 +107,12 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'hood-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (332 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
-  // Gino sentando (só de frente): fileira 1 = sentar (0–3), fileiras 2–3 = sentado (laço 4–11), 4 = de pé.
-  'gino-sit': { cols: 4, rows: 4, height: CHARACTER_H * (300 / 297), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
+  // Sentar (só de frente; quadros 0–3 = sentando, usados também ao contrário para levantar). Altura de cada folha pelo
+  // quadro em pé (0), igual à altura do desenho na caminhada do mesmo personagem (px no quadro de 144).
+  'heroine-sit': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 0, sequence: true },
+  'hero-sit': { cols: 4, rows: 4, height: CHARACTER_H * (140 / 144), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
+  'hood-sit': { cols: 4, rows: 4, height: CHARACTER_H * (143 / 144), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
+  'gino-sit': { cols: 4, rows: 4, height: CHARACTER_H * (138 / 144), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
   // Gino (personagem pronto, assets-src/gino): caminhada sem ferramenta (297 px de desenho), com as 5 ferramentas e
   // os 5 golpes; altura de cada folha pelo desenho.
   'gino': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },

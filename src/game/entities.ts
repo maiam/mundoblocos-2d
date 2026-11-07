@@ -28,8 +28,8 @@ export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
  */
 export type HeroBody = AppearanceBody;
 export const HERO_BODIES: readonly HeroBody[] = APPEARANCE_BODIES;
-/** Personagens prontos com folha de sentar (só eles sentam em cadeiras e bancos; dono do produto, 07/11: Gino). */
-export const SIT_BODIES = ['gino'] as const;
+/** Personagens prontos com folha de sentar (só eles sentam em cadeiras e bancos; dono do produto, 07/11: todos os quatro). */
+export const SIT_BODIES = ['heroine', 'hero', 'hood', 'gino'] as const;
 export type SitBody = (typeof SIT_BODIES)[number];
 export function canSit(body: HeroBody): body is SitBody {
   return (SIT_BODIES as readonly string[]).includes(body);

@@ -39,7 +39,7 @@ describe('Sentar e levantar', () => {
     expect([p.x, p.y]).toEqual([x + 0.5, y + 1.5]); // andou de volta para onde estava
   });
 
-  it('banco da cidade: senta na célula do banco mais perto; outros blocos não são assento; só o Gino senta', () => {
+  it('banco da cidade: senta na célula do banco mais perto; outros blocos não são assento; os quatro personagens sentam', () => {
     const w = new World(7);
     const bench = w.town!.buildings.find((b) => b.id === Block.BENCH_LONG)!;
     expect(w.seatAt(bench.x + 2, bench.y, bench.x + 2.5, bench.y + 1.5)).toEqual([bench.x + 2, bench.y]);
@@ -48,7 +48,7 @@ describe('Sentar e levantar', () => {
     w.placeBlock(x, y, Block.STONE);
     expect(w.seatAt(x, y, x, y + 1)).toBeNull();
     expect(canSit('gino')).toBe(true);
-    expect(canSit('heroine')).toBe(false);
+    expect(['heroine', 'hero', 'hood', 'gino'].every((b) => canSit(b as never))).toBe(true);
   });
 
   it('levar dano sentado levanta na hora', () => {

@@ -1,6 +1,11 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.79.2 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.80.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Todos sentam — v0.80.0
+- `SIT_BODIES` = os quatro personagens prontos; folhas `heroine-sit`, `hero-sit`, `hood-sit` (mesma sequência da do
+  Gino). Altura de cada folha casada com a caminhada pelo quadro em pé (e, na Heroína, pela boina: a folha dela tinha as
+  botas cortadas pela grade → `--respace 40`). O chibi modular ainda não senta (sem folha).
 
 ## Sentado no lugar certo — v0.79.2
 - Quem senta fica com os pés em `assento + SEAT_FEET` (1,05 célula: beira da célula da frente); na vista 3/4 o corpo
