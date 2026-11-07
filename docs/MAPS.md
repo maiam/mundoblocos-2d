@@ -132,7 +132,7 @@ flowchart LR
   JS -->|npm run build| D[dist/ site estático]
   JS -->|build:artifact VITE_WORLD=principal| A[artifact/mundoblocos.html]
   JS -->|build:artifact:santuario| A2[artifact/santuario.html]
-  P2[src/assets/heroine.webp] -->|make-icons.py| PW[public/icon-*.png PWA]
+  P2[assets-src/icone-orvalis.webp] -->|make-icons.py| PW[public/icon-*.png + apple-touch-icon PWA]
 ```
 
 ## 8. Onde mexer para…

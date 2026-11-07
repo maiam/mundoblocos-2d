@@ -261,7 +261,7 @@ grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `r
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
 
-**PWA**: `python3 scripts/make-icons.py` → `public/icon-192.png`, `icon-512.png`.
+**PWA**: `python3 scripts/make-icons.py` (Pillow) gera, a partir do ícone oficial `assets-src/icone-orvalis.webp` (selo redondo, cantos transparentes), `public/icon-192.png`, `icon-512.png` (purpose "any"; o 192 também é o favicon), `icon-maskable-512.png` (selo a 80% sobre fundo `#120f2c`) e `apple-touch-icon.png` (180×180, fundo opaco). Trocar o ícone = substituir o `.webp` e rodar o script.
 
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,

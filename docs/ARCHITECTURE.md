@@ -31,7 +31,7 @@ scripts/
   extract-craftables.py        objetos de receita (fogueira, caldeirão, forno, cadeira) → sprite + ícone
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
   slice-icons.py               prancha em grade com transparência → um ícone por célula
-  make-icons.py                ícones do PWA (public/)
+  make-icons.py                ícones do PWA (public/) a partir de assets-src/icone-orvalis.webp
   build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)
   build-net.mjs                src/net (+ regras de src/world) → dist-net/orvalis-net.cjs, pacote do multiplayer para o servidor (ADR 0016)
   extract-villagers.py         moradores: personagens-base de roupa branca + roupas em camadas (assets-src/villagers)
