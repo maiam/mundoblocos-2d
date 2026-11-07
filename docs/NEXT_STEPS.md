@@ -164,6 +164,9 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
       no multiplayer — `look` no estado do jogador (`PROTOCOL_VERSION` 9+ (2 = mudas/maçãs, 3 = hortaliças, 4 = covil isolado, 5 = pedregulhos, 6 = cerca, 7 = hora e crescimento da sala, 8 = salas fixas), validar contra o manifesto no `Room`),
       `RemotePlayers` desenhando o chibi dos outros; atualizar `orvalis-servidor` junto (`sync-net`).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
+   f. **Herói (v0.65.0)** — pedir à arte: as folhas de **andar segurando** enxada, machado, espada e pá (hoje anda sem
+      ferramenta) e o **golpe de picareta** (hoje usa a caminhada com picareta); a folha da picareta veio com as
+      fileiras na ordem frente, esquerda, costas, direita (`--rows-map 0,1,3,2`).
 1. Arte 3/4 para árvores, cacto e água no estilo da prancha; topo dos cubos menos achatado.
    - **Cerca (v0.59.0)**: pedir à arte o **portão de lado** (fechado e aberto) para cercas verticais — hoje usa o de
      frente — e, se quiserem refinar, peças separadas (poste, travessa horizontal e vertical de 1 célula). Animais

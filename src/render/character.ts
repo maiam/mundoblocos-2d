@@ -79,6 +79,20 @@ const SPECS: Record<ActorKind, SheetSpec> = {
     cols: 4, rows: 4, height: CHARACTER_H * (362 / 288), shadow: [0.32, 0.12], walkFps: 0, action: true,
   },
   'heroine-axe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  // Herói (personagem pronto, assets-src/hero): caminhada sem ferramenta (298 px de desenho), golpes de enxada,
+  // machado, espada e pá, e a caminhada com picareta. Ainda sem folha: andar segurando as outras ferramentas (usa a
+  // caminhada sem ferramenta) e o golpe de picareta (usa a caminhada com picareta) — pendências da arte.
+  hero: { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hero-sword': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hero-hoe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hero-shovel': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hero-axe': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  'hero-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H * (305 / 298), shadow: [0.32, 0.12], walkFps: 7 },
+  'hero-sword-attack': { cols: 4, rows: 4, height: CHARACTER_H * (307 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hero-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (312 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hero-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (311 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hero-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (313 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'hero-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (305 / 298), shadow: [0.32, 0.12], walkFps: 0, action: true },
   sheep: { cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.

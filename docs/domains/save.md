@@ -3,7 +3,7 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 9)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 10)
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
@@ -49,6 +49,7 @@ Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa. Em te
 - v5 → v6 (tela de entrada, v0.50.0): `look: null` — quem já jogava continua com a heroína.
 - v6 → v7 (minimapa, v0.51.0): `explored: []` — o mapa começa coberto e revela a área em volta ao abrir.
 - v8 → v9 (comida, v0.56.0): `player.hunger` = 100 — quem já jogava começa satisfeito.
+- v9 → v10 (Herói, v0.65.0): `body` = `heroine` — personagem pronto escolhido na tela; quem já jogava segue com a Heroína.
 - v7 → v8 (covil isolado, v0.55.0): `dungeon: null` — as aranhas voltam completas (o labirinto mudou de lugar).
 
 ## Regras para quem mexer

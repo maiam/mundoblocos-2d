@@ -18,6 +18,12 @@ import heroineShovel from '../../assets/heroine-shovel.webp';
 import heroineSwordAttack from '../../assets/heroine-sword-attack.webp';
 import heroineSword from '../../assets/heroine-sword.webp';
 import heroine from '../../assets/heroine.webp';
+import hero from '../../assets/hero.webp';
+import heroPickaxe from '../../assets/hero-pickaxe.webp';
+import heroSwordAttack from '../../assets/hero-sword-attack.webp';
+import heroAxeAttack from '../../assets/hero-axe-attack.webp';
+import heroHoeAttack from '../../assets/hero-hoe-attack.webp';
+import heroShovelAttack from '../../assets/hero-shovel-attack.webp';
 import axeIcon from '../../assets/icon-axe.webp';
 import dirtIcon from '../../assets/icon-block-dirt.webp';
 import grassIcon from '../../assets/icon-block-grass.webp';
@@ -177,6 +183,18 @@ const chibiSheets = Object.fromEntries(
 const pack: ArtPack = {
   actors: {
     heroine,
+    // Herói: folhas que faltam usam a mais parecida (ver `SPECS` em render/character.ts).
+    hero,
+    'hero-sword': hero,
+    'hero-hoe': hero,
+    'hero-shovel': hero,
+    'hero-axe': hero,
+    'hero-pickaxe': heroPickaxe,
+    'hero-sword-attack': heroSwordAttack,
+    'hero-axe-attack': heroAxeAttack,
+    'hero-hoe-attack': heroHoeAttack,
+    'hero-shovel-attack': heroShovelAttack,
+    'hero-pickaxe-attack': heroPickaxe,
     'heroine-sword': heroineSword,
     'heroine-hoe': heroineHoe,
     'heroine-pickaxe': heroinePickaxe,

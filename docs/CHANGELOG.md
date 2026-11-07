@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.65.0 — 2026-11-07
+- **Novo mundo abre a escolha de personagem** (pedido do dono do produto): no menu do jogo, "Novo mundo" mostra a mesma
+  tela do início — Chibi, Heroína ou **Herói**, nome — e só então cria o mundo; "Voltar" volta ao mundo de antes.
+- **Herói**, personagem pronto (folhas enviadas): anda nas 4 direções e golpeia com enxada, machado, espada e pá; anda
+  com a picareta. Ainda sem folha (usa a mais parecida): andar segurando as outras ferramentas e o golpe de picareta.
+- Salvamento `SAVE_VERSION` 10: o mundo guarda o personagem escolhido (quem já jogava continua com a Heroína).
+
 ## 0.64.0 — 2026-11-06
 - **Sala fixa e salva** (pedido do dono do produto): "Jogar com amigos" agora lista as salas por número — por enquanto
   a **Sala 1**, para até **10 jogadores** ao mesmo tempo, mostrando quantos estão nela. Entra e sai quando quiser:
