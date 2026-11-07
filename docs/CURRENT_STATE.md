@@ -1,6 +1,18 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.69.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.70.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Sala compartilhada, Etapa 3: bichos da sala — v0.70.0 (ADR 0021)
+- `Room` tem `Entities(null)` com os jogadores como `avatars` (`Player` na posição do `state`); `spawnWildlife` (campo +
+  covil, pela seed) e chunks carregados em volta (`loadAround`). `tick` ~10×/s: bichos em passos de 0,1 s, plantas a
+  cada 1 s, `mobs` por jogador (raio 22, `MobState`). `strike` → `strikeFrom` (+ `hits`, `drops` do espólio); `feed` →
+  `fed`; `onBite` → `bite` só ao mordido.
+- Aparelho na sala: `Entities.remote` (sem simulação de animais/monstros), `CreatureMirror` (objetos espelhados,
+  suavizados; mortes em `dying`, coraçõezinhos em `Entities.extra`); golpe → `net.strike`; comida →
+  `ActionController.onFeed` → `net.feed`; mordida → `Entities.biteFrom`.
+- Moradores seguem locais. Bichos não vão para o disco. Protocolo 13; servidor 0.14.0 (`TICK_MS` = 100).
+- Conferido no navegador com servidor local e dois jogadores: ovelhas nas mesmas posições, comida, mordida, golpe com
+  morte, números e espólio para os dois.
 
 ## Paredes de materiais — v0.69.0
 - 16 paredes: `WALL_MATERIALS` (8 pedras + Terra, Grama, Arada, Batida, Areia, Pedra Bruta de novo — "Pedra com Musgo" —,

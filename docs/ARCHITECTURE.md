@@ -58,7 +58,7 @@ src/
     actions.ts                 ações do jogador como dados + applyAction (pelas regras do World) — multiplayer (ADR 0016)
   net/     multiplayer — sem DOM; usado pelo jogo e pelo servidor (ADR 0016)
     protocol.ts                mensagens, versão, código de convite, nome de convidado, leitura segura da rede
-    room.ts                    Room: sala autoritativa pura (World da sala, jogadores, edições)
+    room.ts                    Room: sala autoritativa pura (World da sala, jogadores, edições, itens, baús e bichos — Entities com avatares, ADR 0021)
     session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
     loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
     index.ts                   o que vai no pacote do servidor (npm run build:net → dist-net/orvalis-net.cjs)
@@ -85,7 +85,9 @@ src/
     title.ts                   tela de entrada (Novo jogo / Continuar) e montagem do personagem; o mundo fica em vitrine atrás
     walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts (FarmAnimal: cavalo, vaca, galinha), villager.ts   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
-                               morte/renascimento dos monstros, atores p/ render
+                               morte/renascimento dos monstros, atores p/ render; roda também na sala do servidor
+                               (sem personagem, jogadores como `avatars`) e em modo `remote` no aparelho dentro da sala
+    creatureMirror.ts          na sala: espelho dos bichos que a sala manda (`mobs`), suavizados (ADR 0021)
     inventory.ts, hotbar.ts, bag.ts, chest.ts, skills.ts, drops.ts   inventário, grade, bolsa, baú, receitas, itens caídos
     camera.ts, joystick.ts, actionButton.ts, screenMode.ts, hud.ts
 ```

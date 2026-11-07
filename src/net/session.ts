@@ -1,8 +1,9 @@
 import { type PlayerAction, applyAction } from '../world/actions';
 import type { World } from '../world/world';
+import type { Facing } from '../game/walker';
 import type { Transport } from './loopback';
 import { fromB64 } from './b64';
-import { type Appearance, type ChestSlotsMsg, type ClientMessage, type Grown, type RoomDrop, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type RoomBag, type RoomChunk, type ServerMessage } from './protocol';
+import { type Appearance, type ChestSlotsMsg, type ClientMessage, type Grown, type MobState, type RoomDrop, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type RoomBag, type RoomChunk, type ServerMessage } from './protocol';
 
 /**
  * Sessão multiplayer do lado do jogo (ADR 0016). O servidor manda no mapa da sala: as ações dos outros chegam como
@@ -43,6 +44,14 @@ export class NetSession {
   onTaken: ((id: number, mine: boolean) => void) | null = null;
   /** Um baú mudou (outro jogador mexeu). */
   onChest: ((x: number, y: number) => void) | null = null;
+  /** Bichos da sala perto de mim (~10×/s; o jogo espelha — `CreatureMirror`). */
+  onMobs: ((list: MobState[]) => void) | null = null;
+  /** Um monstro me mordeu (a sala decide; o dano sai da minha defesa). */
+  onBite: ((kind: string, x: number, y: number) => void) | null = null;
+  /** Dano que entrou em monstros (números na tela). */
+  onHits: ((list: Array<[number, number, number, 0 | 1]>) => void) | null = null;
+  /** O animal comeu o que eu dei (tirar o item da bolsa). */
+  onFed: ((id: number, item: string) => void) | null = null;
   /** Itens já no chão ao entrar (entregues ao jogo no `attach`/`onDrops`). */
   drops: RoomDrop[] = [];
   private chestBacklog: Array<{ x: number; y: number; slots: ChestSlotsMsg }> = [];
@@ -64,6 +73,16 @@ export class NetSession {
   /** Pede um item do chão (a sala responde `taken` para todos: quem pediu primeiro leva). */
   take(id: number): void {
     this.send({ t: 'take', id });
+  }
+
+  /** Golpe para `facing` com a minha força (ataque + arma): a sala calcula quem foi atingido. */
+  strike(facing: Facing, attack: number): void {
+    this.send({ t: 'strike', facing, attack });
+  }
+
+  /** Dar `item` ao animal `id` da sala (o item só sai da bolsa no `fed`). */
+  feed(id: number, item: string): void {
+    this.send({ t: 'feed', id, item });
   }
 
   /** Conteúdo do baú depois de mexer nele (a sala guarda e repassa aos outros). */
@@ -157,6 +176,18 @@ export class NetSession {
         break;
       case 'chest':
         this.setChest(m.x, m.y, m.slots);
+        break;
+      case 'mobs':
+        this.onMobs?.(m.list);
+        break;
+      case 'bite':
+        this.onBite?.(m.k, m.x, m.y);
+        break;
+      case 'hits':
+        this.onHits?.(m.list);
+        break;
+      case 'fed':
+        this.onFed?.(m.id, m.item);
         break;
       case 'joined':
         this.others.set(m.player.id, m.player);

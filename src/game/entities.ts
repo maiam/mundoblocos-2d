@@ -88,9 +88,19 @@ export const MAX_SHEEP = 16;
 /** Limite por espécie (filhotes contam): a população não explode. */
 export const MAX_PER_SPECIES: Record<AnimalKind, number> = { sheep: MAX_SHEEP, horse: 6, cow: 10, chicken: 12 };
 
+/** Alvo distante: monstros sem ninguém por perto só passeiam. */
+const NOBODY = { x: 1e9, y: 1e9 };
+
 /**
- * Entidades vivas da sessão (personagem + ovelhas): atualização, colisão entre
- * elas, reprodução e ocupação de células. Estado de execução, não persistido.
+ * Entidades vivas (personagem, animais, moradores, monstros): atualização, colisão entre elas, reprodução, combate e
+ * ocupação de células. Estado de execução, não persistido.
+ *
+ * Roda nos dois lados do multiplayer (ADR 0016, Etapa 3), com as mesmas regras:
+ * - no aparelho (jogo sozinho): `player` = a personagem; tudo é simulado aqui;
+ * - na sala do servidor (`Room`): sem `player`; os jogadores entram como `avatars` (posição que cada um manda), que os
+ *   monstros perseguem e mordem (`onBite`) e de onde saem os golpes (`strikeFrom`);
+ * - no aparelho dentro da sala: `remote` = animais e monstros são só o espelho do que a sala manda
+ *   (`CreatureMirror`): nada de passeio, namoro, mordida ou renascimento aqui; os moradores seguem locais.
  */
 export class Entities {
   readonly npcs: Sheep[] = [];
@@ -114,13 +124,23 @@ export class Entities {
   private flowArea: Rect | null = null;
   private flowTimer = 0;
 
+  /** Jogadores da sala (servidor): alvos dos monstros e origem dos golpes; bloqueiam como a personagem. */
+  readonly avatars: Player[] = [];
+  /** Mordida num jogador da sala (servidor): quem decide é a sala, o dano é calculado no aparelho dele. */
+  onBite: ((target: Player, m: Monster) => void) | null = null;
+  /** Aparelho na sala: animais e monstros vêm da sala (sem simulação local deles). */
+  remote = false;
+  /** Atores extras desenhados com os demais (espelho da sala: coraçõezinhos do namoro). */
+  extra: Actor[] = [];
+
   /** Aparência modular em teste (`?personagem=chibi`); null = personagem pronto (`body`). */
   look: ModularLook | null = null;
   /** Personagem pronto quando não há `look`: Heroína ou Herói (escolhido na tela de personagem; salvo). */
   body: HeroBody = 'heroine';
 
   constructor(
-    private readonly player: Player,
+    /** A personagem deste aparelho; null na sala do servidor (só `avatars`). */
+    private readonly player: Player | null,
     private readonly rand: () => number = Math.random,
     /** Personagem jogável do mundo (perfil). */
     private readonly character: CharacterId = 'heroine',
@@ -209,6 +229,22 @@ export class Entities {
     });
   }
 
+  /**
+   * Bichos do mundo (os mesmos em qualquer aparelho e na sala, pela seed): rebanho, cavalo, vacas e galinhas no campo
+   * diante do portão (mundos com animais) e os monstros da dungeon.
+   */
+  spawnWildlife(world: World): void {
+    if (world.profile.sheep) {
+      const [gx, gy] = world.outsideGate();
+      const town = !!world.town;
+      this.spawnFlock(world, gx, gy + (town ? 8 : 0));
+      this.spawnHorse(world, gx + 9, gy + (town ? 10 : 2));
+      this.spawnAnimals(world, 'cow', gx - 9, gy + (town ? 10 : 2), 2, 91);
+      this.spawnAnimals(world, 'chicken', gx - 6, gy + (town ? 6 : 1), 4, 97);
+    }
+    this.spawnMonsters(world);
+  }
+
   /** Monstros nos pontos da dungeon (posições pela seed; o sorteio do passeio usa `rand`). */
   spawnMonsters(world: World): void {
     const d = world.dungeon;
@@ -217,8 +253,27 @@ export class Entities {
     for (const s of d.spawns) this.monsters.push(new Monster(s.kind, s.x, s.y, s.kind === 'spider-boss' ? d.bossRoom : d.interior, this.rand));
   }
 
+  /** Quem os monstros perseguem e mordem: a personagem (aparelho) ou os jogadores da sala (servidor). */
+  private hunters(): Player[] {
+    return this.player ? [this.player, ...this.avatars] : this.avatars;
+  }
+
   private all(): Walker[] {
-    return [this.player, ...this.npcs, ...this.horses, ...this.villagers, ...this.monsters];
+    return [...this.hunters(), ...this.npcs, ...this.horses, ...this.villagers, ...this.monsters];
+  }
+
+  /** Alvo de um monstro: o jogador mais perto dentro do limite dele (senão o mais perto de todos). */
+  private targetOf(m: Monster): { x: number; y: number } {
+    let best: Player | null = null;
+    let bestD = Infinity;
+    let bestInside = false;
+    for (const h of this.hunters()) {
+      if (h.dead) continue;
+      const inside = inRect(m.bounds, Math.floor(h.x), Math.floor(h.y));
+      const d = Math.hypot(h.x - m.x, h.y - m.y);
+      if ((inside && !bestInside) || (inside === bestInside && d < bestD)) { best = h; bestD = d; bestInside = inside; }
+    }
+    return best ?? NOBODY;
   }
 
   /** Bloqueio entre entidades; se já estavam sobrepostas, deixa se afastar. */
@@ -233,29 +288,47 @@ export class Entities {
   };
 
   update(dt: number, world: World): void {
-    for (const s of this.npcs) s.update(dt, world, this.blocker);
-    for (const h of this.horses) h.update(dt, world, this.blocker);
     for (const v of this.villagers) v.update(dt, world, this.blocker);
-    this.updateFlow(dt, world);
-    const flow = this.flow ? this.flowAt : undefined;
-    for (const m of this.monsters) m.update(dt, world, this.player, this.blocker, flow);
-    // Mordidas: monstro encostado e pronto morde (a personagem fica invencível por um instante).
-    if (!this.player.dead) {
-      for (const m of this.monsters) {
-        if (!m.tryBite(this.player)) continue;
-        const hit = rollDamage(MONSTER_STATS[m.kind].attack, this.player.stats.defense, this.rand);
-        if (this.player.hurt(hit.amount, m.x, m.y, world, this.blocker)) this.onDamage?.(this.player.x, this.player.y, hit, 'player');
-      }
-    }
+    if (!this.remote) this.updateCreatures(dt, world);
     for (let i = this.dying.length - 1; i >= 0; i--) {
       this.dying[i].t += dt / MONSTERS[this.dying[i].kind].deathSeconds;
       if (this.dying[i].t >= 1) this.dying.splice(i, 1);
     }
+    if (this.remote) return;
     this.updateRespawns(dt);
     // Ordem importa: concluir antes de (re)começar, senão o par namoraria de novo.
     this.finishCourtships(world);
     this.formPairs();
     this.startCourtships();
+  }
+
+  /** Animais passeiam; monstros perseguem o jogador mais perto e mordem quem estiver encostado. */
+  private updateCreatures(dt: number, world: World): void {
+    for (const s of this.npcs) s.update(dt, world, this.blocker);
+    for (const h of this.horses) h.update(dt, world, this.blocker);
+    this.updateFlow(dt, world);
+    const flow = this.flow ? this.flowAt : undefined;
+    for (const m of this.monsters) m.update(dt, world, this.targetOf(m), this.blocker, flow);
+    // Mordidas: monstro encostado e pronto morde (um alvo por vez; quem leva fica invencível por um instante).
+    for (const m of this.monsters) {
+      for (const h of this.hunters()) {
+        if (h.dead || !m.tryBite(h)) continue;
+        if (h === this.player) this.biteFrom(m.kind, m.x, m.y, world);
+        else this.onBite?.(h, m);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Mordida de um monstro `kind` vindo de (x, y) na personagem deste aparelho: dano pela fórmula (ataque do monstro −
+   * defesa dela). No jogo sozinho vem do `update`; na sala, da mensagem `bite` (a sala decide quando morde).
+   */
+  biteFrom(kind: MonsterKind, x: number, y: number, world: World): void {
+    const p = this.player;
+    if (!p || p.dead) return;
+    const hit = rollDamage(MONSTER_STATS[kind].attack, p.stats.defense, this.rand);
+    if (p.hurt(hit.amount, x, y, world, this.blocker)) this.onDamage?.(p.x, p.y, hit, 'player');
   }
 
   /** Animais que se reproduzem (ovelhas + animais do campo). */
@@ -348,9 +421,10 @@ export class Entities {
    * Entidades (exceto a personagem) dentro do arco do golpe (espada ou machado): à frente, até SWORD_REACH
    * da borda do corpo (monstro grande é atingido de mais longe).
    */
-  strikeTargets(facing: Facing): Array<Breeder | Monster> {
+  strikeTargets(facing: Facing, from: { x: number; y: number } | null = this.player): Array<Breeder | Monster> {
     const [fx, fy] = FACING_VEC[facing];
-    const p = this.player;
+    const p = from;
+    if (!p) return [];
     return [...this.npcs, ...this.horses, ...this.monsters].filter((s) => {
       const dx = s.x - p.x;
       const dy = s.y - p.y;
@@ -366,16 +440,22 @@ export class Entities {
    * Animais somem (sem animação de morte ainda). Monstros levam o dano da fórmula (ataque + poder da arma − defesa,
    * com variação e crítico — `world/progression.ts`), piscam e recuam; sem vida, somem.
    */
-  strike(facing: Facing, world?: World, tool: ToolId | null = this.player.attackTool ?? this.player.equipped): number {
-    const attack = this.player.stats.attack + weaponPower(tool);
-    const hit = this.strikeTargets(facing);
+  strike(facing: Facing, world?: World, tool: ToolId | null = this.player?.attackTool ?? this.player?.equipped ?? null): number {
+    const p = this.player;
+    if (!p) return 0;
+    return this.strikeFrom(p, facing, p.stats.attack + weaponPower(tool), world);
+  }
+
+  /** Golpe de quem está em `from` com força `attack` (ataque + poder da arma): a personagem ou um jogador da sala. */
+  strikeFrom(from: { x: number; y: number }, facing: Facing, attack: number, world?: World): number {
+    const hit = this.strikeTargets(facing, from);
     for (const s of hit) {
       if (!(s instanceof Monster)) {
         this.removeAnimal(s);
         continue;
       }
       const dmg = rollDamage(attack, MONSTER_STATS[s.kind].defense, this.rand);
-      if (world) s.takeHit(dmg.amount, this.player.x, this.player.y, world, this.blocker);
+      if (world) s.takeHit(dmg.amount, from.x, from.y, world, this.blocker);
       else s.hp -= dmg.amount;
       this.onDamage?.(s.x, s.y, dmg, 'enemy');
       if (s.dead) this.killMonster(s);
@@ -399,9 +479,9 @@ export class Entities {
       const r = this.respawns[i];
       r.timer -= dt;
       if (r.timer > 0) continue;
-      const p = this.player;
       const m = new Monster(r.kind, r.x, r.y, r.bounds, this.rand);
-      if (Math.hypot(p.x - r.x, p.y - r.y) < RESPAWN_CLEARANCE || this.all().some((w) => m.overlapsAt(m.x, m.y, w))) {
+      const near = this.hunters().some((p) => Math.hypot(p.x - r.x, p.y - r.y) < RESPAWN_CLEARANCE);
+      if (near || this.all().some((w) => m.overlapsAt(m.x, m.y, w))) {
         r.timer = 5;
         continue;
       }
@@ -410,11 +490,11 @@ export class Entities {
     }
   }
 
-  /** Mapa de distâncias pelo chão da dungeon até a personagem (BFS), só com ela lá dentro. */
+  /** Mapa de distâncias pelo chão da dungeon até o jogador mais perto (BFS a partir de todos lá dentro). */
   private updateFlow(dt: number, world: World): void {
     const d = world.dungeon;
-    const p = this.player;
-    if (!d || !inRect(d.area, Math.floor(p.x), Math.floor(p.y))) {
+    const inside = d ? this.hunters().filter((p) => !p.dead && inRect(d.area, Math.floor(p.x), Math.floor(p.y))) : [];
+    if (!d || inside.length === 0) {
       this.flow = null;
       return;
     }
@@ -425,12 +505,15 @@ export class Entities {
     const w = a.x1 - a.x0 + 1;
     const h = a.y1 - a.y0 + 1;
     const dist = this.flow && this.flow.length === w * h ? this.flow.fill(-1) : new Int32Array(w * h).fill(-1);
-    const start = (Math.floor(p.y) - a.y0) * w + (Math.floor(p.x) - a.x0);
-    dist[start] = 0;
     const q = new Int32Array(w * h);
     let head = 0;
     let tail = 0;
-    q[tail++] = start;
+    for (const p of inside) {
+      const start = (Math.floor(p.y) - a.y0) * w + (Math.floor(p.x) - a.x0);
+      if (dist[start] === 0) continue;
+      dist[start] = 0;
+      q[tail++] = start;
+    }
     while (head < tail) {
       const i = q[head++];
       const x = i % w;
@@ -500,6 +583,7 @@ export class Entities {
    */
   villagerInFront(): Villager | null {
     const p = this.player;
+    if (!p) return null;
     const [fx, fy] = FACING_VEC[p.facing];
     let best: Villager | null = null;
     let bestD = Infinity;
@@ -523,17 +607,20 @@ export class Entities {
   }
 
   get actors(): Actor[] {
+    const out: Actor[] = [...this.extra];
     const p = this.player;
-    const b = this.body;
-    const kind: ActorKind = this.character === 'goddess' ? 'goddess'
-      : p.attacking && p.attackTool && TOOLS[p.attackTool].swings ? `${b}-${p.attackTool as SwingTool}-attack`
-      : p.equipped ? `${b}-${p.equipped}` : b;
-    const out: Actor[] = [{
-      kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
-      frame: p.attacking ? p.attackFrame : undefined,
-      hurt: p.invuln > 0,
-      look: this.character === 'heroine' && this.look ? this.look : undefined,
-    }];
+    if (p) {
+      const b = this.body;
+      const kind: ActorKind = this.character === 'goddess' ? 'goddess'
+        : p.attacking && p.attackTool && TOOLS[p.attackTool].swings ? `${b}-${p.attackTool as SwingTool}-attack`
+        : p.equipped ? `${b}-${p.equipped}` : b;
+      out.unshift({
+        kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
+        frame: p.attacking ? p.attackFrame : undefined,
+        hurt: p.invuln > 0,
+        look: this.character === 'heroine' && this.look ? this.look : undefined,
+      });
+    }
     for (const s of this.npcs) {
       out.push({
         kind: s.baby ? 'lamb' : 'sheep',

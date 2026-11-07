@@ -76,3 +76,6 @@
 - Rebanho inicial de até 4 ovelhas a 2–8 células de um ponto 8 células ao sul do portão da cidade (`World.outsideGate`), em grama andável, posições determinísticas pela seed.
 - Colisão entre entidades: não se entra na caixa de outra; se já estavam sobrepostas, podem se afastar.
 - Estado de execução, não persistido (some ao recarregar; renasce igual pela seed).
+- **Na sala do multiplayer** (ADR 0021): os animais e os monstros são da sala (o servidor roda estas mesmas `Entities`,
+  com os jogadores como `avatars`); o aparelho fica em `remote` e o `CreatureMirror` espelha o que a sala manda.
+  Dar comida passa pela sala (`ActionController.onFeed` → `feed`/`fed`). Moradores continuam locais.

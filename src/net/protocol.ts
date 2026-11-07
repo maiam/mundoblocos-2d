@@ -6,7 +6,7 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 12;
+export const PROTOCOL_VERSION = 13;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -75,7 +75,38 @@ export type ClientMessage =
   /** Pegar um item do chão (quem pedir primeiro leva). */
   | { t: 'take'; id: number }
   /** Conteúdo novo de um baú depois de mexer nele (a sala guarda e repassa). */
-  | { t: 'chest'; x: number; y: number; slots: ChestSlotsMsg };
+  | { t: 'chest'; x: number; y: number; slots: ChestSlotsMsg }
+  /** Golpe (espada/machado) para `facing`, com a força de quem bate (ataque + poder da arma): a sala calcula o acerto. */
+  | { t: 'strike'; facing: Facing; attack: number }
+  /** Dar `item` ao animal `id` (o da lista `mobs`): a sala decide se ele come; o item sai da bolsa no `fed`. */
+  | { t: 'feed'; id: number; item: string };
+
+/** Direções na rede (índice em `MobState.f`). */
+export const FACING_ORDER: readonly Facing[] = ['down', 'left', 'right', 'up'];
+
+/**
+ * Bicho da sala visto por um jogador (Etapa 3: a sala roda animais e monstros; o aparelho só desenha). Curto de
+ * propósito (vai ~10×/s): `i` id (0 = efeito sem id: morte ou coraçõezinhos), `k` tipo (`sheep`, `horse`, `cow`,
+ * `chicken`, monstro ou `love-hearts`), `f` direção (`FACING_ORDER`), `m` andando, `b` filhote, `l` apaixonado (coração),
+ * `e` pode comer agora, `p` vida restante (0..1, só ferido), `h` piscando de dor, `d` morte (0..1), `r` quadro e `s`
+ * tamanho dos coraçõezinhos.
+ */
+export interface MobState {
+  i: number;
+  k: string;
+  x: number;
+  y: number;
+  f: number;
+  m?: 1;
+  b?: 1;
+  l?: 1;
+  e?: 1;
+  p?: number;
+  h?: 1;
+  d?: number;
+  r?: number;
+  s?: number;
+}
 
 /** Espaços de um baú na rede: pilha (id + quantidade) ou vazio. */
 export type ChestSlotsMsg = Array<{ item: string; count: number } | null>;
@@ -126,6 +157,14 @@ export type ServerMessage =
   | { t: 'time'; time: number }
   /** Plantas/árvores que cresceram na sala. */
   | { t: 'grow'; cells: Grown[] }
+  /** Bichos da sala perto deste jogador (~10×/s); quem não está na lista saiu de perto ou sumiu. */
+  | { t: 'mobs'; list: MobState[] }
+  /** Um monstro (`k`) em (x, y) mordeu este jogador: o dano sai da defesa dele, no aparelho. */
+  | { t: 'bite'; k: string; x: number; y: number }
+  /** Dano que entrou em monstros (números na tela): x, y, quanto, crítico (1). */
+  | { t: 'hits'; list: Array<[number, number, number, 0 | 1]> }
+  /** O animal comeu: tira `item` da bolsa de quem deu. */
+  | { t: 'fed'; id: number; item: string }
   | { t: 'joined'; player: PlayerInfo }
   | { t: 'left'; id: number }
   | { t: 'state'; id: number; s: PlayerState }
@@ -171,6 +210,11 @@ export function parseClientMessage(text: string): ClientMessage | null {
       const s = parseState(o.s);
       return s ? { t: 'state', s } : null;
     }
+    case 'strike':
+      if (!FACINGS.has(o.facing as string) || !finite(o.attack) || (o.attack as number) < 0 || (o.attack as number) > 1000) return null;
+      return { t: 'strike', facing: o.facing as Facing, attack: o.attack as number };
+    case 'feed':
+      return Number.isInteger(o.id) && typeof o.item === 'string' && /^[a-z_]{1,32}$/.test(o.item) ? { t: 'feed', id: o.id as number, item: o.item } : null;
     case 'action': {
       const a = parseAction(o.a);
       return a && Number.isInteger(o.seq) ? { t: 'action', seq: o.seq as number, a } : null;

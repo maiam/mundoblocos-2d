@@ -70,10 +70,12 @@ Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositó
    - ✅ **Etapa 1 — mesmo horário e mesmo crescimento** (v0.63.0, protocolo 7): `Room.time`/`Room.tick` (servidor 1×/s),
      `welcome.time`, `time` a cada 30 s, `grow` com as células que cresceram; o aparelho na sala não cresce sozinho.
    - ✅ **Etapa 2 — itens caídos e baús da sala** (v0.67.0, protocolo 10). Falta: dois mexendo no mesmo baú ao mesmo
-     tempo — vale o último (sem trava); espólio de aranha ainda local (vem com a Etapa 3).
-   - **Etapa 3 — aranhas, animais (e moradores) da sala**: o servidor roda `Entities` da sala e manda posições ~10×/s
-     (desenho suavizado); golpe = intenção (servidor calcula acerto/dano); mordida decidida no servidor; dar comida e
-     reprodução viram ações. Medir CPU na Hostinger (plano B: VPS).
+     tempo — vale o último (sem trava).
+   - ✅ **Etapa 3 — aranhas e animais da sala** (v0.70.0, protocolo 13, ADR 0021): o servidor roda as `Entities` da sala
+     e manda os bichos perto de cada jogador ~10×/s; golpe, comida e mordida decididos pela sala; espólio de aranha é
+     item da sala. Falta: medir CPU/banda na Hostinger com gente de verdade (em Node: ~70 ms por minuto de jogo);
+     moradores seguem locais; bichos não são salvos (renascem pela seed ao reiniciar o servidor); ferramenta e golpe
+     visíveis para os outros (o boneco do outro não mostra a ferramenta nem a animação); descarregar chunks do servidor.
    - Fora da sala nada muda (tudo roda no aparelho).
    - ✅ **Salas fixas salvas** (v0.64.0, ADR 0020): Sala 1 (até 10), mundo e bolsas no servidor. Confirmado em 07/11 que
      `~/orvalis-dados` sobrevive a reinício e a deploy do servidor (`carregadaDoDisco` após o merge da v0.10.0);

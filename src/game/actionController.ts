@@ -66,6 +66,11 @@ export interface ActionContext {
   notify(text: string): void;
   /** Ação que mudou o mapa, já aplicada no `World` local (multiplayer: vai para o servidor, ADR 0016). */
   onAction?(a: PlayerAction): void;
+  /**
+   * Na sala: dar comida vai para o servidor (o animal é da sala); o item só sai da bolsa quando ela confirma.
+   * Sem isto (jogo sozinho), o animal come aqui.
+   */
+  onFeed?(animal: Breeder, item: ItemId): void;
 }
 
 /** Alvos para o render (destaque do mouse, anel na entidade, foco do botão de ação, quebra em andamento). */
@@ -269,9 +274,12 @@ export class ActionController {
     const item = this.feedItem;
     if (!item) return false;
     if (animal && animal.eats(item)) {
-      if (this.canFeed(animal, item) && this.inventory.take(item)) {
-        animal.feed();
-        this.ctx.onConsumed();
+      if (this.canFeed(animal, item)) {
+        if (this.ctx.onFeed) this.ctx.onFeed(animal, item);
+        else if (this.inventory.take(item)) {
+          animal.feed();
+          this.ctx.onConsumed();
+        }
       }
       return true;
     }
