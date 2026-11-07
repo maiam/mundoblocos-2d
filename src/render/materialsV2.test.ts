@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import manifest from '../assets/materials-v2.json';
 import { blocksV2FromSearch, V2_BLOCKS } from './materialsV2';
 
-describe('Padrão de Materiais V2 (ADR 0022)', () => {
+describe('Padrão de Materiais V2 (ADR 0023)', () => {
   it('manifesto gerado bate com a geometria: topo 64, frentes 32/36 no atlas 2×', () => {
     expect(manifest.cell).toBe(64);
     expect(manifest.rows.top[1]).toBe(64);

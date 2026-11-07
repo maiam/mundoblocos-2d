@@ -1,4 +1,4 @@
-# ADR 0022 — Padrão de Materiais V2: texturas planas, geometria do motor
+# ADR 0023 — Padrão de Materiais V2: texturas planas, geometria do motor
 
 - **Status:** aceita; **em validação** (Etapas 0 e 1 na v0.81.0; o jogo continua no atlas legado)
 - **Data:** 2026-11-07
@@ -23,7 +23,8 @@
    diferentes (grama = topo de grama + frente de terra + franja de grama). É aparência: regras do bloco seguem em
    `world/blocks.ts`.
 5. **Validação atrás de chave**: `?blocos=v2` troca chão e cubo dos blocos-piloto (areia, terra, grama, Pedra Bruta) no mundo, com a
-   frente atual (18); `?escala=1` abre a cena de comparação (legado 18 · V2 18 · V2 16). Sem chave o atlas V2 nem baixa.
+   frente atual (18); `?materiais=1` (só em desenvolvimento, `dev/materialsScene.ts`) abre a cena de comparação
+   (legado 18 · V2 18 · V2 16). Sem chave o atlas V2 nem baixa.
 6. **Transições horizontais (Etapa 3) só na camada de chão plano**, entre topos da mesma altura; nunca sobre o topo de
    cubos empilhados (onde há degrau vale borda/relevo, não máscara). As máscaras das 47 combinações saem de **~13
    formas desenhadas**, giradas/espelhadas pelo script: **máscara é forma, não textura** (exceção registrada em
@@ -36,6 +37,12 @@
 - Frente 16 × 18 é escolha artística (01, "Por que 16?"): decidir olhando a cena, não a prancha. Mudar `CUBE_FRONT`
   afeta câmera, empilhamento, portas, paredes e celestiais (usos listados em NEXT_STEPS, Fase V).
 - Misturar só no chão plano evita a máscara atravessar degraus (04, § 5) e mantém o custo no cache do chunk.
+
+## Relação com a ADR 0022
+
+A ADR 0022 (escala visual) fixa `CUBE_FRONT` 18 e criou a cena `?escala=1` com o renderizador real. Esta ADR não muda
+nada disso enquanto valida: a frente de 16 só aparece na cena própria. Se a etapa 4 escolher 16, o item 1 da ADR 0022
+é revisto junto.
 
 ## Consequências
 

@@ -1,4 +1,4 @@
-# Contrato de entrega — Materiais V2 (ADR 0022)
+# Contrato de entrega — Materiais V2 (ADR 0023)
 
 Resumo operacional do pacote `docs/materiais-v2/` (02, 03, 04). Em dúvida, vale o pacote.
 
@@ -31,7 +31,7 @@ contrato (tamanho, transparência no topo ou na janela da frente, franja abaixo 
 ## Compor blocos
 
 Em `src/render/materialsV2.ts` (`V2_BLOCKS`): `{ top, front, overlay? }` por bloco. Ex.: grama = topo `grama` + frente
-`terra` + franja `grama`. Ver no jogo: `?blocos=v2` (mundo) e `?escala=1` (cena de comparação).
+`terra` + franja `grama`. Ver no jogo: `?blocos=v2` (mundo) e `?materiais=1` (cena de comparação).
 
 ## Máscaras de transição (Etapa 3, ainda não implementada)
 

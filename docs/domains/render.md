@@ -25,13 +25,13 @@ Apenas apresentação; lê `World`, nunca escreve.
   (`main.ts`); a arte da dungeon vem depois (`loadDungeonArt` → `addDungeonTextures` → `ChunkRenderer.invalidateAll`,
   ADR 0013). Imagens são URLs de arquivos ao lado da página; o render nunca lê pixels de canvas.
 
-## Padrão de Materiais V2 (em validação, ADR 0022)
+## Padrão de Materiais V2 (em validação, ADR 0023)
 - A arte entrega **material plano** 128×128 (`assets-src/materiais/<material>/{top,front,front_overlay}.png`,
   contrato na pasta); `scripts/build-materials.py` gera `materials-v2.webp` (linhas top 64, f16 32, f18 36, o16, o18)
   + `materials-v2.json`. O motor monta o cubo: `composeCube(top, front, contorno, alturaDaFrente)`; ordem interna frente
   → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
 - `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco: areia, terra, grama, Pedra Bruta) e o estado do atlas; `textures.applyMaterialsV2` troca os
-  blocos-piloto quando `?blocos=v2`; `textures.qaMaterial` serve a cena `?escala=1` (`render/scaleScene.ts`).
+  blocos-piloto quando `?blocos=v2`; `textures.qaMaterial` serve a cena `?materiais=1` (`dev/materialsScene.ts`, só dev).
 - Transições entre chãos (etapa 3) só no chão plano e na mesma altura; máscaras são formas e podem girar (CONVENTIONS).
 
 ## Pipeline
@@ -69,6 +69,16 @@ Apenas apresentação; lê `World`, nunca escreve.
 - Cidade (`render/townArt.ts`): imagens em escala única (`TOWN_PX_PER_CELL`), variação por posição com sal fixo; o
   quadro varre `TOWN_REACH` além da tela para sprites grandes. Brilho noturno: `glowColor` + `glowAt` (posição da luz
   no sprite, ex.: lanterna do poste).
+
+## Cena de escala (ADR 0022, só em desenvolvimento)
+- `?escala=1` abre uma fila de comparação com o **renderizador real** (`src/dev/scaleScene.ts`; os dados da fila em
+  `scaleLayout.ts`, sem DOM e testados): personagens, animais, monstros, baú, bancos, árvores e uma casa 5×5 sobre a grade
+  de 32 px. Marcações por cima (G grade, A âncoras e altura desenhada, B células bloqueadas e caixa de colisão, L nomes).
+- Reproduzível: seed, hora (0,5), relógio de animação e `Math.random` fixos. Carregada por `import()` dentro de
+  `import.meta.env.DEV`: não vai para o build de produção.
+- Regra de escala conferida em teste: filhote ≈ 0,7× o adulto. Cavalo (1,6) < personagem (2,2): reavaliar antes de montaria.
+- Ao integrar arte nova, compare na cena com o que já existe (ADR 0022; evoluções futuras: catálogo gerado, validação
+  no pipeline, alturas calculadas em vez das razões `297/288` digitadas em `character.ts`).
 
 ## Cerca que se emenda (v0.59.0)
 - `render/fence.ts`: `fenceParts(n, e, s, w)` decide a montagem pelos vizinhos que se emendam (`joinsFence`: cerca ou

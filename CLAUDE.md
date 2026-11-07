@@ -97,7 +97,7 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
 ## 5. Ao terminar (definição de pronto)
 - `npx tsc --noEmit`, `npm test` e, se mexeu em desempenho, `npm run bench` — resumir em uma linha.
 - Verificar no navegador (captura de tela) quando a mudança é visual ou de interação.
-- Atualizar: `docs/CURRENT_STATE.md`, `docs/NEXT_STEPS.md`, `docs/CHANGELOG.md` e, se houver impacto,
+- Atualizar (`CURRENT_STATE` é retrato do estado atual — edite a seção afetada, sem diário por versão): `docs/CURRENT_STATE.md`, `docs/NEXT_STEPS.md`, `docs/CHANGELOG.md` e, se houver impacto,
   `ARCHITECTURE`, `CONVENTIONS`, `DECISIONS` (+ ADR), `OPERATIONS`, `MAPS`, domínios e `README.md`.
 - Republicar o Artifact se o jogo mudou (`npm run build:artifact` + publicar `artifact/mundoblocos.html` com `files`
   = `artifact/mundoblocos-files.json`).

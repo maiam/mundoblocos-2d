@@ -1,11 +1,11 @@
 import { Block, type BlockId } from '../world/blocks';
 
 /**
- * Padrão de Materiais V2 (ADR 0022): texturas planas 128×128 por material (`assets-src/materiais/`), reduzidas pelo
+ * Padrão de Materiais V2 (ADR 0023): texturas planas 128×128 por material (`assets-src/materiais/`), reduzidas pelo
  * `scripts/build-materials.py` para um atlas (`materials-v2.webp` + manifesto). O motor monta a geometria: topo 32×32
  * e frente de altura F (16 no padrão; 18 hoje no jogo) — a arte não traz o cubo pronto.
  *
- * Fase de validação: só areia, terra, grama e Pedra Bruta, e só com `?blocos=v2` (jogo) ou na cena `?escala=1`. Sem a chave nada
+ * Fase de validação: só areia, terra, grama e Pedra Bruta, e só com `?blocos=v2` (jogo) ou na cena `?materiais=1`. Sem a chave nada
  * muda (atlas legado). Aparência é do render; regras de bloco continuam em `world/blocks.ts`.
  */
 export interface MaterialsV2Manifest {

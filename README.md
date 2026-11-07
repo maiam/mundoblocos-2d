@@ -4,9 +4,11 @@
 > `https://orvalis.pensamentos.online` — publicar com `npm run pack:site` (ver `docs/OPERATIONS.md`).
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
-com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**, uma heroína jogável com
-ferramentas, cultivo de trigo, ovelhas que se reproduzem, a Cidade do Despertar (cidade fortificada de partida, igual
-em toda seed) e uma dungeon de aranhas com chefe. Ciclo dia/noite, sombras de nuvens e partículas.
+com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**. Escolha seu personagem (Heroína,
+Herói, Hood, Gino ou o chibi montável), use 5 ferramentas, cultive trigo e hortaliças, crie animais (ovelha, cavalo, vaca,
+galinha), cozinhe, construa com blocos e paredes, explore a Cidade do Despertar (cidade fortificada de partida, igual em
+toda seed) e o Covil das Aranhas com chefe, e jogue com amigos na **Sala 1** (até 10). Ciclo dia/noite, minimapa,
+sombras de nuvens e partículas. Estado detalhado em [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 
 ## Rodar
 
@@ -63,12 +65,17 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 | Bolsa (inventário) | B ou I, ou tocar no 12º ícone: 18 espaços acima da grade (27 com a mão); toque num item e num espaço da grade para trocar |
 | Água | não quebra; qualquer terra (Terra, Grama, Arada, Caminho), Pedra, Tora ou Tábua a substituem; cavar ao lado da água faz o buraco encher sozinho |
 | Materiais | quebrar solta o bloco para coletar (árvore dá toras); colocar gasta; ao cair, perde tudo menos as ferramentas |
+| Sentar / levantar | tocar numa cadeira ou banco (Heroína, Herói, Hood e Gino); andar ou tocar de novo levanta |
+| Fome e comida | barra de fome (mundo principal); selecionar o alimento e usar a ação onde não dá para plantar; pratos feitos no Caldeirão (Cozinheiro) e no Forno de Pedra, perto da estação |
+| Alimentar animais | ovelha/vaca = trigo, galinha = semente, cavalo = cenoura; ficam apaixonados, seguem você, namoram e têm filhotes; vaca dá leite e galinha ovo |
+| Minimapa | canto superior direito: norte para cima, névoa das áreas já exploradas |
 | Depuração (sem botão na tela) | G: bordas dos chunks · T: avançar período do dia · `?seed=` na URL |
 
 ## Documentação
 
 - Personagem modular (humano chibi): [contrato de arte v02](assets-src/personagens/CONTRATO.md) e
-  [coleção](assets-src/personagens/humano-chibi/README.md). Aguardando o piloto; ainda não integrado ao jogo.
+  [coleção](assets-src/personagens/humano-chibi/README.md). Já está no jogo (tela de entrada e `?personagem=`), só
+  caminhando; guarda-roupa ainda em revisão artística.
 
 - Índice e ordem de leitura: [`docs/README.md`](docs/README.md) · mapas do sistema: [`docs/MAPS.md`](docs/MAPS.md)
 - Instruções para agentes de IA: [`CLAUDE.md`](CLAUDE.md)

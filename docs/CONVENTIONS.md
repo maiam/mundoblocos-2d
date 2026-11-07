@@ -38,12 +38,13 @@
 - Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
 
 ## Arte e assets
+- **Escala**: ao integrar arte nova, confira-a na cena de escala (`?escala=1`, ADR 0022) ao lado dos personagens, animais e objetos existentes; não mude `TILE`, chunks nem colisão para "consertar" um desenho — ajuste a escala/âncora do sprite.
 - **Texturas sempre na direção em que foram desenhadas** (regra do dono do produto, 2026-11-03): chão, cubos e
   construções nunca giram nem espelham por célula — ele planeja a arte contando com essa direção. Para variar, ele
   envia **variações** (ex.: 3 gramas), sorteadas por célula, cada uma na direção desenhada.
-  **Exceção — máscaras de transição** (ADR 0022): máscara é **forma** (só alfa), não textura; o script pode girá-la ou
+  **Exceção — máscaras de transição** (ADR 0023): máscara é **forma** (só alfa), não textura; o script pode girá-la ou
   espelhá-la para cobrir as 47 combinações de vizinhos. A textura que aparece através dela nunca gira.
-- **Materiais novos no Padrão V2** (ADR 0022): a arte entrega material plano 128×128 (`top`, `front`, `front_overlay`)
+- **Materiais novos no Padrão V2** (ADR 0023): a arte entrega material plano 128×128 (`top`, `front`, `front_overlay`)
   em `assets-src/materiais/<material>/` pelo `assets-src/materiais/CONTRATO.md`; o motor monta o cubo. Gerar com
   `scripts/build-materials.py`; compor o bloco em `render/materialsV2.ts` (`V2_BLOCKS`). Mistura entre materiais só no
   chão plano e na mesma altura.
@@ -82,6 +83,8 @@
 
 ## Documentação
 - Documentos descrevem o **estado atual**; histórico vai para CHANGELOG/ADRs.
+- Arquivos soltos (capturas de tela, rascunhos) não ficam na raiz do repositório: imagens de apoio vão em `docs/assets/`; saídas geradas (`__pycache__`, `dist/`, `artifact/`) ficam no `.gitignore`.
+- `CURRENT_STATE` é um **retrato do estado atual** (edite a seção afetada, não acrescente uma seção por versão); o histórico por entrega vai só para o `CHANGELOG`. O diário técnico antigo está em `docs/archive/` e não se atualiza.
 - Toda entrega atualiza CURRENT_STATE, NEXT_STEPS e CHANGELOG; mapas (`MAPS.md`) acompanham mudanças de fluxo.
 - Estado de jogo novo que deva sobreviver ao recarregar entra em `game/save.ts` (`SaveData` + teste de ida e volta);
   mudar o formato exige subir `SAVE_VERSION`.

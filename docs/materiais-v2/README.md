@@ -1,11 +1,13 @@
 # Padrão Oficial de Materiais e Blocos V2 — pacote original
 
 Pacote definido pelo dono do produto com a área de arte (07/11/2026), guardado aqui **sem edição**, como referência.
-A decisão do repositório e o que já foi feito estão no [ADR 0022](../adr/0022-padrao-materiais-v2.md); o contrato de
+A decisão do repositório e o que já foi feito estão no [ADR 0023](../adr/0023-padrao-materiais-v2.md); o contrato de
 entrega da arte está em `assets-src/materiais/CONTRATO.md`.
 
-Correção de fato: o pacote (05, § 1) cita uma cena de escala `?escala=1` como já existente. Ela **não existia**; foi
-criada na v0.81.0 (`src/render/scaleScene.ts`) para a comparação de frente 16 × 18.
+Nota: o pacote (05, § 1) cita a cena de escala `?escala=1`. Ela é a da ADR 0022 (sprites no renderizador real, que só
+conhece uma altura de frente); a comparação de frente 16 × 18 ficou numa cena própria, `?materiais=1`
+(`src/dev/materialsScene.ts`, só em desenvolvimento). O número 0022 citado como "ADR" dentro do pacote não tem relação:
+a decisão do repositório é a ADR 0023.
 
 | Arquivo | Conteúdo |
 |---|---|

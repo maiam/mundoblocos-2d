@@ -82,7 +82,7 @@ export async function loadBlockArt(): Promise<void> {
 }
 
 /**
- * Atlas do Padrão de Materiais V2 (ADR 0022), só quando pedido (`?blocos=v2` no jogo, ou a cena `?escala=1`):
+ * Atlas do Padrão de Materiais V2 (ADR 0023), só quando pedido (`?blocos=v2` no jogo, ou a cena `?materiais=1`):
  * `useInWorld` liga os blocos-piloto no mapa. Sem o atlas no pacote, nada acontece.
  */
 export async function loadMaterialsV2(useInWorld: boolean): Promise<boolean> {

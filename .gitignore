@@ -16,4 +16,10 @@ dist-net/
 /assets-src/personagens/**/*.kra.kra
 /assets-src/personagens/**/*autosave*
 /assets-src/materiais/_preview/
+
+# Python
 __pycache__/
+*.pyc
+
+# Configuração local do Claude Code
+.claude/settings.local.json

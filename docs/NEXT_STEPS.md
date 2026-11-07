@@ -1,7 +1,8 @@
 # Plano e próximos passos
 
-_Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andamento)._ Fonte única do que falta fazer. Itens concluídos saem daqui e vão para o
-`CHANGELOG`; o que existe hoje está detalhado em `CURRENT_STATE.md`.
+_Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 3 do multiplayer; Fase P: vida e dano
+entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
+vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 ## 1. Panorama — o que temos
 
@@ -25,8 +26,12 @@ _Revisado em 2026-11-03 (v0.36.1 — Fases 0, 1 e 2 concluídas; Fase 3 em andam
 | Salvar progresso | ✅ | automático no navegador (ADR 0011); nuvem depende do backend do Orvalis (ADR 0015) |
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
-| Qualidade | ✅ | 117 testes, typecheck limpo, bench, verificação no navegador a cada entrega |
-| Peso dos artefatos | ✅ | imagens em arquivos separados (ADR 0013): **início ~2,5 MB** (orçamento < 3 MB), dungeon em segundo plano; Santuário 0,7 MB |
+| Multiplayer (Sala 1, até 10) | ✅ Etapas 1–3 | servidor autoritativo em `maiam/orvalis-servidor`: mundo, hora, crescimento, itens, baús, animais e aranhas da sala; falta medir carga real e moradores compartilhados |
+| Personagens e tela de entrada | ✅ | Heroína, Herói, Hood, Gino + chibi modular (só caminha); sentar nos quatro prontos (v0.80.0) |
+| Minimapa com névoa | ✅ v0.51.0 | mapa grande ainda não |
+| XP, níveis e profissões com proficiência | ❌ | Fase P, etapas 2 e 3 |
+| Qualidade | ✅ | 214 testes, typecheck limpo, bench, CI (Verificação) a cada PR; verificação no navegador a cada entrega |
+| Peso dos artefatos | ✅ | imagens em arquivos separados (ADR 0013): **início ~2,0 MB** (orçamento < 3 MB, desde a v0.74.0), dungeon e folhas de personagem sob demanda; Santuário 0,7 MB |
 
 ## 2. Plano por fases
 
@@ -139,17 +144,17 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
    lojas com compra/venda, hospedaria como ponto de retorno opcional); lampiões acendendo ao anoitecer e
    movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
 1. Ovelhas e cavalos (e novos animais) em outros chunks, por bioma, com limite. Cavalo: montaria (andar mais rápido).
-   Vaca: leite (balde?); galinha: ovos (aparecem no chão de tempos em tempos) — dependem da comida (Fase P).
-   Salvar os animais (posição, idade dos filhotes) no `game/save.ts` (sobe `SAVE_VERSION`): hoje o rebanho criado some
-   ao recarregar.
-   Árvores: comer maçã (Fase P), muda de cerejeira e de cacto se a arte vier, crescimento sincronizado pelo
-   servidor na sala multiplayer (hoje cada aparelho sorteia o seu), cadeira para sentar (animação de sentar).
+   ~~Leite e ovo~~ ✅ v0.74.0. Salvar os animais no jogo **sozinho** (`game/save.ts`, sobe `SAVE_VERSION`): na sala já são
+   salvos pelo servidor (v0.73.0); no jogo sozinho o rebanho criado ainda some ao recarregar.
+   Árvores: muda de cerejeira e de cacto se a arte vier. ~~Maçã comível~~ ✅ v0.56.0, ~~crescimento sincronizado na
+   sala~~ ✅ v0.63.0, ~~cadeira/sentar~~ ✅ v0.79.0.
 2. **Mais dungeons**: generalizar `buildDungeon/decorateDungeon` por tema (arte + monstros + chefe), várias pelo mapa.
 3. Porta: orientação lateral (quadro de lado), cair sem batente?, fechar sozinha?; atalho de teclado além do 9.
 4. Sons e música opcionais, vibração no celular ao quebrar/acertar.
 5. Botão de ação: mão vazia + toque colhe trigo maduro / faz carinho na ovelha; alvo pela diagonal do joystick.
 
 ### Fase 5 — Visual e polimento
+**Escala visual (ADR 0022):** ✅ cena de escala `?escala=1` (v. CHANGELOG, 07/11). Próximo, **depois de olhar a cena** (a normalização das alturas não é automática): (a) catálogo gerado das escalas existentes; (b) validação no `process-sprite.py` — exige tolerâncias numéricas nos contratos; (c) calcular as razões de altura (`297/288`…) pela altura do corpo em vez de digitar; (d) entrar o chibi modular na fila; (e) reavaliar o cavalo (1,6 vs 2,2) antes de montaria.
 0. **Personagem modular (humano chibi v02)** — ADR 0017, `assets-src/personagens/CONTRATO.md`.
    a. _Arte_: revisão 4 corrige a sequência dos braços à direita e o encaixe das mãos nas roupas. Conferir
       `previas/v02/direita-antes-depois.gif` e a montagem no cenário. Guarda-roupa fantasia 01 em revisão (onze peças, treze folhas, 16 combinações sobrepostas;
@@ -178,13 +183,14 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 3. Alturas: meio bloco/escadas; indicar borda de queda.
 4. Geração em Web Worker só se o custo por chunk voltar a crescer.
 
-### Fase V — Padrão de Materiais V2 (ADR 0022; pacote em `docs/materiais-v2/`)
+### Fase V — Padrão de Materiais V2 (ADR 0023; pacote em `docs/materiais-v2/`)
 Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo intacto até a decisão.
-0. ✅ **Docs** (v0.81.0): ADR 0022, `assets-src/materiais/CONTRATO.md`, exceção das máscaras em CONVENTIONS, pacote
-   original guardado. Correção: a cena `?escala=1` citada no pacote não existia — foi criada agora.
+0. ✅ **Docs** (v0.81.0): ADR 0023, `assets-src/materiais/CONTRATO.md`, exceção das máscaras em CONVENTIONS, pacote
+   original guardado. A cena `?escala=1` citada no pacote é a da ADR 0022 (sprites no renderizador real); a comparação
+   de frentes ficou numa cena própria, `?materiais=1`.
 1. ✅ **Pipeline e geometria** (v0.81.0): `scripts/build-materials.py` → `materials-v2.{webp,json}`;
    `composeCube(…, front)`; `render/materialsV2.ts` (`V2_BLOCKS`: areia, terra, grama sobre terra com franja);
-   `?blocos=v2` (mundo, frente 18) e `?escala=1` (`render/scaleScene.ts`: legado 18 · V2 18 · V2 16, pilhas, chão,
+   `?blocos=v2` (mundo, frente 18) e `?materiais=1` (só dev, `dev/materialsScene.ts`: legado 18 · V2 18 · V2 16, pilhas, chão,
    heroína no chão e sobre cubo, grade e linha de apoio).
 2. 🔶 **Arte oficial** (v0.81.0): terra, grama, franja da grama, areia e Pedra Bruta entregues e no pipeline (emendas
    0–1,24: invisíveis). Pendências para a arte:
@@ -236,7 +242,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 | Limite de pilha (bolsa tem 12 espaços desde v0.57.0; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
 | Ações próprias da Deusa | Santuário |
-| Frente dos cubos: 16 (padrão V2) ou 18 (atual)? Decidir olhando `?escala=1` com a arte oficial | Fase V |
+| Frente dos cubos: 16 (padrão V2) ou 18 (atual)? Decidir olhando `?materiais=1` com a arte oficial (mudar para 16 revê também a ADR 0022, item 1) | Fase V |
 
 ## 4. Dependências externas
 - **Backend do Orvalis** (repositório separado, subdomínio de `pensamentos.online`; ADR 0015 — sem maiamapps):

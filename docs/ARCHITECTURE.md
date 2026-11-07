@@ -31,8 +31,15 @@ scripts/
   extract-craftables.py        objetos de receita (fogueira, caldeirão, forno, cadeira) → sprite + ícone
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
   slice-icons.py               prancha em grade com transparência → um ícone por célula
-  make-icons.py                ícones do PWA (public/)
+  make-icons.py                ícones do PWA (public/) a partir de assets-src/icone-orvalis.webp
   build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)
+  build-net.mjs                src/net (+ regras de src/world) → dist-net/orvalis-net.cjs, pacote do multiplayer para o servidor (ADR 0016)
+  extract-villagers.py         moradores: personagens-base de roupa branca + roupas em camadas (assets-src/villagers)
+  extract-water.py             cubo de água e folhas de enchimento → texturas da água
+  extract-ui.py                ícones de interface (Personagem, Habilidades, Construtor), baú e tenda
+  extract-landmarks.py         marcos soltos do mundo (entrada do Covil das Aranhas) → sprite recortado
+  extract-interiors.py         arte dos interiores (assets-src/interiors) → src/assets/interior-<id>.png (ADR 0014)
+docs/                          documentação (README.md = índice); adr/, domains/, archive/ (histórico), assets/ (imagens de apoio)
 bench/perf.bench.ts            benchmarks (npm run bench)
 public/                        manifest PWA + ícones
 src/
@@ -62,12 +69,15 @@ src/
     session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
     loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
     index.ts                   o que vai no pacote do servidor (npm run build:net → dist-net/orvalis-net.cjs)
+  dev/     só desenvolvimento, fora do build de produção: cena de escala (`?escala=1`, ADR 0022) e dos materiais (`?materiais=1`, ADR 0023)
+    scaleLayout.ts             fila de comparação (dados puros, testados)
+    scaleScene.ts              cena: grade, âncoras, células bloqueadas, nomes e alturas por cima do quadro real
+    materialsScene.ts          cena ?materiais=1: legado 18 · V2 18 · V2 16 lado a lado (desenha sozinha: o Renderer só tem uma frente)
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
     textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube(…, frente)
-    materialsV2.ts             Padrão de Materiais V2 em validação: V2_BLOCKS, atlas V2, chave ?blocos=v2 (ADR 0022)
-    scaleScene.ts              cena ?escala=1: legado 18 · V2 18 · V2 16 lado a lado (ADR 0022)
+    materialsV2.ts             Padrão de Materiais V2 em validação: V2_BLOCKS, atlas V2, chave ?blocos=v2 (ADR 0023)
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)

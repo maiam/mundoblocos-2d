@@ -25,13 +25,28 @@ Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece
 | Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Cidade do Despertar: início, muralha, ruas, construções | `world/town.ts`, `render/townArt.ts`, `World` | [town.md](domains/town.md) |
 | Dungeon e monstros: área protegida, aranhas, chefe | `world/dungeon.ts`, `game/monster.ts`, `game/entities.ts` | [dungeon.md](domains/dungeon.md) |
+| Multiplayer: salas, protocolo, servidor, bichos da sala | `src/net/`, `world/actions.ts`, `game/entities.ts` | [multiplayer.md](domains/multiplayer.md) |
 | Salvamento e menu | `game/save.ts`, `game/menu.ts`, `main.ts` | [save.md](domains/save.md) |
 | Render e arte | `src/render/`, `assets-src/`, `scripts/` | [render.md](domains/render.md) |
 
 ## ADRs
-0001 geração pura e chunks · 0002 texturas procedurais (parcialmente substituída) · 0003 vista 3/4 ·
-0004 entidades `Walker` · 0005 itens e inventário · 0006 materiais da prancha · 0007 assets em WebP · 0008 perfis de mundo.
+Índice completo com a decisão de cada um em [DECISIONS.md](DECISIONS.md) (arquivos em [adr/](adr/)): 0001 geração pura e
+chunks · 0002 texturas procedurais (parcialmente substituída) · 0003 vista 3/4 · 0004 entidades `Walker` · 0005 itens e
+inventário · 0006 materiais da prancha · 0007 assets em WebP · 0008 perfis de mundo · 0009 dungeon sobreposta · 0010 arte
+por mundo · 0011 salvamento local · 0012 cidade fixa · 0013 imagens em arquivos separados · 0014 interiores · 0015 Orvalis
+independente · 0016 multiplayer co-op · 0017 personagem modular · 0018 ferramentas por material · 0019 covil isolado e
+andares · 0020 salas fixas salvas · 0021 bichos da sala · 0022 escala visual e cena de escala · 0023 Padrão de Materiais V2 (em validação).
 
 ## Histórico
 Mudanças antigas (vista lateral, cavernas, biomas removidos) aparecem só no CHANGELOG e nas ADRs, como
-registro. Os demais documentos descrevem **apenas o estado atual**.
+registro. Os demais documentos descrevem **apenas o estado atual**. O diário técnico por versão que o `CURRENT_STATE`
+acumulou até a v0.80.0 está em [archive/estado-por-versao.md](archive/estado-por-versao.md) (arquivo, não atualizar).
+
+## Mapa de pastas do repositório
+| Pasta | Conteúdo |
+|---|---|
+| `src/` | jogo: `world/` (regras puras), `game/` (execução), `render/` (desenho, arte em `render/art/`), `net/` (multiplayer), `assets/` (WebP gerado) |
+| `assets-src/` | arte original (folhas, pranchas, contratos de personagem e ferramentas); fonte dos scripts |
+| `scripts/` | pipeline de arte (Python) e builds do artifact e do pacote de rede (Node) |
+| `docs/` | esta documentação; `adr/` decisões, `domains/` por assunto, `archive/` histórico, `assets/` imagens de apoio |
+| `bench/`, `public/`, `.github/` | benchmarks, manifesto PWA e ícones, CI (Verificação) |

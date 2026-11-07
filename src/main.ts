@@ -8,7 +8,6 @@ import { SaveStore } from './game/save';
 import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
-import { showScaleScene } from './render/scaleScene';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
@@ -183,16 +182,28 @@ const query = new URLSearchParams(window.location.search);
 const param = query.get('seed');
 // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
 const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal';
-// Padrão de Materiais V2 em validação (ADR 0022): `?escala=1` abre só a cena de comparação; `?blocos=v2` usa os
-// blocos-piloto V2 no mundo. Sem as chaves o atlas V2 nem baixa.
-const scaleScene = query.has('escala');
+// Padrão de Materiais V2 em validação (ADR 0023): `?materiais=1` abre só a cena de comparação (desenvolvimento);
+// `?blocos=v2` usa os blocos-piloto V2 no mundo. Sem as chaves o atlas V2 nem baixa.
+const materialsScene = import.meta.env.DEV && query.has('materiais');
 const blocksV2 = blocksV2FromSearch(window.location.search);
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
 void loadArtPack(profile.id)
   .then(() => loadBlockArt())
-  .then(() => (scaleScene || blocksV2 ? loadMaterialsV2(blocksV2) : false))
+  .then(() => (materialsScene || blocksV2 ? loadMaterialsV2(blocksV2) : false))
   .then(() => {
-    if (scaleScene) showScaleScene(canvas);
-    else if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
+    // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
+    // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.
+    if (import.meta.env.DEV && query.has('escala')) {
+      void import('./dev/scaleScene').then((m) => {
+        (window as unknown as { __scaleScene: unknown }).__scaleScene = m.startScaleScene(canvas);
+      });
+      return;
+    }
+    // Só em desenvolvimento (ADR 0023): `?materiais=1` compara a frente dos cubos (legado 18 · V2 18 · V2 16).
+    if (import.meta.env.DEV && materialsScene) {
+      void import('./dev/materialsScene').then((m) => m.showMaterialsScene(canvas));
+      return;
+    }
+    if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
     else showTitle();
   });

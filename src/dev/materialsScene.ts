@@ -1,14 +1,15 @@
 import { CUBE_FRONT, TILE } from '../config';
 import type { Actor } from '../game/entities';
 import { Block, type BlockId } from '../world/blocks';
-import { ActorSprites } from './character';
-import { qaMaterial, type Sprite } from './textures';
+import { ActorSprites } from '../render/character';
+import { qaMaterial, type Sprite } from '../render/textures';
 
 /**
- * Cena de escala do Padrão de Materiais V2 (`?escala=1`, ADR 0022): três painéis lado a lado com as mesmas peças —
+ * Cena dos materiais V2 (`?materiais=1`, só em desenvolvimento; ADR 0023): três painéis lado a lado com as mesmas peças —
  * atlas legado (frente 18), V2 com frente 18 e V2 com frente 16 — para decidir a altura da frente olhando o jogo,
  * não a arte solta. Cada painel tem chão plano (só topo), cubos soltos, pilha de 3, a heroína no chão e em cima de um
- * cubo, e a grade das células com a linha de apoio. Só desenha: não cria mundo nem jogo.
+ * cubo, e a grade das células com a linha de apoio. Desenha por conta própria (o `Renderer` só conhece uma altura de
+ * frente, `CUBE_FRONT`); para escala de sprites no renderizador real há a cena `?escala=1` (ADR 0022).
  */
 const COLS = 6;
 const ROWS = 7;
@@ -25,7 +26,7 @@ const CUBES: Array<[number, number, BlockId, number]> = [
   [4, 4, Block.GRASS, 3], [1, 5, Block.DIRT, 2], [2, 5, Block.GRASS, 1], [4, 2, Block.STONE, 1],
 ];
 
-export function showScaleScene(canvas: HTMLCanvasElement): () => void {
+export function showMaterialsScene(canvas: HTMLCanvasElement): () => void {
   const ctx = canvas.getContext('2d')!;
   const sprites = new ActorSprites();
   let grid = true;
@@ -52,7 +53,7 @@ export function showScaleScene(canvas: HTMLCanvasElement): () => void {
   btn('Grade', () => (grid = !grid));
   btn('Sair da cena', () => {
     const url = new URL(window.location.href);
-    url.searchParams.delete('escala');
+    url.searchParams.delete('materiais');
     window.location.href = url.toString();
   });
   document.body.append(bar);

@@ -275,7 +275,7 @@ function materialCube(index: number, outline: string): Sprite {
 /**
  * Monta um cubo 3/4 a partir de duas faces: `drawTop` pinta [0, T) e `drawFront`
  * pinta [T, T + front). Aplica sombra na frente, aresta clara e contorno. `front` = altura da frente (padrão
- * `CUBE_FRONT`; a cena `?escala=1` compara 16 e 18 — ADR 0022).
+ * `CUBE_FRONT`; a cena `?materiais=1` compara 16 e 18 — ADR 0023).
  */
 export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) => void, outline: string, front: number = F): Sprite {
   const F_ = front;
@@ -302,7 +302,7 @@ export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) =
 }
 
 /**
- * `?blocos=v2` (ADR 0022): troca chão e cubo dos blocos-piloto pela montagem V2, com a frente na altura atual do
+ * `?blocos=v2` (ADR 0023): troca chão e cubo dos blocos-piloto pela montagem V2, com a frente na altura atual do
  * mundo (F). As variações legadas da grama saem (o V2 ainda não tem variações).
  */
 function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
@@ -320,7 +320,7 @@ function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVari
 }
 
 /**
- * Peças avulsas para a cena de escala (`?escala=1`, render/scaleScene.ts): cubo e chão de um material no atlas
+ * Peças avulsas para a cena dos materiais (`?materiais=1`, dev/materialsScene.ts): cubo e chão de um material no atlas
  * legado ou no V2, com a frente pedida. Null se faltar a arte.
  */
 export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2', front: number): { cube: Sprite; ground: HTMLCanvasElement } | null {

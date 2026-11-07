@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Pipeline do Padrão de Materiais V2 (ADR 0022, assets-src/materiais/CONTRATO.md).
+"""Pipeline do Padrão de Materiais V2 (ADR 0023, assets-src/materiais/CONTRATO.md).
 
 Lê assets-src/materiais/<material>/{top,front,front_overlay}.png (128×128), valida o contrato e gera:
   src/assets/materials-v2.webp   — atlas, uma coluna de 64 px por material (TEX_RES 2):
       linha top    64×64  ← top.png inteiro
       linha f16    64×32  ← front.png (0,0,128,64)   (frente de 16 px no mundo, padrão V2)
-      linha f18    64×36  ← front.png (0,0,128,72)   (frente de 18 px, só para comparar na cena ?escala=1)
+      linha f18    64×36  ← front.png (0,0,128,72)   (frente de 18 px, só para comparar na cena ?materiais=1)
       linha o16/o18         ← front_overlay.png, mesmas janelas (transparente se o material não tem overlay)
   src/assets/materials-v2.json   — manifesto {cell, rows: {nome: [y, h]}, materials: [nomes], overlay: [nomes]}
 Relatório: emenda do topo e da frente relativa ao miolo (1,0 = invisível; ⚠ acima de 1,6);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Importa a arte oficial de um material para assets-src/materiais/<material>/ (Padrão V2, ADR 0022).
+"""Importa a arte oficial de um material para assets-src/materiais/<material>/ (Padrão V2, ADR 0023).
 
 Uso: python3 scripts/import-material.py <material> --top arquivo.png [--front arquivo.png] [--overlay arquivo.png]
 - Qualquer tamanho quadrado vira 128×128 (redução repetindo a imagem em volta: a emenda do original se mantém).
