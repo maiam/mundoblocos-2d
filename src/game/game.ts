@@ -166,6 +166,7 @@ export class Game {
       slot: () => this.slot,
       joystickActive: () => this.joystick.active,
       collectBlocks: profile.collectBlocks,
+      sharedLoot: !!options.net,
       onConsumed: () => this.hotbar.prune(this.inventory),
       onOpenChest: (x, y) => this.openChest(x, y),
       notify: (text) => this.hud.toast(text),
@@ -218,6 +219,19 @@ export class Game {
       // Mesmo horário para todos: o relógio segue o da sala (e é acertado a cada sincronização).
       if (net.time !== null) this.time = net.time;
       net.onTime = (t) => { this.time = t; };
+      // Itens no chão e baús são da sala: o servidor cria os itens e decide quem pega; os baús vêm e vão por ela.
+      this.drops.addShared(net.drops);
+      net.onDrops = (list) => this.drops.addShared(list);
+      this.drops.claim = (id) => net.take(id);
+      net.onTaken = (id, mine) => {
+        const item = this.drops.resolveClaim(id, mine);
+        if (item) { this.inventory.add(item); this.onCollected(item); }
+      };
+      net.onChest = (x, y) => {
+        this.sentChest.set(`${x},${y}`, JSON.stringify(this.world.chestAt(x, y)));
+        const at = this.chest.at;
+        if (at && at[0] === x && at[1] === y) { this.chest.picked = null; this.refreshChestUi(); }
+      };
       // Bolsa e lugar guardados na sala para este nome (primeira vez: bolsa inicial, no ponto de início).
       const bag = net.bag;
       if (bag) {
@@ -332,9 +346,21 @@ export class Game {
     return at ? this.world.chestAt(at[0], at[1]) : null;
   }
 
+  /** Último conteúdo de cada baú mandado à/recebido da sala (só manda quando muda). */
+  private readonly sentChest = new Map<string, string>();
+
   private refreshChestUi(): void {
     const slots = this.chestSlots;
     if (!slots) return this.closeChest();
+    // Na sala: o baú mudou aqui → a sala guarda e repassa aos outros.
+    const net = this.options.net;
+    const at = this.chest.at!;
+    const key = `${at[0]},${at[1]}`;
+    const json = JSON.stringify(slots);
+    if (net && this.sentChest.get(key) !== json) {
+      if (this.sentChest.has(key) || slots.some((s) => s)) net.sendChest(at[0], at[1], slots);
+      this.sentChest.set(key, json);
+    }
     this.chest.render(slots, (id) => {
       const v = this.stackView(id, null);
       return { icon: v.icon, name: v.name, tool: id.startsWith('tool:') };

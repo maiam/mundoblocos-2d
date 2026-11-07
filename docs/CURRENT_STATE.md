@@ -1,6 +1,14 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.66.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.67.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+
+## Sala compartilhada, Etapa 2: itens no chão e baús — v0.67.0
+- `Room` cria os itens ao aplicar `break` (conteúdo do baú + `breakDrops`) e `pick` (`pickDrops`) e manda `drops`
+  (um por unidade, com id); `take` → `taken` para todos (primeiro pedido vence, até 3 células); itens somem em
+  `DROP_LIFETIME` 300 s. `chest` (espaços inteiros, `parseChestSlots`) → a sala guarda e repassa; `welcome` traz
+  `drops` e `chests`; `RoomSnapshot` v2 com baús (v1 ainda carrega).
+- Jogo na sala: `ActionContext.sharedLoot` (não cria itens ao quebrar/colher), `Drops.addShared`/`claim`/
+  `resolveClaim` (só entra na bolsa o que a sala confirmar), `refreshChestUi` manda o baú quando muda.
 
 ## Aparência de cada jogador na sala — v0.66.0
 - `Appearance` (`body` heroine/hero + `look` do chibi) no `hello` e em `PlayerInfo` (`parseAppearance`: o que vier

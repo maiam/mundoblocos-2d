@@ -6,7 +6,7 @@ import type { Facing } from '../game/walker';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 9;
+export const PROTOCOL_VERSION = 10;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -71,7 +71,22 @@ export type ClientMessage =
   /** `seq` volta no `rejected`, para o jogo saber qual ação não valeu. */
   | { t: 'action'; seq: number; a: PlayerAction }
   /** Bolsa e posição do jogador, para a sala guardar (volta no próximo `welcome` com o mesmo nome). */
-  | { t: 'bag'; bag: RoomBag };
+  | { t: 'bag'; bag: RoomBag }
+  /** Pegar um item do chão (quem pedir primeiro leva). */
+  | { t: 'take'; id: number }
+  /** Conteúdo novo de um baú depois de mexer nele (a sala guarda e repassa). */
+  | { t: 'chest'; x: number; y: number; slots: ChestSlotsMsg };
+
+/** Espaços de um baú na rede: pilha (id + quantidade) ou vazio. */
+export type ChestSlotsMsg = Array<{ item: string; count: number } | null>;
+
+/** Item no chão da sala (um por unidade, como no jogo sozinho). */
+export interface RoomDrop {
+  id: number;
+  item: string;
+  x: number;
+  y: number;
+}
 
 /** O que a sala guarda de cada jogador (pelo nome): itens, grade da mão e onde estava. */
 export interface RoomBag {
@@ -97,7 +112,16 @@ export type ServerMessage =
    * Entrou: `chunks` = mundo da sala como está (chunks editados, crescimento incluso), `time` = hora do dia (0..1),
    * `bag` = bolsa guardada deste nome (null = primeira vez).
    */
-  | { t: 'welcome'; you: number; room: number; roomName: string; seed: number; players: PlayerInfo[]; chunks: RoomChunk[]; time: number; bag: RoomBag | null }
+  | {
+    t: 'welcome'; you: number; room: number; roomName: string; seed: number; players: PlayerInfo[]; chunks: RoomChunk[];
+    time: number; bag: RoomBag | null; drops: RoomDrop[]; chests: Array<{ x: number; y: number; slots: ChestSlotsMsg }>;
+  }
+  /** Itens que caíram no chão da sala (ao quebrar ou colher). */
+  | { t: 'drops'; list: RoomDrop[] }
+  /** Item pego (`by` = quem levou; some para todos). */
+  | { t: 'taken'; id: number; by: number }
+  /** Baú mudou (outro jogador mexeu). */
+  | { t: 'chest'; x: number; y: number; slots: ChestSlotsMsg }
   /** Hora do dia da sala (sincroniza o relógio de todos de tempos em tempos). */
   | { t: 'time'; time: number }
   /** Plantas/árvores que cresceram na sala. */
@@ -136,6 +160,12 @@ export function parseClientMessage(text: string): ClientMessage | null {
     case 'bag': {
       const bag = parseBag(o.bag);
       return bag ? { t: 'bag', bag } : null;
+    }
+    case 'take':
+      return Number.isInteger(o.id) ? { t: 'take', id: o.id as number } : null;
+    case 'chest': {
+      const slots = parseChestSlots(o.slots);
+      return slots && Number.isInteger(o.x) && Number.isInteger(o.y) ? { t: 'chest', x: o.x as number, y: o.y as number, slots } : null;
     }
     case 'state': {
       const s = parseState(o.s);
@@ -189,4 +219,18 @@ export function parseAppearance(v: unknown): Appearance {
     }
   }
   return { body, look };
+}
+
+/** Lê os espaços de um baú vindos da rede (27 espaços, ids de pilha válidos, quantidades inteiras). */
+export function parseChestSlots(v: unknown, size = 27): ChestSlotsMsg | null {
+  if (!Array.isArray(v) || v.length !== size) return null;
+  const out: ChestSlotsMsg = [];
+  for (const s of v) {
+    if (s === null) { out.push(null); continue; }
+    if (!s || typeof s !== 'object') return null;
+    const o = s as Record<string, unknown>;
+    if (typeof o.item !== 'string' || !STACK_RE.test(o.item) || !Number.isInteger(o.count) || (o.count as number) < 1 || (o.count as number) > 99999) return null;
+    out.push({ item: o.item, count: o.count as number });
+  }
+  return out;
 }

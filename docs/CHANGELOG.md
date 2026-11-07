@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.67.0 — 2026-11-07
+- **Itens no chão compartilhados na sala** (Etapa 2): ao quebrar um bloco ou colher maçãs na sala, os itens caem para
+  todos; quem chega primeiro pega e o item some para os outros.
+- **Baús compartilhados**: o que se guarda num baú da sala aparece para todos, fica salvo no servidor junto com o
+  mundo e cai no chão (para todos) se o baú for quebrado.
+- Multiplayer: `PROTOCOL_VERSION` 10 (servidor 0.11.0 junto). Espólios de aranha seguem de cada um até a Etapa 3.
+
 ## 0.66.0 — 2026-11-07
 - **Na sala, cada um aparece com o personagem que escolheu**: Heroína, Herói ou o Chibi com as peças montadas — antes
   os outros jogadores sempre viam a Heroína. Peça que este jogo não conhece vira a padrão.

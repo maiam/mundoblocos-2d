@@ -2,7 +2,7 @@ import { type PlayerAction, applyAction } from '../world/actions';
 import type { World } from '../world/world';
 import type { Transport } from './loopback';
 import { fromB64 } from './b64';
-import { type Appearance, type ClientMessage, type Grown, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type RoomBag, type RoomChunk, type ServerMessage } from './protocol';
+import { type Appearance, type ChestSlotsMsg, type ClientMessage, type Grown, type RoomDrop, type PlayerInfo, type PlayerState, PROTOCOL_VERSION, type RoomBag, type RoomChunk, type ServerMessage } from './protocol';
 
 /**
  * Sessão multiplayer do lado do jogo (ADR 0016). O servidor manda no mapa da sala: as ações dos outros chegam como
@@ -37,6 +37,15 @@ export class NetSession {
   time: number | null = null;
   /** A sala mandou a hora (o jogo acerta o relógio). */
   onTime: ((time: number) => void) | null = null;
+  /** Itens que caíram no chão da sala (no `welcome`, os que já estavam lá). */
+  onDrops: ((list: RoomDrop[]) => void) | null = null;
+  /** Item pego por alguém (`mine` = fui eu: entra na minha bolsa). */
+  onTaken: ((id: number, mine: boolean) => void) | null = null;
+  /** Um baú mudou (outro jogador mexeu). */
+  onChest: ((x: number, y: number) => void) | null = null;
+  /** Itens já no chão ao entrar (entregues ao jogo no `attach`/`onDrops`). */
+  drops: RoomDrop[] = [];
+  private chestBacklog: Array<{ x: number; y: number; slots: ChestSlotsMsg }> = [];
   private readonly pending = new Map<number, PlayerAction>();
   private backlog: PlayerAction[] = [];
   private grownBacklog: Grown[] = [];
@@ -50,6 +59,22 @@ export class NetSession {
   /** Entra numa sala fixa pelo número (`ROOMS`). */
   join(name: string, room: number, appearance?: Appearance): void {
     this.send({ t: 'hello', v: PROTOCOL_VERSION, name, room, appearance });
+  }
+
+  /** Pede um item do chão (a sala responde `taken` para todos: quem pediu primeiro leva). */
+  take(id: number): void {
+    this.send({ t: 'take', id });
+  }
+
+  /** Conteúdo do baú depois de mexer nele (a sala guarda e repassa aos outros). */
+  sendChest(x: number, y: number, slots: ChestSlotsMsg): void {
+    this.send({ t: 'chest', x, y, slots });
+  }
+
+  private setChest(x: number, y: number, slots: ChestSlotsMsg): void {
+    if (!this.world) { this.chestBacklog.push({ x, y, slots }); return; }
+    this.world.chests.set(`${x},${y}`, slots.map((s) => (s ? { ...s } : null)));
+    this.onChest?.(x, y);
   }
 
   /** Manda a bolsa e a posição para a sala guardar (volta na próxima entrada com o mesmo nome). */
@@ -66,6 +91,8 @@ export class NetSession {
     this.chunkBacklog = [];
     for (const a of this.backlog) applyAction(world, a);
     this.backlog = [];
+    for (const c of this.chestBacklog) this.setChest(c.x, c.y, c.slots);
+    this.chestBacklog = [];
     for (const [x, y, id] of this.grownBacklog) world.applyGrowth(x, y, id);
     this.grownBacklog = [];
   }
@@ -111,6 +138,8 @@ export class NetSession {
         for (const p of m.players) this.others.set(p.id, p);
         this.time = m.time;
         this.chunkBacklog = m.chunks; // aplicados no `attach` (o jogo cria o World com a seed no onWelcome)
+        this.chestBacklog = [...m.chests];
+        this.drops = m.drops;
         this.onWelcome?.(m.seed);
         break;
       case 'time':
@@ -119,6 +148,15 @@ export class NetSession {
         break;
       case 'grow':
         this.grow(m.cells);
+        break;
+      case 'drops':
+        this.onDrops?.(m.list);
+        break;
+      case 'taken':
+        this.onTaken?.(m.id, m.by === this.you);
+        break;
+      case 'chest':
+        this.setChest(m.x, m.y, m.slots);
         break;
       case 'joined':
         this.others.set(m.player.id, m.player);

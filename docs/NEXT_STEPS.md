@@ -69,15 +69,14 @@ Arquitetura (ADR 0015): servidor próprio do Orvalis, autoritativo, em repositó
 3b. **Sala compartilhada** (o servidor passa a ser dono do que acontece no mundo, com o mesmo código do jogo):
    - ✅ **Etapa 1 — mesmo horário e mesmo crescimento** (v0.63.0, protocolo 7): `Room.time`/`Room.tick` (servidor 1×/s),
      `welcome.time`, `time` a cada 30 s, `grow` com as células que cresceram; o aparelho na sala não cresce sozinho.
-   - **Etapa 2 — itens caídos da sala**: o servidor cria os itens (com id) ao quebrar; pegar é pedido, quem chega
-     primeiro leva e some para todos.
+   - ✅ **Etapa 2 — itens caídos e baús da sala** (v0.67.0, protocolo 10). Falta: dois mexendo no mesmo baú ao mesmo
+     tempo — vale o último (sem trava); espólio de aranha ainda local (vem com a Etapa 3).
    - **Etapa 3 — aranhas, animais (e moradores) da sala**: o servidor roda `Entities` da sala e manda posições ~10×/s
      (desenho suavizado); golpe = intenção (servidor calcula acerto/dano); mordida decidida no servidor; dar comida e
      reprodução viram ações. Medir CPU na Hostinger (plano B: VPS).
    - Fora da sala nada muda (tudo roda no aparelho).
-   - ✅ **Salas fixas salvas** (v0.64.0, ADR 0020): Sala 1 (até 10), mundo e bolsas no servidor. Falta: conferir que a
-     pasta `~/orvalis-dados` sobrevive ao deploy da Hostinger (`/saude` → `dados.salas.1.carregadaDoDisco` depois de um
-     merge do servidor; senão, MySQL da hospedagem); baús compartilhados (conteúdo) entram com os itens (Etapa 2);
+   - ✅ **Salas fixas salvas** (v0.64.0, ADR 0020): Sala 1 (até 10), mundo e bolsas no servidor. Confirmado em 07/11 que
+     `~/orvalis-dados` sobrevive a reinício e a deploy do servidor (`carregadaDoDisco` após o merge da v0.10.0);
      comprimir o `welcome` quando o mundo editado crescer; mais salas quando precisar (`ROOMS`).
 4. **Encontro nas cidades**: chat, grupos (visão de progressão).
 Decidido (ADR 0016): co-op com código de convite (até 4), convidado só com nome, sem PvP, servidor autoritativo,
