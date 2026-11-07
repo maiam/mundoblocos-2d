@@ -221,8 +221,9 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - **Arte**: mais personagens de roupa branca e folhas de roupas (moradores ✅ 4 + 6 roupas, uma de ferreiro); roupas de outros ofícios (guarda, mercador, estalajadeiro); guardas, ferreiro, mercadores; (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
-- **Orçamento de início (ADR 0013)**: hoje ~3,06 MB de 3 MB (3072 kB) — sem folga (v0.69.0; a tira das paredes já foi para segundo plano). Próximos a ir para segundo plano quando crescer: folhas da
-  heroína com ferramenta (~1 MB, carregar ao equipar) e arte de cidades/dungeons novas (carregar ao se aproximar).
+- **Orçamento de início (ADR 0013)**: ~2,0 MB de 3 MB desde a v0.74.0 (folhas de personagem só baixam quando o ator
+  aparece; antes ~3,06 MB, sem folga). Próximos a ir para segundo plano quando crescer: arte de cidades/dungeons novas
+  (carregar ao se aproximar).
   Hospedagem própria (CDN/domínio) usa o mesmo `dist/`.
 - `ActionController` (465 linhas) vai crescer com vida/dano: separar combate (golpe, dano) em módulo próprio na Fase 1.
 - Canvases do chão em 2× (`TEX_RES`) custam ~4 MB por chunk em cache; reduzir em celulares fracos se preciso.

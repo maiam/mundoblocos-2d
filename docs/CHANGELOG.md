@@ -6,6 +6,8 @@
 - **Leite e ovo**: a vaca solta leite e a galinha solta ovo ao comer. O leite também se bebe.
 - **Receitas novas do Cozinheiro**: Queijo (1 leite, no Caldeirão) e Torta de Maçã (2 trigos, 1 leite, 2 maçãs e
   1 ovo, no Forno de Pedra).
+- **Jogo abre mais rápido**: as folhas da personagem com cada ferramenta (e de outros personagens) só baixam quando
+  aparecem pela primeira vez; o que o jogo espera para começar caiu de ~3,1 MB para ~2,0 MB.
 - Na sala vale o mesmo para todos (o animal segue quem deu; leite e ovo caem no chão da sala). Multiplayer:
   `PROTOCOL_VERSION` 16 (servidor 0.18.0 junto).
 
