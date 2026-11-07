@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.81.2 — 2026-11-07
+- **Materiais V2 — frentes próprias** (nada muda no jogo): terra, Pedra Bruta e areia ganharam a frente enviada pela arte
+  (antes repetiam o topo). A frente da grama usa a frente da terra, então muda junto. Visíveis em `?blocos=v2` e
+  `?materiais=1`.
+
 ## 0.81.1 — 2026-11-07
 - **Materiais V2 — decisões do dono do produto** (nada muda no jogo): a frente dos cubos **fica em 18** (a comparação
   com 16 não mostrou diferença que valha a mudança); a franja da grama foi **reduzida aos 32 px** do padrão (veio com
