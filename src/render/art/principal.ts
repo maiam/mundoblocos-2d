@@ -20,6 +20,7 @@ import heroineSword from '../../assets/heroine-sword.webp';
 import heroine from '../../assets/heroine.webp';
 import hero from '../../assets/hero.webp';
 import heroPickaxe from '../../assets/hero-pickaxe.webp';
+import heroPickaxeAttack from '../../assets/hero-pickaxe-attack.webp';
 import heroSwordAttack from '../../assets/hero-sword-attack.webp';
 import heroAxeAttack from '../../assets/hero-axe-attack.webp';
 import heroHoeAttack from '../../assets/hero-hoe-attack.webp';
@@ -194,7 +195,7 @@ const pack: ArtPack = {
     'hero-axe-attack': heroAxeAttack,
     'hero-hoe-attack': heroHoeAttack,
     'hero-shovel-attack': heroShovelAttack,
-    'hero-pickaxe-attack': heroPickaxe,
+    'hero-pickaxe-attack': heroPickaxeAttack,
     'heroine-sword': heroineSword,
     'heroine-hoe': heroineHoe,
     'heroine-pickaxe': heroinePickaxe,
