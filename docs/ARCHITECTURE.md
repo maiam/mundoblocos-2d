@@ -33,6 +33,13 @@ scripts/
   slice-icons.py               prancha em grade com transparência → um ícone por célula
   make-icons.py                ícones do PWA (public/)
   build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)
+  build-net.mjs                src/net (+ regras de src/world) → dist-net/orvalis-net.cjs, pacote do multiplayer para o servidor (ADR 0016)
+  extract-villagers.py         moradores: personagens-base de roupa branca + roupas em camadas (assets-src/villagers)
+  extract-water.py             cubo de água e folhas de enchimento → texturas da água
+  extract-ui.py                ícones de interface (Personagem, Habilidades, Construtor), baú e tenda
+  extract-landmarks.py         marcos soltos do mundo (entrada do Covil das Aranhas) → sprite recortado
+  extract-interiors.py         arte dos interiores (assets-src/interiors) → src/assets/interior-<id>.png (ADR 0014)
+docs/                          documentação (README.md = índice); adr/, domains/, archive/ (histórico), assets/ (imagens de apoio)
 bench/perf.bench.ts            benchmarks (npm run bench)
 public/                        manifest PWA + ícones
 src/

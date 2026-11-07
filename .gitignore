@@ -15,3 +15,7 @@ dist-net/
 /assets-src/personagens/**/*.ora
 /assets-src/personagens/**/*.kra.kra
 /assets-src/personagens/**/*autosave*
+
+# Python
+__pycache__/
+*.pyc
