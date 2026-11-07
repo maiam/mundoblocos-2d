@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.65.1 — 2026-11-07
+- **Correção**: ao entrar na Sala 1, o jogo trocava o Herói pela Heroína (só a aparência do Chibi passava para o mundo
+  da sala). Agora o personagem escolhido segue para a sala. Os outros jogadores ainda veem todos como Heroína
+  (aparência na rede: próximo passo).
+
 ## 0.65.0 — 2026-11-07
 - **Novo mundo abre a escolha de personagem** (pedido do dono do produto): no menu do jogo, "Novo mundo" mostra a mesma
   tela do início — Chibi, Heroína ou **Herói**, nome — e só então cria o mundo; "Voltar" volta ao mundo de antes.

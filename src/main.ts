@@ -79,9 +79,11 @@ function goOnline(name: string, room: number, attempt = 1): void {
   s.onWelcome = (seed) => {
     if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
     net = s;
-    const look = game?.entities.look ?? null; // mesma aparência do jogo sozinho
+    // Mesmo personagem do jogo sozinho: aparência do Chibi ou personagem pronto (Heroína/Herói).
+    const look = game?.entities.look ?? null;
+    const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, body, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   s.join(name, room);
