@@ -6,7 +6,7 @@
   do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
   (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
   um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
-- **Sentar e levantar** (v0.79.0, só o Gino por enquanto — `SIT_BODIES`/`canSit`): tocar numa cadeira ou num banco da
+- **Sentar e levantar** (v0.79.0 Gino; v0.80.0 Heroína, Herói e Hood — `SIT_BODIES`/`canSit`; o chibi ainda não): tocar numa cadeira ou num banco da
   cidade ao alcance senta (`Player.sitOn`: anda até o assento, vira de frente e senta no lugar, com os pés na célula da frente e o corpo sobre ele — `SEAT_FEET`, v0.79.2 — folha
   `gino-sit` em sequência: 0–3 sentando, parado no quadro 3, 3→0 levantando; v0.79.1). Mexer o controle ou tocar de
   novo levanta (`standUp`) e ele anda de volta para onde estava; levar dano levanta na hora. Na sala, os outros veem (`PlayerState.sit` = quadro; protocolo 18).

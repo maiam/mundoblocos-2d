@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.80.0 — 2026-11-07
+- **Todos sentam**: Heroína, Herói e Hood ganharam a folha de sentar e levantar (antes só o Gino). Cada um sentado tem o
+  mesmo tamanho de quando está em pé; o Gino sentado estava um pouco maior e foi acertado.
+
 ## 0.79.2 — 2026-11-07
 - **Sentado no lugar certo**: os pés do Gino ficam na célula da frente do assento e o corpo sobre ele (antes os pés
   ficavam na célula do banco/cadeira e ele parecia sentado um bloco acima).
