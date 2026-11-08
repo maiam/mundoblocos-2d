@@ -40,6 +40,9 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   // Madeira de carvalho: a Tora tem topo (anéis) e frente (casca) próprios; as Tábuas, só o topo (teste do dono do produto).
   [Block.OAK_LOG]: { top: 'tora-de-carvalho', front: 'tora-de-carvalho' },
   [Block.OAK_PLANKS]: { top: 'tabuas-de-carvalho', front: 'tabuas-de-carvalho' },
+  // Madeira de cerejeira (v0.88.0): tora com topo e frente próprios; tábuas só com o topo (a frente repete o topo).
+  [Block.CHERRY_LOG]: { top: 'tora-de-cerejeira', front: 'tora-de-cerejeira' },
+  [Block.CHERRY_PLANKS]: { top: 'tabuas-de-cerejeira', front: 'tabuas-de-cerejeira' },
   // Caminho de Terra e Terra Arada: a frente é sempre terra (regra do dono do produto), com a franja do próprio topo.
   [Block.PATH]: { top: 'caminho', front: 'terra', overlay: 'caminho' },
   [Block.TILLED]: { top: 'arada', front: 'terra', overlay: 'arada' },

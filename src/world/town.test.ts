@@ -147,4 +147,24 @@ describe('Cidade do Despertar', () => {
     expect(w.getGround(x, y)).not.toBe(Block.WATER);
     expect(w.isWalkable(x, y)).toBe(true);
   });
+
+  it('não se constrói no chunk onde está a muralha: protege o chunk inteiro, mesmo fora dos limites da cidade', () => {
+    const w = new World(42);
+    const a = w.town!.area;
+    // Célula logo fora da cidade (oeste da muralha), no mesmo chunk de um pedaço do muro.
+    const x = a.x0 - 3;
+    const y = a.y0 + 50;
+    expect(inRect(a, x, y)).toBe(false);
+    expect(Math.floor(x / 16) * 16 + 15 >= a.x0).toBe(true); // o chunk tem células da muralha
+    expect(w.isProtected(x, y)).toBe(true);
+    expect(w.canPlace(x, y, Block.STONE)).toBe(false);
+    expect(w.canBreak(x, y)).toBe(false);
+    // Longe da cidade (mais de um chunk além da muralha) segue livre; o miolo da cidade já era protegido.
+    expect(w.isProtected(a.x0 - 40, y)).toBe(false);
+    expect(w.isProtected(...w.town!.start)).toBe(true);
+    // O ponto de testes "fora do portão" já fica fora do chunk do muro.
+    const [gx, gy] = w.outsideGate();
+    expect(w.isProtected(gx, gy)).toBe(false);
+    expect(gy).toBeGreaterThan(a.y1);
+  });
 });

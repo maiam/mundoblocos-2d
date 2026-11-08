@@ -26,8 +26,6 @@ interface CachedChunk {
  * e sombras dos objetos) em um canvas offscreen, invalidado pela `version`.
  * Objetos e personagem são desenhados por frame, ordenados por profundidade.
  */
-/** Árvores pequenas (mudas e jovens): sombra reduzida. */
-const SMALL_TREES = new Set<number>([Block.OAK_SAPLING, Block.OAK_YOUNG, Block.APPLE_SAPLING, Block.APPLE_YOUNG]);
 
 export class ChunkRenderer {
   private readonly cache = new Map<Chunk, CachedChunk>();
@@ -226,8 +224,7 @@ export class ChunkRenderer {
           ctx.ellipse(px + TILE * 0.55, py + TILE - 3, TILE * 0.5, 4, 0, 0, Math.PI * 2);
           ctx.fill();
         } else if (obj.shape === 'tree') {
-          // Muda e árvore jovem: sombra menor (a arte já traz o tufo de grama no pé).
-          const k = SMALL_TREES.has(obj.id) ? 0.45 : 1;
+          const k = 1; // só há árvores adultas (v0.88.0); a arte já traz o tufo de grama no pé
           ctx.fillStyle = 'rgba(30, 20, 70, 0.24)';
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.62, py + TILE * 0.82, TILE * 0.75 * k, TILE * 0.32 * k, 0, 0, Math.PI * 2);

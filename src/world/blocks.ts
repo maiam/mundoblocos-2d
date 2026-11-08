@@ -25,6 +25,9 @@ export const Block = {
   STONE: 25,
   OAK_LOG: 26,
   OAK_PLANKS: 27,
+  /** Madeira de cerejeira (v0.88.0): tora (da Cerejeira derrubada) e tábuas (da tora). */
+  CHERRY_LOG: 230,
+  CHERRY_PLANKS: 231,
   // --- porta (objeto de 3 níveis de altura; o id guarda o estado) ---
   OAK_DOOR: 28,
   /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
@@ -67,7 +70,7 @@ export const Block = {
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
   SAKURA_TREE: 41,
-  // --- árvores que crescem (prancha de crescimento): muda → jovem → (crescendo) → adulta ---
+  // --- estágios de crescimento APOSENTADOS (v0.88.0: as árvores só aparecem adultas): ids reservados, ver `GROWTH_STAGE_ADULT` ---
   OAK_SAPLING: 52,
   OAK_YOUNG: 53,
   OAK_GROWING: 54,
@@ -266,6 +269,7 @@ export function isRemovedBlock(id: number): boolean {
 
 /** Pilha de inventário (`block:<id>`) de um bloco que saiu do jogo? */
 export function isRemovedStack(stack: string): boolean {
+  if (RETIRED_ITEMS.has(stack)) return true;
   const m = /^block:(\d+)$/.exec(stack);
   return m !== null && isRemovedBlock(Number(m[1]));
 }
@@ -292,6 +296,8 @@ const defs: BlockDef[] = [
 
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
   object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),
+  object(Block.CHERRY_LOG, 'Tora de Cerejeira', { organic: 'wood' }),
+  object(Block.CHERRY_PLANKS, 'Tábua de Cerejeira', { organic: 'wood' }),
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
@@ -411,6 +417,9 @@ export const MATERIALS: BlockId[] = [
   Block.STONE_POLISHED,
   Block.STONE_CRACKED,
   Block.STONE_BRICK_CRACKED,
+  // Madeira de cerejeira (v0.88.0): só no V2 (não há coluna no atlas antigo, que termina nas pedras).
+  Block.CHERRY_LOG,
+  Block.CHERRY_PLANKS,
 ];
 
 /** Blocos do Santuário Celestial, na ordem da prancha (e da hotbar do Santuário). */
@@ -428,15 +437,31 @@ export const HOTBAR_BLOCKS: BlockId[] = [
 ];
 
 /**
- * Crescimento das árvores plantadas: estágio → próximo (o `World` avança com o tempo). A macieira colhida volta a
- * ter maçãs pelo mesmo caminho.
+ * Estágios de crescimento aposentados (dono do produto, 2026-11-08: "tirar o crescimento, elas só aparecem adultas de formas
+ * variadas"): mudas e árvores jovens não existem mais. Os ids seguem reservados e, em mundos e salas já salvos, viram a
+ * árvore adulta da mesma espécie ao carregar (`adultOfStage`).
+ */
+export const GROWTH_STAGE_ADULT: Readonly<Record<number, BlockId>> = {
+  [Block.OAK_SAPLING]: Block.OAK_TREE,
+  [Block.OAK_YOUNG]: Block.OAK_TREE,
+  [Block.OAK_GROWING]: Block.OAK_TREE,
+  [Block.APPLE_SAPLING]: Block.APPLE_TREE,
+  [Block.APPLE_YOUNG]: Block.APPLE_TREE,
+};
+
+/** Árvore adulta que substitui um estágio aposentado, ou o próprio id se não for um. */
+export function adultOfStage(id: number): number {
+  return GROWTH_STAGE_ADULT[id] ?? id;
+}
+
+/** Itens aposentados junto com o crescimento (as mudas): somem de bolsas, grades e baús salvos. */
+export const RETIRED_ITEMS: ReadonlySet<string> = new Set(['oak_sapling', 'apple_sapling']);
+
+/**
+ * Macieira colhida volta a ter maçãs com o tempo (a única "espera" que sobrou das árvores; o `World` avança). A arte é a
+ * mesma da macieira carregada (falta enviar a "macieira colhida").
  */
 export const TREE_NEXT: Readonly<Partial<Record<number, BlockId>>> = {
-  [Block.OAK_SAPLING]: Block.OAK_YOUNG,
-  [Block.OAK_YOUNG]: Block.OAK_GROWING,
-  [Block.OAK_GROWING]: Block.OAK_TREE,
-  [Block.APPLE_SAPLING]: Block.APPLE_YOUNG,
-  [Block.APPLE_YOUNG]: Block.APPLE_TREE,
   [Block.APPLE_TREE_BARE]: Block.APPLE_TREE,
 };
 

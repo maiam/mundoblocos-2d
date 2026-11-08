@@ -110,19 +110,17 @@
   (só em chunks modificados, que não descarregam).
 - Colher = quebrar segurando (2 s com a mão/item, 1 s com ferramenta — mesma regra de qualquer quebra).
 
-## Árvores que crescem (v0.52.0; `world/blocks.ts` → `TREE_NEXT`, `world/world.ts`, `world/items.ts`)
-- **Carvalho**: Muda → Jovem → Crescendo → Carvalho adulto. **Macieira**: Muda → Jovem (florida) → Macieira com
-  maçãs; colhida vira **Macieira florida** (`APPLE_TREE_BARE`) e as maçãs voltam. Todos os estágios são sólidos
-  (1 célula); a muda é planta (a enxada arranca e devolve), o resto é madeira (machado).
-- **Plantar**: Muda de Carvalho/Macieira (itens com `plants`) em **Terra ou Terra com Grama**, célula livre (ou com
-  enfeite), fora de área protegida e sem ninguém em pé (`World.canPlant(x, y, id)` + `ActionController`).
-- **Crescer**: `World.tick` avança cada estágio com probabilidade `dt / TREE_STAGE_SECONDS` (120 s); a macieira
-  colhida volta a dar frutas com `dt / FRUIT_REGROW_SECONDS` (150 s). Só árvores em chunks editados crescem (as do
-  gerador já nascem adultas); o `World` as reencontra ao restaurar chunks salvos.
-- **Colher maçãs**: tocar (qualquer item em mãos) numa Macieira com maçãs (`World.canPick/pick`) → 2–3 Maçãs
-  caem ao pé (`pickDrops`). Derrubar a macieira carregada também solta as maçãs.
-- **O que cai**: muda volta inteira; adulta → 2–3 toras + Muda (50%); jovem/crescendo → 1 tora.
-- Gerador: carvalhos dos Campos com 1/6 de macieiras (`Biome.altTree`); cerejeiras não mudaram.
+## Árvores (adultas e variadas; sem crescimento desde a v0.88.0; `world/blocks.ts`, `world/world.ts`, `world/items.ts`)
+- **Só adultas**: carvalho (3 formas), macieira (2) e cerejeira (3); a forma de cada árvore é sorteada pela posição (hash) em
+  `render/textures.ts` (`growthTreeSprites`, tiras de `scripts/process-trees.py`). Não há mudas, plantio nem estágios: os
+  ids antigos (`OAK_SAPLING/YOUNG/GROWING`, `APPLE_SAPLING/YOUNG`) seguem reservados e viram a árvore adulta da espécie ao
+  carregar (`GROWTH_STAGE_ADULT`, `adultOfStage`, em `restoreChunk`/`setLevel`); os itens `oak_sapling`/`apple_sapling`
+  somem de bolsas, grades e baús (`RETIRED_ITEMS`, `isRemovedStack`).
+- **Macieira**: tocar numa macieira com maçãs (`World.canPick/pick`) solta 2–3 Maçãs e ela vira a **colhida**
+  (`APPLE_TREE_BARE`); as maçãs voltam com `dt / FRUIT_REGROW_SECONDS` (150 s) — a única espera que sobrou (`TREE_NEXT`).
+  A arte da colhida é a mesma da carregada (falta enviar a "macieira colhida"). Derrubar a macieira carregada também solta as maçãs.
+- **O que cai**: carvalho e macieira → 2–3 Toras de Carvalho; **Cerejeira → 2–3 Toras de Cerejeira**; macieira carregada → também maçãs.
+- Gerador: carvalhos dos Campos com 1/6 de macieiras (`Biome.altTree`); as cerejeiras do bioma e da cidade são as mesmas, só com arte nova.
 
 ## Inventário e coleta (`game/`)
 - `Inventory`: quantidades de itens; começa com 5 sementes e 2 trigos. Não persistido.

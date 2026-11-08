@@ -1,9 +1,9 @@
 import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, toggled, TREE_NEXT } from './blocks';
+import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, toggled, TREE_NEXT } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
-import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave } from './dungeon';
-import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
+import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave, type Rect } from './dungeon';
+import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, TOWN_WALL, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
 import { type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
@@ -16,12 +16,8 @@ import type { TerrainSource } from './terrain';
 export const WHEAT_STAGE_SECONDS = 6;
 /** Tempo médio (s) por estágio de cada cultura: hortaliças demoram um pouco mais que o trigo (~2–2,5 min). */
 export const CROP_STAGE_SECONDS: Readonly<Record<CropKind, number>> = { wheat: WHEAT_STAGE_SECONDS, potato: 8, carrot: 8, tomato: 10 };
-/** Tempo médio (s) para uma árvore plantada avançar um estágio (~6 min da muda à árvore adulta). */
-export const TREE_STAGE_SECONDS = 120;
 /** Tempo médio (s) para a macieira colhida voltar a ter maçãs. */
 export const FRUIT_REGROW_SECONDS = 150;
-/** Chãos onde se planta uma muda (terra e grama). */
-const SAPLING_GROUND = new Set<number>([Block.DIRT, Block.GRASS]);
 /** Único chão onde a semente pode ser plantada. */
 const PLANTABLE_GROUND: number = Block.TILLED;
 /** Chãos que a enxada transforma em Terra Arada. */
@@ -40,7 +36,7 @@ export const CHEST_SLOTS = 27;
 /** Um espaço de baú: pilha (id do que se carrega + quantidade) ou vazio. */
 export type ChestSlots = Array<{ item: string; count: number } | null>;
 
-export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS]);
+export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS, Block.CHERRY_LOG, Block.CHERRY_PLANKS]);
 /** Tempo para a água encher um buraco vizinho (s). */
 export const FLOW_SECONDS = 0.6;
 
@@ -141,11 +137,34 @@ export class World {
     if (this.interiors.length) this.generator = new InteriorTerrain(this.generator, this.interiors);
   }
 
-  /** Célula dentro da dungeon, da cidade (muralhas incluídas) ou de um interior? Lá nada é quebrado, colocado, arado nem plantado. */
+  /**
+   * Célula dentro da dungeon, da cidade (muralhas incluídas) ou de um interior — ou num chunk que tem pedaço da muralha
+   * da cidade (regra do dono do produto, 2026-11-08: não se constrói no chunk do muro, mesmo fora dos limites da
+   * cidade)? Lá nada é quebrado, colocado, arado nem plantado.
+   */
   isProtected(x: number, y: number): boolean {
+    return this.inGuardedArea(x, y) || (!!this.town && this.inWallChunk(this.town.area, x, y));
+  }
+
+  /**
+   * Áreas fixas do mapa (dungeon, covil, cidade, interiores): voltam sempre do gerador ao carregar. A regra do chunk do
+   * muro NÃO entra aqui: o que já foi construído fora da cidade, nesses chunks, continua lá (só não se constrói mais).
+   */
+  private inGuardedArea(x: number, y: number): boolean {
     return (!!this.dungeon && inRect(dungeonGuard(this.dungeon), x, y)) || (!!this.cave && inRect(this.cave.guard, x, y))
       || (!!this.town && inRect(this.town.area, x, y))
       || this.interiors.some((l) => inRect(l.guard, x, y));
+  }
+
+  /** O chunk da célula contém alguma célula da muralha (o anel de `TOWN_WALL` na borda da área da cidade)? */
+  private inWallChunk(area: Rect, x: number, y: number): boolean {
+    const x0 = Math.floor(x / CHUNK_SIZE) * CHUNK_SIZE;
+    const y0 = Math.floor(y / CHUNK_SIZE) * CHUNK_SIZE;
+    const x1 = x0 + CHUNK_SIZE - 1;
+    const y1 = y0 + CHUNK_SIZE - 1;
+    if (x1 < area.x0 || x0 > area.x1 || y1 < area.y0 || y0 > area.y1) return false; // não encosta na cidade
+    const inside = x0 >= area.x0 + TOWN_WALL && x1 <= area.x1 - TOWN_WALL && y0 >= area.y0 + TOWN_WALL && y1 <= area.y1 - TOWN_WALL;
+    return !inside; // só dentro do miolo (sem muralha) o chunk não conta
   }
 
   /** Interior (cômodo) que contém a célula, ou null. */
@@ -203,7 +222,10 @@ export class World {
 
   /** Do lado de fora do portão da cidade (na estrada); sem cidade, o início. */
   outsideGate(): [number, number] {
-    return this.town ? this.town.doorstep : this.findSpawn();
+    if (!this.town) return this.findSpawn();
+    let [x, y] = this.town.doorstep;
+    while (this.isProtected(x, y)) y++; // a estrada sai do portão: o primeiro trecho já é o chunk do muro (protegido)
+    return [x, y];
   }
 
   /** A célula está dentro dos limites do mundo? (sempre true em mundo ilimitado) */
@@ -324,6 +346,7 @@ export class World {
     const ly = toLocal(y);
     const chunk = this.loadChunk(cx, cy);
     if (isRemovedBlock(id)) id = Block.AIR; // bloco que saiu do jogo (antigas paredes): vindo de dados ou de versão antiga
+    id = adultOfStage(id) as BlockId; // muda/árvore jovem aposentadas (v0.88.0) viram a árvore adulta
     if (level === 'ground') {
       // Buraco novo começa a contar o dia; qualquer outro chão (água, bloco colocado, regeneração) para a contagem.
       if (id === Block.HOLE) this.holeAge.set(chunkKey(x, y), 0);
@@ -660,15 +683,13 @@ export class World {
   // ---- Plantação ----
 
   /**
-   * Dá para plantar `id` aqui? Plantação (trigo, batata, tomate, cenoura): só em Terra Arada. Muda de árvore: em Terra
-   * ou Terra com Grama.
+   * Dá para plantar `id` aqui? Plantação (trigo, batata, tomate, cenoura): só em Terra Arada. Não há mais mudas de árvore
+   * (v0.88.0: as árvores só aparecem adultas).
    * Sempre com a célula livre (ou só com enfeite).
    */
   canPlant(x: number, y: number, id: BlockId = Block.WHEAT_0): boolean {
     if (this.isProtected(x, y)) return false;
-    const sapling = id === Block.OAK_SAPLING || id === Block.APPLE_SAPLING;
-    if (!sapling && !isCropSeedling(id)) return false;
-    if (sapling ? !SAPLING_GROUND.has(this.getGround(x, y)) : this.getGround(x, y) !== PLANTABLE_GROUND) return false;
+    if (!isCropSeedling(id) || this.getGround(x, y) !== PLANTABLE_GROUND) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
   }
@@ -823,14 +844,13 @@ export class World {
       const stage = cropStage(id);
       if (stage < CROP_STAGES - 1 && rand() < dt / CROP_STAGE_SECONDS[kind]) set(x, y, cropId(kind, stage + 1));
     }
-    // Árvores: cada estágio avança com probabilidade dt / tempo do estágio; a macieira colhida volta a dar maçãs.
+    // Árvores: só a macieira colhida volta a dar maçãs (não há mais estágios de crescimento).
     for (const key of [...this.trees]) {
       const [x, y] = key.split(',').map(Number);
       const id = this.getObject(x, y);
       const next = TREE_NEXT[id];
       if (next === undefined) { this.trees.delete(key); continue; }
-      const t = id === Block.APPLE_TREE_BARE ? FRUIT_REGROW_SECONDS : TREE_STAGE_SECONDS;
-      if (rand() < dt / t) set(x, y, next);
+      if (rand() < dt / FRUIT_REGROW_SECONDS) set(x, y, next);
     }
   }
 
@@ -923,13 +943,13 @@ export class World {
     c.ground.set(ground.subarray(0, c.ground.length));
     levels.forEach((l, i) => { if (i < c.levels.length) c.levels[i].set(l.subarray(0, c.levels[i].length)); });
     // Blocos que saíram do jogo (antigas paredes) em mundos e salas salvos viram vazio.
-    for (const l of c.levels) for (let i = 0; i < l.length; i++) if (isRemovedBlock(l[i])) l[i] = Block.AIR;
+    for (const l of c.levels) for (let i = 0; i < l.length; i++) l[i] = isRemovedBlock(l[i]) ? Block.AIR : adultOfStage(l[i]); // + estágios de árvore aposentados
     // Áreas protegidas (cidade/dungeon) sempre voltam do gerador: salvamentos antigos podem ter outro terreno ali.
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const x = cx * CHUNK_SIZE + lx;
         const y = cy * CHUNK_SIZE + ly;
-        if (!this.isProtected(x, y)) continue;
+        if (!this.inGuardedArea(x, y)) continue;
         const cell = this.generator.cellAt(x, y);
         c.setGround(lx, ly, cell.ground);
         c.levels.forEach((l, i) => { l[ly * CHUNK_SIZE + lx] = i === 0 ? cell.object : i === 1 ? cell.upper : Block.AIR; });

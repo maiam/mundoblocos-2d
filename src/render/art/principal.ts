@@ -159,8 +159,9 @@ import fenceGateIcon from '../../assets/icon-block-fence-gate.webp';
 import treeOak from '../../assets/tree-oak.webp';
 import treeApple from '../../assets/tree-apple.webp';
 import treeCactus from '../../assets/tree-cactus.webp';
-import oakSaplingIcon from '../../assets/icon-item-oak-sapling.webp';
-import appleSaplingIcon from '../../assets/icon-item-apple-sapling.webp';
+import treeCherry from '../../assets/tree-cherry.webp';
+import cherryLogIcon from '../../assets/icon-block-cherry-log.webp';
+import cherryPlanksIcon from '../../assets/icon-block-cherry-planks.webp';
 import appleIcon from '../../assets/icon-item-apple.webp';
 import chairIcon from '../../assets/icon-block-chair.webp';
 import chairSprite from '../../assets/chair.webp';
@@ -311,6 +312,8 @@ const pack: ArtPack = {
 
     [Block.OAK_LOG]: oakLogIcon,
     [Block.OAK_PLANKS]: oakPlanksIcon,
+    [Block.CHERRY_LOG]: cherryLogIcon,
+    [Block.CHERRY_PLANKS]: cherryPlanksIcon,
   },
   celestialIcons: {},
   oakDoor,
@@ -324,8 +327,8 @@ const pack: ArtPack = {
     oven: { icon: ovenIcon, sprite: ovenSprite },
     chair: { icon: chairIcon, sprite: chairSprite },
   },
-  // Pranchas de crescimento (scripts/extract-trees.py): 4 × 2 quadros por árvore.
-  trees: { oak: treeOak, apple: treeApple, cactus: treeCactus },
+  // Árvores adultas em tiras de variantes (scripts/process-trees.py); cacto: prancha 4 × 2 (scripts/extract-trees.py).
+  trees: { oak: treeOak, apple: treeApple, cherry: treeCherry, cactus: treeCactus },
   rocks,
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: { pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon },
@@ -335,7 +338,7 @@ const pack: ArtPack = {
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
-  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, oak_sapling: oakSaplingIcon, apple_sapling: appleSaplingIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
+  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
   modular: { manifest: chibiManifest as unknown as ModularManifest, sheets: chibiSheets },
 };

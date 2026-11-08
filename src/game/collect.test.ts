@@ -13,9 +13,12 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(blockDrops(Block.GRASS, r)).toEqual([{ item: blockStack(Block.GRASS), count: 1 }]);
     expect(blockDrops(Block.OAK_DOOR_OPEN, r)).toEqual([{ item: blockStack(Block.OAK_DOOR), count: 1 }]);
     for (let i = 0; i < 30; i++) {
-      const [log] = blockDrops(Block.SAKURA_TREE, r);
+      const [log] = blockDrops(Block.OAK_TREE, r);
       expect(log.item).toBe(blockStack(Block.OAK_LOG));
       expect([2, 3]).toContain(log.count);
+      const [cherry] = blockDrops(Block.SAKURA_TREE, r); // a Cerejeira dá Tora de Cerejeira
+      expect(cherry.item).toBe(blockStack(Block.CHERRY_LOG));
+      expect([2, 3]).toContain(cherry.count);
     }
     expect(blockDrops(Block.FLOWER, r)).toEqual([]);
     expect(blockDrops(Block.CLOUD_SOLID, r)).toEqual([]); // Santuário não coleta

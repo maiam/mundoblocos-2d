@@ -28,6 +28,8 @@ const ROAD_LEN = 14;
 /** Campo ao sul do portão (estrada + rebanho inicial) que a dungeon não pode ocupar (células abaixo da muralha). */
 export const TOWN_SOUTH_FIELD = 28;
 const WALL = 2;
+/** Espessura da muralha em células (a regra de proteção por chunk usa o anel que ela forma na borda de `area`). */
+export const TOWN_WALL = WALL;
 
 export interface TownBuilding {
   id: BlockId;

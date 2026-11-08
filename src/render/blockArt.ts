@@ -33,7 +33,8 @@ let chest: HTMLImageElement | null = null;
 /** Objetos fabricados (fogueira, caldeirão, forno), por nome da arte. */
 const craftables = new Map<string, HTMLImageElement>();
 /** Pranchas de crescimento (carvalho, macieira, cacto). */
-let trees: { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null = null;
+export interface TreeArt { oak: HTMLImageElement; apple: HTMLImageElement; cherry: HTMLImageElement; cactus: HTMLImageElement }
+let trees: TreeArt | null = null;
 /** Tira de pedregulhos. */
 let rocks: HTMLImageElement | null = null;
 /** Cerca de tábuas: peças emendáveis e portão (fechado, aberto). */
@@ -65,8 +66,8 @@ export async function loadBlockArt(): Promise<void> {
     fence = { pieces, gate };
   }
   if (a.trees) {
-    const [oak, apple, cactus] = await Promise.all([load(a.trees.oak), load(a.trees.apple), load(a.trees.cactus)]);
-    trees = { oak, apple, cactus };
+    const [oak, apple, cherry, cactus] = await Promise.all([load(a.trees.oak), load(a.trees.apple), load(a.trees.cherry), load(a.trees.cactus)]);
+    trees = { oak, apple, cherry, cactus };
   }
   if (a.town) {
     const entries = Object.entries(a.town);
@@ -144,8 +145,8 @@ export function getFenceArt(): { pieces: HTMLImageElement; gate: HTMLImageElemen
   return fence;
 }
 
-/** Pranchas de crescimento das árvores e cactos (null fora do mundo principal). */
-export function getTreeArt(): { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null {
+/** Árvores adultas (tiras de variantes) e prancha do cacto (null fora do mundo principal). */
+export function getTreeArt(): TreeArt | null {
   return trees;
 }
 

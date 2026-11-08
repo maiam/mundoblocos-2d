@@ -14,8 +14,8 @@ describe('Machado', () => {
     for (const id of [Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.SAND, Block.STONE]) {
       expect(toolCanBreak('axe', id)).toBe(false);
     }
-    // Materiais da prancha: só tora e piso são de madeira.
-    expect(MATERIALS.filter((m) => BLOCKS[m].organic !== null)).toEqual([Block.OAK_LOG, Block.OAK_PLANKS]);
+    // Materiais da prancha: só tora e tábuas (carvalho e cerejeira) são de madeira.
+    expect(MATERIALS.filter((m) => BLOCKS[m].organic !== null)).toEqual([Block.OAK_LOG, Block.OAK_PLANKS, Block.CHERRY_LOG, Block.CHERRY_PLANKS]);
   });
 
   it('espada não quebra nada; mão vazia/itens quebram tudo', () => {
