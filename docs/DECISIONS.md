@@ -19,12 +19,13 @@
 | 0014 | Interiores = cômodos isolados do mesmo `World` (coordenadas fixas ao norte, protegidos), mapa lógico sobre a arte, porta pela rua, capacho para sair | [0014](adr/0014-interiores.md) |
 | 0015 | Orvalis independente do maiamapps: backend próprio (repositório separado) em subdomínio de `pensamentos.online` até o domínio próprio; regras do mundo compartilhadas com o servidor, não copiadas | [0015](adr/0015-orvalis-independente.md) |
 | 0016 | Multiplayer co-op com código de convite (até 4), convidados só com nome, sem PvP; servidor autoritativo com `Room`/protocolo compartilhados (`src/net`, `world/actions.ts`) | [0016](adr/0016-multiplayer-coop.md) |
-| 0017 | Personagem modular: arte segue o contrato v02 (quadro, âncora, escala fixa, caixa por ação, encaixe × peça × parte); exportador valida/exporta; fontes pesadas fora do git | [0017](adr/0017-personagem-modular-contrato.md) |
+| 0017 | ~~Personagem modular (chibi)~~ — **removido na v0.92.0** (ADR 0025); o texto da ADR fica no histórico do git | — |
 | 0018 | Ferramentas por material: tipo × material; arte segue `assets-src/ferramentas/CONTRATO.md` (ficha, ícones padronizados, camada de mão sobre pose-base sem ferramenta) antes de entrar no motor | [0018](adr/0018-ferramentas-por-material.md) |
 | 0019 | Covil isolado (canto fixo) com entrada de caverna a ≥ 10 chunks do castelo; mundo da Cidade 1 só de florestas; visão de andares/mundos ligados por portais | [0019](adr/0019-covil-isolado-e-andares.md) |
 | 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
 | 0021 | Bichos da sala: o servidor roda as mesmas `Entities` (jogadores como avatares); o aparelho na sala só espelha (`CreatureMirror`); golpe/comida/mordida decididos pela sala; moradores locais | [0021](adr/0021-bichos-da-sala.md) |
 | 0022 | Escala visual: geometria e contratos de arte preservados, sem unidade nova; **cena de escala** `?escala=1` (só dev) compara sprites no renderizador real; catálogo, validação e normalização de alturas ficam para depois | [0022](adr/0022-escala-visual-e-cena-de-escala.md) |
+| 0025 | Chibi modular, expressões e moradores antigos saem; 16 NPCs nomeados (Black + 15) com folha própria; caixa de conversa com retrato, nome e páginas | [0025](adr/0025-npcs-nomeados-e-caixa-de-conversa.md) |
 | 0023 | Padrão de Materiais V2: a arte entrega texturas planas 128×128 por material; o motor monta topo/frente (frente **18**, decidida na v0.81.1; sem frente própria repete o topo; franja ≤ 32 px); **padrão do jogo desde 08/11** (`?blocos=legado` volta ao antigo); transições entre chãos por máscara de alfa que gira (só a Grama avança hoje); `?materiais=1` compara; mistura só no chão plano; máscaras = formas giráveis | [0023](adr/0023-padrao-materiais-v2.md) |
 
 ## Produto e regras de jogo
@@ -94,13 +95,8 @@
 | Prancha 3/4 venceu a extração isométrica (comparação no jogo) | adr/0006 |
 | Texturas de blocos/chão sempre na direção desenhada (nada gira nem espelha por célula); variedade só por variações enviadas | CONVENTIONS, domains/render |
 | Terra com Grama: arte nova com 3 variações sorteadas por célula (chão e cubo); colunas extras 15–16 do atlas | domains/render, OPERATIONS |
-| Moradores = personagem de roupa branca + roupa em camada (sorteada pela seed), mesma grade e escala; cavalo só passeia por enquanto | domains/npc, CONVENTIONS |
-| Roupas de ofício (ferreiro) fora do sorteio: vestem só o morador daquele ofício | domains/npc |
 | Ferraria: ferreiro mora dentro (atrás do balcão), só fala por enquanto; entrar andando para cima diante da porta | adr/0014, domains/town |
-| Ofícios com visual único: personagem e roupa do ofício não se repetem (ferreiro = cabelo preto + roupa de ferreiro) | domains/npc, CONVENTIONS |
-| Expressões em camada (rosto, franja por cabelo, efeitos) extraídas das folhas careca; repouso pela seed, reação ao conversar | domains/npc, OPERATIONS |
 | Tela de entrada dentro do jogo (não página separada): mundo em vitrine atrás, Novo jogo → montar personagem; Continuar só com jogo salvo; `?seed=`/`?personagem=` e Santuário pulam a tela | domains/player, ARCHITECTURE |
-| Aparência do personagem salva por mundo (`SaveData.look`, v6) e levada para mundo novo/sala; heroína continua opção e é o padrão de salvamentos antigos; chibi desenhado a 0,94 para igualar a altura da heroína | domains/save, domains/player |
 | Minimapa redondo, norte para cima, névoa por célula (raio 14) salva com o mundo; cor do mapa é aparência (`render/mapColors.ts`), não propriedade do bloco; só no mundo principal (`WorldProfile.minimap`) | domains/render, domains/save |
 | ~~Árvores crescem de verdade (2026-11-06)~~ — **substituída** em 2026-11-08 (ADR 0024): árvores só adultas e variadas, sem mudas nem estágios; macieira colhida ainda volta a dar frutas | domains/farming |
 | Árvores adultas variadas, madeira de cerejeira e chunk do muro protegido (dono do produto, 2026-11-08) | [0024](adr/0024-arvores-adultas-cerejeira-chunk-do-muro.md) |

@@ -90,28 +90,28 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
     expect(new Room(1, 'Sala 1', 123).restore(snap)).toBe(false);
   });
 
-  it('cada um aparece para os outros com o personagem que escolheu (Herói, chibi com peças)', async () => {
+  it('cada um aparece para os outros com o personagem que escolheu (Herói, Mila)', async () => {
     const server = new LoopbackServer(mulberry32(6));
     const a = client(server);
-    a.s.join('Ana', 1, { body: 'hero', look: null });
+    a.s.join('Ana', 1, { body: 'hero' });
     await flush();
     const b = client(server);
-    b.s.join('Bia', 1, { body: 'heroine', look: { cabelo: 'curto-castanho', tronco: 'blusa-ocre' } });
+    b.s.join('Bia', 1, { body: 'mila' });
     await flush();
-    expect([...b.s.others.values()][0].appearance).toEqual({ body: 'hero', look: null });
-    expect([...a.s.others.values()][0].appearance.look).toEqual({ cabelo: 'curto-castanho', tronco: 'blusa-ocre' });
-    // Aparência estranha vinda da rede vira a padrão.
+    expect([...b.s.others.values()][0].appearance).toEqual({ body: 'hero' });
+    expect([...a.s.others.values()][0].appearance).toEqual({ body: 'mila' });
+    // Aparência estranha (ou o campo antigo `look`, do chibi que saiu) vinda da rede vira só o personagem pronto / a padrão.
     const c = client(server);
-    (c.s as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, name: 'Caio', room: 1, appearance: { body: 'dragão', look: { '<x>': 1 } } });
+    (c.s as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, name: 'Caio', room: 1, appearance: { body: 'dragão', look: { cabelo: 'x' } } });
     await flush();
     const caio = [...a.s.others.values()].find((p) => p.name === 'Caio')!;
-    expect(caio.appearance).toEqual({ body: 'heroine', look: null });
+    expect(caio.appearance).toEqual({ body: 'heroine' });
   });
 });
 
 describe('Aparência na rede: personagens prontos', () => {
   it('Heroína, Herói, Hood, Gino e Mila passam; o resto vira a Heroína', () => {
-    expect(parseAppearance({ body: 'hood', look: null })).toEqual({ body: 'hood', look: null });
+    expect(parseAppearance({ body: 'hood', look: null })).toEqual({ body: 'hood' });
     expect(parseAppearance({ body: 'gino' }).body).toBe('gino');
     expect(parseAppearance({ body: 'mila' }).body).toBe('mila');
     expect(parseAppearance({ body: 'hero' }).body).toBe('hero');
@@ -127,7 +127,7 @@ describe('Estado na rede: ferramenta e golpe', () => {
   });
 
   it('o boneco do outro mostra a ferramenta e toca o golpe quando o número muda', () => {
-    const others = new Map<number, PlayerInfo>([[2, { id: 2, name: 'Ana', appearance: { body: 'hood', look: null }, state: { x: 5, y: 5, facing: 'down', moving: false, tool: 'axe' } }]]);
+    const others = new Map<number, PlayerInfo>([[2, { id: 2, name: 'Ana', appearance: { body: 'hood' }, state: { x: 5, y: 5, facing: 'down', moving: false, tool: 'axe' } }]]);
     const r = new RemotePlayers();
     r.sync(others);
     expect(r.actors[0].kind).toBe('hood-axe');

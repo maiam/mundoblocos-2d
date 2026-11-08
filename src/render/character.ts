@@ -2,7 +2,6 @@ import { art } from './art';
 import { TILE } from '../config';
 import { type Actor, type ActorKind, HERO_BODIES } from '../game/entities';
 import type { Facing } from '../game/walker';
-import type { VillagerBase } from '../game/villager';
 
 /**
  * Sprites de atores (folhas geradas por scripts/process-sprite.py); URLs vêm do pacote de arte do mundo (`render/art`).
@@ -168,12 +167,24 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   foal: { cols: 4, rows: 4, height: TILE * 1.1, shadow: [0.36, 0.11], walkFps: 8 },
   calf: { cols: 4, rows: 4, height: TILE * 0.95, shadow: [0.34, 0.11], walkFps: 7 },
   chick: { cols: 4, rows: 4, height: TILE * 0.6, shadow: [0.2, 0.07], walkFps: 10 },
-  // Moradores (scripts/extract-villagers.py): mesma escala da heroína; a roupa vem por cima (`Actor.outfit`).
-  'villager-blond': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'villager-brown': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'villager-black': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'villager-silver': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
-  'villager-red': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
+  // NPCs da cidade (assets-src/npcs, v0.92.0): folha pronta de cada um, mesma escala da heroína (altura pelo desenho em px
+  // no quadro de 144; o Black é a composição da folha antiga do ferreiro).
+  'npc-black': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-dante': { cols: 4, rows: 4, height: CHARACTER_H * (292 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-silvano': { cols: 4, rows: 4, height: CHARACTER_H * (299 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-morgan': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-aurelio': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-rubem': { cols: 4, rows: 4, height: CHARACTER_H * (289 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-rosendo': { cols: 4, rows: 4, height: CHARACTER_H * (295 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-teodoro': { cols: 4, rows: 4, height: CHARACTER_H * (294 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-bento': { cols: 4, rows: 4, height: CHARACTER_H * (294 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-solano': { cols: 4, rows: 4, height: CHARACTER_H * (288 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-nilo': { cols: 4, rows: 4, height: CHARACTER_H * (300 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-marlon': { cols: 4, rows: 4, height: CHARACTER_H * (293 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-lavinio': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-caio': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-noel': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'npc-leandro': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 297), shadow: [0.32, 0.12], walkFps: 7 },
 };
 
 class SpriteSheet {
@@ -182,12 +193,6 @@ class SpriteSheet {
 
   private readonly deathImg = new Image();
   private deathReady = false;
-
-  /**
-   * Camadas desenhadas por cima no mesmo quadro (moradores), por chave: `face:<expr>`, `bangs`, `fx:<expr>`,
-   * `outfit:<id>`. Ordem: base → rosto → franja → efeitos → roupa.
-   */
-  private readonly layers = new Map<string, HTMLImageElement>();
 
   private requested = false;
 
@@ -200,23 +205,16 @@ class SpriteSheet {
     private readonly spec: SheetSpec,
     private readonly url: string | undefined,
     private readonly deathUrl?: string,
-    private readonly layerUrls?: Partial<Record<string, string>>,
   ) {
     this.img.onload = () => (this.ready = true);
     this.deathImg.onload = () => (this.deathReady = true);
   }
 
-  /** Começa a baixar a folha (e as camadas e a morte), uma vez só. */
+  /** Começa a baixar a folha (e a morte), uma vez só. */
   request(): void {
     if (this.requested) return;
     this.requested = true;
     if (this.url) this.img.src = this.url;
-    for (const [id, src] of Object.entries(this.layerUrls ?? {})) {
-      if (!src) continue;
-      const im = new Image();
-      im.src = src;
-      this.layers.set(id, im);
-    }
     if (this.deathUrl) this.deathImg.src = this.deathUrl;
   }
 
@@ -265,16 +263,6 @@ class SpriteSheet {
     if (a.hurt && Math.floor(elapsed * 14) % 2 === 1) return;
     if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
     else ctx.drawImage(this.img, col * fw, row * fh, fw, fh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
-    // Camadas do morador: mesmo quadro de cada folha (mesma grade e escala da base — extract-villagers.py).
-    const keys = a.expression ? [`face:${a.expression}`, 'bangs', `fx:${a.expression}`] : [];
-    if (a.outfit) keys.push(`outfit:${a.outfit}`);
-    for (const key of keys) {
-      const layer = this.layers.get(key);
-      if (!layer?.complete || !layer.naturalWidth) continue;
-      const lw = layer.naturalWidth / cols;
-      const lh = layer.naturalHeight / rows;
-      ctx.drawImage(layer, col * lw, row * lh, lw, lh, Math.round(dx), Math.round(dy), Math.round(w), Math.round(h));
-    }
   }
 
   /** Monstro: ciclo de 8 quadros (andando) ou respiração lenta (parado), espelho à direita, pisca ferido. */
@@ -356,26 +344,10 @@ class SpriteSheet {
   }
 }
 
-/** Camadas de um personagem-base de morador (ver `SpriteSheet.layers`), do pacote de arte do mundo. */
-function villagerLayers(base: VillagerBase): Record<string, string> {
-  const a = art();
-  const out: Record<string, string> = {};
-  for (const [id, url] of Object.entries(a.outfits ?? {})) if (url) out[`outfit:${id}`] = url;
-  for (const [id, e] of Object.entries(a.expressions ?? {})) {
-    if (!e) continue;
-    out[`face:${id}`] = e.face;
-    if (e.fx) out[`fx:${id}`] = e.fx;
-  }
-  const bangs = a.bangs?.[base];
-  if (bangs) out.bangs = bangs;
-  return out;
-}
-
 export class ActorSprites {
   private readonly sheets = Object.fromEntries(
     (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(
       SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k],
-      k.startsWith('villager-') ? villagerLayers(k.slice('villager-'.length) as VillagerBase) : undefined,
     )]),
   ) as Record<ActorKind, SpriteSheet>;
 

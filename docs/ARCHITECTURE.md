@@ -8,11 +8,7 @@ Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node �
 CLAUDE.md / AGENTS.md          instruções para agentes de IA
 assets-src/                    arte original (folhas 4×4, pranchas de blocos, ícones)
   ferramentas/                 contrato de arte das ferramentas por material (ADR 0018): CONTRATO.md, catalogo.json, entregas
-  personagens/                 personagem modular: CONTRATO.md + humano-chibi/{entrega,previas}/v02 (git);
-                               _trabalho/ e _arquivo/ (Krita, v01) só locais — ADR 0017; ainda fora do runtime
 scripts/
-  export-personagem.py         personagem modular v02 → valida a entrega e exporta WebP + manifesto (ADR 0017);
-                               --out src/assets --prefixo chibi- alimenta o teste no jogo (render/modular*.ts)
   process-sprite.py            folha → PNG transparente com quadros uniformes (--rows-map, --region, --respace…)
   extract-blocks.py            prancha 3/4 de blocos → atlas (topo, frente, chão contínuo) + ícones
   extract-town.py              pranchas da cidade (assets-src/town) → sprites em escala única (tabela OBJECTS)
@@ -35,7 +31,7 @@ scripts/
   make-icons.py                ícones do PWA (public/) a partir de assets-src/icone-orvalis.webp
   build-artifact.mjs           dist/ → artifact/mundoblocos.html (arquivo único)
   build-net.mjs                src/net (+ regras de src/world) → dist-net/orvalis-net.cjs, pacote do multiplayer para o servidor (ADR 0016)
-  extract-villagers.py         moradores: personagens-base de roupa branca + roupas em camadas (assets-src/villagers)
+  process-trees.py / make-portraits.py  (ver OPERATIONS) NPCs: retratos da caixa de conversa a partir das folhas em assets-src/npcs
   extract-water.py             cubo de água e folhas de enchimento → texturas da água
   extract-ui.py                ícones de interface (Personagem, Habilidades, Construtor), baú e tenda
   extract-landmarks.py         marcos soltos do mundo (entrada do Covil das Aranhas) → sprite recortado
@@ -84,7 +80,7 @@ src/
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)
     character.ts               folhas dos atores (heroína ±ferramenta, ovelha, filhote, namoro) + coração
-    modular.ts, modularCharacter.ts   personagem modular (ADR 0017): manifesto, peças/sorteio/limpeza da aparência, desenho
+    (o personagem modular saiu na v0.92.0)
     minimap.ts, mapColors.ts   minimapa redondo (névoa + marcadores) e cor de cada célula no mapa, lida do World
     characterPreview.ts        prévia do personagem na tela de entrada (mesmo desenho do jogo, virando nas 4 direções)
     itemArt.ts                 trigo por estágio, ícones de itens/ferramentas
@@ -96,7 +92,7 @@ src/
     save.ts, menu.ts           salvamento automático (localStorage, ADR 0011) e menu ☰
     exploration.ts             névoa do minimapa: células já vistas (bits por chunk), salva com o mundo
     title.ts                   tela de entrada (Novo jogo / Continuar) e montagem do personagem; o mundo fica em vitrine atrás
-    walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts (FarmAnimal: cavalo, vaca, galinha), villager.ts   movimento/colisão/altura compartilhados
+    walker.ts → player.ts, monster.ts, wanderer.ts → sheep.ts, horse.ts (FarmAnimal: cavalo, vaca, galinha), villager.ts, npcs.ts (NPCs nomeados e falas), dialogue.ts (caixa de conversa)   movimento/colisão/altura compartilhados
     entities.ts                personagem + ovelhas + monstros: colisão, reprodução, golpe, mordida, mapa de distâncias,
                                morte/renascimento dos monstros, atores p/ render; roda também na sala do servidor
                                (sem personagem, jogadores como `avatars`) e em modo `remote` no aparelho dentro da sala

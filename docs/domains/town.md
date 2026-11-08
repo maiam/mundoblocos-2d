@@ -55,7 +55,7 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   **quintal andável** (sem faixa "invisível" bloqueada atrás do telhado).
   **Tocar** numa construção ou placa mostra o nome/texto (`Hud.toast`); interiores ainda não existem.
 - **Zona segura**: monstros não existem fora da dungeon. Ovelhas e o cavalo nascem no campo, do lado de fora do portão.
-- **Moradores** (`domains/npc.md`): 4 passeiam só por ruas e praças (`street`), com roupas sorteadas pela seed; o
+- **Moradores** (`domains/npc.md`): 16 NPCs nomeados (o ferreiro Black e 15 moradores) passeiam só por ruas e praças (`street`); o
   ferreiro atende dentro da Ferraria.
 
 ## Interiores (`world/interiors.ts`, ADR 0014)

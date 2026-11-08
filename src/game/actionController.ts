@@ -13,6 +13,7 @@ import type { Inventory } from './inventory';
 import type { Player } from './player';
 import type { Breeder } from './breeder';
 import type { Facing } from './walker';
+import type { Villager } from './villager';
 
 /** Alcance para quebrar/colocar, em células (do centro do personagem ao centro da célula). */
 const REACH = 4.5;
@@ -64,6 +65,8 @@ export interface ActionContext {
   onOpenChest(x: number, y: number): void;
   /** Mensagem curta na tela (ex.: "Ponto de renascimento alterado"). */
   notify(text: string): void;
+  /** Tocou num morador ao alcance: abre a caixa de conversa (ou avança a que já está aberta). */
+  talk(v: Villager): void;
   /** Ação que mudou o mapa, já aplicada no `World` local (multiplayer: vai para o servidor, ADR 0016). */
   onAction?(a: PlayerAction): void;
   /**
@@ -421,7 +424,7 @@ export class ActionController {
     const [wx, wy] = this.camera.screenToWorld(sx, sy);
     const talker = this.entities.villagerAt(wx / TILE, wy / TILE);
     if (talker && Math.hypot(talker.x - this.player.x, talker.y - this.player.y) <= REACH) {
-      this.ctx.notify(talker.speak());
+      this.ctx.talk(talker);
       return;
     }
     const picked = this.renderer.pick(this.camera, sx, sy);
@@ -486,7 +489,7 @@ export class ActionController {
     // Morador à frente: conversa (antes de golpear/usar).
     const talker = this.entities.villagerInFront();
     if (talker) {
-      this.ctx.notify(talker.speak());
+      this.ctx.talk(talker);
       return;
     }
     const [fx, fy] = this.frontCell();

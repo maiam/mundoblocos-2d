@@ -81,7 +81,7 @@ describe('Salvamento automático', () => {
     }
     player.x = sx + 0.5; player.y = sy + 0.6; player.facing = 'left';
     exploration.revealAround(sx, sy, 5);
-    entities.look = { corpo: 'base', cabelo: 'curto-castanho', tronco: 'tunica-azul' };
+    entities.body = 'mila';
     const data = JSON.parse(JSON.stringify(captureSave({ world, player, entities, inventory, exploration, time: 0.62, selected: 3, hotbar: ['tool:sword', null, 'block:20', null, null, null, null, 'silk'] })));
     expect(data.v).toBe(SAVE_VERSION);
 
@@ -96,7 +96,7 @@ describe('Salvamento automático', () => {
     expect(b.world.getObject(far[0], far[1])).toBe(Block.SAND);
     expect([b.player.x, b.player.y, b.player.hp, b.player.facing]).toEqual([sx + 0.5, sy + 0.6, 6, 'left']);
     expect(b.inventory.count('silk')).toBe(4);
-    expect(b.entities.look).toEqual(entities.look);
+    expect(b.entities.body).toBe('mila');
     expect(b.player.hunger).toBe(42);
     expect(b.exploration.count).toBe(exploration.count);
     expect(b.exploration.isExplored(sx, sy)).toBe(true);
@@ -141,7 +141,7 @@ describe('Salvamento automático', () => {
     })!;
     expect(v4.v).toBe(SAVE_VERSION);
     expect(v4.player.hp).toBe(60);
-    expect(v4.look).toBeNull();
+    expect('look' in v4).toBe(false); // v11 → v12: o chibi saiu, o campo some
     expect(v4.explored).toEqual([]); // v6 → v7: minimapa começa coberto (v5 → v6: quem já jogava continua com a heroína)
     expect(v4.dungeon).toBeNull();
     expect(v4.player.hunger).toBe(100); // v8 → v9: quem já jogava começa satisfeito // v7 → v8: covil mudou de lugar, as aranhas voltam completas

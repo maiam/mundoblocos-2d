@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.92.0 — 2026-11-08
+- **Caixa de conversa**: quando um NPC fala, aparece a moldura no centro da tela com o **rosto** no círculo, o **nome** na
+  plaquinha e o **texto** na caixa; texto que não cabe vira páginas e a setinha ▼ avisa que tem mais (tocar na caixa, no
+  botão de ação, Espaço ou Enter avança; na última página, fecha). O NPC fica parado e virado para a personagem.
+- **16 NPCs nomeados** no lugar dos moradores antigos: o ferreiro agora se chama **Black** e há 15 novos — **Dante, Silvano,
+  Morgan, Aurélio, Rubem, Rosendo, Teodoro, Bento, Solano, Nilo, Marlon, Lavínio, Caio, Noel e Leandro** (nomes escolhidos
+  pelo assistente; tabela em `docs/domains/npc.md`, edite em `game/npcs.ts`). Cada um com folha própria, retrato e 2 falas.
+- **Saíram**: os 4 moradores comuns antigos, as roupas em camada, as **expressões** e o **chibi modular** (peças, tela de
+  montagem, `?personagem=chibi`, exportador e ADR 0017). A tela de entrada escolhe só entre os 5 personagens prontos
+  (Heroína, Herói, Hood, Gino, Mila). `?personagem=mila` (ou outro id) segue como atalho.
+- ⚠ **Protocolo 20** (sem o campo `look` da aparência) e **salvamento v12** (o campo `look` some; quem tinha o chibi fica com
+  o personagem pronto salvo). Servidor precisa do pacote novo.
+
 ## 0.91.0 — 2026-11-08
 - **Mila**: sexto personagem pronto (tela de entrada, ao lado de Heroína, Herói, Hood e Gino): caminhada, caminhada com as
   5 ferramentas, 5 golpes e sentar. Na sala os outros a veem como Mila (`APPEARANCE_BODIES`; **protocolo 19**).

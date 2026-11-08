@@ -1,5 +1,4 @@
 import { APPEARANCE_BODIES, type AppearanceBody } from '../net/protocol';
-import type { ModularLook } from '../render/modular';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block } from '../world/blocks';
 import { hash2 } from '../world/random';
@@ -9,7 +8,8 @@ import type { Player } from './player';
 import { BREED_COOLDOWN, Breeder, COURTSHIP_SECONDS } from './breeder';
 import { Sheep } from './sheep';
 import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
-import { type ExpressionId, ROLE_LOOK, TOWNSFOLK_BASES, Villager, type VillagerBase, villagerExpression, villagerOutfit, type OutfitId, type VillagerRole } from './villager';
+import { Villager } from './villager';
+import { NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { wolfPacks, wolfRoam } from '../world/wolves';
@@ -24,8 +24,7 @@ import type { CharacterId } from '../world/profiles';
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
 /**
- * Personagem pronto (folhas desenhadas inteiras): Heroína, Herói, Hood, Gino ou Mila. O chibi modular é outro caminho
- * (`look`). Personagem novo: acrescente em `APPEARANCE_BODIES` (rede) e o nome aqui; arte em `render/art` + `SPECS`.
+ * Personagem pronto (folhas desenhadas inteiras): Heroína, Herói, Hood, Gino ou Mila.  Personagem novo: acrescente em `APPEARANCE_BODIES` (rede) e o nome aqui; arte em `render/art` + `SPECS`.
  */
 export type HeroBody = AppearanceBody;
 export const HERO_BODIES: readonly HeroBody[] = APPEARANCE_BODIES;
@@ -38,7 +37,7 @@ export function canSit(body: HeroBody): body is SitBody {
 /** Nome de cada personagem pronto na tela de escolha. */
 export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila' };
 
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind;
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -59,16 +58,10 @@ export interface Actor {
   hp?: number;
   /** Monstro derrotado: progresso 0..1 da animação de morte (encolhe e desbota). */
   dying?: number;
-  /** Morador: roupa desenhada por cima da folha-base (mesma grade). */
-  outfit?: OutfitId;
-  /** Morador: expressão (rosto em camada, com franja e efeitos por cima). */
-  expression?: ExpressionId;
   /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
   label?: string;
   /** Tamanho relativo do desenho (ex.: coraçõezinhos do namoro, pelo tamanho do animal). */
   scale?: number;
-  /** Personagem modular em teste (ADR 0017): peças por encaixe; o render desenha o chibi no lugar da heroína. */
-  look?: ModularLook;
 }
 
 /** Recalcula o mapa de distâncias da dungeon a cada … (s). */
@@ -171,8 +164,6 @@ export class Entities {
   /** Atores extras desenhados com os demais (espelho da sala: coraçõezinhos do namoro). */
   extra: Actor[] = [];
 
-  /** Aparência modular em teste (`?personagem=chibi`); null = personagem pronto (`body`). */
-  look: ModularLook | null = null;
   /** Personagem pronto quando não há `look`: Heroína ou Herói (escolhido na tela de personagem; salvo). */
   body: HeroBody = 'heroine';
 
@@ -221,10 +212,10 @@ export class Entities {
   }
 
   /**
-   * Moradores da cidade: um de cada personagem-base livre (`TOWNSFOLK_BASES`, sem os reservados aos ofícios), em pontos
-   * fixos (praça inicial, caminho até o castelo, pátio do castelo), cada um com uma roupa casual sorteada pela seed, e o
-   * **ferreiro** com o visual único do ofício (`ROLE_LOOK`) dentro da Ferraria. Os comuns só andam por ruas/praças dentro
-   * da muralha (nunca pelo portão).
+   * Moradores da cidade (`game/npcs.ts`): o **ferreiro Black** dentro da Ferraria e os 15 NPCs comuns, cada um perto de um
+   * ponto fixo das ruas — os dois primeiros na praça inicial, um no caminho até o castelo, um no pátio do castelo e os
+   * outros espalhados (`homesFor`: células de rua sorteadas pela posição, a pelo menos 16 células umas das outras; a
+   * cidade é igual em toda seed, então os pontos também). Os comuns só andam por ruas/praças dentro da muralha.
    */
   spawnVillagers(world: World): void {
     const t = world.town;
@@ -232,23 +223,21 @@ export class Entities {
     const a = t.area;
     const onStreet = (cx: number, cy: number): boolean =>
       cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < t.gate.y0 && t.street[(cy - a.y0) * t.w + (cx - a.x0)] === 1;
-    const [sx, sy] = t.start;
-    const [kx, ky] = t.castleDoor;
-    type Person = { at: [number, number]; base: VillagerBase; outfit: OutfitId; expression: ExpressionId; walk: (cx: number, cy: number) => boolean; role?: VillagerRole };
-    const homes: Array<[number, number]> = [[sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]];
-    const people: Person[] = TOWNSFOLK_BASES.map((base, i) => ({ at: homes[i % homes.length], base, outfit: villagerOutfit(world.seed, i), expression: villagerExpression(world.seed, i), walk: onStreet }));
-    const smithLook = ROLE_LOOK.smith;
+    const common = NPC_IDS.filter((id) => id !== SMITH);
+    type Person = { at: [number, number]; npc: NpcId; walk: (cx: number, cy: number) => boolean };
+    const homes = homesFor(world, common.length, onStreet);
+    const people: Person[] = common.map((npc, i) => ({ at: homes[i], npc, walk: onStreet }));
     // Ferreiro: dentro da Ferraria, atrás do balcão (só anda nas linhas do ofício); sem interior, diante da porta.
     const forge = world.interiors.find((l) => l.def.building === Block.SMITHY);
     const smithy = t.buildings.find((b) => b.id === Block.SMITHY);
     if (forge?.keeper) {
       const k = forge.keeper;
       const walk = (cx: number, cy: number) => cy >= k.rows[0] && cy <= k.rows[1] && interiorFloor(forge, cx, cy);
-      people.push({ at: k.at, ...smithLook, walk, role: 'smith' });
+      people.push({ at: k.at, npc: SMITH, walk });
     } else if (smithy?.door) {
-      people.push({ at: smithy.door, ...smithLook, walk: onStreet, role: 'smith' });
+      people.push({ at: smithy.door, npc: SMITH, walk: onStreet });
     }
-    people.forEach(({ at: [hx, hy], base, outfit, expression, walk, role }) => {
+    people.forEach(({ at: [hx, hy], npc, walk }) => {
       // Rua/praça andável e livre mais perto do ponto.
       for (let r = 0; r <= 12; r++) {
         for (let dy = -r; dy <= r; dy++) {
@@ -257,7 +246,7 @@ export class Entities {
             const cx = hx + dx;
             const cy = hy + dy;
             if (!walk(cx, cy) || !world.isWalkable(cx, cy)) continue;
-            const v = new Villager(cx + 0.5, cy + 0.5, base, outfit, walk, this.rand, role, expression);
+            const v = new Villager(cx + 0.5, cy + 0.5, npc, walk, this.rand);
             if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
             this.villagers.push(v);
             return;
@@ -704,7 +693,6 @@ export class Entities {
         kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
         frame: sitting ? p.sitFrame : p.attacking ? p.attackFrame : undefined,
         hurt: p.invuln > 0,
-        look: this.character === 'heroine' && this.look ? this.look : undefined,
       });
     }
     for (const s of this.npcs) {
@@ -739,8 +727,7 @@ export class Entities {
     }
     for (const v of this.villagers) {
       out.push({
-        kind: `villager-${v.base}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime,
-        outfit: v.outfit, expression: v.expression,
+        kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime,
       });
     }
     for (const m of this.monsters) {
@@ -754,4 +741,27 @@ export class Entities {
     }
     return out;
   }
+}
+
+/**
+ * Pontos de casa dos moradores comuns: os fixos (praça inicial ×2, meio do caminho até o castelo, pátio do castelo) e,
+ * para os demais, células de rua escolhidas pelo sorteio da posição, a pelo menos `HOME_SPACING` células das já
+ * escolhidas. Determinístico (a cidade é igual em toda seed).
+ */
+export const HOME_SPACING = 16;
+export function homesFor(world: World, n: number, onStreet: (cx: number, cy: number) => boolean): Array<[number, number]> {
+  const t = world.town!;
+  const [sx, sy] = t.start;
+  const [kx, ky] = t.castleDoor;
+  const homes: Array<[number, number]> = [[sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]].slice(0, n) as Array<[number, number]>;
+  const a = t.area;
+  const cells: Array<[number, number, number]> = [];
+  for (let cy = a.y0; cy < t.gate.y0; cy++) for (let cx = a.x0; cx <= a.x1; cx++) if (onStreet(cx, cy)) cells.push([cx, cy, hash2(7919, cx, cy)]);
+  cells.sort((p, q) => p[2] - q[2]);
+  for (const [cx, cy] of cells) {
+    if (homes.length >= n) break;
+    if (homes.every(([hx, hy]) => Math.hypot(hx - cx, hy - cy) >= HOME_SPACING)) homes.push([cx, cy]);
+  }
+  while (homes.length < n) homes.push(homes[homes.length % 4]); // cidade pequena demais: repete pontos
+  return homes;
 }

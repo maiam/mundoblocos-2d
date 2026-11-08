@@ -27,7 +27,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 | Menu | ✅ | continuar, novo mundo, recomeçar |
 | Sons, música, vibração | ❌ | — |
 | Multiplayer (Sala 1, até 10) | ✅ Etapas 1–3 | servidor autoritativo em `maiam/orvalis-servidor`: mundo, hora, crescimento, itens, baús, animais e aranhas da sala; falta medir carga real e moradores compartilhados |
-| Personagens e tela de entrada | ✅ | Heroína, Herói, Hood, Gino + chibi modular (só caminha); sentar nos quatro prontos (v0.80.0) |
+| Personagens e tela de entrada | ✅ | Heroína, Herói, Hood, Gino e Mila (o chibi modular saiu na v0.92.0); sentar nos cinco prontos (v0.80.0) |
 | Minimapa com névoa | ✅ v0.51.0 | mapa grande ainda não |
 | XP, níveis e profissões com proficiência | ❌ | Fase P, etapas 2 e 3 |
 | Qualidade | ✅ | 214 testes, typecheck limpo, bench, CI (Verificação) a cada PR; verificação no navegador a cada entrega |
@@ -93,7 +93,7 @@ servidor reaproveita `world`+`net` como pacote compilado. Repositório do servid
 0. **Ferramentas por material** (ADR 0018, `assets-src/ferramentas/CONTRATO.md`): 5 níveis enviados em 06/11
    (madeira, pedra, madeira + presa, madeira + Coração, presa + Coração) esperando a arte no contrato.
    a. _Arte_: refazer as pranchas de ícones no formato (fileira, em pé, mesma escala, alfa limpo); pose-base sem
-      ferramenta da heroína (10 folhas) ou do chibi; camadas de mão do nível madeira (piloto).
+      ferramenta da heroína (10 folhas); camadas de mão do nível madeira (piloto).
    b. _Dono do produto_: receitas, poder/velocidade por nível e se a pedra entra.
    c. _Motor_ (depois de a): `ToolId` → tipo + material (migração do salvamento), camada `ferramenta-tras/frente`
       no render, ícone por material, receitas.
@@ -133,16 +133,13 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 - **Mapa** — minimapa com névoa ✅ v0.51.0. Próximo: tocar no minimapa abre o **mapa grande** (tela cheia, zoom,
   arrastar), nomes de regiões (biomas, cidade, dungeon) e marcadores do jogador; moldura de pergaminho se a arte
   enviar. Na sala multiplayer, a névoa é só de quem anda (não salva no aparelho) — juntar a dos amigos é opcional.
-0. **Cidade do Despertar — vida** (V1 entregue em v0.35.0, `domains/town.md`; 4 moradores passeando desde v0.40.0):
-   ~~fala ao tocar~~ ✅ v0.42 (falas fixas), expressões ✅ v0.44 (usar mais: sonolento à noite, assustado perto de
-   monstros, bravo se golpeado; folhas de cabelo separadas eliminariam as manchinhas dos perfis), **interiores das outras construções** (hospedaria, guilda, lojas, casas:
-   imagem + mapa, ADR 0014), **loja do ferreiro** (comprar/melhorar ferramentas — depende de moedas/profissões),
-   NPCs que apresentam o mundo na praça inicial, moradores que voltam às casas,
-   mais moradores/roupas conforme chegarem folhas (roupa = folha de caminhada só de roupa, mesma grade —
-   `extract-villagers.py`), guardas na muralha/castelo, ferreiro de dia, hospedaria à
-   noite (precisa de **folhas 4×4 de personagens** — dependência de arte); **arte dos caixotes e placas** (ainda pintados em código; hospedaria ✅ v0.40.1, fonte/poço/barraca/barril ✅ v0.43); interiores (guilda com quadro de missões,
-   lojas com compra/venda, hospedaria como ponto de retorno opcional); lampiões acendendo ao anoitecer e
-   movimento diminuindo. Opcional: trocar a arte pintada em código por pranchas.
+0. **Cidade do Despertar — vida** (V1 em v0.35.0, `domains/town.md`; **16 NPCs nomeados e caixa de conversa na v0.92.0**, `domains/npc.md`):
+   ~~fala ao tocar~~ ✅ (caixa de conversa com retrato, nome e páginas), ~~mais moradores~~ ✅ (Black + 15). Falta: **falas de verdade**
+   (as 2 de cada NPC são provisórias; o dono do produto revisa nomes e textos em `game/npcs.ts`), **escolhas e missões** na conversa,
+   **expressões/retratos por humor** (hoje um retrato fixo por NPC), NPCs que voltam às casas e dormem à noite, guardas na
+   muralha/castelo, **interiores das outras construções** (hospedaria, guilda, lojas, casas: imagem + mapa, ADR 0014),
+   **loja do ferreiro** (comprar/melhorar ferramentas — depende de moedas/profissões); **arte dos caixotes e placas** (ainda
+   pintados em código); lampiões acendendo ao anoitecer e movimento diminuindo.
 1. Ovelhas e cavalos (e novos animais) em outros chunks, por bioma, com limite. Cavalo: montaria (andar mais rápido).
    ~~Leite e ovo~~ ✅ v0.74.0. Salvar os animais no jogo **sozinho** (`game/save.ts`, sobe `SAVE_VERSION`): na sala já são
    salvos pelo servidor (v0.73.0); no jogo sozinho o rebanho criado ainda some ao recarregar.
@@ -155,23 +152,10 @@ em `Entities` usando a fórmula; salvamento v5 com migração (quem já joga com
 
 ### Fase 5 — Visual e polimento
 **Escala visual (ADR 0022):** ✅ cena de escala `?escala=1` (v. CHANGELOG, 07/11). Próximo, **depois de olhar a cena** (a normalização das alturas não é automática): (a) catálogo gerado das escalas existentes; (b) validação no `process-sprite.py` — exige tolerâncias numéricas nos contratos; (c) calcular as razões de altura (`297/288`…) pela altura do corpo em vez de digitar; (d) entrar o chibi modular na fila; (e) reavaliar o cavalo (1,6 vs 2,2) antes de montaria.
-0. **Personagem modular (humano chibi v02)** — ADR 0017, `assets-src/personagens/CONTRATO.md`.
-   a. _Arte_: revisão 4 corrige a sequência dos braços à direita e o encaixe das mãos nas roupas. Conferir
-      `previas/v02/direita-antes-depois.gif` e a montagem no cenário. Guarda-roupa fantasia 01 em revisão (onze peças, treze folhas, 16 combinações sobrepostas;
-      25 incluindo a base). Conferir seletores e sorteio em `humano-chibi/previas/v02/revisao.html`, os 32 quadros,
-      cintura/cavas/bainhas e coerência de detalhes frente/costas do colete. Preservada a base bege da revisão 2.
-      Aprovação do movimento dos sapatos continua pendente. Caminhada direita conferida no navegador/cenário na v0.50.1;
-      aguardar revisão artística do dono antes de nova expansão.
-   b. ~~_Motor_: personagem modular lendo o manifesto~~ — feito na v0.48.0 (`?personagem=chibi`). Falta: conferir
-      no cenário com a área de arte (perspectiva, encaixe), repouso quando houver, ferramentas no chibi e sala
-      multiplayer. ~~Seletor de aparência na interface~~ e ~~escala igual à heroína~~ — feitos na v0.50.0 (tela de entrada).
-   c. Ajustar contrato (caixas, escala, ordem) → repousos e transições → ampliar biblioteca → ferramentas por último.
-   d. ~~Aparência no salvamento~~ (v0.50.0) e ~~aparência no multiplayer~~ (v0.66.0, protocolo 9: `hello.appearance`,
-      `PlayerInfo.appearance`; `RemotePlayers` desenha Heroína/Herói/chibi conferindo as peças com `cleanLook`). Falta:
-      mostrar a ferramenta na mão e o golpe dos outros (o estado só tem posição e direção).
+0. **Personagens prontos** (o chibi modular e a ADR 0017 foram removidos na v0.92.0, ADR 0025).
    e. Tela de entrada: depois, "Jogar com amigos" direto do título e "Entrar" (cadastro, backend do Orvalis).
    f. ~~**Herói** — folhas de andar segurando as ferramentas~~ ✅ v0.76.0 (todas as 11 folhas refeitas).
-   h. **Sentar** (v0.79.0; os quatro personagens prontos desde a v0.80.0): falta o chibi modular; sentar de lado/de
+   h. **Sentar** (v0.79.0; os cinco personagens prontos): sentar de lado/de
       costas só se vier arte por direção.
    g. **Hood (v0.71.0)** — ~~folhas de golpe~~ entregues (v0.75.0). Falta: caminhada com pá virada para a direita
       (hoje espelhada); confirmar que a 6ª folha de caminhada (cabeça de machadinha) é a enxada.
@@ -268,7 +252,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
   o protocolo nem o que o jogador vê (a cidade é gerada no aparelho; os blocos aposentados seguem definidos nos dois lados).
 - **Hospedagem** ✅ no ar em `https://orvalis.pensamentos.online` (Hostinger, provisório; publica a cada merge em
   `main` — ver `OPERATIONS`). Depois, domínio próprio do Orvalis (não maiamapps).
-- **Arte**: mais personagens de roupa branca e folhas de roupas (moradores ✅ 4 + 6 roupas, uma de ferreiro); roupas de outros ofícios (guarda, mercador, estalajadeiro); guardas, ferreiro, mercadores; (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
+- **Arte**: mais NPCs (folha 4×4 pronta + retrato, `docs/domains/npc.md`); outros ofícios (guarda, mercador, estalajadeiro); guardas, ferreiro, mercadores; (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
 
 ## 5. Riscos e dívidas técnicas
 - **Orçamento de início (ADR 0013)**: ~2,0 MB de 3 MB desde a v0.74.0 (folhas de personagem só baixam quando o ator

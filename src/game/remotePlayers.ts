@@ -1,5 +1,4 @@
 import type { PlayerInfo } from '../net/protocol';
-import { cleanLook, type ModularLook, type ModularManifest } from '../render/modular';
 import type { World } from '../world/world';
 import type { ToolId } from '../world/items';
 import { type Actor, canSit, HERO_BODIES, type HeroBody, heroActorKind, type SitBody } from './entities';
@@ -16,9 +15,8 @@ interface Remote {
   facing: Facing;
   moving: boolean;
   walkTime: number;
-  /** Como aparece: personagem pronto ou chibi (peças já conferidas no manifesto deste jogo). */
+  /** Como aparece: personagem pronto. */
   body: HeroBody;
-  look: ModularLook | null;
   /** Ferramenta na mão (null = mãos vazias). */
   tool: ToolId | null;
   /** Último número de golpes visto; quando muda, toca o golpe aqui (`attackTime`). */
@@ -39,9 +37,6 @@ const SNAP = 6;
 export class RemotePlayers {
   private readonly list = new Map<number, Remote>();
 
-  /** `manifest` = peças do chibi neste jogo (sem ele, quem veio de chibi aparece como personagem pronto). */
-  constructor(private readonly manifest?: ModularManifest) {}
-
   /** Acompanha a lista da sessão (entrou, saiu, nova posição). */
   sync(others: ReadonlyMap<number, PlayerInfo>): void {
     for (const id of [...this.list.keys()]) if (!others.has(id)) this.list.delete(id);
@@ -49,10 +44,9 @@ export class RemotePlayers {
       if (!p.state) continue;
       const r = this.list.get(id);
       if (!r) {
-        const look = p.appearance?.look && this.manifest ? cleanLook(this.manifest, p.appearance.look) : null;
         this.list.set(id, {
           name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
-          moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine', look,
+          moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine',
           tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0, sit: p.state.sit ?? null,
         });
         continue;
@@ -92,7 +86,7 @@ export class RemotePlayers {
       const sitting = r.sit !== null && canSit(r.body);
       return {
         kind: sitting ? `${r.body as SitBody}-sit` as const : heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
-        walkTime: r.walkTime, label: r.name, look: r.look ?? undefined,
+        walkTime: r.walkTime, label: r.name,
         frame: sitting ? r.sit! : attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / ATTACK_SECONDS) * ATTACK_FRAMES)) : undefined,
       };
     });

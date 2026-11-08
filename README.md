@@ -5,7 +5,7 @@
 
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
 com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**. Escolha seu personagem (Heroína,
-Herói, Hood, Gino ou o chibi montável), use 5 ferramentas, cultive trigo e hortaliças, crie animais (ovelha, cavalo, vaca,
+Herói, Hood, Gino ou Mila), use 5 ferramentas, cultive trigo e hortaliças, crie animais (ovelha, cavalo, vaca,
 galinha), cozinhe, construa com blocos, explore a Cidade do Despertar (cidade fortificada de partida, igual em
 toda seed) e o Covil das Aranhas com chefe, e jogue com amigos na **Sala 1** (até 10). Ciclo dia/noite, minimapa,
 sombras de nuvens e partículas. Estado detalhado em [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
@@ -73,9 +73,7 @@ permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial
 
 ## Documentação
 
-- Personagem modular (humano chibi): [contrato de arte v02](assets-src/personagens/CONTRATO.md) e
-  [coleção](assets-src/personagens/humano-chibi/README.md). Já está no jogo (tela de entrada e `?personagem=`), só
-  caminhando; guarda-roupa ainda em revisão artística.
+- NPCs da cidade e caixa de conversa: [`docs/domains/npc.md`](docs/domains/npc.md) (tabela com o nome de cada personagem).
 
 - Índice e ordem de leitura: [`docs/README.md`](docs/README.md) · mapas do sistema: [`docs/MAPS.md`](docs/MAPS.md)
 - Instruções para agentes de IA: [`CLAUDE.md`](CLAUDE.md)

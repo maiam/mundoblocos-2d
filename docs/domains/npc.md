@@ -43,31 +43,56 @@
   portão, ~9 células a leste do rebanho, em grama, posição pela seed. O golpe o tira do mundo, como as ovelhas.
   Estado de execução (não salvo). Montaria: ideia em NEXT_STEPS.
 
-## Moradores (`game/villager.ts`)
-- **Personagem-base + roupa**: cada morador é uma folha de roupa branca (`villager-<cabelo>`: blond, brown, black,
-  silver, red) e uma roupa (`outfit-<id>`: denim, varsity, farmer, vest, hoodie; ofício: smith) desenhada por cima no mesmo quadro (`Actor.outfit`,
-  `render/character.ts`). `scripts/extract-villagers.py` processa todas as folhas com a mesma grade, recorte e escala
-  e apaga a cabeça careca das folhas de roupa (acima do queixo vale a cabeça do personagem).
-- **Expressões** (`EXPRESSIONS`, 16, ordem das folhas `assets-src/expressions/expressions-<front|left|right>-sheet.png`):
-  rosto em camada sobre o personagem-base (`expr-<id>`), franja de cada cabelo redesenhada por cima
-  (`villager-<cabelo>-bangs`) e efeitos fora do rosto (`expr-<id>-fx`: assustado, bravo, sonolento). Gerados por
-  `extract-villagers.py` (calibração `CALIB` medida uma vez por sobreposição; deslocamento por quadro da caminhada por
-  semelhança). Repouso sorteado pela seed (`villagerExpression`, só as tranquilas); ofício tem a sua (`ROLE_LOOK`);
-  ao falar (`speak`) mostra uma de conversa por 3 s. Limitação: nos perfis de cabelo escuro sobram manchinhas de pele
-  na franja (a folha careca vem de outro molde).
-- **Ofícios têm visual único** (regra do dono do produto, `ROLE_LOOK`): personagem-base e roupa do ofício não se
-  repetem em nenhum outro morador. **Ferreiro = cabelo preto (`black`) + roupa `smith`**. Os moradores comuns usam os
-  personagens livres (`TOWNSFOLK_BASES`: blond, brown, silver, red — um de cada) e uma roupa sorteada pela seed entre as
-  `CASUAL_OUTFITS` (`villagerOutfit`). **Roupa nova**: folha em `assets-src/villagers/outfit-<id>-sheet.png` → rodar o script → id em
-  `CASUAL_OUTFITS` (ou só em `OUTFITS`, se for de ofício) → import em `render/art/principal.ts`. Folha sem
-  transparência (fundo claro) é limpa pelo script (`remove_bg`).
-- Pontos de casa fixos (praça inicial ×2, meio do caminho até o castelo, pátio do castelo; ferreiro dentro da Ferraria); andam só por células de
-  rua/praça da cidade (`TownLayout.street`) acima do portão — nunca saem da muralha. Velocidade 1,4, leash 6.
-- O golpe não os atinge (`strikeTargets` ignora moradores). **Falam ao toque** (`Villager.speak`; clique sobre o
-  morador ou botão de ação com ele à frente): moradores revezam dicas; ofício tem fala própria e atende do outro lado
-  do balcão (alcance 3,2). Estado de execução (não salvo).
-- **Ferreiro** mora no interior da Ferraria (`InteriorLayout.keeper`, ADR 0014): anda só no chão do cômodo, nas
-  linhas do ofício; sem interior (mundo sem cidade), volta para a frente da porta.
+## NPCs da cidade (`game/npcs.ts`, `game/villager.ts`) — quem é quem
+Desde a v0.92.0 os moradores são **16 NPCs nomeados**, cada um com **folha própria** (`npc-<id>`, `assets-src/npcs/<id>.png`),
+falas próprias e retrato na caixa de conversa. **Nomes e falas moram só em `game/npcs.ts`** (fonte única); a tabela abaixo
+é a lista de nomes:
+
+| Nome | Id (arquivo) | Quem é | Aparência |
+|---|---|---|---|
+| **Black** | `npc-black` | Ferreiro — mora na Ferraria (o antigo "Ferreiro") | cabelo preto, avental de couro |
+| **Dante** | `npc-dante` | Arquivista da cidade | cabelo metade branco, metade preto; colete cinza |
+| **Silvano** | `npc-silvano` | Herbalista | cabelo verde-claro; túnica bege e bolsa |
+| **Morgan** | `npc-morgan` | Estudioso do castelo | cabelo roxo-escuro; casaco roxo |
+| **Aurélio** | `npc-aurelio` | Cortesão sorridente | cabelo branco, olhos fechados; casaco azul-marinho |
+| **Rubem** | `npc-rubem` | Aventureiro | cabelo vermelho; jaqueta marrom |
+| **Rosendo** | `npc-rosendo` | Jardineiro | cabelo rosa; colete verde |
+| **Teodoro** | `npc-teodoro` | Pescador alegre | cabelo castanho-claro, olhos fechados; camisa azul |
+| **Bento** | `npc-bento` | Padeiro | cabelo castanho-escuro; colete marrom |
+| **Solano** | `npc-solano` | Construtor | cabelo loiro-alaranjado; camisa laranja |
+| **Nilo** | `npc-nilo` | Tratador de cavalos | cabelo castanho bem escuro, olhos fechados; colete marrom |
+| **Marlon** | `npc-marlon` | Marinheiro | cabelo azul-petróleo; colete marinho e lenço |
+| **Lavínio** | `npc-lavinio` | Sonhador | cabelo lavanda; camisa lilás |
+| **Caio** | `npc-caio` | Caçador | cabelo preto; túnica verde |
+| **Noel** | `npc-noel` | Guarda da muralha | cabelo azul-marinho; colete vinho e gravata |
+| **Leandro** | `npc-leandro` | Viajante | cabelo loiro; camisa azul |
+
+Os nomes de Dante a Leandro foram escolhidos pelo assistente (o dono do produto mandou só as folhas): **troque à vontade**
+em `game/npcs.ts` (`name`) — nada mais depende do nome. As falas também são provisórias (2 por NPC, em roda, sobre as
+regras que existem hoje).
+
+- **Black** é o antigo ferreiro (renomeado; folha = composição do morador-base preto + expressão + roupa de ferreiro antigos,
+  `assets-src/npcs/black.png`). Mora dentro da Ferraria, atrás do balcão (`InteriorLayout.keeper`); atende de até 4,4 células.
+- Os outros 15 passeiam só por ruas e praças dentro da muralha (`TownLayout.street`), perto de um ponto de casa:
+  praça inicial ×2, meio do caminho até o castelo, pátio do castelo e os demais em células de rua sorteadas pela
+  posição a pelo menos 16 células umas das outras (`homesFor`). A cidade é igual em toda seed, então os lugares também.
+- **Conversa** (`Villager.conversation()` → `DialogueBox`): tocar no NPC (clique, ou botão de ação/Espaço com ele à frente, a
+  até 1,8 célula) abre a **caixa de conversa** (`game/dialogue.ts`, abaixo). Ele para e se vira para a personagem
+  até a conversa fechar (`release()`). Cada toque conta a próxima fala, em roda.
+- **NPC novo**: folha 4×4 em `assets-src/npcs/<id>.png` → `process-sprite.py` e `make-portraits.py` (OPERATIONS) → entrada em
+  `NPCS` (`game/npcs.ts`) → import em `render/art/principal.ts` (`npc-<id>` e `portrait-<id>`) e `SPECS` (`render/character.ts`).
+- Não há mais expressões, roupas em camada nem personagens-base (removidos na v0.92.0, junto com `extract-villagers.py`).
+
+## Caixa de conversa (`game/dialogue.ts`, v0.92.0)
+- Moldura da arte do dono do produto (`assets-src/dialogo-moldura.png`, recortada e sem o nome/rosto de exemplo →
+  `dialogo-moldura.webp`): **retrato** no círculo (cabeça recortada do quadro de frente do NPC, `make-portraits.py` →
+  `portrait-<id>`), **nome** na plaquinha e **texto** dentro da caixa. Aparece no centro da tela, embaixo e acima da grade
+  (a câmera sobe um pouco para o NPC ficar à vista); largura pela tela (≤ 620 px) e respeita a safe-area.
+- **Páginas**: o texto é dividido pelo que cabe (`paginate`, mede o DOM); a **setinha ▼** (animada) aparece quando há mais.
+  Avançar: tocar na caixa, clicar no mundo, botão de ação, Espaço ou Enter; na última página, fecha. Esc fecha.
+- Fecha sozinha se a personagem se afasta (> 3,2 células; 4,4 no ferreiro), leva dano ou abre um painel (menu, bolsa, habilidades).
+- A moldura e os retratos só baixam na primeira conversa (fora do orçamento de início). Só interface local: não passa pela
+  sala nem mexe em protocolo de mensagens de conversa.
 
 ## Monstros
 - Aranhas da dungeon: ver `domains/dungeon.md` (`game/monster.ts`).
