@@ -520,13 +520,13 @@ function waterTile(variant: number): HTMLCanvasElement {
 // ---------------------------------------------------------------- árvores e enfeites
 
 /** Quadros de cada tira de árvore adulta (`scripts/process-trees.py`): a variante de cada árvore é sorteada pela posição. */
-const TREE_FRAMES = { oak: 3, apple: 2, cherry: 3, birch: 3 } as const;
+const TREE_FRAMES = { oak: 3, apple: 3, appleBare: 3, cherry: 3, birch: 3 } as const;
 /** Largura da árvore em células de mundo (o quadro tem a árvore mais larga da espécie de ponta a ponta). */
 const TREE_CELLS = 3.4;
 
 /**
  * Árvores adultas e cacto (v0.88.0, sem crescimento): carvalho, macieira e cerejeira vêm em tiras de variantes (formas
- * diferentes; a macieira colhida usa a mesma arte da carregada), o cacto, da prancha 4 × 2. Sem a arte, ficam as pintadas.
+ * diferentes; a macieira colhida tem as mesmas formas, sem as maçãs), o cacto, da prancha 4 × 2. Sem a arte, ficam as pintadas.
  */
 function growthTreeSprites(
   art: TreeArt | null, objects: Map<BlockId, Sprite>,
@@ -535,6 +535,7 @@ function growthTreeSprites(
   if (!art) return variants;
   const oak = stripSprites(art.oak, TREE_FRAMES.oak, T * TREE_CELLS, 6);
   const apple = stripSprites(art.apple, TREE_FRAMES.apple, T * TREE_CELLS, 6);
+  const appleBare = stripSprites(art.appleBare, TREE_FRAMES.appleBare, T * TREE_CELLS, 6);
   const cherry = stripSprites(art.cherry, TREE_FRAMES.cherry, T * TREE_CELLS, 6);
   const birch = stripSprites(art.birch, TREE_FRAMES.birch, T * TREE_CELLS, 6);
   const cactus = gridSprites(art.cactus, 4, 2, 1.7, 3);
@@ -544,7 +545,7 @@ function growthTreeSprites(
   };
   set(Block.OAK_TREE, oak);
   set(Block.APPLE_TREE, apple);
-  set(Block.APPLE_TREE_BARE, apple); // mesma variante por célula (mesma ordem): só falta a arte "colhida"
+  set(Block.APPLE_TREE_BARE, appleBare); // mesma forma e mesma ordem da carregada: a mesma variante por célula, só sem as maçãs
   set(Block.SAKURA_TREE, cherry);
   set(Block.BIRCH_TREE, birch);
   set(Block.CACTUS, cactus);

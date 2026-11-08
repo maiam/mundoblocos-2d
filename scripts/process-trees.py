@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Monta a tira de variantes de uma espécie de árvore (adulta; sem estágios de crescimento — v0.88.0).
 
-Uso: python3 scripts/process-trees.py <especie> imagem1.png imagem2.png ... [--cut ALFA] [--width 420]
+Uso: python3 scripts/process-trees.py <especie> imagem1.png imagem2.png ... [--cut ALFA] [--width 420] [--scale S --frame LxA]
 Cada imagem é uma árvore adulta inteira em PNG com alfa (fundo transparente). O script:
 - guarda a imagem original em assets-src/arvores/<especie>/NN.png (fonte; nada é perdido);
 - limpa o alfa (--cut zera brilhos/halos semitransparentes de fundo abaixo desse alfa; abertura remove pontinhos soltos
   que sobraram do recorte) e recorta o miolo;
 - reduz todas pela MESMA escala (a árvore mais larga fica com --width px), mantendo as proporções entre as variantes;
 - cola lado a lado, alinhadas pelo pé e centradas, em quadros iguais → src/assets/tree-<especie>.webp.
+Duas tiras que precisam casar quadro a quadro (macieira carregada × colhida) usam a mesma escala e o mesmo quadro: rode a primeira,
+leia "escala" e "quadro" no relatório e passe `--scale` e `--frame` à segunda.
 O jogo lê a quantidade de quadros e a proporção de textures.ts (TREE_FRAMES); a variante de cada árvore é sorteada pela
 posição (hash), então o mesmo mapa sempre sai igual. Depois: nada de optimize-assets (já sai em WebP).
 """
@@ -42,6 +44,8 @@ def main() -> int:
     ap.add_argument('files', nargs='+')
     ap.add_argument('--cut', type=int, default=0)
     ap.add_argument('--width', type=int, default=420)
+    ap.add_argument('--scale', type=float, default=0, help='escala fixa (em vez de --width)')
+    ap.add_argument('--frame', default='', help='quadro fixo LxA (em vez do calculado)')
     args = ap.parse_args()
     src_dir = ROOT / 'assets-src' / 'arvores' / args.species
     src_dir.mkdir(parents=True, exist_ok=True)
@@ -49,10 +53,13 @@ def main() -> int:
     for i, f in enumerate(args.files, 1):
         shutil.copyfile(f, src_dir / f'{i:02d}.png')
         trees.append(clean(Image.open(f), args.cut))
-    s = args.width / max(t.width for t in trees)
+    s = args.scale or args.width / max(t.width for t in trees)
     small = [t.resize((max(1, round(t.width * s)), max(1, round(t.height * s))), Image.LANCZOS) for t in trees]
     fw = max(t.width for t in small) + 4
     fh = max(t.height for t in small) + 4
+    if args.frame:
+        fw, fh = (int(v) for v in args.frame.lower().split('x'))
+        assert all(t.width <= fw and t.height <= fh - 2 for t in small), 'quadro fixo pequeno demais'
     sheet = Image.new('RGBA', (fw * len(small), fh), (0, 0, 0, 0))
     for i, t in enumerate(small):
         sheet.alpha_composite(t, (i * fw + (fw - t.width) // 2, fh - 2 - t.height))

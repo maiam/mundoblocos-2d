@@ -16,7 +16,7 @@
    posta por `planCave`: direção e distância pela seed, ≥ `CAVE_MIN_CASTLE_DIST` (160 células = 10 chunks) do centro
    do castelo, fora da cidade/estrada/campo do rebanho e em terra firme. Andar para cima diante da boca → chegada logo
    para dentro do vão; pisar no anel externo do vão → volta para diante da boca.
-3. **Mundo da Cidade 1 só de florestas**: `pickBiome` devolve só Campos (carvalhos e macieiras) e Bosque de Sakura;
+3. **Mundo da Cidade 1 só de florestas**: `pickBiome` devolve só Campos (carvalhos e macieiras) e Bosque de Sakura (desde a v0.90.0 as árvores se misturam nos dois, ADR 0024);
    rios, mares e areia de praia seguem do gerador. As Dunas e o cacto continuam no código e na arte, sem uso, para um
    mundo árido futuro.
 4. **Andares por portais (visão)**: cada cidade é um **mundo** (um `WorldProfile`) com bioma próprio — o Despertar é

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.90.0 — 2026-11-08
+- **Macieira nova**: 3 formas, com maçãs e **colhida** (florida, sem maçãs) com arte própria, na mesma forma e escala —
+  a colhida de cada árvore é a mesma forma da carregada. Troca as antigas (2 formas; a colhida usava a arte da carregada).
+- **Florestas misturadas** (dono do produto): o mapa da Cidade 1 deixa de ser "só carvalho nos Campos e só cerejeira no Bosque"
+  e mistura carvalho, bétula, cerejeira e macieira nos dois biomas (a principal de cada um domina; as demais ~1/6 cada) e
+  nas árvores da cidade (cerejeira, bétula e carvalho; sem macieira, porque a cidade é protegida e não dá para colher).
+  ⚠ Muda o mapa de todas as seeds só na **espécie** de algumas árvores (nenhuma muda de lugar); macieira e bétula dos
+  Campos continuam onde estavam.
+
 ## 0.89.0 — 2026-11-08
 - **Bétula**: árvore nova (3 formas), misturada aos carvalhos e às macieiras dos Campos (~1 em 6 árvores; as macieiras
   continuam onde estavam — ⚠ troca alguns carvalhos de lugar por bétulas em toda seed). Derrubada dá 2–3 **Toras de

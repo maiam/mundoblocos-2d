@@ -10,16 +10,16 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.89.0 | `package.json` |
+| Versão do jogo | 0.90.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 11 | `src/game/save.ts` |
-| Testes | 242 em 45 arquivos (Vitest), todos passando | `npm test` |
-| Orçamento de início (ADR 0013) | ~2,7 MB de 3 MB (v0.89.0: árvores novas e a bétula) | build do artifact |
+| Testes | 243 em 45 arquivos (Vitest), todos passando | `npm test` |
+| Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (v0.90.0: macieira nova com a colhida) — **no limite** | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
 ## Mundos
 - **Orvalis (principal)**: gerado por seed (`?seed=`), chunks 16×16 nos dois eixos, vista 3/4. Mundo da Cidade 1: só
-  **florestas** (Campos com carvalhos e macieiras, Bosque de Sakura), rios, mares, praias, montanhas, pedregulhos
+  **florestas** (Campos e Bosque de Sakura, com carvalho, bétula, cerejeira e macieira misturados), rios, mares, praias, montanhas, pedregulhos
   (ADR 0019). Abre numa **tela de entrada** (Novo jogo → montar personagem; Continuar se houver salvamento).
 - **Santuário Celestial da Deusa da Vida** (`?mundo=santuario`): 10 chunks de nuvem, só a Deusa, só os 18 blocos
   celestiais; sem ferramentas, cultivo ou animais. Subdomínio real ainda não hospedado (`domains/worlds.md`).
@@ -50,7 +50,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   mundos e bolsas antigos viram vazio). Porta entre dois batentes (bloco de madeira ou de pedra), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
   (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos; buraco sem bloco por um dia inteiro ganha o chão de um vizinho.
 - **Cultivo e árvores**: trigo, batata, tomate e cenoura (só em Terra Arada); árvores só adultas e de formas variadas
-  (carvalho, macieira, bétula, cerejeira; sem mudas nem crescimento desde a v0.88.0) e maçãs colhíveis (a macieira colhida volta a dar).
+  (carvalho, macieira, bétula, cerejeira; sem mudas nem crescimento desde a v0.88.0) e maçãs colhíveis (a macieira colhida, com arte própria, volta a dar).
 - **Chunk do muro**: todo chunk com pedaço da muralha da cidade é protegido por inteiro (v0.88.0; `World.isProtected`).
 - **Animais**: ovelha, cavalo, vaca e galinha no campo ao sul do portão; comem, namoram (corações), têm filhotes que
   crescem e **seguem quem os alimentou**; vaca dá leite e galinha ovo ao comer. Sem montaria; golpe de espada os faz
@@ -119,7 +119,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 242 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 243 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e

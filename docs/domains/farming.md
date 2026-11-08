@@ -111,16 +111,16 @@
 - Colher = quebrar segurando (2 s com a mão/item, 1 s com ferramenta — mesma regra de qualquer quebra).
 
 ## Árvores (adultas e variadas; sem crescimento desde a v0.88.0; `world/blocks.ts`, `world/world.ts`, `world/items.ts`)
-- **Só adultas**: carvalho (3 formas), macieira (2), bétula (3, v0.89.0) e cerejeira (3); a forma de cada árvore é sorteada pela posição (hash) em
+- **Só adultas**: carvalho (3 formas), macieira (3, carregada e colhida), bétula (3, v0.89.0) e cerejeira (3); a forma de cada árvore é sorteada pela posição (hash) em
   `render/textures.ts` (`growthTreeSprites`, tiras de `scripts/process-trees.py`). Não há mudas, plantio nem estágios: os
   ids antigos (`OAK_SAPLING/YOUNG/GROWING`, `APPLE_SAPLING/YOUNG`) seguem reservados e viram a árvore adulta da espécie ao
   carregar (`GROWTH_STAGE_ADULT`, `adultOfStage`, em `restoreChunk`/`setLevel`); os itens `oak_sapling`/`apple_sapling`
   somem de bolsas, grades e baús (`RETIRED_ITEMS`, `isRemovedStack`).
 - **Macieira**: tocar numa macieira com maçãs (`World.canPick/pick`) solta 2–3 Maçãs e ela vira a **colhida**
   (`APPLE_TREE_BARE`); as maçãs voltam com `dt / FRUIT_REGROW_SECONDS` (150 s) — a única espera que sobrou (`TREE_NEXT`).
-  A arte da colhida é a mesma da carregada (falta enviar a "macieira colhida"). Derrubar a macieira carregada também solta as maçãs.
+  A colhida tem arte própria (v0.90.0: 3 formas, na mesma ordem e escala da carregada, então a forma de cada célula não muda ao colher). Derrubar a macieira carregada também solta as maçãs.
 - **O que cai**: carvalho e macieira → 2–3 Toras de Carvalho; **Cerejeira → 2–3 Toras de Cerejeira**; **Bétula → 2–3 Toras de Bétula**; macieira carregada → também maçãs.
-- Gerador: carvalhos dos Campos com 1/6 de macieiras e ~1/6 de bétulas (`Biome.altTrees`, sorteadas na ordem com sal próprio: acrescentar uma no fim não move as anteriores); as cerejeiras do bioma e da cidade são as mesmas, só com arte nova.
+- Gerador: carvalhos dos Campos com macieiras, bétulas e cerejeiras (`Biome.altTrees`: 1/6, 1/5 e 1/4 sorteados na ordem; no Bosque de Sakura, macieira, bétula e carvalho; cidade: cerejeira, bétula e carvalho; sorteadas na ordem com sal próprio: acrescentar uma no fim não move as anteriores); as cerejeiras do bioma e da cidade são as mesmas, só com arte nova.
 
 ## Inventário e coleta (`game/`)
 - `Inventory`: quantidades de itens; começa com 5 sementes e 2 trigos. Não persistido.
