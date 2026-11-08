@@ -15,7 +15,15 @@ import type { Cell, TerrainSource } from './terrain';
  * então corredores atravessam chunks sem interrupção e recarregar um chunk não muda o labirinto.
  */
 
-export type MonsterKind = 'spider-small' | 'spider-big' | 'spider-boss';
+/** Lobos do mapa (v0.91.0): três cores, cada bando de uma cor só. */
+export type WolfKind = 'wolf-brown' | 'wolf-gray' | 'wolf-white';
+export const WOLF_KINDS: readonly WolfKind[] = ['wolf-brown', 'wolf-gray', 'wolf-white'];
+export type MonsterKind = 'spider-small' | 'spider-big' | 'spider-boss' | WolfKind;
+
+/** É um lobo (monstro do mapa aberto, não da dungeon)? */
+export function isWolf(kind: MonsterKind): kind is WolfKind {
+  return (WOLF_KINDS as readonly string[]).includes(kind);
+}
 export type Side = 'north' | 'south' | 'west' | 'east';
 
 export interface Rect {

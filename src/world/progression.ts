@@ -36,6 +36,10 @@ export const MONSTER_STATS: Record<MonsterKind, { hp: number; attack: number; de
   'spider-small': { hp: 20, attack: 8, defense: 0 },
   'spider-big': { hp: 45, attack: 14, defense: 2 },
   'spider-boss': { hp: 180, attack: 36, defense: 6 },
+  // Lobos (v0.91.0): mais fortes quanto mais claros; bando de 1 a 3.
+  'wolf-brown': { hp: 35, attack: 11, defense: 1 },
+  'wolf-gray': { hp: 45, attack: 13, defense: 2 },
+  'wolf-white': { hp: 55, attack: 15, defense: 3 },
 };
 
 /** Variação do dano (±10%), chance e multiplicador de crítico. */

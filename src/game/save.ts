@@ -1,4 +1,4 @@
-import type { MonsterKind } from '../world/dungeon';
+import { isWolf, type MonsterKind } from '../world/dungeon';
 import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
 import { Block, isRemovedStack } from '../world/blocks';
@@ -101,8 +101,8 @@ export function captureSave(s: GameState): SaveData {
     })),
     dungeon: s.world.dungeon
       ? {
-        monsters: s.entities.monsters.map((m) => ({ kind: m.kind, x: m.x, y: m.y, homeX: m.homeX, homeY: m.homeY, hp: m.hp })),
-        respawns: s.entities.respawns.map((r) => ({ kind: r.kind, x: r.x, y: r.y, timer: r.timer })),
+        monsters: s.entities.monsters.filter((m) => !isWolf(m.kind)).map((m) => ({ kind: m.kind, x: m.x, y: m.y, homeX: m.homeX, homeY: m.homeY, hp: m.hp })),
+        respawns: s.entities.respawns.filter((r) => !isWolf(r.kind)).map((r) => ({ kind: r.kind, x: r.x, y: r.y, timer: r.timer })),
       }
       : null,
   };
@@ -121,14 +121,14 @@ export function migrate(raw: unknown): SaveData | null {
   // v4 → v5 (Fase P, vida e dano com números): vida da heroína de meios corações (máx. 10) para pontos, e vida dos
   // monstros de golpes para pontos — na mesma proporção.
   if (d.v === 4) {
-    const OLD_MONSTER_HP: Record<MonsterKind, number> = { 'spider-small': 2, 'spider-big': 4, 'spider-boss': 14 };
+    const OLD_MONSTER_HP: Partial<Record<MonsterKind, number>> = { 'spider-small': 2, 'spider-big': 4, 'spider-boss': 14 };
     d = {
       ...d, v: 5,
       player: { ...d.player, hp: Math.round((d.player.hp / 10) * BASE_STATS.maxHp) },
       dungeon: d.dungeon && {
         ...d.dungeon,
         monsters: d.dungeon.monsters.map((m) => ({
-          ...m, hp: Math.max(1, Math.round((m.hp / OLD_MONSTER_HP[m.kind]) * MONSTER_STATS[m.kind].hp)),
+          ...m, hp: Math.max(1, Math.round((m.hp / (OLD_MONSTER_HP[m.kind] ?? 1)) * MONSTER_STATS[m.kind].hp)),
         })),
       },
     };
@@ -209,12 +209,14 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   const dg = s.world.dungeon;
   if (dg && d.dungeon) {
     const bounds = (k: MonsterKind) => (k === 'spider-boss' ? dg.bossRoom : dg.interior);
-    e.monsters.splice(0, e.monsters.length, ...d.dungeon.monsters.map((m) => {
+    // Os lobos não vão para o salvamento (voltam todos, pela seed, ao carregar): só as aranhas do covil são trocadas.
+    const wolves = e.monsters.filter((m) => isWolf(m.kind));
+    e.monsters.splice(0, e.monsters.length, ...wolves, ...d.dungeon.monsters.map((m) => {
       const mon = new Monster(m.kind, m.x, m.y, bounds(m.kind), rand, m.homeX, m.homeY);
       mon.hp = Math.min(mon.maxHp, Math.max(1, m.hp));
       return mon;
     }));
-    e.respawns.splice(0, e.respawns.length, ...d.dungeon.respawns.map((r) => ({ ...r, bounds: bounds(r.kind) })));
+    e.respawns.splice(0, e.respawns.length, ...e.respawns.filter((r) => isWolf(r.kind)), ...d.dungeon.respawns.map((r) => ({ ...r, bounds: bounds(r.kind) })));
   }
   e.settleAll(s.world);
   // Salvamento de antes da correção da tenda: heroína presa dentro de um objeto → vai para a célula livre mais perto.

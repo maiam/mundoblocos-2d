@@ -1,5 +1,5 @@
 import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
-import type { MonsterKind } from './dungeon';
+import { isWolf, type MonsterKind } from './dungeon';
 
 /**
  * Itens contáveis (diferentes dos blocos de construção, que são infinitos).
@@ -86,6 +86,7 @@ export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART];
  * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha.
  */
 export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
+  if (isWolf(kind)) return []; // sem espólio por enquanto (falta o ícone do item; ver NEXT_STEPS)
   if (kind === 'spider-small') return rand() < 0.6 ? [{ item: Item.SILK, count: 1 }] : [];
   if (kind === 'spider-big') {
     const out: Drop[] = [{ item: Item.SILK, count: 1 + (rand() < 0.5 ? 1 : 0) }];

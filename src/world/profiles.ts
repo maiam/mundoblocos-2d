@@ -26,6 +26,8 @@ export interface WorldProfile {
   farming: boolean;
   /** Rebanho de ovelhas no início. */
   sheep: boolean;
+  /** Bandos de lobos soltos pelo mapa (só mundos com cidade; v0.91.0). */
+  wolves: boolean;
   /** Dungeon das aranhas perto do spawn (área protegida com monstros). */
   dungeon: boolean;
   /** Cidade do Despertar: início e renascer sem tenda (área protegida, igual em toda seed). */
@@ -54,6 +56,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     tools: true,
     farming: true,
     sheep: true,
+    wolves: true,
     dungeon: true,
     town: true,
     collectBlocks: true,
@@ -72,6 +75,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     tools: false,
     farming: false,
     sheep: false,
+    wolves: false,
     dungeon: false,
     town: false,
     collectBlocks: false,

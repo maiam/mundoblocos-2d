@@ -15,13 +15,23 @@ interface MonsterDef {
   respawn: number;
   /** Duração da animação de morte (s; acompanha os quadros da folha de morte). */
   deathSeconds: number;
+  /** Monstro do mapa aberto (lobo): persegue em linha reta só a até `sight` células, sem mapa de corredores da dungeon. */
+  open?: boolean;
 }
+
+/** Distância (células) até a qual o lobo ataca a personagem; mais longe, ele a ignora. */
+export const WOLF_SIGHT = 3;
 
 /** Comportamento por tipo de monstro (movimento, visão, ritmo); a ficha de combate fica em `MONSTER_STATS`. */
 export const MONSTERS: Record<MonsterKind, MonsterDef> = {
   'spider-small': { spec: { speed: 2.1, halfW: 0.3, halfD: 0.18, stepHeight: 0 }, sight: 6, leash: 5, biteEvery: 1.0, respawn: 40, deathSeconds: 0.7 },
   'spider-big': { spec: { speed: 1.6, halfW: 0.42, halfD: 0.24, stepHeight: 0 }, sight: 7, leash: 5, biteEvery: 1.2, respawn: 60, deathSeconds: 0.9 },
   'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, sight: 9, leash: 4, biteEvery: 1.6, respawn: 300, deathSeconds: 1.6 },
+  // Lobos (v0.91.0): só atacam a personagem a até 3 células (regra do dono do produto: `sight` = 3, em linha reta);
+  // mais lentos que ela (4,2) para dar para fugir; o bando passeia junto, perto da toca.
+  'wolf-brown': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
+  'wolf-gray': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
+  'wolf-white': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
 };
 
 /** Tempo piscando depois de levar um golpe (s). */
@@ -116,7 +126,7 @@ export class Monster extends Walker {
     const cx = Math.floor(this.x);
     const cy = Math.floor(this.y);
     const steps = flow ? flow(cx, cy) : -1;
-    const chasing = targetInside && (flow ? steps >= 0 && steps <= def.sight * 1.6 : dist < def.sight);
+    const chasing = targetInside && (def.open ? dist <= def.sight : flow ? steps >= 0 && steps <= def.sight * 1.6 : dist < def.sight);
     if (chasing) {
       const reach = this.reach;
       if (dist <= reach) {
@@ -126,7 +136,7 @@ export class Monster extends Walker {
       }
       let dx = tx / dist;
       let dy = ty / dist;
-      if (flow && steps > 1) {
+      if (flow && !def.open && steps > 1) {
         // Próximo passo pelo corredor: vizinho com menor distância até a personagem.
         let best = steps;
         let nx = cx;
