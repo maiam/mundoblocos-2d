@@ -21,7 +21,7 @@ export const ROOM_START_TIME = 0.31;
 /** De quanto em quanto tempo a sala manda a hora a todos (s): corrige a diferença dos relógios dos aparelhos. */
 export const TIME_SYNC_SECONDS = 30;
 /** Versão do arquivo da sala no servidor (`RoomSnapshot`): 2 = baús; 3 = animais. */
-export const ROOM_SNAPSHOT_VERSION = 3;
+export const ROOM_SNAPSHOT_VERSION = 4;
 /** Quanto tempo um item fica no chão da sala (s), como no jogo sozinho. */
 export const DROP_LIFETIME = 300;
 /** Distância máxima (células) entre o jogador e o item para pegar. */
@@ -51,6 +51,8 @@ export interface RoomSnapshot {
   chests: Record<string, ChestSlotsMsg>;
   /** Animais da sala (v3): filhotes e crias ficam. Monstros não: renascem pela seed. */
   animals?: AnimalSave[];
+  /** Buracos e há quantos segundos estão sem bloco (v4): `[x, y, segundos]`; ao fazer um dia inteiro ganham um chão vizinho. */
+  holes?: Array<[number, number, number]>;
 }
 
 /** Chave da bolsa: o nome sem diferença de maiúsculas (Ana = ana). */
@@ -377,15 +379,17 @@ export class Room {
       chunks: this.chunks(), bags: Object.fromEntries(this.bags),
       chests: Object.fromEntries(this.world.chests),
       animals: this.entities.saveAnimals(),
+      holes: this.world.holeAges(),
     };
   }
 
   /** Recarrega o que o servidor gravou (só se for desta sala e desta seed; senão, a sala começa do zero). */
   restore(s: RoomSnapshot): boolean {
     // v1 (sem baús) ainda vale: o mundo e as bolsas voltam; os baús ficam vazios.
-    if (!s || ![1, 2, ROOM_SNAPSHOT_VERSION].includes(s.v) || s.room !== this.id || s.seed !== this.seed) return false;
+    if (!s || ![1, 2, 3, ROOM_SNAPSHOT_VERSION].includes(s.v) || s.room !== this.id || s.seed !== this.seed) return false;
     for (const c of s.chunks) this.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
     this.world.settleWater();
+    this.world.loadHoleAges(s.holes);
     if (Number.isFinite(s.time)) this.time = ((s.time % 1) + 1) % 1;
     for (const [k, bag] of Object.entries(s.bags ?? {})) this.bags.set(k, bag);
     for (const [k, slots] of Object.entries(s.chests ?? {})) {

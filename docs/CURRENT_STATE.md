@@ -10,10 +10,10 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.85.0 | `package.json` |
+| Versão do jogo | 0.86.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
-| `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
-| Testes | 230 em 44 arquivos (Vitest), todos passando | `npm test` |
+| `SAVE_VERSION` (salvamento local) | 11 | `src/game/save.ts` |
+| Testes | 237 em 45 arquivos (Vitest), todos passando | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,0 MB de 3 MB (desde a v0.74.0) | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
@@ -48,7 +48,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Blocos**: 12 materiais de construção obtidos pelo jogador (pilha de até 3 cubos; 5 pedras: Bruta, Tijolo, Chão,
   Lisa e Polida — as outras 3 foram aposentadas e só existem em mundos salvos). **Não há paredes** (saíram em 08/11; em
   mundos e bolsas antigos viram vazio). Porta entre dois batentes (bloco de madeira ou de pedra), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
-  (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos.
+  (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos; buraco sem bloco por um dia inteiro ganha o chão de um vizinho.
 - **Cultivo e árvores**: trigo, batata, tomate e cenoura (só em Terra Arada); árvores que crescem (carvalho,
   macieira) e maçãs colhíveis.
 - **Animais**: ovelha, cavalo, vaca e galinha no campo ao sul do portão; comem, namoram (corações), têm filhotes que
@@ -115,7 +115,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 230 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 237 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e

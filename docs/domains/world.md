@@ -46,6 +46,11 @@
   agendado (`scheduleFlow`, lado de origem em ordem fixa oeste/leste/norte/sul); `tick` → `tickWater` avança
   (`FLOW_SECONDS` = 0,6 s) e, ao encher, agenda os buracos vizinhos (cadeia). Terra firme nunca é inundada; buraco
   tapado antes desiste. Estado em execução (`waterFlows`); `settleWater` reagenda após carregar (save.ts).
+- **Chão que se refaz** (v0.86.0): cada buraco tem uma idade (`holeAge`, ligada em `setLevel`/`restoreChunk`); `tick` →
+  `tickHoles` envelhece e, ao completar `DAY_LENGTH_S`, `healedGround` escolhe o chão de um vizinho (laterais, depois
+  diagonais; só cubos não líquidos; `hash2(seed, x, y)` desempata) e avisa pelo `onGrow`. Tapar o buraco (ou ele encher)
+  tira a contagem; sem vizinho aproveitável espera. Na sala o aparelho aplica o aviso em `applyGrowth` (só em buraco).
+  Idades persistem: `holeAges`/`loadHoleAges` (save.ts v11, snapshot da sala v4).
 - **Baú**: conteúdo em `World.chests` ("x,y" → 27 espaços), criado sob demanda em `chestAt`, apagado ao quebrar (quem
   quebra lê antes para soltar os itens). Tenda: derrubar a atual zera `World.tent`.
 - **Tenda 2×2** (`tentCells`, `tentAnchor`, `isFootprintFree`, `footprint`/`footprintAnchors` para quem coloca): canto `TENT` + 3 `TENT_PART`; `breakTargetId` de uma

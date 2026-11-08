@@ -212,6 +212,12 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
    do que fazer com as três pedras aposentadas ainda presentes em mundos salvos (coluna do atlas antigo) — e os blocos
    celestiais (outro mundo). Saves não mudam (ids iguais).
 
+5b. ✅ **Chão que se refaz** (v0.86.0, pedido do dono do produto): buraco sem bloco por um dia inteiro ganha o chão de um
+   vizinho (ver `domains/world.md`). Servidor: sincronizar o pacote (retrato v4 e `World`).
+5c. ⏳ **Transições por par e água** (pedido de 2026-11-08): topo da Água e pares caminho|água, caminho|grama,
+   terra|grama, areia|água, terra|água, grama|água, areia|grama (enviados); **falta enviar areia|terra**. Plano: derivar
+   máscara e espuma de cada pintura e compor por vizinho (formas giram, texturas não); regra por par no catálogo.
+
 ### Fase 6 — Mundo de progressão (visão do dono do produto, `PROJECT_CONTEXT`)
 Cidades e dungeons que acompanham a evolução dos personagens: Cidade 1 para novatos; cidades de nível mais alto mais
 longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de dependência):
