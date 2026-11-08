@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.85.0 — 2026-11-08
+- **O novo padrão de materiais é o do jogo**: os blocos e o chão com as texturas planas novas (areia, terra, grama, as cinco
+  pedras, caminho, terra arada, tora e tábuas) passam a ser o que todo mundo vê; antes só aparecia com uma chave de teste.
+  Cubos vizinhos e pilhas viram massa contínua, sem riscos, e o chão não tem mais a linha fraca em cada quadrado.
+- **Transições entre chãos**: a grama avança com borda irregular sobre a terra, o caminho e a areia (a máscara enviada pela
+  arte, girada para cada direção, mais pontas nos cantos). Só no chão plano; água, buracos, pedra e o piso da cidade ficam
+  como estavam.
+- Pedras aposentadas ainda presentes em mundos antigos continuam com a arte antiga.
+
 ## 0.84.0 — 2026-11-08
 - **As paredes saíram do jogo** (decisão do dono do produto): sem as 16 paredes, sem as receitas e sem a arte delas (a
   tira de paredes que carregava em segundo plano e os ícones). Mundos e salas já salvos que tenham paredes ficam com o

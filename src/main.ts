@@ -182,14 +182,14 @@ const query = new URLSearchParams(window.location.search);
 const param = query.get('seed');
 // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
 const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal';
-// Padrão de Materiais V2 em validação (ADR 0023): `?materiais=1` abre só a cena de comparação (desenvolvimento);
-// `?blocos=v2` usa os blocos-piloto V2 no mundo. Sem as chaves o atlas V2 nem baixa.
+// Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para
+// comparar) e `?materiais=1` abre a cena de comparação (desenvolvimento).
 const materialsScene = import.meta.env.DEV && query.has('materiais');
 const blocksV2 = blocksV2FromSearch(window.location.search);
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
 void loadArtPack(profile.id)
   .then(() => loadBlockArt())
-  .then(() => (materialsScene || blocksV2 ? loadMaterialsV2(blocksV2) : false))
+  .then(() => loadMaterialsV2(blocksV2))
   .then(() => {
     // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
     // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import manifest from '../assets/materials-v2.json';
 import { CUBE_FRONT, TILE } from '../config';
 import { Block } from '../world/blocks';
+import { TRANSITION_PIECES } from './transitions';
 import { TEX_RES } from './textures';
 import { blocksV2FromSearch, type CubeView, cubeEdges, edgesKey, V2_BLOCKS } from './materialsV2';
 
@@ -31,10 +32,16 @@ describe('Padrão de Materiais V2 (ADR 0023)', () => {
     }
   });
 
-  it('a chave só liga com ?blocos=v2', () => {
-    expect(blocksV2FromSearch('?seed=1')).toBe(false);
+  it('o V2 é o padrão; só ?blocos=legado volta ao atlas antigo', () => {
+    expect(blocksV2FromSearch('?seed=1')).toBe(true);
     expect(blocksV2FromSearch('?blocos=v2&seed=1')).toBe(true);
-    expect(blocksV2FromSearch('?blocos=v1')).toBe(false);
+    expect(blocksV2FromSearch('?blocos=legado')).toBe(false);
+  });
+
+  it('atlas de máscaras: uma forma, oito peças na ordem de TRANSITION_PIECES', () => {
+    expect(manifest.masks!.order).toEqual([...TRANSITION_PIECES]);
+    expect(manifest.masks!.cell).toBe(TILE * TEX_RES);
+    expect(manifest.masks!.shapes).toEqual(['avanco']);
   });
 });
 

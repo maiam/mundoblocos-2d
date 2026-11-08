@@ -25,7 +25,7 @@
 | 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
 | 0021 | Bichos da sala: o servidor roda as mesmas `Entities` (jogadores como avatares); o aparelho na sala só espelha (`CreatureMirror`); golpe/comida/mordida decididos pela sala; moradores locais | [0021](adr/0021-bichos-da-sala.md) |
 | 0022 | Escala visual: geometria e contratos de arte preservados, sem unidade nova; **cena de escala** `?escala=1` (só dev) compara sprites no renderizador real; catálogo, validação e normalização de alturas ficam para depois | [0022](adr/0022-escala-visual-e-cena-de-escala.md) |
-| 0023 | Padrão de Materiais V2: a arte entrega texturas planas 128×128 por material; o motor monta topo/frente (frente **18**, decidida na v0.81.1; sem frente própria repete o topo; franja ≤ 32 px); validação atrás de `?blocos=v2` e `?materiais=1`; mistura só no chão plano; máscaras = formas giráveis | [0023](adr/0023-padrao-materiais-v2.md) |
+| 0023 | Padrão de Materiais V2: a arte entrega texturas planas 128×128 por material; o motor monta topo/frente (frente **18**, decidida na v0.81.1; sem frente própria repete o topo; franja ≤ 32 px); **padrão do jogo desde 08/11** (`?blocos=legado` volta ao antigo); transições entre chãos por máscara de alfa que gira (só a Grama avança hoje); `?materiais=1` compara; mistura só no chão plano; máscaras = formas giráveis | [0023](adr/0023-padrao-materiais-v2.md) |
 
 ## Produto e regras de jogo
 | Decisão | Onde |

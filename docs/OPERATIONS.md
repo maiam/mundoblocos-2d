@@ -254,7 +254,7 @@ grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `r
 
 **Materiais V2** (ADR 0023, em validação): PNGs 128×128 em `assets-src/materiais/<material>/` (contrato na pasta) →
 `python3 scripts/build-materials.py --preview` → `src/assets/materials-v2.{webp,json}` (já sai em WebP; sem
-`optimize-assets.py`). Ver com `?blocos=v2` (mundo) e `?materiais=1` (cena de comparação, só no `npm run dev`). `?escala=1&blocos=v2` põe a arte V2 na cena de escala
+`optimize-assets.py`). O V2 é o padrão do jogo; `?blocos=legado` volta ao atlas antigo e `?materiais=1` abre a cena de comparação (só no `npm run dev`). A cena `?escala=1` já mostra a arte V2
 (ADR 0022, renderizador real). Arte provisória:
 `scripts/make-provisional-materials.py` (tira do atlas antigo; cria `PROVISORIO.txt`). Arte oficial:
 `python3 scripts/import-material.py <material> --top arq.png [--front arq.png] [--overlay arq.png [--fit-fringe]]`

@@ -6,8 +6,9 @@ import { Block, type BlockId } from '../world/blocks';
  * e frente de `CUBE_FRONT` (18, decidido em 2026-11-07) — a arte não traz o cubo pronto. Sem frente própria, a frente
  * repete o topo (o pipeline resolve).
  *
- * Fase de validação: areia, terra, grama, as cinco pedras, Caminho de Terra, Terra Arada, Tora e Tábuas de Carvalho, e só com `?blocos=v2` (jogo) ou na cena `?materiais=1`. Sem a chave nada
- * muda (atlas legado). Aparência é do render; regras de bloco continuam em `world/blocks.ts`.
+ * É o padrão do jogo (2026-11-08): areia, terra, grama, as cinco pedras, Caminho de Terra, Terra Arada, Tora e Tábuas de
+ * Carvalho — os 15 materiais de construção, menos as três pedras aposentadas. `?blocos=legado` volta ao atlas antigo (só
+ * para comparar). Aparência é do render; regras de bloco continuam em `world/blocks.ts`.
  */
 export interface MaterialsV2Manifest {
   cell: number;
@@ -15,6 +16,8 @@ export interface MaterialsV2Manifest {
   rows: Record<'top' | 'front' | 'overlay', [number, number]>;
   materials: string[];
   overlay: string[];
+  /** Atlas de máscaras de transição (`transitions-v2.webp`): uma linha por forma, uma célula por peça (`TRANSITION_PIECES`). */
+  masks?: { cell: number; order: string[]; shapes: string[] };
 }
 
 /** Sombra da frente (luz vem de cima): a frente é um pouco mais escura que o topo. */
@@ -42,20 +45,30 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   [Block.TILLED]: { top: 'arada', front: 'terra', overlay: 'arada' },
 };
 
-/** `?blocos=v2` liga o caminho V2 no jogo (desenvolvimento; padrão desligado). */
+/**
+ * O V2 é o padrão do jogo (dono do produto, 2026-11-08). `?blocos=legado` volta ao atlas antigo — só para comparar em
+ * desenvolvimento. As pedras aposentadas (mundos antigos) seguem com a arte antiga de qualquer forma.
+ */
 export function blocksV2FromSearch(search: string): boolean {
-  return new URLSearchParams(search).get('blocos') === 'v2';
+  return new URLSearchParams(search).get('blocos') !== 'legado';
 }
 
 let enabled = false;
 let atlas: HTMLImageElement | null = null;
 let manifest: MaterialsV2Manifest | null = null;
+let maskAtlas: HTMLImageElement | null = null;
 
-/** Liga o caminho V2 com o atlas já carregado (`loadMaterialsV2` em blockArt). */
-export function setMaterialsV2(img: HTMLImageElement, m: MaterialsV2Manifest, useInWorld: boolean): void {
+/** Liga o caminho V2 com o atlas (e o das máscaras) já carregado(s) (`loadMaterialsV2` em blockArt). */
+export function setMaterialsV2(img: HTMLImageElement, m: MaterialsV2Manifest, useInWorld: boolean, masks: HTMLImageElement | null = null): void {
   atlas = img;
   manifest = m;
   enabled = useInWorld;
+  maskAtlas = masks;
+}
+
+/** Atlas das máscaras de transição, ou null (sem máscaras no pacote, ou V2 desligado). */
+export function transitionMasks(): { img: HTMLImageElement; cell: number; order: string[]; shapes: string[] } | null {
+  return enabled && maskAtlas && manifest?.masks ? { img: maskAtlas, ...manifest.masks } : null;
 }
 
 /** O mundo deve usar V2 para os blocos-piloto? */

@@ -32,5 +32,21 @@
     "arada",
     "caminho",
     "grama"
-  ]
+  ],
+  "masks": {
+    "cell": 64,
+    "order": [
+      "N",
+      "E",
+      "S",
+      "W",
+      "NE",
+      "SE",
+      "SW",
+      "NW"
+    ],
+    "shapes": [
+      "avanco"
+    ]
+  }
 }

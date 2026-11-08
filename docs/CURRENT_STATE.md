@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.84.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.85.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,10 +10,10 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.84.0 | `package.json` |
+| Versão do jogo | 0.85.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
-| Testes | 225 em 43 arquivos (Vitest), todos passando | `npm test` |
+| Testes | 230 em 44 arquivos (Vitest), todos passando | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,0 MB de 3 MB (desde a v0.74.0) | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
@@ -90,9 +90,10 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Sem pulo nem queda com dano; água parada (sem correnteza nem nado).
 - Santuário: chão de nuvem mostra leve repetição diagonal.
 
-## Padrão de Materiais V2 (em validação, ADR 0023)
-- **Desligado para o jogador.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato
-  na pasta; pacote original em `docs/materiais-v2/`) e o motor monta o cubo.
+## Padrão de Materiais V2 (o padrão do jogo desde 08/11, ADR 0023)
+- **É o que o jogador vê.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato na
+  pasta; pacote original em `docs/materiais-v2/`) e o motor monta o cubo. `?blocos=legado` (só para comparar) volta ao
+  atlas antigo, que também segue valendo para as três pedras aposentadas ainda presentes em mundos salvos.
 - Frente dos cubos **18** (decidido: o pacote propunha 16); a frente é uma textura seamless nas 4 bordas usada inteira
   (uma fatia de 18 px por nível da pilha); **sem frente própria, a frente repete o topo**; franja até 32 px, só no
   nível mais alto.
@@ -106,12 +107,15 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   e Caminho de Terra, Terra Arada e grama — estes três com **frente sempre de terra** e a franja do próprio topo
   (reduzida aos 32 px; só no nível mais alto da pilha). Pipeline: `scripts/import-material.py` →
   `scripts/build-materials.py` → `materials-v2.webp` (~110 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
-- Para ver: `?blocos=v2` troca esses blocos no mundo (sem as variações da grama legada); `?materiais=1` (só em
-  desenvolvimento) põe legado e V2 lado a lado; `?escala=1&blocos=v2`, a arte V2 na cena de escala.
-- Falta: transições entre chãos (máscaras da arte) e decidir quando o V2 vira o padrão (`NEXT_STEPS`, Fase V).
+- **Transições entre chãos** (v0.85.0): a Grama avança sobre Terra, Caminho e Areia pela borda, por uma máscara de alfa
+  (`assets-src/materiais/_mascaras/avanco.png`, `transitions-v2.webp`: 4 bordas, a forma girada, + 4 cantos). Só chão plano
+  e mesma altura; a textura nunca gira. Regras em `render/transitions.ts` (`TRANSITION_RULES`), desenhadas no `chunkRenderer`.
+- Para ver: `?materiais=1` (só em desenvolvimento) põe legado e V2 lado a lado; `?escala=1`, a cena de escala.
+- Falta: máscaras/regras para outros pares de chãos (ex.: Areia sobre Terra), se a arte quiser; atlas antigo sai quando
+  não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 225 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 230 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e

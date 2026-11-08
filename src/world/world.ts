@@ -330,6 +330,10 @@ export class World {
     if (lx === CHUNK_SIZE - 1) this.touch(cx + 1, cy);
     if (ly === 0) this.touch(cx, cy - 1);
     if (ly === CHUNK_SIZE - 1) this.touch(cx, cy + 1);
+    // As transições de chão (render) olham também os vizinhos diagonais: o canto do chunk avisa o chunk da diagonal.
+    const dx = lx === 0 ? -1 : lx === CHUNK_SIZE - 1 ? 1 : 0;
+    const dy = ly === 0 ? -1 : ly === CHUNK_SIZE - 1 ? 1 : 0;
+    if (dx !== 0 && dy !== 0) this.touch(cx + dx, cy + dy);
   }
 
   private touch(cx: number, cy: number): void {

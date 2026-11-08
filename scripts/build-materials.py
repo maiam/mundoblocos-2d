@@ -9,6 +9,11 @@ Lê assets-src/materiais/<material>/{top,front,front_overlay}.png (128×128), va
                              ao início no fim — a parede fica contínua na vertical (ADR 0023)
       linha overlay  64×36  ← front_overlay.png, janela 128×72 (só o nível mais alto da pilha usa)
   src/assets/materials-v2.json   — manifesto {cell, rows: {nome: [y, h]}, materials: [nomes], overlay: [nomes]}
+Máscaras de transição (assets-src/materiais/_mascaras/<forma>.png, de scripts/import-mask.py): FORMA só de alfa, sólida à
+esquerda e irregular à direita (o material que avança vem do oeste). O script gira a forma para as outras três direções
+(rotação da FORMA é permitida; a textura que aparece por ela nunca gira) e monta os 4 cantos (só vizinho diagonal) como a
+interseção de duas bordas recuadas. Saída: src/assets/transitions-v2.webp, uma linha por forma, 8 células de 64 px na
+ordem N, E, S, W, NE, SE, SW, NW (manifesto: "masks").
 Relatório: emenda do topo e da frente (horizontal e vertical) relativa ao miolo (1,0 = invisível; ⚠ acima de 1,6);
 --preview grava um 3×3 de cada topo e de cada frente em assets-src/materiais/_preview/ (fora do git).
 Redução: LANCZOS (suavizada; contrato § 7). Já sai em WebP sem perdas (não precisa de optimize-assets.py).
@@ -25,6 +30,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / 'assets-src' / 'materiais'
 OUT_IMG = ROOT / 'src' / 'assets' / 'materials-v2.webp'
 OUT_JSON = ROOT / 'src' / 'assets' / 'materials-v2.json'
+MASKS_DIR = SRC / '_mascaras'
+OUT_MASKS = ROOT / 'src' / 'assets' / 'transitions-v2.webp'
+MASK_ORDER = ['N', 'E', 'S', 'W', 'NE', 'SE', 'SW', 'NW']
+CORNER_PULL = 0.42  # quanto cada borda recua para o canto ficar só uma ponta (fração da célula)
 SIZE = 128
 CELL = 64
 # Frente de 18 (decisão de 2026-11-07, ADR 0023): janela 128×72 → 64×36 no atlas → 32×18 no mundo.
@@ -62,6 +71,55 @@ def load(path: Path, errors: list[str]) -> Image.Image | None:
         errors.append(f'{path.relative_to(ROOT)}: {img.size[0]}×{img.size[1]} (precisa ser {SIZE}×{SIZE})')
         return None
     return img
+
+
+def shift(a: np.ndarray, dx: int, dy: int) -> np.ndarray:
+    """Desloca o alfa (dx, dy) px sem repetir: o que sai do quadro some e o resto fica transparente."""
+    out = np.zeros_like(a)
+    h, w = a.shape
+    ys, yd = (slice(0, h - dy), slice(dy, h)) if dy >= 0 else (slice(-dy, h), slice(0, h + dy))
+    xs, xd = (slice(0, w - dx), slice(dx, w)) if dx >= 0 else (slice(-dx, w), slice(0, w + dx))
+    out[yd, xd] = a[ys, xs]
+    return out
+
+
+def build_masks() -> list[str]:
+    """Atlas das máscaras: por forma, as 4 bordas (a forma girada) e os 4 cantos (interseção de duas bordas recuadas)."""
+    shapes = sorted(p.stem for p in MASKS_DIR.glob('*.png')) if MASKS_DIR.exists() else []
+    if not shapes:
+        return []
+    cell = CELL
+    atlas = Image.new('RGBA', (cell * len(MASK_ORDER), cell * len(shapes)))
+    for row, name in enumerate(shapes):
+        src = Image.open(MASKS_DIR / f'{name}.png').convert('RGBA')
+        w = src.resize((cell, cell), Image.LANCZOS).getchannel('A')
+        edge = {  # o material que avança vem do lado indicado (a parte sólida fica nesse lado)
+            'W': w,
+            'N': w.rotate(-90),
+            'E': w.rotate(180),
+            'S': w.rotate(90),
+        }
+        arr = {k: np.asarray(v).astype(np.float32) for k, v in edge.items()}
+        pull = int(round(cell * CORNER_PULL))
+        pulled = {  # cada borda recua em direção ao próprio lado, para o canto virar só uma ponta
+            'W': shift(arr['W'], -pull, 0), 'E': shift(arr['E'], pull, 0),
+            'N': shift(arr['N'], 0, -pull), 'S': shift(arr['S'], 0, pull),
+        }
+        corners = {'NE': ('N', 'E'), 'SE': ('S', 'E'), 'SW': ('S', 'W'), 'NW': ('N', 'W')}
+        cells = {k: arr[k] for k in 'NESW'}
+        for k, (a, b) in corners.items():
+            cells[k] = pulled[a] * pulled[b] / 255.0
+        for i, key in enumerate(MASK_ORDER):
+            alpha = Image.fromarray(np.clip(cells[key], 0, 255).astype(np.uint8), 'L')
+            rgba = Image.merge('RGBA', (alpha, alpha, alpha, alpha))  # só o alfa importa; cor branca
+            rgba.putalpha(alpha)
+            white = Image.new('RGBA', (cell, cell), (255, 255, 255, 0))
+            white.putalpha(alpha)
+            atlas.paste(white, (i * cell, row * cell))
+        print(f'máscara {name}: 4 bordas + 4 cantos')
+    atlas.save(OUT_MASKS, 'WEBP', lossless=True, method=6)
+    print(f'{OUT_MASKS.relative_to(ROOT)} {atlas.size[0]}×{atlas.size[1]} ({OUT_MASKS.stat().st_size // 1024} kB)')
+    return shapes
 
 
 def main() -> int:
@@ -141,6 +199,9 @@ def main() -> int:
     atlas.save(OUT_IMG, 'WEBP', lossless=True, method=6)
     manifest = {'cell': CELL, 'rows': rows, 'materials': [m[0] for m in mats],
                 'overlay': [m[0] for m in mats if m[3] is not None]}
+    shapes = build_masks()
+    if shapes:
+        manifest['masks'] = {'cell': CELL, 'order': MASK_ORDER, 'shapes': shapes}
     OUT_JSON.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     print(f'{OUT_IMG.relative_to(ROOT)} {atlas.size[0]}×{atlas.size[1]} ({OUT_IMG.stat().st_size // 1024} kB) + manifesto')
     return 0

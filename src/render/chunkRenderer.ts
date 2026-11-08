@@ -5,6 +5,7 @@ import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { rgba } from './color';
 import { type BlockTextures, TEX_RES } from './textures';
+import { transitionPieces } from './transitions';
 
 const CHUNK_PX = CHUNK_SIZE * TILE;
 /** Altura da barranca (face frontal do chão) vista sobre a água. */
@@ -174,6 +175,16 @@ export class ChunkRenderer {
           if (!liquid(world.getGround(x - 1, y))) ctx.fillRect(px, py, 2, TILE);
           if (!liquid(world.getGround(x + 1, y))) ctx.fillRect(px + TILE - 2, py, 2, TILE);
           if (!liquid(world.getGround(x, y + 1))) ctx.fillRect(px, py + TILE - 2, TILE, 2);
+        }
+
+        // Transições entre chãos (V2, ADR 0023): o material vizinho que avança entra pela máscara; só chão plano.
+        const invaders = this.tex.transitionOnto.get(g);
+        if (invaders) {
+          for (const inv of invaders) {
+            const layers = this.tex.transitionOver.get(inv);
+            if (!layers) continue;
+            for (const i of transitionPieces((dx, dy) => world.getGround(x + dx, y + dy) === inv)) ctx.drawImage(layers[i], px, py, TILE, TILE);
+          }
         }
 
         // Grade sutil de blocos — fora do chão V2, que é textura contínua (sem riscos por célula, ADR 0023).

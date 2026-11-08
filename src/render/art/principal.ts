@@ -3,6 +3,7 @@ import type { ModularManifest } from '../modular';
 import type { MaterialsV2Manifest } from '../materialsV2';
 import blockAtlas from '../../assets/blocks-atlas.webp';
 import materialsV2Atlas from '../../assets/materials-v2.webp';
+import transitionsV2 from '../../assets/transitions-v2.webp';
 import materialsV2Manifest from '../../assets/materials-v2.json';
 import dungeonGround from '../../assets/dungeon-ground.webp';
 import dungeonMountains from '../../assets/dungeon-mountains.webp';
@@ -291,7 +292,7 @@ const pack: ArtPack = {
   bangs: { blond: bangsBlond, brown: bangsBrown, black: bangsBlack, silver: bangsSilver, red: bangsRed },
   outfits: { denim: outfitDenim, varsity: outfitVarsity, farmer: outfitFarmer, vest: outfitVest, hoodie: outfitHoodie, smith: outfitSmith },
   blockAtlas,
-  materialsV2: { atlas: materialsV2Atlas, manifest: materialsV2Manifest as MaterialsV2Manifest },
+  materialsV2: { atlas: materialsV2Atlas, manifest: materialsV2Manifest as MaterialsV2Manifest, masks: transitionsV2 },
   materialIcons: {
     [Block.OAK_DOOR]: oakDoorIcon,
     [Block.DIRT]: dirtIcon,

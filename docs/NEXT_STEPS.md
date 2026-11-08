@@ -195,7 +195,7 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
 2. ✅ **Arte oficial** (v0.81.0–0.81.1): terra, grama, franja da grama (reduzida aos 32 px do padrão), areia e Pedra
    Bruta, estas três com frente própria desde a v0.81.2 (a grama usa a frente da terra); sem frente, a frente repete o topo. Conferir na cena a densidade de terra e grama (vieram
    em 1254 px; no jogo cada célula mostra o quadro inteiro, detalhes pequenos somem).
-3. **Transições horizontais** só no chão plano e na mesma altura: 8 vizinhos, diagonais só com os 2 cardeais, 47 casos
+3. ✅ **Transições horizontais** (v0.85.0; só a Grama avança, sobre Terra, Caminho e Areia — mais pares dependem de regra do dono do produto e de máscara). Plano original: só no chão plano e na mesma altura: 8 vizinhos, diagonais só com os 2 cardeais, 47 casos
    a partir de ~13 formas em `assets-src/materiais/_mascaras/` giradas pelo script; prioridade por material do topo
    (dado do catálogo, desempate estável); composição no cache do chunk do `ChunkRenderer`, invalidando 3×3 (inclusive
    chunk vizinho). Testes do pacote (04, § 8). Substitui o item "Transições suaves entre chãos" da Fase 5.
@@ -208,9 +208,9 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
 4e. ✅ **Madeira de carvalho no V2** (v0.84.0): Tora (topo e frente) e Tábuas (só o topo, em teste: se a frente repetida não agradar, pedir a frente). Todos os 15 materiais de construção agora têm V2; falta o passo 5 (ligar `?blocos=v2` como padrão e aposentar o atlas antigo).
 4f. ✅ **Paredes removidas** (v0.84.0): saíram do jogo (ids 210–225 viram vazio em dados antigos).
 4c. ✅ **Caminho de Terra e Terra Arada** (v0.82.1–0.82.2): topos oficiais, frente sempre de terra e franja própria; o chão V2 deixou de levar a grade sutil por célula.
-5. **Virar o padrão**: os 15 materiais de construção já têm V2 (as três pedras aposentadas ficam de fora); falta decidir
-   quando `?blocos=v2` vira o padrão e o atlas legado (ADR 0006) sai — e, nessa hora, o que fazer com as pedras
-   aposentadas ainda presentes em mundos salvos (coluna do atlas antigo). Depois, os blocos celestiais. Saves não mudam (ids iguais).
+5. ✅ **V2 é o padrão** (v0.85.0, `?blocos=legado` volta ao antigo). Falta: aposentar o atlas legado (ADR 0006) — depende
+   do que fazer com as três pedras aposentadas ainda presentes em mundos salvos (coluna do atlas antigo) — e os blocos
+   celestiais (outro mundo). Saves não mudam (ids iguais).
 
 ### Fase 6 — Mundo de progressão (visão do dono do produto, `PROJECT_CONTEXT`)
 Cidades e dungeons que acompanham a evolução dos personagens: Cidade 1 para novatos; cidades de nível mais alto mais
