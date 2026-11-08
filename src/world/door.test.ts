@@ -58,6 +58,32 @@ describe('Porta de Carvalho', () => {
     expect(w.canPlace(ax, ay, Block.OAK_DOOR)).toBe(false);
   });
 
+  it('qualquer madeira (tora ou tábuas de carvalho, cerejeira ou bétula) ou pedra serve de batente, em qualquer combinação', () => {
+    const jambs = [
+      Block.OAK_LOG, Block.OAK_PLANKS, Block.CHERRY_LOG, Block.CHERRY_PLANKS, Block.BIRCH_LOG, Block.BIRCH_PLANKS,
+      Block.STONE, Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_SMOOTH, Block.STONE_POLISHED,
+    ];
+    const w = new World(7);
+    const [x, y] = freeCell(w);
+    const clear = (cx: number) => { while (w.topBlock(cx, y)) w.breakBlock(cx, y); }; // só o bloco: sem objeto, quebrar abriria buraco no chão
+    for (const left of jambs) {
+      for (const right of jambs) {
+        clear(x - 1); clear(x + 1);
+        w.placeBlock(x - 1, y, left);
+        w.placeBlock(x + 1, y, right);
+        expect(w.canPlace(x, y, Block.OAK_DOOR), `${BLOCKS[left].name} + ${BLOCKS[right].name}`).toBe(true);
+      }
+    }
+    // Terra, areia, grama e os demais chãos não são batente.
+    clear(x - 1); clear(x + 1);
+    w.placeBlock(x - 1, y, Block.CHERRY_LOG);
+    for (const bad of [Block.DIRT, Block.SAND, Block.GRASS, Block.PATH, Block.TILLED]) {
+      clear(x + 1);
+      w.placeBlock(x + 1, y, bad);
+      expect(w.canPlace(x, y, Block.OAK_DOOR), BLOCKS[bad].name).toBe(false);
+    }
+  });
+
   it('vai só no chão; nada empilha sobre ela nem ela sobre cubo/buraco', () => {
     const w = new World(7);
     const [x, y] = framedCell(w);

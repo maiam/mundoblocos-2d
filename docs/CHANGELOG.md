@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.90.1 — 2026-11-08
+- **Porta com qualquer madeira ou pedra** (dono do produto): a regra já valia por `organic: 'wood'` / `stone`, então toras e
+  tábuas de carvalho, cerejeira e bétula e todas as pedras servem de batente, em qualquer combinação; agora há teste que
+  cobre todos os pares (e confirma que terra, areia, grama, caminho e terra arada não servem). Nenhum comportamento mudou.
+
 ## 0.90.0 — 2026-11-08
 - **Macieira nova**: 3 formas, com maçãs e **colhida** (florida, sem maçãs) com arte própria, na mesma forma e escala —
   a colhida de cada árvore é a mesma forma da carregada. Troca as antigas (2 formas; a colhida usava a arte da carregada).
