@@ -7,7 +7,8 @@
   juntos perto da toca, espalhados ao redor da cidade (~26 bandos por mapa; nenhum na cidade, na estrada do portão nem no
   campo do rebanho). **Só atacam a personagem a até 3 células** (em linha reta); mais longe ela é ignorada. São mais lentos
   que ela (3,0 × 4,2), então dá para fugir. Vida, ataque e defesa: marrom 35/11/1, cinza 45/13/2, branco 55/15/3. A
-  espada e o machado os acertam como acertam as aranhas; renascem em 2 min. Sem espólio por enquanto.
+  espada e o machado os acertam como acertam as aranhas; renascem em 2 min. **Espólios**: sempre 1–2 **Pelagens de Lobo** e,
+  na metade das vezes, 1 **Presa de Lobo** (ícones novos; ainda sem uso em receitas).
 - Monstros longe de todo jogador (> 48 células) ficam parados (não são simulados); o salvamento só guarda as aranhas do
   covil (os lobos voltam todos, pela seed, ao carregar).
 

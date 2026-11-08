@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isWolf, WOLF_KINDS } from '../world/dungeon';
 import { MONSTER_STATS } from '../world/progression';
-import { monsterDrops } from '../world/items';
+import { Item, ITEMS, monsterDrops } from '../world/items';
 import { mulberry32 } from '../world/random';
 import { grow } from '../world/town';
 import { WORLD_PROFILES } from '../world/profiles';
@@ -66,11 +66,21 @@ describe('Lobos: bandos pelo mapa', () => {
     }
   });
 
+  it('lobos soltam pelagem (sempre, 1 ou 2) e, às vezes, uma presa; os itens são espólios', () => {
+    expect(ITEMS.wolf_fang.name).toBe('Presa de Lobo');
+    expect(ITEMS.wolf_pelt.name).toBe('Pelagem de Lobo');
+    expect(ITEMS.wolf_fang.loot && ITEMS.wolf_pelt.loot).toBe(true);
+    for (const k of WOLF_KINDS) {
+      expect(monsterDrops(k, () => 0)).toEqual([{ item: Item.WOLF_PELT, count: 2 }, { item: Item.WOLF_FANG, count: 1 }]);
+      expect(monsterDrops(k, () => 0.99)).toEqual([{ item: Item.WOLF_PELT, count: 1 }]);
+    }
+  });
+
   it('mundo sem cidade (Santuário) não tem lobos', () => {
     expect(wolfPacks(new World(1, WORLD_PROFILES.santuario))).toEqual([]);
   });
 
-  it('o jogo põe todos no mapa (e nenhum na dungeon); lobo é monstro com ficha, comportamento e sem espólio', () => {
+  it('o jogo põe todos no mapa (e nenhum na dungeon); lobo é monstro com ficha e comportamento', () => {
     const w = new World(42);
     const e = new Entities(new Player(0, 0), mulberry32(1));
     e.spawnWildlife(w);
@@ -78,7 +88,6 @@ describe('Lobos: bandos pelo mapa', () => {
     for (const k of WOLF_KINDS) {
       expect(MONSTER_STATS[k].hp).toBeGreaterThan(0);
       expect(MONSTERS[k].sight).toBe(WOLF_SIGHT);
-      expect(monsterDrops(k)).toEqual([]);
     }
     expect(WOLF_SIGHT).toBe(3);
     expect(WOLF_ROAM).toBeGreaterThan(WOLF_SIGHT);

@@ -154,6 +154,7 @@ for t in pickaxe shovel; do $P assets-src/mila/mila-$t-attack-sheet.png src/asse
 $P assets-src/mila/mila-sit-sheet.png src/assets/mila-sit.png --alpha --largest --frame-h 144
 # lobos (assets-src/lobos): folha 4×4 já na ordem canônica (frente, esquerda, direita, costas)
 for c in marrom cinza branco; do $P assets-src/lobos/lobo-$c-sheet.png src/assets/wolf-$c.png --alpha --largest --frame-h 144; done
+python3 scripts/slice-icons.py assets-src/lobos/wolf-loot-icons-sheet.png 2 1 icon wolf-fang,wolf-pelt   # presa e pelagem do lobo
 # porta de carvalho (4×2, 0–3 abrindo, 4–7 fechando); geometria em textures.ts (DOOR_*)
 $P assets-src/oak-door-sheet.png src/assets/oak-door.png --alpha --largest --cols 4 --rows 2 --frame-h 120
 # picareta: quadros transbordam a grade (picareta erguida sobe, pés descem) → --respace

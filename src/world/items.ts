@@ -12,6 +12,9 @@ export const Item = {
   SILK: 'silk',
   FANG: 'fang',
   QUEEN_HEART: 'queen_heart',
+  /** Espólios dos lobos (v0.91.0; sem uso ainda — futuras receitas). */
+  WOLF_FANG: 'wolf_fang',
+  WOLF_PELT: 'wolf_pelt',
   /** Fruta da macieira (comer vem com a comida, Fase P). As mudas saíram do jogo na v0.88.0 (`RETIRED_ITEMS`). */
   APPLE: 'apple',
   /** Hortaliças: o próprio legume é o que se planta (e o que se colhe). */
@@ -54,6 +57,8 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   silk: { id: Item.SILK, name: 'Seda de Aranha', loot: true },
   fang: { id: Item.FANG, name: 'Presa de Aranha', loot: true },
   queen_heart: { id: Item.QUEEN_HEART, name: 'Coração da Rainha', loot: true },
+  wolf_fang: { id: Item.WOLF_FANG, name: 'Presa de Lobo', loot: true },
+  wolf_pelt: { id: Item.WOLF_PELT, name: 'Pelagem de Lobo', loot: true },
   apple: { id: Item.APPLE, name: 'Maçã' },
   potato: { id: Item.POTATO, name: 'Batata', plants: Block.POTATO_0 },
   tomato: { id: Item.TOMATO, name: 'Tomate', plants: Block.TOMATO_0 },
@@ -79,14 +84,19 @@ export const VEGETABLES: ItemId[] = [Item.POTATO, Item.TOMATO, Item.CARROT];
 export const GRASS_VEGETABLE_CHANCE = 0.12;
 
 /** Espólios, na ordem exibida na HUD. */
-export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART];
+export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART, Item.WOLF_FANG, Item.WOLF_PELT];
 
 /**
  * O que cada monstro deixa ao morrer. Pequena: 1 seda (60%). Grande: 1–2 sedas + presa (35%).
- * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha.
+ * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha. Lobos: 1–2 pelagens (sempre) + 1 presa (50%).
  */
 export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
-  if (isWolf(kind)) return []; // sem espólio por enquanto (falta o ícone do item; ver NEXT_STEPS)
+  if (isWolf(kind)) {
+    // Lobo: sempre a pelagem (às vezes 2) e, na metade das vezes, uma presa.
+    const out: Drop[] = [{ item: Item.WOLF_PELT, count: 1 + (rand() < 0.35 ? 1 : 0) }];
+    if (rand() < 0.5) out.push({ item: Item.WOLF_FANG, count: 1 });
+    return out;
+  }
   if (kind === 'spider-small') return rand() < 0.6 ? [{ item: Item.SILK, count: 1 }] : [];
   if (kind === 'spider-big') {
     const out: Drop[] = [{ item: Item.SILK, count: 1 + (rand() < 0.5 ? 1 : 0) }];

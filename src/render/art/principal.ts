@@ -151,6 +151,8 @@ import spiderBigDeath from '../../assets/spider-big-death.webp';
 import spiderBossDeath from '../../assets/spider-boss-death.webp';
 import silkIcon from '../../assets/icon-silk.webp';
 import fangIcon from '../../assets/icon-fang.webp';
+import wolfFangIcon from '../../assets/icon-wolf-fang.webp';
+import wolfPeltIcon from '../../assets/icon-wolf-pelt.webp';
 import queenHeartIcon from '../../assets/icon-queen-heart.webp';
 import bagIcon from '../../assets/icon-bag.webp';
 import characterIcon from '../../assets/icon-ui-character.webp';
@@ -374,7 +376,7 @@ const pack: ArtPack = {
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
-  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
+  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, wolf_fang: wolfFangIcon, wolf_pelt: wolfPeltIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
   modular: { manifest: chibiManifest as unknown as ModularManifest, sheets: chibiSheets },
 };
