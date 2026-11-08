@@ -19,8 +19,8 @@ const PANELS: Array<{ title: string; mode: 'legacy' | 'v2'; front: number }> = [
   { title: 'Atlas legado', mode: 'legacy', front: CUBE_FRONT },
   { title: 'Materiais V2', mode: 'v2', front: CUBE_FRONT },
 ];
-/** Chão do painel: linhas de cima em grama, depois terra, areia e pedra (encontros retos: sem transição ainda — Etapa 3). */
-const GROUND: BlockId[] = [Block.GRASS, Block.GRASS, Block.GRASS, Block.DIRT, Block.SAND, Block.SAND, Block.STONE];
+/** Chão do painel: linhas de cima em grama, depois terra arada, caminho, areia e pedra (encontros retos: sem transição ainda — Etapa 3). */
+const GROUND: BlockId[] = [Block.GRASS, Block.GRASS, Block.GRASS, Block.TILLED, Block.PATH, Block.SAND, Block.STONE];
 /** Cubos: [coluna, linha, blocos de baixo para cima]. */
 const CUBES: Array<[number, number, BlockId[]]> = [
   [1, 1, [Block.SAND]], [2, 1, [Block.SAND]], [3, 1, [Block.DIRT]], [4, 1, [Block.DIRT]], // platô de 4×2, materiais misturados

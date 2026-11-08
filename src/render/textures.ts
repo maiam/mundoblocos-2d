@@ -50,6 +50,8 @@ export interface Sprite {
 export interface BlockTextures {
   /** Topo de cada material, usado como chão (TILE×TILE em resolução TEX_RES). */
   groundTop: Map<BlockId, HTMLCanvasElement>;
+  /** Chãos do Padrão V2 (ADR 0023): textura contínua, sem a grade sutil de blocos por cima (`chunkRenderer`). */
+  continuousGround: Set<BlockId>;
   /** Materiais com várias artes de chão (ex.: Terra com Grama): o chão escolhe uma por célula (hash da seed). */
   groundVariants: Map<BlockId, HTMLCanvasElement[]>;
   water: HTMLCanvasElement[];
@@ -304,7 +306,7 @@ export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) =
  * `?blocos=v2` (ADR 0023): troca chão e cubo dos blocos-piloto pela montagem V2, com a frente na altura atual do
  * mundo (F). As variações legadas da grama saem (o V2 ainda não tem variações).
  */
-function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
+function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>, continuousGround: Set<BlockId>): void {
   for (const id of MATERIALS) {
     const faces = v2Faces(id, T, F, TEX_RES);
     if (!faces) continue;
@@ -312,6 +314,7 @@ function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVari
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     v2GroundTop(id, ctx, c.width, c.height);
     groundTop.set(id, c);
+    continuousGround.add(id);
     objects.set(id, composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20'));
     groundVariants.delete(id);
     variants.delete(id);
@@ -680,7 +683,8 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
       variants.set(id, [objects.get(id)!, ...cols.map((c) => materialCube(c, OUTLINE[id] ?? '#3a2a20'))]);
     }
   }
-  if (materialsV2InWorld()) applyMaterialsV2(groundTop, groundVariants, objects, variants);
+  const continuousGround = new Set<BlockId>();
+  if (materialsV2InWorld()) applyMaterialsV2(groundTop, groundVariants, objects, variants, continuousGround);
   // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
   const tentImg = getTentSprite();
   if (tentImg) {
@@ -762,7 +766,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces, wallSprites };
+  return { groundTop, continuousGround, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces, wallSprites };
 }
 
 /**

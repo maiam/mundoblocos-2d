@@ -176,10 +176,12 @@ export class ChunkRenderer {
           if (!liquid(world.getGround(x, y + 1))) ctx.fillRect(px, py + TILE - 2, TILE, 2);
         }
 
-        // Grade sutil de blocos.
-        ctx.fillStyle = 'rgba(40, 30, 80, 0.07)';
-        ctx.fillRect(px, py, TILE, 1);
-        ctx.fillRect(px, py, 1, TILE);
+        // Grade sutil de blocos — fora do chão V2, que é textura contínua (sem riscos por célula, ADR 0023).
+        if (!this.tex.continuousGround.has(g)) {
+          ctx.fillStyle = 'rgba(40, 30, 80, 0.07)';
+          ctx.fillRect(px, py, TILE, 1);
+          ctx.fillRect(px, py, 1, TILE);
+        }
 
         // Sombra projetada pelos objetos (luz de cima-esquerda → sombra ao sul/leste).
         const obj = blockDef(chunk.getObject(lx, ly));
