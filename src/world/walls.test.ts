@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, BLOCKS, HOTBAR_BLOCKS, isWall, WALL_MATERIALS, WALLS } from './blocks';
+import { Block, BLOCKS, HOTBAR_BLOCKS, isWall, RETIRED_STONES, WALL_MATERIALS, WALLS } from './blocks';
 import { blockDrops, blockStack, RECIPES, toolCanBreak } from './items';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
@@ -27,8 +27,12 @@ describe('Paredes', () => {
     expect(isWall(Block.STONE)).toBe(false);
   });
 
-  it('receita: 3 blocos do material → 1 parede do mesmo material', () => {
+  it('receita: 3 blocos do material → 1 parede do mesmo material (menos as pedras aposentadas, sem receita)', () => {
     WALL_MATERIALS.forEach((material, i) => {
+      if (RETIRED_STONES.includes(material)) {
+        expect(RECIPES.some((x) => x.id === `wall-${i}`)).toBe(false);
+        return;
+      }
       const r = RECIPES.find((x) => x.id === `wall-${i}`)!;
       expect(r.profession).toBe('builder');
       expect(r.inputs).toEqual([{ item: blockStack(material), count: 3 }]);

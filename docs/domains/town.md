@@ -21,7 +21,7 @@ A Cidade do Despertar · V1.0" (pedido do dono do produto, 2026-11-03).
 
 ## Geração (ordem da spec)
 1. **Território** fechado (retângulo fixo).
-2. **Muralha**: 2 de espessura × 2 cubos de altura, **Tijolo de Pedra** com ~22% de **Tijolo de Pedra Rachado**.
+2. **Muralha**: 2 de espessura × 2 cubos de altura, só **Tijolo de Pedra** (o Rachado, que aparecia em ~22%, foi aposentado em 08/11).
    **Guaritas** (4×6) nos 4 cantos e ladeando o **único portão** (4 de largura, no meio do lado sul).
 3. **Castelo** (26 × 17) no fundo (norte), oposto ao portão, com **pátio** (cercas vivas, flores,
    lampiões, bancos).

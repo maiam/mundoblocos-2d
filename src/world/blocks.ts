@@ -399,7 +399,15 @@ export function blockDef(id: number): BlockDef {
 
 export const ALL_BLOCK_IDS: readonly BlockId[] = defs.map((d) => d.id);
 
-/** Materiais da prancha de blocos: os únicos blocos de construção (ordem da hotbar). */
+/**
+ * Pedras aposentadas (dono do produto, 2026-11-08): o jogo fica só com Pedra Bruta, Tijolo de Pedra, Chão de Pedra,
+ * Pedra Lisa e Pedra Polida. Estas três não têm mais receita nem uso na cidade, mas **os ids continuam reservados**:
+ * mundos e salas já salvos podem tê-las (continuam aparecendo, quebrando e valendo de batente) e a coluna delas no
+ * atlas antigo é o índice em `MATERIALS`. Não ganham arte V2.
+ */
+export const RETIRED_STONES: readonly BlockId[] = [Block.STONE_COBBLE, Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED];
+
+/** Materiais da prancha de blocos: os únicos blocos de construção (ordem da hotbar; coluna do atlas antigo = índice). */
 export const MATERIALS: BlockId[] = [
   Block.DIRT,
   Block.GRASS,

@@ -83,7 +83,7 @@
 | Cidade v0.36: 164 × 132 (ampliada na proporção das construções); casas ≥ 5×5; tamanhos do dono do produto (castelo 26×17, guilda 9×9, ferreiro 8×5, lojas 5×5, guarita 4×6, bancos 2×1/3×1, poste 1 célula); térreas bloqueiam 4 de 5 fileiras (quintal andável); castelo com fosso escolhido (cobre os 26×17) | domains/town |
 | Dungeon nunca ocupa a estrada do portão nem o campo do rebanho; diante da entrada, sempre terra firme e livre | domains/dungeon, domains/town |
 | Arte de construção da cidade: uma imagem por tamanho de área (nunca esticar/repetir partes para outra proporção); tamanho sem imagem não usa aquela variação | domains/town |
-| Pedras: a pedra do mundo vira Pedra Bruta (mesmo id, salvamentos intactos); 7 variações são materiais novos; receitas 1:1 só para Irregular, Tijolo e Chão; Lisa, Polida, Rachada e Tijolo Rachado ficam para receitas/construções futuras | domains/world, domains/farming |
+| Pedras: a pedra do mundo vira Pedra Bruta (mesmo id, salvamentos intactos); o jogo fica com **cinco pedras** (Bruta, Tijolo, Chão, Lisa, Polida; dono do produto, 08/11) — Irregular, Rachada e Tijolo Rachado foram **aposentadas** (sem receita, fora da cidade e do V2; ids reservados para mundos salvos, `RETIRED_STONES`); receitas 1:1 só para Tijolo e Chão; Lisa e Polida ficam para receitas/construções futuras | domains/world, domains/farming |
 | Horizontal garantido pela camada de rotação; tela cheia/trava quando o navegador permite | domains/player |
 
 ## Arte

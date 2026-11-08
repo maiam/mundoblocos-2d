@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, WALL_MATERIALS, WALLS, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, RETIRED_STONES, cropKind, cropStage, isDoor, isGate, isWheat, WALL_MATERIALS, WALLS, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import type { MonsterKind } from './dungeon';
 
 /**
@@ -333,7 +333,6 @@ export const RECIPES: Recipe[] = [
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.OAK_DOOR), count: 1 },
   },
   ...([
-    ['stone-cobble', 'Pedra Irregular', Block.STONE_COBBLE],
     ['stone-brick', 'Tijolo de Pedra', Block.STONE_BRICK],
     ['stone-floor', 'Chão de Pedra', Block.STONE_FLOOR],
   ] as const).map(([id, name, out]): Recipe => ({
@@ -355,10 +354,11 @@ export const RECIPES: Recipe[] = [
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 2 }], output: { item: blockStack(Block.FENCE), count: 4 },
   },
   // Paredes (dono do produto, 2026-11-07): 3 blocos do material → 1 parede do mesmo material.
-  ...WALL_MATERIALS.map((material, i): Recipe => ({
+  // (As paredes das pedras aposentadas ficam sem receita; o índice no id da receita não muda.)
+  ...WALL_MATERIALS.flatMap((material, i): Recipe[] => RETIRED_STONES.includes(material) ? [] : [{
     id: `wall-${i}`, name: blockDef(WALLS[i]).name, profession: 'builder',
     inputs: [{ item: blockStack(material), count: 3 }], output: { item: blockStack(WALLS[i]), count: 1 },
-  })),
+  }]),
   {
     id: 'fence-gate', name: 'Portão de Madeira', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.FENCE_GATE), count: 1 },

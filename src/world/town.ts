@@ -155,8 +155,8 @@ function buildTown(): TownLayout {
       ground[i] = FLOOR;
       if (y >= H - WALL && x >= GX0 && x <= GX1) { use[i] = STREET; continue; }
       use[i] = WALLED;
-      objects[i] = h(x, y, 1) < 0.22 ? Block.STONE_BRICK_CRACKED : Block.STONE_BRICK;
-      upper[i] = h(x, y, 2) < 0.22 ? Block.STONE_BRICK_CRACKED : Block.STONE_BRICK;
+      objects[i] = Block.STONE_BRICK;
+      upper[i] = Block.STONE_BRICK;
     }
   }
 

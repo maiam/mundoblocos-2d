@@ -18,9 +18,13 @@
     "arada",
     "areia",
     "caminho",
+    "chao-de-pedra",
     "grama",
     "pedra",
-    "terra"
+    "pedra-lisa",
+    "pedra-polida",
+    "terra",
+    "tijolo-de-pedra"
   ],
   "overlay": [
     "arada",

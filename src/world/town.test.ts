@@ -56,10 +56,9 @@ describe('Cidade do Despertar', () => {
     for (let y = a.y0; y <= a.y1; y++) for (const x of [a.x0, a.x1]) if (w.isWalkable(x, y)) exits.push([x, y]);
     expect(exits.length).toBeGreaterThan(0);
     for (const [x, y] of exits) expect(inRect(t.gate, x, y)).toBe(true);
-    // Muralha: tijolo de pedra (inteiro ou rachado), 2 de altura.
-    const wallIds = new Set<number>([Block.STONE_BRICK, Block.STONE_BRICK_CRACKED]);
-    expect(wallIds.has(w.getObject(a.x0 + 10, a.y0))).toBe(true);
-    expect(wallIds.has(w.getLevel(a.x0 + 10, a.y0, 1))).toBe(true);
+    // Muralha: só Tijolo de Pedra (o rachado foi aposentado, 08/11), 2 de altura.
+    expect(w.getObject(a.x0 + 10, a.y0)).toBe(Block.STONE_BRICK);
+    expect(w.getLevel(a.x0 + 10, a.y0, 1)).toBe(Block.STONE_BRICK);
     // Piso pavimentado (ruas, praças, pátio, calçadas): só Tijolo de Pedra (dono do produto, 07/11).
     const L = townLayout();
     const streetIds = new Set<number>();
