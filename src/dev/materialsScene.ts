@@ -29,6 +29,7 @@ const CUBES: Array<[number, number, BlockId[]]> = [
   [0, 4, [Block.DIRT, Block.STONE]], [1, 4, [Block.DIRT, Block.STONE]], // pilhas de material misto
   [4, 4, [Block.GRASS, Block.GRASS, Block.GRASS]], [5, 4, [Block.GRASS, Block.GRASS, Block.GRASS]],
   [2, 5, [Block.GRASS]], // o cubo onde a heroína sobe
+  [1, 3, [Block.PATH]], [2, 3, [Block.TILLED]], [3, 3, [Block.TILLED]], // prolongam o platô: frente de terra com franja
 ];
 /** Mapa do layout para as bordas do cubo V2 (mesma lógica do jogo, `cubeEdges`). */
 const VIEW: CubeView = {

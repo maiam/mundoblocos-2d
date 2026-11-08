@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.82.2 — 2026-11-08
+- **Materiais V2 — frente de terra e franjas do Caminho e da Terra Arada** (só com `?blocos=v2`): Caminho de Terra e
+  Terra Arada passam a ter a frente de terra (como a grama) e a franja de transição enviada pela arte caindo sobre ela.
+  O importador limpa a cor das bordas (a da terra arada veio com halo vermelho de recorte) e reduz as franjas com alfa
+  correto.
+
 ## 0.82.1 — 2026-11-08
 - **Materiais V2 — Caminho de Terra e Terra Arada** (só com `?blocos=v2`): topos oficiais enviados pela arte (a frente
   repete o topo). O chão dos materiais V2 também deixou de ter a linha fraca em cada célula: ela vinha da "grade sutil
