@@ -80,13 +80,14 @@ export async function loadBlockArt(): Promise<void> {
 }
 
 /**
- * Atlas do Padrão de Materiais V2 (ADR 0023), só quando pedido (`?blocos=v2` no jogo, ou a cena `?materiais=1`):
- * `useInWorld` liga os blocos-piloto no mapa. Sem o atlas no pacote, nada acontece.
+ * Atlas do Padrão de Materiais V2 (ADR 0023) e o das máscaras de transição: carregados antes do jogo (o V2 é o padrão;
+ * `useInWorld` false = `?blocos=legado`, só para comparar). Sem o atlas no pacote (ex.: Santuário), nada acontece.
  */
 export async function loadMaterialsV2(useInWorld: boolean): Promise<boolean> {
   const m = art().materialsV2;
   if (!m) return false;
-  setMaterialsV2(await load(m.atlas), m.manifest, useInWorld);
+  const [atlas, masks] = await Promise.all([load(m.atlas), m.masks ? load(m.masks) : Promise.resolve(null)]);
+  setMaterialsV2(atlas, m.manifest, useInWorld, masks);
   return true;
 }
 

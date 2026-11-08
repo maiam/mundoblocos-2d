@@ -395,7 +395,7 @@ export class Renderer {
   }
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
-    // Cubo V2 (`?blocos=v2`): desenhado como parte da massa de cubos vizinhos, sem risco entre eles (ADR 0023).
+    // Cubo V2 (o padrão): desenhado como parte da massa de cubos vizinhos, sem risco entre eles (ADR 0023).
     if (V2_BLOCKS[id] && materialsV2InWorld()) {
       const v2 = cubeSpriteV2(id, level, cubeEdges(this.cubeView, x, y, level));
       if (v2) {

@@ -23,8 +23,9 @@
 4. **Composição por bloco em `render/materialsV2.ts` (`V2_BLOCKS`)**: topo, frente e franja podem vir de materiais
    diferentes (grama = topo de grama + frente de terra + franja de grama). É aparência: regras do bloco seguem em
    `world/blocks.ts`.
-5. **Validação atrás de chave**: `?blocos=v2` troca chão e cubo dos blocos-piloto (areia, terra, grama, Pedra Bruta) no mundo, com a
-   frente de 18; `?materiais=1` (só em desenvolvimento, `dev/materialsScene.ts`) põe legado e V2 lado a lado. Sem chave o atlas V2 nem baixa.
+5. **Validação atrás de chave, depois padrão**: o V2 nasceu atrás de `?blocos=v2` e `?materiais=1`; em 08/11 o dono do produto o
+   tornou o **padrão do jogo** (`?blocos=legado` volta ao atlas antigo, só para comparar; as três pedras aposentadas seguem
+   com a arte antiga). O atlas V2 e o de máscaras carregam antes do jogo (~115 kB, dentro do orçamento).
 6. **Transições horizontais (Etapa 3) só na camada de chão plano**, entre topos da mesma altura; nunca sobre o topo de
    cubos empilhados (onde há degrau vale borda/relevo, não máscara). As máscaras das 47 combinações saem de **~13
    formas desenhadas**, giradas/espelhadas pelo script: **máscara é forma, não textura** (exceção registrada em
@@ -70,6 +71,22 @@ horizontal, nem entre materiais diferentes. Só os blocos V2:
 - Importação de franjas (`import-material.py --overlay`): zera o ruído do alfa, troca a cor dos pixels meio transparentes
   pela dos vizinhos opacos (a franja da terra arada veio com halo vermelho de recorte) e reduz com alfa pré-multiplicado,
   repetindo só na horizontal; `--fit-fringe` guarda os 32 px de baixo do desenho.
+
+## Transições entre chãos (2026-11-08, v0.85.0)
+
+O dono do produto enviou **uma** máscara ("grama avançando"), podendo girar para qualquer direção. Decisão:
+- **Uma forma, oito peças**: `import-mask.py` guarda só o alfa (256×256); `build-materials.py` gera `transitions-v2.webp`
+  com as 4 bordas (a forma **girada** para N, E, S, O — o arquivo vem com o lado sólido à esquerda) e os 4 cantos (interseção
+  de duas bordas recuadas: uma ponta só, para vizinho diagonal). Mais formas = mais linhas no atlas, sem mudar o código.
+- **A textura nunca gira**: a peça é o topo do material que avança dentro da máscara (`source-in`), alinhado à célula, então
+  a grama invasora continua a da célula ao lado.
+- **Regras são dados** (`TRANSITION_RULES`): hoje só a Grama avança, sobre Terra, Caminho e Areia. Água, buraco, pedra e piso
+  da cidade ficam de fora (borda própria); Terra Arada também (o canteiro mantém a borda reta). Prioridades entre os demais
+  pares (areia × terra etc.) ficam para quando o dono do produto escolher e enviar a forma.
+- **Composição, não 47 casos**: cada vizinho de lado traz a sua borda; vizinho só diagonal traz um canto se nenhum dos dois
+  de lado ao redor já cobre (`transitionPieces`, testado). Só no chão plano; nunca atravessa degrau (cubos têm contorno próprio).
+- Desenho no `chunkRenderer` (cache do chunk); `World.setLevel` agora também avisa o chunk da **diagonal** quando a célula
+  é de canto, porque o canto do chunk vizinho muda. Determinístico: depende só dos vizinhos.
 
 ## Por que assim
 

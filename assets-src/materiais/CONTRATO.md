@@ -43,11 +43,16 @@ contrato (tamanho, transparência no topo ou na frente, franja acima de 32 px). 
 ## Compor blocos
 
 Em `src/render/materialsV2.ts` (`V2_BLOCKS`): `{ top, front, overlay? }` por bloco. Ex.: grama = topo `grama` + frente
-`terra` + franja `grama` (a frente de terra é o topo da terra). Ver no jogo: `?blocos=v2` (mundo), `?materiais=1`
-(legado × V2) e `?escala=1&blocos=v2` (cena de escala).
+`terra` + franja `grama` (a frente de terra é o topo da terra). Ver no jogo: o V2 já é o padrão (`?blocos=legado` volta ao antigo), `?materiais=1`
+(legado × V2, só no dev) e `?escala=1` (cena de escala).
 
-## Máscaras de transição (Etapa 3, ainda não implementada)
+## Máscaras de transição (v0.85.0)
 
-`assets-src/materiais/_mascaras/`: ~13 formas 128×128 só no canal alfa (reta, canto interno, canto externo, ponta,
-ilha, faixa…). O script gira/espelha as formas para cobrir as 47 combinações de 8 vizinhos — máscara é **forma**, não
-textura, então girar é permitido (CONVENTIONS). A textura que aparece pela máscara nunca é girada.
+Uma máscara é uma **forma** (só o canal alfa); a textura que aparece por ela é o topo do material que avança e nunca gira.
+- **Arquivo:** PNG quadrado com alfa, a parte sólida à **esquerda** e a borda irregular à **direita** (o material vem do
+  oeste). Importar: `python3 scripts/import-mask.py <nome> arquivo.png` → `assets-src/materiais/_mascaras/<nome>.png`
+  (256×256, só alfa). A cor do arquivo é descartada.
+- **O script gira** a forma para N, E, S, O e **monta os 4 cantos** (ponta para vizinho só na diagonal) e grava
+  `src/assets/transitions-v2.webp` (`build-materials.py`). Para um canto diferente, mande uma forma de canto à parte.
+- **Bordas que se encontram:** a irregularidade deve repetir de cima para baixo (a borda de uma célula continua na de baixo).
+- **Quem avança sobre quem** é regra do catálogo (`render/transitions.ts`, `TRANSITION_RULES`), não da arte.

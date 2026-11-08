@@ -31,13 +31,13 @@ Apenas apresentação; lê `World`, nunca escreve.
   `materials-v2.webp` (linhas top 64, front 36, overlay 36: frente de 18) + `materials-v2.json`. O motor monta o cubo
   com `composeCube`; ordem interna frente → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
 - `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco: areia, terra, grama, Pedra Bruta) e o estado do atlas; `textures.applyMaterialsV2` troca os
-  blocos-piloto quando `?blocos=v2`; `textures.qaMaterial` serve a cena `?materiais=1` (`dev/materialsScene.ts`, só dev).
+  materiais V2 (o padrão; `?blocos=legado` desliga); `textures.qaMaterial` serve a cena `?materiais=1` (`dev/materialsScene.ts`, só dev).
 - **Massa contínua** (v0.82.0): `cubeEdges` (puro) diz onde o cubo V2 tem contorno, olhando os vizinhos (`CubeView`);
   `textures.cubeSpriteV2` monta a variante (cache por bloco, nível e bordas) e `drawCubeParts` desenha topo e frente com
   bordas iguais às dos vizinhos (`Renderer.drawCubeV2`). Frente = textura seamless inteira, fatiada por nível
   (`materialsV2.paintFront`); franja só no nível mais alto; nível coberto desenha a continuação da parede, não o topo.
 - **Chão V2 sem grade**: `BlockTextures.continuousGround` lista os chãos V2; o `chunkRenderer` pula neles a "grade sutil de blocos" (1 px por célula, alfa 0,07) que continua no chão antigo.
-- Transições entre chãos (etapa 3) só no chão plano e na mesma altura; máscaras são formas e podem girar (CONVENTIONS).
+- **Transições entre chãos** (v0.85.0): `render/transitions.ts` (regras e `transitionPieces`), `textures.buildTransitions` (8 peças = topo do material que avança dentro da máscara) e `chunkRenderer` (desenha depois do chão). Só chão plano e mesma altura; máscaras são formas e podem girar (CONVENTIONS); a textura nunca gira.
 
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):

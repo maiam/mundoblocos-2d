@@ -2,7 +2,8 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, v2Faces, v2GroundTop, v2LevelFaces } from './materialsV2';
+import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2LevelFaces } from './materialsV2';
+import { TRANSITION_PIECES, TRANSITION_RULES } from './transitions';
 import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
@@ -52,6 +53,10 @@ export interface BlockTextures {
   groundTop: Map<BlockId, HTMLCanvasElement>;
   /** Chãos do Padrão V2 (ADR 0023): textura contínua, sem a grade sutil de blocos por cima (`chunkRenderer`). */
   continuousGround: Set<BlockId>;
+  /** Transições de chão (V2): por material que avança, as 8 peças (bordas e cantos) já com o topo dele por dentro da máscara. */
+  transitionOver: Map<BlockId, HTMLCanvasElement[]>;
+  /** Transições de chão: por material que recebe, quais materiais avançam sobre ele (`TRANSITION_RULES`). */
+  transitionOnto: Map<BlockId, BlockId[]>;
   /** Materiais com várias artes de chão (ex.: Terra com Grama): o chão escolhe uma por célula (hash da seed). */
   groundVariants: Map<BlockId, HTMLCanvasElement[]>;
   water: HTMLCanvasElement[];
@@ -301,7 +306,7 @@ export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) =
 }
 
 /**
- * `?blocos=v2` (ADR 0023): troca chão e cubo dos blocos-piloto pela montagem V2, com a frente na altura atual do
+ * V2 (padrão, ADR 0023; `?blocos=legado` desliga): troca chão e cubo dos materiais V2 pela montagem V2, com a frente na altura atual do
  * mundo (F). As variações legadas da grama saem (o V2 ainda não tem variações).
  */
 function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>, continuousGround: Set<BlockId>): void {
@@ -335,6 +340,37 @@ export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2'): { cube: Sprite; 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   v2GroundTop(id, ctx, c.width, c.height);
   return { cube: composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20'), ground: c };
+}
+
+/**
+ * Peças de transição entre chãos (ADR 0023): para cada material que avança, as 8 peças (`TRANSITION_PIECES`) = topo dele
+ * dentro da máscara de alfa (`source-in`; a máscara é a única coisa que gira, o topo nunca). Só entre chãos V2 e se o
+ * pacote trouxe as máscaras. Nada de ler pixel de canvas: tudo é composição.
+ */
+function buildTransitions(groundTop: Map<BlockId, HTMLCanvasElement>, continuous: Set<BlockId>): { over: Map<BlockId, HTMLCanvasElement[]>; onto: Map<BlockId, BlockId[]> } {
+  const over = new Map<BlockId, HTMLCanvasElement[]>();
+  const onto = new Map<BlockId, BlockId[]>();
+  const masks = transitionMasks();
+  if (!masks) return { over, onto };
+  const shape = 0; // hoje há uma forma só ("avanco"); regras futuras escolhem a forma por par de materiais
+  for (const rule of TRANSITION_RULES) {
+    const tile = groundTop.get(rule.over);
+    if (!tile || !continuous.has(rule.over)) continue;
+    const pieces = TRANSITION_PIECES.map((_, i) => {
+      const [c, ctx] = canvas(T, T);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(masks.img, i * masks.cell, shape * masks.cell, masks.cell, masks.cell, 0, 0, c.width, c.height);
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.drawImage(tile, 0, 0, c.width, c.height);
+      return c;
+    });
+    over.set(rule.over, pieces);
+    for (const receiver of rule.onto) {
+      if (!continuous.has(receiver)) continue;
+      onto.set(receiver, [...(onto.get(receiver) ?? []), rule.over]);
+    }
+  }
+  return { over, onto };
 }
 
 const CORNER = 3;
@@ -683,6 +719,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   }
   const continuousGround = new Set<BlockId>();
   if (materialsV2InWorld()) applyMaterialsV2(groundTop, groundVariants, objects, variants, continuousGround);
+  const { over: transitionOver, onto: transitionOnto } = buildTransitions(groundTop, continuousGround);
   // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
   const tentImg = getTentSprite();
   if (tentImg) {
@@ -763,7 +800,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, continuousGround, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces };
+  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces };
 }
 
 /**

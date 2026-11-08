@@ -11,7 +11,7 @@ import { cubeSpriteV2, drawCubeParts, qaMaterial, type Sprite } from '../render/
  * 16 × 18 já foi decidida: 18). Cada painel tem chão plano (só topo), um platô de cubos de materiais diferentes, um
  * degrau, pilhas (inclusive de materiais misturados), a heroína no chão e em cima de um cubo, e (tecla/botão Grade) a
  * grade das células com a linha de apoio. No painel V2 os cubos formam uma massa: sem risco entre eles (ADR 0023). Desenha por conta própria (os dois atlas lado a lado); para escala
- * de sprites no renderizador real há a cena `?escala=1` (ADR 0022, com `&blocos=v2` para a arte V2).
+ * de sprites no renderizador real há a cena `?escala=1` (ADR 0022; já mostra a arte V2, que é o padrão).
  */
 const COLS = 6;
 const ROWS = 7;
