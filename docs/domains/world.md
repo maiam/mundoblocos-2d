@@ -7,7 +7,7 @@
   (pilha de até `MAX_STACK` = 3). O gerador só preenche os níveis 0 e 1; o nível 2 é só do jogador.
 - **Materiais** (prancha de blocos, únicos blocos de construção): Terra, Terra com Grama, Terra Arada,
   Caminho de Terra, Areia, Pedra Bruta, Tora de Carvalho, Tábua de Carvalho, 4 variações de pedra (Tijolo, Chão,
-  Lisa, Polida — ids 35–38) e, no fim da lista, Tora e Tábua de Cerejeira (ids 230–231, v0.88.0; só V2, sem coluna no atlas antigo) (`MATERIALS`; coluna do atlas antigo = índice na lista, até `LEGACY_MATERIALS` = 15). **Aposentadas** (08/11, `RETIRED_STONES`):
+  Lisa, Polida — ids 35–38) e, no fim da lista, Tora e Tábua de Cerejeira e de Bétula (ids 230–233, v0.88.0/0.89.0; só V2, sem coluna no atlas antigo) (`MATERIALS`; coluna do atlas antigo = índice na lista, até `LEGACY_MATERIALS` = 15). **Aposentadas** (08/11, `RETIRED_STONES`):
   Pedra Irregular (34), Pedra Rachada (39) e Tijolo de Pedra Rachado (42) — sem receita e fora da cidade, mas os ids
   seguem reservados e na lista (mundos salvos podem tê-las: continuam aparecendo, quebrando e valendo de batente).
   O gerador só usa a Pedra Bruta; substituir água aceita só ela entre as pedras; **qualquer pedra** (`stone: true`) serve de batente de porta. O **mesmo id** serve de

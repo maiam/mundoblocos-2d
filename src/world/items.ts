@@ -161,7 +161,7 @@ export function dropsFor(id: BlockId, rand: () => number = Math.random): Drop[] 
 function treeDrops(id: BlockId, rand: () => number): Drop[] | null {
   switch (id) {
     case Block.APPLE_TREE: return pickDrops(rand);
-    case Block.OAK_TREE: case Block.SAKURA_TREE: case Block.APPLE_TREE_BARE: return [];
+    case Block.OAK_TREE: case Block.SAKURA_TREE: case Block.BIRCH_TREE: case Block.APPLE_TREE_BARE: return [];
     default: return null;
   }
 }
@@ -261,12 +261,13 @@ const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.APPLE_TREE, Block.APP
 
 /**
  * O que um bloco quebrado devolve como material (mundos com coleta): o próprio material (cubo ou chão;
- * Terra com Grama volta como Terra com Grama), árvores dão 2–3 Toras (de Carvalho; a Cerejeira, de Cerejeira), porta volta porta.
+ * Terra com Grama volta como Terra com Grama), árvores dão 2–3 Toras (de Carvalho; a Cerejeira, de Cerejeira; a Bétula, de Bétula), porta volta porta.
  * Plantas, enfeites e blocos de outros mundos não devolvem material (plantas: ver `toolDrops`).
  */
 export function blockDrops(id: BlockId, rand: () => number = Math.random): Drop[] {
   if (ADULT_TREES.has(id)) return [{ item: blockStack(Block.OAK_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }];
   if (id === Block.SAKURA_TREE) return [{ item: blockStack(Block.CHERRY_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }]; // Cerejeira → Tora de Cerejeira
+  if (id === Block.BIRCH_TREE) return [{ item: blockStack(Block.BIRCH_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }]; // Bétula → Tora de Bétula
   if (isDoor(id)) return [{ item: blockStack(Block.OAK_DOOR), count: 1 }];
   if (isGate(id)) return [{ item: blockStack(Block.FENCE_GATE), count: 1 }];
   // Pedregulho: vira 1–3 Pedras Brutas (o bloco de pedra; colocado no mundo, é cubo).
@@ -319,6 +320,10 @@ export const RECIPES: Recipe[] = [
   {
     id: 'oak-planks', name: 'Tábua de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_LOG), count: 1 }], output: { item: blockStack(Block.OAK_PLANKS), count: 2 },
+  },
+  {
+    id: 'birch-planks', name: 'Tábua de Bétula', profession: 'builder',
+    inputs: [{ item: blockStack(Block.BIRCH_LOG), count: 1 }], output: { item: blockStack(Block.BIRCH_PLANKS), count: 2 },
   },
   {
     id: 'cherry-planks', name: 'Tábua de Cerejeira', profession: 'builder',

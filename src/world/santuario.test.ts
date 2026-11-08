@@ -86,6 +86,6 @@ describe('Santuário Celestial', () => {
     const hb = hotbarFor(S);
     expect(hb).toHaveLength(18);
     expect(hb.every((s) => s.kind === 'block')).toBe(true);
-    expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(33); // 5 ferramentas + 2 itens + 17 materiais (8 + 7 pedras + 2 de cerejeira) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + cerca + portão
+    expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(35); // 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + cerca + portão
   });
 });

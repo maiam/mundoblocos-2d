@@ -20,6 +20,8 @@ const GROUND: Partial<Record<number, string>> = {
   [Block.OAK_PLANKS]: '#b98a56',
   [Block.CHERRY_LOG]: '#b8584c',
   [Block.CHERRY_PLANKS]: '#d86a60',
+  [Block.BIRCH_LOG]: '#e0d4c0',
+  [Block.BIRCH_PLANKS]: '#e8c898',
   [Block.STONE_COBBLE]: '#a8a49c',
   [Block.STONE_BRICK]: '#b0aaa0',
   [Block.STONE_FLOOR]: '#bdb6aa',
@@ -35,6 +37,7 @@ const GROUND: Partial<Record<number, string>> = {
 const OBJECT: Partial<Record<number, string>> = {
   [Block.OAK_TREE]: '#3f7a3a',
   [Block.SAKURA_TREE]: '#d98fb0',
+  [Block.BIRCH_TREE]: '#9bc85a',
   [Block.CACTUS]: '#5f8f45',
   [Block.APPLE_TREE]: '#5d9a3c',
   [Block.APPLE_TREE_BARE]: '#7fae55',

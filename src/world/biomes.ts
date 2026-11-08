@@ -5,8 +5,11 @@ export interface Biome {
   name: string;
   ground: BlockId;
   tree: BlockId;
-  /** Outra árvore misturada à principal (ex.: macieiras nos Campos) e a fração dela. */
-  altTree?: { id: BlockId; share: number };
+  /**
+   * Outras árvores misturadas à principal (macieiras e bétulas nos Campos) e a fração de cada uma, sorteadas na ordem
+   * (a 1ª mantém o sorteio de sempre, então acrescentar uma no fim não muda onde as anteriores caem).
+   */
+  altTrees?: ReadonlyArray<{ id: BlockId; share: number }>;
   /** Densidade base de árvores (0..1) dentro de manchas de floresta. */
   treeDensity: number;
   decorations: BlockId[];
@@ -17,7 +20,8 @@ export interface Biome {
 export const BIOMES: Record<Biome['key'], Biome> = {
   meadow: {
     key: 'meadow', name: 'Campos Verdejantes', ground: Block.GRASS,
-    tree: Block.OAK_TREE, treeDensity: 0.22, altTree: { id: Block.APPLE_TREE, share: 1 / 6 },
+    tree: Block.OAK_TREE, treeDensity: 0.22,
+    altTrees: [{ id: Block.APPLE_TREE, share: 1 / 6 }, { id: Block.BIRCH_TREE, share: 1 / 5 }],
     decorations: [Block.TALL_GRASS, Block.TALL_GRASS, Block.FLOWER], decoChance: 0.12,
   },
   sakura: {

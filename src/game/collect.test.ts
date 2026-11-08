@@ -19,6 +19,9 @@ describe('Coleta de materiais (Fase 3)', () => {
       const [cherry] = blockDrops(Block.SAKURA_TREE, r); // a Cerejeira dá Tora de Cerejeira
       expect(cherry.item).toBe(blockStack(Block.CHERRY_LOG));
       expect([2, 3]).toContain(cherry.count);
+      const [birch] = blockDrops(Block.BIRCH_TREE, r); // a Bétula dá Tora de Bétula
+      expect(birch.item).toBe(blockStack(Block.BIRCH_LOG));
+      expect([2, 3]).toContain(birch.count);
     }
     expect(blockDrops(Block.FLOWER, r)).toEqual([]);
     expect(blockDrops(Block.CLOUD_SOLID, r)).toEqual([]); // Santuário não coleta

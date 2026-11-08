@@ -28,6 +28,9 @@ export const Block = {
   /** Madeira de cerejeira (v0.88.0): tora (da Cerejeira derrubada) e tábuas (da tora). */
   CHERRY_LOG: 230,
   CHERRY_PLANKS: 231,
+  /** Madeira de bétula (v0.89.0): tora (da Bétula derrubada) e tábuas (da tora). */
+  BIRCH_LOG: 232,
+  BIRCH_PLANKS: 233,
   // --- porta (objeto de 3 níveis de altura; o id guarda o estado) ---
   OAK_DOOR: 28,
   /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
@@ -70,6 +73,8 @@ export const Block = {
   // --- árvores (objeto alto) ---
   OAK_TREE: 40,
   SAKURA_TREE: 41,
+  /** Bétula (v0.89.0): mistura-se aos carvalhos dos Campos. */
+  BIRCH_TREE: 59,
   // --- estágios de crescimento APOSENTADOS (v0.88.0: as árvores só aparecem adultas): ids reservados, ver `GROWTH_STAGE_ADULT` ---
   OAK_SAPLING: 52,
   OAK_YOUNG: 53,
@@ -298,6 +303,8 @@ const defs: BlockDef[] = [
   object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),
   object(Block.CHERRY_LOG, 'Tora de Cerejeira', { organic: 'wood' }),
   object(Block.CHERRY_PLANKS, 'Tábua de Cerejeira', { organic: 'wood' }),
+  object(Block.BIRCH_LOG, 'Tora de Bétula', { organic: 'wood' }),
+  object(Block.BIRCH_PLANKS, 'Tábua de Bétula', { organic: 'wood' }),
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
@@ -316,6 +323,7 @@ const defs: BlockDef[] = [
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
+  object(Block.BIRCH_TREE, 'Bétula', { shape: 'tree', placeable: false, organic: 'wood' }),
   // Mudas são plantas (a enxada arranca); dali em diante, madeira.
   object(Block.OAK_SAPLING, 'Muda de Carvalho', { shape: 'tree', placeable: false, organic: 'plant' }),
   object(Block.OAK_YOUNG, 'Carvalho Jovem', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -417,9 +425,11 @@ export const MATERIALS: BlockId[] = [
   Block.STONE_POLISHED,
   Block.STONE_CRACKED,
   Block.STONE_BRICK_CRACKED,
-  // Madeira de cerejeira (v0.88.0): só no V2 (não há coluna no atlas antigo, que termina nas pedras).
+  // Madeira de cerejeira (v0.88.0) e de bétula (v0.89.0): só no V2 (não há coluna no atlas antigo, que termina nas pedras).
   Block.CHERRY_LOG,
   Block.CHERRY_PLANKS,
+  Block.BIRCH_LOG,
+  Block.BIRCH_PLANKS,
 ];
 
 /** Blocos do Santuário Celestial, na ordem da prancha (e da hotbar do Santuário). */
