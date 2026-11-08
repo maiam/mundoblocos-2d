@@ -96,7 +96,7 @@ passagem e o chefe dentro; monstros em chão livre do interior; área protegida.
   ignora e só passeia perto da toca (`leash` 5; limite de `WOLF_ROAM` = 12 células). É mais lento (3,0) que ela (4,2). Entre
   si, cada um decide pela própria distância: o bando, junto, tende a atacar junto.
 - `MONSTERS[...].open` marca o monstro do mapa aberto (persegue sem o mapa de corredores da dungeon). Ficha em `MONSTER_STATS`:
-  marrom 35/11/1, cinza 45/13/2, branco 55/15/3 (vida/ataque/defesa); renascem em 120 s; espólios (`monsterDrops`): 1–2 Pelagens de Lobo (sempre) + 1 Presa de Lobo (50%), itens `wolf_pelt`/`wolf_fang` (`assets-src/lobos/wolf-loot-icons-sheet.png` → `icon-wolf-*`, `slice-icons.py`).
+  marrom 35/11/1, cinza 45/13/2, branco 55/15/3 (vida/ataque/defesa); renascem em 120 s; espólios (`monsterDrops`, sorteios independentes: Pelagem de Lobo 55% e Presa de Lobo 40%, `WOLF_PELT_CHANCE`/`WOLF_FANG_CHANCE`), itens `wolf_pelt`/`wolf_fang` (`assets-src/lobos/wolf-loot-icons-sheet.png` → `icon-wolf-*`, `slice-icons.py`).
 - `Entities.spawnWolves` (dentro de `spawnWildlife`); monstro a > 48 células de todo jogador não é simulado (`ACTIVE_RADIUS`);
   `save.ts` só guarda as aranhas (lobos voltam todos pela seed). Na sala, a sala os simula e o aparelho espelha (`mobs`).
 - Arte: `assets-src/lobos/lobo-<cor>-sheet.png` → `wolf-<cor>.webp` (folha 4 × 4 canônica, `process-sprite.py`); sem folha de

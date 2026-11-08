@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isWolf, WOLF_KINDS } from '../world/dungeon';
 import { MONSTER_STATS } from '../world/progression';
-import { Item, ITEMS, monsterDrops } from '../world/items';
+import { Item, ITEMS, monsterDrops, WOLF_FANG_CHANCE, WOLF_PELT_CHANCE } from '../world/items';
 import { mulberry32 } from '../world/random';
 import { grow } from '../world/town';
 import { WORLD_PROFILES } from '../world/profiles';
@@ -66,14 +66,33 @@ describe('Lobos: bandos pelo mapa', () => {
     }
   });
 
-  it('lobos soltam pelagem (sempre, 1 ou 2) e, às vezes, uma presa; os itens são espólios', () => {
+  it('lobos soltam pelagem e presa por sorteios separados: às vezes nada, às vezes um só, às vezes os dois', () => {
     expect(ITEMS.wolf_fang.name).toBe('Presa de Lobo');
     expect(ITEMS.wolf_pelt.name).toBe('Pelagem de Lobo');
     expect(ITEMS.wolf_fang.loot && ITEMS.wolf_pelt.loot).toBe(true);
+    const pelt = { item: Item.WOLF_PELT, count: 1 };
+    const fang = { item: Item.WOLF_FANG, count: 1 };
     for (const k of WOLF_KINDS) {
-      expect(monsterDrops(k, () => 0)).toEqual([{ item: Item.WOLF_PELT, count: 2 }, { item: Item.WOLF_FANG, count: 1 }]);
-      expect(monsterDrops(k, () => 0.99)).toEqual([{ item: Item.WOLF_PELT, count: 1 }]);
+      // `rand` devolve os dois sorteios em ordem (pelagem, presa): baixo = cai, alto = não cai.
+      const seq = (a: number, b: number) => { const v = [a, b]; return () => v.shift() ?? 1; };
+      expect(monsterDrops(k, seq(0, 0))).toEqual([pelt, fang]);
+      expect(monsterDrops(k, seq(0, 0.99))).toEqual([pelt]);
+      expect(monsterDrops(k, seq(0.99, 0))).toEqual([fang]);
+      expect(monsterDrops(k, seq(0.99, 0.99))).toEqual([]);
     }
+    // Estatística: nenhum é garantido, nenhum é raríssimo, e saem sozinhos com frequência.
+    const r = mulberry32(11);
+    let withPelt = 0, withFang = 0, both = 0, none = 0;
+    for (let i = 0; i < 4000; i++) {
+      const d = monsterDrops('wolf-gray', r);
+      const hp = d.some((x) => x.item === Item.WOLF_PELT), hf = d.some((x) => x.item === Item.WOLF_FANG);
+      if (hp) withPelt++; if (hf) withFang++; if (hp && hf) both++; if (!hp && !hf) none++;
+    }
+    expect(withPelt / 4000).toBeCloseTo(WOLF_PELT_CHANCE, 1);
+    expect(withFang / 4000).toBeCloseTo(WOLF_FANG_CHANCE, 1);
+    expect(both).toBeGreaterThan(0);
+    expect(none).toBeGreaterThan(0);
+    expect(both).toBeLessThan(withPelt);
   });
 
   it('mundo sem cidade (Santuário) não tem lobos', () => {

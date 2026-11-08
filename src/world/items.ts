@@ -88,13 +88,18 @@ export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART, Ite
 
 /**
  * O que cada monstro deixa ao morrer. Pequena: 1 seda (60%). Grande: 1–2 sedas + presa (35%).
- * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha. Lobos: 1–2 pelagens (sempre) + 1 presa (50%).
+ * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha. Lobos: pelagem (55%) e presa (40%), sorteadas separadamente.
  */
+/** Chances de cada espólio do lobo (sorteios independentes). */
+export const WOLF_PELT_CHANCE = 0.55;
+export const WOLF_FANG_CHANCE = 0.4;
+
 export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
   if (isWolf(kind)) {
-    // Lobo: sempre a pelagem (às vezes 2) e, na metade das vezes, uma presa.
-    const out: Drop[] = [{ item: Item.WOLF_PELT, count: 1 + (rand() < 0.35 ? 1 : 0) }];
-    if (rand() < 0.5) out.push({ item: Item.WOLF_FANG, count: 1 });
+    // Lobo: pelagem e presa saem por sorteios separados (nenhum é garantido e podem vir juntos ou sozinhos).
+    const out: Drop[] = [];
+    if (rand() < WOLF_PELT_CHANCE) out.push({ item: Item.WOLF_PELT, count: 1 });
+    if (rand() < WOLF_FANG_CHANCE) out.push({ item: Item.WOLF_FANG, count: 1 });
     return out;
   }
   if (kind === 'spider-small') return rand() < 0.6 ? [{ item: Item.SILK, count: 1 }] : [];

@@ -221,7 +221,7 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
 5d. ✅ **Árvores adultas, cerejeira e chunk do muro** (v0.88.0, ADR 0024). Macieira nova com a colhida na v0.90.0. Falta: **frente das tábuas** (hoje repete o topo), formas novas de árvore se o dono do produto quiser, **orçamento de início no limite (~2,9 de 3 MB: a próxima arte de árvore pede carga sob demanda)**, tamanho das árvores (3,4 células de
    largura; ajustar `TREE_CELLS` se pesar na tela) e **versões de outras madeiras** para porta, baú, cadeira e cerca (decisão do dono do produto: por ora só carvalho). Bétula entrou na v0.89.0 (ADR 0024). Servidor: sincronizar o pacote (regra do muro, mudas e ids novos).
 
-5e. ✅ **Mila e lobos** (v0.91.0). Falta: **uso do espólio do lobo em receitas** (Pelagem e Presa de Lobo já caem, sem receita), folha de **morte** própria
+5e. ✅ **Mila e lobos** (v0.91.0). Falta: **uso do espólio do lobo em receitas** (Pelagem e Presa de Lobo já caem por sorteio, sem receita), folha de **morte** própria
    (hoje encolhe e desbota, com faíscas roxas), uivo/aviso antes do ataque, tocas visíveis no mapa e no minimapa, e decidir se
    o bando deve atacar junto (hoje cada lobo decide pela própria distância de 3 células). **Orçamento de início (~2,9 de 3 MB)
    no limite**: árvores e blocos novos já pedem carga sob demanda. Servidor: sincronizar o pacote (protocolo 19).
