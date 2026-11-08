@@ -36,8 +36,6 @@ const craftables = new Map<string, HTMLImageElement>();
 let trees: { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null = null;
 /** Tira de pedregulhos. */
 let rocks: HTMLImageElement | null = null;
-/** Paredes (tira de 16 colunas), carregada em segundo plano (`loadWallArt`). */
-let walls: HTMLImageElement | null = null;
 /** Cerca de tábuas: peças emendáveis e portão (fechado, aberto). */
 let fence: { pieces: HTMLImageElement; gate: HTMLImageElement } | null = null;
 /** Cidade: imagens por nome (`town-<nome>`). */
@@ -106,18 +104,6 @@ export async function loadDungeonArt(): Promise<DungeonArt | null> {
   return dungeon;
 }
 
-/**
- * Tira das paredes, carregada DEPOIS do início (fora do orçamento de 3 MB, ADR 0013): os ícones já vêm no pacote e
- * a bolsa mostra as paredes desde o começo; no mapa, cada parede aparece quando a tira chega (`addWallTextures`).
- * Resolve null se o mundo não tem paredes.
- */
-export async function loadWallArt(): Promise<HTMLImageElement | null> {
-  const w = art().walls;
-  if (!w || walls) return walls;
-  walls = await load(w.sprites);
-  return walls;
-}
-
 /** Atlas dos materiais (null se o mundo não tem materiais). */
 export function getBlockAtlas(): HTMLImageElement | null {
   return atlas;
@@ -150,11 +136,6 @@ export function getChestSprite(): HTMLImageElement | null {
 /** Tira de pedregulhos (null fora do mundo principal). */
 export function getRockArt(): HTMLImageElement | null {
   return rocks;
-}
-
-/** Tira das paredes (null fora do mundo principal ou antes de `loadWallArt` terminar). */
-export function getWallArt(): HTMLImageElement | null {
-  return walls;
 }
 
 /** Peças da cerca e do portão (null fora do mundo principal). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, WALLS, WALL_MATERIALS } from '../world/blocks';
+import { Block } from '../world/blocks';
 import { World } from '../world/world';
 import { canSit } from './entities';
 import { Player, SEAT_FEET, SEATED_FRAME } from './player';
@@ -62,23 +62,20 @@ describe('Sentar e levantar', () => {
   });
 });
 
-describe('Porta entre blocos e paredes de madeira ou pedra', () => {
-  it('vale entre paredes de pedra ou de madeira (e mistura), não entre paredes de terra', () => {
+describe('Porta entre blocos de madeira ou pedra', () => {
+  it('vale entre blocos de pedra ou de madeira (e mistura), não entre blocos de terra', () => {
     const w = new World(7);
     const [x, y] = spot(w);
-    const stoneWall = WALLS[WALL_MATERIALS.indexOf(Block.STONE_BRICK)];
-    const plankWall = WALLS[WALL_MATERIALS.indexOf(Block.OAK_PLANKS)];
-    const dirtWall = WALLS[WALL_MATERIALS.indexOf(Block.DIRT)];
-    w.placeBlock(x - 1, y, stoneWall);
-    w.placeBlock(x + 1, y, plankWall);
+    w.placeBlock(x - 1, y, Block.STONE_BRICK);
+    w.placeBlock(x + 1, y, Block.OAK_PLANKS);
     expect(w.hasDoorFrame(x, y)).toBe(true);
     expect(w.placeBlock(x, y, Block.OAK_DOOR)).toBe(true);
     w.breakBlock(x, y);
     w.breakBlock(x + 1, y);
-    w.placeBlock(x + 1, y, dirtWall);
+    w.placeBlock(x + 1, y, Block.DIRT);
     expect(w.hasDoorFrame(x, y)).toBe(false);
     w.breakBlock(x + 1, y);
     w.placeBlock(x + 1, y, Block.OAK_LOG);
-    expect(w.hasDoorFrame(x, y)).toBe(true); // parede de pedra + tora
+    expect(w.hasDoorFrame(x, y)).toBe(true); // tijolo de pedra + tora
   });
 });

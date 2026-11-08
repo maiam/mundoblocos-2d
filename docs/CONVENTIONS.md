@@ -46,6 +46,9 @@
   espelhá-la para cobrir as 47 combinações de vizinhos. A textura que aparece através dela nunca gira.
 - **Bloco aposentado não perde o id**: sai das receitas e dos usos do jogo e vai para uma lista (`RETIRED_STONES`), mas o
   id, a definição e a posição em `MATERIALS` (coluna do atlas antigo) ficam, porque mundos e salas salvos podem tê-lo. Não ganha arte V2.
+- **Bloco removido de vez** (as antigas paredes, ids 210–225): não sobra definição, receita, arte nem código, mas a faixa de
+  ids fica reservada e todo dado que entra (mapa, salvamento, bolsa, baú, rede) passa por `isRemovedBlock`/`isRemovedStack` e
+  vira vazio — mundos e salas antigos não podem quebrar. Antes de remover um bloco, ache todas as portas de entrada de ids.
 - **Materiais novos no Padrão V2** (ADR 0023): a arte entrega material plano 128×128 (`top`; `front` e `front_overlay`
   opcionais — sem `front` a frente repete o topo; frente de 18 px)
   em `assets-src/materiais/<material>/` pelo `assets-src/materiais/CONTRATO.md`; o motor monta o cubo. Gerar com

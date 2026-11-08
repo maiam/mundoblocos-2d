@@ -26,9 +26,9 @@ const STONE_ROW: BlockId[] = [Block.STONE, Block.STONE_BRICK, Block.STONE_FLOOR,
 /** Cubos: [coluna, linha, blocos de baixo para cima]. */
 const CUBES: Array<[number, number, BlockId[]]> = [
   [1, 1, [Block.SAND]], [2, 1, [Block.STONE_BRICK]], [3, 1, [Block.STONE_FLOOR]], [4, 1, [Block.STONE_SMOOTH]], // platô de 4×2, materiais misturados
-  [1, 2, [Block.DIRT]], [2, 2, [Block.STONE_POLISHED]], [3, 2, [Block.STONE]], [4, 2, [Block.STONE_BRICK]],
+  [1, 2, [Block.OAK_PLANKS]], [2, 2, [Block.STONE_POLISHED]], [3, 2, [Block.STONE]], [4, 2, [Block.STONE_BRICK]],
   [5, 2, [Block.GRASS, Block.GRASS]], // degrau ao lado do platô
-  [0, 4, [Block.DIRT, Block.STONE]], [1, 4, [Block.DIRT, Block.STONE]], // pilhas de material misto
+  [0, 4, [Block.OAK_LOG, Block.OAK_LOG]], [1, 4, [Block.OAK_PLANKS, Block.OAK_LOG]], // pilhas de madeira (tora e tábuas)
   [4, 4, [Block.GRASS, Block.GRASS, Block.GRASS]], [5, 4, [Block.GRASS, Block.GRASS, Block.GRASS]],
   [2, 5, [Block.GRASS]], // o cubo onde a heroína sobe
   [1, 3, [Block.PATH]], [2, 3, [Block.TILLED]], [3, 3, [Block.TILLED]], // prolongam o platô: frente de terra com franja

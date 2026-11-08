@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, BLOCKS, MATERIALS, RETIRED_STONES, WALL_MATERIALS } from '../world/blocks';
+import { Block, BLOCKS, MATERIALS, RETIRED_STONES } from '../world/blocks';
 import { blockDrops, blockStack, breakDrops, canCraft, PROFESSIONS, RECIPES, toolCanBreak, toolStack } from '../world/items';
 import { WORLD_PROFILES } from '../world/profiles';
 import { mulberry32 } from '../world/random';
@@ -146,16 +146,11 @@ describe('Coleta de materiais (Fase 3)', () => {
       expect(toolCanBreak('shovel', v)).toBe(false);
       expect(blockDrops(v)).toEqual([{ item: blockStack(v), count: 1 }]);
     }
-    // Lisa e Polida ainda sem receita; as três pedras aposentadas (Irregular, Rachada, Tijolo Rachado) não têm receita
-    // nem de bloco nem de parede, mas seguem quebráveis e coletáveis (mundos salvos antigos).
+    // Lisa e Polida ainda sem receita; as três pedras aposentadas (Irregular, Rachada, Tijolo Rachado) não têm receita,
+    // mas seguem quebráveis e coletáveis (mundos salvos antigos).
     for (const v of [Block.STONE_SMOOTH, Block.STONE_POLISHED, ...RETIRED_STONES]) {
       expect(RECIPES.some((r) => r.output.item === blockStack(v))).toBe(false);
     }
-    for (const m of RETIRED_STONES) {
-      const i = WALL_MATERIALS.indexOf(m);
-      expect(RECIPES.some((r) => r.id === `wall-${i}`)).toBe(false);
-    }
-    expect(RECIPES.some((r) => r.id === 'wall-2')).toBe(true); // a parede de Tijolo de Pedra continua
   });
 });
 

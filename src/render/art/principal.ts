@@ -151,23 +151,6 @@ import cauldronSprite from '../../assets/cauldron.webp';
 import ovenIcon from '../../assets/icon-block-oven.webp';
 import ovenSprite from '../../assets/oven.webp';
 import rocks from '../../assets/rocks.webp';
-import walls from '../../assets/walls.webp';
-import wallIcon0 from '../../assets/icon-block-wall-0.webp';
-import wallIcon1 from '../../assets/icon-block-wall-1.webp';
-import wallIcon2 from '../../assets/icon-block-wall-2.webp';
-import wallIcon3 from '../../assets/icon-block-wall-3.webp';
-import wallIcon4 from '../../assets/icon-block-wall-4.webp';
-import wallIcon5 from '../../assets/icon-block-wall-5.webp';
-import wallIcon6 from '../../assets/icon-block-wall-6.webp';
-import wallIcon7 from '../../assets/icon-block-wall-7.webp';
-import wallIcon8 from '../../assets/icon-block-wall-8.webp';
-import wallIcon9 from '../../assets/icon-block-wall-9.webp';
-import wallIcon10 from '../../assets/icon-block-wall-10.webp';
-import wallIcon11 from '../../assets/icon-block-wall-11.webp';
-import wallIcon12 from '../../assets/icon-block-wall-12.webp';
-import wallIcon13 from '../../assets/icon-block-wall-13.webp';
-import wallIcon14 from '../../assets/icon-block-wall-14.webp';
-import wallIcon15 from '../../assets/icon-block-wall-15.webp';
 import fencePieces from '../../assets/fence.webp';
 import fenceGate from '../../assets/fence-gate.webp';
 import fenceIcon from '../../assets/icon-block-fence.webp';
@@ -343,12 +326,6 @@ const pack: ArtPack = {
   // Pranchas de crescimento (scripts/extract-trees.py): 4 × 2 quadros por árvore.
   trees: { oak: treeOak, apple: treeApple, cactus: treeCactus },
   rocks,
-  // Paredes (scripts/extract-walls.py): colunas de 3 de altura, contínuas lado a lado; a tira carrega em segundo plano.
-  walls: {
-    sprites: walls,
-    icons: [wallIcon0, wallIcon1, wallIcon2, wallIcon3, wallIcon4, wallIcon5, wallIcon6, wallIcon7,
-      wallIcon8, wallIcon9, wallIcon10, wallIcon11, wallIcon12, wallIcon13, wallIcon14, wallIcon15],
-  },
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: { pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon },
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.

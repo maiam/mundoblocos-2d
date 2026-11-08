@@ -6,7 +6,7 @@
 Mundo procedural em **vista superior inclinada (3/4)**, dividido em **chunks 16×16** no estilo Minecraft,
 com blocos-cubo no estilo **ilustração digital moderna de fantasia (RPG/anime)**. Escolha seu personagem (Heroína,
 Herói, Hood, Gino ou o chibi montável), use 5 ferramentas, cultive trigo e hortaliças, crie animais (ovelha, cavalo, vaca,
-galinha), cozinhe, construa com blocos e paredes, explore a Cidade do Despertar (cidade fortificada de partida, igual em
+galinha), cozinhe, construa com blocos, explore a Cidade do Despertar (cidade fortificada de partida, igual em
 toda seed) e o Covil das Aranhas com chefe, e jogue com amigos na **Sala 1** (até 10). Ciclo dia/noite, minimapa,
 sombras de nuvens e partículas. Estado detalhado em [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 

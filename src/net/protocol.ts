@@ -1,5 +1,6 @@
 import { type PlayerAction, parseAction } from '../world/actions';
 import type { Facing } from '../game/walker';
+import { isRemovedStack } from '../world/blocks';
 import { TOOLS, type ToolId } from '../world/items';
 
 /**
@@ -252,13 +253,14 @@ export function parseBag(v: unknown): RoomBag | null {
   if (entries.length > MAX_BAG_ENTRIES) return null;
   for (const [k, n] of entries) {
     if (!STACK_RE.test(k) || !Number.isInteger(n) || (n as number) < 0 || (n as number) > 99999) return null;
+    if (isRemovedStack(k)) continue; // bloco que saiu do jogo (antigas paredes): some da bolsa
     inventory[k] = n as number;
   }
   let hotbar: Array<string | null> | null = null;
   if (o.hotbar !== null && o.hotbar !== undefined) {
     if (!Array.isArray(o.hotbar) || o.hotbar.length > 64) return null;
     if (!o.hotbar.every((s) => s === null || (typeof s === 'string' && STACK_RE.test(s)))) return null;
-    hotbar = o.hotbar as Array<string | null>;
+    hotbar = (o.hotbar as Array<string | null>).map((s) => (s !== null && isRemovedStack(s) ? null : s));
   }
   return { inventory, hotbar, x: o.x as number, y: o.y as number };
 }
@@ -289,7 +291,7 @@ export function parseChestSlots(v: unknown, size = 27): ChestSlotsMsg | null {
     if (!s || typeof s !== 'object') return null;
     const o = s as Record<string, unknown>;
     if (typeof o.item !== 'string' || !STACK_RE.test(o.item) || !Number.isInteger(o.count) || (o.count as number) < 1 || (o.count as number) > 99999) return null;
-    out.push({ item: o.item, count: o.count as number });
+    out.push(isRemovedStack(o.item) ? null : { item: o.item, count: o.count as number }); // antigas paredes somem do baú
   }
   return out;
 }

@@ -27,9 +27,9 @@
   arte da prancha de pedras — antes eram cubos de `STONE`; minerados dão 1–3 Pedras Brutas); enfeites.
 
 ## Regras
-- **Paredes** (v0.68.0 pedra; v0.69.0 materiais): `isWall` (forma `wall`): bloqueiam, ninguém sobe, nada empilha em
-  cima; só em chão livre. Diferente do bloco (cubo: empilha até 3 e se sobe nele). Cada uma herda do material
-  `organic`/`soft` (qual ferramenta desmonta). Receita `wall-<i>`: 3 blocos de `WALL_MATERIALS[i]`.
+- **Paredes removidas** (08/11, dono do produto): não existem mais. Os ids 210–225 (`isRemovedBlock`) viram vazio em
+  mapa, bolsa, grade e baús vindos de dados antigos (`World.restoreChunk`/`setLevel`, `save.migrate`, `parseBag`,
+  `parseChestSlots`); nenhum bloco novo deve reusar essa faixa enquanto houver mundos e salas antigos.
 - **Cerca/portão** (v0.59.0): `FENCE` bloqueia; portão abre/fecha como a porta (`toggled`); nada empilha em cima;
   qualquer célula livre (sem batentes). A emenda entre cercas é só do render.
 - `standHeight(x, y)`: 0 chão (ou porta/portão aberto), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.
@@ -50,7 +50,7 @@
   quebra lê antes para soltar os itens). Tenda: derrubar a atual zera `World.tent`.
 - **Tenda 2×2** (`tentCells`, `tentAnchor`, `isFootprintFree`, `footprint`/`footprintAnchors` para quem coloca): canto `TENT` + 3 `TENT_PART`; `breakTargetId` de uma
   parte = `TENT`; `breakBlock` remove as 4.
-- Porta só vai entre batentes: células da esquerda e da direita com **bloco ou parede** de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`) no nível 0 (`hasDoorFrame`; pode misturar; paredes desde a v0.79.0 — as de terra/grama/areia não servem).
+- Porta só vai entre batentes: células da esquerda e da direita com **bloco** de madeira (`organic: 'wood'`) ou de qualquer pedra (`stone: true`) no nível 0 (`hasDoorFrame`; pode misturar; terra, grama e areia não servem).
 - **Assentos** (v0.79.0): `BlockDef.seat` (cadeira, bancos da cidade); `World.seatAt(x, y, px, py)` dá a célula onde se senta (no banco, a mais perto de quem senta).
 - Porta: `isDoor/isDoorOpen/toggleDoor` — o id guarda o estado (`OAK_DOOR` sólida, `OAK_DOOR_OPEN` passável). O `Game`
   só fecha se a célula estiver livre de entidades (`canToggleDoorAt`).
