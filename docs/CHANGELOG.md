@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.86.0 — 2026-11-08
+- **O chão quebrado se refaz**: um buraco (chão quebrado sem bloco) que fica um dia inteiro do jogo (`DAY_LENGTH_S`, 8 min)
+  ganha de volta um chão igual ao de um vizinho (os de lado primeiro, depois as diagonais; nunca água), escolhido pela
+  seed e pela posição, sempre o mesmo. Tapar o buraco antes zera a contagem; buraco que enche de água segue enchendo.
+- Na sala, quem decide é a sala: o chão novo viaja na mensagem `grow` (mesma forma do crescimento; sem subir o
+  protocolo, aparelho antigo ignora). As idades dos buracos entram no salvamento (v11) e no retrato da sala (v4), então
+  o dia continua de onde parou.
+
 ## 0.85.0 — 2026-11-08
 - **O novo padrão de materiais é o do jogo**: os blocos e o chão com as texturas planas novas (areia, terra, grama, as cinco
   pedras, caminho, terra arada, tora e tábuas) passam a ser o que todo mundo vê; antes só aparecia com uma chave de teste.

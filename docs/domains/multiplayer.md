@@ -47,7 +47,7 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
 - **Bichos:** a sala roda as mesmas `Entities` (jogadores como `avatars`); o aparelho só espelha. Moradores seguem locais.
   Monstros não são salvos (renascem pela seed); animais são salvos desde a v0.73.0 (`RoomSnapshot` v3).
 - **Salvamento:** na sala nada vai para o salvamento local; bolsa, posição, mundo e animais ficam no servidor
-  (`RoomSnapshot`, versão `ROOM_SNAPSHOT_VERSION` = 3; aceita v1–v3).
+  (`RoomSnapshot`, versão `ROOM_SNAPSHOT_VERSION` = 4; aceita v1–v4; v4 traz `holes`, as idades dos buracos).
 - **Lista de personagens** (`APPEARANCE_BODIES`) é única para rede e jogo; personagem novo = acrescentar lá, a arte e o
   `SPECS` (e subir o protocolo, pois um servidor antigo trocaria por Heroína).
 
