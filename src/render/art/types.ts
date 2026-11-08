@@ -59,8 +59,11 @@ export interface ArtPack {
   fence?: { pieces: string; gate: string; icon: string; gateIcon: string };
   /** Pedregulhos: tira de quadros iguais (`scripts/extract-rocks.py`), um sorteado por célula. */
   rocks?: string;
-  /** Pranchas de crescimento 4 × 2 (estágios em cima, variantes embaixo; `scripts/extract-trees.py`). */
-  trees?: { oak: string; apple: string; cactus: string };
+  /**
+   * Árvores adultas (v0.88.0, sem crescimento): tiras de variantes carvalho/macieira/cerejeira (`scripts/process-trees.py`,
+   * quadros iguais lado a lado) e a prancha 4 × 2 do cacto (`scripts/extract-trees.py`).
+   */
+  trees?: { oak: string; apple: string; cherry: string; cactus: string };
   /** Interiores (`scripts/extract-interiors.py`), por id de `world/interiors.ts`; carregam em segundo plano. */
   interiors?: Record<string, string>;
   /** Cidade do Despertar: construções em imagem (`scripts/extract-town.py`); o resto é pintado em código. */

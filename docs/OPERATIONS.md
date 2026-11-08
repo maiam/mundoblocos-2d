@@ -169,7 +169,9 @@ onde o desenho desbota) → `optimize-assets.py`.
 --frame-h 112`, `calf.png … --frame-h 104` e `chick.png … --frame-h 88` (o ruído vermelho/amarelo do fundo do bezerro
 tem alfa ~1 e some no recorte).
 
-**Pranchas de crescimento** (árvores e cacto, grade 4×2 transparente em `assets-src/trees/<nome>.png`):
+**Árvores adultas** (v0.88.0, sem crescimento): `python3 scripts/process-trees.py <especie> img1.png img2.png … [--cut ALFA]` — uma ilustração por forma (PNG com alfa; `--cut` limpa halos de fundo semitransparentes) → guarda as fontes em `assets-src/arvores/<especie>/` e monta `src/assets/tree-<especie>.webp` (tira de quadros iguais; mesma escala para todas as formas). Os quadros por espécie estão em `TREE_FRAMES` (`render/textures.ts`): mude lá ao mudar a quantidade. Ícone de bloco de material novo: `python3 scripts/make-material-icons.py <material> <icone>`.
+
+**Prancha do cacto** (grade 4×2 transparente em `assets-src/trees/<nome>.png`; as outras árvores usavam esta prancha até a v0.87.0):
 `python3 scripts/extract-trees.py` → `tree-<nome>.png` (quadros de 192 px, mesma escala dentro da prancha, base no pé)
 + ícones das mudas e da maçã → `optimize-assets.py`. A grade da prancha não precisa ser exata: o script separa os 8
 desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e descarta o ruído do fundo.

@@ -26,7 +26,9 @@ scripts/
   extract-crops.py             pranchas de hortaliças 8×2 → folha 4×4 (batata, tomate, cenoura)
   extract-items.py             ícones soltos de itens (maçã, batata, tomate, cenoura) → 64×64
   sprite_segments.py           recorte de pranchas por pedaços conectados (usado pelos dois acima e por extract-trees)
-  extract-trees.py             pranchas de crescimento 4×2 (carvalho, macieira, cacto) → quadros + ícones de mudas/maçã
+  extract-trees.py             prancha 4×2 do cacto (e, até a v0.87.0, de carvalho/macieira) → quadros + ícone da maçã
+  process-trees.py             tira de formas variadas por espécie (carvalho, macieira, cerejeira; v0.88.0)
+  make-material-icons.py       ícone de bloco 3/4 a partir de topo e frente de um material V2
   extract-craftables.py        objetos de receita (fogueira, caldeirão, forno, cadeira) → sprite + ícone
   process-crop.py              folha de crescimento de planta → quadros ancorados pela base, mesma escala
   slice-icons.py               prancha em grade com transparência → um ícone por célula

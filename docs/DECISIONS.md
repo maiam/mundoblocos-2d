@@ -102,7 +102,8 @@
 | Tela de entrada dentro do jogo (não página separada): mundo em vitrine atrás, Novo jogo → montar personagem; Continuar só com jogo salvo; `?seed=`/`?personagem=` e Santuário pulam a tela | domains/player, ARCHITECTURE |
 | Aparência do personagem salva por mundo (`SaveData.look`, v6) e levada para mundo novo/sala; heroína continua opção e é o padrão de salvamentos antigos; chibi desenhado a 0,94 para igualar a altura da heroína | domains/save, domains/player |
 | Minimapa redondo, norte para cima, névoa por célula (raio 14) salva com o mundo; cor do mapa é aparência (`render/mapColors.ts`), não propriedade do bloco; só no mundo principal (`WorldProfile.minimap`) | domains/render, domains/save |
-| Árvores crescem de verdade (dono do produto, 2026-11-06): mudas de árvores adultas, estágios no `World.tick`; o gerador só cria adultas (variantes); macieira colhida volta a dar frutas | domains/farming |
+| ~~Árvores crescem de verdade (2026-11-06)~~ — **substituída** em 2026-11-08 (ADR 0024): árvores só adultas e variadas, sem mudas nem estágios; macieira colhida ainda volta a dar frutas | domains/farming |
+| Árvores adultas variadas, madeira de cerejeira e chunk do muro protegido (dono do produto, 2026-11-08) | [0024](adr/0024-arvores-adultas-cerejeira-chunk-do-muro.md) |
 | Macieiras misturadas nos Campos (1/6 das árvores), sem mudar cerejeiras nem a cidade | domains/farming, domains/world |
 | Cavalo, vaca e galinha = um só `FarmAnimal` com ritmo por tipo (não uma classe por bicho) | domains/npc |
 | Hortaliças plantam pelo próprio legume (sem semente separada); culturas numa tabela única (`CROPS`) com o trigo; fonte inicial: 2 de cada + capim (12%) | domains/farming |

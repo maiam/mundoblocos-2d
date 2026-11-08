@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.88.0 — 2026-11-08
+- **Não se constrói no chunk do muro** (dono do produto): todo chunk que tem um pedaço da muralha da cidade é protegido por
+  inteiro (nada quebra, coloca, ara nem planta), mesmo na parte que fica fora dos limites da cidade. O que já estava
+  construído ali continua; só não se constrói mais. O ponto "fora do portão" passou a ser o primeiro trecho da estrada fora
+  desse chunk.
+- **Árvores novas e sem crescimento**: carvalho (3 formas), macieira (2) e cerejeira (3) com a arte nova, sempre adultas; a
+  forma de cada árvore é sorteada pela posição. **Saíram** as mudas (itens e plantio) e os estágios jovens: mudas e jovens
+  de mundos e salas salvos viram a árvore adulta, e as mudas somem de bolsas, grades e baús. A macieira colhida ainda
+  volta a dar maçãs (com a mesma arte, enquanto não vem a "macieira colhida").
+- **Madeira de cerejeira**: Tora de Cerejeira (topo e frente) e Tábuas de Cerejeira (só o topo), colocáveis como os
+  materiais de carvalho (batente de porta, substituem a água). A Cerejeira derrubada dá 2–3 Toras de Cerejeira; 1 tora vira
+  2 tábuas (receita do construtor).
+- Novos scripts: `scripts/process-trees.py` (tira de variantes a partir das ilustrações) e
+  `scripts/make-material-icons.py` (ícone de bloco a partir de topo e frente).
+
 ## 0.87.0 — 2026-11-08
 - **Água nova e margens pintadas**: o topo da água do V2 (`agua`) é o ladrilho do mar e dos rios, e as margens ganham a
   transição da pintura de cada par: Água sobre Areia, Terra, Caminho e Grama, com espuma e água rasa. A barranca e o fio

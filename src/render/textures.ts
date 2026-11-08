@@ -4,7 +4,7 @@ import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2LevelFaces, v2WaterTop } from './materialsV2';
 import { TRANSITION_PIECES, TRANSITION_RULES, type TransitionRule } from './transitions';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
@@ -36,6 +36,8 @@ export const TEX_RES = 2;
 const T = TILE;
 const F = CUBE_FRONT;
 const WATER_VARIANTS = 3;
+/** Quantos materiais (as primeiras posições de `MATERIALS`) têm coluna no atlas antigo (`?blocos=legado`). */
+const LEGACY_MATERIALS = 15;
 
 /** Sprite posicionado em relação ao canto superior-esquerdo da célula (px de mundo). */
 export interface Sprite {
@@ -476,6 +478,8 @@ const OUTLINE: Record<number, string> = {
   [Block.STONE]: '#3e3a48',
   [Block.OAK_LOG]: '#3e2414',
   [Block.OAK_PLANKS]: '#4e3018',
+  [Block.CHERRY_LOG]: '#5a2a24',
+  [Block.CHERRY_PLANKS]: '#6a2e2a',
 };
 
 // ---------------------------------------------------------------- água
@@ -513,31 +517,32 @@ function waterTile(variant: number): HTMLCanvasElement {
 
 // ---------------------------------------------------------------- árvores e enfeites
 
+/** Quadros de cada tira de árvore adulta (`scripts/process-trees.py`): a variante de cada árvore é sorteada pela posição. */
+const TREE_FRAMES = { oak: 3, apple: 2, cherry: 3 } as const;
+/** Largura da árvore em células de mundo (o quadro tem a árvore mais larga da espécie de ponta a ponta). */
+const TREE_CELLS = 3.4;
+
 /**
- * Árvores e cactos das pranchas de crescimento (quadros 0–3 = linha de cima, 4–7 = de baixo). Carvalho: muda, jovem,
- * crescendo e, adulto, uma das variantes (grande, bolotas, flores, outono, musgo). Macieira: muda, jovem florida,
- * adulta com maçãs (variantes) e colhida (florida, sem frutas). Cacto: as 8 variantes. Sem a arte, ficam as pintadas.
+ * Árvores adultas e cacto (v0.88.0, sem crescimento): carvalho, macieira e cerejeira vêm em tiras de variantes (formas
+ * diferentes; a macieira colhida usa a mesma arte da carregada), o cacto, da prancha 4 × 2. Sem a arte, ficam as pintadas.
  */
 function growthTreeSprites(
-  art: { oak: HTMLImageElement; apple: HTMLImageElement; cactus: HTMLImageElement } | null, objects: Map<BlockId, Sprite>,
+  art: TreeArt | null, objects: Map<BlockId, Sprite>,
 ): Map<BlockId, Sprite[]> {
   const variants = new Map<BlockId, Sprite[]>();
   if (!art) return variants;
-  const oak = gridSprites(art.oak, 4, 2, 3.7, 7);
-  const apple = gridSprites(art.apple, 4, 2, 3.7, 7);
+  const oak = stripSprites(art.oak, TREE_FRAMES.oak, T * TREE_CELLS, 6);
+  const apple = stripSprites(art.apple, TREE_FRAMES.apple, T * TREE_CELLS, 6);
+  const cherry = stripSprites(art.cherry, TREE_FRAMES.cherry, T * TREE_CELLS, 6);
   const cactus = gridSprites(art.cactus, 4, 2, 1.7, 3);
   const set = (id: BlockId, frames: Sprite[]) => {
     objects.set(id, frames[0]);
     if (frames.length > 1) variants.set(id, frames);
   };
-  set(Block.OAK_SAPLING, [oak[0]]);
-  set(Block.OAK_YOUNG, [oak[1]]);
-  set(Block.OAK_GROWING, [oak[2]]);
-  set(Block.OAK_TREE, [oak[3], oak[4], oak[5], oak[6], oak[7]]);
-  set(Block.APPLE_SAPLING, [apple[0]]);
-  set(Block.APPLE_YOUNG, [apple[1]]);
-  set(Block.APPLE_TREE, [apple[2], apple[3], apple[5], apple[6], apple[7]]);
-  set(Block.APPLE_TREE_BARE, [apple[4]]);
+  set(Block.OAK_TREE, oak);
+  set(Block.APPLE_TREE, apple);
+  set(Block.APPLE_TREE_BARE, apple); // mesma variante por célula (mesma ordem): só falta a arte "colhida"
+  set(Block.SAKURA_TREE, cherry);
   set(Block.CACTUS, cactus);
   return variants;
 }
@@ -680,9 +685,10 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   const pack = art();
   if (getBlockAtlas()) {
     MATERIALS.forEach((id, i) => {
+      icons.set(id, pack.materialIcons[id] ?? '');
+      if (i >= LEGACY_MATERIALS) return; // madeira de cerejeira e outros novos só existem no V2 (sem coluna no atlas antigo)
       groundTop.set(id, materialTop(i));
       objects.set(id, materialCube(i, OUTLINE[id] ?? '#3a2a20'));
-      icons.set(id, pack.materialIcons[id] ?? '');
     });
   }
   // Água: topo do bloco de água da arte, ladrilho contínuo sempre na mesma orientação (espelhar por célula

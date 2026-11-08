@@ -218,6 +218,12 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
    Terra Arada, Caminho×Areia/Terra e Grama×Caminho invertido, se o dono do produto quiser; espuma nas pontas de poças de 1
    célula e nos cantos côncavos ainda é simples (ver CURRENT_STATE).
 
+5d. ✅ **Árvores adultas, cerejeira e chunk do muro** (v0.88.0, ADR 0024). Falta: arte da **macieira colhida** (hoje a colhida
+   usa a mesma arte da carregada), **tábuas de cerejeira**: a emenda do topo marca ⚠ (3,1 no relatório; pedir topo seamless),
+   **frente das tábuas** (hoje repete o topo), formas novas de árvore se o dono do produto quiser, tamanho das árvores (3,4 células de
+   largura; ajustar `TREE_CELLS` se pesar na tela) e receitas que usem tábua de cerejeira (porta, baú, cadeira, cerca
+   só aceitam Tábua de Carvalho). Servidor: sincronizar o pacote (regra do muro, mudas e ids novos).
+
 ### Fase 6 — Mundo de progressão (visão do dono do produto, `PROJECT_CONTEXT`)
 Cidades e dungeons que acompanham a evolução dos personagens: Cidade 1 para novatos; cidades de nível mais alto mais
 longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de dependência):
