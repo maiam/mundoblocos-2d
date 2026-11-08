@@ -89,7 +89,7 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
   espalhe `if (ferramenta === …)` pelo `Game`.
 - Os dois artefatos usam o mesmo `dist/`: gere o build do mundo imediatamente antes de publicá-lo.
 - Ao republicar só os assets novos, a chave de `files` é o **nome do arquivo sem pasta** (como em
-  `mundoblocos-files.json`, ex.: `walls-XXXX.webp`); com `mundoblocos-assets/` na frente a imagem não carrega (v0.68.0).
+  `mundoblocos-files.json`, ex.: `materials-v2-XXXX.webp`); com `mundoblocos-assets/` na frente a imagem não carrega (v0.68.0).
 - **Nunca use `window.confirm/alert/prompt`**: o iframe do Artifact bloqueia e devolve falso sem mostrar nada (o botão
   "Novo mundo" já parou assim). Confirme na própria UI (ex.: tocar de novo, `Menu.ask`).
 - Testes no navegador: Playwright já instalado (`require('playwright')`); use `window.__game` no dev.

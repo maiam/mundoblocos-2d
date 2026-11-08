@@ -1,7 +1,7 @@
 import type { MonsterKind } from '../world/dungeon';
 import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
-import { Block } from '../world/blocks';
+import { Block, isRemovedStack } from '../world/blocks';
 import { fromB64, toB64 } from '../net/b64';
 import { startingGrid } from './hotbar';
 import type { WorldId } from '../world/profiles';
@@ -141,7 +141,17 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 8) d = { ...d, v: 9, player: { ...d.player, hunger: HUNGER.max } };
   // v9 → v10 (Herói): personagem pronto escolhido na tela de personagem; quem já jogava continua com a Heroína.
   if (d.v === 9) d = { ...d, v: 10, body: 'heroine' };
-  return d.v === SAVE_VERSION ? d : null;
+  return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
+}
+
+/** Tira do salvamento o que é de bloco que saiu do jogo (antigas paredes): pilhas da bolsa, da grade e dos baús. */
+function withoutRemovedBlocks(d: SaveData): SaveData {
+  return {
+    ...d,
+    inventory: Object.fromEntries(Object.entries(d.inventory).filter(([k]) => !isRemovedStack(k))),
+    hotbar: d.hotbar && d.hotbar.map((s) => (s !== null && isRemovedStack(s) ? null : s)),
+    chests: d.chests && d.chests.map((c) => ({ ...c, slots: c.slots.map((s) => (s && isRemovedStack(s.item) ? null : s)) })),
+  };
 }
 
 /** Migrações antigas até o formato v4. */

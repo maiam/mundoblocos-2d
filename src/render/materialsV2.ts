@@ -6,7 +6,7 @@ import { Block, type BlockId } from '../world/blocks';
  * e frente de `CUBE_FRONT` (18, decidido em 2026-11-07) — a arte não traz o cubo pronto. Sem frente própria, a frente
  * repete o topo (o pipeline resolve).
  *
- * Fase de validação: areia, terra, grama, as cinco pedras, Caminho de Terra e Terra Arada, e só com `?blocos=v2` (jogo) ou na cena `?materiais=1`. Sem a chave nada
+ * Fase de validação: areia, terra, grama, as cinco pedras, Caminho de Terra, Terra Arada, Tora e Tábuas de Carvalho, e só com `?blocos=v2` (jogo) ou na cena `?materiais=1`. Sem a chave nada
  * muda (atlas legado). Aparência é do render; regras de bloco continuam em `world/blocks.ts`.
  */
 export interface MaterialsV2Manifest {
@@ -34,6 +34,9 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   [Block.STONE_FLOOR]: { top: 'chao-de-pedra', front: 'chao-de-pedra' },
   [Block.STONE_SMOOTH]: { top: 'pedra-lisa', front: 'pedra-lisa' },
   [Block.STONE_POLISHED]: { top: 'pedra-polida', front: 'pedra-polida' },
+  // Madeira de carvalho: a Tora tem topo (anéis) e frente (casca) próprios; as Tábuas, só o topo (teste do dono do produto).
+  [Block.OAK_LOG]: { top: 'tora-de-carvalho', front: 'tora-de-carvalho' },
+  [Block.OAK_PLANKS]: { top: 'tabuas-de-carvalho', front: 'tabuas-de-carvalho' },
   // Caminho de Terra e Terra Arada: a frente é sempre terra (regra do dono do produto), com a franja do próprio topo.
   [Block.PATH]: { top: 'caminho', front: 'terra', overlay: 'caminho' },
   [Block.TILLED]: { top: 'arada', front: 'terra', overlay: 'arada' },

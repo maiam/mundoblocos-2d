@@ -21,7 +21,6 @@ scripts/
   extract-dungeon.py           pranchas da dungeon → chão, montanhas, pedras, blocos decorados e aranhas
   optimize-assets.py           src/assets/*.png → *.webp (o que o jogo importa)
   extract-rocks.py             prancha de pedras soltas → tira de pedregulhos (40 artes)
-  extract-walls.py             prancha de 8 pedras × 3 alturas → colunas de parede (3 de altura) + ícones
   extract-love.py              prancha de coraçõezinhos 4×4 → tira de 16 quadros do namoro dos animais
   extract-fence.py             moldura de cerca + portão de referência → peças emendáveis, portão e ícones
   extract-crops.py             pranchas de hortaliças 8×2 → folha 4×4 (batata, tomate, cenoura)

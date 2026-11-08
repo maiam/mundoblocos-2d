@@ -3,7 +3,7 @@ import type { Camera } from '../game/camera';
 import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
-import { Block, blockDef, type BlockId, isDoor, isGate, isWall, joinsFence } from '../world/blocks';
+import { Block, blockDef, type BlockId, isDoor, isGate, joinsFence } from '../world/blocks';
 import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, fenceParts } from './fence';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
@@ -16,9 +16,9 @@ import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
 import { Particles } from './particles';
-import { addDungeonTextures, addWallTextures, createBlockTextures, cubeSpriteV2, drawCubeParts, type BlockTextures, type Sprite, WALL_EDGE_PX } from './textures';
+import { addDungeonTextures, createBlockTextures, cubeSpriteV2, drawCubeParts, type BlockTextures, type Sprite } from './textures';
 import { type CubeView, cubeEdges, materialsV2InWorld, V2_BLOCKS } from './materialsV2';
-import { loadDungeonArt, loadWallArt } from './blockArt';
+import { loadDungeonArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
 import type { Hit } from '../world/progression';
@@ -106,7 +106,6 @@ export class Renderer {
     this.textures = createBlockTextures({ town: !!world.town });
     // Arte da dungeon em segundo plano (não atrasa o início): quando chega, entra nas texturas e o chão redesenha.
     void loadDungeonArt().then((d) => { if (d && addDungeonTextures(this.textures)) this.chunks.invalidateAll(); });
-    void loadWallArt().then(() => addWallTextures(this.textures));
     this.chunks = new ChunkRenderer(world, this.textures);
     loadCropSprites(this.textures.objects);
     for (const [id, url] of Object.entries(art().interiors ?? {})) {
@@ -206,8 +205,6 @@ export class Renderer {
           this.drawDoor(cam, id, x, y, opts.elapsed);
         } else if (id === Block.FENCE && this.textures.fencePieces) {
           this.drawFence(cam, x, y, this.textures.fencePieces);
-        } else if (isWall(id) && this.textures.wallSprites.has(id)) {
-          this.drawWall(cam, id, x, y);
         } else if (isGate(id)) {
           gates.push(x); // depois da linha: os postes do portão cobrem as travessas das cercas vizinhas
         } else if (id !== Block.AIR) {
@@ -420,22 +417,6 @@ export class Renderer {
       const lift = blockDef(id).shape === 'tree' ? -0.9 : 0.1 - (level * CUBE_FRONT) / TILE;
       glows.push(at ? { x: x + 0.5 + at[0], y: y + 1 + at[1], color: glow } : { x: x + 0.5, y: y + lift, color: glow });
     }
-  }
-
-  /**
-   * Parede de pedra: coluna alta; encostada em outra parede (leste/oeste), perde o contorno daquele lado e vira um
-   * muro contínuo (a coluna estica um pouco para cobrir a célula inteira).
-   */
-  private drawWall(cam: Camera, id: BlockId, x: number, y: number): void {
-    const s = this.textures.wallSprites.get(id)!;
-    const cw = s.canvas.width;
-    const ch = s.canvas.height;
-    const sx0 = isWall(this.world.getObject(x - 1, y)) ? WALL_EDGE_PX : 0;
-    const sx1 = isWall(this.world.getObject(x + 1, y)) ? cw - WALL_EDGE_PX : cw;
-    const z = cam.zoom;
-    const dx = Math.round(cam.worldToScreenX(x * TILE + s.ox));
-    const dy = Math.round(cam.worldToScreenY(y * TILE + s.oy));
-    this.ctx.drawImage(s.canvas, sx0, 0, sx1 - sx0, ch, dx, dy, Math.ceil(s.w * z), Math.round(s.h * z));
   }
 
   /** Cerca: emenda com os vizinhos (cerca ou portão) cortando as peças na âncora (`render/fence.ts`). */

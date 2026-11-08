@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, toggled, TREE_NEXT } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, toggled, TREE_NEXT } from './blocks';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave } from './dungeon';
@@ -316,6 +316,7 @@ export class World {
     const lx = toLocal(x);
     const ly = toLocal(y);
     const chunk = this.loadChunk(cx, cy);
+    if (isRemovedBlock(id)) id = Block.AIR; // bloco que saiu do jogo (antigas paredes): vindo de dados ou de versão antiga
     if (level === 'ground') chunk.setGround(lx, ly, id);
     else chunk.setLevel(lx, ly, level, id);
     if (level === 0) {
@@ -493,12 +494,12 @@ export class World {
   // ---- Portas ----
 
   /**
-   * Batente da porta: qualquer bloco (cubo) ou parede de madeira ou de pedra no nível 0 (dono do produto, 07/11: a porta
-   * vai entre quaisquer blocos de madeira ou pedra, inclusive as paredes).
+   * Batente da porta: qualquer bloco (cubo) de madeira ou de pedra no nível 0 (dono do produto, 07/11: a porta vai entre
+   * quaisquer blocos de madeira ou pedra).
    */
   private isDoorJamb(x: number, y: number): boolean {
     const d = blockDef(this.getObject(x, y));
-    return (d.shape === 'cube' || d.shape === 'wall') && (d.organic === 'wood' || d.stone);
+    return d.shape === 'cube' && (d.organic === 'wood' || d.stone);
   }
 
   // ---- Assentos ----
@@ -839,6 +840,8 @@ export class World {
     const c = new Chunk(cx, cy);
     c.ground.set(ground.subarray(0, c.ground.length));
     levels.forEach((l, i) => { if (i < c.levels.length) c.levels[i].set(l.subarray(0, c.levels[i].length)); });
+    // Blocos que saíram do jogo (antigas paredes) em mundos e salas salvos viram vazio.
+    for (const l of c.levels) for (let i = 0; i < l.length; i++) if (isRemovedBlock(l[i])) l[i] = Block.AIR;
     // Áreas protegidas (cidade/dungeon) sempre voltam do gerador: salvamentos antigos podem ter outro terreno ali.
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {

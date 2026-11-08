@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.83.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.84.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.83.0 | `package.json` |
+| Versão do jogo | 0.84.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
 | Testes | 225 em 43 arquivos (Vitest), todos passando | `npm test` |
@@ -45,9 +45,9 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Sistemas de jogo
 - **Ferramentas** (espada, enxada, picareta, pá, machado): regras em `TOOLS` (`world/items.ts`) — o que quebram,
   toque no chão e drops. Detalhe em `domains/player.md` e `domains/farming.md`.
-- **Blocos e paredes**: 12 materiais de construção obtidos pelo jogador (pilha de até 3 cubos; 5 pedras: Bruta, Tijolo, Chão,
-  Lisa e Polida — as outras 3 foram aposentadas e só existem em mundos salvos) e 13 paredes com receita (3 blocos → 1 parede); porta
-  entre dois batentes (madeira, pedra ou parede), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
+- **Blocos**: 12 materiais de construção obtidos pelo jogador (pilha de até 3 cubos; 5 pedras: Bruta, Tijolo, Chão,
+  Lisa e Polida — as outras 3 foram aposentadas e só existem em mundos salvos). **Não há paredes** (saíram em 08/11; em
+  mundos e bolsas antigos viram vazio). Porta entre dois batentes (bloco de madeira ou de pedra), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
   (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos.
 - **Cultivo e árvores**: trigo, batata, tomate e cenoura (só em Terra Arada); árvores que crescem (carvalho,
   macieira) e maçãs colhíveis.
@@ -102,13 +102,13 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Chão V2 sem grade**: o chão dos materiais V2 não leva a "grade sutil de blocos" que o `chunkRenderer` desenha
   sobre o chão antigo (era ela, mais a arte, que riscava cada célula); o chão antigo continua com a grade.
 - Materiais com **arte oficial**: terra, areia e as cinco pedras (Bruta, Tijolo, Chão, Lisa e Polida: topo e frente próprios
-  ou o topo), Caminho de Terra, Terra Arada
-  e grama — estes três com **frente sempre de terra** e a franja do próprio topo (reduzida aos 32 px; só no nível mais
-  alto da pilha). Pipeline: `scripts/import-material.py` →
-  `scripts/build-materials.py` → `materials-v2.webp` (~91 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
+  ou o topo), Tora de Carvalho (topo de anéis e frente de casca), Tábuas de Carvalho (só o topo, em teste)
+  e Caminho de Terra, Terra Arada e grama — estes três com **frente sempre de terra** e a franja do próprio topo
+  (reduzida aos 32 px; só no nível mais alto da pilha). Pipeline: `scripts/import-material.py` →
+  `scripts/build-materials.py` → `materials-v2.webp` (~110 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
 - Para ver: `?blocos=v2` troca esses blocos no mundo (sem as variações da grama legada); `?materiais=1` (só em
   desenvolvimento) põe legado e V2 lado a lado; `?escala=1&blocos=v2`, a arte V2 na cena de escala.
-- Falta: transições entre chãos e migração dos outros materiais (`NEXT_STEPS`, Fase V).
+- Falta: transições entre chãos (máscaras da arte) e decidir quando o V2 vira o padrão (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
 - `npx tsc --noEmit` limpo; 225 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).

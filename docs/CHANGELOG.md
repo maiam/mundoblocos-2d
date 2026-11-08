@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.84.0 — 2026-11-08
+- **As paredes saíram do jogo** (decisão do dono do produto): sem as 16 paredes, sem as receitas e sem a arte delas (a
+  tira de paredes que carregava em segundo plano e os ícones). Mundos e salas já salvos que tenham paredes ficam com o
+  espaço vazio, e paredes na bolsa, na grade ou nos baús somem — nada quebra. A porta agora vai entre blocos de madeira
+  ou de pedra.
+- **Materiais V2 — madeira de carvalho** (só com `?blocos=v2`): Tora de Carvalho com topo (anéis) e frente (casca)
+  próprios, e Tábuas de Carvalho só com o topo (a frente repete o topo; em teste). A cena `?materiais=1` mostra pilhas
+  de tora e tábuas.
+
 ## 0.83.0 — 2026-11-08
 - **Cinco pedras** (decisão do dono do produto): o jogo fica com Pedra Bruta, Tijolo de Pedra, Chão de Pedra, Pedra Lisa e
   Pedra Polida. **Pedra Irregular, Pedra Rachada e Tijolo de Pedra Rachado saíram**: sem receita (nem a parede de cada
