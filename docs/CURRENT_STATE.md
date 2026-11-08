@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.86.0 | `package.json` |
+| Versão do jogo | 0.87.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 11 | `src/game/save.ts` |
 | Testes | 237 em 45 arquivos (Vitest), todos passando | `npm test` |
@@ -107,11 +107,14 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   e Caminho de Terra, Terra Arada e grama — estes três com **frente sempre de terra** e a franja do próprio topo
   (reduzida aos 32 px; só no nível mais alto da pilha). Pipeline: `scripts/import-material.py` →
   `scripts/build-materials.py` → `materials-v2.webp` (~110 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
-- **Transições entre chãos** (v0.85.0): a Grama avança sobre Terra, Caminho e Areia pela borda, por uma máscara de alfa
-  (`assets-src/materiais/_mascaras/avanco.png`, `transitions-v2.webp`: 4 bordas, a forma girada, + 4 cantos). Só chão plano
-  e mesma altura; a textura nunca gira. Regras em `render/transitions.ts` (`TRANSITION_RULES`), desenhadas no `chunkRenderer`.
+- **Transições entre chãos** (v0.87.0): uma forma por par (`assets-src/materiais/_mascaras/<forma>.png`, derivada da
+  pintura por `scripts/import-transition.py`; `transitions-v2.webp`: por peça máscara + halo + espuma, 4 bordas girando a
+  forma + 4 cantos). Grama sobre Terra/Caminho/Areia, Areia sobre Terra e Água sobre Areia/Terra/Caminho/Grama (a água com
+  faixa pintada: espuma e água rasa). Só chão plano e mesma altura; a textura nunca gira. Regras por par em
+  `render/transitions.ts` (`TRANSITION_RULES` com `shape`), desenhadas no `chunkRenderer` (halo, corpo, espuma). A água
+  do V2 (`agua`) é o ladrilho do mar/rios; barranca e fio de espuma antigos ficam só onde a margem não é V2.
 - Para ver: `?materiais=1` (só em desenvolvimento) põe legado e V2 lado a lado; `?escala=1`, a cena de escala.
-- Falta: máscaras/regras para outros pares de chãos (ex.: Areia sobre Terra), se a arte quiser; atlas antigo sai quando
+- Falta: transições da Terra Arada e de outros pares (Caminho×Areia etc.), se a arte quiser; atlas antigo sai quando
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho

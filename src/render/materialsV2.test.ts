@@ -38,10 +38,10 @@ describe('Padrão de Materiais V2 (ADR 0023)', () => {
     expect(blocksV2FromSearch('?blocos=legado')).toBe(false);
   });
 
-  it('atlas de máscaras: uma forma, oito peças na ordem de TRANSITION_PIECES', () => {
+  it('atlas de formas: uma por par, oito peças na ordem de TRANSITION_PIECES', () => {
     expect(manifest.masks!.order).toEqual([...TRANSITION_PIECES]);
     expect(manifest.masks!.cell).toBe(TILE * TEX_RES);
-    expect(manifest.masks!.shapes).toEqual(['avanco']);
+    expect(manifest.masks!.shapes).toEqual(['agua-areia', 'agua-caminho', 'agua-grama', 'agua-terra', 'areia-terra', 'grama-areia', 'grama-caminho', 'grama-terra']);
   });
 });
 

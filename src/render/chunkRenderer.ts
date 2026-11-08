@@ -158,9 +158,11 @@ export class ChunkRenderer {
         if (g !== Block.VOID && g !== Block.HOLE) this.drawSkyEdges(ctx, x, y, px, py);
 
         if (liquid(g)) {
+          // Margem pintada (V2): o chão vizinho que recebe a água já traz a própria borda e a espuma; sem barranca nem fio.
+          const shore = (nx: number, ny: number) => this.tex.transitionOnto.get(world.getGround(nx, ny))?.some((r) => r.over === Block.WATER) ?? false;
           // Barranca: o chão ao norte parece mais alto que a água.
           const north = world.getGround(x, y - 1);
-          if (!liquid(north)) {
+          if (!liquid(north) && !shore(x, y - 1)) {
             const bank = this.tex.bankColor.get(north) ?? '#9a6a42';
             const grad = ctx.createLinearGradient(0, py, 0, py + BANK_H);
             grad.addColorStop(0, bank);
@@ -172,18 +174,21 @@ export class ChunkRenderer {
           }
           // Espuma nas margens laterais e sul.
           ctx.fillStyle = 'rgba(235, 252, 255, 0.7)';
-          if (!liquid(world.getGround(x - 1, y))) ctx.fillRect(px, py, 2, TILE);
-          if (!liquid(world.getGround(x + 1, y))) ctx.fillRect(px + TILE - 2, py, 2, TILE);
-          if (!liquid(world.getGround(x, y + 1))) ctx.fillRect(px, py + TILE - 2, TILE, 2);
+          if (!liquid(world.getGround(x - 1, y)) && !shore(x - 1, y)) ctx.fillRect(px, py, 2, TILE);
+          if (!liquid(world.getGround(x + 1, y)) && !shore(x + 1, y)) ctx.fillRect(px + TILE - 2, py, 2, TILE);
+          if (!liquid(world.getGround(x, y + 1)) && !shore(x, y + 1)) ctx.fillRect(px, py + TILE - 2, TILE, 2);
         }
 
         // Transições entre chãos (V2, ADR 0023): o material vizinho que avança entra pela máscara; só chão plano.
-        const invaders = this.tex.transitionOnto.get(g);
-        if (invaders) {
-          for (const inv of invaders) {
-            const layers = this.tex.transitionOver.get(inv);
+        const rules = this.tex.transitionOnto.get(g);
+        if (rules) {
+          for (const rule of rules) {
+            const layers = this.tex.transitionOver.get(rule.shape);
             if (!layers) continue;
-            for (const i of transitionPieces((dx, dy) => world.getGround(x + dx, y + dy) === inv)) ctx.drawImage(layers[i], px, py, TILE, TILE);
+            const pieces = transitionPieces((dx, dy) => world.getGround(x + dx, y + dy) === rule.over);
+            for (const set of [layers.halo, layers.body, layers.foam]) {
+              if (set) for (const i of pieces) ctx.drawImage(set[i], px, py, TILE, TILE);
+            }
           }
         }
 

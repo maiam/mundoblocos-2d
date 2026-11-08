@@ -17,7 +17,7 @@ export interface MaterialsV2Manifest {
   materials: string[];
   overlay: string[];
   /** Atlas de máscaras de transição (`transitions-v2.webp`): uma linha por forma, uma célula por peça (`TRANSITION_PIECES`). */
-  masks?: { cell: number; order: string[]; shapes: string[] };
+  masks?: { cell: number; order: string[]; shapes: string[]; overlay?: string[] };
 }
 
 /** Sombra da frente (luz vem de cima): a frente é um pouco mais escura que o topo. */
@@ -67,8 +67,8 @@ export function setMaterialsV2(img: HTMLImageElement, m: MaterialsV2Manifest, us
 }
 
 /** Atlas das máscaras de transição, ou null (sem máscaras no pacote, ou V2 desligado). */
-export function transitionMasks(): { img: HTMLImageElement; cell: number; order: string[]; shapes: string[] } | null {
-  return enabled && maskAtlas && manifest?.masks ? { img: maskAtlas, ...manifest.masks } : null;
+export function transitionMasks(): { img: HTMLImageElement; cell: number; order: string[]; shapes: string[]; overlay: string[] } | null {
+  return enabled && maskAtlas && manifest?.masks ? { img: maskAtlas, overlay: [], ...manifest.masks } : null;
 }
 
 /** O mundo deve usar V2 para os blocos-piloto? */
@@ -223,5 +223,12 @@ export function v2GroundTop(id: BlockId, ctx: Ctx, w: number, h: number): boolea
   const b = V2_BLOCKS[id];
   if (!b || col(b.top) < 0) return false;
   paint(ctx, b.top, 'top', 0, 0, w, h);
+  return true;
+}
+
+/** Topo da água do V2 (`agua`): ladrilho contínuo do mar e dos rios, sempre na direção desenhada. False sem a arte. */
+export function v2WaterTop(ctx: Ctx, w: number, h: number): boolean {
+  if (col('agua') < 0) return false;
+  paint(ctx, 'agua', 'top', 0, 0, w, h);
   return true;
 }

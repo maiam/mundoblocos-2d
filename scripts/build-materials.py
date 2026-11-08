@@ -12,8 +12,9 @@ Lê assets-src/materiais/<material>/{top,front,front_overlay}.png (128×128), va
 Máscaras de transição (assets-src/materiais/_mascaras/<forma>.png, de scripts/import-mask.py): FORMA só de alfa, sólida à
 esquerda e irregular à direita (o material que avança vem do oeste). O script gira a forma para as outras três direções
 (rotação da FORMA é permitida; a textura que aparece por ela nunca gira) e monta os 4 cantos (só vizinho diagonal) como a
-interseção de duas bordas recuadas. Saída: src/assets/transitions-v2.webp, uma linha por forma, 8 células de 64 px na
-ordem N, E, S, W, NE, SE, SW, NW (manifesto: "masks").
+interseção de duas bordas recuadas. Saída: src/assets/transitions-v2.webp, uma linha por forma (de scripts/import-transition.py;
+formas com <forma>.overlay.png trazem a faixa pintada), 24 células de 64 px: 8 máscaras, 8 halos (fora da forma) e 8
+espumas (dentro), na ordem N, E, S, W, NE, SE, SW, NW (manifesto: "masks").
 Relatório: emenda do topo e da frente (horizontal e vertical) relativa ao miolo (1,0 = invisível; ⚠ acima de 1,6);
 --preview grava um 3×3 de cada topo e de cada frente em assets-src/materiais/_preview/ (fora do git).
 Redução: LANCZOS (suavizada; contrato § 7). Já sai em WebP sem perdas (não precisa de optimize-assets.py).
@@ -83,43 +84,86 @@ def shift(a: np.ndarray, dx: int, dy: int) -> np.ndarray:
     return out
 
 
+def soft(a: np.ndarray, r: int) -> np.ndarray:
+    """Média em caixa (r px) de um plano 2D, para dilatar uma máscara de forma suave."""
+    k = 2 * r + 1
+    out = a.astype(np.float32)
+    for axis in (0, 1):
+        pad = [(0, 0), (0, 0)]
+        pad[axis] = (r, r)
+        c = np.cumsum(np.pad(out, pad, mode='edge'), axis=axis, dtype=np.float64)
+        c = np.concatenate([np.zeros_like(np.take(c, [0], axis=axis)), c], axis=axis)
+        out = ((np.take(c, range(k, c.shape[axis]), axis=axis) - np.take(c, range(0, c.shape[axis] - k), axis=axis)) / k).astype(np.float32)
+    return out
+
+
 def build_masks() -> list[str]:
-    """Atlas das máscaras: por forma, as 4 bordas (a forma girada) e os 4 cantos (interseção de duas bordas recuadas)."""
-    shapes = sorted(p.stem for p in MASKS_DIR.glob('*.png')) if MASKS_DIR.exists() else []
+    """Atlas das formas: por forma, 8 máscaras (as 4 bordas = forma girada; os 4 cantos = interseção de duas bordas
+    recuadas) e 8 faixas pintadas (espuma/água rasa/halo, só nas formas com `.overlay.png`; mesma geometria)."""
+    shapes = sorted(p.stem for p in MASKS_DIR.glob('*.png') if not p.stem.endswith('.overlay')) if MASKS_DIR.exists() else []
     if not shapes:
         return []
     cell = CELL
-    atlas = Image.new('RGBA', (cell * len(MASK_ORDER), cell * len(shapes)))
+    atlas = Image.new('RGBA', (cell * len(MASK_ORDER) * 3, cell * len(shapes)))
+    with_overlay: list[str] = []
+    pull = int(round(cell * CORNER_PULL))
+    rotations = {'W': None, 'N': -90, 'E': 180, 'S': 90}  # o material que avança vem do lado indicado
+    corners = {'NE': ('N', 'E'), 'SE': ('S', 'E'), 'SW': ('S', 'W'), 'NW': ('N', 'W')}
+
+    def rot(img: Image.Image, k: str) -> Image.Image:
+        return img if rotations[k] is None else img.rotate(rotations[k])
+
+    def pulled(arr: np.ndarray, k: str) -> np.ndarray:  # cada borda recua em direção ao próprio lado
+        return {'W': lambda a: shift4(a, -pull, 0), 'E': lambda a: shift4(a, pull, 0),
+                'N': lambda a: shift4(a, 0, -pull), 'S': lambda a: shift4(a, 0, pull)}[k](arr)
+
     for row, name in enumerate(shapes):
         src = Image.open(MASKS_DIR / f'{name}.png').convert('RGBA')
         w = src.resize((cell, cell), Image.LANCZOS).getchannel('A')
-        edge = {  # o material que avança vem do lado indicado (a parte sólida fica nesse lado)
-            'W': w,
-            'N': w.rotate(-90),
-            'E': w.rotate(180),
-            'S': w.rotate(90),
-        }
-        arr = {k: np.asarray(v).astype(np.float32) for k, v in edge.items()}
-        pull = int(round(cell * CORNER_PULL))
-        pulled = {  # cada borda recua em direção ao próprio lado, para o canto virar só uma ponta
-            'W': shift(arr['W'], -pull, 0), 'E': shift(arr['E'], pull, 0),
-            'N': shift(arr['N'], 0, -pull), 'S': shift(arr['S'], 0, pull),
-        }
-        corners = {'NE': ('N', 'E'), 'SE': ('S', 'E'), 'SW': ('S', 'W'), 'NW': ('N', 'W')}
-        cells = {k: arr[k] for k in 'NESW'}
+        edge = {k: np.asarray(rot(w, k)).astype(np.float32) for k in rotations}
+        pm = {k: pulled(edge[k], k) for k in rotations}
+        cells = dict(edge)
         for k, (a, b) in corners.items():
-            cells[k] = pulled[a] * pulled[b] / 255.0
+            cells[k] = pm[a] * pm[b] / 255.0
         for i, key in enumerate(MASK_ORDER):
             alpha = Image.fromarray(np.clip(cells[key], 0, 255).astype(np.uint8), 'L')
-            rgba = Image.merge('RGBA', (alpha, alpha, alpha, alpha))  # só o alfa importa; cor branca
-            rgba.putalpha(alpha)
             white = Image.new('RGBA', (cell, cell), (255, 255, 255, 0))
             white.putalpha(alpha)
             atlas.paste(white, (i * cell, row * cell))
-        print(f'máscara {name}: 4 bordas + 4 cantos')
+        ov_path = MASKS_DIR / f'{name}.overlay.png'
+        if ov_path.exists():
+            with_overlay.append(name)
+            ov = Image.open(ov_path).convert('RGBA').convert('RGBa').resize((cell, cell), Image.LANCZOS)  # alfa pré-multiplicado
+            ev = {k: np.asarray(rot(ov, k)).astype(np.float32) for k in rotations}  # RGBa (cor já × alfa)
+            pv = {k: pulled(ev[k], k) for k in rotations}
+            ocells = dict(ev)
+            for k, (a, b) in corners.items():
+                # Perto da divisa de A só vale onde o canto (a metade de B recuada, dilatada) está; e vice-versa.
+                near_b = np.clip(soft(pm[b], max(2, pull // 3)) / 255.0 * 2, 0, 1)[..., None]
+                near_a = np.clip(soft(pm[a], max(2, pull // 3)) / 255.0 * 2, 0, 1)[..., None]
+                ca = pv[a] * near_b
+                cb = pv[b] * near_a
+                ocells[k] = ca + cb * (1 - ca[..., 3:4] / 255.0)  # 'over' em RGBa
+            for i, key in enumerate(MASK_ORDER):
+                # Duas camadas: o halo do lado de FORA da forma (areia molhada etc., desenhado ANTES das peças, para outra
+                # peça de água cobrir) e a espuma do lado de DENTRO (por cima); assim a faixa de uma borda não suja a água
+                # que outra borda da mesma célula já pôs.
+                inside = ocells[key] * (cells[key] / 255.0)[..., None]
+                for part, layer in ((1, ocells[key] - inside), (2, inside)):
+                    img = Image.fromarray(np.clip(layer, 0, 255).astype(np.uint8), 'RGBa').convert('RGBA')
+                    atlas.paste(img, ((part * len(MASK_ORDER) + i) * cell, row * cell))
+        print(f'forma {name}: 4 bordas + 4 cantos' + (' + faixa pintada' if name in with_overlay else ''))
     atlas.save(OUT_MASKS, 'WEBP', lossless=True, method=6)
     print(f'{OUT_MASKS.relative_to(ROOT)} {atlas.size[0]}×{atlas.size[1]} ({OUT_MASKS.stat().st_size // 1024} kB)')
+    build_masks.overlay = with_overlay  # type: ignore[attr-defined]
     return shapes
+
+
+def shift4(a: np.ndarray, dx: int, dy: int) -> np.ndarray:
+    """`shift` para um plano 2D ou H×W×C (só desloca os dois primeiros eixos)."""
+    if a.ndim == 2:
+        return shift(a, dx, dy)
+    return np.dstack([shift(a[..., c], dx, dy) for c in range(a.shape[2])])
 
 
 def main() -> int:
@@ -201,7 +245,7 @@ def main() -> int:
                 'overlay': [m[0] for m in mats if m[3] is not None]}
     shapes = build_masks()
     if shapes:
-        manifest['masks'] = {'cell': CELL, 'order': MASK_ORDER, 'shapes': shapes}
+        manifest['masks'] = {'cell': CELL, 'order': MASK_ORDER, 'shapes': shapes, 'overlay': build_masks.overlay}  # type: ignore[attr-defined]
     OUT_JSON.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     print(f'{OUT_IMG.relative_to(ROOT)} {atlas.size[0]}×{atlas.size[1]} ({OUT_IMG.stat().st_size // 1024} kB) + manifesto')
     return 0

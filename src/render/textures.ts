@@ -2,8 +2,8 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2LevelFaces } from './materialsV2';
-import { TRANSITION_PIECES, TRANSITION_RULES } from './transitions';
+import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2LevelFaces, v2WaterTop } from './materialsV2';
+import { TRANSITION_PIECES, TRANSITION_RULES, type TransitionRule } from './transitions';
 import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
@@ -54,9 +54,9 @@ export interface BlockTextures {
   /** Chãos do Padrão V2 (ADR 0023): textura contínua, sem a grade sutil de blocos por cima (`chunkRenderer`). */
   continuousGround: Set<BlockId>;
   /** Transições de chão (V2): por material que avança, as 8 peças (bordas e cantos) já com o topo dele por dentro da máscara. */
-  transitionOver: Map<BlockId, HTMLCanvasElement[]>;
+  transitionOver: Map<string, TransitionLayers>;
   /** Transições de chão: por material que recebe, quais materiais avançam sobre ele (`TRANSITION_RULES`). */
-  transitionOnto: Map<BlockId, BlockId[]>;
+  transitionOnto: Map<BlockId, TransitionRule[]>;
   /** Materiais com várias artes de chão (ex.: Terra com Grama): o chão escolhe uma por célula (hash da seed). */
   groundVariants: Map<BlockId, HTMLCanvasElement[]>;
   water: HTMLCanvasElement[];
@@ -347,28 +347,35 @@ export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2'): { cube: Sprite; 
  * dentro da máscara de alfa (`source-in`; a máscara é a única coisa que gira, o topo nunca). Só entre chãos V2 e se o
  * pacote trouxe as máscaras. Nada de ler pixel de canvas: tudo é composição.
  */
-function buildTransitions(groundTop: Map<BlockId, HTMLCanvasElement>, continuous: Set<BlockId>): { over: Map<BlockId, HTMLCanvasElement[]>; onto: Map<BlockId, BlockId[]> } {
-  const over = new Map<BlockId, HTMLCanvasElement[]>();
-  const onto = new Map<BlockId, BlockId[]>();
+/** Camadas de uma forma de transição, 8 peças cada: halo (antes), corpo (o topo que avança) e espuma (depois). */
+export interface TransitionLayers { body: HTMLCanvasElement[]; halo: HTMLCanvasElement[] | null; foam: HTMLCanvasElement[] | null }
+
+function buildTransitions(groundTop: Map<BlockId, HTMLCanvasElement>, continuous: Set<BlockId>, water: HTMLCanvasElement | null): { over: Map<string, TransitionLayers>; onto: Map<BlockId, TransitionRule[]> } {
+  const over = new Map<string, TransitionLayers>();
+  const onto = new Map<BlockId, TransitionRule[]>();
   const masks = transitionMasks();
   if (!masks) return { over, onto };
-  const shape = 0; // hoje há uma forma só ("avanco"); regras futuras escolhem a forma por par de materiais
   for (const rule of TRANSITION_RULES) {
-    const tile = groundTop.get(rule.over);
-    if (!tile || !continuous.has(rule.over)) continue;
-    const pieces = TRANSITION_PIECES.map((_, i) => {
+    const shape = masks.shapes.indexOf(rule.shape);
+    const tile = rule.over === Block.WATER ? water : continuous.has(rule.over) ? groundTop.get(rule.over) : undefined;
+    if (shape < 0 || !tile || !continuous.has(rule.onto)) continue;
+    const painted = masks.overlay.includes(rule.shape);
+    const n = TRANSITION_PIECES.length;
+    const layer = (col: (i: number) => number) => TRANSITION_PIECES.map((_, i) => {
       const [c, ctx] = canvas(T, T);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(masks.img, i * masks.cell, shape * masks.cell, masks.cell, masks.cell, 0, 0, c.width, c.height);
+      ctx.drawImage(masks.img, col(i) * masks.cell, shape * masks.cell, masks.cell, masks.cell, 0, 0, c.width, c.height);
+      return c;
+    });
+    const body = layer((i) => i).map((c) => { // o topo de quem avança dentro da forma (a forma é a única coisa que gira)
+      const ctx = c.getContext('2d')!;
       ctx.globalCompositeOperation = 'source-in';
       ctx.drawImage(tile, 0, 0, c.width, c.height);
       return c;
     });
-    over.set(rule.over, pieces);
-    for (const receiver of rule.onto) {
-      if (!continuous.has(receiver)) continue;
-      onto.set(receiver, [...(onto.get(receiver) ?? []), rule.over]);
-    }
+    const pieces: TransitionLayers = { body, halo: painted ? layer((i) => n + i) : null, foam: painted ? layer((i) => 2 * n + i) : null };
+    over.set(rule.shape, pieces);
+    onto.set(rule.onto, [...(onto.get(rule.onto) ?? []), rule]);
   }
   return { over, onto };
 }
@@ -681,7 +688,12 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Água: topo do bloco de água da arte, ladrilho contínuo sempre na mesma orientação (espelhar por célula
   // quebra a continuidade e forma um quadriculado); sem arte, procedural.
   const wa = getWaterArt();
-  const water = wa ? [artWaterTile(wa.top, 0)] : Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
+  let water = wa ? [artWaterTile(wa.top, 0)] : Array.from({ length: WATER_VARIANTS }, (_, v) => waterTile(v));
+  if (materialsV2InWorld()) { // topo da água do V2 (ladrilho contínuo); o da arte antiga só no `?blocos=legado`
+    const [wc, wctx] = canvas(T, T);
+    wctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (v2WaterTop(wctx, wc.width, wc.height)) water = [wc];
+  }
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   const treeVariants = growthTreeSprites(getTreeArt(), objects);
@@ -719,7 +731,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   }
   const continuousGround = new Set<BlockId>();
   if (materialsV2InWorld()) applyMaterialsV2(groundTop, groundVariants, objects, variants, continuousGround);
-  const { over: transitionOver, onto: transitionOnto } = buildTransitions(groundTop, continuousGround);
+  const { over: transitionOver, onto: transitionOnto } = buildTransitions(groundTop, continuousGround, materialsV2InWorld() ? water[0] : null);
   // Tenda (2×2): base na borda de baixo do canto inferior esquerdo; ícone do pacote.
   const tentImg = getTentSprite();
   if (tentImg) {

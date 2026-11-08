@@ -15,6 +15,7 @@
     ]
   },
   "materials": [
+    "agua",
     "arada",
     "areia",
     "caminho",
@@ -46,7 +47,20 @@
       "NW"
     ],
     "shapes": [
-      "avanco"
+      "agua-areia",
+      "agua-caminho",
+      "agua-grama",
+      "agua-terra",
+      "areia-terra",
+      "grama-areia",
+      "grama-caminho",
+      "grama-terra"
+    ],
+    "overlay": [
+      "agua-areia",
+      "agua-caminho",
+      "agua-grama",
+      "agua-terra"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { V2_BLOCKS } from './materialsV2';
+import manifest from '../assets/materials-v2.json';
 import { TRANSITION_PIECES, TRANSITION_RULES, transitionPieces } from './transitions';
 
 const N = 0, E = 1, S = 2, W = 3, NE = 4, SE = 5, SW = 6, NW = 7;
@@ -33,13 +34,21 @@ describe('Transições entre chãos (ADR 0023)', () => {
   it('as peças são as 8 do atlas e as regras só citam materiais V2 de chão', () => {
     expect(TRANSITION_PIECES).toHaveLength(8);
     for (const r of TRANSITION_RULES) {
-      expect(V2_BLOCKS[r.over]).toBeDefined();
-      for (const o of r.onto) {
-        expect(V2_BLOCKS[o]).toBeDefined();
-        expect(o).not.toBe(r.over);
-      }
+      if (r.over !== Block.WATER) expect(V2_BLOCKS[r.over]).toBeDefined(); // a Água avança com o ladrilho dela
+      expect(V2_BLOCKS[r.onto]).toBeDefined();
+      expect(r.onto).not.toBe(r.over);
     }
-    // Hoje só a Grama avança, sobre Terra, Caminho e Areia (água, buraco, pedra e piso da cidade ficam de fora).
-    expect(TRANSITION_RULES).toEqual([{ over: Block.GRASS, onto: [Block.DIRT, Block.PATH, Block.SAND] }]);
+    // Pares com pintura enviada pelo dono do produto (buraco, pedra e piso da cidade ficam de fora).
+    expect(TRANSITION_RULES.map((r) => [r.over, r.onto, r.shape])).toEqual([
+      [Block.GRASS, Block.DIRT, 'grama-terra'], [Block.GRASS, Block.PATH, 'grama-caminho'], [Block.GRASS, Block.SAND, 'grama-areia'],
+      [Block.SAND, Block.DIRT, 'areia-terra'],
+      [Block.WATER, Block.SAND, 'agua-areia'], [Block.WATER, Block.DIRT, 'agua-terra'], [Block.WATER, Block.PATH, 'agua-caminho'], [Block.WATER, Block.GRASS, 'agua-grama'],
+    ]);
+  });
+
+  it('cada regra aponta para uma forma que existe no atlas (e as formas de água trazem a faixa pintada)', () => {
+    const masks = manifest.masks!;
+    for (const r of TRANSITION_RULES) expect(masks.shapes).toContain(r.shape);
+    for (const r of TRANSITION_RULES.filter((x) => x.over === Block.WATER)) expect(masks.overlay).toContain(r.shape);
   });
 });
