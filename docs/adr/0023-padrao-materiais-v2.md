@@ -12,8 +12,8 @@
 ## Decisão
 
 1. **A arte entrega material, não cubo.** Cada material é uma pasta `assets-src/materiais/<material>/` com PNGs
-   128×128: `top.png` (repetível nos 4 lados), `front.png` opcional (janela útil **128×72** no alto; **sem ela a
-   frente repete o topo**) e, opcional, `front_overlay.png` (franja com alfa nos **32 px** de cima da janela). Contrato: `assets-src/materiais/CONTRATO.md`.
+   128×128: `top.png` (repetível nos 4 lados), `front.png` opcional (também seamless nas 4 bordas, usada inteira e
+   fatiada por nível; **sem ela a frente repete o topo**) e, opcional, `front_overlay.png` (franja com alfa nos **32 px** de cima da janela). Contrato: `assets-src/materiais/CONTRATO.md`.
 2. **O motor monta a geometria.** `composeCube(drawTop, drawFront, outline)`: topo 32×32, frente `CUBE_FRONT` = **18**
    px, âncora na base da frente (`oy = -18`). Ordem interna: frente → franja → sombra da
    frente → topo → aresta/contorno (contrato de geometria § 5). Chão plano desenha só o topo.
@@ -34,10 +34,35 @@
 
 - **Frente fica em 18** (o pacote propunha 16). Na cena lado a lado a diferença é de 2 px por nível (pilha de 3: 86 ×
   80 px) e não se notou; o ganho do 16 era só a janela 2:1 do pipeline, resolvida lendo 128×72. Mudar custaria rever
-  câmera, elevação, portas, paredes, cerca, celestiais e a ADR 0022. A janela útil da frente passa a 128×72 (64×36 no
+  câmera, elevação, portas, paredes, cerca, celestiais e a ADR 0022. Cada fatia da frente tem 72 linhas da fonte (64×36 no
   atlas, 32×18 no mundo); a franja continua até 32 px da fonte (8 px no mundo).
 - **Franja da grama reduzida ao padrão de 32 px** (veio com 60).
 - **Sem frente própria, a frente sempre repete o topo** (regra geral, no pipeline).
+
+## Massa contínua de cubos (2026-11-07, v0.82.0)
+
+Pedido do dono do produto: cubos vizinhos e níveis empilhados não podem mostrar riscos entre si, nem na vertical nem na
+horizontal, nem entre materiais diferentes. Só os blocos V2:
+
+- **O contorno é da silhueta da massa, não de cada cubo.** `cubeEdges` (`render/materialsV2.ts`, puro e testado) decide
+  por cubo, olhando altura e material dos vizinhos, em quais lados há contorno, filete de luz e canto arredondado:
+  - no topo, só nas bordas (norte, oeste, leste) cujo vizinho **não é V2 no mesmo plano**; um platô de 6×2 cubos vira
+    uma superfície só;
+  - na frente, só nas laterais cujo vizinho não continua a frente; o pé (`base`) só no nível 0; entre níveis não há linha;
+  - **material diferente também some** (pedra sobre terra, terra ao lado de areia); vizinho que não é V2 (bloco antigo)
+    mantém o contorno;
+  - ficam a aresta clara entre o topo e a frente do mesmo cubo (o "vinco") e o contorno em degraus (a borda do mais
+    baixo com o mais alto).
+- **Frente contínua na vertical**: `front.png` é uma textura seamless nas 4 bordas usada **inteira**; cada nível lê uma
+  fatia de 72 linhas (18 px no mundo), o de baixo no começo e cada um acima na fatia anterior, voltando ao fim da
+  textura. Colocar um bloco em cima não muda os de baixo. A franja (grama) só vai no nível mais alto.
+- **Desenho sem fresta**: `cubeSpriteV2` (variantes em cache por bloco, nível e bordas) e `drawCubeParts` desenham
+  topo e frente com bordas arredondadas iguais às dos vizinhos; esticar o sprite inteiro deixava uma linha do topo do
+  nível de baixo aparecendo sob o de cima. O nível coberto não desenha o topo, e sim a continuação da parede.
+- Custo medido: nenhum perceptível (81 cubos na tela, 60 quadros por segundo nos dois caminhos). As bordas são lidas do
+  mundo a cada quadro, então colocar ou quebrar um bloco atualiza os vizinhos sem invalidar nada.
+- Fora do escopo: o chão plano do "Caminho" antigo (linha por célula na própria arte) espera a arte V2 do dono do
+  produto; blocos antigos seguem como são até migrar.
 
 ## Por que assim
 

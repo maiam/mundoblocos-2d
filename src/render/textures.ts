@@ -2,7 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS, WALLS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
-import { materialsV2InWorld, v2Faces, v2GroundTop } from './materialsV2';
+import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, v2Faces, v2GroundTop, v2LevelFaces } from './materialsV2';
 import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getWallArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
@@ -306,7 +306,7 @@ export function composeCube(drawTop: (ctx: Ctx) => void, drawFront: (ctx: Ctx) =
  */
 function applyMaterialsV2(groundTop: Map<BlockId, HTMLCanvasElement>, groundVariants: Map<BlockId, HTMLCanvasElement[]>, objects: Map<BlockId, Sprite>, variants: Map<BlockId, Sprite[]>): void {
   for (const id of MATERIALS) {
-    const faces = v2Faces(id, T, F);
+    const faces = v2Faces(id, T, F, TEX_RES);
     if (!faces) continue;
     const [c, ctx] = canvas(T, T);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -328,12 +328,98 @@ export function qaMaterial(id: BlockId, mode: 'legacy' | 'v2'): { cube: Sprite; 
     if (i < 0 || !getBlockAtlas()) return null;
     return { cube: materialCube(i, OUTLINE[id] ?? '#3a2a20'), ground: materialTop(i) };
   }
-  const faces = v2Faces(id, T, F);
+  const faces = v2Faces(id, T, F, TEX_RES);
   if (!faces) return null;
   const [c, ctx] = canvas(T, T);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   v2GroundTop(id, ctx, c.width, c.height);
   return { cube: composeCube(faces.top, faces.front, OUTLINE[id] ?? '#3a2a20'), ground: c };
+}
+
+const CORNER = 3;
+
+/** Retângulo com raio próprio em cada canto ([noroeste, nordeste, sudeste, sudoeste]; 0 = canto reto). */
+function shapePath(ctx: Ctx, x: number, y: number, w: number, h: number, [tl, tr, br, bl]: number[]): void {
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  if (tr) ctx.arcTo(x + w, y, x + w, y + tr, tr);
+  ctx.lineTo(x + w, y + h - br);
+  if (br) ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+  ctx.lineTo(x + bl, y + h);
+  if (bl) ctx.arcTo(x, y + h, x, y + h - bl, bl);
+  ctx.lineTo(x, y + tl);
+  if (tl) ctx.arcTo(x, y, x + tl, y, tl);
+  ctx.closePath();
+}
+
+const cubeSpritesV2 = new Map<number, Sprite>();
+
+/**
+ * Desenha um cubo V2 (`cubeSpriteV2`) no canvas em duas partes — topo e frente — com as bordas já arredondadas pelo
+ * chamador (`left`/`right` e `top`/`mid`/`bottom`, em px de tela). Cada borda vem do mesmo `round` da vizinha (cubo ao
+ * lado, nível de cima ou de baixo), então nada deixa fresta nem sobra uma linha do topo coberto aparecendo sob o nível
+ * de cima: esticar o sprite inteiro para uma caixa arredondada deslocava a divisão topo/frente em até 1 px.
+ */
+export function drawCubeParts(ctx: CanvasRenderingContext2D, s: Sprite, left: number, right: number, top: number, mid: number, bottom: number): void {
+  const split = Math.round((s.canvas.height * T) / s.h);
+  ctx.drawImage(s.canvas, 0, 0, s.canvas.width, split, left, top, right - left, mid - top);
+  ctx.drawImage(s.canvas, 0, split, s.canvas.width, s.canvas.height - split, left, mid, right - left, bottom - mid);
+}
+
+/**
+ * Cubo V2 como parte de uma massa (ADR 0023): mesmo tamanho de `composeCube` (T × (T + F)), mas o contorno, o filete de
+ * luz e os cantos arredondados só aparecem nos lados que dão para fora da massa (`CubeEdges`); entre cubos V2 vizinhos e
+ * entre níveis empilhados não há risco. A frente do nível `level` é a fatia seguinte da textura (continua na vertical) e a
+ * franja (grama) só vai no cubo mais alto. Em cache por bloco, nível e bordas. Null se faltar a arte.
+ */
+export function cubeSpriteV2(id: BlockId, level: number, e: CubeEdges): Sprite | null {
+  const key = (id * 4 + level) * 256 + edgesKey(e);
+  const hit = cubeSpritesV2.get(key);
+  if (hit) return hit;
+  const faces = v2LevelFaces(id, level, e.top, T, F, TEX_RES);
+  if (!faces) return null;
+  const H = T + F;
+  const outline = OUTLINE[id] ?? '#3a2a20';
+  const [c, ctx] = canvas(T, H);
+  // Cantos arredondados só onde as duas bordas que se encontram são silhueta.
+  ctx.save();
+  shapePath(ctx, 0, 0, T, H, [e.n && e.wt ? CORNER : 0, e.n && e.et ? CORNER : 0, e.base && e.ef ? CORNER : 0, e.base && e.wf ? CORNER : 0]);
+  ctx.clip();
+  faces.front(ctx);
+  ctx.fillStyle = FRONT_SHADE;
+  ctx.fillRect(0, T, T, F);
+  faces.top(ctx);
+  if (e.top && e.front) { // aresta clara entre o topo e a frente deste cubo
+    ctx.fillStyle = 'rgba(255, 250, 230, 0.45)';
+    ctx.fillRect(0, T - 1, T, 1);
+  }
+  if (e.top && e.n) { // filete de luz na borda de cima da massa
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.fillRect(0, 0, T, 1.5);
+  }
+  ctx.restore();
+  // Contorno só na silhueta.
+  const x0 = 0.5, y0 = 0.5, x1 = T - 0.5, y1 = H - 0.5, r = CORNER;
+  const tl = e.n && e.wt, tr = e.n && e.et, bl = e.base && e.wf, br = e.base && e.ef;
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  // Onde o contorno continua num vizinho (lado sem borda), a linha vai até a ponta do sprite: sem falha de meio pixel.
+  if (e.n) { ctx.moveTo(e.wt ? (tl ? x0 + r : x0) : 0, y0); ctx.lineTo(e.et ? (tr ? x1 - r : x1) : T, y0); }
+  if (tl) { ctx.moveTo(x0, y0 + r); ctx.arc(x0 + r, y0 + r, r, Math.PI, 1.5 * Math.PI); }
+  if (tr) { ctx.moveTo(x1 - r, y0); ctx.arc(x1 - r, y0 + r, r, 1.5 * Math.PI, 2 * Math.PI); }
+  if (e.wt) { ctx.moveTo(x0, e.n ? (tl ? y0 + r : y0) : 0); ctx.lineTo(x0, T); }
+  if (e.et) { ctx.moveTo(x1, e.n ? (tr ? y0 + r : y0) : 0); ctx.lineTo(x1, T); }
+  if (e.wf) { ctx.moveTo(x0, T); ctx.lineTo(x0, e.base ? (bl ? y1 - r : y1) : H); }
+  if (e.ef) { ctx.moveTo(x1, T); ctx.lineTo(x1, e.base ? (br ? y1 - r : y1) : H); }
+  if (e.base) { ctx.moveTo(e.wf ? (bl ? x0 + r : x0) : 0, y1); ctx.lineTo(e.ef ? (br ? x1 - r : x1) : T, y1); }
+  if (bl) { ctx.moveTo(x0 + r, y1); ctx.arc(x0 + r, y1 - r, r, 0.5 * Math.PI, Math.PI); }
+  if (br) { ctx.moveTo(x1, y1 - r); ctx.arc(x1 - r, y1 - r, r, 0, 0.5 * Math.PI); }
+  ctx.stroke();
+  const sprite: Sprite = { canvas: c, ox: 0, oy: -F, w: T, h: H, hit: { x: 0, y: -F, w: T, h: H } };
+  cubeSpritesV2.set(key, sprite);
+  return sprite;
 }
 
 /** Contorno de cada material (cor escura da própria arte). */

@@ -48,7 +48,8 @@
   opcionais — sem `front` a frente repete o topo; frente de 18 px)
   em `assets-src/materiais/<material>/` pelo `assets-src/materiais/CONTRATO.md`; o motor monta o cubo. Gerar com
   `scripts/build-materials.py`; compor o bloco em `render/materialsV2.ts` (`V2_BLOCKS`). Mistura entre materiais só no
-  chão plano e na mesma altura.
+  chão plano e na mesma altura. **Massa contínua:** o contorno de cubos V2 é da silhueta do conjunto, nunca de cada
+  cubo — sem riscos entre vizinhos nem entre níveis, nem entre materiais; `front.png` seamless nas 4 bordas.
 - Estilo: ilustração de fantasia RPG/anime; sombras puxam para índigo, luz de cima-esquerda, contornos
   coloridos, brilhos em estrela.
 - Folhas 4×4 na ordem frente, esquerda, direita, costas (`--rows-map` normaliza; `m` espelha); quadros com a

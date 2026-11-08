@@ -4,11 +4,13 @@
 Lê assets-src/materiais/<material>/{top,front,front_overlay}.png (128×128), valida o contrato e gera:
   src/assets/materials-v2.webp   — atlas, uma coluna de 64 px por material (TEX_RES 2):
       linha top      64×64  ← top.png inteiro
-      linha front    64×36  ← front.png (0,0,128,72) — frente de 18 px no mundo (CUBE_FRONT); sem front.png, o topo
-      linha overlay  64×36  ← front_overlay.png, mesma janela (transparente se o material não tem franja)
+      linha front    64×64  ← front.png INTEIRO (textura seamless nas 4 bordas, como o topo); sem front.png, o topo.
+                             O motor fatia: cada nível de uma pilha lê as próximas 72 linhas (18 px no mundo), voltando
+                             ao início no fim — a parede fica contínua na vertical (ADR 0023)
+      linha overlay  64×36  ← front_overlay.png, janela 128×72 (só o nível mais alto da pilha usa)
   src/assets/materials-v2.json   — manifesto {cell, rows: {nome: [y, h]}, materials: [nomes], overlay: [nomes]}
-Relatório: emenda do topo e da frente relativa ao miolo (1,0 = invisível; ⚠ acima de 1,6);
---preview grava um 3×3 de cada topo e a frente repetida 3× em assets-src/materiais/_preview/ (fora do git).
+Relatório: emenda do topo e da frente (horizontal e vertical) relativa ao miolo (1,0 = invisível; ⚠ acima de 1,6);
+--preview grava um 3×3 de cada topo e de cada frente em assets-src/materiais/_preview/ (fora do git).
 Redução: LANCZOS (suavizada; contrato § 7). Já sai em WebP sem perdas (não precisa de optimize-assets.py).
 """
 import argparse
@@ -28,7 +30,7 @@ CELL = 64
 # Frente de 18 (decisão de 2026-11-07, ADR 0023): janela 128×72 → 64×36 no atlas → 32×18 no mundo.
 WINDOW = 72
 FRINGE = 32  # altura máxima da franja na fonte (8 px no mundo)
-ROWS = [('top', None, 64), ('front', WINDOW, 36), ('overlay', WINDOW, 36)]
+ROWS = [('top', None, 64), ('front', None, 64), ('overlay', WINDOW, 36)]
 SEAM_WARN = 1.6  # emenda / vizinhança interna: acima disso a costura provavelmente aparece no jogo
 
 
@@ -81,8 +83,8 @@ def main() -> int:
         if (t[..., 3] < 255).any():
             errors.append(f'{n}/top.png: topo precisa cobrir o quadrado inteiro (sem transparência)')
         f = np.asarray(front)
-        if (f[:WINDOW, :, 3] < 255).any():
-            errors.append(f'{n}/front.png: a janela útil (0,0,128,{WINDOW}) precisa ser opaca')
+        if (f[..., 3] < 255).any():
+            errors.append(f'{n}/front.png: a frente precisa cobrir o quadrado inteiro (sem transparência)')
         fringe = 0
         if over is not None:
             oa = np.asarray(over)[..., 3]
@@ -96,8 +98,9 @@ def main() -> int:
         base_x = np.mean([edge_diff(t[:, i:i + 1], t[:, i + 1:i + 2]) for i in range(1, SIZE - 2)]) or 1
         base_y = np.mean([edge_diff(t[i:i + 1], t[i + 1:i + 2]) for i in range(1, SIZE - 2)]) or 1
         seam_top = max(edge_diff(t[:, :1], t[:, -1:]) / base_x, edge_diff(t[:1], t[-1:]) / base_y)
-        fb = np.mean([edge_diff(f[:WINDOW, i:i + 1], f[:WINDOW, i + 1:i + 2]) for i in range(1, SIZE - 2)]) or 1
-        seam_front = edge_diff(f[:WINDOW, :1], f[:WINDOW, -1:]) / fb
+        fbx = np.mean([edge_diff(f[:, i:i + 1], f[:, i + 1:i + 2]) for i in range(1, SIZE - 2)]) or 1
+        fby = np.mean([edge_diff(f[i:i + 1], f[i + 1:i + 2]) for i in range(1, SIZE - 2)]) or 1
+        seam_front = max(edge_diff(f[:, :1], f[:, -1:]) / fbx, edge_diff(f[:1], f[-1:]) / fby)
         flag = lambda v: ' ⚠' if v > SEAM_WARN else ''
         print(f'{n:10s} emenda topo {seam_top:4.2f}{flag(seam_top)}  frente {seam_front:4.2f}{flag(seam_front)}'
               f'  overlay {f"franja {fringe} px" if over is not None else "não"}'
@@ -110,10 +113,10 @@ def main() -> int:
             for i in range(9):
                 g.paste(top, ((i % 3) * SIZE, (i // 3) * SIZE))
             g.save(pv / f'{n}-top-3x3.png')
-            r = Image.new('RGBA', (SIZE * 3, WINDOW))
-            for i in range(3):
-                r.paste(front.crop((0, 0, SIZE, WINDOW)), (i * SIZE, 0))
-            r.save(pv / f'{n}-front-3x.png')
+            r = Image.new('RGBA', (SIZE * 3, SIZE * 3))
+            for i in range(9):
+                r.paste(front, ((i % 3) * SIZE, (i // 3) * SIZE))
+            r.save(pv / f'{n}-front-3x3.png')
     if errors:
         print('\n'.join('ERRO ' + e for e in errors), file=sys.stderr)
         return 1
@@ -127,12 +130,12 @@ def main() -> int:
             if key == 'top':
                 img = top
             elif key == 'front':
-                img = front.crop((0, 0, SIZE, src_h))
+                img = front
             elif over is not None:
                 img = over.crop((0, 0, SIZE, src_h))
             else:
                 continue
-            atlas.paste(wrap_resize(img, CELL, h, vertical=key == 'top'), (i * CELL, y))
+            atlas.paste(wrap_resize(img, CELL, h, vertical=key in ('top', 'front')), (i * CELL, y))
         y += h
     # Sem perdas: o WebP com perdas mistura a cor da coluna vizinha nas bordas (fio na emenda do chão).
     atlas.save(OUT_IMG, 'WEBP', lossless=True, method=6)

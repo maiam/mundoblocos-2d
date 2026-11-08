@@ -16,7 +16,8 @@ import { ChunkRenderer } from './chunkRenderer';
 import { rgba } from './color';
 import { type SkyState, skyAt } from './daycycle';
 import { Particles } from './particles';
-import { addDungeonTextures, addWallTextures, createBlockTextures, type BlockTextures, type Sprite, WALL_EDGE_PX } from './textures';
+import { addDungeonTextures, addWallTextures, createBlockTextures, cubeSpriteV2, drawCubeParts, type BlockTextures, type Sprite, WALL_EDGE_PX } from './textures';
+import { type CubeView, cubeEdges, materialsV2InWorld, V2_BLOCKS } from './materialsV2';
 import { loadDungeonArt, loadWallArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
@@ -90,6 +91,15 @@ export class Renderer {
   private readonly interiorArt = new Map<string, HTMLImageElement>();
   /** Estado visto por porta (aparência apenas): quando mudou de aberta/fechada, para animar. */
   private readonly doorAnim = new Map<number, { open: boolean; since: number }>();
+  /** O que o contorno dos cubos V2 precisa saber dos vizinhos (só leitura do mundo; ADR 0023). */
+  private readonly cubeView: CubeView = {
+    height: (x, y) => {
+      let n = 0;
+      while (n < MAX_STACK && blockDef(this.world.getLevel(x, y, n)).shape === 'cube') n++;
+      return n;
+    },
+    v2: (x, y, level) => V2_BLOCKS[this.world.getLevel(x, y, level)] !== undefined,
+  };
 
   constructor(canvas: HTMLCanvasElement, private readonly world: World) {
     this.ctx = canvas.getContext('2d')!;
@@ -388,6 +398,14 @@ export class Renderer {
   }
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
+    // Cubo V2 (`?blocos=v2`): desenhado como parte da massa de cubos vizinhos, sem risco entre eles (ADR 0023).
+    if (V2_BLOCKS[id] && materialsV2InWorld()) {
+      const v2 = cubeSpriteV2(id, level, cubeEdges(this.cubeView, x, y, level));
+      if (v2) {
+        this.drawCubeV2(cam, v2, x, y, level);
+        return;
+      }
+    }
     const vars = this.textures.variants.get(id);
     // Variação por célula; na cidade, independente da seed (a cidade é sempre a mesma).
     const salt = isTownArt(id) ? 0x7041 : this.world.seed;
@@ -459,6 +477,19 @@ export class Renderer {
     const step = Math.min(3, Math.floor(t * 4));
     const frame = t < 1 ? (open ? step : 4 + step) : open ? 3 : 0;
     this.drawSprite(cam, this.textures.doorFrames[frame], x, y);
+  }
+
+  /**
+   * Cubo V2: as bordas (esquerda, direita, topo, divisão topo/frente e base) vêm do mesmo arredondamento, então cubos
+   * vizinhos e níveis empilhados se encostam sem fresta nem sobreposição, em qualquer zoom.
+   */
+  private drawCubeV2(cam: Camera, s: Sprite, x: number, y: number, level: number): void {
+    const left = Math.round(cam.worldToScreenX(x * TILE));
+    const right = Math.round(cam.worldToScreenX((x + 1) * TILE));
+    const wy = y * TILE + s.oy - level * CUBE_FRONT;
+    const rowY = (wyy: number) => Math.round(cam.worldToScreenY(wyy));
+    // Topo/frente divididos em y + TILE: a borda de baixo do nível de cima é a de cima da frente deste nível.
+    drawCubeParts(this.ctx, s, left, right, rowY(wy), rowY(wy + TILE), rowY(wy + s.h));
   }
 
   /** Desenha um sprite na célula; cada nível de pilha sobe CUBE_FRONT px. */

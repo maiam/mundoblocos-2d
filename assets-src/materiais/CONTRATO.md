@@ -7,21 +7,24 @@ Resumo operacional do pacote `docs/materiais-v2/` (02, 03, 04). Em dúvida, vale
 ```
 assets-src/materiais/<material>/      nome em pt-BR, minúsculas, sem acento (areia, terra, grama, pedra…)
   top.png            128×128, opaco, repetível nos 4 lados, sem perspectiva nem sombra de cubo
-  front.png          opcional; 128×128; só a janela (0,0,128,72) é usada — opaca; o resto pode ser transparente.
-                     SEM front.png a frente repete o topo (regra do dono do produto)
+  front.png          opcional; 128×128, opaco, repetível nos 4 lados (como o topo): o motor fatia a textura inteira,
+                     uma fatia por nível da pilha. SEM front.png a frente repete o topo (regra do dono do produto)
   front_overlay.png  opcional; franja (grama, neve, musgo) nos 32 px de cima (no máximo), alfa no resto;
                      borda esq. = dir. Franja maior é recusada pelo pipeline
 ```
 
-Diferença para o pacote original (decisão de 2026-11-07, ADR 0023): **frente de 18 px** no mundo (não 16), então a
-janela útil da frente é **128×72** (não 128×64). Topo e franja seguem o pacote.
+Diferenças para o pacote original (decisões de 2026-11-07, ADR 0023): **frente de 18 px** no mundo (não 16) e **frente
+seamless nas 4 bordas, usada inteira** (não a janela 128×64 do alto): cada nível de uma pilha lê as próximas 72 linhas
+(18 px no mundo), voltando ao começo no fim, e a parede fica contínua na vertical. A franja segue o pacote (janela
+128×72, até 32 px, só no nível mais alto da pilha).
 
 ```
   PROVISORIO.txt     só em arte provisória; apague ao trocar pela oficial
 ```
 
 - Luz geral do alto à esquerda, só microvolume; nada de sombra projetada forte.
-- Sem símbolos cortados na borda da janela; frente repetível na horizontal (esquerda casa com direita).
+- Sem símbolos cortados na borda; a frente repete nos quatro lados (esquerda casa com direita, **de cima com a de baixo**).
+- Detalhes que parecem camadas horizontais (estratos) aparecem em todo nível da pilha; o desenho é fatiado de cima para baixo.
 - Sem frente própria a frente é o topo: mande `front.png` só quando o material precisar de outra cara de lado.
 
 ## Gerar
@@ -33,7 +36,7 @@ python3 scripts/build-materials.py --preview   # valida, gera src/assets/materia
 ```
 
 O relatório mostra a altura da franja (recusa acima de 32 px) e a emenda relativa de cada topo/frente (1,0 = invisível; ⚠ acima de 1,6) e recusa arquivos fora do
-contrato (tamanho, transparência no topo ou na janela da frente, franja abaixo da linha 72).
+contrato (tamanho, transparência no topo ou na frente, franja acima de 32 px). Confere a emenda da frente nos dois eixos.
 
 ## Compor blocos
 

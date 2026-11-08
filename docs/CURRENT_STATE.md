@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.81.2 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.82.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,10 +10,10 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.81.2 | `package.json` |
+| Versão do jogo | 0.82.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
-| Testes | 217 em 43 arquivos (Vitest), todos passando | `npm test` |
+| Testes | 224 em 43 arquivos (Vitest), todos passando | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,0 MB de 3 MB (desde a v0.74.0) | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
@@ -91,18 +91,22 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 ## Padrão de Materiais V2 (em validação, ADR 0023)
 - **Desligado para o jogador.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato
-  na pasta; pacote original em `docs/materiais-v2/`) e o motor monta o cubo (`composeCube` com a altura da frente).
-- Frente dos cubos **18** (decidido: o pacote propunha 16); janela da frente 128×72; **sem frente própria, a frente
-  repete o topo**; franja até 32 px.
+  na pasta; pacote original em `docs/materiais-v2/`) e o motor monta o cubo.
+- Frente dos cubos **18** (decidido: o pacote propunha 16); a frente é uma textura seamless nas 4 bordas usada inteira
+  (uma fatia de 18 px por nível da pilha); **sem frente própria, a frente repete o topo**; franja até 32 px, só no
+  nível mais alto.
+- **Massa contínua** (v0.82.0): cubos V2 vizinhos e níveis empilhados, de qualquer material, não têm riscos entre si; o
+  contorno só aparece na silhueta do conjunto (`cubeEdges`, `cubeSpriteV2`, `drawCubeParts`). Só blocos V2; o bloco
+  antigo ao lado mantém o contorno. O chão plano do Caminho antigo ainda mostra linha por célula (espera a arte V2).
 - Materiais com **arte oficial**: terra, areia e Pedra Bruta (topo e frente próprios) e grama (franja reduzida aos
   32 px; topo de grama + frente de terra + franja). Pipeline: `scripts/import-material.py` →
-  `scripts/build-materials.py` → `materials-v2.webp` (~36 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
+  `scripts/build-materials.py` → `materials-v2.webp` (~46 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
 - Para ver: `?blocos=v2` troca esses blocos no mundo (sem as variações da grama legada); `?materiais=1` (só em
   desenvolvimento) põe legado e V2 lado a lado; `?escala=1&blocos=v2`, a arte V2 na cena de escala.
-- Falta: transições entre chãos e migração dos outros materiais (`NEXT_STEPS`, Fase V).
+- Falta: transições entre chãos, arte V2 do Caminho e migração dos outros materiais (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 217 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 224 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e
