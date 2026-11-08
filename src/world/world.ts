@@ -554,7 +554,7 @@ export class World {
     return blockDef(this.getObject(x, y)).seat ? [x, y] : null;
   }
 
-  /** A porta só vai entre dois batentes (qualquer bloco de madeira ou de pedra, podem misturar): células da esquerda e da direita. */
+  /** A porta só vai entre dois batentes (qualquer bloco de madeira — tora ou tábuas, de qualquer árvore — ou de pedra, podem misturar): células da esquerda e da direita. */
   hasDoorFrame(x: number, y: number): boolean {
     return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
   }
