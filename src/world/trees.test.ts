@@ -102,24 +102,31 @@ describe('Árvores adultas (carvalho, macieira, cerejeira; sem crescimento desde
     expect(applyAction(w, parseAction({ kind: 'pick', x, y })!)).toBe(true);
   });
 
-  it('Campos misturam macieiras e bétulas aos carvalhos (a macieira cai onde sempre caiu)', () => {
-    expect(BIOMES.meadow.altTrees).toEqual([{ id: Block.APPLE_TREE, share: 1 / 6 }, { id: Block.BIRCH_TREE, share: 1 / 5 }]);
+  it('o mundo mistura carvalho, bétula, cerejeira e macieira em qualquer bioma (a macieira e a bétula caem onde sempre caíram)', () => {
+    const all4 = new Set<number>([Block.OAK_TREE, Block.BIRCH_TREE, Block.SAKURA_TREE, Block.APPLE_TREE]);
+    for (const b of [BIOMES.meadow, BIOMES.sakura]) {
+      expect(new Set([b.tree, ...(b.altTrees ?? []).map((t) => t.id)])).toEqual(all4);
+      expect(b.altTrees!.slice(0, 2)).toEqual([{ id: Block.APPLE_TREE, share: 1 / 6 }, { id: Block.BIRCH_TREE, share: 1 / 5 }]);
+    }
     const w = new World(42);
-    let oak = 0, apple = 0, birch = 0;
-    for (let y = -150; y < 150; y++) {
-      for (let x = -150; x < 150; x++) {
+    const n = new Map<number, number>();
+    for (let y = -250; y < 250; y++) {
+      for (let x = -250; x < 250; x++) {
         const id = w.getObject(x, y);
-        if (id === Block.OAK_TREE) oak++;
-        if (id === Block.APPLE_TREE) apple++;
-        if (id === Block.BIRCH_TREE) birch++;
+        if (all4.has(id)) n.set(id, (n.get(id) ?? 0) + 1);
       }
     }
-    const all = oak + apple + birch;
-    expect(apple / all).toBeGreaterThan(0.1);
-    expect(apple / all).toBeLessThan(0.25);
-    expect(birch / all).toBeGreaterThan(0.1);
-    expect(birch / all).toBeLessThan(0.25);
-    expect(oak).toBeGreaterThan(apple);
+    const total = [...n.values()].reduce((a, b) => a + b, 0);
+    for (const id of all4) expect((n.get(id) ?? 0) / total, `espécie ${id}`).toBeGreaterThan(0.08);
+    expect((n.get(Block.APPLE_TREE) ?? 0) / total).toBeLessThan(0.25);
+  });
+
+  it('as árvores da cidade são cerejeira, bétula e carvalho (sem macieira: protegida, não dá para colher)', () => {
+    const all4 = new Set<number>([Block.OAK_TREE, Block.BIRCH_TREE, Block.SAKURA_TREE, Block.APPLE_TREE]);
+    const t = new World(42).town!;
+    const seen = new Set<number>();
+    for (const id of t.objects) if (all4.has(id)) seen.add(id);
+    expect(seen).toEqual(new Set([Block.OAK_TREE, Block.BIRCH_TREE, Block.SAKURA_TREE]));
   });
 
   it('bétula: derrubada dá 2–3 Toras de Bétula; tora vira 2 tábuas; as duas são madeira (batente) e substituem a água', () => {

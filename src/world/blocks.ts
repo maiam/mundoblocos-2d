@@ -469,7 +469,7 @@ export const RETIRED_ITEMS: ReadonlySet<string> = new Set(['oak_sapling', 'apple
 
 /**
  * Macieira colhida volta a ter maçãs com o tempo (a única "espera" que sobrou das árvores; o `World` avança). A arte é a
- * mesma da macieira carregada (falta enviar a "macieira colhida").
+ * mesma forma da carregada, só sem as maçãs (arte própria desde a v0.90.0).
  */
 export const TREE_NEXT: Readonly<Partial<Record<number, BlockId>>> = {
   [Block.APPLE_TREE_BARE]: Block.APPLE_TREE,

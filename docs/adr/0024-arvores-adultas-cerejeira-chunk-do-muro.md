@@ -15,7 +15,7 @@ proibir construir no chunk onde está o muro do castelo.
   de muda somem das bolsas (`RETIRED_ITEMS`), como foi com as paredes. Mesma abordagem de compatibilidade, sem subir
   `SAVE_VERSION` nem `PROTOCOL_VERSION` (nenhum formato muda).
 - **A macieira colhida continua voltando a dar maçãs** (`APPLE_TREE_BARE` → `APPLE_TREE`): não é crescimento da árvore e sem
-  isso a maçã seria finita. A arte da colhida é a da carregada até chegar a ilustração.
+  isso a maçã seria finita. A colhida usou a arte da carregada até a v0.90.0 (arte própria, mesma forma).
 - **Formas variadas**: tira de quadros por espécie (`scripts/process-trees.py`), forma sorteada pela posição (hash), sem
   aleatório — o mesmo mapa sempre sai igual. Todas as formas de uma espécie na mesma escala, alinhadas pelo pé.
 - **Madeira de cerejeira**: `CHERRY_LOG` (230) e `CHERRY_PLANKS` (231) entram em `MATERIALS` depois das pedras (só V2: o atlas
@@ -30,6 +30,14 @@ proibir construir no chunk onde está o muro do castelo.
   de todas as seeds troca alguns carvalhos por bétulas, nada mais se move). Tora de Bétula (topo e frente) e Tábuas de
   Bétula (só o topo); a Bétula derrubada dá Toras de Bétula; 1 tora = 2 tábuas.
 - **Baú, porta, cadeira e cerca continuam só de carvalho** (dono do produto); versões de outras madeiras ficam para depois.
+
+## Adendo — macieira nova e florestas misturadas (v0.90.0)
+- Macieira com 3 formas, carregada e colhida (`tree-apple.webp`/`tree-apple-bare.webp`, mesma escala e quadro:
+  `process-trees.py --scale/--frame`); a colhida de cada célula é a mesma forma da carregada.
+- **Regra de mistura** (dono do produto): o mapa da Cidade 1 mistura carvalho, bétula, cerejeira e macieira. `Biome.altTrees`:
+  Campos = carvalho + macieira 1/6 + bétula 1/5 + cerejeira 1/4; Bosque de Sakura = cerejeira + macieira 1/6 + bétula 1/5 +
+  carvalho 1/4 (os dois primeiros sorteios não mudam, então macieiras e bétulas dos Campos ficam onde estavam). Árvores
+  da cidade: cerejeira 30%, bétula ~28%, carvalho ~42% (sem macieira: protegida, não dá para colher).
 
 ## Consequências
 - Mundos e salas antigos: mudas e jovens viram adultas; mudas na bolsa somem; construções já feitas nos chunks do muro ficam.

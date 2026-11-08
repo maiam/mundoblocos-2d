@@ -531,7 +531,8 @@ function buildTown(): TownLayout {
     }
     const roomy = [-1, 0, 1].every((oy) => [-1, 0, 1].every((ox) => inside(x + ox, y + oy) && (use[idx(x + ox, y + oy)] === FREE)));
     if (roomy && r < 0.2 && y > 3) {
-      objects[i] = h(x, y, 6) < 0.3 ? Block.SAKURA_TREE : Block.OAK_TREE;
+      // Árvores da cidade misturadas (cerejeira, bétula e carvalho; sem macieira: na cidade protegida não dá para colher).
+      objects[i] = h(x, y, 6) < 0.3 ? Block.SAKURA_TREE : h(x, y, 7) < 0.4 ? Block.BIRCH_TREE : Block.OAK_TREE;
       use[i] = DECOR;
       rect(x - 1, y - 1, x + 1, y + 1, (_x, _y, j) => { if (use[j] === FREE) use[j] = RESERVED; });
     } else if (r < 0.34) objects[i] = Block.FLOWER;

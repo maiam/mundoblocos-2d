@@ -33,7 +33,7 @@ let chest: HTMLImageElement | null = null;
 /** Objetos fabricados (fogueira, caldeirão, forno), por nome da arte. */
 const craftables = new Map<string, HTMLImageElement>();
 /** Pranchas de crescimento (carvalho, macieira, cacto). */
-export interface TreeArt { oak: HTMLImageElement; apple: HTMLImageElement; cherry: HTMLImageElement; birch: HTMLImageElement; cactus: HTMLImageElement }
+export interface TreeArt { oak: HTMLImageElement; apple: HTMLImageElement; appleBare: HTMLImageElement; cherry: HTMLImageElement; birch: HTMLImageElement; cactus: HTMLImageElement }
 let trees: TreeArt | null = null;
 /** Tira de pedregulhos. */
 let rocks: HTMLImageElement | null = null;
@@ -66,8 +66,8 @@ export async function loadBlockArt(): Promise<void> {
     fence = { pieces, gate };
   }
   if (a.trees) {
-    const [oak, apple, cherry, birch, cactus] = await Promise.all([load(a.trees.oak), load(a.trees.apple), load(a.trees.cherry), load(a.trees.birch), load(a.trees.cactus)]);
-    trees = { oak, apple, cherry, birch, cactus };
+    const [oak, apple, appleBare, cherry, birch, cactus] = await Promise.all([load(a.trees.oak), load(a.trees.apple), load(a.trees.appleBare), load(a.trees.cherry), load(a.trees.birch), load(a.trees.cactus)]);
+    trees = { oak, apple, appleBare, cherry, birch, cactus };
   }
   if (a.town) {
     const entries = Object.entries(a.town);

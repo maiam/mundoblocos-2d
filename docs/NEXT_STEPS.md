@@ -218,8 +218,7 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
    Terra Arada, Caminho×Areia/Terra e Grama×Caminho invertido, se o dono do produto quiser; espuma nas pontas de poças de 1
    célula e nos cantos côncavos ainda é simples (ver CURRENT_STATE).
 
-5d. ✅ **Árvores adultas, cerejeira e chunk do muro** (v0.88.0, ADR 0024). Falta: arte da **macieira colhida** (hoje a colhida
-   usa a mesma arte da carregada), **frente das tábuas** (hoje repete o topo), formas novas de árvore se o dono do produto quiser, tamanho das árvores (3,4 células de
+5d. ✅ **Árvores adultas, cerejeira e chunk do muro** (v0.88.0, ADR 0024). Macieira nova com a colhida na v0.90.0. Falta: **frente das tábuas** (hoje repete o topo), formas novas de árvore se o dono do produto quiser, **orçamento de início no limite (~2,9 de 3 MB: a próxima arte de árvore pede carga sob demanda)**, tamanho das árvores (3,4 células de
    largura; ajustar `TREE_CELLS` se pesar na tela) e **versões de outras madeiras** para porta, baú, cadeira e cerca (decisão do dono do produto: por ora só carvalho). Bétula entrou na v0.89.0 (ADR 0024). Servidor: sincronizar o pacote (regra do muro, mudas e ids novos).
 
 ### Fase 6 — Mundo de progressão (visão do dono do produto, `PROJECT_CONTEXT`)
