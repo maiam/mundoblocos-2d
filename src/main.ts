@@ -1,9 +1,7 @@
-import { lookFromSearch, type ModularLook } from './render/modular';
-import { art } from './render/art';
 import { TitleScreen } from './game/title';
 import './style.css';
 import { Game } from './game/game';
-import type { HeroBody } from './game/entities';
+import { HERO_BODIES, type HeroBody } from './game/entities';
 import { SaveStore } from './game/save';
 import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
@@ -80,15 +78,14 @@ function goOnline(name: string, room: number, attempt = 1): void {
   s.onWelcome = (seed) => {
     if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
     net = s;
-    // Mesmo personagem do jogo sozinho: aparência do Chibi ou personagem pronto (Heroína/Herói).
-    const look = game?.entities.look ?? null;
+    // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    game = new Game(canvas, seed, screenMode, profile, { net: s, online, look, body, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    game = new Game(canvas, seed, screenMode, profile, { net: s, online, body, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
-  // Como os outros vão me ver: o mesmo personagem do jogo (chibi com as peças, ou Heroína/Herói).
-  s.join(name, room, { body: game?.entities.body ?? 'heroine', look: (game?.entities.look as Record<string, string> | null) ?? null });
+  // Como os outros vão me ver: o mesmo personagem do jogo.
+  s.join(name, room, { body: game?.entities.body ?? 'heroine' });
 }
 
 /** Sai da sala e volta ao mundo que estava jogando sozinho (salvo). */
@@ -100,10 +97,9 @@ function leaveRoom(notice: string): void {
   start(soloSeed, notice);
 }
 
-/** Abre um mundo (salvo, se houver). `look` = aparência de um mundo novo; sem ela, a do jogo que estava aberto. */
-function start(seed: number, notice?: string, look?: ModularLook | null, body?: HeroBody): void {
+/** Abre um mundo (salvo, se houver). `body` = personagem de um mundo novo; sem ele, o do jogo que estava aberto. */
+function start(seed: number, notice?: string, body?: HeroBody): void {
   soloSeed = seed;
-  const keepLook = look !== undefined ? look : game?.entities.look ?? null;
   const keepBody = body ?? game?.entities.body ?? 'heroine';
   game?.destroy(); // salva o mundo que estava aberto
   const url = new URL(window.location.href);
@@ -112,7 +108,6 @@ function start(seed: number, notice?: string, look?: ModularLook | null, body?: 
   game = new Game(canvas, seed, screenMode, profile, {
     save: store.load(seed),
     store,
-    look: keepLook,
     body: keepBody,
     notice,
     online,
@@ -120,35 +115,33 @@ function start(seed: number, notice?: string, look?: ModularLook | null, body?: 
     // na Cidade do Despertar (igual em todas): o aviso confirma que o mundo é outro.
     onNewWorld: () => chooseCharacterForNewWorld(),
     onRestart: () => {
-      const look = game?.entities.look ?? null; // recomeça com a mesma aparência
       const body = game?.entities.body;
       game?.destroy();
       game = null;
       store.clear(seed);
-      start(seed, 'Mundo recomeçado do zero', look, body);
+      start(seed, 'Mundo recomeçado do zero', body);
     },
   });
-  // Atalho de teste (ADR 0017): `?personagem=chibi&tronco=…&pernas=…&pes=…&cabelo=…` troca a aparência.
-  const fromUrl = lookFromSearch(window.location.search);
-  if (fromUrl) game.entities.look = fromUrl;
+  // Atalho de teste: `?personagem=mila` (ou heroine, hero, hood, gino) escolhe o personagem pronto.
+  const fromUrl = new URLSearchParams(window.location.search).get('personagem');
+  if (fromUrl && (HERO_BODIES as readonly string[]).includes(fromUrl)) game.entities.body = fromUrl as HeroBody;
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
 }
 
-/** "Novo mundo" no menu: escolha de personagem (Chibi, Heroína ou Herói) e só então o mundo novo. */
+/** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino ou Mila) e só então o mundo novo. */
 function chooseCharacterForNewWorld(): void {
   const title = new TitleScreen({
     canContinue: false,
     name: savedName(),
-    manifest: art().modular?.manifest,
     creatorOnly: true,
     onBack: () => title.destroy(),
     onContinue: () => title.destroy(),
-    onStart: (look, name, body) => {
+    onStart: (name, body) => {
       if (name) try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento */ }
       title.destroy();
       const next = randomSeed();
-      start(next, `Novo mundo criado · semente ${next}`, look, body);
+      start(next, `Novo mundo criado · semente ${next}`, body);
     },
   });
 }
@@ -164,16 +157,15 @@ function showTitle(): void {
   const title = new TitleScreen({
     canContinue,
     name: savedName(),
-    manifest: art().modular?.manifest,
     onContinue: () => {
       title.destroy();
       start(last!);
     },
-    onStart: (look, name, body) => {
+    onStart: (name, body) => {
       if (name) try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento */ }
       title.destroy();
       const seed = randomSeed();
-      start(seed, name ? `Bem-vindo a Orvalis, ${name}!` : 'Bem-vindo a Orvalis!', look, body);
+      start(seed, name ? `Bem-vindo a Orvalis, ${name}!` : 'Bem-vindo a Orvalis!', body);
     },
   });
 }

@@ -2,11 +2,10 @@
 
 - **Tela de entrada e aparência** (v0.50.0, `game/title.ts`): no mundo principal, sem `?seed=`/`?personagem=`, o jogo
   abre no título "Orvalis" com o mundo em vitrine atrás (`GameOptions.showcase`: sem HUD, sem entrada, sem salvar,
-  câmera passeando pela praça). **Novo jogo** → montar o personagem: **Chibi** (cabelo, roupa, pernas, pés — peças
-  do manifesto, `lookOptions`; pés podem ficar descalços) ou **Heroína**, prévia andando nas 4 direções
-  (`render/characterPreview.ts`), **Sortear** e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
-  um mundo com seed aleatória e a aparência escolhida. **Continuar** (só com jogo salvo) abre o último mundo.
-- **Sentar e levantar** (v0.79.0 Gino; v0.80.0 Heroína, Herói e Hood — `SIT_BODIES`/`canSit`; o chibi ainda não): tocar numa cadeira ou num banco da
+  câmera passeando pela praça). **Novo jogo** → montar o personagem: um dos **5 personagens prontos** (Heroína, Herói, Hood, Gino, Mila), prévia andando nas 4 direções
+  (`render/characterPreview.ts`) e **Nome** (o mesmo `mundoblocos:nome` do multiplayer). **Começar** cria
+  um mundo com seed aleatória e o personagem escolhido. **Continuar** (só com jogo salvo) abre o último mundo.
+- **Sentar e levantar** (v0.79.0 Gino; v0.80.0 Heroína, Herói e Hood — `SIT_BODIES`/`canSit`): tocar numa cadeira ou num banco da
   cidade ao alcance senta (`Player.sitOn`: anda até o assento, vira de frente e senta no lugar, com os pés na célula da frente e o corpo sobre ele — `SEAT_FEET`, v0.79.2 — folha
   `gino-sit` em sequência: 0–3 sentando, parado no quadro 3, 3→0 levantando; v0.79.1). Mexer o controle ou tocar de
   novo levanta (`standUp`) e ele anda de volta para onde estava; levar dano levanta na hora. Na sala, os outros veem (`PlayerState.sit` = quadro; protocolo 18).
@@ -21,9 +20,7 @@
 - **Herói** (v0.65.0; redesenhado com caminhada por ferramenta na v0.76.0): terceiro personagem da tela (`HeroBody` = `heroine` | `hero` em `Entities.body`, salvo em
   `SaveData.body`); atores `hero`, `hero-<ferramenta>`, `hero-<ferramenta>-attack`. **Novo mundo** no menu do jogo abre
   a mesma escolha de personagem (`TitleScreen` com `creatorOnly`; "Voltar" volta ao mundo de antes).
-  A aparência fica em `Entities.look` (null = heroína) → `SaveData.look`; vai junto para "Novo mundo", "Recomeçar" e a
-  sala do multiplayer (lá, por enquanto, só a própria tela mostra o chibi: os outros veem a heroína — Etapa 2).
-  O chibi ainda só tem caminhada: ferramentas e golpes funcionam, mas a animação de ação não aparece nele.
+  O personagem fica em `Entities.body` → `SaveData.body`; vai junto para "Novo mundo", "Recomeçar" e a sala do multiplayer.
 
 - **Grade**: 9 itens + Personagem + Habilidades + Bolsa (ver `domains/farming.md`); tocar num item seleciona (de novo =
   mão vazia). Ao cair, renasce ao lado da última tenda (ou na praça inicial da Cidade do Despertar).

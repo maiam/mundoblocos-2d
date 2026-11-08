@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 19;
+export const PROTOCOL_VERSION = 20;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -48,20 +48,16 @@ export interface PlayerState {
   sit?: number;
 }
 
-/**
- * Como o jogador aparece para os outros: personagem pronto (`body`) ou, com `look`, o chibi modular com as peças
- * escolhidas. Quem desenha confere as peças no próprio manifesto (`cleanLook`); peça desconhecida vira a padrão.
- */
 /** Personagens prontos que a rede aceita (fonte única: o jogo usa a mesma lista em `HERO_BODIES`). */
 export const APPEARANCE_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila'] as const;
 export type AppearanceBody = (typeof APPEARANCE_BODIES)[number];
 
+/** Como o jogador aparece para os outros: um personagem pronto (v0.92.0: o chibi modular saiu, `look` não existe mais). */
 export interface Appearance {
   body: AppearanceBody;
-  look: Record<string, string> | null;
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { body: 'heroine', look: null };
+export const DEFAULT_APPEARANCE: Appearance = { body: 'heroine' };
 
 export interface PlayerInfo {
   id: number;
@@ -265,21 +261,12 @@ export function parseBag(v: unknown): RoomBag | null {
   return { inventory, hotbar, x: o.x as number, y: o.y as number };
 }
 
-const PIECE_RE = /^[a-z0-9-]{1,40}$/;
-
-/** Lê a aparência vinda da rede; qualquer coisa estranha vira a padrão (Heroína). */
+/** Lê a aparência vinda da rede; qualquer coisa estranha vira a padrão (Heroína). Campos antigos (`look`) são ignorados. */
 export function parseAppearance(v: unknown): Appearance {
   if (!v || typeof v !== 'object') return DEFAULT_APPEARANCE;
   const o = v as Record<string, unknown>;
   const body = (APPEARANCE_BODIES as readonly unknown[]).includes(o.body) ? (o.body as AppearanceBody) : 'heroine';
-  let look: Record<string, string> | null = null;
-  if (o.look && typeof o.look === 'object') {
-    const entries = Object.entries(o.look as Record<string, unknown>);
-    if (entries.length <= 12 && entries.every(([k, val]) => PIECE_RE.test(k) && typeof val === 'string' && PIECE_RE.test(val))) {
-      look = Object.fromEntries(entries) as Record<string, string>;
-    }
-  }
-  return { body, look };
+  return { body };
 }
 
 /** Lê os espaços de um baú vindos da rede (27 espaços, ids de pilha válidos, quantidades inteiras). */

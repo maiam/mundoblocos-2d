@@ -1,24 +1,19 @@
 import type { Actor, HeroBody } from '../game/entities';
 import type { Facing } from '../game/walker';
-import { art } from './art';
 import { ActorSprites, CHARACTER_H } from './character';
-import type { ModularLook } from './modular';
-import { ModularSprites } from './modularCharacter';
 
 /** Ordem em que a prévia vira (frente, esquerda, costas, direita) e quanto tempo anda em cada direção (s). */
 const TURN: Facing[] = ['down', 'left', 'up', 'right'];
 const TURN_EVERY = 1.6;
 
 /**
- * Prévia do personagem na tela de entrada: o mesmo desenho do jogo (heroína ou chibi modular), andando no lugar e
+ * Prévia do personagem na tela de entrada: o mesmo desenho do jogo (personagem pronto), andando no lugar e
  * virando nas 4 direções. Só desenha — não conhece regra nenhuma.
  */
 export class CharacterPreview {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly sprites = new ActorSprites();
   private body: HeroBody = 'heroine';
-  private readonly modular = art().modular ? new ModularSprites(art().modular!.manifest, art().modular!.sheets) : undefined;
-  private look: ModularLook | null = null;
   private running = false;
   private t = 0;
   private last = 0;
@@ -27,9 +22,7 @@ export class CharacterPreview {
     this.ctx = canvas.getContext('2d')!;
   }
 
-  /** null = personagem pronto (`body`: Heroína ou Herói). */
-  setLook(look: ModularLook | null, body: HeroBody = 'heroine'): void {
-    this.look = look;
+  setBody(body: HeroBody): void {
     this.body = body;
   }
 
@@ -70,10 +63,10 @@ export class CharacterPreview {
     const zoom = (h * 0.8) / CHARACTER_H;
     const facing = TURN[Math.floor(this.t / TURN_EVERY) % TURN.length];
     const a: Actor = {
-      kind: this.body, x: 0, y: 0, visualZ: 0, facing, moving: true, walkTime: this.t, look: this.look ?? undefined,
+      kind: this.body, x: 0, y: 0, visualZ: 0, facing, moving: true, walkTime: this.t,
     };
     const fx = w / 2;
     const fy = h * 0.92;
-    if (!this.modular?.draw(ctx, fx, fy, zoom, a, this.t)) this.sprites.get(this.body).draw(ctx, fx, fy, zoom, a, this.t);
+    this.sprites.get(this.body).draw(ctx, fx, fy, zoom, a, this.t);
   }
 }

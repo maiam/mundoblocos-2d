@@ -10,10 +10,10 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.91.0 | `package.json` |
-| `PROTOCOL_VERSION` (multiplayer) | 19 | `src/net/protocol.ts` |
-| `SAVE_VERSION` (salvamento local) | 11 | `src/game/save.ts` |
-| Testes | 255 em 46 arquivos (Vitest), todos passando | `npm test` |
+| Versão do jogo | 0.92.0 | `package.json` |
+| `PROTOCOL_VERSION` (multiplayer) | 20 | `src/net/protocol.ts` |
+| `SAVE_VERSION` (salvamento local) | 12 | `src/game/save.ts` |
+| Testes | 253 em 46 arquivos (Vitest), todos passando | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (inalterado na v0.91.0: Mila e lobos carregam sob demanda) — **no limite** | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
@@ -25,17 +25,16 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   celestiais; sem ferramentas, cultivo ou animais. Subdomínio real ainda não hospedado (`domains/worlds.md`).
 - **Cidade do Despertar** (`domains/town.md`): 164 × 132 blocos ao norte da origem, igual em toda seed, área protegida,
   piso único de Tijolo de Pedra, muralha, castelo, guilda, hospedaria, ferreiro, lojas e ~90 casas. Início e renascer
-  sem tenda = praça inicial. 4 moradores (roupas sorteadas pela seed; ferreiro de visual único) com uma fala curta.
+  sem tenda = praça inicial. 16 NPCs nomeados (ferreiro **Black** + 15 moradores, `domains/npc.md`) que falam numa **caixa de conversa** (retrato, nome, texto em páginas).
   **Interiores** só da Ferraria e da Tenda (`world/interiors.ts`, ADR 0014); as demais construções só mostram o nome.
 - **Covil das Aranhas** (`domains/dungeon.md`): labirinto procedural isolado (canto fixo), entrada em caverna a ≥ 10
   chunks do castelo, área protegida, ~38 aranhas + Aranha Gigante (chefe); farol e seta indicam a entrada.
 
 ## Personagem e controles
 - **Cinco personagens prontos**: Heroína, Herói, Hood, Gino e Mila (`APPEARANCE_BODIES`), cada um com caminhada, as 5
-  ferramentas e os 5 golpes; escolhidos na tela de entrada e salvos por mundo. Existe também o **chibi modular**
-  (guarda-roupa v02, ADR 0017): escolhido na tela de entrada, só caminha (sem ferramentas/golpes/sentar).
+  ferramentas e os 5 golpes; escolhidos na tela de entrada e salvos por mundo (o chibi modular saiu na v0.92.0).
 - **Sentar**: tocar numa cadeira ou banco senta de frente (anda até o assento, desce, fica parado); andar levanta.
-  Os quatro personagens prontos sentam; o chibi não.
+  Os cinco personagens prontos sentam.
 - Celular: joystick + botão de ação (toque usa, segurar quebra: 2 s com a mão, 1 s com ferramenta). Tablet: também age
   pelo toque no mundo. Desktop: WASD/setas, Espaço, mouse, Q/E/roda = zoom. Sempre na horizontal (`ScreenMode`).
 - HUD: grade de 12 (9 itens · Personagem · Habilidades · Bolsa), bolsa de 12 espaços à direita, barras de vida e de
@@ -79,12 +78,11 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 ## Limitações conhecidas
 - Salvamento só neste navegador/aparelho (nuvem/contas dependem do backend do Orvalis, ADR 0015).
-- Moradores só dizem uma fala (sem diálogo, loja ou missões); só Ferraria e Tenda têm interior.
+- NPCs só dizem falas fixas (2 cada; sem escolhas, loja ou missões); só Ferraria e Tenda têm interior.
 - **Lobos** (v0.91.0, `world/wolves.ts`, `domains/dungeon.md`): bandos de 1 a 3 da mesma cor (marrom, cinza, branco) pelo mapa ao redor da cidade; só atacam a personagem a até 3 células; soltam Pelagem e Presa de Lobo (sem uso em receitas ainda).
 - Espólios das aranhas e vários itens ainda sem uso em receitas; as 2 pedras sem fonte (Lisa e Polida) só existem por
   código/salvamento.
 - Sem sons, música nem vibração; sem XP/níveis; sem lojas nem missões; sem viagem entre mundos (portais, ADR 0019).
-- Chibi modular sem ferramentas, golpes ou sentar.
 - iPhone/Safari não permite tela cheia nem trava de orientação (vale a camada "Gire o aparelho" ou instalar na tela
   inicial); dentro do Artifact a tela cheia pode ser recusada.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); texturas com uma só arte repetem o padrão.
@@ -120,7 +118,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 255 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 253 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e

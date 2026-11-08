@@ -1,3 +1,5 @@
+> **Nota (v0.92.0):** o chibi modular e o contrato dele (ADR 0017) foram removidos; as menções ao chibi neste documento ficam só como histórico. Ferramentas valem para os personagens prontos.
+
 # Contrato de arte das ferramentas — v01
 
 Fechado em 06/11/2026 entre a área de arte e o motor (ADR 0018). Vale para **toda ferramenta nova ou nível novo de

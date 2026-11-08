@@ -59,10 +59,7 @@
   coloridos, brilhos em estrela.
 - Folhas 4×4 na ordem frente, esquerda, direita, costas (`--rows-map` normaliza; `m` espelha); quadros com a
   mesma ancoragem (pés na base). Ajustar `--sat/--min` quando a sombra do desenho for escura/saturada.
-- **Personagens em camadas** (moradores): personagem de **roupa branca** + folhas de caminhada **só de roupa** na mesma
-  grade 4×4; processar todas juntas com `scripts/extract-villagers.py` (mesma escala) e desenhar a roupa por cima.
-  **Expressões** em camada: rosto → franja → efeitos → roupa (`render/character.ts`).
-  **Ofício = visual único**: personagem e roupa de um ofício (`ROLE_LOOK`) não aparecem em mais ninguém.
+- **NPCs**: cada um é uma folha 4×4 pronta (`assets-src/npcs/<id>.png` → `process-sprite.py --alpha --largest --rows-map 0,3,1,2`) + retrato (`make-portraits.py`); nome e falas só em `game/npcs.ts`. Sem camadas de roupa/rosto.
 - Blocos novos: cubo na prancha **3/4** (topo + frente, mesmo enquadramento) + entrada em `MATERIALS` na mesma
   ordem dos nomes de `extract-blocks.py`.
 - Sprites de objeto: `ox/oy` relativos ao canto da célula; base do sprite = base da célula (ordenação por linha).
@@ -70,10 +67,6 @@
 - `src/assets/*.webp?inline` só é importado nos pacotes de arte (`render/art/principal.ts`, `santuario.ts`): arte nova
   entra no pacote do mundo que a usa. Depois de gerar PNG, rodar `scripts/optimize-assets.py`.
 - Originais ficam em `assets-src/` (versionados) e os comandos de processamento em `OPERATIONS.md`.
-- **Personagem modular** (ADR 0017): seguir `assets-src/personagens/CONTRATO.md`. A arte trabalha em `_trabalho/`
-  (fora do git), publica PNGs em `entrega/<versão>/<encaixe>/<peça>/<ação>__<parte>.png` e atualiza `catalogo.json`;
-  `scripts/export-personagem.py` valida antes de qualquer commit de arte. `.kra`/`.ora`/autosaves nunca sobem.
-  Mudou regra do contrato → atualizar `CONTRATO.md` + `contrato.json` e subir a versão.
 
 ## Commits, PRs e publicação (regra do dono do produto, 2026-11-03)
 - `main` = **o que está no ar** (a Hostinger publica `orvalis.pensamentos.online` a cada atualização dela).

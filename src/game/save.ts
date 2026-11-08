@@ -13,7 +13,6 @@ import type { Player } from './player';
 import { Sheep } from './sheep';
 import type { Facing } from './walker';
 import type { Exploration } from './exploration';
-import type { ModularLook } from '../render/modular';
 
 /**
  * Salvamento automático no navegador (Fase 2). Salva só o que a seed não reconstrói:
@@ -23,7 +22,7 @@ import type { ModularLook } from '../render/modular';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 export interface SaveData {
   v: number;
@@ -33,9 +32,7 @@ export interface SaveData {
   time: number;
   selected: number | null;
   player: { x: number; y: number; z: number; hp: number; facing: Facing; hunger: number };
-  /** Aparência montada na tela de entrada (personagem modular, ADR 0017); null = heroína. */
-  look: ModularLook | null;
-  /** Personagem pronto quando não há `look` (Heroína ou Herói). */
+  /** Personagem pronto (Heroína, Herói, Hood, Gino ou Mila). */
   body: HeroBody;
   /** Névoa do minimapa: células já descobertas, por chunk (bits em base64). */
   explored: Array<{ cx: number; cy: number; bits: string }>;
@@ -84,7 +81,6 @@ export function captureSave(s: GameState): SaveData {
     time: s.time,
     selected: s.selected,
     player: { x: p.x, y: p.y, z: p.z, hp: p.hp, facing: p.facing, hunger: Math.round(p.hunger * 10) / 10 },
-    look: s.entities.look,
     body: s.entities.body,
     explored: s.exploration?.toSave() ?? [],
     tent: s.world.tent,
@@ -134,7 +130,7 @@ export function migrate(raw: unknown): SaveData | null {
     };
   }
   // v5 → v6 (tela de entrada): aparência do personagem; quem já jogava continua com a heroína.
-  if (d.v === 5) d = { ...d, v: 6, look: null };
+  if (d.v === 5) d = { ...d, v: 6, look: null } as typeof d;
   // v6 → v7 (minimapa): nada descoberto ainda; o Game revela a área em volta ao abrir.
   if (d.v === 6) d = { ...d, v: 7, explored: [] };
   // v7 → v8 (covil isolado, ADR 0019): o labirinto mudou de lugar — as aranhas voltam completas (posições antigas não
@@ -146,6 +142,8 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 9) d = { ...d, v: 10, body: 'heroine' };
   // v10 → v11 (chão que se refaz): buracos já abertos começam a contar o dia do zero.
   if (d.v === 10) d = { ...d, v: 11, holes: [] };
+  // v11 → v12 (o chibi modular saiu, v0.92.0): o campo `look` some; quem tinha o chibi continua com o personagem pronto salvo (`body`).
+  if (d.v === 11) { const { look: _look, ...rest } = d as SaveData & { look?: unknown }; d = { ...rest, v: 12 }; }
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -194,7 +192,6 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
   p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));
-  s.entities.look = d.look ?? null;
   s.entities.body = HERO_BODIES.includes(d.body) ? d.body : 'heroine';
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);

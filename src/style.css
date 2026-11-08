@@ -569,12 +569,6 @@ html, body {
 .title-kind { display: flex; gap: 6px; }
 .title-kind button { flex: 1; min-height: 36px; }
 .title-kind button[aria-checked="true"] { background: rgba(255, 212, 107, 0.25); border-color: var(--accent); }
-.title-pieces { display: flex; flex-direction: column; gap: 5px; }
-.title-pieces.off { opacity: 0.45; }
-.title-piece { display: grid; grid-template-columns: 62px 34px 1fr 34px; align-items: center; gap: 6px; }
-.title-piece-name { text-align: left; font-size: 13px; font-weight: 800; opacity: 0.8; }
-.title-piece button { min-height: 32px; padding: 0; font-size: 20px; line-height: 1; }
-.title-piece-value { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .title-name {
   min-height: 40px; border-radius: 12px; border: 1.5px solid var(--panel-border); padding: 0 12px;
   background: rgba(255, 255, 255, 0.92); color: #2a1a48; font: 700 15px Nunito, system-ui, sans-serif; text-align: center;
@@ -594,7 +588,6 @@ html, body {
   .title-options { gap: 5px; }
   .title-options h2 { font-size: 16px; }
   .title-kind button { min-height: 32px; }
-  .title-piece button { min-height: 28px; }
   .title-name { min-height: 34px; }
 }
 
@@ -616,3 +609,39 @@ html, body {
 @media (max-height: 500px) and (orientation: landscape) {
   .minimap { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 40px); width: 84px; height: 84px; }
 }
+
+/* ---- Caixa de conversa (v0.92.0): moldura da arte (1627 × 424), medidas em % da moldura ---- */
+.dialogue {
+  position: fixed; left: 0; right: 0; z-index: 30; display: flex; justify-content: center; pointer-events: none;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+}
+.dialogue[hidden] { display: none; }
+.dlg-frame {
+  --dlg-w: 560px; position: relative; width: var(--dlg-w); aspect-ratio: 1627 / 424; pointer-events: auto; cursor: pointer;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; filter: drop-shadow(0 6px 10px rgba(10, 6, 30, 0.55));
+  font-family: Nunito, system-ui, sans-serif;
+}
+.dlg-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.dlg-portrait {
+  position: absolute; left: 3.1%; top: 11.1%; width: 20.3%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.dlg-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.dlg-portrait img[hidden] { display: none; }
+.dlg-name {
+  position: absolute; left: 23.6%; width: 15.8%; top: 14.2%; height: 9.4%; display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: calc(var(--dlg-w) * 0.031); color: #3b2415; white-space: nowrap; overflow: hidden;
+}
+.dlg-text {
+  position: absolute; left: 27.5%; top: 28.8%; width: 65.8%; height: 46.7%; overflow: hidden; color: #fff6e0;
+  font-weight: 700; font-size: calc(var(--dlg-w) * 0.0275); line-height: 1.28; text-shadow: 0 1px 2px rgba(10, 6, 40, 0.7);
+}
+.dlg-arrow {
+  position: absolute; left: 57.4%; top: 78.1%; width: 0; height: 0; margin-left: -1.6%; transform-origin: 50% 50%;
+  border-left: calc(var(--dlg-w) * 0.016) solid transparent; border-right: calc(var(--dlg-w) * 0.016) solid transparent;
+  border-top: calc(var(--dlg-w) * 0.0155) solid #f6ead0; filter: drop-shadow(0 0 1px #3b2a6e) drop-shadow(0 1px 0 #3b2a6e);
+  animation: dlg-bob 0.9s ease-in-out infinite;
+}
+.dlg-arrow[hidden] { display: none; }
+@keyframes dlg-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18%); } }
+@media (prefers-reduced-motion: reduce) { .dlg-arrow { animation: none; } }

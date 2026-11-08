@@ -27,10 +27,11 @@ import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
 import { Player } from './player';
 import { ActionButton, HAND_ICON } from './actionButton';
+import { DialogueBox } from './dialogue';
+import type { Villager } from './villager';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
-import { cleanLook, type ModularLook } from '../render/modular';
 import { HUNGER, weaponPower } from '../world/progression';
 import type { MonsterKind } from '../world/dungeon';
 import { CreatureMirror } from './creatureMirror';
@@ -64,7 +65,6 @@ export interface GameOptions {
     onJoin(name: string, room: number): void; onLeave(): void;
   };
   /** Aparência do personagem num mundo novo (o salvamento, se houver, prevalece); null/ausente = heroína. */
-  look?: ModularLook | null;
   /** Personagem pronto num mundo novo, quando não há `look` (o salvamento, se houver, prevalece). */
   body?: HeroBody;
   /**
@@ -102,6 +102,8 @@ export class Game {
   /** Espaço selecionado na hotbar; null = mão vazia. */
   private selected: number | null = null;
   private readonly actionButton: ActionButton;
+  /** Caixa de conversa dos NPCs (aparece no centro da tela; só interface). */
+  private readonly dialogue: DialogueBox;
   private readonly menu: Menu;
   private saveTimer = 0;
   /** Momento do último salvamento bem-sucedido (ms), 0 = ainda não salvou nesta sessão. */
@@ -112,7 +114,7 @@ export class Game {
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
   /** Outros jogadores da sala (multiplayer). */
-  private readonly remotes = new RemotePlayers(art().modular?.manifest);
+  private readonly remotes = new RemotePlayers();
   /** Na sala: espelho dos animais e monstros da sala. */
   private mirror: CreatureMirror | null = null;
   /** Névoa do minimapa: o que o jogador já viu (salvo junto com o mundo). */
@@ -147,7 +149,6 @@ export class Game {
     this.player = new Player(sx + 0.5, sy + 0.6);
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
-    this.entities.look = options.look ?? null;
     if (options.body) this.entities.body = options.body;
     // Animais e monstros: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
     if (options.net) this.entities.remote = true;
@@ -168,8 +169,9 @@ export class Game {
       onConsumed: () => this.hotbar.prune(this.inventory),
       onOpenChest: (x, y) => this.openChest(x, y),
       notify: (text) => this.hud.toast(text),
+      talk: (v) => this.talkTo(v),
       onAction: (a) => options.net?.sent(a),
-      canSit: () => profile.character === 'heroine' && !this.entities.look && canSit(this.entities.body),
+      canSit: () => profile.character === 'heroine' && canSit(this.entities.body),
       onFeed: options.net ? (animal, item) => {
         const id = this.mirror?.idOf(animal);
         if (id) options.net!.feed(id, item);
@@ -201,6 +203,7 @@ export class Game {
       (r) => this.craftDestination(r),
       { hand: HAND_ICON, bag: art().uiIcons?.bag ?? '' });
     this.joystick = new Joystick(this.hud.root);
+    this.dialogue = new DialogueBox(this.hud.root);
     this.actionButton = new ActionButton(this.hud.root, () => this.startAction(), () => this.actions.endAction());
     if (screenMode?.isTablet) this.hud.root.classList.add('tablet'); // toque na tela também age (além do botão)
     this.menu = new Menu(this.hud.root, {
@@ -272,9 +275,6 @@ export class Game {
       const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
       if (room) this.moveTo(this.roomExit(room), 'down');
     }
-    // Só peças que existem nesta versão da arte (salvamento antigo, arte removida); mundo sem modular = heroína.
-    const modular = art().modular?.manifest;
-    this.entities.look = modular ? cleanLook(modular, this.entities.look) : null;
     if (options.showcase) this.hud.root.style.display = 'none';
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
@@ -291,6 +291,7 @@ export class Game {
     this.sendBag(true); // na sala: a bolsa fica guardada lá até a próxima entrada
     this.running = false;
     for (const fn of this.cleanup) fn();
+    this.dialogue.destroy();
     this.hud.destroy();
   }
 
@@ -615,7 +616,7 @@ export class Game {
       return [(this.player.x + Math.sin(t) * 7) * TILE, (this.player.y + Math.sin(t * 1.7) * 3 - 2) * TILE];
     }
     // Usa a altura suavizada: subir num bloco desloca a câmera sem trancos.
-    return [this.player.x * TILE, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4];
+    return [this.player.x * TILE, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4 + this.dialogueShift];
   }
 
   private resize = (): void => {
@@ -652,11 +653,13 @@ export class Game {
       if (e.code === 'KeyK') this.toggleSkills();
       // KeyC: reservado para o painel do personagem (em breve).
       if (e.code === 'Escape') {
-        if (this.skills.detailOpen) this.skills.closeDetail();
+        if (this.dialogue.isOpen) this.dialogue.close();
+        else if (this.skills.detailOpen) this.skills.closeDetail();
         else if (this.skills.isOpen) this.toggleSkills(false);
         else if (this.bag.isOpen) this.toggleBag(false);
         else this.select(null);
       }
+      if (e.code === 'Enter' && this.dialogue.isOpen) this.dialogue.advance();
       if (e.code === 'Space') this.startAction();
       if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
     });
@@ -685,6 +688,7 @@ export class Game {
     // na tela age como o clique do computador e o botão de ação também fica.
     this.listen(c, 'pointerdown', (e) => {
       if (e.pointerType === 'touch' && !this.screenMode?.isTablet) return;
+      if (this.dialogue.isOpen) { this.dialogue.advance(); return; } // clique no mundo com a conversa aberta: avança
       if (!this.actions.pointerDown(e.pointerId, e.offsetX, e.offsetY)) return;
       try { c.setPointerCapture(e.pointerId); } catch { /* ponteiro já liberado */ }
     });
@@ -698,8 +702,33 @@ export class Game {
 
 
   /** Botão de ação/Espaço: ignorado com a tela bloqueada ("Gire o aparelho"). */
+  /** Quanto a câmera desce (px de mundo) com a conversa aberta, para quem fala não ficar atrás da caixa (suavizado). */
+  private dialogueShift = 0;
+
   private startAction(): void {
+    if (this.dialogue.isOpen) { this.dialogue.advance(); return; } // conversa aberta: o botão de ação avança o texto
     if (!this.screenMode?.blocked) this.actions.startAction();
+  }
+
+  /** Alcance (células) até onde a conversa continua aberta; quem tem ofício atende do outro lado do balcão. */
+  private static readonly TALK_KEEP = 3.2;
+  private static readonly TALK_KEEP_ROLE = 4.4;
+
+  /** Toque num morador: abre a caixa de conversa com ele (ou avança, se já falando com ele). */
+  private talkTo(v: Villager): void {
+    if (this.dialogue.isOpen && this.dialogue.npc === v) { this.dialogue.advance(); return; }
+    this.actions.cancelAll();
+    v.faceTo(this.player.x, this.player.y);
+    this.dialogue.open(v.conversation(), v, () => v.release());
+  }
+
+  /** A conversa fecha sozinha se a personagem se afasta, leva dano ou abre um painel; o NPC fica virado para ela. */
+  private updateDialogue(): void {
+    const npc = this.dialogue.npc;
+    if (!npc) return;
+    const far = Math.hypot(npc.x - this.player.x, npc.y - this.player.y) > (npc.role ? Game.TALK_KEEP_ROLE : Game.TALK_KEEP);
+    if (far || this.player.dead || this.player.invuln > 0 || this.menu.isOpen || this.bag.isOpen || this.skills.isOpen) { this.dialogue.close(); return; }
+    npc.faceTo(this.player.x, this.player.y);
   }
 
   private frame = (now: number): void => {
@@ -722,6 +751,7 @@ export class Game {
     if (!blocked) this.updateInteriors(iy);
     this.fade = Math.max(0, this.fade - dt * 2.5);
     this.entities.update(dt, this.world);
+    this.updateDialogue();
     this.updateNet(realDt);
     this.updateHealth(dt);
     // Só ferramentas que golpeiam (espada, machado) acertam entidades; a enxada apenas ara.
@@ -734,6 +764,8 @@ export class Game {
     this.world.tick(dt, Math.random, !this.options.net);
     this.drops.update(dt, this.player, this.inventory, (id) => this.onCollected(id),
       (id) => !this.collect || canCarry(this.inventory, this.hotbar, id));
+    const shiftWant = this.dialogue.isOpen ? (this.dialogue.boxHeight * 0.62) / this.camera.zoom : 0;
+    this.dialogueShift += (shiftWant - this.dialogueShift) * (1 - Math.exp(-7 * realDt));
     this.camera.follow(...this.cameraTarget(), dt);
     this.actions.update(dt);
 

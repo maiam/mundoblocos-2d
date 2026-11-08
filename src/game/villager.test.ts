@@ -3,9 +3,9 @@ import { Block } from '../world/blocks';
 import { inRect } from '../world/dungeon';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
-import { Entities } from './entities';
+import { Entities, HOME_SPACING } from './entities';
+import { NPCS, NPC_IDS, npcDef, SMITH } from './npcs';
 import { Player } from './player';
-import { CASUAL_OUTFITS, EXPRESSIONS, ROLE_LOOK, TOWNSFOLK_BASES, villagerOutfit } from './villager';
 
 function setup(seed: number) {
   const w = new World(seed);
@@ -18,31 +18,36 @@ function setup(seed: number) {
   return { w, p, e };
 }
 
-describe('Moradores da cidade e cavalo', () => {
-  it('moradores com os personagens livres e roupa sorteada pela seed; ferreiro com visual único (cabelo preto)', () => {
-    const { w, e } = setup(42);
-    const town = e.villagers.filter((v) => !v.role);
-    expect(town.map((v) => v.base)).toEqual(TOWNSFOLK_BASES);
-    expect(TOWNSFOLK_BASES).toEqual(['blond', 'brown', 'silver', 'red']);
-    for (const v of town) expect(CASUAL_OUTFITS).toContain(v.outfit);
-    // Ferreiro: cabelo preto + roupa de ferreiro, dentro da Ferraria (interior), atrás do balcão.
-    const smith = e.villagers.find((v) => v.role === 'smith')!;
-    expect([smith.base, smith.outfit]).toEqual(['black', 'smith']);
-    // Regra: personagem e roupa do ofício nunca se repetem em outro morador, em nenhuma seed.
-    for (let seed = 1; seed <= 20; seed++) {
-      for (const v of setup(seed).e.villagers.filter((x) => !x.role)) {
-        expect(v.base).not.toBe(ROLE_LOOK.smith.base);
-        expect(v.outfit).not.toBe(ROLE_LOOK.smith.outfit);
-      }
+describe('NPCs da cidade (nomes e falas em game/npcs.ts)', () => {
+  it('16 NPCs com id e nome únicos: Black (ferreiro) e 15 moradores; cada um com falas', () => {
+    expect(NPCS).toHaveLength(16);
+    expect(new Set(NPC_IDS).size).toBe(16);
+    expect(new Set(NPCS.map((n) => n.name)).size).toBe(16);
+    expect(SMITH).toBe('black');
+    expect(npcDef('black').name).toBe('Black');
+    expect(NPCS.filter((n) => 'role' in n)).toHaveLength(1);
+    for (const n of NPCS) {
+      expect(n.lines.length).toBeGreaterThanOrEqual(2);
+      for (const l of n.lines) expect(l.length).toBeGreaterThan(20);
     }
-    expect(smith.role).toBe('smith');
+  });
+
+  it('a cidade tem os 16: o ferreiro Black na Ferraria e os 15 espalhados pelas ruas, cada um uma vez', () => {
+    const { w, e } = setup(42);
+    expect(e.villagers.map((v) => v.npc).sort()).toEqual([...NPC_IDS].sort());
+    const smith = e.villagers.find((v) => v.role === 'smith')!;
+    expect(smith.npc).toBe('black');
+    expect(smith.name).toBe('Black');
     expect(w.interiorAt(smith.cellX, smith.cellY)?.def.id).toBe('smithy');
-    expect(smith.speak()).toContain('Ferreiro');
-    expect(setup(42).e.villagers.map((v) => v.outfit)).toEqual(e.villagers.map((v) => v.outfit));
-    // Seeds diferentes variam as roupas.
-    const looks = new Set<string>();
-    for (let s = 1; s <= 30; s++) looks.add(TOWNSFOLK_BASES.map((_, i) => villagerOutfit(s, i)).join());
-    expect(looks.size).toBeGreaterThan(1);
+    // Espalhados: nenhum par de moradores comuns nasce colado e os pontos de casa ficam a pelo menos HOME_SPACING (os 4 fixos à parte).
+    const common = e.villagers.filter((v) => !v.role);
+    expect(common).toHaveLength(15);
+    const homes = common.slice(4).map((v) => [v.homeX, v.homeY]);
+    for (let i = 0; i < homes.length; i++) for (let j = i + 1; j < homes.length; j++) {
+      expect(Math.hypot(homes[i][0] - homes[j][0], homes[i][1] - homes[j][1])).toBeGreaterThan(HOME_SPACING * 0.5);
+    }
+    // A cidade é igual em toda seed: mesmos NPCs nos mesmos lugares.
+    expect(setup(7).e.villagers.map((v) => [v.npc, v.cellX, v.cellY])).toEqual(e.villagers.map((v) => [v.npc, v.cellX, v.cellY]));
   });
 
   it('moradores só andam por ruas e praças, sem sair pela muralha nem pelo portão', () => {
@@ -67,18 +72,31 @@ describe('Moradores da cidade e cavalo', () => {
     }
   });
 
-  it('expressões: cada morador tem uma de repouso (pela seed) e reage ao conversar, voltando depois', () => {
+  it('conversa: a fala sai com nome, retrato e texto, em roda; o NPC fica parado até soltar e volta a passear', () => {
     const { w, e } = setup(42);
-    for (const v of e.villagers) expect(EXPRESSIONS).toContain(v.expression);
-    expect(e.villagers.find((v) => v.role === 'smith')!.expression).toBe(ROLE_LOOK.smith.expression);
-    expect(setup(42).e.villagers.map((v) => v.expression)).toEqual(e.villagers.map((v) => v.expression));
-    const v = e.villagers[0];
-    const rest = v.expression;
-    v.speak();
-    expect(v.expression).not.toBe(rest);
-    for (let f = 0; f < 60 * 4; f++) e.update(1 / 60, w);
-    expect(v.expression).toBe(rest);
-    expect(e.actors.filter((a) => a.expression)).toHaveLength(e.villagers.length);
+    const v = e.villagers.find((x) => x.npc === 'rubem')!;
+    const def = npcDef('rubem');
+    const c1 = v.conversation();
+    expect([c1.npc, c1.name, c1.text]).toEqual(['rubem', 'Rubem', def.lines[0]]);
+    expect(v.conversation().text).toBe(def.lines[1]);
+    expect(v.conversation().text).toBe(def.lines[0]); // volta ao começo
+    expect(v.talking).toBe(true);
+    const [x0, y0] = [v.x, v.y];
+    for (let f = 0; f < 60 * 20; f++) e.update(1 / 60, w);
+    expect([v.x, v.y]).toEqual([x0, y0]); // parado durante a conversa
+    v.faceTo(x0, y0 - 5);
+    expect(v.facing).toBe('up');
+    v.faceTo(x0 + 5, y0);
+    expect(v.facing).toBe('right');
+    v.release();
+    expect(v.talking).toBe(false);
+    for (let f = 0; f < 60 * 40; f++) e.update(1 / 60, w);
+    expect(Math.hypot(v.x - x0, v.y - y0)).toBeGreaterThan(0.2); // voltou a andar
+  });
+
+  it('as falas citam só regras que existem (o Black fala da Ferraria; Rubem dos lobos a 3 passos)', () => {
+    expect(npcDef('black').lines[0]).toContain('Ferraria');
+    expect(npcDef('rubem').lines[0]).toContain('três passos');
   });
 
   it('o golpe não atinge moradores', () => {
@@ -87,7 +105,14 @@ describe('Moradores da cidade e cavalo', () => {
     p.x = v.x - 0.8;
     p.y = v.y;
     expect(e.strike('right', w, 'sword')).toBe(0);
-    expect(e.villagers).toHaveLength(5);
+    expect(e.villagers).toHaveLength(16);
+  });
+
+  it('cada NPC aparece com a própria folha (npc-<id>), sem camadas de roupa nem rosto', () => {
+    const { e } = setup(42);
+    const kinds = e.actors.filter((a) => a.kind.startsWith('npc-')).map((a) => a.kind).sort();
+    expect(kinds).toEqual(NPC_IDS.map((id) => `npc-${id}`).sort());
+    for (const a of e.actors.filter((x) => x.kind.startsWith('npc-'))) expect(Object.keys(a)).not.toContain('outfit');
   });
 
   it('um cavalo no campo fora da cidade, em grama, que passeia', () => {
@@ -100,6 +125,5 @@ describe('Moradores da cidade e cavalo', () => {
     for (let f = 0; f < 60 * 30; f++) e.update(1 / 60, w);
     expect(Math.hypot(h.x - x0, h.y - y0)).toBeGreaterThan(0.3);
     expect(e.actors.some((a) => a.kind === 'horse')).toBe(true);
-    expect(e.actors.filter((a) => a.kind.startsWith('villager-') && a.outfit)).toHaveLength(5);
   });
 });

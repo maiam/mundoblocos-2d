@@ -1,6 +1,37 @@
-import chibiManifest from '../../assets/chibi-manifesto.json';
-import type { ModularManifest } from '../modular';
 import type { MaterialsV2Manifest } from '../materialsV2';
+import npcBlack from '../../assets/npc-black.webp';
+import portraitBlack from '../../assets/portrait-black.webp';
+import npcDante from '../../assets/npc-dante.webp';
+import portraitDante from '../../assets/portrait-dante.webp';
+import npcSilvano from '../../assets/npc-silvano.webp';
+import portraitSilvano from '../../assets/portrait-silvano.webp';
+import npcMorgan from '../../assets/npc-morgan.webp';
+import portraitMorgan from '../../assets/portrait-morgan.webp';
+import npcAurelio from '../../assets/npc-aurelio.webp';
+import portraitAurelio from '../../assets/portrait-aurelio.webp';
+import npcRubem from '../../assets/npc-rubem.webp';
+import portraitRubem from '../../assets/portrait-rubem.webp';
+import npcRosendo from '../../assets/npc-rosendo.webp';
+import portraitRosendo from '../../assets/portrait-rosendo.webp';
+import npcTeodoro from '../../assets/npc-teodoro.webp';
+import portraitTeodoro from '../../assets/portrait-teodoro.webp';
+import npcBento from '../../assets/npc-bento.webp';
+import portraitBento from '../../assets/portrait-bento.webp';
+import npcSolano from '../../assets/npc-solano.webp';
+import portraitSolano from '../../assets/portrait-solano.webp';
+import npcNilo from '../../assets/npc-nilo.webp';
+import portraitNilo from '../../assets/portrait-nilo.webp';
+import npcMarlon from '../../assets/npc-marlon.webp';
+import portraitMarlon from '../../assets/portrait-marlon.webp';
+import npcLavinio from '../../assets/npc-lavinio.webp';
+import portraitLavinio from '../../assets/portrait-lavinio.webp';
+import npcCaio from '../../assets/npc-caio.webp';
+import portraitCaio from '../../assets/portrait-caio.webp';
+import npcNoel from '../../assets/npc-noel.webp';
+import portraitNoel from '../../assets/portrait-noel.webp';
+import npcLeandro from '../../assets/npc-leandro.webp';
+import portraitLeandro from '../../assets/portrait-leandro.webp';
+import dialogueFrame from '../../assets/dialogo-moldura.webp';
 import blockAtlas from '../../assets/blocks-atlas.webp';
 import materialsV2Atlas from '../../assets/materials-v2.webp';
 import transitionsV2 from '../../assets/transitions-v2.webp';
@@ -105,41 +136,6 @@ import chicken from '../../assets/chicken.webp';
 import foal from '../../assets/foal.webp';
 import calf from '../../assets/calf.webp';
 import chick from '../../assets/chick.webp';
-import villagerBlond from '../../assets/villager-blond.webp';
-import villagerBrown from '../../assets/villager-brown.webp';
-import villagerBlack from '../../assets/villager-black.webp';
-import villagerSilver from '../../assets/villager-silver.webp';
-import villagerRed from '../../assets/villager-red.webp';
-import exprCalm from '../../assets/expr-calm.webp';
-import exprHappy from '../../assets/expr-happy.webp';
-import exprSmile from '../../assets/expr-smile.webp';
-import exprLaugh from '../../assets/expr-laugh.webp';
-import exprSurprised from '../../assets/expr-surprised.webp';
-import exprWink from '../../assets/expr-wink.webp';
-import exprContent from '../../assets/expr-content.webp';
-import exprExcited from '../../assets/expr-excited.webp';
-import exprSad from '../../assets/expr-sad.webp';
-import exprScared from '../../assets/expr-scared.webp';
-import exprScaredFx from '../../assets/expr-scared-fx.webp';
-import exprAngry from '../../assets/expr-angry.webp';
-import exprAngryFx from '../../assets/expr-angry-fx.webp';
-import exprSmug from '../../assets/expr-smug.webp';
-import exprGuffaw from '../../assets/expr-guffaw.webp';
-import exprNeutral from '../../assets/expr-neutral.webp';
-import exprShy from '../../assets/expr-shy.webp';
-import exprSleepy from '../../assets/expr-sleepy.webp';
-import exprSleepyFx from '../../assets/expr-sleepy-fx.webp';
-import bangsBlond from '../../assets/villager-blond-bangs.webp';
-import bangsBrown from '../../assets/villager-brown-bangs.webp';
-import bangsBlack from '../../assets/villager-black-bangs.webp';
-import bangsSilver from '../../assets/villager-silver-bangs.webp';
-import bangsRed from '../../assets/villager-red-bangs.webp';
-import outfitDenim from '../../assets/outfit-denim.webp';
-import outfitVarsity from '../../assets/outfit-varsity.webp';
-import outfitFarmer from '../../assets/outfit-farmer.webp';
-import outfitVest from '../../assets/outfit-vest.webp';
-import outfitHoodie from '../../assets/outfit-hoodie.webp';
-import outfitSmith from '../../assets/outfit-smith.webp';
 import wolfBrown from '../../assets/wolf-marrom.webp';
 import wolfGray from '../../assets/wolf-cinza.webp';
 import wolfWhite from '../../assets/wolf-branco.webp';
@@ -234,13 +230,6 @@ import type { ArtPack } from './types';
 
 
 /** Mundo principal: heroína e ferramentas, materiais, porta, trigo, ovelhas e a dungeon das aranhas. */
-// Personagem modular em teste (ADR 0017): `export-personagem.py --out src/assets --prefixo chibi-`. URLs só carregam
-// quando o chibi aparece (`?personagem=chibi`); fora do orçamento de início.
-const chibiSheets = Object.fromEntries(
-  Object.entries(import.meta.glob<string>('../../assets/chibi-*.webp', { eager: true, import: 'default' }))
-    .map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1), url]),
-);
-
 const pack: ArtPack = {
   actors: {
     heroine,
@@ -312,11 +301,22 @@ const pack: ArtPack = {
     foal,
     calf,
     chick,
-    'villager-blond': villagerBlond,
-    'villager-brown': villagerBrown,
-    'villager-black': villagerBlack,
-    'villager-silver': villagerSilver,
-    'villager-red': villagerRed,
+    'npc-black': npcBlack,
+    'npc-dante': npcDante,
+    'npc-silvano': npcSilvano,
+    'npc-morgan': npcMorgan,
+    'npc-aurelio': npcAurelio,
+    'npc-rubem': npcRubem,
+    'npc-rosendo': npcRosendo,
+    'npc-teodoro': npcTeodoro,
+    'npc-bento': npcBento,
+    'npc-solano': npcSolano,
+    'npc-nilo': npcNilo,
+    'npc-marlon': npcMarlon,
+    'npc-lavinio': npcLavinio,
+    'npc-caio': npcCaio,
+    'npc-noel': npcNoel,
+    'npc-leandro': npcLeandro,
     'wolf-brown': wolfBrown,
     'wolf-gray': wolfGray,
     'wolf-white': wolfWhite,
@@ -325,9 +325,8 @@ const pack: ArtPack = {
     'spider-boss': spiderBoss,
   },
   interiors: { smithy: interiorSmithy, tent: interiorTent },
-  expressions: { calm: { face: exprCalm }, happy: { face: exprHappy }, smile: { face: exprSmile }, laugh: { face: exprLaugh }, surprised: { face: exprSurprised }, wink: { face: exprWink }, content: { face: exprContent }, excited: { face: exprExcited }, sad: { face: exprSad }, scared: { face: exprScared, fx: exprScaredFx }, angry: { face: exprAngry, fx: exprAngryFx }, smug: { face: exprSmug }, guffaw: { face: exprGuffaw }, neutral: { face: exprNeutral }, shy: { face: exprShy }, sleepy: { face: exprSleepy, fx: exprSleepyFx } },
-  bangs: { blond: bangsBlond, brown: bangsBrown, black: bangsBlack, silver: bangsSilver, red: bangsRed },
-  outfits: { denim: outfitDenim, varsity: outfitVarsity, farmer: outfitFarmer, vest: outfitVest, hoodie: outfitHoodie, smith: outfitSmith },
+  portraits: { black: portraitBlack, dante: portraitDante, silvano: portraitSilvano, morgan: portraitMorgan, aurelio: portraitAurelio, rubem: portraitRubem, rosendo: portraitRosendo, teodoro: portraitTeodoro, bento: portraitBento, solano: portraitSolano, nilo: portraitNilo, marlon: portraitMarlon, lavinio: portraitLavinio, caio: portraitCaio, noel: portraitNoel, leandro: portraitLeandro },
+  dialogueFrame,
   blockAtlas,
   materialsV2: { atlas: materialsV2Atlas, manifest: materialsV2Manifest as MaterialsV2Manifest, masks: transitionsV2 },
   materialIcons: {
@@ -378,6 +377,5 @@ const pack: ArtPack = {
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
   itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, wolf_fang: wolfFangIcon, wolf_pelt: wolfPeltIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
-  modular: { manifest: chibiManifest as unknown as ModularManifest, sheets: chibiSheets },
 };
 export default pack;

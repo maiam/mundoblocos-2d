@@ -1,8 +1,7 @@
 import type { ActorKind } from '../../game/entities';
-import type { ModularManifest } from '../modular';
 import type { MonsterKind } from '../../world/dungeon';
 import type { ItemId, ToolId } from '../../world/items';
-import type { ExpressionId, OutfitId, VillagerBase } from '../../game/villager';
+import type { NpcId } from '../../game/npcs';
 
 /**
  * Pacote de arte de um mundo: URLs das imagens (arquivos separados no Artifact, ADR 0013) só do que aquele mundo usa.
@@ -15,12 +14,10 @@ export type CraftableArt = 'campfire' | 'cauldron' | 'oven' | 'chair';
 export interface ArtPack {
   /** Folhas dos atores (personagem, animais, monstros). */
   actors: Partial<Record<ActorKind, string>>;
-  /** Roupas dos moradores (`extract-villagers.py`), desenhadas por cima da folha-base no mesmo quadro. */
-  outfits?: Partial<Record<OutfitId, string>>;
-  /** Expressões dos moradores: rosto (todas as direções na grade 4×4) e, em algumas, efeitos por cima do cabelo. */
-  expressions?: Partial<Record<ExpressionId, { face: string; fx?: string }>>;
-  /** Franja de cada personagem-base, redesenhada por cima da expressão. */
-  bangs?: Partial<Record<VillagerBase, string>>;
+  /** Retratos dos NPCs para a caixa de conversa (`make-portraits.py`); só baixam quando a conversa abre. */
+  portraits?: Partial<Record<NpcId, string>>;
+  /** Moldura da caixa de conversa (`assets-src/dialogo-moldura.png`). */
+  dialogueFrame?: string;
   /** Atlas 3/4 dos 8 materiais (`extract-blocks.py`) e ícones da hotbar por bloco. */
   blockAtlas?: string;
   materialIcons: Partial<Record<number, string>>;
@@ -71,6 +68,4 @@ export interface ArtPack {
   /** Ícones de interface (bolsa do inventário). */
   uiIcons?: { bag: string; character: string; skills: string; builder: string };
   toolIcons: Partial<Record<ToolId, string>>;
-  /** Personagem modular em teste (ADR 0017): manifesto do exportador e URL de cada folha (pelo nome no manifesto). */
-  modular?: { manifest: ModularManifest; sheets: Record<string, string> };
 }

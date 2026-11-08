@@ -85,28 +85,6 @@ enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só 
 **Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
 
 ## Pipeline de arte
-### Personagem modular (contrato v02, ADR 0017)
-
-Regras: `assets-src/personagens/CONTRATO.md`. A arte publica em `humano-chibi/entrega/v02/` e atualiza
-`humano-chibi/catalogo.json`; `_trabalho/` e `_arquivo/` (Krita, ORA, v01) ficam só no computador (fora do git —
-manter cópia em nuvem).
-
-```bash
-python3 scripts/export-personagem.py                          # valida a entrega (erro = sai com código 1)
-python3 scripts/export-personagem.py --out /tmp/chibi-export  # valida e exporta WebP + manifesto.json
-```
-
-Teste no jogo: `python3 scripts/export-personagem.py --out src/assets --prefixo chibi-` (regrava as folhas
-`chibi-*.webp` + `chibi-manifesto.json`; não rodar `optimize-assets.py` nelas, já saem em WebP) e abrir
-`http://localhost:5173/?seed=42&personagem=chibi&tronco=colete-verde&pernas=calca-ardosia&pes=sapatos-couro`.
-
-Precisa de Pillow com WebP (sem numpy). Valida tamanho das folhas, pixels fora da caixa da ação, partes/encaixes
-desconhecidos, contato dos pés e prévias ≤ 1 MB. Peça nova ou revisada só vai ao jogo depois de passar no validador e ser reexportada para `src/assets/`.
-
-Sempre: gerar PNG em `src/assets/` → `python3 scripts/optimize-assets.py` (converte para WebP q84/alfa q85 e apaga os
-PNG; `--recompress` regrava no nível atual os WebP de sprite ≥ 60 kB). Depois, **importar o asset no pacote do mundo**
-(`src/render/art/principal.ts` ou `santuario.ts`, ADR 0010) — é o único lugar que importa imagens (como URL, ADR 0013).
-
 **Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`) e `npm run build:artifact:santuario`; cada um
 só leva a arte do seu mundo, em arquivos ao lado da página (ADR 0013). Gere o build de um mundo imediatamente antes de publicá-lo (mesmo `dist/`).
 
@@ -189,12 +167,7 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
 
-**Moradores e roupas** (`assets-src/villagers/villager-*-sheet.png` e `outfit-*-sheet.png`, 4×4 transparentes):
-`python3 scripts/extract-villagers.py [--preview <png>]` → `villager-*.png` + `outfit-*.png` na mesma grade/escala
-(a roupa perde a cabeça careca) → `optimize-assets.py`. A prévia mostra cada morador com cada roupa.
-O mesmo script gera as **expressões** (`assets-src/expressions/`, 16 rostos × frente/esquerda/direita) → `expr-<id>`,
-`expr-<id>-fx` e `villager-<cabelo>-bangs`; `--expr-preview <png>` mostra as 16 expressões em cada personagem. Folha de
-expressão nova com outro molde: medir de novo `CALIB` (escala e deslocamento da expressão 0 até o morador loiro).
+**NPCs da cidade** (v0.92.0; `assets-src/npcs/<id>.png`, 4×4 transparente): `python3 scripts/process-sprite.py assets-src/npcs/<id>.png src/assets/npc-<id>.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2` (as folhas chegam com as linhas frente, costas, direita, esquerda) → `optimize-assets.py`. Retratos da caixa de conversa: `python3 scripts/make-portraits.py [id ...]` → `portrait-<id>.png` (192×192, cabeça do quadro de frente) → `optimize-assets.py`. O Black (`black.png`) é a composição da folha antiga do ferreiro. Moldura: `assets-src/dialogo-moldura.png` (enviada pelo dono do produto; o nome e o rosto de exemplo foram apagados e o recorte vai a 1280 px de largura em `src/assets/dialogo-moldura.webp`).
 
 **Hortaliças** (pranchas 8×2 transparentes em `assets-src/crops/<nome>.png`): `python3 scripts/extract-crops.py` →
 `crop-<nome>.png` (4×4 quadros de 128 px, mesmo formato do trigo) → `optimize-assets.py`. Cultura nova: uma linha em
