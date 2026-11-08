@@ -102,19 +102,41 @@ describe('Árvores adultas (carvalho, macieira, cerejeira; sem crescimento desde
     expect(applyAction(w, parseAction({ kind: 'pick', x, y })!)).toBe(true);
   });
 
-  it('Campos misturam macieiras aos carvalhos', () => {
-    expect(BIOMES.meadow.altTree).toEqual({ id: Block.APPLE_TREE, share: 1 / 6 });
+  it('Campos misturam macieiras e bétulas aos carvalhos (a macieira cai onde sempre caiu)', () => {
+    expect(BIOMES.meadow.altTrees).toEqual([{ id: Block.APPLE_TREE, share: 1 / 6 }, { id: Block.BIRCH_TREE, share: 1 / 5 }]);
     const w = new World(42);
-    let oak = 0, apple = 0;
+    let oak = 0, apple = 0, birch = 0;
     for (let y = -150; y < 150; y++) {
       for (let x = -150; x < 150; x++) {
         const id = w.getObject(x, y);
         if (id === Block.OAK_TREE) oak++;
         if (id === Block.APPLE_TREE) apple++;
+        if (id === Block.BIRCH_TREE) birch++;
       }
     }
-    expect(apple).toBeGreaterThan(0);
-    expect(apple / (oak + apple)).toBeGreaterThan(0.08);
-    expect(apple / (oak + apple)).toBeLessThan(0.3);
+    const all = oak + apple + birch;
+    expect(apple / all).toBeGreaterThan(0.1);
+    expect(apple / all).toBeLessThan(0.25);
+    expect(birch / all).toBeGreaterThan(0.1);
+    expect(birch / all).toBeLessThan(0.25);
+    expect(oak).toBeGreaterThan(apple);
+  });
+
+  it('bétula: derrubada dá 2–3 Toras de Bétula; tora vira 2 tábuas; as duas são madeira (batente) e substituem a água', () => {
+    expect(dropsFor(Block.BIRCH_TREE, () => 0)).toEqual([]);
+    expect(blockDrops(Block.BIRCH_TREE, () => 0)).toEqual([{ item: `block:${Block.BIRCH_LOG}`, count: 3 }]);
+    expect(blockDrops(Block.BIRCH_TREE, () => 0.9)).toEqual([{ item: `block:${Block.BIRCH_LOG}`, count: 2 }]);
+    const recipe = RECIPES.find((r) => r.id === 'birch-planks')!;
+    expect(recipe.inputs).toEqual([{ item: `block:${Block.BIRCH_LOG}`, count: 1 }]);
+    expect(recipe.output).toEqual({ item: `block:${Block.BIRCH_PLANKS}`, count: 2 });
+    for (const id of [Block.BIRCH_LOG, Block.BIRCH_PLANKS]) {
+      expect(BLOCKS[id].organic).toBe('wood');
+      expect(REPLACES_WATER.has(id)).toBe(true);
+      expect(MATERIALS).toContain(id);
+    }
+    // Baú, porta, cadeira e cerca continuam só de Carvalho (dono do produto): nenhuma receita aceita madeira de outra árvore.
+    for (const r of RECIPES.filter((x) => ['oak-door', 'oak-chest', 'wooden-chair', 'wooden-fence', 'wooden-gate'].includes(x.id))) {
+      for (const inp of r.inputs) expect([`block:${Block.OAK_PLANKS}`, `block:${Block.OAK_LOG}`]).toContain(inp.item);
+    }
   });
 });

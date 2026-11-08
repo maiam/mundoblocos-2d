@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.89.0 — 2026-11-08
+- **Bétula**: árvore nova (3 formas), misturada aos carvalhos e às macieiras dos Campos (~1 em 6 árvores; as macieiras
+  continuam onde estavam — ⚠ troca alguns carvalhos de lugar por bétulas em toda seed). Derrubada dá 2–3 **Toras de
+  Bétula**; 1 tora vira 2 **Tábuas de Bétula** (receita do construtor). Tora com topo (anéis) e frente (casca branca);
+  tábuas só com o topo. Colocáveis como os demais materiais de madeira (batente de porta, substituem a água).
+- **Tábuas de Cerejeira contínuas**: o topo novo emenda nas quatro bordas (antes marcava ⚠ de costura).
+- Baú, porta, cadeira e cerca seguem só de carvalho (decisão do dono do produto; outras madeiras ficam para depois).
+
 ## 0.88.0 — 2026-11-08
 - **Não se constrói no chunk do muro** (dono do produto): todo chunk que tem um pedaço da muralha da cidade é protegido por
   inteiro (nada quebra, coloca, ara nem planta), mesmo na parte que fica fora dos limites da cidade. O que já estava

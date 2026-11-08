@@ -24,6 +24,13 @@ proibir construir no chunk onde está o muro do castelo.
   da área da cidade), mesmo fora dos limites dela. A volta ao gerador no carregamento (`inGuardedArea`) continua só para as
   áreas fixas: o que já foi construído fora da cidade não é apagado.
 
+## Adendo — Bétula (v0.89.0)
+- `BIRCH_TREE` (59), `BIRCH_LOG` (232) e `BIRCH_PLANKS` (233); tira de 3 formas (`tree-birch.webp`); entra nos Campos como
+  segunda árvore misturada (`Biome.altTrees`: macieira 1/6 com o sorteio de sempre, depois bétula 1/5 do resto — o mapa
+  de todas as seeds troca alguns carvalhos por bétulas, nada mais se move). Tora de Bétula (topo e frente) e Tábuas de
+  Bétula (só o topo); a Bétula derrubada dá Toras de Bétula; 1 tora = 2 tábuas.
+- **Baú, porta, cadeira e cerca continuam só de carvalho** (dono do produto); versões de outras madeiras ficam para depois.
+
 ## Consequências
 - Mundos e salas antigos: mudas e jovens viram adultas; mudas na bolsa somem; construções já feitas nos chunks do muro ficam.
 - Receitas de porta, baú, cadeira e cerca seguem só com Tábua de Carvalho (decisão futura se a cerejeira também vale).

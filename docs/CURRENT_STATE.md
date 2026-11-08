@@ -10,11 +10,11 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.88.0 | `package.json` |
+| Versão do jogo | 0.89.0 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 11 | `src/game/save.ts` |
-| Testes | 241 em 45 arquivos (Vitest), todos passando | `npm test` |
-| Orçamento de início (ADR 0013) | ~2,6 MB de 3 MB (v0.88.0: árvores novas, ~0,5 MB) | build do artifact |
+| Testes | 242 em 45 arquivos (Vitest), todos passando | `npm test` |
+| Orçamento de início (ADR 0013) | ~2,7 MB de 3 MB (v0.89.0: árvores novas e a bétula) | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
 ## Mundos
@@ -50,7 +50,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   mundos e bolsas antigos viram vazio). Porta entre dois batentes (bloco de madeira ou de pedra), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
   (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos; buraco sem bloco por um dia inteiro ganha o chão de um vizinho.
 - **Cultivo e árvores**: trigo, batata, tomate e cenoura (só em Terra Arada); árvores só adultas e de formas variadas
-  (carvalho, macieira, cerejeira; sem mudas nem crescimento desde a v0.88.0) e maçãs colhíveis (a macieira colhida volta a dar).
+  (carvalho, macieira, bétula, cerejeira; sem mudas nem crescimento desde a v0.88.0) e maçãs colhíveis (a macieira colhida volta a dar).
 - **Chunk do muro**: todo chunk com pedaço da muralha da cidade é protegido por inteiro (v0.88.0; `World.isProtected`).
 - **Animais**: ovelha, cavalo, vaca e galinha no campo ao sul do portão; comem, namoram (corações), têm filhotes que
   crescem e **seguem quem os alimentou**; vaca dá leite e galinha ovo ao comer. Sem montaria; golpe de espada os faz
@@ -104,7 +104,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Chão V2 sem grade**: o chão dos materiais V2 não leva a "grade sutil de blocos" que o `chunkRenderer` desenha
   sobre o chão antigo (era ela, mais a arte, que riscava cada célula); o chão antigo continua com a grade.
 - Materiais com **arte oficial**: terra, areia e as cinco pedras (Bruta, Tijolo, Chão, Lisa e Polida: topo e frente próprios
-  ou o topo), Tora de Carvalho (topo de anéis e frente de casca), Tábuas de Carvalho (só o topo, em teste), Tora de Cerejeira (topo e frente) e Tábuas de Cerejeira (só o topo; a emenda do topo ainda marca ⚠ no relatório)
+  ou o topo), Tora de Carvalho (topo de anéis e frente de casca), Tábuas de Carvalho (só o topo, em teste), Tora e Tábuas de Cerejeira e de Bétula (tora com topo e frente; tábuas só o topo)
   e Caminho de Terra, Terra Arada e grama — estes três com **frente sempre de terra** e a franja do próprio topo
   (reduzida aos 32 px; só no nível mais alto da pilha). Pipeline: `scripts/import-material.py` →
   `scripts/build-materials.py` → `materials-v2.webp` (~110 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
@@ -119,7 +119,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 241 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 242 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e

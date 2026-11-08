@@ -43,6 +43,9 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   // Madeira de cerejeira (v0.88.0): tora com topo e frente próprios; tábuas só com o topo (a frente repete o topo).
   [Block.CHERRY_LOG]: { top: 'tora-de-cerejeira', front: 'tora-de-cerejeira' },
   [Block.CHERRY_PLANKS]: { top: 'tabuas-de-cerejeira', front: 'tabuas-de-cerejeira' },
+  // Madeira de bétula (v0.89.0): mesma regra — tora com topo e frente, tábuas só com o topo.
+  [Block.BIRCH_LOG]: { top: 'tora-de-betula', front: 'tora-de-betula' },
+  [Block.BIRCH_PLANKS]: { top: 'tabuas-de-betula', front: 'tabuas-de-betula' },
   // Caminho de Terra e Terra Arada: a frente é sempre terra (regra do dono do produto), com a franja do próprio topo.
   [Block.PATH]: { top: 'caminho', front: 'terra', overlay: 'caminho' },
   [Block.TILLED]: { top: 'arada', front: 'terra', overlay: 'arada' },

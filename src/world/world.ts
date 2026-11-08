@@ -36,7 +36,7 @@ export const CHEST_SLOTS = 27;
 /** Um espaço de baú: pilha (id do que se carrega + quantidade) ou vazio. */
 export type ChestSlots = Array<{ item: string; count: number } | null>;
 
-export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS, Block.CHERRY_LOG, Block.CHERRY_PLANKS]);
+export const REPLACES_WATER = new Set<number>([Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.STONE, Block.OAK_LOG, Block.OAK_PLANKS, Block.CHERRY_LOG, Block.CHERRY_PLANKS, Block.BIRCH_LOG, Block.BIRCH_PLANKS]);
 /** Tempo para a água encher um buraco vizinho (s). */
 export const FLOW_SECONDS = 0.6;
 

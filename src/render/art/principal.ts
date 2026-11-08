@@ -160,6 +160,9 @@ import treeOak from '../../assets/tree-oak.webp';
 import treeApple from '../../assets/tree-apple.webp';
 import treeCactus from '../../assets/tree-cactus.webp';
 import treeCherry from '../../assets/tree-cherry.webp';
+import treeBirch from '../../assets/tree-birch.webp';
+import birchLogIcon from '../../assets/icon-block-birch-log.webp';
+import birchPlanksIcon from '../../assets/icon-block-birch-planks.webp';
 import cherryLogIcon from '../../assets/icon-block-cherry-log.webp';
 import cherryPlanksIcon from '../../assets/icon-block-cherry-planks.webp';
 import appleIcon from '../../assets/icon-item-apple.webp';
@@ -314,6 +317,8 @@ const pack: ArtPack = {
     [Block.OAK_PLANKS]: oakPlanksIcon,
     [Block.CHERRY_LOG]: cherryLogIcon,
     [Block.CHERRY_PLANKS]: cherryPlanksIcon,
+    [Block.BIRCH_LOG]: birchLogIcon,
+    [Block.BIRCH_PLANKS]: birchPlanksIcon,
   },
   celestialIcons: {},
   oakDoor,
@@ -328,7 +333,7 @@ const pack: ArtPack = {
     chair: { icon: chairIcon, sprite: chairSprite },
   },
   // Árvores adultas em tiras de variantes (scripts/process-trees.py); cacto: prancha 4 × 2 (scripts/extract-trees.py).
-  trees: { oak: treeOak, apple: treeApple, cherry: treeCherry, cactus: treeCactus },
+  trees: { oak: treeOak, apple: treeApple, cherry: treeCherry, birch: treeBirch, cactus: treeCactus },
   rocks,
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: { pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon },

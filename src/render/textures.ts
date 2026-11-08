@@ -480,6 +480,8 @@ const OUTLINE: Record<number, string> = {
   [Block.OAK_PLANKS]: '#4e3018',
   [Block.CHERRY_LOG]: '#5a2a24',
   [Block.CHERRY_PLANKS]: '#6a2e2a',
+  [Block.BIRCH_LOG]: '#6a5a48',
+  [Block.BIRCH_PLANKS]: '#8a6a44',
 };
 
 // ---------------------------------------------------------------- água
@@ -518,7 +520,7 @@ function waterTile(variant: number): HTMLCanvasElement {
 // ---------------------------------------------------------------- árvores e enfeites
 
 /** Quadros de cada tira de árvore adulta (`scripts/process-trees.py`): a variante de cada árvore é sorteada pela posição. */
-const TREE_FRAMES = { oak: 3, apple: 2, cherry: 3 } as const;
+const TREE_FRAMES = { oak: 3, apple: 2, cherry: 3, birch: 3 } as const;
 /** Largura da árvore em células de mundo (o quadro tem a árvore mais larga da espécie de ponta a ponta). */
 const TREE_CELLS = 3.4;
 
@@ -534,6 +536,7 @@ function growthTreeSprites(
   const oak = stripSprites(art.oak, TREE_FRAMES.oak, T * TREE_CELLS, 6);
   const apple = stripSprites(art.apple, TREE_FRAMES.apple, T * TREE_CELLS, 6);
   const cherry = stripSprites(art.cherry, TREE_FRAMES.cherry, T * TREE_CELLS, 6);
+  const birch = stripSprites(art.birch, TREE_FRAMES.birch, T * TREE_CELLS, 6);
   const cactus = gridSprites(art.cactus, 4, 2, 1.7, 3);
   const set = (id: BlockId, frames: Sprite[]) => {
     objects.set(id, frames[0]);
@@ -543,6 +546,7 @@ function growthTreeSprites(
   set(Block.APPLE_TREE, apple);
   set(Block.APPLE_TREE_BARE, apple); // mesma variante por célula (mesma ordem): só falta a arte "colhida"
   set(Block.SAKURA_TREE, cherry);
+  set(Block.BIRCH_TREE, birch);
   set(Block.CACTUS, cactus);
   return variants;
 }
