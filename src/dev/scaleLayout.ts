@@ -30,6 +30,7 @@ export const SCALE_ACTORS: readonly ScaleActor[] = [
   { kind: 'hero', label: 'Herói', col: 2, row: 0 },
   { kind: 'hood', label: 'Hood', col: 4, row: 0 },
   { kind: 'gino', label: 'Gino', col: 6, row: 0 },
+  { kind: 'mila', label: 'Mila', col: 8, row: 0 },
 
   { kind: 'horse', label: 'Cavalo', col: 0, row: 2 },
   { kind: 'foal', label: 'Potro', col: 2, row: 2 },
@@ -43,6 +44,9 @@ export const SCALE_ACTORS: readonly ScaleActor[] = [
   { kind: 'spider-small', label: 'Aranha P', col: 0, row: 4 },
   { kind: 'spider-big', label: 'Aranha G', col: 2, row: 4 },
   { kind: 'spider-boss', label: 'Rainha', col: 5, row: 4 },
+  { kind: 'wolf-brown', label: 'Lobo M', col: 8, row: 4 },
+  { kind: 'wolf-gray', label: 'Lobo C', col: 10, row: 4 },
+  { kind: 'wolf-white', label: 'Lobo B', col: 12, row: 4 },
 ];
 
 /** Fileira 6 em diante: objetos do mundo (colocados no mapa como no jogo). */

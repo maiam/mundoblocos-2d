@@ -88,5 +88,19 @@ passagem e o chefe dentro; monstros em chão livre do interior; área protegida.
 - Render: heroína pisca invencível; vinheta vermelha ao levar dano; **penumbra** dentro da dungeon; **farol** roxo na
   entrada e **seta** na borda da tela apontando para ela quando fora de vista.
 
+## Lobos do mapa (v0.91.0; `world/wolves.ts`, `game/monster.ts`)
+- **Bandos**: `wolfPacks(world)` (função pura da seed, sem chunks carregados): regiões de 40 células ao redor da cidade
+  (7 × 7), 50% com toca; cada toca é de **uma cor** (`WOLF_KINDS`: marrom, cinza, branco) e tem **1 a 3 lobos**. Nada nasce a
+  menos de 28 células da cidade/campo do rebanho, em água, árvore, pedra ou área protegida. Mundo sem cidade: nenhum.
+- **Regra do dono do produto**: o lobo só ataca a personagem a **até 3 células** (`WOLF_SIGHT`, em linha reta); mais longe a
+  ignora e só passeia perto da toca (`leash` 5; limite de `WOLF_ROAM` = 12 células). É mais lento (3,0) que ela (4,2). Entre
+  si, cada um decide pela própria distância: o bando, junto, tende a atacar junto.
+- `MONSTERS[...].open` marca o monstro do mapa aberto (persegue sem o mapa de corredores da dungeon). Ficha em `MONSTER_STATS`:
+  marrom 35/11/1, cinza 45/13/2, branco 55/15/3 (vida/ataque/defesa); renascem em 120 s; espólios (`monsterDrops`, sorteios independentes: Pelagem de Lobo 55% e Presa de Lobo 40%, `WOLF_PELT_CHANCE`/`WOLF_FANG_CHANCE`), itens `wolf_pelt`/`wolf_fang` (`assets-src/lobos/wolf-loot-icons-sheet.png` → `icon-wolf-*`, `slice-icons.py`).
+- `Entities.spawnWolves` (dentro de `spawnWildlife`); monstro a > 48 células de todo jogador não é simulado (`ACTIVE_RADIUS`);
+  `save.ts` só guarda as aranhas (lobos voltam todos pela seed). Na sala, a sala os simula e o aparelho espelha (`mobs`).
+- Arte: `assets-src/lobos/lobo-<cor>-sheet.png` → `wolf-<cor>.webp` (folha 4 × 4 canônica, `process-sprite.py`); sem folha de
+  morte (usa a morte provisória: encolhe e desbota).
+
 ## Arte
 - `scripts/extract-dungeon.py` (comando em `OPERATIONS.md`); detalhes de render em `render.md`.

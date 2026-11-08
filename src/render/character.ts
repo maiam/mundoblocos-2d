@@ -131,10 +131,30 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'gino-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'gino-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (332 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'gino-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (314 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  // Sentar da Mila: altura pela caminhada (141 px de desenho no quadro de 144; quadro em pé da folha de sentar = 144).
+  'mila-sit': { cols: 4, rows: 4, height: CHARACTER_H * (141 / 144), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
+  // Mila (personagem pronto, assets-src/mila): caminhada sem ferramenta (297 px de desenho), com as 5 ferramentas e os
+  // 5 golpes; altura de cada folha pelo desenho.
+  'mila': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'mila-sword': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'mila-axe': { cols: 4, rows: 4, height: CHARACTER_H * (300 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'mila-hoe': { cols: 4, rows: 4, height: CHARACTER_H * (298 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'mila-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H * (296 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'mila-shovel': { cols: 4, rows: 4, height: CHARACTER_H * (292 / 297), shadow: [0.32, 0.12], walkFps: 7 },
+  'mila-sword-attack': { cols: 4, rows: 4, height: CHARACTER_H * (301 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'mila-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (308 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'mila-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (307 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'mila-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (333 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'mila-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (314 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   sheep: { cols: 4, rows: 4, height: TILE * 1.25, shadow: [0.42, 0.14], walkFps: 6 },
   lamb: { cols: 4, rows: 4, height: TILE * 0.9, shadow: [0.3, 0.1], walkFps: 8 },
   // Dois animais lado a lado: ~2 células de largura, mesma escala da ovelha adulta.
   // Aranhas da dungeon (scripts/extract-dungeon.py): 8 quadros de caminhada, arte de frente/esquerda.
+  // Lobos (assets-src/lobos, v0.91.0): folha 4 × 4 canônica (frente, esquerda, direita, costas); a cauda e o focinho
+  // passam da largura do corpo, então o quadro é quadrado. Mesma escala nas três cores.
+  'wolf-brown': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
+  'wolf-gray': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
+  'wolf-white': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
   'spider-small': { cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.034 } },
   'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.0 } },
   'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true }, death: { cols: 8, rows: 2, ratio: 1.012 } },

@@ -10,11 +10,11 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.90.1 | `package.json` |
-| `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
+| Versão do jogo | 0.91.0 | `package.json` |
+| `PROTOCOL_VERSION` (multiplayer) | 19 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 11 | `src/game/save.ts` |
-| Testes | 244 em 45 arquivos (Vitest), todos passando | `npm test` |
-| Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (v0.90.0: macieira nova com a colhida) — **no limite** | build do artifact |
+| Testes | 255 em 46 arquivos (Vitest), todos passando | `npm test` |
+| Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (inalterado na v0.91.0: Mila e lobos carregam sob demanda) — **no limite** | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |
 
 ## Mundos
@@ -31,7 +31,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   chunks do castelo, área protegida, ~38 aranhas + Aranha Gigante (chefe); farol e seta indicam a entrada.
 
 ## Personagem e controles
-- **Quatro personagens prontos**: Heroína, Herói, Hood e Gino (`APPEARANCE_BODIES`), cada um com caminhada, as 5
+- **Cinco personagens prontos**: Heroína, Herói, Hood, Gino e Mila (`APPEARANCE_BODIES`), cada um com caminhada, as 5
   ferramentas e os 5 golpes; escolhidos na tela de entrada e salvos por mundo. Existe também o **chibi modular**
   (guarda-roupa v02, ADR 0017): escolhido na tela de entrada, só caminha (sem ferramentas/golpes/sentar).
 - **Sentar**: tocar numa cadeira ou banco senta de frente (anda até o assento, desce, fica parado); andar levanta.
@@ -80,6 +80,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Limitações conhecidas
 - Salvamento só neste navegador/aparelho (nuvem/contas dependem do backend do Orvalis, ADR 0015).
 - Moradores só dizem uma fala (sem diálogo, loja ou missões); só Ferraria e Tenda têm interior.
+- **Lobos** (v0.91.0, `world/wolves.ts`, `domains/dungeon.md`): bandos de 1 a 3 da mesma cor (marrom, cinza, branco) pelo mapa ao redor da cidade; só atacam a personagem a até 3 células; soltam Pelagem e Presa de Lobo (sem uso em receitas ainda).
 - Espólios das aranhas e vários itens ainda sem uso em receitas; as 2 pedras sem fonte (Lisa e Polida) só existem por
   código/salvamento.
 - Sem sons, música nem vibração; sem XP/níveis; sem lojas nem missões; sem viagem entre mundos (portais, ADR 0019).
@@ -119,7 +120,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
-- `npx tsc --noEmit` limpo; 244 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
+- `npx tsc --noEmit` limpo; 255 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).
 - Geração de chunk ~0,08 ms; render ~0,4 ms/quadro (Chromium headless). Números atuais: `npm run bench`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e

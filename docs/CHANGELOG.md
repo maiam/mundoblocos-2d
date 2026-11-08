@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.91.0 — 2026-11-08
+- **Mila**: sexto personagem pronto (tela de entrada, ao lado de Heroína, Herói, Hood e Gino): caminhada, caminhada com as
+  5 ferramentas, 5 golpes e sentar. Na sala os outros a veem como Mila (`APPEARANCE_BODIES`; **protocolo 19**).
+- **Lobos** (3 cores: marrom, cinza e branco): monstros do mapa aberto, em **bandos de 1 a 3 lobos da mesma cor** que passeiam
+  juntos perto da toca, espalhados ao redor da cidade (~26 bandos por mapa; nenhum na cidade, na estrada do portão nem no
+  campo do rebanho). **Só atacam a personagem a até 3 células** (em linha reta); mais longe ela é ignorada. São mais lentos
+  que ela (3,0 × 4,2), então dá para fugir. Vida, ataque e defesa: marrom 35/11/1, cinza 45/13/2, branco 55/15/3. A
+  espada e o machado os acertam como acertam as aranhas; renascem em 2 min. **Espólios**: **Pelagem de Lobo** (55%) e
+  **Presa de Lobo** (40%), por sorteios separados — às vezes nada, às vezes um só, às vezes os dois (ícones novos; ainda sem
+  uso em receitas).
+- Monstros longe de todo jogador (> 48 células) ficam parados (não são simulados); o salvamento só guarda as aranhas do
+  covil (os lobos voltam todos, pela seed, ao carregar).
+
 ## 0.90.1 — 2026-11-08
 - **Porta com qualquer madeira ou pedra** (dono do produto): a regra já valia por `organic: 'wood'` / `stone`, então toras e
   tábuas de carvalho, cerejeira e bétula e todas as pedras servem de batente, em qualquer combinação; agora há teste que

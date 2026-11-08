@@ -48,6 +48,18 @@ import ginoAxeAttack from '../../assets/gino-axe-attack.webp';
 import ginoHoeAttack from '../../assets/gino-hoe-attack.webp';
 import ginoPickaxeAttack from '../../assets/gino-pickaxe-attack.webp';
 import ginoShovelAttack from '../../assets/gino-shovel-attack.webp';
+import mila from '../../assets/mila.webp';
+import milaSit from '../../assets/mila-sit.webp';
+import milaSword from '../../assets/mila-sword.webp';
+import milaAxe from '../../assets/mila-axe.webp';
+import milaHoe from '../../assets/mila-hoe.webp';
+import milaPickaxe from '../../assets/mila-pickaxe.webp';
+import milaShovel from '../../assets/mila-shovel.webp';
+import milaSwordAttack from '../../assets/mila-sword-attack.webp';
+import milaAxeAttack from '../../assets/mila-axe-attack.webp';
+import milaHoeAttack from '../../assets/mila-hoe-attack.webp';
+import milaPickaxeAttack from '../../assets/mila-pickaxe-attack.webp';
+import milaShovelAttack from '../../assets/mila-shovel-attack.webp';
 import hood from '../../assets/hood.webp';
 import hoodSword from '../../assets/hood-sword.webp';
 import hoodAxe from '../../assets/hood-axe.webp';
@@ -128,6 +140,9 @@ import outfitFarmer from '../../assets/outfit-farmer.webp';
 import outfitVest from '../../assets/outfit-vest.webp';
 import outfitHoodie from '../../assets/outfit-hoodie.webp';
 import outfitSmith from '../../assets/outfit-smith.webp';
+import wolfBrown from '../../assets/wolf-marrom.webp';
+import wolfGray from '../../assets/wolf-cinza.webp';
+import wolfWhite from '../../assets/wolf-branco.webp';
 import spiderBig from '../../assets/spider-big.webp';
 import spiderBoss from '../../assets/spider-boss.webp';
 import spiderSmall from '../../assets/spider-small.webp';
@@ -136,6 +151,8 @@ import spiderBigDeath from '../../assets/spider-big-death.webp';
 import spiderBossDeath from '../../assets/spider-boss-death.webp';
 import silkIcon from '../../assets/icon-silk.webp';
 import fangIcon from '../../assets/icon-fang.webp';
+import wolfFangIcon from '../../assets/icon-wolf-fang.webp';
+import wolfPeltIcon from '../../assets/icon-wolf-pelt.webp';
 import queenHeartIcon from '../../assets/icon-queen-heart.webp';
 import bagIcon from '../../assets/icon-bag.webp';
 import characterIcon from '../../assets/icon-ui-character.webp';
@@ -253,6 +270,18 @@ const pack: ArtPack = {
     'gino-hoe-attack': ginoHoeAttack,
     'gino-pickaxe-attack': ginoPickaxeAttack,
     'gino-shovel-attack': ginoShovelAttack,
+    mila,
+    'mila-sit': milaSit,
+    'mila-sword': milaSword,
+    'mila-axe': milaAxe,
+    'mila-hoe': milaHoe,
+    'mila-pickaxe': milaPickaxe,
+    'mila-shovel': milaShovel,
+    'mila-sword-attack': milaSwordAttack,
+    'mila-axe-attack': milaAxeAttack,
+    'mila-hoe-attack': milaHoeAttack,
+    'mila-pickaxe-attack': milaPickaxeAttack,
+    'mila-shovel-attack': milaShovelAttack,
     hood,
     'hood-sword': hoodSword,
     'hood-axe': hoodAxe,
@@ -288,6 +317,9 @@ const pack: ArtPack = {
     'villager-black': villagerBlack,
     'villager-silver': villagerSilver,
     'villager-red': villagerRed,
+    'wolf-brown': wolfBrown,
+    'wolf-gray': wolfGray,
+    'wolf-white': wolfWhite,
     'spider-small': spiderSmall,
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
@@ -344,7 +376,7 @@ const pack: ArtPack = {
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
   wheatCrop,
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
-  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
+  itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, wolf_fang: wolfFangIcon, wolf_pelt: wolfPeltIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },
   toolIcons: { sword: swordIcon, hoe: hoeIcon, pickaxe: pickaxeIcon, shovel: shovelIcon, axe: axeIcon },
   modular: { manifest: chibiManifest as unknown as ModularManifest, sheets: chibiSheets },
 };

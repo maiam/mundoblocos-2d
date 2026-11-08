@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 18;
+export const PROTOCOL_VERSION = 19;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -53,7 +53,7 @@ export interface PlayerState {
  * escolhidas. Quem desenha confere as peças no próprio manifesto (`cleanLook`); peça desconhecida vira a padrão.
  */
 /** Personagens prontos que a rede aceita (fonte única: o jogo usa a mesma lista em `HERO_BODIES`). */
-export const APPEARANCE_BODIES = ['heroine', 'hero', 'hood', 'gino'] as const;
+export const APPEARANCE_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila'] as const;
 export type AppearanceBody = (typeof APPEARANCE_BODIES)[number];
 
 export interface Appearance {

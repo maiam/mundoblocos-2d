@@ -12,6 +12,7 @@ import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { type ExpressionId, ROLE_LOOK, TOWNSFOLK_BASES, Villager, type VillagerBase, villagerExpression, villagerOutfit, type OutfitId, type VillagerRole } from './villager';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
+import { wolfPacks, wolfRoam } from '../world/wolves';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
 
@@ -23,19 +24,19 @@ import type { CharacterId } from '../world/profiles';
 export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 
 /**
- * Personagem pronto (folhas desenhadas inteiras): Heroína, Herói, Hood ou Gino. O chibi modular é outro caminho
+ * Personagem pronto (folhas desenhadas inteiras): Heroína, Herói, Hood, Gino ou Mila. O chibi modular é outro caminho
  * (`look`). Personagem novo: acrescente em `APPEARANCE_BODIES` (rede) e o nome aqui; arte em `render/art` + `SPECS`.
  */
 export type HeroBody = AppearanceBody;
 export const HERO_BODIES: readonly HeroBody[] = APPEARANCE_BODIES;
 /** Personagens prontos com folha de sentar (só eles sentam em cadeiras e bancos; dono do produto, 07/11: todos os quatro). */
-export const SIT_BODIES = ['heroine', 'hero', 'hood', 'gino'] as const;
+export const SIT_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila'] as const;
 export type SitBody = (typeof SIT_BODIES)[number];
 export function canSit(body: HeroBody): body is SitBody {
   return (SIT_BODIES as readonly string[]).includes(body);
 }
 /** Nome de cada personagem pronto na tela de escolha. */
-export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino' };
+export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila' };
 
 export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `villager-${VillagerBase}` | MonsterKind;
 
@@ -74,6 +75,8 @@ export interface Actor {
 const FLOW_EVERY = 0.25;
 /** Monstro só renasce com a personagem a mais de … células do ponto de nascimento. */
 const RESPAWN_CLEARANCE = 10;
+/** Monstro mais longe que isto (células, em x ou y) de todo jogador não é simulado. */
+const ACTIVE_RADIUS = 48;
 
 const FLOCK_SIZE = 4;
 /** Alcance do golpe de espada (células, do centro dos pés) e abertura do arco (cosseno mínimo). */
@@ -278,6 +281,7 @@ export class Entities {
       this.spawnAnimals(world, 'chicken', gx - 6, gy + (town ? 6 : 1), 4, 97);
     }
     this.spawnMonsters(world);
+    this.spawnWolves(world);
   }
 
   /** Monstros nos pontos da dungeon (posições pela seed; o sorteio do passeio usa `rand`). */
@@ -286,6 +290,11 @@ export class Entities {
     if (!d) return;
     // O chefe fica na câmara da Rainha; os demais andam pelo labirinto inteiro.
     for (const s of d.spawns) this.monsters.push(new Monster(s.kind, s.x, s.y, s.kind === 'spider-boss' ? d.bossRoom : d.interior, this.rand));
+  }
+
+  /** Bandos de lobos pelo mapa (`world/wolves.ts`; posições pela seed): cada lobo passeia perto da toca do bando. */
+  spawnWolves(world: World): void {
+    for (const w of wolfPacks(world)) this.monsters.push(new Monster(w.kind, w.x, w.y, wolfRoam(w.homeX, w.homeY), this.rand, w.homeX, w.homeY));
   }
 
   /** Quem os monstros perseguem e mordem: a personagem (aparelho) ou os jogadores da sala (servidor). */
@@ -343,9 +352,12 @@ export class Entities {
     for (const h of this.horses) h.update(dt, world, this.blocker);
     this.updateFlow(dt, world);
     const flow = this.flow ? this.flowAt : undefined;
-    for (const m of this.monsters) m.update(dt, world, this.targetOf(m), this.blocker, flow);
+    // Monstro longe de todo mundo (> `ACTIVE_RADIUS`) fica parado: só passeia quando alguém pode vê-lo.
+    const awake = (m: Monster) => this.hunters().some((h) => Math.abs(h.x - m.x) <= ACTIVE_RADIUS && Math.abs(h.y - m.y) <= ACTIVE_RADIUS);
+    for (const m of this.monsters) if (awake(m)) m.update(dt, world, this.targetOf(m), this.blocker, flow);
     // Mordidas: monstro encostado e pronto morde (um alvo por vez; quem leva fica invencível por um instante).
     for (const m of this.monsters) {
+      if (!awake(m)) continue;
       for (const h of this.hunters()) {
         if (h.dead || !m.tryBite(h)) continue;
         if (h === this.player) this.biteFrom(m.kind, m.x, m.y, world);

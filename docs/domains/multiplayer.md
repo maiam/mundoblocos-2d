@@ -10,7 +10,7 @@ fixas salvas), [0021](../adr/0021-bichos-da-sala.md) (bichos da sala). Plano e p
 - **Servidor** (repositório `maiam/orvalis-servidor`, app Node.js na Hostinger em `orvalis-servidor.pensamentos.online`):
   WebSocket → `Room`. Recebe uma cópia do pacote gerado por `npm run build:net` (`dist-net/orvalis-net.cjs`, copiado
   para `vendor/` com `npm run sync-net`). Grava `sala-<n>.json` em `DATA_DIR` e responde `GET /salas`.
-- Mudou uma mensagem de forma incompatível → suba `PROTOCOL_VERSION` (hoje **18**) e o servidor junto; servidor novo e
+- Mudou uma mensagem de forma incompatível → suba `PROTOCOL_VERSION` (hoje **19**) e o servidor junto; servidor novo e
   cliente antigo (e o inverso) recebem `error: version`.
 
 ## Módulos (`src/net/`)
