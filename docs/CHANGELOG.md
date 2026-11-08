@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.82.1 — 2026-11-08
+- **Materiais V2 — Caminho de Terra e Terra Arada** (só com `?blocos=v2`): topos oficiais enviados pela arte (a frente
+  repete o topo). O chão dos materiais V2 também deixou de ter a linha fraca em cada célula: ela vinha da "grade sutil
+  de blocos" desenhada sobre todo chão; no V2 o chão é uma superfície só (o chão antigo continua com a grade).
+
 ## 0.82.0 — 2026-11-08
 - **Materiais V2 — massa contínua** (só com `?blocos=v2`; nada muda no jogo normal): cubos vizinhos e níveis empilhados
   não mostram mais riscos entre si, nem na horizontal nem na vertical, nem entre materiais diferentes (pedra sobre

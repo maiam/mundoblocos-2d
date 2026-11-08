@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-07 — v0.82.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-07 — v0.82.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.82.0 | `package.json` |
+| Versão do jogo | 0.82.1 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 18 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 10 | `src/game/save.ts` |
 | Testes | 224 em 43 arquivos (Vitest), todos passando | `npm test` |
@@ -97,13 +97,15 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   nível mais alto.
 - **Massa contínua** (v0.82.0): cubos V2 vizinhos e níveis empilhados, de qualquer material, não têm riscos entre si; o
   contorno só aparece na silhueta do conjunto (`cubeEdges`, `cubeSpriteV2`, `drawCubeParts`). Só blocos V2; o bloco
-  antigo ao lado mantém o contorno. O chão plano do Caminho antigo ainda mostra linha por célula (espera a arte V2).
-- Materiais com **arte oficial**: terra, areia e Pedra Bruta (topo e frente próprios) e grama (franja reduzida aos
-  32 px; topo de grama + frente de terra + franja). Pipeline: `scripts/import-material.py` →
-  `scripts/build-materials.py` → `materials-v2.webp` (~46 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
+  antigo ao lado mantém o contorno.
+- **Chão V2 sem grade**: o chão dos materiais V2 não leva a "grade sutil de blocos" que o `chunkRenderer` desenha
+  sobre o chão antigo (era ela, mais a arte, que riscava cada célula); o chão antigo continua com a grade.
+- Materiais com **arte oficial**: terra, areia e Pedra Bruta (topo e frente próprios), Caminho de Terra e Terra Arada
+  (só o topo; a frente repete o topo) e grama (franja reduzida aos 32 px; topo de grama + frente de terra + franja). Pipeline: `scripts/import-material.py` →
+  `scripts/build-materials.py` → `materials-v2.webp` (~60 kB, sem perdas) + manifesto (`top`, `front`, `overlay`).
 - Para ver: `?blocos=v2` troca esses blocos no mundo (sem as variações da grama legada); `?materiais=1` (só em
   desenvolvimento) põe legado e V2 lado a lado; `?escala=1&blocos=v2`, a arte V2 na cena de escala.
-- Falta: transições entre chãos, arte V2 do Caminho e migração dos outros materiais (`NEXT_STEPS`, Fase V).
+- Falta: transições entre chãos e migração dos outros materiais (`NEXT_STEPS`, Fase V).
 
 ## Qualidade e desempenho
 - `npx tsc --noEmit` limpo; 224 testes passando; `npm audit` sem vulnerabilidades moderadas ou piores (CI).

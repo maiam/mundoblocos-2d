@@ -15,7 +15,9 @@
     ]
   },
   "materials": [
+    "arada",
     "areia",
+    "caminho",
     "grama",
     "pedra",
     "terra"

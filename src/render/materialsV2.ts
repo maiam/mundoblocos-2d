@@ -6,7 +6,7 @@ import { Block, type BlockId } from '../world/blocks';
  * e frente de `CUBE_FRONT` (18, decidido em 2026-11-07) — a arte não traz o cubo pronto. Sem frente própria, a frente
  * repete o topo (o pipeline resolve).
  *
- * Fase de validação: só areia, terra, grama e Pedra Bruta, e só com `?blocos=v2` (jogo) ou na cena `?materiais=1`. Sem a chave nada
+ * Fase de validação: só areia, terra, grama, Pedra Bruta, Caminho de Terra e Terra Arada, e só com `?blocos=v2` (jogo) ou na cena `?materiais=1`. Sem a chave nada
  * muda (atlas legado). Aparência é do render; regras de bloco continuam em `world/blocks.ts`.
  */
 export interface MaterialsV2Manifest {
@@ -29,6 +29,8 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   [Block.DIRT]: { top: 'terra', front: 'terra' },
   [Block.GRASS]: { top: 'grama', front: 'terra', overlay: 'grama' },
   [Block.STONE]: { top: 'pedra', front: 'pedra' },
+  [Block.PATH]: { top: 'caminho', front: 'caminho' }, // Caminho de Terra
+  [Block.TILLED]: { top: 'arada', front: 'arada' }, // Terra Arada
 };
 
 /** `?blocos=v2` liga o caminho V2 no jogo (desenvolvimento; padrão desligado). */

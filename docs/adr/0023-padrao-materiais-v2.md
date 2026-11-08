@@ -61,8 +61,11 @@ horizontal, nem entre materiais diferentes. Só os blocos V2:
   nível de baixo aparecendo sob o de cima. O nível coberto não desenha o topo, e sim a continuação da parede.
 - Custo medido: nenhum perceptível (81 cubos na tela, 60 quadros por segundo nos dois caminhos). As bordas são lidas do
   mundo a cada quadro, então colocar ou quebrar um bloco atualiza os vizinhos sem invalidar nada.
-- Fora do escopo: o chão plano do "Caminho" antigo (linha por célula na própria arte) espera a arte V2 do dono do
-  produto; blocos antigos seguem como são até migrar.
+- **Chão V2 sem grade por célula** (v0.82.1): as linhas fracas em cada célula do chão vinham da "grade sutil de
+  blocos" que o `chunkRenderer` desenha sobre todo chão (1 px por célula, alfa 0,07), não da arte. `continuousGround`
+  (em `BlockTextures`) lista os chãos V2 e o `chunkRenderer` não desenha a grade neles; o chão antigo mantém a grade.
+- Caminho de Terra e Terra Arada entram como blocos V2 (só o topo; a frente repete o topo). Blocos antigos seguem como
+  são até migrar.
 
 ## Por que assim
 
