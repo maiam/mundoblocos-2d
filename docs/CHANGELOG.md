@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.82.0 — 2026-11-08
+- **Materiais V2 — massa contínua** (só com `?blocos=v2`; nada muda no jogo normal): cubos vizinhos e níveis empilhados
+  não mostram mais riscos entre si, nem na horizontal nem na vertical, nem entre materiais diferentes (pedra sobre
+  terra, areia ao lado de terra). O contorno fica só na borda do conjunto; a frente da pilha é uma parede contínua e a
+  franja da grama aparece só no nível mais alto. Blocos antigos ao lado mantêm o contorno. A cena `?materiais=1` mostra
+  um platô de materiais misturados, um degrau e pilhas. Pendente: arte V2 do Caminho (linha em cada célula do chão).
+
 ## 0.81.2 — 2026-11-07
 - **Materiais V2 — frentes próprias** (nada muda no jogo): terra, Pedra Bruta e areia ganharam a frente enviada pela arte
   (antes repetiam o topo). A frente da grama usa a frente da terra, então muda junto. Visíveis em `?blocos=v2` e

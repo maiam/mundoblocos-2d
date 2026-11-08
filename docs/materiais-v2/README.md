@@ -5,7 +5,7 @@ A decisão do repositório e o que já foi feito estão no [ADR 0023](../adr/002
 entrega da arte está em `assets-src/materiais/CONTRATO.md`.
 
 **Diferenças decididas depois** (ADR 0023, 2026-11-07): frente dos cubos **18** px (o pacote fala em 16), logo janela
-útil da frente **128×72**; sem frente própria a frente repete o topo.
+útil da franja **128×72**; a frente (`front.png`) é seamless nas 4 bordas e usada inteira, fatiada por nível de pilha (v0.82.0); sem frente própria a frente repete o topo.
 
 Nota: o pacote (05, § 1) cita a cena de escala `?escala=1`. Ela é a da ADR 0022 (sprites no renderizador real, que só
 conhece uma altura de frente); a comparação de frente 16 × 18 foi feita numa cena própria, `?materiais=1`
