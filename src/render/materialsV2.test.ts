@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import manifest from '../assets/materials-v2.json';
 import { CUBE_FRONT, TILE } from '../config';
+import { Block } from '../world/blocks';
 import { TEX_RES } from './textures';
 import { blocksV2FromSearch, type CubeView, cubeEdges, edgesKey, V2_BLOCKS } from './materialsV2';
 
@@ -19,6 +20,14 @@ describe('Padrão de Materiais V2 (ADR 0023)', () => {
       expect(manifest.materials).toContain(b!.top);
       expect(manifest.materials).toContain(b!.front);
       if (b!.overlay) expect(manifest.overlay).toContain(b!.overlay);
+    }
+  });
+
+  it('Terra Arada, Caminho de Terra e Grama têm frente de terra e a franja do próprio topo', () => {
+    for (const id of [Block.TILLED, Block.PATH, Block.GRASS]) {
+      const b = V2_BLOCKS[id]!;
+      expect(b.front).toBe('terra');
+      expect(b.overlay).toBe(b.top);
     }
   });
 

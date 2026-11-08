@@ -29,8 +29,9 @@ export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   [Block.DIRT]: { top: 'terra', front: 'terra' },
   [Block.GRASS]: { top: 'grama', front: 'terra', overlay: 'grama' },
   [Block.STONE]: { top: 'pedra', front: 'pedra' },
-  [Block.PATH]: { top: 'caminho', front: 'caminho' }, // Caminho de Terra
-  [Block.TILLED]: { top: 'arada', front: 'arada' }, // Terra Arada
+  // Caminho de Terra e Terra Arada: a frente é sempre terra (regra do dono do produto), com a franja do próprio topo.
+  [Block.PATH]: { top: 'caminho', front: 'terra', overlay: 'caminho' },
+  [Block.TILLED]: { top: 'arada', front: 'terra', overlay: 'arada' },
 };
 
 /** `?blocos=v2` liga o caminho V2 no jogo (desenvolvimento; padrão desligado). */

@@ -23,6 +23,8 @@
     "terra"
   ],
   "overlay": [
+    "arada",
+    "caminho",
     "grama"
   ]
 }

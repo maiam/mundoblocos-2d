@@ -204,7 +204,7 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
 4b. ✅ **Massa contínua** (v0.82.0): sem riscos entre cubos V2 vizinhos nem entre níveis, de qualquer material; frente
    seamless usada inteira e fatiada por nível; franja só no nível mais alto (ADR 0023). Falta: conferir com a arte se o
    "vinco" claro entre topo e frente de cada cubo deve ficar.
-4c. ✅ **Caminho de Terra e Terra Arada** (v0.82.1): topos oficiais; o chão V2 deixou de levar a grade sutil por célula.
+4c. ✅ **Caminho de Terra e Terra Arada** (v0.82.1–0.82.2): topos oficiais, frente sempre de terra e franja própria; o chão V2 deixou de levar a grade sutil por célula.
 5. **Migração por lotes** (pedras da cidade, tábuas, tronco, caminho, arado; depois celestiais), `?blocos=v2` vira padrão e o
    atlas legado (ADR 0006) sai quando o último material migrar. Saves não mudam (ids iguais).
 

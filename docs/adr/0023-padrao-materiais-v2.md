@@ -64,8 +64,12 @@ horizontal, nem entre materiais diferentes. Só os blocos V2:
 - **Chão V2 sem grade por célula** (v0.82.1): as linhas fracas em cada célula do chão vinham da "grade sutil de
   blocos" que o `chunkRenderer` desenha sobre todo chão (1 px por célula, alfa 0,07), não da arte. `continuousGround`
   (em `BlockTextures`) lista os chãos V2 e o `chunkRenderer` não desenha a grade neles; o chão antigo mantém a grade.
-- Caminho de Terra e Terra Arada entram como blocos V2 (só o topo; a frente repete o topo). Blocos antigos seguem como
-  são até migrar.
+- Caminho de Terra e Terra Arada entram como blocos V2. Regra do dono do produto (v0.82.2): a **frente de Terra Arada
+  e de Caminho é sempre terra** (como a grama), com a franja de transição do próprio topo (`front: 'terra'`,
+  `overlay: <topo>` em `V2_BLOCKS`). Blocos antigos seguem como são até migrar.
+- Importação de franjas (`import-material.py --overlay`): zera o ruído do alfa, troca a cor dos pixels meio transparentes
+  pela dos vizinhos opacos (a franja da terra arada veio com halo vermelho de recorte) e reduz com alfa pré-multiplicado,
+  repetindo só na horizontal; `--fit-fringe` guarda os 32 px de baixo do desenho.
 
 ## Por que assim
 

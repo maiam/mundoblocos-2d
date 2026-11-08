@@ -9,8 +9,9 @@ assets-src/materiais/<material>/      nome em pt-BR, minúsculas, sem acento (ar
   top.png            128×128, opaco, repetível nos 4 lados, sem perspectiva nem sombra de cubo
   front.png          opcional; 128×128, opaco, repetível nos 4 lados (como o topo): o motor fatia a textura inteira,
                      uma fatia por nível da pilha. SEM front.png a frente repete o topo (regra do dono do produto)
-  front_overlay.png  opcional; franja (grama, neve, musgo) nos 32 px de cima (no máximo), alfa no resto;
-                     borda esq. = dir. Franja maior é recusada pelo pipeline
+  front_overlay.png  opcional; franja (grama, neve, musgo, terra arada, caminho) nos 32 px de cima (no máximo), alfa no
+                     resto; borda esq. = dir. Franja maior é recusada pelo pipeline (o importador corta com --fit-fringe).
+                     Cor das bordas sem halo: o importador limpa o que sobrar de recorte
 ```
 
 Diferenças para o pacote original (decisões de 2026-11-07, ADR 0023): **frente de 18 px** no mundo (não 16) e **frente
@@ -32,6 +33,7 @@ seamless nas 4 bordas, usada inteira** (não a janela 128×64 do alto): cada ní
 ```bash
 python3 scripts/import-material.py terra --top terra.png            # arte enviada → pasta (reduz para 128 como ladrilho)
 python3 scripts/import-material.py grama --top grama.png --overlay franja.png [--fit-fringe]   # franja > 32 px: guarda os 32 de baixo
+# Caminho de Terra e Terra Arada: sem front.png; a frente deles é a de `terra` (regra em V2_BLOCKS)
 python3 scripts/build-materials.py --preview   # valida, gera src/assets/materials-v2.{webp,json}; 3×3 em _preview/
 ```
 
