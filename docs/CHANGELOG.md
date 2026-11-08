@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.87.0 — 2026-11-08
+- **Água nova e margens pintadas**: o topo da água do V2 (`agua`) é o ladrilho do mar e dos rios, e as margens ganham a
+  transição da pintura de cada par: Água sobre Areia, Terra, Caminho e Grama, com espuma e água rasa. A barranca e o fio
+  de espuma antigos saem onde a margem nova vale.
+- **Transições por par de chão**: Grama sobre Terra, Caminho e Areia, e Areia sobre Terra, cada uma com a forma
+  derivada da pintura enviada (antes era uma forma só). A forma gira e monta cantos; a textura nunca gira.
+- Novo script `scripts/import-transition.py` (forma + faixa pintada a partir da pintura do par); `build-materials.py`
+  gera o atlas de formas com máscara, halo e espuma por peça. Terra Arada e os demais chãos seguem sem transição.
+
 ## 0.86.0 — 2026-11-08
 - **O chão quebrado se refaz**: um buraco (chão quebrado sem bloco) que fica um dia inteiro do jogo (`DAY_LENGTH_S`, 8 min)
   ganha de volta um chão igual ao de um vizinho (os de lado primeiro, depois as diagonais; nunca água), escolhido pela

@@ -2,15 +2,30 @@ import { Block, type BlockId } from '../world/blocks';
 
 /**
  * Transições horizontais entre chãos (Padrão V2, ADR 0023): o material que "avança" invade a borda do vizinho por uma
- * máscara de alfa reutilizável (`assets-src/materiais/_mascaras`, `scripts/build-materials.py`). A máscara é uma FORMA e
- * pode girar para qualquer direção; a textura que aparece por ela é o topo do material que avança e nunca gira.
+ * forma derivada da PINTURA do par (`assets-src/materiais/_mascaras/<forma>.png`, `scripts/import-transition.py`; formas
+ * com `.overlay.png` trazem também a faixa pintada — espuma, água rasa). A forma pode girar para qualquer direção; a
+ * textura que aparece por ela é o topo do material que avança e nunca gira.
  *
- * Regras de produção (dados do catálogo, não da cor): só o chão plano, na mesma altura, e só entre os chãos listados;
- * água, buraco, pedra e piso da cidade ficam fora (têm borda própria). Hoje só a Grama avança, sobre Terra, Caminho e
- * Areia. Determinístico: depende só dos vizinhos (sem aleatório), então o mesmo mapa sempre sai igual.
+ * Regras de produção (dados do catálogo, não da cor): só o chão plano, na mesma altura, e só entre os pares listados; cada
+ * par traz a sua forma. A Água também avança (o ladrilho dela, não um bloco); buraco, pedra e piso da cidade ficam fora
+ * (têm borda própria). Falta arte (ainda): Terra Arada com água/grama/areia. Determinístico: depende só dos vizinhos.
  */
-export const TRANSITION_RULES: ReadonlyArray<{ over: BlockId; onto: readonly BlockId[] }> = [
-  { over: Block.GRASS, onto: [Block.DIRT, Block.PATH, Block.SAND] },
+export interface TransitionRule {
+  over: BlockId;
+  onto: BlockId;
+  /** Nome da forma no atlas de máscaras (`manifest.masks.shapes`). */
+  shape: string;
+}
+
+export const TRANSITION_RULES: ReadonlyArray<TransitionRule> = [
+  { over: Block.GRASS, onto: Block.DIRT, shape: 'grama-terra' },
+  { over: Block.GRASS, onto: Block.PATH, shape: 'grama-caminho' },
+  { over: Block.GRASS, onto: Block.SAND, shape: 'grama-areia' },
+  { over: Block.SAND, onto: Block.DIRT, shape: 'areia-terra' },
+  { over: Block.WATER, onto: Block.SAND, shape: 'agua-areia' },
+  { over: Block.WATER, onto: Block.DIRT, shape: 'agua-terra' },
+  { over: Block.WATER, onto: Block.PATH, shape: 'agua-caminho' },
+  { over: Block.WATER, onto: Block.GRASS, shape: 'agua-grama' },
 ];
 
 /** Ordem das peças de uma forma no atlas de máscaras: quatro bordas e quatro cantos (só vizinho diagonal). */

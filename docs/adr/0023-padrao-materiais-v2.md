@@ -88,6 +88,19 @@ O dono do produto enviou **uma** máscara ("grama avançando"), podendo girar pa
 - Desenho no `chunkRenderer` (cache do chunk); `World.setLevel` agora também avisa o chunk da **diagonal** quando a célula
   é de canto, porque o canto do chunk vizinho muda. Determinístico: depende só dos vizinhos.
 
+## Transições por par e água (2026-11-08, v0.87.0)
+
+O dono do produto enviou o topo da Água e a pintura de cada par (caminho|água, caminho|grama, terra|grama, areia|água,
+terra|água, areia|terra, grama|água, areia|grama). Decisões:
+- **Forma derivada da pintura** (`import-transition.py`), não desenhada à parte: classificação por cor + divisa por linha
+  dá a forma; a textura continua a do material (sem emenda com a célula vizinha). Em pares com água, a **faixa pintada**
+  (espuma/água rasa/halo) vem da pintura, em duas camadas (halo antes das peças, espuma depois) para a borda de uma
+  direção não sujar a água que outra direção já pôs.
+- **Quem avança**: Grama sobre Terra/Caminho/Areia, Areia sobre Terra, **Água** sobre Areia/Terra/Caminho/Grama (o ladrilho
+  `agua` do V2 vira o chão da água). Terra Arada e demais pares ficam sem transição até haver arte.
+- **Regras por par com `shape`** em `TRANSITION_RULES`; a forma única `avanco` saiu. Barranca e fio de espuma antigos da água
+  saem onde o vizinho recebe a margem nova.
+
 ## Por que assim
 
 - O pacote pede compatibilidade gradual e reversível (01, "Reversibilidade"; 05, Fase D): a chave mantém o jogo

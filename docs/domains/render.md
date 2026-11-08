@@ -37,7 +37,7 @@ Apenas apresentação; lê `World`, nunca escreve.
   bordas iguais às dos vizinhos (`Renderer.drawCubeV2`). Frente = textura seamless inteira, fatiada por nível
   (`materialsV2.paintFront`); franja só no nível mais alto; nível coberto desenha a continuação da parede, não o topo.
 - **Chão V2 sem grade**: `BlockTextures.continuousGround` lista os chãos V2; o `chunkRenderer` pula neles a "grade sutil de blocos" (1 px por célula, alfa 0,07) que continua no chão antigo.
-- **Transições entre chãos** (v0.85.0): `render/transitions.ts` (regras e `transitionPieces`), `textures.buildTransitions` (8 peças = topo do material que avança dentro da máscara) e `chunkRenderer` (desenha depois do chão). Só chão plano e mesma altura; máscaras são formas e podem girar (CONVENTIONS); a textura nunca gira.
+- **Transições entre chãos** (v0.87.0): `render/transitions.ts` (regras por par com `shape`, e `transitionPieces`), `textures.buildTransitions` (por forma 8 peças em 3 camadas: halo, corpo = topo do material que avança dentro da máscara, espuma; a Água avança com o ladrilho `agua` do V2) e `chunkRenderer` (desenha depois do chão: halo, corpo, espuma; pula barranca/fio de espuma antigos quando o vizinho recebe a margem nova). Só chão plano e mesma altura; máscaras são formas e podem girar (CONVENTIONS); a textura nunca gira.
 
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):

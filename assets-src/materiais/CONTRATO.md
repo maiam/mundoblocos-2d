@@ -46,7 +46,16 @@ Em `src/render/materialsV2.ts` (`V2_BLOCKS`): `{ top, front, overlay? }` por blo
 `terra` + franja `grama` (a frente de terra é o topo da terra). Ver no jogo: o V2 já é o padrão (`?blocos=legado` volta ao antigo), `?materiais=1`
 (legado × V2, só no dev) e `?escala=1` (cena de escala).
 
-## Máscaras de transição (v0.85.0)
+## Transições por par (v0.87.0)
+
+O dono do produto envia a **pintura do par** (um quadro quadrado, um chão de cada lado, divisa irregular no meio) e
+`python3 scripts/import-transition.py <forma> pintura.png --invader left|right [--overlay 40]` deriva a forma (alfa, com
+o material que avança sólido à esquerda; classificação de cor + divisa por linha) e, com `--overlay`, a **faixa pintada**
+(espuma, água rasa, halo) em volta da divisa. O `build-materials.py` gira a forma e a faixa (a textura nunca gira),
+monta os cantos e grava por peça máscara, halo (fora da forma) e espuma (dentro). Nome da forma = `<avança>-<recebe>`
+(ex.: `agua-areia`); a regra do par fica em `render/transitions.ts`. Pintura do par = fonte da forma; não vira textura.
+
+## Máscaras de transição (v0.85.0 — formato antigo, ainda aceito por `import-mask.py`)
 
 Uma máscara é uma **forma** (só o canal alfa); a textura que aparece por ela é o topo do material que avança e nunca gira.
 - **Arquivo:** PNG quadrado com alfa, a parte sólida à **esquerda** e a borda irregular à **direita** (o material vem do
