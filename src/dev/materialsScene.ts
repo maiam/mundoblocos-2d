@@ -21,10 +21,12 @@ const PANELS: Array<{ title: string; mode: 'legacy' | 'v2'; front: number }> = [
 ];
 /** Chão do painel: linhas de cima em grama, depois terra arada, caminho, areia e pedra (encontros retos: sem transição ainda — Etapa 3). */
 const GROUND: BlockId[] = [Block.GRASS, Block.GRASS, Block.GRASS, Block.TILLED, Block.PATH, Block.SAND, Block.STONE];
+/** Última linha: as cinco pedras do jogo lado a lado (chão plano contínuo; Bruta, Tijolo, Chão, Lisa, Polida). */
+const STONE_ROW: BlockId[] = [Block.STONE, Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_SMOOTH, Block.STONE_POLISHED, Block.STONE_BRICK];
 /** Cubos: [coluna, linha, blocos de baixo para cima]. */
 const CUBES: Array<[number, number, BlockId[]]> = [
-  [1, 1, [Block.SAND]], [2, 1, [Block.SAND]], [3, 1, [Block.DIRT]], [4, 1, [Block.DIRT]], // platô de 4×2, materiais misturados
-  [1, 2, [Block.DIRT]], [2, 2, [Block.DIRT]], [3, 2, [Block.STONE]], [4, 2, [Block.STONE]],
+  [1, 1, [Block.SAND]], [2, 1, [Block.STONE_BRICK]], [3, 1, [Block.STONE_FLOOR]], [4, 1, [Block.STONE_SMOOTH]], // platô de 4×2, materiais misturados
+  [1, 2, [Block.DIRT]], [2, 2, [Block.STONE_POLISHED]], [3, 2, [Block.STONE]], [4, 2, [Block.STONE_BRICK]],
   [5, 2, [Block.GRASS, Block.GRASS]], // degrau ao lado do platô
   [0, 4, [Block.DIRT, Block.STONE]], [1, 4, [Block.DIRT, Block.STONE]], // pilhas de material misto
   [4, 4, [Block.GRASS, Block.GRASS, Block.GRASS]], [5, 4, [Block.GRASS, Block.GRASS, Block.GRASS]],
@@ -97,7 +99,7 @@ export function showMaterialsScene(canvas: HTMLCanvasElement): () => void {
       const S = TILE * zoom;
       // Chão plano: só o topo (contrato de geometria § 6).
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-        const g = part(GROUND[r], p.mode);
+        const g = part(r === ROWS - 1 ? STONE_ROW[c] : GROUND[r], p.mode);
         if (g) ctx.drawImage(g.ground, ox + c * S, oy + r * S, S, S);
       }
       // Cubos e personagens em ordem de linha (o de baixo cobre o de cima), pilha de baixo para cima.

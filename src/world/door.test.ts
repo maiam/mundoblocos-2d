@@ -45,7 +45,7 @@ describe('Porta de Carvalho', () => {
     w.breakBlock(x + 1, y);
     w.placeBlock(x + 1, y, Block.OAK_PLANKS);
     expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(true);
-    // Qualquer variação de pedra serve de batente.
+    // Qualquer variação de pedra serve de batente (inclusive as aposentadas, que ainda existem em mundos salvos).
     for (const s of [Block.STONE_COBBLE, Block.STONE_BRICK, Block.STONE_FLOOR, Block.STONE_SMOOTH, Block.STONE_POLISHED, Block.STONE_CRACKED, Block.STONE_BRICK_CRACKED]) {
       w.breakBlock(x - 1, y);
       w.placeBlock(x - 1, y, s);

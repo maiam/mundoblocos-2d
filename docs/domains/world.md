@@ -6,8 +6,10 @@
 - Célula: **chão** + níveis de pilha (`Chunk.levels`, `World.getLevel`): **objeto nível 0** e **cubos nos níveis 1–2**
   (pilha de até `MAX_STACK` = 3). O gerador só preenche os níveis 0 e 1; o nível 2 é só do jogador.
 - **Materiais** (prancha de blocos, únicos blocos de construção): Terra, Terra com Grama, Terra Arada,
-  Caminho de Terra, Areia, Pedra Bruta, Tora de Carvalho, Tábua de Carvalho e 7 variações de pedra (Irregular, Tijolo,
-  Chão, Lisa, Polida, Rachada, Tijolo Rachado — ids 34–39 e 42) (`MATERIALS`; coluna do atlas = índice na lista).
+  Caminho de Terra, Areia, Pedra Bruta, Tora de Carvalho, Tábua de Carvalho e 4 variações de pedra (Tijolo, Chão,
+  Lisa, Polida — ids 35–38) (`MATERIALS`; coluna do atlas antigo = índice na lista). **Aposentadas** (08/11, `RETIRED_STONES`):
+  Pedra Irregular (34), Pedra Rachada (39) e Tijolo de Pedra Rachado (42) — sem receita e fora da cidade, mas os ids
+  seguem reservados e na lista (mundos salvos podem tê-las: continuam aparecendo, quebrando e valendo de batente).
   O gerador só usa a Pedra Bruta; substituir água aceita só ela entre as pedras; **qualquer pedra** (`stone: true`) serve de batente de porta. O **mesmo id** serve de
   chão natural (camada de chão) e de cubo (camada de objeto).
 - Cidade do Despertar: construções (ids 121–134 e bancos 136/142, forma `building`, id no canto inferior esquerdo + `TOWN_PART`) e

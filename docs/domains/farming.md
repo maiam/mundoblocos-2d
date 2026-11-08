@@ -48,7 +48,6 @@
   | Tábua de Carvalho | 1 Tora de Carvalho | 2 Tábuas |
   | Porta de Carvalho | 4 Tábuas | 1 Porta |
   | Baú de Carvalho | 8 Tábuas | 1 Baú |
-  | Pedra Irregular | 1 Pedra Bruta | 1 Pedra Irregular |
   | Tijolo de Pedra | 1 Pedra Bruta | 1 Tijolo de Pedra |
   | Chão de Pedra | 1 Pedra Bruta | 1 Chão de Pedra |
   | Pano de Seda | 10 Sedas de Aranha | 1 Pano de Seda |

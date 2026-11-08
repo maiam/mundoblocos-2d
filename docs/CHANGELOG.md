@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.83.0 — 2026-11-08
+- **Cinco pedras** (decisão do dono do produto): o jogo fica com Pedra Bruta, Tijolo de Pedra, Chão de Pedra, Pedra Lisa e
+  Pedra Polida. **Pedra Irregular, Pedra Rachada e Tijolo de Pedra Rachado saíram**: sem receita (nem a parede de cada
+  uma) e a muralha da cidade agora é só de Tijolo de Pedra, sem as peças rachadas. Mundos e salas já salvos que tenham
+  esses blocos continuam funcionando (eles seguem existindo, só não dá mais para fazê-los).
+- **Materiais V2 — texturas das quatro pedras** (só com `?blocos=v2`): Tijolo de Pedra, Chão de Pedra, Pedra Lisa e
+  Pedra Polida entram no padrão novo, junto com a Pedra Bruta. A cena `?materiais=1` mostra as cinco.
+
 ## 0.82.2 — 2026-11-08
 - **Materiais V2 — frente de terra e franjas do Caminho e da Terra Arada** (só com `?blocos=v2`): Caminho de Terra e
   Terra Arada passam a ter a frente de terra (como a grama) e a franja de transição enviada pela arte caindo sobre ela.

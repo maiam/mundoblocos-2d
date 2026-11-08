@@ -9,7 +9,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 | Sistema | Estado | Observação |
 |---|---|---|
 | Mundo procedural em chunks 16×16, vista 3/4, biomas, água, montanhas | ✅ sólido | determinístico por seed, ~0,08 ms/chunk |
-| Construção: 15 materiais (8 pedras), pilha de 3, buracos, porta, tenda, baú | ✅ | materiais **coletados** (grade 9 + bolsa) |
+| Construção: 12 materiais (5 pedras; 3 aposentadas), pilha de 3, buracos, porta, tenda, baú | ✅ | materiais **coletados** (grade 9 + bolsa) |
 | Personagem: movimento, câmera, joystick, botão de ação, paisagem/tela cheia | ✅ | teste do botão no celular ainda em avaliação |
 | Ferramentas (espada, enxada, picareta, pá, machado) com ação e restrições | ✅ | quebrar com ferramenta 1 s, mão 2 s |
 | Cultivo (trigo, batata, tomate, cenoura) + inventário de itens contáveis | ✅ | 4 culturas; comer e cozinhar desde v0.56.0 |
@@ -103,7 +103,7 @@ servidor reaproveita `world`+`net` como pacote compilado. Repositório do servid
    receitas (trigo → pão? Coração da Rainha → ?), painel do **Personagem** (vida, armaduras — ícone já na grade).
 3. ✅ **Painel de inventário** (bolsa no 9º espaço).
 4. Tosar ovelha → lã; mais culturas; regar/adubar.
-5. **Fonte das pedras sem receita** (Lisa, Polida, Rachada, Tijolo Rachado): receitas futuras ou **construções prontas**
+5. **Fonte das pedras sem receita** (Lisa e Polida; Irregular, Rachada e Tijolo Rachado foram aposentadas em 08/11): receitas futuras ou **construções prontas**
    (ruínas/estruturas geradas pela seed — mudam o mapa; rodar os testes de determinismo). Decidir também se as
    variações substituem água (hoje só a Pedra Bruta; batente de porta já aceita todas).
 
@@ -204,6 +204,7 @@ Recomendação aprovada pelo dono do produto em 2026-11-07: por etapas, jogo int
 4b. ✅ **Massa contínua** (v0.82.0): sem riscos entre cubos V2 vizinhos nem entre níveis, de qualquer material; frente
    seamless usada inteira e fatiada por nível; franja só no nível mais alto (ADR 0023). Falta: conferir com a arte se o
    "vinco" claro entre topo e frente de cada cubo deve ficar.
+4d. ✅ **Cinco pedras no V2** (v0.83.0): Tijolo, Chão, Lisa e Polida entram (a Bruta já estava); as outras três pedras foram aposentadas. Faltam Tronco e Tábuas de Carvalho (e as paredes, que têm tira própria).
 4c. ✅ **Caminho de Terra e Terra Arada** (v0.82.1–0.82.2): topos oficiais, frente sempre de terra e franja própria; o chão V2 deixou de levar a grade sutil por célula.
 5. **Migração por lotes** (pedras da cidade, tábuas, tronco, caminho, arado; depois celestiais), `?blocos=v2` vira padrão e o
    atlas legado (ADR 0006) sai quando o último material migrar. Saves não mudam (ids iguais).
@@ -236,7 +237,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 | O que animais dropam (lã? carne?) | Fase 1 (pendência) |
 | Próximas profissões/receitas; uso do Coração da Rainha | Fase 3 |
 | Cidade: NPCs (quem, falas), interiores, o que as lojas vendem, hospedaria como ponto de retorno | Fase 4 |
-| Variações de pedra: fonte de Lisa/Polida/Rachada/Tijolo Rachado; substituem água? | Fase 3 |
+| Variações de pedra: fonte de Lisa e Polida; substituem água? | Fase 3 |
 | Painel do Personagem: além de nível/atributos/XP (Fase P), armaduras? | Fase P/4 |
 | Limite de pilha (bolsa tem 12 espaços desde v0.57.0; pilhas sem limite) | Fase 3 |
 | Porta cai sem batente? Fecha sozinha? | Fase 4 |
@@ -245,6 +246,9 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 ## 4. Dependências externas
 - **Backend do Orvalis** (repositório separado, subdomínio de `pensamentos.online`; ADR 0015 — sem maiamapps):
   multiplayer, contas, mundos na nuvem. Primeiro passo: validar WebSocket na Hostinger (Fase M).
+- **Servidor (`orvalis-servidor`)**: a v0.83.0 mudou a muralha da cidade (só Tijolo de Pedra) e tirou receitas; o servidor só
+  acompanha na próxima sincronização do pacote (`npm run build:net` aqui + `npm run sync-net` lá). Sem pressa: não muda
+  o protocolo nem o que o jogador vê (a cidade é gerada no aparelho; os blocos aposentados seguem definidos nos dois lados).
 - **Hospedagem** ✅ no ar em `https://orvalis.pensamentos.online` (Hostinger, provisório; publica a cada merge em
   `main` — ver `OPERATIONS`). Depois, domínio próprio do Orvalis (não maiamapps).
 - **Arte**: mais personagens de roupa branca e folhas de roupas (moradores ✅ 4 + 6 roupas, uma de ferreiro); roupas de outros ofícios (guarda, mercador, estalajadeiro); guardas, ferreiro, mercadores; (opcional) aranhas por direção e heroína levando dano, árvores/água 3/4, nuvem contínua.
