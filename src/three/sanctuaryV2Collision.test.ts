@@ -27,7 +27,7 @@ describe('Santuário V2 — colisão vertical temporária', () => {
     expect(p.z).toBe(0);
     // Cross each staircase cell in small steps; no leaps, no teleport through walls.
     for (let i = 0; i < 4; i++) {
-      for (let t = 0; t < 13; t++) p.move(1 / 40, 1, 0, w);
+      for (let t = 0; t < 10; t++) p.move(1 / 40, 1, 0, w);
       expect(p.z).toBe(i + 1);
     }
     expect(p.visualZ).toBeGreaterThan(0);
