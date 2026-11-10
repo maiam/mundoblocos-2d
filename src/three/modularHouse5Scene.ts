@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { SanctuaryV2Materials } from './sanctuaryV2Materials';
-import { HOUSE5, HOUSE5_STAIRS, houseFloorName } from './modularHouse5Plan';
+import { HOUSE5, HOUSE5_STAIRS } from './modularHouse5Plan';
 
 /**
  * Non-persisted, art-directed 5×5 two-storey model, combining solid Three.js
