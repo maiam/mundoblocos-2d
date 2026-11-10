@@ -350,3 +350,49 @@ O usuário testou a V2.1 no navegador e confirmou:
 Esses quatro itens passam do estado "pendente de teste visual" para **aprovado no laboratório experimental**. O feedback não constitui aprovação de toda a experiência V2 nem autoriza mesclar o PR: permanecem pendentes navegabilidade da ilha suspensa, escadas/andares reais, integração dos PNGs 80–85 como assets versionados e salvamento de múltiplas alturas.
 
 **Próxima fase proposta:** consolidar o kit V2.1 no fluxo de assets, testar descidas/bordas/obstáculos e projetar uma casa modular de dois pavimentos com escadas, piso superior e oclusão adequada. Manter V2 e o mundo principal isolados até validação.
+
+
+## Casa Celestial 5×5, dois pavimentos — etapa experimental (10/11/2026)
+
+Primeiro protótipo modular de interior tridimensional, isolado do jogo
+principal e dos salvamentos, no **Setor D** do Laboratório V2.
+
+### Construção
+- Área **5×5 células**, localização local `x=70..74`, `y=25..29`.
+- Entrada pela face sul: `(72,29)`.
+- Piso térreo navegável no nível `0`.
+- Escada de quatro posições: `(71,28)=1`, `(71,27)=2`,
+  `(71,26)=3`, `(72,26)=4`.
+- Segundo pavimento navegável no nível `4` (independente do nível 0 no
+  mesmo X/Y, sem substituir as regras do resto do mundo).
+- Paredes laterais, janela aberta no pavimento superior, cobertura superior
+  demonstrativa e moldura de porta; materiais 82/83/84/85 (seis texturas V2.1
+  são carregadas localmente no browser, sem upload).
+- Ao entrar, paredes voltadas à câmera e telhado ocultam-se de forma
+  contextual; a Deusa mantém a arte 2D original.
+
+### Como testar
+1. Atualizar `feat/santuario-three-experimental` e rodar `npm run dev`.
+2. Abrir `?mundo=santuario&render=three`.
+3. Ativar `Laboratório V2` e carregar o kit PNG V2.1 em **Mais opções**.
+4. Em **Mais opções**, clicar em **Testar casa 5×5 (2 andares)**.
+5. Entrar pela porta ao sul; chegar ao pé da escada passando pela área
+   `(72,28)`, virar à esquerda para `(71,28)` e subir para o norte
+   por `(71,27)` e `(71,26)`. O degrau final fica em `(72,26)`.
+6. Caminhar no segundo pavimento e descer pelo mesmo trajeto.
+7. Conferir o HUD de altura, a câmera, a colisão com paredes e a
+   alternância entre paredes/telhados visíveis e ocultos.
+8. Usar **Mostrar/ocultar casa 5×5** para comparar o laboratório antes/depois.
+
+### Restrições
+
+O modelo é uma **prévia funcional experimental**. A navegação entre
+pavimentos usa leitura de altura dependente do nível atual da Deusa, sem
+alterar `World`, `MAX_STACK`, chunks ou formato de salvamento.
+Quando a casa está desativada, o laboratório mantém a física V2 anterior.
+A geometria usa a mesma biblioteca de texturas PNG 512×512, sem produzir
+ou distribuir modelos 3D fotorrealistas.
+
+**Ainda a validar visualmente:** recorte de paredes e telhado, leitura das
+janelas, percepção do segundo pavimento, transição do quarto degrau,
+descida, câmera e desempenho móvel. Não mesclar o PR antes desta inspeção.
