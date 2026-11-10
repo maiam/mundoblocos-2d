@@ -110,3 +110,22 @@ Também **não está implementado** o autotiling entre os 18 tipos de material: 
 exclusivamente a Nuvem Sólida e seus próprios blocos vizinhos. As artes transparentes extraídas
 do JPEG ainda precisam de refinamento de alfa. Efeitos de pós-processamento, iluminação,
 sombreamento e acabamento de plataforma ficarão para outras etapas.
+
+
+## Nuvem Sólida 512 — textura única seamless aprovada (novo teste)
+
+O usuário aprovou uma imagem **512×512** de nuvens brancas suaves como textura-base, já testada em repetição 4×4. A comparação de pixels extremos (esquerda/direita e cima/baixo) da imagem original retornou **0**, sem discrepância de RGB nos limites.
+
+A nova opção evita o sintetizador macro V1.2, que gerava retângulos grandes: **nenhuma alteração ou combinação de pixels** é aplicada ao arquivo 512 carregado. A imagem é amostrada com **UVs contínuos de mundo**, e cada padrão cobre **4×4 células**. A mesma textura reveste os topos e as faces verticais expostas da Nuvem Sólida; nenhum mosaico por bloco e nenhuma borda decorativa herdada do atlas V1.1 é aplicada a esse modo.
+
+**Como testar:**
+
+1. Atualizar a branch `feat/santuario-three-experimental` e iniciar `npm run dev`.
+2. Abrir `http://localhost:5173/?mundo=santuario&render=three`.
+3. Clicar em **Carregar nuvem 512** e selecionar **orvalis_nuvem_topo_512_seamless_v2(1).png** (512×512).
+4. O modo **Nuvem 512: ativa** passa a usar a nova pintura no terreno inteiro. Para comparar com o material anterior, clicar no mesmo botão, sem recarregar.
+5. Clicar em **Plataforma 5×5** e alternar a câmera superior/isométrica para avaliar topo, faces, sombras e escala.
+
+**Nota:** a imagem é carregada localmente a partir do computador do usuário e **não** está incorporada ao repositório como asset binário. O estado não é persistido; após atualizar a página, carregue novamente a textura 512. Somente a integração do renderizador e seu teste entram no PR. As demais 17 texturas e os salvamentos ficam intactos.
+
+**Próximo passo:** após aprovação visual, preparar a imagem como asset de distribuição do Santuário. Variações (grama/nuvem florida etc.) poderão alterar o topo preservando a mesma base no cubo.
