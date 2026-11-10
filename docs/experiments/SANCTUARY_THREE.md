@@ -396,3 +396,48 @@ ou distribuir modelos 3D fotorrealistas.
 **Ainda a validar visualmente:** recorte de paredes e telhado, leitura das
 janelas, percepção do segundo pavimento, transição do quarto degrau,
 descida, câmera e desempenho móvel. Não mesclar o PR antes desta inspeção.
+
+
+## Deusa da Vida — pranchas isométricas 4×4 (10/11/2026)
+
+Foram recebidas **três folhas** 1254×1254 JPEG em grade 4×4,
+preservando o desenho celestial (auréola, flores, asas, vestido branco/dourado):
+- **Idle:** quatro direções, quatro quadros por linha, pequenas variações de repouso.
+- **Caminhada:** quatro direções, quatro quadros por linha, ciclo de passos.
+- **Sentar/levantar:** quatro direções, quatro quadros por linha.
+
+O JPEG original tinha fundo branco. As folhas foram recortadas em 16 células
+independentes, convertidas para **PNG RGBA transparente 1280×1280** (célula
+320×320), com remoção do branco conectado às bordas e suavização de bordas.
+As cores e a identidade da Deusa foram preservadas. É recomendada inspeção
+artística das bordas delicadas de asas, cabelo e roupa após o recorte.
+
+Pacote entregue na conversa: `Orvalis_Deusa_Isometrica_3_Pranchas.zip`.
+Contém `deusa_iso_idle_4x4.png`, `deusa_iso_walk_4x4.png`,
+`deusa_iso_sit_4x4.png`, manifesto e README.
+
+### Como ativar no Three.js experimental
+
+1. Atualizar a branch `feat/santuario-three-experimental`.
+2. Abrir `?mundo=santuario&render=three`.
+3. Abrir **Mais opções → Carregar pranchas da Deusa (3 PNGs)** e selecionar
+   os três PNGs do ZIP juntos.
+4. O jogo alterna idle/caminhada conforme o movimento e mantém a direção
+   anterior quando parado; botão **Sentar / levantar** reproduz a terceira folha.
+5. **Deusa isométrica: ligada/desligada** alterna com o sprite 7×4 anterior,
+   sem alterar a movimentação, colisões, câmera ou o mundo 2D.
+
+Opcionalmente, copiar os três PNGs para
+`public/assets/characters/deusa-iso/` com os nomes do ZIP. Nesse caso
+o Santuário Three.js os carrega automaticamente ao iniciar. Se faltarem
+arquivos, o sprite anterior continua disponível como fallback.
+
+A integração só altera **renderização experimental**. O jogo principal
+continua usando as animações anteriores e nenhum arquivo de salvamento é modificado.
+
+### Próxima etapa de arquitetura
+
+A casa técnica 5×5 permanece como prova de conceito; a dimensão proposta para
+uma residência modular real de Orvalis é **16×12 células**. A ampliação da
+planta e o suporte a pisos editáveis serão desenvolvidos separadamente, para
+não confundir o novo sprite isométrico com o sistema de construção do mundo.
