@@ -114,9 +114,9 @@ export function renderModularHouse16(
   // Fantasy gabled roof: distinct volume instead of a monolithic floating plane.
   const slope = Math.atan2(2.2, 6.2);
   const northern = add(centerX, centerZ - 3.04, 9.05, 16.7, 6.9, .18, roof, 'roof');
-  northern.rotation.x = slope;
+  northern.rotation.x = -slope;
   const southern = add(centerX, centerZ + 3.04, 9.05, 16.7, 6.9, .18, roof, 'roof');
-  southern.rotation.x = -slope;
+  southern.rotation.x = slope;
   const ridge = add(centerX, centerZ, 10.18, 16.7, .28, .27, gold, 'roof');
   roofMeshes.push(northern, southern, ridge);
 
