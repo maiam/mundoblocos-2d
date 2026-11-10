@@ -89,6 +89,13 @@ export function sanctuaryV2Plan(): SanctuaryV2Cell[] {
     put(x, y, h, 84, 'C', edge >= 2 ? (stableHash(x, y, 67) > 0.9 ? 83 : 82) : 84);
   }
 
+  // C3 access: a guaranteed sequence 0→1→2→3→4 along y=24.
+  // The rest of the plateau remains varied and organically irregular.
+  for (let x = 29; x <= 32; x++) {
+    const height = x - 28;
+    put(x, 24, height, 84, 'C', height >= 3 ? 82 : 84);
+  }
+
   // D1 — compact cloud garden / decorative ethereal areas.
   rect(44, 20, 8, 8, 1, 80, 'D');
   for (let y = 20; y <= 27; y++) for (let x = 44; x <= 51; x++)
