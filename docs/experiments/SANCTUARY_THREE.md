@@ -70,3 +70,43 @@ Fluxo no Santuário experimental:
 **Não houve substituição do pacote de artes definitivo no repositório.** O teste recebe o atlas via seletor local do navegador; nenhum upload é enviado a servidor. Reiniciar a página volta às artes anteriores. Esse procedimento permite comparar com segurança sem inflar o pacote de arte que carrega no início.
 
 **Limites conhecidos:** o tratamento de Fourier zerou a diferença entre pixels das extremidades das texturas 1 e 2, mas não elimina motivos visuais repetidos a cada célula. A transparência dos elementos 3–8 é reconstruída a partir de fundo branco JPEG (alfa aproximado). O encaixe/ângulo das peças é preliminar. Publicação final requer imagens PNG transparentes de origem ou refinamento manual do alfa e transições.
+
+
+## Nuvem Sólida V1.2 — superfície orgânica (sem reiniciar em cada célula)
+
+O teste visual V1.1 mostrou um mosaico: o topo de 128 px era aplicado em cada cubo separadamente.
+Mesmo com bordas matematicamente iguais, formas idênticas se repetiam a cada bloco.
+
+A V1.2 mantém o **mesmo PNG já carregado** pelo botão **Carregar nuvem V1.1**,
+mas constrói um segundo material visual para comparação:
+
+- **Orgânica V1.2:** sintetiza um padrão macro periódico de 768×768 a partir da pintura original,
+  com quatro deslocamentos de fase misturados suavemente e saltos determinísticos.
+- **UVs do mundo:** em vez de reiniciar a textura por bloco, a malha de nuvens recebe
+  UVs proporcionais à posição global X/Z, cobrindo **16×16 células por período**.
+- **Faces expostas:** gera apenas as superfícies superiores visíveis e as laterais em contato
+  com espaço vazio, sem desenhar faces internas entre blocos ocupados.
+- **Bordas de teste:** as peças da prancha só aparecem nos lados expostos da plataforma 5×5.
+- **Comparação imediata:** o botão **Nuvem: orgânica V1.2** alterna para **Nuvem: repetição V1.1**
+  e vice-versa, sem recarregar a página. Sempre compare as mesmas câmera e escala.
+- **Não altera** outras texturas celestiais, regras do mundo, salvamento, personagem ou PR principal.
+
+### Passos para validar
+
+1. Atualizar a branch \`feat/santuario-three-experimental\` no computador.
+2. Executar \`npm ci\`, \`npm run dev\`.
+3. Abrir \`http://localhost:5173/?mundo=santuario&render=three\`.
+4. Clicar em **Carregar nuvem V1.1** e selecionar o **mesmo** \`atlas-4x2-rgba.png\` de 512×256.
+5. A nova versão **Orgânica V1.2** é ativada automaticamente.
+6. Alternar **Nuvem: orgânica V1.2 / Nuvem: repetição V1.1** observando o terreno em escala
+   original, sobretudo a região atrás da Deusa e a plataforma 5×5.
+7. Alternar entre câmera superior e isométrica para verificar laterais e contorno das plataformas.
+
+### Limitações ainda existentes
+
+O campo macro ainda é periódico a cada 16 células (em vez de 1 célula). Como a única
+fonte é uma pintura de 128×128, alguns motivos e variações de contraste ainda podem ser reconhecíveis.
+Também **não está implementado** o autotiling entre os 18 tipos de material: V1.2 trata
+exclusivamente a Nuvem Sólida e seus próprios blocos vizinhos. As artes transparentes extraídas
+do JPEG ainda precisam de refinamento de alfa. Efeitos de pós-processamento, iluminação,
+sombreamento e acabamento de plataforma ficarão para outras etapas.
