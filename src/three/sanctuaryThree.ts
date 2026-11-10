@@ -124,7 +124,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   function clearCloudOverlays(): void {
     for (const obj of [...demonstration.children]) {
       demonstration.remove(obj);
-      if (obj.geometry) obj.geometry.dispose();
+      // SpriteGeometry can be shared by Three.js; dispose only private plane geometries.
+      if (obj.geometry && !obj.isSprite) obj.geometry.dispose();
       if (obj.material) obj.material.dispose();
     }
   }
