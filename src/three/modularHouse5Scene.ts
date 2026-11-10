@@ -69,7 +69,7 @@ export function makeModularHouse5(
 
   // The ground floor can actually be entered from the south side, z=y+4.
   // A thin floor does NOT affect world standHeight, only the visual surface.
-  add(centerX, -0.09, centerZ, 4.6, 0.18, 4.6, marble);
+  add(centerX, 0.035, centerZ, 4.6, 0.07, 4.6, marble);
   // The physical upper-floor support is at height 4. The transparent cutaway
   // prevents this slab from hiding the protagonist while on the ground floor.
   add(centerX, 3.91, centerZ, 4.6, 0.18, 4.6, decorated, 'upper');
