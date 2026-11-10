@@ -285,7 +285,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   hud.style.cssText = 'position:fixed;inset:0;z-index:3;pointer-events:none;color:#fff7eb;font-family:Nunito,system-ui,sans-serif;user-select:none;';
   const style = document.createElement('style');
   style.textContent = [
-    '[data-sanctuary-three] button{pointer-events:auto;cursor:pointer;background:rgba(31,25,76,.86);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;}',
+    '[data-sanctuary-three] button{pointer-events:auto;cursor:pointer;background:rgba(31,25,76,.86);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;white-space:nowrap;}',
+    '[data-sanctuary-three] .three-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none;max-width:100%;}',
+    '[data-sanctuary-three] .three-more[open] .three-menu{display:grid;}',
+    '[data-sanctuary-three] .three-menu{position:absolute;right:0;top:calc(100% + 6px);display:grid;grid-template-columns:1fr;gap:6px;padding:10px;width:min(310px,83vw);max-height:48vh;overflow-y:auto;background:rgba(31,25,76,.97);border:1px solid rgba(255,230,181,.5);border-radius:12px;box-shadow:0 10px 28px rgba(15,10,48,.3);z-index:20;pointer-events:auto;}',
+    '[data-sanctuary-three] .three-menu button{width:100%;text-align:left;}',
     '[data-sanctuary-three] button.active{border-color:#fff8b8;background:rgba(120,83,167,.9);box-shadow:0 0 10px rgba(255,239,180,.35);}',
     '[data-sanctuary-three] .three-tools{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:min(88vw,650px);display:flex;gap:5px;overflow-x:auto;padding:5px;pointer-events:auto;background:rgba(24,19,59,.65);border-radius:15px;}',
     '[data-sanctuary-three] .three-tools button{flex:0 0 48px;width:48px;height:48px;padding:4px;}',
@@ -295,8 +299,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     '@media (hover:hover) and (pointer:fine){[data-sanctuary-three] .three-pad{opacity:.32;}}',
   ].join('');
   document.head.append(style);
+  const header = document.createElement('div');
+  header.style.cssText = 'position:absolute;top:10px;left:10px;right:10px;display:flex;flex-direction:column;gap:5px;align-items:flex-start;pointer-events:none;z-index:4;';
   const top = document.createElement('div');
-  top.style.cssText = 'position:absolute;top:12px;left:12px;display:flex;flex-wrap:wrap;gap:7px;align-items:center;max-width:calc(100% - 24px);';
+  top.className = 'three-toolbar';
+  header.append(top);
   const name = document.createElement('span');
   name.textContent = 'Santuário Celestial · Three.js (experimental)';
   name.style.cssText = 'padding:8px 11px;border-radius:12px;background:rgba(31,25,76,.73);font-size:12px;font-weight:800;';
@@ -356,7 +363,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   kitFile.accept = '.png,.webp,image/png,image/webp';
   kitFile.hidden = true;
   top.append(kitFile);
-  top.append(button('Carregar nuvem V1.1', () => kitFile.click()));
+  const legacyKitButton = button('Carregar nuvem V1.1', () => kitFile.click());
+  top.append(legacyKitButton);
   const top512File = document.createElement('input');
   top512File.type = 'file';
   top512File.accept = '.png,.webp,image/png,image/webp';
@@ -388,16 +396,18 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   top.append(demoButton);
   const editButton = button('Modo: construir', () => { removing = !removing; editButton.textContent = removing ? 'Modo: remover' : 'Modo: construir'; editButton.classList.toggle('active', removing); });
   top.append(editButton);
-  top.append(button('Voltar ao 2D', () => { const u = new URL(location.href); u.searchParams.delete('render'); location.href = u.toString(); }));
-  hud.append(top);
+  const backButton = button('Voltar ao 2D', () => { const u = new URL(location.href); u.searchParams.delete('render'); location.href = u.toString(); });
+  top.append(backButton);
+  hud.append(header);
   const tip = document.createElement('div');
   tip.textContent = 'WASD / setas: mover · clique/toque: bloco · roda: zoom · C: câmera · B: construir/remover';
-  tip.style.cssText = 'position:absolute;top:58px;left:12px;background:rgba(31,25,76,.55);padding:5px 9px;border-radius:8px;font-size:11px;max-width:90vw;';
-  hud.append(tip);
+  tip.style.cssText = 'background:rgba(31,25,76,.76);padding:6px 9px;border-radius:8px;font-size:11px;max-width:min(90vw,680px);line-height:1.45;';
+  tip.hidden = true;
+  header.append(tip);
   const cloudStatus = document.createElement('div');
-  cloudStatus.style.cssText = 'position:absolute;top:84px;left:12px;max-width:min(88vw,640px);padding:6px 9px;border-radius:8px;background:rgba(31,25,76,.6);font-size:11px;';
+  cloudStatus.style.cssText = 'max-width:min(92vw,780px);padding:6px 9px;border-radius:8px;background:rgba(31,25,76,.76);font-size:11px;line-height:1.45;';
   cloudStatus.textContent = 'Novo teste: carregue a textura Nuvem 512×512. Não altera o salvamento.';
-  hud.append(cloudStatus);
+  header.append(cloudStatus);
   top512File.addEventListener('change', async () => {
     const file = top512File.files?.[0];
     if (!file) return;
@@ -480,6 +490,20 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     tools.append(b);
   }
   hud.append(tools);
+  // Keep primary actions visible; optional or legacy controls live in a compact menu.
+  const more = document.createElement('details');
+  more.className = 'three-more';
+  more.style.cssText = 'position:relative;pointer-events:auto;';
+  const moreSummary = document.createElement('summary');
+  moreSummary.textContent = 'Mais opções';
+  moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
+  const menu = document.createElement('div');
+  menu.className = 'three-menu';
+  for (const item of [wireButton, loadTop512Button, compareTop512, legacyKitButton,
+    cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
+  more.append(moreSummary, menu);
+  top.append(more);
+  top.append(button('Ajuda', () => { tip.hidden = !tip.hidden; }));
   const pad = document.createElement('div');
   pad.className = 'three-pad';
   const knob = document.createElement('div');
