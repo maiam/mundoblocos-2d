@@ -378,6 +378,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     goddessLabButton.hidden = laboratoryV2Active;
     focusButton.hidden = !laboratoryV2Active && !laboratoryBuilt;
     focusButton.textContent = laboratoryV2Active ? 'Seguir Deusa' : 'Ver laboratório';
+    v2Info.hidden = !laboratoryV2Active;
     cloudStatus.textContent = laboratoryV2Active
       ? 'Laboratório V2: materiais 80–85, construções, montanhas e ilha. '
         + 'Alturas 4/5 e ilha são APENAS prévias geométricas (sem física ou salvamento). '
@@ -461,6 +462,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   cloudStatus.style.cssText = 'max-width:min(92vw,780px);padding:6px 9px;border-radius:8px;background:rgba(31,25,76,.76);font-size:11px;line-height:1.45;';
   cloudStatus.textContent = 'Novo teste: carregue a textura Nuvem 512×512. Não altera o salvamento.';
   header.append(cloudStatus);
+  const v2Info = document.createElement('div');
+  v2Info.style.cssText = 'max-width:min(92vw,500px);padding:5px 9px;border-radius:8px;background:rgba(31,25,76,.73);font-size:11px;line-height:1.4;';
+  v2Info.textContent = 'Aponte para uma construção V2 para inspecionar o material.';
+  v2Info.hidden = true;
+  header.append(v2Info);
   const v2FilesInput = document.createElement('input');
   v2FilesInput.type = 'file';
   v2FilesInput.multiple = true;
@@ -483,10 +489,12 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     v2SectorSelect.append(option);
   }
   v2SectorSelect.addEventListener('change', () => {
-    laboratoryV2Sector = v2SectorSelect.value as typeof laboratoryV2Sector;
+    const requested = v2SectorSelect.value as typeof laboratoryV2Sector;
     if (!laboratoryV2Active) labV2Button.click();
+    laboratoryV2Sector = requested;
+    v2SectorSelect.value = requested;
     laboratoryCamera = true;
-    zoom = laboratoryV2Sector === 'all' ? 39 : 17;
+    zoom = requested === 'all' ? 39 : 17;
   });
   v2FilesInput.addEventListener('change', async () => {
     try {
@@ -654,6 +662,27 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     return null;
   };
   canvas.addEventListener('pointermove', (e) => {
+    if (laboratoryV2Active && laboratoryV2) {
+      const rect = canvas.getBoundingClientRect();
+      mouse.set(((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(mouse, camera);
+      const hit = raycaster.intersectObject(laboratoryV2.group, true)[0];
+      if (hit) {
+        const n = hit.face?.normal;
+        const x = Math.floor(hit.point.x - (n?.x ?? 0) * 0.005) - x0;
+        const y = Math.floor(hit.point.z - (n?.z ?? 0) * 0.005) - y0;
+        const cell = laboratoryV2.cells.find(c => c.x === x && c.y === y);
+        v2Info.textContent = cell
+          ? 'Setor ' + cell.section + ' · (' + cell.x + ', ' + cell.y + ') · '
+            + SANCTUARY_V2_NAMES[cell.side] + ' (' + cell.side + ') · topo '
+            + SANCTUARY_V2_NAMES[cell.top] + ' (' + cell.top + ') · altura '
+            + cell.height + (cell.floating ? ' · ilha visual, sem colisão' : '')
+          : 'Prévia V2 — mover sobre um bloco para identificar o material.';
+      } else v2Info.textContent = 'Laboratório V2 — selecione um bloco para inspecionar.';
+      selector.visible = false;
+      return;
+    }
     selectedCell = pick(e.clientX, e.clientY);
     selector.visible = !!selectedCell;
     if (selectedCell) {
