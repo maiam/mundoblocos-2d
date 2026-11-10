@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { loadCloudKit, type CloudKit } from './cloudKit';
 import { loadCloudTop512, type CloudTop512 } from './cloudTop512';
-import { makeForegroundCharacterSprite } from './foregroundSprite';
+import { makeOcclusionAwareCharacter } from './foregroundSprite';
+import { constructionLabPlan, resetAndBuildLab, labWireframePositions } from './constructionLab';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -41,6 +42,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let cloudKit: CloudKit | null = null;
   let cloudTop512: CloudTop512 | null = null;
   let cloudTop512Material: any | null = null;
+  let cloudTop512SideMaterial: any | null = null;
   // A new 512px art source is mapped once per 4×4 cells, without synthesis.
   let useCloudTop512 = false;
   let organicCloud = true;
@@ -115,7 +117,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (cloudTop512 && useCloudTop512 && cloudTop512Material) {
       // One 512px illustration, continuous across 4×4 tiles and all visible faces.
       cloudMeshes.push(...buildCloudSurface(
-        world, { x0, x1, y0, y1 }, cloudTop512Material, cloudTop512Material, 4,
+        world, { x0, x1, y0, y1 }, cloudTop512Material, cloudTop512SideMaterial ?? cloudTop512Material, 4,
       ));
     } else if (cloudKit && organicCloud && cloudOrganicMaterials) {
       cloudMeshes.push(...buildCloudSurface(
@@ -204,9 +206,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   spriteMap.colorSpace = THREE.SRGBColorSpace;
   spriteMap.magFilter = THREE.LinearFilter;
   spriteMap.repeat.set(1 / 7, 1 / 4);
-  const goddess = makeForegroundCharacterSprite(spriteMap);
+  const characterLayers = makeOcclusionAwareCharacter(spriteMap);
+  const goddess = characterLayers.sprite;
+  const goddessSilhouette = characterLayers.silhouette;
   goddess.scale.set(2.3, 2.3, 1);
+  goddessSilhouette.scale.copy(goddess.scale);
   scene.add(goddess);
+  scene.add(goddessSilhouette);
   const shadow = new THREE.Mesh(
     new THREE.CircleGeometry(0.37, 24),
     new THREE.MeshBasicMaterial({ color: 0x514779, transparent: true, opacity: 0.16, depthWrite: false }),
@@ -227,6 +233,38 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let removing = false;
   let iso = false;
   let zoom = 10;
+  // Laboratory stays within the bounded 80×32 sanctuary; far from the spawn.
+  const labCells = constructionLabPlan(x0 + 4, y0 + 4);
+  const labCenterX = x0 + 4 + 14;
+  const labCenterY = y0 + 4 + 5.5;
+  let laboratoryBuilt = false;
+  let laboratoryCamera = false;
+  let wireVisible = false;
+  let wireframe: any | null = null;
+  const wireMaterial = new THREE.LineBasicMaterial({
+    color: 0xffdf8d, transparent: true, opacity: 0.72, depthTest: false, depthWrite: false,
+  });
+  function refreshWireframe(): void {
+    if (wireframe) {
+      scene.remove(wireframe);
+      wireframe.geometry.dispose();
+      wireframe = null;
+    }
+    if (!wireVisible || !laboratoryBuilt) return;
+    const positions = labWireframePositions(world, labCells);
+    if (!positions.length) return;
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    wireframe = new THREE.LineSegments(geometry, wireMaterial);
+    wireframe.renderOrder = 8;
+    wireframe.frustumCulled = false;
+    scene.add(wireframe);
+  }
+  function rebuildAfterEdit(): void {
+    rebuild();
+    decorateCloudTest();
+    refreshWireframe();
+  }
   const keys = new Set<string>();
   const joystick = { x: 0, y: 0 };
   const hud = document.createElement('div');
@@ -258,6 +296,35 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   }
   const cameraButton = button('Câmera: superior', () => { iso = !iso; cameraButton.textContent = iso ? 'Câmera: isométrica' : 'Câmera: superior'; });
   top.append(cameraButton);
+  const laboratoryButton = button('Criar laboratório 3D', () => {
+    const result = resetAndBuildLab(world, labCells, Block.CLOUD_SOLID);
+    laboratoryBuilt = true;
+    laboratoryCamera = true;
+    zoom = 12;
+    laboratoryButton.textContent = 'Recriar laboratório';
+    focusButton.hidden = false;
+    focusButton.textContent = 'Seguir Deusa';
+    wireButton.hidden = false;
+    rebuildAfterEdit();
+    cloudStatus.textContent = 'Laboratório: ' + result.cells + ' células, ' + result.placed
+      + '/' + result.blocks + ' blocos. '
+      + (result.failed ? result.failed + ' posições não colocadas.' : 'Pilhas, parede e plataformas prontas.');
+  });
+  top.append(laboratoryButton);
+  const focusButton = button('Seguir Deusa', () => {
+    laboratoryCamera = !laboratoryCamera;
+    focusButton.textContent = laboratoryCamera ? 'Seguir Deusa' : 'Ver laboratório';
+    zoom = laboratoryCamera ? 12 : 10;
+  });
+  focusButton.hidden = true;
+  top.append(focusButton);
+  const wireButton = button('Arestas: ocultas', () => {
+    wireVisible = !wireVisible;
+    wireButton.textContent = wireVisible ? 'Arestas: visíveis' : 'Arestas: ocultas';
+    refreshWireframe();
+  });
+  wireButton.hidden = true;
+  top.append(wireButton);
   const kitFile = document.createElement('input');
   kitFile.type = 'file';
   kitFile.accept = '.png,.webp,image/png,image/webp';
@@ -312,12 +379,16 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       const incoming = await loadCloudTop512(file, renderer.capabilities.getMaxAnisotropy());
       const previous = cloudTop512;
       const previousMaterial = cloudTop512Material;
+      const previousSideMaterial = cloudTop512SideMaterial;
       cloudTop512 = incoming;
       cloudTop512Material = new THREE.MeshBasicMaterial({ map: incoming.texture, color: 0xffffff });
+      // The texture itself remains unchanged; only the vertical faces are softly shaded.
+      cloudTop512SideMaterial = new THREE.MeshBasicMaterial({ map: incoming.texture, color: 0xe2dfed });
       useCloudTop512 = true;
       // Never dispose a texture while its old material is still in the scene.
       buildCloudTest();
       previousMaterial?.dispose();
+      previousSideMaterial?.dispose();
       previous?.dispose();
       compareTop512.hidden = false;
       compareTop512.textContent = 'Nuvem 512: ativa';
@@ -438,7 +509,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const { x, y } = picked;
     // Experimental mode reuses official placement/removal rules; never touches the normal saved world.
     const changed = removing ? world.breakBlock(x, y) !== null : world.placeBlock(x, y, selectedBlock);
-    if (changed) { rebuild(); decorateCloudTest(); }
+    if (changed) rebuildAfterEdit();
   });
   canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom = Math.max(5, Math.min(20, zoom * (e.deltaY > 0 ? 1.12 : 0.89))); }, { passive: false });
 
@@ -476,9 +547,12 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const col = step < 7 ? step : 12 - step;
     spriteMap.offset.set(col / 7, 1 - (row + 1) / 4);
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
+    goddessSilhouette.position.copy(goddess.position);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
     const offset = iso ? [13, 20, 13] : [0, 23, 11];
-    const target = new THREE.Vector3(player.x, 0, player.y);
+    const target = laboratoryCamera
+      ? new THREE.Vector3(labCenterX, 0, labCenterY)
+      : new THREE.Vector3(player.x, 0, player.y);
     camera.position.set(target.x + offset[0], target.y + offset[1], target.z + offset[2]);
     camera.lookAt(target);
     const aspect = Math.max(1, canvas.clientWidth) / Math.max(1, canvas.clientHeight);
@@ -495,12 +569,19 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
     hud.remove(); style.remove();
+    if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
+    wireMaterial.dispose();
+    goddess.material.dispose();
+    goddessSilhouette.material.dispose();
+    shadow.geometry.dispose(); shadow.material.dispose();
+    selector.geometry.dispose(); selector.material.dispose();
     clearCloudOverlays();
     floorGeometry.dispose(); blockGeometry.dispose();
     for (const id of [...materials.keys()]) disposeMaterial(id);
     cloudOrganicMaterials?.top.dispose();
     cloudOrganicMaterials?.side.dispose();
     cloudTop512Material?.dispose();
+    cloudTop512SideMaterial?.dispose();
     cloudTop512?.dispose();
     cloudKit?.dispose();
     spriteMap.dispose(); renderer.dispose();
