@@ -8,6 +8,8 @@ import { buildSanctuaryV2Scene } from './sanctuaryV2Scene';
 import { SANCTUARY_V2_NAMES, sanctuaryTextureId, loadSanctuaryV2Materials, type SanctuaryV2Materials } from './sanctuaryV2Materials';
 import { SANCTUARY_V2_SECTORS } from './sanctuaryV2Plan';
 import { makeV2Heightfield, V2_VISIT_POINTS, type V2Heightfield } from './sanctuaryV2Collision';
+import { HOUSE5, houseFloorName, makeHouseNavigation, type HouseNavigation } from './modularHouse5Plan';
+import { makeModularHouse5 } from './modularHouse5Scene';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -261,6 +263,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let laboratoryV2Active = false;
   let laboratoryV2Sector: 'all' | 'A' | 'B' | 'C' | 'D' = 'all';
   let laboratoryV2Physics: V2Heightfield | null = null;
+  let houseNavigation: HouseNavigation | null = null;
+  let houseScene: ReturnType<typeof makeModularHouse5> | null = null;
+  let houseEnabled = false;
   let cameraY = 0;
   function v2SetPlayerAt(localX: number, localY: number): void {
     const x = x0 + localX, y = y0 + localY;
@@ -272,6 +277,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cameraY = h;
   }
   function rebuildLaboratoryV2(): void {
+    if (houseScene) { scene.remove(houseScene.group); houseScene.dispose(); houseScene = null; }
     if (laboratoryV2) {
       scene.remove(laboratoryV2.group);
       laboratoryV2.dispose();
@@ -280,8 +286,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
     );
     laboratoryV2Physics = makeV2Heightfield(laboratoryV2.cells, x0, y0);
+    houseNavigation = makeHouseNavigation(laboratoryV2Physics, x0, y0, () => player.z);
     laboratoryV2.group.visible = laboratoryV2Active;
     scene.add(laboratoryV2.group);
+    houseScene = makeModularHouse5(
+      x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
+    );
+    houseScene.group.visible = laboratoryV2Active && houseEnabled;
+    scene.add(houseScene.group);
   }
   let laboratoryBuilt = false;
   let laboratoryCamera = false;
@@ -351,6 +363,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   top.append(cameraButton);
   const laboratoryButton = button('Criar laboratório 3D', () => {
     laboratoryV2Active = false;
+    houseEnabled = false;
+    if (houseScene) houseScene.group.visible = false;
     player.z = player.visualZ = world.standHeight(player.cellX, player.cellY) ?? 0;
     if (laboratoryV2) laboratoryV2.group.visible = false;
     labV2Button.textContent = 'Laboratório V2';
@@ -383,6 +397,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     if (!laboratoryV2) rebuildLaboratoryV2();
     if (laboratoryV2) laboratoryV2.group.visible = laboratoryV2Active;
+    if (houseScene) houseScene.group.visible = laboratoryV2Active && houseEnabled;
     // Do not leave the character inside an old demo object when switching scenes.
     if (laboratoryV2Active) v2SetPlayerAt(...V2_VISIT_POINTS.C);
     else {
@@ -402,7 +417,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     v2HeightInfo.hidden = !laboratoryV2Active;
     lastV2HeightDisplay = '';
     cloudStatus.textContent = laboratoryV2Active
-      ? 'Laboratório V2: colisão 3D e subida de um degrau por vez, alturas até 5. '
+      ? 'Laboratório V2: colisão 3D, alturas até 5 e casa modular 5×5 (opcional). '
         + 'Ilha suspensa ainda sem acesso; o laboratório não altera salvamentos. '
         + (laboratoryV2Materials ? 'Seis texturas PNG carregadas.' : 'Carregue os 6 PNGs em Mais opções.')
       : 'Santuário Three.js experimental. Nenhum teste é salvo.';
@@ -549,6 +564,29 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       + 'Aproxime-se do platô e avance ao longo dos degraus. A câmera segue a elevação.';
   });
 
+  const v2HouseButton = button('Testar casa 5×5 (2 andares)', () => {
+    if (!laboratoryV2Active) labV2Button.click();
+    houseEnabled = true;
+    if (!houseScene) rebuildLaboratoryV2();
+    if (houseScene) houseScene.group.visible = true;
+    laboratoryV2Sector = 'D';
+    v2SectorSelect.value = 'D';
+    v2SetPlayerAt(...HOUSE5.visit);
+    laboratoryCamera = false;
+    focusButton.textContent = 'Ver laboratório';
+    zoom = 9;
+    cloudStatus.textContent = 'Casa celestial 5×5: entre pela porta ao sul, vire à esquerda para a escada, '
+      + 'suba os quatro degraus e explore o segundo andar. '
+      + 'Paredes/telhado se ocultam dentro da casa; não há salvamento.';
+  });
+  const v2HouseHideButton = button('Mostrar/ocultar casa 5×5', () => {
+    if (!laboratoryV2Active) return;
+    houseEnabled = !houseEnabled;
+    if (houseScene) houseScene.group.visible = houseEnabled;
+    cloudStatus.textContent = houseEnabled ? 'Casa 5×5 visível, dois pavimentos.' : 'Casa 5×5 oculta (não altera o mundo).';
+    if (!houseEnabled && player.z > 0) v2SetPlayerAt(...V2_VISIT_POINTS.D);
+  });
+
   /** Apply 80 as the real visual ground of the experimental sanctuary. */
   function applyCloudTop512(incoming: CloudTop512, buildDemo: boolean): void {
         const previous = cloudTop512;
@@ -678,7 +716,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -802,7 +840,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const len = Math.hypot(sx, sy);
     if (len > 1) { sx /= len; sy /= len; }
     const movementWorld = laboratoryV2Active && laboratoryV2Physics
-      ? laboratoryV2Physics.walkerWorld : world;
+      ? houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
+      : world;
     if (iso) {
       const ux = (sx + sy) * Math.SQRT1_2;
       const uy = (sy - sx) * Math.SQRT1_2;
@@ -816,9 +855,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     spriteMap.offset.set(col / 7, 1 - (row + 1) / 4);
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
+    if (houseScene && houseEnabled && laboratoryV2Active) {
+      houseScene.updateView(player.x, player.y, player.z, camera.position);
+    }
     if (laboratoryV2Active) {
+      const insideHouse = houseEnabled && Math.floor(player.x - x0) >= HOUSE5.x
+        && Math.floor(player.x - x0) <= HOUSE5.x + 4
+        && Math.floor(player.y - y0) >= HOUSE5.y
+        && Math.floor(player.y - y0) <= HOUSE5.y + 4;
       const display = 'Deusa · nível ' + player.z + ' · altura visual ' + player.visualZ.toFixed(2)
-        + ' · subida máxima 1 bloco';
+        + (insideHouse ? ' · Casa: ' + houseFloorName(player.z, player.x - x0, player.y - y0)
+          : ' · subida máxima 1 bloco');
       if (display !== lastV2HeightDisplay) {
         v2HeightInfo.textContent = display;
         lastV2HeightDisplay = display;
@@ -856,6 +903,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('keyup', onKeyUp);
     hud.remove(); style.remove();
     if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
+    if (houseScene) { scene.remove(houseScene.group); houseScene.dispose(); }
     if (laboratoryV2) { scene.remove(laboratoryV2.group); laboratoryV2.dispose(); }
     laboratoryV2Materials?.dispose();
     wireMaterial.dispose();
