@@ -62,7 +62,9 @@ export async function loadCloudKit(file: File, maxAnisotropy: number): Promise<C
       const pixels = synthesizeCloudPattern(bytes, 768, salt);
       const big = document.createElement('canvas');
       big.width = big.height = 768;
-      big.getContext('2d')!.putImageData(new ImageData(pixels, 768, 768), 0, 0);
+      const imageData = new ImageData(768, 768);
+      imageData.data.set(pixels);
+      big.getContext('2d')!.putImageData(imageData, 0, 0);
       const result = new THREE.CanvasTexture(big);
       result.colorSpace = THREE.SRGBColorSpace;
       result.wrapS = result.wrapT = THREE.RepeatWrapping;
