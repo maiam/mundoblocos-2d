@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { loadCloudKit, type CloudKit } from './cloudKit';
 import { loadCloudTop512, type CloudTop512 } from './cloudTop512';
-import { makeOcclusionAwareCharacter } from './foregroundSprite';
+import { makeDepthTestedCharacter } from './foregroundSprite';
+import { createCutawayState, makeCutawayMaterial, updateCutawayProjection } from './occlusionCutaway';
 import { constructionLabPlan, resetAndBuildLab, labWireframePositions } from './constructionLab';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
@@ -43,6 +44,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let cloudTop512: CloudTop512 | null = null;
   let cloudTop512Material: any | null = null;
   let cloudTop512SideMaterial: any | null = null;
+  let cloudTop512SideAlternate: any | null = null;
+  const cloudCutaway = createCutawayState();
+  const cloudFadeMaterials: any[] = [];
+  const cloudFadeMeshes: any[] = [];
   // A new 512px art source is mapped once per 4×4 cells, without synthesis.
   let useCloudTop512 = false;
   let organicCloud = true;
@@ -75,6 +80,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const dummy = new THREE.Object3D();
   type Cell = { x: number; y: number; level: number };
   function rebuild(): void {
+    for (const mesh of cloudFadeMeshes) scene.remove(mesh);
+    cloudFadeMeshes.length = 0;
     for (const mesh of [...blocks, ...floor, ...cloudMeshes]) {
       scene.remove(mesh);
       if (mesh.userData.cloudSurface) mesh.geometry.dispose();
@@ -118,7 +125,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       // One 512px illustration, continuous across 4×4 tiles and all visible faces.
       cloudMeshes.push(...buildCloudSurface(
         world, { x0, x1, y0, y1 }, cloudTop512Material, cloudTop512SideMaterial ?? cloudTop512Material, 4,
+        cloudTop512SideAlternate ?? cloudTop512SideMaterial,
       ));
+      // Meshes use the same immutable UV geometry and 512px art for both passes.
+      // The second pass paints only the obstruction in front of the goddess.
+      cloudMeshes.forEach((mesh, i) => {
+        const fade = new THREE.Mesh(mesh.geometry, cloudFadeMaterials[i]);
+        fade.renderOrder = 1;
+        fade.frustumCulled = false;
+        cloudFadeMeshes.push(fade);
+        scene.add(fade);
+      });
     } else if (cloudKit && organicCloud && cloudOrganicMaterials) {
       cloudMeshes.push(...buildCloudSurface(
         world, { x0, x1, y0, y1 }, cloudOrganicMaterials.top, cloudOrganicMaterials.side,
@@ -206,13 +223,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   spriteMap.colorSpace = THREE.SRGBColorSpace;
   spriteMap.magFilter = THREE.LinearFilter;
   spriteMap.repeat.set(1 / 7, 1 / 4);
-  const characterLayers = makeOcclusionAwareCharacter(spriteMap);
-  const goddess = characterLayers.sprite;
-  const goddessSilhouette = characterLayers.silhouette;
+  const goddess = makeDepthTestedCharacter(spriteMap);
   goddess.scale.set(2.3, 2.3, 1);
-  goddessSilhouette.scale.copy(goddess.scale);
   scene.add(goddess);
-  scene.add(goddessSilhouette);
   const shadow = new THREE.Mesh(
     new THREE.CircleGeometry(0.37, 24),
     new THREE.MeshBasicMaterial({ color: 0x514779, transparent: true, opacity: 0.16, depthWrite: false }),
@@ -393,15 +406,25 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       const previous = cloudTop512;
       const previousMaterial = cloudTop512Material;
       const previousSideMaterial = cloudTop512SideMaterial;
+      const previousAlternate = cloudTop512SideAlternate;
+      const previousFades = cloudFadeMaterials.splice(0);
       cloudTop512 = incoming;
-      cloudTop512Material = new THREE.MeshBasicMaterial({ map: incoming.texture, color: 0xffffff });
-      // The texture itself remains unchanged; only the vertical faces are softly shaded.
-      cloudTop512SideMaterial = new THREE.MeshBasicMaterial({ map: incoming.texture, color: 0xe2dfed });
+      cloudTop512Material = makeCutawayMaterial(incoming.texture, 0xffffff, cloudCutaway);
+      // Top remains original; two axes use stronger but still pastel face shading.
+      cloudTop512SideMaterial = makeCutawayMaterial(incoming.texture, 0xc7cae1, cloudCutaway);
+      cloudTop512SideAlternate = makeCutawayMaterial(incoming.texture, 0x9eafcf, cloudCutaway);
+      cloudFadeMaterials.push(
+        makeCutawayMaterial(incoming.texture, 0xffffff, cloudCutaway, true),
+        makeCutawayMaterial(incoming.texture, 0xc7cae1, cloudCutaway, true),
+        makeCutawayMaterial(incoming.texture, 0x9eafcf, cloudCutaway, true),
+      );
       useCloudTop512 = true;
       // Never dispose a texture while its old material is still in the scene.
       buildCloudTest();
       previousMaterial?.dispose();
       previousSideMaterial?.dispose();
+      previousAlternate?.dispose();
+      previousFades.forEach((material) => material.dispose());
       previous?.dispose();
       compareTop512.hidden = false;
       compareTop512.textContent = 'Nuvem 512: ativa';
@@ -560,7 +583,6 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const col = step < 7 ? step : 12 - step;
     spriteMap.offset.set(col / 7, 1 - (row + 1) / 4);
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
-    goddessSilhouette.position.copy(goddess.position);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
     const offset = iso ? [13, 20, 13] : [0, 23, 11];
     const target = laboratoryCamera
@@ -573,6 +595,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       camera.left = -zoom * aspect; camera.right = zoom * aspect;
       camera.top = zoom; camera.bottom = -zoom; camera.updateProjectionMatrix();
     }
+    updateCutawayProjection(
+      cloudCutaway, camera, goddess.position, canvas.clientWidth, canvas.clientHeight,
+      renderer.getPixelRatio(), zoom, Boolean(cloudTop512 && useCloudTop512),
+    );
     renderer.render(scene, camera);
   };
   raf = requestAnimationFrame(animate);
@@ -585,7 +611,6 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
     wireMaterial.dispose();
     goddess.material.dispose();
-    goddessSilhouette.material.dispose();
     shadow.geometry.dispose(); shadow.material.dispose();
     selector.geometry.dispose(); selector.material.dispose();
     clearCloudOverlays();
@@ -595,6 +620,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cloudOrganicMaterials?.side.dispose();
     cloudTop512Material?.dispose();
     cloudTop512SideMaterial?.dispose();
+    cloudTop512SideAlternate?.dispose();
+    cloudFadeMaterials.forEach((m) => m.dispose());
     cloudTop512?.dispose();
     cloudKit?.dispose();
     spriteMap.dispose(); renderer.dispose();
