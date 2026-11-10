@@ -499,3 +499,43 @@ Orvalis: os blocos são menores em relação aos personagens.
   de assets no repositório.
 - Verificar visualmente escala, alinhamento do telhado, aberturas,
   oclusão, colisões, fps e câmera nas duas perspectivas antes do merge.
+
+
+## Deusa da Vida — sprites isométricos 4×4 (10/11/2026)
+
+Três folhas produzidas pelo usuário, convertidas tecnicamente de JPG com
+fundo branco para PNG RGBA recortado, sem redesenhar a personagem.
+
+| Animação | Arquivo de 1280×1280 |
+|---|---|
+| Parada / idle | `deusa_iso_idle_4x4.png` |
+| Caminhada | `deusa_iso_walk_4x4.png` |
+| Sentar / levantar | `deusa_iso_sit_4x4.png` |
+
+Cada prancha tem quatro linhas de direção (frente, esquerda, direita e
+costas), quatro quadros por linha; cada quadro ocupa 320×320 px. O carregador
+funciona no Santuário **Three.js experimental** e o sprite original 7×4
+continua disponível como alternativa. O mundo 2D não foi alterado.
+
+**Carregamento automático:** descompactar
+`Orvalis_Deusa_Isometrica_Instalacao_No_Repositorio.zip` na raiz do
+repositório. Os PNGs ficam em
+`public/assets/characters/deusa-iso/`; no próximo `npm run dev`,
+o carregador detecta os arquivos e ativa a nova arte.
+
+**Carregamento sem instalar arquivos:** em
+`?mundo=santuario&render=three`, entrar em **Mais opções →
+Carregar pranchas da Deusa (3 PNGs)** e selecionar as três imagens.
+Os botões **Deusa isométrica: ligada/desligada** e **Sentar / levantar**
+permitem comparar animações. Apenas o teste experimental é afetado.
+
+Os PNGs preparados estão entregues como ZIP na conversa e **não foram
+commitados como binários no repositório**: permanecem disponíveis via
+download e carregamento local. Antes de integrar na versão principal,
+validar alinhamento dos pés, margens transparentes, sombra, escala e
+a direção dos quatro movimentos no navegador.
+
+A construção modular de 16×12 células também foi implementada
+experimentalmente na branch, com peças e andares editáveis; aguarda sua
+própria validação visual e funcional. Não substituir o sistema de
+salvamento 2D nesta etapa.
