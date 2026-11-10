@@ -129,3 +129,28 @@ A nova opção evita o sintetizador macro V1.2, que gerava retângulos grandes: 
 **Nota:** a imagem é carregada localmente a partir do computador do usuário e **não** está incorporada ao repositório como asset binário. O estado não é persistido; após atualizar a página, carregue novamente a textura 512. Somente a integração do renderizador e seu teste entram no PR. As demais 17 texturas e os salvamentos ficam intactos.
 
 **Próximo passo:** após aprovação visual, preparar a imagem como asset de distribuição do Santuário. Variações (grama/nuvem florida etc.) poderão alterar o topo preservando a mesma base no cubo.
+
+
+## Correção da oclusão da Deusa — bloco alto (10/11)
+
+**Sintoma:** com até três blocos empilhados, a face do último bloco podia
+cobrir parte do rosto e das asas da Deusa mesmo quando ela deveria estar visível
+na leitura do protótipo. A ordem anterior (`renderOrder=1` com teste de
+profundidade ligado) não garantia a visibilidade: o teste do *depth buffer*
+descartava pixels do sprite.
+
+**Correção experimental:** a Deusa é desenhada em uma camada visual superior,
+com `renderOrder=10`, `depthTest=false` e `depthWrite=false`. Isso **não altera**
+colisão, posição, alturas, raycasting ou a textura original do personagem.
+Foi incluído teste automatizado para as configurações do sprite.
+
+**Limitação:** o personagem ficará visível mesmo quando estiver realmente
+atrás de uma parede alta. Isso é aceitável **apenas no laboratório atual**
+para evitar desaparecimento involuntário. Antes de implementar interiores
+e andares, precisamos substituir por oclusão contextual (transparência de
+paredes/telhados e/ou máscara de personagem), com testes em ambos os ângulos
+de câmera.
+
+**Teste manual:** com a câmera superior, criar pilhas de 1, 2 e 3 blocos,
+aproximar a Deusa de cada uma, verificar rosto/asa/cabeça inteiros e repetir
+na câmera isométrica. Confirmar que a colisão com os blocos segue funcionando.
