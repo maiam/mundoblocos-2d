@@ -1,9 +1,12 @@
 import * as THREE from 'three';
+import { synthesizeCloudPattern } from './cloudPattern';
 
 /** Atlas técnico RGBA: quatro colunas por duas linhas, 128x128 por célula. */
 export interface CloudKit {
   top: any;
   side: any;
+  macroTop: any;
+  macroSide: any;
   frontEdge: any;
   sideEdge: any;
   cornerOut: any;
@@ -51,9 +54,29 @@ export async function loadCloudKit(file: File, maxAnisotropy: number): Promise<C
       tex.anisotropy = Math.min(maxAnisotropy, 4);
       textures.push(tex);
     }
+    // A single macro painting is sampled with world-space UVs across all cells.
+    // Unlike per-cell texture mapping, this does not restart the cloud motif per block.
+    function macro(canvas: HTMLCanvasElement, salt: number): any {
+      const ctx = canvas.getContext('2d')!;
+      const bytes = ctx.getImageData(0, 0, 128, 128).data;
+      const pixels = synthesizeCloudPattern(bytes, 768, salt);
+      const big = document.createElement('canvas');
+      big.width = big.height = 768;
+      big.getContext('2d')!.putImageData(new ImageData(pixels, 768, 768), 0, 0);
+      const result = new THREE.CanvasTexture(big);
+      result.colorSpace = THREE.SRGBColorSpace;
+      result.wrapS = result.wrapT = THREE.RepeatWrapping;
+      result.anisotropy = Math.min(maxAnisotropy, 4);
+      textures.push(result);
+      return result;
+    }
+    const macroTop = macro(canvases[0], 91);
+    const macroSide = macro(canvases[1], 429);
     return {
       top: textures[0],
       side: textures[1],
+      macroTop,
+      macroSide,
       frontEdge: textures[2],
       sideEdge: textures[3],
       cornerOut: textures[4],
