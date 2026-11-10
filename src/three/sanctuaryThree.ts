@@ -4,6 +4,9 @@ import { loadCloudTop512, type CloudTop512 } from './cloudTop512';
 import { makeDepthTestedCharacter } from './foregroundSprite';
 import { createCutawayState, makeCutawayMaterial, updateCutawayProjection } from './occlusionCutaway';
 import { constructionLabPlan, resetAndBuildLab, labWireframePositions } from './constructionLab';
+import { buildSanctuaryV2Scene } from './sanctuaryV2Scene';
+import { SANCTUARY_V2_NAMES, loadSanctuaryV2Materials, type SanctuaryV2Materials } from './sanctuaryV2Materials';
+import { SANCTUARY_V2_SECTORS } from './sanctuaryV2Plan';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -252,6 +255,21 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const labCells = constructionLabPlan(x0 + 4, y0 + 4);
   const labCenterX = x0 + 4 + 14;
   const labCenterY = y0 + 4 + 5.5;
+  let laboratoryV2: ReturnType<typeof buildSanctuaryV2Scene> | null = null;
+  let laboratoryV2Materials: SanctuaryV2Materials | null = null;
+  let laboratoryV2Active = false;
+  let laboratoryV2Sector: 'all' | 'A' | 'B' | 'C' | 'D' = 'all';
+  function rebuildLaboratoryV2(): void {
+    if (laboratoryV2) {
+      scene.remove(laboratoryV2.group);
+      laboratoryV2.dispose();
+    }
+    laboratoryV2 = buildSanctuaryV2Scene(
+      x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
+    );
+    laboratoryV2.group.visible = laboratoryV2Active;
+    scene.add(laboratoryV2.group);
+  }
   let laboratoryBuilt = false;
   let laboratoryCamera = false;
   let wireVisible = false;
@@ -319,6 +337,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const cameraButton = button('Câmera: superior', () => { iso = !iso; cameraButton.textContent = iso ? 'Câmera: isométrica' : 'Câmera: superior'; });
   top.append(cameraButton);
   const laboratoryButton = button('Criar laboratório 3D', () => {
+    laboratoryV2Active = false;
+    if (laboratoryV2) laboratoryV2.group.visible = false;
+    labV2Button.textContent = 'Laboratório V2';
     const result = resetAndBuildLab(world, labCells, Block.CLOUD_SOLID);
     laboratoryBuilt = true;
     laboratoryCamera = true;
@@ -334,6 +355,36 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       + (result.failed ? result.failed + ' posições não colocadas.' : 'Pilhas, parede e plataformas prontas.');
   });
   top.append(laboratoryButton);
+  const labV2Button = button('Laboratório V2', () => {
+    laboratoryV2Active = !laboratoryV2Active;
+    if (laboratoryV2Active && laboratoryBuilt) {
+      // Clear only the old V1 demo object stack; never remove ground or persist.
+      for (const cell of labCells) {
+        while (world.topBlock(cell.x, cell.y)) {
+          if (world.breakBlock(cell.x, cell.y) === null) break;
+        }
+      }
+      laboratoryBuilt = false;
+      rebuildAfterEdit();
+    }
+    if (!laboratoryV2) rebuildLaboratoryV2();
+    if (laboratoryV2) laboratoryV2.group.visible = laboratoryV2Active;
+    laboratoryCamera = laboratoryV2Active;
+    laboratoryV2Sector = 'all';
+    if (typeof v2SectorSelect !== 'undefined') v2SectorSelect.value = 'all';
+    zoom = laboratoryV2Active ? 39 : 10;
+    labV2Button.textContent = laboratoryV2Active ? 'Fechar laboratório V2' : 'Laboratório V2';
+    laboratoryButton.hidden = laboratoryV2Active;
+    goddessLabButton.hidden = laboratoryV2Active;
+    focusButton.hidden = !laboratoryV2Active && !laboratoryBuilt;
+    focusButton.textContent = laboratoryV2Active ? 'Seguir Deusa' : 'Ver laboratório';
+    cloudStatus.textContent = laboratoryV2Active
+      ? 'Laboratório V2: materiais 80–85, construções, montanhas e ilha. '
+        + 'Alturas 4/5 e ilha são APENAS prévias geométricas (sem física ou salvamento). '
+        + (laboratoryV2Materials ? 'Seis texturas PNG carregadas.' : 'Carregue os 6 PNGs em Mais opções.')
+      : 'Santuário Three.js experimental. Nenhum teste é salvo.';
+  });
+  top.append(labV2Button);
   const focusButton = button('Seguir Deusa', () => {
     laboratoryCamera = !laboratoryCamera;
     focusButton.textContent = laboratoryCamera ? 'Seguir Deusa' : 'Ver laboratório';
@@ -342,7 +393,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   focusButton.hidden = true;
   top.append(focusButton);
   const goddessLabButton = button('Testar oclusão (Deusa)', () => {
-    if (!laboratoryBuilt) return;
+    if (!laboratoryBuilt || laboratoryV2Active) return;
     // Behind the laboratory wall from the superior camera: not inside a block.
     player.respawn(x0 + 4 + 3.5, y0 + 4 + 4.45);
     laboratoryCamera = false;
@@ -410,6 +461,53 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   cloudStatus.style.cssText = 'max-width:min(92vw,780px);padding:6px 9px;border-radius:8px;background:rgba(31,25,76,.76);font-size:11px;line-height:1.45;';
   cloudStatus.textContent = 'Novo teste: carregue a textura Nuvem 512×512. Não altera o salvamento.';
   header.append(cloudStatus);
+  const v2FilesInput = document.createElement('input');
+  v2FilesInput.type = 'file';
+  v2FilesInput.multiple = true;
+  v2FilesInput.accept = '.png,image/png';
+  v2FilesInput.hidden = true;
+  const v2LoadButton = button('Carregar materiais 80–85', () => v2FilesInput.click());
+  const v2SectorSelect = document.createElement('select');
+  v2SectorSelect.setAttribute('aria-label', 'Setor do Laboratório V2');
+  v2SectorSelect.style.cssText = 'pointer-events:auto;padding:8px 10px;border-radius:11px;background:#29204c;color:#fff5e8;max-width:100%;font:700 12px Nunito,system-ui,sans-serif;';
+  for (const [value, label] of [
+    ['all', 'Visão geral V2'],
+    ['A', SANCTUARY_V2_SECTORS.A.label],
+    ['B', SANCTUARY_V2_SECTORS.B.label],
+    ['C', SANCTUARY_V2_SECTORS.C.label],
+    ['D', SANCTUARY_V2_SECTORS.D.label],
+  ]) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    v2SectorSelect.append(option);
+  }
+  v2SectorSelect.addEventListener('change', () => {
+    laboratoryV2Sector = v2SectorSelect.value as typeof laboratoryV2Sector;
+    if (!laboratoryV2Active) labV2Button.click();
+    laboratoryCamera = true;
+    zoom = laboratoryV2Sector === 'all' ? 39 : 17;
+  });
+  v2FilesInput.addEventListener('change', async () => {
+    try {
+      const incoming = await loadSanctuaryV2Materials(
+        [...(v2FilesInput.files ?? [])], renderer.capabilities.getMaxAnisotropy(),
+      );
+      const old = laboratoryV2Materials;
+      laboratoryV2Materials = incoming;
+      rebuildLaboratoryV2();
+      old?.dispose();
+      if (!laboratoryV2Active) labV2Button.click();
+      cloudStatus.textContent = 'Todos os materiais 80–85: PNG 512×512 carregados localmente; '
+        + 'seamless RGB = 0/0. Alternar setor para comparar as seis artes.';
+    } catch (err) {
+      cloudStatus.textContent = 'Erro nos seis materiais: ' + (err instanceof Error ? err.message : String(err));
+    } finally { v2FilesInput.value = ''; }
+  });
+  const recreateV2 = button('Recriar setores V2', () => {
+    rebuildLaboratoryV2();
+    cloudStatus.textContent = 'Laboratório V2 reconstruído: quatro setores, sem mudar o mundo nem os salvamentos.';
+  });
   top512File.addEventListener('change', async () => {
     const file = top512File.files?.[0];
     if (!file) return;
@@ -501,7 +599,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [wireButton, loadTop512Button, compareTop512, legacyKitButton,
+  for (const item of [v2LoadButton, v2SectorSelect, recreateV2, v2FilesInput, wireButton,
+    loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
   top.append(more);
@@ -566,6 +665,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 13) { down = null; return; }
     down = null;
+    if (laboratoryV2Active) {
+      cloudStatus.textContent = 'Prévia V2: construções, relevos 4/5 e ilha NÃO são editáveis. '
+        + 'Use o laboratório original para construir/remover até 3 níveis.';
+      return;
+    }
     const picked = pick(e.clientX, e.clientY);
     if (!picked) return;
     const { x, y } = picked;
@@ -611,9 +715,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
     const offset = iso ? [13, 20, 13] : [0, 23, 11];
-    const target = laboratoryCamera
-      ? new THREE.Vector3(labCenterX, 0, labCenterY)
-      : new THREE.Vector3(player.x, 0, player.y);
+    const v2Target = laboratoryV2Sector === 'all'
+      ? { x: 40, y: 16 }
+      : SANCTUARY_V2_SECTORS[laboratoryV2Sector];
+    const target = laboratoryV2Active && laboratoryCamera
+      ? new THREE.Vector3(x0 + v2Target.x, 0, y0 + v2Target.y)
+      : laboratoryCamera
+        ? new THREE.Vector3(labCenterX, 0, labCenterY)
+        : new THREE.Vector3(player.x, 0, player.y);
     camera.position.set(target.x + offset[0], target.y + offset[1], target.z + offset[2]);
     camera.lookAt(target);
     const aspect = Math.max(1, canvas.clientWidth) / Math.max(1, canvas.clientHeight);
@@ -635,6 +744,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('keyup', onKeyUp);
     hud.remove(); style.remove();
     if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
+    if (laboratoryV2) { scene.remove(laboratoryV2.group); laboratoryV2.dispose(); }
+    laboratoryV2Materials?.dispose();
     wireMaterial.dispose();
     goddess.material.dispose();
     shadow.geometry.dispose(); shadow.material.dispose();
