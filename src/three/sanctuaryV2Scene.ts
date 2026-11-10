@@ -32,8 +32,13 @@ export function buildSanctuaryV2Scene(
   worldY0: number,
   library: SanctuaryV2Materials | null,
   anisotropy: number,
+  excludedArea?: Readonly<{ x: number; y: number; width: number; depth: number }>,
 ): { group: any; cells: SanctuaryV2Cell[]; dispose(): void } {
-  const cells = sanctuaryV2Plan();
+  // Optional, temporary footprint reservation for the 16×12 building lab.
+  // Existing four-sector plan is never mutated; when disabled all cells return.
+  const cells = sanctuaryV2Plan().filter(cell => !excludedArea || cell.x < excludedArea.x
+    || cell.x >= excludedArea.x + excludedArea.width
+    || cell.y < excludedArea.y || cell.y >= excludedArea.y + excludedArea.depth);
   const index = new Map(cells.map((cell) => [cell.x + ',' + cell.y, cell]));
   const surfaces = new Map<string, MeshData>();
   const get = (id: number, face: string): MeshData => {
