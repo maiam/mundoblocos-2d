@@ -7,6 +7,7 @@ import { constructionLabPlan, resetAndBuildLab, labWireframePositions } from './
 import { buildSanctuaryV2Scene } from './sanctuaryV2Scene';
 import { SANCTUARY_V2_NAMES, sanctuaryTextureId, loadSanctuaryV2Materials, type SanctuaryV2Materials } from './sanctuaryV2Materials';
 import { SANCTUARY_V2_SECTORS } from './sanctuaryV2Plan';
+import { makeV2Heightfield, V2_VISIT_POINTS, type V2Heightfield } from './sanctuaryV2Collision';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -259,6 +260,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let laboratoryV2Materials: SanctuaryV2Materials | null = null;
   let laboratoryV2Active = false;
   let laboratoryV2Sector: 'all' | 'A' | 'B' | 'C' | 'D' = 'all';
+  let laboratoryV2Physics: V2Heightfield | null = null;
+  let cameraY = 0;
+  function v2SetPlayerAt(localX: number, localY: number): void {
+    const x = x0 + localX, y = y0 + localY;
+    const h = laboratoryV2Physics?.supportHeight(x, y);
+    if (h === null || h === undefined) return;
+    player.respawn(x, y);
+    player.z = h;
+    player.visualZ = h;
+    cameraY = h;
+  }
   function rebuildLaboratoryV2(): void {
     if (laboratoryV2) {
       scene.remove(laboratoryV2.group);
@@ -267,6 +279,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     laboratoryV2 = buildSanctuaryV2Scene(
       x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
     );
+    laboratoryV2Physics = makeV2Heightfield(laboratoryV2.cells, x0, y0);
     laboratoryV2.group.visible = laboratoryV2Active;
     scene.add(laboratoryV2.group);
   }
@@ -338,6 +351,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   top.append(cameraButton);
   const laboratoryButton = button('Criar laboratório 3D', () => {
     laboratoryV2Active = false;
+    player.z = player.visualZ = world.standHeight(player.cellX, player.cellY) ?? 0;
     if (laboratoryV2) laboratoryV2.group.visible = false;
     labV2Button.textContent = 'Laboratório V2';
     const result = resetAndBuildLab(world, labCells, Block.CLOUD_SOLID);
@@ -369,6 +383,12 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     if (!laboratoryV2) rebuildLaboratoryV2();
     if (laboratoryV2) laboratoryV2.group.visible = laboratoryV2Active;
+    // Do not leave the character inside an old demo object when switching scenes.
+    if (laboratoryV2Active) v2SetPlayerAt(...V2_VISIT_POINTS.C);
+    else {
+      player.respawn(spawnX + 0.5, spawnY + 0.5);
+      cameraY = 0;
+    }
     laboratoryCamera = laboratoryV2Active;
     laboratoryV2Sector = 'all';
     if (typeof v2SectorSelect !== 'undefined') v2SectorSelect.value = 'all';
@@ -380,8 +400,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     focusButton.textContent = laboratoryV2Active ? 'Seguir Deusa' : 'Ver laboratório';
     v2Info.hidden = !laboratoryV2Active;
     cloudStatus.textContent = laboratoryV2Active
-      ? 'Laboratório V2: materiais 80–85, construções, montanhas e ilha. '
-        + 'Alturas 4/5 e ilha são APENAS prévias geométricas (sem física ou salvamento). '
+      ? 'Laboratório V2: colisão 3D e subida de um degrau por vez, alturas até 5. '
+        + 'Ilha suspensa ainda sem acesso; o laboratório não altera salvamentos. '
         + (laboratoryV2Materials ? 'Seis texturas PNG carregadas.' : 'Carregue os 6 PNGs em Mais opções.')
       : 'Santuário Three.js experimental. Nenhum teste é salvo.';
   });
@@ -389,7 +409,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const focusButton = button('Seguir Deusa', () => {
     laboratoryCamera = !laboratoryCamera;
     focusButton.textContent = laboratoryCamera ? 'Seguir Deusa' : 'Ver laboratório';
-    zoom = laboratoryCamera ? 12 : 10;
+    zoom = laboratoryV2Active
+      ? (laboratoryCamera ? (laboratoryV2Sector === 'all' ? 39 : 17) : 9)
+      : (laboratoryCamera ? 12 : 10);
   });
   focusButton.hidden = true;
   top.append(focusButton);
@@ -495,6 +517,18 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     v2SectorSelect.value = requested;
     laboratoryCamera = true;
     zoom = requested === 'all' ? 39 : 17;
+    focusButton.textContent = 'Seguir Deusa';
+  });
+  const v2ExploreButton = button('Explorar setor (Deusa)', () => {
+    if (!laboratoryV2Active) labV2Button.click();
+    const sector = laboratoryV2Sector === 'all' ? 'C' : laboratoryV2Sector;
+    v2SetPlayerAt(...V2_VISIT_POINTS[sector]);
+    laboratoryCamera = false;
+    zoom = 9;
+    focusButton.textContent = 'Ver laboratório';
+    cloudStatus.textContent = 'Explorando setor ' + sector
+      + ': caminhe pelas plataformas e pelo relevo. Subida máxima: 1 bloco por passo. '
+      + 'Câmera acompanha a altura; ilha suspensa permanece sem acesso.';
   });
 
   /** Apply 80 as the real visual ground of the experimental sanctuary. */
@@ -626,7 +660,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [v2LoadButton, v2SectorSelect, recreateV2, v2FilesInput, wireButton,
+  for (const item of [v2LoadButton, v2SectorSelect, v2ExploreButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -749,11 +783,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     let sy = joystick.y + Number(keys.has('arrowdown') || keys.has('s')) - Number(keys.has('arrowup') || keys.has('w'));
     const len = Math.hypot(sx, sy);
     if (len > 1) { sx /= len; sy /= len; }
+    const movementWorld = laboratoryV2Active && laboratoryV2Physics
+      ? laboratoryV2Physics.walkerWorld : world;
     if (iso) {
       const ux = (sx + sy) * Math.SQRT1_2;
       const uy = (sy - sx) * Math.SQRT1_2;
-      player.move(dt, ux, uy, world);
-    } else player.move(dt, sx, sy, world);
+      player.move(dt, ux, uy, movementWorld);
+    } else player.move(dt, sx, sy, movementWorld);
     // billboard row order is down, left, right, up
     const row = player.facing === 'down' ? 0 : player.facing === 'left' ? 1 : player.facing === 'right' ? 2 : 3;
     const fps = player.moving ? 10 : 7;
@@ -766,11 +802,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const v2Target = laboratoryV2Sector === 'all'
       ? { x: 40, y: 16 }
       : SANCTUARY_V2_SECTORS[laboratoryV2Sector];
+    const focusHeight = laboratoryV2Active && !laboratoryCamera ? player.visualZ : 0;
+    cameraY += (focusHeight - cameraY) * (1 - Math.exp(-7 * dt));
     const target = laboratoryV2Active && laboratoryCamera
       ? new THREE.Vector3(x0 + v2Target.x, 0, y0 + v2Target.y)
       : laboratoryCamera
         ? new THREE.Vector3(labCenterX, 0, labCenterY)
-        : new THREE.Vector3(player.x, 0, player.y);
+        : new THREE.Vector3(player.x, laboratoryV2Active ? cameraY : 0, player.y);
     camera.position.set(target.x + offset[0], target.y + offset[1], target.z + offset[2]);
     camera.lookAt(target);
     const aspect = Math.max(1, canvas.clientWidth) / Math.max(1, canvas.clientHeight);
