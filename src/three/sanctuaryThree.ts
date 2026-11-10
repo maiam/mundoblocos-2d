@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadCloudKit, type CloudKit } from './cloudKit';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
 import { art } from '../render/art';
@@ -34,6 +35,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   sun.position.set(-9, 22, 13);
   scene.add(sun);
 
+  let cloudKit: CloudKit | null = null;
   const materials = new Map<number, { ground: unknown; block: unknown }>();
   function texture(source: HTMLCanvasElement): any {
     const t = new THREE.CanvasTexture(source);
@@ -45,9 +47,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     let m = materials.get(id);
     if (!m) {
       const f = celestialFaces(id);
-      const top = new THREE.MeshLambertMaterial({ map: texture(f.top), color: 0xffffff });
-      const front = new THREE.MeshLambertMaterial({ map: texture(f.front), color: 0xffffff });
-      const floor = new THREE.MeshLambertMaterial({ map: texture(f.ground), color: 0xffffff });
+      const replacement = id === Block.CLOUD_SOLID ? cloudKit : null;
+      const top = new THREE.MeshLambertMaterial({ map: replacement?.top ?? texture(f.top), color: 0xffffff });
+      const front = new THREE.MeshLambertMaterial({ map: replacement?.side ?? texture(f.front), color: 0xffffff });
+      const floor = new THREE.MeshLambertMaterial({ map: replacement?.top ?? texture(f.ground), color: 0xffffff });
       m = { ground: [front, front, floor, front, front, front], block: [front, front, top, front, front, front] };
       materials.set(id, m);
     }
@@ -98,6 +101,69 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
   }
   rebuild();
+
+  function disposeMaterial(id: number): void {
+    const entry = materials.get(id);
+    if (!entry) return;
+    const unique = new Set<any>([...(entry.ground as any[]), ...(entry.block as any[])]);
+    for (const material of unique) {
+      // The uploaded kit owns its textures; disposing them happens separately.
+      const map = material.map;
+      if (map && map !== cloudKit?.top && map !== cloudKit?.side) map.dispose();
+      material.dispose();
+    }
+    materials.delete(id);
+  }
+
+  // Cloud 5×5 test uses the official World placement, but never affects saved games.
+  const demonstration = new THREE.Group();
+  scene.add(demonstration);
+  const demoX = Math.min(x1 - 5, Math.max(x0 + 1, Math.floor(spawnX) + 4));
+  const demoY = Math.min(y1 - 5, Math.max(y0 + 1, Math.floor(spawnY) - 2));
+  let demoBuilt = false;
+  function clearCloudOverlays(): void {
+    for (const obj of [...demonstration.children]) {
+      demonstration.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    }
+  }
+  function decorateCloudTest(): void {
+    clearCloudOverlays();
+    if (!cloudKit || !demoBuilt) return;
+    const overlay = (tex: any, x: number, y: number, z: number, rotation = 0, w = 1.1, h = 1.05) => {
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, alphaTest: 0.025 }),
+      );
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rotation;
+      mesh.renderOrder = 2;
+      demonstration.add(mesh);
+    };
+    for (let n = 0; n < 5; n++) {
+      overlay(cloudKit.frontEdge, demoX + n + 0.5, 0.72, demoY + 5.035);
+      overlay(cloudKit.sideEdge, demoX + 5.035, 0.72, demoY + n + 0.5, Math.PI / 2);
+    }
+    overlay(cloudKit.cornerOut, demoX + 4.55, 0.68, demoY + 5.085, Math.PI / 4, 1.35, 1.2);
+    // Billboard decoration is intentionally separate from block geometry.
+    const cloud = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudKit.ornament, transparent: true, depthWrite: false }));
+    cloud.position.set(demoX + 2.5, 1.9, demoY + 2.5);
+    cloud.scale.set(1.25, 1.25, 1);
+    cloud.renderOrder = 2;
+    demonstration.add(cloud);
+  }
+  function buildCloudTest(): void {
+    if (!demoBuilt) {
+      for (let y = demoY; y < demoY + 5; y++) for (let x = demoX; x < demoX + 5; x++)
+        world.placeBlock(x, y, Block.CLOUD_SOLID);
+      // Vertical stack just outside the 5×5 platform demonstrates side tiling.
+      for (let i = 0; i < 3; i++) world.placeBlock(demoX + 6, demoY + 4, Block.CLOUD_SOLID);
+      demoBuilt = true;
+    }
+    rebuild();
+    decorateCloudTest();
+  }
 
   // Keep the original 7-by-4 hand-painted goddess animation (no 3D character model).
   const spriteMap = new THREE.TextureLoader().load(art().actors.goddess!);
@@ -159,6 +225,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   }
   const cameraButton = button('Câmera: superior', () => { iso = !iso; cameraButton.textContent = iso ? 'Câmera: isométrica' : 'Câmera: superior'; });
   top.append(cameraButton);
+  const kitFile = document.createElement('input');
+  kitFile.type = 'file';
+  kitFile.accept = '.png,.webp,image/png,image/webp';
+  kitFile.hidden = true;
+  top.append(kitFile);
+  top.append(button('Carregar nuvem V1.1', () => kitFile.click()));
+  const demoButton = button('Plataforma 5×5', () => buildCloudTest());
+  top.append(demoButton);
   const editButton = button('Modo: construir', () => { removing = !removing; editButton.textContent = removing ? 'Modo: remover' : 'Modo: construir'; editButton.classList.toggle('active', removing); });
   top.append(editButton);
   top.append(button('Voltar ao 2D', () => { const u = new URL(location.href); u.searchParams.delete('render'); location.href = u.toString(); }));
@@ -167,6 +241,28 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   tip.textContent = 'WASD / setas: mover · clique/toque: bloco · roda: zoom · C: câmera · B: construir/remover';
   tip.style.cssText = 'position:absolute;top:58px;left:12px;background:rgba(31,25,76,.55);padding:5px 9px;border-radius:8px;font-size:11px;max-width:90vw;';
   hud.append(tip);
+  const cloudStatus = document.createElement('div');
+  cloudStatus.style.cssText = 'position:absolute;top:84px;left:12px;max-width:min(88vw,640px);padding:6px 9px;border-radius:8px;background:rgba(31,25,76,.6);font-size:11px;';
+  cloudStatus.textContent = 'Kit V1.1: use o arquivo atlas-4x2-rgba.png do ZIP. Não altera o salvamento.';
+  hud.append(cloudStatus);
+  kitFile.addEventListener('change', async () => {
+    const file = kitFile.files?.[0];
+    if (!file) return;
+    try {
+      const incoming = await loadCloudKit(file, renderer.capabilities.getMaxAnisotropy());
+      const previous = cloudKit;
+      disposeMaterial(Block.CLOUD_SOLID);
+      cloudKit = incoming;
+      buildCloudTest();
+      previous?.dispose();
+      cloudStatus.textContent = 'Nuvem V1.1 aplicada · diferença máxima nas bordas: topo '
+        + incoming.seamMax.top + ', lateral ' + incoming.seamMax.side
+        + ' · construção de teste 5×5 (temporária).';
+    } catch (err) {
+      cloudStatus.textContent = 'Erro no atlas: ' + (err instanceof Error ? err.message : String(err));
+    }
+    kitFile.value = '';
+  });
   const tools = document.createElement('div');
   tools.className = 'three-tools';
   for (const id of CELESTIAL_BLOCKS) {
@@ -297,10 +393,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
     hud.remove(); style.remove();
+    clearCloudOverlays();
     floorGeometry.dispose(); blockGeometry.dispose();
-    for (const m of materials.values()) {
-      for (const mat of [...(m.ground as any[]), ...(m.block as any[])]) { mat.map?.dispose(); mat.dispose(); }
-    }
+    for (const id of [...materials.keys()]) disposeMaterial(id);
+    cloudKit?.dispose();
     spriteMap.dispose(); renderer.dispose();
   }, { once: true });
 }
