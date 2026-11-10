@@ -250,9 +250,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (loaded) {
       goddessIsoSheets?.dispose();
       goddessIsoSheets = loaded;
-      goddessIsoMode = true;
-      goddessIsoButton.textContent = 'Deusa isométrica: ligada';
-      cloudStatus.textContent = 'Três pranchas isométricas carregadas automaticamente: idle, caminhada e sentar.';
+      // Artwork not yet visually approved: keep the tested original sprite
+      // active by default. The experimental sheets require explicit opt-in.
+      goddessIsoMode = false;
+      goddessIsoButton.textContent = 'Deusa isométrica: desligada';
+      goddess.material.map = spriteMap;
+      goddess.material.needsUpdate = true;
+      cloudStatus.textContent = 'Pranchas isométricas experimentais encontradas, mas não aprovadas. Ative-as manualmente em Mais opções para comparar.';
     }
   });
   const shadow = new THREE.Mesh(
