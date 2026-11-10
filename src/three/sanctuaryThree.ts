@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { loadCloudKit, type CloudKit } from './cloudKit';
 import { loadCloudTop512, type CloudTop512 } from './cloudTop512';
+import { makeForegroundCharacterSprite } from './foregroundSprite';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -203,9 +204,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   spriteMap.colorSpace = THREE.SRGBColorSpace;
   spriteMap.magFilter = THREE.LinearFilter;
   spriteMap.repeat.set(1 / 7, 1 / 4);
-  const goddess = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteMap, transparent: true, alphaTest: 0.04, depthWrite: false }));
+  const goddess = makeForegroundCharacterSprite(spriteMap);
   goddess.scale.set(2.3, 2.3, 1);
-  goddess.renderOrder = 1;
   scene.add(goddess);
   const shadow = new THREE.Mesh(
     new THREE.CircleGeometry(0.37, 24),
