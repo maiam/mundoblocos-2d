@@ -154,3 +154,65 @@ de câmera.
 **Teste manual:** com a câmera superior, criar pilhas de 1, 2 e 3 blocos,
 aproximar a Deusa de cada uma, verificar rosto/asa/cabeça inteiros e repetir
 na câmera isométrica. Confirmar que a colisão com os blocos segue funcionando.
+
+
+## Laboratório de Construção 3D V1.0 (pilhas, plataformas e oclusão)
+
+**Objetivo:** testar geometria, alturas, leitura de faces e sprite 2D sem mudar
+a versão publicada, texturas originais ou formato de salvamento.
+
+### Cena e interface
+
+Abra `?mundo=santuario&render=three`. Na barra superior:
+
+1. **Carregar nuvem 512:** selecionar a Nuvem Sólida `512×512` seamless aprovada.
+   Seu PNG continua carregado apenas no navegador, sem envio ao servidor.
+2. **Criar laboratório 3D:** prepara uma cena fixa no lado esquerdo do Santuário,
+   dentro dos limites 80×32, com **136 células de teste e 172 cubos**:
+   - pilhas isoladas de 1, 2 e 3 blocos;
+   - parede de 2 blocos de altura, com passagem central;
+   - plataforma 5×5 com 2 blocos de altura;
+   - plataforma 10×10 com 1 bloco de altura.
+3. **Ver laboratório / Seguir Deusa:** alterna câmera entre a região de teste
+   e a personagem; ao abrir o laboratório, a câmera enquadra a construção.
+4. **Testar oclusão (Deusa):** leva a personagem a um ponto atrás da parede
+   e centraliza a câmera nela, sem alterar a lógica do mundo.
+5. **Arestas: ocultas / visíveis:** sobrepõe contornos **somente de depuração**
+   nos blocos elevados do laboratório. Não faz parte do visual definitivo.
+6. **Câmera: superior / isométrica:** comparar com o mesmo conjunto de blocos.
+7. **Recriar laboratório:** restaura os objetos e descarta alterações pontuais
+   feitas nessa área durante o teste, sem modificar o chão ou os arquivos de save.
+
+### Novos recursos
+
+- **Sombras sutis nas faces:** a pintura 512×512 permanece inalterada, mas as
+  laterais recebem um multiplicador de cor suave (`0xe2dfed`). O topo não
+  recebe esse escurecimento.
+- **Faces internas ocultas:** o sistema de superfície de nuvem existente elimina
+  faces entre células ocupadas. O laboratório permite verificar esse resultado
+  após empilhar e retirar blocos.
+- **Oclusão contextual da personagem:** o sprite normal mantém `depthTest`
+  ligado; uma segunda representação com `GreaterDepth`, mais transparente,
+  evidencia **somente as partes escondidas** da Deusa. Não há mais um sprite
+  100% à frente de todo o cenário. As duas representações usam a mesma animação
+  original, posição e escala.
+- **Arestas sob demanda:** um único objeto `LineSegments` é criado para
+  conferir a geometria das pilhas. Não afeta a seleção por raycast.
+
+### Critérios de aprovação visual
+
+- Diferenciar claramente alturas de 1, 2 e 3 blocos nas duas câmeras.
+- Manter a Nuvem Sólida sem mudanças na arte original.
+- Não criar quadrados escuros, costuras falsas ou faces internas aparentes.
+- Mostrar a Deusa inteira onde estiver desobstruída, e apenas uma silhueta
+  translúcida quando uma parede realmente a esconder.
+- Testar construção/remoção após gerar o laboratório.
+- Comparar a legibilidade das plataformas 5×5 e 10×10 no desktop e celular.
+
+### Cuidados
+
+A alteração é **somente experimental**, não habilita navegação real entre andares.
+A representação translúcida facilita localização atrás de paredes; para
+interiores, escadas e telhados o comportamento de câmera/oclusão ainda exigirá
+ajustes contextuais. O laboratório ocupa uma área temporária e não persiste
+em qualquer salvamento.
