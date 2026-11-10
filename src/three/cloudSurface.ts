@@ -14,9 +14,11 @@ export function buildCloudSurface(
   bounds: { x0: number; x1: number; y0: number; y1: number },
   topMaterial: any,
   sideMaterial: any,
+  patternCells = CLOUD_PATTERN_CELLS,
 ): any[] {
-  const top = new SurfaceBuilder(false);
-  const sides = new SurfaceBuilder(true);
+  if (!Number.isFinite(patternCells) || patternCells <= 0) throw new Error('Escala de textura inválida.');
+  const top = new SurfaceBuilder(false, patternCells);
+  const sides = new SurfaceBuilder(true, patternCells);
   const { x0, x1, y0, y1 } = bounds;
   const cloud = (x: number, y: number, level: number): boolean => {
     if (level === -1) return world.getGround(x, y) === Block.CLOUD_SOLID;
@@ -73,14 +75,14 @@ export function buildCloudSurface(
 class SurfaceBuilder {
   private positions: number[] = [];
   private uvs: number[] = [];
-  constructor(private readonly vertical: boolean) {}
+  constructor(private readonly vertical: boolean, private readonly patternCells: number) {}
 
   add(points: number[][], uv: number[]): void {
     // Triangle winding: outward-facing in world coordinates.
     for (const i of [0, 1, 2, 0, 2, 3]) {
       this.positions.push(...points[i]);
-      const scaleU = CLOUD_PATTERN_CELLS;
-      const scaleV = this.vertical ? 4 : CLOUD_PATTERN_CELLS;
+      const scaleU = this.patternCells;
+      const scaleV = this.vertical ? 4 : this.patternCells;
       this.uvs.push(uv[i * 2] / scaleU, uv[i * 2 + 1] / scaleV);
     }
   }
