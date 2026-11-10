@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { loadCloudKit, type CloudKit } from './cloudKit';
+import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
 import { art } from '../render/art';
@@ -36,6 +37,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   scene.add(sun);
 
   let cloudKit: CloudKit | null = null;
+  let organicCloud = true;
+  let cloudOrganicMaterials: { top: any; side: any } | null = null;
   const materials = new Map<number, { ground: unknown; block: unknown }>();
   function texture(source: HTMLCanvasElement): any {
     const t = new THREE.CanvasTexture(source);
@@ -60,17 +63,21 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
   const blocks: any[] = [];
   const floor: any[] = [];
+  const cloudMeshes: any[] = [];
   const dummy = new THREE.Object3D();
   type Cell = { x: number; y: number; level: number };
   function rebuild(): void {
-    for (const mesh of [...blocks, ...floor]) {
+    for (const mesh of [...blocks, ...floor, ...cloudMeshes]) {
       scene.remove(mesh);
-      mesh.dispose();
+      if (mesh.userData.cloudSurface) mesh.geometry.dispose();
+      else mesh.dispose?.();
     }
     blocks.length = 0;
     floor.length = 0;
+    cloudMeshes.length = 0;
     const groups = new Map<string, Cell[]>();
     const add = (id: number, ground: boolean, x: number, y: number, level: number) => {
+      if (id === Block.CLOUD_SOLID && cloudKit && organicCloud) return;
       const key = (ground ? 'g' : 'b') + id;
       const list = groups.get(key) ?? [];
       list.push({ x, y, level });
@@ -98,6 +105,12 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       mesh.instanceMatrix.needsUpdate = true;
       scene.add(mesh);
       (isGround ? floor : blocks).push(mesh);
+    }
+    if (cloudKit && organicCloud && cloudOrganicMaterials) {
+      cloudMeshes.push(...buildCloudSurface(
+        world, { x0, x1, y0, y1 }, cloudOrganicMaterials.top, cloudOrganicMaterials.side,
+      ));
+      for (const mesh of cloudMeshes) scene.add(mesh);
     }
   }
   rebuild();
@@ -131,7 +144,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   }
   function decorateCloudTest(): void {
     clearCloudOverlays();
-    if (!cloudKit || !demoBuilt) return;
+    if (!cloudKit || !demoBuilt || !organicCloud) return;
     const overlay = (tex: any, x: number, y: number, z: number, rotation = 0, w = 1.1, h = 1.05) => {
       const mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(w, h),
@@ -142,11 +155,20 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       mesh.renderOrder = 2;
       demonstration.add(mesh);
     };
-    for (let n = 0; n < 5; n++) {
-      overlay(cloudKit.frontEdge, demoX + n + 0.5, 0.72, demoY + 5.035);
-      overlay(cloudKit.sideEdge, demoX + 5.035, 0.72, demoY + n + 0.5, Math.PI / 2);
+    for (let y = demoY; y < demoY + 5; y++) for (let x = demoX; x < demoX + 5; x++) {
+      // Only silhouette edges. Internal cloud-to-cloud boundaries stay invisible.
+      if (exposedCloudEdge(world, x, y, 0, 1))
+        overlay(cloudKit.frontEdge, x + 0.5, 0.72, y + 1.035);
+      if (exposedCloudEdge(world, x, y, 1, 0))
+        overlay(cloudKit.sideEdge, x + 1.035, 0.72, y + 0.5, Math.PI / 2);
+      if (exposedCloudEdge(world, x, y, 0, -1))
+        overlay(cloudKit.frontEdge, x + 0.5, 0.72, y - 0.035, Math.PI);
+      if (exposedCloudEdge(world, x, y, -1, 0))
+        overlay(cloudKit.sideEdge, x - 0.035, 0.72, y + 0.5, -Math.PI / 2);
     }
-    overlay(cloudKit.cornerOut, demoX + 4.55, 0.68, demoY + 5.085, Math.PI / 4, 1.35, 1.2);
+    if (exposedCloudEdge(world, demoX + 4, demoY + 4, 1, 0)
+      && exposedCloudEdge(world, demoX + 4, demoY + 4, 0, 1))
+      overlay(cloudKit.cornerOut, demoX + 4.85, 0.68, demoY + 4.85, Math.PI / 4, 1.35, 1.2);
     // Billboard decoration is intentionally separate from block geometry.
     const cloud = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudKit.ornament, transparent: true, depthWrite: false }));
     cloud.position.set(demoX + 2.5, 1.9, demoY + 2.5);
@@ -232,6 +254,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   kitFile.hidden = true;
   top.append(kitFile);
   top.append(button('Carregar nuvem V1.1', () => kitFile.click()));
+  const cloudModeButton = button('Nuvem: orgânica V1.2', () => {
+    organicCloud = !organicCloud;
+    cloudModeButton.textContent = organicCloud ? 'Nuvem: orgânica V1.2' : 'Nuvem: repetição V1.1';
+    rebuild();
+    decorateCloudTest();
+  });
+  cloudModeButton.hidden = true;
+  top.append(cloudModeButton);
   const demoButton = button('Plataforma 5×5', () => buildCloudTest());
   top.append(demoButton);
   const editButton = button('Modo: construir', () => { removing = !removing; editButton.textContent = removing ? 'Modo: remover' : 'Modo: construir'; editButton.classList.toggle('active', removing); });
@@ -253,12 +283,21 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       const incoming = await loadCloudKit(file, renderer.capabilities.getMaxAnisotropy());
       const previous = cloudKit;
       disposeMaterial(Block.CLOUD_SOLID);
+      const oldOrganicMaterials = cloudOrganicMaterials;
       cloudKit = incoming;
+      cloudOrganicMaterials = {
+        top: new THREE.MeshBasicMaterial({ map: incoming.macroTop, color: 0xffffff }),
+        side: new THREE.MeshBasicMaterial({ map: incoming.macroSide, color: 0xffffff }),
+      };
       buildCloudTest();
+      oldOrganicMaterials?.top.dispose();
+      oldOrganicMaterials?.side.dispose();
       previous?.dispose();
-      cloudStatus.textContent = 'Nuvem V1.1 aplicada · diferença máxima nas bordas: topo '
+      cloudModeButton.hidden = false;
+      cloudStatus.textContent = 'Nuvem aplicada · modo orgânico V1.2 com UV contínuo (alternável). '
+        + 'Diferença dos pixels nas bordas da fonte: topo '
         + incoming.seamMax.top + ', lateral ' + incoming.seamMax.side
-        + ' · construção de teste 5×5 (temporária).';
+        + '. Compare os dois modos na mesma plataforma 5×5.';
     } catch (err) {
       cloudStatus.textContent = 'Erro no atlas: ' + (err instanceof Error ? err.message : String(err));
     }
@@ -314,9 +353,15 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const rect = canvas.getBoundingClientRect();
     mouse.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(mouse, camera);
-    for (const hit of raycaster.intersectObjects([...blocks, ...floor])) {
-      if (hit.instanceId === undefined) continue;
-      return hit.object.userData.cells[hit.instanceId] as Cell;
+    for (const hit of raycaster.intersectObjects([...blocks, ...floor, ...cloudMeshes])) {
+      if (hit.object.userData.cloudSurface) {
+        // The geometry is expressed in WORLD coordinates, not per-tile UVs.
+        const nx = hit.face?.normal.x ?? 0, nz = hit.face?.normal.z ?? 0;
+        const cx = Math.floor(hit.point.x - nx * 0.005);
+        const cy = Math.floor(hit.point.z - nz * 0.005);
+        if (world.inBounds(cx, cy)) return { x: cx, y: cy, level: Math.max(-1, world.stackHeight(cx, cy) - 1) };
+      }
+      if (hit.instanceId !== undefined) return hit.object.userData.cells[hit.instanceId] as Cell;
     }
     return null;
   };
@@ -337,7 +382,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const { x, y } = picked;
     // Experimental mode reuses official placement/removal rules; never touches the normal saved world.
     const changed = removing ? world.breakBlock(x, y) !== null : world.placeBlock(x, y, selectedBlock);
-    if (changed) rebuild();
+    if (changed) { rebuild(); decorateCloudTest(); }
   });
   canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom = Math.max(5, Math.min(20, zoom * (e.deltaY > 0 ? 1.12 : 0.89))); }, { passive: false });
 
@@ -397,6 +442,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     clearCloudOverlays();
     floorGeometry.dispose(); blockGeometry.dispose();
     for (const id of [...materials.keys()]) disposeMaterial(id);
+    cloudOrganicMaterials?.top.dispose();
+    cloudOrganicMaterials?.side.dispose();
     cloudKit?.dispose();
     spriteMap.dispose(); renderer.dispose();
   }, { once: true });
