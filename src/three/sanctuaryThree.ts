@@ -399,6 +399,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     focusButton.hidden = !laboratoryV2Active && !laboratoryBuilt;
     focusButton.textContent = laboratoryV2Active ? 'Seguir Deusa' : 'Ver laboratório';
     v2Info.hidden = !laboratoryV2Active;
+    v2HeightInfo.hidden = !laboratoryV2Active;
+    lastV2HeightDisplay = '';
     cloudStatus.textContent = laboratoryV2Active
       ? 'Laboratório V2: colisão 3D e subida de um degrau por vez, alturas até 5. '
         + 'Ilha suspensa ainda sem acesso; o laboratório não altera salvamentos. '
@@ -489,6 +491,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   v2Info.textContent = 'Aponte para uma construção V2 para inspecionar o material.';
   v2Info.hidden = true;
   header.append(v2Info);
+  const v2HeightInfo = document.createElement('div');
+  v2HeightInfo.style.cssText = 'background:rgba(31,25,76,.79);padding:5px 9px;border-radius:8px;font-size:11px;font-weight:800;';
+  v2HeightInfo.hidden = true;
+  header.append(v2HeightInfo);
+  let lastV2HeightDisplay = '';
   const v2FilesInput = document.createElement('input');
   v2FilesInput.type = 'file';
   v2FilesInput.multiple = true;
@@ -529,6 +536,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cloudStatus.textContent = 'Explorando setor ' + sector
       + ': caminhe pelas plataformas e pelo relevo. Subida máxima: 1 bloco por passo. '
       + 'Câmera acompanha a altura; ilha suspensa permanece sem acesso.';
+  });
+  const v2RampButton = button('Testar subida 1→4 (platô)', () => {
+    if (!laboratoryV2Active) labV2Button.click();
+    laboratoryV2Sector = 'C';
+    v2SectorSelect.value = 'C';
+    v2SetPlayerAt(28.5, 24.5);
+    laboratoryCamera = false;
+    focusButton.textContent = 'Ver laboratório';
+    zoom = 8;
+    cloudStatus.textContent = 'Subida experimental no setor C: degraus x=29→32, altura 1→4. '
+      + 'Aproxime-se do platô e avance ao longo dos degraus. A câmera segue a elevação.';
   });
 
   /** Apply 80 as the real visual ground of the experimental sanctuary. */
@@ -660,7 +678,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [v2LoadButton, v2SectorSelect, v2ExploreButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -798,6 +816,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     spriteMap.offset.set(col / 7, 1 - (row + 1) / 4);
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
+    if (laboratoryV2Active) {
+      const display = 'Deusa · nível ' + player.z + ' · altura visual ' + player.visualZ.toFixed(2)
+        + ' · subida máxima 1 bloco';
+      if (display !== lastV2HeightDisplay) {
+        v2HeightInfo.textContent = display;
+        lastV2HeightDisplay = display;
+      }
+    }
     const offset = iso ? [13, 20, 13] : [0, 23, 11];
     const v2Target = laboratoryV2Sector === 'all'
       ? { x: 40, y: 16 }
