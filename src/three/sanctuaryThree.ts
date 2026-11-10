@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { loadCloudKit, type CloudKit } from './cloudKit';
+import { loadCloudTop512, type CloudTop512 } from './cloudTop512';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -37,6 +38,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   scene.add(sun);
 
   let cloudKit: CloudKit | null = null;
+  let cloudTop512: CloudTop512 | null = null;
+  let cloudTop512Material: any | null = null;
+  // A new 512px art source is mapped once per 4×4 cells, without synthesis.
+  let useCloudTop512 = false;
   let organicCloud = true;
   let cloudOrganicMaterials: { top: any; side: any } | null = null;
   const materials = new Map<number, { ground: unknown; block: unknown }>();
@@ -77,7 +82,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cloudMeshes.length = 0;
     const groups = new Map<string, Cell[]>();
     const add = (id: number, ground: boolean, x: number, y: number, level: number) => {
-      if (id === Block.CLOUD_SOLID && cloudKit && organicCloud) return;
+      if (id === Block.CLOUD_SOLID && ((cloudKit && organicCloud && !useCloudTop512) || (cloudTop512 && useCloudTop512))) return;
       const key = (ground ? 'g' : 'b') + id;
       const list = groups.get(key) ?? [];
       list.push({ x, y, level });
@@ -106,12 +111,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       scene.add(mesh);
       (isGround ? floor : blocks).push(mesh);
     }
-    if (cloudKit && organicCloud && cloudOrganicMaterials) {
+    if (cloudTop512 && useCloudTop512 && cloudTop512Material) {
+      // One 512px illustration, continuous across 4×4 tiles and all visible faces.
+      cloudMeshes.push(...buildCloudSurface(
+        world, { x0, x1, y0, y1 }, cloudTop512Material, cloudTop512Material, 4,
+      ));
+    } else if (cloudKit && organicCloud && cloudOrganicMaterials) {
       cloudMeshes.push(...buildCloudSurface(
         world, { x0, x1, y0, y1 }, cloudOrganicMaterials.top, cloudOrganicMaterials.side,
       ));
-      for (const mesh of cloudMeshes) scene.add(mesh);
     }
+    for (const mesh of cloudMeshes) scene.add(mesh);
   }
   rebuild();
 
@@ -144,7 +154,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   }
   function decorateCloudTest(): void {
     clearCloudOverlays();
-    if (!cloudKit || !demoBuilt || !organicCloud) return;
+    if (useCloudTop512 || !cloudKit || !demoBuilt || !organicCloud) return;
     const overlay = (tex: any, x: number, y: number, z: number, rotation = 0, w = 1.1, h = 1.05) => {
       const mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(w, h),
@@ -254,8 +264,27 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   kitFile.hidden = true;
   top.append(kitFile);
   top.append(button('Carregar nuvem V1.1', () => kitFile.click()));
+  const top512File = document.createElement('input');
+  top512File.type = 'file';
+  top512File.accept = '.png,.webp,image/png,image/webp';
+  top512File.hidden = true;
+  top.append(top512File);
+  const loadTop512Button = button('Carregar nuvem 512', () => top512File.click());
+  top.append(loadTop512Button);
+  const compareTop512 = button('Nuvem 512: ativa', () => {
+    if (!cloudTop512) return;
+    useCloudTop512 = !useCloudTop512;
+    compareTop512.textContent = useCloudTop512 ? 'Nuvem 512: ativa' : 'Nuvem 512: desativada';
+    rebuild();
+    decorateCloudTest();
+  });
+  compareTop512.hidden = true;
+  top.append(compareTop512);
   const cloudModeButton = button('Nuvem: orgânica V1.2', () => {
+    // Comparing the older atlas explicitly disables the optional 512px skin.
+    useCloudTop512 = false;
     organicCloud = !organicCloud;
+    compareTop512.textContent = 'Nuvem 512: desativada';
     cloudModeButton.textContent = organicCloud ? 'Nuvem: orgânica V1.2' : 'Nuvem: repetição V1.1';
     rebuild();
     decorateCloudTest();
@@ -274,8 +303,33 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   hud.append(tip);
   const cloudStatus = document.createElement('div');
   cloudStatus.style.cssText = 'position:absolute;top:84px;left:12px;max-width:min(88vw,640px);padding:6px 9px;border-radius:8px;background:rgba(31,25,76,.6);font-size:11px;';
-  cloudStatus.textContent = 'Kit V1.1: use o arquivo atlas-4x2-rgba.png do ZIP. Não altera o salvamento.';
+  cloudStatus.textContent = 'Novo teste: carregue a textura Nuvem 512×512. Não altera o salvamento.';
   hud.append(cloudStatus);
+  top512File.addEventListener('change', async () => {
+    const file = top512File.files?.[0];
+    if (!file) return;
+    try {
+      const incoming = await loadCloudTop512(file, renderer.capabilities.getMaxAnisotropy());
+      const previous = cloudTop512;
+      const previousMaterial = cloudTop512Material;
+      cloudTop512 = incoming;
+      cloudTop512Material = new THREE.MeshBasicMaterial({ map: incoming.texture, color: 0xffffff });
+      useCloudTop512 = true;
+      // Never dispose a texture while its old material is still in the scene.
+      buildCloudTest();
+      previousMaterial?.dispose();
+      previous?.dispose();
+      compareTop512.hidden = false;
+      compareTop512.textContent = 'Nuvem 512: ativa';
+      cloudStatus.textContent = 'Nuvem 512 aplicada diretamente em topo e faces (4×4 células). '
+        + 'Seamless: esquerda/direita ' + incoming.seamMax.horizontal
+        + ', cima/baixo ' + incoming.seamMax.vertical
+        + '. Use Nuvem 512: ativa para comparar.';
+    } catch (err) {
+      cloudStatus.textContent = 'Erro na textura 512: ' + (err instanceof Error ? err.message : String(err));
+    }
+    top512File.value = '';
+  });
   kitFile.addEventListener('change', async () => {
     const file = kitFile.files?.[0];
     if (!file) return;
@@ -285,6 +339,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       disposeMaterial(Block.CLOUD_SOLID);
       const oldOrganicMaterials = cloudOrganicMaterials;
       cloudKit = incoming;
+      useCloudTop512 = false;
+      compareTop512.textContent = 'Nuvem 512: desativada';
       cloudOrganicMaterials = {
         top: new THREE.MeshBasicMaterial({ map: incoming.macroTop, color: 0xffffff }),
         side: new THREE.MeshBasicMaterial({ map: incoming.macroSide, color: 0xffffff }),
@@ -444,6 +500,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     for (const id of [...materials.keys()]) disposeMaterial(id);
     cloudOrganicMaterials?.top.dispose();
     cloudOrganicMaterials?.side.dispose();
+    cloudTop512Material?.dispose();
+    cloudTop512?.dispose();
     cloudKit?.dispose();
     spriteMap.dispose(); renderer.dispose();
   }, { once: true });
