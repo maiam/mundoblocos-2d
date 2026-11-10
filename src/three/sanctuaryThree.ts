@@ -5,7 +5,7 @@ import { makeDepthTestedCharacter } from './foregroundSprite';
 import { createCutawayState, makeCutawayMaterial, updateCutawayProjection } from './occlusionCutaway';
 import { constructionLabPlan, resetAndBuildLab, labWireframePositions } from './constructionLab';
 import { buildSanctuaryV2Scene } from './sanctuaryV2Scene';
-import { SANCTUARY_V2_NAMES, loadSanctuaryV2Materials, type SanctuaryV2Materials } from './sanctuaryV2Materials';
+import { SANCTUARY_V2_NAMES, sanctuaryTextureId, loadSanctuaryV2Materials, type SanctuaryV2Materials } from './sanctuaryV2Materials';
 import { SANCTUARY_V2_SECTORS } from './sanctuaryV2Plan';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
@@ -496,18 +496,61 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     laboratoryCamera = true;
     zoom = requested === 'all' ? 39 : 17;
   });
+
+  /** Apply 80 as the real visual ground of the experimental sanctuary. */
+  function applyCloudTop512(incoming: CloudTop512, buildDemo: boolean): void {
+        const previous = cloudTop512;
+        const previousMaterial = cloudTop512Material;
+        const previousSideMaterial = cloudTop512SideMaterial;
+        const previousAlternate = cloudTop512SideAlternate;
+        const previousFades = cloudFadeMaterials.splice(0);
+        cloudTop512 = incoming;
+        cloudTop512Material = makeCutawayMaterial(incoming.texture, 0xffffff, cloudCutaway);
+        // Top remains original; two axes use stronger but still pastel face shading.
+        cloudTop512SideMaterial = makeCutawayMaterial(incoming.texture, 0xc7cae1, cloudCutaway);
+        cloudTop512SideAlternate = makeCutawayMaterial(incoming.texture, 0x9eafcf, cloudCutaway);
+        cloudFadeMaterials.push(
+          makeCutawayMaterial(incoming.texture, 0xffffff, cloudCutaway, true),
+          makeCutawayMaterial(incoming.texture, 0xc7cae1, cloudCutaway, true),
+          makeCutawayMaterial(incoming.texture, 0x9eafcf, cloudCutaway, true),
+        );
+        useCloudTop512 = true;
+        // Never dispose a texture while its old material is still in the scene.
+        if (buildDemo) buildCloudTest();
+      else { rebuild(); decorateCloudTest(); }
+        previousMaterial?.dispose();
+        previousSideMaterial?.dispose();
+        previousAlternate?.dispose();
+        previousFades.forEach((material) => material.dispose());
+        previous?.dispose();
+        compareTop512.hidden = false;
+        compareTop512.textContent = 'Nuvem 512: ativa';
+  
+  }
   v2FilesInput.addEventListener('change', async () => {
     try {
+      const selectedFiles = [...(v2FilesInput.files ?? [])];
       const incoming = await loadSanctuaryV2Materials(
-        [...(v2FilesInput.files ?? [])], renderer.capabilities.getMaxAnisotropy(),
+        selectedFiles, renderer.capabilities.getMaxAnisotropy(),
       );
+      // The background cloud field uses the same official art as the V2 meshes.
+      // Keep a separate texture owner to avoid double disposal when reloading.
+      let cloudCopy: CloudTop512;
+      try {
+        const file80 = selectedFiles.find(f => sanctuaryTextureId(f.name) === 80);
+        cloudCopy = await loadCloudTop512(file80!, renderer.capabilities.getMaxAnisotropy());
+      } catch (error) {
+        incoming.dispose();
+        throw error;
+      }
       const old = laboratoryV2Materials;
       laboratoryV2Materials = incoming;
       rebuildLaboratoryV2();
       old?.dispose();
+      applyCloudTop512(cloudCopy, false);
       if (!laboratoryV2Active) labV2Button.click();
-      cloudStatus.textContent = 'Todos os materiais 80–85: PNG 512×512 carregados localmente; '
-        + 'seamless RGB = 0/0. Alternar setor para comparar as seis artes.';
+      cloudStatus.textContent = 'Os seis materiais 80–85 foram carregados. Nuvem 80 aplicada também ao chão do Santuário. '
+        + 'Todos seamless RGB = 0/0. Selecione um setor A–D para comparar as artes.';
     } catch (err) {
       cloudStatus.textContent = 'Erro nos seis materiais: ' + (err instanceof Error ? err.message : String(err));
     } finally { v2FilesInput.value = ''; }
@@ -521,31 +564,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (!file) return;
     try {
       const incoming = await loadCloudTop512(file, renderer.capabilities.getMaxAnisotropy());
-      const previous = cloudTop512;
-      const previousMaterial = cloudTop512Material;
-      const previousSideMaterial = cloudTop512SideMaterial;
-      const previousAlternate = cloudTop512SideAlternate;
-      const previousFades = cloudFadeMaterials.splice(0);
-      cloudTop512 = incoming;
-      cloudTop512Material = makeCutawayMaterial(incoming.texture, 0xffffff, cloudCutaway);
-      // Top remains original; two axes use stronger but still pastel face shading.
-      cloudTop512SideMaterial = makeCutawayMaterial(incoming.texture, 0xc7cae1, cloudCutaway);
-      cloudTop512SideAlternate = makeCutawayMaterial(incoming.texture, 0x9eafcf, cloudCutaway);
-      cloudFadeMaterials.push(
-        makeCutawayMaterial(incoming.texture, 0xffffff, cloudCutaway, true),
-        makeCutawayMaterial(incoming.texture, 0xc7cae1, cloudCutaway, true),
-        makeCutawayMaterial(incoming.texture, 0x9eafcf, cloudCutaway, true),
-      );
-      useCloudTop512 = true;
-      // Never dispose a texture while its old material is still in the scene.
-      buildCloudTest();
-      previousMaterial?.dispose();
-      previousSideMaterial?.dispose();
-      previousAlternate?.dispose();
-      previousFades.forEach((material) => material.dispose());
-      previous?.dispose();
-      compareTop512.hidden = false;
-      compareTop512.textContent = 'Nuvem 512: ativa';
+      applyCloudTop512(incoming, true);
       cloudStatus.textContent = 'Nuvem 512 aplicada diretamente em topo e faces (4×4 células). '
         + 'Seamless: esquerda/direita ' + incoming.seamMax.horizontal
         + ', cima/baixo ' + incoming.seamMax.vertical
