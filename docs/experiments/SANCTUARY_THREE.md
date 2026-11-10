@@ -337,3 +337,16 @@ principalmente os ornamentos e as pedras dos setores B, C e D em zoom alto.
 
 A igualdade matemática dos pixels de borda não implica alinhamento artístico
 perfeito. A substituição depende de validação visual no navegador.
+
+
+## Validação visual e funcional aprovada pelo usuário — 10/11/2026
+
+O usuário testou a V2.1 no navegador e confirmou:
+- **Texturas V2.1:** faixas/manchas de pintura arrastada eliminadas.
+- **Subida de níveis:** funcionando corretamente.
+- **Colisão dos pés:** funcionando corretamente.
+- **Câmera vertical:** acompanha corretamente a elevação.
+
+Esses quatro itens passam do estado "pendente de teste visual" para **aprovado no laboratório experimental**. O feedback não constitui aprovação de toda a experiência V2 nem autoriza mesclar o PR: permanecem pendentes navegabilidade da ilha suspensa, escadas/andares reais, integração dos PNGs 80–85 como assets versionados e salvamento de múltiplas alturas.
+
+**Próxima fase proposta:** consolidar o kit V2.1 no fluxo de assets, testar descidas/bordas/obstáculos e projetar uma casa modular de dois pavimentos com escadas, piso superior e oclusão adequada. Manter V2 e o mundo principal isolados até validação.
