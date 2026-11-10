@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { loadCloudKit, type CloudKit } from './cloudKit';
 import { loadCloudTop512, type CloudTop512 } from './cloudTop512';
 import { makeDepthTestedCharacter } from './foregroundSprite';
+import { goddessIsoAnimationFrame, goddessIsoDirectionByInput, loadGoddessIsoFromFiles, loadGoddessIsoFromPublicAssets, setGoddessIsoFrame, type GoddessIsoDirection, type GoddessIsoSpriteSet } from './goddessIsoSprites';
 import { createCutawayState, makeCutawayMaterial, updateCutawayProjection } from './occlusionCutaway';
 import { constructionLabPlan, resetAndBuildLab, labWireframePositions } from './constructionLab';
 import { buildSanctuaryV2Scene } from './sanctuaryV2Scene';
@@ -234,6 +235,24 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const goddess = makeDepthTestedCharacter(spriteMap);
   goddess.scale.set(2.3, 2.3, 1);
   scene.add(goddess);
+  let goddessIsoSheets: GoddessIsoSpriteSet | null = null;
+  let goddessIsoDirection: GoddessIsoDirection = 'down';
+  let goddessIsoMode = false;
+  let goddessSitPhase: 'standing' | 'sitting-down' | 'seated' | 'standing-up' = 'standing';
+  let goddessSitElapsed = 0;
+  let goddessWalkElapsed = 0;
+  let goddessIsoDisposed = false;
+  // Safe fallback: if the 3 PNGs are not yet copied into the app, keep the original sprite.
+  void loadGoddessIsoFromPublicAssets().then(loaded => {
+    if (goddessIsoDisposed) { loaded?.dispose(); return; }
+    if (loaded) {
+      goddessIsoSheets?.dispose();
+      goddessIsoSheets = loaded;
+      goddessIsoMode = true;
+      goddessIsoButton.textContent = 'Deusa isométrica: ligada';
+      cloudStatus.textContent = 'Três pranchas isométricas carregadas automaticamente: idle, caminhada e sentar.';
+    }
+  });
   const shadow = new THREE.Mesh(
     new THREE.CircleGeometry(0.37, 24),
     new THREE.MeshBasicMaterial({ color: 0x514779, transparent: true, opacity: 0.16, depthWrite: false }),
@@ -587,6 +606,59 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (!houseEnabled && player.z > 0) v2SetPlayerAt(...V2_VISIT_POINTS.D);
   });
 
+  // The 4×4 RGBA sheets are separate from terrain; never edit the existing sprite atlas.
+  const goddessIsoUpload = document.createElement('input');
+  goddessIsoUpload.type = 'file';
+  goddessIsoUpload.multiple = true;
+  goddessIsoUpload.accept = '.png,image/png';
+  goddessIsoUpload.hidden = true;
+  const goddessIsoUploadButton = button('Carregar pranchas da Deusa (3 PNGs)', () => goddessIsoUpload.click());
+  const goddessIsoButton = button('Deusa isométrica: desligada', () => {
+    if (!goddessIsoSheets) {
+      cloudStatus.textContent = 'Para usar a Deusa isométrica, carregue as 3 pranchas PNG em Mais opções.';
+      return;
+    }
+    goddessIsoMode = !goddessIsoMode;
+    goddessIsoButton.textContent = goddessIsoMode ? 'Deusa isométrica: ligada' : 'Deusa isométrica: desligada';
+    goddessSitPhase = 'standing';
+    goddessSitElapsed = 0;
+    goddess.material.map = goddessIsoMode ? goddessIsoSheets.idle : spriteMap;
+    goddess.material.needsUpdate = true;
+  });
+  const goddessSitButton = button('Sentar / levantar', () => {
+    if (!goddessIsoMode || !goddessIsoSheets) {
+      cloudStatus.textContent = 'Carregue e ative a Deusa isométrica para testar sentar e levantar.';
+      return;
+    }
+    if (goddessSitPhase === 'standing') {
+      goddessSitPhase = 'sitting-down';
+      goddessSitElapsed = 0;
+    } else if (goddessSitPhase === 'seated') {
+      goddessSitPhase = 'standing-up';
+      goddessSitElapsed = 0;
+    }
+  });
+  goddessIsoUpload.addEventListener('change', async () => {
+    try {
+      const loaded = await loadGoddessIsoFromFiles([...(goddessIsoUpload.files ?? [])]);
+      if (goddessIsoDisposed) { loaded.dispose(); return; }
+      const previous = goddessIsoSheets;
+      goddessIsoSheets = loaded;
+      goddessIsoMode = true;
+      goddessIsoButton.textContent = 'Deusa isométrica: ligada';
+      goddessSitPhase = 'standing';
+      goddess.material.map = loaded.idle;
+      goddess.material.needsUpdate = true;
+      previous?.dispose();
+      cloudStatus.textContent = 'Deusa isométrica: 3 folhas 4×4 carregadas com transparência. '
+        + 'Caminhe nas 4 direções ou use Sentar / levantar.';
+    } catch(err) {
+      cloudStatus.textContent = 'Erro nas pranchas da Deusa: ' + (err instanceof Error ? err.message : String(err));
+    } finally {
+      goddessIsoUpload.value = '';
+    }
+  });
+
   /** Apply 80 as the real visual ground of the experimental sanctuary. */
   function applyCloudTop512(incoming: CloudTop512, buildDemo: boolean): void {
         const previous = cloudTop512;
@@ -716,7 +788,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -839,6 +911,16 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     let sy = joystick.y + Number(keys.has('arrowdown') || keys.has('s')) - Number(keys.has('arrowup') || keys.has('w'));
     const len = Math.hypot(sx, sy);
     if (len > 1) { sx /= len; sy /= len; }
+    if (goddessIsoMode && goddessSitPhase !== 'standing') {
+      // Sitting is stationary. A second click triggers a gentle stand-up sequence.
+      sx = sy = 0;
+      goddessSitElapsed += dt;
+      if (goddessSitElapsed >= 0.5) {
+        if (goddessSitPhase === 'sitting-down') goddessSitPhase = 'seated';
+        else if (goddessSitPhase === 'standing-up') goddessSitPhase = 'standing';
+        goddessSitElapsed = 0;
+      }
+    }
     const movementWorld = laboratoryV2Active && laboratoryV2Physics
       ? houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
       : world;
@@ -847,12 +929,38 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       const uy = (sy - sx) * Math.SQRT1_2;
       player.move(dt, ux, uy, movementWorld);
     } else player.move(dt, sx, sy, movementWorld);
-    // billboard row order is down, left, right, up
-    const row = player.facing === 'down' ? 0 : player.facing === 'left' ? 1 : player.facing === 'right' ? 2 : 3;
-    const fps = player.moving ? 10 : 7;
-    const step = Math.floor(elapsed * fps) % 12;
-    const col = step < 7 ? step : 12 - step;
-    spriteMap.offset.set(col / 7, 1 - (row + 1) / 4);
+    if (goddessIsoMode && goddessIsoSheets) {
+      goddessIsoDirection = goddessIsoDirectionByInput(
+        sx, sy, goddessIsoDirection,
+      );
+      const sitting = goddessSitPhase !== 'standing';
+      const action = sitting ? 'sit' : player.moving ? 'walk' : 'idle';
+      if (player.moving && !sitting) goddessWalkElapsed += dt;
+      else if (!player.moving) goddessWalkElapsed = 0;
+      const sitFrame = goddessSitPhase === 'seated' ? 2
+        : goddessSitPhase === 'sitting-down' ? Math.min(3, Math.floor((goddessSitElapsed / 0.5) * 4))
+          : goddessSitPhase === 'standing-up' ? Math.max(0, 3 - Math.floor((goddessSitElapsed / 0.5) * 4)) : 0;
+      const active = goddessIsoSheets[action];
+      setGoddessIsoFrame(
+        active, goddessIsoDirection,
+        goddessIsoAnimationFrame(action, elapsed, goddessWalkElapsed, sitFrame),
+      );
+      if (goddess.material.map !== active) {
+        goddess.material.map = active;
+        goddess.material.needsUpdate = true;
+      }
+    } else {
+      // Original 7×4 sprite is the 2D fallback and remains unchanged.
+      const row = player.facing === 'down' ? 0 : player.facing === 'left' ? 1 : player.facing === 'right' ? 2 : 3;
+      const fps = player.moving ? 10 : 7;
+      const step = Math.floor(elapsed * fps) % 12;
+      const col = step < 7 ? step : 12 - step;
+      spriteMap.offset.set(col / 7, 1 - (row + 1) / 4);
+      if (goddess.material.map !== spriteMap) {
+        goddess.material.map = spriteMap;
+        goddess.material.needsUpdate = true;
+      }
+    }
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
     if (houseScene && houseEnabled && laboratoryV2Active) {
@@ -921,6 +1029,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cloudFadeMaterials.forEach((m) => m.dispose());
     cloudTop512?.dispose();
     cloudKit?.dispose();
+    goddessIsoDisposed = true;
+    goddessIsoSheets?.dispose();
     spriteMap.dispose(); renderer.dispose();
   }, { once: true });
 }
