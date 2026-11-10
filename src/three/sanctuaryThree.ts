@@ -129,8 +129,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       ));
       // Meshes use the same immutable UV geometry and 512px art for both passes.
       // The second pass paints only the obstruction in front of the goddess.
-      cloudMeshes.forEach((mesh, i) => {
-        const fade = new THREE.Mesh(mesh.geometry, cloudFadeMaterials[i]);
+      cloudMeshes.forEach((mesh) => {
+        const fadeMaterial = mesh.material === cloudTop512SideAlternate ? cloudFadeMaterials[2]
+          : mesh.material === cloudTop512SideMaterial ? cloudFadeMaterials[1] : cloudFadeMaterials[0];
+        const fade = new THREE.Mesh(mesh.geometry, fadeMaterial);
         fade.renderOrder = 1;
         fade.frustumCulled = false;
         cloudFadeMeshes.push(fade);
