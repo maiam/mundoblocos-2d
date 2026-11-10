@@ -15,10 +15,12 @@ export function buildCloudSurface(
   topMaterial: any,
   sideMaterial: any,
   patternCells = CLOUD_PATTERN_CELLS,
+  secondarySideMaterial?: any,
 ): any[] {
   if (!Number.isFinite(patternCells) || patternCells <= 0) throw new Error('Escala de textura inválida.');
   const top = new SurfaceBuilder(false, patternCells);
   const sides = new SurfaceBuilder(true, patternCells);
+  const crossSides = secondarySideMaterial ? new SurfaceBuilder(true, patternCells) : sides;
   const { x0, x1, y0, y1 } = bounds;
   const cloud = (x: number, y: number, level: number): boolean => {
     if (level === -1) return world.getGround(x, y) === Block.CLOUD_SOLID;
@@ -48,18 +50,21 @@ export function buildCloudSurface(
         [[x, h0, y + 1], [x + 1, h0, y + 1], [x + 1, h1, y + 1], [x, h1, y + 1]],
         [x, h0, x + 1, h0, x + 1, h1, x, h1],
       );
-      if (!occupied(x - 1, y, level)) sides.add(
+      if (!occupied(x - 1, y, level)) crossSides.add(
         [[x, h0, y], [x, h0, y + 1], [x, h1, y + 1], [x, h1, y]],
         [y, h0, y + 1, h0, y + 1, h1, y, h1],
       );
-      if (!occupied(x + 1, y, level)) sides.add(
+      if (!occupied(x + 1, y, level)) crossSides.add(
         [[x + 1, h0, y + 1], [x + 1, h0, y], [x + 1, h1, y], [x + 1, h1, y + 1]],
         [y + 1, h0, y, h0, y, h1, y + 1, h1],
       );
     }
   }
   const meshes: any[] = [];
-  for (const [builder, material] of [[top, topMaterial], [sides, sideMaterial]] as const) {
+  const surfaces = secondarySideMaterial
+    ? [[top, topMaterial], [sides, sideMaterial], [crossSides, secondarySideMaterial]]
+    : [[top, topMaterial], [sides, sideMaterial]];
+  for (const [builder, material] of surfaces) {
     const geometry = builder.geometry();
     if (!geometry) continue;
     const mesh = new THREE.Mesh(geometry, material);
