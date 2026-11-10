@@ -441,3 +441,61 @@ A casa técnica 5×5 permanece como prova de conceito; a dimensão proposta para
 uma residência modular real de Orvalis é **16×12 células**. A ampliação da
 planta e o suporte a pisos editáveis serão desenvolvidos separadamente, para
 não confundir o novo sprite isométrico com o sistema de construção do mundo.
+
+
+## Construção modular 16×12 — protótipo V1 (10/11/2026)
+
+Depois da validação da escala do personagem, o pequeno teste técnico 5×5
+passa a ser apenas uma opção de compatibilidade. O novo protótipo de
+**casa de dois pavimentos, 16×12 células**, aplica a escala própria de
+Orvalis: os blocos são menores em relação aos personagens.
+
+### Planta e arquitetura
+- Área local do Santuário: `x=54..69`, `y=18..29`, no setor D.
+- Duas entradas contíguas no sul, nas posições `(61,29)` e `(62,29)`.
+- Térreo `z=0`, segundo pavimento `z=4`, cômodos separados com passagens.
+- Escada **2 células de largura × 4 de comprimento**, começando em
+  `(65–66,26)` com nível 1, subindo ao norte para 2, 3 e 4 em
+  `(65–66,23)`. A laje superior **não cobre o vão da escada**.
+- Módulos de parede e laje independentes, guardados por chaves
+  `x:y:pavimento` e tipo, permitindo colocar/remover em qualquer cômodo.
+- Portas e janelas são aberturas representadas geometricamente; telhado
+  celestial inclinado em duas águas, removido visualmente quando a Deusa
+  entra. Uma parede voltada à câmera é recortada enquanto o personagem está
+  dentro do edifício, preservando as outras paredes.
+- Material visual: mármores 82/83, pedra 84 e detalhes 85, sem modelos 3D
+  fotorrealistas. O bloco celeste 80 continua sendo o terreno externo.
+
+### Controles do laboratório
+1. Atualizar `feat/santuario-three-experimental` e iniciar `npm run dev`.
+2. Abrir `http://localhost:5173/?mundo=santuario&render=three`.
+3. Ativar **Laboratório V2**, selecionar os seis PNGs V2.1 em
+   **Mais opções → Carregar materiais 80–85**.
+4. Clicar em **Mais opções → Casa modular 16×12 (2 pavimentos)**.
+5. Entrar pelas duas portas ao sul. Seguir para a direita da casa até
+   a escadaria em `(65–66,26)`, subir ao norte (y decrescente).
+6. Ao alcançar o nível 4, caminhar pelo segundo pavimento e descer
+   pelos mesmos degraus. A câmera segue a altura.
+7. Para editar: **Editar casa: ligado**. Escolher
+   **Peça: parede/piso**, **Editar pavimento: térreo/2º andar** e
+   clicar numa célula da casa. Um clique alterna presença/ausência
+   da peça escolhida. Não editar a célula da Deusa. A escadaria
+   é protegida para preservar a rota dos testes.
+8. **Recriar casa 16×12** restaura as peças iniciais. **Fechar casa
+   modular 16×12** desativa a prévia e restaura o setor D anterior.
+
+### Limites importantes
+- **Sem persistência:** todas as peças são mantidas apenas na instância
+  atual do navegador. NÃO alteram `World`, `Chunk`, `MAX_STACK`,
+  mecanismo de salvamento, nem o mundo aberto em produção.
+- O segundo pavimento tem leitura de altura separada do térreo
+  na mesma coordenada XY; a integração com chunks 3D editáveis
+  e inventário de materiais continua como evolução futura.
+- Em vez de tornar a casa 16×12 um edifício pronto do jogo, esta fase
+  valida o padrão de **construção por blocos individuais** a partir
+  do qual casas livres e pré-fabricadas poderão compartilhar peças.
+- Os materiais PNG V2.1 precisam ser selecionados manualmente no
+  navegador, a menos que posteriormente sejam adicionados à pasta
+  de assets no repositório.
+- Verificar visualmente escala, alinhamento do telhado, aberturas,
+  oclusão, colisões, fps e câmera nas duas perspectivas antes do merge.
