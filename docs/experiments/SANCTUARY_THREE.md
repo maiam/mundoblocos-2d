@@ -301,3 +301,39 @@ Todos os materiais são aplicados como texturas 512×512 com coordenadas UV de m
 - As cinco texturas originalmente em JPEG foram redimensionadas e tiveram as bordas preparadas tecnicamente (faixa simétrica de 48 px). O erro RGB nas bordas é 0, mas é obrigatório avaliar repetição **visual** e efeitos artísticos antes de aprovar os materiais como assets de produção.
 - A nuvem ID 80 usa a referência seamless já aprovada, sem alteração no desenho.
 - A integração definitiva dos PNGs no jogo público e os pavimentos reais ainda são etapas futuras.
+
+## Laboratório V2.1 — colisões verticais, câmera e correção das texturas (10/11/2026)
+
+### Colisões e elevação da câmera
+A V2 agora usa `sanctuaryV2Collision.ts`, um mapa de alturas temporário
+derivado das mesmas células desenhadas no Three.js. Reutiliza a movimentação
+`Player/Walker` para impedir avanço por paredes altas e permitir degraus de
+até 1 bloco. Ao selecionar **Mais opções → Explorar setor (Deusa)**, a câmera
+passa a acompanhar suavemente a altura visual do personagem.
+
+Para reproduzir uma subida controlada, selecionar **Testar subida 1→4 (platô)**:
+o setor C possui degraus garantidos nas posições locais (29..32, 24).
+O visor apresenta o nível lógico e a altura visual.
+
+As montanhas de 4–5 níveis agora são superfícies caminháveis apenas dentro
+desta prévia temporária. A ilha suspensa continua sem navegação no topo.
+A implementação não modifica o `World`, `MAX_STACK`, chunks ou save.
+
+### Problema detectado nas texturas PNG 81–85
+Capturas mostraram manchas parecidas com pintura arrastada nos pisos e
+laterais. A causa foi confirmada diretamente nos arquivos preparados:
+a correção anterior de seamless estendia pixels nas faixas de borda e
+gerava riscos verticais e horizontais. Não era uma falha da geometria UV.
+
+**Kit V2.1 corrigido:** `Orvalis_Santuario_V2_1_Materiais_80-85_sem_estiramento.zip`
+(distribuído na conversa, não commitado). Os cinco materiais 81–85 foram
+recriados das artes originais sem esticar pixels, com ajuste simétrico em
+faixa de 20 px e bordas opostas idênticas. A Nuvem Sólida 80 não foi alterada.
+O ZIP contém PNGs 512×512 e testes 4×4 para comparação.
+
+Para validar: em **Mais opções → Carregar materiais 80–85**, selecionar os
+seis PNGs **do kit V2.1**, substituindo os antigos no navegador. Verificar
+principalmente os ornamentos e as pedras dos setores B, C e D em zoom alto.
+
+A igualdade matemática dos pixels de borda não implica alinhamento artístico
+perfeito. A substituição depende de validação visual no navegador.
