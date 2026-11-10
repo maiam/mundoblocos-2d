@@ -216,3 +216,54 @@ A representação translúcida facilita localização atrás de paredes; para
 interiores, escadas e telhados o comportamento de câmera/oclusão ainda exigirá
 ajustes contextuais. O laboratório ocupa uma área temporária e não persiste
 em qualquer salvamento.
+
+
+## Laboratório V1.1 — contraste, obstáculo translúcido e HUD responsivo
+
+A câmera isométrica confirmou que a geometria de pilhas e plataformas estava correta,
+mas o volume parecia lavado e a antiga silhueta transparente da Deusa criava o
+efeito visual de "fantasma". O usuário aprovou seguir com estas correções.
+
+### Alterações
+
+- **Topo original:** utiliza os pixels da Nuvem Sólida 512×512 aprovada, sem
+  editar a imagem.
+- **Duas intensidades laterais:** multiplicadores de cor diferenciados
+  (N/S: `0xc7cae1`; L/O: `0x9eafcf`). A mesma imagem é usada nas três
+  orientações. A mudança afeta somente a apresentação no Three.js.
+- **Oclusão invertida:** a Deusa é desenhada com opacidade 100% e teste de
+  profundidade normal. Um shader no material da **nuvem 512** identifica,
+  no espaço da câmera, os fragmentos realmente à frente do centro da personagem.
+  Dentro de uma região suave proporcional ao tamanho do sprite, os obstáculos
+  são recortados da passagem opaca e redesenhados parcialmente transparentes,
+  antes da Deusa. Isso preserva suas cores sem colocar o sprite sempre à frente.
+- **Interface:** barra de ações primárias, botão **Mais opções** para controles
+  experimentais/legados, ajuda retrátil e texto de status abaixo da barra.
+  Não há mais posições absolutas independentes que sobrepõem os rótulos
+  quando os botões ocupam mais de uma linha.
+- **Diagnósticos:** botão **Arestas** permanece no menu de opções; seleção e
+  construção ainda usam a geometria real (não o shader visual).
+
+### Reproduzir o teste
+
+1. `git fetch origin` e `git pull --ff-only` na branch experimental.
+2. Executar `npm run dev` e abrir
+   `?mundo=santuario&render=three`.
+3. Em **Mais opções**, carregar a textura pela ação **Carregar nuvem 512**.
+4. Clicar **Criar laboratório 3D** e alternar superior/isométrica.
+5. Selecionar **Testar oclusão (Deusa)**, aproximar da parede de dois níveis.
+6. Conferir que somente a parede entre a câmera e a personagem fica esmaecida.
+7. Em **Mais opções**, ligar **Arestas** para verificar o alinhamento; desligar
+   para avaliar o acabamento final.
+
+### Limitações da V1.1
+
+- O recorte está ativado somente no material **Nuvem 512**. Os outros blocos
+  ainda não usam a mesma máscara.
+- A máscara usa a profundidade no centro do sprite como aproximação;
+  paredes muito altas, sprites maiores e sobreposições complexas podem exigir
+  um recorte mais preciso por pixel ou transparente por objeto.
+- A solução é visual e experimental; ainda não substitui a regra futura para
+  telhados ou ambientes internos de vários andares.
+- Mesmo com os testes de código aprovados, a suavidade do efeito depende de
+  validação manual no navegador, inclusive em dispositivos móveis.
