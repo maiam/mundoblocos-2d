@@ -1,19 +1,26 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { makeForegroundCharacterSprite } from './foregroundSprite';
+import { makeOcclusionAwareCharacter } from './foregroundSprite';
 
-describe('Deusa da Vida no Santuário 3D', () => {
-  it('mantém sprite na frente dos blocos altos sem alterar colisão ou geometria', () => {
+describe('oclusão contextual da Deusa no Santuário 3D', () => {
+  it('mostra a personagem normalmente e a silhueta apenas atrás de profundidade real', () => {
     const map = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
     map.needsUpdate = true;
-    const goddess = makeForegroundCharacterSprite(map);
-    expect(goddess.isSprite).toBe(true);
-    expect(goddess.material.map).toBe(map);
-    expect(goddess.material.transparent).toBe(true);
-    expect(goddess.material.depthWrite).toBe(false);
-    expect(goddess.material.depthTest).toBe(false);
-    expect(goddess.renderOrder).toBeGreaterThan(2);
-    goddess.material.dispose();
+    const { sprite, silhouette } = makeOcclusionAwareCharacter(map);
+    expect(sprite.isSprite).toBe(true);
+    expect(silhouette.isSprite).toBe(true);
+    expect(sprite.material.map).toBe(map);
+    expect(silhouette.material.map).toBe(map);
+    expect(sprite.material.depthTest).toBe(true);
+    expect(sprite.material.depthFunc).toBe(THREE.LessEqualDepth);
+    expect(sprite.material.depthWrite).toBe(false);
+    expect(silhouette.material.depthTest).toBe(true);
+    expect(silhouette.material.depthFunc).toBe(THREE.GreaterDepth);
+    expect(silhouette.material.depthWrite).toBe(false);
+    expect(silhouette.material.opacity).toBeLessThan(0.5);
+    expect(silhouette.renderOrder).toBeGreaterThan(sprite.renderOrder);
+    sprite.material.dispose();
+    silhouette.material.dispose();
     map.dispose();
   });
 });
