@@ -11,6 +11,8 @@ import { SANCTUARY_V2_SECTORS } from './sanctuaryV2Plan';
 import { makeV2Heightfield, V2_VISIT_POINTS, type V2Heightfield } from './sanctuaryV2Collision';
 import { HOUSE5, houseFloorName, makeHouseNavigation, type HouseNavigation } from './modularHouse5Plan';
 import { makeModularHouse5 } from './modularHouse5Scene';
+import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type HouseBuildPiece } from './modularHouse16Plan';
+import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -285,7 +287,28 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let houseNavigation: HouseNavigation | null = null;
   let houseScene: ReturnType<typeof makeModularHouse5> | null = null;
   let houseEnabled = false;
+  let house16Enabled = false;
+  let house16Edit = false;
+  let house16EditLevel: HouseLevel = 0;
+  let house16EditPiece: HouseBuildPiece = 'wall';
+  let house16Plan = new ModularHouse16();
+  let house16Visual: House16Visual | null = null;
+  let house16World: World | null = null;
   let cameraY = 0;
+  function rebuildHouse16View(): void {
+    if (house16Visual) {
+      scene.remove(house16Visual.group);
+      house16Visual.dispose();
+      house16Visual = null;
+    }
+    if (house16Enabled) {
+      house16Visual = renderModularHouse16(
+        house16Plan, x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
+      );
+      house16Visual.group.visible = laboratoryV2Active;
+      scene.add(house16Visual.group);
+    }
+  }
   function v2SetPlayerAt(localX: number, localY: number): void {
     const x = x0 + localX, y = y0 + localY;
     const h = laboratoryV2Physics?.supportHeight(x, y);
@@ -296,6 +319,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cameraY = h;
   }
   function rebuildLaboratoryV2(): void {
+    if (house16Visual) {
+      scene.remove(house16Visual.group);
+      house16Visual.dispose();
+      house16Visual = null;
+    }
     if (houseScene) { scene.remove(houseScene.group); houseScene.dispose(); houseScene = null; }
     if (laboratoryV2) {
       scene.remove(laboratoryV2.group);
@@ -303,16 +331,19 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     laboratoryV2 = buildSanctuaryV2Scene(
       x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
+      house16Enabled ? HOUSE16 : undefined,
     );
     laboratoryV2Physics = makeV2Heightfield(laboratoryV2.cells, x0, y0);
     houseNavigation = makeHouseNavigation(laboratoryV2Physics, x0, y0, () => player.z);
+    house16World = makeHouse16Navigation(house16Plan, laboratoryV2Physics, x0, y0, () => player.z);
     laboratoryV2.group.visible = laboratoryV2Active;
     scene.add(laboratoryV2.group);
     houseScene = makeModularHouse5(
       x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(),
     );
-    houseScene.group.visible = laboratoryV2Active && houseEnabled;
+    houseScene.group.visible = laboratoryV2Active && houseEnabled && !house16Enabled;
     scene.add(houseScene.group);
+    rebuildHouse16View();
   }
   let laboratoryBuilt = false;
   let laboratoryCamera = false;
@@ -383,7 +414,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const laboratoryButton = button('Criar laboratório 3D', () => {
     laboratoryV2Active = false;
     houseEnabled = false;
+    house16Enabled = false;
+    house16Edit = false;
     if (houseScene) houseScene.group.visible = false;
+    if (house16Visual) house16Visual.group.visible = false;
     player.z = player.visualZ = world.standHeight(player.cellX, player.cellY) ?? 0;
     if (laboratoryV2) laboratoryV2.group.visible = false;
     labV2Button.textContent = 'Laboratório V2';
@@ -416,7 +450,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     if (!laboratoryV2) rebuildLaboratoryV2();
     if (laboratoryV2) laboratoryV2.group.visible = laboratoryV2Active;
-    if (houseScene) houseScene.group.visible = laboratoryV2Active && houseEnabled;
+    if (houseScene) houseScene.group.visible = laboratoryV2Active && houseEnabled && !house16Enabled;
+    if (house16Visual) house16Visual.group.visible = laboratoryV2Active && house16Enabled;
     // Do not leave the character inside an old demo object when switching scenes.
     if (laboratoryV2Active) v2SetPlayerAt(...V2_VISIT_POINTS.C);
     else {
@@ -436,7 +471,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     v2HeightInfo.hidden = !laboratoryV2Active;
     lastV2HeightDisplay = '';
     cloudStatus.textContent = laboratoryV2Active
-      ? 'Laboratório V2: colisão 3D, alturas até 5 e casa modular 5×5 (opcional). '
+      ? 'Laboratório V2: colisões e câmeras 3D; casa modular 16×12 com peças editáveis (opcional). '
         + 'Ilha suspensa ainda sem acesso; o laboratório não altera salvamentos. '
         + (laboratoryV2Materials ? 'Seis texturas PNG carregadas.' : 'Carregue os 6 PNGs em Mais opções.')
       : 'Santuário Three.js experimental. Nenhum teste é salvo.';
@@ -585,6 +620,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
 
   const v2HouseButton = button('Testar casa 5×5 (2 andares)', () => {
     if (!laboratoryV2Active) labV2Button.click();
+    if (house16Enabled) {
+      house16Enabled = false;
+      house16Edit = false;
+      rebuildLaboratoryV2();
+    }
     houseEnabled = true;
     if (!houseScene) rebuildLaboratoryV2();
     if (houseScene) houseScene.group.visible = true;
@@ -600,10 +640,65 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   });
   const v2HouseHideButton = button('Mostrar/ocultar casa 5×5', () => {
     if (!laboratoryV2Active) return;
+    if (house16Enabled) {
+      house16Enabled = false;
+      house16Edit = false;
+      rebuildLaboratoryV2();
+    }
     houseEnabled = !houseEnabled;
     if (houseScene) houseScene.group.visible = houseEnabled;
     cloudStatus.textContent = houseEnabled ? 'Casa 5×5 visível, dois pavimentos.' : 'Casa 5×5 oculta (não altera o mundo).';
     if (!houseEnabled && player.z > 0) v2SetPlayerAt(...V2_VISIT_POINTS.D);
+  });
+
+  const house16Button = button('Casa modular 16×12 (2 pavimentos)', () => {
+    if (!laboratoryV2Active) labV2Button.click();
+    house16Enabled = !house16Enabled;
+    houseEnabled = false;
+    house16Edit = false;
+    if (houseScene) houseScene.group.visible = false;
+    rebuildLaboratoryV2();
+    house16Button.textContent = house16Enabled ? 'Fechar casa modular 16×12' : 'Casa modular 16×12 (2 pavimentos)';
+    house16EditButton.textContent = 'Editar casa: desligado';
+    if (house16Enabled) {
+      laboratoryV2Sector = 'D';
+      v2SectorSelect.value = 'D';
+      v2SetPlayerAt(...HOUSE16.visit);
+      laboratoryCamera = false;
+      focusButton.textContent = 'Ver laboratório';
+      zoom = 16;
+      cloudStatus.textContent = 'Casa 16×12: entrada dupla ao sul, escadaria 2×4 à direita. '
+        + 'Pisos e paredes feitos de peças independentes por nível. '
+        + 'Ative Editar casa para colocar/remover peças na grade.';
+    } else {
+      v2SetPlayerAt(...V2_VISIT_POINTS.D);
+      cloudStatus.textContent = 'Casa modular desativada; setores originais restaurados.';
+    }
+  });
+  const house16EditButton = button('Editar casa: desligado', () => {
+    if (!house16Enabled) house16Button.click();
+    house16Edit = !house16Edit;
+    house16EditButton.textContent = house16Edit ? 'Editar casa: ligado' : 'Editar casa: desligado';
+    cloudStatus.textContent = house16Edit
+      ? 'Modo edição da casa 16×12: escolha parede/piso e térreo/2º andar. '
+        + 'Clique em uma célula para colocar ou remover a peça (somente nesta sessão).'
+      : 'Edição desligada. A Deusa continua podendo entrar, subir e descer.';
+  });
+  const house16PieceButton = button('Peça: parede', () => {
+    house16EditPiece = house16EditPiece === 'wall' ? 'floor' : 'wall';
+    house16PieceButton.textContent = house16EditPiece === 'wall' ? 'Peça: parede' : 'Peça: piso';
+  });
+  const house16LevelButton = button('Editar pavimento: térreo', () => {
+    house16EditLevel = house16EditLevel === 0 ? 4 : 0;
+    house16LevelButton.textContent = house16EditLevel === 0 ? 'Editar pavimento: térreo' : 'Editar pavimento: 2º andar';
+  });
+  const house16ResetButton = button('Recriar casa 16×12', () => {
+    house16Plan = new ModularHouse16();
+    if (house16Enabled) {
+      rebuildLaboratoryV2();
+      v2SetPlayerAt(...HOUSE16.visit);
+      cloudStatus.textContent = 'Casa 16×12 reconstruída do projeto inicial: alterações locais descartadas.';
+    }
   });
 
   // The 4×4 RGBA sheets are separate from terrain; never edit the existing sprite atlas.
@@ -788,7 +883,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -842,7 +937,38 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     return null;
   };
+  function editHouse16At(screenX: number, screenY: number, apply: boolean): boolean {
+    if (!laboratoryV2Active || !house16Enabled || !house16Edit) return false;
+    const rect = canvas.getBoundingClientRect();
+    mouse.set(((screenX - rect.left) / rect.width) * 2 - 1,
+      -((screenY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(mouse, camera);
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -house16EditLevel);
+    const hit = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+    if (!hit) return true;
+    const x = Math.floor(hit.x - x0), y = Math.floor(hit.z - y0);
+    const inside = house16Plan.contains(x, y);
+    selector.visible = inside;
+    if (inside) selector.position.set(x0 + x + .5, house16EditLevel + .07, y0 + y + .5);
+    if (!apply || !inside) return true;
+    const playerInside = Math.floor(player.x - x0) === x && Math.floor(player.y - y0) === y
+      && Math.abs(player.z - house16EditLevel) < 2;
+    if (playerInside) {
+      cloudStatus.textContent = 'Não é possível editar a peça ocupada pela Deusa.';
+      return true;
+    }
+    const changed = house16Plan.toggle(x, y, house16EditLevel, house16EditPiece);
+    if (changed) {
+      rebuildHouse16View();
+      cloudStatus.textContent = 'Casa 16×12: peça alterada em (' + x + ', ' + y + '), '
+        + (house16EditLevel === 0 ? 'térreo' : '2º andar') + ', '
+        + (house16EditPiece === 'wall' ? 'parede' : 'piso')
+        + '. Edição temporária, sem salvamento.';
+    } else cloudStatus.textContent = 'Célula protegida: escada, abertura ou limite da casa.';
+    return true;
+  }
   canvas.addEventListener('pointermove', (e) => {
+    if (editHouse16At(e.clientX, e.clientY, false)) return;
     if (laboratoryV2Active && laboratoryV2) {
       const rect = canvas.getBoundingClientRect();
       mouse.set(((e.clientX - rect.left) / rect.width) * 2 - 1,
@@ -875,6 +1001,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 13) { down = null; return; }
     down = null;
+    if (editHouse16At(e.clientX, e.clientY, true)) return;
     if (laboratoryV2Active) {
       cloudStatus.textContent = 'Prévia V2: construções, relevos 4/5 e ilha NÃO são editáveis. '
         + 'Use o laboratório original para construir/remover até 3 níveis.';
@@ -922,7 +1049,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       }
     }
     const movementWorld = laboratoryV2Active && laboratoryV2Physics
-      ? houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
+      ? house16Enabled && house16World ? house16World
+        : houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
       : world;
     if (iso) {
       const ux = (sx + sy) * Math.SQRT1_2;
@@ -966,13 +1094,19 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (houseScene && houseEnabled && laboratoryV2Active) {
       houseScene.updateView(player.x, player.y, player.z, camera.position);
     }
+    if (house16Visual && house16Enabled && laboratoryV2Active) {
+      house16Visual.updateVisibility(player.x, player.y, player.z, camera.position);
+    }
     if (laboratoryV2Active) {
       const insideHouse = houseEnabled && Math.floor(player.x - x0) >= HOUSE5.x
         && Math.floor(player.x - x0) <= HOUSE5.x + 4
         && Math.floor(player.y - y0) >= HOUSE5.y
         && Math.floor(player.y - y0) <= HOUSE5.y + 4;
+      const localX = Math.floor(player.x - x0), localY = Math.floor(player.y - y0);
+      const building16 = house16Enabled && house16Plan.contains(localX, localY);
       const display = 'Deusa · nível ' + player.z + ' · altura visual ' + player.visualZ.toFixed(2)
-        + (insideHouse ? ' · Casa: ' + houseFloorName(player.z, player.x - x0, player.y - y0)
+        + (building16 ? ' · Casa 16×12: ' + house16Plan.floorName(localX, localY, player.z)
+          : insideHouse ? ' · Casa: ' + houseFloorName(player.z, player.x - x0, player.y - y0)
           : ' · subida máxima 1 bloco');
       if (display !== lastV2HeightDisplay) {
         v2HeightInfo.textContent = display;
@@ -1011,6 +1145,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('keyup', onKeyUp);
     hud.remove(); style.remove();
     if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
+    if (house16Visual) { scene.remove(house16Visual.group); house16Visual.dispose(); }
     if (houseScene) { scene.remove(houseScene.group); houseScene.dispose(); }
     if (laboratoryV2) { scene.remove(laboratoryV2.group); laboratoryV2.dispose(); }
     laboratoryV2Materials?.dispose();
