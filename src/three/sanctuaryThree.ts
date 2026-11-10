@@ -290,7 +290,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     '[data-sanctuary-three] button{pointer-events:auto;cursor:pointer;background:rgba(31,25,76,.86);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;white-space:nowrap;}',
     '[data-sanctuary-three] .three-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none;max-width:100%;}',
     '[data-sanctuary-three] .three-more[open] .three-menu{display:grid;}',
-    '[data-sanctuary-three] .three-menu{position:absolute;right:0;top:calc(100% + 6px);display:grid;grid-template-columns:1fr;gap:6px;padding:10px;width:min(310px,83vw);max-height:48vh;overflow-y:auto;background:rgba(31,25,76,.97);border:1px solid rgba(255,230,181,.5);border-radius:12px;box-shadow:0 10px 28px rgba(15,10,48,.3);z-index:20;pointer-events:auto;}',
+    '[data-sanctuary-three] .three-menu{position:absolute;right:0;top:calc(100% + 6px);display:none;grid-template-columns:1fr;gap:6px;padding:10px;width:min(310px,83vw);max-height:48vh;overflow-y:auto;background:rgba(31,25,76,.97);border:1px solid rgba(255,230,181,.5);border-radius:12px;box-shadow:0 10px 28px rgba(15,10,48,.3);z-index:20;pointer-events:auto;}',
     '[data-sanctuary-three] .three-menu button{width:100%;text-align:left;}',
     '[data-sanctuary-three] button.active{border-color:#fff8b8;background:rgba(120,83,167,.9);box-shadow:0 0 10px rgba(255,239,180,.35);}',
     '[data-sanctuary-three] .three-tools{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:min(88vw,650px);display:flex;gap:5px;overflow-x:auto;padding:5px;pointer-events:auto;background:rgba(24,19,59,.65);border-radius:15px;}',
