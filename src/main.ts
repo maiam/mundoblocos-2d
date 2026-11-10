@@ -183,6 +183,28 @@ void loadArtPack(profile.id)
   .then(() => loadBlockArt())
   .then(() => loadMaterialsV2(blocksV2))
   .then(() => {
+    // Apenas o Santuário, ativado explicitamente: não cria o Game/Canvas2D.
+    // Falha de WebGL/Three.js permite voltar ao renderizador original retirando &render=three.
+    if (profile.id === 'santuario' && query.get('render') === 'three') {
+      const seed = param ? seedFromString(param) : store.lastSeed() ?? randomSeed();
+      void import('./three/sanctuaryThree')
+        .then((m) => m.startSanctuaryThree(canvas, seed))
+        .catch((err) => {
+          console.error('Santuário Three.js indisponível', err);
+          const notice = document.createElement('div');
+          notice.style.cssText = 'position:fixed;inset:20%;display:grid;place-content:center;gap:12px;text-align:center;background:#28204b;color:white;border-radius:18px;padding:24px;font:700 16px Nunito,sans-serif;z-index:100';
+          notice.textContent = 'Não foi possível iniciar o modo experimental Three.js.';
+          const link = document.createElement('a');
+          const fallback = new URL(location.href);
+          fallback.searchParams.delete('render');
+          link.href = fallback.toString();
+          link.style.color = '#ffdc91';
+          link.textContent = 'Voltar ao Santuário 2D';
+          notice.append(link);
+          document.body.append(notice);
+        });
+      return;
+    }
     // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
     // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.
     if (import.meta.env.DEV && query.has('escala')) {
