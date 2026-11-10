@@ -539,3 +539,23 @@ A construção modular de 16×12 células também foi implementada
 experimentalmente na branch, com peças e andares editáveis; aguarda sua
 própria validação visual e funcional. Não substituir o sistema de
 salvamento 2D nesta etapa.
+
+
+## Revisão artística rejeitada pelo usuário — 10/11/2026
+
+**Status explícito: NÃO APROVADOS para produção**
+- Edifícios experimentais (casas 5×5 e 16×12): resultado visual sem qualidade suficiente para o padrão de fantasia cartoon de Orvalis.
+- Três pranchas isométricas da Deusa: arte/animação ainda inadequadas para uso oficial; reavaliar ângulo 3/4 diagonal, orientação de quatro direções, posição dos pés, silhueta, escala e continuidade das poses.
+
+**Continuam aprovados, separadamente, apenas os fundamentos que o usuário validou:**
+- Materiais V2.1 com faixas arrastadas corrigidas.
+- Subida de níveis, colisão dos pés e acompanhamento vertical da câmera.
+
+**Ação preventiva aplicada:** mesmo com arquivos PNG presentes em `public/assets/characters/deusa-iso/`, não ativar automaticamente o sprite isométrico reprovado. O sprite anterior continua ativo por padrão. A opção isométrica permanece restrita a comparação manual no laboratório.
+
+**Próxima direção:**
+1. Reprojetar a casa em uma maquete arquitetônica cartoon isométrica de 16×12, com espessuras proporcionais, aberturas, telhado artístico, e escada realmente integrada, mantendo peças/colisões e possibilidade futura de construção editável.
+2. Criar guia de arte consistente da Deusa (mesma identidade, quatro orientações diagonais de câmera, quadro-chave validado antes de produzir todas as folhas). Não confundir recorte RGBA com correção de perspectiva.
+3. Não misturar aprovação de mecânicas/colisões com aprovação visual das artes e não promover estas versões para o jogo definitivo sem novo teste.
+
+O PR #86 permanece draft, isolado da `main`.
