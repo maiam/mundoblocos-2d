@@ -48,3 +48,25 @@ O modo experimental só funciona no perfil `santuario`. O pacote Three.js é imp
 ## Próxima fase (após validação)
 
 Estender o armazenamento vertical e o sistema de colisão para pavimentos reais, acrescentar escadas, transparência de telhado e renderização 3D de terreno com camadas, mantendo o visual ilustrado.
+
+
+## Novo: teste artístico da Nuvem Sólida V1.1
+
+Fonte: segunda prancha aprovada pelo usuário. Um kit de preparação técnica foi gerado **fora do GitHub** a partir do JPEG (não é possível preservar o alfa original de JPEG). O kit inclui:
+- `atlas-4x2-rgba.png` (512×256, células de 128×128, 8 elementos);
+- arquivos PNG de topo/lateral e overlays isolados;
+- folhas de repetição 5×5 e prévia da reconstrução de alfa;
+- fonte do processamento e observações de QA.
+
+Fluxo no Santuário experimental:
+
+1. Abrir `?mundo=santuario&render=three` na branch experimental.
+2. Extrair o arquivo ZIP **Orvalis_Nuvem_Solida_V1.1_Kit_Tecnico.zip**.
+3. Clicar em **Carregar nuvem V1.1** e escolher `atlas-4x2-rgba.png`.
+4. O protótipo substitui o material de Nuvem Sólida em tempo de execução (topo e laterais), monta uma plataforma elevada 5×5 e mostra um detalhe de empilhamento.
+5. O botão **Plataforma 5×5** refaz a demonstração sem persistir.
+6. Alternar câmera superior/isométrica, zoom e verificar emendas, bordas, cantos e estética.
+
+**Não houve substituição do pacote de artes definitivo no repositório.** O teste recebe o atlas via seletor local do navegador; nenhum upload é enviado a servidor. Reiniciar a página volta às artes anteriores. Esse procedimento permite comparar com segurança sem inflar o pacote de arte que carrega no início.
+
+**Limites conhecidos:** o tratamento de Fourier zerou a diferença entre pixels das extremidades das texturas 1 e 2, mas não elimina motivos visuais repetidos a cada célula. A transparência dos elementos 3–8 é reconstruída a partir de fundo branco JPEG (alfa aproximado). O encaixe/ângulo das peças é preliminar. Publicação final requer imagens PNG transparentes de origem ou refinamento manual do alfa e transições.
