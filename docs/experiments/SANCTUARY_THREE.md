@@ -267,3 +267,37 @@ efeito visual de "fantasma". O usuário aprovou seguir com estas correções.
   telhados ou ambientes internos de vários andares.
 - Mesmo com os testes de código aprovados, a suavidade do efeito depende de
   validação manual no navegador, inclusive em dispositivos móveis.
+
+
+## Laboratório V2 — seis materiais, arquitetura, montanhas e ilhas (10/11/2026)
+
+Este recurso está disponível apenas em `?mundo=santuario&render=three`, na branch experimental do PR #86.
+
+### Como testar
+
+1. Atualizar a branch local e executar `npm run dev`.
+2. Baixar e descompactar o pacote `Orvalis_Santuario_V2_Materiais_80-85.zip` fornecido na conversa.
+3. Clicar **Laboratório V2** na barra superior.
+4. Abrir **Mais opções → Carregar materiais 80–85** e selecionar **os seis PNGs ao mesmo tempo** (80, 81, 82, 83, 84 e 85).
+5. Em **Mais opções**, escolher **Visão geral** ou **Setor A/B/C/D**.
+6. Alternar câmera superior/isométrica, zoom e orientação da Deusa para analisar os materiais.
+7. **Recriar setores V2** reconstrói a prévia sem alterar o World.
+
+### Setores
+
+- **A (x=2–37, y=2–13):** galeria dos seis materiais, com cubo, coluna de 3, coluna de 5 e amostra 2×2.
+- **B (x=42–77, y=2–13):** praça 9×9, altar escalonado, corredor e muralhas com aberturas.
+- **C (x=2–37, y=18–29):** colina de até 3, montanha irregular até 5 e platô com diferentes coberturas.
+- **D (x=42–77, y=18–29):** jardim, caminho, mini altar e ilha flutuante de demonstração.
+
+Todos os materiais são aplicados como texturas 512×512 com coordenadas UV de mundo, repetindo a cada 4 células, e faces verticalmente sombreadas por orientação. **Nenhum PNG foi embutido no repositório**: o navegador carrega os arquivos por seleção local, sem fazer upload a um servidor.
+
+### Segurança e limites
+
+- A cena V2 é uma prévia geométrica em Three.js separada de `World`, sem escrita de chunks/save ou alteração de MAX_STACK.
+- As colunas 4–5 e a ilha suspensa **não têm colisão, navegação, seleção construtiva nem persistência**; são objetos de avaliação visual.
+- O laboratório V1 continua acessível pelo botão **Criar laboratório 3D**; ao trocar para V2 suas construções temporárias são apagadas somente dos níveis de objeto, mantendo o chão.
+- Construir/remover permanece desabilitado na prévia V2. Para construir de verdade até 3 blocos, retornar ao laboratório V1.
+- As cinco texturas originalmente em JPEG foram redimensionadas e tiveram as bordas preparadas tecnicamente (faixa simétrica de 48 px). O erro RGB nas bordas é 0, mas é obrigatório avaliar repetição **visual** e efeitos artísticos antes de aprovar os materiais como assets de produção.
+- A nuvem ID 80 usa a referência seamless já aprovada, sem alteração no desenho.
+- A integração definitiva dos PNGs no jogo público e os pavimentos reais ainda são etapas futuras.
