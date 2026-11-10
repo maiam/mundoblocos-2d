@@ -1,27 +1,37 @@
 import * as THREE from 'three';
 
 /**
- * Sprite 2D usado como personagem jogável em cenário 3D.
+ * Occlusion-contextual 2D character in the 3D sanctuary.
  *
- * Uma parede ou plataforma alta pode passar à frente do plano do sprite em
- * câmera superior, escondendo apenas o rosto/cabeça. No protótipo de Orvalis
- * a leitura do protagonista tem prioridade sobre a oclusão de terreno.
+ * The normal sprite respects the actual 3D depth buffer. A second, translucent
+ * silhouette is drawn ONLY for pixels where 3D world geometry is closer than
+ * the character (GreaterDepth). This preserves spatial depth and helps the
+ * player locate the character behind a 1–3 block high wall.
  *
- * Importante: a prioridade é apenas VISUAL. Raycast, colisões, altura e
- * construção continuam usando a geometria real do mundo.
- *
- * Quando construções com andares/interiores forem implementadas, substituir
- * essa regra pela oclusão contextual (paredes/telhados transparentes).
+ * No global always-on-top rendering or changes to collision/raycast/saves.
  */
-export function makeForegroundCharacterSprite(map: any): any {
+export function makeOcclusionAwareCharacter(map: any): { sprite: any; silhouette: any } {
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map,
     transparent: true,
     alphaTest: 0.04,
-    depthTest: false,
+    depthTest: true,
+    depthFunc: THREE.LessEqualDepth,
     depthWrite: false,
   }));
-  // Above cloud overlays and selection planes (renderOrder <= 2).
-  sprite.renderOrder = 10;
-  return sprite;
+  sprite.renderOrder = 1;
+
+  const silhouette = new THREE.Sprite(new THREE.SpriteMaterial({
+    map,
+    transparent: true,
+    opacity: 0.42,
+    color: 0xfff1df,
+    alphaTest: 0.04,
+    depthTest: true,
+    depthFunc: THREE.GreaterDepth,
+    depthWrite: false,
+  }));
+  // The overlay only passes the depth test where the sprite is BEHIND a wall.
+  silhouette.renderOrder = 10;
+  return { sprite, silhouette };
 }
