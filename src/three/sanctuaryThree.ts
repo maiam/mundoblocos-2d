@@ -304,6 +304,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     laboratoryButton.textContent = 'Recriar laboratório';
     focusButton.hidden = false;
     focusButton.textContent = 'Seguir Deusa';
+    goddessLabButton.hidden = false;
     wireButton.hidden = false;
     rebuildAfterEdit();
     cloudStatus.textContent = 'Laboratório: ' + result.cells + ' células, ' + result.placed
@@ -318,6 +319,18 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   });
   focusButton.hidden = true;
   top.append(focusButton);
+  const goddessLabButton = button('Testar oclusão (Deusa)', () => {
+    if (!laboratoryBuilt) return;
+    // Behind the laboratory wall from the superior camera: not inside a block.
+    player.respawn(x0 + 4 + 3.5, y0 + 4 + 4.45);
+    laboratoryCamera = false;
+    zoom = 8;
+    focusButton.textContent = 'Ver laboratório';
+    cloudStatus.textContent = 'Deusa próxima à parede de 2 blocos. '
+      + 'Observe sprite normal e silhueta translúcida apenas quando houver oclusão.';
+  });
+  goddessLabButton.hidden = true;
+  top.append(goddessLabButton);
   const wireButton = button('Arestas: ocultas', () => {
     wireVisible = !wireVisible;
     wireButton.textContent = wireVisible ? 'Arestas: visíveis' : 'Arestas: ocultas';
