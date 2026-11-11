@@ -1,6 +1,6 @@
 import type { PlayerAction } from '../world/actions';
 import { TILE } from '../config';
-import type { Renderer } from '../render/renderer';
+import type { GameRenderer } from '../render/rendererContract';
 import { Block, blockDef, type BlockId, isCrop } from '../world/blocks';
 import { foodValue } from '../world/progression';
 import { ANIMAL_PRODUCE, blockStack, breakDrops, breakSeconds, ITEMS, pickDrops, type StackId, toolCanBreak, TOOLS, type ToolId, type ItemId } from '../world/items';
@@ -50,7 +50,7 @@ export interface ActionContext {
   inventory: Inventory;
   drops: Drops;
   camera: Camera;
-  renderer: Renderer;
+  renderer: GameRenderer;
   /** Espaço selecionado na hotbar (null = mão vazia). */
   slot(): HotbarSlot | null;
   /** Joystick em uso (esconde o destaque do mouse). */
