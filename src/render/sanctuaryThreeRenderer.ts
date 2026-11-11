@@ -10,6 +10,7 @@ import type { BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { sanctuary3DGeometryCells, sanctuaryBlockTransform } from './sanctuaryThreeLayout';
+import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
 type MeshGroup = {mesh:any;cells:Cell[]};
@@ -39,6 +40,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly actorContext:CanvasRenderingContext2D;
   private readonly actorTexture:any;
   private readonly goddess:any;
+  private readonly goddessGhost:any;
+  private readonly goddessShadow:any;
   private readonly highlight:any;
   private readonly breakHighlight:any;
   private readonly bounds:{x0:number;x1:number;y0:number;y1:number};
@@ -77,8 +80,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
 
     // Preserve the official animated goddess sheet, painted on a transparent
     // canvas and uploaded as a billboard texture (not a new 3D avatar).
-    this.actorCanvas.width=256;
-    this.actorCanvas.height=320;
+    this.actorCanvas.width=GODDESS_BILLBOARD_CANVAS.width;
+    this.actorCanvas.height=GODDESS_BILLBOARD_CANVAS.height;
     const ctx=this.actorCanvas.getContext('2d');
     if(!ctx)throw new Error('Canvas auxiliar da Deusa indisponível');
     this.actorContext=ctx;
@@ -86,12 +89,41 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.actorTexture.colorSpace=THREE.SRGBColorSpace;
     this.actorTexture.minFilter=THREE.LinearFilter;
     const spriteMaterial=new THREE.SpriteMaterial({
-      map:this.actorTexture,transparent:true,depthWrite:false,alphaTest:0.015,
+      map:this.actorTexture,transparent:true,depthTest:true,depthWrite:false,
+      alphaTest:0.015,
     });
     this.goddess=new THREE.Sprite(spriteMaterial);
+    // Bottom of the sprite quad = the goddess's logical ground anchor.
+    // Her floating feet are already offset INSIDE the animated artwork.
     this.goddess.center.set(0.5,0);
     this.goddess.scale.set(2.45,3.0,1);
-    this.goddess.renderOrder=2;
+    this.goddess.renderOrder=3;
+
+    // Transparent 'through-wall' echo: if a wall is genuinely closer to the
+    // camera, the normal (depth-tested) sprite remains hidden by the wall,
+    // while only a faint spectral silhouette helps the player locate herself.
+    // Never disable depth testing for the main goddess, which would flatten
+    // every foreground obstacle.
+    this.goddessGhost=new THREE.Sprite(new THREE.SpriteMaterial({
+      map:this.actorTexture,color:0xc9b9ff,transparent:true,opacity:0.18,
+      depthTest:false,depthWrite:false,alphaTest:0.015,
+    }));
+    this.goddessGhost.center.copy(this.goddess.center);
+    this.goddessGhost.scale.copy(this.goddess.scale);
+    this.goddessGhost.renderOrder=2;
+
+    // A shadow belongs to the horizontal physical support plane, not the
+    // billboard (where it previously looked like a vertical sprite fragment).
+    const shadowGeometry=new THREE.CircleGeometry(1,32);
+    shadowGeometry.rotateX(-Math.PI/2);
+    this.goddessShadow=new THREE.Mesh(shadowGeometry,new THREE.MeshBasicMaterial({
+      color:0x241648,transparent:true,opacity:0.22,
+      depthTest:true,depthWrite:false,side:THREE.DoubleSide,
+      polygonOffset:true,polygonOffsetFactor:-2,
+    }));
+    this.goddessShadow.renderOrder=1;
+    this.scene.add(this.goddessShadow);
+    this.scene.add(this.goddessGhost);
     this.scene.add(this.goddess);
 
     const selectGeometry=new THREE.PlaneGeometry(1,1);
@@ -230,12 +262,28 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       moving:player.moving,
       walkTime:player.walkTime,
     };
-    this.actorContext.clearRect(0,0,256,320);
+    this.actorContext.clearRect(
+      0,0,GODDESS_BILLBOARD_CANVAS.width,GODDESS_BILLBOARD_CANVAS.height,
+    );
     this.actorSprites.get('goddess').draw(
-      this.actorContext,128,300,3,actor,opts.elapsed,
+      this.actorContext,
+      GODDESS_BILLBOARD_CANVAS.drawX,
+      GODDESS_BILLBOARD_CANVAS.groundY,
+      GODDESS_BILLBOARD_CANVAS.zoom,
+      actor,opts.elapsed,false, // no baked shadow on the vertical billboard
     );
     this.actorTexture.needsUpdate=true;
-    this.goddess.position.set(player.x,player.visualZ+0.03,player.y+0.15);
+    const visual=sanctuaryGoddessVisualPlacement(player,opts.elapsed);
+    this.goddess.position.set(
+      visual.billboard.x,visual.billboard.y,visual.billboard.z,
+    );
+    this.goddessGhost.position.copy(this.goddess.position);
+    this.goddessShadow.position.set(
+      visual.shadow.x,visual.shadow.y,visual.shadow.z,
+    );
+    this.goddessShadow.scale.set(
+      visual.shadowRadii.x,1,visual.shadowRadii.z,
+    );
   }
 
   private updateSelection(opts:RenderOptions):void{
@@ -309,11 +357,14 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
     this.materials.clear();
     for(const g of [this.floorGeometry,this.solidGeometry,this.wallGeometry,
-      this.highlight.geometry,this.breakHighlight.geometry])g.dispose();
+      this.highlight.geometry,this.breakHighlight.geometry,
+      this.goddessShadow.geometry])g.dispose();
     this.highlight.material.dispose();
     this.breakHighlight.material.dispose();
     this.actorTexture.dispose();
     this.goddess.material.dispose();
+    this.goddessGhost.material.dispose();
+    this.goddessShadow.material.dispose();
     this.gpu.dispose();
   }
 }
