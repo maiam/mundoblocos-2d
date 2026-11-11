@@ -15,6 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
+import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -41,6 +42,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const player = new Player(spawnX + 0.5, spawnY + 0.5);
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-9, 9, 5, -5, 0.1, 300);
+  const fpsCamera = new THREE.PerspectiveCamera(FP_FOV_DEGREES, 1, 0.065, 190);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
@@ -281,6 +283,43 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let removing = false;
   let iso = false;
   let zoom = 10;
+  let firstPerson = false;
+  let fpYaw = Math.PI;
+  let fpPitch = -0.12;
+  let fpDragPointer: number | null = null;
+  let fpLastDrag = { x: 0, y: 0 };
+  const fpCenter = new THREE.Vector2(0, 0);
+  const fpDirection = new THREE.Vector3();
+  const fpEye = new THREE.Vector3();
+  const fpAim = new THREE.Vector3();
+  function fpsActive(): boolean { return firstPerson && laboratoryV2Active && freeBuildEnabled; }
+  function updateFPSCamera(): void {
+    fpsCamera.position.set(player.x, player.visualZ + FP_EYE_HEIGHT, player.y);
+    const [dx, dy, dz] = firstPersonForward(fpYaw, fpPitch);
+    fpDirection.set(dx, dy, dz);
+    fpAim.copy(fpsCamera.position).add(fpDirection);
+    fpsCamera.lookAt(fpAim);
+    fpsCamera.updateMatrixWorld();
+  }
+  function switchFirstPerson(enable: boolean): void {
+    firstPerson = enable && freeBuildEnabled && laboratoryV2Active;
+    if (!firstPerson && document.pointerLockElement === canvas) document.exitPointerLock();
+    goddess.visible = !firstPerson;
+    shadow.visible = !firstPerson;
+    if (typeof fpCrosshair !== 'undefined') fpCrosshair.hidden = !firstPerson;
+    if (typeof fpAction !== 'undefined') fpAction.hidden = !firstPerson;
+    if (typeof fpExitButton !== 'undefined') fpExitButton.hidden = !firstPerson;
+    if (typeof fpModeButton !== 'undefined') fpModeButton.textContent =
+      firstPerson ? 'Sair da primeira pessoa' : 'Primeira pessoa (construção)';
+    cameraButton.textContent = firstPerson ? 'Câmera: primeira pessoa' :
+      iso ? 'Câmera: isométrica' : 'Câmera: superior';
+    if (firstPerson) {
+      laboratoryCamera = false;
+      cloudStatus.textContent = 'Primeira pessoa: WASD para caminhar · mouse para olhar · '
+        + 'clique esquerdo para construir · direito para remover · Esc solta o cursor · C troca a câmera.';
+      updateFPSCamera();
+    }
+  }
   // Laboratory stays within the bounded 80×32 sanctuary; far from the spawn.
   const labCells = constructionLabPlan(x0 + 4, y0 + 4);
   const labCenterX = x0 + 4 + 14;
@@ -438,9 +477,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     b.addEventListener('click', onClick);
     return b;
   }
-  const cameraButton = button('Câmera: superior', () => { iso = !iso; cameraButton.textContent = iso ? 'Câmera: isométrica' : 'Câmera: superior'; });
+  const cameraButton = button('Câmera: superior', () => {
+    if (fpsActive()) { switchFirstPerson(false); iso = false; }
+    else if (!iso) iso = true;
+    else if (freeBuildEnabled && laboratoryV2Active) { switchFirstPerson(true); }
+    else iso = false;
+    cameraButton.textContent = fpsActive() ? 'Câmera: primeira pessoa'
+      : iso ? 'Câmera: isométrica' : 'Câmera: superior';
+  });
   top.append(cameraButton);
   const laboratoryButton = button('Criar laboratório 3D', () => {
+    switchFirstPerson(false);
     laboratoryV2Active = false;
     freeBuildEnabled = false;
     if (freeBuildView) freeBuildView.group.visible = false;
@@ -468,6 +515,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   });
   top.append(laboratoryButton);
   const labV2Button = button('Laboratório V2', () => {
+    if (laboratoryV2Active) switchFirstPerson(false);
     laboratoryV2Active = !laboratoryV2Active;
     if (laboratoryV2Active && laboratoryBuilt) {
       // Clear only the old V1 demo object stack; never remove ground or persist.
@@ -735,6 +783,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
 
   const freeBuildButton = button('Construção livre (5 níveis)', () => {
     if (!laboratoryV2Active) labV2Button.click();
+    if (freeBuildEnabled) switchFirstPerson(false);
     freeBuildEnabled = !freeBuildEnabled;
     if (freeBuildEnabled) {
       houseEnabled = false;
@@ -796,6 +845,31 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cloudStatus.textContent = 'Exemplo criado: degraus adjacentes 1→5, laje elevada 5×5 '
       + 'e piso lateral. Suba caminhando. Nenhuma peça foi salva.';
   });
+  const fpModeButton = button('Primeira pessoa (construção)', () => {
+    if (!freeBuildEnabled) freeBuildButton.click();
+    switchFirstPerson(!firstPerson);
+    if (fpsActive()) {
+      canvas.requestPointerLock?.();
+    }
+  });
+  const fpExitButton = button('Sair da primeira pessoa', () => switchFirstPerson(false));
+  fpExitButton.style.cssText = 'position:absolute;right:15px;bottom:80px;z-index:6;';
+  fpExitButton.hidden = true;
+  hud.append(fpExitButton);
+  const fpCrosshair = document.createElement('div');
+  fpCrosshair.setAttribute('aria-label', 'Mira de construção, centro da tela');
+  fpCrosshair.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'
+    + 'font-size:26px;line-height:1;color:white;text-shadow:0 0 4px #29204c;pointer-events:none;z-index:3;';
+  fpCrosshair.textContent = '+';
+  fpCrosshair.hidden = true;
+  hud.append(fpCrosshair);
+  const fpAction = button('Construir / Remover', () => {
+    if (!fpsActive()) return;
+    editFreeBuildAt(0, 0, true);
+  });
+  fpAction.style.cssText = 'position:absolute;right:15px;bottom:140px;z-index:6;';
+  fpAction.hidden = true;
+  hud.append(fpAction);
   const freeBuildResetButton = button('Limpar construção livre', () => {
     freeBuild.clear();
     if (freeBuildEnabled) rebuildFreeBuild();
@@ -987,7 +1061,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [freeBuildButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [freeBuildButton, fpModeButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -1020,10 +1094,25 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     keys.add(k);
     if (!e.repeat && k === 'c') cameraButton.click();
     if (!e.repeat && k === 'b') editButton.click();
+    if (!e.repeat && k === 'f' && laboratoryV2Active && freeBuildEnabled)
+      switchFirstPerson(!fpsActive());
+    if (!e.repeat && k === 'escape' && fpsActive() && document.pointerLockElement !== canvas)
+      switchFirstPerson(false);
   };
   const onKeyUp = (e: KeyboardEvent) => keys.delete(e.key.toLowerCase());
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
+  const onFPRelativeMouse = (e: MouseEvent) => {
+    if (!fpsActive() || document.pointerLockElement !== canvas) return;
+    const next = firstPersonLook(fpYaw, fpPitch, e.movementX, e.movementY);
+    fpYaw = next.yaw;
+    fpPitch = next.pitch;
+    updateFPSCamera();
+  };
+  document.addEventListener('mousemove', onFPRelativeMouse);
+  canvas.addEventListener('contextmenu', (e) => {
+    if (fpsActive()) e.preventDefault();
+  });
   let down: { x: number; y: number } | null = null;
   const pick = (x: number, y: number): Cell | null => {
     const rect = canvas.getBoundingClientRect();
@@ -1041,20 +1130,28 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     return null;
   };
-  function editFreeBuildAt(screenX: number, screenY: number, apply: boolean): boolean {
+  function editFreeBuildAt(screenX: number, screenY: number, apply: boolean, forceRemove = removing): boolean {
     if (!laboratoryV2Active || !freeBuildEnabled) return false;
+    const fp = fpsActive();
     const rect = canvas.getBoundingClientRect();
-    mouse.set(((screenX - rect.left) / rect.width) * 2 - 1,
-      -((screenY - rect.top) / rect.height) * 2 + 1);
-    raycaster.setFromCamera(mouse, camera);
+    if (fp) {
+      updateFPSCamera();
+      raycaster.setFromCamera(fpCenter, fpsCamera);
+      raycaster.far = FP_REACH;
+    } else {
+      mouse.set(((screenX - rect.left) / rect.width) * 2 - 1,
+        -((screenY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(mouse, camera);
+      raycaster.far = Infinity;
+    }
     let candidate: { x: number; y: number; z: number } | null = null;
-    if (freeBuildFaceMode && freeBuildView) {
+    if ((freeBuildFaceMode || fp) && freeBuildView) {
       const hits = raycaster.intersectObject(freeBuildView.group, true)
-        .filter((hit: any) => hit.object.userData.freeBuildFive);
+        .filter((hit: any) => hit.object.userData.freeBuildFive && (!fp || hit.distance <= FP_REACH));
       const hit = hits[0];
       if (hit) {
         const n = hit.face?.normal ?? new THREE.Vector3(0, 1, 0);
-        const factor = removing ? -0.005 : 0.005;
+        const factor = forceRemove ? -0.005 : 0.005;
         candidate = {
           x: Math.floor(hit.point.x + n.x * factor) - x0,
           y: Math.floor(hit.point.z + n.z * factor) - y0,
@@ -1063,10 +1160,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       }
     }
     if (!candidate) {
-      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -freeBuildLevel);
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), fp ? 0 : -freeBuildLevel);
       const hit = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
-      if (!hit) return true;
-      candidate = { x: Math.floor(hit.x - x0), y: Math.floor(hit.z - y0), z: freeBuildLevel };
+      if (!hit || (fp && hit.distanceTo(raycaster.ray.origin) > FP_REACH)) {
+        selector.visible = false;
+        return true;
+      }
+      candidate = { x: Math.floor(hit.x - x0), y: Math.floor(hit.z - y0), z: fp ? 0 : freeBuildLevel };
     }
     if (freeBuild.contains(candidate.x, candidate.y) && freeBuild.validLevel(candidate.z)) {
       selector.visible = true;
@@ -1084,18 +1184,18 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const isPlayerCell = Math.floor(player.x - x0) === candidate.x
       && Math.floor(player.y - y0) === candidate.y
       && Math.abs(player.z - candidate.z) < 2;
-    if (!removing && isPlayerCell) {
+    if (!forceRemove && isPlayerCell) {
       cloudStatus.textContent = 'Não é possível colocar bloco no espaço da Deusa.';
       return true;
     }
-    const result = removing
+    const result = forceRemove
       ? freeBuild.remove(candidate.x, candidate.y, candidate.z)
       : freeBuild.set(candidate.x, candidate.y, candidate.z,
         (selectedBlock >= 80 && selectedBlock <= 85) ? selectedBlock : 82);
     if (result.ok) {
       rebuildFreeBuild();
       // Do not teleport the goddess: her Walker settles on the next tick.
-      cloudStatus.textContent = (removing ? 'Removido' : 'Colocado')
+      cloudStatus.textContent = (forceRemove ? 'Removido' : 'Colocado')
         + ' bloco (' + candidate.x + ', ' + candidate.y + ', camada '
         + (candidate.z + 1) + '/5). Total: ' + freeBuild.size
         + '. Blocos adjacentes independentes; sem salvamento.';
@@ -1135,6 +1235,16 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     return true;
   }
   canvas.addEventListener('pointermove', (e) => {
+    if (fpsActive()) {
+      if (document.pointerLockElement !== canvas && (e.buttons & 1) !== 0
+        && fpDragPointer === e.pointerId) {
+        const next = firstPersonLook(fpYaw, fpPitch,
+          e.clientX - fpLastDrag.x, e.clientY - fpLastDrag.y, 0.004);
+        fpYaw = next.yaw; fpPitch = next.pitch;
+        fpLastDrag = { x: e.clientX, y: e.clientY };
+      }
+      return;
+    }
     if (editFreeBuildAt(e.clientX, e.clientY, false)) return;
     if (editHouse16At(e.clientX, e.clientY, false)) return;
     if (laboratoryV2Active && laboratoryV2) {
@@ -1165,8 +1275,30 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       selector.position.set(x + 0.5, world.stackHeight(x, y) + 0.03, y + 0.5);
     }
   });
-  canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+  canvas.addEventListener('pointerdown', (e) => {
+    if (fpsActive()) {
+      e.preventDefault();
+      if (e.button === 0 && document.pointerLockElement !== canvas &&
+        e.pointerType === 'mouse') {
+        void canvas.requestPointerLock?.();
+        down = null;
+        return;
+      }
+      fpDragPointer = e.pointerId;
+      fpLastDrag = { x: e.clientX, y: e.clientY };
+      down = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    down = { x: e.clientX, y: e.clientY };
+  });
   canvas.addEventListener('pointerup', (e) => {
+    if (fpsActive()) {
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 13)
+        editFreeBuildAt(e.clientX, e.clientY, true, e.button === 2 ? true : removing);
+      down = null;
+      fpDragPointer = null;
+      return;
+    }
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 13) { down = null; return; }
     down = null;
     if (editFreeBuildAt(e.clientX, e.clientY, true)) return;
@@ -1183,7 +1315,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const changed = removing ? world.breakBlock(x, y) !== null : world.placeBlock(x, y, selectedBlock);
     if (changed) rebuildAfterEdit();
   });
-  canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom = Math.max(5, Math.min(20, zoom * (e.deltaY > 0 ? 1.12 : 0.89))); }, { passive: false });
+  canvas.addEventListener('wheel', (e) => {
+    if (fpsActive()) { e.preventDefault(); return; }
+    e.preventDefault();
+    zoom = Math.max(5, Math.min(20, zoom * (e.deltaY > 0 ? 1.12 : 0.89)));
+  }, { passive: false });
 
   const resize = () => {
     const w = Math.max(1, canvas.clientWidth), h = Math.max(1, canvas.clientHeight);
@@ -1192,6 +1328,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     camera.left = -zoom * aspect; camera.right = zoom * aspect;
     camera.top = zoom; camera.bottom = -zoom;
     camera.updateProjectionMatrix();
+    fpsCamera.aspect = aspect;
+    fpsCamera.updateProjectionMatrix();
   };
   window.addEventListener('resize', resize);
   resize();
@@ -1222,7 +1360,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
         : house16Enabled && house16World ? house16World
         : houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
       : world;
-    if (iso) {
+    if (fpsActive()) {
+      const [ux, uy] = firstPersonMovement(sx, sy, fpYaw);
+      player.move(dt, ux, uy, movementWorld);
+    } else if (iso) {
       const ux = (sx + sy) * Math.SQRT1_2;
       const uy = (sy - sx) * Math.SQRT1_2;
       player.move(dt, ux, uy, movementWorld);
@@ -1261,6 +1402,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     goddess.position.set(player.x, player.visualZ + 0.32 + 1.15 + Math.sin(elapsed * 3.7) * 0.08, player.y);
     shadow.position.set(player.x, player.visualZ + 0.012, player.y);
+    if (fpsActive()) {
+      goddess.visible = false;
+      shadow.visible = false;
+    } else {
+      goddess.visible = true;
+      shadow.visible = true;
+    }
     if (houseScene && houseEnabled && laboratoryV2Active) {
       houseScene.updateView(player.x, player.y, player.z, camera.position);
     }
@@ -1299,6 +1447,12 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
         : new THREE.Vector3(player.x, laboratoryV2Active ? cameraY : 0, player.y);
     camera.position.set(target.x + offset[0], target.y + offset[1], target.z + offset[2]);
     camera.lookAt(target);
+    if (fpsActive()) {
+      updateFPSCamera();
+      // Keep the selector aligned to the center ray. The selected block may
+      // be above, below or behind a ceiling.
+      editFreeBuildAt(0, 0, false);
+    }
     const aspect = Math.max(1, canvas.clientWidth) / Math.max(1, canvas.clientHeight);
     if (Math.abs(camera.top - zoom) > 0.001 || Math.abs(camera.right - zoom * aspect) > 0.001) {
       camera.left = -zoom * aspect; camera.right = zoom * aspect;
@@ -1308,7 +1462,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       cloudCutaway, camera, goddess.position, canvas.clientWidth, canvas.clientHeight,
       renderer.getPixelRatio(), zoom, Boolean(cloudTop512 && useCloudTop512),
     );
-    renderer.render(scene, camera);
+    renderer.render(scene, fpsActive() ? fpsCamera : camera);
   };
   raf = requestAnimationFrame(animate);
   window.addEventListener('pagehide', () => {
@@ -1316,6 +1470,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('resize', resize);
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
+    document.removeEventListener('mousemove', onFPRelativeMouse);
+    if (document.pointerLockElement === canvas) document.exitPointerLock();
     hud.remove(); style.remove();
     if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
     if (freeBuildView) { scene.remove(freeBuildView.group); freeBuildView.dispose(); }
