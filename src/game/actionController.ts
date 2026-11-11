@@ -107,7 +107,7 @@ export class ActionController {
   private get inventory(): Inventory { return this.ctx.inventory; }
   private get drops(): Drops { return this.ctx.drops; }
   private get camera(): Camera { return this.ctx.camera; }
-  private get renderer(): Renderer { return this.ctx.renderer; }
+  private get renderer(): GameRenderer { return this.ctx.renderer; }
   private get slot(): HotbarSlot | null { return this.ctx.slot(); }
 
   // ---- Entrada (repassada pelo Game) ----
