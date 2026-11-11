@@ -69,6 +69,27 @@ describe('Santuário — paredes horizontais adaptativas (experimental)', () => 
     expect(shape(ed, 34, 13)).toBe('solid');
   });
 
+  it('treats an experimental door as a thick pillar and universal horizontal connector', () => {
+    const ed = new FreeBuildFive();
+    ed.set(33, 18, 0, 84);
+    ed.set(34, 18, 0, 84);
+    ed.setDoor(35, 18, 0, 83); // marble door inside a celestial-stone run
+    ed.set(36, 18, 0, 84);
+    ed.set(37, 18, 0, 84);
+    expect(ed.get(35, 18, 0)?.kind).toBe('door');
+    expect(shape(ed, 34, 18)).toBe('thin');
+    expect(shape(ed, 35, 18)).toBe('solid');
+    expect(shape(ed, 36, 18)).toBe('thin');
+    ed.remove(35, 18, 0);
+    expect(shape(ed, 34, 18)).toBe('solid');
+    expect(shape(ed, 36, 18)).toBe('solid');
+    ed.setDoor(35, 18, 0, 85); // different stone door still connects
+    expect(shape(ed, 34, 18)).toBe('thin');
+    expect(shape(ed, 36, 18)).toBe('thin');
+    ed.set(35, 19, 0, 84); // perpendicular mass, door stays structural
+    expect(shape(ed, 35, 18)).toBe('solid');
+  });
+
   it('a removed end restores its neighboring panel to a solid column', () => {
     const ed = new FreeBuildFive();
     for (let x = 33; x <= 35; x++) ed.set(x, 14, 0, 84);
@@ -81,12 +102,16 @@ describe('Santuário — paredes horizontais adaptativas (experimental)', () => 
   it('recreates demo runs and masses in the editor bounds, without saving', () => {
     const ed = new FreeBuildFive();
     buildHorizontalWallDemo(ed);
-    expect(ed.size).toBe(3 + 4 + 5 + 4 + 9);
+    expect(ed.size).toBe(3 + 4 + 5 + 4 + 9 + 7);
     expect(shape(ed, 34, 10)).toBe('thin');
     expect(shape(ed, 34, 12)).toBe('thin');
     expect(shape(ed, 36, 14)).toBe('thin');
     expect(shape(ed, 40, 10)).toBe('solid');
     expect(shape(ed, 44, 15)).toBe('solid');
+    expect(ed.get(36, 18, 0)).toMatchObject({ kind: 'door', id: 83 });
+    expect(shape(ed, 35, 18)).toBe('thin');
+    expect(shape(ed, 36, 18)).toBe('solid');
+    expect(shape(ed, 37, 18)).toBe('thin');
     for (const cell of ed.list()) expect(ed.contains(cell.x, cell.y)).toBe(true);
   });
 
