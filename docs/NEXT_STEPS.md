@@ -8,7 +8,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 - A regra e o protótipo 3D estão isolados na `feat/santuario-three-experimental` (PR #86 draft): só linhas horizontais de pedra/mármore afinam; massas preenchidas não afinam.
 - **Pendente de aprovação visual:** inspecionar a cena de comparação e borda superior na câmera top-down; verificar encaixe com materiais PNG V2.1, remoção e raycasting nas faces recuadas.
-- **Pendente para eventual produção:** colisão subcélula real das paredes de 25% (o Walker atual ocupa célula completa), otimização incremental do editor e decisão sobre materiais/construção fora do Santuário. Não integrar na `main` antes do aceite.
+- **Pendente para eventual produção:** colisão subcélula real das paredes de 50% (ancoradas na frente +Z) (o Walker atual ocupa célula completa), otimização incremental do editor e decisão sobre materiais/construção fora do Santuário. Não integrar na `main` antes do aceite.
 
 ## 1. Panorama — o que temos
 
