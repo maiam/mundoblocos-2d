@@ -559,3 +559,53 @@ salvamento 2D nesta etapa.
 3. Não misturar aprovação de mecânicas/colisões com aprovação visual das artes e não promover estas versões para o jogo definitivo sem novo teste.
 
 O PR #86 permanece draft, isolado da `main`.
+
+
+## Construção livre 3D — cinco alturas e blocos adjacentes (10/11/2026)
+
+Após aprovar a altura 5 e a movimentação sobre o relevo, o usuário pediu
+**testar construção manual antes de continuar os edifícios**. Foi adicionado
+o módulo isolado `freeBuildFive.ts` + `freeBuildFiveScene.ts` ao Santuário
+Three.js na branch experimental.
+
+### Como testar
+1. `git fetch origin && git switch feat/santuario-three-experimental && git pull --ff-only` e `npm run dev`.
+2. Abrir `?mundo=santuario&render=three` e ativar **Laboratório V2**.
+3. Em **Mais opções**, clicar **Construção livre (5 níveis)**. Isso
+   substitui temporariamente a prévia dos setores V2 sem modificar suas peças.
+4. Carregar opcionalmente os **seis PNGs 80–85 do kit V2.1** para acabamento
+   aprovado (pode carregar antes de ativar o editor).
+5. Escolher um material 80–85 na hotbar inferior.
+6. O modo **Colocar pela face adjacente** permite clicar numa face de cubo para
+   construir ao lado/acima/abaixo, inclusive em balanço. Clique em espaço vazio
+   usa a camada de edição.
+7. Em **Mais opções → Camada: 1/5…5/5**, escolher a camada de destino.
+   **Colocar na grade da camada** projeta o clique na altura escolhida: cria
+   pisos, paredes, escadas, lajes suspensas, vazios e platôs sem empilhamento
+   obrigatório.
+8. **Modo: construir/remover** alterna o efeito do clique.
+9. **Montar escada + laje (exemplo)** cria uma sequência de cinco degraus
+   vizinhos (alturas 1→5), uma laje superior suspensa 5×5 e uma plataforma
+   lateral 4×2. **Limpar construção livre** remove tudo dessa sessão.
+10. Explorar com a Deusa e a câmera isométrica ou superior; o suporte de
+    altura é fornecido pelo modelo de blocos construídos, com subida máxima
+    de 1 bloco por passo.
+
+### Contrato técnico
+- Área experimental local: x=32..47, y=9..22; 16×14 células.
+- Cinco camadas construíveis z=0..4, com topo de apoio z=1..5.
+- Blocos distintos por `x:y:z`, inclusive adjacentes, lacunas e lajes.
+- Renderização por materiais 80–85, com UV por coordenada de mundo e
+  supressão das faces internas. Espaço de construção totalmente isolado das
+  construções rejeitadas visualmente.
+- A física usa o `Walker` já aprovado, mas com um `standHeight` calculado
+  na hora, por nível disponível e pé-direito; não transforma plataformas altas
+  automaticamente em um chão acessível a partir do nível 0.
+- Não muda `MAX_STACK`, `World`, dados de chunk, formatos de save
+  ou `main`. Editar não persiste após atualização da página.
+
+### Fora de escopo
+- Encaixe de portas, escadas menores que um cubo, itens de inventário,
+  suporte estrutural/gravidade, persistência e multiandares arquitetônicos.
+- Os edifícios e as pranchas isométricas permanecem **não aprovados**
+  artisticamente. O laboratório atual valida apenas construção e física.
