@@ -10,6 +10,7 @@ import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
+import type { RendererFactory } from './render/rendererContract';
 import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
 
 const canvas = document.getElementById('world') as HTMLCanvasElement;
@@ -18,6 +19,8 @@ const screenMode = new ScreenMode();
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 document.title = profile.name;
 let game: Game | null = null;
+/** Loaded on demand only for the Santuário; no Three.js in the principal bundle. */
+let sanctuaryRendererFactory: RendererFactory | undefined;
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
 const store = new SaveStore(profile.id);
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
@@ -109,6 +112,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
     save: store.load(seed),
     store,
     body: keepBody,
+    rendererFactory: sanctuaryRendererFactory,
     notice,
     online,
     // Novo mundo: abre a escolha de personagem (por cima do jogo; "Voltar" volta ao mundo de antes). Toda seed começa
@@ -182,7 +186,24 @@ const blocksV2 = blocksV2FromSearch(window.location.search);
 void loadArtPack(profile.id)
   .then(() => loadBlockArt())
   .then(() => loadMaterialsV2(blocksV2))
-  .then(() => {
+  .then(async () => {
+    // Three.js is now the official Santuário renderer. The exact same Game,
+    // save format, two-level construction, actions, player and HUD are kept.
+    // The principal world never loads this module (separate Vite chunk).
+    // ?render=2d remains a safe fallback for devices without WebGL.
+    if (profile.id === 'santuario' && query.get('render') !== '2d') {
+      const probe = document.createElement('canvas');
+      const supported = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
+      if (supported) {
+        try {
+          const mod = await import('./render/sanctuaryThreeRenderer');
+          sanctuaryRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world);
+        } catch (error) {
+          console.error('Santuário Three.js: usando renderizador 2D de reserva', error);
+        }
+      } else console.warn('WebGL indisponível: Santuário usará Canvas 2D.');
+    }
+
     // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
     // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.
     if (import.meta.env.DEV && query.has('escala')) {
