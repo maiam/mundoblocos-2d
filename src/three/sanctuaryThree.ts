@@ -1050,7 +1050,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     let candidate: { x: number; y: number; z: number } | null = null;
     if (freeBuildFaceMode && freeBuildView) {
       const hits = raycaster.intersectObject(freeBuildView.group, true)
-        .filter(hit => hit.object.userData.freeBuildFive);
+        .filter((hit: any) => hit.object.userData.freeBuildFive);
       const hit = hits[0];
       if (hit) {
         const n = hit.face?.normal ?? new THREE.Vector3(0, 1, 0);
