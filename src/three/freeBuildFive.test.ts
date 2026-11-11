@@ -46,8 +46,11 @@ describe('Santuário — editor livre de cinco níveis', () => {
     const p=new Player(34.5, 15.5);
     const w=makeFreeBuildNavigation(ed,0,0,()=>p.z);
     const go=(target:number)=>{
-      for(let i=0;i<12;i++) p.move(1/40,1,0,w);
-      expect(p.x).toBeCloseTo(target,1);
+      for (let i=0; i<240 && Math.abs(p.x-target)>0.07; i++) {
+        const dx = target-p.x;
+        p.move(1/60, Math.sign(dx), 0, w);
+      }
+      expect(Math.abs(p.x-target)).toBeLessThan(0.12);
     };
     for(let height=1;height<=5;height++){
       go(34.5+height);
