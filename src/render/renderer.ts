@@ -17,6 +17,7 @@ import { type SkyState, skyAt } from './daycycle';
 import { Particles } from './particles';
 import { addDungeonTextures, createBlockTextures, cubeSpriteV2, drawCubeParts, type BlockTextures, type Sprite } from './textures';
 import { type CubeView, cubeEdges, materialsV2InWorld, V2_BLOCKS } from './materialsV2';
+import { drawThinHorizontalWall, horizontalWallShape } from './adaptiveWalls';
 import { loadDungeonArt } from './blockArt';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
@@ -394,10 +395,12 @@ export class Renderer {
 
   private drawObject(cam: Camera, id: BlockId, x: number, y: number, level: number, glows: Glow[]): void {
     // Cubo V2 (o padrão): desenhado como parte da massa de cubos vizinhos, sem risco entre eles (ADR 0023).
+    const thinWall = horizontalWallShape(this.world, id, x, y, level) === 'thin';
     if (V2_BLOCKS[id] && materialsV2InWorld()) {
       const v2 = cubeSpriteV2(id, level, cubeEdges(this.cubeView, x, y, level));
       if (v2) {
-        this.drawCubeV2(cam, v2, x, y, level);
+        if (thinWall) this.drawAdaptiveWall(cam, v2, x, y, level);
+        else this.drawCubeV2(cam, v2, x, y, level);
         return;
       }
     }
@@ -407,7 +410,10 @@ export class Renderer {
     const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : this.textures.objects.get(id);
     if (sprite) {
       const n = this.textures.stackDraw.get(id) ?? 1;
-      for (let k = 0; k < n; k++) this.drawSprite(cam, sprite, x, y, level + k);
+      for (let k = 0; k < n; k++) {
+        if (thinWall) this.drawAdaptiveWall(cam, sprite, x, y, level + k);
+        else this.drawSprite(cam, sprite, x, y, level + k);
+      }
     }
     const glow = this.textures.glowColor.get(id);
     if (glow) {
@@ -469,6 +475,19 @@ export class Renderer {
     const rowY = (wyy: number) => Math.round(cam.worldToScreenY(wyy));
     // Topo/frente divididos em y + TILE: a borda de baixo do nível de cima é a de cima da frente deste nível.
     drawCubeParts(this.ctx, s, left, right, rowY(wy), rowY(wy + TILE), rowY(wy + s.h));
+  }
+
+  /**
+   * Paredes horizontais no motor 2D já existente: o topo perde só a metade
+   * TRASEIRA, enquanto a face frontal ocupa o mesmo plano dos pilares.
+   */
+  private drawAdaptiveWall(cam: Camera, sprite: Sprite, x: number, y: number, level: number): void {
+    const left = Math.round(cam.worldToScreenX(x * TILE));
+    const right = Math.round(cam.worldToScreenX((x + 1) * TILE));
+    const wy = y * TILE + sprite.oy - level * CUBE_FRONT;
+    const rowY = (value: number) => Math.round(cam.worldToScreenY(value));
+    drawThinHorizontalWall(this.ctx, sprite, left, right,
+      rowY(wy), rowY(wy + TILE), rowY(wy + sprite.h));
   }
 
   /** Desenha um sprite na célula; cada nível de pilha sobe CUBE_FRONT px. */
