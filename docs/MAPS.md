@@ -2,7 +2,7 @@
 
 Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITECTURE.md` e os domínios.
 
-> **Protótipo isolado Santuário Three.js:** `src/three/sanctuaryThree.ts` (botões/editor) → `src/three/freeBuildFive.ts` (voxels) → `src/three/adaptiveHorizontalWalls.ts` (regra horizontal e seleção por célula); `src/three/freeBuildFiveScene.ts` renderiza as malhas espessas/finas e o ressalto superior. Sem conexão com `World`/chunks/saves do jogo principal.
+> **Protótipo isolado Santuário Three.js:** `src/three/sanctuaryThree.ts` (botões/editor) → `src/three/freeBuildFive.ts` (voxels) → `src/three/adaptiveHorizontalWalls.ts` (regra horizontal e seleção por célula); `src/three/freeBuildFiveScene.ts` renderiza malhas espessas/finas, porta-pilar e ressalto superior; `src/three/freeBuildCameraMovement.ts` unifica o deslocamento nas câmeras externas e seu acompanhamento de altura. Sem conexão com `World`/chunks/saves do jogo principal.
 
 ## 1. Módulos e dependências
 Setas = "importa/usa". `world/` é a base e não conhece ninguém acima dele.
