@@ -2,6 +2,8 @@
 
 ## Experimento sem versão publicada — 2026-11-11 (branch `feat/santuario-three-experimental`)
 - **Santuário, paredes horizontais adaptativas:** regra por vizinhos para afinar só o miolo de linhas 3+ com pedra/mármore 82–85 (profundidade 50% ancorada na face frontal +Z dos pilares), mantendo colunas nas pontas e grupos 2×2/3×3 maciços. Topo com ressalto, geometrias procedurais, UV por mundo e raycast vinculado à célula original.
+- Botões em **Mais opções** para ligar/desligar, comparar e escolher **Peça: porta (pilar)**: porta fechada com painel de madeira em bloco maciço, conectando paredes horizontais compatíveis mesmo entre materiais diferentes. Exemplo inclui uma porta e painéis finos dos dois lados.
+- **Subida nas câmeras superior/isométrica:** o exemplo de paredes agora mantém `Colocar pela face adjacente`, permitindo empilhar pelo topo e conectar pela lateral; o modo `grade da camada` continua para lajes suspensas. Movimento pelas câmeras externas preserva a física do `Walker` de 1 a 5 níveis e ativa seguimento da Deusa quando se começa a andar; testes de movimento, empilhamento, porta e geometria.
 - Botões em **Mais opções** para ligar/desligar e montar comparação visual; teste da regra, destruição e seleção. Escopo efêmero, sem mudar câmera superior, arte, `World`, persistência ou `main`; física de movimentação ainda usa célula inteira.
 
 
