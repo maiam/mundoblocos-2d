@@ -1,0 +1,51 @@
+import { Block, blockDef, type BlockId } from '../world/blocks';
+import { MAX_STACK } from '../config';
+import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape } from './adaptiveWalls';
+
+export type SanctuaryBlockShape = 'solid' | 'thin';
+export interface SanctuaryBlockCell {x:number;y:number;level:number;id:BlockId;shape:SanctuaryBlockShape}
+export interface SanctuaryGroundCell {x:number;y:number;id:BlockId}
+
+/** Geometry classification stays tied to the authoritative World and 2-level rules. */
+export function classifySanctuaryBlock(
+  world: {getLevel(x:number,y:number,level:number):BlockId},
+  id: BlockId, x:number, y:number, level:number,
+): SanctuaryBlockShape {
+  if (level < 0 || level >= MAX_STACK) return 'solid';
+  return ADAPTIVE_WALL_BLOCKS.has(id)
+    ? horizontalWallShape(world,id,x,y,level)
+    : 'solid';
+}
+
+/** Thin wall has its FRONT face flush at y+1; rear half is removed. */
+export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'>): {
+  x:number;y:number;z:number;width:number;height:number;depth:number;
+} {
+  const thin = cell.shape === 'thin';
+  return {
+    x: cell.x + 0.5, y: cell.level + 0.5,
+    z: cell.y + (thin ? 0.75 : 0.5),
+    width: 1, height: 1, depth: thin ? 0.5 : 1,
+  };
+}
+
+/** The official sanctuary uses exactly the 80x32 bounded profile. */
+export function sanctuary3DGeometryCells(
+  world: {getGround(x:number,y:number):BlockId;getLevel(x:number,y:number,level:number):BlockId},
+  bounds:{x0:number;x1:number;y0:number;y1:number},
+): {grounds: SanctuaryGroundCell[];blocks: SanctuaryBlockCell[]} {
+  const grounds:SanctuaryGroundCell[]=[];
+  const blocks:SanctuaryBlockCell[]=[];
+  for(let y=bounds.y0;y<=bounds.y1;y++) for(let x=bounds.x0;x<=bounds.x1;x++){
+    const ground=world.getGround(x,y);
+    if(ground!==Block.VOID&&ground!==Block.HOLE) grounds.push({x,y,id:ground});
+    for(let level=0;level<MAX_STACK;level++){
+      const id=world.getLevel(x,y,level);
+      if(id===Block.AIR)continue;
+      // The fixed sanctuary profile only places cubes; do not morph objects.
+      blocks.push({x,y,level,id,shape:blockDef(id).shape==='cube'
+        ? classifySanctuaryBlock(world,id,x,y,level):'solid'});
+    }
+  }
+  return {grounds,blocks};
+}

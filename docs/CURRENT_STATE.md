@@ -90,10 +90,13 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Sem pulo nem queda com dano; água parada (sem correnteza nem nado).
 - Santuário: chão de nuvem mostra leve repetição diagonal.
 
-## Autotile horizontal 2D — versão candidata em PR #87 (11/11/2026)
+## Santuário oficial Three.js e autotile (11/11/2026)
+- **Santuário** (`?mundo=santuario`) utiliza por padrão malhas 3D reais com WebGL/Three.js, câmera superior ortográfica levemente inclinada e Deusa animada com sprite 2D em billboard. Reaproveita o `Game`, `World`, `Player`, hotbar, salvamento e ações oficiais, com **dois níveis** e autotile horizontal herdado da base. Os 18 blocos existentes usam seus materiais oficiais. `?render=2d` preserva o renderizador anterior e WebGL indisponível aciona fallback para Canvas 2D.
+- **Mundo principal** continua integralmente em Canvas 2D, sem carregar Three.js. O Santuário Three separado do PR #86 continua experimental, sem promoção de suas câmeras extra, editor de cinco níveis ou porta especial.
+
 - Paredes construídas com tijolo de pedra, pedra lisa/polida, tábuas de carvalho/cerejeira/bétula e os mármores/pedras celestiais (82–85) afinam **somente** entre vizinhos horizontais do mesmo material (ou porta oficial existente) e sem vizinhos norte/sul, usando **exclusivamente o nível inferior (0) para decidir a forma**. O nível superior (1) herda a geometria da base — parede fina ou pilar — sem consultar seus próprios vizinhos; preserva sempre a textura/material do bloco superior. Porta na base funciona como pilar; materiais não construtivos nunca afinam. Face frontal permanece alinhada; topo desenhado com metade da profundidade. Isolados, extremidades, massas 2×2 e 3×3 permanecem maciços.
 - Todos os blocos empilháveis: **máximo de dois níveis (0 e 1)**. Salvos de versões anteriores com terceiro nível descartam esse nível na leitura; a altura do jogador é limitada a 2. Sem alterações de câmera/terreno/natureza ou itens de porta.
-- **Arte oficial incorporada no PR #87:** seis texturas quadradas 512×512 aprovadas para 80–85, armazenadas em `src/assets/santuario-*-512.jpg` (arquivos normalizados das imagens fornecidas). O Santuário 2D usa cada textura no topo, frente, chão e ícone correspondente; os outros 12 blocos celestiais continuam no atlas original. A arte é carregada apenas pelo pacote do Santuário.
+- **Arte oficial dos seis blocos 80–85**: seis texturas quadradas 512×512 versionadas em `src/assets/santuario-*-512.jpg` usadas em topos, frentes, chão e ícones; os outros 12 blocos celestiais usam o atlas original. Só o pacote do Santuário importa essas artes.
 
 ## Padrão de Materiais V2 (o padrão do jogo desde 08/11, ADR 0023)
 - **É o que o jogador vê.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato na

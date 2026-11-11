@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Santuário oficial — Three.js com personagem 2D (PR #89)
+
+O perfil Santuário é renderizado por `render/sanctuaryThreeRenderer.ts` via `THREE.WebGLRenderer`, com objetos 3D reais e `InstancedMesh` agrupados por bloco/material e altura. Os 18 materiais usam as faces existentes de `celestialArt.ts` (80–85 usam as seis superfícies aprovadas); o personagem é o sprite original da Deusa animado em billboard transparente. Câmera ortográfica top-down inclinada, frente física dos painéis finos alinhada à dos pilares, dois níveis oficiais e herança geométrica vertical. A classificação 3D está em `render/sanctuaryThreeLayout.ts`, sempre derivada de `World`/`adaptiveWalls.ts`, sem duplicar estado. Seleção por raycast; movimentação, colocação, quebra e salvamento permanecem no Game oficial. `?render=2d` força o renderer original. O Mundo principal segue Canvas 2D.
+
 ## Direção de arte — "ilustração digital de fantasia, RPG/anime" em 3/4
 - Materiais: arte da prancha 3/4 (topo + frente), com contorno na cor do material, frente levemente escurecida e
   aresta clara entre faces.

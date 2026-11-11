@@ -29,6 +29,10 @@ jobs:
         run: npm test
       - name: Build do site (como a Hostinger)
         run: npm run build
+      - name: Artefato Santuário oficial (Three.js)
+        run: npm run build:artifact:santuario
+      - name: Artefato Mundo principal (Canvas 2D, sem Three.js)
+        run: npm run build:artifact
       - name: Pacote do multiplayer para o servidor (ADR 0016)
         run: npm run build:net
       - name: Vulnerabilidades nas dependências

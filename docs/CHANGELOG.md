@@ -1,5 +1,10 @@
 # Changelog
 
+## Santuário Three.js oficial — 2026-11-11 (PR #89)
+- **Apenas o Santuário** passa a usar Three.js por padrão: malhas instanciadas 3D dos blocos/chão com texturas oficiais (18 IDs), paredes finas 50% alinhadas pela frente, dois níveis e forma superior herdada da base. Câmera ortográfica superior com profundidade real e seleção por raycast; Deusa continua 2D animada em billboard.
+- `Game`, ações, controles, hotbar e salvamentos continuam comuns; nenhum módulo do editor de cinco níveis ou primeira pessoa foi incorporado ao jogo oficial. `?render=2d` conserva o antigo motor visual; falta verificar o resultado visual em desktop e mobile. Mundo principal permanece Canvas 2D e não carrega Three.js.
+
+
 ## Ajuste de autotile vertical — 2026-11-11
 - **Consistência de dois níveis:** a geometria da parede/pilar é resolvida uma única vez com os vizinhos do bloco inferior; o segundo nível herda a forma e mantém sua própria textura, sem examinar adjacências superiores. Portas existentes continuam funcionando como pilares; blocos não construtivos não afinam. Nenhuma outra regra de mundo, câmera, colisão ou altura foi modificada.
 

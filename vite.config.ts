@@ -5,9 +5,13 @@ export default defineConfig({
   build: {
     // As imagens saem como arquivos separados (ADR 0013); o JS (código) fica pequeno e entra embutido no HTML do
     // Artifact. O aviso padrão de 500 kB vale para o código.
-    // Um único JS (embutido no HTML do Artifact): o pacote de arte do mundo, importado dinamicamente, entra no mesmo
-    // bundle; com VITE_WORLD fixo, só o do mundo escolhido (ADR 0010).
-    rollupOptions: { output: { inlineDynamicImports: true } },
+    // Artefatos de mundo fixo precisam de um único JS embutível no HTML.
+    // No site genérico, os imports são CHUNKS separados: Three.js baixa só
+    // para o Santuário. O Mundo principal não transfere nem executa WebGL.
+    rollupOptions: {
+      output: { inlineDynamicImports: process.env.VITE_WORLD === 'principal' ||
+        process.env.VITE_WORLD === 'santuario' },
+    },
   },
   test: {
     environment: 'node',

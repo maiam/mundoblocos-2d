@@ -1,6 +1,7 @@
 import { CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
+import type { GameRenderer, RendererFactory } from '../render/rendererContract';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef, type BlockId } from '../world/blocks';
 import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
@@ -47,6 +48,8 @@ const REVEAL_RADIUS = 14;
 
 /** Opções da sessão: salvamento para restaurar, armazenamento e ações do menu (vêm do main). */
 export interface GameOptions {
+  /** Only the Santuário supplies a WebGL renderer; main World always uses Canvas2D. */
+  rendererFactory?: RendererFactory;
   save?: SaveData | null;
   store?: SaveStore;
   onNewWorld?(): void;
@@ -94,7 +97,7 @@ export class Game {
   /** Materiais precisam ser coletados neste mundo (perfil). */
   private readonly collect: boolean;
   readonly drops = new Drops();
-  private readonly renderer: Renderer;
+  private readonly renderer: GameRenderer;
   private readonly hud: Hud;
   private readonly joystick: Joystick;
   private readonly keys = new Set<string>();
@@ -158,7 +161,7 @@ export class Game {
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
     this.entities.onDamage = (x, y, hit, target) => this.renderer.addDamage(x, y, hit, target);
     this.lastHp = this.player.hp;
-    this.renderer = new Renderer(canvas, this.world);
+    this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
     this.actions = new ActionController({
       world: this.world, entities: this.entities, player: this.player, inventory: this.inventory,
       drops: this.drops, camera: this.camera, renderer: this.renderer,
@@ -293,6 +296,7 @@ export class Game {
     for (const fn of this.cleanup) fn();
     this.dialogue.destroy();
     this.hud.destroy();
+    this.renderer.dispose?.();
   }
 
   private get slot(): HotbarSlot | null {
