@@ -1,5 +1,10 @@
 # Changelog
 
+## Correção de oclusão da Deusa no Santuário Three.js — 11/11/2026 (PR #91)
+- O sprite flutuante da Deusa agora usa o rodapé real da textura 256×320 como âncora física; a animação original mantém a elevação dos pés. A sombra deixa o billboard vertical e passa a ser um elemento horizontal independente exatamente no chão/nível de apoio lógico, com os mesmos raios e a mesma leve variação de escala.
+- O desenho não avança mais 0,15 célula na direção da câmera. O sprite principal continua respeitando a profundidade real dos blocos (`depthTest=true`); uma silhueta etérea de baixa opacidade dá legibilidade quando uma parede realmente o oculta. Colisões, salvamento e Mundo principal inalterados.
+
+
 ## Correção de colisão Santuário WebGL — 11/11/2026 (PR #90)
 - No Santuário oficial Three.js, a Deusa não sobe automaticamente cubos inteiros ao pressionar a direção: blocos de 1 ou 2 níveis, paredes e pilares voltam a barrar sua caixa de colisão, via `player.spec.stepHeight = 0` apenas no perfil WebGL. Era o `STEP_HEIGHT=1` legado da vista 2D que fazia atravessar visualmente a parede ao subir sem comando de salto.
 - Mundo principal e `?render=2d` continuam com a física anterior; sem alteração em colisões por subcélula, salvamentos, chunks, câmeras ou renderizadores. Testes de regressão da colisão e do fallback adicionados.
