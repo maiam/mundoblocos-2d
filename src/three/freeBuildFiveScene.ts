@@ -67,7 +67,7 @@ export function renderFreeBuildFive(
     const uvBack = [[u,y/4],[w,y/4],[w,(y+1)/4],[u,(y+1)/4]];
     const uvSide = (a: number, b: number) => [[a/4,y/4],[b/4,y/4],[b/4,(y+1)/4],[a/4,(y+1)/4]];
 
-    // Top of a solid block below a thin one must keep its two exposed bands.
+    // When a thin panel sits on a solid block, reveal only the rear half of its top.
     const above = data.get(cell.x, cell.y, cell.z + 1);
     const aboveThin = above && horizontalWallShape(data, above, adaptiveWalls) === 'thin';
     const addTop = (a: number, b: number) => addFace(buffer(id, 'top'),
