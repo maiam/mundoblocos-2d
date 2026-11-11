@@ -718,3 +718,14 @@ com gravidade, impulso, pé-direito e pouso.
 **Validar manualmente:** construção/remoção sem inversão, seleção
 com botão do meio, ciclo da hotbar, sprint, contenção na borda
 da laje com Shift, alternância de câmeras e efeitos em touch.
+
+
+## Ajuste de controles solicitado (10/11/2026)
+
+No modo de construção **primeira pessoa**, o usuário definiu explicitamente o padrão de Orvalis, que difere do Minecraft:
+
+- **Botão esquerdo:** colocar bloco adjacente à face selecionada.
+- **Botão direito:** destruir/remover o bloco apontado.
+- **Botão do meio:** copiar o material do bloco selecionado.
+
+Os textos do laboratório foram corrigidos. O mapeamento é coberto por teste automatizado. A alteração é restrita ao modo experimental, sem afetar a construção das câmeras externas e os salvamentos.
