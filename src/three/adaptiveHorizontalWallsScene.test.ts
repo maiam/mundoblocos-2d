@@ -28,6 +28,38 @@ function zRange(triangles: Triangle[]): [number, number] {
 }
 
 describe('Santuário — malha de parede com frente alinhada aos pilares', () => {
+
+  it('renders a visible door leaf on a full-depth pillar and joins thin stone neighbors', () => {
+    const ed = new FreeBuildFive();
+    for (let x = 33; x <= 37; x++) ed.set(x, 12, 0, 84);
+    ed.remove(35, 12, 0);
+    ed.setDoor(35, 12, 0, 84);
+    const texture = new THREE.Texture();
+    const kit: SanctuaryV2Materials = {
+      textures: new Map([[84, texture]]), seams: new Map(),
+      dispose() { texture.dispose(); },
+    };
+    const scene = renderFreeBuildFive(ed, 0, 0, kit, 1, true);
+    try {
+      const triangles = allTriangles(scene.group);
+      const door = triangles.filter(t => t.cell.x === 35 && t.cell.y === 12);
+      const sideWall = triangles.filter(t => t.cell.x === 34 && t.cell.y === 12);
+      expect(zRange(sideWall)[0]).toBeGreaterThan(12.4);
+      // The door cell remains a full pillar even surrounded by identical stone.
+      expect(zRange(door)[0]).toBe(12);
+      // Its wood panel remains accessible by the same raycast-to-voxel mapping.
+      const leaf = scene.group.children.find((mesh: any) =>
+        mesh.material?.color?.getHex?.() === 0x805039);
+      expect(leaf).toBeDefined();
+      expect(leaf.userData.freeBuildCells).toContainEqual(
+        expect.objectContaining({ x: 35, y: 12, kind: 'door' }),
+      );
+    } finally {
+      scene.dispose();
+      kit.dispose();
+    }
+  });
+
   it('keeps the stone panel front flush at +Z and removes only the rear half', () => {
     const ed = new FreeBuildFive();
     for (let x = 33; x <= 35; x++) expect(ed.set(x, 12, 0, 84).ok).toBe(true);
