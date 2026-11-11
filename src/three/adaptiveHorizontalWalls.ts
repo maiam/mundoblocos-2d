@@ -37,3 +37,19 @@ export function buildHorizontalWallDemo(
   for (let y = 10; y < 12; y++) for (let x = 40; x < 42; x++) editor.set(x, y, 0, id);
   for (let y = 14; y < 17; y++) for (let x = 43; x < 46; x++) editor.set(x, y, 0, id);
 }
+
+/**
+ * Place against the original logical voxel, rather than floor(hit.point):
+ * a recessed thin-wall face is not at the cell boundary.
+ */
+export function adjacentFreeBuildCell(
+  cell: Pick<FreeBuildVoxel, 'x' | 'y' | 'z'>,
+  normal: { x: number; y: number; z: number },
+  remove: boolean,
+): {x: number; y: number; z: number} {
+  if (remove) return { x: cell.x, y: cell.y, z: cell.z };
+  const ax = Math.abs(normal.x), ay = Math.abs(normal.y), az = Math.abs(normal.z);
+  if (ax >= ay && ax >= az) return { x: cell.x + Math.sign(normal.x), y: cell.y, z: cell.z };
+  if (ay >= az) return { x: cell.x, y: cell.y, z: cell.z + Math.sign(normal.y) };
+  return { x: cell.x, y: cell.y + Math.sign(normal.z), z: cell.z };
+}
