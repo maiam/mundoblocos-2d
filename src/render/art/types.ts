@@ -26,8 +26,10 @@ export interface ArtPack {
    * é o padrão do jogo e carrega antes dele começar (~110 kB, dentro do orçamento de início).
    */
   materialsV2?: { atlas: string; manifest: import('../materialsV2').MaterialsV2Manifest; masks?: string };
-  /** Atlas e ícones dos blocos celestiais (Santuário). */
+  /** Atlas legado de 18 blocos celestiais (fallback para arte não substituída). */
   celestialAtlas?: string;
+  /** Seis superfícies aprovadas para IDs 80–85; exclusivas do Santuário. */
+  celestialSurfaces?: Partial<Record<number, string>>;
   celestialIcons: Partial<Record<number, string>>;
   /** Porta de Carvalho (8 quadros). */
   oakDoor?: string;
