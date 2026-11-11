@@ -15,7 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
-import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
+import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER, fpsCycleHotbar, fpsSneakWouldFall, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -305,6 +305,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let firstPerson = false;
   let fpYaw = Math.PI / 2; // start facing +X toward the demo staircase
   let fpPitch = -0.12;
+  const fpBaseSpeed = player.spec.speed;
+  let fpSneakCamera = 0;
+  let fpActiveSlot = 2;
   let fpDragPointer: number | null = null;
   let fpLastDrag = { x: 0, y: 0 };
   const fpCenter = new THREE.Vector2(0, 0);
@@ -312,7 +315,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const fpAim = new THREE.Vector3();
   function fpsActive(): boolean { return firstPerson && laboratoryV2Active && freeBuildEnabled; }
   function updateFPSCamera(): void {
-    fpsCamera.position.set(player.x, player.visualZ + FP_EYE_HEIGHT, player.y);
+    fpsCamera.position.set(player.x, player.visualZ + FP_EYE_HEIGHT - fpSneakCamera, player.y);
     const [dx, dy, dz] = firstPersonForward(fpYaw, fpPitch);
     fpDirection.set(dx, dy, dz);
     fpAim.copy(fpsCamera.position).add(fpDirection);
@@ -322,12 +325,15 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   function switchFirstPerson(enable: boolean): void {
     firstPerson = enable && freeBuildEnabled && laboratoryV2Active;
     if (!firstPerson && document.pointerLockElement === canvas) document.exitPointerLock();
+    player.spec.speed = fpBaseSpeed;
+    if (!firstPerson) fpSneakCamera = 0;
     goddess.visible = !firstPerson;
     shadow.visible = !firstPerson;
     if (!firstPerson) fpFaceHighlight.visible = false;
     if (typeof fpCrosshair !== 'undefined') fpCrosshair.hidden = !firstPerson;
     if (typeof fpFaceInfo !== 'undefined') fpFaceInfo.hidden = !firstPerson;
     if (typeof fpAction !== 'undefined') fpAction.hidden = !firstPerson;
+    if (typeof fpRemoveAction !== 'undefined') fpRemoveAction.hidden = !firstPerson;
     if (typeof fpExitButton !== 'undefined') fpExitButton.hidden = !firstPerson;
     if (typeof fpModeButton !== 'undefined') fpModeButton.textContent =
       firstPerson ? 'Sair da primeira pessoa' : 'Primeira pessoa (construção)';
@@ -335,8 +341,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       iso ? 'Câmera: isométrica' : 'Câmera: superior';
     if (firstPerson) {
       laboratoryCamera = false;
-      cloudStatus.textContent = 'Primeira pessoa: WASD para caminhar · mouse para olhar · '
-        + 'clique esquerdo para construir · direito para remover · Esc solta o cursor · C troca a câmera.';
+      cloudStatus.textContent = 'Primeira pessoa: WASD · mouse olhar · esquerdo remover · direito colocar · '
+        + 'meio copiar bloco · roda/1–6 escolher · Shift agachar · Ctrl correr · F5 câmeras · Esc soltar mouse.';
       updateFPSCamera();
     }
   }
@@ -647,7 +653,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   top.append(backButton);
   hud.append(header);
   const tip = document.createElement('div');
-  tip.textContent = 'WASD / setas: mover · clique/toque: bloco · roda: zoom · C: câmera · B: construir/remover';
+  tip.textContent = 'Externa: WASD, roda zoom, C câmera, B edição. Primeira pessoa: '
+    + 'esquerdo remover, direito colocar, meio copiar, roda/1–6 selecionar, Shift agachar, Ctrl correr, F5 câmeras.';
   tip.style.cssText = 'background:rgba(31,25,76,.76);padding:6px 9px;border-radius:8px;font-size:11px;max-width:min(90vw,680px);line-height:1.45;';
   tip.hidden = true;
   header.append(tip);
@@ -890,10 +897,17 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     + 'text-align:center;max-width:80vw;';
   fpFaceInfo.hidden = true;
   hud.append(fpFaceInfo);
-  const fpAction = button('Construir / Remover', () => {
+  const fpAction = button('Colocar bloco', () => {
     if (!fpsActive()) return;
-    editFreeBuildAt(0, 0, true);
+    editFreeBuildAt(0, 0, true, false);
   });
+  const fpRemoveAction = button('Remover bloco', () => {
+    if (!fpsActive()) return;
+    editFreeBuildAt(0, 0, true, true);
+  });
+  fpRemoveAction.style.cssText = 'position:absolute;right:15px;bottom:190px;z-index:6;';
+  fpRemoveAction.hidden = true;
+  hud.append(fpRemoveAction);
   fpAction.style.cssText = 'position:absolute;right:15px;bottom:140px;z-index:6;';
   fpAction.hidden = true;
   hud.append(fpAction);
@@ -1068,7 +1082,12 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   const tools = document.createElement('div');
   tools.className = 'three-tools';
   for (const id of CELESTIAL_BLOCKS) {
-    const b = button('', () => { selectedBlock = id; for (const el of tools.querySelectorAll('button')) el.classList.remove('active'); b.classList.add('active'); });
+    const b = button('', () => {
+      selectedBlock = id;
+      fpActiveSlot = CELESTIAL_BLOCKS.indexOf(id);
+      for (const el of tools.querySelectorAll('button')) el.classList.remove('active');
+      b.classList.add('active');
+    });
     b.title = 'Bloco celestial ' + id;
     b.setAttribute('aria-label', b.title);
     const img = document.createElement('img');
@@ -1079,6 +1098,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     tools.append(b);
   }
   hud.append(tools);
+  function selectFPSHotbar(index: number): void {
+    if (index < 0 || index >= CELESTIAL_BLOCKS.length) return;
+    fpActiveSlot = index;
+    selectedBlock = CELESTIAL_BLOCKS[index];
+    const buttons = [...tools.querySelectorAll('button')];
+    buttons.forEach((b, i) => b.classList.toggle('active', i === index));
+  }
   // Keep primary actions visible; optional or legacy controls live in a compact menu.
   const more = document.createElement('details');
   more.className = 'three-more';
@@ -1119,8 +1145,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     const k = e.key.toLowerCase();
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
     keys.add(k);
-    if (!e.repeat && k === 'c') cameraButton.click();
-    if (!e.repeat && k === 'b') editButton.click();
+    if (!e.repeat && (k === 'c' || k === 'f5')) {
+      e.preventDefault();
+      cameraButton.click();
+    }
+    if (!e.repeat && k === 'b' && !fpsActive()) editButton.click();
+    if (fpsActive() && !e.repeat && /^[1-6]$/.test(k)) {
+      selectFPSHotbar(Number(k) - 1);
+    }
     if (!e.repeat && k === 'f' && laboratoryV2Active && freeBuildEnabled)
       switchFirstPerson(!fpsActive());
     if (!e.repeat && k === 'escape' && fpsActive() && document.pointerLockElement !== canvas)
@@ -1331,6 +1363,21 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
         down = null;
         return;
       }
+      if (e.button === 1) {
+        updateFPSCamera();
+        raycaster.setFromCamera(fpCenter, fpsCamera);
+        raycaster.far = FP_REACH;
+        const voxelHit = freeBuildView && raycaster.intersectObject(freeBuildView.group, true)
+          .find((hit: any) => hit.object.userData.freeBuildFive && hit.distance <= FP_REACH);
+        if (voxelHit) {
+          const original = firstPersonHitCell(voxelHit.point,
+            voxelHit.face?.normal ?? new THREE.Vector3(0, 1, 0), x0, y0, true);
+          const block = freeBuild.get(original.x, original.y, original.z);
+          if (block) selectFPSHotbar(CELESTIAL_BLOCKS.indexOf(block.id));
+        }
+        down = null;
+        return;
+      }
       fpDragPointer = e.pointerId;
       fpLastDrag = { x: e.clientX, y: e.clientY };
       down = { x: e.clientX, y: e.clientY };
@@ -1340,8 +1387,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   });
   canvas.addEventListener('pointerup', (e) => {
     if (fpsActive()) {
-      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 13)
-        editFreeBuildAt(e.clientX, e.clientY, true, e.button === 2 ? true : removing);
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 13
+        && (e.button === 0 || e.button === 2)) {
+        // Minecraft convention: left removes, right places.
+        editFreeBuildAt(e.clientX, e.clientY, true, e.button === 0);
+      }
       down = null;
       fpDragPointer = null;
       return;
@@ -1363,7 +1413,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (changed) rebuildAfterEdit();
   });
   canvas.addEventListener('wheel', (e) => {
-    if (fpsActive()) { e.preventDefault(); return; }
+    if (fpsActive()) {
+      e.preventDefault();
+      selectFPSHotbar(fpsCycleHotbar(fpActiveSlot, Math.sign(e.deltaY), CELESTIAL_BLOCKS.length));
+      return;
+    }
     e.preventDefault();
     zoom = Math.max(5, Math.min(20, zoom * (e.deltaY > 0 ? 1.12 : 0.89)));
   }, { passive: false });
@@ -1408,13 +1462,33 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
         : houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
       : world;
     if (fpsActive()) {
-      const [ux, uy] = firstPersonMovement(sx, sy, fpYaw);
+      const sprint = (keys.has('control') || keys.has('ctrl')) && keys.has('w');
+      const sneak = keys.has('shift');
+      player.spec.speed = fpBaseSpeed * (sneak ? FP_SNEAK_MULTIPLIER
+        : sprint ? FP_SPRINT_MULTIPLIER : 1);
+      fpSneakCamera += ((sneak ? 0.28 : 0) - fpSneakCamera)
+        * (1 - Math.exp(-12 * dt));
+      let [ux, uy] = firstPersonMovement(sx, sy, fpYaw);
+      if (sneak && player.z > 0) {
+        // Edge safety: try each axis independently so sneaking can slide
+        // along a ledge instead of stepping off into thin air.
+        const step = player.spec.speed * dt;
+        const support = (cx: number, cy: number, h: number) => freeBuild.support(cx-x0, cy-y0, h);
+        if (fpsSneakWouldFall(player.x + ux*step, player.y,
+          player.z, player.spec.halfW, player.spec.halfD, support)) ux = 0;
+        if (fpsSneakWouldFall(player.x, player.y + uy*step,
+          player.z, player.spec.halfW, player.spec.halfD, support)) uy = 0;
+      }
       player.move(dt, ux, uy, movementWorld);
     } else if (iso) {
+      player.spec.speed = fpBaseSpeed;
       const ux = (sx + sy) * Math.SQRT1_2;
       const uy = (sy - sx) * Math.SQRT1_2;
       player.move(dt, ux, uy, movementWorld);
-    } else player.move(dt, sx, sy, movementWorld);
+    } else {
+      player.spec.speed = fpBaseSpeed;
+      player.move(dt, sx, sy, movementWorld);
+    }
     if (goddessIsoMode && goddessIsoSheets) {
       goddessIsoDirection = goddessIsoDirectionByInput(
         sx, sy, goddessIsoDirection,
