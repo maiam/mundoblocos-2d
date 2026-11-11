@@ -683,3 +683,38 @@ Apontar para laterais dos degraus, topo e parte de baixo da laje. A face
 dourada destacada deve seguir a mira, sem selecionar apenas o chão. Construir
 e remover, observando a célula adjacente. Este efeito ainda requer aprovação
 visual do usuário no navegador.
+
+## Laboratório V3.2 — controles estilo Minecraft (10/11/2026)
+
+O usuário aprovou a primeira pessoa e a seleção de faces, mas quer testar
+controles familiares de jogos de construção. Implementados APENAS no editor
+livre do Santuário Three.js experimental:
+
+| Entrada | Ação |
+| --- | --- |
+| WASD | Movimento relativo ao olhar |
+| Mouse | Olhar, yaw corrigido |
+| Esquerdo | Remover bloco sob a mira (face dourada) |
+| Direito | Adicionar bloco adjacente à face sob a mira |
+| Meio / roda pressionada | Copiar material do bloco apontado para a hotbar |
+| Roda girada | Percorrer os seis blocos 80–85 |
+| Números 1 a 6 | Selecionar material da hotbar |
+| Ctrl + W | Correr (velocidade experimental ×1,55) |
+| Shift | Agachar devagar (×0,42), abaixar olhos e evitar sair de bordas de plataformas |
+| F5 ou C | Alternar câmeras superior/isométrica/primeira pessoa no editor |
+| Esc | Soltar cursor preso; pressionar novamente sai da primeira pessoa |
+| Botões touch | Colocar e Remover separados; joystick permanece |
+
+A mudança não depende da mecânica aprovada de escadas/colisão nem altera
+o sprite 2D, materiais V2.1, geometria, mundo original ou salvamentos.
+
+**Não implementado ainda:** pulo real com trajetória aérea, queda
+e colisões de cabeça; o movimento atual usa um `Walker` com
+apoio em superfícies e subida automática de um degrau. Não simular
+pulo apenas deslocando a câmera, pois isso divergiria da física.
+Antes do pulo, criar e validar um controlador de movimento vertical
+com gravidade, impulso, pé-direito e pouso.
+
+**Validar manualmente:** construção/remoção sem inversão, seleção
+com botão do meio, ciclo da hotbar, sprint, contenção na borda
+da laje com Shift, alternância de câmeras e efeitos em touch.
