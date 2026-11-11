@@ -7,7 +7,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 ## Experimento não publicado — paredes horizontais adaptativas (Santuário Three.js)
 
 - A regra e o protótipo 3D estão isolados na `feat/santuario-three-experimental` (PR #86 draft): só linhas horizontais de pedra/mármore afinam; massas preenchidas não afinam.
-- **Pendente de aprovação visual:** inspecionar a cena de comparação e borda superior na câmera top-down; verificar encaixe com materiais PNG V2.1, remoção e raycasting nas faces recuadas.
+- **Pendente de aprovação visual:** inspecionar a cena de comparação, borda superior e nova porta-pilar (fechada, decorativa) na câmera top-down; verificar encaixe com materiais PNG V2.1, empilhamento via topo nas câmeras superior/isométrica, locomoção/subida com ambas e raycasting nas faces recuadas.
 - **Pendente para eventual produção:** colisão subcélula real das paredes de 50% (ancoradas na frente +Z) (o Walker atual ocupa célula completa), otimização incremental do editor e decisão sobre materiais/construção fora do Santuário. Não integrar na `main` antes do aceite.
 
 ## 1. Panorama — o que temos
