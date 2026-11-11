@@ -3,7 +3,7 @@
 ## Próxima versão (PR #87, ainda não publicada) — 2026-11-11
 - **Render top-down oficial:** autotile horizontal de paredes de construção a partir dos blocos atuais. Só blocos intermediários de linhas horizontais isoladas afinam (topo reduzido pela metade para trás); face frontal continua alinhada aos pilares. Massas preenchidas, terrenos e nuvens seguem maciços. Portas existentes contam como pilares sem alterar sua interação.
 - **Máximo de construção:** dois níveis no mundo e Santuário, inclusive na restauração de saves antigos (terceiro nível deixa de ser carregado e altura do personagem é limitada a 2).
-- **Arte pendente:** os seis novos PNGs 80–85 usados no experimento não estão no repositório, pois foram carregados de arquivos locais; os seis IDs já existiam no Santuário 2D. Não substituir as artes existentes por aproximações.
+- **Arte do Santuário 80–85:** seis superfícies aprovadas pelo usuário incorporadas e normalizadas para imagens JPEG 512×512. As faces de cada cubo, o chão e os ícones usam sua textura individual; os outros doze blocos celestiais continuam usando o atlas antigo. Pacote limitado ao Santuário, sem adicionar esses materiais ao mundo principal.
 - Fora do escopo: Three.js experimental, novas câmeras, novas portas, mudanças em terreno, inventário e NPCs.
 
 
