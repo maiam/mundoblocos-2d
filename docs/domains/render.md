@@ -39,12 +39,16 @@ Apenas apresentação; lê `World`, nunca escreve.
 - **Chão V2 sem grade**: `BlockTextures.continuousGround` lista os chãos V2; o `chunkRenderer` pula neles a "grade sutil de blocos" (1 px por célula, alfa 0,07) que continua no chão antigo.
 - **Transições entre chãos** (v0.87.0): `render/transitions.ts` (regras por par com `shape`, e `transitionPieces`), `textures.buildTransitions` (por forma 8 peças em 3 camadas: halo, corpo = topo do material que avança dentro da máscara, espuma; a Água avança com o ladrilho `agua` do V2) e `chunkRenderer` (desenha depois do chão: halo, corpo, espuma; pula barranca/fio de espuma antigos quando o vizinho recebe a margem nova). Só chão plano e mesma altura; máscaras são formas e podem girar (CONVENTIONS); a textura nunca gira.
 
+## Autotile horizontal de construção — PR #87
+
+`render/adaptiveWalls.ts` decide `solid`/`thin` consultando esquerda/direita e frente/trás no mesmo nível: só materiais construtivos específicos, nunca terreno, pedras naturais nem nuvens. Uma porta de carvalho oficial (aberta ou fechada) vale como pilar para conexões horizontais. No estado `thin`, o cubo V2 ou celestial continua usando o sprite já produzido, mas seu topo é recortado para a **metade frontal**, preservando **100% da face vertical frontal** no alinhamento do pilar. Grupos 2×2/3×3 permanecem maciços. Não requer câmera 3D, atlas novo nem sprites por combinação.
+
 ## Pipeline
 - `ChunkRenderer` (cache do chão por chunk, invalidado por `version`, liberado após ~90 frames sem uso):
   material → topo contínuo do atlas **sempre na direção desenhada** (nunca gira nem espelha; só a variação, quando há mais de uma, é sorteada por célula) · água → tile procedural ·
   `HOLE` → fundo escuro + parede de terra no lado norte; depois barranca e espuma nas margens, grade sutil e
   sombras projetadas por cubos e árvores.
-- Pilhas (até 3): cada nível é desenhado `CUBE_FRONT` px acima do anterior (mesmo sprite de cubo); sombra no chão cresce
+- Pilhas (até 2): cada nível é desenhado `CUBE_FRONT` px acima do anterior (mesmo sprite de cubo); sombra no chão cresce
   com a altura. `pick()` considera a pilha inteira clicável; clicar num cubo com espaço empilha nele.
 - Porta (`textures.doorFrames`, folha `oak-door` 4×2 carregada com os atlas em `blockArt.ts`): corpo da porta
   fechada com a largura da célula, base na borda inferior (altura ≈ 3 × `CUBE_FRONT`), dobradiça à esquerda.
