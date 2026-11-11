@@ -95,3 +95,8 @@ export function fpsSneakWouldFall(
   }
   return false;
 }
+
+/** Orvalis FPS: mouse esquerdo coloca (0); mouse direito destrói (2). */
+export function fpsMouseButtonRemoves(button: number): boolean {
+  return button === 2;
+}
