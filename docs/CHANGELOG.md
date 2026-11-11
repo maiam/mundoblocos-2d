@@ -1,7 +1,7 @@
 # Changelog
 
 ## Experimento sem versão publicada — 2026-11-11 (branch `feat/santuario-three-experimental`)
-- **Santuário, paredes horizontais adaptativas:** regra por vizinhos para afinar só o miolo de linhas 3+ com pedra/mármore 82–85 (profundidade 25%), mantendo colunas nas pontas e grupos 2×2/3×3 maciços. Topo com ressalto, geometrias procedurais, UV por mundo e raycast vinculado à célula original.
+- **Santuário, paredes horizontais adaptativas:** regra por vizinhos para afinar só o miolo de linhas 3+ com pedra/mármore 82–85 (profundidade 50% ancorada na face frontal +Z dos pilares), mantendo colunas nas pontas e grupos 2×2/3×3 maciços. Topo com ressalto, geometrias procedurais, UV por mundo e raycast vinculado à célula original.
 - Botões em **Mais opções** para ligar/desligar e montar comparação visual; teste da regra, destruição e seleção. Escopo efêmero, sem mudar câmera superior, arte, `World`, persistência ou `main`; física de movimentação ainda usa célula inteira.
 
 
