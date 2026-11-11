@@ -15,7 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
-import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER, fpsCycleHotbar, fpsSneakWouldFall, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
+import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER, fpsCycleHotbar, fpsSneakWouldFall, fpsMouseButtonRemoves, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -341,7 +341,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       iso ? 'Câmera: isométrica' : 'Câmera: superior';
     if (firstPerson) {
       laboratoryCamera = false;
-      cloudStatus.textContent = 'Primeira pessoa: WASD · mouse olhar · esquerdo remover · direito colocar · '
+      cloudStatus.textContent = 'Primeira pessoa: WASD · mouse olhar · esquerdo colocar · direito destruir · '
         + 'meio copiar bloco · roda/1–6 escolher · Shift agachar · Ctrl correr · F5 câmeras · Esc soltar mouse.';
       updateFPSCamera();
     }
@@ -654,7 +654,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   hud.append(header);
   const tip = document.createElement('div');
   tip.textContent = 'Externa: WASD, roda zoom, C câmera, B edição. Primeira pessoa: '
-    + 'esquerdo remover, direito colocar, meio copiar, roda/1–6 selecionar, Shift agachar, Ctrl correr, F5 câmeras.';
+    + 'esquerdo colocar, direito destruir, meio copiar, roda/1–6 selecionar, Shift agachar, Ctrl correr, F5 câmeras.';
   tip.style.cssText = 'background:rgba(31,25,76,.76);padding:6px 9px;border-radius:8px;font-size:11px;max-width:min(90vw,680px);line-height:1.45;';
   tip.hidden = true;
   header.append(tip);
@@ -1389,8 +1389,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (fpsActive()) {
       if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 13
         && (e.button === 0 || e.button === 2)) {
-        // Minecraft convention: left removes, right places.
-        editFreeBuildAt(e.clientX, e.clientY, true, e.button === 0);
+        // Orvalis controls: left places, right destroys.
+        editFreeBuildAt(e.clientX, e.clientY, true, fpsMouseButtonRemoves(e.button));
       }
       down = null;
       fpDragPointer = null;
