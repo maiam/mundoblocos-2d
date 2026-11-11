@@ -1,7 +1,11 @@
+import newCloudSolid from '../../assets/santuario-nuvem-solida-512.jpg';
+import newCloudEthereal from '../../assets/santuario-nuvem-eterea-512.jpg';
+import newMarbleCelestial from '../../assets/santuario-marmore-celestial-512.jpg';
+import newMarbleOrnate from '../../assets/santuario-marmore-ornamentado-512.jpg';
+import newStoneCelestial from '../../assets/santuario-pedra-celestial-512.jpg';
+import newStoneGolden from '../../assets/santuario-pedra-dourada-512.jpg';
 import celestialAtlas from '../../assets/celestial-atlas.webp';
 import goddessFloat from '../../assets/goddess-float.webp';
-import iconCloudEthereal from '../../assets/icon-celestial-cloud-ethereal.webp';
-import iconCloudSolid from '../../assets/icon-celestial-cloud-solid.webp';
 import iconCrystalLife from '../../assets/icon-celestial-crystal-life.webp';
 import iconEarthCultivated from '../../assets/icon-celestial-earth-cultivated.webp';
 import iconEarthFloral from '../../assets/icon-celestial-earth-floral.webp';
@@ -10,11 +14,7 @@ import iconFoliageGolden from '../../assets/icon-celestial-foliage-golden.webp';
 import iconGrassCelestial from '../../assets/icon-celestial-grass-celestial.webp';
 import iconGrassFlowery from '../../assets/icon-celestial-grass-flowery.webp';
 import iconLightBlock from '../../assets/icon-celestial-light-block.webp';
-import iconMarbleCelestial from '../../assets/icon-celestial-marble-celestial.webp';
-import iconMarbleOrnate from '../../assets/icon-celestial-marble-ornate.webp';
 import iconMossLuminous from '../../assets/icon-celestial-moss-luminous.webp';
-import iconStoneCelestial from '../../assets/icon-celestial-stone-celestial.webp';
-import iconStoneGolden from '../../assets/icon-celestial-stone-golden.webp';
 import iconWaterCrystal from '../../assets/icon-celestial-water-crystal.webp';
 import iconWaterSacred from '../../assets/icon-celestial-water-sacred.webp';
 import iconWoodCelestial from '../../assets/icon-celestial-wood-celestial.webp';
@@ -25,13 +25,21 @@ import type { ArtPack } from './types';
 const pack: ArtPack = {
   actors: { goddess: goddessFloat },
   celestialAtlas,
+  celestialSurfaces: {
+    [Block.CLOUD_SOLID]: newCloudSolid,
+    [Block.CLOUD_ETHEREAL]: newCloudEthereal,
+    [Block.MARBLE_CELESTIAL]: newMarbleCelestial,
+    [Block.MARBLE_ORNATE]: newMarbleOrnate,
+    [Block.STONE_CELESTIAL]: newStoneCelestial,
+    [Block.STONE_GOLDEN]: newStoneGolden,
+  },
   celestialIcons: {
-    [Block.CLOUD_SOLID]: iconCloudSolid,
-    [Block.CLOUD_ETHEREAL]: iconCloudEthereal,
-    [Block.MARBLE_CELESTIAL]: iconMarbleCelestial,
-    [Block.MARBLE_ORNATE]: iconMarbleOrnate,
-    [Block.STONE_CELESTIAL]: iconStoneCelestial,
-    [Block.STONE_GOLDEN]: iconStoneGolden,
+    [Block.CLOUD_SOLID]: newCloudSolid,
+    [Block.CLOUD_ETHEREAL]: newCloudEthereal,
+    [Block.MARBLE_CELESTIAL]: newMarbleCelestial,
+    [Block.MARBLE_ORNATE]: newMarbleOrnate,
+    [Block.STONE_CELESTIAL]: newStoneCelestial,
+    [Block.STONE_GOLDEN]: newStoneGolden,
     [Block.GRASS_CELESTIAL]: iconGrassCelestial,
     [Block.GRASS_FLOWERY]: iconGrassFlowery,
     [Block.MOSS_LUMINOUS]: iconMossLuminous,
