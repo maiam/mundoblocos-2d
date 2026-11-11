@@ -223,7 +223,7 @@ class SpriteSheet {
   }
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
-  draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0): void {
+  draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0, drawShadow = true): void {
     const { height, shadow, walkFps, cols, rows, footPad = 0, float, action, cycle, sequence } = this.spec;
     if (cycle) {
       this.drawCycle(ctx, fx, fy, zoom, a, elapsed);
@@ -233,7 +233,7 @@ class SpriteSheet {
     const wave = float ? Math.sin(elapsed * 2.4) : 0;
     const shadowScale = float ? 1 - 0.12 * (wave + 1) / 2 : 1;
     // Sombra fixa no chão (não acompanha o balanço do sprite).
-    if (shadow[0] > 0) {
+    if (drawShadow && shadow[0] > 0) {
       ctx.fillStyle = float ? 'rgba(30, 20, 70, 0.22)' : 'rgba(30, 20, 70, 0.3)';
       ctx.beginPath();
       ctx.ellipse(fx, fy, shadow[0] * TILE * zoom * shadowScale, shadow[1] * TILE * zoom * shadowScale, 0, 0, Math.PI * 2);
