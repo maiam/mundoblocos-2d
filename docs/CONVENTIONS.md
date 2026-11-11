@@ -11,7 +11,9 @@
   `bench` do contexto (`test('…', async ({ bench }) => { await bench('nome', fn).run(); })`).
 
 ## Mundo e regras
-- Célula: chão + níveis 0..`MAX_STACK`-1 (3): objeto no nível 0, cubos empilhados acima (só sobre cubo). `AIR` = vazio.
+- **Autotile de construção no 2D oficial:** apenas os materiais listados em `render/adaptiveWalls.ts`; painel fino horizontal apenas entre dois iguais (ou porta existente), sem vizinho norte/sul no mesmo nível. A face frontal nunca recua; o topo visual usa a metade frontal. Terreno, rochas naturais, nuvem, pisos e outros objetos ficam maciços.
+- **Altura de construção:** 2 níveis (objeto 0 + superior 1). Um terceiro nível de salvamentos antigos não é restaurado; validar impacto antes de publicar.
+- Célula: chão + níveis 0..`MAX_STACK`-1 (2): objeto no nível 0, cubos empilhados acima (só sobre cubo). `AIR` = vazio.
 - Material tem **um id** para chão e cubo; "é pisável" via `isGroundStandable`, nunca pelo `layer`.
 - Altura de pé/colisão sempre via `World.standHeight` (inclui água, buracos, árvores).
 - Mutação só por `World.setObject/placeBlock/breakBlock/plant` (garante `version` e vizinhos).
