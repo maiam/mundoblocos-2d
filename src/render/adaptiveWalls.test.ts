@@ -1,0 +1,98 @@
+import { describe, expect, it, vi } from 'vitest';
+import { Block, type BlockId } from '../world/blocks';
+import { ADAPTIVE_WALL_BLOCKS, drawThinHorizontalWall, horizontalWallShape, thinWallSlices } from './adaptiveWalls';
+import type { Sprite } from './textures';
+
+const view = (entries: Array<[number,number,number,BlockId]>) => {
+  const cells = new Map(entries.map(([x,y,z,id])=>[x+':'+y+':'+z,id]));
+  return {getLevel(x:number,y:number,z:number):BlockId {
+    return cells.get(x+':'+y+':'+z) ?? Block.AIR;
+  }};
+};
+const buildRun = (id:BlockId,length:number,level=0) =>
+  view(Array.from({length},(_,i)=>[i,2,level,id] as [number,number,number,BlockId]));
+
+describe('autotile de paredes 2D do motor oficial', () => {
+  it('mantém 1/2 blocos sólidos e afina somente o interior das linhas horizontais', () => {
+    for(const id of [Block.STONE_BRICK,Block.STONE_SMOOTH,Block.STONE_POLISHED,
+      Block.OAK_PLANKS,Block.CHERRY_PLANKS,Block.BIRCH_PLANKS,
+      Block.MARBLE_CELESTIAL,Block.MARBLE_ORNATE,
+      Block.STONE_CELESTIAL,Block.STONE_GOLDEN]) {
+      expect(ADAPTIVE_WALL_BLOCKS.has(id)).toBe(true);
+      for(const n of [1,2,3,4,5]) {
+        const w=buildRun(id,n);
+        for(let x=0;x<n;x++) expect(horizontalWallShape(w,id,x,2,0))
+          .toBe(x>0&&x<n-1?'thin':'solid');
+      }
+    }
+  });
+
+  it('terra, pedra natural, areia, pisos e nuvens nunca afinam', () => {
+    for(const id of [Block.DIRT,Block.GRASS,Block.STONE,Block.SAND,Block.STONE_FLOOR,
+      Block.CLOUD_SOLID,Block.CLOUD_ETHEREAL,Block.OAK_LOG]) {
+      const w=buildRun(id,5);
+      expect(horizontalWallShape(w,id,2,2,0)).toBe('solid');
+    }
+  });
+
+  it('volumes 2×2 e 3×3 permanecem maciços; linhas frente/atrás não afinam', () => {
+    for(const size of [2,3]) {
+      const positions: Array<[number,number,number,BlockId]>=[];
+      for(let x=0;x<size;x++)for(let y=0;y<size;y++)
+        positions.push([x,y,0,Block.STONE_BRICK]);
+      const w=view(positions);
+      for(const [x,y,z,id] of positions) expect(horizontalWallShape(w,id,x,y,z)).toBe('solid');
+    }
+    const w=view([[2,1,0,Block.STONE_BRICK],[2,2,0,Block.STONE_BRICK],[2,3,0,Block.STONE_BRICK]]);
+    expect(horizontalWallShape(w,Block.STONE_BRICK,2,2,0)).toBe('solid');
+  });
+
+  it('célula perpendicular impede afinar, sem produzir conexão T ou canto', () => {
+    const run: Array<[number,number,number,BlockId]> =
+      [0,1,2,3,4].map(x=>[x,2,0,Block.STONE_BRICK]);
+    const w=view([...run,[2,1,0,Block.DIRT]]);
+    expect(horizontalWallShape(w,Block.STONE_BRICK,2,2,0)).toBe('solid');
+    expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,0)).toBe('thin');
+    expect(horizontalWallShape(w,Block.STONE_BRICK,3,2,0)).toBe('thin');
+  });
+
+  it('porta aberta ou fechada é pilar e conector apenas no nível zero', () => {
+    for(const door of [Block.OAK_DOOR,Block.OAK_DOOR_OPEN]) {
+      const w=view([[0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],
+        [2,2,0,door],[3,2,0,Block.STONE_BRICK],[4,2,0,Block.STONE_BRICK]]);
+      expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,0)).toBe('thin');
+      expect(horizontalWallShape(w,door,2,2,0)).toBe('solid');
+      expect(horizontalWallShape(w,Block.STONE_BRICK,3,2,0)).toBe('thin');
+      const upper=view([[0,2,1,Block.STONE_BRICK],[1,2,1,Block.STONE_BRICK],
+        [3,2,1,Block.STONE_BRICK],[4,2,1,Block.STONE_BRICK],[2,2,0,door]]);
+      expect(horizontalWallShape(upper,Block.STONE_BRICK,1,2,1)).toBe('solid');
+    }
+  });
+
+  it('níveis diferentes ou materiais de bloco incompatíveis não criam paredes', () => {
+    const w=view([[0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],
+      [2,2,1,Block.STONE_BRICK],[2,2,0,Block.STONE_SMOOTH]]);
+    expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,0)).toBe('solid');
+  });
+
+  it('recorta somente metade traseira do topo, preservando 100% da frente', () => {
+    const r=thinWallSlices(100,50,82,114,132);
+    expect(r).toEqual({topSrcY:32,topSrcH:32,frontSrcY:64,frontSrcH:36,
+      topY:98,topH:16,frontY:114,frontH:18});
+  });
+
+  it('desenha topo fino e face frontal inteira com alinhamento ao pilar', () => {
+    const ops:unknown[][]=[];
+    const ctx={
+      drawImage:(...args:unknown[])=>{ops.push(args);},
+      fillRect:vi.fn(),
+      fillStyle:'',
+    } as unknown as CanvasRenderingContext2D;
+    const sprite={canvas:{width:64,height:100},h:50} as Sprite;
+    drawThinHorizontalWall(ctx,sprite,30,62,82,114,132);
+    expect(ops).toHaveLength(2);
+    expect(ops[0].slice(1)).toEqual([0,32,64,32,30,98,32,16]);
+    expect(ops[1].slice(1)).toEqual([0,64,64,36,30,114,32,18]);
+    expect(ctx.fillRect).toHaveBeenCalledWith(30,98,32,1);
+  });
+});
