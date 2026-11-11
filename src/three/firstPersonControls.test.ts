@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_PITCH_LIMIT, firstPersonLook, firstPersonMovement, firstPersonForward, firstPersonHitCell, firstPersonFaceOverlay } from './firstPersonControls';
+import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_PITCH_LIMIT, firstPersonLook, firstPersonMovement, firstPersonForward, firstPersonHitCell, firstPersonFaceOverlay, fpsCycleHotbar, fpsSneakWouldFall, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER } from './firstPersonControls';
 
 describe('Laboratório V3 — câmera em primeira pessoa', () => {
   it('tem campo de visão e alcance configurados para construção próxima', () => {
@@ -41,6 +41,21 @@ describe('Laboratório V3 — câmera em primeira pessoa', () => {
     expect(side.label).toContain('direita');
     expect(firstPersonHitCell({x:35,y:2.6,z:14.6},{x:1,y:0,z:0},x0,y0,false))
       .toEqual({x:5,y:4,z:2});
+  });
+  it('roda de mouse percorre barra circular, com seis blocos 80–85', () => {
+    expect(fpsCycleHotbar(0, 1, 6)).toBe(1);
+    expect(fpsCycleHotbar(5, 1, 6)).toBe(0);
+    expect(fpsCycleHotbar(0, -1, 6)).toBe(5);
+    expect(fpsCycleHotbar(2, 0, 6)).toBe(2);
+    expect(fpsCycleHotbar(2, 1, 0)).toBe(0);
+  });
+  it('agachar protege borda somente se a caixa inteira dos pés ainda tem apoio', () => {
+    const supports = (x: number, y: number) => x === 5 && y === 5 ? 3 : 0;
+    expect(fpsSneakWouldFall(5.5, 5.5, 3, 0.27, 0.15, supports)).toBe(false);
+    expect(fpsSneakWouldFall(5.92, 5.5, 3, 0.27, 0.15, supports)).toBe(true);
+    expect(fpsSneakWouldFall(5.5, 5.5, 0, 0.27, 0.15, supports)).toBe(false);
+    expect(FP_SNEAK_MULTIPLIER).toBeLessThan(1);
+    expect(FP_SPRINT_MULTIPLIER).toBeGreaterThan(1);
   });
   it('WASD acompanha a rotação, preservando os inputs do Walker', () => {
     const near = (a: number[], b: number[]) => {
