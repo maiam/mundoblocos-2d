@@ -56,17 +56,65 @@ describe('autotile de paredes 2D do motor oficial', () => {
     expect(horizontalWallShape(w,Block.STONE_BRICK,3,2,0)).toBe('thin');
   });
 
-  it('porta aberta ou fechada é pilar e conector apenas no nível zero', () => {
+  it('porta aberta ou fechada é pilar na base e conecta paredes dos dois níveis', () => {
     for(const door of [Block.OAK_DOOR,Block.OAK_DOOR_OPEN]) {
       const w=view([[0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],
-        [2,2,0,door],[3,2,0,Block.STONE_BRICK],[4,2,0,Block.STONE_BRICK]]);
+        [2,2,0,door],[3,2,0,Block.STONE_BRICK],[4,2,0,Block.STONE_BRICK],
+        [1,2,1,Block.STONE_POLISHED],[3,2,1,Block.STONE_SMOOTH]]);
       expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,0)).toBe('thin');
       expect(horizontalWallShape(w,door,2,2,0)).toBe('solid');
       expect(horizontalWallShape(w,Block.STONE_BRICK,3,2,0)).toBe('thin');
-      const upper=view([[0,2,1,Block.STONE_BRICK],[1,2,1,Block.STONE_BRICK],
-        [3,2,1,Block.STONE_BRICK],[4,2,1,Block.STONE_BRICK],[2,2,0,door]]);
-      expect(horizontalWallShape(upper,Block.STONE_BRICK,1,2,1)).toBe('solid');
+      // Os painéis acima herdam a forma da base mesmo sem vizinhos no andar.
+      expect(horizontalWallShape(w,Block.STONE_POLISHED,1,2,1)).toBe('thin');
+      expect(horizontalWallShape(w,Block.STONE_SMOOTH,3,2,1)).toBe('thin');
+      // A porta continua sendo o pilar; não se cria parede no lugar dela.
+      expect(horizontalWallShape(w,Block.STONE_BRICK,2,2,1)).toBe('solid');
     }
+  });
+
+  it('segundo nível herda parede, mesmo com material ou vizinhança diferente', () => {
+    const w=view([
+      [0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],[2,2,0,Block.STONE_BRICK],
+      [1,2,1,Block.OAK_PLANKS],
+      [1,1,1,Block.OAK_PLANKS], // vizinho frontal só no piso superior: não muda forma
+    ]);
+    expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,0)).toBe('thin');
+    expect(horizontalWallShape(w,Block.OAK_PLANKS,1,2,1)).toBe('thin');
+  });
+
+  it('segundo nível herda pilar, mesmo se seus próprios vizinhos formarem uma linha', () => {
+    const w=view([
+      [0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],
+      [2,2,0,Block.STONE_BRICK],[1,1,0,Block.STONE_BRICK],
+      [0,2,1,Block.OAK_PLANKS],[1,2,1,Block.OAK_PLANKS],
+      [2,2,1,Block.OAK_PLANKS],
+    ]);
+    expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,0)).toBe('solid');
+    expect(horizontalWallShape(w,Block.OAK_PLANKS,1,2,1)).toBe('solid');
+  });
+
+  it('segundo nível sem base adaptativa ou não construtivo permanece maciço', () => {
+    const w=view([
+      [0,2,0,Block.STONE_BRICK],[1,2,0,Block.DIRT],[2,2,0,Block.STONE_BRICK],
+      [0,2,1,Block.STONE_BRICK],[1,2,1,Block.STONE_BRICK],
+      [2,2,1,Block.STONE_BRICK],
+    ]);
+    expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,1)).toBe('solid');
+    expect(horizontalWallShape(w,Block.OAK_PLANKS,10,2,1)).toBe('solid'); // sem base
+    expect(horizontalWallShape(w,Block.DIRT,1,2,1)).toBe('solid'); // não construtivo
+    expect(horizontalWallShape(w,Block.STONE_BRICK,1,2,2)).toBe('solid'); // fora do limite
+  });
+
+  it('ao adicionar/remover vizinho da base, a geometria dos dois níveis muda junta', () => {
+    const cells: Array<[number,number,number,BlockId]> = [
+      [0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],
+      [2,2,0,Block.STONE_BRICK],[1,2,1,Block.MARBLE_ORNATE],
+    ];
+    expect(horizontalWallShape(view(cells),Block.MARBLE_ORNATE,1,2,1)).toBe('thin');
+    cells.push([1,3,0,Block.OAK_PLANKS]); // massa perpendicular na base
+    expect(horizontalWallShape(view(cells),Block.MARBLE_ORNATE,1,2,1)).toBe('solid');
+    cells.pop();
+    expect(horizontalWallShape(view(cells),Block.MARBLE_ORNATE,1,2,1)).toBe('thin');
   });
 
   it('níveis diferentes ou materiais de bloco incompatíveis não criam paredes', () => {

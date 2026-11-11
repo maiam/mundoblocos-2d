@@ -43,6 +43,10 @@ Apenas apresentação; lê `World`, nunca escreve.
 
 O pacote `render/art/santuario.ts` registra seis imagens quadradas individuais (`Block.CLOUD_SOLID` a `Block.STONE_GOLDEN`, IDs 80–85). `render/blockArt.ts` pré-carrega essas superfícies, com fallback no atlas original, e `render/celestialArt.ts` aplica a mesma textura de cada material ao topo, frente e chão 2D. Os ícones dos seis blocos apontam às imagens novas. Não afeta o atlas dos outros 12 blocos nem o pacote do mundo principal.
 
+## Autotile vertical dependente da base — revisão posterior ao PR #87
+
+A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apenas sua vizinhança horizontal e o bloqueio ao norte/sul. O nível 1 usa exatamente a mesma decisão geométrica, sem avaliar seus próprios vizinhos e sem alterar sua textura ou material. Se a base for pilar (inclusive porta), o bloco de cima será maciço; se a base for parede fina, o de cima também será fino. Blocos superiores não construtivos ou sem base construtiva permanecem maciços. Válido somente para os dois níveis oficiais e a câmera top-down, sem mudanças físicas.
+
 ## Autotile horizontal de construção — PR #87
 
 `render/adaptiveWalls.ts` decide `solid`/`thin` consultando esquerda/direita e frente/trás no mesmo nível: só materiais construtivos específicos, nunca terreno, pedras naturais nem nuvens. Uma porta de carvalho oficial (aberta ou fechada) vale como pilar para conexões horizontais. No estado `thin`, o cubo V2 ou celestial continua usando o sprite já produzido, mas seu topo é recortado para a **metade frontal**, preservando **100% da face vertical frontal** no alinhamento do pilar. Grupos 2×2/3×3 permanecem maciços. Não requer câmera 3D, atlas novo nem sprites por combinação.
