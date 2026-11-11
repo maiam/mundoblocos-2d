@@ -39,6 +39,10 @@ Apenas apresentação; lê `World`, nunca escreve.
 - **Chão V2 sem grade**: `BlockTextures.continuousGround` lista os chãos V2; o `chunkRenderer` pula neles a "grade sutil de blocos" (1 px por célula, alfa 0,07) que continua no chão antigo.
 - **Transições entre chãos** (v0.87.0): `render/transitions.ts` (regras por par com `shape`, e `transitionPieces`), `textures.buildTransitions` (por forma 8 peças em 3 camadas: halo, corpo = topo do material que avança dentro da máscara, espuma; a Água avança com o ladrilho `agua` do V2) e `chunkRenderer` (desenha depois do chão: halo, corpo, espuma; pula barranca/fio de espuma antigos quando o vizinho recebe a margem nova). Só chão plano e mesma altura; máscaras são formas e podem girar (CONVENTIONS); a textura nunca gira.
 
+## Texturas celestiais aprovadas — PR #87
+
+O pacote `render/art/santuario.ts` registra seis imagens quadradas individuais (`Block.CLOUD_SOLID` a `Block.STONE_GOLDEN`, IDs 80–85). `render/blockArt.ts` pré-carrega essas superfícies, com fallback no atlas original, e `render/celestialArt.ts` aplica a mesma textura de cada material ao topo, frente e chão 2D. Os ícones dos seis blocos apontam às imagens novas. Não afeta o atlas dos outros 12 blocos nem o pacote do mundo principal.
+
 ## Autotile horizontal de construção — PR #87
 
 `render/adaptiveWalls.ts` decide `solid`/`thin` consultando esquerda/direita e frente/trás no mesmo nível: só materiais construtivos específicos, nunca terreno, pedras naturais nem nuvens. Uma porta de carvalho oficial (aberta ou fechada) vale como pilar para conexões horizontais. No estado `thin`, o cubo V2 ou celestial continua usando o sprite já produzido, mas seu topo é recortado para a **metade frontal**, preservando **100% da face vertical frontal** no alinhamento do pilar. Grupos 2×2/3×3 permanecem maciços. Não requer câmera 3D, atlas novo nem sprites por combinação.
