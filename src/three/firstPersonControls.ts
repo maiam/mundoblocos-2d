@@ -70,3 +70,28 @@ export function firstPersonFaceOverlay(
     : nz > 0 ? 'lateral frontal (+Z)' : 'lateral traseira (-Z)';
   return {cell, center: [cx, cy, cz], normal: [nx, ny, nz], label};
 }
+
+/** Minecraft-like creative construction conveniences, isolated to the FPS lab. */
+export const FP_SPRINT_MULTIPLIER = 1.55;
+export const FP_SNEAK_MULTIPLIER = 0.42;
+export const FP_HOLD_REPEAT_MS = 175;
+
+/** Delta is -1 for wheel-up, +1 for wheel-down; wraps within the six celestial slots. */
+export function fpsCycleHotbar(current: number, delta: number, count: number): number {
+  if (!Number.isInteger(count) || count <= 0) return 0;
+  return ((current + delta) % count + count) % count;
+}
+
+/** The block beneath every part of the player's foot box must remain at this level. */
+export function fpsSneakWouldFall(
+  x: number, y: number, level: number, halfW: number, halfD: number,
+  support: (cellX: number, cellY: number, currentLevel: number) => number | null,
+): boolean {
+  for (let cy = Math.floor(y - halfD); cy <= Math.floor(y + halfD); cy++) {
+    for (let cx = Math.floor(x - halfW); cx <= Math.floor(x + halfW); cx++) {
+      const height = support(cx, cy, level);
+      if (height === null || height < level) return true;
+    }
+  }
+  return false;
+}
