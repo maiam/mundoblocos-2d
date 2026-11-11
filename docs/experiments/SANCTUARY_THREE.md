@@ -783,3 +783,32 @@ Inspecionar no navegador a legibilidade do topo e do ressalto na câmera superio
 - Mantidas as regras anteriores de vizinhança, materiais 82–85, top-down e isolamento da branch. **Colisão de caminhada segue por célula inteira**.
 
 **Validação manual recomendada:** use **Exemplo: paredes 3/4/5, maciços 2×2/3×3**. Na câmera superior, a face da parede deve formar uma fachada contínua com as duas colunas. Confira também as juntas entre o centro e as colunas e, se desejar, o highlight na câmera em primeira pessoa.
+
+
+## V1.3 — subir e empilhar nas câmeras externas; porta como pilar (11/11/2026)
+
+**Feedback:** na construção livre, a primeira pessoa permitia empilhar blocos ao apontar para a face superior, mas no exemplo de paredes as câmeras externas não permitiam a mesma ação intuitiva. Também foi solicitado que portas contem como pilares no autotile horizontal.
+
+### Construção e locomoção nas três câmeras
+
+- A lógica de colisão/subida da Deusa continua sendo o mesmo `Walker` e o mesmo `FreeBuildFive.support` usado no FPS, até **um degrau por passo**, com cinco níveis no editor.
+- Na câmera **superior** os controles seguem os eixos da grade. Na **isométrica** são transformados para movimento no mundo usando o ângulo existente, preservando a mesma regra física; primeira pessoa não muda.
+- Ao começar a andar na construção livre usando a câmera externa, a visualização fixa do laboratório passa a **seguir a Deusa**, inclusive sua `visualZ`, em vez de ficar parada na altura zero. O botão para rever o laboratório permanece disponível.
+- A cena **Exemplo: paredes 3/4/5, maciços 2×2/3×3** agora ativa **Colocar pela face adjacente** (antes ativava grade da camada): nas duas câmeras externas, clicar na **face superior** de um cubo cria automaticamente o bloco no nível seguinte. Faces laterais criam o bloco ao lado. A primeira pessoa conserva o comportamento anterior.
+- O modo **Colocar na grade da camada** segue disponível para construir lajes suspensas e colocar um bloco exatamente no nível escolhido, sem depender de uma face já existente.
+
+### Porta-pilar
+
+- O editor livre tem **Peça: bloco / Peça: porta (pilar)** em **Mais opções**, usando pedra/mármore 82–85. A porta experimental aparece como painel de madeira escura e moldura ornamental na **face frontal de um cubo de pedra**.
+- A porta ocupa **uma célula de geometria completa**; não afina, mesmo entre duas paredes. Enquanto vizinha esquerda ou direita, **conta como um pilar de ligação** para painéis horizontais de pedra/mármore, mesmo quando o material da moldura difere da parede.
+- Vizinhos de blocos comuns continuam exigindo **o mesmo material**; a porta não torna o terreno/nuvem adaptativo. Conexões perpendiculares continuam impedindo o afinamento do bloco afetado, sem novos cantos, T ou cruzamentos.
+- O cenário demonstrativo ganhou uma linha com porta no centro (x=36, y=18), entre painéis finos.
+- **Limite do protótipo:** a porta é **fechada e sólida**, sem animação de abrir, passagem, item de inventário ou salvamento. O destaque/raycast do painel retorna à célula original; colidir e caminhar continuam por células inteiras.
+
+### Validação
+
+- Testes de deslocamento da Deusa sobre escada de níveis 1→5 e descida com entrada de câmera superior e isométrica.
+- Testes de posicionamento por face superior na câmera externa, alinhamento de nível, mudança automática do modo de câmera ao caminhar e conexão porta-pilar com materiais distintos.
+- Teste da malha 3D da porta com material e área de seleção do cubo.
+- Teste visual no navegador ainda necessário para confirmar controles, animação de subida, enquadramento e legibilidade da porta.
+- Esta entrega continua isolada em `feat/santuario-three-experimental` / PR #86 draft, **sem promoção para `main`**.
