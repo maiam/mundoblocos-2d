@@ -284,7 +284,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let iso = false;
   let zoom = 10;
   let firstPerson = false;
-  let fpYaw = Math.PI;
+  let fpYaw = Math.PI / 2; // start facing +X toward the demo staircase
   let fpPitch = -0.12;
   let fpDragPointer: number | null = null;
   let fpLastDrag = { x: 0, y: 0 };
