@@ -44,8 +44,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Sistemas de jogo
 - **Ferramentas** (espada, enxada, picareta, pá, machado): regras em `TOOLS` (`world/items.ts`) — o que quebram,
   toque no chão e drops. Detalhe em `domains/player.md` e `domains/farming.md`.
-- **Blocos**: 12 materiais de construção obtidos pelo jogador (pilha de até 3 cubos; 5 pedras: Bruta, Tijolo, Chão,
-  Lisa e Polida — as outras 3 foram aposentadas e só existem em mundos salvos). **Não há paredes** (saíram em 08/11; em
+- **Blocos**: 12 materiais de construção obtidos pelo jogador (pilha de até 2 cubos; 5 pedras: Bruta, Tijolo, Chão,
+  Lisa e Polida — as outras 3 foram aposentadas e só existem em mundos salvos). **Não há paredes como itens separados** (saíram em 08/11; em
   mundos e bolsas antigos viram vazio). Porta entre dois batentes (bloco de madeira — toras e tábuas de qualquer árvore — ou de pedra), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
   (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos; buraco sem bloco por um dia inteiro ganha o chão de um vizinho.
 - **Cultivo e árvores**: trigo, batata, tomate e cenoura (só em Terra Arada); árvores só adultas e de formas variadas
@@ -89,6 +89,11 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   O Padrão de Materiais V2 (abaixo) é o caminho para trocar isso; ainda não está ligado para o jogador.
 - Sem pulo nem queda com dano; água parada (sem correnteza nem nado).
 - Santuário: chão de nuvem mostra leve repetição diagonal.
+
+## Autotile horizontal 2D — versão candidata em PR #87 (11/11/2026)
+- Paredes construídas com tijolo de pedra, pedra lisa/polida, tábuas de carvalho/cerejeira/bétula e os mármores/pedras celestiais (82–85) afinam **somente** entre vizinhos horizontais do mesmo material (ou porta oficial existente) e sem vizinhos norte/sul, nível a nível. Face frontal permanece alinhada; topo desenhado com metade da profundidade. Isolados, extremidades, massas 2×2 e 3×3 permanecem maciços.
+- Todos os blocos empilháveis: **máximo de dois níveis (0 e 1)**. Salvos de versões anteriores com terceiro nível descartam esse nível na leitura; a altura do jogador é limitada a 2. Sem alterações de câmera/terreno/natureza ou itens de porta.
+- **Arte oficial incorporada no PR #87:** seis texturas quadradas 512×512 aprovadas para 80–85, armazenadas em `src/assets/santuario-*-512.jpg` (arquivos normalizados das imagens fornecidas). O Santuário 2D usa cada textura no topo, frente, chão e ícone correspondente; os outros 12 blocos celestiais continuam no atlas original. A arte é carregada apenas pelo pacote do Santuário.
 
 ## Padrão de Materiais V2 (o padrão do jogo desde 08/11, ADR 0023)
 - **É o que o jogador vê.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato na

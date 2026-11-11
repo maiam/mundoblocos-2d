@@ -1,4 +1,5 @@
 import { isWolf, type MonsterKind } from '../world/dungeon';
+import { MAX_STACK } from '../config';
 import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
 import { Block, isRemovedStack } from '../world/blocks';
@@ -188,7 +189,8 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   const p = s.player;
   p.x = d.player.x;
   p.y = d.player.y;
-  p.z = p.visualZ = d.player.z;
+  // Old saves may place the character on the now-retired third stack layer.
+  p.z = p.visualZ = Math.max(0, Math.min(MAX_STACK, d.player.z));
   p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
   p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));

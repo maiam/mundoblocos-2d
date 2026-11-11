@@ -2,6 +2,8 @@
 
 Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITECTURE.md` e os domínios.
 
+> **PR #87 — mudança dirigida:** `config.ts` limita `MAX_STACK=2`; `render/renderer.ts` → `render/adaptiveWalls.ts` seleciona e desenha paredes horizontais de construção no renderizador top-down oficial, preservando a face frontal. Não altera `World` além da validação de nível obsoleto nem a renderização de terreno natural.
+
 ## 1. Módulos e dependências
 Setas = "importa/usa". `world/` é a base e não conhece ninguém acima dele.
 
@@ -61,12 +63,12 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph Célula
-    U[níveis 1–2: cubos empilhados] --> O[nível 0: cubo · árvore · enfeite · trigo · porta]
+    U[nível 1: segundo cubo] --> O[nível 0: cubo · árvore · enfeite · trigo · porta]
     O --> GR[chão: material · água · buraco]
   end
   Q{standHeight} -->|água, buraco, árvore, cacto, porta fechada| X[null: bloqueado]
   Q -->|chão livre / porta aberta| Z0[0]
-  Q -->|1 a 3 cubos| Z12[1 / 2 / 3]
+  Q -->|1 a 2 cubos| Z12[1 / 2]
   BR[quebrar] --> BR1[topo da pilha] --> BR2[nível 0] --> BR3[chão vira buraco]
   PL[colocar material] --> P1{alvo}
   P1 -->|buraco| PF[vira piso nivelado]

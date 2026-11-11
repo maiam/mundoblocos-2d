@@ -1,5 +1,12 @@
 # Changelog
 
+## Próxima versão (PR #87, ainda não publicada) — 2026-11-11
+- **Render top-down oficial:** autotile horizontal de paredes de construção a partir dos blocos atuais. Só blocos intermediários de linhas horizontais isoladas afinam (topo reduzido pela metade para trás); face frontal continua alinhada aos pilares. Massas preenchidas, terrenos e nuvens seguem maciços. Portas existentes contam como pilares sem alterar sua interação.
+- **Máximo de construção:** dois níveis no mundo e Santuário, inclusive na restauração de saves antigos (terceiro nível deixa de ser carregado e altura do personagem é limitada a 2).
+- **Arte do Santuário 80–85:** seis superfícies aprovadas pelo usuário incorporadas e normalizadas para imagens JPEG 512×512. As faces de cada cubo, o chão e os ícones usam sua textura individual; os outros doze blocos celestiais continuam usando o atlas antigo. Pacote limitado ao Santuário, sem adicionar esses materiais ao mundo principal.
+- Fora do escopo: Three.js experimental, novas câmeras, novas portas, mudanças em terreno, inventário e NPCs.
+
+
 ## 0.92.0 — 2026-11-08
 - **Caixa de conversa**: quando um NPC fala, aparece a moldura no centro da tela com o **rosto** no círculo, o **nome** na
   plaquinha e o **texto** na caixa; texto que não cabe vira páginas e a setinha ▼ avisa que tem mais (tocar na caixa, no

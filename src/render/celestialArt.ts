@@ -1,6 +1,6 @@
 import { CUBE_FRONT, TILE } from '../config';
 import { Block, CELESTIAL_BLOCKS } from '../world/blocks';
-import { getCelestialAtlas } from './blockArt';
+import { getCelestialAtlas, getCelestialSurface } from './blockArt';
 
 /**
  * Blocos do Santuário Celestial — arte da prancha 3/4 fornecida
@@ -49,6 +49,15 @@ function slice(atlas: HTMLImageElement, col: number, sy: number, sh: number, w: 
   return c;
 }
 
+/** Textura quadrada única: a projeção do cubo decide a altura da frente. */
+function surfaceFace(img: HTMLImageElement, w: number, h: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = w * RES;
+  c.height = h * RES;
+  c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
 const cache = new Map<number, { top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement }>();
 
 /**
@@ -58,13 +67,22 @@ const cache = new Map<number, { top: HTMLCanvasElement; front: HTMLCanvasElement
 export function celestialFaces(id: number): { top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement } {
   let faces = cache.get(id);
   if (!faces) {
-    const col = CELESTIAL_BLOCKS.indexOf(id);
-    const atlas = getCelestialAtlas()!; // só chamado quando o pacote do mundo traz o atlas celestial
-    faces = {
-      top: slice(atlas, col, 0, ATLAS_TOP, T, T),
-      front: slice(atlas, col, ATLAS_TOP, ATLAS_FRONT, T, F),
-      ground: slice(atlas, col, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, T, T),
-    };
+    const approved = getCelestialSurface(id);
+    if (approved) {
+      faces = {
+        top: surfaceFace(approved, T, T),
+        front: surfaceFace(approved, T, F),
+        ground: surfaceFace(approved, T, T),
+      };
+    } else {
+      const col = CELESTIAL_BLOCKS.indexOf(id);
+      const atlas = getCelestialAtlas()!; // fallback para os outros 12 blocos
+      faces = {
+        top: slice(atlas, col, 0, ATLAS_TOP, T, T),
+        front: slice(atlas, col, ATLAS_TOP, ATLAS_FRONT, T, F),
+        ground: slice(atlas, col, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, T, T),
+      };
+    }
     cache.set(id, faces);
   }
   return faces;

@@ -2,7 +2,7 @@
  * Registro de blocos — fonte de verdade das PROPRIEDADES DE DOMÍNIO de cada bloco.
  * A aparência vive em `src/render/textures.ts`, indexada pelo mesmo id.
  *
- * Vista superior: cada célula tem uma camada de CHÃO (ground) e até MAX_STACK (3) níveis de OBJETO.
+ * Vista superior: cada célula tem uma camada de CHÃO (ground) e até MAX_STACK (2) níveis de OBJETO.
  * Os materiais (terra, grama, pedra…) usam o mesmo id nas duas camadas: no chão são o piso
  * natural; como objeto, são cubos.
  */

@@ -11,6 +11,8 @@ import { setMaterialsV2 } from './materialsV2';
  */
 let atlas: HTMLImageElement | null = null;
 let celestial: HTMLImageElement | null = null;
+/** Texturas quadradas aprovadas do Santuário para os IDs 80–85. */
+const celestialSurfaces = new Map<number, HTMLImageElement>();
 /** Porta de Carvalho: 8 quadros (4×2) — 0..3 abrindo, 4..7 fechando (scripts/process-sprite.py). */
 let oakDoor: HTMLImageElement | null = null;
 /** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras, blocos decorados e paredes. */
@@ -57,6 +59,16 @@ const maybe = (url: string | undefined) => (url ? load(url) : Promise.resolve(nu
 export async function loadBlockArt(): Promise<void> {
   const a = art();
   [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
+  celestialSurfaces.clear();
+  // Mantém o atlas antigo como fallback; falha de uma imagem não bloqueia o Santuário.
+  await Promise.all(Object.entries(a.celestialSurfaces ?? {}).map(async ([id, url]) => {
+    if (!url) return;
+    try {
+      celestialSurfaces.set(Number(id), await load(url));
+    } catch {
+      console.warn('Textura celestial indisponível, usando atlas antigo:', id);
+    }
+  }));
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
@@ -113,6 +125,11 @@ export function getBlockAtlas(): HTMLImageElement | null {
 
 export function getCelestialAtlas(): HTMLImageElement | null {
   return celestial;
+}
+
+/** Arte aprovada do bloco celestial; null para materiais não substituídos. */
+export function getCelestialSurface(id: number): HTMLImageElement | null {
+  return celestialSurfaces.get(id) ?? null;
 }
 
 export function getOakDoorSheet(): HTMLImageElement | null {

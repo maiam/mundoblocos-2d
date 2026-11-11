@@ -298,6 +298,8 @@ export class World {
 
   /** Bloco de um nível da pilha (0 = objeto no chão). O gerador só preenche os níveis 0 e 1. */
   getLevel(x: number, y: number, level: Level): BlockId {
+    // Older saves may still refer to the discontinued third construction tier.
+    if (!Number.isInteger(level) || level < 0 || level >= MAX_STACK) return Block.AIR;
     if (level === 0) return this.getObject(x, y);
     if (level === 1) return this.getUpper(x, y);
     if (!this.inBounds(x, y)) return Block.AIR;

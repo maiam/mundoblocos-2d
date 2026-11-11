@@ -3,6 +3,10 @@
 Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node ≥ 22.12), vista superior inclinada (3/4). Diagramas em
 [MAPS.md](MAPS.md). Decisões em [DECISIONS.md](DECISIONS.md).
 
+## Mudanças direcionadas — autotile horizontal e dois níveis (PR #87)
+
+`MAX_STACK=2` em `src/config.ts` rege os níveis disponíveis do `Chunk`, `World` e `Renderer`. `World.getLevel` retorna AIR para nível obsoleto e a restauração ignora a terceira camada de um save antigo; `applySave` limita a altitude do jogador. O novo `src/render/adaptiveWalls.ts` contém a decisão pura da forma horizontal (mesmo tipo à esquerda/direita, sem norte/sul; porta existente funciona como pilar) e compõe somente a metade frontal do topo do sprite, mantendo a face vertical inteira. `Renderer.drawObject` usa esse desenho **apenas** em materiais de construção; outros blocos seguem renderização anterior e a câmera não muda. Os seis PNGs celestiais aprovados no laboratório ainda não foram versionados.
+
 ## Estrutura
 ```
 CLAUDE.md / AGENTS.md          instruções para agentes de IA

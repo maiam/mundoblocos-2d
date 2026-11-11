@@ -51,6 +51,23 @@ function memoryStorage(): Storage {
 }
 
 describe('Salvamento automático', () => {
+  it('limita altura de um personagem vindo de save antigo com três cubos', () => {
+    const a = session();
+    const [x,y] = grassCells(a.world,a.sx,a.sy,1)[0];
+    expect(a.world.placeBlock(x,y,Block.STONE)).toBe(true);
+    expect(a.world.placeBlock(x,y,Block.STONE)).toBe(true);
+    a.player.x = x + 0.5;
+    a.player.y = y + 0.5;
+    a.player.z = 2;
+    const save = captureSave({...a,time:0.5,selected:null,hotbar:null});
+    save.player.z = 3; // personagem de um mundo antigo sobre a terceira camada
+    const b = session();
+    applySave(save,{...b,time:0,selected:null,hotbar:null},mulberry32(7));
+    expect(b.world.stackHeight(x,y)).toBe(2);
+    expect(b.player.z).toBe(2);
+    expect(b.player.visualZ).toBe(2);
+  });
+
   it('ida e volta: mapa editado, plantação, heroína, inventário, ovelhas, monstros e hora do dia', () => {
     const a = session();
     const { world, player, entities, inventory, exploration, sx, sy } = a;

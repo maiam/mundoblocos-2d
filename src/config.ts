@@ -13,7 +13,7 @@ export const TILE = 32;
 export const CUBE_FRONT = 18;
 
 /** Máximo de cubos empilhados numa célula. */
-export const MAX_STACK = 3;
+export const MAX_STACK = 2;
 
 /** Quantos níveis o personagem consegue subir de uma vez. */
 export const STEP_HEIGHT = 1;
