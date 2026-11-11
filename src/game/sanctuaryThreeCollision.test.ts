@@ -77,7 +77,9 @@ describe('Santuário Three.js — colisões físicas', () => {
     world.setObject(sx + 2, sy, Block.STONE_CELESTIAL);
     const player = new Player(sx + 0.5, sy + 0.5);
     configureSanctuaryThreeCollision(player, 'santuario', false);
-    for (let i = 0; i < 45; i++) player.update(1/60, 1, 0, world);
+    // After ~25 frames the player is ON the 1-block step; later frames
+    // already carry them beyond the block and back down to ground level.
+    for (let i = 0; i < 25; i++) player.update(1/60, 1, 0, world);
     expect(player.x).toBeGreaterThan(sx + 2);
     expect(player.z).toBe(1);
   });
