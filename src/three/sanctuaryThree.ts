@@ -15,7 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
-import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
+import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -276,6 +276,25 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   );
   selector.visible = false;
   scene.add(selector);
+  // A real highlighted face, rotated to the plane the camera is looking at,
+  // avoids confusing the terrain plane with a block side or slab underside.
+  const fpFaceGeometry = new THREE.PlaneGeometry(1.012, 1.012);
+  const fpFaceMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffd474, transparent: true, opacity: 0.28,
+    depthTest: false, depthWrite: false, side: THREE.DoubleSide,
+  });
+  const fpFaceHighlight = new THREE.Mesh(fpFaceGeometry, fpFaceMaterial);
+  fpFaceHighlight.renderOrder = 45;
+  fpFaceHighlight.visible = false;
+  scene.add(fpFaceHighlight);
+  const fpOutlineGeometry = new THREE.EdgesGeometry(fpFaceGeometry);
+  const fpOutlineMaterial = new THREE.LineBasicMaterial({ color: 0xffeeac, depthTest: false, depthWrite: false });
+  const fpFaceOutline = new THREE.LineSegments(fpOutlineGeometry, fpOutlineMaterial);
+  fpFaceOutline.renderOrder = 46;
+  fpFaceHighlight.add(fpFaceOutline);
+  const fpFaceNormal = new THREE.Vector3();
+  const fpPlaneNormal = new THREE.Vector3(0, 0, 1);
+  let fpFaceDescription = '';
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let selectedCell: Cell | null = null;
@@ -305,7 +324,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (!firstPerson && document.pointerLockElement === canvas) document.exitPointerLock();
     goddess.visible = !firstPerson;
     shadow.visible = !firstPerson;
+    if (!firstPerson) fpFaceHighlight.visible = false;
     if (typeof fpCrosshair !== 'undefined') fpCrosshair.hidden = !firstPerson;
+    if (typeof fpFaceInfo !== 'undefined') fpFaceInfo.hidden = !firstPerson;
     if (typeof fpAction !== 'undefined') fpAction.hidden = !firstPerson;
     if (typeof fpExitButton !== 'undefined') fpExitButton.hidden = !firstPerson;
     if (typeof fpModeButton !== 'undefined') fpModeButton.textContent =
@@ -862,6 +883,13 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   fpCrosshair.textContent = '+';
   fpCrosshair.hidden = true;
   hud.append(fpCrosshair);
+  const fpFaceInfo = document.createElement('div');
+  fpFaceInfo.style.cssText = 'position:absolute;left:50%;top:calc(50% + 28px);'
+    + 'transform:translateX(-50%);color:#fff7dc;background:rgba(31,25,76,.78);'
+    + 'padding:5px 9px;border-radius:8px;font-size:12px;pointer-events:none;'
+    + 'text-align:center;max-width:80vw;';
+  fpFaceInfo.hidden = true;
+  hud.append(fpFaceInfo);
   const fpAction = button('Construir / Remover', () => {
     if (!fpsActive()) return;
     editFreeBuildAt(0, 0, true);
@@ -1144,21 +1172,25 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       raycaster.far = Infinity;
     }
     let candidate: { x: number; y: number; z: number } | null = null;
+    let targetFace: ReturnType<typeof firstPersonFaceOverlay> | null = null;
     if ((freeBuildFaceMode || fp) && freeBuildView) {
       const hits = raycaster.intersectObject(freeBuildView.group, true)
         .filter((hit: any) => hit.object.userData.freeBuildFive && (!fp || hit.distance <= FP_REACH));
       const hit = hits[0];
       if (hit) {
         const n = hit.face?.normal ?? new THREE.Vector3(0, 1, 0);
-        const factor = forceRemove ? -0.005 : 0.005;
-        candidate = {
-          x: Math.floor(hit.point.x + n.x * factor) - x0,
-          y: Math.floor(hit.point.z + n.z * factor) - y0,
-          z: Math.floor(hit.point.y + n.y * factor),
-        };
+        // Geometry supplies a face normal. Offset toward the real cube to
+        // identify it even at integer boundaries, then out for placement.
+        candidate = firstPersonHitCell(hit.point, n, x0, y0, forceRemove);
+        if (fp) targetFace = firstPersonFaceOverlay(hit.point, n, x0, y0);
       }
     }
     if (!candidate) {
+      if (fp) {
+        fpFaceHighlight.visible = false;
+        fpFaceInfo.textContent = 'Aponte para uma face do cubo';
+        fpFaceDescription = '';
+      }
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), fp ? 0 : -freeBuildLevel);
       const hit = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
       if (!hit || (fp && hit.distanceTo(raycaster.ray.origin) > FP_REACH)) {
@@ -1167,7 +1199,23 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       }
       candidate = { x: Math.floor(hit.x - x0), y: Math.floor(hit.z - y0), z: fp ? 0 : freeBuildLevel };
     }
-    if (freeBuild.contains(candidate.x, candidate.y) && freeBuild.validLevel(candidate.z)) {
+    const inBounds = freeBuild.contains(candidate.x, candidate.y)
+      && freeBuild.validLevel(candidate.z);
+    if (fp) {
+      selector.visible = false;
+      fpFaceHighlight.visible = Boolean(targetFace);
+      if (targetFace) {
+        fpFaceNormal.set(...targetFace.normal);
+        fpFaceHighlight.position.set(...targetFace.center);
+        fpFaceHighlight.quaternion.setFromUnitVectors(fpPlaneNormal, fpFaceNormal);
+        const description = targetFace.label + ' · bloco '
+          + (targetFace.cell.x + ', ' + targetFace.cell.y + ', altura ' + (targetFace.cell.z + 1));
+        if (fpFaceDescription !== description) {
+          fpFaceInfo.textContent = description;
+          fpFaceDescription = description;
+        }
+      }
+    } else if (inBounds) {
       selector.visible = true;
       selector.position.set(x0 + candidate.x + .5, candidate.z + .03, y0 + candidate.y + .5);
     } else selector.visible = false;
@@ -1482,6 +1530,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     goddess.material.dispose();
     shadow.geometry.dispose(); shadow.material.dispose();
     selector.geometry.dispose(); selector.material.dispose();
+    fpFaceHighlight.remove(fpFaceOutline);
+    scene.remove(fpFaceHighlight);
+    fpFaceGeometry.dispose(); fpFaceMaterial.dispose();
+    fpOutlineGeometry.dispose(); fpOutlineMaterial.dispose();
     clearCloudOverlays();
     floorGeometry.dispose(); blockGeometry.dispose();
     for (const id of [...materials.keys()]) disposeMaterial(id);
