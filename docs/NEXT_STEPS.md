@@ -4,11 +4,12 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
-## Promoção controlada do Santuário — PR #87 (11/11/2026)
+## Migração do Santuário oficial para Three.js — PR #89 (11/11/2026)
 
-- **Implementado na branch, não publicado:** limite de pilha 2 em ambos os mundos e autotile horizontal 2D para materiais construtivos. Portas existentes contam como pilares de conexão; não são alteradas. Sem câmeras ou mundo 3D novo.
-- **Arte incorporada na branch:** seis texturas quadradas 512×512 enviadas pelo usuário para os IDs 80–85, normalizadas para JPEG e versionadas em `src/assets/santuario-*-512.jpg`. São usadas no topo, frente, chão e ícones; os outros 12 blocos celestiais preservam o atlas anterior.
-- **Pendente antes de mesclar na main:** teste visual da parede frontal no Santuário 2D e no mundo, empilhamento 0–1 e migração de salvamentos que tenham um terceiro cubo (o nível excedente será descartado). O PR permanece draft até a revisão.
+- **Renderer Three.js oficial**: Santuário usa malhas tridimensionais reais e Deusa animada em billboard, com o mesmo `World`, UI, controles e salvamentos, sem importar o editor experimental de cinco níveis. Mantém limite de dois níveis e autotile herdado da base.
+- **Teste visual pendente**: conferir desktop e mobile, desempenho WebGL, altura da Deusa, alinhamento de topo e face, seleção precisa por raycast e construção/quebra com mundo salvo. `?mundo=santuario&render=2d` continua disponível como fallback.
+- O Mundo principal permanece no seu Canvas 2D; conferir que o build `VITE_WORLD=principal` não arrasta o módulo Three.js. Os seis materiais 80–85 estão versionados; não há pendência de importação de artes.
+
 
 ## 1. Panorama — o que temos
 
