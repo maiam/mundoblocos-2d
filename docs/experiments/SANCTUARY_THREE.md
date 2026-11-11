@@ -609,3 +609,45 @@ Three.js na branch experimental.
   suporte estrutural/gravidade, persistência e multiandares arquitetônicos.
 - Os edifícios e as pranchas isométricas permanecem **não aprovados**
   artisticamente. O laboratório atual valida apenas construção e física.
+
+
+## Laboratório V3 — Primeira pessoa para construir (10/11/2026)
+
+Após aprovar o editor de cinco alturas e blocos adjacentes, o usuário
+solicitou testar a **câmera em primeira pessoa**, porque a vista isométrica
+nem sempre permite inspecionar laterais e superfícies inferiores da laje.
+
+### Como experimentar
+
+1. Abrir `?mundo=santuario&render=three`, ativar **Laboratório V2**.
+2. Em **Mais opções**, clicar **Construção livre (5 níveis)** e
+   **Montar escada + laje (exemplo)**.
+3. Clicar **Primeira pessoa (construção)**. A primeira ativação usa
+   `PerspectiveCamera` (FOV 74°), na altura dos olhos da Deusa (1,55 bloco).
+   A Deusa fica invisível **somente para a própria câmera FPS**.
+4. **WASD** desloca-se em relação à direção da câmera; mouse movimenta a mira.
+   Clique no canvas para capturar o ponteiro, se não estiver capturado.
+5. Mire num bloco com o `+` central. **Clique esquerdo** coloca ao lado,
+   acima ou abaixo da face; **clique direito** remove o bloco apontado,
+   independentemente do modo do botão. Alcance: até seis blocos.
+6. **Esc** libera o mouse; `C` alterna a câmera e **Sair da primeira pessoa**
+   retorna à perspectiva externa.
+7. **Camada 1–5**, ferramentas e hotbar permanecem disponíveis no editor.
+   O botão **Construir / Remover** é alternativa para dispositivos móveis.
+   Em tela sensível ao toque, arrastar na imagem gira a câmera e o joystick
+   continua movimentando a Deusa.
+
+### Implementação e critérios
+
+- Controles isolados em `src/three/firstPersonControls.ts`, com testes
+  para rotação, campo de visão, movimento relativo e seleção de face.
+- A física aprovada de subida e colisão continua no `Walker` (passo 1);
+  `PerspectiveCamera` apenas segue `visualZ` com altura fixa dos olhos.
+- Se o botão da câmera existente for usado no editor livre, o ciclo é
+  superior → isométrica → primeira pessoa → superior.
+- As paredes e o verso das lajes agora podem ser vistos de perto e
+  selecionados com raycast. Não foi adicionada uma personagem 3D, novas
+  texturas ou alteração da geometria de blocos.
+- Primeiro resultado é **experimental**: validar FPS no navegador, especialmente
+  colisão junto às quinas, mouse lock, mobile e precisão ao mirar nas laterais.
+- O PR permanece draft; a `main`, `World`, salvamentos e limites 2D não mudam.
