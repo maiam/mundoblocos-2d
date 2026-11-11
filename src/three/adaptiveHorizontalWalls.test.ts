@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FreeBuildFive } from './freeBuildFive';
 import {
   adjacentFreeBuildCell, buildHorizontalWallDemo, horizontalWallShape,
-  HORIZONTAL_WALL_THICKNESS,
+  horizontalWallZBounds, HORIZONTAL_WALL_THICKNESS,
 } from './adaptiveHorizontalWalls';
 
 const shape = (ed: FreeBuildFive, x: number, y: number, z = 0, enabled = true) => {
@@ -21,7 +21,15 @@ describe('Santuário — paredes horizontais adaptativas (experimental)', () => 
         expect(shape(ed, 33 + x, 10)).toBe(expected);
       }
     }
-    expect(HORIZONTAL_WALL_THICKNESS).toBe(0.25);
+    expect(HORIZONTAL_WALL_THICKNESS).toBe(0.5);
+  });
+
+  it('anchors the entire reduced depth behind the same front face of each pillar', () => {
+    const z = 12;
+    expect(horizontalWallZBounds(z, false)).toEqual({ rearZ: 12, frontZ: 13 });
+    expect(horizontalWallZBounds(z, true)).toEqual({ rearZ: 12.5, frontZ: 13 });
+    expect(horizontalWallZBounds(z, false).frontZ)
+      .toBe(horizontalWallZBounds(z, true).frontZ);
   });
 
   it('never thins a filled 2×2 / 3×3 or a vertical run', () => {
