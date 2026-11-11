@@ -4,12 +4,18 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Promoção controlada do Santuário — PR #87 (11/11/2026)
+
+- **Implementado na branch, não publicado:** limite de pilha 2 em ambos os mundos e autotile horizontal 2D para materiais construtivos. Portas existentes contam como pilares de conexão; não são alteradas. Sem câmeras ou mundo 3D novo.
+- **Pendente para aprovar a arte:** trazer para o repositório os seis arquivos PNG seamless 512×512 que foram carregados via seletor local no experimento (`80.png`–`85.png`). Não substituí-los pelo atlas antigo nem por imagens inventadas.
+- **Pendente antes de mesclar na main:** teste visual da parede frontal no Santuário 2D e no mundo, empilhamento 0–1 e migração de salvamentos que tenham um terceiro cubo (o nível excedente será descartado). O PR permanece draft até a revisão.
+
 ## 1. Panorama — o que temos
 
 | Sistema | Estado | Observação |
 |---|---|---|
 | Mundo procedural em chunks 16×16, vista 3/4, biomas, água, montanhas | ✅ sólido | determinístico por seed, ~0,08 ms/chunk |
-| Construção: 12 materiais (5 pedras; 3 aposentadas), pilha de 3, buracos, porta, tenda, baú | ✅ | materiais **coletados** (grade 9 + bolsa) |
+| Construção: 12 materiais (5 pedras; 3 aposentadas), pilha de 2, buracos, porta, tenda, baú | ✅ | materiais **coletados** (grade 9 + bolsa) |
 | Personagem: movimento, câmera, joystick, botão de ação, paisagem/tela cheia | ✅ | teste do botão no celular ainda em avaliação |
 | Ferramentas (espada, enxada, picareta, pá, machado) com ação e restrições | ✅ | quebrar com ferramenta 1 s, mão 2 s |
 | Cultivo (trigo, batata, tomate, cenoura) + inventário de itens contáveis | ✅ | 4 culturas; comer e cozinhar desde v0.56.0 |
