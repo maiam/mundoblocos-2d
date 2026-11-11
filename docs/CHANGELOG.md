@@ -1,5 +1,10 @@
 # Changelog
 
+## Experimento sem versão publicada — 2026-11-11 (branch `feat/santuario-three-experimental`)
+- **Santuário, paredes horizontais adaptativas:** regra por vizinhos para afinar só o miolo de linhas 3+ com pedra/mármore 82–85 (profundidade 25%), mantendo colunas nas pontas e grupos 2×2/3×3 maciços. Topo com ressalto, geometrias procedurais, UV por mundo e raycast vinculado à célula original.
+- Botões em **Mais opções** para ligar/desligar e montar comparação visual; teste da regra, destruição e seleção. Escopo efêmero, sem mudar câmera superior, arte, `World`, persistência ou `main`; física de movimentação ainda usa célula inteira.
+
+
 ## 0.92.0 — 2026-11-08
 - **Caixa de conversa**: quando um NPC fala, aparece a moldura no centro da tela com o **rosto** no círculo, o **nome** na
   plaquinha e o **texto** na caixa; texto que não cabe vira páginas e a setinha ▼ avisa que tem mais (tocar na caixa, no
