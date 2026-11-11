@@ -862,7 +862,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     freeBuildPlaceModeButton.textContent = freeBuildFaceMode
       ? 'Colocar pela face adjacente' : 'Colocar na grade da camada';
     cloudStatus.textContent = freeBuildFaceMode
-      ? 'Clique numa face de bloco: cria outro bloco ao lado, acima ou abaixo. Clique no chão para iniciar.'
+      ? 'Nas três câmeras, clique no topo do bloco para subir um nível; nas laterais para conectar. '
+        + 'Clique no chão para iniciar.'
       : 'Clique na grade: cria ou remove bloco na camada selecionada (1–5), mesmo sem apoio.';
   });
   const freeBuildPieceButton = button('Peça: bloco', () => {
@@ -911,8 +912,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     freeBuildPieceButton.classList.remove('active');
     freeBuildLevel = 0;
     freeBuildLevelButton.textContent = 'Camada: 1/5';
-    freeBuildFaceMode = false;
-    freeBuildPlaceModeButton.textContent = 'Colocar na grade da camada';
+    // Keep face-based building in external cameras, just like first person.
+    // Clicking the top face adds the block to the next vertical level.
+    freeBuildFaceMode = true;
+    freeBuildPlaceModeButton.textContent = 'Colocar pela face adjacente';
     rebuildFreeBuild();
     player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
     player.z = player.visualZ = 0;
@@ -922,7 +925,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     zoom = 11;
     cloudStatus.textContent = 'Teste de paredes horizontais: linhas de 3, 4 e 5 blocos, volumes 2×2 e 3×3. '
       + 'Linha com porta-pilar em x=36, y=18. Pedra Celestial (84), topo com borda. '
-      + 'Clique na grade para editar, ou escolha Peça: porta; sem salvamento.';
+      + 'Clique no topo de um bloco para empilhar (também nas câmeras superior/isométrica), '
+      + 'ou escolha Peça: porta. Grade da camada continua disponível; sem salvamento.';
   });
   const freeBuildExampleButton = button('Montar escada + laje (exemplo)', () => {
     if (!freeBuildEnabled) freeBuildButton.click();
