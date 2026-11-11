@@ -23,6 +23,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   (ADR 0019). Abre numa **tela de entrada** (Novo jogo → montar personagem; Continuar se houver salvamento).
 - **Santuário Celestial da Deusa da Vida** (`?mundo=santuario`): 10 chunks de nuvem, só a Deusa, só os 18 blocos
   celestiais; sem ferramentas, cultivo ou animais. Subdomínio real ainda não hospedado (`domains/worlds.md`).
+  **Experimento isolado (branch `feat/santuario-three-experimental`, PR #86 draft):** editor Three.js de 5 níveis com chave para paredes horizontais adaptativas. Pedra/mármore 82–85 na mesma linha afinam apenas no interior sem vizinhos frente/atrás (espessura 25%); volumes 2×2/3×3 ficam maciços. Renderização e seleção por face geométrica; colisão de movimento continua por célula cheia. Não integra o jogo publicado nem seus salvamentos.
 - **Cidade do Despertar** (`domains/town.md`): 164 × 132 blocos ao norte da origem, igual em toda seed, área protegida,
   piso único de Tijolo de Pedra, muralha, castelo, guilda, hospedaria, ferreiro, lojas e ~90 casas. Início e renascer
   sem tenda = praça inicial. 16 NPCs nomeados (ferreiro **Black** + 15 moradores, `domains/npc.md`) que falam numa **caixa de conversa** (retrato, nome, texto em páginas).
