@@ -1,5 +1,9 @@
 # Convenções
 
+## Renderização por perfil
+- **Mundo principal:** Canvas 2D, sem Three.js. **Santuário:** Three.js/WebGL ortográfico superior (com fallback `?render=2d`); `Game`/`World`/save compartilhados. Não duplicar regras de bloco ou importar cenas do laboratório 5 níveis na engine oficial.
+- A célula lógica continua 32×32; no Three cada célula é unidade de 1×1 e a altura física é 1 por camada, no máximo duas camadas. Paredes finas ocupam metade da profundidade a partir da face frontal da célula; o segundo nível herda o formato do primeiro, mantendo sua textura.
+
 ## Código
 - TypeScript estrito, ES modules, sem framework. Identificadores em inglês; UI, comentários e docs em pt-BR.
 - Coordenadas: `x` → direita, `y` → **baixo na tela** (= sul). Unidade = célula; px de mundo = célula × `TILE`.
