@@ -15,6 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
+import { adjacentFreeBuildCell, buildHorizontalWallDemo, horizontalWallShape, HORIZONTAL_WALL_THICKNESS } from './adaptiveHorizontalWalls';
 import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER, fpsCycleHotbar, fpsSneakWouldFall, fpsMouseButtonRemoves, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
@@ -371,6 +372,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let freeBuildEnabled = false;
   let freeBuildLevel = 0;
   let freeBuildFaceMode = true;
+  let adaptiveHorizontalWalls = false;
   let freeBuildView: ReturnType<typeof renderFreeBuildFive> | null = null;
   const freeBuildWorld = makeFreeBuildNavigation(freeBuild, x0, y0, () => player.z);
   let cameraY = 0;
@@ -379,7 +381,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       scene.remove(freeBuildView.group);
       freeBuildView.dispose();
     }
-    freeBuildView = renderFreeBuildFive(freeBuild, x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy());
+    freeBuildView = renderFreeBuildFive(freeBuild, x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy(), adaptiveHorizontalWalls);
     freeBuildView.group.visible = laboratoryV2Active && freeBuildEnabled;
     scene.add(freeBuildView.group);
   }
@@ -859,6 +861,47 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       ? 'Clique numa face de bloco: cria outro bloco ao lado, acima ou abaixo. Clique no chão para iniciar.'
       : 'Clique na grade: cria ou remove bloco na camada selecionada (1–5), mesmo sem apoio.';
   });
+  const adaptiveWallsButton = button('Paredes horizontais: desligadas', () => {
+    if (!freeBuildEnabled) freeBuildButton.click();
+    adaptiveHorizontalWalls = !adaptiveHorizontalWalls;
+    // This experiment is designed for the orthographic top-down view only;
+    // do not alter any camera projection, controls or other scene.
+    if (adaptiveHorizontalWalls && !fpsActive()) {
+      iso = false;
+      cameraButton.textContent = 'Câmera: superior';
+    }
+    rebuildFreeBuild();
+    adaptiveWallsButton.textContent = adaptiveHorizontalWalls
+      ? 'Paredes horizontais: ligadas' : 'Paredes horizontais: desligadas';
+    adaptiveWallsButton.classList.toggle('active', adaptiveHorizontalWalls);
+    cloudStatus.textContent = adaptiveHorizontalWalls
+      ? 'Paredes horizontais: pedra/mármore 82–85; colunas grossas nas pontas, miolo fino de 25%. '
+        + 'Vizinhos na frente/atrás mantêm os blocos maciços. Edite livremente.'
+      : 'Paredes adaptativas desligadas. Todos os blocos voltaram à geometria cúbica.';
+  });
+  const adaptiveWallsDemoButton = button('Exemplo: paredes 3/4/5, maciços 2×2/3×3', () => {
+    if (!freeBuildEnabled) freeBuildButton.click();
+    if (fpsActive()) switchFirstPerson(false);
+    iso = false;
+    cameraButton.textContent = 'Câmera: superior';
+    adaptiveHorizontalWalls = true;
+    adaptiveWallsButton.textContent = 'Paredes horizontais: ligadas';
+    adaptiveWallsButton.classList.add('active');
+    buildHorizontalWallDemo(freeBuild);
+    freeBuildLevel = 0;
+    freeBuildLevelButton.textContent = 'Camada: 1/5';
+    freeBuildFaceMode = false;
+    freeBuildPlaceModeButton.textContent = 'Colocar na grade da camada';
+    rebuildFreeBuild();
+    player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
+    player.z = player.visualZ = 0;
+    cameraY = 0;
+    laboratoryCamera = true;
+    focusButton.textContent = 'Seguir Deusa';
+    zoom = 11;
+    cloudStatus.textContent = 'Teste de paredes horizontais: linhas de 3, 4 e 5 blocos, volumes 2×2 e 3×3. '
+      + 'Pedra Celestial (84), topo fino com borda. Clique na grade para editar; sem salvamento.';
+  });
   const freeBuildExampleButton = button('Montar escada + laje (exemplo)', () => {
     if (!freeBuildEnabled) freeBuildButton.click();
     freeBuild.example();
@@ -1114,7 +1157,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [freeBuildButton, fpModeButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [freeBuildButton, adaptiveWallsButton, adaptiveWallsDemoButton, fpModeButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -1211,10 +1254,30 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       const hit = hits[0];
       if (hit) {
         const n = hit.face?.normal ?? new THREE.Vector3(0, 1, 0);
-        // Geometry supplies a face normal. Offset toward the real cube to
-        // identify it even at integer boundaries, then out for placement.
-        candidate = firstPersonHitCell(hit.point, n, x0, y0, forceRemove);
-        if (fp) targetFace = firstPersonFaceOverlay(hit.point, n, x0, y0);
+        // With recessed walls, the hit surface is NOT on the logical cell
+        // boundary. Resolve the source cell by triangle, never floor(hit.point).
+        const source = hit.object.userData.freeBuildCells?.[hit.faceIndex ?? -1] as
+          ReturnType<FreeBuildFive['get']> | undefined;
+        const normal = n.clone();
+        if (normal.dot(raycaster.ray.direction) > 0) normal.negate();
+        candidate = source
+          ? adjacentFreeBuildCell(source, normal, forceRemove)
+          : firstPersonHitCell(hit.point, normal, x0, y0, forceRemove);
+        if (fp) {
+          targetFace = firstPersonFaceOverlay(hit.point, normal, x0, y0);
+          if (source) {
+            const thin = horizontalWallShape(freeBuild, source, adaptiveHorizontalWalls) === 'thin';
+            const hx = 0.5, hy = 0.5;
+            const hz = thin ? HORIZONTAL_WALL_THICKNESS / 2 : 0.5;
+            targetFace.cell = { x: source.x, y: source.y, z: source.z };
+            targetFace.center = [
+              x0 + source.x + 0.5 + normal.x * (hx + 0.008),
+              source.z + 0.5 + normal.y * (hy + (thin && normal.y > 0 ? 0.035 : 0.008)),
+              y0 + source.y + 0.5 + normal.z * (hz + (thin ? 0.05 : 0.008)),
+            ];
+            targetFace.normal = [normal.x, normal.y, normal.z];
+          }
+        }
       }
     }
     if (!candidate) {
@@ -1240,6 +1303,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
         fpFaceNormal.set(...targetFace.normal);
         fpFaceHighlight.position.set(...targetFace.center);
         fpFaceHighlight.quaternion.setFromUnitVectors(fpPlaneNormal, fpFaceNormal);
+        const faceBlock = freeBuild.get(targetFace.cell.x, targetFace.cell.y, targetFace.cell.z);
+        const narrow = faceBlock &&
+          horizontalWallShape(freeBuild, faceBlock, adaptiveHorizontalWalls) === 'thin';
+        fpFaceHighlight.scale.set(
+          narrow && Math.abs(fpFaceNormal.x) > 0.5 ? HORIZONTAL_WALL_THICKNESS : 1,
+          narrow && Math.abs(fpFaceNormal.y) > 0.5 ? HORIZONTAL_WALL_THICKNESS + 0.09 : 1,
+          1,
+        );
         const description = targetFace.label + ' · bloco '
           + (targetFace.cell.x + ', ' + targetFace.cell.y + ', altura ' + (targetFace.cell.z + 1));
         if (fpFaceDescription !== description) {
