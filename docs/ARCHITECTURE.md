@@ -3,6 +3,10 @@
 Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node ≥ 22.12), vista superior inclinada (3/4). Diagramas em
 [MAPS.md](MAPS.md). Decisões em [DECISIONS.md](DECISIONS.md).
 
+## Laboratório Three.js — paredes horizontais adaptativas (branch experimental)
+
+O editor transitório de cinco níveis do Santuário usa `src/three/freeBuildFive.ts` como mapa de voxels, `src/three/adaptiveHorizontalWalls.ts` como regra pura de vizinhança horizontal (mesmo ID à esquerda/direita e nenhum vizinho norte/sul), e `src/three/freeBuildFiveScene.ts` como compositor de geometrias maciças ou painéis de 0,25 célula, incluindo ressalto superior. `src/three/sanctuaryThree.ts` controla habilitação, cena de comparação e raycasting por triângulo associado à célula lógica. Apenas materiais 82–85 podem afinar. Sem backend/save/chunks: geometria reconstruída ao editar o pequeno editor; colisão do Walker ainda por célula inteira. Documentação completa em `docs/experiments/SANCTUARY_THREE.md`. O jogo principal permanece 2D.
+
 ## Estrutura
 ```
 CLAUDE.md / AGENTS.md          instruções para agentes de IA
