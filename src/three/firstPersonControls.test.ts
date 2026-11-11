@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_PITCH_LIMIT, firstPersonLook, firstPersonMovement, firstPersonForward, firstPersonHitCell, firstPersonFaceOverlay, fpsCycleHotbar, fpsSneakWouldFall, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER } from './firstPersonControls';
+import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_PITCH_LIMIT, firstPersonLook, firstPersonMovement, firstPersonForward, firstPersonHitCell, firstPersonFaceOverlay, fpsCycleHotbar, fpsSneakWouldFall, fpsMouseButtonRemoves, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER } from './firstPersonControls';
 
 describe('Laboratório V3 — câmera em primeira pessoa', () => {
   it('tem campo de visão e alcance configurados para construção próxima', () => {
@@ -41,6 +41,10 @@ describe('Laboratório V3 — câmera em primeira pessoa', () => {
     expect(side.label).toContain('direita');
     expect(firstPersonHitCell({x:35,y:2.6,z:14.6},{x:1,y:0,z:0},x0,y0,false))
       .toEqual({x:5,y:4,z:2});
+  });
+  it('Orvalis: esquerdo coloca e direito destrói o bloco', () => {
+    expect(fpsMouseButtonRemoves(0)).toBe(false);
+    expect(fpsMouseButtonRemoves(2)).toBe(true);
   });
   it('roda de mouse percorre barra circular, com seis blocos 80–85', () => {
     expect(fpsCycleHotbar(0, 1, 6)).toBe(1);
