@@ -111,17 +111,17 @@ describe('World', () => {
     expect(w.isWalkable(x, y)).toBe(true);
   });
 
-  it('empilha no máximo 3 cubos e quebra de cima para baixo', () => {
+  it('empilha no máximo 2 cubos e quebra de cima para baixo', () => {
     const w = new World(7);
     const [x, y] = w.outsideGate();
     expect(w.placeBlock(x, y, Block.STONE)).toBe(true);
     expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true);
-    expect(w.placeBlock(x, y, Block.SAND)).toBe(true);
-    expect(w.stackHeight(x, y)).toBe(3);
-    expect(w.standHeight(x, y)).toBe(3);
-    expect(w.topBlock(x, y)).toEqual({ id: Block.SAND, level: 2 });
+    expect(w.placeBlock(x, y, Block.SAND)).toBe(false);
+    expect(w.stackHeight(x, y)).toBe(2);
+    expect(w.standHeight(x, y)).toBe(2);
+    expect(w.topBlock(x, y)).toEqual({ id: Block.OAK_LOG, level: 1 });
+    expect(w.getLevel(x, y, 2)).toBe(Block.AIR);
     expect(w.placeBlock(x, y, Block.OAK_PLANKS)).toBe(false);
-    expect(w.breakBlock(x, y)).toBe(Block.SAND);
     expect(w.breakBlock(x, y)).toBe(Block.OAK_LOG);
     expect(w.stackHeight(x, y)).toBe(1);
     expect(w.breakBlock(x, y)).toBe(Block.STONE);
