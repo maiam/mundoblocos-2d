@@ -1,15 +1,15 @@
 import * as THREE from 'three';
-import { CHUNK_SIZE, MAX_STACK, TILE } from '../config';
+import { CHUNK_SIZE, TILE } from '../config';
 import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer } from './rendererContract';
 import { celestialFaces } from './celestialArt';
 import { art } from './art';
-import { Block, type BlockId } from '../world/blocks';
+import type { BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
-import { sanctuary3DGeometryCells, sanctuaryBlockTransform, type SanctuaryBlockCell, type SanctuaryGroundCell } from './sanctuaryThreeLayout';
+import { sanctuary3DGeometryCells, sanctuaryBlockTransform } from './sanctuaryThreeLayout';
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
 type MeshGroup = {mesh:any;cells:Cell[]};
@@ -44,7 +44,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly bounds:{x0:number;x1:number;y0:number;y1:number};
   private signature='';
   private disposed=false;
-  private lastCam:Camera|null=null;
+  private lastWidth=0;
+  private lastHeight=0;
+  private lastPixelRatio=0;
 
   constructor(canvas:HTMLCanvasElement,private readonly world:World){
     const profile=world.profile;
@@ -208,9 +210,14 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.camera.lookAt(focusX,0,focusZ);
     this.camera.updateMatrixWorld();
     const pixelRatio=Math.min(window.devicePixelRatio||1,2);
-    this.gpu.setPixelRatio(pixelRatio);
-    this.gpu.setSize(w,h,false);
-    this.lastCam=cam;
+    // Do not resize the drawing buffer for every frame or pointer event.
+    if(w!==this.lastWidth||h!==this.lastHeight||pixelRatio!==this.lastPixelRatio){
+      this.gpu.setPixelRatio(pixelRatio);
+      this.gpu.setSize(w,h,false);
+      this.lastWidth=w;
+      this.lastHeight=h;
+      this.lastPixelRatio=pixelRatio;
+    }
   }
 
   private drawGoddess(opts:RenderOptions):void{
