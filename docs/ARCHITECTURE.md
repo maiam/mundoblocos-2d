@@ -7,6 +7,10 @@ Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node �
 
 `MAX_STACK=2` em `src/config.ts` rege os níveis disponíveis do `Chunk`, `World` e `Renderer`. `World.getLevel` retorna AIR para nível obsoleto e a restauração ignora a terceira camada de um save antigo; `applySave` limita a altitude do jogador. O novo `src/render/adaptiveWalls.ts` contém a decisão pura da forma horizontal (mesmo tipo à esquerda/direita, sem norte/sul; porta existente funciona como pilar) e compõe somente a metade frontal do topo do sprite, mantendo a face vertical inteira. `Renderer.drawObject` usa esse desenho **apenas** em materiais de construção; outros blocos seguem renderização anterior e a câmera não muda. Os seis arquivos de arte 80–85 já foram incorporados ao pacote do Santuário no PR #87.
 
+## Renderizador específico por mundo (PR #89)
+
+`Game` continua orquestrando `World`, personagem, controles, ações, hotbar, HUD e persistência. Sua opção `rendererFactory` pode substituir somente o renderer visual. O perfil **Santuário** carrega sob demanda `render/sanctuaryThreeRenderer.ts` (Three.js 0.187), com `render/sanctuaryThreeLayout.ts` para forma procedural de cubo/painel, instanciamento dos 18 tipos de bloco, câmera ortográfica superior, raycasting e Deusa animada em sprite 2D. O perfil **principal** mantém `render/renderer.ts` Canvas 2D intacto, sem carregar Three.js, inclusive no artefato fixo `VITE_WORLD=principal`. Sem WebGL, ou com `?render=2d`, o Santuário usa o renderer Canvas 2D antigo. O `World` continua a fonte de verdade para chunks, colisão, colocação, remoção e salvamento; o Santuário oficial não recebe as cenas experimentais de 5 níveis e primeira pessoa.
+
 ## Estrutura
 ```
 CLAUDE.md / AGENTS.md          instruções para agentes de IA
