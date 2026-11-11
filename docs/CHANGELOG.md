@@ -1,5 +1,10 @@
 # Changelog
 
+## Correção de colisão Santuário WebGL — 11/11/2026 (PR #90)
+- No Santuário oficial Three.js, a Deusa não sobe automaticamente cubos inteiros ao pressionar a direção: blocos de 1 ou 2 níveis, paredes e pilares voltam a barrar sua caixa de colisão, via `player.spec.stepHeight = 0` apenas no perfil WebGL. Era o `STEP_HEIGHT=1` legado da vista 2D que fazia atravessar visualmente a parede ao subir sem comando de salto.
+- Mundo principal e `?render=2d` continuam com a física anterior; sem alteração em colisões por subcélula, salvamentos, chunks, câmeras ou renderizadores. Testes de regressão da colisão e do fallback adicionados.
+
+
 ## Santuário Three.js oficial — 2026-11-11 (PR #89)
 - **Apenas o Santuário** passa a usar Three.js por padrão: malhas instanciadas 3D dos blocos/chão com texturas oficiais (18 IDs), paredes finas 50% alinhadas pela frente, dois níveis e forma superior herdada da base. Câmera ortográfica superior com profundidade real e seleção por raycast; Deusa continua 2D animada em billboard.
 - `Game`, ações, controles, hotbar e salvamentos continuam comuns; nenhum módulo do editor de cinco níveis ou primeira pessoa foi incorporado ao jogo oficial. `?render=2d` conserva o antigo motor visual; falta verificar o resultado visual em desktop e mobile. Mundo principal permanece Canvas 2D e não carrega Three.js.

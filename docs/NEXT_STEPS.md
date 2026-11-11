@@ -4,6 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Colisão Santuário Three.js — PR #90
+
+- **Correção no perfil WebGL:** cubos/pilares de um nível deixam de funcionar como degrau automático (`stepHeight=0` somente neste renderizador); a caixa dos pés do `Walker` volta a barrar a entrada. Há testes com blocos, parede horizontal, pilar de dois níveis, nuvem livre e fallback Canvas2D.
+- **Validação visual pendente:** testar avanço contra um único cubo, parede fina e coluna, também no celular. **Subir paredes ou degraus futuramente exigirá mecânica explícita** de salto/escada, não caminhada automática. Colisões subcélula em paredes finas ficam fora deste hotfix.
+
 ## Migração do Santuário oficial para Three.js — PR #89 (11/11/2026)
 
 - **Renderer Three.js oficial**: Santuário usa malhas tridimensionais reais e Deusa animada em billboard, com o mesmo `World`, UI, controles e salvamentos, sem importar o editor experimental de cinco níveis. Mantém limite de dois níveis e autotile herdado da base.

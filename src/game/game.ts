@@ -27,6 +27,7 @@ import { Inventory } from './inventory';
 import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
 import { Player } from './player';
+import { configureSanctuaryThreeCollision } from './sanctuaryThreeCollision';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { DialogueBox } from './dialogue';
 import type { Villager } from './villager';
@@ -150,6 +151,9 @@ export class Game {
     this.inventory = profile.collectBlocks || profile.farming ? new Inventory() : new Inventory({});
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
+    // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
+    // The main World and the optional Santuário Canvas2D renderer are unchanged.
+    configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory);
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
     if (options.body) this.entities.body = options.body;
