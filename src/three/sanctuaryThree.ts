@@ -875,7 +875,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       ? 'Paredes horizontais: ligadas' : 'Paredes horizontais: desligadas';
     adaptiveWallsButton.classList.toggle('active', adaptiveHorizontalWalls);
     cloudStatus.textContent = adaptiveHorizontalWalls
-      ? 'Paredes horizontais: pedra/mármore 82–85; colunas grossas nas pontas, miolo fino de 25%. '
+      ? 'Paredes horizontais: pedra/mármore 82–85; colunas grossas nas pontas, miolo com meia profundidade e frente alinhada. '
         + 'Vizinhos na frente/atrás mantêm os blocos maciços. Edite livremente.'
       : 'Paredes adaptativas desligadas. Todos os blocos voltaram à geometria cúbica.';
   });
