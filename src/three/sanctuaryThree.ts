@@ -15,7 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
-import { adjacentFreeBuildCell, buildHorizontalWallDemo, horizontalWallShape, HORIZONTAL_WALL_THICKNESS } from './adaptiveHorizontalWalls';
+import { adjacentFreeBuildCell, buildHorizontalWallDemo, horizontalWallShape, horizontalWallZBounds, HORIZONTAL_WALL_THICKNESS } from './adaptiveHorizontalWalls';
 import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER, fpsCycleHotbar, fpsSneakWouldFall, fpsMouseButtonRemoves, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
@@ -1267,13 +1267,16 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
           targetFace = firstPersonFaceOverlay(hit.point, normal, x0, y0);
           if (source) {
             const thin = horizontalWallShape(freeBuild, source, adaptiveHorizontalWalls) === 'thin';
-            const hx = 0.5, hy = 0.5;
-            const hz = thin ? HORIZONTAL_WALL_THICKNESS / 2 : 0.5;
+            const { rearZ, frontZ } = horizontalWallZBounds(
+              y0 + source.y, thin,
+            );
             targetFace.cell = { x: source.x, y: source.y, z: source.z };
             targetFace.center = [
-              x0 + source.x + 0.5 + normal.x * (hx + 0.008),
-              source.z + 0.5 + normal.y * (hy + (thin && normal.y > 0 ? 0.035 : 0.008)),
-              y0 + source.y + 0.5 + normal.z * (hz + (thin ? 0.05 : 0.008)),
+              x0 + source.x + 0.5 + normal.x * 0.508,
+              source.z + 0.5 + normal.y * (0.5 + (thin && normal.y > 0 ? 0.035 : 0.008)),
+              Math.abs(normal.z) > 0.5
+                ? (normal.z > 0 ? frontZ + 0.008 : rearZ - 0.008)
+                : (rearZ + frontZ) / 2,
             ];
             targetFace.normal = [normal.x, normal.y, normal.z];
           }
