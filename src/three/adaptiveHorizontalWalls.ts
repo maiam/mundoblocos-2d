@@ -3,7 +3,15 @@ import type { SanctuaryV2Id } from './sanctuaryV2Materials';
 
 /** Only decorative stone/marble construction blocks qualify; never clouds or terrain. */
 export const HORIZONTAL_WALL_IDS: readonly SanctuaryV2Id[] = [82, 83, 84, 85];
-export const HORIZONTAL_WALL_THICKNESS = 0.25;
+export const HORIZONTAL_WALL_THICKNESS = 0.5;
+
+/** In the existing superior camera the visible/front face is the +Z edge. */
+export function horizontalWallZBounds(z: number, thin: boolean): { rearZ: number; frontZ: number } {
+  return {
+    rearZ: thin ? z + 1 - HORIZONTAL_WALL_THICKNESS : z,
+    frontZ: z + 1,
+  };
+}
 export type HorizontalWallShape = 'solid' | 'thin';
 
 /**
