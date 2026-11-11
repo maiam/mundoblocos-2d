@@ -651,3 +651,35 @@ nem sempre permite inspecionar laterais e superfícies inferiores da laje.
 - Primeiro resultado é **experimental**: validar FPS no navegador, especialmente
   colisão junto às quinas, mouse lock, mobile e precisão ao mirar nas laterais.
 - O PR permanece draft; a `main`, `World`, salvamentos e limites 2D não mudam.
+
+## Correção V3.1 — mouse e face selecionada (10/11/2026)
+
+O usuário testou a primeira pessoa e identificou dois problemas:
+1. Arrastar o mouse para a direita movia o olhar à esquerda.
+2. A seleção de construção parecia apontar apenas para o chão, sem destacar
+   exatamente a face do cubo atingida.
+
+### Correções
+- `firstPersonLook`: corrigido o sinal horizontal de `yaw`, tanto em
+  Pointer Lock quanto no arraste de toque/mouse. Mouse à direita = olhar à
+  direita; o movimento WASD continua relativo à câmera.
+- O raycast já encontra faces com `intersectObject(freeBuildView.group, true)`;
+  agora a interseção é convertida em uma **face selecionada explícita** e
+  recebe uma superfície dourada translúcida com contorno. O plano acompanha
+  a posição e a normal da face atingida (laterais, topo e underside da laje),
+  em vez de usar o marcador horizontal de terreno.
+- A mira exibe também a face detectada e coordenadas do bloco original.
+  Em FPS, o marcador horizontal foi desabilitado; ele continua disponível
+  nas câmeras externas e na construção por camada.
+- Clique esquerdo coloca cubo adjacente à face; direito remove o cubo
+  original. A regra de cinco níveis e as colisões continuam inalteradas.
+- Testes incluem rotação horizontal intuitiva, orientação do movimento,
+  seleção de lateral, topo e face inferior.
+
+### Verificação manual
+Ativar Laboratório V2 → Construção livre (5 níveis) → Montar escada + laje
+(exemplo) → Primeira pessoa (construção). Mover mouse para direita e esquerda.
+Apontar para laterais dos degraus, topo e parte de baixo da laje. A face
+dourada destacada deve seguir a mira, sem selecionar apenas o chão. Construir
+e remover, observando a célula adjacente. Este efeito ainda requer aprovação
+visual do usuário no navegador.
