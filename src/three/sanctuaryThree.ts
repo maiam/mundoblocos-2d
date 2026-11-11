@@ -13,6 +13,8 @@ import { HOUSE5, houseFloorName, makeHouseNavigation, type HouseNavigation } fro
 import { makeModularHouse5 } from './modularHouse5Scene';
 import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type HouseBuildPiece } from './modularHouse16Plan';
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
+import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
+import { renderFreeBuildFive } from './freeBuildFiveScene';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
 import { MAX_STACK } from '../config';
 import { Player } from '../game/player';
@@ -298,7 +300,24 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let house16Plan = new ModularHouse16();
   let house16Visual: House16Visual | null = null;
   let house16World: World | null = null;
+  // Free construction proof: 5 occupied levels, adjacent blocks and empty cells.
+  // It is deliberately independent from World/Chunk/MAX_STACK/save.
+  const freeBuild = new FreeBuildFive();
+  let freeBuildEnabled = false;
+  let freeBuildLevel = 0;
+  let freeBuildFaceMode = true;
+  let freeBuildView: ReturnType<typeof renderFreeBuildFive> | null = null;
+  const freeBuildWorld = makeFreeBuildNavigation(freeBuild, x0, y0, () => player.z);
   let cameraY = 0;
+  function rebuildFreeBuild(): void {
+    if (freeBuildView) {
+      scene.remove(freeBuildView.group);
+      freeBuildView.dispose();
+    }
+    freeBuildView = renderFreeBuildFive(freeBuild, x0, y0, laboratoryV2Materials, renderer.capabilities.getMaxAnisotropy());
+    freeBuildView.group.visible = laboratoryV2Active && freeBuildEnabled;
+    scene.add(freeBuildView.group);
+  }
   function rebuildHouse16View(): void {
     if (house16Visual) {
       scene.remove(house16Visual.group);
@@ -323,6 +342,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     cameraY = h;
   }
   function rebuildLaboratoryV2(): void {
+    if (freeBuildView) {
+      scene.remove(freeBuildView.group);
+      freeBuildView.dispose();
+      freeBuildView = null;
+    }
     if (house16Visual) {
       scene.remove(house16Visual.group);
       house16Visual.dispose();
@@ -348,6 +372,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     houseScene.group.visible = laboratoryV2Active && houseEnabled && !house16Enabled;
     scene.add(houseScene.group);
     rebuildHouse16View();
+    if (freeBuildEnabled) rebuildFreeBuild();
   }
   let laboratoryBuilt = false;
   let laboratoryCamera = false;
@@ -417,6 +442,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   top.append(cameraButton);
   const laboratoryButton = button('Criar laboratório 3D', () => {
     laboratoryV2Active = false;
+    freeBuildEnabled = false;
+    if (freeBuildView) freeBuildView.group.visible = false;
     houseEnabled = false;
     house16Enabled = false;
     house16Edit = false;
@@ -453,9 +480,10 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       rebuildAfterEdit();
     }
     if (!laboratoryV2) rebuildLaboratoryV2();
-    if (laboratoryV2) laboratoryV2.group.visible = laboratoryV2Active;
-    if (houseScene) houseScene.group.visible = laboratoryV2Active && houseEnabled && !house16Enabled;
-    if (house16Visual) house16Visual.group.visible = laboratoryV2Active && house16Enabled;
+    if (laboratoryV2) laboratoryV2.group.visible = laboratoryV2Active && !freeBuildEnabled;
+    if (houseScene) houseScene.group.visible = laboratoryV2Active && houseEnabled && !house16Enabled && !freeBuildEnabled;
+    if (house16Visual) house16Visual.group.visible = laboratoryV2Active && house16Enabled && !freeBuildEnabled;
+    if (freeBuildView) freeBuildView.group.visible = laboratoryV2Active && freeBuildEnabled;
     // Do not leave the character inside an old demo object when switching scenes.
     if (laboratoryV2Active) v2SetPlayerAt(...V2_VISIT_POINTS.C);
     else {
@@ -475,7 +503,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     v2HeightInfo.hidden = !laboratoryV2Active;
     lastV2HeightDisplay = '';
     cloudStatus.textContent = laboratoryV2Active
-      ? 'Laboratório V2: colisões e câmeras 3D; casa modular 16×12 com peças editáveis (opcional). '
+      ? 'Laboratório V2: construção livre até 5 blocos, escadas e lajes adjacentes (Mais opções). '
         + 'Ilha suspensa ainda sem acesso; o laboratório não altera salvamentos. '
         + (laboratoryV2Materials ? 'Seis texturas PNG carregadas.' : 'Carregue os 6 PNGs em Mais opções.')
       : 'Santuário Three.js experimental. Nenhum teste é salvo.';
@@ -705,6 +733,78 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
   });
 
+  const freeBuildButton = button('Construção livre (5 níveis)', () => {
+    if (!laboratoryV2Active) labV2Button.click();
+    freeBuildEnabled = !freeBuildEnabled;
+    if (freeBuildEnabled) {
+      houseEnabled = false;
+      house16Enabled = false;
+      house16Edit = false;
+      if (houseScene) houseScene.group.visible = false;
+      if (house16Visual) house16Visual.group.visible = false;
+      if (laboratoryV2) laboratoryV2.group.visible = false;
+      if (!freeBuildView) rebuildFreeBuild();
+      if (freeBuildView) freeBuildView.group.visible = true;
+      freeBuildLevel = 0;
+      freeBuildLevelButton.textContent = 'Camada: 1/5';
+      freeBuildFaceMode = true;
+      freeBuildPlaceModeButton.textContent = 'Colocar pela face adjacente';
+      player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
+      player.z = player.visualZ = 0;
+      cameraY = 0;
+      laboratoryCamera = false;
+      focusButton.textContent = 'Ver laboratório';
+      zoom = 11;
+      cloudStatus.textContent = 'Editor 3D: construir/remover no bloco adjacente à face tocada; '
+        + 'escolha camada 1–5 para construir na grade sem bloco de apoio. '
+        + 'Monte escadas e lajes manualmente; sem salvamento.';
+    } else {
+      if (freeBuildView) freeBuildView.group.visible = false;
+      if (laboratoryV2) laboratoryV2.group.visible = true;
+      v2SetPlayerAt(...V2_VISIT_POINTS.C);
+      laboratoryCamera = true;
+      zoom = 39;
+      focusButton.textContent = 'Seguir Deusa';
+      cloudStatus.textContent = 'Editor livre desativado. Setores V2 originais restaurados.';
+    }
+    freeBuildButton.textContent = freeBuildEnabled ? 'Fechar construção livre' : 'Construção livre (5 níveis)';
+  });
+  const freeBuildLevelButton = button('Camada: 1/5', () => {
+    freeBuildLevel = (freeBuildLevel + 1) % FREE_BUILD.maxLevels;
+    freeBuildLevelButton.textContent = 'Camada: ' + (freeBuildLevel + 1) + '/5';
+    cloudStatus.textContent = 'Camada de edição ' + (freeBuildLevel + 1) + '/5. '
+      + 'Modo grade posiciona o cubo exatamente nessa altura; face adjacente usa o lado clicado.';
+  });
+  const freeBuildPlaceModeButton = button('Colocar pela face adjacente', () => {
+    freeBuildFaceMode = !freeBuildFaceMode;
+    freeBuildPlaceModeButton.textContent = freeBuildFaceMode
+      ? 'Colocar pela face adjacente' : 'Colocar na grade da camada';
+    cloudStatus.textContent = freeBuildFaceMode
+      ? 'Clique numa face de bloco: cria outro bloco ao lado, acima ou abaixo. Clique no chão para iniciar.'
+      : 'Clique na grade: cria ou remove bloco na camada selecionada (1–5), mesmo sem apoio.';
+  });
+  const freeBuildExampleButton = button('Montar escada + laje (exemplo)', () => {
+    if (!freeBuildEnabled) freeBuildButton.click();
+    freeBuild.example();
+    rebuildFreeBuild();
+    player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
+    player.z = player.visualZ = 0;
+    cameraY = 0;
+    laboratoryCamera = false;
+    zoom = 11;
+    focusButton.textContent = 'Ver laboratório';
+    cloudStatus.textContent = 'Exemplo criado: degraus adjacentes 1→5, laje elevada 5×5 '
+      + 'e piso lateral. Suba caminhando. Nenhuma peça foi salva.';
+  });
+  const freeBuildResetButton = button('Limpar construção livre', () => {
+    freeBuild.clear();
+    if (freeBuildEnabled) rebuildFreeBuild();
+    player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
+    player.z = player.visualZ = 0;
+    cameraY = 0;
+    cloudStatus.textContent = 'Área de construção livre limpa; pronta para desenhar com blocos adjacentes.';
+  });
+
   // The 4×4 RGBA sheets are separate from terrain; never edit the existing sprite atlas.
   const goddessIsoUpload = document.createElement('input');
   goddessIsoUpload.type = 'file';
@@ -887,7 +987,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [freeBuildButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -941,6 +1041,69 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     return null;
   };
+  function editFreeBuildAt(screenX: number, screenY: number, apply: boolean): boolean {
+    if (!laboratoryV2Active || !freeBuildEnabled) return false;
+    const rect = canvas.getBoundingClientRect();
+    mouse.set(((screenX - rect.left) / rect.width) * 2 - 1,
+      -((screenY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(mouse, camera);
+    let candidate: { x: number; y: number; z: number } | null = null;
+    if (freeBuildFaceMode && freeBuildView) {
+      const hits = raycaster.intersectObject(freeBuildView.group, true)
+        .filter(hit => hit.object.userData.freeBuildFive);
+      const hit = hits[0];
+      if (hit) {
+        const n = hit.face?.normal ?? new THREE.Vector3(0, 1, 0);
+        const factor = removing ? -0.005 : 0.005;
+        candidate = {
+          x: Math.floor(hit.point.x + n.x * factor) - x0,
+          y: Math.floor(hit.point.z + n.z * factor) - y0,
+          z: Math.floor(hit.point.y + n.y * factor),
+        };
+      }
+    }
+    if (!candidate) {
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -freeBuildLevel);
+      const hit = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+      if (!hit) return true;
+      candidate = { x: Math.floor(hit.x - x0), y: Math.floor(hit.z - y0), z: freeBuildLevel };
+    }
+    if (freeBuild.contains(candidate.x, candidate.y) && freeBuild.validLevel(candidate.z)) {
+      selector.visible = true;
+      selector.position.set(x0 + candidate.x + .5, candidate.z + .03, y0 + candidate.y + .5);
+    } else selector.visible = false;
+    if (!apply) return true;
+    if (!freeBuild.contains(candidate.x, candidate.y)) {
+      cloudStatus.textContent = 'Fora da área 16×14 do editor livre.';
+      return true;
+    }
+    if (!freeBuild.validLevel(candidate.z)) {
+      cloudStatus.textContent = 'Altura máxima: cinco blocos (camadas 1–5).';
+      return true;
+    }
+    const isPlayerCell = Math.floor(player.x - x0) === candidate.x
+      && Math.floor(player.y - y0) === candidate.y
+      && Math.abs(player.z - candidate.z) < 2;
+    if (!removing && isPlayerCell) {
+      cloudStatus.textContent = 'Não é possível colocar bloco no espaço da Deusa.';
+      return true;
+    }
+    const result = removing
+      ? freeBuild.remove(candidate.x, candidate.y, candidate.z)
+      : freeBuild.set(candidate.x, candidate.y, candidate.z,
+        (selectedBlock >= 80 && selectedBlock <= 85) ? selectedBlock : 82);
+    if (result.ok) {
+      rebuildFreeBuild();
+      // Do not teleport the goddess: her Walker settles on the next tick.
+      cloudStatus.textContent = (removing ? 'Removido' : 'Colocado')
+        + ' bloco (' + candidate.x + ', ' + candidate.y + ', camada '
+        + (candidate.z + 1) + '/5). Total: ' + freeBuild.size
+        + '. Blocos adjacentes independentes; sem salvamento.';
+    } else {
+      cloudStatus.textContent = 'Não foi possível editar: ' + result.reason;
+    }
+    return true;
+  }
   function editHouse16At(screenX: number, screenY: number, apply: boolean): boolean {
     if (!laboratoryV2Active || !house16Enabled || !house16Edit) return false;
     const rect = canvas.getBoundingClientRect();
@@ -972,6 +1135,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     return true;
   }
   canvas.addEventListener('pointermove', (e) => {
+    if (editFreeBuildAt(e.clientX, e.clientY, false)) return;
     if (editHouse16At(e.clientX, e.clientY, false)) return;
     if (laboratoryV2Active && laboratoryV2) {
       const rect = canvas.getBoundingClientRect();
@@ -1005,6 +1169,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 13) { down = null; return; }
     down = null;
+    if (editFreeBuildAt(e.clientX, e.clientY, true)) return;
     if (editHouse16At(e.clientX, e.clientY, true)) return;
     if (laboratoryV2Active) {
       cloudStatus.textContent = 'Prévia V2: construções, relevos 4/5 e ilha NÃO são editáveis. '
@@ -1053,7 +1218,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       }
     }
     const movementWorld = laboratoryV2Active && laboratoryV2Physics
-      ? house16Enabled && house16World ? house16World
+      ? freeBuildEnabled ? freeBuildWorld
+        : house16Enabled && house16World ? house16World
         : houseEnabled && houseNavigation ? houseNavigation.walkerWorld : laboratoryV2Physics.walkerWorld
       : world;
     if (iso) {
@@ -1098,7 +1264,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     if (houseScene && houseEnabled && laboratoryV2Active) {
       houseScene.updateView(player.x, player.y, player.z, camera.position);
     }
-    if (house16Visual && house16Enabled && laboratoryV2Active) {
+    if (house16Visual && house16Enabled && laboratoryV2Active && !freeBuildEnabled) {
       house16Visual.updateVisibility(player.x, player.y, player.z, camera.position);
     }
     if (laboratoryV2Active) {
@@ -1109,6 +1275,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       const localX = Math.floor(player.x - x0), localY = Math.floor(player.y - y0);
       const building16 = house16Enabled && house16Plan.contains(localX, localY);
       const display = 'Deusa · nível ' + player.z + ' · altura visual ' + player.visualZ.toFixed(2)
+        + (freeBuildEnabled ? ' · construção livre 1–5: ' + freeBuild.size + ' blocos' : '')
         + (building16 ? ' · Casa 16×12: ' + house16Plan.floorName(localX, localY, player.z)
           : insideHouse ? ' · Casa: ' + houseFloorName(player.z, player.x - x0, player.y - y0)
           : ' · subida máxima 1 bloco');
@@ -1118,9 +1285,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       }
     }
     const offset = iso ? [13, 20, 13] : [0, 23, 11];
-    const v2Target = laboratoryV2Sector === 'all'
-      ? { x: 40, y: 16 }
-      : SANCTUARY_V2_SECTORS[laboratoryV2Sector];
+    const v2Target = freeBuildEnabled
+      ? { x: FREE_BUILD.camera[0], y: FREE_BUILD.camera[1] }
+      : laboratoryV2Sector === 'all'
+        ? { x: 40, y: 16 }
+        : SANCTUARY_V2_SECTORS[laboratoryV2Sector];
     const focusHeight = laboratoryV2Active && !laboratoryCamera ? player.visualZ : 0;
     cameraY += (focusHeight - cameraY) * (1 - Math.exp(-7 * dt));
     const target = laboratoryV2Active && laboratoryCamera
@@ -1149,6 +1318,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     window.removeEventListener('keyup', onKeyUp);
     hud.remove(); style.remove();
     if (wireframe) { scene.remove(wireframe); wireframe.geometry.dispose(); }
+    if (freeBuildView) { scene.remove(freeBuildView.group); freeBuildView.dispose(); }
     if (house16Visual) { scene.remove(house16Visual.group); house16Visual.dispose(); }
     if (houseScene) { scene.remove(houseScene.group); houseScene.dispose(); }
     if (laboratoryV2) { scene.remove(laboratoryV2.group); laboratoryV2.dispose(); }
