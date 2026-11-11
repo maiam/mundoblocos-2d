@@ -1,5 +1,9 @@
 # Changelog
 
+## Ajuste de autotile vertical — 2026-11-11
+- **Consistência de dois níveis:** a geometria da parede/pilar é resolvida uma única vez com os vizinhos do bloco inferior; o segundo nível herda a forma e mantém sua própria textura, sem examinar adjacências superiores. Portas existentes continuam funcionando como pilares; blocos não construtivos não afinam. Nenhuma outra regra de mundo, câmera, colisão ou altura foi modificada.
+
+
 ## Próxima versão (PR #87, ainda não publicada) — 2026-11-11
 - **Render top-down oficial:** autotile horizontal de paredes de construção a partir dos blocos atuais. Só blocos intermediários de linhas horizontais isoladas afinam (topo reduzido pela metade para trás); face frontal continua alinhada aos pilares. Massas preenchidas, terrenos e nuvens seguem maciços. Portas existentes contam como pilares sem alterar sua interação.
 - **Máximo de construção:** dois níveis no mundo e Santuário, inclusive na restauração de saves antigos (terceiro nível deixa de ser carregado e altura do personagem é limitada a 2).
