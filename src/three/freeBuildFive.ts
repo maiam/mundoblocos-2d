@@ -13,11 +13,15 @@ export const FREE_BUILD = {
   camera: [40, 16] as const,
 } as const;
 
+export type FreeBuildPiece = 'block' | 'door';
+
 export interface FreeBuildVoxel {
   x: number;
   y: number;
   z: number;
   id: SanctuaryV2Id;
+  /** Experimental stone-framed door: solid pillar for auto-tiling. */
+  kind?: FreeBuildPiece;
 }
 
 export type FreeBuildResult =
@@ -37,16 +41,22 @@ export class FreeBuildFive {
   get(x: number, y: number, z: number): FreeBuildVoxel | undefined {
     return this.voxels.get(this.key(x, y, z));
   }
-  set(x: number, y: number, z: number, id: number): FreeBuildResult {
+  set(x: number, y: number, z: number, id: number, kind: FreeBuildPiece = 'block'): FreeBuildResult {
     if (!this.contains(x, y)) return { ok: false, reason: 'outside' };
     if (!this.validLevel(z)) return { ok: false, reason: 'invalid-level' };
-    if (!(SANCTUARY_V2_IDS as readonly number[]).includes(id)) return { ok: false, reason: 'invalid-material' };
+    if (!(SANCTUARY_V2_IDS as readonly number[]).includes(id) ||
+      (kind === 'door' && (id < 82 || id > 85)) || !['block', 'door'].includes(kind))
+      return { ok: false, reason: 'invalid-material' };
     const key = this.key(x, y, z);
     if (this.voxels.has(key)) return { ok: false, reason: 'occupied' };
     if (this.voxels.size >= FREE_BUILD.width * FREE_BUILD.depth * FREE_BUILD.maxLevels)
       return { ok: false, reason: 'limit' };
-    this.voxels.set(key, { x, y, z, id: id as SanctuaryV2Id });
+    this.voxels.set(key, { x, y, z, id: id as SanctuaryV2Id, ...(kind === 'door' ? { kind } : {}) });
     return { ok: true, action: 'placed' };
+  }
+  /** A closed experimental door is a full-height/full-cell pillar, not a passable opening yet. */
+  setDoor(x: number, y: number, z: number, id: SanctuaryV2Id = 84): FreeBuildResult {
+    return this.set(x, y, z, id, 'door');
   }
   remove(x: number, y: number, z: number): FreeBuildResult {
     if (!this.contains(x, y)) return { ok: false, reason: 'outside' };
