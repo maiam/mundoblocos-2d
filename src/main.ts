@@ -191,7 +191,7 @@ void loadArtPack(profile.id)
     // save format, two-level construction, actions, player and HUD are kept.
     // The principal world never loads this module (separate Vite chunk).
     // ?render=2d remains a safe fallback for devices without WebGL.
-    if (profile.id === 'santuario' && query.get('render') !== '2d') {
+    if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario' && query.get('render') !== '2d') {
       const probe = document.createElement('canvas');
       const supported = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
       if (supported) {
