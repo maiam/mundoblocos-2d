@@ -729,3 +729,42 @@ No modo de construção **primeira pessoa**, o usuário definiu explicitamente o
 - **Botão do meio:** copiar o material do bloco selecionado.
 
 Os textos do laboratório foram corrigidos. O mapeamento é coberto por teste automatizado. A alteração é restrita ao modo experimental, sem afetar a construção das câmeras externas e os salvamentos.
+
+
+## Paredes horizontais adaptativas — SPEC-PAREDES-001 V1.1 (11/11/2026)
+
+**Status: experimento no Santuário Three.js, branch `feat/santuario-three-experimental`, PR #86 draft.**
+Nenhuma mudança na `main`, no `World`, no save ou no modo de construção 2D oficial.
+
+### Como testar
+
+1. Abra `?mundo=santuario&render=three` na branch experimental.
+2. Clique em **Laboratório V2** e em **Mais opções → Construção livre (5 níveis)**.
+3. Clique em **Paredes horizontais: desligadas** para ligar a regra; o experimento usa **Câmera: superior** (top-down ortográfica existente).
+4. Em **Exemplo: paredes 3/4/5, maciços 2×2/3×3**, carregue a comparação pronta. A cena mostra linhas de pedra celestial, massas maciças e uma borda superior fina.
+5. Em **Colocar na grade da camada**, coloque/remova blocos 82–85 horizontalmente na mesma camada para observar as transições. A câmera e os controles anteriores continuam disponíveis ao desligar o modo.
+
+### Regra geométrica estrita
+
+- Apenas mármores/pedras 82–85, exigindo **mesmo material à esquerda e à direita**.
+- Sem bloco imediatamente ao norte ou ao sul no mesmo nível; qualquer bloco nesses lados impede afinamento.
+- Bloco isolado e dupla permanecem maciços; sequências 3, 4, 5 resultam em `█─█`, `█──█` e `█───█`.
+- Matrizes 2×2 e 3×3 e linhas verticais na grade permanecem maciças.
+- Blocos 80/81 (nuvem) nunca afinam, nem quando o modo está ligado.
+- Espessura geométrica do painel: **0,25 célula** na profundidade Z, centralizada na célula lógica.
+- Painéis têm ressalto superior contínuo de 0,035 célula; as colunas conservam o topo cheio.
+- Topos e laterais de blocos contíguos são recortados apenas onde surge uma face exposta pela redução, preservando encaixe visual sem paredes em T.
+
+### Arquitetura e limites
+
+- `adaptiveHorizontalWalls.ts`: regra pura por consulta aos quatro vizinhos da célula na mesma altura, gerador de cenário e cálculo de célula adjacente por normal de face.
+- `freeBuildFiveScene.ts`: malhas procedurais com UV no mundo, borda superior, seleção do voxel original por triângulo e geometria maciça/fina baseada na regra.
+- `sanctuaryThree.ts`: botões de ligar/desligar e comparação, interação, seleção e destaque de faces sem alterar câmeras ou mapas.
+- Cada edição reconstruirá apenas o pequeno editor local **16×14×5** existente; otimização incremental, cache e chunks não integram esta prova de conceito.
+- **Colisão/movimento continuam por célula lógica cheia** via `FreeBuildFive.support`, não pelo quarto de profundidade da parede. A malha de raycast já acompanha a espessura; subcélulas e colisão física fina exigem uma futura revisão do `Walker`.
+- Não há paredes verticais no mapa, cantos, T, cruzamentos, portas ou janelas automáticas.
+- `adaptiveHorizontalWalls.test.ts` testa linhas, massas 2×2/3×3, materiais incompatíveis, níveis, vizinhos perpendiculares, remoção e seleção das faces recuadas.
+
+### Validação pendente
+
+Inspecionar no navegador a legibilidade do topo e do ressalto na câmera superior; confirmar seleção nas quinas, empilhamento e resultado visual com os PNGs V2.1 carregados. Aprovado o visual, discutir se a ocupação/collision por subcélula deverá ser implementada.
