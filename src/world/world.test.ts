@@ -111,6 +111,22 @@ describe('World', () => {
     expect(w.isWalkable(x, y)).toBe(true);
   });
 
+  it('ignora nível 3 de chunks de um salvamento antigo sem perder os dois primeiros', () => {
+    const w = new World(7);
+    const [x,y] = w.outsideGate();
+    const size = CHUNK_SIZE * CHUNK_SIZE;
+    const index = toLocal(y) * CHUNK_SIZE + toLocal(x);
+    const layers = [new Uint8Array(size),new Uint8Array(size),new Uint8Array(size)];
+    layers.forEach(layer=>{layer[index] = Block.STONE_BRICK;});
+    const ground = new Uint8Array(size).fill(Block.GRASS);
+    w.restoreChunk(toChunk(x),toChunk(y),ground,layers);
+    expect(w.getObject(x,y)).toBe(Block.STONE_BRICK);
+    expect(w.getLevel(x,y,1)).toBe(Block.STONE_BRICK);
+    expect(w.getLevel(x,y,2)).toBe(Block.AIR);
+    expect(w.stackHeight(x,y)).toBe(2);
+    expect(w.topBlock(x,y)).toEqual({id:Block.STONE_BRICK,level:1});
+  });
+
   it('empilha no máximo 2 cubos e quebra de cima para baixo', () => {
     const w = new World(7);
     const [x, y] = w.outsideGate();
