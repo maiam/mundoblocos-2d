@@ -5,7 +5,7 @@ import { HORIZONTAL_WALL_THICKNESS, horizontalWallShape, horizontalWallZBounds }
 import { SANCTUARY_V2_IDS, type SanctuaryV2Materials } from './sanctuaryV2Materials';
 
 type FaceBuffer = { positions: number[]; uvs: number[]; cells: FreeBuildVoxel[] };
-type FaceKind = 'top' | 'bottom' | 'ns' | 'ew' | 'cap';
+type FaceKind = 'top' | 'bottom' | 'ns' | 'ew' | 'cap' | 'doorLeaf' | 'doorFrame' | 'doorPlank' | 'doorHandle';
 const quad = [0, 1, 2, 0, 2, 3] as const;
 const makeBuffer = (): FaceBuffer => ({ positions: [], uvs: [], cells: [] });
 function addFace(buffer: FaceBuffer, corners: number[][], uv: number[][], cell: FreeBuildVoxel): void {
@@ -128,6 +128,28 @@ export function renderFreeBuildFive(
       addFace(buffer(id, 'cap'),
         [[x,y+1,b],[x+1,y+1,b],[x+1,capY,b],[x,capY,b]], capBackUV, cell);
     }
+
+    // Prototype door: full-width stone pillar with a painted fantasy door
+    // leaf on its FRONT (+Z). Geometry is part of this logical voxel for
+    // raycasting. A door never becomes a panel, but panels join to it.
+    if (cell.kind === 'door' && !data.get(cell.x, cell.y + 1, cell.z)) {
+      const doorQuad = (
+        kind: FaceKind, leftX: number, rightX: number,
+        lowerY: number, upperY: number, outset: number,
+      ) => addFace(buffer(id, kind), [
+        [x + leftX, y + lowerY, backZ + outset],
+        [x + rightX, y + lowerY, backZ + outset],
+        [x + rightX, y + upperY, backZ + outset],
+        [x + leftX, y + upperY, backZ + outset],
+      ], [[0,0],[1,0],[1,1],[0,1]], cell);
+      doorQuad('doorLeaf', 0.16, 0.84, 0.045, 0.87, 0.012);
+      doorQuad('doorPlank', 0.38, 0.40, 0.08, 0.83, 0.017);
+      doorQuad('doorPlank', 0.60, 0.62, 0.08, 0.83, 0.017);
+      doorQuad('doorFrame', 0.11, 0.18, 0.035, 0.95, 0.019);
+      doorQuad('doorFrame', 0.82, 0.89, 0.035, 0.95, 0.019);
+      doorQuad('doorFrame', 0.11, 0.89, 0.88, 0.95, 0.019);
+      doorQuad('doorHandle', 0.74, 0.79, 0.43, 0.49, 0.023);
+    }
   }
   const geometries: any[] = [], materials: any[] = [];
   for (const [key, face] of faceBuffers) {
@@ -138,9 +160,17 @@ export function renderFreeBuildFive(
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute(face.uvs, 2));
     geometry.computeVertexNormals();
     geometries.push(geometry);
+    const doorColor = kind === 'doorLeaf' ? 0x805039
+      : kind === 'doorFrame' ? 0xd9b984
+      : kind === 'doorPlank' ? 0x4c2c24
+      : kind === 'doorHandle' ? 0xffd479 : null;
     const color = kind === 'top' ? 0xffffff : kind === 'cap' ? 0xf7edd8
       : kind === 'ns' ? 0xc7cae1 : kind === 'ew' ? 0x9eafcf : 0xb0b0ca;
-    const material = new THREE.MeshBasicMaterial({ map: map(Number(idStr)), color, side: THREE.DoubleSide });
+    const material = new THREE.MeshBasicMaterial({
+      map: doorColor === null ? map(Number(idStr)) : null,
+      color: doorColor ?? color,
+      side: THREE.DoubleSide,
+    });
     materials.push(material);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.userData.freeBuildFive = true;
