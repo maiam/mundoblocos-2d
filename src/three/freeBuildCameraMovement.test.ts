@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Player } from '../game/player';
 import { FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { externalFreeBuildMovement, shouldFollowFreeBuildOnMove } from './freeBuildCameraMovement';
+import { adjacentFreeBuildCell } from './adaptiveHorizontalWalls';
 
 describe('Santuário — subida nos blocos com câmeras externas', () => {
   it.each([false, true])(
@@ -33,6 +34,22 @@ describe('Santuário — subida nos blocos com câmeras externas', () => {
       }
     },
   );
+
+  it('stacks by clicking the block top in either external camera without changing edit layer', () => {
+    const build = new FreeBuildFive();
+    build.set(35, 12, 0, 84);
+    for (let level = 0; level < 4; level++) {
+      // Orthographic and isometric raycasters both return the same
+      // upward-facing voxel normal, so the next cell is one level higher.
+      const candidate = adjacentFreeBuildCell(
+        { x: 35, y: 12, z: level }, { x: 0, y: 1, z: 0 }, false,
+      );
+      expect(candidate).toEqual({ x: 35, y: 12, z: level + 1 });
+      expect(build.set(candidate.x, candidate.y, candidate.z, 84).ok).toBe(true);
+    }
+    expect(build.get(35, 12, 4)?.id).toBe(84);
+    expect(build.size).toBe(5);
+  });
 
   it('starts following the goddess after moving out of the static overview', () => {
     expect(shouldFollowFreeBuildOnMove(true, false, true, 0, -1)).toBe(true);
