@@ -23,6 +23,17 @@ describe('Santuário — editor livre de cinco níveis', () => {
     expect(editor.size).toBe(0);
   });
 
+  it('places a separate stone door as a solid structural voxel with normal occupancy', () => {
+    const ed = new FreeBuildFive();
+    expect(ed.setDoor(36, 14, 0, 84)).toEqual({ok:true,action:'placed'});
+    expect(ed.get(36, 14, 0)).toMatchObject({id:84,kind:'door'});
+    expect(ed.support(36, 14, 0)).toBe(1); // Closed door is a full pillar.
+    expect(ed.setDoor(36, 14, 0, 84)).toEqual({ok:false,reason:'occupied'});
+    expect(ed.setDoor(37, 14, 0, 80)).toEqual({ok:false,reason:'invalid-material'});
+    expect(ed.remove(36, 14, 0)).toEqual({ok:true,action:'removed'});
+    expect(ed.get(36, 14, 0)).toBeUndefined();
+  });
+
   it('creates example staircase of 1→5 and 5×5 upper slab with stable adjacency', () => {
     const ed = new FreeBuildFive();
     ed.example();
