@@ -24,18 +24,24 @@ export function horizontalWallShape(
   cell: FreeBuildVoxel,
   enabled: boolean,
 ): HorizontalWallShape {
-  if (!enabled || !HORIZONTAL_WALL_IDS.includes(cell.id)) return 'solid';
+  // A door occupies a full structural cell and must NEVER become a thin panel.
+  if (!enabled || cell.kind === 'door' || !HORIZONTAL_WALL_IDS.includes(cell.id)) return 'solid';
   const { x, y, z, id } = cell;
   const left = data.get(x - 1, y, z);
   const right = data.get(x + 1, y, z);
-  if (left?.id !== id || right?.id !== id) return 'solid';
+  // A door is a universal structural pillar for the experimental wall family.
+  // Regular neighboring blocks still require exactly the same stone material.
+  const joins = (neighbor: FreeBuildVoxel | undefined) =>
+    neighbor?.kind === 'door' && HORIZONTAL_WALL_IDS.includes(neighbor.id)
+      || neighbor?.kind !== 'door' && neighbor?.id === id;
+  if (!joins(left) || !joins(right)) return 'solid';
   if (data.get(x, y - 1, z) || data.get(x, y + 1, z)) return 'solid';
   return 'thin';
 }
 
 /** Repeatable comparison: isolated horizontal runs versus filled stone masses. */
 export function buildHorizontalWallDemo(
-  editor: Pick<FreeBuildFive, 'clear' | 'set'>,
+  editor: Pick<FreeBuildFive, 'clear' | 'set' | 'remove'>,
   id: SanctuaryV2Id = 84,
 ): void {
   editor.clear();
@@ -44,6 +50,10 @@ export function buildHorizontalWallDemo(
   }
   for (let y = 10; y < 12; y++) for (let x = 40; x < 42; x++) editor.set(x, y, 0, id);
   for (let y = 14; y < 17; y++) for (let x = 43; x < 46; x++) editor.set(x, y, 0, id);
+  // Door (in another stone material) becomes a pillar between two thin panels.
+  for (let x = 33; x <= 39; x++) editor.set(x, 18, 0, id);
+  editor.remove(36, 18, 0);
+  editor.set(36, 18, 0, 83, 'door');
 }
 
 /**
