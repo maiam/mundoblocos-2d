@@ -15,7 +15,7 @@ export function firstPersonLook(
   yaw: number, pitch: number, deltaX: number, deltaY: number, sensitivity = FP_MOUSE_SENSITIVITY,
 ): FirstPersonAngles {
   return {
-    yaw: yaw - deltaX * sensitivity,
+    yaw: yaw + deltaX * sensitivity,
     pitch: Math.max(-FP_PITCH_LIMIT, Math.min(FP_PITCH_LIMIT, pitch - deltaY * sensitivity)),
   };
 }
@@ -36,7 +36,11 @@ export function firstPersonForward(yaw: number, pitch: number): [number, number,
   return [Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp];
 }
 
-/** Face hit: small signed offset puts the target INSIDE/OUTSIDE that cube. */
+/**
+ * Face hit: the signed offset picks the existing cube (remove) or the
+ * immediately adjacent empty cell (place). This works for horizontal faces,
+ * vertical walls, and the UNDERSIDE of an elevated slab.
+ */
 export function firstPersonHitCell(
   point: {x: number; y: number; z: number},
   normal: {x: number; y: number; z: number},
@@ -48,4 +52,21 @@ export function firstPersonHitCell(
     y: Math.floor(point.z + normal.z * eps) - worldY0,
     z: Math.floor(point.y + normal.y * eps),
   };
+}
+
+/** Position of an outlined face on the EXISTING cube, not on the ground. */
+export function firstPersonFaceOverlay(
+  point: {x: number; y: number; z: number},
+  normal: {x: number; y: number; z: number},
+  worldX0: number, worldY0: number,
+): {cell: {x: number; y: number; z: number}; center: [number, number, number]; normal: [number, number, number]; label: string} {
+  const cell = firstPersonHitCell(point, normal, worldX0, worldY0, true);
+  const nx = Math.round(normal.x), ny = Math.round(normal.y), nz = Math.round(normal.z);
+  const cx = worldX0 + cell.x + 0.5 + nx * 0.508;
+  const cy = cell.z + 0.5 + ny * 0.508;
+  const cz = worldY0 + cell.y + 0.5 + nz * 0.508;
+  const label = nx ? (nx > 0 ? 'lateral direita (+X)' : 'lateral esquerda (-X)')
+    : ny ? (ny > 0 ? 'topo (+Y)' : 'face inferior (-Y)')
+    : nz > 0 ? 'lateral frontal (+Z)' : 'lateral traseira (-Z)';
+  return {cell, center: [cx, cy, cz], normal: [nx, ny, nz], label};
 }
