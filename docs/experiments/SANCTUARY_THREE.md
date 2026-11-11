@@ -751,7 +751,7 @@ Nenhuma mudança na `main`, no `World`, no save ou no modo de construção 2D of
 - Bloco isolado e dupla permanecem maciços; sequências 3, 4, 5 resultam em `█─█`, `█──█` e `█───█`.
 - Matrizes 2×2 e 3×3 e linhas verticais na grade permanecem maciças.
 - Blocos 80/81 (nuvem) nunca afinam, nem quando o modo está ligado.
-- Espessura geométrica do painel: **0,25 célula** na profundidade Z, centralizada na célula lógica.
+- Espessura geométrica do painel na V1.2: **0,5 célula**, ancorada na face frontal +Z; a célula lógica permanece inteira.
 - Painéis têm ressalto superior contínuo de 0,035 célula; as colunas conservam o topo cheio.
 - Topos e laterais de blocos contíguos são recortados apenas onde surge uma face exposta pela redução, preservando encaixe visual sem paredes em T.
 
@@ -761,10 +761,25 @@ Nenhuma mudança na `main`, no `World`, no save ou no modo de construção 2D of
 - `freeBuildFiveScene.ts`: malhas procedurais com UV no mundo, borda superior, seleção do voxel original por triângulo e geometria maciça/fina baseada na regra.
 - `sanctuaryThree.ts`: botões de ligar/desligar e comparação, interação, seleção e destaque de faces sem alterar câmeras ou mapas.
 - Cada edição reconstruirá apenas o pequeno editor local **16×14×5** existente; otimização incremental, cache e chunks não integram esta prova de conceito.
-- **Colisão/movimento continuam por célula lógica cheia** via `FreeBuildFive.support`, não pelo quarto de profundidade da parede. A malha de raycast já acompanha a espessura; subcélulas e colisão física fina exigem uma futura revisão do `Walker`.
+- **Colisão/movimento continuam por célula lógica cheia** via `FreeBuildFive.support`, não pela meia profundidade da parede. A malha de raycast já acompanha a espessura; subcélulas e colisão física fina exigem uma futura revisão do `Walker`.
 - Não há paredes verticais no mapa, cantos, T, cruzamentos, portas ou janelas automáticas.
 - `adaptiveHorizontalWalls.test.ts` testa linhas, massas 2×2/3×3, materiais incompatíveis, níveis, vizinhos perpendiculares, remoção e seleção das faces recuadas.
 
 ### Validação pendente
 
 Inspecionar no navegador a legibilidade do topo e do ressalto na câmera superior; confirmar seleção nas quinas, empilhamento e resultado visual com os PNGs V2.1 carregados. Aprovado o visual, discutir se a ocupação/collision por subcélula deverá ser implementada.
+
+### Correção visual V1.2 — face frontal alinhada aos pilares (11/11/2026)
+
+**Feedback do teste manual:** o painel fino ficava no meio da célula, criando um recuo indesejado na fachada da parede. O usuário pediu que a parede use a **mesma face frontal do pilar** e ocupe apenas **a metade de profundidade a partir dessa face**, para trás.
+
+**Implementado:**
+- Na câmera superior atual, a fachada visível dos cubos fica na borda **+Z**. O painel fino mantém `frontZ = z + 1` como o pilar maciço e passa a iniciar na profundidade `rearZ = z + 0,5`. Antes, era centralizado.
+- **Espessura revisada: 0,5 célula**. A face frontal mantém exatamente as UV e o material já usados no cubo cheio.
+- Ajustadas as superfícies expostas das colunas e as superfícies de apoio/parte inferior entre níveis: agora a diferença geométrica é **apenas a metade traseira**, não duas faixas simétricas.
+- A borda/capa superior segue a parede e não avança à frente da fachada alinhada.
+- O destaque de face em primeira pessoa usa os limites reais `rearZ/frontZ` no lugar do centro da célula.
+- Adicionado teste da geometria Three.js renderizada, verificando que face da parede e face do pilar coincidem em **+Z**, e que a região exposta do pilar fica na metade traseira.
+- Mantidas as regras anteriores de vizinhança, materiais 82–85, top-down e isolamento da branch. **Colisão de caminhada segue por célula inteira**.
+
+**Validação manual recomendada:** use **Exemplo: paredes 3/4/5, maciços 2×2/3×3**. Na câmera superior, a face da parede deve formar uma fachada contínua com as duas colunas. Confira também as juntas entre o centro e as colunas e, se desejar, o highlight na câmera em primeira pessoa.
