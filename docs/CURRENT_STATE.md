@@ -93,7 +93,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Autotile horizontal 2D — versão candidata em PR #87 (11/11/2026)
 - Paredes construídas com tijolo de pedra, pedra lisa/polida, tábuas de carvalho/cerejeira/bétula e os mármores/pedras celestiais (82–85) afinam **somente** entre vizinhos horizontais do mesmo material (ou porta oficial existente) e sem vizinhos norte/sul, nível a nível. Face frontal permanece alinhada; topo desenhado com metade da profundidade. Isolados, extremidades, massas 2×2 e 3×3 permanecem maciços.
 - Todos os blocos empilháveis: **máximo de dois níveis (0 e 1)**. Salvos de versões anteriores com terceiro nível descartam esse nível na leitura; a altura do jogador é limitada a 2. Sem alterações de câmera/terreno/natureza ou itens de porta.
-- **Arte oficial ainda pendente:** os seis PNGs 512×512 aprovados no laboratório Three.js para 80–85 foram carregados localmente e não estão no GitHub. O Santuário 2D continua usando seu atlas já publicado até receber as fontes exatas.
+- **Arte oficial incorporada no PR #87:** seis texturas quadradas 512×512 aprovadas para 80–85, armazenadas em `src/assets/santuario-*-512.jpg` (arquivos normalizados das imagens fornecidas). O Santuário 2D usa cada textura no topo, frente, chão e ícone correspondente; os outros 12 blocos celestiais continuam no atlas original. A arte é carregada apenas pelo pacote do Santuário.
 
 ## Padrão de Materiais V2 (o padrão do jogo desde 08/11, ADR 0023)
 - **É o que o jogador vê.** A arte entrega material plano 128×128 em `assets-src/materiais/<material>/` (contrato na
