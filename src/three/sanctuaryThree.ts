@@ -290,7 +290,6 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let fpLastDrag = { x: 0, y: 0 };
   const fpCenter = new THREE.Vector2(0, 0);
   const fpDirection = new THREE.Vector3();
-  const fpEye = new THREE.Vector3();
   const fpAim = new THREE.Vector3();
   function fpsActive(): boolean { return firstPerson && laboratoryV2Active && freeBuildEnabled; }
   function updateFPSCamera(): void {
@@ -1460,7 +1459,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     }
     updateCutawayProjection(
       cloudCutaway, camera, goddess.position, canvas.clientWidth, canvas.clientHeight,
-      renderer.getPixelRatio(), zoom, Boolean(cloudTop512 && useCloudTop512),
+      renderer.getPixelRatio(), zoom, Boolean(cloudTop512 && useCloudTop512 && !fpsActive()),
     );
     renderer.render(scene, fpsActive() ? fpsCamera : camera);
   };
