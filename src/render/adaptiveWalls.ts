@@ -19,22 +19,29 @@ type BlockReader = {
 };
 
 /**
- * Sem T/canto: um bloco afina somente se seus dois vizinhos horizontais
- * são do mesmo material (ou uma porta já existente, tratada como pilar),
- * e não há blocos diretamente ao norte/sul no MESMO nível.
- * Blocos que não são construtivos sempre permanecem maciços.
+ * V1 — só o nível de base (índice 0) resolve a forma por vizinhança.
+ * Uma porta aberta/fechada conta como pilar de ligação na base, sem afinar.
+ * Para o segundo bloco (índice 1), HERDAR a geometria da base e conservar
+ * a própria textura. Não consultar vizinhos do andar superior.
+ *
+ * Um bloco não construtivo, sem apoio ou apoiado sobre algo que não participa
+ * do autotile fica sempre maciço; portas são tratadas como pilares.
  */
 export function horizontalWallShape(
   view: BlockReader, id: BlockId, x: number, y: number, level: number,
 ): 'solid' | 'thin' {
   if (!ADAPTIVE_WALL_BLOCKS.has(id)) return 'solid';
+  // Nenhum terceiro nível, nem autoclassificação por vizinhança acima da base.
+  if (level !== 0 && level !== 1) return 'solid';
+  const baseId = level === 0 ? id : view.getLevel(x, y, 0);
+  if (!ADAPTIVE_WALL_BLOCKS.has(baseId)) return 'solid';
   const connects = (nx: number): boolean => {
-    const neighbor = view.getLevel(nx, y, level);
-    return neighbor === id || (level === 0 && isDoor(neighbor));
+    const neighbor = view.getLevel(nx, y, 0);
+    return neighbor === baseId || isDoor(neighbor);
   };
   if (!connects(x - 1) || !connects(x + 1)) return 'solid';
-  if (view.getLevel(x, y - 1, level) !== Block.AIR) return 'solid';
-  if (view.getLevel(x, y + 1, level) !== Block.AIR) return 'solid';
+  if (view.getLevel(x, y - 1, 0) !== Block.AIR) return 'solid';
+  if (view.getLevel(x, y + 1, 0) !== Block.AIR) return 'solid';
   return 'thin';
 }
 
