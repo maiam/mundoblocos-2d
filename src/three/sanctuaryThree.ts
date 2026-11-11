@@ -15,6 +15,7 @@ import { HOUSE16, ModularHouse16, makeHouse16Navigation, type HouseLevel, type H
 import { renderModularHouse16, type House16Visual } from './modularHouse16Scene';
 import { FREE_BUILD, FreeBuildFive, makeFreeBuildNavigation } from './freeBuildFive';
 import { renderFreeBuildFive } from './freeBuildFiveScene';
+import { externalFreeBuildMovement, shouldFollowFreeBuildOnMove } from './freeBuildCameraMovement';
 import { adjacentFreeBuildCell, buildHorizontalWallDemo, horizontalWallShape, horizontalWallZBounds, HORIZONTAL_WALL_THICKNESS } from './adaptiveHorizontalWalls';
 import { FP_EYE_HEIGHT, FP_FOV_DEGREES, FP_REACH, FP_SPRINT_MULTIPLIER, FP_SNEAK_MULTIPLIER, fpsCycleHotbar, fpsSneakWouldFall, fpsMouseButtonRemoves, firstPersonFaceOverlay, firstPersonHitCell, firstPersonForward, firstPersonLook, firstPersonMovement } from './firstPersonControls';
 import { buildCloudSurface, exposedCloudEdge } from './cloudSurface';
@@ -372,6 +373,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   let freeBuildEnabled = false;
   let freeBuildLevel = 0;
   let freeBuildFaceMode = true;
+  let freeBuildPiece: 'block' | 'door' = 'block';
   let adaptiveHorizontalWalls = false;
   let freeBuildView: ReturnType<typeof renderFreeBuildFive> | null = null;
   const freeBuildWorld = makeFreeBuildNavigation(freeBuild, x0, y0, () => player.z);
@@ -827,6 +829,8 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       freeBuildLevelButton.textContent = 'Camada: 1/5';
       freeBuildFaceMode = true;
       freeBuildPlaceModeButton.textContent = 'Colocar pela face adjacente';
+      freeBuildPiece = 'block';
+      freeBuildPieceButton.textContent = 'Peça: bloco';
       player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
       player.z = player.visualZ = 0;
       cameraY = 0;
@@ -861,6 +865,20 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       ? 'Clique numa face de bloco: cria outro bloco ao lado, acima ou abaixo. Clique no chão para iniciar.'
       : 'Clique na grade: cria ou remove bloco na camada selecionada (1–5), mesmo sem apoio.';
   });
+  const freeBuildPieceButton = button('Peça: bloco', () => {
+    if (!freeBuildEnabled) freeBuildButton.click();
+    freeBuildPiece = freeBuildPiece === 'block' ? 'door' : 'block';
+    if (freeBuildPiece === 'door' && (selectedBlock < 82 || selectedBlock > 85)) {
+      selectFPSHotbar(CELESTIAL_BLOCKS.indexOf(84));
+    }
+    freeBuildPieceButton.textContent = freeBuildPiece === 'door'
+      ? 'Peça: porta (pilar)' : 'Peça: bloco';
+    freeBuildPieceButton.classList.toggle('active', freeBuildPiece === 'door');
+    cloudStatus.textContent = freeBuildPiece === 'door'
+      ? 'Porta experimental fechada: selecione mármore/pedra 82–85 e coloque na grade. '
+        + 'A porta mantém a espessura de pilar e conecta paredes horizontais de qualquer pedra.'
+      : 'Peça: bloco convencional. Paredes adaptativas continuam conforme o modo escolhido.';
+  });
   const adaptiveWallsButton = button('Paredes horizontais: desligadas', () => {
     if (!freeBuildEnabled) freeBuildButton.click();
     adaptiveHorizontalWalls = !adaptiveHorizontalWalls;
@@ -888,6 +906,9 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     adaptiveWallsButton.textContent = 'Paredes horizontais: ligadas';
     adaptiveWallsButton.classList.add('active');
     buildHorizontalWallDemo(freeBuild);
+    freeBuildPiece = 'block';
+    freeBuildPieceButton.textContent = 'Peça: bloco';
+    freeBuildPieceButton.classList.remove('active');
     freeBuildLevel = 0;
     freeBuildLevelButton.textContent = 'Camada: 1/5';
     freeBuildFaceMode = false;
@@ -900,11 +921,15 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
     focusButton.textContent = 'Seguir Deusa';
     zoom = 11;
     cloudStatus.textContent = 'Teste de paredes horizontais: linhas de 3, 4 e 5 blocos, volumes 2×2 e 3×3. '
-      + 'Pedra Celestial (84), topo fino com borda. Clique na grade para editar; sem salvamento.';
+      + 'Linha com porta-pilar em x=36, y=18. Pedra Celestial (84), topo com borda. '
+      + 'Clique na grade para editar, ou escolha Peça: porta; sem salvamento.';
   });
   const freeBuildExampleButton = button('Montar escada + laje (exemplo)', () => {
     if (!freeBuildEnabled) freeBuildButton.click();
     freeBuild.example();
+    freeBuildPiece = 'block';
+    freeBuildPieceButton.textContent = 'Peça: bloco';
+    freeBuildPieceButton.classList.remove('active');
     rebuildFreeBuild();
     player.respawn(x0 + FREE_BUILD.visit[0], y0 + FREE_BUILD.visit[1]);
     player.z = player.visualZ = 0;
@@ -1157,7 +1182,7 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
   moreSummary.style.cssText = 'cursor:pointer;list-style:none;background:rgba(31,25,76,.88);color:#fff6e8;border:1px solid rgba(255,225,157,.65);border-radius:12px;padding:8px 11px;font-weight:800;font-size:12px;';
   const menu = document.createElement('div');
   menu.className = 'three-menu';
-  for (const item of [freeBuildButton, adaptiveWallsButton, adaptiveWallsDemoButton, fpModeButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
+  for (const item of [freeBuildButton, freeBuildPieceButton, adaptiveWallsButton, adaptiveWallsDemoButton, fpModeButton, freeBuildLevelButton, freeBuildPlaceModeButton, freeBuildExampleButton, freeBuildResetButton, goddessIsoUploadButton, goddessIsoButton, goddessSitButton, goddessIsoUpload, v2LoadButton, v2SectorSelect, v2ExploreButton, v2RampButton, house16Button, house16EditButton, house16PieceButton, house16LevelButton, house16ResetButton, v2HouseButton, v2HouseHideButton, recreateV2, v2FilesInput, wireButton,
     loadTop512Button, compareTop512, legacyKitButton,
     cloudModeButton, demoButton, backButton, top512File, kitFile]) menu.append(item);
   more.append(moreSummary, menu);
@@ -1341,19 +1366,21 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
       cloudStatus.textContent = 'Não é possível colocar bloco no espaço da Deusa.';
       return true;
     }
+    const buildId = (selectedBlock >= 80 && selectedBlock <= 85) ? selectedBlock : 82;
     const result = forceRemove
       ? freeBuild.remove(candidate.x, candidate.y, candidate.z)
-      : freeBuild.set(candidate.x, candidate.y, candidate.z,
-        (selectedBlock >= 80 && selectedBlock <= 85) ? selectedBlock : 82);
+      : freeBuild.set(candidate.x, candidate.y, candidate.z, buildId, freeBuildPiece);
     if (result.ok) {
       rebuildFreeBuild();
       // Do not teleport the goddess: her Walker settles on the next tick.
-      cloudStatus.textContent = (forceRemove ? 'Removido' : 'Colocado')
-        + ' bloco (' + candidate.x + ', ' + candidate.y + ', camada '
+      cloudStatus.textContent = (forceRemove ? 'Removido' : freeBuildPiece === 'door' ? 'Colocada porta-pilar' : 'Colocado bloco')
+        + ' (' + candidate.x + ', ' + candidate.y + ', camada '
         + (candidate.z + 1) + '/5). Total: ' + freeBuild.size
         + '. Blocos adjacentes independentes; sem salvamento.';
     } else {
-      cloudStatus.textContent = 'Não foi possível editar: ' + result.reason;
+      cloudStatus.textContent = result.reason === 'invalid-material' && freeBuildPiece === 'door'
+        ? 'Porta requer material de construção 82–85 (pedra ou mármore).'
+        : 'Não foi possível editar: ' + result.reason;
     }
     return true;
   }
@@ -1530,6 +1557,14 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
         goddessSitElapsed = 0;
       }
     }
+    // Switching into a moving external view must preserve camera follow
+    // and the same Walker support/step rules used in first person.
+    if (shouldFollowFreeBuildOnMove(
+      laboratoryV2Active && freeBuildEnabled, fpsActive(), laboratoryCamera, sx, sy,
+    )) {
+      laboratoryCamera = false;
+      focusButton.textContent = 'Ver laboratório';
+    }
     const movementWorld = laboratoryV2Active && laboratoryV2Physics
       ? freeBuildEnabled ? freeBuildWorld
         : house16Enabled && house16World ? house16World
@@ -1554,14 +1589,11 @@ export function startSanctuaryThree(canvas: HTMLCanvasElement, seed: number): vo
           player.z, player.spec.halfW, player.spec.halfD, support)) uy = 0;
       }
       player.move(dt, ux, uy, movementWorld);
-    } else if (iso) {
-      player.spec.speed = fpBaseSpeed;
-      const ux = (sx + sy) * Math.SQRT1_2;
-      const uy = (sy - sx) * Math.SQRT1_2;
-      player.move(dt, ux, uy, movementWorld);
     } else {
+      // Same world/navigation source and step height regardless of camera.
       player.spec.speed = fpBaseSpeed;
-      player.move(dt, sx, sy, movementWorld);
+      const [ux, uy] = externalFreeBuildMovement(sx, sy, iso);
+      player.move(dt, ux, uy, movementWorld);
     }
     if (goddessIsoMode && goddessIsoSheets) {
       goddessIsoDirection = goddessIsoDirectionByInput(
