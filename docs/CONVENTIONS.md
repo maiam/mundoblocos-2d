@@ -11,7 +11,7 @@
   `bench` do contexto (`test('…', async ({ bench }) => { await bench('nome', fn).run(); })`).
 
 ## Mundo e regras
-- **Autotile de construção no 2D oficial:** apenas os materiais listados em `render/adaptiveWalls.ts`; painel fino horizontal apenas entre dois iguais (ou porta existente), sem vizinho norte/sul no mesmo nível. A face frontal nunca recua; o topo visual usa a metade frontal. Terreno, rochas naturais, nuvem, pisos e outros objetos ficam maciços.
+- **Autotile de construção no 2D oficial:** apenas os materiais listados em `render/adaptiveWalls.ts`; a geometria é resolvida só pela **base nível 0** (painel fino horizontal entre dois iguais ou porta existente, sem vizinho norte/sul). O bloco no **nível 1 herda a forma** da base (pilar ou parede), não faz autotile independente e conserva seu próprio material/textura. Porta na base funciona como pilar; base ausente ou material não construtivo produz bloco superior maciço. A face frontal nunca recua; topo visual usa a metade frontal. Terreno, rochas naturais, nuvem, pisos e outros objetos ficam maciços.
 - **Altura de construção:** 2 níveis (objeto 0 + superior 1). Um terceiro nível de salvamentos antigos não é restaurado; validar impacto antes de publicar.
 - Célula: chão + níveis 0..`MAX_STACK`-1 (2): objeto no nível 0, cubos empilhados acima (só sobre cubo). `AIR` = vazio.
 - Material tem **um id** para chão e cubo; "é pisável" via `isGroundStandable`, nunca pelo `layer`.
