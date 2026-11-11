@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Santuário oficial — oclusão e sombra independentes da Deusa (PR #91)
+
+No Three.js, `ActorSprites.get('goddess').draw()` é chamado sem sombra e com ponto de apoio no rodapé do canvas 256×320, alinhado ao jogador; o deslocamento de flutuação é aplicado **uma vez só**, pela animação original. O ponto físico da sombra usa `player.z`, enquanto o billboard usa `player.visualZ` para transições suaves. A sombra é uma elipse horizontal escura acima do suporte, nunca um elemento vertical que acompanha a câmera. O billboard principal usa teste de profundidade normal; um eco espectral com 18% de opacidade o precede na renderização para não apagar a Deusa completamente atrás de blocos, sem transformar toda parede em transparência. O motor e a física do Mundo principal permanecem iguais.
+
 ## Santuário oficial — Three.js com personagem 2D (PR #89)
 
 **Colisões após a migração (PR #90):** o `World.standHeight` e o `Walker` continuam como fontes de verdade, mas na sessão do Santuário com WebGL a configuração do jogador aplica `stepHeight=0`. Cubos visíveis são obstáculos sólidos e não degraus automáticos. Um bloco de altura 1 passa a bloquear a entrada, enquanto um chão desocupado segue transitável. O Mundo principal e o fallback `?render=2d` mantêm `STEP_HEIGHT=1`. Não há colisão física subcélula para o recorte traseiro das paredes finas nesta etapa.
