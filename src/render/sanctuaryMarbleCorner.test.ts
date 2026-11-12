@@ -146,8 +146,9 @@ describe('Mármore Celestial — canto adaptativo entre colunas opostas',()=>{
       expect(w.placeBlock(x,row,id)).toBe(true);
     expect(w.placeBlock(left,row-1,id)).toBe(true);
     expect(w.placeBlock(right,row+1,id)).toBe(true);
-    expect(classifySanctuaryBlock(w,id,right,row,0)).toBe('wall_corner_back_right');
-    expect(classifySanctuaryBlock(w,id,right,row,1)).toBe('wall_corner_back_right');
+    // V2: direita foi ampliada para baixo; a parede de cima fica fina.
+    expect(classifySanctuaryBlock(w,id,right,row,0)).toBe('wall_front');
+    expect(classifySanctuaryBlock(w,id,right,row,1)).toBe('wall_front');
     expect(w.breakBlock(right,row+1)).toBe(id);
     expect(classifySanctuaryBlock(w,id,right,row,0)).toBe('wall_front');
     expect(classifySanctuaryBlock(w,id,left,row,0)).toBe('solid');
