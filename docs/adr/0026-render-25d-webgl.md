@@ -30,8 +30,8 @@ seleção); atores, itens, dano, dia/noite, partículas, dungeon, interiores, ci
 - **Invariantes mantidos:** render só **lê** o mundo; `world/` sem DOM; arte importada só em `render/art/<mundo>.ts`; texturas
   nunca giram/espelham por célula; protocolo, save e servidor não mudam por causa do render.
 
-## Experimento: vista oblíqua (v0.93.9)
-Em vez de uma câmera inclinada (que achata tudo o que é vertical por cos da elevação: a Deusa a ~39% da altura a 67°), a recomendação é a projeção **oblíqua**: câmera reta para baixo, altura como deslocamento fixo de 18/32 de célula por nível (a proporção da arte 3/4). Implementada atrás de `?vista=obliqua` no Santuário para comparação; o padrão segue em 67° até o dono do produto decidir. A matemática é pura e testada (`sanctuaryObliqueView.ts`).
+## Vista oblíqua — aprovada e padrão (v0.93.9 experimento; v0.93.10 padrão)
+Em vez de uma câmera inclinada (que achata tudo o que é vertical por cos da elevação: a Deusa a ~39% da altura a 67°), a recomendação é a projeção **oblíqua**: câmera reta para baixo, altura como deslocamento fixo de 18/32 de célula por nível (a proporção da arte 3/4). Implementada primeiro atrás de `?vista=obliqua`; aprovada pelo dono do produto em 12/11/2026 e tornada padrão (`?vista=inclinada` é a reserva). A matemática é pura e testada (`sanctuaryObliqueView.ts`).
 
 ## Fases (detalhe em `NEXT_STEPS.md`)
 1. Consolidar o Santuário (validação visual, perda de contexto, tipagem, linha de base de desempenho, contrato completo,

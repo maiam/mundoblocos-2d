@@ -2,9 +2,9 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
-## Vista oblíqua do Santuário — experimento (v0.93.9, ADR 0026)
+## Vista oblíqua do Santuário — padrão (v0.93.10, ADR 0026)
 
-`?mundo=santuario&vista=obliqua` troca a câmera inclinada a 67° por uma **projeção oblíqua**: câmera reta para baixo, altura = deslocamento de `OBLIQUE_K` (18/32) de célula por nível na tela. A matriz é montada em `render/sanctuaryObliqueView.ts` (função pura, testada): `y_clip = (vy + K·altura)/halfH`, profundidade `z_clip` que cresce para o norte e para baixo (sul/alto na frente). Vertical mantém a proporção da arte: a Deusa é um plano de altura 3,0/K (3,0 células em tela). Materiais sem luz (arte já pintada) com a frente escurecida por um multiplicador frio fixo. O `pick` usa o raio da oblíqua (`obliqueRay`). Não adaptados: mármore V3 (calibrado a 67°), contorno de blocos, partículas.
+A vista oblíqua é o padrão; `?vista=inclinada` volta à câmera inclinada a 67°. Ela troca a câmera inclinada por uma **projeção oblíqua**: câmera reta para baixo, altura = deslocamento de `OBLIQUE_K` (18/32) de célula por nível na tela. A matriz é montada em `render/sanctuaryObliqueView.ts` (função pura, testada): `y_clip = (vy + K·altura)/halfH`, profundidade `z_clip` que cresce para o norte e para baixo (sul/alto na frente). Vertical mantém a proporção da arte: a Deusa é um plano de altura 3,0/K (3,0 células em tela). Materiais sem luz (arte já pintada) com a frente escurecida por um multiplicador frio fixo. O `pick` usa o raio da oblíqua (`obliqueRay`). Não adaptados: mármore V3 (calibrado a 67°), contorno de blocos, partículas.
 
 ## Fase 1 do render WebGL — robustez e medição (v0.93.5, ADR 0026)
 
