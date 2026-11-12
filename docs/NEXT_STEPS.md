@@ -35,6 +35,7 @@ primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de ver
 4. **Fase 4 — objetos do Mundo:** árvores e plantações, portas e cercas, cidade, água e transições, dungeon, interiores.
 5. **Fase 5 — piloto** `?render=3d` (dev): checklist de paridade (capturas 2D × 3D), sala multiplayer, celular/tablet,
    WebGL no iframe do Artifact. 6. **Fase 6 — virada:** 3D padrão, 2D de reserva por uma versão, depois remover a duplicação.
+- **Paredes (ADR 0027, modelo aprovado em 12/11/2026):** W0 teste de proporção (`?mundo=santuario&paredes=teste`, v0.93.11) → escolher a altura; W1 arte (frente 4 variantes, tampa 16 peças, porta); W2 domínio (`wall` no `World`, autotile puro, save); W3 render; W4 migração e remoção do mármore V2/V3; W5 Mundo (casas e interiores).
 - **Vista oblíqua aprovada e padrão** (v0.93.10; `?vista=inclinada` é a reserva). Pendente: contorno dos blocos (shader), partículas, seleção em colchetes, e **redesenhar as paredes** (modelo e arte a decidir com o dono do produto; o mármore V2/V3 é provisório). Arte a enviar: frente própria de cada bloco (Material V2) e o conjunto de paredes.
 - Física sólida no Mundo só entra no piloto, atrás de flag (muda a jogabilidade).
 
