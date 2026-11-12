@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.92.1 — Santuário: paredes adaptativas V2 (12/11/2026)
+- **Construção vertical do Mármore Celestial 82:** ao acrescentar uma parede ao NORTE (acima na tela), a parede antiga completa sua profundidade e a nova nasce como pilar inteiro. Ao acrescentar uma parede ao SUL (abaixo), somente a nova vira pilar e a parede original mantém a metade frontal. A extensão descendo preserva o início de linhas horizontais, inclusive entre colunas opostas, sem preencher um bloco pré-existente indevidamente.
+- **Persistência:** o Santuário grava a ordem de colocação de cada painel no salvamento v13; migração dos saves antigos v12 preserva as estruturas anteriores com a regra legada (ordem 0). Remover uma parede limpa seu histórico. A altura continua em dois níveis e a geometria superior herda a base; demais materiais e o Mundo principal não mudam.
+- **Validação:** testes de construção nas duas direções, fileiras opostas, sequência descendente, remoção e ida-e-volta do salvamento; revisão visual em navegador/Safari ainda recomendada antes de considerar a solução definitiva.
+
 ## Orvalis — Goblins em acampamentos de sete (PR #96)
 - **Mundo principal:** quatro acampamentos determinísticos por seed, cada um com sete goblins circulando uma fogueira real `Block.CAMPFIRE`. Localização fora de cidade/dungeon/caverna e solo seguro; vegetação dos sete pontos é limpa pelo mesmo gerador procedural de terreno. A fogueira pode ser quebrada e restaurações reconciliam acampamentos removidos.
 - **Combate:** Goblin comum com 60 pontos de vida, ataque-base 15, aggro apenas a até três células como os lobos; defesa 2, perseguição territorial, dano, recuo e respawn no motor existente. Dano nominal usa fórmula de combate e não é um valor líquido invariável. Sem itens de saque inventados (drop vazio por enquanto).

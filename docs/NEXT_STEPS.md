@@ -4,6 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Paredes adaptativas V2 do Santuário — 12/11/2026
+
+- **Implementação:** ao construir acima, completar a parede existente e acrescentar pilar inteiro; ao construir abaixo, preencher apenas o bloco novo, sem converter a parede original. Ordem das colocações persistida no save v13; saves antigos seguem a classificação legada.
+- **Conferência visual pendente:** testar extensão ascendente e descendente em uma linha vertical e nas pontas de uma faixa horizontal; comparar ligações opostas espelhadas, L, T, salas 3×3/5×5, bordas ornamentadas, remoção e recarga do save. Validar também seleção/colisão com a câmera a 67° no Safari e desktop.
+
 ## Goblins do Mundo principal — PR #96
 
 - **Implementação:** grupos de sete goblins por fogueira (`Block.CAMPFIRE`) em quatro acampamentos determinísticos, fora da cidade e do covil. HP 60, ataque-base 15, percepção de 3 células, IA e respawn de monstros já existentes; usa pranchas 4×4 com caminhada, repouso, corrida, alerta, ataque, dano e morte. Multiplayer autoritativo transmite os estados visuais e o salvamento preserva os monstros da dungeon, reconstruindo grupos externos pela seed.
@@ -16,7 +21,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 ## Construção dupla e parede adaptativa do Mármore Celestial — PR #94 (11/11/2026)
 
-- **Implementado:** colocação/remoção em uma ação dos dois níveis do ID 82, apenas no Santuário. Uma única célula isolada aparece como parede frontal de meia profundidade, não como pilar. Vizinhos norte–sul transformam ambos em pilares. Paredes horizontais encaixam ao fundo, ao centro ou à frente das colunas verticais, propagando a âncora pela fileira. O nível superior herda sempre a geometria da base.
+- **Implementado:** colocação/remoção em uma ação dos dois níveis do ID 82, apenas no Santuário. Uma única célula isolada aparece como parede frontal de meia profundidade, não como pilar. Vizinhos norte–sul seguem a ordem de colocação desde a V2: subir transforma ambos em pilares; descer preserva a meia parede superior. Paredes horizontais encaixam ao fundo, ao centro ou à frente das colunas verticais, propagando a âncora pela fileira. O nível superior herda sempre a geometria da base.
 - **Topos:** moldura dourada do mármore pilotada por máscara de 10 partes (norte/sul, quatro quartos laterais), permitindo ocultar somente a porção conectada ao pilar, inclusive o meio da lateral. As texturas verticais permanecem originais.
 - **Verificação manual pendente:** testar a construção de uma linha, uma coluna de três células, três ramificações horizontais na coluna, remoção que devolve pilares a paredes, segundo nível, encontros de bordas, cliques perto de paredes e desempenho no Safari. Câmera segue em 67°; mundo principal não muda.
 

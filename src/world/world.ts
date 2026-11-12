@@ -82,6 +82,9 @@ export class World {
   private readonly crops = new Set<string>();
   /** Árvores plantadas crescendo e macieiras colhidas (avançam em `tick`). */
   private readonly trees = new Set<string>();
+  /** Ordem das colocações de mármore no Santuário: 0 = construção antiga sem histórico. */
+  private readonly marblePlacements = new Map<string, number>();
+  private marblePlacementIndex = 0;
   /**
    * Covil deste mundo (perfil com `dungeon`), ou null: labirinto isolado do mapa (ADR 0019), protegido; só se luta lá
    * dentro. No mundo fica só a entrada, a caverna (`cave`).
@@ -314,6 +317,45 @@ export class World {
     return chunk ? chunk.getLevel(toLocal(x), toLocal(y), level) : Block.AIR;
   }
 
+  /**
+   * A ordem de colocação é necessária para diferenciar a extensão da parede
+   * para o norte (completa a antiga) e para o sul (preserva a antiga).
+   * Construções sem histórico têm ordem zero e mantêm a geometria legada.
+   */
+  getMarblePlacementOrder(x: number, y: number): number {
+    return this.profile.id === 'santuario'
+      ? this.marblePlacements.get(chunkKey(x, y)) ?? 0 : 0;
+  }
+
+  /** Metadados de construção persistidos à parte dos ids dos blocos. */
+  marblePlacementOrders(): Array<[number, number, number]> {
+    if (this.profile.id !== 'santuario') return [];
+    const result: Array<[number, number, number]> = [];
+    for (const [key, order] of this.marblePlacements) {
+      const [x, y] = key.split(',').map(Number);
+      if (this.getObject(x, y) === Block.MARBLE_CELESTIAL &&
+        this.getUpper(x, y) === Block.MARBLE_CELESTIAL)
+        result.push([x, y, order]);
+    }
+    return result;
+  }
+
+  /** Restaura somente ordens válidas de painéis existentes. */
+  loadMarblePlacementOrders(entries: ReadonlyArray<readonly [number, number, number]> | undefined): void {
+    this.marblePlacements.clear();
+    this.marblePlacementIndex = 0;
+    if (this.profile.id !== 'santuario') return;
+    for (const entry of entries ?? []) {
+      if (!Array.isArray(entry) || entry.length !== 3) continue;
+      const [x, y, order] = entry;
+      if (![x, y, order].every(Number.isSafeInteger) || order <= 0 ||
+        !this.inBounds(x, y) || this.getObject(x, y) !== Block.MARBLE_CELESTIAL ||
+        this.getUpper(x, y) !== Block.MARBLE_CELESTIAL) continue;
+      this.marblePlacements.set(chunkKey(x, y), order);
+      this.marblePlacementIndex = Math.max(this.marblePlacementIndex, order);
+    }
+  }
+
   /** Bloco visível no topo da célula e seu nível (null se vazia). */
   topBlock(x: number, y: number): { id: BlockId; level: Level } | null {
     for (let level = MAX_STACK - 1; level >= 0; level--) {
@@ -364,6 +406,7 @@ export class World {
     }
     else chunk.setLevel(lx, ly, level, id);
     if (level === 0) {
+      if (id !== Block.MARBLE_CELESTIAL) this.marblePlacements.delete(chunkKey(x, y));
       if (isCrop(id)) this.crops.add(chunkKey(x, y));
       else this.crops.delete(chunkKey(x, y));
       if (isGrowingTree(id)) this.trees.add(chunkKey(x, y));
@@ -620,6 +663,7 @@ export class World {
     if (this.profile.id === 'santuario' &&
       id === Block.MARBLE_CELESTIAL && level === 0) {
       this.setLevel(x, y, 1, id);
+      this.marblePlacements.set(chunkKey(x, y), ++this.marblePlacementIndex);
     }
     if (id === Block.TENT) {
       for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
@@ -996,6 +1040,7 @@ export class World {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const id = c.getObject(lx, ly);
         const key = chunkKey(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly);
+        this.marblePlacements.delete(key);
         if (isCrop(id)) this.crops.add(key);
         if (isGrowingTree(id)) this.trees.add(key);
         // Buracos do chunk voltam a contar o dia do zero (as idades salvas entram depois, `loadHoleAges`).
