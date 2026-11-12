@@ -2,7 +2,7 @@
 
 ## Renderização por perfil
 - **Mundo principal:** Canvas 2D, sem Three.js. **Santuário:** Three.js/WebGL ortográfico superior (com fallback `?render=2d`); `Game`/`World`/save compartilhados. Não duplicar regras de bloco ou importar cenas do laboratório 5 níveis na engine oficial.
-- A célula lógica continua 32×32; no Three cada célula é unidade de 1×1 e a altura física é 1 por camada, no máximo duas camadas. Paredes finas ocupam metade da profundidade a partir da face frontal da célula; o segundo nível herda o formato do primeiro, mantendo sua textura.
+- A célula lógica continua 32×32; no Three cada célula é unidade de 1×1 e a altura física é 1 por camada, no máximo duas camadas. Paredes finas legadas ocupam metade da profundidade da célula; o segundo nível herda seu formato. **V3 no Santuário:** novas bases do Mármore Celestial ocupam duas células em planta, base (x,y) e norte (x,y-1), cada uma com dois níveis. A base física é gravada uma vez; o World deriva a segunda célula para colisão, colocação, quebra e renderização. Painéis de saves anteriores continuam usando V2.
 
 ## Código
 - TypeScript estrito, ES modules, sem framework. Identificadores em inglês; UI, comentários e docs em pt-BR.
