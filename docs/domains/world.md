@@ -4,7 +4,7 @@
 
 ## Modelo
 - Célula: **chão** + níveis de pilha (`Chunk.levels`, `World.getLevel`): **objeto nível 0** e **segundo cubo no nível 1**
-  (pilha de até `MAX_STACK` = 2). O gerador só preenche os níveis 0 e 1; a terceira camada de saves antigos é ignorada.
+  (pilha de até `MAX_STACK` = 2). O gerador só preenche os níveis 0 e 1; a terceira camada de saves antigos é descartada e `restoreChunk` devolve quantos blocos foram descartados (o jogo avisa; a sala registra).
 - **Materiais** (prancha de blocos, únicos blocos de construção): Terra, Terra com Grama, Terra Arada,
   Caminho de Terra, Areia, Pedra Bruta, Tora de Carvalho, Tábua de Carvalho, 4 variações de pedra (Tijolo, Chão,
   Lisa, Polida — ids 35–38) e, no fim da lista, Tora e Tábua de Cerejeira e de Bétula (ids 230–233, v0.88.0/0.89.0; só V2, sem coluna no atlas antigo) (`MATERIALS`; coluna do atlas antigo = índice na lista, até `LEGACY_MATERIALS` = 15). **Aposentadas** (08/11, `RETIRED_STONES`):

@@ -80,6 +80,8 @@ export class Room {
   private clock = 0;
   /** Algo mudou desde o último `snapshot` (o servidor só grava quando há o que gravar). */
   dirty = false;
+  /** Blocos do 3º nível (aposentado) descartados no último `restore`; o servidor registra no log. */
+  droppedOnRestore = 0;
   /**
    * Bichos da sala (Etapa 3): as mesmas `Entities` do jogo, sem personagem; cada jogador é um avatar na posição que
    * manda. Os animais e monstros nascem pela seed; não vão para o disco (renascem se o servidor reiniciar).
@@ -392,7 +394,9 @@ export class Room {
   restore(s: RoomSnapshot): boolean {
     // v1 (sem baús) ainda vale: o mundo e as bolsas voltam; os baús ficam vazios.
     if (!s || ![1, 2, 3, ROOM_SNAPSHOT_VERSION].includes(s.v) || s.room !== this.id || s.seed !== this.seed) return false;
-    for (const c of s.chunks) this.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
+    let dropped = 0;
+    for (const c of s.chunks) dropped += this.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
+    this.droppedOnRestore = dropped;
     this.world.settleWater();
     this.world.loadHoleAges(s.holes);
     if (Number.isFinite(s.time)) this.time = ((s.time % 1) + 1) % 1;
@@ -409,7 +413,7 @@ export class Room {
     // Player-edited chunks can replace a generated campfire from this seed.
     // Never keep a camp of goblins around an absent fire after restoring.
     this.entities.reconcileGoblinCamps(this.world);
-    this.dirty = false;
+    this.dirty = dropped > 0; // descartou algo: a próxima gravação já grava a sala limpa
     return true;
   }
 }

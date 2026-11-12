@@ -9,7 +9,7 @@ Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node �
 
 ## Mudanças direcionadas — autotile horizontal e dois níveis (PR #87)
 
-`MAX_STACK=2` em `src/config.ts` rege os níveis disponíveis do `Chunk`, `World` e `Renderer`. `World.getLevel` retorna AIR para nível obsoleto e a restauração ignora a terceira camada de um save antigo; `applySave` limita a altitude do jogador. O novo `src/render/adaptiveWalls.ts` contém a decisão pura da forma horizontal (mesmo tipo à esquerda/direita, sem norte/sul; porta existente funciona como pilar) e compõe somente a metade frontal do topo do sprite, mantendo a face vertical inteira. `Renderer.drawObject` usa esse desenho **apenas** em materiais de construção; outros blocos seguem renderização anterior e a câmera não muda. Os seis arquivos de arte 80–85 já foram incorporados ao pacote do Santuário no PR #87.
+`MAX_STACK=2` em `src/config.ts` rege os níveis disponíveis do `Chunk`, `World` e `Renderer`. `World.getLevel` retorna AIR para nível obsoleto e a restauração descarta a terceira camada de um save antigo e `restoreChunk` devolve a contagem descartada (`applySave.droppedBlocks`, `Room.droppedOnRestore`); `applySave` limita a altitude do jogador. O novo `src/render/adaptiveWalls.ts` contém a decisão pura da forma horizontal (mesmo tipo à esquerda/direita, sem norte/sul; porta existente funciona como pilar) e compõe somente a metade frontal do topo do sprite, mantendo a face vertical inteira. `Renderer.drawObject` usa esse desenho **apenas** em materiais de construção; outros blocos seguem renderização anterior e a câmera não muda. Os seis arquivos de arte 80–85 já foram incorporados ao pacote do Santuário no PR #87.
 
 ## Renderizador específico por mundo (PR #89)
 

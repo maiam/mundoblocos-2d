@@ -268,12 +268,14 @@ export class Game {
       net.onRejected = () => this.hud.toast('Ação não aceita pela sala');
     }
     // Continua de onde parou (mesmo mundo e seed).
+    let droppedBlocks = 0;
     if (options.save) {
       const r = applySave(options.save, {
         world: this.world, player: this.player, entities: this.entities, inventory: this.inventory,
         exploration: this.exploration, time: this.time, selected: this.selected, hotbar: null,
       });
       this.time = r.time;
+      droppedBlocks = r.droppedBlocks;
       this.hotbar.prune(this.inventory);
       if (r.selected !== null && r.selected < this.hotbar.length) this.select(r.selected);
       this.lastHp = this.player.hp;
@@ -288,6 +290,8 @@ export class Game {
     if (options.showcase) this.listen(window, 'resize', this.resize);
     else this.bindInput();
     if (options.notice) this.hud.toast(options.notice);
+    // O 3º nível de blocos saiu do jogo (limite de 2 níveis): não some em silêncio.
+    if (droppedBlocks) this.hud.toast(`O limite agora é de 2 níveis de blocos: ${droppedBlocks} ${droppedBlocks === 1 ? 'bloco do 3º nível foi removido' : 'blocos do 3º nível foram removidos'} deste mundo`);
     const spilled = this.spillBagOverflow();
     if (spilled) this.hud.toast(`A bolsa agora tem ${BAG_SLOTS} espaços: ${spilled} ${spilled === 1 ? 'item caiu' : 'itens caíram'} no chão aos seus pés`);
     requestAnimationFrame(this.frame);

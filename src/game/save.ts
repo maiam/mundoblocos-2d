@@ -186,11 +186,13 @@ function upToV4(d: SaveData & { v: number }): SaveData & { v: number } {
 }
 
 /**
- * Restaura um salvamento na sessão recém-criada (mesma seed e mundo). Devolve a hora do dia e o espaço
- * selecionado para o Game aplicar. Ignora silenciosamente o que não se aplica (ex.: dungeon ausente).
+ * Restaura um salvamento na sessão recém-criada (mesma seed e mundo). Devolve a hora do dia, o espaço
+ * selecionado e quantos blocos do 3º nível (aposentado) foram descartados, para o Game aplicar/avisar. Ignora
+ * silenciosamente o que não se aplica (ex.: dungeon ausente).
  */
-export function applySave(d: SaveData, s: GameState, rand: () => number = Math.random): { time: number; selected: number | null } {
-  for (const c of d.chunks) s.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
+export function applySave(d: SaveData, s: GameState, rand: () => number = Math.random): { time: number; selected: number | null; droppedBlocks: number } {
+  let droppedBlocks = 0;
+  for (const c of d.chunks) droppedBlocks += s.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
   s.world.settleWater(); // buracos vizinhos de água voltam a encher
   s.world.loadHoleAges(d.holes); // e os demais continuam contando o dia
   s.world.loadMarblePlacementOrders(d.marblePlacements); // ordem das paredes adaptativas
@@ -238,7 +240,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
     p.y = fy + 0.6;
     p.z = p.visualZ = 0;
   }
-  return { time: d.time, selected: d.selected };
+  return { time: d.time, selected: d.selected, droppedBlocks };
 }
 
 /** Armazenamento no navegador: um salvamento por mundo e seed + ponteiro para a última seed jogada. */

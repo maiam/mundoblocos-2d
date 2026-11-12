@@ -147,7 +147,7 @@ describe('Salvamento automático', () => {
 
     const b = session();
     const r = applySave(data, { world: b.world, player: b.player, entities: b.entities, inventory: b.inventory, exploration: b.exploration, time: 0, selected: null, hotbar: null }, mulberry32(5));
-    expect(r).toEqual({ time: 0.62, selected: 3 });
+    expect(r).toEqual({ time: 0.62, selected: 3, droppedBlocks: 0 });
     expect(b.world.stackHeight(ax, ay)).toBe(2);
     expect(b.world.getLevel(ax, ay, 1)).toBe(Block.OAK_LOG);
     expect(b.world.getGround(hx, hy)).toBe(Block.HOLE);
