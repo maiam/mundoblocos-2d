@@ -110,7 +110,7 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     expect(w.placeBlock(x,y,marble)).toBe(false);
     expect(w.breakBlock(x,y-1)).toBe(Block.STONE_CELESTIAL);
     expect(w.placeBlock(x,y,marble)).toBe(true);
-    const [sx,sy]=w.findSpawn();
+    const [sx]=w.findSpawn();
     expect(w.placeBlock(sx+3,-16,marble)).toBe(false); // topo fora do mundo
   });
 
