@@ -38,6 +38,8 @@ interface SheetSpec {
   float?: { lift: number; bob: number; fps: number; movingFps: number };
   /** Folha de ação (ex.: golpe): o quadro vem de `Actor.frame`, a linha da direção. */
   action?: boolean;
+  /** Animate the four columns even while this character stands still. */
+  loopWhenIdle?: boolean;
   /**
    * Ciclo único (monstros): `cols × rows` quadros em sequência, sem linha por direção (arte de frente).
    * `flipRight` espelha o desenho quando o ator olha para a direita.
@@ -154,6 +156,20 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'wolf-brown': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
   'wolf-gray': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
   'wolf-white': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
+  // Goblin: the seven supplied sheets share a 4×4 canonical directional layout
+  // (front, left, right, back). Height and foot anchor match in every state.
+  goblin: { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+    walkFps: 7, death: { cols: 4, rows: 4, ratio: 1 } },
+  'goblin-idle': { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+    walkFps: 2, loopWhenIdle: true },
+  'goblin-run': { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+    walkFps: 11 },
+  'goblin-alert': { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+    walkFps: 0, action: true },
+  'goblin-attack': { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+    walkFps: 0, action: true },
+  'goblin-hurt': { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+    walkFps: 0, action: true },
   'spider-small': { cols: 4, rows: 2, height: TILE * 0.85, shadow: [0.42, 0.13], walkFps: 12, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.034 } },
   'spider-big': { cols: 4, rows: 2, height: TILE * 1.3, shadow: [0.6, 0.17], walkFps: 10, cycle: { flipRight: true }, death: { cols: 4, rows: 2, ratio: 1.0 } },
   'spider-boss': { cols: 4, rows: 2, height: TILE * 2.3, shadow: [1.45, 0.36], walkFps: 8, cycle: { flipRight: true }, death: { cols: 8, rows: 2, ratio: 1.012 } },
@@ -224,7 +240,7 @@ class SpriteSheet {
 
   /** Desenha com a base em (fx, fy) — coordenadas de tela. */
   draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed = 0, drawShadow = true): void {
-    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action, cycle, sequence } = this.spec;
+    const { height, shadow, walkFps, cols, rows, footPad = 0, float, action, cycle, sequence, loopWhenIdle } = this.spec;
     if (cycle) {
       this.drawCycle(ctx, fx, fy, zoom, a, elapsed);
       return;
@@ -241,6 +257,25 @@ class SpriteSheet {
     }
     if (!this.ready) return;
     const h = height * zoom * (a.scale ?? 1);
+    // Goblin's death sheet is 4 directions × 4 consecutive frames.
+    // Keep the row aligned with its last facing instead of cycling through
+    // all 16 directions (which would flip the dying goblin erratically).
+    if(a.dying!==undefined && this.deathReady && this.spec.death){
+      const death=this.spec.death;
+      const row=ROW[a.facing];
+      const frame=Math.min(3,Math.floor(a.dying*4));
+      const fw=this.deathImg.width/death.cols;
+      const fh=this.deathImg.height/death.rows;
+      const dh=height*death.ratio*zoom;
+      const dw=dh*(fw/fh);
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,1-a.dying);
+      ctx.drawImage(this.deathImg,frame*fw,row*fh,fw,fh,
+        Math.round(fx-dw/2),Math.round(fy-dh+2*zoom),
+        Math.round(dw),Math.round(dh));
+      ctx.restore();
+      return;
+    }
     const fw = this.img.width / cols;
     const fh = this.img.height / rows;
     const w = h * (fw / fh);
@@ -253,7 +288,7 @@ class SpriteSheet {
       col = step < cols ? step : span - step;
       lift = float.lift * TILE * zoom + (wave + 1) * 0.5 * float.bob * zoom;
     } else {
-      col = sequence ? (a.frame ?? 0) % cols : rows === 1 || action ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : 0;
+      col = sequence ? (a.frame ?? 0) % cols : rows === 1 || action ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : loopWhenIdle ? Math.floor(elapsed * walkFps) % cols : 0;
     }
     const row = sequence ? Math.floor((a.frame ?? 0) / cols) % rows : rows === 1 ? 0 : ROW[a.facing];
     // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.
