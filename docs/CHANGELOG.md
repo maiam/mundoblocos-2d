@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.15 — Paredes W2: bloco `wall` no domínio e autotile testado (12/11/2026)
+- **Blocos novos** (`Block.WALL_PLANKS` 240, `Block.WALL_STONE` 241; forma `wall`): sólidos, de **nível único**, quebráveis (machado na madeira, picareta na pedra). `isWall`, `WALL_BLOCKS`. Sem receita, sem perfil e sem arte ainda: **inalcançáveis pelo jogador** até a W1 (arte) e a W3 (render).
+- **Regras no `World`** (sem código novo de colocação: a regra existente já serve): coloca no nível 0, bloqueia a passagem (`standHeight` nulo, nunca degrau), não empilha nem vai sobre cubo. `World.isWallAt` e `World.wallPieceAt(x, y)`.
+- **Autotile puro** em `world/walls.ts`: frente (`single`/`left`/`mid`/`right`, escondida com parede ao sul), tampa de 16 peças (máscara N/E/S/W) e cantos internos (NE/SE/SW/NW). Qualquer material conecta com qualquer outro.
+- Testes: `walls.test.ts` (autotile) e `wallBlock.test.ts` (regras, quebra, recálculo da vizinha, salvar/restaurar). Sem mudança de protocolo ou save (ids novos, formato igual); o pacote do servidor só precisa sincronizar quando as paredes ficarem alcançáveis (W3).
+
 ## Orvalis v0.93.14 — Escala do Core Keeper na vista do Santuário (12/11/2026)
 - **ADR 0028 aceita (reescrita):** vale a relação medida no Core Keeper, não "1 m": cubo de frente 1,0 (K = 1), parede ≈ 1,2, personagem ≈ 1,2. `render/worldScale.ts` guarda as constantes.
 - **Vista real do Santuário:** `OBLIQUE_K` passa de 18/32 para **1** (frente do cubo quadrada, que usa a imagem quadrada do topo escurecida); a Deusa usa 1,2 (fator `CHARACTER_SCALE_FACTOR` sobre a escala antiga); a face do mármore V3 vira 2 níveis. A câmera ganha `setCellsTall` e o renderer pede **14 células na vertical** (`GameRenderer.preferredCellsTall`; piso de zoom desce a 0,5 nesse caso); o Mundo 2D continua com 10.

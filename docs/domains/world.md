@@ -2,6 +2,9 @@
 
 **Fonte de verdade:** `World` (estado em execução) + `WorldGenerator` (terreno não editado, puro por seed).
 
+## Paredes (W2, v0.93.15, ADR 0027)
+Bloco de **nível único** (`shape: 'wall'`, `Block.WALL_PLANKS`/`WALL_STONE`): sólido, no nível 0, sem empilhar (a regra de `placementLevel` já cobre: só cubo sobre cubo empilha) e nunca degrau (`standHeight` nulo). A forma sai de `world/walls.ts` (puro): frente (`single`/`left`/`mid`/`right`; escondida com parede ao sul), tampa de 16 peças (máscara N=1, E=2, S=4, W=8) e cantos internos. `World.isWallAt` e `World.wallPieceAt(x, y)` expõem a peça ao render. Nenhum perfil as lista ainda (sem arte nem receita).
+
 ## Modelo
 - Célula: **chão** + níveis de pilha (`Chunk.levels`, `World.getLevel`): **objeto nível 0** e **segundo cubo no nível 1**
   (pilha de até `MAX_STACK` = 2). O gerador só preenche os níveis 0 e 1; a terceira camada de saves antigos é descartada e `restoreChunk` devolve quantos blocos foram descartados (o jogo avisa; a sala registra).

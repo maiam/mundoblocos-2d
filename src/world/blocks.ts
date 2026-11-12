@@ -31,6 +31,11 @@ export const Block = {
   /** Madeira de bétula (v0.89.0): tora (da Bétula derrubada) e tábuas (da tora). */
   BIRCH_LOG: 232,
   BIRCH_PLANKS: 233,
+  // --- paredes (ADR 0027, v0.93.15): bloco de nível único, sólido, altura de `WORLD_SCALE.wall`; forma por autotile (`world/walls.ts`) ---
+  /** Parede de Tábuas (madeira; o machado quebra). Sem receita nem perfil ainda (arte e render vêm na W1/W3). */
+  WALL_PLANKS: 240,
+  /** Parede de Pedra (a picareta quebra). */
+  WALL_STONE: 241,
   // --- porta (objeto de 3 níveis de altura; o id guarda o estado) ---
   OAK_DOOR: 28,
   /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
@@ -219,7 +224,7 @@ export type BlockLayer = 'ground' | 'object';
  * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon) ou
  * construção (sprite de várias células da cidade, com sombra própria; as outras células são `TOWN_PART`).
  */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'rock' | 'building';
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'rock' | 'building' | 'wall';
 
 export interface BlockDef {
   id: BlockId;
@@ -306,6 +311,8 @@ const defs: BlockDef[] = [
   object(Block.BIRCH_LOG, 'Tora de Bétula', { organic: 'wood' }),
   object(Block.BIRCH_PLANKS, 'Tábua de Bétula', { organic: 'wood' }),
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
+  object(Block.WALL_PLANKS, 'Parede de Tábuas', { shape: 'wall', organic: 'wood' }),
+  object(Block.WALL_STONE, 'Parede de Pedra', { shape: 'wall', stone: true }),
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
@@ -481,6 +488,14 @@ export function isGrowingTree(id: BlockId): boolean {
 }
 
 /** Porta (aberta ou fechada)? */
+/** Paredes (ADR 0027): blocos de forma `wall`. */
+export const WALL_BLOCKS: readonly BlockId[] = [Block.WALL_PLANKS, Block.WALL_STONE];
+
+/** O bloco é uma parede? */
+export function isWall(id: BlockId): boolean {
+  return blockDef(id).shape === 'wall';
+}
+
 export function isDoor(id: BlockId): boolean {
   return id === Block.OAK_DOOR || id === Block.OAK_DOOR_OPEN;
 }

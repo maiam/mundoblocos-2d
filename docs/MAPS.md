@@ -4,6 +4,8 @@ Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITE
 
 > **PR #87 — mudança dirigida:** `config.ts` limita `MAX_STACK=2`; `render/renderer.ts` → `render/adaptiveWalls.ts` seleciona e desenha paredes horizontais de construção no renderizador top-down oficial, preservando a face frontal. Não altera `World` além da validação de nível obsoleto nem a renderização de terreno natural.
 
+> **Paredes (ADR 0027, v0.93.15):** `world/walls.ts` (autotile puro: frente, tampa de 16 peças, cantos internos) · `Block.WALL_PLANKS`/`WALL_STONE` em `world/blocks.ts` (`isWall`, `WALL_BLOCKS`) · `World.isWallAt`/`wallPieceAt`. Render e arte: W1/W3.
+
 > **v0.93.x — vista e escala do Santuário:** `render/sanctuaryObliqueView.ts` (projeção oblíqua, K = 1) · `render/worldScale.ts` (relações do Core Keeper: cubo 1,0, parede ≈ 1,2, personagem ≈ 1,2) · `render/sanctuaryWallProportionTest.ts` (teste `?paredes=teste`, descartável) · `Camera.setCellsTall` + `GameRenderer.preferredCellsTall` (células visíveis). ADRs 0026–0028.
 
 > **PR #89 — Santuário oficial Three.js:** `main.ts` importa dinamicamente `render/sanctuaryThreeRenderer.ts` somente no perfil Santuário → usa `render/sanctuaryThreeLayout.ts` e as faces de `celestialArt.ts`, lê `World` e implementa o contrato `render/rendererContract.ts`. O `Game` continua compartilhado. O perfil principal segue `render/renderer.ts` Canvas 2D; `?render=2d` permite fallback.
