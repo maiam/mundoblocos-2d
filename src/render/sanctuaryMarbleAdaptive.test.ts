@@ -134,12 +134,12 @@ describe('Santuário — teste de mármore celestial com bordas dinâmicas',()=>
     expect(calls[0].slice(1)).toEqual([0,0,1254,1254,0,0,256,256]);
   });
 
-  it('câmera superior fica perto de 80° sem yaw isométrico',()=>{
+  it('câmera superior fica a 67° sem yaw isométrico',()=>{
     const {height,depth}=sanctuaryCameraOffset();
-    expect(SANCTUARY_CAMERA_ELEVATION_DEG).toBe(80);
+    expect(SANCTUARY_CAMERA_ELEVATION_DEG).toBe(67);
     expect(height).toBe(37);
-    expect(depth).toBeGreaterThan(6);
-    expect(depth).toBeLessThan(7);
-    expect(Math.atan2(height,depth)*180/Math.PI).toBeCloseTo(80,5);
+    expect(depth).toBeGreaterThan(15);
+    expect(depth).toBeLessThan(17);
+    expect(Math.atan2(height,depth)*180/Math.PI).toBeCloseTo(67,5);
   });
 });

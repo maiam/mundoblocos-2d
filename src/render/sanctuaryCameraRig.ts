@@ -1,11 +1,11 @@
 /**
- * Orthographic near-top-down camera experiment inspired by Core Keeper's
+ * Orthographic elevated top-down camera experiment inspired by Core Keeper's
  * visual language. The exact original game's camera angle is not public.
  *
  * World Z+ faces forward. No azimuth rotation: only one frontal block face.
  * The goddess's XY billboard is vertical and never tilts with this pitch.
  */
-export const SANCTUARY_CAMERA_ELEVATION_DEG = 80;
+export const SANCTUARY_CAMERA_ELEVATION_DEG = 67;
 export const SANCTUARY_CAMERA_HEIGHT = 37;
 
 export function sanctuaryCameraOffset():{height:number;depth:number}{

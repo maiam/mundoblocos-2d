@@ -4,6 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Teste de câmera do Santuário — 67° (PR #93)
+
+- **Alteração isolada:** câmera ortográfica superior ajustada de 80° para 67°; sem alteração da geometria, topologia de bordas do Mármore Celestial, plano vertical da Deusa ou Mundo principal.
+- **Conferência visual:** comparar largura aparente do topo, altura visível da frente dos pilares e paredes e oclusão da Deusa nos cantos. Core Keeper não tem ângulo público confirmado; validar 67° visualmente antes de outra mudança.
+
 ## Teste de bordas adaptativas, Deusa vertical e câmera superior — PR #92
 
 - **Implementado no Santuário Three.js:** câmera ortográfica superior ~80° (sem yaw isométrico), plano vertical de sprite/eco da Deusa, mármore celestial ID 82 com nova textura de topo ornamentada e 64 máscaras possíveis de borda exposta. Parede de fechamento traseira encaixa na meia profundidade de trás dos pilares; fechamento frontal encaixa à frente. Os demais 17 materiais preservam sua arte e geometria anteriores.

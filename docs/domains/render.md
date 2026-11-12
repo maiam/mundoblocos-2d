@@ -2,9 +2,13 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
-## Mármore celestial 82 — borda ornamental adaptativa e câmera 80° (PR #92)
+## Revisão da câmera do Santuário — 67° (PR #93)
 
-No Santuário WebGL, o mármore celestial utiliza a **face vertical já aprovada**, mas o topo vem da imagem ornamentada enviada pelo usuário. A geometria lê as células da base: linha horizontal fechando uma sala por trás gera `wall_back` (meia célula atrás); linha fechando a frente gera `wall_front` (meia célula à frente); cantos e colunas ficam maciços. A parede superior herda a mesma forma. A moldura dourada e os cristais aparecem apenas nas bordas externas, usando seis segmentos (norte/sul e duas metades de leste/oeste) para ocultar exatamente o trecho conectado ao vizinho, sem duplicar molduras sobre as junções. A imagem é composta em Canvas e as texturas reutilizadas por máscara. Todos os outros materiais mantêm sua arte e autotile anterior. A câmera mantém ortográfica, sem azimute, mas eleva-se a 80° acima do chão. A Deusa 2D é um `THREE.Mesh(PlaneGeometry)` vertical, com sua sombra horizontal separada, sem inclinar pela câmera; colisões continuam inalteradas.
+Após comparação visual com Core Keeper, a câmera Three.js do Santuário foi ajustada de 80° para **67° acima do chão** (ortográfica, azimute 0°). Isso torna a frente dos blocos e objetos mais visível, preservando exatamente os estados `pillar`, `wall_front`, `wall_back`, a textura do topo ornamental do Mármore Celestial 82, a Deusa em plano vertical, colisões e salvamentos. O ângulo original do Core Keeper não é conhecido; 67° é um ponto de partida experimental para validação visual.
+
+## Mármore celestial 82 — borda ornamental adaptativa e câmera 80° (PR #92, configuração anterior)
+
+No Santuário WebGL, o mármore celestial utiliza a **face vertical já aprovada**, mas o topo vem da imagem ornamentada enviada pelo usuário. A geometria lê as células da base: linha horizontal fechando uma sala por trás gera `wall_back` (meia célula atrás); linha fechando a frente gera `wall_front` (meia célula à frente); cantos e colunas ficam maciços. A parede superior herda a mesma forma. A moldura dourada e os cristais aparecem apenas nas bordas externas, usando seis segmentos (norte/sul e duas metades de leste/oeste) para ocultar exatamente o trecho conectado ao vizinho, sem duplicar molduras sobre as junções. A imagem é composta em Canvas e as texturas reutilizadas por máscara. Todos os outros materiais mantêm sua arte e autotile anterior. A câmera histórica do PR #92 era ortográfica, sem azimute, a 80° acima do chão; após PR #93 passou para 67°. A Deusa 2D é um `THREE.Mesh(PlaneGeometry)` vertical, com sua sombra horizontal separada, sem inclinar pela câmera; colisões continuam inalteradas.
 
 ## Santuário oficial — oclusão e sombra independentes da Deusa (PR #91)
 
