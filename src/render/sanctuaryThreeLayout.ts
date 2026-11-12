@@ -31,6 +31,8 @@ export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'l
   const front=cell.shape==='thin'||cell.shape==='wall_front';
   const back=cell.shape==='wall_back';
   const middle=cell.shape==='wall_middle';
+  // L-corners fill the full tile's bounding box but remain a thin wall
+  // plus a quarter-width connector, never a solid pillar.
   return {
     x:cell.x+0.5,y:cell.level+0.5,
     z:cell.y+(front?0.75:back?0.25:0.5),
