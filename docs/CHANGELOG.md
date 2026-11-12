@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.6 — Goblins: folhas novas em alta resolução e em WebP (12/11/2026)
+- **Arte refeita** a partir das seis folhas enviadas pelo dono do produto (`assets-src/goblin/{idle,walk,run,alert,hurt,death}.png`, 4×4 transparente, ordem frente/esquerda/direita/costas): `process-sprite.py --alpha --frame-h 160` (`--largest` em tudo menos no alerta, para manter os "!") → `optimize-assets.py`.
+- **WebP:** as 7 folhas (as seis novas + a de ataque, ainda a antiga) saíram de ~5,4 MB em PNG para ~0,83 MB; imports em `render/art/principal.ts` agora `.webp`.
+- **Tamanho em tela preservado:** o desenho novo ocupa ~95% do quadro (o antigo ~89%, com pés acima da base); as folhas novas usam `GOBLIN_H = TILE * 1.6` (0,94 × 1,7) e os pés na base do quadro. A folha de ataque continua em `TILE * 1.7` até ser refeita.
+- **Orçamento:** `build-artifact.mjs` passa a contar `goblin-*` como "depois do início" (carregam sob demanda, como lobos e NPCs): início do Mundo ≈ 2,9 MB (era 8,2 MB com os PNGs).
+- Sem mudança de jogo, protocolo ou save.
+
 ## Orvalis v0.93.5 — Fase 1 do render WebGL: perda de contexto, tipagem e linha de base (12/11/2026)
 - **Perda de contexto WebGL:** o `SanctuaryThreeRenderer` trata `webglcontextlost` (com `preventDefault`) e `webglcontextrestored` (refaz malhas e texturas de canvas); testado no navegador com `WEBGL_lose_context`. Listeners removidos no `dispose`.
 - **Tipagem:** `@types/three@0.187.0` (dev) no lugar da declaração de protótipo `src/three/three.d.ts`; o renderer deixa de usar `any`.
