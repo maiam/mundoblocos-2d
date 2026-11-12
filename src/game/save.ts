@@ -217,6 +217,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
     }));
     e.respawns.splice(0, e.respawns.length, ...e.respawns.filter((r) => isOpenWorldMonster(r.kind)), ...d.dungeon.respawns.filter((r) => !isOpenWorldMonster(r.kind)).map((r) => ({ ...r, bounds: bounds(r.kind) })));
   }
+  e.reconcileGoblinCamps(s.world);
   e.settleAll(s.world);
   // Salvamento de antes da correção da tenda: heroína presa dentro de um objeto → vai para a célula livre mais perto.
   if (p.isStuck(s.world)) {
