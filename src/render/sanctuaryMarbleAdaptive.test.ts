@@ -124,7 +124,14 @@ describe('Santuário — teste de mármore celestial com bordas dinâmicas',()=>
     expect(ctx.clearRect).toHaveBeenCalledWith(0,0,256,256);
     calls.length=0;
     drawMarbleAdaptiveTop(ctx,source,{...noEdges,north:true,westBack:true},256);
-    expect(calls.length).toBe(4); // center, north, west segment, corner
+    expect(calls.length).toBe(4); // center, north rail, west half, corner
+    calls.length=0;
+    drawMarbleAdaptiveTop(ctx,source,{
+      north:true,south:true,westBack:true,westFront:true,
+      eastBack:true,eastFront:true,
+    },256);
+    expect(calls).toHaveLength(1); // isolated block uses the exact new picture
+    expect(calls[0].slice(1)).toEqual([0,0,1254,1254,0,0,256,256]);
   });
 
   it('câmera superior fica perto de 80° sem yaw isométrico',()=>{
