@@ -1,5 +1,6 @@
 import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, toggled, TREE_NEXT } from './blocks';
+import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, toggled, TREE_NEXT } from './blocks';
+import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
 import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave, type Rect } from './dungeon';
@@ -741,6 +742,17 @@ export class World {
       this.tent = [x, y];
     }
     return true;
+  }
+
+  /** A célula tem uma parede (bloco de forma `wall` no nível 0)? */
+  isWallAt(x: number, y: number): boolean {
+    return isWall(this.getObject(x, y));
+  }
+
+  /** Peça de autotile da parede em (x, y) (ADR 0027), ou null se a célula não é parede. */
+  wallPieceAt(x: number, y: number): WallPiece | null {
+    if (!this.isWallAt(x, y)) return null;
+    return wallPiece(wallNeighbors((cx, cy) => this.isWallAt(cx, cy), x, y));
   }
 
   /** Célula livre (vazia ou com enfeite) em chão firme, fora da dungeon — para objetos de várias células. */
