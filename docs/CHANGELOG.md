@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.7 — Goblins soltam 2 moedas de cobre (12/11/2026)
+- **Item novo:** Moeda de Cobre (`Item.COPPER_COIN`, `loot: true`, ícone `icon-copper-coin.webp` a partir da arte enviada pelo dono do produto, `assets-src/moeda-cobre.png`). Sem uso ainda (futuras lojas e trocas).
+- **Espólio do goblin:** `monsterDrops('goblin')` devolve sempre 2 moedas (`GOBLIN_COIN_DROP`, fixo, sem sorteio), no jogo e na sala (os dois usam `monsterDrops`). Substitui o `[]` provisório.
+- **Ferramenta:** `scripts/make-item-icon.py` (recorta pela borda do desenho, quadrado transparente, 64 px, WebP sem perdas).
+- **Servidor:** a sala precisa do pacote novo para soltar as moedas (item novo; protocolo continua 20 e save 14).
+- Testes: `goblinLoot.test.ts`.
+
 ## Orvalis v0.93.6 — Goblins: folhas novas em alta resolução e em WebP (12/11/2026)
 - **Arte refeita** a partir das seis folhas enviadas pelo dono do produto (`assets-src/goblin/{idle,walk,run,alert,hurt,death}.png`, 4×4 transparente, ordem frente/esquerda/direita/costas): `process-sprite.py --alpha --frame-h 160` (`--largest` em tudo menos no alerta, para manter os "!") → `optimize-assets.py`.
 - **WebP:** as 7 folhas (as seis novas + a de ataque, ainda a antiga) saíram de ~5,4 MB em PNG para ~0,83 MB; imports em `render/art/principal.ts` agora `.webp`.
