@@ -2,9 +2,9 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
-## Teste da escala do mundo (v0.93.12, ADR 0027/0028)
+## Teste da escala do mundo (v0.93.12–13, ADR 0027/0028)
 
-`?mundo=santuario&paredes=teste` adiciona à cena (`sanctuaryWallProportionTest.ts`) dois grupos lado a lado: **ATUAL** (cada cubo sobe `OBLIQUE_K` = 0,56 célula na tela; personagem de 2,2) e **NOVA** (1 célula = 1 m: cubo de frente quadrada, parede de 2 cubos = 2,0 células, personagem ≈ 1,75). Cada grupo traz um cubo, uma parede de 2 cubos, uma régua vertical de 1 m por segmento, réguas de 1 m no chão e uma personagem de referência parada (mesma textura animada da Deusa). A Deusa controlável usa a escala nova (`NEW_CHARACTER_SCALE`). Altura de tela = altura de mundo × K, então o teste emula K = 1 dentro da vista atual. Só visual: não entra no `World` nem bloqueia a Deusa.
+`?mundo=santuario&paredes=teste` adiciona à cena (`sanctuaryWallProportionTest.ts`) três grupos lado a lado, cada um com cubo, parede, régua vertical de 2 segmentos, régua de 1 célula no chão e uma personagem de referência parada: **ATUAL** (cubo 0,56; parede 1,125; personagem 2,2), **PROPOSTA** (1,0; 2,0; 1,75) e **CORE KEEPER** (1,0; ≈ 1,2; ≈ 1,2, medida de uma cena do jogo). A Deusa controlável usa a escala de `?escala=atual|proposta|core` (padrão `core`; fator `characterScale`). Altura de tela = altura de mundo × K, então o teste emula cada escala dentro da vista atual. Só visual: não entra no `World` nem bloqueia a Deusa.
 
 ## Vista oblíqua do Santuário — padrão (v0.93.10, ADR 0026)
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.13 — Teste da escala: comparativo com a medida do Core Keeper (12/11/2026)
+- **Medida de uma cena do Core Keeper** (captura enviada pelo dono do produto): personagem ≈ 1,2 tile, frente da parede ≈ 1,2 (≈ a altura do personagem), vaca ≈ 1,2, cerca ≈ 0,65, árvore 3,5–4; paredes do sul e laterais finas; tampa escura; luz dinâmica. Registrada na ADR 0028, agora **em revisão**.
+- **Teste de escala com três grupos** (`?mundo=santuario&paredes=teste`): ATUAL, PROPOSTA (1,75 / parede de 2 cubos) e CORE KEEPER (personagem 1,2 / parede 1,2), cada um com cubo, parede, régua vertical e personagem de referência. A Deusa usa a escala de `?escala=atual|proposta|core` (padrão `core`).
+- Só visual e descartável; sem mudança de jogo, protocolo ou save.
+
 ## Orvalis v0.93.12 — Teste da escala do mundo: 1 célula = 1 m (12/11/2026)
 - **ADR 0028 (direção aprovada):** 1 célula = 1 m; vista oblíqua com K = 1,0 (cubo de frente quadrada); parede = 2 cubos = 2 m; personagem ≈ 1,75 m (≈ 0,8 × a escala antiga). A ADR 0027 passa a usar a altura de 2 cubos.
 - **Teste reformulado** (`?mundo=santuario&paredes=teste`): escala ATUAL e NOVA lado a lado (cubo, parede de 2 cubos, régua vertical de 1 m por segmento, régua de 1 m no chão e personagem de referência parada); a Deusa que se mexe usa a escala nova. Substitui o teste de três alturas da v0.93.11. Só visual, descartável; o jogo e o `OBLIQUE_K` da vista continuam como estavam.
