@@ -26,14 +26,16 @@ export function goblinRoam(x:number,y:number):Rect {
     x1:x+GOBLIN_CAMP_ROAM,y1:y+GOBLIN_CAMP_ROAM};
 }
 
+/** An unbuilt natural camp may clear trees/bushes in its 7-tile circle, but
+ * never cover water, cliffs, cave entrances, player constructions or guards.
+ */
 function open(world:World,x:number,y:number):boolean {
   if(world.isProtected(x,y))return false;
-  const ground=world.generator.groundAt(x,y);
+  const cell=world.generator.cellAt(x,y);
+  const ground=cell.ground;
   if(ground===Block.VOID||ground===Block.HOLE||ground===Block.WATER||
     blockDef(ground).liquid||!blockDef(ground).standable)return false;
-  const obj=world.generator.objectAt(x,y);
-  return (obj===Block.AIR||blockDef(obj).shape==='decoration') &&
-    world.generator.upperAt(x,y)===Block.AIR;
+  return cell.upper===Block.AIR;
 }
 
 /**
@@ -49,9 +51,11 @@ export function planGoblinCamps(world:World):GoblinCamp[] {
   const rx=(town.area.x1-town.area.x0+1)/2;
   const ry=(town.area.y1-town.area.y0+1)/2;
   const camps:GoblinCamp[]=[];
-  for(let i=0;i<400&&camps.length<GOBLIN_CAMP_COUNT;i++){
+  for(let i=0;i<1800&&camps.length<GOBLIN_CAMP_COUNT;i++){
     const angle=hash2(world.seed,113+i,274)*Math.PI*2;
-    const extra=34+hash2(world.seed,938+i,181)*46;
+    // Include open fields beyond the near-city ring when the biome is
+    // mountains/ocean. Still favor nearby camps for discoverability.
+    const extra=36+hash2(world.seed,938+i,181)*Math.min(220,56+Math.floor(i/15)*8);
     // Elliptical ring around the city, beyond the livestock field.
     const x=Math.round(mx+Math.cos(angle)*(rx+extra));
     const y=Math.round(my+Math.sin(angle)*(ry+extra));
@@ -71,10 +75,12 @@ export function planGoblinCamps(world:World):GoblinCamp[] {
 export class GoblinCampTerrain implements TerrainSource {
   readonly seed:number;
   private readonly fires:Set<string>;
+  private readonly cleared:Set<string>;
   private readonly inChunk=new Map<string,GoblinCamp[]>();
   constructor(private readonly source:TerrainSource,readonly camps:readonly GoblinCamp[]){
     this.seed=source.seed;
     this.fires=new Set(camps.map(c=>`${c.x},${c.y}`));
+    this.cleared=new Set(camps.flatMap(c=>c.slots.map(([x,y])=>`${x},${y}`)));
     for(const c of camps){
       const cx=Math.floor(c.x/CHUNK_SIZE),cy=Math.floor(c.y/CHUNK_SIZE);
       const k=`${cx},${cy}`;
@@ -84,11 +90,13 @@ export class GoblinCampTerrain implements TerrainSource {
   }
   cellAt(x:number,y:number):Cell {
     const c=this.source.cellAt(x,y);
-    return this.fires.has(`${x},${y}`)?{...c,object:Block.CAMPFIRE}:c;
+    return this.fires.has(`${x},${y}`)?{...c,object:Block.CAMPFIRE}:
+      this.cleared.has(`${x},${y}`)?{...c,object:Block.AIR}:c;
   }
   groundAt(x:number,y:number):BlockId{return this.source.groundAt(x,y);}
   objectAt(x:number,y:number):BlockId{
-    return this.fires.has(`${x},${y}`)?Block.CAMPFIRE:this.source.objectAt(x,y);
+    return this.fires.has(`${x},${y}`)?Block.CAMPFIRE:
+      this.cleared.has(`${x},${y}`)?Block.AIR:this.source.objectAt(x,y);
   }
   upperAt(x:number,y:number):BlockId{return this.source.upperAt(x,y);}
   biomeAt(x:number,y:number):Biome{return this.source.biomeAt(x,y);}
@@ -97,6 +105,16 @@ export class GoblinCampTerrain implements TerrainSource {
     for(const c of this.inChunk.get(`${cx},${cy}`)??[]){
       const lx=c.x-cx*CHUNK_SIZE,ly=c.y-cy*CHUNK_SIZE;
       objects[ly*CHUNK_SIZE+lx]=Block.CAMPFIRE;
+      for(const [x,y] of c.slots){
+        if(Math.floor(x/CHUNK_SIZE)===cx&&Math.floor(y/CHUNK_SIZE)===cy)
+          objects[(y-cy*CHUNK_SIZE)*CHUNK_SIZE+(x-cx*CHUNK_SIZE)]=Block.AIR;
+      }
+    }
+    // Slots belonging to a center just across this chunk boundary.
+    for(const xy of this.cleared){
+      const [x,y]=xy.split(',').map(Number);
+      if(Math.floor(x/CHUNK_SIZE)===cx&&Math.floor(y/CHUNK_SIZE)===cy)
+        objects[(y-cy*CHUNK_SIZE)*CHUNK_SIZE+(x-cx*CHUNK_SIZE)]=Block.AIR;
     }
   }
 }
