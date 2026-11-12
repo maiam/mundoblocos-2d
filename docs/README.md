@@ -35,7 +35,7 @@ chunks · 0002 texturas procedurais (parcialmente substituída) · 0003 vista 3/
 inventário · 0006 materiais da prancha · 0007 assets em WebP · 0008 perfis de mundo · 0009 dungeon sobreposta · 0010 arte
 por mundo · 0011 salvamento local · 0012 cidade fixa · 0013 imagens em arquivos separados · 0014 interiores · 0015 Orvalis
 independente · 0016 multiplayer co-op · 0017 personagem modular (removido)  · 0018 ferramentas por material · 0019 covil isolado e
-andares · 0020 salas fixas salvas · 0021 bichos da sala · 0022 escala visual e cena de escala · 0025 NPCs nomeados e caixa de conversa · 0026 render 2.5D em WebGL · 0027 paredes de nível único · 0023 Padrão de Materiais V2 (em validação).
+andares · 0020 salas fixas salvas · 0021 bichos da sala · 0022 escala visual e cena de escala · 0025 NPCs nomeados e caixa de conversa · 0026 render 2.5D em WebGL · 0027 paredes de nível único · 0028 escala 1 célula = 1 m · 0023 Padrão de Materiais V2 (em validação).
 
 ## Histórico
 Mudanças antigas (vista lateral, cavernas, biomas removidos) aparecem só no CHANGELOG e nas ADRs, como
