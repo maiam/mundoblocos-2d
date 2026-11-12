@@ -15,6 +15,8 @@ export const Item = {
   /** Espólios dos lobos (v0.91.0; sem uso ainda — futuras receitas). */
   WOLF_FANG: 'wolf_fang',
   WOLF_PELT: 'wolf_pelt',
+  /** Moeda de cobre (v0.93.7): espólio do goblin; sem uso ainda (futuras lojas e trocas). */
+  COPPER_COIN: 'copper_coin',
   /** Fruta da macieira (comer vem com a comida, Fase P). As mudas saíram do jogo na v0.88.0 (`RETIRED_ITEMS`). */
   APPLE: 'apple',
   /** Hortaliças: o próprio legume é o que se planta (e o que se colhe). */
@@ -59,6 +61,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   queen_heart: { id: Item.QUEEN_HEART, name: 'Coração da Rainha', loot: true },
   wolf_fang: { id: Item.WOLF_FANG, name: 'Presa de Lobo', loot: true },
   wolf_pelt: { id: Item.WOLF_PELT, name: 'Pelagem de Lobo', loot: true },
+  copper_coin: { id: Item.COPPER_COIN, name: 'Moeda de Cobre', loot: true },
   apple: { id: Item.APPLE, name: 'Maçã' },
   potato: { id: Item.POTATO, name: 'Batata', plants: Block.POTATO_0 },
   tomato: { id: Item.TOMATO, name: 'Tomate', plants: Block.TOMATO_0 },
@@ -84,20 +87,22 @@ export const VEGETABLES: ItemId[] = [Item.POTATO, Item.TOMATO, Item.CARROT];
 export const GRASS_VEGETABLE_CHANCE = 0.12;
 
 /** Espólios, na ordem exibida na HUD. */
-export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART, Item.WOLF_FANG, Item.WOLF_PELT];
+export const LOOT_ITEMS: ItemId[] = [Item.SILK, Item.FANG, Item.QUEEN_HEART, Item.WOLF_FANG, Item.WOLF_PELT, Item.COPPER_COIN];
 
 /**
  * O que cada monstro deixa ao morrer. Pequena: 1 seda (60%). Grande: 1–2 sedas + presa (35%).
  * Rainha: 5–7 sedas + 2–3 presas + o Coração da Rainha. Lobos: pelagem (55%) e presa (40%), sorteadas separadamente.
+ * Goblin: 2 moedas de cobre, sempre.
  */
 /** Chances de cada espólio do lobo (sorteios independentes). */
 export const WOLF_PELT_CHANCE = 0.55;
 export const WOLF_FANG_CHANCE = 0.4;
+/** Moedas de cobre que cada goblin solta ao morrer (fixo, não sorteado). */
+export const GOBLIN_COIN_DROP = 2;
 
 export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
-  // Goblin loot has not been designed yet. Never fall through to the spider
-  // queen's guaranteed heart/silk drops.
-  if (kind === 'goblin') return [];
+  // Goblin: sempre 2 moedas de cobre (dono do produto, 2026-11-12). Nunca cair no espólio da Rainha das aranhas.
+  if (kind === 'goblin') return [{ item: Item.COPPER_COIN, count: GOBLIN_COIN_DROP }];
   if (isWolf(kind)) {
     // Lobo: pelagem e presa saem por sorteios separados (nenhum é garantido e podem vir juntos ou sozinhos).
     const out: Drop[] = [];
