@@ -16,6 +16,7 @@ import {
 } from './sanctuaryMarbleAdaptive';
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset } from './sanctuaryCameraRig';
+import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
@@ -95,22 +96,12 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.floorGeometry=new THREE.BoxGeometry(1,0.18,1);
     this.solidGeometry=new THREE.BoxGeometry(1,1,1);
     this.wallGeometry=new THREE.BoxGeometry(1,1,0.5);
-    // V3: superfícies separadas. Uma face na base e um único topo
-    // horizontal, nunca dois cubos completos sobrepostos por célula.
-    // Materiais: BoxGeometry +Y = 2 (topo), +Z = 4 (face).
-    this.v3FaceGeometry=new THREE.PlaneGeometry(1,2);
-    this.v3FaceGeometry.translate(0,0,-0.5); // face na borda NORTE da célula-base
-    this.v3FaceGeometry.clearGroups();
-    this.v3FaceGeometry.addGroup(0,6,4);
-    this.v3TopGeometry=new THREE.PlaneGeometry(1,1);
-    this.v3TopGeometry.rotateX(-Math.PI/2);
-    this.v3TopGeometry.clearGroups();
-    this.v3TopGeometry.addGroup(0,6,2);
-    this.v3HalfTopGeometry=new THREE.PlaneGeometry(1,0.5);
-    this.v3HalfTopGeometry.rotateX(-Math.PI/2);
-    this.v3HalfTopGeometry.translate(0,0,0.25); // metade dianteira (sul)
-    this.v3HalfTopGeometry.clearGroups();
-    this.v3HalfTopGeometry.addGroup(0,6,2);
+    // V3 desenha uma face OU um topo por célula; nenhuma peça cria
+    // uma segunda face/cobertura escondida em outro nível.
+    const v3Surfaces=createSanctuaryV3Surfaces();
+    this.v3FaceGeometry=v3Surfaces.face;
+    this.v3TopGeometry=v3Surfaces.top;
+    this.v3HalfTopGeometry=v3Surfaces.halfTop;
     this.cornerLeftGeometry=this.createCornerGeometry('left');
     this.cornerRightGeometry=this.createCornerGeometry('right');
     this.raycaster=new THREE.Raycaster();
