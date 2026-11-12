@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isWolf, WOLF_KINDS } from '../world/dungeon';
+import { isOpenWorldMonster, isWolf, WOLF_KINDS } from '../world/dungeon';
 import { MONSTER_STATS } from '../world/progression';
 import { Item, ITEMS, monsterDrops, WOLF_FANG_CHANCE, WOLF_PELT_CHANCE } from '../world/items';
 import { mulberry32 } from '../world/random';
@@ -175,13 +175,14 @@ describe('Lobos e salvamento', () => {
     const wolves = e.monsters.filter((m) => isWolf(m.kind)).length;
     expect(wolves).toBeGreaterThan(0);
     const data = captureSave({ world: w, player: p, entities: e, inventory: new Inventory(), exploration: new Exploration(), time: 0.5, selected: null, hotbar: null });
-    expect(data.dungeon!.monsters.every((m) => !isWolf(m.kind))).toBe(true);
+    expect(data.dungeon!.monsters.every((m) => !isOpenWorldMonster(m.kind))).toBe(true);
     const w2 = new World(42);
     const p2 = new Player(1, 1);
     const e2 = new Entities(p2, mulberry32(1));
     e2.spawnWildlife(w2);
     applySave(migrate(JSON.parse(JSON.stringify(data)))!, { world: w2, player: p2, entities: e2, inventory: new Inventory() } as never);
     expect(e2.monsters.filter((m) => isWolf(m.kind))).toHaveLength(wolves);
-    expect(e2.monsters.filter((m) => !isWolf(m.kind))).toHaveLength(data.dungeon!.monsters.length);
+    expect(e2.monsters.filter((m) => !isOpenWorldMonster(m.kind))).toHaveLength(data.dungeon!.monsters.length);
+    expect(e2.monsters.filter((m) => m.kind === 'goblin')).toHaveLength(w2.goblinCamps.length * 7);
   });
 });
