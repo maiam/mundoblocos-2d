@@ -1,7 +1,7 @@
 {
   "name": "mundoblocos-2d",
   "private": true,
-  "version": "0.93.4",
+  "version": "0.93.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,6 +16,7 @@
     "build:net": "node scripts/build-net.mjs"
   },
   "devDependencies": {
+    "@types/three": "0.187.0",
     "esbuild": "^0.28.2",
     "typescript": "~5.9.0",
     "vite": "^7.3.7",

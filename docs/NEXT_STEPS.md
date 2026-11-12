@@ -25,7 +25,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 Referência: Core Keeper. Arte 2D, geometria só nas paredes, atores em billboards, parede sólida, **iluminação dinâmica
 primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de versão. O Canvas 2D fica até a paridade.
-1. **Fase 1 — consolidar o Santuário:** validação visual (Safari, celular, tablet); perda de contexto WebGL e `dispose`;
+1. **Fase 1 — consolidar o Santuário (em andamento; v0.93.5 entregou perda de contexto, tipagem, `stats()`, mapa de paridade e linha de base; falta validação visual em Safari/celular/tablet, FPS em aparelho real, tetos de JS/arte e separar o núcleo genérico):** validação visual (Safari, celular, tablet); perda de contexto WebGL e `dispose`;
    tipar o renderer (hoje `any`); linha de base (frame time, draw calls, memória) e tetos de JS/arte; contrato
    `GameRenderer` completo (`RenderOptions`) com testes; separar o núcleo genérico (`render/three/`) do mármore (`sanctuary*`).
 2. **Fase 2 — núcleo por chunk:** malha por chunk com reconstrução incremental, corte pela câmera, orçamento por quadro,
@@ -35,6 +35,7 @@ primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de ver
 4. **Fase 4 — objetos do Mundo:** árvores e plantações, portas e cercas, cidade, água e transições, dungeon, interiores.
 5. **Fase 5 — piloto** `?render=3d` (dev): checklist de paridade (capturas 2D × 3D), sala multiplayer, celular/tablet,
    WebGL no iframe do Artifact. 6. **Fase 6 — virada:** 3D padrão, 2D de reserva por uma versão, depois remover a duplicação.
+- **Achado da linha de base (fora do render):** as 7 folhas dos goblins (`goblin-*.png`, ~5,4 MB) entram como PNG; o artefato do Mundo mostra início ≈ 8,2 MB (orçamento 3 MB). Falta passar por `optimize-assets.py` (WebP) e trocar os imports em `render/art/principal.ts`.
 - Física sólida no Mundo só entra no piloto, atrás de flag (muda a jogabilidade).
 
 ## Goblins do Mundo principal — PR #96

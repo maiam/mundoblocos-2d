@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Fase 1 do render WebGL — robustez e medição (v0.93.5, ADR 0026)
+
+`SanctuaryThreeRenderer` trata perda e volta do contexto WebGL (o Three recria seus recursos; o renderer refaz malhas e texturas de canvas) e remove os listeners no `dispose`. Tipos reais (`@types/three`), sem `any`. `GameRenderer.stats?()` expõe contadores para medir desempenho; `SANCTUARY_THREE_OPTIONS` (em `rendererContract.ts`) classifica cada campo de `RenderOptions` como `honored`/`ignored` e serve de checklist de paridade para as próximas fases.
+
 ## Canto em L em linha horizontal entre colunas opostas (PR #95)
 
 Em `render/sanctuaryMarbleAdaptive.ts`, uma faixa horizontal com a primeira coluna prolongada para o norte e a outra prolongada para o sul (sem ramos verticais internos) tem prioridade de alinhamento: todos os blocos da faixa usam a metade traseira da célula, mantendo a **borda superior contínua**. A extremidade que precisa alcançar a coluna prolongada para o sul recebe `wall_corner_back_left` ou `wall_corner_back_right`: parede de 1×0,5 célula na metade traseira + ligação frontal estreita de 0,25×0,5, ocupando 62,5% da célula em L, sem preencher um cubo inteiro. O `SanctuaryThreeRenderer` constrói a malha real das duas caixas com UVs superiores mapeados na mesma imagem ornamental, além de filetes dourados nas bordas recortadas. A classificação não é usada em salas simples, T internas nem outros materiais. Os dois níveis têm a mesma geometria, conforme a base; física continua baseada na célula lógica.
