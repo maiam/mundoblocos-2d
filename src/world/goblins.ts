@@ -33,8 +33,13 @@ function open(world:World,x:number,y:number):boolean {
   if(world.isProtected(x,y))return false;
   const cell=world.generator.cellAt(x,y);
   const ground=cell.ground;
+  // World.isGroundStandable accepts materials (GRASS, DIRT, SAND) as
+  // ground even though their shared block definitions say standable=false
+  // when used as a raised cube. Mirror that exact domain rule.
+  const def=blockDef(ground);
+  const standable=def.layer==='object'?def.shape==='cube':def.standable;
   if(ground===Block.VOID||ground===Block.HOLE||ground===Block.WATER||
-    blockDef(ground).liquid||!blockDef(ground).standable)return false;
+    def.liquid||!standable)return false;
   return cell.upper===Block.AIR;
 }
 
