@@ -9,7 +9,9 @@ import { Block, type BlockId } from '../world/blocks';
  * pillar. Horizontal strips align their walls to neighboring columns at
  * the rear, front or middle of the cell; other materials are unchanged.
  */
-export type MarbleProfile = 'pillar' | 'wall_back' | 'wall_middle' | 'wall_front';
+export type MarbleProfile =
+  | 'pillar' | 'wall_back' | 'wall_middle' | 'wall_front'
+  | 'wall_corner_back_left' | 'wall_corner_back_right';
 export type MarbleShape = MarbleProfile | 'solid' | 'thin';
 type MarbleReader = {getLevel(x:number,y:number,level:number):BlockId};
 export const MARBLE_TEST_ID: BlockId = Block.MARBLE_CELESTIAL;
@@ -34,32 +36,80 @@ function pillarAnchor(world:MarbleReader,x:number,y:number):MarbleProfile | null
 }
 
 /**
- * Only the ground level decides shape; the upper cube reuses it.
- * Scan the contiguous horizontal strip: all walls in one run keep the same
- * anchor, even when a remote end cell adjoins a vertical pillar.
+ * A horizontal run joining the TOP of a north-going column to the BOTTOM of
+ * a south-going column previously collapsed into wall_middle with two full
+ * pillars. That makes a stepped top even though the row is continuous.
+ *
+ * Keep a single BACK-anchored strip (aligned with the visible top edge),
+ * and let only the column which continues SOUTH have a narrow L-shaped
+ * connector. The other end already touches its north-going column along
+ * the rear edge. We deliberately do NOT override rooms, T-junctions, dense
+ * slabs, or a run with internal north/south columns.
+ *
+ * Both left-to-right orientations are supported, with no stored state: the
+ * decision is fully recomputed after any neighboring cell changes.
+ */
+function oppositeEndCorner(
+  world: MarbleReader, west: number, east: number, y: number,
+): { cornerX:number; shape:'wall_corner_back_left'|'wall_corner_back_right' } | null {
+  if(west>=east)return null;
+  const left=pillarAnchor(world,west,y);
+  const right=pillarAnchor(world,east,y);
+  if(!((left==='wall_front'&&right==='wall_back')||
+       (left==='wall_back'&&right==='wall_front')))return null;
+  for(let xx=west+1;xx<east;xx++){
+    if(columnAt(world,xx,y))return null;
+  }
+  const cornerX=left==='wall_back'?west:east;
+  return {cornerX,
+    shape:cornerX===west?'wall_corner_back_left':'wall_corner_back_right'};
+}
+
+/**
+ * The ground level decides shape for BOTH construction levels.
+ * Horizontal continuity wins only for the two-end/opposing-column case.
  */
 export function classifyMarbleProfile(world:MarbleReader,x:number,y:number):MarbleProfile {
   if(!same(world,x,y))return 'pillar';
-  if(columnAt(world,x,y))return 'pillar';
-
-  // A loose single block or strip starts as a FRONT-anchored wall.
   let west=x,east=x;
   for(let i=0;i<80&&same(world,west-1,y);i++)west--;
   for(let i=0;i<80&&same(world,east+1,y);i++)east++;
+
+  const opposite=oppositeEndCorner(world,west,east,y);
+  if(opposite){
+    return x===opposite.cornerX?opposite.shape:'wall_back';
+  }
+  if(columnAt(world,x,y))return 'pillar';
 
   const anchors=new Set<MarbleProfile>();
   for(let xx=west;xx<=east;xx++){
     const p=pillarAnchor(world,xx,y);
     if(p)anchors.add(p);
   }
-  if(anchors.has('wall_middle') ||
+  if(anchors.has('wall_middle')||
     (anchors.has('wall_front')&&anchors.has('wall_back')))return 'wall_middle';
   if(anchors.has('wall_back'))return 'wall_back';
   return 'wall_front';
 }
 
+/**
+ * The L-shaped endpoint is a rear wall (1 × 0.5) plus a small tongue
+ * (0.25 × 0.5) going forward to meet the south-going column.
+ * Coordinates are offsets from the cell centre in Three.js X/Z.
+ */
+export type MarbleCornerPiece={x:number;z:number;width:number;depth:number};
+export function marbleCornerParts(shape:MarbleProfile):MarbleCornerPiece[] {
+  if(shape!=='wall_corner_back_left'&&shape!=='wall_corner_back_right')return [];
+  return [
+    {x:0,z:-0.25,width:1,depth:0.5},
+    {x:shape==='wall_corner_back_left'?-0.375:0.375,
+      z:0.25,width:0.25,depth:0.5},
+  ];
+}
+
 export function marbleFootprint(y:number,shape:MarbleShape):{rear:number;front:number}{
-  return shape==='wall_back' ? {rear:y,front:y+0.5}
+  return (shape==='wall_back'||shape==='wall_corner_back_left'||
+      shape==='wall_corner_back_right') ? {rear:y,front:y+0.5}
     : shape==='wall_middle' ? {rear:y+0.25,front:y+0.75}
     : shape==='wall_front'||shape==='thin' ? {rear:y+0.5,front:y+1}
     : {rear:y,front:y+1};
@@ -77,28 +127,52 @@ export type MarbleEdgeExposure = {
  * solid pillar without drawing gold over the hidden middle half of its edge.
  * The same algorithm supports back/front walls (0–50%, 50–100%).
  */
+/**
+ * Side exposure is evaluated over the *actual* occupied edge. The L corner
+ * extends only the LEFT or RIGHT outer edge to the front of its cell.
+ */
+function sideSpan(y:number,shape:MarbleShape,side:'west'|'east'):{
+  rear:number;front:number
+}{
+  if((shape==='wall_corner_back_left'&&side==='west')||
+    (shape==='wall_corner_back_right'&&side==='east')){
+    return {rear:y,front:y+1};
+  }
+  return marbleFootprint(y,shape);
+}
+
 export function marbleTopExposure(
   world:MarbleReader,x:number,y:number,level:number,shape:MarbleShape,
   shapeAt:(x:number,y:number,level:number)=>MarbleShape,
 ):MarbleEdgeExposure {
   const own=marbleFootprint(y,shape);
-  const neighbor=(nx:number,ny:number) =>
+  const other=(nx:number,ny:number):MarbleShape|null=>
     world.getLevel(nx,ny,level)===MARBLE_TEST_ID
-      ? marbleFootprint(ny,shapeAt(nx,ny,level)):null;
-  const west=neighbor(x-1,y),east=neighbor(x+1,y),
-    north=neighbor(x,y-1),south=neighbor(x,y+1);
-  const side=(span:{rear:number;front:number}|null):MarbleSideQuarters=>{
-    const width=(own.front-own.rear)/4;
+      ? shapeAt(nx,ny,level):null;
+  const west=other(x-1,y),east=other(x+1,y),
+    north=other(x,y-1),south=other(x,y+1);
+  const quarters=(side:'west'|'east',neighbor:MarbleShape|null):MarbleSideQuarters=>{
+    const edge=sideSpan(y,shape,side);
+    const opposite=side==='west'?'east':'west';
+    const attached=neighbor?sideSpan(y,neighbor,opposite):null;
+    const width=(edge.front-edge.rear)/4;
     return [0,1,2,3].map(i=>{
-      const a=own.rear+i*width,b=a+width;
-      return !span || Math.min(span.front,b)-Math.max(span.rear,a)<=0.0001;
+      const a=edge.rear+i*width,b=a+width;
+      return !attached||Math.min(attached.front,b)-Math.max(attached.rear,a)<=0.0001;
     }) as MarbleSideQuarters;
   };
-  const touchesNorth=!!north && Math.abs(own.rear-north.front)<0.0001;
-  const touchesSouth=!!south && Math.abs(own.front-south.rear)<0.0001;
+  // A corner's tongue touches the SOUTH cell even though its main wall
+  // only spans the rear half of the tile.
+  const rear=own.rear;
+  const front=shape==='wall_corner_back_left'||shape==='wall_corner_back_right'
+    ? y+1:own.front;
+  const northTouches=!!north&&
+    Math.abs(rear-sideSpan(y-1,north,'east').front)<0.0001;
+  const southTouches=!!south&&
+    Math.abs(front-sideSpan(y+1,south,'east').rear)<0.0001;
   return {
-    north:!touchesNorth,south:!touchesSouth,
-    west:side(west),east:side(east),
+    north:!northTouches,south:!southTouches,
+    west:quarters('west',west),east:quarters('east',east),
   };
 }
 
@@ -154,4 +228,34 @@ export function drawMarbleAdaptiveTop(
   };
   side(true,e.west);
   side(false,e.east);
+}
+
+/**
+ * Ornament for the L connector. It is the same approved marble artwork,
+ * mapped once across the entire 1×1 cell. Gold rails follow the indented
+ * outside contour rather than painting a gold square over the empty notch.
+ */
+export function drawMarbleCornerTop(
+  ctx:CanvasRenderingContext2D,
+  source:CanvasImageSource & {width:number;height:number},
+  e:MarbleEdgeExposure,side:'left'|'right',size=256,
+):void {
+  drawMarbleAdaptiveTop(ctx,source,e,size);
+  const s=source.width;
+  const thickness=0.09;
+  const tongue=0.25;
+  const notchX=side==='left'?tongue:0;
+  const notchWidth=1-tongue;
+  const draw=(sx:number,sy:number,sw:number,sh:number,
+    dx:number,dy:number,dw:number,dh:number)=>{
+    ctx.drawImage(source,sx*s,sy*s,sw*s,sh*s,
+      dx*size,dy*size,dw*size,dh*size);
+  };
+  // Inside bend: exposed front edge of the broad rear half.
+  draw(0.27,0,0.1,0.15,
+    notchX,0.5-thickness/2,notchWidth,thickness);
+  // Side of the narrow forward tongue, until it reaches the pillar below.
+  draw(side==='left'?0:0.81,0.27,0.19,0.1,
+    side==='left'?tongue-thickness/2:1-tongue-thickness/2,
+    0.5,thickness,0.5);
 }
