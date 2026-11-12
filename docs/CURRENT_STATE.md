@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-12 — v0.93.8 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-12 — v0.93.9 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.8 | `package.json` |
+| Versão do jogo | 0.93.9 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 20 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 14 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |

@@ -16,12 +16,20 @@ import {
 } from './sanctuaryMarbleAdaptive';
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
+import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
 type MeshGroup = {mesh:THREE.InstancedMesh;cells:Cell[]};
-type Materials = {block:THREE.MeshLambertMaterial[];ground:THREE.MeshLambertMaterial[];textures:THREE.Texture[]};
+type SurfaceMaterial = THREE.MeshLambertMaterial|THREE.MeshBasicMaterial;
+type Materials = {block:SurfaceMaterial[];ground:SurfaceMaterial[];textures:THREE.Texture[]};
+
+/**
+ * `tilt`: câmera inclinada a 67° (padrão, iluminada). `oblique`: câmera reta para baixo com a altura como deslocamento
+ * fixo na tela (`?vista=obliqua`, experimento da ADR 0026) e materiais sem luz, para a arte aprovada manter as cores.
+ */
+export type SanctuaryView = 'tilt'|'oblique';
 type MarbleCap = { block:THREE.Material[]; topMaterial:THREE.MeshLambertMaterial; texture:THREE.Texture };
 
 /**
@@ -64,11 +72,15 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private disposed=false;
   private contextLost=false;
   private readonly canvas:HTMLCanvasElement;
+  private readonly view:SanctuaryView;
+  private obliqueHalf={w:8,h:5};
+  private obliqueFocus={x:0,z:0};
   private lastWidth=0;
   private lastHeight=0;
   private lastPixelRatio=0;
 
-  constructor(canvas:HTMLCanvasElement,private readonly world:World){
+  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView}={}){
+    this.view=options.view??'tilt';
     const profile=world.profile;
     if(profile.id!=='santuario'||!profile.bounds)
       throw new Error('SanctuaryThreeRenderer só pode renderizar o perfil Santuário.');
@@ -135,7 +147,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       alphaTest:0.015,side:THREE.DoubleSide,
     });
     this.goddess=new THREE.Mesh(billboardGeometry,spriteMaterial);
-    this.goddess.scale.set(2.45,3.0,1);
+    // Na vista oblíqua o que é vertical mostra só K por unidade: a altura do plano é dividida por K para a personagem
+    // aparecer com a proporção da arte (3,0 células de altura em tela).
+    this.goddess.scale.set(2.45,this.view==='oblique'?3.0/OBLIQUE_K:3.0,1);
     this.goddess.renderOrder=3;
 
     // Transparent 'through-wall' echo: if a wall is genuinely closer to the
@@ -197,9 +211,11 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     const top=toTexture(faces.top);
     const front=toTexture(faces.front);
     const ground=toTexture(faces.ground);
-    const topMaterial=new THREE.MeshLambertMaterial({map:top,color:0xffffff});
-    const sideMaterial=new THREE.MeshLambertMaterial({map:front,color:0xffffff});
-    const groundMaterial=new THREE.MeshLambertMaterial({map:ground,color:0xffffff});
+    const Mat=this.view==='oblique'?THREE.MeshBasicMaterial:THREE.MeshLambertMaterial;
+    const topMaterial=new Mat({map:top,color:0xffffff});
+    // Sem luz, topo e frente seriam a mesma imagem: a frente leva o escurecimento frio que a arte 2D pinta à mão.
+    const sideMaterial=new Mat({map:front,color:this.view==='oblique'?0xc4c6dc:0xffffff});
+    const groundMaterial=new Mat({map:ground,color:0xffffff});
     // Three BoxGeometry: +X,-X,+Y,-Y,+Z,-Z.
     cached={
       block:[sideMaterial,sideMaterial,topMaterial,sideMaterial,sideMaterial,sideMaterial],
@@ -398,10 +414,25 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     // faces: elevated +Y is height; positive Z is the screen-facing front.
     const focusX=cam.x/TILE;
     const focusZ=cam.y/TILE;
-    const offset=sanctuaryCameraOffset();
-    this.camera.position.set(focusX,offset.height,focusZ+offset.depth);
-    this.camera.lookAt(focusX,0,focusZ);
-    this.camera.updateMatrixWorld();
+    if(this.view==='oblique'){
+      // Câmera reta para baixo (topo da tela = norte) e projeção oblíqua montada à mão (`sanctuaryObliqueView.ts`).
+      this.camera.up.set(0,0,-1);
+      this.camera.position.set(focusX,OBLIQUE_CAMERA_HEIGHT,focusZ);
+      this.camera.lookAt(focusX,0,focusZ);
+      this.camera.updateMatrixWorld();
+      const m=obliqueProjection(halfW,halfH);
+      this.camera.projectionMatrix.set(
+        m[0],m[1],m[2],m[3],m[4],m[5],m[6],m[7],m[8],m[9],m[10],m[11],m[12],m[13],m[14],m[15],
+      );
+      this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
+      this.obliqueHalf={w:halfW,h:halfH};
+      this.obliqueFocus={x:focusX,z:focusZ};
+    }else{
+      const offset=sanctuaryCameraOffset();
+      this.camera.position.set(focusX,offset.height,focusZ+offset.depth);
+      this.camera.lookAt(focusX,0,focusZ);
+      this.camera.updateMatrixWorld();
+    }
     const pixelRatio=Math.min(window.devicePixelRatio||1,2);
     // Do not resize the drawing buffer for every frame or pointer event.
     if(w!==this.lastWidth||h!==this.lastHeight||pixelRatio!==this.lastPixelRatio){
@@ -451,7 +482,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     const cell=opts.hover??opts.focus;
     if(cell&&cell.valid&&this.world.inBounds(cell.x,cell.y)){
       const top=this.world.stackHeight(cell.x,cell.y);
-      const v3=this.world.isMarbleV3Cell(cell.x,cell.y);
+      const v3=this.view==='tilt'&&this.world.isMarbleV3Cell(cell.x,cell.y);
       // O realce acompanha a mesma projeção em tela do topo V3.
       const visualZ=cell.y+0.5+(v3?sanctuaryV3ScreenAnchorOffset():0);
       this.highlight.position.set(cell.x+0.5,(v3?sanctuaryV3VisualHeight():top)+0.03,visualZ);
@@ -460,7 +491,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     const breaking=opts.breaking;
     if(breaking&&this.world.inBounds(breaking.x,breaking.y)){
       const h=this.world.stackHeight(breaking.x,breaking.y);
-      const v3=this.world.isMarbleV3Cell(breaking.x,breaking.y);
+      const v3=this.view==='tilt'&&this.world.isMarbleV3Cell(breaking.x,breaking.y);
       const visualZ=breaking.y+0.5+(v3?sanctuaryV3ScreenAnchorOffset():0);
       this.breakHighlight.position.set(breaking.x+0.5,(v3?sanctuaryV3VisualHeight():h)+0.04,visualZ);
       this.breakHighlight.material.opacity=Math.min(0.58,0.12+0.46*breaking.progress);
@@ -486,7 +517,11 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.syncCamera(cam);
     if(this.groups.length===0)this.buildWorld();
     this.pointer.set(sx/cam.width*2-1,1-sy/cam.height*2);
-    this.raycaster.setFromCamera(this.pointer,this.camera);
+    if(this.view==='oblique'){
+      // Na projeção oblíqua o raio não é perpendicular à tela: sobe 1 de altura a cada K de célula para o sul.
+      const r=obliqueRay(this.pointer.x,this.pointer.y,this.obliqueHalf.w,this.obliqueHalf.h,this.obliqueFocus);
+      this.raycaster.set(new THREE.Vector3(...r.origin),new THREE.Vector3(...r.dir));
+    }else this.raycaster.setFromCamera(this.pointer,this.camera);
     const found=this.raycaster.intersectObjects(this.groups.map(e=>e.mesh),false);
     for(const hit of found){
       const group=this.groups.find(e=>e.mesh===hit.object);

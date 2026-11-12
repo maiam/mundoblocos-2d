@@ -30,6 +30,9 @@ seleção); atores, itens, dano, dia/noite, partículas, dungeon, interiores, ci
 - **Invariantes mantidos:** render só **lê** o mundo; `world/` sem DOM; arte importada só em `render/art/<mundo>.ts`; texturas
   nunca giram/espelham por célula; protocolo, save e servidor não mudam por causa do render.
 
+## Experimento: vista oblíqua (v0.93.9)
+Em vez de uma câmera inclinada (que achata tudo o que é vertical por cos da elevação: a Deusa a ~39% da altura a 67°), a recomendação é a projeção **oblíqua**: câmera reta para baixo, altura como deslocamento fixo de 18/32 de célula por nível (a proporção da arte 3/4). Implementada atrás de `?vista=obliqua` no Santuário para comparação; o padrão segue em 67° até o dono do produto decidir. A matemática é pura e testada (`sanctuaryObliqueView.ts`).
+
 ## Fases (detalhe em `NEXT_STEPS.md`)
 1. Consolidar o Santuário (validação visual, perda de contexto, tipagem, linha de base de desempenho, contrato completo,
    núcleo genérico separado do mármore). 2. Núcleo 3D por chunk. 3. Atores, itens e efeitos — **iluminação primeiro**.
