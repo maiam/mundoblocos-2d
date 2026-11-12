@@ -95,8 +95,13 @@ export function drawMarbleAdaptiveTop(
   size=256,
 ):void {
   const s=source.width;
-  // The framed picture is square; draw an unframed marble background first.
   ctx.clearRect(0,0,size,size);
+  // An isolated pillar must preserve the exact full original ornament.
+  if(e.north&&e.south&&e.westBack&&e.westFront&&e.eastBack&&e.eastFront){
+    ctx.drawImage(source,0,0,s,source.height,0,0,size,size);
+    return;
+  }
+  // The framed picture is square; draw an unframed marble background first.
   ctx.drawImage(source,s*0.24,s*0.24,s*0.52,s*0.52,0,0,size,size);
 
   const band=0.19;
@@ -104,14 +109,17 @@ export function drawMarbleAdaptiveTop(
     dx:number,dy:number,dw:number,dh:number)=>{
     ctx.drawImage(source,sx*s,sy*s,sw*s,sh*s,dx*size,dy*size,dw*size,dh*size);
   };
-  const mid=1-2*band;
-  if(e.north)draw(band,0,mid,band,band,0,mid,band);
-  if(e.south)draw(band,1-band,mid,band,band,1-band,mid,band);
+  // Extend continuous rails all the way to the block edge. If a neighboring
+  // block is connected, its matching rail meets this one without an ugly
+  // ornamental gap. Sample between the gems to avoid repeated corner jewels.
+  if(e.north)draw(0.27,0,0.1,band,0,0,1,band);
+  if(e.south)draw(0.27,1-band,0.1,band,0,1-band,1,band);
 
   const side=(west:boolean,back:boolean,front:boolean)=>{
     const xx=west?0:1-band;
-    if(back) draw(xx,band,band,mid/2,xx,band,band,mid/2);
-    if(front) draw(xx,band+mid/2,band,mid/2,xx,band+mid/2,band,mid/2);
+    if(back) draw(xx,0.27,band,0.1,xx,0,band,0.5);
+    if(front) draw(xx,0.27,band,0.1,xx,0.5,band,0.5);
+    // Only genuinely exterior corners receive the full gold-and-crystal art.
     if(back&&e.north)draw(xx,0,band,band,xx,0,band,band);
     if(front&&e.south)draw(xx,1-band,band,band,xx,1-band,band,band);
   };
