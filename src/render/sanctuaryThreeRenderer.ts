@@ -11,8 +11,8 @@ import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { sanctuary3DGeometryCells, sanctuaryBlockTransform, type SanctuaryBlockShape } from './sanctuaryThreeLayout';
 import {
-  drawMarbleAdaptiveTop, marbleExposureKey, marbleTopExposure,
-  type MarbleEdgeExposure,
+  drawMarbleAdaptiveTop, drawMarbleCornerTop, marbleCornerParts,
+  marbleExposureKey, marbleTopExposure, type MarbleEdgeExposure,
 } from './sanctuaryMarbleAdaptive';
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset } from './sanctuaryCameraRig';
@@ -37,6 +37,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly floorGeometry:any;
   private readonly solidGeometry:any;
   private readonly wallGeometry:any;
+  private readonly cornerLeftGeometry:any;
+  private readonly cornerRightGeometry:any;
   private readonly groups:MeshGroup[]=[];
   private readonly materials=new Map<number,Materials>();
   private readonly marbleCapVariants=new Map<string,MarbleCap>();
@@ -90,6 +92,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.floorGeometry=new THREE.BoxGeometry(1,0.18,1);
     this.solidGeometry=new THREE.BoxGeometry(1,1,1);
     this.wallGeometry=new THREE.BoxGeometry(1,1,0.5);
+    this.cornerLeftGeometry=this.createCornerGeometry('left');
+    this.cornerRightGeometry=this.createCornerGeometry('right');
     this.raycaster=new THREE.Raycaster();
     this.pointer=new THREE.Vector2();
     this.dummy=new THREE.Object3D();
@@ -189,22 +193,77 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     return cached;
   }
 
-  /** The uploaded ornate image replaces ONLY the celestial marble top.
-   * Exposed edge masks are cached (up to 64 variants), leaving the existing
-   * side/front textures untouched.
+  /**
+   * The L shape is formed by a rear half-depth wall and a narrow forward
+   * connector. Its TOP UVs occupy the correct locations in a single 1×1
+   * marble image, so the ornament does not restart on the narrow tongue.
+   * Side/front surfaces continue to use the already approved texture.
    */
-  private marbleCapMaterial(exposure:MarbleEdgeExposure):any[] {
+  private createCornerGeometry(side:'left'|'right'):any {
+    const shape=side==='left'?'wall_corner_back_left':'wall_corner_back_right';
+    const position:number[]=[],normal:number[]=[],uv:number[]=[],indices:number[]=[];
+    const groups:Array<{start:number;count:number;materialIndex:number}>=[];
+    let indexOffset=0,vertexOffset=0;
+    for(const piece of marbleCornerParts(shape)){
+      const box=new THREE.BoxGeometry(piece.width,1,piece.depth);
+      box.translate(piece.x,0,piece.z);
+      const p=box.getAttribute('position');
+      const n=box.getAttribute('normal');
+      const t=box.getAttribute('uv');
+      const index=box.getIndex();
+      const topVertices=new Set<number>();
+      for(const g of box.groups){
+        groups.push({
+          start:indexOffset+g.start,
+          count:g.count,
+          materialIndex:g.materialIndex??0,
+        });
+        if(g.materialIndex===2)
+          for(let j=g.start;j<g.start+g.count;j++)
+            topVertices.add(index.getX(j));
+      }
+      for(let i=0;i<p.count;i++){
+        const x=p.getX(i),z=p.getZ(i);
+        position.push(x,p.getY(i),z);
+        normal.push(n.getX(i),n.getY(i),n.getZ(i));
+        if(topVertices.has(i)){
+          uv.push(x+0.5,0.5-z); // image NORTH starts at local Z -0.5
+        }else uv.push(t.getX(i),t.getY(i));
+      }
+      for(let i=0;i<index.count;i++)indices.push(index.getX(i)+vertexOffset);
+      indexOffset+=index.count;
+      vertexOffset+=p.count;
+      box.dispose();
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(position,3));
+    geo.setAttribute('normal',new THREE.Float32BufferAttribute(normal,3));
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    geo.setIndex(indices);
+    for(const g of groups)geo.addGroup(g.start,g.count,g.materialIndex);
+    geo.computeBoundingSphere();
+    return geo;
+  }
+
+  /** The uploaded ornate image changes only the celestial marble top.
+   * Cache one texture for each exposed-edge mask and L orientation.
+   */
+  private marbleCapMaterial(exposure:MarbleEdgeExposure,
+    shape:SanctuaryBlockShape):any[] {
     const base=this.material(Block.MARBLE_CELESTIAL).block;
     if(!this.marbleTopImage.complete || this.marbleTopImage.naturalWidth===0)
       return base;
-    const key=marbleExposureKey(exposure);
+    const key=shape+':'+marbleExposureKey(exposure);
     const cached=this.marbleCapVariants.get(key);
     if(cached)return cached.block;
     const canvas=document.createElement('canvas');
     canvas.width=canvas.height=256;
     const ctx=canvas.getContext('2d');
     if(!ctx)return base;
-    drawMarbleAdaptiveTop(ctx,this.marbleTopImage,exposure);
+    if(shape==='wall_corner_back_left'||shape==='wall_corner_back_right')
+      drawMarbleCornerTop(ctx,this.marbleTopImage,exposure,
+        shape==='wall_corner_back_left'?'left':'right');
+    else drawMarbleAdaptiveTop(ctx,this.marbleTopImage,exposure);
     const texture=new THREE.CanvasTexture(canvas);
     texture.colorSpace=THREE.SRGBColorSpace;
     texture.anisotropy=Math.min(4,this.gpu.capabilities.getMaxAnisotropy());
@@ -256,11 +315,14 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       add(b.id,false,b.shape,b);
     for(const entry of indexed.values()){
       const geometry=entry.ground?this.floorGeometry:
-        entry.shape==='solid'?this.solidGeometry:this.wallGeometry;
+        entry.shape==='solid'?this.solidGeometry:
+        entry.shape==='wall_corner_back_left'?this.cornerLeftGeometry:
+        entry.shape==='wall_corner_back_right'?this.cornerRightGeometry:
+        this.wallGeometry;
       const mats=this.material(entry.id);
       const mesh=new THREE.InstancedMesh(
         geometry,entry.ground?mats.ground:
-          entry.cap?this.marbleCapMaterial(entry.cap):mats.block,entry.cells.length,
+          entry.cap?this.marbleCapMaterial(entry.cap,entry.shape):mats.block,entry.cells.length,
       );
       mesh.name='Santuário oficial: '+(entry.ground?'chão':'bloco')+' '+entry.id;
       entry.cells.forEach((cell,i)=>{
@@ -418,6 +480,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
     this.marbleCapVariants.clear();
     for(const g of [this.floorGeometry,this.solidGeometry,this.wallGeometry,
+      this.cornerLeftGeometry,this.cornerRightGeometry,
       this.highlight.geometry,this.breakHighlight.geometry,
       this.goddessShadow.geometry,this.goddess.geometry])g.dispose();
     this.highlight.material.dispose();
