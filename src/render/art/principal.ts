@@ -139,6 +139,13 @@ import chick from '../../assets/chick.webp';
 import wolfBrown from '../../assets/wolf-marrom.webp';
 import wolfGray from '../../assets/wolf-cinza.webp';
 import wolfWhite from '../../assets/wolf-branco.webp';
+import goblinWalk from '../../assets/goblin-walk.png';
+import goblinIdle from '../../assets/goblin-idle.png';
+import goblinAttack from '../../assets/goblin-attack.png';
+import goblinHurt from '../../assets/goblin-hurt.png';
+import goblinDeath from '../../assets/goblin-death.png';
+import goblinAlert from '../../assets/goblin-alert.png';
+import goblinRun from '../../assets/goblin-run.png';
 import spiderBig from '../../assets/spider-big.webp';
 import spiderBoss from '../../assets/spider-boss.webp';
 import spiderSmall from '../../assets/spider-small.webp';
@@ -320,6 +327,12 @@ const pack: ArtPack = {
     'wolf-brown': wolfBrown,
     'wolf-gray': wolfGray,
     'wolf-white': wolfWhite,
+    goblin: goblinWalk,
+    'goblin-idle': goblinIdle,
+    'goblin-run': goblinRun,
+    'goblin-alert': goblinAlert,
+    'goblin-attack': goblinAttack,
+    'goblin-hurt': goblinHurt,
     'spider-small': spiderSmall,
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
@@ -372,7 +385,7 @@ const pack: ArtPack = {
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
   town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide },
   water: { top: waterTop, flow: waterFlow },
-  monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath },
+  monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath, goblin: goblinDeath },
   wheatCrop,
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
   itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, wolf_fang: wolfFangIcon, wolf_pelt: wolfPeltIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },

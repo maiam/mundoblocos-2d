@@ -80,6 +80,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Salvamento só neste navegador/aparelho (nuvem/contas dependem do backend do Orvalis, ADR 0015).
 - NPCs só dizem falas fixas (2 cada; sem escolhas, loja ou missões); só Ferraria e Tenda têm interior.
 - **Lobos** (v0.91.0, `world/wolves.ts`, `domains/dungeon.md`): bandos de 1 a 3 da mesma cor (marrom, cinza, branco) pelo mapa ao redor da cidade; só atacam a personagem a até 3 células; soltam Pelagem e Presa de Lobo (sem uso em receitas ainda).
+- **Goblins** (PR #96, `world/goblins.ts`): quatro acampamentos fixados pela seed do Mundo principal, com sete goblins em torno da **fogueira já existente** (`Block.CAMPFIRE`). Cada um tem 60 de vida, ataque-base 15 e só persegue/ataca quando um jogador chega a até três células, seguindo o modelo dos lobos. Sete pranchas 4×4 de animação, áreas de passeio limitadas, respawn e estados sincronizados no multiplayer. Os acampamentos limpam apenas vegetação nos sete pontos de nascimento, sem modificar áreas protegidas; Santuário não recebe goblins. Sem espólio específico de goblin nesta etapa.
 - Espólios das aranhas e vários itens ainda sem uso em receitas; as 2 pedras sem fonte (Lisa e Polida) só existem por
   código/salvamento.
 - Sem sons, música nem vibração; sem XP/níveis; sem lojas nem missões; sem viagem entre mundos (portais, ADR 0019).

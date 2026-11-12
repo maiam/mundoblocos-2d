@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis — Goblins em acampamentos de sete (PR #96)
+- **Mundo principal:** quatro acampamentos determinísticos por seed, cada um com sete goblins circulando uma fogueira real `Block.CAMPFIRE`. Localização fora de cidade/dungeon/caverna e solo seguro; vegetação dos sete pontos é limpa pelo mesmo gerador procedural de terreno. A fogueira pode ser quebrada e restaurações reconciliam acampamentos removidos.
+- **Combate:** Goblin comum com 60 pontos de vida, ataque-base 15, aggro apenas a até três células como os lobos; defesa 2, perseguição territorial, dano, recuo e respawn no motor existente. Dano nominal usa fórmula de combate e não é um valor líquido invariável. Sem itens de saque inventados (drop vazio por enquanto).
+- **Arte:** sete pranchas fornecidas (caminhada, idle, ataque, dano, morte, alerta e corrida), convertidas em folhas 4×4 com transparência e registradas só no pacote do Mundo principal. Frames por direção e estado sincronizados no multiplayer; testes para geração, combate, animações e salvamento. Santuário intocado.
+
+
 ## Santuário — linha horizontal contínua com canto em L (PR #95)
 - Corrigida a situação em que uma coluna norte–sul sobe em uma extremidade de uma linha horizontal e outra desce na extremidade oposta. O autotile do Mármore Celestial 82 mantém a faixa superior de toda a parede alinhada na metade de trás (`wall_back`) e substitui a ponta que liga à coluna de baixo por um **canto em L** fino, à esquerda ou direita, de acordo com o arranjo. A língua de conexão tem 25% da largura do tile e ocupa a metade dianteira; não cria pilar cheio nem desnível na borda superior.
 - A geometria do canto é real em Three.js (UVs do topo contínuos ao longo das duas partes); o topo ornamental é recortado nas bordas expostas. Só se aplica ao caso de **duas extremidades opostas**, sem coluna interna, preservando retângulos, paredes comuns, câmera 67°, personagens, física, salvamentos e Mundo principal.

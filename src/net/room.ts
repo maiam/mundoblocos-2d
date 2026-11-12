@@ -1,6 +1,7 @@
 import { DAY_LENGTH_S } from '../config';
 import { type AnimalSave, Entities } from '../game/entities';
 import { Player } from '../game/player';
+import { GOBLIN_VISUALS } from '../game/monster';
 import { Sheep } from '../game/sheep';
 import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
@@ -334,6 +335,10 @@ export class Room {
       if (m.moving) s.m = 1;
       if (m.hp < m.maxHp) s.p = round2(Math.max(0, m.hp / m.maxHp));
       if (m.hurt > 0) s.h = 1;
+      if (m.kind === 'goblin') {
+        s.v = GOBLIN_VISUALS.indexOf(m.visualState);
+        s.r = m.visualFrame;
+      }
       list.push(s);
     }
     for (const d of e.dying) {
@@ -401,6 +406,9 @@ export class Room {
       for (const a of s.animals) if (Number.isFinite(a?.x) && Number.isFinite(a?.y) && Math.abs(a.x) + Math.abs(a.y) < 2 ** 30) this.loadAround(a.x, a.y, 4);
       this.entities.restoreAnimals(s.animals, this.world);
     }
+    // Player-edited chunks can replace a generated campfire from this seed.
+    // Never keep a camp of goblins around an absent fire after restoring.
+    this.entities.reconcileGoblinCamps(this.world);
     this.dirty = false;
     return true;
   }

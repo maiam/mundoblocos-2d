@@ -13,6 +13,7 @@ import { NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { wolfPacks, wolfRoam } from '../world/wolves';
+import { goblinRoam, GOBLIN_PACK_SIZE } from '../world/goblins';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
 
@@ -37,7 +38,7 @@ export function canSit(body: HeroBody): body is SitBody {
 /** Nome de cada personagem pronto na tela de escolha. */
 export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila' };
 
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind;
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | 'goblin-idle' | 'goblin-run' | 'goblin-alert' | 'goblin-attack' | 'goblin-hurt';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -271,6 +272,7 @@ export class Entities {
     }
     this.spawnMonsters(world);
     this.spawnWolves(world);
+    this.spawnGoblins(world);
   }
 
   /** Monstros nos pontos da dungeon (posições pela seed; o sorteio do passeio usa `rand`). */
@@ -284,6 +286,43 @@ export class Entities {
   /** Bandos de lobos pelo mapa (`world/wolves.ts`; posições pela seed): cada lobo passeia perto da toca do bando. */
   spawnWolves(world: World): void {
     for (const w of wolfPacks(world)) this.monsters.push(new Monster(w.kind, w.x, w.y, wolfRoam(w.homeX, w.homeY), this.rand, w.homeX, w.homeY));
+  }
+
+  /** Exactly seven goblins around each deterministic campfire in the open world. */
+  spawnGoblins(world:World):void {
+    for(const camp of world.goblinCamps){
+      if(world.getObject(camp.x,camp.y)!==Block.CAMPFIRE)continue;
+      const bounds=goblinRoam(camp.x,camp.y);
+      const existing=this.monsters.filter(m=>m.kind==='goblin' &&
+        Math.abs(m.homeX-(camp.x+0.5))<=5 &&
+        Math.abs(m.homeY-(camp.y+0.5))<=5);
+      if(existing.length>=GOBLIN_PACK_SIZE)continue;
+      for(const [x,y] of camp.slots){
+        if(!world.isWalkable(x,y))continue;
+        const px=x+0.5,py=y+0.5;
+        if(existing.some(m=>Math.hypot(m.homeX-px,m.homeY-py)<0.2))continue;
+        this.monsters.push(new Monster('goblin',px,py,bounds,this.rand,px,py));
+      }
+    }
+  }
+
+  /** When old saves replace the generated campfire tile with a player edit,
+   * keep the goblins and respawns consistent with the actual world object.
+   */
+  reconcileGoblinCamps(world:World):void {
+    const allowed=new Set(world.goblinCamps.filter(c=>
+      world.getObject(c.x,c.y)===Block.CAMPFIRE).map(c=>c.x+','+c.y));
+    const known=(x:number,y:number)=>world.goblinCamps.some(c=>
+      Math.hypot(c.x+0.5-x,c.y+0.5-y)<=5 &&
+      allowed.has(c.x+','+c.y));
+    for(let i=this.monsters.length-1;i>=0;i--){
+      const m=this.monsters[i];
+      if(m.kind==='goblin'&&!known(m.homeX,m.homeY))this.monsters.splice(i,1);
+    }
+    for(let i=this.respawns.length-1;i>=0;i--){
+      const r=this.respawns[i];
+      if(r.kind==='goblin'&&!known(r.x,r.y))this.respawns.splice(i,1);
+    }
   }
 
   /** Quem os monstros perseguem e mordem: a personagem (aparelho) ou os jogadores da sala (servidor). */
@@ -731,9 +770,15 @@ export class Entities {
       });
     }
     for (const m of this.monsters) {
+      const state=m.kind==='goblin'?m.visualState:null;
+      const kind:ActorKind=state
+        ? (state==='walk'?'goblin':`goblin-${state}` as ActorKind)
+        : m.kind;
       out.push({
-        kind: m.kind, x: m.x, y: m.y, visualZ: m.visualZ, facing: m.facing, moving: m.moving, walkTime: m.walkTime,
-        hurt: m.hurt > 0, hp: m.hp < m.maxHp ? m.hp / m.maxHp : undefined,
+        kind, x: m.x, y: m.y, visualZ: m.visualZ, facing: m.facing, moving: m.moving, walkTime: m.walkTime,
+        frame:state==='attack'||state==='alert'||state==='hurt'?m.visualFrame:undefined,
+        hurt:state==='hurt'?false:m.hurt>0,
+        hp: m.hp < m.maxHp ? m.hp / m.maxHp : undefined,
       });
     }
     for (const d of this.dying) {

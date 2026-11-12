@@ -95,6 +95,9 @@ export const WOLF_PELT_CHANCE = 0.55;
 export const WOLF_FANG_CHANCE = 0.4;
 
 export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
+  // Goblin loot has not been designed yet. Never fall through to the spider
+  // queen's guaranteed heart/silk drops.
+  if (kind === 'goblin') return [];
   if (isWolf(kind)) {
     // Lobo: pelagem e presa saem por sorteios separados (nenhum é garantido e podem vir juntos ou sozinhos).
     const out: Drop[] = [];

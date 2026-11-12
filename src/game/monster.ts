@@ -21,6 +21,11 @@ interface MonsterDef {
 
 /** Distância (células) até a qual o lobo ataca a personagem; mais longe, ele a ignora. */
 export const WOLF_SIGHT = 3;
+export const GOBLIN_SIGHT = WOLF_SIGHT;
+export const GOBLIN_ATTACK_SECONDS = 0.55;
+export const GOBLIN_ALERT_SECONDS = 0.48;
+export type GoblinVisual = 'idle' | 'walk' | 'run' | 'alert' | 'attack' | 'hurt';
+export const GOBLIN_VISUALS: readonly GoblinVisual[] = ['idle','walk','run','alert','attack','hurt'];
 
 /** Comportamento por tipo de monstro (movimento, visão, ritmo); a ficha de combate fica em `MONSTER_STATS`. */
 export const MONSTERS: Record<MonsterKind, MonsterDef> = {
@@ -32,6 +37,10 @@ export const MONSTERS: Record<MonsterKind, MonsterDef> = {
   'wolf-brown': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
   'wolf-gray': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
   'wolf-white': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
+  // Goblins guard a campfire in groups of seven; aggression only within 3 cells.
+  goblin: { spec: { speed: 2.75, halfW: 0.34, halfD: 0.21, stepHeight: 1 },
+    sight: GOBLIN_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
+    deathSeconds: 0.95, open: true },
 };
 
 /** Tempo piscando depois de levar um golpe (s). */
@@ -54,6 +63,29 @@ export class Monster extends Walker {
   /** Espera até poder morder de novo (s). */
   private biteCd = 0;
   private state: State;
+  private attackAnim=0;
+  private alertAnim=0;
+  private chasing=false;
+  /** Network mirror visual override (not part of monster combat simulation). */
+  presentationState: GoblinVisual | null = null;
+  presentationFrame: number | null = null;
+
+  get visualState(): GoblinVisual {
+    if (this.presentationState) return this.presentationState;
+    if (this.hurt > 0) return 'hurt';
+    if (this.attackAnim > 0) return 'attack';
+    if (this.alertAnim > 0) return 'alert';
+    if (this.chasing && this.moving) return 'run';
+    return this.moving ? 'walk' : 'idle';
+  }
+
+  get visualFrame(): number {
+    if(this.presentationFrame!==null)return this.presentationFrame;
+    if(this.visualState==='attack')return Math.min(3,Math.floor((1-this.attackAnim/GOBLIN_ATTACK_SECONDS)*4));
+    if(this.visualState==='alert')return Math.min(3,Math.floor((1-this.alertAnim/GOBLIN_ALERT_SECONDS)*4));
+    if(this.visualState==='hurt')return Math.min(3,Math.floor((1-this.hurt/HURT_SECONDS)*4));
+    return 0;
+  }
 
   constructor(
     readonly kind: MonsterKind,
@@ -106,6 +138,7 @@ export class Monster extends Walker {
     if (this.dead || this.biteCd > 0 || this.hurt > 0) return false;
     if (Math.hypot(target.x - this.x, target.y - this.y) > this.reach + 0.15) return false;
     this.biteCd = MONSTERS[this.kind].biteEvery;
+    if (this.kind === 'goblin') this.attackAnim = GOBLIN_ATTACK_SECONDS;
     return true;
   }
 
@@ -117,6 +150,8 @@ export class Monster extends Walker {
   update(dt: number, world: World, target: { x: number; y: number }, blocked?: Blocker, flow?: FlowField): void {
     this.hurt = Math.max(0, this.hurt - dt);
     this.biteCd = Math.max(0, this.biteCd - dt);
+    this.attackAnim = Math.max(0, this.attackAnim - dt);
+    this.alertAnim = Math.max(0, this.alertAnim - dt);
     const def = MONSTERS[this.kind];
     const fence = this.confine(blocked);
     const tx = target.x - this.x;
@@ -128,6 +163,8 @@ export class Monster extends Walker {
     const steps = flow ? flow(cx, cy) : -1;
     const chasing = targetInside && (def.open ? dist <= def.sight : flow ? steps >= 0 && steps <= def.sight * 1.6 : dist < def.sight);
     if (chasing) {
+      if (this.kind === 'goblin' && !this.chasing) this.alertAnim = GOBLIN_ALERT_SECONDS;
+      this.chasing = true;
       const reach = this.reach;
       if (dist <= reach) {
         this.move(dt, 0, 0, world, fence);
@@ -154,6 +191,7 @@ export class Monster extends Walker {
       this.move(dt, dx, dy, world, fence);
       return;
     }
+    this.chasing = false;
     const s = this.state;
     s.timer -= dt;
     if (s.kind === 'idle') {

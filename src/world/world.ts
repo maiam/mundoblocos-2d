@@ -9,6 +9,7 @@ import { type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } fro
 import { FlatGenerator } from './flatGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
+import { GoblinCampTerrain, planGoblinCamps, type GoblinCamp } from './goblins';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
 import type { TerrainSource } from './terrain';
 
@@ -90,6 +91,8 @@ export class World {
   readonly cave: CaveEntrance | null = null;
   /** Cidade do Despertar (perfil com `town`), ou null. Área protegida; início e renascer sem tenda. */
   readonly town: TownLayout | null = null;
+  /** Camps with seven goblins around the existing Campfire block (seed based). */
+  readonly goblinCamps: GoblinCamp[] = [];
   /** Interiores das construções da cidade (ADR 0014): cômodos isolados e protegidos. Vazio sem cidade. */
   readonly interiors: InteriorLayout[] = [];
   /** Buracos enchendo de água (estado de execução; ao carregar, `settleWater` reagenda). */
@@ -135,6 +138,10 @@ export class World {
     // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
     if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
     if (this.interiors.length) this.generator = new InteriorTerrain(this.generator, this.interiors);
+    // Generated campfires live in the same terrain layer as every other object:
+    // no permanent writes to chunks, and saved player edits still win.
+    this.goblinCamps.push(...planGoblinCamps(this));
+    if (this.goblinCamps.length) this.generator = new GoblinCampTerrain(this.generator, this.goblinCamps);
   }
 
   /**
