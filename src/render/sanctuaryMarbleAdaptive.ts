@@ -11,7 +11,8 @@ import { Block, type BlockId } from '../world/blocks';
  */
 export type MarbleProfile =
   | 'pillar' | 'wall_back' | 'wall_middle' | 'wall_front'
-  | 'wall_corner_back_left' | 'wall_corner_back_right';
+  | 'wall_corner_back_left' | 'wall_corner_back_right'
+  | 'v3_face' | 'v3_top' | 'v3_top_half';
 export type MarbleShape = MarbleProfile | 'solid' | 'thin';
 type MarbleReader = {
   getLevel(x:number,y:number,level:number):BlockId;
@@ -85,11 +86,14 @@ function oppositeEndCorner(
  * mantêm os alinhamentos e o conector em L quando necessário.
  */
 export function classifyMarbleProfile(world:MarbleReader,x:number,y:number):MarbleProfile {
-  // V3: células cheias desde a face inferior até o topo, onde só resta
-  // a metade frontal da última célula. Bases verticais a cada 2 linhas
-  // fundem naturalmente; horizontais compartilham as mesmas bordas.
-  if(world.isMarbleV3Cell?.(x,y))
-    return world.isMarbleV3Cell(x,y-1)?'pillar':'wall_front';
+  // V3: classificar a célula visual, nunca os dois blocos empilhados.
+  // y aumenta para SUL: a célula mais ao sul da sequência é a FACE;
+  // as intermediárias recebem só TOPOS e a última ao norte, MEIO TOPO.
+  // Isso mantém horizontais como FACE + MEIO TOPO sem topo duplicado.
+  if(world.isMarbleV3Cell?.(x,y)){
+    if(!world.isMarbleV3Cell(x,y+1))return 'v3_face';
+    return world.isMarbleV3Cell(x,y-1)?'v3_top':'v3_top_half';
+  }
   if(!same(world,x,y))return 'pillar';
   let west=x,east=x;
   for(let i=0;i<80&&same(world,west-1,y);i++)west--;
@@ -131,7 +135,9 @@ export function marbleFootprint(y:number,shape:MarbleShape):{rear:number;front:n
   return (shape==='wall_back'||shape==='wall_corner_back_left'||
       shape==='wall_corner_back_right') ? {rear:y,front:y+0.5}
     : shape==='wall_middle' ? {rear:y+0.25,front:y+0.75}
-    : shape==='wall_front'||shape==='thin' ? {rear:y+0.5,front:y+1}
+    : shape==='wall_front'||shape==='thin'||shape==='v3_top_half'
+      ? {rear:y+0.5,front:y+1}
+    : shape==='v3_face' ? {rear:y,front:y} // face não tem superfície de topo
     : {rear:y,front:y+1};
 }
 
@@ -166,9 +172,11 @@ export function marbleTopExposure(
   shapeAt:(x:number,y:number,level:number)=>MarbleShape,
 ):MarbleEdgeExposure {
   const own=marbleFootprint(y,shape);
-  const other=(nx:number,ny:number):MarbleShape|null=>
-    world.getLevel(nx,ny,level)===MARBLE_TEST_ID
-      ? shapeAt(nx,ny,level):null;
+  const other=(nx:number,ny:number):MarbleShape|null=>{
+    if(world.getLevel(nx,ny,level)!==MARBLE_TEST_ID)return null;
+    const found=shapeAt(nx,ny,level);
+    return found==='v3_face'?null:found; // plano vertical não ocupa o topo
+  };
   const west=other(x-1,y),east=other(x+1,y),
     north=other(x,y-1),south=other(x,y+1);
   const quarters=(side:'west'|'east',neighbor:MarbleShape|null):MarbleSideQuarters=>{

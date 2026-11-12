@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.1 — Santuário: corrigir topo duplicado na V3 (12/11/2026)
+- **Superfícies em vez de cubos redundantes:** a malha V3 diferencia `v3_face`, `v3_top` e `v3_top_half`. Uma única face de altura física 2 é desenhada na borda sul da sequência, os topos completos aparecem só nas células intermediárias e um meio-topo fecha a extremidade norte; a segunda camada não repete a malha. Horizontal simples apresenta apenas face e meio-topo, sem topo completo indevido.
+- **Material e câmera:** os planos reutilizam o material já aprovado (frente +Z, cobertura +Y) e as máscaras de ornamentação ocultam emendas de topos adjacentes. Nenhuma alteração na ocupação física/lógica, colisão, construção, demolição, salvamento v14 ou Mundo principal. Malhas e regras cobertas por novos testes; conferência visual no jogo permanece recomendada.
+
+
 ## Orvalis v0.93.0 — Santuário: construção de paredes V3 (12/11/2026)
 - **Ocupação:** novas bases de Mármore Celestial 82 ocupam duas células em planta (a escolhida e a imediatamente ao norte) e os dois níveis de altura por célula. Bases verticais separadas por duas linhas criam face inferior, topo inteiro interno e meio-topo terminal; paredes horizontais e quadrados ficam conectados.
 - **Regras:** a segunda célula é derivada da base única no World; a colisão, a colocação, a seleção de blocos e a quebra respeitam a ocupação compartilhada. O renderizador Three.js usa as geometrias existentes, incluindo as bordas ornamentadas recalculadas.

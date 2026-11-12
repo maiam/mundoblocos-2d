@@ -7,7 +7,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 ## Mármore Celestial V3 — ocupação de duas células e construção de casas (12/11/2026)
 
 - **Implementado:** uma base nova do Mármore Celestial no Santuário ocupa a célula escolhida e a imediatamente ao norte, em planta; ambas continuam tendo dois níveis verticais. O World deriva a célula ocupada da base real, impede sobreposição, bloqueia movimento e permite quebra a partir da projeção. Faixas horizontais, colunas com bases espaçadas de duas linhas e salas quadradas recebem geometria conectada. Save v14 mantém V2 antiga para os painéis já salvos.
-- **Conferência visual pendente:** testar proporções face/topo, cantos L/T/cruzamentos, paredes opostas espelhadas, picking de célula projetada, textura dourada sem borda duplicada, interior livre e desempenho no Safari. Implementação restrita ao Mármore Celestial.
+- **Correção v0.93.1:** o renderizador separa face frontal vertical, topo cheio horizontal e meio-topo terminal sem dois volumes completos por célula. Testes geométricos confirmam sequência vertical e horizontal sem faces/topos extras; dois níveis de lógica continuam preservados.
+- **Conferência visual pendente:** testar a geometria nova no navegador e no Safari (face e topo da imagem enviada), cantos L/T/cruzamentos, paredes opostas espelhadas, picking da célula projetada, textura dourada sem borda duplicada, interior livre e desempenho. Implementação restrita ao Mármore Celestial.
 
 ## Paredes adaptativas V2 do Santuário — 12/11/2026
 

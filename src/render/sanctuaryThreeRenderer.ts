@@ -16,6 +16,7 @@ import {
 } from './sanctuaryMarbleAdaptive';
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset } from './sanctuaryCameraRig';
+import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
@@ -37,6 +38,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly floorGeometry:any;
   private readonly solidGeometry:any;
   private readonly wallGeometry:any;
+  private readonly v3FaceGeometry:any;
+  private readonly v3TopGeometry:any;
+  private readonly v3HalfTopGeometry:any;
   private readonly cornerLeftGeometry:any;
   private readonly cornerRightGeometry:any;
   private readonly groups:MeshGroup[]=[];
@@ -92,6 +96,12 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.floorGeometry=new THREE.BoxGeometry(1,0.18,1);
     this.solidGeometry=new THREE.BoxGeometry(1,1,1);
     this.wallGeometry=new THREE.BoxGeometry(1,1,0.5);
+    // V3 desenha uma face OU um topo por célula; nenhuma peça cria
+    // uma segunda face/cobertura escondida em outro nível.
+    const v3Surfaces=createSanctuaryV3Surfaces();
+    this.v3FaceGeometry=v3Surfaces.face;
+    this.v3TopGeometry=v3Surfaces.top;
+    this.v3HalfTopGeometry=v3Surfaces.halfTop;
     this.cornerLeftGeometry=this.createCornerGeometry('left');
     this.cornerRightGeometry=this.createCornerGeometry('right');
     this.raycaster=new THREE.Raycaster();
@@ -300,7 +310,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       cells:Cell[];cap?:MarbleEdgeExposure;
     }>();
     const add=(id:number,ground:boolean,shape:SanctuaryBlockShape,cell:Cell)=>{
-      const cap=!ground && id===Block.MARBLE_CELESTIAL
+      const cap=!ground && id===Block.MARBLE_CELESTIAL && shape!=='v3_face'
         ? marbleTopExposure(this.world,cell.x,cell.y,cell.level,shape,shapeAt)
         : undefined;
       const key=(ground?'g':'b')+':'+id+':'+shape+
@@ -315,6 +325,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       add(b.id,false,b.shape,b);
     for(const entry of indexed.values()){
       const geometry=entry.ground?this.floorGeometry:
+        entry.shape==='v3_face'?this.v3FaceGeometry:
+        entry.shape==='v3_top'?this.v3TopGeometry:
+        entry.shape==='v3_top_half'?this.v3HalfTopGeometry:
         entry.shape==='solid'?this.solidGeometry:
         entry.shape==='wall_corner_back_left'?this.cornerLeftGeometry:
         entry.shape==='wall_corner_back_right'?this.cornerRightGeometry:
@@ -480,6 +493,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
     this.marbleCapVariants.clear();
     for(const g of [this.floorGeometry,this.solidGeometry,this.wallGeometry,
+      this.v3FaceGeometry,this.v3TopGeometry,this.v3HalfTopGeometry,
       this.cornerLeftGeometry,this.cornerRightGeometry,
       this.highlight.geometry,this.breakHighlight.geometry,
       this.goddessShadow.geometry,this.goddess.geometry])g.dispose();

@@ -31,6 +31,13 @@ export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'l
   const front=cell.shape==='thin'||cell.shape==='wall_front';
   const back=cell.shape==='wall_back';
   const middle=cell.shape==='wall_middle';
+  // Faces V3 se apoiam no limite norte da célula da base; os topos
+  // ocupam as células atrás dela a uma única altitude física (2 níveis).
+  if(cell.shape==='v3_face')
+    return {x:cell.x+0.5,y:1,z:cell.y+0.5,width:1,height:2,depth:0};
+  if(cell.shape==='v3_top'||cell.shape==='v3_top_half')
+    return {x:cell.x+0.5,y:2,z:cell.y+0.5,width:1,height:0,
+      depth:cell.shape==='v3_top'?1:0.5};
   // L-corners fill the full tile's bounding box but remain a thin wall
   // plus a quarter-width connector, never a solid pillar.
   return {
@@ -42,7 +49,8 @@ export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'l
 
 /** The official sanctuary uses exactly the 80x32 bounded profile. */
 export function sanctuary3DGeometryCells(
-  world: {getGround(x:number,y:number):BlockId;getLevel(x:number,y:number,level:number):BlockId},
+  world: {getGround(x:number,y:number):BlockId;getLevel(x:number,y:number,level:number):BlockId;
+    isMarbleV3Cell?(x:number,y:number):boolean},
   bounds:{x0:number;x1:number;y0:number;y1:number},
 ): {grounds: SanctuaryGroundCell[];blocks: SanctuaryBlockCell[]} {
   const grounds:SanctuaryGroundCell[]=[];
@@ -53,7 +61,10 @@ export function sanctuary3DGeometryCells(
     for(let level=0;level<MAX_STACK;level++){
       const id=world.getLevel(x,y,level);
       if(id===Block.AIR)continue;
-      // The fixed sanctuary profile only places cubes; do not morph objects.
+      // V3 tem uma única superfície renderizada por célula lógica: no nível
+      // 1 aparece a face vertical OU o topo. Nunca desenhar novamente no 0.
+      // Os dois níveis continuam existindo no World para física e salvamento.
+      if(id===MARBLE_TEST_ID&&world.isMarbleV3Cell?.(x,y)&&level===0)continue;
       blocks.push({x,y,level,id,shape:blockDef(id).shape==='cube'
         ? classifySanctuaryBlock(world,id,x,y,level):'solid'});
     }
