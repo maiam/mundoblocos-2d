@@ -2,6 +2,7 @@ import { Block, blockDef, type BlockId } from '../world/blocks';
 import { MAX_STACK } from '../config';
 import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape } from './adaptiveWalls';
 import { classifyMarbleProfile, MARBLE_TEST_ID, type MarbleShape } from './sanctuaryMarbleAdaptive';
+import { SANCTUARY_CAMERA_ELEVATION_DEG } from './sanctuaryCameraRig';
 
 export type SanctuaryBlockShape = MarbleShape;
 export interface SanctuaryBlockCell {x:number;y:number;level:number;id:BlockId;shape:SanctuaryBlockShape}
@@ -24,6 +25,21 @@ export function classifySanctuaryBlock(
   return horizontalWallShape(world,id,x,y,level);
 }
 
+/**
+ * V3 visual projection is screen-anchored to the clicked base cell.
+ * In the orthographic pitched camera, an object elevated h units appears
+ * h/tan(elevation) ground cells to the north. Moving its rendered Z south
+ * by the same amount cancels that displacement WITHOUT changing physics
+ * or the persisted cell.
+ *
+ * The two-level marble front goes from Y=0 to Y=MAX_STACK, while its
+ * horizontal top lies at Y=MAX_STACK, so both surfaces must use the same
+ * shift to meet without a gap.
+ */
+export function sanctuaryV3ScreenAnchorOffset():number {
+  return MAX_STACK/Math.tan(SANCTUARY_CAMERA_ELEVATION_DEG*Math.PI/180);
+}
+
 /** One full-height pillar or a half-depth wall anchored front, center or rear. */
 export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'>): {
   x:number;y:number;z:number;width:number;height:number;depth:number;
@@ -31,13 +47,17 @@ export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'l
   const front=cell.shape==='thin'||cell.shape==='wall_front';
   const back=cell.shape==='wall_back';
   const middle=cell.shape==='wall_middle';
-  // Faces V3 se apoiam no limite norte da célula da base; os topos
-  // ocupam as células atrás dela a uma única altitude física (2 níveis).
-  if(cell.shape==='v3_face')
-    return {x:cell.x+0.5,y:1,z:cell.y+0.5,width:1,height:2,depth:0};
-  if(cell.shape==='v3_top'||cell.shape==='v3_top_half')
-    return {x:cell.x+0.5,y:2,z:cell.y+0.5,width:1,height:0,
+  // Screen-space anchoring: at elevation 67°, Y=2 projects almost one
+  // cell to the NORTH. Compensate in +Z so the face is drawn over the
+  // clicked logical base, and the top occupies the next logical row.
+  if(cell.shape==='v3_face'||cell.shape==='v3_top'||cell.shape==='v3_top_half'){
+    const visualZ=cell.y+0.5+sanctuaryV3ScreenAnchorOffset();
+    if(cell.shape==='v3_face')
+      return {x:cell.x+0.5,y:MAX_STACK/2,z:visualZ,
+        width:1,height:MAX_STACK,depth:0};
+    return {x:cell.x+0.5,y:MAX_STACK,z:visualZ,width:1,height:0,
       depth:cell.shape==='v3_top'?1:0.5};
+  }
   // L-corners fill the full tile's bounding box but remain a thin wall
   // plus a quarter-width connector, never a solid pillar.
   return {
