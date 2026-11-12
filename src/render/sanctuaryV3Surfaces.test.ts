@@ -4,9 +4,10 @@ import { World } from '../world/world';
 import { WORLD_PROFILES } from '../world/profiles';
 import { marbleTopExposure } from './sanctuaryMarbleAdaptive';
 import {
-  classifySanctuaryBlock, sanctuary3DGeometryCells, sanctuaryBlockTransform,
+  classifySanctuaryBlock, sanctuary3DGeometryCells, sanctuaryBlockTransform, sanctuaryV3ScreenAnchorOffset,
 } from './sanctuaryThreeLayout';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
+import { SANCTUARY_CAMERA_ELEVATION_DEG } from './sanctuaryCameraRig';
 
 const id=Block.MARBLE_CELESTIAL;
 const create=()=>new World(77,WORLD_PROFILES.santuario);
@@ -55,12 +56,29 @@ describe('Malhas visuais V3 — uma face + cobertura sem duplicação',()=>{
     const face=sanctuaryBlockTransform({x:1,y:5,level:1,shape:'v3_face'});
     const half=sanctuaryBlockTransform({x:1,y:4,level:1,shape:'v3_top_half'});
     const full=sanctuaryBlockTransform({x:1,y:4,level:1,shape:'v3_top'});
-    expect(face).toEqual({x:1.5,y:1,z:5.5,width:1,height:2,depth:0});
-    expect(half).toEqual({x:1.5,y:2,z:4.5,width:1,height:0,depth:0.5});
-    expect(full).toEqual({x:1.5,y:2,z:4.5,width:1,height:0,depth:1});
-    // O plano frontal está na borda norte da base: z=5.
-    expect(face.z-0.5).toBe(half.z+0.5);
-    expect(half.z+0.5).toBe(full.z+0.5);
+    const offset=sanctuaryV3ScreenAnchorOffset();
+    expect(face).toEqual({x:1.5,y:1,z:5.5+offset,width:1,height:2,depth:0});
+    expect(half).toEqual({x:1.5,y:2,z:4.5+offset,width:1,height:0,depth:0.5});
+    expect(full).toEqual({x:1.5,y:2,z:4.5+offset,width:1,height:0,depth:1});
+    // A face está na borda norte da base, transladada para corrigir a
+    // projeção da câmera; a meia superfície de cima encosta nela.
+    expect(face.z-0.5).toBeCloseTo(half.z+0.5);
+    expect(half.z+0.5).toBeCloseTo(full.z+0.5);
+
+    // Projeção ortográfica: a elevação da câmera faz Y>0 parecer
+    // mais ao norte. O deslocamento cancela exatamente esse efeito no
+    // topo da face e nas coberturas. A face deve caber na célula clicada.
+    const tan=Math.tan(SANCTUARY_CAMERA_ELEVATION_DEG*Math.PI/180);
+    const projectedRow=(z:number,height:number)=>z-height/tan;
+    const faceZ=face.z-0.5;
+    expect(projectedRow(faceZ,2)).toBeCloseTo(5); // topo da face na base clicada
+    expect(projectedRow(faceZ,0)).toBeGreaterThan(5);
+    expect(projectedRow(faceZ,0)).toBeLessThan(6);
+    // O meio-topo só pode aparecer na célula imediatamente acima (4,1).
+    expect(projectedRow(half.z,2)).toBeCloseTo(4.5);
+    expect(projectedRow(half.z+0.5,2)).toBeCloseTo(5);
+    // Não mover a câmera nem os blocos lógicos para obter esse resultado.
+    expect(faceZ).toBeCloseTo(5+offset);
   });
 
   it('isolada ocupa duas células físicas e desenha exatamente F + meio-topo',()=>{
@@ -73,6 +91,31 @@ describe('Malhas visuais V3 — uma face + cobertura sem duplicação',()=>{
     ]);
     expect(world.stackHeight(x,y)).toBe(2);
     expect(world.stackHeight(x,y-1)).toBe(2);
+  });
+
+  it('muda a aparência ao adicionar uma parede sem mover nenhuma base lógica',()=>{
+    const world=create(),[x,y]=pos(world);
+    expect(world.placeBlock(x,y,id)).toBe(true);
+    const original=sanctuary3DGeometryCells(world,{x0:x,x1:x,y0:y-3,y1:y});
+    const face=original.blocks.find(b=>b.shape==='v3_face');
+    const half=original.blocks.find(b=>b.shape==='v3_top_half');
+    expect(face).toMatchObject({x,y});
+    expect(half).toMatchObject({x,y:y-1});
+    expect(world.placeBlock(x,y-2,id)).toBe(true);
+    const after=sanctuary3DGeometryCells(world,{x0:x,x1:x,y0:y-3,y1:y});
+    expect(after.blocks.map(b=>[b.y,b.shape])).toEqual([
+      [y-3,'v3_top_half'],[y-2,'v3_top'],[y-1,'v3_top'],[y,'v3_face'],
+    ]);
+    const tan=Math.tan(SANCTUARY_CAMERA_ELEVATION_DEG*Math.PI/180);
+    for(const item of after.blocks){
+      const tr=sanctuaryBlockTransform(item);
+      const logicalScreenRow=tr.z-(item.shape==='v3_face'?0.5:0)-tr.y/tan;
+      // O topo inteiro se projeta sobre sua própria linha lógica,
+      // e a face ocupa a linha clicada (com comprimento projetado < 1).
+      expect(logicalScreenRow).toBeGreaterThanOrEqual(item.y-0.01);
+      expect(logicalScreenRow).toBeLessThanOrEqual(item.y+1.01);
+    }
+    expect(world.marbleV3PlacementBases()).toEqual([[x,y],[x,y-2]]);
   });
 
   it('sequência vertical não repete faces: F + topos inteiros + meio-topo',()=>{
