@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.5 — Fase 1 do render WebGL: perda de contexto, tipagem e linha de base (12/11/2026)
+- **Perda de contexto WebGL:** o `SanctuaryThreeRenderer` trata `webglcontextlost` (com `preventDefault`) e `webglcontextrestored` (refaz malhas e texturas de canvas); testado no navegador com `WEBGL_lose_context`. Listeners removidos no `dispose`.
+- **Tipagem:** `@types/three@0.187.0` (dev) no lugar da declaração de protótipo `src/three/three.d.ts`; o renderer deixa de usar `any`.
+- **Contrato:** `GameRenderer.stats?()` (chamadas, triângulos, geometrias, texturas, contexto perdido) e `SANCTUARY_THREE_OPTIONS`, mapa de paridade que obriga classificar todo campo novo de `RenderOptions`.
+- **Linha de base (Playwright, GL por software, só relativa):** Santuário 3D = 14 chamadas, ~30,8 mil triângulos, 4 geometrias, 3 texturas, `draw()` ≈ 1 ms de JS, heap ≈ 13 MB; o baixo FPS do headless vem do GL por software, não do JS. FPS real exige aparelho. Artefato do Santuário: HTML 0,8 MB, início ≈ 2,3 MB.
+- Sem mudança de jogo, protocolo ou save.
+
 ## Documentação — ADR 0026: render 2.5D em WebGL (12/11/2026, sem versão)
 - Decisão do dono do produto: referência Core Keeper; arte 2D como fonte, geometria só nas paredes, atores em billboards, física sólida, iluminação primeiro, chão por chunk, Canvas 2D como reserva até a paridade. Plano em 6 fases em `NEXT_STEPS.md`. Nenhum código alterado.
 

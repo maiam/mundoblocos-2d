@@ -3,7 +3,7 @@ import { CHUNK_SIZE, TILE } from '../config';
 import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import type { RenderOptions } from './renderer';
-import type { GameRenderer } from './rendererContract';
+import type { GameRenderer, RendererStats } from './rendererContract';
 import { celestialFaces } from './celestialArt';
 import { art } from './art';
 import { Block, type BlockId } from '../world/blocks';
@@ -20,9 +20,9 @@ import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
-type MeshGroup = {mesh:any;cells:Cell[]};
-type Materials = {block:any[];ground:any[];textures:any[]};
-type MarbleCap = { block:any[]; topMaterial:any; texture:any };
+type MeshGroup = {mesh:THREE.InstancedMesh;cells:Cell[]};
+type Materials = {block:THREE.MeshLambertMaterial[];ground:THREE.MeshLambertMaterial[];textures:THREE.Texture[]};
+type MarbleCap = { block:THREE.Material[]; topMaterial:THREE.MeshLambertMaterial; texture:THREE.Texture };
 
 /**
  * Official Three.js VIEW of the same World/Player that the original Game owns.
@@ -32,36 +32,38 @@ type MarbleCap = { block:any[]; topMaterial:any; texture:any };
  * The main World is never initialized with this class; its Canvas 2D stays intact.
  */
 export class SanctuaryThreeRenderer implements GameRenderer {
-  private readonly scene:any;
-  private readonly camera:any;
-  private readonly gpu:any;
-  private readonly floorGeometry:any;
-  private readonly solidGeometry:any;
-  private readonly wallGeometry:any;
-  private readonly v3FaceGeometry:any;
-  private readonly v3TopGeometry:any;
-  private readonly v3HalfTopGeometry:any;
-  private readonly cornerLeftGeometry:any;
-  private readonly cornerRightGeometry:any;
+  private readonly scene:THREE.Scene;
+  private readonly camera:THREE.OrthographicCamera;
+  private readonly gpu:THREE.WebGLRenderer;
+  private readonly floorGeometry:THREE.BufferGeometry;
+  private readonly solidGeometry:THREE.BufferGeometry;
+  private readonly wallGeometry:THREE.BufferGeometry;
+  private readonly v3FaceGeometry:THREE.BufferGeometry;
+  private readonly v3TopGeometry:THREE.BufferGeometry;
+  private readonly v3HalfTopGeometry:THREE.BufferGeometry;
+  private readonly cornerLeftGeometry:THREE.BufferGeometry;
+  private readonly cornerRightGeometry:THREE.BufferGeometry;
   private readonly groups:MeshGroup[]=[];
   private readonly materials=new Map<number,Materials>();
   private readonly marbleCapVariants=new Map<string,MarbleCap>();
   private readonly marbleTopImage=new Image();
-  private readonly raycaster:any;
-  private readonly pointer:any;
-  private readonly dummy:any;
+  private readonly raycaster:THREE.Raycaster;
+  private readonly pointer:THREE.Vector2;
+  private readonly dummy:THREE.Object3D;
   private readonly actorSprites=new ActorSprites();
   private readonly actorCanvas=document.createElement('canvas');
   private readonly actorContext:CanvasRenderingContext2D;
-  private readonly actorTexture:any;
-  private readonly goddess:any;
-  private readonly goddessGhost:any;
-  private readonly goddessShadow:any;
-  private readonly highlight:any;
-  private readonly breakHighlight:any;
+  private readonly actorTexture:THREE.CanvasTexture;
+  private readonly goddess:THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>;
+  private readonly goddessGhost:THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>;
+  private readonly goddessShadow:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;
+  private readonly highlight:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;
+  private readonly breakHighlight:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;
   private readonly bounds:{x0:number;x1:number;y0:number;y1:number};
   private signature='';
   private disposed=false;
+  private contextLost=false;
+  private readonly canvas:HTMLCanvasElement;
   private lastWidth=0;
   private lastHeight=0;
   private lastPixelRatio=0;
@@ -83,6 +85,11 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       console.warn('Topo ornamentado do mármore não carregou; mantendo material anterior');
     };
     this.marbleTopImage.src=marbleBorderTop;
+    this.canvas=canvas;
+    // O aparelho pode tirar a GPU do jogo (aba em segundo plano, pouca memória): sem preventDefault o contexto nunca
+    // volta. Ao voltar, o Three recria seus recursos sozinho; aqui só refazemos o que é nosso (malhas e texturas de canvas).
+    canvas.addEventListener('webglcontextlost',this.onContextLost);
+    canvas.addEventListener('webglcontextrestored',this.onContextRestored);
     this.scene=new THREE.Scene();
     this.scene.background=new THREE.Color('#b5c7f5');
     this.camera=new THREE.OrthographicCamera(-8,8,5,-5,0.1,220);
@@ -181,7 +188,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     let cached=this.materials.get(id);
     if(cached)return cached;
     const faces=celestialFaces(id);
-    const toTexture=(canvas:HTMLCanvasElement):any=>{
+    const toTexture=(canvas:HTMLCanvasElement):THREE.CanvasTexture=>{
       const t=new THREE.CanvasTexture(canvas);
       t.colorSpace=THREE.SRGBColorSpace;
       t.anisotropy=Math.min(4,this.gpu.capabilities.getMaxAnisotropy());
@@ -209,7 +216,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
    * marble image, so the ornament does not restart on the narrow tongue.
    * Side/front surfaces continue to use the already approved texture.
    */
-  private createCornerGeometry(side:'left'|'right'):any {
+  private createCornerGeometry(side:'left'|'right'):THREE.BufferGeometry {
     const shape=side==='left'?'wall_corner_back_left':'wall_corner_back_right';
     const position:number[]=[],normal:number[]=[],uv:number[]=[],indices:number[]=[];
     const groups:Array<{start:number;count:number;materialIndex:number}>=[];
@@ -221,6 +228,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       const n=box.getAttribute('normal');
       const t=box.getAttribute('uv');
       const index=box.getIndex();
+      if(!index)throw new Error("BoxGeometry sem índice");
       const topVertices=new Set<number>();
       for(const g of box.groups){
         groups.push({
@@ -259,7 +267,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
    * Cache one texture for each exposed-edge mask and L orientation.
    */
   private marbleCapMaterial(exposure:MarbleEdgeExposure,
-    shape:SanctuaryBlockShape):any[] {
+    shape:SanctuaryBlockShape):THREE.Material[] {
     const base=this.material(Block.MARBLE_CELESTIAL).block;
     if(!this.marbleTopImage.complete || this.marbleTopImage.naturalWidth===0)
       return base;
@@ -357,6 +365,28 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
   }
 
+  private readonly onContextLost=(e:Event):void=>{
+    e.preventDefault();
+    this.contextLost=true;
+  };
+
+  private readonly onContextRestored=():void=>{
+    this.contextLost=false;
+    this.signature=''; // refaz as malhas no próximo quadro
+    this.actorTexture.needsUpdate=true;
+    for(const cap of this.marbleCapVariants.values())cap.texture.needsUpdate=true;
+    for(const group of this.materials.values())for(const t of group.textures)t.needsUpdate=true;
+  };
+
+  stats():RendererStats{
+    const i=this.gpu.info;
+    return{
+      calls:i.render.calls,triangles:i.render.triangles,
+      geometries:i.memory.geometries,textures:i.memory.textures,
+      contextLost:this.contextLost,
+    };
+  }
+
   private syncCamera(cam:Camera):void{
     const w=cam.width,h=cam.height;
     const halfH=h/(TILE*cam.zoom*2);
@@ -439,7 +469,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   }
 
   draw(cam:Camera,opts:RenderOptions):void{
-    if(this.disposed)return;
+    if(this.disposed||this.contextLost)return;
     const signature=this.worldSignature();
     if(this.signature!==signature){
       this.buildWorld();
@@ -482,6 +512,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   dispose():void{
     if(this.disposed)return;
     this.disposed=true;
+    this.canvas.removeEventListener('webglcontextlost',this.onContextLost);
+    this.canvas.removeEventListener('webglcontextrestored',this.onContextRestored);
     for(const group of this.groups){
       this.scene.remove(group.mesh);
       group.mesh.dispose();
