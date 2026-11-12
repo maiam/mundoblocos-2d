@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.11 — Paredes: ADR 0027 e teste de proporção (12/11/2026)
+- **ADR 0027 (aprovada):** parede = bloco de nível único, sólido, altura visual fixa, com autotile (frente solta/ponta/meio/ponta + tampa de 16 peças) e porta; vale para Santuário e Mundo; o mármore V2/V3 será aposentado.
+- **Teste de proporção:** `?mundo=santuario&paredes=teste` mostra três paredes lisas com a frente de 0,75, 1,0 e 1,25 célula (régua de 1 célula no chão e a altura escrita) para escolher a altura olhando. `render/sanctuaryWallProportionTest.ts`; sem lógica de jogo e descartável.
+- Sem mudança de jogo, protocolo ou save.
+
 ## Orvalis v0.93.10 — Vista oblíqua é o padrão do Santuário (12/11/2026)
 - **Decisão do dono do produto:** aprovada a vista oblíqua (v0.93.9). `main.ts` passa a usá-la por padrão; `?vista=inclinada` volta à câmera inclinada a 67° (reserva, sem as correções de cor e de personagem).
 - **Mármore (V2/V3)** segue como teste provisório: legível na oblíqua, mas não será refinado; as paredes serão redesenhadas (próxima etapa, ver NEXT_STEPS).

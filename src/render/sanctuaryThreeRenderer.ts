@@ -17,6 +17,7 @@ import {
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
 import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
+import { createWallProportionTest } from './sanctuaryWallProportionTest';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -79,7 +80,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private lastHeight=0;
   private lastPixelRatio=0;
 
-  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView}={}){
+  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean}={}){
     this.view=options.view??'tilt';
     const profile=world.profile;
     if(profile.id!=='santuario'||!profile.bounds)
@@ -177,6 +178,11 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.scene.add(this.goddessShadow);
     this.scene.add(this.goddessGhost);
     this.scene.add(this.goddess);
+    if(options.wallTest){
+      // Teste de proporção das paredes (ADR 0027): paredes lisas em 3 alturas perto do ponto inicial; descartável.
+      const [sx,sy]=world.findSpawn();
+      this.scene.add(createWallProportionTest({x:sx,z:sy}));
+    }
 
     const selectGeometry=new THREE.PlaneGeometry(1,1);
     selectGeometry.rotateX(-Math.PI/2);
