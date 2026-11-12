@@ -16,10 +16,16 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
   `WORLD_SCALE.wall`). Não empilha sobre outra parede nem usa dois níveis de bloco. Ocupa uma célula; sem degrau.
 - **Paredes do sul e laterais finas** (referência Core Keeper, a validar): só a faixa escura da tampa, para não esconder o cômodo;
   a frente cheia aparece nas paredes cuja face dá para o interior (ao norte do cômodo).
-- **Autotile por vizinhança** (função pura em `render/`, testável em Node):
-  - **Frente:** aparece só onde o vizinho ao sul não é parede. Variantes: solta, ponta esquerda, meio, ponta direita.
-  - **Tampa:** peça no topo da célula escolhida pelos 4 vizinhos (16 peças), com cantos internos/externos.
-  - **Parede atrás de parede:** só a tampa.
+- **Placa fina (medida no Core Keeper, v0.93.16):** a parede é uma placa de espessura `WALL_THICKNESS` ≈ 0,3 célula nos dois
+  sentidos, no centro da célula: um poste central mais um braço até a borda em cada lado com parede vizinha (`wallFootprint`).
+  A **colisão continua sendo a célula inteira**; só o desenho é fino. Daí saem sozinhos os comportamentos observados:
+  fileira leste–oeste com frente de célula inteira (altura ≈ 1,2); fileira norte–sul como faixa fina em que **só o último
+  bloco ao sul mostra a frente** (fina), os demais só mostram a tampa; bloco isolado = poste fino.
+- **Autotile por vizinhança** (função pura `world/walls.ts`, testada):
+  - **Frente:** `single` (poste), `end` (último bloco ao sul de uma fileira norte–sul), `left`/`mid`/`right` (fileira leste–oeste);
+    `null` quando nada aparece (continuação de uma fileira norte–sul). `wallFrontRanges` dá as faixas de x expostas.
+  - **Tampa:** máscara de 4 bits dos vizinhos (16 peças) e cantos internos; `wallThin` marca a peça sem vizinho leste/oeste.
+  - **Faixa centralizada** na célula (decisão adotada); parede atrás de parede mostra só a tampa.
 - **Porta** substitui a frente de um segmento (a existente continua valendo como pilar nas conexões).
 - **Vale para Santuário e Mundo** (casas, muros, interiores): o modelo é do `World` (propriedade do bloco: `wall`), a aparência
   é por material (`render/`), como nos demais blocos. Nenhuma lógica de parede no cliente além do desenho.
@@ -31,7 +37,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
 
 ## Fases
 - **W0** teste de proporção (v0.93.11) → o dono do produto escolhe a altura.
-- **W1** arte: frente (4 variantes) e tampa (16 peças) por material, mais a porta (aberta e fechada).
+- **W1** arte por material: frente larga (esquerda/meio/direita), frente fina (poste e fim de coluna), tampa larga e fina, cantos, T, cruz e cantos internos, mais a porta (aberta e fechada). **Protótipo com cores lisas** (v0.93.16): `?mundo=santuario&paredes=autotile`.
 - **W2** domínio: bloco `wall` no `World` (colocar/quebrar/colisão/porta), regra de autotile pura e testada, save e protocolo.
 - **W3** render: parede no Three.js (frente + tampa) com oclusão correta da personagem.
 - **W4** migração e remoção do mármore V2/V3.

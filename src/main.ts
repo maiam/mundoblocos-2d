@@ -7,6 +7,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
+import { WALL_BLOCKS } from './world/blocks';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
@@ -18,6 +19,8 @@ const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 document.title = profile.name;
+// Protótipo das paredes (ADR 0027, v0.93.16): `?paredes=autotile` libera as paredes de cor lisa na hotbar do Santuário. Só teste.
+if (profile.id === 'santuario' && new URLSearchParams(window.location.search).get('paredes') === 'autotile') profile.blocks = [...profile.blocks, ...WALL_BLOCKS];
 let game: Game | null = null;
 /** Loaded on demand only for the Santuário; no Three.js in the principal bundle. */
 let sanctuaryRendererFactory: RendererFactory | undefined;
