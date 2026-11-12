@@ -34,7 +34,7 @@ describe('Malhas visuais V3 — uma face + cobertura sem duplicação',()=>{
         for(let i=0;i<p.count;i++){
           xs.push(p.getX(i));ys.push(p.getY(i));zs.push(p.getZ(i));
         }
-        const six=(v:number)=>Math.round(v*1_000_000)/1_000_000;
+        const six=(v:number)=>{const n=Math.round(v*1_000_000)/1_000_000;return n===0?0:n;};
         return {
           x:[six(Math.min(...xs)),six(Math.max(...xs))],
           y:[six(Math.min(...ys)),six(Math.max(...ys))],
