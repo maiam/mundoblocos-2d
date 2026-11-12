@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.2 — Santuário: ancoragem visual na célula clicada (12/11/2026)
+- **Face e topo na posição correta:** a câmera a 67° projetava a face vertical de dois níveis e o meio-topo sobre células superiores às de construção, embora a ocupação lógica estivesse correta. O render Three.js agora compensa a elevação da superfície em Z: deslocamento visual = altura máxima (2) / tan(67°). A face aparece na célula-base e o meio-topo na célula imediatamente ao norte, sem alterar o World, os blocos persistidos nem a câmera.
+- **Seleção e demolição:** os realces de hover e quebra usam a mesma transformação para permanecer sobre a geometria visível; colunas, paredes horizontais, cantos e construções salvas continuam com a classificação V3 existente. Testes de projeção certificam que face e meio-topo não migram mais uma célula para cima. Necessária inspeção final no navegador real.
+
+
 ## Orvalis v0.93.1 — Santuário: corrigir topo duplicado na V3 (12/11/2026)
 - **Superfícies em vez de cubos redundantes:** a malha V3 diferencia `v3_face`, `v3_top` e `v3_top_half`. Uma única face de altura física 2 é desenhada na borda sul da sequência, os topos completos aparecem só nas células intermediárias e um meio-topo fecha a extremidade norte; a segunda camada não repete a malha. Horizontal simples apresenta apenas face e meio-topo, sem topo completo indevido.
 - **Material e câmera:** os planos reutilizam o material já aprovado (frente +Z, cobertura +Y) e as máscaras de ornamentação ocultam emendas de topos adjacentes. Nenhuma alteração na ocupação física/lógica, colisão, construção, demolição, salvamento v14 ou Mundo principal. Malhas e regras cobertas por novos testes; conferência visual no jogo permanece recomendada.
