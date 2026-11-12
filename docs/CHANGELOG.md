@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.9 — Experimento: vista oblíqua do Santuário (`?vista=obliqua`) (12/11/2026)
+- **Teste da recomendação da ADR 0026:** `SanctuaryThreeRenderer` ganha a vista `oblique` (opção do construtor; `main.ts` lê `?vista=obliqua`). A câmera olha reto para baixo (chão em quadrados perfeitos) e a altura vira deslocamento fixo na tela de `OBLIQUE_K = CUBE_FRONT / TILE` (18/32) por nível, a proporção da arte 3/4. O padrão continua a câmera inclinada a 67°.
+- **Matemática pura e testada** em `render/sanctuaryObliqueView.ts` (+ testes): matriz de projeção montada à mão (x, y com cisalhamento, profundidade que põe o sul e o alto na frente), raio do cursor para a seleção (sobe 1 de altura a cada K de célula para o sul).
+- **Efeitos na vista oblíqua:** a Deusa deixa de ser achatada (plano com altura 3,0/K, ocupa 3,0 células em tela como no 2D); cores fiéis à arte (material sem luz; a frente do bloco recebe um escurecimento frio fixo); o `pick` usa o raio oblíquo (topo, frente e chão conferidos).
+- **Fora do experimento:** compensações do mármore V3 (calibradas para 67°) não se aplicam; sem contorno nos blocos nem partículas ainda. Sem mudança de jogo, protocolo ou save.
+
 ## Orvalis v0.93.8 — Goblins: folha de ataque nova (12/11/2026)
 - **Folha de ataque refeita** a partir da imagem enviada (`assets-src/goblin/attack.png`; `process-sprite.py --alpha --largest --frame-h 160` → `optimize-assets.py`, WebP). Agora as sete folhas do goblin seguem o mesmo padrão e todas usam `GOBLIN_H` (acaba o "pulo" de ~4 px ao atacar).
 - Só a ponta do cajado em um quadro (esquerda, 3º) encosta na borda do quadro (7 px de altura na folha de 160): invisível em jogo.

@@ -197,7 +197,9 @@ void loadArtPack(profile.id)
       if (supported) {
         try {
           const mod = await import('./render/sanctuaryThreeRenderer');
-          sanctuaryRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world);
+          // `?vista=obliqua`: experimento da vista oblíqua (ADR 0026); o padrão segue a câmera inclinada a 67°.
+          const view = query.get('vista') === 'obliqua' ? 'oblique' : 'tilt';
+          sanctuaryRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view });
         } catch (error) {
           console.error('Santuário Three.js: usando renderizador 2D de reserva', error);
         }
