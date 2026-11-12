@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.16 — Paredes: placa fina e protótipo de autotile (`?paredes=autotile`) (12/11/2026)
+- **Observação do dono do produto confirmada nas medidas do Core Keeper:** fileiras norte–sul são faixas finas (~0,2–0,3 célula) e só o último bloco ao sul mostra a frente; fileiras leste–oeste têm frente de célula inteira. Modelo: **placa fina** de `WALL_THICKNESS` = 0,3 (poste central + braços até a borda), com a colisão ainda na célula inteira.
+- **`world/walls.ts`:** `wallFootprint` (pegada), `wallFrontRanges` (faixas de frente expostas), `wallThin`; `wallFront` ganha `end` e passa a devolver `null` só nas continuações de fileira norte–sul. Atualiza os testes (21 de paredes).
+- **Protótipo de render com cores lisas** (`render/sanctuaryWallPrototype.ts`): cada parede vira poste + braços de altura `WORLD_SCALE.wall`; o autotile aparece sozinho (frente só no primeiro bloco, faixas finas, porta como vão). `pick` acerta a frente, a tampa e o vão da célula. Ligado por `?mundo=santuario&paredes=autotile`, que libera as paredes de tábuas e de pedra na hotbar do Santuário (só teste, só no render 3D; o `?render=2d` não desenha paredes).
+- Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.15 — Paredes W2: bloco `wall` no domínio e autotile testado (12/11/2026)
 - **Blocos novos** (`Block.WALL_PLANKS` 240, `Block.WALL_STONE` 241; forma `wall`): sólidos, de **nível único**, quebráveis (machado na madeira, picareta na pedra). `isWall`, `WALL_BLOCKS`. Sem receita, sem perfil e sem arte ainda: **inalcançáveis pelo jogador** até a W1 (arte) e a W3 (render).
 - **Regras no `World`** (sem código novo de colocação: a regra existente já serve): coloca no nível 0, bloqueia a passagem (`standHeight` nulo, nunca degrau), não empilha nem vai sobre cubo. `World.isWallAt` e `World.wallPieceAt(x, y)`.

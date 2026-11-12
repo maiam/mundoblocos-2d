@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Paredes — protótipo de autotile (v0.93.16, ADR 0027)
+
+`render/sanctuaryWallPrototype.ts` desenha cada parede do `World` como uma placa fina de cores lisas: para cada célula, `wallFootprint(wallNeighbors(...))` dá o poste e os braços (retângulos em coordenadas da célula) e cada um vira uma caixa de altura `WORLD_SCALE.wall`. A frente só aparece no último bloco de uma fileira norte–sul por consequência da geometria. O `SanctuaryThreeRenderer` refaz as paredes junto com as malhas, inclui-as no `pick` (a célula inteira conta como parede, mesmo no vão) e usa um ícone SVG provisório na hotbar. `sanctuary3DGeometryCells` não desenha paredes como cubos. Ligado por `?mundo=santuario&paredes=autotile` (libera `WALL_BLOCKS` na hotbar do Santuário; só teste). Será substituído pela arte (W1/W3).
+
 ## Escala do mundo no Santuário (v0.93.14, ADR 0028)
 
 A vista oblíqua usa **K = 1** (`OBLIQUE_K`): um metro de altura = uma célula na tela, frente do cubo quadrada (a imagem do topo, escurecida, serve de frente enquanto a arte de frente não vem). `render/worldScale.ts` guarda as relações do Core Keeper: cubo 1,0, parede ≈ 1,2, personagem ≈ 1,2 (`CHARACTER_SCALE_FACTOR` = 1,2/2,2 sobre os planos desenhados para a escala antiga). O renderer expõe `preferredCellsTall` (14); o `Game` repassa à `Camera.setCellsTall`. A inclinada (`?vista=inclinada`) não muda.

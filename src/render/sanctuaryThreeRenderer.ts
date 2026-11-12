@@ -19,6 +19,7 @@ import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCamer
 import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
 import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
+import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -75,6 +76,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private contextLost=false;
   private readonly canvas:HTMLCanvasElement;
   private readonly view:SanctuaryView;
+  /** Paredes (ADR 0027): protótipo de cores lisas até a arte chegar; refeito junto com as malhas. */
+  private walls:WallPrototype|null=null;
   /** Células visíveis na vertical (a câmera usa; ADR 0028): a vista oblíqua mostra mais mundo que a antiga. */
   readonly preferredCellsTall?:number;
   private obliqueHalf={w:8,h:5};
@@ -345,6 +348,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       entry.mesh.dispose();
     }
     this.groups.length=0;
+    if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();}
+    this.walls=buildWallPrototype(this.world,this.bounds);
+    this.scene.add(this.walls.group);
     const cells=sanctuary3DGeometryCells(this.world,this.bounds);
     const shapeMap=new Map<string,SanctuaryBlockShape>();
     for(const b of cells.blocks)shapeMap.set(b.x+':'+b.y+':'+b.level,b.shape);
@@ -543,8 +549,10 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       const r=obliqueRay(this.pointer.x,this.pointer.y,this.obliqueHalf.w,this.obliqueHalf.h,this.obliqueFocus);
       this.raycaster.set(new THREE.Vector3(...r.origin),new THREE.Vector3(...r.dir));
     }else this.raycaster.setFromCamera(this.pointer,this.camera);
-    const found=this.raycaster.intersectObjects(this.groups.map(e=>e.mesh),false);
+    const found=this.raycaster.intersectObjects([...this.groups.map(e=>e.mesh),...(this.walls?.meshes??[])],false);
     for(const hit of found){
+      const wallCell=hit.object.userData.cell as {x:number;y:number}|undefined;
+      if(wallCell)return{x:wallCell.x,y:wallCell.y,hasObject:true};
       const group=this.groups.find(e=>e.mesh===hit.object);
       const cell=group?.cells[hit.instanceId??-1];
       if(cell)return{x:cell.x,y:cell.y,hasObject:cell.level>=0};
@@ -553,7 +561,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     const plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
     const point=new THREE.Vector3();
     if(this.raycaster.ray.intersectPlane(plane,point))
-      return{x:Math.floor(point.x),y:Math.floor(point.z),hasObject:false};
+      return{x:Math.floor(point.x),y:Math.floor(point.z),
+        // a placa fina deixa vão na célula: clicar ao lado dela ainda é a parede
+        hasObject:this.world.isWallAt(Math.floor(point.x),Math.floor(point.z))};
     return{x:0,y:0,hasObject:false};
   }
 
@@ -562,7 +572,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   }
 
   iconFor(id:BlockId):string{
-    return art().celestialIcons[id]??'';
+    return art().celestialIcons[id]??wallPlaceholderIcon(id);
   }
 
   dispose():void{
@@ -575,6 +585,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       group.mesh.dispose();
     }
     this.groups.length=0;
+    if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();this.walls=null;}
     for(const group of this.materials.values()){
       for(const m of new Set([...group.block,...group.ground]))m.dispose();
       for(const t of group.textures)t.dispose();

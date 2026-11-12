@@ -79,6 +79,8 @@ export function sanctuary3DGeometryCells(
     for(let level=0;level<MAX_STACK;level++){
       const id=world.getLevel(x,y,level);
       if(id===Block.AIR)continue;
+      // Paredes (ADR 0027) não são cubos: têm render próprio (`sanctuaryWallPrototype.ts`).
+      if(blockDef(id).shape==='wall')continue;
       // V3 tem uma única superfície renderizada por célula lógica: no nível
       // 1 aparece a face vertical OU o topo. Nunca desenhar novamente no 0.
       // Os dois níveis continuam existindo no World para física e salvamento.

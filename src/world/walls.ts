@@ -1,15 +1,21 @@
 /**
- * Autotile das paredes (ADR 0027): funções PURAS (sem DOM, sem `Math.random`) que, olhando os vizinhos, dizem qual peça de
- * arte desenhar. Fonte de verdade da forma; o `render/` só escolhe a imagem da peça. Vale para Santuário e Mundo.
+ * Autotile das paredes (ADR 0027): funções PURAS (sem DOM, sem `Math.random`) que, olhando os vizinhos, dizem a forma e qual
+ * peça de arte desenhar. Fonte de verdade da forma; o `render/` só escolhe a imagem/geometria. Vale para Santuário e Mundo.
  *
- * Eixos: x leste, y sul (para baixo na tela). Uma parede é um bloco de nível único; qualquer material de parede conecta com
- * qualquer outro (a forma não depende do material).
+ * Modelo (medido numa cena do Core Keeper): a parede é uma **placa fina** de espessura `WALL_THICKNESS` (~0,3 célula) nos dois
+ * sentidos, no centro da célula: um poste central mais um braço até a borda da célula em cada lado que tem parede vizinha.
+ * A colisão continua sendo a célula inteira (só o desenho é fino). Daí saem sozinhos os comportamentos observados:
+ * - fileira leste–oeste: faces sul de célula inteira (frente larga, de `WORLD_SCALE.wall` de altura);
+ * - fileira norte–sul: faixa fina; **só o último bloco ao sul mostra a frente** (fina); os demais só mostram a tampa;
+ * - bloco isolado: poste fino.
  *
- * - **Frente:** aparece só onde o vizinho ao sul NÃO é parede (a frente de uma parede coberta ao sul fica escondida). Variantes
- *   pelos vizinhos leste/oeste: solta, ponta esquerda, meio, ponta direita.
- * - **Tampa:** máscara de 4 bits dos vizinhos (N=1, E=2, S=4, W=8 → 16 peças) mais os cantos internos (um canto é interno quando
- *   os dois vizinhos ortogonais são parede e o diagonal não é).
+ * Eixos: x leste, y sul (para baixo na tela). Qualquer material de parede conecta com qualquer outro.
  */
+
+/** Espessura da placa, em células (a faixa fina medida: ~0,2–0,3; a sombra do topo ~0,35). */
+export const WALL_THICKNESS = 0.3;
+const C0 = (1 - WALL_THICKNESS) / 2;
+const C1 = (1 + WALL_THICKNESS) / 2;
 
 export interface WallNeighbors {
   n: boolean; e: boolean; s: boolean; w: boolean;
@@ -24,15 +30,55 @@ export function wallNeighbors(isWall: (x: number, y: number) => boolean, x: numb
   };
 }
 
-export type WallFront = 'single' | 'left' | 'mid' | 'right';
+export type WallFront = 'single' | 'end' | 'left' | 'mid' | 'right';
 
-/** Variante da frente, ou `null` quando há parede ao sul (frente escondida). */
+/**
+ * Variante da frente, ou `null` quando nada da frente aparece (continuação de uma fileira norte–sul: há parede ao sul e
+ * nenhuma a leste/oeste). `single`: poste isolado; `end`: último bloco ao sul de uma fileira norte–sul; `left`/`mid`/`right`:
+ * fileira leste–oeste (o braço leste, o poste com braços dos dois lados, o braço oeste).
+ */
 export function wallFront(nb: WallNeighbors): WallFront | null {
-  if (nb.s) return null;
+  if (nb.s && !nb.e && !nb.w) return null;
   if (nb.w && nb.e) return 'mid';
   if (nb.e) return 'left'; // só há parede a leste: esta é a ponta esquerda da fileira
   if (nb.w) return 'right';
-  return 'single';
+  return nb.n ? 'end' : 'single';
+}
+
+/** Peça fina (fileira norte–sul pura ou poste): nenhum vizinho a leste/oeste. */
+export function wallThin(nb: WallNeighbors): boolean {
+  return !nb.e && !nb.w;
+}
+
+/** Retângulo em coordenadas da célula (0..1): x leste, z sul. */
+export interface WallRect { x0: number; x1: number; z0: number; z1: number }
+
+/** Pegada da parede na célula: o poste central e um braço até a borda em cada lado com parede vizinha (sem sobreposição). */
+export function wallFootprint(nb: WallNeighbors): WallRect[] {
+  const rects: WallRect[] = [{ x0: C0, x1: C1, z0: C0, z1: C1 }];
+  if (nb.n) rects.push({ x0: C0, x1: C1, z0: 0, z1: C0 });
+  if (nb.s) rects.push({ x0: C0, x1: C1, z0: C1, z1: 1 });
+  if (nb.w) rects.push({ x0: 0, x1: C0, z0: C0, z1: C1 });
+  if (nb.e) rects.push({ x0: C1, x1: 1, z0: C0, z1: C1 });
+  return rects;
+}
+
+/**
+ * Faixas de x (0..1) cuja face sul está exposta, no plano z = (1 + espessura) / 2: o poste (se não há braço ao sul) e os
+ * braços leste/oeste. O braço sul esconde o poste, e a face sul dele só aparece no último bloco da fileira (que então não tem
+ * vizinho ao sul). Faixas contíguas são unidas.
+ */
+export function wallFrontRanges(nb: WallNeighbors): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  const add = (x0: number, x1: number): void => {
+    const last = out[out.length - 1];
+    if (last && last[1] === x0) last[1] = x1;
+    else out.push([x0, x1]);
+  };
+  if (nb.w) add(0, C0);
+  if (!nb.s) add(C0, C1);
+  if (nb.e) add(C1, 1);
+  return out;
 }
 
 export const WALL_CAP_PIECES = 16;
