@@ -4,6 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Goblins do Mundo principal — PR #96
+
+- **Implementação:** grupos de sete goblins por fogueira (`Block.CAMPFIRE`) em quatro acampamentos determinísticos, fora da cidade e do covil. HP 60, ataque-base 15, percepção de 3 células, IA e respawn de monstros já existentes; usa pranchas 4×4 com caminhada, repouso, corrida, alerta, ataque, dano e morte. Multiplayer autoritativo transmite os estados visuais e o salvamento preserva os monstros da dungeon, reconstruindo grupos externos pela seed.
+- **Validação visual pendente:** testar aparecimento no Mundo principal, animações por direção e estado, sete goblins no anel, fogueira como objeto real, ataque apenas quando a 3 células, dano, morte e retorno, celular e sala multiplayer. Espólios específicos de goblin continuam para definição futura.
+
 ## Canto horizontal entre colunas de sentidos opostos — PR #95
 
 - **Implementado no Santuário:** Mármore Celestial reconhece faixa horizontal conectando uma coluna que sobe à esquerda/direita e outra que desce no lado oposto. Em vez de promover ambos os extremos a pilares e deslocar a parede para o centro, preserva o alinhamento da borda superior (`wall_back`) e usa um conector em L na extremidade que encontra a coluna de baixo. O conector tem uma parede de 50% de profundidade e uma língua estreita de 25% da largura; malha e UVs 3D são compartilhados pelos dois níveis.
