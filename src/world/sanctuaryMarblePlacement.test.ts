@@ -28,16 +28,16 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     expect(w.marbleV3AnchorAt(x,y-1)).toEqual([x,y]);
     expect(w.footprint(marble,x,y)).toEqual([[x,y],[x,y-1]]);
     expect(w.footprintAnchors(marble,x,y-1)).toEqual([[x,y-1],[x,y]]);
-    expect(classifyMarbleProfile(w,x,y)).toBe('pillar');
-    expect(classifyMarbleProfile(w,x,y-1)).toBe('wall_front');
-    expect(classifySanctuaryBlock(w,marble,x,y-1,1)).toBe('wall_front');
+    expect(classifyMarbleProfile(w,x,y)).toBe('v3_face');
+    expect(classifyMarbleProfile(w,x,y-1)).toBe('v3_top_half');
+    expect(classifySanctuaryBlock(w,marble,x,y-1,1)).toBe('v3_top_half');
     expect(w.canPlace(x,y,marble)).toBe(false);
     expect(w.canPlace(x,y-1,marble)).toBe(false);
     expect(w.canPlace(x,y-1,Block.STONE_CELESTIAL)).toBe(false);
     const scene=sanctuary3DGeometryCells(w,{x0:x,x1:x,y0:y-1,y1:y});
-    expect(scene.blocks).toHaveLength(4); // duas células × dois níveis
-    expect(scene.blocks.filter(b=>b.shape==='solid')).toHaveLength(2);
-    expect(scene.blocks.filter(b=>b.shape==='wall_front')).toHaveLength(2);
+    expect(scene.blocks).toHaveLength(2); // uma malha por célula lógica, sem duplicar por nível
+    expect(scene.blocks.every(b=>b.level===1)).toBe(true);
+    expect(scene.blocks.map(b=>b.shape)).toEqual(['v3_top_half','v3_face']);
   });
 
   it('duas bases verticais em (1,1) e (3,1) viram F + T + T + meio-topo',()=>{
@@ -46,7 +46,7 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     expect(w.placeBlock(x,y-1,marble)).toBe(false); // célula já ocupada
     expect(w.placeBlock(x,y-2,marble)).toBe(true);
     expect([y,y-1,y-2,y-3].map(row=>classifyMarbleProfile(w,x,row)))
-      .toEqual(['pillar','pillar','pillar','wall_front']);
+      .toEqual(['v3_face','v3_top','v3_top','v3_top_half']);
     for(const row of [y,y-1,y-2,y-3]) expect(w.getObject(x,row)).toBe(marble);
     expect(w.marbleV3PlacementBases()).toEqual([[x,y],[x,y-2]]);
     expect(w.canPlace(x,y-3,marble)).toBe(false);
@@ -58,11 +58,14 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     const w=create(),[x,y]=anchor(w);
     for(let dx=0;dx<5;dx++)expect(w.placeBlock(x+dx,y,marble)).toBe(true);
     for(let dx=0;dx<5;dx++){
-      expect(classifyMarbleProfile(w,x+dx,y)).toBe('pillar');
-      expect(classifyMarbleProfile(w,x+dx,y-1)).toBe('wall_front');
+      expect(classifyMarbleProfile(w,x+dx,y)).toBe('v3_face');
+      expect(classifyMarbleProfile(w,x+dx,y-1)).toBe('v3_top_half');
     }
     const scene=sanctuary3DGeometryCells(w,{x0:x,x1:x+4,y0:y-1,y1:y});
-    expect(scene.blocks).toHaveLength(20);
+    expect(scene.blocks).toHaveLength(10);
+    expect(scene.blocks.filter(b=>b.shape==='v3_top')).toHaveLength(0);
+    expect(scene.blocks.filter(b=>b.shape==='v3_face')).toHaveLength(5);
+    expect(scene.blocks.filter(b=>b.shape==='v3_top_half')).toHaveLength(5);
     expect(new Set(scene.blocks.map(b=>b.x+':'+b.y)).size).toBe(10);
   });
 
@@ -80,11 +83,17 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     expect(w.isWalkable(x+4,y-4)).toBe(true);
     expect(w.getObject(x,y-9)).toBe(marble);
     expect(w.getObject(x+8,y-9)).toBe(marble);
-    expect(classifyMarbleProfile(w,x,y-9)).toBe('wall_front');
-    expect(classifyMarbleProfile(w,x+8,y-9)).toBe('wall_front');
+    expect(classifyMarbleProfile(w,x,y-9)).toBe('v3_top_half');
+    expect(classifyMarbleProfile(w,x+8,y-9)).toBe('v3_top_half');
     // Os quatro cantos continuam conectados às paredes horizontais.
-    for(const xx of [x,x+8])for(const yy of [y,y-8])
-      expect(classifyMarbleProfile(w,xx,yy)).toBe('pillar');
+    for(const xx of [x,x+8]){
+      expect(classifyMarbleProfile(w,xx,y)).toBe('v3_face');
+      expect(classifyMarbleProfile(w,xx,y-8)).toBe('v3_top');
+    }
+    const scene=sanctuary3DGeometryCells(w,{x0:x,x1:x+8,y0:y-9,y1:y});
+    expect(scene.blocks).toHaveLength(42); // células únicas, sem duplicar níveis
+    expect(scene.blocks.filter(b=>b.shape==='v3_face')).toHaveLength(9);
+    expect(scene.blocks.filter(b=>b.shape==='v3_top_half')).toHaveLength(9);
   });
 
   it('quebra em qualquer metade libera ambas e preserva paredes vizinhas',()=>{
