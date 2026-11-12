@@ -13,18 +13,31 @@ export type MarbleProfile =
   | 'pillar' | 'wall_back' | 'wall_middle' | 'wall_front'
   | 'wall_corner_back_left' | 'wall_corner_back_right';
 export type MarbleShape = MarbleProfile | 'solid' | 'thin';
-type MarbleReader = {getLevel(x:number,y:number,level:number):BlockId};
+type MarbleReader = {
+  getLevel(x:number,y:number,level:number):BlockId;
+  getMarblePlacementOrder?(x:number,y:number):number;
+};
 export const MARBLE_TEST_ID: BlockId = Block.MARBLE_CELESTIAL;
 
 const same = (world:MarbleReader,x:number,y:number) =>
   world.getLevel(x,y,0) === MARBLE_TEST_ID;
 
 /**
- * A column is a line along NORTH/SOUTH on the map, not a vertical height
- * stack. Every occupied marble cell is automatically TWO LEVELS tall.
+ * V2 — ligação vertical norte/sul (y crescente = abaixo na tela):
+ * - Novo painel ACIMA do existente: ambos ficam preenchidos.
+ * - Novo painel ABAIXO do existente: só o novo fica preenchido; o antigo
+ *   mantém a meia parede, inclusive em uma fileira horizontal.
+ * A ordem 0 representa painéis de saves antigos e preserva a regra anterior.
+ * A altura física de cada painel continua sendo os dois níveis oficiais.
  */
-const columnAt=(world:MarbleReader,x:number,y:number):boolean=>
-  same(world,x,y) && (same(world,x,y-1)||same(world,x,y+1));
+const columnAt=(world:MarbleReader,x:number,y:number):boolean=>{
+  if(!same(world,x,y))return false;
+  if(same(world,x,y-1))return true; // painel de baixo sempre se completa
+  if(!same(world,x,y+1))return false;
+  const current=world.getMarblePlacementOrder?.(x,y)??0;
+  const below=world.getMarblePlacementOrder?.(x,y+1)??0;
+  return current>=below; // painel acima só se completa se foi colocado depois
+};
 
 /** Profile of a side pillar relative to the current horizontal row. */
 function pillarAnchor(world:MarbleReader,x:number,y:number):MarbleProfile | null {
@@ -66,8 +79,9 @@ function oppositeEndCorner(
 }
 
 /**
- * The ground level decides shape for BOTH construction levels.
- * Horizontal continuity wins only for the two-end/opposing-column case.
+ * O nível de base decide a forma dos DOIS níveis de altura.
+ * Conexões verticais respeitam a ordem de colocação; faixas horizontais
+ * mantêm os alinhamentos e o conector em L quando necessário.
  */
 export function classifyMarbleProfile(world:MarbleReader,x:number,y:number):MarbleProfile {
   if(!same(world,x,y))return 'pillar';
