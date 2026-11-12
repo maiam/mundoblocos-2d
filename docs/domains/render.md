@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Escala do mundo no Santuário (v0.93.14, ADR 0028)
+
+A vista oblíqua usa **K = 1** (`OBLIQUE_K`): um metro de altura = uma célula na tela, frente do cubo quadrada (a imagem do topo, escurecida, serve de frente enquanto a arte de frente não vem). `render/worldScale.ts` guarda as relações do Core Keeper: cubo 1,0, parede ≈ 1,2, personagem ≈ 1,2 (`CHARACTER_SCALE_FACTOR` = 1,2/2,2 sobre os planos desenhados para a escala antiga). O renderer expõe `preferredCellsTall` (14); o `Game` repassa à `Camera.setCellsTall`. A inclinada (`?vista=inclinada`) não muda.
+
 ## Teste da escala do mundo (v0.93.12–13, ADR 0027/0028)
 
 `?mundo=santuario&paredes=teste` adiciona à cena (`sanctuaryWallProportionTest.ts`) três grupos lado a lado, cada um com cubo, parede, régua vertical de 2 segmentos, régua de 1 célula no chão e uma personagem de referência parada: **ATUAL** (cubo 0,56; parede 1,125; personagem 2,2), **PROPOSTA** (1,0; 2,0; 1,75) e **CORE KEEPER** (1,0; ≈ 1,2; ≈ 1,2, medida de uma cena do jogo). A Deusa controlável usa a escala de `?escala=atual|proposta|core` (padrão `core`; fator `characterScale`). Altura de tela = altura de mundo × K, então o teste emula cada escala dentro da vista atual. Só visual: não entra no `World` nem bloqueia a Deusa.

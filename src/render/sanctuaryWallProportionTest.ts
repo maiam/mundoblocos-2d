@@ -4,7 +4,7 @@ import { OBLIQUE_K } from './sanctuaryObliqueView';
 /**
  * Cena de TESTE da escala do mundo (ADR 0028), só para o dono do produto validar olhando. Compara, lado a lado e na mesma
  * tela, TRÊS escalas (frente do cubo, parede e personagem, em células na tela):
- *   ATUAL     — cubo 0,56 (`OBLIQUE_K`), parede de 2 cubos = 1,125, personagem 2,2;
+ *   ATUAL     — cubo 0,56 (K antigo), parede de 2 cubos = 1,125, personagem 2,2;
  *   PROPOSTA  — cubo 1,0, parede de 2 cubos = 2,0, personagem 1,75 (1 célula = 1 m);
  *   CORE KEEPER — medida de uma cena do jogo (v0.93.13): cubo 1,0, parede ≈ 1,2 (≈ a altura do personagem), personagem 1,2.
  * Cada grupo traz um cubo, uma parede, uma régua vertical (2 segmentos) e uma personagem de referência parada. A Deusa que se
@@ -17,8 +17,10 @@ export type ScalePreset = 'atual' | 'proposta' | 'core';
 export interface ScaleDef { name: string; cube: number; wall: number; character: number }
 /** Altura da personagem na escala atual, em células na tela (`CHARACTER_H` / `TILE`). */
 const CURRENT_CHARACTER = 2.2;
+/** K da vista até a v0.93.13 (frente de 18/32 de célula por nível): só para a comparação deste teste. */
+const LEGACY_K = 18 / 32;
 export const SCALE_PRESETS: Record<ScalePreset, ScaleDef> = {
-  atual: { name: 'ATUAL', cube: OBLIQUE_K, wall: OBLIQUE_K * 2, character: CURRENT_CHARACTER },
+  atual: { name: 'ATUAL', cube: LEGACY_K, wall: LEGACY_K * 2, character: CURRENT_CHARACTER },
   proposta: { name: 'PROPOSTA 1,75', cube: 1.0, wall: 2.0, character: 1.75 },
   core: { name: 'CORE KEEPER 1,2', cube: 1.0, wall: 1.2, character: 1.2 },
 };

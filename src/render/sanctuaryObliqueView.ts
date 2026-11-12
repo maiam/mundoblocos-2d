@@ -1,17 +1,15 @@
-import { CUBE_FRONT, TILE } from '../config';
-
 /**
- * Vista OBLÍQUA do Santuário (experimento da ADR 0026): a câmera olha reto para baixo (chão em quadrados perfeitos) e a
- * altura vira um deslocamento fixo na tela — cada nível sobe `OBLIQUE_K` de célula, a mesma proporção da arte 3/4 do
- * jogo (frente de CUBE_FRONT px numa célula de TILE px). Tudo que é vertical (personagem, parede) mantém a proporção
- * da arte, em vez de ser achatado por cos(elevação) como numa câmera inclinada.
+ * Vista OBLÍQUA do Santuário (padrão desde a v0.93.10; K = 1 desde a v0.93.14, ADR 0028): a câmera olha reto para baixo
+ * (chão em quadrados perfeitos) e a altura vira um deslocamento fixo na tela — cada nível sobe `OBLIQUE_K` de célula. Com K = 1
+ * a frente do cubo é quadrada e tudo que é vertical (personagem, parede) mantém a proporção da arte, em vez de ser achatado
+ * por cos(elevação) como numa câmera inclinada.
  *
  * Funções puras (sem DOM nem Three): a matriz é montada à mão e o renderer só a entrega à câmera.
  *
  * Eixos do mundo: X leste, Z sul (para baixo na tela), Y altura. No espaço da câmera (olhando para -Y, topo da tela = norte):
  *   vx = x - fx;  vy = fz - z;  vz = y - H   (H = altura da câmera).
  */
-export const OBLIQUE_K = CUBE_FRONT / TILE;
+export const OBLIQUE_K = 1;
 /** Peso da altura na profundidade: o que está mais ao sul (ou mais alto) fica na frente. Pequeno: só desempata. */
 export const OBLIQUE_DEPTH_EPS = 0.05;
 export const OBLIQUE_CAMERA_HEIGHT = 37;

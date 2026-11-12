@@ -7,8 +7,8 @@ const F = { x: 10, z: 20 };
 const M = obliqueProjection(HALF_W, HALF_H);
 
 describe('vista oblíqua do Santuário', () => {
-  it('a proporção da frente é a da arte 3/4 (18/32)', () => {
-    expect(OBLIQUE_K).toBeCloseTo(18 / 32, 6);
+  it('K = 1: um metro de altura é uma célula na tela (frente do cubo quadrada, ADR 0028)', () => {
+    expect(OBLIQUE_K).toBe(1);
   });
 
   it('o chão cai como numa vista reta: quadrado perfeito, sem achatar', () => {
@@ -20,7 +20,7 @@ describe('vista oblíqua do Santuário', () => {
     expect(y1).toBeCloseTo(1 / HALF_H, 9); // 1 célula na tela, igual à largura em células
   });
 
-  it('cada nível de altura sobe K de célula na tela (a frente do cubo tem 18/32)', () => {
+  it('cada nível de altura sobe K de célula na tela (a frente do cubo é quadrada)', () => {
     const [, ground] = obliqueClip(M, { x: F.x, y: 0, z: F.z }, F);
     const [, up1] = obliqueClip(M, { x: F.x, y: 1, z: F.z }, F);
     const [, up2] = obliqueClip(M, { x: F.x, y: 2, z: F.z }, F);

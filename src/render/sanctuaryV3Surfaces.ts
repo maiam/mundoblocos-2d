@@ -12,8 +12,9 @@ import { sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
  * Os índices de material são os de BoxGeometry: topo +Y = 2,
  * face +Z = 4. A câmera oficial está ao sul (+Z), sem yaw.
  */
-export function createSanctuaryV3Surfaces() {
-  const face=new THREE.PlaneGeometry(1,sanctuaryV3VisualHeight());
+/** `faceHeight`: altura de mundo da face; padrão = a da câmera inclinada (67°). Na oblíqua são dois níveis de cubo. */
+export function createSanctuaryV3Surfaces(faceHeight:number=sanctuaryV3VisualHeight()) {
+  const face=new THREE.PlaneGeometry(1,faceHeight);
   face.translate(0,0,-0.5);
   face.clearGroups();
   face.addGroup(0,6,4);

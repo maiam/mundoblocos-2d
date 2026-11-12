@@ -17,6 +17,8 @@ export interface RendererStats {
 /** Only rendering differs between official worlds; gameplay remains shared. */
 export type GameRenderer = Pick<Renderer, 'draw' | 'pick' | 'addDamage' | 'iconFor'> & {
   dispose?(): void;
+  /** Células visíveis na vertical que o renderer prefere (padrão do Mundo 2D: 10). */
+  readonly preferredCellsTall?: number;
   /** Só no WebGL: contadores para medir desempenho (dev e testes no navegador). */
   stats?(): RendererStats;
 };
