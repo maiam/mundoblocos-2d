@@ -1,5 +1,10 @@
 # Changelog
 
+## Santuário — linha horizontal contínua com canto em L (PR #95)
+- Corrigida a situação em que uma coluna norte–sul sobe em uma extremidade de uma linha horizontal e outra desce na extremidade oposta. O autotile do Mármore Celestial 82 mantém a faixa superior de toda a parede alinhada na metade de trás (`wall_back`) e substitui a ponta que liga à coluna de baixo por um **canto em L** fino, à esquerda ou direita, de acordo com o arranjo. A língua de conexão tem 25% da largura do tile e ocupa a metade dianteira; não cria pilar cheio nem desnível na borda superior.
+- A geometria do canto é real em Three.js (UVs do topo contínuos ao longo das duas partes); o topo ornamental é recortado nas bordas expostas. Só se aplica ao caso de **duas extremidades opostas**, sem coluna interna, preservando retângulos, paredes comuns, câmera 67°, personagens, física, salvamentos e Mundo principal.
+
+
 ## Mármore Celestial — construção automática 2 níveis e paredes com 3 âncoras (PR #94)
 - No Santuário, ID 82 cria/retira os dois blocos da pilha por ação. Bloco isolado começa como parede de meia profundidade na frente da célula; adjacência norte–sul converte os blocos em pilares inteiros. Conexão horizontal com colunas alinha paredes ao fundo, meio ou frente da lateral do pilar, mantendo o mesmo perfil nos dois níveis. Conexões mudam automaticamente com colocação/remoção.
 - Moldura de topo ganha máscara de dez segmentos (norte/sul e quatro quartos por lateral), adequada ao encontro de parede central com pilar. Mantidas textura vertical, câmera 67°, colisões, Mundo principal e outros materiais.

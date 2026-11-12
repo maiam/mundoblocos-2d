@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Canto em L em linha horizontal entre colunas opostas (PR #95)
+
+Em `render/sanctuaryMarbleAdaptive.ts`, uma faixa horizontal com a primeira coluna prolongada para o norte e a outra prolongada para o sul (sem ramos verticais internos) tem prioridade de alinhamento: todos os blocos da faixa usam a metade traseira da célula, mantendo a **borda superior contínua**. A extremidade que precisa alcançar a coluna prolongada para o sul recebe `wall_corner_back_left` ou `wall_corner_back_right`: parede de 1×0,5 célula na metade traseira + ligação frontal estreita de 0,25×0,5, ocupando 62,5% da célula em L, sem preencher um cubo inteiro. O `SanctuaryThreeRenderer` constrói a malha real das duas caixas com UVs superiores mapeados na mesma imagem ornamental, além de filetes dourados nas bordas recortadas. A classificação não é usada em salas simples, T internas nem outros materiais. Os dois níveis têm a mesma geometria, conforme a base; física continua baseada na célula lógica.
+
 ## Mármore celestial — parede-padrão, três âncoras e construção em dois níveis (PR #94)
 
 Somente para o ID 82 no perfil Santuário: `World.placeBlock` reserva **ambos os níveis 0 e 1** no mesmo clique e `World.breakBlock` remove ambos como uma única peça. A forma padrão é `wall_front`, mesmo isolada; duas células norte–sul consecutivas tornam-se `pillar` integral. Uma faixa horizontal percorre seus vizinhos até encontrar colunas: na extremidade superior de uma coluna é `wall_back`, na base inferior `wall_front`, no centro da coluna `wall_middle` (profundidade entre 25% e 75%). Sem coluna, permanece na frente. O segundo nível reproduz a geometria do primeiro. A moldura do topo é calculada em **10 segmentos**: 2 bordas norte/sul e 4 quartos por lateral, ocultando só os trechos realmente compartilhados por pilar e parede. O renderer refaz a malha ao alterar chunks e o Mundo principal continua idêntico.
