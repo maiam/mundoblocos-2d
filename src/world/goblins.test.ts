@@ -10,18 +10,6 @@ describe('Acampamentos goblins — mapa aberto de Orvalis',()=>{
   it('sempre gera quatro acampamentos com fogueiras reais e sete lugares em torno delas',()=>{
     for(const seed of [42,20261106,7]){
       const w=new World(seed);
-      if(seed===42 && w.goblinCamps.length===0){
-        const town=w.town!;
-        const cx=Math.floor((town.area.x0+town.area.x1)/2);
-        const cy=Math.floor((town.area.y0+town.area.y1)/2);
-        const points=[[cx,cy+160],[cx,cy-160],[cx+160,cy],[cx-160,cy],
-          [cx+110,cy+110],[cx-110,cy-110],[cx+130,cy-95]];
-        console.log('GOBLIN DIAG',JSON.stringify({
-          profile:w.profile.id,area:town.area,cx,cy,
-          samples:points.map(([x,y])=>({x,y,cell:w.generator.cellAt(x,y),
-            protected:w.isProtected(x,y)})),
-        }));
-      }
       expect(w.goblinCamps).toHaveLength(GOBLIN_CAMP_COUNT);
       for(const c of w.goblinCamps){
         expect(c.slots).toHaveLength(GOBLIN_PACK_SIZE);
