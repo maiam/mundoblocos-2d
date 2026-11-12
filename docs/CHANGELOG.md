@@ -1,5 +1,8 @@
 # Changelog
 
+## Documentação — especificação da arte das paredes (12/11/2026, sem versão)
+- **`assets-src/paredes/CONTRATO.md`** e **`gabarito.png`** (gerado por `scripts/make-wall-guide.py` a partir das medidas do código): 1 célula = 128 px, placa de 38 px, braço de 45 px, frente de 154 px (1,2 célula); 4 frentes (`front_mid` 128, `front_end_left`/`right` 83, `front_post` 38 × 154) e 16 tampas (128 × 128, índice N·1 + L·2 + S·4 + O·8) por material; regras de emenda, luz, posição de montagem, conferência e brief curto. Materiais: tábuas e pedra primeiro. Nenhum código de jogo alterado.
+
 ## Orvalis v0.93.16 — Paredes: placa fina e protótipo de autotile (`?paredes=autotile`) (12/11/2026)
 - **Observação do dono do produto confirmada nas medidas do Core Keeper:** fileiras norte–sul são faixas finas (~0,2–0,3 célula) e só o último bloco ao sul mostra a frente; fileiras leste–oeste têm frente de célula inteira. Modelo: **placa fina** de `WALL_THICKNESS` = 0,3 (poste central + braços até a borda), com a colisão ainda na célula inteira.
 - **`world/walls.ts`:** `wallFootprint` (pegada), `wallFrontRanges` (faixas de frente expostas), `wallThin`; `wallFront` ganha `end` e passa a devolver `null` só nas continuações de fileira norte–sul. Atualiza os testes (21 de paredes).

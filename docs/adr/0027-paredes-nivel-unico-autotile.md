@@ -37,7 +37,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
 
 ## Fases
 - **W0** teste de proporção (v0.93.11) → o dono do produto escolhe a altura.
-- **W1** arte por material: frente larga (esquerda/meio/direita), frente fina (poste e fim de coluna), tampa larga e fina, cantos, T, cruz e cantos internos, mais a porta (aberta e fechada). **Protótipo com cores lisas** (v0.93.16): `?mundo=santuario&paredes=autotile`.
+- **W1** arte por material (contrato em `assets-src/paredes/CONTRATO.md`, com `gabarito.png`): frente larga (esquerda/meio/direita), frente fina (poste e fim de coluna), tampa larga e fina, cantos, T, cruz e cantos internos, mais a porta (aberta e fechada). **Protótipo com cores lisas** (v0.93.16): `?mundo=santuario&paredes=autotile`.
 - **W2** domínio: bloco `wall` no `World` (colocar/quebrar/colisão/porta), regra de autotile pura e testada, save e protocolo.
 - **W3** render: parede no Three.js (frente + tampa) com oclusão correta da personagem.
 - **W4** migração e remoção do mármore V2/V3.
