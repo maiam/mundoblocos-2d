@@ -1,5 +1,10 @@
 # Changelog
 
+## Santuário — câmera superior 80° e bordas adaptativas do Mármore Celestial (PR #92)
+- **Teste isolado ao Santuário Three.js:** câmera ortográfica aproximada de 80° acima do chão, mantendo uma única face frontal (sem yaw isométrico), e Deusa desenhada em plano vertical com sombra no chão. Apenas o Mármore Celestial 82 recebe nova arte de topo com moldura dourada e gemas azuis enviada pelo usuário; todas as faces verticais continuam usando a textura anterior.
+- **Topos emendados:** máscaras procedurais de bordas expostas evitam ornamentos duplicados entre cubos, inclusive meia borda de pilar ao lado de parede fina. O contorno determina parede traseira ou frontal em salas ocas; camada superior herda geometria. Outros 17 materiais, Mundo principal, regras físicas, saves e controles inalterados. Testes de classificação, geometria, câmera e composição de textura adicionados.
+
+
 ## Correção de oclusão da Deusa no Santuário Three.js — 11/11/2026 (PR #91)
 - O sprite flutuante da Deusa agora usa o rodapé real da textura 256×320 como âncora física; a animação original mantém a elevação dos pés. A sombra deixa o billboard vertical e passa a ser um elemento horizontal independente exatamente no chão/nível de apoio lógico, com os mesmos raios e a mesma leve variação de escala.
 - O desenho não avança mais 0,15 célula na direção da câmera. O sprite principal continua respeitando a profundidade real dos blocos (`depthTest=true`); uma silhueta etérea de baixa opacidade dá legibilidade quando uma parede realmente o oculta. Colisões, salvamento e Mundo principal inalterados.
