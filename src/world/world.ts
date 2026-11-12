@@ -428,6 +428,15 @@ export class World {
   breakBlock(x: number, y: number): BlockId | null {
     const target = this.breakTarget(x, y);
     if (target === 'object') {
+      // Sanctuary pilot: a celestial-marble placement is one two-storey
+      // structure. Breaking either visible half removes BOTH at once.
+      if (this.profile.id === 'santuario' &&
+        this.getLevel(x, y, 0) === Block.MARBLE_CELESTIAL &&
+        this.getLevel(x, y, 1) === Block.MARBLE_CELESTIAL) {
+        this.setLevel(x, y, 1, Block.AIR);
+        this.setLevel(x, y, 0, Block.AIR);
+        return Block.MARBLE_CELESTIAL;
+      }
       const top = this.topBlock(x, y)!;
       if (top.id === Block.CHEST) this.chests.delete(chunkKey(x, y)); // quem quebra lê o conteúdo antes (chestAt)
       if (top.id === Block.TENT || top.id === Block.TENT_PART) {
@@ -461,6 +470,17 @@ export class World {
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
     if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
+    if (this.profile.id === 'santuario' && id === Block.MARBLE_CELESTIAL) {
+      // Unlike regular cubes, a marble panel always occupies the two
+      // official levels in one atomic build. Never stack it on a cube and
+      // never overwrite an existing upper layer or water/hole floor.
+      const lower = blockDef(this.getObject(x, y));
+      const ground = this.getGround(x, y);
+      return this.isGroundStandable(x, y) &&
+        ground !== Block.HOLE && ground !== Block.WATER &&
+        (lower.id === Block.AIR || lower.shape === 'decoration') &&
+        this.getUpper(x, y) === Block.AIR ? 0 : null;
+    }
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
     if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;
@@ -590,6 +610,10 @@ export class World {
     const level = this.placementLevel(x, y, id);
     if (level === null) return false;
     this.setLevel(x, y, level, id);
+    if (this.profile.id === 'santuario' &&
+      id === Block.MARBLE_CELESTIAL && level === 0) {
+      this.setLevel(x, y, 1, id);
+    }
     if (id === Block.TENT) {
       for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
       this.tent = [x, y];

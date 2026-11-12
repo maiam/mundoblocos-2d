@@ -17,22 +17,24 @@ export function classifySanctuaryBlock(
   // Only the celestial-marble pilot uses the new front/back classification.
   // The upper construction level inherits the base footprint, not its own
   // neighbors, even when its texture belongs to a different stone material.
-  if((level===0 ? id : world.getLevel(x,y,0))===MARBLE_TEST_ID)
-    return classifyMarbleProfile(world,x,y)==='pillar'
-      ? 'solid' : classifyMarbleProfile(world,x,y);
+  if((level===0 ? id : world.getLevel(x,y,0))===MARBLE_TEST_ID){
+    const profile=classifyMarbleProfile(world,x,y);
+    return profile==='pillar' ? 'solid' : profile;
+  }
   return horizontalWallShape(world,id,x,y,level);
 }
 
-/** Thin wall has its FRONT face flush at y+1; rear half is removed. */
+/** One full-height pillar or a half-depth wall anchored front, center or rear. */
 export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'>): {
   x:number;y:number;z:number;width:number;height:number;depth:number;
 } {
   const front=cell.shape==='thin'||cell.shape==='wall_front';
   const back=cell.shape==='wall_back';
+  const middle=cell.shape==='wall_middle';
   return {
     x:cell.x+0.5,y:cell.level+0.5,
     z:cell.y+(front?0.75:back?0.25:0.5),
-    width:1,height:1,depth:front||back?0.5:1,
+    width:1,height:1,depth:front||back||middle?0.5:1,
   };
 }
 

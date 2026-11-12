@@ -1,5 +1,10 @@
 # Changelog
 
+## Mármore Celestial — construção automática 2 níveis e paredes com 3 âncoras (PR #94)
+- No Santuário, ID 82 cria/retira os dois blocos da pilha por ação. Bloco isolado começa como parede de meia profundidade na frente da célula; adjacência norte–sul converte os blocos em pilares inteiros. Conexão horizontal com colunas alinha paredes ao fundo, meio ou frente da lateral do pilar, mantendo o mesmo perfil nos dois níveis. Conexões mudam automaticamente com colocação/remoção.
+- Moldura de topo ganha máscara de dez segmentos (norte/sul e quatro quartos por lateral), adequada ao encontro de parede central com pilar. Mantidas textura vertical, câmera 67°, colisões, Mundo principal e outros materiais.
+
+
 ## Santuário — ajuste de câmera para 67° (PR #93)
 - Câmera superior ortográfica do Santuário Three.js revisada de 80° para 67° acima do chão, sem rotação isométrica, aproximando a visibilidade das faces frontais à referência de Core Keeper. Preservados o mármore celestial com topo e bordas adaptativas, o plano vertical da Deusa, colisões, UI, altura de 2 blocos e todas as mecânicas. Mundo principal Canvas 2D inalterado.
 

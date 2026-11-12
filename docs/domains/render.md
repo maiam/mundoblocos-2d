@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Mármore celestial — parede-padrão, três âncoras e construção em dois níveis (PR #94)
+
+Somente para o ID 82 no perfil Santuário: `World.placeBlock` reserva **ambos os níveis 0 e 1** no mesmo clique e `World.breakBlock` remove ambos como uma única peça. A forma padrão é `wall_front`, mesmo isolada; duas células norte–sul consecutivas tornam-se `pillar` integral. Uma faixa horizontal percorre seus vizinhos até encontrar colunas: na extremidade superior de uma coluna é `wall_back`, na base inferior `wall_front`, no centro da coluna `wall_middle` (profundidade entre 25% e 75%). Sem coluna, permanece na frente. O segundo nível reproduz a geometria do primeiro. A moldura do topo é calculada em **10 segmentos**: 2 bordas norte/sul e 4 quartos por lateral, ocultando só os trechos realmente compartilhados por pilar e parede. O renderer refaz a malha ao alterar chunks e o Mundo principal continua idêntico.
+
 ## Revisão da câmera do Santuário — 67° (PR #93)
 
 Após comparação visual com Core Keeper, a câmera Three.js do Santuário foi ajustada de 80° para **67° acima do chão** (ortográfica, azimute 0°). Isso torna a frente dos blocos e objetos mais visível, preservando exatamente os estados `pillar`, `wall_front`, `wall_back`, a textura do topo ornamental do Mármore Celestial 82, a Deusa em plano vertical, colisões e salvamentos. O ângulo original do Core Keeper não é conhecido; 67° é um ponto de partida experimental para validação visual.
