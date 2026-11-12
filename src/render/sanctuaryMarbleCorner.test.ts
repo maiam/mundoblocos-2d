@@ -146,13 +146,13 @@ describe('Mármore Celestial — canto adaptativo entre colunas opostas',()=>{
     expect(w.placeBlock(left,row-2,id)).toBe(true);
     expect(w.placeBlock(right,row+2,id)).toBe(true);
     // Cada base ocupa duas células: não há sobreposição mesmo nos cantos.
-    expect(classifySanctuaryBlock(w,id,left,row,0)).toBe('solid');
-    expect(classifySanctuaryBlock(w,id,right,row,1)).toBe('solid');
-    expect(classifySanctuaryBlock(w,id,left,row-3,0)).toBe('wall_front');
-    expect(classifySanctuaryBlock(w,id,right,row-1,0)).toBe('wall_front');
+    expect(classifySanctuaryBlock(w,id,left,row,0)).toBe('v3_face');
+    expect(classifySanctuaryBlock(w,id,right,row,1)).toBe('v3_top');
+    expect(classifySanctuaryBlock(w,id,left,row-3,0)).toBe('v3_top_half');
+    expect(classifySanctuaryBlock(w,id,right,row-1,0)).toBe('v3_top_half');
     expect(w.breakBlock(right,row+1)).toBe(id); // célula projetada da nova base
     expect(w.getObject(right,row+2)).toBe(Block.AIR);
     expect(w.getObject(right,row)).toBe(id);
-    expect(classifySanctuaryBlock(w,id,right,row-1,0)).toBe('wall_front');
+    expect(classifySanctuaryBlock(w,id,right,row-1,0)).toBe('v3_top_half');
   });
 });
