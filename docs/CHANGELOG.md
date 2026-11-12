@@ -1,5 +1,9 @@
 # Changelog
 
+## Santuário — ajuste de câmera para 67° (PR #93)
+- Câmera superior ortográfica do Santuário Three.js revisada de 80° para 67° acima do chão, sem rotação isométrica, aproximando a visibilidade das faces frontais à referência de Core Keeper. Preservados o mármore celestial com topo e bordas adaptativas, o plano vertical da Deusa, colisões, UI, altura de 2 blocos e todas as mecânicas. Mundo principal Canvas 2D inalterado.
+
+
 ## Santuário — câmera superior 80° e bordas adaptativas do Mármore Celestial (PR #92)
 - **Teste isolado ao Santuário Three.js:** câmera ortográfica aproximada de 80° acima do chão, mantendo uma única face frontal (sem yaw isométrico), e Deusa desenhada em plano vertical com sombra no chão. Apenas o Mármore Celestial 82 recebe nova arte de topo com moldura dourada e gemas azuis enviada pelo usuário; todas as faces verticais continuam usando a textura anterior.
 - **Topos emendados:** máscaras procedurais de bordas expostas evitam ornamentos duplicados entre cubos, inclusive meia borda de pilar ao lado de parede fina. O contorno determina parede traseira ou frontal em salas ocas; camada superior herda geometria. Outros 17 materiais, Mundo principal, regras físicas, saves e controles inalterados. Testes de classificação, geometria, câmera e composição de textura adicionados.
