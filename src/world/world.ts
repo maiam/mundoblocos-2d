@@ -85,6 +85,9 @@ export class World {
   /** Ordem das colocações de mármore no Santuário: 0 = construção antiga sem histórico. */
   private readonly marblePlacements = new Map<string, number>();
   private marblePlacementIndex = 0;
+  /** V3: novas bases ocupam a própria célula e a célula norte.
+   * Painéis antigos preservam sua geometria V2. */
+  private readonly marbleV3Bases = new Set<string>();
   /**
    * Covil deste mundo (perfil com `dungeon`), ou null: labirinto isolado do mapa (ADR 0019), protegido; só se luta lá
    * dentro. No mundo fica só a entrada, a caverna (`cave`).
@@ -292,18 +295,48 @@ export class World {
     return chunk ? chunk.getGround(toLocal(x), toLocal(y)) : this.generator.groundAt(x, y);
   }
 
-  /** Objeto do nível 0 da célula (AIR se vazio). */
-  getObject(x: number, y: number): BlockId {
+  /** Leitura física das bases gravadas; as células projetadas não são duplicadas no save. */
+  private rawObject(x: number, y: number): BlockId {
     if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getObject(toLocal(x), toLocal(y)) : this.generator.objectAt(x, y);
   }
 
-  /** Cubo empilhado no nível 1 (AIR se não houver). */
-  getUpper(x: number, y: number): BlockId {
+  private rawUpper(x: number, y: number): BlockId {
     if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
     return chunk ? chunk.getLevel(toLocal(x), toLocal(y), 1) : this.generator.upperAt(x, y);
+  }
+
+  /** Âncora V3 desta célula; o norte (y-1) pertence à base ao sul. */
+  marbleV3AnchorAt(x: number, y: number): [number, number] | null {
+    if (this.profile.id !== 'santuario' || !this.inBounds(x, y)) return null;
+    if (this.marbleV3Bases.has(chunkKey(x, y)) &&
+      this.rawObject(x, y) === Block.MARBLE_CELESTIAL &&
+      this.rawUpper(x, y) === Block.MARBLE_CELESTIAL) return [x, y];
+    if (this.rawObject(x, y) !== Block.AIR || this.rawUpper(x, y) !== Block.AIR) return null;
+    if (this.marbleV3Bases.has(chunkKey(x, y + 1)) &&
+      this.rawObject(x, y + 1) === Block.MARBLE_CELESTIAL &&
+      this.rawUpper(x, y + 1) === Block.MARBLE_CELESTIAL) return [x, y + 1];
+    return null;
+  }
+
+  isMarbleV3Cell(x: number, y: number): boolean {
+    return this.marbleV3AnchorAt(x, y) !== null;
+  }
+
+  /** Objeto do nível 0, incluindo a célula norte ocupada por uma base V3. */
+  getObject(x: number, y: number): BlockId {
+    const actual = this.rawObject(x, y);
+    return actual !== Block.AIR ? actual :
+      this.marbleV3AnchorAt(x, y) ? Block.MARBLE_CELESTIAL : Block.AIR;
+  }
+
+  /** Nível superior: a projeção V3 mantém os dois níveis físicos do painel. */
+  getUpper(x: number, y: number): BlockId {
+    const actual = this.rawUpper(x, y);
+    return actual !== Block.AIR ? actual :
+      this.marbleV3AnchorAt(x, y) ? Block.MARBLE_CELESTIAL : Block.AIR;
   }
 
   /** Bloco de um nível da pilha (0 = objeto no chão). O gerador só preenche os níveis 0 e 1. */
@@ -353,6 +386,33 @@ export class World {
         this.getUpper(x, y) !== Block.MARBLE_CELESTIAL) continue;
       this.marblePlacements.set(chunkKey(x, y), order);
       this.marblePlacementIndex = Math.max(this.marblePlacementIndex, order);
+    }
+  }
+
+  /** Só bases V3 são serializadas; células virtuais são derivadas. */
+  marbleV3PlacementBases(): Array<[number, number]> {
+    if (this.profile.id !== 'santuario') return [];
+    return [...this.marbleV3Bases].map((key) =>
+      key.split(',').map(Number) as [number, number]).filter(([x, y]) =>
+      this.rawObject(x, y) === Block.MARBLE_CELESTIAL &&
+      this.rawUpper(x, y) === Block.MARBLE_CELESTIAL);
+  }
+
+  /** Saves antigos sem V3 continuam com a geometria V2. */
+  loadMarbleV3PlacementBases(bases: ReadonlyArray<readonly [number, number]> | undefined): void {
+    this.marbleV3Bases.clear();
+    if (this.profile.id !== 'santuario') return;
+    for (const entry of bases ?? []) {
+      if (!Array.isArray(entry) || entry.length !== 2) continue;
+      const [x, y] = entry;
+      if (![x, y].every(Number.isSafeInteger) || !this.inBounds(x, y) ||
+        !this.inBounds(x, y - 1) ||
+        this.rawObject(x, y) !== Block.MARBLE_CELESTIAL ||
+        this.rawUpper(x, y) !== Block.MARBLE_CELESTIAL ||
+        this.rawObject(x, y - 1) !== Block.AIR ||
+        this.rawUpper(x, y - 1) !== Block.AIR ||
+        this.marbleV3AnchorAt(x, y - 1)) continue;
+      this.marbleV3Bases.add(chunkKey(x, y));
     }
   }
 
@@ -406,7 +466,10 @@ export class World {
     }
     else chunk.setLevel(lx, ly, level, id);
     if (level === 0) {
-      if (id !== Block.MARBLE_CELESTIAL) this.marblePlacements.delete(chunkKey(x, y));
+      if (id !== Block.MARBLE_CELESTIAL) {
+        this.marblePlacements.delete(chunkKey(x, y));
+        this.marbleV3Bases.delete(chunkKey(x, y));
+      }
       if (isCrop(id)) this.crops.add(chunkKey(x, y));
       else this.crops.delete(chunkKey(x, y));
       if (isGrowingTree(id)) this.trees.add(chunkKey(x, y));
@@ -476,6 +539,12 @@ export class World {
 
   /** Quebra o topo da célula (empilhado → objeto → chão). Retorna o id removido ou null. */
   breakBlock(x: number, y: number): BlockId | null {
+    // Um golpe na célula norte remove a base real da peça.
+    const anchor = this.marbleV3AnchorAt(x, y);
+    if (anchor && anchor[1] !== y) {
+      if (this.isProtected(x, y) || this.isProtected(anchor[0], anchor[1])) return null;
+      return this.breakBlock(anchor[0], anchor[1]);
+    }
     const target = this.breakTarget(x, y);
     if (target === 'object') {
       // Sanctuary pilot: a celestial-marble placement is one two-storey
@@ -521,15 +590,16 @@ export class World {
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
     if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
     if (this.profile.id === 'santuario' && id === Block.MARBLE_CELESTIAL) {
-      // Unlike regular cubes, a marble panel always occupies the two
-      // official levels in one atomic build. Never stack it on a cube and
-      // never overwrite an existing upper layer or water/hole floor.
-      const lower = blockDef(this.getObject(x, y));
-      const ground = this.getGround(x, y);
-      return this.isGroundStandable(x, y) &&
-        ground !== Block.HOLE && ground !== Block.WATER &&
-        (lower.id === Block.AIR || lower.shape === 'decoration') &&
-        this.getUpper(x, y) === Block.AIR ? 0 : null;
+      // Uma base V3 ocupa (x,y) e (x,y-1), cada uma com dois níveis.
+      const available = (cx: number, cy: number): boolean => {
+        const ground = this.getGround(cx, cy);
+        return this.inBounds(cx, cy) && !this.isProtected(cx, cy) &&
+          this.isGroundStandable(cx, cy) &&
+          ground !== Block.HOLE && ground !== Block.WATER &&
+          this.getObject(cx, cy) === Block.AIR &&
+          this.getUpper(cx, cy) === Block.AIR;
+      };
+      return available(x, y) && available(x, y - 1) ? 0 : null;
     }
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
@@ -664,6 +734,7 @@ export class World {
       id === Block.MARBLE_CELESTIAL && level === 0) {
       this.setLevel(x, y, 1, id);
       this.marblePlacements.set(chunkKey(x, y), ++this.marblePlacementIndex);
+      this.marbleV3Bases.add(chunkKey(x, y));
     }
     if (id === Block.TENT) {
       for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
@@ -681,7 +752,9 @@ export class World {
 
   /** Células que um bloco ocupa ao ser colocado em (x, y) (tenda 2×2; os demais, 1). */
   footprint(id: BlockId, x: number, y: number): Array<[number, number]> {
-    return id === Block.TENT ? tentCells(x, y) : [[x, y]];
+    return id === Block.TENT ? tentCells(x, y) :
+      id === Block.MARBLE_CELESTIAL && this.profile.id === 'santuario'
+        ? [[x, y], [x, y - 1]] : [[x, y]];
   }
 
   /**
@@ -689,7 +762,9 @@ export class World {
    * Quem coloca escolhe o que não pega ninguém; blocos de 1 célula têm só (x, y).
    */
   footprintAnchors(id: BlockId, x: number, y: number): Array<[number, number]> {
-    return id === Block.TENT ? [[x, y], [x - 1, y], [x, y + 1], [x - 1, y + 1]] : [[x, y]];
+    return id === Block.TENT ? [[x, y], [x - 1, y], [x, y + 1], [x - 1, y + 1]] :
+      id === Block.MARBLE_CELESTIAL && this.profile.id === 'santuario'
+        ? [[x, y], [x, y + 1]] : [[x, y]];
   }
 
   /** Canto (TENT) da tenda que contém a célula, ou null. */

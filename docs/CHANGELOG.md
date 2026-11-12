@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.0 — Santuário: construção de paredes V3 (12/11/2026)
+- **Ocupação:** novas bases de Mármore Celestial 82 ocupam duas células em planta (a escolhida e a imediatamente ao norte) e os dois níveis de altura por célula. Bases verticais separadas por duas linhas criam face inferior, topo inteiro interno e meio-topo terminal; paredes horizontais e quadrados ficam conectados.
+- **Regras:** a segunda célula é derivada da base única no World; a colisão, a colocação, a seleção de blocos e a quebra respeitam a ocupação compartilhada. O renderizador Three.js usa as geometrias existentes, incluindo as bordas ornamentadas recalculadas.
+- **Save v14:** persistência das âncoras V3; saves v13 e anteriores conservam painéis V2 sem conversão geométrica. Outros materiais e Mundo principal não são alterados intencionalmente. Encontros L/T e linhas opostas ainda exigem conferência visual.
+
 ## Orvalis v0.92.1 — Santuário: paredes adaptativas V2 (12/11/2026)
 - **Construção vertical do Mármore Celestial 82:** ao acrescentar uma parede ao NORTE (acima na tela), a parede antiga completa sua profundidade e a nova nasce como pilar inteiro. Ao acrescentar uma parede ao SUL (abaixo), somente a nova vira pilar e a parede original mantém a metade frontal. A extensão descendo preserva o início de linhas horizontais, inclusive entre colunas opostas, sem preencher um bloco pré-existente indevidamente.
 - **Persistência:** o Santuário grava a ordem de colocação de cada painel no salvamento v13; migração dos saves antigos v12 preserva as estruturas anteriores com a regra legada (ordem 0). Remover uma parede limpa seu histórico. A altura continua em dois níveis e a geometria superior herda a base; demais materiais e o Mundo principal não mudam.

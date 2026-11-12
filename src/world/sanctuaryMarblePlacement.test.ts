@@ -4,144 +4,143 @@ import { World } from './world';
 import { WORLD_PROFILES } from './profiles';
 import { toChunk } from './coords';
 import { classifyMarbleProfile } from '../render/sanctuaryMarbleAdaptive';
+import { classifySanctuaryBlock, sanctuary3DGeometryCells } from '../render/sanctuaryThreeLayout';
 
 const create=()=>new World(77,WORLD_PROFILES.santuario);
 const marble=Block.MARBLE_CELESTIAL;
+const anchor=(w:World):[number,number]=>{
+  const [sx,sy]=w.findSpawn();
+  return [sx+3,sy+4];
+};
 
-describe('Santuário — colocação de Mármore Celestial como peça de dois níveis',()=>{
-  it('um único clique cria uma parede de dois níveis e não permite empilhar outra',()=>{
-    const w=create();
-    const [x,y]=w.findSpawn();
-    expect(w.placementLevel(x+2,y,marble)).toBe(0);
-    expect(w.placeBlock(x+2,y,marble)).toBe(true);
-    expect(w.getLevel(x+2,y,0)).toBe(marble);
-    expect(w.getLevel(x+2,y,1)).toBe(marble);
-    expect(w.stackHeight(x+2,y)).toBe(2);
-    expect(w.standHeight(x+2,y)).toBe(2);
-    expect(classifyMarbleProfile(w,x+2,y)).toBe('wall_front');
-    expect(w.canPlace(x+2,y,marble)).toBe(false);
-    expect(w.canPlace(x+2,y,Block.STONE_GOLDEN)).toBe(false);
-  });
-
-  it('quebra um único painel de dois níveis inteiro, sem deixar a base suspensa',()=>{
-    const w=create();
-    const [x,y]=w.findSpawn();
-    expect(w.placeBlock(x+2,y,marble)).toBe(true);
-    expect(w.breakBlock(x+2,y)).toBe(marble);
-    expect(w.getObject(x+2,y)).toBe(Block.AIR);
-    expect(w.getUpper(x+2,y)).toBe(Block.AIR);
-    expect(w.stackHeight(x+2,y)).toBe(0);
-    expect(w.placeBlock(x+2,y,marble)).toBe(true);
-  });
-
-  it('V2: adicionar ABAIXO preenche só o novo painel, preservando a parede existente',()=>{
-    const w=create();
-    const [sx,sy]=w.findSpawn();
-    const x=sx+2,y=sy-1;
+describe('Santuário V3 — base do mármore ocupa duas células em planta e dois níveis em altura',()=>{
+  it('um clique preenche a base e a célula norte sem duplicar os blocos físicos',()=>{
+    const w=create(),[x,y]=anchor(w);
+    expect(w.placementLevel(x,y,marble)).toBe(0);
     expect(w.placeBlock(x,y,marble)).toBe(true);
-    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
-    expect(w.placeBlock(x,y+1,marble)).toBe(true);
-    expect(w.getMarblePlacementOrder(x,y+1)).toBeGreaterThan(w.getMarblePlacementOrder(x,y));
-    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
-    expect(classifyMarbleProfile(w,x,y+1)).toBe('pillar');
-    expect(w.breakBlock(x,y+1)).toBe(marble);
-    expect(w.getMarblePlacementOrder(x,y+1)).toBe(0);
-    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
-  });
-
-  it('V2: adicionar ACIMA completa o painel existente e cria pilar novo',()=>{
-    const w=create();
-    const [sx,sy]=w.findSpawn();
-    const x=sx+3,y=sy;
-    expect(w.placeBlock(x,y,marble)).toBe(true);
-    expect(w.placeBlock(x,y-1,marble)).toBe(true);
-    expect(classifyMarbleProfile(w,x,y-1)).toBe('pillar');
-    expect(classifyMarbleProfile(w,x,y)).toBe('pillar');
-    expect(w.breakBlock(x,y-1)).toBe(marble);
-    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
-  });
-
-  it('V2: extensão contínua para baixo conserva somente a primeira meia parede',()=>{
-    const w=create();
-    const [sx,sy]=w.findSpawn();
-    const x=sx+4,y=sy-2;
-    for(const row of [y,y+1,y+2]) expect(w.placeBlock(x,row,marble)).toBe(true);
-    expect([y,y+1,y+2].map(row=>classifyMarbleProfile(w,x,row)))
-      .toEqual(['wall_front','pillar','pillar']);
-  });
-
-  it('progride de parede padrão para fundo, centro e frente ao conectar 3 pilares',()=>{
-    const w=create();
-    const [sx,sy]=w.findSpawn();
-    const x=sx+2,y=sy+1;
-    w.placeBlock(x,y-1,marble);
-    w.placeBlock(x,y,marble);
-    w.placeBlock(x,y+1,marble);
-    for(const [row,expected] of [[y-1,'wall_front'],[y,'wall_middle'],[y+1,'wall_front']] as const){
-      expect(w.placeBlock(x+1,row,marble)).toBe(true);
-      expect(classifyMarbleProfile(w,x+1,row)).toBe(expected);
-      expect(w.getLevel(x+1,row,1)).toBe(marble);
-      expect(w.breakBlock(x+1,row)).toBe(marble);
+    for(const row of [y,y-1]){
+      expect(w.getLevel(x,row,0)).toBe(marble);
+      expect(w.getLevel(x,row,1)).toBe(marble);
+      expect(w.stackHeight(x,row)).toBe(2);
+      expect(w.standHeight(x,row)).toBe(2);
     }
+    expect(w.marbleV3PlacementBases()).toEqual([[x,y]]);
+    expect(w.marbleV3AnchorAt(x,y-1)).toEqual([x,y]);
+    expect(w.footprint(marble,x,y)).toEqual([[x,y],[x,y-1]]);
+    expect(w.footprintAnchors(marble,x,y-1)).toEqual([[x,y-1],[x,y]]);
     expect(classifyMarbleProfile(w,x,y)).toBe('pillar');
+    expect(classifyMarbleProfile(w,x,y-1)).toBe('wall_front');
+    expect(classifySanctuaryBlock(w,marble,x,y-1,1)).toBe('wall_front');
+    expect(w.canPlace(x,y,marble)).toBe(false);
+    expect(w.canPlace(x,y-1,marble)).toBe(false);
+    expect(w.canPlace(x,y-1,Block.STONE_CELESTIAL)).toBe(false);
+    const scene=sanctuary3DGeometryCells(w,{x0:x,x1:x,y0:y-1,y1:y});
+    expect(scene.blocks).toHaveLength(4); // duas células × dois níveis
+    expect(scene.blocks.filter(b=>b.shape==='solid')).toHaveLength(2);
+    expect(scene.blocks.filter(b=>b.shape==='wall_front')).toHaveLength(2);
   });
 
-  it('V2: faixa horizontal não é preenchida ao prolongar sua ponta para baixo',()=>{
-    const w=create();
-    const [sx,sy]=w.findSpawn();
-    const y=sy,x=sx+2;
-    for(let xx=x;xx<x+5;xx++)expect(w.placeBlock(xx,y,marble)).toBe(true);
-    expect(w.placeBlock(x,y-1,marble)).toBe(true); // acima: completa a ponta
-    expect(w.placeBlock(x+4,y+1,marble)).toBe(true); // abaixo: preserva a ponta
-    expect([0,1,2,3,4].map(dx=>classifyMarbleProfile(w,x+dx,y)))
-      .toEqual(['pillar','wall_front','wall_front','wall_front','wall_front']);
-    expect(classifyMarbleProfile(w,x+4,y+1)).toBe('pillar');
+  it('duas bases verticais em (1,1) e (3,1) viram F + T + T + meio-topo',()=>{
+    const w=create(),[x,y]=anchor(w);
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    expect(w.placeBlock(x,y-1,marble)).toBe(false); // célula já ocupada
+    expect(w.placeBlock(x,y-2,marble)).toBe(true);
+    expect([y,y-1,y-2,y-3].map(row=>classifyMarbleProfile(w,x,row)))
+      .toEqual(['pillar','pillar','pillar','wall_front']);
+    for(const row of [y,y-1,y-2,y-3]) expect(w.getObject(x,row)).toBe(marble);
+    expect(w.marbleV3PlacementBases()).toEqual([[x,y],[x,y-2]]);
+    expect(w.canPlace(x,y-3,marble)).toBe(false);
+    expect(w.canPlace(x,y-4,marble)).toBe(true);
+    expect(w.getObject(x,y-4)).toBe(Block.AIR);
   });
 
-  it('marca chunk e mantém nível 1 persistível para salvamentos',()=>{
-    const w=create();
-    const [x,y]=w.findSpawn();
-    expect(w.placeBlock(x+2,y,marble)).toBe(true);
-    const chunk=w.getChunk(toChunk(x+2),toChunk(y));
+  it('parede horizontal gera uma fila de faces e a segunda fila com meio-topos unidos',()=>{
+    const w=create(),[x,y]=anchor(w);
+    for(let dx=0;dx<5;dx++)expect(w.placeBlock(x+dx,y,marble)).toBe(true);
+    for(let dx=0;dx<5;dx++){
+      expect(classifyMarbleProfile(w,x+dx,y)).toBe('pillar');
+      expect(classifyMarbleProfile(w,x+dx,y-1)).toBe('wall_front');
+    }
+    const scene=sanctuary3DGeometryCells(w,{x0:x,x1:x+4,y0:y-1,y1:y});
+    expect(scene.blocks).toHaveLength(20);
+    expect(new Set(scene.blocks.map(b=>b.x+':'+b.y)).size).toBe(10);
+  });
+
+  it('quadrado 9×9 em planta fecha os quatro lados sem ocupar o interior',()=>{
+    const w=create(),[x,y]=anchor(w);
+    // Frente sul e fundos norte; colunas de duas células ligam as duas fileiras.
+    for(let dx=0;dx<=8;dx++){
+      expect(w.placeBlock(x+dx,y,marble)).toBe(true);
+      expect(w.placeBlock(x+dx,y-8,marble)).toBe(true);
+    }
+    for(const dy of [2,4,6])for(const xx of [x,x+8])
+      expect(w.placeBlock(xx,y-dy,marble)).toBe(true);
+    expect(w.marbleV3PlacementBases()).toHaveLength(24); // 9+9 paredes + 3+3 laterais
+    expect(w.getObject(x+4,y-4)).toBe(Block.AIR);
+    expect(w.isWalkable(x+4,y-4)).toBe(true);
+    expect(w.getObject(x,y-9)).toBe(marble);
+    expect(w.getObject(x+8,y-9)).toBe(marble);
+    expect(classifyMarbleProfile(w,x,y-9)).toBe('wall_front');
+    expect(classifyMarbleProfile(w,x+8,y-9)).toBe('wall_front');
+    // Os quatro cantos continuam conectados às paredes horizontais.
+    for(const xx of [x,x+8])for(const yy of [y,y-8])
+      expect(classifyMarbleProfile(w,xx,yy)).toBe('pillar');
+  });
+
+  it('quebra em qualquer metade libera ambas e preserva paredes vizinhas',()=>{
+    const w=create(),[x,y]=anchor(w);
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    expect(w.placeBlock(x+1,y,marble)).toBe(true);
+    expect(w.canBreak(x,y-1)).toBe(true);
+    expect(w.breakBlock(x,y-1)).toBe(marble);
+    expect(w.marbleV3AnchorAt(x,y)).toBeNull();
+    expect(w.getLevel(x,y,0)).toBe(Block.AIR);
+    expect(w.getLevel(x,y,1)).toBe(Block.AIR);
+    expect(w.getLevel(x,y-1,0)).toBe(Block.AIR);
+    expect(w.getLevel(x,y-1,1)).toBe(Block.AIR);
+    expect(w.getObject(x+1,y-1)).toBe(marble);
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    expect(w.breakBlock(x,y)).toBe(marble);
+    expect(w.marbleV3PlacementBases()).toEqual([[x+1,y]]);
+  });
+
+  it('recusa a base se a célula norte estiver ocupada ou fora do limite',()=>{
+    const w=create(),[x,y]=anchor(w);
+    expect(w.placeBlock(x,y-1,Block.STONE_CELESTIAL)).toBe(true);
+    expect(w.placeBlock(x,y,marble)).toBe(false);
+    expect(w.breakBlock(x,y-1)).toBe(Block.STONE_CELESTIAL);
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    const [sx]=w.findSpawn();
+    expect(w.placeBlock(sx+3,-16,marble)).toBe(false); // topo fora do mundo
+  });
+
+  it('só a base gravada modifica o chunk; o topo virtual existe depois de reconstruído',()=>{
+    const w=create(),[x,y]=anchor(w);
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    const chunk=w.getChunk(toChunk(x),toChunk(y));
     expect(chunk?.modified).toBe(true);
     expect(chunk?.version).toBeGreaterThan(1);
-    const xy={x:x+2,y};
-    expect(w.getLevel(xy.x,xy.y,0)).toBe(marble);
-    expect(w.getLevel(xy.x,xy.y,1)).toBe(marble);
+    expect(w.getLevel(x,y-1,1)).toBe(marble);
+    expect(w.marbleV3PlacementBases()).toEqual([[x,y]]);
   });
 
-  it('não permite duplicar quando há nível superior já ocupado ou outra base',()=>{
-    const w=create();
-    const [x,y]=w.findSpawn();
-    expect(w.placeBlock(x+2,y,Block.STONE_CELESTIAL)).toBe(true);
-    expect(w.placeBlock(x+2,y,marble)).toBe(false);
-    expect(w.placeBlock(x+3,y,Block.MARBLE_ORNATE)).toBe(true);
-    expect(w.placeBlock(x+3,y,marble)).toBe(false);
-    expect(w.getUpper(x+2,y)).toBe(Block.AIR);
+  it('painéis legados não são reinterpretados retroativamente como duas células',()=>{
+    const w=create(),[x,y]=anchor(w);
+    w.setObject(x,y,marble);
+    expect(w.getObject(x,y-1)).toBe(Block.AIR);
+    expect(w.marbleV3PlacementBases()).toHaveLength(0);
+    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
   });
 
-  it('outros materiais e Mundo principal continuam com a colocação original',()=>{
-    const w=create();
-    const [x,y]=w.findSpawn();
-    expect(w.placeBlock(x+2,y,Block.STONE_CELESTIAL)).toBe(true);
-    expect(w.stackHeight(x+2,y)).toBe(1);
-    expect(w.placeBlock(x+2,y,Block.STONE_CELESTIAL)).toBe(true);
-    expect(w.stackHeight(x+2,y)).toBe(2);
-
+  it('outros materiais e mundo principal mantêm a colocação original',()=>{
+    const w=create(),[x,y]=anchor(w);
+    expect(w.placeBlock(x,y,Block.STONE_CELESTIAL)).toBe(true);
+    expect(w.stackHeight(x,y)).toBe(1);
+    expect(w.placeBlock(x,y,Block.STONE_CELESTIAL)).toBe(true);
+    expect(w.stackHeight(x,y)).toBe(2);
     const main=new World(7);
     const [mx,my]=main.outsideGate();
     expect(main.placeBlock(mx,my,Block.STONE_BRICK)).toBe(true);
     expect(main.stackHeight(mx,my)).toBe(1);
-    expect(main.placeBlock(mx,my,Block.STONE_BRICK)).toBe(true);
-    expect(main.stackHeight(mx,my)).toBe(2);
-  });
-
-  it('salvamento antigo com 1 nível de mármore quebra sem modificar outros materiais',()=>{
-    const w=create();
-    const [x,y]=w.findSpawn();
-    w.setObject(x+2,y,marble); // simula save antigo anterior à colocação dupla
-    expect(w.getUpper(x+2,y)).toBe(Block.AIR);
-    expect(w.breakBlock(x+2,y)).toBe(marble);
-    expect(w.getObject(x+2,y)).toBe(Block.AIR);
   });
 });

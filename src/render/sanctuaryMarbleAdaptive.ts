@@ -16,11 +16,12 @@ export type MarbleShape = MarbleProfile | 'solid' | 'thin';
 type MarbleReader = {
   getLevel(x:number,y:number,level:number):BlockId;
   getMarblePlacementOrder?(x:number,y:number):number;
+  isMarbleV3Cell?(x:number,y:number):boolean;
 };
 export const MARBLE_TEST_ID: BlockId = Block.MARBLE_CELESTIAL;
 
 const same = (world:MarbleReader,x:number,y:number) =>
-  world.getLevel(x,y,0) === MARBLE_TEST_ID;
+  world.getLevel(x,y,0) === MARBLE_TEST_ID && !world.isMarbleV3Cell?.(x,y);
 
 /**
  * V2 — ligação vertical norte/sul (y crescente = abaixo na tela):
@@ -84,6 +85,11 @@ function oppositeEndCorner(
  * mantêm os alinhamentos e o conector em L quando necessário.
  */
 export function classifyMarbleProfile(world:MarbleReader,x:number,y:number):MarbleProfile {
+  // V3: células cheias desde a face inferior até o topo, onde só resta
+  // a metade frontal da última célula. Bases verticais a cada 2 linhas
+  // fundem naturalmente; horizontais compartilham as mesmas bordas.
+  if(world.isMarbleV3Cell?.(x,y))
+    return world.isMarbleV3Cell(x,y-1)?'pillar':'wall_front';
   if(!same(world,x,y))return 'pillar';
   let west=x,east=x;
   for(let i=0;i<80&&same(world,west-1,y);i++)west--;
