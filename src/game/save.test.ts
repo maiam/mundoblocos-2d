@@ -61,8 +61,8 @@ describe('Salvamento automático', () => {
     expect(world.placeBlock(x,y-2,Block.MARBLE_CELESTIAL)).toBe(true);
     expect(world.getObject(x,y-1)).toBe(Block.MARBLE_CELESTIAL);
     expect(world.getObject(x,y-3)).toBe(Block.MARBLE_CELESTIAL);
-    expect(classifyMarbleProfile(world,x,y)).toBe('pillar');
-    expect(classifyMarbleProfile(world,x,y-3)).toBe('wall_front');
+    expect(classifyMarbleProfile(world,x,y)).toBe('v3_face');
+    expect(classifyMarbleProfile(world,x,y-3)).toBe('v3_top_half');
 
     const player=new Player(sx+0.5,sy+0.6);
     const state={world,player,entities:new Entities(player,mulberry32(7)),
