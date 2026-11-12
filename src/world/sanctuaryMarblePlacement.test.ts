@@ -75,7 +75,7 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     }
     for(const dy of [2,4,6])for(const xx of [x,x+8])
       expect(w.placeBlock(xx,y-dy,marble)).toBe(true);
-    expect(w.marbleV3PlacementBases()).toHaveLength(22);
+    expect(w.marbleV3PlacementBases()).toHaveLength(24); // 9+9 paredes + 3+3 laterais
     expect(w.getObject(x+4,y-4)).toBe(Block.AIR);
     expect(w.isWalkable(x+4,y-4)).toBe(true);
     expect(w.getObject(x,y-9)).toBe(marble);
