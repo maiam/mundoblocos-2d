@@ -34,17 +34,40 @@ describe('Santuário — colocação de Mármore Celestial como peça de dois n�
     expect(w.placeBlock(x+2,y,marble)).toBe(true);
   });
 
-  it('duas células norte-sul tornam ambas pilares sem comandos adicionais',()=>{
+  it('V2: adicionar ABAIXO preenche só o novo painel, preservando a parede existente',()=>{
     const w=create();
-    const [x,y]=w.findSpawn();
-    expect(w.placeBlock(x+2,y,marble)).toBe(true);
-    expect(classifyMarbleProfile(w,x+2,y)).toBe('wall_front');
-    expect(w.placeBlock(x+2,y+1,marble)).toBe(true);
-    expect(classifyMarbleProfile(w,x+2,y)).toBe('pillar');
-    expect(classifyMarbleProfile(w,x+2,y+1)).toBe('pillar');
-    // Deletion must recompute affected neighbors in both height levels.
-    expect(w.breakBlock(x+2,y+1)).toBe(marble);
-    expect(classifyMarbleProfile(w,x+2,y)).toBe('wall_front');
+    const [sx,sy]=w.findSpawn();
+    const x=sx+2,y=sy-1;
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
+    expect(w.placeBlock(x,y+1,marble)).toBe(true);
+    expect(w.getMarblePlacementOrder(x,y+1)).toBeGreaterThan(w.getMarblePlacementOrder(x,y));
+    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
+    expect(classifyMarbleProfile(w,x,y+1)).toBe('pillar');
+    expect(w.breakBlock(x,y+1)).toBe(marble);
+    expect(w.getMarblePlacementOrder(x,y+1)).toBe(0);
+    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
+  });
+
+  it('V2: adicionar ACIMA completa o painel existente e cria pilar novo',()=>{
+    const w=create();
+    const [sx,sy]=w.findSpawn();
+    const x=sx+3,y=sy;
+    expect(w.placeBlock(x,y,marble)).toBe(true);
+    expect(w.placeBlock(x,y-1,marble)).toBe(true);
+    expect(classifyMarbleProfile(w,x,y-1)).toBe('pillar');
+    expect(classifyMarbleProfile(w,x,y)).toBe('pillar');
+    expect(w.breakBlock(x,y-1)).toBe(marble);
+    expect(classifyMarbleProfile(w,x,y)).toBe('wall_front');
+  });
+
+  it('V2: extensão contínua para baixo conserva somente a primeira meia parede',()=>{
+    const w=create();
+    const [sx,sy]=w.findSpawn();
+    const x=sx+4,y=sy-2;
+    for(const row of [y,y+1,y+2]) expect(w.placeBlock(x,row,marble)).toBe(true);
+    expect([y,y+1,y+2].map(row=>classifyMarbleProfile(w,x,row)))
+      .toEqual(['wall_front','pillar','pillar']);
   });
 
   it('progride de parede padrão para fundo, centro e frente ao conectar 3 pilares',()=>{
@@ -54,13 +77,25 @@ describe('Santuário — colocação de Mármore Celestial como peça de dois n�
     w.placeBlock(x,y-1,marble);
     w.placeBlock(x,y,marble);
     w.placeBlock(x,y+1,marble);
-    for(const [row,expected] of [[y-1,'wall_back'],[y,'wall_middle'],[y+1,'wall_front']] as const){
+    for(const [row,expected] of [[y-1,'wall_front'],[y,'wall_middle'],[y+1,'wall_front']] as const){
       expect(w.placeBlock(x+1,row,marble)).toBe(true);
       expect(classifyMarbleProfile(w,x+1,row)).toBe(expected);
       expect(w.getLevel(x+1,row,1)).toBe(marble);
       expect(w.breakBlock(x+1,row)).toBe(marble);
     }
     expect(classifyMarbleProfile(w,x,y)).toBe('pillar');
+  });
+
+  it('V2: faixa horizontal não é preenchida ao prolongar sua ponta para baixo',()=>{
+    const w=create();
+    const [sx,sy]=w.findSpawn();
+    const y=sy,x=sx+2;
+    for(let xx=x;xx<x+5;xx++)expect(w.placeBlock(xx,y,marble)).toBe(true);
+    expect(w.placeBlock(x,y-1,marble)).toBe(true); // acima: completa a ponta
+    expect(w.placeBlock(x+4,y+1,marble)).toBe(true); // abaixo: preserva a ponta
+    expect([0,1,2,3,4].map(dx=>classifyMarbleProfile(w,x+dx,y)))
+      .toEqual(['pillar','wall_front','wall_front','wall_front','wall_front']);
+    expect(classifyMarbleProfile(w,x+4,y+1)).toBe('pillar');
   });
 
   it('marca chunk e mantém nível 1 persistível para salvamentos',()=>{
