@@ -17,7 +17,7 @@ import {
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
 import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
-import { createWallProportionTest } from './sanctuaryWallProportionTest';
+import { createWallProportionTest, NEW_CHARACTER_SCALE } from './sanctuaryWallProportionTest';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -150,7 +150,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.goddess=new THREE.Mesh(billboardGeometry,spriteMaterial);
     // Na vista oblíqua o que é vertical mostra só K por unidade: a altura do plano é dividida por K para a personagem
     // aparecer com a proporção da arte (3,0 células de altura em tela).
-    this.goddess.scale.set(2.45,this.view==='oblique'?3.0/OBLIQUE_K:3.0,1);
+    // No teste da escala (ADR 0028) a Deusa já usa a escala nova (~1,75 m).
+    const charScale=options.wallTest?NEW_CHARACTER_SCALE:1;
+    this.goddess.scale.set(2.45*charScale,(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale,1);
     this.goddess.renderOrder=3;
 
     // Transparent 'through-wall' echo: if a wall is genuinely closer to the
@@ -181,7 +183,14 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     if(options.wallTest){
       // Teste de proporção das paredes (ADR 0027): paredes lisas em 3 alturas perto do ponto inicial; descartável.
       const [sx,sy]=world.findSpawn();
-      this.scene.add(createWallProportionTest({x:sx,z:sy}));
+      // Personagens de referência paradas: mesmo plano e textura animada da Deusa, só com altura de tela própria.
+      const makeReference=(screenHeight:number):THREE.Object3D=>{
+        const ref=new THREE.Mesh(billboardGeometry,spriteMaterial);
+        ref.scale.set(2.45*screenHeight/3.0,screenHeight/OBLIQUE_K,1);
+        ref.renderOrder=3;
+        return ref;
+      };
+      this.scene.add(createWallProportionTest({x:sx,z:sy},makeReference));
     }
 
     const selectGeometry=new THREE.PlaneGeometry(1,1);

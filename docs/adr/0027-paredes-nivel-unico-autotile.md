@@ -1,6 +1,6 @@
 # ADR 0027 — Paredes de nível único com altura fixa e autotile
 
-- **Status:** aceita (modelo); **altura visual pendente do teste de proporção** (`?mundo=santuario&paredes=teste`)
+- **Status:** aceita (modelo); altura definida na ADR 0028 (2 cubos = 2 m)
 - **Data:** 2026-11-12 (v0.93.11)
 - **Relaciona:** ADR 0026 (render 2.5D, vista oblíqua), ADR 0014 (interiores). **Aposenta** o mármore V2/V3 (PRs #92–#101).
 
@@ -12,8 +12,8 @@ repensar as paredes **já pensando no Mundo**. Referência visual: Core Keeper �
 altura, tampa escura em cima, personagem mais alta que a parede (a cabeça aparece por cima).
 
 ## Decisões
-- **Parede = bloco de nível único, sólido,** com **altura visual fixa** (frente ≈ 1 célula na tela; valor final sai do teste
-  de proporção: 0,75 / 1,0 / 1,25). Não empilha sobre outra parede nem usa dois níveis. Ocupa uma célula; sem degrau.
+- **Parede = bloco de nível único, sólido,** com altura de **2 cubos = 2 m** (ADR 0028: 2,0 células de frente na tela, K = 1).
+  Não empilha sobre outra parede nem usa dois níveis de bloco. Ocupa uma célula; sem degrau.
 - **Autotile por vizinhança** (função pura em `render/`, testável em Node):
   - **Frente:** aparece só onde o vizinho ao sul não é parede. Variantes: solta, ponta esquerda, meio, ponta direita.
   - **Tampa:** peça no topo da célula escolhida pelos 4 vizinhos (16 peças), com cantos internos/externos.
@@ -24,8 +24,8 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
 - **Mármore V2/V3 aposentado** depois da migração: remover `sanctuaryMarble*`, `sanctuaryV3Surfaces`, `adaptiveWalls`,
   `marblePlacements`/`marbleV3Bases` do mundo e do save (`SAVE_VERSION` sobe; blocos antigos viram parede do mesmo material ou
   somem, a decidir na migração) e `MAX_STACK` volta a valer só para cubos de terreno.
-- **Teste de proporção** (`render/sanctuaryWallProportionTest.ts`): três paredes lisas com a frente de 0,75/1,0/1,25 célula,
-  com régua de 1 célula no chão e a Deusa para andar ao redor. Descartável; sem lógica de jogo.
+- **Teste de escala** (`render/sanctuaryWallProportionTest.ts`, v0.93.12): compara a escala atual e a nova (ADR 0028) lado a lado,
+  com cubo, parede de 2 cubos, régua de 1 m e personagem de referência. Descartável; sem lógica de jogo.
 
 ## Fases
 - **W0** teste de proporção (v0.93.11) → o dono do produto escolhe a altura.

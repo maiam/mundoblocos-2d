@@ -2,9 +2,9 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
-## Paredes — teste de proporção (v0.93.11, ADR 0027)
+## Teste da escala do mundo (v0.93.12, ADR 0027/0028)
 
-`?mundo=santuario&paredes=teste` adiciona à cena três paredes lisas (`sanctuaryWallProportionTest.ts`) com a frente de 0,75, 1,0 e 1,25 célula na tela (altura no mundo = frente / `OBLIQUE_K`), uma régua de 1 célula no chão diante de cada uma e a altura escrita na frente. Só visual: não entra no `World` nem bloqueia a Deusa. Serve para escolher a altura das paredes antes de desenhar a arte.
+`?mundo=santuario&paredes=teste` adiciona à cena (`sanctuaryWallProportionTest.ts`) dois grupos lado a lado: **ATUAL** (cada cubo sobe `OBLIQUE_K` = 0,56 célula na tela; personagem de 2,2) e **NOVA** (1 célula = 1 m: cubo de frente quadrada, parede de 2 cubos = 2,0 células, personagem ≈ 1,75). Cada grupo traz um cubo, uma parede de 2 cubos, uma régua vertical de 1 m por segmento, réguas de 1 m no chão e uma personagem de referência parada (mesma textura animada da Deusa). A Deusa controlável usa a escala nova (`NEW_CHARACTER_SCALE`). Altura de tela = altura de mundo × K, então o teste emula K = 1 dentro da vista atual. Só visual: não entra no `World` nem bloqueia a Deusa.
 
 ## Vista oblíqua do Santuário — padrão (v0.93.10, ADR 0026)
 
