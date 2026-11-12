@@ -4,6 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Teste de bordas adaptativas, Deusa vertical e câmera superior — PR #92
+
+- **Implementado no Santuário Three.js:** câmera ortográfica superior ~80° (sem yaw isométrico), plano vertical de sprite/eco da Deusa, mármore celestial ID 82 com nova textura de topo ornamentada e 64 máscaras possíveis de borda exposta. Parede de fechamento traseira encaixa na meia profundidade de trás dos pilares; fechamento frontal encaixa à frente. Os demais 17 materiais preservam sua arte e geometria anteriores.
+- **Conferência visual pendente:** testar linha de 3/5 blocos, sala 3×3/5×5 oca, canto com borda de meio pilar, dois níveis, textura de topo sem emendas, silhueta da Deusa e desempenho no Safari iOS. Física continua por célula inteira; nenhuma porta, câmera ou bloco novo fora do escopo.
+
 ## Oclusão visual da Deusa no Three.js — PR #91
 
 - **Feito na branch:** separar sombra da textura vertical, alinhar o canvas ao ponto lógico dos pés, preservar o efeito de voo e usar silhueta etérea discreta quando uma parede está à frente. Regras físicas continuam as mesmas do PR #90.
