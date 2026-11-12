@@ -4,6 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Canto horizontal entre colunas de sentidos opostos — PR #95
+
+- **Implementado no Santuário:** Mármore Celestial reconhece faixa horizontal conectando uma coluna que sobe à esquerda/direita e outra que desce no lado oposto. Em vez de promover ambos os extremos a pilares e deslocar a parede para o centro, preserva o alinhamento da borda superior (`wall_back`) e usa um conector em L na extremidade que encontra a coluna de baixo. O conector tem uma parede de 50% de profundidade e uma língua estreita de 25% da largura; malha e UVs 3D são compartilhados pelos dois níveis.
+- **Conferir no Safari/desktop:** construir coluna para cima na ponta esquerda, linha horizontal e coluna para baixo na direita; repetir espelhado. Testar quebra de uma coluna, moldura do recorte, alinhamento superior e que sala oca 5×5 não mudou. Sem alteração de outros blocos, física ou câmera.
+
 ## Construção dupla e parede adaptativa do Mármore Celestial — PR #94 (11/11/2026)
 
 - **Implementado:** colocação/remoção em uma ação dos dois níveis do ID 82, apenas no Santuário. Uma única célula isolada aparece como parede frontal de meia profundidade, não como pilar. Vizinhos norte–sul transformam ambos em pilares. Paredes horizontais encaixam ao fundo, ao centro ou à frente das colunas verticais, propagando a âncora pela fileira. O nível superior herda sempre a geometria da base.
