@@ -14,6 +14,8 @@ const ROW: Record<Facing, number> = { down: 0, left: 1, right: 2, up: 3 };
 
 /** Altura desenhada da heroína em pixels de mundo (~2,2 células). */
 export const CHARACTER_H = TILE * 2.2;
+/** Altura de quadro das folhas novas do goblin (v0.93.6): o desenho ocupa ~95% do quadro, então 0,94 × 1,7 mantém o tamanho em tela de antes. */
+const GOBLIN_H = TILE * 1.6;
 
 /** Altura desenhada (px de mundo) de um ator: lida pela cena de escala (ADR 0022) e pelos testes. */
 export function actorHeight(kind: ActorKind): number {
@@ -156,9 +158,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'wolf-brown': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
   'wolf-gray': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
   'wolf-white': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
-  // Goblin: the seven supplied sheets share a 4×4 canonical directional layout
-  // (front, left, right, back). Height and foot anchor match in every state.
-  goblin: { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
+  // Goblin: 4×4 sheets in the canonical order (front, left, right, back). The v0.93.6 sheets (idle, walk, run, alert,
+  // hurt, death) fill ~95% of the frame with the feet on its base, so they use GOBLIN_H to keep the on-screen size of the
+  // earlier art; the attack sheet is still the older one (more padding) and keeps TILE * 1.7 until it is redone.
+  goblin: { cols: 4, rows: 4, height: GOBLIN_H, shadow: [0.38, 0.13],
     walkFps: 7, death: { cols: 4, rows: 4, ratio: 1 } },
   'goblin-idle': { cols: 4, rows: 4, height: TILE * 1.7, shadow: [0.38, 0.13],
     walkFps: 2, loopWhenIdle: true },

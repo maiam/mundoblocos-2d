@@ -35,7 +35,7 @@ primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de ver
 4. **Fase 4 — objetos do Mundo:** árvores e plantações, portas e cercas, cidade, água e transições, dungeon, interiores.
 5. **Fase 5 — piloto** `?render=3d` (dev): checklist de paridade (capturas 2D × 3D), sala multiplayer, celular/tablet,
    WebGL no iframe do Artifact. 6. **Fase 6 — virada:** 3D padrão, 2D de reserva por uma versão, depois remover a duplicação.
-- **Achado da linha de base (fora do render):** as 7 folhas dos goblins (`goblin-*.png`, ~5,4 MB) entram como PNG; o artefato do Mundo mostra início ≈ 8,2 MB (orçamento 3 MB). Falta passar por `optimize-assets.py` (WebP) e trocar os imports em `render/art/principal.ts`.
+- **Goblin — folha de ataque:** a de ataque ainda é a antiga (menos resolução e mais folga no quadro, `height` `TILE * 1.7`); refazer no mesmo padrão das outras seis (`assets-src/goblin/attack.png`) e então unificar `GOBLIN_H`.
 - Física sólida no Mundo só entra no piloto, atrás de flag (muda a jogabilidade).
 
 ## Goblins do Mundo principal — PR #96

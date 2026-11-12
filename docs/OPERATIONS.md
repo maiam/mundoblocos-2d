@@ -167,6 +167,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
 
+**Goblin** (v0.93.6; `assets-src/goblin/<estado>.png`, 4×4 transparente, ordem frente/esquerda/direita/costas, sem `--rows-map`): `python3 scripts/process-sprite.py assets-src/goblin/<estado>.png src/assets/goblin-<estado>.png --alpha --largest --frame-h 160` (no `alert` omita `--largest`, senão os "!" somem) → `optimize-assets.py` → imports `.webp` em `render/art/principal.ts`. Estados: idle, walk, run, alert, attack, hurt, death.
+
 **NPCs da cidade** (v0.92.0; `assets-src/npcs/<id>.png`, 4×4 transparente): `python3 scripts/process-sprite.py assets-src/npcs/<id>.png src/assets/npc-<id>.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2` (as folhas chegam com as linhas frente, costas, direita, esquerda) → `optimize-assets.py`. Retratos da caixa de conversa: `python3 scripts/make-portraits.py [id ...]` → `portrait-<id>.png` (192×192, cabeça do quadro de frente) → `optimize-assets.py`. O Black (`black.png`) é a composição da folha antiga do ferreiro. Moldura: `assets-src/dialogo-moldura.png` (enviada pelo dono do produto; o nome e o rosto de exemplo foram apagados e o recorte vai a 1280 px de largura em `src/assets/dialogo-moldura.webp`).
 
 **Hortaliças** (pranchas 8×2 transparentes em `assets-src/crops/<nome>.png`): `python3 scripts/extract-crops.py` →
