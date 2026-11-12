@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.3 — Santuário: face ancorada pela base inferior (12/11/2026)
+- **Bug visual reportado por foto e vídeo:** a v0.93.2 alinhava a borda superior das paredes ao topo lógico, mas a face tinha apenas ~85% da altura projetada de uma célula. A parte inferior terminava antes da borda inferior da célula clicada e paredes adjacentes pareciam desencontradas.
+- **Correção do desenho, sem mexer na física:** com câmera ortográfica a 67°, a altura *visual* do plano frontal passa a ser `tan(67°)` (aproximadamente 2,356 unidades Three.js) para preencher exatamente uma linha de 32×32 em projeção. Topos e meio-topos usam a mesma altura visual, e o deslocamento de profundidade passa a ser `alturaVisual/tan(67°) = 1 célula`. A base inferior coincide com a borda sul da célula clicada; a face termina em sua borda norte, encostando no meio-topo adjacente.
+- **Seleção e salvamento preservados:** realces seguem a altura visual, mas as duas células de ocupação, a colisão de dois níveis, o save v14, os outros materiais e o Mundo principal permanecem como antes. Testes conferem limites projetados da face e encaixe no meio-topo, além dos cenários existentes de colunas/horizontais/casa. Verificação visual no navegador ainda necessária.
+
+
 ## Orvalis v0.93.2 — Santuário: ancoragem visual na célula clicada (12/11/2026)
 - **Face e topo na posição correta:** a câmera a 67° projetava a face vertical de dois níveis e o meio-topo sobre células superiores às de construção, embora a ocupação lógica estivesse correta. O render Three.js agora compensa a elevação da superfície em Z: deslocamento visual = altura máxima (2) / tan(67°). A face aparece na célula-base e o meio-topo na célula imediatamente ao norte, sem alterar o World, os blocos persistidos nem a câmera.
 - **Seleção e demolição:** os realces de hover e quebra usam a mesma transformação para permanecer sobre a geometria visível; colunas, paredes horizontais, cantos e construções salvas continuam com a classificação V3 existente. Testes de projeção certificam que face e meio-topo não migram mais uma célula para cima. Necessária inspeção final no navegador real.

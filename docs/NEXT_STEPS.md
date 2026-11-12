@@ -6,6 +6,9 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 ## Mármore Celestial V3 — ocupação de duas células e construção de casas (12/11/2026)
 
+- **Correção v0.93.3 — base inferior da face:** foto/vídeo mostraram que o alinhamento anterior corrigia o topo mas não a parte de baixo. Corrigida a altura visual das superfícies para tan(67°) e deslocamento de profundidade de uma célula, com a face ocupando integralmente a linha clicada em projeção; preservados física, lógica e save v14.
+- **Conferência manual pendente:** reproduzir os quadros do vídeo com peças isoladas, horizontais desalinhadas e colunas; verificar rodapé da face, continuidade da moldura e picking, depois cantos e a casa 9×9. 
+
 - **Correção de ancoragem visual v0.93.2:** em câmera inclinada a 67°, a altura de dois níveis deslocava a face uma célula acima da base clicada. As superfícies Three.js V3 e realces são deslocados no eixo visual Z em 2/tan(67°), sem modificar as células lógicas nem o save. Testes da projeção garantem face na base e meio-topo na célula superior.
 - **Verificação manual pendente:** reproduzir a foto marcada em azul/vermelho e confirmar bordas, colisão, seleção e interação ao lado de construções antigas, depois testar a casa 9×9, encontros L/T, colunas opostas e Safari. A verificação automática não substitui essa observação na câmera real.
 

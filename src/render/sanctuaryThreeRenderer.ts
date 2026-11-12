@@ -15,7 +15,7 @@ import {
   marbleExposureKey, marbleTopExposure, type MarbleEdgeExposure,
 } from './sanctuaryMarbleAdaptive';
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
-import { sanctuaryCameraOffset } from './sanctuaryCameraRig';
+import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -424,7 +424,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       const v3=this.world.isMarbleV3Cell(cell.x,cell.y);
       // O realce acompanha a mesma projeção em tela do topo V3.
       const visualZ=cell.y+0.5+(v3?sanctuaryV3ScreenAnchorOffset():0);
-      this.highlight.position.set(cell.x+0.5,top+0.03,visualZ);
+      this.highlight.position.set(cell.x+0.5,(v3?sanctuaryV3VisualHeight():top)+0.03,visualZ);
       this.highlight.visible=true;
     }else this.highlight.visible=false;
     const breaking=opts.breaking;
@@ -432,7 +432,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       const h=this.world.stackHeight(breaking.x,breaking.y);
       const v3=this.world.isMarbleV3Cell(breaking.x,breaking.y);
       const visualZ=breaking.y+0.5+(v3?sanctuaryV3ScreenAnchorOffset():0);
-      this.breakHighlight.position.set(breaking.x+0.5,h+0.04,visualZ);
+      this.breakHighlight.position.set(breaking.x+0.5,(v3?sanctuaryV3VisualHeight():h)+0.04,visualZ);
       this.breakHighlight.material.opacity=Math.min(0.58,0.12+0.46*breaking.progress);
       this.breakHighlight.visible=true;
     }else this.breakHighlight.visible=false;
