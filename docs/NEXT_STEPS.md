@@ -35,7 +35,6 @@ primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de ver
 4. **Fase 4 — objetos do Mundo:** árvores e plantações, portas e cercas, cidade, água e transições, dungeon, interiores.
 5. **Fase 5 — piloto** `?render=3d` (dev): checklist de paridade (capturas 2D × 3D), sala multiplayer, celular/tablet,
    WebGL no iframe do Artifact. 6. **Fase 6 — virada:** 3D padrão, 2D de reserva por uma versão, depois remover a duplicação.
-- **Goblin — folha de ataque:** a de ataque ainda é a antiga (menos resolução e mais folga no quadro, `height` `TILE * 1.7`); refazer no mesmo padrão das outras seis (`assets-src/goblin/attack.png`) e então unificar `GOBLIN_H`.
 - Física sólida no Mundo só entra no piloto, atrás de flag (muda a jogabilidade).
 
 ## Goblins do Mundo principal — PR #96

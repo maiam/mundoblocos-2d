@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.8 — Goblins: folha de ataque nova (12/11/2026)
+- **Folha de ataque refeita** a partir da imagem enviada (`assets-src/goblin/attack.png`; `process-sprite.py --alpha --largest --frame-h 160` → `optimize-assets.py`, WebP). Agora as sete folhas do goblin seguem o mesmo padrão e todas usam `GOBLIN_H` (acaba o "pulo" de ~4 px ao atacar).
+- Só a ponta do cajado em um quadro (esquerda, 3º) encosta na borda do quadro (7 px de altura na folha de 160): invisível em jogo.
+- Sem mudança de jogo, protocolo ou save.
+
 ## Orvalis v0.93.7 — Goblins soltam 2 moedas de cobre (12/11/2026)
 - **Item novo:** Moeda de Cobre (`Item.COPPER_COIN`, `loot: true`, ícone `icon-copper-coin.webp` a partir da arte enviada pelo dono do produto, `assets-src/moeda-cobre.png`). Sem uso ainda (futuras lojas e trocas).
 - **Espólio do goblin:** `monsterDrops('goblin')` devolve sempre 2 moedas (`GOBLIN_COIN_DROP`, fixo, sem sorteio), no jogo e na sala (os dois usam `monsterDrops`). Substitui o `[]` provisório.
