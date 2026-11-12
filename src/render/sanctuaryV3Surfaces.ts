@@ -11,11 +11,7 @@ import * as THREE from 'three';
  * Os índices de material são os de BoxGeometry: topo +Y = 2,
  * face +Z = 4. A câmera oficial está ao sul (+Z), sem yaw.
  */
-export function createSanctuaryV3Surfaces(): {
-  face: THREE.PlaneGeometry;
-  top: THREE.PlaneGeometry;
-  halfTop: THREE.PlaneGeometry;
-} {
+export function createSanctuaryV3Surfaces() {
   const face=new THREE.PlaneGeometry(1,2);
   face.translate(0,0,-0.5);
   face.clearGroups();
