@@ -1,6 +1,6 @@
 # ADR 0027 — Paredes de nível único com altura fixa e autotile
 
-- **Status:** aceita (modelo); altura definida na ADR 0028 (2 cubos = 2 m)
+- **Status:** aceita (modelo); altura definida na ADR 0028 (≈ 1,2 célula)
 - **Data:** 2026-11-12 (v0.93.11)
 - **Relaciona:** ADR 0026 (render 2.5D, vista oblíqua), ADR 0014 (interiores). **Aposenta** o mármore V2/V3 (PRs #92–#101).
 
@@ -12,8 +12,10 @@ repensar as paredes **já pensando no Mundo**. Referência visual: Core Keeper �
 altura, tampa escura em cima, personagem mais alta que a parede (a cabeça aparece por cima).
 
 ## Decisões
-- **Parede = bloco de nível único, sólido,** com altura de **2 cubos = 2 m** (ADR 0028: 2,0 células de frente na tela, K = 1).
-  Não empilha sobre outra parede nem usa dois níveis de bloco. Ocupa uma célula; sem degrau.
+- **Parede = bloco de nível único, sólido,** com frente de **≈ 1,2 célula** na tela (ADR 0028: ≈ a altura do personagem, K = 1;
+  `WORLD_SCALE.wall`). Não empilha sobre outra parede nem usa dois níveis de bloco. Ocupa uma célula; sem degrau.
+- **Paredes do sul e laterais finas** (referência Core Keeper, a validar): só a faixa escura da tampa, para não esconder o cômodo;
+  a frente cheia aparece nas paredes cuja face dá para o interior (ao norte do cômodo).
 - **Autotile por vizinhança** (função pura em `render/`, testável em Node):
   - **Frente:** aparece só onde o vizinho ao sul não é parede. Variantes: solta, ponta esquerda, meio, ponta direita.
   - **Tampa:** peça no topo da célula escolhida pelos 4 vizinhos (16 peças), com cantos internos/externos.

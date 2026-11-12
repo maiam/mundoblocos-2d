@@ -166,6 +166,7 @@ export class Game {
     this.entities.onDamage = (x, y, hit, target) => this.renderer.addDamage(x, y, hit, target);
     this.lastHp = this.player.hp;
     this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
+    this.camera.setCellsTall(this.renderer.preferredCellsTall);
     this.actions = new ActionController({
       world: this.world, entities: this.entities, player: this.player, inventory: this.inventory,
       drops: this.drops, camera: this.camera, renderer: this.renderer,

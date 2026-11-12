@@ -18,6 +18,7 @@ import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornament
 import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
 import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
 import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
+import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -74,6 +75,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private contextLost=false;
   private readonly canvas:HTMLCanvasElement;
   private readonly view:SanctuaryView;
+  /** Células visíveis na vertical (a câmera usa; ADR 0028): a vista oblíqua mostra mais mundo que a antiga. */
+  readonly preferredCellsTall?:number;
   private obliqueHalf={w:8,h:5};
   private obliqueFocus={x:0,z:0};
   private lastWidth=0;
@@ -82,6 +85,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
 
   constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset}={}){
     this.view=options.view??'tilt';
+    if(this.view==='oblique')this.preferredCellsTall=SANCTUARY_CELLS_TALL;
     const profile=world.profile;
     if(profile.id!=='santuario'||!profile.bounds)
       throw new Error('SanctuaryThreeRenderer só pode renderizar o perfil Santuário.');
@@ -118,7 +122,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.wallGeometry=new THREE.BoxGeometry(1,1,0.5);
     // V3 desenha uma face OU um topo por célula; nenhuma peça cria
     // uma segunda face/cobertura escondida em outro nível.
-    const v3Surfaces=createSanctuaryV3Surfaces();
+    const v3Surfaces=createSanctuaryV3Surfaces(this.view==='oblique'?2*OBLIQUE_K:undefined);
     this.v3FaceGeometry=v3Surfaces.face;
     this.v3TopGeometry=v3Surfaces.top;
     this.v3HalfTopGeometry=v3Surfaces.halfTop;
@@ -151,7 +155,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     // Na vista oblíqua o que é vertical mostra só K por unidade: a altura do plano é dividida por K para a personagem
     // aparecer com a proporção da arte (3,0 células de altura em tela).
     // No teste da escala (ADR 0028) a Deusa usa a escala escolhida em `?escala=` (padrão: core).
-    const charScale=options.wallTest?characterScale(options.testScale??'core'):1;
+    // Fora do teste: na vista oblíqua a Deusa usa a escala do mundo (ADR 0028); na inclinada (reserva) segue a antiga.
+    const charScale=options.wallTest?characterScale(options.testScale??'core'):(this.view==='oblique'?CHARACTER_SCALE_FACTOR:1);
     this.goddess.scale.set(2.45*charScale,(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale,1);
     this.goddess.renderOrder=3;
 
@@ -224,7 +229,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       return t;
     };
     const top=toTexture(faces.top);
-    const front=toTexture(faces.front);
+    // Vista oblíqua (K = 1): a frente do cubo é quadrada, então usa a mesma imagem quadrada do topo, sem achatar.
+    const front=this.view==='oblique'?top:toTexture(faces.front);
     const ground=toTexture(faces.ground);
     const Mat=this.view==='oblique'?THREE.MeshBasicMaterial:THREE.MeshLambertMaterial;
     const topMaterial=new Mat({map:top,color:0xffffff});

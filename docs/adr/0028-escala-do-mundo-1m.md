@@ -1,45 +1,35 @@
-# ADR 0028 — Escala do mundo: 1 célula = 1 m
+# ADR 0028 — Escala do mundo: relações do Core Keeper (K = 1)
 
-- **Status:** **em revisão** (v0.93.13): a escala proposta abaixo foi comparada com a medida de uma cena do Core Keeper (seção "Referência medida"); valores finais saem do teste `?mundo=santuario&paredes=teste`
-- **Data:** 2026-11-12 (v0.93.12)
-- **Relaciona:** ADR 0026 (vista oblíqua), ADR 0027 (paredes). **Substitui** o `OBLIQUE_K = 18/32` do experimento da v0.93.9.
+- **Status:** aceita (v0.93.14). Substitui a proposta inicial de "1 célula = 1 m" (personagem 1,75; parede de 2 cubos), recusada
+  pelo dono do produto depois de comparar três escalas no teste `?mundo=santuario&paredes=teste`.
+- **Data:** 2026-11-12
+- **Relaciona:** ADR 0026 (vista oblíqua), ADR 0027 (paredes).
 
 ## Contexto
-A célula não tinha medida: a Deusa tinha 2,2 células de altura (2,2 m, se a célula for 1 m) e cada cubo subia só 0,56 célula na
-tela. Por isso o mundo parecia "sem proporção" (o personagem grande demais para casas, árvores e portas) e uma parede de dois
-cubos (1,125 célula na tela) ficaria mais baixa que o personagem. A referência (foto do dono do produto) mostra paredes com
-frente quase quadrada e a cabeça do personagem aparecendo por cima.
+A célula não tinha medida: a Deusa tinha 2,2 células de altura e cada cubo subia só 0,56 célula na tela, o que fazia o mundo
+parecer "sem proporção" (personagem grande demais para casas, árvores e portas). Uma cena do Core Keeper foi medida em pixels
+(captura de 1500×844; tile ≈ 50 px; ±10%, um único quadro): personagem ≈ 1,2 tile de altura × 0,7 de largura; **frente da parede
+≈ 1,15–1,2 (≈ a altura do personagem)**; vaca ≈ 1,2 × 1,0; cerca ≈ 0,65; árvore 3,5–4 de altura (copa ≈ 2,4); cena visível ≈ 30 × 17;
+tampa das paredes quase preta; paredes laterais e do sul finas; iluminação dinâmica com neblina escura.
 
 ## Decisões
-- **1 célula = 1 m**, em largura, profundidade e altura. Física, velocidades, colisão e dados do mundo seguem em células (não mudam).
-- **Vista oblíqua com K = 1,0:** cada metro de altura sobe 1,0 célula na tela. O cubo tem frente **quadrada**; sprites (visão
-  de frente, sem achatar) e geometria usam a mesma proporção, sem ajuste por objeto.
-- **Parede = 2 cubos = 2 m** (2,0 células de frente na tela), de nível único (ADR 0027); coincide com `MAX_STACK = 2`.
-- **Personagem ≈ 1,75 m** (≈ 0,8 × a escala antiga de 2,2). Alturas de referência (ajustáveis): goblin ~1,25; ovelha ~1,0;
-  vaca ~1,4; cavalo ~1,7; lobo ~0,8 (cernelha); aranha pequena ~0,4, grande ~0,9, Rainha ~2,5.
+- **Vale a relação, não "1 m".** Em células na tela, com a vista oblíqua de **K = 1** (um metro de altura = uma célula):
+  frente do cubo **1,0** (quadrada); frente da parede **≈ 1,2** (ADR 0027); personagem **≈ 1,2**.
+  Constantes em `render/worldScale.ts` (`WORLD_SCALE`).
+- **Espécies** (referência, ajustáveis olhando; em células): goblin ~1,0; vaca ~1,2 × 1,0; ovelha ~0,8; cavalo ~1,4; lobo ~0,7;
+  aranha pequena ~0,35, grande ~0,7, Rainha ~2,0; árvore 3,5–4 (copa ~2,4).
+- **Visão:** o render 3D pede ~14 células na vertical (`SANCTUARY_CELLS_TALL`, via `GameRenderer.preferredCellsTall` e
+  `Camera.setCellsTall`); o Core Keeper mostra ~17. O Mundo 2D segue com 10.
+- **Cubos empilhados:** os 2 níveis (`MAX_STACK = 2`) ficam por ora no Santuário; a parede é uma peça própria (ADR 0027).
+  Dois cubos empilhados (2,0) passam bem do personagem; a decisão de manter o empilhamento fica para depois.
 - **Santuário primeiro, Mundo na migração do render** (ADR 0026, Fase 4): o Mundo 2D mantém a escala antiga até migrar;
-  personagens, árvores, casas e interiores serão reproporcionados nessa migração.
-- **Arte:** a frente de cada cubo passa a ser **quadrada** (Material V2 128×128 sem achatar; 32 px por metro no jogo); a frente
-  da parede tem 2 cubos de altura (ex.: 128×256 por peça).
-
-## Referência medida: uma cena do Core Keeper (v0.93.13)
-Medida em pixels sobre uma captura de 1500×844 (tile ≈ 50 px; ±10%, um único quadro, sem garantia de valer para o jogo todo):
-personagem ≈ 1,2 tile de altura × 0,7 de largura; **frente da parede ≈ 1,15–1,2 tile (≈ a altura do personagem)**; vaca ≈ 1,2 × 1,0;
-cerca ≈ 0,65; árvore ≈ 3,5–4 de altura (copa ≈ 2,4); cena visível ≈ 30 × 17 tiles. Tampa das paredes quase preta; paredes
-laterais e do sul aparecem finas (só uma faixa escura), para não esconder o cômodo; iluminação dinâmica com neblina escura.
-Consequência: o que importa são as **relações**, não "1 m": personagem ≈ parede ≈ 1,2 célula; frente do cubo 1,0.
-
-Três escalas comparadas no teste (`atual`, `proposta`, `core`):
-
-| | Cubo (frente) | Parede (frente) | Personagem |
-|---|---|---|---|
-| Atual | 0,56 | 1,125 (2 cubos) | 2,2 |
-| Proposta (acima) | 1,0 | 2,0 (2 cubos) | 1,75 |
-| Core Keeper (medida) | 1,0 | ≈ 1,2 | ≈ 1,2 |
-
-A decisão final (e se a parede continua sendo "2 cubos") fica com o dono do produto depois de ver o teste.
+  personagens, árvores, casas e interiores são reproporcionados nessa migração.
+- **Arte:** a frente de cada cubo é **quadrada** (Material V2 128×128 sem achatar); a frente da parede tem ≈ 1,2 de altura.
+- **Referência a explorar** (NEXT_STEPS): paredes do sul/laterais finas para não esconder o cômodo; tampa escura; luz dinâmica
+  e neblina escura; bordas de terreno orgânicas; decoração pequena e densa.
 
 ## Consequências
-- Todo tamanho passa a ter leitura em metros; casas e portas (2 m) combinam com o personagem (1,75 m).
-- Frentes de bloco da arte atual (18/32) deixam de servir na vista nova: a arte de frente é refeita no padrão quadrado.
-- Até o Mundo migrar, existem duas escalas (2D antiga no Mundo; 1 m no Santuário 3D).
+- Mundo percebido como maior; casas e portas combinam com o personagem; a mesma unidade serve a geometria e aos sprites.
+- Frentes de bloco da arte antiga (18/32) deixam de servir na vista oblíqua: a arte de frente é refeita no padrão quadrado.
+  Enquanto isso o render usa a imagem do topo como frente (escurecida), sem achatar.
+- Até o Mundo migrar, existem duas escalas (2D antiga no Mundo; Core Keeper no Santuário 3D).

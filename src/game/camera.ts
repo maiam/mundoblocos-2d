@@ -25,10 +25,21 @@ export class Camera {
     this.updateZoom();
   }
 
-  /** Zoom base: ~10 células na vertical (personagem grande), limitado pela largura. */
+  /** Células visíveis na vertical no zoom base (10 no Mundo 2D; o renderer pode pedir mais: ADR 0028). */
+  private cellsTall = 10;
+
+  /** Muda quantas células cabem na vertical (só o render 3D do Santuário usa); sem pedido, mantém 10. */
+  setCellsTall(cells: number | undefined): void {
+    this.cellsTall = cells ?? 10;
+    this.updateZoom();
+  }
+
+  /** Zoom base: `cellsTall` células na vertical (10: personagem grande), limitado pela largura. */
   private updateZoom(): void {
-    const base = Math.min(this.height / (10 * TILE), this.width / (7 * TILE));
-    this.zoom = Math.min(3.4, Math.max(1.1, base)) * this.zoomMul;
+    const base = Math.min(this.height / (this.cellsTall * TILE), this.width / (7 * TILE));
+    // O piso de 1,1 vale para o padrão (10 células); com mais células o piso desce para o zoom pedido caber.
+    const floor = this.cellsTall === 10 ? 1.1 : 0.5;
+    this.zoom = Math.min(3.4, Math.max(floor, base)) * this.zoomMul;
   }
 
   zoomBy(factor: number): void {
