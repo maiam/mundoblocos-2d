@@ -1,8 +1,9 @@
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import { MAX_STACK } from '../config';
 import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape } from './adaptiveWalls';
+import { classifyMarbleProfile, MARBLE_TEST_ID, type MarbleShape } from './sanctuaryMarbleAdaptive';
 
-export type SanctuaryBlockShape = 'solid' | 'thin';
+export type SanctuaryBlockShape = MarbleShape;
 export interface SanctuaryBlockCell {x:number;y:number;level:number;id:BlockId;shape:SanctuaryBlockShape}
 export interface SanctuaryGroundCell {x:number;y:number;id:BlockId}
 
@@ -12,20 +13,26 @@ export function classifySanctuaryBlock(
   id: BlockId, x:number, y:number, level:number,
 ): SanctuaryBlockShape {
   if (level < 0 || level >= MAX_STACK) return 'solid';
-  return ADAPTIVE_WALL_BLOCKS.has(id)
-    ? horizontalWallShape(world,id,x,y,level)
-    : 'solid';
+  if(!ADAPTIVE_WALL_BLOCKS.has(id))return 'solid';
+  // Only the celestial-marble pilot uses the new front/back classification.
+  // The upper construction level inherits the base footprint, not its own
+  // neighbors, even when its texture belongs to a different stone material.
+  if((level===0 ? id : world.getLevel(x,y,0))===MARBLE_TEST_ID)
+    return classifyMarbleProfile(world,x,y)==='pillar'
+      ? 'solid' : classifyMarbleProfile(world,x,y);
+  return horizontalWallShape(world,id,x,y,level);
 }
 
 /** Thin wall has its FRONT face flush at y+1; rear half is removed. */
 export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'>): {
   x:number;y:number;z:number;width:number;height:number;depth:number;
 } {
-  const thin = cell.shape === 'thin';
+  const front=cell.shape==='thin'||cell.shape==='wall_front';
+  const back=cell.shape==='wall_back';
   return {
-    x: cell.x + 0.5, y: cell.level + 0.5,
-    z: cell.y + (thin ? 0.75 : 0.5),
-    width: 1, height: 1, depth: thin ? 0.5 : 1,
+    x:cell.x+0.5,y:cell.level+0.5,
+    z:cell.y+(front?0.75:back?0.25:0.5),
+    width:1,height:1,depth:front||back?0.5:1,
   };
 }
 
