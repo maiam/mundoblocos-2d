@@ -40,6 +40,8 @@ export const MONSTER_STATS: Record<MonsterKind, { hp: number; attack: number; de
   'wolf-brown': { hp: 35, attack: 11, defense: 1 },
   'wolf-gray': { hp: 45, attack: 13, defense: 2 },
   'wolf-white': { hp: 55, attack: 15, defense: 3 },
+  /** Goblin comum: vida 60, ataque nominal 15, mesma fórmula dos lobos. */
+  goblin: { hp: 60, attack: 15, defense: 2 },
 };
 
 /** Variação do dano (±10%), chance e multiplicador de crítico. */
