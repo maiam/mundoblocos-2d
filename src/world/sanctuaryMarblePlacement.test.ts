@@ -93,7 +93,8 @@ describe('Santuário V3 — base do mármore ocupa duas células em planta e doi
     const scene=sanctuary3DGeometryCells(w,{x0:x,x1:x+8,y0:y-9,y1:y});
     expect(scene.blocks).toHaveLength(48); // 36 células nas horizontais + 12 nas laterais
     expect(scene.blocks.filter(b=>b.shape==='v3_face')).toHaveLength(16);
-    expect(scene.blocks.filter(b=>b.shape==='v3_top_half')).toHaveLength(9);
+    expect(scene.blocks.filter(b=>b.shape==='v3_top_half')).toHaveLength(16); // 7 meios-topos frontais internos + 9 dos fundos
+    expect(scene.blocks.filter(b=>b.shape==='v3_top')).toHaveLength(16);
   });
 
   it('quebra em qualquer metade libera ambas e preserva paredes vizinhas',()=>{
