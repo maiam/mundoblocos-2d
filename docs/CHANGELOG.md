@@ -1,5 +1,8 @@
 # Changelog
 
+## Documentação — ADR 0026: render 2.5D em WebGL (12/11/2026, sem versão)
+- Decisão do dono do produto: referência Core Keeper; arte 2D como fonte, geometria só nas paredes, atores em billboards, física sólida, iluminação primeiro, chão por chunk, Canvas 2D como reserva até a paridade. Plano em 6 fases em `NEXT_STEPS.md`. Nenhum código alterado.
+
 ## Orvalis v0.93.4 — Aviso do 3º nível descartado e pacote de rede sincronizado (12/11/2026)
 - **Descarte deixa de ser silencioso:** `World.restoreChunk` passa a devolver quantos blocos do 3º nível (aposentado com `MAX_STACK = 2`) foram descartados. `applySave` repassa o total (`droppedBlocks`) e o `Game` mostra um aviso ao abrir um mundo salvo antigo. Salvamento e regras de nível não mudam (`SAVE_VERSION` 14).
 - **Sala do servidor:** `Room.restore` guarda o total em `droppedOnRestore` e marca a sala como suja quando algo foi descartado, para a próxima gravação já gravar a sala limpa; o servidor registra o número no log.

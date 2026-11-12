@@ -21,6 +21,22 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 - **Implementação:** ao construir acima, completar a parede existente e acrescentar pilar inteiro; ao construir abaixo, preencher apenas o bloco novo, sem converter a parede original. Ordem das colocações persistida no save v13; saves antigos seguem a classificação legada.
 - **Conferência visual pendente:** testar extensão ascendente e descendente em uma linha vertical e nas pontas de uma faixa horizontal; comparar ligações opostas espelhadas, L, T, salas 3×3/5×5, bordas ornamentadas, remoção e recarga do save. Validar também seleção/colisão com a câmera a 67° no Safari e desktop.
 
+## Migração do render para 2.5D em WebGL — ADR 0026 (decidida em 12/11/2026)
+
+Referência: Core Keeper. Arte 2D, geometria só nas paredes, atores em billboards, parede sólida, **iluminação dinâmica
+primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de versão. O Canvas 2D fica até a paridade.
+1. **Fase 1 — consolidar o Santuário:** validação visual (Safari, celular, tablet); perda de contexto WebGL e `dispose`;
+   tipar o renderer (hoje `any`); linha de base (frame time, draw calls, memória) e tetos de JS/arte; contrato
+   `GameRenderer` completo (`RenderOptions`) com testes; separar o núcleo genérico (`render/three/`) do mármore (`sanctuary*`).
+2. **Fase 2 — núcleo por chunk:** malha por chunk com reconstrução incremental, corte pela câmera, orçamento por quadro,
+   registro de materiais do atlas V2; chão = `CanvasTexture` do `ChunkRenderer`.
+3. **Fase 3 — atores, itens e efeitos:** luzes (tochas, fogueira, brilhos) e escuridão (dungeon/noite) com teto de luzes e
+   modo reduzido; atores/itens em planos verticais com sombra; dano, minimapa e HUD em camada 2D; partículas e clima.
+4. **Fase 4 — objetos do Mundo:** árvores e plantações, portas e cercas, cidade, água e transições, dungeon, interiores.
+5. **Fase 5 — piloto** `?render=3d` (dev): checklist de paridade (capturas 2D × 3D), sala multiplayer, celular/tablet,
+   WebGL no iframe do Artifact. 6. **Fase 6 — virada:** 3D padrão, 2D de reserva por uma versão, depois remover a duplicação.
+- Física sólida no Mundo só entra no piloto, atrás de flag (muda a jogabilidade).
+
 ## Goblins do Mundo principal — PR #96
 
 - **Implementação:** grupos de sete goblins por fogueira (`Block.CAMPFIRE`) em quatro acampamentos determinísticos, fora da cidade e do covil. HP 60, ataque-base 15, percepção de 3 células, IA e respawn de monstros já existentes; usa pranchas 4×4 com caminhada, repouso, corrida, alerta, ataque, dano e morte. Multiplayer autoritativo transmite os estados visuais e o salvamento preserva os monstros da dungeon, reconstruindo grupos externos pela seed.
