@@ -1088,11 +1088,14 @@ export class World {
 
   /**
    * Restaura um chunk salvo (substitui o gerado pela seed) e reconstrói as plantações dele.
-   * Camadas a mais que o motor atual são ignoradas; a menos ficam vazias.
+   * Camadas a mais que o motor atual (o 3º nível, aposentado com `MAX_STACK = 2`) são descartadas; a menos ficam
+   * vazias. Devolve quantos blocos foram descartados, para quem restaura avisar (jogo) ou registrar (servidor).
    */
-  restoreChunk(cx: number, cy: number, ground: Uint8Array, levels: Uint8Array[]): void {
+  restoreChunk(cx: number, cy: number, ground: Uint8Array, levels: Uint8Array[]): number {
     const c = new Chunk(cx, cy);
     c.ground.set(ground.subarray(0, c.ground.length));
+    let dropped = 0;
+    for (let i = c.levels.length; i < levels.length; i++) for (const b of levels[i]) if (b !== Block.AIR) dropped++;
     levels.forEach((l, i) => { if (i < c.levels.length) c.levels[i].set(l.subarray(0, c.levels[i].length)); });
     // Blocos que saíram do jogo (antigas paredes) em mundos e salas salvos viram vazio.
     for (const l of c.levels) for (let i = 0; i < l.length; i++) l[i] = isRemovedBlock(l[i]) ? Block.AIR : adultOfStage(l[i]); // + estágios de árvore aposentados
@@ -1123,5 +1126,6 @@ export class World {
         else this.holeAge.delete(key);
       }
     }
+    return dropped;
   }
 }

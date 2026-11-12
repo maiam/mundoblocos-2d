@@ -24,6 +24,7 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 ## Goblins do Mundo principal — PR #96
 
 - **Implementação:** grupos de sete goblins por fogueira (`Block.CAMPFIRE`) em quatro acampamentos determinísticos, fora da cidade e do covil. HP 60, ataque-base 15, percepção de 3 células, IA e respawn de monstros já existentes; usa pranchas 4×4 com caminhada, repouso, corrida, alerta, ataque, dano e morte. Multiplayer autoritativo transmite os estados visuais e o salvamento preserva os monstros da dungeon, reconstruindo grupos externos pela seed.
+- **Servidor:** pacote de rede sincronizado na v0.93.4 (orvalis-servidor 0.27.1 com goblins e limite de 2 níveis); conferir `/saude` após o deploy.
 - **Validação visual pendente:** testar aparecimento no Mundo principal, animações por direção e estado, sete goblins no anel, fogueira como objeto real, ataque apenas quando a 3 células, dano, morte e retorno, celular e sala multiplayer. Espólios específicos de goblin continuam para definição futura.
 
 ## Canto horizontal entre colunas de sentidos opostos — PR #95

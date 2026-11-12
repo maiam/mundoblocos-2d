@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.4 — Aviso do 3º nível descartado e pacote de rede sincronizado (12/11/2026)
+- **Descarte deixa de ser silencioso:** `World.restoreChunk` passa a devolver quantos blocos do 3º nível (aposentado com `MAX_STACK = 2`) foram descartados. `applySave` repassa o total (`droppedBlocks`) e o `Game` mostra um aviso ao abrir um mundo salvo antigo. Salvamento e regras de nível não mudam (`SAVE_VERSION` 14).
+- **Sala do servidor:** `Room.restore` guarda o total em `droppedOnRestore` e marca a sala como suja quando algo foi descartado, para a próxima gravação já gravar a sala limpa; o servidor registra o número no log.
+- **Servidor:** pacote de rede regenerado (`build:net` + `sync-net`) com goblins (PR #96), `MobState.v` e o limite de 2 níveis. `PROTOCOL_VERSION` continua 20 (campo novo opcional, compatível).
+- Testes: `restoreDropped.test.ts` (conta/descarta o 3º nível; save sem 3º nível não descarta).
+
 ## Orvalis v0.93.3 — Santuário: face ancorada pela base inferior (12/11/2026)
 - **Bug visual reportado por foto e vídeo:** a v0.93.2 alinhava a borda superior das paredes ao topo lógico, mas a face tinha apenas ~85% da altura projetada de uma célula. A parte inferior terminava antes da borda inferior da célula clicada e paredes adjacentes pareciam desencontradas.
 - **Correção do desenho, sem mexer na física:** com câmera ortográfica a 67°, a altura *visual* do plano frontal passa a ser `tan(67°)` (aproximadamente 2,356 unidades Three.js) para preencher exatamente uma linha de 32×32 em projeção. Topos e meio-topos usam a mesma altura visual, e o deslocamento de profundidade passa a ser `alturaVisual/tan(67°) = 1 célula`. A base inferior coincide com a borda sul da célula clicada; a face termina em sua borda norte, encostando no meio-topo adjacente.
