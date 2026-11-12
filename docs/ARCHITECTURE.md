@@ -11,6 +11,10 @@ Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node �
 
 `Game` continua orquestrando `World`, personagem, controles, ações, hotbar, HUD e persistência. Sua opção `rendererFactory` pode substituir somente o renderer visual. O perfil **Santuário** carrega sob demanda `render/sanctuaryThreeRenderer.ts` (Three.js 0.187), com `render/sanctuaryThreeLayout.ts` para forma procedural de cubo/painel, instanciamento dos 18 tipos de bloco, câmera ortográfica superior, raycasting e Deusa animada em sprite 2D. O perfil **principal** mantém `render/renderer.ts` Canvas 2D intacto, sem carregar Three.js, inclusive no artefato fixo `VITE_WORLD=principal`. Sem WebGL, ou com `?render=2d`, o Santuário usa o renderer Canvas 2D antigo. O `World` continua a fonte de verdade para chunks, colisão, colocação, remoção e salvamento; o Santuário oficial não recebe as cenas experimentais de 5 níveis e primeira pessoa.
 
+## Experimento de bordas de mármore no Santuário Three.js (PR #92)
+
+`render/sanctuaryCameraRig.ts` define a câmera ortográfica de ~80° (sem rotação horizontal); `sanctuaryThreeRenderer.ts` exibe a Deusa como plano vertical com âncora no solo, evitando inclinação pelo pitch. **Só** `Block.MARBLE_CELESTIAL=82` usa a nova foto de topo ornamentado `src/assets/santuario-marmore-celestial-topo-ornamentado.jpg`; o material lateral original permanece em todas as faces verticais. `render/sanctuaryMarbleAdaptive.ts` avalia a base de salas ocas para alinhar paredes horizontais na borda posterior (`wall_back`) ou anterior (`wall_front`) do pilar, deriva seis segmentos de exposição (inclusive meia lateral) e compõe em Canvas texturas com adornos apenas nas bordas livres. As variantes de topo são cacheadas (máximo 64 máscaras), aplicadas a instâncias do mesmo material. O nível 1 da pilha herda a forma do nível 0. Não altera renderização/persistência/colisão do Mundo principal.
+
 ## Estrutura
 ```
 CLAUDE.md / AGENTS.md          instruções para agentes de IA
