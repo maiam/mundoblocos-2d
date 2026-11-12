@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.10 — Vista oblíqua é o padrão do Santuário (12/11/2026)
+- **Decisão do dono do produto:** aprovada a vista oblíqua (v0.93.9). `main.ts` passa a usá-la por padrão; `?vista=inclinada` volta à câmera inclinada a 67° (reserva, sem as correções de cor e de personagem).
+- **Mármore (V2/V3)** segue como teste provisório: legível na oblíqua, mas não será refinado; as paredes serão redesenhadas (próxima etapa, ver NEXT_STEPS).
+- Sem mudança de jogo, protocolo ou save.
+
 ## Orvalis v0.93.9 — Experimento: vista oblíqua do Santuário (`?vista=obliqua`) (12/11/2026)
 - **Teste da recomendação da ADR 0026:** `SanctuaryThreeRenderer` ganha a vista `oblique` (opção do construtor; `main.ts` lê `?vista=obliqua`). A câmera olha reto para baixo (chão em quadrados perfeitos) e a altura vira deslocamento fixo na tela de `OBLIQUE_K = CUBE_FRONT / TILE` (18/32) por nível, a proporção da arte 3/4. O padrão continua a câmera inclinada a 67°.
 - **Matemática pura e testada** em `render/sanctuaryObliqueView.ts` (+ testes): matriz de projeção montada à mão (x, y com cisalhamento, profundidade que põe o sul e o alto na frente), raio do cursor para a seleção (sobe 1 de altura a cada K de célula para o sul).
