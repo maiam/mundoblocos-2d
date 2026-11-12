@@ -1,4 +1,4 @@
-import { isWolf, type MonsterKind } from '../world/dungeon';
+import { isOpenWorldMonster, type MonsterKind } from '../world/dungeon';
 import { MAX_STACK } from '../config';
 import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
@@ -98,8 +98,8 @@ export function captureSave(s: GameState): SaveData {
     })),
     dungeon: s.world.dungeon
       ? {
-        monsters: s.entities.monsters.filter((m) => !isWolf(m.kind)).map((m) => ({ kind: m.kind, x: m.x, y: m.y, homeX: m.homeX, homeY: m.homeY, hp: m.hp })),
-        respawns: s.entities.respawns.filter((r) => !isWolf(r.kind)).map((r) => ({ kind: r.kind, x: r.x, y: r.y, timer: r.timer })),
+        monsters: s.entities.monsters.filter((m) => !isOpenWorldMonster(m.kind)).map((m) => ({ kind: m.kind, x: m.x, y: m.y, homeX: m.homeX, homeY: m.homeY, hp: m.hp })),
+        respawns: s.entities.respawns.filter((r) => !isOpenWorldMonster(r.kind)).map((r) => ({ kind: r.kind, x: r.x, y: r.y, timer: r.timer })),
       }
       : null,
   };
@@ -209,13 +209,13 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   if (dg && d.dungeon) {
     const bounds = (k: MonsterKind) => (k === 'spider-boss' ? dg.bossRoom : dg.interior);
     // Os lobos não vão para o salvamento (voltam todos, pela seed, ao carregar): só as aranhas do covil são trocadas.
-    const wolves = e.monsters.filter((m) => isWolf(m.kind));
-    e.monsters.splice(0, e.monsters.length, ...wolves, ...d.dungeon.monsters.map((m) => {
+    const openMonsters = e.monsters.filter((m) => isOpenWorldMonster(m.kind));
+    e.monsters.splice(0, e.monsters.length, ...openMonsters, ...d.dungeon.monsters.filter((m) => !isOpenWorldMonster(m.kind)).map((m) => {
       const mon = new Monster(m.kind, m.x, m.y, bounds(m.kind), rand, m.homeX, m.homeY);
       mon.hp = Math.min(mon.maxHp, Math.max(1, m.hp));
       return mon;
     }));
-    e.respawns.splice(0, e.respawns.length, ...e.respawns.filter((r) => isWolf(r.kind)), ...d.dungeon.respawns.map((r) => ({ ...r, bounds: bounds(r.kind) })));
+    e.respawns.splice(0, e.respawns.length, ...e.respawns.filter((r) => isOpenWorldMonster(r.kind)), ...d.dungeon.respawns.filter((r) => !isOpenWorldMonster(r.kind)).map((r) => ({ ...r, bounds: bounds(r.kind) })));
   }
   e.settleAll(s.world);
   // Salvamento de antes da correção da tenda: heroína presa dentro de um objeto → vai para a célula livre mais perto.
