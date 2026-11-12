@@ -4,6 +4,12 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Construção dupla e parede adaptativa do Mármore Celestial — PR #94 (11/11/2026)
+
+- **Implementado:** colocação/remoção em uma ação dos dois níveis do ID 82, apenas no Santuário. Uma única célula isolada aparece como parede frontal de meia profundidade, não como pilar. Vizinhos norte–sul transformam ambos em pilares. Paredes horizontais encaixam ao fundo, ao centro ou à frente das colunas verticais, propagando a âncora pela fileira. O nível superior herda sempre a geometria da base.
+- **Topos:** moldura dourada do mármore pilotada por máscara de 10 partes (norte/sul, quatro quartos laterais), permitindo ocultar somente a porção conectada ao pilar, inclusive o meio da lateral. As texturas verticais permanecem originais.
+- **Verificação manual pendente:** testar a construção de uma linha, uma coluna de três células, três ramificações horizontais na coluna, remoção que devolve pilares a paredes, segundo nível, encontros de bordas, cliques perto de paredes e desempenho no Safari. Câmera segue em 67°; mundo principal não muda.
+
 ## Teste de câmera do Santuário — 67° (PR #93)
 
 - **Alteração isolada:** câmera ortográfica superior ajustada de 80° para 67°; sem alteração da geometria, topologia de bordas do Mármore Celestial, plano vertical da Deusa ou Mundo principal.
