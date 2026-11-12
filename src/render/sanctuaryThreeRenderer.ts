@@ -17,7 +17,7 @@ import {
 import marbleBorderTop from '../assets/santuario-marmore-celestial-topo-ornamentado.jpg';
 import { sanctuaryCameraOffset, sanctuaryV3VisualHeight } from './sanctuaryCameraRig';
 import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
-import { createWallProportionTest, NEW_CHARACTER_SCALE } from './sanctuaryWallProportionTest';
+import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -80,7 +80,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private lastHeight=0;
   private lastPixelRatio=0;
 
-  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean}={}){
+  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset}={}){
     this.view=options.view??'tilt';
     const profile=world.profile;
     if(profile.id!=='santuario'||!profile.bounds)
@@ -150,8 +150,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.goddess=new THREE.Mesh(billboardGeometry,spriteMaterial);
     // Na vista oblíqua o que é vertical mostra só K por unidade: a altura do plano é dividida por K para a personagem
     // aparecer com a proporção da arte (3,0 células de altura em tela).
-    // No teste da escala (ADR 0028) a Deusa já usa a escala nova (~1,75 m).
-    const charScale=options.wallTest?NEW_CHARACTER_SCALE:1;
+    // No teste da escala (ADR 0028) a Deusa usa a escala escolhida em `?escala=` (padrão: core).
+    const charScale=options.wallTest?characterScale(options.testScale??'core'):1;
     this.goddess.scale.set(2.45*charScale,(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale,1);
     this.goddess.renderOrder=3;
 

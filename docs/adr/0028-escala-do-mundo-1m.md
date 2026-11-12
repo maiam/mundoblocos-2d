@@ -1,6 +1,6 @@
 # ADR 0028 — Escala do mundo: 1 célula = 1 m
 
-- **Status:** aceita (direção); valores finais por espécie conferidos no teste `?mundo=santuario&paredes=teste`
+- **Status:** **em revisão** (v0.93.13): a escala proposta abaixo foi comparada com a medida de uma cena do Core Keeper (seção "Referência medida"); valores finais saem do teste `?mundo=santuario&paredes=teste`
 - **Data:** 2026-11-12 (v0.93.12)
 - **Relaciona:** ADR 0026 (vista oblíqua), ADR 0027 (paredes). **Substitui** o `OBLIQUE_K = 18/32` do experimento da v0.93.9.
 
@@ -21,6 +21,23 @@ frente quase quadrada e a cabeça do personagem aparecendo por cima.
   personagens, árvores, casas e interiores serão reproporcionados nessa migração.
 - **Arte:** a frente de cada cubo passa a ser **quadrada** (Material V2 128×128 sem achatar; 32 px por metro no jogo); a frente
   da parede tem 2 cubos de altura (ex.: 128×256 por peça).
+
+## Referência medida: uma cena do Core Keeper (v0.93.13)
+Medida em pixels sobre uma captura de 1500×844 (tile ≈ 50 px; ±10%, um único quadro, sem garantia de valer para o jogo todo):
+personagem ≈ 1,2 tile de altura × 0,7 de largura; **frente da parede ≈ 1,15–1,2 tile (≈ a altura do personagem)**; vaca ≈ 1,2 × 1,0;
+cerca ≈ 0,65; árvore ≈ 3,5–4 de altura (copa ≈ 2,4); cena visível ≈ 30 × 17 tiles. Tampa das paredes quase preta; paredes
+laterais e do sul aparecem finas (só uma faixa escura), para não esconder o cômodo; iluminação dinâmica com neblina escura.
+Consequência: o que importa são as **relações**, não "1 m": personagem ≈ parede ≈ 1,2 célula; frente do cubo 1,0.
+
+Três escalas comparadas no teste (`atual`, `proposta`, `core`):
+
+| | Cubo (frente) | Parede (frente) | Personagem |
+|---|---|---|---|
+| Atual | 0,56 | 1,125 (2 cubos) | 2,2 |
+| Proposta (acima) | 1,0 | 2,0 (2 cubos) | 1,75 |
+| Core Keeper (medida) | 1,0 | ≈ 1,2 | ≈ 1,2 |
+
+A decisão final (e se a parede continua sendo "2 cubos") fica com o dono do produto depois de ver o teste.
 
 ## Consequências
 - Todo tamanho passa a ter leitura em metros; casas e portas (2 m) combinam com o personagem (1,75 m).
