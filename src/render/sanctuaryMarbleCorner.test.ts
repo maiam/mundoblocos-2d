@@ -138,19 +138,21 @@ describe('Mármore Celestial — canto adaptativo entre colunas opostas',()=>{
     expect(classifyMarbleProfile(rm,2,4)).toBe('wall_front');
   });
 
-  it('World real: um único clique cria dois níveis e a mudança das conexões afeta ambos',()=>{
+  it('World V3: extensões opostas mantêm a face inferior e o meio-topo superior',()=>{
     const w=new World(77,WORLD_PROFILES.santuario);
     const [sx,sy]=w.findSpawn();
-    const left=sx+2, right=sx+6, row=sy;
-    for(let x=left;x<=right;x++)
-      expect(w.placeBlock(x,row,id)).toBe(true);
-    expect(w.placeBlock(left,row-1,id)).toBe(true);
-    expect(w.placeBlock(right,row+1,id)).toBe(true);
-    // V2: direita foi ampliada para baixo; a parede de cima fica fina.
-    expect(classifySanctuaryBlock(w,id,right,row,0)).toBe('wall_front');
-    expect(classifySanctuaryBlock(w,id,right,row,1)).toBe('wall_front');
-    expect(w.breakBlock(right,row+1)).toBe(id);
-    expect(classifySanctuaryBlock(w,id,right,row,0)).toBe('wall_front');
+    const left=sx+2,right=sx+6,row=sy+2;
+    for(let x=left;x<=right;x++)expect(w.placeBlock(x,row,id)).toBe(true);
+    expect(w.placeBlock(left,row-2,id)).toBe(true);
+    expect(w.placeBlock(right,row+2,id)).toBe(true);
+    // Cada base ocupa duas células: não há sobreposição mesmo nos cantos.
     expect(classifySanctuaryBlock(w,id,left,row,0)).toBe('solid');
+    expect(classifySanctuaryBlock(w,id,right,row,1)).toBe('solid');
+    expect(classifySanctuaryBlock(w,id,left,row-3,0)).toBe('wall_front');
+    expect(classifySanctuaryBlock(w,id,right,row-1,0)).toBe('wall_front');
+    expect(w.breakBlock(right,row+1)).toBe(id); // célula projetada da nova base
+    expect(w.getObject(right,row+2)).toBe(Block.AIR);
+    expect(w.getObject(right,row)).toBe(id);
+    expect(classifySanctuaryBlock(w,id,right,row-1,0)).toBe('wall_front');
   });
 });
