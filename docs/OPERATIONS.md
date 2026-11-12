@@ -167,6 +167,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
 
+**Arte das paredes** (W1, ADR 0027; ainda sem pipeline de build — vem na W3): contrato e gabarito em `assets-src/paredes/` (`CONTRATO.md`, `gabarito.png`; `python3 scripts/make-wall-guide.py` regera o gabarito a partir das medidas do código). Entrega por material em `assets-src/paredes/<material>/`: `front_mid`, `front_end_left`, `front_end_right`, `front_post`, `cap_00`…`cap_15` (PNG RGBA, 128 px por célula).
+
 **Ícone de item** (v0.93.7): `python3 scripts/make-item-icon.py assets-src/<item>.png src/assets/icon-<item>.webp [--size 64]` (recorta, centraliza e reduz; WebP sem perdas) → import e entrada em `itemIcons` de `render/art/principal.ts`.
 
 **Goblin** (v0.93.6; `assets-src/goblin/<estado>.png`, 4×4 transparente, ordem frente/esquerda/direita/costas, sem `--rows-map`): `python3 scripts/process-sprite.py assets-src/goblin/<estado>.png src/assets/goblin-<estado>.png --alpha --largest --frame-h 160` (no `alert` omita `--largest`, senão os "!" somem) → `optimize-assets.py` → imports `.webp` em `render/art/principal.ts`. Estados: idle, walk, run, alert, attack, hurt, death.
