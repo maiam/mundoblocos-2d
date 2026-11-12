@@ -111,6 +111,8 @@ export interface MobState {
   e?: 1;
   p?: number;
   h?: 1;
+  /** Goblin visual state index: idle, walk, run, alert, attack, hurt. Optional. */
+  v?: number;
   d?: number;
   r?: number;
   s?: number;
