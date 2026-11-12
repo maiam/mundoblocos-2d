@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Mármore celestial 82 — borda ornamental adaptativa e câmera 80° (PR #92)
+
+No Santuário WebGL, o mármore celestial utiliza a **face vertical já aprovada**, mas o topo vem da imagem ornamentada enviada pelo usuário. A geometria lê as células da base: linha horizontal fechando uma sala por trás gera `wall_back` (meia célula atrás); linha fechando a frente gera `wall_front` (meia célula à frente); cantos e colunas ficam maciços. A parede superior herda a mesma forma. A moldura dourada e os cristais aparecem apenas nas bordas externas, usando seis segmentos (norte/sul e duas metades de leste/oeste) para ocultar exatamente o trecho conectado ao vizinho, sem duplicar molduras sobre as junções. A imagem é composta em Canvas e as texturas reutilizadas por máscara. Todos os outros materiais mantêm sua arte e autotile anterior. A câmera mantém ortográfica, sem azimute, mas eleva-se a 80° acima do chão. A Deusa 2D é um `THREE.Mesh(PlaneGeometry)` vertical, com sua sombra horizontal separada, sem inclinar pela câmera; colisões continuam inalteradas.
+
 ## Santuário oficial — oclusão e sombra independentes da Deusa (PR #91)
 
 No Three.js, `ActorSprites.get('goddess').draw()` é chamado sem sombra e com ponto de apoio no rodapé do canvas 256×320, alinhado ao jogador; o deslocamento de flutuação é aplicado **uma vez só**, pela animação original. O ponto físico da sombra usa `player.z`, enquanto o billboard usa `player.visualZ` para transições suaves. A sombra é uma elipse horizontal escura acima do suporte, nunca um elemento vertical que acompanha a câmera. O billboard principal usa teste de profundidade normal; um eco espectral com 18% de opacidade o precede na renderização para não apagar a Deusa completamente atrás de blocos, sem transformar toda parede em transparência. O motor e a física do Mundo principal permanecem iguais.
