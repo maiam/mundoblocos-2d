@@ -3,6 +3,10 @@
 Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node ≥ 22.12), vista superior inclinada (3/4). Diagramas em
 [MAPS.md](MAPS.md). Decisões em [DECISIONS.md](DECISIONS.md).
 
+## Monstro Goblin e acampamentos no Mundo principal (PR #96)
+
+`world/goblins.ts` planeja, por seed, quatro fogueiras da família **Block.CAMPFIRE** e um anel de sete células de nascimento por acampamento fora de cidades/áreas protegidas. `GoblinCampTerrain` sobrepõe somente essas fogueiras e limpa a vegetação dos slots, mantendo o gerador base e chunks modificados como fonte de verdade; sem gravar o estado derivado da seed. `Entities.spawnWildlife` coloca sete `Monster('goblin')` em cada um desses grupos, usando a IA de mundo aberto dos lobos (`sight=3`), com 60 HP/ataque-base 15 e área de passeio local. `game/monster.ts` define estados visuais, `render/character.ts` usa as sete folhas transparentes direcionais 4×4 registradas apenas em `render/art/principal.ts`; `MobState.v/r` sincroniza estados em salas e `CreatureMirror` os apresenta. A serialização da dungeon continua reservada às aranhas; os monstros do mundo aberto reaparecem por seed. O Santuário Three.js não importa os novos ativos.
+
 ## Mudanças direcionadas — autotile horizontal e dois níveis (PR #87)
 
 `MAX_STACK=2` em `src/config.ts` rege os níveis disponíveis do `Chunk`, `World` e `Renderer`. `World.getLevel` retorna AIR para nível obsoleto e a restauração ignora a terceira camada de um save antigo; `applySave` limita a altitude do jogador. O novo `src/render/adaptiveWalls.ts` contém a decisão pura da forma horizontal (mesmo tipo à esquerda/direita, sem norte/sul; porta existente funciona como pilar) e compõe somente a metade frontal do topo do sprite, mantendo a face vertical inteira. `Renderer.drawObject` usa esse desenho **apenas** em materiais de construção; outros blocos seguem renderização anterior e a câmera não muda. Os seis arquivos de arte 80–85 já foram incorporados ao pacote do Santuário no PR #87.
