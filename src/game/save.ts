@@ -23,7 +23,7 @@ import type { Exploration } from './exploration';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 export interface SaveData {
   v: number;
@@ -51,6 +51,8 @@ export interface SaveData {
   holes: Array<[number, number, number]>;
   /** Ordem das paredes de mármore do Santuário: [x, y, sequência] (v13). */
   marblePlacements: Array<[number, number, number]>;
+  /** Bases do mármore com ocupação física de duas células (v14). */
+  marbleV3Bases: Array<[number, number]>;
   sheep: Array<{ x: number; y: number; homeX: number; homeY: number; baby: boolean; age: number; love: number; cooldown: number }>;
   /** Monstros vivos e renascimentos pendentes (null = mundo sem dungeon). */
   dungeon: {
@@ -96,6 +98,7 @@ export function captureSave(s: GameState): SaveData {
     chunks: s.world.modifiedChunks().map((c) => ({ cx: c.cx, cy: c.cy, ground: toB64(c.ground), levels: c.levels.map(toB64) })),
     holes: s.world.holeAges(),
     marblePlacements: s.world.marblePlacementOrders(),
+    marbleV3Bases: s.world.marbleV3PlacementBases(),
     sheep: s.entities.npcs.map((o) => ({
       x: o.x, y: o.y, homeX: o.homeX, homeY: o.homeY, baby: o.baby, age: o.age, love: o.love, cooldown: o.cooldown,
     })),
@@ -150,6 +153,8 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 11) { const { look: _look, ...rest } = d as SaveData & { look?: unknown }; d = { ...rest, v: 12 }; }
   // v12 → v13: saves antigos não conhecem a ordem das paredes e preservam a geometria anterior.
   if (d.v === 12) d = { ...d, v: 13, marblePlacements: [] };
+  // v13 → v14: preservar painéis antigos em V2; somente novas bases usam V3.
+  if (d.v === 13) d = { ...d, v: 14, marbleV3Bases: [] };
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -189,6 +194,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   s.world.settleWater(); // buracos vizinhos de água voltam a encher
   s.world.loadHoleAges(d.holes); // e os demais continuam contando o dia
   s.world.loadMarblePlacementOrders(d.marblePlacements); // ordem das paredes adaptativas
+  s.world.loadMarbleV3PlacementBases(d.marbleV3Bases); // bases físicas V3, sem células duplicadas
   s.world.tent = d.tent ?? null;
   // Baús que não existem mais no mapa (ex.: salvamento antigo com um baú onde hoje é a cidade) são descartados.
   for (const c of d.chests ?? []) if (s.world.getObject(c.x, c.y) === Block.CHEST) s.world.chests.set(`${c.x},${c.y}`, c.slots);
