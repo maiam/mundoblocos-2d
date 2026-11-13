@@ -32,7 +32,9 @@ Atualize a tabela quando um cenário mudar de estado.
 
 | 13/11/2026 | O mesmo PC, versão 0.93.45, 180 s (6000 quadros guardados), zero pausas | 3D | média **59,6 fps**; 5% piores **51,8 fps**; pior quadro **67 ms**; **0,3%** dos quadros > 33 ms, **0,1%** > 50 ms; **JS do `draw` 3,4 ms (p95 6,2; máx. 14,5)**; 289 chamadas, 2,8k triângulos, 109 texturas, 70 geometrias; 58 MB de JS | **Aprovado no PC:** praticamente 60 fps fixos, JS pequeno, sem engasgos relevantes. Os 58 MB são lixo ainda não coletado: o teste de vazamento (`npm run leak:3d`, ~140 chunks percorridos) mostra texturas estáveis em ~104, geometrias em 84 e JS em 15 MB depois do coletor — **sem vazamento**. |
 
-**Achados do relatório visual (mesmo PC, 13/11/2026), corrigidos na v0.93.45:**
+| 13/11/2026 | Celular e tablet do dono do produto | 3D (`?render=3d`) | **"Rodando ok"** — confirmação do dono do produto, **sem relatório numérico** (modelo e navegador não informados) | Aceito como ok para seguir; os números ficam como boa prática se for preciso comparar versões. |
+
+**Achados do relatório visual (mesmo PC, 13/11/2026), corrigidos na v0.93.45** — **confirmados pelo dono do produto no PC: as faixas nas copas sumiram e o enquadramento da seleção melhorou:**
 - **Copas com faixas/transparência:** *z-fighting* entre planos de árvores vizinhas na mesma linha (mesma profundidade; no 2D a ordem esquerda→direita resolvia). Agora cada coluna tem um desempate de profundidade (`spriteDepthBias`), e objetos ficam um pouco à frente das faces dos cubos.
 - **Seleção "inexata":** (1) o 3D só mostrava um quadrado amarelo plano no chão, e só quando válido; passou a usar **os mesmos desenhos do 2D** (moldura do cursor, cantoneiras do alvo, rachaduras), em volta do que se vê (cubo = topo + frente; objeto = retângulo clicável). (2) As ferramentas de chão (pá, enxada, sementes) calculavam o alvo pelo mapeamento do chão do 2D; com K = 1 o topo de um cubo cobre o chão da célula ao norte e a ação ia para a célula errada. O 3D agora informa o chão **que se vê** (`pickGround`), ignorando árvores como o 2D.
 
@@ -60,6 +62,7 @@ por quadro do canvas de cada ator (`ActorBillboards`) e o envio das texturas, o 
 - Física: por padrão **inalterada** (degrau automático ligado: com cubos de 1 célula a personagem "sobe" paredes). `?fisica=solida` (dev e piloto, só com `?render=3d`, offline) desliga o degrau do jogador (v0.93.41); lobos e goblins mantêm o degrau deles (decisão pendente).
 
 ## Ainda NÃO verificado (depende de aparelho real ou de decisão)
+- [x] **Celular e tablet**: "rodando ok" (dono do produto, 13/11, sem números). [ ] **Falta registrar** modelo/navegador e, se possível, o relatório `?fps=1` de cada um.
 - [x] **Desempenho no PC** (Windows, Edge, 1912 × 948): 3D a ~60 fps, JS 3,4 ms, sem vazamento. [ ] **Falta em celular médio, iPad e Safari** (meta: 30 FPS) — painel `?fps=1`; relatório copiado e colado na conversa.
 - [ ] **Toque** (botão de ação no celular, toque no tablet), **vertical** (ADR 0030), zoom/pinça bloqueados.
 - [ ] **WebGL no iframe do Artifact** e **perda de contexto** no Mundo (testado só no Santuário).
