@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.42 — painel `?fps=1`: plano B quando não há área de transferência (13/11/2026)
+- **Correção:** em HTTP na rede local (o caso de testar no celular) o navegador não libera `navigator.clipboard`; o toque no painel não fazia nada. Agora mostra o relatório (JSON) numa caixa de texto já selecionada para copiar à mão ou tirar um print (toque na caixa fecha); com permissão, copia e confirma por 3 s. A linha de medição não apaga mais as mensagens em meio segundo.
+- Conferido no navegador nas duas vias (com e sem `clipboard`). OPERATIONS: como obter o relatório e quando anoitece (8 min por dia). Só dev/piloto; sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.41 — M5.2: física sem degrau no piloto do Mundo, atrás de `?fisica=solida` (13/11/2026)
 - **Decisão do dono do produto (13/11):** seguir a recomendação — flag no piloto, padrão inalterado, servidor só na virada. **`?fisica=solida`** (dev e build de piloto, só com `?render=3d`, offline) liga `stepHeight = 0` no jogador do Mundo (`configureSanctuaryThreeCollision` ganhou o 4º parâmetro `solidWorld`; `Game` recebe `solidPhysics`). Sem a flag, no 2D ou online (a sala): a regra antiga (degrau de 1 nível). Só o jogador muda: lobos e goblins mantêm o degrau deles (decisão pendente).
 - **Servidor:** nada muda agora. A sala usa o mesmo `World`/`Walker`; a regra sem degrau só vai a ela na virada (`build:net` + `sync-net` + `PROTOCOL_VERSION`), registrado em `PARITY_3D.md` e NEXT_STEPS.
