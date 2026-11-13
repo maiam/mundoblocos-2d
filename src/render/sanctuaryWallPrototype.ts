@@ -73,6 +73,8 @@ export function buildWallPrototype(
   world: { isWallAt(x: number, y: number): boolean; getObject(x: number, y: number): BlockId },
   bounds: { x0: number; x1: number; y0: number; y1: number },
   thickness: WallThickness = DEFAULT_WALL_THICKNESS,
+  /** Materiais que já têm arte (o render com arte os desenha): o protótipo pula esses. */
+  hasArt: (id: BlockId) => boolean = () => false,
 ): WallPrototype {
   const group = new THREE.Group();
   group.name = 'Paredes (protótipo de autotile)';
@@ -100,6 +102,7 @@ export function buildWallPrototype(
     for (let x = bounds.x0; x <= bounds.x1; x++) {
       if (!isWallAt(x, y)) continue;
       const id = world.getObject(x, y);
+      if (hasArt(id)) continue;
       const nb = wallNeighbors(isWallAt, x, y);
       for (const { kind, rect: r } of wallFootprintParts(nb, thickness)) {
         const geo = new THREE.BoxGeometry(r.x1 - r.x0, WALL_HEIGHT, r.z1 - r.z0);

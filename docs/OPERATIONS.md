@@ -167,6 +167,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
 
+**Atlas de paredes (W3):** `python3 scripts/build-wall-atlas.py tabuas` → `src/assets/walls-tabuas.webp` (lê `assets-src/paredes/<material>/`, 16 tampas + 4 frentes); material novo = pasta com as 20 peças + entrada em `WALL_ART_MATERIALS` (`render/wallAtlas.ts`) e em `ArtPack.wallAtlases`.
+
 **Frentes entregues** (limpeza do alfa + largura): `python3 scripts/retarget-wall-fronts.py --entrada <pasta> --saida <pasta> [--de 38,83 --para 32,80]` (composição do alfa parcial sobre a cor de junta; pontas e poste esticados para a medida final). Usado em `assets-src/paredes/tabuas/`.
 
 **Tampas entregues em outra espessura:** `python3 scripts/retarget-wall-caps.py --entrada <pasta> --saida <pasta> [--de-x 45,83 --de-z 45,83 --para-x 48,80 --para-z 42,86]` reprojeta as 16 tampas esticando poste e braços (mantém topologia e emendas). Usado em `assets-src/paredes/tabuas/`.

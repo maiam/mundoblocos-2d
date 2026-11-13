@@ -20,6 +20,7 @@ import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from 
 import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
+import { buildWallArt, type WallArtGroup } from './sanctuaryWallArt';
 import { DEFAULT_WALL_THICKNESS, type WallThickness } from '../world/walls';
 import { flickerFactor, glowLightFor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
 import { SanctuaryLighting } from './sanctuaryLighting';
@@ -81,6 +82,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly view:SanctuaryView;
   /** Paredes (ADR 0027): protótipo de cores lisas até a arte chegar; refeito junto com as malhas. */
   private walls:WallPrototype|null=null;
+  /** Paredes com arte (W3): atlas por bloco carregados do pacote de arte; os materiais sem atlas usam o protótipo. */
+  private wallArt:WallArtGroup|null=null;
+  private readonly wallAtlases=new Map<BlockId,HTMLImageElement>();
   private readonly wallThickness:WallThickness;
   /** Iluminação (ADR 0029): só na vista oblíqua e quando `?luz=` liga; `glowLights` = blocos que brilham, refeito com as malhas. */
   private readonly lighting:SanctuaryLighting|null;
@@ -95,6 +99,17 @@ export class SanctuaryThreeRenderer implements GameRenderer {
 
   constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset;wallThickness?:WallThickness;ambient?:number}={}){
     this.wallThickness=options.wallThickness??DEFAULT_WALL_THICKNESS;
+    for(const [key,url] of Object.entries(art().wallAtlases??{})){
+      if(!url)continue;
+      const img=new Image();
+      img.onload=()=>{
+        if(this.disposed)return;
+        this.wallAtlases.set(Number(key) as BlockId,img);
+        this.signature=''; // refaz as paredes com a arte
+      };
+      img.onerror=()=>console.warn('Atlas de paredes não carregou; usando cores lisas');
+      img.src=url;
+    }
     this.lighting=options.ambient!==undefined&&(options.view??'tilt')==='oblique'?new SanctuaryLighting(options.ambient):null;
     this.view=options.view??'tilt';
     if(this.view==='oblique')this.preferredCellsTall=SANCTUARY_CELLS_TALL;
@@ -358,7 +373,10 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
     this.groups.length=0;
     if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();}
-    this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness);
+    if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();}
+    this.wallArt=buildWallArt(this.world,this.bounds,this.wallAtlases,this.wallThickness);
+    this.scene.add(this.wallArt.group);
+    this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness,id=>this.wallAtlases.has(id));
     this.scene.add(this.walls.group);
     const cells=sanctuary3DGeometryCells(this.world,this.bounds);
     this.glowLights=[];
@@ -579,10 +597,13 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       const r=obliqueRay(this.pointer.x,this.pointer.y,this.obliqueHalf.w,this.obliqueHalf.h,this.obliqueFocus);
       this.raycaster.set(new THREE.Vector3(...r.origin),new THREE.Vector3(...r.dir));
     }else this.raycaster.setFromCamera(this.pointer,this.camera);
-    const found=this.raycaster.intersectObjects([...this.groups.map(e=>e.mesh),...(this.walls?.meshes??[])],false);
+    const found=this.raycaster.intersectObjects([...this.groups.map(e=>e.mesh),...(this.walls?.meshes??[]),...(this.wallArt?.meshes??[])],false);
     for(const hit of found){
       const wallCell=hit.object.userData.cell as {x:number;y:number}|undefined;
       if(wallCell)return{x:wallCell.x,y:wallCell.y,hasObject:true};
+      const artCells=hit.object.userData.cells as Array<{x:number;y:number}>|undefined;
+      const artCell=artCells?.[hit.instanceId??-1];
+      if(artCell)return{x:artCell.x,y:artCell.y,hasObject:true};
       const group=this.groups.find(e=>e.mesh===hit.object);
       const cell=group?.cells[hit.instanceId??-1];
       if(cell)return{x:cell.x,y:cell.y,hasObject:cell.level>=0};
@@ -617,6 +638,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
     this.groups.length=0;
     if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();this.walls=null;}
+    if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();this.wallArt=null;}
     for(const group of this.materials.values()){
       for(const m of new Set([...group.block,...group.ground]))m.dispose();
       for(const t of group.textures)t.dispose();

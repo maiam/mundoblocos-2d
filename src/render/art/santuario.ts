@@ -5,6 +5,7 @@ import newMarbleOrnate from '../../assets/santuario-marmore-ornamentado-512.jpg'
 import newStoneCelestial from '../../assets/santuario-pedra-celestial-512.jpg';
 import newStoneGolden from '../../assets/santuario-pedra-dourada-512.jpg';
 import celestialAtlas from '../../assets/celestial-atlas.webp';
+import wallsTabuas from '../../assets/walls-tabuas.webp';
 import goddessFloat from '../../assets/goddess-float.webp';
 import iconCrystalLife from '../../assets/icon-celestial-crystal-life.webp';
 import iconEarthCultivated from '../../assets/icon-celestial-earth-cultivated.webp';
@@ -33,6 +34,7 @@ const pack: ArtPack = {
     [Block.STONE_CELESTIAL]: newStoneCelestial,
     [Block.STONE_GOLDEN]: newStoneGolden,
   },
+  wallAtlases: { [Block.WALL_PLANKS]: wallsTabuas },
   celestialIcons: {
     [Block.CLOUD_SOLID]: newCloudSolid,
     [Block.CLOUD_ETHEREAL]: newCloudEthereal,

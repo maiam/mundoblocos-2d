@@ -31,6 +31,8 @@ export interface ArtPack {
   /** Seis superfícies aprovadas para IDs 80–85; exclusivas do Santuário. */
   celestialSurfaces?: Partial<Record<number, string>>;
   celestialIcons: Partial<Record<number, string>>;
+  /** Atlas de paredes por bloco (W3, ADR 0027; `scripts/build-wall-atlas.py`): 16 tampas + 4 frentes. Sem ele, o bloco usa as cores lisas do protótipo. */
+  wallAtlases?: Partial<Record<number, string>>;
   /** Porta de Carvalho (8 quadros). */
   oakDoor?: string;
   /** Dungeon (`extract-dungeon.py`). */
