@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.26 — Arte final de Tábuas (nova versão) com a porta (13/11/2026)
+- **Recebidas e conferidas as 23 peças de Tábuas** (16 tampas, 4 frentes, `door_closed/half/open`): tamanhos e faixas de y corretos, **nenhum alfa parcial**, frentes 100% opacas, vãos de 32 e 64 px centralizados a partir de y = 16, bordas da porta idênticas às de `front_mid`, **emendas exatas** (0) entre frentes, tampas e coluna × fileira.
+- Arquivadas em `assets-src/paredes/tabuas/` (a versão anterior de 16 px vai para `versao-anterior-16px/`); atlas regerado (`walls-tabuas.webp`, 512 × 820, ~44 kB). Os quadros provisórios da porta deixam de ser usados para Tábuas.
+- Verificado no navegador: porta fechada, intermediária, aberta e com a Deusa atravessando. Sem mudança de código, protocolo ou save.
+
 ## Orvalis v0.93.25 — Porta de parede com 3 quadros (13/11/2026)
 - **Domínio:** `Block.WALL_DOOR_PLANKS` (242) / `_OPEN` (243), `shape: 'wall-door'`, par em `TOGGLES` (estado no id, ação de rede `kind:'door'`, salvamento sem mudança de formato). Fechada é sólida; aberta passável. **Colocação** (`World.canPlaceWallDoor`): só em fileira leste–oeste, com **parede comum** (não porta) dos dois lados e nada ao norte/sul. Conta como parede para o autotile (`isWallLike`): tampa `cap_10`, frente = quadro da porta. Quebrar devolve a fechada. `wallDoor.test.ts` (7 testes).
 - **Render:** atlas 512 × 820 com 3 quadros extras (`door_closed`, `door_half`, `door_open`, 128 × 154) em `wallAtlas.ts`; ao abrir/fechar, o quadro intermediário aparece por 140 ms (`DOOR_HALF_MS`). Cubo preto corrigido (`sanctuaryThreeLayout` exclui `wall-door`). `?paredes=autotile` libera a porta na hotbar (teste).
