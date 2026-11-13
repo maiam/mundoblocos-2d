@@ -1,18 +1,19 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { actorScaleFor, objectScaleFor, CHARACTER_SCALE_FACTOR, cellsTallFromSearch, SANCTUARY_CELLS_TALL, WORLD_CELLS_TALL } from './worldScale';
 
 describe('?celulas= (experimento de escala do Mundo)', () => {
-  it('sem parâmetro ou inválido, mantém as 14 células', () => {
-    expect(cellsTallFromSearch('')).toBe(SANCTUARY_CELLS_TALL);
-    expect(cellsTallFromSearch('?celulas=abc')).toBe(SANCTUARY_CELLS_TALL);
+  it('sem parâmetro ou inválido, mantém as células do padrão (14 × SUBDIV)', () => {
+    expect(cellsTallFromSearch('')).toBe(WORLD_CELLS_TALL);
+    expect(cellsTallFromSearch('?celulas=abc')).toBe(WORLD_CELLS_TALL);
   });
   it('lê o valor e limita entre 10 e 32', () => {
     expect(cellsTallFromSearch('?celulas=21')).toBe(21);
     expect(cellsTallFromSearch('?celulas=2')).toBe(10);
     expect(cellsTallFromSearch('?celulas=99')).toBe(32);
   });
-  it('no padrão (sem ?grade=2) o Mundo mostra 14 células', () => {
-    expect(WORLD_CELLS_TALL).toBe(SANCTUARY_CELLS_TALL);
+  it('o Mundo mostra 14 células na grade 1 e 28 na grade 2', () => {
+    expect(WORLD_CELLS_TALL).toBe(SANCTUARY_CELLS_TALL * SUBDIV);
   });
   it('o fator dos atores acompanha as células: o personagem mantém os pixels', () => {
     expect(actorScaleFor(SANCTUARY_CELLS_TALL)).toBeCloseTo(CHARACTER_SCALE_FACTOR);

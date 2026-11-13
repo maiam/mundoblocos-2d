@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { WORLD_PROFILES } from '../world/profiles';
@@ -79,7 +80,7 @@ describe('Santuário Three.js — colisões físicas', () => {
     configureSanctuaryThreeCollision(player, 'santuario', false);
     // After ~25 frames the player is ON the 1-block step; later frames
     // already carry them beyond the block and back down to ground level.
-    for (let i = 0; i < 25; i++) player.update(1/60, 1, 0, world);
+    for (let i = 0; i < Math.round(25 / SUBDIV); i++) player.update(1/60, 1, 0, world); // (a velocidade dobra com a grade)
     expect(player.x).toBeGreaterThan(sx + 2);
     expect(player.z).toBe(1);
   });
@@ -108,7 +109,8 @@ describe('Mundo em 2.5D — física sem degrau no piloto (ADR 0031, M5; `?fisica
     for (let dy = 6; dy < 60 && !spot; dy++) for (let dx = -20; dx < 20 && !spot; dx++) {
       const x = gx + dx, y = gy + dy;
       let ok = true;
-      for (let i = 0; i < 6 && ok; i++) ok = world.standHeight(x + i, y) === 0 && world.getObject(x + i, y) === Block.AIR;
+      // (e também a fileira dois ao sul, onde o teste põe a personagem do terreno plano: na grade fina nem sempre está livre)
+      for (let i = 0; i < 6 && ok; i++) ok = world.standHeight(x + i, y) === 0 && world.getObject(x + i, y) === Block.AIR && world.standHeight(x + i, y + 2) === 0 && world.getObject(x + i, y + 2) === Block.AIR;
       if (ok) spot = [x, y];
     }
     expect(spot).not.toBeNull();

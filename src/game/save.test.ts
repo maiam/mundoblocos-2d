@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
@@ -249,14 +250,14 @@ describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
   it('o salvamento diz a grade (sub) e v15 migra para v16 como grade 1', () => {
     const { d } = saved();
     expect(SAVE_VERSION).toBe(16);
-    expect(d.sub).toBe(1);
+    expect(d.sub).toBe(SUBDIV);
     const { sub: _s, ...rest } = d;
     expect(migrate({ ...rest, v: 15 })?.sub).toBe(1);
   });
 
   it('rescaleSave dobra tudo o que tem lugar: chunks, jogador, tenda, baús, névoa, ovelhas', () => {
     const { d, x, y } = saved();
-    const f = rescaleSave(d, 2);
+    const f = rescaleSave({ ...d, sub: 1 }, 2); // (a função é pura: serve qualquer salvamento de grade 1)
     expect(f.sub).toBe(2);
     expect(f.chunks.length).toBeGreaterThanOrEqual(d.chunks.length * 4);
     expect(f.player.x).toBe(d.player.x * 2);
@@ -271,15 +272,15 @@ describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
 
   it('mesma grade devolve o próprio salvamento; grade mais fina que a pedida é erro', () => {
     const { d } = saved();
-    expect(rescaleSave(d, 1)).toBe(d);
-    expect(() => rescaleSave({ ...d, sub: 2 }, 1)).toThrow();
+    expect(rescaleSave(d, d.sub)).toBe(d);
+    expect(() => rescaleSave({ ...d, sub: SUBDIV + 1 }, SUBDIV)).toThrow();
   });
 
   it('um arquivo de grade mais fina não é aberto nem sobrescrito por um jogo da grade antiga', () => {
     const { d } = saved();
     const storage = memoryStorage();
     const store = new SaveStore('principal', storage);
-    const fine = JSON.stringify({ ...d, sub: 2 });
+    const fine = JSON.stringify({ ...d, sub: SUBDIV + 1 }); // mais fina que a deste jogo
     storage.setItem(`mundoblocos:save:principal:${d.seed}`, fine);
     expect(store.load(d.seed)).toBeNull();
     expect(store.save(d)).toBe(false); // bloqueado: o arquivo fino continua intacto

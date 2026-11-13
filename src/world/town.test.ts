@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block, blockDef } from './blocks';
 import { inRect } from './dungeon';
 import { TOWN_H, TOWN_W, townLayout, upsampleTown } from './town';
+import { SUBDIV } from '../config';
 import { World } from './world';
 
 /** Células andáveis da cidade alcançáveis a partir de (x, y) sem sair da área. */
@@ -28,8 +29,8 @@ describe('Cidade do Despertar', () => {
     const a = new World(1);
     const b = new World(987654);
     const t = a.town!;
-    expect(t.w * t.h).toBe(TOWN_W * TOWN_H);
-    expect(t.w * t.h).toBe(21648);
+    expect(t.w * t.h).toBe(TOWN_W * TOWN_H * SUBDIV * SUBDIV);
+    expect(t.w * t.h).toBe(21648 * SUBDIV * SUBDIV);
     for (let y = t.area.y0; y <= t.area.y1; y += 3) {
       for (let x = t.area.x0; x <= t.area.x1; x += 3) {
         expect(a.getGround(x, y)).toBe(b.getGround(x, y));
@@ -70,8 +71,8 @@ describe('Cidade do Despertar', () => {
     const w = new World(5);
     const t = w.town!;
     const castle = t.buildings.find((b) => b.id === Block.CASTLE)!;
-    expect(castle.y).toBeLessThan(t.area.y0 + 25);
-    expect([castle.w, castle.d]).toEqual([26, 17]);
+    expect(castle.y).toBeLessThan(t.area.y0 + 25 * SUBDIV);
+    expect([castle.w, castle.d]).toEqual([26 * SUBDIV, 17 * SUBDIV]);
     expect(t.gate.y1).toBe(t.area.y1);
     const ok = reach(w, ...t.start);
     expect(ok.has(`${t.castleDoor[0]},${t.castleDoor[1]}`)).toBe(true);

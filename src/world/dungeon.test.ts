@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { buildDungeon, buildMaze, dungeonEntry, dungeonSize, inRect, isDungeonExit, type Side, upsampleDungeon } from './dungeon';
 import { WORLD_PROFILES } from './profiles';
+import { SUBDIV } from '../config';
 import { World } from './world';
 
 const SEEDS = [1, 7, 42, 1234, 98765];
@@ -50,7 +51,7 @@ describe('Covil das Aranhas — labirinto procedural', () => {
       const open: string[] = [];
       for (let x = area.x0; x <= area.x1; x++) for (const y of [area.y0, area.y1]) if (w.standHeight(x, y) === 0) open.push(`${x},${y}`);
       for (let y = area.y0 + 1; y < area.y1; y++) for (const x of [area.x0, area.x1]) if (w.standHeight(x, y) === 0) open.push(`${x},${y}`);
-      expect(open).toHaveLength(3);
+      expect(open).toHaveLength(3 * SUBDIV);
       const seen = reachable(w, ...d.doorstep, area);
       let floor = 0;
       for (let y = area.y0; y <= area.y1; y++) {
@@ -85,7 +86,7 @@ describe('Covil das Aranhas — labirinto procedural', () => {
       expect(forks).toBeGreaterThan(20);
       expect(m.chambers.length).toBeGreaterThanOrEqual(3);
     }
-    expect(new World(42).getObject(new World(42).dungeon!.area.x0 + 1, new World(42).dungeon!.area.y0 + 1)).toBe(Block.DUNGEON_WALL);
+    expect(new World(42).getObject(new World(42).dungeon!.area.x0 + SUBDIV, new World(42).dungeon!.area.y0 + SUBDIV)).toBe(Block.DUNGEON_WALL);
   });
 
   it('câmara da Rainha: terminal, com uma única passagem, e o chefe dentro dela', () => {
@@ -97,8 +98,8 @@ describe('Covil das Aranhas — labirinto procedural', () => {
       const ring: Array<[number, number]> = [];
       for (let x = r.x0 - 1; x <= r.x1 + 1; x++) for (const y of [r.y0 - 1, r.y1 + 1]) if (w.standHeight(x, y) === 0) ring.push([x, y]);
       for (let y = r.y0; y <= r.y1; y++) for (const x of [r.x0 - 1, r.x1 + 1]) if (w.standHeight(x, y) === 0) ring.push([x, y]);
-      expect(ring).toHaveLength(2);
-      expect(Math.abs(ring[0][0] - ring[1][0]) + Math.abs(ring[0][1] - ring[1][1])).toBe(1);
+      expect(ring).toHaveLength(2 * SUBDIV);
+      expect(Math.abs(ring[0][0] - ring[ring.length - 1][0]) + Math.abs(ring[0][1] - ring[ring.length - 1][1])).toBe(2 * SUBDIV - 1);
       expect((r.x1 - r.x0 + 1) * (r.y1 - r.y0 + 1)).toBeGreaterThan(200); // área maior
       const boss = d.spawns.filter((s) => s.kind === 'spider-boss');
       expect(boss).toHaveLength(1);

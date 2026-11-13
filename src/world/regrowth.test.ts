@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { DAY_LENGTH_S } from '../config';
 import { Entities } from '../game/entities';
@@ -135,7 +136,7 @@ describe('Chão quebrado se refaz depois de um dia inteiro', () => {
 
   it('sala: quem decide é a sala — o buraco se refaz, a célula vai no aviso de crescimento e as idades vão para o disco', () => {
     const room = new Room(1, 'Sala 1', 20261108, mulberry32(5));
-    room.join({ t: 'hello', v: PROTOCOL_VERSION, name: 'Ana', room: 1 }); // sem ninguém a sala não manda nada
+    room.join({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name: 'Ana', room: 1 }); // sem ninguém a sala não manda nada
     const [x, y] = inland(room.world);
     room.world.breakBlock(x, y);
     const grown: number[][] = [];

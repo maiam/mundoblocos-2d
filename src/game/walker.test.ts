@@ -39,7 +39,8 @@ describe('Grade fina: especificação em células (ADR 0032)', () => {
   }
   const through = (halfW: number): number => {
     const [w, sx, sy] = gap();
-    const walker = new Walker(sx + 2.5, sy + 3.5, { speed: 4, halfW, halfD: 0.15, stepHeight: 0 });
+    const walker = new Walker(sx + 2.5, sy + 3.5, { speed: 4, halfW: 0.2, halfD: 0.15, stepHeight: 0 });
+    walker.spec.halfW = halfW; // já em células da grade atual (o construtor multiplica por SUBDIV)
     for (let i = 0; i < 180; i++) walker.move(1 / 60, 0, -1, w); // sobe pelo vão
     return sy - walker.y;
   };

@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { World } from '../world/world';
@@ -42,8 +43,9 @@ describe('Sentar e levantar', () => {
   it('banco da cidade: senta na célula do banco mais perto; outros blocos não são assento; os quatro personagens sentam', () => {
     const w = new World(7);
     const bench = w.town!.buildings.find((b) => b.id === Block.BENCH_LONG)!;
-    expect(w.seatAt(bench.x + 2, bench.y, bench.x + 2.5, bench.y + 1.5)).toEqual([bench.x + 2, bench.y]);
-    expect(w.seatAt(bench.x, bench.y, bench.x + 9, bench.y + 1)).toEqual([bench.x + 2, bench.y]);
+    const last = bench.x + bench.w - 1; // célula da ponta direita do banco (3 células na grade 1; 6 na 2)
+    expect(w.seatAt(last, bench.y, last + 0.5, bench.y + 1.5)).toEqual([last, bench.y]);
+    expect(w.seatAt(bench.x, bench.y, bench.x + 9 * SUBDIV, bench.y + 1)).toEqual([last, bench.y]);
     const [x, y] = spot(w);
     w.placeBlock(x, y, Block.STONE);
     expect(w.seatAt(x, y, x, y + 1)).toBeNull();

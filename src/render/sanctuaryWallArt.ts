@@ -6,6 +6,7 @@ import {
   type AtlasRect, type WallDoorPiece, type WallFrontPiece,
 } from './wallAtlas';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
+import { SUBDIV } from '../config';
 import { WORLD_SCALE } from './worldScale';
 
 /**
@@ -16,7 +17,12 @@ import { WORLD_SCALE } from './worldScale';
  * laje está em z = (1 + z)/2 da célula e a frente sobe 154/128 = 1,2. A tampa e a frente se encontram na tela exatamente como no gabarito.
  * Só desenho: colisão e regras vivem no `World`. O `pick` usa as malhas (a célula inteira conta como parede).
  */
-const WALL_HEIGHT = WORLD_SCALE.wall / OBLIQUE_K;
+/**
+ * Na grade fina (ADR 0032) a parede mantém a altura em pixels de hoje: `SUBDIV` vezes mais células de altura. A frente da parede
+ * empilha `SUBDIV` peças (cada uma com a arte na escala da célula nova) e a porta de parede é uma peça só, ampliada `SUBDIV` vezes
+ * em volta do meio da célula (a arte da porta é de uma célula antiga de largura: passa um pouco por cima das paredes vizinhas).
+ */
+const WALL_HEIGHT = (WORLD_SCALE.wall * SUBDIV) / OBLIQUE_K;
 
 export interface WallArtGroup {
   group: THREE.Group;
@@ -126,16 +132,26 @@ export function buildWallArt(
     const pc = cache.piecesFor(g.id, atlases.get(g.id)!);
     const tex = g.kind === 'cap' ? pc.caps[g.piece as number] : pc.fronts[g.piece as WallFrontPiece | WallDoorPiece];
     const mat = cache.material(`${g.id}:${g.kind}:${g.piece}`, tex);
-    const mesh = new THREE.InstancedMesh(g.kind === 'cap' ? capGeo : frontGeo, mat, g.items.length);
-    g.items.forEach((it, i) => {
-      if (g.kind === 'cap') dummy.position.set(it.x + 0.5, WALL_HEIGHT, it.y + 0.5);
-      else dummy.position.set(it.x + 0.5, frontH / 2, it.y + southFace);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-    });
+    const isDoor = g.kind === 'front' && (WALL_DOOR_PIECES as readonly string[]).includes(g.piece as string);
+    const levels = g.kind === 'front' && !isDoor ? SUBDIV : 1; // frente comum: uma peça por nível; tampa e porta: uma só
+    const cells = g.items.flatMap((it) => Array.from({ length: levels }, () => it.cell));
+    const mesh = new THREE.InstancedMesh(g.kind === 'cap' ? capGeo : frontGeo, mat, cells.length);
+    let n = 0;
+    for (const it of g.items) {
+      for (let l = 0; l < levels; l++) {
+        dummy.scale.set(1, 1, 1);
+        if (g.kind === 'cap') dummy.position.set(it.x + 0.5, WALL_HEIGHT, it.y + 0.5);
+        else if (isDoor) {
+          dummy.scale.set(SUBDIV, SUBDIV, 1);
+          dummy.position.set(it.x + 0.5, (frontH * SUBDIV) / 2, it.y + southFace + (SUBDIV > 1 ? 0.01 : 0));
+        } else dummy.position.set(it.x + 0.5, frontH / 2 + l * frontH, it.y + southFace);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(n++, dummy.matrix);
+      }
+    }
     mesh.instanceMatrix.needsUpdate = true;
     mesh.frustumCulled = false;
-    mesh.userData.cells = g.items.map((it) => it.cell);
+    mesh.userData.cells = cells;
     mesh.name = `Parede ${g.kind} ${g.piece}`;
     group.add(mesh);
     meshes.push(mesh);

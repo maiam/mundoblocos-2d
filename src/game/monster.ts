@@ -21,8 +21,9 @@ interface MonsterDef {
 }
 
 /** Distância (células) até a qual o lobo ataca a personagem; mais longe, ele a ignora. */
-export const WOLF_SIGHT = 3 * SUBDIV;
-export const GOBLIN_SIGHT = WOLF_SIGHT;
+export const WOLF_SIGHT = 3;
+/** Visão do goblin em células da grade atual (3 na grade 1): a tabela abaixo já multiplica por `SUBDIV`. */
+export const GOBLIN_SIGHT = WOLF_SIGHT * SUBDIV;
 export const GOBLIN_ATTACK_SECONDS = 0.55;
 export const GOBLIN_ALERT_SECONDS = 0.48;
 export type GoblinVisual = 'idle' | 'walk' | 'run' | 'alert' | 'attack' | 'hurt';
@@ -40,7 +41,7 @@ export const MONSTERS: Record<MonsterKind, MonsterDef> = {
   'wolf-white': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
   // Goblins guard a campfire in groups of seven; aggression only within 3 cells.
   goblin: { spec: { speed: 2.75, halfW: 0.34, halfD: 0.21, stepHeight: 1 },
-    sight: GOBLIN_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
+    sight: WOLF_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
     deathSeconds: 0.95, open: true },
 };
 // Grade fina (ADR 0032): visão e coleira em células da grade atual.
