@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.37 — M3.4: porta animada e partículas do Mundo em 2.5D; M3 concluído (13/11/2026)
+- **`doorAnim.ts` (puro, testado):** a animação da porta (8 quadros, 0,32 s, sem animar na primeira vez vista) extraída do `Renderer` 2D e **compartilhada** com o 3D; o 2D passou a usá-la sem mudar o comportamento (conferido: fechada, abrindo e aberta iguais). **`DoorSprites`:** portas fora do `ChunkSprites`, um plano por porta visível com o quadro do momento, lista por chunk guardada por `chunk.version`, aberta não escreve profundidade, `pick` pelo retângulo clicável.
+- **Partículas do bioma** (pétalas, poeira, pólen, vaga-lumes à noite) na camada 2D, na ordem do 2D. `player` → `honored`.
+- Conferido no navegador (seed 42): porta fechada → folha girando → aberta em 3D, 55 partículas ativas, sem erros. **M3 concluído** em `?render=3d` (só dev): atores, itens, dano, luz/dia-noite, porta animada e partículas. Faltam interiores e dungeon (M4) e o piloto (M5). Física inalterada. 409 testes (7 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.36 — M3.3: luz e ciclo dia/noite do Mundo em 2.5D (13/11/2026)
 - **Decisão do dono do produto (13/11):** a luz do Mundo liga **só à noite e na dungeon**; de dia o jogo fica claro como hoje (a camada nem é desenhada). Registrada na ADR 0031.
 - **`worldLight.ts` (puro, testado):** brilho ambiente pelo mesmo `skyAt` do 2D (1 de dia → 0,24 à meia-noite; penumbra de 0,3 na dungeon), cor da escuridão e coleta das luzes visíveis — a do jogador + fogueira, caldeirão, forno e lampiões da cidade (raio/cor das tabelas existentes), mais próximas primeiro, com a oscilação do fogo. `SanctuaryLighting.setAmbient` (brilho e cor variáveis) reaproveita o shader do Santuário (teto de 12 luzes). `time` e `inDungeon` → `honored`.

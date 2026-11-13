@@ -179,13 +179,7 @@ export class ChunkSprites {
    */
   cellOf(hit: THREE.Intersection): SpriteCell | undefined {
     const cell = (hit.object.userData.cells as SpriteCell[] | undefined)?.[hit.instanceId ?? -1];
-    if (!cell) return undefined;
-    const { tile, k } = this.opts;
-    const s = cell.sprite;
-    const px = (hit.point.x - cell.x) * tile;
-    const py = s.oy + s.h - hit.point.y * tile * k;
-    const r = s.hit;
-    return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h ? cell : undefined;
+    return cell && spriteHit(hit.point, cell, this.opts.tile, this.opts.k) ? cell : undefined;
   }
 
   dispose(): void {
@@ -199,4 +193,17 @@ export class ChunkSprites {
     }
     this.assets.clear();
   }
+}
+
+/**
+ * O ponto (mundo) atingido cai dentro do retângulo clicável (`hit`) do sprite da célula? Coordenadas do sprite: x em px a
+ * partir do canto da célula; y a partir do canto superior da célula, com a base do sprite em `oy + h` e cada unidade de
+ * altura valendo `tile × k` px.
+ */
+export function spriteHit(point: { x: number; y: number }, cell: { x: number; sprite: SpriteArt }, tile: number, k: number): boolean {
+  const s = cell.sprite;
+  const px = (point.x - cell.x) * tile;
+  const py = s.oy + s.h - point.y * tile * k;
+  const r = s.hit;
+  return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
 }
