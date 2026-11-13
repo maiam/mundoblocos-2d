@@ -55,6 +55,9 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
 `net.test.ts`, `online.test.ts`, `shared.test.ts`, `sharedLoot.test.ts`, `fixedRoom.test.ts`, `creatures.test.ts`
 (todos usam `LoopbackServer`, sem rede).
 
+## Grade fina (ADR 0032, F6)
+`PROTOCOL_VERSION` 21: o `hello` leva `sub` e a sala recusa grade diferente; `RoomSnapshot` v5 grava `sub` e `Room.restore` converte arquivos antigos (`rescaleRoomSnapshot`) ou recusa os de grade mais fina. O servidor faz cópia do arquivo da sala antes da primeira regravação de cada pacote (`sala-N.json.antes-<pacote>.bak`). Jogo e servidor trocam `DEFAULT_SUBDIV` juntos (F7).
+
 ## Pendências
 Medir CPU e banda na Hostinger com gente de verdade; comprimir o `welcome` quando o mundo editado crescer; mais salas
 (`ROOMS`); moradores compartilhados; descarregar chunks do servidor; chat e grupos nas cidades (Fase M, item 4).

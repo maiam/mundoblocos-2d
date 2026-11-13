@@ -5,7 +5,7 @@ import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { LoopbackServer } from './loopback';
 import { parseAppearance, parseState, type PlayerInfo, PROTOCOL_VERSION, ROOMS } from './protocol';
-import { Room } from './room';
+import { Room, ROOM_SNAPSHOT_VERSION, rescaleRoomSnapshot } from './room';
 import { NetSession } from './session';
 import { RemotePlayers } from '../game/remotePlayers';
 
@@ -137,5 +137,52 @@ describe('Estado na rede: ferramenta e golpe', () => {
     expect(r.actors[0].frame).toBe(0);
     r.update(1, new World(7));
     expect(r.actors[0].kind).toBe('hood-axe'); // o golpe acabou
+  });
+});
+
+describe('Grade fina na sala (ADR 0032, F6)', () => {
+  it('a fotografia diz a grade (sub) e a versão; entrada com outra grade é recusada', async () => {
+    const r = new Room(1, 'Sala 1', 123);
+    const snap = r.snapshot();
+    expect(snap.v).toBe(ROOM_SNAPSHOT_VERSION);
+    expect(snap.sub).toBe(1);
+    const server = new LoopbackServer(mulberry32(9));
+    const wrong = new NetSession(server.connect());
+    (wrong as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, sub: 2, name: 'Ana', room: 1 });
+    await flush();
+    expect(wrong.error).toMatch(/Versão/);
+    const ok = client(server);
+    ok.s.join('Bia', 1);
+    await flush();
+    expect(ok.s.error ?? '').toBe('');
+    expect(ok.s.seed).toBe(ROOMS[0].seed);
+  });
+
+  it('fotografia de arquivo antigo (sem sub) vale como grade 1; a de uma grade mais fina não abre aqui', () => {
+    const r = new Room(1, 'Sala 1', 123);
+    const old = JSON.parse(JSON.stringify(r.snapshot()));
+    delete old.sub;
+    old.v = 4;
+    expect(new Room(1, 'Sala 1', 123).restore(old)).toBe(true);
+    const fine = JSON.parse(JSON.stringify(r.snapshot()));
+    fine.sub = 2;
+    expect(new Room(1, 'Sala 1', 123).restore(fine)).toBe(false);
+  });
+
+  it('rescaleRoomSnapshot converte chunks, baús, bichos e buracos; as bolsas ficam', () => {
+    const snap = {
+      v: ROOM_SNAPSHOT_VERSION, room: 1, seed: 123, time: 0.5, savedAt: 1, sub: 1,
+      chunks: [], bags: { ana: { hotbar: [], items: {} } as never }, chests: { '3,-2': [] as never },
+      animals: [{ k: 'cow' as const, x: 4.5, y: 6.5, baby: false, age: 0, hx: 4.5, hy: 6.5 }],
+      holes: [[1, 1, 30] as [number, number, number]],
+    };
+    const out = rescaleRoomSnapshot(snap, 2);
+    expect(out.sub).toBe(2);
+    expect(Object.keys(out.chests)).toEqual(['6,-3']);
+    expect(out.animals![0]).toMatchObject({ x: 9, y: 13, hx: 9, hy: 13 });
+    expect(out.holes).toHaveLength(4);
+    expect(out.bags).toBe(snap.bags);
+    expect(rescaleRoomSnapshot(snap, 1)).toBe(snap);
+    expect(() => rescaleRoomSnapshot({ ...snap, sub: 2 }, 1)).toThrow();
   });
 });

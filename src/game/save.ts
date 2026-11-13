@@ -1,5 +1,6 @@
 import { isOpenWorldMonster, type MonsterKind } from '../world/dungeon';
-import { MAX_STACK } from '../config';
+import { MAX_STACK, SUBDIV } from '../config';
+import { rescaleCell, rescaleChunkRecords, rescaleExplored, rescaleFactor, rescaleHoles, rescaleXY } from '../world/subdiv';
 import { BASE_STATS, HUNGER, MONSTER_STATS } from '../world/progression';
 import type { StackId } from '../world/items';
 import { Block, isRemovedStack } from '../world/blocks';
@@ -23,10 +24,12 @@ import type { Exploration } from './exploration';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 export interface SaveData {
   v: number;
+  /** Subdivisão da grade em que o mundo foi salvo (v16, ADR 0032): 1 = antiga; 2 = células de metade do lado. */
+  sub: number;
   world: WorldId;
   seed: number;
   savedAt: number;
@@ -76,6 +79,7 @@ export function captureSave(s: GameState): SaveData {
   const p = s.player;
   return {
     v: SAVE_VERSION,
+    sub: SUBDIV,
     world: s.world.profile.id,
     seed: s.world.seed,
     savedAt: Date.now(),
@@ -151,7 +155,36 @@ export function migrate(raw: unknown): SaveData | null {
     const { marblePlacements: _p, marbleV3Bases: _b, ...rest } = d as SaveData & { marblePlacements?: unknown; marbleV3Bases?: unknown };
     d = { ...rest, v: 15 };
   }
+  // v15 → v16 (grade fina, ADR 0032): o salvamento passa a dizer em que grade foi feito; os antigos são da grade 1.
+  if (d.v === 15) d = { ...d, v: 16, sub: 1 };
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
+}
+
+/**
+ * Converte um salvamento para a grade `to` (só aumenta: 1 → 2): chunks, névoa, buracos, tenda, baús, jogador, ovelhas e monstros do
+ * covil acompanham (`world/subdiv.ts`). Mesma grade devolve o próprio salvamento; grade mais fina que `to` é erro.
+ */
+export function rescaleSave(d: SaveData, to: number): SaveData {
+  const f = rescaleFactor(d.sub ?? 1, to);
+  if (f === 1) return d;
+  const pt = <T extends { x: number; y: number }>(o: T): T => { const [x, y] = rescaleXY(o.x, o.y, f); return { ...o, x, y }; };
+  const home = <T extends { x: number; y: number; homeX: number; homeY: number }>(o: T): T => {
+    const [x, y] = rescaleXY(o.x, o.y, f);
+    const [homeX, homeY] = rescaleXY(o.homeX, o.homeY, f);
+    return { ...o, x, y, homeX, homeY };
+  };
+  return {
+    ...d,
+    sub: to,
+    player: pt(d.player),
+    explored: rescaleExplored(d.explored ?? [], f),
+    tent: d.tent ? rescaleCell(d.tent[0], d.tent[1], f) : null,
+    chests: (d.chests ?? []).map((c) => { const [x, y] = rescaleCell(c.x, c.y, f); return { ...c, x, y }; }),
+    chunks: rescaleChunkRecords(d.chunks, f),
+    holes: rescaleHoles(d.holes ?? [], f),
+    sheep: d.sheep.map(home),
+    dungeon: d.dungeon && { monsters: d.dungeon.monsters.map(home), respawns: d.dungeon.respawns.map(pt) },
+  };
 }
 
 /** Tira do salvamento o que é de bloco que saiu do jogo (antigas paredes): pilhas da bolsa, da grade e dos baús. */
@@ -264,11 +297,25 @@ export class SaveStore {
     }
   }
 
+  /** Sementes cujo arquivo é de uma grade mais fina que a deste jogo (ex.: aba antiga): não se abre nem se sobrescreve. */
+  private readonly blocked = new Set<number>();
+
   load(seed: number): SaveData | null {
     try {
       const raw = this.storage?.getItem(this.key(seed));
-      const d = raw ? migrate(JSON.parse(raw)) : null;
-      return d && d.seed === seed && d.world === this.world ? d : null;
+      let d = raw ? migrate(JSON.parse(raw)) : null;
+      if (!d || d.seed !== seed || d.world !== this.world) return null;
+      const sub = d.sub ?? 1;
+      if (sub > SUBDIV) { this.blocked.add(seed); return null; }
+      if (sub < SUBDIV) {
+        // Grade nova (ADR 0032): guarda uma cópia do arquivo antigo (uma vez) e converte; o jogo regrava na grade nova.
+        try {
+          const backup = `${this.key(seed)}:grade-${sub}`;
+          if (this.storage && raw && !this.storage.getItem(backup)) this.storage.setItem(backup, raw);
+        } catch { /* sem espaço para a cópia: o arquivo antigo continua lá até o jogo regravar */ }
+        d = rescaleSave(d, SUBDIV);
+      }
+      return d;
     } catch {
       return null;
     }
@@ -276,6 +323,7 @@ export class SaveStore {
 
   /** Grava; false se não deu (cota cheia, bloqueado). */
   save(d: SaveData): boolean {
+    if (this.blocked.has(d.seed)) return false;
     try {
       this.storage?.setItem(this.key(d.seed), JSON.stringify(d));
       this.storage?.setItem(this.lastKey, String(d.seed));

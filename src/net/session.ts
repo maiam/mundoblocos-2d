@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { type PlayerAction, applyAction } from '../world/actions';
 import type { World } from '../world/world';
 import type { Facing } from '../game/walker';
@@ -67,7 +68,7 @@ export class NetSession {
 
   /** Entra numa sala fixa pelo número (`ROOMS`). */
   join(name: string, room: number, appearance?: Appearance): void {
-    this.send({ t: 'hello', v: PROTOCOL_VERSION, name, room, appearance });
+    this.send({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name, room, appearance });
   }
 
   /** Pede um item do chão (a sala responde `taken` para todos: quem pediu primeiro leva). */

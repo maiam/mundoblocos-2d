@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 20;
+export const PROTOCOL_VERSION = 21;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -74,7 +74,7 @@ export interface Applied {
 
 export type ClientMessage =
   /** Entrar numa sala fixa pelo número (`ROOMS`). */
-  | { t: 'hello'; v: number; name: string; room: number; appearance?: Appearance }
+  | { t: 'hello'; v: number; /** Subdivisão da grade do aparelho (ADR 0032; v21): a sala só aceita quem fala a mesma. Ausente = 1. */ sub?: number; name: string; room: number; appearance?: Appearance }
   | { t: 'state'; s: PlayerState }
   /** `seq` volta no `rejected`, para o jogo saber qual ação não valeu. */
   | { t: 'action'; seq: number; a: PlayerAction }
@@ -209,7 +209,7 @@ export function parseClientMessage(text: string): ClientMessage | null {
   switch (o.t) {
     case 'hello':
       if (!Number.isInteger(o.v) || typeof o.name !== 'string' || !Number.isInteger(o.room)) return null;
-      return { t: 'hello', v: o.v as number, name: o.name, room: o.room as number, appearance: parseAppearance(o.appearance) };
+      return { t: 'hello', v: o.v as number, sub: Number.isInteger(o.sub) && (o.sub as number) >= 1 ? (o.sub as number) : 1, name: o.name, room: o.room as number, appearance: parseAppearance(o.appearance) };
     case 'bag': {
       const bag = parseBag(o.bag);
       return bag ? { t: 'bag', bag } : null;

@@ -10,11 +10,15 @@ export const DAY_LENGTH_S = 480;
  * Subdivisão da grade (ADR 0032, F1 — protótipo): 1 = padrão; 2 = células de metade do lado, com o mundo do mesmo tamanho em
  * pixels. Só por `?grade=2` em desenvolvimento (Vite) e fora da sala/servidor (o bundle do servidor não tem `window`).
  */
+/** Subdivisão padrão do jogo e do servidor (a F7 da ADR 0032 troca para 2 nos dois ao mesmo tempo). */
+export const DEFAULT_SUBDIV = 1;
+
 function gridSubdiv(): number {
-  if (typeof window === 'undefined') return 1;
+  if (typeof window === 'undefined') return DEFAULT_SUBDIV; // servidor e testes
   const dev = !!(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
-  if (!dev) return 1;
-  return new URLSearchParams(window.location.search).get('grade') === '2' ? 2 : 1;
+  if (!dev) return DEFAULT_SUBDIV;
+  const g = new URLSearchParams(window.location.search).get('grade');
+  return g === '1' ? 1 : g === '2' ? 2 : DEFAULT_SUBDIV;
 }
 export const SUBDIV = gridSubdiv();
 

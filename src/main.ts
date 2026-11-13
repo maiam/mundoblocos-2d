@@ -1,4 +1,4 @@
-import { SUBDIV } from './config';
+import { DEFAULT_SUBDIV, SUBDIV } from './config';
 import { TitleScreen } from './game/title';
 import './style.css';
 import { Game } from './game/game';
@@ -34,7 +34,7 @@ const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const baseProfile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 /** Protótipo da grade fina (ADR 0032; só dev, `?grade=2`): mesmo mundo, sem salvar e sem sala. */
-const gridProto = SUBDIV > 1 && baseProfile.id === 'principal';
+const gridProto = SUBDIV !== DEFAULT_SUBDIV && baseProfile.id === 'principal';
 const profile = baseProfile;
 document.title = profile.name;
 let game: Game | null = null;
