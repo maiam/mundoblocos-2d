@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.40 — M5.1: checklist de paridade 2D × 3D e medição em aparelho real (13/11/2026)
+- **`npm run parity:3d`** (`scripts/parity-3d.cjs`): abre o jogo em 2D e em `?render=3d` nos mesmos 10 cenários (praça, portão, floresta, água, item caído, noite, interior, covil, labirinto, construção) e gera `parity-out/index.html` com as capturas lado a lado; sai com erro se houver erro de console. Resultado e pendências em **`docs/PARITY_3D.md`** (todos os 10 cenários ✅ no headless).
+- **Piloto em aparelho real:** `npm run build:piloto3d` (`VITE_PILOT_3D=1`, `dist-piloto/`) e `npm run preview:piloto3d` (na rede). O build de produção segue **sem** o 3D (conferido). `?fps=1` (`dev/perfHud.ts`, testado): painel com FPS, tempo de quadro e o pior, chamadas/triângulos/texturas/geometrias da GPU e memória; **toque copia o relatório (JSON)**. Funciona também no 2D, para comparar. `Game.rendererStats` exposto.
+- **Medição honesta:** `ThreeStage` agora acumula os contadores de **todas as passadas** do quadro (cena + luz); antes `stats()` mostrava só a última (a camada de luz) — corrigido também para o Santuário.
+- **Achado da paridade (corrigido):** na floresta densa o jogador sumia atrás das copas (z-buffer correto, mas sem pista de onde ele está) → **eco translúcido** do jogador por cima de tudo (`ActorBillboards` `echo`), como no Santuário.
+- Só dev/piloto; física inalterada. 421 testes (8 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.39 — M4.2: dungeon do Mundo em 2.5D; M4 concluído (13/11/2026)
 - **Parede do labirinto em 2 níveis:** `ChunkSprites` aceita `stack` (de `textures.stackDraw`) — instâncias uma unidade de altura acima da outra (`SpriteCell.lift`; o `pick` desconta a altura do exemplar).
 - **Farol, seta da entrada e escuro fora do labirinto** extraídos do `Renderer` 2D para `render/dungeonFx.ts` e **compartilhados** com a camada 2D do 3D (o 2D segue igual). A penumbra do covil é a luz dinâmica (ambiente 0,3 + luz do jogador). `entrance` e `dungeonArea` → `honored`: todos os campos de `RenderOptions` estão atendidos no Mundo 3D (exceto a depuração `showChunkBorders`).

@@ -17,6 +17,11 @@ import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './
 
 const canvas = document.getElementById('world') as HTMLCanvasElement;
 const screenMode = new ScreenMode();
+/**
+ * Piloto do Mundo em 2.5D (ADR 0031, M5): `?render=3d` e o painel `?fps=1` só existem em desenvolvimento ou num build de piloto
+ * (`npm run build:piloto3d`, `VITE_PILOT_3D=1`). O build de produção não os contém (a condição vira constante falsa).
+ */
+const PILOT_3D = import.meta.env.DEV || import.meta.env.VITE_PILOT_3D === '1';
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 document.title = profile.name;
@@ -133,6 +138,8 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
   if (fromUrl && (HERO_BODIES as readonly string[]).includes(fromUrl)) game.entities.body = fromUrl as HeroBody;
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
+  // Painel de desempenho (`?fps=1`, dev e piloto): FPS, tempo de quadro, GPU e memória; toque = copia o relatório.
+  if (PILOT_3D && new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null));
 }
 
 /** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino ou Mila) e só então o mundo novo. */
@@ -209,7 +216,7 @@ void loadArtPack(profile.id)
     }
 
     // Mundo em 2.5D (ADR 0031, M2 — em construção): só em desenvolvimento e com `?render=3d`; o build de produção não o contém.
-    if (import.meta.env.DEV && profile.id === 'principal' && query.get('render') === '3d') {
+    if (PILOT_3D && profile.id === 'principal' && query.get('render') === '3d') {
       const probe = document.createElement('canvas');
       if (probe.getContext('webgl2') || probe.getContext('webgl')) {
         const mod = await import('./render/worldThreeRenderer');

@@ -24,6 +24,8 @@ export interface ActorBillboardsOptions {
   paintZoom?: number;
   /** Teto de atores desenhados por quadro (o jogador sempre entra). */
   maxActors?: number;
+  /** Eco translúcido do primeiro ator (o jogador) por cima de tudo: mostra onde ele está quando uma copa ou parede o esconde. */
+  echo?: boolean;
   createCanvas?(): HTMLCanvasElement;
 }
 
@@ -57,6 +59,7 @@ export class ActorBillboards {
   private readonly shadowGeometry: THREE.BufferGeometry;
   private readonly zoom: number;
   private drawn = 0;
+  private echo: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null;
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -68,7 +71,21 @@ export class ActorBillboards {
     this.plane.translate(0, 0.5, 0); // origem nos pés
     this.shadowGeometry = new THREE.CircleGeometry(1, 24);
     this.shadowGeometry.rotateX(-Math.PI / 2);
+    if (opts.echo) {
+      // Nunca desligar o teste de profundidade do personagem em si (achataria todo obstáculo à frente): o eco é um segundo plano.
+      this.echo = new THREE.Mesh(this.plane, new THREE.MeshBasicMaterial({
+        color: 0xe6dcff, transparent: true, opacity: 0.45, depthTest: false, depthWrite: false, alphaTest: 0.015, side: THREE.DoubleSide,
+      }));
+      this.echo.renderOrder = 2;
+      this.echo.frustumCulled = false;
+      this.echo.visible = false;
+      this.echo.name = 'Mundo: eco do jogador';
+      scene.add(this.echo);
+    }
   }
+
+  /** O eco do jogador está visível? (dev/testes) */
+  get echoVisible(): boolean { return !!this.echo?.visible; }
 
   /** Atores desenhados no último quadro (dev/testes). */
   get count(): number { return this.drawn; }
@@ -89,6 +106,12 @@ export class ActorBillboards {
       slot.mesh.scale.set(cells, cells / this.opts.k, 1);
       slot.mesh.position.set(a.x, a.visualZ + 0.03, a.y);
       slot.mesh.visible = true;
+      if (this.echo && a === chosen[0]) {
+        this.echo.material.map = slot.texture;
+        this.echo.scale.copy(slot.mesh.scale);
+        this.echo.position.copy(slot.mesh.position);
+        this.echo.visible = true;
+      }
       const [rx, ry] = sheet.shadowRadii;
       const dying = a.dying ?? 0;
       slot.shadow.position.set(a.x, a.visualZ + 0.018, a.y);
@@ -97,6 +120,7 @@ export class ActorBillboards {
       slot.shadow.visible = rx > 0;
     }
     this.drawn = chosen.length;
+    if (this.echo && chosen.length === 0) this.echo.visible = false;
     for (const [side, slots] of this.pools) {
       const n = used.get(side) ?? 0;
       for (let i = n; i < slots.length; i++) slots[i].mesh.visible = slots[i].shadow.visible = false;
@@ -175,6 +199,7 @@ export class ActorBillboards {
         s.texture.dispose();
       }
     }
+    if (this.echo) { this.scene.remove(this.echo); this.echo.material.dispose(); this.echo = null; }
     this.pools.clear();
     this.plane.dispose();
     this.shadowGeometry.dispose();

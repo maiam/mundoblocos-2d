@@ -264,6 +264,16 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 
 **Cena de escala** (ADR 0022, só em desenvolvimento): `npm run dev` e abrir `http://localhost:5173/?escala=1` — personagens, animais, monstros, baú, bancos, árvores e uma casa 5×5 sobre a grade, desenhados pelo renderizador real. Teclas: `G` grade · `A` âncoras e alturas · `B` células bloqueadas · `L` nomes · `+`/`−` zoom · setas · `0` reenquadra. Use ao integrar arte nova (compare com o que já existe; a fila é `src/dev/scaleLayout.ts`). Captura de referência: `docs/assets/escala-referencia.jpg` (viewport 1280 × 720). Não entra no build de produção.
 
+## Medir em aparelho real — piloto do Mundo em 2.5D (ADR 0031, M0/M5)
+O 3D do Mundo (`?render=3d`) **não existe no build de produção**. Para testar em celular, iPad ou Safari:
+1. **Mesma rede (rápido):** `npm run dev -- --host` e abrir `http://<IP-do-computador>:5173/?render=3d&fps=1` no aparelho; ou
+2. **Build de piloto:** `npm run build:piloto3d` (`VITE_PILOT_3D=1`, saída em `dist-piloto/`, ignorada pelo git) e `npm run preview:piloto3d`
+   (servidor na rede) — este é o mais próximo do jogo de verdade (JS minificado, sem o servidor de desenvolvimento).
+3. `&fps=1` mostra um painel (FPS, tempo de quadro e o pior, chamadas/triângulos/texturas/geometrias da GPU, memória do JS); **toque nele
+   para copiar o relatório** (JSON) e cole na conversa. Sem `render=3d` o painel mede o 2D, para comparar. Deixe rodando ~1 min andando
+   pela cidade, pela floresta e à noite (`__game.time` só existe em dev; no piloto espere o ciclo ou use o menu de descanso na tenda).
+4. Paridade visual no computador: `npm run parity:3d` (ver [PARITY_3D](PARITY_3D.md)).
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

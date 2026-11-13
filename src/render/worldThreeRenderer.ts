@@ -129,7 +129,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: CHARACTER_SCALE_FACTOR, k: OBLIQUE_K });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: CHARACTER_SCALE_FACTOR, k: OBLIQUE_K, echo: true });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);

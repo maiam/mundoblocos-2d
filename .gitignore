@@ -5,6 +5,8 @@ dist
 artifact/
 orvalis-site.zip
 dist-net/
+dist-piloto/
+parity-out/
 
 # Personagens: trabalho e histórico ficam só no computador da arte (CONTRATO.md)
 /assets-src/personagens/**/_trabalho/
