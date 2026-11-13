@@ -2,7 +2,7 @@ import type { RendererStats } from '../render/rendererContract';
 
 /**
  * Medição de desempenho para o piloto do Mundo em 2.5D (ADR 0031, M0/M5): `?fps=1` mostra um painel pequeno com FPS, tempo de
- * quadro, o que a GPU está desenhando e a memória do JS, e um toque nele copia um relatório (JSON) para colar na conversa.
+ * quadro, o que a GPU está desenhando e a memória do JS, e um toque nele copia um relatório (JSON) para colar na conversa — ou, sem permissão de área de transferência (HTTP na rede local), mostra o JSON numa caixa para copiar à mão.
  * Só em desenvolvimento ou no build de piloto (`VITE_PILOT_3D=1`); funciona também no 2D (sem contadores da GPU), para comparar.
  */
 
@@ -105,13 +105,37 @@ export function startPerfHud(getStats: () => RendererStats | null): () => void {
       worstMs: Math.round(s.worstMs), gpu: getStats(), heapMB: heap() === null ? null : Math.round(heap()!),
     };
   };
+  let sheet: HTMLTextAreaElement | null = null;
   let raf = 0;
   const loop = (now: number) => { meter.frame(now); raf = requestAnimationFrame(loop); };
   raf = requestAnimationFrame(loop);
-  const timer = window.setInterval(() => { box.textContent = perfLine(mode(), meter.snapshot(), getStats(), heap()); }, 500);
+  let holdUntil = 0; // mensagens ('copiado', instruções) ficam um tempo antes da linha de medição voltar
+  const timer = window.setInterval(() => {
+    if (sheet || performance.now() < holdUntil) return;
+    box.textContent = perfLine(mode(), meter.snapshot(), getStats(), heap());
+  }, 500);
+  /** Plano B quando o navegador não libera a área de transferência (HTTP na rede local): o relatório numa caixa de texto selecionada. */
+  const showReport = (text: string): void => {
+    sheet?.remove();
+    sheet = document.createElement('textarea');
+    sheet.readOnly = true;
+    sheet.value = text;
+    Object.assign(sheet.style, {
+      position: 'fixed', left: '6px', right: '6px', top: '34px', height: '55vh', zIndex: '10000', font: '12px/1.3 ui-monospace, Menlo, monospace',
+      background: 'rgba(10,6,24,0.94)', color: '#fff', border: '1px solid #8a7cff', borderRadius: '6px', padding: '6px',
+    } as Partial<CSSStyleDeclaration>);
+    sheet.addEventListener('click', () => { sheet?.remove(); sheet = null; box.textContent = 'Relatório fechado (toque aqui para abrir de novo)'; });
+    document.body.appendChild(sheet);
+    sheet.focus();
+    sheet.select();
+    box.textContent = 'Selecione tudo e copie (ou tire um print). Toque na caixa para fechar.';
+  };
   box.addEventListener('click', () => {
     const text = JSON.stringify(report(), null, 2);
-    void navigator.clipboard?.writeText(text).then(() => { box.textContent = 'Relatório copiado ✓'; }, () => { box.textContent = text; });
+    if (sheet) { sheet.remove(); sheet = null; return; }
+    const clip = navigator.clipboard;
+    if (clip?.writeText) void clip.writeText(text).then(() => { box.textContent = 'Relatório copiado ✓'; holdUntil = performance.now() + 3000; }, () => showReport(text));
+    else showReport(text);
   });
   return () => { cancelAnimationFrame(raf); clearInterval(timer); box.remove(); };
 }
