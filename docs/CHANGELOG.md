@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.18 — Espessura das paredes fechada em 0,25 / 0,35; contrato gerado (13/11/2026)
+- **Decisão do dono do produto:** `DEFAULT_WALL_THICKNESS` = `{ x: 0.25, z: 0.35 }` (faixas e poste de 0,25; tampa de 0,35). A foto do protótipo no iPad confirmou a leitura.
+- **Gabarito e contrato regerados** com a medida: poste 32 × 44 px, braços 48 (L/O) e 42 (N/S), frentes 128/80/80/32 × 154, face sul a 42 px da borda da célula. O `CONTRATO.md` agora é **gerado** por `scripts/make-wall-guide.py` a partir de `CONTRATO.tpl.md` (números sempre iguais aos do gabarito e do código); `--tx/--tz` mudam a espessura.
+- Testes ajustados ao novo padrão (27 de paredes). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.17 — Espessura das paredes ajustável por eixo (`?espessura=x,z`) (13/11/2026)
 - **`WallThickness { x, z }`** em `world/walls.ts`: `x` = largura das faixas norte–sul e do poste; `z` = profundidade da tampa das fileiras leste–oeste (e a posição da face sul na célula). `wallFootprint` e `wallFrontRanges` recebem a espessura (padrão `DEFAULT_WALL_THICKNESS` = 0,3 / 0,3, o valor aprovado). `parseWallThickness` lê `0.25,0.35` (ou só `0.3`) e limita a 0,1–0,9. Testes novos (27 de paredes).
 - **Protótipo:** `?mundo=santuario&paredes=autotile&espessura=0.25,0.35` aplica a espessura nas paredes de cor lisa. Só teste; sem mudança de jogo, protocolo ou save.

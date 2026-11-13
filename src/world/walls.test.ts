@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   clampWallThickness, DEFAULT_WALL_THICKNESS, parseWallThickness,
-  CAP_E, CAP_N, CAP_S, CAP_W, INNER_NE, INNER_NW, INNER_SE, INNER_SW, WALL_CAP_PIECES, WALL_THICKNESS,
+  CAP_E, CAP_N, CAP_S, CAP_W, INNER_NE, INNER_NW, INNER_SE, INNER_SW, WALL_CAP_PIECES,
   wallCapMask, wallFront, wallFootprint, wallFrontRanges, wallInnerCorners, wallNeighbors, wallPiece, wallThin,
 } from './walls';
 
@@ -82,12 +82,15 @@ describe('autotile das paredes (ADR 0027)', () => {
   describe('placa fina (geometria do autotile)', () => {
     const area = (rs: Array<{ x0: number; x1: number; z0: number; z1: number }>) => rs.reduce((a, r) => a + (r.x1 - r.x0) * (r.z1 - r.z0), 0);
     const nbOf = (rows: string[], x: number, y: number) => wallNeighbors(grid(rows), x, y);
-    const C0 = (1 - WALL_THICKNESS) / 2;
-    const C1 = (1 + WALL_THICKNESS) / 2;
+    const { x: TX, z: TZ } = DEFAULT_WALL_THICKNESS;
+    const C0 = (1 - TX) / 2;
+    const C1 = (1 + TX) / 2;
+    const Z0 = (1 - TZ) / 2;
+    const Z1 = (1 + TZ) / 2;
 
     it('poste isolado: um quadrado fino no centro da célula', () => {
       const f = wallFootprint(nbOf(['.#.'], 1, 0));
-      expect(f).toEqual([{ x0: C0, x1: C1, z0: C0, z1: C1 }]);
+      expect(f).toEqual([{ x0: C0, x1: C1, z0: Z0, z1: Z1 }]);
       expect(wallFrontRanges(nbOf(['.#.'], 1, 0))).toEqual([[C0, C1]]);
     });
 
@@ -115,8 +118,8 @@ describe('autotile das paredes (ADR 0027)', () => {
       const f = wallFootprint(cross);
       expect(f).toHaveLength(5);
       for (const r of f) { expect(r.x0).toBeGreaterThanOrEqual(0); expect(r.x1).toBeLessThanOrEqual(1); expect(r.z0).toBeGreaterThanOrEqual(0); expect(r.z1).toBeLessThanOrEqual(1); }
-      const T2 = WALL_THICKNESS;
-      expect(area(f)).toBeCloseTo(T2 * T2 + 4 * T2 * (1 - T2) / 2, 9); // poste + 4 braços de (1 − T)/2
+      // poste + 2 braços norte/sul (x × (1 − z)/2) + 2 braços leste/oeste (z × (1 − x)/2)
+      expect(area(f)).toBeCloseTo(TX * TZ + 2 * TX * (1 - TZ) / 2 + 2 * TZ * (1 - TX) / 2, 9);
     });
 
     it('thin: sem vizinho a leste/oeste', () => {
@@ -127,8 +130,8 @@ describe('autotile das paredes (ADR 0027)', () => {
 
   describe('espessura ajustável por eixo', () => {
     const is = (rows: string[]) => grid(rows);
-    it('o padrão é 0,3 nos dois eixos (o valor aprovado no protótipo)', () => {
-      expect(DEFAULT_WALL_THICKNESS).toEqual({ x: 0.3, z: 0.3 });
+    it('o padrão é x 0,25 · z 0,35 (escolhido pelo dono do produto em 13/11/2026)', () => {
+      expect(DEFAULT_WALL_THICKNESS).toEqual({ x: 0.25, z: 0.35 });
     });
 
     it('x muda a largura do poste e das faixas norte–sul; z muda a profundidade da tampa', () => {
