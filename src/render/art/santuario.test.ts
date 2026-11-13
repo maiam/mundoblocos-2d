@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, CELESTIAL_BLOCKS } from '../../world/blocks';
+import { Block, CELESTIAL_BLOCKS, WALL_BLOCKS } from '../../world/blocks';
 import pack from './santuario';
 
 const APPROVED = [
@@ -27,5 +27,12 @@ describe('Santuário oficial — seis texturas aprovadas', () => {
       expect(pack.celestialSurfaces?.[id]).toBeUndefined();
       expect(pack.celestialIcons[id]).toBeTruthy();
     }
+  });
+});
+
+describe('Santuário — ícones das paredes', () => {
+  it('as duas paredes têm ícone de arte; a porta de parede segue provisória', () => {
+    for (const id of WALL_BLOCKS) expect(pack.celestialIcons[id]).toBeTruthy();
+    expect(pack.celestialIcons[Block.WALL_DOOR_PLANKS]).toBeUndefined();
   });
 });

@@ -20,6 +20,8 @@ import iconMossLuminous from '../../assets/icon-celestial-moss-luminous.webp';
 import iconWaterCrystal from '../../assets/icon-celestial-water-crystal.webp';
 import iconWaterSacred from '../../assets/icon-celestial-water-sacred.webp';
 import iconWoodCelestial from '../../assets/icon-celestial-wood-celestial.webp';
+import iconWallPlanks from '../../assets/icon-wall-planks.webp';
+import iconWallStone from '../../assets/icon-wall-stone.webp';
 import { Block } from '../../world/blocks';
 import type { ArtPack } from './types';
 
@@ -55,6 +57,9 @@ const pack: ArtPack = {
     [Block.LIGHT_BLOCK]: iconLightBlock,
     [Block.WOOD_CELESTIAL]: iconWoodCelestial,
     [Block.FOLIAGE_GOLDEN]: iconFoliageGolden,
+    // paredes autotile (ADR 0027); a porta de parede segue com o ícone provisório (`wallPlaceholderIcon`)
+    [Block.WALL_PLANKS]: iconWallPlanks,
+    [Block.WALL_STONE]: iconWallStone,
   },
   materialIcons: {},
   itemIcons: {},
