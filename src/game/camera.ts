@@ -4,6 +4,8 @@ import type { ChunkRect } from '../world/world';
 /** Multiplicador de zoom ajustável pelo jogador (roda/Q/E). */
 export const MIN_ZOOM_MUL = 0.6;
 export const MAX_ZOOM_MUL = 1.6;
+/** Células visíveis na largura (no mínimo) com a tela em pé. */
+export const PORTRAIT_MIN_CELLS_WIDE = 8;
 /** Rigidez do acompanhamento (maior = mais colado ao alvo). */
 const FOLLOW = 9;
 
@@ -36,7 +38,10 @@ export class Camera {
 
   /** Zoom base: `cellsTall` células na vertical (10: personagem grande), limitado pela largura. */
   private updateZoom(): void {
-    const base = Math.min(this.height / (this.cellsTall * TILE), this.width / (7 * TILE));
+    // Em pé (altura > largura) cabem mais células na altura: a largura mínima sobe para 9 (o personagem não fica gigante) e o
+    // limite passa a ser a largura da tela (ADR 0030); deitado, 7 como antes.
+    const minCellsWide = this.height > this.width ? PORTRAIT_MIN_CELLS_WIDE : 7;
+    const base = Math.min(this.height / (this.cellsTall * TILE), this.width / (minCellsWide * TILE));
     // O piso de 1,1 vale para o padrão (10 células); com mais células o piso desce para o zoom pedido caber.
     const floor = this.cellsTall === 10 ? 1.1 : 0.5;
     this.zoom = Math.min(3.4, Math.max(floor, base)) * this.zoomMul;

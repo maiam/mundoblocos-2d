@@ -21,6 +21,9 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 - **Implementação:** ao construir acima, completar a parede existente e acrescentar pilar inteiro; ao construir abaixo, preencher apenas o bloco novo, sem converter a parede original. Ordem das colocações persistida no save v13; saves antigos seguem a classificação legada.
 - **Conferência visual pendente:** testar extensão ascendente e descendente em uma linha vertical e nas pontas de uma faixa horizontal; comparar ligações opostas espelhadas, L, T, salas 3×3/5×5, bordas ornamentadas, remoção e recarga do save. Validar também seleção/colisão com a câmera a 67° no Safari e desktop.
 
+## Vertical no celular/tablet (ADR 0030, v0.93.24)
+Fases 1 (desbloqueio) e 2 (hotbar em linhas, controles por `--hotbar-h`, conversa) ✅. **Falta:** painéis largos em coluna (bolsa, baú, receitas, profissões), conferir no aparelho real (Safari/iPad), decidir se haverá botão para alternar orientação e se o Mundo 2D precisa de zoom próprio em pé.
+
 ## Migração do render para 2.5D em WebGL — ADR 0026 (decidida em 12/11/2026)
 
 Referência: Core Keeper. Arte 2D, geometria só nas paredes, atores em billboards, parede sólida, **iluminação dinâmica
