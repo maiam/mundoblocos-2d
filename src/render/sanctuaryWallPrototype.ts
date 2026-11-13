@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Block, type BlockId, isWall } from '../world/blocks';
+import { Block, type BlockId, isWallLike } from '../world/blocks';
 import { DEFAULT_WALL_THICKNESS, type WallThickness, wallFootprintParts, wallNeighbors } from '../world/walls';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
 import { WORLD_SCALE } from './worldScale';
@@ -55,7 +55,7 @@ function capTexture(p: Palette, orientation: CapOrientation): THREE.CanvasTextur
 
 /** Ícone provisório da hotbar (SVG em data URL: nada de ler canvas). */
 export function wallPlaceholderIcon(id: BlockId): string {
-  if (!isWall(id)) return '';
+  if (!isWallLike(id)) return '';
   const p = PALETTES[id] ?? FALLBACK;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="14" width="52" height="40" rx="4" fill="${p.front}" stroke="${p.side}" stroke-width="4"/><rect x="6" y="14" width="52" height="10" rx="3" fill="${p.top}"/></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

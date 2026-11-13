@@ -21,6 +21,7 @@ import { characterScale, createWallProportionTest, type ScalePreset } from './sa
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
 import { buildWallArt, type WallArtGroup } from './sanctuaryWallArt';
+import { wallArtBase } from './wallAtlas';
 import { DEFAULT_WALL_THICKNESS, type WallThickness } from '../world/walls';
 import { flickerFactor, glowLightFor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
 import { SanctuaryLighting } from './sanctuaryLighting';
@@ -29,6 +30,8 @@ import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './san
 
 type Cell = {x:number;y:number;level:number;id:BlockId};
 type MeshGroup = {mesh:THREE.InstancedMesh;cells:Cell[]};
+/** Duração do quadro intermediário da porta ao abrir/fechar (ms). */
+const DOOR_HALF_MS=140;
 type SurfaceMaterial = THREE.MeshLambertMaterial|THREE.MeshBasicMaterial;
 type Materials = {block:SurfaceMaterial[];ground:SurfaceMaterial[];textures:THREE.Texture[]};
 
@@ -85,6 +88,10 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   /** Paredes com arte (W3): atlas por bloco carregados do pacote de arte; os materiais sem atlas usam o protótipo. */
   private wallArt:WallArtGroup|null=null;
   private readonly wallAtlases=new Map<BlockId,HTMLImageElement>();
+  /** Portas de parede: estado anterior (para detectar abrir/fechar) e quadro intermediário em andamento (ms até acabar). */
+  private doorStates=new Map<string,BlockId>();
+  private readonly halfDoors=new Map<string,number>();
+  private halfTimer:ReturnType<typeof setTimeout>|null=null;
   private readonly wallThickness:WallThickness;
   /** Iluminação (ADR 0029): só na vista oblíqua e quando `?luz=` liga; `glowLights` = blocos que brilham, refeito com as malhas. */
   private readonly lighting:SanctuaryLighting|null;
@@ -374,9 +381,23 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.groups.length=0;
     if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();}
     if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();}
-    this.wallArt=buildWallArt(this.world,this.bounds,this.wallAtlases,this.wallThickness);
+    const now=performance.now();
+    for(const [k,until] of this.halfDoors)if(until<=now)this.halfDoors.delete(k);
+    this.wallArt=buildWallArt(this.world,this.bounds,this.wallAtlases,this.wallThickness,new Set(this.halfDoors.keys()));
     this.scene.add(this.wallArt.group);
-    this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness,id=>this.wallAtlases.has(id));
+    // Porta que mudou de estado: mostra o quadro intermediário por um instante e depois o estado final.
+    let changed=false;
+    for(const [k,id] of this.wallArt.doors){
+      const prev=this.doorStates.get(k);
+      if(prev!==undefined&&prev!==id&&!this.halfDoors.has(k)){this.halfDoors.set(k,now+DOOR_HALF_MS);changed=true;}
+    }
+    this.doorStates=new Map(this.wallArt.doors);
+    if(changed){
+      this.signature=''; // refaz já com o quadro intermediário…
+      if(this.halfTimer)clearTimeout(this.halfTimer);
+      this.halfTimer=setTimeout(()=>{this.halfTimer=null;this.signature='';},DOOR_HALF_MS+20); // …e depois com o estado final
+    }
+    this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness,id=>this.wallAtlases.has(wallArtBase(id)));
     this.scene.add(this.walls.group);
     const cells=sanctuary3DGeometryCells(this.world,this.bounds);
     this.glowLights=[];
@@ -629,6 +650,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   dispose():void{
     if(this.disposed)return;
     this.disposed=true;
+    if(this.halfTimer)clearTimeout(this.halfTimer);
     this.canvas.removeEventListener('webglcontextlost',this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored',this.onContextRestored);
     this.lighting?.dispose();

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { wallNeighbors } from '../world/walls';
 import {
+  doorPieceFor, wallArtBase,
   capRect, frontPieceFor, frontRect, wallArtPiece, WALL_ART_CELL, WALL_ART_FRONT_H, WALL_ART_MATERIALS, WALL_ATLAS_H, WALL_ATLAS_W,
 } from './wallAtlas';
 
@@ -53,5 +54,24 @@ describe('atlas de paredes (W3)', () => {
     expect(frontPieceFor('mid')).toBe('front_mid');
     expect(WALL_ART_MATERIALS[Block.WALL_PLANKS]).toBe('tabuas');
     expect(WALL_ART_MATERIALS[Block.WALL_STONE]).toBe('pedra');
+  });
+
+  it('porta: quadros de fechada/intermediário/aberta cabem no atlas e não se sobrepõem às frentes', () => {
+    const rects = ['door_closed', 'door_half', 'door_open', 'front_mid', 'front_post'].map((p) => frontRect(p as never));
+    for (const r of rects) { expect(r.x + r.w).toBeLessThanOrEqual(WALL_ATLAS_W); expect(r.y + r.h).toBeLessThanOrEqual(WALL_ATLAS_H); }
+    expect(frontRect('door_closed').y).toBeGreaterThanOrEqual(frontRect('front_post').y + frontRect('front_post').h);
+    expect(WALL_ATLAS_H).toBe(4 * WALL_ART_CELL + 2 * WALL_ART_FRONT_H);
+  });
+
+  it('a porta usa a tampa da fileira e o quadro da porta no lugar da frente; o atlas é o do material', () => {
+    const rows = ['###'];
+    expect(wallArtPiece(nb(rows, 1, 0), 'door_closed')).toEqual({ cap: 10, front: 'door_closed' });
+    expect(wallArtPiece(nb(rows, 1, 0), 'door_open')).toEqual({ cap: 10, front: 'door_open' });
+    expect(doorPieceFor(Block.WALL_DOOR_PLANKS)).toBe('door_closed');
+    expect(doorPieceFor(Block.WALL_DOOR_PLANKS_OPEN)).toBe('door_open');
+    expect(doorPieceFor(Block.WALL_DOOR_PLANKS, true)).toBe('door_half');
+    expect(doorPieceFor(Block.WALL_PLANKS)).toBeNull();
+    expect(wallArtBase(Block.WALL_DOOR_PLANKS_OPEN)).toBe(Block.WALL_PLANKS);
+    expect(wallArtBase(Block.WALL_STONE)).toBe(Block.WALL_STONE);
   });
 });

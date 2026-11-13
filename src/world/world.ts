@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, UNLOAD_MARGIN } from '../config';
-import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, toggled, TREE_NEXT } from './blocks';
+import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
@@ -609,6 +609,7 @@ export class World {
     const base = blockDef(this.getObject(x, y));
     if (base.id === Block.AIR || base.shape === 'decoration') {
       if (def.shape === 'door' && !this.hasDoorFrame(x, y)) return null;
+      if (def.shape === 'wall-door' && !this.canPlaceWallDoor(x, y)) return null;
       // Tenda ocupa 2×2 (esta célula = canto inferior esquerdo): as 4 precisam estar livres em chão firme.
       if (id === Block.TENT && !tentCells(x, y).every(([cx, cy]) => this.isFootprintFree(cx, cy))) return null;
       return 0;
@@ -702,6 +703,15 @@ export class World {
     return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
   }
 
+  /**
+   * Porta de parede (ADR 0027): só dentro de uma fileira leste–oeste, entre duas paredes comuns (não porta) e sem parede ao norte nem ao sul
+   * (a frente da porta precisa aparecer e a tampa é a da fileira).
+   */
+  canPlaceWallDoor(x: number, y: number): boolean {
+    return isWall(this.getObject(x - 1, y)) && isWall(this.getObject(x + 1, y)) &&
+      !this.isWallAt(x, y - 1) && !this.isWallAt(x, y + 1);
+  }
+
   /** Porta ou portão da cerca (abre e fecha com um toque)? */
   isDoor(x: number, y: number): boolean {
     return isOpenable(this.getObject(x, y));
@@ -746,7 +756,7 @@ export class World {
 
   /** A célula tem uma parede (bloco de forma `wall` no nível 0)? */
   isWallAt(x: number, y: number): boolean {
-    return isWall(this.getObject(x, y));
+    return isWallLike(this.getObject(x, y));
   }
 
   /** Peça de autotile da parede em (x, y) (ADR 0027), ou null se a célula não é parede. */
