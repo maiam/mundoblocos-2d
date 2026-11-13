@@ -42,7 +42,7 @@ Experimento `?celulas=28` (v0.93.50): células e objetos ficaram bons, **mas o m
 - **F0 — esta ADR** + tabela de objetos revisada.
 - **F1 — ✅ feita na v0.93.51 — protótipo atrás de `?grade=2` (dev):** `SUBDIV` nas constantes, gerador em `x / SUBDIV`, câmera 28, jogabilidade × `SUBDIV`, mundo aberto sem cidade/dungeon/interiores. Objetivo: ver o mundo "do mesmo tamanho com células menores" e medir o custo. Padrão e saves intocados.
 - **F2 — ✅ feita na v0.93.52 (aprovada no protótipo pelo dono do produto) — objetos:** tamanhos em células por categoria (árvore 1 × 1 com desenho alto; plantas/cercas/móveis menores); rever arte que não aguente a redução.
-- **F3 — ✅ feita na v0.93.53 (`upsampleTown`; interiores/tenda ficam na F4) — cidade** (`buildTown` ampliado, portas 1 × 2, arte ampliada). **F4 — ✅ feita na v0.93.54 — interiores, tenda, dungeon, lobos e goblins.** **F5 — paredes** (altura decidida na pergunta 3; atlas novos ou nível duplo).
+- **F3 — ✅ feita na v0.93.53 (`upsampleTown`; interiores/tenda ficam na F4) — cidade** (`buildTown` ampliado, portas 1 × 2, arte ampliada). **F4 — ✅ feita na v0.93.54 — interiores, tenda, dungeon, lobos e goblins.** **F5 — ✅ feita na v0.93.55 com escopo ajustado (comparação das alturas + corpo que passa por vão de 1 célula; as paredes no Mundo são a W5) — paredes** (altura decidida na pergunta 3; atlas novos ou nível duplo).
 - **F6 — save e protocolo:** `SAVE_VERSION` 16 com migração, `PROTOCOL_VERSION` 21, servidor (`build:net` + `sync-net`), sala.
 - **F7 — virada:** `SUBDIV = 2` como padrão, 2D de reserva ajustado (ou removido no M7), Artifact, CURRENT_STATE/CONVENTIONS/CLAUDE.md.
 

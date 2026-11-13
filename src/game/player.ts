@@ -75,7 +75,8 @@ export class Player extends Walker {
   seat: Seat | null = null;
 
   constructor(x: number, y: number) {
-    super(x, y, { speed: 4.2, halfW: 0.27, halfD: 0.15, stepHeight: STEP_HEIGHT });
+    // maxHalfW: na grade fina (ADR 0032) o corpo (0,54 de largura) passa por vãos de 1 célula
+    super(x, y, { speed: 4.2, halfW: 0.27, halfD: 0.15, stepHeight: STEP_HEIGHT, maxHalfW: 0.45 });
   }
 
   get attacking(): boolean {

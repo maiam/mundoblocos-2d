@@ -9,12 +9,17 @@ import { OBLIQUE_K } from './sanctuaryObliqueView';
  *   CORE KEEPER — medida de uma cena do jogo (v0.93.13): cubo 1,0, parede ≈ 1,2 (≈ a altura do personagem), personagem 1,2.
  * Cada grupo traz um cubo, uma parede, uma régua vertical (2 segmentos) e uma personagem de referência parada. A Deusa que se
  * mexe usa a escala escolhida em `?escala=atual|proposta|core` (padrão: core). Aberta por `?mundo=santuario&paredes=teste`;
+ * `?escala=grade` troca os grupos por CORE KEEPER + três alturas de parede da grade fina (ADR 0032, F5), na mesma tela;
  * sem lógica de jogo (não entra no mapa) e removível.
  *
  * Na vista oblíqua, vertical é só deslocamento na tela: para uma altura de tela `s` o objeto tem altura de mundo `s / K`.
  */
-export type ScalePreset = 'atual' | 'proposta' | 'core';
-export interface ScaleDef { name: string; cube: number; wall: number; character: number }
+export type ScalePreset = 'atual' | 'proposta' | 'core' | 'grade20' | 'grade24' | 'grade30';
+/** `cell` = lado horizontal de uma célula (1; na grade fina 0,5 — a célula tem metade do lado e o personagem mantém os pixels). */
+export interface ScaleDef { name: string; cube: number; wall: number; character: number; cell?: number }
+/** Escolha de `?escala=`: um preset (o padrão, `core`) ou `grade` (compara a parede da grade fina). */
+export type ScaleChoice = ScalePreset | 'grade';
+export const GRADE_COMPARE: ScalePreset[] = ['core', 'grade20', 'grade24', 'grade30'];
 /** Altura da personagem na escala atual, em células na tela (`CHARACTER_H` / `TILE`). */
 const CURRENT_CHARACTER = 2.2;
 /** K da vista até a v0.93.13 (frente de 18/32 de célula por nível): só para a comparação deste teste. */
@@ -23,10 +28,14 @@ export const SCALE_PRESETS: Record<ScalePreset, ScaleDef> = {
   atual: { name: 'ATUAL', cube: LEGACY_K, wall: LEGACY_K * 2, character: CURRENT_CHARACTER },
   proposta: { name: 'PROPOSTA 1,75', cube: 1.0, wall: 2.0, character: 1.75 },
   core: { name: 'CORE KEEPER 1,2', cube: 1.0, wall: 1.2, character: 1.2 },
+  // Grade fina (ADR 0032): células de 0,5 (o personagem de 1,2 vira 2,4 células novas); a parede em cubos novos de 0,5.
+  grade20: { name: 'GRADE: parede 2,0 cubos', cube: 0.5, wall: 1.0, character: 1.2, cell: 0.5 },
+  grade24: { name: 'GRADE: parede 2,4 cubos', cube: 0.5, wall: 1.2, character: 1.2, cell: 0.5 },
+  grade30: { name: 'GRADE: parede 3,0 cubos', cube: 0.5, wall: 1.5, character: 1.2, cell: 0.5 },
 };
 /** Fator da personagem sobre a escala atual (o plano da Deusa foi desenhado para 2,2). */
-export function characterScale(preset: ScalePreset): number {
-  return SCALE_PRESETS[preset].character / CURRENT_CHARACTER;
+export function characterScale(choice: ScaleChoice): number {
+  return SCALE_PRESETS[choice === 'grade' ? 'core' : choice].character / CURRENT_CHARACTER;
 }
 const BILLBOARD_H = 3.0; // altura de tela do plano da personagem na escala atual (células)
 const GROUP_SPACING = 6.4;
@@ -78,16 +87,17 @@ function groundLabel(text: string): THREE.Mesh {
  * `makeReference(scaleY)`: cria um plano de personagem parado (mesma textura animada da Deusa), com a altura de tela
  * `BILLBOARD_H * scale` — fornecido pelo renderer, dono da textura.
  */
-export function createWallProportionTest(spawn: { x: number; z: number }, makeReference: (screenHeight: number) => THREE.Object3D): THREE.Group {
+export function createWallProportionTest(spawn: { x: number; z: number }, makeReference: (screenHeight: number) => THREE.Object3D, presets: ScalePreset[] = ['atual', 'proposta', 'core']): THREE.Group {
   const group = new THREE.Group();
-  group.name = 'Teste da escala do mundo (3 escalas)';
+  group.name = `Teste da escala do mundo (${presets.length} escalas)`;
   const colors = [
     { hue: '#b9855a', top: '#e0b98a', line: '#8a5d3a' },
     { hue: '#7f9fc4', top: '#b4cde8', line: '#56759b' },
     { hue: '#8fb572', top: '#c0dba2', line: '#628549' },
+    { hue: '#c48fb5', top: '#e8c0dd', line: '#9b5f88' },
   ];
-  const groups: Group[] = (['atual', 'proposta', 'core'] as ScalePreset[]).map((k, i) => ({
-    ...SCALE_PRESETS[k], x: spawn.x + 0.5 + (i - 1) * GROUP_SPACING, ...colors[i],
+  const groups: Group[] = presets.map((k, i) => ({
+    ...SCALE_PRESETS[k], x: spawn.x + 0.5 + (i - (presets.length - 1) / 2) * GROUP_SPACING, ...colors[i % colors.length],
   }));
   for (const gr of groups) {
     const cz = spawn.z - 5 + 0.5;
@@ -100,12 +110,13 @@ export function createWallProportionTest(spawn: { x: number; z: number }, makeRe
     };
     // cubo (frente = gr.cube)
     const cubeH = hOf(gr.cube);
-    const cube = new THREE.Mesh(new THREE.BoxGeometry(1, cubeH, 1), mats(1, 1 / gr.cube));
+    const c = gr.cell ?? 1;
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(c, cubeH, c), mats(1, c / gr.cube));
     cube.position.set(gr.x - 2.6, cubeH / 2, cz);
     group.add(cube);
     // parede (frente = gr.wall); linhas a cada cubo para ler a altura em cubos
     const wallH = hOf(gr.wall);
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(2, wallH, 1), mats(Math.max(1, Math.round(gr.wall / gr.cube)), 2 / gr.wall));
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(2 * c, wallH, c), mats(Math.max(1, Math.round(gr.wall / gr.cube)), (2 * c) / gr.wall));
     wall.position.set(gr.x - 0.6, wallH / 2, cz);
     group.add(wall);
     // régua vertical: 2 segmentos de 1 cubo, cores alternadas
@@ -120,7 +131,7 @@ export function createWallProportionTest(spawn: { x: number; z: number }, makeRe
     group.add(ref);
     // réguas no chão: 1 x 1 célula diante do cubo e da parede
     for (const dx of [-2.6, -0.6]) {
-      const ruler = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
+      const ruler = new THREE.Mesh(new THREE.PlaneGeometry(c, c).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
       ruler.position.set(gr.x + dx, 0.02, cz + 1.25);
       group.add(ruler);
     }
