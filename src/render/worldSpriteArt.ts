@@ -1,4 +1,3 @@
-import { SUBDIV } from '../config';
 import { Block, blockDef, isDoor, joinsFence, type BlockId } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
@@ -6,6 +5,7 @@ import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, fenceParts } from './fence';
 import type { BlockTextures } from './textures';
 import { isTownArt } from './townArt';
 import type { SpriteDraw } from './three/chunkSprites';
+import { objectScaleFor } from './worldScale';
 
 /**
  * Qual sprite 2D desenha cada objeto do Mundo no 3D (ADR 0031, M2.3) — as MESMAS escolhas do `Renderer.drawObject` 2D:
@@ -57,8 +57,9 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     const vars = textures.variants.get(id);
     const salt = isTownArt(id) ? 0x7041 : world.seed;
     const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : textures.objects.get(id);
-    // Grade fina (ADR 0032): árvores mantêm os pixels de hoje, então crescem SUBDIV vezes em células (tronco 1 × 1).
-    const scale = SUBDIV > 1 && def.shape === 'tree' ? SUBDIV : undefined;
+    // Grade fina (ADR 0032): quem mantém os pixels de hoje cresce em células (`objectScaleFor`; árvore = tronco 1 × 1, desenho alto).
+    const f = objectScaleFor(def.shape);
+    const scale = f > 1 ? f : undefined;
     return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale } : null;
   };
 }

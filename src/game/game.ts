@@ -45,7 +45,7 @@ import { Exploration } from './exploration';
 /** Duração entre salvamentos automáticos (s). */
 const AUTOSAVE_S = 10;
 /** Raio da névoa revelada em volta do jogador (células): cerca da área visível na tela. */
-const REVEAL_RADIUS = 14;
+const REVEAL_RADIUS = 14 * SUBDIV;
 
 /** Opções da sessão: salvamento para restaurar, armazenamento e ações do menu (vêm do main). */
 export interface GameOptions {

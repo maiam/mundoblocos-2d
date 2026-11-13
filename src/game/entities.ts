@@ -181,7 +181,7 @@ export class Entities {
     const grass = new Set<number>([Block.GRASS]);
     for (let i = 0; i < 400 && this.npcs.length < FLOCK_SIZE; i++) {
       const a = hash2(world.seed, i, 71) * Math.PI * 2;
-      const r = 2 + hash2(world.seed, i, 72) * 6;
+      const r = (2 + hash2(world.seed, i, 72) * 6) * SUBDIV;
       const cx = Math.floor(x + Math.cos(a) * r);
       const cy = Math.floor(y + Math.sin(a) * r);
       if (!world.isWalkable(cx, cy) || !grass.has(world.getGround(cx, cy))) continue;
@@ -201,7 +201,7 @@ export class Entities {
     let placed = 0;
     for (let i = 0; i < 400 && placed < count; i++) {
       const a = hash2(world.seed, i, salt) * Math.PI * 2;
-      const r = 3 + hash2(world.seed, i, salt + 1) * 6;
+      const r = (3 + hash2(world.seed, i, salt + 1) * 6) * SUBDIV;
       const cx = Math.floor(x + Math.cos(a) * r);
       const cy = Math.floor(y + Math.sin(a) * r);
       if (!world.isWalkable(cx, cy) || world.getGround(cx, cy) !== Block.GRASS) continue;
@@ -265,10 +265,12 @@ export class Entities {
     if (world.profile.sheep) {
       const [gx, gy] = world.outsideGate();
       const town = !!world.town;
-      this.spawnFlock(world, gx, gy + (town ? 8 : 0));
-      this.spawnHorse(world, gx + 9, gy + (town ? 10 : 2));
-      this.spawnAnimals(world, 'cow', gx - 9, gy + (town ? 10 : 2), 2, 91);
-      this.spawnAnimals(world, 'chicken', gx - 6, gy + (town ? 6 : 1), 4, 97);
+      // (grade fina, ADR 0032: as distâncias em células × SUBDIV; no padrão, iguais)
+      const s = SUBDIV;
+      this.spawnFlock(world, gx, gy + (town ? 8 : 0) * s);
+      this.spawnHorse(world, gx + 9 * s, gy + (town ? 10 : 2) * s);
+      this.spawnAnimals(world, 'cow', gx - 9 * s, gy + (town ? 10 : 2) * s, 2, 91);
+      this.spawnAnimals(world, 'chicken', gx - 6 * s, gy + (town ? 6 : 1) * s, 4, 97);
     }
     this.spawnMonsters(world);
     this.spawnWolves(world);
