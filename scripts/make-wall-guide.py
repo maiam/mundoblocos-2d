@@ -180,6 +180,33 @@ text(40, gy + 3 * CELL + 172, 'O desenho NÃO inclui sombra de contato nem ilumi
 im.save(OUT)
 print(OUT, im.size)
 
+# --- Gabarito da porta de parede (3 quadros 128 × H) ---
+DOOR_OUT = OUT.replace('gabarito.png', 'gabarito-porta.png')
+J = args.franja
+gaps = [('door_closed (fechada)', 0), ('door_half (meio)', 32), ('door_open (aberta)', 64)]
+pw, ph = 1000, H + 230
+di = Image.new('RGB', (pw, ph), BG)
+dd = ImageDraw.Draw(di)
+dd.text((30, 14), 'Porta de parede — 3 quadros 128 × %d px, vista de frente' % H, font=font(18, True), fill=INK)
+for i, (nome, gap) in enumerate(gaps):
+    ox, oy = 30 + i * (CELL + 200), 60
+    dd.rectangle([ox, oy, ox + CELL - 1, oy + H - 1], fill=FRONT)
+    dd.rectangle([ox, oy, ox + CELL - 1, oy + J - 1], fill=FRONT2)                  # verga
+    dd.rectangle([ox, oy, ox + J - 1, oy + H - 1], fill=FRONT2)                     # batente E
+    dd.rectangle([ox + CELL - J, oy, ox + CELL - 1, oy + H - 1], fill=FRONT2)       # batente D
+    if gap:
+        gx0 = ox + (CELL - gap) // 2
+        dd.rectangle([gx0, oy + J, gx0 + gap - 1, oy + H - 1], fill=(120, 190, 230))  # vão (transparente)
+        fw = (CELL - gap) // 2 - J
+        dd.text((ox + 4, oy + H + 8), 'folha + batente: %d px por lado' % (fw + J), font=font(13), fill=INK)
+    dd.rectangle([ox, oy, ox + CELL - 1, oy + H - 1], outline=INK)
+    dd.text((ox, oy + H + 30), nome, font=font(15, True), fill=INK)
+    dd.text((ox, oy + H + 52), 'vão: %d px' % gap, font=font(15), fill=INK)
+dd.text((30, ph - 60), 'Azul = transparente (vão por onde se passa). Fora do vão, 100%% opaco. Batente e verga = franja de %d px.' % J, font=font(15), fill=INK)
+dd.text((30, ph - 36), 'Vão centralizado em x = 64, começa logo abaixo da verga (y = %d) e vai até a base (sem soleira).' % J, font=font(15), fill=INK)
+di.save(DOOR_OUT)
+print(DOOR_OUT, di.size)
+
 if not args.sem_contrato and TX != CELL:
     print('contrato não regerado: o modelo CONTRATO.tpl.md vale para a coluna de largura da célula (--tx 1.0)')
 elif not args.sem_contrato:
@@ -188,7 +215,7 @@ elif not args.sem_contrato:
         'TX': TX, 'TZ': TZ, 'TXC': fmt(args.tx), 'TZC': fmt(args.tz), 'ARMX': ARM, 'ARMZ': ARMZ, 'H': H,
         'ENDW': CELL - C0, 'C0': C0, 'C1': C1, 'C1M1': C1 - 1, 'ARMXM1': ARM - 1,
         'Z0': Z0, 'Z1': Z1, 'Z0M1': Z0 - 1, 'Z1M1': Z1 - 1, 'YTOP': Z1 - H, 'INSIDE': CELL - Z1,
-        'F': args.franja, 'CORE': CELL - 2 * args.franja, 'ROWCORE': TZ - args.franja, 'FEND': CELL - args.franja, 'Z0RIM': Z0 + args.franja - 1, 'Z0RIM1': Z0 + args.franja,
+        'F': args.franja, 'JAMB': args.franja, 'CORE': CELL - 2 * args.franja, 'ROWCORE': TZ - args.franja, 'FEND': CELL - args.franja, 'Z0RIM': Z0 + args.franja - 1, 'Z0RIM1': Z0 + args.franja,
     }
     text_tpl = open('assets-src/paredes/CONTRATO.tpl.md', encoding='utf-8').read()
     for k, v in tokens.items():

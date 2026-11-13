@@ -52,6 +52,20 @@ Resolução mestre = 128 px por célula; o jogo reduz conforme o zoom. Entregar 
 
 O resto de cada tile é transparente. As 16 peças são variações de acabamento sobre 4 formas: dá para pintar as 4 formas e derivar as bordas.
 
+## 3b. Porta de parede (3 peças extras por material, 128 × 154) — gabarito: `gabarito-porta.png`
+Porta de **parede** (em fileira leste–oeste, com parede comum dos dois lados): uma célula, vista de frente, no mesmo lugar da frente (base em y = 86).
+No jogo a tampa da porta é a `cap_10` (fileira); só a **frente** muda. Referência Core Keeper: aberta, **meia folha encostada em cada lado** do vão.
+| Arquivo | Estado | Vão (transparente) |
+|---|---|---|
+| `door_closed.png` | fechada | **nenhum** — duas folhas com emenda no centro (x = 64) |
+| `door_half.png` | quadro intermediário (~140 ms ao abrir/fechar) | **32 px**, centralizado (x = 48–79) |
+| `door_open.png` | aberta (passável) | **64 px**, centralizado (x = 32–95), com as folhas dobradas/encostadas nos lados |
+- **Batente e verga:** molduras de 16 px (mesma franja do resto), nas laterais e no topo; a franja **faz parte do batente**, não do vão.
+- **Vão:** começa logo abaixo da verga (y = 16) e desce até a base (y = 154), sem soleira; é **100% transparente** (o chão aparece). Fora do vão, **100% opaco**.
+- **Folhas:** madeira do material, no mesmo estilo de `front_mid`; na aberta ocupam ~16 px por lado, junto ao batente. Sem textura girada/espelhada por célula (desenhe cada quadro).
+- Os 3 quadros devem **emendar** com `front_mid` nas laterais (mesmas linhas de moldura nas bordas esquerda/direita).
+- Hoje só Tábuas (porta de Pedra fica para depois). Enquanto os quadros não chegam, o pipeline gera um **provisório** a partir de `front_mid`.
+
 ## 4. Franjas, emendas e acabamento
 - **Uma só espessura de franja: 16 px**, em todas as peças e nas molduras das frentes (dá ideia de continuidade).
 - **Coluna (a forma tem vizinho N ou S):** **franja clara 16 px | miolo escuro 96 px | franja clara 16 px**, com **juntas de tábua a cada 128 px** nas franjas
@@ -95,6 +109,7 @@ Com a franja única de 16 px, **as 20 peças de cada material precisam ser refei
 - [ ] Coluna contínua (`cap_05`) empilhada 3× forma uma coluna sem emenda; `cap_10` repetido forma uma fileira sem emenda.
 - [ ] Junção: `cap_07`/`cap_13`/`cap_15`/`cap_03`/`cap_09`/`cap_11` — a franja da coluna faz a curva e segue como franja da fileira; **nenhuma linha cruza o miolo**.
 - [ ] Coluna ligada a uma fileira (`cap_07`, `cap_13`…) emenda com `cap_10` ao lado, sem degrau.
+- [ ] Porta (Tábuas): `door_closed/half/open.png` 128 × 154; vão de 0/32/64 px centralizado, sem soleira; fora do vão 100% opaco; batente e verga de 16 px; emendam com `front_mid`.
 - [ ] Sem sombra projetada, sem brilho, sem texto, sem marca d'água.
 
 ## 10. Brief curto (para colar)

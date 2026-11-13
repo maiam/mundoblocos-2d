@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.25 — Porta de parede com 3 quadros (13/11/2026)
+- **Domínio:** `Block.WALL_DOOR_PLANKS` (242) / `_OPEN` (243), `shape: 'wall-door'`, par em `TOGGLES` (estado no id, ação de rede `kind:'door'`, salvamento sem mudança de formato). Fechada é sólida; aberta passável. **Colocação** (`World.canPlaceWallDoor`): só em fileira leste–oeste, com **parede comum** (não porta) dos dois lados e nada ao norte/sul. Conta como parede para o autotile (`isWallLike`): tampa `cap_10`, frente = quadro da porta. Quebrar devolve a fechada. `wallDoor.test.ts` (7 testes).
+- **Render:** atlas 512 × 820 com 3 quadros extras (`door_closed`, `door_half`, `door_open`, 128 × 154) em `wallAtlas.ts`; ao abrir/fechar, o quadro intermediário aparece por 140 ms (`DOOR_HALF_MS`). Cubo preto corrigido (`sanctuaryThreeLayout` exclui `wall-door`). `?paredes=autotile` libera a porta na hotbar (teste).
+- **Arte:** contrato (seção 3b) e `gabarito-porta.png` (vão 0/32/64 px, batente e verga de 16 px, folhas encostadas nos lados quando aberta, como no Core Keeper). Enquanto a arte não chega, `build-wall-atlas.py` gera quadros **provisórios** a partir de `front_mid`; a Pedra fica sem porta.
+- Sem mudança de protocolo ou save. Servidor ainda precisa sincronizar (`build:net` + `sync-net`) quando paredes/porta forem alcançáveis.
+
 ## Orvalis v0.93.24 — Vertical no celular e no tablet, como opção (13/11/2026)
 - **Fase 1 (desbloqueio):** o `ScreenMode` não trava mais a orientação em paisagem e some a camada "Gire o aparelho" (`blocked` removido; `Game` não pausa em retrato). Expõe `isPortrait` e `data-orientation`/`data-device` em `<html>`. A câmera, em pé, usa largura mínima de 8 células (`PORTRAIT_MIN_CELLS_WIDE`): célula ~48 px no celular em pé contra ~28 px deitado.
 - **Fase 2 (layout vertical):** a hotbar quebra em linhas e cabe tudo sem rolar (`width: max-content` + `flex-wrap`); `hud.ts` publica `--hotbar-h` (`ResizeObserver`) e o CSS posiciona joystick, botão de ação e caixa de conversa acima dela; minimapa menor; tablet em pé com espaços e controles maiores. A horizontal não muda.

@@ -36,6 +36,9 @@ export const Block = {
   WALL_PLANKS: 240,
   /** Parede de Pedra (a picareta quebra). */
   WALL_STONE: 241,
+  /** Porta de parede (v0.93.25): bloco dentro de uma fileira leste–oeste, entre duas paredes; o id guarda o estado (fechada sólida, aberta passável). */
+  WALL_DOOR_PLANKS: 242,
+  WALL_DOOR_PLANKS_OPEN: 243,
   // --- porta (objeto de 3 níveis de altura; o id guarda o estado) ---
   OAK_DOOR: 28,
   /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
@@ -224,7 +227,7 @@ export type BlockLayer = 'ground' | 'object';
  * rocha (sprite de cenário com variantes por célula: montanhas, pedras e blocos decorados da dungeon) ou
  * construção (sprite de várias células da cidade, com sombra própria; as outras células são `TOWN_PART`).
  */
-export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'rock' | 'building' | 'wall';
+export type BlockShape = 'flat' | 'cube' | 'tree' | 'decoration' | 'crop' | 'door' | 'fence' | 'rock' | 'building' | 'wall' | 'wall-door';
 
 export interface BlockDef {
   id: BlockId;
@@ -313,6 +316,8 @@ const defs: BlockDef[] = [
   // Porta: ocupa a célula inteira (nada empilha em cima); fechada bloqueia, aberta deixa passar.
   object(Block.WALL_PLANKS, 'Parede de Tábuas', { shape: 'wall', organic: 'wood' }),
   object(Block.WALL_STONE, 'Parede de Pedra', { shape: 'wall', stone: true }),
+  object(Block.WALL_DOOR_PLANKS, 'Porta de Parede (Tábuas)', { shape: 'wall-door', organic: 'wood' }),
+  object(Block.WALL_DOOR_PLANKS_OPEN, 'Porta de Parede (Tábuas, aberta)', { shape: 'wall-door', solid: false, placeable: false, organic: 'wood' }),
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
@@ -496,6 +501,20 @@ export function isWall(id: BlockId): boolean {
   return blockDef(id).shape === 'wall';
 }
 
+/** Portas de parede (fechadas; a aberta só existe no mundo, como a porta comum). */
+export const WALL_DOOR_BLOCKS: readonly BlockId[] = [Block.WALL_DOOR_PLANKS];
+
+/** Porta de parede (aberta ou fechada)? */
+export function isWallDoor(id: BlockId): boolean {
+  return blockDef(id).shape === 'wall-door';
+}
+
+/** Parede ou porta de parede: o que o autotile trata como parede (a tampa continua por cima da porta). */
+export function isWallLike(id: BlockId): boolean {
+  const s = blockDef(id).shape;
+  return s === 'wall' || s === 'wall-door';
+}
+
 export function isDoor(id: BlockId): boolean {
   return id === Block.OAK_DOOR || id === Block.OAK_DOOR_OPEN;
 }
@@ -514,6 +533,8 @@ export function joinsFence(id: BlockId): boolean {
 const TOGGLES: Readonly<Partial<Record<number, BlockId>>> = {
   [Block.OAK_DOOR]: Block.OAK_DOOR_OPEN,
   [Block.OAK_DOOR_OPEN]: Block.OAK_DOOR,
+  [Block.WALL_DOOR_PLANKS]: Block.WALL_DOOR_PLANKS_OPEN,
+  [Block.WALL_DOOR_PLANKS_OPEN]: Block.WALL_DOOR_PLANKS,
   [Block.FENCE_GATE]: Block.FENCE_GATE_OPEN,
   [Block.FENCE_GATE_OPEN]: Block.FENCE_GATE,
 };
@@ -530,5 +551,5 @@ export function toggled(id: BlockId): BlockId | null {
 
 /** Aberto (porta ou portão)? */
 export function isOpen(id: BlockId): boolean {
-  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN;
+  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN || id === Block.WALL_DOOR_PLANKS_OPEN;
 }
