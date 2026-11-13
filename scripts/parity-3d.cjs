@@ -47,7 +47,7 @@ async function shot(browser, mode, sc) {
   const errs = [];
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
-  await page.goto(`${BASE}/?seed=${SEED}${mode === '3d' ? '&render=3d' : ''}`);
+  await page.goto(`${BASE}/?seed=${SEED}&render=${mode}`);
   await page.waitForFunction(() => window.__game, null, { timeout: 90000 });
   await page.waitForTimeout(3500);
   await page.evaluate(sc.prep);

@@ -7,6 +7,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
+import { chooseWorldRenderer, useSolidPhysics } from './render/rendererChoice';
 import { parseWallThickness } from './world/walls';
 import { parseAmbient } from './render/lighting';
 import { ScreenMode } from './game/screenMode';
@@ -17,19 +18,14 @@ import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './
 
 const canvas = document.getElementById('world') as HTMLCanvasElement;
 const screenMode = new ScreenMode();
-/**
- * Piloto do Mundo em 2.5D (ADR 0031, M5): `?render=3d` e o painel `?fps=1` só existem em desenvolvimento ou num build de piloto
- * (`npm run build:piloto3d`, `VITE_PILOT_3D=1`). O build de produção não os contém (a condição vira constante falsa).
- */
-const PILOT_3D = import.meta.env.DEV || import.meta.env.VITE_PILOT_3D === '1';
-/** Física sem degrau no piloto (`?fisica=solida`): só com o render 3D do Mundo, offline (a sala segue com a regra antiga). */
-const SOLID_PHYSICS = PILOT_3D && new URLSearchParams(window.location.search).get('fisica') === 'solida';
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 document.title = profile.name;
 let game: Game | null = null;
 /** Renderer 2.5D carregado sob demanda (Santuário; Mundo só em desenvolvimento com `?render=3d`): sem Three.js no pacote do principal. */
 let threeRendererFactory: RendererFactory | undefined;
+/** Física sem degrau do jogador: só no Mundo com o renderer 3D (ADR 0031, M6) e sem `?fisica=degrau`. O Santuário tem a regra dele. */
+const solidPhysics = (): boolean => profile.id === 'principal' && !!threeRendererFactory && useSolidPhysics(window.location.search, '3d');
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
 const store = new SaveStore(profile.id);
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
@@ -93,7 +89,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    game = new Game(canvas, seed, screenMode, profile, { net: s, online, body, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    game = new Game(canvas, seed, screenMode, profile, { net: s, online, body, rendererFactory: threeRendererFactory, solidPhysics: solidPhysics(), notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   // Como os outros vão me ver: o mesmo personagem do jogo.
@@ -122,7 +118,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
     store,
     body: keepBody,
     rendererFactory: threeRendererFactory,
-    solidPhysics: SOLID_PHYSICS,
+    solidPhysics: solidPhysics(),
     notice,
     online,
     // Novo mundo: abre a escolha de personagem (por cima do jogo; "Voltar" volta ao mundo de antes). Toda seed começa
@@ -142,7 +138,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   // Painel de desempenho (`?fps=1`, dev e piloto): FPS, tempo de quadro, GPU e memória; toque = copia o relatório.
-  if (PILOT_3D && new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null, () => game?.drawTimes ?? { samples: [], count: 0 }));
+  if (new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null, () => game?.drawTimes ?? { samples: [], count: 0 }));
 }
 
 /** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino ou Mila) e só então o mundo novo. */
@@ -218,13 +214,19 @@ void loadArtPack(profile.id)
       } else console.warn('WebGL indisponível: Santuário usará Canvas 2D.');
     }
 
-    // Mundo em 2.5D (ADR 0031, M2 — em construção): só em desenvolvimento e com `?render=3d`; o build de produção não o contém.
-    if (PILOT_3D && profile.id === 'principal' && query.get('render') === '3d') {
+    // Mundo em 2.5D (ADR 0031, M6 — a virada): o 3D é o padrão quando há WebGL; `?render=2d` e aparelhos sem WebGL ficam no Canvas 2D
+    // (reserva até o M7). Falha ao carregar o módulo também cai no 2D. Online e solo usam o mesmo renderer.
+    if (profile.id === 'principal') {
       const probe = document.createElement('canvas');
-      if (probe.getContext('webgl2') || probe.getContext('webgl')) {
-        const mod = await import('./render/worldThreeRenderer');
-        threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
-      } else console.warn('WebGL indisponível: o Mundo usará Canvas 2D.');
+      const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
+      if (chooseWorldRenderer(window.location.search, webgl) === '3d') {
+        try {
+          const mod = await import('./render/worldThreeRenderer');
+          threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
+        } catch (error) {
+          console.error('Mundo em 3D indisponível: usando o Canvas 2D de reserva', error);
+        }
+      } else if (!webgl) console.warn('WebGL indisponível: o Mundo usará Canvas 2D.');
     }
 
     // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.

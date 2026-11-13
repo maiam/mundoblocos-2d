@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.47 — a virada: o Mundo passa a usar o 3D por padrão (13/11/2026)
+- **Decisão do dono do produto (13/11):** virada já, com 2D de reserva e física sem degrau como padrão no 3D. PC (~60 fps, JS 3,4 ms, sem vazamento), celular e tablet ("rodando ok"), faixas das copas e seleção corrigidas.
+- **O que muda para quem joga:** o Mundo principal usa o renderer 2.5D em WebGL (solo e online). `?render=2d` e aparelhos sem WebGL (ou falha ao carregar o módulo) usam o Canvas 2D de antes. Com o 3D o jogador **não sobe em cubos sozinho** (`?fisica=degrau` volta à regra antiga); lobos e goblins seguem com degrau.
+- **Código:** `render/rendererChoice.ts` (puro, testado) decide o renderer e a física; `main.ts` carrega o `WorldThreeRenderer` sob demanda e o passa ao `Game` solo e online; `?fps=1` agora vale em qualquer build; o build de piloto (`VITE_PILOT_3D`, `build:piloto3d`, `preview:piloto3d`) deixa de existir. Scripts `parity:3d` e `perf:cpu:3d` passam a usar `?render=2d` para o 2D. 437 testes (3 novos).
+- **Servidor e protocolo: nada muda** (a sala não simula o movimento do jogador). **Dívida:** o início do Artifact de arquivo único passou de 2,94 MB para 3,49 MB (Three.js embutido), acima do orçamento de 3 MB; o site, que carrega o 3D sob demanda, não é afetado. Riscos não verificados: Safari/iOS, iframe do Artifact e sala multiplayer em 3D — conferir após o deploy (NEXT_STEPS).
+
 ## Documentação — confirmação do dono do produto e plano da virada (13/11/2026, sem versão)
 - **Confirmado no PC:** as faixas nas copas sumiram e o enquadramento da seleção melhorou (v0.93.45). **Celular e tablet: "rodando ok"** (sem relatório numérico). Registrado em `docs/PARITY_3D.md`.
 - **Plano do M6 (virada) detalhado na ADR 0031:** 3D padrão com `?render=2d` de reserva, física sem degrau padrão no 3D (só o jogador), **servidor e protocolo sem mudança** (a sala não simula o movimento do jogador; lobos e goblins seguem com degrau), online com o mesmo renderer, peso do build (Three.js no Mundo), Artifact e reversão. Nenhum código alterado; a virada aguarda a decisão do dono do produto.

@@ -27,7 +27,7 @@ const SC = {
   const rows = [];
   for (const name of Object.keys(SC)) for (const mode of ['2d', '3d']) {
     const p = await b.newPage({ viewport: { width: 844, height: 390 } });
-    await p.goto((process.argv[2] || 'http://localhost:5173') + '/?seed=42' + (mode === '3d' ? '&render=3d' : '')); await p.waitForFunction(() => window.__game, null, { timeout: 90000 }); await p.waitForTimeout(3500);
+    await p.goto((process.argv[2] || 'http://localhost:5173') + '/?seed=42' + '&render=' + mode); await p.waitForFunction(() => window.__game, null, { timeout: 90000 }); await p.waitForTimeout(3500);
     await p.evaluate(SC[name]); await p.waitForTimeout(3500);
     const r = await p.evaluate(async () => {
       const rend = window.__game.renderer, orig = rend.draw.bind(rend), t = [];

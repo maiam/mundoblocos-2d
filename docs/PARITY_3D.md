@@ -1,12 +1,12 @@
-# Paridade 2D × 3D do Mundo — checklist do piloto (ADR 0031, M5)
+# Paridade 2D × 3D do Mundo — checklist (ADR 0031, M5; virada na v0.93.47)
 
-Documento vivo. Resultado da comparação entre o Mundo em Canvas 2D (padrão) e em 2.5D (`?render=3d`, só dev ou build de piloto).
+Documento vivo. Resultado da comparação entre o Mundo em Canvas 2D (`?render=2d`, reserva até o M7) e em 2.5D (o padrão desde a v0.93.47).
 Atualize a tabela quando um cenário mudar de estado.
 
 ## Como rodar
 - **Automático (headless):** `npm run dev` em segundo plano e `npm run parity:3d` → `parity-out/index.html` com as capturas lado a lado
   de 10 cenários (seed 42; `ONLY=floresta,noite npm run parity:3d` roda só alguns). Sai com código 1 se algum cenário tiver erro de console.
-- **Aparelho real:** ver *Medir em aparelho real* em [OPERATIONS](OPERATIONS.md) (`npm run build:piloto3d` + `?render=3d&fps=1`).
+- **Aparelho real:** ver *Medir o 3D em aparelho real* em [OPERATIONS](OPERATIONS.md) (`?fps=1`).
   O headless usa GPU por **software** (SwiftShader): FPS dele não vale nada; só o que se vê e as contagens da GPU valem.
 
 ## Cenários (headless, seed 42, 844 × 390)
