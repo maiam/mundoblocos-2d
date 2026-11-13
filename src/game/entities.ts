@@ -1,5 +1,5 @@
 import { APPEARANCE_BODIES, type AppearanceBody } from '../net/protocol';
-import { CUBE_FRONT, TILE } from '../config';
+import { CUBE_FRONT, SUBDIV, TILE } from '../config';
 import { Block } from '../world/blocks';
 import { hash2 } from '../world/random';
 import { type Hit, MONSTER_STATS, rollDamage, weaponPower } from '../world/progression';
@@ -68,13 +68,13 @@ export interface Actor {
 /** Recalcula o mapa de distâncias da dungeon a cada … (s). */
 const FLOW_EVERY = 0.25;
 /** Monstro só renasce com a personagem a mais de … células do ponto de nascimento. */
-const RESPAWN_CLEARANCE = 10;
+const RESPAWN_CLEARANCE = 10 * SUBDIV;
 /** Monstro mais longe que isto (células, em x ou y) de todo jogador não é simulado. */
-const ACTIVE_RADIUS = 48;
+const ACTIVE_RADIUS = 48 * SUBDIV;
 
 const FLOCK_SIZE = 4;
 /** Alcance do golpe de espada (células, do centro dos pés) e abertura do arco (cosseno mínimo). */
-export const SWORD_REACH = 1.45;
+export const SWORD_REACH = 1.45 * SUBDIV;
 const SWORD_ARC_COS = 0.3;
 const FACING_VEC: Record<Facing, [number, number]> = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
 /** Caixa de toque (altura, meia-largura em células) de adulto e filhote, pelo tamanho do desenho. */
@@ -89,9 +89,9 @@ const LOVE_FRAMES = 16;
 /** Tamanho dos coraçõezinhos por espécie (acompanha o tamanho do animal). */
 const LOVE_SCALE: Record<AnimalKind, number> = { sheep: 1, cow: 1.05, chicken: 0.7, horse: 1.25 };
 /** Distância (células) em que dois animais apaixonados se encontram. */
-const PAIR_RANGE = 6;
+const PAIR_RANGE = 6 * SUBDIV;
 /** Distância (células) para começar a namorar. */
-const COURT_DISTANCE = 1.5;
+const COURT_DISTANCE = 1.5 * SUBDIV;
 /** Limite de ovelhas para a população não explodir. */
 export const MAX_SHEEP = 16;
 /** Limite por espécie (filhotes contam): a população não explode. */
@@ -667,7 +667,8 @@ export class Entities {
   animalAt(wx: number, wy: number): Breeder | null {
     let hit: Breeder | null = null;
     for (const s of this.breeders()) {
-      const [h, half] = PICK_BOX[s.species][s.baby ? 1 : 0];
+      const [h0, half0] = PICK_BOX[s.species][s.baby ? 1 : 0];
+      const h = h0 * SUBDIV, half = half0 * SUBDIV;
       const lift = (s.visualZ * CUBE_FRONT) / TILE;
       if (Math.abs(wx - s.x) < half && wy > s.y - lift - h && wy < s.y - lift + 0.2) {
         if (!hit || s.y > hit.y) hit = s;
@@ -793,7 +794,7 @@ export class Entities {
  * para os demais, células de rua escolhidas pelo sorteio da posição, a pelo menos `HOME_SPACING` células das já
  * escolhidas. Determinístico (a cidade é igual em toda seed).
  */
-export const HOME_SPACING = 16;
+export const HOME_SPACING = 16 * SUBDIV;
 export function homesFor(world: World, n: number, onStreet: (cx: number, cy: number) => boolean): Array<[number, number]> {
   const t = world.town!;
   const [sx, sy] = t.start;

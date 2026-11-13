@@ -1,6 +1,7 @@
+import { SUBDIV } from '../config';
 import { type AnimalKind, ITEMS, type ItemId } from '../world/items';
 import type { World } from '../world/world';
-import { type Blocker, type WalkerSpec } from './walker';
+import { type Blocker, scaleSpec, type WalkerSpec } from './walker';
 import { Wanderer, type WanderPace } from './wanderer';
 
 /** Tempo apaixonado após comer (s). */
@@ -10,7 +11,7 @@ export const BREED_COOLDOWN = 45;
 /** Duração do namoro (s): os 16 quadros dos coraçõezinhos (~6 por segundo). */
 export const COURTSHIP_SECONDS = 2.6;
 /** Distância (células) em que o animal que segue quem deu a comida para. */
-export const FOLLOW_DISTANCE = 1.6;
+export const FOLLOW_DISTANCE = 1.6 * SUBDIV;
 
 /** Corpo de adulto e de filhote e quanto tempo o filhote leva para crescer (s). */
 export interface BreedSpec {
@@ -83,7 +84,7 @@ export class Breeder extends Wanderer {
       this.age += dt;
       if (this.age >= this.breed.growUpSeconds) {
         this.baby = false;
-        Object.assign(this.spec, this.breed.adult);
+        Object.assign(this.spec, scaleSpec(this.breed.adult));
       }
     }
     if (this.courtship > 0) {
@@ -128,7 +129,7 @@ export class Breeder extends Wanderer {
    */
   private approachPartner(dt: number, world: World, blocked?: Blocker): void {
     const p = this.partner!;
-    if (Math.hypot(p.x - this.x, p.y - this.y) < 0.9) {
+    if (Math.hypot(p.x - this.x, p.y - this.y) < 0.9 * SUBDIV) {
       this.move(dt, 0, 0, world, blocked);
       return;
     }

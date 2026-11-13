@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import type { World } from '../world/world';
 import { npcDef, type NpcId, type NpcRole } from './npcs';
 import type { Facing, Blocker } from './walker';
@@ -30,7 +31,7 @@ export class Villager extends Wanderer {
     private readonly onStreet: (cx: number, cy: number) => boolean,
     rand: () => number = Math.random,
   ) {
-    super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: npcDef(npc).role ? 3 : 6 });
+    super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: (npcDef(npc).role ? 3 : 6) * SUBDIV });
     this.role = npcDef(npc).role ?? null;
   }
 

@@ -1,4 +1,4 @@
-import { DAY_LENGTH_S } from '../config';
+import { DAY_LENGTH_S, SUBDIV } from '../config';
 import type { AnimalKind } from '../world/items';
 import { Breeder } from './breeder';
 import type { WalkerSpec } from './walker';
@@ -41,7 +41,7 @@ export class FarmAnimal extends Breeder {
   constructor(readonly kind: FarmKind, x: number, y: number, rand: () => number = Math.random, baby = false, homeX = x, homeY = y) {
     const f = FARM[kind];
     super(kind, { adult: f.adult, baby: f.baby, growUpSeconds: FARM_GROW_UP_SECONDS }, x, y, homeX, homeY, rand, baby,
-      { idle: f.idle, walk: f.walk, leash: f.leash });
+      { idle: f.idle, walk: f.walk, leash: f.leash * SUBDIV });
   }
 }
 

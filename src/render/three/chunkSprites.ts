@@ -21,6 +21,8 @@ export interface SpriteDraw {
   walkable: boolean;
   /** Desenhado empilhado N vezes, um cubo (1 de altura) acima do outro (parede do labirinto: 2). Padrão 1. */
   stack?: number;
+  /** Fator de tamanho do desenho em volta do meio da base (objetos que mantêm os pixels na grade fina, ADR 0032: árvores). Padrão 1. */
+  scale?: number;
 }
 export interface SpriteCell {
   x: number;
@@ -29,6 +31,8 @@ export interface SpriteCell {
   sprite: SpriteArt;
   /** Altura (unidades de mundo) em que este exemplar do sprite está empilhado; 0 = no chão. */
   lift?: number;
+  /** Fator de tamanho (`SpriteDraw.scale`); padrão 1. */
+  scale?: number;
 }
 export interface ChunkSpritesOptions {
   /** Pixels por célula da arte (TILE). */
@@ -158,8 +162,9 @@ export class ChunkSprites {
         if (!draw) continue;
         let bucket = buckets.get(draw.sprite.canvas);
         if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
+        const scale = draw.scale && draw.scale !== 1 ? draw.scale : undefined;
         const n = Math.min(MAX_STACK_DRAWN, Math.max(1, Math.floor(draw.stack ?? 1)));
-        for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level });
+        for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale });
       }
     }
     const groups: Group[] = [];
@@ -169,9 +174,11 @@ export class ChunkSprites {
       mesh.name = `Mundo: objeto (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
-        this.dummy.position.set(cell.x + sprite.ox / tile, cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x));
+        // maior que 1: cresce em volta do meio da base (o tronco fica na célula)
+        const sc = cell.scale ?? 1;
+        this.dummy.position.set(cell.x + sprite.ox / tile - (sprite.w / tile / 2) * (sc - 1), cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x));
         this.dummy.rotation.set(0, 0, 0);
-        this.dummy.scale.set(1, 1, 1);
+        this.dummy.scale.set(sc, sc, 1);
         this.dummy.updateMatrix();
         mesh.setMatrixAt(i, this.dummy.matrix);
       });
@@ -226,10 +233,16 @@ export class ChunkSprites {
  * partir do canto da célula; y a partir do canto superior da célula, com a base do sprite em `oy + h` e cada unidade de
  * altura valendo `tile × k` px.
  */
-export function spriteHit(point: { x: number; y: number }, cell: { x: number; sprite: SpriteArt; lift?: number }, tile: number, k: number): boolean {
+export function spriteHit(point: { x: number; y: number }, cell: { x: number; sprite: SpriteArt; lift?: number; scale?: number }, tile: number, k: number): boolean {
   const s = cell.sprite;
-  const px = (point.x - cell.x) * tile;
-  const py = s.oy + s.h - (point.y - (cell.lift ?? 0)) * tile * k;
+  const sc = cell.scale ?? 1;
+  // volta ao desenho sem ampliação: o ponto é desfeito em volta do meio da base
+  const cx = (s.ox + s.w / 2) / tile;
+  const bx = sc === 1 ? point.x : cell.x + cx + (point.x - cell.x - cx) / sc;
+  const h = point.y - (cell.lift ?? 0);
+  const by = sc === 1 ? h : h / sc;
+  const px = (bx - cell.x) * tile;
+  const py = s.oy + s.h - by * tile * k;
   const r = s.hit;
   return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
 }

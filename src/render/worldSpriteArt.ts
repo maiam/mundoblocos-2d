@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { Block, blockDef, isDoor, joinsFence, type BlockId } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
@@ -56,7 +57,9 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     const vars = textures.variants.get(id);
     const salt = isTownArt(id) ? 0x7041 : world.seed;
     const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : textures.objects.get(id);
-    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id) } : null;
+    // Grade fina (ADR 0032): árvores mantêm os pixels de hoje, então crescem SUBDIV vezes em células (tronco 1 × 1).
+    const scale = SUBDIV > 1 && def.shape === 'tree' ? SUBDIV : undefined;
+    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale } : null;
   };
 }
 

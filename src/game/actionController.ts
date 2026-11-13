@@ -1,5 +1,5 @@
 import type { PlayerAction } from '../world/actions';
-import { TILE } from '../config';
+import { SUBDIV, TILE } from '../config';
 import type { GameRenderer } from '../render/rendererContract';
 import { Block, blockDef, type BlockId, isCrop } from '../world/blocks';
 import { foodValue } from '../world/progression';
@@ -16,7 +16,7 @@ import type { Facing } from './walker';
 import type { Villager } from './villager';
 
 /** Alcance para quebrar/colocar, em células (do centro do personagem ao centro da célula). */
-const REACH = 4.5;
+const REACH = 4.5 * SUBDIV;
 /** Deslocamento máximo (px) para um toque/clique contar como "colocar". */
 const TAP_THRESHOLD = 10;
 /** Duração máxima de um toque/clique de colocar (s); acima disso é "segurar". */
@@ -155,7 +155,7 @@ export class ActionController {
   }
 
   private inReach(x: number, y: number): boolean {
-    return Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4)) <= REACH;
+    return Math.hypot(x + 0.5 - this.player.x, y + 0.5 - (this.player.y - 0.4 * SUBDIV)) <= REACH;
   }
 
   // ---- Regras por célula (iguais para cursor e botão de ação) ----
@@ -394,7 +394,7 @@ export class ActionController {
   private faceToward(sx: number, sy: number): void {
     const [wx, wy] = this.camera.screenToWorld(sx, sy);
     const dx = wx / TILE - this.player.x;
-    const dy = wy / TILE - (this.player.y - 0.4);
+    const dy = wy / TILE - (this.player.y - 0.4 * SUBDIV);
     if (Math.abs(dx) > Math.abs(dy)) this.player.facing = dx < 0 ? 'left' : 'right';
     else this.player.facing = dy < 0 ? 'up' : 'down';
   }

@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 /**
  * Escala do mundo (ADR 0028, aprovada em 12/11/2026): relações medidas numa cena do Core Keeper, em CÉLULAS NA TELA com a
  * vista oblíqua de K = 1 (um metro de altura = uma célula na tela). Não é "1 m": o que vale são as relações.
@@ -21,6 +22,9 @@ export const CHARACTER_SCALE_FACTOR = WORLD_SCALE.character / WORLD_SCALE.legacy
 /** Células visíveis na vertical na vista nova (o Core Keeper mostra ~17; no celular em paisagem 14 já deixa o personagem legível). */
 export const SANCTUARY_CELLS_TALL = 14;
 
+/** Células visíveis do Mundo: 14 no padrão; com a grade fina (`?grade=2`, ADR 0032) 14 × `SUBDIV`, para o mundo manter os pixels. */
+export const WORLD_CELLS_TALL = SANCTUARY_CELLS_TALL * SUBDIV;
+
 /** Limites do experimento `?celulas=` (células visíveis na vertical). */
 export const CELLS_TALL_MIN = 10;
 export const CELLS_TALL_MAX = 32;
@@ -32,9 +36,9 @@ export const CELLS_TALL_MAX = 32;
  */
 export function cellsTallFromSearch(search: string): number {
   const raw = new URLSearchParams(search).get('celulas');
-  if (raw === null) return SANCTUARY_CELLS_TALL;
+  if (raw === null) return WORLD_CELLS_TALL;
   const n = Number(raw);
-  if (!Number.isFinite(n)) return SANCTUARY_CELLS_TALL;
+  if (!Number.isFinite(n)) return WORLD_CELLS_TALL;
   return Math.min(CELLS_TALL_MAX, Math.max(CELLS_TALL_MIN, n));
 }
 
