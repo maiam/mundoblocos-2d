@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { TILE } from '../../config';
+import { SUBDIV, TILE } from '../../config';
 import type { ItemDrop } from '../../game/drops';
 
 /** Itens caídos e o anel sob a ovelha no 3D (ADR 0031, M3.1) — o mesmo desenho do `Renderer` 2D, em planos. */
@@ -20,7 +20,7 @@ interface DropSlot {
 export function dropLift(age: number, elapsed: number, x: number): number {
   const pop = age < 0.4 ? Math.sin((age / 0.4) * Math.PI) * 10 : 0;
   const bob = 2 + Math.sin(elapsed * 4 + x * 3) * 1.5;
-  return (bob + pop) / TILE;
+  return ((bob + pop) * SUBDIV) / TILE;
 }
 
 /** Itens caídos: um ícone em plano vertical com sombra no chão (pool; teto de `MAX_DROPS`). */
@@ -51,7 +51,7 @@ export class DropSprites {
       const slot = this.slot(n++);
       // sombra (raios 6 × 2,2 px do 2D)
       slot.shadow.position.set(d.x, 0.02, d.y);
-      slot.shadow.scale.set(6 / TILE, 1, 2.2 / TILE);
+      slot.shadow.scale.set((6 * SUBDIV) / TILE, 1, (2.2 * SUBDIV) / TILE);
       slot.shadow.visible = true;
       const img = this.icons.get(d.item) ?? null;
       slot.icon.visible = !!img;
@@ -61,7 +61,7 @@ export class DropSprites {
         slot.icon.material.map = this.textureFor(img);
         slot.icon.material.needsUpdate = true;
       }
-      const h = 15 / TILE; // ícone de 15 px de altura, a largura segue a proporção da imagem
+      const h = (15 * SUBDIV) / TILE; // ícone de 15 px de altura, a largura segue a proporção da imagem
       const ratio = img.naturalWidth / img.naturalHeight;
       slot.icon.scale.set(h * ratio, h / this.k, 1);
       slot.icon.position.set(d.x, dropLift(d.age, elapsed, d.x) / this.k, d.y);
@@ -152,7 +152,7 @@ export class HoverRing {
     this.mesh.visible = !!r;
     if (!r) return;
     this.mesh.position.set(r.x, 0.03, r.y);
-    this.mesh.scale.set(0.5, 1, 0.2); // elipse de 0,5 × 0,2 célula, como no 2D
+    this.mesh.scale.set(0.5 * SUBDIV, 1, 0.2 * SUBDIV); // elipse de 0,5 × 0,2 célula, como no 2D
     this.mesh.material.color.setHex(r.attack ? RING_COLORS.attack : r.valid ? RING_COLORS.ok : RING_COLORS.bad);
   }
 

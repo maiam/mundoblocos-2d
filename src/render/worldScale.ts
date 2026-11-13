@@ -1,4 +1,5 @@
 import { SUBDIV } from '../config';
+import type { BlockShape } from '../world/blocks';
 /**
  * Escala do mundo (ADR 0028, aprovada em 12/11/2026): relações medidas numa cena do Core Keeper, em CÉLULAS NA TELA com a
  * vista oblíqua de K = 1 (um metro de altura = uma célula na tela). Não é "1 m": o que vale são as relações.
@@ -45,4 +46,13 @@ export function cellsTallFromSearch(search: string): number {
 /** Fator dos planos de ator (personagem, NPCs, animais, monstros) para `cellsTall` células visíveis. */
 export function actorScaleFor(cellsTall: number): number {
   return CHARACTER_SCALE_FACTOR * (cellsTall / SANCTUARY_CELLS_TALL);
+}
+
+/**
+ * Tamanho em células dos objetos (planos de sprite) na grade fina (ADR 0032, tabela da seção 4): `SUBDIV` = mantém os pixels de
+ * hoje (cresce em células, em volta do meio da base); 1 = encolhe com a célula (terra, cultivos, cercas, móveis, baú, tenda,
+ * flores, pedregulho). Árvores: tronco 1 × 1 com o desenho alto. Prédios da cidade (F3), portas e paredes (F5) entram nas suas fatias.
+ */
+export function objectScaleFor(shape: BlockShape, subdiv: number = SUBDIV): number {
+  return shape === 'tree' || shape === 'building' ? subdiv : 1;
 }

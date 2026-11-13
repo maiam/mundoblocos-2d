@@ -1,4 +1,4 @@
-import { TILE } from '../config';
+import { SUBDIV, TILE } from '../config';
 import type { Hit } from '../world/progression';
 import type { Camera } from '../game/camera';
 
@@ -48,10 +48,10 @@ export class DamageNumbers {
         continue;
       }
       const p = f.t / LIFE_S;
-      const rise = 0.9 * (1 - (1 - p) * (1 - p)); // sobe rápido e desacelera
+      const rise = 0.9 * SUBDIV * (1 - (1 - p) * (1 - p)); // sobe rápido e desacelera
       const pop = p < 0.15 ? 0.7 + (p / 0.15) * 0.45 : 1.15 - Math.min(0.15, (p - 0.15) * 0.4);
       const sx = cam.worldToScreenX(f.x * TILE);
-      const sy = cam.worldToScreenY((f.y - 1.4 - rise) * TILE);
+      const sy = cam.worldToScreenY((f.y - 1.4 * SUBDIV - rise) * TILE);
       const size = Math.max(10, f.size * pop * Math.min(1.6, Math.max(0.9, cam.zoom * 0.7)));
       ctx.globalAlpha = p > 0.65 ? 1 - (p - 0.65) / 0.35 : 1;
       ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`;

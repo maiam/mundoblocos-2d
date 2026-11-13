@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.52 — grade fina, F2: objetos e elementos ao redor dos atores (só dev, `?grade=2`) (13/11/2026)
+- **Aprovado pelo dono do produto (13/11):** o protótipo F1 "ficou ótimo" (proporção personagem × terra, cenoura, trigo e árvores).
+- **Tabela de tamanhos em código:** `objectScaleFor(shape)` (`render/worldScale.ts`, testada): árvores e prédios mantêm os pixels de hoje (crescem `SUBDIV` em células, em volta do meio da base; tronco 1 × 1); decoração, cultivos, cercas, móveis, baú, tenda e pedregulho encolhem com a célula (conferido num catálogo de todos os objetos ao lado do personagem). `worldSpriteArt` usa a tabela.
+- **Em células × `SUBDIV` (para manter os pixels):** números de dano (altura e subida), ícones e sombra dos itens caídos (tamanho, pulo e flutuação), anel da ovelha, raio de revelação do minimapa, e o rebanho/cavalo/vacas/galinhas iniciais (distâncias do sorteio).
+- **Fica para as próximas fatias:** portas (1 × 2) e paredes (F5), cidade/prédios (F3), interiores e dungeon (F4), save/protocolo/servidor (F6). Padrão inalterado (442 testes), sem mudança de save, protocolo ou servidor.
+
 ## Orvalis v0.93.51 — grade fina, protótipo F1: `?grade=2` (só dev) (13/11/2026)
 - **ADR 0032, F1:** com `?grade=2` (apenas em desenvolvimento; no site é ignorado) cada célula tem metade do lado e **o mundo mantém o tamanho de hoje em pixels**. `config.ts`: `SUBDIV` (1 ou 2; sem `window`, no servidor, é sempre 1).
 - **O que muda com `SUBDIV = 2`:** gerador em `x / SUBDIV` (mesmas formas de continentes, rios e biomas, com mais resolução; densidades de árvores, pedras e flores ÷ `SUBDIV²`); câmera com 28 células (`WORLD_CELLS_TALL`) e atores com o fator proporcional (personagem, NPCs, animais e monstros mantêm os pixels); árvores ampliadas ×`SUBDIV` em volta do meio da base (`SpriteDraw.scale`, tronco 1 × 1); jogabilidade em células × `SUBDIV` — velocidade e caixa dos pés (`Walker`/`scaleSpec`), alcance de ação, golpe, visão e coleira de monstros, namoro, coleta, passeio dos animais; terra, cultivos, cercas e móveis encolhem junto com a célula.
