@@ -154,8 +154,6 @@ html, body {
   .slot, .joystick { transition: none; }
 }
 
-}
-
 /* Quantidade de itens contáveis (sementes, trigo) na hotbar. */
 .slot { position: relative; }
 .slot .count {
