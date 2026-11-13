@@ -1,5 +1,10 @@
 # Changelog
 
+## Documentação — tampas da Parede de Tábuas recebidas (13/11/2026, sem versão)
+- **Entrega do dono do produto:** as 16 tampas (`cap_00`…`cap_15`) de Tábuas, 128 × 128 RGBA. Conferidas: formas e índices corretos, alfa binário, braços **idênticos** entre as peças que os têm e emendas exatas (diferença 0). Vieram com a espessura do contrato antigo (poste 38 × 38).
+- **Adaptação:** `scripts/retarget-wall-caps.py` reprojeta as 16 peças para a medida final (poste 32 × 44, braços 48 e 42) esticando cada faixa por partes; topologia e emendas preservadas (checadas). Original em `assets-src/paredes/tabuas/entregue-03/`, adaptadas em `assets-src/paredes/tabuas/` (provisórias; `LEIA-ME.md`).
+- Faltam as 4 frentes e a porta. Nenhum código de jogo alterado.
+
 ## Orvalis v0.93.19 — Iluminação dinâmica e neblina escura (`?luz=`) (13/11/2026)
 - **ADR 0029:** camada de iluminação 2.5D como a da referência do Core Keeper: escuridão ambiente com poças de luz (Deusa + blocos que brilham: Musgo Luminoso, Cristal da Vida, Bloco de Luz; no Mundo: fogueira, caldeirão, forno), decaimento suave, tinta quente e oscilação do fogo.
 - **Regras puras** em `render/lighting.ts` (+ 6 testes): `parseAmbient`, `lightFalloff`, `glowLightFor`, `pickLights` (teto `MAX_LIGHTS` = 12), `flickerFactor` determinístico. **Shader** em `render/sanctuaryLighting.ts` (sobreposição de tela cheia, sem tocar nas malhas).
