@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.41 — M5.2: física sem degrau no piloto do Mundo, atrás de `?fisica=solida` (13/11/2026)
+- **Decisão do dono do produto (13/11):** seguir a recomendação — flag no piloto, padrão inalterado, servidor só na virada. **`?fisica=solida`** (dev e build de piloto, só com `?render=3d`, offline) liga `stepHeight = 0` no jogador do Mundo (`configureSanctuaryThreeCollision` ganhou o 4º parâmetro `solidWorld`; `Game` recebe `solidPhysics`). Sem a flag, no 2D ou online (a sala): a regra antiga (degrau de 1 nível). Só o jogador muda: lobos e goblins mantêm o degrau deles (decisão pendente).
+- **Servidor:** nada muda agora. A sala usa o mesmo `World`/`Walker`; a regra sem degrau só vai a ela na virada (`build:net` + `sync-net` + `PROTOCOL_VERSION`), registrado em `PARITY_3D.md` e NEXT_STEPS.
+- Conferido no navegador (seed 42): com a flag o jogador para diante do cubo (stepHeight 0, x = 2,67); em 3D sem a flag e no 2D passa por cima (stepHeight 1). 2 testes novos (421 → 423). **Build de produção inalterado** (a flag só existe em dev/piloto). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.40 — M5.1: checklist de paridade 2D × 3D e medição em aparelho real (13/11/2026)
 - **`npm run parity:3d`** (`scripts/parity-3d.cjs`): abre o jogo em 2D e em `?render=3d` nos mesmos 10 cenários (praça, portão, floresta, água, item caído, noite, interior, covil, labirinto, construção) e gera `parity-out/index.html` com as capturas lado a lado; sai com erro se houver erro de console. Resultado e pendências em **`docs/PARITY_3D.md`** (todos os 10 cenários ✅ no headless).
 - **Piloto em aparelho real:** `npm run build:piloto3d` (`VITE_PILOT_3D=1`, `dist-piloto/`) e `npm run preview:piloto3d` (na rede). O build de produção segue **sem** o 3D (conferido). `?fps=1` (`dev/perfHud.ts`, testado): painel com FPS, tempo de quadro e o pior, chamadas/triângulos/texturas/geometrias da GPU e memória; **toque copia o relatório (JSON)**. Funciona também no 2D, para comparar. `Game.rendererStats` exposto.

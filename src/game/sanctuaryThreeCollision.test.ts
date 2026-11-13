@@ -84,3 +84,54 @@ describe('Santuário Three.js — colisões físicas', () => {
     expect(player.z).toBe(1);
   });
 });
+
+describe('Mundo em 2.5D — física sem degrau no piloto (ADR 0031, M5; `?fisica=solida`)', () => {
+  it('só liga com o render 3D, a flag e o mundo principal; sem isso o degrau de 1 nível continua', () => {
+    const on = new Player(0.5, 0.5);
+    configureSanctuaryThreeCollision(on, 'principal', true, true);
+    expect(on.spec.stepHeight).toBe(0);
+    for (const [three, solid] of [[true, false], [false, true], [false, false]] as const) {
+      const p = new Player(0.5, 0.5);
+      configureSanctuaryThreeCollision(p, 'principal', three, solid);
+      expect(p.spec.stepHeight).toBe(1); // 3D sem a flag, flag sem 3D (2D) e 2D comum: regra antiga
+    }
+    const sanctuary = new Player(0.5, 0.5);
+    configureSanctuaryThreeCollision(sanctuary, 'santuario', true); // o Santuário 3D não depende da flag
+    expect(sanctuary.spec.stepHeight).toBe(0);
+  });
+
+  it('com a flag o jogador não sobe num cubo, mas anda em terreno plano (e a regra antiga sobe)', () => {
+    const world = new World(42);
+    const [gx, gy] = world.outsideGate();
+    // trecho plano e livre de 6 células ao sul do portão (fora da cidade)
+    let spot: [number, number] | null = null;
+    for (let dy = 6; dy < 60 && !spot; dy++) for (let dx = -20; dx < 20 && !spot; dx++) {
+      const x = gx + dx, y = gy + dy;
+      let ok = true;
+      for (let i = 0; i < 6 && ok; i++) ok = world.standHeight(x + i, y) === 0 && world.getObject(x + i, y) === Block.AIR;
+      if (ok) spot = [x, y];
+    }
+    expect(spot).not.toBeNull();
+    const [x, y] = spot!;
+    world.setObject(x + 3, y, Block.STONE);
+    expect(world.standHeight(x + 3, y)).toBe(1);
+
+    const solid = new Player(x + 0.5, y + 0.5);
+    configureSanctuaryThreeCollision(solid, 'principal', true, true);
+    traverse(solid, world, 1, 0);
+    expect(solid.x).toBeLessThanOrEqual(x + 3 - solid.spec.halfW + 1e-6); // parou diante do cubo
+    expect(solid.z).toBe(0);
+
+    const flat = new Player(x + 0.5, y + 2.5);
+    configureSanctuaryThreeCollision(flat, 'principal', true, true);
+    const before = flat.x;
+    traverse(flat, world, 1, 0);
+    expect(flat.x).toBeGreaterThan(before + 2); // terreno plano: anda livre
+
+    const legacy = new Player(x + 0.5, y + 0.5);
+    configureSanctuaryThreeCollision(legacy, 'principal', true, false);
+    traverse(legacy, world, 1, 0);
+    expect(legacy.x).toBeGreaterThan(x + 3); // a regra antiga passa por cima do cubo
+  });
+});
+
