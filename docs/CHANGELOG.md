@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.29 — M1: núcleo 2.5D genérico em `render/three/` (13/11/2026)
+- **Decisões do dono do produto (13/11):** aceitas as recomendações da ADR 0031 — Mundo em K = 1 desde o M2, degrau automático sai atrás de flag no piloto, prédios da cidade como planos na paridade, interiores isolados mantidos até o W5; arte de frente dos blocos e árvores provisória; clima (luz) padrão decidido no M3. ADR 0031 passa a **aceita**.
+- **M1:** `ThreeStage`, `SelectionMarkers` e `BlockMaterials` extraídos do `SanctuaryThreeRenderer` (548 → ~395 linhas), que passa a compô-los. **Sem mudança visual nem de comportamento**: capturas antes × depois (padrão, `?luz=`, `?vista=inclinada`, `?paredes=teste`) idênticas fora da animação (o código antigo tem o mesmo ruído de 3 mil pixels no teste), mesmas estatísticas de GPU, pick e porta iguais. 2 testes novos do `SelectionMarkers` (367).
+- **M0 (pendente do dono do produto):** FPS/memória em celular, iPad e Safari — o headless (swiftshader) não representa GPU real. Linha de base de referência (cena de teste do Santuário, swiftshader): 62 chamadas, 30 956 triângulos, 17 texturas. Sem mudança de protocolo, save ou servidor.
+
 ## Documentação — plano de migração do Mundo para Three.js e W5 pendente (13/11/2026, sem versão)
 - **ADR 0031 (proposta):** fases M0–M7, decisões propostas (núcleo genérico `render/three/`, malhas por chunk com orçamento, chão = textura do `ChunkRenderer`, atores em billboards, física sem degrau atrás de flag, servidor só nos marcos que tocam `world/`/`net/`), riscos e 6 perguntas ao dono do produto. **W5** (paredes no Mundo) registrado como pendente, depois do M4. Nenhum código alterado.
 

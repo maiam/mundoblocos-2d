@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, TILE } from '../config';
+import { ThreeStage, type StageView } from './three/stage';
+import { SelectionMarkers } from './three/selection';
+import { BlockMaterials } from './three/blockMaterials';
 import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import type { RenderOptions } from './renderer';
@@ -10,8 +13,7 @@ import { type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { sanctuary3DGeometryCells, sanctuaryBlockTransform, type SanctuaryBlockShape } from './sanctuaryThreeLayout';
-import { sanctuaryCameraOffset } from './sanctuaryCameraRig';
-import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from './sanctuaryObliqueView';
+import { OBLIQUE_K } from './sanctuaryObliqueView';
 import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
@@ -26,14 +28,12 @@ type Cell = {x:number;y:number;level:number;id:BlockId};
 type MeshGroup = {mesh:THREE.InstancedMesh;cells:Cell[]};
 /** Duração do quadro intermediário da porta ao abrir/fechar (ms). */
 const DOOR_HALF_MS=140;
-type SurfaceMaterial = THREE.MeshLambertMaterial|THREE.MeshBasicMaterial;
-type Materials = {block:SurfaceMaterial[];ground:SurfaceMaterial[];textures:THREE.Texture[]};
 
 /**
  * `tilt`: câmera inclinada a 67° (padrão, iluminada). `oblique`: câmera reta para baixo com a altura como deslocamento
  * fixo na tela (`?vista=obliqua`, experimento da ADR 0026) e materiais sem luz, para a arte aprovada manter as cores.
  */
-export type SanctuaryView = 'tilt'|'oblique';
+export type SanctuaryView = StageView;
 
 /**
  * Official Three.js VIEW of the same World/Player that the original Game owns.
@@ -43,16 +43,15 @@ export type SanctuaryView = 'tilt'|'oblique';
  * The main World is never initialized with this class; its Canvas 2D stays intact.
  */
 export class SanctuaryThreeRenderer implements GameRenderer {
+  /** Núcleo genérico (ADR 0031, M1): cena/câmera/GPU/contexto/mira, realces e materiais de bloco. */
+  private readonly stage:ThreeStage;
   private readonly scene:THREE.Scene;
-  private readonly camera:THREE.OrthographicCamera;
-  private readonly gpu:THREE.WebGLRenderer;
+  private readonly selection:SelectionMarkers;
+  private readonly blockMaterials:BlockMaterials;
   private readonly floorGeometry:THREE.BufferGeometry;
   private readonly solidGeometry:THREE.BufferGeometry;
   private readonly wallGeometry:THREE.BufferGeometry;
   private readonly groups:MeshGroup[]=[];
-  private readonly materials=new Map<number,Materials>();
-  private readonly raycaster:THREE.Raycaster;
-  private readonly pointer:THREE.Vector2;
   private readonly dummy:THREE.Object3D;
   private readonly actorSprites=new ActorSprites();
   private readonly actorCanvas=document.createElement('canvas');
@@ -61,13 +60,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly goddess:THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>;
   private readonly goddessGhost:THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>;
   private readonly goddessShadow:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;
-  private readonly highlight:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;
-  private readonly breakHighlight:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;
   private readonly bounds:{x0:number;x1:number;y0:number;y1:number};
   private signature='';
   private disposed=false;
-  private contextLost=false;
-  private readonly canvas:HTMLCanvasElement;
   private readonly view:SanctuaryView;
   /** Paredes (ADR 0027): protótipo de cores lisas até a arte chegar; refeito junto com as malhas. */
   private walls:WallPrototype|null=null;
@@ -84,11 +79,6 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private glowLights:LightSource[]=[];
   /** Células visíveis na vertical (a câmera usa; ADR 0028): a vista oblíqua mostra mais mundo que a antiga. */
   readonly preferredCellsTall?:number;
-  private obliqueHalf={w:8,h:5};
-  private obliqueFocus={x:0,z:0};
-  private lastWidth=0;
-  private lastHeight=0;
-  private lastPixelRatio=0;
 
   constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset;wallThickness?:WallThickness;ambient?:number}={}){
     this.wallThickness=options.wallThickness??DEFAULT_WALL_THICKNESS;
@@ -115,17 +105,14 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       y0:profile.bounds.cy0*CHUNK_SIZE,
       y1:(profile.bounds.cy1+1)*CHUNK_SIZE-1,
     };
-    this.canvas=canvas;
-    // O aparelho pode tirar a GPU do jogo (aba em segundo plano, pouca memória): sem preventDefault o contexto nunca
-    // volta. Ao voltar, o Three recria seus recursos sozinho; aqui só refazemos o que é nosso (malhas e texturas de canvas).
-    canvas.addEventListener('webglcontextlost',this.onContextLost);
-    canvas.addEventListener('webglcontextrestored',this.onContextRestored);
-    this.scene=new THREE.Scene();
-    this.scene.background=new THREE.Color('#b5c7f5');
-    this.camera=new THREE.OrthographicCamera(-8,8,5,-5,0.1,220);
-    this.gpu=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
-    this.gpu.outputColorSpace=THREE.SRGBColorSpace;
-    this.gpu.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    this.stage=new ThreeStage(canvas,this.view,'#b5c7f5',()=>{
+      this.signature=''; // refaz as malhas no próximo quadro
+      this.actorTexture.needsUpdate=true;
+      this.blockMaterials.reupload();
+    });
+    this.scene=this.stage.scene;
+    this.blockMaterials=new BlockMaterials(this.view,celestialFaces,this.stage.gpu);
+    this.selection=new SelectionMarkers(this.scene,world);
     this.scene.add(new THREE.HemisphereLight(0xfff7ed,0xa99cc4,2.0));
     const sunlight=new THREE.DirectionalLight(0xffe9c7,1.15);
     sunlight.position.set(-15,27,19);
@@ -133,8 +120,6 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.floorGeometry=new THREE.BoxGeometry(1,0.18,1);
     this.solidGeometry=new THREE.BoxGeometry(1,1,1);
     this.wallGeometry=new THREE.BoxGeometry(1,1,0.5);
-    this.raycaster=new THREE.Raycaster();
-    this.pointer=new THREE.Vector2();
     this.dummy=new THREE.Object3D();
 
     // Preserve the official animated goddess sheet, painted on a transparent
@@ -203,53 +188,6 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       this.scene.add(createWallProportionTest({x:sx,z:sy},makeReference));
     }
 
-    const selectGeometry=new THREE.PlaneGeometry(1,1);
-    selectGeometry.rotateX(-Math.PI/2);
-    this.highlight=new THREE.Mesh(selectGeometry,new THREE.MeshBasicMaterial({
-      color:0xffeb8d,transparent:true,opacity:0.32,depthWrite:false,
-      side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,
-    }));
-    this.highlight.renderOrder=4;
-    this.highlight.visible=false;
-    this.scene.add(this.highlight);
-    this.breakHighlight=new THREE.Mesh(
-      selectGeometry.clone(),new THREE.MeshBasicMaterial({
-        color:0xff7389,transparent:true,opacity:0.35,depthWrite:false,
-        side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-4,
-      }),
-    );
-    this.breakHighlight.renderOrder=5;
-    this.breakHighlight.visible=false;
-    this.scene.add(this.breakHighlight);
-  }
-
-  private material(id:number):Materials{
-    let cached=this.materials.get(id);
-    if(cached)return cached;
-    const faces=celestialFaces(id);
-    const toTexture=(canvas:HTMLCanvasElement):THREE.CanvasTexture=>{
-      const t=new THREE.CanvasTexture(canvas);
-      t.colorSpace=THREE.SRGBColorSpace;
-      t.anisotropy=Math.min(4,this.gpu.capabilities.getMaxAnisotropy());
-      return t;
-    };
-    const top=toTexture(faces.top);
-    // Vista oblíqua (K = 1): a frente do cubo é quadrada, então usa a mesma imagem quadrada do topo, sem achatar.
-    const front=this.view==='oblique'?top:toTexture(faces.front);
-    const ground=toTexture(faces.ground);
-    const Mat=this.view==='oblique'?THREE.MeshBasicMaterial:THREE.MeshLambertMaterial;
-    const topMaterial=new Mat({map:top,color:0xffffff});
-    // Sem luz, topo e frente seriam a mesma imagem: a frente leva o escurecimento frio que a arte 2D pinta à mão.
-    const sideMaterial=new Mat({map:front,color:this.view==='oblique'?0xc4c6dc:0xffffff});
-    const groundMaterial=new Mat({map:ground,color:0xffffff});
-    // Three BoxGeometry: +X,-X,+Y,-Y,+Z,-Z.
-    cached={
-      block:[sideMaterial,sideMaterial,topMaterial,sideMaterial,sideMaterial,sideMaterial],
-      ground:[sideMaterial,sideMaterial,groundMaterial,sideMaterial,sideMaterial,sideMaterial],
-      textures:[top,front,ground],
-    };
-    this.materials.set(id,cached);
-    return cached;
   }
 
   private worldSignature():string{
@@ -311,7 +249,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     for(const entry of indexed.values()){
       const geometry=entry.ground?this.floorGeometry:
         entry.shape==='solid'?this.solidGeometry:this.wallGeometry;
-      const mats=this.material(entry.id);
+      const mats=this.blockMaterials.get(entry.id);
       const mesh=new THREE.InstancedMesh(
         geometry,entry.ground?mats.ground:mats.block,entry.cells.length,
       );
@@ -335,67 +273,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
   }
 
-  private readonly onContextLost=(e:Event):void=>{
-    e.preventDefault();
-    this.contextLost=true;
-  };
-
-  private readonly onContextRestored=():void=>{
-    this.contextLost=false;
-    this.signature=''; // refaz as malhas no próximo quadro
-    this.actorTexture.needsUpdate=true;
-    for(const group of this.materials.values())for(const t of group.textures)t.needsUpdate=true;
-  };
-
-  stats():RendererStats{
-    const i=this.gpu.info;
-    return{
-      calls:i.render.calls,triangles:i.render.triangles,
-      geometries:i.memory.geometries,textures:i.memory.textures,
-      contextLost:this.contextLost,
-    };
-  }
-
-  private syncCamera(cam:Camera):void{
-    const w=cam.width,h=cam.height;
-    const halfH=h/(TILE*cam.zoom*2);
-    const halfW=w/(TILE*cam.zoom*2);
-    this.camera.left=-halfW;this.camera.right=halfW;
-    this.camera.top=halfH;this.camera.bottom=-halfH;
-    this.camera.updateProjectionMatrix();
-    // Same world XY axes, orthographic perspective with real visible front
-    // faces: elevated +Y is height; positive Z is the screen-facing front.
-    const focusX=cam.x/TILE;
-    const focusZ=cam.y/TILE;
-    if(this.view==='oblique'){
-      // Câmera reta para baixo (topo da tela = norte) e projeção oblíqua montada à mão (`sanctuaryObliqueView.ts`).
-      this.camera.up.set(0,0,-1);
-      this.camera.position.set(focusX,OBLIQUE_CAMERA_HEIGHT,focusZ);
-      this.camera.lookAt(focusX,0,focusZ);
-      this.camera.updateMatrixWorld();
-      const m=obliqueProjection(halfW,halfH);
-      this.camera.projectionMatrix.set(
-        m[0],m[1],m[2],m[3],m[4],m[5],m[6],m[7],m[8],m[9],m[10],m[11],m[12],m[13],m[14],m[15],
-      );
-      this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
-      this.obliqueHalf={w:halfW,h:halfH};
-      this.obliqueFocus={x:focusX,z:focusZ};
-    }else{
-      const offset=sanctuaryCameraOffset();
-      this.camera.position.set(focusX,offset.height,focusZ+offset.depth);
-      this.camera.lookAt(focusX,0,focusZ);
-      this.camera.updateMatrixWorld();
-    }
-    const pixelRatio=Math.min(window.devicePixelRatio||1,2);
-    // Do not resize the drawing buffer for every frame or pointer event.
-    if(w!==this.lastWidth||h!==this.lastHeight||pixelRatio!==this.lastPixelRatio){
-      this.gpu.setPixelRatio(pixelRatio);
-      this.gpu.setSize(w,h,false);
-      this.lastWidth=w;
-      this.lastHeight=h;
-      this.lastPixelRatio=pixelRatio;
-    }
-  }
+  stats():RendererStats{return this.stage.stats();}
 
   private drawGoddess(opts:RenderOptions):void{
     const player=opts.player;
@@ -431,33 +309,17 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     );
   }
 
-  private updateSelection(opts:RenderOptions):void{
-    const cell=opts.hover??opts.focus;
-    if(cell&&cell.valid&&this.world.inBounds(cell.x,cell.y)){
-      const top=this.world.stackHeight(cell.x,cell.y);
-      this.highlight.position.set(cell.x+0.5,top+0.03,cell.y+0.5);
-      this.highlight.visible=true;
-    }else this.highlight.visible=false;
-    const breaking=opts.breaking;
-    if(breaking&&this.world.inBounds(breaking.x,breaking.y)){
-      const h=this.world.stackHeight(breaking.x,breaking.y);
-      this.breakHighlight.position.set(breaking.x+0.5,h+0.04,breaking.y+0.5);
-      this.breakHighlight.material.opacity=Math.min(0.58,0.12+0.46*breaking.progress);
-      this.breakHighlight.visible=true;
-    }else this.breakHighlight.visible=false;
-  }
-
   draw(cam:Camera,opts:RenderOptions):void{
-    if(this.disposed||this.contextLost)return;
+    if(this.disposed||this.stage.contextLost)return;
     const signature=this.worldSignature();
     if(this.signature!==signature){
       this.buildWorld();
       this.signature=signature;
     }
-    this.syncCamera(cam);
+    this.stage.syncCamera(cam);
     this.drawGoddess(opts);
-    this.updateSelection(opts);
-    this.gpu.render(this.scene,this.camera);
+    this.selection.update(opts);
+    this.stage.render();
     if(this.lighting)this.drawLighting(cam,opts);
   }
 
@@ -473,20 +335,15 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       focus,cellPx,width:cam.width,height:cam.height,
       pixelRatio:Math.min(window.devicePixelRatio||1,2),k:OBLIQUE_K,elapsed:opts.elapsed,
     },(l,i)=>flickerFactor(l.flicker,opts.elapsed,l.x*7+l.z*13+i));
-    this.lighting.render(this.gpu);
+    this.lighting.render(this.stage.gpu);
   }
 
   pick(cam:Camera,sx:number,sy:number):{x:number;y:number;hasObject:boolean}{
     if(this.disposed)return{x:0,y:0,hasObject:false};
-    this.syncCamera(cam);
+    this.stage.syncCamera(cam);
     if(this.groups.length===0)this.buildWorld();
-    this.pointer.set(sx/cam.width*2-1,1-sy/cam.height*2);
-    if(this.view==='oblique'){
-      // Na projeção oblíqua o raio não é perpendicular à tela: sobe 1 de altura a cada K de célula para o sul.
-      const r=obliqueRay(this.pointer.x,this.pointer.y,this.obliqueHalf.w,this.obliqueHalf.h,this.obliqueFocus);
-      this.raycaster.set(new THREE.Vector3(...r.origin),new THREE.Vector3(...r.dir));
-    }else this.raycaster.setFromCamera(this.pointer,this.camera);
-    const found=this.raycaster.intersectObjects([...this.groups.map(e=>e.mesh),...(this.walls?.meshes??[]),...(this.wallArt?.meshes??[])],false);
+    this.stage.aim(cam,sx,sy);
+    const found=this.stage.hits([...this.groups.map(e=>e.mesh),...(this.walls?.meshes??[]),...(this.wallArt?.meshes??[])]);
     for(const hit of found){
       const wallCell=hit.object.userData.cell as {x:number;y:number}|undefined;
       if(wallCell)return{x:wallCell.x,y:wallCell.y,hasObject:true};
@@ -498,12 +355,11 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       if(cell)return{x:cell.x,y:cell.y,hasObject:cell.level>=0};
     }
     // Unoccupied space: derive a cell only from the floor plane.
-    const plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
-    const point=new THREE.Vector3();
-    if(this.raycaster.ray.intersectPlane(plane,point))
-      return{x:Math.floor(point.x),y:Math.floor(point.z),
+    const ground=this.stage.groundCell();
+    if(ground)
+      return{x:ground.x,y:ground.y,
         // a placa fina deixa vão na célula: clicar ao lado dela ainda é a parede
-        hasObject:this.world.isWallAt(Math.floor(point.x),Math.floor(point.z))};
+        hasObject:this.world.isWallAt(ground.x,ground.y)};
     return{x:0,y:0,hasObject:false};
   }
 
@@ -519,8 +375,6 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     if(this.disposed)return;
     this.disposed=true;
     if(this.halfTimer)clearTimeout(this.halfTimer);
-    this.canvas.removeEventListener('webglcontextlost',this.onContextLost);
-    this.canvas.removeEventListener('webglcontextrestored',this.onContextRestored);
     this.lighting?.dispose();
     for(const group of this.groups){
       this.scene.remove(group.mesh);
@@ -529,20 +383,14 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.groups.length=0;
     if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();this.walls=null;}
     if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();this.wallArt=null;}
-    for(const group of this.materials.values()){
-      for(const m of new Set([...group.block,...group.ground]))m.dispose();
-      for(const t of group.textures)t.dispose();
-    }
-    this.materials.clear();
+    this.blockMaterials.dispose();
     for(const g of [this.floorGeometry,this.solidGeometry,this.wallGeometry,
-      this.highlight.geometry,this.breakHighlight.geometry,
       this.goddessShadow.geometry,this.goddess.geometry])g.dispose();
-    this.highlight.material.dispose();
-    this.breakHighlight.material.dispose();
+    this.selection.dispose();
     this.actorTexture.dispose();
     this.goddess.material.dispose();
     this.goddessGhost.material.dispose();
     this.goddessShadow.material.dispose();
-    this.gpu.dispose();
+    this.stage.dispose();
   }
 }

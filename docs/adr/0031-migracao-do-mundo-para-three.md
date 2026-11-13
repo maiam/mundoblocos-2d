@@ -1,6 +1,6 @@
 # ADR 0031 — Plano de migração do Mundo principal para Three.js (2.5D)
 
-- **Status:** proposta (plano para validação do dono do produto; nenhuma linha de código muda com este documento)
+- **Status:** **aceita em 13/11/2026** (recomendações aprovadas pelo dono do produto; M1 entregue na v0.93.29)
 - **Data:** 2026-11-13 (v0.93.28)
 - **Relaciona:** ADR 0026 (render 2.5D em WebGL — esta ADR detalha as Fases 4–6 para o Mundo), 0027 (paredes; W5), 0028 (escala),
   0029 (iluminação), 0030 (orientação vertical), 0010/0013 (arte por mundo, assets), 0012 (cidade), 0014 (interiores), 0016/0021 (multiplayer).
@@ -79,7 +79,8 @@ Mundo renderiza em 3D com o que já tem; depois W5.
 - **Contexto WebGL perdido / iframe do Artifact:** já tratado no Santuário (perda de contexto); validar no Mundo, que tem mais memória.
 - **Mundo infinito:** reconstrução de malhas e texturas de chão por chunk pode gerar picos ao andar; daí o orçamento por quadro.
 
-## 6. Perguntas para o dono do produto (decidir antes do M2)
+## 6. Decisões do dono do produto (13/11/2026) — antes eram perguntas
+Aprovadas as recomendações: (1) **K = 1 no Mundo desde o M2**; (2) **degrau automático sai, atrás de flag no piloto**; (3) **prédios como planos na paridade**, casas com paredes no W5; (4) **interiores isolados mantidos** no M4, teto avaliado no W5; (5) arte de frente dos blocos e árvores em escala nova **provisória** (derivada do topo/escala) até a arte chegar; (6) **luz/escuridão padrão decidida no M3** (hoje só `?luz=`). Texto original das perguntas:
 1. **Escala:** o Mundo adota K = 1 (cubo 1,0 / parede ≈ 1,2 / personagem ≈ 1,2) já no M2, com ajuste de toda a arte, ou mantém a escala antiga na
    paridade e muda depois? (Recomendação: K = 1 desde o M2; muda uma vez só.)
 2. **Física:** o degrau automático sai (parede sólida, como Core Keeper) já no piloto, atrás de flag? (Recomendação: sim, atrás de flag.)
