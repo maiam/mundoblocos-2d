@@ -63,17 +63,17 @@ def footprint(n, e, s, w):
 
 
 text(40, 24, 'Gabarito da arte das paredes — Orvalis', 34, True)
-text(40, 72, f'1 célula = {CELL} px  ·  poste = {TX} px de largura × {TZ} px de profundidade (x = {args.tx:g}, z = {args.tz:g})  ·  braço L/O = {ARM} px, N/S = {ARMZ} px  ·  altura da frente = {H} px (1,2 célula)', 20)
+text(40, 72, f'1 célula = {CELL} px  ·  laje = {TX} px de largura × {TZ} px de profundidade (x = {args.tx:g}, z = {args.tz:g})  ·  braço L/O = {ARM} px, N/S = {ARMZ} px  ·  altura da frente = {H} px (1,2 célula)', 20)
 text(40, 102, 'Cada peça é um PNG RGBA transparente, recortado exato (sem margem). Cinza tracejado = limite da célula (não desenhar).', 18, fill=(100, 96, 110))
 
 # ---------------- 1) FRENTE ----------------
 y0 = 170
 text(40, y0 - 32, '1) FRENTE (face sul da parede) — 4 peças por material', 26, True)
 pieces = [
-    ('front_mid', CELL, 0, ['célula inteira', 'emenda nos DOIS lados'], [(0, ARM, 'braço O'), (ARM, TX, 'poste'), (ARM + TX, ARM, 'braço L')]),
-    ('front_end_left', CELL - C0, C0, ['ponta ESQUERDA', 'acabamento só à esquerda'], [(0, TX, 'poste'), (TX, ARM, 'braço L')]),
-    ('front_end_right', C1, 0, ['ponta DIREITA', 'acabamento só à direita'], [(0, ARM, 'braço O'), (ARM, TX, 'poste')]),
-    ('front_post', TX, 0, ['poste isolado / fim de coluna', 'acabamento nos dois lados'], [(0, TX, 'poste')]),
+    ('front_mid', CELL, 0, ['célula inteira', 'emenda nos DOIS lados'], [(0, ARM, 'braço O'), (ARM, TX, 'laje'), (ARM + TX, ARM, 'braço L')]),
+    ('front_end_left', CELL - C0, C0, ['ponta ESQUERDA', 'acabamento só à esquerda'], [(0, TX, 'laje'), (TX, ARM, 'braço L')]),
+    ('front_end_right', C1, 0, ['ponta DIREITA', 'acabamento só à direita'], [(0, ARM, 'braço O'), (ARM, TX, 'laje')]),
+    ('front_post', TX, 0, ['bloco isolado / fim de coluna', 'acabamento nos dois lados'], [(0, TX, 'laje')]),
 ]
 x = 40
 for name, w, _, desc, parts in pieces:
@@ -89,13 +89,13 @@ for name, w, _, desc, parts in pieces:
     for i, line in enumerate(desc):
         text(x, top + H + 34 + i * 20, line, 14, fill=(100, 96, 110))
     x += max(w, 190) + 150
-text(40, y0 + 30 + H + 70, 'As frentes de "braço só" (ex.: canto de cômodo) são RECORTES de front_mid: por isso front_mid precisa emendar com ele mesmo. '
-     'Altura da frente é a mesma em todas.', 17, fill=(80, 76, 92))
+text(40, y0 + 30 + H + 70, 'Com a laje de largura inteira, as 4 frentes têm 128 px. A frente só aparece onde NÃO há parede ao sul. front_mid emenda com ele mesmo; '
+     'as pontas fecham um lado; front_post é o bloco isolado / fim de coluna. Frentes 100% opacas.', 17, fill=(80, 76, 92))
 
 # ---------------- 2) TAMPA ----------------
 y1 = 560
 text(40, y1 - 40, '2) TAMPA (vista de cima, 128 × 128 cada) — 16 peças por material, uma por combinação de vizinhos', 26, True)
-text(40, y1 - 12, 'Preencher só a forma escura (poste + braços); o resto transparente. Bordas externas com a aresta clara; onde há braço, a tampa CONTINUA até a borda e emenda com a da célula vizinha.', 16, fill=(80, 76, 92))
+text(40, y1 - 12, 'Só os vizinhos N/S mudam a FORMA (4 formas); L/O mudam só o acabamento das bordas esquerda/direita. Coluna: franja | miolo | franja; fileira: franja fina ao norte. O resto transparente.', 16, fill=(80, 76, 92))
 names = {0: 'solta'}
 for m in range(16):
     col, row = m % 4, m // 4
@@ -110,7 +110,7 @@ for m in range(16):
     text(tx + 78, ty + CELL + 6, f'vizinhos: {flags}', 15)
 text(1000, y1 + 24, 'Índice = N·1 + L·2 + S·4 + O·8', 20, True)
 text(1000, y1 + 54, 'N = parede ao norte, L = leste, S = sul, O = oeste.', 17)
-text(1000, y1 + 84, f'cap_00 = poste isolado ({TX} × {TZ} no centro).', 17)
+text(1000, y1 + 84, f'cap_00 = laje isolada ({TX} × {TZ} no centro).', 17)
 text(1000, y1 + 114, 'cap_05 / cap_10 = coluna norte–sul / fileira leste–oeste.', 17)
 text(1000, y1 + 144, 'cap_15 = cruz (parede nos 4 lados).', 17)
 text(1000, y1 + 190, 'Nomes: <material>/cap_00.png … cap_15.png', 17)

@@ -1,6 +1,11 @@
 # Changelog
 
 ## Orvalis v0.93.21 — Decisão final: coluna da largura da célula (x = 1,0 · z = 0,35) (13/11/2026)
+- **Decisão do dono do produto:** `DEFAULT_WALL_THICKNESS` = `{ x: 1, z: 0.35 }`. Com `x = 1` só os vizinhos norte/sul mudam a forma da tampa (**4 formas** para as 16 máscaras); leste/oeste só mudam o acabamento das bordas. Testes novos (padrão, 4 formas, coluna contínua, frentes).
+- **Contrato e gabarito regerados** (`CONTRATO.tpl.md` reescrito): laje 128 × 44 px, braços N/S 42, frente 128 × 154 (4 peças opacas), 16 tampas 128 × 128 sobre 4 formas, franja da coluna 27 | miolo 74 | 27, franja da fileira 9 px ao norte. Das peças de Tábuas valem `front_mid` e `cap_10`; as outras 18 serão refeitas (as antigas ficam como referência de estilo).
+- Sem mudança de protocolo, save ou servidor.
+
+## Orvalis v0.93.21 — Decisão final: coluna da largura da célula (x = 1,0 · z = 0,35) (13/11/2026)
 - **Decisão do dono do produto:** `DEFAULT_WALL_THICKNESS` = `{ x: 1, z: 0.35 }`. Com `x = 1` só os vizinhos norte/sul mudam a forma da tampa (**4 formas** para as 16 máscaras); leste/oeste só mudam o acabamento das bordas. Testes: padrão, 4 formas, coluna contínua preenche a célula, frentes (isolado, fim de coluna, meio e canto).
 - **Contrato e gabarito regerados** (`CONTRATO.tpl.md` reescrito): laje de 128 × 44 px, braços N/S de 42, frente 128 × 154 (4 peças, opacas), 16 tampas 128 × 128 sobre 4 formas, franja da coluna 27 px | miolo 74 | franja 27, franja da fileira 9 px ao norte, tabela de máscaras por forma, conferência. **Das peças de Tábuas já entregues valem `front_mid` e `cap_10`; as outras 18 serão refeitas** (as antigas ficam como referência de estilo).
 - Sem mudança de protocolo, save ou servidor.
