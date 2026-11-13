@@ -56,7 +56,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     const vars = textures.variants.get(id);
     const salt = isTownArt(id) ? 0x7041 : world.seed;
     const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : textures.objects.get(id);
-    return sprite ? { sprite, walkable: !def.solid } : null;
+    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id) } : null;
   };
 }
 

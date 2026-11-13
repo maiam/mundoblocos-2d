@@ -31,6 +31,7 @@ import { INTERIOR_BACKGROUND, InteriorRoom, roomBounds } from './three/interiorR
 import { art } from './art';
 import { Particles } from './particles';
 import { skyAt } from './daycycle';
+import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
 import { ItemIcons, itemIconUrl, loadCropSprites } from './itemArt';
@@ -45,7 +46,7 @@ const FLOOR_MARGIN = 1;
  * M2: chão por chunk (textura do `ChunkRenderer`), cubos (`ChunkBlocks`, frente provisória), objetos altos e a cidade
  * (`ChunkSprites`, planos verticais), efeitos de chão (`GroundFx`). M3.1: atores (`ActorBillboards`: jogador, NPCs, animais,
  * goblins e monstros em planos verticais com sombra, nome, coração e barra de vida), itens caídos e o anel da ovelha.
- * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. M3.3: luz e escuridão só à noite e na dungeon. M3.4: animação da porta (`DoorSprites`) e partículas do bioma. M4.1: interiores (`InteriorRoom`). Ainda **não** desenha a dungeon (covil, farol da entrada)
+ * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. M3.3: luz e escuridão só à noite e na dungeon. M3.4: animação da porta (`DoorSprites`) e partículas do bioma. M4.1: interiores (`InteriorRoom`). M4.2: dungeon (parede empilhada, farol e seta da entrada, escuro fora do labirinto, penumbra pela luz)
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -169,6 +170,9 @@ export class WorldThreeRenderer implements GameRenderer {
     if (!inside) this.drawLighting(cam, opts, view);
     const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
     if (ctx) {
+      // Dungeon (como no 2D: farol da entrada e escuro fora do labirinto, antes das partículas).
+      if (!inside && opts.entrance) drawBeacon(ctx, cam, opts.entrance, opts.elapsed, cam.width, cam.height);
+      if (!inside && opts.dungeonArea) darkenOutside(ctx, cam, opts.dungeonArea, cam.width, cam.height);
       // Partículas do bioma onde o jogador está (como no 2D: depois da noite, antes dos números de dano).
       if (!inside) {
         this.particles.update(opts.dt, cam.width, cam.height, this.world.biomeAt(opts.player.cellX, opts.player.cellY), skyAt(opts.time).night);

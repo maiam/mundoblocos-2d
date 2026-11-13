@@ -52,7 +52,7 @@ export const SANCTUARY_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport>
 
 /**
  * Mapa de paridade do `WorldThreeRenderer` (Mundo em 2.5D, ADR 0031): o que cada campo de `RenderOptions` já faz. Fatia M2.1.
- * Cada marco (M4.2…M5) vira `honored` o que passar a desenhar; o `Record` obriga a classificar todo campo novo.
+ * Cada marco (M5) vira `honored` o que passar a desenhar; o `Record` obriga a classificar todo campo novo.
  */
 export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
   player: 'honored',          // M3.4: a célula do jogador escolhe as partículas do bioma (o personagem em si vem de `actors[0]`)
@@ -68,8 +68,8 @@ export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
   dt: 'ignored',
   hurtFlash: 'honored',       // M3.2: vinheta na camada 2D
   inDungeon: 'honored',       // M3.3: penumbra (a dungeon em si, M4)
-  entrance: 'ignored',        // M4
-  dungeonArea: 'ignored',     // M4
+  entrance: 'honored',        // M4.2: farol e seta, na camada 2D
+  dungeonArea: 'honored',     // M4.2: escuro fora do labirinto, na camada 2D
   interior: 'honored',        // M4.1: o cômodo isolado substitui o mundo
   fade: 'honored',            // M3.2: escurecer de porta na camada 2D
 };
