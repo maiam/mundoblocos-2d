@@ -7,7 +7,7 @@ import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
 import { loadDungeonArt } from './blockArt';
-import { Block, type BlockId } from '../world/blocks';
+import { Block, blockDef, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
@@ -15,6 +15,10 @@ import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { ThreeStage } from './three/stage';
 import { SelectionMarkers } from './three/selection';
 import { ChunkFloor } from './three/chunkFloor';
+import { ChunkBlocks } from './three/chunkBlocks';
+import { BlockMaterials } from './three/blockMaterials';
+import { worldBlockFaces } from './worldBlockFaces';
+import { classifySanctuaryBlock, sanctuaryBlockTransform } from './sanctuaryThreeLayout';
 
 /** Folha do personagem pintada em um canvas 256 × 320 (pé embaixo, ao centro), usado como textura do plano vertical. */
 const BILLBOARD = { width: 256, height: 320, drawX: 128, groundY: 320, zoom: 3 } as const;
@@ -23,8 +27,8 @@ const FLOOR_MARGIN = 1;
 
 /**
  * Render do Mundo principal em 2.5D (ADR 0031, M2 — **em construção**; só em desenvolvimento, `?render=3d`).
- * Fatia atual (M2.1): chão por chunk (textura do `ChunkRenderer`) + o personagem em plano vertical + realces + pick no chão.
- * Ainda **não** desenha cubos/terreno alto, árvores, objetos, cidade, atores além do jogador, itens, luz nem efeitos
+ * Fatias atuais: M2.1 chão por chunk (textura do `ChunkRenderer`) + o personagem em plano vertical + realces; M2.2 cubos
+ * (`ChunkBlocks`, frente quadrada provisória, paredes finas) + pick nos cubos. Ainda **não** desenha árvores, objetos, cidade, atores além do jogador, itens, luz nem efeitos
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -34,6 +38,8 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly selection: SelectionMarkers;
   private readonly chunks: ChunkRenderer;
   private readonly floor: ChunkFloor;
+  private readonly blocks: ChunkBlocks;
+  private readonly blockMaterials: BlockMaterials;
   private readonly actorSprites = new ActorSprites();
   private readonly actorCanvas = document.createElement('canvas');
   private readonly actorContext: CanvasRenderingContext2D;
@@ -46,6 +52,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
       this.actorTexture.needsUpdate = true;
       this.floor.reupload();
+      this.blockMaterials?.reupload();
     });
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
@@ -53,6 +60,13 @@ export class WorldThreeRenderer implements GameRenderer {
     void loadDungeonArt().then((d) => { if (!this.disposed && d && addDungeonTextures(this.textures)) this.chunks.invalidateAll(); });
     this.floor = new ChunkFloor(this.stage.scene, world, this.chunks);
     this.selection = new SelectionMarkers(this.stage.scene, world);
+    this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
+    this.blocks = new ChunkBlocks(this.stage.scene, world, {
+      isCube: (id) => blockDef(id).shape === 'cube',
+      classify: (w, id, x, y, level) => classifySanctuaryBlock(w, id, x, y, level),
+      transform: (cell) => sanctuaryBlockTransform(cell),
+      material: (id) => this.blockMaterials.get(id).block,
+    });
 
     this.actorCanvas.width = BILLBOARD.width;
     this.actorCanvas.height = BILLBOARD.height;
@@ -93,7 +107,9 @@ export class WorldThreeRenderer implements GameRenderer {
   draw(cam: Camera, opts: RenderOptions): void {
     if (this.disposed || this.stage.contextLost) return;
     this.stage.syncCamera(cam);
-    this.floor.update(cam.visibleChunks(FLOOR_MARGIN));
+    const rect = cam.visibleChunks(FLOOR_MARGIN);
+    this.floor.update(rect);
+    this.blocks.update(rect);
     this.drawPlayer(opts);
     this.selection.update(opts);
     this.stage.render();
@@ -117,6 +133,10 @@ export class WorldThreeRenderer implements GameRenderer {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
     this.stage.syncCamera(cam);
     this.stage.aim(cam, sx, sy);
+    for (const hit of this.stage.hits(this.blocks.meshes())) {
+      const block = this.blocks.cellOf(hit.object, hit.instanceId);
+      if (block) return { x: block.x, y: block.y, hasObject: true };
+    }
     const cell = this.stage.groundCell();
     if (!cell) return { x: 0, y: 0, hasObject: false };
     return { x: cell.x, y: cell.y, hasObject: this.world.getObject(cell.x, cell.y) !== Block.AIR };
@@ -134,6 +154,8 @@ export class WorldThreeRenderer implements GameRenderer {
     if (this.disposed) return;
     this.disposed = true;
     this.floor.dispose();
+    this.blocks.dispose();
+    this.blockMaterials.dispose();
     this.selection.dispose();
     this.billboard.geometry.dispose();
     this.billboard.material.dispose();

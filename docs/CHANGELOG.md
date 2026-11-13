@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.31 — M2.2: cubos do Mundo em 2.5D, atrás de `?render=3d` (13/11/2026)
+- **`ChunkBlocks`:** cubos por chunk visível em malhas instanciadas por (bloco, forma `solid`/`thin`), reconstruídas só quando `chunk.version` muda (máx. 2 por quadro; a versão antiga fica na tela), liberadas fora da área; `pick` acerta os cubos e devolve a célula. **`worldBlockFaces`:** topo = textura de chão do material; frente **provisória** (topo escurecido, ou a frente V2 própria esticada a uma célula quando existe — terra sob a grama, casca da tora).
+- Conferido no navegador (seed 42, 2D × 3D): fileira fina de tábuas, pilar de pedra de 2 níveis, terra/pedra, grama, tora e areia com as mesmas formas do 2D; pick no pilar certo; sem erros. A água ainda é estática (M2.4); árvores/objetos altos (M2.3), cidade, atores, luz e efeitos seguem fora. Só dev; física inalterada. 374 testes (3 novos do `ChunkBlocks`). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.30 — M2.1: chão do Mundo em 2.5D, atrás de `?render=3d` (13/11/2026)
 - **`WorldThreeRenderer`** (só dev; o build de produção não o contém) e **`ChunkFloor`**: um plano por chunk visível com a textura do `ChunkRenderer` (Material V2, transições, barrancas e sombras como no 2D), orçamento de 2 chunks pintados por quadro, reenvio à GPU só quando a `version` muda e liberação dos chunks fora da área. O jogador (`actors[0]`) aparece em plano vertical com a escala do mundo (`CHARACTER_SCALE_FACTOR`, K = 1) e sombra; realces e `pick` no chão. `SpriteSheet.shadowRadii` exposto. `WORLD_THREE_OPTIONS` (mapa de paridade) no contrato.
 - Conferido no navegador (seed 42, 2D × 3D no mesmo ponto): chão e jogador corretos, 16 chunks vivos, pick certo, sem erros. **Ainda sem** cubos/terreno alto, objetos, cidade, outros atores, luz e efeitos (fatias M2.2–M2.4 e M3/M4). Física inalterada. 371 testes (4 novos do `ChunkFloor`). Sem mudança de protocolo, save ou servidor.
