@@ -31,8 +31,8 @@ npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos 
 
 ## Celular
 
-Jogado sempre na horizontal. O primeiro toque coloca em tela cheia e trava a orientação onde o navegador
-permite; em retrato aparece "Gire o aparelho". Dá para instalar na tela inicial (abre em tela cheia, deitado).
+Jogado na horizontal ou na vertical, à escolha do jogador (ADR 0030). O primeiro toque coloca em tela cheia; a orientação não é
+travada. Dá para instalar na tela inicial (abre em tela cheia).
 
 ## Controles
 

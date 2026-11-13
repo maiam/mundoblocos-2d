@@ -22,6 +22,8 @@ export interface HudHandlers {
 export class Hud {
   readonly root: HTMLElement;
   private readonly slots: HTMLButtonElement[] = [];
+  private readonly hotbarObserver: ResizeObserver | null = null;
+  private unpublish: (() => void) | null = null;
   private readonly bagButton: HTMLButtonElement | null = null;
   private readonly skillsButton: HTMLButtonElement | null = null;
   /** Painel acima dos 9 itens (mesma largura): bolsa ou receitas. */
@@ -124,6 +126,14 @@ export class Hud {
     this.toastEl.setAttribute('aria-live', 'polite');
     this.root.appendChild(this.toastEl);
     document.body.appendChild(this.root);
+    // A hotbar muda de altura (linhas quebradas na vertical, painéis abertos): o CSS usa `--hotbar-h` (distância do rodapé ao topo
+    // dela) para posicionar joystick, botão de ação e conversa sem sobrepor (ADR 0030).
+    const publish = () => this.root.style.setProperty('--hotbar-h', `${Math.max(0, Math.round(window.innerHeight - card.getBoundingClientRect().top))}px`);
+    this.hotbarObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(publish);
+    this.hotbarObserver?.observe(card);
+    window.addEventListener('resize', publish);
+    this.unpublish = () => window.removeEventListener('resize', publish);
+    publish();
   }
 
   /** Conteúdo dos espaços (só redesenha o que mudou). */
@@ -214,6 +224,8 @@ export class Hud {
   }
 
   destroy(): void {
+    this.hotbarObserver?.disconnect();
+    this.unpublish?.();
     this.root.remove();
   }
 }

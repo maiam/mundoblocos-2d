@@ -1,20 +1,18 @@
 /**
- * Modo de tela em dispositivos de toque: o jogo é jogado na HORIZONTAL.
+ * Modo de tela em dispositivos de toque (ADR 0030): o jogo funciona na HORIZONTAL **e** na VERTICAL; a orientação é escolha do jogador.
  *
- * - No primeiro toque (gesto exigido pelos navegadores), pede tela cheia e,
- *   onde suportado (Android/Chrome), trava a orientação em paisagem.
- * - Onde o navegador não permite (ex.: Safari no iPhone, iframes restritos),
- *   a garantia é a camada "Gire o aparelho", que cobre o jogo enquanto o
- *   aparelho estiver em retrato.
+ * - No primeiro toque (gesto exigido pelos navegadores), pede tela cheia. **Não trava a orientação** (antes travava em paisagem e,
+ *   onde não dava, cobria o jogo com "Gire o aparelho"): quem quiser jogar em pé, joga em pé.
  * - Se o jogador sair da tela cheia, o próximo toque volta a pedi-la — menos ao tocar num campo de texto ou com um
  *   campo em foco: o teclado na tela tira o navegador da tela cheia, e pedi-la de novo fechava o teclado em loop
  *   (não dava para digitar o nome no "Jogar com amigos" no tablet).
+ * - Expõe `data-orientation` (`portrait`/`landscape`) e `data-device` (`phone`/`tablet`/`desktop`) em `<html>` para o CSS e `isPortrait`
+ *   para a câmera (a vertical mostra mais mundo na altura e menos na largura).
  * No desktop nada muda (janela já é horizontal; F11 fica a critério do usuário).
  */
 
 type FsElement = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void };
 type FsDocument = Document & { webkitFullscreenElement?: Element | null };
-type LockableOrientation = ScreenOrientation & { lock?: (o: 'landscape') => Promise<void> };
 
 export class ScreenMode {
   readonly isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -24,19 +22,10 @@ export class ScreenMode {
    */
   readonly isTablet = isTabletScreen(this.isTouch, window.screen.width, window.screen.height);
   private readonly portraitQuery = window.matchMedia('(orientation: portrait)');
-  private readonly overlay: HTMLElement;
   private readonly cleanup: (() => void)[] = [];
 
   constructor() {
-    this.overlay = document.createElement('div');
-    this.overlay.className = 'rotate-overlay';
-    this.overlay.setAttribute('role', 'alert');
-    this.overlay.innerHTML = `
-      <div class="rotate-phone" aria-hidden="true"><span></span></div>
-      <p>Gire o aparelho para jogar na horizontal</p>`;
-    document.body.appendChild(this.overlay);
-
-    const update = () => this.updateOverlay();
+    const update = () => this.syncAttributes();
     this.portraitQuery.addEventListener('change', update);
     window.addEventListener('resize', update);
     this.cleanup.push(() => {
@@ -46,18 +35,25 @@ export class ScreenMode {
     if (this.isTouch) {
       const onGesture = (e: Event) => {
         if (isTextField(e.target) || isTextField(document.activeElement)) return; // digitando: deixa o teclado em paz
-        void this.enterLandscapeFullscreen();
+        void this.enterFullscreen();
       };
       window.addEventListener('pointerup', onGesture, true);
       this.cleanup.push(() => window.removeEventListener('pointerup', onGesture, true));
     }
     this.blockPageZoom();
-    this.updateOverlay();
+    this.syncAttributes();
   }
 
-  /** Em retrato num aparelho de toque, o jogo fica bloqueado pela camada de rotação. */
-  get blocked(): boolean {
-    return this.isTouch && this.portraitQuery.matches;
+  /** A tela está em pé (altura maior que a largura)? Vale também no computador (janela estreita). */
+  get isPortrait(): boolean {
+    return this.portraitQuery.matches;
+  }
+
+  /** Atributos de `<html>` que o CSS usa para a vertical e para o tipo de aparelho. */
+  private syncAttributes(): void {
+    const root = document.documentElement;
+    root.dataset.orientation = this.isPortrait ? 'portrait' : 'landscape';
+    root.dataset.device = this.isTablet ? 'tablet' : this.isTouch ? 'phone' : 'desktop';
   }
 
   /**
@@ -89,36 +85,27 @@ export class ScreenMode {
     });
   }
 
-  private updateOverlay(): void {
-    this.overlay.hidden = !this.blocked;
-  }
-
   private get isFullscreen(): boolean {
     const d = document as FsDocument;
     return !!(document.fullscreenElement ?? d.webkitFullscreenElement);
   }
 
-  /** Pede tela cheia + trava em paisagem. Falhas são esperadas e ignoradas (a camada garante). */
-  private async enterLandscapeFullscreen(): Promise<void> {
-    if (!this.isFullscreen) {
-      const el = document.documentElement as FsElement;
-      try {
-        if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
-        else await el.webkitRequestFullscreen?.();
-      } catch {
-        return; // navegador/iframe não permite: segue com a camada de rotação
-      }
-    }
+  /** Pede tela cheia (sem travar a orientação). Falhas são esperadas e ignoradas. */
+  private async enterFullscreen(): Promise<void> {
+    if (this.isFullscreen) return;
+    const el = document.documentElement as FsElement;
     try {
-      await (screen.orientation as LockableOrientation | undefined)?.lock?.('landscape');
+      if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+      else await el.webkitRequestFullscreen?.();
     } catch {
-      // Sem trava de orientação (ex.: iOS): a camada de rotação cobre o retrato.
+      // navegador/iframe não permite: o jogo segue na janela normal
     }
   }
 
   destroy(): void {
     for (const fn of this.cleanup) fn();
-    this.overlay.remove();
+    delete document.documentElement.dataset.orientation;
+    delete document.documentElement.dataset.device;
   }
 }
 

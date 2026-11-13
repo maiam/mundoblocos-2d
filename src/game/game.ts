@@ -714,13 +714,13 @@ export class Game {
   }
 
 
-  /** Botão de ação/Espaço: ignorado com a tela bloqueada ("Gire o aparelho"). */
+  /** Botão de ação/Espaço. */
   /** Quanto a câmera desce (px de mundo) com a conversa aberta, para quem fala não ficar atrás da caixa (suavizado). */
   private dialogueShift = 0;
 
   private startAction(): void {
     if (this.dialogue.isOpen) { this.dialogue.advance(); return; } // conversa aberta: o botão de ação avança o texto
-    if (!this.screenMode?.blocked) this.actions.startAction();
+    this.actions.startAction();
   }
 
   /** Alcance (células) até onde a conversa continua aberta; quem tem ofício atende do outro lado do balcão. */
@@ -756,8 +756,7 @@ export class Game {
     this.saveTimer += dt;
     if (this.saveTimer >= AUTOSAVE_S) this.saveNow();
 
-    // Em retrato no celular o jogo fica em espera (camada "Gire o aparelho").
-    const blocked = (this.screenMode?.blocked ?? false) || paused;
+    const blocked = paused;
     if (blocked) this.actions.cancelAll();
     const [ix, iy] = blocked ? [0, 0] : this.input(dt);
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);

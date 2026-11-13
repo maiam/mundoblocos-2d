@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-12 — v0.93.23 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-12 — v0.93.24 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.23 | `package.json` |
+| Versão do jogo | 0.93.24 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 20 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 14 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -84,7 +84,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Espólios das aranhas e vários itens ainda sem uso em receitas; as 2 pedras sem fonte (Lisa e Polida) só existem por
   código/salvamento.
 - Sem sons, música nem vibração; sem XP/níveis; sem lojas nem missões; sem viagem entre mundos (portais, ADR 0019).
-- iPhone/Safari não permite tela cheia nem trava de orientação (vale a camada "Gire o aparelho" ou instalar na tela
+- iPhone/Safari não permite tela cheia; o jogo não trava a orientação (ADR 0030): funciona em pé e deitado, por escolha do jogador. Dá para instalar na tela inicial.
   inicial); dentro do Artifact a tela cheia pode ser recusada.
 - Topo dos cubos esticado ~1,6× na vertical (arte desenhada achatada); texturas com uma só arte repetem o padrão.
   O Padrão de Materiais V2 (abaixo) é o caminho para trocar isso; ainda não está ligado para o jogador.

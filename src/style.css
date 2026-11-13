@@ -154,56 +154,6 @@ html, body {
   .slot, .joystick { transition: none; }
 }
 
-/* Camada "Gire o aparelho": cobre o jogo em retrato nos aparelhos de toque. */
-.rotate-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 20px;
-  padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
-  background: radial-gradient(circle at 50% 35%, #3a2f86, #120f2c 70%);
-  color: var(--text);
-  text-align: center;
-  touch-action: none;
-}
-.rotate-overlay[hidden] { display: none; }
-.rotate-overlay p {
-  margin: 0;
-  max-width: 22ch;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.3;
-  text-wrap: balance;
-  text-shadow: 0 2px 0 #241b5c;
-}
-.rotate-phone {
-  width: 54px;
-  height: 92px;
-  border: 4px solid var(--accent);
-  border-radius: 12px;
-  position: relative;
-  box-shadow: 0 0 18px rgba(255, 212, 107, 0.45);
-  animation: rotate-hint 2.4s ease-in-out infinite;
-}
-.rotate-phone span {
-  position: absolute;
-  left: 50%;
-  bottom: 6px;
-  width: 12px;
-  height: 4px;
-  margin-left: -6px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-@keyframes rotate-hint {
-  0%, 25% { transform: rotate(0deg); }
-  55%, 100% { transform: rotate(-90deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rotate-phone { animation: none; transform: rotate(-90deg); }
 }
 
 /* Quantidade de itens contáveis (sementes, trigo) na hotbar. */
@@ -645,3 +595,34 @@ html, body {
 .dlg-arrow[hidden] { display: none; }
 @keyframes dlg-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18%); } }
 @media (prefers-reduced-motion: reduce) { .dlg-arrow { animation: none; } }
+
+/* ---- Vertical (ADR 0030, v0.93.24): celular e tablet em pé, e janela estreita ----
+   A hotbar quebra em linhas (cabe tudo sem rolar de lado) e joystick, botão de ação, minimapa e conversa se posicionam acima dela
+   pela altura real que o HUD publica em `--hotbar-h`. A horizontal não muda. */
+@media (orientation: portrait) and (max-width: 900px) {
+  /* width: max-content: com left 50% a largura caía para a metade da tela antes de quebrar as linhas. */
+  .hotbar { width: max-content; max-width: calc(100vw - 16px); bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) + 6px)); padding: 6px; gap: 4px; }
+  .hotbar-row.hand { flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .slot { width: 36px; height: 36px; padding: 4px; border-radius: 9px; }
+  .slot.active { transform: translateY(-2px); }
+  .joystick {
+    width: 116px; height: 116px; left: max(14px, env(safe-area-inset-left, 0px));
+    bottom: calc(var(--hotbar-h, 96px) + 18px);
+  }
+  .joystick::before { inset: 20px; }
+  .joystick-knob { width: 48px; height: 48px; }
+  .action-button {
+    width: 88px; height: 88px; right: max(14px, env(safe-area-inset-right, 0px));
+    bottom: calc(var(--hotbar-h, 96px) + 24px);
+  }
+  .minimap { width: 92px; height: 92px; }
+  .dialogue { bottom: calc(var(--hotbar-h, 96px) + 6px); }
+}
+/* Tablet em pé: espaços e controles maiores (a tela é ampla). */
+@media (orientation: portrait) and (min-width: 600px) and (max-width: 1100px) {
+  .slot { width: 46px; height: 46px; padding: 5px; }
+  .joystick { width: 140px; height: 140px; }
+  .joystick-knob { width: 58px; height: 58px; }
+  .action-button { width: 104px; height: 104px; }
+  .minimap { width: 120px; height: 120px; }
+}

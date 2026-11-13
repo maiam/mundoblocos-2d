@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.24 — Vertical no celular e no tablet, como opção (13/11/2026)
+- **Fase 1 (desbloqueio):** o `ScreenMode` não trava mais a orientação em paisagem e some a camada "Gire o aparelho" (`blocked` removido; `Game` não pausa em retrato). Expõe `isPortrait` e `data-orientation`/`data-device` em `<html>`. A câmera, em pé, usa largura mínima de 8 células (`PORTRAIT_MIN_CELLS_WIDE`): célula ~48 px no celular em pé contra ~28 px deitado.
+- **Fase 2 (layout vertical):** a hotbar quebra em linhas e cabe tudo sem rolar (`width: max-content` + `flex-wrap`); `hud.ts` publica `--hotbar-h` (`ResizeObserver`) e o CSS posiciona joystick, botão de ação e caixa de conversa acima dela; minimapa menor; tablet em pé com espaços e controles maiores. A horizontal não muda.
+- **ADR 0030** substitui a regra "jogo horizontal" (CONVENTIONS atualizado). Testes de câmera em pé (5, total 393). Conferido no navegador em celular em pé (390 × 844), celular deitado, tablet em pé (820 × 1180) e Mundo em pé.
+- **Pendente:** versões em coluna dos painéis largos (bolsa, baú, receitas, profissões) e teste em aparelho real. Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.23 — Parede de Pedra com arte no Santuário (13/11/2026)
 - **Arte recebida e conferida** (16 tampas + 4 frentes, `assets-src/paredes/pedra/`): tamanhos e faixa de y de cada forma corretos, nenhum alfa parcial, **emendas exatas** (0 de 128), franja de 16 px e junções resolvidas, igual a Tábuas.
 - **Pipeline:** `build-wall-atlas.py pedra` → `src/assets/walls-pedra.webp` (8 kB); `WALL_ART_MATERIALS` e `ArtPack.wallAtlases` ganham `WALL_STONE`. A Pedra deixa de usar cor lisa (o protótipo só resta para materiais futuros sem arte). Teste do registro atualizado (388).
