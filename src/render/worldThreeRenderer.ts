@@ -17,7 +17,7 @@ import { Block, blockDef, isDoor, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
-import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
+import { actorScaleFor, cellsTallFromSearch } from './worldScale';
 import { ThreeStage } from './three/stage';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
@@ -51,7 +51,8 @@ const FLOOR_MARGIN = 1;
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
-  readonly preferredCellsTall = SANCTUARY_CELLS_TALL;
+  /** Padrão 14; `?celulas=N` (experimento de escala, `worldScale.ts`) muda para comparar. */
+  readonly preferredCellsTall = cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
   readonly textures: BlockTextures;
   private readonly stage: ThreeStage;
   private readonly chunks: ChunkRenderer;
@@ -128,7 +129,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: CHARACTER_SCALE_FACTOR, k: OBLIQUE_K, echo: true });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);

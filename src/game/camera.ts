@@ -42,8 +42,8 @@ export class Camera {
     // limite passa a ser a largura da tela (ADR 0030); deitado, 7 como antes.
     const minCellsWide = this.height > this.width ? PORTRAIT_MIN_CELLS_WIDE : 7;
     const base = Math.min(this.height / (this.cellsTall * TILE), this.width / (minCellsWide * TILE));
-    // O piso de 1,1 vale para o padrão (10 células); com mais células o piso desce para o zoom pedido caber.
-    const floor = this.cellsTall === 10 ? 1.1 : 0.5;
+    // O piso de 1,1 vale para o padrão (10 células); com mais células o piso desce para o zoom pedido caber (0,25 deixa até ~32 células em 256 px de altura; `?celulas=`).
+    const floor = this.cellsTall === 10 ? 1.1 : 0.25;
     this.zoom = Math.min(3.4, Math.max(floor, base)) * this.zoomMul;
   }
 
