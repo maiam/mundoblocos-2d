@@ -6,7 +6,7 @@ import { Chunk, type Level } from './chunk';
 import { type CaveEntrance, dungeonEntry, dungeonGuard, type DungeonLayout, DungeonTerrain, inRect, isDungeonExit, isolatedDungeon, planCave, type Rect } from './dungeon';
 import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, TOWN_WALL, type TownBuilding, type TownLayout, townLayout, TownTerrain } from './town';
 import { chunkKey, toChunk, toLocal } from './coords';
-import { type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
+import { type InteriorDoor, type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
@@ -180,10 +180,20 @@ export class World {
     return this.interiors.find((l) => inRect(l.area, x, y)) ?? null;
   }
 
-  /** Interior cuja porta fica diante desta célula da rua (andar para cima nela = entrar), ou null. */
+  /** Porta (e cômodo) cuja entrada fica diante desta célula da rua (andar para cima nela = entrar), ou null. */
+  interiorDoorAt(x: number, y: number): { room: InteriorLayout; door: InteriorDoor } | null {
+    for (const room of this.interiors) {
+      for (const door of room.doors) {
+        // a porta tem `SUBDIV` células de largura na grade fina (a célula da rua guardada é a da esquerda)
+        if (door.outside && y === door.outside[1] && x >= door.outside[0] && x < door.outside[0] + SUBDIV) return { room, door };
+      }
+    }
+    return null;
+  }
+
+  /** Interior cuja porta fica diante desta célula da rua, ou null. */
   interiorEntrance(x: number, y: number): InteriorLayout | null {
-    // a porta tem `SUBDIV` células de largura na grade fina (a célula da rua guardada é a da esquerda)
-    return this.interiors.find((l) => !!l.outside && y === l.outside[1] && x >= l.outside[0] && x < l.outside[0] + SUBDIV) ?? null;
+    return this.interiorDoorAt(x, y)?.room ?? null;
   }
 
   /** Cômodo da tenda (mundos com tenda), ou null. */

@@ -7,8 +7,8 @@
  * aqui → import em `render/art/principal.ts` e entrada em `SPECS` (`render/character.ts`).
  */
 
-/** Ofício que dá fala e lugar próprios (hoje só o ferreiro). */
-export type NpcRole = 'smith';
+/** Ofício que dá fala e lugar próprios: o ferreiro (Ferraria) e o mercador (Mercado, v0.93.57; tocar nele abre a loja). */
+export type NpcRole = 'smith' | 'merchant';
 
 export interface NpcDef {
   id: string;
@@ -82,7 +82,7 @@ export const NPCS = [
     ],
   },
   {
-    id: 'bento', name: 'Bento', who: 'Padeiro (colete marrom)',
+    id: 'bento', name: 'Bento', who: 'Padeiro e mercador (colete marrom) — mora no Mercado', role: 'merchant',
     lines: [
       'Trigo, ovos, leite e maçãs: com isso se faz muita coisa boa no caldeirão e no forno. Pão alimenta bem!',
       'Ovelha e vaca gostam de trigo, galinha prefere semente e o cavalo adora cenoura. Alimente e veja os corações!',
@@ -150,3 +150,5 @@ export function npcDef(id: NpcId): NpcDef {
 
 /** O ferreiro (único com ofício por enquanto). */
 export const SMITH: NpcId = 'black';
+/** O mercador fixo do Mercado (v0.93.57): atrás dos balcões; tocar nele abre a loja. */
+export const MERCHANT: NpcId = 'bento';

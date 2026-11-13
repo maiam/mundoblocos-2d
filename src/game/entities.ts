@@ -9,7 +9,7 @@ import { BREED_COOLDOWN, Breeder, COURTSHIP_SECONDS } from './breeder';
 import { Sheep } from './sheep';
 import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
-import { NPC_IDS, type NpcId, SMITH } from './npcs';
+import { MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, Monster, MONSTERS } from './monster';
 import { wolfPacks, wolfRoam } from '../world/wolves';
@@ -224,7 +224,9 @@ export class Entities {
     const a = t.area;
     const onStreet = (cx: number, cy: number): boolean =>
       cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < t.gate.y0 && t.street[(cy - a.y0) * t.w + (cx - a.x0)] === 1;
-    const common = NPC_IDS.filter((id) => id !== SMITH);
+    // O mercador mora no Mercado (atrás dos balcões); sem o cômodo (grade antiga sem interiores), passeia pelas ruas como os outros.
+    const market = world.interiors.find((l) => l.def.id === 'market');
+    const common = NPC_IDS.filter((id) => id !== SMITH && !(id === MERCHANT && market?.keeper));
     type Person = { at: [number, number]; npc: NpcId; walk: (cx: number, cy: number) => boolean };
     const homes = homesFor(world, common.length, onStreet);
     const people: Person[] = common.map((npc, i) => ({ at: homes[i], npc, walk: onStreet }));
@@ -237,6 +239,11 @@ export class Entities {
       people.push({ at: k.at, npc: SMITH, walk });
     } else if (smithy?.door) {
       people.push({ at: smithy.door, npc: SMITH, walk: onStreet });
+    }
+    if (market?.keeper) {
+      const k = market.keeper;
+      const walk = (cx: number, cy: number) => cy >= k.rows[0] && cy <= k.rows[1] && interiorFloor(market, cx, cy);
+      people.push({ at: k.at, npc: MERCHANT, walk });
     }
     people.forEach(({ at: [hx, hy], npc, walk }) => {
       // Rua/praça andável e livre mais perto do ponto.

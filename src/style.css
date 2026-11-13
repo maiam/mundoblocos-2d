@@ -594,6 +594,42 @@ html, body {
 @keyframes dlg-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18%); } }
 @media (prefers-reduced-motion: reduce) { .dlg-arrow { animation: none; } }
 
+/* ---- Janela da loja (v0.93.57): moldura = arte do dono do produto; o que muda é desenhado por cima, em % da arte (1187 × 1326) ---- */
+.shop {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 6, 30, 0.58); touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  font-family: Nunito, system-ui, sans-serif; --shop-w: 360px; pointer-events: auto;
+}
+.shop[hidden] { display: none; }
+.shop-box { position: relative; width: var(--shop-w); aspect-ratio: 1187 / 1326; filter: drop-shadow(0 8px 14px rgba(5, 3, 20, 0.6)); }
+.shop-box > * { position: absolute; }
+.shop-frame { left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.shop-portrait { border-radius: 50%; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; background: #2b2740; }
+.shop-portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.shop-portrait img[hidden] { display: none; }
+.shop-title, .shop-bubble, .shop-cat, .shop-page, .shop-coins { display: flex; align-items: center; pointer-events: none; white-space: nowrap; }
+.shop-title { justify-content: center; font-weight: 900; font-size: calc(var(--shop-w) * 0.052); color: #5a3418; }
+.shop-bubble { justify-content: center; white-space: normal; text-align: center; line-height: 1.12; font-weight: 700; font-size: calc(var(--shop-w) * 0.0255); color: #f8e9c4; text-shadow: 0 1px 2px rgba(10, 6, 40, 0.7); }
+.shop-cat { justify-content: flex-start; padding-left: 2%; font-weight: 800; font-size: calc(var(--shop-w) * 0.03); color: #f1dcae; }
+.shop-page { justify-content: center; font-weight: 900; font-size: calc(var(--shop-w) * 0.031); color: #fbeccb; text-shadow: 0 1px 2px rgba(10, 6, 40, 0.8); }
+.shop-coins { justify-content: flex-start; font-weight: 900; font-size: calc(var(--shop-w) * 0.046); color: #ffe3b0; text-shadow: 0 1px 2px rgba(10, 6, 40, 0.8); }
+.shop button { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; border-radius: 10px; }
+.shop-prev.off, .shop-next.off { cursor: default; }
+.shop-next.off::after { content: ''; position: absolute; inset: 0; background: rgba(34, 30, 52, 0.62); border-radius: 12px; }
+.shop-card { overflow: visible; }
+.shop-card[hidden] { display: none; }
+.shop-card > * { position: absolute; display: block; pointer-events: none; }
+.shop-icon { object-fit: contain; image-rendering: auto; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45)); }
+.shop-name { display: flex; align-items: center; font-weight: 800; font-size: calc(var(--shop-w) * 0.0275); color: #fbeccb; line-height: 1.05; text-shadow: 0 1px 2px rgba(10, 6, 40, 0.8); white-space: normal; }
+.shop-price { display: flex; align-items: center; justify-content: flex-start; font-weight: 900; font-size: calc(var(--shop-w) * 0.036); color: #ffe3b0; text-shadow: 0 1px 2px rgba(10, 6, 40, 0.8); }
+.shop-card.poor .shop-price { color: #ff9b8c; }
+.shop-card:hover, .shop-card:focus-visible { background: rgba(255, 220, 150, 0.1); outline: none; }
+.shop-card.bump { animation: shop-bump 0.28s ease-out; }
+.shop-card.deny { animation: shop-deny 0.3s ease-in-out; }
+@keyframes shop-bump { 0% { transform: scale(1); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
+@keyframes shop-deny { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2.5%); } 75% { transform: translateX(2.5%); } }
+@media (prefers-reduced-motion: reduce) { .shop-card.bump, .shop-card.deny { animation: none; } }
+
 /* ---- Vertical (ADR 0030, v0.93.24): celular e tablet em pé, e janela estreita ----
    A hotbar quebra em linhas (cabe tudo sem rolar de lado) e joystick, botão de ação, minimapa e conversa se posicionam acima dela
    pela altura real que o HUD publica em `--hotbar-h`. A horizontal não muda. */

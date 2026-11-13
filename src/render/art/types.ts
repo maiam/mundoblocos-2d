@@ -71,5 +71,7 @@ export interface ArtPack {
   town?: Record<string, string>;
   /** Ícones de interface (bolsa do inventário). */
   uiIcons?: { bag: string; character: string; skills: string; builder: string };
+  /** Moldura da janela da loja (`scripts/make-shop-frame.py`, v0.93.57); só o Mundo principal. */
+  shopFrame?: string;
   toolIcons: Partial<Record<ToolId, string>>;
 }

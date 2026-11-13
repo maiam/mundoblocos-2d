@@ -15,7 +15,7 @@ import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { canSit, Entities, type HeroBody } from './entities';
-import { interiorExitAt, type InteriorLayout } from '../world/interiors';
+import { exitDoorAt, type InteriorDoor, type InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import type { RecipeDestination } from './skills';
 import { BagPanel, type BagEntry } from './bag';
@@ -30,6 +30,8 @@ import { Player } from './player';
 import { configureSanctuaryThreeCollision } from './sanctuaryThreeCollision';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { DialogueBox } from './dialogue';
+import { ShopWindow } from './shopWindow';
+import { buyOffer, CURRENCY, MARKET_STOCK, type BuyResult, type ShopOffer } from '../world/shop';
 import type { Villager } from './villager';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
@@ -120,6 +122,8 @@ export class Game {
   private readonly actionButton: ActionButton;
   /** Caixa de conversa dos NPCs (aparece no centro da tela; só interface). */
   private readonly dialogue: DialogueBox;
+  /** Janela do Mercado (criada na primeira vez que se fala com o mercador). */
+  private shop: ShopWindow | null = null;
   private readonly menu: Menu;
   private saveTimer = 0;
   /** Momento do último salvamento bem-sucedido (ms), 0 = ainda não salvou nesta sessão. */
@@ -316,6 +320,7 @@ export class Game {
     this.running = false;
     for (const fn of this.cleanup) fn();
     this.dialogue.destroy();
+    this.shop?.destroy();
     this.hud.destroy();
     this.renderer.dispose?.();
   }
@@ -678,7 +683,8 @@ export class Game {
       if (e.code === 'KeyK') this.toggleSkills();
       // KeyC: reservado para o painel do personagem (em breve).
       if (e.code === 'Escape') {
-        if (this.dialogue.isOpen) this.dialogue.close();
+        if (this.shop?.isOpen) this.shop.close();
+        else if (this.dialogue.isOpen) this.dialogue.close();
         else if (this.skills.detailOpen) this.skills.closeDetail();
         else if (this.skills.isOpen) this.toggleSkills(false);
         else if (this.bag.isOpen) this.toggleBag(false);
@@ -744,7 +750,37 @@ export class Game {
     if (this.dialogue.isOpen && this.dialogue.npc === v) { this.dialogue.advance(); return; }
     this.actions.cancelAll();
     v.faceTo(this.player.x, this.player.y);
+    if (v.role === 'merchant') { this.openShop(v); return; } // o mercador não conversa: abre a loja (v0.93.57)
     this.dialogue.open(v.conversation(), v, () => v.release());
+  }
+
+  /** Mercado: abre a janela da loja com o mercador (o jogo pausa enquanto ela está aberta). */
+  private openShop(v: Villager): void {
+    this.dialogue.close();
+    this.shop ??= new ShopWindow(this.hud.root, {
+      frame: art().shopFrame ?? '',
+      title: 'Mercado',
+      greeting: 'Confira os meus itens à venda!',
+      icon: (item) => itemIconUrl(item),
+      coins: () => this.inventory.count(CURRENCY),
+      buy: (offer) => this.buyAtMarket(offer),
+      onOpenChange: (open) => { if (!open) this.shopMerchant?.release(); },
+    });
+    this.shopMerchant = v;
+    v.conversation(); // segura o mercador parado enquanto a loja está aberta (`release` ao fechar)
+    this.shop.open(MARKET_STOCK, { portrait: art().portraits?.[v.npc] });
+  }
+  private shopMerchant: Villager | null = null;
+
+  /** Compra 1 unidade no Mercado com Moedas de Cobre: entrega na grade (se houver lugar) ou na bolsa. */
+  private buyAtMarket(offer: ShopOffer): BuyResult {
+    const r = buyOffer(this.inventory, offer, (item) => canCarry(this.inventory, this.hotbar, item));
+    if (r !== 'ok') return r;
+    this.hotbar.prune(this.inventory); // a pilha de moedas pode ter acabado
+    this.hotbar.autoPlace(offer.item);
+    this.refreshSelection();
+    if (this.bag.visible) this.bag.render(this.bagEntries());
+    return r;
   }
 
   /** A conversa fecha sozinha se a personagem se afasta, leva dano ou abre um painel; o NPC fica virado para ela. */
@@ -761,7 +797,7 @@ export class Game {
     const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
-    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen;
+    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen || !!this.shop?.isOpen;
     const dt = paused ? 0 : realDt;
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
@@ -964,23 +1000,24 @@ export class Game {
     }
     const room = this.world.interiorAt(p.cellX, p.cellY);
     if (room) {
-      if (interiorExitAt(room, p.cellX, p.cellY)) this.moveTo(this.roomExit(room), 'down');
+      const out = exitDoorAt(room, p.cellX, p.cellY);
+      if (out) this.moveTo(this.roomExit(room, out), 'down');
       return;
     }
     if (iy >= -0.3) return;
-    const door = this.world.interiorEntrance(p.cellX, p.cellY);
-    const tentRoom = !door && this.world.tentDoorAt(p.cellX, p.cellY) ? this.world.tentRoom : null;
-    const enter = door ?? tentRoom;
+    const hit = this.world.interiorDoorAt(p.cellX, p.cellY);
+    const tentRoom = !hit && this.world.tentDoorAt(p.cellX, p.cellY) ? this.world.tentRoom : null;
+    const enter = hit?.room ?? tentRoom;
     if (!enter) return;
     // Tenda: um cômodo para todas; a volta é para diante da tenda por onde se entrou.
     if (tentRoom) this.tentReturn = [p.cellX, p.cellY];
-    this.moveTo(enter.entry, 'up');
+    this.moveTo((hit?.door ?? enter.doors[0]).entry, 'up');
     this.hud.toast(enter.def.name);
   }
 
   /** Onde a saída do cômodo leva: a porta da construção ou, na tenda, a frente da tenda por onde se entrou. */
-  private roomExit(room: InteriorLayout): [number, number] {
-    if (room.outside) return room.outside;
+  private roomExit(room: InteriorLayout, door: InteriorDoor = room.doors[0]): [number, number] {
+    if (door.outside) return door.outside;
     // Tenda: a frente por onde se entrou; sem ela (salvo lá dentro), diante da última tenda ou o ponto de renascer.
     const back = this.tentReturn;
     this.tentReturn = null;

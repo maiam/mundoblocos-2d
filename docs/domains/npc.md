@@ -58,7 +58,7 @@ falas próprias e retrato na caixa de conversa. **Nomes e falas moram só em `ga
 | **Rubem** | `npc-rubem` | Aventureiro | cabelo vermelho; jaqueta marrom |
 | **Rosendo** | `npc-rosendo` | Jardineiro | cabelo rosa; colete verde |
 | **Teodoro** | `npc-teodoro` | Pescador alegre | cabelo castanho-claro, olhos fechados; camisa azul |
-| **Bento** | `npc-bento` | Padeiro | cabelo castanho-escuro; colete marrom |
+| **Bento** | `npc-bento` | Padeiro e **mercador** (v0.93.57: mora no Mercado, atrás dos balcões; tocar nele abre a loja) | cabelo castanho-escuro; colete marrom |
 | **Solano** | `npc-solano` | Construtor | cabelo loiro-alaranjado; camisa laranja |
 | **Nilo** | `npc-nilo` | Tratador de cavalos | cabelo castanho bem escuro, olhos fechados; colete marrom |
 | **Marlon** | `npc-marlon` | Marinheiro | cabelo azul-petróleo; colete marinho e lenço |
