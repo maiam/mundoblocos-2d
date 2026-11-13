@@ -17,7 +17,10 @@ import { SelectionMarkers } from './three/selection';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
 import { BlockMaterials } from './three/blockMaterials';
+import { ChunkSprites } from './three/chunkSprites';
 import { worldBlockFaces } from './worldBlockFaces';
+import { worldSpriteArt } from './worldSpriteArt';
+import { loadCropSprites } from './itemArt';
 import { classifySanctuaryBlock, sanctuaryBlockTransform } from './sanctuaryThreeLayout';
 
 /** Folha do personagem pintada em um canvas 256 × 320 (pé embaixo, ao centro), usado como textura do plano vertical. */
@@ -28,7 +31,8 @@ const FLOOR_MARGIN = 1;
 /**
  * Render do Mundo principal em 2.5D (ADR 0031, M2 — **em construção**; só em desenvolvimento, `?render=3d`).
  * Fatias atuais: M2.1 chão por chunk (textura do `ChunkRenderer`) + o personagem em plano vertical + realces; M2.2 cubos
- * (`ChunkBlocks`, frente quadrada provisória, paredes finas) + pick nos cubos. Ainda **não** desenha árvores, objetos, cidade, atores além do jogador, itens, luz nem efeitos
+ * (`ChunkBlocks`, frente quadrada provisória, paredes finas) + pick nos cubos; M2.3 objetos altos (`ChunkSprites`: árvores, pedras,
+ * cultura, enfeites, portas, cercas, baú, cidade como planos verticais). Ainda **não** desenha atores além do jogador, itens, luz nem efeitos
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -39,6 +43,9 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly chunks: ChunkRenderer;
   private readonly floor: ChunkFloor;
   private readonly blocks: ChunkBlocks;
+  private readonly sprites: ChunkSprites;
+  /** Quantos objetos 2D o mapa de texturas tinha: se crescer (cultura/dungeon chegando), os planos são refeitos. */
+  private objectCount = 0;
   private readonly blockMaterials: BlockMaterials;
   private readonly actorSprites = new ActorSprites();
   private readonly actorCanvas = document.createElement('canvas');
@@ -53,13 +60,16 @@ export class WorldThreeRenderer implements GameRenderer {
       this.actorTexture.needsUpdate = true;
       this.floor.reupload();
       this.blockMaterials?.reupload();
+      this.sprites?.reupload();
     });
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.
-    void loadDungeonArt().then((d) => { if (!this.disposed && d && addDungeonTextures(this.textures)) this.chunks.invalidateAll(); });
+    void loadDungeonArt().then((d) => { if (!this.disposed && d && addDungeonTextures(this.textures)) { this.chunks.invalidateAll(); this.sprites.invalidateAll(); } });
+    loadCropSprites(this.textures.objects);
     this.floor = new ChunkFloor(this.stage.scene, world, this.chunks);
     this.selection = new SelectionMarkers(this.stage.scene, world);
+    this.sprites = new ChunkSprites(this.stage.scene, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
     this.blocks = new ChunkBlocks(this.stage.scene, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
@@ -110,6 +120,8 @@ export class WorldThreeRenderer implements GameRenderer {
     const rect = cam.visibleChunks(FLOOR_MARGIN);
     this.floor.update(rect);
     this.blocks.update(rect);
+    if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
+    this.sprites.update(rect);
     this.drawPlayer(opts);
     this.selection.update(opts);
     this.stage.render();
@@ -133,8 +145,8 @@ export class WorldThreeRenderer implements GameRenderer {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
     this.stage.syncCamera(cam);
     this.stage.aim(cam, sx, sy);
-    for (const hit of this.stage.hits(this.blocks.meshes())) {
-      const block = this.blocks.cellOf(hit.object, hit.instanceId);
+    for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes()])) {
+      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -155,6 +167,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.disposed = true;
     this.floor.dispose();
     this.blocks.dispose();
+    this.sprites.dispose();
     this.blockMaterials.dispose();
     this.selection.dispose();
     this.billboard.geometry.dispose();
