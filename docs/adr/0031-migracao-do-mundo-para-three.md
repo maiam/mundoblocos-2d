@@ -80,7 +80,7 @@ Mundo renderiza em 3D com o que já tem; depois W5.
 - **Mundo infinito:** reconstrução de malhas e texturas de chão por chunk pode gerar picos ao andar; daí o orçamento por quadro.
 
 ## 6. Decisões do dono do produto (13/11/2026) — antes eram perguntas
-Aprovadas as recomendações: (1) **K = 1 no Mundo desde o M2**; (2) **degrau automático sai, atrás de flag no piloto**; (3) **prédios como planos na paridade**, casas com paredes no W5; (4) **interiores isolados mantidos** no M4, teto avaliado no W5; (5) arte de frente dos blocos e árvores em escala nova **provisória** (derivada do topo/escala) até a arte chegar; (6) **luz/escuridão padrão decidida no M3** (hoje só `?luz=`). Texto original das perguntas:
+Aprovadas as recomendações: (1) **K = 1 no Mundo desde o M2**; (2) **degrau automático sai, atrás de flag no piloto**; (3) **prédios como planos na paridade**, casas com paredes no W5; (4) **interiores isolados mantidos** no M4, teto avaliado no W5; (5) arte de frente dos blocos e árvores em escala nova **provisória** (derivada do topo/escala) até a arte chegar; (6) **luz/escuridão só à noite e na dungeon** (decidido em 13/11/2026, recomendação aceita; implementado no M3.3, v0.93.36). Texto original das perguntas:
 1. **Escala:** o Mundo adota K = 1 (cubo 1,0 / parede ≈ 1,2 / personagem ≈ 1,2) já no M2, com ajuste de toda a arte, ou mantém a escala antiga na
    paridade e muda depois? (Recomendação: K = 1 desde o M2; muda uma vez só.)
 2. **Física:** o degrau automático sai (parede sólida, como Core Keeper) já no piloto, atrás de flag? (Recomendação: sim, atrás de flag.)

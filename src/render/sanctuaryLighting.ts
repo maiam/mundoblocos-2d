@@ -78,6 +78,12 @@ export class SanctuaryLighting {
     this.scene.add(quad);
   }
 
+  /** Muda o brilho ambiente (0 = escuridão total, 1 = sem escuridão) e a cor da escuridão — o Mundo varia com a hora do dia. */
+  setAmbient(ambient: number, dark?: string): void {
+    this.material.uniforms.uAmbient.value = ambient;
+    if (dark) (this.material.uniforms.uDark.value as THREE.Color).set(dark);
+  }
+
   /** Posiciona as luzes na tela (mesma projeção oblíqua da vista) e as entrega ao shader. */
   update(lights: readonly LightSource[], f: LightingFrame, flicker: (l: LightSource, i: number) => number): void {
     const u = this.material.uniforms;
