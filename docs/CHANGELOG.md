@@ -1,5 +1,10 @@
 # Changelog
 
+## Documentação — junções coluna × fileira da Parede de Tábuas corrigidas (13/11/2026, sem versão)
+- **Defeito apontado pelo dono do produto:** onde uma coluna chega a uma fileira, a linha clara do topo da fileira (e as marcas escuras da faixa) atravessava o miolo da coluna em vez de sumir.
+- **Correção** (`scripts/fix-wall-cap-junctions.py`): nas tampas com coluna tocando fileira (`cap_03`, `06`, `07`, `09`, `11`, `12`, `13`, `14`, `15`) o miolo da coluna é copiado de `cap_05` nas linhas da faixa da fileira (com vizinho norte) ou só na aresta inferior que cruzava o miolo (canto de cima, que mantém o fechamento do topo). Originais em `assets-src/paredes/tabuas/antes-juncoes/`. Emendas L/O e N/S seguem exatas (0 de 128). Pedir à arte, nas próximas peças (Pedra), a junção já resolvida: o miolo da coluna não é cortado pela linha da fileira.
+- Nenhum código de jogo alterado.
+
 ## Documentação — arte final da Parede de Tábuas recebida (13/11/2026, sem versão)
 - **Entrega do dono do produto no contrato da laje:** 16 tampas (128 × 128) + 4 frentes (128 × 154). Conferência: tamanho e modo corretos; cada tampa cobre exatamente a faixa de y da sua forma (4 formas); **nenhum alfa parcial** (frentes opacas); **emendas exatas** (0 diferenças nas 64 + 64 combinações L/O e N/S; `cap_10` e `cap_05` repetidos sem costura). Sala montada com a arte (cantos, coluna solta, bloco isolado): coerente.
 - Arquivada em `assets-src/paredes/tabuas/`; a primeira entrega fica em `entregue-03/` (referência) e a adaptação provisória em `adaptada-032x044/` (aposentada).
