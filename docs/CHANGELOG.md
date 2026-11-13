@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.43 — medição do custo de JS por quadro, 2D × 3D (13/11/2026)
+- **`npm run perf:cpu:3d`** (`scripts/perf-cpu-3d.cjs`): mede, em 4 cenários (praça, noite, floresta densa, labirinto), o tempo que `renderer.draw` gasta na thread do JS — a parte do custo que não depende da GPU. Primeira medição (VM sem GPU, dev): **2D ≈ 1,1 ms; 3D ≈ 2,7–3,4 ms por quadro** (p95 ≤ 5 ms, máx. 9,6 ms), em `docs/PARITY_3D.md`. Cabe no orçamento de 30 FPS (33 ms), sem grande folga em celular fraco; a GPU só se mede em aparelho real (`?fps=1`).
+- Só ferramenta e docs; sem mudança de jogo, protocolo, save ou servidor.
+
 ## Orvalis v0.93.42 — painel `?fps=1`: plano B quando não há área de transferência (13/11/2026)
 - **Correção:** em HTTP na rede local (o caso de testar no celular) o navegador não libera `navigator.clipboard`; o toque no painel não fazia nada. Agora mostra o relatório (JSON) numa caixa de texto já selecionada para copiar à mão ou tirar um print (toque na caixa fecha); com permissão, copia e confirma por 3 s. A linha de medição não apaga mais as mensagens em meio segundo.
 - Conferido no navegador nas duas vias (com e sem `clipboard`). OPERATIONS: como obter o relatório e quando anoitece (8 min por dia). Só dev/piloto; sem mudança de protocolo, save ou servidor.

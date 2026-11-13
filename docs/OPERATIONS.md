@@ -274,7 +274,7 @@ O 3D do Mundo (`?render=3d`) **não existe no build de produção**. Para testar
    abre uma caixa de texto com o JSON já selecionado (selecione tudo e copie, ou tire um print); toque na caixa para fechar. Sem `render=3d` o painel mede o 2D, para comparar. Deixe rodando ~1 min andando
    pela cidade, pela floresta e à noite. O dia dura 8 min (`DAY_LENGTH_S` = 480) e o jogo começa de manhã (0,31): anoitece em ~3,5 min e é meia-noite em ~5,5 min; no teclado, **T** avança um quarto de dia.
 4. **Física sem degrau** (opcional): acrescente `&fisica=solida` — o jogador deixa de subir em cubos sozinho (como será no 3D de verdade). Só vale com `render=3d` e offline; sem a flag a física é a de sempre.
-5. Paridade visual no computador: `npm run parity:3d` (ver [PARITY_3D](PARITY_3D.md)).
+5. Paridade visual no computador: `npm run parity:3d` (ver [PARITY_3D](PARITY_3D.md)). Custo de JS por quadro 2D × 3D (sem GPU): `npm run perf:cpu:3d`.
 
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
