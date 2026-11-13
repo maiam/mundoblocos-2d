@@ -19,6 +19,7 @@ import { addDungeonTextures, createBlockTextures, cubeSpriteV2, drawCubeParts, t
 import { type CubeView, cubeEdges, materialsV2InWorld, V2_BLOCKS } from './materialsV2';
 import { drawThinHorizontalWall, horizontalWallShape } from './adaptiveWalls';
 import { loadDungeonArt } from './blockArt';
+import { DoorAnimator, doorKey } from './doorAnim';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
 import type { Hit } from '../world/progression';
@@ -29,7 +30,6 @@ import { art } from './art';
 /** Máximo de chunks (chão) re-renderizados por frame. */
 const MAX_CHUNK_RENDERS_PER_FRAME = 2;
 /** Duração da animação de abrir/fechar a porta (s). */
-const DOOR_ANIM_S = 0.32;
 
 export interface RenderOptions {
   player: Player;
@@ -89,7 +89,7 @@ export class Renderer {
   /** Arte dos interiores por id (carrega em segundo plano; sem ela, o cômodo aparece só com o chão escuro). */
   private readonly interiorArt = new Map<string, HTMLImageElement>();
   /** Estado visto por porta (aparência apenas): quando mudou de aberta/fechada, para animar. */
-  private readonly doorAnim = new Map<number, { open: boolean; since: number }>();
+  private readonly doorAnim = new DoorAnimator();
   /** O que o contorno dos cubos V2 precisa saber dos vizinhos (só leitura do mundo; ADR 0023). */
   private readonly cubeView: CubeView = {
     height: (x, y) => {
@@ -447,20 +447,7 @@ export class Renderer {
 
   /** Porta: quadro estático (fechada/aberta) ou da animação logo após mudar de estado. */
   private drawDoor(cam: Camera, id: BlockId, x: number, y: number, elapsed: number): void {
-    const open = id === Block.OAK_DOOR_OPEN;
-    const key = x * 100003 + y;
-    let st = this.doorAnim.get(key);
-    if (!st) {
-      if (this.doorAnim.size > 1024) this.doorAnim.clear();
-      st = { open, since: -Infinity }; // primeira vez vista: sem animação
-      this.doorAnim.set(key, st);
-    } else if (st.open !== open) {
-      st.open = open;
-      st.since = elapsed;
-    }
-    const t = (elapsed - st.since) / DOOR_ANIM_S;
-    const step = Math.min(3, Math.floor(t * 4));
-    const frame = t < 1 ? (open ? step : 4 + step) : open ? 3 : 0;
+    const frame = this.doorAnim.frameFor(doorKey(x, y), id === Block.OAK_DOOR_OPEN, elapsed);
     this.drawSprite(cam, this.textures.doorFrames[frame], x, y);
   }
 

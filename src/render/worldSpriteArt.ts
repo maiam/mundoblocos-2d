@@ -8,7 +8,8 @@ import type { SpriteDraw } from './three/chunkSprites';
 
 /**
  * Qual sprite 2D desenha cada objeto do Mundo no 3D (ADR 0031, M2.3) — as MESMAS escolhas do `Renderer.drawObject` 2D:
- * variação por célula (hash da seed; na cidade, independente dela), porta por estado, cerca emendada pelos vizinhos.
+ * variação por célula (hash da seed; na cidade, independente dela), cerca emendada pelos vizinhos. As portas ficam de fora:
+ * `DoorSprites` as desenha com a animação de abrir/fechar.
  * Cubos e paredes têm render próprio (`ChunkBlocks`) e devolvem null. Ainda sem animação de porta nem brilhos (M3).
  */
 export function worldSpriteArt(world: World, textures: BlockTextures): (id: BlockId, x: number, y: number) => SpriteDraw | null {
@@ -50,11 +51,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     if (id === Block.AIR) return null;
     const def = blockDef(id);
     if (def.shape === 'cube' || def.shape === 'wall' || def.shape === 'wall-door') return null;
-    if (isDoor(id)) {
-      const open = id === Block.OAK_DOOR_OPEN;
-      const sprite = textures.doorFrames[open ? 3 : 0];
-      return sprite ? { sprite, walkable: open } : null;
-    }
+    if (isDoor(id)) return null; // portas têm render próprio, com animação (`DoorSprites`, M3.4)
     if (id === Block.FENCE) return fence(x, y);
     const vars = textures.variants.get(id);
     const salt = isTownArt(id) ? 0x7041 : world.seed;
