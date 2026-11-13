@@ -104,3 +104,6 @@ passagem e o chefe dentro; monstros em chão livre do interior; área protegida.
 
 ## Arte
 - `scripts/extract-dungeon.py` (comando em `OPERATIONS.md`); detalhes de render em `render.md`.
+
+## Grade fina (ADR 0032, F4 — só dev, `?grade=2`)
+O labirinto é gerado na grade antiga e ampliado 2 × 2 por `upsampleDungeon` (chão, paredes e montanhas repetem; adereços numa célula; posições dos monstros × `SUBDIV`); `DungeonLayout.scale` guarda a escala das listas de células (`gate`) usadas por `dungeonEntry`/`isDungeonExit`. Anel de montanhas, aterrissagem, base e frente da caverna e distâncias do `planCave` acompanham `SUBDIV`; a boca da caverna tem `SUBDIV` células de largura (`World.isCaveDoor`). Lobos e goblins: regiões, raios e posições × `SUBDIV`. Testes em `dungeon.test.ts`.

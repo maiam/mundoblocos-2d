@@ -135,12 +135,9 @@ export class World {
       this.cave = planCave(base, center, keep);
       this.generator = new DungeonTerrain(base, this.dungeon, this.cave);
     }
-    // Grade fina (ADR 0032, F3): os interiores ainda são desenhados na grade antiga (F4) — por ora a cidade não tem cômodos nem tenda.
-    if (SUBDIV === 1) {
-      if (this.town) this.interiors = interiorLayouts(this.town);
-      // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
-      if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
-    }
+    if (this.town) this.interiors = interiorLayouts(this.town);
+    // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
+    if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
     if (this.interiors.length) this.generator = new InteriorTerrain(this.generator, this.interiors);
     // Generated campfires live in the same terrain layer as every other object:
     // no permanent writes to chunks, and saved player edits still win.
@@ -185,7 +182,8 @@ export class World {
 
   /** Interior cuja porta fica diante desta célula da rua (andar para cima nela = entrar), ou null. */
   interiorEntrance(x: number, y: number): InteriorLayout | null {
-    return this.interiors.find((l) => l.outside?.[0] === x && l.outside?.[1] === y) ?? null;
+    // a porta tem `SUBDIV` células de largura na grade fina (a célula da rua guardada é a da esquerda)
+    return this.interiors.find((l) => !!l.outside && y === l.outside[1] && x >= l.outside[0] && x < l.outside[0] + SUBDIV) ?? null;
   }
 
   /** Cômodo da tenda (mundos com tenda), ou null. */
@@ -205,7 +203,8 @@ export class World {
 
   /** Diante da boca da caverna (andar para cima aqui = entrar no covil)? */
   isCaveDoor(x: number, y: number): boolean {
-    return !!this.cave && this.cave.outside[0] === x && this.cave.outside[1] === y;
+    // a boca tem `SUBDIV` células de largura na grade fina
+    return !!this.cave && y === this.cave.outside[1] && x >= this.cave.outside[0] && x < this.cave.outside[0] + SUBDIV;
   }
 
   /** Dentro do covil (labirinto), sem o anel em volta? */

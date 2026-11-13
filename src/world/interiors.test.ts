@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { inRect } from './dungeon';
-import { INTERIOR_DEFS, interiorFloor } from './interiors';
+import { INTERIOR_DEFS, interiorFloor, scaleInteriorDef, SMITHY_INTERIOR } from './interiors';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
@@ -78,5 +78,28 @@ describe('Tenda (cômodo do objeto do jogador)', () => {
     expect(w.tentDoorAt(x, y)).toBeNull();
     expect(w.tentDoorAt(x - 1, y + 1)).toBeNull();
     expect(w.interiorEntrance(x, y + 1)).toBeNull(); // não é porta da cidade
+  });
+});
+
+describe('Interiores na grade fina (ADR 0032, F4): scaleInteriorDef', () => {
+  const fine = scaleInteriorDef(SMITHY_INTERIOR, 2);
+
+  it('com 1 devolve o próprio cômodo', () => {
+    expect(scaleInteriorDef(SMITHY_INTERIOR, 1)).toBe(SMITHY_INTERIOR);
+  });
+
+  it('cada caractere vira 2 × 2: mapa do dobro do tamanho, mesma forma', () => {
+    const base = SMITHY_INTERIOR.map;
+    expect(fine.map).toHaveLength(base.length * 2);
+    expect(fine.map[0]).toHaveLength(base[0].length * 2);
+    base.forEach((row, y) => [...row].forEach((c, x) => {
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) expect(fine.map[y * 2 + dy][x * 2 + dx]).toBe(c);
+    }));
+  });
+
+  it('o capacho tem 2 × 2 células e o ferreiro e suas linhas acompanham', () => {
+    expect(fine.map.join('').split('E').length - 1).toBe(4);
+    expect(fine.keeper!.at).toEqual([SMITHY_INTERIOR.keeper!.at[0] * 2, SMITHY_INTERIOR.keeper!.at[1] * 2]);
+    expect(fine.keeper!.rows).toEqual([SMITHY_INTERIOR.keeper!.rows[0] * 2, (SMITHY_INTERIOR.keeper!.rows[1] + 1) * 2 - 1]);
   });
 });

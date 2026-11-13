@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { Block, type BlockId } from './blocks';
 import type { Biome } from './biomes';
 import { inRect, type Rect } from './dungeon';
@@ -77,9 +78,9 @@ export const INTERIOR_DEFS: InteriorDef[] = [SMITHY_INTERIOR];
 
 /** Canto superior esquerdo do primeiro cômodo e distância entre cômodos (células): longe de tudo o que se gera perto. */
 export const INTERIOR_ORIGIN: [number, number] = [0, -100000];
-const INTERIOR_SPACING = 64;
+const INTERIOR_SPACING = 64 * SUBDIV;
 /** Anel de paredes em volta do cômodo (nada de terreno gerado encosta nele). */
-const INTERIOR_MARGIN = 2;
+const INTERIOR_MARGIN = 2 * SUBDIV;
 
 export interface InteriorLayout {
   def: InteriorDef;
@@ -101,8 +102,25 @@ export interface InteriorLayout {
   keeper: { at: [number, number]; rows: [number, number] } | null;
 }
 
+/**
+ * Cômodo na grade fina (ADR 0032, F4): cada caractere do mapa vira `s` × `s` (mesmos pixels de hoje; a arte do cômodo cobre a
+ * área nova inteira) e o morador do ofício e suas linhas acompanham. `s = 1` devolve o próprio cômodo.
+ */
+export function scaleInteriorDef(def: InteriorDef, s: number): InteriorDef {
+  if (s === 1) return def;
+  const map = def.map.flatMap((row) => {
+    const wide = [...row].map((c) => c.repeat(s)).join('');
+    return Array.from({ length: s }, () => wide);
+  });
+  const keeper = def.keeper
+    ? { at: [def.keeper.at[0] * s, def.keeper.at[1] * s] as [number, number], rows: [def.keeper.rows[0] * s, (def.keeper.rows[1] + 1) * s - 1] as [number, number] }
+    : undefined;
+  return { ...def, map, keeper };
+}
+
 /** Monta o cômodo `k` (posição na fila de cômodos) com a porta da rua dada. */
-function layoutFor(def: InteriorDef, k: number, outside: [number, number] | null): InteriorLayout {
+function layoutFor(base: InteriorDef, k: number, outside: [number, number] | null): InteriorLayout {
+  const def = scaleInteriorDef(base, SUBDIV);
   const w = def.map[0].length;
   const h = def.map.length;
   const x0 = INTERIOR_ORIGIN[0] + k * INTERIOR_SPACING;
@@ -133,6 +151,11 @@ export function interiorLayouts(town: TownLayout): InteriorLayout[] {
 /** Cômodo da tenda, depois dos cômodos da cidade (posição fixa para todas as seeds). */
 export function tentLayout(): InteriorLayout {
   return layoutFor(TENT_INTERIOR, INTERIOR_DEFS.length, null);
+}
+
+/** Célula do capacho de saída (pisar = sair)? Na grade fina o capacho tem várias células. */
+export function interiorExitAt(l: InteriorLayout, x: number, y: number): boolean {
+  return inRect(l.area, x, y) && l.def.map[y - l.area.y0][x - l.area.x0] === 'E';
 }
 
 /** Célula andável do cômodo (chão ou capacho)? Fora do cômodo: false. */
