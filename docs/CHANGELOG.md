@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.34 — M3.1: atores, itens caídos e anel da ovelha do Mundo em 2.5D (13/11/2026)
+- **`ActorBillboards`:** jogador, NPCs, animais, goblins e monstros como planos verticais com a folha 2D (a `SpriteSheet` segue desenhando o quadro, o piscar de dano, a morte e a barra de vida), sombra no chão, nome de outros jogadores e coração de namoro; só os atores visíveis (teto 48, o jogador sempre), em pools por tamanho de canvas. `SpriteSheet.frameAspect` exposto. **`DropSprites`** (itens caídos com pulo e flutuação do 2D) e **`HoverRing`** (anel sob a ovelha). `WORLD_THREE_OPTIONS`: `actors`, `drops` e `hoverSheep` agora `honored`.
+- Conferido no navegador (seed 42, 2D × 3D): NPCs da praça nas mesmas posições, itens caídos com ícone, sem erros; 121 atores no mundo, 3 desenhados na tela. Escala **provisória** (mesmo fator para todas as espécies). Ainda sem números de dano/flash (M3.2), luz e dia/noite (M3.3), animação da porta e partículas (M3.4), interiores e dungeon (M4). Só dev; física inalterada. 392 testes (7 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.33 — M2.4: efeitos de chão do Mundo em 2.5D; M2 concluído (13/11/2026)
 - **`GroundFx`:** brilhos que piscam na água, **buraco enchendo de água** (folha de fluxo por UV) e **sombras de nuvens** à deriva, com a mesma matemática do 2D (`groundFxMath.ts`, testada): pools de tamanho fixo (96 brilhos, 16 fluxos, 16 nuvens), planos colados ao chão sem escrever profundidade. Conferido no navegador (seed 42): brilhos, 5 nuvens e 1 fluxo ao quebrar uma margem, sem erros.
 - **M2 (Mundo estático) concluído** em `?render=3d` (só dev): chão por chunk, cubos, objetos altos (inclusive a cidade), água e nuvens. Faltam atores, itens, luz e dia/noite, efeitos (M3), interiores e dungeon (M4) e o piloto (M5). 385 testes (8 novos). Sem mudança de protocolo, save ou servidor.

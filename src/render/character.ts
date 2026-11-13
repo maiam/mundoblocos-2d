@@ -375,6 +375,13 @@ class SpriteSheet {
     }
   }
 
+  /** Largura ÷ altura de um quadro da folha (1 enquanto a imagem não carregou). */
+  get frameAspect(): number {
+    if (!this.ready) return 1;
+    const { cols, rows } = this.spec;
+    return (this.img.width / cols) / (this.img.height / rows);
+  }
+
   /** Raios (em células) da sombra elíptica no chão: x (largura) e y (profundidade). */
   get shadowRadii(): [number, number] {
     return this.spec.shadow;

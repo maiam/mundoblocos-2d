@@ -1,7 +1,8 @@
-import * as THREE from 'three';
 import { TILE } from '../config';
 import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
+import { ActorBillboards } from './three/actorBillboards';
+import { DropSprites, HoverRing } from './three/itemSprites';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
@@ -21,19 +22,19 @@ import { ChunkSprites } from './three/chunkSprites';
 import { GroundFx } from './three/groundFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
-import { loadCropSprites } from './itemArt';
+import { ItemIcons, itemIconUrl, loadCropSprites } from './itemArt';
+import { type ItemId, stackBlock } from '../world/items';
 import { classifySanctuaryBlock, sanctuaryBlockTransform } from './sanctuaryThreeLayout';
 
-/** Folha do personagem pintada em um canvas 256 × 320 (pé embaixo, ao centro), usado como textura do plano vertical. */
-const BILLBOARD = { width: 256, height: 320, drawX: 128, groundY: 320, zoom: 3 } as const;
 /** Margem de chunks além da tela: a vista oblíqua mostra mais ao sul/norte do que a antiga. */
 const FLOOR_MARGIN = 1;
 
 /**
- * Render do Mundo principal em 2.5D (ADR 0031, M2 — **em construção**; só em desenvolvimento, `?render=3d`).
- * Fatias atuais: M2.1 chão por chunk (textura do `ChunkRenderer`) + o personagem em plano vertical + realces; M2.2 cubos
- * (`ChunkBlocks`, frente quadrada provisória, paredes finas) + pick nos cubos; M2.3 objetos altos (`ChunkSprites`: árvores, pedras,
- * cultura, enfeites, portas, cercas, baú, cidade como planos verticais); M2.4 efeitos de chão (`GroundFx`: brilho da água, água enchendo, sombras de nuvens). Ainda **não** desenha atores além do jogador, itens, luz nem efeitos
+ * Render do Mundo principal em 2.5D (ADR 0031, M2–M3 — **em construção**; só em desenvolvimento, `?render=3d`).
+ * M2: chão por chunk (textura do `ChunkRenderer`), cubos (`ChunkBlocks`, frente provisória), objetos altos e a cidade
+ * (`ChunkSprites`, planos verticais), efeitos de chão (`GroundFx`). M3.1: atores (`ActorBillboards`: jogador, NPCs, animais,
+ * goblins e monstros em planos verticais com sombra, nome, coração e barra de vida), itens caídos e o anel da ovelha.
+ * Ainda **não** desenha luz/dia-noite, números de dano e flash (camada 2D), partículas, animação da porta, interiores e dungeon
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -50,16 +51,20 @@ export class WorldThreeRenderer implements GameRenderer {
   private objectCount = 0;
   private readonly blockMaterials: BlockMaterials;
   private readonly actorSprites = new ActorSprites();
-  private readonly actorCanvas = document.createElement('canvas');
-  private readonly actorContext: CanvasRenderingContext2D;
-  private readonly actorTexture: THREE.CanvasTexture;
-  private readonly billboard: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  private readonly shadow: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  private readonly actors: ActorBillboards;
+  private readonly drops: DropSprites;
+  private readonly ring: HoverRing;
+  /** Ícones dos itens caídos: itens pelo pacote de arte; materiais pelo ícone do bloco (como no 2D). */
+  private readonly itemIcons = new ItemIcons((id) => {
+    const b = stackBlock(id);
+    return b !== null ? this.iconFor(b) : itemIconUrl(id as ItemId);
+  });
   private disposed = false;
 
   constructor(canvas: HTMLCanvasElement, private readonly world: World) {
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
-      this.actorTexture.needsUpdate = true;
+      this.actors?.reupload();
+      this.drops?.reupload();
       this.floor.reupload();
       this.blockMaterials?.reupload();
       this.sprites?.reupload();
@@ -87,35 +92,11 @@ export class WorldThreeRenderer implements GameRenderer {
       material: (id) => this.blockMaterials.get(id).block,
     });
 
-    this.actorCanvas.width = BILLBOARD.width;
-    this.actorCanvas.height = BILLBOARD.height;
-    const ctx = this.actorCanvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas auxiliar do personagem indisponível');
-    this.actorContext = ctx;
-    this.actorTexture = new THREE.CanvasTexture(this.actorCanvas);
-    this.actorTexture.colorSpace = THREE.SRGBColorSpace;
-    this.actorTexture.minFilter = THREE.LinearFilter;
-    // Plano vertical (nunca `THREE.Sprite`, que inclina com a câmera), com a origem nos pés. O plano cobre a tela do canvas
-    // em células (zoom 3 × TILE) e leva o fator de escala do mundo (ADR 0028); na vista oblíqua o que é vertical mostra
-    // K por unidade, então a altura é dividida por K.
-    const geometry = new THREE.PlaneGeometry(1, 1);
-    geometry.translate(0, 0.5, 0);
-    this.billboard = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
-      map: this.actorTexture, transparent: true, depthTest: true, depthWrite: false, alphaTest: 0.015, side: THREE.DoubleSide,
-    }));
-    const cellsW = BILLBOARD.width / (BILLBOARD.zoom * TILE);
-    const cellsH = BILLBOARD.height / (BILLBOARD.zoom * TILE);
-    this.billboard.scale.set(cellsW * CHARACTER_SCALE_FACTOR, cellsH * CHARACTER_SCALE_FACTOR / OBLIQUE_K, 1);
-    this.billboard.renderOrder = 3;
-    const shadowGeometry = new THREE.CircleGeometry(1, 32);
-    shadowGeometry.rotateX(-Math.PI / 2);
-    this.shadow = new THREE.Mesh(shadowGeometry, new THREE.MeshBasicMaterial({
-      color: 0x241648, transparent: true, opacity: 0.22, depthTest: true, depthWrite: false, side: THREE.DoubleSide,
-      polygonOffset: true, polygonOffsetFactor: -2,
-    }));
-    this.shadow.renderOrder = 1;
-    this.stage.scene.add(this.shadow);
-    this.stage.scene.add(this.billboard);
+    // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
+    // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: CHARACTER_SCALE_FACTOR, k: OBLIQUE_K });
+    this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
+    this.ring = new HoverRing(this.stage.scene);
   }
 
   stats(): RendererStats { return this.stage.stats(); }
@@ -134,24 +115,13 @@ export class WorldThreeRenderer implements GameRenderer {
     // Área visível em células de mundo (+1 de margem): brilhos da água, água enchendo e sombras de nuvens.
     const [ax, ay] = cam.screenToWorld(0, 0);
     const [bx, by] = cam.screenToWorld(cam.width, cam.height);
-    this.groundFx.update({ x0: ax / TILE - 1, y0: ay / TILE - 1, x1: bx / TILE + 1, y1: by / TILE + 1 }, opts.elapsed);
-    this.drawPlayer(opts);
+    const view = { x0: ax / TILE - 1, y0: ay / TILE - 1, x1: bx / TILE + 1, y1: by / TILE + 1 };
+    this.groundFx.update(view, opts.elapsed);
+    this.actors.update(view, opts.actors, opts.elapsed);
+    this.drops.update(view, opts.drops, opts.elapsed);
+    this.ring.update(opts.hoverSheep);
     this.selection.update(opts);
     this.stage.render();
-  }
-
-  /** O personagem do jogador (primeiro ator): a folha 2D atual num plano vertical, com sombra no chão. */
-  private drawPlayer(opts: RenderOptions): void {
-    const a = opts.actors[0];
-    this.billboard.visible = this.shadow.visible = !!a;
-    if (!a) return;
-    const sheet = this.actorSprites.get(a.kind);
-    this.actorContext.clearRect(0, 0, BILLBOARD.width, BILLBOARD.height);
-    sheet.draw(this.actorContext, BILLBOARD.drawX, BILLBOARD.groundY, BILLBOARD.zoom, a, opts.elapsed, false);
-    this.actorTexture.needsUpdate = true;
-    this.billboard.position.set(a.x, a.visualZ + 0.03, a.y);
-    this.shadow.position.set(a.x, a.visualZ + 0.018, a.y);
-    this.shadow.scale.set(sheet.shadowRadii[0], 1, sheet.shadowRadii[1]);
   }
 
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
@@ -184,11 +154,9 @@ export class WorldThreeRenderer implements GameRenderer {
     this.groundFx.dispose();
     this.blockMaterials.dispose();
     this.selection.dispose();
-    this.billboard.geometry.dispose();
-    this.billboard.material.dispose();
-    this.shadow.geometry.dispose();
-    this.shadow.material.dispose();
-    this.actorTexture.dispose();
+    this.actors.dispose();
+    this.drops.dispose();
+    this.ring.dispose();
     this.stage.dispose();
   }
 }
