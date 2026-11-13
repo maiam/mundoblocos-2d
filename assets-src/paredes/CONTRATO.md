@@ -11,6 +11,8 @@ parede vizinha. A colisão é a célula inteira; só o desenho é fino. Por isso
 - **bloco sozinho:** um poste fino.
 O jogador vê **a frente** (face voltada para o sul) e **a tampa** (o topo, visto de cima). As laterais não aparecem.
 
+> **Aberto:** a espessura (38 px hoje) pode mudar antes da arte começar (o dono do produto está comparando `?espessura=` no protótipo). Os números abaixo valem para 0,3 / 0,3; se mudarem, o gabarito é regerado (`make-wall-guide.py --tx --tz`) e este contrato é atualizado.
+
 ## 2. Medidas (1 célula = 128 px)
 | Item | Valor |
 |---|---|

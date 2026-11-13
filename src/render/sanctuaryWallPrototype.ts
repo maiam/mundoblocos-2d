@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { Block, type BlockId, isWall } from '../world/blocks';
-import { wallFootprint, wallNeighbors } from '../world/walls';
+import { DEFAULT_WALL_THICKNESS, type WallThickness, wallFootprint, wallNeighbors } from '../world/walls';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
 import { WORLD_SCALE } from './worldScale';
 
 /**
  * PROTÓTIPO das paredes (ADR 0027), com cores lisas, para ver o autotile antes da arte: cada parede é uma placa fina
- * (`WALL_THICKNESS`) montada por `wallFootprint` — poste central mais um braço até a borda em cada lado com parede vizinha.
+ * (`WallThickness`: x = faixas, z = tampa) montada por `wallFootprint` — poste central mais um braço até a borda em cada lado com parede vizinha.
  * Por isso a frente só aparece no último bloco de uma fileira norte–sul (os demais mostram só a tampa) e a fileira
  * leste–oeste tem frente de célula inteira. A altura é `WORLD_SCALE.wall` (≈ 1,2 célula na tela).
  *
@@ -40,6 +40,7 @@ export interface WallPrototype {
 export function buildWallPrototype(
   world: { isWallAt(x: number, y: number): boolean; getObject(x: number, y: number): BlockId },
   bounds: { x0: number; x1: number; y0: number; y1: number },
+  thickness: WallThickness = DEFAULT_WALL_THICKNESS,
 ): WallPrototype {
   const group = new THREE.Group();
   group.name = 'Paredes (protótipo de autotile)';
@@ -63,7 +64,7 @@ export function buildWallPrototype(
     for (let x = bounds.x0; x <= bounds.x1; x++) {
       if (!isWallAt(x, y)) continue;
       const id = world.getObject(x, y);
-      for (const r of wallFootprint(wallNeighbors(isWallAt, x, y))) {
+      for (const r of wallFootprint(wallNeighbors(isWallAt, x, y), thickness)) {
         const geo = new THREE.BoxGeometry(r.x1 - r.x0, WALL_HEIGHT, r.z1 - r.z0);
         geometries.push(geo);
         const mesh = new THREE.Mesh(geo, materialsFor(id));

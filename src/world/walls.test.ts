@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clampWallThickness, DEFAULT_WALL_THICKNESS, parseWallThickness,
   CAP_E, CAP_N, CAP_S, CAP_W, INNER_NE, INNER_NW, INNER_SE, INNER_SW, WALL_CAP_PIECES, WALL_THICKNESS,
   wallCapMask, wallFront, wallFootprint, wallFrontRanges, wallInnerCorners, wallNeighbors, wallPiece, wallThin,
 } from './walls';
@@ -121,6 +122,52 @@ describe('autotile das paredes (ADR 0027)', () => {
     it('thin: sem vizinho a leste/oeste', () => {
       expect(wallThin(nbOf(['.#.'], 1, 0))).toBe(true);
       expect(wallThin(nbOf(['##'], 0, 0))).toBe(false);
+    });
+  });
+
+  describe('espessura ajustável por eixo', () => {
+    const is = (rows: string[]) => grid(rows);
+    it('o padrão é 0,3 nos dois eixos (o valor aprovado no protótipo)', () => {
+      expect(DEFAULT_WALL_THICKNESS).toEqual({ x: 0.3, z: 0.3 });
+    });
+
+    it('x muda a largura do poste e das faixas norte–sul; z muda a profundidade da tampa', () => {
+      const nb = wallNeighbors(is(['.#.']), 1, 0);
+      const [post] = wallFootprint(nb, { x: 0.2, z: 0.4 });
+      expect(post.x1 - post.x0).toBeCloseTo(0.2, 9);
+      expect(post.z1 - post.z0).toBeCloseTo(0.4, 9);
+    });
+
+    it('os braços continuam indo até a borda da célula, com a espessura de cada eixo', () => {
+      const nb = wallNeighbors(is(['###']), 1, 0);
+      const f = wallFootprint(nb, { x: 0.25, z: 0.35 });
+      const west = f.find((r) => r.x0 === 0)!;
+      const east = f.find((r) => r.x1 === 1)!;
+      expect(west.z1 - west.z0).toBeCloseTo(0.35, 9); // profundidade da tampa
+      expect(west.x1).toBeCloseTo(0.375, 9);
+      expect(east.x0).toBeCloseTo(0.625, 9);
+    });
+
+    it('a frente de uma fileira leste–oeste continua sem lacuna com qualquer espessura', () => {
+      const nb = wallNeighbors(is(['###']), 1, 0);
+      for (const t of [{ x: 0.2, z: 0.35 }, { x: 0.5, z: 0.2 }]) expect(wallFrontRanges(nb, t)).toEqual([[0, 1]]);
+    });
+
+    it('a faixa fina da frente de um fim de coluna acompanha x', () => {
+      const nb = wallNeighbors(is(['#', '#']), 0, 1);
+      const [[a, b]] = wallFrontRanges(nb, { x: 0.25, z: 0.35 });
+      expect(a).toBeCloseTo(0.375, 9);
+      expect(b).toBeCloseTo(0.625, 9);
+    });
+
+    it('lê "0.25,0.35", "0.3" e rejeita lixo; limita a 0,1–0,9', () => {
+      expect(parseWallThickness('0.25,0.35')).toEqual({ x: 0.25, z: 0.35 });
+      expect(parseWallThickness('0.3')).toEqual({ x: 0.3, z: 0.3 });
+      expect(parseWallThickness('abc')).toBeNull();
+      expect(parseWallThickness('')).toBeNull();
+      expect(parseWallThickness('0.1,0.2,0.3')).toBeNull();
+      expect(parseWallThickness('5,0')).toEqual({ x: 0.9, z: 0.1 });
+      expect(clampWallThickness({ x: NaN, z: 0.5 })).toEqual({ x: 0.3, z: 0.5 });
     });
   });
 });

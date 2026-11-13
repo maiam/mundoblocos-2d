@@ -1,19 +1,32 @@
 """Gera o gabarito da arte das paredes (assets-src/paredes/gabarito.png) a partir das MESMAS medidas do código
 (world/walls.ts + render/worldScale.ts), para a especificação (assets-src/paredes/CONTRATO.md) nunca divergir do jogo.
 
-Medidas (1 célula = CELL px): espessura T = 0,3 → 38 px; braço = (128 − 38) / 2 = 45 px; altura da frente = 1,2 célula = 154 px.
-Uso: python3 scripts/make-wall-guide.py
+Medidas (1 célula = CELL px), com a espessura de cada eixo em células (`--tx` largura das faixas e do poste; `--tz` profundidade da
+tampa); o padrão 0,3 / 0,3 dá: poste 38 px, braço 45 px, altura da frente 1,2 célula = 154 px.
+Uso: python3 scripts/make-wall-guide.py [--tx 0.3] [--tz 0.3] [--saida assets-src/paredes/gabarito.png]
 """
+import argparse
+
 from PIL import Image, ImageDraw, ImageFont
 
+ap = argparse.ArgumentParser()
+ap.add_argument('--tx', type=float, default=0.3, help='largura das faixas norte–sul e do poste (células)')
+ap.add_argument('--tz', type=float, default=0.3, help='profundidade da tampa das fileiras leste–oeste (células)')
+ap.add_argument('--saida', default='assets-src/paredes/gabarito.png')
+args = ap.parse_args()
+
 CELL = 128
-T = round(0.3 * CELL)            # espessura da placa (38)
-ARM = (CELL - T) // 2            # braço até a borda da célula (45)
-C0, C1 = ARM, ARM + T            # poste: de 45 a 83
-H = round(1.2 * CELL)            # altura da frente (154)
+TX = round(args.tx * CELL / 2) * 2           # largura do poste (px, par para os braços ficarem inteiros)
+TZ = round(args.tz * CELL / 2) * 2           # profundidade do poste e da tampa (px)
+ARM = (CELL - TX) // 2                       # braço leste/oeste até a borda da célula
+ARMZ = (CELL - TZ) // 2                      # braço norte/sul até a borda da célula
+C0, C1 = ARM, ARM + TX                       # poste em x
+Z0, Z1 = ARMZ, ARMZ + TZ                     # poste em z
+T = TX
+H = round(1.2 * CELL)                        # altura da frente (154)
 BG, INK, GRID = (244, 240, 232), (40, 36, 48), (170, 166, 180)
 FRONT, FRONT2, CAP, CAPRIM = (214, 168, 120), (186, 140, 96), (66, 48, 38), (110, 84, 66)
-OUT = 'assets-src/paredes/gabarito.png'
+OUT = args.saida
 
 F = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 FB = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
@@ -39,26 +52,26 @@ def dashed_rect(x0, y0, x1, y1, fill=GRID, step=8):
 
 def footprint(n, e, s, w):
     """Mesmos retângulos de `wallFootprint` (walls.ts), em px da célula: poste + braços."""
-    r = [(C0, C0, C1, C1)]
-    if n: r.append((C0, 0, C1, C0))
-    if s: r.append((C0, C1, C1, CELL))
-    if w: r.append((0, C0, C0, C1))
-    if e: r.append((C1, C0, CELL, C1))
+    r = [(C0, Z0, C1, Z1)]
+    if n: r.append((C0, 0, C1, Z0))
+    if s: r.append((C0, Z1, C1, CELL))
+    if w: r.append((0, Z0, C0, Z1))
+    if e: r.append((C1, Z0, CELL, Z1))
     return r
 
 
 text(40, 24, 'Gabarito da arte das paredes — Orvalis', 34, True)
-text(40, 72, f'1 célula = {CELL} px  ·  espessura da placa T = {T} px (0,3)  ·  braço = {ARM} px  ·  poste = {T} px  ·  altura da frente = {H} px (1,2 célula)', 20)
+text(40, 72, f'1 célula = {CELL} px  ·  poste = {TX} px de largura × {TZ} px de profundidade (x = {args.tx:g}, z = {args.tz:g})  ·  braço L/O = {ARM} px, N/S = {ARMZ} px  ·  altura da frente = {H} px (1,2 célula)', 20)
 text(40, 102, 'Cada peça é um PNG RGBA transparente, recortado exato (sem margem). Cinza tracejado = limite da célula (não desenhar).', 18, fill=(100, 96, 110))
 
 # ---------------- 1) FRENTE ----------------
 y0 = 170
 text(40, y0 - 32, '1) FRENTE (face sul da parede) — 4 peças por material', 26, True)
 pieces = [
-    ('front_mid', CELL, 0, ['célula inteira', 'emenda nos DOIS lados'], [(0, ARM, 'braço O'), (ARM, T, 'poste'), (ARM + T, ARM, 'braço L')]),
-    ('front_end_left', CELL - C0, C0, ['ponta ESQUERDA', 'acabamento só à esquerda'], [(0, T, 'poste'), (T, ARM, 'braço L')]),
-    ('front_end_right', C1, 0, ['ponta DIREITA', 'acabamento só à direita'], [(0, ARM, 'braço O'), (ARM, T, 'poste')]),
-    ('front_post', T, 0, ['poste isolado / fim de coluna', 'acabamento nos dois lados'], [(0, T, 'poste')]),
+    ('front_mid', CELL, 0, ['célula inteira', 'emenda nos DOIS lados'], [(0, ARM, 'braço O'), (ARM, TX, 'poste'), (ARM + TX, ARM, 'braço L')]),
+    ('front_end_left', CELL - C0, C0, ['ponta ESQUERDA', 'acabamento só à esquerda'], [(0, TX, 'poste'), (TX, ARM, 'braço L')]),
+    ('front_end_right', C1, 0, ['ponta DIREITA', 'acabamento só à direita'], [(0, ARM, 'braço O'), (ARM, TX, 'poste')]),
+    ('front_post', TX, 0, ['poste isolado / fim de coluna', 'acabamento nos dois lados'], [(0, TX, 'poste')]),
 ]
 x = 40
 for name, w, _, desc, parts in pieces:
@@ -95,7 +108,7 @@ for m in range(16):
     text(tx + 78, ty + CELL + 6, f'vizinhos: {flags}', 15)
 text(1000, y1 + 24, 'Índice = N·1 + L·2 + S·4 + O·8', 20, True)
 text(1000, y1 + 54, 'N = parede ao norte, L = leste, S = sul, O = oeste.', 17)
-text(1000, y1 + 84, 'cap_00 = poste isolado (38 × 38 no centro).', 17)
+text(1000, y1 + 84, f'cap_00 = poste isolado ({TX} × {TZ} no centro).', 17)
 text(1000, y1 + 114, 'cap_05 / cap_10 = coluna norte–sul / fileira leste–oeste.', 17)
 text(1000, y1 + 144, 'cap_15 = cruz (parede nos 4 lados).', 17)
 text(1000, y1 + 190, 'Nomes: <material>/cap_00.png … cap_15.png', 17)
@@ -116,7 +129,7 @@ def draw_cap(cx, cy, mask):
 
 def draw_front(cx, cy, x0, x1):
     ox, oy = cell_box(cx, cy)
-    d.rectangle([ox + x0, oy + C1 - H, ox + x1 - 1, oy + C1 - 1], fill=FRONT, outline=INK)
+    d.rectangle([ox + x0, oy + Z1 - H, ox + x1 - 1, oy + Z1 - 1], fill=FRONT, outline=INK)
 
 # chão das células
 for cx in range(3):
@@ -136,8 +149,8 @@ text(gx + 5 * CELL - 30, gy + 3 * CELL + 14, 'coluna norte–sul: só o último 
 text(40, gy + 3 * CELL + 60,
      f'Posição (origem = canto superior-esquerdo da célula no chão):', 18, True)
 text(40, gy + 3 * CELL + 88, f'TAMPA: a peça 128 × 128 é desenhada {H} px ACIMA da célula (y − {H}).', 17)
-text(40, gy + 3 * CELL + 116, f'FRENTE: a base fica em y = {C1} (face sul do poste) e o topo em y = {C1 - H}, logo abaixo da tampa; a frente invade a célula de cima.', 17)
-text(40, gy + 3 * CELL + 144, f'A face sul fica {CELL - C1} px para dentro da célula (o chão aparece à frente da parede).', 17)
+text(40, gy + 3 * CELL + 116, f'FRENTE: a base fica em y = {Z1} (face sul do poste) e o topo em y = {Z1 - H}, logo abaixo da tampa; a frente invade a célula de cima.', 17)
+text(40, gy + 3 * CELL + 144, f'A face sul fica {CELL - Z1} px para dentro da célula (o chão aparece à frente da parede).', 17)
 text(40, gy + 3 * CELL + 172, 'O desenho NÃO inclui sombra de contato nem iluminação do jogo (feitas em código).', 17)
 
 im.save(OUT)

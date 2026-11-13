@@ -20,6 +20,7 @@ import { OBLIQUE_CAMERA_HEIGHT, OBLIQUE_K, obliqueProjection, obliqueRay } from 
 import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
+import { DEFAULT_WALL_THICKNESS, type WallThickness } from '../world/walls';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -78,6 +79,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly view:SanctuaryView;
   /** Paredes (ADR 0027): protótipo de cores lisas até a arte chegar; refeito junto com as malhas. */
   private walls:WallPrototype|null=null;
+  private readonly wallThickness:WallThickness;
   /** Células visíveis na vertical (a câmera usa; ADR 0028): a vista oblíqua mostra mais mundo que a antiga. */
   readonly preferredCellsTall?:number;
   private obliqueHalf={w:8,h:5};
@@ -86,7 +88,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private lastHeight=0;
   private lastPixelRatio=0;
 
-  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset}={}){
+  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset;wallThickness?:WallThickness}={}){
+    this.wallThickness=options.wallThickness??DEFAULT_WALL_THICKNESS;
     this.view=options.view??'tilt';
     if(this.view==='oblique')this.preferredCellsTall=SANCTUARY_CELLS_TALL;
     const profile=world.profile;
@@ -349,7 +352,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     }
     this.groups.length=0;
     if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();}
-    this.walls=buildWallPrototype(this.world,this.bounds);
+    this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness);
     this.scene.add(this.walls.group);
     const cells=sanctuary3DGeometryCells(this.world,this.bounds);
     const shapeMap=new Map<string,SanctuaryBlockShape>();

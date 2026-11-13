@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.17 — Espessura das paredes ajustável por eixo (`?espessura=x,z`) (13/11/2026)
+- **`WallThickness { x, z }`** em `world/walls.ts`: `x` = largura das faixas norte–sul e do poste; `z` = profundidade da tampa das fileiras leste–oeste (e a posição da face sul na célula). `wallFootprint` e `wallFrontRanges` recebem a espessura (padrão `DEFAULT_WALL_THICKNESS` = 0,3 / 0,3, o valor aprovado). `parseWallThickness` lê `0.25,0.35` (ou só `0.3`) e limita a 0,1–0,9. Testes novos (27 de paredes).
+- **Protótipo:** `?mundo=santuario&paredes=autotile&espessura=0.25,0.35` aplica a espessura nas paredes de cor lisa. Só teste; sem mudança de jogo, protocolo ou save.
+- **`scripts/make-wall-guide.py --tx --tz`** regera o gabarito com a espessura escolhida (padrão 0,3 / 0,3).
+
 ## Documentação — especificação da arte das paredes (12/11/2026, sem versão)
 - **`assets-src/paredes/CONTRATO.md`** e **`gabarito.png`** (gerado por `scripts/make-wall-guide.py` a partir das medidas do código): 1 célula = 128 px, placa de 38 px, braço de 45 px, frente de 154 px (1,2 célula); 4 frentes (`front_mid` 128, `front_end_left`/`right` 83, `front_post` 38 × 154) e 16 tampas (128 × 128, índice N·1 + L·2 + S·4 + O·8) por material; regras de emenda, luz, posição de montagem, conferência e brief curto. Materiais: tábuas e pedra primeiro. Nenhum código de jogo alterado.
 

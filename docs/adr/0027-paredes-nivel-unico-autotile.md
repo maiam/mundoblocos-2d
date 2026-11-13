@@ -18,7 +18,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
   a frente cheia aparece nas paredes cuja face dá para o interior (ao norte do cômodo).
 - **Placa fina (medida no Core Keeper, v0.93.16):** a parede é uma placa de espessura `WALL_THICKNESS` ≈ 0,3 célula nos dois
   sentidos, no centro da célula: um poste central mais um braço até a borda em cada lado com parede vizinha (`wallFootprint`).
-  A **colisão continua sendo a célula inteira**; só o desenho é fino. Daí saem sozinhos os comportamentos observados:
+  A espessura tem **dois valores** (`WallThickness`: `x` faixas/poste, `z` tampa), hoje 0,3 / 0,3 e ajustáveis para casar com a referência (`?espessura=`). A **colisão continua sendo a célula inteira**; só o desenho é fino. Daí saem sozinhos os comportamentos observados:
   fileira leste–oeste com frente de célula inteira (altura ≈ 1,2); fileira norte–sul como faixa fina em que **só o último
   bloco ao sul mostra a frente** (fina), os demais só mostram a tampa; bloco isolado = poste fino.
 - **Autotile por vizinhança** (função pura `world/walls.ts`, testada):
