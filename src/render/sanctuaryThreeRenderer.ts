@@ -21,6 +21,8 @@ import { characterScale, createWallProportionTest, type ScalePreset } from './sa
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
 import { DEFAULT_WALL_THICKNESS, type WallThickness } from '../world/walls';
+import { flickerFactor, glowLightFor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
+import { SanctuaryLighting } from './sanctuaryLighting';
 import { createSanctuaryV3Surfaces } from './sanctuaryV3Surfaces';
 import { GODDESS_BILLBOARD_CANVAS, sanctuaryGoddessVisualPlacement } from './sanctuaryGoddessVisual';
 
@@ -80,6 +82,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   /** Paredes (ADR 0027): protótipo de cores lisas até a arte chegar; refeito junto com as malhas. */
   private walls:WallPrototype|null=null;
   private readonly wallThickness:WallThickness;
+  /** Iluminação (ADR 0029): só na vista oblíqua e quando `?luz=` liga; `glowLights` = blocos que brilham, refeito com as malhas. */
+  private readonly lighting:SanctuaryLighting|null;
+  private glowLights:LightSource[]=[];
   /** Células visíveis na vertical (a câmera usa; ADR 0028): a vista oblíqua mostra mais mundo que a antiga. */
   readonly preferredCellsTall?:number;
   private obliqueHalf={w:8,h:5};
@@ -88,8 +93,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private lastHeight=0;
   private lastPixelRatio=0;
 
-  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset;wallThickness?:WallThickness}={}){
+  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset;wallThickness?:WallThickness;ambient?:number}={}){
     this.wallThickness=options.wallThickness??DEFAULT_WALL_THICKNESS;
+    this.lighting=options.ambient!==undefined&&(options.view??'tilt')==='oblique'?new SanctuaryLighting(options.ambient):null;
     this.view=options.view??'tilt';
     if(this.view==='oblique')this.preferredCellsTall=SANCTUARY_CELLS_TALL;
     const profile=world.profile;
@@ -355,6 +361,11 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness);
     this.scene.add(this.walls.group);
     const cells=sanctuary3DGeometryCells(this.world,this.bounds);
+    this.glowLights=[];
+    for(const b of cells.blocks){
+      const g=glowLightFor(b.id);
+      if(g)this.glowLights.push({x:b.x+0.5,z:b.y+0.5,height:b.level+0.5,...g});
+    }
     const shapeMap=new Map<string,SanctuaryBlockShape>();
     for(const b of cells.blocks)shapeMap.set(b.x+':'+b.y+':'+b.level,b.shape);
     const shapeAt=(x:number,y:number,level:number):SanctuaryBlockShape=>
@@ -540,6 +551,22 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.drawGoddess(opts);
     this.updateSelection(opts);
     this.gpu.render(this.scene,this.camera);
+    if(this.lighting)this.drawLighting(cam,opts);
+  }
+
+  /** Escuridão ambiente com luzes (ADR 0029): a Deusa e os blocos que brilham, até `MAX_LIGHTS` por quadro. */
+  private drawLighting(cam:Camera,opts:RenderOptions):void{
+    if(!this.lighting)return;
+    const focus={x:cam.x/TILE,z:cam.y/TILE};
+    const cellPx=TILE*cam.zoom;
+    const reach=Math.hypot(cam.width,cam.height)/(2*cellPx);
+    const player:LightSource={x:opts.player.x,z:opts.player.y,...PLAYER_LIGHT};
+    const chosen=[player,...pickLights(this.glowLights,focus,reach,11)];
+    this.lighting.update(chosen,{
+      focus,cellPx,width:cam.width,height:cam.height,
+      pixelRatio:Math.min(window.devicePixelRatio||1,2),k:OBLIQUE_K,elapsed:opts.elapsed,
+    },(l,i)=>flickerFactor(l.flicker,opts.elapsed,l.x*7+l.z*13+i));
+    this.lighting.render(this.gpu);
   }
 
   pick(cam:Camera,sx:number,sy:number):{x:number;y:number;hasObject:boolean}{
@@ -583,6 +610,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     this.disposed=true;
     this.canvas.removeEventListener('webglcontextlost',this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored',this.onContextRestored);
+    this.lighting?.dispose();
     for(const group of this.groups){
       this.scene.remove(group.mesh);
       group.mesh.dispose();

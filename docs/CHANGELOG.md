@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.19 — Iluminação dinâmica e neblina escura (`?luz=`) (13/11/2026)
+- **ADR 0029:** camada de iluminação 2.5D como a da referência do Core Keeper: escuridão ambiente com poças de luz (Deusa + blocos que brilham: Musgo Luminoso, Cristal da Vida, Bloco de Luz; no Mundo: fogueira, caldeirão, forno), decaimento suave, tinta quente e oscilação do fogo.
+- **Regras puras** em `render/lighting.ts` (+ 6 testes): `parseAmbient`, `lightFalloff`, `glowLightFor`, `pickLights` (teto `MAX_LIGHTS` = 12), `flickerFactor` determinístico. **Shader** em `render/sanctuaryLighting.ts` (sobreposição de tela cheia, sem tocar nas malhas).
+- **Liga por `?mundo=santuario&luz=noite|penumbra|0..1`** (só vista oblíqua); sem o parâmetro nada muda. HUD sem escurecer. Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.18 — Espessura das paredes fechada em 0,25 / 0,35; contrato gerado (13/11/2026)
 - **Decisão do dono do produto:** `DEFAULT_WALL_THICKNESS` = `{ x: 0.25, z: 0.35 }` (faixas e poste de 0,25; tampa de 0,35). A foto do protótipo no iPad confirmou a leitura.
 - **Gabarito e contrato regerados** com a medida: poste 32 × 44 px, braços 48 (L/O) e 42 (N/S), frentes 128/80/80/32 × 154, face sul a 42 px da borda da célula. O `CONTRATO.md` agora é **gerado** por `scripts/make-wall-guide.py` a partir de `CONTRATO.tpl.md` (números sempre iguais aos do gabarito e do código); `--tx/--tz` mudam a espessura.

@@ -2,6 +2,10 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Iluminação dinâmica (v0.93.19, ADR 0029)
+
+`render/lighting.ts` (puro) escolhe e calcula as luzes; `render/sanctuaryLighting.ts` desenha, depois da cena, um retângulo de tela cheia com a escuridão ambiente e um buraco de luz por fonte (shader com até `MAX_LIGHTS` = 12 fontes; posição na tela pela mesma projeção oblíqua; raio em pixels). Fontes: a Deusa (`PLAYER_LIGHT`) e os blocos com `glow` (`glowLightFor`), reunidos junto com as malhas e filtrados por `pickLights`. Ligada por `?luz=noite|penumbra|0..1` (só vista oblíqua); `GameRenderer` não muda. O HUD é DOM e não escurece.
+
 ## Paredes — protótipo de autotile (v0.93.16, ADR 0027)
 
 `render/sanctuaryWallPrototype.ts` desenha cada parede do `World` como uma placa fina de cores lisas: para cada célula, `wallFootprint(wallNeighbors(...))` dá o poste e os braços (retângulos em coordenadas da célula) e cada um vira uma caixa de altura `WORLD_SCALE.wall`. A frente só aparece no último bloco de uma fileira norte–sul por consequência da geometria. O `SanctuaryThreeRenderer` refaz as paredes junto com as malhas, inclui-as no `pick` (a célula inteira conta como parede, mesmo no vão) e usa um ícone SVG provisório na hotbar. `sanctuary3DGeometryCells` não desenha paredes como cubos. Ligado por `?mundo=santuario&paredes=autotile` (libera `WALL_BLOCKS` na hotbar do Santuário; só teste); `&espessura=x,z` (ex.: `0.25,0.35`) muda a espessura por eixo (x = faixas, z = tampa). Será substituído pela arte (W1/W3).

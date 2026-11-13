@@ -25,6 +25,7 @@
 | 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
 | 0021 | Bichos da sala: o servidor roda as mesmas `Entities` (jogadores como avatares); o aparelho na sala só espelha (`CreatureMirror`); golpe/comida/mordida decididos pela sala; moradores locais | [0021](adr/0021-bichos-da-sala.md) |
 | 0022 | Escala visual: geometria e contratos de arte preservados, sem unidade nova; **cena de escala** `?escala=1` (só dev) compara sprites no renderizador real; catálogo, validação e normalização de alturas ficam para depois | [0022](adr/0022-escala-visual-e-cena-de-escala.md) |
+| 0029 | Iluminação 2.5D: sobreposição de escuridão com poças de luz (Deusa e blocos que brilham), `?luz=`, regras puras em `render/lighting.ts` | [0029](adr/0029-iluminacao-2-5d.md) |
 | 0028 | Escala do mundo: 1 célula = 1 m; vista oblíqua com K = 1 (cubo de frente quadrada); parede = 2 cubos; personagem ≈ 1,75 m; Mundo adota na migração do render | [0028](adr/0028-escala-do-mundo-1m.md) |
 | 0027 | Paredes de nível único com altura fixa e autotile (frente + tampa), porta, para Santuário e Mundo; mármore V2/V3 aposentado | [0027](adr/0027-paredes-nivel-unico-autotile.md) |
 | 0026 | Render 2.5D em WebGL (Three.js), referência Core Keeper: arte 2D como fonte, billboards, física sólida, iluminação primeiro, chão por chunk, 2D como reserva até a paridade | [0026](adr/0026-render-25d-webgl.md) |
