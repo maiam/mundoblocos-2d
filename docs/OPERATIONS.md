@@ -163,7 +163,7 @@ tem alfa ~1 e some no recorte).
 + ícones das mudas e da maçã → `optimize-assets.py`. A grade da prancha não precisa ser exata: o script separa os 8
 desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e descarta o ruído do fundo.
 
-**Interiores** (`assets-src/interiors/<id>.png`, imagem inteira = cômodo): `python3 scripts/extract-interiors.py
+**Janela da loja:** `python3 scripts/make-shop-frame.py` (`assets-src/ui/shop-frame.png` → `src/assets/ui-shop.png`: apaga os textos que mudam; depois `optimize-assets.py`). **Interiores** (`assets-src/interiors/<id>.png`, imagem inteira = cômodo): `python3 scripts/extract-interiors.py
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
 

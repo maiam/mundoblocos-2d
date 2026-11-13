@@ -4,7 +4,7 @@ import { inRect } from '../world/dungeon';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { Entities, HOME_SPACING } from './entities';
-import { NPCS, NPC_IDS, npcDef, SMITH } from './npcs';
+import { MERCHANT, NPCS, NPC_IDS, npcDef, SMITH } from './npcs';
 import { Player } from './player';
 
 function setup(seed: number) {
@@ -25,23 +25,28 @@ describe('NPCs da cidade (nomes e falas em game/npcs.ts)', () => {
     expect(new Set(NPCS.map((n) => n.name)).size).toBe(16);
     expect(SMITH).toBe('black');
     expect(npcDef('black').name).toBe('Black');
-    expect(NPCS.filter((n) => 'role' in n)).toHaveLength(1);
+    expect(NPCS.filter((n) => 'role' in n)).toHaveLength(2); // Black (ferreiro) e Bento (mercador)
+    expect(MERCHANT).toBe('bento');
+    expect(npcDef('bento').role).toBe('merchant');
     for (const n of NPCS) {
       expect(n.lines.length).toBeGreaterThanOrEqual(2);
       for (const l of n.lines) expect(l.length).toBeGreaterThan(20);
     }
   });
 
-  it('a cidade tem os 16: o ferreiro Black na Ferraria e os 15 espalhados pelas ruas, cada um uma vez', () => {
+  it('a cidade tem os 16: Black na Ferraria, Bento atrás dos balcões do Mercado e os 14 espalhados pelas ruas, cada um uma vez', () => {
     const { w, e } = setup(42);
     expect(e.villagers.map((v) => v.npc).sort()).toEqual([...NPC_IDS].sort());
     const smith = e.villagers.find((v) => v.role === 'smith')!;
     expect(smith.npc).toBe('black');
     expect(smith.name).toBe('Black');
     expect(w.interiorAt(smith.cellX, smith.cellY)?.def.id).toBe('smithy');
+    const merchant = e.villagers.find((v) => v.role === 'merchant')!;
+    expect(merchant.npc).toBe('bento');
+    expect(w.interiorAt(merchant.cellX, merchant.cellY)?.def.id).toBe('market');
     // Espalhados: nenhum par de moradores comuns nasce colado e os pontos de casa ficam a pelo menos HOME_SPACING (os 4 fixos à parte).
     const common = e.villagers.filter((v) => !v.role);
-    expect(common).toHaveLength(15);
+    expect(common).toHaveLength(14);
     const homes = common.slice(4).map((v) => [v.homeX, v.homeY]);
     for (let i = 0; i < homes.length; i++) for (let j = i + 1; j < homes.length; j++) {
       expect(Math.hypot(homes[i][0] - homes[j][0], homes[i][1] - homes[j][1])).toBeGreaterThan(HOME_SPACING * 0.5);

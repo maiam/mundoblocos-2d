@@ -208,6 +208,8 @@ import townFountain from '../../assets/town-fountain.webp';
 import townWell from '../../assets/town-well.webp';
 import townStall from '../../assets/town-stall.webp';
 import townBarrel from '../../assets/town-barrel.webp';
+import interiorMarket from '../../assets/interior-market.webp';
+import uiShop from '../../assets/ui-shop.webp';
 import interiorSmithy from '../../assets/interior-smithy.webp';
 import interiorTent from '../../assets/interior-tent.webp';
 import townGuild from '../../assets/town-guild.webp';
@@ -342,7 +344,7 @@ const pack: ArtPack = {
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
   },
-  interiors: { smithy: interiorSmithy, tent: interiorTent },
+  interiors: { smithy: interiorSmithy, tent: interiorTent, market: interiorMarket },
   portraits: { black: portraitBlack, dante: portraitDante, silvano: portraitSilvano, morgan: portraitMorgan, aurelio: portraitAurelio, rubem: portraitRubem, rosendo: portraitRosendo, teodoro: portraitTeodoro, bento: portraitBento, solano: portraitSolano, nilo: portraitNilo, marlon: portraitMarlon, lavinio: portraitLavinio, caio: portraitCaio, noel: portraitNoel, leandro: portraitLeandro },
   dialogueFrame,
   blockAtlas,
@@ -378,6 +380,7 @@ const pack: ArtPack = {
   oakDoor,
   dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls, cave: dungeonCave },
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
+  shopFrame: uiShop,
   tent: { icon: tentIcon, sprite: tentSprite },
   chest: { icon: chestIcon, sprite: chestSprite },
   craftables: {

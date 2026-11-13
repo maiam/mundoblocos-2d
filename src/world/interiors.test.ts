@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { inRect } from './dungeon';
-import { INTERIOR_DEFS, interiorFloor, scaleInteriorDef, SMITHY_INTERIOR } from './interiors';
+import { exitDoorAt, INTERIOR_DEFS, interiorFloor, scaleInteriorDef, SMITHY_INTERIOR } from './interiors';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
@@ -18,10 +18,13 @@ describe('Interiores (ADR 0014)', () => {
     expect(w.interiorAt(...w.town!.start)).toBeNull();
   });
 
-  it('mapas retangulares, com um único capacho, e o mapa lógico manda em onde se anda', () => {
+  it('mapas retangulares, com um capacho por entrada, e o mapa lógico manda em onde se anda', () => {
     for (const d of INTERIOR_DEFS) {
       expect(new Set(d.map.map((r) => r.length)).size).toBe(1);
-      expect(d.map.join('').split('E')).toHaveLength(2);
+      const entradas = d.buildings?.length ?? 1;
+      // cada capacho é uma faixa contínua de `E` numa fileira (a Ferraria tem 1; o Mercado, 3 — uma por loja)
+      const faixas = d.map.flatMap((r) => r.match(/E+/g) ?? []);
+      expect(faixas).toHaveLength(entradas);
     }
     const w = new World(7);
     const room = w.interiors[0];
@@ -101,5 +104,23 @@ describe('Interiores na grade fina (ADR 0032, F4): scaleInteriorDef', () => {
     expect(fine.map.join('').split('E').length - 1).toBe(4);
     expect(fine.keeper!.at).toEqual([SMITHY_INTERIOR.keeper!.at[0] * 2, SMITHY_INTERIOR.keeper!.at[1] * 2]);
     expect(fine.keeper!.rows).toEqual([SMITHY_INTERIOR.keeper!.rows[0] * 2, (SMITHY_INTERIOR.keeper!.rows[1] + 1) * 2 - 1]);
+  });
+});
+
+describe('Mercado (v0.93.57): três lojas, um cômodo', () => {
+  it('as três lojas da cidade se chamam Mercado e cada porta leva ao mesmo cômodo, com a saída na sua porta', () => {
+    const w = new World(7);
+    const town = w.town!;
+    const shops = [Block.SHOP_POTION, Block.SHOP_GOODS, Block.SHOP_TOOLS].map((id) => town.buildings.find((b) => b.id === id)!);
+    for (const b of shops) expect(b.name).toBe('Mercado');
+    const room = w.interiors.find((l) => l.def.id === 'market')!;
+    expect(room.def.name).toBe('Mercado');
+    expect(room.doors).toHaveLength(3);
+    room.doors.forEach((door, i) => {
+      expect(door.outside).toEqual(shops[i].door); // da esquerda para a direita: poções, armazém, ferramentas
+      expect(w.interiorDoorAt(door.outside![0], door.outside![1])).toEqual({ room, door });
+      expect(exitDoorAt(room, door.exit[0], door.exit[1])).toBe(door);
+      expect(interiorFloor(room, door.entry[0], door.entry[1])).toBe(true);
+    });
   });
 });

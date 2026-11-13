@@ -283,9 +283,9 @@ function buildTown(): TownLayout {
     place(Block.GUILD, W / 2 - 28, MID - 8, 'Guilda dos Aventureiros', true),
     place(Block.INN, W / 2 + 20, MID - 4, 'Hospedaria', true),
     place(Block.SMITHY, 30, MID + 18, 'Ferreiro', true),
-    place(Block.SHOP_POTION, W / 2 + 22, MID + 18, 'Loja de Poções', true),
-    place(Block.SHOP_GOODS, W / 2 + 27, MID + 18, 'Armazém', true),
-    place(Block.SHOP_TOOLS, W / 2 + 32, MID + 18, 'Loja de Ferramentas', true),
+    place(Block.SHOP_POTION, W / 2 + 22, MID + 18, 'Mercado', true),
+    place(Block.SHOP_GOODS, W / 2 + 27, MID + 18, 'Mercado', true),
+    place(Block.SHOP_TOOLS, W / 2 + 32, MID + 18, 'Mercado', true),
   ];
   for (const b of required) {
     const x0 = b.x - TOWN_X0;
