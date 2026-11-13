@@ -14,7 +14,7 @@ import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { sanctuary3DGeometryCells, sanctuaryBlockTransform, type SanctuaryBlockShape } from './sanctuaryThreeLayout';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
-import { characterScale, createWallProportionTest, type ScalePreset } from './sanctuaryWallProportionTest';
+import { characterScale, createWallProportionTest, GRADE_COMPARE, type ScaleChoice } from './sanctuaryWallProportionTest';
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { buildWallPrototype, wallPlaceholderIcon, type WallPrototype } from './sanctuaryWallPrototype';
 import { buildWallArt, type WallArtGroup } from './sanctuaryWallArt';
@@ -80,7 +80,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   /** Células visíveis na vertical (a câmera usa; ADR 0028): a vista oblíqua mostra mais mundo que a antiga. */
   readonly preferredCellsTall?:number;
 
-  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScalePreset;wallThickness?:WallThickness;ambient?:number}={}){
+  constructor(canvas:HTMLCanvasElement,private readonly world:World,options:{view?:SanctuaryView;wallTest?:boolean;testScale?:ScaleChoice;wallThickness?:WallThickness;ambient?:number}={}){
     this.wallThickness=options.wallThickness??DEFAULT_WALL_THICKNESS;
     for(const [key,url] of Object.entries(art().wallAtlases??{})){
       if(!url)continue;
@@ -185,7 +185,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
         ref.renderOrder=3;
         return ref;
       };
-      this.scene.add(createWallProportionTest({x:sx,z:sy},makeReference));
+      this.scene.add(options.testScale==='grade'?createWallProportionTest({x:sx,z:sy},makeReference,GRADE_COMPARE):createWallProportionTest({x:sx,z:sy},makeReference));
     }
 
   }

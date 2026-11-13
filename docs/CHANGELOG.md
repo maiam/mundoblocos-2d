@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.55 — grade fina, F5: comparação da altura da parede e corpo que passa por vão de 1 célula (13/11/2026)
+- **Comparação da parede (pergunta 3 da ADR 0032):** `?mundo=santuario&paredes=teste&escala=grade` mostra, lado a lado e com o personagem nos mesmos pixels, o **Core Keeper de hoje** (parede ≈ 1,2) e três alturas na grade fina — **2,0**, **2,4** e **3,0 cubos** de 0,5 (`ScalePreset` `grade20/24/30`, `GRADE_COMPARE`; cada grupo traz cubo, parede, régua de 2 segmentos e o personagem de referência). Em dev, a cena de escala do Mundo (`?escala=`) passou a valer só no mundo principal (antes escondia o teste do Santuário).
+- **Corpo do jogador na grade fina:** a meia-largura dobrada (0,54 → corpo de 1,08) não passava por um vão de **1 célula** (porta, portão, abertura numa fileira de blocos). `WalkerSpec.maxHalfW` + `scaleSpecBy` (pura): o jogador tem teto de 0,45 (corpo de 0,9); monstros e animais seguem dobrados. Padrão inalterado. 4 testes novos (`walker.test.ts`, incluindo a travessia de um vão real: 0,45 passa, 0,54 trava).
+- **Paredes no Mundo continuam sendo a W5** (o perfil principal não tem paredes, receitas nem arte delas): a W5 será feita já na grade fina, com a altura escolhida nesta comparação.
+
 ## Orvalis v0.93.54 — grade fina, F4: interiores, tenda, covil, lobos e goblins (só dev, `?grade=2`) (13/11/2026)
 - **ADR 0032, F4:** com `?grade=2` o mundo inteiro existe na grade fina com os mesmos pixels de hoje — agora também os cômodos, o covil e os bichos do mapa.
 - **Interiores e tenda:** `scaleInteriorDef` (`world/interiors.ts`) amplia cada caractere do mapa do cômodo 2 × 2 (a arte cobre a área nova inteira); o capacho vira 2 × 2 (`interiorExitAt`; pisar em qualquer célula sai), a porta da rua vale `SUBDIV` células (`World.interiorEntrance`), o ferreiro e suas linhas acompanham; espaçamento e anel × `SUBDIV`.

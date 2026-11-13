@@ -9,13 +9,21 @@ export interface WalkerSpec {
   /** Caixa de colisão dos pés (meia-largura / meia-profundidade, em células). */
   halfW: number;
   halfD: number;
+  /** Teto da meia-largura na grade fina (ADR 0032): o personagem precisa passar por um vão de 1 célula (porta, portão). */
+  maxHalfW?: number;
   /** Quantos níveis consegue subir de uma vez (0 = não sobe em cubos). */
   stepHeight: number;
 }
 
 /** Especificação em células da grade atual: velocidade e caixa dos pés × `SUBDIV` (ADR 0032; no padrão, a mesma). */
 export function scaleSpec(spec: WalkerSpec): WalkerSpec {
-  return SUBDIV === 1 ? spec : { ...spec, speed: spec.speed * SUBDIV, halfW: spec.halfW * SUBDIV, halfD: spec.halfD * SUBDIV };
+  return scaleSpecBy(spec, SUBDIV);
+}
+
+/** `scaleSpec` para uma subdivisão qualquer (pura, testável). `s = 1` devolve a mesma especificação. */
+export function scaleSpecBy(spec: WalkerSpec, s: number): WalkerSpec {
+  if (s === 1) return spec;
+  return { ...spec, speed: spec.speed * s, halfW: Math.min(spec.halfW * s, spec.maxHalfW ?? Infinity), halfD: spec.halfD * s };
 }
 
 /** Retorna true se a caixa candidata colide com outra entidade. */

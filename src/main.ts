@@ -223,7 +223,7 @@ void loadArtPack(profile.id)
           const mod = await import('./render/sanctuaryThreeRenderer');
           // Vista oblíqua é o padrão (ADR 0026, v0.93.10); `?vista=inclinada` volta à câmera inclinada a 67°.
           const view = query.get('vista') === 'inclinada' ? 'tilt' : 'oblique';
-          threeRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core') : undefined });
+          threeRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core', 'grade'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core' | 'grade') : undefined });
         } catch (error) {
           console.error('Santuário Three.js: usando renderizador 2D de reserva', error);
         }
@@ -247,7 +247,7 @@ void loadArtPack(profile.id)
 
     // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
     // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.
-    if (import.meta.env.DEV && query.has('escala')) {
+    if (import.meta.env.DEV && query.has('escala') && profile.id === 'principal') {
       void import('./dev/scaleScene').then((m) => {
         (window as unknown as { __scaleScene: unknown }).__scaleScene = m.startScaleScene(canvas);
       });
