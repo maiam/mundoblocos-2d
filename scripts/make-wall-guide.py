@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 ap = argparse.ArgumentParser()
 ap.add_argument('--tx', type=float, default=1.0, help='largura das faixas norte–sul e do poste (células)')
 ap.add_argument('--tz', type=float, default=0.35, help='profundidade da tampa das fileiras leste–oeste (células)')
+ap.add_argument('--franja', type=int, default=16, help='espessura única da franja clara, em px (decisão: 16)')
 ap.add_argument('--saida', default='assets-src/paredes/gabarito.png')
 ap.add_argument('--sem-contrato', action='store_true', help='não regerar o CONTRATO.md')
 args = ap.parse_args()
@@ -89,8 +90,7 @@ for name, w, _, desc, parts in pieces:
     for i, line in enumerate(desc):
         text(x, top + H + 34 + i * 20, line, 14, fill=(100, 96, 110))
     x += max(w, 190) + 150
-text(40, y0 + 30 + H + 70, 'Com a laje de largura inteira, as 4 frentes têm 128 px. A frente só aparece onde NÃO há parede ao sul. front_mid emenda com ele mesmo; '
-     'as pontas fecham um lado; front_post é o bloco isolado / fim de coluna. Frentes 100% opacas.', 17, fill=(80, 76, 92))
+text(40, y0 + 30 + H + 70, 'As 4 frentes têm 128 px e só aparecem onde NÃO há parede ao sul. Moldura com a franja única de 16 px; 100% opacas.', 17, fill=(80, 76, 92))
 
 # ---------------- 2) TAMPA ----------------
 y1 = 560
@@ -105,6 +105,24 @@ for m in range(16):
     for (a, b, c, dd) in footprint(n, e, s, w):
         d.rectangle([tx + a, ty + b, tx + c - 1, ty + dd - 1], fill=CAP)
         d.rectangle([tx + a, ty + b, tx + c - 1, ty + dd - 1], outline=CAPRIM)
+    # franja única (F px): faixas claras desenhadas sobre a forma escura (ver CONTRATO, seção 4)
+    FJ = args.franja
+    top_, bot_ = (0 if n else Z0), (CELL if s else Z1)
+    LIGHT = (214, 168, 120)
+    def fr(x0, y0, x1, y1):
+        if x1 > x0 and y1 > y0:
+            d.rectangle([tx + x0, ty + y0, tx + x1 - 1, ty + y1 - 1], fill=LIGHT)
+    if not n:
+        fr(0, Z0, CELL, Z0 + FJ)                      # fechamento do topo (franja da borda norte)
+    elif e or w:                                      # coluna chega à fileira: a franja faz a curva
+        if w: fr(0, Z0, FJ, Z0 + FJ)
+        if e: fr(CELL - FJ, Z0, CELL, Z0 + FJ)
+    if n or s:                                        # franjas laterais da coluna
+        for (xa, xb, side_open) in ((0, FJ, w), (CELL - FJ, CELL, e)):
+            if side_open:
+                fr(xa, top_ + (FJ if not n else 0), xb, Z0); fr(xa, Z1, xb, bot_)
+            else:
+                fr(xa, top_ + (FJ if not n else 0), xb, bot_)
     flags = ''.join(k for k, v in zip('NESW', (n, e, s, w)) if v) or '—'
     text(tx, ty + CELL + 6, f'cap_{m:02d}', 17, True)
     text(tx + 78, ty + CELL + 6, f'vizinhos: {flags}', 15)
@@ -114,6 +132,10 @@ text(1000, y1 + 84, f'cap_00 = laje isolada ({TX} × {TZ} no centro).', 17)
 text(1000, y1 + 114, 'cap_05 / cap_10 = coluna norte–sul / fileira leste–oeste.', 17)
 text(1000, y1 + 144, 'cap_15 = cruz (parede nos 4 lados).', 17)
 text(1000, y1 + 190, 'Nomes: <material>/cap_00.png … cap_15.png', 17)
+text(1000, y1 + 250, f'Cor clara = franja de {args.franja} px (a MESMA espessura em tudo).', 18, True)
+text(1000, y1 + 280, 'Coluna: franja | miolo | franja. Onde a coluna toca a fileira,', 17)
+text(1000, y1 + 306, 'a franja faz a CURVA e segue como franja da fileira (borda norte).', 17)
+text(1000, y1 + 332, 'O miolo da coluna não é cortado por nenhuma linha.', 17)
 text(1000, y1 + 220, 'Cada peça de tampa tem 128 × 128 e o MESMO canto superior-esquerdo da célula.', 17)
 
 # ---------------- 3) MONTAGEM ----------------
@@ -166,7 +188,7 @@ elif not args.sem_contrato:
         'TX': TX, 'TZ': TZ, 'TXC': fmt(args.tx), 'TZC': fmt(args.tz), 'ARMX': ARM, 'ARMZ': ARMZ, 'H': H,
         'ENDW': CELL - C0, 'C0': C0, 'C1': C1, 'C1M1': C1 - 1, 'ARMXM1': ARM - 1,
         'Z0': Z0, 'Z1': Z1, 'Z0M1': Z0 - 1, 'Z1M1': Z1 - 1, 'YTOP': Z1 - H, 'INSIDE': CELL - Z1,
-        'TRIM': round(0.21 * CELL), 'CORE': CELL - 2 * round(0.21 * CELL), 'RIMN': round(0.2 * TZ), 'Z0RIM': Z0 + round(0.2 * TZ) - 1,
+        'F': args.franja, 'CORE': CELL - 2 * args.franja, 'ROWCORE': TZ - args.franja, 'FEND': CELL - args.franja, 'Z0RIM': Z0 + args.franja - 1, 'Z0RIM1': Z0 + args.franja,
     }
     text_tpl = open('assets-src/paredes/CONTRATO.tpl.md', encoding='utf-8').read()
     for k, v in tokens.items():

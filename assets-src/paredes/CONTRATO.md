@@ -22,8 +22,9 @@ O jogador vê **a frente** (face sul, voltada para ele) e **a tampa** (o topo, v
 | Profundidade da laje (eixo z) | **44 px** (0,35 célula), centrada: de y = 42 a y = 85 |
 | Braço norte/sul (da laje à borda) | **42 px** de cada lado (42 + 44 + 42 = 128): a coluna contínua preenche os 128 × 128 |
 | Altura da frente | **154 px** (1,2 célula ≈ a altura do personagem) |
-| Franja da coluna | **27 px** de cada lado (0,21) · miolo escuro de **74 px** |
-| Franja da tampa da fileira | **9 px** na borda norte (0,2 da profundidade) |
+| **Franja (espessura ÚNICA)** | **16 px** (0,125 célula) em **tudo**: colunas, fileira e moldura da frente |
+| Coluna | franja 16 | miolo escuro **96 px** | franja 16 |
+| Fileira (tampa, 44 px de profundidade) | franja 16 na borda norte + miolo escuro de **28 px** |
 
 Resolução mestre = 128 px por célula; o jogo reduz conforme o zoom. Entregar **nessa escala exata**.
 
@@ -52,14 +53,18 @@ Resolução mestre = 128 px por célula; o jogo reduz conforme o zoom. Entregar 
 O resto de cada tile é transparente. As 16 peças são variações de acabamento sobre 4 formas: dá para pintar as 4 formas e derivar as bordas.
 
 ## 4. Franjas, emendas e acabamento
-- **Coluna (a forma tem braço N ou S):** estrutura **franja clara (27 px) | miolo escuro (74 px) | franja clara (27 px)**, com **juntas de tábua a cada
-  128 px** nas franjas (referência Core Keeper). Onde há **parede leste/oeste** ligada à coluna, a franja daquele lado é **interrompida na altura da
-  fileira** (y = 42–85) e a tampa continua pela fileira.
-- **Fileira (faixa horizontal):** miolo escuro com uma **franja clara de 9 px na borda norte** (y = 42–50). Nas pontas sem vizinho, acabamento fechado.
+- **Uma só espessura de franja: 16 px**, em todas as peças e nas molduras das frentes (dá ideia de continuidade).
+- **Coluna (a forma tem vizinho N ou S):** **franja clara 16 px | miolo escuro 96 px | franja clara 16 px**, com **juntas de tábua a cada 128 px** nas franjas
+  (referência Core Keeper).
+- **Fileira (faixa horizontal):** **franja clara de 16 px na borda norte** (y = 42–57) e miolo escuro abaixo (28 px, y = 58–85).
+- **Fechamento do topo:** onde NÃO há vizinho norte, a franja da borda norte cruza a largura inteira (fecha o topo da coluna ou da laje).
+- **Junção coluna × fileira (importante):** onde uma coluna toca uma fileira (vizinho N ou S **e** L ou O), a franja da coluna do lado da fileira **faz a curva**
+  (y = 42–85): vira a franja da fileira (borda norte), com a MESMA espessura, e continua. **Nenhuma linha atravessa o miolo da coluna.**
+  Sem vizinho norte (canto de cima) o fechamento do topo fica; a aresta inferior da fileira também não cruza o miolo.
 - **Emendas:** bordas abertas coincidem pixel a pixel com a peça vizinha (esquerda/direita: linhas y = 42–85 das faixas; norte/sul: colunas x = 0–127). Mesmo
   desenho em todas as peças que tenham o mesmo lado aberto.
 - **Contorno** fino na cor escura do próprio material (como os blocos do jogo), sem preto puro. **Textura nunca gira nem espelha por célula.**
-- **Frente:** moldura/aresta no topo e embaixo e **montante (poste) entre painéis** a cada 128 px (como na referência).
+- **Frente:** moldura de **16 px** no topo, nas laterais e na base, e **montante entre painéis** a cada 128 px, também com a franja de 16 px (como na referência).
 
 ## 5. Luz e estilo
 - **Ilustração digital de fantasia (RPG/anime)**, vista 3/4, cores quentes e limpas; **referência: Core Keeper**.
@@ -78,16 +83,17 @@ Origem = canto superior-esquerdo da célula no chão (ver gabarito, seção 3):
 - A face sul fica 42 px para dentro da célula: o chão aparece à frente da parede.
 
 ## 8. O que já existe de Tábuas (referência) e o que refazer
-Entregue em 13/11/2026 para uma geometria mais fina (ver `assets-src/paredes/tabuas/LEIA-ME.md`). Com a coluna de largura da célula:
-- **Ainda vale:** `front_mid` (128 × 154) e `cap_10` (fileira leste–oeste, y = 42–85).
-- **Refazer:** as outras 15 tampas (formas novas, de 128 px de largura, com franjas) e `front_end_left`, `front_end_right`, `front_post` (agora 128 × 154).
-  As peças antigas servem de **referência de estilo** (madeira, moldura, montantes).
+A arte de Tábuas de 13/11/2026 (`assets-src/paredes/tabuas/`) usa franjas de espessuras diferentes (~25 px nas colunas, ~5 px na fileira, ~6–8 px nas frentes).
+Com a franja única de 16 px, **as 20 peças de cada material precisam ser refeitas** (16 tampas + 4 frentes). As antigas servem de **referência de estilo**
+(madeira, moldura, montantes). Dá para pintar **as 4 formas de tampa** (faixa, topo de coluna, base de coluna, coluna contínua) e derivar as outras 12 variando só o acabamento das bordas.
 
 ## 9. Conferência (antes de entregar)
 - [ ] 20 arquivos por material, nomes exatos, PNG RGBA, 128 px/célula.
 - [ ] Frentes: 128 × 154, **100% opacas**; `front_mid` repetido 3× forma uma fileira contínua.
 - [ ] Tampas: 128 × 128; cada uma cobre a faixa de y da sua forma (tabela da seção 3).
+- [ ] **Todas as franjas com 16 px** (tampas e molduras das frentes).
 - [ ] Coluna contínua (`cap_05`) empilhada 3× forma uma coluna sem emenda; `cap_10` repetido forma uma fileira sem emenda.
+- [ ] Junção: `cap_07`/`cap_13`/`cap_15`/`cap_03`/`cap_09`/`cap_11` — a franja da coluna faz a curva e segue como franja da fileira; **nenhuma linha cruza o miolo**.
 - [ ] Coluna ligada a uma fileira (`cap_07`, `cap_13`…) emenda com `cap_10` ao lado, sem degrau.
 - [ ] Sem sombra projetada, sem brilho, sem texto, sem marca d'água.
 
@@ -95,6 +101,6 @@ Entregue em 13/11/2026 para uma geometria mais fina (ver `assets-src/paredes/tab
 > Arte de paredes para um jogo 2D de fantasia (vista 3/4, estilo ilustração digital RPG/anime, referência Core Keeper). A parede é uma
 > laje que ocupa a célula inteira em largura (128 px), com 44 px de profundidade e 154 px de altura. Por material (tábuas de carvalho e pedra
 > primeiro): 4 frentes de 128 × 154 (meio, ponta esquerda, ponta direita e poste/fim de coluna; opacas) e 16 tampas vistas de cima, 128 × 128,
-> indexadas pelos vizinhos N/L/S/O (só N/S mudam a forma: faixa horizontal, topo de coluna, base de coluna e coluna contínua). Coluna = franja
-> clara | miolo escuro | franja clara com juntas de tábua; fileira = miolo escuro com franja fina ao norte. PNG transparente, recorte exato,
+> indexadas pelos vizinhos N/L/S/O (só N/S mudam a forma: faixa horizontal, topo de coluna, base de coluna e coluna contínua). Franja clara de 16 px,
+> igual em tudo (colunas, fileira ao norte e molduras das frentes); coluna = franja | miolo | franja com juntas de tábua; onde a coluna toca a fileira, a franja faz a curva. PNG transparente, recorte exato,
 > sem sombra projetada nem iluminação. Ver gabarito.png.

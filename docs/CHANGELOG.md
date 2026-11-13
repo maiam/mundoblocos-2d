@@ -1,5 +1,10 @@
 # Changelog
 
+## Documentação — franja única de 16 px no contrato de arte das paredes (13/11/2026, sem versão)
+- **Decisão do dono do produto:** todas as franjas da composição com a **mesma espessura, 16 px (0,125 célula)**, para dar continuidade. Medido na arte atual de Tábuas: ~25 px nas colunas, ~5 px na fileira, ~6–8 px nas molduras das frentes (não coincidiam).
+- **Contrato e gabarito regerados** (`make-wall-guide.py --franja 16`): coluna = franja 16 | miolo 96 | franja 16; fileira = franja 16 na borda norte + miolo de 28; moldura da frente de 16 px; **na junção coluna × fileira a franja faz a curva** e segue como franja da fileira (sem linha cruzando o miolo). O gabarito passa a desenhar as franjas em cada uma das 16 tampas.
+- **As 20 peças de cada material precisam ser refeitas** (Tábuas e Pedra); a arte atual de Tábuas vira referência de estilo. Nenhum código de jogo alterado.
+
 ## Documentação — junções coluna × fileira da Parede de Tábuas corrigidas (13/11/2026, sem versão)
 - **Defeito apontado pelo dono do produto:** onde uma coluna chega a uma fileira, a linha clara do topo da fileira (e as marcas escuras da faixa) atravessava o miolo da coluna em vez de sumir.
 - **Correção** (`scripts/fix-wall-cap-junctions.py`): nas tampas com coluna tocando fileira (`cap_03`, `06`, `07`, `09`, `11`, `12`, `13`, `14`, `15`) o miolo da coluna é copiado de `cap_05` nas linhas da faixa da fileira (com vizinho norte) ou só na aresta inferior que cruzava o miolo (canto de cima, que mantém o fechamento do topo). Originais em `assets-src/paredes/tabuas/antes-juncoes/`. Emendas L/O e N/S seguem exatas (0 de 128). Pedir à arte, nas próximas peças (Pedra), a junção já resolvida: o miolo da coluna não é cortado pela linha da fileira.
