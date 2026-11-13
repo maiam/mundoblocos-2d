@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.39 — M4.2: dungeon do Mundo em 2.5D; M4 concluído (13/11/2026)
+- **Parede do labirinto em 2 níveis:** `ChunkSprites` aceita `stack` (de `textures.stackDraw`) — instâncias uma unidade de altura acima da outra (`SpriteCell.lift`; o `pick` desconta a altura do exemplar).
+- **Farol, seta da entrada e escuro fora do labirinto** extraídos do `Renderer` 2D para `render/dungeonFx.ts` e **compartilhados** com a camada 2D do 3D (o 2D segue igual). A penumbra do covil é a luz dinâmica (ambiente 0,3 + luz do jogador). `entrance` e `dungeonArea` → `honored`: todos os campos de `RenderOptions` estão atendidos no Mundo 3D (exceto a depuração `showChunkBorders`).
+- Conferido no navegador (seed 42): entrada do covil com o farol roxo e pétalas, e o interior do labirinto (paredes empilhadas, escuro fora da área, penumbra) em 3D × 2D, sem erros. **M4 concluído** em `?render=3d` (só dev). Falta o **M5 — piloto**. Física inalterada. 416 testes (3 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.38 — M4.1: interiores do Mundo em 2.5D, atrás de `?render=3d` (13/11/2026)
 - **`InteriorRoom`:** ao entrar numa construção (`opts.interior`), o conteúdo do mundo aberto (agora numa `worldLayer`) é escondido e a arte pronta do cômodo é estendida sobre o chão da área — na vista oblíqua K = 1 aparece igual ao 2D —, com o fundo escuro; atores e itens em pé por cima (só os de dentro), sem céu, nuvens, luz da noite nem partículas. Ao sair, o mundo volta e o fundo do céu é restaurado. O cômodo segue isolado ao norte (ADR 0014; decisão de manter o cômodo isolado até o W5). `interior` → `honored`.
 - Conferido no navegador (seed 42): ferraria em 2D × 3D — arte, ferreiro e personagem corretos, camada do mundo escondida lá dentro e de volta na rua, sem erros. Ainda sem a dungeon (covil, farol e seta da entrada: M4.2) e o piloto (M5). Só dev; física inalterada. 413 testes (4 novos). Sem mudança de protocolo, save ou servidor.

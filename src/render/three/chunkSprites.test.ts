@@ -78,4 +78,23 @@ describe('ChunkSprites (objetos altos do Mundo no 3D)', () => {
     sprites.dispose();
     expect(scene.children).toHaveLength(0);
   });
+
+  it('empilhado N vezes: N instâncias, uma unidade de altura acima da outra; o pick desconta a altura do exemplar', () => {
+    const chunks = new Map<string, Chunk>([['0,0', { cx: 0, cy: 0, version: 1 } as Chunk]]);
+    const world: BlockWorld = { getChunk: (cx, cy) => chunks.get(cx + ',' + cy), getLevel: (x, y) => (x === 2 && y === 2 ? 9 : 0) };
+    const scene = new THREE.Scene();
+    const wall: SpriteArt = { canvas: {} as HTMLCanvasElement, ox: 0, oy: -18, w: 32, h: 50, hit: { x: 0, y: -18, w: 32, h: 50 } };
+    const sprites = new ChunkSprites(scene, world, { tile: 32, k: 1, art: (id) => (id === 9 ? { sprite: wall, walkable: false, stack: 2 } : null) });
+    sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    const mesh = sprites.meshes()[0];
+    expect(mesh.count).toBe(2);
+    const m = new THREE.Matrix4();
+    const ys = [0, 1].map((i) => { mesh.getMatrixAt(i, m); return new THREE.Vector3().setFromMatrixPosition(m).y; });
+    expect(ys).toEqual([0, 1]);
+    // um ponto a 1,4 de altura está no 2º exemplar (lift 1) a 0,4 acima da base dele: dentro do retângulo clicável
+    const hit = (i: number, h: number) => sprites.cellOf({ object: mesh, instanceId: i, point: new THREE.Vector3(2.5, h, 3) } as unknown as THREE.Intersection);
+    expect(hit(1, 1.4)).toMatchObject({ x: 2, y: 2, lift: 1 });
+    expect(hit(0, 1.4)).toBeDefined(); // o 1º exemplar (50 px ≈ 1,56 célula) também cobre 1,4
+    expect(hit(1, 3)).toBeUndefined();  // acima do 2º exemplar (1 + 1,56 = 2,56)
+  });
 });
