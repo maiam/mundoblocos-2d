@@ -58,7 +58,8 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     const salt = isTownArt(id) ? 0x7041 : world.seed;
     const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : textures.objects.get(id);
     // Grade fina (ADR 0032): quem mantém os pixels de hoje cresce em células (`objectScaleFor`; árvore = tronco 1 × 1, desenho alto).
-    const f = objectScaleFor(def.shape);
+    // sebes da cidade repetem em todas as células finas (linha contínua): ficam do tamanho da célula, sem ampliar
+    const f = id === Block.HEDGE ? 1 : objectScaleFor(def.shape);
     const scale = f > 1 ? f : undefined;
     return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale } : null;
   };

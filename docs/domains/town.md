@@ -58,6 +58,9 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
 - **Moradores** (`domains/npc.md`): 16 NPCs nomeados (o ferreiro Black e 15 moradores) passeiam só por ruas e praças (`street`); o
   ferreiro atende dentro da Ferraria.
 
+## Grade fina (ADR 0032, F3 — só dev, `?grade=2`)
+A cidade continua sendo gerada na grade antiga (`buildTown`, semente fixa) e é **ampliada 2 × 2** por `upsampleTown` (`townLayout()` com `SUBDIV > 1`): mesmos pixels, mesmas ruas e construções. Muralha, chão, sebes e `TOWN_PART` repetem nas 4 células; o id de cada construção fica só na célula do canto inferior esquerdo; objetos soltos (árvores, flores, postes, barris) ficam numa célula (tronco 1 × 1). `TOWN_MARGIN`, `TOWN_SOUTH_FIELD`, `TOWN_WALL` e a estrada acompanham `SUBDIV`. A arte dos prédios mantém os pixels de hoje (`objectScaleFor`, escala em volta da base); as sebes ficam do tamanho da célula nova. **Ainda sem interiores/tenda, dungeon, lobos e goblins na grade fina (F4); a regra de entrada pela porta usa `door` já ampliado.** `town.test.ts` cobre `upsampleTown`.
+
 ## Interiores (`world/interiors.ts`, ADR 0014)
 - Cômodo isolado do mapa em coordenadas fixas ao norte (`INTERIOR_ORIGIN`), sobreposição `InteriorTerrain`, protegido.
   Mapa lógico (`InteriorDef.map`: `#` bloqueado, `.` chão, `E` capacho) desenhado sobre a arte (grade em partes iguais).

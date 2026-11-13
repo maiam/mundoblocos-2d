@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.53 — grade fina, F3: a cidade (só dev, `?grade=2`) (13/11/2026)
+- **ADR 0032, F3:** com `?grade=2` a Cidade do Despertar existe na grade fina, **com os mesmos pixels de hoje**: `upsampleTown` (`world/town.ts`) amplia o mapa lógico 2 × 2 — área, portão, construções (retângulo e porta), ruas, muralha de 2 cubos, `TOWN_PART` e sebes repetem nas 4 células; o id da construção fica na célula do canto inferior esquerdo; objetos soltos (árvores, flores, postes, barris, caixas, placas) numa célula só. `TOWN_MARGIN`/`TOWN_SOUTH_FIELD`/`TOWN_WALL`/estrada × `SUBDIV`. A arte dos prédios mantém os pixels (`objectScaleFor('building')`); as sebes ficam do tamanho da célula (`worldSpriteArt`).
+- **Conferido no navegador (seed 42):** praça inicial, poço, bancos, torres, lampiões, casas, a Guilda e o castelo com os mesmos tamanhos do padrão, personagem igual; NPCs presentes. 5 testes novos (`town.test.ts`: dimensões, retângulos das construções, âncora única, muralha/portão, objetos soltos × repetidos). Padrão inalterado (`SUBDIV = 1` devolve o mesmo mapa).
+- **Ainda fora da grade fina (F4):** interiores e tenda (por ora sem cômodos), dungeon, lobos e goblins. **Risco anotado:** construções grandes são montadas pelo chunk da âncora; com chunks de 16 células finas o castelo (52 células) pode sumir se a âncora sair da margem — verificar no uso.
+
 ## Orvalis v0.93.52 — grade fina, F2: objetos e elementos ao redor dos atores (só dev, `?grade=2`) (13/11/2026)
 - **Aprovado pelo dono do produto (13/11):** o protótipo F1 "ficou ótimo" (proporção personagem × terra, cenoura, trigo e árvores).
 - **Tabela de tamanhos em código:** `objectScaleFor(shape)` (`render/worldScale.ts`, testada): árvores e prédios mantêm os pixels de hoje (crescem `SUBDIV` em células, em volta do meio da base; tronco 1 × 1); decoração, cultivos, cercas, móveis, baú, tenda e pedregulho encolhem com a célula (conferido num catálogo de todos os objetos ao lado do personagem). `worldSpriteArt` usa a tabela.

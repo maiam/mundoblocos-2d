@@ -1,4 +1,4 @@
-import { CHUNK_SIZE } from '../config';
+import { CHUNK_SIZE, SUBDIV } from '../config';
 import { Block, blockDef, type BlockId } from './blocks';
 import { hash2 } from './random';
 import type { Biome } from './biomes';
@@ -49,7 +49,7 @@ function open(world:World,x:number,y:number):boolean {
  * No dynamic placement during rendering or entity respawning.
  */
 export function planGoblinCamps(world:World):GoblinCamp[] {
-  if(world.profile.id!=='principal'||!world.town)return [];
+  if(world.profile.id!=='principal'||!world.town||SUBDIV>1)return []; // grade fina (ADR 0032): acampamentos voltam na F4
   const town=world.town;
   const mx=(town.area.x0+town.area.x1)/2;
   const my=(town.area.y0+town.area.y1)/2;

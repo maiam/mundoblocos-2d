@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import type { Biome } from './biomes';
 import { Block, type BlockId, blockDef } from './blocks';
 import { inRect, type Rect } from './dungeon';
@@ -21,15 +22,15 @@ const TOWN_X0 = -TOWN_W / 2;
 const TOWN_Y0 = -TOWN_H;
 const TOWN_SEED = 0x0de59e7a;
 /** Anel ao redor da muralha onde o terreno vira terra firme (sem água) e, perto dela, fica livre de objetos. */
-export const TOWN_MARGIN = 8;
-const TOWN_CLEAR = 3;
+export const TOWN_MARGIN = 8 * SUBDIV;
+const TOWN_CLEAR = 3 * SUBDIV;
 /** Estrada de terra que sai do portão para o sul. */
-const ROAD_LEN = 14;
+const ROAD_LEN = 14 * SUBDIV;
 /** Campo ao sul do portão (estrada + rebanho inicial) que a dungeon não pode ocupar (células abaixo da muralha). */
-export const TOWN_SOUTH_FIELD = 28;
+export const TOWN_SOUTH_FIELD = 28 * SUBDIV;
 const WALL = 2;
 /** Espessura da muralha em células (a regra de proteção por chunk usa o anel que ela forma na borda de `area`). */
-export const TOWN_WALL = WALL;
+export const TOWN_WALL = WALL * SUBDIV;
 
 export interface TownBuilding {
   id: BlockId;
@@ -122,9 +123,64 @@ const YARD = 8;
 
 let cached: TownLayout | null = null;
 
-/** A cidade (sempre a mesma; calculada uma vez). */
+/** A cidade (sempre a mesma; calculada uma vez). Com a grade fina (ADR 0032) é a mesma cidade, ampliada `SUBDIV` × `SUBDIV`. */
 export function townLayout(): TownLayout {
-  return (cached ??= buildTown());
+  return (cached ??= SUBDIV > 1 ? upsampleTown(buildTown(), SUBDIV) : buildTown());
+}
+
+/**
+ * Cidade na grade fina (ADR 0032, F3): cada célula vira `s` × `s`, então a cidade tem os mesmos pixels de hoje. Chão, camada de
+ * cima, ruas, muralha, partes de construção (`TOWN_PART`) e sebes repetem em todas as células; o id da construção fica só na
+ * célula do canto inferior esquerdo da sua; objetos soltos (árvores, flores, postes, barris…) ficam numa célula só (tronco 1 × 1).
+ * A área, o portão, as construções e os pontos de referência ganham as coordenadas novas. `s = 1` devolve o mapa como está.
+ */
+export function upsampleTown(l: TownLayout, s: number): TownLayout {
+  if (s === 1) return l;
+  const W = l.w * s;
+  const H = l.h * s;
+  const ground = new Uint8Array(W * H);
+  const objects = new Uint8Array(W * H);
+  const upper = new Uint8Array(W * H);
+  const street = new Uint8Array(W * H);
+  const buildingAt = new Int16Array(W * H).fill(-1);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const cx = Math.floor(x / s);
+      const cy = Math.floor(y / s);
+      const j = cy * l.w + cx;
+      const i = y * W + x;
+      ground[i] = l.ground[j];
+      upper[i] = l.upper[j];
+      street[i] = l.street[j];
+      buildingAt[i] = l.buildingAt[j];
+      const o = l.objects[j] as BlockId;
+      if (o === Block.AIR) continue;
+      const corner = x % s === 0 && y % s === s - 1; // canto inferior esquerdo da célula antiga
+      if (o === Block.TOWN_PART || o === Block.HEDGE || blockDef(o).shape === 'cube') objects[i] = o;
+      else if (l.buildingAt[j] >= 0) objects[i] = corner ? o : Block.TOWN_PART; // âncora de construção: o resto do lote é parte sólida
+      else if (corner) objects[i] = o;
+    }
+  }
+  const a = l.area;
+  const sc = (r: Rect): Rect => ({ x0: r.x0 * s, y0: r.y0 * s, x1: (r.x1 + 1) * s - 1, y1: (r.y1 + 1) * s - 1 });
+  const pt = ([x, y]: [number, number]): [number, number] => [x * s, y * s];
+  return {
+    w: W, h: H,
+    area: sc(a),
+    gate: sc(l.gate),
+    start: pt(l.start),
+    doorstep: pt(l.doorstep),
+    castleDoor: pt(l.castleDoor),
+    buildings: l.buildings.map((b) => ({
+      ...b,
+      x: b.x * s,
+      y: (b.y + 1) * s - 1,
+      w: b.w * s,
+      d: b.d * s,
+      door: b.door ? pt(b.door) : null,
+    })),
+    ground, objects, upper, buildingAt, street,
+  };
 }
 
 function buildTown(): TownLayout {
