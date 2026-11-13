@@ -39,7 +39,7 @@ export class DoorSprites {
   private readonly animator = new DoorAnimator();
   private drawn = 0;
 
-  constructor(private readonly scene: THREE.Scene, private readonly world: DoorWorld, private readonly opts: DoorSpritesOptions) {}
+  constructor(private readonly scene: THREE.Object3D, private readonly world: DoorWorld, private readonly opts: DoorSpritesOptions) {}
 
   get count(): number { return this.drawn; }
 

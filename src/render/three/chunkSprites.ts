@@ -54,7 +54,7 @@ export class ChunkSprites {
   private generation = 0;
 
   constructor(
-    private readonly scene: THREE.Scene,
+    private readonly scene: THREE.Object3D,
     private readonly world: BlockWorld,
     private readonly opts: ChunkSpritesOptions,
   ) {}

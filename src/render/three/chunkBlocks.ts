@@ -38,7 +38,7 @@ export class ChunkBlocks {
   private readonly dummy = new THREE.Object3D();
 
   constructor(
-    private readonly scene: THREE.Scene,
+    private readonly scene: THREE.Object3D,
     private readonly world: BlockWorld,
     private readonly opts: ChunkBlocksOptions,
   ) {}

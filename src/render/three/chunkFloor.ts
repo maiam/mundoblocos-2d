@@ -29,7 +29,7 @@ export class ChunkFloor {
   private readonly geometry: THREE.PlaneGeometry;
 
   constructor(
-    private readonly scene: THREE.Scene,
+    private readonly scene: THREE.Object3D,
     private readonly world: FloorWorld,
     private readonly source: FloorSource,
     private readonly maxRendersPerFrame = 2,

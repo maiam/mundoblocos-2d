@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.38 — M4.1: interiores do Mundo em 2.5D, atrás de `?render=3d` (13/11/2026)
+- **`InteriorRoom`:** ao entrar numa construção (`opts.interior`), o conteúdo do mundo aberto (agora numa `worldLayer`) é escondido e a arte pronta do cômodo é estendida sobre o chão da área — na vista oblíqua K = 1 aparece igual ao 2D —, com o fundo escuro; atores e itens em pé por cima (só os de dentro), sem céu, nuvens, luz da noite nem partículas. Ao sair, o mundo volta e o fundo do céu é restaurado. O cômodo segue isolado ao norte (ADR 0014; decisão de manter o cômodo isolado até o W5). `interior` → `honored`.
+- Conferido no navegador (seed 42): ferraria em 2D × 3D — arte, ferreiro e personagem corretos, camada do mundo escondida lá dentro e de volta na rua, sem erros. Ainda sem a dungeon (covil, farol e seta da entrada: M4.2) e o piloto (M5). Só dev; física inalterada. 413 testes (4 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.37 — M3.4: porta animada e partículas do Mundo em 2.5D; M3 concluído (13/11/2026)
 - **`doorAnim.ts` (puro, testado):** a animação da porta (8 quadros, 0,32 s, sem animar na primeira vez vista) extraída do `Renderer` 2D e **compartilhada** com o 3D; o 2D passou a usá-la sem mudar o comportamento (conferido: fechada, abrindo e aberta iguais). **`DoorSprites`:** portas fora do `ChunkSprites`, um plano por porta visível com o quadro do momento, lista por chunk guardada por `chunk.version`, aberta não escreve profundidade, `pick` pelo retângulo clicável.
 - **Partículas do bioma** (pétalas, poeira, pólen, vaga-lumes à noite) na camada 2D, na ordem do 2D. `player` → `honored`.
