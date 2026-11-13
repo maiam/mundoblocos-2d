@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.36 — M3.3: luz e ciclo dia/noite do Mundo em 2.5D (13/11/2026)
+- **Decisão do dono do produto (13/11):** a luz do Mundo liga **só à noite e na dungeon**; de dia o jogo fica claro como hoje (a camada nem é desenhada). Registrada na ADR 0031.
+- **`worldLight.ts` (puro, testado):** brilho ambiente pelo mesmo `skyAt` do 2D (1 de dia → 0,24 à meia-noite; penumbra de 0,3 na dungeon), cor da escuridão e coleta das luzes visíveis — a do jogador + fogueira, caldeirão, forno e lampiões da cidade (raio/cor das tabelas existentes), mais próximas primeiro, com a oscilação do fogo. `SanctuaryLighting.setAmbient` (brilho e cor variáveis) reaproveita o shader do Santuário (teto de 12 luzes). `time` e `inDungeon` → `honored`.
+- Conferido no navegador (seed 42): meio-dia sem camada (179 chamadas de desenho), entardecer escurecendo, meia-noite com poça de luz no jogador e brilho nos lampiões da praça, sem erros. Ainda sem tinta laranja do pôr do sol, brilho aditivo de dia, sombras projetadas e oclusão da luz (parte da evolução da ADR 0029); animação da porta e partículas (M3.4). Só dev; física inalterada. 402 testes (6 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.35 — M3.2: camada 2D (dano, vinheta, fade) do Mundo em 2.5D (13/11/2026)
 - **`Overlay2D`:** canvas 2D irmão do canvas do jogo, logo depois dele no DOM (abaixo do HUD), `pointer-events: none`, redimensionado só quando a tela/densidade mudam. Desenha **números de dano** (`addDamage` agora funciona; crítico amarelo e maior, dano no jogador vermelho), **vinheta de dano** (`hurtFlash`) e **fade de porta** (`fade`) com o mesmo código do 2D. `WORLD_THREE_OPTIONS`: `dt`, `hurtFlash` e `fade` → `honored`.
 - Conferido no navegador (seed 42): números 99! / 12 / 37 acima do jogador, overlay sem pegar toques (o elemento sob o ponto continua sendo o canvas do jogo), sem erros. Ainda sem luz e dia/noite (M3.3), animação da porta e partículas (M3.4), interiores e dungeon (M4). Só dev; física inalterada. 396 testes (4 novos). Sem mudança de protocolo, save ou servidor.

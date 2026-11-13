@@ -96,6 +96,7 @@ src/
     (SpriteSheet.frameAspect/shadowRadii: o 3D lê o tamanho da folha sem mexer no desenho 2D)
     worldBlockFaces.ts         topo e frente (provisória) de cada cubo do Mundo para o 3D
     groundFxMath.ts            matemática pura dos efeitos de chão (brilho da água, sombras de nuvens): a mesma do `Renderer` 2D
+    worldLight.ts              luz do Mundo (pura): brilho ambiente pela hora, cor da escuridão, luzes dos blocos que brilham (ADR 0031, M3.3)
     worldSpriteArt.ts          qual sprite 2D desenha cada objeto do Mundo no 3D (variações por célula, porta por estado, cerca emendada)
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     damageNumbers.ts           números de dano subindo na tela (apresentação)

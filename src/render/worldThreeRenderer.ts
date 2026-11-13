@@ -5,6 +5,9 @@ import { ActorBillboards } from './three/actorBillboards';
 import { DropSprites, HoverRing } from './three/itemSprites';
 import { drawFade, drawHurtVignette, Overlay2D } from './three/overlay2d';
 import { DamageNumbers } from './damageNumbers';
+import { SanctuaryLighting } from './sanctuaryLighting';
+import { flickerFactor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
+import { collectWorldLights, worldAmbient } from './worldLight';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
@@ -36,7 +39,7 @@ const FLOOR_MARGIN = 1;
  * M2: chão por chunk (textura do `ChunkRenderer`), cubos (`ChunkBlocks`, frente provisória), objetos altos e a cidade
  * (`ChunkSprites`, planos verticais), efeitos de chão (`GroundFx`). M3.1: atores (`ActorBillboards`: jogador, NPCs, animais,
  * goblins e monstros em planos verticais com sombra, nome, coração e barra de vida), itens caídos e o anel da ovelha.
- * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. Ainda **não** desenha luz/dia-noite, partículas, animação da porta, interiores e dungeon
+ * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. M3.3: luz e escuridão só à noite e na dungeon. Ainda **não** desenha partículas, animação da porta, interiores e dungeon
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -59,6 +62,8 @@ export class WorldThreeRenderer implements GameRenderer {
   /** Camada 2D sobre o WebGL: números de dano, vinheta de dano e escurecer de porta (M3.2). */
   private readonly overlay: Overlay2D;
   private readonly damageNumbers = new DamageNumbers();
+  /** Luz e escuridão (M3.3): só à noite e na dungeon (clima padrão decidido em 13/11/2026); o dia não desenha a camada. */
+  private readonly lighting = new SanctuaryLighting(1);
   /** Ícones dos itens caídos: itens pelo pacote de arte; materiais pelo ícone do bloco (como no 2D). */
   private readonly itemIcons = new ItemIcons((id) => {
     const b = stackBlock(id);
@@ -128,12 +133,35 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ring.update(opts.hoverSheep);
     this.selection.update(opts);
     this.stage.render();
+    this.drawLighting(cam, opts, view);
     const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
     if (ctx) {
       this.damageNumbers.draw(ctx, cam, opts.dt);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }
+  }
+
+  /** Escuridão com poças de luz pela hora do dia (`opts.time`) e pelo covil (`opts.inDungeon`); dia pleno: nada é desenhado. */
+  private drawLighting(cam: Camera, opts: RenderOptions, view: { x0: number; y0: number; x1: number; y1: number }): void {
+    const amb = worldAmbient(opts.time, opts.inDungeon);
+    if (!amb.active) return;
+    const focus = { x: cam.x / TILE, z: cam.y / TILE };
+    const cellPx = TILE * cam.zoom;
+    const reach = Math.hypot(cam.width, cam.height) / (2 * cellPx);
+    const a = opts.actors[0];
+    const player: LightSource = { x: a ? a.x : focus.x, z: a ? a.y : focus.z, ...PLAYER_LIGHT };
+    const glows = collectWorldLights(view, (x, y) => this.world.getObject(x, y), (id) => {
+      const color = this.textures.glowColor.get(id);
+      return color ? { color, at: this.textures.glowAt.get(id) } : undefined;
+    });
+    const chosen = [player, ...pickLights(glows, focus, reach, 11)];
+    this.lighting.setAmbient(amb.ambient, amb.dark);
+    this.lighting.update(chosen, {
+      focus, cellPx, width: cam.width, height: cam.height,
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 2), k: OBLIQUE_K, elapsed: opts.elapsed,
+    }, (l, i) => flickerFactor(l.flicker, opts.elapsed, l.x * 7 + l.z * 13 + i));
+    this.lighting.render(this.stage.gpu);
   }
 
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
@@ -171,6 +199,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();
+    this.lighting.dispose();
     this.stage.dispose();
   }
 }
