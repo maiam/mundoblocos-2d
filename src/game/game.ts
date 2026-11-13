@@ -101,6 +101,12 @@ export class Game {
   private readonly collect: boolean;
   readonly drops = new Drops();
   private readonly renderer: GameRenderer;
+  /** Tempo (ms) que `renderer.draw` gastou nos últimos quadros (anel de 1200): separa o custo de JS do custo de GPU no painel `?fps=1`. */
+  private readonly drawRing = new Float32Array(1200);
+  private drawCount = 0;
+  get drawTimes(): { samples: Float32Array; count: number } {
+    return { samples: this.drawRing, count: this.drawCount };
+  }
   /** Contadores de desempenho da GPU (só o renderer WebGL tem; null no 2D): usados pelo painel `?fps=1` (dev e piloto). */
   get rendererStats(): ReturnType<NonNullable<GameRenderer['stats']>> | null {
     return this.renderer.stats?.() ?? null;
@@ -797,6 +803,7 @@ export class Game {
 
     const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
     this.updateMinimap(room?.def.name ?? null, now);
+    const drawStart = performance.now();
     this.renderer.draw(this.camera, {
       player: this.player,
       actors: this.remotes.size ? [...this.entities.actors, ...this.remotes.actors] : this.entities.actors,
@@ -814,6 +821,7 @@ export class Game {
       elapsed: this.elapsed,
       dt,
     });
+    this.drawRing[this.drawCount++ % this.drawRing.length] = performance.now() - drawStart;
     this.hud.setSlots(Array.from({ length: this.hotbar.length }, (_, i) => {
       const id = this.hotbar.stack(i);
       return id ? this.stackView(id, this.inventory.count(id)) : null;
