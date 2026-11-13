@@ -49,3 +49,27 @@ export const SANCTUARY_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport>
   interior: 'ignored',        // interiores (Fase 4)
   fade: 'ignored',
 };
+
+/**
+ * Mapa de paridade do `WorldThreeRenderer` (Mundo em 2.5D, ADR 0031): o que cada campo de `RenderOptions` já faz. Fatia M2.1.
+ * Cada marco (M2.2…M4) vira `honored` o que passar a desenhar; o `Record` obriga a classificar todo campo novo.
+ */
+export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
+  player: 'ignored',          // o personagem vem de `actors[0]`
+  actors: 'honored',          // M2.1: só o primeiro ator (o jogador); os demais entram no M3
+  showChunkBorders: 'ignored',
+  hover: 'honored',
+  breaking: 'honored',
+  drops: 'ignored',           // itens caídos (M3)
+  focus: 'honored',
+  hoverSheep: 'ignored',      // M3
+  time: 'ignored',            // dia/noite e luzes (M3)
+  elapsed: 'honored',
+  dt: 'ignored',
+  hurtFlash: 'ignored',       // M3 (camada 2D)
+  inDungeon: 'ignored',       // M4
+  entrance: 'ignored',        // M4
+  dungeonArea: 'ignored',     // M4
+  interior: 'ignored',        // M4
+  fade: 'ignored',            // M4
+};

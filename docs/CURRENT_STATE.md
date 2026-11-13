@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-12 — v0.93.29 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-12 — v0.93.30 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.29 | `package.json` |
+| Versão do jogo | 0.93.30 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 20 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -93,10 +93,10 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 ## Santuário oficial Three.js e autotile (11/11/2026)
 - **Santuário** (`?mundo=santuario`) utiliza por padrão malhas 3D reais com WebGL/Three.js, câmera superior ortográfica levemente inclinada e Deusa animada com sprite 2D em billboard. Reaproveita o `Game`, `World`, `Player`, hotbar, salvamento e ações oficiais, com **dois níveis** e autotile horizontal herdado da base. Os 18 blocos existentes usam seus materiais oficiais. `?render=2d` preserva o renderizador anterior e WebGL indisponível aciona fallback para Canvas 2D.
-- **Câmera do Santuário (PRs #92–#93):** ortográfica a ~67° acima do chão (vista oblíqua K = 1 é o padrão desde a v0.93.10). **O mármore V2/V3 (formas adaptativas, base de duas células, ordem de colocação) foi removido na v0.93.29 (W4):** o Mármore Celestial (82) é um cubo comum; paredes novas são as autotile (ADR 0027).
-- **Mundo principal** continua integralmente em Canvas 2D, sem carregar Three.js (migração planejada na ADR 0031; M1 — núcleo `render/three/` — feito na v0.93.29). O Santuário Three separado do PR #86 continua experimental, sem promoção de suas câmeras extra, editor de cinco níveis ou porta especial.
+- **Câmera do Santuário (PRs #92–#93):** ortográfica a ~67° acima do chão (vista oblíqua K = 1 é o padrão desde a v0.93.10). **O mármore V2/V3 (formas adaptativas, base de duas células, ordem de colocação) foi removido na v0.93.30 (W4):** o Mármore Celestial (82) é um cubo comum; paredes novas são as autotile (ADR 0027).
+- **Mundo principal** continua integralmente em Canvas 2D, sem carregar Three.js (migração planejada na ADR 0031; M1 — núcleo `render/three/` — feito na v0.93.29; M2.1 — chão em `?render=3d`, só dev — na v0.93.30). O Santuário Three separado do PR #86 continua experimental, sem promoção de suas câmeras extra, editor de cinco níveis ou porta especial.
 
-- **Porta de parede (v0.93.25):** bloco `WALL_DOOR_PLANKS` entre duas paredes comuns, 3 quadros no atlas (arte final de Tábuas desde a v0.93.29); **alcançável no Santuário** pela hotbar (v0.93.29); o Mundo principal ainda não as lista (W5).
+- **Porta de parede (v0.93.25):** bloco `WALL_DOOR_PLANKS` entre duas paredes comuns, 3 quadros no atlas (arte final de Tábuas desde a v0.93.30); **alcançável no Santuário** pela hotbar (v0.93.30); o Mundo principal ainda não as lista (W5).
 - Paredes construídas com tijolo de pedra, pedra lisa/polida, tábuas de carvalho/cerejeira/bétula e os mármores/pedras celestiais (82–85) afinam **somente** entre vizinhos horizontais do mesmo material (ou porta oficial existente) e sem vizinhos norte/sul, usando **exclusivamente o nível inferior (0) para decidir a forma**. O nível superior (1) herda a geometria da base — parede fina ou pilar — sem consultar seus próprios vizinhos; preserva sempre a textura/material do bloco superior. Porta na base funciona como pilar; materiais não construtivos nunca afinam. Face frontal permanece alinhada; topo desenhado com metade da profundidade. Isolados, extremidades, massas 2×2 e 3×3 permanecem maciços.
 - Todos os blocos empilháveis: **máximo de dois níveis (0 e 1)**. Salvos de versões anteriores com terceiro nível descartam esse nível na leitura (o jogo avisa quantos blocos foram removidos; a sala do servidor registra no log); a altura do jogador é limitada a 2. Sem alterações de câmera/terreno/natureza ou itens de porta.
 - **Arte oficial dos seis blocos 80–85**: seis texturas quadradas 512×512 versionadas em `src/assets/santuario-*-512.jpg` usadas em topos, frentes, chão e ícones; os outros 12 blocos celestiais usam o atlas original. Só o pacote do Santuário importa essas artes.
