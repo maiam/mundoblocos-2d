@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.46 — relatório do PC aprovado e teste de vazamento do 3D (13/11/2026)
+- **Relatório do dono do produto (PC Windows, Edge, 1912 × 948, v0.93.45, 180 s, zero pausas):** média **59,6 fps**, 5% piores **51,8 fps**, pior quadro 67 ms, **0,3%** dos quadros > 33 ms, JS do `draw` **3,4 ms** (p95 6,2) — o 3D roda a ~60 fps fixos no PC. Registrado em `docs/PARITY_3D.md`.
+- **`npm run leak:3d`** (`scripts/leak-3d.cjs`): percorre ~140 chunks novos com `?render=3d`, coletando o lixo a cada passo, e falha se texturas, geometrias ou memória do JS crescerem depois do aquecimento. Resultado: texturas estáveis em ~104, geometrias em 84, JS em 15 MB — **sem vazamento** (os 58 MB do relatório eram lixo ainda não coletado).
+- Só ferramenta e docs; sem mudança de jogo, protocolo, save ou servidor.
+
 ## Orvalis v0.93.45 — árvores sem faixas, seleção igual à do 2D e medidor que ignora pausas (13/11/2026)
 - **Achados do teste no PC (dono do produto):** (1) copas de árvores com faixas e transparência — *z-fighting* entre planos de objetos vizinhos na mesma linha (mesma profundidade); (2) seleção de blocos "inexata". Corrigidos no render 3D do Mundo (só dev/piloto):
   - **Profundidade:** `spriteDepthBias` — cada coluna avança uma fração de célula (0,0015, ciclo de 64) para o lado do espectador, reproduzindo a ordem esquerda→direita do 2D; objetos e portas ganham 0,01 de folga sobre as faces dos cubos (mesmo plano). Tudo < 0,14 (pés do personagem).

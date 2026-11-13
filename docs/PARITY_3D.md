@@ -30,6 +30,8 @@ Atualize a tabela quando um cenário mudar de estado.
 
 | 13/11/2026 | O mesmo PC, painel com o regime estável, 159 s (6000 quadros guardados) | 3D | média **51 fps**, 5% piores 13 fps, "pior quadro" **15 400 ms**; só **0,4%** dos quadros > 33 ms e **0,1%** > 50 ms; **JS do `draw`: média 3,9 ms, p95 6,4, máx. 13,9**; 337 chamadas, 6,9k triângulos, 96 texturas, 65 geometrias; 33 MB; nas capturas o painel marcava **60 fps · 16,7 ms (pior 17)** | **No PC o 3D roda a 60 fps estáveis.** A média de 51 e o "pior quadro" de 15,4 s vinham de **uma pausa do navegador** (a aba ficou em segundo plano — o WhatsApp aparece aberto ao lado nas capturas): sem ela a média é ≈ 58,7 fps. O JS gasta 3,9 ms (cabe folgado nos 16,7 do PC; confirma a medição de 3 ms da VM). O painel passou a **excluir pausas** (> 1 s entre quadros) das médias e a contá-las à parte. Falta o 2D para comparar e os aparelhos. |
 
+| 13/11/2026 | O mesmo PC, versão 0.93.45, 180 s (6000 quadros guardados), zero pausas | 3D | média **59,6 fps**; 5% piores **51,8 fps**; pior quadro **67 ms**; **0,3%** dos quadros > 33 ms, **0,1%** > 50 ms; **JS do `draw` 3,4 ms (p95 6,2; máx. 14,5)**; 289 chamadas, 2,8k triângulos, 109 texturas, 70 geometrias; 58 MB de JS | **Aprovado no PC:** praticamente 60 fps fixos, JS pequeno, sem engasgos relevantes. Os 58 MB são lixo ainda não coletado: o teste de vazamento (`npm run leak:3d`, ~140 chunks percorridos) mostra texturas estáveis em ~104, geometrias em 84 e JS em 15 MB depois do coletor — **sem vazamento**. |
+
 **Achados do relatório visual (mesmo PC, 13/11/2026), corrigidos na v0.93.45:**
 - **Copas com faixas/transparência:** *z-fighting* entre planos de árvores vizinhas na mesma linha (mesma profundidade; no 2D a ordem esquerda→direita resolvia). Agora cada coluna tem um desempate de profundidade (`spriteDepthBias`), e objetos ficam um pouco à frente das faces dos cubos.
 - **Seleção "inexata":** (1) o 3D só mostrava um quadrado amarelo plano no chão, e só quando válido; passou a usar **os mesmos desenhos do 2D** (moldura do cursor, cantoneiras do alvo, rachaduras), em volta do que se vê (cubo = topo + frente; objeto = retângulo clicável). (2) As ferramentas de chão (pá, enxada, sementes) calculavam o alvo pelo mapeamento do chão do 2D; com K = 1 o topo de um cubo cobre o chão da célula ao norte e a ação ia para a célula errada. O 3D agora informa o chão **que se vê** (`pickGround`), ignorando árvores como o 2D.
@@ -58,7 +60,7 @@ por quadro do canvas de cada ator (`ActorBillboards`) e o envio das texturas, o 
 - Física: por padrão **inalterada** (degrau automático ligado: com cubos de 1 célula a personagem "sobe" paredes). `?fisica=solida` (dev e piloto, só com `?render=3d`, offline) desliga o degrau do jogador (v0.93.41); lobos e goblins mantêm o degrau deles (decisão pendente).
 
 ## Ainda NÃO verificado (depende de aparelho real ou de decisão)
-- [ ] **Desempenho** em celular médio, iPad e Safari (meta: 30 FPS) — painel `?fps=1`; relatório copiado e colado na conversa.
+- [x] **Desempenho no PC** (Windows, Edge, 1912 × 948): 3D a ~60 fps, JS 3,4 ms, sem vazamento. [ ] **Falta em celular médio, iPad e Safari** (meta: 30 FPS) — painel `?fps=1`; relatório copiado e colado na conversa.
 - [ ] **Toque** (botão de ação no celular, toque no tablet), **vertical** (ADR 0030), zoom/pinça bloqueados.
 - [ ] **WebGL no iframe do Artifact** e **perda de contexto** no Mundo (testado só no Santuário).
 - [ ] **Sala multiplayer** em 3D (atores remotos, nomes, itens da sala).
