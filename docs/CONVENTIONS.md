@@ -1,7 +1,7 @@
 # Convenções
 
 ## Renderização por perfil
-- **Mundo principal:** Canvas 2D, sem Three.js. **Santuário:** Three.js/WebGL ortográfico superior (com fallback `?render=2d`); `Game`/`World`/save compartilhados. Não duplicar regras de bloco ou importar cenas do laboratório 5 níveis na engine oficial.
+- **Mundo principal:** renderer 2.5D em WebGL por padrão (`render/worldThreeRenderer.ts`, ADR 0031 M6), Canvas 2D de reserva com `?render=2d` e sem WebGL (até o M7). **Mudança visual do Mundo vale nos DOIS** enquanto o 2D existir: os desenhos compartilhados (`render/selectionFx.ts`, `dungeonFx.ts`, `doorAnim.ts`, `groundFxMath.ts`) ficam num lugar só. **Santuário:** Three.js/WebGL ortográfico superior (com fallback `?render=2d`); `Game`/`World`/save compartilhados. Não duplicar regras de bloco ou importar cenas do laboratório 5 níveis na engine oficial.
 - A célula lógica continua 32×32; no Three cada célula é unidade de 1×1 e a altura física é 1 por camada, no máximo duas camadas. Paredes finas legadas ocupam metade da profundidade da célula; o segundo nível herda seu formato. O mármore V2/V3 foi removido na v0.93.28 (W4): o Mármore Celestial é um cubo comum.
 
 ## Código

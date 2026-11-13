@@ -3,7 +3,7 @@ import type { RendererStats } from '../render/rendererContract';
 /**
  * Medição de desempenho para o piloto do Mundo em 2.5D (ADR 0031, M0/M5): `?fps=1` mostra um painel pequeno com FPS, tempo de
  * quadro, o que a GPU está desenhando e a memória do JS, e um toque nele copia um relatório (JSON) para colar na conversa — ou, sem permissão de área de transferência (HTTP na rede local), mostra o JSON numa caixa para copiar à mão.
- * Só em desenvolvimento ou no build de piloto (`VITE_PILOT_3D=1`); funciona também no 2D (sem contadores da GPU), para comparar.
+ * Disponível em qualquer build (a virada do Mundo para o 3D, v0.93.47, tirou a trava de dev/piloto); funciona também no 2D (sem contadores da GPU), para comparar.
  */
 
 /** Intervalo entre quadros acima disto = pausa do navegador (aba escondida), não um quadro lento. */
