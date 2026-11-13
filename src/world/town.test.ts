@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Block, blockDef } from './blocks';
 import { inRect } from './dungeon';
-import { TOWN_H, TOWN_W, townLayout } from './town';
+import { TOWN_H, TOWN_W, townLayout, upsampleTown } from './town';
 import { World } from './world';
 
 /** Células andáveis da cidade alcançáveis a partir de (x, y) sem sair da área. */
@@ -166,5 +166,70 @@ describe('Cidade do Despertar', () => {
     const [gx, gy] = w.outsideGate();
     expect(w.isProtected(gx, gy)).toBe(false);
     expect(gy).toBeGreaterThan(a.y1);
+  });
+});
+
+describe('cidade na grade fina (ADR 0032, F3): upsampleTown', () => {
+  const base = townLayout();
+  const fine = upsampleTown(base, 2);
+  const at = (x: number, y: number) => (y - fine.area.y0) * fine.w + (x - fine.area.x0);
+
+  it('com 1 devolve a mesma cidade', () => {
+    expect(upsampleTown(base, 1)).toBe(base);
+  });
+
+  it('dobra as dimensões, a área, o portão e os pontos de referência', () => {
+    expect([fine.w, fine.h]).toEqual([base.w * 2, base.h * 2]);
+    expect(fine.area).toEqual({ x0: base.area.x0 * 2, y0: base.area.y0 * 2, x1: (base.area.x1 + 1) * 2 - 1, y1: (base.area.y1 + 1) * 2 - 1 });
+    expect(fine.gate.x1 - fine.gate.x0 + 1).toBe((base.gate.x1 - base.gate.x0 + 1) * 2);
+    expect(fine.start).toEqual([base.start[0] * 2, base.start[1] * 2]);
+    expect(fine.buildings).toHaveLength(base.buildings.length);
+  });
+
+  it('cada construção tem o mesmo retângulo em pixels (lado dobrado, canto inferior esquerdo igual) e um único id na âncora', () => {
+    const anchors = new Map<number, number>();
+    for (let i = 0; i < fine.objects.length; i++) {
+      const k = fine.buildingAt[i];
+      if (k >= 0 && fine.objects[i] !== Block.TOWN_PART) anchors.set(k, (anchors.get(k) ?? 0) + 1);
+    }
+    fine.buildings.forEach((b, k) => {
+      const c = base.buildings[k];
+      expect([b.w, b.d]).toEqual([c.w * 2, c.d * 2]);
+      expect([b.x, b.y]).toEqual([c.x * 2, (c.y + 1) * 2 - 1]);
+      expect(anchors.get(k)).toBe(1);
+      expect(fine.objects[at(b.x, b.y)]).toBe(c.id);
+    });
+  });
+
+  it('muralha e portão: sólidos onde havia muralha, vão onde havia portão; o início é andável', () => {
+    const gx = fine.gate.x0 + 1;
+    const gy = fine.gate.y1;
+    expect(fine.objects[at(gx, gy)]).toBe(Block.AIR);
+    // uma célula de muralha qualquer (cubo de 2 níveis): as quatro células novas também o são
+    const w = base.objects.findIndex((o, i) => o === Block.STONE_BRICK && base.upper[i] === Block.STONE_BRICK);
+    expect(w).toBeGreaterThanOrEqual(0);
+    const [wx, wy] = [w % base.w, Math.floor(w / base.w)];
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+      const i = (wy * 2 + dy) * fine.w + wx * 2 + dx;
+      expect([fine.objects[i], fine.upper[i]]).toEqual([Block.STONE_BRICK, Block.STONE_BRICK]);
+    }
+    const [sx, sy] = fine.start;
+    expect(fine.objects[at(sx, sy)]).toBe(Block.AIR);
+    expect(fine.street[at(sx, sy)]).toBe(1);
+  });
+
+  it('objetos soltos (árvores, flores, postes) não se repetem nas quatro células; sebes e muralha sim', () => {
+    let singles = 0;
+    let blocks = 0;
+    for (let y = 0; y < base.h; y++) {
+      for (let x = 0; x < base.w; x++) {
+        const o = base.objects[y * base.w + x];
+        if (o === Block.AIR || base.buildingAt[y * base.w + x] >= 0) continue;
+        const n = [0, 1].flatMap((dy) => [0, 1].map((dx) => fine.objects[(y * 2 + dy) * fine.w + (x * 2 + dx)])).filter((v) => v === o).length;
+        if (o === Block.HEDGE || o === Block.STONE_BRICK) { expect(n).toBe(4); blocks++; } else { expect(n).toBe(1); singles++; }
+      }
+    }
+    expect(singles).toBeGreaterThan(50);
+    expect(blocks).toBeGreaterThan(50);
   });
 });

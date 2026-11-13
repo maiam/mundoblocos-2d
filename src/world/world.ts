@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, UNLOAD_MARGIN } from '../config';
+import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
 import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
@@ -135,9 +135,12 @@ export class World {
       this.cave = planCave(base, center, keep);
       this.generator = new DungeonTerrain(base, this.dungeon, this.cave);
     }
-    if (this.town) this.interiors = interiorLayouts(this.town);
-    // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
-    if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
+    // Grade fina (ADR 0032, F3): os interiores ainda são desenhados na grade antiga (F4) — por ora a cidade não tem cômodos nem tenda.
+    if (SUBDIV === 1) {
+      if (this.town) this.interiors = interiorLayouts(this.town);
+      // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
+      if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
+    }
     if (this.interiors.length) this.generator = new InteriorTerrain(this.generator, this.interiors);
     // Generated campfires live in the same terrain layer as every other object:
     // no permanent writes to chunks, and saved player edits still win.
