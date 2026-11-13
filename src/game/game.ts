@@ -99,6 +99,10 @@ export class Game {
   private readonly collect: boolean;
   readonly drops = new Drops();
   private readonly renderer: GameRenderer;
+  /** Contadores de desempenho da GPU (só o renderer WebGL tem; null no 2D): usados pelo painel `?fps=1` (dev e piloto). */
+  get rendererStats(): ReturnType<NonNullable<GameRenderer['stats']>> | null {
+    return this.renderer.stats?.() ?? null;
+  }
   private readonly hud: Hud;
   private readonly joystick: Joystick;
   private readonly keys = new Set<string>();

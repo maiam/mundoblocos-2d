@@ -45,6 +45,9 @@ export class ThreeStage {
     this.gpu = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.gpu.outputColorSpace = THREE.SRGBColorSpace;
     this.gpu.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    // O quadro tem mais de uma passada (cena, depois a camada de luz): os contadores acumulam o quadro inteiro e são zerados
+    // à mão no começo de `render()`; sem isso `stats()` mostraria só a última passada.
+    this.gpu.info.autoReset = false;
   }
 
   private readonly onLost = (e: Event): void => {
@@ -129,6 +132,7 @@ export class ThreeStage {
   }
 
   render(): void {
+    this.gpu.info.reset();
     this.gpu.render(this.scene, this.camera);
   }
 

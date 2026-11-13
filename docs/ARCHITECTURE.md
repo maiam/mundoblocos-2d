@@ -86,6 +86,7 @@ src/
     scaleLayout.ts             fila de comparação (dados puros, testados)
     scaleScene.ts              cena: grade, âncoras, células bloqueadas, nomes e alturas por cima do quadro real
     materialsScene.ts          cena ?materiais=1: atlas legado × materiais V2 lado a lado (ADR 0023)
+  dev/perfHud.ts               painel de desempenho `?fps=1` (dev e piloto): FPS, GPU, memória; toque copia o relatório
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo

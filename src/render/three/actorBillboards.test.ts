@@ -73,4 +73,25 @@ describe('ActorBillboards (atores do Mundo no 3D)', () => {
     bb.dispose();
     expect(scene.children).toHaveLength(0);
   });
+
+  it('eco do jogador: um plano translúcido sem teste de profundidade que acompanha o primeiro ator; só se ligado', () => {
+    const hero = sheetFor(70);
+    const scene = new THREE.Scene();
+    const bb = new ActorBillboards(scene, { get: () => hero }, { scale: 0.5, k: 1, paintZoom: 2, createCanvas: fakeCanvas, echo: true });
+    expect(bb.echoVisible).toBe(false);
+    bb.update(view, [actor('heroine', 5, 6), actor('heroine', 8, 9)], 0);
+    expect(bb.echoVisible).toBe(true);
+    const echo = scene.children.find((o) => o.name === 'Mundo: eco do jogador') as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+    expect(echo.material.depthTest).toBe(false);
+    expect(echo.material.opacity).toBeLessThan(0.6);
+    expect(echo.position.x).toBe(5); // o do primeiro ator, não o do segundo
+    expect(echo.position.z).toBe(6);
+    bb.update(view, [], 1);
+    expect(bb.echoVisible).toBe(false);
+    const plain = new ActorBillboards(new THREE.Scene(), { get: () => hero }, { scale: 0.5, k: 1, createCanvas: fakeCanvas });
+    plain.update(view, [actor('heroine', 1, 1)], 0);
+    expect(plain.echoVisible).toBe(false);
+    bb.dispose();
+    expect(scene.children).toHaveLength(0);
+  });
 });
