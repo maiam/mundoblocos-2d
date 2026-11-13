@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.23 — Parede de Pedra com arte no Santuário (13/11/2026)
+- **Arte recebida e conferida** (16 tampas + 4 frentes, `assets-src/paredes/pedra/`): tamanhos e faixa de y de cada forma corretos, nenhum alfa parcial, **emendas exatas** (0 de 128), franja de 16 px e junções resolvidas, igual a Tábuas.
+- **Pipeline:** `build-wall-atlas.py pedra` → `src/assets/walls-pedra.webp` (8 kB); `WALL_ART_MATERIALS` e `ArtPack.wallAtlases` ganham `WALL_STONE`. A Pedra deixa de usar cor lisa (o protótipo só resta para materiais futuros sem arte). Teste do registro atualizado (388).
+- Verificado no navegador: sala de pedra com porta, T e poste, ao lado de uma coluna de tábuas. Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.22 — W3: paredes de Tábuas com a arte real no Santuário (13/11/2026)
 - **Pipeline de arte:** `scripts/build-wall-atlas.py <material>` monta o atlas (16 tampas 4 × 4 + 4 frentes; 512 × 666, WebP sem perdas, ~9 kB) em `src/assets/walls-<material>.webp`; registrado no pacote de arte do Santuário (`ArtPack.wallAtlases`, `art/santuario.ts`) — ADR 0010.
 - **Regras puras testadas** (`render/wallAtlas.ts`, 6 testes): layout do atlas, máscara da tampa e escolha da frente (`wallArtPiece`: frente só onde não há parede ao sul; poste isolado/fim de coluna = `front_post`).

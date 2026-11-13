@@ -4,7 +4,7 @@ Apenas apresentação; lê `World`, nunca escreve.
 
 ## Paredes com arte (W3, v0.93.22, ADR 0027)
 
-`scripts/build-wall-atlas.py <material>` gera `src/assets/walls-<material>.webp` (16 tampas 4 × 4, índice = máscara N·1 + L·2 + S·4 + O·8, e 4 frentes abaixo; `render/wallAtlas.ts` guarda o layout e `wallArtPiece`, a escolha da peça). `render/sanctuaryWallArt.ts` desenha: um plano horizontal (tampa) à altura `WORLD_SCALE.wall` e, onde não há parede ao sul, um plano vertical (frente) com a base na face sul da laje; planos instanciados por peça, `alphaTest` 0,5, texturas recortadas do atlas (mipmaps sem sangrar). O `SanctuaryThreeRenderer` carrega os atlas do pacote de arte (`ArtPack.wallAtlases`) e refaz as paredes ao carregar; blocos sem atlas (Pedra) usam o protótipo de cor lisa. O `pick` inclui as malhas das paredes.
+`scripts/build-wall-atlas.py <material>` gera `src/assets/walls-<material>.webp` (16 tampas 4 × 4, índice = máscara N·1 + L·2 + S·4 + O·8, e 4 frentes abaixo; `render/wallAtlas.ts` guarda o layout e `wallArtPiece`, a escolha da peça). `render/sanctuaryWallArt.ts` desenha: um plano horizontal (tampa) à altura `WORLD_SCALE.wall` e, onde não há parede ao sul, um plano vertical (frente) com a base na face sul da laje; planos instanciados por peça, `alphaTest` 0,5, texturas recortadas do atlas (mipmaps sem sangrar). O `SanctuaryThreeRenderer` carrega os atlas do pacote de arte (`ArtPack.wallAtlases`) e refaz as paredes ao carregar; blocos sem atlas usam o protótipo de cor lisa (hoje Tábuas e Pedra têm atlas). O `pick` inclui as malhas das paredes.
 
 ## Iluminação dinâmica (v0.93.19, ADR 0029)
 

@@ -52,6 +52,6 @@ describe('atlas de paredes (W3)', () => {
     expect(frontPieceFor('end')).toBe('front_post');
     expect(frontPieceFor('mid')).toBe('front_mid');
     expect(WALL_ART_MATERIALS[Block.WALL_PLANKS]).toBe('tabuas');
-    expect(WALL_ART_MATERIALS[Block.WALL_STONE]).toBeUndefined(); // Pedra ainda sem arte
+    expect(WALL_ART_MATERIALS[Block.WALL_STONE]).toBe('pedra');
   });
 });
