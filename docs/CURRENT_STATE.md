@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-12 — v0.93.55 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-12 — v0.93.56 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.55 | `package.json` |
+| Versão do jogo | 0.93.56 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 20 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -96,7 +96,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Câmera do Santuário (PRs #92–#93):** ortográfica a ~67° acima do chão (vista oblíqua K = 1 é o padrão desde a v0.93.10). **O mármore V2/V3 (formas adaptativas, base de duas células, ordem de colocação) foi removido na v0.93.47 (W4):** o Mármore Celestial (82) é um cubo comum; paredes novas são as autotile (ADR 0027).
 - **Mundo principal (desde a v0.93.47, ADR 0031 M6 — a virada):** usa o renderer **2.5D em WebGL** (`render/worldThreeRenderer.ts`, núcleo `render/three/`) por padrão — chão por chunk, cubos, objetos e cidade como planos, atores e itens em billboards, água/nuvens, luz só à noite e na dungeon, interiores, dungeon, porta animada, partículas, camada 2D (dano, seleção, farol). **`?render=2d`** e aparelhos sem WebGL (ou falha ao carregar o módulo) usam o Canvas 2D de sempre (`render/renderer.ts`, reserva até o M7). Com o 3D o jogador **não sobe em cubos sozinho** (`?fisica=degrau` volta à regra antiga); lobos e goblins mantêm o degrau. Online e solo usam o mesmo renderer. **`?grade=2`** (v0.93.51–55, só dev — protótipo F1–F5, com cidade, interiores, covil, lobos e goblins ampliados da grade fina, ADR 0032: células de metade do lado, mundo do mesmo tamanho; sem save, sala e paredes novas) e **`?celulas=N`** (v0.93.50, experimento de escala, só 3D) muda as células visíveis na vertical (padrão 14) mantendo os pixels dos atores. **Cada `Game` recebe um `<canvas>` novo** (`freshCanvas()` em `main.ts`, v0.93.48): canvas com contexto 2D (vitrine do título) não aceita WebGL. O 3D vale em celular e tablet ("rodando ok", dono do produto) e a ~60 fps no PC (JS do `draw` ≈ 3,4 ms); **ainda não verificados:** Safari, o iframe do Artifact e a sala multiplayer em 3D. O Santuário Three separado do PR #86 continua experimental, sem promoção de suas câmeras extra, editor de cinco níveis ou porta especial
 
-- **Porta de parede (v0.93.25):** bloco `WALL_DOOR_PLANKS` entre duas paredes comuns, 3 quadros no atlas (arte final de Tábuas desde a v0.93.47); **alcançável no Santuário** pela hotbar (v0.93.47; ícones de arte de Tábuas e Pedra desde a v0.93.49, a porta segue com o ícone provisório `wallPlaceholderIcon`); o Mundo principal ainda não as lista (W5).
+- **Porta de parede (v0.93.25):** bloco `WALL_DOOR_PLANKS` entre duas paredes comuns, 3 quadros no atlas (arte final de Tábuas desde a v0.93.47); **alcançável no Santuário** pela hotbar (v0.93.47; ícones de arte de Tábuas e Pedra desde a v0.93.49, a porta segue com o ícone provisório `wallPlaceholderIcon`); **no Mundo (v0.93.56, W5 enxuta):** perfil principal, receitas no Construtor, ícones e render 3D (`ChunkWalls`); falta refazer cidade/interiores com paredes, porta de Pedra e a versão da grade fina.
 - Paredes construídas com tijolo de pedra, pedra lisa/polida, tábuas de carvalho/cerejeira/bétula e os mármores/pedras celestiais (82–85) afinam **somente** entre vizinhos horizontais do mesmo material (ou porta oficial existente) e sem vizinhos norte/sul, usando **exclusivamente o nível inferior (0) para decidir a forma**. O nível superior (1) herda a geometria da base — parede fina ou pilar — sem consultar seus próprios vizinhos; preserva sempre a textura/material do bloco superior. Porta na base funciona como pilar; materiais não construtivos nunca afinam. Face frontal permanece alinhada; topo desenhado com metade da profundidade. Isolados, extremidades, massas 2×2 e 3×3 permanecem maciços.
 - Todos os blocos empilháveis: **máximo de dois níveis (0 e 1)**. Salvos de versões anteriores com terceiro nível descartam esse nível na leitura (o jogo avisa quantos blocos foram removidos; a sala do servidor registra no log); a altura do jogador é limitada a 2. Sem alterações de câmera/terreno/natureza ou itens de porta.
 - **Arte oficial dos seis blocos 80–85**: seis texturas quadradas 512×512 versionadas em `src/assets/santuario-*-512.jpg` usadas em topos, frentes, chão e ícones; os outros 12 blocos celestiais usam o atlas original. Só o pacote do Santuário importa essas artes.

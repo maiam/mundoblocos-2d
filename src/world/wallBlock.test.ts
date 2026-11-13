@@ -87,9 +87,11 @@ describe('bloco parede (W2, ADR 0027)', () => {
     expect(b.isWallAt(x, y)).toBe(true);
   });
 
-  it('o mundo principal comum ainda não aceita paredes (sem receita nem perfil)', () => {
+  it('o mundo principal aceita paredes desde a W5 (v0.93.56)', () => {
     const w = new World(7);
-    const [x, y] = freeRun(worldWithWalls());
-    expect(w.placementLevel(x, y, Block.WALL_PLANKS)).toBeNull();
+    const [x, y] = w.outsideGate();
+    expect(w.placeBlock(x + 3, y + 4, Block.WALL_PLANKS)).toBe(true);
+    expect(w.isWallAt(x + 3, y + 4)).toBe(true);
+    expect(w.breakBlock(x + 3, y + 4)).toBe(Block.WALL_PLANKS);
   });
 });

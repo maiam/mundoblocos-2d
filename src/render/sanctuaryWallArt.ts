@@ -41,6 +41,44 @@ function pieceTexture(atlas: HTMLImageElement, r: AtlasRect): THREE.CanvasTextur
 
 interface Pieces { caps: THREE.CanvasTexture[]; fronts: Record<WallFrontPiece | WallDoorPiece, THREE.CanvasTexture> }
 
+/**
+ * Texturas das peças, materiais e geometrias compartilhados entre várias chamadas de `buildWallArt` (o Mundo monta as paredes por chunk:
+ * sem isto cada chunk criaria as 23 texturas do material de novo). Quem cria o cache é dono dele e chama `dispose`.
+ */
+export class WallPieceCache {
+  private readonly pieces = new Map<BlockId, Pieces>();
+  private readonly materials = new Map<string, THREE.MeshBasicMaterial>();
+  readonly capGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2); // +Y para cima; u para leste, v para norte (topo da textura = norte)
+  readonly frontGeo = new THREE.PlaneGeometry(1, WALL_ART_FRONT_H / WALL_ART_CELL); // vertical, olhando para o sul (+Z)
+
+  piecesFor(id: BlockId, atlas: HTMLImageElement): Pieces {
+    let p = this.pieces.get(id);
+    if (!p) {
+      p = {
+        caps: Array.from({ length: 16 }, (_, m) => pieceTexture(atlas, capRect(m))),
+        fronts: Object.fromEntries([...WALL_FRONT_PIECES, ...WALL_DOOR_PIECES].map((f) => [f, pieceTexture(atlas, frontRect(f))])) as Pieces['fronts'],
+      };
+      this.pieces.set(id, p);
+    }
+    return p;
+  }
+
+  material(key: string, tex: THREE.Texture): THREE.MeshBasicMaterial {
+    let m = this.materials.get(key);
+    if (!m) this.materials.set(key, (m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide })));
+    return m;
+  }
+
+  dispose(): void {
+    for (const p of this.pieces.values()) for (const t of [...p.caps, ...Object.values(p.fronts)]) t.dispose();
+    for (const m of this.materials.values()) m.dispose();
+    this.capGeo.dispose();
+    this.frontGeo.dispose();
+    this.pieces.clear();
+    this.materials.clear();
+  }
+}
+
 export function buildWallArt(
   world: { isWallAt(x: number, y: number): boolean; getObject(x: number, y: number): BlockId },
   bounds: { x0: number; x1: number; y0: number; y1: number },
@@ -48,28 +86,15 @@ export function buildWallArt(
   thickness: WallThickness,
   /** Portas ("x,y") em animação: desenham o quadro intermediário. */
   halfDoors: ReadonlySet<string> = new Set(),
+  /** Cache compartilhado (o chamador é o dono); sem ele, a chamada cria o seu e o libera em `dispose`. */
+  shared?: WallPieceCache,
 ): WallArtGroup {
   const group = new THREE.Group();
   group.name = 'Paredes (arte)';
   const meshes: THREE.InstancedMesh[] = [];
-  const disposables: Array<{ dispose(): void }> = [];
-  const pieces = new Map<BlockId, Pieces>();
-  const piecesFor = (id: BlockId, atlas: HTMLImageElement): Pieces => {
-    let p = pieces.get(id);
-    if (!p) {
-      p = {
-        caps: Array.from({ length: 16 }, (_, m) => pieceTexture(atlas, capRect(m))),
-        fronts: Object.fromEntries([...WALL_FRONT_PIECES, ...WALL_DOOR_PIECES].map((f) => [f, pieceTexture(atlas, frontRect(f))])) as Pieces['fronts'],
-      };
-      disposables.push(...p.caps, ...Object.values(p.fronts));
-      pieces.set(id, p);
-    }
-    return p;
-  };
-  const capGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2); // +Y para cima; u para leste, v para norte (topo da textura = norte)
+  const cache = shared ?? new WallPieceCache();
   const frontH = WALL_ART_FRONT_H / WALL_ART_CELL;
-  const frontGeo = new THREE.PlaneGeometry(1, frontH);               // vertical, olhando para o sul (+Z)
-  disposables.push(capGeo, frontGeo);
+  const { capGeo, frontGeo } = cache;
   const southFace = (1 + thickness.z) / 2;                            // z da face sul da laje, em células
 
   interface Instance { x: number; y: number; cell: { x: number; y: number } }
@@ -98,9 +123,9 @@ export function buildWallArt(
   }
   const dummy = new THREE.Object3D();
   for (const g of groups.values()) {
-    const tex = g.kind === 'cap' ? piecesFor(g.id, atlases.get(g.id)!).caps[g.piece as number] : piecesFor(g.id, atlases.get(g.id)!).fronts[g.piece as WallFrontPiece | WallDoorPiece];
-    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide });
-    disposables.push(mat);
+    const pc = cache.piecesFor(g.id, atlases.get(g.id)!);
+    const tex = g.kind === 'cap' ? pc.caps[g.piece as number] : pc.fronts[g.piece as WallFrontPiece | WallDoorPiece];
+    const mat = cache.material(`${g.id}:${g.kind}:${g.piece}`, tex);
     const mesh = new THREE.InstancedMesh(g.kind === 'cap' ? capGeo : frontGeo, mat, g.items.length);
     g.items.forEach((it, i) => {
       if (g.kind === 'cap') dummy.position.set(it.x + 0.5, WALL_HEIGHT, it.y + 0.5);
@@ -115,5 +140,5 @@ export function buildWallArt(
     group.add(mesh);
     meshes.push(mesh);
   }
-  return { group, doors, meshes, dispose() { for (const d of disposables) d.dispose(); } };
+  return { group, doors, meshes, dispose() { if (!shared) cache.dispose(); } };
 }

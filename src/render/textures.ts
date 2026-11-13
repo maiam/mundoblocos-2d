@@ -794,6 +794,11 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     // Ícone em arquivo próprio: ler um canvas desenhado com imagem de outro arquivo pode ser bloqueado (ADR 0013).
     icons.set(Block.OAK_DOOR, pack.materialIcons[Block.OAK_DOOR] ?? '');
   }
+  // Paredes autotile (W5): o desenho é do `ChunkWalls`; aqui só os ícones da hotbar/bolsa.
+  for (const id of [Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS] as BlockId[]) {
+    const url = id === Block.WALL_DOOR_PLANKS ? pack.materialIcons[Block.OAK_DOOR] : pack.materialIcons[id];
+    if (url) icons.set(id, url);
+  }
   const fencePieces = fenceTextures(objects, icons);
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],

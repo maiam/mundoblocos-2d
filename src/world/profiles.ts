@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { Block, CELESTIAL_BLOCKS, type BlockId, HOTBAR_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
 import type { ChunkRect } from './world';
 
@@ -52,7 +53,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     terrain: { kind: 'procedural' },
     bounds: null,
     character: 'heroine',
-    blocks: HOTBAR_BLOCKS,
+    // Paredes e porta de parede (W5): no Mundo desde a v0.93.56; na grade fina de teste (`?grade=2`) ainda não (altura e arte novas na W5-grade).
+    blocks: SUBDIV === 1 ? [...HOTBAR_BLOCKS, ...WALL_BLOCKS, ...WALL_DOOR_BLOCKS] : HOTBAR_BLOCKS,
     tools: true,
     farming: true,
     sheep: true,
