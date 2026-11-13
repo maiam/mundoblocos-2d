@@ -12,10 +12,28 @@
  * Eixos: x leste, y sul (para baixo na tela). Qualquer material de parede conecta com qualquer outro.
  */
 
-/** Espessura da placa, em células (a faixa fina medida: ~0,2–0,3; a sombra do topo ~0,35). */
-export const WALL_THICKNESS = 0.3;
-const C0 = (1 - WALL_THICKNESS) / 2;
-const C1 = (1 + WALL_THICKNESS) / 2;
+/**
+ * Espessura da placa, em células, em cada eixo: `x` = largura das faixas norte–sul e do poste; `z` = profundidade da tampa das
+ * fileiras leste–oeste (e onde a face sul fica dentro da célula). Medido no Core Keeper: faixa fina ~0,2–0,3 e tampa ~0,35.
+ */
+export interface WallThickness { x: number; z: number }
+export const DEFAULT_WALL_THICKNESS: WallThickness = { x: 0.3, z: 0.3 };
+/** Atalho do valor padrão (mesmo nos dois eixos). */
+export const WALL_THICKNESS = DEFAULT_WALL_THICKNESS.x;
+
+/** Limita a espessura a um intervalo que ainda forma parede (0,1 a 0,9 da célula). */
+export function clampWallThickness(t: WallThickness): WallThickness {
+  const c = (v: number): number => Math.min(0.9, Math.max(0.1, Number.isFinite(v) ? v : 0.3));
+  return { x: c(t.x), z: c(t.z) };
+}
+
+/** Lê `a,b` (x,z) ou só `a` (os dois eixos); `null` se não for um número válido. */
+export function parseWallThickness(text: string | null | undefined): WallThickness | null {
+  if (!text) return null;
+  const parts = text.split(',').map((p) => Number(p.trim()));
+  if (parts.length < 1 || parts.length > 2 || parts.some((n) => !Number.isFinite(n))) return null;
+  return clampWallThickness({ x: parts[0], z: parts[parts.length - 1] });
+}
 
 export interface WallNeighbors {
   n: boolean; e: boolean; s: boolean; w: boolean;
@@ -54,21 +72,23 @@ export function wallThin(nb: WallNeighbors): boolean {
 export interface WallRect { x0: number; x1: number; z0: number; z1: number }
 
 /** Pegada da parede na célula: o poste central e um braço até a borda em cada lado com parede vizinha (sem sobreposição). */
-export function wallFootprint(nb: WallNeighbors): WallRect[] {
-  const rects: WallRect[] = [{ x0: C0, x1: C1, z0: C0, z1: C1 }];
-  if (nb.n) rects.push({ x0: C0, x1: C1, z0: 0, z1: C0 });
-  if (nb.s) rects.push({ x0: C0, x1: C1, z0: C1, z1: 1 });
-  if (nb.w) rects.push({ x0: 0, x1: C0, z0: C0, z1: C1 });
-  if (nb.e) rects.push({ x0: C1, x1: 1, z0: C0, z1: C1 });
+export function wallFootprint(nb: WallNeighbors, t: WallThickness = DEFAULT_WALL_THICKNESS): WallRect[] {
+  const x0 = (1 - t.x) / 2, x1 = (1 + t.x) / 2, z0 = (1 - t.z) / 2, z1 = (1 + t.z) / 2;
+  const rects: WallRect[] = [{ x0, x1, z0, z1 }];
+  if (nb.n) rects.push({ x0, x1, z0: 0, z1: z0 });
+  if (nb.s) rects.push({ x0, x1, z0: z1, z1: 1 });
+  if (nb.w) rects.push({ x0: 0, x1: x0, z0, z1 });
+  if (nb.e) rects.push({ x0: x1, x1: 1, z0, z1 });
   return rects;
 }
 
 /**
- * Faixas de x (0..1) cuja face sul está exposta, no plano z = (1 + espessura) / 2: o poste (se não há braço ao sul) e os
+ * Faixas de x (0..1) cuja face sul está exposta, no plano z = (1 + t.z) / 2: o poste (se não há braço ao sul) e os
  * braços leste/oeste. O braço sul esconde o poste, e a face sul dele só aparece no último bloco da fileira (que então não tem
  * vizinho ao sul). Faixas contíguas são unidas.
  */
-export function wallFrontRanges(nb: WallNeighbors): Array<[number, number]> {
+export function wallFrontRanges(nb: WallNeighbors, t: WallThickness = DEFAULT_WALL_THICKNESS): Array<[number, number]> {
+  const C0 = (1 - t.x) / 2, C1 = (1 + t.x) / 2;
   const out: Array<[number, number]> = [];
   const add = (x0: number, x1: number): void => {
     const last = out[out.length - 1];
