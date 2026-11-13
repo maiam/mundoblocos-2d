@@ -18,7 +18,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
   a frente cheia aparece nas paredes cuja face dá para o interior (ao norte do cômodo).
 - **Placa fina (medida no Core Keeper, v0.93.16):** a parede é uma placa de espessura `WALL_THICKNESS` ≈ 0,3 célula nos dois
   sentidos, no centro da célula: um poste central mais um braço até a borda em cada lado com parede vizinha (`wallFootprint`).
-  A espessura tem **dois valores** (`WallThickness`: `x` faixas/poste, `z` tampa), hoje 0,3 / 0,3 e ajustáveis para casar com a referência (`?espessura=`). A **colisão continua sendo a célula inteira**; só o desenho é fino. Daí saem sozinhos os comportamentos observados:
+  A espessura tem **dois valores** (`WallThickness`: `x` faixas/poste, `z` tampa), fechados em **0,25 / 0,35** pelo dono do produto (13/11/2026; ajustáveis por `?espessura=` só para teste). A **colisão continua sendo a célula inteira**; só o desenho é fino. Daí saem sozinhos os comportamentos observados:
   fileira leste–oeste com frente de célula inteira (altura ≈ 1,2); fileira norte–sul como faixa fina em que **só o último
   bloco ao sul mostra a frente** (fina), os demais só mostram a tampa; bloco isolado = poste fino.
 - **Autotile por vizinhança** (função pura `world/walls.ts`, testada):
@@ -32,6 +32,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
 - **Mármore V2/V3 aposentado** depois da migração: remover `sanctuaryMarble*`, `sanctuaryV3Surfaces`, `adaptiveWalls`,
   `marblePlacements`/`marbleV3Bases` do mundo e do save (`SAVE_VERSION` sobe; blocos antigos viram parede do mesmo material ou
   somem, a decidir na migração) e `MAX_STACK` volta a valer só para cubos de terreno.
+- **Espessura final: x 0,25 · z 0,35** (v0.93.18): poste 32 × 44 px na arte de 128 px por célula.
 - **Teste de escala** (`render/sanctuaryWallProportionTest.ts`, v0.93.12): compara a escala atual e a nova (ADR 0028) lado a lado,
   com cubo, parede de 2 cubos, régua de 1 m e personagem de referência. Descartável; sem lógica de jogo.
 
