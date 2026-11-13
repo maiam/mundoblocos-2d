@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import type { World } from '../world/world';
 
 export type Facing = 'down' | 'left' | 'right' | 'up';
@@ -10,6 +11,11 @@ export interface WalkerSpec {
   halfD: number;
   /** Quantos níveis consegue subir de uma vez (0 = não sobe em cubos). */
   stepHeight: number;
+}
+
+/** Especificação em células da grade atual: velocidade e caixa dos pés × `SUBDIV` (ADR 0032; no padrão, a mesma). */
+export function scaleSpec(spec: WalkerSpec): WalkerSpec {
+  return SUBDIV === 1 ? spec : { ...spec, speed: spec.speed * SUBDIV, halfW: spec.halfW * SUBDIV, halfD: spec.halfD * SUBDIV };
 }
 
 /** Retorna true se a caixa candidata colide com outra entidade. */
@@ -32,8 +38,12 @@ export class Walker {
   z = 0;
   visualZ = 0;
 
-  /** Especificação física (mutável: o filhote cresce). */
-  constructor(public x: number, public y: number, readonly spec: WalkerSpec) {}
+  /** Especificação física (mutável: o filhote cresce), já em células da grade atual. */
+  readonly spec: WalkerSpec;
+
+  constructor(public x: number, public y: number, spec: WalkerSpec) {
+    this.spec = scaleSpec(spec);
+  }
 
   /**
    * Anda na direção (ix, iy) em coordenadas de tela, magnitude 0..1.

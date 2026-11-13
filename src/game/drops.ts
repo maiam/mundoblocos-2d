@@ -1,10 +1,11 @@
+import { SUBDIV } from '../config';
 import type { Drop, StackId } from '../world/items';
 import type { Inventory } from './inventory';
 import type { Walker } from './walker';
 
 /** Distância (células) a partir da qual o item voa até o personagem. */
-const MAGNET = 1.6;
-const COLLECT = 0.35;
+const MAGNET = 1.6 * SUBDIV;
+const COLLECT = 0.35 * SUBDIV;
 /** Tempo antes de poder ser coletado (deixa ver o item "pular" para fora). */
 const PICKUP_DELAY = 0.45;
 const LIFETIME = 300;

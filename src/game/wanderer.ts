@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import type { World } from '../world/world';
 import { type Blocker, type Facing, Walker, type WalkerSpec } from './walker';
 
@@ -10,7 +11,7 @@ export interface WanderPace {
   leash: number;
 }
 
-export const DEFAULT_PACE: WanderPace = { idle: [1.5, 5], walk: [1, 3.5], leash: 7 };
+export const DEFAULT_PACE: WanderPace = { idle: [1.5, 5], walk: [1, 3.5], leash: 7 * SUBDIV };
 
 /**
  * Passeio sem rumo perto de "casa" (ovelhas, cavalo, moradores): alterna parar e andar numa direção sorteada,

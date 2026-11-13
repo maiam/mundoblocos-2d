@@ -1,4 +1,4 @@
-import { CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, TILE } from '../config';
+import { CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, SUBDIV, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import type { GameRenderer, RendererFactory } from '../render/rendererContract';
@@ -736,8 +736,8 @@ export class Game {
   }
 
   /** Alcance (células) até onde a conversa continua aberta; quem tem ofício atende do outro lado do balcão. */
-  private static readonly TALK_KEEP = 3.2;
-  private static readonly TALK_KEEP_ROLE = 4.4;
+  private static readonly TALK_KEEP = 3.2 * SUBDIV;
+  private static readonly TALK_KEEP_ROLE = 4.4 * SUBDIV;
 
   /** Toque num morador: abre a caixa de conversa com ele (ou avança, se já falando com ele). */
   private talkTo(v: Villager): void {

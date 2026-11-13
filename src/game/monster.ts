@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { MONSTER_STATS } from '../world/progression';
 import type { World } from '../world/world';
@@ -20,7 +21,7 @@ interface MonsterDef {
 }
 
 /** Distância (células) até a qual o lobo ataca a personagem; mais longe, ele a ignora. */
-export const WOLF_SIGHT = 3;
+export const WOLF_SIGHT = 3 * SUBDIV;
 export const GOBLIN_SIGHT = WOLF_SIGHT;
 export const GOBLIN_ATTACK_SECONDS = 0.55;
 export const GOBLIN_ALERT_SECONDS = 0.48;
@@ -42,6 +43,8 @@ export const MONSTERS: Record<MonsterKind, MonsterDef> = {
     sight: GOBLIN_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
     deathSeconds: 0.95, open: true },
 };
+// Grade fina (ADR 0032): visão e coleira em células da grade atual.
+if (SUBDIV !== 1) for (const d of Object.values(MONSTERS)) { d.sight *= SUBDIV; d.leash *= SUBDIV; }
 
 /** Tempo piscando depois de levar um golpe (s). */
 export const HURT_SECONDS = 0.35;
@@ -130,7 +133,7 @@ export class Monster extends Walker {
 
   /** Distância de mordida (centro a centro). */
   get reach(): number {
-    return 0.7 + this.spec.halfW;
+    return 0.7 * SUBDIV + this.spec.halfW;
   }
 
   /** Encostado na personagem e pronto para morder? Se sim, consome a espera e devolve true. */

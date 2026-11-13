@@ -1,3 +1,4 @@
+import { SUBDIV } from './config';
 import { TitleScreen } from './game/title';
 import './style.css';
 import { Game } from './game/game';
@@ -31,7 +32,10 @@ function freshCanvas(): HTMLCanvasElement {
 }
 const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
-const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
+const baseProfile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
+/** Protótipo da grade fina (ADR 0032, F1; só dev, `?grade=2`): mundo aberto sem cidade/dungeon/lobos, sem salvar e sem sala. */
+const gridProto = SUBDIV > 1 && baseProfile.id === 'principal';
+const profile = gridProto ? { ...baseProfile, town: false, dungeon: false, wolves: false } : baseProfile;
 document.title = profile.name;
 let game: Game | null = null;
 /** Renderer 2.5D carregado sob demanda (Santuário; Mundo só em desenvolvimento com `?render=3d`): sem Three.js no pacote do principal. */
@@ -39,7 +43,7 @@ let threeRendererFactory: RendererFactory | undefined;
 /** Física sem degrau do jogador: só no Mundo com o renderer 3D (ADR 0031, M6) e sem `?fisica=degrau`. O Santuário tem a regra dele. */
 const solidPhysics = (): boolean => profile.id === 'principal' && !!threeRendererFactory && useSolidPhysics(window.location.search, '3d');
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
-const store = new SaveStore(profile.id);
+const store = new SaveStore(profile.id, gridProto ? null : undefined);
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
 /** Mundo jogado sozinho (volta para ele ao sair da sala). */
 let soloSeed = 0;
@@ -47,7 +51,7 @@ let soloSeed = 0;
 // ---- Multiplayer (ADR 0016): só no mundo principal ----
 const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
-const online = profile.id === 'principal' ? {
+const online = profile.id === 'principal' && !gridProto ? {
   get name() { return savedName(); },
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
   available: onlineAvailable(window.location.hostname),
@@ -197,7 +201,7 @@ function showTitle(): void {
 const query = new URLSearchParams(window.location.search);
 const param = query.get('seed');
 // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
-const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal';
+const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal' || gridProto;
 // Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para
 // comparar) e `?materiais=1` abre a cena de comparação (desenvolvimento).
 const materialsScene = import.meta.env.DEV && query.has('materiais');

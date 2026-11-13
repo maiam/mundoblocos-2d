@@ -6,6 +6,18 @@
 /** Duração de um dia de jogo (s): dia e noite completos. */
 export const DAY_LENGTH_S = 480;
 
+/**
+ * Subdivisão da grade (ADR 0032, F1 — protótipo): 1 = padrão; 2 = células de metade do lado, com o mundo do mesmo tamanho em
+ * pixels. Só por `?grade=2` em desenvolvimento (Vite) e fora da sala/servidor (o bundle do servidor não tem `window`).
+ */
+function gridSubdiv(): number {
+  if (typeof window === 'undefined') return 1;
+  const dev = !!(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
+  if (!dev) return 1;
+  return new URLSearchParams(window.location.search).get('grade') === '2' ? 2 : 1;
+}
+export const SUBDIV = gridSubdiv();
+
 /** Tamanho de uma célula em pixels de mundo (zoom 1). */
 export const TILE = 32;
 

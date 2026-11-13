@@ -40,7 +40,7 @@ Experimento `?celulas=28` (v0.93.50): células e objetos ficaram bons, **mas o m
 
 ## 5. Plano por fases (cada uma com PR, testes e medição; nenhuma muda o jogo no ar antes da F7)
 - **F0 — esta ADR** + tabela de objetos revisada.
-- **F1 — protótipo atrás de `?grade=2` (dev):** `SUBDIV` nas constantes, gerador em `x / SUBDIV`, câmera 28, jogabilidade × `SUBDIV`, mundo aberto sem cidade/dungeon/interiores. Objetivo: ver o mundo "do mesmo tamanho com células menores" e medir o custo. Padrão e saves intocados.
+- **F1 — ✅ feita na v0.93.51 — protótipo atrás de `?grade=2` (dev):** `SUBDIV` nas constantes, gerador em `x / SUBDIV`, câmera 28, jogabilidade × `SUBDIV`, mundo aberto sem cidade/dungeon/interiores. Objetivo: ver o mundo "do mesmo tamanho com células menores" e medir o custo. Padrão e saves intocados.
 - **F2 — objetos:** tamanhos em células por categoria (árvore 1 × 1 com desenho alto; plantas/cercas/móveis menores); rever arte que não aguente a redução.
 - **F3 — cidade** (`buildTown` ampliado, portas 1 × 2, arte ampliada). **F4 — interiores e dungeon.** **F5 — paredes** (altura decidida na pergunta 3; atlas novos ou nível duplo).
 - **F6 — save e protocolo:** `SAVE_VERSION` 16 com migração, `PROTOCOL_VERSION` 21, servidor (`build:net` + `sync-net`), sala.

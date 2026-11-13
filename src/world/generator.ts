@@ -1,4 +1,4 @@
-import { CHUNK_SIZE } from '../config';
+import { CHUNK_SIZE, SUBDIV } from '../config';
 import { Block, type BlockId } from './blocks';
 import { type Biome, pickBiome } from './biomes';
 import { Noise } from './noise';
@@ -37,20 +37,25 @@ export class WorldGenerator implements TerrainSource {
   }
 
   elevation(x: number, y: number): number {
+    // Grade fina (ADR 0032): as formas do mundo seguem do mesmo tamanho em pixels; só a resolução sobe.
+    x /= SUBDIV;
+    y /= SUBDIV;
     const continent = this.terrain.fbm2(x / 420 + 11.3, y / 420 - 7.1, 3) * 0.45;
     const local = this.terrain.fbm2(x / 70, y / 70, 5);
     return local * 0.8 + continent;
   }
 
   biomeAt(x: number, y: number): Biome {
-    x += this.climateOx;
-    y += this.climateOy;
+    x = x / SUBDIV + this.climateOx;
+    y = y / SUBDIV + this.climateOy;
     const t = this.climate.fbm2(x / 480 + 31.7, y / 480 + 5.2, 3);
     const m = this.climate.fbm2(x / 300 - 913.1, y / 300 + 77.7, 3);
     return pickBiome(t * 1.9, m * 1.9);
   }
 
   private isRiver(x: number, y: number): boolean {
+    x /= SUBDIV;
+    y /= SUBDIV;
     return Math.abs(this.terrain.fbm2(x / 230 + 400, y / 230 - 400, 3)) < 0.022;
   }
 
@@ -70,7 +75,7 @@ export class WorldGenerator implements TerrainSource {
     let ground: BlockId = biome.ground;
     if (e > MOUNTAIN_LEVEL - 0.05 && biome.key !== 'desert') ground = Block.DIRT;
     // Trilhas naturais de terra batida cortando os campos (sempre livres).
-    else if (biome.key !== 'desert' && Math.abs(this.detail.fbm2(x / 90 - 300, y / 90 + 300, 2)) < 0.012) {
+    else if (biome.key !== 'desert' && Math.abs(this.detail.fbm2(x / SUBDIV / 90 - 300, y / SUBDIV / 90 + 300, 2)) < 0.012) {
       return { ground: Block.PATH, object: Block.AIR, upper: Block.AIR };
     }
 
@@ -79,8 +84,10 @@ export class WorldGenerator implements TerrainSource {
     }
 
     const r = hash2(this.seed, x, y);
-    const forest = this.detail.fbm2(x / 38 + 50, y / 38 - 50, 2);
-    const density = biome.treeDensity * (forest > 0.05 ? 1 : 0.12);
+    const forest = this.detail.fbm2(x / SUBDIV / 38 + 50, y / SUBDIV / 38 - 50, 2);
+    // Itens por célula: a mesma densidade por área em pixels (cada célula fina é 1/SUBDIV² da antiga).
+    const area = SUBDIV * SUBDIV;
+    const density = biome.treeDensity * (forest > 0.05 ? 1 : 0.12) / area;
     let object: BlockId = Block.AIR;
     if (r < density) {
       // Árvore da vez: a principal do bioma ou, numa fração, uma das misturadas (macieiras e bétulas nos Campos).
@@ -90,8 +97,8 @@ export class WorldGenerator implements TerrainSource {
         if (hash2(this.seed, x + 4409 + i * 1013, y - 2027 + i * 389) < alts[i].share) { object = alts[i].id; break; }
       }
     }
-    else if (r > 0.994) object = Block.ROCK_BOULDER; // pedregulhos ocasionais (arte da prancha de pedras)
-    else if (hash2(this.seed, x, y + 7919) < biome.decoChance) {
+    else if (r > (area === 1 ? 0.994 : 1 - 0.006 / area)) object = Block.ROCK_BOULDER; // pedregulhos ocasionais (arte da prancha de pedras)
+    else if (hash2(this.seed, x, y + 7919) < biome.decoChance / area) {
       object = biome.decorations[Math.floor(hash2(this.seed, x - 31, y) * biome.decorations.length)];
     }
     return { ground, object, upper: Block.AIR };
