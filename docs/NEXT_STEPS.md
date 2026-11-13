@@ -30,7 +30,7 @@ primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de ver
    `GameRenderer` completo (`RenderOptions`) com testes; separar o núcleo genérico (`render/three/`) do mármore (`sanctuary*`).
 2. **Fase 2 — núcleo por chunk:** malha por chunk com reconstrução incremental, corte pela câmera, orçamento por quadro,
    registro de materiais do atlas V2; chão = `CanvasTexture` do `ChunkRenderer`.
-3. **Fase 3 — atores, itens e efeitos:** luzes (tochas, fogueira, brilhos) e escuridão (dungeon/noite) com teto de luzes e
+3. **Fase 3 — atores, itens e efeitos (iluminação ✅ v0.93.19 atrás de `?luz=`, ADR 0029; falta decidir o clima padrão, ciclo dia/noite, sombras projetadas, oclusão pelas paredes e modo reduzido):** luzes (tochas, fogueira, brilhos) e escuridão (dungeon/noite) com teto de luzes e
    modo reduzido; atores/itens em planos verticais com sombra; dano, minimapa e HUD em camada 2D; partículas e clima.
 4. **Fase 4 — objetos do Mundo:** árvores e plantações, portas e cercas, cidade, água e transições, dungeon, interiores.
 5. **Fase 5 — piloto** `?render=3d` (dev): checklist de paridade (capturas 2D × 3D), sala multiplayer, celular/tablet,

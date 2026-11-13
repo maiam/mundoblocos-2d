@@ -9,6 +9,7 @@ import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { WALL_BLOCKS } from './world/blocks';
 import { parseWallThickness } from './world/walls';
+import { parseAmbient } from './render/lighting';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
@@ -203,7 +204,7 @@ void loadArtPack(profile.id)
           const mod = await import('./render/sanctuaryThreeRenderer');
           // Vista oblíqua é o padrão (ADR 0026, v0.93.10); `?vista=inclinada` volta à câmera inclinada a 67°.
           const view = query.get('vista') === 'inclinada' ? 'tilt' : 'oblique';
-          sanctuaryRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core') : undefined });
+          sanctuaryRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core') : undefined });
         } catch (error) {
           console.error('Santuário Three.js: usando renderizador 2D de reserva', error);
         }
