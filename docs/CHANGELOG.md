@@ -1,5 +1,8 @@
 # Changelog
 
+## Documentação — plano de migração do Mundo para Three.js e W5 pendente (13/11/2026, sem versão)
+- **ADR 0031 (proposta):** fases M0–M7, decisões propostas (núcleo genérico `render/three/`, malhas por chunk com orçamento, chão = textura do `ChunkRenderer`, atores em billboards, física sem degrau atrás de flag, servidor só nos marcos que tocam `world/`/`net/`), riscos e 6 perguntas ao dono do produto. **W5** (paredes no Mundo) registrado como pendente, depois do M4. Nenhum código alterado.
+
 ## Orvalis v0.93.28 — W4: mármore V2/V3 removido (13/11/2026)
 - **Decisão (dono do produto):** o Mármore Celestial (82) vira **cubo comum**; paredes novas são só as autotile (ADR 0027).
 - **Removido:** par de níveis em um clique, base V3 de duas células (célula norte virtual), ordem de colocação, formas adaptativas e cantos em L do 82, borda ornamental, superfícies V3 e altura visual V3 da câmera (`sanctuaryMarbleAdaptive`, `sanctuaryV3Surfaces`, `World.marbleV3*`/`marblePlacement*`, textura de topo ornamentado). O 82 empilha e quebra um nível por vez e segue o autotile horizontal genérico (`thin`) como os outros celestiais. `SanctuaryBlockShape` agora é só `solid | thin`.
