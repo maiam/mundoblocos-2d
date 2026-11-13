@@ -1,4 +1,4 @@
-import { DAY_LENGTH_S } from '../config';
+import { DAY_LENGTH_S, SUBDIV } from '../config';
 import { type AnimalSave, Entities } from '../game/entities';
 import { Player } from '../game/player';
 import { GOBLIN_VISUALS } from '../game/monster';
@@ -7,6 +7,7 @@ import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
 import { toChunk } from '../world/coords';
 import { ANIMAL_PRODUCE, breakDrops, type Drop, type ItemId, ITEMS, monsterDrops, pickDrops, type StackId } from '../world/items';
+import { rescaleCellKey, rescaleChunkRecords, rescaleFactor, rescaleHoles, rescaleXY } from '../world/subdiv';
 import { CHEST_SLOTS, World } from '../world/world';
 import { fromB64, toB64 } from './b64';
 import {
@@ -22,7 +23,7 @@ export const ROOM_START_TIME = 0.31;
 /** De quanto em quanto tempo a sala manda a hora a todos (s): corrige a diferença dos relógios dos aparelhos. */
 export const TIME_SYNC_SECONDS = 30;
 /** Versão do arquivo da sala no servidor (`RoomSnapshot`): 2 = baús; 3 = animais. */
-export const ROOM_SNAPSHOT_VERSION = 4;
+export const ROOM_SNAPSHOT_VERSION = 5;
 /** Quanto tempo um item fica no chão da sala (s), como no jogo sozinho. */
 export const DROP_LIFETIME = 300;
 /** Distância máxima (células) entre o jogador e o item para pegar. */
@@ -54,6 +55,29 @@ export interface RoomSnapshot {
   animals?: AnimalSave[];
   /** Buracos e há quantos segundos estão sem bloco (v4): `[x, y, segundos]`; ao fazer um dia inteiro ganham um chão vizinho. */
   holes?: Array<[number, number, number]>;
+  /** Subdivisão da grade em que a sala foi gravada (v5, ADR 0032); ausente = 1. */
+  sub?: number;
+}
+
+/**
+ * A fotografia da sala na grade `to` (só aumenta: 1 → 2; `world/subdiv.ts`): chunks, baús, bichos e buracos acompanham; as bolsas não
+ * mudam. Mesma grade devolve a própria fotografia; mais fina que `to` é erro.
+ */
+export function rescaleRoomSnapshot(s: RoomSnapshot, to: number): RoomSnapshot {
+  const f = rescaleFactor(s.sub ?? 1, to);
+  if (f === 1) return s;
+  return {
+    ...s,
+    sub: to,
+    chunks: rescaleChunkRecords(s.chunks ?? [], f),
+    chests: Object.fromEntries(Object.entries(s.chests ?? {}).map(([k, v]) => [rescaleCellKey(k, f), v])),
+    animals: s.animals?.map((a) => {
+      const [x, y] = rescaleXY(a.x, a.y, f);
+      const [hx, hy] = rescaleXY(a.hx, a.hy, f);
+      return { ...a, x, y, hx, hy };
+    }),
+    holes: s.holes && rescaleHoles(s.holes, f),
+  };
 }
 
 /** Chave da bolsa: o nome sem diferença de maiúsculas (Ana = ana). */
@@ -138,7 +162,7 @@ export class Room {
   /** Pedido de entrada. Retorna o id do novo jogador e o que enviar (ou só um erro, para quem pediu). */
   join(hello: Extract<ClientMessage, { t: 'hello' }>): { id: number | null; out: Outgoing[] } {
     const fail = (code: Extract<ServerMessage, { t: 'error' }>['code'], message: string) => ({ id: null, out: [{ to: 0, msg: { t: 'error' as const, code, message } }] });
-    if (hello.v !== PROTOCOL_VERSION) return fail('version', 'Versão do jogo diferente da do servidor: recarregue a página.');
+    if (hello.v !== PROTOCOL_VERSION || (hello.sub ?? 1) !== SUBDIV) return fail('version', 'Versão do jogo diferente da do servidor: recarregue a página.');
     const name = sanitizeName(hello.name);
     if (!name) return fail('name', 'Nome inválido: use de 2 a 16 letras ou números.');
     if (this.players.size >= MAX_PLAYERS) return fail('full', `${this.name} cheia (máximo ${MAX_PLAYERS} jogadores). Tente daqui a pouco.`);
@@ -387,13 +411,17 @@ export class Room {
       chests: Object.fromEntries(this.world.chests),
       animals: this.entities.saveAnimals(),
       holes: this.world.holeAges(),
+      sub: SUBDIV,
     };
   }
 
   /** Recarrega o que o servidor gravou (só se for desta sala e desta seed; senão, a sala começa do zero). */
-  restore(s: RoomSnapshot): boolean {
+  restore(snap: RoomSnapshot): boolean {
     // v1 (sem baús) ainda vale: o mundo e as bolsas voltam; os baús ficam vazios.
-    if (!s || ![1, 2, 3, ROOM_SNAPSHOT_VERSION].includes(s.v) || s.room !== this.id || s.seed !== this.seed) return false;
+    if (!snap || ![1, 2, 3, 4, ROOM_SNAPSHOT_VERSION].includes(snap.v) || snap.room !== this.id || snap.seed !== this.seed) return false;
+    // Gravada numa grade mais fina que a deste pacote: não se abre (e o servidor guarda cópia antes de regravar); mais grossa: converte.
+    if ((snap.sub ?? 1) > SUBDIV) return false;
+    const s = rescaleRoomSnapshot(snap, SUBDIV);
     let dropped = 0;
     for (const c of s.chunks) dropped += this.world.restoreChunk(c.cx, c.cy, fromB64(c.ground), c.levels.map(fromB64));
     this.droppedOnRestore = dropped;

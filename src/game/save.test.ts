@@ -7,7 +7,7 @@ import { Entities } from './entities';
 import { Inventory } from './inventory';
 import { Player } from './player';
 import { Exploration } from './exploration';
-import { applySave, captureSave, migrate, SAVE_VERSION, SaveStore } from './save';
+import { applySave, captureSave, migrate, rescaleSave, SAVE_VERSION, SaveStore } from './save';
 import { Sheep } from './sheep';
 
 function session(seed = 42) {
@@ -52,7 +52,7 @@ function memoryStorage(): Storage {
 }
 
 describe('Salvamento automático', () => {
-  it('v15: o mármore V2/V3 saiu; saves v12–v14 migram descartando os campos e o 82 vira cubo comum', () => {
+  it('o mármore V2/V3 saiu (v15); saves v12–v14 migram descartando os campos e o 82 vira cubo comum', () => {
     const world = new World(77, WORLD_PROFILES.santuario);
     const [sx,sy] = world.findSpawn();
     const x=sx+2,y=sy+1;
@@ -68,13 +68,14 @@ describe('Salvamento automático', () => {
       inventory:new Inventory(),time:0.25,selected:null,hotbar:null};
     const saved=captureSave(state);
     expect(saved.v).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(15);
+    expect(SAVE_VERSION).toBe(16);
     expect('marblePlacements' in saved).toBe(false);
     expect('marbleV3Bases' in saved).toBe(false);
 
     for(const v of [12,13,14]){
       const old=migrate({...saved,v,marblePlacements:[[x,y,1]],marbleV3Bases:[[x,y]]});
-      expect(old?.v).toBe(15);
+      expect(old?.v).toBe(16); // ...e segue até a versão atual (v15 → v16: grade 1)
+      expect(old?.sub).toBe(1);
       expect(old && 'marblePlacements' in old).toBe(false);
       expect(old && 'marbleV3Bases' in old).toBe(false);
     }
@@ -231,3 +232,59 @@ describe('Salvamento automático', () => {
   });
 });
 
+describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
+  function saved() {
+    const a = session();
+    const [x, y] = grassCells(a.world, a.sx, a.sy, 1)[0];
+    a.world.placeBlock(x, y, Block.STONE);
+    a.world.placeBlock(x + 1, y, Block.CHEST);
+    a.world.chests.set(`${x + 1},${y}`, Array.from({ length: 27 }, () => null));
+    a.world.tent = [x + 2, y];
+    a.exploration.reveal(x, y);
+    a.entities.npcs.push(new Sheep(x + 0.5, y + 3.5));
+    const d = captureSave({ ...a, time: 0.3, selected: null, hotbar: null });
+    return { d, x, y };
+  }
+
+  it('o salvamento diz a grade (sub) e v15 migra para v16 como grade 1', () => {
+    const { d } = saved();
+    expect(SAVE_VERSION).toBe(16);
+    expect(d.sub).toBe(1);
+    const { sub: _s, ...rest } = d;
+    expect(migrate({ ...rest, v: 15 })?.sub).toBe(1);
+  });
+
+  it('rescaleSave dobra tudo o que tem lugar: chunks, jogador, tenda, baús, névoa, ovelhas', () => {
+    const { d, x, y } = saved();
+    const f = rescaleSave(d, 2);
+    expect(f.sub).toBe(2);
+    expect(f.chunks.length).toBeGreaterThanOrEqual(d.chunks.length * 4);
+    expect(f.player.x).toBe(d.player.x * 2);
+    expect(f.player.y).toBe(d.player.y * 2);
+    expect(f.tent).toEqual([(x + 2) * 2, y * 2 + 1]);
+    expect(f.chests[0]).toMatchObject({ x: (x + 1) * 2, y: y * 2 + 1 });
+    expect(f.explored.length).toBeGreaterThan(0);
+    expect(f.sheep.at(-1)).toMatchObject({ x: (x + 0.5) * 2, y: (y + 3.5) * 2 });
+    expect(f.inventory).toEqual(d.inventory);
+    expect(f.hotbar).toEqual(d.hotbar);
+  });
+
+  it('mesma grade devolve o próprio salvamento; grade mais fina que a pedida é erro', () => {
+    const { d } = saved();
+    expect(rescaleSave(d, 1)).toBe(d);
+    expect(() => rescaleSave({ ...d, sub: 2 }, 1)).toThrow();
+  });
+
+  it('um arquivo de grade mais fina não é aberto nem sobrescrito por um jogo da grade antiga', () => {
+    const { d } = saved();
+    const storage = memoryStorage();
+    const store = new SaveStore('principal', storage);
+    const fine = JSON.stringify({ ...d, sub: 2 });
+    storage.setItem(`mundoblocos:save:principal:${d.seed}`, fine);
+    expect(store.load(d.seed)).toBeNull();
+    expect(store.save(d)).toBe(false); // bloqueado: o arquivo fino continua intacto
+    expect(storage.getItem(`mundoblocos:save:principal:${d.seed}`)).toBe(fine);
+    // outra seed segue normal
+    expect(store.save({ ...d, seed: d.seed + 1 })).toBe(true);
+  });
+});
