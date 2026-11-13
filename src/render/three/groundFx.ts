@@ -37,7 +37,7 @@ export class GroundFx {
   private flowTextures: THREE.Texture[] = [];
   private readonly dummy = new THREE.Object3D();
 
-  constructor(private readonly scene: THREE.Scene, private readonly src: GroundFxSource) {
+  constructor(private readonly scene: THREE.Object3D, private readonly src: GroundFxSource) {
     this.flat = new THREE.PlaneGeometry(1, 1);
     this.flat.rotateX(-Math.PI / 2);
     const make = src.createCanvas ?? (() => document.createElement('canvas'));

@@ -26,6 +26,9 @@ import { BlockMaterials } from './three/blockMaterials';
 import { ChunkSprites } from './three/chunkSprites';
 import { GroundFx } from './three/groundFx';
 import { DoorSprites } from './three/doorSprites';
+import * as THREE from 'three';
+import { INTERIOR_BACKGROUND, InteriorRoom, roomBounds } from './three/interiorRoom';
+import { art } from './art';
 import { Particles } from './particles';
 import { skyAt } from './daycycle';
 import { worldBlockFaces } from './worldBlockFaces';
@@ -42,7 +45,7 @@ const FLOOR_MARGIN = 1;
  * M2: chão por chunk (textura do `ChunkRenderer`), cubos (`ChunkBlocks`, frente provisória), objetos altos e a cidade
  * (`ChunkSprites`, planos verticais), efeitos de chão (`GroundFx`). M3.1: atores (`ActorBillboards`: jogador, NPCs, animais,
  * goblins e monstros em planos verticais com sombra, nome, coração e barra de vida), itens caídos e o anel da ovelha.
- * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. M3.3: luz e escuridão só à noite e na dungeon. M3.4: animação da porta (`DoorSprites`) e partículas do bioma. Ainda **não** desenha interiores e dungeon
+ * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. M3.3: luz e escuridão só à noite e na dungeon. M3.4: animação da porta (`DoorSprites`) e partículas do bioma. M4.1: interiores (`InteriorRoom`). Ainda **não** desenha a dungeon (covil, farol da entrada)
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -51,6 +54,11 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly stage: ThreeStage;
   private readonly selection: SelectionMarkers;
   private readonly chunks: ChunkRenderer;
+  /** Tudo do mundo aberto (chão, cubos, objetos, portas, efeitos): escondido quando a personagem está num interior (M4.1). */
+  private readonly worldLayer = new THREE.Group();
+  private readonly interiorLayer = new THREE.Group();
+  private readonly room: InteriorRoom;
+  private readonly skyColor: THREE.Color;
   private readonly floor: ChunkFloor;
   private readonly blocks: ChunkBlocks;
   private readonly sprites: ChunkSprites;
@@ -86,28 +94,32 @@ export class WorldThreeRenderer implements GameRenderer {
       this.sprites?.reupload();
       this.groundFx?.reupload();
       this.doors?.reupload();
+      this.room?.reupload();
     });
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.
     void loadDungeonArt().then((d) => { if (!this.disposed && d && addDungeonTextures(this.textures)) { this.chunks.invalidateAll(); this.sprites.invalidateAll(); } });
     loadCropSprites(this.textures.objects);
-    this.floor = new ChunkFloor(this.stage.scene, world, this.chunks);
+    this.stage.scene.add(this.worldLayer, this.interiorLayer);
+    this.skyColor = new THREE.Color(world.profile.sky[0]);
+    this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
+    this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.selection = new SelectionMarkers(this.stage.scene, world);
-    this.sprites = new ChunkSprites(this.stage.scene, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
-    this.doors = new DoorSprites(this.stage.scene, world, {
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
+    this.doors = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K,
       isDoor: (id) => isDoor(id), isOpen: (id) => id === Block.OAK_DOOR_OPEN,
       frames: () => this.textures.doorFrames,
     });
-    this.groundFx = new GroundFx(this.stage.scene, {
+    this.groundFx = new GroundFx(this.worldLayer, {
       seed: world.seed,
       isOpenWater: (x, y) => blockDef(world.getGround(x, y)).liquid && world.getObject(x, y) === Block.AIR,
       waterFlows: () => world.waterFlows(),
       flowSheet: () => getWaterArt()?.flow ?? null,
     });
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
-    this.blocks = new ChunkBlocks(this.stage.scene, world, {
+    this.blocks = new ChunkBlocks(this.worldLayer, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
       classify: (w, id, x, y, level) => classifySanctuaryBlock(w, id, x, y, level),
       transform: (cell) => sanctuaryBlockTransform(cell),
@@ -130,28 +142,38 @@ export class WorldThreeRenderer implements GameRenderer {
   draw(cam: Camera, opts: RenderOptions): void {
     if (this.disposed || this.stage.contextLost) return;
     this.stage.syncCamera(cam);
-    const rect = cam.visibleChunks(FLOOR_MARGIN);
-    this.floor.update(rect);
-    this.blocks.update(rect);
-    if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
-    this.sprites.update(rect);
-    this.doors.update(rect, opts.elapsed);
-    // Área visível em células de mundo (+1 de margem): brilhos da água, água enchendo e sombras de nuvens.
+    // Interior (ADR 0014): o cômodo isolado substitui o mundo — sem chão, céu, nuvens, noite nem partículas lá dentro.
+    const inside = opts.interior ?? null;
+    this.worldLayer.visible = !inside;
+    this.interiorLayer.visible = !!inside;
+    this.room.update(inside ? { id: inside.def.id, area: inside.area } : null);
+    (this.stage.scene.background as THREE.Color).set(inside ? INTERIOR_BACKGROUND : this.skyColor);
+    // Área visível em células de mundo (+1 de margem); dentro do cômodo, só o que está nele.
     const [ax, ay] = cam.screenToWorld(0, 0);
     const [bx, by] = cam.screenToWorld(cam.width, cam.height);
-    const view = { x0: ax / TILE - 1, y0: ay / TILE - 1, x1: bx / TILE + 1, y1: by / TILE + 1 };
-    this.groundFx.update(view, opts.elapsed);
+    const view = inside ? roomBounds(inside.area) : { x0: ax / TILE - 1, y0: ay / TILE - 1, x1: bx / TILE + 1, y1: by / TILE + 1 };
+    if (!inside) {
+      const rect = cam.visibleChunks(FLOOR_MARGIN);
+      this.floor.update(rect);
+      this.blocks.update(rect);
+      if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
+      this.sprites.update(rect);
+      this.doors.update(rect, opts.elapsed);
+      this.groundFx.update(view, opts.elapsed);
+    }
     this.actors.update(view, opts.actors, opts.elapsed);
     this.drops.update(view, opts.drops, opts.elapsed);
     this.ring.update(opts.hoverSheep);
     this.selection.update(opts);
     this.stage.render();
-    this.drawLighting(cam, opts, view);
+    if (!inside) this.drawLighting(cam, opts, view);
     const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
     if (ctx) {
       // Partículas do bioma onde o jogador está (como no 2D: depois da noite, antes dos números de dano).
-      this.particles.update(opts.dt, cam.width, cam.height, this.world.biomeAt(opts.player.cellX, opts.player.cellY), skyAt(opts.time).night);
-      this.particles.draw(ctx);
+      if (!inside) {
+        this.particles.update(opts.dt, cam.width, cam.height, this.world.biomeAt(opts.player.cellX, opts.player.cellY), skyAt(opts.time).night);
+        this.particles.draw(ctx);
+      }
       this.damageNumbers.draw(ctx, cam, opts.dt);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
@@ -184,7 +206,7 @@ export class WorldThreeRenderer implements GameRenderer {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
     this.stage.syncCamera(cam);
     this.stage.aim(cam, sx, sy);
-    for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.doors.meshes()])) {
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.doors.meshes()])) {
       const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.doors.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
@@ -216,6 +238,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();
+    this.room.dispose();
     this.lighting.dispose();
     this.stage.dispose();
   }
