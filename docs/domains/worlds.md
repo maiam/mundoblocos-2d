@@ -7,7 +7,7 @@
 | `terrain` | procedural (`WorldGenerator`) | plano de **Nuvem Sólida** (`FlatGenerator`) |
 | `bounds` | ilimitado | **10 chunks = 5×2** (`cx -3..1`, `cy -1..0`) → 80×32 blocos, x −48..31, y −16..15 |
 | `character` | heroína | **Deusa da Vida** |
-| `blocks` | 8 materiais da prancha | **18 blocos celestiais** (únicos colocáveis) |
+| `blocks` | 8 materiais da prancha | **18 blocos celestiais** + paredes (Tábuas, Pedra) e porta de parede (v0.93.27, ADR 0027) |
 | ferramentas / cultivo / ovelhas | sim / sim / sim | **não / não / não** |
 | `sky` (fundo além das bordas) | escuro | degradê azul → lilás |
 

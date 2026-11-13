@@ -46,7 +46,7 @@ operacional e faz parte da entrega.
 - **Salvamento:** estado que deve persistir passa por `game/save.ts` (ADR 0011); mudou o formato → suba
   `SAVE_VERSION`. Nada de backend aqui: nuvem é do backend do Orvalis.
 - **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é
-  limitado a 10 chunks e só aceita os 18 blocos celestiais e a Deusa — não misture conteúdo entre mundos.
+  limitado a 10 chunks e aceita os 18 blocos celestiais, as paredes autotile + porta de parede (ADR 0027) e só a Deusa — não misture conteúdo entre mundos.
 
 ## 3. Comandos
 ```bash
