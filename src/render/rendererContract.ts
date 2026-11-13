@@ -41,7 +41,7 @@ export const SANCTUARY_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport>
   hoverSheep: 'ignored',
   time: 'ignored',            // dia/noite e luzes (Fase 3)
   elapsed: 'honored',         // animação da Deusa
-  dt: 'ignored',
+  dt: 'honored',              // M3.2: anima os números de dano
   hurtFlash: 'ignored',
   inDungeon: 'ignored',       // dungeon (Fase 4)
   entrance: 'ignored',
@@ -52,7 +52,7 @@ export const SANCTUARY_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport>
 
 /**
  * Mapa de paridade do `WorldThreeRenderer` (Mundo em 2.5D, ADR 0031): o que cada campo de `RenderOptions` já faz. Fatia M2.1.
- * Cada marco (M3.2…M4) vira `honored` o que passar a desenhar; o `Record` obriga a classificar todo campo novo.
+ * Cada marco (M3.3…M4) vira `honored` o que passar a desenhar; o `Record` obriga a classificar todo campo novo.
  */
 export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
   player: 'ignored',          // o personagem vem de `actors[0]`
@@ -66,10 +66,10 @@ export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
   time: 'ignored',            // dia/noite e luzes (M3)
   elapsed: 'honored',
   dt: 'ignored',
-  hurtFlash: 'ignored',       // M3 (camada 2D)
+  hurtFlash: 'honored',       // M3.2: vinheta na camada 2D
   inDungeon: 'ignored',       // M4
   entrance: 'ignored',        // M4
   dungeonArea: 'ignored',     // M4
   interior: 'ignored',        // M4
-  fade: 'ignored',            // M4
+  fade: 'honored',            // M3.2: escurecer de porta na camada 2D
 };

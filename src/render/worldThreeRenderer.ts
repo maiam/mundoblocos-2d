@@ -3,6 +3,8 @@ import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import { ActorBillboards } from './three/actorBillboards';
 import { DropSprites, HoverRing } from './three/itemSprites';
+import { drawFade, drawHurtVignette, Overlay2D } from './three/overlay2d';
+import { DamageNumbers } from './damageNumbers';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
@@ -34,7 +36,7 @@ const FLOOR_MARGIN = 1;
  * M2: chão por chunk (textura do `ChunkRenderer`), cubos (`ChunkBlocks`, frente provisória), objetos altos e a cidade
  * (`ChunkSprites`, planos verticais), efeitos de chão (`GroundFx`). M3.1: atores (`ActorBillboards`: jogador, NPCs, animais,
  * goblins e monstros em planos verticais com sombra, nome, coração e barra de vida), itens caídos e o anel da ovelha.
- * Ainda **não** desenha luz/dia-noite, números de dano e flash (camada 2D), partículas, animação da porta, interiores e dungeon
+ * M3.2: camada 2D (`Overlay2D`) com números de dano, vinheta de dano e fade de porta. Ainda **não** desenha luz/dia-noite, partículas, animação da porta, interiores e dungeon
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -54,6 +56,9 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly actors: ActorBillboards;
   private readonly drops: DropSprites;
   private readonly ring: HoverRing;
+  /** Camada 2D sobre o WebGL: números de dano, vinheta de dano e escurecer de porta (M3.2). */
+  private readonly overlay: Overlay2D;
+  private readonly damageNumbers = new DamageNumbers();
   /** Ícones dos itens caídos: itens pelo pacote de arte; materiais pelo ícone do bloco (como no 2D). */
   private readonly itemIcons = new ItemIcons((id) => {
     const b = stackBlock(id);
@@ -97,6 +102,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: CHARACTER_SCALE_FACTOR, k: OBLIQUE_K });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
+    this.overlay = new Overlay2D(canvas);
   }
 
   stats(): RendererStats { return this.stage.stats(); }
@@ -122,6 +128,12 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ring.update(opts.hoverSheep);
     this.selection.update(opts);
     this.stage.render();
+    const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
+    if (ctx) {
+      this.damageNumbers.draw(ctx, cam, opts.dt);
+      drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
+      drawFade(ctx, cam.width, cam.height, opts.fade);
+    }
   }
 
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
@@ -137,8 +149,9 @@ export class WorldThreeRenderer implements GameRenderer {
     return { x: cell.x, y: cell.y, hasObject: this.world.getObject(cell.x, cell.y) !== Block.AIR };
   }
 
-  addDamage(_x: number, _y: number, _hit: Hit, _target: 'enemy' | 'player'): void {
-    // M3: números de dano em camada 2D sobre o canvas 3D.
+  /** Mostra o número de um dano que entrou (chamado pelo jogo a cada acerto); desenhado na camada 2D. */
+  addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void {
+    this.damageNumbers.add(x, y, hit, target);
   }
 
   iconFor(id: BlockId): string {
@@ -157,6 +170,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.actors.dispose();
     this.drops.dispose();
     this.ring.dispose();
+    this.overlay.dispose();
     this.stage.dispose();
   }
 }
