@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import { isWolf, type MonsterKind } from './dungeon';
 
 /**
@@ -278,7 +278,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
 
 /** Árvores adultas (dão 2–3 toras). */
 const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.APPLE_TREE, Block.APPLE_TREE_BARE]);
@@ -294,6 +294,7 @@ export function blockDrops(id: BlockId, rand: () => number = Math.random): Drop[
   if (id === Block.BIRCH_TREE) return [{ item: blockStack(Block.BIRCH_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }]; // Bétula → Tora de Bétula
   if (isDoor(id)) return [{ item: blockStack(Block.OAK_DOOR), count: 1 }];
   if (isGate(id)) return [{ item: blockStack(Block.FENCE_GATE), count: 1 }];
+  if (isWallDoor(id)) return [{ item: blockStack(Block.WALL_DOOR_PLANKS), count: 1 }]; // aberta ou fechada, volta a porta (fechada)
   // Pedregulho: vira 1–3 Pedras Brutas (o bloco de pedra; colocado no mundo, é cubo).
   if (id === Block.ROCK_BOULDER) return [{ item: blockStack(Block.STONE), count: 1 + Math.floor(rand() * 3) }];
   return COLLECTABLE.has(id) ? [{ item: blockStack(id), count: 1 }] : [];
@@ -356,6 +357,19 @@ export const RECIPES: Recipe[] = [
   {
     id: 'oak-door', name: 'Porta de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.OAK_DOOR), count: 1 },
+  },
+  // Paredes autotile (W5, dono do produto 13/11): custos provisórios, ajustáveis olhando o ritmo do jogo.
+  {
+    id: 'plank-wall', name: 'Parede de Tábuas', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 2 }], output: { item: blockStack(Block.WALL_PLANKS), count: 2 },
+  },
+  {
+    id: 'stone-wall', name: 'Parede de Pedra', profession: 'builder',
+    inputs: [{ item: blockStack(Block.STONE), count: 2 }], output: { item: blockStack(Block.WALL_STONE), count: 2 },
+  },
+  {
+    id: 'plank-wall-door', name: 'Porta de Parede (Tábuas)', profession: 'builder',
+    inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.WALL_DOOR_PLANKS), count: 1 },
   },
   ...([
     ['stone-brick', 'Tijolo de Pedra', Block.STONE_BRICK],

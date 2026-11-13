@@ -2,6 +2,9 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
+## Paredes no Mundo (W5, v0.93.56)
+`render/three/chunkWalls.ts`: o Mundo desenha as paredes autotile com o mesmo `buildWallArt` do Santuário, **por chunk** (refeito só quando `chunk.version` muda; o `World` avisa os vizinhos nas bordas) e com texturas de peça/materiais compartilhados (`WallPieceCache`), `pick` pelas malhas. Os atlas vêm de `art().wallAtlases` (pacote principal: Tábuas e Pedra), carregados em segundo plano. Sem animação do quadro intermediário da porta (Santuário tem). O 2D de reserva não desenha paredes. Na grade fina (`?grade=2`) o perfil ainda não lista paredes.
+
 ## Paredes com arte (W3, v0.93.22, ADR 0027)
 
 `scripts/build-wall-atlas.py <material>` gera `src/assets/walls-<material>.webp` (16 tampas 4 × 4, índice = máscara N·1 + L·2 + S·4 + O·8, e 4 frentes abaixo; `render/wallAtlas.ts` guarda o layout e `wallArtPiece`, a escolha da peça). `render/sanctuaryWallArt.ts` desenha: um plano horizontal (tampa) à altura `WORLD_SCALE.wall` e, onde não há parede ao sul, um plano vertical (frente) com a base na face sul da laje; planos instanciados por peça, `alphaTest` 0,5, texturas recortadas do atlas (mipmaps sem sangrar). O `SanctuaryThreeRenderer` carrega os atlas do pacote de arte (`ArtPack.wallAtlases`) e refaz as paredes ao carregar; blocos sem atlas usam o protótipo de cor lisa (hoje Tábuas e Pedra têm atlas). O `pick` inclui as malhas das paredes. **Porta:** o atlas ganha 3 quadros (`door_closed/half/open`, fileira y = 4·128+154; atlas 512 × 820); a frente da porta é o quadro do estado, com quadro intermediário de 140 ms ao trocar de estado (`DOOR_HALF_MS` no `SanctuaryThreeRenderer`).

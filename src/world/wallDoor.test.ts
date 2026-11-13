@@ -104,10 +104,10 @@ describe('porta de parede (ADR 0027)', () => {
     expect(w.wallPieceAt(x, y)).toEqual({ front: 'single', cap: 0, inner: 0 });
   });
 
-  it('alcançável: o perfil do Santuário lista paredes e porta; o Mundo principal ainda não', () => {
+  it('alcançável: os perfis do Santuário e do Mundo (W5) listam paredes e porta', () => {
     for (const id of [...WALL_BLOCKS, ...WALL_DOOR_BLOCKS]) {
       expect(WORLD_PROFILES.santuario.blocks).toContain(id);
-      expect(WORLD_PROFILES.principal.blocks).not.toContain(id);
+      expect(WORLD_PROFILES.principal.blocks).toContain(id);
     }
     const w = new World(3, WORLD_PROFILES.santuario);
     const [x, y] = w.findSpawn();

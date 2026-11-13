@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.56 — Paredes de Tábuas e Pedra e Porta de Parede no Mundo (W5 enxuta) (13/11/2026)
+- **Decisões do dono do produto (13/11):** altura da parede na grade fina = **2,4 cubos** (recomendação aceita: a mesma de hoje, ≈ a altura do personagem); **paredes e porta com ícone entram no Mundo** (a porta de parede usa o ícone da Porta de Carvalho).
+- **No Mundo (3D):** `ChunkWalls` (`render/three/chunkWalls.ts`) desenha as paredes autotile do Santuário — tampa e frente com a arte real, emenda entre chunks, porta que troca de quadro — por chunk, com texturas compartilhadas (`WallPieceCache` em `sanctuaryWallArt.ts`); `pick` e quebrar funcionam. Atlas de Tábuas e Pedra e ícones no pacote do Mundo (`art/principal.ts`, `textures.ts`).
+- **Economia (`world/items.ts`, provisória, ajustável):** Parede de Tábuas = 2 Tábuas de Carvalho → 2; Parede de Pedra = 2 Pedras Brutas → 2; Porta de Parede (Tábuas) = 4 Tábuas → 1, no Construtor; quebrar devolve o item (a porta, aberta ou fechada, volta a porta). Perfil principal lista os três blocos (hotbar com 3 a mais).
+- **Fora do escopo (próximas):** casas/cidade e interiores refeitos com paredes autotile; porta de Pedra; animação do quadro intermediário da porta no Mundo; **grade fina** (`?grade=2`): sem paredes por ora — na W5-grade a parede empilha `SUBDIV` frentes (altura 2,4 cubos) e a porta pede arte 1 × 2. **Sala:** o servidor precisa de `build:net` + `sync-net` + deploy para aceitar paredes (sem mudança de mensagem; `PROTOCOL_VERSION` 20 mantido). **2D de reserva (`?render=2d`/sem WebGL) não desenha paredes** (continuam sólidas): some no M7.
+- 4 testes novos (`wallsMundo.test.ts`); 3 testes que registravam "o Mundo ainda não tem paredes" atualizados; recibos `plank-wall`/`stone-wall`/`plank-wall-door` (o prefixo `wall-` é guardado pelo teste das paredes antigas removidas).
+
 ## Orvalis v0.93.54 — grade fina, F4: interiores, tenda, covil, lobos e goblins (só dev, `?grade=2`) (13/11/2026)
 - **ADR 0032, F4:** com `?grade=2` o mundo inteiro existe na grade fina com os mesmos pixels de hoje — agora também os cômodos, o covil e os bichos do mapa.
 - **Interiores e tenda:** `scaleInteriorDef` (`world/interiors.ts`) amplia cada caractere do mapa do cômodo 2 × 2 (a arte cobre a área nova inteira); o capacho vira 2 × 2 (`interiorExitAt`; pisar em qualquer célula sai), a porta da rua vale `SUBDIV` células (`World.interiorEntrance`), o ferreiro e suas linhas acompanham; espaçamento e anel × `SUBDIV`.

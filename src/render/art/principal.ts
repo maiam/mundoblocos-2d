@@ -128,6 +128,10 @@ import wheatIcon from '../../assets/icon-wheat.webp';
 import lamb from '../../assets/lamb.webp';
 import oakDoor from '../../assets/oak-door.webp';
 import oakDoorIcon from '../../assets/icon-block-oak-door.webp';
+import iconWallPlanks from '../../assets/icon-wall-planks.webp';
+import iconWallStone from '../../assets/icon-wall-stone.webp';
+import wallsPedra from '../../assets/walls-pedra.webp';
+import wallsTabuas from '../../assets/walls-tabuas.webp';
 import loveHearts from '../../assets/love-hearts.webp';
 import sheep from '../../assets/sheep.webp';
 import horse from '../../assets/horse.webp';
@@ -365,8 +369,12 @@ const pack: ArtPack = {
     [Block.CHERRY_PLANKS]: cherryPlanksIcon,
     [Block.BIRCH_LOG]: birchLogIcon,
     [Block.BIRCH_PLANKS]: birchPlanksIcon,
+    [Block.WALL_PLANKS]: iconWallPlanks,
+    [Block.WALL_STONE]: iconWallStone,
   },
   celestialIcons: {},
+  // Paredes autotile no Mundo (W5): atlas por material e ícones (a porta de parede usa o ícone da Porta de Carvalho).
+  wallAtlases: { [Block.WALL_PLANKS]: wallsTabuas, [Block.WALL_STONE]: wallsPedra },
   oakDoor,
   dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls, cave: dungeonCave },
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },

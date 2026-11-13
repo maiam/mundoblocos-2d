@@ -18,6 +18,8 @@ import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
 import { actorScaleFor, cellsTallFromSearch } from './worldScale';
+import { ChunkWalls } from './three/chunkWalls';
+import { DEFAULT_WALL_THICKNESS } from '../world/walls';
 import { ThreeStage } from './three/stage';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
@@ -66,6 +68,9 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly sprites: ChunkSprites;
   private readonly groundFx: GroundFx;
   private readonly doors: DoorSprites;
+  /** Paredes autotile (W5): arte por chunk; os atlas chegam em segundo plano. */
+  private readonly walls: ChunkWalls;
+  private readonly wallAtlases = new Map<BlockId, HTMLImageElement>();
   /** Partículas do bioma (pétalas, poeira, pólen, vaga-lumes), em espaço de tela, na camada 2D. */
   private readonly particles = new Particles();
   /** Quantos objetos 2D o mapa de texturas tinha: se crescer (cultura/dungeon chegando), os planos são refeitos. */
@@ -108,6 +113,14 @@ export class WorldThreeRenderer implements GameRenderer {
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
+    this.walls = new ChunkWalls(this.worldLayer, world, this.wallAtlases, DEFAULT_WALL_THICKNESS);
+    for (const [key, url] of Object.entries(art().wallAtlases ?? {})) {
+      if (!url) continue;
+      const img = new Image();
+      img.onload = () => { if (!this.disposed) { this.wallAtlases.set(Number(key) as BlockId, img); this.walls.invalidateAll(); } };
+      img.onerror = () => console.warn('Atlas de paredes não carregou');
+      img.src = url;
+    }
     this.doors = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K,
       isDoor: (id) => isDoor(id), isOpen: (id) => id === Block.OAK_DOOR_OPEN,
@@ -159,6 +172,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.blocks.update(rect);
       if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
       this.sprites.update(rect);
+      this.walls.update(rect);
       this.doors.update(rect, opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
     }
@@ -222,8 +236,8 @@ export class WorldThreeRenderer implements GameRenderer {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
     this.stage.syncCamera(cam);
     this.stage.aim(cam, sx, sy);
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.doors.meshes()])) {
-      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.doors.cellOf(hit);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes()])) {
+      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -260,6 +274,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.floor.dispose();
     this.blocks.dispose();
     this.sprites.dispose();
+    this.walls.dispose();
     this.doors.dispose();
     this.groundFx.dispose();
     this.blockMaterials.dispose();

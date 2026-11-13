@@ -49,7 +49,7 @@ Experimento `?celulas=28` (v0.93.50): células e objetos ficaram bons, **mas o m
 ## 6. Perguntas abertas (ao dono do produto)
 1. **Mundos salvos:** migrar (cada célula editada vira 2 × 2; formas do terreno iguais, bordas e posição de árvores com pequenas diferenças) **ou** aceitar mundo novo para quem já tem save?
 2. **Tamanho do chunk em células:** 32 (mesma área em px; recomendado) ou 16 (chunk menor, mais chunks).
-3. **Altura da parede:** 2 níveis finos (~96 px) ou manter ≈ 115 px (2,4 células)?
+3. **Altura da parede:** ✅ **decidido (13/11): 2,4 cubos** (≈ 115 px, a de hoje). Na W5-grade: a frente empilha `SUBDIV` peças e a porta pede arte 1 × 2.
 4. **Celular:** se 28 células na vertical ficar pequeno demais no celular, aceitar menos células visíveis só nele (mundo maior na tela) ou manter igual em todo aparelho?
 5. **Altura do personagem:** manter ≈ 2,4 células novas (mesmos pixels de hoje) ou reduzir para 2,0 (padrão Stardew exato, ~17% menor)?
 6. **Controle de ação:** manter cursor/botão com alcance (convertido) ou adotar a ação no tile à frente (Stardew)?
