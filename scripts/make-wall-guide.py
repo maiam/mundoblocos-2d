@@ -59,7 +59,7 @@ def footprint(n, e, s, w):
     if s: r.append((C0, Z1, C1, CELL))
     if w: r.append((0, Z0, C0, Z1))
     if e: r.append((C1, Z0, CELL, Z1))
-    return r
+    return [q for q in r if q[2] > q[0] and q[3] > q[1]]  # com x = 1 os braços L/O têm largura zero: não existem
 
 
 text(40, 24, 'Gabarito da arte das paredes — Orvalis', 34, True)
@@ -81,7 +81,7 @@ for name, w, _, desc, parts in pieces:
     d.rectangle([x, top, x + w, top + H], fill=FRONT, outline=INK, width=2)
     d.line([(x, top + 14), (x + w, top + 14)], fill=FRONT2, width=3)  # faixa do topo (aresta clara/escura)
     px = x
-    for off, ww, lab in parts:
+    for off, ww, lab in [q for q in parts if q[1] > 0]:
         d.rectangle([px + off + 1, top + 24, px + off + ww - 1, top + H - 8], outline=FRONT2)
         text(px + off + ww // 2, top + H // 2, lab, 13, fill=INK, anchor='mm')
     text(x, top - 24, name, 20, True)

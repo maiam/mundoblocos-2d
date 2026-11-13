@@ -8,6 +8,8 @@ Apenas apresentação; lê `World`, nunca escreve.
 
 ## Paredes — protótipo de autotile (v0.93.16, ADR 0027)
 
+> **v0.93.20:** a tampa do protótipo tem franjas (coluna: `franja | miolo | franja`, `CAP_TRIM` ≈ 0,21; fileira: franja na borda norte); `?espessura=` aceita `x` até 1,0 (coluna = célula inteira). A geometria usa `wallFootprintParts` (tipo de cada parte).
+
 `render/sanctuaryWallPrototype.ts` desenha cada parede do `World` como uma placa fina de cores lisas: para cada célula, `wallFootprint(wallNeighbors(...))` dá o poste e os braços (retângulos em coordenadas da célula) e cada um vira uma caixa de altura `WORLD_SCALE.wall`. A frente só aparece no último bloco de uma fileira norte–sul por consequência da geometria. O `SanctuaryThreeRenderer` refaz as paredes junto com as malhas, inclui-as no `pick` (a célula inteira conta como parede, mesmo no vão) e usa um ícone SVG provisório na hotbar. `sanctuary3DGeometryCells` não desenha paredes como cubos. Ligado por `?mundo=santuario&paredes=autotile` (libera `WALL_BLOCKS` na hotbar do Santuário; só teste); `&espessura=x,z` (ex.: `0.25,0.35`) muda a espessura por eixo (x = faixas, z = tampa). Será substituído pela arte (W1/W3).
 
 ## Escala do mundo no Santuário (v0.93.14, ADR 0028)

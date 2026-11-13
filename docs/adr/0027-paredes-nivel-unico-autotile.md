@@ -21,6 +21,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
   A espessura tem **dois valores** (`WallThickness`: `x` faixas/poste, `z` tampa), fechados em **0,25 / 0,35** pelo dono do produto (13/11/2026; ajustáveis por `?espessura=` só para teste). A **colisão continua sendo a célula inteira**; só o desenho é fino. Daí saem sozinhos os comportamentos observados:
   fileira leste–oeste com frente de célula inteira (altura ≈ 1,2); fileira norte–sul como faixa fina em que **só o último
   bloco ao sul mostra a frente** (fina), os demais só mostram a tampa; bloco isolado = poste fino.
+- **Correção (v0.93.20):** a medida de uma cena do Core Keeper, refeita com a escala certa (tile ≈ 90 px), mostra a **coluna** com ≈ 0,9–1,0 tile de largura, em três faixas (`franja clara ~0,21 | miolo escuro ~0,5 | franja clara ~0,21`, juntas a cada tile; a frente do fim da coluna tem a largura da coluna), e a **tampa da fileira** com ≈ 0,3 de profundidade e uma franja clara na borda norte. O "poste fino de 0,2" da medida anterior era só uma franja. `x` (largura da coluna) vai até 1,0; `z` (profundidade da tampa) segue ≈ 0,35.
 - **Autotile por vizinhança** (função pura `world/walls.ts`, testada):
   - **Frente:** `single` (poste), `end` (último bloco ao sul de uma fileira norte–sul), `left`/`mid`/`right` (fileira leste–oeste);
     `null` quando nada aparece (continuação de uma fileira norte–sul). `wallFrontRanges` dá as faixas de x expostas.
