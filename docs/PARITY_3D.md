@@ -23,6 +23,13 @@ Atualize a tabela quando um cenário mudar de estado.
 | Dentro do labirinto | ✅ | Paredes em 2 níveis, escuro fora, penumbra pela luz do jogador (mais escura que a vinheta do 2D no centro). |
 | Construção (parede fina, pilar, porta) | ✅ | Formas iguais; frente dos cubos **provisória**. |
 
+## Medições em aparelho real (painel `?fps=1`)
+| Data | Aparelho | Modo | Resultado | Leitura |
+|---|---|---|---|---|
+| 13/11/2026 | PC Windows, Edge 157, janela 1912 × 948, DPR 1, servidor de desenvolvimento, 41 s | 3D (`?render=3d`) | média **51,7 fps**; 5% piores quadros ≈ **21 fps**; pior quadro **200 ms**; 252 chamadas, 5,0k triângulos, 72 texturas, 52 geometrias; JS 34 MB; contexto não perdeu | **Inconclusivo.** A cena é leve (a GPU de um PC não deveria limitar) e a média ficou abaixo de 60: o suspeito são engasgos de CPU (pintura do chão de chunks novos, envio de texturas, coleta de lixo) e a carga inicial, que esse relatório ainda misturava à média. A versão seguinte do painel separa o **regime estável** (depois de 8 s), conta a fração de quadros lentos e mostra o **tempo de JS do `draw`** — se o JS for pequeno e o quadro lento, é GPU/compositor; se o JS acompanhar, é CPU. |
+
+**Próxima rodada (PC):** (1) 3D, ~1 min **parado numa praça** depois da carga e outro ~1 min **andando** (cruzar chunks); (2) o mesmo no 2D (`?fps=1` sem `render=3d`). Compare `steady.avgFps`, `steady.pctOver33`, `steady.pctOver50` e `jsDrawMs`. Depois repita nos aparelhos.
+
 ## Custo de JS por quadro (`npm run perf:cpu:3d`) — o que NÃO depende da GPU
 Medido em 13/11/2026 numa VM sem GPU (Xeon, 4 vCPUs), servidor de desenvolvimento (JS sem minificar), 844 × 390, seed 42, 7 s por cenário.
 Mede só o tempo de `renderer.draw` na thread do JS (a CPU que o celular gasta para montar o quadro), **não** o desenho na GPU.

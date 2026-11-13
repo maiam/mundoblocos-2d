@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.44 — painel `?fps=1`: regime estável e tempo de JS do draw (13/11/2026)
+- **Primeiro relatório em aparelho real** (PC Windows, Edge, 1912 × 948): média 51,7 fps, 5% piores ≈ 21 fps, pior quadro 200 ms, 252 chamadas / 5,0k triângulos — **inconclusivo** (cena leve; suspeita de engasgos de CPU e da carga inicial misturada à média). Registrado em `docs/PARITY_3D.md`.
+- **Painel melhor:** o relatório passa a trazer o **regime estável** (depois de 8 s de carga: FPS médio, 5% piores, pior quadro, % de quadros > 33 ms e > 50 ms) e o **tempo de JS do `renderer.draw`** (`jsDrawMs`: média, p95, máx.), medido pelo `Game` num anel de 1200 quadros (`Game.drawTimes`); a linha do painel mostra `JS x ms`. Assim se vê se o gargalo é CPU (o JS acompanha o quadro lento) ou GPU/compositor (JS pequeno, quadro lento). Conferido no navegador. 2 testes novos (425). Só dev/piloto; sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.43 — medição do custo de JS por quadro, 2D × 3D (13/11/2026)
 - **`npm run perf:cpu:3d`** (`scripts/perf-cpu-3d.cjs`): mede, em 4 cenários (praça, noite, floresta densa, labirinto), o tempo que `renderer.draw` gasta na thread do JS — a parte do custo que não depende da GPU. Primeira medição (VM sem GPU, dev): **2D ≈ 1,1 ms; 3D ≈ 2,7–3,4 ms por quadro** (p95 ≤ 5 ms, máx. 9,6 ms), em `docs/PARITY_3D.md`. Cabe no orçamento de 30 FPS (33 ms), sem grande folga em celular fraco; a GPU só se mede em aparelho real (`?fps=1`).
 - Só ferramenta e docs; sem mudança de jogo, protocolo, save ou servidor.

@@ -142,7 +142,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   // Painel de desempenho (`?fps=1`, dev e piloto): FPS, tempo de quadro, GPU e memória; toque = copia o relatório.
-  if (PILOT_3D && new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null));
+  if (PILOT_3D && new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null, () => game?.drawTimes ?? { samples: [], count: 0 }));
 }
 
 /** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino ou Mila) e só então o mundo novo. */
