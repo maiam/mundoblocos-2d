@@ -79,43 +79,44 @@ describe('autotile das paredes (ADR 0027)', () => {
     expect(a.cap).toBe(CAP_E);
   });
 
-  describe('placa fina (geometria do autotile)', () => {
+  describe('placa fina (geometria do autotile, espessura explícita 0,25 / 0,35)', () => {
+    const THIN = { x: 0.25, z: 0.35 };
     const area = (rs: Array<{ x0: number; x1: number; z0: number; z1: number }>) => rs.reduce((a, r) => a + (r.x1 - r.x0) * (r.z1 - r.z0), 0);
     const nbOf = (rows: string[], x: number, y: number) => wallNeighbors(grid(rows), x, y);
-    const { x: TX, z: TZ } = DEFAULT_WALL_THICKNESS;
+    const { x: TX, z: TZ } = THIN;
     const C0 = (1 - TX) / 2;
     const C1 = (1 + TX) / 2;
     const Z0 = (1 - TZ) / 2;
     const Z1 = (1 + TZ) / 2;
 
     it('poste isolado: um quadrado fino no centro da célula', () => {
-      const f = wallFootprint(nbOf(['.#.'], 1, 0));
+      const f = wallFootprint(nbOf(['.#.'], 1, 0), THIN);
       expect(f).toEqual([{ x0: C0, x1: C1, z0: Z0, z1: Z1 }]);
-      expect(wallFrontRanges(nbOf(['.#.'], 1, 0))).toEqual([[C0, C1]]);
+      expect(wallFrontRanges(nbOf(['.#.'], 1, 0), THIN)).toEqual([[C0, C1]]);
     });
 
     it('fileira leste–oeste: frente de célula inteira e sem lacuna entre blocos', () => {
       const rows = ['###'];
-      expect(wallFrontRanges(nbOf(rows, 1, 0))).toEqual([[0, 1]]);
-      expect(wallFrontRanges(nbOf(rows, 0, 0))).toEqual([[C0, 1]]); // ponta oeste: começa no poste
-      expect(wallFrontRanges(nbOf(rows, 2, 0))).toEqual([[0, C1]]);
+      expect(wallFrontRanges(nbOf(rows, 1, 0), THIN)).toEqual([[0, 1]]);
+      expect(wallFrontRanges(nbOf(rows, 0, 0), THIN)).toEqual([[C0, 1]]); // ponta oeste: começa no poste
+      expect(wallFrontRanges(nbOf(rows, 2, 0), THIN)).toEqual([[0, C1]]);
     });
 
     it('fileira norte–sul: nenhuma frente, exceto o último bloco (fina)', () => {
       const rows = ['#', '#', '#'];
-      expect(wallFrontRanges(nbOf(rows, 0, 0))).toEqual([]);
-      expect(wallFrontRanges(nbOf(rows, 0, 1))).toEqual([]);
-      expect(wallFrontRanges(nbOf(rows, 0, 2))).toEqual([[C0, C1]]);
+      expect(wallFrontRanges(nbOf(rows, 0, 0), THIN)).toEqual([]);
+      expect(wallFrontRanges(nbOf(rows, 0, 1), THIN)).toEqual([]);
+      expect(wallFrontRanges(nbOf(rows, 0, 2), THIN)).toEqual([[C0, C1]]);
     });
 
     it('canto noroeste do cômodo (leste + sul): só o braço leste mostra a frente', () => {
       const nb = nbOf(['##', '#.'], 0, 0);
-      expect(wallFrontRanges(nb)).toEqual([[C1, 1]]);
+      expect(wallFrontRanges(nb, THIN)).toEqual([[C1, 1]]);
     });
 
     it('a pegada não se sobrepõe e fica dentro da célula; a área cresce com os braços', () => {
       const cross = nbOf(['.#.', '###', '.#.'], 1, 1);
-      const f = wallFootprint(cross);
+      const f = wallFootprint(cross, THIN);
       expect(f).toHaveLength(5);
       for (const r of f) { expect(r.x0).toBeGreaterThanOrEqual(0); expect(r.x1).toBeLessThanOrEqual(1); expect(r.z0).toBeGreaterThanOrEqual(0); expect(r.z1).toBeLessThanOrEqual(1); }
       // poste + 2 braços norte/sul (x × (1 − z)/2) + 2 braços leste/oeste (z × (1 − x)/2)
@@ -130,8 +131,8 @@ describe('autotile das paredes (ADR 0027)', () => {
 
   describe('espessura ajustável por eixo', () => {
     const is = (rows: string[]) => grid(rows);
-    it('o padrão é x 0,25 · z 0,35 (escolhido pelo dono do produto em 13/11/2026)', () => {
-      expect(DEFAULT_WALL_THICKNESS).toEqual({ x: 0.25, z: 0.35 });
+    it('o padrão é x 1,0 · z 0,35 (escolhido pelo dono do produto em 13/11/2026)', () => {
+      expect(DEFAULT_WALL_THICKNESS).toEqual({ x: 1, z: 0.35 });
     });
 
     it('x muda a largura do poste e das faixas norte–sul; z muda a profundidade da tampa', () => {
@@ -211,6 +212,33 @@ describe('autotile das paredes (ADR 0027)', () => {
         }
         expect(union.size / (N * N)).toBeCloseTo(total, 2); // soma das áreas = área da união (sem sobreposição)
       }
+    });
+  });
+
+  describe('padrão x = 1,0 (decisão final)', () => {
+    const nbOf = (rows: string[], x: number, y: number) => wallNeighbors(grid(rows), x, y);
+    const shapeKey = (m: number) => JSON.stringify(wallFootprint({ n: !!(m & CAP_N), e: !!(m & CAP_E), s: !!(m & CAP_S), w: !!(m & CAP_W), ne: false, se: false, sw: false, nw: false }));
+
+    it('só os vizinhos norte/sul mudam a forma da tampa: 4 formas para as 16 máscaras', () => {
+      const shapes = new Set(Array.from({ length: 16 }, (_, m) => shapeKey(m)));
+      expect(shapes.size).toBe(4);
+      expect(shapeKey(0)).toBe(shapeKey(CAP_E | CAP_W)); // poste e fileira têm a mesma forma
+      expect(shapeKey(CAP_N)).toBe(shapeKey(CAP_N | CAP_E)); // coluna com ramal leste: mesma forma
+      expect(shapeKey(CAP_N | CAP_S)).toBe(shapeKey(CAP_N | CAP_S | CAP_E | CAP_W));
+    });
+
+    it('a coluna contínua (N + S) ocupa a célula inteira', () => {
+      const f = wallFootprint(nbOf(['.#.', '.#.', '.#.'], 1, 1));
+      const covered = (px: number, pz: number) => f.some((r) => px >= r.x0 && px < r.x1 && pz >= r.z0 && pz < r.z1);
+      for (const px of [0.05, 0.5, 0.95]) for (const pz of [0.05, 0.5, 0.95]) expect(covered(px, pz)).toBe(true);
+    });
+
+    it('frente só onde não há parede ao sul, sempre de célula inteira; canto leste+sul não mostra frente', () => {
+      expect(wallFrontRanges(nbOf(['###'], 1, 0))).toEqual([[0, 1]]);
+      expect(wallFrontRanges(nbOf(['.#.'], 1, 0))).toEqual([[0, 1]]);        // bloco isolado
+      expect(wallFrontRanges(nbOf(['#', '#'], 0, 1))).toEqual([[0, 1]]);     // fim de coluna
+      expect(wallFrontRanges(nbOf(['#', '#'], 0, 0))).toEqual([]);           // meio da coluna
+      expect(wallFrontRanges(nbOf(['##', '#.'], 0, 0))).toEqual([]);         // canto: coberto pelo braço sul
     });
   });
 });

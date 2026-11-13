@@ -2,16 +2,16 @@
 (world/walls.ts + render/worldScale.ts), para a especificação (assets-src/paredes/CONTRATO.md) nunca divergir do jogo.
 
 Medidas (1 célula = CELL px), com a espessura de cada eixo em células (`--tx` largura das faixas e do poste; `--tz` profundidade da
-tampa); o padrão 0,25 / 0,35 (escolhido em 13/11/2026) dá: poste 32 × 44 px, braços 48 e 42 px, altura da frente 1,2 célula = 154 px.
+tampa); o padrão 1,0 / 0,35 (decisão final de 13/11/2026: coluna da largura da célula) dá: laje 128 × 44 px, braços N/S de 42 px, frente de 154 px.
 Gera também `assets-src/paredes/CONTRATO.md` a partir de `CONTRATO.tpl.md` (os números do contrato saem das mesmas medidas).
-Uso: python3 scripts/make-wall-guide.py [--tx 0.25] [--tz 0.35] [--saida assets-src/paredes/gabarito.png] [--sem-contrato]
+Uso: python3 scripts/make-wall-guide.py [--tx 1.0] [--tz 0.35] [--saida assets-src/paredes/gabarito.png] [--sem-contrato]
 """
 import argparse
 
 from PIL import Image, ImageDraw, ImageFont
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--tx', type=float, default=0.25, help='largura das faixas norte–sul e do poste (células)')
+ap.add_argument('--tx', type=float, default=1.0, help='largura das faixas norte–sul e do poste (células)')
 ap.add_argument('--tz', type=float, default=0.35, help='profundidade da tampa das fileiras leste–oeste (células)')
 ap.add_argument('--saida', default='assets-src/paredes/gabarito.png')
 ap.add_argument('--sem-contrato', action='store_true', help='não regerar o CONTRATO.md')
@@ -158,12 +158,15 @@ text(40, gy + 3 * CELL + 172, 'O desenho NÃO inclui sombra de contato nem ilumi
 im.save(OUT)
 print(OUT, im.size)
 
-if not args.sem_contrato:
+if not args.sem_contrato and TX != CELL:
+    print('contrato não regerado: o modelo CONTRATO.tpl.md vale para a coluna de largura da célula (--tx 1.0)')
+elif not args.sem_contrato:
     fmt = lambda v: f'{v:g}'.replace('.', ',')
     tokens = {
         'TX': TX, 'TZ': TZ, 'TXC': fmt(args.tx), 'TZC': fmt(args.tz), 'ARMX': ARM, 'ARMZ': ARMZ, 'H': H,
         'ENDW': CELL - C0, 'C0': C0, 'C1': C1, 'C1M1': C1 - 1, 'ARMXM1': ARM - 1,
         'Z0': Z0, 'Z1': Z1, 'Z0M1': Z0 - 1, 'Z1M1': Z1 - 1, 'YTOP': Z1 - H, 'INSIDE': CELL - Z1,
+        'TRIM': round(0.21 * CELL), 'CORE': CELL - 2 * round(0.21 * CELL), 'RIMN': round(0.2 * TZ), 'Z0RIM': Z0 + round(0.2 * TZ) - 1,
     }
     text_tpl = open('assets-src/paredes/CONTRATO.tpl.md', encoding='utf-8').read()
     for k, v in tokens.items():

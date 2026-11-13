@@ -1,97 +1,100 @@
 <!-- GERADO por scripts/make-wall-guide.py a partir de CONTRATO.tpl.md: não edite à mão. -->
 
-# Contrato de arte — Paredes (Orvalis)
+# Contrato de arte — Paredes (Orvalis) — versão final (coluna de largura da célula)
 
-Especificação para criar a arte das paredes. Acompanha o **`gabarito.png`**. Os dois são **gerados das mesmas medidas do código** por `scripts/make-wall-guide.py` a partir de
-`CONTRATO.tpl.md` (não edite o `CONTRATO.md` à mão: edite o modelo e rode o script). Decisões: ADR 0027 (paredes) e ADR 0028 (escala).
+Especificação para criar a arte das paredes. Acompanha o **`gabarito.png`**. Os dois são **gerados das mesmas medidas do código** por
+`scripts/make-wall-guide.py` a partir de `CONTRATO.tpl.md` (não edite o `CONTRATO.md` à mão: edite o modelo e rode o script).
+Decisões: ADR 0027 (paredes) e ADR 0028 (escala). **Referência visual: Core Keeper** (colunas com franjas claras e miolo escuro).
 
 ## 1. O que é uma parede
-Uma parede é uma **placa fina** no centro da célula (não um cubo): um **poste** central (32 px de largura × 44 px de profundidade)
-e **braços** até a borda em cada lado que tem parede vizinha. A colisão é a célula inteira; só o desenho é fino. Por isso:
-- **fileira leste–oeste:** a frente aparece em todos os blocos (frente larga, de célula inteira);
-- **fileira norte–sul:** é uma faixa fina e **só o último bloco ao sul mostra a frente** (fina); os outros mostram só a tampa;
-- **bloco sozinho:** um poste fino.
-O jogador vê **a frente** (face voltada para o sul) e **a tampa** (o topo, visto de cima). As laterais não aparecem.
+Uma parede é uma **laje de 44 px de profundidade** (eixo norte–sul, 0,35 célula) que **ocupa a célula inteira em largura** (128 px). A colisão é a célula inteira.
+O jogador vê **a frente** (face sul, voltada para ele) e **a tampa** (o topo, visto de cima); as laterais não aparecem.
+- **Fileira leste–oeste:** a frente aparece em todos os blocos; a tampa é uma faixa horizontal de 44 px de profundidade.
+- **Coluna norte–sul:** a tampa é uma faixa **vertical de 128 px de largura**, de bloco em bloco; **só o último bloco ao sul mostra a frente**
+  (de largura inteira); os outros mostram só a tampa.
+- **Bloco isolado:** uma laje de 128 × 44 px com frente de largura inteira.
 
 ## 2. Medidas (1 célula = 128 px)
 | Item | Valor |
 |---|---|
 | Célula | 128 × 128 px |
-| Poste: largura (eixo x) | **32 px** (0,25 célula) — largura das faixas norte–sul e do poste |
-| Poste: profundidade (eixo z) | **44 px** (0,35 célula) — profundidade da tampa das fileiras leste–oeste |
-| Braço leste/oeste (do poste à borda) | **48 px** de cada lado (48 + 32 + 48 = 128) |
-| Braço norte/sul (do poste à borda) | **42 px** de cada lado (42 + 44 + 42 = 128) |
+| Largura da laje (eixo x) | **128 px** (1,0 célula) — não há braços leste/oeste |
+| Profundidade da laje (eixo z) | **44 px** (0,35 célula), centrada: de y = 42 a y = 85 |
+| Braço norte/sul (da laje à borda) | **42 px** de cada lado (42 + 44 + 42 = 128): a coluna contínua preenche os 128 × 128 |
 | Altura da frente | **154 px** (1,2 célula ≈ a altura do personagem) |
+| Franja da coluna | **27 px** de cada lado (0,21) · miolo escuro de **74 px** |
+| Franja da tampa da fileira | **9 px** na borda norte (0,2 da profundidade) |
 
 Resolução mestre = 128 px por célula; o jogo reduz conforme o zoom. Entregar **nessa escala exata**.
 
-## 3. Peças por material
-Cada material de parede tem **20 imagens** (PNG RGBA, fundo transparente, **recortadas exatas, sem margem**), em
+## 3. Peças por material (20 PNG RGBA, fundo transparente, recorte exato, sem margem)
 `assets-src/paredes/<material>/`:
 
-**Frente (4)** — altura 154 px em todas:
-| Arquivo | Tamanho | Uso |
+**Frente (4), todas 128 × 154** — só aparece onde **não há parede ao sul**:
+| Arquivo | Uso |
+|---|---|
+| `front_mid.png` | bloco do meio de uma fileira leste–oeste; **emenda com ele mesmo** nos dois lados |
+| `front_end_left.png` | ponta ESQUERDA (acabamento/aresta à esquerda; emenda à direita) |
+| `front_end_right.png` | ponta DIREITA (acabamento à direita; emenda à esquerda) |
+| `front_post.png` | bloco isolado e **fim de coluna** norte–sul (acabamento nos dois lados; é a "frente iluminada com rebites" da referência) |
+
+**Tampa (16), todas 128 × 128, vista de cima** — `cap_00.png` … `cap_15.png`, índice = **N·1 + L·2 + S·4 + O·8**
+(N/L/S/O = há parede ao norte/leste/sul/oeste). Só os vizinhos **norte/sul** mudam a **forma**; os vizinhos leste/oeste mudam só o
+**acabamento das bordas esquerda e direita** (borda sem vizinho = fechada, com aresta/franja; com vizinho = aberta, emenda com a peça ao lado):
+
+| Forma (pelos vizinhos N/S) | Cobre (y) | Máscaras |
 |---|---|---|
-| `front_mid.png` | 128 × 154 | bloco do meio de uma fileira leste–oeste; **emenda com ele mesmo** nos dois lados |
-| `front_end_left.png` | 80 × 154 | ponta ESQUERDA (começa no lado oeste do poste, com acabamento/aresta à esquerda; emenda à direita) |
-| `front_end_right.png` | 80 × 154 | ponta DIREITA (acabamento à direita; emenda à esquerda) |
-| `front_post.png` | 32 × 154 | poste isolado e fim de coluna; acabamento nos dois lados |
+| nenhuma (poste/fileira) | y = 42–85 | `cap_00`, `02`, `08`, `10` |
+| só norte (topo de coluna, acabamento no fim) | y = 0–85 | `cap_01`, `03`, `09`, `11` |
+| só sul (base de coluna) | y = 42–127 | `cap_04`, `06`, `12`, `14` |
+| norte e sul (coluna contínua) | y = 0–127 (tile inteiro) | `cap_05`, `07`, `13`, `15` |
 
-As frentes de "só o braço" (ex.: canto de cômodo) são **recortes** de `front_mid` (colunas 0–47 = braço oeste; 80–127 = braço leste):
-não precisam de arte própria, mas `front_mid` **tem de poder ser cortado** nesses pontos sem emenda visível.
+O resto de cada tile é transparente. As 16 peças são variações de acabamento sobre 4 formas: dá para pintar as 4 formas e derivar as bordas.
 
-**Tampa (16)** — `cap_00.png` … `cap_15.png`, todas **128 × 128**, vista de cima. Índice = **N·1 + L·2 + S·4 + O·8**
-(N/L/S/O = há parede ao norte/leste/sul/oeste). A forma é sempre o poste + os braços (ver o gabarito, seção 2). Só a forma é
-pintada; o resto fica transparente. Exemplos: `cap_00` poste isolado; `cap_05` coluna norte–sul; `cap_10` fileira leste–oeste;
-`cap_15` cruz.
-
-## 4. Emendas e acabamento
-- **Onde há braço, a tampa continua até a borda da célula e emenda com a da vizinha** (mesma pintura nas linhas/colunas de
-  contato): braço leste ocupa x = 80–127 e braço oeste x = 0–47 (faixa y = 42–85); braço norte y = 0–41 e braço sul
-  y = 86–127 (faixa x = 48–79). Esses trechos devem ser **idênticos em todas as peças** que tenham o mesmo braço.
-- **Onde NÃO há braço**, a borda é externa: leve aresta clara (2–3 px) e/ou contorno.
-- **Contorno:** fino, na cor escura do próprio material (como os blocos do jogo), sem preto puro.
-- **Textura nunca gira nem espelha por célula:** desenhe na direção final. Variedade = variações enviadas (ver 6).
-- A frente tem um **ritmo por célula**: moldura/aresta no topo e embaixo e um **montante (poste) entre painéis** a cada 128 px
-  (como na referência), de modo que `front_mid` repetido forme painéis alinhados.
+## 4. Franjas, emendas e acabamento
+- **Coluna (a forma tem braço N ou S):** estrutura **franja clara (27 px) | miolo escuro (74 px) | franja clara (27 px)**, com **juntas de tábua a cada
+  128 px** nas franjas (referência Core Keeper). Onde há **parede leste/oeste** ligada à coluna, a franja daquele lado é **interrompida na altura da
+  fileira** (y = 42–85) e a tampa continua pela fileira.
+- **Fileira (faixa horizontal):** miolo escuro com uma **franja clara de 9 px na borda norte** (y = 42–50). Nas pontas sem vizinho, acabamento fechado.
+- **Emendas:** bordas abertas coincidem pixel a pixel com a peça vizinha (esquerda/direita: linhas y = 42–85 das faixas; norte/sul: colunas x = 0–127). Mesmo
+  desenho em todas as peças que tenham o mesmo lado aberto.
+- **Contorno** fino na cor escura do próprio material (como os blocos do jogo), sem preto puro. **Textura nunca gira nem espelha por célula.**
+- **Frente:** moldura/aresta no topo e embaixo e **montante (poste) entre painéis** a cada 128 px (como na referência).
 
 ## 5. Luz e estilo
-- Estilo do jogo: **ilustração digital de fantasia (RPG/anime)**, vista 3/4, cores quentes e limpas; **referência: Core Keeper**
-  (paredes de madeira com painéis emoldurados e tampa escura).
-- **Frente iluminada** (cor cheia do material). **Tampa mais escura** (cerca de 40–55% da luminosidade da frente), quase sem textura,
-  com uma aresta clara fina na borda externa.
-- **Não pintar:** sombra projetada no chão, sombra de contato no pé, luz/brilho do ambiente, neblina. O jogo faz isso em código
-  (luz dinâmica); pintar duplicaria.
+- **Ilustração digital de fantasia (RPG/anime)**, vista 3/4, cores quentes e limpas; **referência: Core Keeper**.
+- **Frente iluminada** (cor cheia). **Tampa mais escura** (cerca de 40–55% da luminosidade da frente): miolo escuro e franjas claras.
+- **Não pintar:** sombra projetada no chão, sombra de contato no pé, luz/brilho do ambiente, neblina. O jogo faz isso em código (luz dinâmica).
+- **Frente 100% opaca** (sem alfa parcial, inclusive na última coluna/linha e nas juntas das tábuas): o chão não pode aparecer através da parede.
 
 ## 6. Materiais e ordem de entrega
-1. **`tabuas`** — Parede de Tábuas (madeira de carvalho: tábuas verticais, moldura e montantes).
-2. **`pedra`** — Parede de Pedra (blocos de pedra/tijolo, juntas visíveis).
-3. Depois: os demais (celestial, cerejeira, bétula etc.), no mesmo padrão.
-**Variações (opcional, recomendado):** `front_mid_b.png` e `front_mid_c.png` (128 × 154), com **as mesmas colunas de borda** (x = 0 e
-x = 127) de `front_mid`, para trocar de uma para outra sem emenda e quebrar a repetição.
+1. **`tabuas`** — Parede de Tábuas (madeira de carvalho). 2. **`pedra`** — Parede de Pedra. 3. Depois: os demais, no mesmo padrão.
+**Variações (opcional):** `front_mid_b.png` e `front_mid_c.png` (128 × 154) com as mesmas colunas de borda de `front_mid`.
 
 ## 7. Montagem (onde cada peça cai)
 Origem = canto superior-esquerdo da célula no chão (ver gabarito, seção 3):
 - **Tampa:** a peça 128 × 128 é desenhada **154 px acima** da célula (y − 154).
-- **Frente:** base em **y = 86** (face sul do poste) e topo em **y = 86 − 154 = -68**, encostada embaixo da tampa; invade a célula de cima.
+- **Frente:** base em **y = 86** (face sul da laje) e topo em **y = 86 − 154 = -68**, encostada embaixo da tampa; invade a célula de cima.
 - A face sul fica 42 px para dentro da célula: o chão aparece à frente da parede.
 
-## 8. Conferência (antes de entregar)
+## 8. O que já existe de Tábuas (referência) e o que refazer
+Entregue em 13/11/2026 para uma geometria mais fina (ver `assets-src/paredes/tabuas/LEIA-ME.md`). Com a coluna de largura da célula:
+- **Ainda vale:** `front_mid` (128 × 154) e `cap_10` (fileira leste–oeste, y = 42–85).
+- **Refazer:** as outras 15 tampas (formas novas, de 128 px de largura, com franjas) e `front_end_left`, `front_end_right`, `front_post` (agora 128 × 154).
+  As peças antigas servem de **referência de estilo** (madeira, moldura, montantes).
+
+## 9. Conferência (antes de entregar)
 - [ ] 20 arquivos por material, nomes exatos, PNG RGBA, 128 px/célula.
-- [ ] Tamanhos exatos (frente 154 de altura; larguras 128/80/80/32; tampas 128 × 128).
-- [ ] `front_mid` repetido 3× forma uma fileira contínua; cortado em 0–47 / 80–127 não mostra emenda.
-- [ ] Tampas com o mesmo braço têm o trecho do braço idêntico (monte uma cruz `cap_15` ao lado de `cap_10`: sem degrau).
+- [ ] Frentes: 128 × 154, **100% opacas**; `front_mid` repetido 3× forma uma fileira contínua.
+- [ ] Tampas: 128 × 128; cada uma cobre a faixa de y da sua forma (tabela da seção 3).
+- [ ] Coluna contínua (`cap_05`) empilhada 3× forma uma coluna sem emenda; `cap_10` repetido forma uma fileira sem emenda.
+- [ ] Coluna ligada a uma fileira (`cap_07`, `cap_13`…) emenda com `cap_10` ao lado, sem degrau.
 - [ ] Sem sombra projetada, sem brilho, sem texto, sem marca d'água.
 
-## 9. Depois (fora deste contrato)
-- **Porta** (aberta e fechada, encaixada na fileira leste–oeste): contrato à parte.
-- Estados de dano (rachaduras) e variações de tampa.
-- Se a **espessura** mudar (hoje 0,25 × 0,35, fechada pelo dono do produto em 13/11/2026), as peças que dependem dela são
-  `front_end_*`, `front_post` e todas as `cap_*`; `front_mid` só muda se o poste mudar de posição.
-
 ## 10. Brief curto (para colar)
-> Arte de paredes para um jogo 2D de fantasia (vista 3/4, estilo ilustração digital RPG/anime, referência Core Keeper). A parede é
-> uma placa fina (poste de 32 × 44 px numa célula de 128 px), de 154 px de altura. Entregar, por material (começando por tábuas de
-> carvalho e pedra), 4 frentes (128, 80, 80 e 32 px de largura × 154 de altura; a do meio emenda com ela mesma) e 16 tampas vistas
-> de cima (128 × 128, indexadas pelos vizinhos N/L/S/O, em forma de poste + braços). Tampa escura, frente iluminada com
-> moldura e montantes. PNG transparente, recorte exato, sem sombra projetada nem iluminação. Ver gabarito.png.
+> Arte de paredes para um jogo 2D de fantasia (vista 3/4, estilo ilustração digital RPG/anime, referência Core Keeper). A parede é uma
+> laje que ocupa a célula inteira em largura (128 px), com 44 px de profundidade e 154 px de altura. Por material (tábuas de carvalho e pedra
+> primeiro): 4 frentes de 128 × 154 (meio, ponta esquerda, ponta direita e poste/fim de coluna; opacas) e 16 tampas vistas de cima, 128 × 128,
+> indexadas pelos vizinhos N/L/S/O (só N/S mudam a forma: faixa horizontal, topo de coluna, base de coluna e coluna contínua). Coluna = franja
+> clara | miolo escuro | franja clara com juntas de tábua; fileira = miolo escuro com franja fina ao norte. PNG transparente, recorte exato,
+> sem sombra projetada nem iluminação. Ver gabarito.png.

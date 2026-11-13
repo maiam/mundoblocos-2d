@@ -2,7 +2,7 @@
  * Autotile das paredes (ADR 0027): funções PURAS (sem DOM, sem `Math.random`) que, olhando os vizinhos, dizem a forma e qual
  * peça de arte desenhar. Fonte de verdade da forma; o `render/` só escolhe a imagem/geometria. Vale para Santuário e Mundo.
  *
- * Modelo (medido numa cena do Core Keeper): a parede é uma **placa fina** de espessura `DEFAULT_WALL_THICKNESS` (x 0,25 · z 0,35, por eixo) nos dois
+ * Modelo (medido numa cena do Core Keeper): a parede é uma **placa fina** de espessura `DEFAULT_WALL_THICKNESS` (x 1,0 · z 0,35, por eixo) nos dois
  * sentidos, no centro da célula: um poste central mais um braço até a borda da célula em cada lado que tem parede vizinha.
  * A colisão continua sendo a célula inteira (só o desenho é fino). Daí saem sozinhos os comportamentos observados:
  * - fileira leste–oeste: faces sul de célula inteira (frente larga, de `WORLD_SCALE.wall` de altura);
@@ -17,8 +17,12 @@
  * fileiras leste–oeste (e onde a face sul fica dentro da célula). Medido no Core Keeper: faixa fina ~0,2–0,3 e tampa ~0,35.
  */
 export interface WallThickness { x: number; z: number }
-/** Valor escolhido pelo dono do produto em 13/11/2026 (comparando `?espessura=` no protótipo): faixa 0,25 e tampa 0,35. */
-export const DEFAULT_WALL_THICKNESS: WallThickness = { x: 0.25, z: 0.35 };
+/**
+ * Valor final escolhido pelo dono do produto em 13/11/2026: **coluna da largura da célula (x = 1,0)** e tampa de 0,35. Medida no Core Keeper:
+ * a coluna tem ≈ 0,9–1,0 tile (franja | miolo | franja) e a tampa da fileira ≈ 0,3. Com x = 1 não há braços leste/oeste: só os vizinhos
+ * norte/sul mudam a forma da tampa (4 formas); os leste/oeste só mudam o acabamento das bordas.
+ */
+export const DEFAULT_WALL_THICKNESS: WallThickness = { x: 1, z: 0.35 };
 
 /** Limita a espessura a um intervalo que ainda forma parede (0,1 a 1,0 da célula; 1,0 = a coluna ocupa a célula inteira). */
 export function clampWallThickness(t: WallThickness): WallThickness {

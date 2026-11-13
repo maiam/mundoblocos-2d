@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.21 — Decisão final: coluna da largura da célula (x = 1,0 · z = 0,35) (13/11/2026)
+- **Decisão do dono do produto:** `DEFAULT_WALL_THICKNESS` = `{ x: 1, z: 0.35 }`. Com `x = 1` só os vizinhos norte/sul mudam a forma da tampa (**4 formas** para as 16 máscaras); leste/oeste só mudam o acabamento das bordas. Testes: padrão, 4 formas, coluna contínua preenche a célula, frentes (isolado, fim de coluna, meio e canto).
+- **Contrato e gabarito regerados** (`CONTRATO.tpl.md` reescrito): laje de 128 × 44 px, braços N/S de 42, frente 128 × 154 (4 peças, opacas), 16 tampas 128 × 128 sobre 4 formas, franja da coluna 27 px | miolo 74 | franja 27, franja da fileira 9 px ao norte, tabela de máscaras por forma, conferência. **Das peças de Tábuas já entregues valem `front_mid` e `cap_10`; as outras 18 serão refeitas** (as antigas ficam como referência de estilo).
+- Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.20 — Colunas largas com franjas (`espessura` até 1,0) e correção da leitura do Core Keeper (13/11/2026)
 - **Correção:** a medida da coluna estava errada. Com a escala certa da cena (tile ≈ 90 px), a coluna do Core Keeper tem **≈ 0,9–1,0 tile** de largura: `franja clara (~0,21) | miolo escuro (~0,5) | franja clara (~0,21)`, com juntas a cada tile e, no fim ao sul, uma frente iluminada com a largura da coluna. A "faixa fina de 0,2" que eu medi era só uma das franjas. A tampa leste–oeste continua ≈ 0,3 de profundidade, com uma franja clara na borda norte.
 - **`world/walls.ts`:** `clampWallThickness` aceita até **1,0** (coluna = célula inteira); `wallFootprintParts` devolve cada parte com o tipo (`post`/`n`/`s`/`w`/`e`) e omite os braços leste/oeste de comprimento zero; `wallFrontRanges` não gera faixas de comprimento zero. O padrão **não mudou** (0,25 / 0,35) até a decisão. 24 testes de paredes.
