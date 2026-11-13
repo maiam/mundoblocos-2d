@@ -16,7 +16,19 @@ import { NetSession } from './net/session';
 import type { RendererFactory } from './render/rendererContract';
 import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
 
-const canvas = document.getElementById('world') as HTMLCanvasElement;
+let canvas = document.getElementById('world') as HTMLCanvasElement;
+/** Um canvas que recebeu contexto 2D não aceita WebGL (e vice-versa): cada Game ganha um canvas novo, senão a vitrine
+ *  do título (2D) travava a entrada no 3D até reiniciar. */
+function freshCanvas(): HTMLCanvasElement {
+  const next = document.createElement('canvas');
+  next.id = canvas.id;
+  next.className = canvas.className;
+  const style = canvas.getAttribute('style');
+  if (style) next.setAttribute('style', style);
+  canvas.replaceWith(next);
+  canvas = next;
+  return next;
+}
 const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
@@ -89,7 +101,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    game = new Game(canvas, seed, screenMode, profile, { net: s, online, body, rendererFactory: threeRendererFactory, solidPhysics: solidPhysics(), notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    game = new Game(freshCanvas(), seed, screenMode, profile, { net: s, online, body, rendererFactory: threeRendererFactory, solidPhysics: solidPhysics(), notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   // Como os outros vão me ver: o mesmo personagem do jogo.
@@ -113,7 +125,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
   const url = new URL(window.location.href);
   url.searchParams.set('seed', String(seed));
   window.history.replaceState(null, '', url);
-  game = new Game(canvas, seed, screenMode, profile, {
+  game = new Game(freshCanvas(), seed, screenMode, profile, {
     save: store.load(seed),
     store,
     body: keepBody,
@@ -165,7 +177,7 @@ function chooseCharacterForNewWorld(): void {
 function showTitle(): void {
   const last = store.lastSeed();
   const canContinue = last !== null && store.load(last) !== null;
-  game = new Game(canvas, last ?? 1, screenMode, profile, { showcase: true });
+  game = new Game(freshCanvas(), last ?? 1, screenMode, profile, { showcase: true });
   const title = new TitleScreen({
     canContinue,
     name: savedName(),

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.48 — corrige a entrada no jogo que ficava no 2D/travava (13/11/2026)
+- **Relato do dono do produto:** ao entrar no jogo ele "travava com a tela do 2d" e só voltava a funcionar (em 3D) depois de reiniciar. **Causa:** a vitrine da tela de título (`showcase`) roda um `Game` em Canvas 2D no `#world`; um canvas que recebeu contexto 2D **não aceita WebGL**, então o `Game` 3D criado por "Novo jogo"/"Continuar" falhava (`THREE.WebGLRenderer: Error creating WebGL context`) e a tela ficava parada. Reproduzido no headless antes do conserto.
+- **Correção (`main.ts`):** cada `Game` (vitrine, solo, sala, sair da sala) ganha um `<canvas id="world">` novo (`freshCanvas()`, mesmo id/classe/estilo) depois de o anterior ser destruído. Verificado: título → Novo jogo → Começar entra em WebGL. Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.47 — a virada: o Mundo passa a usar o 3D por padrão (13/11/2026)
 - **Decisão do dono do produto (13/11):** virada já, com 2D de reserva e física sem degrau como padrão no 3D. PC (~60 fps, JS 3,4 ms, sem vazamento), celular e tablet ("rodando ok"), faixas das copas e seleção corrigidas.
 - **O que muda para quem joga:** o Mundo principal usa o renderer 2.5D em WebGL (solo e online). `?render=2d` e aparelhos sem WebGL (ou falha ao carregar o módulo) usam o Canvas 2D de antes. Com o 3D o jogador **não sobe em cubos sozinho** (`?fisica=degrau` volta à regra antiga); lobos e goblins seguem com degrau.
