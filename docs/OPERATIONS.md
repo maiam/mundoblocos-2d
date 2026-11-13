@@ -171,7 +171,7 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 
 **Tampas entregues em outra espessura:** `python3 scripts/retarget-wall-caps.py --entrada <pasta> --saida <pasta> [--de-x 45,83 --de-z 45,83 --para-x 48,80 --para-z 42,86]` reprojeta as 16 tampas esticando poste e braços (mantém topologia e emendas). Usado em `assets-src/paredes/tabuas/`.
 
-**Arte das paredes** (W1, ADR 0027; ainda sem pipeline de build — vem na W3): contrato e gabarito em `assets-src/paredes/` (`CONTRATO.md`, `gabarito.png`; `python3 scripts/make-wall-guide.py [--tx 1.0] [--tz 0.35]` regera o gabarito **e** o `CONTRATO.md` (a partir de `CONTRATO.tpl.md`; não edite o contrato à mão)). Entrega por material em `assets-src/paredes/<material>/`: `front_mid`, `front_end_left`, `front_end_right`, `front_post`, `cap_00`…`cap_15` (PNG RGBA, 128 px por célula).
+**Arte das paredes** (W1, ADR 0027; ainda sem pipeline de build — vem na W3): contrato e gabarito em `assets-src/paredes/` (`CONTRATO.md`, `gabarito.png`; `python3 scripts/make-wall-guide.py [--tx 1.0] [--tz 0.35] [--franja 16]` regera o gabarito **e** o `CONTRATO.md` (a partir de `CONTRATO.tpl.md`; não edite o contrato à mão)). Entrega por material em `assets-src/paredes/<material>/`: `front_mid`, `front_end_left`, `front_end_right`, `front_post`, `cap_00`…`cap_15` (PNG RGBA, 128 px por célula).
 
 **Ícone de item** (v0.93.7): `python3 scripts/make-item-icon.py assets-src/<item>.png src/assets/icon-<item>.webp [--size 64]` (recorta, centraliza e reduz; WebP sem perdas) → import e entrada em `itemIcons` de `render/art/principal.ts`.
 
