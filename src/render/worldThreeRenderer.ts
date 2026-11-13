@@ -6,7 +6,7 @@ import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { loadDungeonArt } from './blockArt';
+import { getWaterArt, loadDungeonArt } from './blockArt';
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
@@ -18,6 +18,7 @@ import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
 import { BlockMaterials } from './three/blockMaterials';
 import { ChunkSprites } from './three/chunkSprites';
+import { GroundFx } from './three/groundFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
 import { loadCropSprites } from './itemArt';
@@ -32,7 +33,7 @@ const FLOOR_MARGIN = 1;
  * Render do Mundo principal em 2.5D (ADR 0031, M2 — **em construção**; só em desenvolvimento, `?render=3d`).
  * Fatias atuais: M2.1 chão por chunk (textura do `ChunkRenderer`) + o personagem em plano vertical + realces; M2.2 cubos
  * (`ChunkBlocks`, frente quadrada provisória, paredes finas) + pick nos cubos; M2.3 objetos altos (`ChunkSprites`: árvores, pedras,
- * cultura, enfeites, portas, cercas, baú, cidade como planos verticais). Ainda **não** desenha atores além do jogador, itens, luz nem efeitos
+ * cultura, enfeites, portas, cercas, baú, cidade como planos verticais); M2.4 efeitos de chão (`GroundFx`: brilho da água, água enchendo, sombras de nuvens). Ainda **não** desenha atores além do jogador, itens, luz nem efeitos
  * (ver `WORLD_THREE_OPTIONS` em `rendererContract.ts`). Mesma vista oblíqua K = 1 do Santuário (ADR 0026/0028).
  */
 export class WorldThreeRenderer implements GameRenderer {
@@ -44,6 +45,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly floor: ChunkFloor;
   private readonly blocks: ChunkBlocks;
   private readonly sprites: ChunkSprites;
+  private readonly groundFx: GroundFx;
   /** Quantos objetos 2D o mapa de texturas tinha: se crescer (cultura/dungeon chegando), os planos são refeitos. */
   private objectCount = 0;
   private readonly blockMaterials: BlockMaterials;
@@ -61,6 +63,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.floor.reupload();
       this.blockMaterials?.reupload();
       this.sprites?.reupload();
+      this.groundFx?.reupload();
     });
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
@@ -70,6 +73,12 @@ export class WorldThreeRenderer implements GameRenderer {
     this.floor = new ChunkFloor(this.stage.scene, world, this.chunks);
     this.selection = new SelectionMarkers(this.stage.scene, world);
     this.sprites = new ChunkSprites(this.stage.scene, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
+    this.groundFx = new GroundFx(this.stage.scene, {
+      seed: world.seed,
+      isOpenWater: (x, y) => blockDef(world.getGround(x, y)).liquid && world.getObject(x, y) === Block.AIR,
+      waterFlows: () => world.waterFlows(),
+      flowSheet: () => getWaterArt()?.flow ?? null,
+    });
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
     this.blocks = new ChunkBlocks(this.stage.scene, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
@@ -122,6 +131,10 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blocks.update(rect);
     if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
     this.sprites.update(rect);
+    // Área visível em células de mundo (+1 de margem): brilhos da água, água enchendo e sombras de nuvens.
+    const [ax, ay] = cam.screenToWorld(0, 0);
+    const [bx, by] = cam.screenToWorld(cam.width, cam.height);
+    this.groundFx.update({ x0: ax / TILE - 1, y0: ay / TILE - 1, x1: bx / TILE + 1, y1: by / TILE + 1 }, opts.elapsed);
     this.drawPlayer(opts);
     this.selection.update(opts);
     this.stage.render();
@@ -168,6 +181,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.floor.dispose();
     this.blocks.dispose();
     this.sprites.dispose();
+    this.groundFx.dispose();
     this.blockMaterials.dispose();
     this.selection.dispose();
     this.billboard.geometry.dispose();

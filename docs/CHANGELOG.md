@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.33 — M2.4: efeitos de chão do Mundo em 2.5D; M2 concluído (13/11/2026)
+- **`GroundFx`:** brilhos que piscam na água, **buraco enchendo de água** (folha de fluxo por UV) e **sombras de nuvens** à deriva, com a mesma matemática do 2D (`groundFxMath.ts`, testada): pools de tamanho fixo (96 brilhos, 16 fluxos, 16 nuvens), planos colados ao chão sem escrever profundidade. Conferido no navegador (seed 42): brilhos, 5 nuvens e 1 fluxo ao quebrar uma margem, sem erros.
+- **M2 (Mundo estático) concluído** em `?render=3d` (só dev): chão por chunk, cubos, objetos altos (inclusive a cidade), água e nuvens. Faltam atores, itens, luz e dia/noite, efeitos (M3), interiores e dungeon (M4) e o piloto (M5). 385 testes (8 novos). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.32 — M2.3: objetos altos do Mundo em 2.5D, atrás de `?render=3d` (13/11/2026)
 - **`ChunkSprites`:** cada sprite 2D de objeto vira um plano vertical (base na face sul da célula, tamanho em células da arte, altura ÷ K), instanciado por chunk e sprite, reconstruído por `chunk.version` com orçamento. Sólidos escrevem profundidade (`alphaTest`); os de passar por cima (grama, flor, cultura, porta aberta) não, para nunca cobrir o personagem. **`worldSpriteArt`** repete as escolhas do `drawObject` 2D (variação por célula, porta por estado, cerca emendada por composição de canvas). `pick` pelo retângulo clicável do sprite (sem ler pixels). Arte que chega depois (cultura, dungeon) refaz os planos.
 - **A cidade já aparece** (torres do portão, bancos, poço, arbustos, flores) com a mesma arte do 2D; árvores, pedras e mato também. Conferido no navegador (seed 42, 2D × 3D; praça e floresta), sem erros. Ainda sem animação de porta, luz/brilhos, água animada (M2.4), atores além do jogador e itens (M3), interiores e dungeon (M4). Só dev; física inalterada. 377 testes (3 novos do `ChunkSprites`). Sem mudança de protocolo, save ou servidor.
