@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.49 — ícones de arte das paredes na hotbar (13/11/2026)
+- **Arte enviada pelo dono do produto:** ícones da **Parede de Tábuas** (tora e painéis) e da **Parede de Pedra**. Originais em `assets-src/icons-paredes/`; recorte pela silhueta (alfa > 10, ignora o véu quase invisível das bordas), quadrado 128 px, WebP q84 em `src/assets/icon-wall-*.webp`, registrados em `celestialIcons` do pacote do Santuário (`render/art/santuario.ts`) — `iconFor` já os devolvia antes do provisório. Teste novo em `santuario.test.ts`.
+- **Porta de parede:** sem ícone enviado, segue com `wallPlaceholderIcon`. O Mundo principal ainda não lista paredes (W5). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.48 — corrige a entrada no jogo que ficava no 2D/travava (13/11/2026)
 - **Relato do dono do produto:** ao entrar no jogo ele "travava com a tela do 2d" e só voltava a funcionar (em 3D) depois de reiniciar. **Causa:** a vitrine da tela de título (`showcase`) roda um `Game` em Canvas 2D no `#world`; um canvas que recebeu contexto 2D **não aceita WebGL**, então o `Game` 3D criado por "Novo jogo"/"Continuar" falhava (`THREE.WebGLRenderer: Error creating WebGL context`) e a tela ficava parada. Reproduzido no headless antes do conserto.
 - **Correção (`main.ts`):** cada `Game` (vitrine, solo, sala, sair da sala) ganha um `<canvas id="world">` novo (`freshCanvas()`, mesmo id/classe/estilo) depois de o anterior ser destruído. Verificado: título → Novo jogo → Começar entra em WebGL. Sem mudança de protocolo, save ou servidor.
