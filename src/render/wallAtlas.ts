@@ -49,4 +49,4 @@ export function wallArtPiece(nb: WallNeighbors): WallArtPiece {
 }
 
 /** Materiais de parede que já têm arte (id do bloco → nome da pasta em `assets-src/paredes`). */
-export const WALL_ART_MATERIALS: Readonly<Partial<Record<BlockId, string>>> = { [Block.WALL_PLANKS]: 'tabuas' };
+export const WALL_ART_MATERIALS: Readonly<Partial<Record<BlockId, string>>> = { [Block.WALL_PLANKS]: 'tabuas', [Block.WALL_STONE]: 'pedra' };
