@@ -40,6 +40,21 @@ export interface ChunkSpritesOptions {
   maxBuildsPerFrame?: number;
 }
 
+/**
+ * Desempate de profundidade (z-fighting): planos de objetos vizinhos na MESMA linha ficam exatamente na mesma profundidade e, onde as
+ * copas se sobrepõem, a GPU alterna entre um e outro em faixas. O 2D resolvia pela ordem de desenho (da esquerda para a direita:
+ * quem está mais à direita fica por cima); aqui cada coluna avança um pouquinho para o lado do espectador, em ciclos de `SPRITE_BIAS_PERIOD`
+ * colunas (só a ordem entre vizinhos importa; o salto do ciclo inverte a sobreposição em 1 de cada 64 colunas, quase nunca visível).
+ * `SPRITE_BIAS_BASE` põe todos os objetos um pouco à frente das faces dos cubos, que estão no mesmo plano. Tudo menor que a meia altura do
+ * pé do personagem (~0,14), para não esconder quem está logo ao sul.
+ */
+export const SPRITE_BIAS_BASE = 0.01;
+export const SPRITE_BIAS_STEP = 0.0015;
+export const SPRITE_BIAS_PERIOD = 64;
+export function spriteDepthBias(x: number): number {
+  return SPRITE_BIAS_BASE + (x & (SPRITE_BIAS_PERIOD - 1)) * SPRITE_BIAS_STEP;
+}
+
 interface Asset {
   texture: THREE.CanvasTexture;
   geometry: THREE.PlaneGeometry;
@@ -154,7 +169,7 @@ export class ChunkSprites {
       mesh.name = `Mundo: objeto (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
-        this.dummy.position.set(cell.x + sprite.ox / tile, cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile);
+        this.dummy.position.set(cell.x + sprite.ox / tile, cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x));
         this.dummy.rotation.set(0, 0, 0);
         this.dummy.scale.set(1, 1, 1);
         this.dummy.updateMatrix();

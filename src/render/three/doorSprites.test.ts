@@ -4,6 +4,7 @@ import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import { DOOR_ANIM_S } from '../doorAnim';
 import type { SpriteArt } from './chunkSprites';
+import { spriteDepthBias } from './chunkSprites';
 import { DoorSprites } from './doorSprites';
 
 const CLOSED = 50, OPEN = 51;
@@ -31,7 +32,9 @@ describe('DoorSprites (portas animadas no 3D)', () => {
     expect(doors.count).toBe(1);
     const mesh = scene.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
     // x + ox/tile = 3,25 ; z = y + (oy + h)/tile = 4 + 32/32 = 5
-    expect(mesh.position.toArray()).toEqual([3.25, 0, 5]);
+    expect(mesh.position.x).toBeCloseTo(3.25);
+    expect(mesh.position.y).toBe(0);
+    expect(mesh.position.z).toBeCloseTo(5 + spriteDepthBias(3), 6); // um pouco à frente das paredes vizinhas (mesmo plano)
     expect(mesh.material.depthWrite).toBe(true);
   });
 

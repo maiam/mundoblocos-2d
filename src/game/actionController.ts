@@ -357,6 +357,8 @@ export class ActionController {
 
   /** Célula de chão sob o ponto da tela (ignora objetos altos à frente). */
   private groundCell(sx: number, sy: number): [number, number] {
+    const seen = this.renderer.pickGround?.(this.camera, sx, sy); // 3D: o chão/cubo que se VÊ ali (o topo de um cubo cobre o chão ao norte)
+    if (seen) return [seen.x, seen.y];
     const [wx, wy] = this.camera.screenToWorld(sx, sy);
     return [Math.floor(wx / TILE), Math.floor(wy / TILE)];
   }

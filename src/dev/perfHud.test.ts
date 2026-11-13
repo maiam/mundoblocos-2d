@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { drawStats, PerfMeter, perfLine, WARMUP_S } from './perfHud';
+import { drawStats, PAUSE_MS, PerfMeter, perfLine, WARMUP_S } from './perfHud';
 
 describe('PerfMeter (medidor do painel ?fps=1)', () => {
   it('60 fps constantes: fps ≈ 60, tempo médio ≈ 16,7 ms, pior = o mesmo', () => {
@@ -70,4 +70,20 @@ describe('PerfMeter (medidor do painel ?fps=1)', () => {
     expect(drawStats(ring, 1000).n).toBe(100);                        // contagem maior que o anel: usa só o que cabe
     expect(perfLine('3d', { fps: 60, avgMs: 16.7, worstMs: 20 }, null, null, 2.4)).toContain('JS 2.4 ms');
   });
+
+  it('pausa do navegador (aba em segundo plano) não conta como quadro lento: sai das médias e vira "pausas"', () => {
+    const m = new PerfMeter();
+    let t = 0;
+    for (let i = 0; i < 120; i++) { t += 16.7; m.frame(t); }      // 60 fps
+    t += 15400; m.frame(t);                                         // a aba ficou escondida 15 s
+    for (let i = 0; i < 120; i++) { t += 16.7; m.frame(t); }
+    expect(m.pauses).toBe(1);
+    expect(m.pausedMs).toBeCloseTo(15400, 0);
+    const s = m.session();
+    expect(s.worstMs).toBeLessThan(PAUSE_MS);                       // o pior quadro de 15 s não entra
+    expect(s.avgFps).toBeCloseTo(60, 0);
+    expect(s.over50).toBe(0);
+    expect(m.snapshot().fps).toBeCloseTo(60, 0);
+  });
 });
+

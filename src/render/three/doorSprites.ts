@@ -4,7 +4,7 @@ import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import type { ChunkRect } from '../../world/world';
 import { DoorAnimator, doorKey } from '../doorAnim';
-import { type SpriteArt, type SpriteCell, spriteHit } from './chunkSprites';
+import { type SpriteArt, type SpriteCell, spriteDepthBias, spriteHit } from './chunkSprites';
 
 export interface DoorWorld {
   getChunk(cx: number, cy: number): Chunk | null | undefined;
@@ -128,7 +128,7 @@ export class DoorSprites {
     }
     mesh.geometry = this.geometryFor(sprite);
     mesh.material = open ? a.soft : a.solid; // aberta se atravessa: nunca cobre o personagem
-    mesh.position.set(d.x + sprite.ox / this.opts.tile, 0, d.y + (sprite.oy + sprite.h) / this.opts.tile);
+    mesh.position.set(d.x + sprite.ox / this.opts.tile, 0, d.y + (sprite.oy + sprite.h) / this.opts.tile + spriteDepthBias(d.x));
     mesh.userData.cell = { x: d.x, y: d.y, id: d.id, sprite } satisfies SpriteCell;
     mesh.visible = true;
   }

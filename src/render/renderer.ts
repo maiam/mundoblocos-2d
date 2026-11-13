@@ -21,6 +21,7 @@ import { drawThinHorizontalWall, horizontalWallShape } from './adaptiveWalls';
 import { loadDungeonArt } from './blockArt';
 import { DoorAnimator, doorKey } from './doorAnim';
 import { darkenOutside, drawBeacon } from './dungeonFx';
+import { drawBreakingCracks, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { isTownArt, TOWN_REACH } from './townArt';
 import { DamageNumbers } from './damageNumbers';
 import type { Hit } from '../world/progression';
@@ -596,103 +597,27 @@ export class Renderer {
     };
   }
 
-  /**
-   * Seleção do alvo à frente: cantoneiras que "respiram" ao redor do bloco do
-   * topo (ou da célula), douradas se há ação possível, rosadas se não.
-   */
+  /** Seleção do alvo à frente (cantoneiras; `render/selectionFx.ts`, compartilhado com o 3D). */
   private drawFocus(cam: Camera, f: NonNullable<RenderOptions['focus']>, elapsed: number): void {
-    const ctx = this.ctx;
-    const { sx, sy, w, h } = this.cellScreenRect(cam, f.x, f.y);
-    const pulse = 1 + 0.06 * Math.sin(elapsed * 5);
-    const cx = sx + w / 2;
-    const cy = sy + h / 2;
-    const hw = (w / 2) * pulse + 2;
-    const hh = (h / 2) * pulse + 2;
-    const len = Math.min(w, h) * 0.28;
-    ctx.save();
-    ctx.lineWidth = Math.max(2.5, cam.zoom * 1.4);
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = f.valid ? '#ffe9a8' : 'rgba(255, 150, 170, 0.9)';
-    ctx.shadowColor = f.valid ? 'rgba(255, 212, 107, 0.95)' : 'rgba(255, 80, 120, 0.7)';
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    for (const [sxn, syn] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) {
-      const x = cx + sxn * hw;
-      const y = cy + syn * hh;
-      ctx.moveTo(x, y - syn * len);
-      ctx.lineTo(x, y);
-      ctx.lineTo(x - sxn * len, y);
-    }
-    ctx.stroke();
-    ctx.restore();
+    drawFocusBrackets(this.ctx, this.cellScreenRect(cam, f.x, f.y), cam.zoom, f.valid, elapsed);
   }
 
-  /** Rachaduras que crescem com o progresso + anel de carregamento. */
+  /** Rachaduras que crescem com o progresso + anel de carregamento (`render/selectionFx.ts`). */
   private drawBreaking(cam: Camera, b: NonNullable<RenderOptions['breaking']>): void {
-    const ctx = this.ctx;
-    const { sx, sy, w, h } = this.cellScreenRect(cam, b.x, b.y);
-    const cx = sx + w / 2;
-    const cy = sy + h / 2;
-    const p = Math.min(1, b.progress);
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(sx, sy, w, h);
-    ctx.clip();
-    ctx.fillStyle = `rgba(20, 12, 40, ${0.25 * p})`;
-    ctx.fillRect(sx, sy, w, h);
-    // Rachaduras determinísticas a partir do centro; mais ramos conforme avança.
-    ctx.strokeStyle = `rgba(30, 18, 50, ${0.5 + 0.4 * p})`;
-    ctx.lineWidth = Math.max(1.5, cam.zoom);
-    ctx.lineCap = 'round';
-    const branches = Math.ceil(p * 7);
-    const reach = Math.max(w, h) * 0.55 * p;
-    for (let i = 0; i < branches; i++) {
-      const a = (i / 7) * Math.PI * 2 + hash2(b.x * 31 + i, b.y, 5) * 0.8;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      let px = cx;
-      let py = cy;
-      for (let k = 1; k <= 3; k++) {
-        const jitter = (hash2(b.x + k, b.y + i, 9) - 0.5) * 0.9;
-        px = cx + Math.cos(a + jitter) * reach * (k / 3);
-        py = cy + Math.sin(a + jitter) * reach * (k / 3);
-        ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    const r = Math.max(14, Math.min(w, h) * 0.32);
-    ctx.save();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(28, 22, 64, 0.55)';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.strokeStyle = '#ffd46b';
-    ctx.shadowColor = 'rgba(255, 212, 107, 0.8)';
-    ctx.shadowBlur = 6;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    drawBreakingCracks(this.ctx, this.cellScreenRect(cam, b.x, b.y), cam.zoom, b.progress, b);
   }
 
   private drawHover(cam: Camera, hover: NonNullable<RenderOptions['hover']>): void {
-    const ctx = this.ctx;
     const top = this.world.topBlock(hover.x, hover.y);
     const sprite = top ? this.textures.objects.get(top.id) : undefined;
     const r = sprite?.hit ?? { x: 0, y: 0, w: TILE, h: TILE };
     const lift = (top?.level ?? 0) * CUBE_FRONT;
-    const sx = cam.worldToScreenX(hover.x * TILE + r.x);
-    const sy = cam.worldToScreenY(hover.y * TILE + r.y - lift);
-    ctx.save();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = hover.valid ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 120, 140, 0.9)';
-    ctx.shadowColor = hover.valid ? 'rgba(160, 220, 255, 0.9)' : 'rgba(255, 80, 120, 0.8)';
-    ctx.shadowBlur = 8;
-    ctx.strokeRect(sx + 1, sy + 1, r.w * cam.zoom - 2, r.h * cam.zoom - 2);
-    ctx.restore();
+    drawHoverFrame(this.ctx, {
+      sx: cam.worldToScreenX(hover.x * TILE + r.x),
+      sy: cam.worldToScreenY(hover.y * TILE + r.y - lift),
+      w: r.w * cam.zoom,
+      h: r.h * cam.zoom,
+    }, hover.valid);
   }
 
   /**

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { Chunk } from '../../world/chunk';
 import type { BlockWorld } from './chunkBlocks';
-import { ChunkSprites, type SpriteArt } from './chunkSprites';
+import { ChunkSprites, SPRITE_BIAS_BASE, SPRITE_BIAS_PERIOD, SPRITE_BIAS_STEP, type SpriteArt, spriteDepthBias } from './chunkSprites';
 
 const TREE = 7, GRASS = 8, CUBE = 5;
 const canvasA = {} as HTMLCanvasElement;
@@ -38,7 +38,10 @@ describe('ChunkSprites (objetos altos do Mundo no 3D)', () => {
     // a base do plano fica na face sul da célula: z = y + (oy + h) / tile = y + 1; x = x + ox / tile
     const m = new THREE.Matrix4();
     trees.getMatrixAt(0, m);
-    expect(new THREE.Vector3().setFromMatrixPosition(m).toArray()).toEqual([0.5, 0, 2]);
+    const pos = new THREE.Vector3().setFromMatrixPosition(m);
+    expect(pos.x).toBeCloseTo(0.5);
+    expect(pos.y).toBe(0);
+    expect(pos.z).toBeCloseTo(2 + spriteDepthBias(1), 6); // base na face sul + o desempate de profundidade da coluna
     // plano de 2 × 3 células (64 × 96 px), com a origem no canto inferior esquerdo
     const g = trees.geometry as THREE.PlaneGeometry;
     g.computeBoundingBox();
@@ -97,4 +100,18 @@ describe('ChunkSprites (objetos altos do Mundo no 3D)', () => {
     expect(hit(0, 1.4)).toBeDefined(); // o 1º exemplar (50 px ≈ 1,56 célula) também cobre 1,4
     expect(hit(1, 3)).toBeUndefined();  // acima do 2º exemplar (1 + 1,56 = 2,56)
   });
+
+  it('desempate de profundidade: vizinhos da mesma linha nunca empatam (o da direita fica na frente, como no 2D); folga pequena sobre as faces dos cubos', () => {
+    for (let x = -200; x < 200; x++) {
+      if ((x & (SPRITE_BIAS_PERIOD - 1)) === SPRITE_BIAS_PERIOD - 1) continue; // o salto do ciclo é o único lugar onde a ordem inverte
+      expect(spriteDepthBias(x + 1)).toBeGreaterThan(spriteDepthBias(x));
+    }
+    expect(spriteDepthBias(0)).toBeCloseTo(SPRITE_BIAS_BASE);
+    // menor que a meia profundidade dos pés do personagem (~0,14): não esconde quem está logo ao sul do tronco
+    expect(spriteDepthBias(SPRITE_BIAS_PERIOD - 1)).toBeLessThan(0.14);
+    // maior que a precisão de profundidade de 16 bits do pior celular (≈ 7e-4 de célula): o empate some de verdade
+    expect(SPRITE_BIAS_STEP).toBeGreaterThan(7e-4);
+    expect(spriteDepthBias(-5)).toBeGreaterThanOrEqual(SPRITE_BIAS_BASE); // colunas negativas (o covil fica em x ≈ −100000)
+  });
 });
+

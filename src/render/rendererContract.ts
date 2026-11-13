@@ -1,4 +1,5 @@
 import type { World } from '../world/world';
+import type { Camera } from '../game/camera';
 import type { Renderer, RenderOptions } from './renderer';
 
 /** Contadores de desempenho do renderer (linha de base da Fase 1, ADR 0026). Só o WebGL tem. */
@@ -17,6 +18,12 @@ export interface RendererStats {
 /** Only rendering differs between official worlds; gameplay remains shared. */
 export type GameRenderer = Pick<Renderer, 'draw' | 'pick' | 'addDamage' | 'iconFor'> & {
   dispose?(): void;
+  /**
+   * Célula de CHÃO que se vê sob o ponto da tela, ignorando objetos altos de sprite (árvores…) mas não os cubos: no 3D com K = 1 o topo
+   * de um cubo cobre o chão da célula ao norte, então o mapeamento do 2D (`Camera.screenToWorld`) apontaria para a célula errada.
+   * Opcional: sem ele, quem usa cai no mapeamento do 2D (que já é exato lá).
+   */
+  pickGround?(cam: Camera, sx: number, sy: number): { x: number; y: number } | null;
   /** Células visíveis na vertical que o renderer prefere (padrão do Mundo 2D: 10). */
   readonly preferredCellsTall?: number;
   /** Só no WebGL: contadores para medir desempenho (dev e testes no navegador). */

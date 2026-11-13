@@ -19,7 +19,6 @@ import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
 import { CHARACTER_SCALE_FACTOR, SANCTUARY_CELLS_TALL } from './worldScale';
 import { ThreeStage } from './three/stage';
-import { SelectionMarkers } from './three/selection';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
 import { BlockMaterials } from './three/blockMaterials';
@@ -31,6 +30,8 @@ import { INTERIOR_BACKGROUND, InteriorRoom, roomBounds } from './three/interiorR
 import { art } from './art';
 import { Particles } from './particles';
 import { skyAt } from './daycycle';
+import { drawBreakingCracks, drawFocusBrackets, drawHoverFrame } from './selectionFx';
+import { selectionRect3d } from './worldSelection';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
@@ -53,7 +54,6 @@ export class WorldThreeRenderer implements GameRenderer {
   readonly preferredCellsTall = SANCTUARY_CELLS_TALL;
   readonly textures: BlockTextures;
   private readonly stage: ThreeStage;
-  private readonly selection: SelectionMarkers;
   private readonly chunks: ChunkRenderer;
   /** Tudo do mundo aberto (chão, cubos, objetos, portas, efeitos): escondido quando a personagem está num interior (M4.1). */
   private readonly worldLayer = new THREE.Group();
@@ -106,7 +106,6 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.selection = new SelectionMarkers(this.stage.scene, world);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
     this.doors = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K,
@@ -165,7 +164,6 @@ export class WorldThreeRenderer implements GameRenderer {
     this.actors.update(view, opts.actors, opts.elapsed);
     this.drops.update(view, opts.drops, opts.elapsed);
     this.ring.update(opts.hoverSheep);
-    this.selection.update(opts);
     this.stage.render();
     if (!inside) this.drawLighting(cam, opts, view);
     const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
@@ -179,6 +177,19 @@ export class WorldThreeRenderer implements GameRenderer {
         this.particles.draw(ctx);
       }
       this.damageNumbers.draw(ctx, cam, opts.dt);
+      // Seleção como no 2D (moldura do cursor, cantoneiras do alvo, rachaduras): em volta do que se vê — o cubo de cima, o objeto —,
+      // não um quadrado no chão (o 3D tinha um realce plano que só aparecia quando válido e não acompanhava a silhueta).
+      const rectFor = (c: { x: number; y: number }) => {
+        const top = this.world.topBlock(c.x, c.y);
+        return selectionRect3d(cam, {
+          x: c.x, y: c.y,
+          top: top ? { level: top.level, cube: blockDef(top.id).shape === 'cube' } : null,
+          hit: top ? this.textures.objects.get(top.id)?.hit ?? null : null,
+        }, TILE, OBLIQUE_K);
+      };
+      if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
+      if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
+      if (opts.breaking) drawBreakingCracks(ctx, rectFor(opts.breaking), cam.zoom, opts.breaking.progress, opts.breaking);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }
@@ -220,6 +231,20 @@ export class WorldThreeRenderer implements GameRenderer {
   }
 
   /** Mostra o número de um dano que entrou (chamado pelo jogo a cada acerto); desenhado na camada 2D. */
+  /** Chão visto sob o ponto da tela: o cubo atingido (qualquer nível) ou o ladrilho do chão; árvores e objetos de sprite não contam. */
+  pickGround(cam: Camera, sx: number, sy: number): { x: number; y: number } | null {
+    if (this.disposed) return null;
+    this.stage.syncCamera(cam);
+    this.stage.aim(cam, sx, sy);
+    if (this.worldLayer.visible) {
+      for (const hit of this.stage.hits(this.blocks.meshes())) {
+        const block = this.blocks.cellOf(hit.object, hit.instanceId);
+        if (block) return { x: block.x, y: block.y };
+      }
+    }
+    return this.stage.groundCell();
+  }
+
   addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void {
     this.damageNumbers.add(x, y, hit, target);
   }
@@ -237,7 +262,6 @@ export class WorldThreeRenderer implements GameRenderer {
     this.doors.dispose();
     this.groundFx.dispose();
     this.blockMaterials.dispose();
-    this.selection.dispose();
     this.actors.dispose();
     this.drops.dispose();
     this.ring.dispose();
