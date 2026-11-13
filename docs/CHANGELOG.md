@@ -1,5 +1,9 @@
 # Changelog
 
+## Documentação — confirmação do dono do produto e plano da virada (13/11/2026, sem versão)
+- **Confirmado no PC:** as faixas nas copas sumiram e o enquadramento da seleção melhorou (v0.93.45). **Celular e tablet: "rodando ok"** (sem relatório numérico). Registrado em `docs/PARITY_3D.md`.
+- **Plano do M6 (virada) detalhado na ADR 0031:** 3D padrão com `?render=2d` de reserva, física sem degrau padrão no 3D (só o jogador), **servidor e protocolo sem mudança** (a sala não simula o movimento do jogador; lobos e goblins seguem com degrau), online com o mesmo renderer, peso do build (Three.js no Mundo), Artifact e reversão. Nenhum código alterado; a virada aguarda a decisão do dono do produto.
+
 ## Orvalis v0.93.46 — relatório do PC aprovado e teste de vazamento do 3D (13/11/2026)
 - **Relatório do dono do produto (PC Windows, Edge, 1912 × 948, v0.93.45, 180 s, zero pausas):** média **59,6 fps**, 5% piores **51,8 fps**, pior quadro 67 ms, **0,3%** dos quadros > 33 ms, JS do `draw` **3,4 ms** (p95 6,2) — o 3D roda a ~60 fps fixos no PC. Registrado em `docs/PARITY_3D.md`.
 - **`npm run leak:3d`** (`scripts/leak-3d.cjs`): percorre ~140 chunks novos com `?render=3d`, coletando o lixo a cada passo, e falha se texturas, geometrias ou memória do JS crescerem depois do aquecimento. Resultado: texturas estáveis em ~104, geometrias em 84, JS em 15 MB — **sem vazamento** (os 58 MB do relatório eram lixo ainda não coletado).
