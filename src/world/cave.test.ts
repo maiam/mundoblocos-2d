@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { CAVE_MIN_CASTLE_DIST, DUNGEON_ORIGIN, dungeonGuard } from './dungeon';
 import { inRect } from './dungeon';
+import { SUBDIV } from '../config';
 import { World } from './world';
 
 describe('Covil isolado e entrada de caverna (ADR 0019)', () => {
@@ -23,7 +24,7 @@ describe('Covil isolado e entrada de caverna (ADR 0019)', () => {
       expect(w.isCaveDoor(...cave.outside)).toBe(true);
       // O labirinto fica no canto isolado, longe da cidade e da caverna.
       const d = w.dungeon!;
-      expect(d.area.x0).toBe(DUNGEON_ORIGIN[0]);
+      expect(d.area.x0).toBe(DUNGEON_ORIGIN[0] * SUBDIV);
       expect(Math.abs(d.area.x0 - cave.x)).toBeGreaterThan(50000);
       // Chegada dentro do covil é andável; o vão de saída está na borda; em volta, só montanha (ninguém sai a pé).
       const entry = w.dungeonEntry()!;
@@ -32,7 +33,7 @@ describe('Covil isolado e entrada de caverna (ADR 0019)', () => {
       expect(w.isDungeonExit(...entry)).toBe(false);
       const exit = d.gate[1];
       expect(w.isDungeonExit(...exit)).toBe(true);
-      expect(exit[1]).toBe(d.area.y1);
+      expect(exit[1] + SUBDIV - 1).toBe(d.area.y1);
       const g = dungeonGuard(d);
       expect(inRect(g, d.area.x0 - 3, d.area.y0)).toBe(true);
       expect(w.isWalkable(d.area.x0 - 3, d.area.y0)).toBe(false);

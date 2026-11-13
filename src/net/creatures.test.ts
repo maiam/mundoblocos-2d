@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Item } from '../world/items';
 import { mulberry32 } from '../world/random';
@@ -7,7 +8,7 @@ import { type MobState, PROTOCOL_VERSION, type ServerMessage } from './protocol'
 /** Sala com jogadores parados em (x, y). */
 function setup(names: string[]) {
   const room = new Room(1, 'Sala 1', 20261106, mulberry32(5));
-  const ids = names.map((name) => room.join({ t: 'hello', v: PROTOCOL_VERSION, name, room: 1 }).id!);
+  const ids = names.map((name) => room.join({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name, room: 1 }).id!);
   const at = (id: number, x: number, y: number) => room.handle(id, { t: 'state', s: { x, y, facing: 'down', moving: false } });
   return { room, ids, at };
 }

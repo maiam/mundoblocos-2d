@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe,expect,it } from 'vitest';
 import { Block } from '../world/blocks';
 import { MONSTER_STATS } from '../world/progression';
@@ -23,7 +24,7 @@ describe('Goblin do Orvalis',()=>{
     expect(goblins).toHaveLength(w.goblinCamps.length*GOBLIN_PACK_SIZE);
     for(const c of w.goblinCamps){
       const pack=goblins.filter(m=>
-        Math.hypot(m.homeX-(c.x+0.5),m.homeY-(c.y+0.5))<5);
+        Math.hypot(m.homeX-(c.x+0.5),m.homeY-(c.y+0.5))<5*SUBDIV);
       expect(pack).toHaveLength(7);
       expect(w.getObject(c.x,c.y)).toBe(Block.CAMPFIRE);
       expect(pack.every(m=>m.maxHp===60&&m.hp===60)).toBe(true);
@@ -33,8 +34,8 @@ describe('Goblin do Orvalis',()=>{
 
   it('vida 60, ataque nominal 15 e visão exatamente 3 células, como os lobos',()=>{
     expect(MONSTER_STATS.goblin).toMatchObject({hp:60,attack:15});
-    expect(GOBLIN_SIGHT).toBe(3);
-    expect(MONSTERS.goblin.sight).toBe(3);
+    expect(GOBLIN_SIGHT).toBe(3*SUBDIV); // 3 células na grade 1: a mesma distância em pixels
+    expect(MONSTERS.goblin.sight).toBe(3*SUBDIV);
     expect(MONSTERS.goblin.open).toBe(true);
     const {w}=camp();
     const c=w.goblinCamps[0];

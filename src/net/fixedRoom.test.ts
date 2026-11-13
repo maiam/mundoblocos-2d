@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
@@ -71,7 +72,7 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
 
   it('o servidor grava e recarrega a sala: mundo, hora e bolsas', () => {
     const r = new Room(1, 'Sala 1', ROOMS[0].seed, mulberry32(1));
-    const j = r.join({ t: 'hello', v: PROTOCOL_VERSION, name: 'Ana', room: 1 });
+    const j = r.join({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name: 'Ana', room: 1 });
     const spot = freeSpot(r.world);
     r.handle(j.id!, { t: 'action', seq: 1, a: { kind: 'place', x: spot[0], y: spot[1], block: Block.STONE } });
     r.handle(j.id!, { t: 'bag', bag: { inventory: { apple: 2 }, hotbar: null, x: 1, y: 2 } });
@@ -83,7 +84,7 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
     expect(back.restore(snap)).toBe(true);
     expect(back.world.getObject(...spot)).toBe(Block.STONE);
     expect(back.time).toBeCloseTo(r.time);
-    const w = back.join({ t: 'hello', v: PROTOCOL_VERSION, name: 'ana', room: 1 });
+    const w = back.join({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name: 'ana', room: 1 });
     const welcome = w.out[0].msg as { t: 'welcome'; bag: unknown };
     expect(welcome.bag).toEqual({ inventory: { apple: 2 }, hotbar: null, x: 1, y: 2 });
     // Arquivo de outra sala/seed não é aplicado.
@@ -102,7 +103,7 @@ describe('Sala fixa (mundo compartilhado salvo no servidor)', () => {
     expect([...a.s.others.values()][0].appearance).toEqual({ body: 'mila' });
     // Aparência estranha (ou o campo antigo `look`, do chibi que saiu) vinda da rede vira só o personagem pronto / a padrão.
     const c = client(server);
-    (c.s as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, name: 'Caio', room: 1, appearance: { body: 'dragão', look: { cabelo: 'x' } } });
+    (c.s as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name: 'Caio', room: 1, appearance: { body: 'dragão', look: { cabelo: 'x' } } });
     await flush();
     const caio = [...a.s.others.values()].find((p) => p.name === 'Caio')!;
     expect(caio.appearance).toEqual({ body: 'heroine' });
@@ -145,10 +146,10 @@ describe('Grade fina na sala (ADR 0032, F6)', () => {
     const r = new Room(1, 'Sala 1', 123);
     const snap = r.snapshot();
     expect(snap.v).toBe(ROOM_SNAPSHOT_VERSION);
-    expect(snap.sub).toBe(1);
+    expect(snap.sub).toBe(SUBDIV);
     const server = new LoopbackServer(mulberry32(9));
     const wrong = new NetSession(server.connect());
-    (wrong as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, sub: 2, name: 'Ana', room: 1 });
+    (wrong as unknown as { send: (m: unknown) => void }).send({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV + 1, name: 'Ana', room: 1 });
     await flush();
     expect(wrong.error).toMatch(/Versão/);
     const ok = client(server);
@@ -165,7 +166,7 @@ describe('Grade fina na sala (ADR 0032, F6)', () => {
     old.v = 4;
     expect(new Room(1, 'Sala 1', 123).restore(old)).toBe(true);
     const fine = JSON.parse(JSON.stringify(r.snapshot()));
-    fine.sub = 2;
+    fine.sub = SUBDIV + 1;
     expect(new Room(1, 'Sala 1', 123).restore(fine)).toBe(false);
   });
 

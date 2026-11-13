@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.59 — grade fina, F7: a virada — o Mundo passa a `SUBDIV = 2` (13/11/2026)
+- **Pedido do dono do produto:** "Pode começar a F7". `DEFAULT_SUBDIV = 2`: célula de metade do lado, mundo do mesmo tamanho em pixels. Santuário Celestial fica na grade 1 (`sanctuaryPage()`; outro mundo, ADR 0028).
+- **Paredes e porta de parede no Mundo em qualquer grade** (perfil sempre com paredes): na grade fina a frente empilha `SUBDIV` peças e a porta sai ×`SUBDIV` (`sanctuaryWallArt.ts`).
+- **Bugs reais achados com `ORVALIS_SUBDIV=2 npm test`:** visão de lobos/goblins escalada duas vezes; raio fixo `5` apagava todos os goblins; `villagerInFront` sem escala — corrigidos. Testes de rede, mundo e jogo passam a depender de `SUBDIV`; suíte verde em `SUBDIV` 1 e 2 (486 testes).
+- **Medição (SwiftShader, `perf:cpu:3d`):** ~3,2–3,5 ms de JS por quadro no 3D (praça, noite, floresta, dungeon).
+- **Servidor:** precisa subir junto (`build:net` + `sync-net`, PR no `orvalis-servidor`); `hello.sub` recusa quem fala outra grade. Implantação conjunta só com aval do dono do produto. Quem já tem save v15/v16 grade 1 migra sozinho (cópia `…:grade-1`).
+
 ## Orvalis v0.93.58 — grade fina, F6: salvamento v16, protocolo 21 e a sala na mesma grade (13/11/2026)
 - **Pedido do dono do produto:** F6 junto com o servidor. Nada muda para quem joga hoje (a grade padrão segue 1: `DEFAULT_SUBDIV = 1`); a F7 troca para 2 no jogo e no servidor ao mesmo tempo.
 - **Migração pura e compartilhada** (`world/subdiv.ts`, sem DOM — roda no navegador e no pacote do servidor): chunks (o chão repete nas 2 × 2 células; cubos, paredes, portas, cercas, plantações e ar repetem; árvores, flores, baú, fogueira etc. ficam só na célula do canto inferior esquerdo, a mesma regra de `upsampleTown`), névoa do minimapa, buracos, tenda, baús, jogador, ovelhas e monstros do covil. Só aumenta a grade (1 → 2); diminuir é erro.

@@ -1,6 +1,6 @@
 # ADR 0032 — Grade fina do Mundo: células menores, mundo do mesmo tamanho
 
-- **Status:** **proposta (13/11/2026)** — direção e padrão-alvo (Stardew Valley) confirmados pelo dono do produto; falta aprovar as perguntas abertas (seção 6); F1 (protótipo em dev) liberada
+- **Status:** **implementada (F7, v0.93.59, 13/11/2026)** — `DEFAULT_SUBDIV = 2` no jogo (Mundo principal); Santuário segue na grade 1 (mundo à parte, ADR 0028 vale para ele)
 - **Data:** 2026-11-13 (v0.93.50)
 - **Relaciona:** ADR 0028 (escala do mundo — esta ADR a **substitui** para o Mundo se aprovada), 0027 (paredes), 0031 (render 3D do Mundo),
   0011 (save), 0016/0021 (protocolo e sala), 0012/0014 (cidade e interiores), `docs/domains/world.md`.
@@ -44,7 +44,7 @@ Experimento `?celulas=28` (v0.93.50): células e objetos ficaram bons, **mas o m
 - **F2 — ✅ feita na v0.93.52 (aprovada no protótipo pelo dono do produto) — objetos:** tamanhos em células por categoria (árvore 1 × 1 com desenho alto; plantas/cercas/móveis menores); rever arte que não aguente a redução.
 - **F3 — ✅ feita na v0.93.53 (`upsampleTown`; interiores/tenda ficam na F4) — cidade** (`buildTown` ampliado, portas 1 × 2, arte ampliada). **F4 — ✅ feita na v0.93.54 — interiores, tenda, dungeon, lobos e goblins.** **F5 — ✅ feita na v0.93.55 com escopo ajustado (comparação das alturas + corpo que passa por vão de 1 célula; as paredes no Mundo são a W5) — paredes** (altura decidida na pergunta 3; atlas novos ou nível duplo).
 - **F6 — ✅ feita na v0.93.58 — save e protocolo:** `SAVE_VERSION` 16 com migração, `PROTOCOL_VERSION` 21, servidor (`build:net` + `sync-net`), sala.
-- **F7 — virada:** `SUBDIV = 2` como padrão, 2D de reserva ajustado (ou removido no M7), Artifact, CURRENT_STATE/CONVENTIONS/CLAUDE.md.
+- **F7 — ✅ feita na v0.93.59 — virada:** `SUBDIV = 2` como padrão, 2D de reserva ajustado (ou removido no M7), Artifact, CURRENT_STATE/CONVENTIONS/CLAUDE.md.
 
 ## 6. Perguntas abertas (ao dono do produto)
 1. **Mundos salvos:** migrar (cada célula editada vira 2 × 2; formas do terreno iguais, bordas e posição de árvores com pequenas diferenças) **ou** aceitar mundo novo para quem já tem save?

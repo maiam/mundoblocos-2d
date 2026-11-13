@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { isOpenWorldMonster, isWolf, WOLF_KINDS } from '../world/dungeon';
 import { MONSTER_STATS } from '../world/progression';
@@ -56,13 +57,13 @@ describe('Lobos: bandos pelo mapa', () => {
   it('nenhum nasce na cidade, na estrada do portão, no campo do rebanho, em água, árvore ou área protegida', () => {
     const w = new World(42);
     const t = w.town!;
-    const keep = grow({ ...t.area, y1: t.area.y1 + 28 }, WOLF_TOWN_CLEARANCE - 1);
+    const keep = grow({ ...t.area, y1: t.area.y1 + 28 * SUBDIV }, WOLF_TOWN_CLEARANCE - 2 * SUBDIV);
     for (const s of packs) {
       const [cx, cy] = [Math.floor(s.x), Math.floor(s.y)];
       expect(cx >= keep.x0 && cx <= keep.x1 && cy >= keep.y0 && cy <= keep.y1, `${cx},${cy}`).toBe(false);
       expect(w.isProtected(cx, cy)).toBe(false);
       expect(w.isWalkable(cx, cy), `${cx},${cy}`).toBe(true);
-      expect(Math.hypot(s.x - s.homeX, s.y - s.homeY)).toBeLessThan(4);
+      expect(Math.hypot(s.x - s.homeX, s.y - s.homeY)).toBeLessThan(4 * SUBDIV);
     }
   });
 
@@ -106,7 +107,7 @@ describe('Lobos: bandos pelo mapa', () => {
     expect(e.monsters.filter((m) => isWolf(m.kind))).toHaveLength(packs.length);
     for (const k of WOLF_KINDS) {
       expect(MONSTER_STATS[k].hp).toBeGreaterThan(0);
-      expect(MONSTERS[k].sight).toBe(WOLF_SIGHT);
+      expect(MONSTERS[k].sight).toBe(WOLF_SIGHT * SUBDIV); // 3 células na grade 1: a mesma distância em pixels
     }
     expect(WOLF_SIGHT).toBe(3);
     expect(WOLF_ROAM).toBeGreaterThan(WOLF_SIGHT);
@@ -115,7 +116,7 @@ describe('Lobos: bandos pelo mapa', () => {
 
 describe('Lobos: só atacam a personagem a até 3 células', () => {
   it('a mais de 3 células o lobo a ignora: não vai atrás nem morde (nem passeando perto: só chega a 3 se passear até lá)', () => {
-    const { w, e, p, wolf } = arena(3.6);
+    const { w, e, p, wolf } = arena(3.6 * SUBDIV);
     let bites = 0;
     e.onBite = () => { bites++; };
     const [x0, y0] = [wolf.x, wolf.y];
@@ -127,7 +128,7 @@ describe('Lobos: só atacam a personagem a até 3 células', () => {
   });
 
   it('a até 3 células ele a persegue e morde (dano pela ficha)', () => {
-    const { w, e, p, wolf } = arena(2.6, 'wolf-white');
+    const { w, e, p, wolf } = arena(2.6 * SUBDIV, 'wolf-white');
     const hp = p.hp;
     const before = Math.hypot(p.x - wolf.x, p.y - wolf.y);
     for (let t = 0; t < 12; t++) e.update(1 / 30, w);
@@ -138,17 +139,17 @@ describe('Lobos: só atacam a personagem a até 3 células', () => {
   });
 
   it('personagem que se afasta além de 3 células sai da mira (ele é mais lento: dá para fugir)', () => {
-    const { w, e, p, wolf } = arena(2);
+    const { w, e, p, wolf } = arena(2 * SUBDIV);
     expect(MONSTERS['wolf-gray'].spec.speed).toBeLessThan(p.spec.speed);
     for (let t = 0; t < 30; t++) e.update(1 / 30, w);
-    p.x += 6; // corre
+    p.x += 6 * SUBDIV; // corre
     const d0 = Math.hypot(p.x - wolf.x, p.y - wolf.y);
     for (let t = 0; t < 120; t++) e.update(1 / 30, w);
-    expect(Math.hypot(p.x - wolf.x, p.y - wolf.y)).toBeGreaterThanOrEqual(d0 - 1.2); // não persegue de longe
+    expect(Math.hypot(p.x - wolf.x, p.y - wolf.y)).toBeGreaterThanOrEqual(d0 - 1.2 * SUBDIV); // não persegue de longe
   });
 
   it('lobo longe de todo jogador (> 48 células) fica parado: não é simulado', () => {
-    const { w, e, wolf } = arena(60);
+    const { w, e, wolf } = arena(60 * SUBDIV);
     const [x0, y0] = [wolf.x, wolf.y];
     for (let t = 0; t < 300; t++) e.update(1 / 30, w);
     expect([wolf.x, wolf.y]).toEqual([x0, y0]);

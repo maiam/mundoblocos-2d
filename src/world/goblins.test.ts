@@ -2,7 +2,7 @@ import { describe,expect,it } from 'vitest';
 import { World } from './world';
 import { Block } from './blocks';
 import { WORLD_PROFILES } from './profiles';
-import { CHUNK_SIZE } from '../config';
+import { CHUNK_SIZE, SUBDIV } from '../config';
 import { GOBLIN_PACK_SIZE, GOBLIN_CAMP_COUNT, GOBLIN_CAMP_SLOTS, goblinRoam } from './goblins';
 import { toChunk, toLocal } from './coords';
 
@@ -19,14 +19,14 @@ describe('Acampamentos goblins — mapa aberto de Orvalis',()=>{
         const positions=new Set<string>();
         for(const [x,y] of c.slots){
           expect(w.isWalkable(x,y)).toBe(true);
-          expect(Math.hypot(x-c.x,y-c.y)).toBeGreaterThanOrEqual(2);
-          expect(Math.hypot(x-c.x,y-c.y)).toBeLessThanOrEqual(4);
+          expect(Math.hypot(x-c.x,y-c.y)).toBeGreaterThanOrEqual(2*SUBDIV);
+          expect(Math.hypot(x-c.x,y-c.y)).toBeLessThanOrEqual(4*SUBDIV);
           positions.add(x+','+y);
         }
         expect(positions.size).toBe(7);
         const rect=goblinRoam(c.x,c.y);
-        expect(rect.x0).toBe(c.x-11);
-        expect(rect.y1).toBe(c.y+11);
+        expect(rect.x0).toBe(c.x-11*SUBDIV);
+        expect(rect.y1).toBe(c.y+11*SUBDIV);
       }
     }
     expect(GOBLIN_CAMP_SLOTS).toHaveLength(7);

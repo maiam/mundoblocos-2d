@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { ItemDrop } from '../../game/drops';
+import { SUBDIV } from '../../config';
 import { DropSprites, HoverRing, dropLift } from './itemSprites';
 
 const image = { naturalWidth: 30, naturalHeight: 15 } as HTMLImageElement;
@@ -9,9 +10,10 @@ const drop = (x: number, y: number, age = 1): ItemDrop => ({ item: 'wheat' as It
 
 describe('itens caídos no 3D', () => {
   it('flutuação e pulo de saída (px do 2D ÷ TILE)', () => {
-    expect(dropLift(1, 0, 0)).toBeCloseTo(2 / 32);              // flutuando: 2 px com o seno em 0
-    expect(dropLift(0.2, 0, 0)).toBeCloseTo((2 + 10) / 32);    // meio do pulo: +10 px
-    expect(dropLift(0, 0, 0)).toBeCloseTo(2 / 32);              // começo do pulo: ainda no chão
+    // (na grade fina os px acompanham `SUBDIV`: o ícone mantém a altura em pixels)
+    expect(dropLift(1, 0, 0)).toBeCloseTo((2 * SUBDIV) / 32);              // flutuando: 2 px com o seno em 0
+    expect(dropLift(0.2, 0, 0)).toBeCloseTo(((2 + 10) * SUBDIV) / 32);    // meio do pulo: +10 px
+    expect(dropLift(0, 0, 0)).toBeCloseTo((2 * SUBDIV) / 32);              // começo do pulo: ainda no chão
   });
 
   it('um ícone com sombra por item visível; sem imagem só a sombra; fora da área nada; sobras ficam escondidas', () => {

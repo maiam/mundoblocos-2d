@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
@@ -34,7 +35,7 @@ describe('Sheep', () => {
       s.update(1 / 60, w);
       maxDist = Math.max(maxDist, Math.hypot(s.x - s.homeX, s.y - s.homeY));
     });
-    expect(maxDist).toBeLessThan(14);
+    expect(maxDist).toBeLessThan(14 * SUBDIV); // volta para casa a partir de `leash` (7 células na grade 1)
   });
 
   it('não sobe em cubos: blocos funcionam como cerca', () => {

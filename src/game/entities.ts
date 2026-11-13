@@ -303,8 +303,8 @@ export class Entities {
       if(world.getObject(camp.x,camp.y)!==Block.CAMPFIRE)continue;
       const bounds=goblinRoam(camp.x,camp.y);
       const existing=this.monsters.filter(m=>m.kind==='goblin' &&
-        Math.abs(m.homeX-(camp.x+0.5))<=5 &&
-        Math.abs(m.homeY-(camp.y+0.5))<=5);
+        Math.abs(m.homeX-(camp.x+0.5))<=5*SUBDIV &&
+        Math.abs(m.homeY-(camp.y+0.5))<=5*SUBDIV);
       if(existing.length>=GOBLIN_PACK_SIZE)continue;
       for(const [x,y] of camp.slots){
         if(!world.isWalkable(x,y))continue;
@@ -322,7 +322,7 @@ export class Entities {
     const allowed=new Set(world.goblinCamps.filter(c=>
       world.getObject(c.x,c.y)===Block.CAMPFIRE).map(c=>c.x+','+c.y));
     const known=(x:number,y:number)=>world.goblinCamps.some(c=>
-      Math.hypot(c.x+0.5-x,c.y+0.5-y)<=5 &&
+      Math.hypot(c.x+0.5-x,c.y+0.5-y)<=5*SUBDIV &&
       allowed.has(c.x+','+c.y));
     for(let i=this.monsters.length-1;i>=0;i--){
       const m=this.monsters[i];
@@ -710,8 +710,8 @@ export class Entities {
       const dx = v.x - p.x;
       const dy = v.y - p.y;
       const d = Math.hypot(dx, dy);
-      if (d > (v.role ? 3.2 : 1.8) || d >= bestD) continue;
-      if (d < 0.4 || (dx * fx + dy * fy) / d >= 0.3) { best = v; bestD = d; }
+      if (d > (v.role ? 3.2 : 1.8) * SUBDIV || d >= bestD) continue;
+      if (d < 0.4 * SUBDIV || (dx * fx + dy * fy) / d >= 0.3) { best = v; bestD = d; }
     }
     return best;
   }

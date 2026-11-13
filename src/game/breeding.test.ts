@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
@@ -107,7 +108,7 @@ describe('Ovelhas: comer, namorar e ter filhote', () => {
     const lamb = new Sheep(sx + 0.5, sy + 0.5, sx + 0.5, sy + 0.5, mulberry32(6), true);
     for (let t = 0; t < GROW_UP_SECONDS + 1; t += 0.5) lamb.update(0.5, w);
     expect(lamb.baby).toBe(false);
-    expect(lamb.spec.halfW).toBeCloseTo(0.3);
+    expect(lamb.spec.halfW).toBeCloseTo(0.3 * SUBDIV);
   });
 
   it('respeita o limite de população', () => {
