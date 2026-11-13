@@ -3,7 +3,7 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 11)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 15)
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
@@ -49,6 +49,7 @@ Mostra a semente e o estado do salvamento. Com o menu aberto o jogo pausa. Em te
 - v6 → v7 (minimapa, v0.51.0): `explored: []` — o mapa começa coberto e revela a área em volta ao abrir.
 - v8 → v9 (comida, v0.56.0): `player.hunger` = 100 — quem já jogava começa satisfeito.
 - v9 → v10 (Herói, v0.65.0): `body` = `heroine` — personagem pronto escolhido na tela; quem já jogava segue com a Heroína.
+- v12/13/14 → v15 (W4, v0.93.28): os campos `marblePlacements` e `marbleV3Bases` somem (mármore V2/V3 removido); o 82 já colocado continua como cubo comum.
 - v11 → v12 (v0.92.0): o campo `look` (chibi) some; o `body` (personagem pronto) fica.
 - v10 → v11 (chão que se refaz, v0.86.0): `holes: []` — buracos antigos recomeçam a contagem do dia ao carregar.
 - v7 → v8 (covil isolado, v0.55.0): `dungeon: null` — as aranhas voltam completas (o labirinto mudou de lugar).

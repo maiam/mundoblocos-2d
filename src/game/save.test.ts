@@ -3,7 +3,6 @@ import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
 import { WORLD_PROFILES } from '../world/profiles';
-import { classifyMarbleProfile } from '../render/sanctuaryMarbleAdaptive';
 import { Entities } from './entities';
 import { Inventory } from './inventory';
 import { Player } from './player';
@@ -53,46 +52,38 @@ function memoryStorage(): Storage {
 }
 
 describe('Salvamento automático', () => {
-  it('v14: persiste bases V3 de duas células, migra v13 sem alterar painéis antigos', () => {
+  it('v15: o mármore V2/V3 saiu; saves v12–v14 migram descartando os campos e o 82 vira cubo comum', () => {
     const world = new World(77, WORLD_PROFILES.santuario);
     const [sx,sy] = world.findSpawn();
     const x=sx+2,y=sy+1;
     expect(world.placeBlock(x,y,Block.MARBLE_CELESTIAL)).toBe(true);
-    expect(world.placeBlock(x,y-2,Block.MARBLE_CELESTIAL)).toBe(true);
-    expect(world.getObject(x,y-1)).toBe(Block.MARBLE_CELESTIAL);
-    expect(world.getObject(x,y-3)).toBe(Block.MARBLE_CELESTIAL);
-    expect(classifyMarbleProfile(world,x,y)).toBe('v3_face');
-    expect(classifyMarbleProfile(world,x,y-3)).toBe('v3_top_half');
+    expect(world.getObject(x,y-1)).toBe(Block.AIR); // sem célula norte virtual
+    expect(world.placeBlock(x,y,Block.MARBLE_CELESTIAL)).toBe(true); // empilha como cubo comum
+    expect(world.getUpper(x,y)).toBe(Block.MARBLE_CELESTIAL);
+    expect(world.breakBlock(x,y)).toBe(Block.MARBLE_CELESTIAL); // quebra um nível por vez
+    expect(world.getObject(x,y)).toBe(Block.MARBLE_CELESTIAL);
 
     const player=new Player(sx+0.5,sy+0.6);
     const state={world,player,entities:new Entities(player,mulberry32(7)),
       inventory:new Inventory(),time:0.25,selected:null,hotbar:null};
     const saved=captureSave(state);
-    expect(saved.v).toBe(14);
-    expect(saved.marblePlacements).toHaveLength(2);
-    expect(saved.marbleV3Bases).toEqual([[x,y],[x,y-2]]);
+    expect(saved.v).toBe(SAVE_VERSION);
+    expect(SAVE_VERSION).toBe(15);
+    expect('marblePlacements' in saved).toBe(false);
+    expect('marbleV3Bases' in saved).toBe(false);
+
+    for(const v of [12,13,14]){
+      const old=migrate({...saved,v,marblePlacements:[[x,y,1]],marbleV3Bases:[[x,y]]});
+      expect(old?.v).toBe(15);
+      expect(old && 'marblePlacements' in old).toBe(false);
+      expect(old && 'marbleV3Bases' in old).toBe(false);
+    }
     const restored=new World(77,WORLD_PROFILES.santuario);
     const p2=new Player(sx+0.5,sy+0.6);
     applySave(JSON.parse(JSON.stringify(saved)),{
       ...state,world:restored,player:p2,entities:new Entities(p2,mulberry32(7)),
     });
-    expect(restored.marbleV3PlacementBases()).toEqual(saved.marbleV3Bases);
-    for(const [xx,yy,order] of saved.marblePlacements)
-      expect(restored.getMarblePlacementOrder(xx,yy)).toBe(order);
-    expect(restored.getObject(x,y-3)).toBe(Block.MARBLE_CELESTIAL);
-    expect(restored.getUpper(x,y-1)).toBe(Block.MARBLE_CELESTIAL);
-    expect(restored.placeBlock(x,y-1,Block.MARBLE_CELESTIAL)).toBe(false);
-
-    const old=migrate({...saved,v:12,marblePlacements:undefined,marbleV3Bases:undefined});
-    expect(old?.v).toBe(14);
-    expect(old?.marblePlacements).toEqual([]);
-    expect(old?.marbleV3Bases).toEqual([]);
-    const v13=migrate({...saved,v:13,marbleV3Bases:undefined});
-    expect(v13?.marbleV3Bases).toEqual([]);
-    const legacy=new World(77,WORLD_PROFILES.santuario);
-    legacy.setObject(x,y,Block.MARBLE_CELESTIAL);
-    expect(legacy.marbleV3PlacementBases()).toEqual([]);
-    expect(classifyMarbleProfile(legacy,x,y)).toBe('wall_front');
+    expect(restored.getObject(x,y)).toBe(Block.MARBLE_CELESTIAL);
   });
   it('limita altura de um personagem vindo de save antigo com três cubos', () => {
     const a = session();

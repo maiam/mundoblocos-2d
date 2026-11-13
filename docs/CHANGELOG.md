@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.28 — W4: mármore V2/V3 removido (13/11/2026)
+- **Decisão (dono do produto):** o Mármore Celestial (82) vira **cubo comum**; paredes novas são só as autotile (ADR 0027).
+- **Removido:** par de níveis em um clique, base V3 de duas células (célula norte virtual), ordem de colocação, formas adaptativas e cantos em L do 82, borda ornamental, superfícies V3 e altura visual V3 da câmera (`sanctuaryMarbleAdaptive`, `sanctuaryV3Surfaces`, `World.marbleV3*`/`marblePlacement*`, textura de topo ornamentado). O 82 empilha e quebra um nível por vez e segue o autotile horizontal genérico (`thin`) como os outros celestiais. `SanctuaryBlockShape` agora é só `solid | thin`.
+- **Salvamento v15:** v12–v14 migram descartando `marblePlacements`/`marbleV3Bases`; o 82 já colocado continua; a célula norte virtual das bases V3 deixa de existir.
+- Testes: 6 arquivos de teste do mármore removidos, teste de migração reescrito (365 passando). Conferido no navegador (fileira, pilar empilhado, sem erros). Sem mudança de protocolo (o servidor só joga o Mundo principal).
+
 ## Orvalis v0.93.27 — Paredes e porta de parede alcançáveis no Santuário (13/11/2026)
 - **Perfil do Santuário** (`world/profiles.ts`): `blocks` = 18 celestiais + `WALL_BLOCKS` (Tábuas, Pedra) + `WALL_DOOR_BLOCKS`. Aparecem no fim da hotbar (21 itens; ela já rola na horizontal); colocar/quebrar/abrir seguem as regras do `World` (porta só entre duas paredes comuns). A flag de teste `?paredes=autotile` foi removida (`?paredes=teste` continua).
 - **Ícones:** continuam o SVG provisório de cor lisa (a porta ganhou o vão); ícones de arte ficam como pendência (precisam sair do atlas sem ler canvas).
