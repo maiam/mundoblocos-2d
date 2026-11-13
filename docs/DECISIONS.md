@@ -43,7 +43,7 @@
 | Progressão (Fase P): vida em barra com número; atributos sobem sozinhos ao subir de nível; morte perde 10% do XP do nível atual sem descer de nível; profissões iniciais Lenhador, Minerador, Agricultor e Construtor | NEXT_STEPS Fase P |
 | Visão: mundo de progressão — cidades e dungeons por faixa de nível; Cidade 1 recebe novatos e os personagens migram para cidades de nível maior conforme evoluem | PROJECT_CONTEXT, NEXT_STEPS Fase 6 |
 | Chunks quadrados 16×16 nos dois eixos | domains/world |
-| Santuário: 10 chunks em 5×2; só Deusa; só 18 blocos; sem ferramentas/cultivo/ovelhas | domains/worlds |
+| Santuário: 10 chunks em 5×2; só Deusa; 18 blocos + paredes/porta de parede (v0.93.27); sem ferramentas/cultivo/ovelhas | domains/worlds |
 | Subdomínio `santuario`; artefato próprio enquanto não há hospedagem | domains/worlds |
 | Blocos celestiais: arte da prancha 3/4 (a isométrica não foi convertida) | domains/worlds |
 | Chão de nuvem sem giro/espelho e com contraste suavizado (cobre o mapa todo) | domains/worlds |

@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.27 — Paredes e porta de parede alcançáveis no Santuário (13/11/2026)
+- **Perfil do Santuário** (`world/profiles.ts`): `blocks` = 18 celestiais + `WALL_BLOCKS` (Tábuas, Pedra) + `WALL_DOOR_BLOCKS`. Aparecem no fim da hotbar (21 itens; ela já rola na horizontal); colocar/quebrar/abrir seguem as regras do `World` (porta só entre duas paredes comuns). A flag de teste `?paredes=autotile` foi removida (`?paredes=teste` continua).
+- **Ícones:** continuam o SVG provisório de cor lisa (a porta ganhou o vão); ícones de arte ficam como pendência (precisam sair do atlas sem ler canvas).
+- **Servidor:** nada a sincronizar agora — só o Mundo principal joga online (`online` em `main.ts`) e ele não lista paredes. Sincronizar (`build:net` + `sync-net`) quando as paredes forem ao Mundo (W5) ou o Santuário for online.
+- Testes: perfil do Santuário × Mundo, colocar parede/porta pelo perfil (403 passando). Invariante do `CLAUDE.md` ("Vários mundos") e DECISIONS/worlds atualizados. Sem mudança de protocolo ou save.
+
 ## Orvalis v0.93.26 — Arte final de Tábuas (nova versão) com a porta (13/11/2026)
 - **Recebidas e conferidas as 23 peças de Tábuas** (16 tampas, 4 frentes, `door_closed/half/open`): tamanhos e faixas de y corretos, **nenhum alfa parcial**, frentes 100% opacas, vãos de 32 e 64 px centralizados a partir de y = 16, bordas da porta idênticas às de `front_mid`, **emendas exatas** (0) entre frentes, tampas e coluna × fileira.
 - Arquivadas em `assets-src/paredes/tabuas/` (a versão anterior de 16 px vai para `versao-anterior-16px/`); atlas regerado (`walls-tabuas.webp`, 512 × 820, ~44 kB). Os quadros provisórios da porta deixam de ser usados para Tábuas.

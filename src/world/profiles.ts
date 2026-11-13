@@ -1,4 +1,4 @@
-import { Block, CELESTIAL_BLOCKS, type BlockId, HOTBAR_BLOCKS } from './blocks';
+import { Block, CELESTIAL_BLOCKS, type BlockId, HOTBAR_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
 import type { ChunkRect } from './world';
 
 /**
@@ -71,7 +71,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     // 10 chunks: 5 × 2 (80 × 32 blocos), centrados na origem.
     bounds: { cx0: -3, cy0: -1, cx1: 1, cy1: 0 },
     character: 'goddess',
-    blocks: CELESTIAL_BLOCKS,
+    // 18 blocos celestiais + paredes autotile e a porta de parede (ADR 0027; só o Santuário por ora, W5 leva ao Mundo).
+    blocks: [...CELESTIAL_BLOCKS, ...WALL_BLOCKS, ...WALL_DOOR_BLOCKS],
     tools: false,
     farming: false,
     sheep: false,
