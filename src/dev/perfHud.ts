@@ -6,6 +6,9 @@ import type { RendererStats } from '../render/rendererContract';
  * Só em desenvolvimento ou no build de piloto (`VITE_PILOT_3D=1`); funciona também no 2D (sem contadores da GPU), para comparar.
  */
 
+/** Intervalo entre quadros acima disto = pausa do navegador (aba escondida), não um quadro lento. */
+export const PAUSE_MS = 1000;
+
 export interface PerfSnapshot {
   /** Quadros por segundo na janela atual (~1 s). */
   fps: number;
@@ -22,8 +25,18 @@ export class PerfMeter {
 
   constructor(private readonly windowMs = 1000, private readonly maxAll = 6000) {}
 
+  /** Pausas detectadas (aba em segundo plano, janela minimizada…): intervalos entre quadros acima de `PAUSE_MS`, que não contam como lentidão. */
+  pauses = 0;
+  pausedMs = 0;
+
   /** Registra um quadro apresentado no instante `now` (ms). */
   frame(now: number): void {
+    const prev = this.times[this.times.length - 1];
+    if (prev !== undefined && now - prev > PAUSE_MS) { // o navegador pausou a animação: não é lentidão do jogo
+      this.pauses++;
+      this.pausedMs += now - prev;
+      this.times.length = 0;
+    }
     const last = this.times[this.times.length - 1];
     this.times.push(now);
     if (last !== undefined) {
@@ -80,6 +93,8 @@ export interface PerfReport {
   avgFps: number;
   lowFps: number;
   worstMs: number;
+  /** Quantas vezes o navegador pausou a animação (aba em segundo plano…) e por quantos segundos no total: fora das médias. */
+  pauses: { count: number; seconds: number };
   /** Regime estável: depois dos primeiros `WARMUP_S` segundos (a carga inicial não conta). */
   steady: { seconds: number; frames: number; avgFps: number; lowFps: number; worstMs: number; pctOver33: number; pctOver50: number };
   /** Tempo de JS de `renderer.draw` nos últimos quadros: se for pequeno e o quadro for lento, o gargalo é a GPU/compositor, não o JS. */
@@ -128,6 +143,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
     return {
       renderer: mode(), url: location.href, userAgent: navigator.userAgent, devicePixelRatio: window.devicePixelRatio,
       viewport: [window.innerWidth, window.innerHeight], seconds: Math.round((performance.now() - t0) / 1000),
+      pauses: { count: meter.pauses, seconds: Math.round(meter.pausedMs / 1000) },
       frames: s.frames, avgFps: round1(s.avgFps), lowFps: round1(s.lowFps), worstMs: Math.round(s.worstMs),
       steady: {
         seconds: Math.max(0, Math.round((performance.now() - t0) / 1000) - WARMUP_S), frames: st.frames, avgFps: round1(st.avgFps),
