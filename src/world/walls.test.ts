@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  clampWallThickness, DEFAULT_WALL_THICKNESS, parseWallThickness,
+  clampWallThickness, DEFAULT_WALL_THICKNESS, parseWallThickness, wallFootprintParts,
   CAP_E, CAP_N, CAP_S, CAP_W, INNER_NE, INNER_NW, INNER_SE, INNER_SW, WALL_CAP_PIECES,
   wallCapMask, wallFront, wallFootprint, wallFrontRanges, wallInnerCorners, wallNeighbors, wallPiece, wallThin,
 } from './walls';
@@ -163,14 +163,54 @@ describe('autotile das paredes (ADR 0027)', () => {
       expect(b).toBeCloseTo(0.625, 9);
     });
 
-    it('lê "0.25,0.35", "0.3" e rejeita lixo; limita a 0,1–0,9', () => {
+    it('lê "0.25,0.35", "0.3" e rejeita lixo; limita a 0,1–1,0', () => {
       expect(parseWallThickness('0.25,0.35')).toEqual({ x: 0.25, z: 0.35 });
       expect(parseWallThickness('0.3')).toEqual({ x: 0.3, z: 0.3 });
       expect(parseWallThickness('abc')).toBeNull();
       expect(parseWallThickness('')).toBeNull();
       expect(parseWallThickness('0.1,0.2,0.3')).toBeNull();
-      expect(parseWallThickness('5,0')).toEqual({ x: 0.9, z: 0.1 });
+      expect(parseWallThickness('5,0')).toEqual({ x: 1, z: 0.1 });
       expect(clampWallThickness({ x: NaN, z: 0.5 })).toEqual({ x: 0.3, z: 0.5 });
+    });
+  });
+
+  describe('coluna da largura da célula (x = 0,9 e 1,0, v0.93.20)', () => {
+    const nbOf = (rows: string[], x: number, y: number) => wallNeighbors(grid(rows), x, y);
+
+    it('x = 1: a coluna ocupa a célula inteira em x e não há braços leste/oeste (comprimento zero)', () => {
+      const parts = wallFootprintParts(nbOf(['###'], 1, 0), { x: 1, z: 0.35 });
+      expect(parts.map((p) => p.kind)).toEqual(['post']);
+      expect(parts[0].rect.x0).toBe(0);
+      expect(parts[0].rect.x1).toBe(1);
+    });
+
+    it('x = 1: uma fileira leste–oeste ainda tem frente de célula inteira, sem faixas de comprimento zero', () => {
+      const nb = nbOf(['###'], 1, 0);
+      expect(wallFrontRanges(nb, { x: 1, z: 0.35 })).toEqual([[0, 1]]);
+      for (const [a, b] of wallFrontRanges(nbOf(['##', '#.'], 0, 0), { x: 1, z: 0.35 })) expect(b).toBeGreaterThan(a);
+    });
+
+    it('x = 0,9: braços leste/oeste de 0,05 e braços norte/sul de largura 0,9', () => {
+      const parts = wallFootprintParts(nbOf(['.#.', '###', '.#.'], 1, 1), { x: 0.9, z: 0.35 });
+      const by = Object.fromEntries(parts.map((p) => [p.kind, p.rect]));
+      expect(by.n.x1 - by.n.x0).toBeCloseTo(0.9, 9);
+      expect(by.s.x1 - by.s.x0).toBeCloseTo(0.9, 9);
+      expect(by.w.x1 - by.w.x0).toBeCloseTo(0.05, 9);
+      expect(by.e.x1 - by.e.x0).toBeCloseTo(0.05, 9);
+    });
+
+    it('as partes não se sobrepõem em nenhuma espessura', () => {
+      for (const t of [{ x: 0.25, z: 0.35 }, { x: 0.9, z: 0.35 }, { x: 1, z: 0.35 }]) {
+        const rs = wallFootprint(nbOf(['.#.', '###', '.#.'], 1, 1), t);
+        const total = rs.reduce((a, r) => a + (r.x1 - r.x0) * (r.z1 - r.z0), 0);
+        const union = new Set<string>();
+        const N = 200;
+        for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+          const px = (i + 0.5) / N, pz = (j + 0.5) / N;
+          if (rs.some((r) => px >= r.x0 && px < r.x1 && pz >= r.z0 && pz < r.z1)) union.add(`${i},${j}`);
+        }
+        expect(union.size / (N * N)).toBeCloseTo(total, 2); // soma das áreas = área da união (sem sobreposição)
+      }
     });
   });
 });

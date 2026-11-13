@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.20 — Colunas largas com franjas (`espessura` até 1,0) e correção da leitura do Core Keeper (13/11/2026)
+- **Correção:** a medida da coluna estava errada. Com a escala certa da cena (tile ≈ 90 px), a coluna do Core Keeper tem **≈ 0,9–1,0 tile** de largura: `franja clara (~0,21) | miolo escuro (~0,5) | franja clara (~0,21)`, com juntas a cada tile e, no fim ao sul, uma frente iluminada com a largura da coluna. A "faixa fina de 0,2" que eu medi era só uma das franjas. A tampa leste–oeste continua ≈ 0,3 de profundidade, com uma franja clara na borda norte.
+- **`world/walls.ts`:** `clampWallThickness` aceita até **1,0** (coluna = célula inteira); `wallFootprintParts` devolve cada parte com o tipo (`post`/`n`/`s`/`w`/`e`) e omite os braços leste/oeste de comprimento zero; `wallFrontRanges` não gera faixas de comprimento zero. O padrão **não mudou** (0,25 / 0,35) até a decisão. 24 testes de paredes.
+- **Protótipo:** a tampa agora tem franjas (coluna: franja | miolo | franja com junta; fileira: franja na borda norte). `?mundo=santuario&paredes=autotile&espessura=0.9,0.35` ou `=1,0.35` para comparar.
+- Sem mudança de jogo, protocolo ou save.
+
 ## Documentação — frentes da Parede de Tábuas recebidas (13/11/2026, sem versão)
 - **Entrega do dono do produto:** `front_mid` (128 × 154), `front_end_left`/`front_end_right` (83 × 154) e `front_post` (38 × 154): painéis de tábuas com moldura e montantes.
 - **Conferência:** alturas iguais e arte consistente, mas (1) as medidas são as do contrato antigo (pontas 83 e poste 38; final 80 e 32); (2) a última coluna e a última linha de cada peça e as juntas entre tábuas estão **semitransparentes** (alfa ~27–30%), o que deixa o chão aparecer pela parede e desenha linhas claras nas emendas.

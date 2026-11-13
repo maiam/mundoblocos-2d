@@ -20,9 +20,9 @@ export interface WallThickness { x: number; z: number }
 /** Valor escolhido pelo dono do produto em 13/11/2026 (comparando `?espessura=` no protótipo): faixa 0,25 e tampa 0,35. */
 export const DEFAULT_WALL_THICKNESS: WallThickness = { x: 0.25, z: 0.35 };
 
-/** Limita a espessura a um intervalo que ainda forma parede (0,1 a 0,9 da célula). */
+/** Limita a espessura a um intervalo que ainda forma parede (0,1 a 1,0 da célula; 1,0 = a coluna ocupa a célula inteira). */
 export function clampWallThickness(t: WallThickness): WallThickness {
-  const c = (v: number): number => Math.min(0.9, Math.max(0.1, Number.isFinite(v) ? v : 0.3));
+  const c = (v: number): number => Math.min(1, Math.max(0.1, Number.isFinite(v) ? v : 0.3));
   return { x: c(t.x), z: c(t.z) };
 }
 
@@ -70,15 +70,25 @@ export function wallThin(nb: WallNeighbors): boolean {
 /** Retângulo em coordenadas da célula (0..1): x leste, z sul. */
 export interface WallRect { x0: number; x1: number; z0: number; z1: number }
 
-/** Pegada da parede na célula: o poste central e um braço até a borda em cada lado com parede vizinha (sem sobreposição). */
-export function wallFootprint(nb: WallNeighbors, t: WallThickness = DEFAULT_WALL_THICKNESS): WallRect[] {
+/** Parte da pegada: o poste central ou o braço (norte/sul = barra vertical da coluna; leste/oeste = barra horizontal da fileira). */
+export type WallPartKind = 'post' | 'n' | 's' | 'w' | 'e';
+export interface WallPart { kind: WallPartKind; rect: WallRect }
+
+/** Pegada da parede na célula, por parte: o poste central e um braço até a borda em cada lado com parede vizinha (sem sobreposição). */
+export function wallFootprintParts(nb: WallNeighbors, t: WallThickness = DEFAULT_WALL_THICKNESS): WallPart[] {
   const x0 = (1 - t.x) / 2, x1 = (1 + t.x) / 2, z0 = (1 - t.z) / 2, z1 = (1 + t.z) / 2;
-  const rects: WallRect[] = [{ x0, x1, z0, z1 }];
-  if (nb.n) rects.push({ x0, x1, z0: 0, z1: z0 });
-  if (nb.s) rects.push({ x0, x1, z0: z1, z1: 1 });
-  if (nb.w) rects.push({ x0: 0, x1: x0, z0, z1 });
-  if (nb.e) rects.push({ x0: x1, x1: 1, z0, z1 });
-  return rects;
+  const parts: WallPart[] = [{ kind: 'post', rect: { x0, x1, z0, z1 } }];
+  if (nb.n) parts.push({ kind: 'n', rect: { x0, x1, z0: 0, z1: z0 } });
+  if (nb.s) parts.push({ kind: 's', rect: { x0, x1, z0: z1, z1: 1 } });
+  // Com a coluna da largura da célula (x = 1) os braços leste/oeste têm comprimento zero: não existem.
+  if (nb.w && x0 > 1e-9) parts.push({ kind: 'w', rect: { x0: 0, x1: x0, z0, z1 } });
+  if (nb.e && x0 > 1e-9) parts.push({ kind: 'e', rect: { x0: x1, x1: 1, z0, z1 } });
+  return parts;
+}
+
+/** Pegada da parede na célula (só os retângulos). */
+export function wallFootprint(nb: WallNeighbors, t: WallThickness = DEFAULT_WALL_THICKNESS): WallRect[] {
+  return wallFootprintParts(nb, t).map((p) => p.rect);
 }
 
 /**
@@ -94,9 +104,9 @@ export function wallFrontRanges(nb: WallNeighbors, t: WallThickness = DEFAULT_WA
     if (last && last[1] === x0) last[1] = x1;
     else out.push([x0, x1]);
   };
-  if (nb.w) add(0, C0);
+  if (nb.w && C0 > 1e-9) add(0, C0);
   if (!nb.s) add(C0, C1);
-  if (nb.e) add(C1, 1);
+  if (nb.e && C0 > 1e-9) add(C1, 1);
   return out;
 }
 
