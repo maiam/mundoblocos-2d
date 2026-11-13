@@ -91,6 +91,7 @@ src/
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
     textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
     materialsV2.ts             Padrão de Materiais V2 (o padrão do jogo): V2_BLOCKS, atlas V2 e de máscaras, massa contínua (`cubeEdges`) (ADR 0023)
+    three/                     núcleo 2.5D genérico (ADR 0031, M1): `stage.ts` (cena, câmera ortográfica/oblíqua, GPU, perda de contexto, mira/raio), `selection.ts` (realces), `blockMaterials.ts` (materiais por bloco)
     celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
     damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)

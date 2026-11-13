@@ -36,6 +36,9 @@ A vista oblíqua é o padrão; `?vista=inclinada` volta à câmera inclinada a 6
 O comportamento especial do Mármore Celestial (82) no Santuário — dois níveis em um clique, formas adaptativas, âncora V3 de duas células, ordem de colocação, borda ornamental e cantos em L — foi **removido** (`sanctuaryMarbleAdaptive`, `sanctuaryV3Surfaces`, `World.marbleV3*`/`marblePlacement*`). O 82 é um cubo comum: empilha e quebra um nível por vez, e entra no autotile horizontal genérico (`render/adaptiveWalls.ts`, forma `thin`) como os demais celestiais. Paredes novas são só as autotile (`world/walls.ts`). Salvamento v15 descarta os campos antigos.
 
 
+## Núcleo 2.5D genérico — `render/three/` (ADR 0031, M1, v0.93.29)
+`ThreeStage` (cena, câmera `tilt`/`oblique`, `WebGLRenderer`, perda/volta de contexto com `onRestored`, `syncCamera`, `aim`/`hits`/`groundCell` para o `pick`, `stats`), `SelectionMarkers` (realce de cursor/foco e de quebra) e `BlockMaterials` (cache de materiais por id; cada mundo passa a sua função de faces — `celestialFaces` no Santuário). O `SanctuaryThreeRenderer` (548 → ~395 linhas) compõe os três e ficou só com o que é do Santuário (chão/blocos por perfil fixo, paredes, Deusa, luz). O `WorldThreeRenderer` do Mundo (M2) usará o mesmo núcleo. Refator sem mudança visual: capturas antes × depois idênticas fora da animação (4 variantes) e mesmas estatísticas de GPU (62 chamadas / 30 956 triângulos na cena de teste).
+
 ## Revisão da câmera do Santuário — 67° (PR #93)
 
 Após comparação visual com Core Keeper, a câmera Three.js do Santuário foi ajustada de 80° para **67° acima do chão** (ortográfica, azimute 0°). Isso torna a frente dos blocos e objetos mais visível, preservando exatamente os estados `pillar`, `wall_front`, `wall_back`, a textura do topo ornamental do Mármore Celestial 82, a Deusa em plano vertical, colisões e salvamentos. O ângulo original do Core Keeper não é conhecido; 67° é um ponto de partida experimental para validação visual.
