@@ -3,6 +3,7 @@
 - **Status:** aceita (v0.93.14). Substitui a proposta inicial de "1 célula = 1 m" (personagem 1,75; parede de 2 cubos), recusada
   pelo dono do produto depois de comparar três escalas no teste `?mundo=santuario&paredes=teste`.
 - **Data:** 2026-11-12
+- **Nota (13/11/2026):** para o Mundo, a **ADR 0032 (proposta)** substitui a escala em células desta ADR (grade fina, padrão Stardew).
 - **Relaciona:** ADR 0026 (vista oblíqua), ADR 0027 (paredes).
 
 ## Contexto
