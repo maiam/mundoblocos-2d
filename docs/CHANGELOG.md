@@ -1,5 +1,10 @@
 # Changelog
 
+## Documentação — arte final de Tábuas com franja única de 16 px (13/11/2026, sem versão)
+- **Entrega do dono do produto no contrato novo:** 16 tampas (128 × 128) + 4 frentes (128 × 154, com pregos nos cantos e moldura de 16 px). Conferência: tamanho e faixa de y de cada forma corretos; **nenhum alfa parcial**; **emendas exatas** (0 de 128); franja de 16 px uniforme (tampas e molduras); a franja da coluna faz a curva e segue como franja da fileira nas junções (`cap_03`, `07`, `09`, `15`…), sem linha cruzando o miolo. Sala montada (cantos, coluna solta, T e cruz de teste): coerente.
+- Arquivada em `assets-src/paredes/tabuas/`; a versão anterior vai para `versao-franja-variada/` (histórico). `scripts/fix-wall-cap-junctions.py` fica só para a versão antiga (a arte nova já traz a junção resolvida).
+- **Tábuas completa, exceto a porta.** Nenhum código de jogo alterado.
+
 ## Documentação — franja única de 16 px no contrato de arte das paredes (13/11/2026, sem versão)
 - **Decisão do dono do produto:** todas as franjas da composição com a **mesma espessura, 16 px (0,125 célula)**, para dar continuidade. Medido na arte atual de Tábuas: ~25 px nas colunas, ~5 px na fileira, ~6–8 px nas molduras das frentes (não coincidiam).
 - **Contrato e gabarito regerados** (`make-wall-guide.py --franja 16`): coluna = franja 16 | miolo 96 | franja 16; fileira = franja 16 na borda norte + miolo de 28; moldura da frente de 16 px; **na junção coluna × fileira a franja faz a curva** e segue como franja da fileira (sem linha cruzando o miolo). O gabarito passa a desenhar as franjas em cada uma das 16 tampas.
