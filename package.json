@@ -1,7 +1,7 @@
 {
   "name": "mundoblocos-2d",
   "private": true,
-  "version": "0.93.42",
+  "version": "0.93.43",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,8 @@
     "build:net": "node scripts/build-net.mjs",
     "build:piloto3d": "VITE_PILOT_3D=1 npm run build -- --outDir dist-piloto",
     "preview:piloto3d": "vite preview --outDir dist-piloto --host",
-    "parity:3d": "node scripts/parity-3d.cjs"
+    "parity:3d": "node scripts/parity-3d.cjs",
+    "perf:cpu:3d": "node scripts/perf-cpu-3d.cjs"
   },
   "devDependencies": {
     "@types/three": "0.187.0",

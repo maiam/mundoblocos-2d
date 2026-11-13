@@ -23,6 +23,22 @@ Atualize a tabela quando um cenário mudar de estado.
 | Dentro do labirinto | ✅ | Paredes em 2 níveis, escuro fora, penumbra pela luz do jogador (mais escura que a vinheta do 2D no centro). |
 | Construção (parede fina, pilar, porta) | ✅ | Formas iguais; frente dos cubos **provisória**. |
 
+## Custo de JS por quadro (`npm run perf:cpu:3d`) — o que NÃO depende da GPU
+Medido em 13/11/2026 numa VM sem GPU (Xeon, 4 vCPUs), servidor de desenvolvimento (JS sem minificar), 844 × 390, seed 42, 7 s por cenário.
+Mede só o tempo de `renderer.draw` na thread do JS (a CPU que o celular gasta para montar o quadro), **não** o desenho na GPU.
+
+| Cenário | 2D média | 3D média | 3D p95 | 3D máx | 3D: chamadas · triângulos · texturas |
+|---|---|---|---|---|---|
+| Praça | 1,06 ms | 2,74 ms | 4,0 ms | 9,6 ms | 182 · 4,5k · 54 |
+| Meia-noite | 1,13 ms | 3,13 ms | 4,5 ms | 5,7 ms | 186 · 4,5k · 54 |
+| Floresta densa | 1,12 ms | 3,35 ms | 4,2 ms | 6,9 ms | 272 · 2,7k · 74 |
+| Labirinto | 1,36 ms | 3,27 ms | 5,0 ms | 7,3 ms | 277 · 5,3k · 114 |
+
+Leitura: o 3D gasta **~3× o JS do 2D** (~3 ms contra ~1 ms), com picos até ~10 ms. O orçamento de 30 FPS é 33 ms por quadro; num celular
+médio a CPU costuma ser várias vezes mais lenta que este Xeon, então o JS do 3D deve ficar na casa de 10–25 ms em dev e menos no build —
+**cabe, mas sem folga grande**. O que decide é a GPU, só medida em aparelho real. Se faltar fôlego, os custos de JS a atacar primeiro: pintura
+por quadro do canvas de cada ator (`ActorBillboards`) e o envio das texturas, o laço de brilhos da água e a coleta de luzes à noite.
+
 ## Diferenças conhecidas e aceitas (decisões do dono do produto, ADR 0031)
 - Escala K = 1: cubo e parede mais altos na tela, personagem menor (1,2 em vez de 2,2 células), 14 células visíveis em vez de 10.
 - Frente dos cubos provisória (topo escurecido) até a arte nova; criaturas com o mesmo fator do personagem até decidir o tamanho por espécie.
