@@ -11,6 +11,11 @@ O comportamento especial do Mármore Celestial (82) no Santuário — dois níve
 ## Vertical no celular/tablet (ADR 0030, v0.93.24)
 Fases 1 (desbloqueio) e 2 (hotbar em linhas, controles por `--hotbar-h`, conversa) ✅. **Pendência (decisão do dono do produto, 13/11/2026): melhorar a versão vertical — o layout atual "ficou bom", mas precisa de ajustes futuros.** **Falta:** painéis largos em coluna (bolsa, baú, receitas, profissões), conferir no aparelho real (Safari/iPad), decidir se haverá botão para alternar orientação e se o Mundo 2D precisa de zoom próprio em pé.
 
+## Migração do Mundo principal para Three.js — plano proposto (ADR 0031, 13/11/2026) — EM PAUSA para decisão
+Plano em fases **M0–M7** (pré-requisitos e medição em aparelho real → núcleo genérico `render/three/` → Mundo estático → atores e efeitos → cidade/interiores/dungeon → piloto `?render=3d` → virada → limpeza). **Nada foi implementado.** Antes do M2 o dono do produto decide as 6 perguntas da seção 6 da ADR (escala K = 1 no Mundo, degrau automático, prédios como planos, interiores, arte de frente dos blocos, clima padrão).
+- **W5 — paredes no Mundo (PENDENTE, depois do M4):** paredes e porta de parede no perfil principal com receitas/coleta, casas e interiores com paredes autotile, `build:net` + `sync-net`, `PROTOCOL_VERSION`/`SAVE_VERSION` se preciso, arte da porta de Pedra e ícones. Detalhe na seção 4 da ADR 0031.
+- Antes do M2 também seguem pendentes: FPS em aparelho real e validação visual (Safari/celular/tablet) da Fase 1 do ADR 0026.
+
 ## Migração do render para 2.5D em WebGL — ADR 0026 (decidida em 12/11/2026)
 
 Referência: Core Keeper. Arte 2D, geometria só nas paredes, atores em billboards, parede sólida, **iluminação dinâmica

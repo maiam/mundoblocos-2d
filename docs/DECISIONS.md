@@ -25,6 +25,7 @@
 | 0020 | Salas fixas por número (Sala 1, até 10 jogadores), mundo e bolsas salvos no servidor; sem salas de convite | [0020](adr/0020-salas-fixas-salvas.md) |
 | 0021 | Bichos da sala: o servidor roda as mesmas `Entities` (jogadores como avatares); o aparelho na sala só espelha (`CreatureMirror`); golpe/comida/mordida decididos pela sala; moradores locais | [0021](adr/0021-bichos-da-sala.md) |
 | 0022 | Escala visual: geometria e contratos de arte preservados, sem unidade nova; **cena de escala** `?escala=1` (só dev) compara sprites no renderizador real; catálogo, validação e normalização de alturas ficam para depois | [0022](adr/0022-escala-visual-e-cena-de-escala.md) |
+| 0031 | **Proposta** — plano de migração do Mundo principal para Three.js (fases M0–M7, W5 depois do M4, perguntas ao dono do produto) | [0031](adr/0031-migracao-do-mundo-para-three.md) |
 | 0030 | Vertical no celular e no tablet como opção do jogador: sem trava de orientação nem aviso; câmera com largura mínima de 8 células em pé; HUD vertical com hotbar em linhas e controles por `--hotbar-h` | [0030](adr/0030-orientacao-vertical.md) |
 | 0029 | Iluminação 2.5D: sobreposição de escuridão com poças de luz (Deusa e blocos que brilham), `?luz=`, regras puras em `render/lighting.ts` | [0029](adr/0029-iluminacao-2-5d.md) |
 | 0028 | Escala do mundo: 1 célula = 1 m; vista oblíqua com K = 1 (cubo de frente quadrada); parede = 2 cubos; personagem ≈ 1,75 m; Mundo adota na migração do render | [0028](adr/0028-escala-do-mundo-1m.md) |
