@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.22 — W3: paredes de Tábuas com a arte real no Santuário (13/11/2026)
+- **Pipeline de arte:** `scripts/build-wall-atlas.py <material>` monta o atlas (16 tampas 4 × 4 + 4 frentes; 512 × 666, WebP sem perdas, ~9 kB) em `src/assets/walls-<material>.webp`; registrado no pacote de arte do Santuário (`ArtPack.wallAtlases`, `art/santuario.ts`) — ADR 0010.
+- **Regras puras testadas** (`render/wallAtlas.ts`, 6 testes): layout do atlas, máscara da tampa e escolha da frente (`wallArtPiece`: frente só onde não há parede ao sul; poste isolado/fim de coluna = `front_post`).
+- **Render** (`render/sanctuaryWallArt.ts`): por parede, um plano horizontal (tampa) à altura `WORLD_SCALE.wall` e, quando há frente, um plano vertical com a base na face sul da laje; instanciado por peça (20 malhas por material), `alphaTest` na transparência. Tampa e frente se encontram na tela como no gabarito. O `pick` acerta frente, tampa e vão.
+- **Materiais sem arte** (Pedra) continuam em cor lisa (`sanctuaryWallPrototype.ts`, que passa a pular os materiais com atlas). `?paredes=autotile` segue liberando as paredes na hotbar (teste). Sem mudança de protocolo, save ou servidor.
+- **Verificado no navegador:** sala com porta, coluna solta, bloco isolado e T; a Deusa atrás da parede (só a cabeça por cima), na frente (cobre a frente) e ao lado.
+
 ## Documentação — arte final de Tábuas com franja única de 16 px (13/11/2026, sem versão)
 - **Entrega do dono do produto no contrato novo:** 16 tampas (128 × 128) + 4 frentes (128 × 154, com pregos nos cantos e moldura de 16 px). Conferência: tamanho e faixa de y de cada forma corretos; **nenhum alfa parcial**; **emendas exatas** (0 de 128); franja de 16 px uniforme (tampas e molduras); a franja da coluna faz a curva e segue como franja da fileira nas junções (`cap_03`, `07`, `09`, `15`…), sem linha cruzando o miolo. Sala montada (cantos, coluna solta, T e cruz de teste): coerente.
 - Arquivada em `assets-src/paredes/tabuas/`; a versão anterior vai para `versao-franja-variada/` (histórico). `scripts/fix-wall-cap-junctions.py` fica só para a versão antiga (a arte nova já traz a junção resolvida).

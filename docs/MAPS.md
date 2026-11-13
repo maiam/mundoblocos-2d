@@ -4,6 +4,8 @@ Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITE
 
 > **PR #87 — mudança dirigida:** `config.ts` limita `MAX_STACK=2`; `render/renderer.ts` → `render/adaptiveWalls.ts` seleciona e desenha paredes horizontais de construção no renderizador top-down oficial, preservando a face frontal. Não altera `World` além da validação de nível obsoleto nem a renderização de terreno natural.
 
+> **Paredes com arte (W3, v0.93.22):** `scripts/build-wall-atlas.py` → `src/assets/walls-<material>.webp` · `render/wallAtlas.ts` (layout + `wallArtPiece`) · `render/sanctuaryWallArt.ts` (planos instanciados) · `ArtPack.wallAtlases` em `render/art/santuario.ts`.
+
 > **Iluminação (ADR 0029, v0.93.19):** `render/lighting.ts` (regras puras, `?luz=`) · `render/sanctuaryLighting.ts` (shader de escuridão com poças de luz).
 
 > **Paredes (ADR 0027, v0.93.15):** `world/walls.ts` (autotile puro: frente, tampa de 16 peças, cantos internos) · `Block.WALL_PLANKS`/`WALL_STONE` em `world/blocks.ts` (`isWall`, `WALL_BLOCKS`) · `World.isWallAt`/`wallPieceAt` · `render/sanctuaryWallPrototype.ts` (protótipo de cores lisas, `?paredes=autotile`). Arte e render final: W1/W3.
