@@ -43,7 +43,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
 - **W1** arte por material (contrato em `assets-src/paredes/CONTRATO.md`, com `gabarito.png`): frente larga (esquerda/meio/direita), frente fina (poste e fim de coluna), tampa larga e fina, cantos, T, cruz e cantos internos, mais a porta (aberta e fechada). **Protótipo com cores lisas** (v0.93.16): `?mundo=santuario&paredes=autotile`.
 - **W2** domínio: bloco `wall` no `World` (colocar/quebrar/colisão/porta), regra de autotile pura e testada, save e protocolo.
 - **W3** render: parede no Three.js (frente + tampa) com oclusão correta da personagem.
-- **W4** migração e remoção do mármore V2/V3.
+- **W4** ✅ (v0.93.28) remoção do mármore V2/V3: o Mármore Celestial (82) virou cubo comum (decisão do dono do produto); saves v12–v14 migram para a v15 descartando os campos de ordem e de bases V3.
 - **W5** Mundo: casas e interiores com o mesmo conjunto.
 
 ## Consequências
