@@ -4,6 +4,7 @@ Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITE
 
 > **PR #87 — mudança dirigida:** `config.ts` limita `MAX_STACK=2`; `render/renderer.ts` → `render/adaptiveWalls.ts` seleciona e desenha paredes horizontais de construção no renderizador top-down oficial, preservando a face frontal. Não altera `World` além da validação de nível obsoleto nem a renderização de terreno natural.
 
+> **Mundo em 2.5D (M2.1, v0.93.30; só dev `?render=3d`):** `render/worldThreeRenderer.ts` · `render/three/chunkFloor.ts` · `WORLD_THREE_OPTIONS` em `rendererContract.ts` · `main.ts` (flag sob `import.meta.env.DEV`).
 > **Núcleo 2.5D genérico (M1, v0.93.29):** `render/three/{stage,selection,blockMaterials}.ts` · usado por `sanctuaryThreeRenderer.ts`; o Mundo (M2) reaproveita.
 > **Porta de parede (v0.93.25):** `Block.WALL_DOOR_*`, `World.canPlaceWallDoor` · `wallAtlas.ts` (`doorPieceFor`, `wallArtBase`) · `sanctuaryWallArt.ts` · contrato 3b + `gabarito-porta.png`.
 > **Paredes com arte (W3, v0.93.22):** `scripts/build-wall-atlas.py` → `src/assets/walls-<material>.webp` · `render/wallAtlas.ts` (layout + `wallArtPiece`) · `render/sanctuaryWallArt.ts` (planos instanciados) · `ArtPack.wallAtlases` em `render/art/santuario.ts`.

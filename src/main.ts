@@ -21,8 +21,8 @@ const screenMode = new ScreenMode();
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 document.title = profile.name;
 let game: Game | null = null;
-/** Loaded on demand only for the Santuário; no Three.js in the principal bundle. */
-let sanctuaryRendererFactory: RendererFactory | undefined;
+/** Renderer 2.5D carregado sob demanda (Santuário; Mundo só em desenvolvimento com `?render=3d`): sem Three.js no pacote do principal. */
+let threeRendererFactory: RendererFactory | undefined;
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
 const store = new SaveStore(profile.id);
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
@@ -114,7 +114,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
     save: store.load(seed),
     store,
     body: keepBody,
-    rendererFactory: sanctuaryRendererFactory,
+    rendererFactory: threeRendererFactory,
     notice,
     online,
     // Novo mundo: abre a escolha de personagem (por cima do jogo; "Voltar" volta ao mundo de antes). Toda seed começa
@@ -201,11 +201,20 @@ void loadArtPack(profile.id)
           const mod = await import('./render/sanctuaryThreeRenderer');
           // Vista oblíqua é o padrão (ADR 0026, v0.93.10); `?vista=inclinada` volta à câmera inclinada a 67°.
           const view = query.get('vista') === 'inclinada' ? 'tilt' : 'oblique';
-          sanctuaryRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core') : undefined });
+          threeRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core') : undefined });
         } catch (error) {
           console.error('Santuário Three.js: usando renderizador 2D de reserva', error);
         }
       } else console.warn('WebGL indisponível: Santuário usará Canvas 2D.');
+    }
+
+    // Mundo em 2.5D (ADR 0031, M2 — em construção): só em desenvolvimento e com `?render=3d`; o build de produção não o contém.
+    if (import.meta.env.DEV && profile.id === 'principal' && query.get('render') === '3d') {
+      const probe = document.createElement('canvas');
+      if (probe.getContext('webgl2') || probe.getContext('webgl')) {
+        const mod = await import('./render/worldThreeRenderer');
+        threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
+      } else console.warn('WebGL indisponível: o Mundo usará Canvas 2D.');
     }
 
     // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.

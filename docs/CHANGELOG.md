@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.30 — M2.1: chão do Mundo em 2.5D, atrás de `?render=3d` (13/11/2026)
+- **`WorldThreeRenderer`** (só dev; o build de produção não o contém) e **`ChunkFloor`**: um plano por chunk visível com a textura do `ChunkRenderer` (Material V2, transições, barrancas e sombras como no 2D), orçamento de 2 chunks pintados por quadro, reenvio à GPU só quando a `version` muda e liberação dos chunks fora da área. O jogador (`actors[0]`) aparece em plano vertical com a escala do mundo (`CHARACTER_SCALE_FACTOR`, K = 1) e sombra; realces e `pick` no chão. `SpriteSheet.shadowRadii` exposto. `WORLD_THREE_OPTIONS` (mapa de paridade) no contrato.
+- Conferido no navegador (seed 42, 2D × 3D no mesmo ponto): chão e jogador corretos, 16 chunks vivos, pick certo, sem erros. **Ainda sem** cubos/terreno alto, objetos, cidade, outros atores, luz e efeitos (fatias M2.2–M2.4 e M3/M4). Física inalterada. 371 testes (4 novos do `ChunkFloor`). Sem mudança de protocolo, save ou servidor.
+
 ## Orvalis v0.93.29 — M1: núcleo 2.5D genérico em `render/three/` (13/11/2026)
 - **Decisões do dono do produto (13/11):** aceitas as recomendações da ADR 0031 — Mundo em K = 1 desde o M2, degrau automático sai atrás de flag no piloto, prédios da cidade como planos na paridade, interiores isolados mantidos até o W5; arte de frente dos blocos e árvores provisória; clima (luz) padrão decidido no M3. ADR 0031 passa a **aceita**.
 - **M1:** `ThreeStage`, `SelectionMarkers` e `BlockMaterials` extraídos do `SanctuaryThreeRenderer` (548 → ~395 linhas), que passa a compô-los. **Sem mudança visual nem de comportamento**: capturas antes × depois (padrão, `?luz=`, `?vista=inclinada`, `?paredes=teste`) idênticas fora da animação (o código antigo tem o mesmo ruído de 3 mil pixels no teste), mesmas estatísticas de GPU, pick e porta iguais. 2 testes novos do `SelectionMarkers` (367).

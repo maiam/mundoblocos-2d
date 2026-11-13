@@ -375,6 +375,11 @@ class SpriteSheet {
     }
   }
 
+  /** Raios (em células) da sombra elíptica no chão: x (largura) e y (profundidade). */
+  get shadowRadii(): [number, number] {
+    return this.spec.shadow;
+  }
+
   /** Altura total na tela (px de mundo), incluindo o quanto paira acima do chão. */
   get drawHeight(): number {
     return this.spec.height + (this.spec.float ? this.spec.float.lift * TILE : 0);
