@@ -6,14 +6,16 @@ import type { WorldId } from '../world/profiles';
  * In Three.js that looks like walking THROUGH solid blocks, because
  * the whole cube is a visible obstacle rather than a stylized 18px face.
  *
- * Only the official Santuário WebGL session changes this rule.
- * All other worlds, including the Santuário ?render=2d fallback,
- * keep their existing STEP_HEIGHT navigation unchanged.
+ * The official Santuário WebGL session always changes this rule. The Mundo (ADR 0031, M5) changes it only in the pilot, behind
+ * `?fisica=solida` (`solidWorld`), with the 3D renderer active and offline: the room (server) still runs the old rule until
+ * the switch to 3D. All other cases — the Santuário ?render=2d fallback, the Mundo in 2D, online — keep STEP_HEIGHT unchanged.
+ * Only the player changes: wolves and goblins keep their own step height (decision pending).
  */
 export function configureSanctuaryThreeCollision(
-  player: Player, worldId: WorldId, threeRendererActive: boolean,
+  player: Player, worldId: WorldId, threeRendererActive: boolean, solidWorld = false,
 ): void {
-  if (worldId === 'santuario' && threeRendererActive) {
+  if (!threeRendererActive) return;
+  if (worldId === 'santuario' || (worldId === 'principal' && solidWorld)) {
     player.spec.stepHeight = 0;
   }
 }

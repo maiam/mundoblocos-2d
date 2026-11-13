@@ -22,6 +22,8 @@ const screenMode = new ScreenMode();
  * (`npm run build:piloto3d`, `VITE_PILOT_3D=1`). O build de produção não os contém (a condição vira constante falsa).
  */
 const PILOT_3D = import.meta.env.DEV || import.meta.env.VITE_PILOT_3D === '1';
+/** Física sem degrau no piloto (`?fisica=solida`): só com o render 3D do Mundo, offline (a sala segue com a regra antiga). */
+const SOLID_PHYSICS = PILOT_3D && new URLSearchParams(window.location.search).get('fisica') === 'solida';
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const profile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
 document.title = profile.name;
@@ -120,6 +122,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
     store,
     body: keepBody,
     rendererFactory: threeRendererFactory,
+    solidPhysics: SOLID_PHYSICS,
     notice,
     online,
     // Novo mundo: abre a escolha de personagem (por cima do jogo; "Voltar" volta ao mundo de antes). Toda seed começa

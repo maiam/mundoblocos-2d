@@ -272,7 +272,8 @@ O 3D do Mundo (`?render=3d`) **não existe no build de produção**. Para testar
 3. `&fps=1` mostra um painel (FPS, tempo de quadro e o pior, chamadas/triângulos/texturas/geometrias da GPU, memória do JS); **toque nele
    para copiar o relatório** (JSON) e cole na conversa. Sem `render=3d` o painel mede o 2D, para comparar. Deixe rodando ~1 min andando
    pela cidade, pela floresta e à noite (`__game.time` só existe em dev; no piloto espere o ciclo ou use o menu de descanso na tenda).
-4. Paridade visual no computador: `npm run parity:3d` (ver [PARITY_3D](PARITY_3D.md)).
+4. **Física sem degrau** (opcional): acrescente `&fisica=solida` — o jogador deixa de subir em cubos sozinho (como será no 3D de verdade). Só vale com `render=3d` e offline; sem a flag a física é a de sempre.
+5. Paridade visual no computador: `npm run parity:3d` (ver [PARITY_3D](PARITY_3D.md)).
 
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,

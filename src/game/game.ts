@@ -51,6 +51,8 @@ const REVEAL_RADIUS = 14;
 export interface GameOptions {
   /** Only the Santuário supplies a WebGL renderer; main World always uses Canvas2D. */
   rendererFactory?: RendererFactory;
+  /** Piloto do Mundo em 2.5D (`?fisica=solida`): o jogador não sobe em cubos sozinho (sem degrau). Só vale com o render 3D. */
+  solidPhysics?: boolean;
   save?: SaveData | null;
   store?: SaveStore;
   onNewWorld?(): void;
@@ -157,7 +159,7 @@ export class Game {
     this.player = new Player(sx + 0.5, sy + 0.6);
     // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
     // The main World and the optional Santuário Canvas2D renderer are unchanged.
-    configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory);
+    configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory, !!options.solidPhysics);
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
     if (options.body) this.entities.body = options.body;
