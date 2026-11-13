@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.50 — experimento de escala do Mundo: `?celulas=N` (13/11/2026)
+- **Pedido do dono do produto:** a célula/blocos ficaram grandes perto do personagem (cenoura, trigo e terra arada "gigantes"); o tamanho visual do personagem está bom. Proposta em estudo (passo 1 do plano): reduzir a célula em até 50% e reclassificar os objetos (encolhem com a célula / mantêm os pixels / passam a ocupar mais de uma célula).
+- **Experimento (3D, só para comparar; sem mudar o padrão):** `?celulas=N` mostra N células na vertical (padrão 14; limites 10–32) e o fator dos atores (personagem, NPCs, animais, monstros) sobe na mesma proporção (`actorScaleFor`), então o personagem mantém os pixels e o resto do mapa encolhe. `render/worldScale.ts` (+ teste), `worldThreeRenderer.ts`, piso de zoom da câmera baixado de 0,5 para 0,25 (só para mais de 14 células). Nome `?celulas=` porque `?escala=` já abre a cena de comparação de dev e o teste de paredes do Santuário. Verificado em 1280×720: 14 e 28 células (personagem igual; árvores, lampiões e casas ficam menores que o personagem — como previsto).
+- **Não muda:** padrão, mapa (células), protocolo, save, servidor, Canvas 2D de reserva (o parâmetro só vale no 3D). Tabela de objetos e ADR 0032 vêm depois da escolha do valor.
+
 ## Orvalis v0.93.49 — ícones de arte das paredes na hotbar (13/11/2026)
 - **Arte enviada pelo dono do produto:** ícones da **Parede de Tábuas** (tora e painéis) e da **Parede de Pedra**. Originais em `assets-src/icons-paredes/`; recorte pela silhueta (alfa > 10, ignora o véu quase invisível das bordas), quadrado 128 px, WebP q84 em `src/assets/icon-wall-*.webp`, registrados em `celestialIcons` do pacote do Santuário (`render/art/santuario.ts`) — `iconFor` já os devolvia antes do provisório. Teste novo em `santuario.test.ts`.
 - **Porta de parede:** sem ícone enviado, segue com `wallPlaceholderIcon`. O Mundo principal ainda não lista paredes (W5). Sem mudança de protocolo, save ou servidor.
