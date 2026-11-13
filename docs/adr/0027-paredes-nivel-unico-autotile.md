@@ -22,6 +22,7 @@ altura, tampa escura em cima, personagem mais alta que a parede (a cabeça apare
   fileira leste–oeste com frente de célula inteira (altura ≈ 1,2); fileira norte–sul como faixa fina em que **só o último
   bloco ao sul mostra a frente** (fina), os demais só mostram a tampa; bloco isolado = poste fino.
 - **Correção (v0.93.20):** a medida de uma cena do Core Keeper, refeita com a escala certa (tile ≈ 90 px), mostra a **coluna** com ≈ 0,9–1,0 tile de largura, em três faixas (`franja clara ~0,21 | miolo escuro ~0,5 | franja clara ~0,21`, juntas a cada tile; a frente do fim da coluna tem a largura da coluna), e a **tampa da fileira** com ≈ 0,3 de profundidade e uma franja clara na borda norte. O "poste fino de 0,2" da medida anterior era só uma franja. `x` (largura da coluna) vai até 1,0; `z` (profundidade da tampa) segue ≈ 0,35.
+- **Decisão final (v0.93.21):** `x = 1,0` (coluna da largura da célula) e `z = 0,35`: a parede é uma **laje** de 128 × 44 px por célula; só os vizinhos N/S mudam a forma da tampa (4 formas), L/O só o acabamento das bordas. Substitui o poste de 0,25.
 - **Autotile por vizinhança** (função pura `world/walls.ts`, testada):
   - **Frente:** `single` (poste), `end` (último bloco ao sul de uma fileira norte–sul), `left`/`mid`/`right` (fileira leste–oeste);
     `null` quando nada aparece (continuação de uma fileira norte–sul). `wallFrontRanges` dá as faixas de x expostas.
