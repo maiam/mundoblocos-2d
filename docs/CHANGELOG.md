@@ -1,5 +1,11 @@
 # Changelog
 
+## Documentação — frentes da Parede de Tábuas recebidas (13/11/2026, sem versão)
+- **Entrega do dono do produto:** `front_mid` (128 × 154), `front_end_left`/`front_end_right` (83 × 154) e `front_post` (38 × 154): painéis de tábuas com moldura e montantes.
+- **Conferência:** alturas iguais e arte consistente, mas (1) as medidas são as do contrato antigo (pontas 83 e poste 38; final 80 e 32); (2) a última coluna e a última linha de cada peça e as juntas entre tábuas estão **semitransparentes** (alfa ~27–30%), o que deixa o chão aparecer pela parede e desenha linhas claras nas emendas.
+- **Ajuste:** `scripts/retarget-wall-fronts.py` compõe o alfa parcial sobre uma cor de junta (opaco) e reprojeta as larguras para a medida final. Original em `assets-src/paredes/tabuas/entregue-03/`, ajustadas em `assets-src/paredes/tabuas/` (provisórias). Com as 16 tampas, **a parede de Tábuas está completa, exceto a porta**; montada em sala de teste, as emendas ficam contínuas.
+- Nenhum código de jogo alterado.
+
 ## Documentação — tampas da Parede de Tábuas recebidas (13/11/2026, sem versão)
 - **Entrega do dono do produto:** as 16 tampas (`cap_00`…`cap_15`) de Tábuas, 128 × 128 RGBA. Conferidas: formas e índices corretos, alfa binário, braços **idênticos** entre as peças que os têm e emendas exatas (diferença 0). Vieram com a espessura do contrato antigo (poste 38 × 38).
 - **Adaptação:** `scripts/retarget-wall-caps.py` reprojeta as 16 peças para a medida final (poste 32 × 44, braços 48 e 42) esticando cada faixa por partes; topologia e emendas preservadas (checadas). Original em `assets-src/paredes/tabuas/entregue-03/`, adaptadas em `assets-src/paredes/tabuas/` (provisórias; `LEIA-ME.md`).

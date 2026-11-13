@@ -167,6 +167,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 [--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
 `--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
 
+**Frentes entregues** (limpeza do alfa + largura): `python3 scripts/retarget-wall-fronts.py --entrada <pasta> --saida <pasta> [--de 38,83 --para 32,80]` (composição do alfa parcial sobre a cor de junta; pontas e poste esticados para a medida final). Usado em `assets-src/paredes/tabuas/`.
+
 **Tampas entregues em outra espessura:** `python3 scripts/retarget-wall-caps.py --entrada <pasta> --saida <pasta> [--de-x 45,83 --de-z 45,83 --para-x 48,80 --para-z 42,86]` reprojeta as 16 tampas esticando poste e braços (mantém topologia e emendas). Usado em `assets-src/paredes/tabuas/`.
 
 **Arte das paredes** (W1, ADR 0027; ainda sem pipeline de build — vem na W3): contrato e gabarito em `assets-src/paredes/` (`CONTRATO.md`, `gabarito.png`; `python3 scripts/make-wall-guide.py [--tx 0.25] [--tz 0.35]` regera o gabarito **e** o `CONTRATO.md` (a partir de `CONTRATO.tpl.md`; não edite o contrato à mão)). Entrega por material em `assets-src/paredes/<material>/`: `front_mid`, `front_end_left`, `front_end_right`, `front_post`, `cap_00`…`cap_15` (PNG RGBA, 128 px por célula).
