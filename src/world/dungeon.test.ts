@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
-import { buildMaze, dungeonSize, inRect, type Side } from './dungeon';
+import { buildDungeon, buildMaze, dungeonEntry, dungeonSize, inRect, isDungeonExit, type Side, upsampleDungeon } from './dungeon';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
@@ -137,5 +137,43 @@ describe('Covil das Aranhas — labirinto procedural', () => {
     expect(w.canTill(x, y) || w.canFlatten(x, y) || w.canPlant(x, y)).toBe(false);
     const [sx, sy] = w.outsideGate();
     expect(w.canBreak(sx, sy) || w.canPlace(sx, sy, Block.STONE)).toBe(true);
+  });
+});
+
+describe('Covil na grade fina (ADR 0032, F4): upsampleDungeon', () => {
+  const base = buildDungeon(7, 1000, 2000, 'south');
+  const fine = upsampleDungeon(base, 2);
+
+  it('com 1 devolve o mesmo covil', () => {
+    expect(upsampleDungeon(base, 1)).toBe(base);
+  });
+
+  it('dobra dimensões, áreas, câmaras e posições dos monstros', () => {
+    expect([fine.w, fine.h]).toEqual([base.w * 2, base.h * 2]);
+    expect(fine.area).toEqual({ x0: base.area.x0 * 2, y0: base.area.y0 * 2, x1: (base.area.x1 + 1) * 2 - 1, y1: (base.area.y1 + 1) * 2 - 1 });
+    expect(fine.chambers).toHaveLength(base.chambers.length);
+    expect(fine.spawns).toHaveLength(base.spawns.length);
+    expect(fine.spawns[0]).toMatchObject({ kind: 'spider-boss', x: base.spawns[0].x * 2, y: base.spawns[0].y * 2 });
+    expect(fine.scale).toBe(2);
+  });
+
+  it('chão, paredes e montanhas repetem nas 4 células (o labirinto não muda de forma)', () => {
+    for (let y = 0; y < base.h; y++) {
+      for (let x = 0; x < base.w; x++) {
+        const o = base.objects[y * base.w + x];
+        if (o !== Block.DUNGEON_WALL && o !== Block.DUNGEON_MOUNTAIN) continue;
+        for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) expect(fine.objects[(y * 2 + dy) * fine.w + x * 2 + dx]).toBe(o);
+      }
+    }
+  });
+
+  it('a entrada e o vão de saída acompanham a escala', () => {
+    const [ex, ey] = dungeonEntry(fine);
+    const [bx, by] = dungeonEntry(base);
+    expect([ex, ey]).toEqual([bx * 2, by * 2]);
+    const g = fine.gate[0];
+    expect(isDungeonExit(fine, g[0], g[1])).toBe(true);
+    expect(isDungeonExit(fine, g[0] + 1, g[1] + 1)).toBe(true); // as 4 células da célula antiga
+    expect(isDungeonExit(fine, ex, ey)).toBe(false);
   });
 });

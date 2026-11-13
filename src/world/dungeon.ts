@@ -1,4 +1,4 @@
-import { CHUNK_SIZE } from '../config';
+import { CHUNK_SIZE, SUBDIV } from '../config';
 import type { Biome } from './biomes';
 import { Block, type BlockId, blockDef } from './blocks';
 import { hash2, mulberry32 } from './random';
@@ -86,6 +86,8 @@ export interface DungeonLayout {
   /** Mapa da área: chão e objeto por célula (índice = (y - y0) * w + (x - x0)). */
   ground: Uint8Array;
   objects: Uint8Array;
+  /** Subdivisão da grade (ADR 0032): 1 = padrão; as listas de células (`gate`) guardam o canto de cada célula antiga. */
+  scale?: number;
 }
 
 export function inRect(r: Rect, x: number, y: number): boolean {
@@ -431,12 +433,12 @@ export function buildDungeon(seed: number, x0: number, y0: number, side: Side, s
 /** Canto do covil: coordenadas fixas muito longe de tudo (os interiores ficam em (0, -100000)). */
 export const DUNGEON_ORIGIN: [number, number] = [-100000, -100000];
 /** Anel de montanhas em volta do covil (ninguém sai andando; o render escurece o que fica fora). */
-export const DUNGEON_RIM = 6;
+export const DUNGEON_RIM = 6 * SUBDIV;
 /** Distância mínima da caverna ao centro do castelo (células): 10 chunks. */
-export const CAVE_MIN_CASTLE_DIST = 10 * CHUNK_SIZE;
+export const CAVE_MIN_CASTLE_DIST = 10 * CHUNK_SIZE * SUBDIV;
 /** Base da caverna no mundo (células): a boca fica no meio da fileira de baixo. */
-export const CAVE_W = 5;
-export const CAVE_D = 3;
+export const CAVE_W = 5 * SUBDIV;
+export const CAVE_D = 3 * SUBDIV;
 
 /** Entrada do covil no mundo: base da arte da caverna (sólida, protegida) e a célula diante da boca. */
 export interface CaveEntrance {
@@ -451,9 +453,48 @@ export interface CaveEntrance {
   front: Rect;
 }
 
+/**
+ * Covil na grade fina (ADR 0032, F4): cada célula vira `s` × `s` (mesmos pixels de hoje). Chão, paredes e montanhas repetem em todas
+ * as células; adereços (rochas, ninhos) numa célula só. Áreas, câmaras e posições ganham as coordenadas novas; as listas de células
+ * (`gate`) guardam o canto de cada célula antiga e `scale` diz de quanto (`dungeonEntry`, `isDungeonExit`). `s = 1` devolve o mesmo.
+ */
+export function upsampleDungeon(l: DungeonLayout, s: number): DungeonLayout {
+  if (s === 1) return l;
+  const W = l.w * s;
+  const H = l.h * s;
+  const ground = new Uint8Array(W * H);
+  const objects = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const j = Math.floor(y / s) * l.w + Math.floor(x / s);
+      const i = y * W + x;
+      ground[i] = l.ground[j];
+      const o = l.objects[j] as BlockId;
+      if (o === Block.AIR) continue;
+      if (o === Block.DUNGEON_MOUNTAIN || o === Block.DUNGEON_WALL || blockDef(o).shape === 'cube') objects[i] = o;
+      else if (x % s === 0 && y % s === s - 1) objects[i] = o;
+    }
+  }
+  const sc = (r: Rect): Rect => ({ x0: r.x0 * s, y0: r.y0 * s, x1: (r.x1 + 1) * s - 1, y1: (r.y1 + 1) * s - 1 });
+  const pt = ([x, y]: [number, number]): [number, number] => [x * s, y * s];
+  return {
+    w: W, h: H,
+    area: sc(l.area),
+    interior: sc(l.interior),
+    side: l.side,
+    gate: l.gate.map(pt),
+    doorstep: pt(l.doorstep),
+    chambers: l.chambers.map(sc),
+    bossRoom: sc(l.bossRoom),
+    bossHome: [l.bossHome[0] * s + (s >> 1), l.bossHome[1] * s + (s >> 1)],
+    spawns: l.spawns.map((m) => ({ ...m, x: m.x * s, y: m.y * s })),
+    ground, objects, scale: s,
+  };
+}
+
 /** O labirinto do mundo, sempre com a entrada ao sul, no canto isolado. */
 export function isolatedDungeon(seed: number): DungeonLayout {
-  return buildDungeon(seed, DUNGEON_ORIGIN[0], DUNGEON_ORIGIN[1], 'south');
+  return upsampleDungeon(buildDungeon(seed, DUNGEON_ORIGIN[0], DUNGEON_ORIGIN[1], 'south'), SUBDIV);
 }
 
 /** Área do covil com o anel de montanhas (protegida). */
@@ -465,21 +506,24 @@ export function dungeonGuard(l: DungeonLayout): Rect {
 export function dungeonEntry(l: DungeonLayout): [number, number] {
   const c = l.gate[l.gate.length - 2]; // anel mais interno do vão, k = 0
   const inward = { north: [0, 1], south: [0, -1], west: [1, 0], east: [-1, 0] }[l.side];
-  return [c[0] + inward[0], c[1] + inward[1]];
+  const s = l.scale ?? 1;
+  return [c[0] + inward[0] * s, c[1] + inward[1] * s];
 }
 
 /** Pisar aqui sai do covil: o anel externo do vão (as 3 células da borda). */
 export function isDungeonExit(l: DungeonLayout, x: number, y: number): boolean {
-  return l.gate.slice(0, 3).some(([gx, gy]) => gx === x && gy === y);
+  const s = l.scale ?? 1;
+  return l.gate.slice(0, 3).some(([gx, gy]) => x >= gx && x < gx + s && y >= gy && y < gy + s);
 }
 
 function caveAt(x: number, y: number): CaveEntrance {
   const footprint = { x0: x, y0: y - CAVE_D + 1, x1: x + CAVE_W - 1, y1: y };
-  const outside: [number, number] = [x + (CAVE_W >> 1), y + 1];
+  // a boca fica na coluna do meio da base antiga (`SUBDIV` células de largura)
+  const outside: [number, number] = [x + ((CAVE_W / SUBDIV) >> 1) * SUBDIV, y + 1];
   return {
     x, y, footprint, outside,
-    guard: { x0: footprint.x0 - 1, y0: footprint.y0 - 1, x1: footprint.x1 + 1, y1: footprint.y1 },
-    front: { x0: outside[0] - 2, y0: outside[1], x1: outside[0] + 2, y1: outside[1] + 2 },
+    guard: { x0: footprint.x0 - SUBDIV, y0: footprint.y0 - SUBDIV, x1: footprint.x1 + SUBDIV, y1: footprint.y1 },
+    front: { x0: outside[0] - 2 * SUBDIV, y0: outside[1], x1: outside[0] + 3 * SUBDIV - 1, y1: outside[1] + 3 * SUBDIV - 1 },
   };
 }
 
@@ -494,7 +538,7 @@ export function planCave(base: TerrainSource, castle: [number, number], avoid: R
   let fallback: CaveEntrance | null = null;
   for (let t = 0; t < 96; t++) {
     const a = a0 + t * 0.7;
-    const dist = CAVE_MIN_CASTLE_DIST + 8 + hash2(seed, 7002, t) * 80 + Math.floor(t / 9) * 24;
+    const dist = CAVE_MIN_CASTLE_DIST + (8 + hash2(seed, 7002, t) * 80 + Math.floor(t / 9) * 24) * SUBDIV;
     const ox = Math.round(castle[0] + Math.cos(a) * dist);
     const oy = Math.round(castle[1] + Math.sin(a) * dist);
     const cave = caveAt(ox - (CAVE_W >> 1), oy);
@@ -521,7 +565,8 @@ export class DungeonTerrain implements TerrainSource {
   constructor(private readonly base: TerrainSource, readonly layout: DungeonLayout, readonly cave: CaveEntrance | null = null) {
     this.guard = dungeonGuard(layout);
     const [dx, dy] = layout.doorstep;
-    this.landing = layout.side === 'north' || layout.side === 'south' ? { x0: dx - 1, y0: dy, x1: dx + 1, y1: dy } : { x0: dx, y0: dy - 1, x1: dx, y1: dy + 1 };
+    const s = layout.scale ?? 1;
+    this.landing = layout.side === 'north' || layout.side === 'south' ? { x0: dx - s, y0: dy, x1: dx + 2 * s - 1, y1: dy + s - 1 } : { x0: dx, y0: dy - s, x1: dx + s - 1, y1: dy + 2 * s - 1 };
   }
 
   private clearFront(c: Cell): Cell {

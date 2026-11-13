@@ -9,10 +9,10 @@ import type { Rect } from './dungeon';
 /** Goblin camps around the already-existing CAMPFIRE item; seven per camp. */
 export const GOBLIN_PACK_SIZE=7;
 export const GOBLIN_CAMP_COUNT=4;
-export const GOBLIN_CAMP_ROAM=11;
-export const GOBLIN_CAMP_SLOTS:ReadonlyArray<readonly [number,number]>=[
+export const GOBLIN_CAMP_ROAM=11*SUBDIV;
+export const GOBLIN_CAMP_SLOTS:ReadonlyArray<readonly [number,number]>=([
   [0,-3],[2,-2],[3,0],[2,2],[0,3],[-2,2],[-3,0],
-];
+] as const).map(([dx,dy])=>[dx*SUBDIV,dy*SUBDIV] as const);
 
 export interface GoblinCamp {
   /** Tile containing the real campfire object (Block.CAMPFIRE). */
@@ -49,7 +49,7 @@ function open(world:World,x:number,y:number):boolean {
  * No dynamic placement during rendering or entity respawning.
  */
 export function planGoblinCamps(world:World):GoblinCamp[] {
-  if(world.profile.id!=='principal'||!world.town||SUBDIV>1)return []; // grade fina (ADR 0032): acampamentos voltam na F4
+  if(world.profile.id!=='principal'||!world.town)return [];
   const town=world.town;
   const mx=(town.area.x0+town.area.x1)/2;
   const my=(town.area.y0+town.area.y1)/2;
@@ -60,11 +60,11 @@ export function planGoblinCamps(world:World):GoblinCamp[] {
     const angle=hash2(world.seed,113+i,274)*Math.PI*2;
     // Include open fields beyond the near-city ring when the biome is
     // mountains/ocean. Still favor nearby camps for discoverability.
-    const extra=36+hash2(world.seed,938+i,181)*Math.min(220,56+Math.floor(i/15)*8);
+    const extra=(36+hash2(world.seed,938+i,181)*Math.min(220,56+Math.floor(i/15)*8))*SUBDIV;
     // Elliptical ring around the city, beyond the livestock field.
     const x=Math.round(mx+Math.cos(angle)*(rx+extra));
     const y=Math.round(my+Math.sin(angle)*(ry+extra));
-    if(camps.some(c=>Math.hypot(c.x-x,c.y-y)<32))continue;
+    if(camps.some(c=>Math.hypot(c.x-x,c.y-y)<32*SUBDIV))continue;
     if(!open(world,x,y))continue;
     const slots=GOBLIN_CAMP_SLOTS.map(([dx,dy])=>[x+dx,y+dy] as const);
     if(!slots.every(([sx,sy])=>open(world,sx,sy)))continue;

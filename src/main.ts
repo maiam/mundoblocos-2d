@@ -33,9 +33,9 @@ function freshCanvas(): HTMLCanvasElement {
 const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const baseProfile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
-/** Protótipo da grade fina (ADR 0032; só dev, `?grade=2`): cidade (F3) sem interiores, sem dungeon/lobos/goblins, sem salvar e sem sala. */
+/** Protótipo da grade fina (ADR 0032; só dev, `?grade=2`): mesmo mundo, sem salvar e sem sala. */
 const gridProto = SUBDIV > 1 && baseProfile.id === 'principal';
-const profile = gridProto ? { ...baseProfile, dungeon: false, wolves: false } : baseProfile;
+const profile = baseProfile;
 document.title = profile.name;
 let game: Game | null = null;
 /** Renderer 2.5D carregado sob demanda (Santuário; Mundo só em desenvolvimento com `?render=3d`): sem Three.js no pacote do principal. */

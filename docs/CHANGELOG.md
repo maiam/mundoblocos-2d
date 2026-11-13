@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.54 — grade fina, F4: interiores, tenda, covil, lobos e goblins (só dev, `?grade=2`) (13/11/2026)
+- **ADR 0032, F4:** com `?grade=2` o mundo inteiro existe na grade fina com os mesmos pixels de hoje — agora também os cômodos, o covil e os bichos do mapa.
+- **Interiores e tenda:** `scaleInteriorDef` (`world/interiors.ts`) amplia cada caractere do mapa do cômodo 2 × 2 (a arte cobre a área nova inteira); o capacho vira 2 × 2 (`interiorExitAt`; pisar em qualquer célula sai), a porta da rua vale `SUBDIV` células (`World.interiorEntrance`), o ferreiro e suas linhas acompanham; espaçamento e anel × `SUBDIV`.
+- **Covil e caverna:** `upsampleDungeon` (`world/dungeon.ts`) amplia o labirinto (chão, paredes e montanhas repetem; adereços numa célula; posições dos monstros × `SUBDIV`), `DungeonLayout.scale` guarda a escala das listas de células (`dungeonEntry`, `isDungeonExit`); anel de montanhas, aterrissagem, base e frente da caverna e distâncias do `planCave` × `SUBDIV` (a boca vale `SUBDIV` células: `World.isCaveDoor`).
+- **Lobos e goblins:** regiões, distâncias, raio de passeio e posições do bando/acampamento × `SUBDIV`; `planGoblinCamps` voltou na grade fina.
+- **Conferido no navegador (seed 42):** a Ferraria (entrada pela porta, arte e ferreiro no lugar), a caverna levando ao covil (corredores, teias e ossos) e **as mesmas contagens do padrão** — 4 acampamentos, 26 bandos, 1 chefe, 10 aranhas grandes, 28 pequenas, 28 goblins, 26 lobos. 9 testes novos (`interiors`, `dungeon`). Padrão inalterado (`SUBDIV = 1`).
+- **Falta (F5–F7):** paredes e portas de parede, save, protocolo e servidor, virada; sala (servidor) ainda não simula a grade fina.
+
 ## Orvalis v0.93.53 — grade fina, F3: a cidade (só dev, `?grade=2`) (13/11/2026)
 - **ADR 0032, F3:** com `?grade=2` a Cidade do Despertar existe na grade fina, **com os mesmos pixels de hoje**: `upsampleTown` (`world/town.ts`) amplia o mapa lógico 2 × 2 — área, portão, construções (retângulo e porta), ruas, muralha de 2 cubos, `TOWN_PART` e sebes repetem nas 4 células; o id da construção fica na célula do canto inferior esquerdo; objetos soltos (árvores, flores, postes, barris, caixas, placas) numa célula só. `TOWN_MARGIN`/`TOWN_SOUTH_FIELD`/`TOWN_WALL`/estrada × `SUBDIV`. A arte dos prédios mantém os pixels (`objectScaleFor('building')`); as sebes ficam do tamanho da célula (`worldSpriteArt`).
 - **Conferido no navegador (seed 42):** praça inicial, poço, bancos, torres, lampiões, casas, a Guilda e o castelo com os mesmos tamanhos do padrão, personagem igual; NPCs presentes. 5 testes novos (`town.test.ts`: dimensões, retângulos das construções, âncora única, muralha/portão, objetos soltos × repetidos). Padrão inalterado (`SUBDIV = 1` devolve o mesmo mapa).

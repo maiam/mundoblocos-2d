@@ -15,7 +15,7 @@ import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { canSit, Entities, type HeroBody } from './entities';
-import type { InteriorLayout } from '../world/interiors';
+import { interiorExitAt, type InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import type { RecipeDestination } from './skills';
 import { BagPanel, type BagEntry } from './bag';
@@ -964,7 +964,7 @@ export class Game {
     }
     const room = this.world.interiorAt(p.cellX, p.cellY);
     if (room) {
-      if (p.cellX === room.exit[0] && p.cellY === room.exit[1]) this.moveTo(this.roomExit(room), 'down');
+      if (interiorExitAt(room, p.cellX, p.cellY)) this.moveTo(this.roomExit(room), 'down');
       return;
     }
     if (iy >= -0.3) return;

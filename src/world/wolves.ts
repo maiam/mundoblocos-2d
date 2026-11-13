@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { Block, blockDef } from './blocks';
 import { isWolf, type Rect, WOLF_KINDS, type WolfKind } from './dungeon';
 import { hash2 } from './random';
@@ -20,17 +21,17 @@ export interface WolfSpawn {
 }
 
 /** Lado (células) de cada região; no máximo uma toca por região. */
-export const WOLF_REGION = 40;
+export const WOLF_REGION = 40 * SUBDIV;
 /** Quantas regiões para cada lado do centro da cidade (±): 7 × 7 regiões ≈ 280 × 280 células. */
 export const WOLF_REGIONS = 3;
 /** Chance de uma região ter toca. */
 export const WOLF_DEN_CHANCE = 0.5;
 /** Distância mínima (células) entre a muralha/campo do rebanho e qualquer toca. */
-export const WOLF_TOWN_CLEARANCE = 28;
+export const WOLF_TOWN_CLEARANCE = 28 * SUBDIV;
 /** Quanto o bando pode se afastar da toca (células): limite do passeio e da perseguição. */
-export const WOLF_ROAM = 12;
+export const WOLF_ROAM = 12 * SUBDIV;
 /** Posições dos membros do bando em torno da toca (o 1º é a própria toca). */
-const SLOTS: ReadonlyArray<readonly [number, number]> = [[0, 0], [2, 1], [-1, 2]];
+const SLOTS: ReadonlyArray<readonly [number, number]> = [[0, 0], [2 * SUBDIV, SUBDIV], [-SUBDIV, 2 * SUBDIV]];
 
 /** O terreno-base da célula serve de chão para um lobo (sem água, buraco, árvore, pedra, bloco)? */
 function open(world: World, x: number, y: number): boolean {
@@ -60,8 +61,9 @@ export function wolfPacks(world: World): WolfSpawn[] {
       const kind = WOLF_KINDS[Math.floor(hash2(seed, rx * 31 + 5, ry * 17 + 9) * WOLF_KINDS.length)];
       const count = 1 + Math.floor(hash2(seed, rx * 5 + 3, ry * 11 + 7) * 3); // 1, 2 ou 3
       for (let k = 0; k < 12; k++) { // tenta posições da toca até caber o bando inteiro em terreno aberto
-        const hx = rx * WOLF_REGION + 4 + Math.floor(hash2(seed, rx * 3 + k, ry * 19 + 1) * (WOLF_REGION - 8));
-        const hy = ry * WOLF_REGION + 4 + Math.floor(hash2(seed, rx * 23 + 2, ry * 3 + k) * (WOLF_REGION - 8));
+        const m = 4 * SUBDIV; // margem da região (grade fina: × SUBDIV)
+        const hx = rx * WOLF_REGION + m + Math.floor(hash2(seed, rx * 3 + k, ry * 19 + 1) * (WOLF_REGION - 2 * m));
+        const hy = ry * WOLF_REGION + m + Math.floor(hash2(seed, rx * 23 + 2, ry * 3 + k) * (WOLF_REGION - 2 * m));
         if (hx >= keepOut.x0 && hx <= keepOut.x1 && hy >= keepOut.y0 && hy <= keepOut.y1) continue;
         const cells = SLOTS.slice(0, count).map(([dx, dy]) => [hx + dx, hy + dy] as const);
         if (!cells.every(([x, y]) => open(world, x, y))) continue;
