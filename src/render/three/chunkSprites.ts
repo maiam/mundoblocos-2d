@@ -42,7 +42,28 @@ export interface ChunkSpritesOptions {
   /** O que desenhar na célula (id do objeto do nível 0), ou null (vazia, cubo, parede: têm render próprio). */
   art(id: BlockId, x: number, y: number): SpriteDraw | null;
   maxBuildsPerFrame?: number;
+  /** Objetos de chama viva (fogueira): a chama balança e pisca no próprio desenho (`FIRE_VERTEX`/`FIRE_FRAGMENT`). */
+  animated?(id: BlockId): boolean;
 }
+
+/**
+ * Chama que balança: o desenho da fogueira (toras e pedras embaixo, fogo em cima) é amostrado com a coordenada horizontal ondulando
+ * tanto mais quanto mais alto o ponto, e os pixels de cor de fogo pulsam em brilho. Sem recorte do desenho: o mesmo sprite, só animado.
+ */
+const FIRE_FRAGMENT = `
+#ifdef USE_MAP
+vec2 fuv = vMapUv;
+float fh = smoothstep(uFlameFrom, uFlameTo, vMapUv.y);
+float fw = sin(uFireTime * 7.0 + vMapUv.y * 11.0) * 0.55 + sin(uFireTime * 12.3 + vMapUv.y * 19.0 + 1.7) * 0.45;
+fuv.x += fw * 0.016 * fh;
+fuv.y -= (0.5 + 0.5 * sin(uFireTime * 5.1)) * 0.018 * fh;
+vec4 sampledDiffuseColor = texture2D(map, fuv);
+diffuseColor *= sampledDiffuseColor;
+float warm = smoothstep(0.1, 0.45, sampledDiffuseColor.r - sampledDiffuseColor.b) * smoothstep(0.35, 0.8, sampledDiffuseColor.r);
+float pulse = 0.5 + 0.5 * sin(uFireTime * 9.0 + vMapUv.y * 5.0) * 0.6 + 0.5 * sin(uFireTime * 21.0) * 0.4;
+diffuseColor.rgb *= 1.0 + warm * (pulse - 0.5) * 0.45;
+#endif
+`;
 
 /**
  * Desempate de profundidade (z-fighting): planos de objetos vizinhos na MESMA linha ficam exatamente na mesma profundidade e, onde as
@@ -64,6 +85,7 @@ interface Asset {
   geometry: THREE.PlaneGeometry;
   solid: THREE.MeshBasicMaterial;
   soft: THREE.MeshBasicMaterial;
+  fire?: THREE.MeshBasicMaterial;
 }
 interface Group { mesh: THREE.InstancedMesh; cells: SpriteCell[] }
 interface Build { version: number; groups: Group[] }
@@ -80,6 +102,8 @@ export class ChunkSprites {
   private readonly assets = new Map<HTMLCanvasElement, Asset>();
   private readonly dummy = new THREE.Object3D();
   private generation = 0;
+  /** Tempo da chama (s), compartilhado pelos materiais animados. */
+  private readonly fireUniforms = { uFireTime: { value: 0 }, uFlameFrom: { value: 0.3 }, uFlameTo: { value: 0.9 } };
 
   constructor(
     private readonly scene: THREE.Object3D,
@@ -88,6 +112,22 @@ export class ChunkSprites {
   ) {}
 
   get count(): number { return this.builds.size; }
+
+  /** Relógio da chama viva (chamar a cada quadro com o tempo decorrido). */
+  setTime(elapsed: number): void { this.fireUniforms.uFireTime.value = elapsed; }
+
+  private fireMaterial(a: Asset): THREE.MeshBasicMaterial {
+    if (a.fire) return a.fire;
+    const m = new THREE.MeshBasicMaterial({ map: a.texture, side: THREE.DoubleSide, alphaTest: 0.5 });
+    m.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, this.fireUniforms);
+      shader.fragmentShader = shader.fragmentShader
+        .replace('void main() {', 'uniform float uFireTime; uniform float uFlameFrom; uniform float uFlameTo;\nvoid main() {')
+        .replace('#include <map_fragment>', FIRE_FRAGMENT);
+    };
+    a.fire = m;
+    return m;
+  }
 
   /** Chegou arte nova (cultura, dungeon): refaz os planos e reenvia as texturas. */
   invalidateAll(): void {
@@ -152,7 +192,7 @@ export class ChunkSprites {
     const x0 = chunk.cx * CHUNK_SIZE;
     const y0 = chunk.cy * CHUNK_SIZE;
     const { tile } = this.opts;
-    const buckets = new Map<HTMLCanvasElement, { sprite: SpriteArt; walkable: boolean; cells: SpriteCell[] }>();
+    const buckets = new Map<HTMLCanvasElement, { sprite: SpriteArt; walkable: boolean; animated: boolean; cells: SpriteCell[] }>();
     const MAX_STACK_DRAWN = 4;
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
@@ -161,16 +201,16 @@ export class ChunkSprites {
         const draw = this.opts.art(id, x, y);
         if (!draw) continue;
         let bucket = buckets.get(draw.sprite.canvas);
-        if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
+        if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, animated: !!this.opts.animated?.(id), cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
         const scale = draw.scale && draw.scale !== 1 ? draw.scale : undefined;
         const n = Math.min(MAX_STACK_DRAWN, Math.max(1, Math.floor(draw.stack ?? 1)));
         for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale });
       }
     }
     const groups: Group[] = [];
-    for (const { sprite, walkable, cells } of buckets.values()) {
+    for (const { sprite, walkable, animated, cells } of buckets.values()) {
       const a = this.asset(sprite);
-      const mesh = new THREE.InstancedMesh(a.geometry, walkable ? a.soft : a.solid, cells.length);
+      const mesh = new THREE.InstancedMesh(a.geometry, animated ? this.fireMaterial(a) : walkable ? a.soft : a.solid, cells.length);
       mesh.name = `Mundo: objeto (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
@@ -222,6 +262,7 @@ export class ChunkSprites {
       a.geometry.dispose();
       a.solid.dispose();
       a.soft.dispose();
+      a.fire?.dispose();
       a.texture.dispose();
     }
     this.assets.clear();
