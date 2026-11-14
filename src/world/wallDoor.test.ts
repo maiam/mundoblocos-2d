@@ -104,17 +104,14 @@ describe('porta de parede (ADR 0027)', () => {
     expect(w.wallPieceAt(x, y)).toEqual({ front: 'single', cap: 0, inner: 0 });
   });
 
-  it('alcançável: os perfis do Santuário e do Mundo (W5) listam paredes e porta', () => {
+  it('mantém paredes e portas no Mundo, mas remove da seleção do laboratório do Santuário', () => {
     for (const id of [...WALL_BLOCKS, ...WALL_DOOR_BLOCKS]) {
-      expect(WORLD_PROFILES.santuario.blocks).toContain(id);
       expect(WORLD_PROFILES.principal.blocks).toContain(id);
+      expect(WORLD_PROFILES.santuario.blocks).not.toContain(id);
     }
     const w = new World(3, WORLD_PROFILES.santuario);
     const [x, y] = w.findSpawn();
-    for (let i = 0; i < 3; i++) expect(w.placeBlock(x + 4 + i, y, Block.WALL_PLANKS)).toBe(true);
-    expect(w.breakBlock(x + 5, y)).toBe(Block.WALL_PLANKS);
-    expect(w.placeBlock(x + 5, y, Block.WALL_DOOR_PLANKS)).toBe(true);
-    expect(w.getObject(x + 5, y)).toBe(Block.WALL_DOOR_PLANKS);
-    expect(w.placeBlock(x + 8, y, Block.WALL_DOOR_PLANKS)).toBe(false); // sem paredes dos lados
+    expect(w.placeBlock(x + 4, y, Block.WALL_PLANKS)).toBe(false);
+    expect(w.placeBlock(x + 5, y, Block.WALL_DOOR_PLANKS)).toBe(false);
   });
 });
