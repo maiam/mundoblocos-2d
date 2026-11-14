@@ -85,10 +85,10 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com 21 blocos (18 celestiais + paredes + porta), sem bolsa', () => {
+  it('Santuário continua infinito: grade fixa com 23 blocos (18 celestiais + Terra e Arada + paredes + porta), sem bolsa', () => {
     const grid = new Hotbar(WORLD_PROFILES.santuario);
     expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(21);
+    expect(grid.length).toBe(23);
     grid.assign(0, null);
     expect(grid.stack(0)).toBe(blockStack(Block.CLOUD_SOLID));
   });

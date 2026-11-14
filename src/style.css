@@ -737,3 +737,8 @@ html, body {
   .sanctuary-scale-controls { gap: 4px; padding: 2px 0 5px; }
   .sanctuary-camera-panel { max-height: calc(100dvh - 54px); }
 }
+
+/* Presets rápidos sem remover o joystick ou os ajustes finos existentes. */
+.sanctuary-camera-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+.sanctuary-camera-presets button { font-size: 11px; padding: 7px 3px; line-height: 1.25; }
+.sanctuary-camera-presets button.active { color: #231641; background: #ffd46b; border-color: #fff2c2; }

@@ -1,3 +1,8 @@
+import type { MaterialsV2Manifest } from '../materialsV2';
+import materialsV2Atlas from '../../assets/materials-v2.webp';
+import materialsV2Manifest from '../../assets/materials-v2.json';
+import dirtIcon from '../../assets/icon-block-dirt.webp';
+import tilledIcon from '../../assets/icon-block-tilled.webp';
 import newCloudSolid from '../../assets/santuario-nuvem-solida-512.jpg';
 import newCloudEthereal from '../../assets/santuario-nuvem-eterea-512.jpg';
 import newMarbleCelestial from '../../assets/santuario-marmore-celestial-512.jpg';
@@ -29,6 +34,8 @@ import type { ArtPack } from './types';
 const pack: ArtPack = {
   actors: { goddess: goddessFloat },
   celestialAtlas,
+  // Compartilha apenas o atlas de superfícies; não traz sistemas do Mundo principal.
+  materialsV2: { atlas: materialsV2Atlas, manifest: materialsV2Manifest as MaterialsV2Manifest },
   celestialSurfaces: {
     [Block.CLOUD_SOLID]: newCloudSolid,
     [Block.CLOUD_ETHEREAL]: newCloudEthereal,
@@ -61,7 +68,10 @@ const pack: ArtPack = {
     [Block.WALL_PLANKS]: iconWallPlanks,
     [Block.WALL_STONE]: iconWallStone,
   },
-  materialIcons: {},
+  materialIcons: {
+    [Block.DIRT]: dirtIcon,
+    [Block.TILLED]: tilledIcon,
+  },
   itemIcons: {},
   toolIcons: {},
 };

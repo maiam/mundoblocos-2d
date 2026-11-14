@@ -1,6 +1,7 @@
 import { CUBE_FRONT, TILE } from '../config';
 import { Block, CELESTIAL_BLOCKS } from '../world/blocks';
 import { getCelestialAtlas, getCelestialSurface } from './blockArt';
+import { v2Faces } from './materialsV2';
 
 /**
  * Blocos do Santuário Celestial — arte da prancha 3/4 fornecida
@@ -93,6 +94,26 @@ export function celestialFaces(id: number): CelestialFaces {
       cache.set(id, faces);
       return faces;
     }
+    // Terra lisa e Terra Arada: topo V2 de cada material, quatro faces laterais
+    // da mesma terra e face inferior de terra. Não repetir o topo arado nas laterais.
+    if (id === Block.DIRT || id === Block.TILLED) {
+      const surface = v2Faces(id, 128, 128, 1);
+      const dirt = v2Faces(Block.DIRT, 128, 128, 1);
+      if (surface && dirt) {
+        const top = document.createElement('canvas');
+        top.width = top.height = 128;
+        surface.top(top.getContext('2d')!);
+        const sheet = document.createElement('canvas');
+        sheet.width = 128; sheet.height = 256;
+        dirt.front(sheet.getContext('2d')!);
+        const side = document.createElement('canvas');
+        side.width = side.height = 128;
+        side.getContext('2d')!.drawImage(sheet, 0, 128, 128, 128, 0, 0, 128, 128);
+        faces = { top, front: side, ground: top, cube: [side, side, top, side, side, side] };
+        cache.set(id, faces);
+        return faces;
+      }
+    }
     const approved = getCelestialSurface(id);
     if (approved) {
       faces = {
@@ -108,6 +129,12 @@ export function celestialFaces(id: number): CelestialFaces {
         front: slice(atlas, col, ATLAS_TOP, ATLAS_FRONT, T, F),
         ground: slice(atlas, col, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, T, T),
       };
+    }
+    // Água Cristalina: mapa físico de seis faces, com topo próprio e
+    // laterais aquáticas mesmo quando o jogador gira a câmera.
+    // Reusa a arte celestial aprovada até existir uma rede 512×512 específica.
+    if (id === Block.WATER_CRYSTAL) {
+      faces.cube = [faces.front, faces.front, faces.top, faces.ground, faces.front, faces.front];
     }
     cache.set(id, faces);
   }
