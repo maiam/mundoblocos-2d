@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.65 — Cinco níveis de construção e escala visual no Santuário (14/11/2026)
+- **Pedido do dono do produto:** permitir blocos em degraus até cinco níveis e controles para reduzir separadamente a altura dos blocos e o tamanho das células, como experimento de câmera/profundidade.
+- **Construção:** o Santuário passa a guardar e restaurar até **5 blocos em pilha**; o Mundo principal e o servidor continuam com **2**. Colisão segue sólida no WebGL, sem subir automaticamente os degraus.
+- **Laboratório da câmera:** o painel **◉ Câmera** recebe sliders **Altura do bloco** (25%–125%) e **Tamanho da célula** (50%–125%). A escala altera as geometrias 3D e o foco/mira mas não a grade lógica, a física, os dados salvos ou o Mundo principal. Zoom segue independente, e Resetar restaura os valores originais.
+- **Testes:** cubos até o 5º, não cria 6º, persistência do 5º nível e regressão do limite original no Mundo. Revisão visual das proporções em mobile/desktop pendente.
+
 ## Orvalis v0.93.64 — Grama Celestial de seis faces e laboratório de câmera (14/11/2026)
 - **Pedido do dono do produto:** testar inclinação e profundidade no Santuário com o cubo Grama Celestial, desenhado dos seis lados, e joystick de câmera.
 - **Grama Celestial:** nova textura 512×512 em cruz, com topo e quatro laterais pintadas e base de terra, aplicada por face no `BoxGeometry` do Three.js. A arte fica embutida em WebP no pacote do Santuário; outros blocos continuam com os materiais anteriores.
