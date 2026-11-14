@@ -7,7 +7,7 @@ export class SelectionMarkers {
   private readonly highlight: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   private readonly breakHighlight: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
 
-  constructor(scene: THREE.Scene, private readonly world: World) {
+  constructor(scene: THREE.Object3D, private readonly world: World) {
     const selectGeometry = new THREE.PlaneGeometry(1, 1);
     selectGeometry.rotateX(-Math.PI / 2);
     this.highlight = new THREE.Mesh(selectGeometry, new THREE.MeshBasicMaterial({
