@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { ItemDrop } from '../../game/drops';
 import { SUBDIV } from '../../config';
-import { DropSprites, HoverRing, dropLift } from './itemSprites';
+import { DropSprites, HoverRing, dropLift, dropToss } from './itemSprites';
 
 const image = { naturalWidth: 30, naturalHeight: 15 } as HTMLImageElement;
 const view = { x0: 0, y0: 0, x1: 20, y1: 20 };
@@ -12,8 +12,19 @@ describe('itens caídos no 3D', () => {
   it('flutuação e pulo de saída (px do 2D ÷ TILE)', () => {
     // (na grade fina os px acompanham `SUBDIV`: o ícone mantém a altura em pixels)
     expect(dropLift(1, 0, 0)).toBeCloseTo((2 * SUBDIV) / 32);              // flutuando: 2 px com o seno em 0
-    expect(dropLift(0.2, 0, 0)).toBeCloseTo(((2 + 10) * SUBDIV) / 32);    // meio do pulo: +10 px
+    expect(dropLift(0.25, 0, 0)).toBeCloseTo(((2 + 14) * SUBDIV) / 32);   // topo do 1º quique: +14 px
+    expect(dropLift(0.65, 0, 0)).toBeCloseTo(((2 + 5) * SUBDIV) / 32);    // topo do 2º quique: +5 px
+    expect(dropLift(0.9, 0, 0)).toBeCloseTo((2 * SUBDIV) / 32);           // assentou
     expect(dropLift(0, 0, 0)).toBeCloseTo((2 * SUBDIV) / 32);              // começo do pulo: ainda no chão
+  });
+
+  it('o item desliza do bloco quebrado até onde cai (nos primeiros 0,5 s) e depois não se mexe', () => {
+    const d = { x: 4.3, y: 7.1, age: 0 };
+    const first = dropToss(d);
+    expect(Math.abs(first)).toBeLessThanOrEqual(0.45);
+    expect(Math.abs(dropToss({ ...d, age: 0.4 }))).toBeLessThan(Math.abs(first) + 1e-9);
+    expect(dropToss({ ...d, age: 0.5 })).toBe(0);
+    expect(dropToss({ ...d, age: 3 })).toBe(0);
   });
 
   it('um ícone com sombra por item visível; sem imagem só a sombra; fora da área nada; sobras ficam escondidas', () => {

@@ -57,6 +57,11 @@ const ROCK = '#7f7b74';
 const CROP = '#d9be5c';
 const FALLBACK = '#8a8578';
 
+/** Cor própria de um bloco (chão, material ou objeto com cor), ou null: usada também pelas lascas da quebra (`render/breakFx.ts`). */
+export function blockColor(id: number): string | null {
+  return GROUND[id] ?? OBJECT[id] ?? null;
+}
+
 /** Cor da célula (x, y) no minimapa. */
 export function mapColor(world: World, x: number, y: number): string {
   const obj = world.getObject(x, y);

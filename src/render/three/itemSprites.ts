@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { SUBDIV, TILE } from '../../config';
 import type { ItemDrop } from '../../game/drops';
+import { hash2 } from '../../world/random';
 
 /** Itens caídos e o anel sob a ovelha no 3D (ADR 0031, M3.1) — o mesmo desenho do `Renderer` 2D, em planos. */
 
@@ -16,11 +17,21 @@ interface DropSlot {
   image: HTMLImageElement | null;
 }
 
-/** Posição do ícone acima do chão (células de altura): pulo de saída nos primeiros 0,4 s + flutuação (px do 2D ÷ TILE). */
+/**
+ * Posição do ícone acima do chão (células de altura): saída com **dois quiques** (14 px em 0,5 s e 5 px em 0,3 s; v0.93.94) e depois a
+ * flutuação (px do 2D ÷ TILE). O quique só vale a partir do instante em que o item nasce (`age`).
+ */
 export function dropLift(age: number, elapsed: number, x: number): number {
-  const pop = age < 0.4 ? Math.sin((age / 0.4) * Math.PI) * 10 : 0;
+  const pop = age < 0.5 ? Math.sin((age / 0.5) * Math.PI) * 14 : age < 0.8 ? Math.sin(((age - 0.5) / 0.3) * Math.PI) * 5 : 0;
   const bob = 2 + Math.sin(elapsed * 4 + x * 3) * 1.5;
   return ((bob + pop) * SUBDIV) / TILE;
+}
+
+/** Deslocamento horizontal do item nos primeiros 0,5 s: sai do bloco quebrado e desliza até o ponto onde cai (decai a zero; hash da posição). */
+export function dropToss(d: { x: number; y: number; age: number }): number {
+  if (d.age >= 0.5) return 0;
+  const k = 1 - d.age / 0.5;
+  return (hash2(7, Math.floor(d.x * 97), Math.floor(d.y * 89)) - 0.5) * 0.9 * k * k;
 }
 
 /** Itens caídos: um ícone em plano vertical com sombra no chão (pool; teto de `MAX_DROPS`). */
@@ -64,7 +75,7 @@ export class DropSprites {
       const h = (15 * SUBDIV) / TILE; // ícone de 15 px de altura, a largura segue a proporção da imagem
       const ratio = img.naturalWidth / img.naturalHeight;
       slot.icon.scale.set(h * ratio, h / this.k, 1);
-      slot.icon.position.set(d.x, dropLift(d.age, elapsed, d.x) / this.k, d.y);
+      slot.icon.position.set(d.x + dropToss(d), dropLift(d.age, elapsed, d.x) / this.k, d.y);
     }
     this.drawn = n;
     for (let i = n; i < this.slots.length; i++) this.slots[i].icon.visible = this.slots[i].shadow.visible = false;

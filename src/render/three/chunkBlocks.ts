@@ -77,6 +77,48 @@ export class ChunkBlocks {
 
   get count(): number { return this.builds.size; }
 
+  /** Instância tremendo agora: onde está e a matriz original, para devolver. */
+  private shaken: { mesh: THREE.InstancedMesh; index: number; original: THREE.Matrix4 } | null = null;
+
+  /**
+   * Treme o bloco mais alto da célula (x, y) (a quebra em andamento): desloca a instância por (dx, dy, dz) células; `null` devolve o bloco ao
+   * lugar. Uma célula por vez. Se o chunk for refeito no meio, a instância nova já nasce no lugar certo.
+   */
+  setShake(cell: { x: number; y: number } | null, off: { dx: number; dy: number; dz: number } = { dx: 0, dy: 0, dz: 0 }): boolean {
+    const cur = this.shaken;
+    if (cur && cur.mesh.parent) {
+      // a mesma instância (se a célula é a mesma) só muda o deslocamento; senão devolve a anterior
+      const cells = cur.mesh.userData.cells as BlockCell[] | undefined;
+      const c = cells?.[cur.index];
+      if (!cell || !c || c.x !== cell.x || c.y !== cell.y) { cur.mesh.setMatrixAt(cur.index, cur.original); cur.mesh.instanceMatrix.needsUpdate = true; this.shaken = null; }
+    } else if (cur) this.shaken = null; // o chunk saiu da cena
+    if (!cell) return false;
+    if (!this.shaken) {
+      const build = this.builds.get(Math.floor(cell.x / CHUNK_SIZE) + ',' + Math.floor(cell.y / CHUNK_SIZE));
+      if (!build) return false;
+      let best: { mesh: THREE.InstancedMesh; index: number; top: number } | null = null;
+      for (const g of build.groups) {
+        g.cells.forEach((c, index) => {
+          if (c.x !== cell.x || c.y !== cell.y) return;
+          const top = c.level + (c.n ?? 1);
+          if (!best || top > best.top) best = { mesh: g.mesh, index, top };
+        });
+      }
+      if (!best) return false;
+      const b = best as { mesh: THREE.InstancedMesh; index: number; top: number };
+      const original = new THREE.Matrix4();
+      b.mesh.getMatrixAt(b.index, original);
+      this.shaken = { mesh: b.mesh, index: b.index, original };
+    }
+    const s = this.shaken;
+    this.dummy.matrix.copy(s.original);
+    const e = this.dummy.matrix.elements;
+    e[12] += off.dx; e[13] += off.dy; e[14] += off.dz;
+    s.mesh.setMatrixAt(s.index, this.dummy.matrix);
+    s.mesh.instanceMatrix.needsUpdate = true;
+    return true;
+  }
+
   update(rect: ChunkRect): void {
     let budget = this.opts.maxBuildsPerFrame ?? 2;
     const keep = new Set<string>();
