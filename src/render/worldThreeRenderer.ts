@@ -14,6 +14,9 @@ import { DUST_STRIDE, dustFor, printFor } from './footDust';
 import { FootPrints } from './three/footPrints';
 import { SWAY_PUSH_RADIUS, windKind } from './wind';
 import { TreeLeaves } from './three/treeLeaves';
+import { WaterSurface } from './three/waterSurface';
+import { waterFxOn } from './waterFx';
+import { v2WaterTop } from './materialsV2';
 import { FootDust } from './three/footDust';
 import { findFires, type FireSource } from './fireLight';
 import { FireFx } from './three/fireFx';
@@ -81,6 +84,8 @@ export class WorldThreeRenderer implements GameRenderer {
   /** Poeira de passos do jogador (v0.93.69): distância andada desde a última nuvenzinha e onde ele estava. */
   private readonly dust: FootDust;
   private readonly leaves: TreeLeaves;
+  private readonly water: WaterSurface | null;
+  private waterTileCanvas: HTMLCanvasElement | null = null;
   private readonly leafTrees: SpriteCell[] = [];
   private leafTreesAt = -1;
   private cutLeafAt = 0;
@@ -159,6 +164,11 @@ export class WorldThreeRenderer implements GameRenderer {
       waterFlows: () => world.waterFlows(),
       flowSheet: () => getWaterArt()?.flow ?? null,
     });
+    this.water = waterFxOn() ? new WaterSurface(this.worldLayer, {
+      isOpenWater: (x, y) => blockDef(world.getGround(x, y)).liquid && world.getObject(x, y) === Block.AIR,
+      getChunk: (cx, cy) => world.getChunk(cx, cy),
+      tile: () => this.waterTile(),
+    }) : null;
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
     this.blocks = new ChunkBlocks(this.worldLayer, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
@@ -207,6 +217,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.walls.update(rect);
       this.doors.update(rect, opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
+      this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
     // Fogueiras vivas (v0.93.67): a lista das visíveis é refeita a cada ~0,25 s; chama, brilho, brasas e luz nos atores.
     this.sprites.setTime(opts.elapsed);
@@ -290,6 +301,16 @@ export class WorldThreeRenderer implements GameRenderer {
     this.lighting.render(this.stage.gpu);
   }
 
+  /** Ladrilho da água V2 (`agua`) pintado num canvas próprio (sem ler pixels), assim que o atlas dos materiais chega; null antes. */
+  private waterTile(): HTMLCanvasElement | null {
+    if (this.waterTileCanvas) return this.waterTileCanvas;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    if (ctx && v2WaterTop(ctx, 128, 128)) this.waterTileCanvas = c;
+    return this.waterTileCanvas;
+  }
+
   /** Poeira de passos: uma nuvenzinha por passada do jogador (distância andada), com a cor do chão pisado; nada em cômodos nem em água. */
   private stepDust(opts: RenderOptions, inside: unknown, cellPx: number): void {
     const a = opts.actors[0];
@@ -355,6 +376,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.fireFx.dispose();
     this.dust.dispose();
     this.leaves.dispose();
+    this.water?.dispose();
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();
