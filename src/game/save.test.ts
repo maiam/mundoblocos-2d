@@ -57,11 +57,13 @@ describe('Salvamento automático', () => {
     const world = new World(77, WORLD_PROFILES.santuario);
     const [sx,sy] = world.findSpawn();
     const x=sx+2,y=sy+1;
-    expect(world.placeBlock(x,y,Block.MARBLE_CELESTIAL)).toBe(true);
+    // Materiais antigos não são mais selecionáveis; continuam carregáveis em saves.
+    world.setObject(x,y,Block.MARBLE_CELESTIAL);
+    expect(world.canPlace(x,y,Block.MARBLE_CELESTIAL)).toBe(false);
     expect(world.getObject(x,y-1)).toBe(Block.AIR); // sem célula norte virtual
-    expect(world.placeBlock(x,y,Block.MARBLE_CELESTIAL)).toBe(true); // empilha como cubo comum
-    expect(world.getUpper(x,y)).toBe(Block.MARBLE_CELESTIAL);
-    expect(world.breakBlock(x,y)).toBe(Block.MARBLE_CELESTIAL); // quebra um nível por vez
+    expect(world.placeBlock(x,y,Block.DIRT)).toBe(true); // empilha o novo bloco sobre legado
+    expect(world.getUpper(x,y)).toBe(Block.DIRT);
+    expect(world.breakBlock(x,y)).toBe(Block.DIRT); // quebra um nível por vez
     expect(world.getObject(x,y)).toBe(Block.MARBLE_CELESTIAL);
 
     const player=new Player(sx+0.5,sy+0.6);

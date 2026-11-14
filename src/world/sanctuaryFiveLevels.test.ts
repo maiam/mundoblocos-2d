@@ -10,26 +10,26 @@ describe('pilhas de cinco blocos apenas no Santuário', () => {
     const [x, y] = world.findSpawn();
     expect(world.maxStack).toBe(SANCTUARY_MAX_STACK);
     for (let i = 0; i < SANCTUARY_MAX_STACK; i++) {
-      expect(world.placementLevel(x, y, Block.GRASS_CELESTIAL)).toBe(i);
-      expect(world.placeBlock(x, y, Block.GRASS_CELESTIAL)).toBe(true);
+      expect(world.placementLevel(x, y, Block.GRASS)).toBe(i);
+      expect(world.placeBlock(x, y, Block.GRASS)).toBe(true);
       expect(world.stackHeight(x, y)).toBe(i + 1);
     }
-    expect(world.placeBlock(x, y, Block.GRASS_CELESTIAL)).toBe(false);
+    expect(world.placeBlock(x, y, Block.GRASS)).toBe(false);
     expect(world.topBlock(x, y)?.level).toBe(4);
     expect(world.standHeight(x, y)).toBe(5);
-    expect(world.breakBlock(x, y)).toBe(Block.GRASS_CELESTIAL);
+    expect(world.breakBlock(x, y)).toBe(Block.GRASS);
     expect(world.stackHeight(x, y)).toBe(4);
   });
   it('salva e restaura cinco camadas em um chunk', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [x, y] = world.findSpawn();
-    for (let i = 0; i < 5; i++) world.placeBlock(x, y, Block.GRASS_CELESTIAL);
+    for (let i = 0; i < 5; i++) world.placeBlock(x, y, Block.GRASS);
     const cx = Math.floor(x / CHUNK_SIZE), cy = Math.floor(y / CHUNK_SIZE);
     const chunk = world.getChunk(cx, cy)!;
     expect(chunk.levels).toHaveLength(5);
     const restored = new World(42, WORLD_PROFILES.santuario);
     expect(restored.restoreChunk(cx, cy, chunk.ground, chunk.levels)).toBe(0);
-    expect(restored.getLevel(x, y, 4)).toBe(Block.GRASS_CELESTIAL);
+    expect(restored.getLevel(x, y, 4)).toBe(Block.GRASS);
     expect(restored.stackHeight(x, y)).toBe(5);
   });
   it('mantém o Mundo principal com apenas duas camadas', () => {

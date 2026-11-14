@@ -85,12 +85,12 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com 24 blocos (18 celestiais + Água Pura + Terra e Arada + paredes + porta), sem bolsa', () => {
+  it('Santuário continua infinito: grade fixa com apenas 8 materiais do laboratório, sem bolsa', () => {
     const grid = new Hotbar(WORLD_PROFILES.santuario);
     expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(24);
+    expect(grid.length).toBe(8);
     grid.assign(0, null);
-    expect(grid.stack(0)).toBe(blockStack(Block.CLOUD_SOLID));
+    expect(grid.stack(0)).toBe(blockStack(Block.DIRT));
   });
 
   it('bolsa com 12 espaços (4 × 3 à direita) + 9 na mão: tipo novo só entra se houver lugar', () => {

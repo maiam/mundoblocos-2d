@@ -7,10 +7,11 @@ import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
-import { celestialFaces, installCelestialGrassNet } from './celestialArt';
+import { celestialFaces, installCelestialGrassNet, installSanctuaryEightBlockAtlas, SANCTUARY_CUBE_IDS } from './celestialArt';
 import { Block } from '../world/blocks';
 import { SanctuaryCameraJoystick } from './sanctuaryCameraJoystick';
 import { CELESTIAL_GRASS_NET_DATA_URI } from './celestialGrassNetAsset';
+import { SANCTUARY_EIGHT_FACES_URI } from './sanctuaryEightFacesAsset';
 import { art } from './art';
 import { type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
@@ -147,6 +148,15 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     grassCubeSheet.onerror=()=>console.warn('Grama Celestial (6 faces): fallback para arte anterior');
     grassCubeSheet.src=CELESTIAL_GRASS_NET_DATA_URI;
     this.blockMaterials=new BlockMaterials(this.view,celestialFaces,this.stage.gpu);
+    const newMaterialAtlas = new Image();
+    newMaterialAtlas.onload=()=>{
+      if(this.disposed)return;
+      installSanctuaryEightBlockAtlas(newMaterialAtlas);
+      for(const id of SANCTUARY_CUBE_IDS) this.blockMaterials.invalidate(id);
+      this.signature=''; // forçar recriação das instâncias e os novos mapas UV
+    };
+    newMaterialAtlas.onerror=()=>console.warn('Atlas de oito blocos do Santuário indisponível');
+    newMaterialAtlas.src=SANCTUARY_EIGHT_FACES_URI;
     this.selection=new SelectionMarkers(this.visualRoot,world);
     this.scene.add(new THREE.HemisphereLight(0xfff7ed,0xa99cc4,2.0));
     const sunlight=new THREE.DirectionalLight(0xffe9c7,1.15);
@@ -184,7 +194,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     const charScale=options.wallTest?characterScale(options.testScale??'core'):(this.view==='oblique'?CHARACTER_SCALE_FACTOR:1);
     this.goddessBaseWidth=2.45*charScale;
     this.goddessBaseHeight=(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale;
-    this.goddess.scale.set(this.goddessBaseWidth,this.goddessBaseHeight,1);
+    // A câmera padrão já aplicou a escala do mundo antes de criar a Deusa:
+    // compensar no próprio billboard para a personagem não encolher 50%.
+    this.goddess.scale.set(this.goddessBaseWidth/this.cellSizeScale,this.goddessBaseHeight/this.blockHeightScale,1);
     this.goddess.renderOrder=3;
 
     // Transparent 'through-wall' echo: if a wall is genuinely closer to the
