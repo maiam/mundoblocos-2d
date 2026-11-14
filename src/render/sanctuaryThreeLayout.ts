@@ -7,7 +7,7 @@ export type SanctuaryBlockShape = 'solid' | 'thin';
 export interface SanctuaryBlockCell {x:number;y:number;level:number;id:BlockId;shape:SanctuaryBlockShape}
 export interface SanctuaryGroundCell {x:number;y:number;id:BlockId}
 
-/** Geometry classification stays tied to the authoritative World and 2-level rules. */
+/** Geometry classification stays tied to the authoritative World and its Santuário 5-level rules. */
 export function classifySanctuaryBlock(
   world: {getLevel(x:number,y:number,level:number):BlockId},
   id: BlockId, x:number, y:number, level:number,
@@ -15,6 +15,13 @@ export function classifySanctuaryBlock(
   if (level < 0 || level >= SANCTUARY_MAX_STACK) return 'solid';
   if(!ADAPTIVE_WALL_BLOCKS.has(id))return 'solid';
   // O nível superior herda a pegada da base, não os próprios vizinhos (ver `horizontalWallShape`).
+  if (level >= 2) {
+    // Todas as camadas altas repetem a pegada da base; o algoritmo genérico
+    // de paredes do Mundo principal continua restrito aos seus dois níveis.
+    const baseId = world.getLevel(x,y,0);
+    return ADAPTIVE_WALL_BLOCKS.has(baseId)
+      ? horizontalWallShape(world,baseId,x,y,0) : 'solid';
+  }
   return horizontalWallShape(world,id,x,y,level);
 }
 
