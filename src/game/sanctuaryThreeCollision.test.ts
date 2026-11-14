@@ -10,10 +10,18 @@ const traverse = (player: Player, world: World, dx: number, dy: number) => {
   for (let i = 0; i < 160; i++) player.update(1/60, dx, dy, world);
 };
 
+/** Os testes de física criam sua própria pista sem modificar a seed em produção. */
+function clearTestArea(world: World, sx: number, sy: number, rows = 1): void {
+  for (let y = sy; y < sy + rows; y++) for (let x = sx; x < sx + 18; x++) {
+    while (world.topBlock(x, y)) world.breakBlock(x, y);
+  }
+}
+
 describe('Santuário Three.js — colisões físicas', () => {
   it('sobe um bloco de altura e depois desce normalmente', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
+    clearTestArea(world, sx, sy);
     world.setObject(sx + 2, sy, Block.STONE);
     expect(world.standHeight(sx + 2, sy)).toBe(1);
 
@@ -31,6 +39,7 @@ describe('Santuário Three.js — colisões físicas', () => {
   it('não atravessa paredes horizontais finas nem pilares com dois blocos', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
+    clearTestArea(world, sx, sy, 4);
     for (const x of [sx + 1, sx + 2, sx + 3]) {
       world.setObject(x, sy + 2, Block.STONE);
       world.placeBlock(x, sy + 2, Block.STONE_SMOOTH);
@@ -53,6 +62,7 @@ describe('Santuário Three.js — colisões físicas', () => {
   it('mantém a movimentação livre em nuvens vazias', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
+    clearTestArea(world, sx, sy);
     const player = new Player(sx + 0.5, sy + 0.5);
     configureSanctuaryThreeCollision(player, 'santuario', true);
     traverse(player, world, 1, 0);
