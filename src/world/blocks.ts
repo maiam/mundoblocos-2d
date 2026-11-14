@@ -39,6 +39,10 @@ export const Block = {
   /** Porta de parede (v0.93.25): bloco dentro de uma fileira leste–oeste, entre duas paredes; o id guarda o estado (fechada sólida, aberta passável). */
   WALL_DOOR_PLANKS: 242,
   WALL_DOOR_PLANKS_OPEN: 243,
+  // --- lajes de Carvalho (piloto `?tabua=laje`, v0.93.73): topo 16 × 16 e face de 4, 6 e 8 px; só se fabricam e se colocam no piloto (offline) ---
+  OAK_SLAB_1: 250,
+  OAK_SLAB_2: 251,
+  OAK_SLAB_3: 252,
   // --- porta (objeto de 3 níveis de altura; o id guarda o estado) ---
   OAK_DOOR: 28,
   /** Porta aberta: mesma porta, passável. Só existe no mundo (a hotbar coloca a fechada). */
@@ -311,6 +315,9 @@ const defs: BlockDef[] = [
 
   object(Block.OAK_LOG, 'Tora de Carvalho', { organic: 'wood' }),
   object(Block.OAK_PLANKS, 'Tábua de Carvalho', { organic: 'wood' }),
+  object(Block.OAK_SLAB_1, 'Laje 1 de Carvalho (4×16)', { organic: 'wood' }),
+  object(Block.OAK_SLAB_2, 'Laje 2 de Carvalho (6×16)', { organic: 'wood' }),
+  object(Block.OAK_SLAB_3, 'Laje 3 de Carvalho (8×16)', { organic: 'wood' }),
   object(Block.CHERRY_LOG, 'Tora de Cerejeira', { organic: 'wood' }),
   object(Block.CHERRY_PLANKS, 'Tábua de Cerejeira', { organic: 'wood' }),
   object(Block.BIRCH_LOG, 'Tora de Bétula', { organic: 'wood' }),
@@ -455,6 +462,9 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
   Block.WATER_SACRED, Block.WATER_CRYSTAL, Block.CRYSTAL_LIFE, Block.LIGHT_BLOCK,
   Block.WOOD_CELESTIAL, Block.FOLIAGE_GOLDEN,
 ];
+
+/** As três lajes de Carvalho do piloto (`?tabua=laje`): fora de `MATERIALS` e da hotbar fixa de propósito. */
+export const SLAB_BLOCKS: BlockId[] = [Block.OAK_SLAB_1, Block.OAK_SLAB_2, Block.OAK_SLAB_3];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
