@@ -28,14 +28,17 @@ describe('Perfis de mundo', () => {
 });
 
 describe('Santuário Celestial', () => {
-  it('chão todo de Nuvem Sólida, sem objetos; fora dos limites é céu intransponível', () => {
+  it('chão sob a paisagem permanece Nuvem Sólida; fora dos limites é céu intransponível', () => {
     const w = new World(1, S);
     const b = S.bounds!;
     for (let y = b.cy0 * CHUNK_SIZE; y < (b.cy1 + 1) * CHUNK_SIZE; y++) {
       for (let x = b.cx0 * CHUNK_SIZE; x < (b.cx1 + 1) * CHUNK_SIZE; x++) {
         expect(w.getGround(x, y)).toBe(Block.CLOUD_SOLID);
-        expect(w.getObject(x, y)).toBe(Block.AIR);
-        expect(w.standHeight(x, y)).toBe(0);
+        const height = w.standHeight(x, y);
+        expect(height).not.toBeNull();
+        expect(height!).toBeGreaterThanOrEqual(1);
+        expect(height!).toBeLessThanOrEqual(5);
+        expect(w.topBlock(x, y)?.id).toBe(Block.GRASS);
       }
     }
     const outside = [[b.cx0 * CHUNK_SIZE - 1, 0], [(b.cx1 + 1) * CHUNK_SIZE, 0], [0, b.cy0 * CHUNK_SIZE - 1], [0, (b.cy1 + 1) * CHUNK_SIZE]];
@@ -69,6 +72,8 @@ describe('Santuário Celestial', () => {
   it('cavar a nuvem abre buraco que só um material permitido preenche', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
+    // Desbasta a coluna gerada antes de abrir o chão subjacente.
+    while (w.topBlock(x + 2, y)) w.breakBlock(x + 2, y);
     expect(w.breakBlock(x + 2, y)).toBe(Block.CLOUD_SOLID);
     expect(w.getGround(x + 2, y)).toBe(Block.HOLE);
     expect(w.placeBlock(x + 2, y, Block.MARBLE_ORNATE)).toBe(false);

@@ -8,6 +8,7 @@ import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, TOWN_WALL, type TownBuilding, type
 import { chunkKey, toChunk, toLocal } from './coords';
 import { type InteriorDoor, type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
+import { SanctuarySeedGenerator } from './sanctuarySeedGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
 import { GoblinCampTerrain, planGoblinCamps, planLizardPacks, type GoblinCamp, type LizardPack } from './goblins';
@@ -114,9 +115,11 @@ export class World {
   constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
     this.profile = profile;
     this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
-    this.generator = profile.terrain.kind === 'flat'
-      ? new FlatGenerator(seed, profile.terrain.ground)
-      : new WorldGenerator(seed);
+    this.generator = profile.id === 'santuario' && profile.bounds
+      ? new SanctuarySeedGenerator(seed, profile.bounds)
+      : profile.terrain.kind === 'flat'
+        ? new FlatGenerator(seed, profile.terrain.ground)
+        : new WorldGenerator(seed);
     const baseTerrain = this.generator;
     const b = profile.bounds;
     this.cellBounds = b
@@ -297,6 +300,8 @@ export class World {
     if (!chunk) {
       chunk = new Chunk(cx, cy, this.maxStack);
       this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects, chunk.upper);
+      if (this.generator instanceof SanctuarySeedGenerator)
+        this.generator.fillHighLevels(cx, cy, chunk.levels);
       this.chunks.set(key, chunk);
     }
     return chunk;
@@ -331,7 +336,8 @@ export class World {
     if (level === 1) return this.getUpper(x, y);
     if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
-    return chunk ? chunk.getLevel(toLocal(x), toLocal(y), level) : Block.AIR;
+    if (chunk) return chunk.getLevel(toLocal(x), toLocal(y), level);
+    return this.generator instanceof SanctuarySeedGenerator ? this.generator.levelAt(x, y, level) : Block.AIR;
   }
 
   /** Bloco visível no topo da célula e seu nível (null se vazia). */
@@ -714,6 +720,9 @@ export class World {
       // Mundo limitado: centro da área.
       const cx = Math.floor(((b.cx0 + b.cx1 + 1) * CHUNK_SIZE) / 2);
       const cy = Math.floor(((b.cy0 + b.cy1 + 1) * CHUNK_SIZE) / 2);
+      // O Santuário agora tem cubos em 100% das células, sem áreas com
+      // standHeight=0. O centro tem a plataforma de altura 1 garantida.
+      if (this.generator instanceof SanctuarySeedGenerator) return [cx, cy];
       return this.nearestWalkable(cx, cy, 64);
     }
     const welcoming = new Set(['meadow', 'sakura', 'enchanted']);

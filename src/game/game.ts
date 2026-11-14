@@ -184,6 +184,12 @@ export class Game {
     // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
     // The main World and the optional Santuário Canvas2D renderer are unchanged.
     configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory, !!options.solidPhysics);
+    // A nova seed do Santuário não tem chão vazio: nasce sobre o topo da
+    // coluna inicial, nunca dentro dos cubos.
+    if (profile.id === 'santuario') {
+      this.player.z = this.world.standHeight(sx, sy) ?? 0;
+      this.player.visualZ = this.player.z;
+    }
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
     if (options.body) this.entities.body = options.body;
@@ -317,6 +323,15 @@ export class Game {
       // Salvo dentro de um interior: volta para a rua, diante da porta (o cômodo não guarda estado).
       const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
       if (room) this.moveTo(this.roomExit(room), 'down');
+    }
+    // Saves anteriores à geração em camadas podem registrar a Deusa em z=0
+    // onde agora existe terreno: reposiciona os pés sobre o topo sem editar a seed.
+    if (profile.id === 'santuario') {
+      const support = this.world.standHeight(this.player.cellX, this.player.cellY);
+      if (support !== null && this.player.z < support) {
+        this.player.z = support;
+        this.player.visualZ = support;
+      }
     }
     if (options.showcase) this.hud.root.style.display = 'none';
     this.resize();
