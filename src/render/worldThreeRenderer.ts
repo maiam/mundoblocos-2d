@@ -12,7 +12,8 @@ import { actorLightAt } from './actorLight';
 import { feelOn } from '../game/feel';
 import { DUST_STRIDE, dustFor, printFor } from './footDust';
 import { FootPrints } from './three/footPrints';
-import { SWAY_PUSH_RADIUS, swaysInWind } from './wind';
+import { SWAY_PUSH_RADIUS, windKind } from './wind';
+import { TreeLeaves } from './three/treeLeaves';
 import { FootDust } from './three/footDust';
 import { findFires, type FireSource } from './fireLight';
 import { FireFx } from './three/fireFx';
@@ -33,7 +34,7 @@ import { ThreeStage } from './three/stage';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
 import { BlockMaterials } from './three/blockMaterials';
-import { ChunkSprites } from './three/chunkSprites';
+import { ChunkSprites, type SpriteCell } from './three/chunkSprites';
 import { GroundFx } from './three/groundFx';
 import { DoorSprites } from './three/doorSprites';
 import * as THREE from 'three';
@@ -79,6 +80,9 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly fireFx: FireFx;
   /** Poeira de passos do jogador (v0.93.69): distância andada desde a última nuvenzinha e onde ele estava. */
   private readonly dust: FootDust;
+  private readonly leaves: TreeLeaves;
+  private readonly leafTrees: SpriteCell[] = [];
+  private leafTreesAt = -1;
   private readonly prints: FootPrints;
   private dustWalked = 0;
   private dustAt: { x: number; y: number } | null = null;
@@ -130,9 +134,10 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() && swaysInWind(id) ? 'sway' : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
+    this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);
     this.prints = new FootPrints(this.worldLayer);
     this.walls = new ChunkWalls(this.worldLayer, world, this.wallAtlases, DEFAULT_WALL_THICKNESS);
     for (const [key, url] of Object.entries(art().wallAtlases ?? {})) {
@@ -212,6 +217,15 @@ export class WorldThreeRenderer implements GameRenderer {
     }
     this.fireFx.update(this.fires, opts.elapsed, skyAt(opts.time).night, TILE * cam.zoom);
     this.stepDust(opts, inside, TILE * cam.zoom);
+    // Folhas caindo das copas (v0.93.82): a lista das árvores perto da câmera é refeita a cada ~0,5 s; nada em cômodos nem com `?sensacao=0`.
+    if (inside || !feelOn()) { this.leaves.clear(); this.leafTrees.length = 0; }
+    else if (opts.elapsed - this.leafTreesAt > 0.5 || opts.elapsed < this.leafTreesAt) {
+      this.leafTreesAt = opts.elapsed;
+      const cellPx = TILE * cam.zoom;
+      // o que aparece na tela: meia largura + folga, e meia altura + a altura da copa (a árvore da borda de baixo mostra a copa acima)
+      this.sprites.treesNear(cam.x / TILE, cam.y / TILE, cam.width / cellPx / 2 + 2, cam.height / cellPx / 2 + 8, this.leafTrees);
+    }
+    this.leaves.update(opts.dt, TILE * cam.zoom, this.leafTrees);
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
@@ -334,6 +348,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.sprites.dispose();
     this.fireFx.dispose();
     this.dust.dispose();
+    this.leaves.dispose();
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();

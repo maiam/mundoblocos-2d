@@ -43,7 +43,7 @@ export interface ChunkSpritesOptions {
   art(id: BlockId, x: number, y: number): SpriteDraw | null;
   maxBuildsPerFrame?: number;
   /** Objetos de chama viva (fogueira): a chama balança e pisca no próprio desenho (`FIRE_VERTEX`/`FIRE_FRAGMENT`). */
-  animated?(id: BlockId): 'fire' | 'sway' | null;
+  animated?(id: BlockId): 'fire' | 'sway' | 'tree' | null;
   /** Alcance (células) em que o jogador curva a vegetação que balança (`sway`). */
   swayRadius?: number;
 }
@@ -64,6 +64,24 @@ vec2 away = vSwayWp.xz - uSwayPlayer;
 float push = smoothstep(uSwayRadius, 0.0, length(away)) * (away.x >= 0.0 ? 1.0 : -1.0);
 vec2 suv = vMapUv;
 suv.x -= (wind * 0.014 + push * 0.07) * sw;
+vec4 sampledDiffuseColor = texture2D(map, suv);
+diffuseColor *= sampledDiffuseColor;
+#endif
+`;
+
+/**
+ * Copa ao vento (v0.93.82): o tronco (parte de baixo do desenho) fica preso e a folhagem ondula com o tempo, com rajadas lentas que
+ * atravessam o mapa (fase pela posição) e um tremor fino das folhas. Só desloca a amostra da textura dentro do próprio plano: sem
+ * recorte nem geometria nova; o sprite mantém `alphaTest` e escreve profundidade (o personagem some atrás da árvore).
+ */
+const TREE_FRAGMENT = `
+#ifdef USE_MAP
+float crown = smoothstep(0.28, 0.85, vMapUv.y);
+float gust = 0.55 + 0.45 * sin(uSwayTime * 0.37 + vSwayWp.x * 0.045 + vSwayWp.z * 0.03);
+float wave = sin(uSwayTime * 1.25 + vSwayWp.x * 0.6 + vSwayWp.z * 0.4) * 0.65 + sin(uSwayTime * 2.3 + vSwayWp.x * 1.7) * 0.25;
+vec2 suv = vMapUv;
+suv.x -= wave * gust * 0.011 * crown;
+suv += vec2(sin(uSwayTime * 3.1 + vMapUv.y * 21.0 + vSwayWp.x), cos(uSwayTime * 2.7 + vMapUv.x * 18.0 + vSwayWp.z)) * 0.0022 * crown * (0.4 + gust);
 vec4 sampledDiffuseColor = texture2D(map, suv);
 diffuseColor *= sampledDiffuseColor;
 #endif
@@ -106,9 +124,10 @@ interface Asset {
   soft: THREE.MeshBasicMaterial;
   fire?: THREE.MeshBasicMaterial;
   sway?: THREE.MeshBasicMaterial;
+  tree?: THREE.MeshBasicMaterial;
 }
 interface Group { mesh: THREE.InstancedMesh; cells: SpriteCell[] }
-interface Build { version: number; groups: Group[] }
+interface Build { version: number; groups: Group[]; /** Árvores que balançam (para soltar folhas). */ trees: SpriteCell[] }
 
 /**
  * Objetos altos do Mundo no 3D (ADR 0031, M2.3): árvores, pedras, cultura, enfeites, portas, cercas, baú, cidade… Cada sprite 2D
@@ -157,6 +176,22 @@ export class ChunkSprites {
         .replace('#include <map_fragment>', SWAY_FRAGMENT);
     };
     a.sway = m;
+    return m;
+  }
+
+  private treeMaterial(a: Asset): THREE.MeshBasicMaterial {
+    if (a.tree) return a.tree;
+    const m = new THREE.MeshBasicMaterial({ map: a.texture, side: THREE.DoubleSide, alphaTest: 0.5 });
+    m.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, this.swayUniforms);
+      shader.vertexShader = shader.vertexShader
+        .replace('void main() {', 'varying vec3 vSwayWp;\nvoid main() {')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\nvSwayWp = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;\n#else\nvSwayWp = (modelMatrix * vec4(position, 1.0)).xyz;\n#endif');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('void main() {', 'uniform float uSwayTime; varying vec3 vSwayWp;\nvoid main() {')
+        .replace('#include <map_fragment>', TREE_FRAGMENT);
+    };
+    a.tree = m;
     return m;
   }
 
@@ -236,7 +271,7 @@ export class ChunkSprites {
     const x0 = chunk.cx * CHUNK_SIZE;
     const y0 = chunk.cy * CHUNK_SIZE;
     const { tile } = this.opts;
-    const buckets = new Map<HTMLCanvasElement, { sprite: SpriteArt; walkable: boolean; animated: 'fire' | 'sway' | null; cells: SpriteCell[] }>();
+    const buckets = new Map<HTMLCanvasElement, { sprite: SpriteArt; walkable: boolean; animated: 'fire' | 'sway' | 'tree' | null; cells: SpriteCell[] }>();
     const MAX_STACK_DRAWN = 4;
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
@@ -252,9 +287,11 @@ export class ChunkSprites {
       }
     }
     const groups: Group[] = [];
+    const trees: SpriteCell[] = [];
     for (const { sprite, walkable, animated, cells } of buckets.values()) {
+      if (animated === 'tree') trees.push(...cells);
       const a = this.asset(sprite);
-      const mesh = new THREE.InstancedMesh(a.geometry, animated === 'fire' ? this.fireMaterial(a) : animated === 'sway' ? this.swayMaterial(a) : walkable ? a.soft : a.solid, cells.length);
+      const mesh = new THREE.InstancedMesh(a.geometry, animated === 'fire' ? this.fireMaterial(a) : animated === 'sway' ? this.swayMaterial(a) : animated === 'tree' ? this.treeMaterial(a) : walkable ? a.soft : a.solid, cells.length);
       mesh.name = `Mundo: objeto (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
@@ -272,7 +309,7 @@ export class ChunkSprites {
       this.scene.add(mesh);
       groups.push({ mesh, cells });
     }
-    return { version: stamp, groups };
+    return { version: stamp, groups, trees };
   }
 
   private release(build: Build): void {
@@ -280,6 +317,13 @@ export class ChunkSprites {
       this.scene.remove(g.mesh);
       g.mesh.dispose();
     }
+  }
+
+  /** Árvores que balançam a até `rx` × `rz` células de (x, z): preenche `out` (folhas caindo). */
+  treesNear(x: number, z: number, rx: number, rz: number = rx, out: SpriteCell[] = []): SpriteCell[] {
+    out.length = 0;
+    for (const b of this.builds.values()) for (const c of b.trees) if (Math.abs(c.x - x) <= rx && Math.abs(c.y - z) <= rz) out.push(c);
+    return out;
   }
 
   /** Malhas clicáveis (para o `pick`). */
@@ -308,6 +352,7 @@ export class ChunkSprites {
       a.soft.dispose();
       a.fire?.dispose();
       a.sway?.dispose();
+      a.tree?.dispose();
       a.texture.dispose();
     }
     this.assets.clear();

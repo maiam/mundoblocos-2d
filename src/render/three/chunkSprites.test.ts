@@ -113,5 +113,20 @@ describe('ChunkSprites (objetos altos do Mundo no 3D)', () => {
     expect(SPRITE_BIAS_STEP).toBeGreaterThan(7e-4);
     expect(spriteDepthBias(-5)).toBeGreaterThanOrEqual(SPRITE_BIAS_BASE); // colunas negativas (o covil fica em x ≈ −100000)
   });
-});
 
+  it('árvore que balança usa o material de copa (sólido, escreve profundidade) e entra na lista de árvores perto', () => {
+    const chunks = new Map<string, Chunk>([['0,0', { cx: 0, cy: 0, version: 1 } as Chunk]]);
+    const cells = new Map<string, number>([['1,1', TREE], ['2,2', GRASS]]);
+    const world: BlockWorld = { getChunk: (cx, cy) => chunks.get(cx + ',' + cy), getLevel: (x, y) => cells.get(x + ',' + y) ?? 0 };
+    const sprites = new ChunkSprites(new THREE.Scene(), world, {
+      tile: 32, k: 1,
+      art: (id) => id === TREE ? { sprite: tree, walkable: false } : id === GRASS ? { sprite: grass, walkable: true } : null,
+      animated: (id) => (id === TREE ? 'tree' : null),
+    });
+    sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    const m = sprites.meshes().find((x) => x.count === 1 && (x.material as THREE.MeshBasicMaterial).alphaTest === 0.5)!;
+    expect((m.material as THREE.MeshBasicMaterial).depthWrite).toBe(true);
+    expect(sprites.treesNear(1, 1, 3)).toHaveLength(1);
+    expect(sprites.treesNear(30, 30, 3)).toHaveLength(0);
+  });
+});

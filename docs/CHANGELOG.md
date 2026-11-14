@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.82 — árvores ao vento e folhas caindo (3D) (14/11/2026)
+- **Pedido do dono do produto:** animações do three.js nas árvores; ordem combinada: vento nas copas e folhas/pétalas caindo (depois: tremor ao bater, queda ao cortar, rebrota suave e sombras).
+- **Vento nas copas** (`render/three/chunkSprites.ts`, material `tree`; `render/wind.ts`: `windKind`): árvores (forma `tree`) ganham um material próprio, sólido (`alphaTest`, escreve profundidade, o personagem some atrás), em que o tronco fica preso e a folhagem ondula com rajadas lentas que atravessam o mapa (fase pela posição) e um tremor fino das folhas. Só desloca a amostra da textura dentro do plano (sem geometria nova). Capim e flores seguem no material `sway`; a árvore **não** se curva ao jogador.
+- **Folhas e pétalas** (`render/three/treeLeaves.ts`): pool de 48 pontos; a cada 0,18 s uma árvore visível tenta soltar uma folha (cerejeira sempre, carvalho/bétula/macieira às vezes; cores por espécie em `leafStyleFor`), que deriva com o vento girando e some ao chegar ao chão. As árvores candidatas (`ChunkSprites.treesNear`) vêm da área da tela e são refeitas a cada 0,5 s. Sem `Math.random`.
+- **Desligar:** `?sensacao=0` (como o resto do "feel"); nada em cômodos. Só o 3D (o 2D de reserva fica sem). Só cliente (sem save nem protocolo).
+- Testes: `windKind`, pool de folhas (dentro da copa, cai, some, limite, determinismo) e material da árvore (556 testes, grades 1 e 2). Conferido no navegador.
 ## Orvalis v0.93.81 — Grewn: mesma escala em todas as ações (14/11/2026)
 - **Defeito:** o Grewn aparecia em tamanhos diferentes conforme a ação. As 12 folhas foram geradas preenchendo a célula de 384 px, então a escala do personagem varia entre elas (cabeça de 250 a 296 px) e a altura pelo desenho (v0.93.80) não corrigia isso.
 - **Correção** (`render/character.ts`): a altura do quadro de cada folha é `270 / largura da cabeça` medida na prancha original (média das fileiras de frente e de costas), para a cabeça ter o mesmo tamanho em toda ação. Conferido no navegador (caminhadas com as 5 ferramentas).
