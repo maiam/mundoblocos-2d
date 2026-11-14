@@ -145,7 +145,8 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'mila-hoe': { cols: 4, rows: 4, height: CHARACTER_H * (298 / 297), shadow: [0.32, 0.12], walkFps: 7 },
   'mila-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H * (296 / 297), shadow: [0.32, 0.12], walkFps: 7 },
   'mila-shovel': { cols: 4, rows: 4, height: CHARACTER_H * (292 / 297), shadow: [0.32, 0.12], walkFps: 7 },
-  'mila-sword-attack': { cols: 4, rows: 4, height: CHARACTER_H * (301 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  // Golpe de espada da Mila: 8 quadros em 4 direções das 8 da prancha (como o do Hood); a coluna vem de `Actor.phase`.
+  'mila-sword-attack': { cols: 8, rows: 4, height: CHARACTER_H * (301 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'mila-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (308 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'mila-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (307 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'mila-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (333 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },

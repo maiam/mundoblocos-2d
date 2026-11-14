@@ -65,6 +65,8 @@ describe('Tempo do golpe por personagem (v0.93.64)', () => {
 
   it('o Hood com a espada usa a folha de 8 quadros: 0,48 s e acerto no meio do arco; os outros seguem 0,36 s', () => {
     expect(attackTimingFor('hood', 'sword')).toEqual(HOOD_SWORD_TIMING);
+    expect(attackTimingFor('mila', 'sword')).toEqual(HOOD_SWORD_TIMING); // a Mila também tem a folha de 8 quadros (v0.93.68)
+    expect(attackTimingFor('mila', 'axe')).toEqual(DEFAULT_ATTACK_TIMING);
     expect(attackTimingFor('hood', 'axe')).toEqual(DEFAULT_ATTACK_TIMING);
     expect(attackTimingFor('heroine', 'sword')).toEqual(DEFAULT_ATTACK_TIMING);
     expect(HOOD_SWORD_TIMING.seconds).toBeGreaterThan(DEFAULT_ATTACK_TIMING.seconds);
