@@ -43,6 +43,7 @@ import { MONSTERS } from './monster';
 import { Minimap, type MinimapMarker } from '../render/minimap';
 import { WorldMap, type WorldMapView } from '../render/worldMap';
 import { attackTimingFor } from './attackTiming';
+import { slabIdsFromSearch } from '../world/slabs';
 import { feelOn, LOOKAHEAD_PX, LOOKAHEAD_RATE } from './feel';
 import { Exploration } from './exploration';
 
@@ -191,6 +192,8 @@ export class Game {
     // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
     // The main World and the optional Santuário Canvas2D renderer are unchanged.
     configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory, !!options.solidPhysics);
+    // Piloto das lajes (`?tabua=laje`): só no Mundo principal, no 3D e offline (a sala não conhece lajes).
+    if (profile.id === 'principal' && options.rendererFactory && !options.net && typeof window !== 'undefined') this.world.setSlabBlocks(slabIdsFromSearch(window.location.search));
     // A nova seed do Santuário não tem chão vazio: nasce sobre o topo da
     // coluna inicial, nunca dentro dos cubos.
     if (profile.id === 'santuario') {

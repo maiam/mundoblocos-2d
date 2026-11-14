@@ -161,6 +161,9 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
   Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
 
+## Laje (piloto v0.93.72)
+- `world/slabs.ts` (`SLAB_HEIGHT` = 0,25; `?tabua=laje`), `World.isSlabAt/slabLift/setSlabBlocks`, `Walker.lift`, forma `slab` em `three/chunkBlocks.ts` (`slabGeometry`: faces laterais recortam o quarto de cima da imagem) e `sanctuaryBlockTransform` (centro 1/8 acima do nível). Só no Mundo principal, 3D, offline.
+
 ## Sombreado do corpo (v0.93.71)
 - O relevo do corpo pelo sol (`render/actorLight.ts` + shader de `three/actorBillboards.ts`) vem desligado (`sunShadingOn`, `?sombreado=1` liga); a luz da fogueira nos atores segue ligada; `?sombreado=0` desliga os dois; a sombra projetada do sol é `?sombra=sol`.
 

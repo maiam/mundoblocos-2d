@@ -1,9 +1,10 @@
+import { SLAB_HEIGHT } from '../world/slabs';
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import { SANCTUARY_MAX_STACK } from '../config';
 import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape } from './adaptiveWalls';
 
 /** Forma de cubo no Santuário: maciço, ou placa fina de meia profundidade (parede horizontal de construção). */
-export type SanctuaryBlockShape = 'solid' | 'thin';
+export type SanctuaryBlockShape = 'solid' | 'thin' | 'slab';
 export interface SanctuaryBlockCell {x:number;y:number;level:number;id:BlockId;shape:SanctuaryBlockShape}
 export interface SanctuaryGroundCell {x:number;y:number;id:BlockId}
 
@@ -30,6 +31,8 @@ export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'l
   x:number;y:number;z:number;width:number;height:number;depth:number;
 } {
   const thin=cell.shape==='thin';
+  // Laje (piloto): altura de 1/4, centro 1/8 acima do nível.
+  if(cell.shape==='slab')return {x:cell.x+0.5,y:cell.level+SLAB_HEIGHT/2,z:cell.y+0.5,width:1,height:SLAB_HEIGHT,depth:1};
   return {
     x:cell.x+0.5,y:cell.level+0.5,
     z:cell.y+(thin?0.75:0.5),

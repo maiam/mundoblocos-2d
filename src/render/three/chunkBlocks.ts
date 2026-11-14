@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, MAX_STACK } from '../../config';
+import { SLAB_HEIGHT } from '../../world/slabs';
 import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import type { ChunkRect } from '../../world/world';
 
 export interface BlockCell { x: number; y: number; level: number; id: BlockId }
-export type CubeShape = 'solid' | 'thin';
+export type CubeShape = 'solid' | 'thin' | 'slab';
 export interface BlockWorld {
   getChunk(cx: number, cy: number): Chunk | null | undefined;
   getLevel(x: number, y: number, level: number): BlockId;
@@ -13,7 +14,7 @@ export interface BlockWorld {
 export interface ChunkBlocksOptions {
   /** O bloco é um cubo desenhado aqui (objetos altos, árvores etc. têm render próprio). */
   isCube(id: BlockId): boolean;
-  /** `solid` (cubo cheio) ou `thin` (placa de meia profundidade, parede horizontal de construção). */
+  /** `solid` (cubo cheio), `thin` (placa de meia profundidade, parede horizontal de construção) ou `slab` (laje baixa: piloto `?tabua=laje`). */
   classify(world: BlockWorld, id: BlockId, x: number, y: number, level: number): CubeShape;
   /** Posição do centro da caixa em unidades de mundo. */
   transform(cell: { x: number; y: number; level: number; shape: CubeShape }): { x: number; y: number; z: number };
@@ -21,6 +22,21 @@ export interface ChunkBlocksOptions {
   material(id: BlockId): THREE.Material[];
   /** Reconstruções de chunk por quadro. */
   maxBuildsPerFrame?: number;
+}
+
+/**
+ * Laje: caixa de topo 1 × 1 e altura `SLAB_HEIGHT` (16 × 16 de topo e 16 × 4 de face). As faces laterais usam só o quarto de cima da
+ * imagem (recorte, não esticada): v em [1 − `SLAB_HEIGHT`, 1]; o topo e a base seguem inteiros.
+ */
+export function slabGeometry(): THREE.BoxGeometry {
+  const g = new THREE.BoxGeometry(1, SLAB_HEIGHT, 1);
+  const uv = g.getAttribute('uv') as THREE.BufferAttribute;
+  // Ordem das faces do BoxGeometry: +X, −X, +Y (topo), −Y (base), +Z, −Z; 4 vértices cada.
+  for (const face of [0, 1, 4, 5]) {
+    for (let i = face * 4; i < face * 4 + 4; i++) uv.setY(i, 1 - SLAB_HEIGHT + uv.getY(i) * SLAB_HEIGHT);
+  }
+  uv.needsUpdate = true;
+  return g;
 }
 
 interface Group { mesh: THREE.InstancedMesh; cells: BlockCell[] }
@@ -35,6 +51,7 @@ export class ChunkBlocks {
   private readonly builds = new Map<string, Build>();
   private readonly solid = new THREE.BoxGeometry(1, 1, 1);
   private readonly thin = new THREE.BoxGeometry(1, 1, 0.5);
+  private readonly slab = slabGeometry();
   private readonly dummy = new THREE.Object3D();
 
   constructor(
@@ -89,7 +106,7 @@ export class ChunkBlocks {
     }
     const groups: Group[] = [];
     for (const { id, shape, cells } of buckets.values()) {
-      const mesh = new THREE.InstancedMesh(shape === 'thin' ? this.thin : this.solid, this.opts.material(id), cells.length);
+      const mesh = new THREE.InstancedMesh(shape === 'thin' ? this.thin : shape === 'slab' ? this.slab : this.solid, this.opts.material(id), cells.length);
       mesh.name = `Mundo: cubo ${id} ${shape} (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
         const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape });
@@ -132,5 +149,6 @@ export class ChunkBlocks {
     this.builds.clear();
     this.solid.dispose();
     this.thin.dispose();
+    this.slab.dispose();
   }
 }
