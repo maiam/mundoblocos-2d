@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
+import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
 import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
@@ -73,6 +73,8 @@ export interface ChunkRect {
 export class World {
   readonly generator: TerrainSource;
   readonly profile: WorldProfile;
+  /** Profundidade de pilha específica do perfil: Mundo 2, Santuário 5. */
+  readonly maxStack: number;
   /** Limites em células (inclusivos) quando o perfil limita o mundo. */
   private readonly cellBounds: { x0: number; y0: number; x1: number; y1: number } | null;
   /** Chunks por chave numérica (`numKey`): evita criar strings a cada leitura de célula. */
@@ -111,6 +113,7 @@ export class World {
 
   constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
     this.profile = profile;
+    this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
     this.generator = profile.terrain.kind === 'flat'
       ? new FlatGenerator(seed, profile.terrain.ground)
       : new WorldGenerator(seed);
@@ -292,7 +295,7 @@ export class World {
     const key = numKey(cx, cy);
     let chunk = this.chunks.get(key);
     if (!chunk) {
-      chunk = new Chunk(cx, cy);
+      chunk = new Chunk(cx, cy, this.maxStack);
       this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects, chunk.upper);
       this.chunks.set(key, chunk);
     }
@@ -323,7 +326,7 @@ export class World {
   /** Bloco de um nível da pilha (0 = objeto no chão). O gerador só preenche os níveis 0 e 1. */
   getLevel(x: number, y: number, level: Level): BlockId {
     // Older saves may still refer to the discontinued third construction tier.
-    if (!Number.isInteger(level) || level < 0 || level >= MAX_STACK) return Block.AIR;
+    if (!Number.isInteger(level) || level < 0 || level >= this.maxStack) return Block.AIR;
     if (level === 0) return this.getObject(x, y);
     if (level === 1) return this.getUpper(x, y);
     if (!this.inBounds(x, y)) return Block.AIR;
@@ -333,7 +336,7 @@ export class World {
 
   /** Bloco visível no topo da célula e seu nível (null se vazia). */
   topBlock(x: number, y: number): { id: BlockId; level: Level } | null {
-    for (let level = MAX_STACK - 1; level >= 0; level--) {
+    for (let level = this.maxStack - 1; level >= 0; level--) {
       const id = this.getLevel(x, y, level);
       if (id !== Block.AIR) return { id, level };
     }
@@ -344,7 +347,7 @@ export class World {
   stackHeight(x: number, y: number): number {
     if (blockDef(this.getObject(x, y)).shape !== 'cube') return 0;
     let n = 1;
-    while (n < MAX_STACK && this.getLevel(x, y, n) !== Block.AIR) n++;
+    while (n < this.maxStack && this.getLevel(x, y, n) !== Block.AIR) n++;
     return n;
   }
 
@@ -499,7 +502,7 @@ export class World {
     }
     if (def.shape === 'cube' && base.shape === 'cube') {
       const h = this.stackHeight(x, y);
-      return h < MAX_STACK ? h : null;
+      return h < this.maxStack ? h : null;
     }
     return null;
   }
@@ -987,7 +990,7 @@ export class World {
    * vazias. Devolve quantos blocos foram descartados, para quem restaura avisar (jogo) ou registrar (servidor).
    */
   restoreChunk(cx: number, cy: number, ground: Uint8Array, levels: Uint8Array[]): number {
-    const c = new Chunk(cx, cy);
+    const c = new Chunk(cx, cy, this.maxStack);
     c.ground.set(ground.subarray(0, c.ground.length));
     let dropped = 0;
     for (let i = c.levels.length; i < levels.length; i++) for (const b of levels[i]) if (b !== Block.AIR) dropped++;

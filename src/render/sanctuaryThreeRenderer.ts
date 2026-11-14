@@ -51,6 +51,12 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   private readonly orbitControls:SanctuaryCameraJoystick;
   private cameraYaw=0;
   private readonly scene:THREE.Scene;
+  /** Escala visual do laboratório: geometria unificada, sem alterar coordenadas lógicas. */
+  private readonly visualRoot=new THREE.Group();
+  private blockHeightScale=1;
+  private cellSizeScale=1;
+  private goddessBaseWidth=1;
+  private goddessBaseHeight=1;
   private readonly selection:SelectionMarkers;
   private readonly blockMaterials:BlockMaterials;
   private readonly floorGeometry:THREE.BufferGeometry;
@@ -116,9 +122,18 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       this.blockMaterials.reupload();
     });
     this.scene=this.stage.scene;
+    this.scene.add(this.visualRoot);
     this.orbitControls=new SanctuaryCameraJoystick(orbit=>{
       this.stage.setFreeOrbit(orbit);
       this.cameraYaw=(orbit?.azimuthDeg??0)*Math.PI/180;
+      this.blockHeightScale=orbit?.blockHeight??1;
+      this.cellSizeScale=orbit?.cellSize??1;
+      this.visualRoot.scale.set(this.cellSizeScale,this.blockHeightScale,this.cellSizeScale);
+      this.stage.setVisualCellSize(this.cellSizeScale);
+      if(this.goddess){
+        this.goddess.scale.set(this.goddessBaseWidth/this.cellSizeScale,this.goddessBaseHeight/this.blockHeightScale,1);
+        this.goddessGhost.scale.copy(this.goddess.scale);
+      }
     });
     const grassCubeSheet = new Image();
     grassCubeSheet.onload=()=>{
@@ -130,7 +145,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     grassCubeSheet.onerror=()=>console.warn('Grama Celestial (6 faces): fallback para arte anterior');
     grassCubeSheet.src=CELESTIAL_GRASS_NET_DATA_URI;
     this.blockMaterials=new BlockMaterials(this.view,celestialFaces,this.stage.gpu);
-    this.selection=new SelectionMarkers(this.scene,world);
+    this.selection=new SelectionMarkers(this.visualRoot,world);
     this.scene.add(new THREE.HemisphereLight(0xfff7ed,0xa99cc4,2.0));
     const sunlight=new THREE.DirectionalLight(0xffe9c7,1.15);
     sunlight.position.set(-15,27,19);
@@ -165,7 +180,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     // No teste da escala (ADR 0028) a Deusa usa a escala escolhida em `?escala=` (padrão: core).
     // Fora do teste: na vista oblíqua a Deusa usa a escala do mundo (ADR 0028); na inclinada (reserva) segue a antiga.
     const charScale=options.wallTest?characterScale(options.testScale??'core'):(this.view==='oblique'?CHARACTER_SCALE_FACTOR:1);
-    this.goddess.scale.set(2.45*charScale,(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale,1);
+    this.goddessBaseWidth=2.45*charScale;
+    this.goddessBaseHeight=(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale;
+    this.goddess.scale.set(this.goddessBaseWidth,this.goddessBaseHeight,1);
     this.goddess.renderOrder=3;
 
     // Transparent 'through-wall' echo: if a wall is genuinely closer to the
@@ -190,9 +207,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       polygonOffset:true,polygonOffsetFactor:-2,
     }));
     this.goddessShadow.renderOrder=1;
-    this.scene.add(this.goddessShadow);
-    this.scene.add(this.goddessGhost);
-    this.scene.add(this.goddess);
+    this.visualRoot.add(this.goddessShadow);
+    this.visualRoot.add(this.goddessGhost);
+    this.visualRoot.add(this.goddess);
     if(options.wallTest){
       // Teste de proporção das paredes (ADR 0027): paredes lisas em 3 alturas perto do ponto inicial; descartável.
       const [sx,sy]=world.findSpawn();
@@ -203,7 +220,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
         ref.renderOrder=3;
         return ref;
       };
-      this.scene.add(options.testScale==='grade'?createWallProportionTest({x:sx,z:sy},makeReference,GRADE_COMPARE):createWallProportionTest({x:sx,z:sy},makeReference));
+      this.visualRoot.add(options.testScale==='grade'?createWallProportionTest({x:sx,z:sy},makeReference,GRADE_COMPARE):createWallProportionTest({x:sx,z:sy},makeReference));
     }
 
   }
@@ -220,16 +237,16 @@ export class SanctuaryThreeRenderer implements GameRenderer {
 
   private buildWorld():void{
     for(const entry of this.groups){
-      this.scene.remove(entry.mesh);
+      this.visualRoot.remove(entry.mesh);
       entry.mesh.dispose();
     }
     this.groups.length=0;
-    if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();}
-    if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();}
+    if(this.walls){this.visualRoot.remove(this.walls.group);this.walls.dispose();}
+    if(this.wallArt){this.visualRoot.remove(this.wallArt.group);this.wallArt.dispose();}
     const now=performance.now();
     for(const [k,until] of this.halfDoors)if(until<=now)this.halfDoors.delete(k);
     this.wallArt=buildWallArt(this.world,this.bounds,this.wallAtlases,this.wallThickness,new Set(this.halfDoors.keys()));
-    this.scene.add(this.wallArt.group);
+    this.visualRoot.add(this.wallArt.group);
     // Porta que mudou de estado: mostra o quadro intermediário por um instante e depois o estado final.
     let changed=false;
     for(const [k,id] of this.wallArt.doors){
@@ -243,7 +260,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       this.halfTimer=setTimeout(()=>{this.halfTimer=null;this.signature='';},DOOR_HALF_MS+20); // …e depois com o estado final
     }
     this.walls=buildWallPrototype(this.world,this.bounds,this.wallThickness,id=>this.wallAtlases.has(wallArtBase(id)));
-    this.scene.add(this.walls.group);
+    this.visualRoot.add(this.walls.group);
     const cells=sanctuary3DGeometryCells(this.world,this.bounds);
     this.glowLights=[];
     for(const b of cells.blocks){
@@ -286,7 +303,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       });
       mesh.instanceMatrix.needsUpdate=true;
       mesh.frustumCulled=false;
-      this.scene.add(mesh);
+      this.visualRoot.add(mesh);
       this.groups.push({mesh,cells:entry.cells});
     }
   }
@@ -326,7 +343,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       visual.shadow.x,visual.shadow.y,visual.shadow.z,
     );
     this.goddessShadow.scale.set(
-      visual.shadowRadii.x,1,visual.shadowRadii.z,
+      visual.shadowRadii.x/this.cellSizeScale,1,visual.shadowRadii.z/this.cellSizeScale,
     );
   }
 
@@ -399,12 +416,12 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     if(this.halfTimer)clearTimeout(this.halfTimer);
     this.lighting?.dispose();
     for(const group of this.groups){
-      this.scene.remove(group.mesh);
+      this.visualRoot.remove(group.mesh);
       group.mesh.dispose();
     }
     this.groups.length=0;
-    if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();this.walls=null;}
-    if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();this.wallArt=null;}
+    if(this.walls){this.visualRoot.remove(this.walls.group);this.walls.dispose();this.walls=null;}
+    if(this.wallArt){this.visualRoot.remove(this.wallArt.group);this.wallArt.dispose();this.wallArt=null;}
     this.blockMaterials.dispose();
     for(const g of [this.floorGeometry,this.solidGeometry,this.wallGeometry,
       this.goddessShadow.geometry,this.goddess.geometry])g.dispose();

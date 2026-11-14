@@ -22,8 +22,11 @@ export class ThreeStage {
   readonly gpu: THREE.WebGLRenderer;
   contextLost = false;
   private freeOrbit: SanctuaryOrbit | null = null;
+  private visualCellSize = 1;
   /** Alterna entre a camera de laboratorio e a projecao original do mundo. */
   setFreeOrbit(orbit: SanctuaryOrbit | null): void { this.freeOrbit = orbit; }
+  /** Conversão entre células lógicas e tamanho de célula na cena 3D. */
+  setVisualCellSize(size: number): void { this.visualCellSize = size; }
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2();
   private obliqueHalf = { w: 8, h: 5 };
@@ -82,8 +85,8 @@ export class ThreeStage {
     this.camera.top = halfH; this.camera.bottom = -halfH;
     this.camera.updateProjectionMatrix();
     // Mesmos eixos X/Y do mundo; +Y é altura e +Z a frente voltada para a tela.
-    const focusX = cam.x / TILE;
-    const focusZ = cam.y / TILE;
+    const focusX = cam.x / TILE * this.visualCellSize;
+    const focusZ = cam.y / TILE * this.visualCellSize;
     if (this.freeOrbit) {
       const elevation = this.freeOrbit.elevationDeg * Math.PI / 180;
       const azimuth = this.freeOrbit.azimuthDeg * Math.PI / 180;
@@ -141,7 +144,7 @@ export class ThreeStage {
   groundCell(): { x: number; y: number } | null {
     const point = new THREE.Vector3();
     if (!this.raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), point)) return null;
-    return { x: Math.floor(point.x), y: Math.floor(point.z) };
+    return { x: Math.floor(point.x / this.visualCellSize), y: Math.floor(point.z / this.visualCellSize) };
   }
 
   render(): void {

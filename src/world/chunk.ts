@@ -11,13 +11,15 @@ export type Level = number;
 export class Chunk {
   readonly ground = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE);
   /** Um array por nível de pilha. */
-  readonly levels: Uint8Array[] = Array.from({ length: MAX_STACK }, () => new Uint8Array(CHUNK_SIZE * CHUNK_SIZE));
+  readonly levels: Uint8Array[];
   /** True se o jogador alterou algo (chunk não pode ser descartado). */
   modified = false;
   /** Incrementado a cada mudança visível (inclusive vizinhos na borda); invalida caches. */
   version = 0;
 
-  constructor(readonly cx: number, readonly cy: number) {}
+  constructor(readonly cx: number, readonly cy: number, readonly maxStack: number = MAX_STACK) {
+    this.levels = Array.from({ length: maxStack }, () => new Uint8Array(CHUNK_SIZE * CHUNK_SIZE));
+  }
 
   /** Nível 0 (preenchido pelo gerador). */
   get objects(): Uint8Array {
@@ -44,7 +46,7 @@ export class Chunk {
   /** Quantos níveis ocupados há na célula (contínuos a partir do 0). */
   filledLevels(lx: number, ly: number): number {
     let n = 0;
-    while (n < MAX_STACK && this.levels[n][ly * CHUNK_SIZE + lx] !== 0) n++;
+    while (n < this.levels.length && this.levels[n][ly * CHUNK_SIZE + lx] !== 0) n++;
     return n;
   }
 

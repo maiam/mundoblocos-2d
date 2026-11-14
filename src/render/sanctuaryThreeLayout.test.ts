@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_STACK } from '../config';
+import { SANCTUARY_MAX_STACK } from '../config';
 import { Block, type BlockId } from '../world/blocks';
 import { classifySanctuaryBlock, sanctuaryBlockTransform, sanctuary3DGeometryCells } from './sanctuaryThreeLayout';
 
@@ -14,17 +14,21 @@ const map = (entries:Array<[number,number,number,BlockId]>,ground:BlockId=Block.
 };
 
 describe('renderer oficial Three.js do Santuário',()=>{
-  it('usa dois níveis oficiais do World (não o editor isolado de cinco)',()=>{
-    expect(MAX_STACK).toBe(2);
+  it('usa cinco níveis oficiais do Santuário (sem alterar o limite do Mundo)',()=>{
+    expect(SANCTUARY_MAX_STACK).toBe(5);
     const w=map([
       [0,0,0,Block.STONE_CELESTIAL],[1,0,0,Block.STONE_CELESTIAL],
       [2,0,0,Block.STONE_CELESTIAL],[1,0,1,Block.MARBLE_ORNATE],
       [1,0,2,Block.MARBLE_ORNATE],
+      [1,0,3,Block.MARBLE_ORNATE],
+      [1,0,4,Block.MARBLE_ORNATE],
+      [1,0,5,Block.MARBLE_ORNATE],
     ]);
     const scene=sanctuary3DGeometryCells(w,{x0:0,x1:2,y0:0,y1:0});
     expect(scene.grounds).toHaveLength(3);
-    expect(scene.blocks).toHaveLength(4);
-    expect(scene.blocks.some(b=>b.level===2)).toBe(false);
+    expect(scene.blocks).toHaveLength(7);
+    expect(scene.blocks.some(b=>b.level===4 && b.shape==='thin')).toBe(true);
+    expect(scene.blocks.some(b=>b.level===5)).toBe(false);
     const middle=scene.blocks.find(b=>b.level===1);
     expect(middle).toMatchObject({id:Block.MARBLE_ORNATE,shape:'thin'});
   });
@@ -38,7 +42,7 @@ describe('renderer oficial Three.js do Santuário',()=>{
     expect(wall.z-wall.depth/2).toBe(5.5); // espaço vazio fica atrás
   });
 
-  it('usa só a base para decidir pilar/parede dos dois níveis',()=>{
+  it('usa só a base para decidir pilar/parede dos cinco níveis',()=>{
     const w=map([
       [0,0,0,Block.STONE_CELESTIAL],[1,0,0,Block.STONE_CELESTIAL],
       [2,0,0,Block.STONE_CELESTIAL],[1,0,1,Block.MARBLE_ORNATE],

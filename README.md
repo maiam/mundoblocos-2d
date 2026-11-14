@@ -40,7 +40,7 @@ travada. Dá para instalar na tela inicial (abre em tela cheia).
 |---|---|
 | Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
-| Câmera livre (apenas Santuário) | botão **◉ Câmera** no canto superior direito; arrastar joystick para girar e inclinar, `+` / `−` para zoom, **Resetar** (67°), **Salvar** (neste aparelho); fechar volta à vista padrão |
+| Câmera livre (apenas Santuário) | botão **◉ Câmera** no canto superior direito; arrastar joystick para girar e inclinar, `+` / `−` para zoom, **Resetar** (67°), **Salvar** (neste aparelho); sliders de **Altura do bloco** e **Tamanho da célula** no Santuário (5 níveis de construção); fechar volta à vista padrão |
 | Tablet | joystick para andar; botão de ação como no celular; tocar no mundo também usa o item, segurar quebra (como o mouse) |
 | Botão de ação (celular) / Espaço (desktop) | toque: usa o selecionado no bloco à frente · segurar: quebra (2 s com a mão, 1 s com ferramenta) |
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |
