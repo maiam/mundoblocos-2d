@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.84 — a árvore derrubada tomba (3D) (14/11/2026)
+- **Terceiro passo das árvores animadas:** ao cortar a árvore ela **tomba** (gira em volta do pé, acelerando, ~0,8 s) e some nos últimos 0,3 s, com sete folhas soltas, em vez de desaparecer de uma vez. Cai **para longe do jogador**; sem jogador conhecido, para a direita.
+- **Como** (`three/chunkSprites.ts`): ao refazer um chunk, a árvore que estava na lista anterior e não está mais na célula (`ChunkSprites.startFall`) vira uma cópia temporária do desenho (grupo com o pé como pivô, material com opacidade). `tick(dt)` avança e descarta (`FALL_SECONDS` = 1,1 s). Funciona para quem corta, em qualquer jogador da sala, e não dispara na primeira montagem, na troca de forma da macieira nem com `?sensacao=0` (sem lista de árvores).
+- Só o 3D; só cliente. Testes: tombo (gira, some, descarta), direção oposta ao jogador e sem efeito ligado. Conferido no navegador.
 ## Orvalis v0.93.83 — a árvore treme ao ser cortada (3D) (14/11/2026)
 - **Segundo passo das árvores animadas** (ordem combinada com o dono do produto): ao cortar uma árvore (`RenderOptions.breaking` sobre uma célula de forma `tree`), a copa **treme** e solta folhas no ritmo do golpe. A intensidade cresce com o progresso da quebra (0,4 → 1).
 - **Como** (`three/chunkSprites.ts`): o material `tree` ganha duas uniformes (origem do plano da instância e intensidade); só a instância cujo plano está na origem treme (deslocamento rápido da amostra da textura, no tronco preso). `ChunkSprites.setShake(alvo, intensidade, dt)` acha a árvore pela célula, devolve-a (para `TreeLeaves.emit`) e, ao soltar, a intensidade some em ~0,25 s. Uma árvore por vez. Nada de geometria nova nem leitura de pixels.

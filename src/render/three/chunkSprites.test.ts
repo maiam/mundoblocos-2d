@@ -148,3 +148,49 @@ describe('ChunkSprites.setShake (árvore sendo cortada)', () => {
     expect(sprites.setShake({ x: 1, y: 1 }, 0.2, 0.016)).toMatchObject({ x: 1, y: 1 }); // pode tremer de novo
   });
 });
+
+describe('ChunkSprites: árvore derrubada tomba', () => {
+  const make = (animated: 'tree' | null = 'tree') => {
+    const chunks = new Map<string, Chunk>([['0,0', { cx: 0, cy: 0, version: 1 } as Chunk]]);
+    const cells = new Map<number | string, number>([['1,1', TREE]]);
+    const felled: unknown[] = [];
+    const world: BlockWorld = { getChunk: (cx, cy) => chunks.get(cx + ',' + cy), getLevel: (x, y) => (cells.get(x + ',' + y) as number) ?? 0 };
+    const scene = new THREE.Scene();
+    const sprites = new ChunkSprites(scene, world, {
+      tile: 32, k: 1, art: (id) => (id === TREE ? { sprite: tree, walkable: false } : null), animated: (id) => (id === TREE ? animated : null),
+      felled: (c) => felled.push(c),
+    });
+    sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    return { chunks, cells, scene, sprites, felled };
+  };
+
+  it('a árvore que some do mapa tomba (gira em volta do pé) e some; a primeira montagem e a troca de forma não disparam', () => {
+    const { chunks, cells, scene, sprites, felled } = make();
+    expect(sprites.fallingCount).toBe(0); // primeira montagem
+    cells.set('1,1', 9); chunks.get('0,0')!.version++; // vira outro objeto na mesma célula (ainda é árvore? aqui não é arte: some)
+    sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    expect(sprites.fallingCount).toBe(1);
+    expect(felled).toHaveLength(1);
+    const pivot = scene.children.find((o) => o.name === 'Mundo: árvore tombando')!;
+    sprites.tick(0.5);
+    expect(Math.abs(pivot.rotation.z)).toBeGreaterThan(0.1);
+    sprites.tick(0.4);
+    expect(Math.abs(pivot.rotation.z)).toBeGreaterThan(1); // quase deitada
+    sprites.tick(0.5);
+    expect(sprites.fallingCount).toBe(0);
+    expect(scene.children.some((o) => o.name === 'Mundo: árvore tombando')).toBe(false);
+  });
+
+  it('cai para longe do jogador e não tomba sem o efeito ligado', () => {
+    const a = make();
+    a.sprites.setSwayPlayer(0, 0); // jogador à esquerda da árvore (x = 1): cai para a direita (rotação negativa)
+    a.cells.set('1,1', 0); a.chunks.get('0,0')!.version++;
+    a.sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    a.sprites.tick(0.6);
+    expect(a.scene.children.find((o) => o.name === 'Mundo: árvore tombando')!.rotation.z).toBeLessThan(0);
+    const b = make(null); // ?sensacao=0: sem lista de árvores, sem tombo
+    b.cells.set('1,1', 0); b.chunks.get('0,0')!.version++;
+    b.sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    expect(b.sprites.fallingCount).toBe(0);
+  });
+});
