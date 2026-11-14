@@ -44,4 +44,14 @@ describe('TreeLeaves (folhas e pétalas caindo das copas)', () => {
     expect(run()).toBeGreaterThan(0);
     expect(run()).toBe(run());
   });
+
+  it('avisa onde cada folha pousa (onda na água)', () => {
+    const leaves = new TreeLeaves(new THREE.Scene(), 32, 1);
+    const landed: number[][] = [];
+    leaves.onLand = (x, z) => landed.push([x, z]);
+    leaves.emit(cell(Block.SAKURA_TREE));
+    for (let i = 0; i < 200; i++) leaves.update(0.05, 30, null);
+    expect(landed).toHaveLength(1);
+    expect(landed[0][1]).toBeGreaterThan(4); // z da árvore em diante
+  });
 });

@@ -15,6 +15,7 @@ import { FootPrints } from './three/footPrints';
 import { SWAY_PUSH_RADIUS, windKind } from './wind';
 import { TreeLeaves } from './three/treeLeaves';
 import { WaterSurface } from './three/waterSurface';
+import { WaterRipples } from './three/waterRipples';
 import { waterFxOn } from './waterFx';
 import { v2WaterTop } from './materialsV2';
 import { FootDust } from './three/footDust';
@@ -85,6 +86,9 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly dust: FootDust;
   private readonly leaves: TreeLeaves;
   private readonly water: WaterSurface | null;
+  private readonly ripples: WaterRipples | null;
+  private rippleWalked = 0;
+  private rippleAt: { x: number; y: number } | null = null;
   private waterTileCanvas: HTMLCanvasElement | null = null;
   private readonly leafTrees: SpriteCell[] = [];
   private leafTreesAt = -1;
@@ -170,6 +174,10 @@ export class WorldThreeRenderer implements GameRenderer {
       getChunk: (cx, cy) => world.getChunk(cx, cy),
       tile: () => this.waterTile(),
     }) : null;
+    this.ripples = this.water ? new WaterRipples(this.worldLayer) : null;
+    if (this.ripples) {
+      this.leaves.onLand = (x, z) => { if (this.isOpenWaterAt(x, z)) this.ripples!.emit(x, z, 0.5); };
+    }
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
     this.blocks = new ChunkBlocks(this.worldLayer, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
@@ -244,6 +252,9 @@ export class WorldThreeRenderer implements GameRenderer {
     const shaking = this.sprites.setShake(cut, 0.4 + 0.6 * (cut?.progress ?? 0), opts.dt);
     if (shaking && opts.elapsed - this.cutLeafAt > 0.14) { this.cutLeafAt = opts.elapsed; this.leaves.emit(shaking); }
     this.leaves.update(opts.dt, TILE * cam.zoom, this.leafTrees);
+    this.stepRipples(opts, inside);
+    if (inside) this.ripples?.clear();
+    this.ripples?.update(opts.dt, skyAt(opts.time).night);
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
@@ -300,6 +311,30 @@ export class WorldThreeRenderer implements GameRenderer {
       pixelRatio: Math.min(window.devicePixelRatio || 1, 2), k: OBLIQUE_K, elapsed: opts.elapsed,
     }, (l, i) => flickerFactor(l.flicker, opts.elapsed, l.x * 7 + l.z * 13 + i));
     this.lighting.render(this.stage.gpu);
+  }
+
+  private isOpenWaterAt(x: number, z: number): boolean {
+    const cx = Math.floor(x), cy = Math.floor(z);
+    return blockDef(this.world.getGround(cx, cy)).liquid && this.world.getObject(cx, cy) === Block.AIR;
+  }
+
+  /** Ondas de quem anda na margem: a cada passada, uma onda na água vizinha mais próxima (até 1,5 célula); nada em cômodos nem com `?agua=0`. */
+  private stepRipples(opts: RenderOptions, inside: unknown): void {
+    const a = opts.actors[0];
+    if (!this.ripples) return;
+    if (inside || !a || !a.moving || a.visualZ > 0.05) { this.rippleAt = a ? { x: a.x, y: a.y } : null; return; }
+    if (this.rippleAt) this.rippleWalked += Math.hypot(a.x - this.rippleAt.x, a.y - this.rippleAt.y);
+    this.rippleAt = { x: a.x, y: a.y };
+    if (this.rippleWalked < DUST_STRIDE) return;
+    this.rippleWalked = 0;
+    const R = Math.ceil(1.5 * SUBDIV);
+    let best: [number, number] | null = null, bd = (1.5 * SUBDIV) ** 2;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+      const cx = Math.floor(a.x) + dx, cy = Math.floor(a.y) + dy;
+      const d = (cx + 0.5 - a.x) ** 2 + (cy + 0.5 - a.y) ** 2;
+      if (d < bd && this.isOpenWaterAt(cx, cy)) { bd = d; best = [cx, cy]; }
+    }
+    if (best) this.ripples.emit(best[0] + 0.5, best[1] + 0.5, 0.8);
   }
 
   /** Ladrilho da água V2 (`agua`) pintado num canvas próprio (sem ler pixels), assim que o atlas dos materiais chega; null antes. */
@@ -378,6 +413,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.dust.dispose();
     this.leaves.dispose();
     this.water?.dispose();
+    this.ripples?.dispose();
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();
