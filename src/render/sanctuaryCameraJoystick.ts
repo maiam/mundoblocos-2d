@@ -44,10 +44,10 @@ export class SanctuaryCameraJoystick {
           <button type="button" data-action="save" title="Guardar esta posição neste dispositivo">Salvar</button>
         </div>
       </div>`;
-    this.panel = this.root.querySelector('.sanctuary-camera-panel')!;
-    this.readout = this.root.querySelector('.sanctuary-camera-readout')!;
-    this.knob = this.root.querySelector('.sanctuary-camera-knob')!;
-    this.ring = this.root.querySelector('.sanctuary-camera-ring')!;
+    this.panel = this.root.querySelector<HTMLDivElement>('.sanctuary-camera-panel')!;
+    this.readout = this.root.querySelector<HTMLElement>('.sanctuary-camera-readout')!;
+    this.knob = this.root.querySelector<HTMLDivElement>('.sanctuary-camera-knob')!;
+    this.ring = this.root.querySelector<HTMLElement>('.sanctuary-camera-ring')!;
     this.root.querySelector<HTMLButtonElement>('.sanctuary-camera-toggle')!.addEventListener('click', () => {
       this.open = !this.open;
       this.panel.hidden = !this.open;
