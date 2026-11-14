@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.83 — a árvore treme ao ser cortada (3D) (14/11/2026)
+- **Segundo passo das árvores animadas** (ordem combinada com o dono do produto): ao cortar uma árvore (`RenderOptions.breaking` sobre uma célula de forma `tree`), a copa **treme** e solta folhas no ritmo do golpe. A intensidade cresce com o progresso da quebra (0,4 → 1).
+- **Como** (`three/chunkSprites.ts`): o material `tree` ganha duas uniformes (origem do plano da instância e intensidade); só a instância cujo plano está na origem treme (deslocamento rápido da amostra da textura, no tronco preso). `ChunkSprites.setShake(alvo, intensidade, dt)` acha a árvore pela célula, devolve-a (para `TreeLeaves.emit`) e, ao soltar, a intensidade some em ~0,25 s. Uma árvore por vez. Nada de geometria nova nem leitura de pixels.
+- Desliga com `?sensacao=0`; nada em cômodos; só o 3D; só cliente. Testes: `setShake` (acha, decai, volta a tremer). A árvore ainda some de uma vez ao cair (próximo passo: tombar).
 ## Orvalis v0.93.82 — árvores ao vento e folhas caindo (3D) (14/11/2026)
 - **Pedido do dono do produto:** animações do three.js nas árvores; ordem combinada: vento nas copas e folhas/pétalas caindo (depois: tremor ao bater, queda ao cortar, rebrota suave e sombras).
 - **Vento nas copas** (`render/three/chunkSprites.ts`, material `tree`; `render/wind.ts`: `windKind`): árvores (forma `tree`) ganham um material próprio, sólido (`alphaTest`, escreve profundidade, o personagem some atrás), em que o tronco fica preso e a folhagem ondula com rajadas lentas que atravessam o mapa (fase pela posição) e um tremor fino das folhas. Só desloca a amostra da textura dentro do plano (sem geometria nova). Capim e flores seguem no material `sway`; a árvore **não** se curva ao jogador.
