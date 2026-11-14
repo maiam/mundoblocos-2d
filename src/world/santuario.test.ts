@@ -71,7 +71,7 @@ describe('Santuário Celestial', () => {
     const [x, y] = w.findSpawn();
     expect(w.breakBlock(x + 2, y)).toBe(Block.CLOUD_SOLID);
     expect(w.getGround(x + 2, y)).toBe(Block.HOLE);
-    expect(w.placeBlock(x + 2, y, Block.STONE)).toBe(false);
+    expect(w.placeBlock(x + 2, y, Block.MARBLE_ORNATE)).toBe(false);
     expect(w.placeBlock(x + 2, y, Block.DIRT)).toBe(true);
     expect(w.standHeight(x + 2, y)).toBe(0);
   });
