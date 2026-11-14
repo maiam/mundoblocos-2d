@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, MAX_STACK } from '../../config';
-import { slabHeightOf } from '../../world/slabs';
+import { SLAB_DEPTH, slabHeightOf } from '../../world/slabs';
 import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import type { ChunkRect } from '../../world/world';
@@ -25,16 +25,36 @@ export interface ChunkBlocksOptions {
 }
 
 /**
- * Laje: caixa de topo 1 × 1 e altura `height` (célula = 1; 4, 6 ou 8 px de 16). As faces laterais usam só a faixa de cima da imagem
- * (recorte, não esticada): v em [1 − `height`, 1]; o topo e a base seguem inteiros.
+ * Laje: caixa de largura 1, fundo `depth` (12/16 = `SLAB_DEPTH`) e altura `height` (4, 6 ou 8 px de 16), centrada na origem. Tudo é
+ * RECORTE da imagem, nunca esticado: as faces laterais usam só a faixa de cima (v em [1 − `height`, 1]) e o recorte do fundo mantém
+ * a ponta da frente (sul, +z) da imagem — nas faces ±X (u) e no topo e na base (v); o lado de trás é o que perde 4 px.
  */
-export function slabGeometry(height: number): THREE.BoxGeometry {
-  const g = new THREE.BoxGeometry(1, height, 1);
+export function slabGeometry(height: number, depth = SLAB_DEPTH): THREE.BoxGeometry {
+  const g = new THREE.BoxGeometry(1, height, depth);
   const uv = g.getAttribute('uv') as THREE.BufferAttribute;
+  const pos = g.getAttribute('position') as THREE.BufferAttribute;
   // Ordem das faces do BoxGeometry: +X, −X, +Y (topo), −Y (base), +Z, −Z; 4 vértices cada.
   for (const face of [0, 1, 4, 5]) {
     for (let i = face * 4; i < face * 4 + 4; i++) uv.setY(i, 1 - height + uv.getY(i) * height);
   }
+  // Recorte do fundo: o valor do vértice mais à frente (+z) fica; o de trás anda `depth` do caminho até ele.
+  const crop = (face: number, axis: 'x' | 'y'): void => {
+    let front = -Infinity, vFront = 0, vBack = 0;
+    for (let i = face * 4; i < face * 4 + 4; i++) {
+      const z = pos.getZ(i);
+      if (z > front) { front = z; vFront = axis === 'x' ? uv.getX(i) : uv.getY(i); }
+    }
+    for (let i = face * 4; i < face * 4 + 4; i++) {
+      const v = axis === 'x' ? uv.getX(i) : uv.getY(i);
+      if (pos.getZ(i) < front) vBack = v;
+    }
+    for (let i = face * 4; i < face * 4 + 4; i++) {
+      if (pos.getZ(i) >= front) continue;
+      const nv = vFront + (vBack - vFront) * depth;
+      if (axis === 'x') uv.setX(i, nv); else uv.setY(i, nv);
+    }
+  };
+  crop(0, 'x'); crop(1, 'x'); crop(2, 'y'); crop(3, 'y');
   uv.needsUpdate = true;
   return g;
 }
