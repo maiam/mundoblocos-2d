@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { Actor, ActorKind } from '../../game/entities';
-import { ActorBillboards, selectVisibleActors, type ActorSheet } from './actorBillboards';
+import { ActorBillboards, GROUND_LIFT, selectVisibleActors, type ActorSheet } from './actorBillboards';
 
 const fakeCtx = { clearRect() {}, fillText() {}, strokeText() {} } as unknown as CanvasRenderingContext2D;
 const fakeCanvas = (): HTMLCanvasElement => ({ width: 0, height: 0, getContext: () => fakeCtx }) as unknown as HTMLCanvasElement;
@@ -49,7 +49,7 @@ describe('ActorBillboards (atores do Mundo no 3D)', () => {
     // lado do canvas = ceil(70 × 2 × 1,45 / 16) × 16 = 208; em células: 208 / (2 × 32) × 0,5 = 1,625
     expect(heroPlane.scale.x).toBeCloseTo(1.625);
     expect(heroPlane.scale.y).toBeCloseTo(1.625); // K = 1
-    expect(heroPlane.position.y).toBeCloseTo(0.03);
+    expect(heroPlane.position.y).toBeCloseTo(GROUND_LIFT); // quase colado no chão (v0.93.70)
     expect(heroPlane.position.z).toBe(5);
   });
 

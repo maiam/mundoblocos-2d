@@ -161,6 +161,9 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
   Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
 
+## Atores no chão (v0.93.70)
+- `scripts/foot-margins.py` → `render/footMargins.ts`: folga embaixo dos pés por folha e por linha de direção; `character.ts` `footDrop` desce o desenho por ela (2D e 3D). `GROUND_LIFT` (0,012) é a elevação do plano do ator. Sombra: círculo suave por padrão; `?sombra=sol` liga a sombra projetada. Sem inclinação lateral (`LEAN_RAD = 0`).
+
 ## Fluidez e terreno vivo (v0.93.69)
 - Atores: `ActorBillboards` só repinta/reenvia a textura quando `SpriteSheet.visualKey` muda (`painted`/`skipped` para medir). Poeira e pegadas: `footDust.ts`/`three/footDust.ts`/`three/footPrints.ts`. Vegetação: material `sway` de `three/chunkSprites.ts` (`wind.ts`: capim e flores). Rede: `RemotePlayers` interpola amostras (`sampleAt`, `INTERP_DELAY`).
 
