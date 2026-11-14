@@ -1,3 +1,4 @@
+import { SLAB_HEIGHT } from './slabs';
 import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
 import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
@@ -365,8 +366,33 @@ export class World {
   standHeight(x: number, y: number): number | null {
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
+    // Laje (piloto): andável, no nível do chão para a lógica; o corpo sobe `SLAB_HEIGHT` só no visual (`slabLift`).
+    if (base.shape === 'cube' && this.isSlabAt(x, y)) return 0;
     if (base.shape === 'cube') return this.stackHeight(x, y);
     return base.solid ? null : 0;
+  }
+
+  /** Blocos que viram laje (piloto `?tabua=laje`, ver `world/slabs.ts`); vazio = nenhum (o padrão, e sempre na sala). */
+  private slabs: ReadonlySet<BlockId> = new Set();
+
+  setSlabBlocks(ids: readonly BlockId[]): void {
+    this.slabs = new Set(ids);
+  }
+
+  get hasSlabs(): boolean {
+    return this.slabs.size > 0;
+  }
+
+  /** A célula tem uma laje (bloco de laje sozinho no nível 0, sem mais nada em cima)? */
+  isSlabAt(x: number, y: number): boolean {
+    if (this.slabs.size === 0 || !this.slabs.has(this.getObject(x, y))) return false;
+    for (let level = 1; level < this.maxStack; level++) if (this.getLevel(x, y, level) !== Block.AIR) return false;
+    return true;
+  }
+
+  /** Quanto o corpo sobe por cima da célula (visual): `SLAB_HEIGHT` sobre laje, 0 no resto. */
+  slabLift(x: number, y: number): number {
+    return this.isSlabAt(x, y) ? SLAB_HEIGHT : 0;
   }
 
   /** Mantido para o objeto do nível 0 (testes/ferramentas). */

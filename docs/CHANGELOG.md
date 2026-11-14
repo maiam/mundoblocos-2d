@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.72 — piloto da laje de Carvalho: topo 16 × 16, face 16 × 4 (14/11/2026)
+- **Pedido do dono do produto:** testar a Tábua de Carvalho com **face 16 × 4 e topo 16 × 16** (a célula do Mundo tem 16 × 16 px na grade 2; o cubo atual é topo 16 × 16 + face 16 × 16 na vista K = 1). Decisões dele: **piloto reversível** e laje **andável com o corpo subindo 4 px**.
+- **Como ligar:** `?tabua=laje` — só no Mundo principal, no 3D e **offline** (a sala não conhece lajes). Sem o parâmetro tudo segue como era; o dado guardado (saves, sala) continua o cubo comum, então tirar o parâmetro desfaz o piloto.
+- **Regras** (`world/slabs.ts`, `World.setSlabBlocks/isSlabAt/slabLift`): a laje é um bloco de Tábua **sozinho** no nível 0 (um segundo cubo em cima desfaz a laje e vira pilha de 2); para a lógica ela fica no **nível do chão** (`standHeight` 0: andável, inclusive para bichos); `Walker.lift` sobe o corpo `SLAB_HEIGHT` (1/4 de célula = 4 px) **só no visual** (`visualZ`), com a mesma suavização; `z` lógico não muda.
+- **Desenho** (`three/chunkBlocks.ts`): forma `slab` — caixa 1 × 1/4 × 1; as faces laterais **recortam o quarto de cima** da imagem (16 × 4, sem esticar); o topo segue inteiro. A moldura de seleção trata a laje como objeto baixo.
+- Só cliente + `World`/`Walker` (inertes sem o piloto). Testes: parâmetro, regras da laje, subida do corpo e retorno, geometria/UV e posição (551 testes, grades 1 e 2). Conferido no navegador (personagem em cima da laje; cubo comum sem o parâmetro).
+
 ## Orvalis v0.93.71 — sem sombreado de sol no corpo dos atores (14/11/2026)
 - **Decisão do dono do produto:** "a sombra sai" (resposta sobre o sombreado por pixel do corpo, depois de `?sombreado=0` ter melhorado muito a vista).
 - O **relevo do corpo pelo sol/lua** (normais falsas, brilho de contorno) passa a vir **desligado**; `?sombreado=1` o liga. A **luz quente da fogueira nos atores** continua (usa o mesmo shader, mas não depende do sol), e `?sombreado=0` segue desligando tudo. A sombra no chão é o círculo suave sob os pés (v0.93.70).
