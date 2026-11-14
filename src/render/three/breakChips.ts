@@ -89,7 +89,7 @@ export class BreakChips {
 
   /** Avança o tempo; `cellPx` = pixels de tela por célula (tamanho das lascas). */
   update(dt: number, cellPx: number): void {
-    this.uniforms.uPx.value = Math.max(4, cellPx * 0.3 * window.devicePixelRatio);
+    this.uniforms.uPx.value = Math.max(4, cellPx * 0.3 * (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1));
     for (let i = 0; i < MAX; i++) {
       if (this.age[i] >= this.life[i]) continue;
       this.age[i] += dt;
