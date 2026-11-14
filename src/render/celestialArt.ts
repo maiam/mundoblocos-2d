@@ -2,6 +2,7 @@ import { CUBE_FRONT, TILE } from '../config';
 import { Block, CELESTIAL_BLOCKS } from '../world/blocks';
 import { getCelestialAtlas, getCelestialSurface } from './blockArt';
 import { v2Faces } from './materialsV2';
+import { seamlessCubeFace } from './seamlessCubeTexture';
 
 /**
  * Blocos do Santuário Celestial — arte da prancha 3/4 fornecida
@@ -77,8 +78,23 @@ export function installSanctuaryEightBlockAtlas(atlas: HTMLImageElement): void {
   sanctuaryEightAtlas = atlas;
   for (const id of SANCTUARY_CUBE_IDS) cache.delete(id);
 }
+/** Cubos de terreno têm bordas contínuas; toras e tábuas mantêm juntas próprias. */
+export const SEAMLESS_SANCTUARY_BLOCKS = new Set<number>([
+  Block.GRASS, Block.DIRT, Block.TILLED, Block.WATER_PURE,
+  Block.STONE, Block.STONE_SMOOTH,
+]);
+
 function atlasCell(atlas: HTMLImageElement, column: number, face: number): HTMLCanvasElement {
   const side = atlas.width / SANCTUARY_CUBE_IDS.length;
+  const id = SANCTUARY_CUBE_IDS[column];
+  if (SEAMLESS_SANCTUARY_BLOCKS.has(id)) {
+    // A textura 6-faces contém uma moldura escura ao redor de CADA quadrado.
+    // Os topos devem repetir em X/Z; as laterais de grama somente no eixo
+    // horizontal para preservar grama em cima e terra embaixo.
+    const axes = id === Block.GRASS && face !== 2 && face !== 3
+      ? 'horizontal' : 'both';
+    return seamlessCubeFace(atlas, column * side, face * side, side, axes);
+  }
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 128;
   canvas.getContext('2d')!.drawImage(
