@@ -1,4 +1,4 @@
-import { CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, SUBDIV, TILE } from '../config';
+import { CHUNK_SIZE, CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, SUBDIV, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
 import { Renderer } from '../render/renderer';
 import type { GameRenderer, RendererFactory } from '../render/rendererContract';
@@ -41,6 +41,7 @@ import type { MonsterKind } from '../world/dungeon';
 import { CreatureMirror } from './creatureMirror';
 import { MONSTERS } from './monster';
 import { Minimap, type MinimapMarker } from '../render/minimap';
+import { WorldMap, type WorldMapView } from '../render/worldMap';
 import { Exploration } from './exploration';
 
 /** Duração de um dia completo em segundos. */
@@ -140,6 +141,8 @@ export class Game {
   /** Névoa do minimapa: o que o jogador já viu (salvo junto com o mundo). */
   readonly exploration = new Exploration();
   private minimap: Minimap | null = null;
+  /** Mapa grande (tela cheia) com tudo o que já foi explorado; abre pelo minimapa ou pela tecla M e pausa o jogo. */
+  private worldMap: WorldMap | null = null;
   /** Última célula em que a névoa foi revelada (só revela de novo ao mudar de célula). */
   private revealedAt = '';
   /** Tempo até mandar a próxima posição ao servidor e a última mandada. */
@@ -213,7 +216,10 @@ export class Game {
       // Corações só em mundo com dungeon.
       health: profile.dungeon,
     });
-    if (profile.minimap) this.minimap = new Minimap(this.hud.root);
+    if (profile.minimap) {
+      this.minimap = new Minimap(this.hud.root, options.showcase ? undefined : () => this.toggleWorldMap());
+      if (!options.showcase) this.worldMap = new WorldMap(this.hud.root, () => this.actions.cancelAll());
+    }
     this.bag = new BagPanel(this.hud.bagSection, (i, e) => this.onBagTap(i, e));
     this.chest = new ChestPanel(this.hud.chestSection, (i) => this.onChestTap(i));
     setProfessionIcon('builder', art().uiIcons?.builder ?? '');
@@ -321,6 +327,7 @@ export class Game {
     for (const fn of this.cleanup) fn();
     this.dialogue.destroy();
     this.shop?.destroy();
+    this.worldMap?.destroy();
     this.hud.destroy();
     this.renderer.dispose?.();
   }
@@ -681,9 +688,11 @@ export class Game {
       }
       if (e.code === 'KeyI' || e.code === 'KeyB') this.toggleBag();
       if (e.code === 'KeyK') this.toggleSkills();
+      if (e.code === 'KeyM') this.toggleWorldMap();
       // KeyC: reservado para o painel do personagem (em breve).
       if (e.code === 'Escape') {
-        if (this.shop?.isOpen) this.shop.close();
+        if (this.worldMap?.isOpen) this.worldMap.close();
+        else if (this.shop?.isOpen) this.shop.close();
         else if (this.dialogue.isOpen) this.dialogue.close();
         else if (this.skills.detailOpen) this.skills.closeDetail();
         else if (this.skills.isOpen) this.toggleSkills(false);
@@ -797,7 +806,7 @@ export class Game {
     const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
-    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen || !!this.shop?.isOpen;
+    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen || !!this.shop?.isOpen || !!this.worldMap?.isOpen;
     const dt = paused ? 0 : realDt;
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
@@ -882,6 +891,33 @@ export class Game {
       this.revealedAt = cell;
       force = this.exploration.revealAround(p.cellX, p.cellY, REVEAL_RADIUS);
     }
+    this.minimap.update({ world: this.world, exploration: this.exploration, player: p, markers: this.mapMarkers(), place }, now, force);
+  }
+
+  /** Abre/fecha o mapa grande (fora dos cômodos, que são espaços à parte do mundo). */
+  private toggleWorldMap(): void {
+    const m = this.worldMap;
+    if (!m) return;
+    if (m.isOpen) { m.close(); return; }
+    if (this.world.interiorAt(this.player.cellX, this.player.cellY)) return;
+    if (this.bag.isOpen) this.toggleBag(false);
+    if (this.skills.isOpen) this.toggleSkills(false);
+    this.dialogue.close();
+    m.open((): WorldMapView => {
+      const area = this.inDungeon ? this.world.dungeon?.area : null;
+      const dung = this.world.dungeon?.area;
+      const inRect = (a: { x0: number; y0: number; x1: number; y1: number }, cx: number, cy: number): boolean =>
+        cx * CHUNK_SIZE <= a.x1 && (cx + 1) * CHUNK_SIZE > a.x0 && cy * CHUNK_SIZE <= a.y1 && (cy + 1) * CHUNK_SIZE > a.y0;
+      return {
+        world: this.world, exploration: this.exploration, player: this.player, markers: this.mapMarkers(),
+        // No covil só o labirinto; no mundo, tudo menos o covil (que fica num canto isolado, longe de tudo).
+        filter: area ? (cx, cy) => inRect(area, cx, cy) : dung ? (cx, cy) => !inRect(dung, cx, cy) : null,
+      };
+    });
+  }
+
+  /** Marcadores do mapa (minimapa e mapa grande): cidade, covil, tenda e amigos. */
+  private mapMarkers(): MinimapMarker[] {
     const markers: MinimapMarker[] = [];
     const town = this.world.town;
     // No covil o mapa é só o labirinto (a cidade e a tenda ficam em outro lugar do mundo).
@@ -896,7 +932,7 @@ export class Game {
     const tent = this.world.tent;
     if (tent && !this.inDungeon) markers.push({ kind: 'tent', x: tent[0] + 0.5, y: tent[1] + 0.5, pinned: true });
     for (const r of this.remotes.actors) markers.push({ kind: 'friend', x: r.x, y: r.y });
-    this.minimap.update({ world: this.world, exploration: this.exploration, player: p, markers, place }, now, force);
+    return markers;
   }
 
   /**

@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-12 — v0.93.60 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-12 — v0.93.62 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.60 | `package.json` |
+| Versão do jogo | 0.93.62 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 22 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -39,7 +39,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Celular: joystick + botão de ação (toque usa, segurar quebra: 2 s com a mão, 1 s com ferramenta). Tablet: também age
   pelo toque no mundo. Desktop: WASD/setas, Espaço, mouse, Q/E/roda = zoom. Sempre na horizontal (`ScreenMode`).
 - HUD: grade de 12 (9 itens · Personagem · Habilidades · Bolsa), bolsa de 12 espaços à direita, barras de vida e de
-  fome, **minimapa** redondo com névoa explorada (salva), menu ☰.
+  fome, **minimapa** redondo com névoa explorada (salva), **mapa grande em tela cheia** (toque no minimapa ou tecla M; v0.93.62: arrasta, zoom por roda/botões/pinça, enquadra tudo; pausa o jogo; `render/worldMap.ts`), menu ☰.
 - Controles completos: [`README.md`](../README.md) da raiz e `domains/player.md`.
 
 ## Sistemas de jogo

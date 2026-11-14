@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.62 — mapa grande em tela cheia (14/11/2026)
+- **Pedido do dono do produto:** "aumentar o mapa de consulta para a tela toda pro jogador saber por onde já andou" (o círculo do canto superior direito era pequeno).
+- **Mapa grande** (`render/worldMap.ts`): abre ao **tocar/clicar no minimapa** ou na tecla **M**; mostra tudo o que já foi explorado (a mesma névoa salva, `Exploration`), com **arrastar** para mover, **roda / botões ＋ － / pinça** para aproximar, **◎** centraliza em mim e **▣** enquadra tudo; marcadores de cidade, covil (só depois de visto), tenda e amigos, e a seta do jogador. Fecha com ✕ ou Esc. **O jogo fica pausado** enquanto está aberto. No covil mostra só o labirinto; no mundo, tudo menos o covil; não abre dentro de cômodos.
+- **Sem segunda fonte de verdade:** o mapa lê `World` + `Exploration` como o minimapa; o cache de imagens de chunk virou `render/mapChunks.ts` (compartilhado) e os marcadores `render/mapMarkers.ts`.
+- **Correção junto:** o raio do minimapa estava fixo em 36 células e, na grade 2, mostrava metade do trecho de antes; agora é `36 × SUBDIV`.
+- Testes: `chunkCoords`, `exploredBounds`, `fitScale`. **Limites conhecidos:** a névoa só cobre onde o jogador já andou (nada retroativo); mapa só no Mundo principal (o Santuário não tem minimapa); sem legenda dos marcadores.
+
 ## Orvalis v0.93.60 — mais acampamentos de goblin e o homem-lagarto (14/11/2026)
 - **Pedido do dono do produto:** "1 acampamento a cada 4 chunks" e incluir o **homem-lagarto** (vive perto de rios, anda de 3 em 3; vida 100, ataque 15, 2 Moedas de Cobre; folhas enviadas). **Ajuste meu:** com o chunk de 256 px da grade 2, "a cada 4 chunks" colaria os acampamentos; ficou **1 por região de 4 × 4 chunks** (`PACK_REGION = 32 × SUBDIV` células) — uma constante só para ajustar. Aviso: muda o mapa de **todas as seeds** só nos acampamentos (antes 4, agora ~340–400 em ±10 regiões em volta da cidade).
 - **Homem-lagarto** (`MonsterKind 'lizard'`): bandos de 3 na margem de rios (`WorldGenerator.riverAt`, novo; sem fogueira), ficha em `MONSTER_STATS`, espólio em `monsterDrops`, mesmas 7 folhas do goblin (`--rows-map 0,2,3,1`, a ordem enviada era frente/costas/esquerda/direita), `hasPoses(kind)` no lugar dos `=== 'goblin'` (estado visual, sala e espelho).
