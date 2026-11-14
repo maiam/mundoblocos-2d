@@ -86,8 +86,13 @@ describe('Poeira de passos', () => {
 });
 
 describe('Vento e pegadas (v0.93.69)', () => {
-  it('só o capim e as flores balançam no vento; árvores, pedras e cubos não', async () => {
-    const { swaysInWind, SWAY_PUSH_RADIUS } = await import('../render/wind');
+  it('o capim e as flores balançam e se curvam; as árvores balançam a copa; pedras e cubos não', async () => {
+    const { swaysInWind, windKind, SWAY_PUSH_RADIUS } = await import('../render/wind');
+    expect(windKind(Block.OAK_TREE)).toBe('tree');
+    expect(windKind(Block.SAKURA_TREE)).toBe('tree');
+    expect(windKind(Block.TALL_GRASS)).toBe('grass');
+    expect(windKind(Block.STONE)).toBeNull();
+    expect(swaysInWind(Block.OAK_TREE)).toBe(false); // a árvore não se curva ao jogador: só a copa ondula
     expect(swaysInWind(Block.TALL_GRASS)).toBe(true);
     expect(swaysInWind(Block.FLOWER)).toBe(true);
     expect(swaysInWind(Block.STONE)).toBe(false);
