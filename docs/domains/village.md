@@ -31,8 +31,8 @@
 | Barril, caixote, balde | 1,5 × 2 | sim | |
 | Toras, feno, sacos, rochas, carroça | 2–4 × 2–3 | sim | |
 | Poste com lampião | 2 × 4 | tronco 1 × 1 | luz à noite (reaproveitar o sistema dos postes da cidade) |
-| Paliçada | segmentos de 6, 7 e 9 estacas ≈ 6, 7 e 9 células (passo de 1 célula) | sim | 6 + 6 + … fecha qualquer comprimento; cantos NO/NE/SO/SE vieram à parte |
-| Portão (aberto e fechado) | 8 × 5 | fechado bloqueia | a cidade tem vão de 8 células |
+| Paliçada (`V_STAKE`) | 1 × 1,5 (16 × 24 px), 4 estacas por célula | sim | o muro todo, cantos incluídos; mesma unidade da Cerca de Estacas do jogador |
+| Portão (aberto e fechado) | 5 × 3 (vão de 3 células) | fechado bloqueia | encolhido para acompanhar o muro mais baixo (v0.93.90) |
 | Arbustos, flores, capim, pedras de caminho | 1–3 × 1–2 | não | enfeites |
 
 ## Decisões do dono do produto (14/11/2026)
@@ -46,8 +46,8 @@
 - Os cantos do norte da paliçada foram retocados pelo artista (sem o reflexo que tinham); a paliçada reta tem três larguras e a do norte, no mapa, é contínua.
 
 ## Arte a pedir ao artista (se a primeira versão não ficar boa)
-1. **Muro leste e oeste (peças laterais):** hoje uso uma estaca recortada do braço dos cantos do norte. Pedir um segmento **vertical** de paliçada, de 6 e de 7 estacas, com a face voltada para o espectador (as estacas vistas de frente, empilhadas) e a mesma altura de estaca da reta.
-2. **Estacas em escala única:** a reta tem 6, 7 e 9 estacas em larguras diferentes; pedir um **único módulo** de 1 estaca (ou de 2) com largura exata de 1 célula, para emendar sem costura.
+1. **Muro (v0.93.90):** agora é a **Cerca de Estacas** (unidade recortada da paliçada reta, 4 estacas por célula; na vila 16 × 24 px). Se não ficar boa, pedir o módulo de 4 estacas em 16 × 16 px e em 16 × 24 px, já na resolução do jogo (mesma corda e altura de estaca), para o muro e para a cerca do jogador.
+2. **Portão menor:** com o muro mais baixo o portão encolheu (5 × 3 células); se a arte vier na escala do muro, trocar.
 3. **Chão da vila:** ladrilhos repetíveis de **grama com manchas** e de **terra da estrada** (com bordas de transição para a grama), no estilo do mapa, para o chão não ficar tão liso quanto o do jogo.
 4. **Portão:** os quadros intermediários de **abrir e fechar** (4 quadros) para o portão interativo, e a versão **sem a coluna**, se for só a folha.
 5. **Casas:** porta e janelas em versões separadas (acesas à noite) e **o interior** de uma casa (cômodo) no padrão dos interiores existentes.
