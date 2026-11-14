@@ -73,7 +73,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     bounds: { cx0: -3, cy0: -1, cx1: 1, cy1: 0 },
     character: 'goddess',
     // Blocos celestiais + Terra e Terra Arada do atlas V2 para testes de profundidade.
-    blocks: [...CELESTIAL_BLOCKS, Block.WATER_PURE, Block.DIRT, Block.TILLED, ...WALL_BLOCKS, ...WALL_DOOR_BLOCKS],
+    blocks: [...CELESTIAL_BLOCKS.flatMap(id => id === Block.WATER_CRYSTAL ? [id, Block.WATER_PURE] : [id]),
+      Block.DIRT, Block.TILLED, ...WALL_BLOCKS, ...WALL_DOOR_BLOCKS],
     tools: false,
     farming: false,
     sheep: false,
