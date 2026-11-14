@@ -35,6 +35,8 @@ export interface ActorBillboardsOptions {
   lit?: boolean;
   /** Sombra projetada pelo sol (comprida e girada); desligada, a sombra é o círculo suave sob os pés (v0.93.70: o padrão). */
   sunShadow?: boolean;
+  /** Sombreado do corpo pelo sol/lua (relevo por pixel); desligado, só a luz da fogueira acende os atores (v0.93.71: o padrão). */
+  sunShading?: boolean;
   /** Balanço do corpo ao andar (v0.93.69): sobe e desce a cada passo e inclina de leve para o lado do movimento; só personagens e moradores. */
   bob?: boolean;
   createCanvas?(): HTMLCanvasElement;
@@ -168,7 +170,7 @@ export class ActorBillboards {
     this.light.uSunDir.value.set(...l.dir);
     this.light.uSunColor.value.set(...l.color);
     this.light.uAmbient.value.set(...l.ambient);
-    this.light.uLightStrength.value = l.strength;
+    this.light.uLightStrength.value = this.opts.sunShading ? l.strength : 0;
     this.shadowDir = l.shadow;
   }
 
