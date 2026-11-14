@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.74 — lajes com topo 12 × 16 (14/11/2026)
+- **Pedido do dono do produto:** "muda as receitas para terem 12×16 de topo todas" (laje1, laje2 e laje3). Decisão dele: **12 px de profundidade (norte–sul) por 16 de largura, encostada na frente** (borda sul da célula); sobram 4 px livres atrás.
+- **Pegada** (`SLAB_DEPTH = 12/16` em `world/slabs.ts`): a caixa da laje vai de `y + 0,25` a `y + 1`; as alturas seguem 4, 6 e 8 px. Tudo é **recorte da imagem, sem esticar**: o topo e as faces laterais mantêm a ponta da frente (sul) da textura da Tábua e o lado de trás perde 4 px (`slabGeometry(altura)`).
+- Lajes lado a lado em fileira continuam emendadas na largura; em fileira norte–sul ficam com 4 px de vão entre elas. A lógica não muda: a célula inteira segue andável e o corpo sobe a altura da laje também sobre os 4 px livres (só visual).
+- Só cliente (inerte sem o piloto `?tabua=laje`; a sala nunca o liga). Testes: pegada, encaixe na borda sul e recorte do topo e das faces (553 testes, grades 1 e 2). Conferido no navegador.
+
 ## Orvalis v0.93.73 — três lajes de Carvalho (laje1, laje2, laje3) no piloto (14/11/2026)
 - **Pedido do dono do produto:** "ficou melhor do que eu imaginava" — criar **3 versões da tábua com receitas `laje1` (4 × 16, topo 16 × 16), `laje2` (6 × 16) e `laje3` (8 × 16)**, só offline com `?tabua=laje`, para testar.
 - **Blocos novos** (`Block.OAK_SLAB_1/2/3` = 250–252, `SLAB_BLOCKS`; `world/slabs.ts` → `SLABS`): face de **4, 6 e 8 px** numa célula de 16 px (1/4, 3/8 e 1/2 de célula), topo 16 × 16 com a textura da Tábua de Carvalho (frente = recorte da faixa de cima, sem esticar). A **Tábua de Carvalho voltou a ser cubo comum** (no piloto anterior ela mesma virava laje).

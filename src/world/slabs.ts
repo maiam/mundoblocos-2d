@@ -1,7 +1,7 @@
 import { Block, type BlockId } from './blocks';
 
 /**
- * Lajes de Carvalho (piloto `?tabua=laje`, v0.93.73): três blocos baixos — topo 16 × 16 px e face de 4, 6 e 8 px (1/4, 3/8 e 1/2 de
+ * Lajes de Carvalho (piloto `?tabua=laje`, v0.93.73): três blocos baixos — topo 16 × 12 px (encostado na frente) e face de 4, 6 e 8 px (1/4, 3/8 e 1/2 de
  * célula na grade 2, onde a célula tem 16 × 16 px). Só valem no piloto (Mundo principal, 3D, jogo offline): a laje é andável (lógica
  * no nível do chão) e o corpo sobe a altura dela por cima (só visual). Fora do piloto os blocos continuam existindo como cubos
  * comuns de tábua. Sem DOM.
@@ -15,6 +15,12 @@ export interface SlabSpec {
   /** Altura em células (facepx ÷ 16). */
   height: number;
 }
+
+/**
+ * Pegada do topo (v0.93.74, pedido do dono do produto: "12×16 de topo"): 16 px de largura (leste–oeste) por 12 px de fundo (norte–sul),
+ * **encostada na frente** (borda sul) da célula; sobram 4 px livres atrás. Em células: fundo 12/16.
+ */
+export const SLAB_DEPTH = 12 / 16;
 
 export const SLABS: readonly SlabSpec[] = [
   { id: Block.OAK_SLAB_1, recipe: 'laje1', facepx: 4, height: 4 / 16 },

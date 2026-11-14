@@ -5,7 +5,7 @@ import { sanctuaryBlockTransform } from '../render/sanctuaryThreeLayout';
 import { Player } from '../game/player';
 import { Block, blockDef, SLAB_BLOCKS } from './blocks';
 import { blockStack, RECIPES } from './items';
-import { SLABS, slabBaseOf, slabHeightOf, slabIdsFromSearch } from './slabs';
+import { SLAB_DEPTH, SLABS, slabBaseOf, slabHeightOf, slabIdsFromSearch } from './slabs';
 import { World } from './world';
 
 describe('Lajes de Carvalho 1, 2 e 3 (piloto ?tabua=laje, v0.93.73)', () => {
@@ -85,23 +85,47 @@ describe('Lajes de Carvalho 1, 2 e 3 (piloto ?tabua=laje, v0.93.73)', () => {
     expect(p.visualZ).toBeCloseTo(0, 2);
   });
 
-  it('geometria: caixa 1 × altura × 1 e as faces laterais recortam a faixa de cima da imagem (sem esticar)', () => {
+  it('topo 12 × 16: 16 px de largura por 12 de fundo (SLAB_DEPTH = 0,75), encostado na frente (borda sul) da célula', () => {
+    expect(SLAB_DEPTH).toBe(12 / 16);
+    for (const s of SLABS) {
+      const t = sanctuaryBlockTransform({ x: 3, y: 5, level: 0, shape: 'slab', slabHeight: s.height });
+      expect(t).toMatchObject({ x: 3.5, width: 1, height: s.height, depth: SLAB_DEPTH });
+      expect(t.y).toBeCloseTo(s.height / 2);
+      // A caixa vai de z = y + 0,25 a z = y + 1: a face da frente (sul) coincide com a borda sul da célula, sobram 4 px atrás.
+      expect(t.z + t.depth / 2).toBeCloseTo(6);
+      expect(t.z - t.depth / 2).toBeCloseTo(5.25);
+    }
+  });
+
+  it('geometria: caixa 1 × altura × 0,75 e tudo é recorte da imagem (sem esticar), mantendo a frente', () => {
     for (const s of SLABS) {
       const g = slabGeometry(s.height);
       g.computeBoundingBox();
       const size = g.boundingBox!.getSize(new THREE.Vector3());
-      expect([size.x, size.y, size.z]).toEqual([1, s.height, 1]);
+      expect([size.x, size.y, size.z].map((n) => +n.toFixed(6))).toEqual([1, s.height, SLAB_DEPTH]);
       const uv = g.getAttribute('uv') as THREE.BufferAttribute;
-      for (const face of [0, 1, 4, 5]) for (let i = face * 4; i < face * 4 + 4; i++) {
+      const pos = g.getAttribute('position') as THREE.BufferAttribute;
+      // Faces laterais: a faixa de cima da imagem (altura).
+      for (const face of [4, 5]) for (let i = face * 4; i < face * 4 + 4; i++) {
         expect(uv.getY(i)).toBeGreaterThanOrEqual(1 - s.height - 1e-6);
         expect(uv.getY(i)).toBeLessThanOrEqual(1 + 1e-6);
       }
-      const topV = [8, 9, 10, 11].map((i) => uv.getY(i)); // topo: imagem inteira
-      expect(Math.min(...topV)).toBeCloseTo(0);
-      expect(Math.max(...topV)).toBeCloseTo(1);
-      const t = sanctuaryBlockTransform({ x: 3, y: 5, level: 0, shape: 'slab', slabHeight: s.height });
-      expect(t).toMatchObject({ x: 3.5, z: 5.5, height: s.height, depth: 1 });
-      expect(t.y).toBeCloseTo(s.height / 2);
+      // Topo (face 2): largura inteira (u de 0 a 1) e fundo recortado: o vértice da frente (+z) fica na ponta da imagem e o de trás
+      // anda só SLAB_DEPTH do caminho (12 de 16 px), sem esticar.
+      const topIdx = [8, 9, 10, 11];
+      const us = topIdx.map((i) => uv.getX(i));
+      expect(Math.min(...us)).toBeCloseTo(0);
+      expect(Math.max(...us)).toBeCloseTo(1);
+      const front = topIdx.filter((i) => pos.getZ(i) > 0), back = topIdx.filter((i) => pos.getZ(i) < 0);
+      const vf = uv.getY(front[0]), vb = uv.getY(back[0]);
+      expect(Math.abs(vb - vf)).toBeCloseTo(SLAB_DEPTH, 5);
+      expect([0, 1].some((e) => Math.abs(vf - e) < 1e-6)).toBe(true); // a frente é uma ponta da imagem inteira
+      // Faces ±X: o fundo (u) é recortado do mesmo jeito.
+      for (const face of [0, 1]) {
+        const idx = [0, 1, 2, 3].map((k) => face * 4 + k);
+        const uf = uv.getX(idx.filter((i) => pos.getZ(i) > 0)[0]), ub = uv.getX(idx.filter((i) => pos.getZ(i) < 0)[0]);
+        expect(Math.abs(ub - uf)).toBeCloseTo(SLAB_DEPTH, 5);
+      }
     }
   });
 });
