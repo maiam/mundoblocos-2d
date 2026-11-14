@@ -157,7 +157,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
   if (new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null, () => game?.drawTimes ?? { samples: [], count: 0 }));
 }
 
-/** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino ou Mila) e só então o mundo novo. */
+/** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino, Mila ou Grewn) e só então o mundo novo. */
 function chooseCharacterForNewWorld(): void {
   const title = new TitleScreen({
     canContinue: false,

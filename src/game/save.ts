@@ -36,7 +36,7 @@ export interface SaveData {
   time: number;
   selected: number | null;
   player: { x: number; y: number; z: number; hp: number; facing: Facing; hunger: number };
-  /** Personagem pronto (Heroína, Herói, Hood, Gino ou Mila). */
+  /** Personagem pronto (Heroína, Herói, Hood, Gino, Mila ou Grewn). */
   body: HeroBody;
   /** Névoa do minimapa: células já descobertas, por chunk (bits em base64). */
   explored: Array<{ cx: number; cy: number; bits: string }>;
