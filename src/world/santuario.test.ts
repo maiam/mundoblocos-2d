@@ -3,7 +3,7 @@ import { CHUNK_SIZE } from '../config';
 import { hotbarFor } from '../game/hotbar';
 import { Entities } from '../game/entities';
 import { Player } from '../game/player';
-import { Block, MATERIALS } from './blocks';
+import { Block } from './blocks';
 import { chunkCount, resolveWorldId, WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
