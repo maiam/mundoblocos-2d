@@ -9,7 +9,7 @@ import { art } from '../render/art';
 import { World } from '../world/world';
 import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
 import type { Facing } from './walker';
-import { Camera } from './camera';
+import { Camera, initialZoomMultiplier } from './camera';
 import type { NetSession } from '../net/session';
 import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
@@ -97,6 +97,9 @@ export interface GameOptions {
 export class Game {
   readonly world: World;
   readonly camera = new Camera();
+  /** Presets por orientação só se aplicam enquanto o usuário não ajustou o zoom. */
+  private zoomModifiedByUser = false;
+  private lastZoomPortrait: boolean | null = null;
   readonly player: Player;
   readonly entities: Entities;
   readonly inventory: Inventory;
@@ -203,6 +206,7 @@ export class Game {
     this.lastHp = this.player.hp;
     this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
     this.camera.setCellsTall(this.renderer.preferredCellsTall);
+    this.syncOrientationZoom(true);
     this.actions = new ActionController({
       world: this.world, entities: this.entities, player: this.player, inventory: this.inventory,
       drops: this.drops, camera: this.camera, renderer: this.renderer,
@@ -256,6 +260,10 @@ export class Game {
     this.menu = new Menu(this.hud.root, {
       seed,
       status: () => this.saveStatus(),
+      zoom: screenMode?.isTouch ? {
+        get: () => this.camera.zoomMul,
+        change: (factor: number) => this.zoomByUser(factor),
+      } : undefined,
       onOpenChange: (open) => { if (open) { this.toggleBag(false); this.toggleSkills(false); this.actions.cancelAll(); this.saveNow(); } },
       onNewWorld: options.net ? undefined : options.onNewWorld,
       onRestart: options.net ? undefined : options.onRestart,
@@ -682,12 +690,28 @@ export class Game {
     return [this.player.x * TILE, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4 + this.dialogueShift];
   }
 
+  /** Por padrão, paisagem usa 1,91× e retrato 0,95×.
+   * Girar a tela atualiza o preset apenas até o primeiro ajuste manual.
+   */
+  private syncOrientationZoom(force = false): void {
+    const portrait = this.screenMode?.isPortrait ?? window.innerHeight > window.innerWidth;
+    if (!force && this.lastZoomPortrait === portrait) return;
+    this.lastZoomPortrait = portrait;
+    if (!this.zoomModifiedByUser) this.camera.setZoomMultiplier(initialZoomMultiplier(portrait));
+  }
+
+  private zoomByUser(factor: number): void {
+    this.zoomModifiedByUser = true;
+    this.camera.zoomBy(factor);
+  }
+
   private resize = (): void => {
     const dpr = window.devicePixelRatio || 1;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     this.canvas.width = Math.round(w * dpr);
     this.canvas.height = Math.round(h * dpr);
+    this.syncOrientationZoom();
     this.camera.resize(w, h);
   };
 
@@ -746,7 +770,7 @@ export class Game {
     this.listen(c, 'contextmenu', (e) => e.preventDefault());
     this.listen(c, 'wheel', (e) => {
       e.preventDefault();
-      this.camera.zoomBy(Math.exp(-e.deltaY * 0.0012));
+      this.zoomByUser(Math.exp(-e.deltaY * 0.0012));
     }, { passive: false });
 
     // Toque/clique curto = usar. Segurar sobre o mesmo alvo = quebrar.
@@ -1153,8 +1177,8 @@ export class Game {
     if (k.has('KeyS') || k.has('ArrowDown')) y += 1;
     // Zoom contínuo independente da taxa de quadros (~1,35× por segundo).
     const z = Math.exp(0.3 * dt);
-    if (k.has('KeyE') || k.has('Equal')) this.camera.zoomBy(z);
-    if (k.has('KeyQ') || k.has('Minus')) this.camera.zoomBy(1 / z);
+    if (k.has('KeyE') || k.has('Equal')) this.zoomByUser(z);
+    if (k.has('KeyQ') || k.has('Minus')) this.zoomByUser(1 / z);
     return [x, y];
   }
 
