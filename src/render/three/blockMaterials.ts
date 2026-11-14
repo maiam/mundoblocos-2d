@@ -9,6 +9,8 @@ export type BlockFaces = {
   top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement;
   /** Mapa UV real, em ordem BoxGeometry: +X, -X, +Y, -Y, +Z, -Z. */
   cube?: [HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement];
+  /** Arte já sombreada pelo pintor: ignora iluminação direcional na câmera inclinada. */
+  unlit?: boolean;
 };
 
 /**
@@ -36,7 +38,7 @@ export class BlockMaterials {
     };
     if (faces.cube) {
       const textures = faces.cube.map(toTexture);
-      const Mat = this.view === 'oblique' ? THREE.MeshBasicMaterial : THREE.MeshLambertMaterial;
+      const Mat = this.view === 'oblique' || faces.unlit ? THREE.MeshBasicMaterial : THREE.MeshLambertMaterial;
       const block = textures.map(map => new Mat({ map, color: 0xffffff }));
       // O solo tem a mesma face superior, mas e' uma placa mais fina.
       cached = { block, ground: block, textures };

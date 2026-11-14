@@ -160,6 +160,8 @@ export const Block = {
   EARTH_CULTIVATED: 91,
   WATER_SACRED: 92,
   WATER_CRYSTAL: 93,
+  /** Água Pura: bloco 3D azul com textura aquática em todas as faces; exclusivo do Santuário. */
+  WATER_PURE: 98,
   CRYSTAL_LIFE: 94,
   LIGHT_BLOCK: 95,
   WOOD_CELESTIAL: 96,
@@ -387,6 +389,7 @@ const defs: BlockDef[] = [
   object(Block.EARTH_CULTIVATED, 'Terra Cultivada'),
   object(Block.WATER_SACRED, 'Água Sagrada'),
   object(Block.WATER_CRYSTAL, 'Água Cristalina'),
+  object(Block.WATER_PURE, 'Água Pura'),
   object(Block.CRYSTAL_LIFE, 'Cristal da Vida', { glow: true }),
   object(Block.LIGHT_BLOCK, 'Bloco de Luz', { glow: true }),
   object(Block.WOOD_CELESTIAL, 'Madeira Celestial'),

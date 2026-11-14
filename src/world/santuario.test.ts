@@ -53,12 +53,13 @@ describe('Santuário Celestial', () => {
     expect(w.loadedCount).toBe(10);
   });
 
-  it('aceita os 18 celestiais e Terra/Arada; o mundo principal não aceita os celestiais', () => {
+  it('aceita os 18 celestiais, Água Pura e Terra/Arada; o mundo principal não aceita os celestiais', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     expect(CELESTIAL_BLOCKS).toHaveLength(18);
     for (const m of MATERIALS) expect(w.canPlace(x, y, m)).toBe(m === Block.DIRT || m === Block.TILLED);
     for (const c of CELESTIAL_BLOCKS) expect(w.canPlace(x, y, c)).toBe(true);
+    expect(w.canPlace(x, y, Block.WATER_PURE)).toBe(true);
     expect(w.placeBlock(x, y, Block.MARBLE_ORNATE)).toBe(true);
     expect(w.placeBlock(x, y, Block.LIGHT_BLOCK)).toBe(true); // empilha
     const main = new World(1);
@@ -76,7 +77,7 @@ describe('Santuário Celestial', () => {
     expect(w.standHeight(x + 2, y)).toBe(0);
   });
 
-  it('spawn no centro; Deusa é a personagem; hotbar só com blocos (18 celestiais + Terra/Arada + 2 paredes + porta)', () => {
+  it('spawn no centro; Deusa é a personagem; hotbar só com blocos (18 celestiais + Água Pura + Terra/Arada + 2 paredes + porta)', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     expect(w.inBounds(x, y)).toBe(true);
@@ -84,7 +85,7 @@ describe('Santuário Celestial', () => {
     const e = new Entities(new Player(x + 0.5, y + 0.5), Math.random, S.character);
     expect(e.actors[0].kind).toBe('goddess');
     const hb = hotbarFor(S);
-    expect(hb).toHaveLength(23);
+    expect(hb).toHaveLength(24);
     expect(hb.every((s) => s.kind === 'block')).toBe(true);
     expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(38); // 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + cerca + portão + 2 paredes + porta de parede (W5)
   });

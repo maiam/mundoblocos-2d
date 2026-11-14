@@ -139,7 +139,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     grassCubeSheet.onload=()=>{
       if(this.disposed)return;
       installCelestialGrassNet(grassCubeSheet);
-      this.blockMaterials.invalidate(Block.GRASS_CELESTIAL);
+      // A terra da grama é agora a referência comum dos três blocos.
+      for(const id of [Block.GRASS_CELESTIAL,Block.DIRT,Block.TILLED])
+        this.blockMaterials.invalidate(id);
       this.signature='';
     };
     grassCubeSheet.onerror=()=>console.warn('Grama Celestial (6 faces): fallback para arte anterior');

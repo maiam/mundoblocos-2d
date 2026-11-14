@@ -1,6 +1,7 @@
 import type { MaterialsV2Manifest } from '../materialsV2';
 import materialsV2Atlas from '../../assets/materials-v2.webp';
 import materialsV2Manifest from '../../assets/materials-v2.json';
+import { WATER_PURE_TILE_DATA_URI } from '../waterPureAsset';
 import dirtIcon from '../../assets/icon-block-dirt.webp';
 import tilledIcon from '../../assets/icon-block-tilled.webp';
 import newCloudSolid from '../../assets/santuario-nuvem-solida-512.jpg';
@@ -43,6 +44,7 @@ const pack: ArtPack = {
     [Block.MARBLE_ORNATE]: newMarbleOrnate,
     [Block.STONE_CELESTIAL]: newStoneCelestial,
     [Block.STONE_GOLDEN]: newStoneGolden,
+    [Block.WATER_PURE]: WATER_PURE_TILE_DATA_URI,
   },
   wallAtlases: { [Block.WALL_PLANKS]: wallsTabuas, [Block.WALL_STONE]: wallsPedra },
   celestialIcons: {
@@ -60,6 +62,7 @@ const pack: ArtPack = {
     [Block.EARTH_CULTIVATED]: iconEarthCultivated,
     [Block.WATER_SACRED]: iconWaterSacred,
     [Block.WATER_CRYSTAL]: iconWaterCrystal,
+    [Block.WATER_PURE]: WATER_PURE_TILE_DATA_URI,
     [Block.CRYSTAL_LIFE]: iconCrystalLife,
     [Block.LIGHT_BLOCK]: iconLightBlock,
     [Block.WOOD_CELESTIAL]: iconWoodCelestial,
