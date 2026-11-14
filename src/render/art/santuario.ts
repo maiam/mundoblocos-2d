@@ -3,6 +3,11 @@ import materialsV2Atlas from '../../assets/materials-v2.webp';
 import materialsV2Manifest from '../../assets/materials-v2.json';
 import { WATER_PURE_TILE_DATA_URI } from '../waterPureAsset';
 import dirtIcon from '../../assets/icon-block-dirt.webp';
+import grassIcon from '../../assets/icon-block-grass.webp';
+import oakLogIcon from '../../assets/icon-block-oak-log.webp';
+import oakPlanksIcon from '../../assets/icon-block-oak-planks.webp';
+import stoneIcon from '../../assets/icon-block-stone.webp';
+import smoothStoneIcon from '../../assets/icon-block-stone-smooth.webp';
 import tilledIcon from '../../assets/icon-block-tilled.webp';
 import newCloudSolid from '../../assets/santuario-nuvem-solida-512.jpg';
 import newCloudEthereal from '../../assets/santuario-nuvem-eterea-512.jpg';
@@ -74,6 +79,11 @@ const pack: ArtPack = {
   materialIcons: {
     [Block.DIRT]: dirtIcon,
     [Block.TILLED]: tilledIcon,
+    [Block.GRASS]: grassIcon,
+    [Block.OAK_LOG]: oakLogIcon,
+    [Block.OAK_PLANKS]: oakPlanksIcon,
+    [Block.STONE]: stoneIcon,
+    [Block.STONE_SMOOTH]: smoothStoneIcon,
   },
   itemIcons: {},
   toolIcons: {},
