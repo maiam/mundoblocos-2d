@@ -177,6 +177,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 
 **Ícone de item** (v0.93.7): `python3 scripts/make-item-icon.py assets-src/<item>.png src/assets/icon-<item>.webp [--size 64]` (recorta, centraliza e reduz; WebP sem perdas) → import e entrada em `itemIcons` de `render/art/principal.ts`.
 
+**Lobos** (v0.93.61; `assets-src/wolf-<brown|gray|white>/<estado>.png`, 4×4 transparentes): `python3 scripts/process-sprite.py <src> src/assets/wolf-<cor>-<estado>.png --alpha --largest --frame-h 160` (`alert` sem `--largest`; confira a ordem das linhas: a folha marrom de idle/run/alert/attack/hurt/death usa `--rows-map 0,2,1,3`) → `optimize-assets.py`. **Capivara** (`assets-src/capybara/`, `--frame-h 128`): só `walk` e `idle` entram (`src/assets/capybara*.webp`).
+
 **Homem-lagarto** (v0.93.60; `assets-src/lizard/<estado>.png`, 4×4 transparente, linhas frente/costas/esquerda/direita → `--rows-map 0,2,3,1`): mesmo comando do goblin (`--alpha --largest --frame-h 160`, `alert` sem `--largest`) com `src/assets/lizard-<estado>.png` → `optimize-assets.py` → imports em `render/art/principal.ts`.
 
 **Goblin** (v0.93.6; `assets-src/goblin/<estado>.png`, 4×4 transparente, ordem frente/esquerda/direita/costas, sem `--rows-map`): `python3 scripts/process-sprite.py assets-src/goblin/<estado>.png src/assets/goblin-<estado>.png --alpha --largest --frame-h 160` (no `alert` omita `--largest`, senão os "!" somem) → `optimize-assets.py` → imports `.webp` em `render/art/principal.ts`. Estados: idle, walk, run, alert, attack, hurt, death.

@@ -11,7 +11,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 | Item | Valor | Fonte |
 |---|---|---|
 | Versão do jogo | 0.93.62 | `package.json` |
-| `PROTOCOL_VERSION` (multiplayer) | 22 | `src/net/protocol.ts` |
+| `PROTOCOL_VERSION` (multiplayer) | 23 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (inalterado na v0.91.0: Mila e lobos carregam sob demanda) — **no limite** | build do artifact |
@@ -82,6 +82,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - NPCs só dizem falas fixas (2 cada; sem escolhas, loja ou missões); só Ferraria e Tenda têm interior.
 - **Lobos** (v0.91.0, `world/wolves.ts`, `domains/dungeon.md`): bandos de 1 a 3 da mesma cor (marrom, cinza, branco) pelo mapa ao redor da cidade; só atacam a personagem a até 3 células; soltam Pelagem e Presa de Lobo (sem uso em receitas ainda).
 - **Goblins** (PR #96, `world/goblins.ts`; soltam **2 Moedas de Cobre** ao morrer): **um acampamento por região de 64 × 64 células (1 024 px; "1 a cada 16 chunks", v0.93.60)**, planejado uma vez pela seed em ±10 regiões em volta da cidade (~340–400 acampamentos), fora do anel da cidade e a ≥ 24 células um do outro, com sete goblins em torno da **fogueira já existente** (`Block.CAMPFIRE`; constante `PACK_REGION` ajusta a densidade). 60 de vida, ataque-base 15, persegue só a até três células (× `SUBDIV`). Sete folhas 4×4, passeio limitado, respawn e estados sincronizados na sala.
+- **Lobos (v0.93.61):** as três cores (marrom, cinza, branco) agora têm **sete folhas 4×4 cada** (walk, idle, run, alert, attack, hurt, death; `assets-src/wolf-<cor>/`, `src/assets/wolf-<cor>-<estado>.webp`) e usam o mesmo mecanismo de pose do goblin e do lagarto (`hasPoses`/`PoseKind` em `game/monster.ts`; estado visual sincronizado pela sala no campo `v`). Substituem as folhas únicas antigas (`wolf-marrom/cinza/branco.webp`). Atenção: a folha marrom de alerta/ataque/dano/idle veio com as linhas na ordem frente/direita/esquerda/costas (`--rows-map 0,2,1,3`); a de caminhada já vinha na ordem do jogo.
+- **Capivara** (v0.93.61, `FarmKind 'capybara'`, `game/horse.ts`): animal doméstico que só **passeia** (velocidade 0,8, coleira 7) — 3 perto do portão (ao lado oeste do campo das vacas); desenhada com a folha de caminhada e, parada, com a de idle (`capybara-idle`). **Sem filhote nem alimento por enquanto** (sem arte de filhote; não há item que ela coma). As folhas de comer, dormir, dano e morte estão em `assets-src/capybara/` e **ainda não entram no jogo**.
 - **Homem-lagarto** (v0.93.60, `lizard`; vida **100**, ataque **15**, defesa 2, **2 Moedas de Cobre**): bandos de **três** na margem de rios (`WorldGenerator.riverAt`; ~110–155 bandos por seed, um por região), sem fogueira; mesmas sete folhas do goblin (`assets-src/lizard`, `--rows-map 0,2,3,1`), mesma visão/coleira/ritmo. **Streaming dos bandos** (goblins e lagartos, `Entities.updatePacks`): só vivem os bandos com jogador a até 56 × `SUBDIV` células e saem ao se afastar além de 80 × `SUBDIV` (renascimentos pendentes somem junto; o bando volta completo ao se aproximar). `spawnWildlife(world, true)` (jogo e sala) deixa isso por conta do streaming; sem o argumento (testes) todos nascem de uma vez. Protocolo 22 (novo tipo de monstro).
 - Espólios das aranhas e vários itens ainda sem uso em receitas; as 2 pedras sem fonte (Lisa e Polida) só existem por
   código/salvamento.

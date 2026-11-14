@@ -40,6 +40,7 @@ export const SCALE_ACTORS: readonly ScaleActor[] = [
   { kind: 'lamb', label: 'Cordeiro', col: 10, row: 2 },
   { kind: 'chicken', label: 'Galinha', col: 12, row: 2 },
   { kind: 'chick', label: 'Pintinho', col: 14, row: 2 },
+  { kind: 'capybara', label: 'Capivara', col: 16, row: 2 },
 
   { kind: 'spider-small', label: 'Aranha P', col: 0, row: 4 },
   { kind: 'spider-big', label: 'Aranha G', col: 2, row: 4 },
