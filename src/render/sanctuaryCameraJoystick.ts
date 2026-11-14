@@ -34,8 +34,13 @@ export class SanctuaryCameraJoystick {
   private lastX = 0;
   private lastY = 0;
 
-  constructor(private readonly apply: (orbit: SanctuaryOrbit | null) => void) {
+  /**
+   * enabled=false mantém o componente e sua lógica intactos, mas não monta
+   * a interface e não recupera ajustes antigos. A câmera recebe o padrão.
+   */
+  constructor(private readonly apply: (orbit: SanctuaryOrbit | null) => void, private readonly enabled = true) {
     try {
+      if (!this.enabled) throw new Error('Controles de câmera temporariamente inibidos');
       const saved = JSON.parse(localStorage.getItem(KEY) || 'null') as SanctuaryOrbit | null;
       if (saved && Number.isFinite(saved.azimuthDeg) && Number.isFinite(saved.elevationDeg) && Number.isFinite(saved.zoom)) {
         this.orbit = normalize(saved);
@@ -112,7 +117,7 @@ export class SanctuaryCameraJoystick {
       this.publish();
     }));
     this.updateReadout();
-    document.body.appendChild(this.root);
+    if (this.enabled) document.body.appendChild(this.root);
     // A configuração inicial vale já no primeiro quadro do jogo.
     this.apply({ ...this.orbit });
   }
