@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.94 — a quebra de blocos ganha tremor, lascas, estouro e itens que quicam (3D) (14/11/2026)
+- **Pedido do dono do produto:** melhorar a animação de quebrar; ele aprovou a combinação 1 + 2 + 4 + 5 (lascas, tremor, estouro e itens que quicam).
+- **Lascas a cada golpe** (`three/breakChips.ts`, `breakFx.ts`): enquanto se segura a quebra, saem a cada 0,11 s de 2 a 4 lascas quadradas **da cor do material** (`blockColor`, a do minimapa; madeira, pedra e terra sem cor própria ganham um tom; flor e capim não soltam), que pulam, caem com gravidade e quicam uma vez. Pool de 96, sem `Math.random`.
+- **Tremor do bloco** (`ChunkBlocks.setShake`, `breakShake`): o bloco mais alto da célula balança (até ~0,035 célula, oscilação rápida com fases diferentes por eixo), mais forte perto de quebrar; a instância volta à matriz original ao soltar. A árvore mantém o tremor próprio.
+- **Estouro final** (`WorldThreeRenderer.stepBreak`): quando o bloco some (ou perde um nível) até 0,5 s depois de soltar, saem 16 lascas mais fortes e 3 nuvens de poeira da cor do material.
+- **Itens que quicam** (`three/itemSprites.ts`: `dropLift`, `dropToss`): dois quiques (14 px em 0,5 s e 5 px em 0,3 s) em vez de um, e o item **desliza** do bloco até onde cai (deslocamento horizontal que decai em 0,5 s).
+- Só cliente e só 3D; `?sensacao=0` e os cômodos ficam sem; o 2D de reserva mantém as rachaduras de antes. Sem protocolo (o servidor não muda). 595 testes e `tsc` verdes (grades 1 e 2). Conferido no navegador (lascas, rachaduras, estouro e item). O tremor do bloco só foi conferido por teste (a oscilação não aparece em quadro parado).
 ## Orvalis v0.93.93 — os peixes ficam sob a água (3D) (14/11/2026)
 - **Pedido do dono do produto:** os peixes pareciam flutuar sobre a água; deixar mais transparentes ou com algum efeito.
 - **Efeito** (`three/waterFish.ts`): o peixe agora é **translúcido** (opacidade máxima 0,74, com fade de entrada e saída), **tingido de azul-água** (multiplica a cor da imagem por `0xd6eaf5`) e **ondula** — a amostra da textura balança de leve (refração) com o tempo. Testei duas tentativas antes: com o peixe **sob** a superfície animada e mais tingido ele perdeu a cor e quase sumiu; ficou como está, **acima** da superfície animada (`renderOrder` −0,5) mas translúcido.
