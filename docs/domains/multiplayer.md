@@ -56,7 +56,7 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
 (todos usam `LoopbackServer`, sem rede).
 
 ## Grade fina (ADR 0032, F6)
-`PROTOCOL_VERSION` 21: o `hello` leva `sub` e a sala recusa grade diferente; `RoomSnapshot` v5 grava `sub` e `Room.restore` converte arquivos antigos (`rescaleRoomSnapshot`) ou recusa os de grade mais fina. O servidor faz cópia do arquivo da sala antes da primeira regravação de cada pacote (`sala-N.json.antes-<pacote>.bak`). Jogo e servidor trocam `DEFAULT_SUBDIV` juntos (F7).
+`PROTOCOL_VERSION` 22 (v0.93.60: novo monstro `lizard`; o índice de pose `v` vale para goblin e lagarto) — antes, 21: o `hello` leva `sub` e a sala recusa grade diferente; `RoomSnapshot` v5 grava `sub` e `Room.restore` converte arquivos antigos (`rescaleRoomSnapshot`) ou recusa os de grade mais fina. O servidor faz cópia do arquivo da sala antes da primeira regravação de cada pacote (`sala-N.json.antes-<pacote>.bak`). Jogo e servidor trocam `DEFAULT_SUBDIV` juntos (F7).
 
 ## Pendências
 Medir CPU e banda na Hostinger com gente de verdade; comprimir o `welcome` quando o mundo editado crescer; mais salas

@@ -26,6 +26,10 @@ export const WOLF_SIGHT = 3;
 export const GOBLIN_SIGHT = WOLF_SIGHT * SUBDIV;
 export const GOBLIN_ATTACK_SECONDS = 0.55;
 export const GOBLIN_ALERT_SECONDS = 0.48;
+/** Monstros com folhas de pose (idle, walk, run, alert, attack, hurt): goblin e homem-lagarto. */
+export function hasPoses(kind: MonsterKind): boolean {
+  return kind === 'goblin' || kind === 'lizard';
+}
 export type GoblinVisual = 'idle' | 'walk' | 'run' | 'alert' | 'attack' | 'hurt';
 export const GOBLIN_VISUALS: readonly GoblinVisual[] = ['idle','walk','run','alert','attack','hurt'];
 
@@ -41,6 +45,10 @@ export const MONSTERS: Record<MonsterKind, MonsterDef> = {
   'wolf-white': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
   // Goblins guard a campfire in groups of seven; aggression only within 3 cells.
   goblin: { spec: { speed: 2.75, halfW: 0.34, halfD: 0.21, stepHeight: 1 },
+    sight: WOLF_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
+    deathSeconds: 0.95, open: true },
+  // Homem-lagarto (v0.93.60): vive junto de rios e anda em grupos de três; mesma visão, coleira e ritmo do goblin.
+  lizard: { spec: { speed: 2.9, halfW: 0.34, halfD: 0.21, stepHeight: 1 },
     sight: WOLF_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
     deathSeconds: 0.95, open: true },
 };
@@ -142,7 +150,7 @@ export class Monster extends Walker {
     if (this.dead || this.biteCd > 0 || this.hurt > 0) return false;
     if (Math.hypot(target.x - this.x, target.y - this.y) > this.reach + 0.15) return false;
     this.biteCd = MONSTERS[this.kind].biteEvery;
-    if (this.kind === 'goblin') this.attackAnim = GOBLIN_ATTACK_SECONDS;
+    if (hasPoses(this.kind)) this.attackAnim = GOBLIN_ATTACK_SECONDS;
     return true;
   }
 
@@ -167,7 +175,7 @@ export class Monster extends Walker {
     const steps = flow ? flow(cx, cy) : -1;
     const chasing = targetInside && (def.open ? dist <= def.sight : flow ? steps >= 0 && steps <= def.sight * 1.6 : dist < def.sight);
     if (chasing) {
-      if (this.kind === 'goblin' && !this.chasing) this.alertAnim = GOBLIN_ALERT_SECONDS;
+      if (hasPoses(this.kind) && !this.chasing) this.alertAnim = GOBLIN_ALERT_SECONDS;
       this.chasing = true;
       const reach = this.reach;
       if (dist <= reach) {

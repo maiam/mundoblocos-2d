@@ -175,7 +175,7 @@ export class Game {
     if (options.body) this.entities.body = options.body;
     // Animais e monstros: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
     if (options.net) this.entities.remote = true;
-    else this.entities.spawnWildlife(this.world);
+    else this.entities.spawnWildlife(this.world, true);
     this.entities.spawnVillagers(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));

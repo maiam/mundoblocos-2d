@@ -11,9 +11,9 @@ import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
 import { MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
-import { type FlowField, Monster, MONSTERS } from './monster';
+import { type FlowField, hasPoses, Monster, MONSTERS } from './monster';
 import { wolfPacks, wolfRoam } from '../world/wolves';
-import { goblinRoam, GOBLIN_PACK_SIZE } from '../world/goblins';
+import { goblinRoam, GOBLIN_PACK_SIZE, LIZARD_PACK_SIZE, lizardRoam } from '../world/goblins';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
 import { type Facing, type Walker } from './walker';
 
@@ -38,7 +38,7 @@ export function canSit(body: HeroBody): body is SitBody {
 /** Nome de cada personagem pronto na tela de escolha. */
 export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila' };
 
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | 'goblin-idle' | 'goblin-run' | 'goblin-alert' | 'goblin-attack' | 'goblin-hurt';
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | 'goblin-idle' | 'goblin-run' | 'goblin-alert' | 'goblin-attack' | 'goblin-hurt' | 'lizard-idle' | 'lizard-run' | 'lizard-alert' | 'lizard-attack' | 'lizard-hurt';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -71,6 +71,9 @@ const FLOW_EVERY = 0.25;
 const RESPAWN_CLEARANCE = 10 * SUBDIV;
 /** Monstro mais longe que isto (células, em x ou y) de todo jogador não é simulado. */
 const ACTIVE_RADIUS = 48 * SUBDIV;
+/** Bandos (acampamentos de goblin e homens-lagarto): nascem com um jogador a até … células e somem com todos além de …. */
+const PACK_SPAWN_RADIUS = 56 * SUBDIV;
+const PACK_DROP_RADIUS = 80 * SUBDIV;
 
 const FLOCK_SIZE = 4;
 /** Alcance do golpe de espada (células, do centro dos pés) e abertura do arco (cosseno mínimo). */
@@ -268,7 +271,7 @@ export class Entities {
    * Bichos do mundo (os mesmos em qualquer aparelho e na sala, pela seed): rebanho, cavalo, vacas e galinhas no campo
    * diante do portão (mundos com animais) e os monstros da dungeon.
    */
-  spawnWildlife(world: World): void {
+  spawnWildlife(world: World, stream = false): void {
     if (world.profile.sheep) {
       const [gx, gy] = world.outsideGate();
       const town = !!world.town;
@@ -281,7 +284,8 @@ export class Entities {
     }
     this.spawnMonsters(world);
     this.spawnWolves(world);
-    this.spawnGoblins(world);
+    // Com `stream` (jogo e sala), os bandos nascem perto dos jogadores em `updatePacks`; sem ele, todos de uma vez (testes).
+    if (!stream) { this.spawnGoblins(world); this.spawnLizards(world); }
   }
 
   /** Monstros nos pontos da dungeon (posições pela seed; o sorteio do passeio usa `rand`). */
@@ -297,9 +301,13 @@ export class Entities {
     for (const w of wolfPacks(world)) this.monsters.push(new Monster(w.kind, w.x, w.y, wolfRoam(w.homeX, w.homeY), this.rand, w.homeX, w.homeY));
   }
 
-  /** Exactly seven goblins around each deterministic campfire in the open world. */
-  spawnGoblins(world:World):void {
+  /**
+   * Exactly seven goblins around each deterministic campfire in the open world. Sem `wake`, todos os acampamentos (testes e
+   * mundos pequenos); com `wake`, só os que passam no teste (o streaming de `updatePacks`).
+   */
+  spawnGoblins(world:World,wake?:(x:number,y:number)=>boolean):void {
     for(const camp of world.goblinCamps){
+      if(wake&&!wake(camp.x+0.5,camp.y+0.5))continue;
       if(world.getObject(camp.x,camp.y)!==Block.CAMPFIRE)continue;
       const bounds=goblinRoam(camp.x,camp.y);
       const existing=this.monsters.filter(m=>m.kind==='goblin' &&
@@ -312,6 +320,61 @@ export class Entities {
         if(existing.some(m=>Math.hypot(m.homeX-px,m.homeY-py)<0.2))continue;
         this.monsters.push(new Monster('goblin',px,py,bounds,this.rand,px,py));
       }
+      this.livePacks.add(`g:${camp.x},${camp.y}`);
+    }
+  }
+
+  /** Bandos de três homens-lagarto na margem dos rios (mesma regra de `wake`). */
+  spawnLizards(world:World,wake?:(x:number,y:number)=>boolean):void {
+    for(const pack of world.lizardPacks){
+      if(wake&&!wake(pack.x+0.5,pack.y+0.5))continue;
+      const bounds=lizardRoam(pack.x,pack.y);
+      const existing=this.monsters.filter(m=>m.kind==='lizard' &&
+        Math.abs(m.homeX-(pack.x+0.5))<=5*SUBDIV && Math.abs(m.homeY-(pack.y+0.5))<=5*SUBDIV);
+      if(existing.length>=LIZARD_PACK_SIZE)continue;
+      for(const [x,y] of pack.slots){
+        if(!world.isWalkable(x,y))continue;
+        const px=x+0.5,py=y+0.5;
+        if(existing.some(m=>Math.hypot(m.homeX-px,m.homeY-py)<0.2))continue;
+        this.monsters.push(new Monster('lizard',px,py,bounds,this.rand,px,py));
+      }
+      this.livePacks.add(`l:${pack.x},${pack.y}`);
+    }
+  }
+
+  /** Bandos que estão no jogo agora (chave `g:x,y` / `l:x,y`): o resto do mundo só existe no plano da seed. */
+  private readonly livePacks=new Set<string>();
+  private packTimer=0;
+
+  /**
+   * Streaming dos bandos (v0.93.60): com ~170 acampamentos e bandos de rio no mundo, só vivem os que têm um jogador a até
+   * `PACK_SPAWN_RADIUS`; quando todos se afastam além de `PACK_DROP_RADIUS` o bando sai (com os renascimentos pendentes) e
+   * volta completo na próxima aproximação. Roda a cada 0,5 s.
+   */
+  private updatePacks(dt:number,world:World):void {
+    this.packTimer-=dt;
+    if(this.packTimer>0)return;
+    this.packTimer=0.5;
+    const hs=this.hunters();
+    if(!hs.length)return;
+    const near=(x:number,y:number,r:number)=>hs.some(h=>Math.abs(h.x-x)<=r&&Math.abs(h.y-y)<=r);
+    this.spawnGoblins(world,(x,y)=>near(x,y,PACK_SPAWN_RADIUS)&&!this.livePacks.has(`g:${Math.floor(x)},${Math.floor(y)}`));
+    this.spawnLizards(world,(x,y)=>near(x,y,PACK_SPAWN_RADIUS)&&!this.livePacks.has(`l:${Math.floor(x)},${Math.floor(y)}`));
+    for(const key of [...this.livePacks]){
+      const [kind,xy]=key.split(':');
+      const [x,y]=xy.split(',').map(Number);
+      if(near(x+0.5,y+0.5,PACK_DROP_RADIUS))continue;
+      const mk=kind==='g'?'goblin':'lizard';
+      const mine=(hx:number,hy:number)=>Math.abs(hx-(x+0.5))<=5*SUBDIV&&Math.abs(hy-(y+0.5))<=5*SUBDIV;
+      for(let i=this.monsters.length-1;i>=0;i--){
+        const m=this.monsters[i];
+        if(m.kind===mk&&mine(m.homeX,m.homeY))this.monsters.splice(i,1);
+      }
+      for(let i=this.respawns.length-1;i>=0;i--){
+        const r=this.respawns[i];
+        if(r.kind===mk&&mine(r.x,r.y))this.respawns.splice(i,1);
+      }
+      this.livePacks.delete(key);
     }
   }
 
@@ -377,6 +440,7 @@ export class Entities {
     }
     if (this.remote) return;
     this.updateRespawns(dt);
+    this.updatePacks(dt, world);
     // Ordem importa: concluir antes de (re)começar, senão o par namoraria de novo.
     this.finishCourtships(world);
     this.formPairs();
@@ -780,9 +844,9 @@ export class Entities {
       });
     }
     for (const m of this.monsters) {
-      const state=m.kind==='goblin'?m.visualState:null;
+      const state=hasPoses(m.kind)?m.visualState:null;
       const kind:ActorKind=state
-        ? (state==='walk'?'goblin':`goblin-${state}` as ActorKind)
+        ? (state==='walk'?m.kind:`${m.kind}-${state}` as ActorKind)
         : m.kind;
       out.push({
         kind, x: m.x, y: m.y, visualZ: m.visualZ, facing: m.facing, moving: m.moving, walkTime: m.walkTime,

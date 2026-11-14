@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 21;
+export const PROTOCOL_VERSION = 22;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -111,7 +111,7 @@ export interface MobState {
   e?: 1;
   p?: number;
   h?: 1;
-  /** Goblin visual state index: idle, walk, run, alert, attack, hurt. Optional. */
+  /** Estado visual do goblin ou do homem-lagarto (índice): idle, walk, run, alert, attack, hurt. Opcional. */
   v?: number;
   d?: number;
   r?: number;

@@ -150,6 +150,13 @@ import goblinHurt from '../../assets/goblin-hurt.webp';
 import goblinDeath from '../../assets/goblin-death.webp';
 import goblinAlert from '../../assets/goblin-alert.webp';
 import goblinRun from '../../assets/goblin-run.webp';
+import lizardWalk from '../../assets/lizard-walk.webp';
+import lizardIdle from '../../assets/lizard-idle.webp';
+import lizardAttack from '../../assets/lizard-attack.webp';
+import lizardHurt from '../../assets/lizard-hurt.webp';
+import lizardDeath from '../../assets/lizard-death.webp';
+import lizardAlert from '../../assets/lizard-alert.webp';
+import lizardRun from '../../assets/lizard-run.webp';
 import spiderBig from '../../assets/spider-big.webp';
 import spiderBoss from '../../assets/spider-boss.webp';
 import spiderSmall from '../../assets/spider-small.webp';
@@ -340,6 +347,12 @@ const pack: ArtPack = {
     'goblin-alert': goblinAlert,
     'goblin-attack': goblinAttack,
     'goblin-hurt': goblinHurt,
+    lizard: lizardWalk,
+    'lizard-idle': lizardIdle,
+    'lizard-run': lizardRun,
+    'lizard-alert': lizardAlert,
+    'lizard-attack': lizardAttack,
+    'lizard-hurt': lizardHurt,
     'spider-small': spiderSmall,
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
@@ -397,7 +410,7 @@ const pack: ArtPack = {
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
   town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide },
   water: { top: waterTop, flow: waterFlow },
-  monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath, goblin: goblinDeath },
+  monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath, goblin: goblinDeath, lizard: lizardDeath },
   wheatCrop,
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
   itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, wolf_fang: wolfFangIcon, wolf_pelt: wolfPeltIcon, copper_coin: copperCoinIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },

@@ -2,6 +2,7 @@ import { SUBDIV } from '../config';
 import { describe,expect,it } from 'vitest';
 import { Block } from '../world/blocks';
 import { MONSTER_STATS } from '../world/progression';
+import { Item, monsterDrops } from '../world/items';
 import { World } from '../world/world';
 import { GOBLIN_PACK_SIZE } from '../world/goblins';
 import { Entities } from './entities';
@@ -106,3 +107,49 @@ describe('Goblin do Orvalis',()=>{
 function goblinBounds(x:number,y:number){
   return {x0:x-11,y0:y-11,x1:x+11,y1:y+11};
 }
+
+describe('Homem-lagarto e streaming dos bandos (v0.93.60)',()=>{
+  it('ficha: vida 100, ataque 15 e 2 moedas de cobre; folhas de pose como as do goblin',()=>{
+    expect(MONSTER_STATS.lizard).toMatchObject({hp:100,attack:15});
+    expect(monsterDrops('lizard')).toEqual([{item:Item.COPPER_COIN,count:2}]);
+    const {w,e}=camp();
+    const m=new Monster('lizard',0.5,0.5,{x0:-5,y0:-5,x1:5,y1:5},()=>0.5);
+    e.monsters.push(m);
+    m.presentationState='attack';
+    expect(e.actors.find(a=>a.x===m.x&&a.y===m.y)?.kind).toBe('lizard-attack');
+    m.presentationState='walk';
+    expect(e.actors.find(a=>a.x===m.x&&a.y===m.y)?.kind).toBe('lizard');
+    void w;
+  });
+
+  it('spawnWildlife(stream) não cria bandos; update cria só os que têm jogador perto e remove ao se afastar',()=>{
+    const w=new World(42);
+    const [sx,sy]=w.findSpawn();
+    const p=new Player(sx+0.5,sy+0.6);
+    const e=new Entities(p,()=>0.5);
+    e.spawnWildlife(w,true);
+    expect(e.monsters.filter(m=>m.kind==='goblin'||m.kind==='lizard')).toHaveLength(0);
+    // Põe o jogador no acampamento mais longe da cidade e deixa o streaming rodar.
+    const c=w.goblinCamps[0];
+    p.x=c.x+0.5;p.y=c.y+0.5+3;
+    e.update(0.6,w);
+    const near=e.monsters.filter(m=>m.kind==='goblin');
+    expect(near.length).toBeGreaterThanOrEqual(7);
+    expect(near.length).toBeLessThan(7*30);
+    // Longe de tudo: os bandos saem.
+    p.x=c.x+0.5+200*SUBDIV;p.y=c.y+0.5;
+    e.update(0.6,w);
+    expect(e.monsters.some(m=>m.homeX>c.x-6*SUBDIV&&m.homeX<c.x+6*SUBDIV&&m.homeY>c.y-6*SUBDIV&&m.homeY<c.y+6*SUBDIV&&m.kind==='goblin')).toBe(false);
+  });
+
+  it('bandos de lagarto nascem com três e voltam completos',()=>{
+    const w=new World(42);
+    const pack=w.lizardPacks[0];
+    const e=new Entities(new Player(pack.x+0.5,pack.y+0.5+2),()=>0.5);
+    e.spawnWildlife(w,true);
+    e.update(0.6,w);
+    const mine=e.monsters.filter(m=>m.kind==='lizard'&&Math.abs(m.homeX-pack.x-0.5)<5*SUBDIV&&Math.abs(m.homeY-pack.y-0.5)<5*SUBDIV);
+    expect(mine).toHaveLength(3);
+    expect(mine.every(m=>m.hp===100&&m.maxHp===100)).toBe(true);
+  });
+});

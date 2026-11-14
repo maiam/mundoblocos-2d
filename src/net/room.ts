@@ -1,7 +1,7 @@
 import { DAY_LENGTH_S, SUBDIV } from '../config';
 import { type AnimalSave, Entities } from '../game/entities';
 import { Player } from '../game/player';
-import { GOBLIN_VISUALS } from '../game/monster';
+import { GOBLIN_VISUALS, hasPoses } from '../game/monster';
 import { Sheep } from '../game/sheep';
 import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
@@ -141,7 +141,7 @@ export class Room {
     this.loadAround(gx, gy + 6, 24);
     const d = this.world.dungeon;
     if (d) this.loadRect(d.area.x0, d.area.y0, d.area.x1, d.area.y1);
-    e.spawnWildlife(this.world);
+    e.spawnWildlife(this.world, true);
   }
 
   /** Carrega (gera) os chunks em volta de (x, y). */
@@ -361,7 +361,7 @@ export class Room {
       if (m.moving) s.m = 1;
       if (m.hp < m.maxHp) s.p = round2(Math.max(0, m.hp / m.maxHp));
       if (m.hurt > 0) s.h = 1;
-      if (m.kind === 'goblin') {
+      if (hasPoses(m.kind)) {
         s.v = GOBLIN_VISUALS.indexOf(m.visualState);
         s.r = m.visualFrame;
       }

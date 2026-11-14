@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.60 — mais acampamentos de goblin e o homem-lagarto (14/11/2026)
+- **Pedido do dono do produto:** "1 acampamento a cada 4 chunks" e incluir o **homem-lagarto** (vive perto de rios, anda de 3 em 3; vida 100, ataque 15, 2 Moedas de Cobre; folhas enviadas). **Ajuste meu:** com o chunk de 256 px da grade 2, "a cada 4 chunks" colaria os acampamentos; ficou **1 por região de 4 × 4 chunks** (`PACK_REGION = 32 × SUBDIV` células) — uma constante só para ajustar. Aviso: muda o mapa de **todas as seeds** só nos acampamentos (antes 4, agora ~340–400 em ±10 regiões em volta da cidade).
+- **Homem-lagarto** (`MonsterKind 'lizard'`): bandos de 3 na margem de rios (`WorldGenerator.riverAt`, novo; sem fogueira), ficha em `MONSTER_STATS`, espólio em `monsterDrops`, mesmas 7 folhas do goblin (`--rows-map 0,2,3,1`, a ordem enviada era frente/costas/esquerda/direita), `hasPoses(kind)` no lugar dos `=== 'goblin'` (estado visual, sala e espelho).
+- **Streaming dos bandos** (`Entities.updatePacks`, a cada 0,5 s): só vivem os bandos com jogador a até 56 × `SUBDIV` células (somem além de 80 ×); sem isso ~2 800 goblins entrariam no `blocker` O(n). Efeito: bando derrotado volta completo depois de o jogador se afastar e voltar.
+- **Protocolo 22** (novo tipo de monstro na sala): servidor e jogo sobem juntos (`build:net` + `sync-net`).
+- Testes: acampamentos por região, bandos de rio, ficha/espólio/pose do lagarto, streaming (490 testes, grades 1 e 2).
+
 ## Orvalis v0.93.59 — grade fina, F7: a virada — o Mundo passa a `SUBDIV = 2` (13/11/2026)
 - **Pedido do dono do produto:** "Pode começar a F7". `DEFAULT_SUBDIV = 2`: célula de metade do lado, mundo do mesmo tamanho em pixels. Santuário Celestial fica na grade 1 (`sanctuaryPage()`; outro mundo, ADR 0028).
 - **Paredes e porta de parede no Mundo em qualquer grade** (perfil sempre com paredes): na grade fina a frente empilha `SUBDIV` peças e a porta sai ×`SUBDIV` (`sanctuaryWallArt.ts`).

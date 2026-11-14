@@ -99,10 +99,13 @@ export const WOLF_PELT_CHANCE = 0.55;
 export const WOLF_FANG_CHANCE = 0.4;
 /** Moedas de cobre que cada goblin solta ao morrer (fixo, não sorteado). */
 export const GOBLIN_COIN_DROP = 2;
+/** Moedas de cobre do homem-lagarto (fixo; dono do produto, 14/11/2026). */
+export const LIZARD_COIN_DROP = 2;
 
 export function monsterDrops(kind: MonsterKind, rand: () => number = Math.random): Drop[] {
   // Goblin: sempre 2 moedas de cobre (dono do produto, 2026-11-12). Nunca cair no espólio da Rainha das aranhas.
   if (kind === 'goblin') return [{ item: Item.COPPER_COIN, count: GOBLIN_COIN_DROP }];
+  if (kind === 'lizard') return [{ item: Item.COPPER_COIN, count: LIZARD_COIN_DROP }];
   if (isWolf(kind)) {
     // Lobo: pelagem e presa saem por sorteios separados (nenhum é garantido e podem vir juntos ou sozinhos).
     const out: Drop[] = [];

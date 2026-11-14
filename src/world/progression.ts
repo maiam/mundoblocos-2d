@@ -42,6 +42,8 @@ export const MONSTER_STATS: Record<MonsterKind, { hp: number; attack: number; de
   'wolf-white': { hp: 55, attack: 15, defense: 3 },
   /** Goblin comum: vida 60, ataque nominal 15, mesma fórmula dos lobos. */
   goblin: { hp: 60, attack: 15, defense: 2 },
+  /** Homem-lagarto (v0.93.60): vida 100, ataque nominal 15 (dono do produto, 14/11/2026); defesa como a do goblin. */
+  lizard: { hp: 100, attack: 15, defense: 2 },
 };
 
 /** Variação do dano (±10%), chance e multiplicador de crítico. */

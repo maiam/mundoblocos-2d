@@ -18,11 +18,11 @@ import type { Cell, TerrainSource } from './terrain';
 /** Lobos do mapa (v0.91.0): três cores, cada bando de uma cor só. */
 export type WolfKind = 'wolf-brown' | 'wolf-gray' | 'wolf-white';
 export const WOLF_KINDS: readonly WolfKind[] = ['wolf-brown', 'wolf-gray', 'wolf-white'];
-export type MonsterKind = 'spider-small' | 'spider-big' | 'spider-boss' | WolfKind | 'goblin';
+export type MonsterKind = 'spider-small' | 'spider-big' | 'spider-boss' | WolfKind | 'goblin' | 'lizard';
 
 /** É um monstro do mundo aberto, gerado por seed fora da dungeon? */
 export function isOpenWorldMonster(kind: MonsterKind): boolean {
-  return isWolf(kind) || kind === 'goblin';
+  return isWolf(kind) || kind === 'goblin' || kind === 'lizard';
 }
 
 /** É um lobo (monstro do mapa aberto, não da dungeon)? */
