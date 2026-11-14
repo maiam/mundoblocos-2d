@@ -328,6 +328,13 @@ html, body {
 .menu-panel h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--accent); }
 .menu-panel p { margin: 0; font-size: 13px; line-height: 1.35; }
 .menu-panel .menu-seed { opacity: 0.75; }
+/* Zoom dentro do hambúrguer: controle de toque para celular e tablet. */
+.menu-zoom { display: grid; gap: 6px; padding: 8px 0; border-top: 1px solid var(--panel-border); }
+.menu-zoom > span { font: 800 13px Nunito, system-ui, sans-serif; }
+.menu-zoom-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.menu-panel .menu-zoom-controls button { width: 54px; min-height: 44px; font-size: 24px; line-height: 1; touch-action: manipulation; }
+.menu-zoom-value { min-width: 62px; font: 800 17px Nunito, system-ui, sans-serif; color: var(--accent); font-variant-numeric: tabular-nums; }
+
 .menu-panel button {
   min-height: 42px; border-radius: 12px; border: 1.5px solid var(--panel-border);
   background: rgba(255, 255, 255, 0.08); color: var(--text); font: 800 15px Nunito, system-ui, sans-serif; cursor: pointer;
