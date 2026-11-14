@@ -54,7 +54,7 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
   loja **térreas** bloqueiam 4 das 5 fileiras: o desenho é mais baixo que o lote, então a fileira de trás vira
   **quintal andável** (sem faixa "invisível" bloqueada atrás do telhado).
   **Tocar** numa construção ou placa mostra o nome/texto (`Hud.toast`); interiores ainda não existem.
-- **Zona segura**: monstros não existem fora da dungeon. Ovelhas e o cavalo nascem no campo, do lado de fora do portão.
+- **Zona segura**: monstros não existem fora da dungeon. O cavalo nasce no campo, do lado de fora do portão; ovelhas, vacas, galinhas e capivaras nascem na Vila Camponesa (`domains/village.md`, v0.93.91; sem a vila, no campo).
 - **Moradores** (`domains/npc.md`): 16 NPCs nomeados (o ferreiro Black e 15 moradores) passeiam só por ruas e praças (`street`); o
   ferreiro atende dentro da Ferraria.
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.91 — os animais domésticos nascem na vila (14/11/2026)
+- **Pedido do dono do produto:** vaca, ovelha, galinha e capivara "agora nascem na vila".
+- **Como** (`game/entities.ts`: `spawnVillageAnimals`, `VILLAGE_PENS`): com a vila no mundo (grade fina), as **4 ovelhas, 2 vacas, 4 galinhas e 3 capivaras** nascem **dentro dela**, cada espécie numa faixa de grama da planta: galinhas no quintal do galinheiro (nordeste), vacas no gramado do oeste, ovelhas no do leste e capivaras ao norte das casas; posição pela seed, só em grama andável e livre. O **cavalo** continua no campo diante do portão da cidade. Sem a vila (grade 1), tudo segue como antes, no campo.
+- **Servidor:** a sala roda o mesmo código (`build:net` + `sync-net`). Mundos e salas **já salvos** guardam os animais onde estavam (só um mundo novo ou sem animais salvos usa o novo ponto de nascimento).
+- Os animais ficam presos pela correia (leash) e pelo muro, mas **saem pelo portão se ele estiver aberto**. Testes: contagem por espécie, dentro da vila e em grama, determinismo, galinhas no nordeste, cavalo fora, e a sala (`creatures.test`) com a vila. Conferido no navegador.
 ## Orvalis v0.93.90 — Cerca de Estacas (item de receita) e muro da vila feito com ela (14/11/2026)
 - **Pedido do dono do produto:** a cerca da vila não ficou boa e a "parede de estacas" (arte de 20 peças) foi descartada; vira uma **cerca**, com **uma unidade recortada** da paliçada para testar: cerca baixa no jogo (16 × 16 px, **4 estacas por bloco**, receita) e, na vila, uma versão mais alta. (Pediu 16 × 32 px; depois: "pode ser mais baixa para não deformar" → **16 × 24 px**.)
 - **Unidade:** de vale a vale da paliçada reta `1-2-05` há um **período de 2 estacas (alta + baixa) que emenda consigo mesmo**; um bloco = 2 períodos = 4 estacas em 1 célula. A versão alta estica só o **corpo entre as cordas** (a madeira é vertical: esticar não a deforma); pontas e cordas ficam intactas (`scripts/extract-village.py`, imagens de 96 px por célula).
