@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.78 — o Mundo 3D mostra a frente própria dos materiais (14/11/2026)
+- **Defeito:** o 3D oblíquo usava o topo também nas laterais (`BlockMaterials`: `view === 'oblique' ? top : front`), e `worldBlockFaces` só usava a frente V2 quando o nome do material da frente diferia do topo (Pedra Bruta, Pedra Lisa e as toras têm `front.png` próprio, mas o mesmo nome). Resultado: topo e face iguais.
+- **Correção:** a lateral usa `faces.front` e todo bloco V2 monta a frente a partir do material (sem `front.png`, é o próprio topo). Grama mostra terra com franja, Terra Arada e Terra mostram a terra lateral, pedras e toras mostram a face própria. Testes e `tsc` verdes; conferido no navegador.
+- Pendente (NEXT_STEPS): pilha parcial de Grama (1–3 blocos) mostra a faixa de terra sem franja, porque a textura é fatiada por nível absoluto e a franja só aparece no 4º nível.
 ## Orvalis v0.93.77 — arte nova de Grama, Terra, Terra Arada, Pedra Bruta e Pedra Lisa (14/11/2026)
 - **Pedido do dono do produto:** novos blocos (planificações de cubo: topo, 4 laterais, base) para Terra com Grama, Terra, Terra Arada, Pedra Bruta e Pedra Lisa. Originais guardados em `assets-src/blocos-net/`.
 - **Materiais V2** (`assets-src/materiais/`): topo de `grama`, `terra`, `arada`, `pedra`, `pedra-lisa`; frente própria de `terra` (a base da Grama e da Arada), `pedra` e `pedra-lisa` (esta ganhou frente); franja da `grama` tirada das folhas da lateral (máscara por matiz, comprimida em 32 linhas). Os ladrilhos foram **emendados** (mistura com o deslocamento de meio ladrilho) porque a arte não era repetível: emenda 0,9–1,7 (Arada 1,9, só aviso). A franja da Terra Arada continua a antiga (a lateral nova não tem franja).

@@ -46,7 +46,7 @@ export class BlockMaterials {
       return cached;
     }
     const top = toTexture(faces.top);
-    const front = this.view === 'oblique' ? top : toTexture(faces.front);
+    const front = toTexture(faces.front); // (a frente própria vale também no Mundo oblíquo; sem ela `faces.front` já é o topo)
     const ground = toTexture(faces.ground);
     const Mat = this.view === 'oblique' ? THREE.MeshBasicMaterial : THREE.MeshLambertMaterial;
     const topMaterial = new Mat({ map: top, color: 0xffffff });
