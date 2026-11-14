@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.86 — a água ganha superfície animada (3D) (14/11/2026)
+- **Pedido do dono do produto:** animação da água (ordem combinada: superfície ondulando e brilho à noite; depois espuma na beira e ondas/peixes).
+- **Superfície** (`render/three/waterSurface.ts`, `render/waterFx.ts`): um plano por chunk **com água**, colado ao chão (sem escrever profundidade), com duas cópias do ladrilho V2 `agua` deslizando em direções e escalas diferentes (manchas claras e escuras em movimento, com leve distorção) e fios de luz que correm. A água **continua nos pixels do chão do chunk** (que não são lidos): a camada só aparece onde a **máscara** diz que há água aberta (`World`: chão líquido sem objeto), com 1 célula de vizinhança (a margem esmaece e nada cobre a terra, também na emenda dos chunks). À **noite** fica mais escura e azulada.
+- **Desligar:** `?agua=0` (chave própria; o `?sensacao=0` não a desliga). Só 3D e só cliente. Limite de 4 máscaras refeitas por quadro; chunks sem água ficam invisíveis; os que saem da área liberam a GPU. O ladrilho vem de `v2WaterTop` num canvas próprio.
+- Testes: máscara (vizinhança e contagem), chave `?agua=0`, planos por chunk (visíveis só com água, liberação, versão). Conferido no navegador, com e sem a camada, no mar aberto e na margem.
 ## Orvalis v0.93.85 — a macieira troca de forma com transição suave (3D) (14/11/2026)
 - **Quarto passo das árvores animadas:** quando a árvore **muda de forma** na mesma célula (a macieira volta a dar maçãs depois de 150 s, ou perde as maçãs ao colher), o desenho antigo **some aos poucos** (0,7 s) sobre o novo em vez de trocar de uma vez.
 - **Como** (`three/chunkSprites.ts`): ao refazer um chunk, a árvore da lista anterior que continua na célula mas com outra arte (`ChunkSprites.startMorph`) ganha uma cópia translúcida do desenho antigo, um fio à frente do novo (`MORPH_SECONDS`); ela usa o mesmo material de copa (`makeTreeMaterial(…, true)`), então balança junto com a árvore. Descartada no fim; sem efeito com `?sensacao=0`; só 3D e só cliente.
