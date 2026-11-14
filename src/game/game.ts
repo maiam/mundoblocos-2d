@@ -324,6 +324,15 @@ export class Game {
       const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
       if (room) this.moveTo(this.roomExit(room), 'down');
     }
+    // Saves anteriores à geração em camadas podem registrar a Deusa em z=0
+    // onde agora existe terreno: reposiciona os pés sobre o topo sem editar a seed.
+    if (profile.id === 'santuario') {
+      const support = this.world.standHeight(this.player.cellX, this.player.cellY);
+      if (support !== null && this.player.z < support) {
+        this.player.z = support;
+        this.player.visualZ = support;
+      }
+    }
     if (options.showcase) this.hud.root.style.display = 'none';
     this.resize();
     this.camera.follow(...this.cameraTarget(), 0, true);
