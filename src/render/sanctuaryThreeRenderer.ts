@@ -416,12 +416,12 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     if(this.halfTimer)clearTimeout(this.halfTimer);
     this.lighting?.dispose();
     for(const group of this.groups){
-      this.scene.remove(group.mesh);
+      this.visualRoot.remove(group.mesh);
       group.mesh.dispose();
     }
     this.groups.length=0;
-    if(this.walls){this.scene.remove(this.walls.group);this.walls.dispose();this.walls=null;}
-    if(this.wallArt){this.scene.remove(this.wallArt.group);this.wallArt.dispose();this.wallArt=null;}
+    if(this.walls){this.visualRoot.remove(this.walls.group);this.walls.dispose();this.walls=null;}
+    if(this.wallArt){this.visualRoot.remove(this.wallArt.group);this.wallArt.dispose();this.wallArt=null;}
     this.blockMaterials.dispose();
     for(const g of [this.floorGeometry,this.solidGeometry,this.wallGeometry,
       this.goddessShadow.geometry,this.goddess.geometry])g.dispose();
