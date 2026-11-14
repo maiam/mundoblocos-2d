@@ -45,9 +45,7 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.V_BARN]: ['village-barn'], [Block.V_COOP]: ['village-coop'], [Block.V_WELL]: ['village-well'],
   [Block.V_BENCH]: ['village-bench-1', 'village-bench-2'], [Block.V_BED_WHEAT]: ['village-bed-wheat'], [Block.V_BED_VEG]: ['village-bed-veg'],
   [Block.V_OAK]: ['village-oak-1', 'village-oak-2', 'village-oak-3'], [Block.V_TREE]: ['village-tree-1', 'village-tree-2'],
-  [Block.V_PAL_H6]: ['village-palisade-h6'], [Block.V_PAL_H7]: ['village-palisade-h7'], [Block.V_PAL_W]: ['village-palisade-w'],
-  [Block.V_PAL_E]: ['village-palisade-e'], [Block.V_PAL_NW]: ['village-palisade-nw'], [Block.V_PAL_NE]: ['village-palisade-ne'],
-  [Block.V_PAL_SW]: ['village-palisade-sw'], [Block.V_PAL_SE]: ['village-palisade-se'], [Block.V_GATE]: ['village-gate-open'], [Block.V_GATE_CLOSED]: ['village-gate-closed'],
+  [Block.V_STAKE]: ['village-stake-tall'], [Block.FENCE_STAKE]: ['village-stake-low'], [Block.V_GATE]: ['village-gate-open'], [Block.V_GATE_CLOSED]: ['village-gate-closed'],
   [Block.V_BARREL]: ['village-barrel'], [Block.V_ROCKS]: ['village-rocks'], [Block.V_BUSH]: ['village-bush'], [Block.V_LOGS]: ['village-logs'],
   [Block.V_HAY]: ['village-hay'], [Block.V_CART]: ['village-cart'], [Block.V_SACKS]: ['village-sacks'], [Block.V_FLOWERS]: ['village-flowers'],
 };
@@ -122,10 +120,12 @@ const signpost = () => prop(40, (ctx, cx, b) => {
  */
 function imageSprite(img: HTMLImageElement, id: BlockId): Sprite {
   // Vila Camponesa: lotes em células da grade fina; o desenho trabalha em células antigas (metade).
-  const vs = VILLAGE_SIZES[id];
+  const vs = VILLAGE_SIZES[id] ?? (id === Block.FENCE_STAKE ? ([1, 1] as [number, number]) : undefined);
   const w = vs ? vs[0] / 2 : townSize(id)[0];
   const d = vs ? vs[1] / 2 : townSolid(id);
-  const k = T / TOWN_PX_PER_CELL;
+  // As estacas da cerca são só 16 px de jogo: a imagem tem 4× a densidade das outras peças (`STAKE_PX_PER_CELL` em `scripts/extract-village.py`).
+  const dense = id === Block.V_STAKE || id === Block.FENCE_STAKE;
+  const k = T / (dense ? TOWN_PX_PER_CELL * 2 : TOWN_PX_PER_CELL);
   const sw = img.width * k;
   const sh = img.height * k;
   // O 3D amplia o desenho em volta do meio da base (`objectScaleFor`): o centro fica em `x + (ox + sw/2)/T`. Nos lotes da vila (em células

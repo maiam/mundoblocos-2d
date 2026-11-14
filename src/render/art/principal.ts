@@ -257,16 +257,11 @@ import villageLogs from '../../assets/village-logs.webp';
 import villageOak1 from '../../assets/village-oak-1.webp';
 import villageOak2 from '../../assets/village-oak-2.webp';
 import villageOak3 from '../../assets/village-oak-3.webp';
-import villagePalisadeE from '../../assets/village-palisade-e.webp';
-import villagePalisadeH6 from '../../assets/village-palisade-h6.webp';
-import villagePalisadeH7 from '../../assets/village-palisade-h7.webp';
-import villagePalisadeNe from '../../assets/village-palisade-ne.webp';
-import villagePalisadeNw from '../../assets/village-palisade-nw.webp';
-import villagePalisadeSe from '../../assets/village-palisade-se.webp';
-import villagePalisadeSw from '../../assets/village-palisade-sw.webp';
-import villagePalisadeW from '../../assets/village-palisade-w.webp';
 import villageRocks from '../../assets/village-rocks.webp';
 import villageSacks from '../../assets/village-sacks.webp';
+import villageStakeIcon from '../../assets/icon-block-fence-stake.webp';
+import villageStakeLow from '../../assets/village-stake-low.webp';
+import villageStakeTall from '../../assets/village-stake-tall.webp';
 import villageTree1 from '../../assets/village-tree-1.webp';
 import villageTree2 from '../../assets/village-tree-2.webp';
 import villageWell from '../../assets/village-well.webp';
@@ -506,7 +501,7 @@ const pack: ArtPack = {
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: { pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon },
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
-  town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide, 'village-barn': villageBarn, 'village-barrel': villageBarrel, 'village-bed-veg': villageBedVeg, 'village-bed-wheat': villageBedWheat, 'village-bench-1': villageBench1, 'village-bench-2': villageBench2, 'village-bush': villageBush, 'village-cart': villageCart, 'village-coop': villageCoop, 'village-flowers': villageFlowers, 'village-gate-closed': villageGateClosed, 'village-gate-open': villageGateOpen, 'village-hay': villageHay, 'village-house-straw-1': villageHouseStraw1, 'village-house-straw-2': villageHouseStraw2, 'village-house-straw-3': villageHouseStraw3, 'village-house-tile-1': villageHouseTile1, 'village-house-tile-2': villageHouseTile2, 'village-lamp': villageLamp, 'village-logs': villageLogs, 'village-oak-1': villageOak1, 'village-oak-2': villageOak2, 'village-oak-3': villageOak3, 'village-palisade-e': villagePalisadeE, 'village-palisade-h6': villagePalisadeH6, 'village-palisade-h7': villagePalisadeH7, 'village-palisade-ne': villagePalisadeNe, 'village-palisade-nw': villagePalisadeNw, 'village-palisade-se': villagePalisadeSe, 'village-palisade-sw': villagePalisadeSw, 'village-palisade-w': villagePalisadeW, 'village-rocks': villageRocks, 'village-sacks': villageSacks, 'village-tree-1': villageTree1, 'village-tree-2': villageTree2, 'village-well': villageWell },
+  town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide, 'village-barn': villageBarn, 'village-barrel': villageBarrel, 'village-bed-veg': villageBedVeg, 'village-bed-wheat': villageBedWheat, 'village-bench-1': villageBench1, 'village-bench-2': villageBench2, 'village-bush': villageBush, 'village-cart': villageCart, 'village-coop': villageCoop, 'village-flowers': villageFlowers, 'village-gate-closed': villageGateClosed, 'village-gate-open': villageGateOpen, 'village-hay': villageHay, 'village-house-straw-1': villageHouseStraw1, 'village-house-straw-2': villageHouseStraw2, 'village-house-straw-3': villageHouseStraw3, 'village-house-tile-1': villageHouseTile1, 'village-house-tile-2': villageHouseTile2, 'village-lamp': villageLamp, 'village-logs': villageLogs, 'village-oak-1': villageOak1, 'village-oak-2': villageOak2, 'village-oak-3': villageOak3, 'village-rocks': villageRocks, 'village-stake-low': villageStakeLow, 'village-stake-tall': villageStakeTall, 'village-stake-icon': villageStakeIcon, 'village-sacks': villageSacks, 'village-tree-1': villageTree1, 'village-tree-2': villageTree2, 'village-well': villageWell },
   water: { top: waterTop, flow: waterFlow },
   monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath, goblin: goblinDeath, lizard: lizardDeath, 'wolf-brown': wolfBrownDeath, 'wolf-gray': wolfGrayDeath, 'wolf-white': wolfWhiteDeath },
   wheatCrop,

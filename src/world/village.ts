@@ -15,7 +15,7 @@ import { TOWN_SOUTH_FIELD } from './town';
  */
 export const VILLAGE_W = 48;
 export const VILLAGE_H = 48;
-/** Canto noroeste: sob o portão da cidade, depois do campo do rebanho e de uma folga de 16 células. O vão do portão (x 20–27) fica no eixo do portão da cidade. */
+/** Canto noroeste: sob o portão da cidade, depois do campo do rebanho e de uma folga de 16 células. O vão do portão (x 23–25) fica no eixo do portão da cidade. */
 export const VILLAGE_X0 = -24;
 export const VILLAGE_Y0 = TOWN_SOUTH_FIELD + 16;
 /** Anel em volta da vila onde a água vira grama (terra firme) e, nas `VILLAGE_CLEAR` mais próximas, não há objetos naturais. */
@@ -29,10 +29,9 @@ const VILLAGE_CLEAR = 6;
 export const VILLAGE_SIZES: Partial<Record<BlockId, [number, number]>> = {
   [Block.V_HOUSE_STRAW]: [8, 4], [Block.V_HOUSE_TILE]: [8, 4], [Block.V_BARN]: [13, 5], [Block.V_COOP]: [4, 3], [Block.V_WELL]: [4, 3],
   [Block.V_BENCH]: [2, 1], [Block.V_BED_WHEAT]: [6, 7], [Block.V_BED_VEG]: [6, 6], [Block.V_OAK]: [1, 1], [Block.V_TREE]: [1, 1],
-  [Block.V_PAL_H6]: [6, 1], [Block.V_PAL_H7]: [7, 1], [Block.V_PAL_W]: [1, 1], [Block.V_PAL_E]: [1, 1],
-  [Block.V_PAL_NW]: [7, 6], [Block.V_PAL_NE]: [7, 6], [Block.V_PAL_SW]: [6, 6], [Block.V_PAL_SE]: [6, 6], [Block.V_GATE]: [8, 1],
+  [Block.V_STAKE]: [1, 1], [Block.V_GATE]: [5, 1],
   [Block.V_BARREL]: [1, 1], [Block.V_ROCKS]: [3, 1], [Block.V_BUSH]: [3, 1], [Block.V_LOGS]: [2, 1], [Block.V_HAY]: [2, 1],
-  [Block.V_CART]: [3, 2], [Block.V_SACKS]: [2, 1], [Block.V_FLOWERS]: [2, 1], [Block.V_GATE_CLOSED]: [8, 1], [Block.V_GATE_GAP]: [1, 1],
+  [Block.V_CART]: [3, 2], [Block.V_SACKS]: [2, 1], [Block.V_FLOWERS]: [2, 1], [Block.V_GATE_CLOSED]: [5, 1], [Block.V_GATE_GAP]: [1, 1],
   [Block.V_GATE_GAP_CLOSED]: [1, 1],
 };
 
@@ -46,7 +45,7 @@ export interface VillageLayout {
   h: number;
   /** Área inteira (muro incluído), inclusiva, em células do mundo. Protegida. */
   area: Rect;
-  /** Vão do portão (células livres entre os dois postes), em células do mundo. */
+  /** Vão do portão (3 células livres entre os dois postes), em células do mundo. */
   gate: Rect;
   /** Trilha de terra do fim da estrada da cidade até o portão da vila, em retângulos do mundo. */
   trail: Rect[];
@@ -101,18 +100,13 @@ function buildVillage(): VillageLayout {
   /** Peça sem teste de ocupação (a estrutura: muro, casas, celeiro). */
   const must = (id: BlockId, x: number, y: number, cells?: Array<[number, number]>) => put(id, x, y, cells, true);
 
-  // --- Muro de estacas (norte: linha 4; sul: linha 43; oeste: coluna 1; leste: coluna 46) ---
-  const row = (x0: number, x1: number, y: number): Array<[number, number]> => Array.from({ length: x1 - x0 + 1 }, (_, i) => [x0 + i, y]);
-  const col = (x: number, y0: number, y1: number): Array<[number, number]> => Array.from({ length: y1 - y0 + 1 }, (_, i) => [x, y0 + i]);
-  must(Block.V_PAL_NW, 1, 9, [...row(1, 7, 4), ...col(1, 5, 9)]);
-  must(Block.V_PAL_NE, 40, 9, [...row(40, 46, 4), ...col(46, 5, 9), [40, 9]]); // âncora no canto de dentro do lote: bloqueada também
-  must(Block.V_PAL_SW, 1, 43, [...row(1, 6, 43), ...col(1, 38, 42)]);
-  must(Block.V_PAL_SE, 41, 43, [...row(41, 46, 43), ...col(46, 38, 42)]);
-  for (const [x, id] of [[8, Block.V_PAL_H6], [14, Block.V_PAL_H7], [21, Block.V_PAL_H6], [27, Block.V_PAL_H7], [34, Block.V_PAL_H6]] as const) must(id, x, 4);
-  for (const [x, id] of [[7, Block.V_PAL_H6], [13, Block.V_PAL_H7], [28, Block.V_PAL_H7], [35, Block.V_PAL_H6]] as const) must(id, x, 43);
-  for (let y = 10; y <= 37; y++) { must(Block.V_PAL_W, 1, y); must(Block.V_PAL_E, 46, y); }
-  must(Block.V_GATE, 20, 43, [[20, 43], [27, 43]]); // dois postes; o vão (x 21–26) tem os blocos do portão, livres com ele aberto
-  for (let x = 21; x <= 26; x++) objects[idx(x, 43)] = Block.V_GATE_GAP;
+  // --- Muro de estacas altas (norte: linha 4; sul: linha 43; oeste: coluna 1; leste: coluna 46), 1 célula de largura × 1,5 de altura cada ---
+  const stake = (x: number, y: number) => { objects[idx(x, y)] = Block.V_STAKE; };
+  for (let x = 1; x <= 46; x++) { stake(x, 4); if (x < 22 || x > 26) stake(x, 43); }
+  for (let y = 5; y <= 42; y++) { stake(1, y); stake(46, y); }
+  // portão: dois postes (x 22 e 26) e o vão de 3 blocos entre eles (x 23–25), livres com o portão aberto
+  must(Block.V_GATE, 22, 43, [[22, 43], [26, 43]]);
+  for (let x = 23; x <= 25; x++) objects[idx(x, 43)] = Block.V_GATE_GAP;
 
   // --- Construções ---
   must(Block.V_BARN, 18, 10);
@@ -157,7 +151,7 @@ function buildVillage(): VillageLayout {
     { x0: gx, y0: VILLAGE_Y0 + 44, x1: gx + 3, y1: VILLAGE_Y0 + 49 },
   ];
   const touched: Rect = { x0: area.x0 - VILLAGE_MARGIN, y0: trailTop, x1: area.x1 + VILLAGE_MARGIN, y1: area.y1 + VILLAGE_MARGIN };
-  return { w: W, h: H, area, gate: { x0: VILLAGE_X0 + 21, y0: VILLAGE_Y0 + 43, x1: VILLAGE_X0 + 26, y1: VILLAGE_Y0 + 43 }, trail, touched, ground, objects, props };
+  return { w: W, h: H, area, gate: { x0: VILLAGE_X0 + 23, y0: VILLAGE_Y0 + 43, x1: VILLAGE_X0 + 25, y1: VILLAGE_Y0 + 43 }, trail, touched, ground, objects, props };
 }
 
 /**

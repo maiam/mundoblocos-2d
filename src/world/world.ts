@@ -671,7 +671,7 @@ export class World {
   toggleDoor(x: number, y: number): boolean {
     const group = this.gateCells(x, y);
     if (group) {
-      // Portão da vila: os 8 blocos mudam juntos, pelo estado do poste (âncora).
+      // Portão da vila: os 5 blocos mudam juntos, pelo estado do poste (âncora).
       const open = this.getObject(group[0][0], group[0][1]) === Block.V_GATE;
       for (const [cx, cy] of group) {
         const id = this.getObject(cx, cy);
@@ -687,15 +687,16 @@ export class World {
     return true;
   }
 
-  /** Blocos do portão da vila a que a célula pertence (poste esquerdo primeiro), ou null se não é um. */
+  /** Blocos do portão da vila (2 postes e o vão) a que a célula pertence (poste esquerdo primeiro), ou null se não é um. */
   gateCells(x: number, y: number): Array<[number, number]> | null {
     const id = this.getObject(x, y);
     if (id !== Block.V_GATE && id !== Block.V_GATE_CLOSED && id !== Block.V_GATE_GAP && id !== Block.V_GATE_GAP_CLOSED) return null;
     const v = this.village;
     if (!v) return null;
-    const x0 = v.gate.x0 - 1; // poste esquerdo (o vão tem 6 células entre os postes)
-    if (y !== v.gate.y0 || x < x0 || x > x0 + 7) return null;
-    return Array.from({ length: 8 }, (_, i) => [x0 + i, y] as [number, number]);
+    const x0 = v.gate.x0 - 1; // poste esquerdo; o vão (3 células) vem depois e o poste direito fecha
+    const n = v.gate.x1 - v.gate.x0 + 3;
+    if (y !== v.gate.y0 || x < x0 || x > x0 + n - 1) return null;
+    return Array.from({ length: n }, (_, i) => [x0 + i, y] as [number, number]);
   }
 
   canPlace(x: number, y: number, id: BlockId): boolean {

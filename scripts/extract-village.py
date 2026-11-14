@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Vila Camponesa (v0.93.89): itens de assets-src/vila-camponesa/itens → src/assets/village-<nome>.webp.
+"""Vila Camponesa (v0.93.89; cerca de estacas v0.93.90): itens de assets-src/vila-camponesa/itens → src/assets/village-<nome>.webp.
 
 Cada item é recortado pela caixa útil (alfa), reduzido para a escala do jogo e gravado em WebP. Escala do jogo: 48 px de imagem por
 célula ANTIGA (32 px de mundo) = 24 px por célula da grade fina (`TOWN_PX_PER_CELL` em render/townArt.ts), então a largura final é
@@ -33,15 +33,8 @@ ITEMS: dict[str, tuple[str, float, tuple[int, int, int, int] | None]] = {
     'oak-3': ('2-2-03-carvalho.png', 7.5, None),
     'tree-1': ('2-1-03-arvore-pequena.png', 5.0, None),
     'tree-2': ('0-1-04-arvore-pequena.png', 5.0, None),
-    # muro de estacas: o segmento reto mede 6 células (7 estacas); os cantos e as laterais saem na mesma escala de estaca
-    'palisade-h6': ('1-2-05-palicada-reta.png', 6.0, None),
-    'palisade-h7': ('1-2-05-palicada-reta.png', 7.0, None),
-    'palisade-nw': ('compl-01-palicada-canto-noroeste.png', 6.9, None),
-    'palisade-ne': ('compl-02-palicada-canto-nordeste.png', 6.9, None),
-    'palisade-sw': ('0-2-06-palicada-canto-sudoeste.png', 5.5, None),
-    'palisade-se': ('2-2-06-palicada-canto-sudeste.png', 5.3, None),
-    'gate-open': ('1-2-01-portao-aberto.png', 8.6, None),
-    'gate-closed': ('compl-03-portao-fechado.png', 8.6, None),
+    'gate-open': ('1-2-01-portao-aberto.png', 5.0, None),
+    'gate-closed': ('compl-03-portao-fechado.png', 5.0, None),
     'lamp': ('1-2-04-poste-com-lampiao.png', 1.9, None),
     'barrel': ('1-0-03-barril.png', 1.5, None),
     'rocks': ('0-0-04-rochas.png', 3.0, None),
@@ -52,14 +45,6 @@ ITEMS: dict[str, tuple[str, float, tuple[int, int, int, int] | None]] = {
     'flowers': ('1-2-06-capim-e-flores.png', 1.8, None),
     'sacks': ('2-1-04-sacos-de-juta.png', 2.0, None),
 }
-# Laterais do muro (norte e sul têm o segmento reto; leste e oeste não vieram na arte): uma "estaca" recortada do braço vertical dos
-# cantos do norte, de ponta a ponta, que se repete uma por fileira (período 1 célula na vertical). Ver docs/domains/village.md.
-PALISADE_V = {
-    'palisade-w': ('compl-01-palicada-canto-noroeste.png', (50, 198, 150, 298)),
-    'palisade-e': ('compl-02-palicada-canto-nordeste.png', (505, 245, 605, 345)),
-}
-
-
 def bbox(im: Image.Image) -> tuple[int, int, int, int]:
     return im.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox()
 
@@ -76,7 +61,45 @@ for name, (fn, cells_w, crop) in ITEMS.items():
     im = Image.open(SRC / fn).convert('RGBA')
     im = im.crop(crop) if crop else im
     save(name, im.crop(bbox(im)), cells_w)
-for name, (fn, crop) in PALISADE_V.items():
-    im = Image.open(SRC / fn).convert('RGBA').crop(crop)
-    im = im.crop(bbox(im))
-    save(name, im, im.width * 0.24 / PX_PER_CELL)  # escala 0,24: o período de 100 px vira 24 px = 1 célula (estaca ≈ 0,85 célula de largura)
+
+# ---- Cerca de estacas (v0.93.90): uma unidade recortada da paliçada reta -----------------------------------------------------------
+# A reta (`1-2-05`) alterna estaca alta (com corda) e baixa; de vale a vale (x 105–228, y 143–401) há um PERÍODO de 2 estacas que emenda
+# consigo mesmo. Um bloco da cerca = 2 períodos = 4 estacas em 1 célula de largura. Baixa (jogador coloca): 1 × 1 célula (16 × 16 px do jogo);
+# alta (muro da vila): 1 × 1,5 células (16 × 24 px; mais baixa que os 16 × 32 pedidos primeiro, para deformar menos), com o CORPO entre as cordas esticado (a madeira é vertical: esticar não deforma).
+# Resolução: 96 px por célula da grade fina (4× a das outras peças), porque são só 16 px de jogo.
+STAKE_PX = 96
+src = Image.open(SRC / '1-2-05-palicada-reta.png').convert('RGBA')
+per = src.crop((105, 143, 228, 401))
+TOP, BODY0, BODY1 = 136, 146, 186
+
+
+def stake_strip(extra: int) -> Image.Image:
+    top = per.crop((0, 0, per.width, TOP))
+    body = per.crop((0, BODY0, per.width, BODY1)).resize((per.width, BODY1 - BODY0 + extra), Image.LANCZOS)
+    mid = per.crop((0, TOP, per.width, BODY0))
+    bot = per.crop((0, BODY1, per.width, per.height))
+    out = Image.new('RGBA', (per.width, top.height + mid.height + body.height + bot.height))
+    y = 0
+    for part in (top, mid, body, bot):
+        out.paste(part, (0, y))
+        y += part.height
+    return out
+
+
+def two_periods(p: Image.Image) -> Image.Image:
+    w = Image.new('RGBA', (p.width * 2, p.height))
+    w.paste(p, (0, 0)); w.paste(p, (p.width, 0))
+    return w
+
+
+low = two_periods(stake_strip(0))
+tall_target = round(low.width * 1.5)  # 2 : 3 (16 × 24)
+tall = two_periods(stake_strip(max(0, tall_target - stake_strip(0).height)))
+low.resize((STAKE_PX, STAKE_PX), Image.LANCZOS).save(OUT / 'village-stake-low.webp', 'WEBP', quality=90, method=6)
+tall.resize((STAKE_PX, round(STAKE_PX * 1.5)), Image.LANCZOS).save(OUT / 'village-stake-tall.webp', 'WEBP', quality=90, method=6)
+# ícone do item (64 × 64): a cerca baixa centrada
+icon = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
+small = low.resize((56, 56), Image.LANCZOS)
+icon.alpha_composite(small, (4, 6))
+icon.save(OUT / 'icon-block-fence-stake.webp', 'WEBP', quality=90, method=6)
+print('village-stake-low.webp / village-stake-tall.webp / icon-block-fence-stake.webp')

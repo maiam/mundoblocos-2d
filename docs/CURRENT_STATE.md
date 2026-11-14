@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-14 — v0.93.89 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-14 — v0.93.90 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.89 | `package.json` |
+| Versão do jogo | 0.93.90 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 23 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -25,7 +25,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Santuário Celestial da Deusa da Vida** (`?mundo=santuario`): 10 chunks de nuvem, só a Deusa, os 18 blocos
   celestiais + 2 paredes autotile + porta de parede (ADR 0027); sem ferramentas, cultivo ou animais. Subdomínio real ainda não hospedado (`domains/worlds.md`).
 - **Teste de câmera e profundidade no Santuário (v0.93.65):** o botão **◉ Câmera**, no alto à direita, abre o joystick experimental para girar a câmera ortográfica 360° e mudar a inclinação (15°–85°) e o zoom (0,6–2,2×). Resetar volta a 67°, Salvar guarda as preferências localmente e fechar restaura a projeção oblíqua original. Há controles experimentais de **altura de bloco 25%–125%** e **tamanho de célula 50%–125%** (apenas geometria visual) e pilhas de **5 blocos** no Santuário, mantendo 2 no Mundo. A Grama Celestial recebeu atlas 512×512 com topo, base e quatro lados independentes; **não muda o mapa/salvamento nem o Mundo principal**. O personagem de sprite gira para acompanhar a câmera orbital.
-- **Vila Camponesa** (`domains/village.md`, v0.93.89): área fixa de 48 × 48 células ao sul da cidade, protegida, na grade fina; muro de estacas com portão que abre e fecha (volta aberto ao recarregar), 6 casas, celeiro, galinheiro, trigo, horta e enfeites; trilha de terra até a cidade; caverna e acampamentos ficam fora. Servidor com `build:net`.
+- **Vila Camponesa** (`domains/village.md`, v0.93.89): área fixa de 48 × 48 células ao sul da cidade, protegida, na grade fina; muro de **Cerca de Estacas altas** em volta (1 × 1,5 célula por bloco) com portão menor que abre e fecha (vão de 3; volta aberto ao recarregar), 6 casas, celeiro, galinheiro, trigo, horta e enfeites; trilha de terra até a cidade; caverna e acampamentos ficam fora. Servidor com `build:net`.
 - **Cidade do Despertar** (`domains/town.md`): 164 × 132 blocos ao norte da origem, igual em toda seed, área protegida,
   piso único de Tijolo de Pedra, muralha, castelo, guilda, hospedaria, ferreiro, lojas e ~90 casas. Início e renascer
   sem tenda = praça inicial. 16 NPCs nomeados (ferreiro **Black** + 15 moradores, `domains/npc.md`) que falam numa **caixa de conversa** (retrato, nome, texto em páginas).
