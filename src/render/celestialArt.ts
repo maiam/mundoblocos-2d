@@ -66,6 +66,26 @@ type CelestialFaces = {
   unlit?: boolean;
 };
 const cache = new Map<number, CelestialFaces>();
+/** Atlas exclusivo do laboratório: 8 blocos × 6 faces, ordenados pela hotbar.
+ * Linhas: +X, -X, +Y, -Y, +Z, -Z (ordem nativa do BoxGeometry). */
+export const SANCTUARY_CUBE_IDS = [
+  Block.DIRT, Block.TILLED, Block.GRASS, Block.WATER_PURE,
+  Block.OAK_LOG, Block.OAK_PLANKS, Block.STONE, Block.STONE_SMOOTH,
+] as const;
+let sanctuaryEightAtlas: HTMLImageElement | null = null;
+export function installSanctuaryEightBlockAtlas(atlas: HTMLImageElement): void {
+  sanctuaryEightAtlas = atlas;
+  for (const id of SANCTUARY_CUBE_IDS) cache.delete(id);
+}
+function atlasCell(atlas: HTMLImageElement, column: number, face: number): HTMLCanvasElement {
+  const side = atlas.width / SANCTUARY_CUBE_IDS.length;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 128;
+  canvas.getContext('2d')!.drawImage(
+    atlas, column * side, face * side, side, side, 0, 0, 128, 128,
+  );
+  return canvas;
+}
 let grassNet: HTMLImageElement | null = null;
 export function installCelestialGrassNet(image: HTMLImageElement): void {
   grassNet = image;
@@ -117,6 +137,17 @@ function cultivatedTop(earth: HTMLCanvasElement): HTMLCanvasElement {
 export function celestialFaces(id: number): CelestialFaces {
   let faces = cache.get(id);
   if (!faces) {
+    // As oito artes novas são a única fonte visual desses materiais no
+    // Santuário. Cada cubo usa as seis faces EXATAS da rede enviada, sem
+    // modificar o restante dos blocos do Mundo principal.
+    const atlasColumn = SANCTUARY_CUBE_IDS.indexOf(id as typeof SANCTUARY_CUBE_IDS[number]);
+    if (sanctuaryEightAtlas && atlasColumn !== -1) {
+      const sides = [0, 1, 2, 3, 4, 5].map((face) => atlasCell(sanctuaryEightAtlas!, atlasColumn, face));
+      const cube = sides as CelestialFaces['cube'];
+      faces = { top: sides[2], front: sides[4], ground: sides[2], cube, unlit: true };
+      cache.set(id, faces);
+      return faces;
+    }
     if (id === Block.GRASS_CELESTIAL && grassNet) {
       const east = netTile(grassNet, 0, 1);
       const west = netTile(grassNet, 1, 1);
