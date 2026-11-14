@@ -164,7 +164,7 @@ export class WaterSurface {
     });
     const mesh = new THREE.Mesh(this.geometry, material);
     mesh.position.set(cx * CHUNK_SIZE + CHUNK_SIZE / 2, 0.012, cy * CHUNK_SIZE + CHUNK_SIZE / 2);
-    mesh.renderOrder = 0.5; // acima do chão, abaixo dos brilhos e do fluxo (ordem 1)
+    mesh.renderOrder = -1; // acima do chão (opaco), abaixo das plantas e objetos translúcidos (ordem 0) e dos brilhos e do fluxo (ordem 1)
     mesh.frustumCulled = false;
     mesh.visible = false;
     mesh.name = 'Mundo: superfície da água ' + key;

@@ -1,6 +1,7 @@
 import { TILE } from '../config';
 import { Block, type BlockId } from '../world/blocks';
 import { townSize, townSolid } from '../world/town';
+import { isWaterPlant } from '../world/blocks';
 import { isVillageId, VILLAGE_SIZES } from '../world/village';
 import type { Sprite } from './textures';
 
@@ -47,6 +48,9 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.V_OAK]: ['village-oak-1', 'village-oak-2', 'village-oak-3'], [Block.V_TREE]: ['village-tree-1', 'village-tree-2'],
   [Block.V_STAKE]: ['village-stake-tall'], [Block.FENCE_STAKE]: ['village-stake-low'], [Block.V_GATE]: ['village-gate-open'], [Block.V_GATE_CLOSED]: ['village-gate-closed'],
   [Block.V_BARREL]: ['village-barrel'], [Block.V_ROCKS]: ['village-rocks'], [Block.V_BUSH]: ['village-bush'], [Block.V_LOGS]: ['village-logs'],
+  // Vitórias-régias (v0.93.92): variante pela posição.
+  [Block.WATER_LILY]: ['water-lily-leaf', 'water-lily-pink', 'water-lily-white', 'water-lily-bud', 'water-lily-leaf'],
+  [Block.VICTORIA]: ['water-victoria-a', 'water-victoria-b', 'water-victoria-flower', 'water-victoria-pair', 'water-victoria-a'],
   [Block.V_HAY]: ['village-hay'], [Block.V_CART]: ['village-cart'], [Block.V_SACKS]: ['village-sacks'], [Block.V_FLOWERS]: ['village-flowers'],
 };
 
@@ -120,11 +124,11 @@ const signpost = () => prop(40, (ctx, cx, b) => {
  */
 function imageSprite(img: HTMLImageElement, id: BlockId): Sprite {
   // Vila Camponesa: lotes em células da grade fina; o desenho trabalha em células antigas (metade).
-  const vs = VILLAGE_SIZES[id] ?? (id === Block.FENCE_STAKE ? ([1, 1] as [number, number]) : undefined);
+  const vs = VILLAGE_SIZES[id] ?? (id === Block.FENCE_STAKE ? ([1, 1] as [number, number]) : id === Block.WATER_LILY ? ([2, 1] as [number, number]) : id === Block.VICTORIA ? ([4, 1] as [number, number]) : undefined);
   const w = vs ? vs[0] / 2 : townSize(id)[0];
   const d = vs ? vs[1] / 2 : townSolid(id);
   // As estacas da cerca são só 16 px de jogo: a imagem tem 4× a densidade das outras peças (`STAKE_PX_PER_CELL` em `scripts/extract-village.py`).
-  const dense = id === Block.V_STAKE || id === Block.FENCE_STAKE;
+  const dense = id === Block.V_STAKE || id === Block.FENCE_STAKE || id === Block.WATER_LILY || id === Block.VICTORIA;
   const k = T / (dense ? TOWN_PX_PER_CELL * 2 : TOWN_PX_PER_CELL);
   const sw = img.width * k;
   const sh = img.height * k;
@@ -154,7 +158,7 @@ export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
 
 /** Ids desenhados pela arte da cidade (o render escolhe a variação por posição, fixa como a cidade). */
 export function isTownArt(id: number): boolean {
-  return (id >= Block.CASTLE && id <= Block.BENCH_LONG) || isVillageId(id);
+  return (id >= Block.CASTLE && id <= Block.BENCH_LONG) || isVillageId(id) || isWaterPlant(id);
 }
 
 /** Maior alcance de um sprite da cidade além da célula âncora (células): à direita e para cima. */

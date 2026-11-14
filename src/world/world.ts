@@ -1,6 +1,6 @@
 import { quarterLevel } from './quarters';
 import { CHUNK_SIZE, CUBE_LEVELS, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
-import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isStackBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
+import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isWaterPlant, isRemovedBlock, isStackBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
@@ -707,11 +707,28 @@ export class World {
     const level = this.placementLevel(x, y, id);
     if (level === null) return false;
     this.setLevel(x, y, level, id);
+    if (level === 'ground') this.clearWaterPlantsCovering(x, y); // a água virou chão: a vitória-régia que cobria a célula sai
     if (id === Block.TENT) {
       for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
       this.tent = [x, y];
     }
     return true;
+  }
+
+  /**
+   * Remove as vitórias-régias cujo desenho cobre a célula (x, y): a âncora fica no canto inferior esquerdo e o desenho cresce para a direita
+   * (até 4 células) e para cima (até 3). Chamado quando a água da célula vira chão (Terra, Pedra ou Tora sobre a água).
+   */
+  private clearWaterPlantsCovering(x: number, y: number): void {
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 4; dx++) {
+        const ax = x - dx, ay = y + dy;
+        const id = this.getObject(ax, ay);
+        if (!isWaterPlant(id)) continue;
+        const [w, h] = id === Block.VICTORIA ? [4, 3] : [2, 2];
+        if (dx < w && dy < h) this.setLevel(ax, ay, 0, Block.AIR);
+      }
+    }
   }
 
   /** A célula tem uma parede (bloco de forma `wall` no nível 0)? */

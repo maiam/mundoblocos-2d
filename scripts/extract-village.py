@@ -103,3 +103,27 @@ small = low.resize((56, 56), Image.LANCZOS)
 icon.alpha_composite(small, (4, 6))
 icon.save(OUT / 'icon-block-fence-stake.webp', 'WEBP', quality=90, method=6)
 print('village-stake-low.webp / village-stake-tall.webp / icon-block-fence-stake.webp')
+
+
+# ---- Itens da água (v0.93.92): vitórias-régias (objetos) e peixes (sprites girados no jogo) -------------------------------------------
+# Fonte: assets-src/agua-itens/*.png (arte do dono do produto, 12 itens). Plantas: 48 px por célula (densas, como as estacas); peixes: 128 px de comprimento.
+WATER_SRC = ROOT / 'assets-src' / 'agua-itens'
+WATER_PLANTS = {  # nome -> (arquivo, largura em células da grade fina)
+    'lily-leaf': ('lirio-folha.png', 2.2), 'lily-bud': ('lirio-botao.png', 2.4), 'lily-white': ('lirio-flor-branca.png', 2.4), 'lily-pink': ('lirio-flor-rosa.png', 2.4),
+    'victoria-a': ('victoria-folha-a.png', 4.4), 'victoria-b': ('victoria-folha-b.png', 4.4), 'victoria-flower': ('victoria-flor.png', 4.4), 'victoria-pair': ('victoria-par.png', 5.2),
+}
+for name, (fn, cells_w) in WATER_PLANTS.items():
+    im = Image.open(WATER_SRC / fn).convert('RGBA')
+    im = im.crop(bbox(im))
+    w = round(cells_w * 48)
+    im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(OUT / f'water-{name}.webp', 'WEBP', quality=88, method=6)
+FISH = {'gold': 'peixe-dourado.png', 'perch': 'peixe-listrado.png', 'silver': 'peixe-azul.png', 'carp': 'peixe-carpa.png'}
+for name, fn in FISH.items():
+    im = Image.open(WATER_SRC / fn).convert('RGBA')
+    im = im.crop(bbox(im))
+    # quadro quadrado (o peixe gira em volta do centro): lado = diagonal do desenho, para nenhum ponto sair ao girar
+    side = int((im.width ** 2 + im.height ** 2) ** 0.5) + 2
+    q = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    q.alpha_composite(im, ((side - im.width) // 2, (side - im.height) // 2))
+    q.resize((160, 160), Image.LANCZOS).save(OUT / f'water-fish-{name}.webp', 'WEBP', quality=88, method=6)
+print('itens da água: plantas e peixes')

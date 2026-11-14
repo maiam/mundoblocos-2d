@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHUNK_SIZE } from '../config';
-import { Block, blockDef, MATERIALS } from './blocks';
+import { Block, blockDef, isWaterPlant, MATERIALS } from './blocks';
 import { toChunk, toLocal } from './coords';
 import { WorldGenerator } from './generator';
 import { World } from './world';
@@ -56,7 +56,7 @@ describe('WorldGenerator', () => {
     }
   });
 
-  it('respeita camadas: chão no chão, objetos nos objetos, nada sobre água', () => {
+  it('respeita camadas: chão no chão, objetos nos objetos, nada sobre água (a não ser vitória-régia)', () => {
     const g = new WorldGenerator(5);
     for (let y = -60; y < 60; y += 3) {
       for (let x = -60; x < 60; x += 3) {
@@ -65,7 +65,7 @@ describe('WorldGenerator', () => {
         // Chão: água/buraco ou um material da prancha (mesmo id do cubo).
         expect(ground.layer === 'ground' || MATERIALS.includes(ground.id)).toBe(true);
         expect(obj.layer).toBe('object');
-        if (ground.liquid) expect(obj.id).toBe(Block.AIR);
+        if (ground.liquid) expect(obj.id === Block.AIR || isWaterPlant(obj.id)).toBe(true);
         // Nível 1 só existe sobre cubo.
         if (g.upperAt(x, y) !== Block.AIR) expect(obj.shape).toBe('cube');
       }

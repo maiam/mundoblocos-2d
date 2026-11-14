@@ -1,6 +1,6 @@
 import { SUBDIV } from '../config';
 import type { Biome } from './biomes';
-import { Block, type BlockId, blockDef } from './blocks';
+import { Block, type BlockId, blockDef, isWaterPlant } from './blocks';
 import { inRect, type Rect } from './dungeon';
 import { hash2 } from './random';
 import type { Cell, TerrainSource } from './terrain';
@@ -176,6 +176,7 @@ export class VillageTerrain implements TerrainSource {
     if (d > VILLAGE_MARGIN) return c;
     const g = blockDef(c.ground);
     const ground = g.liquid || c.ground === Block.HOLE ? Block.GRASS : c.ground;
+    if (isWaterPlant(c.object)) return { ground, object: Block.AIR, upper: c.upper }; // a água virou grama: a planta flutuante some
     if (d <= VILLAGE_CLEAR) return { ground, object: Block.AIR, upper: Block.AIR };
     return { ground, object: c.object, upper: c.upper };
   }
