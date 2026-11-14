@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.87 — espuma na beira da água (3D) (14/11/2026)
+- **Segundo passo da água animada:** uma **frente de espuma** vai e volta na margem (vaivém por posição, com ruído para não ficar reta, mais um rastro rendilhado perto da margem), mais clara à noite menos brilho. Dentro de `three/waterSurface.ts` (mesmo plano por chunk; `?agua=0` desliga tudo).
+- **Margem visível:** a arte V2 pinta uma faixa de água (~0,65 de célula) na terra vizinha. A máscara (`waterFx.ts: buildWaterMask`, parâmetro `paintedShore`) passa a incluir a célula de grama, areia, caminho ou terra colada na água, para a camada e a espuma começarem na franja que se vê e não na margem do mapa. A espuma mede a distância pela própria máscara (sem ler pixels).
+- Só 3D, só cliente. Testes: máscara com e sem a terra de margem. Conferido no navegador na margem (franja de grama, galinhas passando).
 ## Orvalis v0.93.86 — a água ganha superfície animada (3D) (14/11/2026)
 - **Pedido do dono do produto:** animação da água (ordem combinada: superfície ondulando e brilho à noite; depois espuma na beira e ondas/peixes).
 - **Superfície** (`render/three/waterSurface.ts`, `render/waterFx.ts`): um plano por chunk **com água**, colado ao chão (sem escrever profundidade), com duas cópias do ladrilho V2 `agua` deslizando em direções e escalas diferentes (manchas claras e escuras em movimento, com leve distorção) e fios de luz que correm. A água **continua nos pixels do chão do chunk** (que não são lidos): a camada só aparece onde a **máscara** diz que há água aberta (`World`: chão líquido sem objeto), com 1 célula de vizinhança (a margem esmaece e nada cobre a terra, também na emenda dos chunks). À **noite** fica mais escura e azulada.

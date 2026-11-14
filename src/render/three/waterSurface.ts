@@ -7,6 +7,8 @@ import { buildWaterMask, WATER_MASK_SIZE } from '../waterFx';
 export interface WaterSurfaceSource {
   /** A célula é água aberta (chão líquido sem objeto por cima)? */
   isOpenWater(x: number, y: number): boolean;
+  /** Terra que recebe a faixa pintada da água (grama, areia, caminho, terra): entra na máscara se tem água ao lado. */
+  paintedShore?(x: number, y: number): boolean;
   getChunk(cx: number, cy: number): Chunk | null | undefined;
   /** Ladrilho da água (repetível), quando a arte já carregou. */
   tile(): HTMLCanvasElement | null;
@@ -24,7 +26,7 @@ void main() {
 `;
 /**
  * Duas cópias do ladrilho da água deslizando em direções e escalas diferentes (a diferença entre elas dá o movimento de ondas),
- * mais fios de luz que correm. Só onde a máscara marca água; a margem esmaece (a máscara tem 1 célula de vizinhança, então o
+ * mais fios de luz que correm e a espuma que vai e volta na beira. Só onde a máscara marca água; a margem esmaece (a máscara tem 1 célula de vizinhança, então o
  * esmaecer cruza chunks). À noite fica mais escura, com fios azulados.
  */
 const FRAGMENT = `
@@ -34,7 +36,9 @@ varying vec2 vCell; varying vec2 vWorld;
 void main() {
   float m = texture2D(uMask, (vCell + 1.0) / ${WATER_MASK_SIZE}.0).r;
   float a = smoothstep(0.5, 0.95, m);
-  if (a <= 0.0) discard;
+  // a faixa pintada da agua cobre 0.65 de celula da terra vizinha (a mascara inclui essa celula): a camada comeca na franja visivel
+  // (m = 0.85 na celula de terra) e edge mede, em celulas, a distancia dali para dentro da agua
+  if (m <= 0.85) discard;
   vec2 w = vWorld;
   vec2 warp = vec2(sin(w.y * 1.9 + uTime * 0.9), cos(w.x * 1.7 + uTime * 0.8)) * 0.06;
   vec3 c1 = texture2D(uTile, w / 1.7 + vec2(uTime * 0.020, uTime * 0.011) + warp).rgb;
@@ -49,7 +53,18 @@ void main() {
   float shine = pow(max(ln, 0.0), 5.0);
   vec3 light = mix(vec3(1.0, 1.0, 0.95), vec3(0.62, 0.78, 1.0), uNight);
   col = mix(col, light, shine * (0.45 - 0.15 * uNight));
-  gl_FragColor = vec4(col, a * 0.26);
+  // espuma na beira: a distância à margem vem da própria máscara (0 junto à margem pintada, ~0,7 no centro da célula); uma frente fina de
+  // espuma vai e volta (vaivém por posição, com ruído para não ficar reta) e deixa um rastro perto da margem
+  float edge = (m - 0.85) * 2.0;
+  float n = sin(w.x * 7.3 + w.y * 5.1 + uTime * 0.7) * 0.5 + sin(w.x * 3.1 - w.y * 9.7 - uTime * 0.5) * 0.5;
+  float lap = 0.5 + 0.5 * sin(uTime * 0.8 + (w.x + w.y) * 0.9 + n * 0.8);
+  float front = 0.06 + 0.2 * lap + n * 0.04;
+  float crest = smoothstep(front - 0.13, front - 0.03, edge) * (1.0 - smoothstep(front - 0.03, front + 0.07, edge));
+  float trail = (1.0 - smoothstep(0.0, 0.1 + 0.08 * lap, edge)) * 0.55;
+  float lace = 0.72 + 0.28 * sin(w.x * 13.0 + w.y * 11.0 + uTime * 1.5);
+  float foam = clamp(crest + trail, 0.0, 1.0) * lace;
+  vec3 foamCol = vec3(0.96, 1.0, 1.0) * (1.0 - 0.4 * uNight);
+  gl_FragColor = vec4(mix(col, foamCol, foam), mix(a * 0.26, 0.85, foam));
 }
 `;
 
@@ -116,7 +131,7 @@ export class WaterSurface {
         }
         if (layer.version !== chunk.version && budget > 0) {
           budget--;
-          const n = buildWaterMask(this.src.isOpenWater, cx * CHUNK_SIZE, cy * CHUNK_SIZE, CHUNK_SIZE, layer.data);
+          const n = buildWaterMask(this.src.isOpenWater, cx * CHUNK_SIZE, cy * CHUNK_SIZE, CHUNK_SIZE, layer.data, this.src.paintedShore);
           layer.mask.needsUpdate = true;
           layer.version = chunk.version;
           layer.mesh.visible = n > 0;

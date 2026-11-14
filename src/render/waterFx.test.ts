@@ -22,4 +22,15 @@ describe('waterFx (superfície da água)', () => {
     const out = new Uint8Array(WATER_MASK_SIZE * WATER_MASK_SIZE);
     expect(buildWaterMask(() => false, 0, 0, 16, out)).toBe(0);
   });
+
+  it('a terra com faixa pintada ao lado da água entra na máscara (a camada chega à margem visível); terra longe da água não', () => {
+    const out = new Uint8Array(WATER_MASK_SIZE * WATER_MASK_SIZE);
+    // água em x >= 5; terra (que recebe a faixa) em x < 5; chunk em x0 = 0
+    buildWaterMask((x) => x >= 5, 0, 0, 16, out, (x) => x < 5);
+    expect(out[1 * WATER_MASK_SIZE + 1 + 4]).toBe(255); // (4, 0): terra colada na água
+    expect(out[1 * WATER_MASK_SIZE + 1 + 3]).toBe(0); // (3, 0): terra a 2 células da água
+    const none = new Uint8Array(WATER_MASK_SIZE * WATER_MASK_SIZE);
+    buildWaterMask((x) => x >= 5, 0, 0, 16, none); // sem o predicado, a máscara é só a água do mapa
+    expect(none[1 * WATER_MASK_SIZE + 1 + 4]).toBe(0);
+  });
 });

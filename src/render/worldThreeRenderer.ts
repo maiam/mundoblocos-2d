@@ -166,6 +166,7 @@ export class WorldThreeRenderer implements GameRenderer {
     });
     this.water = waterFxOn() ? new WaterSurface(this.worldLayer, {
       isOpenWater: (x, y) => blockDef(world.getGround(x, y)).liquid && world.getObject(x, y) === Block.AIR,
+      paintedShore: (x, y) => { const g = world.getGround(x, y); return g === Block.GRASS || g === Block.SAND || g === Block.PATH || g === Block.DIRT; },
       getChunk: (cx, cy) => world.getChunk(cx, cy),
       tile: () => this.waterTile(),
     }) : null;
