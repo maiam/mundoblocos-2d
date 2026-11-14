@@ -133,6 +133,10 @@ interface Asset {
 interface Group { mesh: THREE.InstancedMesh; cells: SpriteCell[] }
 /** Árvore tombando (só visual): o desenho gira em volta do pé e some. */
 interface Falling { pivot: THREE.Group; mat: THREE.MeshBasicMaterial; t: number; dir: 1 | -1 }
+/** Desenho antigo de uma árvore que mudou de forma (macieira com/sem maçãs): some aos poucos sobre o novo. */
+interface Fading { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; t: number }
+/** Duração (s) da troca suave de forma da árvore. */
+export const MORPH_SECONDS = 0.7;
 /** Duração do tombo (s): acelera como um corpo caindo; nos últimos 0,3 s a árvore some. */
 export const FALL_SECONDS = 1.1;
 const FALL_FADE = 0.3;
@@ -158,6 +162,7 @@ export class ChunkSprites {
   private readonly shakeUniforms = { uShakeOrigin: { value: new THREE.Vector3(1e6, 0, 1e6) }, uShakeAmp: { value: 0 } };
   private shakeCell: SpriteCell | null = null;
   private falling: Falling[] = [];
+  private fading: Fading[] = [];
   private readonly swayUniforms = { uSwayTime: { value: 0 }, uSwayPlayer: { value: new THREE.Vector2(1e6, 1e6) }, uSwayRadius: { value: 1.1 } };
 
   constructor(
@@ -194,8 +199,14 @@ export class ChunkSprites {
   }
 
   private treeMaterial(a: Asset): THREE.MeshBasicMaterial {
-    if (a.tree) return a.tree;
-    const m = new THREE.MeshBasicMaterial({ map: a.texture, side: THREE.DoubleSide, alphaTest: 0.5 });
+    return (a.tree ??= this.makeTreeMaterial(a, false));
+  }
+
+  /** Material de copa ao vento; `fading` = a versão translúcida (desenho que some na troca de forma da árvore). */
+  private makeTreeMaterial(a: Asset, fading: boolean): THREE.MeshBasicMaterial {
+    const m = new THREE.MeshBasicMaterial(fading
+      ? { map: a.texture, side: THREE.DoubleSide, transparent: true, alphaTest: 0.01, depthWrite: false }
+      : { map: a.texture, side: THREE.DoubleSide, alphaTest: 0.5 });
     m.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, this.swayUniforms, this.shakeUniforms);
       shader.vertexShader = shader.vertexShader
@@ -205,7 +216,6 @@ export class ChunkSprites {
         .replace('void main() {', 'uniform float uSwayTime; uniform vec3 uShakeOrigin; uniform float uShakeAmp; varying vec3 vSwayWp; varying vec3 vInstPos;\nvoid main() {')
         .replace('#include <map_fragment>', TREE_FRAGMENT);
     };
-    a.tree = m;
     return m;
   }
 
@@ -251,7 +261,13 @@ export class ChunkSprites {
         const built = this.build(chunk, stamp);
         this.builds.set(key, built);
         // árvore que estava aqui e não está mais (cortada, por este ou outro jogador): tomba em vez de sumir de uma vez
-        if (old) for (const c of old.trees) if (!built.trees.some((t) => t.x === c.x && t.y === c.y)) this.startFall(c);
+        if (old) {
+          for (const c of old.trees) {
+            const now = built.trees.find((t) => t.x === c.x && t.y === c.y);
+            if (!now) this.startFall(c);
+            else if (now.sprite.canvas !== c.sprite.canvas) this.startMorph(c); // mesma árvore, outra forma (ex.: a macieira volta a dar maçãs)
+          }
+        }
       }
     }
     for (const [key, build] of this.builds) {
@@ -356,7 +372,20 @@ export class ChunkSprites {
     this.opts.felled?.(c);
   }
 
-  /** Avança as árvores que tombam (chamar a cada quadro). */
+  private startMorph(c: SpriteCell): void {
+    const a = this.asset(c.sprite);
+    const sc = c.scale ?? 1;
+    const [ox, oy, oz] = this.originOf(c);
+    const mat = this.makeTreeMaterial(a, true);
+    const mesh = new THREE.Mesh(a.geometry, mat);
+    mesh.scale.set(sc, sc, 1);
+    mesh.position.set(ox, oy, oz + 0.0007); // um fio à frente do desenho novo (menos que o passo entre colunas)
+    mesh.name = 'Mundo: árvore mudando de forma';
+    this.scene.add(mesh);
+    this.fading.push({ mesh, mat, t: 0 });
+  }
+
+  /** Avança as árvores que tombam e as que mudam de forma (chamar a cada quadro). */
   tick(dt: number): void {
     for (let i = this.falling.length - 1; i >= 0; i--) {
       const f = this.falling[i];
@@ -370,10 +399,23 @@ export class ChunkSprites {
         this.falling.splice(i, 1);
       }
     }
+    for (let i = this.fading.length - 1; i >= 0; i--) {
+      const f = this.fading[i];
+      f.t += dt;
+      f.mat.opacity = Math.max(0, 1 - f.t / MORPH_SECONDS);
+      if (f.t >= MORPH_SECONDS) {
+        this.scene.remove(f.mesh);
+        f.mat.dispose();
+        this.fading.splice(i, 1);
+      }
+    }
   }
 
   /** Árvores tombando agora (dev/testes). */
   get fallingCount(): number { return this.falling.length; }
+
+  /** Árvores trocando de forma agora (dev/testes). */
+  get morphingCount(): number { return this.fading.length; }
 
   /** Origem (mundo) do plano de uma árvore: onde `build` a coloca (mesma conta). */
   private originOf(c: SpriteCell): [number, number, number] {
@@ -428,6 +470,8 @@ export class ChunkSprites {
   dispose(): void {
     for (const f of this.falling) { this.scene.remove(f.pivot); f.mat.dispose(); }
     this.falling = [];
+    for (const f of this.fading) { this.scene.remove(f.mesh); f.mat.dispose(); }
+    this.fading = [];
     for (const b of this.builds.values()) this.release(b);
     this.builds.clear();
     for (const a of this.assets.values()) {

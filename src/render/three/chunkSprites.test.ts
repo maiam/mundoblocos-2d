@@ -194,3 +194,33 @@ describe('ChunkSprites: árvore derrubada tomba', () => {
     expect(b.sprites.fallingCount).toBe(0);
   });
 });
+
+describe('ChunkSprites: árvore que muda de forma troca suave (macieira com/sem maçãs)', () => {
+  it('o desenho antigo some aos poucos sobre o novo e é descartado; sem mudança de arte, nada acontece', () => {
+    const TREE2 = 11;
+    const tree2: SpriteArt = { canvas: {} as HTMLCanvasElement, ox: -16, oy: -64, w: 64, h: 96, hit: { x: 0, y: 0, w: 32, h: 70 } };
+    const chunks = new Map<string, Chunk>([['0,0', { cx: 0, cy: 0, version: 1 } as Chunk]]);
+    const cells = new Map<string, number>([['1,1', TREE]]);
+    const world: BlockWorld = { getChunk: (cx, cy) => chunks.get(cx + ',' + cy), getLevel: (x, y) => cells.get(x + ',' + y) ?? 0 };
+    const scene = new THREE.Scene();
+    const sprites = new ChunkSprites(scene, world, {
+      tile: 32, k: 1, animated: (id) => (id === TREE || id === TREE2 ? 'tree' : null),
+      art: (id) => (id === TREE ? { sprite: tree, walkable: false } : id === TREE2 ? { sprite: tree2, walkable: false } : null),
+    });
+    const rect = { cx0: 0, cy0: 0, cx1: 0, cy1: 0 };
+    sprites.update(rect);
+    chunks.get('0,0')!.version++; sprites.update(rect); // reconstrução sem mudança
+    expect(sprites.morphingCount).toBe(0);
+    cells.set('1,1', TREE2); chunks.get('0,0')!.version++; sprites.update(rect);
+    expect(sprites.morphingCount).toBe(1);
+    expect(sprites.fallingCount).toBe(0); // continua árvore: não tomba
+    const mesh = scene.children.find((o) => o.name === 'Mundo: árvore mudando de forma') as THREE.Mesh;
+    expect((mesh.material as THREE.MeshBasicMaterial).opacity).toBe(1);
+    sprites.tick(0.35);
+    expect((mesh.material as THREE.MeshBasicMaterial).opacity).toBeGreaterThan(0);
+    expect((mesh.material as THREE.MeshBasicMaterial).opacity).toBeLessThan(1);
+    sprites.tick(0.5);
+    expect(sprites.morphingCount).toBe(0);
+    expect(scene.children.some((o) => o.name === 'Mundo: árvore mudando de forma')).toBe(false);
+  });
+});
