@@ -135,7 +135,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);
@@ -210,6 +210,7 @@ export class WorldThreeRenderer implements GameRenderer {
     }
     // Fogueiras vivas (v0.93.67): a lista das visíveis é refeita a cada ~0,25 s; chama, brilho, brasas e luz nos atores.
     this.sprites.setTime(opts.elapsed);
+    this.sprites.tick(opts.dt);
     this.sprites.setSwayPlayer(opts.actors[0] && !inside ? opts.actors[0].x : null, opts.actors[0]?.y);
     if (inside) this.fires = [];
     else if (opts.elapsed - this.firesAt > 0.25 || opts.elapsed < this.firesAt) {

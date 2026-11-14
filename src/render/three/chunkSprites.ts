@@ -46,6 +46,8 @@ export interface ChunkSpritesOptions {
   animated?(id: BlockId): 'fire' | 'sway' | 'tree' | null;
   /** Alcance (células) em que o jogador curva a vegetação que balança (`sway`). */
   swayRadius?: number;
+  /** Uma árvore foi derrubada (sumiu do mapa): o 3D a faz tombar; o chamador solta folhas dela. */
+  felled?(cell: SpriteCell): void;
 }
 
 /**
@@ -129,6 +131,12 @@ interface Asset {
   tree?: THREE.MeshBasicMaterial;
 }
 interface Group { mesh: THREE.InstancedMesh; cells: SpriteCell[] }
+/** Árvore tombando (só visual): o desenho gira em volta do pé e some. */
+interface Falling { pivot: THREE.Group; mat: THREE.MeshBasicMaterial; t: number; dir: 1 | -1 }
+/** Duração do tombo (s): acelera como um corpo caindo; nos últimos 0,3 s a árvore some. */
+export const FALL_SECONDS = 1.1;
+const FALL_FADE = 0.3;
+const FALL_ANGLE = Math.PI / 2 - 0.12;
 interface Build { version: number; groups: Group[]; /** Árvores que balançam (para soltar folhas). */ trees: SpriteCell[] }
 
 /**
@@ -149,6 +157,7 @@ export class ChunkSprites {
   /** Árvore que treme (a que está sendo cortada): origem do plano da instância e intensidade 0..1. */
   private readonly shakeUniforms = { uShakeOrigin: { value: new THREE.Vector3(1e6, 0, 1e6) }, uShakeAmp: { value: 0 } };
   private shakeCell: SpriteCell | null = null;
+  private falling: Falling[] = [];
   private readonly swayUniforms = { uSwayTime: { value: 0 }, uSwayPlayer: { value: new THREE.Vector2(1e6, 1e6) }, uSwayRadius: { value: 1.1 } };
 
   constructor(
@@ -239,7 +248,10 @@ export class ChunkSprites {
         if (budget <= 0) continue;
         budget--;
         if (old) this.release(old);
-        this.builds.set(key, this.build(chunk, stamp));
+        const built = this.build(chunk, stamp);
+        this.builds.set(key, built);
+        // árvore que estava aqui e não está mais (cortada, por este ou outro jogador): tomba em vez de sumir de uma vez
+        if (old) for (const c of old.trees) if (!built.trees.some((t) => t.x === c.x && t.y === c.y)) this.startFall(c);
       }
     }
     for (const [key, build] of this.builds) {
@@ -324,6 +336,45 @@ export class ChunkSprites {
     }
   }
 
+  private startFall(c: SpriteCell): void {
+    const a = this.asset(c.sprite);
+    const { tile } = this.opts, s = c.sprite, sc = c.scale ?? 1;
+    const [ox, oy, oz] = this.originOf(c);
+    const wc = (s.w / tile) * sc;
+    const pivot = new THREE.Group();
+    pivot.position.set(ox + wc / 2, oy, oz); // o pé: meio da base do desenho
+    const mat = new THREE.MeshBasicMaterial({ map: a.texture, side: THREE.DoubleSide, transparent: true, alphaTest: 0.01, depthWrite: false });
+    const mesh = new THREE.Mesh(a.geometry, mat);
+    mesh.scale.set(sc, sc, 1);
+    mesh.position.x = -wc / 2;
+    pivot.add(mesh);
+    pivot.name = 'Mundo: árvore tombando';
+    this.scene.add(pivot);
+    // cai para longe de quem cortou (o jogador conhecido por `setSwayPlayer`); sem jogador, para a direita
+    const px = this.swayUniforms.uSwayPlayer.value.x;
+    this.falling.push({ pivot, mat, t: 0, dir: px < 1e5 && px > ox + wc / 2 ? -1 : 1 });
+    this.opts.felled?.(c);
+  }
+
+  /** Avança as árvores que tombam (chamar a cada quadro). */
+  tick(dt: number): void {
+    for (let i = this.falling.length - 1; i >= 0; i--) {
+      const f = this.falling[i];
+      f.t += dt;
+      const u = Math.min(1, f.t / (FALL_SECONDS - FALL_FADE));
+      f.pivot.rotation.z = -f.dir * FALL_ANGLE * Math.pow(u, 2.2);
+      f.mat.opacity = f.t < FALL_SECONDS - FALL_FADE ? 1 : Math.max(0, 1 - (f.t - (FALL_SECONDS - FALL_FADE)) / FALL_FADE);
+      if (f.t >= FALL_SECONDS) {
+        this.scene.remove(f.pivot);
+        f.mat.dispose();
+        this.falling.splice(i, 1);
+      }
+    }
+  }
+
+  /** Árvores tombando agora (dev/testes). */
+  get fallingCount(): number { return this.falling.length; }
+
   /** Origem (mundo) do plano de uma árvore: onde `build` a coloca (mesma conta). */
   private originOf(c: SpriteCell): [number, number, number] {
     const { tile } = this.opts, s = c.sprite, sc = c.scale ?? 1;
@@ -375,6 +426,8 @@ export class ChunkSprites {
   }
 
   dispose(): void {
+    for (const f of this.falling) { this.scene.remove(f.pivot); f.mat.dispose(); }
+    this.falling = [];
     for (const b of this.builds.values()) this.release(b);
     this.builds.clear();
     for (const a of this.assets.values()) {
