@@ -193,7 +193,7 @@ export class ActionController {
   private canToggleDoorAt(x: number, y: number): boolean {
     if (!this.world.isDoor(x, y)) return false;
     if (!this.world.isDoorOpen(x, y)) return true;
-    // Fechar exige a(s) célula(s) livre(s) de entidades (o portão da vila ocupa 8 células).
+    // Fechar exige a(s) célula(s) livre(s) de entidades (o portão da vila ocupa 5 células).
     return !(this.world.gateCells(x, y) ?? [[x, y]]).some(([cx, cy]) => this.entities.occupies(cx, cy));
   }
 

@@ -800,6 +800,9 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     if (url) icons.set(id, url);
   }
   const fencePieces = fenceTextures(objects, icons);
+  // Cerca de Estacas (v0.93.90): o ícone vem do pacote da vila (`village-stake-icon`).
+  const stakeIcon = getTownImages().get('village-stake-icon')?.src;
+  if (stakeIcon) icons.set(Block.FENCE_STAKE, stakeIcon);
   const glowColor = new Map<BlockId, string>([
     [Block.MOSS_LUMINOUS, '#c8ff8a'],
     [Block.CRYSTAL_LIFE, '#ff9be6'],

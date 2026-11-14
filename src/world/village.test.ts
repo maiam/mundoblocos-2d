@@ -43,8 +43,8 @@ describe('Vila Camponesa (domains/village.md)', () => {
     // norte, oeste e leste: nenhuma célula livre ao longo da linha do muro
     for (let x = 1; x <= 46; x++) expect(solid(v.area.x0 + x, v.area.y0 + 4), `norte x=${x}`).toBe(true);
     for (let y = 4; y <= 43; y++) { expect(solid(v.area.x0 + 1, v.area.y0 + y), `oeste y=${y}`).toBe(true); expect(solid(v.area.x0 + 46, v.area.y0 + y), `leste y=${y}`).toBe(true); }
-    // sul: tudo bloqueado, menos o vão do portão (x 21–26)
-    for (let x = 1; x <= 46; x++) expect(solid(v.area.x0 + x, v.area.y0 + 43), `sul x=${x}`).toBe(x < 21 || x > 26);
+    // sul: tudo bloqueado, menos o vão do portão (x 23–25)
+    for (let x = 1; x <= 46; x++) expect(solid(v.area.x0 + x, v.area.y0 + 43), `sul x=${x}`).toBe(x < 23 || x > 25);
   });
 
   it.runIf(SUBDIV === 2)('do portão da vila à praça do poço há caminho livre (estrada de terra), e as seis casas têm porta para um caminho', () => {
@@ -53,7 +53,7 @@ describe('Vila Camponesa (domains/village.md)', () => {
     let reachable = 0;
     // busca em largura a partir do vão do portão, andando só em células livres dentro da área
     const seen = new Set<string>();
-    const queue: Array<[number, number]> = [[v.gate.x0 + 2, v.gate.y0 + 1]];
+    const queue: Array<[number, number]> = [[v.gate.x0 + 1, v.gate.y0 + 1]];
     while (queue.length) {
       const [x, y] = queue.pop()!;
       const k = x + ',' + y;
@@ -90,38 +90,38 @@ describe('Vila Camponesa (domains/village.md)', () => {
       expect(w.getGround(x, v.area.y1 + 4)).not.toBe(Block.WATER);
       expect(w.getGround(x, v.area.y0 - 4)).not.toBe(Block.WATER);
     }
-    expect(w.getGround(v.gate.x0 + 2, v.gate.y1 + 3)).toBe(Block.PATH); // fora do portão, na trilha
-    expect(w.getGround(v.gate.x0 + 2, v.gate.y0 - 3)).toBe(Block.PATH); // dentro, a estrada segue pelo meio da vila
+    expect(w.getGround(v.gate.x0 + 1, v.gate.y1 + 3)).toBe(Block.PATH); // fora do portão, na trilha
+    expect(w.getGround(v.gate.x0 + 1, v.gate.y0 - 3)).toBe(Block.PATH); // dentro, a estrada segue pelo meio da vila
     expect(w.getGround(v.area.x0 + 3, v.area.y0 + 30)).toBe(Block.GRASS); // o resto é grama
   });
 
-  it.runIf(SUBDIV === 2)('o portão abre e fecha: tocar em qualquer bloco muda os 8 juntos; fechado bloqueia o vão, aberto deixa passar', () => {
+  it.runIf(SUBDIV === 2)('o portão abre e fecha: tocar em qualquer bloco muda os 5 juntos; fechado bloqueia o vão, aberto deixa passar', () => {
     const w = new World(42);
     const v = w.village!;
     const y = v.gate.y0;
-    const cells = Array.from({ length: 8 }, (_, i) => [v.gate.x0 - 1 + i, y] as [number, number]);
-    expect(w.gateCells(v.gate.x0 + 2, y)).toEqual(cells);
+    const cells = Array.from({ length: 5 }, (_, i) => [v.gate.x0 - 1 + i, y] as [number, number]);
+    expect(w.gateCells(v.gate.x0 + 1, y)).toEqual(cells);
     expect(w.gateCells(v.gate.x0 - 2, y)).toBeNull(); // o muro ao lado não é do portão
-    expect(w.isDoor(v.gate.x0 + 2, y)).toBe(true);
-    expect(w.isDoorOpen(v.gate.x0 + 2, y)).toBe(true);
-    for (const [x] of cells.slice(1, 7)) expect(blockSolid(w, x, y), `aberto x=${x}`).toBe(false);
-    expect(w.toggleDoor(v.gate.x0 + 2, y)).toBe(true); // um bloco do vão fecha o portão inteiro
+    expect(w.isDoor(v.gate.x0 + 1, y)).toBe(true);
+    expect(w.isDoorOpen(v.gate.x0 + 1, y)).toBe(true);
+    for (const [x] of cells.slice(1, 4)) expect(blockSolid(w, x, y), `aberto x=${x}`).toBe(false);
+    expect(w.toggleDoor(v.gate.x0 + 1, y)).toBe(true); // um bloco do vão fecha o portão inteiro
     expect(w.getObject(cells[0][0], y)).toBe(Block.V_GATE_CLOSED);
-    for (const [x] of cells.slice(1, 7)) { expect(w.getObject(x, y)).toBe(Block.V_GATE_GAP_CLOSED); expect(blockSolid(w, x, y), `fechado x=${x}`).toBe(true); }
-    expect(w.isDoorOpen(v.gate.x0 + 2, y)).toBe(false);
+    for (const [x] of cells.slice(1, 4)) { expect(w.getObject(x, y)).toBe(Block.V_GATE_GAP_CLOSED); expect(blockSolid(w, x, y), `fechado x=${x}`).toBe(true); }
+    expect(w.isDoorOpen(v.gate.x0 + 1, y)).toBe(false);
     expect(w.toggleDoor(cells[0][0], y)).toBe(true); // o poste abre de novo
     expect(w.getObject(cells[0][0], y)).toBe(Block.V_GATE);
-    expect(w.getObject(cells[7][0], y)).toBe(Block.TOWN_PART); // o poste da direita nunca muda
-    expect(blockSolid(w, cells[7][0], y)).toBe(true);
-    for (const [x] of cells.slice(1, 7)) expect(blockSolid(w, x, y)).toBe(false);
+    expect(w.getObject(cells[4][0], y)).toBe(Block.TOWN_PART); // o poste da direita nunca muda
+    expect(blockSolid(w, cells[4][0], y)).toBe(true);
+    for (const [x] of cells.slice(1, 4)) expect(blockSolid(w, x, y)).toBe(false);
   });
 
   it.runIf(SUBDIV === 2)('o portão volta aberto ao restaurar um chunk salvo (a área é protegida e volta do gerador)', () => {
     const a = new World(42);
     const v = a.village!;
-    a.toggleDoor(v.gate.x0 + 2, v.gate.y0);
+    a.toggleDoor(v.gate.x0 + 1, v.gate.y0);
     const b = new World(42);
-    expect(b.getObject(v.gate.x0 + 2, v.gate.y0)).toBe(Block.V_GATE_GAP);
+    expect(b.getObject(v.gate.x0 + 1, v.gate.y0)).toBe(Block.V_GATE_GAP);
   });
 });
 

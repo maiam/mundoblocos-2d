@@ -150,15 +150,8 @@ export const Block = {
   V_BED_VEG: 119,
   V_OAK: 143,
   V_TREE: 144,
-  /** Muro de estacas: segmentos retos de 6 e de 7 células (norte e sul), laterais (uma estaca por fileira) e os quatro cantos. */
-  V_PAL_H6: 145,
-  V_PAL_H7: 146,
-  V_PAL_W: 147,
-  V_PAL_E: 148,
-  V_PAL_NW: 149,
-  V_PAL_NE: 206,
-  V_PAL_SW: 207,
-  V_PAL_SE: 208,
+  /** Estaca alta do muro da vila: 1 célula de largura (4 estacas) × 1,5 de altura (16 × 24 px); só o gerador a põe. */
+  V_STAKE: 145,
   /** Portão aberto (duas colunas com lampião; o vão entre elas fica livre). */
   V_GATE: 209,
   V_BARREL: 226,
@@ -175,6 +168,8 @@ export const Block = {
   /** Os 6 blocos do vão entre os postes: livres com o portão aberto, sólidos com ele fechado (sem arte própria: o desenho é do portão). */
   V_GATE_GAP: 239,
   V_GATE_GAP_CLOSED: 254,
+  /** Cerca de Estacas (v0.93.90): 1 célula × 1 de altura (16 × 16 px), 4 estacas; o jogador fabrica (1 Tora → 4) e coloca. */
+  FENCE_STAKE: 244,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -385,6 +380,7 @@ const defs: BlockDef[] = [
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   // Cerca e portão: ocupam a célula (nada empilha em cima); madeira: o machado desmonta.
   object(Block.FENCE, 'Cerca de Madeira', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_STAKE, 'Cerca de Estacas', { shape: 'building', organic: 'wood' }),
   object(Block.FENCE_GATE, 'Portão de Madeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_GATE_OPEN, 'Portão de Madeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
@@ -431,9 +427,7 @@ const defs: BlockDef[] = [
   ...([
     [Block.V_HOUSE_STRAW, 'Casa de Palha'], [Block.V_HOUSE_TILE, 'Casa de Telhas'], [Block.V_BARN, 'Celeiro'],
     [Block.V_COOP, 'Galinheiro'], [Block.V_WELL, 'Poço'], [Block.V_BENCH, 'Banco'], [Block.V_BED_WHEAT, 'Canteiro de Trigo'],
-    [Block.V_BED_VEG, 'Horta'], [Block.V_OAK, 'Carvalho'], [Block.V_TREE, 'Árvore'], [Block.V_PAL_H6, 'Paliçada'],
-    [Block.V_PAL_H7, 'Paliçada'], [Block.V_PAL_W, 'Paliçada'], [Block.V_PAL_E, 'Paliçada'], [Block.V_PAL_NW, 'Paliçada'],
-    [Block.V_PAL_NE, 'Paliçada'], [Block.V_PAL_SW, 'Paliçada'], [Block.V_PAL_SE, 'Paliçada'], [Block.V_GATE, 'Portão da Vila'],
+    [Block.V_BED_VEG, 'Horta'], [Block.V_OAK, 'Carvalho'], [Block.V_TREE, 'Árvore'], [Block.V_STAKE, 'Paliçada'], [Block.V_GATE, 'Portão da Vila'],
     [Block.V_BARREL, 'Barril'], [Block.V_ROCKS, 'Rochas'], [Block.V_BUSH, 'Arbusto Florido'], [Block.V_LOGS, 'Toras'],
     [Block.V_HAY, 'Feno'], [Block.V_CART, 'Carroça'], [Block.V_SACKS, 'Sacos'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false, seat: id === Block.V_BENCH })),
@@ -525,7 +519,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
-  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_GATE,
+  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_GATE, Block.FENCE_STAKE,
 ];
 
 /**
