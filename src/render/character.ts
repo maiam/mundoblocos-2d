@@ -151,8 +151,8 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'mila-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (308 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'mila-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (307 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'mila-pickaxe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (333 / 297), shadow: [0.32, 0.12], walkFps: 0, action: true },
-  // Grewn (v0.93.80, teste do estilo chibi de cabeça grande; assets-src/grewn): a folha-base é a de repouso (sem caminhada sem ferramenta: `walkFps: 0`), 5 caminhadas com ferramenta, 5 golpes e sentar; cada folha foi gerada preenchendo a célula, então a escala varia (cabeça de 250 a 296 px numa célula de 384): a altura do quadro é `270 / largura da cabeça` da folha (largura medida em px da prancha original), para a cabeça ter o mesmo tamanho em toda ação.
-  'grewn': { cols: 4, rows: 4, height: CHARACTER_H * (270 / 296), shadow: [0.32, 0.12], walkFps: 0 },
+  // Grewn (v0.93.80, teste do estilo chibi de cabeça grande; assets-src/grewn): a folha-base é a caminhada sem ferramenta (`hood-v02-01`), mais 5 caminhadas com ferramenta, 5 golpes e sentar; cada folha foi gerada preenchendo a célula, então a escala varia (cabeça de 250 a 296 px numa célula de 384): a altura do quadro é `270 / largura da cabeça` da folha (largura medida em px da prancha original), para a cabeça ter o mesmo tamanho em toda ação.
+  'grewn': { cols: 4, rows: 4, height: CHARACTER_H * (270 / 262), shadow: [0.32, 0.12], walkFps: 7 },
   'grewn-sit': { cols: 4, rows: 4, height: CHARACTER_H * (270 / 275), shadow: [0.32, 0.12], walkFps: 0, sequence: true },
   'grewn-sword': { cols: 4, rows: 4, height: CHARACTER_H * (270 / 252), shadow: [0.32, 0.12], walkFps: 7 },
   'grewn-axe': { cols: 4, rows: 4, height: CHARACTER_H * (270 / 272), shadow: [0.32, 0.12], walkFps: 7 },
