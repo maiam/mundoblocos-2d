@@ -1,4 +1,4 @@
-import { Block, CELESTIAL_BLOCKS, type BlockId, HOTBAR_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
+import { Block, type BlockId, HOTBAR_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
 import type { ChunkRect } from './world';
 
 /**
@@ -72,9 +72,12 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     // 10 chunks: 5 × 2 (80 × 32 blocos), centrados na origem.
     bounds: { cx0: -3, cy0: -1, cx1: 1, cy1: 0 },
     character: 'goddess',
-    // Blocos celestiais + Terra e Terra Arada do atlas V2 para testes de profundidade.
-    blocks: [...CELESTIAL_BLOCKS.flatMap(id => id === Block.WATER_CRYSTAL ? [id, Block.WATER_PURE] : [id]),
-      Block.DIRT, Block.TILLED, ...WALL_BLOCKS, ...WALL_DOOR_BLOCKS],
+    // Laboratório de oito materiais do cubo (lista única e na ordem aprovada pelo usuário).
+    // O piso Nuvem Sólida permanece como suporte do cenário, mas NÃO é selecionável na hotbar.
+    blocks: [
+      Block.DIRT, Block.TILLED, Block.GRASS, Block.WATER_PURE,
+      Block.OAK_LOG, Block.OAK_PLANKS, Block.STONE, Block.STONE_SMOOTH,
+    ],
     tools: false,
     farming: false,
     sheep: false,
