@@ -38,9 +38,10 @@ describe('Luz dos atores (v0.93.64)', () => {
     expect(actorLightAt(-0.5).dir).toEqual(actorLightAt(0.5).dir);
   });
 
-  it('?luz=0 desliga o sombreado dos atores', () => {
+  it('?sombreado=0 desliga o sombreado dos atores (e ?luz= não mexe nele)', () => {
     expect(actorLightOn('')).toBe(true);
-    expect(actorLightOn('?luz=1')).toBe(true);
-    expect(actorLightOn('?luz=0')).toBe(false);
+    expect(actorLightOn('?luz=0')).toBe(true);
+    expect(actorLightOn('?sombreado=1')).toBe(true);
+    expect(actorLightOn('?sombreado=0')).toBe(false);
   });
 });

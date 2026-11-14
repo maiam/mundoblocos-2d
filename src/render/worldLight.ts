@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import { skyAt } from './daycycle';
 import { hexToRgb, mix } from './color';
@@ -58,7 +59,8 @@ export function glowSource(id: BlockId, x: number, y: number, info: GlowInfo | u
   const p = base ?? fallback;
   const at = info.at ?? [0, -0.9];
   const color = base ? base.color : lightColorFrom(info.color);
-  return { x: x + 0.5 + at[0], z: y + 1, height: Math.max(0.2, -at[1]), radius: p.radius, color, flicker: p.flicker };
+  // O raio é em pixels de mundo: na grade fina (ADR 0032) vale `SUBDIV` vezes mais células.
+  return { x: x + 0.5 + at[0], z: y + 1, height: Math.max(0.2, -at[1]), radius: p.radius * SUBDIV, color, flicker: p.flicker };
 }
 
 /** Todas as luzes de blocos na área visível `[x0, x1] × [y0, y1]` (células). */

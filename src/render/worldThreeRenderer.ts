@@ -1,4 +1,4 @@
-import { TILE } from '../config';
+import { SUBDIV, TILE } from '../config';
 import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import { ActorBillboards } from './three/actorBillboards';
@@ -9,6 +9,8 @@ import { SanctuaryLighting } from './sanctuaryLighting';
 import { flickerFactor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
 import { collectWorldLights, worldAmbient } from './worldLight';
 import { actorLightAt } from './actorLight';
+import { findFires, type FireSource } from './fireLight';
+import { FireFx } from './three/fireFx';
 import { actorLightOn } from './rendererChoice';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
@@ -68,6 +70,10 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly floor: ChunkFloor;
   private readonly blocks: ChunkBlocks;
   private readonly sprites: ChunkSprites;
+  /** Efeitos da fogueira (brilho no chão, halo, brasas) e a lista das visíveis (refeita a cada ~0,25 s). */
+  private readonly fireFx: FireFx;
+  private fires: FireSource[] = [];
+  private firesAt = -Infinity;
   private readonly groundFx: GroundFx;
   private readonly doors: DoorSprites;
   /** Paredes autotile (W5): arte por chunk; os atlas chegam em segundo plano. */
@@ -114,7 +120,8 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures) });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => id === Block.CAMPFIRE });
+    this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.walls = new ChunkWalls(this.worldLayer, world, this.wallAtlases, DEFAULT_WALL_THICKNESS);
     for (const [key, url] of Object.entries(art().wallAtlases ?? {})) {
       if (!url) continue;
@@ -178,6 +185,15 @@ export class WorldThreeRenderer implements GameRenderer {
       this.doors.update(rect, opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
     }
+    // Fogueiras vivas (v0.93.67): a lista das visíveis é refeita a cada ~0,25 s; chama, brilho, brasas e luz nos atores.
+    this.sprites.setTime(opts.elapsed);
+    if (inside) this.fires = [];
+    else if (opts.elapsed - this.firesAt > 0.25 || opts.elapsed < this.firesAt) {
+      this.firesAt = opts.elapsed;
+      this.fires = findFires(view, (x, y) => this.world.getObject(x, y), { x: cam.x / TILE, z: cam.y / TILE });
+    }
+    this.fireFx.update(this.fires, opts.elapsed, skyAt(opts.time).night, TILE * cam.zoom);
+    this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
     this.drops.update(view, opts.drops, opts.elapsed);
@@ -221,7 +237,7 @@ export class WorldThreeRenderer implements GameRenderer {
     const cellPx = TILE * cam.zoom;
     const reach = Math.hypot(cam.width, cam.height) / (2 * cellPx);
     const a = opts.actors[0];
-    const player: LightSource = { x: a ? a.x : focus.x, z: a ? a.y : focus.z, ...PLAYER_LIGHT };
+    const player: LightSource = { x: a ? a.x : focus.x, z: a ? a.y : focus.z, ...PLAYER_LIGHT, radius: PLAYER_LIGHT.radius * SUBDIV };
     const glows = collectWorldLights(view, (x, y) => this.world.getObject(x, y), (id) => {
       const color = this.textures.glowColor.get(id);
       return color ? { color, at: this.textures.glowAt.get(id) } : undefined;
@@ -277,6 +293,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.floor.dispose();
     this.blocks.dispose();
     this.sprites.dispose();
+    this.fireFx.dispose();
     this.walls.dispose();
     this.doors.dispose();
     this.groundFx.dispose();

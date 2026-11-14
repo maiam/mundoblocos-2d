@@ -161,8 +161,11 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
   Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
 
+## Fogueira viva (v0.93.67)
+- Chama: material `animated` em `three/chunkSprites.ts` (`FIRE_FRAGMENT`: ondulação por altura, pulso e piscar). Efeitos: `three/fireFx.ts` (brilho no chão, halo, brasas). Dados e luz: `render/fireLight.ts` (puro: `findFires`, `fireLightOn`). Luz nos atores: `uFire*` no shader de `actorBillboards.ts`. O renderer refaz a lista de fogueiras a cada ~0,25 s. Raios de luz do Mundo valem `× SUBDIV` (`worldLight.glowSource`, luz do jogador).
+
 ## Luz dos atores no 3D (v0.93.66)
-- `render/actorLight.ts` (puro): sol/lua pela hora (`actorLightAt(time, place)`) → direção, cor, ambiente, força e sombra no chão. `ActorBillboards.setLight` passa para o shader (`LIT_HEAD`/`LIT_BODY` em `three/actorBillboards.ts`): normal falsa por pixel (alfa + brilho), difuso relativo a uma normal de frente, brilho de contorno e escurecimento junto dos pés. `?luz=0` desliga. Corações e morte não recebem; o 2D de reserva fica chapado.
+- `render/actorLight.ts` (puro): sol/lua pela hora (`actorLightAt(time, place)`) → direção, cor, ambiente, força e sombra no chão. `ActorBillboards.setLight` passa para o shader (`LIT_HEAD`/`LIT_BODY` em `three/actorBillboards.ts`): normal falsa por pixel (alfa + brilho), difuso relativo a uma normal de frente, brilho de contorno e escurecimento junto dos pés. `?sombreado=0` desliga. Corações e morte não recebem; o 2D de reserva fica chapado.
 
 ## Mapa grande (v0.93.62)
 - `render/worldMap.ts`: tela cheia (M ou toque no minimapa), arrasta/zoom/pinça, ◎ centraliza, ▣ enquadra o explorado; lê `World` + `Exploration`; `render/mapChunks.ts` (cache de imagens de chunk) e `render/mapMarkers.ts` são compartilhados com o minimapa. O `Game` pausa enquanto está aberto (`toggleWorldMap`).

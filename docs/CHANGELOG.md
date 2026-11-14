@@ -1,11 +1,20 @@
 # Changelog
 
+## Orvalis v0.93.67 — fogueira viva: chama animada, luz e brasas (14/11/2026)
+- **Pedido do dono do produto:** "luz da fogueira e animação no fogo" (o Three.js dá conta, sem arte nova).
+- **Chama que balança** (`three/chunkSprites.ts`, material `animated`): o próprio desenho da fogueira é amostrado com a coordenada horizontal ondulando mais quanto mais alto o ponto, a altura da chama pulsa e os pixels cor de fogo piscam em brilho. Sem recorte nem arte nova; o 2D de reserva segue estático.
+- **Efeitos** (`three/fireFx.ts`, pools de `MAX_FIRES = 8`): brilho quente no chão (mistura normal, para não virar verde-limão sobre a grama; fraco de dia, forte à noite), halo aditivo em volta da chama e **brasas** que sobem e se apagam (animadas no vertex shader).
+- **Luz nos atores** (`render/fireLight.ts` + shader de `actorBillboards.ts`): quem está perto da fogueira recebe luz quente do lado dela, de dia e de noite, com a mesma oscilação do fogo.
+- **Correção junto:** os raios de luz do Mundo (fogueira, lanternas, luz do jogador) eram em células da grade 1 e, na grade 2, cobriam metade da área; agora valem `× SUBDIV`.
+- **Parâmetro:** o sombreado dos atores (v0.93.66) passa a se desligar com `?sombreado=0` (o `?luz=` já é a escuridão do Santuário).
+- Só cliente (render): **sem mudança no servidor nem no protocolo**. Testes: achar fogueiras, queda e direção da luz, oscilação (526 testes, grades 1 e 2). Conferido no navegador de dia, ao entardecer e à noite.
+
 ## Orvalis v0.93.66 — golpe de espada do Hood em 8 quadros e luz do sol nos atores (14/11/2026)
 - **Pedido do dono do produto:** incorporar a nova prancha de batalha com espada do Hood e fazer o three.js trabalhar luminosidade e profundidade no personagem.
 - **Prancha do Hood** (`assets-src/hood/hood-sword-attack8-sheet.png`, 8 quadros × 8 direções): entram as 4 direções do jogo (frente, esquerda, direita, costas; as diagonais ficam guardadas para quando houver 8 direções) com os 8 quadros — preparo, subida, golpe com o arco branco (5º quadro) e recuperação. `Actor.phase` (0..1) escolhe a coluna de folhas de ação com mais de 4 quadros; as de 4 seguem por `frame`. Tempo próprio (`game/attackTiming.ts`): 0,48 s com o acerto em 56% (no meio do arco); os outros personagens seguem 0,36 s. A sala anima os outros jogadores com o mesmo tempo (`RemotePlayers`).
-- **Luz dos atores no 3D** (`render/actorLight.ts`, `render/three/actorBillboards.ts`): o sol (leste de manhã → oeste à tarde, alaranjado no nascer/pôr, lua azulada à noite) acende cada ator com **normais falsas** tiradas do arredondado da silhueta e do brilho do desenho (sem ler o canvas: tudo no shader), mais um brilho de contorno do lado do sol e um leve escurecimento junto dos pés — relativo a uma normal de frente, então o dia continua claro. A **sombra no chão** cai para o lado oposto ao sol e é mais comprida com o sol baixo. Fraco no covil e em cômodos; corações do namoro e morte ficam de fora. `?luz=0` desliga (para comparar). O 2D de reserva não muda.
+- **Luz dos atores no 3D** (`render/actorLight.ts`, `render/three/actorBillboards.ts`): o sol (leste de manhã → oeste à tarde, alaranjado no nascer/pôr, lua azulada à noite) acende cada ator com **normais falsas** tiradas do arredondado da silhueta e do brilho do desenho (sem ler o canvas: tudo no shader), mais um brilho de contorno do lado do sol e um leve escurecimento junto dos pés — relativo a uma normal de frente, então o dia continua claro. A **sombra no chão** cai para o lado oposto ao sol e é mais comprida com o sol baixo. Fraco no covil e em cômodos; corações do namoro e morte ficam de fora. `?sombreado=0` desliga (para comparar). O 2D de reserva não muda.
 - **Servidor:** `player.ts`/`entities.ts` mudaram (tempo do golpe, `Actor.phase`) → `build:net` + `sync-net`; protocolo não muda.
-- Testes: luz pela hora do dia, sombra, `?luz=0`, tempo do golpe do Hood e do `Player`. Conferido no navegador nas 4 direções e em 4 horas do dia, no 3D e no 2D.
+- Testes: luz pela hora do dia, sombra, `?sombreado=0`, tempo do golpe do Hood e do `Player`. Conferido no navegador nas 4 direções e em 4 horas do dia, no 3D e no 2D.
 
 ## Orvalis v0.93.65 — Cinco níveis de construção e escala visual no Santuário (14/11/2026)
 - **Pedido do dono do produto:** permitir blocos em degraus até cinco níveis e controles para reduzir separadamente a altura dos blocos e o tamanho das células, como experimento de câmera/profundidade.

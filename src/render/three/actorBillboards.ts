@@ -3,6 +3,7 @@ import { TILE } from '../../config';
 import type { Actor, ActorKind } from '../../game/entities';
 import { drawHeart } from '../character';
 import type { ActorLight } from '../actorLight';
+import { FIRE_COLOR, fireLightOn, type FireSource } from '../fireLight';
 
 /** O que o pool precisa de uma folha de sprites (a `SpriteSheet` 2D, que continua dona do desenho de cada quadro). */
 export interface ActorSheet {
@@ -39,6 +40,7 @@ function makeLightUniforms() {
     uSunColor: { value: new THREE.Vector3(1, 0.97, 0.9) },
     uAmbient: { value: new THREE.Vector3(0.74, 0.8, 0.95) },
     uLightStrength: { value: 1 },
+    uFireColor: { value: new THREE.Vector3(...FIRE_COLOR) },
   };
 }
 
@@ -50,6 +52,7 @@ function makeLightUniforms() {
 const LIT_HEAD = `
 uniform vec2 uTexel; uniform vec2 uFeet; uniform float uStrength;
 uniform vec3 uSunDir; uniform vec3 uSunColor; uniform vec3 uAmbient; uniform float uLightStrength;
+uniform vec3 uFireDir; uniform float uFireInt; uniform vec3 uFireColor;
 float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 `;
 const LIT_BODY = `
@@ -73,13 +76,22 @@ if (uStrength * uLightStrength > 0.001 && diffuseColor.a > 0.05) {
   vec3 col = diffuseColor.rgb * rel * ground + uSunColor * rim * 0.38 * diffuseColor.a;
   diffuseColor.rgb = mix(diffuseColor.rgb, col, uStrength * uLightStrength);
 }
+// Luz da fogueira (v0.93.67): quente, do lado dela, vale de dia e de noite (não depende do sol).
+if (uFireInt > 0.001 && diffuseColor.a > 0.05) {
+  vec2 ft = uTexel * 2.0;
+  float fgx = texture2D(map, vMapUv + vec2(ft.x, 0.0)).a - texture2D(map, vMapUv - vec2(ft.x, 0.0)).a;
+  float fgy = texture2D(map, vMapUv + vec2(0.0, ft.y)).a - texture2D(map, vMapUv - vec2(0.0, ft.y)).a;
+  vec3 fn = normalize(vec3(-fgx * 2.2, -fgy * 2.2, 1.0));
+  float fl = max(dot(fn, normalize(uFireDir)), 0.0);
+  diffuseColor.rgb += diffuseColor.rgb * uFireColor * (0.18 + 0.7 * fl) * uFireInt;
+}
 #endif
 `;
 
 interface Slot {
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
   /** Uniformes próprios do quadro (tamanho do texel, onde ficam os pés no canvas, quanto o sombreado vale neste ator). */
-  u: { uTexel: { value: THREE.Vector2 }; uFeet: { value: THREE.Vector2 }; uStrength: { value: number } };
+  u: { uTexel: { value: THREE.Vector2 }; uFeet: { value: THREE.Vector2 }; uStrength: { value: number }; uFireDir: { value: THREE.Vector3 }; uFireInt: { value: number } };
   shadow: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
@@ -109,6 +121,7 @@ export class ActorBillboards {
   private readonly zoom: number;
   private drawn = 0;
   private readonly light = makeLightUniforms();
+  private fires: readonly FireSource[] = [];
   private shadowDir = { dx: 0, dz: 0, len: 1, opacity: 0.22 };
   private echo: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null;
 
@@ -144,6 +157,11 @@ export class ActorBillboards {
     this.shadowDir = l.shadow;
   }
 
+  /** Fogueiras visíveis (`findFires`): iluminam os atores perto delas. Chamar antes de `update`. */
+  setFires(f: readonly FireSource[]): void {
+    this.fires = f;
+  }
+
   /** O eco do jogador está visível? (dev/testes) */
   get echoVisible(): boolean { return !!this.echo?.visible; }
 
@@ -165,6 +183,9 @@ export class ActorBillboards {
       // Onde ficam os pés e a altura do desenho em coordenadas de textura (v de baixo para cima), para o escurecimento junto ao chão.
       slot.u.uFeet.value.set((3 * z) / side, (sheet.drawHeight * z * (a.scale ?? 1)) / side);
       slot.u.uStrength.value = a.kind === 'love-hearts' || a.dying !== undefined ? 0 : 1;
+      const fl = a.kind === 'love-hearts' || this.fires.length === 0 ? null : fireLightOn(a.x, a.y, this.fires, elapsed);
+      slot.u.uFireInt.value = fl ? fl.intensity : 0;
+      if (fl) slot.u.uFireDir.value.set(...fl.dir);
       const cells = side / (z * TILE) * this.opts.scale;
       slot.mesh.scale.set(cells, cells / this.opts.k, 1);
       slot.mesh.position.set(a.x, a.visualZ + 0.03, a.y);
@@ -209,7 +230,7 @@ export class ActorBillboards {
     const material = new THREE.MeshBasicMaterial({
       map: texture, transparent: true, depthTest: true, depthWrite: false, alphaTest: 0.015, side: THREE.DoubleSide,
     });
-    const u = { uTexel: { value: new THREE.Vector2(1 / side, 1 / side) }, uFeet: { value: new THREE.Vector2(0, 0.5) }, uStrength: { value: 0 } };
+    const u = { uTexel: { value: new THREE.Vector2(1 / side, 1 / side) }, uFeet: { value: new THREE.Vector2(0, 0.5) }, uStrength: { value: 0 }, uFireDir: { value: new THREE.Vector3(0, 1, 0) }, uFireInt: { value: 0 } };
     if (this.opts.lit !== false) {
       material.onBeforeCompile = (shader) => {
         Object.assign(shader.uniforms, u, this.light);

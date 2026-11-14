@@ -1,3 +1,4 @@
+import { SUBDIV } from '../config';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { DAY_AMBIENT, DUNGEON_AMBIENT, NIGHT_AMBIENT, collectWorldLights, glowSource, lightColorFrom, worldAmbient } from './worldLight';
@@ -45,7 +46,7 @@ describe('fontes de luz do Mundo', () => {
 
   it('fogueira: raio e cor da tabela de blocos que brilham; poste: lanterna acima do pé, deslocada pelo `at`', () => {
     const fire = glowSource(Block.CAMPFIRE, 10, 20, { color: '#ffab4a' })!;
-    expect(fire.radius).toBeCloseTo(5.5);
+    expect(fire.radius).toBeCloseTo(5.5 * SUBDIV); // o raio da tabela é em pixels da grade 1
     expect(fire.x).toBeCloseTo(10.5);
     expect(fire.z).toBe(21); // face sul da célula
     expect(fire.flicker).toBeGreaterThan(0);
