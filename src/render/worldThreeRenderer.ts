@@ -156,7 +156,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
     this.blocks = new ChunkBlocks(this.worldLayer, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
-      classify: (w, id, x, y, level) => (level === 0 && this.world.isSlabAt(x, y) ? 'slab' : classifySanctuaryBlock(w, id, x, y, level)),
+      classify: (w, id, x, y, level) => (this.world.isSlabAt(x, y) ? 'slab' : classifySanctuaryBlock(w, id, x, y, level)),
       transform: (cell) => sanctuaryBlockTransform(cell),
       material: (id) => this.blockMaterials.get(id).block,
     });
@@ -231,7 +231,7 @@ export class WorldThreeRenderer implements GameRenderer {
         const top = this.world.topBlock(c.x, c.y);
         return selectionRect3d(cam, {
           x: c.x, y: c.y,
-          top: top ? { level: top.level, cube: blockDef(top.id).shape === 'cube' && !(top.level === 0 && this.world.isSlabAt(c.x, c.y)) } : null,
+          top: top ? (this.world.isSlabAt(c.x, c.y) ? { level: 0, cube: false } : { level: top.level, cube: blockDef(top.id).shape === 'cube' }) : null,
           hit: top ? this.textures.objects.get(top.id)?.hit ?? null : null,
         }, TILE, OBLIQUE_K);
       };

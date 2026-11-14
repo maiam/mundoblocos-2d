@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.75 — lajes: topo 16 × 16 de volta e pilha de até 4 (14/11/2026)
+- **Pedido do dono do produto:** "volta pra topo com 16×16 e inclui possibilidade de empilhar até 4, apenas nessa versão, ainda pra teste" (o topo 12 × 16 da v0.93.74 foi desfeito; `SLAB_DEPTH = 1`, o recorte do fundo continua no desenho caso o teste volte).
+- **Pilha** (`SLAB_STACK_MAX = 4`, `World.slabCount/slabBase/slabLift`): dá para empilhar até **4 lajes na mesma célula, misturando laje1, laje2 e laje3**; cada uma assenta na **soma das alturas das de baixo** (ex.: 0,25 + 0,5 + 0,375 + 0,25 = 1,375 célula) e o corpo sobe a soma de todas (só visual; a célula segue andável). A 5ª não entra; **cubo comum em cima de laje e laje em cima de cubo não**; quebrar tira a de cima, uma por vez.
+- **Só no piloto** `?tabua=laje` (offline): ligado, ele **eleva o limite de níveis do Mundo de 2 para 4** (`World.setSlabBlocks`, `Chunk.growLevels` para chunks já gerados); desligado, tudo volta a 2. Quem salvar um mundo com pilhas de 3–4 lajes e abrir **sem** o parâmetro perde os níveis acima de 2 (o aviso de "blocos excedentes removidos" já existe) — é um teste.
+- **Desenho** (`three/chunkBlocks.ts`): cada nível de laje vira uma caixa na altura certa (`slabBase`); a moldura de seleção trata a pilha como objeto baixo. Só cliente (inerte sem o piloto; a sala nunca o liga).
+- Testes: pilha mista até 4, 5ª recusada, cubo/laje, altura acumulada, quebrar, piloto ligado depois de chunks gerados, transformação com base (554 testes, grades 1 e 2). Conferido no navegador: pilhas de 1 a 4 lajes, 5ª recusada, corpo a 1,375 sobre a de 4.
+
 ## Orvalis v0.93.74 — lajes com topo 12 × 16 (14/11/2026)
 - **Pedido do dono do produto:** "muda as receitas para terem 12×16 de topo todas" (laje1, laje2 e laje3). Decisão dele: **12 px de profundidade (norte–sul) por 16 de largura, encostada na frente** (borda sul da célula); sobram 4 px livres atrás.
 - **Pegada** (`SLAB_DEPTH = 12/16` em `world/slabs.ts`): a caixa da laje vai de `y + 0,25` a `y + 1`; as alturas seguem 4, 6 e 8 px. Tudo é **recorte da imagem, sem esticar**: o topo e as faces laterais mantêm a ponta da frente (sul) da textura da Tábua e o lado de trás perde 4 px (`slabGeometry(altura)`).

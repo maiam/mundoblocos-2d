@@ -1,4 +1,4 @@
-import { slabHeightOf } from './slabs';
+import { SLAB_STACK_MAX, slabHeightOf } from './slabs';
 import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
 import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
@@ -76,7 +76,9 @@ export class World {
   readonly generator: TerrainSource;
   readonly profile: WorldProfile;
   /** Profundidade de pilha específica do perfil: Mundo 2, Santuário 5. */
-  readonly maxStack: number;
+  /** Níveis de pilha por célula (2 no Mundo, 5 no Santuário; o piloto das lajes eleva para `SLAB_STACK_MAX` enquanto ligado). */
+  maxStack: number;
+  private readonly baseMaxStack: number;
   /** Limites em células (inclusivos) quando o perfil limita o mundo. */
   private readonly cellBounds: { x0: number; y0: number; x1: number; y1: number } | null;
   /** Chunks por chave numérica (`numKey`): evita criar strings a cada leitura de célula. */
@@ -115,7 +117,7 @@ export class World {
 
   constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
     this.profile = profile;
-    this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
+    this.maxStack = this.baseMaxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
     this.generator = profile.id === 'santuario' && profile.bounds
       ? new SanctuarySeedGenerator(seed, profile.bounds)
       : profile.terrain.kind === 'flat'
@@ -375,24 +377,47 @@ export class World {
   /** Blocos que viram laje (piloto `?tabua=laje`, ver `world/slabs.ts`); vazio = nenhum (o padrão, e sempre na sala). */
   private slabs: ReadonlySet<BlockId> = new Set();
 
+  /** Liga o piloto (ids de laje) ou o desliga (`[]`). Ligado, o limite de níveis sobe para `SLAB_STACK_MAX` (e os chunks já gerados crescem). */
   setSlabBlocks(ids: readonly BlockId[]): void {
     this.slabs = new Set(ids);
+    this.maxStack = ids.length > 0 ? Math.max(this.baseMaxStack, SLAB_STACK_MAX) : this.baseMaxStack;
+    if (ids.length > 0) for (const c of this.chunks.values()) c.growLevels(this.maxStack);
   }
 
   get hasSlabs(): boolean {
     return this.slabs.size > 0;
   }
 
-  /** A célula tem uma laje (bloco de laje sozinho no nível 0, sem mais nada em cima)? */
+  /**
+   * A célula é uma pilha só de lajes (nível 0 de laje e, acima, só lajes ou nada)? Cubo comum em qualquer nível desfaz a laje.
+   */
   isSlabAt(x: number, y: number): boolean {
     if (this.slabs.size === 0 || !this.slabs.has(this.getObject(x, y))) return false;
-    for (let level = 1; level < this.maxStack; level++) if (this.getLevel(x, y, level) !== Block.AIR) return false;
+    for (let level = 1; level < this.maxStack; level++) {
+      const id = this.getLevel(x, y, level);
+      if (id !== Block.AIR && !this.slabs.has(id)) return false;
+    }
     return true;
   }
 
-  /** Quanto o corpo sobe por cima da célula (visual): a altura da laje ali, 0 no resto. */
+  /** Quantas lajes há empilhadas na célula (0 se não é pilha de lajes). */
+  slabCount(x: number, y: number): number {
+    if (!this.isSlabAt(x, y)) return 0;
+    let n = 0;
+    while (n < this.maxStack && this.slabs.has(this.getLevel(x, y, n))) n++;
+    return n;
+  }
+
+  /** Altura (células) das lajes abaixo do nível `level` da célula: onde assenta a laje desse nível. */
+  slabBase(x: number, y: number, level: number): number {
+    let h = 0;
+    for (let l = 0; l < level; l++) h += slabHeightOf(this.getLevel(x, y, l));
+    return h;
+  }
+
+  /** Quanto o corpo sobe por cima da célula (visual): a soma das alturas das lajes empilhadas, 0 no resto. */
   slabLift(x: number, y: number): number {
-    return this.isSlabAt(x, y) ? slabHeightOf(this.getObject(x, y)) : 0;
+    return this.isSlabAt(x, y) ? this.slabBase(x, y, this.slabCount(x, y)) : 0;
   }
 
   /** Mantido para o objeto do nível 0 (testes/ferramentas). */
@@ -520,8 +545,14 @@ export class World {
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
     if ((!this.profile.blocks.includes(id) && !(this.slabs.has(id))) || this.isProtected(x, y)) return null;
-    // Lajes (piloto) não empilham e nada se põe em cima delas (o desenho de pilha com laje ainda não existe).
-    if (this.isSlabAt(x, y) || (this.slabs.has(id) && !(this.getObject(x, y) === Block.AIR || blockDef(this.getObject(x, y)).shape === 'decoration'))) return null;
+    // Lajes (piloto): empilham até `SLAB_STACK_MAX` (misturando as três); cubo em cima de laje e laje em cima de cubo ou objeto não.
+    if (this.slabs.has(id)) {
+      if (this.getGround(x, y) === Block.HOLE || !this.isGroundStandable(x, y)) return null;
+      if (this.isSlabAt(x, y)) { const n = this.slabCount(x, y); return n < SLAB_STACK_MAX && n < this.maxStack ? n : null; }
+      const o = blockDef(this.getObject(x, y));
+      return o.id === Block.AIR || o.shape === 'decoration' ? 0 : null;
+    }
+    if (this.isSlabAt(x, y)) return null;
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
     if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;
