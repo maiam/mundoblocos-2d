@@ -80,6 +80,18 @@ import ginoHoeAttack from '../../assets/gino-hoe-attack.webp';
 import ginoPickaxeAttack from '../../assets/gino-pickaxe-attack.webp';
 import ginoShovelAttack from '../../assets/gino-shovel-attack.webp';
 import mila from '../../assets/mila.webp';
+import grewn from '../../assets/grewn.webp';
+import grewnSit from '../../assets/grewn-sit.webp';
+import grewnSword from '../../assets/grewn-sword.webp';
+import grewnAxe from '../../assets/grewn-axe.webp';
+import grewnHoe from '../../assets/grewn-hoe.webp';
+import grewnPickaxe from '../../assets/grewn-pickaxe.webp';
+import grewnShovel from '../../assets/grewn-shovel.webp';
+import grewnSwordAttack from '../../assets/grewn-sword-attack.webp';
+import grewnAxeAttack from '../../assets/grewn-axe-attack.webp';
+import grewnHoeAttack from '../../assets/grewn-hoe-attack.webp';
+import grewnPickaxeAttack from '../../assets/grewn-pickaxe-attack.webp';
+import grewnShovelAttack from '../../assets/grewn-shovel-attack.webp';
 import milaSit from '../../assets/mila-sit.webp';
 import milaSword from '../../assets/mila-sword.webp';
 import milaAxe from '../../assets/mila-axe.webp';
@@ -301,6 +313,18 @@ const pack: ArtPack = {
     'gino-pickaxe-attack': ginoPickaxeAttack,
     'gino-shovel-attack': ginoShovelAttack,
     mila,
+    grewn,
+    'grewn-sit': grewnSit,
+    'grewn-sword': grewnSword,
+    'grewn-axe': grewnAxe,
+    'grewn-hoe': grewnHoe,
+    'grewn-pickaxe': grewnPickaxe,
+    'grewn-shovel': grewnShovel,
+    'grewn-sword-attack': grewnSwordAttack,
+    'grewn-axe-attack': grewnAxeAttack,
+    'grewn-hoe-attack': grewnHoeAttack,
+    'grewn-pickaxe-attack': grewnPickaxeAttack,
+    'grewn-shovel-attack': grewnShovelAttack,
     'mila-sit': milaSit,
     'mila-sword': milaSword,
     'mila-axe': milaAxe,

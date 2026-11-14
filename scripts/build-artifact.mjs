@@ -43,7 +43,7 @@ for (const f of files) {
 writeFileSync(join('artifact', `${name}-files.json`), JSON.stringify(manifest, null, 1));
 // Fora do orçamento de início: arte da dungeon e dos monstros (carrega em segundo plano) e folhas de moradores, roupas, expressões,
 // NPCs da cidade (folhas e retratos), moldura da conversa, animais do campo e filhotes, folhas do Herói, do Hood, do Gino e da Mila, da Heroína com ferramenta (cada folha só baixa quando o ator aparece: render/character.ts → `request`), interiores, a tira das paredes e o personagem modular em teste (o jogo não espera por elas: cada um aparece quando a folha chega — render/character.ts).
-const later = Object.keys(manifest).filter((f) => /^(dungeon|spider|wolf|goblin|lizard|capybara|npc-|portrait-|dialogo|horse|cow|chicken|foal|calf|chick|love-hearts|hero-|heroine-(?:sword|axe|hoe|pickaxe|shovel|sit)|hood|gino|mila|interior|crop-|wheat-crop)/.test(f)).reduce((s, f) => s + statSync(join(assets, f)).size, 0);
+const later = Object.keys(manifest).filter((f) => /^(dungeon|spider|wolf|goblin|lizard|capybara|npc-|portrait-|dialogo|horse|cow|chicken|foal|calf|chick|love-hearts|hero-|heroine-(?:sword|axe|hoe|pickaxe|shovel|sit)|hood|gino|mila|grewn|interior|crop-|wheat-crop)/.test(f)).reduce((s, f) => s + statSync(join(assets, f)).size, 0);
 const kb = (n) => `${(n / 1024).toFixed(1)} kB`;
 console.log(`artifact/${name}.html (${kb(html.length)}) + ${Object.keys(manifest).length} arquivos em ${outDir} (${kb(total)})`);
 const start = html.length + total - later;

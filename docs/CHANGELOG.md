@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.80 — Grewn, personagem de teste do novo estilo chibi (14/11/2026)
+- **Pedido do dono do produto:** novo personagem **Grewn** (cabeça maior, corpo menor) para testar um estilo chibi novo. Entra como **sétimo personagem pronto**, escolhido na tela de entrada (ou `?personagem=grewn`).
+- **Arte** (`assets-src/grewn`, 12 folhas 4 × 4 de 1536 px; `src/assets/grewn*.webp`): repouso, sentar, 5 caminhadas com ferramenta e 5 golpes. Fileiras vêm em frente, direita, costas, esquerda (`--rows-map 0,3,1,2` em todas); `--alpha --largest` tirou o ruído vermelho das bordas. **Não veio a caminhada sem ferramenta:** a folha-base é a de repouso (`walkFps: 0`, sem pernas andando); o golpe de espada usa os 4 quadros padrão.
+- **Código** (mesmos pontos da Mila): `APPEARANCE_BODIES` (**protocolo 25**), `HERO_NAMES`, `SIT_BODIES`, `SPECS` (altura de cada folha pelo desenho, base 380 px), `art/principal.ts`, margens dos pés (`foot-margins.py`), balanço (`actorBillboards`), cena de escala e regra do artefato. Servidor: `build:net` + `sync-net` (PR no `orvalis-servidor`).
+- Fica para depois: caminhada sem ferramenta, golpe de espada em 8 quadros e conferir a escala (Grewn usa a mesma altura-base dos outros). O arquivo `hood-v02-13-uso-pa` veio duas vezes (1254 e 1536 px): usei o de 1536.
 ## Orvalis v0.93.79 — Grama com topo e face enviados (14/11/2026)
 - **Pedido do dono do produto:** a grama da v0.93.77 saiu ("não gostei dessa grama"); voltam o **topo** (relva verde repetível) e a **face** (terra avermelhada em estratos, com raízes) enviados. Originais em `assets-src/blocos-net/grama-topo.png` e `grama-face.png`.
 - **Materiais V2:** `grama` ganha `top.png` e `front.png` próprios (emendas 0,89 e 0,70: a arte já era repetível, sem mistura); `V2_BLOCKS[GRASS] = { top: 'grama', front: 'grama' }` — **sem franja** (a arte não traz). O chão de grama e as transições usam o novo topo. Ícone `icon-block-grass` refeito. Terra, Terra Arada, Pedra Bruta e Pedra Lisa ficam como na v0.93.77.

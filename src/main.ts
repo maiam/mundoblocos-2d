@@ -148,7 +148,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
       start(seed, 'Mundo recomeçado do zero', body);
     },
   });
-  // Atalho de teste: `?personagem=mila` (ou heroine, hero, hood, gino) escolhe o personagem pronto.
+  // Atalho de teste: `?personagem=grewn` (ou heroine, hero, hood, gino, mila) escolhe o personagem pronto.
   const fromUrl = new URLSearchParams(window.location.search).get('personagem');
   if (fromUrl && (HERO_BODIES as readonly string[]).includes(fromUrl)) game.entities.body = fromUrl as HeroBody;
   // Só em desenvolvimento: acesso para testes automatizados no navegador.
@@ -157,7 +157,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
   if (new URLSearchParams(window.location.search).get('fps') === '1') void import('./dev/perfHud').then((m) => m.startPerfHud(() => game?.rendererStats ?? null, () => game?.drawTimes ?? { samples: [], count: 0 }));
 }
 
-/** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino ou Mila) e só então o mundo novo. */
+/** "Novo mundo" no menu: escolha de personagem (Heroína, Herói, Hood, Gino, Mila ou Grewn) e só então o mundo novo. */
 function chooseCharacterForNewWorld(): void {
   const title = new TitleScreen({
     canContinue: false,
