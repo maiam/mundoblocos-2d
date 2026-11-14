@@ -325,7 +325,7 @@ export class Game {
     else this.bindInput();
     if (options.notice) this.hud.toast(options.notice);
     // O 3º nível de blocos saiu do jogo (limite de 2 níveis): não some em silêncio.
-    if (droppedBlocks) this.hud.toast(`O limite agora é de 2 níveis de blocos: ${droppedBlocks} ${droppedBlocks === 1 ? 'bloco do 3º nível foi removido' : 'blocos do 3º nível foram removidos'} deste mundo`);
+    if (droppedBlocks) this.hud.toast(`O limite deste mundo é de ${this.world.maxStack} níveis: ${droppedBlocks} ${droppedBlocks === 1 ? 'bloco excedente foi removido' : 'blocos excedentes foram removidos'} deste mundo`);
     const spilled = this.spillBagOverflow();
     if (spilled) this.hud.toast(`A bolsa agora tem ${BAG_SLOTS} espaços: ${spilled} ${spilled === 1 ? 'item caiu' : 'itens caíram'} no chão aos seus pés`);
     requestAnimationFrame(this.frame);
