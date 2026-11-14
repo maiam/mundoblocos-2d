@@ -92,3 +92,7 @@
   quebra** (o progresso reinicia se o alvo mudar ou ficar inválido; ao quebrar, continua no que está por baixo).
   Feedback no canvas: rachaduras progressivas + anel. Alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o
   chão sob ela (regra de ocupação no `Game`; o domínio garante que buraco não é pisável).
+
+## Combate: fluidez (v0.93.63)
+- Golpe do jogador (`game/player.ts`): `ATTACK_CHAIN_AT` (70%) permite começar outro golpe depois do acerto; fila curta de `ATTACK_BUFFER_S` (0,18 s). Retorno (`game/game.ts`): `HITSTOP_*` e `SHAKE_*`; recuo do monstro escala com o dano (`Entities.strikeFrom` → `Monster.takeHit(..., knock)`).
+- Monstros (`game/monster.ts`): `windup` (goblin/lagarto 0,4 s, lobos 0,3 s): arma o ataque, dá para esquivar, golpe recebido cancela; aranhas mordem na hora.

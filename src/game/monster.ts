@@ -16,6 +16,8 @@ interface MonsterDef {
   respawn: number;
   /** Duração da animação de morte (s; acompanha os quadros da folha de morte). */
   deathSeconds: number;
+  /** Tempo (s) entre começar o ataque e o dano sair: o jogador vê a pose e pode esquivar (v0.93.63). 0 = morde na hora (aranhas). */
+  windup?: number;
   /** Monstro do mapa aberto (lobo): persegue em linha reta só a até `sight` células, sem mapa de corredores da dungeon. */
   open?: boolean;
 }
@@ -25,6 +27,9 @@ export const WOLF_SIGHT = 3;
 /** Visão do goblin em células da grade atual (3 na grade 1): a tabela abaixo já multiplica por `SUBDIV`. */
 export const GOBLIN_SIGHT = WOLF_SIGHT * SUBDIV;
 export const GOBLIN_ATTACK_SECONDS = 0.55;
+/** Tempo de "armar" o ataque (v0.93.63): a pose de ataque toca e o dano sai no quadro do golpe (~3º de 4); o jogador pode esquivar ou interromper com um golpe. */
+export const GOBLIN_WINDUP = 0.4;
+export const WOLF_WINDUP = 0.3;
 export const GOBLIN_ALERT_SECONDS = 0.48;
 /** Monstros com folhas de pose (idle, walk, run, alert, attack, hurt, death): goblin, homem-lagarto e os três lobos (v0.93.61). */
 export type PoseKind = 'goblin' | 'lizard' | WolfKind;
@@ -41,17 +46,17 @@ export const MONSTERS: Record<MonsterKind, MonsterDef> = {
   'spider-boss': { spec: { speed: 1.15, halfW: 0.9, halfD: 0.45, stepHeight: 0 }, sight: 9, leash: 4, biteEvery: 1.6, respawn: 300, deathSeconds: 1.6 },
   // Lobos (v0.91.0): só atacam a personagem a até 3 células (regra do dono do produto: `sight` = 3, em linha reta);
   // mais lentos que ela (4,2) para dar para fugir; o bando passeia junto, perto da toca.
-  'wolf-brown': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
-  'wolf-gray': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
-  'wolf-white': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true },
+  'wolf-brown': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true, windup: WOLF_WINDUP },
+  'wolf-gray': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true, windup: WOLF_WINDUP },
+  'wolf-white': { spec: { speed: 3.0, halfW: 0.36, halfD: 0.2, stepHeight: 1 }, sight: WOLF_SIGHT, leash: 5, biteEvery: 1.1, respawn: 120, deathSeconds: 0.8, open: true, windup: WOLF_WINDUP },
   // Goblins guard a campfire in groups of seven; aggression only within 3 cells.
   goblin: { spec: { speed: 2.75, halfW: 0.34, halfD: 0.21, stepHeight: 1 },
     sight: WOLF_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
-    deathSeconds: 0.95, open: true },
+    deathSeconds: 0.95, open: true, windup: GOBLIN_WINDUP },
   // Homem-lagarto (v0.93.60): vive junto de rios e anda em grupos de três; mesma visão, coleira e ritmo do goblin.
   lizard: { spec: { speed: 2.9, halfW: 0.34, halfD: 0.21, stepHeight: 1 },
     sight: WOLF_SIGHT, leash: 4, biteEvery: 1.2, respawn: 150,
-    deathSeconds: 0.95, open: true },
+    deathSeconds: 0.95, open: true, windup: GOBLIN_WINDUP },
 };
 // Grade fina (ADR 0032): visão e coleira em células da grade atual.
 if (SUBDIV !== 1) for (const d of Object.values(MONSTERS)) { d.sight *= SUBDIV; d.leash *= SUBDIV; }
@@ -75,6 +80,9 @@ export class Monster extends Walker {
   hurt = 0;
   /** Espera até poder morder de novo (s). */
   private biteCd = 0;
+  /** Ataque armado: tempo restante até o dano (> 0) e se o dano está pendente (ao zerar, o próximo `tryBite` o aplica). */
+  private windupLeft = 0;
+  private strikePending = false;
   private state: State;
   private attackAnim=0;
   private alertAnim=0;
@@ -126,13 +134,19 @@ export class Monster extends Walker {
     return x - halfW >= b.x0 && x + halfW <= b.x1 + 1 && y - halfD >= b.y0 && y + halfD <= b.y1 + 1;
   }
 
-  /** Leva um golpe de `damage` pontos: perde vida, pisca e é empurrado para longe de (fromX, fromY). */
-  takeHit(damage: number, fromX: number, fromY: number, world: World, blocked?: Blocker): void {
+  /**
+   * Leva um golpe de `damage` pontos: perde vida, pisca e é empurrado para longe de (fromX, fromY). `knock` (1 = o recuo de
+   * sempre) escala o empurrão: golpe forte ou crítico recua mais. Um ataque armado é interrompido.
+   */
+  takeHit(damage: number, fromX: number, fromY: number, world: World, blocked?: Blocker, knock = 1): void {
     this.hp -= damage;
     this.hurt = HURT_SECONDS;
+    this.windupLeft = 0;
+    this.strikePending = false;
+    this.attackAnim = 0;
     const d = Math.hypot(this.x - fromX, this.y - fromY) || 1;
     const facing = this.facing;
-    this.move(0.25, (this.x - fromX) / d, (this.y - fromY) / d, world, this.confine(blocked));
+    this.move(0.25 * knock, (this.x - fromX) / d, (this.y - fromY) / d, world, this.confine(blocked));
     this.facing = facing;
   }
 
@@ -146,13 +160,31 @@ export class Monster extends Walker {
     return 0.7 * SUBDIV + this.spec.halfW;
   }
 
-  /** Encostado na personagem e pronto para morder? Se sim, consome a espera e devolve true. */
+  /**
+   * Encostado na personagem e pronto para morder? Devolve true no instante em que o dano deve sair.
+   * Monstros com `windup` (goblin, lagarto, lobos) **armam** o ataque: ao chegar ao alcance tocam a pose de ataque e só
+   * causam dano `windup` segundos depois — e só se a personagem ainda estiver ao alcance (dá para esquivar); um golpe
+   * recebido nesse meio-tempo cancela o ataque. Sem `windup` (aranhas) o dano é imediato, como antes.
+   */
   tryBite(target: { x: number; y: number }): boolean {
-    if (this.dead || this.biteCd > 0 || this.hurt > 0) return false;
-    if (Math.hypot(target.x - this.x, target.y - this.y) > this.reach + 0.15) return false;
-    this.biteCd = MONSTERS[this.kind].biteEvery;
+    if (this.dead || this.hurt > 0) return false;
+    const inReach = Math.hypot(target.x - this.x, target.y - this.y) <= this.reach + 0.15;
+    if (this.strikePending) {
+      if (this.windupLeft > 0) return false; // ainda armando
+      this.strikePending = false;
+      this.biteCd = MONSTERS[this.kind].biteEvery;
+      return inReach; // esquivou: o golpe pega só o ar
+    }
+    if (this.biteCd > 0 || !inReach) return false;
+    const w = MONSTERS[this.kind].windup ?? 0;
     if (hasPoses(this.kind)) this.attackAnim = GOBLIN_ATTACK_SECONDS;
-    return true;
+    if (w <= 0) {
+      this.biteCd = MONSTERS[this.kind].biteEvery;
+      return true;
+    }
+    this.windupLeft = w;
+    this.strikePending = true;
+    return false;
   }
 
   /**
@@ -164,6 +196,7 @@ export class Monster extends Walker {
     this.hurt = Math.max(0, this.hurt - dt);
     this.biteCd = Math.max(0, this.biteCd - dt);
     this.attackAnim = Math.max(0, this.attackAnim - dt);
+    this.windupLeft = Math.max(0, this.windupLeft - dt);
     this.alertAnim = Math.max(0, this.alertAnim - dt);
     const def = MONSTERS[this.kind];
     const fence = this.confine(blocked);
@@ -179,7 +212,8 @@ export class Monster extends Walker {
       if (hasPoses(this.kind) && !this.chasing) this.alertAnim = GOBLIN_ALERT_SECONDS;
       this.chasing = true;
       const reach = this.reach;
-      if (dist <= reach) {
+      // Armando o ataque: fica parado, de frente para a personagem (o jogador lê o golpe e esquiva).
+      if (this.windupLeft > 0 || dist <= reach) {
         this.move(dt, 0, 0, world, fence);
         this.facing = Math.abs(tx) > Math.abs(ty) ? (tx < 0 ? 'left' : 'right') : ty < 0 ? 'up' : 'down';
         return;

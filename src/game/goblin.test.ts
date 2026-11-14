@@ -6,7 +6,7 @@ import { Item, monsterDrops } from '../world/items';
 import { World } from '../world/world';
 import { GOBLIN_PACK_SIZE } from '../world/goblins';
 import { Entities } from './entities';
-import { Monster, GOBLIN_SIGHT, MONSTERS } from './monster';
+import { Monster, GOBLIN_SIGHT, GOBLIN_WINDUP, MONSTERS } from './monster';
 import { Player } from './player';
 
 function camp(seed=42){
@@ -52,17 +52,66 @@ describe('Goblin do Orvalis',()=>{
     expect(mon.visualFrame).toBeGreaterThanOrEqual(0);
   });
 
-  it('goblin só ataca ao alcance físico, com ritmo de combate e animação',()=>{
+  it('goblin só ataca ao alcance físico: arma o ataque (pose + tempo) e o dano sai depois, com ritmo de combate',()=>{
     const {w}=camp();
     const c=w.goblinCamps[0];
     const [cx,cy]=c.slots[0];
     const m=new Monster('goblin',cx+0.5,cy+0.5,goblinBounds(cx,cy),()=>0.5);
+    const near={x:m.x+1.1,y:m.y};
     expect(m.tryBite({x:m.x+3.1,y:m.y})).toBe(false);
-    expect(m.tryBite({x:m.x+1.1,y:m.y})).toBe(true);
+    // Ao chegar: começa a armar (sem dano ainda), tocando a pose de ataque.
+    expect(m.tryBite(near)).toBe(false);
     expect(m.visualState).toBe('attack');
-    expect(m.tryBite({x:m.x+1,y:m.y})).toBe(false);
+    m.update(GOBLIN_WINDUP/2,w,near);
+    expect(m.tryBite(near)).toBe(false);
+    // Passado o tempo de armar, o dano sai uma vez e começa a espera entre mordidas.
+    m.update(GOBLIN_WINDUP,w,near);
+    expect(m.tryBite(near)).toBe(true);
+    expect(m.tryBite(near)).toBe(false);
     m.update(1.3,w,{x:m.x+30,y:m.y+30});
-    expect(m.tryBite({x:m.x+1,y:m.y})).toBe(true);
+    expect(m.tryBite(near)).toBe(false); // arma de novo
+    m.update(GOBLIN_WINDUP+0.01,w,near);
+    expect(m.tryBite(near)).toBe(true);
+  });
+
+  it('dá para esquivar do ataque armado, e um golpe recebido durante o armar o cancela',()=>{
+    const {w}=camp();
+    const [cx,cy]=w.goblinCamps[0].slots[0];
+    const mk=()=>new Monster('goblin',cx+0.5,cy+0.5,goblinBounds(cx,cy),()=>0.5);
+    // Esquiva: a personagem sai do alcance antes do dano.
+    const a=mk();
+    const near={x:a.x+1.1,y:a.y}, far={x:a.x+4,y:a.y};
+    a.tryBite(near);
+    for(let i=0;i<9;i++)a.update(0.05,w,far);
+    expect(a.tryBite(far)).toBe(false);
+    // Interrupção: levar um golpe no meio do armar não deixa o dano sair.
+    const b=mk();
+    b.tryBite(near);
+    b.takeHit(1,b.x-1,b.y,w);
+    b.update(1,w,near);
+    expect(b.tryBite(near)).toBe(false); // recomeça a armar do zero
+    b.update(GOBLIN_WINDUP+0.01,w,near);
+    expect(b.tryBite(near)).toBe(true);
+  });
+
+  it('aranhas continuam mordendo na hora (sem armar)',()=>{
+    const {w}=camp();
+    const m=new Monster('spider-small',0.5,0.5,{x0:-9,y0:-9,x1:9,y1:9},()=>0.5);
+    void w;
+    expect(m.tryBite({x:m.x+0.3,y:m.y})).toBe(true);
+  });
+
+  it('o recuo cresce com o dano e com o crítico (knock)',()=>{
+    const {w}=camp();
+    const [cx,cy]=w.goblinCamps[0].slots[0];
+    const dist=(knock:number)=>{
+      const m=new Monster('goblin',cx+0.5,cy+0.5,goblinBounds(cx,cy),()=>0.5);
+      const x0=m.x,y0=m.y;
+      m.takeHit(1,m.x-1,m.y,w,undefined,knock);
+      return Math.hypot(m.x-x0,m.y-y0);
+    };
+    expect(dist(1.6)).toBeGreaterThan(dist(1));
+    expect(dist(1)).toBeGreaterThan(0);
   });
 
   it('leva dano, mostra reação e é possível derrotá-lo',()=>{

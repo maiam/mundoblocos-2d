@@ -49,6 +49,13 @@ import { Exploration } from './exploration';
 const AUTOSAVE_S = 10;
 /** Raio da névoa revelada em volta do jogador (células): cerca da área visível na tela. */
 const REVEAL_RADIUS = 14 * SUBDIV;
+/** Retorno do golpe: duração (s) do hit-stop, quanto o tempo da simulação cai nele e a tremida (px de mundo). */
+const HITSTOP_S = 0.055;
+const HITSTOP_CRIT_S = 0.1;
+const HITSTOP_SCALE = 0.06;
+const SHAKE_HIT = 1.6;
+const SHAKE_CRIT = 3.2;
+const SHAKE_HURT = 2.2;
 
 /** Opções da sessão: salvamento para restaurar, armazenamento e ações do menu (vêm do main). */
 export interface GameOptions {
@@ -134,6 +141,10 @@ export class Game {
   private elapsed = 0;
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
+  /** Retorno do golpe (v0.93.63): pausa curta (`hitStop`, s) e tremida de câmera (`shake`, px de mundo; some em ~0,15 s). */
+  private hitStop = 0;
+  private shake = 0;
+  private shakeOff = { x: 0, y: 0 };
   /** Outros jogadores da sala (multiplayer). */
   private readonly remotes = new RemotePlayers();
   /** Na sala: espelho dos animais e monstros da sala. */
@@ -182,7 +193,7 @@ export class Game {
     this.entities.spawnVillagers(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
-    this.entities.onDamage = (x, y, hit, target) => this.renderer.addDamage(x, y, hit, target);
+    this.entities.onDamage = (x, y, hit, target) => { this.renderer.addDamage(x, y, hit, target); if (target === 'enemy') this.onHitLanded(hit.crit); };
     this.lastHp = this.player.hp;
     this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
     this.camera.setCellsTall(this.renderer.preferredCellsTall);
@@ -283,7 +294,7 @@ export class Game {
       this.mirror = mirror;
       net.onMobs = (list) => mirror.apply(list);
       net.onBite = (kind, x, y) => { if (kind in MONSTERS) this.entities.biteFrom(kind as MonsterKind, x, y, this.world); };
-      net.onHits = (list) => { for (const [x, y, amount, crit] of list) this.renderer.addDamage(x, y, { amount, crit: crit === 1 }, 'enemy'); };
+      net.onHits = (list) => { for (const [x, y, amount, crit] of list) { this.renderer.addDamage(x, y, { amount, crit: crit === 1 }, 'enemy'); this.onHitLanded(crit === 1); } };
       net.onFed = (_id, item) => {
         if (item in ITEMS && this.inventory.take(item as ItemId)) this.hotbar.prune(this.inventory);
       };
@@ -807,7 +818,9 @@ export class Game {
     this.last = now;
     // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
     const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen || !!this.shop?.isOpen || !!this.worldMap?.isOpen;
-    const dt = paused ? 0 : realDt;
+    // Hit-stop: ao acertar, o mundo quase para por uns instantes (só a simulação; o desenho e o relógio real seguem).
+    const dt = paused ? 0 : realDt * (this.hitStop > 0 ? HITSTOP_SCALE : 1);
+    this.hitStop = Math.max(0, this.hitStop - realDt);
     this.elapsed += dt;
     this.time = (this.time + dt / DAY_LENGTH_S) % 1;
     this.saveTimer += dt;
@@ -835,7 +848,14 @@ export class Game {
       (id) => !this.collect || canCarry(this.inventory, this.hotbar, id));
     const shiftWant = this.dialogue.isOpen ? (this.dialogue.boxHeight * 0.62) / this.camera.zoom : 0;
     this.dialogueShift += (shiftWant - this.dialogueShift) * (1 - Math.exp(-7 * realDt));
+    // Tremida: tira o deslocamento do quadro anterior, segue o alvo e põe o novo (não acumula na suavização).
+    this.camera.x -= this.shakeOff.x;
+    this.camera.y -= this.shakeOff.y;
     this.camera.follow(...this.cameraTarget(), dt);
+    this.shake = Math.max(0, this.shake - realDt * 14);
+    this.shakeOff = this.shake > 0.05 ? { x: (Math.random() * 2 - 1) * this.shake, y: (Math.random() * 2 - 1) * this.shake } : { x: 0, y: 0 };
+    this.camera.x += this.shakeOff.x;
+    this.camera.y += this.shakeOff.y;
     this.actions.update(dt);
 
     const loadRect = this.camera.visibleChunks(LOAD_MARGIN);
@@ -880,6 +900,12 @@ export class Game {
       !!slot && slot.kind !== 'tool' && (slot.kind === 'item' || this.collect) && this.inventory.count(slotStack(slot)) === 0);
     requestAnimationFrame(this.frame);
   };
+
+  /** Acertou um inimigo: hit-stop e tremida (maiores no crítico). */
+  private onHitLanded(crit: boolean): void {
+    this.hitStop = Math.max(this.hitStop, crit ? HITSTOP_CRIT_S : HITSTOP_S);
+    this.shake = Math.max(this.shake, crit ? SHAKE_CRIT : SHAKE_HIT);
+  }
 
   /** Revela a névoa em volta do jogador (ao mudar de célula, fora dos cômodos) e redesenha o minimapa. */
   private updateMinimap(place: string | null, now: number): void {
@@ -1082,7 +1108,7 @@ export class Game {
 
   /** Flash ao levar dano; derrotada → renasce no início com vida cheia (itens ficam com ela). */
   private updateHealth(dt: number): void {
-    if (this.player.hp < this.lastHp) this.hurtFlash = 1;
+    if (this.player.hp < this.lastHp) { this.hurtFlash = 1; this.shake = Math.max(this.shake, SHAKE_HURT); }
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.5);
     if (this.player.dead) {
       this.actions.cancelAll();
