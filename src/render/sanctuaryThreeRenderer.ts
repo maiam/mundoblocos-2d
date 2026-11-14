@@ -135,7 +135,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
         this.goddess.scale.set(this.goddessBaseWidth/this.cellSizeScale,this.goddessBaseHeight/this.blockHeightScale,1);
         this.goddessGhost.scale.copy(this.goddess.scale);
       }
-    });
+    }, false); // Joystick de câmera oculto, mas preservado para reativação.
     const grassCubeSheet = new Image();
     grassCubeSheet.onload=()=>{
       if(this.disposed)return;
