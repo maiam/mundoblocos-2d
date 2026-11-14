@@ -39,13 +39,14 @@ export class SanctuaryCameraJoystick {
    * a interface e não recupera ajustes antigos. A câmera recebe o padrão.
    */
   constructor(private readonly apply: (orbit: SanctuaryOrbit | null) => void, private readonly enabled = true) {
-    try {
-      if (!this.enabled) throw new Error('Controles de câmera temporariamente inibidos');
-      const saved = JSON.parse(localStorage.getItem(KEY) || 'null') as SanctuaryOrbit | null;
-      if (saved && Number.isFinite(saved.azimuthDeg) && Number.isFinite(saved.elevationDeg) && Number.isFinite(saved.zoom)) {
-        this.orbit = normalize(saved);
-      }
-    } catch { /* dispositivo sem armazenamento: usa padrão */ }
+    if (this.enabled) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || 'null') as SanctuaryOrbit | null;
+        if (saved && Number.isFinite(saved.azimuthDeg) && Number.isFinite(saved.elevationDeg) && Number.isFinite(saved.zoom)) {
+          this.orbit = normalize(saved);
+        }
+      } catch { /* dispositivo sem armazenamento: usa padrão */ }
+    }
     this.root = document.createElement('div');
     this.root.className = 'sanctuary-camera-ui';
     this.root.innerHTML = `
