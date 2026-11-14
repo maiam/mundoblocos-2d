@@ -4,6 +4,9 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Laboratório de câmera do Santuário (v0.93.64)
+**Implementado:** joystick orbital com azimute, elevação, zoom, reset e preferência local; Grama Celestial com seis faces reais (atlas 512×512). **Conferir visualmente em aparelhos reais:** rotação completa e inclinações extremas (especialmente sprite 2D da Deusa, paredes e portas), alcance da seleção por toque com câmera girada, iluminação e legibilidade da arte nas diferentes faces. Após a avaliação do dono do produto, fixar a direção artística e manter ou retirar o painel experimental. O Mundo principal não mudou.
+
 ## Mármore Celestial V2/V3 removido (W4, v0.93.28, ADR 0027)
 O comportamento especial do Mármore Celestial (82) no Santuário — dois níveis em um clique, formas adaptativas, âncora V3 de duas células, ordem de colocação, borda ornamental e cantos em L — foi **removido** (`sanctuaryMarbleAdaptive`, `sanctuaryV3Surfaces`, `World.marbleV3*`/`marblePlacement*`). O 82 é um cubo comum: empilha e quebra um nível por vez, e entra no autotile horizontal genérico (`render/adaptiveWalls.ts`, forma `thin`) como os demais celestiais. Paredes novas são só as autotile (`world/walls.ts`). Salvamento v15 descarta os campos antigos.
 

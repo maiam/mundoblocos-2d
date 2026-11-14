@@ -7,7 +7,10 @@ import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
-import { celestialFaces } from './celestialArt';
+import { celestialFaces, installCelestialGrassNet } from './celestialArt';
+import { Block } from '../world/blocks';
+import { SanctuaryCameraJoystick } from './sanctuaryCameraJoystick';
+import { CELESTIAL_GRASS_NET_DATA_URI } from './celestialGrassNetAsset';
 import { art } from './art';
 import { type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
@@ -45,6 +48,8 @@ export type SanctuaryView = StageView;
 export class SanctuaryThreeRenderer implements GameRenderer {
   /** Núcleo genérico (ADR 0031, M1): cena/câmera/GPU/contexto/mira, realces e materiais de bloco. */
   private readonly stage:ThreeStage;
+  private readonly orbitControls:SanctuaryCameraJoystick;
+  private cameraYaw=0;
   private readonly scene:THREE.Scene;
   private readonly selection:SelectionMarkers;
   private readonly blockMaterials:BlockMaterials;
@@ -111,6 +116,19 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       this.blockMaterials.reupload();
     });
     this.scene=this.stage.scene;
+    this.orbitControls=new SanctuaryCameraJoystick(orbit=>{
+      this.stage.setFreeOrbit(orbit);
+      this.cameraYaw=(orbit?.azimuthDeg??0)*Math.PI/180;
+    });
+    const grassCubeSheet = new Image();
+    grassCubeSheet.onload=()=>{
+      if(this.disposed)return;
+      installCelestialGrassNet(grassCubeSheet);
+      this.blockMaterials.invalidate(Block.GRASS_CELESTIAL);
+      this.signature='';
+    };
+    grassCubeSheet.onerror=()=>console.warn('Grama Celestial (6 faces): fallback para arte anterior');
+    grassCubeSheet.src=CELESTIAL_GRASS_NET_DATA_URI;
     this.blockMaterials=new BlockMaterials(this.view,celestialFaces,this.stage.gpu);
     this.selection=new SelectionMarkers(this.scene,world);
     this.scene.add(new THREE.HemisphereLight(0xfff7ed,0xa99cc4,2.0));
@@ -301,6 +319,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       visual.billboard.x,visual.billboard.y,visual.billboard.z,
     );
     this.goddessGhost.position.copy(this.goddess.position);
+    // Os sprites 2D permanecem legiveis ao orbitar o cubo 3D.
+    this.goddess.rotation.y=this.cameraYaw;
+    this.goddessGhost.rotation.y=this.cameraYaw;
     this.goddessShadow.position.set(
       visual.shadow.x,visual.shadow.y,visual.shadow.z,
     );
@@ -374,6 +395,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   dispose():void{
     if(this.disposed)return;
     this.disposed=true;
+    this.orbitControls.dispose();
     if(this.halfTimer)clearTimeout(this.halfTimer);
     this.lighting?.dispose();
     for(const group of this.groups){

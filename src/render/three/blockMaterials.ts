@@ -5,7 +5,11 @@ export type SurfaceMaterial = THREE.MeshLambertMaterial | THREE.MeshBasicMateria
 /** Materiais de um bloco por face do `BoxGeometry` (+X, −X, +Y, −Y, +Z, −Z) e as texturas que os sustentam. */
 export type BlockMaterialSet = { block: SurfaceMaterial[]; ground: SurfaceMaterial[]; textures: THREE.Texture[] };
 /** Imagens de um bloco: topo, frente (cubo) e chão. Cada mundo fornece as suas (`celestialFaces` no Santuário). */
-export type BlockFaces = { top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement };
+export type BlockFaces = {
+  top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement;
+  /** Mapa UV real, em ordem BoxGeometry: +X, -X, +Y, -Y, +Z, -Z. */
+  cube?: [HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement];
+};
 
 /**
  * Cache de materiais por id de bloco (núcleo genérico, M1). Na vista oblíqua (K = 1) a frente do cubo é quadrada e usa a
@@ -30,6 +34,15 @@ export class BlockMaterials {
       t.anisotropy = Math.min(4, this.gpu.capabilities.getMaxAnisotropy());
       return t;
     };
+    if (faces.cube) {
+      const textures = faces.cube.map(toTexture);
+      const Mat = this.view === 'oblique' ? THREE.MeshBasicMaterial : THREE.MeshLambertMaterial;
+      const block = textures.map(map => new Mat({ map, color: 0xffffff }));
+      // O solo tem a mesma face superior, mas e' uma placa mais fina.
+      cached = { block, ground: block, textures };
+      this.cache.set(id, cached);
+      return cached;
+    }
     const top = toTexture(faces.top);
     const front = this.view === 'oblique' ? top : toTexture(faces.front);
     const ground = toTexture(faces.ground);
@@ -45,6 +58,15 @@ export class BlockMaterials {
     };
     this.cache.set(id, cached);
     return cached;
+  }
+
+  /** Recria o material de um bloco apos uma nova textura ser carregada. */
+  invalidate(id: number): void {
+    const group = this.cache.get(id);
+    if (!group) return;
+    for (const m of new Set([...group.block, ...group.ground])) m.dispose();
+    for (const t of group.textures) t.dispose();
+    this.cache.delete(id);
   }
 
   /** Contexto restaurado: reenvia as texturas de canvas à GPU. */
