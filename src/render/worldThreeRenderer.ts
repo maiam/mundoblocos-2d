@@ -9,6 +9,9 @@ import { SanctuaryLighting } from './sanctuaryLighting';
 import { flickerFactor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
 import { collectWorldLights, worldAmbient } from './worldLight';
 import { actorLightAt } from './actorLight';
+import { feelOn } from '../game/feel';
+import { DUST_STRIDE, dustFor } from './footDust';
+import { FootDust } from './three/footDust';
 import { findFires, type FireSource } from './fireLight';
 import { FireFx } from './three/fireFx';
 import { actorLightOn } from './rendererChoice';
@@ -72,6 +75,10 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly sprites: ChunkSprites;
   /** Efeitos da fogueira (brilho no chão, halo, brasas) e a lista das visíveis (refeita a cada ~0,25 s). */
   private readonly fireFx: FireFx;
+  /** Poeira de passos do jogador (v0.93.69): distância andada desde a última nuvenzinha e onde ele estava. */
+  private readonly dust: FootDust;
+  private dustWalked = 0;
+  private dustAt: { x: number; y: number } | null = null;
   private fires: FireSource[] = [];
   private firesAt = -Infinity;
   private readonly groundFx: GroundFx;
@@ -122,6 +129,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => id === Block.CAMPFIRE });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
+    this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.walls = new ChunkWalls(this.worldLayer, world, this.wallAtlases, DEFAULT_WALL_THICKNESS);
     for (const [key, url] of Object.entries(art().wallAtlases ?? {})) {
       if (!url) continue;
@@ -151,7 +159,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn() });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), bob: feelOn() });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);
@@ -193,6 +201,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.fires = findFires(view, (x, y) => this.world.getObject(x, y), { x: cam.x / TILE, z: cam.y / TILE });
     }
     this.fireFx.update(this.fires, opts.elapsed, skyAt(opts.time).night, TILE * cam.zoom);
+    this.stepDust(opts, inside, TILE * cam.zoom);
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
@@ -251,6 +260,22 @@ export class WorldThreeRenderer implements GameRenderer {
     this.lighting.render(this.stage.gpu);
   }
 
+  /** Poeira de passos: uma nuvenzinha por passada do jogador (distância andada), com a cor do chão pisado; nada em cômodos nem em água. */
+  private stepDust(opts: RenderOptions, inside: unknown, cellPx: number): void {
+    const a = opts.actors[0];
+    if (!feelOn() || inside || !a || !a.moving || a.frame !== undefined) this.dustAt = a ? { x: a.x, y: a.y } : null;
+    else {
+      if (this.dustAt) this.dustWalked += Math.hypot(a.x - this.dustAt.x, a.y - this.dustAt.y);
+      this.dustAt = { x: a.x, y: a.y };
+      if (this.dustWalked >= DUST_STRIDE) {
+        this.dustWalked = 0;
+        const style = dustFor(this.world.getGround(Math.floor(a.x), Math.floor(a.y)));
+        if (style && a.visualZ < 0.05) this.dust.emit(a.x, a.y, style);
+      }
+    }
+    this.dust.update(opts.dt, cellPx);
+  }
+
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
     this.stage.syncCamera(cam);
@@ -294,6 +319,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blocks.dispose();
     this.sprites.dispose();
     this.fireFx.dispose();
+    this.dust.dispose();
     this.walls.dispose();
     this.doors.dispose();
     this.groundFx.dispose();

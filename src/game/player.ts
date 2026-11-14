@@ -3,6 +3,7 @@ import type { ToolId } from '../world/items';
 import { HUNGER, playerStats, REGEN, type Stats } from '../world/progression';
 import type { World } from '../world/world';
 import { type AttackTiming, DEFAULT_ATTACK_TIMING } from './attackTiming';
+import { INPUT_ACCEL, INPUT_DECEL } from './feel';
 import { type Blocker, Walker } from './walker';
 
 export type { Facing } from './walker';
@@ -67,6 +68,14 @@ export class Player extends Walker {
   timingFor: ((tool: ToolId | null) => AttackTiming) | null = null;
   private timing: AttackTiming = DEFAULT_ATTACK_TIMING;
   private hitDone = true;
+  /**
+   * Sensação de movimento (v0.93.69): com `smooth` ligado a entrada tem inércia curta (arranca e para em ~50 ms, sem corte seco) e o passo
+   * da animação anda pela distância percorrida (o pé não desliza). Desligado = o movimento de antes. O `Game` liga; os testes de física antigos ficam como eram.
+   */
+  smooth = false;
+  /** Entrada suavizada (0..1 por eixo): o que de fato move o personagem quando `smooth`. */
+  vx = 0;
+  vy = 0;
   /** Golpe pedido durante o anterior (fila curta): ferramenta e tempo restante da fila. */
   private queuedTool: ToolId | null | undefined = undefined;
   private queueLeft = 0;
@@ -176,6 +185,7 @@ export class Player extends Walker {
   /** Renasce em (x, y) com vida cheia (itens ficam com ela). */
   respawn(x: number, y: number): void {
     this.seat = null;
+    this.vx = this.vy = 0;
     this.x = x;
     this.y = y;
     this.z = this.visualZ = 0;
@@ -300,12 +310,25 @@ export class Player extends Walker {
   update(dt: number, ix: number, iy: number, world: World, blocked?: Blocker): void {
     this.tickHealth(dt);
     if (this.seat) {
+      this.vx = this.vy = 0;
       this.updateSeat(dt, ix, iy);
       return;
     }
     // Durante o golpe ela continua podendo andar, mas a direção do golpe não muda.
     const facing = this.facing;
-    this.move(dt, ix, iy, world, blocked);
+    if (this.smooth) {
+      const want = Math.hypot(ix, iy);
+      const have = Math.hypot(this.vx, this.vy);
+      const k = 1 - Math.exp(-(want >= have ? INPUT_ACCEL : INPUT_DECEL) * dt);
+      this.vx += (ix - this.vx) * k;
+      this.vy += (iy - this.vy) * k;
+      const w0 = this.walkTime;
+      const moved = this.move(dt, this.vx, this.vy, world, blocked);
+      // Passo pela distância: 1 ciclo por segundo à velocidade máxima (como antes), proporcional à velocidade real; ao bater na parede o pé não corre parado.
+      if (this.moving) this.walkTime = w0 + Math.max(moved / this.spec.speed, 0.25 * dt);
+    } else {
+      this.move(dt, ix, iy, world, blocked);
+    }
     if (this.attacking) {
       this.facing = facing;
       this.attackTime = Math.max(0, this.attackTime - dt);
