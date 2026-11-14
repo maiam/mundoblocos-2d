@@ -130,6 +130,12 @@ export function celestialFaces(id: number): CelestialFaces {
         ground: slice(atlas, col, ATLAS_TOP + ATLAS_FRONT, ATLAS_TOP, T, T),
       };
     }
+    // Água Cristalina: mapa físico de seis faces, com topo próprio e
+    // laterais aquáticas mesmo quando o jogador gira a câmera.
+    // Reusa a arte celestial aprovada até existir uma rede 512×512 específica.
+    if (id === Block.WATER_CRYSTAL) {
+      faces.cube = [faces.front, faces.front, faces.top, faces.ground, faces.front, faces.front];
+    }
     cache.set(id, faces);
   }
   return faces;
