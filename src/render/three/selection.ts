@@ -31,13 +31,13 @@ export class SelectionMarkers {
   update(opts: Pick<RenderOptions, 'hover' | 'focus' | 'breaking'>): void {
     const cell = opts.hover ?? opts.focus;
     if (cell && cell.valid && this.world.inBounds(cell.x, cell.y)) {
-      const top = this.world.stackHeight(cell.x, cell.y);
+      const top = this.world.stackHeight(cell.x, cell.y) / this.world.cubeLevels; // em células de altura
       this.highlight.position.set(cell.x + 0.5, top + 0.03, cell.y + 0.5);
       this.highlight.visible = true;
     } else this.highlight.visible = false;
     const breaking = opts.breaking;
     if (breaking && this.world.inBounds(breaking.x, breaking.y)) {
-      const h = this.world.stackHeight(breaking.x, breaking.y);
+      const h = this.world.stackHeight(breaking.x, breaking.y) / this.world.cubeLevels;
       this.breakHighlight.position.set(breaking.x + 0.5, h + 0.04, breaking.y + 0.5);
       this.breakHighlight.material.opacity = Math.min(0.58, 0.12 + 0.46 * breaking.progress);
       this.breakHighlight.visible = true;

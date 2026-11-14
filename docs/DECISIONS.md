@@ -129,3 +129,4 @@
 | Reprodução é uma base comum (`Breeder`) para ovelha e animais do campo; o alimento de cada espécie fica em `ITEMS.feeds`; filhote do campo cresce em 3 dias de jogo (tempo real da sessão; no jogo sozinho os animais não são salvos; na sala, sim — v0.73.0) | domains/npc |
 | Cerca emenda por vizinhos só no render (o mundo guarda um id por célula; sem ids por forma): metades das peças + poste grande; portão de frente também em cerca vertical até chegar a arte de lado | domains/world, domains/render |
 | Pedregulhos soltos (arte da prancha) substituem os cubos de pedra avulsos do gerador; minerados dão 1–3 Pedras Brutas (o item é sempre o bloco de pedra, colocado como cubo) | domains/world, domains/farming |
+| **Blocos de 1/4 de célula (14/11/2026):** no Mundo principal todo bloco de construção tem altura 1/4 e empilha até 4; paredes e Santuário fora; 1–3 andável, 4 bloqueia; migração preserva a altura (1 cubo → 4, 2 → 2+2) | ADR 0033 |

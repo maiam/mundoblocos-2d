@@ -43,12 +43,18 @@ export const TILE = 32;
 /** Altura visível da face frontal de um cubo (efeito 3/4), em pixels de mundo. */
 export const CUBE_FRONT = 18;
 
-/** Limite original do Mundo principal e do servidor. */
-export const MAX_STACK = 2;
+/**
+ * Blocos de 1/4 (ADR 0033, v0.93.75): no Mundo principal todo bloco de construção tem **altura de 1/4 de célula** (face 16 × 4, topo
+ * 16 × 16) e empilha até `CUBE_LEVELS` = 4 (= 1 célula, a altura do cubo antigo). Um nível de pilha = 1 bloco. O Santuário Celestial
+ * (mundo à parte) segue com cubos cheios (1 nível por cubo).
+ */
+export const CUBE_LEVELS = 4;
+/** Limite de níveis (blocos de 1/4) por célula no Mundo principal e no servidor. */
+export const MAX_STACK = CUBE_LEVELS;
 /** Santuário pode construir até cinco níveis sem alterar o protocolo do Mundo principal. */
 export const SANCTUARY_MAX_STACK = 5;
 
-/** Quantos níveis o personagem consegue subir de uma vez. */
+/** Quantos cubos cheios o personagem consegue subir de uma vez (no Mundo: `World.stepLevels` converte para 3 blocos de 1/4). */
 export const STEP_HEIGHT = 1;
 
 /** Lado de um chunk em células (chunks 16×16, como no Minecraft). */

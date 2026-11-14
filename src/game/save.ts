@@ -24,7 +24,7 @@ import type { Exploration } from './exploration';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 export interface SaveData {
   v: number;
@@ -157,6 +157,9 @@ export function migrate(raw: unknown): SaveData | null {
   }
   // v15 → v16 (grade fina, ADR 0032): o salvamento passa a dizer em que grade foi feito; os antigos são da grade 1.
   if (d.v === 15) d = { ...d, v: 16, sub: 1 };
+  // v16 → v17 (blocos de 1/4, ADR 0033): a altura de apoio `z` do Mundo passa de cubos para blocos de 1/4 (× 4); os chunks no formato antigo
+  // (2 níveis) são convertidos ao carregar (`World.restoreChunk`), cada cubo virando 4 blocos com a mesma altura.
+  if (d.v === 16) d = { ...d, v: 17, player: { ...d.player, z: d.world === 'santuario' ? d.player.z : d.player.z * 4 } };
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -231,7 +234,10 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.x = d.player.x;
   p.y = d.player.y;
   // Old saves may place the character on the now-retired third stack layer.
-  p.z = p.visualZ = Math.max(0, Math.min(s.world.maxStack, d.player.z));
+  p.z = Math.max(0, Math.min(s.world.maxStack, d.player.z));
+  // (e nunca acima do chão sob os pés: o visualZ nasce coerente)
+  p.z = Math.min(p.z, Math.max(0, s.world.standHeight(Math.floor(p.x), Math.floor(p.y)) ?? 0));
+  p.visualZ = p.z / s.world.cubeLevels;
   p.hp = Math.min(p.maxHp, Math.max(1, d.player.hp));
   p.facing = d.player.facing;
   p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));

@@ -1,6 +1,6 @@
-import { SLAB_STACK_MAX, slabHeightOf } from './slabs';
-import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
-import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
+import { quarterLevel } from './quarters';
+import { CHUNK_SIZE, CUBE_LEVELS, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
+import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isStackBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
@@ -76,9 +76,13 @@ export class World {
   readonly generator: TerrainSource;
   readonly profile: WorldProfile;
   /** Profundidade de pilha específica do perfil: Mundo 2, Santuário 5. */
-  /** Níveis de pilha por célula (2 no Mundo, 5 no Santuário; o piloto das lajes eleva para `SLAB_STACK_MAX` enquanto ligado). */
-  maxStack: number;
-  private readonly baseMaxStack: number;
+  /** Níveis de pilha por célula: 4 blocos de 1/4 no Mundo (ADR 0033) e 5 cubos cheios no Santuário. */
+  readonly maxStack: number;
+  /**
+   * Quantos níveis valem 1 célula de altura (o cubo antigo): 4 no Mundo (cada bloco tem 1/4 de célula), 1 no Santuário. É a escala entre o
+   * apoio lógico `z`/`standHeight` (em níveis) e o visual (`visualZ`, em células).
+   */
+  readonly cubeLevels: number;
   /** Limites em células (inclusivos) quando o perfil limita o mundo. */
   private readonly cellBounds: { x0: number; y0: number; x1: number; y1: number } | null;
   /** Chunks por chave numérica (`numKey`): evita criar strings a cada leitura de célula. */
@@ -117,7 +121,8 @@ export class World {
 
   constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
     this.profile = profile;
-    this.maxStack = this.baseMaxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
+    this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
+    this.cubeLevels = profile.id === 'santuario' ? 1 : CUBE_LEVELS;
     this.generator = profile.id === 'santuario' && profile.bounds
       ? new SanctuarySeedGenerator(seed, profile.bounds)
       : profile.terrain.kind === 'flat'
@@ -305,9 +310,24 @@ export class World {
       this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects, chunk.upper);
       if (this.generator instanceof SanctuarySeedGenerator)
         this.generator.fillHighLevels(cx, cy, chunk.levels);
+      else if (this.cubeLevels > 1) this.expandQuarters(chunk);
       this.chunks.set(key, chunk);
     }
     return chunk;
+  }
+
+  /**
+   * Terreno gerado → blocos de 1/4 (ADR 0033): onde o gerador pôs um cubo de construção (pedra da montanha, tijolo da muralha), a
+   * célula vira 4 blocos empilhados (`quarterLevel`), com a mesma altura de antes.
+   */
+  private expandQuarters(chunk: Chunk): void {
+    const n = chunk.ground.length;
+    for (let i = 0; i < n; i++) {
+      const obj = chunk.levels[0][i] as BlockId;
+      if (!isStackBlock(obj)) continue;
+      const up = chunk.levels[1][i] as BlockId;
+      for (let l = 1; l < chunk.levels.length; l++) chunk.levels[l][i] = quarterLevel(obj, up, l);
+    }
   }
 
   /** Chão da célula. Fora de chunk carregado consulta o gerador (puro); fora dos limites, céu. */
@@ -326,9 +346,7 @@ export class World {
 
   /** Nível superior (1). */
   getUpper(x: number, y: number): BlockId {
-    if (!this.inBounds(x, y)) return Block.AIR;
-    const chunk = this.chunkAt(x, y);
-    return chunk ? chunk.getLevel(toLocal(x), toLocal(y), 1) : this.generator.upperAt(x, y);
+    return this.getLevel(x, y, 1);
   }
 
   /** Bloco de um nível da pilha (0 = objeto no chão). O gerador só preenche os níveis 0 e 1. */
@@ -336,11 +354,13 @@ export class World {
     // Older saves may still refer to the discontinued third construction tier.
     if (!Number.isInteger(level) || level < 0 || level >= this.maxStack) return Block.AIR;
     if (level === 0) return this.getObject(x, y);
-    if (level === 1) return this.getUpper(x, y);
     if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
     if (chunk) return chunk.getLevel(toLocal(x), toLocal(y), level);
-    return this.generator instanceof SanctuarySeedGenerator ? this.generator.levelAt(x, y, level) : Block.AIR;
+    if (this.generator instanceof SanctuarySeedGenerator) return this.generator.levelAt(x, y, level);
+    // Chunk ainda não carregado: o gerador descreve a célula no formato antigo (2 níveis); no Mundo vira blocos de 1/4 (`quarterLevel`).
+    if (this.cubeLevels > 1) return quarterLevel(this.generator.objectAt(x, y), this.generator.upperAt(x, y), level);
+    return level === 1 ? this.generator.upperAt(x, y) : Block.AIR;
   }
 
   /** Bloco visível no topo da célula e seu nível (null se vazia). */
@@ -352,12 +372,25 @@ export class World {
     return null;
   }
 
-  /** Quantos cubos há empilhados na célula (0..MAX_STACK). */
+  /**
+   * Altura da pilha da célula em níveis (0..`maxStack`): no Mundo, quantos blocos de 1/4 há empilhados (4 = 1 célula cheia); no
+   * Santuário, quantos cubos. O cacto (planta que o gerador põe como "cubo") não é bloco de construção: conta como célula cheia.
+   */
   stackHeight(x: number, y: number): number {
-    if (blockDef(this.getObject(x, y)).shape !== 'cube') return 0;
+    const base = this.getObject(x, y);
+    if (blockDef(base).shape !== 'cube') return 0;
+    if (!isStackBlock(base)) return this.cubeLevels;
     let n = 1;
     while (n < this.maxStack && this.getLevel(x, y, n) !== Block.AIR) n++;
     return n;
+  }
+
+  /**
+   * Quantos níveis um corpo com `stepHeight` (em cubos cheios, como na `WalkerSpec`) sobe de uma vez. No Mundo um cubo cheio são 4
+   * blocos de 1/4 e **a pilha de 4 bloqueia**: quem sobe 1 cubo sobe no máximo 3 blocos (piso e degraus, nunca a célula cheia).
+   */
+  stepLevels(stepHeight: number): number {
+    return this.cubeLevels === 1 ? stepHeight : Math.round(stepHeight * (this.cubeLevels - 1));
   }
 
   /**
@@ -368,56 +401,8 @@ export class World {
   standHeight(x: number, y: number): number | null {
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
-    // Laje (piloto): andável, no nível do chão para a lógica; o corpo sobe `SLAB_HEIGHT` só no visual (`slabLift`).
-    if (base.shape === 'cube' && this.isSlabAt(x, y)) return 0;
     if (base.shape === 'cube') return this.stackHeight(x, y);
     return base.solid ? null : 0;
-  }
-
-  /** Blocos que viram laje (piloto `?tabua=laje`, ver `world/slabs.ts`); vazio = nenhum (o padrão, e sempre na sala). */
-  private slabs: ReadonlySet<BlockId> = new Set();
-
-  /** Liga o piloto (ids de laje) ou o desliga (`[]`). Ligado, o limite de níveis sobe para `SLAB_STACK_MAX` (e os chunks já gerados crescem). */
-  setSlabBlocks(ids: readonly BlockId[]): void {
-    this.slabs = new Set(ids);
-    this.maxStack = ids.length > 0 ? Math.max(this.baseMaxStack, SLAB_STACK_MAX) : this.baseMaxStack;
-    if (ids.length > 0) for (const c of this.chunks.values()) c.growLevels(this.maxStack);
-  }
-
-  get hasSlabs(): boolean {
-    return this.slabs.size > 0;
-  }
-
-  /**
-   * A célula é uma pilha só de lajes (nível 0 de laje e, acima, só lajes ou nada)? Cubo comum em qualquer nível desfaz a laje.
-   */
-  isSlabAt(x: number, y: number): boolean {
-    if (this.slabs.size === 0 || !this.slabs.has(this.getObject(x, y))) return false;
-    for (let level = 1; level < this.maxStack; level++) {
-      const id = this.getLevel(x, y, level);
-      if (id !== Block.AIR && !this.slabs.has(id)) return false;
-    }
-    return true;
-  }
-
-  /** Quantas lajes há empilhadas na célula (0 se não é pilha de lajes). */
-  slabCount(x: number, y: number): number {
-    if (!this.isSlabAt(x, y)) return 0;
-    let n = 0;
-    while (n < this.maxStack && this.slabs.has(this.getLevel(x, y, n))) n++;
-    return n;
-  }
-
-  /** Altura (células) das lajes abaixo do nível `level` da célula: onde assenta a laje desse nível. */
-  slabBase(x: number, y: number, level: number): number {
-    let h = 0;
-    for (let l = 0; l < level; l++) h += slabHeightOf(this.getLevel(x, y, l));
-    return h;
-  }
-
-  /** Quanto o corpo sobe por cima da célula (visual): a soma das alturas das lajes empilhadas, 0 no resto. */
-  slabLift(x: number, y: number): number {
-    return this.isSlabAt(x, y) ? this.slabBase(x, y, this.slabCount(x, y)) : 0;
   }
 
   /** Mantido para o objeto do nível 0 (testes/ferramentas). */
@@ -544,15 +529,7 @@ export class World {
     const def = blockDef(id);
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
-    if ((!this.profile.blocks.includes(id) && !(this.slabs.has(id))) || this.isProtected(x, y)) return null;
-    // Lajes (piloto): empilham até `SLAB_STACK_MAX` (misturando as três); cubo em cima de laje e laje em cima de cubo ou objeto não.
-    if (this.slabs.has(id)) {
-      if (this.getGround(x, y) === Block.HOLE || !this.isGroundStandable(x, y)) return null;
-      if (this.isSlabAt(x, y)) { const n = this.slabCount(x, y); return n < SLAB_STACK_MAX && n < this.maxStack ? n : null; }
-      const o = blockDef(this.getObject(x, y));
-      return o.id === Block.AIR || o.shape === 'decoration' ? 0 : null;
-    }
-    if (this.isSlabAt(x, y)) return null;
+    if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
     if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;
@@ -1063,6 +1040,15 @@ export class World {
     let dropped = 0;
     for (let i = c.levels.length; i < levels.length; i++) for (const b of levels[i]) if (b !== Block.AIR) dropped++;
     levels.forEach((l, i) => { if (i < c.levels.length) c.levels[i].set(l.subarray(0, c.levels[i].length)); });
+    // Arquivo no formato antigo (2 níveis, cubos cheios): cada cubo vira 4 blocos de 1/4, preservando a altura (ADR 0033).
+    if (this.cubeLevels > 1 && levels.length <= 2) {
+      const n = c.ground.length;
+      for (let i = 0; i < n; i++) {
+        const obj = c.levels[0][i] as BlockId, up = c.levels[1][i] as BlockId;
+        if (!isStackBlock(obj)) continue;
+        for (let l = 1; l < c.levels.length; l++) c.levels[l][i] = quarterLevel(obj, up, l);
+      }
+    }
     // Blocos que saíram do jogo (antigas paredes) em mundos e salas salvos viram vazio.
     for (const l of c.levels) for (let i = 0; i < l.length; i++) l[i] = isRemovedBlock(l[i]) ? Block.AIR : adultOfStage(l[i]); // + estágios de árvore aposentados
     // Áreas protegidas (cidade/dungeon) sempre voltam do gerador: salvamentos antigos podem ter outro terreno ali.
@@ -1073,7 +1059,7 @@ export class World {
         if (!this.inGuardedArea(x, y)) continue;
         const cell = this.generator.cellAt(x, y);
         c.setGround(lx, ly, cell.ground);
-        c.levels.forEach((l, i) => { l[ly * CHUNK_SIZE + lx] = i === 0 ? cell.object : i === 1 ? cell.upper : Block.AIR; });
+        c.levels.forEach((l, i) => { l[ly * CHUNK_SIZE + lx] = this.cubeLevels > 1 ? quarterLevel(cell.object, cell.upper, i) : i === 0 ? cell.object : i === 1 ? cell.upper : Block.AIR; });
       }
     }
     c.modified = true;

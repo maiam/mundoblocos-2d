@@ -11,7 +11,7 @@ export interface SelectionTarget {
   x: number;
   y: number;
   /** Bloco do topo e seu nível, ou null (chão vazio). */
-  top: { level: number; cube: boolean } | null;
+  top: { level: number; cube: boolean; levelsPerCube?: number } | null;
   /** Retângulo clicável do sprite do objeto (px relativos ao canto da célula), quando o topo é um objeto desenhado por sprite. */
   hit: { x: number; y: number; w: number; h: number } | null;
 }
@@ -24,8 +24,11 @@ export interface SelectionTarget {
 export function selectionRect3d(cam: SelectionCamera, t: SelectionTarget, tile: number, k: number): SelectionRect {
   const cell = tile * cam.zoom;
   if (t.top?.cube) {
-    const lift = k * (t.top.level + 1); // o topo do cubo está `level + 1` unidades acima do chão
-    return { sx: cam.worldToScreenX(t.x * tile), sy: cam.worldToScreenY((t.y - lift) * tile), w: cell, h: cell * (1 + k) };
+    // Blocos de 1/4 (`levelsPerCube` = 4, ADR 0033): o topo do bloco do nível `level` está `(level + 1) / 4` de célula acima do chão e a frente
+    // dele tem 1/4 de altura; com 1 (padrão, Santuário) é o cubo inteiro, como antes.
+    const q = t.top.levelsPerCube ?? 1;
+    const lift = (k * (t.top.level + 1)) / q;
+    return { sx: cam.worldToScreenX(t.x * tile), sy: cam.worldToScreenY((t.y - lift) * tile), w: cell, h: cell * (1 + k / q) };
   }
   if (t.top && t.hit) {
     return {

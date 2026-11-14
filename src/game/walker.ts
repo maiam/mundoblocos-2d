@@ -45,8 +45,6 @@ export class Walker {
   /** Nível lógico (inteiro) e exibido (suavizado). */
   z = 0;
   visualZ = 0;
-  /** Quanto o corpo sobe por cima de uma laje (piloto `?tabua=laje`; 0 no resto): só o visual, a lógica fica em `z`. */
-  lift = 0;
 
   /** Especificação física (mutável: o filhote cresce), já em células da grade atual. */
   readonly spec: WalkerSpec;
@@ -60,7 +58,9 @@ export class Walker {
    * Retorna a distância efetivamente percorrida.
    */
   move(dt: number, ix: number, iy: number, world: World, blocked?: Blocker): number {
-    this.visualZ += (this.z + this.lift - this.visualZ) * (1 - Math.exp(-Z_SMOOTH * dt));
+    // `z` é o apoio lógico em níveis (blocos de 1/4 no Mundo); `visualZ` é em CÉLULAS de altura (z ÷ níveis por cubo), a unidade que a câmera,
+    // os atores e as sombras sempre usaram.
+    this.visualZ += (this.z / world.cubeLevels - this.visualZ) * (1 - Math.exp(-Z_SMOOTH * dt));
     let len = Math.hypot(ix, iy);
     if (len > 1) { ix /= len; iy /= len; len = 1; }
     this.moving = len > 0.08;
@@ -91,23 +91,12 @@ export class Walker {
     this.x = x;
     this.y = y;
     this.z = h;
-    this.lift = this.liftAt(x, y, world);
-  }
-
-  /** O maior `slabLift` entre as células sob a caixa dos pés (0 sem lajes no mundo). */
-  private liftAt(x: number, y: number, world: World): number {
-    if (!world.hasSlabs) return 0;
-    const { halfW, halfD } = this.spec;
-    let lift = 0;
-    for (let cy = Math.floor(y - halfD); cy <= Math.floor(y + halfD); cy++) {
-      for (let cx = Math.floor(x - halfW); cx <= Math.floor(x + halfW); cx++) lift = Math.max(lift, world.slabLift(cx, cy));
-    }
-    return lift;
   }
 
   /** Altura de apoio na posição, ou null se bloqueado (degrau alto, água, buraco, árvore). */
   private supportHeight(x: number, y: number, world: World): number | null {
-    const { halfW, halfD, stepHeight } = this.spec;
+    const { halfW, halfD } = this.spec;
+    const stepHeight = world.stepLevels(this.spec.stepHeight);
     const x0 = Math.floor(x - halfW);
     const x1 = Math.floor(x + halfW);
     const y0 = Math.floor(y - halfD);
@@ -131,7 +120,7 @@ export class Walker {
   /** Recalcula o apoio no lugar (ex.: o bloco sob os pés foi quebrado). */
   settle(world: World): void {
     const h = this.supportHeight(this.x, this.y, world);
-    if (h !== null) { this.z = h; this.lift = this.liftAt(this.x, this.y, world); }
+    if (h !== null) this.z = h;
   }
 
   /** A caixa dos pés ocupa a célula? */

@@ -57,11 +57,6 @@ export class Chunk {
     this.version++;
   }
 
-  /** Acrescenta níveis vazios até ter `n` (o piloto das lajes sobe o limite de pilha com chunks já gerados). */
-  growLevels(n: number): void {
-    while (this.levels.length < n) this.levels.push(new Uint8Array(CHUNK_SIZE * CHUNK_SIZE));
-  }
-
   /** Define o bloco de um nível da célula. */
   setLevel(lx: number, ly: number, level: Level, id: BlockId): void {
     this.levels[level][ly * CHUNK_SIZE + lx] = id;

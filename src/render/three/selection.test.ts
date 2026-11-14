@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { World } from '../../world/world';
 import { SelectionMarkers } from './selection';
 
-const fakeWorld = { inBounds: (x: number, y: number) => x >= 0 && y >= 0 && x < 10 && y < 10, stackHeight: () => 2 } as unknown as World;
+const fakeWorld = { inBounds: (x: number, y: number) => x >= 0 && y >= 0 && x < 10 && y < 10, stackHeight: () => 2, cubeLevels: 1 } as unknown as World;
 
 function markers(): { scene: THREE.Scene; sel: SelectionMarkers; marks: THREE.Mesh[] } {
   const scene = new THREE.Scene();
@@ -21,6 +21,14 @@ describe('SelectionMarkers (núcleo 3D genérico)', () => {
     expect(marks[0].visible).toBe(false);
     sel.update({ hover: { x: 30, y: 4, valid: true }, focus: null, breaking: null });
     expect(marks[0].visible).toBe(false);
+  });
+
+  it('na regra de blocos de 1/4 (cubeLevels 4) o realce sobe em células, não em níveis', () => {
+    const scene = new THREE.Scene();
+    const world = { inBounds: () => true, stackHeight: () => 2, cubeLevels: 4 } as unknown as World;
+    const sel = new SelectionMarkers(scene, world);
+    sel.update({ hover: { x: 3, y: 4, valid: true }, focus: null, breaking: null });
+    expect((scene.children[0] as THREE.Mesh).position.y).toBeCloseTo(0.5 + 0.03);
   });
 
   it('o foco vale quando não há cursor; quebra: opacidade cresce com o progresso e é limitada', () => {

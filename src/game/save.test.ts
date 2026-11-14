@@ -71,13 +71,13 @@ describe('Salvamento automático', () => {
       inventory:new Inventory(),time:0.25,selected:null,hotbar:null};
     const saved=captureSave(state);
     expect(saved.v).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(16);
+    expect(SAVE_VERSION).toBe(17);
     expect('marblePlacements' in saved).toBe(false);
     expect('marbleV3Bases' in saved).toBe(false);
 
     for(const v of [12,13,14]){
       const old=migrate({...saved,v,marblePlacements:[[x,y,1]],marbleV3Bases:[[x,y]]});
-      expect(old?.v).toBe(16); // ...e segue até a versão atual (v15 → v16: grade 1)
+      expect(old?.v).toBe(17); // ...e segue até a versão atual (v15 → v16: grade 1; v16 → v17: blocos de 1/4)
       expect(old?.sub).toBe(1);
       expect(old && 'marblePlacements' in old).toBe(false);
       expect(old && 'marbleV3Bases' in old).toBe(false);
@@ -89,7 +89,7 @@ describe('Salvamento automático', () => {
     });
     expect(restored.getObject(x,y)).toBe(Block.MARBLE_CELESTIAL);
   });
-  it('limita altura de um personagem vindo de save antigo com três cubos', () => {
+  it('limita a altura do personagem ao máximo da pilha (4 níveis = 1 célula)', () => {
     const a = session();
     const [x,y] = grassCells(a.world,a.sx,a.sy,1)[0];
     expect(a.world.placeBlock(x,y,Block.STONE)).toBe(true);
@@ -98,12 +98,12 @@ describe('Salvamento automático', () => {
     a.player.y = y + 0.5;
     a.player.z = 2;
     const save = captureSave({...a,time:0.5,selected:null,hotbar:null});
-    save.player.z = 3; // personagem de um mundo antigo sobre a terceira camada
+    save.player.z = 9; // altura impossível (save adulterado/antigo)
     const b = session();
     applySave(save,{...b,time:0,selected:null,hotbar:null},mulberry32(7));
     expect(b.world.stackHeight(x,y)).toBe(2);
-    expect(b.player.z).toBe(2);
-    expect(b.player.visualZ).toBe(2);
+    expect(b.player.z).toBe(2); // fica na altura da pilha (2 blocos)
+    expect(b.player.visualZ).toBe(0.5); // 2 níveis = meia célula
   });
 
   it('ida e volta: mapa editado, plantação, heroína, inventário, ovelhas, monstros e hora do dia', () => {
@@ -251,7 +251,7 @@ describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
 
   it('o salvamento diz a grade (sub) e v15 migra para v16 como grade 1', () => {
     const { d } = saved();
-    expect(SAVE_VERSION).toBe(16);
+    expect(SAVE_VERSION).toBe(17);
     expect(d.sub).toBe(SUBDIV);
     const { sub: _s, ...rest } = d;
     expect(migrate({ ...rest, v: 15 })?.sub).toBe(1);

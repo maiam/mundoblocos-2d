@@ -1,5 +1,5 @@
 import { CUBE_FRONT, TILE } from '../config';
-import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS, SLAB_BLOCKS } from '../world/blocks';
+import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2LevelFaces, v2WaterTop } from './materialsV2';
@@ -691,7 +691,6 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   if (getBlockAtlas()) {
     MATERIALS.forEach((id, i) => {
       icons.set(id, pack.materialIcons[id] ?? '');
-      if (id === Block.OAK_PLANKS) for (const slab of SLAB_BLOCKS) icons.set(slab, pack.materialIcons[slab] ?? pack.materialIcons[id] ?? ''); // ícone de cada laje (a Tábua baixa)
       if (i >= LEGACY_MATERIALS) return; // madeira de cerejeira e outros novos só existem no V2 (sem coluna no atlas antigo)
       groundTop.set(id, materialTop(i));
       objects.set(id, materialCube(i, OUTLINE[id] ?? '#3a2a20'));

@@ -35,7 +35,7 @@ describe('ChunkBlocks (cubos do Mundo no 3D)', () => {
     expect(meshes).toHaveLength(2); // solid (chunk 0) + thin (chunk 1)
     const solid = meshes.find((m) => (m.userData.cells as unknown[]).length === 3)!;
     expect(solid.count).toBe(3);
-    expect(blocks.cellOf(solid, 0)).toEqual({ x: 1, y: 1, level: 0, id: STONE });
+    expect(blocks.cellOf(solid, 0)).toEqual({ x: 1, y: 1, level: 0, id: STONE, n: 1 });
     expect(blocks.cellOf(solid, 99)).toBeUndefined();
     expect(scene.children).toHaveLength(2);
   });

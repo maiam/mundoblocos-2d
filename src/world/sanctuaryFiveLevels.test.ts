@@ -34,11 +34,13 @@ describe('pilhas de cinco blocos apenas no Santuário', () => {
     expect(restored.getLevel(x, y, 4)).toBe(Block.GRASS);
     expect(restored.stackHeight(x, y)).toBe(5);
   });
-  it('mantém o Mundo principal com apenas duas camadas', () => {
+  it('o Mundo principal usa blocos de 1/4 (4 camadas)', () => {
     const main = new World(42, WORLD_PROFILES.principal);
     expect(main.maxStack).toBe(MAX_STACK);
     const [x, y] = main.outsideGate();
     const chunk = main.loadChunk(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE));
-    expect(chunk.levels).toHaveLength(2);
+    expect(chunk.levels).toHaveLength(4);
+    expect(main.cubeLevels).toBe(4);
+    expect(new World(42, WORLD_PROFILES.santuario).cubeLevels).toBe(1);
   });
 });

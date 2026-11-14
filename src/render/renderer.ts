@@ -94,12 +94,13 @@ export class Renderer {
   private readonly doorAnim = new DoorAnimator();
   /** O que o contorno dos cubos V2 precisa saber dos vizinhos (só leitura do mundo; ADR 0023). */
   private readonly cubeView: CubeView = {
+    // Blocos de 1/4 (ADR 0033): o 2D de reserva ainda desenha CUBOS CHEIOS — cada 4 blocos da coluna (arredondando para cima) são 1 cubo.
     height: (x, y) => {
       let n = 0;
       while (n < MAX_STACK && blockDef(this.world.getLevel(x, y, n)).shape === 'cube') n++;
-      return n;
+      return Math.ceil(n / this.world.cubeLevels);
     },
-    v2: (x, y, level) => V2_BLOCKS[this.world.getLevel(x, y, level)] !== undefined,
+    v2: (x, y, level) => V2_BLOCKS[this.world.getLevel(x, y, level * this.world.cubeLevels)] !== undefined,
   };
 
   constructor(canvas: HTMLCanvasElement, private readonly world: World) {
@@ -210,10 +211,13 @@ export class Renderer {
           gates.push(x); // depois da linha: os postes do portão cobrem as travessas das cercas vizinhas
         } else if (id !== Block.AIR) {
           this.drawObject(cam, id, x, y, 0, glows);
-          for (let level = 1; level < MAX_STACK; level++) {
-            const up = this.world.getLevel(x, y, level);
+          // Cubos extras: um por cada 4 blocos de 1/4 da coluna (o 2D de reserva não desenha alturas parciais: 1 a 4 blocos = 1 cubo cheio). O bloco
+          // de cima de cada grupo de 4 dá o desenho; no Santuário (1 nível por cubo) é um cubo por nível, como sempre.
+          const q = this.world.cubeLevels;
+          for (let cube = 1; cube * q < MAX_STACK; cube++) {
+            const up = this.world.getLevel(x, y, cube * q);
             if (up === Block.AIR) break;
-            this.drawObject(cam, up, x, y, level, glows);
+            this.drawObject(cam, up, x, y, cube, glows);
           }
         } else if (blockDef(this.world.getGround(x, y)).liquid) {
           this.waterGlint(cam, x, y, opts.elapsed);
