@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { actorLightAt } from './actorLight';
-import { actorLightOn } from './rendererChoice';
+import { actorLightOn, sunShadingOn } from './rendererChoice';
 
 const len = (v: number[]) => Math.hypot(...v);
 
@@ -43,6 +43,10 @@ describe('Luz dos atores (v0.93.64)', () => {
     expect(actorLightOn('?luz=0')).toBe(true);
     expect(actorLightOn('?sombreado=1')).toBe(true);
     expect(actorLightOn('?sombreado=0')).toBe(false);
+    // O relevo do corpo pelo sol vem desligado (v0.93.71) e só liga com ?sombreado=1.
+    expect(sunShadingOn('')).toBe(false);
+    expect(sunShadingOn('?sombreado=1')).toBe(true);
+    expect(sunShadingOn('?sombreado=0')).toBe(false);
   });
 });
 

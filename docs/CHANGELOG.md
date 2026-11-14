@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.71 — sem sombreado de sol no corpo dos atores (14/11/2026)
+- **Decisão do dono do produto:** "a sombra sai" (resposta sobre o sombreado por pixel do corpo, depois de `?sombreado=0` ter melhorado muito a vista).
+- O **relevo do corpo pelo sol/lua** (normais falsas, brilho de contorno) passa a vir **desligado**; `?sombreado=1` o liga. A **luz quente da fogueira nos atores** continua (usa o mesmo shader, mas não depende do sol), e `?sombreado=0` segue desligando tudo. A sombra no chão é o círculo suave sob os pés (v0.93.70).
+- Só cliente (render). Teste: o relevo vem desligado e só liga com `?sombreado=1`. Conferido no navegador.
+
 ## Orvalis v0.93.70 — atores no chão: sem flutuar e sem sombra inclinada (14/11/2026)
 - **Relato do dono do produto (com capturas do celular):** a sombra e o jeito de andar davam a impressão de plano inclinado (`?sombreado=0` melhorou muito) e os animais e a personagem pareciam acima do solo, "principalmente de lado".
 - **Causa do "acima do solo" (medida):** as folhas têm uma **folga vazia embaixo dos pés que varia por direção** e o desenho era colado pela base do quadro. Vaca de lado: 9–14% da altura do quadro; capivara 11–19%; cavalo, galinha e ovelha 7–12%; o Hood só 0–3%. Somavam-se ~1 px de margem do canvas e 0,03 célula de elevação do plano.

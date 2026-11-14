@@ -161,6 +161,9 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
   Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
 
+## Sombreado do corpo (v0.93.71)
+- O relevo do corpo pelo sol (`render/actorLight.ts` + shader de `three/actorBillboards.ts`) vem desligado (`sunShadingOn`, `?sombreado=1` liga); a luz da fogueira nos atores segue ligada; `?sombreado=0` desliga os dois; a sombra projetada do sol é `?sombra=sol`.
+
 ## Atores no chão (v0.93.70)
 - `scripts/foot-margins.py` → `render/footMargins.ts`: folga embaixo dos pés por folha e por linha de direção; `character.ts` `footDrop` desce o desenho por ela (2D e 3D). `GROUND_LIFT` (0,012) é a elevação do plano do ator. Sombra: círculo suave por padrão; `?sombra=sol` liga a sombra projetada. Sem inclinação lateral (`LEAN_RAD = 0`).
 
