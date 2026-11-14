@@ -170,6 +170,11 @@ export const Block = {
   V_SACKS: 236,
   /** Capim e flores (enfeite que não bloqueia). */
   V_FLOWERS: 237,
+  /** Portão da vila fechado (os dois postes e as folhas). Abre e fecha com um toque; os 8 blocos da peça mudam juntos (`World.toggleDoor`). */
+  V_GATE_CLOSED: 238,
+  /** Os 6 blocos do vão entre os postes: livres com o portão aberto, sólidos com ele fechado (sem arte própria: o desenho é do portão). */
+  V_GATE_GAP: 239,
+  V_GATE_GAP_CLOSED: 254,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -432,6 +437,9 @@ const defs: BlockDef[] = [
     [Block.V_BARREL, 'Barril'], [Block.V_ROCKS, 'Rochas'], [Block.V_BUSH, 'Arbusto Florido'], [Block.V_LOGS, 'Toras'],
     [Block.V_HAY, 'Feno'], [Block.V_CART, 'Carroça'], [Block.V_SACKS, 'Sacos'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false, seat: id === Block.V_BENCH })),
+  object(Block.V_GATE_CLOSED, 'Portão da Vila (fechado)', { shape: 'building', breakable: false, placeable: false }),
+  object(Block.V_GATE_GAP, 'Portão da Vila', { shape: 'building', solid: false, breakable: false, placeable: false }),
+  object(Block.V_GATE_GAP_CLOSED, 'Portão da Vila (fechado)', { shape: 'building', breakable: false, placeable: false }),
   object(Block.V_FLOWERS, 'Capim e Flores', { shape: 'building', solid: false, breakable: false, placeable: false }),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
@@ -599,6 +607,10 @@ const TOGGLES: Readonly<Partial<Record<number, BlockId>>> = {
   [Block.WALL_DOOR_PLANKS_OPEN]: Block.WALL_DOOR_PLANKS,
   [Block.FENCE_GATE]: Block.FENCE_GATE_OPEN,
   [Block.FENCE_GATE_OPEN]: Block.FENCE_GATE,
+  [Block.V_GATE]: Block.V_GATE_CLOSED,
+  [Block.V_GATE_CLOSED]: Block.V_GATE,
+  [Block.V_GATE_GAP]: Block.V_GATE_GAP_CLOSED,
+  [Block.V_GATE_GAP_CLOSED]: Block.V_GATE_GAP,
 };
 
 /** Porta ou portão (abre e fecha com um toque)? */
@@ -613,5 +625,5 @@ export function toggled(id: BlockId): BlockId | null {
 
 /** Aberto (porta ou portão)? */
 export function isOpen(id: BlockId): boolean {
-  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN || id === Block.WALL_DOOR_PLANKS_OPEN;
+  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN || id === Block.WALL_DOOR_PLANKS_OPEN || id === Block.V_GATE || id === Block.V_GATE_GAP;
 }

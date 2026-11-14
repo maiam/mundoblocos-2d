@@ -32,7 +32,8 @@ export const VILLAGE_SIZES: Partial<Record<BlockId, [number, number]>> = {
   [Block.V_PAL_H6]: [6, 1], [Block.V_PAL_H7]: [7, 1], [Block.V_PAL_W]: [1, 1], [Block.V_PAL_E]: [1, 1],
   [Block.V_PAL_NW]: [7, 6], [Block.V_PAL_NE]: [7, 6], [Block.V_PAL_SW]: [6, 6], [Block.V_PAL_SE]: [6, 6], [Block.V_GATE]: [8, 1],
   [Block.V_BARREL]: [1, 1], [Block.V_ROCKS]: [3, 1], [Block.V_BUSH]: [3, 1], [Block.V_LOGS]: [2, 1], [Block.V_HAY]: [2, 1],
-  [Block.V_CART]: [3, 2], [Block.V_SACKS]: [2, 1], [Block.V_FLOWERS]: [2, 1],
+  [Block.V_CART]: [3, 2], [Block.V_SACKS]: [2, 1], [Block.V_FLOWERS]: [2, 1], [Block.V_GATE_CLOSED]: [8, 1], [Block.V_GATE_GAP]: [1, 1],
+  [Block.V_GATE_GAP_CLOSED]: [1, 1],
 };
 
 /** O id é um objeto da vila? */
@@ -110,7 +111,8 @@ function buildVillage(): VillageLayout {
   for (const [x, id] of [[8, Block.V_PAL_H6], [14, Block.V_PAL_H7], [21, Block.V_PAL_H6], [27, Block.V_PAL_H7], [34, Block.V_PAL_H6]] as const) must(id, x, 4);
   for (const [x, id] of [[7, Block.V_PAL_H6], [13, Block.V_PAL_H7], [28, Block.V_PAL_H7], [35, Block.V_PAL_H6]] as const) must(id, x, 43);
   for (let y = 10; y <= 37; y++) { must(Block.V_PAL_W, 1, y); must(Block.V_PAL_E, 46, y); }
-  must(Block.V_GATE, 20, 43, [[20, 43], [27, 43]]); // dois postes; o vão (x 21–26) fica livre
+  must(Block.V_GATE, 20, 43, [[20, 43], [27, 43]]); // dois postes; o vão (x 21–26) tem os blocos do portão, livres com ele aberto
+  for (let x = 21; x <= 26; x++) objects[idx(x, 43)] = Block.V_GATE_GAP;
 
   // --- Construções ---
   must(Block.V_BARN, 18, 10);

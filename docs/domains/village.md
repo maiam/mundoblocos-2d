@@ -35,10 +35,10 @@
 | Portão (aberto e fechado) | 8 × 5 | fechado bloqueia | a cidade tem vão de 8 células |
 | Arbustos, flores, capim, pedras de caminho | 1–3 × 1–2 | não | enfeites |
 
-## Decisões abertas (do dono do produto)
-1. **Portão**: interativo (alterna aberto/fechado, como as portas) ou sempre aberto? O fechado existe como arte, mas não há quadros intermediários.
-2. **Variantes**: usar todas as variantes de casa e de árvore em rodízio (mais variedade) ou uma só de cada (mais coerência)?
-3. **Posição exata** ao sul da cidade e **o que fica ao redor** (estrada, rebanho, dungeon): a cidade reserva o "campo do rebanho" (28 células ao sul do portão); a vila entra depois dele.
+## Decisões do dono do produto (14/11/2026)
+1. **Portão: abre e fecha** (feito): toque em qualquer bloco dele troca os 8 juntos (`V_GATE`/`V_GATE_CLOSED` nos postes, `V_GATE_GAP`/`V_GATE_GAP_CLOSED` no vão); fechado bloqueia, aberto deixa passar; não fecha com alguém dentro; troca seca entre as duas artes e volta aberto ao recarregar.
+2. **Variantes em rodízio** (feito): 3 casas de palha, 2 de telhas, 3 carvalhos, 2 árvores e 2 bancos, sorteados pela posição.
+3. **Posição** ao sul da cidade, logo depois do campo do rebanho (28 células antigas ao sul do portão) + 16 células (feito).
 
 ## Limitações conhecidas da arte
 - Os itens não são recortes do mapa: o ladrilho do chão (grama, terra) não vem pronto e o chão do mapa tem manchas e sombras pintadas que o jogo não reproduz.

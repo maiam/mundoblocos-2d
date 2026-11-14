@@ -47,7 +47,7 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.V_OAK]: ['village-oak-1', 'village-oak-2', 'village-oak-3'], [Block.V_TREE]: ['village-tree-1', 'village-tree-2'],
   [Block.V_PAL_H6]: ['village-palisade-h6'], [Block.V_PAL_H7]: ['village-palisade-h7'], [Block.V_PAL_W]: ['village-palisade-w'],
   [Block.V_PAL_E]: ['village-palisade-e'], [Block.V_PAL_NW]: ['village-palisade-nw'], [Block.V_PAL_NE]: ['village-palisade-ne'],
-  [Block.V_PAL_SW]: ['village-palisade-sw'], [Block.V_PAL_SE]: ['village-palisade-se'], [Block.V_GATE]: ['village-gate-open'],
+  [Block.V_PAL_SW]: ['village-palisade-sw'], [Block.V_PAL_SE]: ['village-palisade-se'], [Block.V_GATE]: ['village-gate-open'], [Block.V_GATE_CLOSED]: ['village-gate-closed'],
   [Block.V_BARREL]: ['village-barrel'], [Block.V_ROCKS]: ['village-rocks'], [Block.V_BUSH]: ['village-bush'], [Block.V_LOGS]: ['village-logs'],
   [Block.V_HAY]: ['village-hay'], [Block.V_CART]: ['village-cart'], [Block.V_SACKS]: ['village-sacks'], [Block.V_FLOWERS]: ['village-flowers'],
 };
