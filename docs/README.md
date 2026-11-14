@@ -25,6 +25,7 @@ Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece
 | NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
 | Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Cidade do Despertar: início, muralha, ruas, construções | `world/town.ts`, `render/townArt.ts`, `World` | [town.md](domains/town.md) |
+| Vila Camponesa: área fixa ao sul da cidade (arte recebida; código a fazer) | `world/village.ts` (a criar), `assets-src/vila-camponesa/` | [village.md](domains/village.md) |
 | Dungeon e monstros: área protegida, aranhas, chefe | `world/dungeon.ts`, `game/monster.ts`, `game/entities.ts` | [dungeon.md](domains/dungeon.md) |
 | Multiplayer: salas, protocolo, servidor, bichos da sala | `src/net/`, `world/actions.ts`, `game/entities.ts` | [multiplayer.md](domains/multiplayer.md) |
 | Salvamento e menu | `game/save.ts`, `game/menu.ts`, `main.ts` | [save.md](domains/save.md) |

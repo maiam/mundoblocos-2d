@@ -192,7 +192,9 @@ export class ActionController {
   /** Dá para abrir/fechar a porta desta célula? Fechar exige a célula livre de entidades. */
   private canToggleDoorAt(x: number, y: number): boolean {
     if (!this.world.isDoor(x, y)) return false;
-    return !this.world.isDoorOpen(x, y) || !this.entities.occupies(x, y);
+    if (!this.world.isDoorOpen(x, y)) return true;
+    // Fechar exige a(s) célula(s) livre(s) de entidades (o portão da vila ocupa 8 células).
+    return !(this.world.gateCells(x, y) ?? [[x, y]]).some(([cx, cy]) => this.entities.occupies(cx, cy));
   }
 
   /** Toque numa porta: abre/fecha (qualquer item em mãos). Retorna true se havia porta (o toque foi usado). */

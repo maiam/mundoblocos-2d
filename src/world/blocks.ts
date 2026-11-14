@@ -138,6 +138,43 @@ export const Block = {
   SIGNPOST: 139,
   HEDGE: 140,
   STALL: 141,
+  // --- Vila Camponesa (v0.93.89, `docs/domains/village.md`; só no Mundo principal, área protegida). Todos `building`: o id fica na célula do
+  //     canto inferior esquerdo da peça e o resto do lote é `TOWN_PART` (`world/village.ts`, `VILLAGE_SIZES`). ---
+  V_HOUSE_STRAW: 112,
+  V_HOUSE_TILE: 113,
+  V_BARN: 114,
+  V_COOP: 115,
+  V_WELL: 116,
+  V_BENCH: 117,
+  V_BED_WHEAT: 118,
+  V_BED_VEG: 119,
+  V_OAK: 143,
+  V_TREE: 144,
+  /** Muro de estacas: segmentos retos de 6 e de 7 células (norte e sul), laterais (uma estaca por fileira) e os quatro cantos. */
+  V_PAL_H6: 145,
+  V_PAL_H7: 146,
+  V_PAL_W: 147,
+  V_PAL_E: 148,
+  V_PAL_NW: 149,
+  V_PAL_NE: 206,
+  V_PAL_SW: 207,
+  V_PAL_SE: 208,
+  /** Portão aberto (duas colunas com lampião; o vão entre elas fica livre). */
+  V_GATE: 209,
+  V_BARREL: 226,
+  V_ROCKS: 227,
+  V_BUSH: 228,
+  V_LOGS: 229,
+  V_HAY: 234,
+  V_CART: 235,
+  V_SACKS: 236,
+  /** Capim e flores (enfeite que não bloqueia). */
+  V_FLOWERS: 237,
+  /** Portão da vila fechado (os dois postes e as folhas). Abre e fecha com um toque; os 8 blocos da peça mudam juntos (`World.toggleDoor`). */
+  V_GATE_CLOSED: 238,
+  /** Os 6 blocos do vão entre os postes: livres com o portão aberto, sólidos com ele fechado (sem arte própria: o desenho é do portão). */
+  V_GATE_GAP: 239,
+  V_GATE_GAP_CLOSED: 254,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -390,6 +427,20 @@ const defs: BlockDef[] = [
     [Block.LAMP, 'Poste de Luz'], [Block.BARREL, 'Barril'], [Block.CRATES, 'Caixotes'],
     [Block.SIGNPOST, 'Placa'], [Block.HEDGE, 'Cerca Viva'],
   ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false })),
+  // Vila Camponesa: peças de várias células (como a cidade) e enfeites fixos; o World protege a área inteira.
+  ...([
+    [Block.V_HOUSE_STRAW, 'Casa de Palha'], [Block.V_HOUSE_TILE, 'Casa de Telhas'], [Block.V_BARN, 'Celeiro'],
+    [Block.V_COOP, 'Galinheiro'], [Block.V_WELL, 'Poço'], [Block.V_BENCH, 'Banco'], [Block.V_BED_WHEAT, 'Canteiro de Trigo'],
+    [Block.V_BED_VEG, 'Horta'], [Block.V_OAK, 'Carvalho'], [Block.V_TREE, 'Árvore'], [Block.V_PAL_H6, 'Paliçada'],
+    [Block.V_PAL_H7, 'Paliçada'], [Block.V_PAL_W, 'Paliçada'], [Block.V_PAL_E, 'Paliçada'], [Block.V_PAL_NW, 'Paliçada'],
+    [Block.V_PAL_NE, 'Paliçada'], [Block.V_PAL_SW, 'Paliçada'], [Block.V_PAL_SE, 'Paliçada'], [Block.V_GATE, 'Portão da Vila'],
+    [Block.V_BARREL, 'Barril'], [Block.V_ROCKS, 'Rochas'], [Block.V_BUSH, 'Arbusto Florido'], [Block.V_LOGS, 'Toras'],
+    [Block.V_HAY, 'Feno'], [Block.V_CART, 'Carroça'], [Block.V_SACKS, 'Sacos'],
+  ] as const).map(([id, name]) => object(id, name, { shape: 'building', breakable: false, placeable: false, seat: id === Block.V_BENCH })),
+  object(Block.V_GATE_CLOSED, 'Portão da Vila (fechado)', { shape: 'building', breakable: false, placeable: false }),
+  object(Block.V_GATE_GAP, 'Portão da Vila', { shape: 'building', solid: false, breakable: false, placeable: false }),
+  object(Block.V_GATE_GAP_CLOSED, 'Portão da Vila (fechado)', { shape: 'building', breakable: false, placeable: false }),
+  object(Block.V_FLOWERS, 'Capim e Flores', { shape: 'building', solid: false, breakable: false, placeable: false }),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
   object(Block.CLOUD_ETHEREAL, 'Nuvem Etérea'),
@@ -556,6 +607,10 @@ const TOGGLES: Readonly<Partial<Record<number, BlockId>>> = {
   [Block.WALL_DOOR_PLANKS_OPEN]: Block.WALL_DOOR_PLANKS,
   [Block.FENCE_GATE]: Block.FENCE_GATE_OPEN,
   [Block.FENCE_GATE_OPEN]: Block.FENCE_GATE,
+  [Block.V_GATE]: Block.V_GATE_CLOSED,
+  [Block.V_GATE_CLOSED]: Block.V_GATE,
+  [Block.V_GATE_GAP]: Block.V_GATE_GAP_CLOSED,
+  [Block.V_GATE_GAP_CLOSED]: Block.V_GATE_GAP,
 };
 
 /** Porta ou portão (abre e fecha com um toque)? */
@@ -570,5 +625,5 @@ export function toggled(id: BlockId): BlockId | null {
 
 /** Aberto (porta ou portão)? */
 export function isOpen(id: BlockId): boolean {
-  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN || id === Block.WALL_DOOR_PLANKS_OPEN;
+  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN || id === Block.WALL_DOOR_PLANKS_OPEN || id === Block.V_GATE || id === Block.V_GATE_GAP;
 }

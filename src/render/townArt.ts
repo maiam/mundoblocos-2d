@@ -1,6 +1,7 @@
 import { TILE } from '../config';
 import { Block, type BlockId } from '../world/blocks';
 import { townSize, townSolid } from '../world/town';
+import { isVillageId, VILLAGE_SIZES } from '../world/village';
 import type { Sprite } from './textures';
 
 /**
@@ -38,6 +39,17 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.BENCH_LONG]: ['bench-3'],
   [Block.LAMP]: ['lamp-stone', 'lamp-wood', 'lamp-mixed'],
   [Block.HEDGE]: ['bush-round', 'bush-round', 'bush-tall', 'bush-wide'],
+  // Vila Camponesa (v0.93.89): itens do dono do produto, na escala do jogo (`scripts/extract-village.py`); a variação sai da posição.
+  [Block.V_HOUSE_STRAW]: ['village-house-straw-1', 'village-house-straw-2', 'village-house-straw-3'],
+  [Block.V_HOUSE_TILE]: ['village-house-tile-1', 'village-house-tile-2'],
+  [Block.V_BARN]: ['village-barn'], [Block.V_COOP]: ['village-coop'], [Block.V_WELL]: ['village-well'],
+  [Block.V_BENCH]: ['village-bench-1', 'village-bench-2'], [Block.V_BED_WHEAT]: ['village-bed-wheat'], [Block.V_BED_VEG]: ['village-bed-veg'],
+  [Block.V_OAK]: ['village-oak-1', 'village-oak-2', 'village-oak-3'], [Block.V_TREE]: ['village-tree-1', 'village-tree-2'],
+  [Block.V_PAL_H6]: ['village-palisade-h6'], [Block.V_PAL_H7]: ['village-palisade-h7'], [Block.V_PAL_W]: ['village-palisade-w'],
+  [Block.V_PAL_E]: ['village-palisade-e'], [Block.V_PAL_NW]: ['village-palisade-nw'], [Block.V_PAL_NE]: ['village-palisade-ne'],
+  [Block.V_PAL_SW]: ['village-palisade-sw'], [Block.V_PAL_SE]: ['village-palisade-se'], [Block.V_GATE]: ['village-gate-open'], [Block.V_GATE_CLOSED]: ['village-gate-closed'],
+  [Block.V_BARREL]: ['village-barrel'], [Block.V_ROCKS]: ['village-rocks'], [Block.V_BUSH]: ['village-bush'], [Block.V_LOGS]: ['village-logs'],
+  [Block.V_HAY]: ['village-hay'], [Block.V_CART]: ['village-cart'], [Block.V_SACKS]: ['village-sacks'], [Block.V_FLOWERS]: ['village-flowers'],
 };
 
 type Ctx = CanvasRenderingContext2D;
@@ -109,16 +121,21 @@ const signpost = () => prop(40, (ctx, cx, b) => {
  * construção, base no pé da célula do canto inferior esquerdo. Nada é esticado.
  */
 function imageSprite(img: HTMLImageElement, id: BlockId): Sprite {
-  const [w] = townSize(id);
-  const d = townSolid(id);
+  // Vila Camponesa: lotes em células da grade fina; o desenho trabalha em células antigas (metade).
+  const vs = VILLAGE_SIZES[id];
+  const w = vs ? vs[0] / 2 : townSize(id)[0];
+  const d = vs ? vs[1] / 2 : townSolid(id);
   const k = T / TOWN_PX_PER_CELL;
   const sw = img.width * k;
   const sh = img.height * k;
+  // O 3D amplia o desenho em volta do meio da base (`objectScaleFor`): o centro fica em `x + (ox + sw/2)/T`. Nos lotes da vila (em células
+  // da grade fina, `vs[0]` de largura) o centro é `x + vs[0]/2`, então `ox` usa a largura do lote inteira (a cidade, em células antigas, não muda).
+  const lotW = vs ? vs[0] : w;
   const c = document.createElement('canvas');
   c.width = img.width;
   c.height = img.height;
   c.getContext('2d')!.drawImage(img, 0, 0);
-  return { canvas: c, ox: (w * T - sw) / 2, oy: T - sh + 1, w: sw, h: sh, hit: { x: 0, y: T - d * T, w: w * T, h: d * T } };
+  return { canvas: c, ox: (lotW * T - sw) / 2, oy: T - sh + 1, w: sw, h: sh, hit: { x: 0, y: T - d * T, w: w * T, h: d * T } };
 }
 
 /** Sprites (com variações) de todas as construções e enfeites da cidade. */
@@ -137,7 +154,7 @@ export function townSprites(images: TownImages): Map<BlockId, Sprite[]> {
 
 /** Ids desenhados pela arte da cidade (o render escolhe a variação por posição, fixa como a cidade). */
 export function isTownArt(id: number): boolean {
-  return id >= Block.CASTLE && id <= Block.BENCH_LONG;
+  return (id >= Block.CASTLE && id <= Block.BENCH_LONG) || isVillageId(id);
 }
 
 /** Maior alcance de um sprite da cidade além da célula âncora (células): à direita e para cima. */
