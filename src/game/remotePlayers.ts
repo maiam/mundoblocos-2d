@@ -123,7 +123,7 @@ export class RemotePlayers {
       r.walkTime = r.moving ? r.walkTime + Math.max(Math.hypot(r.x - x0, r.y - y0) / (4.2 * SUBDIV), 0.25 * dt) : 0;
       r.attackTime = Math.max(0, r.attackTime - dt);
       const h = world.standHeight(Math.floor(r.x), Math.floor(r.y)) ?? 0;
-      r.z += (h - r.z) * k;
+      r.z += (h / world.cubeLevels - r.z) * k; // em células de altura (como o `visualZ` dos outros atores)
     }
   }
 

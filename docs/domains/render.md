@@ -161,8 +161,8 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
   Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
 
-## Laje (piloto v0.93.72)
-- `world/slabs.ts` (`SLABS`: `Block.OAK_SLAB_1/2/3` com face de 4/6/8 px, `?tabua=laje`, receitas `laje1`–`laje3`), `World.isSlabAt/slabLift/setSlabBlocks`, `Walker.lift`, forma `slab` em `three/chunkBlocks.ts` (`slabGeometry(altura)`: faces laterais recortam a faixa de cima da imagem; o fundo é `SLAB_DEPTH`, hoje 1 = topo 16 × 16). Pilha de até 4 (`SLAB_STACK_MAX`): cada nível assenta na soma das alturas de baixo (`World.slabBase`, `slabBase` no `transform`); o piloto eleva `World.maxStack` para 4 e `sanctuaryBlockTransform` (centro na metade da altura). Textura = a da Tábua (`slabBaseOf`). Só no Mundo principal, 3D, offline.
+## Blocos de 1/4 (ADR 0033, v0.93.76)
+- `three/chunkBlocks.ts`: com `levelsPerCube > 1` blocos iguais seguidos na coluna viram uma caixa (`stackGeometry(base, n, levels)`, textura recortada continuamente; 4 iguais = o cubo de antes). Seleção usa `levelsPerCube` (`selectionRect3d`, `SelectionMarkers` divide por `cubeLevels`). 2D de reserva (`renderer.ts`): colapsa 4 blocos num cubo cheio; parciais arredondam para cima.
 
 ## Sombreado do corpo (v0.93.71)
 - O relevo do corpo pelo sol (`render/actorLight.ts` + shader de `three/actorBillboards.ts`) vem desligado (`sunShadingOn`, `?sombreado=1` liga); a luz da fogueira nos atores segue ligada; `?sombreado=0` desliga os dois; a sombra projetada do sol é `?sombra=sol`.

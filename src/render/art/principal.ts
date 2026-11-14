@@ -107,9 +107,6 @@ import dirtIcon from '../../assets/icon-block-dirt.webp';
 import grassIcon from '../../assets/icon-block-grass.webp';
 import oakLogIcon from '../../assets/icon-block-oak-log.webp';
 import oakPlanksIcon from '../../assets/icon-block-oak-planks.webp';
-import oakSlab1Icon from '../../assets/icon-block-oak-slab-1.webp';
-import oakSlab2Icon from '../../assets/icon-block-oak-slab-2.webp';
-import oakSlab3Icon from '../../assets/icon-block-oak-slab-3.webp';
 import pathIcon from '../../assets/icon-block-path.webp';
 import sandIcon from '../../assets/icon-block-sand.webp';
 import stoneIcon from '../../assets/icon-block-stone.webp';
@@ -420,9 +417,6 @@ const pack: ArtPack = {
 
     [Block.OAK_LOG]: oakLogIcon,
     [Block.OAK_PLANKS]: oakPlanksIcon,
-    [Block.OAK_SLAB_1]: oakSlab1Icon,
-    [Block.OAK_SLAB_2]: oakSlab2Icon,
-    [Block.OAK_SLAB_3]: oakSlab3Icon,
     [Block.CHERRY_LOG]: cherryLogIcon,
     [Block.CHERRY_PLANKS]: cherryPlanksIcon,
     [Block.BIRCH_LOG]: birchLogIcon,

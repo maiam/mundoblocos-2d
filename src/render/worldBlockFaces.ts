@@ -1,6 +1,5 @@
 import { CUBE_FRONT, TILE } from '../config';
 import type { BlockId } from '../world/blocks';
-import { slabBaseOf } from '../world/slabs';
 import type { BlockFaces } from './three/blockMaterials';
 import { TEX_RES, type BlockTextures } from './textures';
 import { v2Faces, V2_BLOCKS } from './materialsV2';
@@ -23,8 +22,7 @@ function square(): [HTMLCanvasElement, CanvasRenderingContext2D] {
  */
 export function worldBlockFaces(textures: BlockTextures): (id: number) => BlockFaces {
   return (id) => {
-    // Lajes (piloto): topo e frente são os da Tábua de Carvalho.
-    const bid = slabBaseOf(id) as BlockId;
+    const bid = id as BlockId;
     const [top, tctx] = square();
     const src = textures.groundTop.get(bid);
     if (src) tctx.drawImage(src, 0, 0, RES, RES);

@@ -47,6 +47,7 @@ operacional e faz parte da entrega.
 - **Salvamento:** estado que deve persistir passa por `game/save.ts` (ADR 0011); mudou o formato → suba
   `SAVE_VERSION`. Nada de backend aqui: nuvem é do backend do Orvalis.
 - **Render do Mundo (ADR 0031, M6, v0.93.47):** o Mundo principal usa o renderer **2.5D em WebGL** por padrão (`render/worldThreeRenderer.ts`, núcleo em `render/three/`, escolha em `render/rendererChoice.ts`); `?render=2d` e aparelhos sem WebGL usam o Canvas 2D (`render/renderer.ts`, reserva até o M7). Com o 3D o jogador não sobe em cubos sozinho (`?fisica=degrau` desfaz). **Mudança visual do Mundo: conferir nos dois** e manter os desenhos compartilhados (`selectionFx`, `dungeonFx`, `doorAnim`, `groundFxMath`) num lugar só. A sala (servidor) não simula o movimento do jogador; mexer em `game/monster.ts`/`entities.ts` exige `build:net` + `sync-net`.
+- **Blocos de 1/4 (ADR 0033, v0.93.76):** no Mundo principal todo bloco tem 1/4 de célula e empilha até 4 (`CUBE_LEVELS`); `z`/`standHeight` do `World` são em **níveis**, `visualZ` em células (`/ cubeLevels`); altura nova → `cubeLevels`, nunca 1 nível = 1 célula; paredes e Santuário (`cubeLevels = 1`) ficam fora. Mudou a regra → `SAVE_VERSION`/`ROOM_SNAPSHOT_VERSION`/`PROTOCOL_VERSION`.
 - **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é
   limitado a 10 chunks e aceita os 18 blocos celestiais, as paredes autotile + porta de parede (ADR 0027) e só a Deusa — não misture conteúdo entre mundos.
 

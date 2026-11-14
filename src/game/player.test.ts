@@ -41,10 +41,9 @@ describe('Player', () => {
     expect(p.z).toBe(0);
   });
 
-  it('não sobe 2 blocos de uma vez', () => {
+  it('não sobe pilha de 4 blocos (1 célula); sobe de 1 a 3', () => {
     const [w, sx, sy] = corridor(7);
-    w.placeBlock(sx + 2, sy, Block.STONE);
-    w.placeBlock(sx + 2, sy, Block.STONE);
+    for (let i = 0; i < 4; i++) w.placeBlock(sx + 2, sy, Block.STONE);
     const p = new Player(sx + 0.5, sy + 0.5);
     for (let i = 0; i < 90; i++) p.update(1 / 60, 1, 0, w);
     expect(p.x).toBeLessThan(sx + 2);

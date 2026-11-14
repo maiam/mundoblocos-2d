@@ -156,8 +156,13 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blockMaterials = new BlockMaterials('oblique', worldBlockFaces(this.textures), this.stage.gpu);
     this.blocks = new ChunkBlocks(this.worldLayer, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
-      classify: (w, id, x, y, level) => (this.world.isSlabAt(x, y) ? 'slab' : classifySanctuaryBlock(w, id, x, y, level)),
-      transform: (cell) => sanctuaryBlockTransform(cell),
+      // Mundo (blocos de 1/4, ADR 0033): sempre caixa cheia (sem a placa fina das "paredes horizontais"), `n` blocos iguais seguidos numa caixa só,
+      // do nível `level` até `level + n`, em células de altura (nível ÷ níveis por cubo). Santuário (1 nível por cubo) mantém o cálculo dele.
+      levelsPerCube: this.world.cubeLevels,
+      classify: (w, id, x, y, level) => (this.world.cubeLevels > 1 ? 'solid' : classifySanctuaryBlock(w, id, x, y, level)),
+      transform: (cell) => (this.world.cubeLevels > 1
+        ? { x: cell.x + 0.5, y: (cell.level + cell.n / 2) / this.world.cubeLevels, z: cell.y + 0.5 }
+        : sanctuaryBlockTransform(cell)),
       material: (id) => this.blockMaterials.get(id).block,
     });
 
@@ -231,7 +236,7 @@ export class WorldThreeRenderer implements GameRenderer {
         const top = this.world.topBlock(c.x, c.y);
         return selectionRect3d(cam, {
           x: c.x, y: c.y,
-          top: top ? (this.world.isSlabAt(c.x, c.y) ? { level: 0, cube: false } : { level: top.level, cube: blockDef(top.id).shape === 'cube' }) : null,
+          top: top ? { level: top.level, cube: blockDef(top.id).shape === 'cube', levelsPerCube: this.world.cubeLevels } : null,
           hit: top ? this.textures.objects.get(top.id)?.hit ?? null : null,
         }, TILE, OBLIQUE_K);
       };

@@ -43,7 +43,6 @@ import { MONSTERS } from './monster';
 import { Minimap, type MinimapMarker } from '../render/minimap';
 import { WorldMap, type WorldMapView } from '../render/worldMap';
 import { attackTimingFor } from './attackTiming';
-import { setSlabPilot, slabIdsFromSearch } from '../world/slabs';
 import { feelOn, LOOKAHEAD_PX, LOOKAHEAD_RATE } from './feel';
 import { Exploration } from './exploration';
 
@@ -192,17 +191,11 @@ export class Game {
     // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
     // The main World and the optional Santuário Canvas2D renderer are unchanged.
     configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory, !!options.solidPhysics);
-    // Piloto das lajes (`?tabua=laje`): só no Mundo principal, no 3D e offline (a sala não conhece lajes).
-    if (profile.id === 'principal' && options.rendererFactory && !options.net && typeof window !== 'undefined') {
-      const slabIds = slabIdsFromSearch(window.location.search);
-      this.world.setSlabBlocks(slabIds);
-      setSlabPilot(slabIds.length > 0);
-    }
     // A nova seed do Santuário não tem chão vazio: nasce sobre o topo da
     // coluna inicial, nunca dentro dos cubos.
     if (profile.id === 'santuario') {
       this.player.z = this.world.standHeight(sx, sy) ?? 0;
-      this.player.visualZ = this.player.z;
+      this.player.visualZ = this.player.z / this.world.cubeLevels;
     }
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
@@ -351,7 +344,7 @@ export class Game {
       const support = this.world.standHeight(this.player.cellX, this.player.cellY);
       if (support !== null && this.player.z < support) {
         this.player.z = support;
-        this.player.visualZ = support;
+        this.player.visualZ = support / this.world.cubeLevels;
       }
     }
     if (options.showcase) this.hud.root.style.display = 'none';

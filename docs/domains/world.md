@@ -7,7 +7,7 @@ Bloco de **nível único** (`shape: 'wall'`, `Block.WALL_PLANKS`/`WALL_STONE`): 
 
 ## Modelo
 - Célula: **chão** + níveis de pilha (`Chunk.levels`, `World.getLevel`): **objeto nível 0** e **segundo cubo no nível 1**
-  (pilha de até `MAX_STACK` = 2). O gerador só preenche os níveis 0 e 1; a terceira camada de saves antigos é descartada e `restoreChunk` devolve quantos blocos foram descartados (o jogo avisa; a sala registra).
+  (pilha de até `MAX_STACK` = 4 blocos de 1/4 de célula no Mundo, ADR 0033; Santuário: cubos cheios, 5). O gerador expande cada cubo antigo com `quarterLevel` (1 → 4; 2 → 2+2); camadas acima do limite de saves são descartadas e `restoreChunk` devolve quantos blocos foram descartados (o jogo avisa; a sala registra).
 - **Materiais** (prancha de blocos, únicos blocos de construção): Terra, Terra com Grama, Terra Arada,
   Caminho de Terra, Areia, Pedra Bruta, Tora de Carvalho, Tábua de Carvalho, 4 variações de pedra (Tijolo, Chão,
   Lisa, Polida — ids 35–38) e, no fim da lista, Tora e Tábua de Cerejeira e de Bétula (ids 230–233, v0.88.0/0.89.0; só V2, sem coluna no atlas antigo) (`MATERIALS`; coluna do atlas antigo = índice na lista, até `LEGACY_MATERIALS` = 15). **Aposentadas** (08/11, `RETIRED_STONES`):
@@ -41,7 +41,7 @@ Bloco de **nível único** (`shape: 'wall'`, `Block.WALL_PLANKS`/`WALL_STONE`): 
   ferramenta fica em `world/items.ts` (`toolCanBreak`), usando `BlockDef.organic` (`wood` = madeira/árvore; `plant` = plantas e derivados) e `BlockDef.soft` (terra, grama,
   arada, caminho, areia: o que a pá cava). `canFlatten/flatten`: Terra/Grama/Arada → Caminho (pá).
 - Colocar (`placementLevel`): só materiais. Em buraco vira piso nivelado; senão nível 0 (substitui enfeite) ou
-  próximo nível sobre cubo (até 2). Porta (`shape: 'door'`): só nível 0, nada empilha sobre ela.
+  próximo nível sobre bloco (até 4 no Mundo). Porta (`shape: 'door'`): só nível 0, nada empilha sobre ela.
 - **Dungeon** (`world/dungeon.ts`, perfil `dungeon`): `DungeonTerrain` sobrepõe a área ao gerador; `isProtected`
   bloqueia quebrar/colocar/arar/amassar/plantar na área inteira. Ver `domains/dungeon.md`.
 - **Água** (`Block.WATER`, chão líquido): inquebrável e não pisável. `placementLevel`: qualquer terra (Terra, Terra com Grama, Terra Arada, Caminho de Terra), Pedra, Tora ou Tábua de Carvalho

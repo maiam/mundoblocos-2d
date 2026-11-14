@@ -22,8 +22,8 @@ export type Outgoing = { to: number | 'all' | { except: number }; msg: ServerMes
 export const ROOM_START_TIME = 0.31;
 /** De quanto em quanto tempo a sala manda a hora a todos (s): corrige a diferença dos relógios dos aparelhos. */
 export const TIME_SYNC_SECONDS = 30;
-/** Versão do arquivo da sala no servidor (`RoomSnapshot`): 2 = baús; 3 = animais. */
-export const ROOM_SNAPSHOT_VERSION = 5;
+/** Versão do arquivo da sala no servidor (`RoomSnapshot`): 2 = baús; 3 = animais; 6 = blocos de 1/4 (4 níveis por célula; as v1–v5 têm cubos inteiros e convertem ao abrir, ADR 0033). */
+export const ROOM_SNAPSHOT_VERSION = 6;
 /** Quanto tempo um item fica no chão da sala (s), como no jogo sozinho. */
 export const DROP_LIFETIME = 300;
 /** Distância máxima (células) entre o jogador e o item para pegar. */
@@ -418,7 +418,7 @@ export class Room {
   /** Recarrega o que o servidor gravou (só se for desta sala e desta seed; senão, a sala começa do zero). */
   restore(snap: RoomSnapshot): boolean {
     // v1 (sem baús) ainda vale: o mundo e as bolsas voltam; os baús ficam vazios.
-    if (!snap || ![1, 2, 3, 4, ROOM_SNAPSHOT_VERSION].includes(snap.v) || snap.room !== this.id || snap.seed !== this.seed) return false;
+    if (!snap || ![1, 2, 3, 4, 5, ROOM_SNAPSHOT_VERSION].includes(snap.v) || snap.room !== this.id || snap.seed !== this.seed) return false;
     // Gravada numa grade mais fina que a deste pacote: não se abre (e o servidor guarda cópia antes de regravar); mais grossa: converte.
     if ((snap.sub ?? 1) > SUBDIV) return false;
     const s = rescaleRoomSnapshot(snap, SUBDIV);

@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, MAX_STACK } from '../../config';
-import { SLAB_DEPTH, slabHeightOf } from '../../world/slabs';
 import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import type { ChunkRect } from '../../world/world';
 
-export interface BlockCell { x: number; y: number; level: number; id: BlockId }
-export type CubeShape = 'solid' | 'thin' | 'slab';
+/** Uma caixa desenhada: `level` = nível da base e `n` = quantos níveis seguidos do mesmo bloco ela cobre (sequência da coluna; 1 sem `levelsPerCube`). */
+export interface BlockCell { x: number; y: number; level: number; id: BlockId; n?: number }
+export type CubeShape = 'solid' | 'thin';
 export interface BlockWorld {
   getChunk(cx: number, cy: number): Chunk | null | undefined;
   getLevel(x: number, y: number, level: number): BlockId;
@@ -14,10 +14,15 @@ export interface BlockWorld {
 export interface ChunkBlocksOptions {
   /** O bloco é um cubo desenhado aqui (objetos altos, árvores etc. têm render próprio). */
   isCube(id: BlockId): boolean;
-  /** `solid` (cubo cheio), `thin` (placa de meia profundidade, parede horizontal de construção) ou `slab` (laje baixa: piloto `?tabua=laje`). */
+  /** `solid` (cubo cheio) ou `thin` (placa de meia profundidade, parede horizontal de construção). */
   classify(world: BlockWorld, id: BlockId, x: number, y: number, level: number): CubeShape;
+  /**
+   * Quantos níveis valem 1 célula de altura (4 no Mundo: blocos de 1/4). Com mais de 1, blocos iguais seguidos na coluna viram uma caixa só
+   * (`stackGeometry`) e o `transform` recebe `n`. Padrão 1: um cubo por nível, como antes.
+   */
+  levelsPerCube?: number;
   /** Posição do centro da caixa em unidades de mundo. */
-  transform(cell: { x: number; y: number; level: number; shape: CubeShape; slabHeight?: number; slabBase?: number }): { x: number; y: number; z: number };
+  transform(cell: { x: number; y: number; level: number; shape: CubeShape; n: number }): { x: number; y: number; z: number };
   /** Materiais do bloco por face do `BoxGeometry`. */
   material(id: BlockId): THREE.Material[];
   /** Reconstruções de chunk por quadro. */
@@ -25,36 +30,18 @@ export interface ChunkBlocksOptions {
 }
 
 /**
- * Laje: caixa de largura 1, fundo `depth` (12/16 = `SLAB_DEPTH`) e altura `height` (4, 6 ou 8 px de 16), centrada na origem. Tudo é
- * RECORTE da imagem, nunca esticado: as faces laterais usam só a faixa de cima (v em [1 − `height`, 1]) e o recorte do fundo mantém
- * a ponta da frente (sul, +z) da imagem — nas faces ±X (u) e no topo e na base (v); o lado de trás é o que perde 4 px.
+ * Caixa de uma sequência de `n` blocos de 1/4 que começa no nível `base` de uma pilha de `levels` níveis por cubo (ADR 0033): altura
+ * `n / levels`, largura e fundo 1. Tudo é RECORTE da textura, nunca esticado — as faces laterais usam a faixa do cubo que a sequência
+ * ocupa (v de `base / levels` a `(base + n) / levels`, de baixo para cima), então 4 blocos iguais na coluna são exatamente o cubo de
+ * antes; o topo e a base seguem inteiros.
  */
-export function slabGeometry(height: number, depth = SLAB_DEPTH): THREE.BoxGeometry {
-  const g = new THREE.BoxGeometry(1, height, depth);
+export function stackGeometry(base: number, n: number, levels: number): THREE.BoxGeometry {
+  const g = new THREE.BoxGeometry(1, n / levels, 1);
   const uv = g.getAttribute('uv') as THREE.BufferAttribute;
-  const pos = g.getAttribute('position') as THREE.BufferAttribute;
   // Ordem das faces do BoxGeometry: +X, −X, +Y (topo), −Y (base), +Z, −Z; 4 vértices cada.
   for (const face of [0, 1, 4, 5]) {
-    for (let i = face * 4; i < face * 4 + 4; i++) uv.setY(i, 1 - height + uv.getY(i) * height);
+    for (let i = face * 4; i < face * 4 + 4; i++) uv.setY(i, base / levels + uv.getY(i) * (n / levels));
   }
-  // Recorte do fundo: o valor do vértice mais à frente (+z) fica; o de trás anda `depth` do caminho até ele.
-  const crop = (face: number, axis: 'x' | 'y'): void => {
-    let front = -Infinity, vFront = 0, vBack = 0;
-    for (let i = face * 4; i < face * 4 + 4; i++) {
-      const z = pos.getZ(i);
-      if (z > front) { front = z; vFront = axis === 'x' ? uv.getX(i) : uv.getY(i); }
-    }
-    for (let i = face * 4; i < face * 4 + 4; i++) {
-      const v = axis === 'x' ? uv.getX(i) : uv.getY(i);
-      if (pos.getZ(i) < front) vBack = v;
-    }
-    for (let i = face * 4; i < face * 4 + 4; i++) {
-      if (pos.getZ(i) >= front) continue;
-      const nv = vFront + (vBack - vFront) * depth;
-      if (axis === 'x') uv.setX(i, nv); else uv.setY(i, nv);
-    }
-  };
-  crop(0, 'x'); crop(1, 'x'); crop(2, 'y'); crop(3, 'y');
   uv.needsUpdate = true;
   return g;
 }
@@ -71,12 +58,13 @@ export class ChunkBlocks {
   private readonly builds = new Map<string, Build>();
   private readonly solid = new THREE.BoxGeometry(1, 1, 1);
   private readonly thin = new THREE.BoxGeometry(1, 1, 0.5);
-  /** Geometria da laje por altura (uma por altura usada). */
-  private readonly slabs = new Map<number, THREE.BoxGeometry>();
+  /** Geometrias das sequências por (base, n): no máximo 10 com 4 níveis. */
+  private readonly stacks = new Map<string, THREE.BoxGeometry>();
 
-  private slabFor(height: number): THREE.BoxGeometry {
-    let g = this.slabs.get(height);
-    if (!g) { g = slabGeometry(height); this.slabs.set(height, g); }
+  private stackFor(base: number, n: number, levels: number): THREE.BoxGeometry {
+    const key = base + ':' + n;
+    let g = this.stacks.get(key);
+    if (!g) { g = stackGeometry(base, n, levels); this.stacks.set(key, g); }
     return g;
   }
   private readonly dummy = new THREE.Object3D();
@@ -116,31 +104,35 @@ export class ChunkBlocks {
   private build(chunk: Chunk): Build {
     const x0 = chunk.cx * CHUNK_SIZE;
     const y0 = chunk.cy * CHUNK_SIZE;
-    const buckets = new Map<string, { id: BlockId; shape: CubeShape; cells: BlockCell[] }>();
+    const Q = this.opts.levelsPerCube ?? 1;
+    const levels = Math.max(MAX_STACK, chunk.levels?.length ?? 0);
+    const buckets = new Map<string, { id: BlockId; shape: CubeShape; base: number; n: number; cells: BlockCell[] }>();
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const x = x0 + lx, y = y0 + ly;
-        // Até o limite do Mundo (2) ou, com o piloto das lajes ligado, os níveis que o chunk realmente tem (até 4).
-        for (let level = 0; level < Math.max(MAX_STACK, chunk.levels?.length ?? 0); level++) {
+        for (let level = 0; level < levels; level++) {
           const id = this.world.getLevel(x, y, level);
           if (!this.opts.isCube(id)) continue;
           const shape = this.opts.classify(this.world, id, x, y, level);
-          const key = id + ':' + shape;
+          // Com blocos de 1/4 (`Q > 1`): blocos iguais seguidos na coluna viram UMA caixa (menos instâncias, textura contínua).
+          let n = 1;
+          if (Q > 1) while (level + n < levels && this.world.getLevel(x, y, level + n) === id) n++;
+          const base = Q > 1 ? level : 0;
+          const key = id + ':' + shape + ':' + base + ':' + n;
           let bucket = buckets.get(key);
-          if (!bucket) { bucket = { id, shape, cells: [] }; buckets.set(key, bucket); }
-          bucket.cells.push({ x, y, level, id });
+          if (!bucket) { bucket = { id, shape, base, n, cells: [] }; buckets.set(key, bucket); }
+          bucket.cells.push({ x, y, level, id, n });
+          level += n - 1;
         }
       }
     }
     const groups: Group[] = [];
-    for (const { id, shape, cells } of buckets.values()) {
-      const mesh = new THREE.InstancedMesh(shape === 'thin' ? this.thin : shape === 'slab' ? this.slabFor(slabHeightOf(id)) : this.solid, this.opts.material(id), cells.length);
-      mesh.name = `Mundo: cubo ${id} ${shape} (chunk ${chunk.cx},${chunk.cy})`;
+    for (const { id, shape, base, n, cells } of buckets.values()) {
+      const geometry = shape === 'thin' ? this.thin : Q > 1 ? this.stackFor(base, n, Q) : this.solid;
+      const mesh = new THREE.InstancedMesh(geometry, this.opts.material(id), cells.length);
+      mesh.name = `Mundo: cubo ${id} ${shape}${Q > 1 ? ` ${n}/${Q}@${base}` : ''} (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
-        // Laje: altura própria e assenta na soma das alturas das lajes de baixo (pilha de até 4, piloto).
-        let slabBase = 0;
-        if (shape === 'slab') for (let l = 0; l < cell.level; l++) slabBase += slabHeightOf(this.world.getLevel(cell.x, cell.y, l));
-        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape, slabHeight: shape === 'slab' ? slabHeightOf(id) : undefined, slabBase });
+        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape, n });
         this.dummy.position.set(t.x, t.y, t.z);
         this.dummy.rotation.set(0, 0, 0);
         this.dummy.scale.set(1, 1, 1);
@@ -180,7 +172,7 @@ export class ChunkBlocks {
     this.builds.clear();
     this.solid.dispose();
     this.thin.dispose();
-    for (const g of this.slabs.values()) g.dispose();
-    this.slabs.clear();
+    for (const g of this.stacks.values()) g.dispose();
+    this.stacks.clear();
   }
 }

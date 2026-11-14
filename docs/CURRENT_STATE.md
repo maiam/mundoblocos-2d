@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-14 — v0.93.75 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-14 — v0.93.76 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.75 | `package.json` |
+| Versão do jogo | 0.93.76 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 23 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -46,7 +46,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Sistemas de jogo
 - **Ferramentas** (espada, enxada, picareta, pá, machado): regras em `TOOLS` (`world/items.ts`) — o que quebram,
   toque no chão e drops. Detalhe em `domains/player.md` e `domains/farming.md`.
-- **Blocos**: 12 materiais de construção obtidos pelo jogador (pilha de até 2 cubos; 5 pedras: Bruta, Tijolo, Chão,
+- **Blocos**: 12 materiais de construção obtidos pelo jogador (**blocos de 1/4 de célula, pilha de até 4**, ADR 0033; 5 pedras: Bruta, Tijolo, Chão,
   Lisa e Polida — as outras 3 foram aposentadas e só existem em mundos salvos). **Não há paredes como itens separados** (saíram em 08/11; em
   mundos e bolsas antigos viram vazio). Porta entre dois batentes (bloco de madeira — toras e tábuas de qualquer árvore — ou de pedra), cerca e portão que emendam pelos vizinhos, baú de 27 espaços, tenda
   (ponto de renascer, com interior). Água inquebrável que enche buracos vizinhos; buraco sem bloco por um dia inteiro ganha o chão de um vizinho.
@@ -103,7 +103,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 - **Porta de parede (v0.93.25):** bloco `WALL_DOOR_PLANKS` entre duas paredes comuns, 3 quadros no atlas (arte final de Tábuas desde a v0.93.47); **alcançável no Santuário** pela hotbar (v0.93.47; ícones de arte de Tábuas e Pedra desde a v0.93.49, a porta segue com o ícone provisório `wallPlaceholderIcon`); **no Mundo (v0.93.56, W5 enxuta):** perfil principal, receitas no Construtor, ícones e render 3D (`ChunkWalls`); falta refazer cidade/interiores com paredes, porta de Pedra e a versão da grade fina.
 - Paredes construídas com tijolo de pedra, pedra lisa/polida, tábuas de carvalho/cerejeira/bétula e os mármores/pedras celestiais (82–85) afinam **somente** entre vizinhos horizontais do mesmo material (ou porta oficial existente) e sem vizinhos norte/sul, usando **exclusivamente o nível inferior (0) para decidir a forma**. O nível superior (1) herda a geometria da base — parede fina ou pilar — sem consultar seus próprios vizinhos; preserva sempre a textura/material do bloco superior. Porta na base funciona como pilar; materiais não construtivos nunca afinam. Face frontal permanece alinhada; topo desenhado com metade da profundidade. Isolados, extremidades, massas 2×2 e 3×3 permanecem maciços.
-- Todos os blocos empilháveis: **máximo de dois níveis (0 e 1)**. Salvos de versões anteriores com terceiro nível descartam esse nível na leitura (o jogo avisa quantos blocos foram removidos; a sala do servidor registra no log); a altura do jogador é limitada a 2. Sem alterações de câmera/terreno/natureza ou itens de porta.
+- **Blocos de 1/4 (ADR 0033, v0.93.76, só o Mundo principal):** todo bloco de construção tem 1/4 de célula e empilha até 4 (uma célula); paredes e objetos não mudam; o Santuário segue com cubos cheios e pilha de 5. `World.stepLevels`: o corpo sobe 1 a 3 blocos, a pilha de 4 bloqueia. Salvamentos (v17), sala (v6) e o gerador convertem cubos antigos (1 → 4 blocos; 2 → 2+2). 2D de reserva aproxima (parciais viram cubo cheio).
 - **Arte oficial dos seis blocos 80–85**: seis texturas quadradas 512×512 versionadas em `src/assets/santuario-*-512.jpg` usadas em topos, frentes, chão e ícones; os outros 12 blocos celestiais usam o atlas original. Só o pacote do Santuário importa essas artes.
 
 ## Padrão de Materiais V2 (o padrão do jogo desde 08/11, ADR 0023)

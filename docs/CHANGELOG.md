@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.76 — blocos de 1/4 de célula: regra oficial do Mundo (14/11/2026)
+- **Pedido do dono do produto:** a versão 16×4/16×16 das lajes vira **regra de todo bloco do Mundo, empilhando até 4; só blocos, não paredes** (ADR 0033). Decisões dele: migrar **preservando a altura**, andar **1 a 3 sobe, 4 bloqueia**, **só o Mundo principal** (Santuário igual).
+- **Regra** (`config.ts`: `CUBE_LEVELS = MAX_STACK = 4`; `World.cubeLevels/stepLevels`): bloco = 1/4 de célula; `z`/`standHeight` em níveis, `visualZ` em células. Quebrar tira 1 bloco por golpe.
+- **Migração** (`world/quarters.ts`): 1 cubo antigo → 4 blocos; 2 cubos → 2 + 2. Gerador, chunks não carregados, `restoreChunk` e saves. `SAVE_VERSION` 17, `ROOM_SNAPSHOT_VERSION` 6, `PROTOCOL_VERSION` 24 (jogo e servidor juntos; `build:net` + `sync-net`).
+- **Render:** `ChunkBlocks` junta blocos iguais da coluna numa caixa (`stackGeometry`, textura contínua); seleção e 2D de reserva acompanham (2D arredonda parciais para cima).
+- **Removido:** piloto das lajes (`world/slabs.ts`, `?tabua=laje`, ids 250–252 viram vazio, `Chunk.growLevels`, `Walker.lift`) e `?fisica=solida` sem efeito no Mundo.
+- Efeitos: muralha e montanhas de 2 níveis ficam com 1 célula; 4 golpes por célula cheia; monstros não sobem a pilha de 4. Testes e `tsc` verdes (grades 1 e 2); conferido no navegador (pilhas de 1 a 4, misturadas, bloqueio na 4, 2D de reserva).
 ## Orvalis v0.93.75 — lajes: topo 16 × 16 de volta e pilha de até 4 (14/11/2026)
 - **Pedido do dono do produto:** "volta pra topo com 16×16 e inclui possibilidade de empilhar até 4, apenas nessa versão, ainda pra teste" (o topo 12 × 16 da v0.93.74 foi desfeito; `SLAB_DEPTH = 1`, o recorte do fundo continua no desenho caso o teste volte).
 - **Pilha** (`SLAB_STACK_MAX = 4`, `World.slabCount/slabBase/slabLift`): dá para empilhar até **4 lajes na mesma célula, misturando laje1, laje2 e laje3**; cada uma assenta na **soma das alturas das de baixo** (ex.: 0,25 + 0,5 + 0,375 + 0,25 = 1,375 célula) e o corpo sobe a soma de todas (só visual; a célula segue andável). A 5ª não entra; **cubo comum em cima de laje e laje em cima de cubo não**; quebrar tira a de cima, uma por vez.
