@@ -130,3 +130,21 @@ describe('ChunkSprites (objetos altos do Mundo no 3D)', () => {
     expect(sprites.treesNear(30, 30, 3)).toHaveLength(0);
   });
 });
+
+describe('ChunkSprites.setShake (árvore sendo cortada)', () => {
+  it('acha a árvore pela célula, guarda a origem do plano e a intensidade; solta e decai até zero', () => {
+    const chunks = new Map<string, Chunk>([['0,0', { cx: 0, cy: 0, version: 1 } as Chunk]]);
+    const cells = new Map<string, number>([['1,1', TREE]]);
+    const world: BlockWorld = { getChunk: (cx, cy) => chunks.get(cx + ',' + cy), getLevel: (x, y) => cells.get(x + ',' + y) ?? 0 };
+    const sprites = new ChunkSprites(new THREE.Scene(), world, {
+      tile: 32, k: 1, art: (id) => (id === TREE ? { sprite: tree, walkable: false } : null), animated: (id) => (id === TREE ? 'tree' : null),
+    });
+    sprites.update({ cx0: 0, cy0: 0, cx1: 0, cy1: 0 });
+    expect(sprites.setShake({ x: 5, y: 5 }, 1, 0.016)).toBeNull(); // célula sem árvore
+    const hit = sprites.setShake({ x: 1, y: 1 }, 0.7, 0.016);
+    expect(hit).toMatchObject({ x: 1, y: 1 });
+    expect(sprites.setShake(null, 0, 0.1)).toBeNull(); // solta: decai
+    for (let i = 0; i < 10; i++) sprites.setShake(null, 0, 0.1);
+    expect(sprites.setShake({ x: 1, y: 1 }, 0.2, 0.016)).toMatchObject({ x: 1, y: 1 }); // pode tremer de novo
+  });
+});

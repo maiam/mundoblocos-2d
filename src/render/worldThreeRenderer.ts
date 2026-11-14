@@ -83,6 +83,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly leaves: TreeLeaves;
   private readonly leafTrees: SpriteCell[] = [];
   private leafTreesAt = -1;
+  private cutLeafAt = 0;
   private readonly prints: FootPrints;
   private dustWalked = 0;
   private dustAt: { x: number; y: number } | null = null;
@@ -225,6 +226,10 @@ export class WorldThreeRenderer implements GameRenderer {
       // o que aparece na tela: meia largura + folga, e meia altura + a altura da copa (a árvore da borda de baixo mostra a copa acima)
       this.sprites.treesNear(cam.x / TILE, cam.y / TILE, cam.width / cellPx / 2 + 2, cam.height / cellPx / 2 + 8, this.leafTrees);
     }
+    // Golpe do machado (v0.93.83): a árvore sendo cortada treme mais quanto mais perto de cair e solta folhas no ritmo dos golpes.
+    const cut = opts.breaking && !inside && feelOn() && (opts.breaking as { valid?: boolean }).valid !== false && windKind(this.world.getObject(opts.breaking.x, opts.breaking.y)) === 'tree' ? opts.breaking : null;
+    const shaking = this.sprites.setShake(cut, 0.4 + 0.6 * (cut?.progress ?? 0), opts.dt);
+    if (shaking && opts.elapsed - this.cutLeafAt > 0.14) { this.cutLeafAt = opts.elapsed; this.leaves.emit(shaking); }
     this.leaves.update(opts.dt, TILE * cam.zoom, this.leafTrees);
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));

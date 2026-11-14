@@ -76,11 +76,13 @@ diffuseColor *= sampledDiffuseColor;
  */
 const TREE_FRAGMENT = `
 #ifdef USE_MAP
+float shaking = step(length(vInstPos - uShakeOrigin), 0.02) * uShakeAmp;
 float crown = smoothstep(0.28, 0.85, vMapUv.y);
 float gust = 0.55 + 0.45 * sin(uSwayTime * 0.37 + vSwayWp.x * 0.045 + vSwayWp.z * 0.03);
 float wave = sin(uSwayTime * 1.25 + vSwayWp.x * 0.6 + vSwayWp.z * 0.4) * 0.65 + sin(uSwayTime * 2.3 + vSwayWp.x * 1.7) * 0.25;
 vec2 suv = vMapUv;
 suv.x -= wave * gust * 0.011 * crown;
+suv.x -= sin(uSwayTime * 38.0 + vMapUv.y * 3.0) * 0.022 * shaking * crown; // golpe do machado: a copa treme
 suv += vec2(sin(uSwayTime * 3.1 + vMapUv.y * 21.0 + vSwayWp.x), cos(uSwayTime * 2.7 + vMapUv.x * 18.0 + vSwayWp.z)) * 0.0022 * crown * (0.4 + gust);
 vec4 sampledDiffuseColor = texture2D(map, suv);
 diffuseColor *= sampledDiffuseColor;
@@ -144,6 +146,9 @@ export class ChunkSprites {
   /** Tempo da chama (s), compartilhado pelos materiais animados. */
   private readonly fireUniforms = { uFireTime: { value: 0 }, uFlameFrom: { value: 0.3 }, uFlameTo: { value: 0.9 } };
   /** Vento e passos (vegetação): relógio, onde está o jogador (x, z em células) e o alcance em que ele curva as plantas. */
+  /** Árvore que treme (a que está sendo cortada): origem do plano da instância e intensidade 0..1. */
+  private readonly shakeUniforms = { uShakeOrigin: { value: new THREE.Vector3(1e6, 0, 1e6) }, uShakeAmp: { value: 0 } };
+  private shakeCell: SpriteCell | null = null;
   private readonly swayUniforms = { uSwayTime: { value: 0 }, uSwayPlayer: { value: new THREE.Vector2(1e6, 1e6) }, uSwayRadius: { value: 1.1 } };
 
   constructor(
@@ -183,12 +188,12 @@ export class ChunkSprites {
     if (a.tree) return a.tree;
     const m = new THREE.MeshBasicMaterial({ map: a.texture, side: THREE.DoubleSide, alphaTest: 0.5 });
     m.onBeforeCompile = (shader) => {
-      Object.assign(shader.uniforms, this.swayUniforms);
+      Object.assign(shader.uniforms, this.swayUniforms, this.shakeUniforms);
       shader.vertexShader = shader.vertexShader
-        .replace('void main() {', 'varying vec3 vSwayWp;\nvoid main() {')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\nvSwayWp = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;\n#else\nvSwayWp = (modelMatrix * vec4(position, 1.0)).xyz;\n#endif');
+        .replace('void main() {', 'varying vec3 vSwayWp; varying vec3 vInstPos;\nvoid main() {')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\nvSwayWp = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;\nvInstPos = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;\n#else\nvSwayWp = (modelMatrix * vec4(position, 1.0)).xyz;\nvInstPos = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;\n#endif');
       shader.fragmentShader = shader.fragmentShader
-        .replace('void main() {', 'uniform float uSwayTime; varying vec3 vSwayWp;\nvoid main() {')
+        .replace('void main() {', 'uniform float uSwayTime; uniform vec3 uShakeOrigin; uniform float uShakeAmp; varying vec3 vSwayWp; varying vec3 vInstPos;\nvoid main() {')
         .replace('#include <map_fragment>', TREE_FRAGMENT);
     };
     a.tree = m;
@@ -317,6 +322,32 @@ export class ChunkSprites {
       this.scene.remove(g.mesh);
       g.mesh.dispose();
     }
+  }
+
+  /** Origem (mundo) do plano de uma árvore: onde `build` a coloca (mesma conta). */
+  private originOf(c: SpriteCell): [number, number, number] {
+    const { tile } = this.opts, s = c.sprite, sc = c.scale ?? 1;
+    return [c.x + s.ox / tile - (s.w / tile / 2) * (sc - 1), c.lift ?? 0, c.y + (s.oy + s.h) / tile + spriteDepthBias(c.x)];
+  }
+
+  /**
+   * A árvore em (x, y) treme com intensidade `amp` (0..1): é a que está sendo cortada. `null` solta o tremor, que some em ~0,25 s.
+   * Devolve a árvore que treme (para soltar folhas do golpe) ou null. Uma só por vez.
+   */
+  setShake(target: { x: number; y: number } | null, amp: number, dt: number): SpriteCell | null {
+    const u = this.shakeUniforms;
+    if (target) {
+      let found: SpriteCell | null = null;
+      if (!this.shakeCell || this.shakeCell.x !== target.x || this.shakeCell.y !== target.y) {
+        for (const b of this.builds.values()) for (const c of b.trees) if (c.x === target.x && c.y === target.y) found = c;
+        if (found) { this.shakeCell = found; u.uShakeOrigin.value.set(...this.originOf(found)); }
+      } else found = this.shakeCell;
+      u.uShakeAmp.value = found ? Math.min(1, Math.max(0, amp)) : 0;
+      return found;
+    }
+    u.uShakeAmp.value = Math.max(0, u.uShakeAmp.value - dt * 4);
+    if (u.uShakeAmp.value === 0) this.shakeCell = null;
+    return null;
   }
 
   /** Árvores que balançam a até `rx` × `rz` células de (x, z): preenche `out` (folhas caindo). */
