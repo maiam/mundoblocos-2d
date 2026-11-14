@@ -123,6 +123,7 @@ $P assets-src/heroine-sit-sheet.png src/assets/heroine-sit.png --alpha --largest
 for t in pickaxe shovel; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --respace 40 --frame-h 144; done
 # golpe de espada do Hood (v0.93.66): prancha de 8 quadros × 8 direções (S, SE, L, NE, N, NO, O, SO); entram 4 direções (linhas 0,6,2,4 = frente, esquerda, direita, costas) e a folha de saída tem 8 colunas × 4 linhas:
 #   $P assets-src/hood/hood-sword-attack8-sheet.png /tmp/x.png --alpha --largest --cols 8 --rows 8 --rows-map 0,6,2,4 --frame-h 144  (e corte as 4 primeiras linhas: o script gera 8 linhas, 4 vazias)
+# golpe de espada da Mila (v0.93.68): mesma prancha 8×8 e o mesmo comando do Hood (sem `--largest`: o arco branco é um pedaço separado do corpo e some com ele), `assets-src/mila/mila-sword-attack8-sheet.png` → `src/assets/mila-sword-attack.png` (8 colunas × 4 linhas, cortando as 4 linhas vazias)
 # golpes do Hood: já na ordem canônica; a picareta erguida passa da célula
 for t in sword axe hoe shovel; do $P assets-src/hood/hood-$t-attack-sheet.png src/assets/hood-$t-attack.png --alpha --largest --frame-h 144; done
 $P assets-src/hood/hood-pickaxe-attack-sheet.png src/assets/hood-pickaxe-attack.png --alpha --largest --respace 40 --frame-h 144

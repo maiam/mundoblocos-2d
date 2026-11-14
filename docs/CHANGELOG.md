@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.68 — golpe de espada da Mila em 8 quadros (14/11/2026)
+- **Pedido do dono do produto:** prancha de ataque com espada da Mila (a mesma de 8 direções × 8 quadros do Hood).
+- Entram as 4 direções do jogo (frente, esquerda, direita, costas) com os 8 quadros (as diagonais ficam guardadas em `assets-src/mila/mila-sword-attack8-sheet.png`). O corpo tem o mesmo tamanho da folha antiga (136 px de 144), então a altura em tela não muda. Processada **sem** `--largest`, porque o arco branco do golpe é um pedaço separado do corpo.
+- `game/attackTiming.ts`: `SWORD8_BODIES = ['hood', 'mila']` usam o tempo de 0,48 s com acerto em 56% (a Mila com a espada passa dos 0,36 s antigos); a sala anima a Mila dos outros jogadores com o mesmo tempo. O `HOOD_SWORD_TIMING` segue como alias.
+- Teste de tempo estendido à Mila. Conferido no navegador nas 4 direções. **Servidor:** `attackTiming.ts` entra no pacote da sala (`build:net` + `sync-net`); protocolo inalterado.
+
 ## Orvalis v0.93.67 — fogueira viva: chama animada, luz e brasas (14/11/2026)
 - **Pedido do dono do produto:** "luz da fogueira e animação no fogo" (o Three.js dá conta, sem arte nova).
 - **Chama que balança** (`three/chunkSprites.ts`, material `animated`): o próprio desenho da fogueira é amostrado com a coordenada horizontal ondulando mais quanto mais alto o ponto, a altura da chama pulsa e os pixels cor de fogo piscam em brilho. Sem recorte nem arte nova; o 2D de reserva segue estático.
