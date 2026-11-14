@@ -1,5 +1,5 @@
 import { Block, blockDef, type BlockId } from '../world/blocks';
-import { MAX_STACK } from '../config';
+import { SANCTUARY_MAX_STACK } from '../config';
 import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape } from './adaptiveWalls';
 
 /** Forma de cubo no Santuário: maciço, ou placa fina de meia profundidade (parede horizontal de construção). */
@@ -12,7 +12,7 @@ export function classifySanctuaryBlock(
   world: {getLevel(x:number,y:number,level:number):BlockId},
   id: BlockId, x:number, y:number, level:number,
 ): SanctuaryBlockShape {
-  if (level < 0 || level >= MAX_STACK) return 'solid';
+  if (level < 0 || level >= SANCTUARY_MAX_STACK) return 'solid';
   if(!ADAPTIVE_WALL_BLOCKS.has(id))return 'solid';
   // O nível superior herda a pegada da base, não os próprios vizinhos (ver `horizontalWallShape`).
   return horizontalWallShape(world,id,x,y,level);
@@ -40,7 +40,7 @@ export function sanctuary3DGeometryCells(
   for(let y=bounds.y0;y<=bounds.y1;y++) for(let x=bounds.x0;x<=bounds.x1;x++){
     const ground=world.getGround(x,y);
     if(ground!==Block.VOID&&ground!==Block.HOLE) grounds.push({x,y,id:ground});
-    for(let level=0;level<MAX_STACK;level++){
+    for(let level=0;level<SANCTUARY_MAX_STACK;level++){
       const id=world.getLevel(x,y,level);
       if(id===Block.AIR)continue;
       // Paredes (ADR 0027) não são cubos: têm render próprio (`sanctuaryWallPrototype.ts`).
