@@ -50,6 +50,8 @@ export class TreeLeaves {
   private next = 0;
   private counter = 0;
   private clock = 0;
+  /** Uma folha chegou ao chão em (x, z) (células): o chamador decide o que acontece (onda na água). */
+  onLand?: (x: number, z: number) => void;
 
   constructor(scene: THREE.Object3D, private readonly tile: number, private readonly k: number) {
     const geo = new THREE.BufferGeometry();
@@ -116,6 +118,7 @@ export class TreeLeaves {
     for (let i = 0; i < MAX; i++) {
       if (this.age[i] >= 1) continue;
       this.age[i] = Math.min(1, this.age[i] + dt / this.life[i]);
+      if (this.age[i] >= 1) this.onLand?.(this.pos[i * 3], this.pos[i * 3 + 2]);
       this.phase[i] += dt * 2.2;
       this.pos[i * 3] += (this.vel[i * 3] + Math.sin(this.phase[i]) * 0.4 * SUBDIV) * dt;
       this.pos[i * 3 + 1] += this.vel[i * 3 + 1] * dt * (0.75 + 0.25 * Math.cos(this.phase[i] * 0.7));

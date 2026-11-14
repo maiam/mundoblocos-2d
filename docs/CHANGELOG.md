@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.88 — ondas na água (3D) (14/11/2026)
+- **Terceiro passo da água animada:** anéis que se abrem e somem **onde algo toca a água**: (1) cada **passada de quem anda na margem** abre uma onda na água vizinha mais próxima (até 1,5 célula); (2) **folhas e pétalas que caem** das árvores e pousam na água (`TreeLeaves.onLand`) abrem uma onda fraca.
+- **Como** (`three/waterRipples.ts`): pool de 20 planos deitados com o anel desenhado no shader (sem textura; dois anéis, um dentro do outro, que crescem e esmaecem, mais azulados à noite), sem escrever profundidade; sorteio por hash. O passo usa o mesmo ritmo da poeira (`DUST_STRIDE`). O jogador não anda dentro d'água, então as ondas dele são só na margem.
+- Só 3D e só cliente; `?agua=0` desliga junto com a superfície e a espuma; nada em cômodos. Testes: abre, cresce, some, limite do pool, força, `onLand`. Conferido no navegador (andando ao longo da margem).
 ## Orvalis v0.93.87 — espuma na beira da água (3D) (14/11/2026)
 - **Segundo passo da água animada:** uma **frente de espuma** vai e volta na margem (vaivém por posição, com ruído para não ficar reta, mais um rastro rendilhado perto da margem), mais clara à noite menos brilho. Dentro de `three/waterSurface.ts` (mesmo plano por chunk; `?agua=0` desliga tudo).
 - **Margem visível:** a arte V2 pinta uma faixa de água (~0,65 de célula) na terra vizinha. A máscara (`waterFx.ts: buildWaterMask`, parâmetro `paintedShore`) passa a incluir a célula de grama, areia, caminho ou terra colada na água, para a camada e a espuma começarem na franja que se vê e não na margem do mapa. A espuma mede a distância pela própria máscara (sem ler pixels).
