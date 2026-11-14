@@ -4,7 +4,7 @@ import type { World } from '../world/world';
 import type { Breeder } from './breeder';
 import type { Entities } from './entities';
 import { FarmAnimal, type FarmKind } from './horse';
-import { GOBLIN_VISUALS, Monster, MONSTERS } from './monster';
+import { GOBLIN_VISUALS, hasPoses, Monster, MONSTERS } from './monster';
 import { Sheep } from './sheep';
 
 /** Acima disso (células) o bicho é teleportado em vez de deslizar (voltou a ficar perto, renasceu…). */
@@ -72,7 +72,7 @@ export class CreatureMirror {
       if (o instanceof Monster) {
         o.hp = m.p !== undefined ? m.p * o.maxHp : o.maxHp;
         o.hurt = m.h ? 0.2 : 0;
-        if (o.kind === 'goblin') {
+        if (hasPoses(o.kind)) {
           o.presentationState = GOBLIN_VISUALS[m.v ?? -1] ?? null;
           o.presentationFrame = m.r ?? null;
         }

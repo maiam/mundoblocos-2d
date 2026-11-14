@@ -3,14 +3,17 @@ import { World } from './world';
 import { Block } from './blocks';
 import { WORLD_PROFILES } from './profiles';
 import { CHUNK_SIZE, SUBDIV } from '../config';
-import { GOBLIN_PACK_SIZE, GOBLIN_CAMP_COUNT, GOBLIN_CAMP_SLOTS, goblinRoam } from './goblins';
+import { GOBLIN_PACK_SIZE, GOBLIN_CAMP_SLOTS, goblinRoam, LIZARD_PACK_SIZE, PACK_REGION } from './goblins';
 import { toChunk, toLocal } from './coords';
 
 describe('Acampamentos goblins — mapa aberto de Orvalis',()=>{
-  it('sempre gera quatro acampamentos com fogueiras reais e sete lugares em torno delas',()=>{
+  it('gera um acampamento por região (1 a cada 16 chunks) com fogueiras reais e sete lugares em torno delas',()=>{
     for(const seed of [42,20261106,7]){
       const w=new World(seed);
-      expect(w.goblinCamps).toHaveLength(GOBLIN_CAMP_COUNT);
+      // Muito mais que os 4 de antes (densidade por região), no máximo um por região.
+      expect(w.goblinCamps.length).toBeGreaterThan(100);
+      const regions=new Set(w.goblinCamps.map(c=>`${Math.floor(c.x/PACK_REGION)},${Math.floor(c.y/PACK_REGION)}`));
+      expect(regions.size).toBe(w.goblinCamps.length);
       for(const c of w.goblinCamps){
         expect(c.slots).toHaveLength(GOBLIN_PACK_SIZE);
         expect(w.generator.objectAt(c.x,c.y)).toBe(Block.CAMPFIRE);
@@ -49,9 +52,31 @@ describe('Acampamentos goblins — mapa aberto de Orvalis',()=>{
     expect(chunk.modified).toBe(true);
   });
 
+  it('bandos de homem-lagarto: três por bando, na margem de rios, em chão livre e determinísticos',()=>{
+    for(const seed of [42,7,1234]){
+      const w=new World(seed);
+      expect(w.lizardPacks.length).toBeGreaterThan(10);
+      for(const p of w.lizardPacks){
+        expect(p.slots).toHaveLength(LIZARD_PACK_SIZE);
+        for(const [x,y] of p.slots){
+          expect(w.isWalkable(x,y)).toBe(true);
+          expect(w.getObject(x,y)).toBe(Block.AIR);
+        }
+        // Perto de água (o rio fica a até 4 células da margem escolhida).
+        let water=false;
+        for(let dy=-5*SUBDIV;dy<=5*SUBDIV&&!water;dy++)for(let dx=-5*SUBDIV;dx<=5*SUBDIV;dx++){
+          if(w.generator.groundAt(p.x+dx,p.y+dy)===Block.WATER){water=true;break;}
+        }
+        expect(water).toBe(true);
+      }
+      expect(new World(seed).lizardPacks).toEqual(w.lizardPacks);
+    }
+  });
+
   it('Santuário não recebe acampamentos, goblins nem novas fogueiras',()=>{
     const w=new World(42,WORLD_PROFILES.santuario);
     expect(w.goblinCamps).toEqual([]);
+    expect(w.lizardPacks).toEqual([]);
     expect(w.findSpawn()).toBeTruthy();
   });
 });

@@ -1,6 +1,6 @@
 # Estado atual
 
-_Atualizado em 2026-11-12 — v0.93.59 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-12 — v0.93.60 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md); o diário
 técnico antigo (até a v0.80.0, com nomes de funções e versões de protocolo/salvamento) está em
@@ -10,8 +10,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.93.59 | `package.json` |
-| `PROTOCOL_VERSION` (multiplayer) | 20 | `src/net/protocol.ts` |
+| Versão do jogo | 0.93.60 | `package.json` |
+| `PROTOCOL_VERSION` (multiplayer) | 22 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (inalterado na v0.91.0: Mila e lobos carregam sob demanda) — **no limite** | build do artifact |
@@ -81,7 +81,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - Salvamento só neste navegador/aparelho (nuvem/contas dependem do backend do Orvalis, ADR 0015).
 - NPCs só dizem falas fixas (2 cada; sem escolhas, loja ou missões); só Ferraria e Tenda têm interior.
 - **Lobos** (v0.91.0, `world/wolves.ts`, `domains/dungeon.md`): bandos de 1 a 3 da mesma cor (marrom, cinza, branco) pelo mapa ao redor da cidade; só atacam a personagem a até 3 células; soltam Pelagem e Presa de Lobo (sem uso em receitas ainda).
-- **Goblins** (PR #96, `world/goblins.ts`; soltam **2 Moedas de Cobre** ao morrer, v0.93.7): quatro acampamentos fixados pela seed do Mundo principal, com sete goblins em torno da **fogueira já existente** (`Block.CAMPFIRE`). Cada um tem 60 de vida, ataque-base 15 e só persegue/ataca quando um jogador chega a até três células, seguindo o modelo dos lobos. Sete pranchas 4×4 de animação, áreas de passeio limitadas, respawn e estados sincronizados no multiplayer. Os acampamentos limpam apenas vegetação nos sete pontos de nascimento, sem modificar áreas protegidas; Santuário não recebe goblins. Sem espólio específico de goblin nesta etapa.
+- **Goblins** (PR #96, `world/goblins.ts`; soltam **2 Moedas de Cobre** ao morrer): **um acampamento por região de 64 × 64 células (1 024 px; "1 a cada 16 chunks", v0.93.60)**, planejado uma vez pela seed em ±10 regiões em volta da cidade (~340–400 acampamentos), fora do anel da cidade e a ≥ 24 células um do outro, com sete goblins em torno da **fogueira já existente** (`Block.CAMPFIRE`; constante `PACK_REGION` ajusta a densidade). 60 de vida, ataque-base 15, persegue só a até três células (× `SUBDIV`). Sete folhas 4×4, passeio limitado, respawn e estados sincronizados na sala.
+- **Homem-lagarto** (v0.93.60, `lizard`; vida **100**, ataque **15**, defesa 2, **2 Moedas de Cobre**): bandos de **três** na margem de rios (`WorldGenerator.riverAt`; ~110–155 bandos por seed, um por região), sem fogueira; mesmas sete folhas do goblin (`assets-src/lizard`, `--rows-map 0,2,3,1`), mesma visão/coleira/ritmo. **Streaming dos bandos** (goblins e lagartos, `Entities.updatePacks`): só vivem os bandos com jogador a até 56 × `SUBDIV` células e saem ao se afastar além de 80 × `SUBDIV` (renascimentos pendentes somem junto; o bando volta completo ao se aproximar). `spawnWildlife(world, true)` (jogo e sala) deixa isso por conta do streaming; sem o argumento (testes) todos nascem de uma vez. Protocolo 22 (novo tipo de monstro).
 - Espólios das aranhas e vários itens ainda sem uso em receitas; as 2 pedras sem fonte (Lisa e Polida) só existem por
   código/salvamento.
 - Sem sons, música nem vibração; sem XP/níveis; **loja só no Mercado (v0.93.57, consumíveis em Moedas de Cobre; sem venda)**; sem missões; sem viagem entre mundos (portais, ADR 0019).

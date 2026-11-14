@@ -53,6 +53,12 @@ export class WorldGenerator implements TerrainSource {
     return pickBiome(t * 1.9, m * 1.9);
   }
 
+  /** Célula de rio (água de rio, não de lago nem de mar)? Usada para plantar os bandos de homem-lagarto. */
+  riverAt(x: number, y: number): boolean {
+    const e = this.elevation(x, y);
+    return e >= WATER_LEVEL && e < MOUNTAIN_LEVEL - 0.04 && this.isRiver(x, y);
+  }
+
   private isRiver(x: number, y: number): boolean {
     x /= SUBDIV;
     y /= SUBDIV;

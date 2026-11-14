@@ -10,7 +10,7 @@ import { type InteriorDoor, type InteriorLayout, interiorLayouts, InteriorTerrai
 import { FlatGenerator } from './flatGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
-import { GoblinCampTerrain, planGoblinCamps, type GoblinCamp } from './goblins';
+import { GoblinCampTerrain, planGoblinCamps, planLizardPacks, type GoblinCamp, type LizardPack } from './goblins';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
 import type { TerrainSource } from './terrain';
 
@@ -94,6 +94,8 @@ export class World {
   readonly town: TownLayout | null = null;
   /** Camps with seven goblins around the existing Campfire block (seed based). */
   readonly goblinCamps: GoblinCamp[] = [];
+  /** Bandos de três homens-lagarto na margem dos rios (seed based, v0.93.60). */
+  readonly lizardPacks: LizardPack[] = [];
   /** Interiores das construções da cidade (ADR 0014): cômodos isolados e protegidos. Vazio sem cidade. */
   readonly interiors: InteriorLayout[] = [];
   /** Buracos enchendo de água (estado de execução; ao carregar, `settleWater` reagenda). */
@@ -112,6 +114,7 @@ export class World {
     this.generator = profile.terrain.kind === 'flat'
       ? new FlatGenerator(seed, profile.terrain.ground)
       : new WorldGenerator(seed);
+    const baseTerrain = this.generator;
     const b = profile.bounds;
     this.cellBounds = b
       ? { x0: b.cx0 * CHUNK_SIZE, y0: b.cy0 * CHUNK_SIZE, x1: (b.cx1 + 1) * CHUNK_SIZE - 1, y1: (b.cy1 + 1) * CHUNK_SIZE - 1 }
@@ -143,6 +146,7 @@ export class World {
     // no permanent writes to chunks, and saved player edits still win.
     this.goblinCamps.push(...planGoblinCamps(this));
     if (this.goblinCamps.length) this.generator = new GoblinCampTerrain(this.generator, this.goblinCamps);
+    if (baseTerrain instanceof WorldGenerator) this.lizardPacks.push(...planLizardPacks(this, (x, y) => baseTerrain.riverAt(x, y), this.goblinCamps));
   }
 
   /**
