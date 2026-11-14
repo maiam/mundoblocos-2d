@@ -410,6 +410,24 @@ class SpriteSheet {
     }
   }
 
+  /**
+   * Assinatura do que `draw` pintaria agora (v0.93.69): se for igual à do quadro anterior, o canvas já tem o desenho certo e o 3D
+   * pula a repintura e o reenvio da textura. É um superconjunto do que importa — todo campo do ator que o desenho lê, o quadro da
+   * animação e os piscares quantizados no tempo —, então no pior caso repinta de mais, nunca de menos. Folhas flutuantes (a Deusa,
+   * balanço contínuo em sub-pixel) nunca repetem.
+   */
+  visualKey(a: Actor, elapsed: number): string {
+    const { walkFps, loopWhenIdle, float } = this.spec;
+    if (float) return `f${elapsed}`;
+    const step = a.moving ? Math.floor(a.walkTime * walkFps) : loopWhenIdle ? Math.floor(elapsed * walkFps) : 0;
+    const blink = a.hurt ? `${Math.floor(elapsed * 14) % 2}${Math.floor(elapsed * 16) % 2}` : '';
+    const breathe = this.spec.cycle && !a.moving ? Math.floor(elapsed * 2) % 2 : 0;
+    const q = (v: number | undefined, n: number): string => (v === undefined ? '' : String(Math.round(v * n)));
+    const heart = a.inLove ? `h${Math.floor(elapsed * 15)}:${Math.round(a.x * 8)}` : '';
+    const dying = a.dying !== undefined ? `d${q(a.dying, 24)}:${Math.round(a.x * 8)}` : '';
+    return `${this.ready ? 1 : 0}${this.deathReady ? 1 : 0}|${a.facing}|${a.moving ? 1 : 0}|${step}|${a.frame ?? ''}|${q(a.phase, 16)}|${blink}|${breathe}|${q(a.hp, 32)}|${dying}|${a.scale ?? 1}|${a.label ?? ''}|${heart}`;
+  }
+
   /** Largura ÷ altura de um quadro da folha (1 enquanto a imagem não carregou). */
   get frameAspect(): number {
     if (!this.ready) return 1;

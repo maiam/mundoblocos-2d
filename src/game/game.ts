@@ -43,6 +43,7 @@ import { MONSTERS } from './monster';
 import { Minimap, type MinimapMarker } from '../render/minimap';
 import { WorldMap, type WorldMapView } from '../render/worldMap';
 import { attackTimingFor } from './attackTiming';
+import { feelOn, LOOKAHEAD_PX, LOOKAHEAD_RATE } from './feel';
 import { Exploration } from './exploration';
 
 /** Duração de um dia completo em segundos. */
@@ -146,6 +147,8 @@ export class Game {
   /** Flash vermelho ao levar dano (1 → 0). */
   private hurtFlash = 0;
   /** Retorno do golpe (v0.93.63): pausa curta (`hitStop`, s) e tremida de câmera (`shake`, px de mundo; some em ~0,15 s). */
+  /** Antecipação da câmera (px de mundo): vai na direção do movimento (v0.93.69). */
+  private look = { x: 0, y: 0 };
   private hitStop = 0;
   private shake = 0;
   private shakeOff = { x: 0, y: 0 };
@@ -205,6 +208,7 @@ export class Game {
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
     this.entities.onDamage = (x, y, hit, target) => { this.renderer.addDamage(x, y, hit, target); if (target === 'enemy') this.onHitLanded(hit.crit); };
     this.player.timingFor = (tool) => attackTimingFor(this.entities.body, tool);
+    this.player.smooth = !options.showcase && feelOn();
     this.lastHp = this.player.hp;
     this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
     this.camera.setCellsTall(this.renderer.preferredCellsTall);
@@ -689,7 +693,7 @@ export class Game {
       return [(this.player.x + Math.sin(t) * 7) * TILE, (this.player.y + Math.sin(t * 1.7) * 3 - 2) * TILE];
     }
     // Usa a altura suavizada: subir num bloco desloca a câmera sem trancos.
-    return [this.player.x * TILE, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4 + this.dialogueShift];
+    return [this.player.x * TILE + this.look.x, this.player.y * TILE - this.player.visualZ * CUBE_FRONT - CHARACTER_H * 0.4 + this.dialogueShift + this.look.y];
   }
 
   /** Por padrão, paisagem usa 1,91× e retrato 0,95×.
@@ -892,6 +896,12 @@ export class Game {
     // Tremida: tira o deslocamento do quadro anterior, segue o alvo e põe o novo (não acumula na suavização).
     this.camera.x -= this.shakeOff.x;
     this.camera.y -= this.shakeOff.y;
+    // Antecipação: a câmera se adianta (devagar) para onde o personagem vai; parado, volta ao centro.
+    const lk = this.player.smooth && !this.dialogue.isOpen ? 1 - Math.exp(-LOOKAHEAD_RATE * dt) : 1;
+    const wantX = this.player.smooth && !this.dialogue.isOpen ? this.player.vx * LOOKAHEAD_PX : 0;
+    const wantY = this.player.smooth && !this.dialogue.isOpen ? this.player.vy * LOOKAHEAD_PX * 0.6 : 0;
+    this.look.x += (wantX - this.look.x) * lk;
+    this.look.y += (wantY - this.look.y) * lk;
     this.camera.follow(...this.cameraTarget(), dt);
     this.shake = Math.max(0, this.shake - realDt * 14);
     this.shakeOff = this.shake > 0.05 ? { x: (Math.random() * 2 - 1) * this.shake, y: (Math.random() * 2 - 1) * this.shake } : { x: 0, y: 0 };

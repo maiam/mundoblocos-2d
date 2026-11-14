@@ -10,7 +10,7 @@ function actor(kind: string, x: number, y: number, extra: Partial<Actor> = {}): 
   return { kind: kind as ActorKind, x, y, visualZ: 0, facing: 'down', moving: false, walkTime: 0, ...extra } as Actor;
 }
 const sheetFor = (height: number, aspect = 1): ActorSheet & { draws: number } => {
-  const s = { draws: 0, drawHeight: height, frameAspect: aspect, shadowRadii: [0.32, 0.12] as [number, number], draw() { s.draws++; } };
+  const s = { draws: 0, drawHeight: height, frameAspect: aspect, shadowRadii: [0.32, 0.12] as [number, number], draw() { s.draws++; }, visualKey: (a: Actor, e: number) => `${a.moving}:${Math.floor(e * 7)}` };
   return s;
 };
 const view = { x0: 0, y0: 0, x1: 20, y1: 20 };
@@ -93,5 +93,24 @@ describe('ActorBillboards (atores do Mundo no 3D)', () => {
     expect(plain.echoVisible).toBe(false);
     bb.dispose();
     expect(scene.children).toHaveLength(0);
+  });
+
+  it('não repinta nem reenvia a textura enquanto o desenho não mudou (assinatura igual); repinta quando muda', () => {
+    const hero = sheetFor(70);
+    const { bb } = setup({ heroine: hero });
+    const a = [actor('heroine', 5, 5)];
+    bb.update(view, a, 0);
+    expect([bb.painted, bb.skipped]).toEqual([1, 0]);
+    bb.update(view, a, 0.05); // mesmo quadro da animação (7 por segundo)
+    expect([bb.painted, bb.skipped]).toEqual([0, 1]);
+    expect(hero.draws).toBe(1);
+    bb.update(view, a, 0.2); // passou do quadro: repinta
+    expect(bb.painted).toBe(1);
+    bb.update(view, [actor('heroine', 5, 5, { facing: 'left' })], 0.2); // virou: repinta
+    expect(bb.painted).toBe(1);
+    expect(hero.draws).toBe(3);
+    bb.reupload(); // contexto restaurado: tudo de novo
+    bb.update(view, [actor('heroine', 5, 5, { facing: 'left' })], 0.2);
+    expect(bb.painted).toBe(1);
   });
 });

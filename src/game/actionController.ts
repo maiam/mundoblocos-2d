@@ -7,7 +7,8 @@ import { ANIMAL_PRODUCE, blockStack, breakDrops, breakSeconds, ITEMS, pickDrops,
 import type { World } from '../world/world';
 import type { Camera } from './camera';
 import type { Drops } from './drops';
-import type { Entities } from './entities';
+import { SWORD_REACH, type Entities } from './entities';
+import { aimFacing, aimRange } from './aimAssist';
 import type { HotbarSlot } from './hotbar';
 import type { Inventory } from './inventory';
 import type { Player } from './player';
@@ -386,7 +387,12 @@ export class ActionController {
   }
 
   /** Golpe (espada/machado) na direção em que a personagem olha (o acerto sai no meio da animação). */
-  private attack(): void {
+  private attack(assist = false): void {
+    // Mira assistida (botão de ação/teclado): vira para o monstro mais perto à frente antes de golpear.
+    if (assist && !this.player.attacking) {
+      const f = aimFacing(this.player, this.player.facing, this.entities.monsters.filter((m) => !m.dead), aimRange(SWORD_REACH));
+      if (f) this.player.facing = f;
+    }
     this.player.startAttack();
   }
 
@@ -498,7 +504,7 @@ export class ActionController {
     if (this.sitOrStand(fx, fy)) return;
     if (this.useDoorAt(fx, fy)) return;
     if (this.strikerInHand) {
-      this.attack();
+      this.attack(true);
       return;
     }
     if (this.feedInstead(this.frontAnimal())) return;

@@ -4,9 +4,12 @@ import type { Actor, ActorKind } from '../../game/entities';
 import { drawHeart } from '../character';
 import type { ActorLight } from '../actorLight';
 import { FIRE_COLOR, fireLightOn, type FireSource } from '../fireLight';
+import { BOB_CELLS, LEAN_RAD } from '../../game/feel';
 
 /** O que o pool precisa de uma folha de sprites (a `SpriteSheet` 2D, que continua dona do desenho de cada quadro). */
 export interface ActorSheet {
+  /** Assinatura do desenho de agora (igual à anterior = não precisa repintar; ver `SpriteSheet.visualKey`). */
+  visualKey(a: Actor, elapsed: number): string;
   draw(ctx: CanvasRenderingContext2D, fx: number, fy: number, zoom: number, a: Actor, elapsed: number, drawShadow: boolean): void;
   readonly drawHeight: number;
   readonly frameAspect: number;
@@ -30,6 +33,8 @@ export interface ActorBillboardsOptions {
   echo?: boolean;
   /** Sombreado por quadro com a luz do sol/lua (normais falsas pela forma e pelo brilho do desenho); desligado = atores chapados como antes. */
   lit?: boolean;
+  /** Balanço do corpo ao andar (v0.93.69): sobe e desce a cada passo e inclina de leve para o lado do movimento; só personagens e moradores. */
+  bob?: boolean;
   createCanvas?(): HTMLCanvasElement;
 }
 
@@ -49,6 +54,7 @@ function makeLightUniforms() {
  * brilho dá o relevo das dobras), acende com o sol (difuso + brilho de contorno do lado do sol) e escurece de leve junto dos pés. O
  * resultado é relativo a uma normal de frente: sem sol o ator fica como a arte, o dia continua claro.
  */
+const BOBBERS = /^(heroine|hero|hood|gino|mila|npc-)/;
 const LIT_HEAD = `
 uniform vec2 uTexel; uniform vec2 uFeet; uniform float uStrength;
 uniform vec3 uSunDir; uniform vec3 uSunColor; uniform vec3 uAmbient; uniform float uLightStrength;
@@ -97,6 +103,8 @@ interface Slot {
   ctx: CanvasRenderingContext2D | null;
   texture: THREE.CanvasTexture;
   side: number;
+  /** Assinatura do que está pintado no canvas agora (`kind|visualKey`); vazia = nada pintado. */
+  key: string;
 }
 
 /** Quais atores desenhar: o primeiro (o jogador) sempre; dos demais, os que caem na área visível, do mais perto ao mais longe do jogador. */
@@ -120,6 +128,9 @@ export class ActorBillboards {
   private readonly shadowGeometry: THREE.BufferGeometry;
   private readonly zoom: number;
   private drawn = 0;
+  /** Quantos atores foram repintados / pulados neste quadro (dev/testes: a economia do cache de assinatura). */
+  painted = 0;
+  skipped = 0;
   private readonly light = makeLightUniforms();
   private fires: readonly FireSource[] = [];
   private shadowDir = { dx: 0, dz: 0, len: 1, opacity: 0.22 };
@@ -169,6 +180,7 @@ export class ActorBillboards {
   get count(): number { return this.drawn; }
 
   update(view: ActorView, actors: readonly Actor[], elapsed: number): void {
+    this.painted = this.skipped = 0;
     const chosen = selectVisibleActors(actors, view, this.opts.maxActors ?? 48);
     const used = new Map<number, number>();
     for (const a of chosen) {
@@ -188,7 +200,11 @@ export class ActorBillboards {
       if (fl) slot.u.uFireDir.value.set(...fl.dir);
       const cells = side / (z * TILE) * this.opts.scale;
       slot.mesh.scale.set(cells, cells / this.opts.k, 1);
-      slot.mesh.position.set(a.x, a.visualZ + 0.03, a.y);
+      // Balanço: a cada passada (2 por ciclo de 4 quadros) o corpo sobe um pouco; inclina para a direção do passo. Só quem anda de verdade.
+      const walking = this.opts.bob && a.moving && a.frame === undefined && a.dying === undefined && BOBBERS.test(a.kind);
+      const bob = walking ? Math.abs(Math.sin(a.walkTime * 3.5 * Math.PI)) * BOB_CELLS / this.opts.k : 0;
+      slot.mesh.position.set(a.x, a.visualZ + 0.03 + bob, a.y);
+      slot.mesh.rotation.z = walking ? (a.facing === 'left' ? LEAN_RAD : a.facing === 'right' ? -LEAN_RAD : 0) * Math.min(1, Math.sin(a.walkTime * 3.5 * Math.PI + 0.6) * 0.5 + 0.7) : 0;
       slot.mesh.visible = true;
       if (this.echo && a === chosen[0]) {
         this.echo.material.map = slot.texture;
@@ -251,7 +267,7 @@ export class ActorBillboards {
     shadow.name = 'Mundo: sombra de ator';
     this.scene.add(shadow);
     this.scene.add(mesh);
-    s = { mesh, u, shadow, canvas, ctx: canvas.getContext('2d'), texture, side };
+    s = { mesh, u, shadow, canvas, ctx: canvas.getContext('2d'), texture, side, key: '' };
     pool.push(s);
     return s;
   }
@@ -259,6 +275,11 @@ export class ActorBillboards {
   private paint(slot: Slot, sheet: ActorSheet, a: Actor, elapsed: number): void {
     const { ctx, side } = slot;
     if (!ctx) return;
+    // Só repinta (e reenvia a textura) quando o desenho mudou: a animação anda a poucos quadros por segundo, o render a 60.
+    const key = `${a.kind}|${side}|${a.facing}|${sheet.visualKey(a, elapsed)}|${a.inLove ? 1 : 0}`;
+    if (key === slot.key) { this.skipped++; return; }
+    slot.key = key;
+    this.painted++;
     const z = this.zoom;
     ctx.clearRect(0, 0, side, side);
     const fx = side / 2;
@@ -285,7 +306,7 @@ export class ActorBillboards {
 
   /** Contexto restaurado: reenvia as texturas. */
   reupload(): void {
-    for (const pool of this.pools.values()) for (const s of pool) s.texture.needsUpdate = true;
+    for (const pool of this.pools.values()) for (const s of pool) { s.texture.needsUpdate = true; s.key = ''; }
   }
 
   dispose(): void {
