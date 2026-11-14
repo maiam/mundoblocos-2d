@@ -8,6 +8,8 @@ describe('Santuário — comparação de câmera e materiais', () => {
   it('mantém Água Cristalina e disponibiliza Terra e Terra Arada sem IDs duplicados', () => {
     const blocks = WORLD_PROFILES.santuario.blocks;
     expect(blocks).toContain(Block.WATER_CRYSTAL);
+    expect(blocks).toContain(Block.WATER_PURE);
+    expect(Block.WATER_PURE).not.toBe(Block.WATER_CRYSTAL);
     expect(blocks).toContain(Block.DIRT);
     expect(blocks).toContain(Block.TILLED);
     expect(blocks.length).toBe(new Set(blocks).size);
