@@ -9,7 +9,7 @@
   cidade ao alcance senta (`Player.sitOn`: anda até o assento, vira de frente e senta no lugar, com os pés na célula da frente e o corpo sobre ele — `SEAT_FEET`, v0.79.2 — folha
   `gino-sit` em sequência: 0–3 sentando, parado no quadro 3, 3→0 levantando; v0.79.1). Mexer o controle ou tocar de
   novo levanta (`standUp`) e ele anda de volta para onde estava; levar dano levanta na hora. Na sala, os outros veem (`PlayerState.sit` = quadro; protocolo 18).
-- **Grewn** (v0.93.80, teste do estilo chibi de cabeça grande): sétimo personagem pronto (repouso como base, 5 caminhadas com ferramenta, 5 golpes e sentar; `assets-src/grewn`); entra em `APPEARANCE_BODIES` (protocolo 25), `HERO_NAMES`, `SIT_BODIES`, `SPECS` e `art/principal.ts`.
+- **Grewn** (v0.93.80, teste do estilo chibi de cabeça grande): sétimo personagem pronto (caminhada como base, 5 caminhadas com ferramenta, 5 golpes e sentar; `assets-src/grewn`); entra em `APPEARANCE_BODIES` (protocolo 25), `HERO_NAMES`, `SIT_BODIES`, `SPECS` e `art/principal.ts`.
 - **Mila** (v0.91.0): sexto personagem pronto (caminhada, 5 caminhadas com ferramenta, 5 golpes e sentar; `assets-src/mila`); entra só em `APPEARANCE_BODIES` (protocolo 19), `HERO_NAMES`, `SIT_BODIES`, `SPECS` e `art/principal.ts` — nada mais.
 - **Gino** (v0.77.0): quinto personagem pronto (caminhada, caminhada com as 5 ferramentas, 5 golpes). A lista de
   personagens prontos é uma só: `APPEARANCE_BODIES` (`net/protocol.ts`) = `HERO_BODIES`; nomes em `HERO_NAMES`.
