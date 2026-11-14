@@ -51,7 +51,7 @@ describe('Sentar e levantar', () => {
     expect(w.seatAt(x, y, x, y + 1)).toBeNull();
     expect(canSit('gino')).toBe(true);
     expect(canSit('mila')).toBe(true);
-    expect(['heroine', 'hero', 'hood', 'gino', 'mila'].every((b) => canSit(b as never))).toBe(true);
+    expect(['heroine', 'hero', 'hood', 'gino', 'mila', 'grewn'].every((b) => canSit(b as never))).toBe(true);
   });
 
   it('levar dano sentado levanta na hora', () => {

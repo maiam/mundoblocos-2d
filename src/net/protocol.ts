@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 24;
+export const PROTOCOL_VERSION = 25;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -49,7 +49,7 @@ export interface PlayerState {
 }
 
 /** Personagens prontos que a rede aceita (fonte única: o jogo usa a mesma lista em `HERO_BODIES`). */
-export const APPEARANCE_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila'] as const;
+export const APPEARANCE_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila', 'grewn'] as const;
 export type AppearanceBody = (typeof APPEARANCE_BODIES)[number];
 
 /** Como o jogador aparece para os outros: um personagem pronto (v0.92.0: o chibi modular saiu, `look` não existe mais). */

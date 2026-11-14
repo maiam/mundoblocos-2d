@@ -60,7 +60,7 @@ function makeLightUniforms() {
  */
 /** Quanto o plano do ator fica acima do chão (células): só o suficiente para não brigar com o chão na profundidade. */
 export const GROUND_LIFT = 0.012;
-const BOBBERS = /^(heroine|hero|hood|gino|mila|npc-)/;
+const BOBBERS = /^(heroine|hero|hood|gino|mila|grewn|npc-)/;
 const LIT_HEAD = `
 uniform vec2 uTexel; uniform vec2 uFeet; uniform float uStrength;
 uniform vec3 uSunDir; uniform vec3 uSunColor; uniform vec3 uAmbient; uniform float uLightStrength;

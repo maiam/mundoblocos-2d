@@ -30,13 +30,13 @@ export type SwingTool = 'sword' | 'axe' | 'hoe' | 'shovel' | 'pickaxe';
 export type HeroBody = AppearanceBody;
 export const HERO_BODIES: readonly HeroBody[] = APPEARANCE_BODIES;
 /** Personagens prontos com folha de sentar (só eles sentam em cadeiras e bancos; dono do produto, 07/11: todos os quatro). */
-export const SIT_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila'] as const;
+export const SIT_BODIES = ['heroine', 'hero', 'hood', 'gino', 'mila', 'grewn'] as const;
 export type SitBody = (typeof SIT_BODIES)[number];
 export function canSit(body: HeroBody): body is SitBody {
   return (SIT_BODIES as readonly string[]).includes(body);
 }
 /** Nome de cada personagem pronto na tela de escolha. */
-export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila' };
+export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila', grewn: 'Grewn' };
 
 /** Estados de pose com folha própria (o `walk` é a folha do próprio tipo). */
 export type PoseState = 'idle' | 'run' | 'alert' | 'attack' | 'hurt';

@@ -31,6 +31,7 @@ export const SCALE_ACTORS: readonly ScaleActor[] = [
   { kind: 'hood', label: 'Hood', col: 4, row: 0 },
   { kind: 'gino', label: 'Gino', col: 6, row: 0 },
   { kind: 'mila', label: 'Mila', col: 8, row: 0 },
+  { kind: 'grewn', label: 'Grewn', col: 10, row: 0 },
 
   { kind: 'horse', label: 'Cavalo', col: 0, row: 2 },
   { kind: 'foal', label: 'Potro', col: 2, row: 2 },
