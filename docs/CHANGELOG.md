@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.85 — a macieira troca de forma com transição suave (3D) (14/11/2026)
+- **Quarto passo das árvores animadas:** quando a árvore **muda de forma** na mesma célula (a macieira volta a dar maçãs depois de 150 s, ou perde as maçãs ao colher), o desenho antigo **some aos poucos** (0,7 s) sobre o novo em vez de trocar de uma vez.
+- **Como** (`three/chunkSprites.ts`): ao refazer um chunk, a árvore da lista anterior que continua na célula mas com outra arte (`ChunkSprites.startMorph`) ganha uma cópia translúcida do desenho antigo, um fio à frente do novo (`MORPH_SECONDS`); ela usa o mesmo material de copa (`makeTreeMaterial(…, true)`), então balança junto com a árvore. Descartada no fim; sem efeito com `?sensacao=0`; só 3D e só cliente.
+- Testes: troca suave (opacidade cai, descarta; não tomba; reconstrução sem mudança não dispara). Conferido no navegador (macieira sem maçãs → com maçãs em transição).
 ## Orvalis v0.93.84 — a árvore derrubada tomba (3D) (14/11/2026)
 - **Terceiro passo das árvores animadas:** ao cortar a árvore ela **tomba** (gira em volta do pé, acelerando, ~0,8 s) e some nos últimos 0,3 s, com sete folhas soltas, em vez de desaparecer de uma vez. Cai **para longe do jogador**; sem jogador conhecido, para a direita.
 - **Como** (`three/chunkSprites.ts`): ao refazer um chunk, a árvore que estava na lista anterior e não está mais na célula (`ChunkSprites.startFall`) vira uma cópia temporária do desenho (grupo com o pé como pivô, material com opacidade). `tick(dt)` avança e descarta (`FALL_SECONDS` = 1,1 s). Funciona para quem corta, em qualquer jogador da sala, e não dispara na primeira montagem, na troca de forma da macieira nem com `?sensacao=0` (sem lista de árvores).
