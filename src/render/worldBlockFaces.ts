@@ -31,7 +31,7 @@ export function worldBlockFaces(textures: BlockTextures): (id: number) => BlockF
       tctx.fillRect(0, 0, RES, RES);
     }
     const v2 = V2_BLOCKS[bid];
-    const faces = v2 && v2.front !== v2.top ? v2Faces(bid, T, F, TEX_RES) : null;
+    const faces = v2 ? v2Faces(bid, T, F, TEX_RES) : null; // toda arte V2: a frente é a do material (ou o próprio topo, sem `front.png`)
     let front = top;
     if (faces) {
       // O V2 pinta a frente numa faixa de F abaixo do topo (altura T): pinta, recorta a faixa e estica até a altura da célula.
