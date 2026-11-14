@@ -406,7 +406,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   }
 
   iconFor(id:BlockId):string{
-    return art().celestialIcons[id]??wallPlaceholderIcon(id);
+    return art().celestialIcons[id]??art().materialIcons[id]??wallPlaceholderIcon(id);
   }
 
   dispose():void{
