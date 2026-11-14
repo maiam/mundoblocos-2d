@@ -16,6 +16,11 @@ export interface MenuHandlers {
   status(): string;
   seed: number;
   onOpenChange(open: boolean): void;
+  /** Controle de zoom do jogo, exibido apenas em celulares e tablets. */
+  zoom?: {
+    get(): number;
+    change(factor: number): void;
+  };
   onNewWorld?(): void;
   onRestart?(): void;
   /** Multiplayer (ADR 0016): sem `online` o menu não mostra "Jogar com amigos" (ex.: Santuário). */
@@ -63,6 +68,14 @@ export class Menu {
       <h2>Orvalis</h2>
       <p class="menu-status"></p>
       <p class="menu-seed">Semente do mundo: <b>${h.seed}</b></p>
+      ${h.zoom ? `<div class="menu-zoom" role="group" aria-label="Ajustar zoom do jogo">
+        <span>Zoom do mundo</span>
+        <div class="menu-zoom-controls">
+          <button type="button" data-act="zoom-out" aria-label="Diminuir zoom">−</button>
+          <output class="menu-zoom-value" aria-live="polite">1,00×</output>
+          <button type="button" data-act="zoom-in" aria-label="Aumentar zoom">+</button>
+        </div>
+      </div>` : ''}
       <button data-act="continue" class="primary">Continuar</button>
       ${h.online?.room ? '' : `<button data-act="new">Novo mundo</button>
       <button data-act="restart">Recomeçar este mundo</button>`}
@@ -74,6 +87,11 @@ export class Menu {
     this.onlineMsg = this.panel.querySelector('.menu-online-msg');
     this.panel.addEventListener('click', (e) => {
       const act = (e.target as HTMLElement).closest('button')?.dataset.act;
+      if (act === 'zoom-in' || act === 'zoom-out') {
+        this.h.zoom?.change(act === 'zoom-in' ? 1.15 : 1 / 1.15);
+        this.refreshZoom();
+        return;
+      }
       if (act === 'continue') this.toggle(false);
       if (act === 'new') { this.toggle(false); this.h.onNewWorld?.(); }
       if (act === 'restart') this.ask(act);
@@ -84,6 +102,12 @@ export class Menu {
   }
 
   private readonly onlineMsg: HTMLElement | null;
+
+  /** Mostra o valor realmente aplicado, inclusive após zoom por outros atalhos. */
+  private refreshZoom(): void {
+    const output = this.panel.querySelector<HTMLOutputElement>('.menu-zoom-value');
+    if (output && this.h.zoom) output.value = this.h.zoom.get().toFixed(2).replace('.', ',') + '×';
+  }
 
   /** Mensagem na área "Jogar com amigos" (ex.: "Conectando…", erro do servidor). */
   onlineMessage(text: string): void {
@@ -151,6 +175,7 @@ export class Menu {
     this.h.onOpenChange(this.open); // abrir salva; o estado mostrado já reflete esse salvamento
     if (this.open) {
       this.statusEl.textContent = this.h.status();
+      this.refreshZoom();
       const count = this.panel.querySelector('.menu-players');
       if (count && this.h.online?.players) count.textContent = String(this.h.online.players());
       if (!this.h.online?.room) this.refreshCounts();

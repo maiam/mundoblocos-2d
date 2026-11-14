@@ -3,7 +3,12 @@ import type { ChunkRect } from '../world/world';
 
 /** Multiplicador de zoom ajustável pelo jogador (roda/Q/E). */
 export const MIN_ZOOM_MUL = 0.6;
-export const MAX_ZOOM_MUL = 1.6;
+export const MAX_ZOOM_MUL = 2.4;
+/** Zoom inicial do jogo por orientação (multiplicador sobre o enquadramento base). */
+export const LANDSCAPE_INITIAL_ZOOM = 1.91;
+export const PORTRAIT_INITIAL_ZOOM = 0.95;
+export const initialZoomMultiplier = (portrait: boolean): number =>
+  portrait ? PORTRAIT_INITIAL_ZOOM : LANDSCAPE_INITIAL_ZOOM;
 /** Células visíveis na largura (no mínimo) com a tela em pé. */
 export const PORTRAIT_MIN_CELLS_WIDE = 8;
 /** Rigidez do acompanhamento (maior = mais colado ao alvo). */
@@ -47,9 +52,16 @@ export class Camera {
     this.zoom = Math.min(3.4, Math.max(floor, base)) * this.zoomMul;
   }
 
-  zoomBy(factor: number): void {
-    this.zoomMul = Math.min(MAX_ZOOM_MUL, Math.max(MIN_ZOOM_MUL, this.zoomMul * factor));
+  /** Define o multiplicador absoluto; não acumula valores ao rotacionar a tela. */
+  setZoomMultiplier(multiplier: number): void {
+    if (!Number.isFinite(multiplier)) return;
+    this.zoomMul = Math.min(MAX_ZOOM_MUL, Math.max(MIN_ZOOM_MUL, multiplier));
     this.updateZoom();
+  }
+
+  zoomBy(factor: number): void {
+    if (!Number.isFinite(factor) || factor <= 0) return;
+    this.setZoomMultiplier(this.zoomMul * factor);
   }
 
   /**
