@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.81 — Grewn: mesma escala em todas as ações (14/11/2026)
+- **Defeito:** o Grewn aparecia em tamanhos diferentes conforme a ação. As 12 folhas foram geradas preenchendo a célula de 384 px, então a escala do personagem varia entre elas (cabeça de 250 a 296 px) e a altura pelo desenho (v0.93.80) não corrigia isso.
+- **Correção** (`render/character.ts`): a altura do quadro de cada folha é `270 / largura da cabeça` medida na prancha original (média das fileiras de frente e de costas), para a cabeça ter o mesmo tamanho em toda ação. Conferido no navegador (caminhadas com as 5 ferramentas).
+- **Pendente:** a caminhada sem ferramenta continua travada porque falta a folha `hood-v02-01` (a numeração enviada começa em 02; a base é a de repouso, `walkFps: 0`). Só cliente.
 ## Orvalis v0.93.80 — Grewn, personagem de teste do novo estilo chibi (14/11/2026)
 - **Pedido do dono do produto:** novo personagem **Grewn** (cabeça maior, corpo menor) para testar um estilo chibi novo. Entra como **sétimo personagem pronto**, escolhido na tela de entrada (ou `?personagem=grewn`).
 - **Arte** (`assets-src/grewn`, 12 folhas 4 × 4 de 1536 px; `src/assets/grewn*.webp`): repouso, sentar, 5 caminhadas com ferramenta e 5 golpes. Fileiras vêm em frente, direita, costas, esquerda (`--rows-map 0,3,1,2` em todas); `--alpha --largest` tirou o ruído vermelho das bordas. **Não veio a caminhada sem ferramenta:** a folha-base é a de repouso (`walkFps: 0`, sem pernas andando); o golpe de espada usa os 4 quadros padrão.
