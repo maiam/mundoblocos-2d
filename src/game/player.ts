@@ -2,14 +2,15 @@ import { STEP_HEIGHT } from '../config';
 import type { ToolId } from '../world/items';
 import { HUNGER, playerStats, REGEN, type Stats } from '../world/progression';
 import type { World } from '../world/world';
+import { type AttackTiming, DEFAULT_ATTACK_TIMING } from './attackTiming';
 import { type Blocker, Walker } from './walker';
 
 export type { Facing } from './walker';
 
 /** Duração do golpe de espada (4 quadros da folha de ataque). */
-export const ATTACK_SECONDS = 0.36;
+export const ATTACK_SECONDS = DEFAULT_ATTACK_TIMING.seconds;
 /** Momento do golpe (fração da animação) em que o acerto é resolvido. */
-export const ATTACK_HIT_AT = 0.45;
+export const ATTACK_HIT_AT = DEFAULT_ATTACK_TIMING.hitAt;
 /**
  * Cancelar e encadear (v0.93.63): depois do acerto, a partir desta fração da animação já dá para começar outro golpe (sem
  * esperar o fim); um golpe pedido um pouco antes disso fica na fila por `ATTACK_BUFFER_S` e sai assim que possível.
@@ -62,6 +63,9 @@ export class Player extends Walker {
   attackTool: ToolId | null = null;
   /** Golpes começados (a sala repassa aos outros, que tocam a animação ao ver o número mudar). */
   swings = 0;
+  /** Tempo do golpe em andamento (do personagem e da ferramenta, `attackTimingFor`); o `Game` liga `timingFor`. */
+  timingFor: ((tool: ToolId | null) => AttackTiming) | null = null;
+  private timing: AttackTiming = DEFAULT_ATTACK_TIMING;
   private hitDone = true;
   /** Golpe pedido durante o anterior (fila curta): ferramenta e tempo restante da fila. */
   private queuedTool: ToolId | null | undefined = undefined;
@@ -94,13 +98,17 @@ export class Player extends Walker {
 
   /** Quadro atual do golpe (0..ATTACK_FRAMES-1). */
   get attackFrame(): number {
-    const p = 1 - this.attackTime / ATTACK_SECONDS;
-    return Math.min(ATTACK_FRAMES - 1, Math.floor(p * ATTACK_FRAMES));
+    return Math.min(ATTACK_FRAMES - 1, Math.floor(this.attackPhase * ATTACK_FRAMES));
+  }
+
+  /** Quanto do golpe já passou (0..1): as folhas com mais de 4 quadros escolhem o quadro por aqui. */
+  get attackPhase(): number {
+    return this.attacking ? 1 - this.attackTime / this.timing.seconds : 0;
   }
 
   /** Já passou do acerto e do ponto de cancelar: dá para começar outro golpe por cima do que termina. */
   private get canChain(): boolean {
-    return this.attacking && this.hitDone && 1 - this.attackTime / ATTACK_SECONDS >= ATTACK_CHAIN_AT;
+    return this.attacking && this.hitDone && this.attackPhase >= ATTACK_CHAIN_AT;
   }
 
   /**
@@ -110,7 +118,7 @@ export class Player extends Walker {
    */
   startAttack(tool: ToolId | null = this.equipped): boolean {
     if (this.attacking && !this.canChain) {
-      const toChain = ATTACK_SECONDS * ATTACK_CHAIN_AT - (ATTACK_SECONDS - this.attackTime);
+      const toChain = this.timing.seconds * ATTACK_CHAIN_AT - (this.timing.seconds - this.attackTime);
       if (toChain <= ATTACK_BUFFER_S) {
         this.queuedTool = tool;
         this.queueLeft = ATTACK_BUFFER_S;
@@ -119,7 +127,8 @@ export class Player extends Walker {
     }
     this.queuedTool = undefined;
     this.attackTool = tool;
-    this.attackTime = ATTACK_SECONDS;
+    this.timing = this.timingFor?.(tool) ?? DEFAULT_ATTACK_TIMING;
+    this.attackTime = this.timing.seconds;
     this.swings++;
     this.hitDone = false;
     return true;
@@ -128,7 +137,7 @@ export class Player extends Walker {
   /** true uma única vez por golpe, quando a lâmina chega ao ponto de acerto. */
   consumeHit(): boolean {
     if (this.hitDone || !this.attacking) return false;
-    if (1 - this.attackTime / ATTACK_SECONDS < ATTACK_HIT_AT) return false;
+    if (this.attackPhase < this.timing.hitAt) return false;
     this.hitDone = true;
     return true;
   }

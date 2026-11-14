@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { TILE } from '../../config';
 import type { Actor, ActorKind } from '../../game/entities';
 import { drawHeart } from '../character';
+import type { ActorLight } from '../actorLight';
 
 /** O que o pool precisa de uma folha de sprites (a `SpriteSheet` 2D, que continua dona do desenho de cada quadro). */
 export interface ActorSheet {
@@ -26,11 +27,59 @@ export interface ActorBillboardsOptions {
   maxActors?: number;
   /** Eco translúcido do primeiro ator (o jogador) por cima de tudo: mostra onde ele está quando uma copa ou parede o esconde. */
   echo?: boolean;
+  /** Sombreado por quadro com a luz do sol/lua (normais falsas pela forma e pelo brilho do desenho); desligado = atores chapados como antes. */
+  lit?: boolean;
   createCanvas?(): HTMLCanvasElement;
 }
 
+/** Luz compartilhada por todos os atores (os mesmos objetos de uniforme em todos os materiais). */
+function makeLightUniforms() {
+  return {
+    uSunDir: { value: new THREE.Vector3(0.3, 0.9, 0.5).normalize() },
+    uSunColor: { value: new THREE.Vector3(1, 0.97, 0.9) },
+    uAmbient: { value: new THREE.Vector3(0.74, 0.8, 0.95) },
+    uLightStrength: { value: 1 },
+  };
+}
+
+/**
+ * Sombreado do ator: depois de ler a cor da folha, estima uma "normal" por pixel (o alfa borrado dá o arredondado da silhueta, o
+ * brilho dá o relevo das dobras), acende com o sol (difuso + brilho de contorno do lado do sol) e escurece de leve junto dos pés. O
+ * resultado é relativo a uma normal de frente: sem sol o ator fica como a arte, o dia continua claro.
+ */
+const LIT_HEAD = `
+uniform vec2 uTexel; uniform vec2 uFeet; uniform float uStrength;
+uniform vec3 uSunDir; uniform vec3 uSunColor; uniform vec3 uAmbient; uniform float uLightStrength;
+float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+`;
+const LIT_BODY = `
+#ifdef USE_MAP
+if (uStrength * uLightStrength > 0.001 && diffuseColor.a > 0.05) {
+  vec2 t = uTexel * 2.0;
+  vec4 L = texture2D(map, vMapUv + vec2(-t.x, 0.0)); vec4 R = texture2D(map, vMapUv + vec2(t.x, 0.0));
+  vec4 U = texture2D(map, vMapUv + vec2(0.0, t.y)); vec4 D = texture2D(map, vMapUv + vec2(0.0, -t.y));
+  float gx = (R.a - L.a) + 1.8 * (lumOf(R.rgb) * R.a - lumOf(L.rgb) * L.a);
+  float gy = (U.a - D.a) + 1.8 * (lumOf(U.rgb) * U.a - lumOf(D.rgb) * D.a);
+  vec3 n = normalize(vec3(-gx * 2.2, -gy * 2.2, 1.0));
+  vec3 l = normalize(uSunDir);
+  float flat0 = max(dot(vec3(0.0, 0.0, 1.0), l), 0.0);
+  float lit = max(dot(n, l), 0.0);
+  vec3 shade = uAmbient + uSunColor * lit;
+  vec3 shade0 = uAmbient + uSunColor * flat0;
+  vec3 rel = clamp(shade / max(shade0, vec3(0.001)), vec3(0.72), vec3(1.32));
+  float rim = pow(1.0 - n.z, 2.0) * max(dot(normalize(n.xy + vec2(0.0001)), normalize(l.xy + vec2(0.0001))), 0.0);
+  float along = clamp((vMapUv.y - uFeet.x) / max(uFeet.y, 0.001), 0.0, 1.0);
+  float ground = mix(0.9, 1.0, smoothstep(0.0, 0.3, along));
+  vec3 col = diffuseColor.rgb * rel * ground + uSunColor * rim * 0.38 * diffuseColor.a;
+  diffuseColor.rgb = mix(diffuseColor.rgb, col, uStrength * uLightStrength);
+}
+#endif
+`;
+
 interface Slot {
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  /** Uniformes próprios do quadro (tamanho do texel, onde ficam os pés no canvas, quanto o sombreado vale neste ator). */
+  u: { uTexel: { value: THREE.Vector2 }; uFeet: { value: THREE.Vector2 }; uStrength: { value: number } };
   shadow: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
@@ -59,6 +108,8 @@ export class ActorBillboards {
   private readonly shadowGeometry: THREE.BufferGeometry;
   private readonly zoom: number;
   private drawn = 0;
+  private readonly light = makeLightUniforms();
+  private shadowDir = { dx: 0, dz: 0, len: 1, opacity: 0.22 };
   private echo: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null;
 
   constructor(
@@ -84,6 +135,15 @@ export class ActorBillboards {
     }
   }
 
+  /** Luz da hora do dia (`actorLightAt`): sol/lua para o sombreado e a sombra no chão. Chamar antes de `update`. */
+  setLight(l: ActorLight): void {
+    this.light.uSunDir.value.set(...l.dir);
+    this.light.uSunColor.value.set(...l.color);
+    this.light.uAmbient.value.set(...l.ambient);
+    this.light.uLightStrength.value = l.strength;
+    this.shadowDir = l.shadow;
+  }
+
   /** O eco do jogador está visível? (dev/testes) */
   get echoVisible(): boolean { return !!this.echo?.visible; }
 
@@ -102,6 +162,9 @@ export class ActorBillboards {
       used.set(side, index + 1);
       const slot = this.slot(side, index);
       this.paint(slot, sheet, a, elapsed);
+      // Onde ficam os pés e a altura do desenho em coordenadas de textura (v de baixo para cima), para o escurecimento junto ao chão.
+      slot.u.uFeet.value.set((3 * z) / side, (sheet.drawHeight * z * (a.scale ?? 1)) / side);
+      slot.u.uStrength.value = a.kind === 'love-hearts' || a.dying !== undefined ? 0 : 1;
       const cells = side / (z * TILE) * this.opts.scale;
       slot.mesh.scale.set(cells, cells / this.opts.k, 1);
       slot.mesh.position.set(a.x, a.visualZ + 0.03, a.y);
@@ -114,9 +177,14 @@ export class ActorBillboards {
       }
       const [rx, ry] = sheet.shadowRadii;
       const dying = a.dying ?? 0;
-      slot.shadow.position.set(a.x, a.visualZ + 0.018, a.y);
-      slot.shadow.scale.set(rx * Math.sqrt(this.opts.scale), 1, ry * Math.sqrt(this.opts.scale));
-      slot.shadow.material.opacity = 0.22 * (1 - dying);
+      // Sombra projetada pelo sol: cai para o lado oposto a ele, mais comprida com o sol baixo (sem luz ligada: o círculo de sempre).
+      const sd = this.opts.lit === false ? { dx: 0, dz: 0, len: 1, opacity: 0.22 } : this.shadowDir;
+      const sx = rx * Math.sqrt(this.opts.scale), sz = ry * Math.sqrt(this.opts.scale);
+      const reach = (sd.len - 1) * sx * 0.5;
+      slot.shadow.position.set(a.x + sd.dx * reach, a.visualZ + 0.018, a.y + sd.dz * reach);
+      slot.shadow.rotation.y = Math.atan2(sd.dz, sd.dx) * -1;
+      slot.shadow.scale.set(sx * sd.len, 1, sz);
+      slot.shadow.material.opacity = sd.opacity * (1 - dying);
       slot.shadow.visible = rx > 0;
     }
     this.drawn = chosen.length;
@@ -138,9 +206,19 @@ export class ActorBillboards {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearFilter;
     texture.generateMipmaps = false;
-    const mesh = new THREE.Mesh(this.plane, new THREE.MeshBasicMaterial({
+    const material = new THREE.MeshBasicMaterial({
       map: texture, transparent: true, depthTest: true, depthWrite: false, alphaTest: 0.015, side: THREE.DoubleSide,
-    }));
+    });
+    const u = { uTexel: { value: new THREE.Vector2(1 / side, 1 / side) }, uFeet: { value: new THREE.Vector2(0, 0.5) }, uStrength: { value: 0 } };
+    if (this.opts.lit !== false) {
+      material.onBeforeCompile = (shader) => {
+        Object.assign(shader.uniforms, u, this.light);
+        shader.fragmentShader = shader.fragmentShader
+          .replace('void main() {', `${LIT_HEAD}\nvoid main() {`)
+          .replace('#include <map_fragment>', `#include <map_fragment>\n${LIT_BODY}`);
+      };
+    }
+    const mesh = new THREE.Mesh(this.plane, material);
     mesh.renderOrder = 3;
     mesh.name = 'Mundo: ator';
     mesh.frustumCulled = false;
@@ -152,7 +230,7 @@ export class ActorBillboards {
     shadow.name = 'Mundo: sombra de ator';
     this.scene.add(shadow);
     this.scene.add(mesh);
-    s = { mesh, shadow, canvas, ctx: canvas.getContext('2d'), texture, side };
+    s = { mesh, u, shadow, canvas, ctx: canvas.getContext('2d'), texture, side };
     pool.push(s);
     return s;
   }

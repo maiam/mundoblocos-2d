@@ -110,7 +110,8 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'hood-shovel': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 292), shadow: [0.32, 0.12], walkFps: 7 },
   'hood-axe': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 292), shadow: [0.32, 0.12], walkFps: 7 },
   'hood-pickaxe': { cols: 4, rows: 4, height: CHARACTER_H * (297 / 292), shadow: [0.32, 0.12], walkFps: 7 },
-  'hood-sword-attack': { cols: 4, rows: 4, height: CHARACTER_H * (298 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  // Golpe de espada do Hood: 8 quadros (o arco só aparece no 5º) em 4 direções das 8 da prancha; a coluna vem de `Actor.phase`.
+  'hood-sword-attack': { cols: 8, rows: 4, height: CHARACTER_H * (298 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-axe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (308 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-hoe-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'hood-shovel-attack': { cols: 4, rows: 4, height: CHARACTER_H * (310 / 292), shadow: [0.32, 0.12], walkFps: 0, action: true },
@@ -323,7 +324,7 @@ class SpriteSheet {
       col = step < cols ? step : span - step;
       lift = float.lift * TILE * zoom + (wave + 1) * 0.5 * float.bob * zoom;
     } else {
-      col = sequence ? (a.frame ?? 0) % cols : rows === 1 || action ? (a.frame ?? 0) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : loopWhenIdle ? Math.floor(elapsed * walkFps) % cols : 0;
+      col = sequence ? (a.frame ?? 0) % cols : rows === 1 || action ? (action && a.phase !== undefined ? Math.min(cols - 1, Math.floor(a.phase * cols)) : (a.frame ?? 0)) : a.moving ? Math.floor(a.walkTime * walkFps) % cols : loopWhenIdle ? Math.floor(elapsed * walkFps) % cols : 0;
     }
     const row = sequence ? Math.floor((a.frame ?? 0) / cols) % rows : rows === 1 ? 0 : ROW[a.facing];
     // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.

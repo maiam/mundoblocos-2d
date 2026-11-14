@@ -8,6 +8,8 @@ import { DamageNumbers } from './damageNumbers';
 import { SanctuaryLighting } from './sanctuaryLighting';
 import { flickerFactor, type LightSource, PLAYER_LIGHT, pickLights } from './lighting';
 import { collectWorldLights, worldAmbient } from './worldLight';
+import { actorLightAt } from './actorLight';
+import { actorLightOn } from './rendererChoice';
 import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
@@ -142,7 +144,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn() });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);
@@ -176,6 +178,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.doors.update(rect, opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
     }
+    this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
     this.drops.update(view, opts.drops, opts.elapsed);
     this.ring.update(opts.hoverSheep);

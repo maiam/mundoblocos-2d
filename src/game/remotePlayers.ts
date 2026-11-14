@@ -2,7 +2,8 @@ import type { PlayerInfo } from '../net/protocol';
 import type { World } from '../world/world';
 import type { ToolId } from '../world/items';
 import { type Actor, canSit, HERO_BODIES, type HeroBody, heroActorKind, type SitBody } from './entities';
-import { ATTACK_FRAMES, ATTACK_SECONDS } from './player';
+import { ATTACK_FRAMES } from './player';
+import { attackTimingFor } from './attackTiming';
 import type { Facing } from './walker';
 
 interface Remote {
@@ -22,6 +23,8 @@ interface Remote {
   /** Último número de golpes visto; quando muda, toca o golpe aqui (`attackTime`). */
   swing: number;
   attackTime: number;
+  /** Duração do golpe em andamento (s): do personagem e da ferramenta do outro jogador. */
+  attackDur: number;
   /** Sentado: quadro da folha de sentar (null = de pé). */
   sit: number | null;
 }
@@ -47,7 +50,7 @@ export class RemotePlayers {
         this.list.set(id, {
           name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
           moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine',
-          tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0, sit: p.state.sit ?? null,
+          tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0, attackDur: attackTimingFor('heroine', null).seconds, sit: p.state.sit ?? null,
         });
         continue;
       }
@@ -60,7 +63,8 @@ export class RemotePlayers {
       const swing = p.state.swing ?? 0;
       if (swing !== r.swing) {
         r.swing = swing;
-        r.attackTime = ATTACK_SECONDS; // golpe novo: a mesma animação do jogador local
+        r.attackDur = attackTimingFor(r.body, r.tool).seconds; // golpe novo: a mesma animação (e o mesmo tempo) do jogador local
+        r.attackTime = r.attackDur;
       }
     }
   }
@@ -87,7 +91,8 @@ export class RemotePlayers {
       return {
         kind: sitting ? `${r.body as SitBody}-sit` as const : heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
         walkTime: r.walkTime, label: r.name,
-        frame: sitting ? r.sit! : attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / ATTACK_SECONDS) * ATTACK_FRAMES)) : undefined,
+        frame: sitting ? r.sit! : attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / r.attackDur) * ATTACK_FRAMES)) : undefined,
+        phase: !sitting && attacking ? 1 - r.attackTime / r.attackDur : undefined,
       };
     });
   }

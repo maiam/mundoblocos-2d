@@ -42,6 +42,7 @@ import { CreatureMirror } from './creatureMirror';
 import { MONSTERS } from './monster';
 import { Minimap, type MinimapMarker } from '../render/minimap';
 import { WorldMap, type WorldMapView } from '../render/worldMap';
+import { attackTimingFor } from './attackTiming';
 import { Exploration } from './exploration';
 
 /** Duração de um dia completo em segundos. */
@@ -203,6 +204,7 @@ export class Game {
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
     this.entities.onDamage = (x, y, hit, target) => { this.renderer.addDamage(x, y, hit, target); if (target === 'enemy') this.onHitLanded(hit.crit); };
+    this.player.timingFor = (tool) => attackTimingFor(this.entities.body, tool);
     this.lastHp = this.player.hp;
     this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
     this.camera.setCellsTall(this.renderer.preferredCellsTall);

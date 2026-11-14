@@ -57,6 +57,8 @@ export interface Actor {
   frame?: number;
   /** Monstro: piscando após levar golpe. */
   hurt?: boolean;
+  /** Fração (0..1) da animação de ação em andamento: folhas de ação com mais de 4 quadros escolhem a coluna por aqui (`frame` segue valendo para as de 4). */
+  phase?: number;
   /** Monstro ferido: fração de vida restante (barra acima dele). */
   hp?: number;
   /** Monstro derrotado: progresso 0..1 da animação de morte (encolhe e desbota). */
@@ -811,6 +813,7 @@ export class Entities {
       out.unshift({
         kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,
         frame: sitting ? p.sitFrame : p.attacking ? p.attackFrame : undefined,
+        phase: !sitting && p.attacking ? p.attackPhase : undefined,
         hurt: p.invuln > 0,
       });
     }
