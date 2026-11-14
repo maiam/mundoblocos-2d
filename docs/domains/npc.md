@@ -39,7 +39,7 @@
 
 ### Cavalo
 - Folha `assets-src/horse-sheet.png` → `horse.webp` (`process-sprite.py --alpha --largest --frame-h 112`), desenhado
-  com 1,6 célula. Velocidade 1,8, não sobe em cubos, leash 10. Um cavalo (`Entities.spawnHorse`) no campo ao sul do
+  com 1,6 célula. Velocidade 1,8, não sobe em cubos, leash 10. (v0.93.91: ovelhas, vacas, galinhas e capivaras nascem na Vila Camponesa, `Entities.spawnVillageAnimals`.) Um cavalo (`Entities.spawnHorse`) no campo ao sul do
   portão, ~9 células a leste do rebanho, em grama, posição pela seed. O golpe o tira do mundo, como as ovelhas.
   Estado de execução (não salvo). Montaria: ideia em NEXT_STEPS.
 

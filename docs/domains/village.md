@@ -53,3 +53,6 @@
 5. **Casas:** porta e janelas em versões separadas (acesas à noite) e **o interior** de uma casa (cômodo) no padrão dos interiores existentes.
 6. **Galinha:** a folha 4 × 4 de caminhada (como a galinha atual do jogo) no estilo da vila, para o galinheiro ter bichos vivos.
 7. **Sombras:** as sombras projetadas ficaram fora das peças (regra do prompt); o jogo desenha as próprias.
+
+## Animais (v0.93.91)
+Ovelhas (4), vacas (2), galinhas (4) e capivaras (3) nascem dentro da vila (`Entities.spawnVillageAnimals`, faixas `VILLAGE_PENS`): galinhas no quintal do galinheiro (células 33–45 × 9–15), vacas no oeste (3–12 × 30–35), ovelhas no leste (33–44 × 29–34) e capivaras ao norte (8–16 × 6–9). O portão aberto deixa os bichos saírem (correia de 6–10 células); fechado, eles ficam. A galinha desenhada pelo artista (imagem única do galinheiro) segue só como enfeite.

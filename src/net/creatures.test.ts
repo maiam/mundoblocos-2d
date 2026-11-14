@@ -25,8 +25,10 @@ function run(room: Room, seconds: number): Outgoing[] {
 describe('Sala: bichos compartilhados (Etapa 3)', () => {
   it('a sala roda animais e monstros e manda a cada jogador só os que estão perto', () => {
     const { room, ids, at } = setup(['Ana', 'Beto']);
-    const [gx, gy] = room.world.outsideGate();
-    at(ids[0], gx + 0.5, gy + 6.5); // no campo dos animais
+    // Os animais domésticos nascem na Vila Camponesa (v0.93.91; na grade 1, que não tem vila, no campo diante do portão).
+    const v = room.world.village;
+    const [gx, gy] = v ? [Math.floor((v.area.x0 + v.area.x1) / 2), Math.floor((v.area.y0 + v.area.y1) / 2)] : room.world.outsideGate();
+    at(ids[0], gx + 0.5, v ? gy + 0.5 : gy + 6.5); // no campo dos animais
     const d = room.world.dungeon!;
     at(ids[1], d.area.x1 + 60, d.area.y1 + 60); // longe de tudo
     const out = run(room, 1);
