@@ -58,15 +58,41 @@ function surfaceFace(img: HTMLImageElement, w: number, h: number): HTMLCanvasEle
   return c;
 }
 
-const cache = new Map<number, { top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement }>();
+type CelestialFaces = {
+  top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement;
+  cube?: [HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement];
+};
+const cache = new Map<number, CelestialFaces>();
+let grassNet: HTMLImageElement | null = null;
+export function installCelestialGrassNet(image: HTMLImageElement): void {
+  grassNet = image;
+  cache.delete(Block.GRASS_CELESTIAL);
+}
+function netTile(img: HTMLImageElement, col: number, row: number): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = out.height = 128;
+  out.getContext('2d')!.drawImage(img, col * 128, row * 128, 128, 128, 0, 0, 128, 128);
+  return out;
+}
 
 /**
  * Faces de um bloco celestial, recortadas do atlas da prancha 3/4 (ordem de CELESTIAL_BLOCKS):
  * topo do cubo, frente e topo contínuo para o chão — em resolução 2×.
  */
-export function celestialFaces(id: number): { top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement } {
+export function celestialFaces(id: number): CelestialFaces {
   let faces = cache.get(id);
   if (!faces) {
+    if (id === Block.GRASS_CELESTIAL && grassNet) {
+      const east = netTile(grassNet, 0, 1);
+      const west = netTile(grassNet, 1, 1);
+      const south = netTile(grassNet, 2, 1);
+      const north = netTile(grassNet, 3, 1);
+      const top = netTile(grassNet, 1, 0);
+      const bottom = netTile(grassNet, 1, 2);
+      faces = { top, front: south, ground: top, cube: [east, west, top, bottom, south, north] };
+      cache.set(id, faces);
+      return faces;
+    }
     const approved = getCelestialSurface(id);
     if (approved) {
       faces = {
