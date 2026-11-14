@@ -6,8 +6,10 @@ export interface SanctuaryOrbit {
   /** Escala da largura/profundidade da célula renderizada. 1 = célula original. */
   cellSize: number;
 }
-const KEY = 'orvalis:santuario:camera-livre:v1';
-const DEFAULT: SanctuaryOrbit = { azimuthDeg: 0, elevationDeg: 67, zoom: 1, blockHeight: 1, cellSize: 1 };
+// v2: invalida snapshots antigos que substituiriam inadvertidamente o novo padrão.
+const KEY = 'orvalis:santuario:camera-livre:v2';
+export const SANCTUARY_DEFAULT_CAMERA: SanctuaryOrbit = { azimuthDeg: 35, elevationDeg: 50, zoom: 0.95, blockHeight: 0.5, cellSize: 0.8 };
+const DEFAULT: SanctuaryOrbit = SANCTUARY_DEFAULT_CAMERA;
 /** Comparação aprovada para a câmera inclinada — não muda a visão original. */
 export const CAMERA_OPTION_2: SanctuaryOrbit = { azimuthDeg: 36, elevationDeg: 40, zoom: 1.91, blockHeight: 0.5, cellSize: 0.5 };
 const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));
@@ -28,8 +30,8 @@ export class SanctuaryCameraJoystick {
   private readonly cellRange: HTMLInputElement;
   private orbit: SanctuaryOrbit = { ...DEFAULT };
   private open = false;
-  /** Opção 1 conserva a projeção original do Santuário. */
-  private useOriginal = true;
+  /** Preset padrão aplicado imediatamente, sem precisar abrir o painel. */
+  private useOriginal = false;
   private pointerId: number | null = null;
   private lastX = 0;
   private lastY = 0;
@@ -47,8 +49,8 @@ export class SanctuaryCameraJoystick {
       <button type="button" class="sanctuary-camera-toggle" aria-expanded="false">◉ Câmera</button>
       <div class="sanctuary-camera-panel" hidden>
         <div class="sanctuary-camera-presets" role="group" aria-label="Comparar perspectivas">
-          <button type="button" data-preset="1">Opção 1 · Atual</button>
-          <button type="button" data-preset="2">Opção 2 · 36°/40°</button>
+          <button type="button" data-preset="1">Padrão · 35°/50°</button>
+          <button type="button" data-preset="2">Comparar · 36°/40°</button>
         </div>
         <div class="sanctuary-camera-readout" aria-live="off"></div>
         <div class="sanctuary-camera-ring" aria-label="Joystick de câmera: arraste para girar e inclinar" role="group">
@@ -66,7 +68,7 @@ export class SanctuaryCameraJoystick {
           <button type="button" data-action="minus" title="Afastar">−</button>
           <span>Zoom</span>
           <button type="button" data-action="plus" title="Aproximar">+</button>
-          <button type="button" data-action="reset" title="Voltar à câmera inclinada a 67°">Resetar</button>
+          <button type="button" data-action="reset" title="Restaurar câmera padrão 35°/50°">Resetar</button>
           <button type="button" data-action="save" title="Guardar esta posição neste dispositivo">Salvar</button>
         </div>
       </div>`;
@@ -88,12 +90,12 @@ export class SanctuaryCameraJoystick {
       this.open = !this.open;
       this.panel.hidden = !this.open;
       this.root.querySelector<HTMLButtonElement>('.sanctuary-camera-toggle')!.setAttribute('aria-expanded', String(this.open));
-      this.apply(this.open && !this.useOriginal ? { ...this.orbit } : null);
+      this.apply({ ...this.orbit });
       this.updateReadout();
     });
     this.root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(btn => btn.addEventListener('click', () => {
-      this.useOriginal = btn.dataset.preset === '1';
-      if (!this.useOriginal) this.orbit = { ...CAMERA_OPTION_2 };
+      this.useOriginal = false;
+      this.orbit = btn.dataset.preset === '1' ? { ...DEFAULT } : { ...CAMERA_OPTION_2 };
       this.publish();
     }));
     this.ring.addEventListener('pointerdown', this.down);
@@ -105,7 +107,7 @@ export class SanctuaryCameraJoystick {
       switch (btn.dataset.action) {
         case 'minus': this.useOriginal = false; this.orbit.zoom /= 1.15; break;
         case 'plus': this.useOriginal = false; this.orbit.zoom *= 1.15; break;
-        case 'reset': this.orbit = { ...DEFAULT }; this.useOriginal = true; break;
+        case 'reset': this.orbit = { ...DEFAULT }; this.useOriginal = false; break;
         case 'save':
           try { localStorage.setItem(KEY, JSON.stringify(this.orbit)); btn.textContent = 'Salvo ✓'; }
           catch { btn.textContent = 'Indisponível'; }
@@ -116,6 +118,8 @@ export class SanctuaryCameraJoystick {
     }));
     this.updateReadout();
     document.body.appendChild(this.root);
+    // A configuração inicial vale já no primeiro quadro do jogo.
+    this.apply({ ...this.orbit });
   }
   private readonly down = (e: PointerEvent): void => {
     if (this.pointerId !== null) return;
@@ -148,17 +152,16 @@ export class SanctuaryCameraJoystick {
   };
   private publish(): void {
     this.orbit = normalize(this.orbit);
-    if (this.open) this.apply(this.useOriginal ? null : { ...this.orbit });
+    this.apply({ ...this.orbit });
     this.updateReadout();
   }
   private updateReadout(): void {
     const azimuth = Math.round(this.orbit.azimuthDeg);
     const elevation = Math.round(this.orbit.elevationDeg);
-    this.readout.textContent = this.useOriginal
-      ? 'Opção 1 · projeção original do Santuário'
-      : `Rotação ${azimuth}° · Inclinação ${elevation}° · Zoom ${this.orbit.zoom.toFixed(2)}×`;
+    this.readout.textContent = `Rotação ${azimuth}° · Inclinação ${elevation}° · Zoom ${this.orbit.zoom.toFixed(2)}×`;
     this.root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(btn => {
-      const active = btn.dataset.preset === (this.useOriginal ? '1' : '2') && (this.useOriginal || JSON.stringify(this.orbit) === JSON.stringify(CAMERA_OPTION_2));
+      const preset = btn.dataset.preset === '1' ? DEFAULT : CAMERA_OPTION_2;
+      const active = JSON.stringify(this.orbit) === JSON.stringify(preset);
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-pressed', String(active));
     });
@@ -168,7 +171,6 @@ export class SanctuaryCameraJoystick {
     this.root.querySelector<HTMLOutputElement>('[data-value="cell"]')!.value = `${Math.round(this.orbit.cellSize * 100)}%`;
   }
   dispose(): void {
-    this.apply(null);
     this.root.remove();
   }
 }
