@@ -194,7 +194,9 @@ export class SanctuaryThreeRenderer implements GameRenderer {
     const charScale=options.wallTest?characterScale(options.testScale??'core'):(this.view==='oblique'?CHARACTER_SCALE_FACTOR:1);
     this.goddessBaseWidth=2.45*charScale;
     this.goddessBaseHeight=(this.view==='oblique'?3.0/OBLIQUE_K:3.0)*charScale;
-    this.goddess.scale.set(this.goddessBaseWidth,this.goddessBaseHeight,1);
+    // A câmera padrão já aplicou a escala do mundo antes de criar a Deusa:
+    // compensar no próprio billboard para a personagem não encolher 50%.
+    this.goddess.scale.set(this.goddessBaseWidth/this.cellSizeScale,this.goddessBaseHeight/this.blockHeightScale,1);
     this.goddess.renderOrder=3;
 
     // Transparent 'through-wall' echo: if a wall is genuinely closer to the
