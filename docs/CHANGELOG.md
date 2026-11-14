@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.66 — golpe de espada do Hood em 8 quadros e luz do sol nos atores (14/11/2026)
+- **Pedido do dono do produto:** incorporar a nova prancha de batalha com espada do Hood e fazer o three.js trabalhar luminosidade e profundidade no personagem.
+- **Prancha do Hood** (`assets-src/hood/hood-sword-attack8-sheet.png`, 8 quadros × 8 direções): entram as 4 direções do jogo (frente, esquerda, direita, costas; as diagonais ficam guardadas para quando houver 8 direções) com os 8 quadros — preparo, subida, golpe com o arco branco (5º quadro) e recuperação. `Actor.phase` (0..1) escolhe a coluna de folhas de ação com mais de 4 quadros; as de 4 seguem por `frame`. Tempo próprio (`game/attackTiming.ts`): 0,48 s com o acerto em 56% (no meio do arco); os outros personagens seguem 0,36 s. A sala anima os outros jogadores com o mesmo tempo (`RemotePlayers`).
+- **Luz dos atores no 3D** (`render/actorLight.ts`, `render/three/actorBillboards.ts`): o sol (leste de manhã → oeste à tarde, alaranjado no nascer/pôr, lua azulada à noite) acende cada ator com **normais falsas** tiradas do arredondado da silhueta e do brilho do desenho (sem ler o canvas: tudo no shader), mais um brilho de contorno do lado do sol e um leve escurecimento junto dos pés — relativo a uma normal de frente, então o dia continua claro. A **sombra no chão** cai para o lado oposto ao sol e é mais comprida com o sol baixo. Fraco no covil e em cômodos; corações do namoro e morte ficam de fora. `?luz=0` desliga (para comparar). O 2D de reserva não muda.
+- **Servidor:** `player.ts`/`entities.ts` mudaram (tempo do golpe, `Actor.phase`) → `build:net` + `sync-net`; protocolo não muda.
+- Testes: luz pela hora do dia, sombra, `?luz=0`, tempo do golpe do Hood e do `Player`. Conferido no navegador nas 4 direções e em 4 horas do dia, no 3D e no 2D.
+
 ## Orvalis v0.93.65 — Cinco níveis de construção e escala visual no Santuário (14/11/2026)
 - **Pedido do dono do produto:** permitir blocos em degraus até cinco níveis e controles para reduzir separadamente a altura dos blocos e o tamanho das células, como experimento de câmera/profundidade.
 - **Construção:** o Santuário passa a guardar e restaurar até **5 blocos em pilha**; o Mundo principal e o servidor continuam com **2**. Colisão segue sólida no WebGL, sem subir automaticamente os degraus.

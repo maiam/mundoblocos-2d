@@ -121,6 +121,8 @@ $P assets-src/hero/hero-sit-sheet.png src/assets/hero-sit.png --alpha --largest 
 $P assets-src/hood/hood-sit-sheet.png src/assets/hood-sit.png --alpha --largest --frame-h 144
 $P assets-src/heroine-sit-sheet.png src/assets/heroine-sit.png --alpha --largest --respace 40 --frame-h 144   # botas passam da grade
 for t in pickaxe shovel; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --respace 40 --frame-h 144; done
+# golpe de espada do Hood (v0.93.66): prancha de 8 quadros × 8 direções (S, SE, L, NE, N, NO, O, SO); entram 4 direções (linhas 0,6,2,4 = frente, esquerda, direita, costas) e a folha de saída tem 8 colunas × 4 linhas:
+#   $P assets-src/hood/hood-sword-attack8-sheet.png /tmp/x.png --alpha --largest --cols 8 --rows 8 --rows-map 0,6,2,4 --frame-h 144  (e corte as 4 primeiras linhas: o script gera 8 linhas, 4 vazias)
 # golpes do Hood: já na ordem canônica; a picareta erguida passa da célula
 for t in sword axe hoe shovel; do $P assets-src/hood/hood-$t-attack-sheet.png src/assets/hood-$t-attack.png --alpha --largest --frame-h 144; done
 $P assets-src/hood/hood-pickaxe-attack-sheet.png src/assets/hood-pickaxe-attack.png --alpha --largest --respace 40 --frame-h 144
