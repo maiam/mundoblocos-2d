@@ -170,6 +170,10 @@ export const Block = {
   V_GATE_GAP_CLOSED: 254,
   /** Cerca de Estacas (v0.93.90): 1 célula × 1 de altura (16 × 16 px), 4 estacas; o jogador fabrica (1 Tora → 4) e coloca. */
   FENCE_STAKE: 244,
+  /** Vitória-régia comum (folha ou flor; 4 variantes): enfeite sobre a água rasa de rios e lagos, não bloqueia (a água não se pisa). */
+  WATER_LILY: 246,
+  /** Vitória-régia gigante de borda levantada (4 variantes): idem, maior. */
+  VICTORIA: 247,
   // --- plantação de trigo: 16 estágios consecutivos (60 = semente ... 75 = maduro) ---
   WHEAT_0: 60,
   WHEAT_15: 75,
@@ -434,6 +438,8 @@ const defs: BlockDef[] = [
   object(Block.V_GATE_CLOSED, 'Portão da Vila (fechado)', { shape: 'building', breakable: false, placeable: false }),
   object(Block.V_GATE_GAP, 'Portão da Vila', { shape: 'building', solid: false, breakable: false, placeable: false }),
   object(Block.V_GATE_GAP_CLOSED, 'Portão da Vila (fechado)', { shape: 'building', breakable: false, placeable: false }),
+  object(Block.WATER_LILY, 'Vitória-régia', { shape: 'building', solid: false, breakable: false, placeable: false }),
+  object(Block.VICTORIA, 'Vitória-régia Gigante', { shape: 'building', solid: false, breakable: false, placeable: false }),
   object(Block.V_FLOWERS, 'Capim e Flores', { shape: 'building', solid: false, breakable: false, placeable: false }),
   // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
   object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
@@ -577,6 +583,11 @@ export function isWallDoor(id: BlockId): boolean {
 export function isWallLike(id: BlockId): boolean {
   const s = blockDef(id).shape;
   return s === 'wall' || s === 'wall-door';
+}
+
+/** Planta flutuante da água (vitória-régia comum ou gigante): fica sobre a água, que continua "aberta" para os efeitos (brilho, espuma, ondas). */
+export function isWaterPlant(id: number): boolean {
+  return id === Block.WATER_LILY || id === Block.VICTORIA;
 }
 
 export function isDoor(id: BlockId): boolean {

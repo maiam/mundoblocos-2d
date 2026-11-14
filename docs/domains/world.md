@@ -33,6 +33,7 @@ Bloco de **nível único** (`shape: 'wall'`, `Block.WALL_PLANKS`/`WALL_STONE`): 
 - **Paredes removidas** (08/11, dono do produto): não existem mais. Os ids 210–225 (`isRemovedBlock`) viram vazio em
   mapa, bolsa, grade e baús vindos de dados antigos (`World.restoreChunk`/`setLevel`, `save.migrate`, `parseBag`,
   `parseChestSlots`); nenhum bloco novo deve reusar essa faixa enquanto houver mundos e salas antigos.
+- **Vitórias-régias** (v0.93.92): `WATER_LILY`/`VICTORIA` sobre a água rasa de rios e lagos, sorteadas pela seed (`WorldGenerator.waterPlantAt`), enfeites sem colisão; a água sob elas, quando enchida com Terra/Pedra/Tora, as remove.
 - **Cerca/portão** (v0.59.0): `FENCE` bloqueia; portão abre/fecha como a porta (`toggled`); nada empilha em cima;
   qualquer célula livre (sem batentes). A emenda entre cercas é só do render.
 - `standHeight(x, y)`: 0 chão (ou porta/portão aberto), 1–3 sobre cubos, `null` (água, buraco, árvore, cacto, porta fechada). Regra única de entidades.

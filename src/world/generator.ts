@@ -11,6 +11,10 @@ const BEACH_LEVEL = -0.2;
 const MOUNTAIN_LEVEL = 0.36;
 /** Acima disto a montanha tem 2 cubos de altura (escalável a partir das bordas de 1). */
 const HIGH_MOUNTAIN = 0.43;
+/** Quão abaixo da margem a água ainda é rasa (vitórias-régias) e a chance por célula de uma planta nascer, por célula ANTIGA (dividida por SUBDIV²). */
+const SHALLOW_DEPTH = 0.07;
+const LILY_CHANCE = 0.025;
+const VICTORIA_CHANCE = 0.006;
 
 export type { Cell } from './terrain';
 
@@ -65,6 +69,32 @@ export class WorldGenerator implements TerrainSource {
     return Math.abs(this.terrain.fbm2(x / 230 + 400, y / 230 - 400, 3)) < 0.022;
   }
 
+  /** Célula de água (mar, lago ou rio)? */
+  private isWater(x: number, y: number): boolean {
+    const e = this.elevation(x, y);
+    return e < WATER_LEVEL || (e < MOUNTAIN_LEVEL - 0.04 && this.isRiver(x, y));
+  }
+
+  /**
+   * Vitórias-régias (v0.93.92, arte do dono do produto): sorteadas na água RASA de rios e lagos (`e` logo abaixo da margem, ou rio), nunca no
+   * mar aberto. A âncora é a célula do canto inferior esquerdo da planta: só nasce se toda a área dela (2 × 2 a comum, 4 × 3 a gigante) for água.
+   * Função pura da seed, como o resto; o desenho (variante) sai da posição no render.
+   */
+  private waterPlantAt(x: number, y: number, e: number): BlockId {
+    if (e < WATER_LEVEL - SHALLOW_DEPTH && !this.isRiver(x, y)) return Block.AIR; // fundo: mar aberto
+    const r = hash2(this.seed, x + 5521, y - 3301);
+    const area = SUBDIV * SUBDIV;
+    if (r < VICTORIA_CHANCE / area) return this.waterAreaFree(x, y, 4, 3) ? Block.VICTORIA : Block.AIR;
+    if (r < (VICTORIA_CHANCE + LILY_CHANCE) / area) return this.waterAreaFree(x, y, 2, 2) ? Block.WATER_LILY : Block.AIR;
+    return Block.AIR;
+  }
+
+  /** A área `w × h` com o canto inferior esquerdo em (x, y) (cresce para a direita e para cima) é toda água? */
+  private waterAreaFree(x: number, y: number, w: number, h: number): boolean {
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) if ((dx || dy) && !this.isWater(x + dx, y - dy)) return false;
+    return true;
+  }
+
   /**
    * Célula completa numa única avaliação de ruído (elevação, clima, rio, trilha).
    * `groundAt/objectAt/upperAt` derivam daqui — antes cada um recalculava o terreno
@@ -73,7 +103,7 @@ export class WorldGenerator implements TerrainSource {
   cellAt(x: number, y: number): Cell {
     const e = this.elevation(x, y);
     if (e < WATER_LEVEL || (e < MOUNTAIN_LEVEL - 0.04 && this.isRiver(x, y))) {
-      return { ground: Block.WATER, object: Block.AIR, upper: Block.AIR };
+      return { ground: Block.WATER, object: this.waterPlantAt(x, y, e), upper: Block.AIR };
     }
     const biome = this.biomeAt(x, y);
     if (e < BEACH_LEVEL) return { ground: Block.SAND, object: Block.AIR, upper: Block.AIR };

@@ -16,6 +16,7 @@ import { SWAY_PUSH_RADIUS, windKind } from './wind';
 import { TreeLeaves } from './three/treeLeaves';
 import { WaterSurface } from './three/waterSurface';
 import { WaterRipples } from './three/waterRipples';
+import { WaterFish } from './three/waterFish';
 import { waterFxOn } from './waterFx';
 import { v2WaterTop } from './materialsV2';
 import { FootDust } from './three/footDust';
@@ -26,8 +27,8 @@ import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { getWaterArt, loadDungeonArt } from './blockArt';
-import { Block, blockDef, isDoor, type BlockId } from '../world/blocks';
+import { getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { Block, blockDef, isDoor, isWaterPlant, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
@@ -58,6 +59,13 @@ import { classifySanctuaryBlock, sanctuaryBlockTransform } from './sanctuaryThre
 /** Margem de chunks além da tela: a vista oblíqua mostra mais ao sul/norte do que a antiga. */
 const FLOOR_MARGIN = 1;
 
+/** Água "aberta" para os efeitos (brilho, espuma, ondas, peixes): chão líquido sem objeto, ou só com uma planta flutuante por cima. */
+function openWaterAt(world: World, x: number, y: number): boolean {
+  if (!blockDef(world.getGround(x, y)).liquid) return false;
+  const o = world.getObject(x, y);
+  return o === Block.AIR || isWaterPlant(o);
+}
+
 /**
  * Render do Mundo principal em 2.5D (ADR 0031, M2–M3 — **em construção**; só em desenvolvimento, `?render=3d`).
  * M2: chão por chunk (textura do `ChunkRenderer`), cubos (`ChunkBlocks`, frente provisória), objetos altos e a cidade
@@ -87,6 +95,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly leaves: TreeLeaves;
   private readonly water: WaterSurface | null;
   private readonly ripples: WaterRipples | null;
+  private readonly fish: WaterFish | null;
   private rippleWalked = 0;
   private rippleAt: { x: number; y: number } | null = null;
   private waterTileCanvas: HTMLCanvasElement | null = null;
@@ -164,17 +173,18 @@ export class WorldThreeRenderer implements GameRenderer {
     });
     this.groundFx = new GroundFx(this.worldLayer, {
       seed: world.seed,
-      isOpenWater: (x, y) => blockDef(world.getGround(x, y)).liquid && world.getObject(x, y) === Block.AIR,
+      isOpenWater: (x, y) => openWaterAt(world, x, y),
       waterFlows: () => world.waterFlows(),
       flowSheet: () => getWaterArt()?.flow ?? null,
     });
     this.water = waterFxOn() ? new WaterSurface(this.worldLayer, {
-      isOpenWater: (x, y) => blockDef(world.getGround(x, y)).liquid && world.getObject(x, y) === Block.AIR,
+      isOpenWater: (x, y) => openWaterAt(world, x, y),
       paintedShore: (x, y) => { const g = world.getGround(x, y); return g === Block.GRASS || g === Block.SAND || g === Block.PATH || g === Block.DIRT; },
       getChunk: (cx, cy) => world.getChunk(cx, cy),
       tile: () => this.waterTile(),
     }) : null;
     this.ripples = this.water ? new WaterRipples(this.worldLayer) : null;
+    this.fish = this.water ? new WaterFish(this.worldLayer, world.seed, getTownImages()) : null;
     if (this.ripples) {
       this.leaves.onLand = (x, z) => { if (this.isOpenWaterAt(x, z)) this.ripples!.emit(x, z, 0.5); };
     }
@@ -253,6 +263,10 @@ export class WorldThreeRenderer implements GameRenderer {
     if (shaking && opts.elapsed - this.cutLeafAt > 0.14) { this.cutLeafAt = opts.elapsed; this.leaves.emit(shaking); }
     this.leaves.update(opts.dt, TILE * cam.zoom, this.leafTrees);
     this.stepRipples(opts, inside);
+    if (this.fish) {
+      if (inside) this.fish.clear();
+      else this.fish.update(opts.dt, { x: cam.x / TILE, z: cam.y / TILE }, Math.hypot(view.x1 - view.x0, view.y1 - view.y0) / 2, opts.actors[0] ? { x: opts.actors[0].x, z: opts.actors[0].y } : null, (x, z) => openWaterAt(this.world, Math.floor(x), Math.floor(z)));
+    }
     if (inside) this.ripples?.clear();
     this.ripples?.update(opts.dt, skyAt(opts.time).night);
     this.actors.setFires(this.fires);
@@ -315,7 +329,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
   private isOpenWaterAt(x: number, z: number): boolean {
     const cx = Math.floor(x), cy = Math.floor(z);
-    return blockDef(this.world.getGround(cx, cy)).liquid && this.world.getObject(cx, cy) === Block.AIR;
+    return openWaterAt(this.world, cx, cy);
   }
 
   /** Ondas de quem anda na margem: a cada passada, uma onda na água vizinha mais próxima (até 1,5 célula); nada em cômodos nem com `?agua=0`. */
@@ -414,6 +428,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.leaves.dispose();
     this.water?.dispose();
     this.ripples?.dispose();
+    this.fish?.dispose();
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();

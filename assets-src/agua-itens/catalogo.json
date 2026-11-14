@@ -1,0 +1,218 @@
+[
+ {
+  "slug": "victoria-par",
+  "nome": "Vitória-régia gigante (duas folhas)",
+  "tam": [
+   384,
+   342
+  ],
+  "caixa": [
+   14,
+   47,
+   360,
+   307
+  ],
+  "util": [
+   346,
+   260
+  ]
+ },
+ {
+  "slug": "victoria-flor",
+  "nome": "Vitória-régia gigante com flor",
+  "tam": [
+   384,
+   342
+  ],
+  "caixa": [
+   14,
+   48,
+   346,
+   286
+  ],
+  "util": [
+   332,
+   238
+  ]
+ },
+ {
+  "slug": "victoria-folha-a",
+  "nome": "Vitória-régia gigante (folha A)",
+  "tam": [
+   384,
+   342
+  ],
+  "caixa": [
+   31,
+   55,
+   350,
+   296
+  ],
+  "util": [
+   319,
+   241
+  ]
+ },
+ {
+  "slug": "victoria-folha-b",
+  "nome": "Vitória-régia gigante (folha B)",
+  "tam": [
+   384,
+   342
+  ],
+  "caixa": [
+   28,
+   47,
+   355,
+   305
+  ],
+  "util": [
+   327,
+   258
+  ]
+ },
+ {
+  "slug": "lirio-botao",
+  "nome": "Vitória-régia comum com botão",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   26,
+   33,
+   357,
+   297
+  ],
+  "util": [
+   331,
+   264
+  ]
+ },
+ {
+  "slug": "lirio-flor-branca",
+  "nome": "Vitória-régia comum com flor branca",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   27,
+   43,
+   352,
+   291
+  ],
+  "util": [
+   325,
+   248
+  ]
+ },
+ {
+  "slug": "lirio-flor-rosa",
+  "nome": "Vitória-régia comum com flor rosa",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   33,
+   43,
+   347,
+   295
+  ],
+  "util": [
+   314,
+   252
+  ]
+ },
+ {
+  "slug": "lirio-folha",
+  "nome": "Vitória-régia comum (folha)",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   52,
+   56,
+   339,
+   283
+  ],
+  "util": [
+   287,
+   227
+  ]
+ },
+ {
+  "slug": "peixe-dourado",
+  "nome": "Peixe dourado",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   36,
+   64,
+   346,
+   305
+  ],
+  "util": [
+   310,
+   241
+  ]
+ },
+ {
+  "slug": "peixe-listrado",
+  "nome": "Peixe listrado oliva",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   51,
+   62,
+   353,
+   296
+  ],
+  "util": [
+   302,
+   234
+  ]
+ },
+ {
+  "slug": "peixe-azul",
+  "nome": "Peixe azul-prateado",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   50,
+   63,
+   355,
+   299
+  ],
+  "util": [
+   305,
+   236
+  ]
+ },
+ {
+  "slug": "peixe-carpa",
+  "nome": "Carpa laranja",
+  "tam": [
+   384,
+   341
+  ],
+  "caixa": [
+   34,
+   57,
+   354,
+   309
+  ],
+  "util": [
+   320,
+   252
+  ]
+ }
+]
