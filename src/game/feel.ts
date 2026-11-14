@@ -11,8 +11,9 @@ export const INPUT_DECEL = 25;
 export const LOOKAHEAD_PX = 18;
 export const LOOKAHEAD_RATE = 3.2;
 /** Balanço do corpo ao andar (células de mundo de subida; radianos de inclinação lateral). */
-export const BOB_CELLS = 0.03;
-export const LEAN_RAD = 0.04;
+export const BOB_CELLS = 0.012;
+/** Inclinação lateral ao andar: 0 desde a v0.93.70 (inclinava o corpo e dava a impressão de chão inclinado). */
+export const LEAN_RAD = 0;
 
 export function feelOn(search: string = typeof window !== 'undefined' ? window.location.search : ''): boolean {
   return new URLSearchParams(search).get('sensacao') !== '0';

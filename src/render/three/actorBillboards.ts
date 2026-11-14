@@ -33,6 +33,8 @@ export interface ActorBillboardsOptions {
   echo?: boolean;
   /** Sombreado por quadro com a luz do sol/lua (normais falsas pela forma e pelo brilho do desenho); desligado = atores chapados como antes. */
   lit?: boolean;
+  /** Sombra projetada pelo sol (comprida e girada); desligada, a sombra é o círculo suave sob os pés (v0.93.70: o padrão). */
+  sunShadow?: boolean;
   /** Balanço do corpo ao andar (v0.93.69): sobe e desce a cada passo e inclina de leve para o lado do movimento; só personagens e moradores. */
   bob?: boolean;
   createCanvas?(): HTMLCanvasElement;
@@ -54,6 +56,8 @@ function makeLightUniforms() {
  * brilho dá o relevo das dobras), acende com o sol (difuso + brilho de contorno do lado do sol) e escurece de leve junto dos pés. O
  * resultado é relativo a uma normal de frente: sem sol o ator fica como a arte, o dia continua claro.
  */
+/** Quanto o plano do ator fica acima do chão (células): só o suficiente para não brigar com o chão na profundidade. */
+export const GROUND_LIFT = 0.012;
 const BOBBERS = /^(heroine|hero|hood|gino|mila|npc-)/;
 const LIT_HEAD = `
 uniform vec2 uTexel; uniform vec2 uFeet; uniform float uStrength;
@@ -193,7 +197,7 @@ export class ActorBillboards {
       const slot = this.slot(side, index);
       this.paint(slot, sheet, a, elapsed);
       // Onde ficam os pés e a altura do desenho em coordenadas de textura (v de baixo para cima), para o escurecimento junto ao chão.
-      slot.u.uFeet.value.set((3 * z) / side, (sheet.drawHeight * z * (a.scale ?? 1)) / side);
+      slot.u.uFeet.value.set(0, (sheet.drawHeight * z * (a.scale ?? 1)) / side);
       slot.u.uStrength.value = a.kind === 'love-hearts' || a.dying !== undefined ? 0 : 1;
       const fl = a.kind === 'love-hearts' || this.fires.length === 0 ? null : fireLightOn(a.x, a.y, this.fires, elapsed);
       slot.u.uFireInt.value = fl ? fl.intensity : 0;
@@ -203,7 +207,7 @@ export class ActorBillboards {
       // Balanço: a cada passada (2 por ciclo de 4 quadros) o corpo sobe um pouco; inclina para a direção do passo. Só quem anda de verdade.
       const walking = this.opts.bob && a.moving && a.frame === undefined && a.dying === undefined && BOBBERS.test(a.kind);
       const bob = walking ? Math.abs(Math.sin(a.walkTime * 3.5 * Math.PI)) * BOB_CELLS / this.opts.k : 0;
-      slot.mesh.position.set(a.x, a.visualZ + 0.03 + bob, a.y);
+      slot.mesh.position.set(a.x, a.visualZ + GROUND_LIFT + bob, a.y);
       slot.mesh.rotation.z = walking ? (a.facing === 'left' ? LEAN_RAD : a.facing === 'right' ? -LEAN_RAD : 0) * Math.min(1, Math.sin(a.walkTime * 3.5 * Math.PI + 0.6) * 0.5 + 0.7) : 0;
       slot.mesh.visible = true;
       if (this.echo && a === chosen[0]) {
@@ -215,10 +219,10 @@ export class ActorBillboards {
       const [rx, ry] = sheet.shadowRadii;
       const dying = a.dying ?? 0;
       // Sombra projetada pelo sol: cai para o lado oposto a ele, mais comprida com o sol baixo (sem luz ligada: o círculo de sempre).
-      const sd = this.opts.lit === false ? { dx: 0, dz: 0, len: 1, opacity: 0.22 } : this.shadowDir;
+      const sd = this.opts.lit === false || !this.opts.sunShadow ? { dx: 0, dz: 0, len: 1, opacity: 0.22 } : this.shadowDir;
       const sx = rx * Math.sqrt(this.opts.scale), sz = ry * Math.sqrt(this.opts.scale);
       const reach = (sd.len - 1) * sx * 0.5;
-      slot.shadow.position.set(a.x + sd.dx * reach, a.visualZ + 0.018, a.y + sd.dz * reach);
+      slot.shadow.position.set(a.x + sd.dx * reach, a.visualZ + GROUND_LIFT * 0.6, a.y + sd.dz * reach);
       slot.shadow.rotation.y = Math.atan2(sd.dz, sd.dx) * -1;
       slot.shadow.scale.set(sx * sd.len, 1, sz);
       slot.shadow.material.opacity = sd.opacity * (1 - dying);
@@ -283,7 +287,7 @@ export class ActorBillboards {
     const z = this.zoom;
     ctx.clearRect(0, 0, side, side);
     const fx = side / 2;
-    const fy = side - 3 * z; // a folha pinta os pés 2 px abaixo do ponto dado
+    const fy = side - 2 * z; // a folha pinta os pés 2 px abaixo do ponto dado: a sola fica na base do plano, que toca o chão
     sheet.draw(ctx, fx, fy, z, a, elapsed, false); // a sombra é um plano no chão, não um desenho vertical
     const top = fy - sheet.drawHeight * z * (a.scale ?? 1) - 4 * z;
     if (a.label) { // nome de outro jogador (multiplayer)

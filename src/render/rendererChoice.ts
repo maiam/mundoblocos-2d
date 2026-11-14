@@ -19,6 +19,11 @@ export function useSolidPhysics(search: string, renderer: WorldRenderer): boolea
   return renderer === '3d' && new URLSearchParams(search).get('fisica') !== 'degrau';
 }
 
+/** Sombra projetada pelo sol nos atores (comprida, girada): só com `?sombra=sol`; o padrão é o círculo suave sob os pés. */
+export function sunShadowOn(search: string = typeof window !== 'undefined' ? window.location.search : ''): boolean {
+  return new URLSearchParams(search).get('sombra') === 'sol';
+}
+
 /** Sombreado dos atores com a luz do sol/lua (v0.93.64): ligado, a não ser com `?sombreado=0` (para comparar com os atores chapados; `?luz=` é a escuridão do Santuário). */
 export function actorLightOn(search: string = typeof window !== 'undefined' ? window.location.search : ''): boolean {
   return new URLSearchParams(search).get('sombreado') !== '0';

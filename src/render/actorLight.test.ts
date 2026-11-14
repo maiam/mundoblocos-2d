@@ -45,3 +45,34 @@ describe('Luz dos atores (v0.93.64)', () => {
     expect(actorLightOn('?sombreado=0')).toBe(false);
   });
 });
+
+import { footDrop } from './character';
+import { FOOT_MARGINS } from './footMargins';
+import { GROUND_LIFT } from './three/actorBillboards';
+import { LEAN_RAD } from '../game/feel';
+import { sunShadowOn } from './rendererChoice';
+
+describe('Atores no chão (v0.93.70)', () => {
+  it('as folhas de animais de lado têm folga embaixo das patas e a tabela a conhece; o Hood quase não tem', () => {
+    const cow = FOOT_MARGINS.cow, hood = FOOT_MARGINS.hood;
+    expect(cow[1]).toBeGreaterThan(0.05); // esquerda
+    expect(cow[2]).toBeGreaterThan(0.1); // direita
+    expect(cow[0]).toBeLessThan(0.02); // de frente: sem folga
+    expect(Math.max(...hood)).toBeLessThan(0.05);
+  });
+
+  it('footDrop desce o desenho pela folga da linha (fração da altura) e nunca passa de 20%', () => {
+    expect(footDrop([0, 0.1, 0.15, 0], 2, 100)).toBeCloseTo(15);
+    expect(footDrop([0, 0.1], 0, 100)).toBe(0);
+    expect(footDrop(undefined, 3, 100)).toBe(0);
+    expect(footDrop([0.9], 0, 100)).toBeCloseTo(20);
+  });
+
+  it('o plano do ator fica quase colado no chão, sem inclinar o corpo, e a sombra do sol só com ?sombra=sol', () => {
+    expect(GROUND_LIFT).toBeLessThan(0.02);
+    expect(LEAN_RAD).toBe(0);
+    expect(sunShadowOn('')).toBe(false);
+    expect(sunShadowOn('?sombra=sol')).toBe(true);
+    expect(sunShadowOn('?sombreado=0')).toBe(false);
+  });
+});

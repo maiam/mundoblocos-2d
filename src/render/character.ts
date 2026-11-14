@@ -1,3 +1,4 @@
+import { FOOT_MARGINS } from './footMargins';
 import { art } from './art';
 import { TILE } from '../config';
 import { type Actor, type ActorKind, HERO_BODIES } from '../game/entities';
@@ -240,6 +241,15 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   'npc-leandro': { cols: 4, rows: 4, height: CHARACTER_H * (291 / 297), shadow: [0.32, 0.12], walkFps: 7 },
 };
 
+/**
+ * Quanto descer o desenho para a sola dos pés tocar o ponto de apoio (v0.93.70): a folga vazia embaixo dos pés da linha de direção, em
+ * fração da altura do quadro (`footMargins.ts`), vezes a altura desenhada `h`. Limitada a 20% para um dado ruim não afundar o ator.
+ */
+export function footDrop(margins: readonly number[] | undefined, row: number, h: number): number {
+  const m = margins?.[row] ?? 0;
+  return Math.min(0.2, Math.max(0, m)) * h;
+}
+
 class SpriteSheet {
   private readonly img = new Image();
   private ready = false;
@@ -258,6 +268,8 @@ class SpriteSheet {
     private readonly spec: SheetSpec,
     private readonly url: string | undefined,
     private readonly deathUrl?: string,
+    /** Folga embaixo dos pés por linha de direção (`FOOT_MARGINS[kind]`): o desenho desce essa folga e a sola toca o chão. */
+    private readonly foot?: readonly number[],
   ) {
     this.img.onload = () => (this.ready = true);
     this.deathImg.onload = () => (this.deathReady = true);
@@ -330,7 +342,8 @@ class SpriteSheet {
     const row = sequence ? Math.floor((a.frame ?? 0) / cols) % rows : rows === 1 ? 0 : ROW[a.facing];
     // Sem arredondar a posição na flutuação: o balanço sub-pixel fica suave.
     const dx = fx - w / 2;
-    const dy = fy - h + 2 * zoom + h * footPad - lift;
+    // Folga vazia embaixo dos pés (varia por direção: a vaca de lado tem até 14%): sem isso o bicho paira acima da sombra.
+    const dy = fy - h + 2 * zoom + h * footPad - lift + (sequence || float ? 0 : footDrop(this.foot, row, h));
     // Invencível depois de levar dano: pisca.
     if (a.hurt && Math.floor(elapsed * 14) % 2 === 1) return;
     if (float) ctx.drawImage(this.img, col * fw, row * fh, fw, fh, dx, dy, w, h);
@@ -449,7 +462,7 @@ class SpriteSheet {
 export class ActorSprites {
   private readonly sheets = Object.fromEntries(
     (Object.keys(SPECS) as ActorKind[]).map((k) => [k, new SpriteSheet(
-      SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k],
+      SPECS[k], art().actors[k], (art().monsterDeaths as Record<string, string> | undefined)?.[k], FOOT_MARGINS[k],
     )]),
   ) as Record<ActorKind, SpriteSheet>;
 
