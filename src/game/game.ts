@@ -184,6 +184,12 @@ export class Game {
     // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
     // The main World and the optional Santuário Canvas2D renderer are unchanged.
     configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory, !!options.solidPhysics);
+    // A nova seed do Santuário não tem chão vazio: nasce sobre o topo da
+    // coluna inicial, nunca dentro dos cubos.
+    if (profile.id === 'santuario') {
+      this.player.z = this.world.standHeight(sx, sy) ?? 0;
+      this.player.visualZ = this.player.z;
+    }
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
     if (options.body) this.entities.body = options.body;
