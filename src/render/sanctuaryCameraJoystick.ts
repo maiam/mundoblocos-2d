@@ -1,12 +1,20 @@
 /** Controle experimental de órbita do Santuário. Não altera o estado do jogo. */
-export interface SanctuaryOrbit { azimuthDeg: number; elevationDeg: number; zoom: number }
+export interface SanctuaryOrbit {
+  azimuthDeg: number; elevationDeg: number; zoom: number;
+  /** Escala da altura dos cubos, apenas no palco visual. 1 = bloco original. */
+  blockHeight: number;
+  /** Escala da largura/profundidade da célula renderizada. 1 = célula original. */
+  cellSize: number;
+}
 const KEY = 'orvalis:santuario:camera-livre:v1';
-const DEFAULT: SanctuaryOrbit = { azimuthDeg: 0, elevationDeg: 67, zoom: 1 };
+const DEFAULT: SanctuaryOrbit = { azimuthDeg: 0, elevationDeg: 67, zoom: 1, blockHeight: 1, cellSize: 1 };
 const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));
 const normalize = (v: SanctuaryOrbit): SanctuaryOrbit => ({
   azimuthDeg: ((v.azimuthDeg % 360) + 360) % 360,
   elevationDeg: clamp(v.elevationDeg, 15, 85),
   zoom: clamp(v.zoom, 0.6, 2.2),
+  blockHeight: clamp(Number.isFinite(v.blockHeight) ? v.blockHeight : 1, 0.25, 1.25),
+  cellSize: clamp(Number.isFinite(v.cellSize) ? v.cellSize : 1, 0.5, 1.25),
 });
 export class SanctuaryCameraJoystick {
   private readonly root: HTMLDivElement;
@@ -14,6 +22,8 @@ export class SanctuaryCameraJoystick {
   private readonly readout: HTMLElement;
   private readonly knob: HTMLDivElement;
   private readonly ring: HTMLElement;
+  private readonly blockRange: HTMLInputElement;
+  private readonly cellRange: HTMLInputElement;
   private orbit: SanctuaryOrbit = { ...DEFAULT };
   private open = false;
   private pointerId: number | null = null;
@@ -36,6 +46,14 @@ export class SanctuaryCameraJoystick {
         <div class="sanctuary-camera-ring" aria-label="Joystick de câmera: arraste para girar e inclinar" role="group">
           <div class="sanctuary-camera-knob"></div>
         </div>
+        <div class="sanctuary-scale-controls">
+          <label>Altura do bloco <output data-value="block">100%</output>
+            <input type="range" min="25" max="125" step="5" value="100" data-range="block" aria-label="Altura visual de cada bloco">
+          </label>
+          <label>Tamanho da célula <output data-value="cell">100%</output>
+            <input type="range" min="50" max="125" step="5" value="100" data-range="cell" aria-label="Tamanho visual da célula">
+          </label>
+        </div>
         <div class="sanctuary-camera-buttons">
           <button type="button" data-action="minus" title="Afastar">−</button>
           <span>Zoom</span>
@@ -48,6 +66,14 @@ export class SanctuaryCameraJoystick {
     this.readout = this.root.querySelector<HTMLElement>('.sanctuary-camera-readout')!;
     this.knob = this.root.querySelector<HTMLDivElement>('.sanctuary-camera-knob')!;
     this.ring = this.root.querySelector<HTMLElement>('.sanctuary-camera-ring')!;
+    this.blockRange = this.root.querySelector<HTMLInputElement>('[data-range="block"]')!;
+    this.cellRange = this.root.querySelector<HTMLInputElement>('[data-range="cell"]')!;
+    this.blockRange.addEventListener('input', () => {
+      this.orbit.blockHeight = Number(this.blockRange.value) / 100; this.publish();
+    });
+    this.cellRange.addEventListener('input', () => {
+      this.orbit.cellSize = Number(this.cellRange.value) / 100; this.publish();
+    });
     this.root.querySelector<HTMLButtonElement>('.sanctuary-camera-toggle')!.addEventListener('click', () => {
       this.open = !this.open;
       this.panel.hidden = !this.open;
@@ -113,6 +139,10 @@ export class SanctuaryCameraJoystick {
     const azimuth = Math.round(this.orbit.azimuthDeg);
     const elevation = Math.round(this.orbit.elevationDeg);
     this.readout.textContent = `Rotação ${azimuth}° · Inclinação ${elevation}° · Zoom ${this.orbit.zoom.toFixed(2)}×`;
+    this.blockRange.value = String(Math.round(this.orbit.blockHeight * 100));
+    this.cellRange.value = String(Math.round(this.orbit.cellSize * 100));
+    this.root.querySelector<HTMLOutputElement>('[data-value="block"]')!.value = `${Math.round(this.orbit.blockHeight * 100)}%`;
+    this.root.querySelector<HTMLOutputElement>('[data-value="cell"]')!.value = `${Math.round(this.orbit.cellSize * 100)}%`;
   }
   dispose(): void {
     this.apply(null);
