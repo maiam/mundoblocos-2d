@@ -24,12 +24,13 @@ describe('Padrão de Materiais V2 (ADR 0023)', () => {
     }
   });
 
-  it('Terra Arada, Caminho de Terra e Grama têm frente de terra e a franja do próprio topo', () => {
-    for (const id of [Block.TILLED, Block.PATH, Block.GRASS]) {
+  it('Terra Arada e Caminho de Terra têm frente de terra e a franja do próprio topo; a Grama tem topo e face próprios, sem franja', () => {
+    for (const id of [Block.TILLED, Block.PATH]) {
       const b = V2_BLOCKS[id]!;
       expect(b.front).toBe('terra');
       expect(b.overlay).toBe(b.top);
     }
+    expect(V2_BLOCKS[Block.GRASS]).toEqual({ top: 'grama', front: 'grama' });
   });
 
   it('o V2 é o padrão; só ?blocos=legado volta ao atlas antigo', () => {

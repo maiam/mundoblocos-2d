@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.79 — Grama com topo e face enviados (14/11/2026)
+- **Pedido do dono do produto:** a grama da v0.93.77 saiu ("não gostei dessa grama"); voltam o **topo** (relva verde repetível) e a **face** (terra avermelhada em estratos, com raízes) enviados. Originais em `assets-src/blocos-net/grama-topo.png` e `grama-face.png`.
+- **Materiais V2:** `grama` ganha `top.png` e `front.png` próprios (emendas 0,89 e 0,70: a arte já era repetível, sem mistura); `V2_BLOCKS[GRASS] = { top: 'grama', front: 'grama' }` — **sem franja** (a arte não traz). O chão de grama e as transições usam o novo topo. Ícone `icon-block-grass` refeito. Terra, Terra Arada, Pedra Bruta e Pedra Lisa ficam como na v0.93.77.
+- Só arte e uma linha de composição; testes e `tsc` verdes; conferido no navegador (3D).
 ## Orvalis v0.93.78 — o Mundo 3D mostra a frente própria dos materiais (14/11/2026)
 - **Defeito:** o 3D oblíquo usava o topo também nas laterais (`BlockMaterials`: `view === 'oblique' ? top : front`), e `worldBlockFaces` só usava a frente V2 quando o nome do material da frente diferia do topo (Pedra Bruta, Pedra Lisa e as toras têm `front.png` próprio, mas o mesmo nome). Resultado: topo e face iguais.
 - **Correção:** a lateral usa `faces.front` e todo bloco V2 monta a frente a partir do material (sem `front.png`, é o próprio topo). Grama mostra terra com franja, Terra Arada e Terra mostram a terra lateral, pedras e toras mostram a face própria. Testes e `tsc` verdes; conferido no navegador.

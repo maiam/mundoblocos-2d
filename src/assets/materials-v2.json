@@ -35,8 +35,7 @@
   ],
   "overlay": [
     "arada",
-    "caminho",
-    "grama"
+    "caminho"
   ],
   "masks": {
     "cell": 64,
