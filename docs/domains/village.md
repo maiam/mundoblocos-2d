@@ -1,9 +1,9 @@
-# Domínio: Vila Camponesa (fase de arte — sem código no jogo ainda)
+# Domínio: Vila Camponesa (v0.93.89: no jogo, primeira versão)
 
 Área fixa no **Mundo principal**, ao sul da Cidade do Despertar, igual em toda seed, **protegida** como a cidade (nada quebra nem se coloca) e com o **chão em blocos do jogo + objetos em sprites** (decisões do dono do produto, 14/11/2026). A arte foi pintada por ele; o jogo desenha no código o que o mapa mostra, seguindo o padrão da cidade (`world/town.ts`: layout fixo + `TerrainSource` que o sobrepõe + proteção no `World`).
 
-## Fonte de verdade (futura)
-`world/village.ts` (layout) → `VillageTerrain` (sobreposição) → `World.inGuardedArea` (proteção). Arte: `assets-src/vila-camponesa/` → `render/art/principal.ts` + um mapa de arte como o `render/townArt.ts`. A sala (servidor) roda o mesmo `World`: mexe em `build:net` + `sync-net`.
+## Fonte de verdade
+`world/village.ts` (`villageLayout()`, `VILLAGE_SIZES`, `VillageTerrain`) → `World.village`/`inGuardedArea` (proteção). Arte: `assets-src/vila-camponesa/` → `scripts/extract-village.py` → `src/assets/village-*.webp` → `render/townArt.ts` (`IMAGE_ART`) + `render/art/principal.ts`. Só existe com `SUBDIV = 2` (a vila foi desenhada nessa grade). A sala (servidor) roda o mesmo `World`: `build:net` + `sync-net`. Posição: canto NO em (−24, 72), logo depois do campo do rebanho da cidade (`TOWN_SOUTH_FIELD` + 16); portão no meio do lado sul; trilha de terra por fora do muro até a estrada da cidade.
 
 ## Material recebido (`assets-src/vila-camponesa/`)
 - `mapa/`: `mapa-768.png` (48 × 48 células de 16 px = **a mesma grade do jogo**, `SUBDIV = 2`), `mapa-original-1254.png` e os 9 chunks 16 × 16 células (recompõem o mapa de 768 px sem diferença).
@@ -44,3 +44,12 @@
 - Os itens não são recortes do mapa: o ladrilho do chão (grama, terra) não vem pronto e o chão do mapa tem manchas e sombras pintadas que o jogo não reproduz.
 - A medição automática com o mapa só foi confiável para casas, celeiro, árvores grandes, poço, banco e carroça (correspondência ≥ 0,6); o resto foi estimado.
 - Os cantos do norte da paliçada foram retocados pelo artista (sem o reflexo que tinham); a paliçada reta tem três larguras e a do norte, no mapa, é contínua.
+
+## Arte a pedir ao artista (se a primeira versão não ficar boa)
+1. **Muro leste e oeste (peças laterais):** hoje uso uma estaca recortada do braço dos cantos do norte. Pedir um segmento **vertical** de paliçada, de 6 e de 7 estacas, com a face voltada para o espectador (as estacas vistas de frente, empilhadas) e a mesma altura de estaca da reta.
+2. **Estacas em escala única:** a reta tem 6, 7 e 9 estacas em larguras diferentes; pedir um **único módulo** de 1 estaca (ou de 2) com largura exata de 1 célula, para emendar sem costura.
+3. **Chão da vila:** ladrilhos repetíveis de **grama com manchas** e de **terra da estrada** (com bordas de transição para a grama), no estilo do mapa, para o chão não ficar tão liso quanto o do jogo.
+4. **Portão:** os quadros intermediários de **abrir e fechar** (4 quadros) para o portão interativo, e a versão **sem a coluna**, se for só a folha.
+5. **Casas:** porta e janelas em versões separadas (acesas à noite) e **o interior** de uma casa (cômodo) no padrão dos interiores existentes.
+6. **Galinha:** a folha 4 × 4 de caminhada (como a galinha atual do jogo) no estilo da vila, para o galinheiro ter bichos vivos.
+7. **Sombras:** as sombras projetadas ficaram fora das peças (regra do prompt); o jogo desenha as próprias.

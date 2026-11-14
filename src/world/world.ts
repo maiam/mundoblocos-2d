@@ -15,6 +15,7 @@ import { WorldGenerator } from './generator';
 import { GoblinCampTerrain, planGoblinCamps, planLizardPacks, type GoblinCamp, type LizardPack } from './goblins';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
 import type { TerrainSource } from './terrain';
+import { type VillageLayout, villageLayout, VillageTerrain } from './village';
 
 /** Tempo médio (s) para o trigo avançar um estágio (~1,5 min da semente ao maduro). */
 export const WHEAT_STAGE_SECONDS = 6;
@@ -102,6 +103,8 @@ export class World {
   readonly cave: CaveEntrance | null = null;
   /** Cidade do Despertar (perfil com `town`), ou null. Área protegida; início e renascer sem tenda. */
   readonly town: TownLayout | null = null;
+  /** Vila Camponesa (ao sul da cidade, só na grade fina; `domains/village.md`), ou null. Área protegida. */
+  readonly village: VillageLayout | null = null;
   /** Camps with seven goblins around the existing Campfire block (seed based). */
   readonly goblinCamps: GoblinCamp[] = [];
   /** Bandos de três homens-lagarto na margem dos rios (seed based, v0.93.60). */
@@ -138,6 +141,11 @@ export class World {
       this.town = townLayout();
       this.generator = new TownTerrain(this.generator, this.town);
       this.spawn = this.town.start;
+      const village = villageLayout();
+      if (village) {
+        this.village = village;
+        this.generator = new VillageTerrain(this.generator, village);
+      }
     }
     if (profile.dungeon) {
       const base = this.generator;
@@ -146,6 +154,11 @@ export class World {
       // a pelo menos 10 chunks do castelo; o labirinto em si fica no canto isolado.
       const keep = this.town ? grow(this.town.area, TOWN_MARGIN + 4) : null;
       if (keep) keep.y1 = this.town!.area.y1 + TOWN_SOUTH_FIELD;
+      // A vila (e a trilha até ela) também fica livre da caverna.
+      if (keep && this.village) {
+        const t = this.village.touched;
+        keep.x0 = Math.min(keep.x0, t.x0); keep.x1 = Math.max(keep.x1, t.x1); keep.y1 = Math.max(keep.y1, t.y1);
+      }
       const castle = this.town?.buildings.find((b) => b.id === Block.CASTLE);
       const center: [number, number] = castle ? [castle.x + castle.w / 2, castle.y - castle.d / 2] : spawn;
       this.dungeon = isolatedDungeon(seed);
@@ -179,6 +192,7 @@ export class World {
   private inGuardedArea(x: number, y: number): boolean {
     return (!!this.dungeon && inRect(dungeonGuard(this.dungeon), x, y)) || (!!this.cave && inRect(this.cave.guard, x, y))
       || (!!this.town && inRect(this.town.area, x, y))
+      || (!!this.village && inRect(this.village.area, x, y))
       || this.interiors.some((l) => inRect(l.guard, x, y));
   }
 

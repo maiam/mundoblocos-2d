@@ -79,6 +79,8 @@ export function planGoblinCamps(world:World):GoblinCamp[] {
       for(const [x,y] of regionPoint(world.seed,rx,ry,113,8)){
         // Fora da cidade e do anel em volta (a conta antiga: "além do campo do rebanho").
         if(x>=town.area.x0-36*SUBDIV&&x<=town.area.x1+36*SUBDIV&&y>=town.area.y0-36*SUBDIV&&y<=town.area.y1+36*SUBDIV)continue;
+        // A Vila Camponesa (e a trilha) é zona segura, com folga de 16 células.
+        if(nearVillage(world,x,y,16*SUBDIV))continue;
         // Vizinhos de regiões diferentes não podem ficar colados (os bandos se confundiriam).
         if(camps.some(c=>Math.hypot(c.x-x,c.y-y)<24*SUBDIV))continue;
         if(!open(world,x,y))continue;
@@ -90,6 +92,12 @@ export function planGoblinCamps(world:World):GoblinCamp[] {
     }
   }
   return camps;
+}
+
+/** A célula está na Vila Camponesa, no anel e na trilha dela, ou a menos de `m` células disso? */
+function nearVillage(world:World,x:number,y:number,m:number):boolean {
+  const t=world.village?.touched;
+  return !!t&&x>=t.x0-m&&x<=t.x1+m&&y>=t.y0-m&&y<=t.y1+m;
 }
 
 /** Bando de homens-lagarto: três em volta de um ponto da margem de um rio (sem fogueira nem arte no chão). */
@@ -125,6 +133,7 @@ export function planLizardPacks(world:World,riverAt:(x:number,y:number)=>boolean
       for(const [x,y] of regionPoint(world.seed,rx,ry,271,40)){
         if(x>=town.area.x0-24*SUBDIV&&x<=town.area.x1+24*SUBDIV&&y>=town.area.y0-24*SUBDIV&&y<=town.area.y1+24*SUBDIV)continue;
         if(!riverAt(x,y))continue;
+        if(nearVillage(world,x,y,12*SUBDIV))continue;
         // Margem: primeira célula andável e livre num anel curto em volta da água.
         let spot:[number,number]|null=null;
         for(let d=1;d<=4*SUBDIV&&!spot;d++){
