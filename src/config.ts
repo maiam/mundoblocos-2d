@@ -43,8 +43,10 @@ export const TILE = 32;
 /** Altura visível da face frontal de um cubo (efeito 3/4), em pixels de mundo. */
 export const CUBE_FRONT = 18;
 
-/** Máximo de cubos empilhados numa célula. */
+/** Limite original do Mundo principal e do servidor. */
 export const MAX_STACK = 2;
+/** Santuário pode construir até cinco níveis sem alterar o protocolo do Mundo principal. */
+export const SANCTUARY_MAX_STACK = 5;
 
 /** Quantos níveis o personagem consegue subir de uma vez. */
 export const STEP_HEIGHT = 1;
