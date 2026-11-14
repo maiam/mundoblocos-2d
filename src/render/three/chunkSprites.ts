@@ -43,13 +43,32 @@ export interface ChunkSpritesOptions {
   art(id: BlockId, x: number, y: number): SpriteDraw | null;
   maxBuildsPerFrame?: number;
   /** Objetos de chama viva (fogueira): a chama balança e pisca no próprio desenho (`FIRE_VERTEX`/`FIRE_FRAGMENT`). */
-  animated?(id: BlockId): boolean;
+  animated?(id: BlockId): 'fire' | 'sway' | null;
+  /** Alcance (células) em que o jogador curva a vegetação que balança (`sway`). */
+  swayRadius?: number;
 }
 
 /**
  * Chama que balança: o desenho da fogueira (toras e pedras embaixo, fogo em cima) é amostrado com a coordenada horizontal ondulando
  * tanto mais quanto mais alto o ponto, e os pixels de cor de fogo pulsam em brilho. Sem recorte do desenho: o mesmo sprite, só animado.
  */
+/**
+ * Vegetação ao vento: a parte de cima do desenho ondula com o tempo (fase pela posição, para o capinzal não balançar em bloco) e se
+ * curva para longe do jogador que passa a menos de `uSwayRadius`. A base fica presa ao chão.
+ */
+const SWAY_FRAGMENT = `
+#ifdef USE_MAP
+float sw = smoothstep(0.05, 1.0, vMapUv.y);
+float wind = sin(uSwayTime * 1.7 + vSwayWp.x * 0.8 + vSwayWp.z * 0.55) * 0.6 + sin(uSwayTime * 3.1 + vSwayWp.x * 2.1) * 0.25;
+vec2 away = vSwayWp.xz - uSwayPlayer;
+float push = smoothstep(uSwayRadius, 0.0, length(away)) * (away.x >= 0.0 ? 1.0 : -1.0);
+vec2 suv = vMapUv;
+suv.x -= (wind * 0.014 + push * 0.07) * sw;
+vec4 sampledDiffuseColor = texture2D(map, suv);
+diffuseColor *= sampledDiffuseColor;
+#endif
+`;
+
 const FIRE_FRAGMENT = `
 #ifdef USE_MAP
 vec2 fuv = vMapUv;
@@ -86,6 +105,7 @@ interface Asset {
   solid: THREE.MeshBasicMaterial;
   soft: THREE.MeshBasicMaterial;
   fire?: THREE.MeshBasicMaterial;
+  sway?: THREE.MeshBasicMaterial;
 }
 interface Group { mesh: THREE.InstancedMesh; cells: SpriteCell[] }
 interface Build { version: number; groups: Group[] }
@@ -104,6 +124,8 @@ export class ChunkSprites {
   private generation = 0;
   /** Tempo da chama (s), compartilhado pelos materiais animados. */
   private readonly fireUniforms = { uFireTime: { value: 0 }, uFlameFrom: { value: 0.3 }, uFlameTo: { value: 0.9 } };
+  /** Vento e passos (vegetação): relógio, onde está o jogador (x, z em células) e o alcance em que ele curva as plantas. */
+  private readonly swayUniforms = { uSwayTime: { value: 0 }, uSwayPlayer: { value: new THREE.Vector2(1e6, 1e6) }, uSwayRadius: { value: 1.1 } };
 
   constructor(
     private readonly scene: THREE.Object3D,
@@ -114,7 +136,29 @@ export class ChunkSprites {
   get count(): number { return this.builds.size; }
 
   /** Relógio da chama viva (chamar a cada quadro com o tempo decorrido). */
-  setTime(elapsed: number): void { this.fireUniforms.uFireTime.value = elapsed; }
+  setTime(elapsed: number): void { this.fireUniforms.uFireTime.value = elapsed; this.swayUniforms.uSwayTime.value = elapsed; }
+
+  /** Posição do jogador (células) para a vegetação se curvar ao passar; `null` = ninguém por perto. */
+  setSwayPlayer(x: number | null, z = 0): void {
+    this.swayUniforms.uSwayPlayer.value.set(x ?? 1e6, z);
+    this.swayUniforms.uSwayRadius.value = this.opts.swayRadius ?? 1.1;
+  }
+
+  private swayMaterial(a: Asset): THREE.MeshBasicMaterial {
+    if (a.sway) return a.sway;
+    const m = new THREE.MeshBasicMaterial({ map: a.texture, side: THREE.DoubleSide, transparent: true, depthWrite: false, alphaTest: 0.01 });
+    m.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, this.swayUniforms);
+      shader.vertexShader = shader.vertexShader
+        .replace('void main() {', 'varying vec3 vSwayWp;\nvoid main() {')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\nvSwayWp = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;\n#else\nvSwayWp = (modelMatrix * vec4(position, 1.0)).xyz;\n#endif');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('void main() {', 'uniform float uSwayTime; uniform vec2 uSwayPlayer; uniform float uSwayRadius; varying vec3 vSwayWp;\nvoid main() {')
+        .replace('#include <map_fragment>', SWAY_FRAGMENT);
+    };
+    a.sway = m;
+    return m;
+  }
 
   private fireMaterial(a: Asset): THREE.MeshBasicMaterial {
     if (a.fire) return a.fire;
@@ -192,7 +236,7 @@ export class ChunkSprites {
     const x0 = chunk.cx * CHUNK_SIZE;
     const y0 = chunk.cy * CHUNK_SIZE;
     const { tile } = this.opts;
-    const buckets = new Map<HTMLCanvasElement, { sprite: SpriteArt; walkable: boolean; animated: boolean; cells: SpriteCell[] }>();
+    const buckets = new Map<HTMLCanvasElement, { sprite: SpriteArt; walkable: boolean; animated: 'fire' | 'sway' | null; cells: SpriteCell[] }>();
     const MAX_STACK_DRAWN = 4;
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
@@ -201,7 +245,7 @@ export class ChunkSprites {
         const draw = this.opts.art(id, x, y);
         if (!draw) continue;
         let bucket = buckets.get(draw.sprite.canvas);
-        if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, animated: !!this.opts.animated?.(id), cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
+        if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, animated: this.opts.animated?.(id) ?? null, cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
         const scale = draw.scale && draw.scale !== 1 ? draw.scale : undefined;
         const n = Math.min(MAX_STACK_DRAWN, Math.max(1, Math.floor(draw.stack ?? 1)));
         for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale });
@@ -210,7 +254,7 @@ export class ChunkSprites {
     const groups: Group[] = [];
     for (const { sprite, walkable, animated, cells } of buckets.values()) {
       const a = this.asset(sprite);
-      const mesh = new THREE.InstancedMesh(a.geometry, animated ? this.fireMaterial(a) : walkable ? a.soft : a.solid, cells.length);
+      const mesh = new THREE.InstancedMesh(a.geometry, animated === 'fire' ? this.fireMaterial(a) : animated === 'sway' ? this.swayMaterial(a) : walkable ? a.soft : a.solid, cells.length);
       mesh.name = `Mundo: objeto (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
@@ -263,6 +307,7 @@ export class ChunkSprites {
       a.solid.dispose();
       a.soft.dispose();
       a.fire?.dispose();
+      a.sway?.dispose();
       a.texture.dispose();
     }
     this.assets.clear();

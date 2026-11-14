@@ -84,3 +84,22 @@ describe('Poeira de passos', () => {
     expect(DUST_STRIDE).toBeGreaterThan(0);
   });
 });
+
+describe('Vento e pegadas (v0.93.69)', () => {
+  it('só o capim e as flores balançam no vento; árvores, pedras e cubos não', async () => {
+    const { swaysInWind, SWAY_PUSH_RADIUS } = await import('../render/wind');
+    expect(swaysInWind(Block.TALL_GRASS)).toBe(true);
+    expect(swaysInWind(Block.FLOWER)).toBe(true);
+    expect(swaysInWind(Block.STONE)).toBe(false);
+    expect(swaysInWind(Block.AIR)).toBe(false);
+    expect(SWAY_PUSH_RADIUS).toBeGreaterThan(0);
+  });
+
+  it('pegadas só no chão macio (areia, terra, caminho, terra arada); a grama e a pedra não marcam', async () => {
+    const { printFor, PRINT_LIFE } = await import('../render/footDust');
+    for (const id of [Block.SAND, Block.DIRT, Block.PATH, Block.TILLED]) expect(printFor(id)).not.toBeNull();
+    for (const id of [Block.GRASS, Block.STONE, Block.WATER, Block.AIR]) expect(printFor(id)).toBeNull();
+    expect(PRINT_LIFE).toBeGreaterThan(2);
+    expect(printFor(Block.SAND)!.alpha).toBeLessThanOrEqual(0.6);
+  });
+});

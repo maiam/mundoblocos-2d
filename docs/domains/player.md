@@ -96,3 +96,6 @@
 ## Combate: fluidez (v0.93.63)
 - Golpe do jogador (`game/player.ts`): `ATTACK_CHAIN_AT` (70%) permite começar outro golpe depois do acerto; fila curta de `ATTACK_BUFFER_S` (0,18 s). Retorno (`game/game.ts`): `HITSTOP_*` e `SHAKE_*`; recuo do monstro escala com o dano (`Entities.strikeFrom` → `Monster.takeHit(..., knock)`).
 - Monstros (`game/monster.ts`): `windup` (goblin/lagarto 0,4 s, lobos 0,3 s): arma o ataque, dá para esquivar, golpe recebido cancela; aranhas mordem na hora.
+
+## Sensação de movimento (v0.93.69)
+- `game/feel.ts` (constantes e `?sensacao=0`): `Player.smooth` liga a inércia curta (`vx`/`vy`) e o passo por distância; `Game` liga e adianta a câmera (`look`); `render/three/actorBillboards.ts` balança o corpo; `worldThreeRenderer.stepDust` solta poeira e pegadas por passada; `game/aimAssist.ts` vira o golpe do botão para o monstro à frente.

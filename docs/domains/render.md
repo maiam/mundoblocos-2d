@@ -161,6 +161,9 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Portão: sprite por estado (`objects`), desenhado depois dos objetos da linha para os postes cobrirem as travessas.
   Desenho de frente; em cerca vertical usa o mesmo (aguarda arte de lado).
 
+## Fluidez e terreno vivo (v0.93.69)
+- Atores: `ActorBillboards` só repinta/reenvia a textura quando `SpriteSheet.visualKey` muda (`painted`/`skipped` para medir). Poeira e pegadas: `footDust.ts`/`three/footDust.ts`/`three/footPrints.ts`. Vegetação: material `sway` de `three/chunkSprites.ts` (`wind.ts`: capim e flores). Rede: `RemotePlayers` interpola amostras (`sampleAt`, `INTERP_DELAY`).
+
 ## Fogueira viva (v0.93.67)
 - Chama: material `animated` em `three/chunkSprites.ts` (`FIRE_FRAGMENT`: ondulação por altura, pulso e piscar). Efeitos: `three/fireFx.ts` (brilho no chão, halo, brasas). Dados e luz: `render/fireLight.ts` (puro: `findFires`, `fireLightOn`). Luz nos atores: `uFire*` no shader de `actorBillboards.ts`. O renderer refaz a lista de fogueiras a cada ~0,25 s. Raios de luz do Mundo valem `× SUBDIV` (`worldLight.glowSource`, luz do jogador).
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## Orvalis v0.93.69 — fluidez dos personagens: movimento, desempenho, terreno vivo e rede (14/11/2026)
+- **Pedido do dono do produto:** "nessa rodada melhoramos o que existe" — implementar o plano de jogabilidade em ordem (fases 1, 3, 4 e 6; a **fase 2, 8 direções para andar, espera arte** e a **fase 5, esquiva/corrida, ficou fora** por decisão dele). O movimento segue **responsivo** (estilo Stardew). Tudo da fase 1 se desliga com `?sensacao=0` para comparar.
+- **Fase 1 — sensação de movimento:** inércia curta do jogador (`game/feel.ts`: arranca em ~55 ms e para em ~40 ms, sem corte seco; só no `Player`, não no `Walker`, então animais e monstros do servidor não mudam); **passo pela distância** (o ciclo de caminhada acompanha a velocidade real: o pé não desliza nem corre contra a parede); **câmera que se adianta** ~18 px na direção do movimento; **balanço do corpo** ao andar (sobe a cada passada e inclina de leve) no 3D; **poeira de passos** com a cor do chão (`render/footDust.ts` + `three/footDust.ts`); **mira assistida do golpe** pelo botão/teclado (`game/aimAssist.ts`: vira para o monstro mais perto à frente; o mouse não usa).
+- **Fase 3 — desempenho dos atores:** cada ator só é repintado e só reenvia a textura quando o desenho muda (assinatura `SpriteSheet.visualKey`): ~70% menos pinturas/envios medidos com bando e animais na tela. O atlas instanciado completo ficou como próximo passo.
+- **Fase 4 — terreno vivo:** **capim e flores balançam** ao vento e **se curvam quando o jogador passa** (material `sway`, `render/wind.ts`); **pegadas** na areia, terra, caminho e terra arada, alternando os pés, que somem em ~7 s (`three/footPrints.ts`). Marolas na água e folhas ao vento ficam para depois.
+- **Fase 6 — rede:** os outros jogadores são desenhados com **interpolação entre as amostras** recebidas (atraso de 0,15 s, extrapolação curta se a rede atrasar, teletransporte em saltos grandes) no lugar da suavização exponencial que andava em degraus de 10 Hz; o passo deles também anda pela distância.
+- **Servidor:** `player.ts` ganhou campos e `actionController`/`feel` entram no pacote; o **protocolo não muda**, mas jogo e servidor sobem juntos.
+- Testes: inércia, passo, mira, poeira, pegadas, vento, cache de repintura, interpolação (539 testes, grades 1 e 2). Conferido no navegador (arranque/parada, câmera, pegadas, sem erros de shader).
+
 ## Orvalis v0.93.68 — golpe de espada da Mila em 8 quadros (14/11/2026)
 - **Pedido do dono do produto:** prancha de ataque com espada da Mila (a mesma de 8 direções × 8 quadros do Hood).
 - Entram as 4 direções do jogo (frente, esquerda, direita, costas) com os 8 quadros (as diagonais ficam guardadas em `assets-src/mila/mila-sword-attack8-sheet.png`). O corpo tem o mesmo tamanho da folha antiga (136 px de 144), então a altura em tela não muda. Processada **sem** `--largest`, porque o arco branco do golpe é um pedaço separado do corpo.

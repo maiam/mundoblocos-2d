@@ -36,3 +36,22 @@ export function dustFor(id: BlockId): DustStyle | null {
 
 /** Distância (células da grade atual) entre uma nuvenzinha e a seguinte: uma por passada. */
 export const DUST_STRIDE = 0.55 * SUBDIV;
+
+/** Pegada deixada no chão macio (areia, terra, caminho, terra arada); grama, pedra, água e afins não deixam. */
+export interface PrintStyle {
+  color: [number, number, number];
+  /** Opacidade inicial (0–1); some em `PRINT_LIFE` segundos. */
+  alpha: number;
+}
+export const PRINT_LIFE = 7;
+
+export function printFor(id: BlockId): PrintStyle | null {
+  switch (id) {
+    case Block.SAND: return { color: [0.62, 0.5, 0.28], alpha: 0.5 };
+    case Block.DIRT:
+    case Block.PATH:
+    case Block.DUNGEON_DIRT: return { color: [0.3, 0.18, 0.09], alpha: 0.5 };
+    case Block.TILLED: return { color: [0.22, 0.13, 0.06], alpha: 0.5 };
+    default: return null;
+  }
+}

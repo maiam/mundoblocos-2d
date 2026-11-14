@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SUBDIV } from '../../config';
 import type { DustStyle } from '../footDust';
 
 /**
@@ -62,11 +63,12 @@ export class FootDust {
     this.next = (this.next + 1) % MAX;
     const h = Math.sin(++this.counter * 12.9898) * 43758.5453;
     const r = h - Math.floor(h);
-    this.pos[i * 3] = x + (r - 0.5) * 0.25;
+    // Em células × `SUBDIV`: o corpo mantém os pixels na grade fina (ADR 0032).
+    this.pos[i * 3] = x + (r - 0.5) * 0.25 * SUBDIV;
     this.pos[i * 3 + 1] = 0.05 / this.k;
-    this.pos[i * 3 + 2] = z - 0.05;
-    this.vel[i * 3] = (r - 0.5) * 0.5;
-    this.vel[i * 3 + 1] = (0.25 + 0.2 * r) / this.k;
+    this.pos[i * 3 + 2] = z - 0.05 * SUBDIV;
+    this.vel[i * 3] = (r - 0.5) * 0.5 * SUBDIV;
+    this.vel[i * 3 + 1] = (0.25 + 0.2 * r) * SUBDIV / this.k;
     this.vel[i * 3 + 2] = 0;
     this.age[i] = 0;
     this.size[i] = (0.7 + 0.5 * r) * style.amount;

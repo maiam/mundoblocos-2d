@@ -10,7 +10,9 @@ import { flickerFactor, type LightSource, PLAYER_LIGHT, pickLights } from './lig
 import { collectWorldLights, worldAmbient } from './worldLight';
 import { actorLightAt } from './actorLight';
 import { feelOn } from '../game/feel';
-import { DUST_STRIDE, dustFor } from './footDust';
+import { DUST_STRIDE, dustFor, printFor } from './footDust';
+import { FootPrints } from './three/footPrints';
+import { SWAY_PUSH_RADIUS, swaysInWind } from './wind';
 import { FootDust } from './three/footDust';
 import { findFires, type FireSource } from './fireLight';
 import { FireFx } from './three/fireFx';
@@ -77,6 +79,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly fireFx: FireFx;
   /** Poeira de passos do jogador (v0.93.69): distância andada desde a última nuvenzinha e onde ele estava. */
   private readonly dust: FootDust;
+  private readonly prints: FootPrints;
   private dustWalked = 0;
   private dustAt: { x: number; y: number } | null = null;
   private fires: FireSource[] = [];
@@ -127,9 +130,10 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => id === Block.CAMPFIRE });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() && swaysInWind(id) ? 'sway' : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
+    this.prints = new FootPrints(this.worldLayer);
     this.walls = new ChunkWalls(this.worldLayer, world, this.wallAtlases, DEFAULT_WALL_THICKNESS);
     for (const [key, url] of Object.entries(art().wallAtlases ?? {})) {
       if (!url) continue;
@@ -195,6 +199,7 @@ export class WorldThreeRenderer implements GameRenderer {
     }
     // Fogueiras vivas (v0.93.67): a lista das visíveis é refeita a cada ~0,25 s; chama, brilho, brasas e luz nos atores.
     this.sprites.setTime(opts.elapsed);
+    this.sprites.setSwayPlayer(opts.actors[0] && !inside ? opts.actors[0].x : null, opts.actors[0]?.y);
     if (inside) this.fires = [];
     else if (opts.elapsed - this.firesAt > 0.25 || opts.elapsed < this.firesAt) {
       this.firesAt = opts.elapsed;
@@ -269,11 +274,15 @@ export class WorldThreeRenderer implements GameRenderer {
       this.dustAt = { x: a.x, y: a.y };
       if (this.dustWalked >= DUST_STRIDE) {
         this.dustWalked = 0;
-        const style = dustFor(this.world.getGround(Math.floor(a.x), Math.floor(a.y)));
+        const ground = this.world.getGround(Math.floor(a.x), Math.floor(a.y));
+        const style = dustFor(ground);
         if (style && a.visualZ < 0.05) this.dust.emit(a.x, a.y, style);
+        const print = printFor(ground);
+        if (print && a.visualZ < 0.05) this.prints.emit(a.x, a.y, a.facing === 'left' ? -1 : a.facing === 'right' ? 1 : 0, a.facing === 'up' ? -1 : a.facing === 'down' ? 1 : 0, print);
       }
     }
     this.dust.update(opts.dt, cellPx);
+    this.prints.update(opts.dt);
   }
 
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
@@ -320,6 +329,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.sprites.dispose();
     this.fireFx.dispose();
     this.dust.dispose();
+    this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();
     this.groundFx.dispose();
