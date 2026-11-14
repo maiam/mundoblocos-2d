@@ -30,7 +30,7 @@ interface V2Block { top: string; front: string; overlay?: string }
 export const V2_BLOCKS: Partial<Record<BlockId, V2Block>> = {
   [Block.SAND]: { top: 'areia', front: 'areia' },
   [Block.DIRT]: { top: 'terra', front: 'terra' },
-  [Block.GRASS]: { top: 'grama', front: 'terra', overlay: 'grama' },
+  [Block.GRASS]: { top: 'grama', front: 'grama' }, // topo e face próprios (v0.93.79), sem franja
   // As cinco pedras do jogo (as outras três foram aposentadas, `RETIRED_STONES`); sem frente própria, a frente é o topo.
   [Block.STONE]: { top: 'pedra', front: 'pedra' },
   [Block.STONE_BRICK]: { top: 'tijolo-de-pedra', front: 'tijolo-de-pedra' },
