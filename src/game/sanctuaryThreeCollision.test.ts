@@ -11,7 +11,7 @@ const traverse = (player: Player, world: World, dx: number, dy: number) => {
 };
 
 describe('Santuário Three.js — colisões físicas', () => {
-  it('não atravessa nem sobe automaticamente um cubo sólido de um nível', () => {
+  it('sobe um bloco de altura e depois desce normalmente', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
     world.setObject(sx + 2, sy, Block.STONE_CELESTIAL);
@@ -19,10 +19,12 @@ describe('Santuário Three.js — colisões físicas', () => {
 
     const player = new Player(sx + 0.5, sy + 0.5);
     configureSanctuaryThreeCollision(player, 'santuario', true);
-    expect(player.spec.stepHeight).toBe(0);
+    expect(player.spec.stepHeight).toBe(1);
 
+    for (let i = 0; i < Math.round(25 / SUBDIV); i++) player.update(1/60, 1, 0, world);
+    expect(player.x).toBeGreaterThan(sx + 2);
+    expect(player.z).toBe(1);
     traverse(player, world, 1, 0);
-    expect(player.x).toBeLessThanOrEqual(sx + 2 - player.spec.halfW);
     expect(player.z).toBe(0);
   });
 
@@ -31,8 +33,8 @@ describe('Santuário Three.js — colisões físicas', () => {
     const [sx, sy] = world.findSpawn();
     for (const x of [sx + 1, sx + 2, sx + 3]) {
       world.setObject(x, sy + 2, Block.STONE_CELESTIAL);
+      world.placeBlock(x, sy + 2, Block.STONE_GOLDEN);
     }
-    world.placeBlock(sx + 1, sy + 2, Block.STONE_GOLDEN);
     expect(world.stackHeight(sx + 1, sy + 2)).toBe(2);
     const front = new Player(sx + 2.5, sy + 0.5);
     configureSanctuaryThreeCollision(front, 'santuario', true);
@@ -69,7 +71,7 @@ describe('Santuário Three.js — colisões físicas', () => {
 
     const webgl = new Player(0.5, 0.5);
     configureSanctuaryThreeCollision(webgl, 'santuario', true);
-    expect(webgl.spec.stepHeight).toBe(0);
+    expect(webgl.spec.stepHeight).toBe(1);
   });
 
   it('preserva o mecanismo anterior de degraus nos perfis 2D', () => {
@@ -98,7 +100,7 @@ describe('Mundo em 2.5D — física sem degrau no piloto (ADR 0031, M5; `?fisica
     }
     const sanctuary = new Player(0.5, 0.5);
     configureSanctuaryThreeCollision(sanctuary, 'santuario', true); // o Santuário 3D não depende da flag
-    expect(sanctuary.spec.stepHeight).toBe(0);
+    expect(sanctuary.spec.stepHeight).toBe(1);
   });
 
   it('com a flag o jogador não sobe num cubo, mas anda em terreno plano (e a regra antiga sobe)', () => {
