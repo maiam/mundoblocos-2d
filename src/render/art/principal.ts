@@ -137,12 +137,32 @@ import sheep from '../../assets/sheep.webp';
 import horse from '../../assets/horse.webp';
 import cow from '../../assets/cow.webp';
 import chicken from '../../assets/chicken.webp';
+import capybara from '../../assets/capybara.webp';
+import capybaraIdle from '../../assets/capybara-idle.webp';
 import foal from '../../assets/foal.webp';
 import calf from '../../assets/calf.webp';
 import chick from '../../assets/chick.webp';
-import wolfBrown from '../../assets/wolf-marrom.webp';
-import wolfGray from '../../assets/wolf-cinza.webp';
-import wolfWhite from '../../assets/wolf-branco.webp';
+import wolfBrownWalk from '../../assets/wolf-brown-walk.webp';
+import wolfBrownIdle from '../../assets/wolf-brown-idle.webp';
+import wolfBrownRun from '../../assets/wolf-brown-run.webp';
+import wolfBrownAlert from '../../assets/wolf-brown-alert.webp';
+import wolfBrownAttack from '../../assets/wolf-brown-attack.webp';
+import wolfBrownHurt from '../../assets/wolf-brown-hurt.webp';
+import wolfBrownDeath from '../../assets/wolf-brown-death.webp';
+import wolfGrayWalk from '../../assets/wolf-gray-walk.webp';
+import wolfGrayIdle from '../../assets/wolf-gray-idle.webp';
+import wolfGrayRun from '../../assets/wolf-gray-run.webp';
+import wolfGrayAlert from '../../assets/wolf-gray-alert.webp';
+import wolfGrayAttack from '../../assets/wolf-gray-attack.webp';
+import wolfGrayHurt from '../../assets/wolf-gray-hurt.webp';
+import wolfGrayDeath from '../../assets/wolf-gray-death.webp';
+import wolfWhiteWalk from '../../assets/wolf-white-walk.webp';
+import wolfWhiteIdle from '../../assets/wolf-white-idle.webp';
+import wolfWhiteRun from '../../assets/wolf-white-run.webp';
+import wolfWhiteAlert from '../../assets/wolf-white-alert.webp';
+import wolfWhiteAttack from '../../assets/wolf-white-attack.webp';
+import wolfWhiteHurt from '../../assets/wolf-white-hurt.webp';
+import wolfWhiteDeath from '../../assets/wolf-white-death.webp';
 import goblinWalk from '../../assets/goblin-walk.webp';
 import goblinIdle from '../../assets/goblin-idle.webp';
 import goblinAttack from '../../assets/goblin-attack.webp';
@@ -319,6 +339,8 @@ const pack: ArtPack = {
     horse,
     cow,
     chicken,
+    capybara,
+    'capybara-idle': capybaraIdle,
     foal,
     calf,
     chick,
@@ -338,9 +360,24 @@ const pack: ArtPack = {
     'npc-caio': npcCaio,
     'npc-noel': npcNoel,
     'npc-leandro': npcLeandro,
-    'wolf-brown': wolfBrown,
-    'wolf-gray': wolfGray,
-    'wolf-white': wolfWhite,
+    'wolf-brown': wolfBrownWalk,
+    'wolf-brown-idle': wolfBrownIdle,
+    'wolf-brown-run': wolfBrownRun,
+    'wolf-brown-alert': wolfBrownAlert,
+    'wolf-brown-attack': wolfBrownAttack,
+    'wolf-brown-hurt': wolfBrownHurt,
+    'wolf-gray': wolfGrayWalk,
+    'wolf-gray-idle': wolfGrayIdle,
+    'wolf-gray-run': wolfGrayRun,
+    'wolf-gray-alert': wolfGrayAlert,
+    'wolf-gray-attack': wolfGrayAttack,
+    'wolf-gray-hurt': wolfGrayHurt,
+    'wolf-white': wolfWhiteWalk,
+    'wolf-white-idle': wolfWhiteIdle,
+    'wolf-white-run': wolfWhiteRun,
+    'wolf-white-alert': wolfWhiteAlert,
+    'wolf-white-attack': wolfWhiteAttack,
+    'wolf-white-hurt': wolfWhiteHurt,
     goblin: goblinWalk,
     'goblin-idle': goblinIdle,
     'goblin-run': goblinRun,
@@ -410,7 +447,7 @@ const pack: ArtPack = {
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
   town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide },
   water: { top: waterTop, flow: waterFlow },
-  monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath, goblin: goblinDeath, lizard: lizardDeath },
+  monsterDeaths: { 'spider-small': spiderSmallDeath, 'spider-big': spiderBigDeath, 'spider-boss': spiderBossDeath, goblin: goblinDeath, lizard: lizardDeath, 'wolf-brown': wolfBrownDeath, 'wolf-gray': wolfGrayDeath, 'wolf-white': wolfWhiteDeath },
   wheatCrop,
   crops: { potato: cropPotato, tomato: cropTomato, carrot: cropCarrot },
   itemIcons: { wheat_seed: seedIcon, wheat: wheatIcon, silk: silkIcon, fang: fangIcon, queen_heart: queenHeartIcon, wolf_fang: wolfFangIcon, wolf_pelt: wolfPeltIcon, copper_coin: copperCoinIcon, apple: appleIcon, potato: potatoIcon, tomato: tomatoIcon, carrot: carrotIcon, silk_cloth: silkClothIcon, bread: breadIcon, pasta_tomato: pastaTomatoIcon, milk: milkIcon, egg: eggIcon, cheese: cheeseIcon, apple_pie: applePieIcon },

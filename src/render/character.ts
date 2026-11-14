@@ -155,9 +155,26 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   // Aranhas da dungeon (scripts/extract-dungeon.py): 8 quadros de caminhada, arte de frente/esquerda.
   // Lobos (assets-src/lobos, v0.91.0): folha 4 × 4 canônica (frente, esquerda, direita, costas); a cauda e o focinho
   // passam da largura do corpo, então o quadro é quadrado. Mesma escala nas três cores.
-  'wolf-brown': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
-  'wolf-gray': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
-  'wolf-white': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 9 },
+  // Lobos (v0.93.61): sete folhas 4×4 por cor (walk, idle, run, alert, attack, hurt, death) na ordem canônica; o desenho ocupa
+  // ~97% do quadro (como as folhas antigas de 144 px), então a altura de tela segue TILE * 1.3.
+  'wolf-brown': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 8, death: { cols: 4, rows: 4, ratio: 1 } },
+  'wolf-brown-idle': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 2, loopWhenIdle: true },
+  'wolf-brown-run': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 12 },
+  'wolf-brown-alert': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-brown-attack': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-brown-hurt': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-gray': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 8, death: { cols: 4, rows: 4, ratio: 1 } },
+  'wolf-gray-idle': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 2, loopWhenIdle: true },
+  'wolf-gray-run': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 12 },
+  'wolf-gray-alert': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-gray-attack': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-gray-hurt': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-white': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 8, death: { cols: 4, rows: 4, ratio: 1 } },
+  'wolf-white-idle': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 2, loopWhenIdle: true },
+  'wolf-white-run': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 12 },
+  'wolf-white-alert': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-white-attack': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
+  'wolf-white-hurt': { cols: 4, rows: 4, height: TILE * 1.3, shadow: [0.5, 0.16], walkFps: 0, action: true },
   // Goblin: sete folhas 4×4 na ordem canônica (frente, esquerda, direita, costas), todas do mesmo padrão (v0.93.6–7): o
   // desenho ocupa ~95% do quadro com os pés na base, e GOBLIN_H mantém o tamanho em tela da arte anterior.
   goblin: { cols: 4, rows: 4, height: GOBLIN_H, shadow: [0.38, 0.13],
@@ -194,6 +211,9 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   // Vaca e galinha (process-sprite.py --alpha --largest): bichinhos chibi, menores que o cavalo.
   cow: { cols: 4, rows: 4, height: TILE * 1.35, shadow: [0.46, 0.14], walkFps: 6 },
   chicken: { cols: 4, rows: 4, height: TILE * 0.85, shadow: [0.26, 0.09], walkFps: 9 },
+  // Capivara (v0.93.61): folhas de caminhada e de parada (idle, respiração); eat/sleep/hurt/death ficam em `assets-src/capybara`.
+  capybara: { cols: 4, rows: 4, height: TILE * 1.15, shadow: [0.4, 0.13], walkFps: 6 },
+  'capybara-idle': { cols: 4, rows: 4, height: TILE * 1.15, shadow: [0.4, 0.13], walkFps: 2, loopWhenIdle: true },
   // Filhotes (process-sprite.py --alpha --largest): potro, bezerro e pintinho, menores e mais ligeiros que os pais.
   foal: { cols: 4, rows: 4, height: TILE * 1.1, shadow: [0.36, 0.11], walkFps: 8 },
   calf: { cols: 4, rows: 4, height: TILE * 0.95, shadow: [0.34, 0.11], walkFps: 7 },
