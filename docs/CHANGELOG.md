@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.64 — Grama Celestial de seis faces e laboratório de câmera (14/11/2026)
+- **Pedido do dono do produto:** testar inclinação e profundidade no Santuário com o cubo Grama Celestial, desenhado dos seis lados, e joystick de câmera.
+- **Grama Celestial:** nova textura 512×512 em cruz, com topo e quatro laterais pintadas e base de terra, aplicada por face no `BoxGeometry` do Three.js. A arte fica embutida em WebP no pacote do Santuário; outros blocos continuam com os materiais anteriores.
+- **Câmera orbital experimental:** botão **◉ Câmera**; joystick para azimute 360° e inclinação 15°–85°, zoom (0,6–2,2×), Resetar (67°) e Salvar (no dispositivo). Fechar retorna à projeção oblíqua; não muda colisão, construção, salvamento nem a câmera do Mundo principal. A Deusa de sprite acompanha o giro.
+- **Validação:** CI (TypeScript, Vitest e builds dos dois mundos). A comparação visual no aparelho e a escolha do ângulo definitivo ficam para o dono do produto.
+
 ## Orvalis v0.93.63 — combate mais fluido (14/11/2026)
 - **Pedido do dono do produto:** "pode seguir com os três primeiros" (retorno do golpe, previsibilidade dos monstros, cancelar/encadear).
 - **Retorno do golpe:** acertar um inimigo dá **hit-stop** (a simulação quase para por 0,055 s; 0,1 s no crítico), **tremida de câmera** (1,6 px; 3,2 no crítico; 2,2 ao levar dano) e **recuo proporcional** ao dano (`takeHit(..., knock)`: 0,8 a 2 × o recuo antigo; crítico +0,5). O hit-stop e a tremida são só do aparelho (na sala, vêm das mensagens `hits`).
