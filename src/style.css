@@ -726,3 +726,14 @@ html, body {
   .sanctuary-camera-ring { width: 70px; height: 70px; margin-bottom: 6px; }
   .sanctuary-camera-readout { margin-bottom: 5px; }
 }
+
+
+.sanctuary-camera-panel { max-height: min(92dvh, 680px); overflow-y: auto; }
+.sanctuary-scale-controls { display: grid; gap: 8px; padding: 5px 0 9px; text-align: left; }
+.sanctuary-scale-controls label { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; }
+.sanctuary-scale-controls output { color: #ffd46b; font-variant-numeric: tabular-nums; }
+.sanctuary-scale-controls input { grid-column: 1/-1; width: 100%; margin: 0; accent-color: #ffd46b; touch-action: auto; }
+@media (max-height: 430px) and (orientation: landscape) {
+  .sanctuary-scale-controls { gap: 4px; padding: 2px 0 5px; }
+  .sanctuary-camera-panel { max-height: calc(100dvh - 54px); }
+}
