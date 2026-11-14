@@ -33,6 +33,7 @@ export const CELESTIAL_STYLE: Record<number, Style> = {
   [Block.EARTH_CULTIVATED]: { outline: '#4e2e1a' },
   [Block.WATER_SACRED]: { outline: '#1f7fae' },
   [Block.WATER_CRYSTAL]: { outline: '#1a6aa0' },
+  [Block.WATER_PURE]: { outline: '#00a9d6' },
   [Block.CRYSTAL_LIFE]: { outline: '#9a4aa8' },
   [Block.LIGHT_BLOCK]: { outline: '#b8862a' },
   [Block.WOOD_CELESTIAL]: { outline: '#9a8264' },
@@ -62,6 +63,7 @@ function surfaceFace(img: HTMLImageElement, w: number, h: number): HTMLCanvasEle
 type CelestialFaces = {
   top: HTMLCanvasElement; front: HTMLCanvasElement; ground: HTMLCanvasElement;
   cube?: [HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement, HTMLCanvasElement];
+  unlit?: boolean;
 };
 const cache = new Map<number, CelestialFaces>();
 let grassNet: HTMLImageElement | null = null;
@@ -73,6 +75,38 @@ function netTile(img: HTMLImageElement, col: number, row: number): HTMLCanvasEle
   const out = document.createElement('canvas');
   out.width = out.height = 128;
   out.getContext('2d')!.drawImage(img, col * 128, row * 128, 128, 128, 0, 0, 128, 128);
+  return out;
+}
+
+/**
+ * A Terra Arada tem o mesmo pigmento do barro da Grama Celestial.
+ * O atlas de arado V2 fornece somente a variação de relevo/claridade,
+ * jamais uma segunda paleta de terra (evita blocos com tons incompatíveis).
+ */
+function cultivatedTop(earth: HTMLCanvasElement): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = out.height = 128;
+  const ctx = out.getContext('2d')!;
+  ctx.drawImage(earth, 0, 0);
+  const furrows = v2Faces(Block.TILLED, 128, 128, 1);
+  if (!furrows) return out;
+  const source = document.createElement('canvas');
+  source.width = source.height = 128;
+  furrows.top(source.getContext('2d')!);
+  const original = ctx.getImageData(0, 0, 128, 128);
+  const relief = source.getContext('2d')!.getImageData(0, 0, 128, 128).data;
+  const pixels = original.data;
+  const lum = (index: number) => 0.2126 * relief[index] + 0.7152 * relief[index + 1] + 0.0722 * relief[index + 2];
+  let average = 0;
+  for (let i = 0; i < relief.length; i += 4) average += lum(i);
+  average /= relief.length / 4;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const factor = Math.max(0.68, Math.min(1.32, 1 + (lum(i) - average) * 1.5 / 255));
+    pixels[i] = Math.min(255, pixels[i] * factor);
+    pixels[i + 1] = Math.min(255, pixels[i + 1] * factor);
+    pixels[i + 2] = Math.min(255, pixels[i + 2] * factor);
+  }
+  ctx.putImageData(original, 0, 0);
   return out;
 }
 
@@ -90,7 +124,30 @@ export function celestialFaces(id: number): CelestialFaces {
       const north = netTile(grassNet, 3, 1);
       const top = netTile(grassNet, 1, 0);
       const bottom = netTile(grassNet, 1, 2);
-      faces = { top, front: south, ground: top, cube: [east, west, top, bottom, south, north] };
+      faces = { top, front: south, ground: top, cube: [east, west, top, bottom, south, north], unlit: true };
+      cache.set(id, faces);
+      return faces;
+    }
+    // Grama, Terra e Arada passam a usar a MESMA tinta de barro, diretamente
+    // da face inferior da rede da Grama Celestial (sem diferença de iluminação).
+    if ((id === Block.DIRT || id === Block.TILLED) && grassNet) {
+      const earth = netTile(grassNet, 1, 2);
+      const top = id === Block.TILLED ? cultivatedTop(earth) : earth;
+      faces = { top, front: earth, ground: top,
+        cube: [earth, earth, top, earth, earth, earth], unlit: true };
+      cache.set(id, faces);
+      return faces;
+    }
+    // Água Pura: arte enviada em azul-turquesa aplicada em seis faces reais.
+    if (id === Block.WATER_PURE) {
+      const water = getCelestialSurface(id);
+      const face = document.createElement('canvas');
+      face.width = face.height = 128;
+      const ctx = face.getContext('2d')!;
+      if (water) ctx.drawImage(water, 0, 0, 128, 128);
+      else { ctx.fillStyle = '#08b9d9'; ctx.fillRect(0, 0, 128, 128); }
+      faces = { top: face, front: face, ground: face,
+        cube: [face, face, face, face, face, face], unlit: true };
       cache.set(id, faces);
       return faces;
     }
@@ -109,7 +166,7 @@ export function celestialFaces(id: number): CelestialFaces {
         const side = document.createElement('canvas');
         side.width = side.height = 128;
         side.getContext('2d')!.drawImage(sheet, 0, 128, 128, 128, 0, 0, 128, 128);
-        faces = { top, front: side, ground: top, cube: [side, side, top, side, side, side] };
+        faces = { top, front: side, ground: top, cube: [side, side, top, side, side, side], unlit: true };
         cache.set(id, faces);
         return faces;
       }
