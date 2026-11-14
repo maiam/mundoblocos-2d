@@ -30,8 +30,6 @@ export class SanctuaryCameraJoystick {
   private readonly cellRange: HTMLInputElement;
   private orbit: SanctuaryOrbit = { ...DEFAULT };
   private open = false;
-  /** Preset padrão aplicado imediatamente, sem precisar abrir o painel. */
-  private useOriginal = false;
   private pointerId: number | null = null;
   private lastX = 0;
   private lastY = 0;
@@ -79,11 +77,9 @@ export class SanctuaryCameraJoystick {
     this.blockRange = this.root.querySelector<HTMLInputElement>('[data-range="block"]')!;
     this.cellRange = this.root.querySelector<HTMLInputElement>('[data-range="cell"]')!;
     this.blockRange.addEventListener('input', () => {
-      this.useOriginal = false;
       this.orbit.blockHeight = Number(this.blockRange.value) / 100; this.publish();
     });
     this.cellRange.addEventListener('input', () => {
-      this.useOriginal = false;
       this.orbit.cellSize = Number(this.cellRange.value) / 100; this.publish();
     });
     this.root.querySelector<HTMLButtonElement>('.sanctuary-camera-toggle')!.addEventListener('click', () => {
@@ -94,7 +90,6 @@ export class SanctuaryCameraJoystick {
       this.updateReadout();
     });
     this.root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach(btn => btn.addEventListener('click', () => {
-      this.useOriginal = false;
       this.orbit = btn.dataset.preset === '1' ? { ...DEFAULT } : { ...CAMERA_OPTION_2 };
       this.publish();
     }));
@@ -105,9 +100,9 @@ export class SanctuaryCameraJoystick {
     this.ring.addEventListener('lostpointercapture', this.end);
     this.root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach(btn => btn.addEventListener('click', () => {
       switch (btn.dataset.action) {
-        case 'minus': this.useOriginal = false; this.orbit.zoom /= 1.15; break;
-        case 'plus': this.useOriginal = false; this.orbit.zoom *= 1.15; break;
-        case 'reset': this.orbit = { ...DEFAULT }; this.useOriginal = false; break;
+        case 'minus': this.orbit.zoom /= 1.15; break;
+        case 'plus': this.orbit.zoom *= 1.15; break;
+        case 'reset': this.orbit = { ...DEFAULT }; break;
         case 'save':
           try { localStorage.setItem(KEY, JSON.stringify(this.orbit)); btn.textContent = 'Salvo ✓'; }
           catch { btn.textContent = 'Indisponível'; }
@@ -135,7 +130,6 @@ export class SanctuaryCameraJoystick {
     e.preventDefault();
     const dx = e.clientX - this.lastX, dy = e.clientY - this.lastY;
     this.lastX = e.clientX; this.lastY = e.clientY;
-    this.useOriginal = false;
     this.orbit.azimuthDeg += dx * 0.48;
     this.orbit.elevationDeg = clamp(this.orbit.elevationDeg + dy * 0.35, 15, 85);
     const bounds = this.ring.getBoundingClientRect();
