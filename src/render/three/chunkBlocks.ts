@@ -17,7 +17,7 @@ export interface ChunkBlocksOptions {
   /** `solid` (cubo cheio), `thin` (placa de meia profundidade, parede horizontal de construção) ou `slab` (laje baixa: piloto `?tabua=laje`). */
   classify(world: BlockWorld, id: BlockId, x: number, y: number, level: number): CubeShape;
   /** Posição do centro da caixa em unidades de mundo. */
-  transform(cell: { x: number; y: number; level: number; shape: CubeShape; slabHeight?: number }): { x: number; y: number; z: number };
+  transform(cell: { x: number; y: number; level: number; shape: CubeShape; slabHeight?: number; slabBase?: number }): { x: number; y: number; z: number };
   /** Materiais do bloco por face do `BoxGeometry`. */
   material(id: BlockId): THREE.Material[];
   /** Reconstruções de chunk por quadro. */
@@ -120,7 +120,8 @@ export class ChunkBlocks {
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const x = x0 + lx, y = y0 + ly;
-        for (let level = 0; level < MAX_STACK; level++) {
+        // Até o limite do Mundo (2) ou, com o piloto das lajes ligado, os níveis que o chunk realmente tem (até 4).
+        for (let level = 0; level < Math.max(MAX_STACK, chunk.levels?.length ?? 0); level++) {
           const id = this.world.getLevel(x, y, level);
           if (!this.opts.isCube(id)) continue;
           const shape = this.opts.classify(this.world, id, x, y, level);
@@ -136,7 +137,10 @@ export class ChunkBlocks {
       const mesh = new THREE.InstancedMesh(shape === 'thin' ? this.thin : shape === 'slab' ? this.slabFor(slabHeightOf(id)) : this.solid, this.opts.material(id), cells.length);
       mesh.name = `Mundo: cubo ${id} ${shape} (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
-        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape, slabHeight: shape === 'slab' ? slabHeightOf(id) : undefined });
+        // Laje: altura própria e assenta na soma das alturas das lajes de baixo (pilha de até 4, piloto).
+        let slabBase = 0;
+        if (shape === 'slab') for (let l = 0; l < cell.level; l++) slabBase += slabHeightOf(this.world.getLevel(cell.x, cell.y, l));
+        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape, slabHeight: shape === 'slab' ? slabHeightOf(id) : undefined, slabBase });
         this.dummy.position.set(t.x, t.y, t.z);
         this.dummy.rotation.set(0, 0, 0);
         this.dummy.scale.set(1, 1, 1);

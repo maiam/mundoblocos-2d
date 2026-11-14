@@ -27,12 +27,12 @@ export function classifySanctuaryBlock(
 }
 
 /** Um cubo cheio ou uma placa de meia profundidade encostada à frente da célula. */
-export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'> & {slabHeight?:number}): {
+export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'> & {slabHeight?:number;slabBase?:number}): {
   x:number;y:number;z:number;width:number;height:number;depth:number;
 } {
   const thin=cell.shape==='thin';
   // Laje (piloto): a altura vem do bloco (1/4, 3/8 ou 1/2), com o centro na metade dela.
-  if(cell.shape==='slab'){const h=cell.slabHeight??0.25;return {x:cell.x+0.5,y:cell.level+h/2,z:cell.y+1-SLAB_DEPTH/2,width:1,height:h,depth:SLAB_DEPTH};}
+  if(cell.shape==='slab'){const h=cell.slabHeight??0.25;return {x:cell.x+0.5,y:(cell.slabBase??0)+h/2,z:cell.y+1-SLAB_DEPTH/2,width:1,height:h,depth:SLAB_DEPTH};}
   return {
     x:cell.x+0.5,y:cell.level+0.5,
     z:cell.y+(thin?0.75:0.5),
