@@ -25,7 +25,7 @@ describe.runIf(SUBDIV === 2)('animais domésticos na Vila Camponesa (v0.93.91)',
     expect(by('chicken')).toHaveLength(4);
     expect(by('capybara')).toHaveLength(3);
     for (const a of [...sheep, ...by('cow'), ...by('chicken'), ...by('capybara')]) {
-      expect(inRect(v.area, Math.floor(a.x), Math.floor(a.y)), `${a.kind} em ${a.x},${a.y}`).toBe(true);
+      expect(inRect(v.area, Math.floor(a.x), Math.floor(a.y)), `${a.constructor.name} em ${a.x},${a.y}`).toBe(true);
       expect(w.getGround(Math.floor(a.x), Math.floor(a.y))).toBe(Block.GRASS);
     }
     expect(e.npcs.every((n) => n.constructor.name === 'Sheep')).toBe(true);
