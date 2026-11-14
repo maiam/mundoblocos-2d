@@ -3,6 +3,7 @@ import { Block, CELESTIAL_BLOCKS } from '../world/blocks';
 import { getCelestialAtlas, getCelestialSurface } from './blockArt';
 import { v2Faces } from './materialsV2';
 import { seamlessCubeFace } from './seamlessCubeTexture';
+import { seamlessPixelEdges } from './seamlessCubeTexture';
 
 /**
  * Blocos do Santuário Celestial — arte da prancha 3/4 fornecida
@@ -67,6 +68,29 @@ type CelestialFaces = {
   unlit?: boolean;
 };
 const cache = new Map<number, CelestialFaces>();
+/** Atlas dedicado de três painéis fornecidos para o bloco Grama no Santuário.
+ * Sequência: topo de grama | lateral de grama/terra | terra inferior.
+ * Não altera Block.GRASS do Mundo principal, nem as texturas dos outros sete blocos.
+ */
+let sanctuaryGrassPanels: HTMLImageElement | null = null;
+export function installSanctuaryGrassPanels(image: HTMLImageElement): void {
+  sanctuaryGrassPanels = image;
+  cache.delete(Block.GRASS);
+}
+function sanctuaryGrassPanel(index: number, horizontalOnly = false): HTMLCanvasElement {
+  const image = sanctuaryGrassPanels!;
+  const size = image.height;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(image, size * index, 0, size, size, 0, 0, 128, 128);
+  const pixels = ctx.getImageData(0, 0, 128, 128);
+  // As imagens novas não têm molduras artificiais: NÃO recortar os 7%.
+  // Laterais preservam a franja verde em cima e a terra embaixo.
+  pixels.data.set(seamlessPixelEdges(pixels.data, 128, 128, horizontalOnly ? 'horizontal' : 'both', 0.08));
+  ctx.putImageData(pixels, 0, 0);
+  return canvas;
+}
 /** Atlas exclusivo do laboratório: 8 blocos × 6 faces, ordenados pela hotbar.
  * Linhas: +X, -X, +Y, -Y, +Z, -Z (ordem nativa do BoxGeometry). */
 export const SANCTUARY_CUBE_IDS = [
@@ -153,6 +177,17 @@ function cultivatedTop(earth: HTMLCanvasElement): HTMLCanvasElement {
 export function celestialFaces(id: number): CelestialFaces {
   let faces = cache.get(id);
   if (!faces) {
+    if (id === Block.GRASS && sanctuaryGrassPanels) {
+      const top = sanctuaryGrassPanel(0);
+      const side = sanctuaryGrassPanel(1, true);
+      const bottom = sanctuaryGrassPanel(2);
+      faces = {
+        top, front: side, ground: top,
+        cube: [side, side, top, bottom, side, side], unlit: true,
+      };
+      cache.set(id, faces);
+      return faces;
+    }
     // As oito artes novas são a única fonte visual desses materiais no
     // Santuário. Cada cubo usa as seis faces EXATAS da rede enviada, sem
     // modificar o restante dos blocos do Mundo principal.
