@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.73 — três lajes de Carvalho (laje1, laje2, laje3) no piloto (14/11/2026)
+- **Pedido do dono do produto:** "ficou melhor do que eu imaginava" — criar **3 versões da tábua com receitas `laje1` (4 × 16, topo 16 × 16), `laje2` (6 × 16) e `laje3` (8 × 16)**, só offline com `?tabua=laje`, para testar.
+- **Blocos novos** (`Block.OAK_SLAB_1/2/3` = 250–252, `SLAB_BLOCKS`; `world/slabs.ts` → `SLABS`): face de **4, 6 e 8 px** numa célula de 16 px (1/4, 3/8 e 1/2 de célula), topo 16 × 16 com a textura da Tábua de Carvalho (frente = recorte da faixa de cima, sem esticar). A **Tábua de Carvalho voltou a ser cubo comum** (no piloto anterior ela mesma virava laje).
+- **Receitas** (`laje1`, `laje2`, `laje3`, profissão Construtor, `Recipe.pilot = 'laje'`): **1 Tábua de Carvalho → 4, 3 e 2 lajes** (números provisórios, ajustáveis olhando o ritmo do jogo). As receitas **só aparecem com `?tabua=laje`**, e os blocos só se colocam nele (`World.placementLevel`); ícones próprios (a Tábua baixa em 3 espessuras).
+- **Regras:** cada laje é andável (nível do chão) e **sobe o corpo a própria altura** só no visual; lajes **não empilham** e nada se põe em cima delas; colocam-se sobre chão livre e coletam-se de volta ao quebrar. Sem o parâmetro os ids existem mas valem cubo cheio (ninguém os fabrica nem os coloca), então nada muda para quem não testa.
+- Só cliente + `World`/`Items` (inertes sem o piloto; a sala não liga lajes). Testes: três alturas, receitas, andar/subir, não empilhar, geometria/UV (552 testes, grades 1 e 2). Conferido no navegador: fabricar as três, colocar e andar por cima (corpo a 0,25 / 0,375 / 0,5).
+
 ## Orvalis v0.93.72 — piloto da laje de Carvalho: topo 16 × 16, face 16 × 4 (14/11/2026)
 - **Pedido do dono do produto:** testar a Tábua de Carvalho com **face 16 × 4 e topo 16 × 16** (a célula do Mundo tem 16 × 16 px na grade 2; o cubo atual é topo 16 × 16 + face 16 × 16 na vista K = 1). Decisões dele: **piloto reversível** e laje **andável com o corpo subindo 4 px**.
 - **Como ligar:** `?tabua=laje` — só no Mundo principal, no 3D e **offline** (a sala não conhece lajes). Sem o parâmetro tudo segue como era; o dado guardado (saves, sala) continua o cubo comum, então tirar o parâmetro desfaz o piloto.

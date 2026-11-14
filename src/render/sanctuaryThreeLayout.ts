@@ -1,4 +1,3 @@
-import { SLAB_HEIGHT } from '../world/slabs';
 import { Block, blockDef, type BlockId } from '../world/blocks';
 import { SANCTUARY_MAX_STACK } from '../config';
 import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape } from './adaptiveWalls';
@@ -27,12 +26,12 @@ export function classifySanctuaryBlock(
 }
 
 /** Um cubo cheio ou uma placa de meia profundidade encostada à frente da célula. */
-export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'>): {
+export function sanctuaryBlockTransform(cell: Pick<SanctuaryBlockCell,'x'|'y'|'level'|'shape'> & {slabHeight?:number}): {
   x:number;y:number;z:number;width:number;height:number;depth:number;
 } {
   const thin=cell.shape==='thin';
-  // Laje (piloto): altura de 1/4, centro 1/8 acima do nível.
-  if(cell.shape==='slab')return {x:cell.x+0.5,y:cell.level+SLAB_HEIGHT/2,z:cell.y+0.5,width:1,height:SLAB_HEIGHT,depth:1};
+  // Laje (piloto): a altura vem do bloco (1/4, 3/8 ou 1/2), com o centro na metade dela.
+  if(cell.shape==='slab'){const h=cell.slabHeight??0.25;return {x:cell.x+0.5,y:cell.level+h/2,z:cell.y+0.5,width:1,height:h,depth:1};}
   return {
     x:cell.x+0.5,y:cell.level+0.5,
     z:cell.y+(thin?0.75:0.5),

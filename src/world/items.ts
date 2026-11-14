@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWallDoor, isWheat, MATERIALS, SLAB_BLOCKS, WHEAT_STAGES, wheatStage } from './blocks';
 import { isWolf, type MonsterKind } from './dungeon';
 
 /**
@@ -281,7 +281,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
+const COLLECTABLE = new Set<number>([...MATERIALS, ...SLAB_BLOCKS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
 
 /** Árvores adultas (dão 2–3 toras). */
 const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.APPLE_TREE, Block.APPLE_TREE_BARE]);
@@ -339,12 +339,19 @@ export interface Recipe {
   output: Drop;
   /** Bloco que precisa estar perto da personagem para fazer a receita (ex.: Caldeirão para cozinhar). */
   station?: BlockId;
+  /** Receita do piloto das lajes: só aparece com `?tabua=laje` (offline). */
+  pilot?: 'laje';
 }
 
 /** Distância máxima (células, do centro da personagem ao centro do bloco) para usar uma estação de receita. */
 export const STATION_REACH = 3;
 
 export const RECIPES: Recipe[] = [
+  // Lajes de Carvalho (piloto `?tabua=laje`, v0.93.73): 1 Tábua rende 4, 3 ou 2 lajes (4, 6 e 8 px de face).
+  ...([['laje1', 'Laje 1 de Carvalho (4×16)', Block.OAK_SLAB_1, 4], ['laje2', 'Laje 2 de Carvalho (6×16)', Block.OAK_SLAB_2, 3], ['laje3', 'Laje 3 de Carvalho (8×16)', Block.OAK_SLAB_3, 2]] as const).map(([id, name, out, n]): Recipe => ({
+    id, name, profession: 'builder', pilot: 'laje',
+    inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 1 }], output: { item: blockStack(out), count: n },
+  })),
   {
     id: 'oak-planks', name: 'Tábua de Carvalho', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_LOG), count: 1 }], output: { item: blockStack(Block.OAK_PLANKS), count: 2 },

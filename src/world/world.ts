@@ -1,4 +1,4 @@
-import { SLAB_HEIGHT } from './slabs';
+import { slabHeightOf } from './slabs';
 import { CHUNK_SIZE, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
 import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isRemovedBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
@@ -390,9 +390,9 @@ export class World {
     return true;
   }
 
-  /** Quanto o corpo sobe por cima da célula (visual): `SLAB_HEIGHT` sobre laje, 0 no resto. */
+  /** Quanto o corpo sobe por cima da célula (visual): a altura da laje ali, 0 no resto. */
   slabLift(x: number, y: number): number {
-    return this.isSlabAt(x, y) ? SLAB_HEIGHT : 0;
+    return this.isSlabAt(x, y) ? slabHeightOf(this.getObject(x, y)) : 0;
   }
 
   /** Mantido para o objeto do nível 0 (testes/ferramentas). */
@@ -519,7 +519,9 @@ export class World {
     const def = blockDef(id);
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
-    if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
+    if ((!this.profile.blocks.includes(id) && !(this.slabs.has(id))) || this.isProtected(x, y)) return null;
+    // Lajes (piloto) não empilham e nada se põe em cima delas (o desenho de pilha com laje ainda não existe).
+    if (this.isSlabAt(x, y) || (this.slabs.has(id) && !(this.getObject(x, y) === Block.AIR || blockDef(this.getObject(x, y)).shape === 'decoration'))) return null;
     if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
     if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, MAX_STACK } from '../../config';
-import { SLAB_HEIGHT } from '../../world/slabs';
+import { slabHeightOf } from '../../world/slabs';
 import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import type { ChunkRect } from '../../world/world';
@@ -17,7 +17,7 @@ export interface ChunkBlocksOptions {
   /** `solid` (cubo cheio), `thin` (placa de meia profundidade, parede horizontal de construção) ou `slab` (laje baixa: piloto `?tabua=laje`). */
   classify(world: BlockWorld, id: BlockId, x: number, y: number, level: number): CubeShape;
   /** Posição do centro da caixa em unidades de mundo. */
-  transform(cell: { x: number; y: number; level: number; shape: CubeShape }): { x: number; y: number; z: number };
+  transform(cell: { x: number; y: number; level: number; shape: CubeShape; slabHeight?: number }): { x: number; y: number; z: number };
   /** Materiais do bloco por face do `BoxGeometry`. */
   material(id: BlockId): THREE.Material[];
   /** Reconstruções de chunk por quadro. */
@@ -25,15 +25,15 @@ export interface ChunkBlocksOptions {
 }
 
 /**
- * Laje: caixa de topo 1 × 1 e altura `SLAB_HEIGHT` (16 × 16 de topo e 16 × 4 de face). As faces laterais usam só o quarto de cima da
- * imagem (recorte, não esticada): v em [1 − `SLAB_HEIGHT`, 1]; o topo e a base seguem inteiros.
+ * Laje: caixa de topo 1 × 1 e altura `height` (célula = 1; 4, 6 ou 8 px de 16). As faces laterais usam só a faixa de cima da imagem
+ * (recorte, não esticada): v em [1 − `height`, 1]; o topo e a base seguem inteiros.
  */
-export function slabGeometry(): THREE.BoxGeometry {
-  const g = new THREE.BoxGeometry(1, SLAB_HEIGHT, 1);
+export function slabGeometry(height: number): THREE.BoxGeometry {
+  const g = new THREE.BoxGeometry(1, height, 1);
   const uv = g.getAttribute('uv') as THREE.BufferAttribute;
   // Ordem das faces do BoxGeometry: +X, −X, +Y (topo), −Y (base), +Z, −Z; 4 vértices cada.
   for (const face of [0, 1, 4, 5]) {
-    for (let i = face * 4; i < face * 4 + 4; i++) uv.setY(i, 1 - SLAB_HEIGHT + uv.getY(i) * SLAB_HEIGHT);
+    for (let i = face * 4; i < face * 4 + 4; i++) uv.setY(i, 1 - height + uv.getY(i) * height);
   }
   uv.needsUpdate = true;
   return g;
@@ -51,7 +51,14 @@ export class ChunkBlocks {
   private readonly builds = new Map<string, Build>();
   private readonly solid = new THREE.BoxGeometry(1, 1, 1);
   private readonly thin = new THREE.BoxGeometry(1, 1, 0.5);
-  private readonly slab = slabGeometry();
+  /** Geometria da laje por altura (uma por altura usada). */
+  private readonly slabs = new Map<number, THREE.BoxGeometry>();
+
+  private slabFor(height: number): THREE.BoxGeometry {
+    let g = this.slabs.get(height);
+    if (!g) { g = slabGeometry(height); this.slabs.set(height, g); }
+    return g;
+  }
   private readonly dummy = new THREE.Object3D();
 
   constructor(
@@ -106,10 +113,10 @@ export class ChunkBlocks {
     }
     const groups: Group[] = [];
     for (const { id, shape, cells } of buckets.values()) {
-      const mesh = new THREE.InstancedMesh(shape === 'thin' ? this.thin : shape === 'slab' ? this.slab : this.solid, this.opts.material(id), cells.length);
+      const mesh = new THREE.InstancedMesh(shape === 'thin' ? this.thin : shape === 'slab' ? this.slabFor(slabHeightOf(id)) : this.solid, this.opts.material(id), cells.length);
       mesh.name = `Mundo: cubo ${id} ${shape} (chunk ${chunk.cx},${chunk.cy})`;
       cells.forEach((cell, i) => {
-        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape });
+        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape, slabHeight: shape === 'slab' ? slabHeightOf(id) : undefined });
         this.dummy.position.set(t.x, t.y, t.z);
         this.dummy.rotation.set(0, 0, 0);
         this.dummy.scale.set(1, 1, 1);
@@ -149,6 +156,7 @@ export class ChunkBlocks {
     this.builds.clear();
     this.solid.dispose();
     this.thin.dispose();
-    this.slab.dispose();
+    for (const g of this.slabs.values()) g.dispose();
+    this.slabs.clear();
   }
 }

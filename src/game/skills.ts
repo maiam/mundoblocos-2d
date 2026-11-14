@@ -1,4 +1,5 @@
 import { blockDef, type BlockId } from '../world/blocks';
+import { slabPilotActive } from '../world/slabs';
 import { blockStack, canCraft, PROFESSIONS, type ProfessionId, type Recipe, RECIPES, type StackId } from '../world/items';
 
 /** Ícone e nome de uma pilha (resolvidos pelo Game com a arte do mundo). */
@@ -194,7 +195,8 @@ export class SkillsPanel {
   }
 
   private recipes(): Recipe[] {
-    return RECIPES.filter((r) => r.profession === this.profession);
+    // Receitas do piloto das lajes só aparecem com `?tabua=laje` (offline).
+    return RECIPES.filter((r) => r.profession === this.profession && (!r.pilot || slabPilotActive()));
   }
 
   /** Redesenha as receitas com o que a heroína tem agora; `nearStation` = a estação pedida está perto? */
