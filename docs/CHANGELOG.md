@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.61 — lobos com poses completas e a capivara (14/11/2026)
+- **Pedido do dono do produto:** atualizar o movimento dos três lobos e incluir a **capivara** como novo animal doméstico (21 folhas de lobo + 7 de capivara enviadas).
+- **Lobos:** 7 folhas por cor (walk, idle, run, alert, attack, hurt, death) pelo mesmo mecanismo do goblin/lagarto (`hasPoses`/`PoseKind`; `ActorKind` ganhou `${PoseKind}-${PoseState}`). Corre ao perseguir, alerta ao ver o jogador, ataca ao morder, treme ao levar golpe. As folhas de 144 px viraram 160 px por quadro (~2,7 MB em WebP para as 21; baixam sob demanda, fora do orçamento de início — `build-artifact.mjs` agora também isenta `lizard` e `capybara`).
+- **Capivara:** `FarmKind 'capybara'` (passeia perto do portão; idle quando parada). Sem reprodução (sem arte de filhote e sem alimento). Folhas de comer/dormir/dano/morte ficam guardadas.
+- **Protocolo 23** (novo tipo de animal no espelho da sala): servidor e jogo sobem juntos.
+
 ## Orvalis v0.93.60 — mais acampamentos de goblin e o homem-lagarto (14/11/2026)
 - **Pedido do dono do produto:** "1 acampamento a cada 4 chunks" e incluir o **homem-lagarto** (vive perto de rios, anda de 3 em 3; vida 100, ataque 15, 2 Moedas de Cobre; folhas enviadas). **Ajuste meu:** com o chunk de 256 px da grade 2, "a cada 4 chunks" colaria os acampamentos; ficou **1 por região de 4 × 4 chunks** (`PACK_REGION = 32 × SUBDIV` células) — uma constante só para ajustar. Aviso: muda o mapa de **todas as seeds** só nos acampamentos (antes 4, agora ~340–400 em ±10 regiões em volta da cidade).
 - **Homem-lagarto** (`MonsterKind 'lizard'`): bandos de 3 na margem de rios (`WorldGenerator.riverAt`, novo; sem fogueira), ficha em `MONSTER_STATS`, espólio em `monsterDrops`, mesmas 7 folhas do goblin (`--rows-map 0,2,3,1`, a ordem enviada era frente/costas/esquerda/direita), `hasPoses(kind)` no lugar dos `=== 'goblin'` (estado visual, sala e espelho).

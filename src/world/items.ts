@@ -39,7 +39,7 @@ export const Item = {
 export type ItemId = (typeof Item)[keyof typeof Item];
 
 /** Animais que se reproduzem comendo (ovelha, vaca, galinha, cavalo). */
-export type AnimalKind = 'sheep' | 'horse' | 'cow' | 'chicken';
+export type AnimalKind = 'sheep' | 'horse' | 'cow' | 'chicken' | 'capybara';
 
 export interface ItemDef {
   id: ItemId;

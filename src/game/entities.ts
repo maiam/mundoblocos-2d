@@ -11,7 +11,7 @@ import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
 import { MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
-import { type FlowField, hasPoses, Monster, MONSTERS } from './monster';
+import { type FlowField, hasPoses, Monster, MONSTERS, type PoseKind } from './monster';
 import { wolfPacks, wolfRoam } from '../world/wolves';
 import { goblinRoam, GOBLIN_PACK_SIZE, LIZARD_PACK_SIZE, lizardRoam } from '../world/goblins';
 import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
@@ -38,7 +38,9 @@ export function canSit(body: HeroBody): body is SitBody {
 /** Nome de cada personagem pronto na tela de escolha. */
 export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero: 'Herói', hood: 'Hood', gino: 'Gino', mila: 'Mila' };
 
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | 'goblin-idle' | 'goblin-run' | 'goblin-alert' | 'goblin-attack' | 'goblin-hurt' | 'lizard-idle' | 'lizard-run' | 'lizard-alert' | 'lizard-attack' | 'lizard-hurt';
+/** Estados de pose com folha própria (o `walk` é a folha do próprio tipo). */
+export type PoseState = 'idle' | 'run' | 'alert' | 'attack' | 'hurt';
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | `${PoseKind}-${PoseState}` | 'capybara' | 'capybara-idle';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -86,11 +88,12 @@ const PICK_BOX: Record<AnimalKind, [[number, number], [number, number]]> = {
   horse: [[1.5, 0.55], [1.05, 0.4]],
   cow: [[1.25, 0.5], [0.95, 0.4]],
   chicken: [[0.8, 0.3], [0.65, 0.26]],
+  capybara: [[0.95, 0.45], [0.95, 0.45]],
 };
 /** Quadros dos coraçõezinhos do namoro (folha `love-hearts`, `scripts/extract-love.py`). */
 const LOVE_FRAMES = 16;
 /** Tamanho dos coraçõezinhos por espécie (acompanha o tamanho do animal). */
-const LOVE_SCALE: Record<AnimalKind, number> = { sheep: 1, cow: 1.05, chicken: 0.7, horse: 1.25 };
+const LOVE_SCALE: Record<AnimalKind, number> = { sheep: 1, cow: 1.05, chicken: 0.7, horse: 1.25, capybara: 1 };
 /** Distância (células) em que dois animais apaixonados se encontram. */
 const PAIR_RANGE = 6 * SUBDIV;
 /** Distância (células) para começar a namorar. */
@@ -98,7 +101,7 @@ const COURT_DISTANCE = 1.5 * SUBDIV;
 /** Limite de ovelhas para a população não explodir. */
 export const MAX_SHEEP = 16;
 /** Limite por espécie (filhotes contam): a população não explode. */
-export const MAX_PER_SPECIES: Record<AnimalKind, number> = { sheep: MAX_SHEEP, horse: 6, cow: 10, chicken: 12 };
+export const MAX_PER_SPECIES: Record<AnimalKind, number> = { sheep: MAX_SHEEP, horse: 6, cow: 10, chicken: 12, capybara: 6 };
 
 /**
  * Desenho do personagem pronto: golpe (`<corpo>-<ferramenta>-attack`), andando com a ferramenta na mão
@@ -120,7 +123,7 @@ export interface AnimalSave {
   hy: number;
 }
 
-const ANIMAL_KINDS = new Set<string>(['sheep', 'horse', 'cow', 'chicken']);
+const ANIMAL_KINDS = new Set<string>(['sheep', 'horse', 'cow', 'chicken', 'capybara']);
 const finiteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 2 ** 30;
 
 /** Alvo distante: monstros sem ninguém por perto só passeiam. */
@@ -281,6 +284,7 @@ export class Entities {
       this.spawnHorse(world, gx + 9 * s, gy + (town ? 10 : 2) * s);
       this.spawnAnimals(world, 'cow', gx - 9 * s, gy + (town ? 10 : 2) * s, 2, 91);
       this.spawnAnimals(world, 'chicken', gx - 6 * s, gy + (town ? 6 : 1) * s, 4, 97);
+      this.spawnAnimals(world, 'capybara', gx - 8 * s, gy + (town ? 4 : 1) * s, 3, 103);
     }
     this.spawnMonsters(world);
     this.spawnWolves(world);
@@ -817,7 +821,7 @@ export class Entities {
     }
     for (const h of this.horses) {
       out.push({
-        kind: h.baby ? BABY_KIND[h.kind] : h.kind, x: h.x, y: h.y, visualZ: h.visualZ, facing: h.facing,
+        kind: h.baby ? BABY_KIND[h.kind] : h.kind === 'capybara' && !h.moving ? 'capybara-idle' : h.kind, x: h.x, y: h.y, visualZ: h.visualZ, facing: h.facing,
         moving: h.moving, walkTime: h.walkTime, inLove: h.inLove && h.courtship <= 0,
       });
     }

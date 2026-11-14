@@ -9,7 +9,7 @@ import { Sheep } from './sheep';
 
 /** Acima disso (células) o bicho é teleportado em vez de deslizar (voltou a ficar perto, renasceu…). */
 const SNAP = 6;
-const FARM_KINDS = new Set<string>(['horse', 'cow', 'chicken']);
+const FARM_KINDS = new Set<string>(['horse', 'cow', 'chicken', 'capybara']);
 
 interface Mirrored {
   obj: Breeder | Monster;

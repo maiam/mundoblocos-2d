@@ -1,5 +1,5 @@
 import { SUBDIV } from '../config';
-import { inRect, type MonsterKind, type Rect } from '../world/dungeon';
+import { inRect, isWolf, type MonsterKind, type Rect, type WolfKind } from '../world/dungeon';
 import { MONSTER_STATS } from '../world/progression';
 import type { World } from '../world/world';
 import { type Blocker, Walker, type WalkerSpec } from './walker';
@@ -26,9 +26,10 @@ export const WOLF_SIGHT = 3;
 export const GOBLIN_SIGHT = WOLF_SIGHT * SUBDIV;
 export const GOBLIN_ATTACK_SECONDS = 0.55;
 export const GOBLIN_ALERT_SECONDS = 0.48;
-/** Monstros com folhas de pose (idle, walk, run, alert, attack, hurt): goblin e homem-lagarto. */
-export function hasPoses(kind: MonsterKind): boolean {
-  return kind === 'goblin' || kind === 'lizard';
+/** Monstros com folhas de pose (idle, walk, run, alert, attack, hurt, death): goblin, homem-lagarto e os três lobos (v0.93.61). */
+export type PoseKind = 'goblin' | 'lizard' | WolfKind;
+export function hasPoses(kind: MonsterKind): kind is PoseKind {
+  return kind === 'goblin' || kind === 'lizard' || isWolf(kind);
 }
 export type GoblinVisual = 'idle' | 'walk' | 'run' | 'alert' | 'attack' | 'hurt';
 export const GOBLIN_VISUALS: readonly GoblinVisual[] = ['idle','walk','run','alert','attack','hurt'];

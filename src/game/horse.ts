@@ -10,7 +10,8 @@ export type FarmKind = Exclude<AnimalKind, 'sheep'>;
 export const FARM_GROW_UP_SECONDS = 3 * DAY_LENGTH_S;
 
 /** Nome do filhote de cada animal (ator do render e textos). */
-export const BABY_KIND = { horse: 'foal', cow: 'calf', chicken: 'chick' } as const;
+/** A capivara (v0.93.61) não tem filhote: sem arte de filhote nem alimento, ela só passeia (`BABY_KIND.capybara` não é usado). */
+export const BABY_KIND = { horse: 'foal', cow: 'calf', chicken: 'chick', capybara: 'capybara' } as const;
 export type BabyKind = (typeof BABY_KIND)[FarmKind];
 
 /** Corpo (adulto e filhote) e passeio de cada animal: velocidade, meia-largura/profundidade, pausas, passos e coleira (células). */
@@ -24,6 +25,11 @@ const FARM: Record<FarmKind, { adult: WalkerSpec; baby: WalkerSpec; idle: [numbe
     adult: { speed: 0.9, halfW: 0.38, halfD: 0.2, stepHeight: 0 },
     baby: { speed: 1.1, halfW: 0.27, halfD: 0.15, stepHeight: 0 },
     idle: [3, 8], walk: [1.5, 3.5], leash: 8,
+  },
+  capybara: {
+    adult: { speed: 0.8, halfW: 0.34, halfD: 0.2, stepHeight: 0 },
+    baby: { speed: 0.8, halfW: 0.34, halfD: 0.2, stepHeight: 0 },
+    idle: [3, 9], walk: [1.2, 3], leash: 7,
   },
   chicken: {
     adult: { speed: 1.3, halfW: 0.22, halfD: 0.14, stepHeight: 0 },
