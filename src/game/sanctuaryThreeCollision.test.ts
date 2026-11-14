@@ -87,6 +87,7 @@ describe('Santuário Three.js — colisões físicas', () => {
   it('preserva o mecanismo anterior de degraus nos perfis 2D', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
+    clearTestArea(world, sx, sy);
     world.setObject(sx + 2, sy, Block.STONE);
     const player = new Player(sx + 0.5, sy + 0.5);
     configureSanctuaryThreeCollision(player, 'santuario', false);
