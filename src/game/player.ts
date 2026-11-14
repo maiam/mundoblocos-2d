@@ -10,6 +10,12 @@ export type { Facing } from './walker';
 export const ATTACK_SECONDS = 0.36;
 /** Momento do golpe (fração da animação) em que o acerto é resolvido. */
 export const ATTACK_HIT_AT = 0.45;
+/**
+ * Cancelar e encadear (v0.93.63): depois do acerto, a partir desta fração da animação já dá para começar outro golpe (sem
+ * esperar o fim); um golpe pedido um pouco antes disso fica na fila por `ATTACK_BUFFER_S` e sai assim que possível.
+ */
+export const ATTACK_CHAIN_AT = 0.7;
+export const ATTACK_BUFFER_S = 0.18;
 /** Quadros da animação de ataque. */
 export const ATTACK_FRAMES = 4;
 /** Invencibilidade depois de levar dano (s) e depois de renascer. */
@@ -57,6 +63,9 @@ export class Player extends Walker {
   /** Golpes começados (a sala repassa aos outros, que tocam a animação ao ver o número mudar). */
   swings = 0;
   private hitDone = true;
+  /** Golpe pedido durante o anterior (fila curta): ferramenta e tempo restante da fila. */
+  private queuedTool: ToolId | null | undefined = undefined;
+  private queueLeft = 0;
   /** Atributos atuais (vida máxima, ataque, defesa — `world/progression.ts`). */
   stats: Stats = playerStats(1);
   /** Vida em pontos (0 = derrotada; o Game a faz renascer). */
@@ -89,9 +98,26 @@ export class Player extends Walker {
     return Math.min(ATTACK_FRAMES - 1, Math.floor(p * ATTACK_FRAMES));
   }
 
-  /** Começa um golpe (se não houver outro em andamento). */
+  /** Já passou do acerto e do ponto de cancelar: dá para começar outro golpe por cima do que termina. */
+  private get canChain(): boolean {
+    return this.attacking && this.hitDone && 1 - this.attackTime / ATTACK_SECONDS >= ATTACK_CHAIN_AT;
+  }
+
+  /**
+   * Começa um golpe. Com outro em andamento: se já dá para encadear, começa o novo; senão, se faltam até `ATTACK_BUFFER_S`
+   * para poder encadear, o pedido entra na fila (sai sozinho quando der) e devolve false; pedido mais cedo que isso é
+   * ignorado (apertar sem parar não empilha golpes).
+   */
   startAttack(tool: ToolId | null = this.equipped): boolean {
-    if (this.attacking) return false;
+    if (this.attacking && !this.canChain) {
+      const toChain = ATTACK_SECONDS * ATTACK_CHAIN_AT - (ATTACK_SECONDS - this.attackTime);
+      if (toChain <= ATTACK_BUFFER_S) {
+        this.queuedTool = tool;
+        this.queueLeft = ATTACK_BUFFER_S;
+      }
+      return false;
+    }
+    this.queuedTool = undefined;
     this.attackTool = tool;
     this.attackTime = ATTACK_SECONDS;
     this.swings++;
@@ -150,6 +176,7 @@ export class Player extends Walker {
     this.sinceHurt = Infinity;
     this.attackTime = 0;
     this.hitDone = true;
+    this.queuedTool = undefined;
   }
 
   /** Come: a fome sobe `points` (até cheia). false = sem fome (barra cheia) ou fome desligada. */
@@ -273,6 +300,12 @@ export class Player extends Walker {
     if (this.attacking) {
       this.facing = facing;
       this.attackTime = Math.max(0, this.attackTime - dt);
+    }
+    // Golpe na fila: sai assim que o anterior termina ou permite encadear; some se esperou demais.
+    if (this.queuedTool !== undefined) {
+      this.queueLeft -= dt;
+      if (this.queueLeft <= 0) this.queuedTool = undefined;
+      else if (!this.attacking || this.canChain) this.startAttack(this.queuedTool);
     }
   }
 }

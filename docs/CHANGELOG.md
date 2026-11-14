@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.63 — combate mais fluido (14/11/2026)
+- **Pedido do dono do produto:** "pode seguir com os três primeiros" (retorno do golpe, previsibilidade dos monstros, cancelar/encadear).
+- **Retorno do golpe:** acertar um inimigo dá **hit-stop** (a simulação quase para por 0,055 s; 0,1 s no crítico), **tremida de câmera** (1,6 px; 3,2 no crítico; 2,2 ao levar dano) e **recuo proporcional** ao dano (`takeHit(..., knock)`: 0,8 a 2 × o recuo antigo; crítico +0,5). O hit-stop e a tremida são só do aparelho (na sala, vêm das mensagens `hits`).
+- **Monstros armam o ataque:** goblin, homem-lagarto e lobos tocam a pose de ataque e o dano sai depois (`windup` 0,4 s goblin/lagarto, 0,3 s lobos), só se a personagem ainda estiver ao alcance — **dá para esquivar**; um golpe recebido durante o armar **cancela** o ataque; o monstro fica parado enquanto arma. Aranhas seguem mordendo na hora.
+- **Cancelar e encadear:** depois do acerto, a partir de 70% da animação já dá para começar outro golpe; um pedido até 0,18 s antes disso entra numa fila curta e sai sozinho (pedido mais cedo é ignorado: apertar sem parar não empilha golpes).
+- **Servidor:** mexe em `game/monster.ts` e `entities.ts` (tempo dos monstros) → `build:net` + `sync-net`; **protocolo não muda** (mesmas mensagens), mas o dano dos monstros na sala passa a sair com atraso: servidor e jogo sobem juntos.
+- Testes: armar/esquivar/interromper, recuo, aranha instantânea, golpes encadeados e na fila (500 testes, grades 1 e 2). Conferido no navegador (windup ≈ 0,42 s de jogo; hit-stop/tremida/recuo no golpe).
+
 ## Orvalis v0.93.62 — mapa grande em tela cheia (14/11/2026)
 - **Pedido do dono do produto:** "aumentar o mapa de consulta para a tela toda pro jogador saber por onde já andou" (o círculo do canto superior direito era pequeno).
 - **Mapa grande** (`render/worldMap.ts`): abre ao **tocar/clicar no minimapa** ou na tecla **M**; mostra tudo o que já foi explorado (a mesma névoa salva, `Exploration`), com **arrastar** para mover, **roda / botões ＋ － / pinça** para aproximar, **◎** centraliza em mim e **▣** enquadra tudo; marcadores de cidade, covil (só depois de visto), tenda e amigos, e a seta do jogador. Fecha com ✕ ou Esc. **O jogo fica pausado** enquanto está aberto. No covil mostra só o labirinto; no mundo, tudo menos o covil; não abre dentro de cômodos.

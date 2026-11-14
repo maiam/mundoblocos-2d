@@ -641,7 +641,9 @@ export class Entities {
         continue;
       }
       const dmg = rollDamage(attack, MONSTER_STATS[s.kind].defense, this.rand);
-      if (world) s.takeHit(dmg.amount, from.x, from.y, world, this.blocker);
+      // Recuo proporcional: golpe forte (dano alto perto da vida máxima) e crítico empurram mais.
+      const knock = Math.min(2, 0.8 + Math.min(0.7, dmg.amount / s.maxHp) + (dmg.crit ? 0.5 : 0));
+      if (world) s.takeHit(dmg.amount, from.x, from.y, world, this.blocker, knock);
       else s.hp -= dmg.amount;
       this.onDamage?.(s.x, s.y, dmg, 'enemy');
       if (s.dead) this.killMonster(s);
