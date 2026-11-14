@@ -264,6 +264,8 @@ grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `r
 (reduz qualquer quadrado para 128 como ladrilho; sem `--front` a frente repete o topo; `--fit-fringe` guarda os 32 px de
 baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 
+**Planificações de cubo** (v0.93.77, `assets-src/blocos-net/*.png`: topo no meio de cima, 4 laterais, base): recorta-se o topo e uma lateral (margem ~24 px contra o contorno), torna-se o ladrilho repetível (mistura com o deslocamento de meio ladrilho) e importa-se com `import-material.py` (`--top`, `--front`; a franja da grama sai da máscara de não-terra da lateral, 32 linhas); depois `build-materials.py --preview` e os ícones `icon-block-*` (topo + frente escurecida, 64×64).
+
 **Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
 `--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
 

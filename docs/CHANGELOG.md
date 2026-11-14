@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.77 — arte nova de Grama, Terra, Terra Arada, Pedra Bruta e Pedra Lisa (14/11/2026)
+- **Pedido do dono do produto:** novos blocos (planificações de cubo: topo, 4 laterais, base) para Terra com Grama, Terra, Terra Arada, Pedra Bruta e Pedra Lisa. Originais guardados em `assets-src/blocos-net/`.
+- **Materiais V2** (`assets-src/materiais/`): topo de `grama`, `terra`, `arada`, `pedra`, `pedra-lisa`; frente própria de `terra` (a base da Grama e da Arada), `pedra` e `pedra-lisa` (esta ganhou frente); franja da `grama` tirada das folhas da lateral (máscara por matiz, comprimida em 32 linhas). Os ladrilhos foram **emendados** (mistura com o deslocamento de meio ladrilho) porque a arte não era repetível: emenda 0,9–1,7 (Arada 1,9, só aviso). A franja da Terra Arada continua a antiga (a lateral nova não tem franja).
+- **Ícones** (`icon-block-{grass,dirt,tilled,stone,stone-smooth}`) refeitos a partir da arte nova (topo + frente escurecida). Fora do escopo: tijolo, chão de pedra, pedra polida e demais materiais.
+- Só arte (sem mudança de regra, save ou protocolo). Testes e `tsc` verdes (grades 1 e 2); conferido no navegador (3D e 2D de reserva).
 ## Orvalis v0.93.76 — blocos de 1/4 de célula: regra oficial do Mundo (14/11/2026)
 - **Pedido do dono do produto:** a versão 16×4/16×16 das lajes vira **regra de todo bloco do Mundo, empilhando até 4; só blocos, não paredes** (ADR 0033). Decisões dele: migrar **preservando a altura**, andar **1 a 3 sobe, 4 bloqueia**, **só o Mundo principal** (Santuário igual).
 - **Regra** (`config.ts`: `CUBE_LEVELS = MAX_STACK = 4`; `World.cubeLevels/stepLevels`): bloco = 1/4 de célula; `z`/`standHeight` em níveis, `visualZ` em células. Quebrar tira 1 bloco por golpe.
