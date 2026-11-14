@@ -9,6 +9,9 @@ import { FISH_MAX, FISH_SCALE, FISH_SCHOOL, FISH_SPECIES, type Fish, fishAlpha, 
 const SIDE = 1.7; // lado do quadro do peixe em células (o corpo ocupa ~85% dele)
 const SPAWN_EVERY = 0.6; // s entre tentativas de nascer um cardume
 const MAX_DIST = 26; // some se ficar a mais disso da câmera (células)
+/** Opacidade máxima (o peixe está SOB a água: nunca opaco) e cor de água que o tinge (multiplica a imagem). */
+const MAX_OPACITY = 0.74;
+const WATER_TINT = 0xd6eaf5;
 
 interface Slot { mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>; fish: Fish | null }
 
@@ -17,6 +20,8 @@ export class WaterFish {
   private readonly geometry = new THREE.PlaneGeometry(1, 1);
   private readonly textures: Array<THREE.Texture | null>;
   private clock = 0;
+  private readonly uniforms = { uFishTime: { value: 0 } };
+  private elapsed = 0;
   private counter = 0;
 
   constructor(scene: THREE.Object3D, private readonly seed: number, images: Map<string, HTMLImageElement>) {
@@ -32,11 +37,24 @@ export class WaterFish {
       return t;
     });
     for (let i = 0; i < FISH_MAX; i++) {
-      const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0 });
+      const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0, color: WATER_TINT });
+      material.onBeforeCompile = (shader) => {
+        // ondulação da água: a imagem do peixe balança de leve (refração), mais forte longe do meio, com o tempo compartilhado
+        Object.assign(shader.uniforms, this.uniforms);
+        shader.fragmentShader = shader.fragmentShader
+          .replace('void main() {', 'uniform float uFishTime;\nvoid main() {')
+          .replace('#include <map_fragment>', `
+#ifdef USE_MAP
+vec2 fuv = vMapUv;
+fuv += vec2(sin(fuv.y * 14.0 + uFishTime * 2.1), cos(fuv.x * 12.0 + uFishTime * 1.7)) * 0.012;
+vec4 sampledDiffuseColor = texture2D(map, fuv);
+diffuseColor *= sampledDiffuseColor;
+#endif`);
+      };
       const mesh = new THREE.Mesh(this.geometry, material);
       mesh.visible = false;
       mesh.frustumCulled = false;
-      mesh.renderOrder = -0.5; // acima da água animada (−1), abaixo das plantas e dos atores
+      mesh.renderOrder = -0.5; // acima da superfície animada (−1), abaixo das plantas e dos atores; translúcido e tingido, ele parece sob a água
       mesh.name = 'Mundo: peixe';
       scene.add(mesh);
       this.slots.push({ mesh, fish: null });
@@ -54,6 +72,8 @@ export class WaterFish {
    */
   update(dt: number, cam: { x: number; z: number }, view: number, player: { x: number; z: number } | null, water: (x: number, z: number) => boolean): void {
     this.clock += dt;
+    this.elapsed += dt;
+    this.uniforms.uFishTime.value = this.elapsed;
     if (this.clock >= SPAWN_EVERY) {
       this.clock = 0;
       this.trySpawn(cam, view, water);
@@ -68,7 +88,7 @@ export class WaterFish {
       s.mesh.position.set(f.x, 0.04, f.z);
       s.mesh.rotation.y = fishYaw(f.heading);
       s.mesh.scale.set(sc, 1, sc);
-      s.mesh.material.opacity = fishAlpha(f);
+      s.mesh.material.opacity = fishAlpha(f) * MAX_OPACITY;
     }
   }
 
