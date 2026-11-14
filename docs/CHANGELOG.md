@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.62 — mapa grande em tela cheia (14/11/2026)
+- **Pedido do dono do produto:** "aumentar o mapa de consulta para a tela toda pro jogador saber por onde já andou" (o círculo do canto superior direito era pequeno).
+- **Mapa grande** (`render/worldMap.ts`): abre ao **tocar/clicar no minimapa** ou na tecla **M**; mostra tudo o que já foi explorado (a mesma névoa salva, `Exploration`), com **arrastar** para mover, **roda / botões ＋ － / pinça** para aproximar, **◎** centraliza em mim e **▣** enquadra tudo; marcadores de cidade, covil (só depois de visto), tenda e amigos, e a seta do jogador. Fecha com ✕ ou Esc. **O jogo fica pausado** enquanto está aberto. No covil mostra só o labirinto; no mundo, tudo menos o covil; não abre dentro de cômodos.
+- **Sem segunda fonte de verdade:** o mapa lê `World` + `Exploration` como o minimapa; o cache de imagens de chunk virou `render/mapChunks.ts` (compartilhado) e os marcadores `render/mapMarkers.ts`.
+- **Correção junto:** o raio do minimapa estava fixo em 36 células e, na grade 2, mostrava metade do trecho de antes; agora é `36 × SUBDIV`.
+- Testes: `chunkCoords`, `exploredBounds`, `fitScale`. **Limites conhecidos:** a névoa só cobre onde o jogador já andou (nada retroativo); mapa só no Mundo principal (o Santuário não tem minimapa); sem legenda dos marcadores.
+
 ## Orvalis v0.93.61 — lobos com poses completas e a capivara (14/11/2026)
 - **Pedido do dono do produto:** atualizar o movimento dos três lobos e incluir a **capivara** como novo animal doméstico (21 folhas de lobo + 7 de capivara enviadas).
 - **Lobos:** 7 folhas por cor (walk, idle, run, alert, attack, hurt, death) pelo mesmo mecanismo do goblin/lagarto (`hasPoses`/`PoseKind`; `ActorKind` ganhou `${PoseKind}-${PoseState}`). Corre ao perseguir, alerta ao ver o jogador, ataca ao morder, treme ao levar golpe. As folhas de 144 px viraram 160 px por quadro (~2,7 MB em WebP para as 21; baixam sob demanda, fora do orçamento de início — `build-artifact.mjs` agora também isenta `lizard` e `capybara`).

@@ -1,8 +1,11 @@
-import { CHUNK_SIZE } from '../config';
+import { CHUNK_SIZE, SUBDIV } from '../config';
 import type { Exploration } from '../game/exploration';
 import type { Facing } from '../game/walker';
 import type { World } from '../world/world';
-import { mapColor } from './mapColors';
+import { MapChunkCache } from './mapChunks';
+import { drawMarkerShape, type MinimapMarker } from './mapMarkers';
+
+export type { MinimapMarker, MinimapMarkerKind } from './mapMarkers';
 
 /**
  * Minimapa redondo do canto superior direito: o mundo em volta do jogador (norte sempre para cima), coberto pela
@@ -10,23 +13,13 @@ import { mapColor } from './mapColors';
  * Cada chunk vira uma imagem de 16 × 16 px, refeita só quando o mapa ou a névoa dele mudam. Nunca lê pixels de volta.
  */
 
-/** Raio mostrado (células). */
-export const MINIMAP_RADIUS = 36;
+/** Raio mostrado (células da grade atual: 36 na grade 1, o mesmo trecho do mundo em qualquer grade). */
+export const MINIMAP_RADIUS = 36 * SUBDIV;
 /** Imagens de chunk refeitas por atualização (o resto fica para a próxima, sem travar o quadro). */
 const BUILD_BUDGET = 6;
-const MAX_CACHE = 600;
 /** Intervalo entre redesenhos (ms): o mapa anda devagar, não precisa de 60 quadros. */
 const REDRAW_MS = 100;
 
-export type MinimapMarkerKind = 'town' | 'dungeon' | 'tent' | 'friend';
-
-export interface MinimapMarker {
-  kind: MinimapMarkerKind;
-  x: number;
-  y: number;
-  /** Marcador que fica na borda quando está longe (cidade, tenda). */
-  pinned?: boolean;
-}
 
 export interface MinimapView {
   world: World;
@@ -37,30 +30,25 @@ export interface MinimapView {
   place: string | null;
 }
 
-interface ChunkImage {
-  canvas: HTMLCanvasElement;
-  terrain: number;
-  fog: number;
-  used: number;
-}
-
 const ANGLE: Record<Facing, number> = { up: 0, right: Math.PI / 2, down: Math.PI, left: -Math.PI / 2 };
-const MARKER_COLOR: Record<MinimapMarkerKind, string> = {
-  town: '#ffd46b', dungeon: '#e8574a', tent: '#f3e3c0', friend: '#7fd4ff',
-};
-
 export class Minimap {
   readonly root: HTMLElement;
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private readonly label: HTMLElement;
-  private readonly cache = new Map<string, ChunkImage>();
-  private tick = 0;
+  private readonly chunks = new MapChunkCache();
   private last = -Infinity;
 
-  constructor(parent: HTMLElement) {
+  /** `onTap`: toque/clique no minimapa (abre o mapa grande). */
+  constructor(parent: HTMLElement, onTap?: () => void) {
     this.root = document.createElement('div');
     this.root.className = 'minimap';
+    if (onTap) {
+      this.root.classList.add('tappable');
+      this.root.setAttribute('role', 'button');
+      this.root.title = 'Abrir o mapa (M)';
+      this.root.addEventListener('click', (e) => { e.stopPropagation(); onTap(); });
+    }
     this.root.setAttribute('aria-label', 'Mapa');
     this.canvas = document.createElement('canvas');
     this.label = document.createElement('span');
@@ -73,14 +61,14 @@ export class Minimap {
 
   destroy(): void {
     this.root.remove();
-    this.cache.clear();
+    this.chunks.clear();
   }
 
   /** Redesenha (no máximo a cada `REDRAW_MS`, a não ser com `force`). */
   update(v: MinimapView, now: number, force = false): void {
     if (!force && now - this.last < REDRAW_MS) return;
     this.last = now;
-    this.tick++;
+    this.chunks.beginFrame();
     this.label.hidden = !v.place;
     this.label.textContent = v.place ?? '';
     if (v.place) {
@@ -133,9 +121,10 @@ export class Minimap {
       for (let cx = cx0; cx <= cx1; cx++) {
         const fog = v.exploration.chunk(cx, cy);
         if (!fog) continue;
-        const img = this.chunkImage(v, cx, cy, fog, budget > 0);
-        if (!img) continue;
-        if (img.built) budget--;
+        const got = this.chunks.get(v.world, cx, cy, fog, budget > 0);
+        if (!got) continue;
+        if (got.built) budget--;
+        const img = got.image;
         const sx = half + (cx * CHUNK_SIZE - px) * cell;
         const sy = half + (cy * CHUNK_SIZE - py) * cell;
         const s = CHUNK_SIZE * cell;
@@ -151,39 +140,7 @@ export class Minimap {
     for (const m of v.markers) this.drawMarker(m, px, py, half, cell, size);
     ctx.restore();
     this.drawPlayer(half, size, v.player.facing);
-    this.evict();
-  }
-
-  private chunkImage(
-    v: MinimapView, cx: number, cy: number, fog: { bits: Uint8Array; version: number }, canBuild: boolean,
-  ): (ChunkImage & { built: boolean }) | null {
-    const key = `${cx},${cy}`;
-    const terrain = v.world.getChunk(cx, cy)?.version ?? 0;
-    const cached = this.cache.get(key);
-    if (cached && cached.terrain === terrain && cached.fog === fog.version) {
-      cached.used = this.tick;
-      return { ...cached, built: false };
-    }
-    // Sem orçamento neste quadro: mostra a imagem antiga, se houver (atualiza na próxima).
-    if (!canBuild) return cached ? { ...cached, built: false } : null;
-    const canvas = cached?.canvas ?? document.createElement('canvas');
-    canvas.width = CHUNK_SIZE;
-    canvas.height = CHUNK_SIZE;
-    const c = canvas.getContext('2d')!;
-    c.clearRect(0, 0, CHUNK_SIZE, CHUNK_SIZE);
-    const x0 = cx * CHUNK_SIZE;
-    const y0 = cy * CHUNK_SIZE;
-    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
-      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-        const i = ly * CHUNK_SIZE + lx;
-        if (!(fog.bits[i >> 3] & (1 << (i & 7)))) continue;
-        c.fillStyle = mapColor(v.world, x0 + lx, y0 + ly);
-        c.fillRect(lx, ly, 1, 1);
-      }
-    }
-    const entry: ChunkImage = { canvas, terrain, fog: fog.version, used: this.tick };
-    this.cache.set(key, entry);
-    return { ...entry, built: true };
+    this.chunks.evict();
   }
 
   private drawMarker(m: MinimapMarker, px: number, py: number, half: number, cell: number, size: number): void {
@@ -196,34 +153,7 @@ export class Minimap {
       dx = (dx / dist) * edge;
       dy = (dy / dist) * edge;
     }
-    const ctx = this.ctx;
-    const x = half + dx;
-    const y = half + dy;
-    const r = Math.max(2.5, size * 0.035);
-    ctx.lineWidth = Math.max(1, size * 0.012);
-    ctx.strokeStyle = '#2a1a48';
-    ctx.fillStyle = MARKER_COLOR[m.kind];
-    ctx.beginPath();
-    if (m.kind === 'town') {
-      // Estrela de 4 pontas: a cidade.
-      for (let k = 0; k < 8; k++) {
-        const a = (k * Math.PI) / 4 - Math.PI / 2;
-        const rr = k % 2 === 0 ? r * 1.6 : r * 0.6;
-        ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-      }
-      ctx.closePath();
-    } else if (m.kind === 'tent') {
-      ctx.moveTo(x, y - r * 1.3);
-      ctx.lineTo(x + r * 1.2, y + r);
-      ctx.lineTo(x - r * 1.2, y + r);
-      ctx.closePath();
-    } else if (m.kind === 'dungeon') {
-      ctx.rect(x - r, y - r, r * 2, r * 2);
-    } else {
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-    }
-    ctx.fill();
-    ctx.stroke();
+    drawMarkerShape(this.ctx, m.kind, half + dx, half + dy, Math.max(2.5, size * 0.035), Math.max(1, size * 0.012));
   }
 
   /** Seta no centro, apontando para onde o jogador olha; anel da moldura e o "N". */
@@ -255,11 +185,5 @@ export class Minimap {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('N', half, size * 0.035);
-  }
-
-  private evict(): void {
-    if (this.cache.size <= MAX_CACHE) return;
-    const old = [...this.cache.entries()].sort((a, b) => a[1].used - b[1].used);
-    for (const [k] of old.slice(0, this.cache.size - MAX_CACHE)) this.cache.delete(k);
   }
 }

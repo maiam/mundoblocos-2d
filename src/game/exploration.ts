@@ -65,6 +65,14 @@ export class Exploration {
     return bits ? { bits, version: this.versions.get(k) ?? 0 } : null;
   }
 
+  /** Chunks com algo descoberto, como `{ cx, cy }` (o mapa grande desenha só esses). */
+  chunkCoords(): Array<{ cx: number; cy: number }> {
+    return [...this.chunks.keys()].map((k) => {
+      const [cx, cy] = k.split(',').map(Number);
+      return { cx, cy };
+    });
+  }
+
   /** Total de células descobertas (estatística e testes). */
   get count(): number {
     let n = 0;
