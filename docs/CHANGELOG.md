@@ -1,8 +1,8 @@
 # Changelog
 
-## Orvalis v0.93.97 — flores fofas no mundo (14 variantes) (15/11/2026)
-- **Pedido do dono do produto:** incluir as "Flores fofas v01" (15 estudos; chegaram 14 PNGs — a **13 Dançarina de Coral** ficou de fora até ele enviar o arquivo individual) como enfeite do mundo. Escolhas dele: substitui a Flor atual (sem colisão, não colocável), sorteada por célula em rodízio nos mesmos lugares onde já nasciam flores (biomas, cidade), **tamanho pequeno** (~0,6 célula).
-- **Arte** (`scripts/extract-flowers.py`, fontes em `assets-src/flores/`): uma só escala para todas (a mais alta, o Lírio de Lua, = 80 px de arte; 128 px = 1 célula, como a cerca) → `src/assets/flowers.webp`, 14 quadros 96 × 96, base do caule em (48, 92). Flor nova = PNG `NN-nome.png` na pasta + rodar o script (o jogo lê a quantidade pela largura da tira).
+## Orvalis v0.93.97 — flores fofas no mundo (15 variantes) (15/11/2026)
+- **Pedido do dono do produto:** incluir as "Flores fofas v01" (15 estudos; a 13 Dançarina de Coral chegou depois dos demais) como enfeite do mundo. Escolhas dele: substitui a Flor atual (sem colisão, não colocável), sorteada por célula em rodízio nos mesmos lugares onde já nasciam flores (biomas, cidade), **tamanho pequeno** (~0,6 célula).
+- **Arte** (`scripts/extract-flowers.py`, fontes em `assets-src/flores/`): uma só escala para todas (a mais alta, o Lírio de Lua, = 80 px de arte; 128 px = 1 célula, como a cerca) → `src/assets/flowers.webp`, 15 quadros 96 × 96, base do caule em (48, 92). Flor nova = PNG `NN-nome.png` na pasta + rodar o script (o jogo lê a quantidade pela largura da tira).
 - **Render** (`blockArt.getFlowerArt`, `textures.ts`): os quadros viram `variants` de `Block.FLOWER` (mesmo sorteio por célula de rochas/árvores, `worldSpriteArt` e `drawObject`); a Flor procedural fica de reserva fora do mundo principal. O balanço ao vento (`wind.ts`, `grass`) continua valendo. Só aparência: sem mudança de mapa, save ou protocolo; o servidor não muda.
 - 597 testes (grade 2) e 588 (grade 1) e `tsc` verdes; conferido no navegador (3D).
 
