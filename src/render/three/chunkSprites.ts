@@ -17,6 +17,8 @@ export interface SpriteArt {
 }
 export interface SpriteDraw {
   sprite: SpriteArt;
+  /** Sombra no chão (sprite translúcido, não clicável) desenhada atrás do sprite. */
+  shadow?: SpriteArt;
   /** Dá para andar por cima (grama, flor, cultura, porta aberta): não esconde o personagem. */
   walkable: boolean;
   /** Desenhado empilhado N vezes, um cubo (1 de altura) acima do outro (parede do labirinto: 2). Padrão 1. */
@@ -33,6 +35,8 @@ export interface SpriteCell {
   lift?: number;
   /** Fator de tamanho (`SpriteDraw.scale`); padrão 1. */
   scale?: number;
+  /** Deslocamento extra de profundidade (a sombra fica um pouco atrás do sprite). */
+  bias?: number;
 }
 export interface ChunkSpritesOptions {
   /** Pixels por célula da arte (TILE). */
@@ -117,6 +121,8 @@ diffuseColor.rgb *= 1.0 + warm * (pulse - 0.5) * 0.45;
 export const SPRITE_BIAS_BASE = 0.01;
 export const SPRITE_BIAS_STEP = 0.0015;
 export const SPRITE_BIAS_PERIOD = 64;
+/** A sombra de contato (`SpriteDraw.shadow`) fica este tanto atrás do sprite a que pertence. */
+const SHADOW_BIAS = 0.004;
 export function spriteDepthBias(x: number): number {
   return SPRITE_BIAS_BASE + (x & (SPRITE_BIAS_PERIOD - 1)) * SPRITE_BIAS_STEP;
 }
@@ -317,6 +323,11 @@ export class ChunkSprites {
         const scale = draw.scale && draw.scale !== 1 ? draw.scale : undefined;
         const n = Math.min(MAX_STACK_DRAWN, Math.max(1, Math.floor(draw.stack ?? 1)));
         for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale });
+        if (draw.shadow) {
+          let sb = buckets.get(draw.shadow.canvas);
+          if (!sb) { sb = { sprite: draw.shadow, walkable: true, animated: null, cells: [] }; buckets.set(draw.shadow.canvas, sb); }
+          sb.cells.push({ x, y, id, sprite: draw.shadow, bias: -SHADOW_BIAS });
+        }
       }
     }
     const groups: Group[] = [];
@@ -330,7 +341,7 @@ export class ChunkSprites {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
         // maior que 1: cresce em volta do meio da base (o tronco fica na célula)
         const sc = cell.scale ?? 1;
-        this.dummy.position.set(cell.x + sprite.ox / tile - (sprite.w / tile / 2) * (sc - 1), cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x));
+        this.dummy.position.set(cell.x + sprite.ox / tile - (sprite.w / tile / 2) * (sc - 1), cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x) + (cell.bias ?? 0));
         this.dummy.rotation.set(0, 0, 0);
         this.dummy.scale.set(sc, sc, 1);
         this.dummy.updateMatrix();

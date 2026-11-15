@@ -19,7 +19,7 @@ const server = http.createServer((req, res) => {
   await new Promise((r) => server.listen(0, r));
   const port = server.address().port;
   const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const p = await b.newPage({ viewport: { width: 220, height: 320 } });
+  const p = await b.newPage({ viewport: { width: 260, height: 320 } });
   p.on('pageerror', (e) => console.log('ERRO', e.message));
   fs.mkdirSync(out, { recursive: true });
   for (const wood of ['carvalho', 'betula', 'cerejeira']) {

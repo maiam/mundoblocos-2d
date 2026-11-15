@@ -7,7 +7,7 @@ const P = new URLSearchParams(location.search);
 const piece = P.get('piece'), WOOD = P.get('wood');
 const CELL = 12, PPU = 128 / CELL, K = 1;
 const GATE = piece === 'gate', ANGLE = +(P.get('angle') || 0) * Math.PI / 180;
-const [W, H, AY] = GATE ? [192, 300, 278] : [128, 232, 208];
+const [W, H, AY] = GATE ? [224, 300, 278] : [128, 232, 208];
 const d = await (await fetch(GATE ? 'gate.json' : 'model.json')).json();
 const byName = Object.fromEntries(d.elements.map((e) => [e.name, e]));
 const loader = new THREE.TextureLoader();
@@ -17,6 +17,8 @@ const tile = (n) => new Promise((r) => loader.load(n, (x) => {
 }));
 const [woodTop, woodFront] = await Promise.all([tile('top-' + WOOD + '.png'), tile('front-' + WOOD + '.png')]);
 const scene = new THREE.Scene();
+
+// (a sombra de contato no chão não é cozida na arte: os sprites sólidos usam alphaTest e ela viraria pontos pretos; ver `fenceShadow` em render/fence.ts)
 
 /** Malha do modelo com os vértices transformados por `map([x,y,z]) → [x,y,z]`; UV por projeção a partir da posição final (1 tile = 1 célula = 12 u). */
 /** `tone` escurece (< 1) ou clareia (> 1) a peça: as travessas saem mais escuras que as estacas para se distinguirem delas. */

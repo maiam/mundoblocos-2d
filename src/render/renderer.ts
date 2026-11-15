@@ -4,7 +4,7 @@ import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
 import { Block, blockDef, type BlockId, isDoor, isFence, isGate, joinsFence } from '../world/blocks';
-import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts, gateWood } from './fence';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts, drawFenceShadow, gateWood } from './fence';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
@@ -376,10 +376,11 @@ export class Renderer {
   private drawFence(cam: Camera, x: number, y: number, pieces: HTMLCanvasElement[]): void {
     const j = (dx: number, dy: number) => joinsFence(this.world.getObject(x + dx, y + dy));
     const parts = fenceParts(j(0, -1), j(1, 0), j(0, 1), j(-1, 0));
-    const { w, h, ax } = FENCE_FRAME;
+    const { w, h, ax, ay } = FENCE_FRAME;
     const z = cam.zoom * FENCE_SCALE;
     const left = cam.worldToScreenX(x * TILE + FENCE_OFFSET.x);
     const top = cam.worldToScreenY(y * TILE + FENCE_OFFSET.y);
+    drawFenceShadow(this.ctx, left + ax * z, top + ay * z, z, parts.north || parts.whole === FencePiece.Vertical, parts.east || parts.whole === FencePiece.Horizontal, parts.south || parts.whole === FencePiece.Vertical, parts.west || parts.whole === FencePiece.Horizontal);
     // Recorte (sx, sy, sw, sh) da peça, desenhado na mesma posição do quadro.
     const piece = (p: number, sx: number, sy: number, sw: number, sh: number) =>
       this.ctx.drawImage(pieces[p], sx, sy, sw, sh, Math.round(left + sx * z), Math.round(top + sy * z), Math.ceil(sw * z), Math.ceil(sh * z));

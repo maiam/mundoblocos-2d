@@ -48,9 +48,9 @@ for wood, (_, strip_name, icon_name, gate_name) in WOODS.items():
     c = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
     c.alpha_composite(im, ((64 - im.width) // 2, (64 - im.height) // 2))
     c.save(OUT / icon_name, 'WEBP', quality=90, method=6)
-    gate = Image.new('RGBA', (192 * 5, 300), (0, 0, 0, 0))   # 5 poses (0°, 22,5°, 45°, 67,5°, 90°) 192 × 300; base das estacas em (96, 278)
+    gate = Image.new('RGBA', (224 * 5, 300), (0, 0, 0, 0))   # 5 poses (0°, 22,5°, 45°, 67,5°, 90°) 224 × 300; base das estacas em (112, 278)
     for i in range(5):
-        gate.alpha_composite(Image.open(renders / f'{wood}-gate-{i}.png').convert('RGBA'), (i * 192, 0))
+        gate.alpha_composite(Image.open(renders / f'{wood}-gate-{i}.png').convert('RGBA'), (i * 224, 0))
     gate.save(OUT / gate_name, 'WEBP', quality=90, method=6)
     if wood == 'carvalho':
         im = Image.open(renders / 'carvalho-gate-0.png').convert('RGBA')

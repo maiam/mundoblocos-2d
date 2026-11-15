@@ -22,7 +22,7 @@ export const FENCE_FRAME = { w: 128, h: 232, ax: 64, ay: 208 } as const;
  * Porteira do modelo 3D (v0.93.96): 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h` (a folha gira para o norte em torno da
  * dobradiça); `postBase` = linha da base das estacas (a mesma âncora da cerca). Há uma tira por madeira; a porteira usa a da cerca vizinha.
  */
-export const GATE_FRAME = { w: 192, h: 300, postBase: 278, poses: 5 } as const;
+export const GATE_FRAME = { w: 224, h: 300, postBase: 278, poses: 5 } as const;
 
 /** Madeira da porteira: a da primeira cerca vizinha (oeste, leste, norte, sul); sem cerca por perto, Carvalho. `at(dx, dy)` devolve o objeto da célula vizinha. */
 export function gateWood(at: (dx: number, dy: number) => BlockId): BlockId {
@@ -60,3 +60,31 @@ export const FENCE_OFFSET = {
   x: TILE / 2 - FENCE_FRAME.ax * FENCE_SCALE,
   y: TILE / 2 - FENCE_FRAME.ay * FENCE_SCALE,
 } as const;
+
+function blob(ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, alpha: number): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(rx, ry);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, `rgba(0,0,0,${alpha})`);
+  g.addColorStop(0.55, `rgba(0,0,0,${alpha * 0.7})`);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, 1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
+ * Sombra de contato da cerca no chão (v0.93.96; sem ela a cerca parece flutuar): uma mancha suave sob a estaca e outra sob cada braço que se emenda.
+ * Desenhada por código (não vai na arte: o 3D usa `alphaTest` nos sprites e pontos translúcidos virariam pretos) com `ax, ay` = pé da estaca no
+ * canvas e `z` = escala (px do canvas por px do quadro de 128 px por célula).
+ */
+export function drawFenceShadow(ctx: CanvasRenderingContext2D, ax: number, ay: number, z: number, n: boolean, e: boolean, s: boolean, w: boolean): void {
+  blob(ctx, ax + 5 * z, ay + 3 * z, 38 * z, 26 * z, 0.5);
+  if (w) blob(ctx, ax - 40 * z, ay + 3 * z, 36 * z, 17 * z, 0.36);
+  if (e) blob(ctx, ax + 46 * z, ay + 3 * z, 36 * z, 17 * z, 0.36);
+  if (n) blob(ctx, ax + 5 * z, ay - 40 * z, 20 * z, 36 * z, 0.36);
+  if (s) blob(ctx, ax + 5 * z, ay + 46 * z, 20 * z, 36 * z, 0.36);
+}

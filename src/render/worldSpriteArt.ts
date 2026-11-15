@@ -1,7 +1,7 @@
 import { Block, blockDef, isDoor, isFence, isGate, joinsFence, type BlockId } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
-import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts } from './fence';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts, drawFenceShadow } from './fence';
 import type { BlockTextures } from './textures';
 import { isTownArt } from './townArt';
 import type { SpriteDraw } from './three/chunkSprites';
@@ -40,9 +40,15 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
       if (parts.south) piece(FencePiece.ArmSouth, 0, 0, fw, fh);
     }
     const wpx = fw * FENCE_SCALE, hpx = fh * FENCE_SCALE;
+    // Sombra no chão: sprite à parte (translúcido; o sprite sólido do 3D descartaria o que tem pouco alfa), atrás da cerca.
+    const sc = document.createElement('canvas');
+    sc.width = fw;
+    sc.height = fh;
+    drawFenceShadow(sc.getContext('2d')!, FENCE_FRAME.ax, FENCE_FRAME.ay, 1, n || parts.whole === FencePiece.Vertical, e || parts.whole === FencePiece.Horizontal, s || parts.whole === FencePiece.Vertical, w || parts.whole === FencePiece.Horizontal);
     hit = {
       walkable: false,
       sprite: { canvas: c, ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: wpx, h: hpx, hit: { x: FENCE_OFFSET.x, y: FENCE_OFFSET.y, w: wpx, h: hpx } },
+      shadow: { canvas: sc, ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: wpx, h: hpx, hit: { x: 0, y: 0, w: 0, h: 0 } },
     };
     fenceCache.set(key, hit);
     return hit;
