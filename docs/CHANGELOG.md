@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.112 — prédios da cidade centrados na porta e na rua (15/11/2026)
+- **Bug (apontado pelo dono do produto na Floricultura):** a rua não chegava à porta e a entrada ficava à direita da porta desenhada. Causa: `townArt.imageSprite` calculava o centro do desenho com a largura do lote em **células antigas**, mas o 3D amplia os prédios por `objectScaleFor` (= `SUBDIV`) e o lote real tem `w × SUBDIV` células finas — o desenho ficava ~2 células antigas à esquerda do lote (valia para todos os prédios da cidade, não só a Floricultura).
+- **Correção:** `lotW = w * objectScaleFor(shape)` (a vila, em células finas, não muda). Rua, porta e entrada (`door`) já estavam certas; só o desenho andou. Sem mudança de gerador, mapa, save ou protocolo. `tsc` e 603 testes verdes; conferido no navegador (Floricultura e Hospedaria).
+
 ## Orvalis v0.93.111 — rotina do Bento: abre, fecha, vai dormir pela porta dos fundos (nível 1 da IA dos NPCs) (15/11/2026)
 - **Piloto do ADR 0034:** agenda pura em `game/npcBrain/schedule.ts` (`BENTO_SCHEDULE`: acorda 6h, abre 7h, fecha 19h30, dorme 21h; `phaseAt`, `shopOpen`, `closedLine`), sem DOM nem `Math.random`.
 - **`Villager`** ganha estados `post → goHome → leaving → asleep → arriving → post`: ao anoitecer o Bento anda até o ponto dos fundos do Mercado (travado 2 s, chega de uma vez), **desbota (fade 1,2 s) e some** (oculto: sem colisão, sem conversa, fora de `actors`); de manhã reaparece lá e volta ao posto. Mundo aberto de madrugada já o encontra dormindo. Sem relógio (`Entities.time = -1`, como na sala do servidor) não há rotina.
