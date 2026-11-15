@@ -67,6 +67,39 @@ uniform vec3 uSunDir; uniform vec3 uSunColor; uniform vec3 uAmbient; uniform flo
 uniform vec3 uFireDir; uniform float uFireInt; uniform vec3 uFireColor;
 float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 `;
+/**
+ * Troca de cores (moradores sorteados, ADR 0034): gira o matiz e ajusta saturação/brilho de tudo o que é colorido, **menos a pele** (matiz laranja
+ * claro) e os cinzas/brancos/pretos (sem saturação) — cabelo e roupa mudam, o rosto não. Roda antes da luz, sobre a cor da folha.
+ */
+const RECOLOR_HEAD = `
+uniform vec4 uRecolor;
+vec3 rgb2hsv(vec3 c) {
+  vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+  vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+  vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+  float d = q.x - min(q.w, q.y);
+  return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x);
+}
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+`;
+const RECOLOR_BODY = `
+#ifdef USE_MAP
+if (uRecolor.w > 0.5 && diffuseColor.a > 0.02) {
+  vec3 hsv = rgb2hsv(diffuseColor.rgb);
+  bool skin = hsv.x > 0.02 && hsv.x < 0.13 && hsv.y > 0.08 && hsv.y < 0.62 && hsv.z > 0.45;
+  if (hsv.y > 0.1 && !skin) {
+    hsv.x = fract(hsv.x + uRecolor.x);
+    hsv.y = clamp(hsv.y * uRecolor.y, 0.0, 1.0);
+    hsv.z = clamp(hsv.z * uRecolor.z, 0.0, 1.0);
+    diffuseColor.rgb = hsv2rgb(hsv);
+  }
+}
+#endif
+`;
 const LIT_BODY = `
 #ifdef USE_MAP
 if (uStrength * uLightStrength > 0.001 && diffuseColor.a > 0.05) {
@@ -103,7 +136,7 @@ if (uFireInt > 0.001 && diffuseColor.a > 0.05) {
 interface Slot {
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
   /** Uniformes próprios do quadro (tamanho do texel, onde ficam os pés no canvas, quanto o sombreado vale neste ator). */
-  u: { uTexel: { value: THREE.Vector2 }; uFeet: { value: THREE.Vector2 }; uStrength: { value: number }; uFireDir: { value: THREE.Vector3 }; uFireInt: { value: number } };
+  u: { uTexel: { value: THREE.Vector2 }; uFeet: { value: THREE.Vector2 }; uStrength: { value: number }; uFireDir: { value: THREE.Vector3 }; uFireInt: { value: number }; uRecolor: { value: THREE.Vector4 } };
   shadow: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D | null;
@@ -200,6 +233,7 @@ export class ActorBillboards {
       this.paint(slot, sheet, a, elapsed);
       // Onde ficam os pés e a altura do desenho em coordenadas de textura (v de baixo para cima), para o escurecimento junto ao chão.
       slot.u.uFeet.value.set(0, (sheet.drawHeight * z * (a.scale ?? 1)) / side);
+      if (a.look) slot.u.uRecolor.value.set(a.look.hue, a.look.sat, a.look.val, 1); else slot.u.uRecolor.value.set(0, 1, 1, 0);
       slot.u.uStrength.value = a.kind === 'love-hearts' || a.dying !== undefined ? 0 : 1;
       const fl = a.kind === 'love-hearts' || this.fires.length === 0 ? null : fireLightOn(a.x, a.y, this.fires, elapsed);
       slot.u.uFireInt.value = fl ? fl.intensity : 0;
@@ -253,15 +287,14 @@ export class ActorBillboards {
     const material = new THREE.MeshBasicMaterial({
       map: texture, transparent: true, depthTest: true, depthWrite: false, alphaTest: 0.015, side: THREE.DoubleSide,
     });
-    const u = { uTexel: { value: new THREE.Vector2(1 / side, 1 / side) }, uFeet: { value: new THREE.Vector2(0, 0.5) }, uStrength: { value: 0 }, uFireDir: { value: new THREE.Vector3(0, 1, 0) }, uFireInt: { value: 0 } };
-    if (this.opts.lit !== false) {
-      material.onBeforeCompile = (shader) => {
-        Object.assign(shader.uniforms, u, this.light);
-        shader.fragmentShader = shader.fragmentShader
-          .replace('void main() {', `${LIT_HEAD}\nvoid main() {`)
-          .replace('#include <map_fragment>', `#include <map_fragment>\n${LIT_BODY}`);
-      };
-    }
+    const u = { uTexel: { value: new THREE.Vector2(1 / side, 1 / side) }, uFeet: { value: new THREE.Vector2(0, 0.5) }, uStrength: { value: 0 }, uFireDir: { value: new THREE.Vector3(0, 1, 0) }, uFireInt: { value: 0 }, uRecolor: { value: new THREE.Vector4(0, 1, 1, 0) } };
+    const lit = this.opts.lit !== false;
+    material.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, u, this.light);
+      shader.fragmentShader = shader.fragmentShader
+        .replace('void main() {', `${RECOLOR_HEAD}${lit ? LIT_HEAD : ''}\nvoid main() {`)
+        .replace('#include <map_fragment>', `#include <map_fragment>\n${RECOLOR_BODY}${lit ? LIT_BODY : ''}`);
+    };
     const mesh = new THREE.Mesh(this.plane, material);
     mesh.renderOrder = 3;
     mesh.name = 'Mundo: ator';

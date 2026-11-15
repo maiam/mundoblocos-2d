@@ -2,6 +2,7 @@ import { SUBDIV } from '../config';
 import type { World } from '../world/world';
 import { closedLine, type DaySchedule, type NpcPhase, phaseAt, scheduleOf } from './npcBrain/schedule';
 import { npcDef, type NpcId, type NpcRole } from './npcs';
+import type { ResidentDef } from './residents';
 import type { Facing, Blocker } from './walker';
 import { Wanderer } from './wanderer';
 
@@ -41,6 +42,8 @@ export class Villager extends Wanderer {
     readonly npc: NpcId,
     private readonly onStreet: (cx: number, cy: number) => boolean,
     rand: () => number = Math.random,
+    /** Morador sorteado (ADR 0034): `npc` é só a folha e o retrato emprestados; nome e falas vêm daqui e as cores são trocadas no shader. */
+    readonly resident: ResidentDef | null = null,
   ) {
     super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: (npcDef(npc).role ? 3 : 6) * SUBDIV });
     this.role = npcDef(npc).role ?? null;
@@ -69,15 +72,20 @@ export class Villager extends Wanderer {
   }
 
   get name(): string {
-    return npcDef(this.npc).name;
+    return this.resident?.name ?? npcDef(this.npc).name;
+  }
+
+  /** Troca de cores do desenho (só os sorteados; os 16 NPCs nomeados usam a arte como ela é). */
+  get look(): ResidentDef['look'] | null {
+    return this.resident?.look ?? null;
   }
 
   /** A próxima fala (em roda) como conversa; o NPC fica parado até `release()`. */
   conversation(): Conversation {
-    const def = npcDef(this.npc);
-    const text = def.lines[this.said++ % def.lines.length];
+    const lines = this.resident?.lines ?? npcDef(this.npc).lines;
+    const text = lines[this.said++ % lines.length];
     this.hold = true;
-    return { npc: this.npc, name: def.name, text };
+    return { npc: this.npc, name: this.name, text };
   }
 
   /** Terminou a conversa: volta a passear. */

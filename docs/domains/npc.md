@@ -22,6 +22,11 @@
 
 > **Plano de inteligência (ADR 0034; nível 1 do Bento feito na v0.93.111 — `game/npcBrain/schedule.ts`, estados no `Villager`):** níveis 1–4 (rotina, reativo, memória, objetivos) sem LLM; piloto no Bento; mais moradores por recolor + sorteio. Ver `docs/adr/0034-inteligencia-dos-npcs.md`.
 
+## Moradores sorteados (`game/residents.ts`, v0.93.113, ADR 0034)
+- Além dos 16 nomeados: **8 na cidade e 5 na vila**, "primos" dos 13 moradores comuns. `makeResidents(seed, 'town'|'village', n, avoidNames)` (puro) devolve `ResidentDef` {base, name, profession, personality, look, lines}; mesma seed = mesmas pessoas; nomes únicos no mundo.
+- **Cores:** `Look {hue, sat, val}` → `Actor.look` → `uRecolor` no shader do billboard (gira matiz e ajusta sat/brilho de tudo menos pele e neutros). Sem arte nova nem peso extra. O retrato da conversa é o da folha-base (a cor do cabelo no retrato é a original).
+- **Execução:** `Entities.spawnResidents` (depois de `spawnVillagers`); `Villager(…, resident)` usa nome/falas do sorteado; `npc` = folha emprestada. Cidade: ruas; vila: dentro do muro, pontos nos caminhos. Só no aparelho (a sala não simula moradores). Sem rotina de dormir ainda (só o Bento).
+
 ## Wanderer (`game/wanderer.ts`)
 - Passeio comum (parar ↔ andar numa direção sorteada, desacelerar no fim, voltar a casa além da `leash`). Ovelha,
   cavalo e morador estendem `Wanderer` (que estende `Walker`) e só mudam o ritmo (`WanderPace`) e a caixa.

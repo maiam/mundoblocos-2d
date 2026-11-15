@@ -9,6 +9,7 @@ import { BREED_COOLDOWN, Breeder, COURTSHIP_SECONDS } from './breeder';
 import { Sheep } from './sheep';
 import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
+import { type Look, makeResidents, type ResidentDef } from './residents';
 import { FLORIST_KEEPER, MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, hasPoses, Monster, MONSTERS, type PoseKind } from './monster';
@@ -65,6 +66,8 @@ export interface Actor {
   dying?: number;
   /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
   label?: string;
+  /** Troca de cores do desenho (morador sorteado, ADR 0034): aplicada no shader do billboard. */
+  look?: Look;
   /** NPC saindo/entrando pela porta dos fundos (nível 1 da IA dos NPCs): 0 = à vista … 1 = sumiu; o desenho desbota. */
   fade?: number;
   /** Tamanho relativo do desenho (ex.: coraçõezinhos do namoro, pelo tamanho do animal). */
@@ -117,6 +120,9 @@ const LOVE_SCALE: Record<AnimalKind, number> = { sheep: 1, cow: 1.05, chicken: 0
 const PAIR_RANGE = 6 * SUBDIV;
 /** Distância (células) para começar a namorar. */
 const COURT_DISTANCE = 1.5 * SUBDIV;
+/** Moradores sorteados (ADR 0034): quantos na cidade e na vila. */
+export const RESIDENTS_TOWN = 8;
+export const RESIDENTS_VILLAGE = 5;
 /** Limite de ovelhas para a população não explodir. */
 export const MAX_SHEEP = 16;
 /** Limite por espécie (filhotes contam): a população não explode. */
@@ -336,23 +342,62 @@ export class Entities {
       people.push({ at: k.at, npc: FLORIST_KEEPER, walk });
     }
     people.forEach(({ at: [hx, hy], npc, walk }) => {
-      // Rua/praça andável e livre mais perto do ponto.
-      for (let r = 0; r <= 12; r++) {
-        for (let dy = -r; dy <= r; dy++) {
-          for (let dx = -r; dx <= r; dx++) {
-            if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-            const cx = hx + dx;
-            const cy = hy + dy;
-            if (!walk(cx, cy) || !world.isWalkable(cx, cy)) continue;
-            const v = new Villager(cx + 0.5, cy + 0.5, npc, walk, this.rand);
-            if (npc === MERCHANT) v.setHome(hx + 0.5, hy + 0.5); // porta dos fundos do Mercado: o ponto do posto dele, junto das prateleiras
-            if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
-            this.villagers.push(v);
-            return;
-          }
+      const v = this.placeVillager(world, hx, hy, npc, walk);
+      if (v && npc === MERCHANT) v.setHome(hx + 0.5, hy + 0.5); // porta dos fundos do Mercado: o ponto do posto dele, junto das prateleiras
+    });
+  }
+
+  /** Posta um morador na célula andável e livre mais perto de (hx, hy) (até 12 células); devolve-o, ou null se não coube. */
+  private placeVillager(world: World, hx: number, hy: number, npc: NpcId, walk: (cx: number, cy: number) => boolean, resident: ResidentDef | null = null): Villager | null {
+    for (let r = 0; r <= 12; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const cx = hx + dx;
+          const cy = hy + dy;
+          if (!walk(cx, cy) || !world.isWalkable(cx, cy)) continue;
+          const v = new Villager(cx + 0.5, cy + 0.5, npc, walk, this.rand, resident);
+          if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
+          this.villagers.push(v);
+          return v;
         }
       }
-    });
+    }
+    return null;
+  }
+
+  /**
+   * Moradores sorteados (ADR 0034, `game/residents.ts`): `RESIDENTS_TOWN` nas ruas da cidade e `RESIDENTS_VILLAGE` pelos caminhos da vila, cada um
+   * "primo" de um morador comum (cores trocadas no shader), com nome, profissão e falas próprias — sempre os mesmos para a mesma seed. Chamar
+   * depois de `spawnVillagers` (eles se espalham longe dos 16 nomeados). Só no aparelho (a sala não simula moradores).
+   */
+  spawnResidents(world: World, townCount = RESIDENTS_TOWN, villageCount = RESIDENTS_VILLAGE): void {
+    const t = world.town;
+    let townNames: ResidentDef[] = [];
+    if (t) {
+      const a = t.area;
+      const onStreet = (cx: number, cy: number): boolean =>
+        cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < t.gate.y0 && t.street[(cy - a.y0) * t.w + (cx - a.x0)] === 1;
+      const taken = this.villagers.map((v): [number, number] => [v.cellX, v.cellY]);
+      const homes = homesFor(world, townCount, onStreet, taken, HOME_SPACING / 2);
+      townNames = makeResidents(world.seed, 'town', townCount);
+      townNames.forEach((r, i) => this.placeVillager(world, homes[i][0], homes[i][1], r.base, onStreet, r));
+    }
+    const vl = world.village;
+    if (vl && villageCount > 0) {
+      const { x0, y0, x1, y1 } = vl.area;
+      // Anda pelos caminhos de terra e pela grama dentro do muro (animais e cercas bloqueiam pelo mapa).
+      const inside = (cx: number, cy: number): boolean => cx > x0 && cx < x1 && cy > y0 && cy < y1;
+      const cells: Array<[number, number, number]> = [];
+      for (let cy = y0 + 1; cy < y1; cy++) for (let cx = x0 + 1; cx < x1; cx++) if (vl.ground[(cy - y0) * vl.w + (cx - x0)] === Block.PATH) cells.push([cx, cy, hash2(world.seed ^ 0x51a9, cx, cy)]);
+      cells.sort((p, q) => p[2] - q[2]);
+      const homes: Array<[number, number]> = [];
+      for (const [cx, cy] of cells) {
+        if (homes.length >= villageCount) break;
+        if (homes.every(([hx, hy]) => Math.hypot(hx - cx, hy - cy) >= 4 * SUBDIV)) homes.push([cx, cy]);
+      }
+      makeResidents(world.seed, 'village', villageCount, townNames.map((r) => r.name)).forEach((r, i) => { if (homes[i]) this.placeVillager(world, homes[i][0], homes[i][1], r.base, inside, r); });
+    }
   }
 
   /**
@@ -939,7 +984,7 @@ export class Entities {
     for (const v of this.villagers) {
       if (v.hidden) continue;
       out.push({
-        kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime, fade: v.fade > 0 ? v.fade : undefined,
+        kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime, fade: v.fade > 0 ? v.fade : undefined, look: v.look ?? undefined,
       });
     }
     for (const m of this.monsters) {
@@ -967,19 +1012,21 @@ export class Entities {
  * escolhidas. Determinístico (a cidade é igual em toda seed).
  */
 export const HOME_SPACING = 16 * SUBDIV;
-export function homesFor(world: World, n: number, onStreet: (cx: number, cy: number) => boolean): Array<[number, number]> {
+export function homesFor(
+  world: World, n: number, onStreet: (cx: number, cy: number) => boolean, taken: Array<[number, number]> = [], spacing = HOME_SPACING,
+): Array<[number, number]> {
   const t = world.town!;
   const [sx, sy] = t.start;
   const [kx, ky] = t.castleDoor;
-  const homes: Array<[number, number]> = [[sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]].slice(0, n) as Array<[number, number]>;
+  const homes: Array<[number, number]> = taken.length ? [] : [[sx - 5, sy - 1], [sx + 5, sy - 3], [Math.round((sx + kx) / 2), Math.round((sy + ky) / 2)], [kx + 3, ky + 2]].slice(0, n) as Array<[number, number]>;
   const a = t.area;
   const cells: Array<[number, number, number]> = [];
   for (let cy = a.y0; cy < t.gate.y0; cy++) for (let cx = a.x0; cx <= a.x1; cx++) if (onStreet(cx, cy)) cells.push([cx, cy, hash2(7919, cx, cy)]);
   cells.sort((p, q) => p[2] - q[2]);
   for (const [cx, cy] of cells) {
     if (homes.length >= n) break;
-    if (homes.every(([hx, hy]) => Math.hypot(hx - cx, hy - cy) >= HOME_SPACING)) homes.push([cx, cy]);
+    if (homes.every(([hx, hy]) => Math.hypot(hx - cx, hy - cy) >= spacing) && taken.every(([hx, hy]) => Math.hypot(hx - cx, hy - cy) >= spacing)) homes.push([cx, cy]);
   }
-  while (homes.length < n) homes.push(homes[homes.length % 4]); // cidade pequena demais: repete pontos
+  while (homes.length < n) homes.push(taken.length ? cells[homes.length % cells.length].slice(0, 2) as [number, number] : homes[homes.length % 4]); // cidade pequena demais: repete pontos
   return homes;
 }

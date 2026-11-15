@@ -202,6 +202,7 @@ export class Game {
     if (options.net) this.entities.remote = true;
     else this.entities.spawnWildlife(this.world, true);
     this.entities.spawnVillagers(this.world);
+    this.entities.spawnResidents(this.world);
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
     this.entities.onDamage = (x, y, hit, target) => { this.renderer.addDamage(x, y, hit, target); if (target === 'enemy') this.onHitLanded(hit.crit); };
