@@ -31,10 +31,10 @@
 - A sala (`Room`) roda os moradores; o aparelho espelha (`CreatureMirror` cria `Villager`s). Detalhe e protocolo: `domains/multiplayer.md`. Sozinho, os moradores nascem no `Game` como antes.
 
 ## Missões e acompanhante (v0.93.116, ADR 0034 nível 4)
-- `game/npcBrain/quests.ts`: `QuestDef` (giver, item, count, recompensa, textos), `phaseOf` (`available/active/ready/done`), `markOf` (sinal), `sanitizeLog`. Única missão: **Ervas de cura** (Silvano, 6 flores de qualquer espécie das 15, 12 Moedas). Estado em `Entities.quests`, **salvo no jogador** (v19); sinais em `Entities.marks` (recalculados por `Game.updateQuests`).
+- `game/npcBrain/quests.ts`: `QuestDef` (giver, item, count, recompensa, textos), `phaseOf` (`available/active/ready/done`), `markOf` (sinal), `sanitizeLog`. Única missão: **Ervas de cura** (Silvano, 6 flores de UMA espécie por seed — a do canteiro garantido —, 12 Moedas). Estado em `Entities.quests`, **salvo no jogador** (v19); sinais em `Entities.marks` (recalculados por `Game.updateQuests`).
 - **Sinal** `Actor.mark`: `!` oferece, `?` azulado em andamento, `?` dourado pronta. **Conversa com escolhas:** `Conversation.prompt/choices` no `DialogueBox`.
 - **Acompanhante:** `Villager.setCompanion(true|false)`; segue a ~2 células, corre se fica para trás, reaparece ao lado se longe demais, volta ao posto ao terminar; comenta ao ver flor (toast). Retoma ao carregar o jogo. Só no aparelho.
-- A flor do campo (`Block.FLOWER`) solta, ao quebrar, a espécie das 15 Flores Fofas que o mundo desenha ali (`wildFlowerIndex`; v0.93.118); a missão aceita qualquer espécie (`haveOf`/`takeOf`).
+- A flor do campo (`Block.FLOWER`) solta, ao quebrar, a espécie das 15 Flores Fofas que o mundo desenha ali (`wildFlowerIndex`; v0.93.118); a missão pede só a espécie do canteiro da seed (`world/flowerPatch.ts`, ver `healingHerbsFor`).
 
 ## Memória (v0.93.115, ADR 0034 nível 3)
 - `game/npcBrain/memory.ts`: `MemoryBook` {chave → {talks, bought}}, `relation` 0–100, `tierOf`, `knownLine`, `shopGreeting`. Em `Entities.memory`; **salvo no jogador** (`SaveData.npcMemory`, v18). Sala não guarda.

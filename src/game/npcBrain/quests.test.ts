@@ -7,16 +7,58 @@ import { Entities } from '../entities';
 import { Player } from '../player';
 import { applySave, captureSave, migrate } from '../save';
 import { Inventory } from '../inventory';
-import { HEALING_HERBS, haveOf, markOf, phaseOf, questOf, sanitizeLog, takeOf } from './quests';
+import { breakDrops } from '../../world/items';
+import { blockDef, FLOWER_BLOCKS, wildFlowerIndex } from '../../world/blocks';
+import { compass, haveOf, healingHerbsFor, markOf, phaseOf, questOf, questsFor, sanitizeLog, takeOf } from './quests';
 
-describe('missão Ervas de cura (ADR 0034)', () => {
-  it('fases e sinal sobre a cabeça: ! → ? → ? dourado → nada', () => {
-    const q = HEALING_HERBS;
+describe('missão Ervas de cura por seed (v0.93.119)', () => {
+  const world = new World(42);
+  const q = healingHerbsFor(world)!;
+
+  it('pede UMA espécie específica (a do canteiro da seed), diz o nome, o rumo e os passos, e só ela vale', () => {
+    const patch = world.flowerPatch!;
     expect(q.giver).toBe('silvano');
-    expect(questOf('silvano')).toBe(q);
-    expect(questOf('dante')).toBeNull();
-    expect(q.items).toHaveLength(16);
-    expect(q.items).toContain(blockStack(Block.FLOWER_ROSE));
+    expect(q.items).toEqual([blockStack(patch.species)]);
+    const name = blockDef(patch.species).name;
+    expect(q.offer).toContain(name);
+    expect(q.offer).toMatch(/ao (norte|sul|leste|oeste|nordeste|noroeste|sudeste|sudoeste) do portão/);
+    expect(q.offer).toMatch(/a uns \d+ passos/);
+    expect(q.progress(2)).toContain('só ela serve');
+    const inv = new Inventory();
+    const count = (id: string) => inv.count(id as never);
+    const other = FLOWER_BLOCKS.find((b) => b !== patch.species)!;
+    inv.add(blockStack(other), 20); // outras espécies não contam
+    expect(haveOf(q, count)).toBe(0);
+    inv.add(blockStack(patch.species), 5);
+    expect(haveOf(q, count)).toBe(5);
+    expect(takeOf(q, count, (id, n) => inv.take(id as never, n))).toBe(false); // faltam: não tira nada
+    expect(haveOf(q, count)).toBe(5);
+    inv.add(blockStack(patch.species), 2);
+    expect(takeOf(q, count, (id, n) => inv.take(id as never, n))).toBe(true);
+    expect(haveOf(q, count)).toBe(1);
+    expect(inv.count(blockStack(other))).toBe(20); // nada mais é tirado
+  });
+
+  it('o canteiro garante flores: a missão é oferecida; sem o canteiro (mundo mexido) deixa de ser oferecida; sem canteiro no mundo, não há missão', () => {
+    expect(q.offerable()).toBe(true);
+    const w2 = new World(42);
+    for (const [x, y] of w2.flowerPatch!.cells.slice(0, 5)) w2.breakBlock(x, y); // sobram 5
+    expect(healingHerbsFor(w2)!.offerable()).toBe(false);
+    expect(questsFor(world)).toHaveLength(1);
+    expect(questOf(questsFor(world), 'silvano')).not.toBeNull();
+    expect(questOf(questsFor(world), 'dante')).toBeNull();
+  });
+
+  it('o rumo vem do mapa: compass', () => {
+    expect(compass(10, 0)).toBe('leste');
+    expect(compass(0, 10)).toBe('sul');
+    expect(compass(-10, 0)).toBe('oeste');
+    expect(compass(0, -10)).toBe('norte');
+    expect(compass(7, 7)).toBe('sudeste');
+    expect(compass(-7, -7)).toBe('noroeste');
+  });
+
+  it('fases e sinal sobre a cabeça: ! → ? → ? dourado → nada', () => {
     expect(phaseOf({}, q, 99)).toBe('available'); // sem aceitar, as flores não contam
     expect(markOf('available')).toBe('offer');
     expect(phaseOf({ 'ervas-de-cura': 'active' }, q, 5)).toBe('active');
@@ -46,9 +88,7 @@ describe('missão Ervas de cura (ADR 0034)', () => {
 });
 
 describe('flores do campo (v0.93.118)', () => {
-  it('a flor do campo solta exatamente a espécie que o mundo desenha ali; seed e célula decidem', async () => {
-    const { FLOWER_BLOCKS, wildFlowerIndex } = await import('../../world/blocks');
-    const { breakDrops } = await import('../../world/items');
+  it('a flor do campo solta exatamente a espécie que o mundo desenha ali; seed e célula decidem', () => {
     const seen = new Set<number>();
     for (let x = 0; x < 80; x++) for (let y = 0; y < 5; y++) {
       const i = wildFlowerIndex(42, x, y);
@@ -59,20 +99,6 @@ describe('flores do campo (v0.93.118)', () => {
     }
     expect(seen.size).toBe(15); // todas as 15 aparecem
     expect(breakDrops(null, Block.FLOWER, false, Math.random, { seed: 42, x: 1, y: 1 })).toEqual([]); // mundo sem coleta
-  });
-
-  it('a missão aceita flores de qualquer espécie (e a Flor genérica antiga) e tira exatamente 6', () => {
-    const inv = new Inventory();
-    const q = HEALING_HERBS;
-    const count = (id: string) => inv.count(id as never);
-    inv.add(blockStack(Block.FLOWER_ROSE), 2);
-    inv.add(blockStack(Block.FLOWER_MOON), 3);
-    expect(haveOf(q, count)).toBe(5);
-    expect(takeOf(q, count, (id, n) => inv.take(id as never, n))).toBe(false); // faltam: não tira nada
-    expect(haveOf(q, count)).toBe(5);
-    inv.add(blockStack(Block.FLOWER), 2); // a Flor da v0.93.116
-    expect(takeOf(q, count, (id, n) => inv.take(id as never, n))).toBe(true);
-    expect(haveOf(q, count)).toBe(1);
   });
 });
 
