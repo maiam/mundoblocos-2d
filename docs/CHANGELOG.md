@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.103 — efeitos de picareta, pá, enxada e espada para cima e para baixo (3D) (15/11/2026)
+- **Pedido do dono do produto:** "segue picareta, enxada, pá e espada para cima e para baixo" — 5 pranchas novas (`assets-src/efeitos/`: `picareta-pedra`, `pa-terra`, `enxada-arar`, `espada-cima`, `espada-baixo`; os nomes foram **deduzidos do desenho**, já que os arquivos vieram sem nome: confirmar).
+- **Arte** (`scripts/extract-fx.py`): +5 tiras de 12 quadros 128 × 128 (`fx-slash-up/-down`, `fx-rock`, `fx-soil`, `fx-till`). A prancha da pá veio com uma **névoa translúcida na prancha toda** (alfa ~77–107): o alfa abaixo de 110 é cortado e o resto reescalado (`HAZE`), e o RGB solto dos pixels transparentes é refeito como nas outras.
+- **Render** (`worldThreeRenderer.stepBreak`, `three/spriteFx.ts` com 8 `FxKind`): no instante do golpe — espada para **cima** e para **baixo** com os cortes próprios (os lados seguem com o corte espelhado); **picareta**: clarão e pedrinhas no topo do bloco que se quebra; **pá**: terra jogada no bloco/chão que se cava (o buraco final segue com o efeito de cavar); **enxada**: terra revirada na célula-alvo (foco/hover válido).
+- Só cliente e só 3D (`?sensacao=0` e cômodos ficam sem); sem mapa, save, protocolo ou `RenderOptions` novo (servidor não muda). `tsc` e testes verdes (grades 1 e 2); conferido no navegador por código (cada ferramenta toca o efeito certo) e por captura.
+
 ## Orvalis v0.93.102 — efeitos de golpe em quadros: espada, machadada e buraco; lascas no instante da pancada (3D) (15/11/2026)
 - **Pedido do dono do produto:** 3 pranchas de efeito (buraco, corte de árvore, ataque de espada); sobre a estrela do corte de árvore: "pode reduzir ou pular a vontade"; sobre a espada: "espelha".
 - **Arte** (`scripts/extract-fx.py`, fontes em `assets-src/efeitos/`): pranchas 4 × 4 de 1254 px (quadros de 313,5 px, recortados com arredondamento) → tiras de quadros 128 × 128 (`fx-dig` 12 quadros, `fx-tree` 10, `fx-slash` 12). O RGB dos pixels quase transparentes (fios vermelhos/amarelos) é refeito a partir da vizinhança opaca (sem halo na filtragem). O corte de árvore **pula os 4 primeiros quadros** (a estrela grande) e é tocado menor (2 células); os 4 últimos quadros do buraco (buraco parado) ficam de fora.

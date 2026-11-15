@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { SpriteFx, type FxArt } from './spriteFx';
 
 const img = (frames: number) => ({ width: 128 * frames, height: 128 }) as unknown as HTMLImageElement;
-const art: FxArt = { dig: img(12), tree: img(10), slash: img(12) };
+const KINDS = ['dig', 'tree', 'slash', 'slashUp', 'slashDown', 'rock', 'soil', 'till'] as const;
+const art = Object.fromEntries(KINDS.map((k) => [k, img(k === 'tree' ? 10 : 12)])) as FxArt;
 
 describe('SpriteFx (efeitos de golpe em quadros)', () => {
   it('toca os quadros na ordem, termina sozinho e libera', () => {
