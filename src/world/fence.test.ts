@@ -45,6 +45,17 @@ describe('Cerca de Madeira e portão', () => {
     expect(blockDrops(Block.FENCE, () => 0)).toEqual([{ item: blockStack(Block.FENCE), count: 1 }]);
   });
 
+  it('Cercas de Bétula e de Cerejeira: colocam, bloqueiam e voltam como o próprio item', () => {
+    for (const id of [Block.FENCE_BIRCH, Block.FENCE_CHERRY]) {
+      const w = new World(7);
+      const [x, y] = freeRow(w);
+      expect(w.placeBlock(x, y, id)).toBe(true);
+      expect(w.getObject(x, y)).toBe(id);
+      expect(w.isWalkable(x, y)).toBe(false);
+      expect(blockDrops(id, () => 0)).toEqual([{ item: blockStack(id), count: 1 }]);
+    }
+  });
+
   it('portão vai em qualquer célula livre, abre (passável) e fecha com a ação de porta', () => {
     const w = new World(7);
     const [x, y] = freeRow(w);
