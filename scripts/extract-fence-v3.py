@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cerca de madeira v3 e porteira (v0.93.96): kit do dono do produto (`assets-src/cerca-v3/kit.png`) → tira de 3 quadros + 5 poses da porteira.
 
-O kit vem sobre fundo creme com sombras suaves: o recorte é por saturação (madeira ≫ fundo/sombra), com buracos preenchidos.
+O kit vem com fundo transparente e sem sombra (a primeira versão, sobre fundo creme, era recortada por saturação e perdia detalhes).
 Peças usadas: trecho horizontal de cima (5 postes, 325 px entre postes = 1 célula), coluna de trilhos do trecho vertical da esquerda e a
 porteira fechada (frente). A porteira abrir é feita aqui: a folha (entre os dois postes) encolhe na largura pelo cosseno do ângulo
 (0°, 22,5°, 45°, 67,5°, 90°), presa na dobradiça da esquerda, com os postes fixos.
@@ -17,24 +17,16 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from PIL import ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'src' / 'assets'
 PITCH = 325
 K = 128 / PITCH
 
-raw = np.asarray(Image.open(ROOT / 'assets-src' / 'cerca-v3' / 'kit.png').convert('RGB')).astype(int)
-mx, mn = raw.max(2), raw.min(2)
-sat = (mx - mn) / np.maximum(mx, 1)
-mask = (sat > 0.33) | (mx < 95)
-m = Image.fromarray((mask * 255).astype(np.uint8), 'L')
-m = m.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))                 # fecha frestas
-ImageDraw.floodfill(m, (3, 3), 128)                                                    # fundo = 128; o que sobrar 0 é buraco
-mask = np.asarray(m) != 128
-m2 = Image.fromarray((mask * 255).astype(np.uint8), 'L').filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3))
-mask = np.asarray(m2) > 127
-rgba = np.dstack([raw, (mask * 255)]).astype(np.uint8)
+# O kit já vem com alfa (fundo e sombra removidos pelo dono do produto): o alfa baixo (halo/brilho) é descartado e a borda suavizada.
+raw = np.asarray(Image.open(ROOT / 'assets-src' / 'cerca-v3' / 'kit.png').convert('RGBA')).astype(np.float32)
+alpha = np.clip((raw[..., 3] - 90) * 255 / (250 - 90), 0, 255)
+rgba = np.dstack([raw[..., :3], alpha]).astype(np.uint8)
 # borda suave: 1 px de blur no alfa evita serrilhado depois da redução
 KIT = Image.fromarray(rgba, 'RGBA')
 
