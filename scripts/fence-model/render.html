@@ -17,7 +17,8 @@ const [woodTop, woodFront] = await Promise.all([tile('top-' + WOOD + '.png'), ti
 const scene = new THREE.Scene();
 
 /** Malha do modelo com os vértices transformados por `map([x,y,z]) → [x,y,z]`; UV por projeção a partir da posição final (1 tile = 1 célula = 12 u). */
-function add(e, map, upright) {
+/** `tone` escurece (< 1) ou clareia (> 1) a peça: as travessas saem mais escuras que as estacas para se distinguirem delas. */
+function add(e, map, upright, tone = 1) {
   for (const kind of ['top', 'side']) {
     const pos = [], uv = [], col = [];
     for (const f of Object.values(e.faces)) {
@@ -29,7 +30,7 @@ function add(e, map, upright) {
       const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
       const top = Math.abs(ny) > 0.6;
       if ((kind === 'top') !== top) continue;
-      const shade = top ? 1.0 : Math.abs(nz) > Math.abs(nx) ? 0.9 : 0.74;
+      const shade = (top ? 1.0 : Math.abs(nz) > Math.abs(nx) ? 0.9 : 0.74) * tone;
       for (let i = 1; i < V.length - 1; i++) for (const v of [V[0], V[i], V[i + 1]]) {
         pos.push(v[0], v[1] - v[2] * K, v[2] * 0.02); col.push(shade, shade, shade);
         let h, vv;
@@ -51,14 +52,15 @@ const stake = byName['Frente 3'];                       // estaca de 4 × 17 u c
 const railH = [byName['Frontal 2 | nível 5'], byName['Frontal 2 | nível 12']];   // x de -10 a -2
 const railV = [byName['Retorno 1 | nível 5'], byName['Retorno 1 | nível 12']];   // z de -10 a -2, em x = 24
 const remap = (v, from0, from1, to0, to1) => to0 + ((v - from0) * (to1 - to0)) / (from1 - from0);
+const RAIL_TONE = 0.68;
 const wantStake = piece !== 'armn' && piece !== 'arms';
 if (wantStake) add(stake, (v) => v, true);
 if (piece === 'horizontal') for (const r of railH) {
-  add(r, (v) => [remap(v[0], -10, -2, -6, 0), v[1], v[2]], false);   // braço oeste
-  add(r, (v) => [remap(v[0], -10, -2, 0, 6), v[1], v[2]], false);    // braço leste
+  add(r, (v) => [remap(v[0], -10, -2, -6, 0), v[1], v[2]], false, RAIL_TONE);   // braço oeste
+  add(r, (v) => [remap(v[0], -10, -2, 0, 6), v[1], v[2]], false, RAIL_TONE);    // braço leste
 }
-if (piece === 'vertical' || piece === 'armn') for (const r of railV) add(r, (v) => [v[0] - 24, v[1], remap(v[2], -10, -2, -6, 0)], false);
-if (piece === 'vertical' || piece === 'arms') for (const r of railV) add(r, (v) => [v[0] - 24, v[1], remap(v[2], -10, -2, 0, 6)], false);
+if (piece === 'vertical' || piece === 'armn') for (const r of railV) add(r, (v) => [v[0] - 24, v[1], remap(v[2], -10, -2, -6, 0)], false, RAIL_TONE);
+if (piece === 'vertical' || piece === 'arms') for (const r of railV) add(r, (v) => [v[0] - 24, v[1], remap(v[2], -10, -2, 0, 6)], false, RAIL_TONE);
 
 const cv = document.getElementById('c');
 const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true });
