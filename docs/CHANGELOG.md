@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.104 — portão de lado (cercas norte-sul) (15/11/2026)
+- **Pedido do dono do produto:** o portão 3D só entrava de frente, sem se adaptar; pediu a versão lateral.
+- **Arte** (`scripts/extract-fence-model.py`, `render.html` com `yaw=90`): o mesmo modelo do portão girado 90° — as estacas ficam uma atrás da outra (norte e sul) e a folha, presa à dobradiça do norte, **abre para leste**. 3 tiras (Carvalho, Bétula, Cerejeira) `fence-gate-side*.webp`, 5 poses de 224 × 400, base das estacas em (112, 300).
+- **Escolha** (`render/fence.ts`, `gateIsSide`): de lado quando a cerca vizinha está ao **norte e/ou ao sul** e não há leste/oeste; senão (leste-oeste, solto, cruzamento) de frente. Vale no 3D (`framesAt` do `DoorSprites`) e no 2D de reserva; mesma animação de 10 quadros. A orientação acompanha as vizinhas ao construir/quebrar.
+- Só aparência: sem mapa, save ou protocolo (servidor não muda). Teste novo de `gateIsSide`; `tsc` e testes verdes; conferido no navegador (3 portões, fechados e abertos, em cerca norte-sul).
+
 ## Orvalis v0.93.103 — efeitos de picareta, pá, enxada e espada para cima e para baixo (3D) (15/11/2026)
 - **Pedido do dono do produto:** "segue picareta, enxada, pá e espada para cima e para baixo" — 5 pranchas novas (`assets-src/efeitos/`: `picareta-pedra`, `pa-terra`, `enxada-arar`, `espada-cima`, `espada-baixo`; os nomes foram **deduzidos do desenho**, já que os arquivos vieram sem nome: confirmar).
 - **Arte** (`scripts/extract-fx.py`): +5 tiras de 12 quadros 128 × 128 (`fx-slash-up/-down`, `fx-rock`, `fx-soil`, `fx-till`). A prancha da pá veio com uma **névoa translúcida na prancha toda** (alfa ~77–107): o alfa abaixo de 110 é cortado e o resto reescalado (`HAZE`), e o RGB solto dos pixels transparentes é refeito como nas outras.
