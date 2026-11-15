@@ -53,6 +53,8 @@ export class NetSession {
   onHits: ((list: Array<[number, number, number, 0 | 1]>) => void) | null = null;
   /** O animal comeu o que eu dei (tirar o item da bolsa). */
   onFed: ((id: number, item: string) => void) | null = null;
+  /** Abati um monstro (`k`: tipo): as missões contam. */
+  onKilled: ((kind: string) => void) | null = null;
   /** Resposta ao pedido de acompanhar um morador (`ok` falso = ocupado com outro jogador ou longe). */
   onEscort: ((id: number, ok: boolean) => void) | null = null;
   /** Itens já no chão ao entrar (entregues ao jogo no `attach`/`onDrops`). */
@@ -201,6 +203,9 @@ export class NetSession {
         break;
       case 'escort':
         this.onEscort?.(m.id, m.ok);
+        break;
+      case 'killed':
+        this.onKilled?.(m.k);
         break;
       case 'fed':
         this.onFed?.(m.id, m.item);

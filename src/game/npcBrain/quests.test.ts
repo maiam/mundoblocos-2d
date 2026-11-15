@@ -84,6 +84,7 @@ describe('missão Ervas de cura por seed (v0.93.119)', () => {
     expect(e2.quests).toEqual({ 'ervas-de-cura': 'active' });
     const { quests: _q, ...old } = d;
     expect(migrate({ ...old, v: 18 })?.quests).toEqual({});
+    expect(migrate({ ...old, v: 19, missions: undefined })?.missions).toEqual({ done: [], active: null, progress: {} });
   });
 });
 

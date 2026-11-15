@@ -11,8 +11,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 | Item | Valor | Fonte |
 |---|---|---|
 | Versão do jogo | 0.93.94 | `package.json` |
-| `PROTOCOL_VERSION` (multiplayer) | 26 | `src/net/protocol.ts` |
-| `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
+| `PROTOCOL_VERSION` (multiplayer) | 27 | `src/net/protocol.ts` |
+| `SAVE_VERSION` (salvamento local) | 20 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (inalterado na v0.91.0: Mila e lobos carregam sob demanda) — **no limite** | build do artifact |
 | Dependências | Vite 7, Vitest 5, TypeScript 5.9; Node ≥ 22.12 | `package.json` |

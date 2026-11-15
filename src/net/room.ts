@@ -117,6 +117,8 @@ export class Room {
    */
   readonly entities: Entities;
   private readonly avatars = new Map<number, Player>();
+  /** Quem está golpeando agora (para dar a morte a quem abateu). */
+  private striker: number | null = null;
   private readonly mobIds = new WeakMap<object, number>();
   private nextMobId = 1;
   private mobTimer = 0;
@@ -130,6 +132,7 @@ export class Room {
     this.entities = new Entities(null, rand);
     const e = this.entities;
     e.onMonsterKilled = (m) => {
+      if (this.striker !== null) this.pending.push({ to: this.striker, msg: { t: 'killed', k: m.kind } }); // quem abateu conta a morte (missões)
       const list = this.spawnDrops(m.x, m.y + 0.2, monsterDrops(m.kind, rand));
       if (list.length) this.pending.push({ to: 'all', msg: { t: 'drops', list } });
     };
@@ -271,7 +274,8 @@ export class Room {
       const av = this.avatars.get(id);
       if (!av) return [];
       av.facing = m.facing;
-      this.entities.strikeFrom(av, m.facing, m.attack, this.world);
+      this.striker = id;
+      try { this.entities.strikeFrom(av, m.facing, m.attack, this.world); } finally { this.striker = null; }
       return this.flush();
     }
     if (m.t === 'talk' || m.t === 'escort') {

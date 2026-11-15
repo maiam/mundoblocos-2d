@@ -36,6 +36,10 @@ import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
 import { phaseAt, scheduleOf, shopOpen } from './npcBrain/schedule';
+import {
+  accept as acceptMissionLog, complete as completeMission, COIN, goalsOf, isReady as isMissionReady, type Mission, type MissionEvent, marksOf as missionMarks,
+  missionOf, nextMission, onEvent as onMissionEvent,
+} from './npcBrain/missions';
 import { haveOf, markOf, phaseOf, type QuestDef, questOf, questsFor, takeOf } from './npcBrain/quests';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { HUNGER, weaponPower } from '../world/progression';
@@ -211,7 +215,7 @@ export class Game {
       this.entities.spawnResidents(this.world);
     }
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
-    this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
+    this.entities.onMonsterKilled = (m) => { this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind)); this.missionEvent({ type: 'kill', monster: m.kind }); };
     this.entities.onDamage = (x, y, hit, target) => { this.renderer.addDamage(x, y, hit, target); if (target === 'enemy') this.onHitLanded(hit.crit); };
     this.player.timingFor = (tool) => attackTimingFor(this.entities.body, tool);
     this.player.smooth = !options.showcase && feelOn();
@@ -230,7 +234,7 @@ export class Game {
       onOpenChest: (x, y) => this.openChest(x, y),
       notify: (text) => this.hud.toast(text),
       talk: (v) => this.talkTo(v),
-      onAction: (a) => options.net?.sent(a),
+      onAction: (a) => { options.net?.sent(a); if (a.kind === 'place') this.missionEvent({ type: 'place', block: a.block }); },
       canSit: () => profile.character === 'heroine' && canSit(this.entities.body),
       onFeed: options.net ? (animal, item) => {
         const id = this.mirror?.idOf(animal);
@@ -321,6 +325,7 @@ export class Game {
       net.onMobs = (list) => mirror.apply(list);
       mirror.onTalk = (id, on) => net.talk(id, on);
       net.onEscort = (id, ok) => this.onEscortReply(id, ok);
+      net.onKilled = (k) => this.missionEvent({ type: 'kill', monster: k as MonsterKind });
       net.onBite = (kind, x, y) => { if (kind in MONSTERS) this.entities.biteFrom(kind as MonsterKind, x, y, this.world); };
       net.onHits = (list) => { for (const [x, y, amount, crit] of list) { this.renderer.addDamage(x, y, { amount, crit: crit === 1 }, 'enemy'); this.onHitLanded(crit === 1); } };
       net.onFed = (_id, item) => {
@@ -823,6 +828,7 @@ export class Game {
     if (this.dialogue.isOpen && this.dialogue.npc === v) { this.dialogue.advance(); return; }
     this.actions.cancelAll();
     v.faceTo(this.player.x, this.player.y);
+    if (this.talkMission(v)) return; // missões do Capítulo 1: oferta, andamento ou entrega
     // Loja fechada (rotina do Bento): pela hora do mundo, igual no jogo sozinho e na sala.
     const sched = scheduleOf(v.npc);
     if (v.role === 'merchant' && !shopOpen(sched, this.time)) {
@@ -835,6 +841,78 @@ export class Game {
     const tier = tierOf(this.entities.memory[v.memoryKey]);
     this.dialogue.open(v.conversation(tier), v, () => v.release());
     noteTalk(this.entities.memory, v.memoryKey); // lembra desta conversa (ADR 0034, nível 3)
+  }
+
+  /** Chave do NPC nas missões: o Mestre da Guilda é `guild`; os nomeados, o id. Sorteados não participam. */
+  private missionKey(v: Villager): string | null {
+    return v.resident ? (v.resident.id === 'guild' ? 'guild' : null) : v.npc;
+  }
+
+  /** Um acontecimento para a missão ativa (falar, abater, construir…); atualiza o diário se algo andou. */
+  private missionEvent(e: MissionEvent): void {
+    if (onMissionEvent(this.entities.missions, e)) this.refreshMissionHud();
+  }
+
+  /** Diário curto no canto da tela: título e metas da missão ativa (nada, sem missão). */
+  private refreshMissionHud(): void {
+    const log = this.entities.missions;
+    const m = missionOf(log.active);
+    if (!m) { this.hud.setMission(null); return; }
+    const goals = goalsOf(m, log, (id) => this.inventory.count(id));
+    this.hud.setMission(m.title, goals.map(({ goal, have, done }) => `${done ? '✓ ' : ''}${goal.text}${goal.count > 1 ? ` ${have}/${goal.count}` : ''}`));
+  }
+
+  /**
+   * Conversa de missão do Capítulo 1 com `v`: conta o "falar com" e, no Mestre da Guilda, oferece a próxima missão (Aceitar / Agora não), cobra o andamento
+   * ou entrega a pronta; nos outros, só recebe a entrega quando a missão pede a eles. Devolve se a conversa foi tratada (senão segue a conversa normal).
+   */
+  private talkMission(v: Villager): boolean {
+    const key = this.missionKey(v);
+    if (!key) return false;
+    const log = this.entities.missions;
+    this.missionEvent({ type: 'talk', npc: key });
+    const count = (id: StackId) => this.inventory.count(id);
+    const active = missionOf(log.active);
+    const base = { npc: v.npc, name: v.name };
+    const open = (conv: Conversation): void => { this.dialogue.open(conv, v, () => v.release()); v.conversation(); };
+    if (active && active.turnIn === key) {
+      if (!isMissionReady(active, log, count)) {
+        if (key !== 'guild') return false; // fora da guilda só a entrega pronta interrompe a conversa normal
+        open({ ...base, text: active.progress });
+        return true;
+      }
+      if (!canCarry(this.inventory, this.hotbar, COIN) && this.inventory.count(COIN) === 0) { this.hud.toast('Sem espaço na bolsa'); return true; }
+      if (!completeMission(log, active, count, (id, n) => this.inventory.take(id, n))) return true;
+      this.inventory.add(COIN, active.reward.coins);
+      this.hotbar.autoPlace(COIN);
+      this.hotbar.prune(this.inventory);
+      this.refreshSelection();
+      noteBuy(this.entities.memory, v.memoryKey, 5);
+      this.hud.toast(`Missão cumprida: ${active.title} (+${active.reward.coins} Moedas de Cobre)`);
+      this.refreshMissionHud();
+      open({ ...base, text: active.complete });
+      return true;
+    }
+    if (active && key === 'guild') { open({ ...base, text: active.progress }); return true; } // a missão ativa é entregue a outro NPC
+    if (key !== 'guild') return false;
+    const next = nextMission(log);
+    if (!next) return false; // o capítulo acabou: conversa normal
+    open({
+      ...base, text: next.offer, prompt: next.prompt,
+      choices: [
+        { label: 'Aceitar', run: () => this.acceptMission(v, next) },
+        { label: 'Agora não', run: () => { /* fica para depois */ } },
+      ],
+    });
+    return true;
+  }
+
+  private acceptMission(v: Villager, m: Mission): void {
+    acceptMissionLog(this.entities.missions, m.id);
+    this.missionEvent({ type: 'talk', npc: 'guild' }); // aceitar já é falar com o Mestre (registrar-se)
+    this.refreshMissionHud();
+    this.hud.toast(`Missão aceita: ${m.title}`);
+    this.dialogue.open({ npc: v.npc, name: v.name, text: m.accepted }, v, () => v.release());
   }
 
   /** Fala de missão: oferece (com escolhas), cobra o andamento ou recebe a entrega. Devolve false se não há o que dizer (missão concluída). */
@@ -918,6 +996,9 @@ export class Game {
         }
       }
     }
+    // Missões do Capítulo 1: ! no Mestre que oferece, ? em quem recebe (azulado em andamento, dourado pronta); vence o sinal do Silvano na mesma pessoa.
+    Object.assign(marks, missionMarks(this.entities.missions, (id) => this.inventory.count(id)));
+    this.refreshMissionHud();
     this.entities.marks = marks as typeof this.entities.marks;
   }
   /** Missões deste mundo (a espécie e o canteiro dependem da seed). */

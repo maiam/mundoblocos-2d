@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 26;
+export const PROTOCOL_VERSION = 27;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -185,6 +185,8 @@ export type ServerMessage =
   | { t: 'fed'; id: number; item: string }
   /** Resposta ao pedido `escort` (`on`): `ok` falso = o morador já está acompanhando outro jogador (ou longe demais). */
   | { t: 'escort'; id: number; ok: boolean }
+  /** Um monstro (`k`) morreu por golpe MEU (v27): as missões contam a morte no aparelho de quem abateu. */
+  | { t: 'killed'; k: string }
   | { t: 'joined'; player: PlayerInfo }
   | { t: 'left'; id: number }
   | { t: 'state'; id: number; s: PlayerState }

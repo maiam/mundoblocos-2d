@@ -1,5 +1,15 @@
 # Changelog
 
+## Orvalis v0.93.121 — Capítulo 1 "O Despertar": motor de missões e as missões 01–03 (15/11/2026)
+- **Pedido do dono do produto (ADR 0035):** a Cidade do Despertar vira um lugar a que se volta: história em que a jogadora começa desconhecida e, por missões, ganha dinheiro e reconhecimento; **10 missões narrativas** + **contratos repetíveis** (duas camadas).
+- **Motor** (`game/npcBrain/missions.ts`, puro): corrente linear de missões (uma vez cada), metas em paralelo (`have` = inventário, `event` = falar/abater/construir depois de aceitar), entrega ao Mestre da Guilda ou a outro NPC, recompensa em Moedas de Cobre; `sanitizeMissions`. **Salvamento v20** (`SaveData.missions`; v19 migra vazio).
+- **Missões** (texto do dono do produto): **01 Um nome na guilda** (registrar-se, conhecer Black e Bento; 8), **02 O pedido do ferreiro** (6 toras de carvalho + 8 pedras brutas **entregues ao Black**; 12), **03 Lobos na estrada** (3 lobos de qualquer cor; 15). O **Mestre Aldric** oferece a próxima (**Aceitar / Agora não**), cobra o andamento e paga; falar com Black/Bento conta na 01.
+- **Sinais e diário:** `!` no Mestre quando há missão, `?` azulado em quem recebe a ativa, `?` dourado quando pronta (`Entities.marks` por chave de NPC); **diário** no canto da tela (`Hud.setMission`, `.mission-tracker`) com as metas e o andamento. Falar com NPC nomeado emite o evento "falar".
+- **Multiplayer (protocolo 27):** sala → quem abateu: `{t:'killed', k}`; `Room` guarda quem está golpeando (`striker`); `NetSession.onKilled` → `Game.missionEvent`. Construir (`place`) também conta (usado nas próximas missões).
+- Testes novos (`npcBrain/missions.test.ts`, `killed` em `net/villagers.test.ts`); `tsc` e 640 testes verdes; conferido no navegador (oferta com botões, diário, Black e Bento, 8 moedas e a próxima missão oferecida).
+- **Servidor:** `build:net` + `sync-net` e publicar **antes** do jogo (protocolo 27).
+- **Próximo:** missões 04–07, 08–10 e os contratos repetíveis (ver ADR 0035).
+
 ## Orvalis v0.93.120 — a Guilda dos Aventureiros por dentro e o Mestre da Guilda (15/11/2026)
 - **Pedido do dono do produto:** incluir a imagem de dentro da Guilda (base do Capítulo 1 — "O Despertar": missões e contratos saem da guilda).
 - **Cômodo** (`world/interiors.ts`, `GUILD_INTERIOR`, 24 × 18): estantes, mapa e armas no fundo, balcão no meio, quadro de contratos à esquerda, lareira à direita, quatro mesas, tapete central e entrada larga (6 colunas de capacho) entre os pilares. Arte `assets-src/interiors/guild.png` → `interior-guild.webp` (`scripts/extract-interiors.py` + `optimize-assets.py`), registrada em `render/art/principal.ts`. **Vai no fim de `INTERIOR_DEFS`:** os outros cômodos não mudam; o da **tenda anda uma posição** (quem salvou dentro de uma tenda reabre na rua).

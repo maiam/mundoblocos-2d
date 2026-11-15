@@ -16,6 +16,7 @@ import { Sheep } from './sheep';
 import type { Facing } from './walker';
 import type { Exploration } from './exploration';
 import { type MemoryBook, sanitizeBook } from './npcBrain/memory';
+import { EMPTY_LOG, type MissionLog, sanitizeMissions } from './npcBrain/missions';
 import { type QuestLog, sanitizeLog } from './npcBrain/quests';
 
 /**
@@ -26,7 +27,7 @@ import { type QuestLog, sanitizeLog } from './npcBrain/quests';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 export interface SaveData {
   v: number;
@@ -34,6 +35,8 @@ export interface SaveData {
   npcMemory: MemoryBook;
   /** Missões dos NPCs (v19, ADR 0034): em andamento ou concluídas. */
   quests: QuestLog;
+  /** Corrente de missões do Capítulo 1 (v20, ADR 0034). */
+  missions: MissionLog;
   /** Subdivisão da grade em que o mundo foi salvo (v16, ADR 0032): 1 = antiga; 2 = células de metade do lado. */
   sub: number;
   world: WorldId;
@@ -87,6 +90,7 @@ export function captureSave(s: GameState): SaveData {
     v: SAVE_VERSION,
     npcMemory: s.entities.memory,
     quests: s.entities.quests,
+    missions: s.entities.missions,
     sub: SUBDIV,
     world: s.world.profile.id,
     seed: s.world.seed,
@@ -172,6 +176,8 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 17) d = { ...d, v: 18, npcMemory: {} };
   // v18 → v19 (missões dos NPCs, ADR 0034): nenhuma missão aceita ainda.
   if (d.v === 18) d = { ...d, v: 19, quests: {} };
+  // v19 → v20 (missões do Capítulo 1, ADR 0034): nenhuma missão cumprida ainda.
+  if (d.v === 19) d = { ...d, v: 20, missions: EMPTY_LOG() };
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -256,6 +262,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   s.entities.body = HERO_BODIES.includes(d.body) ? d.body : 'heroine';
   s.entities.memory = sanitizeBook(d.npcMemory);
   s.entities.quests = sanitizeLog(d.quests);
+  s.entities.missions = sanitizeMissions(d.missions);
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;
