@@ -159,7 +159,7 @@ flowchart LR
 | Regra de colocar/quebrar/pisar | `world/world.ts` (`placementLevel`, `breakTarget`, `standHeight`) + testes | world, MAPS §3 |
 | Geração do mapa/biomas | `world/generator.ts` (`cellAt`), `world/biomes.ts` + `npm run bench` | world |
 | Novo item ou ferramenta | `world/items.ts` (`StackId`, drops), `game/inventory.ts` (começo), `game/hotbar.ts`, `render/art/<mundo>.ts` (ícone) | farming |
-| Água (substituir, encher buracos) | `world/world.ts` (`REPLACES_WATER`, `scheduleFlow/tickWater`), `render/renderer.ts` (`drawWaterFlows`) | world, render |
+| Água (substituir, encher buracos) | `world/world.ts` (`REPLACES_WATER`, `scheduleFlow/tickWater`), `render/three/groundFx.ts` (água enchendo) | world, render |
 | Receita / profissão nova | `world/items.ts` (`RECIPES`, `PROFESSIONS`), ícone em `render/art/<mundo>.ts`; tela em `game/skills.ts` | farming |
 | O que um bloco devolve ao quebrar | `world/items.ts` (`blockDrops/breakDrops`) | farming |
 | Ação de ferramenta / toque / clique | `game/actionController.ts` (`canUseAt/applyUse/advanceHold`), `world/world.ts` | player, farming, MAPS §6 |
@@ -199,4 +199,4 @@ flowchart LR
 | Cidade (ruas, construções, regras) | `world/town.ts` (`buildTown`, `TOWN_SIZES`, `TownTerrain`), `world/blocks.ts` (ids 120–142), arte em `assets-src/town/` + `scripts/extract-town.py`, `World` (`isProtected`, `townBuildingAt`), `render/townArt.ts` + `town.test.ts` | town, ADR 0012 |
 | Dungeon / monstro novo | `world/dungeon.ts` (área, spawns), `game/monster.ts` (`MONSTERS`), `game/entities.ts`, `render/character.ts` (`cycle`), `scripts/extract-dungeon.py` | dungeon, render, OPERATIONS, ADR 0009 |
 | Estado novo que deve ser salvo / menu | `game/save.ts` (`SaveData`, `SAVE_VERSION`, captura/aplica), `game/menu.ts`, `main.ts` | save, ADR 0011 |
-| Desempenho | `bench/perf.bench.ts`, `world/generator.ts`, `world/world.ts`, `render/renderer.ts` | ARCHITECTURE §Desempenho |
+| Desempenho | `bench/perf.bench.ts`, `world/generator.ts`, `world/world.ts`, `render/worldThreeRenderer.ts` | ARCHITECTURE §Desempenho |

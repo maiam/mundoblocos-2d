@@ -8,7 +8,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
-import { chooseWorldRenderer, useSolidPhysics } from './render/rendererChoice';
+import { useSolidPhysics } from './render/rendererChoice';
 import { parseWallThickness } from './world/walls';
 import { parseAmbient } from './render/lighting';
 import { ScreenMode } from './game/screenMode';
@@ -18,8 +18,7 @@ import type { RendererFactory } from './render/rendererContract';
 import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
 
 let canvas = document.getElementById('world') as HTMLCanvasElement;
-/** Um canvas que recebeu contexto 2D não aceita WebGL (e vice-versa): cada Game ganha um canvas novo, senão a vitrine
- *  do título (2D) travava a entrada no 3D até reiniciar. */
+/** Um canvas já usado por um Game não aceita um contexto novo: cada Game ganha um canvas novo (a vitrine do título, o jogo, a sala). */
 function freshCanvas(): HTMLCanvasElement {
   const next = document.createElement('canvas');
   next.id = canvas.id;
@@ -30,6 +29,15 @@ function freshCanvas(): HTMLCanvasElement {
   canvas = next;
   return next;
 }
+/** Sem WebGL (ou sem o módulo do renderer) não há o que mostrar: o Canvas 2D foi removido (v0.93.105). Avisa na tela, sem janela do navegador. */
+function showUnsupported(webgl: boolean): void {
+  const box = document.createElement('div');
+  box.setAttribute('style', 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#120f2c;color:#f4efe0;font:600 16px/1.5 Nunito,system-ui,sans-serif;text-align:center;z-index:99');
+  box.textContent = webgl
+    ? 'Não foi possível carregar o gráfico do Orvalis. Recarregue a página; se continuar, tente outro navegador.'
+    : 'O Orvalis precisa de WebGL, e este aparelho ou navegador não o oferece. Ative a aceleração gráfica nas configurações do navegador ou tente outro.';
+  document.body.appendChild(box);
+}
 const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
 const baseProfile = WORLD_PROFILES[resolveWorldId(window.location.hostname, window.location.search, import.meta.env.VITE_WORLD)];
@@ -38,10 +46,10 @@ const gridProto = SUBDIV !== DEFAULT_SUBDIV && baseProfile.id === 'principal';
 const profile = baseProfile;
 document.title = profile.name;
 let game: Game | null = null;
-/** Renderer 2.5D carregado sob demanda (Santuário; Mundo só em desenvolvimento com `?render=3d`): sem Three.js no pacote do principal. */
+/** Renderer 2.5D em WebGL carregado sob demanda (Santuário e Mundo; o Canvas 2D foi removido na v0.93.105): sem Three.js no pacote inicial. */
 let threeRendererFactory: RendererFactory | undefined;
-/** Física sem degrau do jogador: só no Mundo com o renderer 3D (ADR 0031, M6) e sem `?fisica=degrau`. O Santuário tem a regra dele. */
-const solidPhysics = (): boolean => profile.id === 'principal' && !!threeRendererFactory && useSolidPhysics(window.location.search, '3d');
+/** Física sem degrau do jogador no Mundo (ADR 0031), a não ser com `?fisica=degrau`. O Santuário tem a regra dele. */
+const solidPhysics = (): boolean => profile.id === 'principal' && useSolidPhysics(window.location.search);
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
 const store = new SaveStore(profile.id, gridProto ? null : undefined);
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
@@ -105,7 +113,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    game = new Game(freshCanvas(), seed, screenMode, profile, { net: s, online, body, rendererFactory: threeRendererFactory, solidPhysics: solidPhysics(), notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    game = new Game(freshCanvas(), seed, screenMode, profile, { net: s, online, body, rendererFactory: threeRendererFactory!, solidPhysics: solidPhysics(), notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   // Como os outros vão me ver: o mesmo personagem do jogo.
@@ -133,7 +141,7 @@ function start(seed: number, notice?: string, body?: HeroBody): void {
     save: store.load(seed),
     store,
     body: keepBody,
-    rendererFactory: threeRendererFactory,
+    rendererFactory: threeRendererFactory!,
     solidPhysics: solidPhysics(),
     notice,
     online,
@@ -181,7 +189,7 @@ function chooseCharacterForNewWorld(): void {
 function showTitle(): void {
   const last = store.lastSeed();
   const canContinue = last !== null && store.load(last) !== null;
-  game = new Game(freshCanvas(), last ?? 1, screenMode, profile, { showcase: true });
+  game = new Game(freshCanvas(), last ?? 1, screenMode, profile, { showcase: true, rendererFactory: threeRendererFactory! });
   const title = new TitleScreen({
     canContinue,
     name: savedName(),
@@ -211,48 +219,27 @@ void loadArtPack(profile.id)
   .then(() => loadBlockArt())
   .then(() => loadMaterialsV2(blocksV2))
   .then(async () => {
-    // Three.js is now the official Santuário renderer. The exact same Game,
-    // save format, two-level construction, actions, player and HUD are kept.
-    // The principal world never loads this module (separate Vite chunk).
-    // ?render=2d remains a safe fallback for devices without WebGL.
-    if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario' && query.get('render') !== '2d') {
-      const probe = document.createElement('canvas');
-      const supported = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
-      if (supported) {
-        try {
+    // Renderer 2.5D em WebGL (Three.js), carregado sob demanda (chunks separados do Santuário e do Mundo). O Canvas 2D foi removido na v0.93.105:
+    // sem WebGL (ou se o módulo falhar) o jogo avisa em vez de abrir.
+    const probe = document.createElement('canvas');
+    const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
+    if (webgl) {
+      try {
+        if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario') {
           const mod = await import('./render/sanctuaryThreeRenderer');
           // Vista oblíqua é o padrão (ADR 0026, v0.93.10); `?vista=inclinada` volta à câmera inclinada a 67°.
           const view = query.get('vista') === 'inclinada' ? 'tilt' : 'oblique';
           threeRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core', 'grade'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core' | 'grade') : undefined });
-        } catch (error) {
-          console.error('Santuário Three.js: usando renderizador 2D de reserva', error);
-        }
-      } else console.warn('WebGL indisponível: Santuário usará Canvas 2D.');
-    }
-
-    // Mundo em 2.5D (ADR 0031, M6 — a virada): o 3D é o padrão quando há WebGL; `?render=2d` e aparelhos sem WebGL ficam no Canvas 2D
-    // (reserva até o M7). Falha ao carregar o módulo também cai no 2D. Online e solo usam o mesmo renderer.
-    if (profile.id === 'principal') {
-      const probe = document.createElement('canvas');
-      const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
-      if (chooseWorldRenderer(window.location.search, webgl) === '3d') {
-        try {
+        } else if (profile.id === 'principal') {
           const mod = await import('./render/worldThreeRenderer');
           threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
-        } catch (error) {
-          console.error('Mundo em 3D indisponível: usando o Canvas 2D de reserva', error);
         }
-      } else if (!webgl) console.warn('WebGL indisponível: o Mundo usará Canvas 2D.');
+      } catch (error) {
+        console.error('Renderer 3D indisponível', error);
+      }
     }
+    if (!threeRendererFactory) { showUnsupported(webgl); return; }
 
-    // Só em desenvolvimento (ADR 0022): `?escala=1` abre a cena de comparação de escala com o renderizador real.
-    // O `import()` fica dentro de `import.meta.env.DEV`: o build de produção não contém a cena.
-    if (import.meta.env.DEV && query.has('escala') && profile.id === 'principal') {
-      void import('./dev/scaleScene').then((m) => {
-        (window as unknown as { __scaleScene: unknown }).__scaleScene = m.startScaleScene(canvas);
-      });
-      return;
-    }
     // Só em desenvolvimento (ADR 0023): `?materiais=1` põe o atlas legado e os materiais V2 lado a lado.
     if (import.meta.env.DEV && materialsScene) {
       void import('./dev/materialsScene').then((m) => m.showMaterialsScene(canvas));

@@ -1,13 +1,12 @@
 import { CHUNK_SIZE, CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FRAME, SUBDIV, TILE } from '../config';
 import { CHARACTER_H } from '../render/character';
-import { Renderer } from '../render/renderer';
 import type { GameRenderer, RendererFactory } from '../render/rendererContract';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
 import { blockDef, type BlockId } from '../world/blocks';
 import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { World } from '../world/world';
-import { WORLD_PROFILES, type WorldProfile } from '../world/profiles';
+import { type WorldProfile } from '../world/profiles';
 import type { Facing } from './walker';
 import { Camera, initialZoomMultiplier } from './camera';
 import type { NetSession } from '../net/session';
@@ -61,8 +60,8 @@ const SHAKE_HURT = 2.2;
 
 /** Opções da sessão: salvamento para restaurar, armazenamento e ações do menu (vêm do main). */
 export interface GameOptions {
-  /** Only the Santuário supplies a WebGL renderer; main World always uses Canvas2D. */
-  rendererFactory?: RendererFactory;
+  /** O renderer 2.5D em WebGL do mundo (o Canvas 2D foi removido na v0.93.105): o `main` o monta e avisa quando o aparelho não tem WebGL. */
+  rendererFactory: RendererFactory;
   /** Piloto do Mundo em 2.5D (`?fisica=solida`): o jogador não sobe em cubos sozinho (sem degrau). Só vale com o render 3D. */
   solidPhysics?: boolean;
   save?: SaveData | null;
@@ -177,9 +176,9 @@ export class Game {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     seed: number,
-    private readonly screenMode?: ScreenMode,
-    profile: WorldProfile = WORLD_PROFILES.principal,
-    private readonly options: GameOptions = {},
+    private readonly screenMode: ScreenMode | undefined,
+    profile: WorldProfile,
+    private readonly options: GameOptions,
   ) {
     this.world = new World(seed, profile);
     this.collect = profile.collectBlocks;
@@ -189,8 +188,7 @@ export class Game {
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
     // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
-    // The main World and the optional Santuário Canvas2D renderer are unchanged.
-    configureSanctuaryThreeCollision(this.player, profile.id, !!options.rendererFactory, !!options.solidPhysics);
+    configureSanctuaryThreeCollision(this.player, profile.id, true, !!options.solidPhysics);
     // A nova seed do Santuário não tem chão vazio: nasce sobre o topo da
     // coluna inicial, nunca dentro dos cubos.
     if (profile.id === 'santuario') {
@@ -210,7 +208,7 @@ export class Game {
     this.player.timingFor = (tool) => attackTimingFor(this.entities.body, tool);
     this.player.smooth = !options.showcase && feelOn();
     this.lastHp = this.player.hp;
-    this.renderer = options.rendererFactory?.(canvas, this.world) ?? new Renderer(canvas, this.world);
+    this.renderer = options.rendererFactory(canvas, this.world);
     this.camera.setCellsTall(this.renderer.preferredCellsTall);
     this.syncOrientationZoom(true);
     this.actions = new ActionController({

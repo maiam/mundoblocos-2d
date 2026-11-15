@@ -1,6 +1,45 @@
-import type { World } from '../world/world';
 import type { Camera } from '../game/camera';
-import type { Renderer, RenderOptions } from './renderer';
+import type { ItemDrop } from '../game/drops';
+import type { Actor } from '../game/entities';
+import type { Player } from '../game/player';
+import type { Rect } from '../world/dungeon';
+import type { InteriorLayout } from '../world/interiors';
+import type { Hit } from '../world/progression';
+import type { BlockId } from '../world/blocks';
+import type { World } from '../world/world';
+
+/** O que o jogo entrega ao renderer a cada quadro (antes vivia no `renderer.ts` do Canvas 2D, removido na v0.93.105). */
+export interface RenderOptions {
+  player: Player;
+  /** Todos os atores (personagem + NPCs), desenhados com ordenação por profundidade. */
+  actors: Actor[];
+  showChunkBorders: boolean;
+  hover: { x: number; y: number; valid: boolean } | null;
+  /** Quebra em andamento (segurando): célula e progresso 0..1. */
+  breaking: { x: number; y: number; progress: number } | null;
+  /** Itens caídos no chão (colheita). */
+  drops: ItemDrop[];
+  /** Alvo à frente da personagem parada (botão de ação): contorno de seleção. */
+  focus: { x: number; y: number; valid: boolean } | null;
+  /** Ovelha sob o cursor quando o trigo está selecionado (posição dos pés, em células). */
+  hoverSheep: { x: number; y: number; valid: boolean; attack?: boolean } | null;
+  time: number;
+  elapsed: number;
+  dt: number;
+  /** Flash vermelho de dano (1 → 0). */
+  hurtFlash: number;
+  /** Personagem dentro da dungeon: penumbra com luz ao redor dela. */
+  inDungeon: boolean;
+  /** Célula diante da entrada da dungeon (farol + seta na borda da tela), ou null. */
+  entrance: [number, number] | null;
+  /** Dentro do covil: área do labirinto (o resto da tela fica escuro — de dentro não se vê o mundo). */
+  dungeonArea?: Rect | null;
+  /** Cômodo onde a personagem está (ADR 0014): desenha só a arte dele e os atores, sem mundo em volta. */
+  interior?: InteriorLayout | null;
+  /** Escurecer ao passar por uma porta (1 → 0). */
+  fade?: number;
+}
+
 
 /** Contadores de desempenho do renderer (linha de base da Fase 1, ADR 0026). Só o WebGL tem. */
 export interface RendererStats {
@@ -16,7 +55,14 @@ export interface RendererStats {
 }
 
 /** Only rendering differs between official worlds; gameplay remains shared. */
-export type GameRenderer = Pick<Renderer, 'draw' | 'pick' | 'addDamage' | 'iconFor'> & {
+export type GameRenderer = {
+  draw(cam: Camera, opts: RenderOptions): void;
+  /** Célula (e se há objeto nela) sob o ponto da tela. */
+  pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean };
+  /** Número de dano flutuante em (x, y) (células). */
+  addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void;
+  /** Ícone (URL) do bloco na grade e na bolsa. */
+  iconFor(id: BlockId): string;
   dispose?(): void;
   /**
    * Célula de CHÃO que se vê sob o ponto da tela, ignorando objetos altos de sprite (árvores…) mas não os cubos: no 3D com K = 1 o topo

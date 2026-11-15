@@ -14,7 +14,6 @@ Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece
 | 7 | [OPERATIONS](OPERATIONS.md) | Comandos, pipeline de assets, Artifact, testes | Comando/script/processo novo |
 | 8 | [DECISIONS](DECISIONS.md) + [adr/](adr/) | Decisões registradas | Decisão de arquitetura ou de produto |
 | 9 | [CHANGELOG](CHANGELOG.md) | Histórico por versão | **Toda entrega** |
-| — | [PARITY_3D](PARITY_3D.md) | Checklist de paridade 2D × 3D do Mundo (piloto, ADR 0031) | Cenário do piloto muda de estado |
 
 ## Domínios (`domains/`)
 | Domínio | Fonte de verdade | Documento |

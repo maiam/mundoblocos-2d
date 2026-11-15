@@ -260,7 +260,7 @@ grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `r
 
 **Materiais V2** (ADR 0023, em validação): PNGs 128×128 em `assets-src/materiais/<material>/` (contrato na pasta) →
 `python3 scripts/build-materials.py --preview` → `src/assets/materials-v2.{webp,json}` (já sai em WebP; sem
-`optimize-assets.py`). O V2 é o padrão do jogo; `?blocos=legado` volta ao atlas antigo e `?materiais=1` abre a cena de comparação (só no `npm run dev`). A cena `?escala=1` já mostra a arte V2
+`optimize-assets.py`). O V2 é o padrão do jogo; `?blocos=legado` volta ao atlas antigo e `?materiais=1` abre a cena de comparação (só no `npm run dev`). (A cena `?escala=1` foi removida na v0.93.105.) A arte V2
 (ADR 0022, renderizador real). Arte provisória:
 `scripts/make-provisional-materials.py` (tira do atlas antigo; cria `PROVISORIO.txt`). Arte oficial:
 `python3 scripts/import-material.py <material> --top arq.png [--front arq.png] [--overlay arq.png [--fit-fringe]]`
@@ -274,18 +274,18 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 
 **PWA**: `python3 scripts/make-icons.py` (Pillow) gera, a partir do ícone oficial `assets-src/icone-orvalis.webp` (selo redondo, cantos transparentes), `public/icon-192.png`, `icon-512.png` (purpose "any"; o 192 também é o favicon), `icon-maskable-512.png` (selo a 80% sobre fundo `#120f2c`) e `apple-touch-icon.png` (180×180, fundo opaco). Trocar o ícone = substituir o `.webp` e rodar o script.
 
-**Cena de escala** (ADR 0022, só em desenvolvimento): `npm run dev` e abrir `http://localhost:5173/?escala=1` — personagens, animais, monstros, baú, bancos, árvores e uma casa 5×5 sobre a grade, desenhados pelo renderizador real. Teclas: `G` grade · `A` âncoras e alturas · `B` células bloqueadas · `L` nomes · `+`/`−` zoom · setas · `0` reenquadra. Use ao integrar arte nova (compare com o que já existe; a fila é `src/dev/scaleLayout.ts`). Captura de referência: `docs/assets/escala-referencia.jpg` (viewport 1280 × 720). Não entra no build de produção.
+**Cena de escala** (ADR 0022): foi removida junto com o Canvas 2D na v0.93.105 (`?escala=1`, `src/dev/scaleScene.ts`, `scaleLayout.ts`). A referência `docs/assets/escala-referencia.jpg` fica; para comparar arte nova, confira-a no jogo ao lado dos personagens e objetos existentes.
 
 ## Medir o 3D em aparelho real (ADR 0031) — o 3D é o padrão do Mundo desde a v0.93.47
-1. **Mesma rede (rápido):** `npm run dev -- --host` e abrir `http://<IP-do-computador>:5173/?fps=1` no aparelho (o 3D já é o padrão; `?render=2d` mede o 2D para comparar); ou use o site/Artifact publicado com `?fps=1`.
+1. **Mesma rede (rápido):** `npm run dev -- --host` e abrir `http://<IP-do-computador>:5173/?fps=1` no aparelho (o 3D é o único renderer); ou use o site/Artifact publicado com `?fps=1`.
 2. `?fps=1` mostra um painel (FPS, tempo de quadro e o pior, chamadas/triângulos/texturas/geometrias da GPU, memória do JS); **toque nele para copiar o
    relatório** (JSON) e cole na conversa. O relatório traz a sessão inteira **e o regime estável** (depois de 8 s de carga), a fração de quadros acima de 33 ms
    (< 30 FPS) e de 50 ms (engasgo), as **pausas do navegador** (aba em segundo plano, fora das médias) e o **tempo de JS do `draw`** (`jsDrawMs`, para separar
    CPU de GPU). Faça duas coletas: ~1 min parado e ~1 min andando, pela cidade, pela floresta e à noite. Em HTTP na rede local o navegador não libera a
    área de transferência: o painel abre então uma caixa de texto com o JSON já selecionado (copie à mão ou tire um print; toque na caixa para fechar). O dia
    dura 8 min (`DAY_LENGTH_S` = 480) e o jogo começa de manhã (0,31): anoitece em ~3,5 min e é meia-noite em ~5,5 min; no teclado, **T** avança um quarto de dia.
-3. **Sem GPU** (CI, VM): `npm run perf:cpu:3d` (custo de JS por quadro 2D × 3D), `npm run parity:3d` (capturas lado a lado em `parity-out/`, ver [PARITY_3D](PARITY_3D.md)) e
-   `npm run leak:3d` (vazamento ao atravessar o mapa). Os três usam `?render=2d`/padrão e o Playwright do ambiente.
+3. **Sem GPU** (CI, VM): `npm run perf:cpu:3d` (custo de JS por quadro) e
+   `npm run leak:3d` (vazamento ao atravessar o mapa). Os dois usam o Playwright do ambiente. (`parity:3d` e `docs/PARITY_3D.md`, da comparação 2D × 3D, foram removidos na v0.93.105.)
 4. **Física:** com o 3D o jogador não sobe em cubos sozinho; `&fisica=degrau` devolve a regra antiga para comparar.
 
 ## Testes no navegador

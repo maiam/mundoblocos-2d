@@ -1,4 +1,3 @@
-import { hash2 } from '../world/random';
 
 /**
  * Seleção de células na tela (cantoneiras do alvo, moldura do cursor, rachaduras de quebra): o MESMO desenho para o `Renderer` 2D
@@ -49,45 +48,14 @@ export function drawHoverFrame(ctx: CanvasRenderingContext2D, r: SelectionRect, 
 }
 
 /**
- * Rachaduras que crescem com o progresso + anel de carregamento. `cell` é a célula (só semeia as rachaduras, determinísticas).
- * `ringOnly`: só o anel (o 3D com "sensação" desenha o desgaste em pixels no próprio bloco, `three/breakCracks.ts`; as fissuras radiais
- * por cima liam como listras).
+ * Anel de carregamento da quebra em andamento, centrado na célula: trilho escuro + arco dourado que cresce com o progresso (0..1). (As fissuras
+ * desenhadas por cima, do Canvas 2D, foram removidas: as rachaduras agora são decalques no próprio bloco, `three/breakCracks.ts`.)
  */
-export function drawBreakingCracks(ctx: CanvasRenderingContext2D, r: SelectionRect, zoom: number, progress: number, cell: { x: number; y: number }, ringOnly = false): void {
+export function drawBreakingRing(ctx: CanvasRenderingContext2D, r: SelectionRect, progress: number): void {
   const { sx, sy, w, h } = r;
   const cx = sx + w / 2;
   const cy = sy + h / 2;
   const p = Math.min(1, progress);
-  if (!ringOnly) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(sx, sy, w, h);
-    ctx.clip();
-    ctx.fillStyle = `rgba(20, 12, 40, ${0.25 * p})`;
-    ctx.fillRect(sx, sy, w, h);
-    // Rachaduras determinísticas a partir do centro; mais ramos conforme avança.
-    ctx.strokeStyle = `rgba(30, 18, 50, ${0.5 + 0.4 * p})`;
-    ctx.lineWidth = Math.max(1.5, zoom);
-    ctx.lineCap = 'round';
-    const branches = Math.ceil(p * 7);
-    const reach = Math.max(w, h) * 0.55 * p;
-    for (let i = 0; i < branches; i++) {
-      const a = (i / 7) * Math.PI * 2 + hash2(cell.x * 31 + i, cell.y, 5) * 0.8;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      let px = cx;
-      let py = cy;
-      for (let k = 1; k <= 3; k++) {
-        const jitter = (hash2(cell.x + k, cell.y + i, 9) - 0.5) * 0.9;
-        px = cx + Math.cos(a + jitter) * reach * (k / 3);
-        py = cy + Math.sin(a + jitter) * reach * (k / 3);
-        ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
   const ringR = Math.max(14, Math.min(w, h) * 0.32);
   ctx.save();
   ctx.lineWidth = 4;

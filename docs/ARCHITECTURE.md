@@ -13,7 +13,7 @@ Site estático (Vite 7 + TypeScript, sem framework; testes com Vitest 5; Node �
 
 ## Renderizador específico por mundo (PR #89; Mundo em 3D desde a v0.93.47)
 
-> **M6 (v0.93.47):** o **Mundo principal** também usa o renderer 2.5D por padrão (`render/worldThreeRenderer.ts`, núcleo em `render/three/`; a escolha vem de `render/rendererChoice.ts`: `?render=2d` e a falta de WebGL voltam ao `Renderer` 2D). O parágrafo abaixo conta a origem (Santuário).
+> **M7 (v0.93.105):** o Canvas 2D (`render/renderer.ts`) foi **removido**: Mundo e Santuário usam só o renderer 2.5D em WebGL; sem WebGL o `main.ts` avisa na tela. O `ChunkRenderer` continua (pinta o chão numa textura por chunk). O parágrafo abaixo conta a origem (Santuário).
 
 `Game` continua orquestrando `World`, personagem, controles, ações, hotbar, HUD e persistência. Sua opção `rendererFactory` pode substituir somente o renderer visual. O perfil **Santuário** carrega sob demanda `render/sanctuaryThreeRenderer.ts` (Three.js 0.187), com `render/sanctuaryThreeLayout.ts` para forma procedural de cubo/painel, instanciamento dos 18 tipos de bloco, câmera ortográfica superior, raycasting e Deusa animada em sprite 2D. O perfil **principal** mantém `render/renderer.ts` Canvas 2D intacto, sem carregar Three.js, inclusive no artefato fixo `VITE_WORLD=principal`. Sem WebGL, ou com `?render=2d`, o Santuário usa o renderer Canvas 2D antigo. O `World` continua a fonte de verdade para chunks, colisão, colocação, remoção e salvamento; o Santuário oficial não recebe as cenas experimentais de 5 níveis e primeira pessoa.
 
@@ -84,9 +84,7 @@ src/
     session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
     loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
     index.ts                   o que vai no pacote do servidor (npm run build:net → dist-net/orvalis-net.cjs)
-  dev/     só desenvolvimento, fora do build de produção: cena de escala (`?escala=1`, ADR 0022) e dos materiais (`?materiais=1`, ADR 0023)
-    scaleLayout.ts             fila de comparação (dados puros, testados)
-    scaleScene.ts              cena: grade, âncoras, células bloqueadas, nomes e alturas por cima do quadro real
+  dev/     só desenvolvimento, fora do build de produção: cena dos materiais (`?materiais=1`, ADR 0023) e painel de desempenho (`?fps=1`)
     materialsScene.ts          cena ?materiais=1: atlas legado × materiais V2 lado a lado (ADR 0023)
   dev/perfHud.ts               painel de desempenho `?fps=1` (dev e piloto): FPS, GPU, memória; toque copia o relatório
   render/  apresentação — só lê o mundo
@@ -115,7 +113,7 @@ src/
     characterPreview.ts        prévia do personagem na tela de entrada (mesmo desenho do jogo, virando nas 4 direções)
     itemArt.ts                 trigo por estágio, ícones de itens/ferramentas
     daycycle.ts, particles.ts, color.ts
-    renderer.ts                frame + pick (objeto sob o cursor)
+    rendererContract.ts        `RenderOptions` (o que o jogo entrega por quadro) e `GameRenderer` (draw, pick, addDamage, iconFor)
   game/    orquestração e entidades
     game.ts                    loop, criação do mundo/entidades, câmera, hotbar/HUD; repassa a entrada
     actionController.ts        regras de ação por célula (toque/clique/segurar), porta, quebra, alvos p/ render

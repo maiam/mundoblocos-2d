@@ -1,7 +1,7 @@
 # Convenções
 
 ## Renderização por perfil
-- **Mundo principal:** renderer 2.5D em WebGL por padrão (`render/worldThreeRenderer.ts`, ADR 0031 M6), Canvas 2D de reserva com `?render=2d` e sem WebGL (até o M7). **Mudança visual do Mundo vale nos DOIS** enquanto o 2D existir: os desenhos compartilhados (`render/selectionFx.ts`, `dungeonFx.ts`, `doorAnim.ts`, `groundFxMath.ts`) ficam num lugar só. **Santuário:** Three.js/WebGL ortográfico superior (com fallback `?render=2d`); `Game`/`World`/save compartilhados. Não duplicar regras de bloco ou importar cenas do laboratório 5 níveis na engine oficial.
+- **Mundo principal e Santuário:** renderer 2.5D em WebGL (Three.js) é o **único** (`render/worldThreeRenderer.ts`, `sanctuaryThreeRenderer.ts`; o Canvas 2D foi removido na v0.93.105, ADR 0031 M7). `Game`/`World`/save compartilhados. Desenhos usados também pela camada 2D do 3D (`render/selectionFx.ts`, `dungeonFx.ts`, `doorAnim.ts`, `groundFxMath.ts`) ficam num lugar só. Não duplicar regras de bloco nem importar cenas do laboratório de 5 níveis na engine oficial.
 - A célula lógica continua 32×32; no Three cada célula é unidade de 1×1 e a altura física é 1 por camada, no máximo duas camadas. Paredes finas legadas ocupam metade da profundidade da célula; o segundo nível herda seu formato. O mármore V2/V3 foi removido na v0.93.28 (W4): o Mármore Celestial é um cubo comum.
 
 ## Código
@@ -44,7 +44,7 @@
 - Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
 
 ## Arte e assets
-- **Escala**: ao integrar arte nova, confira-a na cena de escala (`?escala=1`, ADR 0022) ao lado dos personagens, animais e objetos existentes; não mude `TILE`, chunks nem colisão para "consertar" um desenho — ajuste a escala/âncora do sprite.
+- **Escala**: ao integrar arte nova, confira-a no jogo ao lado dos personagens, animais e objetos existentes (a cena de escala `?escala=1` foi removida com o Canvas 2D, v0.93.105; `docs/assets/escala-referencia.jpg` fica como referência); não mude `TILE`, chunks nem colisão para "consertar" um desenho — ajuste a escala/âncora do sprite.
 - **Texturas sempre na direção em que foram desenhadas** (regra do dono do produto, 2026-11-03): chão, cubos e
   construções nunca giram nem espelham por célula — ele planeja a arte contando com essa direção. Para variar, ele
   envia **variações** (ex.: 3 gramas), sorteadas por célula, cada uma na direção desenhada.

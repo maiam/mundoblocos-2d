@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Block, type BlockId } from '../world/blocks';
-import { ADAPTIVE_WALL_BLOCKS, drawThinHorizontalWall, horizontalWallShape, thinWallSlices } from './adaptiveWalls';
-import type { Sprite } from './textures';
+import { ADAPTIVE_WALL_BLOCKS, horizontalWallShape, thinWallSlices } from './adaptiveWalls';
 
 const view = (entries: Array<[number,number,number,BlockId]>) => {
   const cells = new Map(entries.map(([x,y,z,id])=>[x+':'+y+':'+z,id]));
@@ -127,20 +126,5 @@ describe('autotile de paredes 2D do motor oficial', () => {
     const r=thinWallSlices(100,50,82,114,132);
     expect(r).toEqual({topSrcY:32,topSrcH:32,frontSrcY:64,frontSrcH:36,
       topY:98,topH:16,frontY:114,frontH:18});
-  });
-
-  it('desenha topo fino e face frontal inteira com alinhamento ao pilar', () => {
-    const ops:unknown[][]=[];
-    const ctx={
-      drawImage:(...args:unknown[])=>{ops.push(args);},
-      fillRect:vi.fn(),
-      fillStyle:'',
-    } as unknown as CanvasRenderingContext2D;
-    const sprite={canvas:{width:64,height:100},h:50} as Sprite;
-    drawThinHorizontalWall(ctx,sprite,30,62,82,114,132);
-    expect(ops).toHaveLength(2);
-    expect(ops[0].slice(1)).toEqual([0,32,64,32,30,98,32,16]);
-    expect(ops[1].slice(1)).toEqual([0,64,64,36,30,114,32,18]);
-    expect(ctx.fillRect).toHaveBeenCalledWith(30,98,32,1);
   });
 });

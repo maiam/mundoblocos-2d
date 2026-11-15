@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { World } from '../../world/world';
-import type { RenderOptions } from '../renderer';
+import type { RenderOptions } from '../rendererContract';
 
 /** Realces de seleção (cursor/foco) e de quebra, planos sobre o topo da pilha da célula (núcleo genérico, M1). */
 export class SelectionMarkers {
