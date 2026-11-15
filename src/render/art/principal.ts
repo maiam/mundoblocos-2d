@@ -216,6 +216,7 @@ import cauldronSprite from '../../assets/cauldron.webp';
 import ovenIcon from '../../assets/icon-block-oven.webp';
 import ovenSprite from '../../assets/oven.webp';
 import rocks from '../../assets/rocks.webp';
+import flowers from '../../assets/flowers.webp';
 import fencePieces from '../../assets/fence.webp';
 import fenceGate from '../../assets/fence-gate.webp';
 import fenceIcon from '../../assets/icon-block-fence.webp';
@@ -517,6 +518,7 @@ const pack: ArtPack = {
   // Árvores adultas em tiras de variantes (scripts/process-trees.py); cacto: prancha 4 × 2 (scripts/extract-trees.py).
   trees: { oak: treeOak, apple: treeApple, appleBare: treeAppleBare, cherry: treeCherry, birch: treeBirch, cactus: treeCactus },
   rocks,
+  flowers,
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: {
     pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon,

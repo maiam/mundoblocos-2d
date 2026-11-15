@@ -217,12 +217,7 @@ export class ChunkRenderer {
           ctx.beginPath();
           ctx.ellipse(px + TILE * 0.55, py + TILE - 2, TILE * (obj.solid ? 0.55 : 0.25), 4, 0, 0, Math.PI * 2);
           ctx.fill();
-        } else if (obj.shape === 'fence') {
-          // Cerca/portão: faixa fina de sombra ao pé.
-          ctx.fillStyle = 'rgba(30, 20, 70, 0.18)';
-          ctx.beginPath();
-          ctx.ellipse(px + TILE * 0.55, py + TILE - 3, TILE * 0.5, 4, 0, 0, Math.PI * 2);
-          ctx.fill();
+        // Cerca/portão: sem sombra no chão aqui (a de antes ficava na frente da base e descolava a cerca; a sombra de contato é `drawFenceShadow`, atrás)
         } else if (obj.shape === 'tree') {
           const k = 1; // só há árvores adultas (v0.88.0); a arte já traz o tufo de grama no pé
           ctx.fillStyle = 'rgba(30, 20, 70, 0.24)';

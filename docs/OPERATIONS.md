@@ -195,6 +195,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 **Ferramentas por material**: a arte segue `assets-src/ferramentas/CONTRATO.md` (ficha em `catalogo.json`, prancha
 de ícones padronizada, camada de mão sobre pose-base). O motor só importa o que passou pela checagem da seção 5.
 
+**Flores fofas** (PNGs individuais transparentes em `assets-src/flores/NN-nome.png`, 360 × 320, base do caule em y = 278): `python3 scripts/extract-flowers.py` → `flowers.webp` (tira de quadros 96 × 96, mesma escala para todas). Sorteadas por célula como variantes de `Block.FLOWER`.
+
 **Pedregulhos** (prancha de pedras soltas em fileiras irregulares, `assets-src/rocks-sheet.png`):
 `python3 scripts/extract-rocks.py` → `rocks.png` (tira de quadros de 96 px, mesma escala, base no pé) →
 `optimize-assets.py`. Separa os desenhos por pedaços conectados e ordena por fileira (sem grade).

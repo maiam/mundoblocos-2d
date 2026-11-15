@@ -40,6 +40,7 @@ export interface TreeArt { oak: HTMLImageElement; apple: HTMLImageElement; apple
 let trees: TreeArt | null = null;
 /** Tira de pedregulhos. */
 let rocks: HTMLImageElement | null = null;
+let flowers: HTMLImageElement | null = null;
 /** Cerca de tábuas: peças emendáveis e portão (fechado, aberto). */
 let fence: { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement> } | null = null;
 /** Cidade: imagens por nome (`town-<nome>`). */
@@ -74,6 +75,7 @@ export async function loadBlockArt(): Promise<void> {
   if (a.chest) chest = await load(a.chest.sprite);
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
   if (a.rocks) rocks = await load(a.rocks);
+  if (a.flowers) flowers = await load(a.flowers);
   if (a.fence) {
     const f = a.fence;
     const [oak, birch, cherry, gOak, gBirch, gCherry] = await Promise.all([f.pieces, f.birch.pieces, f.cherry.pieces, f.gate, f.birch.gate, f.cherry.gate].map(load));
@@ -160,6 +162,11 @@ export function getChestSprite(): HTMLImageElement | null {
 /** Tira de pedregulhos (null fora do mundo principal). */
 export function getRockArt(): HTMLImageElement | null {
   return rocks;
+}
+
+/** Tira de flores fofas (null fora do mundo principal). */
+export function getFlowerArt(): HTMLImageElement | null {
+  return flowers;
 }
 
 /** Peças da cerca e do portão (null fora do mundo principal). */
