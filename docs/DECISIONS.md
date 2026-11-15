@@ -32,7 +32,7 @@
 | 0029 | Iluminação 2.5D: sobreposição de escuridão com poças de luz (Deusa e blocos que brilham), `?luz=`, regras puras em `render/lighting.ts` | [0029](adr/0029-iluminacao-2-5d.md) |
 | 0028 | Escala do mundo: 1 célula = 1 m; vista oblíqua com K = 1 (cubo de frente quadrada); parede = 2 cubos; personagem ≈ 1,75 m; Mundo adota na migração do render | [0028](adr/0028-escala-do-mundo-1m.md) |
 | 0027 | Paredes de nível único com altura fixa e autotile (frente + tampa), porta, para Santuário e Mundo; mármore V2/V3 aposentado | [0027](adr/0027-paredes-nivel-unico-autotile.md) |
-| 0026 | Render 2.5D em WebGL (Three.js), referência Core Keeper: arte 2D como fonte, billboards, física sólida, iluminação primeiro, chão por chunk, 2D como reserva até a paridade | [0026](adr/0026-render-25d-webgl.md) |
+| 0026 | Render 2.5D em WebGL (Three.js), referência Core Keeper: arte 2D como fonte, billboards, física sólida, iluminação primeiro, chão por chunk, 2D como reserva até a paridade (**removido na v0.93.105**, M7) | [0026](adr/0026-render-25d-webgl.md) |
 | 0025 | Chibi modular, expressões e moradores antigos saem; 16 NPCs nomeados (Black + 15) com folha própria; caixa de conversa com retrato, nome e páginas | [0025](adr/0025-npcs-nomeados-e-caixa-de-conversa.md) |
 | 0023 | Padrão de Materiais V2: a arte entrega texturas planas 128×128 por material; o motor monta topo/frente (frente **18**, decidida na v0.81.1; sem frente própria repete o topo; franja ≤ 32 px); **padrão do jogo desde 08/11** (`?blocos=legado` volta ao antigo); transições entre chãos por máscara de alfa que gira (só a Grama avança hoje); `?materiais=1` compara; mistura só no chão plano; máscaras = formas giráveis | [0023](adr/0023-padrao-materiais-v2.md) |
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.105 — o modelo 3D vira o único: o Canvas 2D é removido (M7) (15/11/2026)
+- **Decisão do dono do produto:** "vamos assumir o modelo 3D como padrão já que funcionou muito bem. E podemos excluir o 2D do projeto" — a limpeza M7 da ADR 0031.
+- **Removido:** `render/renderer.ts` (o Canvas 2D do Mundo e do Santuário, ~680 linhas), `?render=2d` e `chooseWorldRenderer`, a cena de escala (`?escala=1`, `dev/scaleScene.ts`, `scaleLayout.ts` + teste), `scripts/parity-3d.cjs` e `docs/PARITY_3D.md` (comparação 2D × 3D), `drawThinHorizontalWall` (parede fina do 2D), `TOWN_REACH`, e as fissuras radiais do overlay (`drawBreakingCracks` virou `drawBreakingRing`: só o anel de progresso; as rachaduras são os decalques do bloco).
+- **Movido:** `RenderOptions` passou do `renderer.ts` para `render/rendererContract.ts`, e `GameRenderer` agora é uma interface explícita (draw, pick, addDamage, iconFor) em vez de `Pick<Renderer, …>`.
+- **Comportamento:** `Game` exige `rendererFactory` (a vitrine do título também usa o 3D); `main.ts` carrega o renderer do mundo por `import()` e, **sem WebGL ou se o módulo falhar, mostra um aviso na tela** em vez de cair no 2D (`showUnsupported`). `useSolidPhysics(search)`: física sem degrau sempre, `?fisica=degrau` desfaz. O `ChunkRenderer` fica (pinta o chão de cada chunk).
+- Só cliente; sem mapa, save ou protocolo (servidor não muda). `tsc` e testes verdes (grades 1 e 2); conferido no navegador (título com a vitrine em 3D; jogo; `?render=2d` abre o 3D) e `build`/`build:artifact` (o início do Artifact segue ~4,8 MB, como antes: o orçamento de 3 MB já estava estourado).
+- **Aparelhos sem WebGL** deixam de abrir o jogo (antes caíam no Canvas 2D). O 3D já era o padrão e rodou bem em celular e tablet do dono do produto.
+
 ## Orvalis v0.93.104 — portão de lado (cercas norte-sul) (15/11/2026)
 - **Pedido do dono do produto:** o portão 3D só entrava de frente, sem se adaptar; pediu a versão lateral.
 - **Arte** (`scripts/extract-fence-model.py`, `render.html` com `yaw=90`): o mesmo modelo do portão girado 90° — as estacas ficam uma atrás da outra (norte e sul) e a folha, presa à dobradiça do norte, **abre para leste**. 3 tiras (Carvalho, Bétula, Cerejeira) `fence-gate-side*.webp`, 5 poses de 224 × 400, base das estacas em (112, 300).

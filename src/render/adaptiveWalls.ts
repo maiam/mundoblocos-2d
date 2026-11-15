@@ -1,6 +1,5 @@
 import { TILE } from '../config';
 import { Block, isDoor, type BlockId } from '../world/blocks';
-import type { Sprite } from './textures';
 
 /**
  * SPEC-PAREDES-001, adaptada para o renderizador 2D oficial.
@@ -60,27 +59,4 @@ export function thinWallSlices(canvasH: number, spriteH: number,
     topY: rearY, topH: frontY - rearY,
     frontY, frontH: bottomY - frontY,
   };
-}
-
-/**
- * Face frontal INTACTA e alinhada ao pilar; o topo passa a ocupar só a metade
- * da profundidade a partir da frente (+Y no mapa). Não há perspectiva nova.
- * Mesmas texturas, coordenadas e zoom usados no desenho de cubos normal.
- */
-export function drawThinHorizontalWall(
-  ctx: CanvasRenderingContext2D, sprite: Sprite,
-  left: number, right: number, topY: number, frontY: number, bottomY: number,
-): void {
-  const crop = thinWallSlices(sprite.canvas.height, sprite.h, topY, frontY, bottomY);
-  if (crop.topSrcH > 0 && crop.topH > 0) {
-    ctx.drawImage(sprite.canvas, 0, crop.topSrcY, sprite.canvas.width, crop.topSrcH,
-      left, crop.topY, right - left, crop.topH);
-    // Filete no limite traseiro do topo fino: termina na mesma face frontal.
-    ctx.fillStyle = 'rgba(255,255,255,0.19)';
-    ctx.fillRect(left, crop.topY, right - left, 1);
-  }
-  if (crop.frontSrcH > 0 && crop.frontH > 0) {
-    ctx.drawImage(sprite.canvas, 0, crop.frontSrcY, sprite.canvas.width, crop.frontSrcH,
-      left, crop.frontY, right - left, crop.frontH);
-  }
 }

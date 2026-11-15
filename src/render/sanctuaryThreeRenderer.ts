@@ -5,7 +5,7 @@ import { SelectionMarkers } from './three/selection';
 import { BlockMaterials } from './three/blockMaterials';
 import type { Camera } from '../game/camera';
 import { ActorSprites } from './character';
-import type { RenderOptions } from './renderer';
+import type { RenderOptions } from './rendererContract';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { celestialFaces, installCelestialGrassNet, installSanctuaryEightBlockAtlas, installSanctuaryGrassPanels, SANCTUARY_CUBE_IDS } from './celestialArt';
 import { Block } from '../world/blocks';

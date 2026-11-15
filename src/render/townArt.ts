@@ -162,4 +162,3 @@ export function isTownArt(id: number): boolean {
 }
 
 /** Maior alcance de um sprite da cidade além da célula âncora (células): à direita e para cima. */
-export const TOWN_REACH = { right: 28, up: 22 };

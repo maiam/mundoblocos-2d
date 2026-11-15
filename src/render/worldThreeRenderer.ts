@@ -26,7 +26,7 @@ import { FootDust } from './three/footDust';
 import { findFires, type FireSource } from './fireLight';
 import { FireFx } from './three/fireFx';
 import { actorLightOn, sunShadingOn, sunShadowOn } from './rendererChoice';
-import type { RenderOptions } from './renderer';
+import type { RenderOptions } from './rendererContract';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
@@ -53,7 +53,7 @@ import { INTERIOR_BACKGROUND, InteriorRoom, roomBounds } from './three/interiorR
 import { art } from './art';
 import { Particles } from './particles';
 import { skyAt } from './daycycle';
-import { drawBreakingCracks, drawFocusBrackets, drawHoverFrame } from './selectionFx';
+import { drawBreakingRing, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { selectionRect3d } from './worldSelection';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
@@ -329,7 +329,7 @@ export class WorldThreeRenderer implements GameRenderer {
       };
       if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
       if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
-      if (opts.breaking) drawBreakingCracks(ctx, rectFor(opts.breaking), cam.zoom, opts.breaking.progress, opts.breaking, feelOn() && !inside);
+      if (opts.breaking) drawBreakingRing(ctx, rectFor(opts.breaking), opts.breaking.progress);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }
