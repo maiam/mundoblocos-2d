@@ -323,7 +323,7 @@ export class Room {
       const out: Outgoing[] = [{ to: 'all', msg: { t: 'applied', ...applied } }];
       let loot: Drop[] = [];
       if (a.kind === 'break' && breaking !== null) {
-        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.world.profile.collectBlocks, this.rand)];
+        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
       }
       if (a.kind === 'pick') loot = pickDrops(this.rand);
       const list = this.spawnDrops(a.x + 0.5, a.y + 0.7, loot);

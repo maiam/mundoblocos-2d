@@ -1,9 +1,9 @@
 /**
  * Missões dos NPCs (ADR 0034, primeira do nível 4): um morador que pede algo, explica o motivo, **acompanha a jogadora** enquanto ela procura e
  * paga a recompensa na entrega. Puro e sem DOM; o estado vai no **salvamento do jogador** (`SaveData.quests`), não na sala do servidor.
- * Hoje há uma: **Ervas de cura** (Silvano pede 6 flores silvestres para o remédio de uma criança da cidade).
+ * Hoje há uma: **Ervas de cura** (Silvano pede 6 flores do campo, de qualquer espécie, para o remédio de uma criança da cidade).
  */
-import { Block } from '../../world/blocks';
+import { Block, FLOWER_BLOCKS } from '../../world/blocks';
 import { blockStack, Item, type StackId } from '../../world/items';
 import type { NpcId } from '../npcs';
 
@@ -17,8 +17,8 @@ export interface QuestDef {
   id: QuestId;
   giver: NpcId;
   title: string;
-  /** O que a jogadora precisa trazer. */
-  item: StackId;
+  /** O que a jogadora precisa trazer: `count` unidades somando qualquer destas pilhas. */
+  items: readonly StackId[];
   count: number;
   reward: { item: StackId; count: number };
   /** Explicação (conversa em páginas) e a pergunta final com as duas escolhas. */
@@ -42,21 +42,39 @@ export const HEALING_HERBS: QuestDef = {
   id: 'ervas-de-cura',
   giver: 'silvano',
   title: 'Ervas de cura',
-  item: blockStack(Block.FLOWER),
+  // Qualquer das 15 flores do campo (as que nascem na grama); a Flor genérica da v0.93.116 ainda vale para quem já a carregava.
+  items: [...FLOWER_BLOCKS.map((id) => blockStack(id)), blockStack(Block.FLOWER)],
   count: 6,
   reward: { item: Item.COPPER_COIN, count: 12 },
-  offer: 'Preciso da sua ajuda! Uma criança aqui da cidade está de cama, e o remédio que sei fazer pede flores silvestres frescas. Preciso de 6 delas, daquelas que nascem na grama pelos campos e matas. Eu vou junto para ajudar a procurar!',
+  offer: 'Preciso da sua ajuda! Uma criança aqui da cidade está de cama, e o remédio que sei fazer pede flores silvestres frescas. Preciso de 6 delas, de qualquer espécie, daquelas que nascem na grama pelos campos e matas. Eu vou junto para ajudar a procurar!',
   prompt: 'Quer procurar as flores comigo?',
   accept: 'Aceitar',
   decline: 'Agora não',
   accepted: 'Que alívio! Vou com você. Quebre as flores que encontrar e, quando tiver as 6, é só falar comigo.',
-  progress: (have) => `Já temos ${have} de 6 flores. Continue procurando pelos campos e pelas matas: elas nascem entre o capim.`,
+  progress: (have) => `Já temos ${have} de 6 flores. Continue procurando pelos campos e pelas matas: elas nascem entre o capim, de várias espécies.`,
   ready: 'Seis flores, e tão frescas! Com elas eu preparo o remédio agora mesmo. Aceite estas moedas pelo trabalho, e obrigado por tudo!',
   done: 'A criança já está de pé, correndo pela rua! Graças a você. Sempre que precisar de ervas, me procure.',
   remarks: ['Olha só, uma florzinha ali!', 'Aquela flor serve para o remédio.', 'Mais uma flor por perto, está vendo?'],
 };
 
 export const QUESTS: readonly QuestDef[] = [HEALING_HERBS];
+
+/** Quantas unidades do pedido a jogadora tem (soma das pilhas aceitas). */
+export function haveOf(def: QuestDef, count: (id: StackId) => number): number {
+  return def.items.reduce((n, id) => n + count(id), 0);
+}
+
+/** Tira `def.count` unidades do pedido, pelas pilhas aceitas em ordem; devolve se tirou tudo (não tira nada se não tem o bastante). */
+export function takeOf(def: QuestDef, count: (id: StackId) => number, take: (id: StackId, n: number) => boolean): boolean {
+  if (haveOf(def, count) < def.count) return false;
+  let left = def.count;
+  for (const id of def.items) {
+    const n = Math.min(left, count(id));
+    if (n > 0 && take(id, n)) left -= n;
+    if (left === 0) break;
+  }
+  return left === 0;
+}
 
 export function questOf(npc: NpcId): QuestDef | null {
   return QUESTS.find((q) => q.giver === npc) ?? null;

@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, FLOWER_BLOCKS, CROP_STAGES, cropKind, cropStage, gateClosed, isDoor, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, FLOWER_BLOCKS, wildFlowerIndex, CROP_STAGES, cropKind, cropStage, gateClosed, isDoor, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import { isWolf, type MonsterKind } from './dungeon';
 
 /**
@@ -281,7 +281,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FLOWER, ...FLOWER_BLOCKS, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_STAKE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, ...FLOWER_BLOCKS, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_STAKE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
 
 /** Árvores adultas (dão 2–3 toras). */
 const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.APPLE_TREE, Block.APPLE_TREE_BARE]);
@@ -305,7 +305,12 @@ export function blockDrops(id: BlockId, rand: () => number = Math.random): Drop[
 }
 
 /** Tudo que cai ao quebrar: colheita/plantas (`toolDrops`) + material, se o mundo coleta blocos. */
-export function breakDrops(tool: ToolId | null, id: BlockId, collect: boolean, rand: () => number = Math.random): Drop[] {
+export function breakDrops(
+  tool: ToolId | null, id: BlockId, collect: boolean, rand: () => number = Math.random,
+  /** Onde foi quebrado (seed e célula): a flor do campo solta a espécie que se vê ali (`wildFlowerIndex`). */
+  at?: { seed: number; x: number; y: number },
+): Drop[] {
+  if (collect && id === Block.FLOWER && at) return [{ item: blockStack(FLOWER_BLOCKS[wildFlowerIndex(at.seed, at.x, at.y)]), count: 1 }];
   return [...toolDrops(tool, id, rand), ...(collect ? blockDrops(id, rand) : [])];
 }
 

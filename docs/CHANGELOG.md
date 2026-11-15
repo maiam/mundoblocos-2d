@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.118 — as flores do campo são as 15 Flores Fofas: quebra, bolsa, hotbar e recolocar (15/11/2026)
+- **Bug (dono do produto):** a flor colhida no campo aparecia como um **quadrado em branco** na hotbar. Causa: na v0.93.116 a `Block.FLOWER` genérica virou coletável, mas só as 15 Flores Fofas têm ícone.
+- **Correção:** a flor do campo agora solta **a espécie que se vê ali** — `wildFlowerIndex(seed, x, y)` (`world/blocks.ts`) é a mesma conta do desenho (`worldSpriteArt`) e do drop (`breakDrops(…, at)`); quem quebra uma flor leva exatamente aquela, com o ícone e o nome dela, e recolocada ela volta igual (todas as 15 aparecem pelo mapa). `Block.FLOWER` deixa de ser coletável. O local de quebra passa ao `breakDrops` no aparelho (`ActionController`) e na sala (`Room`).
+- **Missão Ervas de cura** passa a aceitar **qualquer** das 15 espécies (6 no total, somando as pilhas; `haveOf`/`takeOf`); a Flor genérica da v0.93.116 ainda vale para quem já a carregava.
+- Sem mudança de save/protocolo; **servidor:** `build:net` + `sync-net` (a sala solta o item). Testes novos; `tsc` e 627 testes verdes; conferido no navegador (6 flores quebradas dão 4 espécies, ícones na hotbar).
+
 ## Orvalis v0.93.117 — a sala (servidor) simula os moradores: protocolo 26 (15/11/2026)
 - **Pedido do dono do produto:** o servidor passa a simular os moradores (antes cada aparelho tinha os seus, em lugares diferentes). Decisão no ADR 0034.
 - **Sala** (`net/room.ts`): carrega a cidade, os cômodos e a vila ao nascer (uma vez; ~560 chunks, ~0,5 s) e roda `spawnVillagers` + `spawnResidents` — 16 nomeados + 8 sorteados na cidade + 5 na vila, a **rotina do Bento com a hora da sala** (dorme de madrugada e some da lista) e o passeio. O morador parado se vira para o **avatar mais perto**. Só os que estão a até 22 células de cada jogador vão em `mobs`.

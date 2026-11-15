@@ -23,7 +23,7 @@ describe('Coleta de materiais (Fase 3)', () => {
       expect(birch.item).toBe(blockStack(Block.BIRCH_LOG));
       expect([2, 3]).toContain(birch.count);
     }
-    expect(blockDrops(Block.FLOWER, r)).toEqual([{ item: blockStack(Block.FLOWER), count: 1 }]); // a flor silvestre vira item (missão Ervas de cura, v0.93.116)
+    expect(blockDrops(Block.FLOWER, r)).toEqual([]); // a flor do campo só solta algo sabendo ONDE (`breakDrops` com `at`: a espécie que se vê ali)
     expect(blockDrops(Block.CLOUD_SOLID, r)).toEqual([]); // Santuário não coleta
     expect(breakDrops('shovel', Block.WHEAT_15, true, r)).toEqual([]); // pá destrói planta sem drop
     expect(breakDrops(null, Block.STONE, false, r)).toEqual([]); // mundo sem coleta
