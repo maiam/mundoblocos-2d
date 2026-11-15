@@ -27,6 +27,9 @@
 - **Cores:** `Look {hue, sat, val}` → `Actor.look` → `uRecolor` no shader do billboard (gira matiz e ajusta sat/brilho de tudo menos pele e neutros). Sem arte nova nem peso extra. O retrato da conversa é o da folha-base (a cor do cabelo no retrato é a original).
 - **Execução:** `Entities.spawnResidents` (depois de `spawnVillagers`); `Villager(…, resident)` usa nome/falas do sorteado; `npc` = folha emprestada. Cidade: ruas; vila: dentro do muro, pontos nos caminhos. Só no aparelho (a sala não simula moradores). Sem rotina de dormir ainda (só o Bento).
 
+## Reação mínima (v0.93.114, ADR 0034 nível 2)
+- Morador parado, à vista e fora de conversa, a até `NOTICE_RANGE` da jogadora (`entities.ts`) vira-se para ela (`Villager.faceTo`). Cumprimento, fuga de perigo e Guarita: NEXT_STEPS.
+
 ## Wanderer (`game/wanderer.ts`)
 - Passeio comum (parar ↔ andar numa direção sorteada, desacelerar no fim, voltar a casa além da `leash`). Ovelha,
   cavalo e morador estendem `Wanderer` (que estende `Walker`) e só mudam o ritmo (`WanderPace`) e a caixa.

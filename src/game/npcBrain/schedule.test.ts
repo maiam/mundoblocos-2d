@@ -61,3 +61,23 @@ describe('Bento na rotina', () => {
     expect(b.bento.hidden).toBe(false);
   });
 });
+
+describe('morador percebe a jogadora (nível 2)', () => {
+  it('parado e perto, vira-se para ela', async () => {
+    const { NOTICE_RANGE } = await import('../entities');
+    const w = new World(42);
+    const [sx, sy] = w.town!.start;
+    const player = new Player(sx + 0.5, sy + 0.6);
+    const e = new Entities(player, mulberry32(42));
+    e.spawnVillagers(w);
+    const v = e.villagers.find((x) => !x.role)!;
+    let checked = 0;
+    for (let i = 0; i < 400; i++) {
+      player.x = v.x + 1; player.y = v.y + 0.2; // à direita, bem dentro do alcance
+      e.update(0.05, w);
+      if (!v.moving && !v.hidden) { expect(v.facing).toBe('right'); checked++; }
+    }
+    expect(checked).toBeGreaterThan(0);
+    expect(NOTICE_RANGE).toBeGreaterThan(1);
+  });
+});

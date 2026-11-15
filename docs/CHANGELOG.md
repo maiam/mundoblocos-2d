@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.114 — moradores percebem a jogadora (nível 2 da IA dos NPCs, primeira reação) (15/11/2026)
+- **ADR 0034, nível 2 (reativo), passo mínimo:** `Entities.update` vira para a jogadora todo morador **parado** (não andando, não conversando, à vista) a até `NOTICE_RANGE` (3 células antigas × `SUBDIV`). Vale para os 16 nomeados e os sorteados; sem estado novo, sem save, sem protocolo; só no aparelho.
+- **Fica para depois (nível 2):** cumprimentar com balãozinho, fugir de lobo/perigo perto da vila e da cidade, aviso da Guarita.
+- Teste novo (`npcBrain/schedule.test.ts`); `tsc` e testes verdes.
+
 ## Orvalis v0.93.113 — moradores sorteados: recolor no shader + nome, profissão e falas por seed (cidade e vila) (15/11/2026)
 - **ADR 0034 (decisão do dono do produto):** mais gente sem arte nova nem peso extra. `game/residents.ts` (puro, sem DOM/`Math.random`) sorteia pela seed **8 moradores na cidade e 5 na vila** (`RESIDENTS_TOWN`/`RESIDENTS_VILLAGE`): cada um é um **"primo"** de um morador comum (13 folhas emprestadas, sem os de ofício), com **nome** (48 nomes, nenhum repete NPC nomeado nem outro sorteado), **profissão** (cidade: guarda, escriba, alfaiate…; vila: agricultor, pastor, lenhador, tecelão, ordenhador, cuidador de galinhas), **personalidade** (alegre, tímido, curioso, ranzinza, sonhador) e **2 falas** (profissão + jeito de ser). Mesma seed = mesmas pessoas.
 - **Recolor** (`render/three/actorBillboards.ts`, `uRecolor`): no shader do billboard, gira o **matiz** e ajusta saturação/brilho de tudo o que é colorido **menos a pele** (matiz laranja claro) e os neutros — cabelo e roupa mudam, o rosto não. `Look {hue, sat, val}` vai em `Actor.look`; os 16 nomeados não são alterados. Conferido em lineup (13 folhas × 4 cores).
