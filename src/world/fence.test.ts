@@ -75,4 +75,20 @@ describe('Emenda da cerca (render/fence)', () => {
     expect(fenceParts(true, true, true, true)).toMatchObject({ whole: null, north: true, east: true, south: true, west: true, post: true });
     expect(fenceParts(true, true, false, true)).toMatchObject({ whole: null, post: true }); // "T"
   });
+
+  it('Cercas de Bétula e de Cerejeira: blocos próprios que se emendam com a de Carvalho e com o portão, receita com a tábua da madeira', () => {
+    for (const id of [Block.FENCE_BIRCH, Block.FENCE_CHERRY]) {
+      expect(HOTBAR_BLOCKS).toContain(id);
+      expect(WORLD_PROFILES.santuario.blocks).not.toContain(id);
+      expect(BLOCKS[id].solid).toBe(true);
+      expect(toolCanBreak('axe', id)).toBe(true);
+      expect(joinsFence(id)).toBe(true);
+    }
+    const birch = RECIPES.find((r) => r.id === 'birch-fence')!;
+    expect(birch.inputs).toEqual([{ item: blockStack(Block.BIRCH_PLANKS), count: 2 }]);
+    expect(birch.output).toEqual({ item: blockStack(Block.FENCE_BIRCH), count: 4 });
+    const cherry = RECIPES.find((r) => r.id === 'cherry-fence')!;
+    expect(cherry.inputs).toEqual([{ item: blockStack(Block.CHERRY_PLANKS), count: 2 }]);
+    expect(cherry.output).toEqual({ item: blockStack(Block.FENCE_CHERRY), count: 4 });
+  });
 });

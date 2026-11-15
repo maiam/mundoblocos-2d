@@ -71,12 +71,14 @@ export interface BlockTextures {
   bankColor: Map<BlockId, string>;
   /** Porta de Carvalho: 8 quadros (0..3 abrindo, 4..7 fechando); fechada = 0, aberta = 3. */
   doorFrames: Sprite[];
+  /** Porteira do jogador: 10 quadros (0..4 abrindo, 5..9 fechando); fechada = 0, aberta = 4. Vazio sem a arte. */
+  gateFrames: Map<BlockId, Sprite[]>;
   /** Objetos com várias artes (montanhas, pedras): o render escolhe uma por célula (hash). */
   variants: Map<BlockId, Sprite[]>;
   /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
   stackDraw: Map<BlockId, number>;
   /** Peças da cerca (trecho horizontal, vertical, poste grande; `render/fence.ts`), ou null sem a arte. */
-  fencePieces: HTMLCanvasElement[] | null;
+  fencePieces: Map<BlockId, HTMLCanvasElement[]>;
 }
 
 /**
@@ -799,7 +801,8 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     const url = id === Block.WALL_DOOR_PLANKS ? pack.materialIcons[Block.OAK_DOOR] : pack.materialIcons[id];
     if (url) icons.set(id, url);
   }
-  const fencePieces = fenceTextures(objects, icons);
+  const gateFrames = new Map<BlockId, Sprite[]>();
+  const fencePieces = fenceTextures(objects, icons, gateFrames);
   // Cerca de Estacas (v0.93.90): o ícone vem do pacote da vila (`village-stake-icon`).
   const stakeIcon = getTownImages().get('village-stake-icon')?.src;
   if (stakeIcon) icons.set(Block.FENCE_STAKE, stakeIcon);
@@ -831,41 +834,57 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, variants, stackDraw, fencePieces };
+  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, variants, stackDraw, fencePieces };
 }
 
 /**
  * Cerca e portão (`render/fence.ts`): as 3 peças viram canvases para o render cortar as metades; a cerca também
  * ganha um sprite (trecho horizontal) para o clique e o destaque. Portão: um sprite por estado.
  */
-function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>): HTMLCanvasElement[] | null {
+function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, gateFrames: Map<BlockId, Sprite[]>): Map<BlockId, HTMLCanvasElement[]> {
   const a = getFenceArt();
   const pack = art().fence;
-  if (!a || !pack) return null;
-  const pieces = [0, 1, 2].map((i) => {
-    const c = document.createElement('canvas');
-    c.width = FENCE_FRAME.w;
-    c.height = FENCE_FRAME.h;
-    c.getContext('2d')!.drawImage(a.pieces, i * FENCE_FRAME.w, 0, FENCE_FRAME.w, FENCE_FRAME.h, 0, 0, FENCE_FRAME.w, FENCE_FRAME.h);
-    return c;
-  });
-  const hit = { x: 0, y: -T * 0.1, w: T, h: T * 1.1 };
-  objects.set(Block.FENCE, {
-    canvas: pieces[0], ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: FENCE_FRAME.w * FENCE_SCALE, h: FENCE_FRAME.h * FENCE_SCALE, hit,
-  });
-  const k = T / GATE_FRAME.cell;
+  const out = new Map<BlockId, HTMLCanvasElement[]>();
+  if (!a || !pack) return out;
+  const hit = { x: 0, y: -T * 0.9, w: T, h: T * 1.5 };
+  for (const [id, img, icon] of [
+    [Block.FENCE, a.pieces.get(Block.FENCE), pack.icon],
+    [Block.FENCE_BIRCH, a.pieces.get(Block.FENCE_BIRCH), pack.birch.icon],
+    [Block.FENCE_CHERRY, a.pieces.get(Block.FENCE_CHERRY), pack.cherry.icon],
+  ] as const) {
+    if (!img) continue;
+    const pieces = [0, 1, 2, 3, 4].map((i) => {
+      const c = document.createElement('canvas');
+      c.width = FENCE_FRAME.w;
+      c.height = FENCE_FRAME.h;
+      c.getContext('2d')!.drawImage(img, i * FENCE_FRAME.w, 0, FENCE_FRAME.w, FENCE_FRAME.h, 0, 0, FENCE_FRAME.w, FENCE_FRAME.h);
+      return c;
+    });
+    out.set(id, pieces);
+    objects.set(id, { canvas: pieces[0], ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: FENCE_FRAME.w * FENCE_SCALE, h: FENCE_FRAME.h * FENCE_SCALE, hit });
+    icons.set(id, icon);
+  }
+  // Porteira: 5 poses (0°→90°) por madeira, na mesma escala e âncora da cerca; 10 quadros (abre 0..4, fecha 5..9).
+  const k = FENCE_SCALE;
   const w = GATE_FRAME.w * k;
   const h = GATE_FRAME.h * k;
-  const oy = T - GATE_FRAME.postBase * k;
-  [Block.FENCE_GATE, Block.FENCE_GATE_OPEN].forEach((id, i) => {
-    const c = document.createElement('canvas');
-    c.width = GATE_FRAME.w;
-    c.height = GATE_FRAME.h;
-    c.getContext('2d')!.drawImage(a.gate, i * GATE_FRAME.w, 0, GATE_FRAME.w, GATE_FRAME.h, 0, 0, GATE_FRAME.w, GATE_FRAME.h);
-    objects.set(id, { canvas: c, ox: (T - w) / 2, oy, w, h, hit });
-  });
-  icons.set(Block.FENCE, pack.icon);
+  const oy = T / 2 - GATE_FRAME.postBase * k;
+  for (const [fenceId, img] of a.gates) {
+    const poses: Sprite[] = [];
+    for (let i = 0; i < GATE_FRAME.poses; i++) {
+      const c = document.createElement('canvas');
+      c.width = GATE_FRAME.w;
+      c.height = GATE_FRAME.h;
+      c.getContext('2d')!.drawImage(img, i * GATE_FRAME.w, 0, GATE_FRAME.w, GATE_FRAME.h, 0, 0, GATE_FRAME.w, GATE_FRAME.h);
+      poses.push({ canvas: c, ox: (T - w) / 2, oy, w, h, hit });
+    }
+    gateFrames.set(fenceId, [...poses, ...[...poses].reverse()]);
+    if (fenceId === Block.FENCE) {
+      objects.set(Block.FENCE_GATE, poses[0]);
+      objects.set(Block.FENCE_GATE_OPEN, poses[poses.length - 1]);
+    }
+  }
   icons.set(Block.FENCE_GATE, pack.gateIcon);
-  return pieces;
+  return out;
 }
 

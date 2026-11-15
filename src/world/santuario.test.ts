@@ -91,6 +91,6 @@ describe('Santuário Celestial', () => {
     const hb = hotbarFor(S);
     expect(hb).toHaveLength(8);
     expect(hb.every((s) => s.kind === 'block')).toBe(true);
-    expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(39); // (v0.93.90: + Cerca de Estacas) 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + cerca + portão + 2 paredes + porta de parede (W5)
+    expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(41); // (v0.93.96: + Cercas de Bétula e de Cerejeira; v0.93.90: + Cerca de Estacas) 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + 3 cercas (Carvalho, Bétula, Cerejeira) + portão + 2 paredes + porta de parede (W5)
   });
 });

@@ -199,10 +199,9 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 `python3 scripts/extract-rocks.py` → `rocks.png` (tira de quadros de 96 px, mesma escala, base no pé) →
 `optimize-assets.py`. Separa os desenhos por pedaços conectados e ordena por fileira (sem grade).
 
-**Cerca e portão** (referências em `assets-src/cerca/`: `moldura.png` = cercado quadrado 3/4, `portao.png` =
-fechado, aberto e poste solto): `python3 scripts/extract-fence.py` → `fence.png` (3 peças de 128 × 192 px com âncora
-comum no centro da célula), `fence-gate.png` (2 quadros, postes nas bordas da célula) e os ícones →
-`optimize-assets.py`. Mudou a âncora ou o quadro no script → atualize `FENCE_FRAME`/`GATE_FRAME` em `render/fence.ts`.
+**Cerca (v0.93.96)** — a partir do **modelo 3D** do Blockbench (`assets-src/cerca-betula/*.bbmodel`): `python3 scripts/extract-fence-model.py` (cerca + porteira; precisa de `node` + `playwright` global e `npm ci`) renderiza o modelo com Three.js na câmera do jogo e o reveste com as tábuas do `materials-v2` → `fence.webp` (Carvalho), `fence-betula.webp`, `fence-cerejeira.webp` (5 quadros 128 × 232: horizontal, vertical, estaca, braço norte, braço sul) e os ícones. Modelo novo com outros nomes de malha → ajuste `scripts/fence-model/render.html`. Mudou a âncora/quadro → `FENCE_FRAME` em `render/fence.ts`.
+
+**Porteira** — do modelo `portao-*.bbmodel` (mesma pasta), pelo mesmo `extract-fence-model.py`: `fence-gate.webp`, `fence-gate-betula.webp`, `fence-gate-cerejeira.webp` (5 poses 224 × 300; a folha gira em torno da dobradiça em x = −5,1; `buildGate` em `scripts/fence-model/render.html`) e `icon-block-fence-gate.webp`. `GATE_FRAME` em `render/fence.ts`. (Referências antigas em `assets-src/cerca/`; `extract-fence.py` é a versão antiga.)
 
 **Marcos do mundo** (entrada do covil, `assets-src/dungeon-cave.png`): `python3 scripts/extract-landmarks.py` →
 `dungeon-cave.png` (320 px de largura) → `optimize-assets.py`. Carrega com a arte do covil, em segundo plano.
