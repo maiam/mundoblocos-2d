@@ -12,6 +12,7 @@ import { FlatGenerator } from './flatGenerator';
 import { SanctuarySeedGenerator } from './sanctuarySeedGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
+import { type FlowerPatch, FlowerPatchTerrain, planFlowerPatch } from './flowerPatch';
 import { GoblinCampTerrain, planGoblinCamps, planLizardPacks, type GoblinCamp, type LizardPack } from './goblins';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
 import type { TerrainSource } from './terrain';
@@ -119,6 +120,8 @@ export class World {
    * (`loadHoleAges`); buraco sem idade guardada começa a contar do zero.
    */
   private readonly holeAge = new Map<string, number>();
+  /** Canteiro de flores da missão do Silvano (null fora do Mundo da Cidade). */
+  flowerPatch: FlowerPatch | null = null;
   /** Spawn calculado no terreno base (a dungeon é posta longe dele e não o altera). */
   private spawn: [number, number] | null = null;
 
@@ -173,6 +176,16 @@ export class World {
     // no permanent writes to chunks, and saved player edits still win.
     this.goblinCamps.push(...planGoblinCamps(this));
     if (this.goblinCamps.length) this.generator = new GoblinCampTerrain(this.generator, this.goblinCamps);
+    // Canteiro da missão "Ervas de cura": flores da espécie pedida garantidas numa clareira perto do portão (só onde há cidade e vila).
+    if (this.town && profile.dungeon) {
+      const avoid: Rect[] = [grow(this.town.area, TOWN_MARGIN + 6)];
+      if (this.village) avoid.push(grow(this.village.touched, 6));
+      if (this.cave) avoid.push(grow(this.cave.guard, 6));
+      if (this.dungeon) avoid.push(grow(dungeonGuard(this.dungeon), 6));
+      for (const c of this.goblinCamps) avoid.push(grow({ x0: c.x, y0: c.y, x1: c.x, y1: c.y }, 10 * SUBDIV)); // longe dos acampamentos de goblins
+      this.flowerPatch = planFlowerPatch(seed, this.generator, this.outsideGate(), avoid);
+      if (this.flowerPatch) this.generator = new FlowerPatchTerrain(this.generator, this.flowerPatch);
+    }
     if (baseTerrain instanceof WorldGenerator) this.lizardPacks.push(...planLizardPacks(this, (x, y) => baseTerrain.riverAt(x, y), this.goblinCamps));
   }
 
