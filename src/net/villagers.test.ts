@@ -125,3 +125,23 @@ describe('sala + espelho juntos (v26)', () => {
     expect(client.villagers.find((v) => v.npc === 'silvano')!.escortedBy).toBe(ids[0]);
   });
 });
+
+describe('mortes para as missões (v27)', () => {
+  it('quem abate o monstro recebe `killed`; os outros jogadores não', () => {
+    const { room, ids, at } = setup(['Ana', 'Beto']);
+    const m = room.entities.monsters.find((x) => x.kind === 'spider-small')!;
+    at(ids[0], m.x + 0.6, m.y);
+    at(ids[1], m.x + 40, m.y + 40);
+    let killed: ReturnType<typeof of<'killed'>> = [];
+    for (let i = 0; i < 40 && killed.length === 0; i++) {
+      at(ids[0], m.x + 0.6, m.y);
+      m.x = m.x; // parado: o golpe é à direita do alvo
+      const out = room.handle(ids[0], { t: 'strike', facing: 'left', attack: 9999 });
+      killed = of(out, 'killed');
+      if (!killed.length) room.tick(0.1);
+    }
+    expect(killed.length).toBeGreaterThan(0);
+    expect(killed.every((o) => o.to === ids[0])).toBe(true);
+    expect(killed[0].msg.k).toBe('spider-small');
+  });
+});

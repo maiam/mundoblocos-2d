@@ -10,6 +10,7 @@ import { Sheep } from './sheep';
 import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
 import type { MemoryBook } from './npcBrain/memory';
+import { EMPTY_LOG, type MissionLog } from './npcBrain/missions';
 import type { QuestLog, QuestMark } from './npcBrain/quests';
 import { GUILD_MASTER, type Look, makeResidents, type ResidentDef } from './residents';
 import { FLORIST_KEEPER, MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
@@ -183,7 +184,9 @@ export class Entities {
   /** Missões (ADR 0034): estado salvo no jogador; o `Game` o muda ao aceitar/entregar. */
   quests: QuestLog = {};
   /** Sinal sobre a cabeça dos NPCs com missão (o `Game` o recalcula todo quadro a partir do estado e do inventário). */
-  marks: Partial<Record<NpcId, QuestMark>> = {};
+  marks: Record<string, QuestMark> = {};
+  /** Corrente de missões do Capítulo 1 (estado salvo no jogador; o `Game` a muda). */
+  missions: MissionLog = EMPTY_LOG();
   /** Hora do mundo (0..1) para a agenda dos moradores (o `Game` a atualiza todo quadro; -1 = sem relógio: sem rotina, como na sala). */
   time = -1;
   /** Monstros da dungeon (presos no interior dela). */
@@ -1013,7 +1016,7 @@ export class Entities {
       if (v.hidden) continue;
       out.push({
         kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime, fade: v.fade > 0 ? v.fade : undefined, look: v.look ?? undefined,
-        mark: v.resident ? undefined : this.marks[v.npc],
+        mark: this.marks[v.resident?.id ?? v.npc],
       });
     }
     for (const m of this.monsters) {

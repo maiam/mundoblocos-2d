@@ -46,6 +46,8 @@ export class Hud {
   private readonly hungerBar: HTMLElement;
   private readonly hungerFill: HTMLElement;
   private lastHunger = '';
+  private readonly missionEl: HTMLElement;
+  private lastMission = '';
 
   constructor(h: HudHandlers) {
     this.root = document.createElement('div');
@@ -119,6 +121,11 @@ export class Hud {
     this.hungerBar.hidden = true;
     this.hungerFill = this.hungerBar.querySelector('.hunger-fill')!;
     status.appendChild(this.hungerBar);
+    // Missão em andamento (Capítulo 1): título e metas, logo abaixo da fome.
+    this.missionEl = document.createElement('div');
+    this.missionEl.className = 'mission-tracker';
+    this.missionEl.hidden = true;
+    status.appendChild(this.missionEl);
     this.root.appendChild(status);
     this.toastEl = document.createElement('div');
     this.toastEl.className = 'toast';
@@ -206,6 +213,26 @@ export class Hud {
   }
 
   /** Mensagem no alto da tela: some sozinha em ~2,5 s (falas longas ficam mais, para dar tempo de ler). */
+  /** Diário curto da missão ativa (null = nenhuma). `lines` já vêm prontas ("Lobos abatidos 1/3"; `✓` quando cumpridas). */
+  setMission(title: string | null, lines: readonly string[] = []): void {
+    const key = title === null ? '' : `${title}\n${lines.join('\n')}`;
+    if (key === this.lastMission) return;
+    this.lastMission = key;
+    this.missionEl.hidden = title === null;
+    this.missionEl.textContent = '';
+    if (title === null) return;
+    const t = document.createElement('div');
+    t.className = 'mission-title';
+    t.textContent = title;
+    this.missionEl.appendChild(t);
+    for (const l of lines) {
+      const li = document.createElement('div');
+      li.className = l.startsWith('✓') ? 'mission-goal done' : 'mission-goal';
+      li.textContent = l;
+      this.missionEl.appendChild(li);
+    }
+  }
+
   toast(text: string): void {
     this.toastEl.textContent = text;
     this.toastEl.classList.add('shown');
