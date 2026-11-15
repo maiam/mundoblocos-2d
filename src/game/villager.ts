@@ -1,5 +1,6 @@
 import { SUBDIV } from '../config';
 import type { World } from '../world/world';
+import { knownLine, type Tier } from './npcBrain/memory';
 import { closedLine, type DaySchedule, type NpcPhase, phaseAt, scheduleOf } from './npcBrain/schedule';
 import { npcDef, type NpcId, type NpcRole } from './npcs';
 import type { ResidentDef } from './residents';
@@ -71,6 +72,11 @@ export class Villager extends Wanderer {
     return { npc: this.npc, name: this.name, text: closedLine(this.phase) };
   }
 
+  /** Chave da memória: o id do sorteado (`rt3`…) ou o do NPC nomeado. */
+  get memoryKey(): string {
+    return this.resident?.id ?? this.npc;
+  }
+
   get name(): string {
     return this.resident?.name ?? npcDef(this.npc).name;
   }
@@ -81,9 +87,11 @@ export class Villager extends Wanderer {
   }
 
   /** A próxima fala (em roda) como conversa; o NPC fica parado até `release()`. */
-  conversation(): Conversation {
+  conversation(tier: Tier = 'stranger'): Conversation {
     const lines = this.resident?.lines ?? npcDef(this.npc).lines;
-    const text = lines[this.said++ % lines.length];
+    // Memória (ADR 0034): na primeira fala da sessão, quem já conhece a jogadora a recebe com uma frase de reencontro.
+    const hello = this.said === 0 ? knownLine(tier, this.said) : '';
+    const text = `${hello ? hello + ' ' : ''}${lines[this.said++ % lines.length]}`;
     this.hold = true;
     return { npc: this.npc, name: this.name, text };
   }

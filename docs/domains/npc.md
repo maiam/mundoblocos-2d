@@ -27,6 +27,10 @@
 - **Cores:** `Look {hue, sat, val}` → `Actor.look` → `uRecolor` no shader do billboard (gira matiz e ajusta sat/brilho de tudo menos pele e neutros). Sem arte nova nem peso extra. O retrato da conversa é o da folha-base (a cor do cabelo no retrato é a original).
 - **Execução:** `Entities.spawnResidents` (depois de `spawnVillagers`); `Villager(…, resident)` usa nome/falas do sorteado; `npc` = folha emprestada. Cidade: ruas; vila: dentro do muro, pontos nos caminhos. Só no aparelho (a sala não simula moradores). Sem rotina de dormir ainda (só o Bento).
 
+## Memória (v0.93.115, ADR 0034 nível 3)
+- `game/npcBrain/memory.ts`: `MemoryBook` {chave → {talks, bought}}, `relation` 0–100, `tierOf`, `knownLine`, `shopGreeting`. Em `Entities.memory`; **salvo no jogador** (`SaveData.npcMemory`, v18). Sala não guarda.
+- Uso: `Game.talkTo`/`openShop`/`buyAtMarket` anotam; `Villager.conversation(tier)` antepõe a frase de reencontro na 1ª fala da sessão.
+
 ## Reação mínima (v0.93.114, ADR 0034 nível 2)
 - Morador parado, à vista e fora de conversa, a até `NOTICE_RANGE` da jogadora (`entities.ts`) vira-se para ela (`Villager.faceTo`). Cumprimento, fuga de perigo e Guarita: NEXT_STEPS.
 

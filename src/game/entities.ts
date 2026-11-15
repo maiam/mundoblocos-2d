@@ -9,6 +9,7 @@ import { BREED_COOLDOWN, Breeder, COURTSHIP_SECONDS } from './breeder';
 import { Sheep } from './sheep';
 import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
+import type { MemoryBook } from './npcBrain/memory';
 import { type Look, makeResidents, type ResidentDef } from './residents';
 import { FLORIST_KEEPER, MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
@@ -174,6 +175,8 @@ export class Entities {
   readonly horses: FarmAnimal[] = [];
   /** Moradores da cidade (só andam por ruas e praças; o golpe não os atinge). */
   readonly villagers: Villager[] = [];
+  /** O que os moradores lembram da jogadora (ADR 0034, nível 3): vai no salvamento do jogador; a sala não guarda. */
+  memory: MemoryBook = {};
   /** Hora do mundo (0..1) para a agenda dos moradores (o `Game` a atualiza todo quadro; -1 = sem relógio: sem rotina, como na sala). */
   time = -1;
   /** Monstros da dungeon (presos no interior dela). */

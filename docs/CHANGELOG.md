@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.115 — memória dos NPCs no salvamento (nível 3 da IA dos NPCs) (15/11/2026)
+- **ADR 0034, nível 3:** `game/npcBrain/memory.ts` (puro): por morador, `talks` (conversas/visitas à loja) e `bought` (compras); **relação 0–100** (conversa = 6, compra = 4) e faixas **estranho → conhecido → amigo → íntimo**. Chave = id do nomeado ou do sorteado (`rt3`, `rv1`…).
+- **Falas por condição** (escritas, nada gerado): quem já conhece a jogadora a recebe com uma frase de reencontro **na primeira fala da sessão**; **Bento e Rosendo** cumprimentam na janela da loja conforme a faixa (`shopGreeting`); toda conversa e visita à loja conta, e cada compra soma ao morador.
+- **Salvamento v18 (aditivo):** `SaveData.npcMemory`; `migrate` v17 → v18 começa vazio; `applySave` valida (`sanitizeBook`). Memória vive em `Entities.memory`; **a sala/servidor não guarda** (sem protocolo novo).
+- Testes novos (`npcBrain/memory.test.ts`; `save.test.ts` para v18); `tsc` e 614 testes verdes; smoke no navegador (conversa conta no livro).
+
 ## Orvalis v0.93.114 — moradores percebem a jogadora (nível 2 da IA dos NPCs, primeira reação) (15/11/2026)
 - **ADR 0034, nível 2 (reativo), passo mínimo:** `Entities.update` vira para a jogadora todo morador **parado** (não andando, não conversando, à vista) a até `NOTICE_RANGE` (3 células antigas × `SUBDIV`). Vale para os 16 nomeados e os sorteados; sem estado novo, sem save, sem protocolo; só no aparelho.
 - **Fica para depois (nível 2):** cumprimentar com balãozinho, fugir de lobo/perigo perto da vila e da cidade, aviso da Guarita.
