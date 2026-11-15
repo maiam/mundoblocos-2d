@@ -201,7 +201,7 @@ export class WorldThreeRenderer implements GameRenderer {
     }) : null;
     this.ripples = this.water ? new WaterRipples(this.worldLayer) : null;
     this.chips = new BreakChips(this.worldLayer, world.seed);
-    this.cracks = new BreakCracks(this.worldLayer, world.seed, world.cubeLevels);
+    this.cracks = new BreakCracks(this.worldLayer, world.cubeLevels);
     this.fish = this.water ? new WaterFish(this.worldLayer, world.seed, getTownImages()) : null;
     if (this.ripples) {
       this.leaves.onLand = (x, z) => { if (this.isOpenWaterAt(x, z)) this.ripples!.emit(x, z, 0.5); };
@@ -319,7 +319,7 @@ export class WorldThreeRenderer implements GameRenderer {
       };
       if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
       if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
-      if (opts.breaking) drawBreakingCracks(ctx, rectFor(opts.breaking), cam.zoom, opts.breaking.progress, opts.breaking);
+      if (opts.breaking) drawBreakingCracks(ctx, rectFor(opts.breaking), cam.zoom, opts.breaking.progress, opts.breaking, feelOn() && !inside);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }

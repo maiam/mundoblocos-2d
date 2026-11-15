@@ -48,39 +48,45 @@ export function drawHoverFrame(ctx: CanvasRenderingContext2D, r: SelectionRect, 
   ctx.restore();
 }
 
-/** Rachaduras que crescem com o progresso + anel de carregamento. `cell` é a célula (só semeia as rachaduras, determinísticas). */
-export function drawBreakingCracks(ctx: CanvasRenderingContext2D, r: SelectionRect, zoom: number, progress: number, cell: { x: number; y: number }): void {
+/**
+ * Rachaduras que crescem com o progresso + anel de carregamento. `cell` é a célula (só semeia as rachaduras, determinísticas).
+ * `ringOnly`: só o anel (o 3D com "sensação" desenha o desgaste em pixels no próprio bloco, `three/breakCracks.ts`; as fissuras radiais
+ * por cima liam como listras).
+ */
+export function drawBreakingCracks(ctx: CanvasRenderingContext2D, r: SelectionRect, zoom: number, progress: number, cell: { x: number; y: number }, ringOnly = false): void {
   const { sx, sy, w, h } = r;
   const cx = sx + w / 2;
   const cy = sy + h / 2;
   const p = Math.min(1, progress);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(sx, sy, w, h);
-  ctx.clip();
-  ctx.fillStyle = `rgba(20, 12, 40, ${0.25 * p})`;
-  ctx.fillRect(sx, sy, w, h);
-  // Rachaduras determinísticas a partir do centro; mais ramos conforme avança.
-  ctx.strokeStyle = `rgba(30, 18, 50, ${0.5 + 0.4 * p})`;
-  ctx.lineWidth = Math.max(1.5, zoom);
-  ctx.lineCap = 'round';
-  const branches = Math.ceil(p * 7);
-  const reach = Math.max(w, h) * 0.55 * p;
-  for (let i = 0; i < branches; i++) {
-    const a = (i / 7) * Math.PI * 2 + hash2(cell.x * 31 + i, cell.y, 5) * 0.8;
+  if (!ringOnly) {
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    let px = cx;
-    let py = cy;
-    for (let k = 1; k <= 3; k++) {
-      const jitter = (hash2(cell.x + k, cell.y + i, 9) - 0.5) * 0.9;
-      px = cx + Math.cos(a + jitter) * reach * (k / 3);
-      py = cy + Math.sin(a + jitter) * reach * (k / 3);
-      ctx.lineTo(px, py);
+    ctx.rect(sx, sy, w, h);
+    ctx.clip();
+    ctx.fillStyle = `rgba(20, 12, 40, ${0.25 * p})`;
+    ctx.fillRect(sx, sy, w, h);
+    // Rachaduras determinísticas a partir do centro; mais ramos conforme avança.
+    ctx.strokeStyle = `rgba(30, 18, 50, ${0.5 + 0.4 * p})`;
+    ctx.lineWidth = Math.max(1.5, zoom);
+    ctx.lineCap = 'round';
+    const branches = Math.ceil(p * 7);
+    const reach = Math.max(w, h) * 0.55 * p;
+    for (let i = 0; i < branches; i++) {
+      const a = (i / 7) * Math.PI * 2 + hash2(cell.x * 31 + i, cell.y, 5) * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      let px = cx;
+      let py = cy;
+      for (let k = 1; k <= 3; k++) {
+        const jitter = (hash2(cell.x + k, cell.y + i, 9) - 0.5) * 0.9;
+        px = cx + Math.cos(a + jitter) * reach * (k / 3);
+        py = cy + Math.sin(a + jitter) * reach * (k / 3);
+        ctx.lineTo(px, py);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
+    ctx.restore();
   }
-  ctx.restore();
 
   const ringR = Math.max(14, Math.min(w, h) * 0.32);
   ctx.save();

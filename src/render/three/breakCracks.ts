@@ -1,45 +1,52 @@
 import * as THREE from 'three';
-import { mulberry32 } from '../../world/random';
-import { CRACK_STAGES, crackStage } from '../breakFx';
+import { crackStage } from '../breakFx';
 
 /**
  * Rachaduras do bloco que se quebra (v0.93.98): decalques pintados por cima do topo e da frente do bloco, em estágios que crescem com o
  * progresso da quebra (`crackStage`). Cada estágio acrescenta fissuras às do anterior (mesma semente), então o desenho "cresce" em vez de
  * trocar. Só visual; tremem junto com o bloco (`setShake`). As texturas são desenhadas por código (nunca se lê canvas).
  */
-const VARIANTS = 2;
+/**
+ * Rachaduras em pixel-art (v0.93.100): bitmaps de 16 × 16 (topo) e 16 × 4 (frente) desenhados à mão, na grade de pixels do bloco, sem suavização.
+ * Cada pixel traz o estágio (1..4) em que aparece, então o desenho CRESCE a partir do centro, ramificando, em vez de trocar. Traço escuro de 1 px
+ * com um fio claro na diagonal de baixo (parece fundo). Variante 1 = espelho horizontal (decalque, não textura de bloco).
+ */
+const TOP_CRACK: readonly (readonly [number, number, number])[] = [
+  // linha principal, do centro para fora (noroeste ↔ sudeste)
+  [8, 8, 1], [7, 8, 1], [7, 7, 1], [9, 8, 1], [9, 9, 1], [10, 9, 1],
+  [6, 7, 2], [6, 6, 2], [5, 6, 2], [5, 5, 2], [10, 10, 2], [11, 10, 2], [11, 11, 2],
+  [4, 5, 3], [4, 4, 3], [3, 4, 3], [3, 3, 3], [12, 11, 3], [12, 12, 3], [13, 12, 3],
+  [2, 3, 4], [2, 2, 4], [13, 13, 4], [14, 13, 4],
+  // ramo para nordeste
+  [9, 7, 3], [9, 6, 3], [10, 6, 3], [10, 5, 3], [11, 5, 3], [11, 4, 3], [12, 4, 3], [12, 3, 3],
+  [9, 5, 4], [8, 5, 4], [8, 4, 4], [13, 3, 4],
+  // ramo para sudoeste
+  [5, 7, 3], [5, 8, 3], [4, 8, 3], [4, 9, 3], [3, 9, 3], [3, 10, 3], [2, 10, 3],
+  [4, 10, 4], [4, 11, 4], [3, 12, 4], [2, 11, 4],
+  // ramos curtos para leste e sul
+  [11, 9, 4], [12, 8, 4], [13, 8, 4], [14, 8, 4], [10, 12, 4], [10, 13, 4],
+];
+const FRONT_CRACK: readonly (readonly [number, number, number])[] = [
+  [9, 0, 1], [9, 1, 1], [10, 2, 1],
+  [10, 3, 2], [5, 0, 2], [5, 1, 2],
+  [4, 2, 3], [4, 3, 3], [12, 0, 3], [12, 1, 3],
+  [13, 2, 4], [13, 3, 4], [8, 2, 4], [8, 3, 4], [6, 2, 4],
+];
 
-/** Desenha as fissuras dos estágios 1..stage num canvas `w × h` (o mesmo `seed` dá sempre as mesmas fissuras). */
-function drawCracks(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, seed: number): void {
-  const r = mulberry32(seed);
-  const branches: { x: number; y: number; pts: [number, number][] }[] = [];
-  for (let i = 0; i < CRACK_STAGES; i++) {
-    const sx = (0.25 + r() * 0.5) * w, sy = (0.25 + r() * 0.5) * h;
-    let a = r() * Math.PI * 2, x = sx, y = sy;
-    const pts: [number, number][] = [[x, y]];
-    const steps = 4 + Math.floor(r() * 3);
-    for (let s = 0; s < steps; s++) {
-      a += (r() - 0.5) * 1.3;
-      const len = (0.12 + r() * 0.14) * Math.max(w, h * 2);
-      x += Math.cos(a) * len; y += Math.sin(a) * len * (h / w < 0.5 ? 0.5 : 1);
-      pts.push([x, y]);
-    }
-    branches.push({ x: sx, y: sy, pts });
-  }
+function drawCrackPixels(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, mirror: boolean, front: boolean): void {
   ctx.clearRect(0, 0, w, h);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  for (let b = 0; b < stage; b++) {
-    const pts = branches[b].pts;
-    for (const [color, off, width] of [['rgba(255,255,255,0.2)', 0.7, 0.9], ['rgba(24,14,10,0.8)', 0, 1.25]] as const) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width * (w / 32);
-      ctx.beginPath();
-      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x + off, y + off) : ctx.moveTo(x + off, y + off)));
-      ctx.stroke();
-    }
+  const pts = (front ? FRONT_CRACK : TOP_CRACK).filter(([, , st]) => st <= stage).map(([x, y]) => [mirror ? w - 1 - x : x, y] as const);
+  const dark = new Set(pts.map(([x, y]) => x + ',' + y));
+  ctx.fillStyle = 'rgba(255,255,255,0.24)';
+  for (const [x, y] of pts) {
+    const lx = x + (mirror ? -1 : 1), ly = y + 1;
+    if (!dark.has(lx + ',' + ly) && lx >= 0 && lx < w && ly < h) ctx.fillRect(lx, ly, 1, 1);
   }
+  ctx.fillStyle = 'rgba(28,17,12,0.88)';
+  for (const [x, y] of pts) ctx.fillRect(x, y, 1, 1);
 }
+
+const VARIANTS = 2;
 
 export class BreakCracks {
   private readonly group = new THREE.Group();
@@ -50,7 +57,7 @@ export class BreakCracks {
   private cell = '';
 
   /** `levels` = níveis por célula de altura (4 no Mundo): a frente do bloco tem `1 / levels` de altura. */
-  constructor(parent: THREE.Object3D, private readonly seed: number, private readonly levels: number) {
+  constructor(parent: THREE.Object3D, private readonly levels: number) {
     const mat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     const topGeo = new THREE.PlaneGeometry(1, 1);
     topGeo.rotateX(-Math.PI / 2);
@@ -66,14 +73,14 @@ export class BreakCracks {
     const key = kind + stage + ':' + variant;
     let t = this.cache.get(key);
     if (t) return t;
-    const w = 64, h = kind === 'top' ? 64 : 64 / this.levels * 1; // a frente é uma faixa 1 : (1/levels)
+    const w = 16, h = kind === 'top' ? 16 : 16 / this.levels; // grade de 16 px do bloco; a frente é uma faixa 1 : (1/levels)
     const c = document.createElement('canvas');
-    c.width = w; c.height = Math.max(8, Math.round(h));
-    drawCracks(c.getContext('2d')!, c.width, c.height, stage, this.seed * 31 + variant * 977 + (kind === 'top' ? 1 : 2));
+    c.width = w; c.height = Math.max(3, Math.round(h));
+    drawCrackPixels(c.getContext('2d')!, c.width, c.height, stage, variant === 1, kind === 'front');
     t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.generateMipmaps = false;
-    t.minFilter = t.magFilter = THREE.LinearFilter;
+    t.minFilter = t.magFilter = THREE.NearestFilter; // pixels nítidos
     this.cache.set(key, t);
     return t;
   }
