@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.98 — rachaduras em estágios na quebra e menos lascas (3D) (15/11/2026)
+- **Pedido do dono do produto:** as lascas estavam em demasia → **reduzidas** (a cada 0,2 s em vez de 0,11; 1 a 2 por vez em vez de 2 a 4; estouro final de 10 lascas em vez de 16 e 2 nuvens de poeira em vez de 3). E seguir a recomendação: **rachaduras pintadas em estágios** (opção 3 da animação de quebrar).
+- **Rachaduras** (`three/breakCracks.ts`, `breakFx.crackStage`): decalques por cima do topo e da frente (a faixa de 1/4) do bloco que se quebra, em 4 estágios que crescem com o progresso (a partir de 8 %); cada estágio acrescenta fissuras às do anterior (mesma semente, 2 variantes por célula), com traço escuro e fio claro. Tremem junto com o bloco. Texturas desenhadas por código (nunca se lê canvas). No chão (sem face frontal) racha só o topo; árvores e alvos sem lasca (flor, capim) não racham. `?sensacao=0` e os cômodos ficam sem. O 2D de reserva mantém as rachaduras de antes.
+- Só cliente e só 3D; sem mapa, save ou protocolo (servidor não muda).
+
 ## Orvalis v0.93.97 — flores fofas no mundo (15 variantes) (15/11/2026)
 - **Pedido do dono do produto:** incluir as "Flores fofas v01" (15 estudos; a 13 Dançarina de Coral chegou depois dos demais) como enfeite do mundo. Escolhas dele: substitui a Flor atual (sem colisão, não colocável), sorteada por célula em rodízio nos mesmos lugares onde já nasciam flores (biomas, cidade), **tamanho pequeno** (~0,6 célula).
 - **Arte** (`scripts/extract-flowers.py`, fontes em `assets-src/flores/`): uma só escala para todas (a mais alta, o Lírio de Lua, = 80 px de arte; 128 px = 1 célula, como a cerca) → `src/assets/flowers.webp`, 15 quadros 96 × 96, base do caule em (48, 92). **Contorno reforçado** (pedido do dono do produto): a silhueta dilatada ~1 px de arte (linha fina; começou em 2 px e o dono do produto pediu mais fina) numa cor verde-acinzentada escura (`OUTLINE`/`OUTLINE_PX` no script) por trás de cada flor, porque o traço original some na redução. Flor nova = PNG `NN-nome.png` na pasta + rodar o script (o jogo lê a quantidade pela largura da tira).

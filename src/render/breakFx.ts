@@ -17,13 +17,20 @@ export function chipColor(id: number): [number, number, number] | null {
 }
 
 /** De quanto em quanto tempo (s) saem lascas enquanto se segura a quebra, e quantas por vez (cresce com o progresso). */
-export const CHIP_EVERY = 0.11;
+export const CHIP_EVERY = 0.2;
 export function chipsPerBurst(progress: number): number {
-  return 2 + Math.round(Math.min(1, progress) * 2);
+  return 1 + Math.round(Math.min(1, progress));
+}
+
+/** Estágios de rachadura (v0.93.98): 0 = inteiro; cada estágio acrescenta fissuras. `progress` 0..1 da quebra. */
+export const CRACK_STAGES = 4;
+export function crackStage(progress: number): number {
+  if (!(progress > 0.08)) return 0;
+  return Math.min(CRACK_STAGES, 1 + Math.floor(((Math.min(1, progress) - 0.08) / 0.92) * CRACK_STAGES * 0.999));
 }
 
 /** Lascas do estouro final (o bloco se desfaz). */
-export const BREAK_BURST_CHIPS = 16;
+export const BREAK_BURST_CHIPS = 10;
 /** Janela (s) depois que a quebra termina em que ainda se confere se o bloco sumiu (o jogo aplica a quebra um instante depois). */
 export const BREAK_GRACE = 0.5;
 

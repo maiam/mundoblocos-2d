@@ -18,6 +18,7 @@ import { WaterSurface } from './three/waterSurface';
 import { WaterRipples } from './three/waterRipples';
 import { WaterFish } from './three/waterFish';
 import { BreakChips } from './three/breakChips';
+import { BreakCracks } from './three/breakCracks';
 import { BREAK_BURST_CHIPS, BREAK_GRACE, breakShake, CHIP_EVERY, chipColor, chipsPerBurst } from './breakFx';
 import { waterFxOn } from './waterFx';
 import { v2WaterTop } from './materialsV2';
@@ -100,6 +101,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly ripples: WaterRipples | null;
   private readonly fish: WaterFish | null;
   private readonly chips: BreakChips;
+  private readonly cracks: BreakCracks;
   /** A quebra em andamento: onde, que bloco, a altura do topo e quando foi vista pela última vez (para o estouro final). */
   private lastBreak: { x: number; y: number; id: number; top: number; at: number } | null = null;
   private chipAt = 0;
@@ -200,6 +202,7 @@ export class WorldThreeRenderer implements GameRenderer {
     }) : null;
     this.ripples = this.water ? new WaterRipples(this.worldLayer) : null;
     this.chips = new BreakChips(this.worldLayer, world.seed);
+    this.cracks = new BreakCracks(this.worldLayer, world.seed, world.cubeLevels);
     this.fish = this.water ? new WaterFish(this.worldLayer, world.seed, getTownImages()) : null;
     if (this.ripples) {
       this.leaves.onLand = (x, z) => { if (this.isOpenWaterAt(x, z)) this.ripples!.emit(x, z, 0.5); };
@@ -351,7 +354,7 @@ export class WorldThreeRenderer implements GameRenderer {
    */
   private stepBreak(opts: RenderOptions, inside: unknown, cellPx: number): void {
     const b = opts.breaking && (opts.breaking as { valid?: boolean }).valid !== false ? opts.breaking : null;
-    if (!feelOn() || inside) { this.blocks.setShake(null); this.chips.clear(); this.lastBreak = null; this.chips.update(opts.dt, cellPx); return; }
+    if (!feelOn() || inside) { this.blocks.setShake(null); this.cracks.hide(); this.chips.clear(); this.lastBreak = null; this.chips.update(opts.dt, cellPx); return; }
     const w = this.world;
     if (b) {
       const top = w.topBlock(b.x, b.y);
@@ -359,7 +362,9 @@ export class WorldThreeRenderer implements GameRenderer {
       const cube = !!top && blockDef(top.id).shape === 'cube';
       const h = cube ? w.stackHeight(b.x, b.y) / w.cubeLevels : 0;
       this.lastBreak = { x: b.x, y: b.y, id, top: w.stackHeight(b.x, b.y), at: opts.elapsed };
-      if (cube) { const s = breakShake(opts.elapsed, b.progress); this.blocks.setShake({ x: b.x, y: b.y }, s); } else this.blocks.setShake(null);
+      const shake = cube ? breakShake(opts.elapsed, b.progress) : { dx: 0, dy: 0, dz: 0 };
+      if (cube) this.blocks.setShake({ x: b.x, y: b.y }, shake); else this.blocks.setShake(null);
+      if (windKind(id) === 'tree' || !chipColor(id)) this.cracks.hide(); else this.cracks.show(b.x, b.y, h, b.progress, cube, shake);
       const color = chipColor(id);
       if (color && windKind(id) !== 'tree' && opts.elapsed - this.chipAt >= CHIP_EVERY) {
         this.chipAt = opts.elapsed;
@@ -367,6 +372,7 @@ export class WorldThreeRenderer implements GameRenderer {
       }
     } else {
       this.blocks.setShake(null);
+      this.cracks.hide();
       const lb = this.lastBreak;
       if (lb && opts.elapsed - lb.at <= BREAK_GRACE) {
         // o bloco sumiu (ou perdeu um nível)? estoura
@@ -377,7 +383,7 @@ export class WorldThreeRenderer implements GameRenderer {
           if (color) {
             const h = Math.max(0, w.stackHeight(lb.x, lb.y)) / w.cubeLevels;
             this.chips.emit(lb.x + 0.5, h + 0.15, lb.y + 0.5, color, BREAK_BURST_CHIPS, 1.9);
-            for (let i = 0; i < 3; i++) this.dust.emit(lb.x + 0.5 + (i - 1) * 0.25, lb.y + 0.5, { color, amount: 1.3 });
+            for (let i = 0; i < 2; i++) this.dust.emit(lb.x + 0.5 + (i - 0.5) * 0.3, lb.y + 0.5, { color, amount: 1.3 });
           }
           this.lastBreak = null;
         }
@@ -489,6 +495,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ripples?.dispose();
     this.fish?.dispose();
     this.chips.dispose();
+    this.cracks.dispose();
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();

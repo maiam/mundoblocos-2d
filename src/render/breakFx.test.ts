@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
-import { breakShake, chipColor, chipsPerBurst } from './breakFx';
+import { breakShake, chipColor, chipsPerBurst, CRACK_STAGES, crackStage } from './breakFx';
 import { BreakChips } from './three/breakChips';
 import { ChunkBlocks } from './three/chunkBlocks';
 import type { Chunk } from '../world/chunk';
@@ -59,5 +59,17 @@ describe('breakFx (quebra de blocos)', () => {
     expect(blocks.setShake(null)).toBe(false);
     expect([at(0), at(1)]).toEqual(before);
     expect(blocks.setShake({ x: 9, y: 9 })).toBe(false); // célula sem bloco
+  });
+});
+
+describe('rachaduras em estágios', () => {
+  it('sem rachadura no começo, cresce com o progresso até o último estágio', () => {
+    expect(crackStage(0)).toBe(0);
+    expect(crackStage(0.05)).toBe(0);
+    const stages = [0.1, 0.3, 0.55, 0.8, 1].map(crackStage);
+    expect(stages[0]).toBe(1);
+    expect(stages[stages.length - 1]).toBe(CRACK_STAGES);
+    for (let i = 1; i < stages.length; i++) expect(stages[i]).toBeGreaterThanOrEqual(stages[i - 1]);
+    expect(crackStage(5)).toBe(CRACK_STAGES);
   });
 });
