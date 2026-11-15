@@ -120,6 +120,8 @@ const LOVE_SCALE: Record<AnimalKind, number> = { sheep: 1, cow: 1.05, chicken: 0
 const PAIR_RANGE = 6 * SUBDIV;
 /** Distância (células) para começar a namorar. */
 const COURT_DISTANCE = 1.5 * SUBDIV;
+/** Distância (células) em que um morador parado percebe a jogadora e se vira para ela (ADR 0034, nível 2). */
+export const NOTICE_RANGE = 3 * SUBDIV;
 /** Moradores sorteados (ADR 0034): quantos na cidade e na vila. */
 export const RESIDENTS_TOWN = 8;
 export const RESIDENTS_VILLAGE = 5;
@@ -570,7 +572,12 @@ export class Entities {
   };
 
   update(dt: number, world: World): void {
-    for (const v of this.villagers) v.update(dt, world, this.blocker, this.time);
+    for (const v of this.villagers) {
+      v.update(dt, world, this.blocker, this.time);
+      // Nível 2 (ADR 0034): parado e com a jogadora por perto, o morador se vira para ela.
+      const p = this.player;
+      if (p && !v.hidden && !v.moving && !v.talking && Math.hypot(p.x - v.x, p.y - v.y) <= NOTICE_RANGE) v.faceTo(p.x, p.y);
+    }
     if (!this.remote) this.updateCreatures(dt, world);
     for (let i = this.dying.length - 1; i >= 0; i--) {
       this.dying[i].t += dt / MONSTERS[this.dying[i].kind].deathSeconds;
