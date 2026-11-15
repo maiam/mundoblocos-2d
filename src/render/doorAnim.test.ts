@@ -35,3 +35,12 @@ describe('animação da porta (a mesma do 2D e do 3D)', () => {
     expect(a.animating(doorKey(2, 2), 5.05)).toBe(false);
   });
 });
+
+describe('porteira (5 quadros por sentido)', () => {
+  it('abre 0..4, fecha 5..9', () => {
+    expect([0, 0.2, 0.4, 0.6, 0.8].map((t) => doorFrame(true, t, 5))).toEqual([0, 1, 2, 3, 4]);
+    expect([0, 0.2, 0.4, 0.6, 0.8].map((t) => doorFrame(false, t, 5))).toEqual([5, 6, 7, 8, 9]);
+    expect(doorFrame(true, 1, 5)).toBe(4);
+    expect(doorFrame(false, 1, 5)).toBe(0);
+  });
+});

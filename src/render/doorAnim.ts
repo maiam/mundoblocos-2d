@@ -6,13 +6,16 @@
 export const DOOR_ANIM_S = 0.32;
 
 /** Quadro (0..7) de uma porta no instante `t` desde a mudança de estado; `open` = estado final. */
-export function doorFrame(open: boolean, t: number): number {
-  const step = Math.min(3, Math.floor(t * 4));
-  return t < 1 ? (open ? step : 4 + step) : open ? 3 : 0;
+export function doorFrame(open: boolean, t: number, steps = 4): number {
+  const step = Math.min(steps - 1, Math.floor(t * steps));
+  return t < 1 ? (open ? step : steps + step) : open ? steps - 1 : 0;
 }
 
 /** Memória do estado visto por porta: detecta a mudança aberta ↔ fechada e devolve o quadro a desenhar. */
 export class DoorAnimator {
+  /** `steps` = quadros de cada sentido (porta: 4; porteira: 5, com 2×steps quadros no total). */
+  constructor(private readonly steps = 4) {}
+
   private readonly seen = new Map<number, { open: boolean; since: number }>();
 
   /** `key` identifica a porta (ex.: `x * 100003 + y`); `elapsed` em segundos. */
@@ -26,7 +29,7 @@ export class DoorAnimator {
       st.open = open;
       st.since = elapsed;
     }
-    return doorFrame(open, (elapsed - st.since) / DOOR_ANIM_S);
+    return doorFrame(open, (elapsed - st.since) / DOOR_ANIM_S, this.steps);
   }
 
   /** A porta ainda está no meio da animação (precisa de redesenho a cada quadro)? */

@@ -30,7 +30,7 @@ import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
 import { getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
-import { Block, blockDef, isDoor, isWaterPlant, type BlockId } from '../world/blocks';
+import { Block, blockDef, isDoor, isGate, isWaterPlant, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
@@ -115,6 +115,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private firesAt = -Infinity;
   private readonly groundFx: GroundFx;
   private readonly doors: DoorSprites;
+  private readonly gates: DoorSprites;
   /** Paredes autotile (W5): arte por chunk; os atlas chegam em segundo plano. */
   private readonly walls: ChunkWalls;
   private readonly wallAtlases = new Map<BlockId, HTMLImageElement>();
@@ -148,6 +149,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.sprites?.reupload();
       this.groundFx?.reupload();
       this.doors?.reupload();
+      this.gates?.reupload();
       this.room?.reupload();
     });
     this.textures = createBlockTextures({ town: !!world.town });
@@ -176,6 +178,11 @@ export class WorldThreeRenderer implements GameRenderer {
       tile: TILE, k: OBLIQUE_K,
       isDoor: (id) => isDoor(id), isOpen: (id) => id === Block.OAK_DOOR_OPEN,
       frames: () => this.textures.doorFrames,
+    });
+    this.gates = new DoorSprites(this.worldLayer, world, {
+      tile: TILE, k: OBLIQUE_K, steps: 5,
+      isDoor: (id) => isGate(id), isOpen: (id) => id === Block.FENCE_GATE_OPEN,
+      frames: () => this.textures.gateFrames,
     });
     this.groundFx = new GroundFx(this.worldLayer, {
       seed: world.seed,
@@ -242,6 +249,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.sprites.update(rect);
       this.walls.update(rect);
       this.doors.update(rect, opts.elapsed);
+      this.gates.update(rect, opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
       this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
@@ -434,8 +442,8 @@ export class WorldThreeRenderer implements GameRenderer {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
     this.stage.syncCamera(cam);
     this.stage.aim(cam, sx, sy);
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes()])) {
-      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes()])) {
+      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -482,6 +490,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();
+    this.gates.dispose();
     this.groundFx.dispose();
     this.blockMaterials.dispose();
     this.actors.dispose();

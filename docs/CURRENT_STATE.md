@@ -141,3 +141,4 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Cena de escala** (`?escala=1`, só em desenvolvimento, ADR 0022): comparação visual de sprites no renderizador real; ver `OPERATIONS.md`.
 - Artefatos só com a arte do próprio mundo (ADR 0010), imagens em arquivos separados (ADR 0013); arte de dungeon e
   folhas de personagem/monstro carregam em segundo plano ou sob demanda.
+- **Cerca e porteira do jogador (v0.93.95):** arte nova em `assets-src/cerca-v2/` (`scripts/extract-fence-v2.py`); cerca em 3 peças 128×128 (`FENCE_FRAME.cutY` = corte norte/sul); porteira com 5 poses → 10 quadros animados (`gateFrames`, `DoorAnimator(5)`, 2ª `DoorSprites` no 3D). Portão/muro da vila ainda usam a arte anterior.

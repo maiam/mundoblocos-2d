@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.95 — cerca nova e porteira animada (15/11/2026)
+- **Pedido do dono do produto:** trocar a cerca do mundo pela arte nova (trecho norte-sul e canto L, kit v02 com porteira de 5 ângulos).
+- **Cerca** (`render/fence.ts`, `scripts/extract-fence-v2.py`, `assets-src/cerca-v2/`): continua autotile por vizinhos em 3 peças (horizontal, vertical, poste), agora com quadro 128×128 (`FENCE_FRAME`, 1 célula entre postes). Corte norte/sul na linha `cutY` (o trilho vertical passa acima da âncora). Só a câmera oblíqua do jogo foi usada; o kit isométrico de 16 conexões não serve nela.
+- **Porteira animada** (`GATE_FRAME`, `Textures.gateFrames`): 5 poses (0°–90°) viram 10 quadros (abre 0..4, fecha 5..9). `doorFrame`/`DoorAnimator` ganham `steps` (porta = 4, porteira = 5); no 3D uma 2ª instância de `DoorSprites` cuida das porteiras (clique incluso); no 2D de reserva a linha desenha a porteira com o mesmo animador. `worldSpriteArt` pula a porteira quando há quadros. Ícones novos da cerca e da porteira.
+- Só aparência: sem mapa, save ou protocolo (servidor não muda). O portão e o muro de estacas da vila ficam como estão. `tsc` e testes verdes.
+
 ## Orvalis v0.93.94 — a quebra de blocos ganha tremor, lascas, estouro e itens que quicam (3D) (14/11/2026)
 - **Pedido do dono do produto:** melhorar a animação de quebrar; ele aprovou a combinação 1 + 2 + 4 + 5 (lascas, tremor, estouro e itens que quicam).
 - **Lascas a cada golpe** (`three/breakChips.ts`, `breakFx.ts`): enquanto se segura a quebra, saem a cada 0,11 s de 2 a 4 lascas quadradas **da cor do material** (`blockColor`, a do minimapa; madeira, pedra e terra sem cor própria ganham um tom; flor e capim não soltam), que pulam, caem com gravidade e quicam uma vez. Pool de 96, sem `Math.random`.

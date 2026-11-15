@@ -92,6 +92,7 @@ export class Renderer {
   private readonly interiorArt = new Map<string, HTMLImageElement>();
   /** Estado visto por porta (aparência apenas): quando mudou de aberta/fechada, para animar. */
   private readonly doorAnim = new DoorAnimator();
+  private readonly gateAnim = new DoorAnimator(5);
   /** O que o contorno dos cubos V2 precisa saber dos vizinhos (só leitura do mundo; ADR 0023). */
   private readonly cubeView: CubeView = {
     // Blocos de 1/4 (ADR 0033): o 2D de reserva ainda desenha CUBOS CHEIOS — cada 4 blocos da coluna (arredondando para cima) são 1 cubo.
@@ -223,7 +224,12 @@ export class Renderer {
           this.waterGlint(cam, x, y, opts.elapsed);
         }
       }
-      for (const gx of gates) this.drawObject(cam, this.world.getObject(gx, y), gx, y, 0, glows);
+      for (const gx of gates) {
+        const gid = this.world.getObject(gx, y);
+        const frames = this.textures.gateFrames;
+        if (frames.length) this.drawSprite(cam, frames[this.gateAnim.frameFor(doorKey(gx, y), gid === Block.FENCE_GATE_OPEN, opts.elapsed)], gx, y);
+        else this.drawObject(cam, gid, gx, y, 0, glows);
+      }
       const items = byRow.get(y);
       if (items) {
         items.sort((a, b) => a.y - b.y);
@@ -370,7 +376,7 @@ export class Renderer {
   private drawFence(cam: Camera, x: number, y: number, pieces: HTMLCanvasElement[]): void {
     const j = (dx: number, dy: number) => joinsFence(this.world.getObject(x + dx, y + dy));
     const parts = fenceParts(j(0, -1), j(1, 0), j(0, 1), j(-1, 0));
-    const { w, h, ax, ay } = FENCE_FRAME;
+    const { w, h, ax, cutY } = FENCE_FRAME;
     const z = cam.zoom * FENCE_SCALE;
     const left = cam.worldToScreenX(x * TILE + FENCE_OFFSET.x);
     const top = cam.worldToScreenY(y * TILE + FENCE_OFFSET.y);
@@ -381,10 +387,10 @@ export class Renderer {
       piece(parts.whole, 0, 0, w, h);
       return;
     }
-    if (parts.north) piece(1, 0, 0, w, ay);
+    if (parts.north) piece(1, 0, 0, w, cutY);
     if (parts.west) piece(0, 0, 0, ax, h);
     if (parts.east) piece(0, ax, 0, w - ax, h);
-    if (parts.south) piece(1, 0, ay, w, h - ay);
+    if (parts.south) piece(1, 0, cutY, w, h - cutY);
     if (parts.post) piece(2, 0, 0, w, h);
   }
 

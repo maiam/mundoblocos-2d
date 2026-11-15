@@ -11,10 +11,17 @@ import { TILE } from '../config';
  * Portão: desenho próprio com os dois postes nas bordas da célula, onde chegam as travessas das vizinhas.
  */
 
-/** Quadro de cada peça na tira (px da imagem) e a âncora = centro da célula dentro do quadro. */
-export const FENCE_FRAME = { w: 128, h: 192, ax: 64, ay: 112 } as const;
-/** Portão: quadro (px) e onde fica o pé dos postes; os centros dos postes caem nas bordas da célula. */
-export const GATE_FRAME = { w: 168, h: 137, postBase: 125, cell: 128 } as const;
+/**
+ * Quadro de cada peça na tira (px da imagem) e a âncora = centro da base do poste (que fica no centro da célula). Cerca v2 (v0.93.95, arte do dono do
+ * produto, `scripts/extract-fence-v2.py`): 128 px por célula (distância entre postes = 1 célula); o poste tem 60 px de altura e os trilhos horizontais
+ * ficam a 13–22 e 34–44 acima da base; o trilho vertical passa a ~26 px de altura (por isso o corte norte/sul, `cutY`, é na linha 64 e não na âncora).
+ */
+export const FENCE_FRAME = { w: 128, h: 128, ax: 64, ay: 90, cutY: 64 } as const;
+/**
+ * Porteira: 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h`; a base dos postes cai na linha `postBase` e a pose ocupa a célula
+ * inteira (os postes ficam a ±0,33 célula do centro e cotos de trilho chegam às bordas, onde as cercas vizinhas terminam).
+ */
+export const GATE_FRAME = { w: 128, h: 76, postBase: 61, poses: 5 } as const;
 
 export const enum FencePiece { Horizontal = 0, Vertical = 1, Post = 2 }
 
