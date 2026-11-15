@@ -44,6 +44,7 @@ import { BlockMaterials } from './three/blockMaterials';
 import { ChunkSprites, type SpriteCell } from './three/chunkSprites';
 import { GroundFx } from './three/groundFx';
 import { DoorSprites } from './three/doorSprites';
+import { gateWood } from './fence';
 import * as THREE from 'three';
 import { INTERIOR_BACKGROUND, InteriorRoom, roomBounds } from './three/interiorRoom';
 import { art } from './art';
@@ -182,7 +183,8 @@ export class WorldThreeRenderer implements GameRenderer {
     this.gates = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K, steps: 5,
       isDoor: (id) => isGate(id), isOpen: (id) => id === Block.FENCE_GATE_OPEN,
-      frames: () => this.textures.gateFrames,
+      frames: () => this.textures.gateFrames.get(Block.FENCE) ?? [],
+      framesAt: (gx, gy) => this.textures.gateFrames.get(gateWood((dx, dy) => world.getObject(gx + dx, gy + dy))),
     });
     this.groundFx = new GroundFx(this.worldLayer, {
       seed: world.seed,

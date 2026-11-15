@@ -1,4 +1,5 @@
 import { TILE } from '../config';
+import { Block, isFence, type BlockId } from '../world/blocks';
 
 /**
  * Cerca de tábuas que se emenda sozinha (aparência; a regra de bloquear/abrir fica no `World`).
@@ -18,10 +19,19 @@ import { TILE } from '../config';
  */
 export const FENCE_FRAME = { w: 128, h: 232, ax: 64, ay: 208 } as const;
 /**
- * Porteira: 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h`; a base dos postes cai na linha `postBase` (alinhada à base dos postes
- * da cerca) e os postes ficam nas bordas da célula; a folha encolhe presa à dobradiça (gerada por `extract-fence-v3.py`).
+ * Porteira do modelo 3D (v0.93.96): 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h` (a folha gira para o norte em torno da
+ * dobradiça); `postBase` = linha da base das estacas (a mesma âncora da cerca). Há uma tira por madeira; a porteira usa a da cerca vizinha.
  */
-export const GATE_FRAME = { w: 136, h: 94, postBase: 90, poses: 5 } as const;
+export const GATE_FRAME = { w: 192, h: 300, postBase: 278, poses: 5 } as const;
+
+/** Madeira da porteira: a da primeira cerca vizinha (oeste, leste, norte, sul); sem cerca por perto, Carvalho. `at(dx, dy)` devolve o objeto da célula vizinha. */
+export function gateWood(at: (dx: number, dy: number) => BlockId): BlockId {
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+    const id = at(dx, dy);
+    if (isFence(id)) return id;
+  }
+  return Block.FENCE;
+}
 
 export const enum FencePiece { Horizontal = 0, Vertical = 1, Post = 2, ArmNorth = 3, ArmSouth = 4 }
 

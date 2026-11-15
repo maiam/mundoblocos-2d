@@ -19,6 +19,8 @@ export interface DoorSpritesOptions {
   isOpen(id: BlockId): boolean;
   /** Os 8 quadros da porta (0..3 abrindo, 4..7 fechando). */
   frames(): readonly SpriteArt[];
+  /** Quadros próprios desta porta (ex.: porteira na madeira da cerca vizinha); sem isto vale `frames()`. */
+  framesAt?(x: number, y: number): readonly SpriteArt[] | undefined;
   /** Quadros por sentido (porta: 4, padrão; porteira: 5). */
   steps?: number;
   /** Teto de portas desenhadas por quadro. */
@@ -119,8 +121,9 @@ export class DoorSprites {
 
   private place(i: number, d: Door, frames: readonly SpriteArt[], elapsed: number): void {
     const open = this.opts.isOpen(d.id);
-    const frame = Math.min(frames.length - 1, this.animator.frameFor(doorKey(d.x, d.y), open, elapsed));
-    const sprite = frames[frame];
+    const own = this.opts.framesAt?.(d.x, d.y) ?? frames;
+    const frame = Math.min(own.length - 1, this.animator.frameFor(doorKey(d.x, d.y), open, elapsed));
+    const sprite = own[frame];
     const a = this.assetFor(sprite);
     let mesh = this.pool[i];
     if (!mesh) {

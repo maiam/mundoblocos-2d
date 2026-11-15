@@ -41,7 +41,7 @@ let trees: TreeArt | null = null;
 /** Tira de pedregulhos. */
 let rocks: HTMLImageElement | null = null;
 /** Cerca de tábuas: peças emendáveis e portão (fechado, aberto). */
-let fence: { pieces: Map<BlockId, HTMLImageElement>; gate: HTMLImageElement } | null = null;
+let fence: { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement> } | null = null;
 /** Cidade: imagens por nome (`town-<nome>`). */
 const townImages = new Map<string, HTMLImageElement>();
 
@@ -75,8 +75,12 @@ export async function loadBlockArt(): Promise<void> {
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
   if (a.rocks) rocks = await load(a.rocks);
   if (a.fence) {
-    const [oak, birch, cherry, gate] = await Promise.all([load(a.fence.pieces), load(a.fence.birch.pieces), load(a.fence.cherry.pieces), load(a.fence.gate)]);
-    fence = { pieces: new Map<BlockId, HTMLImageElement>([[Block.FENCE, oak], [Block.FENCE_BIRCH, birch], [Block.FENCE_CHERRY, cherry]]), gate };
+    const f = a.fence;
+    const [oak, birch, cherry, gOak, gBirch, gCherry] = await Promise.all([f.pieces, f.birch.pieces, f.cherry.pieces, f.gate, f.birch.gate, f.cherry.gate].map(load));
+    fence = {
+      pieces: new Map<BlockId, HTMLImageElement>([[Block.FENCE, oak], [Block.FENCE_BIRCH, birch], [Block.FENCE_CHERRY, cherry]]),
+      gates: new Map<BlockId, HTMLImageElement>([[Block.FENCE, gOak], [Block.FENCE_BIRCH, gBirch], [Block.FENCE_CHERRY, gCherry]]),
+    };
   }
   if (a.trees) {
     const [oak, apple, appleBare, cherry, birch, cactus] = await Promise.all([load(a.trees.oak), load(a.trees.apple), load(a.trees.appleBare), load(a.trees.cherry), load(a.trees.birch), load(a.trees.cactus)]);
@@ -159,7 +163,7 @@ export function getRockArt(): HTMLImageElement | null {
 }
 
 /** Peças da cerca e do portão (null fora do mundo principal). */
-export function getFenceArt(): { pieces: Map<BlockId, HTMLImageElement>; gate: HTMLImageElement } | null {
+export function getFenceArt(): { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement> } | null {
   return fence;
 }
 

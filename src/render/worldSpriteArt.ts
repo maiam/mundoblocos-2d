@@ -52,7 +52,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     if (id === Block.AIR) return null;
     const def = blockDef(id);
     if (def.shape === 'cube' || def.shape === 'wall' || def.shape === 'wall-door') return null;
-    if (isGate(id) && textures.gateFrames.length) return null; // porteira animada: `DoorSprites` (instância própria)
+    if (isGate(id) && textures.gateFrames.size) return null; // porteira animada: `DoorSprites` (instância própria)
     if (isDoor(id)) return null; // portas têm render próprio, com animação (`DoorSprites`, M3.4)
     if (isFence(id)) return fence(id, x, y);
     const vars = textures.variants.get(id);
