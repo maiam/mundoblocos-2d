@@ -82,10 +82,6 @@ export function materialsV2InWorld(): boolean {
   return enabled && !!atlas;
 }
 
-export function materialsV2Ready(): boolean {
-  return !!atlas && !!manifest;
-}
-
 type Ctx = CanvasRenderingContext2D;
 
 function col(name: string): number {
@@ -140,88 +136,6 @@ export function v2Faces(id: BlockId, T: number, front: number, texRes: number): 
       paintOverlay(ctx, b, T, front);
     },
   };
-}
-
-/**
- * Faces de um cubo V2 dentro de uma massa (pilha/platô): frente do nível `level` e franja só se `top` (nível mais alto
- * da célula). Mesma forma de `v2Faces`, usada por `textures.cubeSpriteV2`.
- */
-export function v2LevelFaces(id: BlockId, level: number, isTop: boolean, T: number, front: number, texRes: number): { top: (ctx: Ctx) => void; front: (ctx: Ctx) => void } | null {
-  const b = V2_BLOCKS[id];
-  if (!b || !manifest || col(b.top) < 0 || col(b.front) < 0) return null;
-  return {
-    top: (ctx) => {
-      if (isTop) {
-        paint(ctx, b.top, 'top', 0, 0, T, T);
-        return;
-      }
-      // Nível coberto pelo de cima: o topo não aparece, mas a borda do de cima é meio transparente no arredondamento e
-      // deixaria ver uma linha dele. Em vez do topo, a parede continua para cima (fatias seguintes da frente).
-      for (let k = 1; k * front < T + front; k++) paintFront(ctx, b.front, level + k, T - k * front, T, front, front * texRes);
-      ctx.fillStyle = FRONT_SHADE;
-      ctx.fillRect(0, 0, T, T);
-    },
-    front: (ctx) => {
-      paintFront(ctx, b.front, level, T, T, front, front * texRes);
-      if (isTop) paintOverlay(ctx, b, T, front);
-    },
-  };
-}
-
-// ---------------------------------------------------------------- massa contínua (sem riscos entre cubos)
-
-/**
- * O que o motor sabe do mapa para decidir os contornos de um cubo V2 (só leitura; o `Renderer` monta a partir do
- * `World`, a cena `?materiais=1` a partir do próprio layout):
- * - `height(x, y)`: quantos cubos empilhados há na célula (só cubos, 0..MAX_STACK);
- * - `v2(x, y, level)`: o cubo desse nível é de um bloco V2?
- */
-export interface CubeView {
-  height(x: number, y: number): number;
-  v2(x: number, y: number, level: number): boolean;
-}
-
-/**
- * Onde o cubo tem contorno. Regra (ADR 0023): o contorno é da **silhueta da massa**, não de cada cubo — cubos V2 vizinhos,
- * de qualquer material, formam uma superfície só: sem risco entre eles, nem entre níveis empilhados.
- * - `top`: é o cubo mais alto da célula (só ele mostra o topo e a franja);
- * - `front`: a frente aparece (a célula ao sul não cobre este nível);
- * - `n`, `wt`, `et`: bordas do topo (norte, oeste, leste) que dão para fora do plano;
- * - `wf`, `ef`: bordas laterais da frente que dão para fora; `base`: pé da pilha no chão.
- */
-export interface CubeEdges {
-  top: boolean;
-  front: boolean;
-  n: boolean;
-  wt: boolean;
-  et: boolean;
-  wf: boolean;
-  ef: boolean;
-  base: boolean;
-}
-
-export function cubeEdges(view: CubeView, x: number, y: number, level: number): CubeEdges {
-  const top = view.height(x, y) === level + 1;
-  const front = view.height(x, y + 1) <= level; // a célula ao sul cobriria a frente com o topo dela
-  // Mesmo plano de topo: vizinho V2 cujo cubo mais alto está neste mesmo nível.
-  const samePlane = (nx: number, ny: number) => view.height(nx, ny) === level + 1 && view.v2(nx, ny, level);
-  // Frente contínua ao lado: vizinho V2 com este nível, também com a frente à mostra.
-  const sameFront = (nx: number) => view.v2(nx, y, level) && view.height(nx, y) > level && view.height(nx, y + 1) <= level;
-  return {
-    top,
-    front,
-    n: top && !samePlane(x, y - 1),
-    wt: top && !samePlane(x - 1, y),
-    et: top && !samePlane(x + 1, y),
-    wf: front && !sameFront(x - 1),
-    ef: front && !sameFront(x + 1),
-    base: front && level === 0,
-  };
-}
-
-/** Chave numérica das bordas (cache de sprites). */
-export function edgesKey(e: CubeEdges): number {
-  return (e.top ? 1 : 0) | (e.front ? 2 : 0) | (e.n ? 4 : 0) | (e.wt ? 8 : 0) | (e.et ? 16 : 0) | (e.wf ? 32 : 0) | (e.ef ? 64 : 0) | (e.base ? 128 : 0);
 }
 
 /** Topo contínuo do chão (só o topo; chão plano não desenha frente — contrato § 6). */

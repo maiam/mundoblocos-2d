@@ -3,7 +3,7 @@ import type { RendererStats } from '../render/rendererContract';
 /**
  * Medição de desempenho para o piloto do Mundo em 2.5D (ADR 0031, M0/M5): `?fps=1` mostra um painel pequeno com FPS, tempo de
  * quadro, o que a GPU está desenhando e a memória do JS, e um toque nele copia um relatório (JSON) para colar na conversa — ou, sem permissão de área de transferência (HTTP na rede local), mostra o JSON numa caixa para copiar à mão.
- * Disponível em qualquer build (a virada do Mundo para o 3D, v0.93.47, tirou a trava de dev/piloto); funciona também no 2D (sem contadores da GPU), para comparar.
+ * Disponível em qualquer build (a virada do Mundo para o 3D, v0.93.47, tirou a trava de dev/piloto);
  */
 
 /** Intervalo entre quadros acima disto = pausa do navegador (aba escondida), não um quadro lento. */
@@ -82,7 +82,6 @@ export function drawStats(samples: ArrayLike<number>, count: number): { avg: num
 }
 
 export interface PerfReport {
-  renderer: '3d' | '2d';
   url: string;
   userAgent: string;
   devicePixelRatio: number;
@@ -109,8 +108,8 @@ export const WARMUP_S = 8;
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Linha de texto do painel. */
-export function perfLine(mode: '3d' | '2d', s: PerfSnapshot, gpu: RendererStats | null, heapMB: number | null, jsMs: number | null = null): string {
-  const parts = [mode.toUpperCase(), `${fmt(s.fps)} fps`, `${fmt(s.avgMs, 1)} ms (pior ${fmt(s.worstMs)})`];
+export function perfLine(s: PerfSnapshot, gpu: RendererStats | null, heapMB: number | null, jsMs: number | null = null): string {
+  const parts = ['3D', `${fmt(s.fps)} fps`, `${fmt(s.avgMs, 1)} ms (pior ${fmt(s.worstMs)})`];
   if (jsMs !== null) parts.push(`JS ${fmt(jsMs, 1)} ms`);
   if (gpu) parts.push(`${gpu.calls} calls`, `${fmt(gpu.triangles / 1000, 1)}k tri`, `${gpu.textures} tex`, `${gpu.geometries} geo`);
   if (heapMB !== null) parts.push(`${fmt(heapMB)} MB`);
@@ -118,7 +117,7 @@ export function perfLine(mode: '3d' | '2d', s: PerfSnapshot, gpu: RendererStats 
   return parts.join(' · ');
 }
 
-/** Cria o painel e o laço de medição. `getStats` devolve os contadores da GPU (null no 2D). */
+/** Cria o painel e o laço de medição. `getStats` devolve os contadores da GPU (null até o renderer existir). */
 export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () => { samples: ArrayLike<number>; count: number }): () => void {
   const meter = new PerfMeter();
   const t0 = performance.now();
@@ -130,7 +129,6 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
   } as Partial<CSSStyleDeclaration>);
   box.title = 'Toque para copiar o relatório';
   document.body.appendChild(box);
-  const mode = (): '3d' | '2d' => (getStats() ? '3d' : '2d');
   const heap = (): number | null => {
     const m = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
     return m ? m.usedJSHeapSize / 1048576 : null;
@@ -141,7 +139,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
     const st = meter.session(t0 + WARMUP_S * 1000);
     const d = draw();
     return {
-      renderer: mode(), url: location.href, userAgent: navigator.userAgent, devicePixelRatio: window.devicePixelRatio,
+      url: location.href, userAgent: navigator.userAgent, devicePixelRatio: window.devicePixelRatio,
       viewport: [window.innerWidth, window.innerHeight], seconds: Math.round((performance.now() - t0) / 1000),
       pauses: { count: meter.pauses, seconds: Math.round(meter.pausedMs / 1000) },
       frames: s.frames, avgFps: round1(s.avgFps), lowFps: round1(s.lowFps), worstMs: Math.round(s.worstMs),
@@ -161,7 +159,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
   const timer = window.setInterval(() => {
     if (sheet || performance.now() < holdUntil) return;
     const d = draw();
-    box.textContent = perfLine(mode(), meter.snapshot(), getStats(), heap(), d && d.n ? d.avg : null);
+    box.textContent = perfLine(meter.snapshot(), getStats(), heap(), d && d.n ? d.avg : null);
   }, 500);
   /** Plano B quando o navegador não libera a área de transferência (HTTP na rede local): o relatório numa caixa de texto selecionada. */
   const showReport = (text: string): void => {

@@ -15,6 +15,7 @@ import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
 import type { RendererFactory } from './render/rendererContract';
+import { showUnsupported } from './game/unsupported';
 import { fetchRoomCounts, GAME_SITE, onlineAvailable, SocketTransport } from './net/socket';
 
 let canvas = document.getElementById('world') as HTMLCanvasElement;
@@ -28,15 +29,6 @@ function freshCanvas(): HTMLCanvasElement {
   canvas.replaceWith(next);
   canvas = next;
   return next;
-}
-/** Sem WebGL (ou sem o módulo do renderer) não há o que mostrar: o Canvas 2D foi removido (v0.93.105). Avisa na tela, sem janela do navegador. */
-function showUnsupported(webgl: boolean): void {
-  const box = document.createElement('div');
-  box.setAttribute('style', 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#120f2c;color:#f4efe0;font:600 16px/1.5 Nunito,system-ui,sans-serif;text-align:center;z-index:99');
-  box.textContent = webgl
-    ? 'Não foi possível carregar o gráfico do Orvalis. Recarregue a página; se continuar, tente outro navegador.'
-    : 'O Orvalis precisa de WebGL, e este aparelho ou navegador não o oferece. Ative a aceleração gráfica nas configurações do navegador ou tente outro.';
-  document.body.appendChild(box);
 }
 const screenMode = new ScreenMode();
 // Mundo: fixo no build (VITE_WORLD, artefato próprio) → subdomínio → ?mundo= → principal.
@@ -210,9 +202,7 @@ const query = new URLSearchParams(window.location.search);
 const param = query.get('seed');
 // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
 const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal' || gridProto;
-// Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para
-// comparar) e `?materiais=1` abre a cena de comparação (desenvolvimento).
-const materialsScene = import.meta.env.DEV && query.has('materiais');
+// Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para comparar).
 const blocksV2 = blocksV2FromSearch(window.location.search);
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
 void loadArtPack(profile.id)
@@ -238,13 +228,8 @@ void loadArtPack(profile.id)
         console.error('Renderer 3D indisponível', error);
       }
     }
-    if (!threeRendererFactory) { showUnsupported(webgl); return; }
+    if (!threeRendererFactory) { showUnsupported(webgl ? 'load-failed' : 'no-webgl'); return; }
 
-    // Só em desenvolvimento (ADR 0023): `?materiais=1` põe o atlas legado e os materiais V2 lado a lado.
-    if (import.meta.env.DEV && materialsScene) {
-      void import('./dev/materialsScene').then((m) => m.showMaterialsScene(canvas));
-      return;
-    }
     if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
     else showTitle();
   });

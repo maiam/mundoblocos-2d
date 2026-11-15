@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.107 — sobras do Canvas 2D e aviso melhor para aparelhos sem WebGL (15/11/2026)
+- **Pedido do dono do produto:** "segue com as sobras e um aviso melhor pro WebGL" (o muro e o portão da vila ficam como estão: são estacas; sons ficam para o futuro).
+- **Sobras removidas:** a cena de desenvolvimento `?materiais=1` (`dev/materialsScene.ts`) e o que só ela usava do motor 2D — `textures.qaMaterial`, `cubeSpriteV2`, `drawCubeParts`, `shapePath`, e em `materialsV2.ts` `cubeEdges`, `CubeView`, `CubeEdges`, `edgesKey`, `v2LevelFaces`, `materialsV2Ready` (com os testes de `cubeEdges`). O painel `?fps=1` perdeu o rótulo "2D": `perfLine(snap, gpu, heap, js)` mostra sempre "3D" e o relatório não tem mais o campo `renderer`. Revisado: o resto do `textures.ts` (`objects`, `variants`, `stackDraw`, `doorFrames`, `gateFrames`, transições…) é usado pelo 3D e pelo `ChunkRenderer` e fica.
+- **Aviso melhor** (`game/unsupported.ts`): uma camada com título, o motivo provável, **dicas por navegador** (Chrome/Edge, Firefox, iOS, outro; atualizar driver; abrir no navegador do aparelho se estiver dentro de um app) e dois botões — **Tentar de novo** (recarrega) e **Copiar detalhes** (causa + navegador + endereço). Duas causas: `no-webgl` (aparelho sem WebGL ou desligado) e `load-failed` (o módulo do renderer não carregou: conexão; avisa que o progresso está salvo). Sem `alert`/`confirm` (o iframe do Artifact os bloqueia). Textos puros e testados (`unsupportedInfo`, `unsupportedDetails`).
+- Só cliente; sem mapa, save ou protocolo (servidor não muda). `tsc` e testes verdes; conferido no navegador (sem WebGL e com o módulo bloqueado).
+
 ## Orvalis v0.93.106 — 3 de cada animal na vila: cavalos, galinhas, capivaras, ovelhas e vacas (15/11/2026)
 - **Pedido do dono do produto:** "cavalos, galinhas, capivaras, ovelhas e vacas, 3 de cada nascendo na vila. No mundo e no servidor".
 - **Regra** (`game/entities.ts`): `VILLAGE_ANIMALS_EACH = 3` e uma faixa nova de gramado para os **cavalos** no sudeste da vila (30–44 × 40–42, junto ao muro); antes eram ovelhas 4, vacas 2, galinhas 4, capivaras 3 e 1 cavalo no campo diante do portão da cidade (que deixa de nascer quando há vila). Sem vila (grade 1), nada muda.

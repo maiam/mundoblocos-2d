@@ -33,12 +33,12 @@ describe('PerfMeter (medidor do painel ?fps=1)', () => {
     expect(s.worstMs).toBe(100);
   });
 
-  it('linha do painel: 3D com contadores da GPU e memória; 2D só com tempos; contexto perdido avisa', () => {
+  it('linha do painel: contadores da GPU e memória quando há; só tempos sem eles; contexto perdido avisa', () => {
     const snap = { fps: 58.4, avgMs: 17.1, worstMs: 24 };
     const gpu = { calls: 169, triangles: 5512, geometries: 42, textures: 49, contextLost: false };
-    expect(perfLine('3d', snap, gpu, 64.2)).toBe('3D · 58 fps · 17.1 ms (pior 24) · 169 calls · 5.5k tri · 49 tex · 42 geo · 64 MB');
-    expect(perfLine('2d', snap, null, null)).toBe('2D · 58 fps · 17.1 ms (pior 24)');
-    expect(perfLine('3d', snap, { ...gpu, contextLost: true }, null)).toContain('CONTEXTO PERDIDO');
+    expect(perfLine(snap, gpu, 64.2)).toBe('3D · 58 fps · 17.1 ms (pior 24) · 169 calls · 5.5k tri · 49 tex · 42 geo · 64 MB');
+    expect(perfLine(snap, null, null)).toBe('3D · 58 fps · 17.1 ms (pior 24)');
+    expect(perfLine(snap, { ...gpu, contextLost: true }, null)).toContain('CONTEXTO PERDIDO');
   });
 
   it('regime estável: ignora a carga inicial e conta a fração de quadros lentos (> 33 ms e > 50 ms)', () => {
@@ -68,7 +68,7 @@ describe('PerfMeter (medidor do painel ?fps=1)', () => {
     expect(s.p95).toBe(10);
     expect(s.max).toBe(10);
     expect(drawStats(ring, 1000).n).toBe(100);                        // contagem maior que o anel: usa só o que cabe
-    expect(perfLine('3d', { fps: 60, avgMs: 16.7, worstMs: 20 }, null, null, 2.4)).toContain('JS 2.4 ms');
+    expect(perfLine({ fps: 60, avgMs: 16.7, worstMs: 20 }, null, null, 2.4)).toContain('JS 2.4 ms');
   });
 
   it('pausa do navegador (aba em segundo plano) não conta como quadro lento: sai das médias e vira "pausas"', () => {
