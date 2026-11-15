@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis — plano de inteligência dos NPCs (só documentação, 15/11/2026)
+- **ADR 0034** (`docs/adr/0034-inteligencia-dos-npcs.md`): os 4 níveis (rotina, reativo, memória, objetivos), técnica (Utility AI + módulo puro `npcBrain`), piloto no Bento, "dormir" pela porta da casa e mais moradores por recolor no shader + sorteio por seed — decisões do dono do produto. **Nada de código ainda;** `DECISIONS`, `NEXT_STEPS` e `domains/npc.md` apontam para ele.
+
 ## Orvalis v0.93.110 — Floricultura na cidade, com a florista Rosendo e as 15 Flores Fofas à venda (15/11/2026)
 - **Pedido do dono do produto:** incluir a floricultura (imagens de fora e de dentro), numa área do mapa da cidade ("pode retirar casas marrons se precisar"), com **um NPC fixo** que vende as **15 flores do jogo**, que passam a ser **ícones da hotbar** e podem ser **colocadas no mapa** pelo jogador — **sem efeito real, só visual**.
 - **Construção** (`world/town.ts`, `world/blocks.ts`): `Block.FLORIST` (130), lote 9 × 5 (como a Hospedaria), reservada **antes das ruas** com as outras obrigatórias, a oeste da Praça Central logo abaixo da Guilda (`place(FLORIST, W/2 − 28, MID + 6)`). As ruas e as casas se reorganizam em volta (a cidade é gerada com semente fixa, então segue igual em toda seed; **nenhuma casa marrom precisou sair à mão**: as casas são sorteadas depois e se encaixam no espaço que sobra). Arte `assets-src/town/florist.png` → `town-florist.webp` (`scripts/extract-town.py`, 9 células de fundação, 9,4 × 4,9 células de desenho).

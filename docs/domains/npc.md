@@ -20,6 +20,8 @@
 - **Golpe de espada**: a ovelha (adulta ou filhote) atingida some do mundo; par/namoro da outra é desfeito
   (`Entities.removeAnimal`). Animação de morte fica para quando houver arte.
 
+> **Plano de inteligência (ADR 0034, não implementado):** níveis 1–4 (rotina, reativo, memória, objetivos) sem LLM; piloto no Bento; mais moradores por recolor + sorteio. Ver `docs/adr/0034-inteligencia-dos-npcs.md`.
+
 ## Wanderer (`game/wanderer.ts`)
 - Passeio comum (parar ↔ andar numa direção sorteada, desacelerar no fim, voltar a casa além da `leash`). Ovelha,
   cavalo e morador estendem `Wanderer` (que estende `Walker`) e só mudam o ritmo (`WanderPace`) e a caixa.
