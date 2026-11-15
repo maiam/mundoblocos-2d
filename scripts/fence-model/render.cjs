@@ -19,7 +19,7 @@ const server = http.createServer((req, res) => {
   await new Promise((r) => server.listen(0, r));
   const port = server.address().port;
   const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const p = await b.newPage({ viewport: { width: 260, height: 320 } });
+  const p = await b.newPage({ viewport: { width: 260, height: 420 } });
   p.on('pageerror', (e) => console.log('ERRO', e.message));
   fs.mkdirSync(out, { recursive: true });
   for (const wood of ['carvalho', 'betula', 'cerejeira']) {
@@ -27,6 +27,11 @@ const server = http.createServer((req, res) => {
       await p.goto(`http://localhost:${port}/render.html?piece=${piece}&wood=${wood}`);
       await p.waitForFunction('window.done', null, { timeout: 30000 });
       await p.locator('#c').screenshot({ path: path.join(out, `${wood}-${piece}.png`), omitBackground: true });
+    }
+    for (const [i, angle] of [0, 22.5, 45, 67.5, 90].entries()) {
+      await p.goto(`http://localhost:${port}/render.html?piece=gate&wood=${wood}&angle=${angle}&yaw=90`);
+      await p.waitForFunction('window.done', null, { timeout: 30000 });
+      await p.locator('#c').screenshot({ path: path.join(out, `${wood}-gateS-${i}.png`), omitBackground: true });
     }
     for (const [i, angle] of [0, 22.5, 45, 67.5, 90].entries()) {
       await p.goto(`http://localhost:${port}/render.html?piece=gate&wood=${wood}&angle=${angle}`);

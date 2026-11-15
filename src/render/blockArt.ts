@@ -44,7 +44,7 @@ let rocks: HTMLImageElement | null = null;
 let flowers: HTMLImageElement | null = null;
 let fx: Record<FxKind, HTMLImageElement> | null = null;
 /** Cerca de tábuas: peças emendáveis e portão (fechado, aberto). */
-let fence: { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement> } | null = null;
+let fence: { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement>; gatesSide: Map<BlockId, HTMLImageElement> } | null = null;
 /** Cidade: imagens por nome (`town-<nome>`). */
 const townImages = new Map<string, HTMLImageElement>();
 
@@ -85,10 +85,11 @@ export async function loadBlockArt(): Promise<void> {
   }
   if (a.fence) {
     const f = a.fence;
-    const [oak, birch, cherry, gOak, gBirch, gCherry] = await Promise.all([f.pieces, f.birch.pieces, f.cherry.pieces, f.gate, f.birch.gate, f.cherry.gate].map(load));
+    const [oak, birch, cherry, gOak, gBirch, gCherry, sOak, sBirch, sCherry] = await Promise.all([f.pieces, f.birch.pieces, f.cherry.pieces, f.gate, f.birch.gate, f.cherry.gate, f.gateSide, f.birch.gateSide, f.cherry.gateSide].map(load));
     fence = {
       pieces: new Map<BlockId, HTMLImageElement>([[Block.FENCE, oak], [Block.FENCE_BIRCH, birch], [Block.FENCE_CHERRY, cherry]]),
       gates: new Map<BlockId, HTMLImageElement>([[Block.FENCE, gOak], [Block.FENCE_BIRCH, gBirch], [Block.FENCE_CHERRY, gCherry]]),
+      gatesSide: new Map<BlockId, HTMLImageElement>([[Block.FENCE, sOak], [Block.FENCE_BIRCH, sBirch], [Block.FENCE_CHERRY, sCherry]]),
     };
   }
   if (a.trees) {
@@ -182,7 +183,7 @@ export function getFlowerArt(): HTMLImageElement | null {
 }
 
 /** Peças da cerca e do portão (null fora do mundo principal). */
-export function getFenceArt(): { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement> } | null {
+export function getFenceArt(): { pieces: Map<BlockId, HTMLImageElement>; gates: Map<BlockId, HTMLImageElement>; gatesSide: Map<BlockId, HTMLImageElement> } | null {
   return fence;
 }
 

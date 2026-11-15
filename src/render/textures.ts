@@ -8,7 +8,7 @@ import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, ge
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
-import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, GATE_FRAME } from './fence';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, GATE_FRAME, GATE_SIDE_FRAME } from './fence';
 import { townSprites } from './townArt';
 
 /**
@@ -73,6 +73,8 @@ export interface BlockTextures {
   doorFrames: Sprite[];
   /** Porteira do jogador: 10 quadros (0..4 abrindo, 5..9 fechando); fechada = 0, aberta = 4. Vazio sem a arte. */
   gateFrames: Map<BlockId, Sprite[]>;
+  /** Idem, de LADO (cercas ao norte/sul; `gateIsSide`). */
+  gateFramesSide: Map<BlockId, Sprite[]>;
   /** Objetos com várias artes (montanhas, pedras): o render escolhe uma por célula (hash). */
   variants: Map<BlockId, Sprite[]>;
   /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
@@ -819,7 +821,8 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     if (url) icons.set(id, url);
   }
   const gateFrames = new Map<BlockId, Sprite[]>();
-  const fencePieces = fenceTextures(objects, icons, gateFrames);
+  const gateFramesSide = new Map<BlockId, Sprite[]>();
+  const fencePieces = fenceTextures(objects, icons, gateFrames, gateFramesSide);
   // Cerca de Estacas (v0.93.90): o ícone vem do pacote da vila (`village-stake-icon`).
   const stakeIcon = getTownImages().get('village-stake-icon')?.src;
   if (stakeIcon) icons.set(Block.FENCE_STAKE, stakeIcon);
@@ -851,14 +854,14 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, variants, stackDraw, fencePieces };
+  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, gateFramesSide, variants, stackDraw, fencePieces };
 }
 
 /**
  * Cerca e portão (`render/fence.ts`): as 3 peças viram canvases para o render cortar as metades; a cerca também
  * ganha um sprite (trecho horizontal) para o clique e o destaque. Portão: um sprite por estado.
  */
-function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, gateFrames: Map<BlockId, Sprite[]>): Map<BlockId, HTMLCanvasElement[]> {
+function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, gateFrames: Map<BlockId, Sprite[]>, gateFramesSide: Map<BlockId, Sprite[]>): Map<BlockId, HTMLCanvasElement[]> {
   const a = getFenceArt();
   const pack = art().fence;
   const out = new Map<BlockId, HTMLCanvasElement[]>();
@@ -900,6 +903,19 @@ function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string
       : fenceId === Block.FENCE_CHERRY ? [Block.FENCE_GATE_CHERRY, Block.FENCE_GATE_CHERRY_OPEN] : [Block.FENCE_GATE, Block.FENCE_GATE_OPEN];
     objects.set(closed, poses[0]);
     objects.set(open, poses[poses.length - 1]);
+  }
+  // De lado (v0.93.104): quadro mais alto, mesma âncora.
+  const sw = GATE_SIDE_FRAME.w * k, sh = GATE_SIDE_FRAME.h * k, soy = T / 2 - GATE_SIDE_FRAME.postBase * k;
+  for (const [fenceId, img] of a.gatesSide) {
+    const poses: Sprite[] = [];
+    for (let i = 0; i < GATE_SIDE_FRAME.poses; i++) {
+      const c = document.createElement('canvas');
+      c.width = GATE_SIDE_FRAME.w;
+      c.height = GATE_SIDE_FRAME.h;
+      c.getContext('2d')!.drawImage(img, i * GATE_SIDE_FRAME.w, 0, GATE_SIDE_FRAME.w, GATE_SIDE_FRAME.h, 0, 0, GATE_SIDE_FRAME.w, GATE_SIDE_FRAME.h);
+      poses.push({ canvas: c, ox: (T - sw) / 2, oy: soy, w: sw, h: sh, hit: { x: 0, y: -T * 0.9, w: T, h: T * 2.4 } });
+    }
+    gateFramesSide.set(fenceId, [...poses, ...[...poses].reverse()]);
   }
   icons.set(Block.FENCE_GATE, pack.gateIcon);
   icons.set(Block.FENCE_GATE_BIRCH, pack.birch.gateIcon);
