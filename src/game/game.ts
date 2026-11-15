@@ -36,7 +36,7 @@ import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
 import { phaseAt, scheduleOf, shopOpen } from './npcBrain/schedule';
-import { markOf, phaseOf, type QuestDef, questOf, QUESTS } from './npcBrain/quests';
+import { haveOf, markOf, phaseOf, type QuestDef, questOf, QUESTS, takeOf } from './npcBrain/quests';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { HUNGER, weaponPower } from '../world/progression';
 import type { MonsterKind } from '../world/dungeon';
@@ -838,7 +838,7 @@ export class Game {
 
   /** Fala de missão: oferece (com escolhas), cobra o andamento ou recebe a entrega. Devolve false se não há o que dizer (missão concluída). */
   private talkQuest(v: Villager, q: QuestDef): boolean {
-    const have = this.inventory.count(q.item);
+    const have = haveOf(q, (id) => this.inventory.count(id));
     const phase = phaseOf(this.entities.quests, q, have);
     const base = { npc: v.npc, name: v.name };
     const open = (conv: Conversation): void => { this.dialogue.open(conv, v, () => v.release()); v.conversation(); };
@@ -854,7 +854,8 @@ export class Game {
       open({ ...base, text: q.progress(have) });
     } else if (phase === 'ready') {
       if (!canCarry(this.inventory, this.hotbar, q.reward.item) && this.inventory.count(q.reward.item) === 0) { this.hud.toast('Sem espaço na bolsa'); return true; }
-      this.inventory.take(q.item, q.count);
+      if (!takeOf(q, (id) => this.inventory.count(id), (id, n) => this.inventory.take(id, n))) return true;
+      this.hotbar.prune(this.inventory); // as pilhas de flor que acabaram saem da grade
       this.inventory.add(q.reward.item, q.reward.count);
       this.hotbar.autoPlace(q.reward.item);
       this.hotbar.prune(this.inventory);
@@ -884,7 +885,7 @@ export class Game {
   private updateQuests(dt: number): void {
     const marks: Partial<Record<string, ReturnType<typeof markOf>>> = {};
     for (const q of QUESTS) {
-      const phase = phaseOf(this.entities.quests, q, this.inventory.count(q.item));
+      const phase = phaseOf(this.entities.quests, q, haveOf(q, (id) => this.inventory.count(id)));
       const m = markOf(phase);
       if (m) marks[q.giver] = m;
       const giver = this.entities.villagers.find((x) => x.npc === q.giver && !x.resident);

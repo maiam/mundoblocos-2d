@@ -7,7 +7,7 @@ import { Entities } from '../entities';
 import { Player } from '../player';
 import { applySave, captureSave, migrate } from '../save';
 import { Inventory } from '../inventory';
-import { HEALING_HERBS, markOf, phaseOf, questOf, sanitizeLog } from './quests';
+import { HEALING_HERBS, haveOf, markOf, phaseOf, questOf, sanitizeLog, takeOf } from './quests';
 
 describe('missão Ervas de cura (ADR 0034)', () => {
   it('fases e sinal sobre a cabeça: ! → ? → ? dourado → nada', () => {
@@ -15,7 +15,8 @@ describe('missão Ervas de cura (ADR 0034)', () => {
     expect(q.giver).toBe('silvano');
     expect(questOf('silvano')).toBe(q);
     expect(questOf('dante')).toBeNull();
-    expect(q.item).toBe(blockStack(Block.FLOWER));
+    expect(q.items).toHaveLength(16);
+    expect(q.items).toContain(blockStack(Block.FLOWER_ROSE));
     expect(phaseOf({}, q, 99)).toBe('available'); // sem aceitar, as flores não contam
     expect(markOf('available')).toBe('offer');
     expect(phaseOf({ 'ervas-de-cura': 'active' }, q, 5)).toBe('active');
@@ -41,6 +42,37 @@ describe('missão Ervas de cura (ADR 0034)', () => {
     expect(e2.quests).toEqual({ 'ervas-de-cura': 'active' });
     const { quests: _q, ...old } = d;
     expect(migrate({ ...old, v: 18 })?.quests).toEqual({});
+  });
+});
+
+describe('flores do campo (v0.93.118)', () => {
+  it('a flor do campo solta exatamente a espécie que o mundo desenha ali; seed e célula decidem', async () => {
+    const { FLOWER_BLOCKS, wildFlowerIndex } = await import('../../world/blocks');
+    const { breakDrops } = await import('../../world/items');
+    const seen = new Set<number>();
+    for (let x = 0; x < 80; x++) for (let y = 0; y < 5; y++) {
+      const i = wildFlowerIndex(42, x, y);
+      expect(i).toBeGreaterThanOrEqual(0);
+      expect(i).toBeLessThan(15);
+      seen.add(i);
+      expect(breakDrops(null, Block.FLOWER, true, Math.random, { seed: 42, x, y })).toEqual([{ item: blockStack(FLOWER_BLOCKS[i]), count: 1 }]);
+    }
+    expect(seen.size).toBe(15); // todas as 15 aparecem
+    expect(breakDrops(null, Block.FLOWER, false, Math.random, { seed: 42, x: 1, y: 1 })).toEqual([]); // mundo sem coleta
+  });
+
+  it('a missão aceita flores de qualquer espécie (e a Flor genérica antiga) e tira exatamente 6', () => {
+    const inv = new Inventory();
+    const q = HEALING_HERBS;
+    const count = (id: string) => inv.count(id as never);
+    inv.add(blockStack(Block.FLOWER_ROSE), 2);
+    inv.add(blockStack(Block.FLOWER_MOON), 3);
+    expect(haveOf(q, count)).toBe(5);
+    expect(takeOf(q, count, (id, n) => inv.take(id as never, n))).toBe(false); // faltam: não tira nada
+    expect(haveOf(q, count)).toBe(5);
+    inv.add(blockStack(Block.FLOWER), 2); // a Flor da v0.93.116
+    expect(takeOf(q, count, (id, n) => inv.take(id as never, n))).toBe(true);
+    expect(haveOf(q, count)).toBe(1);
   });
 });
 

@@ -1,3 +1,4 @@
+import { hash2 } from './random';
 /**
  * Registro de blocos — fonte de verdade das PROPRIEDADES DE DOMÍNIO de cada bloco.
  * A aparência vive em `src/render/textures.ts`, indexada pelo mesmo id.
@@ -327,6 +328,14 @@ const FLOWER_NAMES: ReadonlyArray<readonly [BlockId, string]> = [
 
 /** As 15 Flores Fofas, na ordem da lista (índice = quadro de `flowers.webp`). */
 export const FLOWER_BLOCKS: readonly BlockId[] = FLOWER_NAMES.map(([id]) => id);
+
+/**
+ * Qual das 15 Flores Fofas a flor do campo (`Block.FLOWER`) desta célula é: o desenho (`worldSpriteArt`) e o que ela solta ao ser quebrada vêm da MESMA conta,
+ * então quem quebra uma flor leva exatamente a que viu, e recolocada ela volta igual. Pura (seed + célula).
+ */
+export function wildFlowerIndex(seed: number, x: number, y: number): number {
+  return Math.floor(hash2(seed, x * 7 + 3, y * 13 - 1) * FLOWER_BLOCKS.length);
+}
 
 /** O bloco é uma das 15 Flores Fofas colocáveis? */
 export function isFancyFlower(id: number): boolean {

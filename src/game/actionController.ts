@@ -543,7 +543,7 @@ export class ActionController {
       if (hadTent && !this.world.tent) this.ctx.notify('Ponto de renascimento voltou ao início');
       // O que cai no chão para ser coletado: colheita (pá e picareta destroem plantas sem drop) e, com coleta,
       // o próprio material (árvore dá toras).
-      if (broken !== null && !this.ctx.sharedLoot) this.drops.spawn(t.x + 0.5, t.y + 0.7, breakDrops(this.tool, broken, this.ctx.collectBlocks));
+      if (broken !== null && !this.ctx.sharedLoot) this.drops.spawn(t.x + 0.5, t.y + 0.7, breakDrops(this.tool, broken, this.ctx.collectBlocks, Math.random, { seed: this.world.seed, x: t.x, y: t.y }));
       this.entities.settleAll(this.world);
       h.target = null;
       h.progress = 0;
