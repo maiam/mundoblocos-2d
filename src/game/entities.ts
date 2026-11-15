@@ -10,6 +10,7 @@ import { Sheep } from './sheep';
 import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
 import type { MemoryBook } from './npcBrain/memory';
+import type { QuestLog, QuestMark } from './npcBrain/quests';
 import { type Look, makeResidents, type ResidentDef } from './residents';
 import { FLORIST_KEEPER, MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
@@ -67,6 +68,8 @@ export interface Actor {
   dying?: number;
   /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
   label?: string;
+  /** Sinal de missão sobre a cabeça (ADR 0034): ! oferece, ? em andamento, ? dourado = pode entregar. */
+  mark?: QuestMark;
   /** Troca de cores do desenho (morador sorteado, ADR 0034): aplicada no shader do billboard. */
   look?: Look;
   /** NPC saindo/entrando pela porta dos fundos (nível 1 da IA dos NPCs): 0 = à vista … 1 = sumiu; o desenho desbota. */
@@ -177,6 +180,10 @@ export class Entities {
   readonly villagers: Villager[] = [];
   /** O que os moradores lembram da jogadora (ADR 0034, nível 3): vai no salvamento do jogador; a sala não guarda. */
   memory: MemoryBook = {};
+  /** Missões (ADR 0034): estado salvo no jogador; o `Game` o muda ao aceitar/entregar. */
+  quests: QuestLog = {};
+  /** Sinal sobre a cabeça dos NPCs com missão (o `Game` o recalcula todo quadro a partir do estado e do inventário). */
+  marks: Partial<Record<NpcId, QuestMark>> = {};
   /** Hora do mundo (0..1) para a agenda dos moradores (o `Game` a atualiza todo quadro; -1 = sem relógio: sem rotina, como na sala). */
   time = -1;
   /** Monstros da dungeon (presos no interior dela). */
@@ -576,7 +583,7 @@ export class Entities {
 
   update(dt: number, world: World): void {
     for (const v of this.villagers) {
-      v.update(dt, world, this.blocker, this.time);
+      v.update(dt, world, this.blocker, this.time, this.player ?? undefined);
       // Nível 2 (ADR 0034): parado e com a jogadora por perto, o morador se vira para ela.
       const p = this.player;
       if (p && !v.hidden && !v.moving && !v.talking && Math.hypot(p.x - v.x, p.y - v.y) <= NOTICE_RANGE) v.faceTo(p.x, p.y);
@@ -995,6 +1002,7 @@ export class Entities {
       if (v.hidden) continue;
       out.push({
         kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime, fade: v.fade > 0 ? v.fade : undefined, look: v.look ?? undefined,
+        mark: v.resident ? undefined : this.marks[v.npc],
       });
     }
     for (const m of this.monsters) {

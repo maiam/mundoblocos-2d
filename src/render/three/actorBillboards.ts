@@ -316,7 +316,7 @@ export class ActorBillboards {
     const { ctx, side } = slot;
     if (!ctx) return;
     // Só repinta (e reenvia a textura) quando o desenho mudou: a animação anda a poucos quadros por segundo, o render a 60.
-    const key = `${a.kind}|${side}|${a.facing}|${sheet.visualKey(a, elapsed)}|${a.inLove ? 1 : 0}`;
+    const key = `${a.kind}|${side}|${a.facing}|${sheet.visualKey(a, elapsed)}|${a.inLove ? 1 : 0}|${a.mark ? a.mark + Math.floor(elapsed * 8) % 8 : ''}`;
     if (key === slot.key) { this.skipped++; return; }
     slot.key = key;
     this.painted++;
@@ -335,6 +335,21 @@ export class ActorBillboards {
       ctx.strokeText(a.label, fx, Math.max(12 * z, top));
       ctx.fillStyle = '#ffffff';
       ctx.fillText(a.label, fx, Math.max(12 * z, top));
+    }
+    if (a.mark) { // sinal de missão (ADR 0034): ! oferece, ? em andamento (azulado) ou pronta (dourado), saltitando de leve
+      const bounce = Math.abs(Math.sin(elapsed * 4)) * 3 * z;
+      const size = 24 * z;
+      ctx.font = `900 ${Math.round(size)}px Nunito, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 4 * z;
+      ctx.strokeStyle = 'rgba(40, 24, 8, 0.95)';
+      const y = Math.max(size + 2 * z, top - 2 * z) - bounce;
+      const glyph = a.mark === 'offer' ? '!' : '?';
+      ctx.strokeText(glyph, fx, y);
+      ctx.fillStyle = a.mark === 'progress' ? '#b8c6ea' : '#ffd34d';
+      ctx.fillText(glyph, fx, y);
     }
     if (a.inLove) { // coração flutuando enquanto está apaixonada
       const bob = Math.sin(elapsed * 3 + a.x) * 3 * z;

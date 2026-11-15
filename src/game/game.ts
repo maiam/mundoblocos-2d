@@ -2,7 +2,7 @@ import { CHUNK_SIZE, CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FR
 import { CHARACTER_H } from '../render/character';
 import type { GameRenderer, RendererFactory } from '../render/rendererContract';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
-import { blockDef, type BlockId } from '../world/blocks';
+import { Block, blockDef, type BlockId } from '../world/blocks';
 import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { World } from '../world/world';
@@ -31,10 +31,11 @@ import { ActionButton, HAND_ICON } from './actionButton';
 import { DialogueBox } from './dialogue';
 import { ShopWindow, type ShopStyle } from './shopWindow';
 import { buyOffer, CURRENCY, FLORIST_STOCK, MARKET_STOCK, type BuyResult, type ShopOffer } from '../world/shop';
-import type { Villager } from './villager';
+import type { Conversation, Villager } from './villager';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
+import { markOf, phaseOf, type QuestDef, questOf, QUESTS } from './npcBrain/quests';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { HUNGER, weaponPower } from '../world/progression';
 import type { MonsterKind } from '../world/dungeon';
@@ -817,10 +818,85 @@ export class Game {
     v.faceTo(this.player.x, this.player.y);
     if (v.role === 'merchant' && !v.shopIsOpen) { this.dialogue.open(v.closedConversation(), v, () => v.release()); return; } // loja fechada (rotina do Bento)
     if (v.role === 'merchant' || v.role === 'florist') { this.openShop(v); return; } // mercador e florista não conversam: abrem a loja (v0.93.57, v0.93.110)
+    const quest = v.resident ? null : questOf(v.npc);
+    if (quest && this.talkQuest(v, quest)) return;
     const tier = tierOf(this.entities.memory[v.memoryKey]);
     this.dialogue.open(v.conversation(tier), v, () => v.release());
     noteTalk(this.entities.memory, v.memoryKey); // lembra desta conversa (ADR 0034, nível 3)
   }
+
+  /** Fala de missão: oferece (com escolhas), cobra o andamento ou recebe a entrega. Devolve false se não há o que dizer (missão concluída). */
+  private talkQuest(v: Villager, q: QuestDef): boolean {
+    const have = this.inventory.count(q.item);
+    const phase = phaseOf(this.entities.quests, q, have);
+    const base = { npc: v.npc, name: v.name };
+    const open = (conv: Conversation): void => { this.dialogue.open(conv, v, () => v.release()); v.conversation(); };
+    if (phase === 'available') {
+      open({
+        ...base, text: q.offer, prompt: q.prompt,
+        choices: [
+          { label: q.accept, run: () => this.acceptQuest(v, q) },
+          { label: q.decline, run: () => { /* fica para depois */ } },
+        ],
+      });
+    } else if (phase === 'active') {
+      open({ ...base, text: q.progress(have) });
+    } else if (phase === 'ready') {
+      if (!canCarry(this.inventory, this.hotbar, q.reward.item) && this.inventory.count(q.reward.item) === 0) { this.hud.toast('Sem espaço na bolsa'); return true; }
+      this.inventory.take(q.item, q.count);
+      this.inventory.add(q.reward.item, q.reward.count);
+      this.hotbar.autoPlace(q.reward.item);
+      this.hotbar.prune(this.inventory);
+      this.refreshSelection();
+      this.entities.quests[q.id] = 'done';
+      v.setCompanion(false); // volta ao posto
+      noteTalk(this.entities.memory, v.memoryKey);
+      noteBuy(this.entities.memory, v.memoryKey, 5); // a ajuda conta como favor: sobe a relação
+      this.hud.toast(`Missão cumprida: ${q.title} (+${q.reward.count} Moedas de Cobre)`);
+      open({ ...base, text: `${q.ready} ${q.done}` });
+    } else return false;
+    noteTalk(this.entities.memory, v.memoryKey);
+    return true;
+  }
+
+  private acceptQuest(v: Villager, q: QuestDef): void {
+    this.entities.quests[q.id] = 'active';
+    v.setCompanion(true);
+    this.hud.toast(`Missão aceita: ${q.title}`);
+    this.dialogue.open({ npc: v.npc, name: v.name, text: q.accepted }, v, () => v.release());
+  }
+
+  /** Todo quadro: sinal sobre a cabeça de quem tem missão, acompanhante de missão em andamento (também ao carregar o jogo) e seus comentários. */
+  private updateQuests(dt: number): void {
+    const marks: Partial<Record<string, ReturnType<typeof markOf>>> = {};
+    for (const q of QUESTS) {
+      const phase = phaseOf(this.entities.quests, q, this.inventory.count(q.item));
+      const m = markOf(phase);
+      if (m) marks[q.giver] = m;
+      const giver = this.entities.villagers.find((x) => x.npc === q.giver && !x.resident);
+      if (!giver) continue;
+      if (this.entities.quests[q.id] === 'active') {
+        if (!giver.escorting) { // carregou o jogo no meio da missão: ele vem para perto
+          giver.setCompanion(true);
+          giver.teleportTo(this.player.x - 1.5, this.player.y);
+        }
+        this.remarkTimer -= dt;
+        if (this.remarkTimer <= 0 && !this.dialogue.isOpen) {
+          this.remarkTimer = 0.6;
+          const r = 3 * SUBDIV;
+          for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+            if (this.world.getObject(Math.floor(giver.x) + dx, Math.floor(giver.y) + dy) !== Block.FLOWER) continue;
+            this.hud.toast(`${giver.name}: ${q.remarks[this.remarkIndex++ % q.remarks.length]}`);
+            this.remarkTimer = 30;
+            return;
+          }
+        }
+      }
+    }
+    this.entities.marks = marks as typeof this.entities.marks;
+  }
+  private remarkTimer = 8;
+  private remarkIndex = 0;
 
   /** Vitrine, título e falas de cada loja (Mercado e Floricultura, v0.93.110). */
   private static readonly SHOPS: Record<'merchant' | 'florist', { stock: readonly ShopOffer[]; style: ShopStyle }> = {
@@ -890,6 +966,7 @@ export class Game {
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     if (!blocked) this.updateInteriors(iy);
     this.fade = Math.max(0, this.fade - dt * 2.5);
+    this.updateQuests(dt);
     this.entities.time = this.time;
     this.entities.update(dt, this.world);
     this.updateDialogue();

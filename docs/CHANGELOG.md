@@ -1,5 +1,15 @@
 # Changelog
 
+## Orvalis v0.93.116 — primeira missão: Silvano pede flores e acompanha a jogadora (nível 4 da IA dos NPCs) (15/11/2026)
+- **Pedido do dono do produto:** um NPC explica uma missão (encontrar flores por um motivo), acompanha a jogadora se ela aceitar e mostra um **sinal sobre a cabeça**. Escolhas dele: **Silvano** (herbalista), motivo **ervas de cura**, **recompensa em moedas**, acompanhante que **segue e comenta**.
+- **Missão** (`game/npcBrain/quests.ts`, puro): "Ervas de cura" — 6 **Flores silvestres** (a flor que nasce no capim) para o remédio de uma criança da cidade; recompensa 12 Moedas de Cobre. Fases `available → active → ready → done`; o estado salvo é só `active`/`done` (a fase `ready` sai da contagem no inventário). A ajuda conta como favor na memória do NPC (relação sobe).
+- **Sinal** (`Actor.mark`, `three/actorBillboards.ts`): **!** dourado oferece; **?** azulado = em andamento; **?** dourado = pronta para entregar; saltita de leve sobre a cabeça. `Game.updateQuests` recalcula todo quadro.
+- **Conversa com escolhas** (`dialogue.ts`, `Conversation.prompt/choices`, CSS `.dlg-choice`): explicação em páginas + pergunta final com **Aceitar / Agora não**; só uma escolha fecha. É o primeiro uso de botões na caixa de conversa.
+- **Acompanhante** (`Villager.setCompanion/escort`): anda atrás da jogadora a ~2 células (de frente para ela), **corre** para alcançá-la, **reaparece ao lado** se fica longe demais (> 18 células) e **volta ao posto andando** ao terminar; para quando está conversando. Ao **carregar o jogo no meio da missão** ele vem para perto. Comenta ao ver flor por perto (toast, a cada ~30 s).
+- **Flor silvestre coletável** (`world/items.ts`): `Block.FLOWER` passa a devolver o próprio item ao quebrar em mundo com coleta (antes não dava nada). Os outros mundos não mudam.
+- **Salvamento v19** (aditivo): `SaveData.quests`; v18 migra sem missões. Só no aparelho (a sala não simula moradores): sem protocolo novo.
+- Testes novos (`npcBrain/quests.test.ts`) e ajustados (`collect`, `save`); `tsc` e 618 testes verdes; conferido no navegador (sinal, conversa com botões, seguir, entrega e moedas).
+
 ## Orvalis v0.93.115 — memória dos NPCs no salvamento (nível 3 da IA dos NPCs) (15/11/2026)
 - **ADR 0034, nível 3:** `game/npcBrain/memory.ts` (puro): por morador, `talks` (conversas/visitas à loja) e `bought` (compras); **relação 0–100** (conversa = 6, compra = 4) e faixas **estranho → conhecido → amigo → íntimo**. Chave = id do nomeado ou do sorteado (`rt3`, `rv1`…).
 - **Falas por condição** (escritas, nada gerado): quem já conhece a jogadora a recebe com uma frase de reencontro **na primeira fala da sessão**; **Bento e Rosendo** cumprimentam na janela da loja conforme a faixa (`shopGreeting`); toda conversa e visita à loja conta, e cada compra soma ao morador.

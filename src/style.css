@@ -598,6 +598,14 @@ html, body {
   animation: dlg-bob 0.9s ease-in-out infinite;
 }
 .dlg-arrow[hidden] { display: none; }
+.dlg-choices { position: absolute; left: 27.5%; top: 56%; width: 65.8%; height: 18%; display: flex; gap: 4%; align-items: center; justify-content: flex-start; }
+.dlg-choices[hidden] { display: none; }
+.dlg-choice {
+  flex: 0 1 auto; min-width: 22%; height: 100%; padding: 0 5%; cursor: pointer; touch-action: manipulation;
+  font: 900 calc(var(--dlg-w) * 0.0265) Nunito, system-ui, sans-serif; color: #3b2415; background: #f6ead0;
+  border: 2px solid #3b2a6e; border-radius: 10px; box-shadow: 0 2px 0 #3b2a6e;
+}
+.dlg-choice:active { transform: translateY(1px); box-shadow: 0 1px 0 #3b2a6e; }
 @keyframes dlg-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18%); } }
 @media (prefers-reduced-motion: reduce) { .dlg-arrow { animation: none; } }
 

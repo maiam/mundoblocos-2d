@@ -16,6 +16,7 @@ import { Sheep } from './sheep';
 import type { Facing } from './walker';
 import type { Exploration } from './exploration';
 import { type MemoryBook, sanitizeBook } from './npcBrain/memory';
+import { type QuestLog, sanitizeLog } from './npcBrain/quests';
 
 /**
  * Salvamento automático no navegador (Fase 2). Salva só o que a seed não reconstrói:
@@ -25,12 +26,14 @@ import { type MemoryBook, sanitizeBook } from './npcBrain/memory';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 export interface SaveData {
   v: number;
   /** Memória dos NPCs (v18, ADR 0034 nível 3): conversas e compras por morador. */
   npcMemory: MemoryBook;
+  /** Missões dos NPCs (v19, ADR 0034): em andamento ou concluídas. */
+  quests: QuestLog;
   /** Subdivisão da grade em que o mundo foi salvo (v16, ADR 0032): 1 = antiga; 2 = células de metade do lado. */
   sub: number;
   world: WorldId;
@@ -83,6 +86,7 @@ export function captureSave(s: GameState): SaveData {
   return {
     v: SAVE_VERSION,
     npcMemory: s.entities.memory,
+    quests: s.entities.quests,
     sub: SUBDIV,
     world: s.world.profile.id,
     seed: s.world.seed,
@@ -166,6 +170,8 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 16) d = { ...d, v: 17, player: { ...d.player, z: d.world === 'santuario' ? d.player.z : d.player.z * 4 } };
   // v17 → v18 (memória dos NPCs, ADR 0034): ninguém conhece a jogadora ainda.
   if (d.v === 17) d = { ...d, v: 18, npcMemory: {} };
+  // v18 → v19 (missões dos NPCs, ADR 0034): nenhuma missão aceita ainda.
+  if (d.v === 18) d = { ...d, v: 19, quests: {} };
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -249,6 +255,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));
   s.entities.body = HERO_BODIES.includes(d.body) ? d.body : 'heroine';
   s.entities.memory = sanitizeBook(d.npcMemory);
+  s.entities.quests = sanitizeLog(d.quests);
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;
