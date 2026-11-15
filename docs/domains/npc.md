@@ -56,7 +56,7 @@ falas próprias e retrato na caixa de conversa. **Nomes e falas moram só em `ga
 | **Morgan** | `npc-morgan` | Estudioso do castelo | cabelo roxo-escuro; casaco roxo |
 | **Aurélio** | `npc-aurelio` | Cortesão sorridente | cabelo branco, olhos fechados; casaco azul-marinho |
 | **Rubem** | `npc-rubem` | Aventureiro | cabelo vermelho; jaqueta marrom |
-| **Rosendo** | `npc-rosendo` | Jardineiro | cabelo rosa; colete verde |
+| **Rosendo** | `npc-rosendo` | Jardineiro e **florista** — mora na Floricultura (v0.93.110, papel `florist`; vende as 15 Flores Fofas) | cabelo rosa; colete verde |
 | **Teodoro** | `npc-teodoro` | Pescador alegre | cabelo castanho-claro, olhos fechados; camisa azul |
 | **Bento** | `npc-bento` | Padeiro e **mercador** (v0.93.57: mora no Mercado, atrás dos balcões; tocar nele abre a loja) | cabelo castanho-escuro; colete marrom |
 | **Solano** | `npc-solano` | Construtor | cabelo loiro-alaranjado; camisa laranja |

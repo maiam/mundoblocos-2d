@@ -105,8 +105,35 @@ export const MARKET_INTERIOR: InteriorDef = {
   keeper: { at: [11, 4], rows: [4, 4] },
 };
 
-/** Cômodos das construções da cidade. */
-export const INTERIOR_DEFS: InteriorDef[] = [SMITHY_INTERIOR, MARKET_INTERIOR];
+/**
+ * Floricultura (arte `assets-src/interiors/florist.png`, 24 × 13 células, v0.93.110): prateleiras e vasos ao fundo, o balcão no meio (a florista,
+ * Rosendo, anda atrás dele) e dois canteiros de flores à frente, com a entrada de duas células no meio do muro da frente. Só visual: as flores
+ * são vendidas pela janela da loja (`world/shop.ts`, `FLORIST_STOCK`).
+ */
+export const FLORIST_INTERIOR: InteriorDef = {
+  id: 'florist',
+  name: 'Floricultura',
+  building: Block.FLORIST,
+  map: [
+    '########################', // 0  parede do fundo, janelas e cortinas
+    '########################', // 1
+    '########################', // 2  prateleiras e vasos
+    '########################', // 3
+    '########........########', // 4  atrás do balcão (a florista anda aqui)
+    '##.......######.......##', // 5  balcão
+    '##.......######.......##', // 6
+    '##.#####........#####.##', // 7  canteiros (esquerdo e direito)
+    '##.#####........#####.##', // 8
+    '##.#####........#####.##', // 9
+    '###########..###########', // 10 entre os pilares (o muro de pedra da frente fecha o resto)
+    '###########..###########', // 11 entrada (2 células)
+    '###########EE###########', // 12 capacho de saída
+  ],
+  keeper: { at: [11, 4], rows: [4, 4] },
+};
+
+/** Cômodos das construções da cidade (a ordem fixa a posição de cada um: cômodo novo vai no fim). */
+export const INTERIOR_DEFS: InteriorDef[] = [SMITHY_INTERIOR, MARKET_INTERIOR, FLORIST_INTERIOR];
 
 /** Canto superior esquerdo do primeiro cômodo e distância entre cômodos (células): longe de tudo o que se gera perto. */
 export const INTERIOR_ORIGIN: [number, number] = [0, -100000];

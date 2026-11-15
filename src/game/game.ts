@@ -29,8 +29,8 @@ import { Player } from './player';
 import { configureSanctuaryThreeCollision } from './sanctuaryThreeCollision';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { DialogueBox } from './dialogue';
-import { ShopWindow } from './shopWindow';
-import { buyOffer, CURRENCY, MARKET_STOCK, type BuyResult, type ShopOffer } from '../world/shop';
+import { ShopWindow, type ShopStyle } from './shopWindow';
+import { buyOffer, CURRENCY, FLORIST_STOCK, MARKET_STOCK, type BuyResult, type ShopOffer } from '../world/shop';
 import type { Villager } from './villager';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
@@ -813,29 +813,35 @@ export class Game {
     if (this.dialogue.isOpen && this.dialogue.npc === v) { this.dialogue.advance(); return; }
     this.actions.cancelAll();
     v.faceTo(this.player.x, this.player.y);
-    if (v.role === 'merchant') { this.openShop(v); return; } // o mercador não conversa: abre a loja (v0.93.57)
+    if (v.role === 'merchant' || v.role === 'florist') { this.openShop(v); return; } // mercador e florista não conversam: abrem a loja (v0.93.57, v0.93.110)
     this.dialogue.open(v.conversation(), v, () => v.release());
   }
 
-  /** Mercado: abre a janela da loja com o mercador (o jogo pausa enquanto ela está aberta). */
+  /** Vitrine, título e falas de cada loja (Mercado e Floricultura, v0.93.110). */
+  private static readonly SHOPS: Record<'merchant' | 'florist', { stock: readonly ShopOffer[]; style: ShopStyle }> = {
+    merchant: { stock: MARKET_STOCK, style: { title: 'Mercado', greeting: 'Confira os meus itens à venda!', category: 'Consumíveis' } },
+    florist: { stock: FLORIST_STOCK, style: { title: 'Floricultura', greeting: 'Flores fofas para enfeitar o seu mundo!', category: 'Flores' } },
+  };
+
+  /** Loja: abre a janela com o atendente (mercador ou florista; o jogo pausa enquanto ela está aberta). */
   private openShop(v: Villager): void {
     this.dialogue.close();
     this.shop ??= new ShopWindow(this.hud.root, {
       frame: art().shopFrame ?? '',
-      title: 'Mercado',
-      greeting: 'Confira os meus itens à venda!',
-      icon: (item) => itemIconUrl(item),
+      icon: (id) => this.stackView(id, null).icon,
+      name: (id) => this.stackView(id, null).name,
       coins: () => this.inventory.count(CURRENCY),
       buy: (offer) => this.buyAtMarket(offer),
       onOpenChange: (open) => { if (!open) this.shopMerchant?.release(); },
     });
     this.shopMerchant = v;
-    v.conversation(); // segura o mercador parado enquanto a loja está aberta (`release` ao fechar)
-    this.shop.open(MARKET_STOCK, { portrait: art().portraits?.[v.npc] });
+    v.conversation(); // segura o atendente parado enquanto a loja está aberta (`release` ao fechar)
+    const shop = Game.SHOPS[v.role === 'florist' ? 'florist' : 'merchant'];
+    this.shop.open(shop.stock, { portrait: art().portraits?.[v.npc] }, shop.style);
   }
   private shopMerchant: Villager | null = null;
 
-  /** Compra 1 unidade no Mercado com Moedas de Cobre: entrega na grade (se houver lugar) ou na bolsa. */
+  /** Compra 1 unidade na loja (Mercado ou Floricultura) com Moedas de Cobre: entrega na grade (se houver lugar) ou na bolsa. */
   private buyAtMarket(offer: ShopOffer): BuyResult {
     const r = buyOffer(this.inventory, offer, (item) => canCarry(this.inventory, this.hotbar, item));
     if (r !== 'ok') return r;

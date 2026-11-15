@@ -197,6 +197,8 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 
 **Efeitos de golpe** (pranchas 4 × 4 em `assets-src/efeitos/`: `buraco.png`, `corte-arvore.png`, `espada.png`): `python3 scripts/extract-fx.py` → `fx-dig`, `fx-tree`, `fx-slash` (+ `-up`, `-down`), `fx-rock`, `fx-soil`, `fx-till` `.webp` (quadros 128 × 128; limpa o RGB dos pixels transparentes; escolhe os quadros usados). Tocados por `three/spriteFx.ts`.
 
+**Floricultura** (v0.93.110): fachada `assets-src/town/florist.png` → `python3 scripts/extract-town.py --only florist` (+ `optimize-assets.py`) e interior `assets-src/interiors/florist.png` → `python3 scripts/extract-interiors.py` (a grade 24 × 13 vem de `FLORIST_INTERIOR`; `--grid prévia.png` confere o mapa). Os ícones das 15 flores saem de `scripts/extract-flowers.py` (`icon-flower-NN.webp`).
+
 **Flores fofas** (PNGs individuais transparentes em `assets-src/flores/NN-nome.png`, 360 × 320, base do caule em y = 278): `python3 scripts/extract-flowers.py` → `flowers.webp` (tira de quadros 96 × 96, mesma escala para todas). Sorteadas por célula como variantes de `Block.FLOWER`.
 
 **Pedregulhos** (prancha de pedras soltas em fileiras irregulares, `assets-src/rocks-sheet.png`):

@@ -77,6 +77,7 @@ export const TOWN_SIZES: Partial<Record<BlockId, [number, number, number]>> = {
   [Block.CASTLE]: [26, 17, 17],
   [Block.GUILD]: [9, 9, 9],
   [Block.INN]: [9, 5, 5],
+  [Block.FLORIST]: [9, 5, 5],
   [Block.SMITHY]: [8, 5, 5],
   [Block.SHOP_POTION]: [5, 5, 4],
   [Block.SHOP_GOODS]: [5, 5, 5],
@@ -282,6 +283,8 @@ function buildTown(): TownLayout {
   const required: TownBuilding[] = [
     place(Block.GUILD, W / 2 - 28, MID - 8, 'Guilda dos Aventureiros', true),
     place(Block.INN, W / 2 + 20, MID - 4, 'Hospedaria', true),
+    // Floricultura (v0.93.110): a oeste da Praça Central, logo abaixo da Guilda (que vai de MID-8 a MID); a rua chega pela porta, ao sul.
+    place(Block.FLORIST, W / 2 - 28, MID + 6, 'Floricultura', true),
     place(Block.SMITHY, 30, MID + 18, 'Ferreiro', true),
     place(Block.SHOP_POTION, W / 2 + 22, MID + 18, 'Mercado', true),
     place(Block.SHOP_GOODS, W / 2 + 27, MID + 18, 'Mercado', true),

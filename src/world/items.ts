@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, gateClosed, isDoor, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, FLOWER_BLOCKS, CROP_STAGES, cropKind, cropStage, gateClosed, isDoor, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import { isWolf, type MonsterKind } from './dungeon';
 
 /**
@@ -281,7 +281,7 @@ export function toolDrops(tool: ToolId | null, id: BlockId, rand: () => number =
 export const TOOL_ORDER: ToolId[] = [Tool.SWORD, Tool.HOE, Tool.PICKAXE, Tool.SHOVEL, Tool.AXE];
 
 /** Blocos que voltam como item ao serem quebrados (mundo com coleta): os materiais e a porta. */
-const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_STAKE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
+const COLLECTABLE = new Set<number>([...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, ...FLOWER_BLOCKS, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_STAKE, Block.WALL_PLANKS, Block.WALL_STONE, Block.WALL_DOOR_PLANKS]);
 
 /** Árvores adultas (dão 2–3 toras). */
 const ADULT_TREES = new Set<number>([Block.OAK_TREE, Block.APPLE_TREE, Block.APPLE_TREE_BARE]);

@@ -34,4 +34,15 @@ base.putalpha(alpha)
 base.alpha_composite(strip)
 strip = base
 strip.save(ROOT / 'src' / 'assets' / 'flowers.webp', 'WEBP', quality=90, method=6)
+
+# Ícones da hotbar e da loja (v0.93.110): um por flor (64 × 64, mesmo desenho do quadro, centrado), `icon-flower-NN.webp`.
+for i, f in enumerate(files):
+    fr = strip.crop((i * FRAME, 0, (i + 1) * FRAME, FRAME))
+    bb = fr.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox()
+    fr = fr.crop(bb)
+    k = 52 / max(fr.size)
+    fr = fr.resize((max(1, round(fr.width * k)), max(1, round(fr.height * k))), Image.LANCZOS)
+    ic = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
+    ic.alpha_composite(fr, ((64 - fr.width) // 2, (64 - fr.height) // 2))
+    ic.save(ROOT / 'src' / 'assets' / f"icon-flower-{int(re.search(r'/(\d\d)-', f).group(1)):02d}.webp", 'WEBP', quality=90, method=6)
 print(len(ims), 'flores, escala', round(scale, 3))
