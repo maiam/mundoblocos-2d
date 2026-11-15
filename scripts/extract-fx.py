@@ -5,7 +5,8 @@ Fontes (assets-src/efeitos/, pranchas 4 × 4 de 1254 px; cada quadro tem 313,5 p
 (machadada), `espada.png` (golpe de espada, do canto inferior esquerdo ao superior direito; o jogo espelha para a esquerda).
 Os pixels quase transparentes trazem cores soltas (vermelho/amarelo) que virariam um halo na filtragem do GPU: aqui a cor deles é refeita a partir
 da vizinhança opaca. Quadros usados: buraco 0–11 (os 4 últimos são o buraco parado), árvore 4–13 (pula a estrela grande do começo) e espada 0–11.
-Saída: src/assets/fx-dig.webp (12), fx-tree.webp (10), fx-slash.webp (12) quadros de 128 × 128 lado a lado.
+Outras pranchas (v0.93.103): `espada-cima.png`/`espada-baixo.png` (golpe para cima e para baixo), `picareta-pedra.png` (faíscas e pedras), `pa-terra.png` (terra jogada),
+`enxada-arar.png` (terra revirada). Saída: src/assets/fx-*.webp, 10 a 12 quadros de 128 × 128 lado a lado cada.
 Uso: python3 scripts/extract-fx.py
 """
 from pathlib import Path
@@ -16,7 +17,13 @@ from PIL import Image, ImageFilter
 ROOT = Path(__file__).resolve().parent.parent
 SRC, OUT = ROOT / 'assets-src' / 'efeitos', ROOT / 'src' / 'assets'
 CELL, FRAME = 313.5, 128
-SHEETS = {'fx-dig': ('buraco.png', range(0, 12)), 'fx-tree': ('corte-arvore.png', range(4, 14)), 'fx-slash': ('espada.png', range(0, 12))}
+SHEETS = {
+    'fx-dig': ('buraco.png', range(0, 12)), 'fx-tree': ('corte-arvore.png', range(4, 14)), 'fx-slash': ('espada.png', range(0, 12)),
+    'fx-slash-up': ('espada-cima.png', range(0, 12)), 'fx-slash-down': ('espada-baixo.png', range(0, 12)),
+    'fx-rock': ('picareta-pedra.png', range(0, 12)), 'fx-soil': ('pa-terra.png', range(0, 12)), 'fx-till': ('enxada-arar.png', range(0, 12)),
+}
+# `pa-terra.png` veio com uma névoa translúcida cobrindo a prancha toda: o alfa baixo some e o resto é reescalado.
+HAZE = {'pa-terra.png': (110, 200)}
 
 
 def clean(im: Image.Image) -> Image.Image:
@@ -35,6 +42,11 @@ def clean(im: Image.Image) -> Image.Image:
 
 for name, (src, frames) in SHEETS.items():
     sheet = Image.open(SRC / src).convert('RGBA')
+    if src in HAZE:
+        lo, hi = HAZE[src]
+        arr = np.asarray(sheet).astype(np.float32)
+        arr[..., 3] = ((arr[..., 3] - lo) / (hi - lo)).clip(0, 1) * 255
+        sheet = Image.fromarray(arr.astype(np.uint8), 'RGBA')
     strip = Image.new('RGBA', (FRAME * len(frames), FRAME), (0, 0, 0, 0))
     for k, i in enumerate(frames):
         cx, cy = round((i % 4) * CELL), round((i // 4) * CELL)

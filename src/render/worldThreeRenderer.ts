@@ -365,7 +365,17 @@ export class WorldThreeRenderer implements GameRenderer {
     const hit = p.impacts !== this.impactSeen;
     this.impactSeen = p.impacts;
     const swingTool = p.equipped !== null && TOOLS[p.equipped].swings;
-    if (hit && p.attackTool === 'sword') this.fx.play('slash', p.x + (p.facing === 'left' ? -1 : p.facing === 'right' ? 1 : 0), 1.2, p.y + (p.facing === 'down' ? 0.9 : p.facing === 'up' ? -0.9 : 0.3), { mirror: p.facing === 'left' || p.facing === 'up' });
+    if (hit && p.attackTool === 'sword') {
+      // para os lados: o corte do lado direito, espelhado à esquerda; para cima e para baixo: os cortes próprios
+      if (p.facing === 'up') this.fx.play('slashUp', p.x, 1.2, p.y - 0.9);
+      else if (p.facing === 'down') this.fx.play('slashDown', p.x, 1.2, p.y + 1.1);
+      else this.fx.play('slash', p.x + (p.facing === 'left' ? -1 : 1), 1.2, p.y + 0.3, { mirror: p.facing === 'left' });
+    }
+    // enxada: terra revirada na célula-alvo (o alvo de uso aparece como foco/hover)
+    if (hit && p.attackTool === 'hoe') {
+      const t = opts.focus ?? opts.hover;
+      if (t && t.valid) this.fx.play('till', t.x + 0.5, 0.5, t.y + 0.7);
+    }
     if (b) {
       const top = w.topBlock(b.x, b.y);
       const id = top ? top.id : w.getGround(b.x, b.y);
@@ -377,6 +387,8 @@ export class WorldThreeRenderer implements GameRenderer {
       if (!(cube || !top) || !chipColor(id)) this.cracks.hide(); else this.cracks.show(b.x, b.y, h, b.progress, cube, shake);
       const color = chipColor(id);
       if (hit && p.attackTool === 'axe' && windKind(id) === 'tree') this.fx.play('tree', b.x + 0.5, 0.95, b.y + 0.9);
+      if (hit && p.attackTool === 'pickaxe') this.fx.play('rock', b.x + 0.5, h + 0.35, b.y + 0.9);
+      if (hit && p.attackTool === 'shovel') this.fx.play('soil', b.x + 0.5, h + 0.3, b.y + 0.8);
       if (color && (swingTool ? hit : opts.elapsed - this.chipAt >= CHIP_EVERY)) {
         this.chipAt = opts.elapsed;
         this.chips.emit(b.x + 0.5, h, b.y + 0.5, color, chipsPerBurst(b.progress));

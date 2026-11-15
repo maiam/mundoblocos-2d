@@ -220,6 +220,11 @@ import flowers from '../../assets/flowers.webp';
 import fxDig from '../../assets/fx-dig.webp';
 import fxTree from '../../assets/fx-tree.webp';
 import fxSlash from '../../assets/fx-slash.webp';
+import fxSlashUp from '../../assets/fx-slash-up.webp';
+import fxSlashDown from '../../assets/fx-slash-down.webp';
+import fxRock from '../../assets/fx-rock.webp';
+import fxSoil from '../../assets/fx-soil.webp';
+import fxTill from '../../assets/fx-till.webp';
 import fencePieces from '../../assets/fence.webp';
 import fenceGate from '../../assets/fence-gate.webp';
 import fenceIcon from '../../assets/icon-block-fence.webp';
@@ -524,7 +529,7 @@ const pack: ArtPack = {
   trees: { oak: treeOak, apple: treeApple, appleBare: treeAppleBare, cherry: treeCherry, birch: treeBirch, cactus: treeCactus },
   rocks,
   flowers,
-  fx: { dig: fxDig, tree: fxTree, slash: fxSlash },
+  fx: { dig: fxDig, tree: fxTree, slash: fxSlash, slashUp: fxSlashUp, slashDown: fxSlashDown, rock: fxRock, soil: fxSoil, till: fxTill },
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: {
     pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon,

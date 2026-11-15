@@ -2,16 +2,22 @@ import * as THREE from 'three';
 
 /**
  * Efeitos de golpe em quadros (v0.93.102): tiras de quadros 128 × 128 (`scripts/extract-fx.py`) tocadas como planos que olham para a câmera, por cima
- * do mundo (sem teste de profundidade): cavar (`dig`), machadada (`tree`) e espada (`slash`, que se espelha para a esquerda). Pool fixo; só visual.
+ * do mundo (sem teste de profundidade): cavar (`dig`), machadada (`tree`), espada (`slash` para os lados, espelhada à esquerda; `slashUp`/`slashDown`),
+ * picareta (`rock`), pá (`soil`) e enxada (`till`). Pool fixo; só visual.
  */
-export type FxKind = 'dig' | 'tree' | 'slash';
-export interface FxArt { dig: HTMLImageElement; tree: HTMLImageElement; slash: HTMLImageElement }
+export type FxKind = 'dig' | 'tree' | 'slash' | 'slashUp' | 'slashDown' | 'rock' | 'soil' | 'till';
+export type FxArt = Record<FxKind, HTMLImageElement>;
 
 interface Def { fps: number; size: number }
 const DEFS: Record<FxKind, Def> = {
   dig: { fps: 16, size: 2.2 },     // o buraco ocupa ~0,45 do quadro: 2,2 células → ~1 célula
   tree: { fps: 22, size: 2 },      // menor que a prancha (a estrela era grande demais para uma machadada)
   slash: { fps: 26, size: 2.6 },
+  slashUp: { fps: 26, size: 2.4 },
+  slashDown: { fps: 26, size: 2.4 },
+  rock: { fps: 24, size: 1.8 },    // picareta: clarão e pedrinhas
+  soil: { fps: 20, size: 1.8 },    // pá: terra jogada
+  till: { fps: 20, size: 1.8 },    // enxada: terra revirada
 };
 const POOL = 12;
 
