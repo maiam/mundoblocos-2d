@@ -40,8 +40,9 @@ describe('moradores sorteados (ADR 0034)', () => {
       return { w, e };
     };
     const { w, e } = build(42);
-    const rs = e.villagers.filter((v) => v.resident);
+    const rs = e.villagers.filter((v) => v.resident && v.resident.id !== 'guild');
     expect(e.villagers.filter((v) => !v.resident)).toHaveLength(16);
+    expect(e.villagers.some((v) => v.resident?.id === 'guild')).toBe(true); // o Mestre da Guilda não conta entre os sorteados
     const inVillage = rs.filter((v) => w.village && v.cellY >= w.village.area.y0);
     expect(inVillage).toHaveLength(w.village ? RESIDENTS_VILLAGE : 0);
     expect(rs).toHaveLength(RESIDENTS_TOWN + (w.village ? RESIDENTS_VILLAGE : 0));

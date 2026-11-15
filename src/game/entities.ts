@@ -11,7 +11,7 @@ import { BABY_KIND, type BabyKind, FarmAnimal, type FarmKind } from './horse';
 import { Villager } from './villager';
 import type { MemoryBook } from './npcBrain/memory';
 import type { QuestLog, QuestMark } from './npcBrain/quests';
-import { type Look, makeResidents, type ResidentDef } from './residents';
+import { GUILD_MASTER, type Look, makeResidents, type ResidentDef } from './residents';
 import { FLORIST_KEEPER, MERCHANT, NPC_IDS, type NpcId, SMITH } from './npcs';
 import { interiorFloor } from '../world/interiors';
 import { type FlowField, hasPoses, Monster, MONSTERS, type PoseKind } from './monster';
@@ -352,6 +352,12 @@ export class Entities {
       const k = florist.keeper;
       const walk = (cx: number, cy: number) => cy >= k.rows[0] && cy <= k.rows[1] && interiorFloor(florist, cx, cy);
       people.push({ at: k.at, npc: FLORIST_KEEPER, walk });
+    }
+    // O Mestre da Guilda mora atrás do balcão da Guilda (v0.93.120), com o mesmo recuo do mercador; sem o cômodo, não existe.
+    const guild = world.interiors.find((l) => l.def.id === 'guild');
+    if (guild?.keeper) {
+      const k = guild.keeper;
+      this.placeVillager(world, k.at[0], k.at[1], GUILD_MASTER.base, (cx, cy) => cy >= k.rows[0] && cy <= k.rows[1] && interiorFloor(guild, cx, cy), GUILD_MASTER);
     }
     people.forEach(({ at: [hx, hy], npc, walk }) => {
       const v = this.placeVillager(world, hx, hy, npc, walk);

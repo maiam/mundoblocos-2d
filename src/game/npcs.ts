@@ -7,8 +7,8 @@
  * aqui → import em `render/art/principal.ts` e entrada em `SPECS` (`render/character.ts`).
  */
 
-/** Ofício que dá fala e lugar próprios: o ferreiro (Ferraria) e o mercador (Mercado, v0.93.57; tocar nele abre a loja). */
-export type NpcRole = 'smith' | 'merchant' | 'florist';
+/** Ofício que dá fala e lugar próprios: o ferreiro (Ferraria), o mercador (Mercado, v0.93.57; tocar nele abre a loja), o florista e o Mestre da Guilda (v0.93.120). */
+export type NpcRole = 'smith' | 'merchant' | 'florist' | 'guild';
 
 export interface NpcDef {
   id: string;

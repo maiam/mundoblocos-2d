@@ -4,7 +4,7 @@
  * (e falas por profissão). Módulo **puro** (sem DOM nem `Math.random`): o mesmo mundo sorteia sempre as mesmas pessoas. O `Villager` só executa.
  */
 import { hash2 } from '../world/random';
-import { NPCS, NPC_IDS, FLORIST_KEEPER, MERCHANT, SMITH, type NpcId } from './npcs';
+import { NPCS, NPC_IDS, FLORIST_KEEPER, MERCHANT, SMITH, type NpcId, type NpcRole } from './npcs';
 
 /** Troca de cores do desenho (aplicada no shader: ver `three/actorBillboards.ts`): giro de matiz (voltas, 0..1) e multiplicadores de saturação e brilho. */
 export interface Look {
@@ -28,6 +28,8 @@ export interface ResidentDef {
   look: Look;
   /** Falas em roda (profissão + jeito de ser). */
   lines: readonly string[];
+  /** Ofício (só o Mestre da Guilda: mora no cômodo dela, atrás do balcão; as missões saem dele). */
+  role?: NpcRole;
 }
 
 /** Nomes sorteados (nenhum repete o de um NPC nomeado). */
@@ -86,6 +88,24 @@ const VALS = [0.86, 0.95, 1.04];
 /** Folhas que um sorteado pode emprestar: os moradores comuns (sem ofício). */
 export const RESIDENT_BASES: readonly NpcId[] = NPC_IDS.filter((id) => id !== SMITH && id !== MERCHANT && id !== FLORIST_KEEPER);
 
+/**
+ * O Mestre da Guilda (v0.93.120): "primo" do guarda Noel (mesma folha e retrato, cores trocadas), fixo atrás do balcão da Guilda dos Aventureiros. Não é sorteado:
+ * existe em toda seed, com o mesmo id (`guild`), e o aparelho dentro da sala o reconhece por ele (`residentRoster`).
+ */
+export const GUILD_MASTER: ResidentDef = {
+  id: 'guild',
+  base: 'noel',
+  name: 'Mestre Aldric',
+  profession: 'Mestre da Guilda',
+  personality: 'ranzinza',
+  role: 'guild',
+  look: { hue: 0.93, sat: 1.05, val: 1 },
+  lines: [
+    'Bem-vindo à Guilda dos Aventureiros! Aqui os contratos da cidade passam por mim. Quem prova ser útil tem trabalho e moedas de sobra.',
+    'Não importa de onde veio. Na guilda, o que vale é o nome que você faz com o que entrega.',
+  ],
+};
+
 /** Cores neutras (sem troca): o desenho original. */
 export const NO_LOOK: Look = { hue: 0, sat: 1, val: 1 };
 
@@ -132,7 +152,7 @@ export function makeResidents(seed: number, place: ResidentPlace, count: number,
 export function residentRoster(seed: number, townCount: number, villageCount: number): Map<string, ResidentDef> {
   const town = makeResidents(seed, 'town', townCount);
   const village = makeResidents(seed, 'village', villageCount, town.map((r) => r.name));
-  return new Map([...town, ...village].map((r) => [r.id, r]));
+  return new Map([GUILD_MASTER, ...town, ...village].map((r) => [r.id, r]));
 }
 
 /** O sorteado conhece o nome de um NPC nomeado? (teste de colisão de nomes) */

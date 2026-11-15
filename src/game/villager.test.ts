@@ -38,7 +38,12 @@ describe('NPCs da cidade (nomes e falas em game/npcs.ts)', () => {
 
   it('a cidade tem os 16: Black na Ferraria, Bento atrás dos balcões do Mercado, Rosendo no balcão da Floricultura e os 13 espalhados pelas ruas, cada um uma vez', () => {
     const { w, e } = setup(42);
-    expect(e.villagers.map((v) => v.npc).sort()).toEqual([...NPC_IDS].sort());
+    // os 16 nomeados + o Mestre da Guilda (primo do Noel, v0.93.120)
+    expect(e.villagers.filter((v) => !v.resident).map((v) => v.npc).sort()).toEqual([...NPC_IDS].sort());
+    const master = e.villagers.find((v) => v.resident?.role === 'guild')!;
+    expect(master.name).toBe('Mestre Aldric');
+    expect(master.role).toBe('guild');
+    expect(w.interiorAt(master.cellX, master.cellY)?.def.id).toBe('guild');
     const smith = e.villagers.find((v) => v.role === 'smith')!;
     expect(smith.npc).toBe('black');
     expect(smith.name).toBe('Black');
@@ -50,7 +55,7 @@ describe('NPCs da cidade (nomes e falas em game/npcs.ts)', () => {
     expect(florist.npc).toBe('rosendo');
     expect(w.interiorAt(florist.cellX, florist.cellY)?.def.id).toBe('florist');
     // Espalhados: nenhum par de moradores comuns nasce colado e os pontos de casa ficam a pelo menos HOME_SPACING (os 4 fixos à parte).
-    const common = e.villagers.filter((v) => !v.role);
+    const common = e.villagers.filter((v) => !v.role && !v.resident);
     expect(common).toHaveLength(13);
     const homes = common.slice(4).map((v) => [v.homeX, v.homeY]);
     for (let i = 0; i < homes.length; i++) for (let j = i + 1; j < homes.length; j++) {
@@ -115,13 +120,13 @@ describe('NPCs da cidade (nomes e falas em game/npcs.ts)', () => {
     p.x = v.x - 0.8;
     p.y = v.y;
     expect(e.strike('right', w, 'sword')).toBe(0);
-    expect(e.villagers).toHaveLength(16);
+    expect(e.villagers).toHaveLength(17); // 16 nomeados + o Mestre da Guilda
   });
 
   it('cada NPC aparece com a própria folha (npc-<id>), sem camadas de roupa nem rosto', () => {
     const { e } = setup(42);
     const kinds = e.actors.filter((a) => a.kind.startsWith('npc-')).map((a) => a.kind).sort();
-    expect(kinds).toEqual(NPC_IDS.map((id) => `npc-${id}`).sort());
+    expect(kinds).toEqual([...NPC_IDS.map((id) => `npc-${id}`), 'npc-noel'].sort()); // + o Mestre da Guilda (folha do Noel)
     for (const a of e.actors.filter((x) => x.kind.startsWith('npc-'))) expect(Object.keys(a)).not.toContain('outfit');
   });
 

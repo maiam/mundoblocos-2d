@@ -329,6 +329,7 @@ import townStall from '../../assets/town-stall.webp';
 import townBarrel from '../../assets/town-barrel.webp';
 import interiorMarket from '../../assets/interior-market.webp';
 import interiorFlorist from '../../assets/interior-florist.webp';
+import interiorGuild from '../../assets/interior-guild.webp';
 import townFlorist from '../../assets/town-florist.webp';
 import uiShop from '../../assets/ui-shop.webp';
 import interiorSmithy from '../../assets/interior-smithy.webp';
@@ -500,7 +501,7 @@ const pack: ArtPack = {
     'spider-big': spiderBig,
     'spider-boss': spiderBoss,
   },
-  interiors: { smithy: interiorSmithy, tent: interiorTent, market: interiorMarket, florist: interiorFlorist },
+  interiors: { smithy: interiorSmithy, tent: interiorTent, market: interiorMarket, florist: interiorFlorist, guild: interiorGuild },
   portraits: { black: portraitBlack, dante: portraitDante, silvano: portraitSilvano, morgan: portraitMorgan, aurelio: portraitAurelio, rubem: portraitRubem, rosendo: portraitRosendo, teodoro: portraitTeodoro, bento: portraitBento, solano: portraitSolano, nilo: portraitNilo, marlon: portraitMarlon, lavinio: portraitLavinio, caio: portraitCaio, noel: portraitNoel, leandro: portraitLeandro },
   dialogueFrame,
   blockAtlas,
