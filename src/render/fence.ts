@@ -12,16 +12,16 @@ import { TILE } from '../config';
  */
 
 /**
- * Quadro de cada peça na tira (px da imagem) e a âncora = centro da base do poste (que fica no centro da célula). Cerca v2 (v0.93.95, arte do dono do
- * produto, `scripts/extract-fence-v2.py`): 128 px por célula (distância entre postes = 1 célula); o poste tem 60 px de altura e os trilhos horizontais
- * ficam a 13–22 e 34–44 acima da base; o trilho vertical passa a ~26 px de altura (por isso o corte norte/sul, `cutY`, é na linha 64 e não na âncora).
+ * Quadro de cada peça na tira (px da imagem) e a âncora = centro da base do poste (que fica no centro da célula). Cerca v3 (v0.93.96, kit do dono do
+ * produto, `scripts/extract-fence-v3.py`): 128 px por célula (distância entre postes = 1 célula); o poste tem 42 px de altura; a coluna de trilhos
+ * vertical é centrada no poste (por isso o corte norte/sul, `cutY`, é na linha 74 e não na âncora).
  */
-export const FENCE_FRAME = { w: 128, h: 128, ax: 64, ay: 90, cutY: 64 } as const;
+export const FENCE_FRAME = { w: 128, h: 144, ax: 64, ay: 96, cutY: 74 } as const;
 /**
- * Porteira: 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h`; a base dos postes cai na linha `postBase` e a pose ocupa a célula
- * inteira (os postes ficam a ±0,33 célula do centro e cotos de trilho chegam às bordas, onde as cercas vizinhas terminam).
+ * Porteira: 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h`; a base dos postes cai na linha `postBase` (alinhada à base dos postes
+ * da cerca) e os postes ficam nas bordas da célula; a folha encolhe presa à dobradiça (gerada por `extract-fence-v3.py`).
  */
-export const GATE_FRAME = { w: 128, h: 76, postBase: 61, poses: 5 } as const;
+export const GATE_FRAME = { w: 136, h: 94, postBase: 90, poses: 5 } as const;
 
 export const enum FencePiece { Horizontal = 0, Vertical = 1, Post = 2 }
 

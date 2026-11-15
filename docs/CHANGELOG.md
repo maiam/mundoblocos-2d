@@ -1,9 +1,9 @@
 # Changelog
 
-## Orvalis v0.93.95 — cerca nova e porteira animada (15/11/2026)
+## Orvalis v0.93.95 — cerca nova (kit v3) e porteira animada (15/11/2026)
 - **Pedido do dono do produto:** trocar a cerca do mundo pela arte nova (trecho norte-sul e canto L, kit v02 com porteira de 5 ângulos).
-- **Cerca** (`render/fence.ts`, `scripts/extract-fence-v2.py`, `assets-src/cerca-v2/`): continua autotile por vizinhos em 3 peças (horizontal, vertical, poste), agora com quadro 128×128 (`FENCE_FRAME`, 1 célula entre postes). Corte norte/sul na linha `cutY` (o trilho vertical passa acima da âncora). Só a câmera oblíqua do jogo foi usada; o kit isométrico de 16 conexões não serve nela.
-- **Porteira animada** (`GATE_FRAME`, `Textures.gateFrames`): 5 poses (0°–90°) viram 10 quadros (abre 0..4, fecha 5..9). `doorFrame`/`DoorAnimator` ganham `steps` (porta = 4, porteira = 5); no 3D uma 2ª instância de `DoorSprites` cuida das porteiras (clique incluso); no 2D de reserva a linha desenha a porteira com o mesmo animador. `worldSpriteArt` pula a porteira quando há quadros. Ícones novos da cerca e da porteira.
+- **Cerca** (`render/fence.ts`, `scripts/extract-fence-v3.py`, `assets-src/cerca-v3/kit.png`): kit v3 do dono do produto (as tentativas v1/v2, de arte isométrica, foram descartadas), recortado por saturação, no mesmo autotile de 3 peças (horizontal, vertical, poste), quadro 128×144 (`FENCE_FRAME`: 1 célula entre postes; corte norte/sul em `cutY`; a coluna de trilhos é centrada no poste). T, cruz e cantos do kit não são usados: o autotile os compõe.
+- **Porteira animada** (`GATE_FRAME`, `Textures.gateFrames`): a arte traz só a porteira fechada; o script gera 5 poses (0°–90°) encolhendo a folha pelo cosseno do ângulo, presa à dobradiça, e viram 10 quadros (abre 0..4, fecha 5..9). `doorFrame`/`DoorAnimator` ganham `steps` (porta = 4, porteira = 5); no 3D uma 2ª `DoorSprites` cuida das porteiras (clique incluso); no 2D de reserva a linha usa o mesmo animador; `worldSpriteArt` pula a porteira quando há quadros. A porteira agora fica na linha de base da cerca. Ícones novos.
 - Só aparência: sem mapa, save ou protocolo (servidor não muda). O portão e o muro de estacas da vila ficam como estão. `tsc` e testes verdes.
 
 ## Orvalis v0.93.94 — a quebra de blocos ganha tremor, lascas, estouro e itens que quicam (3D) (14/11/2026)

@@ -857,10 +857,10 @@ function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string
     canvas: pieces[0], ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: FENCE_FRAME.w * FENCE_SCALE, h: FENCE_FRAME.h * FENCE_SCALE, hit,
   });
   // Porteira: 5 poses (0°→90°), cada uma a 1 célula de largura (a pose cobre a célula inteira; postes a ±0,33).
-  const k = FENCE_FRAME.w === GATE_FRAME.w ? FENCE_SCALE : T / GATE_FRAME.w;
+  const k = FENCE_SCALE; // mesma escala da cerca (a porteira passa ~4 px da célula de cada lado)
   const w = GATE_FRAME.w * k;
   const h = GATE_FRAME.h * k;
-  const oy = T - GATE_FRAME.postBase * k;
+  const oy = T / 2 - GATE_FRAME.postBase * k; // base dos postes na mesma linha da base dos postes da cerca (centro da célula)
   const poses: Sprite[] = [];
   for (let i = 0; i < GATE_FRAME.poses; i++) {
     const c = document.createElement('canvas');
