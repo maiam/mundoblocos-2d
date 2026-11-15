@@ -37,7 +37,10 @@ import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, joinsFence, isW
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
-import { actorScaleFor, cellsTallFromSearch } from './worldScale';
+import { actorScaleFor, cellsTallFromSearch, objectScaleFor } from './worldScale';
+import { ChimneySmoke, chimneyWorldPos, type Chimney } from './three/chimneySmoke';
+import { chimneyMouths, isTownArt } from './townArt';
+import { hash2 } from '../world/random';
 import { ChunkWalls } from './three/chunkWalls';
 import { DEFAULT_WALL_THICKNESS } from '../world/walls';
 import { ThreeStage } from './three/stage';
@@ -105,6 +108,7 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly chips: BreakChips;
   private readonly cracks: BreakCracks;
   private readonly fx: SpriteFx;
+  private readonly smoke: ChimneySmoke;
   private impactSeen = 0;
   /** A quebra em andamento: onde, que bloco, a altura do topo e quando foi vista pela última vez (para o estouro final). */
   private lastBreak: { x: number; y: number; id: number; top: number; at: number } | null = null;
@@ -211,6 +215,8 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ripples = this.water ? new WaterRipples(this.worldLayer) : null;
     this.chips = new BreakChips(this.worldLayer, world.seed);
     this.cracks = new BreakCracks(this.worldLayer, world.cubeLevels);
+    this.smoke = new ChimneySmoke(this.worldLayer, world.seed);
+    this.smoke.setChimneys(this.villageChimneys());
     this.fx = new SpriteFx(this.worldLayer, () => getFxArt());
     this.fish = this.water ? new WaterFish(this.worldLayer, world.seed, getTownImages()) : null;
     if (this.ripples) {
@@ -297,6 +303,8 @@ export class WorldThreeRenderer implements GameRenderer {
       else this.fish.update(opts.dt, { x: cam.x / TILE, z: cam.y / TILE }, Math.hypot(view.x1 - view.x0, view.y1 - view.y0) / 2, opts.actors[0] ? { x: opts.actors[0].x, z: opts.actors[0].y } : null, (x, z) => openWaterAt(this.world, Math.floor(x), Math.floor(z)));
     }
     this.stepBreak(opts, inside, TILE * cam.zoom);
+    // Fumaça das chaminés da vila (v0.93.109): só as que estão na tela; sem a "sensação" e dentro de cômodos, nada.
+    if (!feelOn() || inside) this.smoke.clear(); else this.smoke.update(opts.dt, TILE * cam.zoom, view, opts.elapsed, skyAt(opts.time).night);
     if (inside) this.ripples?.clear();
     this.ripples?.update(opts.dt, skyAt(opts.time).night);
     this.actors.setFires(this.fires);
@@ -422,6 +430,27 @@ export class WorldThreeRenderer implements GameRenderer {
     this.fx.update(opts.dt);
   }
 
+  /**
+   * Chaminés das casas da Vila Camponesa no mundo (`World.village.props`; a variante da arte sai da posição, como no `worldSpriteArt`): a boca de cada
+   * uma vem de `townArt.CHIMNEY_MOUTH` e a posição 3D de `chimneyWorldPos`. Fixas: calculadas uma vez.
+   */
+  private villageChimneys(): Chimney[] {
+    const v = this.world.village;
+    if (!v) return [];
+    const out: Chimney[] = [];
+    for (const p of v.props) {
+      const vars = this.textures.variants.get(p.id);
+      const mouths = chimneyMouths(p.id);
+      if (!vars || !mouths.length) continue;
+      const idx = Math.floor(hash2(isTownArt(p.id) ? 0x7041 : this.world.seed, p.x * 7 + 3, p.y * 13 - 1) * vars.length);
+      const s = vars[idx], mouth = mouths[idx];
+      if (!s || !mouth) continue;
+      const pos = chimneyWorldPos(p, { ox: s.ox, oy: s.oy, w: s.w, h: s.h, imgW: s.canvas.width }, mouth, objectScaleFor(blockDef(p.id).shape), TILE);
+      out.push({ ...pos, phase: hash2(this.world.seed, p.x, p.y) });
+    }
+    return out;
+  }
+
   private isOpenWaterAt(x: number, z: number): boolean {
     const cx = Math.floor(x), cy = Math.floor(z);
     return openWaterAt(this.world, cx, cy);
@@ -526,6 +555,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.fish?.dispose();
     this.chips.dispose();
     this.cracks.dispose();
+    this.smoke.dispose();
     this.fx.dispose();
     this.prints.dispose();
     this.walls.dispose();

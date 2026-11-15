@@ -54,6 +54,20 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.V_HAY]: ['village-hay'], [Block.V_CART]: ['village-cart'], [Block.V_SACKS]: ['village-sacks'], [Block.V_FLOWERS]: ['village-flowers'],
 };
 
+/**
+ * Boca da chaminé (px da imagem final de cada casa da vila, a partir do canto superior esquerdo) — de onde sobe a fumaça animada
+ * (`three/chimneySmoke.ts`). Medida na arte SEM a fumaça desenhada (`scripts/extract-village.py`, `SMOKE_RIM`).
+ */
+export const CHIMNEY_MOUTH: Readonly<Record<string, readonly [number, number]>> = {
+  'village-house-straw-1': [118, 43], 'village-house-straw-2': [122, 41], 'village-house-straw-3': [122, 44],
+  'village-house-tile-1': [118, 39], 'village-house-tile-2': [113, 41],
+};
+
+/** Boca da chaminé de cada variante de `id` (mesma ordem de `IMAGE_ART[id]`; null onde a casa não tem chaminé animada). */
+export function chimneyMouths(id: BlockId): Array<readonly [number, number] | null> {
+  return (IMAGE_ART[id] ?? []).map((n) => CHIMNEY_MOUTH[n] ?? null);
+}
+
 type Ctx = CanvasRenderingContext2D;
 const T = TILE;
 const RES = 2;

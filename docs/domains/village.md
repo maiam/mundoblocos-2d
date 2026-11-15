@@ -56,3 +56,6 @@
 
 ## Animais (v0.93.91; v0.93.106: 3 de cada espécie)
 **Desde a v0.93.106 nascem 3 de cada — ovelhas, vacas, galinhas, capivaras e cavalos (`VILLAGE_ANIMALS_EACH`) —, os cavalos num gramado novo no sudeste (células 30–44 × 40–42, junto ao muro); o cavalo do campo diante do portão deixou de nascer com a vila.** Mundos salvos no aparelho antes mantêm os animais que já tinham (o salvamento guarda os bichos); **as salas do servidor são ajustadas ao abrir** (v0.93.108: `Entities.reconcileVillageAnimals`, snapshot < 7). Texto original (v0.93.91: ovelhas 4, vacas 2, galinhas 4, capivaras 3): ovelhas, vacas, galinhas e capivaras nascem dentro da vila (`Entities.spawnVillageAnimals`, faixas `VILLAGE_PENS`): galinhas no quintal do galinheiro (células 33–45 × 9–15), vacas no oeste (3–12 × 30–35), ovelhas no leste (33–44 × 29–34) e capivaras ao norte (8–16 × 6–9). O portão aberto deixa os bichos saírem (correia de 6–10 células); fechado, eles ficam. A galinha desenhada pelo artista (imagem única do galinheiro) segue só como enfeite.
+
+## Fumaça das chaminés (v0.93.109)
+As 5 casas (palha e telha) soltam fumaça animada (`render/three/chimneySmoke.ts`): a fumaça que vinha desenhada na arte foi apagada por `scripts/extract-village.py` e a boca de cada chaminé está em `render/townArt.ts` (`CHIMNEY_MOUTH`). Só quando a chaminé está na tela; `?sensacao=0` e cômodos sem.
