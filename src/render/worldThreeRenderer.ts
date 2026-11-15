@@ -363,9 +363,9 @@ export class WorldThreeRenderer implements GameRenderer {
       this.lastBreak = { x: b.x, y: b.y, id, top: w.stackHeight(b.x, b.y), at: opts.elapsed };
       const shake = cube ? breakShake(opts.elapsed, b.progress) : { dx: 0, dy: 0, dz: 0 };
       if (cube) this.blocks.setShake({ x: b.x, y: b.y }, shake); else this.blocks.setShake(null);
-      if (windKind(id) === 'tree' || !chipColor(id)) this.cracks.hide(); else this.cracks.show(b.x, b.y, h, b.progress, cube, shake);
+      if (!(cube || !top) || !chipColor(id)) this.cracks.hide(); else this.cracks.show(b.x, b.y, h, b.progress, cube, shake);
       const color = chipColor(id);
-      if (color && windKind(id) !== 'tree' && opts.elapsed - this.chipAt >= CHIP_EVERY) {
+      if (color && opts.elapsed - this.chipAt >= CHIP_EVERY) {
         this.chipAt = opts.elapsed;
         this.chips.emit(b.x + 0.5, h, b.y + 0.5, color, chipsPerBurst(b.progress));
       }

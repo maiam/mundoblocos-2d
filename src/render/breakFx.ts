@@ -1,4 +1,4 @@
-import { blockDef } from '../world/blocks';
+import { Block, blockDef, isCrop } from '../world/blocks';
 import { blockColor } from './mapColors';
 
 /**
@@ -6,10 +6,13 @@ import { blockColor } from './mapColors';
  * (lascas) e `ChunkBlocks.setShake` (tremor). O jogo (`ActionController`) continua dono de quanto falta para quebrar: aqui só o visual.
  */
 
-/** Cor (0–1) das lascas de um bloco: a do minimapa/material; madeira e pedra sem cor própria ganham um tom; null = não solta lascas (flor, capim…). */
+/** Cor (0–1) das lascas de um bloco: a do minimapa/material; madeira e pedra sem cor própria ganham um tom; árvore solta casca (marrom), flor pétalas e capim/culturas folhas (v0.93.101). */
 export function chipColor(id: number): [number, number, number] | null {
-  const own = blockColor(id);
   const d = blockDef(id);
+  if (d.shape === 'tree') return [0.5, 0.34, 0.2];                 // casca
+  if (id === Block.FLOWER) return [0.96, 0.62, 0.74];              // pétalas
+  if (id === Block.TALL_GRASS || d.organic === 'plant' || isCrop(id)) return [0.42, 0.76, 0.34]; // folhas
+  const own = blockColor(id);
   const css = own ?? (d.organic === 'wood' ? '#b98a56' : d.stone ? '#9b9a96' : d.soft ? '#8a5a36' : null);
   if (!css) return null;
   const n = parseInt(css.slice(1), 16);

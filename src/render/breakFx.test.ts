@@ -12,8 +12,9 @@ describe('breakFx (quebra de blocos)', () => {
     expect(stone).not.toBeNull();
     expect(sand[0]).toBeGreaterThan(stone[0]); // areia mais clara/quente que a pedra
     expect(chipColor(Block.OAK_PLANKS)).not.toBeNull();
-    expect(chipColor(Block.FLOWER)).toBeNull();
-    expect(chipColor(Block.TALL_GRASS)).toBeNull();
+    // v0.93.101: árvore solta casca; flor e capim, pétalas e folhas
+    for (const id of [Block.OAK_TREE, Block.SAKURA_TREE, Block.FLOWER, Block.TALL_GRASS]) expect(chipColor(id)).not.toBeNull();
+    expect(chipColor(Block.TALL_GRASS)![1]).toBeGreaterThan(chipColor(Block.TALL_GRASS)![0]); // verde
   });
 
   it('mais lascas e mais tremor quanto mais perto de quebrar', () => {
