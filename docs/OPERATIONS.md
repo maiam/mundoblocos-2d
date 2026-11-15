@@ -195,6 +195,8 @@ desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e des
 **Ferramentas por material**: a arte segue `assets-src/ferramentas/CONTRATO.md` (ficha em `catalogo.json`, prancha
 de ícones padronizada, camada de mão sobre pose-base). O motor só importa o que passou pela checagem da seção 5.
 
+**Efeitos de golpe** (pranchas 4 × 4 em `assets-src/efeitos/`: `buraco.png`, `corte-arvore.png`, `espada.png`): `python3 scripts/extract-fx.py` → `fx-dig.webp`, `fx-tree.webp`, `fx-slash.webp` (quadros 128 × 128; limpa o RGB dos pixels transparentes; escolhe os quadros usados). Tocados por `three/spriteFx.ts`.
+
 **Flores fofas** (PNGs individuais transparentes em `assets-src/flores/NN-nome.png`, 360 × 320, base do caule em y = 278): `python3 scripts/extract-flowers.py` → `flowers.webp` (tira de quadros 96 × 96, mesma escala para todas). Sorteadas por célula como variantes de `Block.FLOWER`.
 
 **Pedregulhos** (prancha de pedras soltas em fileiras irregulares, `assets-src/rocks-sheet.png`):

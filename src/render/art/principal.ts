@@ -217,6 +217,9 @@ import ovenIcon from '../../assets/icon-block-oven.webp';
 import ovenSprite from '../../assets/oven.webp';
 import rocks from '../../assets/rocks.webp';
 import flowers from '../../assets/flowers.webp';
+import fxDig from '../../assets/fx-dig.webp';
+import fxTree from '../../assets/fx-tree.webp';
+import fxSlash from '../../assets/fx-slash.webp';
 import fencePieces from '../../assets/fence.webp';
 import fenceGate from '../../assets/fence-gate.webp';
 import fenceIcon from '../../assets/icon-block-fence.webp';
@@ -521,6 +524,7 @@ const pack: ArtPack = {
   trees: { oak: treeOak, apple: treeApple, appleBare: treeAppleBare, cherry: treeCherry, birch: treeBirch, cactus: treeCactus },
   rocks,
   flowers,
+  fx: { dig: fxDig, tree: fxTree, slash: fxSlash },
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
   fence: {
     pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon,

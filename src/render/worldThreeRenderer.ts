@@ -30,7 +30,9 @@ import type { RenderOptions } from './renderer';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { getFxArt, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { SpriteFx } from './three/spriteFx';
+import { TOOLS } from '../world/items';
 import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, isWaterPlant, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
@@ -101,6 +103,8 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly fish: WaterFish | null;
   private readonly chips: BreakChips;
   private readonly cracks: BreakCracks;
+  private readonly fx: SpriteFx;
+  private impactSeen = 0;
   /** A quebra em andamento: onde, que bloco, a altura do topo e quando foi vista pela última vez (para o estouro final). */
   private lastBreak: { x: number; y: number; id: number; top: number; at: number } | null = null;
   private chipAt = 0;
@@ -202,6 +206,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ripples = this.water ? new WaterRipples(this.worldLayer) : null;
     this.chips = new BreakChips(this.worldLayer, world.seed);
     this.cracks = new BreakCracks(this.worldLayer, world.cubeLevels);
+    this.fx = new SpriteFx(this.worldLayer, () => getFxArt());
     this.fish = this.water ? new WaterFish(this.worldLayer, world.seed, getTownImages()) : null;
     if (this.ripples) {
       this.leaves.onLand = (x, z) => { if (this.isOpenWaterAt(x, z)) this.ripples!.emit(x, z, 0.5); };
@@ -353,8 +358,14 @@ export class WorldThreeRenderer implements GameRenderer {
    */
   private stepBreak(opts: RenderOptions, inside: unknown, cellPx: number): void {
     const b = opts.breaking && (opts.breaking as { valid?: boolean }).valid !== false ? opts.breaking : null;
-    if (!feelOn() || inside) { this.blocks.setShake(null); this.cracks.hide(); this.chips.clear(); this.lastBreak = null; this.chips.update(opts.dt, cellPx); return; }
+    if (!feelOn() || inside) { this.blocks.setShake(null); this.cracks.hide(); this.chips.clear(); this.fx.clear(); this.impactSeen = opts.player.impacts; this.lastBreak = null; this.chips.update(opts.dt, cellPx); return; }
     const w = this.world;
+    // Golpe (v0.93.102): o instante da pancada (`Player.consumeHit`) toca o efeito da ferramenta e solta as lascas, em vez de um ritmo fixo.
+    const p = opts.player;
+    const hit = p.impacts !== this.impactSeen;
+    this.impactSeen = p.impacts;
+    const swingTool = p.equipped !== null && TOOLS[p.equipped].swings;
+    if (hit && p.attackTool === 'sword') this.fx.play('slash', p.x + (p.facing === 'left' ? -1 : p.facing === 'right' ? 1 : 0), 1.2, p.y + (p.facing === 'down' ? 0.9 : p.facing === 'up' ? -0.9 : 0.3), { mirror: p.facing === 'left' || p.facing === 'up' });
     if (b) {
       const top = w.topBlock(b.x, b.y);
       const id = top ? top.id : w.getGround(b.x, b.y);
@@ -365,7 +376,8 @@ export class WorldThreeRenderer implements GameRenderer {
       if (cube) this.blocks.setShake({ x: b.x, y: b.y }, shake); else this.blocks.setShake(null);
       if (!(cube || !top) || !chipColor(id)) this.cracks.hide(); else this.cracks.show(b.x, b.y, h, b.progress, cube, shake);
       const color = chipColor(id);
-      if (color && opts.elapsed - this.chipAt >= CHIP_EVERY) {
+      if (hit && p.attackTool === 'axe' && windKind(id) === 'tree') this.fx.play('tree', b.x + 0.5, 0.95, b.y + 0.9);
+      if (color && (swingTool ? hit : opts.elapsed - this.chipAt >= CHIP_EVERY)) {
         this.chipAt = opts.elapsed;
         this.chips.emit(b.x + 0.5, h, b.y + 0.5, color, chipsPerBurst(b.progress));
       }
@@ -379,6 +391,7 @@ export class WorldThreeRenderer implements GameRenderer {
         const gone = w.stackHeight(lb.x, lb.y) < lb.top || (now ? now.id : w.getGround(lb.x, lb.y)) !== lb.id;
         if (gone) {
           const color = chipColor(lb.id);
+          if (w.getGround(lb.x, lb.y) === Block.HOLE) this.fx.play('dig', lb.x + 0.5, 0.12 * 2.2, lb.y + 0.5);
           if (color) {
             const h = Math.max(0, w.stackHeight(lb.x, lb.y)) / w.cubeLevels;
             this.chips.emit(lb.x + 0.5, h + 0.15, lb.y + 0.5, color, BREAK_BURST_CHIPS, 1.9);
@@ -389,6 +402,7 @@ export class WorldThreeRenderer implements GameRenderer {
       } else if (lb) this.lastBreak = null;
     }
     this.chips.update(opts.dt, cellPx);
+    this.fx.update(opts.dt);
   }
 
   private isOpenWaterAt(x: number, z: number): boolean {
@@ -495,6 +509,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.fish?.dispose();
     this.chips.dispose();
     this.cracks.dispose();
+    this.fx.dispose();
     this.prints.dispose();
     this.walls.dispose();
     this.doors.dispose();
