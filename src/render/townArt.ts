@@ -1,5 +1,6 @@
 import { TILE } from '../config';
-import { Block, type BlockId } from '../world/blocks';
+import { Block, type BlockId, blockDef } from '../world/blocks';
+import { objectScaleFor } from './worldScale';
 import { townSize, townSolid } from '../world/town';
 import { isWaterPlant } from '../world/blocks';
 import { isVillageId, VILLAGE_SIZES } from '../world/village';
@@ -149,7 +150,9 @@ function imageSprite(img: HTMLImageElement, id: BlockId): Sprite {
   const sh = img.height * k;
   // O 3D amplia o desenho em volta do meio da base (`objectScaleFor`): o centro fica em `x + (ox + sw/2)/T`. Nos lotes da vila (em células
   // da grade fina, `vs[0]` de largura) o centro é `x + vs[0]/2`, então `ox` usa a largura do lote inteira (a cidade, em células antigas, não muda).
-  const lotW = vs ? vs[0] : w;
+  // Prédios da cidade: o lote é gerado em células antigas e vira `SUBDIV` × maior; o 3D amplia o desenho por `objectScaleFor`, então o centro cai em `x + lotW/2`
+  // com `lotW` em células finas (antes usava `w` antigo: o desenho ficava ~2 células à esquerda da porta e da rua).
+  const lotW = vs ? vs[0] : w * objectScaleFor(blockDef(id).shape);
   const c = document.createElement('canvas');
   c.width = img.width;
   c.height = img.height;
