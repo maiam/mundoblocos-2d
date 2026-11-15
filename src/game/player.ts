@@ -64,6 +64,8 @@ export class Player extends Walker {
   attackTool: ToolId | null = null;
   /** Golpes começados (a sala repassa aos outros, que tocam a animação ao ver o número mudar). */
   swings = 0;
+  /** Quantos golpes já chegaram ao ponto de acerto (`consumeHit`): o render usa a mudança para tocar o efeito no instante da pancada. */
+  impacts = 0;
   /** Tempo do golpe em andamento (do personagem e da ferramenta, `attackTimingFor`); o `Game` liga `timingFor`. */
   timingFor: ((tool: ToolId | null) => AttackTiming) | null = null;
   private timing: AttackTiming = DEFAULT_ATTACK_TIMING;
@@ -148,6 +150,7 @@ export class Player extends Walker {
     if (this.hitDone || !this.attacking) return false;
     if (this.attackPhase < this.timing.hitAt) return false;
     this.hitDone = true;
+    this.impacts++;
     return true;
   }
 

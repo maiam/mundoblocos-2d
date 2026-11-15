@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.102 — efeitos de golpe em quadros: espada, machadada e buraco; lascas no instante da pancada (3D) (15/11/2026)
+- **Pedido do dono do produto:** 3 pranchas de efeito (buraco, corte de árvore, ataque de espada); sobre a estrela do corte de árvore: "pode reduzir ou pular a vontade"; sobre a espada: "espelha".
+- **Arte** (`scripts/extract-fx.py`, fontes em `assets-src/efeitos/`): pranchas 4 × 4 de 1254 px (quadros de 313,5 px, recortados com arredondamento) → tiras de quadros 128 × 128 (`fx-dig` 12 quadros, `fx-tree` 10, `fx-slash` 12). O RGB dos pixels quase transparentes (fios vermelhos/amarelos) é refeito a partir da vizinhança opaca (sem halo na filtragem). O corte de árvore **pula os 4 primeiros quadros** (a estrela grande) e é tocado menor (2 células); os 4 últimos quadros do buraco (buraco parado) ficam de fora.
+- **Render** (`three/spriteFx.ts`): pool de 12 planos voltados para a câmera, por cima do mundo (sem teste de profundidade), que tocam os quadros (dig 16 fps, tree 22, slash 26). Espada: no **instante do golpe** (`Player.impacts`, novo contador incrementado em `consumeHit`), à frente do personagem, **espelhada** para esquerda e para cima; machado: no pé da árvore atingida; buraco: quando o chão atingido vira `HOLE` (cobre a troca de textura).
+- **Lascas no impacto** (era o próximo pendente da quebra): com ferramenta de golpe na mão, as lascas saem no instante da pancada (`hit`) em vez de a cada 0,2 s; sem ferramenta (mão), segue o ritmo fixo.
+- Só cliente e só 3D (`?sensacao=0` e cômodos ficam sem); sem mapa, save, protocolo ou `RenderOptions` novo (servidor não muda).
+
 ## Orvalis v0.93.101 — lascas também ao cortar árvore e ao quebrar plantas (3D) (15/11/2026)
 - **Seguindo a ordem combinada** dos pendentes da animação de quebrar: lascas em outros alvos além dos blocos.
 - **Cores** (`breakFx.chipColor`): árvore solta **casca** (marrom), flor **pétalas** (rosa), capim, plantas e culturas **folhas** (verde); portas, portões e cercas já soltavam lascas de madeira. As árvores continuam com o tremor e as folhas de antes (v0.93.83), agora com casca no pé.
