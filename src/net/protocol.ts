@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 25;
+export const PROTOCOL_VERSION = 26;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -87,7 +87,11 @@ export type ClientMessage =
   /** Golpe (espada/machado) para `facing`, com a força de quem bate (ataque + poder da arma): a sala calcula o acerto. */
   | { t: 'strike'; facing: Facing; attack: number }
   /** Dar `item` ao animal `id` (o da lista `mobs`): a sala decide se ele come; o item sai da bolsa no `fed`. */
-  | { t: 'feed'; id: number; item: string };
+  | { t: 'feed'; id: number; item: string }
+  /** Começou (`on`) ou terminou de conversar com o morador `id` (o da lista `mobs`): a sala o segura parado para todos (v26, ADR 0034). */
+  | { t: 'talk'; id: number; on: boolean }
+  /** Pede para o morador `id` acompanhar este jogador (`on`) ou parar de acompanhar (missões, v26): a sala responde `escort` com `ok`. */
+  | { t: 'escort'; id: number; on: boolean };
 
 /** Direções na rede (índice em `MobState.f`). */
 export const FACING_ORDER: readonly Facing[] = ['down', 'left', 'right', 'up'];
@@ -97,7 +101,8 @@ export const FACING_ORDER: readonly Facing[] = ['down', 'left', 'right', 'up'];
  * propósito (vai ~10×/s): `i` id (0 = efeito sem id: morte ou coraçõezinhos), `k` tipo (`sheep`, `horse`, `cow`,
  * `chicken`, monstro ou `love-hearts`), `f` direção (`FACING_ORDER`), `m` andando, `b` filhote, `l` apaixonado (coração),
  * `e` pode comer agora, `p` vida restante (0..1, só ferido), `h` piscando de dor, `d` morte (0..1), `r` quadro e `s`
- * tamanho dos coraçõezinhos.
+ * tamanho dos coraçõezinhos. Moradores (v26): `k` = `npc-<id>`, `u` id do sorteado (`rt3`; ausente = nomeado), `a` desbotar (0..1, entrando/
+ * saindo pela porta) e `g` id do jogador que ele acompanha (missão). Morador dormindo não vem na lista.
  */
 export interface MobState {
   i: number;
@@ -116,6 +121,9 @@ export interface MobState {
   d?: number;
   r?: number;
   s?: number;
+  u?: string;
+  a?: number;
+  g?: number;
 }
 
 /** Espaços de um baú na rede: pilha (id + quantidade) ou vazio. */
@@ -175,6 +183,8 @@ export type ServerMessage =
   | { t: 'hits'; list: Array<[number, number, number, 0 | 1]> }
   /** O animal comeu: tira `item` da bolsa de quem deu. */
   | { t: 'fed'; id: number; item: string }
+  /** Resposta ao pedido `escort` (`on`): `ok` falso = o morador já está acompanhando outro jogador (ou longe demais). */
+  | { t: 'escort'; id: number; ok: boolean }
   | { t: 'joined'; player: PlayerInfo }
   | { t: 'left'; id: number }
   | { t: 'state'; id: number; s: PlayerState }
@@ -229,6 +239,10 @@ export function parseClientMessage(text: string): ClientMessage | null {
       return { t: 'strike', facing: o.facing as Facing, attack: o.attack as number };
     case 'feed':
       return Number.isInteger(o.id) && typeof o.item === 'string' && /^[a-z_]{1,32}$/.test(o.item) ? { t: 'feed', id: o.id as number, item: o.item } : null;
+    case 'talk':
+      return Number.isInteger(o.id) && typeof o.on === 'boolean' ? { t: 'talk', id: o.id as number, on: o.on } : null;
+    case 'escort':
+      return Number.isInteger(o.id) && typeof o.on === 'boolean' ? { t: 'escort', id: o.id as number, on: o.on } : null;
     case 'action': {
       const a = parseAction(o.a);
       return a && Number.isInteger(o.seq) ? { t: 'action', seq: o.seq as number, a } : null;

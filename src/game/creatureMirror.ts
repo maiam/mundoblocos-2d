@@ -6,13 +6,17 @@ import type { Entities } from './entities';
 import { FarmAnimal, type FarmKind } from './horse';
 import { GOBLIN_VISUALS, hasPoses, Monster, MONSTERS } from './monster';
 import { Sheep } from './sheep';
+import { RESIDENTS_TOWN, RESIDENTS_VILLAGE } from './entities';
+import { NPC_IDS, type NpcId } from './npcs';
+import { type ResidentDef, residentRoster } from './residents';
+import { Villager } from './villager';
 
 /** Acima disso (células) o bicho é teleportado em vez de deslizar (voltou a ficar perto, renasceu…). */
 const SNAP = 6;
 const FARM_KINDS = new Set<string>(['horse', 'cow', 'chicken', 'capybara']);
 
 interface Mirrored {
-  obj: Breeder | Monster;
+  obj: Breeder | Monster | Villager;
   tx: number;
   ty: number;
   baby: boolean;
@@ -28,7 +32,14 @@ export class CreatureMirror {
   private readonly byId = new Map<number, Mirrored>();
   private readonly ids = new WeakMap<object, number>();
 
-  constructor(private readonly entities: Entities, private readonly world: World) {}
+  /** Os sorteados do mundo por id (a sala manda só o id; nome, cores e falas saem da seed, como no jogo sozinho). */
+  private readonly roster: Map<string, ResidentDef>;
+  /** A conversa com um morador começou/terminou: o jogo avisa a sala (ela o segura parado para todos). */
+  onTalk: ((id: number, on: boolean) => void) | null = null;
+
+  constructor(private readonly entities: Entities, private readonly world: World) {
+    this.roster = residentRoster(world.seed, RESIDENTS_TOWN, RESIDENTS_VILLAGE);
+  }
 
   /** Id na sala de um animal espelhado (para dar comida), ou null. */
   idOf(o: object): number | null {
@@ -69,7 +80,10 @@ export class CreatureMirror {
       const o = r.obj;
       o.facing = facing;
       o.moving = !!m.m;
-      if (o instanceof Monster) {
+      if (o instanceof Villager) {
+        o.fade = m.a ?? 0;
+        o.escortedBy = m.g ?? null;
+      } else if (o instanceof Monster) {
         o.hp = m.p !== undefined ? m.p * o.maxHp : o.maxHp;
         o.hurt = m.h ? 0.2 : 0;
         if (hasPoses(o.kind)) {
@@ -97,8 +111,18 @@ export class CreatureMirror {
     }
   }
 
-  private create(m: MobState): Breeder | Monster | null {
+  private create(m: MobState): Breeder | Monster | Villager | null {
     const e = this.entities;
+    if (m.k.startsWith('npc-')) {
+      const npc = m.k.slice(4);
+      if (!(NPC_IDS as readonly string[]).includes(npc)) return null;
+      const resident = m.u ? this.roster.get(m.u) ?? null : null;
+      if (m.u && !resident) return null;
+      const v = new Villager(m.x, m.y, npc as NpcId, () => true, Math.random, resident);
+      v.talkHook = (on) => { const id = this.ids.get(v); if (id) this.onTalk?.(id, on); };
+      e.villagers.push(v);
+      return v;
+    }
     if (m.k === 'sheep') {
       const s = new Sheep(m.x, m.y, m.x, m.y, Math.random, !!m.b);
       e.npcs.push(s);
@@ -124,7 +148,7 @@ export class CreatureMirror {
     if (!r) return;
     this.byId.delete(id);
     const e = this.entities;
-    const list: Array<Breeder | Monster> = r.obj instanceof Monster ? e.monsters : r.obj instanceof FarmAnimal ? e.horses : e.npcs;
+    const list: Array<Breeder | Monster | Villager> = r.obj instanceof Villager ? e.villagers : r.obj instanceof Monster ? e.monsters : r.obj instanceof FarmAnimal ? e.horses : e.npcs;
     const i = list.indexOf(r.obj);
     if (i >= 0) list.splice(i, 1);
   }

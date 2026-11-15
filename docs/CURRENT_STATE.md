@@ -11,7 +11,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 | Item | Valor | Fonte |
 |---|---|---|
 | Versão do jogo | 0.93.94 | `package.json` |
-| `PROTOCOL_VERSION` (multiplayer) | 23 | `src/net/protocol.ts` |
+| `PROTOCOL_VERSION` (multiplayer) | 26 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 15 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
 | Orçamento de início (ADR 0013) | ~2,9 MB de 3 MB (inalterado na v0.91.0: Mila e lobos carregam sob demanda) — **no limite** | build do artifact |
@@ -71,8 +71,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   no chão e moradores não são salvos; no jogo sozinho os animais do campo também não.
 - **Jogar com amigos** (`domains/multiplayer.md`, ADRs 0015/0016/0020/0021): menu ☰ → **Sala 1**, até 10 jogadores,
   aberta a quem tiver o site. O **servidor** (repositório `maiam/orvalis-servidor`) é dono do mundo, da hora, do
-  crescimento, dos itens no chão e baús, dos animais e das aranhas; mundo, bolsas e animais da sala ficam salvos no
-  servidor. Moradores seguem locais. A opção só aparece onde o servidor aceita a origem (no Artifact aparece um aviso
+  crescimento, dos itens no chão e baús, dos animais, das aranhas e **dos moradores** (rotina, passeio e acompanhante de missão; v0.93.117); mundo, bolsas e animais da sala ficam salvos no
+  servidor (moradores nascem pela seed). Conversa, loja, memória e missões seguem no aparelho de cada um. A opção só aparece onde o servidor aceita a origem (no Artifact aparece um aviso
   com o link do site).
 
 ## Hospedagem e publicação

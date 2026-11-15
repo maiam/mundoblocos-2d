@@ -3,6 +3,7 @@ import { type AnimalSave, Entities } from '../game/entities';
 import { Player } from '../game/player';
 import { GOBLIN_VISUALS, hasPoses } from '../game/monster';
 import { Sheep } from '../game/sheep';
+import type { Villager } from '../game/villager';
 import { applyAction } from '../world/actions';
 import { Block } from '../world/blocks';
 import { toChunk } from '../world/coords';
@@ -38,6 +39,10 @@ const CREATURE_STEP = 0.1;
 const LOAD_RADIUS = 28;
 /** Distância máxima (células) para dar comida a um animal. */
 const FEED_REACH = 3;
+/** Alcance (células) para conversar com um morador ou pedir que ele acompanhe (as lojas atendem do outro lado do balcão). */
+export const TALK_REACH = 8;
+/** Conversa aberta há mais que isto (s) solta o morador mesmo sem o aviso do jogador (fechou o jogo, caiu a rede). */
+const TALK_MAX_SECONDS = 120;
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
 /** O que o servidor grava em disco de uma sala: mundo (chunks editados), hora e bolsas por nome. */
@@ -142,6 +147,18 @@ export class Room {
     const d = this.world.dungeon;
     if (d) this.loadRect(d.area.x0, d.area.y0, d.area.x1, d.area.y1);
     e.spawnWildlife(this.world, true);
+    // Moradores (v26, ADR 0034): a sala os simula para todos (rotina, passeio, sorteados); conversa/loja/missão seguem no aparelho de cada um.
+    this.loadPeopleAreas();
+    e.spawnVillagers(this.world);
+    e.spawnResidents(this.world);
+  }
+
+  /** Gera os chunks onde os moradores nascem e andam: a cidade, os cômodos (balcões) e a vila. */
+  private loadPeopleAreas(): void {
+    const w = this.world;
+    if (w.town) this.loadRect(w.town.area.x0, w.town.area.y0, w.town.area.x1, w.town.area.y1);
+    for (const l of w.interiors) this.loadRect(l.area.x0, l.area.y0, l.area.x1, l.area.y1);
+    if (w.village) this.loadRect(w.village.area.x0, w.village.area.y0, w.village.area.x1, w.village.area.y1);
   }
 
   /** Carrega (gera) os chunks em volta de (x, y). */
@@ -190,12 +207,45 @@ export class Room {
 
   leave(id: number): Outgoing[] {
     if (!this.players.delete(id)) return [];
+    this.releasePlayerVillagers(id); // antes de tirar o avatar: solta a conversa e manda quem o acompanhava de volta ao posto
     const av = this.avatars.get(id);
     if (av) {
       this.avatars.delete(id);
       this.entities.avatars.splice(this.entities.avatars.indexOf(av), 1);
     }
     return [{ to: 'all', msg: { t: 'left', id } }];
+  }
+
+  /** Moradores presos numa conversa (jogador → morador, quando começou) e quem tem uma conversa aberta há tempo demais é solto. */
+  private readonly talks = new Map<number, { v: Villager; since: number }>();
+
+  private releaseTalk(id: number): void {
+    const t = this.talks.get(id);
+    if (!t) return;
+    this.talks.delete(id);
+    if (![...this.talks.values()].some((o) => o.v === t.v)) t.v.freeze(false);
+  }
+
+  private releaseStaleTalks(): void {
+    for (const [pid, t] of this.talks) if (this.clock - t.since > TALK_MAX_SECONDS) this.releaseTalk(pid);
+  }
+
+  /** O jogador saiu: solta a conversa dele e os moradores que o acompanhavam voltam ao posto. */
+  private releasePlayerVillagers(id: number): void {
+    this.releaseTalk(id);
+    const av = this.avatars.get(id);
+    for (const v of this.entities.villagers) {
+      if (av && v.leader === av) { v.setCompanion(false); v.leader = null; }
+    }
+  }
+
+  private villagerById(id: number): Villager | null {
+    return this.entities.villagers.find((v) => this.mobIds.get(v) === id) ?? null;
+  }
+
+  private playerIdOf(av: object | null): number {
+    if (av) for (const [pid, a] of this.avatars) if (a === av) return pid;
+    return 0;
   }
 
   /** Mensagem de um jogador já na sala. Ações passam pelas regras do `World`; recusadas voltam só para quem mandou. */
@@ -223,6 +273,23 @@ export class Room {
       av.facing = m.facing;
       this.entities.strikeFrom(av, m.facing, m.attack, this.world);
       return this.flush();
+    }
+    if (m.t === 'talk' || m.t === 'escort') {
+      const av = this.avatars.get(id);
+      const v = av ? this.villagerById(m.id) : null;
+      if (!av || !v) return [];
+      const close = Math.hypot(v.x - av.x, v.y - av.y) <= TALK_REACH;
+      if (m.t === 'talk') {
+        this.releaseTalk(id);
+        if (m.on && close) { v.freeze(true); v.faceTo(av.x, av.y); this.talks.set(id, { v, since: this.clock }); }
+        return [];
+      }
+      if (!m.on) { if (v.leader === av) { v.setCompanion(false); v.leader = null; } return []; }
+      if (v.escorting && v.leader !== av) return [{ to: id, msg: { t: 'escort', id: m.id, ok: false } }]; // já está com outro jogador
+      if (!close && v.leader !== av) return [{ to: id, msg: { t: 'escort', id: m.id, ok: false } }];
+      v.leader = av;
+      v.setCompanion(true);
+      return [{ to: id, msg: { t: 'escort', id: m.id, ok: true } }];
     }
     if (m.t === 'feed') {
       const av = this.avatars.get(id);
@@ -305,6 +372,8 @@ export class Room {
     if (this.players.size) {
       this.dirty = true;
       for (const av of this.avatars.values()) this.loadAround(av.x, av.y, LOAD_RADIUS);
+      this.entities.time = this.time; // a rotina dos moradores segue a hora da sala
+      this.releaseStaleTalks();
       for (let left = dt; left > 1e-6; left -= CREATURE_STEP) this.entities.update(Math.min(CREATURE_STEP, left), this.world);
       out.push(...this.flush());
       this.mobTimer -= dt;
@@ -353,6 +422,16 @@ export class Room {
       if (a.baby) s.b = 1;
       if (a.inLove && a.courtship <= 0) s.l = 1;
       if (a.canEat) s.e = 1;
+      list.push(s);
+    }
+    for (const v of e.villagers) {
+      if (v.hidden || !near(v)) continue; // quem dorme sai da lista (o espelho some com ele)
+      const s: MobState = { i: this.mobId(v), k: `npc-${v.npc}`, x: round2(v.x), y: round2(v.y), f: FACING_ORDER.indexOf(v.facing) };
+      if (v.moving) s.m = 1;
+      if (v.resident) s.u = v.resident.id;
+      if (v.fade > 0) s.a = round2(v.fade);
+      const g = this.playerIdOf(v.leader as object | null);
+      if (g) s.g = g;
       list.push(s);
     }
     for (const m of e.monsters) {

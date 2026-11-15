@@ -23,7 +23,7 @@ operacional e faz parte da entrega.
 - `src/world/` **não usa DOM nem `Math.random()`** (testável em Node, determinístico por seed).
 - **Multiplayer** (ADR 0016): `src/net/` e `world/actions.ts` são compartilhados com o servidor — sem DOM; mensagem
   incompatível → suba `PROTOCOL_VERSION`. Ação que muda o mapa só vale quando o servidor confirma (`applied`).
-  Bichos da sala (ADR 0021): a sala roda as mesmas `game/entities.ts` (e tudo o que ela importa vai para o servidor:
+  Bichos e moradores da sala (ADR 0021, 0034; v0.93.117): a sala roda as mesmas `game/entities.ts` (e tudo o que ela importa vai para o servidor:
   sem DOM nem arte); na sala o aparelho só espelha (`CreatureMirror`) e golpe/comida passam pela sala.
 - **Grade fina (ADR 0032):** toda coordenada em células depende de `SUBDIV` (`config.ts`; padrão `DEFAULT_SUBDIV = 2` desde a F7 (v0.93.59; troca **no jogo e no servidor juntos**; o Santuário fica em 1)). Dado que sai da sessão (salvamento v16, `RoomSnapshot` v5, `hello`) carrega `sub`; a migração é de `world/subdiv.ts` (só aumenta a grade; arquivo de grade mais fina não é aberto nem sobrescrito). Constante nova em células → multiplique por `SUBDIV` (jogabilidade) ou use `objectScaleFor` (arte).
 - `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula

@@ -27,6 +27,9 @@
 - **Cores:** `Look {hue, sat, val}` → `Actor.look` → `uRecolor` no shader do billboard (gira matiz e ajusta sat/brilho de tudo menos pele e neutros). Sem arte nova nem peso extra. O retrato da conversa é o da folha-base (a cor do cabelo no retrato é a original).
 - **Execução:** `Entities.spawnResidents` (depois de `spawnVillagers`); `Villager(…, resident)` usa nome/falas do sorteado; `npc` = folha emprestada. Cidade: ruas; vila: dentro do muro, pontos nos caminhos. Só no aparelho (a sala não simula moradores). Sem rotina de dormir ainda (só o Bento).
 
+## Moradores na sala (v0.93.117)
+- A sala (`Room`) roda os moradores; o aparelho espelha (`CreatureMirror` cria `Villager`s). Detalhe e protocolo: `domains/multiplayer.md`. Sozinho, os moradores nascem no `Game` como antes.
+
 ## Missões e acompanhante (v0.93.116, ADR 0034 nível 4)
 - `game/npcBrain/quests.ts`: `QuestDef` (giver, item, count, recompensa, textos), `phaseOf` (`available/active/ready/done`), `markOf` (sinal), `sanitizeLog`. Única missão: **Ervas de cura** (Silvano, 6 Flores silvestres, 12 Moedas). Estado em `Entities.quests`, **salvo no jogador** (v19); sinais em `Entities.marks` (recalculados por `Game.updateQuests`).
 - **Sinal** `Actor.mark`: `!` oferece, `?` azulado em andamento, `?` dourado pronta. **Conversa com escolhas:** `Conversation.prompt/choices` no `DialogueBox`.
