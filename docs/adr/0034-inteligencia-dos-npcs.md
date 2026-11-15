@@ -37,6 +37,6 @@ Escolhido porque já tem cômodo, loja (`ShopWindow`) e retrato. Depois o mesmo 
 ## Consequências e riscos
 - Desempenho: orçamento de decisões por quadro e **NPC distante não é simulado** (volta ao ponto da agenda ao aproximar).
 - Mundos já salvos: o novo bloco de memória nasce vazio (migração aditiva do save).
-- Sala/servidor: nenhum protocolo novo; se um dia os NPCs forem compartilhados entre jogadores, isso vira ADR à parte.
+- Sala/servidor: **atualizado em 15/11/2026 (v0.93.117, decisão do dono do produto): a sala simula os moradores** (protocolo 26) — rotina, passeio e sorteados iguais para todos; conversa, loja, memória e missões continuam por jogador, no aparelho. Acompanhante de missão: um jogador por vez. Detalhe: `docs/domains/multiplayer.md`.
 - Ordem sugerida: (1) `npcBrain` puro + agenda + Bento (nível 1); (2) loja fechada/dormir pela porta; (3) memória e falas (nível 3); (4) recolor + moradores
   sorteados; (5) reações (nível 2); (6) objetivos e boatos (nível 4).

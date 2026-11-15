@@ -128,5 +128,12 @@ export function makeResidents(seed: number, place: ResidentPlace, count: number,
   return out;
 }
 
+/** Todos os sorteados do mundo por id (`rt0`…, `rv0`…): o aparelho dentro da sala os reconhece pelo id que a sala manda (mesma seed, mesma lista; a vila evita os nomes da cidade). */
+export function residentRoster(seed: number, townCount: number, villageCount: number): Map<string, ResidentDef> {
+  const town = makeResidents(seed, 'town', townCount);
+  const village = makeResidents(seed, 'village', villageCount, town.map((r) => r.name));
+  return new Map([...town, ...village].map((r) => [r.id, r]));
+}
+
 /** O sorteado conhece o nome de um NPC nomeado? (teste de colisão de nomes) */
 export const NAMED_NPC_NAMES: ReadonlySet<string> = new Set(NPCS.map((n) => n.name));

@@ -35,6 +35,7 @@ import type { Conversation, Villager } from './villager';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
+import { phaseAt, scheduleOf, shopOpen } from './npcBrain/schedule';
 import { markOf, phaseOf, type QuestDef, questOf, QUESTS } from './npcBrain/quests';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { HUNGER, weaponPower } from '../world/progression';
@@ -203,8 +204,11 @@ export class Game {
     // Animais e monstros: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
     if (options.net) this.entities.remote = true;
     else this.entities.spawnWildlife(this.world, true);
-    this.entities.spawnVillagers(this.world);
-    this.entities.spawnResidents(this.world);
+    // Moradores: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
+    if (!options.net) {
+      this.entities.spawnVillagers(this.world);
+      this.entities.spawnResidents(this.world);
+    }
     // Monstro derrotado solta os espólios no lugar (seda, presas, Coração da Rainha).
     this.entities.onMonsterKilled = (m) => this.drops.spawn(m.x, m.y + 0.2, monsterDrops(m.kind));
     this.entities.onDamage = (x, y, hit, target) => { this.renderer.addDamage(x, y, hit, target); if (target === 'enemy') this.onHitLanded(hit.crit); };
@@ -314,6 +318,8 @@ export class Game {
       const mirror = new CreatureMirror(this.entities, this.world);
       this.mirror = mirror;
       net.onMobs = (list) => mirror.apply(list);
+      mirror.onTalk = (id, on) => net.talk(id, on);
+      net.onEscort = (id, ok) => this.onEscortReply(id, ok);
       net.onBite = (kind, x, y) => { if (kind in MONSTERS) this.entities.biteFrom(kind as MonsterKind, x, y, this.world); };
       net.onHits = (list) => { for (const [x, y, amount, crit] of list) { this.renderer.addDamage(x, y, { amount, crit: crit === 1 }, 'enemy'); this.onHitLanded(crit === 1); } };
       net.onFed = (_id, item) => {
@@ -816,7 +822,12 @@ export class Game {
     if (this.dialogue.isOpen && this.dialogue.npc === v) { this.dialogue.advance(); return; }
     this.actions.cancelAll();
     v.faceTo(this.player.x, this.player.y);
-    if (v.role === 'merchant' && !v.shopIsOpen) { this.dialogue.open(v.closedConversation(), v, () => v.release()); return; } // loja fechada (rotina do Bento)
+    // Loja fechada (rotina do Bento): pela hora do mundo, igual no jogo sozinho e na sala.
+    const sched = scheduleOf(v.npc);
+    if (v.role === 'merchant' && !shopOpen(sched, this.time)) {
+      this.dialogue.open(v.closedConversation(sched ? phaseAt(sched, this.time) : 'closing'), v, () => v.release());
+      return;
+    }
     if (v.role === 'merchant' || v.role === 'florist') { this.openShop(v); return; } // mercador e florista não conversam: abrem a loja (v0.93.57, v0.93.110)
     const quest = v.resident ? null : questOf(v.npc);
     if (quest && this.talkQuest(v, quest)) return;
@@ -849,7 +860,8 @@ export class Game {
       this.hotbar.prune(this.inventory);
       this.refreshSelection();
       this.entities.quests[q.id] = 'done';
-      v.setCompanion(false); // volta ao posto
+      const rid = this.mirror?.idOf(v);
+      if (this.mirror) { if (rid) this.options.net?.escort(rid, false); } else v.setCompanion(false); // volta ao posto
       noteTalk(this.entities.memory, v.memoryKey);
       noteBuy(this.entities.memory, v.memoryKey, 5); // a ajuda conta como favor: sobe a relação
       this.hud.toast(`Missão cumprida: ${q.title} (+${q.reward.count} Moedas de Cobre)`);
@@ -861,7 +873,9 @@ export class Game {
 
   private acceptQuest(v: Villager, q: QuestDef): void {
     this.entities.quests[q.id] = 'active';
-    v.setCompanion(true);
+    const rid = this.mirror?.idOf(v);
+    if (this.mirror) { if (rid) { this.escortAsked = { id: rid, fresh: q.id }; this.options.net?.escort(rid, true); } } // na sala: a sala decide se ele pode vir
+    else v.setCompanion(true);
     this.hud.toast(`Missão aceita: ${q.title}`);
     this.dialogue.open({ npc: v.npc, name: v.name, text: q.accepted }, v, () => v.release());
   }
@@ -876,7 +890,15 @@ export class Game {
       const giver = this.entities.villagers.find((x) => x.npc === q.giver && !x.resident);
       if (!giver) continue;
       if (this.entities.quests[q.id] === 'active') {
-        if (!giver.escorting) { // carregou o jogo no meio da missão: ele vem para perto
+        if (this.mirror) { // na sala: pede de novo que ele me acompanhe se ele voltou ao posto (reentrou, ou outro o levou e soltou)
+          const rid = this.mirror.idOf(giver);
+          this.askTimer -= dt;
+          if (rid && giver.escortedBy !== this.options.net?.you && this.askTimer <= 0) {
+            this.askTimer = 5;
+            this.escortAsked = { id: rid, fresh: null };
+            this.options.net?.escort(rid, true);
+          }
+        } else if (!giver.escorting) { // carregou o jogo no meio da missão: ele vem para perto
           giver.setCompanion(true);
           giver.teleportTo(this.player.x - 1.5, this.player.y);
         }
@@ -896,6 +918,21 @@ export class Game {
     this.entities.marks = marks as typeof this.entities.marks;
   }
   private remarkTimer = 8;
+  private askTimer = 0;
+  /** Pedido de acompanhar em aberto (na sala): `fresh` = missão recém-aceita (se a sala negar, a missão volta a ser oferecida). */
+  private escortAsked: { id: number; fresh: QuestDef['id'] | null } | null = null;
+
+  /** A sala respondeu ao pedido de acompanhar: negado = ele já está com outro jogador. */
+  private onEscortReply(id: number, ok: boolean): void {
+    const ask = this.escortAsked;
+    if (!ask || ask.id !== id) return;
+    this.escortAsked = null;
+    if (ok) return;
+    if (ask.fresh) { // não valeu: a missão continua oferecida
+      delete this.entities.quests[ask.fresh];
+      this.hud.toast('Ele já está ajudando outra pessoa agora. Tente de novo daqui a pouco.');
+    } else this.askTimer = 30; // retomada negada: tenta de novo mais tarde, sem avisar toda hora
+  }
   private remarkIndex = 0;
 
   /** Vitrine, título e falas de cada loja (Mercado e Floricultura, v0.93.110). */

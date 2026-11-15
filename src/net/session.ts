@@ -53,6 +53,8 @@ export class NetSession {
   onHits: ((list: Array<[number, number, number, 0 | 1]>) => void) | null = null;
   /** O animal comeu o que eu dei (tirar o item da bolsa). */
   onFed: ((id: number, item: string) => void) | null = null;
+  /** Resposta ao pedido de acompanhar um morador (`ok` falso = ocupado com outro jogador ou longe). */
+  onEscort: ((id: number, ok: boolean) => void) | null = null;
   /** Itens já no chão ao entrar (entregues ao jogo no `attach`/`onDrops`). */
   drops: RoomDrop[] = [];
   private chestBacklog: Array<{ x: number; y: number; slots: ChestSlotsMsg }> = [];
@@ -84,6 +86,16 @@ export class NetSession {
   /** Dar `item` ao animal `id` da sala (o item só sai da bolsa no `fed`). */
   feed(id: number, item: string): void {
     this.send({ t: 'feed', id, item });
+  }
+
+  /** Conversa com o morador `id` começou/terminou (a sala o segura parado). */
+  talk(id: number, on: boolean): void {
+    this.send({ t: 'talk', id, on });
+  }
+
+  /** Pede que o morador `id` me acompanhe (`on`) ou pare (a sala responde `onEscort`). */
+  escort(id: number, on: boolean): void {
+    this.send({ t: 'escort', id, on });
   }
 
   /** Conteúdo do baú depois de mexer nele (a sala guarda e repassa aos outros). */
@@ -186,6 +198,9 @@ export class NetSession {
         break;
       case 'hits':
         this.onHits?.(m.list);
+        break;
+      case 'escort':
+        this.onEscort?.(m.id, m.ok);
         break;
       case 'fed':
         this.onFed?.(m.id, m.item);

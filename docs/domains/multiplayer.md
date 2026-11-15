@@ -34,7 +34,7 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
 3. Em jogo: `state` (posição, direção, ferramenta, golpes, sentado) ~10×/s; `action` (quebrar, colocar, arar, plantar,
    porta…) só vale quando a sala devolve `applied` (senão `rejected` e o aparelho desfaz); `take` (pegar item: quem pedir
    primeiro leva), `chest`, `bag` (a cada 5 s e ao sair), `strike`, `feed`.
-4. A sala manda `mobs` (bichos a até 22 células de cada jogador, ~10×/s), `hits`, `bite`, `fed`, `drops`, `taken`,
+4. A sala manda `mobs` (bichos **e moradores** a até 22 células de cada jogador, ~10×/s), `hits`, `bite`, `fed`, `drops`, `taken`,
    `grow`, `time` (a cada 30 s), `joined`/`left`.
 
 ## Regras importantes
@@ -44,7 +44,7 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
   (`World.tick(..., grow = false)`).
 - **Itens no chão e baús** são da sala (`ActionContext.sharedLoot`): quem quebra não cria o item; só entra na bolsa o que
   a sala confirmar. Dois mexendo no mesmo baú ao mesmo tempo: vale o último (sem trava).
-- **Bichos:** a sala roda as mesmas `Entities` (jogadores como `avatars`); o aparelho só espelha. Moradores seguem locais.
+- **Bichos e moradores (v26):** a sala roda as mesmas `Entities` (jogadores como `avatars`); o aparelho só espelha (`CreatureMirror`). Moradores: nomeados e sorteados nascem pela seed e seguem a hora da sala (rotina do Bento); o aparelho manda `talk` (segura o morador parado) e `escort` (acompanhante de missão, um jogador por vez; resposta `escort {ok}`); `MobState.u/a/g` = id do sorteado, desbotar, quem ele acompanha. Conversa, loja, memória e missões são do aparelho (salvamento do jogador).
   Monstros não são salvos (renascem pela seed); animais são salvos desde a v0.73.0 (`RoomSnapshot` v3).
 - **Salvamento:** na sala nada vai para o salvamento local; bolsa, posição, mundo e animais ficam no servidor
   (`RoomSnapshot`, versão `ROOM_SNAPSHOT_VERSION` = 4; aceita v1–v4; v4 traz `holes`, as idades dos buracos).
@@ -60,4 +60,4 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
 
 ## Pendências
 Medir CPU e banda na Hostinger com gente de verdade; comprimir o `welcome` quando o mundo editado crescer; mais salas
-(`ROOMS`); moradores compartilhados; descarregar chunks do servidor; chat e grupos nas cidades (Fase M, item 4).
+(`ROOMS`); descarregar chunks do servidor; chat e grupos nas cidades (Fase M, item 4).

@@ -41,6 +41,12 @@ export class Villager extends Wanderer {
   private stuckFor = 0;
   /** Acompanhando a jogadora numa missão (ADR 0034): `follow` anda atrás dela por onde for; `home` volta ao posto ao terminar. */
   private companion: 'off' | 'follow' | 'home' = 'off';
+  /** Quem ele acompanha na sala (um avatar; no jogo sozinho vale a jogadora): o `Entities` passa este alvo ao `update`. */
+  leader: { x: number; y: number } | null = null;
+  /** No aparelho dentro da sala: id do jogador que a sala diz estar sendo acompanhado por ele (0/null = ninguém). Só o espelho usa. */
+  escortedBy: number | null = null;
+  /** No aparelho dentro da sala: avisa a sala quando a conversa começa/termina (ela segura o morador parado para todos). */
+  talkHook: ((on: boolean) => void) | null = null;
   private readonly cruise: number;
 
   constructor(
@@ -91,9 +97,20 @@ export class Villager extends Wanderer {
   }
 
   /** Conversa de loja fechada (ele ainda está à vista, arrumando): fica parado até `release()`. */
-  closedConversation(): Conversation {
-    this.hold = true;
-    return { npc: this.npc, name: this.name, text: closedLine(this.phase) };
+  closedConversation(phase: NpcPhase = this.phase): Conversation {
+    this.setHold(true);
+    return { npc: this.npc, name: this.name, text: closedLine(phase) };
+  }
+
+  /** A sala segura (ou solta) o morador parado enquanto alguém conversa com ele. */
+  freeze(on: boolean): void {
+    this.hold = on;
+  }
+
+  private setHold(on: boolean): void {
+    if (this.hold === on) return;
+    this.hold = on;
+    this.talkHook?.(on);
   }
 
   /** Chave da memória: o id do sorteado (`rt3`…) ou o do NPC nomeado. */
@@ -116,13 +133,13 @@ export class Villager extends Wanderer {
     // Memória (ADR 0034): na primeira fala da sessão, quem já conhece a jogadora a recebe com uma frase de reencontro.
     const hello = this.said === 0 ? knownLine(tier, this.said) : '';
     const text = `${hello ? hello + ' ' : ''}${lines[this.said++ % lines.length]}`;
-    this.hold = true;
+    this.setHold(true);
     return { npc: this.npc, name: this.name, text };
   }
 
   /** Terminou a conversa: volta a passear. */
   release(): void {
-    this.hold = false;
+    this.setHold(false);
   }
 
   get talking(): boolean {

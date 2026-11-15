@@ -582,11 +582,16 @@ export class Entities {
   };
 
   update(dt: number, world: World): void {
-    for (const v of this.villagers) {
-      v.update(dt, world, this.blocker, this.time, this.player ?? undefined);
-      // Nível 2 (ADR 0034): parado e com a jogadora por perto, o morador se vira para ela.
-      const p = this.player;
-      if (p && !v.hidden && !v.moving && !v.talking && Math.hypot(p.x - v.x, p.y - v.y) <= NOTICE_RANGE) v.faceTo(p.x, p.y);
+    // Moradores: no aparelho dentro da sala quem manda neles é a sala (o espelho só os move); sozinho e na sala, rodam aqui.
+    if (!this.remote) {
+      for (const v of this.villagers) {
+        v.update(dt, world, this.blocker, this.time, v.leader ?? this.player ?? undefined);
+        // Nível 2 (ADR 0034): parado e com alguém por perto (a jogadora ou, na sala, um avatar), o morador se vira para a pessoa mais perto.
+        if (v.hidden || v.moving || v.talking) continue;
+        let near: Player | null = null, nd = NOTICE_RANGE;
+        for (const h of this.hunters()) { const d = Math.hypot(h.x - v.x, h.y - v.y); if (d <= nd) { near = h; nd = d; } }
+        if (near) v.faceTo(near.x, near.y);
+      }
     }
     if (!this.remote) this.updateCreatures(dt, world);
     for (let i = this.dying.length - 1; i >= 0; i--) {

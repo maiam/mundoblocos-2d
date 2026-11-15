@@ -1,5 +1,14 @@
 # Changelog
 
+## Orvalis v0.93.117 — a sala (servidor) simula os moradores: protocolo 26 (15/11/2026)
+- **Pedido do dono do produto:** o servidor passa a simular os moradores (antes cada aparelho tinha os seus, em lugares diferentes). Decisão no ADR 0034.
+- **Sala** (`net/room.ts`): carrega a cidade, os cômodos e a vila ao nascer (uma vez; ~560 chunks, ~0,5 s) e roda `spawnVillagers` + `spawnResidents` — 16 nomeados + 8 sorteados na cidade + 5 na vila, a **rotina do Bento com a hora da sala** (dorme de madrugada e some da lista) e o passeio. O morador parado se vira para o **avatar mais perto**. Só os que estão a até 22 células de cada jogador vão em `mobs`.
+- **Protocolo 26:** `MobState` ganha `u` (id do sorteado), `a` (desbotar) e `g` (jogador que ele acompanha); cliente → sala `talk {id,on}` e `escort {id,on}`; sala → cliente `escort {id,ok}`. Conversa **segura o morador parado para todos** (solta ao terminar, ao sair do jogador ou após 120 s); **acompanhar é um jogador por vez** (outro recebe `ok:false` e "ele já está ajudando outra pessoa"; o dono o leva embora, e quando sai ele volta ao posto andando).
+- **Aparelho** (`game/creatureMirror.ts`): o espelho cria `Villager`s (nomeados e sorteados — nome, cores e falas saem da seed pelo id, `residentRoster`) em `Entities.villagers`; `Entities.update` não os simula em modo `remote`. Na sala o jogo **não** cria moradores locais. `Villager.talkHook` avisa a sala ao conversar; loja fechada do Bento agora usa a hora do mundo (igual sozinho e na sala).
+- **Missão na sala** (`Game`): aceitar pede o acompanhante à sala (negado = a missão volta a ser oferecida); se ele volta ao posto (reentrou na sala), o aparelho pede de novo quando o vê (a cada 5 s; negado, tenta a cada 30 s).
+- **Servidor:** `build:net` + `sync-net` e deploy **antes** do jogo (`PROTOCOL_VERSION` 26; sem mudar `ROOM_SNAPSHOT_VERSION`: moradores não são salvos, nascem pela seed).
+- Testes novos (`net/villagers.test.ts`, `game/creatureMirror.test.ts`); `tsc` e 625 testes verdes. **Não testado:** sala real com várias pessoas (Hostinger) e a banda com muita gente.
+
 ## Orvalis v0.93.116 — primeira missão: Silvano pede flores e acompanha a jogadora (nível 4 da IA dos NPCs) (15/11/2026)
 - **Pedido do dono do produto:** um NPC explica uma missão (encontrar flores por um motivo), acompanha a jogadora se ela aceitar e mostra um **sinal sobre a cabeça**. Escolhas dele: **Silvano** (herbalista), motivo **ervas de cura**, **recompensa em moedas**, acompanhante que **segue e comenta**.
 - **Missão** (`game/npcBrain/quests.ts`, puro): "Ervas de cura" — 6 **Flores silvestres** (a flor que nasce no capim) para o remédio de uma criança da cidade; recompensa 12 Moedas de Cobre. Fases `available → active → ready → done`; o estado salvo é só `active`/`done` (a fase `ready` sai da contagem no inventário). A ajuda conta como favor na memória do NPC (relação sobe).
