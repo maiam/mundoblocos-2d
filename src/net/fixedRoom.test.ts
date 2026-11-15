@@ -187,3 +187,41 @@ describe('Grade fina na sala (ADR 0032, F6)', () => {
     expect(() => rescaleRoomSnapshot({ ...snap, sub: 2 }, 1)).toThrow();
   });
 });
+
+describe.runIf(SUBDIV === 2)('Migração dos animais da vila na sala (v0.93.106, snapshot 7)', () => {
+  it('sala gravada com as contagens antigas (v6) volta com 3 de cada na vila e sem o cavalo do campo; a gravação nova já é v7', () => {
+    const fresh = new Room(1, 'Sala 1', 123);
+    const base = JSON.parse(JSON.stringify(fresh.snapshot())) as ReturnType<Room['snapshot']>;
+    const by = (k: string) => base.animals!.filter((a) => a.k === k);
+    const clone = (a: (typeof base.animals extends (infer T)[] | undefined ? T : never), dx: number) => ({ ...a, x: a.x + dx, hx: a.hx + dx });
+    // contagens de antes: ovelhas 4, vacas 2, galinhas 4, capivaras 3, e UM cavalo no campo diante do portão
+    const [gx, gy] = fresh.world.outsideGate();
+    const old = [
+      ...by('sheep'), clone(by('sheep')[0], 1),
+      ...by('cow').slice(0, 2),
+      ...by('chicken'), clone(by('chicken')[0], 1),
+      ...by('capybara'),
+      { k: 'horse' as const, x: gx + 9.5, y: gy + 10.5, baby: false, age: 0, hx: gx + 9.5, hy: gy + 10.5 },
+    ];
+    expect(old.filter((a) => a.k === 'sheep')).toHaveLength(4);
+    const v6 = { ...base, v: 6, animals: old };
+    const room = new Room(1, 'Sala 1', 123);
+    expect(room.restore(v6 as never)).toBe(true);
+    const village = room.world.village!;
+    const count = (k: string) => room.entities.animals.filter((a) => a.species === k).length;
+    for (const k of ['sheep', 'cow', 'chicken', 'capybara', 'horse']) expect(count(k), k).toBe(3);
+    for (const a of room.entities.animals.filter((b) => b.species === 'horse')) {
+      expect(a.x).toBeGreaterThanOrEqual(village.area.x0);
+      expect(a.x).toBeLessThan(village.area.x0 + 48);
+      expect(a.y).toBeGreaterThanOrEqual(village.area.y0);
+      expect(a.y).toBeLessThan(village.area.y0 + 48);
+    }
+    expect(room.dirty).toBe(true); // regrava já na v7
+    expect(room.snapshot().v).toBe(7);
+    // a v7 não é mexida: restaurar a gravação nova não muda nada
+    const again = new Room(1, 'Sala 1', 123);
+    again.restore(JSON.parse(JSON.stringify(room.snapshot())));
+    for (const k of ['sheep', 'cow', 'chicken', 'capybara', 'horse']) expect(again.entities.animals.filter((a) => a.species === k).length, k).toBe(3);
+    expect(again.dirty).toBe(false);
+  });
+});

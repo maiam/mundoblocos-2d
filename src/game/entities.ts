@@ -80,6 +80,7 @@ const PACK_SPAWN_RADIUS = 56 * SUBDIV;
 const PACK_DROP_RADIUS = 80 * SUBDIV;
 
 const FLOCK_SIZE = 4;
+type VillageKind = 'sheep' | 'cow' | 'chicken' | 'capybara' | 'horse';
 /** Quantos animais de cada espécie (cavalo, galinha, capivara, ovelha, vaca) nascem na Vila Camponesa. */
 export const VILLAGE_ANIMALS_EACH = 3;
 /**
@@ -239,9 +240,9 @@ export class Entities {
    * espécie numa faixa de grama da planta dela (`VILLAGE_PENS`, em células da vila); a posição sai da seed, só em grama andável e livre.
    * Devolve quantos de cada espécie nasceram.
    */
-  spawnVillageAnimals(world: World): Record<'sheep' | 'cow' | 'chicken' | 'capybara' | 'horse', number> {
+  spawnVillageAnimals(world: World, have: Partial<Record<VillageKind, number>> = {}): Record<VillageKind, number> {
     const v = world.village;
-    const placed = { sheep: 0, cow: 0, chicken: 0, capybara: 0, horse: 0 };
+    const placed: Record<VillageKind, number> = { sheep: have.sheep ?? 0, cow: have.cow ?? 0, chicken: have.chicken ?? 0, capybara: have.capybara ?? 0, horse: have.horse ?? 0 };
     if (!v) return placed;
     for (const pen of VILLAGE_PENS) {
       for (let i = 0; i < 400 && placed[pen.kind] < pen.count; i++) {
@@ -256,6 +257,38 @@ export class Entities {
       }
     }
     return placed;
+  }
+
+  /**
+   * Ajusta os animais da vila de uma sala GRAVADA ANTES da v0.93.106 (snapshot < 7) para 3 de cada espécie: o que está dentro da vila passa a ser,
+   * no máximo, `VILLAGE_ANIMALS_EACH` por espécie (sobram os filhotes e os mais longe do centro da faixa), o cavalo que nascia no campo diante
+   * do portão some (os cavalos moram na vila agora) e o que falta nasce nas faixas (`VILLAGE_PENS`). Bichos fora da vila (soltos, comprados,
+   * crias que saíram) não são tocados, a não ser o cavalo do campo. Devolve quantos foram tirados e quantos nasceram.
+   */
+  reconcileVillageAnimals(world: World): { removed: number; spawned: number } {
+    const v = world.village;
+    if (!v) return { removed: 0, spawned: 0 };
+    const inVillage = (a: Breeder): boolean => inRect(v.area, Math.floor(a.x), Math.floor(a.y));
+    let removed = 0;
+    const kindOf = (a: Breeder): VillageKind => a.species as VillageKind;
+    // O cavalo antigo do campo (fora da vila) sai; os cavalos moram na vila.
+    const outside = this.horses.filter((h) => h.kind === 'horse' && !inVillage(h));
+    for (const h of outside) { this.horses.splice(this.horses.indexOf(h), 1); removed++; }
+    const have: Record<VillageKind, number> = { sheep: 0, cow: 0, chicken: 0, capybara: 0, horse: 0 };
+    for (const kind of Object.keys(have) as VillageKind[]) {
+      const inside = this.breeders().filter((a) => kindOf(a) === kind && inVillage(a));
+      // adultos primeiro; os que passam de 3 saem
+      inside.sort((a, b) => Number(a.baby) - Number(b.baby));
+      for (const extra of inside.slice(VILLAGE_ANIMALS_EACH)) {
+        if (extra instanceof Sheep) this.npcs.splice(this.npcs.indexOf(extra), 1); else this.horses.splice(this.horses.indexOf(extra as FarmAnimal), 1);
+        this.courting.delete(extra);
+        removed++;
+      }
+      have[kind] = Math.min(inside.length, VILLAGE_ANIMALS_EACH);
+    }
+    const before = this.breeders().length;
+    this.spawnVillageAnimals(world, have);
+    return { removed, spawned: this.breeders().length - before };
   }
 
   /**
