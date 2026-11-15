@@ -29,7 +29,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Água viva** (v0.93.92): **vitórias-régias** (comuns e gigantes, 4 variantes cada) sorteadas pela seed na água rasa de rios e lagos (`WorldGenerator.waterPlantAt`; objetos `WATER_LILY`/`VICTORIA`, enfeite que não bloqueia) e **peixes de ambiente** (4 espécies, só no 3D e no aparelho, nadam em cardumes, giram para a direção de nado e fogem do jogador; `?agua=0` desliga). Encher a água sob uma planta (Terra/Pedra/Tora) a remove.
 - **Cidade do Despertar** (`domains/town.md`): 164 × 132 blocos ao norte da origem, igual em toda seed, área protegida,
   piso único de Tijolo de Pedra, muralha, castelo, guilda, hospedaria, ferreiro, lojas e ~90 casas. Início e renascer
-  sem tenda = praça inicial. 16 NPCs nomeados (ferreiro **Black** + 15 moradores, `domains/npc.md`) que falam numa **caixa de conversa** (retrato, nome, texto em páginas).
+  sem tenda = praça inicial. 16 NPCs nomeados (ferreiro **Black** + 15 moradores, `domains/npc.md`) + **8 moradores sorteados na cidade e 5 na vila** (primos recoloridos no shader, com nome/profissão/falas por seed) que falam numa **caixa de conversa** (retrato, nome, texto em páginas).
   **Interiores** só da Ferraria e da Tenda (`world/interiors.ts`, ADR 0014); as demais construções só mostram o nome.
 - **Covil das Aranhas** (`domains/dungeon.md`): labirinto procedural isolado (canto fixo), entrada em caverna a ≥ 10
   chunks do castelo, área protegida, ~38 aranhas + Aranha Gigante (chefe); farol e seta indicam a entrada.
