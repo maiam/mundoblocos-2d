@@ -211,6 +211,7 @@ export class ActorBillboards {
       const bob = walking ? Math.abs(Math.sin(a.walkTime * 3.5 * Math.PI)) * BOB_CELLS / this.opts.k : 0;
       slot.mesh.position.set(a.x, a.visualZ + GROUND_LIFT + bob, a.y);
       slot.mesh.rotation.z = walking ? (a.facing === 'left' ? LEAN_RAD : a.facing === 'right' ? -LEAN_RAD : 0) * Math.min(1, Math.sin(a.walkTime * 3.5 * Math.PI + 0.6) * 0.5 + 0.7) : 0;
+      slot.mesh.material.opacity = 1 - (a.fade ?? 0); // saindo/entrando pela porta dos fundos (rotina dos NPCs)
       slot.mesh.visible = true;
       if (this.echo && a === chosen[0]) {
         this.echo.material.map = slot.texture;
@@ -227,7 +228,7 @@ export class ActorBillboards {
       slot.shadow.position.set(a.x + sd.dx * reach, a.visualZ + GROUND_LIFT * 0.6, a.y + sd.dz * reach);
       slot.shadow.rotation.y = Math.atan2(sd.dz, sd.dx) * -1;
       slot.shadow.scale.set(sx * sd.len, 1, sz);
-      slot.shadow.material.opacity = sd.opacity * (1 - dying);
+      slot.shadow.material.opacity = sd.opacity * (1 - dying) * (1 - (a.fade ?? 0));
       slot.shadow.visible = rx > 0;
     }
     this.drawn = chosen.length;

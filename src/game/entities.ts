@@ -65,6 +65,8 @@ export interface Actor {
   dying?: number;
   /** Nome escrito acima da cabeça (outros jogadores no multiplayer). */
   label?: string;
+  /** NPC saindo/entrando pela porta dos fundos (nível 1 da IA dos NPCs): 0 = à vista … 1 = sumiu; o desenho desbota. */
+  fade?: number;
   /** Tamanho relativo do desenho (ex.: coraçõezinhos do namoro, pelo tamanho do animal). */
   scale?: number;
 }
@@ -164,6 +166,8 @@ export class Entities {
   readonly horses: FarmAnimal[] = [];
   /** Moradores da cidade (só andam por ruas e praças; o golpe não os atinge). */
   readonly villagers: Villager[] = [];
+  /** Hora do mundo (0..1) para a agenda dos moradores (o `Game` a atualiza todo quadro; -1 = sem relógio: sem rotina, como na sala). */
+  time = -1;
   /** Monstros da dungeon (presos no interior dela). */
   readonly monsters: Monster[] = [];
   /** Monstros derrotados tocando a animação de morte. */
@@ -341,6 +345,7 @@ export class Entities {
             const cy = hy + dy;
             if (!walk(cx, cy) || !world.isWalkable(cx, cy)) continue;
             const v = new Villager(cx + 0.5, cy + 0.5, npc, walk, this.rand);
+            if (npc === MERCHANT) v.setHome(hx + 0.5, hy + 0.5); // porta dos fundos do Mercado: o ponto do posto dele, junto das prateleiras
             if (this.all().some((w) => v.overlapsAt(v.x, v.y, w))) continue;
             this.villagers.push(v);
             return;
@@ -491,7 +496,7 @@ export class Entities {
   }
 
   private all(): Walker[] {
-    return [...this.hunters(), ...this.npcs, ...this.horses, ...this.villagers, ...this.monsters];
+    return [...this.hunters(), ...this.npcs, ...this.horses, ...this.villagers.filter((v) => !v.hidden), ...this.monsters];
   }
 
   /** Alvo de um monstro: o jogador mais perto dentro do limite dele (senão o mais perto de todos). */
@@ -520,7 +525,7 @@ export class Entities {
   };
 
   update(dt: number, world: World): void {
-    for (const v of this.villagers) v.update(dt, world, this.blocker);
+    for (const v of this.villagers) v.update(dt, world, this.blocker, this.time);
     if (!this.remote) this.updateCreatures(dt, world);
     for (let i = this.dying.length - 1; i >= 0; i--) {
       this.dying[i].t += dt / MONSTERS[this.dying[i].kind].deathSeconds;
@@ -844,6 +849,7 @@ export class Entities {
   villagerAt(wx: number, wy: number): Villager | null {
     let hit: Villager | null = null;
     for (const v of this.villagers) {
+      if (v.hidden) continue;
       const lift = (v.visualZ * CUBE_FRONT) / TILE;
       if (Math.abs(wx - v.x) < 0.45 && wy > v.y - lift - 2.1 && wy < v.y - lift + 0.2 && (!hit || v.y > hit.y)) hit = v;
     }
@@ -861,6 +867,7 @@ export class Entities {
     let best: Villager | null = null;
     let bestD = Infinity;
     for (const v of this.villagers) {
+      if (v.hidden) continue;
       const dx = v.x - p.x;
       const dy = v.y - p.y;
       const d = Math.hypot(dx, dy);
@@ -930,8 +937,9 @@ export class Entities {
       });
     }
     for (const v of this.villagers) {
+      if (v.hidden) continue;
       out.push({
-        kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime,
+        kind: `npc-${v.npc}`, x: v.x, y: v.y, visualZ: v.visualZ, facing: v.facing, moving: v.moving, walkTime: v.walkTime, fade: v.fade > 0 ? v.fade : undefined,
       });
     }
     for (const m of this.monsters) {
