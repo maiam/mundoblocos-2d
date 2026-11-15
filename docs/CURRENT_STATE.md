@@ -116,7 +116,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   (uma fatia de 18 px por nível da pilha); **sem frente própria, a frente repete o topo**; franja até 32 px, só no
   nível mais alto.
 - **Massa contínua** (v0.82.0): cubos V2 vizinhos e níveis empilhados, de qualquer material, não têm riscos entre si; o
-  contorno só aparece na silhueta do conjunto (`cubeEdges`, `cubeSpriteV2`, `drawCubeParts`). Só blocos V2; o bloco
+  contorno só aparecia na silhueta do conjunto no Canvas 2D (`cubeEdges`, `cubeSpriteV2`, `drawCubeParts`, **removidos na v0.93.107** com a cena `?materiais=1`; no 3D o cubo é uma caixa com texturas). Só blocos V2; o bloco
   antigo ao lado mantém o contorno.
 - **Chão V2 sem grade**: o chão dos materiais V2 não leva a "grade sutil de blocos" que o `chunkRenderer` desenha
   sobre o chão antigo (era ela, mais a arte, que riscava cada célula); o chão antigo continua com a grade.
@@ -131,7 +131,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   faixa pintada: espuma e água rasa). Só chão plano e mesma altura; a textura nunca gira. Regras por par em
   `render/transitions.ts` (`TRANSITION_RULES` com `shape`), desenhadas no `chunkRenderer` (halo, corpo, espuma). A água
   do V2 (`agua`) é o ladrilho do mar/rios; barranca e fio de espuma antigos ficam só onde a margem não é V2.
-- Para ver: `?materiais=1` (só em desenvolvimento) põe legado e V2 lado a lado.
+- A cena `?materiais=1` (legado × V2) foi removida na v0.93.107.
 - Falta: transições da Terra Arada e de outros pares (Caminho×Areia etc.), se a arte quiser; atlas antigo sai quando
   não houver mais pedras aposentadas em uso (`NEXT_STEPS`, Fase V).
 

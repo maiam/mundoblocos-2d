@@ -88,11 +88,8 @@ O perfil Santuário é renderizado por `render/sanctuaryThreeRenderer.ts` via `T
   `materials-v2.webp` (linhas top 64, front 36, overlay 36: frente de 18) + `materials-v2.json`. O motor monta o cubo
   com `composeCube`; ordem interna frente → franja → sombra da frente → topo → aresta/contorno. Chão plano usa só o topo.
 - `render/materialsV2.ts`: `V2_BLOCKS` (composição por bloco: areia, terra, grama, Pedra Bruta) e o estado do atlas; `textures.applyMaterialsV2` troca os
-  materiais V2 (o padrão; `?blocos=legado` desliga); `textures.qaMaterial` serve a cena `?materiais=1` (`dev/materialsScene.ts`, só dev).
-- **Massa contínua** (v0.82.0): `cubeEdges` (puro) diz onde o cubo V2 tem contorno, olhando os vizinhos (`CubeView`);
-  `textures.cubeSpriteV2` monta a variante (cache por bloco, nível e bordas) e `drawCubeParts` desenha topo e frente com
-  bordas iguais às dos vizinhos (`Renderer.drawCubeV2`). Frente = textura seamless inteira, fatiada por nível
-  (`materialsV2.paintFront`); franja só no nível mais alto; nível coberto desenha a continuação da parede, não o topo.
+  materiais V2 (o padrão; `?blocos=legado` desliga); (a cena `?materiais=1` e `textures.qaMaterial` foram removidas na v0.93.107).
+- **Massa contínua** (v0.82.0, Canvas 2D): `cubeEdges`/`cubeSpriteV2`/`drawCubeParts` foram removidos na v0.93.107 junto com o motor 2D; no 3D cada cubo é uma caixa instanciada (`ChunkBlocks`) com as texturas V2 de topo e frente.
 - **Chão V2 sem grade**: `BlockTextures.continuousGround` lista os chãos V2; o `chunkRenderer` pula neles a "grade sutil de blocos" (1 px por célula, alfa 0,07) que continua no chão antigo.
 - **Transições entre chãos** (v0.87.0): `render/transitions.ts` (regras por par com `shape`, e `transitionPieces`), `textures.buildTransitions` (por forma 8 peças em 3 camadas: halo, corpo = topo do material que avança dentro da máscara, espuma; a Água avança com o ladrilho `agua` do V2) e `chunkRenderer` (desenha depois do chão: halo, corpo, espuma; pula barranca/fio de espuma antigos quando o vizinho recebe a margem nova). Só chão plano e mesma altura; máscaras são formas e podem girar (CONVENTIONS); a textura nunca gira.
 

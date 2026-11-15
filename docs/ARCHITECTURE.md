@@ -84,8 +84,7 @@ src/
     session.ts                 NetSession: lado do jogo (aplica ações confirmadas, outros jogadores)
     loopback.ts                LoopbackServer: salas dentro do jogo para testes (sem rede)
     index.ts                   o que vai no pacote do servidor (npm run build:net → dist-net/orvalis-net.cjs)
-  dev/     só desenvolvimento, fora do build de produção: cena dos materiais (`?materiais=1`, ADR 0023) e painel de desempenho (`?fps=1`)
-    materialsScene.ts          cena ?materiais=1: atlas legado × materiais V2 lado a lado (ADR 0023)
+  dev/     só desenvolvimento, fora do build de produção: painel de desempenho (`?fps=1`; a cena dos materiais `?materiais=1` foi removida na v0.93.107)
   dev/perfHud.ts               painel de desempenho `?fps=1` (dev e piloto): FPS, GPU, memória; toque copia o relatório
   render/  apresentação — só lê o mundo
     art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
