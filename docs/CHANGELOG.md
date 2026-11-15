@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.99 — portões de Bétula e de Cerejeira (blocos novos) (15/11/2026)
+- **Pedido do dono do produto:** as cercas de Bétula e de Cerejeira apareciam, mas **os portões dessas madeiras não existiam** (havia só o de Carvalho, que tomava a madeira da cerca vizinha). Agora são **blocos próprios**.
+- **Blocos** (`world/blocks.ts`): `FENCE_GATE_BIRCH` (77) / `_BIRCH_OPEN` (78) e `FENCE_GATE_CHERRY` (79) / `_CHERRY_OPEN` (99), no lugar de ids livres (os 210–225 são os blocos removidos, 250–252 as lajes aposentadas). Helpers `gateClosed`, `gateFence`, `isGateOpen`; `isGate`, `TOGGLES` (abre/fecha com um toque) e `isOpen` cobrem os três portões. Hotbar principal 41 → 43 (só os fechados); fora do Santuário.
+- **Receitas** do Construtor: 4 Tábuas da madeira → 1 portão (`birch-gate`, `cherry-gate`); quebrar (aberto ou fechado) devolve o portão fechado da mesma madeira.
+- **Render:** a madeira da porteira vem do **próprio bloco** (`gateFence(id)`), não mais da cerca vizinha (`gateWood` removido); mesma animação de 10 quadros. Ícones novos `icon-block-fence-gate-betula/-cerejeira.webp` (gerados por `scripts/extract-fence-model.py`).
+- Mundos/salas já salvos seguem válidos (o portão de Carvalho não mudou). Blocos novos → o servidor precisa de `build:net` + `sync-net`. 599 testes (grade 2) e 590 (grade 1) e `tsc` verdes; conferido no navegador (3 portões, abrindo e fechando).
+
 ## Orvalis v0.93.98 — rachaduras em estágios na quebra e menos lascas (3D) (15/11/2026)
 - **Pedido do dono do produto:** as lascas estavam em demasia → **reduzidas** (a cada 0,2 s em vez de 0,11; 1 a 2 por vez em vez de 2 a 4; estouro final de 10 lascas em vez de 16 e 2 nuvens de poeira em vez de 3). E seguir a recomendação: **rachaduras pintadas em estágios** (opção 3 da animação de quebrar).
 - **Rachaduras** (`three/breakCracks.ts`, `breakFx.crackStage`): decalques por cima do topo e da frente (a faixa de 1/4) do bloco que se quebra, em 4 estágios que crescem com o progresso (a partir de 8 %); cada estágio acrescenta fissuras às do anterior (mesma semente, 2 variantes por célula), com traço escuro e fio claro. Tremem junto com o bloco. Texturas desenhadas por código (nunca se lê canvas). No chão (sem face frontal) racha só o topo; árvores e alvos sem lasca (flor, capim) não racham. `?sensacao=0` e os cômodos ficam sem. O 2D de reserva mantém as rachaduras de antes.

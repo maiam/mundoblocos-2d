@@ -69,6 +69,11 @@ export const Block = {
   FENCE_GATE: 49,
   /** Portão aberto: passável. Só existe no mundo (a bolsa coloca o fechado). */
   FENCE_GATE_OPEN: 76,
+  /** Portões de Bétula e de Cerejeira (v0.93.99), fechado e aberto: o mesmo portão do Carvalho (`FENCE_GATE`) com a madeira da cerca. */
+  FENCE_GATE_BIRCH: 77,
+  FENCE_GATE_BIRCH_OPEN: 78,
+  FENCE_GATE_CHERRY: 79,
+  FENCE_GATE_CHERRY_OPEN: 99,
   // --- variações de pedra (prancha de pedras; por receita ou, no futuro, em construções prontas) ---
   STONE_COBBLE: 34,
   STONE_BRICK: 35,
@@ -392,6 +397,10 @@ const defs: BlockDef[] = [
   object(Block.FENCE_STAKE, 'Cerca de Estacas', { shape: 'building', organic: 'wood' }),
   object(Block.FENCE_GATE, 'Portão de Madeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_GATE_OPEN, 'Portão de Madeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
+  object(Block.FENCE_GATE_BIRCH, 'Portão de Bétula', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_GATE_BIRCH_OPEN, 'Portão de Bétula (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
+  object(Block.FENCE_GATE_CHERRY, 'Portão de Cerejeira', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_GATE_CHERRY_OPEN, 'Portão de Cerejeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
   object(Block.CACTUS, 'Cacto', { placeable: false, organic: 'plant' }),
   object(Block.OAK_TREE, 'Carvalho', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.SAKURA_TREE, 'Cerejeira', { shape: 'tree', placeable: false, organic: 'wood' }),
@@ -530,7 +539,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
-  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_STAKE,
+  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY, Block.FENCE_STAKE,
 ];
 
 /**
@@ -601,7 +610,28 @@ export function isDoor(id: BlockId): boolean {
 
 /** Portão da cerca (aberto ou fechado)? */
 export function isGate(id: BlockId): boolean {
-  return id === Block.FENCE_GATE || id === Block.FENCE_GATE_OPEN;
+  return gateClosed(id) !== null;
+}
+
+/** O portão fechado da mesma madeira (null se não é portão da cerca). */
+export function gateClosed(id: BlockId): BlockId | null {
+  switch (id) {
+    case Block.FENCE_GATE: case Block.FENCE_GATE_OPEN: return Block.FENCE_GATE;
+    case Block.FENCE_GATE_BIRCH: case Block.FENCE_GATE_BIRCH_OPEN: return Block.FENCE_GATE_BIRCH;
+    case Block.FENCE_GATE_CHERRY: case Block.FENCE_GATE_CHERRY_OPEN: return Block.FENCE_GATE_CHERRY;
+    default: return null;
+  }
+}
+
+/** A cerca da madeira do portão (Carvalho, Bétula ou Cerejeira): escolhe a arte do portão. */
+export function gateFence(id: BlockId): BlockId {
+  const c = gateClosed(id);
+  return c === Block.FENCE_GATE_BIRCH ? Block.FENCE_BIRCH : c === Block.FENCE_GATE_CHERRY ? Block.FENCE_CHERRY : Block.FENCE;
+}
+
+/** Portão da cerca aberto? */
+export function isGateOpen(id: BlockId): boolean {
+  return id === Block.FENCE_GATE_OPEN || id === Block.FENCE_GATE_BIRCH_OPEN || id === Block.FENCE_GATE_CHERRY_OPEN;
 }
 
 /** Cerca ou portão: as cercas vizinhas se emendam com eles. */
@@ -622,6 +652,10 @@ const TOGGLES: Readonly<Partial<Record<number, BlockId>>> = {
   [Block.WALL_DOOR_PLANKS_OPEN]: Block.WALL_DOOR_PLANKS,
   [Block.FENCE_GATE]: Block.FENCE_GATE_OPEN,
   [Block.FENCE_GATE_OPEN]: Block.FENCE_GATE,
+  [Block.FENCE_GATE_BIRCH]: Block.FENCE_GATE_BIRCH_OPEN,
+  [Block.FENCE_GATE_BIRCH_OPEN]: Block.FENCE_GATE_BIRCH,
+  [Block.FENCE_GATE_CHERRY]: Block.FENCE_GATE_CHERRY_OPEN,
+  [Block.FENCE_GATE_CHERRY_OPEN]: Block.FENCE_GATE_CHERRY,
   [Block.V_GATE]: Block.V_GATE_CLOSED,
   [Block.V_GATE_CLOSED]: Block.V_GATE,
   [Block.V_GATE_GAP]: Block.V_GATE_GAP_CLOSED,
@@ -640,5 +674,5 @@ export function toggled(id: BlockId): BlockId | null {
 
 /** Aberto (porta ou portão)? */
 export function isOpen(id: BlockId): boolean {
-  return id === Block.OAK_DOOR_OPEN || id === Block.FENCE_GATE_OPEN || id === Block.WALL_DOOR_PLANKS_OPEN || id === Block.V_GATE || id === Block.V_GATE_GAP;
+  return id === Block.OAK_DOOR_OPEN || isGateOpen(id) || id === Block.WALL_DOOR_PLANKS_OPEN || id === Block.V_GATE || id === Block.V_GATE_GAP;
 }

@@ -45,6 +45,31 @@ describe('Cerca de Madeira e portão', () => {
     expect(blockDrops(Block.FENCE, () => 0)).toEqual([{ item: blockStack(Block.FENCE), count: 1 }]);
   });
 
+  it('Portões de Bétula e de Cerejeira: blocos próprios que abrem e fecham e voltam como o portão fechado da mesma madeira', () => {
+    for (const [closed, open, plank] of [
+      [Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_BIRCH_OPEN, Block.BIRCH_PLANKS],
+      [Block.FENCE_GATE_CHERRY, Block.FENCE_GATE_CHERRY_OPEN, Block.CHERRY_PLANKS],
+    ] as const) {
+      expect(HOTBAR_BLOCKS).toContain(closed);
+      expect(HOTBAR_BLOCKS).not.toContain(open);
+      expect(joinsFence(closed)).toBe(true);
+      expect(joinsFence(open)).toBe(true);
+      const w = new World(7);
+      const [x, y] = freeRow(w);
+      expect(w.placeBlock(x, y, closed)).toBe(true);
+      expect(w.isWalkable(x, y)).toBe(false);
+      expect(applyAction(w, { kind: 'door', x, y })).toBe(true);
+      expect(w.getObject(x, y)).toBe(open);
+      expect(w.isWalkable(x, y)).toBe(true);
+      w.toggleDoor(x, y);
+      expect(w.getObject(x, y)).toBe(closed);
+      expect(blockDrops(open, () => 0)).toEqual([{ item: blockStack(closed), count: 1 }]);
+      const r = RECIPES.find((q) => q.output.item === blockStack(closed))!;
+      expect(r.profession).toBe('builder');
+      expect(r.inputs).toEqual([{ item: blockStack(plank), count: 4 }]);
+    }
+  });
+
   it('portão vai em qualquer célula livre, abre (passável) e fecha com a ação de porta', () => {
     const w = new World(7);
     const [x, y] = freeRow(w);

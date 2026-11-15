@@ -896,12 +896,14 @@ function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string
       poses.push({ canvas: c, ox: (T - w) / 2, oy, w, h, hit });
     }
     gateFrames.set(fenceId, [...poses, ...[...poses].reverse()]);
-    if (fenceId === Block.FENCE) {
-      objects.set(Block.FENCE_GATE, poses[0]);
-      objects.set(Block.FENCE_GATE_OPEN, poses[poses.length - 1]);
-    }
+    const [closed, open] = fenceId === Block.FENCE_BIRCH ? [Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_BIRCH_OPEN]
+      : fenceId === Block.FENCE_CHERRY ? [Block.FENCE_GATE_CHERRY, Block.FENCE_GATE_CHERRY_OPEN] : [Block.FENCE_GATE, Block.FENCE_GATE_OPEN];
+    objects.set(closed, poses[0]);
+    objects.set(open, poses[poses.length - 1]);
   }
   icons.set(Block.FENCE_GATE, pack.gateIcon);
+  icons.set(Block.FENCE_GATE_BIRCH, pack.birch.gateIcon);
+  icons.set(Block.FENCE_GATE_CHERRY, pack.cherry.gateIcon);
   return out;
 }
 
