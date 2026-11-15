@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.120 — a Guilda dos Aventureiros por dentro e o Mestre da Guilda (15/11/2026)
+- **Pedido do dono do produto:** incluir a imagem de dentro da Guilda (base do Capítulo 1 — "O Despertar": missões e contratos saem da guilda).
+- **Cômodo** (`world/interiors.ts`, `GUILD_INTERIOR`, 24 × 18): estantes, mapa e armas no fundo, balcão no meio, quadro de contratos à esquerda, lareira à direita, quatro mesas, tapete central e entrada larga (6 colunas de capacho) entre os pilares. Arte `assets-src/interiors/guild.png` → `interior-guild.webp` (`scripts/extract-interiors.py` + `optimize-assets.py`), registrada em `render/art/principal.ts`. **Vai no fim de `INTERIOR_DEFS`:** os outros cômodos não mudam; o da **tenda anda uma posição** (quem salvou dentro de uma tenda reabre na rua).
+- **Mestre da Guilda** (`game/residents.ts`, `GUILD_MASTER`): **Mestre Aldric**, "primo" do guarda Noel (folha e retrato emprestados, cores trocadas no shader), fixo atrás do balcão, em toda seed. `NpcRole` ganha `guild`; `ResidentDef.role`; entra no `residentRoster` (id `guild`: o aparelho na sala o reconhece). Por enquanto só conversa; **as missões do Capítulo 1 saem dele** (próximas entregas).
+- Testes novos (`world/guild.test.ts`) e ajustados (`villager`, `residents`, `florist`); `tsc` e 629 testes verdes; conferido no navegador (interior e balcão).
+- **Servidor:** `build:net` + `sync-net` (cômodo novo e morador novo na sala).
+
 ## Orvalis v0.93.119 — a missão do Silvano pede UMA flor específica, e a seed garante o canteiro (15/11/2026)
 - **Pedido do dono do produto:** a missão deve especificar a flor e aceitar só ela (senão fica fácil demais); basta garantir que a seed tenha essa quantidade por perto.
 - **Canteiro garantido** (`world/flowerPatch.ts`, `World.flowerPatch`): a espécie sai da seed (`patchSpecies`, 1 das 15) e o gerador põe **10 flores dela** numa clareira de grama livre de 6 × 6 células, **o mais perto possível do portão** (faixas de 20 células a partir de 20, até 140; testado em 8 seeds), fora da cidade, da vila e da trilha, da caverna, da dungeon e dos acampamentos de goblins. `FlowerPatchTerrain` entra na geração do chunk (como o acampamento de goblins: edições do jogador valem por cima). **Muda o mapa de todas as seeds do Mundo da Cidade** (uma clareira nova de flores no campo).

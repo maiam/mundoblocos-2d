@@ -61,6 +61,9 @@ becos espalhados); (3) comércio e artesãos (ferreiro, lojas); (4) hospedaria e
 ## Grade fina (ADR 0032, F3 — só dev, `?grade=2`)
 A cidade continua sendo gerada na grade antiga (`buildTown`, semente fixa) e é **ampliada 2 × 2** por `upsampleTown` (`townLayout()` com `SUBDIV > 1`): mesmos pixels, mesmas ruas e construções. Muralha, chão, sebes e `TOWN_PART` repetem nas 4 células; o id de cada construção fica só na célula do canto inferior esquerdo; objetos soltos (árvores, flores, postes, barris) ficam numa célula (tronco 1 × 1). `TOWN_MARGIN`, `TOWN_SOUTH_FIELD`, `TOWN_WALL` e a estrada acompanham `SUBDIV`. A arte dos prédios mantém os pixels de hoje (`objectScaleFor`, escala em volta da base); as sebes ficam do tamanho da célula nova. **Ainda sem interiores/tenda, dungeon, lobos e goblins na grade fina (F4); a regra de entrada pela porta usa `door` já ampliado.** `town.test.ts` cobre `upsampleTown`.
 
+## Guilda por dentro (v0.93.120)
+- `GUILD_INTERIOR` (24 × 18) em `world/interiors.ts`, arte `assets-src/interiors/guild.png`; entrada larga (6 capachos). O **Mestre Aldric** (`game/residents.ts`, `GUILD_MASTER`) fica atrás do balcão. Base das missões do Capítulo 1 (`NEXT_STEPS`).
+
 ## Floricultura (v0.93.110)
 `Block.FLORIST`, lote 9 × 5 como a Hospedaria, reservada antes das ruas **a oeste da Praça Central, logo abaixo da Guilda** (`required` em `buildTown`). Cômodo `FLORIST_INTERIOR` (24 × 13, `assets-src/interiors/florist.png`), no **fim** de `INTERIOR_DEFS` (os outros não mudam de lugar; a tenda anda uma posição). A florista é a **Rosendo** (`FLORIST_KEEPER`), fixa atrás do balcão; tocar nela abre a loja das **15 Flores Fofas** (`FLORIST_STOCK`, 2 Moedas de Cobre cada), blocos de enfeite que o jogador coloca no mundo — sem efeito além do visual (`domains/npc.md`).
 
