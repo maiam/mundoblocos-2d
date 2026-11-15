@@ -40,6 +40,8 @@ OBJECTS = [
     ('guild', 'guild', (0, 0, 1254, 955), ('base', 9, 0.82), (9, 9), False),
     ('castle', 'castle-moat', (0, 0, 1200, 1024), ('full', 26), (26, 17), False),
     ('inn', 'inn', (150, 0, 1390, 752), ('base', 9, 0.95), (9, 5), False),
+    # Floricultura (v0.93.110): a fundação de pedra (y ≈ 0,92 da altura) mede os 9 células do lote; o beiral transborda.
+    ('florist', 'florist', (0, 0, 1774, 887), ('base', 9, 0.92), (9, 5), False),
     ('watchtower', 'watchtower', (90, 0, 670, 1290), ('base', 4, 0.9), (4, 6), True),
     ('bench-3', 'benches', (0, 100, 1010, 660), ('full', 3.7), (3, 1), False),
     ('bench-2', 'benches', (1020, 100, 1774, 660), ('full', 2.5), (2, 1), False),

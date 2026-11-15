@@ -1,4 +1,4 @@
-import { ITEMS, type ItemId } from '../world/items';
+import type { StackId } from '../world/items';
 import { type BuyResult, shopPage, shopPages, type ShopOffer } from '../world/shop';
 
 /**
@@ -23,13 +23,19 @@ function place(el: HTMLElement, x0: number, y0: number, x1: number, y1: number):
   el.style.height = pct(y1 - y0, H);
 }
 
+/** O que muda de uma loja para outra (Mercado, Floricultura): título, fala de abertura e a etiqueta da categoria. */
+export interface ShopStyle {
+  title: string;
+  greeting: string;
+  category: string;
+}
+
 export interface ShopHandlers {
   /** Arte da moldura (`art().shopFrame`). */
   frame: string;
-  /** Título da janela e fala de abertura. */
-  title: string;
-  greeting: string;
-  icon(item: ItemId): string;
+  /** Ícone e nome de uma pilha à venda (item ou bloco). */
+  icon(item: StackId): string;
+  name(item: StackId): string;
   coins(): number;
   buy(offer: ShopOffer): BuyResult;
   onOpenChange(open: boolean): void;
@@ -52,18 +58,22 @@ export class ShopWindow {
   private readonly onResize = (): void => { if (this.opened) this.fit(); };
   private readonly onKey = (e: KeyboardEvent): void => { if (this.opened && e.code === 'Escape') { e.stopPropagation(); this.close(); } };
 
+  private greeting = '';
+  private readonly titleEl: HTMLElement;
+  private readonly catEl: HTMLElement;
+
   constructor(parent: HTMLElement, private readonly h: ShopHandlers) {
     this.root = document.createElement('div');
     this.root.className = 'shop';
     this.root.hidden = true;
     this.root.innerHTML = `
-      <div class="shop-box" role="dialog" aria-label="${h.title}">
+      <div class="shop-box" role="dialog">
         <div class="shop-portrait"><img alt="" draggable="false" hidden></div>
         <img class="shop-frame" alt="" draggable="false" src="${h.frame}">
-        <div class="shop-title">${h.title}</div>
+        <div class="shop-title"></div>
         <button class="shop-close" aria-label="Fechar"></button>
         <div class="shop-bubble"></div>
-        <div class="shop-cat">Consumíveis</div>
+        <div class="shop-cat"></div>
         <button class="shop-prev" aria-label="Página anterior"></button>
         <div class="shop-page"></div>
         <button class="shop-next" aria-label="Próxima página"></button>
@@ -72,6 +82,8 @@ export class ShopWindow {
         <div class="shop-coins"></div>
       </div>`;
     this.box = this.root.querySelector('.shop-box')!;
+    this.titleEl = this.root.querySelector('.shop-title')!;
+    this.catEl = this.root.querySelector('.shop-cat')!;
     this.portrait = this.root.querySelector('.shop-portrait img')!;
     this.bubble = this.root.querySelector('.shop-bubble')!;
     this.pageEl = this.root.querySelector('.shop-page')!;
@@ -126,15 +138,19 @@ export class ShopWindow {
     return this.opened;
   }
 
-  open(offers: readonly ShopOffer[], merchant: { portrait?: string }): void {
+  open(offers: readonly ShopOffer[], merchant: { portrait?: string }, style: ShopStyle): void {
     this.offers = offers;
+    this.greeting = style.greeting;
+    this.titleEl.textContent = style.title;
+    this.catEl.textContent = style.category;
+    this.box.setAttribute('aria-label', style.title);
     this.page = 0;
     if (merchant.portrait) this.portrait.src = merchant.portrait;
     this.portrait.hidden = !merchant.portrait;
     this.opened = true;
     this.root.hidden = false;
     this.fit();
-    this.say(this.h.greeting, 0);
+    this.say(this.greeting, 0);
     this.render();
     this.h.onOpenChange(true);
   }
@@ -157,10 +173,11 @@ export class ShopWindow {
       c.btn.hidden = !o;
       if (!o) return;
       c.icon.src = this.h.icon(o.item);
-      c.name.textContent = ITEMS[o.item].name;
+      const name = this.h.name(o.item);
+      c.name.textContent = name;
       c.price.textContent = String(o.price);
       c.btn.classList.toggle('poor', coins < o.price);
-      c.btn.setAttribute('aria-label', `${ITEMS[o.item].name}, ${o.price} moedas de cobre${coins < o.price ? ' (faltam moedas)' : ''}`);
+      c.btn.setAttribute('aria-label', `${name}, ${o.price} moedas de cobre${coins < o.price ? ' (faltam moedas)' : ''}`);
     });
     this.pageEl.textContent = `Página ${this.page + 1} de ${pages}`;
     this.prev.classList.toggle('off', this.page <= 0);
@@ -179,7 +196,7 @@ export class ShopWindow {
     const o = shopPage(this.offers, this.page)[i];
     if (!o) return;
     const r = this.h.buy(o);
-    const name = ITEMS[o.item].name;
+    const name = this.h.name(o.item);
     if (r === 'ok') this.say(`Obrigado! ${name} é seu.`);
     else if (r === 'coins') this.say('Faltam Moedas de Cobre para esse item.');
     else this.say('Sua bolsa está cheia. Abra espaço e volte!');
@@ -194,7 +211,7 @@ export class ShopWindow {
   private say(text: string, ms = 3200): void {
     this.bubble.textContent = text;
     if (this.bubbleTimer) clearTimeout(this.bubbleTimer);
-    if (ms > 0) this.bubbleTimer = setTimeout(() => { this.bubble.textContent = this.h.greeting; }, ms);
+    if (ms > 0) this.bubbleTimer = setTimeout(() => { this.bubble.textContent = this.greeting; }, ms);
   }
 
   /** Largura da janela: cabe na tela (altura e largura) mantendo a proporção da arte. */

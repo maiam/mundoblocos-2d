@@ -29,6 +29,7 @@ const IMAGE_ART: Partial<Record<BlockId, string[]>> = {
   [Block.SHOP_TOOLS]: ['shop-1f'],
   [Block.SMITHY]: ['smithy'],
   [Block.INN]: ['inn'],
+  [Block.FLORIST]: ['florist'],
   [Block.FOUNTAIN]: ['fountain'],
   [Block.WELL]: ['well'],
   [Block.STALL]: ['stall'],

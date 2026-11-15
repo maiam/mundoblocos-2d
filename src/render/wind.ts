@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef } from '../world/blocks';
+import { Block, type BlockId, blockDef, isFancyFlower } from '../world/blocks';
 
 /**
  * Vento e passos na vegetação (v0.93.69) e nas árvores (v0.93.82): quais objetos balançam e que folhas soltam. Puro. O desenho é o
@@ -8,7 +8,7 @@ export type WindKind = 'grass' | 'tree';
 
 /** Como o objeto reage ao vento (null = não se mexe). Árvores: qualquer objeto de forma `tree` (adultas das quatro espécies). */
 export function windKind(id: BlockId): WindKind | null {
-  if (id === Block.TALL_GRASS || id === Block.FLOWER) return 'grass';
+  if (id === Block.TALL_GRASS || id === Block.FLOWER || isFancyFlower(id)) return 'grass';
   return id !== Block.AIR && blockDef(id).shape === 'tree' ? 'tree' : null;
 }
 

@@ -1,5 +1,5 @@
 import { CUBE_FRONT, TILE } from '../config';
-import { Block, type BlockId, CELESTIAL_BLOCKS, MATERIALS } from '../world/blocks';
+import { Block, type BlockId, CELESTIAL_BLOCKS, FLOWER_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2WaterTop } from './materialsV2';
@@ -632,6 +632,12 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     });
     objects.set(Block.FLOWER, frames[0]);
     treeVariants.set(Block.FLOWER, frames);
+    // As 15 Flores Fofas colocáveis (v0.93.110): cada bloco desenha o quadro da própria flor (mesma ordem da lista) e tem o ícone dela.
+    const icons15 = art().flowerIcons ?? [];
+    FLOWER_BLOCKS.forEach((id, i) => {
+      if (frames[i]) objects.set(id, frames[i]);
+      if (icons15[i]) icons.set(id, icons15[i]);
+    });
   }
   // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
   for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {

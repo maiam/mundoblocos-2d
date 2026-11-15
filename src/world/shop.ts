@@ -1,4 +1,5 @@
-import { Item, type ItemId } from './items';
+import { FLOWER_BLOCKS } from './blocks';
+import { blockStack, Item, type ItemId, type StackId } from './items';
 import { foodValue } from './progression';
 
 /**
@@ -9,7 +10,8 @@ import { foodValue } from './progression';
 export const CURRENCY: ItemId = Item.COPPER_COIN;
 
 export interface ShopOffer {
-  item: ItemId;
+  /** O que se vende: um item (Mercado) ou um bloco (`blockStack`, Floricultura). */
+  item: StackId;
   /** Moedas de cobre por unidade. */
   price: number;
 }
@@ -27,6 +29,13 @@ export const MARKET_STOCK: readonly ShopOffer[] = [
   { item: Item.APPLE_PIE, price: 8 },
 ];
 
+/**
+ * Vitrine da Floricultura (v0.93.110, dono do produto): as **15 Flores Fofas**, na ordem da lista dele, pagas em Moedas de Cobre. São só enfeite —
+ * viram ícones da hotbar, o jogador as coloca no chão e elas **não têm efeito nenhum além do visual**. Preço provisório igual para todas.
+ */
+export const FLORIST_PRICE = 2;
+export const FLORIST_STOCK: readonly ShopOffer[] = FLOWER_BLOCKS.map((id) => ({ item: blockStack(id), price: FLORIST_PRICE }));
+
 /** Itens por página da janela (2 colunas × 5 fileiras). */
 export const SHOP_PAGE_SIZE = 10;
 
@@ -42,16 +51,16 @@ export function shopPage(offers: readonly ShopOffer[], page: number): readonly S
 
 /** O que a compra precisa saber do inventário (o `Inventory` do jogo cumpre). */
 export interface Wallet {
-  count(id: ItemId): number;
-  take(id: ItemId, n?: number): boolean;
-  add(id: ItemId, n?: number): void;
+  count(id: StackId): number;
+  take(id: StackId, n?: number): boolean;
+  add(id: StackId, n?: number): void;
 }
 
 /** `ok`: comprou; `coins`: faltam moedas (nada muda); `full`: sem lugar na bolsa para um item novo (nada muda). */
 export type BuyResult = 'ok' | 'coins' | 'full';
 
 /** Compra `qty` unidades: confere o lugar na bolsa (`canCarry`) e as moedas, depois gasta e entrega — tudo ou nada. */
-export function buyOffer(wallet: Wallet, offer: ShopOffer, canCarry: (item: ItemId) => boolean = () => true, qty = 1): BuyResult {
+export function buyOffer(wallet: Wallet, offer: ShopOffer, canCarry: (item: StackId) => boolean = () => true, qty = 1): BuyResult {
   if (!canCarry(offer.item)) return 'full';
   const cost = offer.price * qty;
   if (wallet.count(CURRENCY) < cost) return 'coins';
@@ -62,5 +71,5 @@ export function buyOffer(wallet: Wallet, offer: ShopOffer, canCarry: (item: Item
 
 /** Toda a vitrine é consumível (enche a fome) e tem preço positivo? (guarda do teste: o Mercado não vende outra coisa.) */
 export function stockIsConsumable(offers: readonly ShopOffer[] = MARKET_STOCK): boolean {
-  return offers.every((o) => foodValue(o.item) > 0 && o.price > 0);
+  return offers.every((o) => foodValue(o.item as ItemId) > 0 && o.price > 0);
 }

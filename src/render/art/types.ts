@@ -62,6 +62,8 @@ export interface ArtPack {
   rocks?: string;
   /** Flores fofas (`scripts/extract-flowers.py`): tira de quadros 96 × 96, um sorteado por célula no lugar da Flor procedural. */
   flowers?: string;
+  /** Ícones (64 × 64) das 15 Flores Fofas colocáveis, na ordem da lista (`FLOWER_BLOCKS`). */
+  flowerIcons?: string[];
   /** Efeitos de golpe (`scripts/extract-fx.py`): tiras de quadros 128 × 128 de cavar, machadada, espada (lados, cima, baixo), picareta, pá e enxada. */
   fx?: { dig: string; tree: string; slash: string; slashUp: string; slashDown: string; rock: string; soil: string; till: string };
   /**

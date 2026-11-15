@@ -8,7 +8,7 @@
  */
 
 /** Ofício que dá fala e lugar próprios: o ferreiro (Ferraria) e o mercador (Mercado, v0.93.57; tocar nele abre a loja). */
-export type NpcRole = 'smith' | 'merchant';
+export type NpcRole = 'smith' | 'merchant' | 'florist';
 
 export interface NpcDef {
   id: string;
@@ -68,7 +68,7 @@ export const NPCS = [
     ],
   },
   {
-    id: 'rosendo', name: 'Rosendo', who: 'Jardineiro (cabelo rosa, colete verde)',
+    id: 'rosendo', name: 'Rosendo', who: 'Jardineiro e florista (cabelo rosa, colete verde) — mora na Floricultura', role: 'florist',
     lines: [
       'Gosto de flor e de árvore. Carvalho, bétula, cerejeira e macieira crescem todas por aqui, misturadas.',
       'Tora de cerejeira, de bétula ou de carvalho: cada árvore derrubada dá a sua madeira. Dá para fazer tábuas com elas!',
@@ -150,5 +150,7 @@ export function npcDef(id: NpcId): NpcDef {
 
 /** O ferreiro (único com ofício por enquanto). */
 export const SMITH: NpcId = 'black';
+/** O florista fixo da Floricultura (v0.93.110): atrás do balcão; tocar nele abre a loja das 15 Flores Fofas. Era o Jardineiro da rua. */
+export const FLORIST_KEEPER: NpcId = 'rosendo';
 /** O mercador fixo do Mercado (v0.93.57): atrás dos balcões; tocar nele abre a loja. */
 export const MERCHANT: NpcId = 'bento';

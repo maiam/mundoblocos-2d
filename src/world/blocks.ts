@@ -122,6 +122,8 @@ export const Block = {
   TOWN_PART: 120,
   CASTLE: 121,
   GUILD: 122,
+  /** Floricultura (v0.93.110): 9×5, a oeste da Praça Central, abaixo da Guilda; o cômodo é `FLORIST_INTERIOR`. */
+  FLORIST: 130,
   INN: 123,
   SMITHY: 124,
   SHOP_POTION: 125,
@@ -176,6 +178,12 @@ export const Block = {
   /** Cerca de Bétula e de Cerejeira (v0.93.96): a mesma cerca de estacas do Carvalho (`FENCE`), com outra madeira; emendam entre si e com o portão. */
   FENCE_BIRCH: 245,
   FENCE_CHERRY: 248,
+  /**
+   * As 15 Flores Fofas (v0.93.110): enfeites que a Floricultura vende e o jogador coloca no chão — só visual, sem efeito. Ids soltos em faixas livres
+   * (10–19, 146–149 e 249); a ordem é a da lista do dono do produto (`FLOWER_BLOCKS`), a mesma dos 15 quadros de `flowers.webp`.
+   */
+  FLOWER_HONEY: 10, FLOWER_BELL: 11, FLOWER_PEACH: 12, FLOWER_SNOW: 13, FLOWER_POM: 14, FLOWER_TULIP: 15, FLOWER_LANTERN: 16, FLOWER_SHELL: 17,
+  FLOWER_BOW: 18, FLOWER_ROSE: 19, FLOWER_MOON: 146, FLOWER_STRAWBERRY: 147, FLOWER_CORAL: 148, FLOWER_SAPPHIRE: 149, FLOWER_VANILLA: 249,
   /** Cerca de Estacas (v0.93.90): 1 célula × 1 de altura (16 × 16 px), 4 estacas; o jogador fabrica (1 Tora → 4) e coloca. */
   FENCE_STAKE: 244,
   /** Vitória-régia comum (folha ou flor; 4 variantes): enfeite sobre a água rasa de rios e lagos, não bloqueia (a água não se pisa). */
@@ -308,6 +316,23 @@ const ground = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): Block
   id, name, layer: 'ground', shape: 'flat', solid: false, standable: true, liquid: false,
   breakable: true, placeable: false, glow: false, organic: null, soft: false, stone: false, ...extra,
 });
+/** Nome de cada Flor Fofa, na ordem da lista do dono do produto (`assets-src/flores/LISTA.md`) e dos quadros de `flowers.webp`. */
+const FLOWER_NAMES: ReadonlyArray<readonly [BlockId, string]> = [
+  [Block.FLOWER_HONEY, 'Margarida de Mel'], [Block.FLOWER_BELL, 'Sininho de Orvalho'], [Block.FLOWER_PEACH, 'Coração de Pêssego'],
+  [Block.FLOWER_SNOW, 'Estrelinha de Neve'], [Block.FLOWER_POM, 'Pom-pom de Amora'], [Block.FLOWER_TULIP, 'Tulipa de Suspiro'],
+  [Block.FLOWER_LANTERN, 'Lanterninha de Sol'], [Block.FLOWER_SHELL, 'Conchinha do Lago'], [Block.FLOWER_BOW, 'Laço de Lavanda'],
+  [Block.FLOWER_ROSE, 'Rosinha de Nuvem'], [Block.FLOWER_MOON, 'Lírio de Lua'], [Block.FLOWER_STRAWBERRY, 'Botão de Morango'],
+  [Block.FLOWER_CORAL, 'Dançarina de Coral'], [Block.FLOWER_SAPPHIRE, 'Chuvinha de Safira'], [Block.FLOWER_VANILLA, 'Coroa de Baunilha'],
+];
+
+/** As 15 Flores Fofas, na ordem da lista (índice = quadro de `flowers.webp`). */
+export const FLOWER_BLOCKS: readonly BlockId[] = FLOWER_NAMES.map(([id]) => id);
+
+/** O bloco é uma das 15 Flores Fofas colocáveis? */
+export function isFancyFlower(id: number): boolean {
+  return FLOWER_BLOCKS.includes(id as BlockId);
+}
+
 const object = (id: BlockId, name: string, extra: Partial<BlockDef> = {}): BlockDef => ({
   id, name, layer: 'object', shape: 'cube', solid: true, standable: false, liquid: false,
   breakable: true, placeable: true, glow: false, organic: null, soft: false, stone: false, ...extra,
@@ -414,6 +439,8 @@ const defs: BlockDef[] = [
   object(Block.APPLE_TREE, 'Macieira', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.APPLE_TREE_BARE, 'Macieira', { shape: 'tree', placeable: false, organic: 'wood' }),
   object(Block.TALL_GRASS, 'Capim', { shape: 'decoration', solid: false, placeable: false, organic: 'plant' }),
+  // As 15 Flores Fofas (v0.93.110): enfeite colocável e quebrável (volta como item), sem colisão e sem efeito algum além do visual.
+  ...FLOWER_NAMES.map(([id, name]) => object(id, name, { shape: 'decoration', solid: false, placeable: true, organic: 'plant' })),
   object(Block.FLOWER, 'Flor', { shape: 'decoration', solid: false, placeable: false, organic: 'plant' }),
   // Dungeon: chão e cenário fixos (inquebráveis; o World também protege a área inteira).
   ground(Block.DUNGEON_DIRT, 'Chão da Caverna', { breakable: false }),
@@ -430,7 +457,7 @@ const defs: BlockDef[] = [
   object(Block.TOWN_PART, 'Construção', { shape: 'building', breakable: false, placeable: false }),
   ...([
     [Block.CASTLE, 'Castelo'], [Block.GUILD, 'Guilda dos Aventureiros'], [Block.INN, 'Hospedaria'],
-    [Block.SMITHY, 'Ferreiro'], [Block.SHOP_POTION, 'Loja de Poções'], [Block.SHOP_GOODS, 'Armazém'],
+    [Block.SMITHY, 'Ferreiro'], [Block.FLORIST, 'Floricultura'], [Block.SHOP_POTION, 'Loja de Poções'], [Block.SHOP_GOODS, 'Armazém'],
     [Block.SHOP_TOOLS, 'Loja de Ferramentas'], [Block.HOUSE, 'Casa'], [Block.HOUSE_TALL, 'Casa'],
     [Block.WATCHTOWER, 'Guarita'], [Block.WELL, 'Poço'], [Block.FOUNTAIN, 'Fonte'],
     [Block.STALL, 'Barraca'], [Block.BENCH, 'Banco'], [Block.BENCH_LONG, 'Banco'],
@@ -540,6 +567,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
   ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY, Block.FENCE_STAKE,
+  ...FLOWER_BLOCKS,
 ];
 
 /**
