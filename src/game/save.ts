@@ -15,6 +15,7 @@ import type { Player } from './player';
 import { Sheep } from './sheep';
 import type { Facing } from './walker';
 import type { Exploration } from './exploration';
+import { type MemoryBook, sanitizeBook } from './npcBrain/memory';
 
 /**
  * Salvamento automático no navegador (Fase 2). Salva só o que a seed não reconstrói:
@@ -24,10 +25,12 @@ import type { Exploration } from './exploration';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 export interface SaveData {
   v: number;
+  /** Memória dos NPCs (v18, ADR 0034 nível 3): conversas e compras por morador. */
+  npcMemory: MemoryBook;
   /** Subdivisão da grade em que o mundo foi salvo (v16, ADR 0032): 1 = antiga; 2 = células de metade do lado. */
   sub: number;
   world: WorldId;
@@ -79,6 +82,7 @@ export function captureSave(s: GameState): SaveData {
   const p = s.player;
   return {
     v: SAVE_VERSION,
+    npcMemory: s.entities.memory,
     sub: SUBDIV,
     world: s.world.profile.id,
     seed: s.world.seed,
@@ -160,6 +164,8 @@ export function migrate(raw: unknown): SaveData | null {
   // v16 → v17 (blocos de 1/4, ADR 0033): a altura de apoio `z` do Mundo passa de cubos para blocos de 1/4 (× 4); os chunks no formato antigo
   // (2 níveis) são convertidos ao carregar (`World.restoreChunk`), cada cubo virando 4 blocos com a mesma altura.
   if (d.v === 16) d = { ...d, v: 17, player: { ...d.player, z: d.world === 'santuario' ? d.player.z : d.player.z * 4 } };
+  // v17 → v18 (memória dos NPCs, ADR 0034): ninguém conhece a jogadora ainda.
+  if (d.v === 17) d = { ...d, v: 18, npcMemory: {} };
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -242,6 +248,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   p.facing = d.player.facing;
   p.hunger = Math.min(HUNGER.max, Math.max(0, d.player.hunger ?? HUNGER.max));
   s.entities.body = HERO_BODIES.includes(d.body) ? d.body : 'heroine';
+  s.entities.memory = sanitizeBook(d.npcMemory);
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
   const e = s.entities;

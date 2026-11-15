@@ -3,12 +3,13 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 16)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 18)
 **Grade (v16, ADR 0032):** o campo `sub` diz em que grade o mundo foi salvo (v15 = 1). `rescaleSave` (`world/subdiv.ts`) converte para a do jogo (só aumenta); `SaveStore.load` guarda uma cópia do arquivo antigo (`…:grade-1`) e **não abre nem sobrescreve** arquivo de grade mais fina que a do jogo.
 
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
+| Memória dos NPCs (v18) | `Entities.memory` | `npcMemory`: {chave → {talks, bought}}; validada por `sanitizeBook`; v17 migra vazia |
 | Chunks editados | `World.modifiedChunks()` | chão + 3 níveis em base64; plantações reconstruídas |
 | Heroína | `Player` | posição, nível, vida, direção |
 | Névoa do minimapa | `Exploration` (`game/exploration.ts`) | células descobertas, bits por chunk em base64 (`explored`) |

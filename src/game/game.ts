@@ -34,6 +34,7 @@ import { buyOffer, CURRENCY, FLORIST_STOCK, MARKET_STOCK, type BuyResult, type S
 import type { Villager } from './villager';
 import { ActionController } from './actionController';
 import { Menu } from './menu';
+import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { HUNGER, weaponPower } from '../world/progression';
 import type { MonsterKind } from '../world/dungeon';
@@ -816,7 +817,9 @@ export class Game {
     v.faceTo(this.player.x, this.player.y);
     if (v.role === 'merchant' && !v.shopIsOpen) { this.dialogue.open(v.closedConversation(), v, () => v.release()); return; } // loja fechada (rotina do Bento)
     if (v.role === 'merchant' || v.role === 'florist') { this.openShop(v); return; } // mercador e florista não conversam: abrem a loja (v0.93.57, v0.93.110)
-    this.dialogue.open(v.conversation(), v, () => v.release());
+    const tier = tierOf(this.entities.memory[v.memoryKey]);
+    this.dialogue.open(v.conversation(tier), v, () => v.release());
+    noteTalk(this.entities.memory, v.memoryKey); // lembra desta conversa (ADR 0034, nível 3)
   }
 
   /** Vitrine, título e falas de cada loja (Mercado e Floricultura, v0.93.110). */
@@ -838,8 +841,11 @@ export class Game {
     });
     this.shopMerchant = v;
     v.conversation(); // segura o atendente parado enquanto a loja está aberta (`release` ao fechar)
-    const shop = Game.SHOPS[v.role === 'florist' ? 'florist' : 'merchant'];
-    this.shop.open(shop.stock, { portrait: art().portraits?.[v.npc] }, shop.style);
+    const role = v.role === 'florist' ? 'florist' : 'merchant';
+    const shop = Game.SHOPS[role];
+    const tier = tierOf(this.entities.memory[v.memoryKey]);
+    noteTalk(this.entities.memory, v.memoryKey); // a visita conta para a relação
+    this.shop.open(shop.stock, { portrait: art().portraits?.[v.npc] }, { ...shop.style, greeting: shopGreeting(role, tier) });
   }
   private shopMerchant: Villager | null = null;
 
@@ -847,6 +853,7 @@ export class Game {
   private buyAtMarket(offer: ShopOffer): BuyResult {
     const r = buyOffer(this.inventory, offer, (item) => canCarry(this.inventory, this.hotbar, item));
     if (r !== 'ok') return r;
+    if (this.shopMerchant) noteBuy(this.entities.memory, this.shopMerchant.memoryKey);
     this.hotbar.prune(this.inventory); // a pilha de moedas pode ter acabado
     this.hotbar.autoPlace(offer.item);
     this.refreshSelection();
