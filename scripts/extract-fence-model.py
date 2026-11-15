@@ -52,6 +52,10 @@ for wood, (_, strip_name, icon_name, gate_name, gate_icon) in WOODS.items():
     for i in range(5):
         gate.alpha_composite(Image.open(renders / f'{wood}-gate-{i}.png').convert('RGBA'), (i * 224, 0))
     gate.save(OUT / gate_name, 'WEBP', quality=90, method=6)
+    side = Image.new('RGBA', (224 * 5, 400), (0, 0, 0, 0))   # portão de LADO (cercas ao norte e ao sul): 224 × 400, base das estacas em (112, 300), folha abre para leste
+    for i in range(5):
+        side.alpha_composite(Image.open(renders / f'{wood}-gateS-{i}.png').convert('RGBA'), (i * 224, 0))
+    side.save(OUT / gate_name.replace('fence-gate', 'fence-gate-side'), 'WEBP', quality=90, method=6)
     im = Image.open(renders / f'{wood}-gate-0.png').convert('RGBA')
     im = im.crop(im.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox())
     k = 56 / max(im.size)
@@ -60,4 +64,4 @@ for wood, (_, strip_name, icon_name, gate_name, gate_icon) in WOODS.items():
     c.alpha_composite(im, ((64 - im.width) // 2, (64 - im.height) // 2))
     c.save(OUT / gate_icon, 'WEBP', quality=90, method=6)
 shutil.rmtree(work)
-print('ok: 3 tiras de cerca, 3 de portão e 6 ícones')
+print('ok: 3 tiras de cerca, 3 de portão e 6 ícones e 3 portões de lado')

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fenceParts, FencePiece } from '../render/fence';
+import { fenceParts, FencePiece, gateIsSide } from '../render/fence';
 import { applyAction } from './actions';
 import { Block, BLOCKS, HOTBAR_BLOCKS, joinsFence } from './blocks';
 import { blockDrops, blockStack, RECIPES, toolCanBreak } from './items';
@@ -115,5 +115,16 @@ describe('Emenda da cerca (render/fence)', () => {
     const cherry = RECIPES.find((r) => r.id === 'cherry-fence')!;
     expect(cherry.inputs).toEqual([{ item: blockStack(Block.CHERRY_PLANKS), count: 2 }]);
     expect(cherry.output).toEqual({ item: blockStack(Block.FENCE_CHERRY), count: 4 });
+  });
+});
+
+describe('Portão de lado (render/fence)', () => {
+  it('só quando as cercas vizinhas estão ao norte e/ou ao sul', () => {
+    const at = (n: boolean, e: boolean, s: boolean, w: boolean) => (dx: number, dy: number) => (dy === -1 ? n : dy === 1 ? s : dx === 1 ? e : w);
+    expect(gateIsSide(at(true, false, true, false))).toBe(true);   // cerca norte-sul
+    expect(gateIsSide(at(true, false, false, false))).toBe(true);  // ponta de cerca vertical
+    expect(gateIsSide(at(false, true, false, true))).toBe(false);  // cerca leste-oeste: de frente
+    expect(gateIsSide(at(false, false, false, false))).toBe(false);// solto: de frente
+    expect(gateIsSide(at(true, true, true, false))).toBe(false);   // cruzamento: de frente
   });
 });

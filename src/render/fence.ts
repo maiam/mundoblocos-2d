@@ -23,6 +23,17 @@ export const FENCE_FRAME = { w: 128, h: 232, ax: 64, ay: 208 } as const;
  */
 export const GATE_FRAME = { w: 224, h: 300, postBase: 278, poses: 5 } as const;
 
+/**
+ * Portão de LADO (v0.93.104): quando as cercas vizinhas estão ao norte e/ou ao sul (e não a leste/oeste), o portão gira 90° — as estacas ficam uma
+ * atrás da outra e a folha abre para leste. Mesma âncora (base da estaca no centro da célula); quadro mais alto (as estacas ficam a ±0,64 célula em z).
+ */
+export const GATE_SIDE_FRAME = { w: 224, h: 400, postBase: 300, poses: 5 } as const;
+
+/** O portão deve ser desenhado de lado? `joins(dx, dy)` = a célula vizinha é cerca ou portão. Só norte/sul, sem leste/oeste. */
+export function gateIsSide(joins: (dx: number, dy: number) => boolean): boolean {
+  return (joins(0, -1) || joins(0, 1)) && !joins(1, 0) && !joins(-1, 0);
+}
+
 export const enum FencePiece { Horizontal = 0, Vertical = 1, Post = 2, ArmNorth = 3, ArmSouth = 4 }
 
 /** O que desenhar numa célula de cerca, dados os vizinhos que se emendam. */
