@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.101 — lascas também ao cortar árvore e ao quebrar plantas (3D) (15/11/2026)
+- **Seguindo a ordem combinada** dos pendentes da animação de quebrar: lascas em outros alvos além dos blocos.
+- **Cores** (`breakFx.chipColor`): árvore solta **casca** (marrom), flor **pétalas** (rosa), capim, plantas e culturas **folhas** (verde); portas, portões e cercas já soltavam lascas de madeira. As árvores continuam com o tremor e as folhas de antes (v0.93.83), agora com casca no pé.
+- **Render** (`worldThreeRenderer.stepBreak`): o filtro que excluía árvores saiu; o estouro final vale para plantas e árvores (a árvore estoura ao sair do mapa, junto do tombo). As rachaduras em pixel-art ficam só nos cubos e no chão (não aparecem sob uma flor ou árvore).
+- Só cliente e só 3D (`?sensacao=0` desliga); sem mapa, save ou protocolo (servidor não muda). `tsc` e testes verdes (grades 1 e 2); conferido no navegador (flor, capim, árvore, porta).
+
 ## Orvalis v0.93.100 — rachaduras em pixel-art na quebra, sem as listras (3D) (15/11/2026)
 - **Pedido do dono do produto:** não gostou das "ranhuras em listras" da animação de quebrar. Testou o **desgaste em pixels** (covinhas e mordidas; descartado: "não gostei") e depois a **opção 1, rachaduras em pixel-art**, que ficou.
 - **Causa das listras:** havia DUAS camadas de linhas no 3D — as fissuras vetoriais da v0.93.98 e, por cima, as fissuras radiais antigas do overlay (`drawBreakingCracks`, linhas saindo do centro + véu escuro).
