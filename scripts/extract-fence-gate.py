@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
-"""Cerca de madeira v3 e porteira (v0.93.96): kit do dono do produto (`assets-src/cerca-v3/kit.png`) → tira de 3 quadros + 5 poses da porteira.
+"""Porteira (v0.93.96; a cerca virou o modelo 3D: `extract-fence-model.py`): kit do dono do produto (`assets-src/cerca-v3/kit.png`, fundo transparente)
+→ 5 poses da porteira. O kit só traz a porteira fechada (frente); a abertura é feita aqui: a folha (entre os dois postes) encolhe na largura pelo
+cosseno do ângulo (0°, 22,5°, 45°, 67,5°, 90°), presa na dobradiça da esquerda, com os postes fixos.
 
-O kit vem com fundo transparente e sem sombra (a primeira versão, sobre fundo creme, era recortada por saturação e perdia detalhes).
-Peças usadas: trecho horizontal de cima (5 postes, 325 px entre postes = 1 célula), coluna de trilhos do trecho vertical da esquerda e a
-porteira fechada (frente). A porteira abrir é feita aqui: a folha (entre os dois postes) encolhe na largura pelo cosseno do ângulo
-(0°, 22,5°, 45°, 67,5°, 90°), presa na dobradiça da esquerda, com os postes fixos.
-
-Saída (px por célula = 128; a escala do jogo é 32 px de mundo por célula):
-  src/assets/fence.webp       tira de 3 quadros 128 × 144: 0 = horizontal (trilhos ← poste → trilhos), 1 = vertical (coluna de trilhos atrás do
-                              poste), 2 = poste. Âncora (base do poste) em (64, 96); a coluna é centrada no poste (corte N/S na linha 75).
-  src/assets/fence-gate.webp  5 poses 136 × 92 (base dos postes na linha 90); postes nas bordas da célula.
-  src/assets/icon-block-fence.webp e icon-block-fence-gate.webp (64 × 64).
-Uso: python3 scripts/extract-fence-v3.py   (depois python3 scripts/optimize-assets.py não é necessário: já sai em WebP)
+Saída (px por célula = 128; escala do jogo = 16 px por célula):
+  src/assets/fence-gate.webp  5 poses 136 × 94 (base dos postes na linha 90); postes nas bordas da célula.
+  src/assets/icon-block-fence-gate.webp (64 × 64).
+Uso: python3 scripts/extract-fence-gate.py
 """
+
 from pathlib import Path
 
 import numpy as np
@@ -58,57 +54,6 @@ def tile(strip: Image.Image, length: int, axis: int) -> Image.Image:
     return out
 
 
-# ---- peças-fonte ---------------------------------------------------------------------------------------------------------------------
-POST = crop((741, 56, 801, 168))           # poste do trecho horizontal (60 × 112); base em y = 109 do recorte, centro x = 30
-POST_BASE = (30, 109)
-rails_span = crop((801, 72, 1069, 156))    # trilhos entre dois postes (268 × 84)
-RAIL_TOP = 72 - 168 + 109                   # linha dos trilhos relativa à base do poste (+ base em POST_BASE[1])
-col_span = crop((90, 622, 131, 830))        # coluna vertical entre dois postes (41 × 208)
-
-rails = tile(seamless(rails_span, 240, 28, 1), PITCH, 1)
-col = tile(seamless(col_span, 180, 28, 0), PITCH, 0)
-
-FW, FH, AX, AY = PITCH, 360, PITCH // 2, 270   # quadro-fonte em px da arte; poste centrado, base em AY
-
-
-def frame() -> Image.Image:
-    return Image.new('RGBA', (FW, FH), (0, 0, 0, 0))
-
-
-def put_post(f: Image.Image) -> None:
-    f.alpha_composite(POST, (AX - POST_BASE[0], AY - POST_BASE[1]))
-
-
-horizontal = frame()
-horizontal.alpha_composite(rails, (0, AY - (168 - 72) + 0 - 0))
-put_post(horizontal)
-vertical = frame()
-POST_MID = AY - 56                           # centro visual do poste
-vertical.alpha_composite(col, (AX - col.width // 2, POST_MID - PITCH // 2))
-put_post(vertical)
-single = frame()
-put_post(single)
-
-FRAME = (128, 144)
-
-
-def shrink(im: Image.Image) -> Image.Image:
-    return im.resize((round(FW * K), round(FH * K)), Image.LANCZOS).crop((0, round((AY - 96 / K) * K) if False else 0, 128, 0 + 144))
-
-
-def to_frame(im: Image.Image) -> Image.Image:
-    # reduz e corta de modo que a base do poste caia em (64, 96)
-    s = im.resize((round(FW * K), round(FH * K)), Image.LANCZOS)
-    top = round(AY * K) - 96
-    return s.crop((0, top, 128, top + 144))
-
-
-strip = Image.new('RGBA', (384, 144), (0, 0, 0, 0))
-for i, im in enumerate((horizontal, vertical, single)):
-    strip.alpha_composite(to_frame(im), (i * 128, 0))
-strip.save(OUT / 'fence.webp', 'WEBP', quality=90, method=6)
-
-
 def icon(im: Image.Image, name: str) -> None:
     bb = im.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox()
     im = im.crop(bb)
@@ -119,7 +64,6 @@ def icon(im: Image.Image, name: str) -> None:
     c.save(OUT / name, 'WEBP', quality=90, method=6)
 
 
-icon(horizontal, 'icon-block-fence.webp')
 
 # ---- porteira: folha encolhe presa à dobradiça da esquerda ---------------------------------------------------------------------------
 G_TOP, G_BASE = 712, 940
@@ -149,4 +93,4 @@ for i, f in enumerate(poses):
     if i == 0:
         icon(f, 'icon-block-fence-gate.webp')
 gate_strip.save(OUT / 'fence-gate.webp', 'WEBP', quality=90, method=6)
-print('cerca:', strip.size, ' porteira:', gate_strip.size, ' base dos postes na linha', round((G_BASE - G_TOP) * K))
+print('porteira:', gate_strip.size, ' base dos postes na linha', round((G_BASE - G_TOP) * K))

@@ -3,8 +3,8 @@ import type { Camera } from '../game/camera';
 import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
-import { Block, blockDef, type BlockId, isDoor, isGate, joinsFence } from '../world/blocks';
-import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, fenceParts } from './fence';
+import { Block, blockDef, type BlockId, isDoor, isFence, isGate, joinsFence } from '../world/blocks';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts } from './fence';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
@@ -206,8 +206,8 @@ export class Renderer {
         if ((x < bx0 || y > by1) && !isTownArt(id) && id !== Block.DUNGEON_CAVE) continue;
         if (isDoor(id)) {
           this.drawDoor(cam, id, x, y, opts.elapsed);
-        } else if (id === Block.FENCE && this.textures.fencePieces) {
-          this.drawFence(cam, x, y, this.textures.fencePieces);
+        } else if (isFence(id) && this.textures.fencePieces.has(id)) {
+          this.drawFence(cam, x, y, this.textures.fencePieces.get(id)!);
         } else if (isGate(id)) {
           gates.push(x); // depois da linha: os postes do portão cobrem as travessas das cercas vizinhas
         } else if (id !== Block.AIR) {
@@ -376,7 +376,7 @@ export class Renderer {
   private drawFence(cam: Camera, x: number, y: number, pieces: HTMLCanvasElement[]): void {
     const j = (dx: number, dy: number) => joinsFence(this.world.getObject(x + dx, y + dy));
     const parts = fenceParts(j(0, -1), j(1, 0), j(0, 1), j(-1, 0));
-    const { w, h, ax, cutY } = FENCE_FRAME;
+    const { w, h, ax } = FENCE_FRAME;
     const z = cam.zoom * FENCE_SCALE;
     const left = cam.worldToScreenX(x * TILE + FENCE_OFFSET.x);
     const top = cam.worldToScreenY(y * TILE + FENCE_OFFSET.y);
@@ -387,11 +387,12 @@ export class Renderer {
       piece(parts.whole, 0, 0, w, h);
       return;
     }
-    if (parts.north) piece(1, 0, 0, w, cutY);
-    if (parts.west) piece(0, 0, 0, ax, h);
-    if (parts.east) piece(0, ax, 0, w - ax, h);
-    if (parts.south) piece(1, 0, cutY, w, h - cutY);
-    if (parts.post) piece(2, 0, 0, w, h);
+    // Ordem de profundidade: braço norte (atrás), braços laterais, estaca, braço sul (na frente da estaca).
+    if (parts.north) piece(FencePiece.ArmNorth, 0, 0, w, h);
+    if (parts.west) piece(FencePiece.Horizontal, 0, 0, ax, h);
+    if (parts.east) piece(FencePiece.Horizontal, ax, 0, w - ax, h);
+    if (parts.post) piece(FencePiece.Post, 0, 0, w, h);
+    if (parts.south) piece(FencePiece.ArmSouth, 0, 0, w, h);
   }
 
   /** Porta: quadro estático (fechada/aberta) ou da animação logo após mudar de estado. */

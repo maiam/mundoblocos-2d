@@ -219,6 +219,10 @@ import rocks from '../../assets/rocks.webp';
 import fencePieces from '../../assets/fence.webp';
 import fenceGate from '../../assets/fence-gate.webp';
 import fenceIcon from '../../assets/icon-block-fence.webp';
+import fenceBirch from '../../assets/fence-betula.webp';
+import fenceBirchIcon from '../../assets/icon-block-fence-betula.webp';
+import fenceCherry from '../../assets/fence-cerejeira.webp';
+import fenceCherryIcon from '../../assets/icon-block-fence-cerejeira.webp';
 import fenceGateIcon from '../../assets/icon-block-fence-gate.webp';
 import treeOak from '../../assets/tree-oak.webp';
 import treeApple from '../../assets/tree-apple.webp';
@@ -512,7 +516,10 @@ const pack: ArtPack = {
   trees: { oak: treeOak, apple: treeApple, appleBare: treeAppleBare, cherry: treeCherry, birch: treeBirch, cactus: treeCactus },
   rocks,
   // Cerca de tábuas (scripts/extract-fence.py): peças emendadas por vizinhos + portão.
-  fence: { pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon },
+  fence: {
+    pieces: fencePieces, gate: fenceGate, icon: fenceIcon, gateIcon: fenceGateIcon,
+    birch: { pieces: fenceBirch, icon: fenceBirchIcon }, cherry: { pieces: fenceCherry, icon: fenceCherryIcon },
+  },
   // Cidade do Despertar (scripts/extract-town.py): construções, bancos, postes e arbustos.
   town: { 'house-red-1f': townHouseRed1f, 'house-red-2f': townHouseRed2f, 'house-blue-1f': townHouseBlue1f, 'house-blue-2f': townHouseBlue2f, 'house-brown-1f': townHouseBrown1f, 'house-brown-2f': townHouseBrown2f, 'shop-1f': townShop1f, 'shop-2f': townShop2f, 'smithy': townSmithy, 'inn': townInn, 'fountain': townFountain, 'well': townWell, 'stall': townStall, 'barrel': townBarrel, 'guild': townGuild, 'castle': townCastle, 'watchtower': townWatchtower, 'bench-2': townBench2, 'bench-3': townBench3, 'lamp-stone': townLampStone, 'lamp-wood': townLampWood, 'lamp-mixed': townLampMixed, 'bush-round': townBushRound, 'bush-tall': townBushTall, 'bush-wide': townBushWide, 'water-fish-carp': waterFishCarp, 'water-fish-gold': waterFishGold, 'water-fish-perch': waterFishPerch, 'water-fish-silver': waterFishSilver, 'water-lily-bud': waterLilyBud, 'water-lily-leaf': waterLilyLeaf, 'water-lily-pink': waterLilyPink, 'water-lily-white': waterLilyWhite, 'water-victoria-a': waterVictoriaA, 'water-victoria-b': waterVictoriaB, 'water-victoria-flower': waterVictoriaFlower, 'water-victoria-pair': waterVictoriaPair, 'village-barn': villageBarn, 'village-barrel': villageBarrel, 'village-bed-veg': villageBedVeg, 'village-bed-wheat': villageBedWheat, 'village-bench-1': villageBench1, 'village-bench-2': villageBench2, 'village-bush': villageBush, 'village-cart': villageCart, 'village-coop': villageCoop, 'village-flowers': villageFlowers, 'village-gate-closed': villageGateClosed, 'village-gate-open': villageGateOpen, 'village-hay': villageHay, 'village-house-straw-1': villageHouseStraw1, 'village-house-straw-2': villageHouseStraw2, 'village-house-straw-3': villageHouseStraw3, 'village-house-tile-1': villageHouseTile1, 'village-house-tile-2': villageHouseTile2, 'village-lamp': villageLamp, 'village-logs': villageLogs, 'village-oak-1': villageOak1, 'village-oak-2': villageOak2, 'village-oak-3': villageOak3, 'village-rocks': villageRocks, 'village-stake-low': villageStakeLow, 'village-stake-tall': villageStakeTall, 'village-stake-icon': villageStakeIcon, 'village-sacks': villageSacks, 'village-tree-1': villageTree1, 'village-tree-2': villageTree2, 'village-well': villageWell },
   water: { top: waterTop, flow: waterFlow },

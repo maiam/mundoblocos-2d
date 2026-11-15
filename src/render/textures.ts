@@ -78,7 +78,7 @@ export interface BlockTextures {
   /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
   stackDraw: Map<BlockId, number>;
   /** Peças da cerca (trecho horizontal, vertical, poste grande; `render/fence.ts`), ou null sem a arte. */
-  fencePieces: HTMLCanvasElement[] | null;
+  fencePieces: Map<BlockId, HTMLCanvasElement[]>;
 }
 
 /**
@@ -841,21 +841,29 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
  * Cerca e portão (`render/fence.ts`): as 3 peças viram canvases para o render cortar as metades; a cerca também
  * ganha um sprite (trecho horizontal) para o clique e o destaque. Portão: um sprite por estado.
  */
-function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, gateFrames: Sprite[]): HTMLCanvasElement[] | null {
+function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, gateFrames: Sprite[]): Map<BlockId, HTMLCanvasElement[]> {
   const a = getFenceArt();
   const pack = art().fence;
-  if (!a || !pack) return null;
-  const pieces = [0, 1, 2].map((i) => {
-    const c = document.createElement('canvas');
-    c.width = FENCE_FRAME.w;
-    c.height = FENCE_FRAME.h;
-    c.getContext('2d')!.drawImage(a.pieces, i * FENCE_FRAME.w, 0, FENCE_FRAME.w, FENCE_FRAME.h, 0, 0, FENCE_FRAME.w, FENCE_FRAME.h);
-    return c;
-  });
-  const hit = { x: 0, y: -T * 0.1, w: T, h: T * 1.1 };
-  objects.set(Block.FENCE, {
-    canvas: pieces[0], ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: FENCE_FRAME.w * FENCE_SCALE, h: FENCE_FRAME.h * FENCE_SCALE, hit,
-  });
+  const out = new Map<BlockId, HTMLCanvasElement[]>();
+  if (!a || !pack) return out;
+  const hit = { x: 0, y: -T * 0.9, w: T, h: T * 1.5 };
+  for (const [id, img, icon] of [
+    [Block.FENCE, a.pieces.get(Block.FENCE), pack.icon],
+    [Block.FENCE_BIRCH, a.pieces.get(Block.FENCE_BIRCH), pack.birch.icon],
+    [Block.FENCE_CHERRY, a.pieces.get(Block.FENCE_CHERRY), pack.cherry.icon],
+  ] as const) {
+    if (!img) continue;
+    const pieces = [0, 1, 2, 3, 4].map((i) => {
+      const c = document.createElement('canvas');
+      c.width = FENCE_FRAME.w;
+      c.height = FENCE_FRAME.h;
+      c.getContext('2d')!.drawImage(img, i * FENCE_FRAME.w, 0, FENCE_FRAME.w, FENCE_FRAME.h, 0, 0, FENCE_FRAME.w, FENCE_FRAME.h);
+      return c;
+    });
+    out.set(id, pieces);
+    objects.set(id, { canvas: pieces[0], ox: FENCE_OFFSET.x, oy: FENCE_OFFSET.y, w: FENCE_FRAME.w * FENCE_SCALE, h: FENCE_FRAME.h * FENCE_SCALE, hit });
+    icons.set(id, icon);
+  }
   // Porteira: 5 poses (0°→90°), cada uma a 1 célula de largura (a pose cobre a célula inteira; postes a ±0,33).
   const k = FENCE_SCALE; // mesma escala da cerca (a porteira passa ~4 px da célula de cada lado)
   const w = GATE_FRAME.w * k;
@@ -873,8 +881,7 @@ function fenceTextures(objects: Map<BlockId, Sprite>, icons: Map<BlockId, string
   objects.set(Block.FENCE_GATE, poses[0]);
   objects.set(Block.FENCE_GATE_OPEN, poses[last]);
   gateFrames.push(...poses, ...[...poses].reverse());
-  icons.set(Block.FENCE, pack.icon);
   icons.set(Block.FENCE_GATE, pack.gateIcon);
-  return pieces;
+  return out;
 }
 

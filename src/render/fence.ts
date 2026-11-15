@@ -12,18 +12,18 @@ import { TILE } from '../config';
  */
 
 /**
- * Quadro de cada peça na tira (px da imagem) e a âncora = centro da base do poste (que fica no centro da célula). Cerca v3 (v0.93.96, kit do dono do
- * produto, `scripts/extract-fence-v3.py`): 128 px por célula (distância entre postes = 1 célula); o poste tem 42 px de altura; a coluna de trilhos
- * vertical é centrada no poste (por isso o corte norte/sul, `cutY`, é na linha 74 e não na âncora).
+ * Quadro de cada peça na tira (px da imagem) e a âncora = centro da base da estaca (no centro da célula). Cerca do modelo 3D (v0.93.96,
+ * `scripts/extract-fence-model.py`): 128 px por célula (12 u do modelo = 1 célula); a estaca tem 4 u de largura e 17 de altura (~22 px no jogo).
+ * Tira de 5 quadros: horizontal, vertical, estaca, braço norte, braço sul (os braços são só as travessas).
  */
-export const FENCE_FRAME = { w: 128, h: 144, ax: 64, ay: 96, cutY: 74 } as const;
+export const FENCE_FRAME = { w: 128, h: 232, ax: 64, ay: 208 } as const;
 /**
  * Porteira: 5 poses (0°, 22,5°, 45°, 67,5°, 90°) lado a lado, cada uma `w × h`; a base dos postes cai na linha `postBase` (alinhada à base dos postes
  * da cerca) e os postes ficam nas bordas da célula; a folha encolhe presa à dobradiça (gerada por `extract-fence-v3.py`).
  */
 export const GATE_FRAME = { w: 136, h: 94, postBase: 90, poses: 5 } as const;
 
-export const enum FencePiece { Horizontal = 0, Vertical = 1, Post = 2 }
+export const enum FencePiece { Horizontal = 0, Vertical = 1, Post = 2, ArmNorth = 3, ArmSouth = 4 }
 
 /** O que desenhar numa célula de cerca, dados os vizinhos que se emendam. */
 export interface FenceParts {

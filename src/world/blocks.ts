@@ -168,6 +168,9 @@ export const Block = {
   /** Os 6 blocos do vão entre os postes: livres com o portão aberto, sólidos com ele fechado (sem arte própria: o desenho é do portão). */
   V_GATE_GAP: 239,
   V_GATE_GAP_CLOSED: 254,
+  /** Cerca de Bétula e de Cerejeira (v0.93.96): a mesma cerca de estacas do Carvalho (`FENCE`), com outra madeira; emendam entre si e com o portão. */
+  FENCE_BIRCH: 245,
+  FENCE_CHERRY: 248,
   /** Cerca de Estacas (v0.93.90): 1 célula × 1 de altura (16 × 16 px), 4 estacas; o jogador fabrica (1 Tora → 4) e coloca. */
   FENCE_STAKE: 244,
   /** Vitória-régia comum (folha ou flor; 4 variantes): enfeite sobre a água rasa de rios e lagos, não bloqueia (a água não se pisa). */
@@ -384,6 +387,8 @@ const defs: BlockDef[] = [
   object(Block.OAK_DOOR_OPEN, 'Porta de Carvalho (aberta)', { shape: 'door', solid: false, placeable: false, organic: 'wood' }),
   // Cerca e portão: ocupam a célula (nada empilha em cima); madeira: o machado desmonta.
   object(Block.FENCE, 'Cerca de Madeira', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_BIRCH, 'Cerca de Bétula', { shape: 'fence', organic: 'wood' }),
+  object(Block.FENCE_CHERRY, 'Cerca de Cerejeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_STAKE, 'Cerca de Estacas', { shape: 'building', organic: 'wood' }),
   object(Block.FENCE_GATE, 'Portão de Madeira', { shape: 'fence', organic: 'wood' }),
   object(Block.FENCE_GATE_OPEN, 'Portão de Madeira (aberto)', { shape: 'fence', solid: false, placeable: false, organic: 'wood' }),
@@ -525,7 +530,7 @@ export const CELESTIAL_BLOCKS: BlockId[] = [
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
-  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_GATE, Block.FENCE_STAKE,
+  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_STAKE,
 ];
 
 /**
@@ -601,7 +606,12 @@ export function isGate(id: BlockId): boolean {
 
 /** Cerca ou portão: as cercas vizinhas se emendam com eles. */
 export function joinsFence(id: BlockId): boolean {
-  return id === Block.FENCE || isGate(id);
+  return isFence(id) || isGate(id);
+}
+
+/** Cerca de estacas do jogador (Carvalho, Bétula ou Cerejeira; as três se emendam). */
+export function isFence(id: BlockId): boolean {
+  return id === Block.FENCE || id === Block.FENCE_BIRCH || id === Block.FENCE_CHERRY;
 }
 
 /** Abre/fecha com um toque (porta ou portão): estado → estado oposto. */

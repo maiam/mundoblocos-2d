@@ -199,10 +199,9 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 `python3 scripts/extract-rocks.py` → `rocks.png` (tira de quadros de 96 px, mesma escala, base no pé) →
 `optimize-assets.py`. Separa os desenhos por pedaços conectados e ordena por fileira (sem grade).
 
-**Cerca e portão** (referências em `assets-src/cerca/`: `moldura.png` = cercado quadrado 3/4, `portao.png` =
-fechado, aberto e poste solto): `python3 scripts/extract-fence-v3.py` (v0.93.95; fonte em `assets-src/cerca-v3/kit.png`; o `extract-fence.py` é a versão antiga) → `fence.webp` (3 peças de 128 × 144 px com âncora
-comum no centro da célula), `fence-gate.webp` (5 poses 136 × 94, 0°–90°, folha encolhida no script; a animação usa 10 quadros ida e volta) e os ícones →
-`optimize-assets.py`. Mudou a âncora ou o quadro no script → atualize `FENCE_FRAME`/`GATE_FRAME` em `render/fence.ts`.
+**Cerca (v0.93.96)** — a partir do **modelo 3D** do Blockbench (`assets-src/cerca-betula/*.bbmodel`): `python3 scripts/extract-fence-model.py` (precisa de `node` + `playwright` global e `npm ci`) renderiza o modelo com Three.js na câmera do jogo e o reveste com as tábuas do `materials-v2` → `fence.webp` (Carvalho), `fence-betula.webp`, `fence-cerejeira.webp` (5 quadros 128 × 232: horizontal, vertical, estaca, braço norte, braço sul) e os ícones. Modelo novo com outros nomes de malha → ajuste `scripts/fence-model/render.html`. Mudou a âncora/quadro → `FENCE_FRAME` em `render/fence.ts`.
+
+**Porteira** (kit `assets-src/cerca-v3/kit.png`, fundo transparente): `python3 scripts/extract-fence-gate.py` → `fence-gate.webp` (5 poses 136 × 94, 0°–90°; a folha encolhe no script; a animação usa 10 quadros ida e volta) e o ícone. `GATE_FRAME` em `render/fence.ts`. (Referências antigas em `assets-src/cerca/`; `extract-fence.py` é a versão antiga.)
 
 **Marcos do mundo** (entrada do covil, `assets-src/dungeon-cave.png`): `python3 scripts/extract-landmarks.py` →
 `dungeon-cave.png` (320 px de largura) → `optimize-assets.py`. Carrega com a arte do covil, em segundo plano.

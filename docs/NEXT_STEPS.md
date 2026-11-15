@@ -363,4 +363,4 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - Monstros sempre atualizados (~39 no labirinto): ok hoje; com várias dungeons, atualizar só os próximos.
 - Pipeline de brilho (`glowColor`) sem uso desde a remoção dos blocos mágicos (mantido para tochas/vaga-lumes).
 - iPhone/Safari: sem tela cheia/trava de orientação no navegador (limitação da plataforma).
-- **Cerca nova:** decidir se o muro e o portão da vila passam a usar a cerca/porteira novas; cantos e fim de trecho próprios (hoje o L vira horizontal+vertical+poste); trocar ícone do portão da vila se mudar.
+- **Cercas de estacas (v0.93.96):** (1) **servidor**: blocos novos (245/248) → `npm run build:net` + `sync-net` e republicar o servidor antes do jogo; (2) **porteira**: só existe a de Carvalho (kit v3), mais baixa que a estaca nova — pedir modelo 3D de porteira (e, se quiser, uma por madeira); (3) decidir se o muro/portão da vila passam a usar a cerca nova; (4) o 2D de reserva desenha as cercas maiores no zoom padrão (conferir se vale ajustar); (5) conferir a legibilidade das travessas verticais (finas na câmera oblíqua).

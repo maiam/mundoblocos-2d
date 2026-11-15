@@ -1,7 +1,7 @@
-import { Block, blockDef, isDoor, isGate, joinsFence, type BlockId } from '../world/blocks';
+import { Block, blockDef, isDoor, isFence, isGate, joinsFence, type BlockId } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
-import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, fenceParts } from './fence';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts } from './fence';
 import type { BlockTextures } from './textures';
 import { isTownArt } from './townArt';
 import type { SpriteDraw } from './three/chunkSprites';
@@ -15,16 +15,16 @@ import { objectScaleFor } from './worldScale';
  */
 export function worldSpriteArt(world: World, textures: BlockTextures): (id: BlockId, x: number, y: number) => SpriteDraw | null {
   const fenceCache = new Map<number, SpriteDraw>();
-  const fence = (x: number, y: number): SpriteDraw | null => {
-    const pieces = textures.fencePieces;
+  const fence = (id: BlockId, x: number, y: number): SpriteDraw | null => {
+    const pieces = textures.fencePieces.get(id);
     if (!pieces) return null;
     const j = (dx: number, dy: number) => joinsFence(world.getObject(x + dx, y + dy));
     const n = j(0, -1), e = j(1, 0), s = j(0, 1), w = j(-1, 0);
-    const key = (n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0);
+    const key = id * 16 + ((n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0));
     let hit = fenceCache.get(key);
     if (hit) return hit;
     // Compõe as peças (cortes na âncora, como `Renderer.drawFence`) num quadro do tamanho da tira; só composição de canvas.
-    const { w: fw, h: fh, ax, cutY } = FENCE_FRAME;
+    const { w: fw, h: fh, ax } = FENCE_FRAME;
     const c = document.createElement('canvas');
     c.width = fw;
     c.height = fh;
@@ -33,11 +33,11 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     const piece = (p: number, sx: number, sy: number, sw: number, sh: number) => ctx.drawImage(pieces[p], sx, sy, sw, sh, sx, sy, sw, sh);
     if (parts.whole !== null) piece(parts.whole, 0, 0, fw, fh);
     else {
-      if (parts.north) piece(1, 0, 0, fw, cutY);
-      if (parts.west) piece(0, 0, 0, ax, fh);
-      if (parts.east) piece(0, ax, 0, fw - ax, fh);
-      if (parts.south) piece(1, 0, cutY, fw, fh - cutY);
-      if (parts.post) piece(2, 0, 0, fw, fh);
+      if (parts.north) piece(FencePiece.ArmNorth, 0, 0, fw, fh);
+      if (parts.west) piece(FencePiece.Horizontal, 0, 0, ax, fh);
+      if (parts.east) piece(FencePiece.Horizontal, ax, 0, fw - ax, fh);
+      if (parts.post) piece(FencePiece.Post, 0, 0, fw, fh);
+      if (parts.south) piece(FencePiece.ArmSouth, 0, 0, fw, fh);
     }
     const wpx = fw * FENCE_SCALE, hpx = fh * FENCE_SCALE;
     hit = {
@@ -54,7 +54,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     if (def.shape === 'cube' || def.shape === 'wall' || def.shape === 'wall-door') return null;
     if (isGate(id) && textures.gateFrames.length) return null; // porteira animada: `DoorSprites` (instância própria)
     if (isDoor(id)) return null; // portas têm render próprio, com animação (`DoorSprites`, M3.4)
-    if (id === Block.FENCE) return fence(x, y);
+    if (isFence(id)) return fence(id, x, y);
     const vars = textures.variants.get(id);
     const salt = isTownArt(id) ? 0x7041 : world.seed;
     const sprite = vars ? vars[Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length)] : textures.objects.get(id);
