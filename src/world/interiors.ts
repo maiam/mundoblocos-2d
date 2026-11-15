@@ -132,8 +132,39 @@ export const FLORIST_INTERIOR: InteriorDef = {
   keeper: { at: [11, 4], rows: [4, 4] },
 };
 
+/**
+ * Guilda dos Aventureiros (arte `assets-src/interiors/guild.png`, 24 × 18 células, v0.93.120): estantes, mapa e armas no fundo, o balcão no meio (o Mestre da
+ * Guilda anda atrás dele), quadro de contratos à esquerda, lareira à direita, quatro mesas, tapete central e a entrada larga entre dois pilares.
+ */
+export const GUILD_INTERIOR: InteriorDef = {
+  id: 'guild',
+  name: 'Guilda dos Aventureiros',
+  building: Block.GUILD,
+  map: [
+    '########################', // 0  parede do fundo, janelas, estandartes
+    '########################', // 1
+    '########################', // 2
+    '########################', // 3  estantes, mapa, armas
+    '########################', // 4  lareira à direita
+    '#####..............#####', // 5  atrás do balcão (o Mestre anda aqui); quadro e lareira
+    '####.##############.####', // 6  balcão
+    '####.##############.####', // 7
+    '####................####', // 8
+    '####.####......####.####', // 9  mesas de cima
+    '#....####......####....#', // 10
+    '###..####......####...##', // 11 barris | caixotes
+    '###.#####......#####..##', // 12 mesas de baixo
+    '#...#####......#####...#', // 13
+    '#...#####......#####...#', // 14
+    '###...................##', // 15 plantas nos cantos
+    '#########......#########', // 16 entrada entre os pilares
+    '#########EEEEEE#########', // 17 capacho
+  ],
+  keeper: { at: [11, 5], rows: [5, 5] },
+};
+
 /** Cômodos das construções da cidade (a ordem fixa a posição de cada um: cômodo novo vai no fim). */
-export const INTERIOR_DEFS: InteriorDef[] = [SMITHY_INTERIOR, MARKET_INTERIOR, FLORIST_INTERIOR];
+export const INTERIOR_DEFS: InteriorDef[] = [SMITHY_INTERIOR, MARKET_INTERIOR, FLORIST_INTERIOR, GUILD_INTERIOR];
 
 /** Canto superior esquerdo do primeiro cômodo e distância entre cômodos (células): longe de tudo o que se gera perto. */
 export const INTERIOR_ORIGIN: [number, number] = [0, -100000];

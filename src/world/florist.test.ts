@@ -62,7 +62,7 @@ describe.runIf(SUBDIV === 2 || SUBDIV === 1)('Floricultura na cidade (v0.93.110)
     const b = w.town!.buildings.find((x) => x.id === Block.FLORIST)!;
     expect(b.name).toBe('Floricultura');
     expect(b.door).not.toBeNull();
-    expect(INTERIOR_DEFS.map((d) => d.id)).toEqual(['smithy', 'market', 'florist']); // cômodo novo no fim: os outros não mudam de lugar
+    expect(INTERIOR_DEFS.map((d) => d.id)).toEqual(['smithy', 'market', 'florist', 'guild']); // cômodo novo no fim: os outros não mudam de lugar
     const lay = interiorLayouts(w.town!).find((l) => l.def.id === 'florist')!;
     expect(lay.doors).toHaveLength(1);
     expect(lay.keeper).not.toBeNull();

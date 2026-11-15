@@ -59,7 +59,7 @@ export class Villager extends Wanderer {
     readonly resident: ResidentDef | null = null,
   ) {
     super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: (npcDef(npc).role ? 3 : 6) * SUBDIV });
-    this.role = npcDef(npc).role ?? null;
+    this.role = resident?.role ?? npcDef(npc).role ?? null;
     this.schedule = scheduleOf(npc);
     this.cruise = this.spec.speed;
   }
