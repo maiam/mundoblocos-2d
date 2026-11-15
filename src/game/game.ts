@@ -2,8 +2,8 @@ import { CHUNK_SIZE, CUBE_FRONT, DAY_LENGTH_S, LOAD_MARGIN, MAX_CHUNK_GEN_PER_FR
 import { CHARACTER_H } from '../render/character';
 import type { GameRenderer, RendererFactory } from '../render/rendererContract';
 import { itemIconUrl, toolIconUrl } from '../render/itemArt';
-import { Block, blockDef, type BlockId } from '../world/blocks';
-import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, TOOLS } from '../world/items';
+import { blockDef, type BlockId } from '../world/blocks';
+import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, stackBlock, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { World } from '../world/world';
 import { type WorldProfile } from '../world/profiles';
@@ -36,7 +36,7 @@ import { ActionController } from './actionController';
 import { Menu } from './menu';
 import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
 import { phaseAt, scheduleOf, shopOpen } from './npcBrain/schedule';
-import { haveOf, markOf, phaseOf, type QuestDef, questOf, QUESTS, takeOf } from './npcBrain/quests';
+import { haveOf, markOf, phaseOf, type QuestDef, questOf, questsFor, takeOf } from './npcBrain/quests';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
 import { HUNGER, weaponPower } from '../world/progression';
 import type { MonsterKind } from '../world/dungeon';
@@ -184,6 +184,7 @@ export class Game {
     private readonly options: GameOptions,
   ) {
     this.world = new World(seed, profile);
+    this.questDefs = questsFor(this.world);
     this.collect = profile.collectBlocks;
     this.hotbar = new Hotbar(profile, (options.save?.hotbar ?? options.net?.bag?.hotbar ?? undefined) as (StackId | null)[] | undefined);
     // Sem cultivo nem coleta, não há itens contáveis (Santuário: só blocos infinitos).
@@ -829,7 +830,7 @@ export class Game {
       return;
     }
     if (v.role === 'merchant' || v.role === 'florist') { this.openShop(v); return; } // mercador e florista não conversam: abrem a loja (v0.93.57, v0.93.110)
-    const quest = v.resident ? null : questOf(v.npc);
+    const quest = v.resident ? null : questOf(this.questDefs, v.npc);
     if (quest && this.talkQuest(v, quest)) return;
     const tier = tierOf(this.entities.memory[v.memoryKey]);
     this.dialogue.open(v.conversation(tier), v, () => v.release());
@@ -840,6 +841,7 @@ export class Game {
   private talkQuest(v: Villager, q: QuestDef): boolean {
     const have = haveOf(q, (id) => this.inventory.count(id));
     const phase = phaseOf(this.entities.quests, q, have);
+    if (phase === 'available' && !q.offerable()) return false; // o canteiro não tem flores o bastante (mundo já mexido): não oferece
     const base = { npc: v.npc, name: v.name };
     const open = (conv: Conversation): void => { this.dialogue.open(conv, v, () => v.release()); v.conversation(); };
     if (phase === 'available') {
@@ -884,9 +886,9 @@ export class Game {
   /** Todo quadro: sinal sobre a cabeça de quem tem missão, acompanhante de missão em andamento (também ao carregar o jogo) e seus comentários. */
   private updateQuests(dt: number): void {
     const marks: Partial<Record<string, ReturnType<typeof markOf>>> = {};
-    for (const q of QUESTS) {
+    for (const q of this.questDefs) {
       const phase = phaseOf(this.entities.quests, q, haveOf(q, (id) => this.inventory.count(id)));
-      const m = markOf(phase);
+      const m = phase === 'available' && !q.offerable() ? null : markOf(phase);
       if (m) marks[q.giver] = m;
       const giver = this.entities.villagers.find((x) => x.npc === q.giver && !x.resident);
       if (!giver) continue;
@@ -908,7 +910,7 @@ export class Game {
           this.remarkTimer = 0.6;
           const r = 3 * SUBDIV;
           for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-            if (this.world.getObject(Math.floor(giver.x) + dx, Math.floor(giver.y) + dy) !== Block.FLOWER) continue;
+            if (this.world.getObject(Math.floor(giver.x) + dx, Math.floor(giver.y) + dy) !== stackBlock(q.items[0])) continue;
             this.hud.toast(`${giver.name}: ${q.remarks[this.remarkIndex++ % q.remarks.length]}`);
             this.remarkTimer = 30;
             return;
@@ -918,6 +920,8 @@ export class Game {
     }
     this.entities.marks = marks as typeof this.entities.marks;
   }
+  /** Missões deste mundo (a espécie e o canteiro dependem da seed). */
+  private questDefs: QuestDef[] = [];
   private remarkTimer = 8;
   private askTimer = 0;
   /** Pedido de acompanhar em aberto (na sala): `fresh` = missão recém-aceita (se a sala negar, a missão volta a ser oferecida). */

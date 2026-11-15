@@ -29,6 +29,9 @@ Bloco de **nível único** (`shape: 'wall'`, `Block.WALL_PLANKS`/`WALL_STONE`): 
 - Árvores por hash × densidade × manchas de floresta; **pedregulhos** raros (`ROCK_BOULDER`, desde v0.58.0 com a
   arte da prancha de pedras — antes eram cubos de `STONE`; minerados dão 1–3 Pedras Brutas); enfeites.
 
+## Canteiro de flores da missão (v0.93.119)
+- `world/flowerPatch.ts` + `World.flowerPatch`: uma clareira com 10 flores da espécie da seed (`patchSpecies`) perto do portão, posta pelo gerador (`FlowerPatchTerrain`, camada mais externa) para a missão **Ervas de cura**. Planejada depois da vila, caverna, dungeon e acampamentos (evita todos). Só no Mundo da Cidade. Mudar `planFlowerPatch` muda o mapa das seeds.
+
 ## Regras
 - **Paredes removidas** (08/11, dono do produto): não existem mais. Os ids 210–225 (`isRemovedBlock`) viram vazio em
   mapa, bolsa, grade e baús vindos de dados antigos (`World.restoreChunk`/`setLevel`, `save.migrate`, `parseBag`,
