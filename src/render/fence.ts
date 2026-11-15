@@ -81,11 +81,10 @@ function blob(ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number,
  * Desenhada por código (não vai na arte: o 3D usa `alphaTest` nos sprites e pontos translúcidos virariam pretos) com `ax, ay` = pé da estaca no
  * canvas e `z` = escala (px do canvas por px do quadro de 128 px por célula).
  */
-export function drawFenceShadow(ctx: CanvasRenderingContext2D, ax: number, ay: number, z: number, n: boolean, e: boolean, s: boolean, w: boolean): void {
-  // A sombra cai para trás e para a direita da estaca (nunca à frente da base: uma faixa escura diante da cerca a descola do chão).
+export function drawFenceShadow(ctx: CanvasRenderingContext2D, ax: number, ay: number, z: number, n: boolean, e: boolean, _s: boolean, w: boolean): void {
+  // A sombra cai para trás e para a direita da estaca (nunca à frente da base: uma faixa escura diante da cerca a descola do chão; por isso o braço sul não tem sombra própria: a do vizinho ao sul, que é braço norte, já cobre o trecho).
   blob(ctx, ax + 9 * z, ay - 5 * z, 30 * z, 17 * z, 0.5);
   if (w) blob(ctx, ax - 40 * z, ay - 6 * z, 36 * z, 11 * z, 0.34);
   if (e) blob(ctx, ax + 46 * z, ay - 6 * z, 36 * z, 11 * z, 0.34);
   if (n) blob(ctx, ax + 9 * z, ay - 40 * z, 16 * z, 36 * z, 0.34);
-  if (s) blob(ctx, ax + 9 * z, ay + 20 * z, 16 * z, 22 * z, 0.34);
 }

@@ -17,7 +17,7 @@ from PIL import Image, ImageFilter
 ROOT = Path(__file__).resolve().parent.parent
 FRAME = 96
 OUTLINE = (58, 72, 66)  # contorno extra (v0.93.97): o traço original some na redução; este o reforça por fora
-OUTLINE_PX = 5          # MaxFilter (ímpar): 5 = ~2 px de arte de contorno
+OUTLINE_PX = 3          # MaxFilter (ímpar): 3 = ~1 px de arte de contorno (linha fina, a pedido do dono do produto)
 BASE_Y, STEM_X = 278, 179
 files = sorted(glob.glob(str(ROOT / 'assets-src' / 'flores' / '[0-9][0-9]-*.png')), key=lambda f: int(re.search(r'/(\d\d)-', f).group(1)))
 ims = [Image.open(f).convert('RGBA') for f in files]
