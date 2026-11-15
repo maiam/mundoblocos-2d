@@ -12,10 +12,12 @@ import re
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 FRAME = 96
+OUTLINE = (58, 72, 66)  # contorno extra (v0.93.97): o traço original some na redução; este o reforça por fora
+OUTLINE_PX = 5          # MaxFilter (ímpar): 5 = ~2 px de arte de contorno
 BASE_Y, STEM_X = 278, 179
 files = sorted(glob.glob(str(ROOT / 'assets-src' / 'flores' / '[0-9][0-9]-*.png')), key=lambda f: int(re.search(r'/(\d\d)-', f).group(1)))
 ims = [Image.open(f).convert('RGBA') for f in files]
@@ -25,5 +27,11 @@ strip = Image.new('RGBA', (FRAME * len(ims), FRAME), (0, 0, 0, 0))
 for i, im in enumerate(ims):
     s = im.resize((round(im.width * scale), round(im.height * scale)), Image.LANCZOS)
     strip.alpha_composite(s, (i * FRAME + FRAME // 2 - round(STEM_X * scale), 92 - round(BASE_Y * scale)))
+# contorno: silhueta dilatada em OUTLINE_COLOR por trás do desenho
+alpha = strip.getchannel('A').point(lambda v: 255 if v > 24 else 0).filter(ImageFilter.MaxFilter(OUTLINE_PX))
+base = Image.new('RGBA', strip.size, OUTLINE + (0,))
+base.putalpha(alpha)
+base.alpha_composite(strip)
+strip = base
 strip.save(ROOT / 'src' / 'assets' / 'flowers.webp', 'WEBP', quality=90, method=6)
 print(len(ims), 'flores, escala', round(scale, 3))
