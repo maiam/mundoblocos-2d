@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.109 — fumaça de verdade subindo pelas chaminés da vila (3D) (15/11/2026)
+- **Pedido do dono do produto:** as casas com fumaça desenhada na chaminé ganharem fumaça animada quando o jogador olha para elas. Escolhas dele: **só a vila** nesta rodada (as 5 casas que já tinham fumaça desenhada) e **limpar os puffs da arte por script**.
+- **Arte** (`scripts/extract-village.py`, `SMOKE_RIM`/`erase_smoke`): os puffs desenhados acima da chaminé das 5 casas (3 de palha e 2 de telha) são apagados (retângulo acima do topo de pedra, à direita de x = 90); a imagem não é recortada de novo, então as coordenadas medidas continuam valendo. A brasa na boca da chaminé fica.
+- **Fumaça** (`three/chimneySmoke.ts`): `THREE.Points` (1 desenho, pool de 56 puffs): puffs macios que nascem na boca da chaminé a cada ~0,45 s (ritmo e fase por chaminé), sobem devagar, crescem, derivam com o vento (que varia no tempo e pega mais quanto mais alto) e somem em ~3 s; **só as chaminés dentro da tela** soltam puffs; à noite ficam mais discretos e azulados. Sem `Math.random` (hash). `?sensacao=0` e os cômodos ficam sem.
+- **Posição** (`townArt.CHIMNEY_MOUTH`/`chimneyMouths`, `chimneyWorldPos`): a boca de cada variante (px da imagem) vira posição 3D com a mesma geometria do `ChunkSprites` (base na face sul da célula, ampliação `objectScaleFor`); `WorldThreeRenderer.villageChimneys` as calcula uma vez a partir de `World.village.props`.
+- Só cliente e só 3D; sem mapa, save ou protocolo (servidor não muda). Testes novos (`chimneySmoke.test.ts`); `tsc` e testes verdes (grades 1 e 2); conferido no navegador (puffs subindo e derivando).
+
 ## Orvalis v0.93.108 — migração dos animais da vila nas salas do servidor (15/11/2026)
 - **Pedido do dono do produto:** "migração dos mundos apenas sala do servidor; os mundos salvos não precisam migrar" — as salas já gravadas passam a ter 3 de cada animal na vila (a regra da v0.93.106), e os mundos salvos no aparelho ficam como estão.
 - **Regra** (`Entities.reconcileVillageAnimals`): ao abrir uma sala gravada com `RoomSnapshot` **< 7**, dentro da vila fica no máximo 3 de cada espécie (adultos primeiro; sobram os filhotes e os extras saem), o **cavalo antigo do campo** diante do portão sai (os cavalos moram na vila) e o que falta nasce nas faixas (`VILLAGE_PENS`, `spawnVillageAnimals(world, have)`). Bichos fora da vila não são tocados. A sala marca `dirty` e a próxima gravação já sai como v7; abrir a v7 não mexe em nada.

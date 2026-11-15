@@ -57,10 +57,27 @@ def save(name: str, im: Image.Image, cells_w: float) -> None:
     print(f'village-{name}.webp {w}x{h}')
 
 
+# Fumaça desenhada nas chaminés das 5 casas (v0.93.109): sai da arte (a fumaça de verdade é animada em código, `render/three/chimneySmoke.ts`).
+# Valor = linha (em px da IMAGEM FINAL de 206 de largura) em que começa o topo de pedra da chaminé: tudo acima dela, à direita de x = 90, é apagado.
+# A imagem NÃO é recortada de novo (a caixa útil encolheria o topo e mudaria as coordenadas medidas das bocas das chaminés em `townArt.CHIMNEYS`).
+SMOKE_RIM = {'house-straw-1': 41, 'house-straw-2': 39, 'house-straw-3': 42, 'house-tile-1': 37, 'house-tile-2': 40}
+SMOKE_X0 = 90
+
+
+def erase_smoke(im: Image.Image, cells_w: float, rim: int) -> Image.Image:
+    k = im.width / round(cells_w * PX_PER_CELL)          # px do item por px da imagem final
+    out = im.copy()
+    out.paste((0, 0, 0, 0), (round(SMOKE_X0 * k), 0, im.width, round(rim * k)))
+    return out
+
+
 for name, (fn, cells_w, crop) in ITEMS.items():
     im = Image.open(SRC / fn).convert('RGBA')
     im = im.crop(crop) if crop else im
-    save(name, im.crop(bbox(im)), cells_w)
+    im = im.crop(bbox(im))
+    if name in SMOKE_RIM:
+        im = erase_smoke(im, cells_w, SMOKE_RIM[name])
+    save(name, im, cells_w)
 
 # ---- Cerca de estacas (v0.93.90): uma unidade recortada da paliçada reta -----------------------------------------------------------
 # A reta (`1-2-05`) alterna estaca alta (com corda) e baixa; de vale a vale (x 105–228, y 143–401) há um PERÍODO de 2 estacas que emenda
