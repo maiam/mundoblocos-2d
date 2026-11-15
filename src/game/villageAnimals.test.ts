@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBDIV } from '../config';
 import { World } from '../world/world';
 import { Player } from './player';
-import { Entities } from './entities';
+import { Entities, VILLAGE_ANIMALS_EACH } from './entities';
 import { Block } from '../world/blocks';
 import { inRect } from '../world/dungeon';
 
@@ -15,23 +15,20 @@ function wildlife(seed: number) {
 }
 
 describe.runIf(SUBDIV === 2)('animais domésticos na Vila Camponesa (v0.93.91)', () => {
-  it('ovelhas, vacas, galinhas e capivaras nascem dentro da vila, em grama; o cavalo fica no campo', () => {
+  it('3 de cada: ovelhas, vacas, galinhas, capivaras e cavalos nascem dentro da vila, em grama', () => {
     const { w, e } = wildlife(42);
     const v = w.village!;
     const sheep = e.npcs;
     const by = (k: string) => e.horses.filter((h) => h.kind === k);
-    expect(sheep).toHaveLength(4);
-    expect(by('cow')).toHaveLength(2);
-    expect(by('chicken')).toHaveLength(4);
-    expect(by('capybara')).toHaveLength(3);
-    for (const a of [...sheep, ...by('cow'), ...by('chicken'), ...by('capybara')]) {
+    expect(sheep).toHaveLength(VILLAGE_ANIMALS_EACH);
+    for (const k of ['cow', 'chicken', 'capybara', 'horse']) expect(by(k), k).toHaveLength(VILLAGE_ANIMALS_EACH);
+    expect(VILLAGE_ANIMALS_EACH).toBe(3);
+    for (const a of [...sheep, ...e.horses]) {
       expect(inRect(v.area, Math.floor(a.x), Math.floor(a.y)), `${a.constructor.name} em ${a.x},${a.y}`).toBe(true);
       expect(w.getGround(Math.floor(a.x), Math.floor(a.y))).toBe(Block.GRASS);
     }
     expect(e.npcs.every((n) => n.constructor.name === 'Sheep')).toBe(true);
-    const horse = by('horse');
-    expect(horse).toHaveLength(1);
-    expect(inRect(v.area, Math.floor(horse[0].x), Math.floor(horse[0].y))).toBe(false);
+    expect(e.horses).toHaveLength(4 * VILLAGE_ANIMALS_EACH); // nenhum cavalo extra no campo
   });
 
   it('é determinístico pela seed e as galinhas ficam perto do galinheiro (nordeste da vila)', () => {
