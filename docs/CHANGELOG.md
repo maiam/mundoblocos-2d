@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.108 — migração dos animais da vila nas salas do servidor (15/11/2026)
+- **Pedido do dono do produto:** "migração dos mundos apenas sala do servidor; os mundos salvos não precisam migrar" — as salas já gravadas passam a ter 3 de cada animal na vila (a regra da v0.93.106), e os mundos salvos no aparelho ficam como estão.
+- **Regra** (`Entities.reconcileVillageAnimals`): ao abrir uma sala gravada com `RoomSnapshot` **< 7**, dentro da vila fica no máximo 3 de cada espécie (adultos primeiro; sobram os filhotes e os extras saem), o **cavalo antigo do campo** diante do portão sai (os cavalos moram na vila) e o que falta nasce nas faixas (`VILLAGE_PENS`, `spawnVillageAnimals(world, have)`). Bichos fora da vila não são tocados. A sala marca `dirty` e a próxima gravação já sai como v7; abrir a v7 não mexe em nada.
+- **Versão:** `ROOM_SNAPSHOT_VERSION` 6 → **7** (o servidor lê v1–v7; um arquivo v7 não abre em servidor antigo). `PROTOCOL_VERSION` não muda. Servidor: `build:net` + `sync-net`.
+- Teste novo (sala gravada v6 com ovelhas 4, vacas 2, galinhas 4, capivaras 3 e 1 cavalo no campo → 3 de cada, todos os cavalos dentro da vila, regrava em v7 e não mexe de novo); `tsc` e testes verdes (grades 1 e 2).
+
 ## Orvalis v0.93.107 — sobras do Canvas 2D e aviso melhor para aparelhos sem WebGL (15/11/2026)
 - **Pedido do dono do produto:** "segue com as sobras e um aviso melhor pro WebGL" (o muro e o portão da vila ficam como estão: são estacas; sons ficam para o futuro).
 - **Sobras removidas:** a cena de desenvolvimento `?materiais=1` (`dev/materialsScene.ts`) e o que só ela usava do motor 2D — `textures.qaMaterial`, `cubeSpriteV2`, `drawCubeParts`, `shapePath`, e em `materialsV2.ts` `cubeEdges`, `CubeView`, `CubeEdges`, `edgesKey`, `v2LevelFaces`, `materialsV2Ready` (com os testes de `cubeEdges`). O painel `?fps=1` perdeu o rótulo "2D": `perfLine(snap, gpu, heap, js)` mostra sempre "3D" e o relatório não tem mais o campo `renderer`. Revisado: o resto do `textures.ts` (`objects`, `variants`, `stackDraw`, `doorFrames`, `gateFrames`, transições…) é usado pelo 3D e pelo `ChunkRenderer` e fica.
