@@ -80,15 +80,19 @@ const PACK_SPAWN_RADIUS = 56 * SUBDIV;
 const PACK_DROP_RADIUS = 80 * SUBDIV;
 
 const FLOCK_SIZE = 4;
+/** Quantos animais de cada espécie (cavalo, galinha, capivara, ovelha, vaca) nascem na Vila Camponesa. */
+export const VILLAGE_ANIMALS_EACH = 3;
 /**
  * Faixas de grama da vila (células da vila, 48 × 48; ver `docs/domains/village.md`) onde cada espécie nasce: galinhas no quintal do galinheiro
- * (nordeste), vacas no gramado do oeste, ovelhas no do leste e capivaras na faixa ao norte das casas.
+ * (nordeste), vacas no gramado do oeste, ovelhas no do leste, capivaras na faixa ao norte das casas e cavalos no gramado do sudeste, junto ao muro
+ * (v0.93.106: 3 de cada espécie).
  */
-const VILLAGE_PENS: ReadonlyArray<{ kind: 'sheep' | 'cow' | 'chicken' | 'capybara'; count: number; salt: number; x0: number; y0: number; x1: number; y1: number }> = [
-  { kind: 'chicken', count: 4, salt: 97, x0: 33, y0: 9, x1: 45, y1: 15 },
-  { kind: 'cow', count: 2, salt: 91, x0: 3, y0: 30, x1: 12, y1: 35 },
-  { kind: 'sheep', count: FLOCK_SIZE, salt: 71, x0: 33, y0: 29, x1: 44, y1: 34 },
-  { kind: 'capybara', count: 3, salt: 103, x0: 8, y0: 6, x1: 16, y1: 9 },
+const VILLAGE_PENS: ReadonlyArray<{ kind: 'sheep' | 'cow' | 'chicken' | 'capybara' | 'horse'; count: number; salt: number; x0: number; y0: number; x1: number; y1: number }> = [
+  { kind: 'chicken', count: VILLAGE_ANIMALS_EACH, salt: 97, x0: 33, y0: 9, x1: 45, y1: 15 },
+  { kind: 'cow', count: VILLAGE_ANIMALS_EACH, salt: 91, x0: 3, y0: 30, x1: 12, y1: 35 },
+  { kind: 'sheep', count: VILLAGE_ANIMALS_EACH, salt: 71, x0: 33, y0: 29, x1: 44, y1: 34 },
+  { kind: 'capybara', count: VILLAGE_ANIMALS_EACH, salt: 103, x0: 8, y0: 6, x1: 16, y1: 9 },
+  { kind: 'horse', count: VILLAGE_ANIMALS_EACH, salt: 81, x0: 30, y0: 40, x1: 44, y1: 42 },
 ];
 /** Alcance do golpe de espada (células, do centro dos pés) e abertura do arco (cosseno mínimo). */
 export const SWORD_REACH = 1.45 * SUBDIV;
@@ -231,13 +235,13 @@ export class Entities {
   }
 
   /**
-   * Animais domésticos na Vila Camponesa (`world/village.ts`, v0.93.91): ovelhas, vacas, galinhas e capivaras nascem DENTRO da vila, cada
+   * Animais domésticos na Vila Camponesa (`world/village.ts`, v0.93.91; v0.93.106: 3 de cada, cavalos incluídos): ovelhas, vacas, galinhas, capivaras e cavalos nascem DENTRO da vila, cada
    * espécie numa faixa de grama da planta dela (`VILLAGE_PENS`, em células da vila); a posição sai da seed, só em grama andável e livre.
-   * Devolve quantos de cada espécie nasceram. O cavalo continua no campo diante do portão da cidade.
+   * Devolve quantos de cada espécie nasceram.
    */
-  spawnVillageAnimals(world: World): Record<'sheep' | 'cow' | 'chicken' | 'capybara', number> {
+  spawnVillageAnimals(world: World): Record<'sheep' | 'cow' | 'chicken' | 'capybara' | 'horse', number> {
     const v = world.village;
-    const placed = { sheep: 0, cow: 0, chicken: 0, capybara: 0 };
+    const placed = { sheep: 0, cow: 0, chicken: 0, capybara: 0, horse: 0 };
     if (!v) return placed;
     for (const pen of VILLAGE_PENS) {
       for (let i = 0; i < 400 && placed[pen.kind] < pen.count; i++) {
@@ -313,14 +317,14 @@ export class Entities {
   spawnWildlife(world: World, stream = false): void {
     if (world.profile.sheep) {
       const [gx, gy] = world.outsideGate();
-      const inVillage = !!world.village; // com a vila (grade fina), ovelha, vaca, galinha e capivara nascem nela; o cavalo fica no campo
+      const inVillage = !!world.village; // com a vila (grade fina), ovelha, vaca, galinha, capivara e cavalo nascem nela
       const town = !!world.town;
       // (grade fina, ADR 0032: as distâncias em células × SUBDIV; no padrão, iguais)
       const s = SUBDIV;
       if (inVillage) this.spawnVillageAnimals(world);
       else this.spawnFlock(world, gx, gy + (town ? 8 : 0) * s);
-      this.spawnHorse(world, gx + 9 * s, gy + (town ? 10 : 2) * s);
       if (!inVillage) {
+        this.spawnHorse(world, gx + 9 * s, gy + (town ? 10 : 2) * s);
         this.spawnAnimals(world, 'cow', gx - 9 * s, gy + (town ? 10 : 2) * s, 2, 91);
         this.spawnAnimals(world, 'chicken', gx - 6 * s, gy + (town ? 6 : 1) * s, 4, 97);
         this.spawnAnimals(world, 'capybara', gx - 8 * s, gy + (town ? 4 : 1) * s, 3, 103);

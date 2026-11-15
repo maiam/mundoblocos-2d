@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.106 — 3 de cada animal na vila: cavalos, galinhas, capivaras, ovelhas e vacas (15/11/2026)
+- **Pedido do dono do produto:** "cavalos, galinhas, capivaras, ovelhas e vacas, 3 de cada nascendo na vila. No mundo e no servidor".
+- **Regra** (`game/entities.ts`): `VILLAGE_ANIMALS_EACH = 3` e uma faixa nova de gramado para os **cavalos** no sudeste da vila (30–44 × 40–42, junto ao muro); antes eram ovelhas 4, vacas 2, galinhas 4, capivaras 3 e 1 cavalo no campo diante do portão da cidade (que deixa de nascer quando há vila). Sem vila (grade 1), nada muda.
+- **No servidor:** a sala roda as mesmas `Entities.spawnWildlife`, então vale o vendor novo (`build:net` + `sync-net`; sem mudar `PROTOCOL_VERSION`). **Mundos e salas já salvos mantêm os animais que tinham** (o salvamento guarda os bichos); a regra vale para mundos e salas novos.
+- Teste da vila atualizado (3 de cada, dentro da vila, em grama, nenhum cavalo extra); `tsc` e testes verdes (grades 1 e 2); conferido no navegador (3 de cada; cavalo no gramado do sudeste).
+
 ## Orvalis v0.93.105 — o modelo 3D vira o único: o Canvas 2D é removido (M7) (15/11/2026)
 - **Decisão do dono do produto:** "vamos assumir o modelo 3D como padrão já que funcionou muito bem. E podemos excluir o 2D do projeto" — a limpeza M7 da ADR 0031.
 - **Removido:** `render/renderer.ts` (o Canvas 2D do Mundo e do Santuário, ~680 linhas), `?render=2d` e `chooseWorldRenderer`, a cena de escala (`?escala=1`, `dev/scaleScene.ts`, `scaleLayout.ts` + teste), `scripts/parity-3d.cjs` e `docs/PARITY_3D.md` (comparação 2D × 3D), `drawThinHorizontalWall` (parede fina do 2D), `TOWN_REACH`, e as fissuras radiais do overlay (`drawBreakingCracks` virou `drawBreakingRing`: só o anel de progresso; as rachaduras são os decalques do bloco).
