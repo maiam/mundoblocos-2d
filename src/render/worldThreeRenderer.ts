@@ -31,7 +31,7 @@ import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
 import { getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
-import { Block, blockDef, isDoor, isGate, isWaterPlant, type BlockId } from '../world/blocks';
+import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, isWaterPlant, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
@@ -45,7 +45,6 @@ import { BlockMaterials } from './three/blockMaterials';
 import { ChunkSprites, type SpriteCell } from './three/chunkSprites';
 import { GroundFx } from './three/groundFx';
 import { DoorSprites } from './three/doorSprites';
-import { gateWood } from './fence';
 import * as THREE from 'three';
 import { INTERIOR_BACKGROUND, InteriorRoom, roomBounds } from './three/interiorRoom';
 import { art } from './art';
@@ -184,9 +183,9 @@ export class WorldThreeRenderer implements GameRenderer {
     });
     this.gates = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K, steps: 5,
-      isDoor: (id) => isGate(id), isOpen: (id) => id === Block.FENCE_GATE_OPEN,
+      isDoor: (id) => isGate(id), isOpen: (id) => isGateOpen(id),
       frames: () => this.textures.gateFrames.get(Block.FENCE) ?? [],
-      framesAt: (gx, gy) => this.textures.gateFrames.get(gateWood((dx, dy) => world.getObject(gx + dx, gy + dy))),
+      framesAt: (gx, gy) => this.textures.gateFrames.get(gateFence(world.getObject(gx, gy))),
     });
     this.groundFx = new GroundFx(this.worldLayer, {
       seed: world.seed,

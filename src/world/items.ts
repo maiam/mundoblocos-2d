@@ -1,4 +1,4 @@
-import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, isDoor, isGate, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
+import { Block, type BlockId, blockDef, CROP_STAGES, cropKind, cropStage, gateClosed, isDoor, isWallDoor, isWheat, MATERIALS, WHEAT_STAGES, wheatStage } from './blocks';
 import { isWolf, type MonsterKind } from './dungeon';
 
 /**
@@ -296,7 +296,8 @@ export function blockDrops(id: BlockId, rand: () => number = Math.random): Drop[
   if (id === Block.SAKURA_TREE) return [{ item: blockStack(Block.CHERRY_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }]; // Cerejeira → Tora de Cerejeira
   if (id === Block.BIRCH_TREE) return [{ item: blockStack(Block.BIRCH_LOG), count: 2 + (rand() < 0.5 ? 1 : 0) }]; // Bétula → Tora de Bétula
   if (isDoor(id)) return [{ item: blockStack(Block.OAK_DOOR), count: 1 }];
-  if (isGate(id)) return [{ item: blockStack(Block.FENCE_GATE), count: 1 }];
+  const gate = gateClosed(id);
+  if (gate !== null) return [{ item: blockStack(gate), count: 1 }]; // aberto ou fechado, volta o portão fechado da mesma madeira
   if (isWallDoor(id)) return [{ item: blockStack(Block.WALL_DOOR_PLANKS), count: 1 }]; // aberta ou fechada, volta a porta (fechada)
   // Pedregulho: vira 1–3 Pedras Brutas (o bloco de pedra; colocado no mundo, é cubo).
   if (id === Block.ROCK_BOULDER) return [{ item: blockStack(Block.STONE), count: 1 + Math.floor(rand() * 3) }];
@@ -412,6 +413,15 @@ export const RECIPES: Recipe[] = [
   {
     id: 'fence-gate', name: 'Portão de Madeira', profession: 'builder',
     inputs: [{ item: blockStack(Block.OAK_PLANKS), count: 4 }], output: { item: blockStack(Block.FENCE_GATE), count: 1 },
+  },
+  // Portões de Bétula e de Cerejeira (v0.93.99): a mesma receita do de Carvalho, com a tábua da madeira.
+  {
+    id: 'birch-gate', name: 'Portão de Bétula', profession: 'builder',
+    inputs: [{ item: blockStack(Block.BIRCH_PLANKS), count: 4 }], output: { item: blockStack(Block.FENCE_GATE_BIRCH), count: 1 },
+  },
+  {
+    id: 'cherry-gate', name: 'Portão de Cerejeira', profession: 'builder',
+    inputs: [{ item: blockStack(Block.CHERRY_PLANKS), count: 4 }], output: { item: blockStack(Block.FENCE_GATE_CHERRY), count: 1 },
   },
   // Cozinha (dono do produto, 2026-11-05): por enquanto só se fabricam e se colocam; cozinhar vem com a comida.
   {

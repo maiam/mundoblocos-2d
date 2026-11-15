@@ -57,7 +57,7 @@ export interface ArtPack {
    * Cerca de tábuas (`scripts/extract-fence.py`): tira de peças (trecho horizontal, vertical, poste grande) que o
    * render emenda por vizinhos, portão (fechado, aberto) e os ícones da bolsa.
    */
-  fence?: { pieces: string; gate: string; icon: string; gateIcon: string; birch: { pieces: string; icon: string; gate: string }; cherry: { pieces: string; icon: string; gate: string } };
+  fence?: { pieces: string; gate: string; icon: string; gateIcon: string; birch: { pieces: string; icon: string; gate: string; gateIcon: string }; cherry: { pieces: string; icon: string; gate: string; gateIcon: string } };
   /** Pedregulhos: tira de quadros iguais (`scripts/extract-rocks.py`), um sorteado por célula. */
   rocks?: string;
   /** Flores fofas (`scripts/extract-flowers.py`): tira de quadros 96 × 96, um sorteado por célula no lugar da Flor procedural. */

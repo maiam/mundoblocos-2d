@@ -3,8 +3,8 @@ import type { Camera } from '../game/camera';
 import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
-import { Block, blockDef, type BlockId, isDoor, isFence, isGate, joinsFence } from '../world/blocks';
-import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts, drawFenceShadow, gateWood } from './fence';
+import { Block, blockDef, type BlockId, isDoor, gateFence, isFence, isGate, isGateOpen, joinsFence } from '../world/blocks';
+import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts, drawFenceShadow } from './fence';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { ActorSprites, drawHeart } from './character';
@@ -226,8 +226,8 @@ export class Renderer {
       }
       for (const gx of gates) {
         const gid = this.world.getObject(gx, y);
-        const frames = this.textures.gateFrames.get(gateWood((dx, dy) => this.world.getObject(gx + dx, y + dy)));
-        if (frames) this.drawSprite(cam, frames[this.gateAnim.frameFor(doorKey(gx, y), gid === Block.FENCE_GATE_OPEN, opts.elapsed)], gx, y);
+        const frames = this.textures.gateFrames.get(gateFence(gid));
+        if (frames) this.drawSprite(cam, frames[this.gateAnim.frameFor(doorKey(gx, y), isGateOpen(gid), opts.elapsed)], gx, y);
         else this.drawObject(cam, gid, gx, y, 0, glows);
       }
       const items = byRow.get(y);
