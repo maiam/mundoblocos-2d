@@ -319,7 +319,7 @@ export class WorldThreeRenderer implements GameRenderer {
       };
       if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
       if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
-      if (opts.breaking) drawBreakingCracks(ctx, rectFor(opts.breaking), cam.zoom, opts.breaking.progress, opts.breaking);
+      if (opts.breaking) drawBreakingCracks(ctx, rectFor(opts.breaking), cam.zoom, opts.breaking.progress, opts.breaking, feelOn() && !inside);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }

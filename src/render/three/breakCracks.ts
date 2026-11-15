@@ -9,34 +9,53 @@ import { CRACK_STAGES, crackStage } from '../breakFx';
  */
 const VARIANTS = 2;
 
-/** Desenha as fissuras dos estágios 1..stage num canvas `w × h` (o mesmo `seed` dá sempre as mesmas fissuras). */
-function drawCracks(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, seed: number): void {
+/**
+ * Desgaste em pixels (v0.93.100, no lugar das fissuras em linhas de v0.93.98, que liam como listras): covinhas e lascas de borda de 1 px
+ * da grade de 16 × 16 do bloco, sem nenhuma linha. Cada estágio acrescenta marcas às do anterior (mesma semente): covinhas escuras com
+ * um fio claro embaixo/à direita (parecem fundas) e cantos e bordas mordidos.
+ */
+function drawWear(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, seed: number): void {
   const r = mulberry32(seed);
-  const branches: { x: number; y: number; pts: [number, number][] }[] = [];
-  for (let i = 0; i < CRACK_STAGES; i++) {
-    const sx = (0.25 + r() * 0.5) * w, sy = (0.25 + r() * 0.5) * h;
-    let a = r() * Math.PI * 2, x = sx, y = sy;
-    const pts: [number, number][] = [[x, y]];
-    const steps = 4 + Math.floor(r() * 3);
-    for (let s = 0; s < steps; s++) {
-      a += (r() - 0.5) * 1.3;
-      const len = (0.12 + r() * 0.14) * Math.max(w, h * 2);
-      x += Math.cos(a) * len; y += Math.sin(a) * len * (h / w < 0.5 ? 0.5 : 1);
-      pts.push([x, y]);
+  const px = (x: number, y: number, color: string): void => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, 1, 1);
+  };
+  const CORE = 'rgba(30,18,12,0.78)', SHADE = 'rgba(40,24,16,0.5)', RIM = 'rgba(255,255,255,0.26)';
+  const small = h < w * 0.6; // faixa da frente (1 : 1/levels): marcas menores
+  type Mark = { kind: 'pit'; x: number; y: number; rad: number } | { kind: 'corner'; c: number; size: number } | { kind: 'bite'; edge: number; at: number; depth: number };
+  const marks: Mark[] = [];
+  const per = [3, 3, 4, 4];
+  for (let st = 0; st < CRACK_STAGES; st++) {
+    for (let i = 0; i < per[st]; i++) {
+      const roll = r();
+      if (roll < 0.62) marks.push({ kind: 'pit', x: 1 + Math.floor(r() * (w - 2)), y: 1 + Math.floor(r() * (h - 2)), rad: (small ? 0.6 : 0.8) + r() * (0.5 + st * 0.22) });
+      else if (roll < 0.82) marks.push({ kind: 'corner', c: Math.floor(r() * 4), size: (small ? 1 : 2) + Math.floor(r() * (1 + st * 0.7)) });
+      else marks.push({ kind: 'bite', edge: Math.floor(r() * 4), at: Math.floor(r() * (w - 2)) + 1, depth: 1 + Math.floor(r() * (1 + st * 0.5)) });
     }
-    branches.push({ x: sx, y: sy, pts });
   }
   ctx.clearRect(0, 0, w, h);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  for (let b = 0; b < stage; b++) {
-    const pts = branches[b].pts;
-    for (const [color, off, width] of [['rgba(255,255,255,0.2)', 0.7, 0.9], ['rgba(24,14,10,0.8)', 0, 1.25]] as const) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width * (w / 32);
-      ctx.beginPath();
-      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x + off, y + off) : ctx.moveTo(x + off, y + off)));
-      ctx.stroke();
+  const count = per.slice(0, stage).reduce((a, n) => a + n, 0);
+  for (const m of marks.slice(0, count)) {
+    if (m.kind === 'pit') {
+      const cells: [number, number][] = [];
+      for (let y = Math.floor(m.y - m.rad - 1); y <= Math.ceil(m.y + m.rad + 1); y++) {
+        for (let x = Math.floor(m.x - m.rad - 1); x <= Math.ceil(m.x + m.rad + 1); x++) {
+          if (Math.hypot(x - m.x, (y - m.y) * 1.1) <= m.rad + (((x * 7 + y * 13) & 3) - 1.5) * 0.18) cells.push([x, y]);
+        }
+      }
+      const set = new Set(cells.map(([x, y]) => x + ',' + y));
+      for (const [x, y] of cells) { px(x - 1, y - 1, SHADE); px(x, y - 1, SHADE); px(x - 1, y, SHADE); }
+      for (const [x, y] of cells) px(x, y, CORE);
+      for (const [x, y] of cells) if (!set.has(x + ',' + (y + 1))) px(x, y + 1, RIM);
+    } else if (m.kind === 'corner') {
+      const cx = m.c & 1 ? w - 1 : 0, cy = m.c & 2 ? h - 1 : 0;
+      for (let y = 0; y < m.size; y++) for (let x = 0; x < m.size - y; x++) px(m.c & 1 ? cx - x : cx + x, m.c & 2 ? cy - y : cy + y, CORE);
+    } else {
+      for (let d = 0; d < m.depth; d++) for (let k = 0; k < 2; k++) {
+        const t = m.at + k;
+        if (m.edge === 0) px(t, d, CORE); else if (m.edge === 1) px(t, h - 1 - d, CORE); else if (m.edge === 2) px(d, Math.min(h - 1, t), CORE); else px(w - 1 - d, Math.min(h - 1, t), CORE);
+      }
     }
   }
 }
@@ -66,14 +85,14 @@ export class BreakCracks {
     const key = kind + stage + ':' + variant;
     let t = this.cache.get(key);
     if (t) return t;
-    const w = 64, h = kind === 'top' ? 64 : 64 / this.levels * 1; // a frente é uma faixa 1 : (1/levels)
+    const w = 16, h = kind === 'top' ? 16 : 16 / this.levels; // grade de 16 px do bloco; a frente é uma faixa 1 : (1/levels)
     const c = document.createElement('canvas');
-    c.width = w; c.height = Math.max(8, Math.round(h));
-    drawCracks(c.getContext('2d')!, c.width, c.height, stage, this.seed * 31 + variant * 977 + (kind === 'top' ? 1 : 2));
+    c.width = w; c.height = Math.max(3, Math.round(h));
+    drawWear(c.getContext('2d')!, c.width, c.height, stage, this.seed * 31 + variant * 977 + (kind === 'top' ? 1 : 2));
     t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.generateMipmaps = false;
-    t.minFilter = t.magFilter = THREE.LinearFilter;
+    t.minFilter = t.magFilter = THREE.NearestFilter; // pixels nítidos
     this.cache.set(key, t);
     return t;
   }
