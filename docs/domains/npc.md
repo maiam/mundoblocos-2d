@@ -27,6 +27,12 @@
 - **Cores:** `Look {hue, sat, val}` → `Actor.look` → `uRecolor` no shader do billboard (gira matiz e ajusta sat/brilho de tudo menos pele e neutros). Sem arte nova nem peso extra. O retrato da conversa é o da folha-base (a cor do cabelo no retrato é a original).
 - **Execução:** `Entities.spawnResidents` (depois de `spawnVillagers`); `Villager(…, resident)` usa nome/falas do sorteado; `npc` = folha emprestada. Cidade: ruas; vila: dentro do muro, pontos nos caminhos. Só no aparelho (a sala não simula moradores). Sem rotina de dormir ainda (só o Bento).
 
+## Missões e acompanhante (v0.93.116, ADR 0034 nível 4)
+- `game/npcBrain/quests.ts`: `QuestDef` (giver, item, count, recompensa, textos), `phaseOf` (`available/active/ready/done`), `markOf` (sinal), `sanitizeLog`. Única missão: **Ervas de cura** (Silvano, 6 Flores silvestres, 12 Moedas). Estado em `Entities.quests`, **salvo no jogador** (v19); sinais em `Entities.marks` (recalculados por `Game.updateQuests`).
+- **Sinal** `Actor.mark`: `!` oferece, `?` azulado em andamento, `?` dourado pronta. **Conversa com escolhas:** `Conversation.prompt/choices` no `DialogueBox`.
+- **Acompanhante:** `Villager.setCompanion(true|false)`; segue a ~2 células, corre se fica para trás, reaparece ao lado se longe demais, volta ao posto ao terminar; comenta ao ver flor (toast). Retoma ao carregar o jogo. Só no aparelho.
+- A flor silvestre (`Block.FLOWER`) agora vira item ao quebrar (mundos com coleta).
+
 ## Memória (v0.93.115, ADR 0034 nível 3)
 - `game/npcBrain/memory.ts`: `MemoryBook` {chave → {talks, bought}}, `relation` 0–100, `tierOf`, `knownLine`, `shopGreeting`. Em `Entities.memory`; **salvo no jogador** (`SaveData.npcMemory`, v18). Sala não guarda.
 - Uso: `Game.talkTo`/`openShop`/`buyAtMarket` anotam; `Villager.conversation(tier)` antepõe a frase de reencontro na 1ª fala da sessão.

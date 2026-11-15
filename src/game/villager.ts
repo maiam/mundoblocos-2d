@@ -13,6 +13,9 @@ export interface Conversation {
   name: string;
   /** Texto corrido; a caixa divide em páginas pelo que cabe. */
   text: string;
+  /** Pergunta final com escolhas (missões, ADR 0034): na última página aparecem os botões; escolher fecha a conversa. */
+  prompt?: string;
+  choices?: Array<{ label: string; run: () => void }>;
 }
 
 /**
@@ -36,6 +39,9 @@ export class Villager extends Wanderer {
   private home: [number, number] | null = null;
   private seeded = false;
   private stuckFor = 0;
+  /** Acompanhando a jogadora numa missão (ADR 0034): `follow` anda atrás dela por onde for; `home` volta ao posto ao terminar. */
+  private companion: 'off' | 'follow' | 'home' = 'off';
+  private readonly cruise: number;
 
   constructor(
     x: number,
@@ -49,6 +55,24 @@ export class Villager extends Wanderer {
     super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: (npcDef(npc).role ? 3 : 6) * SUBDIV });
     this.role = npcDef(npc).role ?? null;
     this.schedule = scheduleOf(npc);
+    this.cruise = this.spec.speed;
+  }
+
+  /** Está acompanhando a jogadora (ou voltando ao posto depois)? */
+  get escorting(): boolean {
+    return this.companion !== 'off';
+  }
+
+  /** Começa (`true`) ou termina (`false`: volta ao posto andando) o acompanhamento. */
+  setCompanion(on: boolean): void {
+    if (on) this.companion = 'follow';
+    else if (this.companion === 'follow') this.companion = 'home';
+  }
+
+  /** Põe o acompanhante ao lado de (x, y) (carregar o jogo no meio da missão). */
+  teleportTo(x: number, y: number): void {
+    this.x = x;
+    this.y = y;
   }
 
   /** A porta dos fundos (centro da célula): por onde ele vai dormir e aparece de manhã. */
@@ -122,9 +146,34 @@ export class Villager extends Wanderer {
     return true;
   }
 
-  update(dt: number, world: World, blocked?: Blocker, time = -1): void {
+  update(dt: number, world: World, blocked?: Blocker, time = -1, target?: { x: number; y: number }): void {
+    if (this.companion !== 'off') { this.escort(dt, world, blocked, target); return; }
     if (this.schedule && time >= 0 && this.home) { this.routine(dt, world, blocked, time); return; }
     this.post(dt, world, blocked);
+  }
+
+  /**
+   * Acompanhante: anda atrás da jogadora (parando a ~2 células, de frente para ela), corre para alcançá-la quando fica para trás e, se a perde de
+   * vista (longe demais), aparece ao lado dela. Ao terminar volta sozinho ao posto e retoma o passeio.
+   */
+  private escort(dt: number, world: World, blocked: Blocker | undefined, target?: { x: number; y: number }): void {
+    if (this.hold) { this.move(dt, 0, 0, world, blocked); return; } // conversando: parado
+    const free: Blocker = (self, x, y) => !!blocked?.(self, x, y);
+    if (this.companion === 'home') {
+      this.spec.speed = this.cruise;
+      if (this.steer(dt, world, free, this.homeX, this.homeY, true)) { this.companion = 'off'; this.moving = false; }
+      return;
+    }
+    if (!target) { this.move(dt, 0, 0, world, blocked); return; }
+    const dx = target.x - this.x, dy = target.y - this.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 18 * SUBDIV) { // perdeu a jogadora: reaparece ao lado dela
+      this.x = target.x - 1.5; this.y = target.y;
+      return;
+    }
+    if (d <= 2.2 * SUBDIV) { this.spec.speed = this.cruise; this.faceTo(target.x, target.y); this.move(dt, 0, 0, world, blocked); return; }
+    this.spec.speed = d > 5 * SUBDIV ? this.cruise * 2.4 : this.cruise * 1.3; // alcança quem corre
+    this.move(dt, dx / d, dy / d, world, free);
   }
 
   /** No posto: passeia pela área dele (ou fica parado, se está conversando). */
@@ -177,11 +226,11 @@ export class Villager extends Wanderer {
   }
 
   /** Anda em linha reta até (tx, ty) respeitando a área do morador; travado por 2 s, chega de uma vez. Devolve se chegou. */
-  private steer(dt: number, world: World, blocked: Blocker | undefined, tx: number, ty: number): boolean {
+  private steer(dt: number, world: World, blocked: Blocker | undefined, tx: number, ty: number, anywhere = false): boolean {
     const dx = tx - this.x, dy = ty - this.y;
     const d = Math.hypot(dx, dy);
     if (d < 0.3) return true;
-    const moved = this.move(dt, dx / d, dy / d, world, (self, x, y) => !this.allowedAt(x, y) || !!blocked?.(self, x, y));
+    const moved = this.move(dt, dx / d, dy / d, world, (self, x, y) => (!anywhere && !this.allowedAt(x, y)) || !!blocked?.(self, x, y));
     this.stuckFor = moved < 0.002 ? this.stuckFor + dt : 0;
     if (this.stuckFor > 2) { this.x = tx; this.y = ty; return true; }
     return false;
