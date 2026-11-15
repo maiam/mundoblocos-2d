@@ -1,64 +1,52 @@
 import * as THREE from 'three';
-import { mulberry32 } from '../../world/random';
-import { CRACK_STAGES, crackStage } from '../breakFx';
+import { crackStage } from '../breakFx';
 
 /**
  * Rachaduras do bloco que se quebra (v0.93.98): decalques pintados por cima do topo e da frente do bloco, em estágios que crescem com o
  * progresso da quebra (`crackStage`). Cada estágio acrescenta fissuras às do anterior (mesma semente), então o desenho "cresce" em vez de
  * trocar. Só visual; tremem junto com o bloco (`setShake`). As texturas são desenhadas por código (nunca se lê canvas).
  */
-const VARIANTS = 2;
-
 /**
- * Desgaste em pixels (v0.93.100, no lugar das fissuras em linhas de v0.93.98, que liam como listras): covinhas e lascas de borda de 1 px
- * da grade de 16 × 16 do bloco, sem nenhuma linha. Cada estágio acrescenta marcas às do anterior (mesma semente): covinhas escuras com
- * um fio claro embaixo/à direita (parecem fundas) e cantos e bordas mordidos.
+ * Rachaduras em pixel-art (v0.93.100): bitmaps de 16 × 16 (topo) e 16 × 4 (frente) desenhados à mão, na grade de pixels do bloco, sem suavização.
+ * Cada pixel traz o estágio (1..4) em que aparece, então o desenho CRESCE a partir do centro, ramificando, em vez de trocar. Traço escuro de 1 px
+ * com um fio claro na diagonal de baixo (parece fundo). Variante 1 = espelho horizontal (decalque, não textura de bloco).
  */
-function drawWear(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, seed: number): void {
-  const r = mulberry32(seed);
-  const px = (x: number, y: number, color: string): void => {
-    if (x < 0 || y < 0 || x >= w || y >= h) return;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, 1, 1);
-  };
-  const CORE = 'rgba(30,18,12,0.78)', SHADE = 'rgba(40,24,16,0.5)', RIM = 'rgba(255,255,255,0.26)';
-  const small = h < w * 0.6; // faixa da frente (1 : 1/levels): marcas menores
-  type Mark = { kind: 'pit'; x: number; y: number; rad: number } | { kind: 'corner'; c: number; size: number } | { kind: 'bite'; edge: number; at: number; depth: number };
-  const marks: Mark[] = [];
-  const per = [3, 3, 4, 4];
-  for (let st = 0; st < CRACK_STAGES; st++) {
-    for (let i = 0; i < per[st]; i++) {
-      const roll = r();
-      if (roll < 0.62) marks.push({ kind: 'pit', x: 1 + Math.floor(r() * (w - 2)), y: 1 + Math.floor(r() * (h - 2)), rad: (small ? 0.6 : 0.8) + r() * (0.5 + st * 0.22) });
-      else if (roll < 0.82) marks.push({ kind: 'corner', c: Math.floor(r() * 4), size: (small ? 1 : 2) + Math.floor(r() * (1 + st * 0.7)) });
-      else marks.push({ kind: 'bite', edge: Math.floor(r() * 4), at: Math.floor(r() * (w - 2)) + 1, depth: 1 + Math.floor(r() * (1 + st * 0.5)) });
-    }
-  }
+const TOP_CRACK: readonly (readonly [number, number, number])[] = [
+  // linha principal, do centro para fora (noroeste ↔ sudeste)
+  [8, 8, 1], [7, 8, 1], [7, 7, 1], [9, 8, 1], [9, 9, 1], [10, 9, 1],
+  [6, 7, 2], [6, 6, 2], [5, 6, 2], [5, 5, 2], [10, 10, 2], [11, 10, 2], [11, 11, 2],
+  [4, 5, 3], [4, 4, 3], [3, 4, 3], [3, 3, 3], [12, 11, 3], [12, 12, 3], [13, 12, 3],
+  [2, 3, 4], [2, 2, 4], [13, 13, 4], [14, 13, 4],
+  // ramo para nordeste
+  [9, 7, 3], [9, 6, 3], [10, 6, 3], [10, 5, 3], [11, 5, 3], [11, 4, 3], [12, 4, 3], [12, 3, 3],
+  [9, 5, 4], [8, 5, 4], [8, 4, 4], [13, 3, 4],
+  // ramo para sudoeste
+  [5, 7, 3], [5, 8, 3], [4, 8, 3], [4, 9, 3], [3, 9, 3], [3, 10, 3], [2, 10, 3],
+  [4, 10, 4], [4, 11, 4], [3, 12, 4], [2, 11, 4],
+  // ramos curtos para leste e sul
+  [11, 9, 4], [12, 8, 4], [13, 8, 4], [14, 8, 4], [10, 12, 4], [10, 13, 4],
+];
+const FRONT_CRACK: readonly (readonly [number, number, number])[] = [
+  [9, 0, 1], [9, 1, 1], [10, 2, 1],
+  [10, 3, 2], [5, 0, 2], [5, 1, 2],
+  [4, 2, 3], [4, 3, 3], [12, 0, 3], [12, 1, 3],
+  [13, 2, 4], [13, 3, 4], [8, 2, 4], [8, 3, 4], [6, 2, 4],
+];
+
+function drawCrackPixels(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, mirror: boolean, front: boolean): void {
   ctx.clearRect(0, 0, w, h);
-  const count = per.slice(0, stage).reduce((a, n) => a + n, 0);
-  for (const m of marks.slice(0, count)) {
-    if (m.kind === 'pit') {
-      const cells: [number, number][] = [];
-      for (let y = Math.floor(m.y - m.rad - 1); y <= Math.ceil(m.y + m.rad + 1); y++) {
-        for (let x = Math.floor(m.x - m.rad - 1); x <= Math.ceil(m.x + m.rad + 1); x++) {
-          if (Math.hypot(x - m.x, (y - m.y) * 1.1) <= m.rad + (((x * 7 + y * 13) & 3) - 1.5) * 0.18) cells.push([x, y]);
-        }
-      }
-      const set = new Set(cells.map(([x, y]) => x + ',' + y));
-      for (const [x, y] of cells) { px(x - 1, y - 1, SHADE); px(x, y - 1, SHADE); px(x - 1, y, SHADE); }
-      for (const [x, y] of cells) px(x, y, CORE);
-      for (const [x, y] of cells) if (!set.has(x + ',' + (y + 1))) px(x, y + 1, RIM);
-    } else if (m.kind === 'corner') {
-      const cx = m.c & 1 ? w - 1 : 0, cy = m.c & 2 ? h - 1 : 0;
-      for (let y = 0; y < m.size; y++) for (let x = 0; x < m.size - y; x++) px(m.c & 1 ? cx - x : cx + x, m.c & 2 ? cy - y : cy + y, CORE);
-    } else {
-      for (let d = 0; d < m.depth; d++) for (let k = 0; k < 2; k++) {
-        const t = m.at + k;
-        if (m.edge === 0) px(t, d, CORE); else if (m.edge === 1) px(t, h - 1 - d, CORE); else if (m.edge === 2) px(d, Math.min(h - 1, t), CORE); else px(w - 1 - d, Math.min(h - 1, t), CORE);
-      }
-    }
+  const pts = (front ? FRONT_CRACK : TOP_CRACK).filter(([, , st]) => st <= stage).map(([x, y]) => [mirror ? w - 1 - x : x, y] as const);
+  const dark = new Set(pts.map(([x, y]) => x + ',' + y));
+  ctx.fillStyle = 'rgba(255,255,255,0.24)';
+  for (const [x, y] of pts) {
+    const lx = x + (mirror ? -1 : 1), ly = y + 1;
+    if (!dark.has(lx + ',' + ly) && lx >= 0 && lx < w && ly < h) ctx.fillRect(lx, ly, 1, 1);
   }
+  ctx.fillStyle = 'rgba(28,17,12,0.88)';
+  for (const [x, y] of pts) ctx.fillRect(x, y, 1, 1);
 }
+
+const VARIANTS = 2;
 
 export class BreakCracks {
   private readonly group = new THREE.Group();
@@ -69,7 +57,7 @@ export class BreakCracks {
   private cell = '';
 
   /** `levels` = níveis por célula de altura (4 no Mundo): a frente do bloco tem `1 / levels` de altura. */
-  constructor(parent: THREE.Object3D, private readonly seed: number, private readonly levels: number) {
+  constructor(parent: THREE.Object3D, private readonly levels: number) {
     const mat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     const topGeo = new THREE.PlaneGeometry(1, 1);
     topGeo.rotateX(-Math.PI / 2);
@@ -88,7 +76,7 @@ export class BreakCracks {
     const w = 16, h = kind === 'top' ? 16 : 16 / this.levels; // grade de 16 px do bloco; a frente é uma faixa 1 : (1/levels)
     const c = document.createElement('canvas');
     c.width = w; c.height = Math.max(3, Math.round(h));
-    drawWear(c.getContext('2d')!, c.width, c.height, stage, this.seed * 31 + variant * 977 + (kind === 'top' ? 1 : 2));
+    drawCrackPixels(c.getContext('2d')!, c.width, c.height, stage, variant === 1, kind === 'front');
     t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.generateMipmaps = false;

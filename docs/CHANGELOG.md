@@ -1,9 +1,9 @@
 # Changelog
 
-## Orvalis v0.93.100 — desgaste em pixels no lugar das rachaduras em listras (3D) (15/11/2026)
-- **Pedido do dono do produto:** não gostou das "ranhuras em listras" da animação de quebrar; escolheu testar a opção 3 (desgaste na própria textura).
+## Orvalis v0.93.100 — rachaduras em pixel-art na quebra, sem as listras (3D) (15/11/2026)
+- **Pedido do dono do produto:** não gostou das "ranhuras em listras" da animação de quebrar. Testou o **desgaste em pixels** (covinhas e mordidas; descartado: "não gostei") e depois a **opção 1, rachaduras em pixel-art**, que ficou.
 - **Causa das listras:** havia DUAS camadas de linhas no 3D — as fissuras vetoriais da v0.93.98 e, por cima, as fissuras radiais antigas do overlay (`drawBreakingCracks`, linhas saindo do centro + véu escuro).
-- **Desgaste** (`three/breakCracks.ts`, `drawWear`): no lugar das linhas, **covinhas e mordidas de 1 px** da grade de 16 × 16 do bloco, sem nenhuma linha — covinhas escuras com fio claro embaixo (parecem fundas), cantos e bordas mordidos; 4 estágios cumulativos (mesma semente), texturas com `NearestFilter`; a faixa da frente usa marcas menores.
+- **Rachaduras em pixel-art** (`three/breakCracks.ts`, `TOP_CRACK`/`FRONT_CRACK`): bitmaps desenhados à mão de 16 × 16 (topo) e 16 × 4 (frente) na grade de pixels do bloco, `NearestFilter`; cada pixel traz o estágio (1–4) em que aparece, então a rachadura cresce a partir do centro (linha principal → ramos NE/SO → ramos curtos) em vez de trocar; traço escuro de 1 px com fio claro na diagonal de baixo; variante espelhada por célula. Sem semente aleatória.
 - **Overlay:** `drawBreakingCracks(…, ringOnly)`: com a "sensação" ligada o 3D desenha só o **anel de progresso** (sem fissuras radiais nem véu); o 2D de reserva e `?sensacao=0` mantêm o desenho antigo.
 - Só cliente e só 3D; sem mapa, save ou protocolo (servidor não muda). `tsc` e testes verdes.
 
