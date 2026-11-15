@@ -1,5 +1,6 @@
 import { SUBDIV } from '../config';
 import type { World } from '../world/world';
+import { closedLine, type DaySchedule, type NpcPhase, phaseAt, scheduleOf } from './npcBrain/schedule';
 import { npcDef, type NpcId, type NpcRole } from './npcs';
 import type { Facing, Blocker } from './walker';
 import { Wanderer } from './wanderer';
@@ -23,6 +24,16 @@ export class Villager extends Wanderer {
   /** Falando com alguém agora: parado, virado para a personagem (a caixa de conversa o segura). */
   private hold = false;
   private said = 0;
+  /** Agenda do dia (ADR 0034, nível 1): só o Bento tem hoje; sem agenda, passeia como sempre. */
+  private readonly schedule: DaySchedule | null;
+  /** Fase do dia pela agenda (sem agenda, sempre `open`). */
+  phase: NpcPhase = 'open';
+  /** 0 = à vista … 1 = sumiu pela porta dos fundos (o desenho desbota). */
+  fade = 0;
+  private mode: 'post' | 'goHome' | 'leaving' | 'asleep' | 'arriving' = 'post';
+  private home: [number, number] | null = null;
+  private seeded = false;
+  private stuckFor = 0;
 
   constructor(
     x: number,
@@ -33,6 +44,28 @@ export class Villager extends Wanderer {
   ) {
     super(x, y, { speed: 1.4, halfW: 0.26, halfD: 0.14, stepHeight: 0 }, x, y, rand, { idle: [2, 7], walk: [1, 3], leash: (npcDef(npc).role ? 3 : 6) * SUBDIV });
     this.role = npcDef(npc).role ?? null;
+    this.schedule = scheduleOf(npc);
+  }
+
+  /** A porta dos fundos (centro da célula): por onde ele vai dormir e aparece de manhã. */
+  setHome(x: number, y: number): void {
+    this.home = [x, y];
+  }
+
+  /** Dormindo (fora do mapa: não aparece, não bloqueia nem atende)? */
+  get hidden(): boolean {
+    return this.mode === 'asleep';
+  }
+
+  /** A loja deste atendente está aberta? */
+  get shopIsOpen(): boolean {
+    return !this.schedule || this.phase === 'open';
+  }
+
+  /** Conversa de loja fechada (ele ainda está à vista, arrumando): fica parado até `release()`. */
+  closedConversation(): Conversation {
+    this.hold = true;
+    return { npc: this.npc, name: this.name, text: closedLine(this.phase) };
   }
 
   get name(): string {
@@ -73,11 +106,68 @@ export class Villager extends Wanderer {
     return true;
   }
 
-  update(dt: number, world: World, blocked?: Blocker): void {
+  update(dt: number, world: World, blocked?: Blocker, time = -1): void {
+    if (this.schedule && time >= 0 && this.home) { this.routine(dt, world, blocked, time); return; }
+    this.post(dt, world, blocked);
+  }
+
+  /** No posto: passeia pela área dele (ou fica parado, se está conversando). */
+  private post(dt: number, world: World, blocked?: Blocker): void {
     if (this.hold) {
       this.move(dt, 0, 0, world, blocked); // parado (mantém a colisão e o quadro de parada)
       return;
     }
     this.wander(dt, world, (self, x, y) => !this.allowedAt(x, y) || !!blocked?.(self, x, y));
+  }
+
+  /**
+   * Rotina do dia (nível 1): no posto durante o dia; ao anoitecer anda até a porta dos fundos, desbota e dorme (fora do mapa); de manhã aparece
+   * nela e volta ao posto. A primeira chamada já nasce no estado certo para a hora (mundo aberto à noite: ele já está dormindo).
+   */
+  private routine(dt: number, world: World, blocked: Blocker | undefined, time: number): void {
+    const phase = phaseAt(this.schedule!, time);
+    this.phase = phase;
+    const wantAsleep = phase === 'asleep';
+    const [hx, hy] = this.home!;
+    if (!this.seeded) {
+      this.seeded = true;
+      if (wantAsleep) { this.mode = 'asleep'; this.fade = 1; this.x = hx; this.y = hy; return; }
+    }
+    switch (this.mode) {
+      case 'asleep':
+        if (wantAsleep) return;
+        this.mode = 'arriving';
+        this.x = hx; this.y = hy; this.facing = 'down';
+        return;
+      case 'arriving':
+        this.fade = Math.max(0, this.fade - dt / 1.2);
+        this.move(dt, 0, 0, world, blocked);
+        if (this.fade <= 0) this.mode = 'post';
+        return;
+      case 'goHome':
+        if (!wantAsleep) { this.mode = 'post'; break; }
+        if (this.steer(dt, world, blocked, hx, hy)) this.mode = 'leaving';
+        return;
+      case 'leaving':
+        this.fade = Math.min(1, this.fade + dt / 1.2);
+        this.move(dt, 0, 0, world, blocked);
+        if (this.fade >= 1) this.mode = 'asleep';
+        return;
+      default:
+        break;
+    }
+    if (this.mode === 'post' && wantAsleep && !this.hold) { this.mode = 'goHome'; this.stuckFor = 0; return; }
+    this.post(dt, world, blocked);
+  }
+
+  /** Anda em linha reta até (tx, ty) respeitando a área do morador; travado por 2 s, chega de uma vez. Devolve se chegou. */
+  private steer(dt: number, world: World, blocked: Blocker | undefined, tx: number, ty: number): boolean {
+    const dx = tx - this.x, dy = ty - this.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 0.3) return true;
+    const moved = this.move(dt, dx / d, dy / d, world, (self, x, y) => !this.allowedAt(x, y) || !!blocked?.(self, x, y));
+    this.stuckFor = moved < 0.002 ? this.stuckFor + dt : 0;
+    if (this.stuckFor > 2) { this.x = tx; this.y = ty; return true; }
+    return false;
   }
 }

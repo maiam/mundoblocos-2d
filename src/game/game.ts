@@ -813,6 +813,7 @@ export class Game {
     if (this.dialogue.isOpen && this.dialogue.npc === v) { this.dialogue.advance(); return; }
     this.actions.cancelAll();
     v.faceTo(this.player.x, this.player.y);
+    if (v.role === 'merchant' && !v.shopIsOpen) { this.dialogue.open(v.closedConversation(), v, () => v.release()); return; } // loja fechada (rotina do Bento)
     if (v.role === 'merchant' || v.role === 'florist') { this.openShop(v); return; } // mercador e florista não conversam: abrem a loja (v0.93.57, v0.93.110)
     this.dialogue.open(v.conversation(), v, () => v.release());
   }
@@ -881,6 +882,7 @@ export class Game {
     this.player.update(dt, ix, iy, this.world, this.entities.blocker);
     if (!blocked) this.updateInteriors(iy);
     this.fade = Math.max(0, this.fade - dt * 2.5);
+    this.entities.time = this.time;
     this.entities.update(dt, this.world);
     this.updateDialogue();
     this.updateNet(realDt);

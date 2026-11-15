@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.111 — rotina do Bento: abre, fecha, vai dormir pela porta dos fundos (nível 1 da IA dos NPCs) (15/11/2026)
+- **Piloto do ADR 0034:** agenda pura em `game/npcBrain/schedule.ts` (`BENTO_SCHEDULE`: acorda 6h, abre 7h, fecha 19h30, dorme 21h; `phaseAt`, `shopOpen`, `closedLine`), sem DOM nem `Math.random`.
+- **`Villager`** ganha estados `post → goHome → leaving → asleep → arriving → post`: ao anoitecer o Bento anda até o ponto dos fundos do Mercado (travado 2 s, chega de uma vez), **desbota (fade 1,2 s) e some** (oculto: sem colisão, sem conversa, fora de `actors`); de manhã reaparece lá e volta ao posto. Mundo aberto de madrugada já o encontra dormindo. Sem relógio (`Entities.time = -1`, como na sala do servidor) não há rotina.
+- **Loja:** fora do horário (`opening`/`closing`) tocar nele abre só o diálogo ("ainda estou arrumando…" / "já fechei por hoje…") em vez da janela.
+- **Render:** `Actor.fade?` aplicado à opacidade do desenho e da sombra no `ActorBillboards`. `Game` atualiza `entities.time` todo quadro.
+- Sem protocolo/servidor/save novos (moradores só rodam no aparelho). Testes novos (`npcBrain/schedule.test.ts`); `tsc` e 603 testes verdes; conferido no navegador (de dia aberto, à noite sai de cena).
+
 ## Orvalis — plano de inteligência dos NPCs (só documentação, 15/11/2026)
 - **ADR 0034** (`docs/adr/0034-inteligencia-dos-npcs.md`): os 4 níveis (rotina, reativo, memória, objetivos), técnica (Utility AI + módulo puro `npcBrain`), piloto no Bento, "dormir" pela porta da casa e mais moradores por recolor no shader + sorteio por seed — decisões do dono do produto. **Nada de código ainda;** `DECISIONS`, `NEXT_STEPS` e `domains/npc.md` apontam para ele.
 

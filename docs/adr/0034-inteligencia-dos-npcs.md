@@ -1,6 +1,6 @@
 # ADR 0034 — Inteligência dos NPCs (plano em 4 níveis, sem LLM)
 
-- **Status:** **plano aprovado** (15/11/2026); nada implementado ainda. Piloto: o mercador **Bento**.
+- **Status:** **plano aprovado** (15/11/2026); **nível 1 do Bento implementado (v0.93.111)**; demais níveis pendentes. Piloto: o mercador **Bento**.
 - **Relaciona:** `docs/domains/npc.md`, ADR 0011 (save), 0016/0021 (sala), 0012/0014 (cidade e interiores), `docs/NEXT_STEPS.md`.
 
 ## Contexto
