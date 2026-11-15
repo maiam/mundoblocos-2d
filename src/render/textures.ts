@@ -4,7 +4,7 @@ import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { type CubeEdges, edgesKey, FRONT_SHADE, materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2LevelFaces, v2WaterTop } from './materialsV2';
 import { TRANSITION_PIECES, TRANSITION_RULES, type TransitionRule } from './transitions';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
+import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
@@ -718,6 +718,23 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
     treeVariants.set(Block.ROCK_BOULDER, frames);
   }
   for (const id of [Block.TALL_GRASS, Block.FLOWER] as BlockId[]) objects.set(id, decorationSprite(id));
+  // Flores fofas (`scripts/extract-flowers.py`): um quadro por flor, sorteado por célula; a Flor procedural fica de reserva (Santuário etc.).
+  const flowerArt = getFlowerArt();
+  if (flowerArt) {
+    const n = Math.round(flowerArt.width / flowerArt.height);
+    const fw = flowerArt.width / n, k = T / 128; // 128 px de arte = 1 célula, como a cerca
+    const frames = Array.from({ length: n }, (_, i): Sprite => {
+      const c = document.createElement('canvas');
+      c.width = fw;
+      c.height = flowerArt.height;
+      c.getContext('2d')!.drawImage(flowerArt, i * fw, 0, fw, flowerArt.height, 0, 0, fw, flowerArt.height);
+      const w = fw * k, h = flowerArt.height * k;
+      const oy = T - 3 - (92 / 96) * h; // base do caule 3 px acima da borda de baixo da célula
+      return { canvas: c, ox: (T - w) / 2, oy, w, h, hit: { x: 0, y: oy, w: T, h: T - oy } };
+    });
+    objects.set(Block.FLOWER, frames[0]);
+    treeVariants.set(Block.FLOWER, frames);
+  }
   // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
   for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {
     const { top, front, ground } = celestialFaces(id);
