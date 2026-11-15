@@ -200,8 +200,8 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 `optimize-assets.py`. Separa os desenhos por pedaços conectados e ordena por fileira (sem grade).
 
 **Cerca e portão** (referências em `assets-src/cerca/`: `moldura.png` = cercado quadrado 3/4, `portao.png` =
-fechado, aberto e poste solto): `python3 scripts/extract-fence.py` → `fence.png` (3 peças de 128 × 192 px com âncora
-comum no centro da célula), `fence-gate.png` (2 quadros, postes nas bordas da célula) e os ícones →
+fechado, aberto e poste solto): `python3 scripts/extract-fence-v2.py` (v0.93.95; fonte em `assets-src/cerca-v2/`; o `extract-fence.py` é a versão antiga) → `fence.webp` (3 peças de 128 × 128 px com âncora
+comum no centro da célula), `fence-gate.webp` (5 poses 128 × 76, 0°–90°; a animação usa 10 quadros ida e volta) e os ícones →
 `optimize-assets.py`. Mudou a âncora ou o quadro no script → atualize `FENCE_FRAME`/`GATE_FRAME` em `render/fence.ts`.
 
 **Marcos do mundo** (entrada do covil, `assets-src/dungeon-cave.png`): `python3 scripts/extract-landmarks.py` →
