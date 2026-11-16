@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.126 — corrige "Versão do jogo diferente da do servidor" na URL do Santuário (16/11/2026)
+- **Bug (dono do produto, celular):** abrir a URL do Santuário mostrava "Versão do jogo diferente da do servidor: recarregue a página". **Causa:** `config.ts` (`sanctuaryPage`) mantinha **qualquer** página do Santuário na **grade 1** (regra do Celestial antigo), e o `hello` leva a grade (`sub`): 1 ≠ 2 do servidor (`/saude` mostrava protocolo 29, o mesmo do jogo — o servidor estava certo).
+- **Correção:** só o **Santuário Celestial antigo** usa a grade 1 (build fixo `VITE_WORLD=santuario` ou `?celestial=1`); a URL do Santuário (subdomínio ou `?mundo=santuario`) abre a Sala 2 no mundo normal, **grade 2**, igual à do servidor.
+- Sem mudança de protocolo, save ou servidor. `tsc` e testes verdes. **Não conferido no navegador/celular** (precisa do site publicado).
+
 ## Orvalis v0.93.125 — a URL do Santuário abre direto na Sala 2, na mesma versão do jogo do mundo normal (16/11/2026)
 - **Problema (dono do produto):** a URL do Santuário abria uma versão antiga de teste (o Santuário Celestial, mundo plano de nuvens), diferente do mundo normal; só a Sala 2 online usava o mundo novo.
 - **Decisão (dono do produto):** abrir **direto na Sala 2 online**, sem modo solo. `main.ts` (`sanctuaryEntry`): a página do Santuário carrega o **mesmo pacote de arte e o mesmo renderer do mundo normal** (`loadArtPack('principal')`, `WorldThreeRenderer`) e entra na sala (`enterSanctuary`) com o nome lembrado ou um nome de Deusa sorteado (`DeusaNNNN`, guardado no aparelho). Joga como a Deusa, em modo criativo, com as três câmeras, no mundo procedural com a Cidade — as mesmas telas, painel e hotbar do jogo atual.

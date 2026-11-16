@@ -13,13 +13,19 @@ export const DAY_LENGTH_S = 480;
 /** Subdivisão padrão do jogo e do servidor (a F7 da ADR 0032 troca para 2 nos dois ao mesmo tempo). */
 export const DEFAULT_SUBDIV = 2;
 
-/** A página é a do Santuário Celestial (build fixo, subdomínio ou `?mundo=santuario`)? Cópia mínima de `resolveWorldId` (aquele módulo importa este). */
+/**
+ * A página é a do Santuário **Celestial** antigo (mundo plano de nuvens, escala própria, grade 1)? Só no build fixo `VITE_WORLD=santuario` (o Artifact antigo) ou com
+ * `?celestial=1` na página do Santuário. **Desde a v0.93.125 a URL do Santuário (subdomínio ou `?mundo=santuario`) abre a Sala 2 online no mundo normal: grade 2, igual
+ * à do servidor** (com a grade 1 o `hello` seria recusado como "versão diferente"). Cópia mínima de `resolveWorldId` (aquele módulo importa este).
+ */
 function sanctuaryPage(): boolean {
   const fixed = (import.meta as unknown as { env?: { VITE_WORLD?: string } }).env?.VITE_WORLD;
   if (fixed) return fixed === 'santuario';
+  const q = new URLSearchParams(window.location.search);
+  if (!q.has('celestial')) return false;
   const parts = window.location.hostname.split('.');
   if (parts.length > 2 && parts[0].toLowerCase() === 'santuario') return true;
-  return new URLSearchParams(window.location.search).get('mundo')?.toLowerCase() === 'santuario';
+  return q.get('mundo')?.toLowerCase() === 'santuario';
 }
 
 function gridSubdiv(): number {
