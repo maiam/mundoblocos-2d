@@ -166,7 +166,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.gates?.reupload();
       this.room?.reupload();
     });
-    this.sanctuaryCameras = sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage) : null;
+    this.sanctuaryCameras = sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage, true) : null;
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.
