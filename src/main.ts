@@ -50,7 +50,7 @@ const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
 /** Mundo jogado sozinho (volta para ele ao sair da sala). */
 let soloSeed = 0;
 
-// ---- Multiplayer (ADR 0016): só no mundo principal ----
+// ---- Multiplayer (ADR 0016): mundo normal e Santuário como salas independentes ----
 const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
 const online = !gridProto ? {
@@ -110,7 +110,9 @@ function goOnline(name: string, room: number, attempt = 1): void {
     const sanctuaryRoom = roomById(room)?.kind === 'sanctuary';
     // A sala especial compartilha o terreno e a cidade do mundo principal.
     // O inventário criativo só será habilitado depois da validação autoritativa no servidor.
-    const roomProfile = WORLD_PROFILES.principal;
+    const roomProfile = sanctuaryRoom
+      ? { ...WORLD_PROFILES.principal, collectBlocks: false, name: 'Santuário de Orvalis' }
+      : WORLD_PROFILES.principal;
     const roomRenderer: RendererFactory = sanctuaryRoom
       ? (target, world) => new (worldRendererCtor!)(target, world, true)
       : (target, world) => new (worldRendererCtor!)(target, world);
