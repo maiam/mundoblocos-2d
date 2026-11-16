@@ -8,7 +8,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
-import { roomById } from './net/protocol';
+import { roomRules } from './net/protocol';
 import { useSolidPhysics } from './render/rendererChoice';
 import { parseWallThickness } from './world/walls';
 import { parseAmbient } from './render/lighting';
@@ -107,13 +107,13 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    const sanctuaryRoom = roomById(room)?.kind === 'sanctuary';
-    // A sala especial compartilha o terreno e a cidade do mundo principal.
-    // O inventário criativo só será habilitado depois da validação autoritativa no servidor.
-    const roomProfile = sanctuaryRoom
+    // As regras da sala (`ROOM_RULES`, as mesmas do servidor) decidem tudo: a Sala 1 é sobrevivência; o Santuário é criativo (blocos infinitos = hotbar fixa com todos
+    // os blocos, sem material ao quebrar) e dá as três câmeras a cada jogador. Mesmo terreno procedural e mesma cidade, seed própria.
+    const rules = roomRules(room);
+    const roomProfile = rules.infiniteBlocks
       ? { ...WORLD_PROFILES.principal, collectBlocks: false, name: 'Santuário de Orvalis' }
       : WORLD_PROFILES.principal;
-    const roomRenderer: RendererFactory = sanctuaryRoom
+    const roomRenderer: RendererFactory = rules.allowCameraModes
       ? (target, world) => new (worldRendererCtor!)(target, world, true)
       : (target, world) => new (worldRendererCtor!)(target, world);
     game = new Game(freshCanvas(), seed, screenMode, roomProfile, { net: s, online, body, rendererFactory: roomRenderer, solidPhysics: true, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });

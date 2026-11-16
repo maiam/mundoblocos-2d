@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.123 — Santuário multiplayer: regras de sala centralizadas e testes de sala (PR #239, em rascunho) (16/11/2026)
+- **SPEC do dono do produto** (`docs/SPEC_SANTUARIO_MULTIPLAYER.md`): a Sala 2 "Santuário" usa o mesmo mundo procedural e a Cidade do Despertar com seed própria (20261115), em modo criativo, sem tocar na Sala 1.
+- **`ROOM_RULES`/`roomRules`** (`net/protocol.ts`): `mode`, `infiniteBlocks`, `collectBlockDrops`, `allowCameraModes`, `protectTown`, `maxBuildLevels` num lugar só, lido pelo cliente (`main.ts`) e pelo servidor (`Room.rules`); sai o `this.id !== 2` do `Room`. Sala desconhecida = regras da Sala 1.
+- **Protocolo 29** (lista de salas com `kind`; servidor antigo recusa o cliente novo com "recarregue a página").
+- **Testes de sala** (`net/sanctuaryRoom.test.ts`): regras por sala; mesmo gerador e cidade; snapshot de outra sala/seed não restaura; quebrar solta material só na Sala 1; cidade protegida nas duas; dois jogadores constroem e removem em conjunto e o estado volta do snapshot (reinício), sem vazar para a Sala 1. `net.test.ts` agora espera as duas salas.
+- **Build:** `tsc`, 650+ testes, `npm run build` e `build:net` verdes; servidor local (`orvalis-servidor` + vendor desta versão) listou as duas salas.
+- **Não feito (precisa de navegador):** câmeras isométrica e primeira pessoa em dois navegadores reais, hotbar criativa, celular, reconexão. O PR segue em **rascunho** até isso ser validado (ver a SPEC).
+
 ## Orvalis v0.93.122 — painel do personagem e carteira de moedas que não se perde ao morrer (16/11/2026)
 - **Pedido do dono do produto:** o painel do personagem que faltava no botão da hotbar (avatar no canto, personagem de corpo inteiro no centro) e as moedas passarem a viver no painel, sem se perder na morte.
 - **Painel** (`game/characterWindow.ts`, arte `assets-src/ui/character-frame.png` → `scripts/make-character-frame.py` → `ui-character.webp`): o branco de fora vira transparente e o do avatar e da caixa central viram buraco (o jogo desenha **atrás** da moldura); os valores baked ("---", "–/–") e o preenchimento da barra de XP são apagados. Mostra título (nome do personagem), **avatar** (rosto e ombros) e **personagem inteiro** (`CharacterPreview` ganhou `still`/`bust`), nível, barra de XP, **ataque** (ataque + arma na mão), **HP** e as **três moedas** (cobre, prata, ouro). Abre pelo **botão Personagem** da hotbar e pela tecla **C**; Esc/X/fora fecham; o jogo pausa enquanto aberto.

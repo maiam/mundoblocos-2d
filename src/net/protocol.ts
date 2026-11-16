@@ -2,13 +2,14 @@ import { type PlayerAction, parseAction } from '../world/actions';
 import type { Facing } from '../game/walker';
 import { isRemovedStack } from '../world/blocks';
 import { TOOLS, type ToolId } from '../world/items';
+import { MAX_STACK } from '../config';
 
 /**
  * Protocolo do multiplayer (ADR 0016): mensagens JSON entre jogo e servidor do Orvalis. Puro (sem DOM): o servidor usa
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 28;
+export const PROTOCOL_VERSION = 29;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -16,10 +17,40 @@ export const MAX_PLAYERS = 10;
  * Salas fixas do servidor (dono do produto, 2026-11-06): cada uma é um mundo compartilhado e salvo no servidor, aberto
  * a quem quiser entrar, a qualquer hora. Cada sala tem seed fixa e salvamento independente.
  */
-export const ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; kind: 'normal' | 'sanctuary' }> = [
+export type RoomKind = 'normal' | 'sanctuary';
+
+/**
+ * Regras de uma sala (SPEC Santuário Multiplayer, v0.93.123): ficam num lugar só e valem igual no cliente e no servidor — nada de `room.id === 2` espalhado.
+ * `survival` = a Sala 1 (blocos limitados, coleta); `creative` = o Santuário (blocos infinitos, sem material ao quebrar, três câmeras por jogador).
+ */
+export interface RoomRules {
+  mode: 'survival' | 'creative';
+  /** Os blocos de construção são infinitos (hotbar fixa com todos; colocar não gasta). */
+  infiniteBlocks: boolean;
+  /** Quebrar um bloco solta o material (colher/plantas seguem as regras de sempre). */
+  collectBlockDrops: boolean;
+  /** O jogador pode alternar entre as câmeras Atual, Isométrica e Primeira pessoa (cada um a sua; nunca sincronizado). */
+  allowCameraModes: boolean;
+  /** A Cidade do Despertar (e vila, dungeon, interiores) é protegida: nada quebra nem se coloca ali. */
+  protectTown: boolean;
+  /** Níveis de blocos de 1/4 empilháveis (o motor: `MAX_STACK`; altura nova só depois de verificar `maxStack`, `cubeLevels` e a serialização dos chunks). */
+  maxBuildLevels: number;
+}
+
+export const ROOM_RULES: Readonly<Record<RoomKind, RoomRules>> = {
+  normal: { mode: 'survival', infiniteBlocks: false, collectBlockDrops: true, allowCameraModes: false, protectTown: true, maxBuildLevels: MAX_STACK },
+  sanctuary: { mode: 'creative', infiniteBlocks: true, collectBlockDrops: false, allowCameraModes: true, protectTown: true, maxBuildLevels: MAX_STACK },
+};
+
+export const ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; kind: RoomKind }> = [
   { id: 1, name: 'Sala 1', seed: 20261106, kind: 'normal' },
   { id: 2, name: 'Santuário', seed: 20261115, kind: 'sanctuary' },
 ];
+
+/** As regras da sala `id` (sala desconhecida = as da Sala 1, a mais restrita). */
+export function roomRules(id: number): RoomRules {
+  return ROOM_RULES[roomById(id)?.kind ?? 'normal'];
+}
 
 export function roomById(id: number): (typeof ROOMS)[number] | undefined {
   return ROOMS.find((r) => r.id === id);

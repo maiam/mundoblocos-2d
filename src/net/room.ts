@@ -13,7 +13,7 @@ import { CHEST_SLOTS, World } from '../world/world';
 import { fromB64, toB64 } from './b64';
 import {
   type Applied, type ClientMessage, DEFAULT_APPEARANCE, type Grown, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, type RoomBag, type RoomChunk,
-  type ChestSlotsMsg, FACING_ORDER, type MobState, type RoomDrop, sanitizeName, type ServerMessage,
+  type ChestSlotsMsg, FACING_ORDER, type MobState, type RoomDrop, type RoomRules, roomRules, sanitizeName, type ServerMessage,
 } from './protocol';
 
 /** Mensagem a entregar: a um jogador, a todos, ou a todos menos um. */
@@ -127,7 +127,11 @@ export class Room {
   private pending: Outgoing[] = [];
   private hits: Array<[number, number, number, 0 | 1]> = [];
 
+  /** Regras desta sala (`ROOM_RULES`): modo, blocos infinitos, coleta, câmeras e proteção da cidade. */
+  readonly rules: RoomRules;
+
   constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random) {
+    this.rules = roomRules(id);
     this.world = new World(seed);
     this.entities = new Entities(null, rand);
     const e = this.entities;
@@ -329,7 +333,7 @@ export class Room {
       const out: Outgoing[] = [{ to: 'all', msg: { t: 'applied', ...applied } }];
       let loot: Drop[] = [];
       if (a.kind === 'break' && breaking !== null) {
-        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.id !== 2 && this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
+        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.rules.collectBlockDrops && this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
       }
       if (a.kind === 'pick') loot = pickDrops(this.rand);
       const list = this.spawnDrops(a.x + 0.5, a.y + 0.7, loot);
