@@ -321,13 +321,15 @@ export class Room {
         ? (this.world.chestAt(a.x, a.y) ?? []).filter((c) => c !== null).map((c) => ({ item: c!.item as StackId, count: c!.count }))
         : [];
       const wasChest = a.kind === 'break' && this.world.getObject(a.x, a.y) === Block.CHEST;
+      // O Santuário é criativo, mas continua sujeito às regras de colocação e proteção do mundo.
+      // A sala 1 mantém integralmente as regras de sobrevivência.
       if (!applyAction(this.world, a)) return [{ to: id, msg: { t: 'rejected', seq: m.seq } }];
       this.dirty = true;
       const applied: Applied = { by: id, action: a };
       const out: Outgoing[] = [{ to: 'all', msg: { t: 'applied', ...applied } }];
       let loot: Drop[] = [];
       if (a.kind === 'break' && breaking !== null) {
-        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
+        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.id !== 2 && this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
       }
       if (a.kind === 'pick') loot = pickDrops(this.rand);
       const list = this.spawnDrops(a.x + 0.5, a.y + 0.7, loot);
