@@ -16,6 +16,7 @@ import { Sheep } from './sheep';
 import type { Facing } from './walker';
 import type { Exploration } from './exploration';
 import { type MemoryBook, sanitizeBook } from './npcBrain/memory';
+import { Item } from '../world/items';
 import { EMPTY_LOG, type MissionLog, sanitizeMissions } from './npcBrain/missions';
 import { type QuestLog, sanitizeLog } from './npcBrain/quests';
 
@@ -27,7 +28,9 @@ import { type QuestLog, sanitizeLog } from './npcBrain/quests';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
+/** Id da pilha da Moeda de Cobre (para migrar salvamentos antigos). */
+const COPPER_COIN_ID = Item.COPPER_COIN;
 
 export interface SaveData {
   v: number;
@@ -37,6 +40,8 @@ export interface SaveData {
   quests: QuestLog;
   /** Corrente de missões do Capítulo 1 (v20, ADR 0034). */
   missions: MissionLog;
+  /** Carteira (v21): saldo em Moedas de Cobre; antes as moedas eram uma pilha da bolsa. */
+  coins: number;
   /** Subdivisão da grade em que o mundo foi salvo (v16, ADR 0032): 1 = antiga; 2 = células de metade do lado. */
   sub: number;
   world: WorldId;
@@ -91,6 +96,7 @@ export function captureSave(s: GameState): SaveData {
     npcMemory: s.entities.memory,
     quests: s.entities.quests,
     missions: s.entities.missions,
+    coins: s.inventory.wallet.copper,
     sub: SUBDIV,
     world: s.world.profile.id,
     seed: s.world.seed,
@@ -178,6 +184,13 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 18) d = { ...d, v: 19, quests: {} };
   // v19 → v20 (missões do Capítulo 1, ADR 0034): nenhuma missão cumprida ainda.
   if (d.v === 19) d = { ...d, v: 20, missions: EMPTY_LOG() };
+  // v20 → v21 (carteira no painel do personagem): as moedas da bolsa viram o saldo da carteira.
+  if (d.v === 20) {
+    const inv = { ...(d.inventory as Record<string, number>) };
+    const coins = inv[COPPER_COIN_ID] ?? 0;
+    delete inv[COPPER_COIN_ID];
+    d = { ...d, v: 21, inventory: inv, coins };
+  }
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -265,6 +278,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   s.entities.missions = sanitizeMissions(d.missions);
   s.exploration?.load(d.explored);
   s.inventory.replaceAll(d.inventory);
+  if (typeof d.coins === 'number') s.inventory.wallet.set(d.coins); // saldo salvo (v21)
   const e = s.entities;
   e.npcs.splice(0, e.npcs.length, ...d.sheep.map((o) => {
     const sheep = new Sheep(o.x, o.y, o.homeX, o.homeY, rand, o.baby);

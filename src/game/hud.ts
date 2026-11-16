@@ -14,7 +14,7 @@ export interface HudHandlers {
   slots: number;
   onSelect(i: number): void;
   /** Mundo com coleta: personagem (10), habilidades (11) e bolsa (12) depois dos 9 itens, após um separador. */
-  menu?: { character: string; skills: string; bag: string; onSkills(): void; onBag(): void };
+  menu?: { character: string; skills: string; bag: string; onCharacter(): void; onSkills(): void; onBag(): void };
   /** Mostra a barra de vida (mundos com combate). */
   health?: boolean;
 }
@@ -96,7 +96,7 @@ export class Hud {
         menu.appendChild(b);
         return b;
       };
-      btn('ui character', m.character, 'Personagem (em breve)', 'Personagem (em breve)');
+      btn('ui character', m.character, 'Personagem (C)', 'Abrir o painel do personagem', m.onCharacter);
       this.skillsButton = btn('ui skills', m.skills, 'Habilidades (K)', 'Abrir ou fechar habilidades e receitas', m.onSkills);
       this.bagButton = btn('ui bag', m.bag, 'Bolsa (B)', 'Abrir ou fechar a bolsa', m.onBag);
       card.appendChild(menu);

@@ -79,5 +79,7 @@ export interface ArtPack {
   uiIcons?: { bag: string; character: string; skills: string; builder: string };
   /** Moldura da janela da loja (`scripts/make-shop-frame.py`, v0.93.57); só o Mundo principal. */
   shopFrame?: string;
+  /** Moldura do painel do personagem (`scripts/make-character-frame.py`, v0.93.122). */
+  characterFrame?: string;
   toolIcons: Partial<Record<ToolId, string>>;
 }

@@ -3,12 +3,13 @@
 Decisão: ADR 0011. Código: `game/save.ts` (formato e armazenamento), `World.modifiedChunks/restoreChunk`,
 `Inventory.entries/replaceAll`, `game/menu.ts` (menu), `main.ts` (qual seed abrir).
 
-## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 20)
+## O que é salvo (`SaveData`, versão `SAVE_VERSION` = 21)
 **Grade (v16, ADR 0032):** o campo `sub` diz em que grade o mundo foi salvo (v15 = 1). `rescaleSave` (`world/subdiv.ts`) converte para a do jogo (só aumenta); `SaveStore.load` guarda uma cópia do arquivo antigo (`…:grade-1`) e **não abre nem sobrescreve** arquivo de grade mais fina que a do jogo.
 
 | Parte | Origem | Observação |
 |---|---|---|
 | Seed, mundo, hora do dia | `World`, `Game` | — |
+| Carteira (v21) | `Inventory.wallet` | `coins` em Moedas de Cobre; antes era a pilha `copper_coin` da bolsa (v20 migra); não se perde ao morrer |
 | Capítulo 1 (v20) | `Entities.missions` | `missions`: {done, active, progress}; validada por `sanitizeMissions`; v19 migra vazio |
 | Missões dos NPCs (v19) | `Entities.quests` | `quests`: {missão → `active`/`done`}; validada por `sanitizeLog`; v18 migra sem missões |
 | Memória dos NPCs (v18) | `Entities.memory` | `npcMemory`: {chave → {talks, bought}}; validada por `sanitizeBook`; v17 migra vazia |
