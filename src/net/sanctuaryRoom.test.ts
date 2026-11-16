@@ -14,8 +14,8 @@ describe('Santuário como seed de sala multiplayer', () => {
   it('usa o mesmo gerador procedural e preserva a cidade em seeds diferentes', () => {
     const normal = new Room(1, 'Sala 1', roomById(1)!.seed);
     const sanctuary = new Room(2, 'Santuário', roomById(2)!.seed);
-    expect(sanctuary.world.village).toBeTruthy();
-    expect(normal.world.village).toBeTruthy();
+    expect(sanctuary.world.town).toBeTruthy();
+    expect(normal.world.town).toBeTruthy();
     expect(sanctuary.snapshot()).toMatchObject({ room: 2, seed: roomById(2)!.seed });
     expect(normal.restore(sanctuary.snapshot())).toBe(false);
   });
