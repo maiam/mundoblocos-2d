@@ -10,6 +10,8 @@ import type { GameRenderer, RendererStats } from './rendererContract';
 import { celestialFaces, installCelestialGrassNet, installSanctuaryEightBlockAtlas, installSanctuaryGrassPanels, SANCTUARY_CUBE_IDS } from './celestialArt';
 import { Block } from '../world/blocks';
 import { SanctuaryCameraJoystick } from './sanctuaryCameraJoystick';
+import { SanctuaryCameraModes } from './sanctuaryCameraModes';
+import type { Player } from '../game/player';
 import { CELESTIAL_GRASS_NET_DATA_URI } from './celestialGrassNetAsset';
 import { SANCTUARY_EIGHT_FACES_URI } from './sanctuaryEightFacesAsset';
 import { SANCTUARY_GRASS_PANELS_URI } from './sanctuaryGrassPanelsAsset';
@@ -51,6 +53,8 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   /** Núcleo genérico (ADR 0031, M1): cena/câmera/GPU/contexto/mira, realces e materiais de bloco. */
   private readonly stage:ThreeStage;
   private readonly orbitControls:SanctuaryCameraJoystick;
+  private readonly cameraModes:SanctuaryCameraModes;
+  private lastPlayer:Player|null=null;
   private cameraYaw=0;
   private readonly scene:THREE.Scene;
   /** Escala visual do laboratório: geometria unificada, sem alterar coordenadas lógicas. */
@@ -137,6 +141,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
         this.goddessGhost.scale.copy(this.goddess.scale);
       }
     }, false); // Joystick de câmera oculto, mas preservado para reativação.
+    this.cameraModes=new SanctuaryCameraModes(canvas,this.stage);
     const grassCubeSheet = new Image();
     grassCubeSheet.onload=()=>{
       if(this.disposed)return;
@@ -382,11 +387,16 @@ export class SanctuaryThreeRenderer implements GameRenderer {
       this.buildWorld();
       this.signature=signature;
     }
-    this.stage.syncCamera(cam);
+    this.lastPlayer=opts.player;
+    const activeCamera=this.cameraModes.sync(cam,opts.player);
     this.drawGoddess(opts);
+    const firstPerson=this.cameraModes.current==='primeira-pessoa';
+    this.goddess.visible=!firstPerson;
+    this.goddessGhost.visible=!firstPerson;
+    this.goddessShadow.visible=!firstPerson;
     this.selection.update(opts);
-    this.stage.render();
-    if(this.lighting)this.drawLighting(cam,opts);
+    this.stage.renderWithCamera(activeCamera);
+    if(this.lighting&&!firstPerson&&this.cameraModes.current==='atual')this.drawLighting(cam,opts);
   }
 
   /** Escuridão ambiente com luzes (ADR 0029): a Deusa e os blocos que brilham, até `MAX_LIGHTS` por quadro. */
@@ -406,9 +416,10 @@ export class SanctuaryThreeRenderer implements GameRenderer {
 
   pick(cam:Camera,sx:number,sy:number):{x:number;y:number;hasObject:boolean}{
     if(this.disposed)return{x:0,y:0,hasObject:false};
-    this.stage.syncCamera(cam);
+    if(this.lastPlayer)this.cameraModes.sync(cam,this.lastPlayer);
+    else this.stage.syncCamera(cam);
     if(this.groups.length===0)this.buildWorld();
-    this.stage.aim(cam,sx,sy);
+    this.cameraModes.aim(cam,sx,sy);
     const found=this.stage.hits([...this.groups.map(e=>e.mesh),...(this.walls?.meshes??[]),...(this.wallArt?.meshes??[])]);
     for(const hit of found){
       const wallCell=hit.object.userData.cell as {x:number;y:number}|undefined;
@@ -440,6 +451,7 @@ export class SanctuaryThreeRenderer implements GameRenderer {
   dispose():void{
     if(this.disposed)return;
     this.disposed=true;
+    this.cameraModes.dispose();
     this.orbitControls.dispose();
     if(this.halfTimer)clearTimeout(this.halfTimer);
     this.lighting?.dispose();
