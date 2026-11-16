@@ -14,10 +14,11 @@ export const MAX_PLAYERS = 10;
 
 /**
  * Salas fixas do servidor (dono do produto, 2026-11-06): cada uma é um mundo compartilhado e salvo no servidor, aberto
- * a quem quiser entrar, a qualquer hora. Por enquanto só a Sala 1. A seed é fixa (o mundo é sempre o mesmo).
+ * a quem quiser entrar, a qualquer hora. Cada sala tem seed fixa e salvamento independente.
  */
-export const ROOMS: ReadonlyArray<{ id: number; name: string; seed: number }> = [
-  { id: 1, name: 'Sala 1', seed: 20261106 },
+export const ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; kind: 'normal' | 'sanctuary' }> = [
+  { id: 1, name: 'Sala 1', seed: 20261106, kind: 'normal' },
+  { id: 2, name: 'Santuário', seed: 20261115, kind: 'sanctuary' },
 ];
 
 export function roomById(id: number): (typeof ROOMS)[number] | undefined {
