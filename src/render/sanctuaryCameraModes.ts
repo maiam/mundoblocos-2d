@@ -93,8 +93,14 @@ export class SanctuaryCameraModes {
     this.perspective.aspect = aspect;
     this.perspective.updateProjectionMatrix();
     // O corpo da Deusa está no centro da célula, acima do suporte sólido.
-    const eye = Math.max(0.6, player.z * 0.5 + 1.35);
-    this.perspective.position.set(player.x * 0.8, eye, player.y * 0.8);
+    const eye = this.proceduralWorld
+      ? Math.max(0.9, player.visualZ + 1.25)
+      : Math.max(0.6, player.z * 0.5 + 1.35);
+    this.perspective.position.set(
+      player.x * (this.proceduralWorld ? 1 : 0.8),
+      eye,
+      player.y * (this.proceduralWorld ? 1 : 0.8),
+    );
     this.perspective.up.set(0, 1, 0);
     const direction = new THREE.Vector3(
       Math.sin(this.yaw) * Math.cos(this.pitch),
