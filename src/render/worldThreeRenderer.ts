@@ -533,8 +533,13 @@ export class WorldThreeRenderer implements GameRenderer {
   /** Chão visto sob o ponto da tela: o cubo atingido (qualquer nível) ou o ladrilho do chão; árvores e objetos de sprite não contam. */
   pickGround(cam: Camera, sx: number, sy: number): { x: number; y: number } | null {
     if (this.disposed) return null;
-    this.stage.syncCamera(cam);
-    this.stage.aim(cam, sx, sy);
+    if (this.sanctuaryCameras && this.lastCameraPlayer) {
+      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
+      this.sanctuaryCameras.aim(cam, sx, sy);
+    } else {
+      this.stage.syncCamera(cam);
+      this.stage.aim(cam, sx, sy);
+    }
     if (this.worldLayer.visible) {
       for (const hit of this.stage.hits(this.blocks.meshes())) {
         const block = this.blocks.cellOf(hit.object, hit.instanceId);
