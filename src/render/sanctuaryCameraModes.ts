@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Camera } from '../game/camera';
 import type { ThreeStage } from './three/stage';
 import type { Player } from '../game/player';
+import { SANCTUARY_DEFAULT_CAMERA } from './sanctuaryCameraJoystick';
 
 export type SanctuaryCameraMode = 'atual' | 'isometrico' | 'primeira-pessoa';
 const MODES: SanctuaryCameraMode[] = ['atual', 'isometrico', 'primeira-pessoa'];
@@ -81,7 +82,7 @@ export class SanctuaryCameraModes {
     if (hint) hint.hidden = mode !== 'primeira-pessoa';
     this.stage.setFreeOrbit(mode === 'isometrico'
       ? { azimuthDeg: 45, elevationDeg: 35.264, zoom: 1, blockHeight: 1, cellSize: 1 }
-      : null);
+      : mode === 'atual' ? { ...SANCTUARY_DEFAULT_CAMERA } : null);
   }
 
   /** A câmera do modo atual permanece exatamente como era. */
