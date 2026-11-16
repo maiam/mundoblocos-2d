@@ -135,6 +135,12 @@ export class ThreeStage {
     } else this.raycaster.setFromCamera(this.pointer, this.camera);
   }
 
+  /** Projeção alternativa usada somente pelo Santuário em primeira pessoa. */
+  aimWithCamera(camera: THREE.Camera, cam: Camera, sx: number, sy: number): void {
+    this.pointer.set(sx / cam.width * 2 - 1, 1 - sy / cam.height * 2);
+    this.raycaster.setFromCamera(this.pointer, camera);
+  }
+
   /** Interseções do raio apontado com as malhas dadas, da mais próxima à mais distante. */
   hits(objects: THREE.Object3D[]): THREE.Intersection[] {
     return this.raycaster.intersectObjects(objects, false);
@@ -150,6 +156,12 @@ export class ThreeStage {
   render(): void {
     this.gpu.info.reset();
     this.gpu.render(this.scene, this.camera);
+  }
+
+  /** Mantém o render padrão inalterado; aceita câmera alternativa somente quando fornecida. */
+  renderWithCamera(camera: THREE.Camera): void {
+    this.gpu.info.reset();
+    this.gpu.render(this.scene, camera);
   }
 
   dispose(): void {
