@@ -94,6 +94,10 @@
   Feedback no canvas: rachaduras progressivas + anel. Alcance 4,5 células; não é possível colocar bloco na célula ocupada pela personagem nem cavar o
   chão sob ela (regra de ocupação no `Game`; o domínio garante que buraco não é pisável).
 
+## Painel do personagem e carteira (v0.93.122)
+- `game/characterWindow.ts` (botão Personagem / tecla C): avatar, personagem inteiro, nível, XP (sem sistema ainda), ataque, HP e as três moedas; 6 espaços de roupa só em arte. Moldura: `scripts/make-character-frame.py`.
+- Moedas: `game/wallet.ts` — a Moeda de Cobre é a **carteira** (`Inventory.wallet`), fora da bolsa, **não se perde ao morrer**; 100 cobre = 1 prata, 100 prata = 1 ouro.
+
 ## Combate: fluidez (v0.93.63)
 - Golpe do jogador (`game/player.ts`): `ATTACK_CHAIN_AT` (70%) permite começar outro golpe depois do acerto; fila curta de `ATTACK_BUFFER_S` (0,18 s). Retorno (`game/game.ts`): `HITSTOP_*` e `SHAKE_*`; recuo do monstro escala com o dano (`Entities.strikeFrom` → `Monster.takeHit(..., knock)`).
 - Monstros (`game/monster.ts`): `windup` (goblin/lagarto 0,4 s, lobos 0,3 s): arma o ataque, dá para esquivar, golpe recebido cancela; aranhas mordem na hora.

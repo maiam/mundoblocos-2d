@@ -18,7 +18,8 @@ export class CharacterPreview {
   private t = 0;
   private last = 0;
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  /** `still`: parado de frente (painel do personagem); `bust`: enquadra só o rosto e os ombros (avatar do painel). */
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly opts: { still?: boolean; bust?: boolean } = {}) {
     this.ctx = canvas.getContext('2d')!;
   }
 
@@ -60,13 +61,13 @@ export class CharacterPreview {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     // Personagem ocupa ~80% da altura, pés perto da base.
-    const zoom = (h * 0.8) / CHARACTER_H;
-    const facing = TURN[Math.floor(this.t / TURN_EVERY) % TURN.length];
+    const zoom = (h * (this.opts.bust ? 2.1 : 0.8)) / CHARACTER_H;
+    const facing = this.opts.still ? 'down' : TURN[Math.floor(this.t / TURN_EVERY) % TURN.length];
     const a: Actor = {
-      kind: this.body, x: 0, y: 0, visualZ: 0, facing, moving: true, walkTime: this.t,
+      kind: this.body, x: 0, y: 0, visualZ: 0, facing, moving: !this.opts.still, walkTime: this.t,
     };
     const fx = w / 2;
-    const fy = h * 0.92;
+    const fy = h * (this.opts.bust ? 1.9 : 0.92);
     this.sprites.get(this.body).draw(ctx, fx, fy, zoom, a, this.t);
   }
 }

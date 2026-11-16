@@ -765,3 +765,23 @@ html, body {
 .sanctuary-camera-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
 .sanctuary-camera-presets button { font-size: 11px; padding: 7px 3px; line-height: 1.25; }
 .sanctuary-camera-presets button.active { color: #231641; background: #ffd46b; border-color: #fff2c2; }
+
+/* ---- Painel do personagem (v0.93.122): arte 1448 × 1086, tudo por porcentagem da moldura ---- */
+.charwin {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 6, 30, 0.58); touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  font-family: Nunito, system-ui, sans-serif; --cw: min(94vw, calc(94vh * 1448 / 1086), 760px); pointer-events: auto;
+}
+.charwin[hidden] { display: none; }
+.charwin-box { position: relative; width: var(--cw); aspect-ratio: 1448 / 1086; filter: drop-shadow(0 8px 14px rgba(5, 3, 20, 0.6)); }
+.charwin-box > * { position: absolute; }
+.charwin-frame { left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.charwin-avatar { border-radius: 50%; }
+.charwin-title, .charwin-val { display: flex; align-items: center; justify-content: center; pointer-events: none; white-space: nowrap; }
+.charwin-title { font-weight: 900; font-size: calc(var(--cw) * 0.05); color: #5a3418; }
+.charwin-val { font-weight: 900; font-size: calc(var(--cw) * 0.033); color: #fff2c8; text-shadow: 0 1px 0 #1c1030, 0 0 4px rgba(10, 6, 40, 0.9); font-variant-numeric: tabular-nums; }
+.charwin-level { font-size: calc(var(--cw) * 0.045); }
+.charwin-xptext { justify-content: flex-start; }
+.charwin-xp { border-radius: 999px; overflow: hidden; pointer-events: none; }
+.charwin-xp-fill { display: block; height: 100%; width: 0; background: linear-gradient(180deg, #7fe0ff, #2e9bff 60%, #1b6fd6); }
+.charwin button { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; border-radius: 12px; -webkit-tap-highlight-color: transparent; }

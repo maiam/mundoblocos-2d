@@ -8,7 +8,7 @@ import { TOOLS, type ToolId } from '../world/items';
  * este mesmo arquivo. Mudou o formato de forma incompatível → suba `PROTOCOL_VERSION` (o servidor recusa versões
  * diferentes com uma mensagem clara, em vez de quebrar o jogo).
  */
-export const PROTOCOL_VERSION = 27;
+export const PROTOCOL_VERSION = 28;
 /** Jogadores por sala ao mesmo tempo. */
 export const MAX_PLAYERS = 10;
 
@@ -140,6 +140,8 @@ export interface RoomDrop {
 /** O que a sala guarda de cada jogador (pelo nome): itens, grade da mão e onde estava. */
 export interface RoomBag {
   inventory: Record<string, number>;
+  /** Carteira em Moedas de Cobre (v28): não é mais uma pilha da bolsa e não se perde ao morrer. Ausente = 0 (bolsa antiga: as moedas vinham em `inventory`). */
+  coins?: number;
   hotbar: Array<string | null> | null;
   x: number;
   y: number;
@@ -276,7 +278,8 @@ export function parseBag(v: unknown): RoomBag | null {
     if (!o.hotbar.every((s) => s === null || (typeof s === 'string' && STACK_RE.test(s)))) return null;
     hotbar = (o.hotbar as Array<string | null>).map((s) => (s !== null && isRemovedStack(s) ? null : s));
   }
-  return { inventory, hotbar, x: o.x as number, y: o.y as number };
+  const coins = Number.isInteger(o.coins) && (o.coins as number) >= 0 && (o.coins as number) <= 999_999_999 ? (o.coins as number) : undefined;
+  return { inventory, ...(coins !== undefined ? { coins } : {}), hotbar, x: o.x as number, y: o.y as number };
 }
 
 /** Lê a aparência vinda da rede; qualquer coisa estranha vira a padrão (Heroína). Campos antigos (`look`) são ignorados. */
