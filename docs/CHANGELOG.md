@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.124 — o Santuário só pela URL do Santuário, com a Deusa; fora do menu do mundo normal (16/11/2026)
+- **Correção de rumo (dono do produto):** a Sala 2 é uma **área de criação acessada só pela URL do Santuário, pela personagem Deusa**; não aparece no menu do mundo normal.
+- **Menu por página** (`roomsForWorld`, `Menu.online.rooms`): o mundo normal lista só as salas de sobrevivência (Sala 1); o Santuário lista só a sua (Sala 2). `goOnline` recusa sala que a página não oferece ("Esta sala não é acessível a partir daqui").
+- **A Deusa é o personagem do Santuário:** `Appearance.goddess` (`net/protocol.ts`), `RoomRules.goddessOnly` (Santuário `true`, Sala 1 `false`); o **servidor** impõe: no Santuário todo mundo entra como Deusa (mesmo que o cliente peça outro corpo) e na Sala 1 a flag some (a Deusa vira a heroína padrão). O aparelho joga como Deusa (`character: 'goddess'`) e os outros jogadores veem o desenho da Deusa (`RemotePlayers`).
+- O resto da SPEC não muda (mundo procedural completo + cidade, criativo, 3 câmeras, persistência própria). Sem mudança de `PROTOCOL_VERSION` (continua 29; campo opcional). **Servidor:** `build:net` + `sync-net` e publicar antes do jogo.
+- Testes novos (`net/sanctuaryRoom.test.ts`: salas por página e aparência imposta pela sala); `tsc` e 653 testes verdes. Não conferido no navegador (jogar como Deusa na Sala 2 e o menu das duas páginas).
+
 ## Orvalis v0.93.123 — Santuário multiplayer: regras de sala centralizadas e testes de sala (PR #239, em rascunho) (16/11/2026)
 - **SPEC do dono do produto** (`docs/SPEC_SANTUARIO_MULTIPLAYER.md`): a Sala 2 "Santuário" usa o mesmo mundo procedural e a Cidade do Despertar com seed própria (20261115), em modo criativo, sem tocar na Sala 1.
 - **`ROOM_RULES`/`roomRules`** (`net/protocol.ts`): `mode`, `infiniteBlocks`, `collectBlockDrops`, `allowCameraModes`, `protectTown`, `maxBuildLevels` num lugar só, lido pelo cliente (`main.ts`) e pelo servidor (`Room.rules`); sai o `this.id !== 2` do `Room`. Sala desconhecida = regras da Sala 1.

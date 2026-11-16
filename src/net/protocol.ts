@@ -33,19 +33,29 @@ export interface RoomRules {
   allowCameraModes: boolean;
   /** A Cidade do Despertar (e vila, dungeon, interiores) é protegida: nada quebra nem se coloca ali. */
   protectTown: boolean;
+  /** Só a Deusa da Vida entra (o Santuário é acessado pela página do Santuário, com a Deusa); nas outras salas a Deusa vira a heroína padrão. */
+  goddessOnly: boolean;
   /** Níveis de blocos de 1/4 empilháveis (o motor: `MAX_STACK`; altura nova só depois de verificar `maxStack`, `cubeLevels` e a serialização dos chunks). */
   maxBuildLevels: number;
 }
 
 export const ROOM_RULES: Readonly<Record<RoomKind, RoomRules>> = {
-  normal: { mode: 'survival', infiniteBlocks: false, collectBlockDrops: true, allowCameraModes: false, protectTown: true, maxBuildLevels: MAX_STACK },
-  sanctuary: { mode: 'creative', infiniteBlocks: true, collectBlockDrops: false, allowCameraModes: true, protectTown: true, maxBuildLevels: MAX_STACK },
+  normal: { mode: 'survival', infiniteBlocks: false, collectBlockDrops: true, allowCameraModes: false, protectTown: true, goddessOnly: false, maxBuildLevels: MAX_STACK },
+  sanctuary: { mode: 'creative', infiniteBlocks: true, collectBlockDrops: false, allowCameraModes: true, protectTown: true, goddessOnly: true, maxBuildLevels: MAX_STACK },
 };
 
 export const ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; kind: RoomKind }> = [
   { id: 1, name: 'Sala 1', seed: 20261106, kind: 'normal' },
   { id: 2, name: 'Santuário', seed: 20261115, kind: 'sanctuary' },
 ];
+
+/**
+ * Salas que cada página oferece (SPEC, correção v0.93.124): o **mundo normal** só lista as de sobrevivência; o **Santuário** só é acessado pela URL do Santuário (a
+ * Deusa) e só lista a sala criativa — o Santuário não aparece no menu do mundo normal, nem a Sala 1 no do Santuário.
+ */
+export function roomsForWorld(world: 'principal' | 'santuario' | string): ReadonlyArray<(typeof ROOMS)[number]> {
+  return ROOMS.filter((r) => (r.kind === 'sanctuary') === (world === 'santuario'));
+}
 
 /** As regras da sala `id` (sala desconhecida = as da Sala 1, a mais restrita). */
 export function roomRules(id: number): RoomRules {
@@ -87,6 +97,8 @@ export type AppearanceBody = (typeof APPEARANCE_BODIES)[number];
 /** Como o jogador aparece para os outros: um personagem pronto (v0.92.0: o chibi modular saiu, `look` não existe mais). */
 export interface Appearance {
   body: AppearanceBody;
+  /** A Deusa da Vida (v0.93.124): é o único personagem do Santuário; a sala força isto nas salas `goddessOnly` e o tira nas outras. */
+  goddess?: true;
 }
 
 export const DEFAULT_APPEARANCE: Appearance = { body: 'heroine' };
@@ -319,7 +331,7 @@ export function parseAppearance(v: unknown): Appearance {
   if (!v || typeof v !== 'object') return DEFAULT_APPEARANCE;
   const o = v as Record<string, unknown>;
   const body = (APPEARANCE_BODIES as readonly unknown[]).includes(o.body) ? (o.body as AppearanceBody) : 'heroine';
-  return { body };
+  return o.goddess === true ? { body, goddess: true } : { body };
 }
 
 /** Lê os espaços de um baú vindos da rede (27 espaços, ids de pilha válidos, quantidades inteiras). */

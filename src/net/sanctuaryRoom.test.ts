@@ -99,3 +99,28 @@ describe('Santuário como sala multiplayer (SPEC v1.0)', () => {
     expect(room.world.getObject(x, y)).toBe(Block.AIR);
   });
 });
+
+describe('o Santuário é da página do Santuário, com a Deusa (correção v0.93.124)', () => {
+  it('o mundo normal só lista as salas de sobrevivência; o Santuário só lista a sua', async () => {
+    const { roomsForWorld } = await import('./protocol');
+    expect(roomsForWorld('principal').map((r) => r.id)).toEqual([1]);
+    expect(roomsForWorld('santuario').map((r) => r.id)).toEqual([2]);
+    expect(roomsForWorld('qualquer')).toEqual(roomsForWorld('principal')); // desconhecido = a mais restrita (sem o Santuário)
+  });
+
+  it('a sala decide a aparência: no Santuário só a Deusa entra (mesmo que o cliente peça outra); na Sala 1 a Deusa vira a heroína', () => {
+    const sanct = new Room(2, 'Santuário', roomById(2)!.seed);
+    const normal = new Room(1, 'Sala 1', roomById(1)!.seed);
+    expect(ROOM_RULES.sanctuary.goddessOnly).toBe(true);
+    expect(ROOM_RULES.normal.goddessOnly).toBe(false);
+    const hero = sanct.join({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name: 'Ana', room: 2, appearance: { body: 'hero' } });
+    const welcome = of(hero.out, 'welcome')[0].msg as unknown as { others?: unknown[] };
+    expect(welcome).toBeTruthy();
+    const goddess = normal.join({ t: 'hello', v: PROTOCOL_VERSION, sub: SUBDIV, name: 'Beto', room: 1, appearance: { body: 'heroine', goddess: true } });
+    const a = join(sanct, 'Caio');
+    const info = (room: Room, id: number) => (room as unknown as { players: Map<number, { appearance: unknown }> }).players.get(id)!.appearance;
+    expect(info(sanct, hero.id!)).toEqual({ body: 'hero', goddess: true });
+    expect(info(normal, goddess.id!)).toEqual({ body: 'heroine' });
+    expect(a).toBeGreaterThan(0);
+  });
+});

@@ -1,4 +1,4 @@
-import { MAX_PLAYERS, NAME_MAX, ROOMS, sanitizeName } from '../net/protocol';
+import { MAX_PLAYERS, NAME_MAX, sanitizeName } from '../net/protocol';
 
 /**
  * Menu recolhível (☰ no canto superior direito): continuar, novo mundo, recomeçar este mundo.
@@ -32,6 +32,8 @@ export interface MenuHandlers {
     name: string;
     /** Este endereço conecta ao servidor? Falso no Artifact e nas prévias: o menu mostra o link do site. */
     available: boolean;
+    /** Salas que esta página oferece (`roomsForWorld`): o mundo normal não lista o Santuário e o Santuário só lista a sua. */
+    rooms: ReadonlyArray<{ id: number; name: string }>;
     /** Site onde jogar com amigos (link do aviso). */
     site: string;
     /** Quantos estão em cada sala agora (mostrado ao abrir o menu); null = servidor sem resposta. */
@@ -203,7 +205,7 @@ function onlineSection(o: NonNullable<MenuHandlers['online']>): string {
         aria-label="Abrir o site do Orvalis para jogar com amigos">🌐 ${esc(o.site.replace(/^https?:\/\//, ''))}</a>
     </div>`;
   }
-  const rooms = ROOMS.map((r) => `<button data-act="join" data-room="${r.id}" class="menu-room-btn" title="Entrar na ${esc(r.name)}"
+  const rooms = o.rooms.map((r) => `<button data-act="join" data-room="${r.id}" class="menu-room-btn" title="Entrar na ${esc(r.name)}"
         aria-label="Entrar na ${esc(r.name)}">🌍 ${esc(r.name)} <span class="menu-room-count" data-room="${r.id}"></span></button>`).join('');
   return `<div class="menu-online">
       <h3>Jogar com amigos</h3>
