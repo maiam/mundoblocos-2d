@@ -18,8 +18,8 @@ function client(server: LoopbackServer) {
 }
 
 describe('Multiplayer — protocolo e sala (ADR 0016)', () => {
-  it('salas fixas (só a Sala 1, até 10) e nome de jogador', () => {
-    expect(ROOMS.map((r) => r.name)).toEqual(['Sala 1']);
+  it('salas fixas (Sala 1 e Santuário, até 10 jogadores) e nome de jogador', () => {
+    expect(ROOMS.map((r) => r.name)).toEqual(['Sala 1', 'Santuário']);
     expect(MAX_PLAYERS).toBe(10);
     expect(sanitizeName('  Ana   Clara ')).toBe('Ana Clara');
     expect(sanitizeName('Zé_2')).toBe('Zé_2');

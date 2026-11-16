@@ -32,7 +32,7 @@ export class SanctuaryCameraModes {
     if (this.drag?.id === e.pointerId) this.drag = null;
   };
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly stage: ThreeStage) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly stage: ThreeStage, private readonly proceduralWorld = false) {
     this.root.className = 'sanctuary-view-switch';
     this.root.setAttribute('role', 'group');
     this.root.setAttribute('aria-label', 'Perspectiva do Santuário');
@@ -82,7 +82,7 @@ export class SanctuaryCameraModes {
     if (hint) hint.hidden = mode !== 'primeira-pessoa';
     this.stage.setFreeOrbit(mode === 'isometrico'
       ? { azimuthDeg: 45, elevationDeg: 35.264, zoom: 1, blockHeight: 1, cellSize: 1 }
-      : mode === 'atual' ? { ...SANCTUARY_DEFAULT_CAMERA } : null);
+      : mode === 'atual' && !this.proceduralWorld ? { ...SANCTUARY_DEFAULT_CAMERA } : null);
   }
 
   /** A câmera do modo atual permanece exatamente como era. */
@@ -93,8 +93,14 @@ export class SanctuaryCameraModes {
     this.perspective.aspect = aspect;
     this.perspective.updateProjectionMatrix();
     // O corpo da Deusa está no centro da célula, acima do suporte sólido.
-    const eye = Math.max(0.6, player.z * 0.5 + 1.35);
-    this.perspective.position.set(player.x * 0.8, eye, player.y * 0.8);
+    const eye = this.proceduralWorld
+      ? Math.max(0.9, player.visualZ + 1.25)
+      : Math.max(0.6, player.z * 0.5 + 1.35);
+    this.perspective.position.set(
+      player.x * (this.proceduralWorld ? 1 : 0.8),
+      eye,
+      player.y * (this.proceduralWorld ? 1 : 0.8),
+    );
     this.perspective.up.set(0, 1, 0);
     const direction = new THREE.Vector3(
       Math.sin(this.yaw) * Math.cos(this.pitch),

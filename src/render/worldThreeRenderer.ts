@@ -44,6 +44,7 @@ import { hash2 } from '../world/random';
 import { ChunkWalls } from './three/chunkWalls';
 import { DEFAULT_WALL_THICKNESS } from '../world/walls';
 import { ThreeStage } from './three/stage';
+import { SanctuaryCameraModes } from './sanctuaryCameraModes';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
 import { BlockMaterials } from './three/blockMaterials';
@@ -88,6 +89,8 @@ export class WorldThreeRenderer implements GameRenderer {
   readonly preferredCellsTall = cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
   readonly textures: BlockTextures;
   private readonly stage: ThreeStage;
+  private readonly sanctuaryCameras: SanctuaryCameraModes | null;
+  private lastCameraPlayer: RenderOptions['player'] | null = null;
   private readonly chunks: ChunkRenderer;
   /** Tudo do mundo aberto (chão, cubos, objetos, portas, efeitos): escondido quando a personagem está num interior (M4.1). */
   private readonly worldLayer = new THREE.Group();
@@ -151,7 +154,7 @@ export class WorldThreeRenderer implements GameRenderer {
   });
   private disposed = false;
 
-  constructor(canvas: HTMLCanvasElement, private readonly world: World) {
+  constructor(canvas: HTMLCanvasElement, private readonly world: World, sanctuaryRoom = false) {
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
       this.actors?.reupload();
       this.drops?.reupload();
@@ -163,6 +166,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.gates?.reupload();
       this.room?.reupload();
     });
+    this.sanctuaryCameras = sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage, true) : null;
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.
@@ -250,7 +254,8 @@ export class WorldThreeRenderer implements GameRenderer {
 
   draw(cam: Camera, opts: RenderOptions): void {
     if (this.disposed || this.stage.contextLost) return;
-    this.stage.syncCamera(cam);
+    this.lastCameraPlayer = opts.player;
+    const activeCamera = this.sanctuaryCameras?.sync(cam, opts.player) ?? (this.stage.syncCamera(cam), this.stage.camera);
     // Interior (ADR 0014): o cômodo isolado substitui o mundo — sem chão, céu, nuvens, noite nem partículas lá dentro.
     const inside = opts.interior ?? null;
     this.worldLayer.visible = !inside;
@@ -312,8 +317,9 @@ export class WorldThreeRenderer implements GameRenderer {
     this.actors.update(view, opts.actors, opts.elapsed);
     this.drops.update(view, opts.drops, opts.elapsed);
     this.ring.update(opts.hoverSheep);
-    this.stage.render();
-    if (!inside) this.drawLighting(cam, opts, view);
+    if (this.sanctuaryCameras) this.stage.renderWithCamera(activeCamera);
+    else this.stage.render();
+    if (!inside && (!this.sanctuaryCameras || this.sanctuaryCameras.current === 'atual')) this.drawLighting(cam, opts, view);
     const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
     if (ctx) {
       // Dungeon (como no 2D: farol da entrada e escuro fora do labirinto, antes das partículas).
@@ -507,8 +513,13 @@ export class WorldThreeRenderer implements GameRenderer {
 
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
-    this.stage.syncCamera(cam);
-    this.stage.aim(cam, sx, sy);
+    if (this.sanctuaryCameras && this.lastCameraPlayer) {
+      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
+      this.sanctuaryCameras.aim(cam, sx, sy);
+    } else {
+      this.stage.syncCamera(cam);
+      this.stage.aim(cam, sx, sy);
+    }
     if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes()])) {
       const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
@@ -522,8 +533,13 @@ export class WorldThreeRenderer implements GameRenderer {
   /** Chão visto sob o ponto da tela: o cubo atingido (qualquer nível) ou o ladrilho do chão; árvores e objetos de sprite não contam. */
   pickGround(cam: Camera, sx: number, sy: number): { x: number; y: number } | null {
     if (this.disposed) return null;
-    this.stage.syncCamera(cam);
-    this.stage.aim(cam, sx, sy);
+    if (this.sanctuaryCameras && this.lastCameraPlayer) {
+      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
+      this.sanctuaryCameras.aim(cam, sx, sy);
+    } else {
+      this.stage.syncCamera(cam);
+      this.stage.aim(cam, sx, sy);
+    }
     if (this.worldLayer.visible) {
       for (const hit of this.stage.hits(this.blocks.meshes())) {
         const block = this.blocks.cellOf(hit.object, hit.instanceId);
@@ -544,6 +560,7 @@ export class WorldThreeRenderer implements GameRenderer {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.sanctuaryCameras?.dispose();
     this.floor.dispose();
     this.blocks.dispose();
     this.sprites.dispose();

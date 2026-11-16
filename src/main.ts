@@ -8,6 +8,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
+import { roomRules } from './net/protocol';
 import { useSolidPhysics } from './render/rendererChoice';
 import { parseWallThickness } from './world/walls';
 import { parseAmbient } from './render/lighting';
@@ -40,6 +41,7 @@ document.title = profile.name;
 let game: Game | null = null;
 /** Renderer 2.5D em WebGL carregado sob demanda (Santuário e Mundo; o Canvas 2D foi removido na v0.93.105): sem Three.js no pacote inicial. */
 let threeRendererFactory: RendererFactory | undefined;
+let worldRendererCtor: (new (canvas: HTMLCanvasElement, world: import('./world/world').World, sanctuaryRoom?: boolean) => import('./render/rendererContract').GameRenderer) | null = null;
 /** Física sem degrau do jogador no Mundo (ADR 0031), a não ser com `?fisica=degrau`. O Santuário tem a regra dele. */
 const solidPhysics = (): boolean => profile.id === 'principal' && useSolidPhysics(window.location.search);
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
@@ -48,10 +50,10 @@ const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
 /** Mundo jogado sozinho (volta para ele ao sair da sala). */
 let soloSeed = 0;
 
-// ---- Multiplayer (ADR 0016): só no mundo principal ----
+// ---- Multiplayer (ADR 0016): mundo normal e Santuário como salas independentes ----
 const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
-const online = profile.id === 'principal' && !gridProto ? {
+const online = !gridProto ? {
   get name() { return savedName(); },
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
   available: onlineAvailable(window.location.hostname),
@@ -105,7 +107,16 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    game = new Game(freshCanvas(), seed, screenMode, profile, { net: s, online, body, rendererFactory: threeRendererFactory!, solidPhysics: solidPhysics(), notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    // As regras da sala (`ROOM_RULES`, as mesmas do servidor) decidem tudo: a Sala 1 é sobrevivência; o Santuário é criativo (blocos infinitos = hotbar fixa com todos
+    // os blocos, sem material ao quebrar) e dá as três câmeras a cada jogador. Mesmo terreno procedural e mesma cidade, seed própria.
+    const rules = roomRules(room);
+    const roomProfile = rules.infiniteBlocks
+      ? { ...WORLD_PROFILES.principal, collectBlocks: false, name: 'Santuário de Orvalis' }
+      : WORLD_PROFILES.principal;
+    const roomRenderer: RendererFactory = rules.allowCameraModes
+      ? (target, world) => new (worldRendererCtor!)(target, world, true)
+      : (target, world) => new (worldRendererCtor!)(target, world);
+    game = new Game(freshCanvas(), seed, screenMode, roomProfile, { net: s, online, body, rendererFactory: roomRenderer, solidPhysics: true, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   // Como os outros vão me ver: o mesmo personagem do jogo.
@@ -217,11 +228,14 @@ void loadArtPack(profile.id)
       try {
         if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario') {
           const mod = await import('./render/sanctuaryThreeRenderer');
+          const worldMod = await import('./render/worldThreeRenderer');
+          worldRendererCtor = worldMod.WorldThreeRenderer;
           // Vista oblíqua é o padrão (ADR 0026, v0.93.10); `?vista=inclinada` volta à câmera inclinada a 67°.
           const view = query.get('vista') === 'inclinada' ? 'tilt' : 'oblique';
           threeRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core', 'grade'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core' | 'grade') : undefined });
         } else if (profile.id === 'principal') {
           const mod = await import('./render/worldThreeRenderer');
+          worldRendererCtor = mod.WorldThreeRenderer;
           threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
         }
       } catch (error) {

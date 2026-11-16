@@ -13,7 +13,7 @@ import { CHEST_SLOTS, World } from '../world/world';
 import { fromB64, toB64 } from './b64';
 import {
   type Applied, type ClientMessage, DEFAULT_APPEARANCE, type Grown, MAX_PLAYERS, type PlayerInfo, PROTOCOL_VERSION, type RoomBag, type RoomChunk,
-  type ChestSlotsMsg, FACING_ORDER, type MobState, type RoomDrop, sanitizeName, type ServerMessage,
+  type ChestSlotsMsg, FACING_ORDER, type MobState, type RoomDrop, type RoomRules, roomRules, sanitizeName, type ServerMessage,
 } from './protocol';
 
 /** Mensagem a entregar: a um jogador, a todos, ou a todos menos um. */
@@ -127,7 +127,11 @@ export class Room {
   private pending: Outgoing[] = [];
   private hits: Array<[number, number, number, 0 | 1]> = [];
 
+  /** Regras desta sala (`ROOM_RULES`): modo, blocos infinitos, coleta, câmeras e proteção da cidade. */
+  readonly rules: RoomRules;
+
   constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random) {
+    this.rules = roomRules(id);
     this.world = new World(seed);
     this.entities = new Entities(null, rand);
     const e = this.entities;
@@ -321,13 +325,15 @@ export class Room {
         ? (this.world.chestAt(a.x, a.y) ?? []).filter((c) => c !== null).map((c) => ({ item: c!.item as StackId, count: c!.count }))
         : [];
       const wasChest = a.kind === 'break' && this.world.getObject(a.x, a.y) === Block.CHEST;
+      // O Santuário é criativo, mas continua sujeito às regras de colocação e proteção do mundo.
+      // A sala 1 mantém integralmente as regras de sobrevivência.
       if (!applyAction(this.world, a)) return [{ to: id, msg: { t: 'rejected', seq: m.seq } }];
       this.dirty = true;
       const applied: Applied = { by: id, action: a };
       const out: Outgoing[] = [{ to: 'all', msg: { t: 'applied', ...applied } }];
       let loot: Drop[] = [];
       if (a.kind === 'break' && breaking !== null) {
-        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
+        loot = [...(wasChest ? chestLoot : []), ...breakDrops(a.tool, breaking, this.rules.collectBlockDrops && this.world.profile.collectBlocks, this.rand, { seed: this.world.seed, x: a.x, y: a.y })];
       }
       if (a.kind === 'pick') loot = pickDrops(this.rand);
       const list = this.spawnDrops(a.x + 0.5, a.y + 0.7, loot);
