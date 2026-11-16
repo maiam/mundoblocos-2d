@@ -13,7 +13,8 @@ import type { NetSession } from '../net/session';
 import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
-import { canSit, Entities, type HeroBody } from './entities';
+import { canSit, Entities, HERO_NAMES, type HeroBody } from './entities';
+import { CharacterWindow } from './characterWindow';
 import { exitDoorAt, type InteriorDoor, type InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
 import type { RecipeDestination } from './skills';
@@ -247,7 +248,7 @@ export class Game {
       menu: this.hotbar.dynamic
         ? {
           character: art().uiIcons?.character ?? '', skills: art().uiIcons?.skills ?? '', bag: art().uiIcons?.bag ?? '',
-          onSkills: () => this.toggleSkills(), onBag: () => this.toggleBag(),
+          onCharacter: () => this.toggleCharacter(), onSkills: () => this.toggleSkills(), onBag: () => this.toggleBag(),
         }
         : undefined,
       // Corações só em mundo com dungeon.
@@ -313,6 +314,7 @@ export class Game {
       const bag = net.bag;
       if (bag) {
         this.inventory.replaceAll(bag.inventory as Partial<Record<StackId, number>>);
+        if (typeof bag.coins === 'number') this.inventory.wallet.set(bag.coins); // carteira guardada na sala (v28)
         this.hotbar.prune(this.inventory);
         const [bx, by] = this.world.isWalkable(Math.floor(bag.x), Math.floor(bag.y))
           ? [bag.x, bag.y] : this.world.nearestWalkable(Math.floor(bag.x), Math.floor(bag.y)).map((v) => v + 0.5);
@@ -380,6 +382,7 @@ export class Game {
     for (const fn of this.cleanup) fn();
     this.dialogue.destroy();
     this.shop?.destroy();
+    this.charWin?.destroy();
     this.worldMap?.destroy();
     this.hud.destroy();
     this.renderer.dispose?.();
@@ -758,9 +761,10 @@ export class Game {
       if (e.code === 'KeyI' || e.code === 'KeyB') this.toggleBag();
       if (e.code === 'KeyK') this.toggleSkills();
       if (e.code === 'KeyM') this.toggleWorldMap();
-      // KeyC: reservado para o painel do personagem (em breve).
+      if (e.code === 'KeyC') this.toggleCharacter();
       if (e.code === 'Escape') {
         if (this.worldMap?.isOpen) this.worldMap.close();
+        else if (this.charWin?.isOpen) this.charWin.close();
         else if (this.shop?.isOpen) this.shop.close();
         else if (this.dialogue.isOpen) this.dialogue.close();
         else if (this.skills.detailOpen) this.skills.closeDetail();
@@ -1021,6 +1025,21 @@ export class Game {
   }
   private remarkIndex = 0;
 
+  private charWin: CharacterWindow | null = null;
+
+  /** Painel do personagem (botão ou tecla C): avatar, personagem inteiro, nível, ataque, HP e a carteira; o jogo pausa enquanto está aberto. */
+  private toggleCharacter(): void {
+    if (this.charWin?.isOpen) { this.charWin.close(); return; }
+    this.charWin ??= new CharacterWindow(this.hud.root, { frame: art().characterFrame ?? '', onOpenChange: () => { /* o `frame` lê `isOpen` para pausar */ } });
+    this.dialogue.close();
+    const p = this.player;
+    const body = this.entities.body;
+    this.charWin.show({
+      body, name: HERO_NAMES[body], level: 1, xp: 0, xpText: '—',
+      attack: p.stats.attack + weaponPower(p.equipped), hp: Math.round(p.hp), maxHp: p.maxHp, copper: this.inventory.wallet.copper,
+    });
+  }
+
   /** Vitrine, título e falas de cada loja (Mercado e Floricultura, v0.93.110). */
   private static readonly SHOPS: Record<'merchant' | 'florist', { stock: readonly ShopOffer[]; style: ShopStyle }> = {
     merchant: { stock: MARKET_STOCK, style: { title: 'Mercado', greeting: 'Confira os meus itens à venda!', category: 'Consumíveis' } },
@@ -1074,7 +1093,7 @@ export class Game {
     const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     // Menu aberto = jogo pausado (o mundo continua desenhado atrás do painel).
-    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen || !!this.shop?.isOpen || !!this.worldMap?.isOpen;
+    const paused = this.menu.isOpen || this.bag.isOpen || this.skills.isOpen || !!this.shop?.isOpen || !!this.charWin?.isOpen || !!this.worldMap?.isOpen;
     // Hit-stop: ao acertar, o mundo quase para por uns instantes (só a simulação; o desenho e o relógio real seguem).
     const dt = paused ? 0 : realDt * (this.hitStop > 0 ? HITSTOP_SCALE : 1);
     this.hitStop = Math.max(0, this.hitStop - realDt);
@@ -1267,6 +1286,7 @@ export class Game {
     const p = this.player;
     const bag = {
       inventory: Object.fromEntries(this.inventory.entries()) as Record<string, number>,
+      coins: this.inventory.wallet.copper,
       hotbar: this.hotbar.dynamic ? this.hotbar.layout() : null,
       x: Math.round(p.x * 100) / 100,
       y: Math.round(p.y * 100) / 100,

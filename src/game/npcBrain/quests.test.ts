@@ -85,6 +85,9 @@ describe('missão Ervas de cura por seed (v0.93.119)', () => {
     const { quests: _q, ...old } = d;
     expect(migrate({ ...old, v: 18 })?.quests).toEqual({});
     expect(migrate({ ...old, v: 19, missions: undefined })?.missions).toEqual({ done: [], active: null, progress: {} });
+    const money = migrate({ ...old, v: 20, inventory: { wheat: 2, copper_coin: 7 }, coins: undefined } as never)!; // v20 → v21: moedas da bolsa viram carteira
+    expect(money.coins).toBe(7);
+    expect(money.inventory).toEqual({ wheat: 2 });
   });
 });
 

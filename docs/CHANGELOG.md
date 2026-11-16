@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.122 — painel do personagem e carteira de moedas que não se perde ao morrer (16/11/2026)
+- **Pedido do dono do produto:** o painel do personagem que faltava no botão da hotbar (avatar no canto, personagem de corpo inteiro no centro) e as moedas passarem a viver no painel, sem se perder na morte.
+- **Painel** (`game/characterWindow.ts`, arte `assets-src/ui/character-frame.png` → `scripts/make-character-frame.py` → `ui-character.webp`): o branco de fora vira transparente e o do avatar e da caixa central viram buraco (o jogo desenha **atrás** da moldura); os valores baked ("---", "–/–") e o preenchimento da barra de XP são apagados. Mostra título (nome do personagem), **avatar** (rosto e ombros) e **personagem inteiro** (`CharacterPreview` ganhou `still`/`bust`), nível, barra de XP, **ataque** (ataque + arma na mão), **HP** e as **três moedas** (cobre, prata, ouro). Abre pelo **botão Personagem** da hotbar e pela tecla **C**; Esc/X/fora fecham; o jogo pausa enquanto aberto.
+- **Pendências do painel:** os 6 espaços de roupa (chapéu, blusa, calça, luvas, anel, sapato) são só arte (não há itens de equipamento); **não existe sistema de XP/nível** (mostra nível 1 e a barra vazia com "—").
+- **Carteira** (`game/wallet.ts`): a Moeda de Cobre deixa de ser pilha da bolsa — `Inventory.count/add/take` da moeda leem/gravam a `Wallet` (loja, espólios e missões seguem iguais), `entries()` não a inclui e **`dropOnDeath` não a toca: o dinheiro não se perde mais ao morrer**. 100 de cobre = 1 de prata, 100 de prata = 1 de ouro (`splitCoins`). **Salvamento v21** (`coins`; v20 migra as moedas da bolsa); **sala:** `RoomBag.coins` (protocolo **28**) guarda a carteira no servidor.
+- Testes novos (`wallet.test.ts`; migração em `quests.test.ts`); `tsc` e 645 testes verdes; conferido no navegador (painel com 1 de ouro, 23 de prata e 45 de cobre; a morte não leva a carteira).
+- **Servidor:** `build:net` + `sync-net` e publicar **antes** do jogo (protocolo 28).
+
 ## Orvalis v0.93.121 — Capítulo 1 "O Despertar": motor de missões e as missões 01–03 (15/11/2026)
 - **Pedido do dono do produto (ADR 0035):** a Cidade do Despertar vira um lugar a que se volta: história em que a jogadora começa desconhecida e, por missões, ganha dinheiro e reconhecimento; **10 missões narrativas** + **contratos repetíveis** (duas camadas).
 - **Motor** (`game/npcBrain/missions.ts`, puro): corrente linear de missões (uma vez cada), metas em paralelo (`have` = inventário, `event` = falar/abater/construir depois de aceitar), entrega ao Mestre da Guilda ou a outro NPC, recompensa em Moedas de Cobre; `sanitizeMissions`. **Salvamento v20** (`SaveData.missions`; v19 migra vazio).

@@ -331,6 +331,7 @@ import interiorMarket from '../../assets/interior-market.webp';
 import interiorFlorist from '../../assets/interior-florist.webp';
 import interiorGuild from '../../assets/interior-guild.webp';
 import townFlorist from '../../assets/town-florist.webp';
+import uiCharacter from '../../assets/ui-character.webp';
 import uiShop from '../../assets/ui-shop.webp';
 import interiorSmithy from '../../assets/interior-smithy.webp';
 import interiorTent from '../../assets/interior-tent.webp';
@@ -538,6 +539,7 @@ const pack: ArtPack = {
   dungeon: { ground: dungeonGround, mountains: dungeonMountains, rocks: dungeonRocks, props: dungeonProps, walls: dungeonWalls, cave: dungeonCave },
   uiIcons: { bag: bagIcon, character: characterIcon, skills: skillsIcon, builder: builderIcon },
   shopFrame: uiShop,
+  characterFrame: uiCharacter,
   tent: { icon: tentIcon, sprite: tentSprite },
   chest: { icon: chestIcon, sprite: chestSprite },
   craftables: {
