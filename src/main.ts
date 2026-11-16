@@ -8,7 +8,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
-import { roomRules } from './net/protocol';
+import { roomRules, roomsForWorld } from './net/protocol';
 import { useSolidPhysics } from './render/rendererChoice';
 import { parseWallThickness } from './world/walls';
 import { parseAmbient } from './render/lighting';
@@ -58,6 +58,7 @@ const online = !gridProto ? {
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
   available: onlineAvailable(window.location.hostname),
   site: GAME_SITE,
+  rooms: roomsForWorld(profile.id),
   counts: fetchRoomCounts,
   onJoin: (name: string, room: number) => goOnline(name, room),
   onLeave: () => leaveRoom('Você saiu da sala'),
@@ -75,6 +76,8 @@ let connecting: { session: NetSession; timer: number } | null = null;
  * nada, avisa — a conexão nunca fica presa em "Conectando…".
  */
 function goOnline(name: string, room: number, attempt = 1): void {
+  // Cada página só entra nas suas salas: o Santuário (criativo, da Deusa) só pela URL do Santuário; o mundo normal nunca o oferece.
+  if (!roomsForWorld(profile.id).some((r) => r.id === room)) { game?.notify('Esta sala não é acessível a partir daqui.'); return; }
   try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento: só não lembra o nome */ }
   if (connecting) { clearTimeout(connecting.timer); connecting.session.onClose = null; connecting.session.leave(); }
   const s = new NetSession(new SocketTransport());
@@ -111,7 +114,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // os blocos, sem material ao quebrar) e dá as três câmeras a cada jogador. Mesmo terreno procedural e mesma cidade, seed própria.
     const rules = roomRules(room);
     const roomProfile = rules.infiniteBlocks
-      ? { ...WORLD_PROFILES.principal, collectBlocks: false, name: 'Santuário de Orvalis' }
+      ? { ...WORLD_PROFILES.principal, collectBlocks: false, name: 'Santuário de Orvalis', ...(rules.goddessOnly ? { character: 'goddess' as const } : {}) }
       : WORLD_PROFILES.principal;
     const roomRenderer: RendererFactory = rules.allowCameraModes
       ? (target, world) => new (worldRendererCtor!)(target, world, true)
@@ -120,7 +123,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   // Como os outros vão me ver: o mesmo personagem do jogo.
-  s.join(name, room, { body: game?.entities.body ?? 'heroine' });
+  s.join(name, room, { body: game?.entities.body ?? 'heroine', ...(profile.id === 'santuario' ? { goddess: true as const } : {}) });
 }
 
 /** Sai da sala e volta ao mundo que estava jogando sozinho (salvo). */

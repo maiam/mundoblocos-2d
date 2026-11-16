@@ -86,6 +86,8 @@ export interface GameOptions {
   /** Menu "Jogar com amigos": criar/entrar (jogando sozinho) e sair (na sala). Ausente = sem multiplayer (Santuário). */
   online?: {
     name: string; available: boolean; site: string;
+    /** Salas que esta página oferece (o mundo normal não lista o Santuário). */
+    rooms: ReadonlyArray<{ id: number; name: string }>;
     counts?(): Promise<Record<number, { players: number; max: number }> | null>;
     onJoin(name: string, room: number): void; onLeave(): void;
   };

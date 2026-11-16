@@ -19,6 +19,8 @@ interface Remote {
   walkTime: number;
   /** Como aparece: personagem pronto. */
   body: HeroBody;
+  /** A Deusa da Vida (Santuário): desenho próprio, sem ferramentas nem sentar. */
+  goddess: boolean;
   /** Ferramenta na mão (null = mãos vazias). */
   tool: ToolId | null;
   /** Último número de golpes visto; quando muda, toca o golpe aqui (`attackTime`). */
@@ -83,7 +85,7 @@ export class RemotePlayers {
       if (!r) {
         this.list.set(id, {
           name: p.name, x: p.state.x, y: p.state.y, tx: p.state.x, ty: p.state.y, z: 0, facing: p.state.facing,
-          moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine',
+          moving: p.state.moving, walkTime: 0, body: HERO_BODIES.includes(p.appearance?.body) ? p.appearance.body : 'heroine', goddess: p.appearance?.goddess === true,
           tool: p.state.tool ?? null, swing: p.state.swing ?? 0, attackTime: 0, attackDur: attackTimingFor('heroine', null).seconds, sit: p.state.sit ?? null,
           buf: [{ t: this.clock, x: p.state.x, y: p.state.y }],
         });
@@ -136,7 +138,7 @@ export class RemotePlayers {
       const attacking = r.attackTime > 0;
       const sitting = r.sit !== null && canSit(r.body);
       return {
-        kind: sitting ? `${r.body as SitBody}-sit` as const : heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
+        kind: r.goddess ? 'goddess' as const : sitting ? `${r.body as SitBody}-sit` as const : heroActorKind(r.body, r.tool, r.tool, attacking), x: r.x, y: r.y, visualZ: r.z, facing: r.facing, moving: r.moving,
         walkTime: r.walkTime, label: r.name,
         frame: sitting ? r.sit! : attacking ? Math.min(ATTACK_FRAMES - 1, Math.floor((1 - r.attackTime / r.attackDur) * ATTACK_FRAMES)) : undefined,
         phase: !sitting && attacking ? 1 - r.attackTime / r.attackDur : undefined,

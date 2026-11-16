@@ -193,7 +193,10 @@ export class Room {
     // A bolsa é guardada pelo nome: dois ao mesmo tempo com o mesmo nome dividiriam a bolsa.
     if ([...this.players.values()].some((p) => bagKey(p.name) === bagKey(name))) return fail('name', `Já tem alguém com o nome ${name} na sala: escolha outro.`);
     const id = this.nextId++;
-    const player: PlayerInfo = { id, name, state: null, appearance: hello.appearance ?? DEFAULT_APPEARANCE };
+    // A aparência segue a sala: no Santuário só entra a Deusa; nas outras a Deusa vira a heroína padrão (o cliente não decide isso).
+    const base = hello.appearance ?? DEFAULT_APPEARANCE;
+    const appearance = this.rules.goddessOnly ? { body: base.body, goddess: true as const } : { body: base.body };
+    const player: PlayerInfo = { id, name, state: null, appearance };
     const others = [...this.players.values()];
     this.players.set(id, player);
     return {
