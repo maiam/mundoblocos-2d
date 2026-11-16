@@ -32,7 +32,7 @@ export class SanctuaryCameraModes {
     if (this.drag?.id === e.pointerId) this.drag = null;
   };
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly stage: ThreeStage) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly stage: ThreeStage, private readonly proceduralWorld = false) {
     this.root.className = 'sanctuary-view-switch';
     this.root.setAttribute('role', 'group');
     this.root.setAttribute('aria-label', 'Perspectiva do Santuário');
@@ -82,7 +82,7 @@ export class SanctuaryCameraModes {
     if (hint) hint.hidden = mode !== 'primeira-pessoa';
     this.stage.setFreeOrbit(mode === 'isometrico'
       ? { azimuthDeg: 45, elevationDeg: 35.264, zoom: 1, blockHeight: 1, cellSize: 1 }
-      : mode === 'atual' ? { ...SANCTUARY_DEFAULT_CAMERA } : null);
+      : mode === 'atual' && !this.proceduralWorld ? { ...SANCTUARY_DEFAULT_CAMERA } : null);
   }
 
   /** A câmera do modo atual permanece exatamente como era. */
