@@ -38,7 +38,7 @@ No jogo: `game/remotePlayers.ts` (desenha os outros com nome, personagem e ferra
    `grow`, `time` (a cada 30 s), `joined`/`left`.
 
 ## Salas e regras (v0.93.123, SPEC Santuário Multiplayer)
-- `ROOMS`: **Sala 1** (seed 20261106, `normal`/sobrevivência) e **Santuário** (seed 20261115, `sanctuary`/criativo, mesmo mundo procedural e cidade). Regras em `ROOM_RULES`/`roomRules(id)` (`net/protocol.ts`), lidas igual pelo cliente e pelo `Room`. Cada sala tem snapshot e arquivo próprios; `restore` recusa outra sala/seed. Detalhe e checklist: `docs/SPEC_SANTUARIO_MULTIPLAYER.md`. O servidor não conhece inventário: o "criativo" é do aparelho (hotbar fixa) e do que a sala deixa soltar.
+- `ROOMS`: **Sala 1** (seed 20261106, `normal`/sobrevivência) e **Santuário** (seed 20261115, `sanctuary`/criativo, mesmo mundo procedural e cidade). Regras em `ROOM_RULES`/`roomRules(id)` (`net/protocol.ts`), lidas igual pelo cliente e pelo `Room`. Cada sala tem snapshot e arquivo próprios; `restore` recusa outra sala/seed. **Acesso (v0.93.124):** o Santuário só é oferecido pela URL do Santuário (o menu do mundo normal não o lista; `roomsForWorld`) e só entra a **Deusa** (`Appearance.goddess`, imposto pela sala). Detalhe e checklist: `docs/SPEC_SANTUARIO_MULTIPLAYER.md`. O servidor não conhece inventário: o "criativo" é do aparelho (hotbar fixa) e do que a sala deixa soltar.
 
 ## Regras importantes
 - **Mapa:** ação que muda o mapa só vale quando o servidor confirma (`applied`). O terreno não editado é função da seed,

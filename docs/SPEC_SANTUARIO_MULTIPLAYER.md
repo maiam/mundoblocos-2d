@@ -2,6 +2,9 @@
 
 Resumo operacional da especificação que orienta o PR #239 (`feat/santuario-sala-multiplayer`). **Regra principal: nada pode mudar o comportamento, o inventário, a câmera ou a persistência da Sala 1.**
 
+## Acesso (correção 16/11/2026)
+A Sala 2 é uma **área de criação acessada só pela URL do Santuário, pela personagem Deusa** (`?mundo=santuario` / domínio do Santuário). **Não aparece no menu do mundo normal**, e o Santuário não lista a Sala 1. O servidor impõe a aparência: Santuário = só Deusa (`RoomRules.goddessOnly`); Sala 1 = nunca Deusa.
+
 ## Salas
 | | Sala 1 | Sala 2 — Santuário |
 |---|---|---|
