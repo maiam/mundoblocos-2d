@@ -37,7 +37,12 @@ const baseProfile = WORLD_PROFILES[resolveWorldId(window.location.hostname, wind
 /** Protótipo da grade fina (ADR 0032; só dev, `?grade=2`): mesmo mundo, sem salvar e sem sala. */
 const gridProto = SUBDIV !== DEFAULT_SUBDIV && baseProfile.id === 'principal';
 const profile = baseProfile;
-document.title = profile.name;
+/**
+ * A URL do Santuário abre **direto na Sala 2** (v0.93.125): a mesma versão do jogo do mundo normal (mundo procedural com a Cidade, mesmas telas), em modo criativo e
+ * com a Deusa. O Santuário Celestial antigo (mundo plano de nuvens, laboratório) só abre com `?celestial=1`, para desenvolvimento.
+ */
+const sanctuaryEntry = profile.id === 'santuario' && !new URLSearchParams(window.location.search).has('celestial') && !gridProto;
+document.title = sanctuaryEntry ? 'Santuário de Orvalis' : profile.name;
 let game: Game | null = null;
 /** Renderer 2.5D em WebGL carregado sob demanda (Santuário e Mundo; o Canvas 2D foi removido na v0.93.105): sem Three.js no pacote inicial. */
 let threeRendererFactory: RendererFactory | undefined;
@@ -77,7 +82,7 @@ let connecting: { session: NetSession; timer: number } | null = null;
  */
 function goOnline(name: string, room: number, attempt = 1): void {
   // Cada página só entra nas suas salas: o Santuário (criativo, da Deusa) só pela URL do Santuário; o mundo normal nunca o oferece.
-  if (!roomsForWorld(profile.id).some((r) => r.id === room)) { game?.notify('Esta sala não é acessível a partir daqui.'); return; }
+  if (!roomsForWorld(profile.id).some((r) => r.id === room)) { report('Esta sala não é acessível a partir daqui.'); return; }
   try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento: só não lembra o nome */ }
   if (connecting) { clearTimeout(connecting.timer); connecting.session.onClose = null; connecting.session.leave(); }
   const s = new NetSession(new SocketTransport());
@@ -88,15 +93,15 @@ function goOnline(name: string, room: number, attempt = 1): void {
     s.onClose = null;
     s.leave();
     if (attempt === 1) {
-      game?.notify('Conectando… (tentando de novo)');
+      if (game) game.notify('Conectando… (tentando de novo)');
       goOnline(name, room, 2);
-    } else game?.notify('O servidor não respondeu. Tente de novo em instantes.');
+    } else report('O servidor não respondeu. Tente de novo em instantes.');
   };
   connecting = { session: s, timer: window.setTimeout(giveUp, CONNECT_TIMEOUT_MS) };
   s.onError = (message) => {
     if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
-    if (net === s) { game?.notify(message); return; }
-    game?.notify(message); // entrada recusada: continua no mundo de antes
+    if (net === s) { report(message); return; }
+    report(message); // entrada recusada: continua no mundo de antes (no Santuário, volta à porta com "Tentar de novo")
     s.onClose = null;
     s.leave();
   };
@@ -107,6 +112,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
   s.onWelcome = (seed) => {
     if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
     net = s;
+    document.getElementById('sanctuary-gate')?.remove();
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
@@ -126,12 +132,61 @@ function goOnline(name: string, room: number, attempt = 1): void {
   s.join(name, room, { body: game?.entities.body ?? 'heroine', ...(profile.id === 'santuario' ? { goddess: true as const } : {}) });
 }
 
-/** Sai da sala e volta ao mundo que estava jogando sozinho (salvo). */
+/** Aviso: sobre o jogo, ou — no Santuário, sem jogo aberto — na porta, com "Tentar de novo". */
+function report(message: string): void {
+  if (game) game.notify(message);
+  else if (sanctuaryEntry) showSanctuaryGate(message, true);
+}
+
+/** Tela de espera do Santuário (conectando, ou o servidor não respondeu): um botão tenta de novo. */
+function showSanctuaryGate(message: string, retry: boolean): void {
+  let gate = document.getElementById('sanctuary-gate');
+  if (!gate) {
+    gate = document.createElement('div');
+    gate.id = 'sanctuary-gate';
+    document.body.appendChild(gate);
+  }
+  gate.textContent = '';
+  const text = document.createElement('p');
+  text.textContent = message;
+  gate.appendChild(text);
+  if (retry) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = 'Tentar de novo';
+    b.addEventListener('click', () => enterSanctuary());
+    gate.appendChild(b);
+  }
+}
+
+/** Nome do Santuário: o lembrado ou, na primeira vez, um nome de Deusa sorteado (a bolsa e o lugar na sala são guardados pelo nome). */
+function sanctuaryName(): string {
+  const saved = savedName();
+  if (saved) return saved;
+  const name = `Deusa${1000 + Math.floor(Math.random() * 9000)}`;
+  try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento: só não lembra */ }
+  return name;
+}
+
+/** A URL do Santuário: entra direto na Sala 2. */
+function enterSanctuary(): void {
+  if (!online?.available) { showSanctuaryGate(`O Santuário abre só pelo site do Orvalis: ${GAME_SITE.replace(/^https?:\/\//, '')}`, false); return; }
+  showSanctuaryGate('Entrando no Santuário…', false);
+  goOnline(sanctuaryName(), roomsForWorld('santuario')[0].id);
+}
+
+/** Sai da sala e volta ao mundo que estava jogando sozinho (salvo). No Santuário não há modo solo: volta à porta, para tentar de novo. */
 function leaveRoom(notice: string): void {
   const s = net;
   net = null;
   game?.sendBag(true); // a bolsa vai para a sala antes de fechar a conexão
   if (s) { s.onClose = null; s.leave(); }
+  if (sanctuaryEntry) {
+    game?.destroy();
+    game = null;
+    showSanctuaryGate(notice, true);
+    return;
+  }
   start(soloSeed, notice);
 }
 
@@ -219,7 +274,7 @@ const skipTitle = !!param || query.has('personagem') || profile.id !== 'principa
 // Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para comparar).
 const blocksV2 = blocksV2FromSearch(window.location.search);
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
-void loadArtPack(profile.id)
+void loadArtPack(sanctuaryEntry ? 'principal' : profile.id)
   .then(() => loadBlockArt())
   .then(() => loadMaterialsV2(blocksV2))
   .then(async () => {
@@ -229,7 +284,12 @@ void loadArtPack(profile.id)
     const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
     if (webgl) {
       try {
-        if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario') {
+        if (sanctuaryEntry) {
+          // A Sala 2 usa o renderer do mundo normal (com as câmeras do Santuário ligadas pelas regras da sala).
+          const mod = await import('./render/worldThreeRenderer');
+          worldRendererCtor = mod.WorldThreeRenderer;
+          threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
+        } else if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario') {
           const mod = await import('./render/sanctuaryThreeRenderer');
           const worldMod = await import('./render/worldThreeRenderer');
           worldRendererCtor = worldMod.WorldThreeRenderer;
@@ -247,6 +307,7 @@ void loadArtPack(profile.id)
     }
     if (!threeRendererFactory) { showUnsupported(webgl ? 'load-failed' : 'no-webgl'); return; }
 
-    if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
+    if (sanctuaryEntry) enterSanctuary();
+    else if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
     else showTitle();
   });

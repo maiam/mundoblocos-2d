@@ -75,7 +75,7 @@ A Hostinger também lista vulnerabilidades das dependências do repositório: ma
    devem ficar direto na pasta, com `index.html` na raiz dela) → apagar o `.zip`.
 3. **Segurança** → **SSL**: conferir/instalar o certificado grátis para `orvalis.pensamentos.online` (pode levar
    alguns minutos até horas) e ativar **Forçar HTTPS**. HTTPS é necessário para instalar como app.
-4. Santuário (opcional): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
+4. Santuário (v0.93.125: abre direto na Sala 2 online, na mesma build do mundo normal — **não** use o Artifact antigo `build:artifact:santuario` como entrada): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
    Santuário pelo primeiro nome do endereço). Sem ele, `https://orvalis.pensamentos.online/?mundo=santuario` funciona.
 5. Conferir: abrir no celular (deitado), jogar, recarregar (continua salvo), instalar na tela inicial.
 
