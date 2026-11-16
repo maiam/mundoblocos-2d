@@ -18,6 +18,7 @@ As regras ficam em **`ROOM_RULES`** (`net/protocol.ts`): `mode`, `infiniteBlocks
 Não modificar a `main` antes da aprovação; não alterar a seed da Sala 1; sem regras criativas globais; sem compartilhar snapshots entre salas; protocolo versionado (hoje **29**); publicar cliente e servidor compatíveis (**servidor primeiro**); compilar não é concluir.
 
 ## Plano e estado (v0.93.123)
+**Validação do dono do produto (16/11/2026): câmeras (Atual, Isométrica, Primeira pessoa), construção criativa, dois jogadores, persistência e Sala 1 sem regressão — "validado"; PR liberado para merge (servidor primeiro).** As marcações "pendente" abaixo são as de antes da validação.
 **Fase 1 — build e testes:** `tsc`, `npm test` (650+), `npm run build`, `build:net` ✔ · Sala 2 registrada no servidor local (`GET /salas` lista as duas, `/saude` protocolo 29) ✔ · Cidade gerada nas duas salas (teste) ✔.
 **Fase 2 — construção criativa:** regras centralizadas ✔ · quebrar não solta material no Santuário e solta na Sala 1 (teste de sala) ✔ · cidade protegida nas duas salas (teste) ✔ · **pendente:** validar visualmente blocos infinitos/hotbar e limites verticais (5 níveis só depois de verificar `maxStack`/`cubeLevels`/serialização; **não** mudar a altura global).
 **Fase 3 — câmeras:** seletor e modos vêm do PR #238 (mesclado) ✔ · **pendente (precisa de navegador):** isométrica (projeção/raycast), primeira pessoa (mira, faces, sprite do jogador, alcance), chunks pela câmera ativa, iluminação, alternância contínua, celular/tablet.

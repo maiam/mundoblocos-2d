@@ -6,7 +6,7 @@
 - **Protocolo 29** (lista de salas com `kind`; servidor antigo recusa o cliente novo com "recarregue a página").
 - **Testes de sala** (`net/sanctuaryRoom.test.ts`): regras por sala; mesmo gerador e cidade; snapshot de outra sala/seed não restaura; quebrar solta material só na Sala 1; cidade protegida nas duas; dois jogadores constroem e removem em conjunto e o estado volta do snapshot (reinício), sem vazar para a Sala 1. `net.test.ts` agora espera as duas salas.
 - **Build:** `tsc`, 650+ testes, `npm run build` e `build:net` verdes; servidor local (`orvalis-servidor` + vendor desta versão) listou as duas salas.
-- **Não feito (precisa de navegador):** câmeras isométrica e primeira pessoa em dois navegadores reais, hotbar criativa, celular, reconexão. O PR segue em **rascunho** até isso ser validado (ver a SPEC).
+- **Validado pelo dono do produto (16/11/2026)** no aparelho: câmeras (Atual, Isométrica, Primeira pessoa), construção criativa, dois jogadores, persistência e Sala 1 sem regressão. Servidor publicado antes (orvalis-servidor #59).
 
 ## Orvalis v0.93.122 — painel do personagem e carteira de moedas que não se perde ao morrer (16/11/2026)
 - **Pedido do dono do produto:** o painel do personagem que faltava no botão da hotbar (avatar no canto, personagem de corpo inteiro no centro) e as moedas passarem a viver no painel, sem se perder na morte.
