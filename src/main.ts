@@ -121,7 +121,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // os blocos, sem material ao quebrar) e dá as três câmeras a cada jogador. Mesmo terreno procedural e mesma cidade, seed própria.
     const rules = roomRules(room);
     const roomProfile = rules.infiniteBlocks
-      ? { ...WORLD_PROFILES.principal, collectBlocks: false, name: 'Santuário de Orvalis', ...(rules.goddessOnly ? { character: 'goddess' as const } : {}) }
+      ? { ...WORLD_PROFILES.principal, collectBlocks: false, progression: false, name: 'Santuário de Orvalis', ...(rules.goddessOnly ? { character: 'goddess' as const } : {}) }
       : WORLD_PROFILES.principal;
     const roomRenderer: RendererFactory = rules.allowCameraModes
       ? (target, world) => new (worldRendererCtor!)(target, world, true)

@@ -41,6 +41,8 @@ export interface WorldProfile {
   hunger: boolean;
   /** Minimapa com névoa de exploração no canto da tela (mundo grande); false no Santuário (cabe na tela). */
   minimap: boolean;
+  /** Progressão da jogadora: missões do Capítulo 1, carteira (Moedas de Cobre) e painel do personagem. false no Santuário (Sala 2, criação). */
+  progression: boolean;
   /** Cores do fundo além das bordas do mundo (céu). */
   sky: [string, string];
 }
@@ -62,6 +64,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     town: true,
     collectBlocks: true,
     minimap: true,
+    progression: true,
     hunger: true,
     sky: ['#1b1838', '#1b1838'],
   },
@@ -86,6 +89,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     town: false,
     collectBlocks: false,
     minimap: false,
+    progression: false,
     hunger: false,
     sky: ['#8fb8ff', '#f6d9ff'],
   },
