@@ -62,12 +62,7 @@ export function isoSetTextures(
   ISO_GROUND_ORDER.forEach((key, i) => tops.set(key, slice(ground, (i % 5) * FACE, Math.floor(i / 5) * FACE, FACE, FACE)));
   const south = slice(cube, 0, 0, FACE, FACE);
   const east = slice(cube, FACE, 0, FACE, FACE);
-  // Laterais: franja de grama sobre terra (o bloco de grama), a terra sem a franja (a metade de baixo), e pedra (o próprio piso de pedra, escurecido).
-  const earthOf = (src: HTMLCanvasElement): HTMLCanvasElement => {
-    const [c, ctx] = square();
-    ctx.drawImage(src, 0, src.height * 0.55, src.width, src.height * 0.45, 0, 0, RES, RES);
-    return c;
-  };
+  // Laterais: franja de grama sobre terra (o bloco de grama), a terra (o próprio piso escurecido) e a pedra (idem).
   const darken = (src: HTMLCanvasElement, k: number): HTMLCanvasElement => {
     const [c, ctx] = square();
     ctx.drawImage(src, 0, 0, RES, RES);
@@ -77,7 +72,8 @@ export function isoSetTextures(
   };
   const sides: Record<Side, [HTMLCanvasElement, HTMLCanvasElement]> = {
     grass: [south, east],
-    earth: [earthOf(south), earthOf(east)],
+    // Piso de Terra: a lateral é o próprio piso (a terra com pedrinhas) escurecido — sem esticar um pedaço da lateral do bloco de grama, que deformava a pedra e a trepadeira.
+    earth: [darken(tops.get('g_dirt')!, 0.16), darken(tops.get('g_dirt')!, 0.3)],
     stone: [darken(tops.get('g_stone')!, 0.2), darken(tops.get('g_stone')!, 0.34)],
   };
   for (const id of ISO_CUBES) {

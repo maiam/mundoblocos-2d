@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.146 — Santuário: Piso de Terra corrigido + todos os blocos do Mundo (17/11/2026)
+- **Piso de Terra deformado:** a lateral esticava um pedaço da lateral do bloco de grama; agora é o próprio piso de terra escurecido (`render/isoSet.ts`). Só esse bloco mudou.
+- **Blocos do Mundo no Santuário, como blocos NOVOS** (`WORLD_BLOCKS_IN_SANCTUARY`, 42 peças: materiais, porta de carvalho, tenda, baú, fogueira, caldeirão, forno, cadeira, estaca de cerca e flores); nenhum id do conjunto isométrico foi sobrescrito (perfil = 26 + 42 = 68). Arte do pacote do Mundo reaproveitada em `render/art/santuario.ts`.
+- **Objetos em qualquer nível** (`World.surfaceObject/surfaceLevel`): porta (exige dois batentes no mesmo nível; abre/fecha), baú, assento, estação, tenda (cai inteira, terreno fica) e luz de fogo seguem o nível; sprites e portas giram π/4 na vista isométrica.
+- **Hotbar** com mais de 40 peças usa slots menores e rolagem (`.hotbar-row.hand.huge`).
+- **Fora desta entrega:** paredes (`WALL_*`) e porta de parede (autotile lê só o nível 0); altura da animação do fogo não conferida (ver NEXT_STEPS).
+- `tsc` e testes verdes; sem mudança de save/protocolo; `package.json` 0.93.146.
+
 ## Orvalis v0.93.145 — Santuário: texturas de madeira nas cercas e portões (17/11/2026)
 - **Pedido do dono do produto:** colocar as texturas dele (3 imagens de tábuas: carvalho laranja, bétula clara, cerejeira vermelha com flores) nas cercas e portões 3D do Santuário.
 - `assets-src/iso-set/madeira-{carvalho,betula,cerejeira}.png` → `scripts/extract-iso-fence.py` → `src/assets/iso-wood.webp` (3 quadrados de 256 px, 35 KB; antes eram as tábuas 64 px do Padrão V2). `render/three/isoFences.ts`: uma textura por madeira (filtro suave, no lugar do pixel-art), projetada **24 u do modelo por imagem** (tábua de ~6 u: a do tamanho da estaca; a estaca usa a veia na vertical), com o sombreado por direção da face. Carvalho = `FENCE`/`FENCE_GATE`, Bétula = `_BIRCH`, Cerejeira = `_CHERRY`. Só o Santuário; as cercas do Mundo não mudam.

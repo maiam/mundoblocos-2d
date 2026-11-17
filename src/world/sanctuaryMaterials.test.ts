@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { Block, ISO_BLOCKS } from './blocks';
+import { Block, ISO_BLOCKS, WORLD_BLOCKS_IN_SANCTUARY } from './blocks';
 import { WORLD_PROFILES } from './profiles';
 import { V2_BLOCKS } from '../render/materialsV2';
 import { CAMERA_OPTION_2, SANCTUARY_DEFAULT_CAMERA } from '../render/sanctuaryCameraJoystick';
 
 describe('Santuário — comparação de câmera e materiais', () => {
-  it('disponibiliza as 26 peças do conjunto isométrico (4 cubos, 16 objetos e 6 cercas/portões), em ordem exata', () => {
-    expect(WORLD_PROFILES.santuario.blocks).toEqual(ISO_BLOCKS);
+  it('disponibiliza as 68 peças: 26 do conjunto isométrico (4 cubos, 16 objetos, 6 cercas/portões) + 42 do Mundo, sem repetir id, em ordem exata', () => {
+    expect(WORLD_PROFILES.santuario.blocks).toEqual([...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY]);
     expect(ISO_BLOCKS).toHaveLength(26);
-    expect(new Set(ISO_BLOCKS).size).toBe(26);
+    expect(WORLD_BLOCKS_IN_SANCTUARY).toHaveLength(42);
+    expect(new Set(WORLD_PROFILES.santuario.blocks).size).toBe(68);
+    expect(WORLD_BLOCKS_IN_SANCTUARY.some((id) => ISO_BLOCKS.includes(id))).toBe(false); // os do Mundo são blocos NOVOS: nenhum sobrescreve um do conjunto isométrico
   });
 
   it('a Terra Arada tem topo próprio e laterais de terra', () => {

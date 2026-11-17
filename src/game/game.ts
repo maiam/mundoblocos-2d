@@ -596,7 +596,7 @@ export class Game {
     const r = STATION_REACH;
     for (let y = Math.floor(p.y - r); y <= Math.floor(p.y + r); y++) {
       for (let x = Math.floor(p.x - r); x <= Math.floor(p.x + r); x++) {
-        if (this.world.getObject(x, y) === id && Math.hypot(x + 0.5 - p.x, y + 0.5 - p.y) <= r + 0.5) return true;
+        if (this.world.surfaceObject(x, y) === id && Math.hypot(x + 0.5 - p.x, y + 0.5 - p.y) <= r + 0.5) return true;
       }
     }
     return false;

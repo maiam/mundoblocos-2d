@@ -16,7 +16,7 @@ import { objectScaleFor } from './worldScale';
 /** Objetos do conjunto isométrico: o plano gira 45° para encarar a câmera isométrica (ADR 0036). */
 const ISO_PROP_SET: ReadonlySet<BlockId> = new Set(ISO_PROPS);
 
-export function worldSpriteArt(world: World, textures: BlockTextures): (id: BlockId, x: number, y: number) => SpriteDraw | null {
+export function worldSpriteArt(world: World, textures: BlockTextures, isometric = false): (id: BlockId, x: number, y: number) => SpriteDraw | null {
   const fenceCache = new Map<number, SpriteDraw>();
   const fence = (id: BlockId, x: number, y: number): SpriteDraw | null => {
     const pieces = textures.fencePieces.get(id);
@@ -73,7 +73,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     // sebes da cidade repetem em todas as células finas (linha contínua): ficam do tamanho da célula, sem ampliar
     const f = id === Block.HEDGE ? 1 : objectScaleFor(def.shape);
     const scale = f > 1 ? f : undefined;
-    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale, yaw: ISO_PROP_SET.has(id) ? Math.PI / 4 : undefined } : null;
+    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale, yaw: ISO_PROP_SET.has(id) || isometric ? Math.PI / 4 : undefined } : null;
   };
 }
 

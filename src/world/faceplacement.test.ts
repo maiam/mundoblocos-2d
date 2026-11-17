@@ -31,7 +31,7 @@ describe('colocar na face (vista isométrica, ADR 0036)', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     expect(w.canPlaceAt(x, y, Block.OAK_DOOR, 1)).toBe(false); // não é cubo
-    expect(w.canPlaceAt(x, y, Block.STONE_BRICK, 1)).toBe(false); // fora do perfil
+    expect(w.canPlaceAt(x, y, Block.WALL_STONE, 1)).toBe(false); // fora do perfil
     expect(w.canPlaceAt(10_000, 10_000, Block.ISO_G_STONE, 1)).toBe(false);
   });
 

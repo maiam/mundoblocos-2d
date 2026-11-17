@@ -188,7 +188,7 @@ export class WorldThreeRenderer implements GameRenderer {
     const fenceArt = getIsoFence();
     this.isoFences = fenceArt ? new IsoFences(this.worldLayer, world, fenceArt.art) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures, world.profile.view === 'isometric'), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);
@@ -205,6 +205,7 @@ export class WorldThreeRenderer implements GameRenderer {
       tile: TILE, k: OBLIQUE_K,
       isDoor: (id) => isDoor(id), isOpen: (id) => id === Block.OAK_DOOR_OPEN,
       frames: () => this.textures.doorFrames,
+      surfaceLevels: world.profile.surfaceObjects, yaw: world.profile.view === 'isometric' ? Math.PI / 4 : 0,
     });
     this.gates = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K, steps: 5,
@@ -298,7 +299,7 @@ export class WorldThreeRenderer implements GameRenderer {
     if (inside) this.fires = [];
     else if (opts.elapsed - this.firesAt > 0.25 || opts.elapsed < this.firesAt) {
       this.firesAt = opts.elapsed;
-      this.fires = findFires(view, (x, y) => this.world.getObject(x, y), { x: cam.x / TILE, z: cam.y / TILE });
+      this.fires = findFires(view, (x, y) => this.world.surfaceObject(x, y), { x: cam.x / TILE, z: cam.y / TILE });
     }
     this.fireFx.update(this.fires, opts.elapsed, skyAt(opts.time).night, TILE * cam.zoom);
     this.stepDust(opts, inside, TILE * cam.zoom);
@@ -391,7 +392,7 @@ export class WorldThreeRenderer implements GameRenderer {
     const reach = Math.hypot(cam.width, cam.height) / (2 * cellPx);
     const a = opts.actors[0];
     const player: LightSource = { x: a ? a.x : focus.x, z: a ? a.y : focus.z, ...PLAYER_LIGHT, radius: PLAYER_LIGHT.radius * SUBDIV };
-    const glows = collectWorldLights(view, (x, y) => this.world.getObject(x, y), (id) => {
+    const glows = collectWorldLights(view, (x, y) => this.world.surfaceObject(x, y), (id) => {
       const color = this.textures.glowColor.get(id);
       return color ? { color, at: this.textures.glowAt.get(id) } : undefined;
     });

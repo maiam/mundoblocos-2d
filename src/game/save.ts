@@ -266,7 +266,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   s.world.loadHoleAges(d.holes); // e os demais continuam contando o dia
   s.world.tent = d.tent ?? null;
   // Baús que não existem mais no mapa (ex.: salvamento antigo com um baú onde hoje é a cidade) são descartados.
-  for (const c of d.chests ?? []) if (s.world.getObject(c.x, c.y) === Block.CHEST) s.world.chests.set(`${c.x},${c.y}`, c.slots);
+  for (const c of d.chests ?? []) if (s.world.surfaceObject(c.x, c.y) === Block.CHEST) s.world.chests.set(`${c.x},${c.y}`, c.slots);
   const p = s.player;
   p.x = d.player.x;
   p.y = d.player.y;

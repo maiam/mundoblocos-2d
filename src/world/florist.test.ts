@@ -9,7 +9,7 @@ import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
 describe('15 Flores Fofas colocáveis (v0.93.110)', () => {
-  it('são 15 blocos de enfeite, de ids únicos e sem colisão com os outros blocos, só no mundo principal', () => {
+  it('são 15 blocos de enfeite, de ids únicos e sem colisão com os outros blocos, no mundo principal e no Santuário', () => {
     expect(FLOWER_BLOCKS).toHaveLength(15);
     expect(new Set(FLOWER_BLOCKS).size).toBe(15);
     const values = Object.values(Block) as number[];
@@ -22,7 +22,7 @@ describe('15 Flores Fofas colocáveis (v0.93.110)', () => {
       expect(d.placeable).toBe(true);
       expect(isFancyFlower(id)).toBe(true);
       expect(HOTBAR_BLOCKS).toContain(id);
-      expect(WORLD_PROFILES.santuario.blocks).not.toContain(id);
+      expect(WORLD_PROFILES.santuario.blocks).toContain(id); // também no Santuário (v0.93.146), como blocos novos
     }
     expect(isFancyFlower(Block.FLOWER)).toBe(false); // a Flor sorteada do mundo continua à parte
     expect(BLOCKS[Block.FLOWER_HONEY].name).toBe('Margarida de Mel');

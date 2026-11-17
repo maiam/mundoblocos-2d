@@ -177,7 +177,8 @@ export class World {
     }
     if (this.town) this.interiors = interiorLayouts(this.town);
     // Mundos com tenda ganham o cômodo dela (um só, para todas as tendas).
-    if (this.profile.blocks.includes(Block.TENT)) this.interiors = [...this.interiors, tentLayout()];
+    // (no Santuário a tenda é só um objeto: sem cômodo, sem renascer nela)
+    if (this.profile.blocks.includes(Block.TENT) && !this.profile.surfaceObjects) this.interiors = [...this.interiors, tentLayout()];
     if (this.interiors.length) this.generator = new InteriorTerrain(this.generator, this.interiors);
     // Generated campfires live in the same terrain layer as every other object:
     // no permanent writes to chunks, and saved player edits still win.
@@ -451,6 +452,21 @@ export class World {
     return base.solid ? null : 0;
   }
 
+  /**
+   * O bloco da SUPERFÍCIE da célula: o objeto que não é cubo em cima da pilha de cubos (Santuário, `surfaceObjects`) ou, nos outros mundos, o do nível 0.
+   * É o que baú, porta, fogueira etc. consultam em vez de `getObject` (que no Santuário é o cubo de pedra do terreno).
+   */
+  surfaceObject(x: number, y: number): BlockId {
+    if (!this.profile.surfaceObjects) return this.getObject(x, y);
+    const h = this.stackHeight(x, y);
+    return h < this.maxStack ? this.getLevel(x, y, h) : Block.AIR;
+  }
+
+  /** Nível onde fica o objeto de superfície da célula (0 fora do Santuário). */
+  surfaceLevel(x: number, y: number): number {
+    return this.profile.surfaceObjects ? Math.min(this.stackHeight(x, y), this.maxStack - 1) : 0;
+  }
+
   /** Mantido para o objeto do nível 0 (testes/ferramentas). */
   setObject(x: number, y: number, id: BlockId): void {
     this.setLevel(x, y, 0, id);
@@ -547,10 +563,10 @@ export class World {
       if (top.id === Block.CHEST) this.chests.delete(chunkKey(x, y)); // quem quebra lê o conteúdo antes (chestAt)
       if (top.id === Block.TENT || top.id === Block.TENT_PART) {
         // Tenda 2×2: qualquer parte derruba a tenda inteira; se era a última colocada, o renascer volta ao início.
-        const a = this.tentAnchor(x, y);
+        const a = this.tentAnchor(x, y, top.level);
         if (a && this.tent && a[0] === this.tent[0] && a[1] === this.tent[1]) this.tent = null;
-        if (a) for (const [cx, cy] of tentCells(a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
-        else this.setLevel(x, y, 0, Block.AIR);
+        if (a) for (const [cx, cy] of tentCells(a[0], a[1])) this.setLevel(cx, cy, top.level, Block.AIR);
+        else this.setLevel(x, y, top.level, Block.AIR);
         return Block.TENT;
       }
       const bigId = ISO_BIG[top.id] ? top.id : this.bigOfPart(top.id);
@@ -593,6 +609,7 @@ export class World {
     if (this.profile.surfaceObjects && def.shape !== 'cube' && base.shape === 'cube') {
       const h = this.stackHeight(x, y);
       if (h >= this.maxStack) return null;
+      if (def.shape === 'door' && !this.hasDoorFrame(x, y, h)) return null; // a porta vai entre dois batentes NO MESMO NÍVEL (cubos de madeira ou pedra postos ao lado)
       return this.footprint(id, x, y).every(([cx, cy]) => this.surfaceFree(cx, cy, h)) ? h : null;
     }
     if (base.id === Block.AIR || base.shape === 'decoration') {
@@ -671,8 +688,8 @@ export class World {
    * Batente da porta: qualquer bloco (cubo) de madeira ou de pedra no nível 0 (dono do produto, 07/11: a porta vai entre
    * quaisquer blocos de madeira ou pedra).
    */
-  private isDoorJamb(x: number, y: number): boolean {
-    const d = blockDef(this.getObject(x, y));
+  private isDoorJamb(x: number, y: number, level = 0): boolean {
+    const d = blockDef(this.getLevel(x, y, level));
     return d.shape === 'cube' && (d.organic === 'wood' || d.stone);
   }
 
@@ -686,12 +703,12 @@ export class World {
     const b = this.townBuildingAt(x, y);
     if (b) return blockDef(b.id).seat ? [Math.max(b.x, Math.min(b.x + b.w - 1, Math.floor(px))), b.y] : null;
     void py;
-    return blockDef(this.getObject(x, y)).seat ? [x, y] : null;
+    return blockDef(this.surfaceObject(x, y)).seat ? [x, y] : null;
   }
 
   /** A porta só vai entre dois batentes (qualquer bloco de madeira — tora ou tábuas, de qualquer árvore — ou de pedra, podem misturar): células da esquerda e da direita. */
-  hasDoorFrame(x: number, y: number): boolean {
-    return this.isDoorJamb(x - 1, y) && this.isDoorJamb(x + 1, y);
+  hasDoorFrame(x: number, y: number, level = 0): boolean {
+    return this.isDoorJamb(x - 1, y, level) && this.isDoorJamb(x + 1, y, level);
   }
 
   /**
@@ -705,12 +722,12 @@ export class World {
 
   /** Porta ou portão da cerca (abre e fecha com um toque)? */
   isDoor(x: number, y: number): boolean {
-    return isOpenable(this.getObject(x, y));
+    return isOpenable(this.surfaceObject(x, y));
   }
 
   /** Porta ou portão aberto? */
   isDoorOpen(x: number, y: number): boolean {
-    return isOpen(this.getObject(x, y));
+    return isOpen(this.surfaceObject(x, y));
   }
 
   /**
@@ -730,9 +747,9 @@ export class World {
       }
       return true;
     }
-    const next = toggled(this.getObject(x, y));
+    const next = toggled(this.surfaceObject(x, y));
     if (next === null) return false;
-    this.setLevel(x, y, 0, next);
+    this.setLevel(x, y, this.surfaceLevel(x, y), next);
     return true;
   }
 
@@ -786,7 +803,7 @@ export class World {
     this.setLevel(x, y, level, id);
     if (level === 'ground') this.clearWaterPlantsCovering(x, y); // a água virou chão: a vitória-régia que cobria a célula sai
     if (id === Block.TENT) {
-      for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
+      for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, typeof level === 'number' ? level : 0, Block.TENT_PART);
       this.tent = [x, y];
     }
     const big = ISO_BIG[id];
@@ -859,9 +876,9 @@ export class World {
   }
 
   /** Canto (TENT) da tenda que contém a célula, ou null. */
-  tentAnchor(x: number, y: number): [number, number] | null {
+  tentAnchor(x: number, y: number, level = 0): [number, number] | null {
     for (const [dx, dy] of [[0, 0], [-1, 0], [0, 1], [-1, 1]]) {
-      if (this.getObject(x + dx, y + dy) === Block.TENT) return [x + dx, y + dy];
+      if (this.getLevel(x + dx, y + dy, level) === Block.TENT) return [x + dx, y + dy];
     }
     return null;
   }
@@ -889,7 +906,7 @@ export class World {
 
   /** Espaços do baú da célula (null se não há baú). */
   chestAt(x: number, y: number): ChestSlots | null {
-    return this.getObject(x, y) === Block.CHEST ? this.chests.get(chunkKey(x, y)) ?? this.newChest(x, y) : null;
+    return this.surfaceObject(x, y) === Block.CHEST ? this.chests.get(chunkKey(x, y)) ?? this.newChest(x, y) : null;
   }
 
   private newChest(x: number, y: number): ChestSlots {

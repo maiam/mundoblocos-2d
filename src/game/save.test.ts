@@ -62,7 +62,7 @@ describe('Salvamento automático', () => {
     const x=sx,y=sy; // chão plano vazio (Santuário, ADR 0036)
     // Materiais antigos não são mais selecionáveis; continuam carregáveis em saves.
     world.setObject(x,y,Block.STONE_BRICK);
-    expect(world.canPlace(x,y,Block.STONE_BRICK)).toBe(false);
+    expect(world.canPlace(x,y,Block.WALL_PLANKS)).toBe(false);
     expect(world.getObject(x,y-1)).toBe(Block.AIR); // terreno plano e vazio
     expect(world.placeBlock(x,y,Block.ISO_G_DIRT)).toBe(true); // empilha o novo bloco sobre legado
     expect(world.getUpper(x,y)).toBe(Block.ISO_G_DIRT);

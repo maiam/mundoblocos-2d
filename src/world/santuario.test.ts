@@ -70,11 +70,12 @@ describe('Santuário (terreno em camadas, ADR 0036)', () => {
     expect(w.loadedCount).toBe(16);
   });
 
-  it('só deixa colocar as 26 peças do conjunto isométrico; cubos empilham e objetos ficam EM CIMA do terreno (nível 3)', () => {
+  it('só deixa colocar as 68 peças (a porta exige batentes); cubos empilham e objetos ficam EM CIMA do terreno (nível 3)', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
-    for (const b of S.blocks) expect(w.canPlace(x, y, b)).toBe(true);
-    expect(w.canPlace(x, y, Block.STONE_BRICK)).toBe(false); // fora do perfil
+    for (const b of S.blocks.filter((id) => id !== Block.OAK_DOOR)) expect(w.canPlace(x, y, b)).toBe(true);
+    expect(w.canPlace(x, y, Block.OAK_DOOR)).toBe(false); // sem os dois batentes ao lado
+    expect(w.canPlace(x, y, Block.WALL_PLANKS)).toBe(false); // fora do perfil (as paredes não entram no Santuário)
     expect(w.placeBlock(x, y, Block.ISO_STONE_BLOCK)).toBe(true);
     expect(w.getLevel(x, y, 2)).toBe(Block.ISO_STONE_BLOCK); // cubo empilha no topo (2 → 3 cubos)
     expect(w.placeBlock(x + 1, y, Block.ISO_TREE)).toBe(true);
@@ -101,7 +102,7 @@ describe('Santuário (terreno em camadas, ADR 0036)', () => {
     expect(w.breakBlock(x + 7, y - 4)).toBe(Block.ISO_HOUSE);
   });
 
-  it('spawn no centro; Deusa isométrica é a personagem; hotbar só com as 26 peças', () => {
+  it('spawn no centro; Deusa isométrica é a personagem; hotbar com as 68 peças', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     expect(w.inBounds(x, y)).toBe(true);
@@ -111,8 +112,33 @@ describe('Santuário (terreno em camadas, ADR 0036)', () => {
     const e = new Entities(new Player(x + 0.5, y + 0.5), Math.random, S.character);
     expect(e.actors[0].kind).toBe('goddess-iso-idle'); // parada: folha de idle; andando, 'goddess-iso'
     const hb = hotbarFor(S);
-    expect(hb).toHaveLength(26);
+    expect(hb).toHaveLength(68);
     expect(hb.every((s) => s.kind === 'block')).toBe(true);
     expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(58); // (v0.93.110: + 15 Flores Fofas; v0.93.99: + Portões de Bétula e de Cerejeira; v0.93.96: + Cercas de Bétula e de Cerejeira; v0.93.90: + Cerca de Estacas) 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + 3 cercas (Carvalho, Bétula, Cerejeira) + 3 portões + 15 flores fofas + 2 paredes + porta de parede (W5)
+  });
+});
+
+describe('Blocos do Mundo no Santuário (v0.93.146): objetos de superfície', () => {
+  it('porta entre dois batentes do mesmo nível abre e fecha; baú guarda itens; tenda cai inteira e o terreno fica', () => {
+    const w = new World(3, S);
+    const [x, y] = [-10, 10];
+    expect(w.placeBlock(x + 1, y, Block.OAK_DOOR)).toBe(false);
+    w.placeBlock(x, y, Block.STONE); w.placeBlock(x + 2, y, Block.STONE);
+    expect(w.placeBlock(x + 1, y, Block.OAK_DOOR)).toBe(true);
+    expect(w.getLevel(x + 1, y, 2)).toBe(Block.OAK_DOOR);
+    expect(w.standHeight(x + 1, y)).toBeNull();               // fechada
+    expect(w.toggleDoor(x + 1, y)).toBe(true);
+    expect(w.isDoorOpen(x + 1, y)).toBe(true);
+    expect(w.standHeight(x + 1, y)).toBe(2);                  // aberta: passa
+    expect(w.placeBlock(x + 6, y, Block.CHEST)).toBe(true);
+    expect(w.chestAt(x + 6, y)).not.toBeNull();
+    expect(w.getLevel(x + 6, y, 0)).toBe(Block.ISO_STONE_BLOCK);
+    expect(w.placeBlock(x, y + 5, Block.TENT)).toBe(true);
+    expect(w.getLevel(x + 1, y + 4, 2)).toBe(Block.TENT_PART);
+    expect(w.breakBlock(x + 1, y + 4)).toBe(Block.TENT);
+    expect(w.getLevel(x, y + 5, 2)).toBe(Block.AIR);
+    expect(w.getLevel(x + 1, y + 4, 0)).toBe(Block.ISO_STONE_BLOCK); // o terreno continua
+    expect(w.placeBlock(x + 3, y + 5, Block.CAMPFIRE)).toBe(true);
+    expect(w.placeBlock(x + 4, y + 5, Block.FLOWER_HONEY)).toBe(true);
   });
 });

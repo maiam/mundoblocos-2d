@@ -634,6 +634,14 @@ export const ISO_FENCES: readonly BlockId[] = [
   Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY,
 ];
 export const ISO_BLOCKS: readonly BlockId[] = [...ISO_CUBES, ...ISO_PROPS, ...ISO_FENCES];
+/**
+ * Blocos do Mundo principal que também existem no Santuário (v0.93.146), **como blocos novos, sem trocar nenhum dos do conjunto isométrico**: os 19 materiais (cubos), a porta,
+ * a tenda, o baú, a fogueira, o caldeirão, o forno, a cadeira, a cerca de estacas e as 15 flores fofas. Ficam de fora (por exigirem o nível 0 do mundo): as paredes e a
+ * porta de parede (autotile) — ver NEXT_STEPS. As cercas e portões do Mundo já estão em `ISO_FENCES` (em 3D).
+ */
+export const WORLD_BLOCKS_IN_SANCTUARY: readonly BlockId[] = [
+  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE_STAKE, ...FLOWER_BLOCKS,
+];
 
 export const WALL_BLOCKS: readonly BlockId[] = [Block.WALL_PLANKS, Block.WALL_STONE];
 

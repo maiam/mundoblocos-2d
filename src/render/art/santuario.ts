@@ -1,4 +1,5 @@
 import type { ArtPack } from './types';
+import world from './principal';
 import isoGround from '../../assets/iso-ground.webp';
 import isoCube from '../../assets/iso-cube.webp';
 import isoProps from '../../assets/iso-props.webp';
@@ -60,7 +61,17 @@ const pack: ArtPack = {
       [Block.FENCE_GATE]: iconGate, [Block.FENCE_GATE_BIRCH]: iconGateBirch, [Block.FENCE_GATE_CHERRY]: iconGateCherry,
     },
   },
-  materialIcons: {},
+  // Blocos do Mundo que também existem no Santuário (v0.93.146): só a arte deles, vinda do pacote principal.
+  blockAtlas: world.blockAtlas,
+  materialsV2: world.materialsV2,
+  materialIcons: world.materialIcons,
+  oakDoor: world.oakDoor,
+  tent: world.tent,
+  chest: world.chest,
+  craftables: world.craftables,
+  flowers: world.flowers,
+  flowerIcons: world.flowerIcons,
+  town: world.town && { 'village-stake-low': world.town['village-stake-low'], 'village-stake-tall': world.town['village-stake-tall'], 'village-stake-icon': world.town['village-stake-icon'] },
   itemIcons: {},
   toolIcons: {},
 };

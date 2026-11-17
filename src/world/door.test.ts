@@ -19,11 +19,11 @@ function framedCell(w: World): [number, number] {
 }
 
 describe('Porta de Carvalho', () => {
-  it('é bloco de madeira do mundo principal (hotbar), não do Santuário', () => {
+  it('é bloco de madeira do mundo principal (hotbar) e também do Santuário', () => {
     expect(HOTBAR_BLOCKS).toContain(Block.OAK_DOOR);
     expect(BLOCKS[Block.OAK_DOOR].organic).toBe('wood');
     expect(BLOCKS[Block.OAK_DOOR_OPEN].placeable).toBe(false);
-    expect(WORLD_PROFILES.santuario.blocks).not.toContain(Block.OAK_DOOR);
+    expect(WORLD_PROFILES.santuario.blocks).toContain(Block.OAK_DOOR); // (Santuário, v0.93.146: como bloco novo, entre dois batentes no mesmo nível)
     expect(toolCanBreak('axe', Block.OAK_DOOR)).toBe(true);
     expect(toolCanBreak('pickaxe', Block.OAK_DOOR)).toBe(false);
   });

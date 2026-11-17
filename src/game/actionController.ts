@@ -221,7 +221,7 @@ export class ActionController {
       }
       return true;
     }
-    if (this.world.getObject(x, y) === Block.CHEST) {
+    if (this.world.surfaceObject(x, y) === Block.CHEST) {
       // Baú: toque (qualquer item em mãos) abre o painel dele.
       if (this.inReach(x, y)) this.ctx.onOpenChest(x, y);
       return true;
