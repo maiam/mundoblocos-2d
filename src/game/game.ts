@@ -53,6 +53,7 @@ import { WorldMap, type WorldMapView } from '../render/worldMap';
 import { attackTimingFor } from './attackTiming';
 import { feelOn, LOOKAHEAD_PX, LOOKAHEAD_RATE } from './feel';
 import { Exploration } from './exploration';
+import { screenToWorldIso } from './isoInput';
 
 /** Duração de um dia completo em segundos. */
 /** Duração entre salvamentos automáticos (s). */
@@ -140,6 +141,8 @@ export class Game {
   }
   private readonly hud: Hud;
   private readonly joystick: Joystick;
+  /** Vista isométrica: as direções de tela (teclado/joystick) viram o sentido do mundo girado em 45° (cima = para o fundo da tela, não para o norte). */
+  private readonly isoInput: boolean;
   private readonly keys = new Set<string>();
   private showChunkBorders = false;
   /** Espaço selecionado na hotbar; null = mão vazia. */
@@ -196,6 +199,7 @@ export class Game {
     this.world = new World(seed, profile);
     this.questDefs = questsFor(this.world);
     this.collect = profile.collectBlocks;
+    this.isoInput = profile.view === 'isometric';
     this.progression = profile.progression;
     this.hotbar = new Hotbar(profile, (options.save?.hotbar ?? options.net?.bag?.hotbar ?? undefined) as (StackId | null)[] | undefined);
     // Sem cultivo nem coleta, não há itens contáveis (Santuário: só blocos infinitos).
@@ -1449,7 +1453,7 @@ export class Game {
     const z = Math.exp(0.3 * dt);
     if (k.has('KeyE') || k.has('Equal')) this.zoomByUser(z);
     if (k.has('KeyQ') || k.has('Minus')) this.zoomByUser(1 / z);
-    return [x, y];
+    return this.isoInput ? screenToWorldIso(x, y) : [x, y];
   }
 
 }

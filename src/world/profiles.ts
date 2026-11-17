@@ -44,6 +44,8 @@ export interface WorldProfile {
   minimap: boolean;
   /** Progressão da jogadora: missões do Capítulo 1, carteira (Moedas de Cobre) e painel do personagem. false no Santuário (Sala 2, criação). */
   progression: boolean;
+  /** Vista: `oblique` (3/4, o Mundo) ou `isometric` (45°, o Santuário solo, ADR 0036) — decide a câmera e o sentido das teclas/joystick (em tela). */
+  view: 'oblique' | 'isometric';
   /** Cores do fundo além das bordas do mundo (céu). */
   sky: [string, string];
 }
@@ -67,6 +69,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     minimap: true,
     progression: true,
     hunger: true,
+    view: 'oblique',
     sky: ['#1b1838', '#1b1838'],
   },
   santuario: {
@@ -92,6 +95,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     minimap: false,
     progression: false,
     hunger: false,
+    view: 'isometric',
     sky: ['#8fb8ff', '#f6d9ff'],
   },
 };

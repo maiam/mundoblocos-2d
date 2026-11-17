@@ -59,6 +59,7 @@ import { Particles } from './particles';
 import { skyAt } from './daycycle';
 import { drawBreakingRing, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { selectionRect3d } from './worldSelection';
+import { IsoCursor } from './three/isoCursor';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
@@ -94,6 +95,8 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly chunks: ChunkRenderer;
   /** Tudo do mundo aberto (chão, cubos, objetos, portas, efeitos): escondido quando a personagem está num interior (M4.1). */
   private readonly worldLayer = new THREE.Group();
+  /** Cursor 3D da câmera isométrica (o 2D de seleção não projeta na vista isométrica). */
+  private readonly isoCursor: IsoCursor;
   private readonly interiorLayer = new THREE.Group();
   private readonly room: InteriorRoom;
   private readonly skyColor: THREE.Color;
@@ -176,6 +179,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.stage.scene.add(this.worldLayer, this.interiorLayer);
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
+    this.isoCursor = new IsoCursor(this.worldLayer, world);
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
@@ -315,6 +319,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ripples?.update(opts.dt, skyAt(opts.time).night);
     // Câmera isométrica (azimute 45°): os planos dos atores encaram a câmera (sem isso saem achatados em 0,71).
     this.actors.setYaw(this.sanctuaryCameras?.current === 'isometrico' ? Math.PI / 4 : 0);
+    this.isoCursor.update(opts, this.sanctuaryCameras?.current === 'isometrico');
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
@@ -358,9 +363,12 @@ export class WorldThreeRenderer implements GameRenderer {
           hit: top ? this.textures.objects.get(top.id)?.hit ?? null : null,
         }, TILE, OBLIQUE_K);
       };
-      if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
-      if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
-      if (opts.breaking) drawBreakingRing(ctx, rectFor(opts.breaking), opts.breaking.progress);
+      // Câmera isométrica: o cursor é o bloco-fantasma 3D (`IsoCursor`); os retângulos de tela abaixo só valem na vista oblíqua.
+      if (this.sanctuaryCameras?.current !== 'isometrico') {
+        if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
+        if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
+        if (opts.breaking) drawBreakingRing(ctx, rectFor(opts.breaking), opts.breaking.progress);
+      }
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }
@@ -598,6 +606,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.groundFx.dispose();
     this.blockMaterials.dispose();
     this.actors.dispose();
+    this.isoCursor.dispose();
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();
