@@ -19,4 +19,6 @@ export interface TerrainSource {
   upperAt(x: number, y: number): BlockId;
   biomeAt(x: number, y: number): Biome;
   generateChunk(cx: number, cy: number, ground: Uint8Array, objects: Uint8Array, upper: Uint8Array): void;
+  /** Opcional: preenche os níveis 2 em diante da pilha (paisagens do Santuário com colinas e casas). `levels[0]` e `levels[1]` já vêm de `generateChunk`. */
+  generateLevels?(cx: number, cy: number, levels: Uint8Array[]): void;
 }
