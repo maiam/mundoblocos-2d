@@ -333,6 +333,20 @@ export class WorldThreeRenderer implements GameRenderer {
         this.particles.draw(ctx);
       }
       this.damageNumbers.draw(ctx, cam, opts.dt);
+      if (!inside && opts.zones) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 205, 90, ${0.65 + 0.3 * Math.sin(opts.elapsed * 3)})`;
+        ctx.fillStyle = 'rgba(255, 205, 90, 0.12)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 6]);
+        for (const z of opts.zones) {
+          const sx = cam.worldToScreenX(z.x0 * TILE), sy = cam.worldToScreenY(z.y0 * TILE);
+          const w = (z.x1 - z.x0 + 1) * TILE * cam.zoom, h = (z.y1 - z.y0 + 1) * TILE * cam.zoom;
+          ctx.fillRect(sx, sy, w, h);
+          ctx.strokeRect(sx, sy, w, h);
+        }
+        ctx.restore();
+      }
       // Seleção como no 2D (moldura do cursor, cantoneiras do alvo, rachaduras): em volta do que se vê — o cubo de cima, o objeto —,
       // não um quadrado no chão (o 3D tinha um realce plano que só aparecia quando válido e não acompanhava a silhueta).
       const rectFor = (c: { x: number; y: number }) => {
