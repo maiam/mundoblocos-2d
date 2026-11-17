@@ -199,26 +199,9 @@ export const Block = {
   TOMATO_0: 170,
   CARROT_0: 190,
   // --- Conjunto isométrico do Santuário (ADR 0036, v0.93.140): 20 cubos (bloco de grama + 19 pisos) e 17 objetos (16 peças + a parte da casa) ---
-  ISO_CUBE_GRASS: 80,
   ISO_G_GRASS: 81,
   ISO_G_DIRT: 82,
   ISO_G_STONE: 83,
-  ISO_G_STONE_PLAIN: 84,
-  ISO_G_EDGE_A: 85,
-  ISO_G_EDGE_B: 86,
-  ISO_G_EDGE_C: 87,
-  ISO_G_EDGE_D: 88,
-  ISO_G_EDGE_E: 89,
-  ISO_P_NS: 90,
-  ISO_P_EW: 91,
-  ISO_P_CURVE_A: 92,
-  ISO_P_CURVE_B: 93,
-  ISO_P_CORNER: 94,
-  ISO_P_T: 95,
-  ISO_P_CROSS: 96,
-  ISO_P_END: 97,
-  ISO_P_DIAG: 98,
-  ISO_P_PATCH: 166,
   ISO_TREE: 167,
   ISO_BUSH_L: 168,
   ISO_BUSH_M: 169,
@@ -236,6 +219,7 @@ export const Block = {
   ISO_CRATE: 4,
   ISO_HOUSE: 5,
   ISO_HOUSE_PART: 7,
+  ISO_STALL_PART: 84,
 } as const;
 
 /** Número de estágios de crescimento do trigo e primeiro id da sequência. */
@@ -432,26 +416,9 @@ const defs: BlockDef[] = [
   object(Block.WALL_DOOR_PLANKS, 'Porta de Parede (Tábuas)', { shape: 'wall-door', organic: 'wood' }),
   object(Block.WALL_DOOR_PLANKS_OPEN, 'Porta de Parede (Tábuas, aberta)', { shape: 'wall-door', solid: false, placeable: false, organic: 'wood' }),
   // Conjunto isométrico do Santuário (ADR 0036): cubos (topo = o piso da prancha) e objetos de sprite.
-  object(Block.ISO_CUBE_GRASS, 'Bloco de Grama'),
   object(Block.ISO_G_GRASS, 'Piso de Grama'),
   object(Block.ISO_G_DIRT, 'Piso de Terra'),
   object(Block.ISO_G_STONE, 'Piso de Pedra'),
-  object(Block.ISO_G_STONE_PLAIN, 'Piso de Pedra Lisa'),
-  object(Block.ISO_G_EDGE_A, 'Grama e Pedra (A)'),
-  object(Block.ISO_G_EDGE_B, 'Grama e Pedra (B)'),
-  object(Block.ISO_G_EDGE_C, 'Grama e Pedra (C)'),
-  object(Block.ISO_G_EDGE_D, 'Grama e Pedra (D)'),
-  object(Block.ISO_G_EDGE_E, 'Grama e Pedra (E)'),
-  object(Block.ISO_P_NS, 'Caminho Reto (A)'),
-  object(Block.ISO_P_EW, 'Caminho Reto (B)'),
-  object(Block.ISO_P_CURVE_A, 'Caminho em Curva (A)'),
-  object(Block.ISO_P_CURVE_B, 'Caminho em Curva (B)'),
-  object(Block.ISO_P_CORNER, 'Canto de Caminho'),
-  object(Block.ISO_P_T, 'Caminho em T'),
-  object(Block.ISO_P_CROSS, 'Cruzamento de Caminhos'),
-  object(Block.ISO_P_END, 'Fim de Caminho'),
-  object(Block.ISO_P_DIAG, 'Caminho Diagonal'),
-  object(Block.ISO_P_PATCH, 'Mancha de Terra'),
   object(Block.ISO_TREE, 'Carvalho', { shape: 'rock' }),
   object(Block.ISO_BUSH_L, 'Arbusto Grande', { shape: 'rock' }),
   object(Block.ISO_BUSH_M, 'Arbusto Médio', { shape: 'rock' }),
@@ -469,6 +436,7 @@ const defs: BlockDef[] = [
   object(Block.ISO_CRATE, 'Caixote', { shape: 'rock' }),
   object(Block.ISO_HOUSE, 'Casa de Feira', { shape: 'rock' }),
   object(Block.ISO_HOUSE_PART, 'Casa de Feira', { shape: 'rock', placeable: false }),
+  object(Block.ISO_STALL_PART, 'Barraca de Feira', { shape: 'rock', placeable: false }),
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
@@ -642,13 +610,22 @@ export function isGrowingTree(id: BlockId): boolean {
 
 /** Porta (aberta ou fechada)? */
 /** Paredes (ADR 0027): blocos de forma `wall`. */
-/** Conjunto isométrico do Santuário na ordem da hotbar: os 20 cubos (bloco de grama e pisos) e os 16 objetos (a parte da casa não é colocável). */
-export const ISO_CUBES: readonly BlockId[] = [
-  Block.ISO_CUBE_GRASS, Block.ISO_G_GRASS, Block.ISO_G_DIRT, Block.ISO_G_STONE, Block.ISO_G_STONE_PLAIN, Block.ISO_G_EDGE_A, Block.ISO_G_EDGE_B, Block.ISO_G_EDGE_C, Block.ISO_G_EDGE_D, Block.ISO_G_EDGE_E, Block.ISO_P_NS, Block.ISO_P_EW, Block.ISO_P_CURVE_A, Block.ISO_P_CURVE_B, Block.ISO_P_CORNER, Block.ISO_P_T, Block.ISO_P_CROSS, Block.ISO_P_END, Block.ISO_P_DIAG, Block.ISO_P_PATCH,
-];
+/** Conjunto isométrico do Santuário na ordem da hotbar: 3 pisos (grama, terra, pedra) e 16 objetos (as partes de casa e barraca não são colocáveis). */
+export const ISO_CUBES: readonly BlockId[] = [Block.ISO_G_GRASS, Block.ISO_G_DIRT, Block.ISO_G_STONE];
 export const ISO_PROPS: readonly BlockId[] = [
-  Block.ISO_TREE, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, Block.ISO_ROCK_L, Block.ISO_PEBBLES, Block.ISO_TUFT, Block.ISO_DAISIES, Block.ISO_LAVENDER, Block.ISO_LANTERN, Block.ISO_STALL, Block.ISO_PLANTER, Block.ISO_STONE_PLANTER, Block.ISO_BARREL, Block.ISO_CRATE, Block.ISO_HOUSE,
+  Block.ISO_TREE, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, Block.ISO_ROCK_L, Block.ISO_PEBBLES, Block.ISO_TUFT, Block.ISO_DAISIES,
+  Block.ISO_LAVENDER, Block.ISO_LANTERN, Block.ISO_STALL, Block.ISO_PLANTER, Block.ISO_STONE_PLANTER, Block.ISO_BARREL, Block.ISO_CRATE, Block.ISO_HOUSE,
 ];
+/**
+ * Objetos grandes do conjunto isométrico: ocupam `size` × `size` células (canto inferior esquerdo = o id, as outras células = `part`) e o desenho cresce
+ * `scale` vezes (Casa de Feira 4×, Barraca 3×, a árvore 2× sem ocupar mais que a célula do tronco; pedido do dono do produto, 17/11/2026).
+ */
+export const ISO_BIG: Readonly<Record<number, { size: number; part: BlockId }>> = {
+  [Block.ISO_HOUSE]: { size: 12, part: Block.ISO_HOUSE_PART },
+  [Block.ISO_STALL]: { size: 3, part: Block.ISO_STALL_PART },
+};
+/** Fator de tamanho do desenho de cada objeto do conjunto (os demais: 1). */
+export const ISO_SCALE: Readonly<Record<number, number>> = { [Block.ISO_TREE]: 2, [Block.ISO_HOUSE]: 4, [Block.ISO_STALL]: 3 };
 export const ISO_BLOCKS: readonly BlockId[] = [...ISO_CUBES, ...ISO_PROPS];
 
 export const WALL_BLOCKS: readonly BlockId[] = [Block.WALL_PLANKS, Block.WALL_STONE];

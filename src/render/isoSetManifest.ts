@@ -18,4 +18,4 @@ export const ISO_PROPS_ATLAS: Readonly<Record<string, readonly [number, number, 
   'crate': [0, 743, 110, 115],
   'house': [0, 0, 598, 585],
 };
-export const ISO_GROUND_ORDER: readonly string[] = ["g_grass", "g_dirt", "g_stone", "g_stone_plain", "g_edge_a", "g_edge_b", "g_edge_c", "g_edge_d", "g_edge_e", "p_ns", "p_ew", "p_curve_a", "p_curve_b", "p_corner", "p_t", "p_cross", "p_end", "p_diag", "p_patch", "cube_grass"];
+export const ISO_GROUND_ORDER: readonly string[] = ["g_grass", "g_dirt", "g_stone"];

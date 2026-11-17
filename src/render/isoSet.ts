@@ -1,5 +1,5 @@
 import { TILE } from '../config';
-import { Block, ISO_CUBES, ISO_PROPS, type BlockId } from '../world/blocks';
+import { Block, ISO_BIG, ISO_CUBES, ISO_PROPS, ISO_SCALE, type BlockId } from '../world/blocks';
 import { ISO_GROUND_ORDER, ISO_PROPS_ATLAS } from './isoSetManifest';
 import type { Sprite } from './textures';
 
@@ -26,13 +26,8 @@ const RES = TILE * 2; // a mesma resolução das outras texturas (TEX_RES = 2)
 const FACE = 128;
 
 type Side = 'grass' | 'earth' | 'stone';
-/** De que são as laterais de cada cubo: terra com franja de grama (grama e caminhos), terra lisa, ou pedra. */
-const SIDE: Record<string, Side> = {
-  cube_grass: 'grass', g_grass: 'grass', g_dirt: 'earth', g_stone: 'stone', g_stone_plain: 'stone',
-  g_edge_a: 'stone', g_edge_b: 'stone', g_edge_c: 'stone', g_edge_d: 'stone', g_edge_e: 'stone',
-  p_ns: 'grass', p_ew: 'grass', p_curve_a: 'grass', p_curve_b: 'grass', p_corner: 'grass', p_t: 'grass', p_cross: 'grass',
-  p_end: 'grass', p_diag: 'grass', p_patch: 'grass',
-};
+/** De que são as laterais de cada cubo: terra com franja de grama (o Piso de Grama), terra lisa (o de Terra), ou pedra (o de Pedra). */
+const SIDE: Record<string, Side> = { g_grass: 'grass', g_dirt: 'earth', g_stone: 'stone' };
 export const ISO_KEY: ReadonlyMap<BlockId, string> = new Map<BlockId, string>([...ISO_CUBES, ...ISO_PROPS].map((id) => {
   const name = Object.entries(Block).find(([, v]) => v === id)![0]; // ISO_G_GRASS → g_grass
   return [id, name.slice(4).toLowerCase()];
@@ -65,7 +60,7 @@ export function isoSetTextures(
   ISO_GROUND_ORDER.forEach((key, i) => tops.set(key, slice(ground, (i % 5) * FACE, Math.floor(i / 5) * FACE, FACE, FACE)));
   const south = slice(cube, 0, 0, FACE, FACE);
   const east = slice(cube, FACE, 0, FACE, FACE);
-  // Laterais: franja de grama sobre terra (o bloco de grama), a terra sem a franja (a metade de baixo), e pedra (o piso de pedra lisa, escurecido).
+  // Laterais: franja de grama sobre terra (o bloco de grama), a terra sem a franja (a metade de baixo), e pedra (o próprio piso de pedra, escurecido).
   const earthOf = (src: HTMLCanvasElement): HTMLCanvasElement => {
     const [c, ctx] = square();
     ctx.drawImage(src, 0, src.height * 0.55, src.width, src.height * 0.45, 0, 0, RES, RES);
@@ -81,7 +76,7 @@ export function isoSetTextures(
   const sides: Record<Side, [HTMLCanvasElement, HTMLCanvasElement]> = {
     grass: [south, east],
     earth: [earthOf(south), earthOf(east)],
-    stone: [darken(tops.get('g_stone_plain')!, 0.16), darken(tops.get('g_stone_plain')!, 0.3)],
+    stone: [darken(tops.get('g_stone')!, 0.2), darken(tops.get('g_stone')!, 0.34)],
   };
   for (const id of ISO_CUBES) {
     const key = ISO_KEY.get(id)!;
@@ -100,8 +95,9 @@ export function isoSetTextures(
     c.width = w;
     c.height = h;
     c.getContext('2d')!.drawImage(props, x, y, w, h, 0, 0, w, h);
-    const pw = (w / ART_PER_CELL_X) * TILE, ph = (h / ART_PER_CELL_Y) * TILE;
-    const cells = id === Block.ISO_HOUSE ? 3 : 1; // a casa é 3 × 3
+    const k = ISO_SCALE[id] ?? 1; // a árvore 2×, a casa 4×, a barraca 3× (pedido do dono do produto)
+    const pw = (w / ART_PER_CELL_X) * TILE * k, ph = (h / ART_PER_CELL_Y) * TILE * k;
+    const cells = ISO_BIG[id]?.size ?? 1; // a casa ocupa 12 × 12 e a barraca 3 × 3
     // O desenho se apoia na quina sul da base (onde o losango da base toca o chão mais perto da câmera): o plano gira em volta do meio da borda de baixo.
     objects.set(id, { canvas: c, ox: cells * TILE - pw / 2, oy: TILE - ph, w: pw, h: ph, hit: { x: 0, y: 0, w: TILE * cells, h: TILE } });
   }

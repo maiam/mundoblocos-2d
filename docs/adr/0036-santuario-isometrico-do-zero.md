@@ -17,5 +17,8 @@ Perfil novo e câmera isométrica fixa entregues; abre solo por `?mundo=santuari
 ## Conjunto isométrico (v0.93.140)
 A prancha isométrica do dono do produto (36 peças) é o conjunto de blocos do Santuário, no lugar dos 8 materiais do Mundo: 20 cubos (topo da peça "desentortado" + faces próprias) e 16 objetos de sprite (plano vertical girado 45° para a câmera; Casa 3×3 com partes). Arte e render isolados do Mundo (`render/art/santuario.ts`, `render/isoSet.ts`); ids reaproveitados da faixa celestial removida. Pisos como cubos cheios é uma simplificação a rever (NEXT_STEPS).
 
+### Ajuste (v0.93.141)
+Só 19 das 36 peças viraram blocos (3 pisos e 16 objetos) e três objetos cresceram (carvalho 2×, casa 4×, barraca 3×); os objetos grandes ocupam várias células (`ISO_BIG`).
+
 ## Consequências
 Menos código paralelo (um renderer). O perfil `santuario` atual e `celestialArt.ts` ainda existem até o perfil novo entrar. Perde-se o artefato publicado do Santuário Celestial (fica como histórico).

@@ -5,10 +5,10 @@ import { V2_BLOCKS } from '../render/materialsV2';
 import { CAMERA_OPTION_2, SANCTUARY_DEFAULT_CAMERA } from '../render/sanctuaryCameraJoystick';
 
 describe('Santuário — comparação de câmera e materiais', () => {
-  it('disponibiliza as 36 peças do conjunto isométrico (20 cubos e 16 objetos), em ordem exata', () => {
+  it('disponibiliza as 19 peças do conjunto isométrico (3 pisos e 16 objetos), em ordem exata', () => {
     expect(WORLD_PROFILES.santuario.blocks).toEqual(ISO_BLOCKS);
-    expect(ISO_BLOCKS).toHaveLength(36);
-    expect(new Set(ISO_BLOCKS).size).toBe(36);
+    expect(ISO_BLOCKS).toHaveLength(19);
+    expect(new Set(ISO_BLOCKS).size).toBe(19);
   });
 
   it('a Terra Arada tem topo próprio e laterais de terra', () => {

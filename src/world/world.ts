@@ -1,6 +1,6 @@
 import { quarterLevel } from './quarters';
 import { CHUNK_SIZE, CUBE_LEVELS, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
-import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isWaterPlant, isRemovedBlock, isStackBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
+import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isWaterPlant, isRemovedBlock, ISO_BIG, isStackBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
 import { Chunk, type Level } from './chunk';
@@ -36,10 +36,10 @@ export function tentCells(x: number, y: number): Array<[number, number]> {
   return [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]];
 }
 
-/** Células da Casa de Feira isométrica (3 × 3) com canto inferior esquerdo em (x, y): o próprio canto primeiro. */
-export function houseCells(x: number, y: number): Array<[number, number]> {
+/** Células de um objeto grande do conjunto isométrico (`ISO_BIG`: casa 12 × 12, barraca 3 × 3) com canto inferior esquerdo em (x, y): o próprio canto primeiro. */
+export function bigCells(size: number, x: number, y: number): Array<[number, number]> {
   const out: Array<[number, number]> = [];
-  for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) out.push([x + dx, y - dy]);
+  for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) out.push([x + dx, y - dy]);
   return out;
 }
 
@@ -519,7 +519,7 @@ export class World {
     const t = this.breakTarget(x, y);
     if (t === 'object') {
       const id = this.topBlock(x, y)!.id;
-      return id === Block.TENT_PART ? Block.TENT : id === Block.ISO_HOUSE_PART ? Block.ISO_HOUSE : id; // parte da tenda/casa = a tenda/casa
+      return id === Block.TENT_PART ? Block.TENT : this.bigOfPart(id) ?? id; // parte da tenda/casa/barraca = a tenda/casa/barraca
     }
     if (t === 'ground') return this.getGround(x, y);
     return null;
@@ -539,12 +539,13 @@ export class World {
         else this.setLevel(x, y, 0, Block.AIR);
         return Block.TENT;
       }
-      if (top.id === Block.ISO_HOUSE || top.id === Block.ISO_HOUSE_PART) {
-        // Casa 3×3 (Santuário): qualquer parte derruba a casa inteira.
-        const a = this.houseAnchor(x, y);
-        if (a) for (const [cx, cy] of houseCells(a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
+      const bigId = ISO_BIG[top.id] ? top.id : this.bigOfPart(top.id);
+      if (bigId !== null) {
+        // Casa/barraca do Santuário: qualquer parte derruba o objeto inteiro.
+        const a = this.bigAnchor(bigId as BlockId, x, y);
+        if (a) for (const [cx, cy] of bigCells(ISO_BIG[bigId].size, a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
         else this.setLevel(x, y, 0, Block.AIR);
-        return Block.ISO_HOUSE;
+        return bigId as BlockId;
       }
       this.setLevel(x, y, top.level, Block.AIR);
       return top.id;
@@ -578,7 +579,7 @@ export class World {
       if (def.shape === 'door' && !this.hasDoorFrame(x, y)) return null;
       if (def.shape === 'wall-door' && !this.canPlaceWallDoor(x, y)) return null;
       // Tenda ocupa 2×2 (esta célula = canto inferior esquerdo): as 4 precisam estar livres em chão firme.
-      if ((id === Block.TENT || id === Block.ISO_HOUSE) && !this.footprint(id, x, y).every(([cx, cy]) => this.isFootprintFree(cx, cy))) return null;
+      if ((id === Block.TENT || ISO_BIG[id]) && !this.footprint(id, x, y).every(([cx, cy]) => this.isFootprintFree(cx, cy))) return null;
       return 0;
     }
     if (def.shape === 'cube' && base.shape === 'cube') {
@@ -765,7 +766,8 @@ export class World {
       for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
       this.tent = [x, y];
     }
-    if (id === Block.ISO_HOUSE) for (const [cx, cy] of houseCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.ISO_HOUSE_PART);
+    const big = ISO_BIG[id];
+    if (big) for (const [cx, cy] of bigCells(big.size, x, y).slice(1)) this.setLevel(cx, cy, 0, big.part);
     return true;
   }
 
@@ -805,7 +807,8 @@ export class World {
 
   /** Células que um bloco ocupa ao ser colocado em (x, y) (tenda 2×2; os demais, 1). */
   footprint(id: BlockId, x: number, y: number): Array<[number, number]> {
-    return id === Block.TENT ? tentCells(x, y) : id === Block.ISO_HOUSE ? houseCells(x, y) : [[x, y]];
+    const big = ISO_BIG[id];
+    return id === Block.TENT ? tentCells(x, y) : big ? bigCells(big.size, x, y) : [[x, y]];
   }
 
   /**
@@ -813,10 +816,12 @@ export class World {
    * Quem coloca escolhe o que não pega ninguém; blocos de 1 célula têm só (x, y).
    */
   footprintAnchors(id: BlockId, x: number, y: number): Array<[number, number]> {
-    if (id === Block.ISO_HOUSE) {
-      // Casa 3×3: o centro dela cobre a célula apontada primeiro (o desenho se apoia no meio), depois as demais posições.
-      const out: Array<[number, number]> = [];
-      for (const [i, j] of [[1, 1], [0, 0], [1, 0], [2, 0], [0, 1], [2, 1], [0, 2], [1, 2], [2, 2]]) out.push([x - i, y + j]);
+    const big = ISO_BIG[id];
+    if (big) {
+      // Objeto grande: o centro dele cobre a célula apontada primeiro (o desenho se apoia no meio), depois as demais posições.
+      const n = big.size, c = Math.floor(n / 2);
+      const out: Array<[number, number]> = [[x - c, y + c]];
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) if (i !== c || j !== c) out.push([x - i, y + j]);
       return out;
     }
     return id === Block.TENT ? [[x, y], [x - 1, y], [x, y + 1], [x - 1, y + 1]] : [[x, y]];
@@ -830,10 +835,17 @@ export class World {
     return null;
   }
 
-  /** Canto (ISO_HOUSE) da Casa de Feira que contém a célula, ou null. */
-  houseAnchor(x: number, y: number): [number, number] | null {
-    for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) {
-      if (this.getObject(x - dx, y + dy) === Block.ISO_HOUSE) return [x - dx, y + dy];
+  /** O objeto grande (casa, barraca) a que o id de parte pertence, ou null. */
+  private bigOfPart(id: number): BlockId | null {
+    for (const [big, d] of Object.entries(ISO_BIG)) if (d.part === id) return Number(big) as BlockId;
+    return null;
+  }
+
+  /** Canto (o id `big`) do objeto grande que contém a célula, ou null. */
+  bigAnchor(big: BlockId, x: number, y: number): [number, number] | null {
+    const n = ISO_BIG[big]?.size ?? 1;
+    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) {
+      if (this.getObject(x - dx, y + dy) === big) return [x - dx, y + dy];
     }
     return null;
   }

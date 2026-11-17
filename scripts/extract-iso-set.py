@@ -1,7 +1,7 @@
 """Conjunto isométrico (ADR 0036, v0.93.140): extrai as 36 peças de `assets-src/iso-set/prancha-iso.png` (fundo transparente).
 
 Saídas (todas em `src/assets/`):
-  iso-ground.webp   20 quadrados de 128 px (5 × 4): o TOPO de cada piso (e do bloco de grama, na 20ª casa) "desentortado" do losango isométrico
+  iso-ground.webp   os quadrados de 128 px (5 por linha) do TOPO de cada piso usado "desentortado" do losango isométrico
                     para um quadrado (u = leste, v = sul, norte para cima, como o chão do jogo).
   iso-cube.webp     as duas faces visíveis do bloco de grama, desentortadas (sul | leste), 2 × 128 px.
   iso-props.webp    objetos (árvore, arbustos, pedras, casa…) recortados e empacotados; os retângulos vão para `src/render/isoSetManifest.ts`.
@@ -32,8 +32,7 @@ KEYS = ['cube_grass', 'g_grass', 'g_dirt', 'g_stone', 'g_edge_a', 'g_edge_b', 'g
         'tree', 'bush_l', 'bush_m', 'bush_s', 'rock_l', 'pebbles', 'tuft', 'daisies', 'lavender', 'lantern', 'stall', 'planter',
         'stone_planter', 'barrel', 'crate']
 assert len(comps) == len(KEYS), (len(comps), len(KEYS))
-GROUND = ['g_grass', 'g_dirt', 'g_stone', 'g_stone_plain', 'g_edge_a', 'g_edge_b', 'g_edge_c', 'g_edge_d', 'g_edge_e',
-          'p_ns', 'p_ew', 'p_curve_a', 'p_curve_b', 'p_corner', 'p_t', 'p_cross', 'p_end', 'p_diag', 'p_patch']
+GROUND = ['g_grass', 'g_dirt', 'g_stone']   # só os 3 pisos que viraram blocos (a prancha tem 19; o resto foi dispensado em 17/11/2026)
 PROPS = ['tree', 'bush_l', 'bush_m', 'bush_s', 'rock_l', 'pebbles', 'tuft', 'daisies', 'lavender', 'lantern', 'stall', 'planter',
          'stone_planter', 'barrel', 'crate', 'house']
 pieces = {}
@@ -89,7 +88,7 @@ def seamless(img):
 
 
 ground_atlas = Image.new('RGB', (5 * N, 4 * N), (0, 0, 0))
-for i, key in enumerate(GROUND + ['cube_grass']):
+for i, key in enumerate(GROUND):
     tile = top_square(pieces[key])
     if key == 'g_grass':
         tile = seamless(tile)
@@ -139,7 +138,7 @@ for key in PROPS:
 atlas.save(root / 'src/assets/iso-props.webp', quality=88)
 
 # Ícones 64 × 64.
-ALL = ['cube_grass'] + GROUND + PROPS
+ALL = GROUND + PROPS
 for key in ALL:
     im = pieces[key].crop(pieces[key].getbbox())
     s = 58 / max(im.width, im.height)
@@ -154,6 +153,6 @@ ts = ['// Gerado por scripts/extract-iso-set.py — NÃO EDITE (rode o script de
 for k in PROPS:
     ts.append(f"  '{k}': {json.dumps(manifest[k])},")
 ts.append('};')
-ts.append(f'export const ISO_GROUND_ORDER: readonly string[] = {json.dumps(GROUND + ["cube_grass"])};')
+ts.append(f'export const ISO_GROUND_ORDER: readonly string[] = {json.dumps(GROUND)};')
 (root / 'src/render/isoSetManifest.ts').write_text('\n'.join(ts) + '\n')
 print('ok', len(GROUND), 'pisos,', len(PROPS), 'objetos, altura do atlas', atlas_h, ' H cubo', round(H, 1))

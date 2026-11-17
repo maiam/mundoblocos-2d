@@ -47,29 +47,38 @@ describe('colocar na face (vista isométrica, ADR 0036)', () => {
   });
 });
 
-describe('conjunto isométrico — casa 3×3 e objetos (ADR 0036)', () => {
-  it('a Casa de Feira ocupa 3 × 3, bloqueia e cai inteira ao quebrar qualquer parte', () => {
+describe('conjunto isométrico — objetos grandes e enfeites (ADR 0036)', () => {
+  it('a Casa de Feira ocupa 12 × 12, bloqueia e cai inteira ao quebrar qualquer parte', () => {
     const w = new World(1, S);
-    const [x, y] = [-4, 4];
+    const [x, y] = [-20, 20];
     expect(w.placeBlock(x, y, Block.ISO_HOUSE)).toBe(true);
-    for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 3; dy++) {
-      const id = w.getObject(x + dx, y - dy);
-      expect(id).toBe(dx === 0 && dy === 0 ? Block.ISO_HOUSE : Block.ISO_HOUSE_PART);
+    for (const [dx, dy] of [[0, 0], [5, 5], [11, 11], [11, 0], [0, 11]]) {
+      expect(w.getObject(x + dx, y - dy)).toBe(dx === 0 && dy === 0 ? Block.ISO_HOUSE : Block.ISO_HOUSE_PART);
       expect(w.standHeight(x + dx, y - dy)).toBeNull(); // sólida
     }
-    expect(w.houseAnchor(x + 2, y - 2)).toEqual([x, y]);
-    expect(w.canPlace(x + 1, y - 1, Block.ISO_HOUSE)).toBe(false); // não sobrepõe
-    expect(w.breakBlock(x + 1, y - 1)).toBe(Block.ISO_HOUSE);
-    for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 3; dy++) expect(w.getObject(x + dx, y - dy)).toBe(Block.AIR);
+    expect(w.bigAnchor(Block.ISO_HOUSE, x + 11, y - 11)).toEqual([x, y]);
+    expect(w.canPlace(x + 4, y - 4, Block.ISO_HOUSE)).toBe(false); // não sobrepõe
+    expect(w.breakBlock(x + 7, y - 3)).toBe(Block.ISO_HOUSE);
+    for (let dx = 0; dx < 12; dx++) for (let dy = 0; dy < 12; dy++) expect(w.getObject(x + dx, y - dy)).toBe(Block.AIR);
   });
 
-  it('a casa só entra com as 9 células livres e dentro dos limites; tem 9 âncoras possíveis', () => {
+  it('a Barraca ocupa 3 × 3 e cai inteira; a árvore ocupa só a célula do tronco', () => {
+    const w = new World(1, S);
+    expect(w.placeBlock(0, 0, Block.ISO_STALL)).toBe(true);
+    expect(w.getObject(2, -2)).toBe(Block.ISO_STALL_PART);
+    expect(w.breakBlock(1, -1)).toBe(Block.ISO_STALL);
+    expect(w.getObject(0, 0)).toBe(Block.AIR);
+    expect(w.footprint(Block.ISO_TREE, 4, 4)).toEqual([[4, 4]]);
+    expect(w.footprintAnchors(Block.ISO_STALL, 5, 5)).toHaveLength(9);
+    expect(w.footprintAnchors(Block.ISO_HOUSE, 5, 5)).toHaveLength(144);
+  });
+
+  it('a casa só entra com as 144 células livres e dentro dos limites', () => {
     const w = new World(1, S);
     w.placeBlock(0, 0, Block.ISO_BARREL);
-    expect(w.canPlace(-1, 1, Block.ISO_HOUSE)).toBe(false); // cobriria o barril
+    expect(w.canPlace(-3, 5, Block.ISO_HOUSE)).toBe(false); // cobriria o barril
     expect(w.canPlace(-30, 30, Block.ISO_HOUSE)).toBe(true);
-    expect(w.footprintAnchors(Block.ISO_HOUSE, 5, 5)).toHaveLength(9);
-    expect(w.footprint(Block.ISO_HOUSE, 2, 2)).toHaveLength(9);
+    expect(w.canPlace(25, 0, Block.ISO_HOUSE)).toBe(false); // sairia pelo limite leste (x até 36 > 31)
   });
 
   it('enfeites (capim, flores, pedrinhas) deixam andar por cima; árvore e barril bloqueiam', () => {

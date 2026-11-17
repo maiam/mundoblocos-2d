@@ -42,7 +42,7 @@ describe('Santuário Three.js — colisões físicas', () => {
     clearTestArea(world, sx, sy, 4);
     for (const x of [sx + 1, sx + 2, sx + 3]) {
       world.setObject(x, sy + 2, Block.ISO_G_STONE);
-      world.placeBlock(x, sy + 2, Block.ISO_G_STONE_PLAIN);
+      world.placeBlock(x, sy + 2, Block.ISO_G_DIRT);
     }
     expect(world.stackHeight(sx + 1, sy + 2)).toBe(2);
     const front = new Player(sx + 2.5, sy + 0.5);

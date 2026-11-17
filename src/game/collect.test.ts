@@ -85,12 +85,12 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com as 36 peças do conjunto isométrico, sem bolsa', () => {
+  it('Santuário continua infinito: grade fixa com as 19 peças do conjunto isométrico, sem bolsa', () => {
     const grid = new Hotbar(WORLD_PROFILES.santuario);
     expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(36);
+    expect(grid.length).toBe(19);
     grid.assign(0, null);
-    expect(grid.stack(0)).toBe(blockStack(Block.ISO_CUBE_GRASS));
+    expect(grid.stack(0)).toBe(blockStack(Block.ISO_G_GRASS));
   });
 
   it('bolsa com 12 espaços (4 × 3 à direita) + 9 na mão: tipo novo só entra se houver lugar', () => {

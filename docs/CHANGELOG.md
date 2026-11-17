@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.141 — Santuário: conjunto enxuto (19 peças) e objetos maiores (17/11/2026)
+- **Pedido do dono do produto:** árvore **2×**, casa **4×**, barraca azul e branca **3×**; excluir os blocos 1 e 5–20 da hotbar (numeração da hotbar de 36: Bloco de Grama; Piso de Pedra Lisa; os 5 pisos grama/pedra; os 10 caminhos e a mancha). Ficam **3 pisos** (grama, terra, pedra) e **16 objetos** = **19 blocos**.
+- **Tamanhos** (`ISO_SCALE` em `blocks.ts`, lido por `render/isoSet.ts`): interpretados como fator **linear** do desenho. O que ocupa chão cresce junto: **Casa 12 × 12** células (`ISO_HOUSE` + 143 `ISO_HOUSE_PART`) e **Barraca 3 × 3** (`ISO_STALL` + 8 `ISO_STALL_PART`, id novo); a árvore 2× segue ocupando só a célula do tronco. `ISO_BIG` generaliza o que era a casa 3×3: `World.bigCells`/`bigAnchor` (substituem `houseCells`/`houseAnchor`), colocar, quebrar e âncoras valem para qualquer objeto grande.
+- **Arte/script:** `extract-iso-set.py` grava só os 3 topos e os 19 ícones; as laterais da pedra vêm do próprio piso de pedra (escurecido); as da grama continuam as do bloco de grama da prancha (arte, não bloco). Ícones e blocos dispensados saíram do código.
+- Testes reescritos (casa 12×12, barraca, árvore, 19 peças); `tsc`, 658 testes e `npm run build` verdes; conferido no navegador (casa 4× e barraca 3× ao lado da Deusa; hotbar numa linha). Sem mudança de save, protocolo nem servidor; `package.json` 0.93.141.
+
 ## Orvalis v0.93.140 — Santuário: conjunto isométrico completo (36 peças) e fim do legado celestial (17/11/2026)
 - **Pedido do dono do produto:** a prancha isométrica (36 peças) entra **toda** como blocos da Deusa, inclusive árvore, casa etc., como **conjunto novo** (substitui os 8 materiais do Mundo no Santuário).
 - **Blocos** (`world/blocks.ts`, `ISO_*`): 20 **cubos** (Bloco de Grama + 19 pisos: grama, terra, pedra lisa/irregular, 5 transições grama-pedra, 10 caminhos de terra e a mancha) e 16 **objetos** (carvalho, arbustos G/M/P, rochedo, pedrinhas, capim, margaridas, lavanda, lampião, barraca, jardineira, canteiro de pedra, barril, caixote e a **Casa de Feira 3×3**: `ISO_HOUSE` + 8 `ISO_HOUSE_PART`, `World.houseAnchor`/`houseCells`; qualquer parte quebra a casa). `WorldProfile.santuario.blocks = ISO_BLOCKS`; chão do mundo = Piso de Grama.
