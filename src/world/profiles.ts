@@ -16,7 +16,7 @@ export interface WorldProfile {
   id: WorldId;
   name: string;
   /** Terreno: procedural (mundo principal) ou plano coberto por um bloco. */
-  terrain: { kind: 'procedural' } | { kind: 'flat'; ground: BlockId };
+  terrain: { kind: 'procedural' } | { kind: 'flat'; ground: BlockId; /** Camadas de cubo sobre o chão, de baixo para cima (nível 0 e 1 da pilha), em toda célula. */ layers?: readonly BlockId[] };
   /** Retângulo de chunks permitido (inclusivo); null = sem limites. */
   bounds: ChunkRect | null;
   character: CharacterId;
@@ -44,6 +44,10 @@ export interface WorldProfile {
   minimap: boolean;
   /** Progressão da jogadora: missões do Capítulo 1, carteira (Moedas de Cobre) e painel do personagem. false no Santuário (Sala 2, criação). */
   progression: boolean;
+  /** Quanto segurar para quebrar um bloco (s), qualquer que seja a mão/ferramenta; null = pela ferramenta (ferramenta 1 s, mão 2 s). */
+  breakSeconds: number | null;
+  /** Objetos que não são cubo (árvore, cerca, casa…) ficam **em cima** da pilha de cubos da célula, não no nível 0 (Santuário: terreno em camadas, ADR 0036). */
+  surfaceObjects: boolean;
   /** Vista: `oblique` (3/4, o Mundo) ou `isometric` (45°, o Santuário solo, ADR 0036) — decide a câmera e o sentido das teclas/joystick (em tela). */
   view: 'oblique' | 'isometric';
   /** Cores do fundo além das bordas do mundo (céu). */
@@ -69,14 +73,17 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     minimap: true,
     progression: true,
     hunger: true,
+    breakSeconds: null,
+    surfaceObjects: false,
     view: 'oblique',
     sky: ['#1b1838', '#1b1838'],
   },
   santuario: {
     id: 'santuario',
     name: 'Santuário de Orvalis',
-    // Santuário refeito do zero (ADR 0036, v0.93.134): solo, **terreno plano vazio** (grama), vista isométrica. Cubos cheios (1 nível = 1 célula).
-    terrain: { kind: 'flat', ground: Block.ISO_G_GRASS },
+    // Santuário refeito do zero (ADR 0036): solo, vista isométrica, cubos cheios (1 nível = 1 célula). Terreno plano em **camadas** (v0.93.143): chão de grama,
+    // uma camada de Bloco de Pedra (nível 1) e uma de Grama (nível 2); a Deusa e tudo o mais ficam em cima (nível 3).
+    terrain: { kind: 'flat', ground: Block.ISO_G_GRASS, layers: [Block.ISO_STONE_BLOCK, Block.ISO_G_GRASS] },
     // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
     bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
     character: 'goddess-iso',
@@ -92,6 +99,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     minimap: false,
     progression: false,
     hunger: false,
+    breakSeconds: 1, // quebrar qualquer bloco leva 1 s (pedido do dono do produto, 17/11/2026)
+    surfaceObjects: true,
     view: 'isometric',
     sky: ['#8fb8ff', '#f6d9ff'],
   },

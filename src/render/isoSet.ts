@@ -17,6 +17,8 @@ export interface IsoSetImages {
   ground: HTMLImageElement;
   cube: HTMLImageElement;
   props: HTMLImageElement;
+  /** Bloco de Pedra (`scripts/extract-iso-stone.py`): topo, sul e leste, 3 quadrados de 128 px em 1 linha. */
+  stone: HTMLImageElement;
 }
 
 /** Pixels da prancha por célula, na horizontal (a largura do losango é 1,414 célula) e na vertical (aresta × cos 35,264°). */
@@ -55,7 +57,7 @@ export function isoSetTextures(
   images: IsoSetImages, iconUrls: Readonly<Record<string, string>>,
   groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, cubes: Map<BlockId, IsoCubeFaces>,
 ): void {
-  const { ground, cube, props } = images;
+  const { ground, cube, props, stone } = images;
   const tops = new Map<string, HTMLCanvasElement>();
   ISO_GROUND_ORDER.forEach((key, i) => tops.set(key, slice(ground, (i % 5) * FACE, Math.floor(i / 5) * FACE, FACE, FACE)));
   const south = slice(cube, 0, 0, FACE, FACE);
@@ -79,6 +81,12 @@ export function isoSetTextures(
     stone: [darken(tops.get('g_stone')!, 0.2), darken(tops.get('g_stone')!, 0.34)],
   };
   for (const id of ISO_CUBES) {
+    if (id === Block.ISO_STONE_BLOCK) {
+      const top = slice(stone, 0, 0, FACE, FACE), s = slice(stone, FACE, 0, FACE, FACE), e = slice(stone, 2 * FACE, 0, FACE, FACE);
+      groundTop.set(id, top);
+      cubes.set(id, [e, e, top, s, s, s]);
+      continue;
+    }
     const key = ISO_KEY.get(id)!;
     const top = tops.get(key)!;
     const [s, e] = sides[SIDE[key]];

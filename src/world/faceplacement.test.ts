@@ -3,7 +3,7 @@ import { Block } from './blocks';
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
-const S = WORLD_PROFILES.santuario;
+const S = { ...WORLD_PROFILES.santuario, terrain: { kind: 'flat' as const, ground: Block.ISO_G_GRASS } }; // sem as camadas de terreno: os níveis contam do chão
 
 describe('colocar na face (vista isométrica, ADR 0036)', () => {
   it('coloca no nível pedido sem cubo embaixo (bloco flutuante)', () => {

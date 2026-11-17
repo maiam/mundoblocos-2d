@@ -4,9 +4,12 @@ import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 import { CHUNK_SIZE, MAX_STACK, SANCTUARY_MAX_STACK } from '../config';
 
+/** Santuário sem as camadas de terreno (só o chão): a base dos testes de mecânica (colocar, empilhar, quebrar), que contam níveis a partir do chão. */
+const EMPTY = { ...WORLD_PROFILES.santuario, terrain: { kind: 'flat' as const, ground: Block.ISO_G_GRASS } };
+
 describe('pilhas de cinco blocos apenas no Santuário', () => {
   it('empilha até o 5º bloco e não aceita o 6º', () => {
-    const world = new World(42, WORLD_PROFILES.santuario);
+    const world = new World(42, EMPTY);
     const [x, y] = world.findSpawn();
     expect(world.maxStack).toBe(SANCTUARY_MAX_STACK);
     // Terreno plano e vazio (ADR 0036): nada construído no spawn.
@@ -23,13 +26,13 @@ describe('pilhas de cinco blocos apenas no Santuário', () => {
     expect(world.stackHeight(x, y)).toBe(4);
   });
   it('salva e restaura cinco camadas em um chunk', () => {
-    const world = new World(42, WORLD_PROFILES.santuario);
+    const world = new World(42, EMPTY);
     const [x, y] = world.findSpawn();
     for (let i = 0; i < 5; i++) world.placeBlock(x, y, Block.ISO_G_GRASS);
     const cx = Math.floor(x / CHUNK_SIZE), cy = Math.floor(y / CHUNK_SIZE);
     const chunk = world.getChunk(cx, cy)!;
     expect(chunk.levels).toHaveLength(5);
-    const restored = new World(42, WORLD_PROFILES.santuario);
+    const restored = new World(42, EMPTY);
     expect(restored.restoreChunk(cx, cy, chunk.ground, chunk.levels)).toBe(0);
     expect(restored.getLevel(x, y, 4)).toBe(Block.ISO_G_GRASS);
     expect(restored.stackHeight(x, y)).toBe(5);
@@ -41,6 +44,6 @@ describe('pilhas de cinco blocos apenas no Santuário', () => {
     const chunk = main.loadChunk(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE));
     expect(chunk.levels).toHaveLength(4);
     expect(main.cubeLevels).toBe(4);
-    expect(new World(42, WORLD_PROFILES.santuario).cubeLevels).toBe(1);
+    expect(new World(42, EMPTY).cubeLevels).toBe(1);
   });
 });

@@ -139,7 +139,7 @@ export class World {
     this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
     this.cubeLevels = profile.id === 'santuario' ? 1 : CUBE_LEVELS;
     this.generator = profile.terrain.kind === 'flat'
-      ? new FlatGenerator(seed, profile.terrain.ground)
+      ? new FlatGenerator(seed, profile.terrain.ground, profile.terrain.layers)
       : new WorldGenerator(seed);
     const baseTerrain = this.generator;
     const b = profile.bounds;
@@ -413,7 +413,13 @@ export class World {
     if (blockDef(base).shape !== 'cube') return 0;
     if (!isStackBlock(base)) return this.cubeLevels;
     let n = 1;
-    while (n < this.maxStack && this.getLevel(x, y, n) !== Block.AIR) n++;
+    // Com `surfaceObjects` (Santuário) só cubo conta: o objeto em cima da pilha (árvore, cerca, casa) não é altura de piso.
+    const onlyCubes = this.profile.surfaceObjects;
+    while (n < this.maxStack) {
+      const id = this.getLevel(x, y, n);
+      if (id === Block.AIR || (onlyCubes && blockDef(id).shape !== 'cube')) break;
+      n++;
+    }
     return n;
   }
 
@@ -433,7 +439,15 @@ export class World {
   standHeight(x: number, y: number): number | null {
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
-    if (base.shape === 'cube') return this.stackHeight(x, y);
+    if (base.shape === 'cube') {
+      const h = this.stackHeight(x, y);
+      // Objeto sólido em cima da pilha (Santuário): não se fica de pé na célula; o que dá para atravessar (enfeite, portão aberto) deixa passar.
+      if (this.profile.surfaceObjects && h < this.maxStack) {
+        const on = this.getLevel(x, y, h);
+        if (on !== Block.AIR && blockDef(on).solid) return null;
+      }
+      return h;
+    }
     return base.solid ? null : 0;
   }
 
@@ -542,9 +556,9 @@ export class World {
       const bigId = ISO_BIG[top.id] ? top.id : this.bigOfPart(top.id);
       if (bigId !== null) {
         // Casa/barraca do Santuário: qualquer parte derruba o objeto inteiro.
-        const a = this.bigAnchor(bigId as BlockId, x, y);
-        if (a) for (const [cx, cy] of bigCells(ISO_BIG[bigId].size, a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
-        else this.setLevel(x, y, 0, Block.AIR);
+        const a = this.bigAnchor(bigId as BlockId, x, y, top.level);
+        if (a) for (const [cx, cy] of bigCells(ISO_BIG[bigId].size, a[0], a[1])) this.setLevel(cx, cy, top.level, Block.AIR);
+        else this.setLevel(x, y, top.level, Block.AIR);
         return bigId as BlockId;
       }
       this.setLevel(x, y, top.level, Block.AIR);
@@ -575,6 +589,12 @@ export class World {
     if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;
     if (!this.isGroundStandable(x, y)) return null;
     const base = blockDef(this.getObject(x, y));
+    // Santuário (terreno em camadas): objeto que não é cubo vai EM CIMA da pilha de cubos da célula (os 144 da casa precisam ter a mesma altura e a superfície livre).
+    if (this.profile.surfaceObjects && def.shape !== 'cube' && base.shape === 'cube') {
+      const h = this.stackHeight(x, y);
+      if (h >= this.maxStack) return null;
+      return this.footprint(id, x, y).every(([cx, cy]) => this.surfaceFree(cx, cy, h)) ? h : null;
+    }
     if (base.id === Block.AIR || base.shape === 'decoration') {
       if (def.shape === 'door' && !this.hasDoorFrame(x, y)) return null;
       if (def.shape === 'wall-door' && !this.canPlaceWallDoor(x, y)) return null;
@@ -584,7 +604,10 @@ export class World {
     }
     if (def.shape === 'cube' && base.shape === 'cube') {
       const h = this.stackHeight(x, y);
-      return h < this.maxStack ? h : null;
+      if (h >= this.maxStack) return null;
+      // (Santuário) um objeto em cima da pilha ocupa o nível: não se põe cubo sobre ele
+      if (this.profile.surfaceObjects && this.getLevel(x, y, h) !== Block.AIR) return null;
+      return h;
     }
     return null;
   }
@@ -767,7 +790,7 @@ export class World {
       this.tent = [x, y];
     }
     const big = ISO_BIG[id];
-    if (big) for (const [cx, cy] of bigCells(big.size, x, y).slice(1)) this.setLevel(cx, cy, 0, big.part);
+    if (big) for (const [cx, cy] of bigCells(big.size, x, y).slice(1)) this.setLevel(cx, cy, typeof level === 'number' ? level : 0, big.part);
     return true;
   }
 
@@ -803,6 +826,14 @@ export class World {
     if (this.isProtected(x, y) || !this.isGroundStandable(x, y) || this.getGround(x, y) === Block.HOLE) return false;
     const b = blockDef(this.getObject(x, y));
     return b.id === Block.AIR || b.shape === 'decoration';
+  }
+
+  /** A superfície da pilha de cubos da célula, na altura `h`, está livre (vazia ou com enfeite), em chão firme e fora de área protegida? (Santuário) */
+  private surfaceFree(x: number, y: number, h: number): boolean {
+    if (!this.inBounds(x, y) || this.isProtected(x, y) || !this.isGroundStandable(x, y) || this.getGround(x, y) === Block.HOLE) return false;
+    if (blockDef(this.getObject(x, y)).shape !== 'cube' || this.stackHeight(x, y) !== h || h >= this.maxStack) return false;
+    const on = blockDef(this.getLevel(x, y, h));
+    return on.id === Block.AIR || on.shape === 'decoration';
   }
 
   /** Células que um bloco ocupa ao ser colocado em (x, y) (tenda 2×2; os demais, 1). */
@@ -841,11 +872,11 @@ export class World {
     return null;
   }
 
-  /** Canto (o id `big`) do objeto grande que contém a célula, ou null. */
-  bigAnchor(big: BlockId, x: number, y: number): [number, number] | null {
+  /** Canto (o id `big`) do objeto grande que contém a célula, ou null; `level` = o nível da pilha onde ele está (0 no chão; em cima do terreno do Santuário, mais). */
+  bigAnchor(big: BlockId, x: number, y: number, level = 0): [number, number] | null {
     const n = ISO_BIG[big]?.size ?? 1;
     for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) {
-      if (this.getObject(x - dx, y + dy) === big) return [x - dx, y + dy];
+      if (this.getLevel(x - dx, y + dy, level) === big) return [x - dx, y + dy];
     }
     return null;
   }
@@ -891,6 +922,8 @@ export class World {
       // Mundo limitado: centro da área.
       const cx = Math.floor(((b.cx0 + b.cx1 + 1) * CHUNK_SIZE) / 2);
       const cy = Math.floor(((b.cy0 + b.cy1 + 1) * CHUNK_SIZE) / 2);
+      // Santuário (terreno em camadas): o centro da área; a Deusa nasce em cima da pilha.
+      if (this.profile.surfaceObjects) return [cx, cy];
       return this.nearestWalkable(cx, cy, 64);
     }
     const welcoming = new Set(['meadow', 'sakura', 'enchanted']);

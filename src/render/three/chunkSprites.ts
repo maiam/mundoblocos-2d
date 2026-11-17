@@ -57,6 +57,8 @@ export interface ChunkSpritesOptions {
   /** O que desenhar na célula (id do objeto do nível 0), ou null (vazia, cubo, parede: têm render próprio). */
   art(id: BlockId, x: number, y: number): SpriteDraw | null;
   maxBuildsPerFrame?: number;
+  /** Objetos de sprite podem estar em qualquer nível da pilha (Santuário: em cima do terreno em camadas), não só no nível 0; o sprite sobe `nível` células. */
+  surfaceLevels?: boolean;
   /** Objetos de chama viva (fogueira): a chama balança e pisca no próprio desenho (`FIRE_VERTEX`/`FIRE_FRAGMENT`). */
   animated?(id: BlockId): 'fire' | 'sway' | 'tree' | null;
   /** Alcance (células) em que o jogador curva a vegetação que balança (`sway`). */
@@ -326,19 +328,29 @@ export class ChunkSprites {
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const x = x0 + lx, y = y0 + ly;
-        const id = this.world.getLevel(x, y, 0);
-        const draw = this.opts.art(id, x, y);
+        // Nível 0 (padrão); com `surfaceLevels`, o 1º nível da pilha que tem sprite (os cubos devolvem null e são pulados).
+        let id = this.world.getLevel(x, y, 0);
+        let draw = this.opts.art(id, x, y);
+        let baseLift = 0;
+        if (!draw && this.opts.surfaceLevels) {
+          for (let l = 1; l < chunk.levels.length && !draw; l++) {
+            id = this.world.getLevel(x, y, l);
+            if (id === 0) continue;
+            draw = this.opts.art(id, x, y);
+            baseLift = l;
+          }
+        }
         if (!draw) continue;
         let bucket = buckets.get(draw.sprite.canvas);
         if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, animated: this.opts.animated?.(id) ?? null, cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
         const scale = draw.scale && draw.scale !== 1 ? draw.scale : undefined;
         const n = Math.min(MAX_STACK_DRAWN, Math.max(1, Math.floor(draw.stack ?? 1)));
         const yaw = draw.yaw ? draw.yaw : undefined;
-        for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale, yaw });
+        for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: baseLift + level, scale, yaw });
         if (draw.shadow) {
           let sb = buckets.get(draw.shadow.canvas);
           if (!sb) { sb = { sprite: draw.shadow, walkable: true, animated: null, cells: [] }; buckets.set(draw.shadow.canvas, sb); }
-          sb.cells.push({ x, y, id, sprite: draw.shadow, bias: -SHADOW_BIAS });
+          sb.cells.push({ x, y, id, sprite: draw.shadow, bias: -SHADOW_BIAS, lift: baseLift });
         }
       }
     }

@@ -23,5 +23,8 @@ Só 19 das 36 peças viraram blocos (3 pisos e 16 objetos) e três objetos cresc
 ### Cercas e portões 3D (v0.93.142)
 Os sprites do Mundo são renders 3/4 do modelo e não servem à câmera isométrica; o Santuário desenha a **geometria do modelo** (malhas Three.js, `render/three/isoFences.ts`) com as tábuas V2. Reaproveita os blocos e as regras do Mundo; não cria ids.
 
+### Terreno em camadas (v0.93.143)
+O Santuário nasce com 2 camadas de cubo sobre o chão (Bloco de Pedra, depois Grama): a Deusa e os objetos ficam em cima (nível 3) e cavar mostra as camadas; quebrar leva 1 s. Tudo atrás de campos do `WorldProfile` (`breakSeconds`, `surfaceObjects`, `terrain.layers`), sem mudar o Mundo.
+
 ## Consequências
 Menos código paralelo (um renderer). O perfil `santuario` atual e `celestialArt.ts` ainda existem até o perfil novo entrar. Perde-se o artefato publicado do Santuário Celestial (fica como histórico).

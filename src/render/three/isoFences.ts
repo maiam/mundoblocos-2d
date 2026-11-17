@@ -81,7 +81,7 @@ class Builder {
 
 const remap = (v: number, from0: number, from1: number, to0: number, to1: number): number => to0 + ((v - from0) * (to1 - to0)) / (from1 - from0);
 
-interface Entry { x: number; y: number; id: BlockId; group: THREE.Group; picks: THREE.Mesh[]; leaf?: THREE.Object3D; key: string }
+interface Entry { x: number; y: number; level: number; id: BlockId; group: THREE.Group; picks: THREE.Mesh[]; leaf?: THREE.Object3D; key: string }
 interface GateState { angle: number; target: number }
 
 /**
@@ -173,18 +173,19 @@ export class IsoFences {
 
   // ---- cena ----
 
-  private make(x: number, y: number, id: BlockId): Entry {
+  /** `level` = nível da pilha onde a cerca/portão está (0 no chão; em cima do terreno em camadas do Santuário, mais): sobe `level` células. */
+  private make(x: number, y: number, level: number, id: BlockId): Entry {
     const wood = woodOf(id);
     const mats = this.materials[wood];
     const group = new THREE.Group();
-    group.position.set(x + 0.5, 0, y + 0.5);
+    group.position.set(x + 0.5, level, y + 0.5);
     group.name = isGate(id) ? 'Santuário: portão 3D' : 'Santuário: cerca 3D';
     const picks: THREE.Mesh[] = [];
     const cellKey = `${x},${y}`;
     let leaf: THREE.Object3D | undefined;
     let key = '';
     if (isGate(id)) {
-      const join = (dx: number, dy: number) => joinsFence(this.world.getLevel(x + dx, y + dy, 0));
+      const join = (dx: number, dy: number) => joinsFence(this.world.getLevel(x + dx, y + dy, level));
       const side = gateIsSide(join);
       group.rotation.y = side ? -Math.PI / 2 : 0; // de lado: a dobradiça fica ao norte e a folha abre para leste
       const fixed = new THREE.Mesh(this.gateGeometry('fixed'), mats);
@@ -202,7 +203,7 @@ export class IsoFences {
       pivot.rotation.y = st.angle;
       key = `g${wood}${side ? 's' : ''}`;
     } else {
-      const j = (dx: number, dy: number) => (joinsFence(this.world.getLevel(x + dx, y + dy, 0)) ? 1 : 0);
+      const j = (dx: number, dy: number) => (joinsFence(this.world.getLevel(x + dx, y + dy, level)) ? 1 : 0);
       const mask = j(0, -1) | (j(1, 0) << 1) | (j(0, 1) << 2) | (j(-1, 0) << 3);
       const mesh = new THREE.Mesh(this.fenceGeometry(wood, mask), mats);
       group.add(mesh);
@@ -211,7 +212,7 @@ export class IsoFences {
     }
     for (const m of picks) m.userData.cell = { x, y };
     this.scene.add(group);
-    return { x, y, id, group, picks, leaf, key };
+    return { x, y, level, id, group, picks, leaf, key };
   }
 
   private release(e: Entry): void {
@@ -242,11 +243,14 @@ export class IsoFences {
         for (let ly = 0; ly < CHUNK_SIZE; ly++) {
           for (let lx = 0; lx < CHUNK_SIZE; lx++) {
             const x = cx * CHUNK_SIZE + lx, y = cy * CHUNK_SIZE + ly;
-            const id = this.world.getLevel(x, y, 0);
-            if (!isFence(id) && !isGate(id)) continue;
-            const e = this.make(x, y, id);
-            entries.push(e);
-            if (e.leaf) this.gates.push(e);
+            for (let level = 0; level < chunk.levels.length; level++) {
+              const id = this.world.getLevel(x, y, level);
+              if (!isFence(id) && !isGate(id)) continue;
+              const e = this.make(x, y, level, id);
+              entries.push(e);
+              if (e.leaf) this.gates.push(e);
+              break;
+            }
           }
         }
         this.lists.set(key, { stamp, entries });

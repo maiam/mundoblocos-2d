@@ -188,7 +188,7 @@ export class WorldThreeRenderer implements GameRenderer {
     const fenceArt = getIsoFence();
     this.isoFences = fenceArt ? new IsoFences(this.worldLayer, world, fenceArt.art) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);

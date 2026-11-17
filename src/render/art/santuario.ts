@@ -2,6 +2,7 @@ import type { ArtPack } from './types';
 import isoGround from '../../assets/iso-ground.webp';
 import isoCube from '../../assets/iso-cube.webp';
 import isoProps from '../../assets/iso-props.webp';
+import isoStone from '../../assets/iso-stone.webp';
 import isoFenceModel from '../../assets/iso-fence-model.json';
 import isoWood from '../../assets/iso-wood.webp';
 import iconFence from '../../assets/icon-block-fence.webp';
@@ -51,7 +52,7 @@ const pack: ArtPack = {
     'goddess-iso-pickaxe-attack': goddessIsoPickaxeAttack,
     'goddess-iso-shovel-attack': goddessIsoShovelAttack,
   },
-  isoSet: { ground: isoGround, cube: isoCube, props: isoProps, icons },
+  isoSet: { ground: isoGround, cube: isoCube, props: isoProps, stone: isoStone, icons },
   isoFence: {
     model: isoFenceModel as IsoFenceModel, wood: isoWood,
     icons: {

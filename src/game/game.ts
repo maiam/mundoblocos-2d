@@ -240,6 +240,7 @@ export class Game {
       slot: () => this.slot,
       joystickActive: () => this.joystick.active,
       facePlacement: profile.view === 'isometric' && !options.net,
+      breakSeconds: profile.breakSeconds ?? undefined,
       collectBlocks: profile.collectBlocks,
       sharedLoot: !!options.net,
       onConsumed: () => this.hotbar.prune(this.inventory),

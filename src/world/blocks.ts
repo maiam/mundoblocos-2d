@@ -220,6 +220,8 @@ export const Block = {
   ISO_HOUSE: 5,
   ISO_HOUSE_PART: 7,
   ISO_STALL_PART: 84,
+  /** Bloco de Pedra isométrico (v0.93.143): a camada de baixo do terreno do Santuário. */
+  ISO_STONE_BLOCK: 85,
 } as const;
 
 /** Número de estágios de crescimento do trigo e primeiro id da sequência. */
@@ -419,6 +421,7 @@ const defs: BlockDef[] = [
   object(Block.ISO_G_GRASS, 'Piso de Grama'),
   object(Block.ISO_G_DIRT, 'Piso de Terra'),
   object(Block.ISO_G_STONE, 'Piso de Pedra'),
+  object(Block.ISO_STONE_BLOCK, 'Bloco de Pedra', { stone: true }),
   object(Block.ISO_TREE, 'Carvalho', { shape: 'rock' }),
   object(Block.ISO_BUSH_L, 'Arbusto Grande', { shape: 'rock' }),
   object(Block.ISO_BUSH_M, 'Arbusto Médio', { shape: 'rock' }),
@@ -611,7 +614,7 @@ export function isGrowingTree(id: BlockId): boolean {
 /** Porta (aberta ou fechada)? */
 /** Paredes (ADR 0027): blocos de forma `wall`. */
 /** Conjunto isométrico do Santuário na ordem da hotbar: 3 pisos (grama, terra, pedra) e 16 objetos (as partes de casa e barraca não são colocáveis). */
-export const ISO_CUBES: readonly BlockId[] = [Block.ISO_G_GRASS, Block.ISO_G_DIRT, Block.ISO_G_STONE];
+export const ISO_CUBES: readonly BlockId[] = [Block.ISO_G_GRASS, Block.ISO_G_DIRT, Block.ISO_G_STONE, Block.ISO_STONE_BLOCK];
 export const ISO_PROPS: readonly BlockId[] = [
   Block.ISO_TREE, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, Block.ISO_ROCK_L, Block.ISO_PEBBLES, Block.ISO_TUFT, Block.ISO_DAISIES,
   Block.ISO_LAVENDER, Block.ISO_LANTERN, Block.ISO_STALL, Block.ISO_PLANTER, Block.ISO_STONE_PLANTER, Block.ISO_BARREL, Block.ISO_CRATE, Block.ISO_HOUSE,

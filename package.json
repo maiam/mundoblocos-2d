@@ -1,7 +1,7 @@
 {
   "name": "mundoblocos-2d",
   "private": true,
-  "version": "0.93.142",
+  "version": "0.93.143",
   "type": "module",
   "scripts": {
     "dev": "vite",

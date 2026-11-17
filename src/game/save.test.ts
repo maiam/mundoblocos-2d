@@ -52,9 +52,12 @@ function memoryStorage(): Storage {
   };
 }
 
+/** Santuário sem as camadas de terreno: este teste conta os níveis a partir do chão. */
+const EMPTY_SANTUARIO = { ...WORLD_PROFILES.santuario, terrain: { kind: 'flat' as const, ground: Block.ISO_G_GRASS } };
+
 describe('Salvamento automático', () => {
   it('o mármore V2/V3 saiu (v15); saves v12–v14 migram descartando os campos (o bloco legado vira cubo comum)', () => {
-    const world = new World(77, WORLD_PROFILES.santuario);
+    const world = new World(77, EMPTY_SANTUARIO);
     const [sx,sy] = world.findSpawn();
     const x=sx,y=sy; // chão plano vazio (Santuário, ADR 0036)
     // Materiais antigos não são mais selecionáveis; continuam carregáveis em saves.
@@ -71,18 +74,18 @@ describe('Salvamento automático', () => {
       inventory:new Inventory(),time:0.25,selected:null,hotbar:null};
     const saved=captureSave(state);
     expect(saved.v).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(21);
+    expect(SAVE_VERSION).toBe(22);
     expect('marblePlacements' in saved).toBe(false);
     expect('marbleV3Bases' in saved).toBe(false);
 
     for(const v of [12,13,14]){
-      const old=migrate({...saved,v,marblePlacements:[[x,y,1]],marbleV3Bases:[[x,y]]});
-      expect(old?.v).toBe(21); // ...e segue até a versão atual (v15 → v16: grade 1; v16 → v17: blocos de 1/4; v17 → v18: memória dos NPCs; v18 → v19: missões)
+      const old=migrate({...saved,v,world:'principal',marblePlacements:[[x,y,1]],marbleV3Bases:[[x,y]]}); // (do Santuário o v21 → v22 descarta: ver o teste próprio)
+      expect(old?.v).toBe(22); // ...e segue até a versão atual (v15 → v16: grade 1; v16 → v17: blocos de 1/4; v17 → v18: memória dos NPCs; v18 → v19: missões; v21 → v22: o Santuário recomeça)
       expect(old?.sub).toBe(1);
       expect(old && 'marblePlacements' in old).toBe(false);
       expect(old && 'marbleV3Bases' in old).toBe(false);
     }
-    const restored=new World(77,WORLD_PROFILES.santuario);
+    const restored=new World(77,EMPTY_SANTUARIO);
     const p2=new Player(sx+0.5,sy+0.6);
     applySave(JSON.parse(JSON.stringify(saved)),{
       ...state,world:restored,player:p2,entities:new Entities(p2,mulberry32(7)),
@@ -251,7 +254,7 @@ describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
 
   it('o salvamento diz a grade (sub) e v15 migra para v16 como grade 1', () => {
     const { d } = saved();
-    expect(SAVE_VERSION).toBe(21);
+    expect(SAVE_VERSION).toBe(22);
     expect(d.sub).toBe(SUBDIV);
     const { sub: _s, ...rest } = d;
     expect(migrate({ ...rest, v: 15 })?.sub).toBe(1);
@@ -289,5 +292,15 @@ describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
     expect(storage.getItem(`mundoblocos:save:principal:${d.seed}`)).toBe(fine);
     // outra seed segue normal
     expect(store.save({ ...d, seed: d.seed + 1 })).toBe(true);
+  });
+});
+
+describe('Santuário em camadas (v21 → v22, ADR 0036)', () => {
+  it('um salvamento v21 do Santuário não abre (o terreno mudou: recomeça); o do Mundo principal migra', () => {
+    const world = new World(5, WORLD_PROFILES.santuario);
+    const player = new Player(0.5, 0.5);
+    const base = captureSave({ world, player, entities: new Entities(player, mulberry32(7)), inventory: new Inventory(), time: 0.25, selected: null, hotbar: null });
+    expect(migrate({ ...base, v: 21 })).toBeNull();
+    expect(migrate({ ...base, v: 21, world: 'principal' })?.v).toBe(22);
   });
 });

@@ -27,6 +27,8 @@ export class ThreeStage {
   setFreeOrbit(orbit: SanctuaryOrbit | null): void { this.freeOrbit = orbit; }
   /** Conversão entre células lógicas e tamanho de célula na cena 3D. */
   setVisualCellSize(size: number): void { this.visualCellSize = size; }
+  /** Altura (células) para onde a câmera livre olha: o personagem em cima de uma pilha de cubos continua no centro da tela (Santuário, ADR 0036). */
+  focusY = 0;
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2();
   private obliqueHalf = { w: 8, h: 5 };
@@ -92,8 +94,8 @@ export class ThreeStage {
       const azimuth = this.freeOrbit.azimuthDeg * Math.PI / 180;
       const depth = 37 / Math.tan(elevation);
       this.camera.up.set(0, 1, 0);
-      this.camera.position.set(focusX + Math.sin(azimuth) * depth, 37, focusZ + Math.cos(azimuth) * depth);
-      this.camera.lookAt(focusX, 0, focusZ);
+      this.camera.position.set(focusX + Math.sin(azimuth) * depth, 37 + this.focusY, focusZ + Math.cos(azimuth) * depth);
+      this.camera.lookAt(focusX, this.focusY, focusZ);
       this.camera.updateMatrixWorld();
     } else if (this.view === 'oblique') {
       // Câmera reta para baixo (topo da tela = norte) e projeção oblíqua montada à mão (`sanctuaryObliqueView.ts`).

@@ -85,10 +85,10 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com as 25 peças do conjunto isométrico, sem bolsa', () => {
+  it('Santuário continua infinito: grade fixa com as 26 peças do conjunto isométrico, sem bolsa', () => {
     const grid = new Hotbar(WORLD_PROFILES.santuario);
     expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(25);
+    expect(grid.length).toBe(26);
     grid.assign(0, null);
     expect(grid.stack(0)).toBe(blockStack(Block.ISO_G_GRASS));
   });

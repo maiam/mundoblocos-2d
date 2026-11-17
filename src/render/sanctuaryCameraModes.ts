@@ -91,6 +91,7 @@ export class SanctuaryCameraModes {
 
   /** A câmera do modo atual permanece exatamente como era. */
   sync(cam: Camera, player: Player): THREE.Camera {
+    this.stage.focusY = this.mode === 'isometrico' ? player.visualZ : 0;
     this.stage.syncCamera(cam);
     if (this.mode !== 'primeira-pessoa') return this.stage.camera;
     const aspect = Math.max(0.1, cam.width / Math.max(1, cam.height));

@@ -4,16 +4,16 @@ import { Block, type BlockId } from './blocks';
 import type { Cell, TerrainSource } from './terrain';
 
 /**
- * Terreno plano: todo o chão é um único bloco e não há objetos. Usado pelo
- * Santuário Celestial (chão de Nuvem Sólida). Os limites do mundo ficam no `World`.
+ * Terreno plano: todo o chão é um único bloco; sem `layers` não há objetos. Com `layers` (Santuário, v0.93.143) toda célula tem essas camadas de cubo
+ * empilhadas sobre o chão (a 1ª é o nível 0 da pilha, a 2ª o nível 1). Os limites do mundo ficam no `World`.
  */
 export class FlatGenerator implements TerrainSource {
   readonly seed: number;
   private readonly cell: Cell;
 
-  constructor(seed: number, ground: BlockId, private readonly biome: Biome = BIOMES.celestial) {
+  constructor(seed: number, ground: BlockId, layers: readonly BlockId[] = [], private readonly biome: Biome = BIOMES.celestial) {
     this.seed = seed >>> 0;
-    this.cell = { ground, object: Block.AIR, upper: Block.AIR };
+    this.cell = { ground, object: layers[0] ?? Block.AIR, upper: layers[1] ?? Block.AIR };
   }
 
   cellAt(): Cell {
@@ -25,11 +25,11 @@ export class FlatGenerator implements TerrainSource {
   }
 
   objectAt(): BlockId {
-    return Block.AIR;
+    return this.cell.object;
   }
 
   upperAt(): BlockId {
-    return Block.AIR;
+    return this.cell.upper;
   }
 
   biomeAt(): Biome {
@@ -38,7 +38,7 @@ export class FlatGenerator implements TerrainSource {
 
   generateChunk(_cx: number, _cy: number, ground: Uint8Array, objects: Uint8Array, upper: Uint8Array): void {
     ground.fill(this.cell.ground, 0, CHUNK_SIZE * CHUNK_SIZE);
-    objects.fill(Block.AIR);
-    upper.fill(Block.AIR);
+    objects.fill(this.cell.object);
+    upper.fill(this.cell.upper);
   }
 }
