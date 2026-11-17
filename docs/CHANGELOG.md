@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.136 — Deusa isométrica: folhas revisadas 01–03 (17/11/2026)
+- **Arte revisada do dono do produto (1280×1280, grade de 320 px):** caminhada, idle e sentar **reimportados** no lugar das versões de prévia (v0.93.135). Medido: sem alfa-resíduo, sola da bota na mesma linha (oscilação ≤ 1 px em todas as fileiras; antes até 19 px), corpo de 291–292 px nas duas primeiras (±0,5%). Mesmos comandos de `OPERATIONS` (`--rows-map 1,3,0,2`).
+- **Guardadas em `assets-src/goddess-iso/` e ainda sem uso:** caminhada e ataque de espada revisados (04: oscilação de 12 px na 1ª fileira, é a ponta da espada abaixo da bota; 05: limpa, corpo 290). As outras 8 revisadas (06–13) **não chegaram como arquivo** (só vistas na conversa): pedido reenviar como PNG.
+- Sem mudança de save, protocolo nem servidor. `tsc` e 652 testes verdes; conferido no navegador (4 direções).
+
 ## Orvalis v0.93.135 — Deusa isométrica no Santuário (caminhada, idle e sentar) (17/11/2026)
 - **Arte do dono do produto:** 13 pranchas da Deusa em vista isométrica (4 diagonais × 4 quadros: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda). **Importadas só as 3 que o Santuário usa hoje:** caminhada, idle e sentar (`assets-src/goddess-iso/` → `src/assets/goddess-iso-{walk,idle,sit}.webp`, 373 KB no total, `process-sprite.py --alpha --largest --frame-h 144 --rows-map 1,3,0,2`). As 10 de ferramenta (espada, machado, enxada, picareta, pá: caminhada e golpe) **não foram importadas**: o Santuário não tem ferramentas e as folhas precisam de revisão (ver NEXT_STEPS).
 - **Mapa de direções:** com a câmera a 45° o mundo "direita" aparece como baixo-direita, "baixo" como baixo-esquerda, "cima" como cima-direita e "esquerda" como cima-esquerda; `--rows-map 1,3,0,2` põe as 4 na ordem canônica (frente, esquerda, direita, costas) e o jogo não muda.

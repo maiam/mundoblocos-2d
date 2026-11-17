@@ -27,8 +27,6 @@ export const FOOT_MARGINS: Readonly<Record<string, readonly number[]>> = {
   'goblin-idle': [0.0125, 0.0, 0.0, 0.0],
   'goblin-run': [0.0187, 0.0063, 0.0187, 0.0],
   'goddess': [0.0, 0.0875, 0.05, 0.0375],
-  'goddess-iso': [0.0069, 0.0139, 0.0, 0.0069],
-  'goddess-iso-idle': [0.0, 0.0139, 0.0, 0.0139],
   'grewn': [0.0, 0.0139, 0.0069, 0.0139],
   'grewn-axe': [0.0, 0.0417, 0.0139, 0.0278],
   'grewn-axe-attack': [0.0, 0.0, 0.0, 0.0278],
