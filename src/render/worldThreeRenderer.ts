@@ -167,6 +167,8 @@ export class WorldThreeRenderer implements GameRenderer {
       this.room?.reupload();
     });
     this.sanctuaryCameras = sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage, true) : null;
+    // Os carvalhos mudam de arte (e giram) na Isométrica: refaz os sprites ao trocar de câmera.
+    if (this.sanctuaryCameras) this.sanctuaryCameras.onChange = () => this.sprites?.invalidateAll();
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.
@@ -176,7 +178,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures, () => this.sanctuaryCameras?.current === 'isometrico'), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);

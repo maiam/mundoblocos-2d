@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.127 — carvalhos isométricos na câmera Isométrica do Santuário (17/11/2026)
+- **Arte do dono do produto:** prancha com 3 carvalhos em perspectiva isométrica (pequeno, médio, grande). Decisões dele: **só para a câmera Isométrica do Santuário** (o mundo normal e as outras câmeras seguem com a arte atual) e **sem o bloquinho de grama** (só a árvore).
+- **Arte** (`scripts/extract-oak-iso.py`, `assets-src/trees/oak-iso.png` → `tree-oak-iso.webp`, 90 KB): o brilho verde vira transparência (curva no alfa + maior componente), o bloquinho de grama/terra, as folhas rasteiras, as flores e a pedrinha somem (abaixo da base só fica o tronco marrom ligado ao de cima) e as 3 árvores viram uma **tira de 3 quadros de mesma largura** (como `tree-oak`), base do tronco no pé do quadro.
+- **Render:** `BlockTextures.isoOak`; `worldSpriteArt(…, isometric)` troca o `OAK_TREE` por um dos 3 tamanhos (sorteado pela célula) enquanto a câmera é a Isométrica, e **gira o plano 45° em volta do meio da base** (`SpriteDraw.yaw`, `yawPivotOrigin`) para encarar a câmera (azimute 45°). `SanctuaryCameraModes.onChange` → `WorldThreeRenderer` refaz os sprites ao trocar de câmera. Só valem os carvalhos adultos (`OAK_TREE`); muda/jovem seguem iguais.
+- Teste novo (`render/three/yawPivot.test.ts`); `tsc`, 655 testes e `npm run build` verdes. **Não conferido no navegador** (a câmera Isométrica só existe na Sala 2 online): ver tamanho, posição do tronco na célula e se encaram bem a câmera.
+
 ## Orvalis v0.93.126 — corrige "Versão do jogo diferente da do servidor" na URL do Santuário (16/11/2026)
 - **Bug (dono do produto, celular):** abrir a URL do Santuário mostrava "Versão do jogo diferente da do servidor: recarregue a página". **Causa:** `config.ts` (`sanctuaryPage`) mantinha **qualquer** página do Santuário na **grade 1** (regra do Celestial antigo), e o `hello` leva a grade (`sub`): 1 ≠ 2 do servidor (`/saude` mostrava protocolo 29, o mesmo do jogo — o servidor estava certo).
 - **Correção:** só o **Santuário Celestial antigo** usa a grade 1 (build fixo `VITE_WORLD=santuario` ou `?celestial=1`); a URL do Santuário (subdomínio ou `?mundo=santuario`) abre a Sala 2 no mundo normal, **grade 2**, igual à do servidor.
