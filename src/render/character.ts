@@ -66,6 +66,17 @@ const SPECS: Record<ActorKind, SheetSpec> = {
   // Deusa isométrica (v0.93.135): anda no chão (sem flutuar); mesma altura nas três folhas (o corpo mede ~288 px nas três, na escala de 1254).
   'goddess-iso': { cols: 4, rows: 4, height: TILE * 2.3, shadow: [0.32, 0.12], walkFps: 7 },
   'goddess-iso-idle': { cols: 4, rows: 4, height: TILE * 2.3, shadow: [0.32, 0.12], walkFps: 3, loopWhenIdle: true },
+  // Com ferramenta: altura pelo desenho de cada folha (px num quadro de 320; a caminhada sem ferramenta mede 300).
+  'goddess-iso-sword': { cols: 4, rows: 4, height: TILE * 2.3 * (304 / 300), shadow: [0.32, 0.12], walkFps: 7 },
+  'goddess-iso-sword-attack': { cols: 4, rows: 4, height: TILE * 2.3 * (299 / 300), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'goddess-iso-axe': { cols: 4, rows: 4, height: TILE * 2.3 * (300 / 300), shadow: [0.32, 0.12], walkFps: 7 },
+  'goddess-iso-axe-attack': { cols: 4, rows: 4, height: TILE * 2.3 * (304 / 300), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'goddess-iso-hoe': { cols: 4, rows: 4, height: TILE * 2.3 * (304 / 300), shadow: [0.32, 0.12], walkFps: 7 },
+  'goddess-iso-hoe-attack': { cols: 4, rows: 4, height: TILE * 2.3 * (304 / 300), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'goddess-iso-pickaxe': { cols: 4, rows: 4, height: TILE * 2.3 * (303 / 300), shadow: [0.32, 0.12], walkFps: 7 },
+  'goddess-iso-pickaxe-attack': { cols: 4, rows: 4, height: TILE * 2.3 * (304 / 300), shadow: [0.32, 0.12], walkFps: 0, action: true },
+  'goddess-iso-shovel': { cols: 4, rows: 4, height: TILE * 2.3 * (301 / 300), shadow: [0.32, 0.12], walkFps: 7 },
+  'goddess-iso-shovel-attack': { cols: 4, rows: 4, height: TILE * 2.3 * (304 / 300), shadow: [0.32, 0.12], walkFps: 0, action: true },
   'goddess-iso-sit': { cols: 4, rows: 4, height: TILE * 2.3, shadow: [0.32, 0.12], walkFps: 0, sequence: true },
   heroine: { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   // Heroína com ferramenta: mesma escala (altura do desenho igual à folha base).
@@ -491,6 +502,11 @@ export class ActorSprites {
     const s = this.sheets[kind];
     s.request();
     if (s.isReady) return s;
+    if (kind.startsWith('goddess-iso-') && kind !== 'goddess-iso-idle' && kind !== 'goddess-iso-sit') { // ferramenta ainda baixando: usa a caminhada sem ferramenta
+      const g = this.sheets['goddess-iso'];
+      g.request();
+      return g.isReady ? g : s;
+    }
     const base = kind.slice(0, kind.indexOf('-')) as ActorKind;
     const b = kind.includes('-') && (HERO_BODIES as readonly string[]).includes(base) ? this.sheets[base] : undefined;
     if (!b) return s;

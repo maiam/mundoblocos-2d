@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.137 — Deusa isométrica: as 10 folhas de ferramenta (17/11/2026)
+- **Arte revisada completa (13 pranchas, 1280×1280):** importadas as 10 de ferramenta — caminhada com espada, machado, enxada, picareta e pá, e o golpe/uso de cada uma (`goddess-iso-<ferramenta>[-attack].webp`, ~0,9 MB no total, baixam só quando a ferramenta é usada). Medido antes de importar: sem alfa-resíduo, corpo de 290–293 px, sola da bota ≤ 8 px entre quadros nas caminhadas e ≤ 5 nas de uso (as oscilações maiores da base total são a ponta da ferramenta abaixo da bota). Comandos em `OPERATIONS` (`--largest`, exceto o golpe de espada, que tem peças soltas legítimas; `--rows-map 1,3,0,2`).
+- **Código:** `ActorKind` ganha `goddess-iso-${ferramenta}` e `goddess-iso-${ferramenta}-attack`; `goddessIsoKind` (entities) escolhe a folha (golpe → ferramenta na mão → caminhada/idle); `SPECS` com altura pelo desenho de cada folha; enquanto a folha da ferramenta baixa, o ator usa a caminhada sem ferramenta (sem sumir). Teste novo `goddessIsoKind.test.ts`.
+- **Sem uso no jogo ainda:** o perfil do Santuário segue com `tools: false` (decisão de design pendente); equipar por `window.__game.player.equipped` no dev mostra as 5 caminhadas (conferido no navegador).
+- Sem mudança de save, protocolo nem servidor. `tsc`, 655 testes e `npm run build` verdes.
+
 ## Orvalis v0.93.136 — Deusa isométrica: folhas revisadas 01–03 (17/11/2026)
 - **Arte revisada do dono do produto (1280×1280, grade de 320 px):** caminhada, idle e sentar **reimportados** no lugar das versões de prévia (v0.93.135). Medido: sem alfa-resíduo, sola da bota na mesma linha (oscilação ≤ 1 px em todas as fileiras; antes até 19 px), corpo de 291–292 px nas duas primeiras (±0,5%). Mesmos comandos de `OPERATIONS` (`--rows-map 1,3,0,2`).
 - **Guardadas em `assets-src/goddess-iso/` e ainda sem uso:** caminhada e ataque de espada revisados (04: oscilação de 12 px na 1ª fileira, é a ponta da espada abaixo da bota; 05: limpa, corpo 290). As outras 8 revisadas (06–13) **não chegaram como arquivo** (só vistas na conversa): pedido reenviar como PNG.

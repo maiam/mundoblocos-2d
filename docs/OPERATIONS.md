@@ -109,6 +109,9 @@ for t in pickaxe shovel; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero
 # Hood (assets-src/hood): caminhadas transparentes com fileiras F, D, C, E; a da pá vem com os dois lados para a esquerda
 # Deusa isométrica (v0.93.135; prancha em vista isométrica: linhas baixo-direita, baixo-esquerda, cima-direita, cima-esquerda)
 for t in walk idle sit; do $P assets-src/goddess-iso/goddess-iso-$t-sheet.png src/assets/goddess-iso-$t.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+for t in sword axe hoe pickaxe shovel; do $P assets-src/goddess-iso/goddess-iso-$t-walk-sheet.png src/assets/goddess-iso-$t.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+for t in axe hoe pickaxe shovel; do $P assets-src/goddess-iso/goddess-iso-$t-attack-sheet.png src/assets/goddess-iso-$t-attack.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+$P assets-src/goddess-iso/goddess-iso-sword-attack-sheet.png src/assets/goddess-iso-sword-attack.png --alpha --frame-h 144 --rows-map 1,3,0,2   # sem --largest: peças soltas do golpe de espada
 $P assets-src/hood/hood-sheet.png src/assets/hood.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
 for t in sword axe hoe pickaxe; do $P assets-src/hood/hood-$t-sheet.png src/assets/hood-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
 $P assets-src/hood/hood-shovel-sheet.png src/assets/hood-shovel.png --alpha --largest --frame-h 144 --rows-map 0,3,3m,2

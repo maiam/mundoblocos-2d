@@ -44,7 +44,7 @@ export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero:
 
 /** Estados de pose com folha própria (o `walk` é a folha do próprio tipo). */
 export type PoseState = 'idle' | 'run' | 'alert' | 'attack' | 'hurt';
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'goddess-iso' | 'goddess-iso-idle' | 'goddess-iso-sit' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | `${PoseKind}-${PoseState}` | 'capybara' | 'capybara-idle';
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'goddess-iso' | 'goddess-iso-idle' | 'goddess-iso-sit' | `goddess-iso-${ToolId}` | `goddess-iso-${SwingTool}-attack` | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | `${PoseKind}-${PoseState}` | 'capybara' | 'capybara-idle';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -139,6 +139,13 @@ export const MAX_PER_SPECIES: Record<AnimalKind, number> = { sheep: MAX_SHEEP, h
  * Desenho do personagem pronto: golpe (`<corpo>-<ferramenta>-attack`), andando com a ferramenta na mão
  * (`<corpo>-<ferramenta>`) ou de mãos vazias. O mesmo para a personagem deste aparelho e para os outros da sala.
  */
+/** Folha da Deusa isométrica: golpe da ferramenta, caminhada com ela na mão (parada = 1º quadro) ou, sem ferramenta, caminhada/idle. */
+export function goddessIsoKind(equipped: ToolId | null, attackTool: ToolId | null, attacking: boolean, moving: boolean): ActorKind {
+  if (attacking && attackTool && TOOLS[attackTool].swings) return `goddess-iso-${attackTool as SwingTool}-attack`;
+  if (equipped) return `goddess-iso-${equipped}`;
+  return moving ? 'goddess-iso' : 'goddess-iso-idle';
+}
+
 export function heroActorKind(body: HeroBody, equipped: ToolId | null, attackTool: ToolId | null, attacking: boolean): ActorKind {
   if (attacking && attackTool && TOOLS[attackTool].swings) return `${body}-${attackTool as SwingTool}-attack`;
   return equipped ? `${body}-${equipped}` : body;
@@ -974,7 +981,7 @@ export class Entities {
       const b = this.body;
       const sitting = p.sitting && canSit(b);
       // Deusa isométrica (Santuário solo): caminhada em movimento, idle parada (a folha de sentar fica registrada para quando houver assento).
-      const kind: ActorKind = this.character === 'goddess-iso' ? (p.moving ? 'goddess-iso' : 'goddess-iso-idle')
+      const kind: ActorKind = this.character === 'goddess-iso' ? goddessIsoKind(p.equipped, p.attackTool, p.attacking, p.moving)
         : this.character === 'goddess' ? 'goddess'
         : sitting ? `${b as SitBody}-sit` : heroActorKind(b, p.equipped, p.attackTool, p.attacking);
       out.unshift({

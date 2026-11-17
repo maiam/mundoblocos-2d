@@ -42,7 +42,7 @@ Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham 
 - A prancha isométrica (`celestial-blocks-iso.png`) fica só como referência.
 
 ## Deusa isométrica (Santuário solo, v0.93.135)
-Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `goddess-iso-idle` e `goddess-iso-sit` (`assets-src/goddess-iso/`, 4×4; ordem da prancha original: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda = direita, frente, costas, esquerda do jogo; `--rows-map 1,3,0,2`). Anda no chão; parada usa o idle. A Deusa flutuante abaixo continua na Sala 2 online. Ver `NEXT_STEPS` para as 10 folhas de ferramenta pendentes de revisão.
+Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `goddess-iso-idle` e `goddess-iso-sit` (`assets-src/goddess-iso/`, 4×4; ordem da prancha original: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda = direita, frente, costas, esquerda do jogo; `--rows-map 1,3,0,2`). Anda no chão; parada usa o idle. A Deusa flutuante abaixo continua na Sala 2 online. Também há folhas de caminhada e de golpe das 5 ferramentas (`goddess-iso-<ferramenta>[-attack]`, v0.93.137); o perfil ainda não dá ferramentas à Deusa (`tools: false`).
 
 ## Deusa da Vida (flutuante, Sala 2)
 - **Flutua em vez de caminhar.** Folha `assets-src/goddess-float-sheet.png` (7 quadros × 4 direções, fundo branco,
