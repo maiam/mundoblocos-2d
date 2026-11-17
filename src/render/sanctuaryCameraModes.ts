@@ -72,8 +72,13 @@ export class SanctuaryCameraModes {
 
   get current(): SanctuaryCameraMode { return this.mode; }
 
+  /** Avisa o renderer quando a câmera muda (a arte dos carvalhos acompanha a Isométrica). */
+  onChange: ((mode: SanctuaryCameraMode) => void) | null = null;
+
   private setMode(mode: SanctuaryCameraMode): void {
+    const changed = mode !== this.mode;
     this.mode = mode;
+    if (changed) this.onChange?.(mode);
     this.drag = null;
     this.root.querySelectorAll<HTMLButtonElement>('button[data-mode]').forEach(b => {
       b.setAttribute('aria-pressed', String(b.dataset.mode === mode));

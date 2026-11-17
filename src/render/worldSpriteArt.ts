@@ -13,7 +13,7 @@ import { objectScaleFor } from './worldScale';
  * `DoorSprites` as desenha com a animação de abrir/fechar.
  * Cubos e paredes têm render próprio (`ChunkBlocks`) e devolvem null. Ainda sem animação de porta nem brilhos (M3).
  */
-export function worldSpriteArt(world: World, textures: BlockTextures): (id: BlockId, x: number, y: number) => SpriteDraw | null {
+export function worldSpriteArt(world: World, textures: BlockTextures, isometric: () => boolean = () => false): (id: BlockId, x: number, y: number) => SpriteDraw | null {
   const fenceCache = new Map<number, SpriteDraw>();
   const fence = (id: BlockId, x: number, y: number): SpriteDraw | null => {
     const pieces = textures.fencePieces.get(id);
@@ -65,6 +65,11 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     const salt = isTownArt(id) ? 0x7041 : world.seed;
     // A flor do campo desenha a espécie que ela solta ao ser quebrada (`wildFlowerIndex`: mesma conta, 15 quadros).
     const pick = id === Block.FLOWER && vars?.length === FLOWER_BLOCKS.length ? wildFlowerIndex(world.seed, x, y) : vars ? Math.floor(hash2(salt, x * 7 + 3, y * 13 - 1) * vars.length) : 0;
+    // Câmera Isométrica do Santuário: o carvalho usa a arte isométrica (3 tamanhos, sorteados pela célula) e o plano gira 45° para encarar a câmera.
+    if (id === Block.OAK_TREE && textures.isoOak.length && isometric()) {
+      const iso = textures.isoOak[Math.floor(hash2(world.seed, x * 7 + 3, y * 13 - 1) * textures.isoOak.length)];
+      return { sprite: iso, walkable: false, scale: objectScaleFor(def.shape) > 1 ? objectScaleFor(def.shape) : undefined, yaw: Math.PI / 4 };
+    }
     const sprite = vars ? vars[pick] : textures.objects.get(id);
     // Grade fina (ADR 0032): quem mantém os pixels de hoje cresce em células (`objectScaleFor`; árvore = tronco 1 × 1, desenho alto).
     // sebes da cidade repetem em todas as células finas (linha contínua): ficam do tamanho da célula, sem ampliar

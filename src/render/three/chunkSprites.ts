@@ -25,6 +25,15 @@ export interface SpriteDraw {
   stack?: number;
   /** Fator de tamanho do desenho em volta do meio da base (objetos que mantêm os pixels na grade fina, ADR 0032: árvores). Padrão 1. */
   scale?: number;
+  /** Giro (rad) do plano em volta do meio da base: o desenho encara a câmera Isométrica (v0.93.127). Padrão 0 (encara o sul, como todos). */
+  yaw?: number;
+}
+/**
+ * Origem (x, z) do plano de um sprite girado `yaw` em volta do MEIO da base: a malha tem a origem no canto esquerdo, então a origem recua meia largura já girada
+ * (`Ry(yaw)·(half, 0, 0) = (half·cos, 0, −half·sin)`); o meio da base fica onde estava (`left + half`, `baseZ`).
+ */
+export function yawPivotOrigin(left: number, baseZ: number, half: number, yaw: number): [number, number] {
+  return [left + half - half * Math.cos(yaw), baseZ + half * Math.sin(yaw)];
 }
 export interface SpriteCell {
   x: number;
@@ -35,6 +44,8 @@ export interface SpriteCell {
   lift?: number;
   /** Fator de tamanho (`SpriteDraw.scale`); padrão 1. */
   scale?: number;
+  /** Giro em volta do meio da base (`SpriteDraw.yaw`); padrão 0. */
+  yaw?: number;
   /** Deslocamento extra de profundidade (a sombra fica um pouco atrás do sprite). */
   bias?: number;
 }
@@ -322,7 +333,8 @@ export class ChunkSprites {
         if (!bucket) { bucket = { sprite: draw.sprite, walkable: draw.walkable, animated: this.opts.animated?.(id) ?? null, cells: [] }; buckets.set(draw.sprite.canvas, bucket); }
         const scale = draw.scale && draw.scale !== 1 ? draw.scale : undefined;
         const n = Math.min(MAX_STACK_DRAWN, Math.max(1, Math.floor(draw.stack ?? 1)));
-        for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale });
+        const yaw = draw.yaw ? draw.yaw : undefined;
+        for (let level = 0; level < n; level++) bucket.cells.push({ x, y, id, sprite: draw.sprite, lift: level, scale, yaw });
         if (draw.shadow) {
           let sb = buckets.get(draw.shadow.canvas);
           if (!sb) { sb = { sprite: draw.shadow, walkable: true, animated: null, cells: [] }; buckets.set(draw.shadow.canvas, sb); }
@@ -341,8 +353,15 @@ export class ChunkSprites {
         // base do sprite = face sul da célula (oy + h = TILE na maioria dos objetos); canto esquerdo = ox
         // maior que 1: cresce em volta do meio da base (o tronco fica na célula)
         const sc = cell.scale ?? 1;
-        this.dummy.position.set(cell.x + sprite.ox / tile - (sprite.w / tile / 2) * (sc - 1), cell.lift ?? 0, cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x) + (cell.bias ?? 0));
-        this.dummy.rotation.set(0, 0, 0);
+        const left = cell.x + sprite.ox / tile - (sprite.w / tile / 2) * (sc - 1);
+        const baseZ = cell.y + (sprite.oy + sprite.h) / tile + spriteDepthBias(cell.x) + (cell.bias ?? 0);
+        const yaw = cell.yaw ?? 0;
+        if (yaw) {
+          // O plano gira em volta do MEIO da base (o tronco fica na célula): a origem da malha é o canto esquerdo, então recua meia largura girada.
+          const [px, pz] = yawPivotOrigin(left, baseZ, (sprite.w / tile / 2) * sc, yaw);
+          this.dummy.position.set(px, cell.lift ?? 0, pz);
+        } else this.dummy.position.set(left, cell.lift ?? 0, baseZ);
+        this.dummy.rotation.set(0, yaw, 0);
         this.dummy.scale.set(sc, sc, 1);
         this.dummy.updateMatrix();
         mesh.setMatrixAt(i, this.dummy.matrix);
