@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.145 — Santuário: texturas de madeira nas cercas e portões (17/11/2026)
+- **Pedido do dono do produto:** colocar as texturas dele (3 imagens de tábuas: carvalho laranja, bétula clara, cerejeira vermelha com flores) nas cercas e portões 3D do Santuário.
+- `assets-src/iso-set/madeira-{carvalho,betula,cerejeira}.png` → `scripts/extract-iso-fence.py` → `src/assets/iso-wood.webp` (3 quadrados de 256 px, 35 KB; antes eram as tábuas 64 px do Padrão V2). `render/three/isoFences.ts`: uma textura por madeira (filtro suave, no lugar do pixel-art), projetada **24 u do modelo por imagem** (tábua de ~6 u: a do tamanho da estaca; a estaca usa a veia na vertical), com o sombreado por direção da face. Carvalho = `FENCE`/`FENCE_GATE`, Bétula = `_BIRCH`, Cerejeira = `_CHERRY`. Só o Santuário; as cercas do Mundo não mudam.
+- `tsc` e testes verdes; conferido no navegador (as 3 madeiras, cerca e portão aberto). Sem mudança de save/protocolo; `package.json` 0.93.145 (a 0.93.144, das laterais, foi revertida).
+
 ## Orvalis v0.93.143 — Santuário: Bloco de Pedra, quebra em 1 s e terreno em camadas (17/11/2026)
 - **Pedido do dono do produto (regras só do Santuário):** (1) novo **Bloco de Pedra** (o cubo 1×1×1 da prancha de blocos de pedra: `scripts/extract-iso-stone.py` → `iso-stone.webp` com topo/sul/leste e ícone); (2) **quebrar bloco em 1 s**; (3) terreno em camadas — **nível 1 = Bloco de Pedra, nível 2 = Grama, e a Deusa e todo o resto no nível 3**.
 - **Perfil** (`WorldProfile`): `breakSeconds` (Santuário 1; Mundo `null` = pela ferramenta/mão como antes), `surfaceObjects` (Santuário `true`) e `terrain.layers` (Santuário `[ISO_STONE_BLOCK, ISO_G_GRASS]`); `FlatGenerator` põe as camadas em toda célula (níveis 0 e 1 da pilha, que contam como 1 e 2 a partir do chão). `ActionContext.breakSeconds` troca o tempo no `advanceHold`.

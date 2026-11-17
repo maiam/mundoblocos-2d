@@ -6,8 +6,7 @@ os desenha como malhas 3D de verdade (`render/three/isoFences.ts`), então valem
 Saídas:
   src/assets/iso-fence-model.json  as peças usadas (estaca, travessas, portão), cada uma = lista de faces, cada face = lista de vértices [x, y, z]
                                    em unidades do modelo (12 u = 1 célula; norte = −z; y para cima), arredondados a 0,01.
-  src/assets/iso-wood.webp         tábuas das 3 madeiras (carvalho, bétula, cerejeira): por madeira, o topo e a frente (64 px) — a mesma tábua do
-                                   Padrão de Materiais V2 que a cerca 2D usa. Layout: 6 quadrados de 64 px em 1 linha (carvalho topo/frente, bétula…, cerejeira…).
+  src/assets/iso-wood.webp         texturas de madeira (carvalho, bétula, cerejeira; `assets-src/iso-set/madeira-*.png`): 3 quadrados de 256 px em 1 linha.
 Uso: python3 scripts/extract-iso-fence.py
 """
 import json
@@ -39,14 +38,12 @@ data = {
 assert len(data['fence']) == len(FENCE_PARTS), data['fence'].keys()
 (OUT / 'iso-fence-model.json').write_text(json.dumps(data, separators=(',', ':'), ensure_ascii=False))
 
-mats = json.loads((OUT / 'materials-v2.json').read_text())
-sheet = Image.open(OUT / 'materials-v2.webp').convert('RGBA')
-cell = mats['cell']
-atlas = Image.new('RGBA', (6 * cell, cell))
-for w, name in enumerate(['tabuas-de-carvalho', 'tabuas-de-betula', 'tabuas-de-cerejeira']):
-    i = mats['materials'].index(name)
-    for k, row in enumerate(['top', 'front']):
-        atlas.paste(sheet.crop((i * cell, mats['rows'][row][0], (i + 1) * cell, mats['rows'][row][0] + cell)), ((w * 2 + k) * cell, 0))
-atlas.save(OUT / 'iso-wood.webp', lossless=True)
+# Texturas de madeira do dono do produto (v0.93.145): 1 imagem por madeira (4 tábuas, emendável), reduzida a 256 px; o render projeta 24 u do modelo por imagem.
+WOODS = ['carvalho', 'betula', 'cerejeira']   # a ordem de `Wood` em render/three/isoFences.ts
+TEX = 256
+atlas = Image.new('RGB', (len(WOODS) * TEX, TEX))
+for i, w in enumerate(WOODS):
+    atlas.paste(Image.open(ROOT / 'assets-src' / 'iso-set' / f'madeira-{w}.png').convert('RGB').resize((TEX, TEX), Image.LANCZOS), (i * TEX, 0))
+atlas.save(OUT / 'iso-wood.webp', quality=88)
 size = (OUT / 'iso-fence-model.json').stat().st_size
-print(f'ok: {len(data["fence"])} peças de cerca, {len(data["gate"])} do portão, modelo {size // 1024} KB, tábuas {cell}px')
+print(f'ok: {len(data["fence"])} peças de cerca, {len(data["gate"])} do portão, modelo {size // 1024} KB, texturas {TEX}px')

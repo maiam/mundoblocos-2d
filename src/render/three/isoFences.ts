@@ -9,7 +9,7 @@ import { gateIsSide } from '../fence';
 export type ModelFace = number[][];
 /** O modelo do Blockbench já extraído (`scripts/extract-iso-fence.py`): peças da cerca por nome e elementos do portão. */
 export interface IsoFenceModel { fence: Record<string, ModelFace[]>; gate: { name: string; faces: ModelFace[] }[] }
-/** Arte da cerca isométrica: o modelo e a imagem com as tábuas (6 quadrados em 1 linha: topo e frente de carvalho, bétula e cerejeira). */
+/** Arte da cerca isométrica: o modelo e a imagem com as texturas de madeira (3 quadrados em 1 linha: carvalho, bétula, cerejeira). */
 export interface IsoFenceArt { model: IsoFenceModel; wood: HTMLImageElement }
 
 export interface IsoFenceWorld {
@@ -19,6 +19,8 @@ export interface IsoFenceWorld {
 
 /** Unidades do modelo por célula do jogo. */
 const CELL = 12;
+/** Unidades do modelo cobertas por UMA imagem de madeira (4 tábuas): cada tábua fica com 6 u, mais grossa que as travessas e do tamanho da estaca. */
+const TEX_UNITS = 24;
 /** Eixo da dobradiça do portão (x do modelo) e ângulo aberto (rad); a folha gira para o norte, como o portão 2D. */
 const HINGE_X = -5.1;
 const OPEN_ANGLE = Math.PI / 2;
@@ -57,8 +59,8 @@ class Builder {
           t.col.push(shade, shade, shade);
           let h: number, w: number;
           if (isTop) { h = v[0]; w = -v[2]; } else if (Math.abs(nz) > Math.abs(nx)) { h = v[0]; w = v[1]; } else { h = v[2]; w = v[1]; }
-          let u = h / CELL;
-          w /= CELL;
+          let u = h / TEX_UNITS;
+          w /= TEX_UNITS;
           if (upright && !isTop) [u, w] = [w, -u];
           t.uv.push(u, w);
         }
@@ -103,22 +105,19 @@ export class IsoFences {
 
   constructor(private readonly scene: THREE.Object3D, private readonly world: IsoFenceWorld, private readonly art: IsoFenceArt) {
     const { wood } = art;
-    const cell = wood.height; // tábuas quadradas, uma ao lado da outra
-    const tile = (i: number): THREE.CanvasTexture => {
+    const cell = wood.height; // texturas quadradas, uma ao lado da outra
+    for (let w = 0; w < 3; w++) {
       const c = document.createElement('canvas');
       c.width = c.height = cell;
-      c.getContext('2d')!.drawImage(wood, i * cell, 0, cell, cell, 0, 0, cell, cell);
+      c.getContext('2d')!.drawImage(wood, w * cell, 0, cell, cell, 0, 0, cell, cell);
       const t = new THREE.CanvasTexture(c);
       t.colorSpace = THREE.SRGBColorSpace;
-      t.magFilter = t.minFilter = THREE.NearestFilter;
-      t.generateMipmaps = false;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.anisotropy = 4;
       this.textures.push(t);
-      return t;
-    };
-    for (let w = 0; w < 3; w++) {
-      const mk = (map: THREE.Texture) => new THREE.MeshBasicMaterial({ map, vertexColors: true, side: THREE.DoubleSide });
-      this.materials.push([mk(tile(w * 2)), mk(tile(w * 2 + 1))]);
+      // o sombreado por direção da face (vertex colors) faz a diferença entre topo e lateral: as duas usam a mesma madeira
+      const m = new THREE.MeshBasicMaterial({ map: t, vertexColors: true, side: THREE.DoubleSide });
+      this.materials.push([m, m]);
     }
   }
 
