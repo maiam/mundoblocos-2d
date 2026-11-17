@@ -14,14 +14,13 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | `npm audit` | Deve mostrar 0 vulnerabilidades (a Hostinger também verifica as dependências do repositório) |
 | `npm run build` | Typecheck + `dist/` estático (`base: './'`, qualquer subcaminho/CDN; inclui PWA) |
 | `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (código embutido, sem esqueleto `<html>`) + imagens em `artifact/mundoblocos-assets/` + mapa `artifact/mundoblocos-files.json` (ADR 0013) |
-| `npm run build:artifact:santuario` | build com `VITE_WORLD=santuario` → `artifact/santuario.html` + `-assets/` + `-files.json` |
 
 ## Artifacts (versões jogáveis, privadas — compartilhar pelo menu Share)
 | Mundo | URL | Atualizar |
 |---|---|---|
 | Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
-| Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` com `files` de `artifact/santuario-files.json` |
-- Rode **o build de cada mundo antes de publicá-lo** (os dois usam `dist/`). No dev: `?mundo=santuario`.
+| ~~Santuário Celestial~~ | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | **descontinuado (v0.93.133, ADR 0036)**: o build `build:artifact:santuario` foi removido; o link fica só como histórico |
+- No dev: `?mundo=santuario`.
 - Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`); o jogo reconhece o Santuário pelo hostname (`santuario.`).
 
 ## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
@@ -75,7 +74,7 @@ A Hostinger também lista vulnerabilidades das dependências do repositório: ma
    devem ficar direto na pasta, com `index.html` na raiz dela) → apagar o `.zip`.
 3. **Segurança** → **SSL**: conferir/instalar o certificado grátis para `orvalis.pensamentos.online` (pode levar
    alguns minutos até horas) e ativar **Forçar HTTPS**. HTTPS é necessário para instalar como app.
-4. Santuário (v0.93.125: abre direto na Sala 2 online, na mesma build do mundo normal — **não** use o Artifact antigo `build:artifact:santuario` como entrada): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
+4. Santuário (v0.93.125: abre direto na Sala 2 online, na mesma build do mundo normal): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
    Santuário pelo primeiro nome do endereço). Sem ele, `https://orvalis.pensamentos.online/?mundo=santuario` funciona.
 5. Conferir: abrir no celular (deitado), jogar, recarregar (continua salvo), instalar na tela inicial.
 
@@ -85,8 +84,7 @@ enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só 
 **Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
 
 ## Pipeline de arte
-**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`) e `npm run build:artifact:santuario`; cada um
-só leva a arte do seu mundo, em arquivos ao lado da página (ADR 0013). Gere o build de um mundo imediatamente antes de publicá-lo (mesmo `dist/`).
+**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`): leva a arte do mundo em arquivos ao lado da página (ADR 0013). O artefato do Santuário (`build:artifact:santuario`) foi removido (ADR 0036).
 
 **Sprites** — `P="python3 scripts/process-sprite.py"`:
 ```bash

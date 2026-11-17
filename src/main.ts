@@ -11,8 +11,6 @@ import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
 import { roomRules, roomsForWorld } from './net/protocol';
 import { useSolidPhysics } from './render/rendererChoice';
-import { parseWallThickness } from './world/walls';
-import { parseAmbient } from './render/lighting';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
 import { NetSession } from './net/session';
@@ -40,9 +38,10 @@ const gridProto = SUBDIV !== DEFAULT_SUBDIV && baseProfile.id === 'principal';
 const profile = baseProfile;
 /**
  * A URL do Santuário abre **direto na Sala 2** (v0.93.125): a mesma versão do jogo do mundo normal (mundo procedural com a Cidade, mesmas telas), em modo criativo e
- * com a Deusa. O Santuário Celestial antigo (mundo plano de nuvens, laboratório) só abre com `?celestial=1`, para desenvolvimento.
+ * com a Deusa. O Santuário Celestial antigo (renderer próprio, `?celestial=1`, artefato `VITE_WORLD=santuario`) foi removido na limpeza do Santuário isométrico
+ * (v0.93.133); o Santuário isométrico solo nasce sobre este ponto de entrada (ver NEXT_STEPS).
  */
-const sanctuaryEntry = profile.id === 'santuario' && !new URLSearchParams(window.location.search).has('celestial') && !gridProto;
+const sanctuaryEntry = profile.id === 'santuario';
 document.title = sanctuaryEntry ? 'Santuário de Orvalis' : profile.name;
 let game: Game | null = null;
 /** Renderer 2.5D em WebGL carregado sob demanda (Santuário e Mundo; o Canvas 2D foi removido na v0.93.105): sem Three.js no pacote inicial. */
@@ -298,13 +297,6 @@ void loadArtPack(sanctuaryEntry ? 'principal' : profile.id)
           const mod = await import('./render/worldThreeRenderer');
           worldRendererCtor = mod.WorldThreeRenderer;
           threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
-        } else if (import.meta.env.VITE_WORLD !== 'principal' && profile.id === 'santuario') {
-          const mod = await import('./render/sanctuaryThreeRenderer');
-          const worldMod = await import('./render/worldThreeRenderer');
-          worldRendererCtor = worldMod.WorldThreeRenderer;
-          // Vista oblíqua é o padrão (ADR 0026, v0.93.10); `?vista=inclinada` volta à câmera inclinada a 67°.
-          const view = query.get('vista') === 'inclinada' ? 'tilt' : 'oblique';
-          threeRendererFactory = (target, world) => new mod.SanctuaryThreeRenderer(target, world, { view, wallTest: query.get('paredes') === 'teste', ambient: parseAmbient(query.get('luz')) ?? undefined, wallThickness: parseWallThickness(query.get('espessura')) ?? undefined, testScale: ['atual', 'proposta', 'core', 'grade'].includes(query.get('escala') ?? '') ? (query.get('escala') as 'atual' | 'proposta' | 'core' | 'grade') : undefined });
         } else if (profile.id === 'principal') {
           const mod = await import('./render/worldThreeRenderer');
           worldRendererCtor = mod.WorldThreeRenderer;

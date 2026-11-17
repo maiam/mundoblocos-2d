@@ -13,29 +13,12 @@ export const DAY_LENGTH_S = 480;
 /** Subdivisão padrão do jogo e do servidor (a F7 da ADR 0032 troca para 2 nos dois ao mesmo tempo). */
 export const DEFAULT_SUBDIV = 2;
 
-/**
- * A página é a do Santuário **Celestial** antigo (mundo plano de nuvens, escala própria, grade 1)? Só no build fixo `VITE_WORLD=santuario` (o Artifact antigo) ou com
- * `?celestial=1` na página do Santuário. **Desde a v0.93.125 a URL do Santuário (subdomínio ou `?mundo=santuario`) abre a Sala 2 online no mundo normal: grade 2, igual
- * à do servidor** (com a grade 1 o `hello` seria recusado como "versão diferente"). Cópia mínima de `resolveWorldId` (aquele módulo importa este).
- */
-function sanctuaryPage(): boolean {
-  const fixed = (import.meta as unknown as { env?: { VITE_WORLD?: string } }).env?.VITE_WORLD;
-  if (fixed) return fixed === 'santuario';
-  const q = new URLSearchParams(window.location.search);
-  if (!q.has('celestial')) return false;
-  const parts = window.location.hostname.split('.');
-  if (parts.length > 2 && parts[0].toLowerCase() === 'santuario') return true;
-  return q.get('mundo')?.toLowerCase() === 'santuario';
-}
-
 function gridSubdiv(): number {
   if (typeof window === 'undefined') {
     // servidor e testes (Node): `ORVALIS_SUBDIV=2 npm test` roda a suíte na outra grade, para achar o que ainda supõe 1 célula = 1 passo
     const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.ORVALIS_SUBDIV;
     return env === '1' ? 1 : env === '2' ? 2 : DEFAULT_SUBDIV;
   }
-  // O Santuário Celestial é outro mundo, com a escala própria da ADR 0028: segue na grade 1 (a grade fina é do Mundo).
-  if (sanctuaryPage()) return 1;
   const dev = !!(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
   if (!dev) return DEFAULT_SUBDIV;
   const g = new URLSearchParams(window.location.search).get('grade');

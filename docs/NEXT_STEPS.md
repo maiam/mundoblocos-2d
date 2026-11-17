@@ -4,7 +4,11 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
-## Laboratório de câmera do Santuário (v0.93.65)
+## Santuário isométrico solo (ADR 0036, decisão do dono do produto, 17/11/2026)
+**Feito (v0.93.133, limpeza):** removidos `SanctuaryThreeRenderer`, protótipos de parede, joystick de câmera, pacotes de arte do laboratório, `?celestial=1`, `VITE_WORLD=santuario` e `build:artifact:santuario`. O Mundo principal não mudou.
+**Próximos passos (decididos: solo/local, terreno plano vazio):** 1) reescrever o `WorldProfile` `santuario` (terreno plano vazio, limites pequenos, hotbar de construção, sem cidade/missões/monstros) e permitir **abri-lo solo** (hoje `main.ts` o liga à Sala 2 online); 2) câmera isométrica fixa como padrão do perfil (45° / 35,264°, sem seletor; giro em passos de 90° a decidir) sobre o `worldThreeRenderer`; 3) conferir seleção/raycast, chunks visíveis, ordem de profundidade de sprites/billboards e a Deusa (só 4 direções); 4) definir arte/proporção isométrica (texturas e sprites estão em 3/4); 5) remover o resto do legado celestial quando o perfil novo estiver de pé (`celestialArt.ts`: instaladores de grade/oito faces/painéis sem uso, `art/santuario.ts`, blocos 80–97, `sanctuaryMaterials.test.ts`); 6) reconectar à Sala 2 online só depois do visual aprovado (exige terreno da sala, `PROTOCOL_VERSION`, snapshot e **servidor primeiro**). **Dívida:** `celestialArt.ts` tem funções sem chamador (`installCelestialGrassNet`, `installSanctuaryEightBlockAtlas`, `installSanctuaryGrassPanels`).
+
+## Laboratório de câmera do Santuário (v0.93.65) — removido na v0.93.133 (histórico)
 **Implementado:** joystick orbital com azimute, elevação, zoom, reset e preferência local; Grama Celestial com seis faces reais (atlas 512×512); cinco níveis de pilha somente no Santuário, e sliders para reduzir altura do bloco e tamanho aparente da célula sem trocar a grade lógica. **Conferir visualmente em aparelhos reais:** rotação completa e inclinações extremas (especialmente sprite 2D da Deusa, paredes e portas), alcance da seleção por toque com câmera girada, iluminação e legibilidade da arte nas diferentes faces. Após a avaliação do dono do produto, fixar a direção artística e manter ou retirar o painel experimental. O Mundo principal não mudou.
 
 ## Mármore Celestial V2/V3 removido (W4, v0.93.28, ADR 0027)

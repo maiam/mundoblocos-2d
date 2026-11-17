@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.133 — limpeza do Santuário Celestial antigo (17/11/2026)
+- **Pedido do dono do produto:** o mundo normal continua como está; o Santuário será refeito do zero, **solo**, terreno plano vazio, em vista isométrica. Este é o 1º passo: a limpeza (ADR 0036).
+- **Removido:** `render/sanctuaryThreeRenderer.ts`, `sanctuaryWallPrototype.ts`, `sanctuaryWallProportionTest.ts`, `sanctuaryEightFacesAsset.ts`, `celestialGrassNetAsset.ts`, `sanctuaryGrassPanelsAsset.ts`, `sanctuaryGoddessVisual.ts` (+ testes), a classe `SanctuaryCameraJoystick` (ficam as constantes de câmera), o `?celestial=1`, o build fixo `VITE_WORLD=santuario` (vite, `art/index.ts`, `config.ts`), o script `build:artifact:santuario` e o ramo do Santuário Celestial em `main.ts`.
+- **Mantido (o renderer do Mundo usa):** `sanctuaryThreeLayout`, `sanctuaryLighting`, `sanctuaryCameraModes`, `sanctuaryCameraRig`, `sanctuaryObliqueView`, `sanctuaryWallArt`, `celestialArt` e o perfil `santuario` (a substituir no próximo passo).
+- Efeito: o perfil Santuário passa a usar sempre a grade 2 (antes o Celestial usava a 1). Sem mudança de save, protocolo (29) nem servidor. `tsc`, 656 testes e `npm run build` verdes; **não conferido no navegador** (sem mudança visual no Mundo).
+
 ## Orvalis v0.93.132 — carvalho isométrico removido (17/11/2026)
 - **Pedido do dono do produto:** não gostou da versão do carvalho em perspectiva isométrica; **removida do jogo** (reverte a v0.93.127): arte `tree-oak-iso.webp`, prancha de origem, `scripts/extract-oak-iso.py`, `SpriteDraw.yaw`/`yawPivotOrigin` e o teste, a troca de sprites ao mudar de câmera (`onChange`) e a doc em `domains/render.md`. A câmera Isométrica do Santuário volta a usar o carvalho de sempre.
 - Sem mudança de save, protocolo ou servidor.

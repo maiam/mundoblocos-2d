@@ -11,7 +11,6 @@
     "test": "vitest run",
     "build:artifact": "VITE_WORLD=principal npm run build && node scripts/build-artifact.mjs",
     "bench": "vitest bench --run --config bench/vitest.config.ts",
-    "build:artifact:santuario": "VITE_WORLD=santuario npm run build && node scripts/build-artifact.mjs santuario \"Santuário Celestial\"",
     "pack:site": "npm run build && rm -f orvalis-site.zip && cd dist && zip -qr ../orvalis-site.zip .",
     "build:net": "node scripts/build-net.mjs",
     "perf:cpu:3d": "node scripts/perf-cpu-3d.cjs",

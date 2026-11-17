@@ -51,6 +51,5 @@ Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham 
 - Ainda sem ferramentas nem ações próprias.
 
 ## Publicação
-- Artefato próprio: `npm run build:artifact:santuario` → `artifact/santuario.html` →
-  https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb
+- O artefato próprio (`build:artifact:santuario`) e o `?celestial=1` foram **removidos** (v0.93.133, ADR 0036). O Santuário será refeito do zero em vista isométrica (NEXT_STEPS); este perfil (nuvem, 18 blocos celestiais) é o conteúdo a ser substituído.
 - Subdomínio real (`santuario.<domínio>`) exige hospedar o build estático (`dist/`) no domínio — pendente.
