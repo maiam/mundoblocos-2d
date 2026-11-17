@@ -574,6 +574,29 @@ export class WorldThreeRenderer implements GameRenderer {
     return this.stage.groundCell();
   }
 
+  /** Face de cubo sob o ponto da tela (cubo, nível e normal): o "colocar na face" da vista isométrica. */
+  pickFace(cam: Camera, sx: number, sy: number): { x: number; y: number; level: number; nx: number; ny: number; up: boolean } | null {
+    if (this.disposed || !this.worldLayer.visible) return null;
+    if (this.sanctuaryCameras && this.lastCameraPlayer) {
+      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
+      this.sanctuaryCameras.aim(cam, sx, sy);
+    } else {
+      this.stage.syncCamera(cam);
+      this.stage.aim(cam, sx, sy);
+    }
+    const cl = this.world.cubeLevels;
+    for (const hit of this.stage.hits(this.blocks.meshes())) {
+      const cell = this.blocks.cellOf(hit.object, hit.instanceId);
+      const n = hit.face?.normal;
+      if (!cell || !n || n.y < -0.5) continue; // por baixo nunca se vê de cima
+      // Nível atingido: o ponto de impacto, um pouco para dentro do bloco (blocos de 1/4 vêm em sequências de `n` níveis).
+      const inside = (hit.point.y - n.y * 0.25 / cl) * cl;
+      const level = Math.max(cell.level, Math.min(cell.level + (cell.n ?? 1) - 1, Math.floor(inside)));
+      return { x: cell.x, y: cell.y, level, nx: Math.round(n.x), ny: Math.round(n.z), up: n.y > 0.5 };
+    }
+    return null;
+  }
+
   addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void {
     this.damageNumbers.add(x, y, hit, target);
   }

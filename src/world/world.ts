@@ -714,6 +714,34 @@ export class World {
     return this.placementLevel(x, y, id) !== null;
   }
 
+  /**
+   * Onde um CUBO entraria **no nível pedido** — colocar numa face de um cubo vizinho (vista isométrica, ADR 0036): o nível pode ficar flutuando, sem cubo no
+   * nível de baixo. Só cubos; a célula precisa estar livre naquele nível e não ter objeto não-cubo (árvore, porta, enfeite) no chão. Nível 0 segue as regras de
+   * sempre (`placementLevel`). null = não pode.
+   */
+  placementLevelAt(x: number, y: number, id: BlockId, level: number): Level | null {
+    const def = blockDef(id);
+    if (!def.placeable || def.layer !== 'object' || def.shape !== 'cube') return null;
+    if (!this.profile.blocks.includes(id) || this.isProtected(x, y) || !this.inBounds(x, y)) return null;
+    if (!Number.isInteger(level) || level < 0 || level >= this.maxStack) return null;
+    if (level === 0) return this.placementLevel(x, y, id) === 0 ? 0 : null;
+    if (this.getLevel(x, y, level) !== Block.AIR || this.getGround(x, y) === Block.VOID) return null;
+    const base = blockDef(this.getObject(x, y));
+    if (base.id !== Block.AIR && base.shape !== 'cube') return null;
+    return level;
+  }
+
+  canPlaceAt(x: number, y: number, id: BlockId, level: number): boolean {
+    return this.placementLevelAt(x, y, id, level) !== null;
+  }
+
+  placeBlockAt(x: number, y: number, id: BlockId, level: number): boolean {
+    const at = this.placementLevelAt(x, y, id, level);
+    if (at === null) return false;
+    this.setLevel(x, y, at, id);
+    return true;
+  }
+
   placeBlock(x: number, y: number, id: BlockId): boolean {
     const level = this.placementLevel(x, y, id);
     if (level === null) return false;

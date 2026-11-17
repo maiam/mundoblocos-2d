@@ -47,7 +47,7 @@ export class IsoCursor {
     if (cell && w.inBounds(cell.x, cell.y)) {
       const stack = w.stackHeight(cell.x, cell.y);
       // Pilha cheia: nada entra em cima; marca o bloco do topo.
-      const level = stack >= w.maxStack ? w.maxStack - 1 : stack;
+      const level = cell.level ?? (stack >= w.maxStack ? w.maxStack - 1 : stack);
       this.ghost.position.set(cell.x + 0.5, (level + 0.5) * h, cell.y + 0.5);
       this.ghost.scale.set(1.004, h * 1.004, 1.004);
       this.ghost.material.color.set(cell.valid ? 0xffe27a : 0xff6b7d);

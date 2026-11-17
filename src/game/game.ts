@@ -239,6 +239,7 @@ export class Game {
       drops: this.drops, camera: this.camera, renderer: this.renderer,
       slot: () => this.slot,
       joystickActive: () => this.joystick.active,
+      facePlacement: profile.view === 'isometric' && !options.net,
       collectBlocks: profile.collectBlocks,
       sharedLoot: !!options.net,
       onConsumed: () => this.hotbar.prune(this.inventory),
