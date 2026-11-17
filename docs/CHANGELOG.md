@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.130 — Sala 2 (Santuário) sem missões, carteira e painel do personagem (17/11/2026)
+- **Decisão do dono do produto:** o Santuário é área de criação; não herda a progressão do mundo normal. Novo `WorldProfile.progression` (principal `true`; Santuário e o perfil criativo da Sala 2 `false`).
+- Com `progression: false` o `Game` não conta/oferece missões (eventos, diário, sinais `!`/`?`, conversa com o Mestre), esconde o botão e a tecla **C** do painel do personagem, e ignora a carteira (a bolsa da sala não carrega nem guarda Moedas de Cobre: `coins` = 0).
+- **Correção — Deusa invisível na Sala 2 (só a sombra):** a Sala 2 usa o pacote de arte do mundo normal, que não trazia a folha da Deusa (`actors.goddess` só existia no pacote do Santuário antigo). `art/principal.ts` agora importa `goddess-float.webp` (baixa só quando a Deusa aparece). Conferido no navegador com servidor local: a Deusa aparece e a carteira fica em 0 (bolsas antigas traziam moedas).
+- Sem mudança de save (21) nem de protocolo (29). Empilhado sobre o #246 (missões 04–07).
+
 ## Orvalis v0.93.129 — Capítulo 1: missões 04–07 (17/11/2026)
 - **Missões** (`npcBrain/missions.ts`, texto do dono do produto; valores provisórios): **04 O valor de uma aventura** (5 espólios — seda, presas, pelagem, coração da rainha; 10 + valor de cada item), **05 A floresta das teias** (4 aranhas pequenas + 1 grande; 22), **06 Protegendo nossas terras** (6 cercas + 1 porteira de qualquer madeira, eventos `place`; 25), **07 Terra para o futuro** (12 blocos de terra arada no terreno marcado; 18). A corrente agora vai até a 07.
 - **Motor:** meta `probe` (lida do mundo, não por evento; `goalsOf/isReady/marksOf/complete` ganham `probe`), `Mission.bonusPerItem` + `bonusFor` (bônus por unidade entregue) e `complete` devolve o que tirou (`taken`).

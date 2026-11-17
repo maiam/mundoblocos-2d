@@ -42,6 +42,7 @@ import dungeonProps from '../../assets/dungeon-props.webp';
 import dungeonRocks from '../../assets/dungeon-rocks.webp';
 import dungeonWalls from '../../assets/dungeon-walls.webp';
 import dungeonCave from '../../assets/dungeon-cave.webp';
+import goddessFloat from '../../assets/goddess-float.webp';
 import heroineAxeAttack from '../../assets/heroine-axe-attack.webp';
 import heroineAxe from '../../assets/heroine-axe.webp';
 import heroineHoeAttack from '../../assets/heroine-hoe-attack.webp';
@@ -370,6 +371,7 @@ import type { ArtPack } from './types';
 /** Mundo principal: heroína e ferramentas, materiais, porta, trigo, ovelhas e a dungeon das aranhas. */
 const pack: ArtPack = {
   actors: {
+    goddess: goddessFloat, // Sala 2 (Santuário) usa o pacote do mundo normal; a folha só baixa quando a Deusa aparece
     heroine,
     hero,
     'hero-sword': heroSword,

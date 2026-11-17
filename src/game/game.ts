@@ -124,6 +124,8 @@ export class Game {
   private heroPicked: StackId | null = null;
   /** Materiais precisam ser coletados neste mundo (perfil). */
   private readonly collect: boolean;
+  /** Missões, carteira e painel do personagem ligados (`WorldProfile.progression`; desligado na Sala 2). */
+  private readonly progression: boolean;
   readonly drops = new Drops();
   private readonly renderer: GameRenderer;
   /** Tempo (ms) que `renderer.draw` gastou nos últimos quadros (anel de 1200): separa o custo de JS do custo de GPU no painel `?fps=1`. */
@@ -194,6 +196,7 @@ export class Game {
     this.world = new World(seed, profile);
     this.questDefs = questsFor(this.world);
     this.collect = profile.collectBlocks;
+    this.progression = profile.progression;
     this.hotbar = new Hotbar(profile, (options.save?.hotbar ?? options.net?.bag?.hotbar ?? undefined) as (StackId | null)[] | undefined);
     // Sem cultivo nem coleta, não há itens contáveis (Santuário: só blocos infinitos).
     this.inventory = profile.collectBlocks || profile.farming ? new Inventory() : new Inventory({});
@@ -251,7 +254,7 @@ export class Game {
       menu: this.hotbar.dynamic
         ? {
           character: art().uiIcons?.character ?? '', skills: art().uiIcons?.skills ?? '', bag: art().uiIcons?.bag ?? '',
-          onCharacter: () => this.toggleCharacter(), onSkills: () => this.toggleSkills(), onBag: () => this.toggleBag(),
+          onCharacter: profile.progression ? () => this.toggleCharacter() : undefined, onSkills: () => this.toggleSkills(), onBag: () => this.toggleBag(),
         }
         : undefined,
       // Corações só em mundo com dungeon.
@@ -317,7 +320,8 @@ export class Game {
       const bag = net.bag;
       if (bag) {
         this.inventory.replaceAll(bag.inventory as Partial<Record<StackId, number>>);
-        if (typeof bag.coins === 'number') this.inventory.wallet.set(bag.coins); // carteira guardada na sala (v28)
+        if (this.progression) { if (typeof bag.coins === 'number') this.inventory.wallet.set(bag.coins); } // carteira guardada na sala (v28)
+        else this.inventory.wallet.set(0); // Sala 2: sem carteira (bolsas antigas traziam moedas)
         this.hotbar.prune(this.inventory);
         const [bx, by] = this.world.isWalkable(Math.floor(bag.x), Math.floor(bag.y))
           ? [bag.x, bag.y] : this.world.nearestWalkable(Math.floor(bag.x), Math.floor(bag.y)).map((v) => v + 0.5);
@@ -860,13 +864,14 @@ export class Game {
   private missionProbe = (key: string): number => (key === 'plot-tilled' && this.world.farmPlot ? tilledIn(this.world, this.world.farmPlot) : 0);
 
   private missionEvent(e: MissionEvent): void {
+    if (!this.progression) return;
     if (onMissionEvent(this.entities.missions, e)) this.refreshMissionHud();
   }
 
   /** Diário curto no canto da tela: título e metas da missão ativa (nada, sem missão). */
   private refreshMissionHud(): void {
     const log = this.entities.missions;
-    const m = missionOf(log.active);
+    const m = this.progression ? missionOf(log.active) : null;
     if (!m) { this.hud.setMission(null); return; }
     const goals = goalsOf(m, log, (id) => this.inventory.count(id), this.missionProbe);
     this.hud.setMission(m.title, goals.map(({ goal, have, done }) => `${done ? '✓ ' : ''}${goal.text}${goal.count > 1 ? ` ${have}/${goal.count}` : ''}`));
@@ -877,6 +882,7 @@ export class Game {
    * ou entrega a pronta; nos outros, só recebe a entrega quando a missão pede a eles. Devolve se a conversa foi tratada (senão segue a conversa normal).
    */
   private talkMission(v: Villager): boolean {
+    if (!this.progression) return false;
     const key = this.missionKey(v);
     if (!key) return false;
     const log = this.entities.missions;
@@ -1010,7 +1016,7 @@ export class Game {
       }
     }
     // Missões do Capítulo 1: ! no Mestre que oferece, ? em quem recebe (azulado em andamento, dourado pronta); vence o sinal do Silvano na mesma pessoa.
-    Object.assign(marks, missionMarks(this.entities.missions, (id) => this.inventory.count(id), this.missionProbe));
+    if (this.progression) Object.assign(marks, missionMarks(this.entities.missions, (id) => this.inventory.count(id), this.missionProbe));
     this.refreshMissionHud();
     this.entities.marks = marks as typeof this.entities.marks;
   }
@@ -1038,6 +1044,7 @@ export class Game {
 
   /** Painel do personagem (botão ou tecla C): avatar, personagem inteiro, nível, ataque, HP e a carteira; o jogo pausa enquanto está aberto. */
   private toggleCharacter(): void {
+    if (!this.progression) return;
     if (this.charWin?.isOpen) { this.charWin.close(); return; }
     this.charWin ??= new CharacterWindow(this.hud.root, { frame: art().characterFrame ?? '', onOpenChange: () => { /* o `frame` lê `isOpen` para pausar */ } });
     this.dialogue.close();
@@ -1296,7 +1303,7 @@ export class Game {
     const p = this.player;
     const bag = {
       inventory: Object.fromEntries(this.inventory.entries()) as Record<string, number>,
-      coins: this.inventory.wallet.copper,
+      coins: this.progression ? this.inventory.wallet.copper : 0,
       hotbar: this.hotbar.dynamic ? this.hotbar.layout() : null,
       x: Math.round(p.x * 100) / 100,
       y: Math.round(p.y * 100) / 100,
