@@ -2,14 +2,18 @@
 
 **Fonte de verdade:** `src/world/profiles.ts` (`WORLD_PROFILES`). O motor é um só; o perfil decide o que existe.
 
-| Campo | Mundo principal | Santuário Celestial |
+| Campo | Mundo principal | Santuário (v0.93.134, ADR 0036) |
 |---|---|---|
-| `terrain` | procedural (`WorldGenerator`) | plano de **Nuvem Sólida** (`FlatGenerator`) |
-| `bounds` | ilimitado | **10 chunks = 5×2** (`cx -3..1`, `cy -1..0`) → 80×32 blocos, x −48..31, y −16..15 |
+| `terrain` | procedural (`WorldGenerator`) | **plano vazio de grama** (`FlatGenerator`) |
+| `bounds` | ilimitado | **16 chunks = 4×4** (`cx -2..1`, `cy -2..1`) → 64×64 células |
 | `character` | heroína | **Deusa da Vida** |
-| `blocks` | 8 materiais da prancha | **18 blocos celestiais** + paredes (Tábuas, Pedra) e porta de parede (v0.93.27, ADR 0027) |
-| ferramentas / cultivo / ovelhas | sim / sim / sim | **não / não / não** |
+| `blocks` | materiais, objetos, paredes… | **8 materiais**: Terra, Grama, Terra Arada, Areia, Pedra, Pedra Lisa, Tora, Tábuas de Carvalho (pilha de 5, cubos cheios) |
+| ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
+| câmera | 3/4 (oblíqua) | **isométrica fixa** (45° / 35,264°, sem seletor) |
 | `sky` (fundo além das bordas) | escuro | degradê azul → lilás |
+| como abre | padrão | **solo, sem servidor**: `?mundo=santuario` ou subdomínio; arte do pacote principal |
+
+> O conteúdo celestial antigo (nuvem, 18 blocos, Deusa-laboratório, abaixo) é **histórico**: o código foi removido (v0.93.133–134) ou aguarda a limpeza final (`celestialArt.ts`, `art/santuario.ts`, ids 80–97 em `blocks.ts`). A Sala 2 online segue em `ROOM_RULES`/servidor, mas a página do Santuário não a oferece mais.
 
 ## Como o mundo é escolhido (`resolveWorldId`)
 1. Build fixo `VITE_WORLD` (artefato próprio do Santuário).

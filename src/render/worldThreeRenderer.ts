@@ -154,7 +154,8 @@ export class WorldThreeRenderer implements GameRenderer {
   });
   private disposed = false;
 
-  constructor(canvas: HTMLCanvasElement, private readonly world: World, sanctuaryRoom = false) {
+  /** `sanctuaryRoom` = seletor das 3 câmeras (Sala 2); `isometric` = câmera isométrica fixa (Santuário solo, ADR 0036). */
+  constructor(canvas: HTMLCanvasElement, private readonly world: World, sanctuaryRoom = false, isometric = false) {
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
       this.actors?.reupload();
       this.drops?.reupload();
@@ -166,7 +167,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.gates?.reupload();
       this.room?.reupload();
     });
-    this.sanctuaryCameras = sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage, true) : null;
+    this.sanctuaryCameras = isometric ? new SanctuaryCameraModes(canvas, this.stage, true, 'isometrico') : sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage, true) : null;
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.

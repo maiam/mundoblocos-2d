@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.134 — Santuário isométrico solo, terreno plano vazio (17/11/2026)
+- **Pedido do dono do produto (2º passo, ADR 0036):** solo, plano e vazio, em vista isométrica; o Mundo principal não muda.
+- **Perfil `santuario` refeito** (`world/profiles.ts`): terreno plano de grama (`FlatGenerator`), 4×4 chunks, Deusa, hotbar de 8 materiais do Mundo (Terra, Grama, Terra Arada, Areia, Pedra, Pedra Lisa, Tora, Tábuas; a Água Pura saiu: sem arte no pacote principal). `SanctuarySeedGenerator` (+ teste) removido de `world.ts` e do repositório.
+- **Entrada solo** (`main.ts`): `?mundo=santuario` abre o mundo sozinho (sem servidor, portão, nome de Deusa nem seletor de sala; `online` desligado). Arte do pacote principal. `renderer`: `WorldThreeRenderer(canvas, world, sanctuaryRoom, isometric)` e `SanctuaryCameraModes(…, fixed)` travam a câmera isométrica (45° / 35,264°) sem seletor.
+- Testes reescritos (`santuario.test.ts`, `sanctuaryFiveLevels.test.ts`, `sanctuaryMaterials.test.ts`, `save.test.ts`); `tsc`, 652 testes e `npm run build` verdes; **conferido no navegador** (captura com blocos empilhados: chão plano, Deusa, hotbar com ícones).
+- Sem mudança de save (21), protocolo (29) nem servidor. Santuário agora segue a grade 2 do Mundo.
+
 ## Orvalis v0.93.133 — limpeza do Santuário Celestial antigo (17/11/2026)
 - **Pedido do dono do produto:** o mundo normal continua como está; o Santuário será refeito do zero, **solo**, terreno plano vazio, em vista isométrica. Este é o 1º passo: a limpeza (ADR 0036).
 - **Removido:** `render/sanctuaryThreeRenderer.ts`, `sanctuaryWallPrototype.ts`, `sanctuaryWallProportionTest.ts`, `sanctuaryEightFacesAsset.ts`, `celestialGrassNetAsset.ts`, `sanctuaryGrassPanelsAsset.ts`, `sanctuaryGoddessVisual.ts` (+ testes), a classe `SanctuaryCameraJoystick` (ficam as constantes de câmera), o `?celestial=1`, o build fixo `VITE_WORLD=santuario` (vite, `art/index.ts`, `config.ts`), o script `build:artifact:santuario` e o ramo do Santuário Celestial em `main.ts`.

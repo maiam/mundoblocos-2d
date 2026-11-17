@@ -11,5 +11,8 @@ O Mundo principal continua em vista 3/4. O dono do produto quer **testar a vista
 3. A Sala 2 online só volta depois do visual aprovado (exige terreno da sala, `PROTOCOL_VERSION`, snapshot e deploy do servidor primeiro).
 4. Passo 1 (v0.93.133): remover o renderer, o artefato, o `?celestial=1` e os pacotes de arte do laboratório. Passos seguintes em `NEXT_STEPS`.
 
+## Estado (v0.93.134)
+Perfil novo e câmera isométrica fixa entregues; abre solo por `?mundo=santuario`. Terreno plano de grama, 4×4 chunks, 8 materiais do Mundo, cubos cheios (`cubeLevels = 1`, pilha de 5), arte do pacote principal. Gerador `SanctuarySeedGenerator` removido.
+
 ## Consequências
 Menos código paralelo (um renderer). O perfil `santuario` atual e `celestialArt.ts` ainda existem até o perfil novo entrar. Perde-se o artefato publicado do Santuário Celestial (fica como histórico).

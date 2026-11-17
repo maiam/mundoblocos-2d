@@ -56,11 +56,11 @@ describe('Salvamento automático', () => {
   it('o mármore V2/V3 saiu (v15); saves v12–v14 migram descartando os campos e o 82 vira cubo comum', () => {
     const world = new World(77, WORLD_PROFILES.santuario);
     const [sx,sy] = world.findSpawn();
-    const x=sx,y=sy; // área plana garantida de altura 1
+    const x=sx,y=sy; // chão plano vazio (Santuário, ADR 0036)
     // Materiais antigos não são mais selecionáveis; continuam carregáveis em saves.
     world.setObject(x,y,Block.MARBLE_CELESTIAL);
     expect(world.canPlace(x,y,Block.MARBLE_CELESTIAL)).toBe(false);
-    expect(world.getObject(x,y-1)).toBe(Block.GRASS); // sem célula norte virtual
+    expect(world.getObject(x,y-1)).toBe(Block.AIR); // terreno plano e vazio
     expect(world.placeBlock(x,y,Block.DIRT)).toBe(true); // empilha o novo bloco sobre legado
     expect(world.getUpper(x,y)).toBe(Block.DIRT);
     expect(world.breakBlock(x,y)).toBe(Block.DIRT); // quebra um nível por vez

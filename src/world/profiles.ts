@@ -70,16 +70,16 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
   },
   santuario: {
     id: 'santuario',
-    name: 'Santuário Celestial da Deusa da Vida',
-    terrain: { kind: 'flat', ground: Block.CLOUD_SOLID },
-    // 10 chunks: 5 × 2 (80 × 32 blocos), centrados na origem.
-    bounds: { cx0: -3, cy0: -1, cx1: 1, cy1: 0 },
+    name: 'Santuário de Orvalis',
+    // Santuário refeito do zero (ADR 0036, v0.93.134): solo, **terreno plano vazio** (grama), vista isométrica. Cubos cheios (1 nível = 1 célula).
+    terrain: { kind: 'flat', ground: Block.GRASS },
+    // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
+    bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
     character: 'goddess',
-    // Laboratório de oito materiais do cubo (lista única e na ordem aprovada pelo usuário).
-    // O piso Nuvem Sólida permanece como suporte do cenário, mas NÃO é selecionável na hotbar.
+    // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
     blocks: [
-      Block.DIRT, Block.TILLED, Block.GRASS, Block.WATER_PURE,
-      Block.OAK_LOG, Block.OAK_PLANKS, Block.STONE, Block.STONE_SMOOTH,
+      Block.DIRT, Block.GRASS, Block.TILLED, Block.SAND,
+      Block.STONE, Block.STONE_SMOOTH, Block.OAK_LOG, Block.OAK_PLANKS,
     ],
     tools: false,
     farming: false,

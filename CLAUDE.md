@@ -25,7 +25,7 @@ operacional e faz parte da entrega.
   incompatível → suba `PROTOCOL_VERSION`. Ação que muda o mapa só vale quando o servidor confirma (`applied`).
   Bichos e moradores da sala (ADR 0021, 0034; v0.93.117): a sala roda as mesmas `game/entities.ts` (e tudo o que ela importa vai para o servidor:
   sem DOM nem arte); na sala o aparelho só espelha (`CreatureMirror`) e golpe/comida passam pela sala.
-- **Grade fina (ADR 0032):** toda coordenada em células depende de `SUBDIV` (`config.ts`; padrão `DEFAULT_SUBDIV = 2` desde a F7 (v0.93.59; troca **no jogo e no servidor juntos**; o Santuário fica em 1)). Dado que sai da sessão (salvamento v16, `RoomSnapshot` v5, `hello`) carrega `sub`; a migração é de `world/subdiv.ts` (só aumenta a grade; arquivo de grade mais fina não é aberto nem sobrescrito). Constante nova em células → multiplique por `SUBDIV` (jogabilidade) ou use `objectScaleFor` (arte).
+- **Grade fina (ADR 0032):** toda coordenada em células depende de `SUBDIV` (`config.ts`; padrão `DEFAULT_SUBDIV = 2` desde a F7 (v0.93.59; troca **no jogo e no servidor juntos**; o Santuário também usa 2 desde a v0.93.134)). Dado que sai da sessão (salvamento v16, `RoomSnapshot` v5, `hello`) carrega `sub`; a migração é de `world/subdiv.ts` (só aumenta a grade; arquivo de grade mais fina não é aberto nem sobrescrito). Constante nova em células → multiplique por `SUBDIV` (jogabilidade) ou use `objectScaleFor` (arte).
 - `src/render/` só **lê** o mundo. Regra de ação do jogador fica no `ActionController` por célula
   (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; cursor e botão de ação só escolhem a célula.
 - **Arte por mundo:** imagens só são importadas em `src/render/art/<mundo>.ts` (ADR 0010), como URL — viram arquivos
@@ -48,8 +48,8 @@ operacional e faz parte da entrega.
   `SAVE_VERSION`. Nada de backend aqui: nuvem é do backend do Orvalis.
 - **Render do Mundo (ADR 0031, v0.93.105):** o Mundo principal e o Santuário usam **só** o renderer **2.5D em WebGL** (`render/worldThreeRenderer.ts` (o `sanctuaryThreeRenderer.ts` do Santuário Celestial antigo foi removido na v0.93.133, ADR 0036), núcleo em `render/three/`, `RenderOptions`/`GameRenderer` em `render/rendererContract.ts`). **O Canvas 2D foi removido** (`render/renderer.ts` apagado; `?render=2d` não faz nada): sem WebGL o `main.ts` mostra um aviso em vez de abrir. O jogador não sobe em cubos sozinho (`?fisica=degrau` desfaz). Desenhos compartilhados com a camada 2D do 3D ficam num lugar só (`selectionFx`, `dungeonFx`, `doorAnim`, `groundFxMath`). A sala (servidor) não simula o movimento do jogador; mexer em `game/monster.ts`/`entities.ts` exige `build:net` + `sync-net`.
 - **Blocos de 1/4 (ADR 0033, v0.93.76):** no Mundo principal todo bloco tem 1/4 de célula e empilha até 4 (`CUBE_LEVELS`); `z`/`standHeight` do `World` são em **níveis**, `visualZ` em células (`/ cubeLevels`); altura nova → `cubeLevels`, nunca 1 nível = 1 célula; paredes e Santuário (`cubeLevels = 1`) ficam fora. Mudou a regra → `SAVE_VERSION`/`ROOM_SNAPSHOT_VERSION`/`PROTOCOL_VERSION`.
-- **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O Santuário Celestial é
-  limitado a 10 chunks e aceita os 18 blocos celestiais, as paredes autotile + porta de parede (ADR 0027) e só a Deusa — não misture conteúdo entre mundos.
+- **Vários mundos, um motor:** diferenças só pelo `WorldProfile` (`world/profiles.ts`). O **Santuário** (ADR 0036, v0.93.134) é
+  **solo**, terreno plano vazio, 4×4 chunks, 8 materiais do Mundo, só a Deusa e câmera **isométrica fixa**; o Santuário Celestial antigo (18 blocos, nuvem) foi removido — não misture conteúdo entre mundos.
 
 ## 3. Comandos
 ```bash
