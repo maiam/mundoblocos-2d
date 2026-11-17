@@ -14,14 +14,13 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | `npm audit` | Deve mostrar 0 vulnerabilidades (a Hostinger também verifica as dependências do repositório) |
 | `npm run build` | Typecheck + `dist/` estático (`base: './'`, qualquer subcaminho/CDN; inclui PWA) |
 | `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (código embutido, sem esqueleto `<html>`) + imagens em `artifact/mundoblocos-assets/` + mapa `artifact/mundoblocos-files.json` (ADR 0013) |
-| `npm run build:artifact:santuario` | build com `VITE_WORLD=santuario` → `artifact/santuario.html` + `-assets/` + `-files.json` |
 
 ## Artifacts (versões jogáveis, privadas — compartilhar pelo menu Share)
 | Mundo | URL | Atualizar |
 |---|---|---|
 | Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
-| Santuário Celestial | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | `npm run build:artifact:santuario` → publicar `artifact/santuario.html` com `files` de `artifact/santuario-files.json` |
-- Rode **o build de cada mundo antes de publicá-lo** (os dois usam `dist/`). No dev: `?mundo=santuario`.
+| ~~Santuário Celestial~~ | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | **descontinuado (v0.93.133, ADR 0036)**: o build `build:artifact:santuario` foi removido; o link fica só como histórico |
+- No dev: `?mundo=santuario`.
 - Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`); o jogo reconhece o Santuário pelo hostname (`santuario.`).
 
 ## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
@@ -75,7 +74,7 @@ A Hostinger também lista vulnerabilidades das dependências do repositório: ma
    devem ficar direto na pasta, com `index.html` na raiz dela) → apagar o `.zip`.
 3. **Segurança** → **SSL**: conferir/instalar o certificado grátis para `orvalis.pensamentos.online` (pode levar
    alguns minutos até horas) e ativar **Forçar HTTPS**. HTTPS é necessário para instalar como app.
-4. Santuário (v0.93.125: abre direto na Sala 2 online, na mesma build do mundo normal — **não** use o Artifact antigo `build:artifact:santuario` como entrada): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
+4. Santuário (v0.93.125: abre direto na Sala 2 online, na mesma build do mundo normal): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
    Santuário pelo primeiro nome do endereço). Sem ele, `https://orvalis.pensamentos.online/?mundo=santuario` funciona.
 5. Conferir: abrir no celular (deitado), jogar, recarregar (continua salvo), instalar na tela inicial.
 
@@ -85,8 +84,7 @@ enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só 
 **Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
 
 ## Pipeline de arte
-**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`) e `npm run build:artifact:santuario`; cada um
-só leva a arte do seu mundo, em arquivos ao lado da página (ADR 0013). Gere o build de um mundo imediatamente antes de publicá-lo (mesmo `dist/`).
+**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`): leva a arte do mundo em arquivos ao lado da página (ADR 0013). O artefato do Santuário (`build:artifact:santuario`) foi removido (ADR 0036).
 
 **Sprites** — `P="python3 scripts/process-sprite.py"`:
 ```bash
@@ -109,6 +107,11 @@ for t in sword axe; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero-$t.p
 $P assets-src/hero/hero-hoe-sheet.png src/assets/hero-hoe.png --alpha --largest --respace 40 --frame-h 144 --rows-map 0,3,1,2
 for t in pickaxe shovel; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero-$t.png --alpha --largest --frame-h 144 --rows-map 0,1,3,2; done
 # Hood (assets-src/hood): caminhadas transparentes com fileiras F, D, C, E; a da pá vem com os dois lados para a esquerda
+# Deusa isométrica (v0.93.135; prancha em vista isométrica: linhas baixo-direita, baixo-esquerda, cima-direita, cima-esquerda)
+for t in walk idle sit; do $P assets-src/goddess-iso/goddess-iso-$t-sheet.png src/assets/goddess-iso-$t.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+for t in sword axe hoe pickaxe shovel; do $P assets-src/goddess-iso/goddess-iso-$t-walk-sheet.png src/assets/goddess-iso-$t.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+for t in axe hoe pickaxe shovel; do $P assets-src/goddess-iso/goddess-iso-$t-attack-sheet.png src/assets/goddess-iso-$t-attack.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+$P assets-src/goddess-iso/goddess-iso-sword-attack-sheet.png src/assets/goddess-iso-sword-attack.png --alpha --frame-h 144 --rows-map 1,3,0,2   # sem --largest: peças soltas do golpe de espada
 $P assets-src/hood/hood-sheet.png src/assets/hood.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
 for t in sword axe hoe pickaxe; do $P assets-src/hood/hood-$t-sheet.png src/assets/hood-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
 $P assets-src/hood/hood-shovel-sheet.png src/assets/hood-shovel.png --alpha --largest --frame-h 144 --rows-map 0,3,3m,2

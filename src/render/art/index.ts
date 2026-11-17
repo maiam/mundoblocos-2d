@@ -11,11 +11,9 @@ let current: ArtPack | null = null;
  * escolhido em tempo de execução decide.
  */
 export async function loadArtPack(world: WorldId): Promise<ArtPack> {
-  const mod = import.meta.env.VITE_WORLD === 'santuario'
-    ? await import('./santuario')
-    : import.meta.env.VITE_WORLD === 'principal'
-      ? await import('./principal')
-      : world === 'santuario' ? await import('./santuario') : await import('./principal');
+  const mod = import.meta.env.VITE_WORLD === 'principal'
+    ? await import('./principal')
+    : world === 'santuario' ? await import('./santuario') : await import('./principal');
   current = mod.default;
   return current;
 }

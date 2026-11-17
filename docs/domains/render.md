@@ -1,3 +1,5 @@
+> **v0.93.133 (ADR 0036):** `sanctuaryThreeRenderer.ts`, `sanctuaryWallPrototype.ts`, `sanctuaryWallProportionTest.ts`, o joystick de câmera e os pacotes de arte do laboratório (oito faces, grama, rede) foram **removidos**. As seções abaixo sobre o renderer do Santuário Celestial são **histórico**; o perfil Santuário usa o `worldThreeRenderer.ts`. Ficam as constantes `SANCTUARY_DEFAULT_CAMERA`/`CAMERA_OPTION_2` (`sanctuaryCameraJoystick.ts`), usadas pelo palco.
+
 # Domínio: render
 
 Apenas apresentação; lê `World`, nunca escreve.

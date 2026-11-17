@@ -5,10 +5,10 @@ import { V2_BLOCKS } from '../render/materialsV2';
 import { CAMERA_OPTION_2, SANCTUARY_DEFAULT_CAMERA } from '../render/sanctuaryCameraJoystick';
 
 describe('Santuário — comparação de câmera e materiais', () => {
-  it('disponibiliza somente os 8 materiais aprovados, em ordem exata', () => {
+  it('disponibiliza somente os 8 materiais do Mundo (sem a água pura, que não tem arte no pacote principal), em ordem exata', () => {
     expect(WORLD_PROFILES.santuario.blocks).toEqual([
-      Block.DIRT, Block.TILLED, Block.GRASS, Block.WATER_PURE,
-      Block.OAK_LOG, Block.OAK_PLANKS, Block.STONE, Block.STONE_SMOOTH,
+      Block.DIRT, Block.GRASS, Block.TILLED, Block.SAND,
+      Block.STONE, Block.STONE_SMOOTH, Block.OAK_LOG, Block.OAK_PLANKS,
     ]);
   });
 

@@ -4,7 +4,7 @@
 // O navegador guarda as imagens em cache entre versões e o jogo só espera o que precisa para começar.
 // Uso: node scripts/build-artifact.mjs [nome] [título]
 //   mundo principal: mundoblocos "Orvalis" (padrão; o nome do arquivo segue o do repositório)
-//   Santuário:       santuario "Santuário Celestial" (build com VITE_WORLD=santuario)
+//   (o artefato do Santuário Celestial antigo foi removido na v0.93.133)
 // Saída: artifact/<nome>.html, artifact/<nome>-assets/* e artifact/<nome>-files.json (mapa para publicar:
 // caminho publicado → arquivo local; passe-o em `files` ao publicar a página).
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, copyFileSync, statSync } from 'node:fs';

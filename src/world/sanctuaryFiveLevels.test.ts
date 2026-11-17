@@ -9,9 +9,9 @@ describe('pilhas de cinco blocos apenas no Santuário', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [x, y] = world.findSpawn();
     expect(world.maxStack).toBe(SANCTUARY_MAX_STACK);
-    // Spawn é reservado com uma camada natural de Grama no nível zero.
-    expect(world.stackHeight(x, y)).toBe(1);
-    for (let i = 1; i < SANCTUARY_MAX_STACK; i++) {
+    // Terreno plano e vazio (ADR 0036): nada construído no spawn.
+    expect(world.stackHeight(x, y)).toBe(0);
+    for (let i = 0; i < SANCTUARY_MAX_STACK; i++) {
       expect(world.placementLevel(x, y, Block.GRASS)).toBe(i);
       expect(world.placeBlock(x, y, Block.GRASS)).toBe(true);
       expect(world.stackHeight(x, y)).toBe(i + 1);
@@ -25,7 +25,7 @@ describe('pilhas de cinco blocos apenas no Santuário', () => {
   it('salva e restaura cinco camadas em um chunk', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [x, y] = world.findSpawn();
-    for (let i = 1; i < 5; i++) world.placeBlock(x, y, Block.GRASS);
+    for (let i = 0; i < 5; i++) world.placeBlock(x, y, Block.GRASS);
     const cx = Math.floor(x / CHUNK_SIZE), cy = Math.floor(y / CHUNK_SIZE);
     const chunk = world.getChunk(cx, cy)!;
     expect(chunk.levels).toHaveLength(5);

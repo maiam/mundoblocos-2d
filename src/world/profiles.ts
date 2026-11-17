@@ -9,7 +9,8 @@ import type { ChunkRect } from './world';
 export type WorldId = 'principal' | 'santuario';
 
 /** Personagens jogáveis (folhas de sprite em `render/character.ts`). */
-export type CharacterId = 'heroine' | 'goddess';
+/** `goddess` = Deusa flutuante (Sala 2 online); `goddess-iso` = Deusa isométrica do Santuário solo (ADR 0036). */
+export type CharacterId = 'heroine' | 'goddess' | 'goddess-iso';
 
 export interface WorldProfile {
   id: WorldId;
@@ -43,6 +44,8 @@ export interface WorldProfile {
   minimap: boolean;
   /** Progressão da jogadora: missões do Capítulo 1, carteira (Moedas de Cobre) e painel do personagem. false no Santuário (Sala 2, criação). */
   progression: boolean;
+  /** Vista: `oblique` (3/4, o Mundo) ou `isometric` (45°, o Santuário solo, ADR 0036) — decide a câmera e o sentido das teclas/joystick (em tela). */
+  view: 'oblique' | 'isometric';
   /** Cores do fundo além das bordas do mundo (céu). */
   sky: [string, string];
 }
@@ -66,20 +69,21 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     minimap: true,
     progression: true,
     hunger: true,
+    view: 'oblique',
     sky: ['#1b1838', '#1b1838'],
   },
   santuario: {
     id: 'santuario',
-    name: 'Santuário Celestial da Deusa da Vida',
-    terrain: { kind: 'flat', ground: Block.CLOUD_SOLID },
-    // 10 chunks: 5 × 2 (80 × 32 blocos), centrados na origem.
-    bounds: { cx0: -3, cy0: -1, cx1: 1, cy1: 0 },
-    character: 'goddess',
-    // Laboratório de oito materiais do cubo (lista única e na ordem aprovada pelo usuário).
-    // O piso Nuvem Sólida permanece como suporte do cenário, mas NÃO é selecionável na hotbar.
+    name: 'Santuário de Orvalis',
+    // Santuário refeito do zero (ADR 0036, v0.93.134): solo, **terreno plano vazio** (grama), vista isométrica. Cubos cheios (1 nível = 1 célula).
+    terrain: { kind: 'flat', ground: Block.GRASS },
+    // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
+    bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
+    character: 'goddess-iso',
+    // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
     blocks: [
-      Block.DIRT, Block.TILLED, Block.GRASS, Block.WATER_PURE,
-      Block.OAK_LOG, Block.OAK_PLANKS, Block.STONE, Block.STONE_SMOOTH,
+      Block.DIRT, Block.GRASS, Block.TILLED, Block.SAND,
+      Block.STONE, Block.STONE_SMOOTH, Block.OAK_LOG, Block.OAK_PLANKS,
     ],
     tools: false,
     farming: false,
@@ -91,6 +95,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     minimap: false,
     progression: false,
     hunger: false,
+    view: 'isometric',
     sky: ['#8fb8ff', '#f6d9ff'],
   },
 };

@@ -32,7 +32,11 @@ export class SanctuaryCameraModes {
     if (this.drag?.id === e.pointerId) this.drag = null;
   };
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly stage: ThreeStage, private readonly proceduralWorld = false) {
+  /**
+   * `fixed` = câmera travada neste modo, sem seletor nem arrasto (Santuário isométrico solo, ADR 0036); sem ele, o seletor das três câmeras da Sala 2.
+   */
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly stage: ThreeStage, private readonly proceduralWorld = false, fixed: SanctuaryCameraMode | null = null) {
+    if (fixed) { this.setMode(fixed); return; }
     this.root.className = 'sanctuary-view-switch';
     this.root.setAttribute('role', 'group');
     this.root.setAttribute('aria-label', 'Perspectiva do Santuário');

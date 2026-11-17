@@ -9,7 +9,6 @@ import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, TOWN_WALL, type TownBuilding, type
 import { chunkKey, toChunk, toLocal } from './coords';
 import { type InteriorDoor, type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
-import { SanctuarySeedGenerator } from './sanctuarySeedGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
 import { type FlowerPatch, FlowerPatchTerrain, planFlowerPatch } from './flowerPatch';
@@ -132,11 +131,9 @@ export class World {
     this.profile = profile;
     this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
     this.cubeLevels = profile.id === 'santuario' ? 1 : CUBE_LEVELS;
-    this.generator = profile.id === 'santuario' && profile.bounds
-      ? new SanctuarySeedGenerator(seed, profile.bounds)
-      : profile.terrain.kind === 'flat'
-        ? new FlatGenerator(seed, profile.terrain.ground)
-        : new WorldGenerator(seed);
+    this.generator = profile.terrain.kind === 'flat'
+      ? new FlatGenerator(seed, profile.terrain.ground)
+      : new WorldGenerator(seed);
     const baseTerrain = this.generator;
     const b = profile.bounds;
     this.cellBounds = b
@@ -339,9 +336,7 @@ export class World {
     if (!chunk) {
       chunk = new Chunk(cx, cy, this.maxStack);
       this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects, chunk.upper);
-      if (this.generator instanceof SanctuarySeedGenerator)
-        this.generator.fillHighLevels(cx, cy, chunk.levels);
-      else if (this.cubeLevels > 1) this.expandQuarters(chunk);
+      if (this.cubeLevels > 1) this.expandQuarters(chunk);
       this.chunks.set(key, chunk);
     }
     return chunk;
@@ -388,7 +383,6 @@ export class World {
     if (!this.inBounds(x, y)) return Block.AIR;
     const chunk = this.chunkAt(x, y);
     if (chunk) return chunk.getLevel(toLocal(x), toLocal(y), level);
-    if (this.generator instanceof SanctuarySeedGenerator) return this.generator.levelAt(x, y, level);
     // Chunk ainda não carregado: o gerador descreve a célula no formato antigo (2 níveis); no Mundo vira blocos de 1/4 (`quarterLevel`).
     if (this.cubeLevels > 1) return quarterLevel(this.generator.objectAt(x, y), this.generator.upperAt(x, y), level);
     return level === 1 ? this.generator.upperAt(x, y) : Block.AIR;
@@ -720,6 +714,34 @@ export class World {
     return this.placementLevel(x, y, id) !== null;
   }
 
+  /**
+   * Onde um CUBO entraria **no nível pedido** — colocar numa face de um cubo vizinho (vista isométrica, ADR 0036): o nível pode ficar flutuando, sem cubo no
+   * nível de baixo. Só cubos; a célula precisa estar livre naquele nível e não ter objeto não-cubo (árvore, porta, enfeite) no chão. Nível 0 segue as regras de
+   * sempre (`placementLevel`). null = não pode.
+   */
+  placementLevelAt(x: number, y: number, id: BlockId, level: number): Level | null {
+    const def = blockDef(id);
+    if (!def.placeable || def.layer !== 'object' || def.shape !== 'cube') return null;
+    if (!this.profile.blocks.includes(id) || this.isProtected(x, y) || !this.inBounds(x, y)) return null;
+    if (!Number.isInteger(level) || level < 0 || level >= this.maxStack) return null;
+    if (level === 0) return this.placementLevel(x, y, id) === 0 ? 0 : null;
+    if (this.getLevel(x, y, level) !== Block.AIR || this.getGround(x, y) === Block.VOID) return null;
+    const base = blockDef(this.getObject(x, y));
+    if (base.id !== Block.AIR && base.shape !== 'cube') return null;
+    return level;
+  }
+
+  canPlaceAt(x: number, y: number, id: BlockId, level: number): boolean {
+    return this.placementLevelAt(x, y, id, level) !== null;
+  }
+
+  placeBlockAt(x: number, y: number, id: BlockId, level: number): boolean {
+    const at = this.placementLevelAt(x, y, id, level);
+    if (at === null) return false;
+    this.setLevel(x, y, at, id);
+    return true;
+  }
+
   placeBlock(x: number, y: number, id: BlockId): boolean {
     const level = this.placementLevel(x, y, id);
     if (level === null) return false;
@@ -828,9 +850,6 @@ export class World {
       // Mundo limitado: centro da área.
       const cx = Math.floor(((b.cx0 + b.cx1 + 1) * CHUNK_SIZE) / 2);
       const cy = Math.floor(((b.cy0 + b.cy1 + 1) * CHUNK_SIZE) / 2);
-      // O Santuário agora tem cubos em 100% das células, sem áreas com
-      // standHeight=0. O centro tem a plataforma de altura 1 garantida.
-      if (this.generator instanceof SanctuarySeedGenerator) return [cx, cy];
       return this.nearestWalkable(cx, cy, 64);
     }
     const welcoming = new Set(['meadow', 'sakura', 'enchanted']);

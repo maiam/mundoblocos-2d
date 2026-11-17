@@ -14,13 +14,13 @@ export interface RenderOptions {
   /** Todos os atores (personagem + NPCs), desenhados com ordenação por profundidade. */
   actors: Actor[];
   showChunkBorders: boolean;
-  hover: { x: number; y: number; valid: boolean } | null;
+  hover: { x: number; y: number; valid: boolean; level?: number } | null;
   /** Quebra em andamento (segurando): célula e progresso 0..1. */
   breaking: { x: number; y: number; progress: number } | null;
   /** Itens caídos no chão (colheita). */
   drops: ItemDrop[];
   /** Alvo à frente da personagem parada (botão de ação): contorno de seleção. */
-  focus: { x: number; y: number; valid: boolean } | null;
+  focus: { x: number; y: number; valid: boolean; level?: number } | null;
   /** Ovelha sob o cursor quando o trigo está selecionado (posição dos pés, em células). */
   hoverSheep: { x: number; y: number; valid: boolean; attack?: boolean } | null;
   time: number;
@@ -61,6 +61,11 @@ export type GameRenderer = {
   draw(cam: Camera, opts: RenderOptions): void;
   /** Célula (e se há objeto nela) sob o ponto da tela. */
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean };
+  /**
+   * Face de cubo sob o ponto da tela (3D): a célula e o nível do cubo atingido e para onde a face aponta (`nx`, `ny` = passo em células; `up` = o topo). Base do
+   * "colocar na face" da vista isométrica. null = nenhum cubo ali (chão, sprite ou fora).
+   */
+  pickFace?(cam: Camera, sx: number, sy: number): { x: number; y: number; level: number; nx: number; ny: number; up: boolean } | null;
   /** Número de dano flutuante em (x, y) (células). */
   addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void;
   /** Ícone (URL) do bloco na grade e na bolsa. */

@@ -5,7 +5,7 @@ Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITE
 > **PR #87 — mudança dirigida:** `config.ts` limita `MAX_STACK=2`; `render/renderer.ts` → `render/adaptiveWalls.ts` seleciona e desenha paredes horizontais de construção no renderizador top-down oficial, preservando a face frontal. Não altera `World` além da validação de nível obsoleto nem a renderização de terreno natural.
 
 > **Mundo em 2.5D (M2.1–M2.4, M3.1–M3.4 e M4.1–M4.2, v0.93.30–39; só dev `?render=3d`):** `render/worldThreeRenderer.ts` · `render/three/chunkFloor.ts` · `render/three/chunkBlocks.ts` · `render/three/chunkSprites.ts` · `render/worldBlockFaces.ts` · `render/worldSpriteArt.ts` · `render/three/groundFx.ts` + `render/groundFxMath.ts` · `render/three/actorBillboards.ts` · `render/three/itemSprites.ts` · `render/three/overlay2d.ts` · `render/worldLight.ts` (+ `sanctuaryLighting.ts`) · `render/three/doorSprites.ts` + `render/doorAnim.ts` · `render/three/interiorRoom.ts` · `render/dungeonFx.ts` · `WORLD_THREE_OPTIONS` em `rendererContract.ts` · `main.ts` (flag sob `import.meta.env.DEV`).
-> **Núcleo 2.5D genérico (M1, v0.93.29):** `render/three/{stage,selection,blockMaterials}.ts` · usado por `sanctuaryThreeRenderer.ts`; o Mundo (M2) reaproveita.
+> **Núcleo 2.5D genérico (M1, v0.93.29):** `render/three/{stage,selection,blockMaterials}.ts` · usado pelo `worldThreeRenderer.ts` (o `sanctuaryThreeRenderer.ts` foi removido na v0.93.133).
 > **Porta de parede (v0.93.25):** `Block.WALL_DOOR_*`, `World.canPlaceWallDoor` · `wallAtlas.ts` (`doorPieceFor`, `wallArtBase`) · `sanctuaryWallArt.ts` · contrato 3b + `gabarito-porta.png`.
 > **Paredes com arte (W3, v0.93.22):** `scripts/build-wall-atlas.py` → `src/assets/walls-<material>.webp` · `render/wallAtlas.ts` (layout + `wallArtPiece`) · `render/sanctuaryWallArt.ts` (planos instanciados) · `ArtPack.wallAtlases` em `render/art/santuario.ts`.
 
@@ -15,7 +15,7 @@ Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITE
 
 > **v0.93.x — vista e escala do Santuário:** `render/sanctuaryObliqueView.ts` (projeção oblíqua, K = 1) · `render/worldScale.ts` (relações do Core Keeper: cubo 1,0, parede ≈ 1,2, personagem ≈ 1,2) · `render/sanctuaryWallProportionTest.ts` (teste `?paredes=teste`, descartável) · `Camera.setCellsTall` + `GameRenderer.preferredCellsTall` (células visíveis). ADRs 0026–0028.
 
-> **PR #89 — Santuário oficial Three.js:** `main.ts` importa dinamicamente `render/sanctuaryThreeRenderer.ts` somente no perfil Santuário → usa `render/sanctuaryThreeLayout.ts` e as faces de `celestialArt.ts`, lê `World` e implementa o contrato `render/rendererContract.ts`. O `Game` continua compartilhado. O perfil principal segue `render/renderer.ts` Canvas 2D; `?render=2d` permite fallback.
+> **Histórico (PR #89, removido na v0.93.133, ADR 0036):** o Santuário Celestial tinha renderer próprio (`sanctuaryThreeRenderer.ts`, protótipos de parede, vista oblíqua em laboratório). Hoje o perfil Santuário também passa pelo `worldThreeRenderer.ts`; `sanctuaryThreeLayout`, `sanctuaryLighting`, `sanctuaryCameraModes` e `sanctuaryWallArt` ficam porque o renderer do Mundo os usa.
 
 ## 1. Módulos e dependências
 Setas = "importa/usa". `world/` é a base e não conhece ninguém acima dele.
@@ -146,7 +146,6 @@ flowchart LR
   WB -->|import ?inline em render/art/mundo.ts| JS[bundle Vite]
   JS -->|npm run build| D[dist/ site estático]
   JS -->|build:artifact VITE_WORLD=principal| A[artifact/mundoblocos.html]
-  JS -->|build:artifact:santuario| A2[artifact/santuario.html]
   P2[assets-src/icone-orvalis.webp] -->|make-icons.py| PW[public/icon-*.png + apple-touch-icon PWA]
 ```
 

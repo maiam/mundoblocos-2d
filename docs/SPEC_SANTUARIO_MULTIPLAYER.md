@@ -5,7 +5,9 @@ Resumo operacional da especificação que orienta o PR #239 (`feat/santuario-sal
 ## Acesso (correção 16/11/2026)
 A Sala 2 é uma **área de criação acessada só pela URL do Santuário, pela personagem Deusa** (`?mundo=santuario` / domínio do Santuário). **Não aparece no menu do mundo normal**, e o Santuário não lista a Sala 1. O servidor impõe a aparência: Santuário = só Deusa (`RoomRules.goddessOnly`); Sala 1 = nunca Deusa.
 
-**Entrada (v0.93.125):** a URL do Santuário abre **direto na Sala 2**, na mesma versão e arte do jogo normal (sem modo solo; o Celestial antigo só em `?celestial=1`).
+> **Atualização v0.93.134 (ADR 0036):** a página do Santuário agora abre um **mundo solo isométrico**, sem servidor; a Sala 2 abaixo segue definida no servidor, mas não é oferecida pela página até o visual ser aprovado.
+
+**Entrada (v0.93.125, histórico):** a URL do Santuário abre **direto na Sala 2**, na mesma versão e arte do jogo normal (sem modo solo; o Celestial antigo só em `?celestial=1`).
 
 ## Salas
 | | Sala 1 | Sala 2 — Santuário |

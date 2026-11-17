@@ -43,6 +43,19 @@ import dungeonRocks from '../../assets/dungeon-rocks.webp';
 import dungeonWalls from '../../assets/dungeon-walls.webp';
 import dungeonCave from '../../assets/dungeon-cave.webp';
 import goddessFloat from '../../assets/goddess-float.webp';
+import goddessIsoWalk from '../../assets/goddess-iso-walk.webp';
+import goddessIsoIdle from '../../assets/goddess-iso-idle.webp';
+import goddessIsoSit from '../../assets/goddess-iso-sit.webp';
+import goddessIsoSword from '../../assets/goddess-iso-sword.webp';
+import goddessIsoAxe from '../../assets/goddess-iso-axe.webp';
+import goddessIsoHoe from '../../assets/goddess-iso-hoe.webp';
+import goddessIsoPickaxe from '../../assets/goddess-iso-pickaxe.webp';
+import goddessIsoShovel from '../../assets/goddess-iso-shovel.webp';
+import goddessIsoSwordAttack from '../../assets/goddess-iso-sword-attack.webp';
+import goddessIsoAxeAttack from '../../assets/goddess-iso-axe-attack.webp';
+import goddessIsoHoeAttack from '../../assets/goddess-iso-hoe-attack.webp';
+import goddessIsoPickaxeAttack from '../../assets/goddess-iso-pickaxe-attack.webp';
+import goddessIsoShovelAttack from '../../assets/goddess-iso-shovel-attack.webp';
 import heroineAxeAttack from '../../assets/heroine-axe-attack.webp';
 import heroineAxe from '../../assets/heroine-axe.webp';
 import heroineHoeAttack from '../../assets/heroine-hoe-attack.webp';
@@ -371,6 +384,20 @@ import type { ArtPack } from './types';
 const pack: ArtPack = {
   actors: {
     goddess: goddessFloat, // Sala 2 (Santuário) usa o pacote do mundo normal; a folha só baixa quando a Deusa aparece
+    // Deusa isométrica (Santuário solo, ADR 0036): 4 diagonais da câmera a 45° (frente=baixo, esquerda, direita, costas = as 4 direções do jogo); folhas só baixam quando ela aparece
+    'goddess-iso': goddessIsoWalk,
+    'goddess-iso-idle': goddessIsoIdle,
+    'goddess-iso-sit': goddessIsoSit,
+    'goddess-iso-sword': goddessIsoSword,
+    'goddess-iso-axe': goddessIsoAxe,
+    'goddess-iso-hoe': goddessIsoHoe,
+    'goddess-iso-pickaxe': goddessIsoPickaxe,
+    'goddess-iso-shovel': goddessIsoShovel,
+    'goddess-iso-sword-attack': goddessIsoSwordAttack,
+    'goddess-iso-axe-attack': goddessIsoAxeAttack,
+    'goddess-iso-hoe-attack': goddessIsoHoeAttack,
+    'goddess-iso-pickaxe-attack': goddessIsoPickaxeAttack,
+    'goddess-iso-shovel-attack': goddessIsoShovelAttack,
     heroine,
     hero,
     'hero-sword': heroSword,

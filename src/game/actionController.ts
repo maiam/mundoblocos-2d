@@ -38,7 +38,8 @@ interface Press extends Hold {
   moved: boolean;
 }
 
-export type CellTarget = { x: number; y: number; valid: boolean };
+/** `level` = nível exato do bloco a colocar (colocar numa face: vista isométrica); sem ele, o topo da pilha. */
+export type CellTarget = { x: number; y: number; valid: boolean; level?: number };
 
 /** Deslocamento da célula "à frente" para cada direção do sprite. */
 const FACING_DIR: Record<Facing, [number, number]> = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
@@ -58,6 +59,8 @@ export interface ActionContext {
   joystickActive(): boolean;
   /** Materiais coletados (colocar gasta, quebrar solta o bloco) — perfil `collectBlocks`. */
   collectBlocks: boolean;
+  /** Colocar cubos nas faces de outros (nível exato, sem exigir cubo embaixo): vista isométrica, só sozinho (o protocolo da sala não leva o nível). */
+  facePlacement?: boolean;
   /** Na sala: o que cai ao quebrar/colher é criado pelo servidor (itens da sala), não aqui. */
   sharedLoot?: boolean;
   /** Algo do inventário foi gasto (a grade libera espaços vazios). */
@@ -227,7 +230,7 @@ export class ActionController {
   }
 
   /** Pode usar o espaço selecionado (bloco/semente) nesta célula? Ovelha: ver `canFeed`. */
-  private canUseAt(slot: HotbarSlot | null, x: number, y: number): boolean {
+  private canUseAt(slot: HotbarSlot | null, x: number, y: number, level?: number): boolean {
     if (!slot) return false;
     if (slot.kind === 'tool') {
       const use = TOOLS[slot.tool].groundUse;
@@ -237,6 +240,7 @@ export class ActionController {
     }
     if (slot.kind === 'block') {
       if (this.ctx.collectBlocks && this.inventory.count(blockStack(slot.block)) <= 0) return false;
+      if (level !== undefined) return this.world.canPlaceAt(x, y, slot.block, level) && !this.entities.occupies(x, y);
       return this.placeAnchor(slot.block, x, y) !== null;
     }
     const plants = ITEMS[slot.item].plants;
@@ -317,7 +321,7 @@ export class ActionController {
   }
 
   /** Aplica o espaço selecionado: coloca bloco, planta ou alimenta. */
-  private applyUse(slot: HotbarSlot | null, x: number, y: number): void {
+  private applyUse(slot: HotbarSlot | null, x: number, y: number, level?: number): void {
     if (!slot) return; // mão vazia ainda não tem ação
     if (slot.kind === 'tool') {
       // Ferramenta com ação (enxada, pá, picareta): animação sempre; enxada/pá trocam o chão se o alvo for válido.
@@ -328,9 +332,9 @@ export class ActionController {
       return;
     }
     if (slot.kind === 'block') {
-      if (!this.canUseAt(slot, x, y)) return;
-      const [ax, ay] = this.placeAnchor(slot.block, x, y)!;
-      const placed = this.world.placeBlock(ax, ay, slot.block);
+      if (!this.canUseAt(slot, x, y, level)) return;
+      const [ax, ay] = level !== undefined ? [x, y] : this.placeAnchor(slot.block, x, y)!;
+      const placed = level !== undefined ? this.world.placeBlockAt(ax, ay, slot.block, level) : this.world.placeBlock(ax, ay, slot.block);
       if (placed) this.ctx.onAction?.({ kind: 'place', x: ax, y: ay, block: slot.block });
       if (placed && slot.block === Block.TENT) this.ctx.notify('Ponto de renascimento alterado');
       if (placed && this.ctx.collectBlocks) {
@@ -370,6 +374,14 @@ export class ActionController {
   private useTarget(sx: number, sy: number): CellTarget | null {
     const slot = this.slot;
     if (!slot || (slot.kind === 'tool' && !TOOLS[slot.tool].groundUse) || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
+    // Vista isométrica: apontar para a face de um cubo coloca o novo no vizinho daquela face, no mesmo nível (pode flutuar); o topo, em cima.
+    if (slot.kind === 'block' && this.ctx.facePlacement) {
+      const f = this.renderer.pickFace?.(this.camera, sx, sy);
+      if (f) {
+        const tx = f.up ? f.x : f.x + f.nx, ty = f.up ? f.y : f.y + f.ny, level = f.up ? f.level + 1 : f.level;
+        return { x: tx, y: ty, level, valid: this.inReach(tx, ty) && this.canUseAt(slot, tx, ty, level) };
+      }
+    }
     let [x, y] = this.groundCell(sx, sy);
     if (slot.kind === 'block') {
       const picked = this.renderer.pick(this.camera, sx, sy);
@@ -450,13 +462,13 @@ export class ActionController {
       // Pelo mouse: vira para o cursor e toca a ação (ara/amassa só se o alvo for válido).
       const t = this.useTarget(sx, sy);
       if (!this.player.attacking) this.faceToward(sx, sy);
-      if (t?.valid) this.applyUse(slot, t.x, t.y);
+      if (t?.valid) this.applyUse(slot, t.x, t.y, t.level);
       else this.player.startAttack(slot.tool); // alvo fora de alcance/inválido: só a animação
       return;
     }
     const t = this.useTarget(sx, sy);
     if (this.eatInstead(slot, !!t?.valid)) return;
-    if (t?.valid) this.applyUse(slot, t.x, t.y);
+    if (t?.valid) this.applyUse(slot, t.x, t.y, t.level);
   }
 
   // ---- Alvo à frente da personagem (botão de ação) ----
