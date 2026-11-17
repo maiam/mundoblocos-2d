@@ -104,51 +104,9 @@ inset = 0.03
 u0, u1, v0, v1 = 0.07, 0.95, 0.06, 0.88   # recua das bordas: ali o alfa é parcial e a cor da peça está contaminada
 south = affine(cg, L + (B - L) * u0 + np.array([0, H * v0]), (B - L) * (u1 - u0), np.array([0, H * (v1 - v0)]))   # face sul: L → B
 east = affine(cg, B + (R - B) * u0 + np.array([0, H * v0]), (R - B) * (u1 - u0), np.array([0, H * (v1 - v0)]))    # face leste: B → R
-def mirror_u(face):
-    """Emendável em u (lado a lado): a metade esquerda seguida do espelho dela (as bordas ficam iguais)."""
-    out = Image.new('RGB', (N, N))
-    half = face.crop((0, 0, N // 2, N))
-    out.paste(half, (0, 0))
-    out.paste(half.transpose(Image.FLIP_LEFT_RIGHT), (N // 2, 0))
-    return out
-
-
-def earth_rows(face, height, x0=0.5, x1=0.95, tone=1.0, from_face=None):
-    """Terra lisa emendável em u e v: a faixa de terra logo abaixo da franja (sem pedra nem trepadeira, y 0,38–0,50), espelhada em u e repetida
-    em espelho vertical até `height` px; a 1ª linha é a que continua a franja (sem emenda visível sob ela)."""
-    y0, y1 = int(N * 0.38), int(N * 0.48)
-    src_face = from_face or face   # a lateral leste usa a terra da sul, mais escura (a pedra e a trepadeira da leste quebrariam a emenda)
-    half = src_face.crop((int(N * x0), y0, int(N * x1), y1)).resize((N // 2, y1 - y0), Image.LANCZOS)   # um trecho limpo da terra, sem a pedra nem a trepadeira
-    band = Image.new('RGB', (N, y1 - y0))
-    band.paste(half, (0, 0))
-    band.paste(half.transpose(Image.FLIP_LEFT_RIGHT), (N // 2, 0))
-    out = Image.new('RGB', (N, height))
-    y, flip = 0, False
-    while y < height:
-        out.paste(band.transpose(Image.FLIP_TOP_BOTTOM) if flip else band, (0, y))
-        y += band.height
-        flip = not flip
-    if tone != 1.0:
-        out = Image.eval(out, lambda v: int(v * tone))
-    return out
-
-
-def earth(face, x0, x1, tone=1.0, from_face=None):
-    return earth_rows(face, N, x0, x1, tone, from_face)
-
-
-def grass_side(face, x0, x1, tone=1.0, from_face=None):
-    """Franja de grama (a faixa de cima da face, emendável em u pelo espelho) sobre a terra lisa."""
-    fringe_h = int(N * 0.38)
-    out = Image.new('RGB', (N, N))
-    out.paste(mirror_u(face).crop((0, 0, N, fringe_h)), (0, 0))
-    out.paste(earth_rows(face, N - fringe_h, x0, x1, tone, from_face), (0, fringe_h))
-    return out
-
-
-cube = Image.new('RGB', (4 * N, N))
-for j, f in enumerate((grass_side(south, 0.50, 0.95, 1.0), grass_side(east, 0.50, 0.95, 0.8, south), earth(south, 0.50, 0.95, 1.0), earth(east, 0.50, 0.95, 0.8, south))):
-    cube.paste(f, (j * N, 0))
+cube = Image.new('RGB', (2 * N, N))
+cube.paste(south, (0, 0))
+cube.paste(east, (N, 0))
 cube.save(root / 'src/assets/iso-cube.webp', quality=88)
 
 # Objetos: prateleiras de largura 1024.

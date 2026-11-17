@@ -60,11 +60,25 @@ export function isoSetTextures(
   const { ground, cube, props, stone } = images;
   const tops = new Map<string, HTMLCanvasElement>();
   ISO_GROUND_ORDER.forEach((key, i) => tops.set(key, slice(ground, (i % 5) * FACE, Math.floor(i / 5) * FACE, FACE, FACE)));
-  // Laterais já emendáveis (`scripts/extract-iso-set.py` e `extract-iso-stone.py`): grama sobre terra, terra lisa e pedra em tijolos em amarração; a leste é mais escura.
+  const south = slice(cube, 0, 0, FACE, FACE);
+  const east = slice(cube, FACE, 0, FACE, FACE);
+  // Laterais: franja de grama sobre terra (o bloco de grama), a terra sem a franja (a metade de baixo), e pedra (o próprio piso de pedra, escurecido).
+  const earthOf = (src: HTMLCanvasElement): HTMLCanvasElement => {
+    const [c, ctx] = square();
+    ctx.drawImage(src, 0, src.height * 0.55, src.width, src.height * 0.45, 0, 0, RES, RES);
+    return c;
+  };
+  const darken = (src: HTMLCanvasElement, k: number): HTMLCanvasElement => {
+    const [c, ctx] = square();
+    ctx.drawImage(src, 0, 0, RES, RES);
+    ctx.fillStyle = `rgba(20, 15, 35, ${k})`;
+    ctx.fillRect(0, 0, RES, RES);
+    return c;
+  };
   const sides: Record<Side, [HTMLCanvasElement, HTMLCanvasElement]> = {
-    grass: [slice(cube, 0, 0, FACE, FACE), slice(cube, FACE, 0, FACE, FACE)],
-    earth: [slice(cube, 2 * FACE, 0, FACE, FACE), slice(cube, 3 * FACE, 0, FACE, FACE)],
-    stone: [slice(stone, FACE, 0, FACE, FACE), slice(stone, 2 * FACE, 0, FACE, FACE)],
+    grass: [south, east],
+    earth: [earthOf(south), earthOf(east)],
+    stone: [darken(tops.get('g_stone')!, 0.2), darken(tops.get('g_stone')!, 0.34)],
   };
   for (const id of ISO_CUBES) {
     if (id === Block.ISO_STONE_BLOCK) {

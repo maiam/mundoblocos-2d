@@ -1,11 +1,5 @@
 # Changelog
 
-## Orvalis v0.93.144 — Santuário: encaixe entre os blocos (laterais emendáveis) (17/11/2026)
-- **Problema (visto pelo dono do produto):** cada cubo mostrava a face inteira do desenho (laje de cima + 1 fiada de tijolos) — num muro a laje se repetia a cada cubo e as emendas laterais cortavam tijolos e trepadeiras. **Sem refazer a arte:** as laterais passaram a ser **texturas emendáveis geradas da própria arte**.
-- **Pedra** (`extract-iso-stone.py`, `bond()`): só a fiada de tijolos, em **2 fiadas em amarração** (a de baixo deslocada meio tijolo, com volta da borda) → muro contínuo em u (lado a lado) e em v (cubo sobre cubo); vale para o Bloco de Pedra e o Piso de Pedra.
-- **Grama e terra** (`extract-iso-set.py`): franja de grama (emendável pelo espelho) sobre **terra lisa** (um trecho limpo da faixa de terra, espelhado, sem a pedra nem a trepadeira que quebravam a emenda); a lateral leste é a mesma terra mais escura. O Piso de Terra usa a terra lisa.
-- `render/isoSet.ts` só fatia as laterais prontas (antes esticava a parte de baixo da face). `iso-cube.webp` agora tem 4 quadrados (grama sul/leste, terra sul/leste). `tsc`, 661 testes verdes; conferido no navegador (muro de pedra, cova com paredes, blocos de terra). Sem mudança de save/protocolo.
-
 ## Orvalis v0.93.143 — Santuário: Bloco de Pedra, quebra em 1 s e terreno em camadas (17/11/2026)
 - **Pedido do dono do produto (regras só do Santuário):** (1) novo **Bloco de Pedra** (o cubo 1×1×1 da prancha de blocos de pedra: `scripts/extract-iso-stone.py` → `iso-stone.webp` com topo/sul/leste e ícone); (2) **quebrar bloco em 1 s**; (3) terreno em camadas — **nível 1 = Bloco de Pedra, nível 2 = Grama, e a Deusa e todo o resto no nível 3**.
 - **Perfil** (`WorldProfile`): `breakSeconds` (Santuário 1; Mundo `null` = pela ferramenta/mão como antes), `surfaceObjects` (Santuário `true`) e `terrain.layers` (Santuário `[ISO_STONE_BLOCK, ISO_G_GRASS]`); `FlatGenerator` põe as camadas em toda célula (níveis 0 e 1 da pilha, que contam como 1 e 2 a partir do chão). `ActionContext.breakSeconds` troca o tempo no `advanceHold`.

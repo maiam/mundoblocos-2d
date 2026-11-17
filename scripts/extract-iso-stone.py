@@ -55,22 +55,8 @@ top = affine(c + (T - c) * (1 - 2 * k), (R - T) * (1 - 2 * k), (L - T) * (1 - 2 
 u0, u1, v0, v1 = 0.06, 0.94, 0.07, 0.9
 south = affine(L + (B - L) * u0 + np.array([0, H * v0]), (B - L) * (u1 - u0), np.array([0, H * (v1 - v0)]))
 east = affine(B + (R - B) * u0 + np.array([0, H * v0]), (R - B) * (u1 - u0), np.array([0, H * (v1 - v0)]))
-
-
-def bond(face):
-    """Lateral emendável (v0.93.144): do desenho da face (laje de cima + 1 fiada de tijolos) fica só a fiada, que vira 2 fiadas em amarração
-    (a de baixo deslocada meio tijolo, com a volta da borda). As bordas da fiada são juntas (e a de cima é a sombra da junta), então
-    a textura emenda em u (lado a lado) e em v (cubo sobre cubo) sem a laje repetida a cada cubo."""
-    course = face.crop((0, int(N * 0.47), N, N)).resize((N, N // 2), Image.LANCZOS)
-    out = Image.new('RGB', (N, N))
-    out.paste(course, (0, 0))
-    out.paste(course, (N // 2, N // 2))
-    out.paste(course, (-N // 2, N // 2))
-    return out
-
-
 atlas = Image.new('RGB', (3 * N, N))
-for j, f in enumerate((top, bond(south), bond(east))):
+for j, f in enumerate((top, south, east)):
     atlas.paste(f, (j * N, 0))
 atlas.save(root / 'src/assets/iso-stone.webp', quality=90)
 
