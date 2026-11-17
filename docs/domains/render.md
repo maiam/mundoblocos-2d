@@ -2,9 +2,6 @@
 
 Apenas apresentação; lê `World`, nunca escreve.
 
-## Carvalhos isométricos na câmera Isométrica do Santuário (v0.93.127)
-- Arte `assets-src/trees/oak-iso.png` (3 tamanhos) → `scripts/extract-oak-iso.py` → `tree-oak-iso.webp` (tira de 3 quadros, sem a base de grama). `BlockTextures.isoOak`; `worldSpriteArt(world, textures, isometric)` usa-os no `OAK_TREE` só quando `SanctuaryCameraModes.current === 'isometrico'`, com `SpriteDraw.yaw = π/4` (o plano encara a câmera de azimute 45° em volta do meio da base, `yawPivotOrigin`); `onChange` refaz os sprites. Outras árvores e câmeras: inalteradas.
-
 ## Paredes no Mundo (W5, v0.93.56)
 `render/three/chunkWalls.ts`: o Mundo desenha as paredes autotile com o mesmo `buildWallArt` do Santuário, **por chunk** (refeito só quando `chunk.version` muda; o `World` avisa os vizinhos nas bordas) e com texturas de peça/materiais compartilhados (`WallPieceCache`), `pick` pelas malhas. Os atlas vêm de `art().wallAtlases` (pacote principal: Tábuas e Pedra), carregados em segundo plano. Sem animação do quadro intermediário da porta (Santuário tem). O 2D de reserva não desenha paredes. Na grade fina (`?grade=2`) o perfil ainda não lista paredes.
 

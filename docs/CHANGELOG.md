@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.132 — carvalho isométrico removido (17/11/2026)
+- **Pedido do dono do produto:** não gostou da versão do carvalho em perspectiva isométrica; **removida do jogo** (reverte a v0.93.127): arte `tree-oak-iso.webp`, prancha de origem, `scripts/extract-oak-iso.py`, `SpriteDraw.yaw`/`yawPivotOrigin` e o teste, a troca de sprites ao mudar de câmera (`onChange`) e a doc em `domains/render.md`. A câmera Isométrica do Santuário volta a usar o carvalho de sempre.
+- Sem mudança de save, protocolo ou servidor.
+
 ## Orvalis v0.93.131 — Capítulo 1: missões 08–10, fim do capítulo (17/11/2026)
 - **Decisão do dono do produto:** o `lizard` do jogo **é** o homem-lagarto e a quantidade da missão 08 vale toda para ele: **4** (os "3 lagartos + 1 homem-lagarto" do texto original viraram 4 homens-lagarto).
 - **08 Movimento nas margens** (4 homens-lagarto; 30) · **09 A fogueira dos goblins** (achar o acampamento + 2 goblins; 35) · **10 A ameaça à Cidade do Despertar** (os 5 goblins restantes; 60; texto de reconhecimento e gancho do mistério maior). Depois da 10 a conversa do Mestre volta ao normal.

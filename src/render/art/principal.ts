@@ -257,7 +257,6 @@ import fenceCherry from '../../assets/fence-cerejeira.webp';
 import fenceCherryIcon from '../../assets/icon-block-fence-cerejeira.webp';
 import fenceGateIcon from '../../assets/icon-block-fence-gate.webp';
 import treeOak from '../../assets/tree-oak.webp';
-import treeOakIso from '../../assets/tree-oak-iso.webp';
 import treeApple from '../../assets/tree-apple.webp';
 import treeCactus from '../../assets/tree-cactus.webp';
 import treeAppleBare from '../../assets/tree-apple-bare.webp';
@@ -552,7 +551,7 @@ const pack: ArtPack = {
     chair: { icon: chairIcon, sprite: chairSprite },
   },
   // Árvores adultas em tiras de variantes (scripts/process-trees.py); cacto: prancha 4 × 2 (scripts/extract-trees.py).
-  trees: { oak: treeOak, apple: treeApple, appleBare: treeAppleBare, cherry: treeCherry, birch: treeBirch, cactus: treeCactus, oakIso: treeOakIso },
+  trees: { oak: treeOak, apple: treeApple, appleBare: treeAppleBare, cherry: treeCherry, birch: treeBirch, cactus: treeCactus },
   rocks,
   flowers,
   flowerIcons: [flowerIcon01, flowerIcon02, flowerIcon03, flowerIcon04, flowerIcon05, flowerIcon06, flowerIcon07, flowerIcon08, flowerIcon09, flowerIcon10, flowerIcon11, flowerIcon12, flowerIcon13, flowerIcon14, flowerIcon15],
