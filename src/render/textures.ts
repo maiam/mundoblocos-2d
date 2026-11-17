@@ -77,8 +77,6 @@ export interface BlockTextures {
   gateFramesSide: Map<BlockId, Sprite[]>;
   /** Objetos com várias artes (montanhas, pedras): o render escolhe uma por célula (hash). */
   variants: Map<BlockId, Sprite[]>;
-  /** Carvalhos isométricos (3 tamanhos): só a câmera Isométrica do Santuário os usa (`worldSpriteArt`, `isometric`). Vazio sem a arte. */
-  isoOak: Sprite[];
   /** Objetos desenhados empilhados N vezes (aparência; ex.: parede do labirinto com 2 cubos de altura). */
   stackDraw: Map<BlockId, number>;
   /** Peças da cerca (trecho horizontal, vertical, poste grande; `render/fence.ts`), ou null sem a arte. */
@@ -610,9 +608,6 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   for (const id of [Block.OAK_TREE, Block.SAKURA_TREE] as BlockId[]) objects.set(id, treeSprite(id));
   objects.set(Block.CACTUS, cactusSprite());
   const treeVariants = growthTreeSprites(getTreeArt(), objects);
-  // Carvalhos isométricos (v0.93.127): a mesma tira de 3 quadros do carvalho (o maior de ponta a ponta), mas desenhados em perspectiva isométrica; só a câmera Isométrica do Santuário.
-  const isoArt = getTreeArt()?.oakIso;
-  const isoOak: Sprite[] = isoArt ? stripSprites(isoArt, TREE_FRAMES.oak, T * TREE_CELLS, 6) : [];
   // Pedregulhos: 40 artes da prancha de pedras (quadro de 2 células; as pedrinhas ficam pequenas no meio).
   const rockArt = getRockArt();
   if (rockArt) {
@@ -761,7 +756,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, gateFramesSide, variants, isoOak, stackDraw, fencePieces };
+  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, gateFramesSide, variants, stackDraw, fencePieces };
 }
 
 /**
