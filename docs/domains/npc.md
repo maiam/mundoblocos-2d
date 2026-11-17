@@ -28,7 +28,7 @@
 - **Execução:** `Entities.spawnResidents` (depois de `spawnVillagers`); `Villager(…, resident)` usa nome/falas do sorteado; `npc` = folha emprestada. Cidade: ruas; vila: dentro do muro, pontos nos caminhos. Só no aparelho (a sala não simula moradores). Sem rotina de dormir ainda (só o Bento).
 
 ## Capítulo 1 — missões do Mestre da Guilda (desligado na Sala 2: `WorldProfile.progression = false`, v0.93.130) (v0.93.121, ADR 0035)
-- `game/npcBrain/missions.ts`: `MISSIONS` (01–07; v0.93.129: meta `probe` lida do mundo — terra arada em `World.farmPlot` —, `bonusPerItem`/`bonusFor` com `SELL_PRICE`, contorno dourado via `RenderOptions.zones`), `MissionLog` {done, active, progress}, `nextMission/accept/goalsOf/isReady/onEvent/complete/marksOf/sanitizeMissions`. Em `Entities.missions`, **salvo no jogador** (v20). Eventos: `talk`, `kill`, `place`. `Game.talkMission` (oferta com botões, andamento, entrega; entrega pode ser a outro NPC) e `refreshMissionHud` (diário).
+- `game/npcBrain/missions.ts`: `MISSIONS` (01–10; evento `near` = chegar à fogueira de um acampamento de goblins; v0.93.129: meta `probe` lida do mundo — terra arada em `World.farmPlot` —, `bonusPerItem`/`bonusFor` com `SELL_PRICE`, contorno dourado via `RenderOptions.zones`), `MissionLog` {done, active, progress}, `nextMission/accept/goalsOf/isReady/onEvent/complete/marksOf/sanitizeMissions`. Em `Entities.missions`, **salvo no jogador** (v20). Eventos: `talk`, `kill`, `place`. `Game.talkMission` (oferta com botões, andamento, entrega; entrega pode ser a outro NPC) e `refreshMissionHud` (diário).
 - Chave de NPC nas missões: `guild` (Mestre Aldric) ou o id do nomeado. Moeda: Cobre.
 
 ## Moradores na sala (v0.93.117)

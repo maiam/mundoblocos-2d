@@ -982,6 +982,12 @@ export class Game {
 
   /** Todo quadro: sinal sobre a cabeça de quem tem missão, acompanhante de missão em andamento (também ao carregar o jogo) e seus comentários. */
   private updateQuests(dt: number): void {
+    this.campTimer -= dt;
+    if (this.progression && this.campTimer <= 0 && this.entities.missions.active === 'm09' && !this.inDungeon) {
+      this.campTimer = 0.5;
+      const r = 8 * SUBDIV;
+      if (this.world.goblinCamps.some((c) => Math.hypot(c.x - this.player.x, c.y - this.player.y) <= r)) this.missionEvent({ type: 'near', spot: 'goblin-camp' });
+    }
     const marks: Partial<Record<string, ReturnType<typeof markOf>>> = {};
     for (const q of this.questDefs) {
       const phase = phaseOf(this.entities.quests, q, haveOf(q, (id) => this.inventory.count(id)));
@@ -1023,6 +1029,7 @@ export class Game {
   /** Missões deste mundo (a espécie e o canteiro dependem da seed). */
   private questDefs: QuestDef[] = [];
   private remarkTimer = 8;
+  private campTimer = 0;
   private askTimer = 0;
   /** Pedido de acompanhar em aberto (na sala): `fresh` = missão recém-aceita (se a sala negar, a missão volta a ser oferecida). */
   private escortAsked: { id: number; fresh: QuestDef['id'] | null } | null = null;

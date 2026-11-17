@@ -17,7 +17,7 @@ describe('Capítulo 1: corrente de missões (ADR 0034)', () => {
     expect(marksOf(log, () => 0)).toEqual({ guild: 'offer' });
     log.done.push('m01');
     expect(nextMission(log)!.id).toBe('m02');
-    log.done.push('m02', 'm03', 'm04', 'm05', 'm06', 'm07');
+    log.done.push('m02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10');
     expect(nextMission(log)).toBeNull();
     expect(marksOf(log, () => 0)).toEqual({});
   });
@@ -76,7 +76,7 @@ describe('Capítulo 1: corrente de missões (ADR 0034)', () => {
   });
 
   it('as recompensas e os textos existem; o save valida (descarta lixo, limita contagem)', () => {
-    expect(MISSIONS.map((m) => m.reward.coins)).toEqual([8, 12, 15, 10, 22, 25, 18]);
+    expect(MISSIONS.map((m) => m.reward.coins)).toEqual([8, 12, 15, 10, 22, 25, 18, 30, 35, 60]);
     for (const m of MISSIONS) for (const t of [m.offer, m.prompt, m.accepted, m.progress, m.complete]) expect(t.length).toBeGreaterThan(10);
     expect(Item.COPPER_COIN).toBe('copper_coin');
     const clean = sanitizeMissions({ done: ['m01', 'xx', 'm02'], active: 'm03', progress: { wolves: 99, lixo: 4 } });
@@ -129,5 +129,27 @@ describe('Capítulo 1: corrente de missões (ADR 0034)', () => {
     expect(isReady(m, log, () => 0, () => 12)).toBe(true);
     expect(marksOf(log, () => 0, () => 12)).toEqual({ guild: 'ready' });
     expect(complete(log, m, () => 0, () => true, undefined, () => 12)).toBe(true);
+  });
+
+  it('m08–m10: homens-lagarto (4), acampamento + 2 goblins, depois 5 goblins', () => {
+    const log = EMPTY_LOG();
+    log.done.push('m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07');
+    accept(log, 'm08');
+    const m8 = missionOf('m08')!;
+    for (let n = 0; n < 5; n++) onEvent(log, { type: 'kill', monster: 'lizard' });
+    expect(goalsOf(m8, log, () => 0)[0].have).toBe(4);
+    expect(isReady(m8, log, () => 0)).toBe(true);
+    log.active = null; log.progress = {}; log.done.push('m08');
+    accept(log, 'm09');
+    const m9 = missionOf('m09')!;
+    onEvent(log, { type: 'kill', monster: 'goblin' });
+    onEvent(log, { type: 'kill', monster: 'goblin' });
+    expect(isReady(m9, log, () => 0)).toBe(false); // falta achar a fogueira
+    onEvent(log, { type: 'near', spot: 'goblin-camp' });
+    expect(isReady(m9, log, () => 0)).toBe(true);
+    log.active = null; log.progress = {}; log.done.push('m09');
+    accept(log, 'm10');
+    for (let n = 0; n < 5; n++) onEvent(log, { type: 'kill', monster: 'goblin' });
+    expect(isReady(missionOf('m10')!, log, () => 0)).toBe(true);
   });
 });

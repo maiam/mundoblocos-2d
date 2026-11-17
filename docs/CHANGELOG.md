@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.131 — Capítulo 1: missões 08–10, fim do capítulo (17/11/2026)
+- **Decisão do dono do produto:** o `lizard` do jogo **é** o homem-lagarto e a quantidade da missão 08 vale toda para ele: **4** (os "3 lagartos + 1 homem-lagarto" do texto original viraram 4 homens-lagarto).
+- **08 Movimento nas margens** (4 homens-lagarto; 30) · **09 A fogueira dos goblins** (achar o acampamento + 2 goblins; 35) · **10 A ameaça à Cidade do Despertar** (os 5 goblins restantes; 60; texto de reconhecimento e gancho do mistério maior). Depois da 10 a conversa do Mestre volta ao normal.
+- **Evento novo** `{ type: 'near', spot: 'goblin-camp' }`: `Game.updateQuests` o emite (a cada 0,5 s, só com a 09 ativa) quando a jogadora chega a 8 células de uma fogueira de `world.goblinCamps`.
+- Simplificação conhecida: os goblins das missões 09/10 contam pela espécie (qualquer goblin), não por acampamento (cada um tem 7).
+- Sem mudança de save (21), protocolo (29) nem servidor. Testes novos; `tsc` e testes verdes.
+
 ## Orvalis v0.93.130 — Sala 2 (Santuário) sem missões, carteira e painel do personagem (17/11/2026)
 - **Decisão do dono do produto:** o Santuário é área de criação; não herda a progressão do mundo normal. Novo `WorldProfile.progression` (principal `true`; Santuário e o perfil criativo da Sala 2 `false`).
 - Com `progression: false` o `Game` não conta/oferece missões (eventos, diário, sinais `!`/`?`, conversa com o Mestre), esconde o botão e a tecla **C** do painel do personagem, e ignora a carteira (a bolsa da sala não carrega nem guarda Moedas de Cobre: `coins` = 0).
