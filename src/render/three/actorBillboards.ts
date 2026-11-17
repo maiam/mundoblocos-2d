@@ -173,6 +173,11 @@ export class ActorBillboards {
   private readonly light = makeLightUniforms();
   private fires: readonly FireSource[] = [];
   private shadowDir = { dx: 0, dz: 0, len: 1, opacity: 0.22 };
+  /** Giro dos planos em torno do vertical (rad): na câmera isométrica (azimute 45°) o plano de frente fica de lado e achata o ator em cos 45° = 0,71; girar o plano para a câmera desfaz. 0 = vistas de sempre. */
+  private yaw = 0;
+
+  /** Gira os planos dos atores para encarar a câmera (isométrica: o azimute em rad; as outras vistas: 0). Chamar antes de `update`. */
+  setYaw(rad: number): void { this.yaw = rad; }
   private echo: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null;
 
   constructor(
@@ -244,6 +249,7 @@ export class ActorBillboards {
       const walking = this.opts.bob && a.moving && a.frame === undefined && a.dying === undefined && BOBBERS.test(a.kind);
       const bob = walking ? Math.abs(Math.sin(a.walkTime * 3.5 * Math.PI)) * BOB_CELLS / this.opts.k : 0;
       slot.mesh.position.set(a.x, a.visualZ + GROUND_LIFT + bob, a.y);
+      slot.mesh.rotation.y = this.yaw;
       slot.mesh.rotation.z = walking ? (a.facing === 'left' ? LEAN_RAD : a.facing === 'right' ? -LEAN_RAD : 0) * Math.min(1, Math.sin(a.walkTime * 3.5 * Math.PI + 0.6) * 0.5 + 0.7) : 0;
       slot.mesh.material.opacity = 1 - (a.fade ?? 0); // saindo/entrando pela porta dos fundos (rotina dos NPCs)
       slot.mesh.visible = true;
@@ -251,6 +257,7 @@ export class ActorBillboards {
         this.echo.material.map = slot.texture;
         this.echo.scale.copy(slot.mesh.scale);
         this.echo.position.copy(slot.mesh.position);
+        this.echo.rotation.y = this.yaw;
         this.echo.visible = true;
       }
       const [rx, ry] = sheet.shadowRadii;

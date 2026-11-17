@@ -63,6 +63,10 @@ const SPECS: Record<ActorKind, SheetSpec> = {
     cols: 7, rows: 4, height: TILE * 2.3, shadow: [0.34, 0.11], walkFps: 0,
     float: { lift: 0.32, bob: 3, fps: 7, movingFps: 10 },
   },
+  // Deusa isométrica (v0.93.135): anda no chão (sem flutuar); mesma altura nas três folhas (o corpo mede ~288 px nas três, na escala de 1254).
+  'goddess-iso': { cols: 4, rows: 4, height: TILE * 2.3, shadow: [0.32, 0.12], walkFps: 7 },
+  'goddess-iso-idle': { cols: 4, rows: 4, height: TILE * 2.3, shadow: [0.32, 0.12], walkFps: 3, loopWhenIdle: true },
+  'goddess-iso-sit': { cols: 4, rows: 4, height: TILE * 2.3, shadow: [0.32, 0.12], walkFps: 0, sequence: true },
   heroine: { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },
   // Heroína com ferramenta: mesma escala (altura do desenho igual à folha base).
   'heroine-sword': { cols: 4, rows: 4, height: CHARACTER_H, shadow: [0.32, 0.12], walkFps: 7 },

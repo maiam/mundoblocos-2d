@@ -44,7 +44,7 @@ export const HERO_NAMES: Record<HeroBody, string> = { heroine: 'Heroína', hero:
 
 /** Estados de pose com folha própria (o `walk` é a folha do próprio tipo). */
 export type PoseState = 'idle' | 'run' | 'alert' | 'attack' | 'hurt';
-export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | `${PoseKind}-${PoseState}` | 'capybara' | 'capybara-idle';
+export type ActorKind = HeroBody | `${HeroBody}-${ToolId}` | `${HeroBody}-${SwingTool}-attack` | `${SitBody}-sit` | 'goddess' | 'goddess-iso' | 'goddess-iso-idle' | 'goddess-iso-sit' | 'sheep' | 'lamb' | 'love-hearts' | FarmKind | BabyKind | `npc-${NpcId}` | MonsterKind | `${PoseKind}-${PoseState}` | 'capybara' | 'capybara-idle';
 
 /** O que o render precisa para desenhar um ator (desacoplado da lógica). */
 export interface Actor {
@@ -973,7 +973,9 @@ export class Entities {
     if (p) {
       const b = this.body;
       const sitting = p.sitting && canSit(b);
-      const kind: ActorKind = this.character === 'goddess' ? 'goddess'
+      // Deusa isométrica (Santuário solo): caminhada em movimento, idle parada (a folha de sentar fica registrada para quando houver assento).
+      const kind: ActorKind = this.character === 'goddess-iso' ? (p.moving ? 'goddess-iso' : 'goddess-iso-idle')
+        : this.character === 'goddess' ? 'goddess'
         : sitting ? `${b as SitBody}-sit` : heroActorKind(b, p.equipped, p.attackTool, p.attacking);
       out.unshift({
         kind, x: p.x, y: p.y, visualZ: p.visualZ, facing: p.facing, moving: p.moving, walkTime: p.walkTime,

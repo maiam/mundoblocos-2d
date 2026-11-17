@@ -41,7 +41,10 @@ Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham 
   contraste reduzido (`soften`), porque cobrem o mapa inteiro. Demais giram/espelham por célula.
 - A prancha isométrica (`celestial-blocks-iso.png`) fica só como referência.
 
-## Deusa da Vida
+## Deusa isométrica (Santuário solo, v0.93.135)
+Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `goddess-iso-idle` e `goddess-iso-sit` (`assets-src/goddess-iso/`, 4×4; ordem da prancha original: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda = direita, frente, costas, esquerda do jogo; `--rows-map 1,3,0,2`). Anda no chão; parada usa o idle. A Deusa flutuante abaixo continua na Sala 2 online. Ver `NEXT_STEPS` para as 10 folhas de ferramenta pendentes de revisão.
+
+## Deusa da Vida (flutuante, Sala 2)
 - **Flutua em vez de caminhar.** Folha `assets-src/goddess-float-sheet.png` (7 quadros × 4 direções, fundo branco,
   legendas à esquerda, linhas frente/direita/trás/esquerda) → `process-sprite.py --cols 7 --rows 4
   --region 130,0,1470,1000 --rows-map 0,3,1,2 --frame-h 160 --sat 16 --min 228` → `src/assets/goddess-float.webp`.

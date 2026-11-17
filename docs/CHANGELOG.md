@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.135 — Deusa isométrica no Santuário (caminhada, idle e sentar) (17/11/2026)
+- **Arte do dono do produto:** 13 pranchas da Deusa em vista isométrica (4 diagonais × 4 quadros: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda). **Importadas só as 3 que o Santuário usa hoje:** caminhada, idle e sentar (`assets-src/goddess-iso/` → `src/assets/goddess-iso-{walk,idle,sit}.webp`, 373 KB no total, `process-sprite.py --alpha --largest --frame-h 144 --rows-map 1,3,0,2`). As 10 de ferramenta (espada, machado, enxada, picareta, pá: caminhada e golpe) **não foram importadas**: o Santuário não tem ferramentas e as folhas precisam de revisão (ver NEXT_STEPS).
+- **Mapa de direções:** com a câmera a 45° o mundo "direita" aparece como baixo-direita, "baixo" como baixo-esquerda, "cima" como cima-direita e "esquerda" como cima-esquerda; `--rows-map 1,3,0,2` põe as 4 na ordem canônica (frente, esquerda, direita, costas) e o jogo não muda.
+- **Código:** `CharacterId` ganha `goddess-iso` (perfil `santuario`; a Sala 2 online segue com a `goddess` flutuante); `ActorKind` ganha `goddess-iso` (andando), `goddess-iso-idle` (parada, 4 quadros em laço) e `goddess-iso-sit` (registrada, ainda sem assento); folhas no pacote principal (`render/art/principal.ts`), `SPECS` em `render/character.ts`, `footMargins.ts` regenerado.
+- **Correção da câmera isométrica:** os planos dos atores ficavam de frente para o eixo z e, a 45°, saíam **achatados (×0,71 na largura)**. `ActorBillboards.setYaw` gira os planos para a câmera (π/4 só no modo isométrico); as outras vistas não mudam. Vale também para a câmera "Isométrica" da Sala 2.
+- Sem mudança de save (21), protocolo (29) nem servidor. `tsc`, 652 testes e `npm run build` verdes; **conferido no navegador** (4 direções andando e parada, proporção correta).
+
 ## Orvalis v0.93.134 — Santuário isométrico solo, terreno plano vazio (17/11/2026)
 - **Pedido do dono do produto (2º passo, ADR 0036):** solo, plano e vazio, em vista isométrica; o Mundo principal não muda.
 - **Perfil `santuario` refeito** (`world/profiles.ts`): terreno plano de grama (`FlatGenerator`), 4×4 chunks, Deusa, hotbar de 8 materiais do Mundo (Terra, Grama, Terra Arada, Areia, Pedra, Pedra Lisa, Tora, Tábuas; a Água Pura saiu: sem arte no pacote principal). `SanctuarySeedGenerator` (+ teste) removido de `world.ts` e do repositório.

@@ -66,14 +66,14 @@ describe('Santuário (terreno plano vazio, ADR 0036)', () => {
     expect(w.placeBlock(x, y, Block.STONE_SMOOTH)).toBe(true); // empilha
   });
 
-  it('spawn no centro; Deusa é a personagem; hotbar só com os 8 blocos', () => {
+  it('spawn no centro; Deusa isométrica é a personagem; hotbar só com os 8 blocos', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     expect(w.inBounds(x, y)).toBe(true);
     expect(Math.abs(x)).toBeLessThanOrEqual(1);
     expect(Math.abs(y)).toBeLessThanOrEqual(1);
     const e = new Entities(new Player(x + 0.5, y + 0.5), Math.random, S.character);
-    expect(e.actors[0].kind).toBe('goddess');
+    expect(e.actors[0].kind).toBe('goddess-iso-idle'); // parada: folha de idle; andando, 'goddess-iso'
     const hb = hotbarFor(S);
     expect(hb).toHaveLength(8);
     expect(hb.every((s) => s.kind === 'block')).toBe(true);

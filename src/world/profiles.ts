@@ -9,7 +9,8 @@ import type { ChunkRect } from './world';
 export type WorldId = 'principal' | 'santuario';
 
 /** Personagens jogáveis (folhas de sprite em `render/character.ts`). */
-export type CharacterId = 'heroine' | 'goddess';
+/** `goddess` = Deusa flutuante (Sala 2 online); `goddess-iso` = Deusa isométrica do Santuário solo (ADR 0036). */
+export type CharacterId = 'heroine' | 'goddess' | 'goddess-iso';
 
 export interface WorldProfile {
   id: WorldId;
@@ -75,7 +76,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     terrain: { kind: 'flat', ground: Block.GRASS },
     // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
     bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
-    character: 'goddess',
+    character: 'goddess-iso',
     // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
     blocks: [
       Block.DIRT, Block.GRASS, Block.TILLED, Block.SAND,
