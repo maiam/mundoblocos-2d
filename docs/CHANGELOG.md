@@ -41,6 +41,7 @@
 - **Pedido do dono do produto:** o mundo normal continua como está; o Santuário será refeito do zero, **solo**, terreno plano vazio, em vista isométrica. Este é o 1º passo: a limpeza (ADR 0036).
 - **Removido:** `render/sanctuaryThreeRenderer.ts`, `sanctuaryWallPrototype.ts`, `sanctuaryWallProportionTest.ts`, `sanctuaryEightFacesAsset.ts`, `celestialGrassNetAsset.ts`, `sanctuaryGrassPanelsAsset.ts`, `sanctuaryGoddessVisual.ts` (+ testes), a classe `SanctuaryCameraJoystick` (ficam as constantes de câmera), o `?celestial=1`, o build fixo `VITE_WORLD=santuario` (vite, `art/index.ts`, `config.ts`), o script `build:artifact:santuario` e o ramo do Santuário Celestial em `main.ts`.
 - **Mantido (o renderer do Mundo usa):** `sanctuaryThreeLayout`, `sanctuaryLighting`, `sanctuaryCameraModes`, `sanctuaryCameraRig`, `sanctuaryObliqueView`, `sanctuaryWallArt`, `celestialArt` e o perfil `santuario` (a substituir no próximo passo).
+- **CI:** a Verificação (`.github/workflows/ci.yml`) deixa de rodar `build:artifact:santuario` (script removido); `package.json` sobe para 0.93.139.
 - Efeito: o perfil Santuário passa a usar sempre a grade 2 (antes o Celestial usava a 1). Sem mudança de save, protocolo (29) nem servidor. `tsc`, 656 testes e `npm run build` verdes; **não conferido no navegador** (sem mudança visual no Mundo).
 
 ## Orvalis v0.93.132 — carvalho isométrico removido (17/11/2026)
