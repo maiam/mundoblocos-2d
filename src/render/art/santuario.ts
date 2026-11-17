@@ -1,90 +1,78 @@
-import type { MaterialsV2Manifest } from '../materialsV2';
-import materialsV2Atlas from '../../assets/materials-v2.webp';
-import materialsV2Manifest from '../../assets/materials-v2.json';
-import { WATER_PURE_TILE_DATA_URI } from '../waterPureAsset';
-import dirtIcon from '../../assets/icon-block-dirt.webp';
-import grassIcon from '../../assets/icon-block-grass.webp';
-import oakLogIcon from '../../assets/icon-block-oak-log.webp';
-import oakPlanksIcon from '../../assets/icon-block-oak-planks.webp';
-import stoneIcon from '../../assets/icon-block-stone.webp';
-import smoothStoneIcon from '../../assets/icon-block-stone-smooth.webp';
-import tilledIcon from '../../assets/icon-block-tilled.webp';
-import newCloudSolid from '../../assets/santuario-nuvem-solida-512.jpg';
-import newCloudEthereal from '../../assets/santuario-nuvem-eterea-512.jpg';
-import newMarbleCelestial from '../../assets/santuario-marmore-celestial-512.jpg';
-import newMarbleOrnate from '../../assets/santuario-marmore-ornamentado-512.jpg';
-import newStoneCelestial from '../../assets/santuario-pedra-celestial-512.jpg';
-import newStoneGolden from '../../assets/santuario-pedra-dourada-512.jpg';
-import celestialAtlas from '../../assets/celestial-atlas.webp';
-import wallsTabuas from '../../assets/walls-tabuas.webp';
-import wallsPedra from '../../assets/walls-pedra.webp';
-import goddessFloat from '../../assets/goddess-float.webp';
-import iconCrystalLife from '../../assets/icon-celestial-crystal-life.webp';
-import iconEarthCultivated from '../../assets/icon-celestial-earth-cultivated.webp';
-import iconEarthFloral from '../../assets/icon-celestial-earth-floral.webp';
-import iconEarthSacred from '../../assets/icon-celestial-earth-sacred.webp';
-import iconFoliageGolden from '../../assets/icon-celestial-foliage-golden.webp';
-import iconGrassCelestial from '../../assets/icon-celestial-grass-celestial.webp';
-import iconGrassFlowery from '../../assets/icon-celestial-grass-flowery.webp';
-import iconLightBlock from '../../assets/icon-celestial-light-block.webp';
-import iconMossLuminous from '../../assets/icon-celestial-moss-luminous.webp';
-import iconWaterCrystal from '../../assets/icon-celestial-water-crystal.webp';
-import iconWaterSacred from '../../assets/icon-celestial-water-sacred.webp';
-import iconWoodCelestial from '../../assets/icon-celestial-wood-celestial.webp';
-import iconWallPlanks from '../../assets/icon-wall-planks.webp';
-import iconWallStone from '../../assets/icon-wall-stone.webp';
-import { Block } from '../../world/blocks';
 import type { ArtPack } from './types';
+import world from './principal';
+import isoGround from '../../assets/iso-ground.webp';
+import isoCube from '../../assets/iso-cube.webp';
+import isoProps from '../../assets/iso-props.webp';
+import isoStone from '../../assets/iso-stone.webp';
+import isoRio from '../../assets/iso-rio.webp';
+import isoFenceModel from '../../assets/iso-fence-model.json';
+import isoWood from '../../assets/iso-wood.webp';
+import iconFence from '../../assets/icon-block-fence.webp';
+import iconFenceBirch from '../../assets/icon-block-fence-betula.webp';
+import iconFenceCherry from '../../assets/icon-block-fence-cerejeira.webp';
+import iconGate from '../../assets/icon-block-fence-gate.webp';
+import iconGateBirch from '../../assets/icon-block-fence-gate-betula.webp';
+import iconGateCherry from '../../assets/icon-block-fence-gate-cerejeira.webp';
+import { Block } from '../../world/blocks';
+import type { IsoFenceModel } from '../three/isoFences';
+import goddessIsoWalk from '../../assets/goddess-iso-walk.webp';
+import goddessIsoIdle from '../../assets/goddess-iso-idle.webp';
+import goddessIsoSit from '../../assets/goddess-iso-sit.webp';
+import goddessIsoSword from '../../assets/goddess-iso-sword.webp';
+import goddessIsoAxe from '../../assets/goddess-iso-axe.webp';
+import goddessIsoHoe from '../../assets/goddess-iso-hoe.webp';
+import goddessIsoPickaxe from '../../assets/goddess-iso-pickaxe.webp';
+import goddessIsoShovel from '../../assets/goddess-iso-shovel.webp';
+import goddessIsoSwordAttack from '../../assets/goddess-iso-sword-attack.webp';
+import goddessIsoAxeAttack from '../../assets/goddess-iso-axe-attack.webp';
+import goddessIsoHoeAttack from '../../assets/goddess-iso-hoe-attack.webp';
+import goddessIsoPickaxeAttack from '../../assets/goddess-iso-pickaxe-attack.webp';
+import goddessIsoShovelAttack from '../../assets/goddess-iso-shovel-attack.webp';
 
-/** Santuário Celestial: só a Deusa e os 18 blocos celestiais. */
+/** Ícones das peças (`icon-iso-<chave>.webp`), por chave com hífens (`g-grass`). Vite devolve a URL de cada arquivo. */
+const iconFiles = import.meta.glob('../../assets/icon-iso-*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const icons: Record<string, string> = {};
+for (const [path, url] of Object.entries(iconFiles)) icons[path.replace(/^.*icon-iso-/, '').replace(/\.webp$/, '')] = url;
+
+/**
+ * Santuário isométrico (ADR 0036, v0.93.140): só o conjunto isométrico (pisos, bloco de grama e objetos) e a Deusa isométrica. Não traz a arte do Mundo
+ * principal (materiais, árvores, cidade…): o Santuário não tem nada disso.
+ */
 const pack: ArtPack = {
-  actors: { goddess: goddessFloat },
-  celestialAtlas,
-  // Compartilha apenas o atlas de superfícies; não traz sistemas do Mundo principal.
-  materialsV2: { atlas: materialsV2Atlas, manifest: materialsV2Manifest as MaterialsV2Manifest },
-  celestialSurfaces: {
-    [Block.CLOUD_SOLID]: newCloudSolid,
-    [Block.CLOUD_ETHEREAL]: newCloudEthereal,
-    [Block.MARBLE_CELESTIAL]: newMarbleCelestial,
-    [Block.MARBLE_ORNATE]: newMarbleOrnate,
-    [Block.STONE_CELESTIAL]: newStoneCelestial,
-    [Block.STONE_GOLDEN]: newStoneGolden,
-    [Block.WATER_PURE]: WATER_PURE_TILE_DATA_URI,
+  actors: {
+    'goddess-iso': goddessIsoWalk,
+    'goddess-iso-idle': goddessIsoIdle,
+    'goddess-iso-sit': goddessIsoSit,
+    'goddess-iso-sword': goddessIsoSword,
+    'goddess-iso-axe': goddessIsoAxe,
+    'goddess-iso-hoe': goddessIsoHoe,
+    'goddess-iso-pickaxe': goddessIsoPickaxe,
+    'goddess-iso-shovel': goddessIsoShovel,
+    'goddess-iso-sword-attack': goddessIsoSwordAttack,
+    'goddess-iso-axe-attack': goddessIsoAxeAttack,
+    'goddess-iso-hoe-attack': goddessIsoHoeAttack,
+    'goddess-iso-pickaxe-attack': goddessIsoPickaxeAttack,
+    'goddess-iso-shovel-attack': goddessIsoShovelAttack,
   },
-  wallAtlases: { [Block.WALL_PLANKS]: wallsTabuas, [Block.WALL_STONE]: wallsPedra },
-  celestialIcons: {
-    [Block.CLOUD_SOLID]: newCloudSolid,
-    [Block.CLOUD_ETHEREAL]: newCloudEthereal,
-    [Block.MARBLE_CELESTIAL]: newMarbleCelestial,
-    [Block.MARBLE_ORNATE]: newMarbleOrnate,
-    [Block.STONE_CELESTIAL]: newStoneCelestial,
-    [Block.STONE_GOLDEN]: newStoneGolden,
-    [Block.GRASS_CELESTIAL]: iconGrassCelestial,
-    [Block.GRASS_FLOWERY]: iconGrassFlowery,
-    [Block.MOSS_LUMINOUS]: iconMossLuminous,
-    [Block.EARTH_SACRED]: iconEarthSacred,
-    [Block.EARTH_FLORAL]: iconEarthFloral,
-    [Block.EARTH_CULTIVATED]: iconEarthCultivated,
-    [Block.WATER_SACRED]: iconWaterSacred,
-    [Block.WATER_CRYSTAL]: iconWaterCrystal,
-    [Block.WATER_PURE]: WATER_PURE_TILE_DATA_URI,
-    [Block.CRYSTAL_LIFE]: iconCrystalLife,
-    [Block.LIGHT_BLOCK]: iconLightBlock,
-    [Block.WOOD_CELESTIAL]: iconWoodCelestial,
-    [Block.FOLIAGE_GOLDEN]: iconFoliageGolden,
-    // paredes autotile (ADR 0027); a porta de parede segue com o ícone provisório (`wallPlaceholderIcon`)
-    [Block.WALL_PLANKS]: iconWallPlanks,
-    [Block.WALL_STONE]: iconWallStone,
+  isoSet: { ground: isoGround, cube: isoCube, props: isoProps, stone: isoStone, rio: isoRio, icons },
+  isoFence: {
+    model: isoFenceModel as IsoFenceModel, wood: isoWood,
+    icons: {
+      [Block.FENCE]: iconFence, [Block.FENCE_BIRCH]: iconFenceBirch, [Block.FENCE_CHERRY]: iconFenceCherry,
+      [Block.FENCE_GATE]: iconGate, [Block.FENCE_GATE_BIRCH]: iconGateBirch, [Block.FENCE_GATE_CHERRY]: iconGateCherry,
+    },
   },
-  materialIcons: {
-    [Block.DIRT]: dirtIcon,
-    [Block.TILLED]: tilledIcon,
-    [Block.GRASS]: grassIcon,
-    [Block.OAK_LOG]: oakLogIcon,
-    [Block.OAK_PLANKS]: oakPlanksIcon,
-    [Block.STONE]: stoneIcon,
-    [Block.STONE_SMOOTH]: smoothStoneIcon,
-  },
+  // Blocos do Mundo que também existem no Santuário (v0.93.146): só a arte deles, vinda do pacote principal.
+  blockAtlas: world.blockAtlas,
+  materialsV2: world.materialsV2,
+  materialIcons: world.materialIcons,
+  oakDoor: world.oakDoor,
+  tent: world.tent,
+  chest: world.chest,
+  craftables: world.craftables,
+  flowers: world.flowers,
+  flowerIcons: world.flowerIcons,
+  town: world.town && { 'village-stake-low': world.town['village-stake-low'], 'village-stake-tall': world.town['village-stake-tall'], 'village-stake-icon': world.town['village-stake-icon'] },
   itemIcons: {},
   toolIcons: {},
 };

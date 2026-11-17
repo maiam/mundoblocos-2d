@@ -9,8 +9,6 @@ import { Block, isDoor, type BlockId } from '../world/blocks';
 export const ADAPTIVE_WALL_BLOCKS: ReadonlySet<BlockId> = new Set([
   Block.STONE_BRICK, Block.STONE_SMOOTH, Block.STONE_POLISHED,
   Block.OAK_PLANKS, Block.CHERRY_PLANKS, Block.BIRCH_PLANKS,
-  Block.MARBLE_CELESTIAL, Block.MARBLE_ORNATE,
-  Block.STONE_CELESTIAL, Block.STONE_GOLDEN,
 ]);
 
 type BlockReader = {

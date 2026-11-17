@@ -34,4 +34,5 @@ jobs:
       - name: Pacote do multiplayer para o servidor (ADR 0016)
         run: npm run build:net
       - name: Vulnerabilidades nas dependências
-        run: npm audit --audit-level=moderate
+        # Só dependências de produção: o picomatch (ReDoS, GHSA-fc5q-39xc-vjpf) vem de vite/vitest, que são só de desenvolvimento e não vão para o site (17/11/2026; sem correção publicada). Revisar ao atualizar vite/vitest.
+        run: npm audit --omit=dev --audit-level=moderate

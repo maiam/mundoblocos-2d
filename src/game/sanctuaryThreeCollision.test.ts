@@ -22,7 +22,7 @@ describe('Santuário Three.js — colisões físicas', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
     clearTestArea(world, sx, sy);
-    world.setObject(sx + 2, sy, Block.STONE);
+    world.setObject(sx + 2, sy, Block.ISO_G_STONE);
     expect(world.standHeight(sx + 2, sy)).toBe(1);
 
     const player = new Player(sx + 0.5, sy + 0.5);
@@ -41,8 +41,8 @@ describe('Santuário Three.js — colisões físicas', () => {
     const [sx, sy] = world.findSpawn();
     clearTestArea(world, sx, sy, 4);
     for (const x of [sx + 1, sx + 2, sx + 3]) {
-      world.setObject(x, sy + 2, Block.STONE);
-      world.placeBlock(x, sy + 2, Block.STONE_SMOOTH);
+      world.setObject(x, sy + 2, Block.ISO_G_STONE);
+      world.placeBlock(x, sy + 2, Block.ISO_G_DIRT);
     }
     expect(world.stackHeight(sx + 1, sy + 2)).toBe(2);
     const front = new Player(sx + 2.5, sy + 0.5);
@@ -88,7 +88,7 @@ describe('Santuário Three.js — colisões físicas', () => {
     const world = new World(42, WORLD_PROFILES.santuario);
     const [sx, sy] = world.findSpawn();
     clearTestArea(world, sx, sy);
-    world.setObject(sx + 2, sy, Block.STONE);
+    world.setObject(sx + 2, sy, Block.ISO_G_STONE);
     const player = new Player(sx + 0.5, sy + 0.5);
     configureSanctuaryThreeCollision(player, 'santuario', false);
     // After ~25 frames the player is ON the 1-block step; later frames

@@ -35,7 +35,7 @@ export const BIOMES: Record<Biome['key'], Biome> = {
     tree: Block.CACTUS, treeDensity: 0.06, decorations: [], decoChance: 0,
   },
   celestial: {
-    key: 'celestial', name: 'Santuário Celestial', ground: Block.CLOUD_SOLID,
+    key: 'celestial', name: 'Santuário', ground: Block.ISO_G_GRASS,
     tree: Block.AIR, treeDensity: 0, decorations: [], decoChance: 0,
   },
 };

@@ -30,17 +30,18 @@ import type { RenderOptions } from './rendererContract';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { getFxArt, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { getFxArt, getIsoFence, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
 import { SpriteFx } from './three/spriteFx';
 import { TOOLS } from '../world/items';
 import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, joinsFence, isWaterPlant, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
-import { actorScaleFor, cellsTallFromSearch, objectScaleFor } from './worldScale';
+import { actorScaleFor, cellsTallFromSearch, ISO_CELLS_TALL, objectScaleFor, WORLD_CELLS_TALL } from './worldScale';
 import { ChimneySmoke, chimneyWorldPos, type Chimney } from './three/chimneySmoke';
 import { chimneyMouths, isTownArt } from './townArt';
 import { hash2 } from '../world/random';
+import { isRioBrush, rioPieceAt, rioVirtualId } from '../world/rio';
 import { ChunkWalls } from './three/chunkWalls';
 import { DEFAULT_WALL_THICKNESS } from '../world/walls';
 import { ThreeStage } from './three/stage';
@@ -60,6 +61,7 @@ import { skyAt } from './daycycle';
 import { drawBreakingRing, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { selectionRect3d } from './worldSelection';
 import { IsoCursor } from './three/isoCursor';
+import { IsoFences } from './three/isoFences';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
@@ -87,7 +89,8 @@ function openWaterAt(world: World, x: number, y: number): boolean {
  */
 export class WorldThreeRenderer implements GameRenderer {
   /** Padrão 14; `?celulas=N` (experimento de escala, `worldScale.ts`) muda para comparar. */
-  readonly preferredCellsTall = cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
+  /** Células visíveis na vertical: o padrão do Mundo (14 × SUBDIV) ou, no Santuário isométrico, `ISO_CELLS_TALL` (as peças da prancha são grandes). */
+  readonly preferredCellsTall: number;
   readonly textures: BlockTextures;
   private readonly stage: ThreeStage;
   private readonly sanctuaryCameras: SanctuaryCameraModes | null;
@@ -97,6 +100,8 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly worldLayer = new THREE.Group();
   /** Cursor 3D da câmera isométrica (o 2D de seleção não projeta na vista isométrica). */
   private readonly isoCursor: IsoCursor;
+  /** Cercas e portões como malhas 3D (Santuário isométrico); null nos outros mundos. */
+  private readonly isoFences: IsoFences | null;
   private readonly interiorLayer = new THREE.Group();
   private readonly room: InteriorRoom;
   private readonly skyColor: THREE.Color;
@@ -159,6 +164,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
   /** `sanctuaryRoom` = seletor das 3 câmeras (Sala 2); `isometric` = câmera isométrica fixa (Santuário solo, ADR 0036). */
   constructor(canvas: HTMLCanvasElement, private readonly world: World, sanctuaryRoom = false, isometric = false) {
+    this.preferredCellsTall = isometric ? ISO_CELLS_TALL : cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
       this.actors?.reupload();
       this.drops?.reupload();
@@ -180,8 +186,10 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.isoCursor = new IsoCursor(this.worldLayer, world);
+    const fenceArt = getIsoFence();
+    this.isoFences = fenceArt ? new IsoFences(this.worldLayer, world, fenceArt.art) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures, world.profile.view === 'isometric'), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);
@@ -198,6 +206,7 @@ export class WorldThreeRenderer implements GameRenderer {
       tile: TILE, k: OBLIQUE_K,
       isDoor: (id) => isDoor(id), isOpen: (id) => id === Block.OAK_DOOR_OPEN,
       frames: () => this.textures.doorFrames,
+      surfaceLevels: world.profile.surfaceObjects, yaw: world.profile.view === 'isometric' ? Math.PI / 4 : 0,
     });
     this.gates = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K, steps: 5,
@@ -241,12 +250,14 @@ export class WorldThreeRenderer implements GameRenderer {
       transform: (cell) => (this.world.cubeLevels > 1
         ? { x: cell.x + 0.5, y: (cell.level + cell.n / 2) / this.world.cubeLevels, z: cell.y + 0.5 }
         : sanctuaryBlockTransform(cell)),
+      // Rio das Fadas (Santuário): o mapa guarda só o pincel; a peça de água vem dos 4 vizinhos do mesmo nível.
+      variant: (w, id, x, y, level) => (isRioBrush(id) ? rioVirtualId(rioPieceAt((gx, gy, gl) => w.getLevel(gx, gy, gl), x, y, level)) : id),
       material: (id) => this.blockMaterials.get(id).block,
     });
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), sunShading: sunShadingOn(), sunShadow: sunShadowOn(), bob: feelOn() });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(isometric ? WORLD_CELLS_TALL : this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), sunShading: sunShadingOn(), sunShadow: sunShadowOn(), bob: feelOn() });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);
@@ -280,6 +291,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.walls.update(rect);
       this.doors.update(rect, opts.elapsed);
       this.gates.update(rect, opts.elapsed);
+      this.isoFences?.update(rect, opts.dt);
       this.groundFx.update(view, opts.elapsed);
       this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
@@ -290,7 +302,7 @@ export class WorldThreeRenderer implements GameRenderer {
     if (inside) this.fires = [];
     else if (opts.elapsed - this.firesAt > 0.25 || opts.elapsed < this.firesAt) {
       this.firesAt = opts.elapsed;
-      this.fires = findFires(view, (x, y) => this.world.getObject(x, y), { x: cam.x / TILE, z: cam.y / TILE });
+      this.fires = findFires(view, (x, y) => this.world.surfaceObject(x, y), { x: cam.x / TILE, z: cam.y / TILE });
     }
     this.fireFx.update(this.fires, opts.elapsed, skyAt(opts.time).night, TILE * cam.zoom);
     this.stepDust(opts, inside, TILE * cam.zoom);
@@ -383,7 +395,7 @@ export class WorldThreeRenderer implements GameRenderer {
     const reach = Math.hypot(cam.width, cam.height) / (2 * cellPx);
     const a = opts.actors[0];
     const player: LightSource = { x: a ? a.x : focus.x, z: a ? a.y : focus.z, ...PLAYER_LIGHT, radius: PLAYER_LIGHT.radius * SUBDIV };
-    const glows = collectWorldLights(view, (x, y) => this.world.getObject(x, y), (id) => {
+    const glows = collectWorldLights(view, (x, y) => this.world.surfaceObject(x, y), (id) => {
       const color = this.textures.glowColor.get(id);
       return color ? { color, at: this.textures.glowAt.get(id) } : undefined;
     });
@@ -545,8 +557,8 @@ export class WorldThreeRenderer implements GameRenderer {
       this.stage.syncCamera(cam);
       this.stage.aim(cam, sx, sy);
     }
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes()])) {
-      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? [])])) {
+      const block = this.isoFences?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -630,6 +642,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blockMaterials.dispose();
     this.actors.dispose();
     this.isoCursor.dispose();
+    this.isoFences?.dispose();
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();

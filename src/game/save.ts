@@ -28,7 +28,7 @@ import { type QuestLog, sanitizeLog } from './npcBrain/quests';
  */
 
 /** Versão do formato; mudar ao alterar a estrutura (e migrar em `migrate`). */
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 /** Id da pilha da Moeda de Cobre (para migrar salvamentos antigos). */
 const COPPER_COIN_ID = Item.COPPER_COIN;
 
@@ -191,6 +191,12 @@ export function migrate(raw: unknown): SaveData | null {
     delete inv[COPPER_COIN_ID];
     d = { ...d, v: 21, inventory: inv, coins };
   }
+  // v21 → v22 (Santuário em camadas, ADR 0036, v0.93.143): o terreno do Santuário passa a nascer com 2 camadas de cubo (pedra e grama) e os objetos ficam em cima
+  // delas; o que foi salvo no terreno plano e vazio de antes não serve mais — o Santuário recomeça (o Mundo principal segue igual).
+  if (d.v === 21) {
+    if (d.world === 'santuario') return null;
+    d = { ...d, v: 22 };
+  }
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;
 }
 
@@ -260,7 +266,7 @@ export function applySave(d: SaveData, s: GameState, rand: () => number = Math.r
   s.world.loadHoleAges(d.holes); // e os demais continuam contando o dia
   s.world.tent = d.tent ?? null;
   // Baús que não existem mais no mapa (ex.: salvamento antigo com um baú onde hoje é a cidade) são descartados.
-  for (const c of d.chests ?? []) if (s.world.getObject(c.x, c.y) === Block.CHEST) s.world.chests.set(`${c.x},${c.y}`, c.slots);
+  for (const c of d.chests ?? []) if (s.world.surfaceObject(c.x, c.y) === Block.CHEST) s.world.chests.set(`${c.x},${c.y}`, c.slots);
   const p = s.player;
   p.x = d.player.x;
   p.y = d.player.y;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, CELESTIAL_BLOCKS } from '../world/blocks';
+import { Block } from '../world/blocks';
 import { toolCanBreak, toolDrops, TOOLS } from '../world/items';
 import { mulberry32 } from '../world/random';
 import { Entities } from './entities';
@@ -9,7 +9,7 @@ import { Sheep } from './sheep';
 describe('Picareta', () => {
   it('quebra qualquer bloco e plantas, mas não madeira nem árvore', () => {
     const minable = [Block.DIRT, Block.GRASS, Block.TILLED, Block.PATH, Block.SAND, Block.STONE,
-      Block.CACTUS, Block.TALL_GRASS, Block.FLOWER, Block.WHEAT_0, Block.WHEAT_15, ...CELESTIAL_BLOCKS];
+      Block.CACTUS, Block.TALL_GRASS, Block.FLOWER, Block.WHEAT_0, Block.WHEAT_15];
     for (const id of minable) expect(toolCanBreak('pickaxe', id)).toBe(true);
     for (const id of [Block.OAK_LOG, Block.OAK_PLANKS, Block.OAK_TREE, Block.SAKURA_TREE]) {
       expect(toolCanBreak('pickaxe', id)).toBe(false);

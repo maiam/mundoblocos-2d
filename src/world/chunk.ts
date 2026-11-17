@@ -57,6 +57,11 @@ export class Chunk {
     this.version++;
   }
 
+  /** Pede o redesenho sem mudar dados (vizinho de uma célula do rio que mudou na borda do chunk). */
+  touch(): void {
+    this.version++;
+  }
+
   /** Define o bloco de um nível da célula. */
   setLevel(lx: number, ly: number, level: Level, id: BlockId): void {
     this.levels[level][ly * CHUNK_SIZE + lx] = id;

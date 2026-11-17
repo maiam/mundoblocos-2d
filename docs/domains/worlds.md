@@ -4,10 +4,12 @@
 
 | Campo | Mundo principal | Santuário (v0.93.134, ADR 0036) |
 |---|---|---|
-| `terrain` | procedural (`WorldGenerator`) | **plano vazio de grama** (`FlatGenerator`) |
+| `terrain` | procedural (`WorldGenerator`) | **plano em camadas** (`FlatGenerator` com `layers`): chão de grama + **Bloco de Pedra no nível 1** + **Grama no nível 2**; a Deusa e tudo o mais no **nível 3** |
+| quebrar | pela ferramenta (1 s) ou mão (2 s) | **1 s para qualquer bloco** (`breakSeconds`) |
+| objetos | no nível 0 da célula | **em cima da pilha de cubos** (`surfaceObjects`): árvore, cerca, casa… ficam no nível 3 e não contam como altura de piso |
 | `bounds` | ilimitado | **16 chunks = 4×4** (`cx -2..1`, `cy -2..1`) → 64×64 células |
 | `character` | heroína | **Deusa da Vida** |
-| `blocks` | materiais, objetos, paredes… | **8 materiais**: Terra, Grama, Terra Arada, Areia, Pedra, Pedra Lisa, Tora, Tábuas de Carvalho (pilha de 5, cubos cheios) |
+| `blocks` | materiais, objetos, paredes… | **70 peças**: 26 do conjunto isométrico (`ISO_BLOCKS`) + 42 do Mundo como blocos novos (`WORLD_BLOCKS_IN_SANCTUARY`; sem paredes) + 2 pincéis do Rio das Fadas (`RIO_BRUSHES`) —: 4 cubos (3 pisos + Bloco de Pedra) + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
 | câmera | 3/4 (oblíqua) | **isométrica fixa** (45° / 35,264°, sem seletor) |
 | `sky` (fundo além das bordas) | escuro | degradê azul → lilás |
@@ -26,20 +28,17 @@
   na borda. Objetos fora dos limites são `AIR`.
 - `ensureChunks` recorta a área aos limites (nunca mais de 10 chunks carregados); `findSpawn` usa o centro.
 - `placementLevel` só aceita ids de `profile.blocks` (vale também para o mundo principal).
-- Quebrar a nuvem abre buraco; só bloco celestial preenche (vira piso).
+- Quebrar o piso abre buraco; só um cubo preenche (vira piso).
 
-## Blocos celestiais (`world/blocks.ts`, ids 80–97)
-Nuvem Sólida, Nuvem Etérea, Mármore Celestial, Mármore Ornamentado, Pedra Celestial, Pedra Dourada, Grama Celestial,
-Grama Florida, Musgo Luminoso*, Terra Sagrada, Terra Floral, Terra Cultivada, Água Sagrada, Água Cristalina,
-Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham à noite.)
-- Todos são cubos sólidos de construção (as águas são blocos decorativos, não líquido).
-- **Arte:** prancha 3/4 fornecida (`assets-src/celestial-blocks-34.png`, fundo transparente, 6×3) →
-  `python3 scripts/extract-blocks.py --celestial` → `src/assets/celestial-atlas.webp` (topo, frente, chão contínuo)
-  + `icon-celestial-*.webp` (cubo inteiro). Topo ≈ 46 % da altura do cubo (medido).
-- Chão: blocos com desenho central/moldura (mármore ornamentado, pedra dourada, terra cultivada, água cristalina,
-  cristal, bloco de luz, madeira) não giram; nuvens não giram nem espelham (formariam "V") e têm o chão com
-  contraste reduzido (`soften`), porque cobrem o mapa inteiro. Demais giram/espelham por célula.
-- A prancha isométrica (`celestial-blocks-iso.png`) fica só como referência.
+## Conjunto isométrico (v0.93.140–141, ADR 0036)
+Fonte: `assets-src/iso-set/prancha-iso.png` (36 peças, fundo transparente, projeção isométrica = a da câmera: topo 1,414 × 0,816 células). **Só 19 viraram blocos** (decisão do dono do produto, 17/11/2026: saem o Bloco de Grama, os pisos 5–10 de pedra/transição e os 10 caminhos). `python3 scripts/extract-iso-set.py` (reconhece as 36 peças, grava só as usadas) gera `src/assets/iso-ground.webp` (3 topos 128 px), `iso-cube.webp` (faces sul e leste do bloco de grama, usadas nas laterais), `iso-props.webp` (16 objetos), `icon-iso-<chave>.webp` e `render/isoSetManifest.ts`. Ids em `blocks.ts` (`ISO_*`) e listas `ISO_CUBES`/`ISO_PROPS`/`ISO_BLOCKS`.
+- **Terreno em camadas** (v0.93.143): toda célula nasce com 2 cubos (índice 0 da pilha = Bloco de Pedra, 1 = Piso de Grama) sobre o chão; contando a partir do chão: nível 1 = pedra, nível 2 = grama, nível 3 = a superfície onde ficam a Deusa (`standHeight` = 2) e os objetos. Cavar tira a grama, depois a pedra, depois abre o chão. `World.stackHeight` conta só cubos e `placementLevel` põe objetos em cima (`surfaceFree`; a casa 12×12 exige a mesma altura nas 144 células); `ChunkSprites.surfaceLevels` e `IsoFences` desenham em qualquer nível; a câmera acompanha a altura da Deusa (`ThreeStage.focusY`). **Só o perfil do Santuário** liga isso.
+- **Bloco de Pedra** (`ISO_STONE_BLOCK`, `scripts/extract-iso-stone.py`, prancha `assets-src/iso-set/blocos-pedra.png`): o cubo 1×1×1 da prancha (as outras peças são o mesmo bloco empilhado, não viram blocos).
+- **Cubos** (`shape: 'cube'`, pilha de 5, colocáveis na face): topo = o piso da prancha; laterais = terra com franja de grama (grama), terra lisa (terra) ou pedra. O chão do mundo é o Piso de Grama (emendável).
+- **Objetos** (`shape: 'rock'` sólido ou `'decoration'` andável: pedrinhas, capim, margaridas, lavanda, arbusto pequeno): só no chão livre, um sprite vertical girado 45°. **Tamanhos** (`ISO_SCALE`, pedido do dono do produto): carvalho 2× (ocupa só a célula do tronco), Barraca 3× e Casa de Feira 4×. **Objetos grandes** (`ISO_BIG`): Barraca 3 × 3 (`ISO_STALL` + 8 `ISO_STALL_PART`) e Casa 12 × 12 (`ISO_HOUSE` + 143 `ISO_HOUSE_PART`), canto inferior esquerdo = o id (`World.bigCells`/`bigAnchor`); qualquer parte quebra o objeto inteiro.
+- **Cercas e portões 3D** (v0.93.142, `ISO_FENCES`): os blocos `FENCE*`/`FENCE_GATE*` do Mundo, mas desenhados por `render/three/isoFences.ts` com a geometria do modelo do Blockbench (`python3 scripts/extract-iso-fence.py` → `iso-fence-model.json`) e as texturas de madeira do dono do produto (`assets-src/iso-set/madeira-*.png` → `iso-wood.webp`, 24 u do modelo por imagem); 12 u do modelo = 1 célula; regras (bloqueio, abrir, emenda por vizinhos) são as do Mundo (`isFence`/`isGate`/`joinsFence`).
+- O desenho se apoia na quina sul da base (o plano gira em volta do meio da borda de baixo).
+- A prancha 3/4 antiga e os 18 blocos celestiais (ids 80–97) saíram do jogo.
 
 ## Deusa isométrica (Santuário solo, v0.93.135)
 Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `goddess-iso-idle` e `goddess-iso-sit` (`assets-src/goddess-iso/`, 4×4; ordem da prancha original: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda = direita, frente, costas, esquerda do jogo; `--rows-map 1,3,0,2`). Anda no chão; parada usa o idle. A Deusa flutuante abaixo continua na Sala 2 online. Também há folhas de caminhada e de golpe das 5 ferramentas (`goddess-iso-<ferramenta>[-attack]`, v0.93.137); o perfil ainda não dá ferramentas à Deusa (`tools: false`).

@@ -2,21 +2,24 @@ import { Block, type BlockId } from '../world/blocks';
 import type { FxKind } from './three/spriteFx';
 import { art } from './art';
 import { setMaterialsV2 } from './materialsV2';
+import type { IsoSetImages } from './isoSet';
+import type { IsoFenceArt } from './three/isoFences';
 
 /**
  * Imagens de blocos carregadas antes do jogo começar (para chão e cubos já nascerem com a arte), a partir do
- * pacote de arte do mundo (`render/art`): atlas dos materiais (scripts/extract-blocks.py), atlas celestial,
+ * pacote de arte do mundo (`render/art`): atlas dos materiais (scripts/extract-blocks.py),
  * folha da porta, água, tenda, baú e cidade. A arte da dungeon vem depois, em segundo plano (`loadDungeonArt`).
  * Só o que o pacote traz é carregado; o resto fica null.
  * Layout de cada atlas: linha 0 = topo do cubo (64×64), linha 1 = frente (64×36),
  * linha 2 = topo contínuo para o chão (64×64); uma coluna por bloco.
  */
 let atlas: HTMLImageElement | null = null;
-let celestial: HTMLImageElement | null = null;
-/** Texturas quadradas aprovadas do Santuário para os IDs 80–85. */
-const celestialSurfaces = new Map<number, HTMLImageElement>();
 /** Porta de Carvalho: 8 quadros (4×2) — 0..3 abrindo, 4..7 fechando (scripts/process-sprite.py). */
 let oakDoor: HTMLImageElement | null = null;
+/** Conjunto isométrico do Santuário (null nos outros mundos). */
+let isoSet: { images: IsoSetImages; icons: Record<string, string> } | null = null;
+/** Cerca e portão 3D do Santuário (null nos outros mundos). */
+let isoFence: { art: IsoFenceArt; icons: Partial<Record<number, string>> } | null = null;
 /** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras, blocos decorados e paredes. */
 export interface DungeonArt {
   ground: HTMLImageElement;
@@ -62,17 +65,14 @@ const maybe = (url: string | undefined) => (url ? load(url) : Promise.resolve(nu
 /** Carrega as imagens de bloco do pacote de arte já carregado (`loadArtPack`). */
 export async function loadBlockArt(): Promise<void> {
   const a = art();
-  [atlas, celestial, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.celestialAtlas), maybe(a.oakDoor)]);
-  celestialSurfaces.clear();
-  // Mantém o atlas antigo como fallback; falha de uma imagem não bloqueia o Santuário.
-  await Promise.all(Object.entries(a.celestialSurfaces ?? {}).map(async ([id, url]) => {
-    if (!url) return;
-    try {
-      celestialSurfaces.set(Number(id), await load(url));
-    } catch {
-      console.warn('Textura celestial indisponível, usando atlas antigo:', id);
-    }
-  }));
+  [atlas, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.oakDoor)]);
+  isoSet = null;
+  isoFence = null;
+  if (a.isoFence) isoFence = { art: { model: a.isoFence.model, wood: await load(a.isoFence.wood) }, icons: a.isoFence.icons };
+  if (a.isoSet) {
+    const [ground, cube, props, stone, rio] = await Promise.all([load(a.isoSet.ground), load(a.isoSet.cube), load(a.isoSet.props), load(a.isoSet.stone), load(a.isoSet.rio)]);
+    isoSet = { images: { ground, cube, props, stone, rio }, icons: a.isoSet.icons };
+  }
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
@@ -138,13 +138,14 @@ export function getBlockAtlas(): HTMLImageElement | null {
   return atlas;
 }
 
-export function getCelestialAtlas(): HTMLImageElement | null {
-  return celestial;
+/** Cerca e portão 3D do Santuário (modelo, tábuas e ícones), ou null. */
+export function getIsoFence(): { art: IsoFenceArt; icons: Partial<Record<number, string>> } | null {
+  return isoFence;
 }
 
-/** Arte aprovada do bloco celestial; null para materiais não substituídos. */
-export function getCelestialSurface(id: number): HTMLImageElement | null {
-  return celestialSurfaces.get(id) ?? null;
+/** Conjunto isométrico do Santuário (imagens e ícones), ou null. */
+export function getIsoSet(): { images: IsoSetImages; icons: Record<string, string> } | null {
+  return isoSet;
 }
 
 export function getOakDoorSheet(): HTMLImageElement | null {

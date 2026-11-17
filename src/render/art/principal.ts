@@ -561,7 +561,6 @@ const pack: ArtPack = {
     [Block.WALL_PLANKS]: iconWallPlanks,
     [Block.WALL_STONE]: iconWallStone,
   },
-  celestialIcons: {},
   // Paredes autotile no Mundo (W5): atlas por material e ícones (a porta de parede usa o ícone da Porta de Carvalho).
   wallAtlases: { [Block.WALL_PLANKS]: wallsTabuas, [Block.WALL_STONE]: wallsPedra },
   oakDoor,

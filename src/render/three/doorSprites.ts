@@ -4,7 +4,7 @@ import type { BlockId } from '../../world/blocks';
 import type { Chunk } from '../../world/chunk';
 import type { ChunkRect } from '../../world/world';
 import { DoorAnimator, doorKey } from '../doorAnim';
-import { type SpriteArt, type SpriteCell, spriteDepthBias, spriteHit } from './chunkSprites';
+import { type SpriteArt, type SpriteCell, spriteDepthBias, spriteHit, yawPivotOrigin } from './chunkSprites';
 
 export interface DoorWorld {
   getChunk(cx: number, cy: number): Chunk | null | undefined;
@@ -23,11 +23,15 @@ export interface DoorSpritesOptions {
   framesAt?(x: number, y: number): readonly SpriteArt[] | undefined;
   /** Quadros por sentido (porta: 4, padrão; porteira: 5). */
   steps?: number;
+  /** Portas em qualquer nível da pilha (Santuário: em cima do terreno em camadas): o quadro sobe `nível` células. */
+  surfaceLevels?: boolean;
+  /** Giro (rad) do plano em volta do meio da base: o desenho encara a câmera isométrica (π/4). Padrão 0. */
+  yaw?: number;
   /** Teto de portas desenhadas por quadro. */
   maxDoors?: number;
 }
 
-interface Door { x: number; y: number; id: BlockId }
+interface Door { x: number; y: number; id: BlockId; level: number }
 interface Asset { texture: THREE.CanvasTexture; solid: THREE.MeshBasicMaterial; soft: THREE.MeshBasicMaterial }
 
 /**
@@ -83,8 +87,10 @@ export class DoorSprites {
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const x = chunk.cx * CHUNK_SIZE + lx, y = chunk.cy * CHUNK_SIZE + ly;
-        const id = this.world.getLevel(x, y, 0);
-        if (this.opts.isDoor(id)) out.push({ x, y, id });
+        for (let level = 0; level < (this.opts.surfaceLevels ? chunk.levels.length : 1); level++) {
+          const id = this.world.getLevel(x, y, level);
+          if (this.opts.isDoor(id)) { out.push({ x, y, id, level }); break; }
+        }
       }
     }
     return out;
@@ -135,7 +141,14 @@ export class DoorSprites {
     }
     mesh.geometry = this.geometryFor(sprite);
     mesh.material = open ? a.soft : a.solid; // aberta se atravessa: nunca cobre o personagem
-    mesh.position.set(d.x + sprite.ox / this.opts.tile, 0, d.y + (sprite.oy + sprite.h) / this.opts.tile + spriteDepthBias(d.x));
+    const left = d.x + sprite.ox / this.opts.tile, baseZ = d.y + (sprite.oy + sprite.h) / this.opts.tile + spriteDepthBias(d.x);
+    const yaw = this.opts.yaw ?? 0;
+    if (yaw) {
+      // gira em volta do MEIO da base (a origem da malha é o canto esquerdo): ver `yawPivotOrigin`
+      const [px, pz] = yawPivotOrigin(left, baseZ, sprite.w / this.opts.tile / 2, yaw);
+      mesh.position.set(px, d.level, pz);
+    } else mesh.position.set(left, d.level, baseZ);
+    mesh.rotation.y = yaw;
     mesh.userData.cell = { x: d.x, y: d.y, id: d.id, sprite } satisfies SpriteCell;
     mesh.visible = true;
   }

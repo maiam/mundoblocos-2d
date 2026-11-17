@@ -26,11 +26,10 @@ export interface ArtPack {
    * é o padrão do jogo e carrega antes dele começar (~110 kB, dentro do orçamento de início).
    */
   materialsV2?: { atlas: string; manifest: import('../materialsV2').MaterialsV2Manifest; masks?: string };
-  /** Atlas legado de 18 blocos celestiais (fallback para arte não substituída). */
-  celestialAtlas?: string;
-  /** Seis superfícies aprovadas para IDs 80–85; exclusivas do Santuário. */
-  celestialSurfaces?: Partial<Record<number, string>>;
-  celestialIcons: Partial<Record<number, string>>;
+  /** Conjunto isométrico do Santuário (`scripts/extract-iso-set.py`, ADR 0036): atlas de pisos, faces do bloco de grama, atlas de objetos e ícones por chave da peça. */
+  isoSet?: { ground: string; cube: string; props: string; stone: string; rio: string; icons: Record<string, string> };
+  /** Cerca e portão 3D do Santuário isométrico (`scripts/extract-iso-fence.py`, ADR 0036): modelo (geometria), imagem das tábuas e ícones por id de bloco. */
+  isoFence?: { model: import('../three/isoFences').IsoFenceModel; wood: string; icons: Partial<Record<number, string>> };
   /** Atlas de paredes por bloco (W3, ADR 0027; `scripts/build-wall-atlas.py`): 16 tampas + 4 frentes. Sem ele, o bloco usa as cores lisas do protótipo. */
   wallAtlases?: Partial<Record<number, string>>;
   /** Porta de Carvalho (8 quadros). */

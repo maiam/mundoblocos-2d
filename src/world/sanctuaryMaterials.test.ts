@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { Block } from './blocks';
+import { Block, ISO_BLOCKS, WORLD_BLOCKS_IN_SANCTUARY } from './blocks';
+import { RIO_BRUSHES } from './rio';
 import { WORLD_PROFILES } from './profiles';
 import { V2_BLOCKS } from '../render/materialsV2';
 import { CAMERA_OPTION_2, SANCTUARY_DEFAULT_CAMERA } from '../render/sanctuaryCameraJoystick';
 
 describe('Santuário — comparação de câmera e materiais', () => {
-  it('disponibiliza somente os 8 materiais do Mundo (sem a água pura, que não tem arte no pacote principal), em ordem exata', () => {
-    expect(WORLD_PROFILES.santuario.blocks).toEqual([
-      Block.DIRT, Block.GRASS, Block.TILLED, Block.SAND,
-      Block.STONE, Block.STONE_SMOOTH, Block.OAK_LOG, Block.OAK_PLANKS,
-    ]);
+  it('disponibiliza as 70 peças: 26 do conjunto isométrico (4 cubos, 16 objetos, 6 cercas/portões) + 42 do Mundo + 2 pincéis do rio, sem repetir id, em ordem exata', () => {
+    expect(WORLD_PROFILES.santuario.blocks).toEqual([...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY, ...RIO_BRUSHES]);
+    expect(ISO_BLOCKS).toHaveLength(26);
+    expect(WORLD_BLOCKS_IN_SANCTUARY).toHaveLength(42);
+    expect(new Set(WORLD_PROFILES.santuario.blocks).size).toBe(70);
+    expect(WORLD_BLOCKS_IN_SANCTUARY.some((id) => ISO_BLOCKS.includes(id))).toBe(false); // os do Mundo são blocos NOVOS: nenhum sobrescreve um do conjunto isométrico
   });
 
   it('a Terra Arada tem topo próprio e laterais de terra', () => {

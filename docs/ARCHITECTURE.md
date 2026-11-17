@@ -102,7 +102,8 @@ src/
     doorAnim.ts                animação da porta (8 quadros, `DoorAnimator`): máquina de estados compartilhada pelo 2D e pelo 3D
     worldLight.ts              luz do Mundo (pura): brilho ambiente pela hora, cor da escuridão, luzes dos blocos que brilham (ADR 0031, M3.3)
     worldSpriteArt.ts          qual sprite 2D desenha cada objeto do Mundo no 3D (variações por célula, porta por estado, cerca emendada)
-    celestialArt.ts            blocos celestiais: ícones da prancha + faces provisórias
+    isoSet.ts                  conjunto isométrico do Santuário: topos, faces e sprites dos cubos e objetos a partir da prancha
+    three/isoFences.ts         cercas e portões 3D (malhas do modelo do Blockbench) do Santuário isométrico
     damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)

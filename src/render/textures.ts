@@ -1,15 +1,15 @@
 import { CUBE_FRONT, TILE } from '../config';
-import { Block, type BlockId, CELESTIAL_BLOCKS, FLOWER_BLOCKS, MATERIALS } from '../world/blocks';
+import { Block, type BlockId, FLOWER_BLOCKS, MATERIALS } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2WaterTop } from './materialsV2';
 import { TRANSITION_PIECES, TRANSITION_RULES, type TransitionRule } from './transitions';
-import { getBlockAtlas, getCelestialAtlas, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
+import { getBlockAtlas, getIsoFence, getIsoSet, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
 import type { CraftableArt } from './art/types';
-import { celestialFaces, CELESTIAL_STYLE } from './celestialArt';
 import { rgba, shade } from './color';
 import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, GATE_FRAME, GATE_SIDE_FRAME } from './fence';
 import { townSprites } from './townArt';
+import { isoSetTextures, type IsoCubeFaces } from './isoSet';
 
 /**
  * Texturas do mundo em vista 3/4.
@@ -81,6 +81,8 @@ export interface BlockTextures {
   stackDraw: Map<BlockId, number>;
   /** Peças da cerca (trecho horizontal, vertical, poste grande; `render/fence.ts`), ou null sem a arte. */
   fencePieces: Map<BlockId, HTMLCanvasElement[]>;
+  /** Faces (+X −X +Y −Y +Z −Z) dos cubos do conjunto isométrico do Santuário (vazio nos outros mundos). */
+  isoCube: Map<BlockId, IsoCubeFaces>;
 }
 
 /**
@@ -639,17 +641,10 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
       if (icons15[i]) icons.set(id, icons15[i]);
     });
   }
-  // Santuário Celestial: arte da prancha 3/4 (atlas) + ícones do cubo inteiro.
-  for (const id of getCelestialAtlas() ? CELESTIAL_BLOCKS : []) {
-    const { top, front, ground } = celestialFaces(id);
-    groundTop.set(id, ground);
-    objects.set(id, composeCube(
-      (ctx) => ctx.drawImage(top, 0, 0, T, T),
-      (ctx) => ctx.drawImage(front, 0, T, T, F),
-      CELESTIAL_STYLE[id].outline,
-    ));
-    icons.set(id, pack.celestialIcons[id] ?? '');
-  }
+  const isoCube = new Map<BlockId, IsoCubeFaces>();
+  const iso = getIsoSet();
+  if (iso) isoSetTextures(iso.images, iso.icons, groundTop, objects, icons, isoCube);
+  for (const [id, url] of Object.entries(getIsoFence()?.icons ?? {})) if (url) icons.set(Number(id) as BlockId, url); // cercas e portões 3D do Santuário
   const variants = new Map<BlockId, Sprite[]>(treeVariants);
   const stackDraw = new Map<BlockId, number>();
   if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);
@@ -729,9 +724,6 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   const stakeIcon = getTownImages().get('village-stake-icon')?.src;
   if (stakeIcon) icons.set(Block.FENCE_STAKE, stakeIcon);
   const glowColor = new Map<BlockId, string>([
-    [Block.MOSS_LUMINOUS, '#c8ff8a'],
-    [Block.CRYSTAL_LIFE, '#ff9be6'],
-    [Block.LIGHT_BLOCK, '#ffe08a'],
     [Block.LAMP, '#ffd27a'],
     [Block.CAMPFIRE, '#ffab4a'],
     [Block.CAULDRON, '#ff9a3c'],
@@ -756,7 +748,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
-  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, gateFramesSide, variants, stackDraw, fencePieces };
+  return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, gateFramesSide, variants, stackDraw, fencePieces, isoCube };
 }
 
 /**

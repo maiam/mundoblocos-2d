@@ -72,6 +72,8 @@ export class Hud {
     card.append(top, side);
     const hotbar = document.createElement('div');
     hotbar.className = 'hotbar-row hand';
+    if (h.slots > 20) hotbar.classList.add('many'); // muitas peças (conjunto isométrico do Santuário): quebram em linhas em vez de rolar de lado
+    if (h.slots > 40) hotbar.classList.add('huge'); // mais de 40 (Santuário com os blocos do Mundo): peças menores e a grade rola na vertical
     card.appendChild(hotbar);
     for (let i = 0; i < h.slots; i++) {
       const b = document.createElement('button');

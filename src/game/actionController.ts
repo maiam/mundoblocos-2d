@@ -61,6 +61,8 @@ export interface ActionContext {
   collectBlocks: boolean;
   /** Colocar cubos nas faces de outros (nível exato, sem exigir cubo embaixo): vista isométrica, só sozinho (o protocolo da sala não leva o nível). */
   facePlacement?: boolean;
+  /** Tempo fixo (s) para quebrar qualquer bloco, em vez de pela ferramenta (Santuário: 1 s). */
+  breakSeconds?: number;
   /** Na sala: o que cai ao quebrar/colher é criado pelo servidor (itens da sala), não aqui. */
   sharedLoot?: boolean;
   /** Algo do inventário foi gasto (a grade libera espaços vazios). */
@@ -219,7 +221,7 @@ export class ActionController {
       }
       return true;
     }
-    if (this.world.getObject(x, y) === Block.CHEST) {
+    if (this.world.surfaceObject(x, y) === Block.CHEST) {
       // Baú: toque (qualquer item em mãos) abre o painel dele.
       if (this.inReach(x, y)) this.ctx.onOpenChest(x, y);
       return true;
@@ -375,7 +377,7 @@ export class ActionController {
     const slot = this.slot;
     if (!slot || (slot.kind === 'tool' && !TOOLS[slot.tool].groundUse) || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
     // Vista isométrica: apontar para a face de um cubo coloca o novo no vizinho daquela face, no mesmo nível (pode flutuar); o topo, em cima.
-    if (slot.kind === 'block' && this.ctx.facePlacement) {
+    if (slot.kind === 'block' && this.ctx.facePlacement && blockDef(slot.block).shape === 'cube') {
       const f = this.renderer.pickFace?.(this.camera, sx, sy);
       if (f) {
         const tx = f.up ? f.x : f.x + f.nx, ty = f.up ? f.y : f.y + f.ny, level = f.up ? f.level + 1 : f.level;
@@ -541,7 +543,7 @@ export class ActionController {
       h.target = { x: t.x, y: t.y };
       h.progress = 0;
     }
-    h.progress += dt / breakSeconds(this.tool); // ferramenta 1 s, mão/item 2 s
+    h.progress += dt / (this.ctx.breakSeconds ?? breakSeconds(this.tool)); // ferramenta 1 s, mão/item 2 s (ou o tempo fixo do perfil)
     // Machado/enxada/pá/picareta: enquanto quebra, repete a animação de ação (só o machado acerta entidades).
     if (this.swingsWhileBreaking && !this.player.attacking) this.player.startAttack();
     if (h.progress >= 1) {

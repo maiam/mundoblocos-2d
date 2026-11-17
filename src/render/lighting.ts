@@ -61,9 +61,6 @@ export function glowLightFor(id: BlockId): Pick<LightSource, 'radius' | 'color' 
     case Block.CAMPFIRE: return { radius: 5.5, color: [1, 0.62, 0.28], flicker: 0.12 };
     case Block.CAULDRON:
     case Block.OVEN: return { radius: 3.5, color: [1, 0.55, 0.25], flicker: 0.1 };
-    case Block.MOSS_LUMINOUS: return { radius: 3.2, color: [0.72, 1, 0.5], flicker: 0 };
-    case Block.CRYSTAL_LIFE: return { radius: 4.2, color: [1, 0.55, 0.9], flicker: 0 };
-    case Block.LIGHT_BLOCK: return { radius: 5, color: [1, 0.92, 0.62], flicker: 0 };
     default: return { radius: 3.5, color: [1, 0.85, 0.6], flicker: 0 };
   }
 }

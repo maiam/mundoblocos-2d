@@ -1,4 +1,5 @@
 import { hash2 } from './random';
+import { RIO_CANAL, RIO_LAGO } from './rio';
 /**
  * Registro de blocos — fonte de verdade das PROPRIEDADES DE DOMÍNIO de cada bloco.
  * A aparência vive em `src/render/textures.ts`, indexada pelo mesmo id.
@@ -198,27 +199,33 @@ export const Block = {
   POTATO_0: 150,
   TOMATO_0: 170,
   CARROT_0: 190,
-  // --- Santuário Celestial (prancha "Blocos do Mundo Celestial") ---
-  CLOUD_SOLID: 80,
-  CLOUD_ETHEREAL: 81,
-  MARBLE_CELESTIAL: 82,
-  MARBLE_ORNATE: 83,
-  STONE_CELESTIAL: 84,
-  STONE_GOLDEN: 85,
-  GRASS_CELESTIAL: 86,
-  GRASS_FLOWERY: 87,
-  MOSS_LUMINOUS: 88,
-  EARTH_SACRED: 89,
-  EARTH_FLORAL: 90,
-  EARTH_CULTIVATED: 91,
-  WATER_SACRED: 92,
-  WATER_CRYSTAL: 93,
-  /** Água Pura: bloco 3D azul com textura aquática em todas as faces; exclusivo do Santuário. */
-  WATER_PURE: 98,
-  CRYSTAL_LIFE: 94,
-  LIGHT_BLOCK: 95,
-  WOOD_CELESTIAL: 96,
-  FOLIAGE_GOLDEN: 97,
+  // --- Conjunto isométrico do Santuário (ADR 0036, v0.93.140): 20 cubos (bloco de grama + 19 pisos) e 17 objetos (16 peças + a parte da casa) ---
+  ISO_G_GRASS: 81,
+  ISO_G_DIRT: 82,
+  ISO_G_STONE: 83,
+  ISO_TREE: 167,
+  ISO_BUSH_L: 168,
+  ISO_BUSH_M: 169,
+  ISO_BUSH_S: 186,
+  ISO_ROCK_L: 187,
+  ISO_PEBBLES: 188,
+  ISO_TUFT: 189,
+  ISO_DAISIES: 206,
+  ISO_LAVENDER: 207,
+  ISO_LANTERN: 208,
+  ISO_STALL: 131,
+  ISO_PLANTER: 1,
+  ISO_STONE_PLANTER: 2,
+  ISO_BARREL: 3,
+  ISO_CRATE: 4,
+  ISO_HOUSE: 5,
+  ISO_HOUSE_PART: 7,
+  ISO_STALL_PART: 84,
+  /** Bloco de Pedra isométrico (v0.93.143): a camada de baixo do terreno do Santuário. */
+  ISO_STONE_BLOCK: 85,
+  /** Pincéis do Rio das Fadas (v0.93.147, `world/rio.ts`): a peça de água certa é escolhida na hora de desenhar, pelos vizinhos. */
+  ISO_RIO_CANAL: RIO_CANAL,
+  ISO_RIO_LAGO: RIO_LAGO,
 } as const;
 
 /** Número de estágios de crescimento do trigo e primeiro id da sequência. */
@@ -414,6 +421,31 @@ const defs: BlockDef[] = [
   object(Block.WALL_STONE, 'Parede de Pedra', { shape: 'wall', stone: true }),
   object(Block.WALL_DOOR_PLANKS, 'Porta de Parede (Tábuas)', { shape: 'wall-door', organic: 'wood' }),
   object(Block.WALL_DOOR_PLANKS_OPEN, 'Porta de Parede (Tábuas, aberta)', { shape: 'wall-door', solid: false, placeable: false, organic: 'wood' }),
+  // Conjunto isométrico do Santuário (ADR 0036): cubos (topo = o piso da prancha) e objetos de sprite.
+  object(Block.ISO_G_GRASS, 'Piso de Grama'),
+  object(Block.ISO_G_DIRT, 'Piso de Terra'),
+  object(Block.ISO_G_STONE, 'Piso de Pedra'),
+  object(Block.ISO_STONE_BLOCK, 'Bloco de Pedra', { stone: true }),
+  object(Block.ISO_RIO_CANAL, 'Rio: Canal'),
+  object(Block.ISO_RIO_LAGO, 'Rio: Lago'),
+  object(Block.ISO_TREE, 'Carvalho', { shape: 'rock' }),
+  object(Block.ISO_BUSH_L, 'Arbusto Grande', { shape: 'rock' }),
+  object(Block.ISO_BUSH_M, 'Arbusto Médio', { shape: 'rock' }),
+  object(Block.ISO_BUSH_S, 'Arbusto Pequeno', { shape: 'decoration', solid: false }),
+  object(Block.ISO_ROCK_L, 'Rochedo', { shape: 'rock' }),
+  object(Block.ISO_PEBBLES, 'Pedrinhas', { shape: 'decoration', solid: false }),
+  object(Block.ISO_TUFT, 'Tufo de Capim', { shape: 'decoration', solid: false }),
+  object(Block.ISO_DAISIES, 'Margaridas', { shape: 'decoration', solid: false }),
+  object(Block.ISO_LAVENDER, 'Lavanda', { shape: 'decoration', solid: false }),
+  object(Block.ISO_LANTERN, 'Lampião de Parede', { shape: 'rock' }),
+  object(Block.ISO_STALL, 'Barraca de Feira', { shape: 'rock' }),
+  object(Block.ISO_PLANTER, 'Jardineira de Lavanda', { shape: 'rock' }),
+  object(Block.ISO_STONE_PLANTER, 'Canteiro de Pedra', { shape: 'rock' }),
+  object(Block.ISO_BARREL, 'Barril', { shape: 'rock' }),
+  object(Block.ISO_CRATE, 'Caixote', { shape: 'rock' }),
+  object(Block.ISO_HOUSE, 'Casa de Feira', { shape: 'rock' }),
+  object(Block.ISO_HOUSE_PART, 'Casa de Feira', { shape: 'rock', placeable: false }),
+  object(Block.ISO_STALL_PART, 'Barraca de Feira', { shape: 'rock', placeable: false }),
   object(Block.OAK_DOOR, 'Porta de Carvalho', { shape: 'door', organic: 'wood' }),
   object(Block.TENT, 'Tenda', { shape: 'rock', organic: 'wood' }), // madeira: o machado quebra
   object(Block.TENT_PART, 'Tenda', { shape: 'rock', placeable: false, organic: 'wood' }),
@@ -491,26 +523,6 @@ const defs: BlockDef[] = [
   object(Block.WATER_LILY, 'Vitória-régia', { shape: 'building', solid: false, breakable: false, placeable: false }),
   object(Block.VICTORIA, 'Vitória-régia Gigante', { shape: 'building', solid: false, breakable: false, placeable: false }),
   object(Block.V_FLOWERS, 'Capim e Flores', { shape: 'building', solid: false, breakable: false, placeable: false }),
-  // Santuário Celestial: todos são cubos de construção (as águas são blocos sólidos decorativos).
-  object(Block.CLOUD_SOLID, 'Nuvem Sólida'),
-  object(Block.CLOUD_ETHEREAL, 'Nuvem Etérea'),
-  object(Block.MARBLE_CELESTIAL, 'Mármore Celestial'),
-  object(Block.MARBLE_ORNATE, 'Mármore Ornamentado'),
-  object(Block.STONE_CELESTIAL, 'Pedra Celestial'),
-  object(Block.STONE_GOLDEN, 'Pedra Dourada'),
-  object(Block.GRASS_CELESTIAL, 'Grama Celestial'),
-  object(Block.GRASS_FLOWERY, 'Grama Florida'),
-  object(Block.MOSS_LUMINOUS, 'Musgo Luminoso', { glow: true }),
-  object(Block.EARTH_SACRED, 'Terra Sagrada'),
-  object(Block.EARTH_FLORAL, 'Terra Floral'),
-  object(Block.EARTH_CULTIVATED, 'Terra Cultivada'),
-  object(Block.WATER_SACRED, 'Água Sagrada'),
-  object(Block.WATER_CRYSTAL, 'Água Cristalina'),
-  object(Block.WATER_PURE, 'Água Pura'),
-  object(Block.CRYSTAL_LIFE, 'Cristal da Vida', { glow: true }),
-  object(Block.LIGHT_BLOCK, 'Bloco de Luz', { glow: true }),
-  object(Block.WOOD_CELESTIAL, 'Madeira Celestial'),
-  object(Block.FOLIAGE_GOLDEN, 'Folhagem Dourada'),
   // Plantações (trigo, batata, tomate, cenoura): não bloqueiam passagem, não aceitam nada por cima, só entram plantando.
   ...CROP_KINDS.flatMap((k) => Array.from({ length: CROP_STAGES }, (_, s) =>
     object(CROPS[k].first + s, s === CROP_STAGES - 1 ? CROPS[k].ripe : `${CROPS[k].name} em crescimento`, {
@@ -564,14 +576,6 @@ export const MATERIALS: BlockId[] = [
   Block.BIRCH_PLANKS,
 ];
 
-/** Blocos do Santuário Celestial, na ordem da prancha (e da hotbar do Santuário). */
-export const CELESTIAL_BLOCKS: BlockId[] = [
-  Block.CLOUD_SOLID, Block.CLOUD_ETHEREAL, Block.MARBLE_CELESTIAL, Block.MARBLE_ORNATE,
-  Block.STONE_CELESTIAL, Block.STONE_GOLDEN, Block.GRASS_CELESTIAL, Block.GRASS_FLOWERY,
-  Block.MOSS_LUMINOUS, Block.EARTH_SACRED, Block.EARTH_FLORAL, Block.EARTH_CULTIVATED,
-  Block.WATER_SACRED, Block.WATER_CRYSTAL, Block.CRYSTAL_LIFE, Block.LIGHT_BLOCK,
-  Block.WOOD_CELESTIAL, Block.FOLIAGE_GOLDEN,
-];
 
 /** Ids que aparecem na hotbar, na ordem exibida: materiais + porta. */
 export const HOTBAR_BLOCKS: BlockId[] = [
@@ -615,6 +619,36 @@ export function isGrowingTree(id: BlockId): boolean {
 
 /** Porta (aberta ou fechada)? */
 /** Paredes (ADR 0027): blocos de forma `wall`. */
+/** Conjunto isométrico do Santuário na ordem da hotbar: 3 pisos (grama, terra, pedra) e 16 objetos (as partes de casa e barraca não são colocáveis). */
+export const ISO_CUBES: readonly BlockId[] = [Block.ISO_G_GRASS, Block.ISO_G_DIRT, Block.ISO_G_STONE, Block.ISO_STONE_BLOCK];
+export const ISO_PROPS: readonly BlockId[] = [
+  Block.ISO_TREE, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, Block.ISO_ROCK_L, Block.ISO_PEBBLES, Block.ISO_TUFT, Block.ISO_DAISIES,
+  Block.ISO_LAVENDER, Block.ISO_LANTERN, Block.ISO_STALL, Block.ISO_PLANTER, Block.ISO_STONE_PLANTER, Block.ISO_BARREL, Block.ISO_CRATE, Block.ISO_HOUSE,
+];
+/**
+ * Objetos grandes do conjunto isométrico: ocupam `size` × `size` células (canto inferior esquerdo = o id, as outras células = `part`) e o desenho cresce
+ * `scale` vezes (Casa de Feira 4×, Barraca 3×, a árvore 2× sem ocupar mais que a célula do tronco; pedido do dono do produto, 17/11/2026).
+ */
+export const ISO_BIG: Readonly<Record<number, { size: number; part: BlockId }>> = {
+  [Block.ISO_HOUSE]: { size: 12, part: Block.ISO_HOUSE_PART },
+  [Block.ISO_STALL]: { size: 3, part: Block.ISO_STALL_PART },
+};
+/** Fator de tamanho do desenho de cada objeto do conjunto (os demais: 1). */
+export const ISO_SCALE: Readonly<Record<number, number>> = { [Block.ISO_TREE]: 2, [Block.ISO_HOUSE]: 4, [Block.ISO_STALL]: 3 };
+/** Cercas e portões (Carvalho, Bétula, Cerejeira): no Santuário isométrico são o modelo 3D (`render/three/isoFences.ts`), não os sprites do Mundo. */
+export const ISO_FENCES: readonly BlockId[] = [
+  Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY,
+];
+export const ISO_BLOCKS: readonly BlockId[] = [...ISO_CUBES, ...ISO_PROPS, ...ISO_FENCES];
+/**
+ * Blocos do Mundo principal que também existem no Santuário (v0.93.146), **como blocos novos, sem trocar nenhum dos do conjunto isométrico**: os 19 materiais (cubos), a porta,
+ * a tenda, o baú, a fogueira, o caldeirão, o forno, a cadeira, a cerca de estacas e as 15 flores fofas. Ficam de fora (por exigirem o nível 0 do mundo): as paredes e a
+ * porta de parede (autotile) — ver NEXT_STEPS. As cercas e portões do Mundo já estão em `ISO_FENCES` (em 3D).
+ */
+export const WORLD_BLOCKS_IN_SANCTUARY: readonly BlockId[] = [
+  ...MATERIALS, Block.OAK_DOOR, Block.TENT, Block.CHEST, Block.CAMPFIRE, Block.CAULDRON, Block.OVEN, Block.CHAIR, Block.FENCE_STAKE, ...FLOWER_BLOCKS,
+];
+
 export const WALL_BLOCKS: readonly BlockId[] = [Block.WALL_PLANKS, Block.WALL_STONE];
 
 /** O bloco é uma parede? */

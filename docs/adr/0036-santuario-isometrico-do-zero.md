@@ -14,5 +14,17 @@ O Mundo principal continua em vista 3/4. O dono do produto quer **testar a vista
 ## Estado (v0.93.134)
 Perfil novo e câmera isométrica fixa entregues; abre solo por `?mundo=santuario`. Terreno plano de grama, 4×4 chunks, 8 materiais do Mundo, cubos cheios (`cubeLevels = 1`, pilha de 5), arte do pacote principal. Gerador `SanctuarySeedGenerator` removido.
 
+## Conjunto isométrico (v0.93.140)
+A prancha isométrica do dono do produto (36 peças) é o conjunto de blocos do Santuário, no lugar dos 8 materiais do Mundo: 20 cubos (topo da peça "desentortado" + faces próprias) e 16 objetos de sprite (plano vertical girado 45° para a câmera; Casa 3×3 com partes). Arte e render isolados do Mundo (`render/art/santuario.ts`, `render/isoSet.ts`); ids reaproveitados da faixa celestial removida. Pisos como cubos cheios é uma simplificação a rever (NEXT_STEPS).
+
+### Ajuste (v0.93.141)
+Só 19 das 36 peças viraram blocos (3 pisos e 16 objetos) e três objetos cresceram (carvalho 2×, casa 4×, barraca 3×); os objetos grandes ocupam várias células (`ISO_BIG`).
+
+### Cercas e portões 3D (v0.93.142)
+Os sprites do Mundo são renders 3/4 do modelo e não servem à câmera isométrica; o Santuário desenha a **geometria do modelo** (malhas Three.js, `render/three/isoFences.ts`) com as tábuas V2. Reaproveita os blocos e as regras do Mundo; não cria ids.
+
+### Terreno em camadas (v0.93.143)
+O Santuário nasce com 2 camadas de cubo sobre o chão (Bloco de Pedra, depois Grama): a Deusa e os objetos ficam em cima (nível 3) e cavar mostra as camadas; quebrar leva 1 s. Tudo atrás de campos do `WorldProfile` (`breakSeconds`, `surfaceObjects`, `terrain.layers`), sem mudar o Mundo.
+
 ## Consequências
 Menos código paralelo (um renderer). O perfil `santuario` atual e `celestialArt.ts` ainda existem até o perfil novo entrar. Perde-se o artefato publicado do Santuário Celestial (fica como histórico).
