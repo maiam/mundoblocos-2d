@@ -320,7 +320,8 @@ export class Game {
       const bag = net.bag;
       if (bag) {
         this.inventory.replaceAll(bag.inventory as Partial<Record<StackId, number>>);
-        if (this.progression && typeof bag.coins === 'number') this.inventory.wallet.set(bag.coins); // carteira guardada na sala (v28)
+        if (this.progression) { if (typeof bag.coins === 'number') this.inventory.wallet.set(bag.coins); } // carteira guardada na sala (v28)
+        else this.inventory.wallet.set(0); // Sala 2: sem carteira (bolsas antigas traziam moedas)
         this.hotbar.prune(this.inventory);
         const [bx, by] = this.world.isWalkable(Math.floor(bag.x), Math.floor(bag.y))
           ? [bag.x, bag.y] : this.world.nearestWalkable(Math.floor(bag.x), Math.floor(bag.y)).map((v) => v + 0.5);
