@@ -9,13 +9,15 @@ import { blockStack, Item, type ItemId, type StackId } from '../../world/items';
 import { SELL_PRICE } from '../../world/shop';
 import { type MonsterKind, WOLF_KINDS } from '../../world/dungeon';
 
-export type MissionId = 'm01' | 'm02' | 'm03' | 'm04' | 'm05' | 'm06' | 'm07';
+export type MissionId = 'm01' | 'm02' | 'm03' | 'm04' | 'm05' | 'm06' | 'm07' | 'm08' | 'm09' | 'm10';
 
 /** Um acontecimento do jogo que pode andar uma meta (`MissionLog.progress`). */
 export type MissionEvent =
   | { type: 'talk'; npc: string }
   | { type: 'kill'; monster: MonsterKind }
-  | { type: 'place'; block: number };
+  | { type: 'place'; block: number }
+  /** A jogadora chegou perto de um lugar (`goblin-camp`: a fogueira de um acampamento de goblins). */
+  | { type: 'near'; spot: 'goblin-camp' };
 
 export interface Goal {
   id: string;
@@ -55,6 +57,7 @@ export interface Mission {
 /** Espólios de monstro que a Guilda compra (sem a Moeda de Cobre). */
 const LOOT_FOR_SALE: readonly StackId[] = [Item.SILK, Item.FANG, Item.WOLF_FANG, Item.WOLF_PELT, Item.QUEEN_HEART];
 const placed = (blocks: readonly number[]): ((e: MissionEvent) => boolean) => (e) => e.type === 'place' && blocks.includes(e.block);
+const near = (spot: 'goblin-camp'): ((e: MissionEvent) => boolean) => (e) => e.type === 'near' && e.spot === spot;
 const talk = (npc: string): ((e: MissionEvent) => boolean) => (e) => e.type === 'talk' && e.npc === npc;
 const kills = (kinds: readonly MonsterKind[]): ((e: MissionEvent) => boolean) => (e) => e.type === 'kill' && kinds.includes(e.monster);
 
@@ -144,6 +147,39 @@ export const MISSIONS: readonly Mission[] = [
     accepted: 'Combinado! O terreno está marcado com um contorno dourado perto do portão. Ara 12 blocos ali com a enxada e volte.',
     progress: 'O terreno marcado ainda não tem 12 blocos de terra arada. Use a enxada dentro do contorno dourado.',
     complete: 'Terra boa e pronta para o futuro! A cidade agradece. Aqui está o seu pagamento.',
+  },
+  {
+    id: 'm08', chapter: 1, title: 'Movimento nas margens', kind: 'Caçada', turnIn: 'guild',
+    goals: [{ id: 'lizard', text: 'Derrotar homens-lagarto', count: 4, kind: 'event', match: kills(['lizard']) }],
+    reward: { coins: 30 },
+    offer: 'Pescadores e viajantes veem vultos nas margens dos rios: homens-lagarto, em grupos de três ou mais. São mais rápidos e resistentes que lobos. O contrato pede 4 deles. Vá preparado: leve armadura, comida e uma boa arma.',
+    prompt: 'Aceita caçar os homens-lagarto?',
+    accepted: 'Contrato aceito. Procure os homens-lagarto perto dos rios, derrote 4 e volte aqui. Eles andam em grupo: não se arrisque sozinho com pouca vida.',
+    progress: 'Ainda restam homens-lagarto nas margens: o contrato pede 4. Eles ficam perto dos rios, em grupo.',
+    complete: 'Quatro a menos! As margens ficam mais tranquilas. Aqui está o seu pagamento.',
+  },
+  {
+    id: 'm09', chapter: 1, title: 'A fogueira dos goblins', kind: 'Exploração', turnIn: 'guild',
+    goals: [
+      { id: 'camp', text: 'Encontrar um acampamento de goblins', count: 1, kind: 'event', match: near('goblin-camp') },
+      { id: 'goblin', text: 'Derrotar goblins do acampamento', count: 2, kind: 'event', match: kills(['goblin']) },
+    ],
+    reward: { coins: 35 },
+    offer: 'Há fumaça de fogueira fora da muralha: goblins acamparam por perto, e em número. Preciso que você ache a fogueira, derrube 2 deles para medir a força do bando e me conte o que viu. Sem heroísmos: são sete em volta do fogo.',
+    prompt: 'Aceita investigar o acampamento?',
+    accepted: 'Procure a fogueira dos goblins fora da muralha, derrote 2 goblins e volte aqui para me contar.',
+    progress: 'Ainda falta investigar o acampamento: ache a fogueira dos goblins e derrote 2 deles. Depois me conte.',
+    complete: 'Então são mesmo sete, e organizados. Bom relatório e bom trabalho. Aqui está o seu pagamento.',
+  },
+  {
+    id: 'm10', chapter: 1, title: 'A ameaça à Cidade do Despertar', kind: 'Missão final', turnIn: 'guild',
+    goals: [{ id: 'goblin', text: 'Derrotar os goblins restantes', count: 5, kind: 'event', match: kills(['goblin']) }],
+    reward: { coins: 60 },
+    offer: 'Agora que sabemos a força deles, é hora de acabar com a ameaça. Restam 5 goblins no acampamento. Leve tudo o que tiver: armas, comida, vida cheia. A cidade inteira confia em você.',
+    prompt: 'Aceita enfrentar os goblins restantes?',
+    accepted: 'Que a sorte acompanhe você. Derrote os 5 goblins restantes e volte aqui.',
+    progress: 'A ameaça ainda não acabou: faltam 5 goblins. Volte quando o acampamento estiver limpo.',
+    complete: 'Conseguiu! A Cidade do Despertar está a salvo, e a guilda reconhece o seu nome: de desconhecida a heroína da cidade. Aqui está o seu pagamento. Mas guarde as armas com carinho: dizem que isso era só o começo, e há um mistério maior por trás desses goblins…',
   },
 ];
 
