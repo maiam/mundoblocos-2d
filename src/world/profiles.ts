@@ -17,7 +17,7 @@ export interface WorldProfile {
   id: WorldId;
   name: string;
   /** Terreno: procedural (mundo principal) ou plano coberto por um bloco. */
-  terrain: { kind: 'procedural' } | { kind: 'flat'; ground: BlockId; /** Camadas de cubo sobre o chão, de baixo para cima (nível 0 e 1 da pilha), em toda célula. */ layers?: readonly BlockId[] };
+  terrain: { kind: 'procedural' } | { kind: 'flat'; ground: BlockId; /** Camadas de cubo sobre o chão, de baixo para cima (nível 0 e 1 da pilha), em toda célula. */ layers?: readonly BlockId[]; /** Seeds com paisagem fixa (`world/sanctuaryLandscape.ts`) em vez do terreno plano. */ landscape?: boolean };
   /** Retângulo de chunks permitido (inclusivo); null = sem limites. */
   bounds: ChunkRect | null;
   character: CharacterId;
@@ -84,7 +84,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     name: 'Santuário de Orvalis',
     // Santuário refeito do zero (ADR 0036): solo, vista isométrica, cubos cheios (1 nível = 1 célula). Terreno plano em **camadas** (v0.93.143): chão de grama,
     // uma camada de Bloco de Pedra (nível 1) e uma de Grama (nível 2); a Deusa e tudo o mais ficam em cima (nível 3).
-    terrain: { kind: 'flat', ground: Block.ISO_G_GRASS, layers: [Block.ISO_STONE_BLOCK, Block.ISO_G_GRASS] },
+    terrain: { kind: 'flat', ground: Block.ISO_G_GRASS, layers: [Block.ISO_STONE_BLOCK, Block.ISO_G_GRASS], landscape: true },
     // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
     bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
     character: 'goddess-iso',

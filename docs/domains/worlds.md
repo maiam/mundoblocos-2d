@@ -59,3 +59,5 @@ Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `godde
 ## Publicação
 - O artefato próprio (`build:artifact:santuario`) e o `?celestial=1` foram **removidos** (v0.93.133, ADR 0036). O Santuário será refeito do zero em vista isométrica (NEXT_STEPS); este perfil (nuvem, 18 blocos celestiais) é o conteúdo a ser substituído.
 - Subdomínio real (`santuario.<domínio>`) exige hospedar o build estático (`dist/`) no domínio — pendente.
+
+- **Paisagem por seed** (v0.93.148, `world/sanctuaryLandscape.ts`): só as seeds de `LANDSCAPE_SEEDS` (hoje 1835638650) têm terreno modelado; `World` troca o `FlatGenerator` por `landscapeFor(seed)` quando `terrain.landscape` está ligado e usa `generateLevels` para os níveis 2..4. Seed fora da lista = terreno plano de sempre. Água = pincéis do rio rentes ao chão (a arte das peças já traz a margem); passarelas erguem 1 cubo.

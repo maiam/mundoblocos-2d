@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.148 — Santuário: paisagem fixa da seed 1835638650 (17/11/2026)
+- **Pedido do dono do produto:** construir um mundo na seed 1835638650 só com blocos do Mundo (terra, grama, água, areia, pedra, madeira, árvore, arbustos, flores), usando os níveis para dar forma. Decisões dele: água/árvore/arbustos são os que o Santuário já tem (Rio: Lago e Canal, Carvalho e Arbustos do conjunto isométrico) e a paisagem vale **só nessa seed** (as outras seguem planas e vazias).
+- `world/sanctuaryLandscape.ts` (`SanctuaryLandscape`, função pura da seed; `LANDSCAPE_SEEDS`): planície (altura 2: pedra + grama), duas colinas (altura 3: pedra + terra + grama, afloramento de pedra), lago com praia de areia, rio de uma nascente ao norte até a margem do lago, ponte e cais de tábuas (erguidos 1 cubo sobre a água, estacas de tora), casa de madeira (piso, paredes de toras e tábuas, porta de carvalho entre batentes, telhado na 5ª camada), jardim cercado com flores, florestas de Carvalho, arbustos e manchas de flores. Clareira de 6 células onde a Deusa nasce. Todo degrau entre vizinhos é de 1 cubo.
+- Motor: `TerrainSource.generateLevels` (opcional, níveis 2..4 da pilha), `WorldProfile.terrain.landscape` (Santuário `true`) e `World` usa `landscapeFor(seed)` antes do terreno plano. Chunks já editados e salvos nessa seed mantêm o que foi salvo.
+- **Rio reto de propósito:** as peças de canal só têm retas, curvas norte–leste/oeste, Ts e pontas; as curvas sul–leste/oeste faltam (NEXT_STEPS), então o rio é uma coluna reta que desce para o lago (peça "Foz para lago").
+- `tsc` e testes verdes (novos: `sanctuaryLandscape.test.ts`); conferido no navegador (lago, rio, ponte, cais, casa, colinas, floresta). Sem mudança de save/protocolo; `package.json` 0.93.148.
+
 ## Orvalis v0.93.147 — Santuário: Rio das Fadas com autotile (17/11/2026)
 - **Pedido do dono do produto:** incluir o pacote "Rio das Fadas" (`.bbmodel` + atlas + teste de encaixe) no Santuário, como blocos únicos e transições automáticas. Decisões dele: o cubo fica **inteiro** (a laje de água de 7/16 se apoia numa base de terra) e a entrada é **autotile**.
 - **Dois pincéis na barra** (70 peças no total): `Rio: Canal` e `Rio: Lago` (`world/rio.ts`; ids 253 e 166, os únicos do rio no mapa e no salvamento — ids de bloco são escassos: 210–225 e 250–252 são faixas aposentadas).

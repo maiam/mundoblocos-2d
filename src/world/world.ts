@@ -9,6 +9,7 @@ import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, TOWN_WALL, type TownBuilding, type
 import { chunkKey, toChunk, toLocal } from './coords';
 import { type InteriorDoor, type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
+import { landscapeFor } from './sanctuaryLandscape';
 import { isRioBrush } from './rio';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
@@ -140,7 +141,7 @@ export class World {
     this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
     this.cubeLevels = profile.id === 'santuario' ? 1 : CUBE_LEVELS;
     this.generator = profile.terrain.kind === 'flat'
-      ? new FlatGenerator(seed, profile.terrain.ground, profile.terrain.layers)
+      ? (profile.terrain.landscape ? landscapeFor(seed, profile.terrain.ground) : null) ?? new FlatGenerator(seed, profile.terrain.ground, profile.terrain.layers)
       : new WorldGenerator(seed);
     const baseTerrain = this.generator;
     const b = profile.bounds;
@@ -345,6 +346,7 @@ export class World {
     if (!chunk) {
       chunk = new Chunk(cx, cy, this.maxStack);
       this.generator.generateChunk(cx, cy, chunk.ground, chunk.objects, chunk.upper);
+      this.generator.generateLevels?.(cx, cy, chunk.levels);
       if (this.cubeLevels > 1) this.expandQuarters(chunk);
       this.chunks.set(key, chunk);
     }

@@ -396,3 +396,8 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 
 ## Dependências (17/11/2026)
 - `npm audit` acusa o `picomatch` (ReDoS, GHSA-fc5q-39xc-vjpf; vem de vite/vitest, sem versão corrigida no npm). O CI passou a auditar só dependências de produção (`--omit=dev`). Reverter para auditar tudo quando houver correção ou ao atualizar `vite`/`vitest`.
+
+## Santuário — paisagem da seed (v0.93.148)
+- O rio é reto porque faltam as curvas sul–leste/oeste e os Ts de canal; com essas peças ele pode meandrar (a lista completa está em "Rio das Fadas").
+- Outras seeds com paisagem: acrescentar a seed em `LANDSCAPE_SEEDS` reaproveita o mesmo desenho; para paisagens diferentes por seed, parametrizar `buildLandscape` (posições do lago, rio, casa).
+- Colocar/quebrar blocos nessa seed salva só os chunks editados; limpar o salvamento da seed para ver a paisagem intacta.
