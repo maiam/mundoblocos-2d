@@ -375,7 +375,7 @@ export class ActionController {
     const slot = this.slot;
     if (!slot || (slot.kind === 'tool' && !TOOLS[slot.tool].groundUse) || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
     // Vista isométrica: apontar para a face de um cubo coloca o novo no vizinho daquela face, no mesmo nível (pode flutuar); o topo, em cima.
-    if (slot.kind === 'block' && this.ctx.facePlacement) {
+    if (slot.kind === 'block' && this.ctx.facePlacement && blockDef(slot.block).shape === 'cube') {
       const f = this.renderer.pickFace?.(this.camera, sx, sy);
       if (f) {
         const tx = f.up ? f.x : f.x + f.nx, ty = f.up ? f.y : f.y + f.ny, level = f.up ? f.level + 1 : f.level;

@@ -14,5 +14,8 @@ O Mundo principal continua em vista 3/4. O dono do produto quer **testar a vista
 ## Estado (v0.93.134)
 Perfil novo e câmera isométrica fixa entregues; abre solo por `?mundo=santuario`. Terreno plano de grama, 4×4 chunks, 8 materiais do Mundo, cubos cheios (`cubeLevels = 1`, pilha de 5), arte do pacote principal. Gerador `SanctuarySeedGenerator` removido.
 
+## Conjunto isométrico (v0.93.140)
+A prancha isométrica do dono do produto (36 peças) é o conjunto de blocos do Santuário, no lugar dos 8 materiais do Mundo: 20 cubos (topo da peça "desentortado" + faces próprias) e 16 objetos de sprite (plano vertical girado 45° para a câmera; Casa 3×3 com partes). Arte e render isolados do Mundo (`render/art/santuario.ts`, `render/isoSet.ts`); ids reaproveitados da faixa celestial removida. Pisos como cubos cheios é uma simplificação a rever (NEXT_STEPS).
+
 ## Consequências
 Menos código paralelo (um renderer). O perfil `santuario` atual e `celestialArt.ts` ainda existem até o perfil novo entrar. Perde-se o artefato publicado do Santuário Celestial (fica como histórico).

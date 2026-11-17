@@ -24,7 +24,7 @@ describe('Coleta de materiais (Fase 3)', () => {
       expect([2, 3]).toContain(birch.count);
     }
     expect(blockDrops(Block.FLOWER, r)).toEqual([]); // a flor do campo só solta algo sabendo ONDE (`breakDrops` com `at`: a espécie que se vê ali)
-    expect(blockDrops(Block.CLOUD_SOLID, r)).toEqual([]); // Santuário não coleta
+    expect(breakDrops(null, Block.DIRT, false, r)).toEqual([]); // Santuário não coleta
     expect(breakDrops('shovel', Block.WHEAT_15, true, r)).toEqual([]); // pá destrói planta sem drop
     expect(breakDrops(null, Block.STONE, false, r)).toEqual([]); // mundo sem coleta
   });
@@ -85,12 +85,12 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com apenas 8 materiais do laboratório, sem bolsa', () => {
+  it('Santuário continua infinito: grade fixa com as 36 peças do conjunto isométrico, sem bolsa', () => {
     const grid = new Hotbar(WORLD_PROFILES.santuario);
     expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(8);
+    expect(grid.length).toBe(36);
     grid.assign(0, null);
-    expect(grid.stack(0)).toBe(blockStack(Block.DIRT));
+    expect(grid.stack(0)).toBe(blockStack(Block.ISO_CUBE_GRASS));
   });
 
   it('bolsa com 12 espaços (4 × 3 à direita) + 9 na mão: tipo novo só entra se houver lugar', () => {

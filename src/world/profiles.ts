@@ -1,4 +1,4 @@
-import { Block, type BlockId, HOTBAR_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
+import { Block, type BlockId, HOTBAR_BLOCKS, ISO_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
 import type { ChunkRect } from './world';
 
 /**
@@ -76,15 +76,12 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     id: 'santuario',
     name: 'Santuário de Orvalis',
     // Santuário refeito do zero (ADR 0036, v0.93.134): solo, **terreno plano vazio** (grama), vista isométrica. Cubos cheios (1 nível = 1 célula).
-    terrain: { kind: 'flat', ground: Block.GRASS },
+    terrain: { kind: 'flat', ground: Block.ISO_G_GRASS },
     // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
     bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
     character: 'goddess-iso',
     // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
-    blocks: [
-      Block.DIRT, Block.GRASS, Block.TILLED, Block.SAND,
-      Block.STONE, Block.STONE_SMOOTH, Block.OAK_LOG, Block.OAK_PLANKS,
-    ],
+    blocks: [...ISO_BLOCKS],
     tools: false,
     farming: false,
     sheep: false,

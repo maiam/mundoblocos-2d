@@ -33,7 +33,7 @@ describe('Santuário (terreno plano vazio, ADR 0036)', () => {
     const b = S.bounds!;
     for (let y = b.cy0 * CHUNK_SIZE; y < (b.cy1 + 1) * CHUNK_SIZE; y++) {
       for (let x = b.cx0 * CHUNK_SIZE; x < (b.cx1 + 1) * CHUNK_SIZE; x++) {
-        expect(w.getGround(x, y)).toBe(Block.GRASS);
+        expect(w.getGround(x, y)).toBe(Block.ISO_G_GRASS);
         expect(w.standHeight(x, y)).toBe(0);
         expect(w.topBlock(x, y)).toBeNull();
       }
@@ -43,7 +43,7 @@ describe('Santuário (terreno plano vazio, ADR 0036)', () => {
       expect(w.getGround(x, y)).toBe(Block.VOID);
       expect(w.standHeight(x, y)).toBeNull();
       expect(w.canBreak(x, y)).toBe(false);
-      expect(w.placeBlock(x, y, Block.STONE)).toBe(false);
+      expect(w.placeBlock(x, y, Block.ISO_G_STONE)).toBe(false);
     }
   });
 
@@ -53,20 +53,18 @@ describe('Santuário (terreno plano vazio, ADR 0036)', () => {
     expect(w.loadedCount).toBe(16);
   });
 
-  it('só deixa colocar os oito blocos de construção e empilha', () => {
+  it('só deixa colocar as 36 peças do conjunto isométrico e empilha os cubos', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     for (const b of S.blocks) expect(w.canPlace(x, y, b)).toBe(true);
-    expect(w.canPlace(x, y, Block.MARBLE_ORNATE)).toBe(false);
-    expect(w.canPlace(x, y, Block.CLOUD_SOLID)).toBe(false);
-    const main = new World(1);
-    const [mx, my] = main.findSpawn();
-    expect(main.canPlace(mx, my, Block.WATER_PURE)).toBe(false);
-    expect(w.placeBlock(x, y, Block.OAK_LOG)).toBe(true);
-    expect(w.placeBlock(x, y, Block.STONE_SMOOTH)).toBe(true); // empilha
+    expect(w.canPlace(x, y, Block.STONE_BRICK)).toBe(false); // fora do perfil
+    expect(w.placeBlock(x, y, Block.ISO_G_STONE)).toBe(true);
+    expect(w.placeBlock(x, y, Block.ISO_G_DIRT)).toBe(true); // cubo empilha em cubo
+    expect(w.placeBlock(x + 1, y, Block.ISO_TREE)).toBe(true); // objeto: só no chão livre
+    expect(w.placeBlock(x + 1, y, Block.ISO_G_STONE)).toBe(false); // sobre um objeto não empilha
   });
 
-  it('spawn no centro; Deusa isométrica é a personagem; hotbar só com os 8 blocos', () => {
+  it('spawn no centro; Deusa isométrica é a personagem; hotbar só com as 36 peças', () => {
     const w = new World(1, S);
     const [x, y] = w.findSpawn();
     expect(w.inBounds(x, y)).toBe(true);
@@ -75,7 +73,7 @@ describe('Santuário (terreno plano vazio, ADR 0036)', () => {
     const e = new Entities(new Player(x + 0.5, y + 0.5), Math.random, S.character);
     expect(e.actors[0].kind).toBe('goddess-iso-idle'); // parada: folha de idle; andando, 'goddess-iso'
     const hb = hotbarFor(S);
-    expect(hb).toHaveLength(8);
+    expect(hb).toHaveLength(36);
     expect(hb.every((s) => s.kind === 'block')).toBe(true);
     expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(58); // (v0.93.110: + 15 Flores Fofas; v0.93.99: + Portões de Bétula e de Cerejeira; v0.93.96: + Cercas de Bétula e de Cerejeira; v0.93.90: + Cerca de Estacas) 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + 3 cercas (Carvalho, Bétula, Cerejeira) + 3 portões + 15 flores fofas + 2 paredes + porta de parede (W5)
   });

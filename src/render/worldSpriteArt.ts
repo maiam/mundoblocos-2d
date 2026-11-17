@@ -1,4 +1,4 @@
-import { Block, blockDef, FLOWER_BLOCKS, isDoor, isFence, isGate, joinsFence, type BlockId, wildFlowerIndex } from '../world/blocks';
+import { Block, blockDef, FLOWER_BLOCKS, ISO_PROPS, isDoor, isFence, isGate, joinsFence, type BlockId, wildFlowerIndex } from '../world/blocks';
 import { hash2 } from '../world/random';
 import type { World } from '../world/world';
 import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, FencePiece, fenceParts, drawFenceShadow } from './fence';
@@ -13,6 +13,9 @@ import { objectScaleFor } from './worldScale';
  * `DoorSprites` as desenha com a animação de abrir/fechar.
  * Cubos e paredes têm render próprio (`ChunkBlocks`) e devolvem null. Ainda sem animação de porta nem brilhos (M3).
  */
+/** Objetos do conjunto isométrico: o plano gira 45° para encarar a câmera isométrica (ADR 0036). */
+const ISO_PROP_SET: ReadonlySet<BlockId> = new Set(ISO_PROPS);
+
 export function worldSpriteArt(world: World, textures: BlockTextures): (id: BlockId, x: number, y: number) => SpriteDraw | null {
   const fenceCache = new Map<number, SpriteDraw>();
   const fence = (id: BlockId, x: number, y: number): SpriteDraw | null => {
@@ -70,7 +73,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures): (id: Bloc
     // sebes da cidade repetem em todas as células finas (linha contínua): ficam do tamanho da célula, sem ampliar
     const f = id === Block.HEDGE ? 1 : objectScaleFor(def.shape);
     const scale = f > 1 ? f : undefined;
-    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale } : null;
+    return sprite ? { sprite, walkable: !def.solid, stack: textures.stackDraw.get(id), scale, yaw: ISO_PROP_SET.has(id) ? Math.PI / 4 : undefined } : null;
   };
 }
 

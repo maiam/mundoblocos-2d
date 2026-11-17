@@ -36,6 +36,13 @@ export function tentCells(x: number, y: number): Array<[number, number]> {
   return [[x, y], [x + 1, y], [x, y - 1], [x + 1, y - 1]];
 }
 
+/** Células da Casa de Feira isométrica (3 × 3) com canto inferior esquerdo em (x, y): o próprio canto primeiro. */
+export function houseCells(x: number, y: number): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) out.push([x + dx, y - dy]);
+  return out;
+}
+
 /** Blocos que substituem a água (viram o chão da célula): todo tipo de terra, Pedra, Tora e Tábua. */
 /** Espaços de um baú. */
 export const CHEST_SLOTS = 27;
@@ -512,7 +519,7 @@ export class World {
     const t = this.breakTarget(x, y);
     if (t === 'object') {
       const id = this.topBlock(x, y)!.id;
-      return id === Block.TENT_PART ? Block.TENT : id; // parte da tenda = a tenda
+      return id === Block.TENT_PART ? Block.TENT : id === Block.ISO_HOUSE_PART ? Block.ISO_HOUSE : id; // parte da tenda/casa = a tenda/casa
     }
     if (t === 'ground') return this.getGround(x, y);
     return null;
@@ -531,6 +538,13 @@ export class World {
         if (a) for (const [cx, cy] of tentCells(a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
         else this.setLevel(x, y, 0, Block.AIR);
         return Block.TENT;
+      }
+      if (top.id === Block.ISO_HOUSE || top.id === Block.ISO_HOUSE_PART) {
+        // Casa 3×3 (Santuário): qualquer parte derruba a casa inteira.
+        const a = this.houseAnchor(x, y);
+        if (a) for (const [cx, cy] of houseCells(a[0], a[1])) this.setLevel(cx, cy, 0, Block.AIR);
+        else this.setLevel(x, y, 0, Block.AIR);
+        return Block.ISO_HOUSE;
       }
       this.setLevel(x, y, top.level, Block.AIR);
       return top.id;
@@ -564,7 +578,7 @@ export class World {
       if (def.shape === 'door' && !this.hasDoorFrame(x, y)) return null;
       if (def.shape === 'wall-door' && !this.canPlaceWallDoor(x, y)) return null;
       // Tenda ocupa 2×2 (esta célula = canto inferior esquerdo): as 4 precisam estar livres em chão firme.
-      if (id === Block.TENT && !tentCells(x, y).every(([cx, cy]) => this.isFootprintFree(cx, cy))) return null;
+      if ((id === Block.TENT || id === Block.ISO_HOUSE) && !this.footprint(id, x, y).every(([cx, cy]) => this.isFootprintFree(cx, cy))) return null;
       return 0;
     }
     if (def.shape === 'cube' && base.shape === 'cube') {
@@ -751,6 +765,7 @@ export class World {
       for (const [cx, cy] of tentCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.TENT_PART);
       this.tent = [x, y];
     }
+    if (id === Block.ISO_HOUSE) for (const [cx, cy] of houseCells(x, y).slice(1)) this.setLevel(cx, cy, 0, Block.ISO_HOUSE_PART);
     return true;
   }
 
@@ -790,7 +805,7 @@ export class World {
 
   /** Células que um bloco ocupa ao ser colocado em (x, y) (tenda 2×2; os demais, 1). */
   footprint(id: BlockId, x: number, y: number): Array<[number, number]> {
-    return id === Block.TENT ? tentCells(x, y) : [[x, y]];
+    return id === Block.TENT ? tentCells(x, y) : id === Block.ISO_HOUSE ? houseCells(x, y) : [[x, y]];
   }
 
   /**
@@ -798,6 +813,12 @@ export class World {
    * Quem coloca escolhe o que não pega ninguém; blocos de 1 célula têm só (x, y).
    */
   footprintAnchors(id: BlockId, x: number, y: number): Array<[number, number]> {
+    if (id === Block.ISO_HOUSE) {
+      // Casa 3×3: o centro dela cobre a célula apontada primeiro (o desenho se apoia no meio), depois as demais posições.
+      const out: Array<[number, number]> = [];
+      for (const [i, j] of [[1, 1], [0, 0], [1, 0], [2, 0], [0, 1], [2, 1], [0, 2], [1, 2], [2, 2]]) out.push([x - i, y + j]);
+      return out;
+    }
     return id === Block.TENT ? [[x, y], [x - 1, y], [x, y + 1], [x - 1, y + 1]] : [[x, y]];
   }
 
@@ -805,6 +826,14 @@ export class World {
   tentAnchor(x: number, y: number): [number, number] | null {
     for (const [dx, dy] of [[0, 0], [-1, 0], [0, 1], [-1, 1]]) {
       if (this.getObject(x + dx, y + dy) === Block.TENT) return [x + dx, y + dy];
+    }
+    return null;
+  }
+
+  /** Canto (ISO_HOUSE) da Casa de Feira que contém a célula, ou null. */
+  houseAnchor(x: number, y: number): [number, number] | null {
+    for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) {
+      if (this.getObject(x - dx, y + dy) === Block.ISO_HOUSE) return [x - dx, y + dy];
     }
     return null;
   }

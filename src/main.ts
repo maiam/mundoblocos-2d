@@ -236,8 +236,7 @@ const skipTitle = !!param || query.has('personagem') || profile.id !== 'principa
 // Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para comparar).
 const blocksV2 = blocksV2FromSearch(window.location.search);
 // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
-// O Santuário usa a arte do Mundo (blocos, Deusa); o pacote celestial antigo sai no próximo passo da limpeza.
-void loadArtPack('principal')
+void loadArtPack(profile.id)
   .then(() => loadBlockArt())
   .then(() => loadMaterialsV2(blocksV2))
   .then(async () => {

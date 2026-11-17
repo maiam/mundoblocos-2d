@@ -26,6 +26,9 @@ export const SANCTUARY_CELLS_TALL = 14;
 /** Células visíveis do Mundo: 14 no padrão; com a grade fina (`?grade=2`, ADR 0032) 14 × `SUBDIV`, para o mundo manter os pixels. */
 export const WORLD_CELLS_TALL = SANCTUARY_CELLS_TALL * SUBDIV;
 
+/** Células visíveis do Santuário isométrico (ADR 0036): menos que no Mundo, porque as peças da prancha isométrica são grandes (um piso = 1 célula de ~180 px). */
+export const ISO_CELLS_TALL = 10;
+
 /** Limites do experimento `?celulas=` (células visíveis na vertical). */
 export const CELLS_TALL_MIN = 10;
 export const CELLS_TALL_MAX = 32;

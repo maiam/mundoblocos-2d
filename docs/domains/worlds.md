@@ -7,7 +7,7 @@
 | `terrain` | procedural (`WorldGenerator`) | **plano vazio de grama** (`FlatGenerator`) |
 | `bounds` | ilimitado | **16 chunks = 4×4** (`cx -2..1`, `cy -2..1`) → 64×64 células |
 | `character` | heroína | **Deusa da Vida** |
-| `blocks` | materiais, objetos, paredes… | **8 materiais**: Terra, Grama, Terra Arada, Areia, Pedra, Pedra Lisa, Tora, Tábuas de Carvalho (pilha de 5, cubos cheios) |
+| `blocks` | materiais, objetos, paredes… | **36 peças do conjunto isométrico** (20 cubos + 16 objetos, `ISO_BLOCKS`); pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
 | câmera | 3/4 (oblíqua) | **isométrica fixa** (45° / 35,264°, sem seletor) |
 | `sky` (fundo além das bordas) | escuro | degradê azul → lilás |
@@ -26,20 +26,14 @@
   na borda. Objetos fora dos limites são `AIR`.
 - `ensureChunks` recorta a área aos limites (nunca mais de 10 chunks carregados); `findSpawn` usa o centro.
 - `placementLevel` só aceita ids de `profile.blocks` (vale também para o mundo principal).
-- Quebrar a nuvem abre buraco; só bloco celestial preenche (vira piso).
+- Quebrar o piso abre buraco; só um cubo preenche (vira piso).
 
-## Blocos celestiais (`world/blocks.ts`, ids 80–97)
-Nuvem Sólida, Nuvem Etérea, Mármore Celestial, Mármore Ornamentado, Pedra Celestial, Pedra Dourada, Grama Celestial,
-Grama Florida, Musgo Luminoso*, Terra Sagrada, Terra Floral, Terra Cultivada, Água Sagrada, Água Cristalina,
-Cristal da Vida*, Bloco de Luz*, Madeira Celestial, Folhagem Dourada. (*brilham à noite.)
-- Todos são cubos sólidos de construção (as águas são blocos decorativos, não líquido).
-- **Arte:** prancha 3/4 fornecida (`assets-src/celestial-blocks-34.png`, fundo transparente, 6×3) →
-  `python3 scripts/extract-blocks.py --celestial` → `src/assets/celestial-atlas.webp` (topo, frente, chão contínuo)
-  + `icon-celestial-*.webp` (cubo inteiro). Topo ≈ 46 % da altura do cubo (medido).
-- Chão: blocos com desenho central/moldura (mármore ornamentado, pedra dourada, terra cultivada, água cristalina,
-  cristal, bloco de luz, madeira) não giram; nuvens não giram nem espelham (formariam "V") e têm o chão com
-  contraste reduzido (`soften`), porque cobrem o mapa inteiro. Demais giram/espelham por célula.
-- A prancha isométrica (`celestial-blocks-iso.png`) fica só como referência.
+## Conjunto isométrico (v0.93.140, ADR 0036)
+Fonte: `assets-src/iso-set/prancha-iso.png` (36 peças, fundo transparente, projeção isométrica = a da câmera: topo 1,414 × 0,816 células). `python3 scripts/extract-iso-set.py` gera `src/assets/iso-ground.webp` (20 topos 128 px), `iso-cube.webp` (faces sul e leste do Bloco de Grama), `iso-props.webp` (16 objetos), `icon-iso-<chave>.webp` e `render/isoSetManifest.ts`. Ids em `blocks.ts` (`ISO_*`: 80–98, 166–169, 186–189, 206–208, 131, 1–5, 7 — os livres depois da limpeza do Celestial) e listas `ISO_CUBES`/`ISO_PROPS`/`ISO_BLOCKS`.
+- **Cubos** (`shape: 'cube'`, colocáveis em pilha de 5 e na face): topo = o piso da prancha; laterais = terra com franja de grama (grama e caminhos), terra lisa (Piso de Terra) ou pedra (pisos de pedra). O chão do mundo é o Piso de Grama (emendável, `seamless` no script).
+- **Objetos** (`shape: 'rock'` sólido ou `'decoration'` andável: pedrinhas, capim, margaridas, lavanda, arbusto pequeno): só no chão livre, um sprite vertical por célula girado 45°. **Casa de Feira 3×3**: `ISO_HOUSE` (canto inferior esquerdo) + 8 `ISO_HOUSE_PART` (`World.houseAnchor/houseCells`); qualquer parte quebra a casa inteira.
+- O desenho se apoia na quina sul da base (o plano gira em volta do meio da borda de baixo).
+- A prancha 3/4 antiga (`celestial-blocks-34.png`/`-iso.png`) e os 18 blocos celestiais (ids 80–97) saíram do jogo.
 
 ## Deusa isométrica (Santuário solo, v0.93.135)
 Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `goddess-iso-idle` e `goddess-iso-sit` (`assets-src/goddess-iso/`, 4×4; ordem da prancha original: baixo-direita, baixo-esquerda, cima-direita, cima-esquerda = direita, frente, costas, esquerda do jogo; `--rows-map 1,3,0,2`). Anda no chão; parada usa o idle. A Deusa flutuante abaixo continua na Sala 2 online. Também há folhas de caminhada e de golpe das 5 ferramentas (`goddess-iso-<ferramenta>[-attack]`, v0.93.137); o perfil ainda não dá ferramentas à Deusa (`tools: false`).

@@ -395,6 +395,9 @@ html, body {
 .hotbar-side:not(:has(.panel-section:not([hidden]))) { display: none; }
 .hotbar-row { display: flex; gap: inherit; }
 .hotbar-row.hand { grid-column: 1; grid-row: 2; }
+.hotbar-row.hand.many { flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 48px); }
+/* Com muitas peças a hotbar usa a largura da tela (sem isto, left: 50% a limitava à metade e quebrava em colunas estreitas). */
+.hotbar:has(.hotbar-row.many) { width: max-content; }
 .menu-row { grid-column: 2; grid-row: 2; padding-left: 10px; margin-left: 2px; position: relative; }
 .menu-row::before {
   content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 5px;

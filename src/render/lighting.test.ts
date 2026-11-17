@@ -35,12 +35,11 @@ describe('iluminação (ADR 0029)', () => {
     expect(lightIntensityAt(ls, 10, 1)).toBeGreaterThan(0);
   });
 
-  it('só blocos que brilham emitem luz; fogo oscila e cristal não', () => {
+  it('só blocos que brilham emitem luz; fogo oscila', () => {
     expect(glowLightFor(Block.STONE)).toBeNull();
     expect(glowLightFor(Block.OAK_PLANKS)).toBeNull();
-    expect(glowLightFor(Block.LIGHT_BLOCK)).not.toBeNull();
+    expect(glowLightFor(Block.CAULDRON)).not.toBeNull();
     expect(glowLightFor(Block.CAMPFIRE)!.flicker).toBeGreaterThan(0);
-    expect(glowLightFor(Block.CRYSTAL_LIFE)!.flicker).toBe(0);
   });
 
   it('oscilação determinística e limitada; sem oscilação vale 1', () => {

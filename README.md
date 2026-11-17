@@ -27,7 +27,7 @@ npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos 
 | Mundo | Como abrir | Jogável |
 |---|---|---|
 | Orvalis (principal) | `orvalis.pensamentos.online` | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
-| Santuário de Orvalis (Sala 2, criativo, com a Deusa) | `?mundo=santuario` (ou subdomínio `santuario.orvalis.pensamentos.online`) — abre direto na Sala 2 online, na mesma versão do jogo; o antigo Santuário Celestial só com `?celestial=1` | só pelo site (o Artifact antigo do Santuário é de teste e não vale) |
+| Santuário de Orvalis (mundo solo isométrico, criativo, com a Deusa) | `?mundo=santuario` (ou subdomínio `santuario.orvalis.pensamentos.online`) — abre um mundo solo, plano e vazio, em vista isométrica, com o conjunto de 36 peças; sem servidor | mesma build do jogo |
 
 ## Celular
 

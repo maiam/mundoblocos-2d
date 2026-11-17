@@ -53,18 +53,18 @@ function memoryStorage(): Storage {
 }
 
 describe('Salvamento automático', () => {
-  it('o mármore V2/V3 saiu (v15); saves v12–v14 migram descartando os campos e o 82 vira cubo comum', () => {
+  it('o mármore V2/V3 saiu (v15); saves v12–v14 migram descartando os campos (o bloco legado vira cubo comum)', () => {
     const world = new World(77, WORLD_PROFILES.santuario);
     const [sx,sy] = world.findSpawn();
     const x=sx,y=sy; // chão plano vazio (Santuário, ADR 0036)
     // Materiais antigos não são mais selecionáveis; continuam carregáveis em saves.
-    world.setObject(x,y,Block.MARBLE_CELESTIAL);
-    expect(world.canPlace(x,y,Block.MARBLE_CELESTIAL)).toBe(false);
+    world.setObject(x,y,Block.STONE_BRICK);
+    expect(world.canPlace(x,y,Block.STONE_BRICK)).toBe(false);
     expect(world.getObject(x,y-1)).toBe(Block.AIR); // terreno plano e vazio
-    expect(world.placeBlock(x,y,Block.DIRT)).toBe(true); // empilha o novo bloco sobre legado
-    expect(world.getUpper(x,y)).toBe(Block.DIRT);
-    expect(world.breakBlock(x,y)).toBe(Block.DIRT); // quebra um nível por vez
-    expect(world.getObject(x,y)).toBe(Block.MARBLE_CELESTIAL);
+    expect(world.placeBlock(x,y,Block.ISO_G_DIRT)).toBe(true); // empilha o novo bloco sobre legado
+    expect(world.getUpper(x,y)).toBe(Block.ISO_G_DIRT);
+    expect(world.breakBlock(x,y)).toBe(Block.ISO_G_DIRT); // quebra um nível por vez
+    expect(world.getObject(x,y)).toBe(Block.STONE_BRICK);
 
     const player=new Player(sx+0.5,sy+0.6);
     const state={world,player,entities:new Entities(player,mulberry32(7)),
@@ -87,7 +87,7 @@ describe('Salvamento automático', () => {
     applySave(JSON.parse(JSON.stringify(saved)),{
       ...state,world:restored,player:p2,entities:new Entities(p2,mulberry32(7)),
     });
-    expect(restored.getObject(x,y)).toBe(Block.MARBLE_CELESTIAL);
+    expect(restored.getObject(x,y)).toBe(Block.STONE_BRICK);
   });
   it('limita a altura do personagem ao máximo da pilha (4 níveis = 1 célula)', () => {
     const a = session();

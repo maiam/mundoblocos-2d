@@ -37,7 +37,7 @@ import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, joinsFence, isW
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
-import { actorScaleFor, cellsTallFromSearch, objectScaleFor } from './worldScale';
+import { actorScaleFor, cellsTallFromSearch, ISO_CELLS_TALL, objectScaleFor, WORLD_CELLS_TALL } from './worldScale';
 import { ChimneySmoke, chimneyWorldPos, type Chimney } from './three/chimneySmoke';
 import { chimneyMouths, isTownArt } from './townArt';
 import { hash2 } from '../world/random';
@@ -87,7 +87,8 @@ function openWaterAt(world: World, x: number, y: number): boolean {
  */
 export class WorldThreeRenderer implements GameRenderer {
   /** Padrão 14; `?celulas=N` (experimento de escala, `worldScale.ts`) muda para comparar. */
-  readonly preferredCellsTall = cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
+  /** Células visíveis na vertical: o padrão do Mundo (14 × SUBDIV) ou, no Santuário isométrico, `ISO_CELLS_TALL` (as peças da prancha são grandes). */
+  readonly preferredCellsTall: number;
   readonly textures: BlockTextures;
   private readonly stage: ThreeStage;
   private readonly sanctuaryCameras: SanctuaryCameraModes | null;
@@ -159,6 +160,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
   /** `sanctuaryRoom` = seletor das 3 câmeras (Sala 2); `isometric` = câmera isométrica fixa (Santuário solo, ADR 0036). */
   constructor(canvas: HTMLCanvasElement, private readonly world: World, sanctuaryRoom = false, isometric = false) {
+    this.preferredCellsTall = isometric ? ISO_CELLS_TALL : cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
       this.actors?.reupload();
       this.drops?.reupload();
@@ -246,7 +248,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), sunShading: sunShadingOn(), sunShadow: sunShadowOn(), bob: feelOn() });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(isometric ? WORLD_CELLS_TALL : this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), sunShading: sunShadingOn(), sunShadow: sunShadowOn(), bob: feelOn() });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);

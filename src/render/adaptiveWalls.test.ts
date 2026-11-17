@@ -14,9 +14,7 @@ const buildRun = (id:BlockId,length:number,level=0) =>
 describe('autotile de paredes 2D do motor oficial', () => {
   it('mantém 1/2 blocos sólidos e afina somente o interior das linhas horizontais', () => {
     for(const id of [Block.STONE_BRICK,Block.STONE_SMOOTH,Block.STONE_POLISHED,
-      Block.OAK_PLANKS,Block.CHERRY_PLANKS,Block.BIRCH_PLANKS,
-      Block.MARBLE_CELESTIAL,Block.MARBLE_ORNATE,
-      Block.STONE_CELESTIAL,Block.STONE_GOLDEN]) {
+      Block.OAK_PLANKS,Block.CHERRY_PLANKS,Block.BIRCH_PLANKS]) {
       expect(ADAPTIVE_WALL_BLOCKS.has(id)).toBe(true);
       for(const n of [1,2,3,4,5]) {
         const w=buildRun(id,n);
@@ -28,7 +26,7 @@ describe('autotile de paredes 2D do motor oficial', () => {
 
   it('terra, pedra natural, areia, pisos e nuvens nunca afinam', () => {
     for(const id of [Block.DIRT,Block.GRASS,Block.STONE,Block.SAND,Block.STONE_FLOOR,
-      Block.CLOUD_SOLID,Block.CLOUD_ETHEREAL,Block.OAK_LOG]) {
+      Block.OAK_LOG]) {
       const w=buildRun(id,5);
       expect(horizontalWallShape(w,id,2,2,0)).toBe('solid');
     }
@@ -107,13 +105,13 @@ describe('autotile de paredes 2D do motor oficial', () => {
   it('ao adicionar/remover vizinho da base, a geometria dos dois níveis muda junta', () => {
     const cells: Array<[number,number,number,BlockId]> = [
       [0,2,0,Block.STONE_BRICK],[1,2,0,Block.STONE_BRICK],
-      [2,2,0,Block.STONE_BRICK],[1,2,1,Block.MARBLE_ORNATE],
+      [2,2,0,Block.STONE_BRICK],[1,2,1,Block.STONE_POLISHED],
     ];
-    expect(horizontalWallShape(view(cells),Block.MARBLE_ORNATE,1,2,1)).toBe('thin');
+    expect(horizontalWallShape(view(cells),Block.STONE_POLISHED,1,2,1)).toBe('thin');
     cells.push([1,3,0,Block.OAK_PLANKS]); // massa perpendicular na base
-    expect(horizontalWallShape(view(cells),Block.MARBLE_ORNATE,1,2,1)).toBe('solid');
+    expect(horizontalWallShape(view(cells),Block.STONE_POLISHED,1,2,1)).toBe('solid');
     cells.pop();
-    expect(horizontalWallShape(view(cells),Block.MARBLE_ORNATE,1,2,1)).toBe('thin');
+    expect(horizontalWallShape(view(cells),Block.STONE_POLISHED,1,2,1)).toBe('thin');
   });
 
   it('níveis diferentes ou materiais de bloco incompatíveis não criam paredes', () => {
