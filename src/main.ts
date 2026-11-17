@@ -1,5 +1,6 @@
 import { DEFAULT_SUBDIV, SUBDIV } from './config';
 import { TitleScreen } from './game/title';
+import { showLanding } from './landing/landing';
 import './style.css';
 import { Game } from './game/game';
 import { HERO_BODIES, type HeroBody } from './game/entities';
@@ -243,17 +244,25 @@ function chooseCharacterForNewWorld(): void {
   });
 }
 
+/** Landing page (v0.93.128): explica o jogo; só o botão Jogar leva à escolha de personagem. */
+function showLandingPage(): void {
+  showLanding({ onPlay: () => showTitle(true) });
+}
+
 /**
  * Tela de entrada com o mundo em vitrine atrás (Cidade do Despertar, igual em toda seed): Novo jogo → montar o
  * personagem → mundo novo; Continuar → último mundo salvo.
  */
-function showTitle(): void {
+function showTitle(fromLanding = false): void {
   const last = store.lastSeed();
   const canContinue = last !== null && store.load(last) !== null;
   game = new Game(freshCanvas(), last ?? 1, screenMode, profile, { showcase: true, rendererFactory: threeRendererFactory! });
   const title = new TitleScreen({
     canContinue,
     name: savedName(),
+    // Vindo da landing sem mundo salvo: vai direto à escolha de personagem ("Voltar" volta à landing); com mundo salvo, a tela de sempre (Novo jogo / Continuar).
+    creatorOnly: fromLanding && !canContinue,
+    onBack: () => { title.destroy(); game?.destroy(); game = null; showLandingPage(); },
     onContinue: () => {
       title.destroy();
       start(last!);
@@ -309,5 +318,5 @@ void loadArtPack(sanctuaryEntry ? 'principal' : profile.id)
 
     if (sanctuaryEntry) enterSanctuary();
     else if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
-    else showTitle();
+    else showLandingPage();
   });
