@@ -20,5 +20,8 @@ A prancha isométrica do dono do produto (36 peças) é o conjunto de blocos do 
 ### Ajuste (v0.93.141)
 Só 19 das 36 peças viraram blocos (3 pisos e 16 objetos) e três objetos cresceram (carvalho 2×, casa 4×, barraca 3×); os objetos grandes ocupam várias células (`ISO_BIG`).
 
+### Cercas e portões 3D (v0.93.142)
+Os sprites do Mundo são renders 3/4 do modelo e não servem à câmera isométrica; o Santuário desenha a **geometria do modelo** (malhas Three.js, `render/three/isoFences.ts`) com as tábuas V2. Reaproveita os blocos e as regras do Mundo; não cria ids.
+
 ## Consequências
 Menos código paralelo (um renderer). O perfil `santuario` atual e `celestialArt.ts` ainda existem até o perfil novo entrar. Perde-se o artefato publicado do Santuário Celestial (fica como histórico).

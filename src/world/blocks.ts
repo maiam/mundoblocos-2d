@@ -626,7 +626,11 @@ export const ISO_BIG: Readonly<Record<number, { size: number; part: BlockId }>> 
 };
 /** Fator de tamanho do desenho de cada objeto do conjunto (os demais: 1). */
 export const ISO_SCALE: Readonly<Record<number, number>> = { [Block.ISO_TREE]: 2, [Block.ISO_HOUSE]: 4, [Block.ISO_STALL]: 3 };
-export const ISO_BLOCKS: readonly BlockId[] = [...ISO_CUBES, ...ISO_PROPS];
+/** Cercas e portões (Carvalho, Bétula, Cerejeira): no Santuário isométrico são o modelo 3D (`render/three/isoFences.ts`), não os sprites do Mundo. */
+export const ISO_FENCES: readonly BlockId[] = [
+  Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY,
+];
+export const ISO_BLOCKS: readonly BlockId[] = [...ISO_CUBES, ...ISO_PROPS, ...ISO_FENCES];
 
 export const WALL_BLOCKS: readonly BlockId[] = [Block.WALL_PLANKS, Block.WALL_STONE];
 

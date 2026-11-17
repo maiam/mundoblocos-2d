@@ -30,7 +30,7 @@ import type { RenderOptions } from './rendererContract';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { getFxArt, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { getFxArt, getIsoFence, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
 import { SpriteFx } from './three/spriteFx';
 import { TOOLS } from '../world/items';
 import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, joinsFence, isWaterPlant, type BlockId } from '../world/blocks';
@@ -60,6 +60,7 @@ import { skyAt } from './daycycle';
 import { drawBreakingRing, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { selectionRect3d } from './worldSelection';
 import { IsoCursor } from './three/isoCursor';
+import { IsoFences } from './three/isoFences';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
@@ -98,6 +99,8 @@ export class WorldThreeRenderer implements GameRenderer {
   private readonly worldLayer = new THREE.Group();
   /** Cursor 3D da câmera isométrica (o 2D de seleção não projeta na vista isométrica). */
   private readonly isoCursor: IsoCursor;
+  /** Cercas e portões como malhas 3D (Santuário isométrico); null nos outros mundos. */
+  private readonly isoFences: IsoFences | null;
   private readonly interiorLayer = new THREE.Group();
   private readonly room: InteriorRoom;
   private readonly skyColor: THREE.Color;
@@ -182,6 +185,8 @@ export class WorldThreeRenderer implements GameRenderer {
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
     this.isoCursor = new IsoCursor(this.worldLayer, world);
+    const fenceArt = getIsoFence();
+    this.isoFences = fenceArt ? new IsoFences(this.worldLayer, world, fenceArt.art) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
@@ -282,6 +287,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.walls.update(rect);
       this.doors.update(rect, opts.elapsed);
       this.gates.update(rect, opts.elapsed);
+      this.isoFences?.update(rect, opts.dt);
       this.groundFx.update(view, opts.elapsed);
       this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
@@ -547,8 +553,8 @@ export class WorldThreeRenderer implements GameRenderer {
       this.stage.syncCamera(cam);
       this.stage.aim(cam, sx, sy);
     }
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes()])) {
-      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? [])])) {
+      const block = this.isoFences?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -632,6 +638,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blockMaterials.dispose();
     this.actors.dispose();
     this.isoCursor.dispose();
+    this.isoFences?.dispose();
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();

@@ -13,10 +13,10 @@ function freeRow(w: World): [number, number] {
 }
 
 describe('Cerca de Madeira e portão', () => {
-  it('são blocos de madeira do mundo principal (bolsa), não do Santuário', () => {
+  it('são blocos de madeira do mundo principal (bolsa); no Santuário isométrico são o modelo 3D', () => {
     expect(HOTBAR_BLOCKS).toEqual(expect.arrayContaining([Block.FENCE, Block.FENCE_GATE]));
     expect(HOTBAR_BLOCKS).not.toContain(Block.FENCE_GATE_OPEN);
-    expect(WORLD_PROFILES.santuario.blocks).not.toContain(Block.FENCE);
+    expect(WORLD_PROFILES.santuario.blocks).toContain(Block.FENCE); // Santuário isométrico: cerca 3D (`render/three/isoFences.ts`)
     expect(BLOCKS[Block.FENCE].solid).toBe(true);
     expect(BLOCKS[Block.FENCE_GATE_OPEN].solid).toBe(false);
     expect(toolCanBreak('axe', Block.FENCE)).toBe(true);
@@ -104,7 +104,7 @@ describe('Emenda da cerca (render/fence)', () => {
   it('Cercas de Bétula e de Cerejeira: blocos próprios que se emendam com a de Carvalho e com o portão, receita com a tábua da madeira', () => {
     for (const id of [Block.FENCE_BIRCH, Block.FENCE_CHERRY]) {
       expect(HOTBAR_BLOCKS).toContain(id);
-      expect(WORLD_PROFILES.santuario.blocks).not.toContain(id);
+      expect(WORLD_PROFILES.santuario.blocks).toContain(id); // as 3 madeiras também estão no Santuário (3D)
       expect(BLOCKS[id].solid).toBe(true);
       expect(toolCanBreak('axe', id)).toBe(true);
       expect(joinsFence(id)).toBe(true);

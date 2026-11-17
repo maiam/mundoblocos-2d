@@ -4,7 +4,7 @@ import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2WaterTop } from './materialsV2';
 import { TRANSITION_PIECES, TRANSITION_RULES, type TransitionRule } from './transitions';
-import { getBlockAtlas, getIsoSet, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
+import { getBlockAtlas, getIsoFence, getIsoSet, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { rgba, shade } from './color';
 import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, GATE_FRAME, GATE_SIDE_FRAME } from './fence';
@@ -644,6 +644,7 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   const isoCube = new Map<BlockId, IsoCubeFaces>();
   const iso = getIsoSet();
   if (iso) isoSetTextures(iso.images, iso.icons, groundTop, objects, icons, isoCube);
+  for (const [id, url] of Object.entries(getIsoFence()?.icons ?? {})) if (url) icons.set(Number(id) as BlockId, url); // cercas e portões 3D do Santuário
   const variants = new Map<BlockId, Sprite[]>(treeVariants);
   const stackDraw = new Map<BlockId, number>();
   if (getDungeonArt()) dungeonTextures(groundTop, objects, variants, stackDraw);

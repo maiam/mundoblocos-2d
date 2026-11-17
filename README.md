@@ -27,7 +27,7 @@ npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos 
 | Mundo | Como abrir | Jogável |
 |---|---|---|
 | Orvalis (principal) | `orvalis.pensamentos.online` | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
-| Santuário de Orvalis (mundo solo isométrico, criativo, com a Deusa) | `?mundo=santuario` (ou subdomínio `santuario.orvalis.pensamentos.online`) — abre um mundo solo, plano e vazio, em vista isométrica, com o conjunto de 19 peças (3 pisos e 16 objetos); sem servidor | mesma build do jogo |
+| Santuário de Orvalis (mundo solo isométrico, criativo, com a Deusa) | `?mundo=santuario` (ou subdomínio `santuario.orvalis.pensamentos.online`) — abre um mundo solo, plano e vazio, em vista isométrica, com o conjunto de 25 peças (3 pisos, 16 objetos e 6 cercas/portões 3D); sem servidor | mesma build do jogo |
 
 ## Celular
 

@@ -7,7 +7,7 @@
 | `terrain` | procedural (`WorldGenerator`) | **plano vazio de grama** (`FlatGenerator`) |
 | `bounds` | ilimitado | **16 chunks = 4×4** (`cx -2..1`, `cy -2..1`) → 64×64 células |
 | `character` | heroína | **Deusa da Vida** |
-| `blocks` | materiais, objetos, paredes… | **19 peças do conjunto isométrico** (3 pisos em cubo + 16 objetos, `ISO_BLOCKS`); pilha de 5, cubos cheios |
+| `blocks` | materiais, objetos, paredes… | **25 peças** (`ISO_BLOCKS`): 3 pisos em cubo + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
 | câmera | 3/4 (oblíqua) | **isométrica fixa** (45° / 35,264°, sem seletor) |
 | `sky` (fundo além das bordas) | escuro | degradê azul → lilás |
@@ -32,6 +32,7 @@
 Fonte: `assets-src/iso-set/prancha-iso.png` (36 peças, fundo transparente, projeção isométrica = a da câmera: topo 1,414 × 0,816 células). **Só 19 viraram blocos** (decisão do dono do produto, 17/11/2026: saem o Bloco de Grama, os pisos 5–10 de pedra/transição e os 10 caminhos). `python3 scripts/extract-iso-set.py` (reconhece as 36 peças, grava só as usadas) gera `src/assets/iso-ground.webp` (3 topos 128 px), `iso-cube.webp` (faces sul e leste do bloco de grama, usadas nas laterais), `iso-props.webp` (16 objetos), `icon-iso-<chave>.webp` e `render/isoSetManifest.ts`. Ids em `blocks.ts` (`ISO_*`) e listas `ISO_CUBES`/`ISO_PROPS`/`ISO_BLOCKS`.
 - **Cubos** (`shape: 'cube'`, pilha de 5, colocáveis na face): topo = o piso da prancha; laterais = terra com franja de grama (grama), terra lisa (terra) ou pedra. O chão do mundo é o Piso de Grama (emendável).
 - **Objetos** (`shape: 'rock'` sólido ou `'decoration'` andável: pedrinhas, capim, margaridas, lavanda, arbusto pequeno): só no chão livre, um sprite vertical girado 45°. **Tamanhos** (`ISO_SCALE`, pedido do dono do produto): carvalho 2× (ocupa só a célula do tronco), Barraca 3× e Casa de Feira 4×. **Objetos grandes** (`ISO_BIG`): Barraca 3 × 3 (`ISO_STALL` + 8 `ISO_STALL_PART`) e Casa 12 × 12 (`ISO_HOUSE` + 143 `ISO_HOUSE_PART`), canto inferior esquerdo = o id (`World.bigCells`/`bigAnchor`); qualquer parte quebra o objeto inteiro.
+- **Cercas e portões 3D** (v0.93.142, `ISO_FENCES`): os blocos `FENCE*`/`FENCE_GATE*` do Mundo, mas desenhados por `render/three/isoFences.ts` com a geometria do modelo do Blockbench (`python3 scripts/extract-iso-fence.py` → `iso-fence-model.json`, `iso-wood.webp`); 12 u do modelo = 1 célula; regras (bloqueio, abrir, emenda por vizinhos) são as do Mundo (`isFence`/`isGate`/`joinsFence`).
 - O desenho se apoia na quina sul da base (o plano gira em volta do meio da borda de baixo).
 - A prancha 3/4 antiga e os 18 blocos celestiais (ids 80–97) saíram do jogo.
 
