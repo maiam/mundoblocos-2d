@@ -221,6 +221,8 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 **Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
 `python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`
 
+**Rio das Fadas** (Santuário): `python3 scripts/extract-iso-rio.py` (atlas `assets-src/iso-set/rio-atlas.png`, extraído do `.bbmodel`) → `src/assets/iso-rio.webp` + `icon-iso-rio-{canal,lago}.webp`; a ordem das peças em `TILES` deve ser a de `RIO_PIECES` (`world/rio.ts`).
+
 **Cerca e portão 3D do Santuário** (modelos `assets-src/cerca-betula/*.bbmodel`): `python3 scripts/extract-iso-fence.py` → `src/assets/iso-fence-model.json` (geometria) e `iso-wood.webp` (texturas de madeira do dono do produto, `assets-src/iso-set/madeira-*.png`); os sprites 3/4 do Mundo seguem em `extract-fence-model.py`.
 
 **Conjunto isométrico do Santuário** (prancha isométrica transparente, 36 peças; ordem fixa em `scripts/extract-iso-set.py`): `python3 scripts/extract-iso-set.py` → `iso-ground.webp`, `iso-cube.webp`, `iso-props.webp`, `icon-iso-*.webp` e `src/render/isoSetManifest.ts`; o script já grava WebP (não rode `optimize-assets.py` para eles). Outra prancha com as mesmas 36 peças na mesma ordem: troque `assets-src/iso-set/prancha-iso.png` e rode o script. `slice-icons.py` recorta ícones de qualquer prancha em grade, se precisar.

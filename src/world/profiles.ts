@@ -1,3 +1,4 @@
+import { RIO_BRUSHES } from './rio';
 import { Block, type BlockId, HOTBAR_BLOCKS, ISO_BLOCKS, WALL_BLOCKS, WORLD_BLOCKS_IN_SANCTUARY, WALL_DOOR_BLOCKS } from './blocks';
 import type { ChunkRect } from './world';
 
@@ -88,7 +89,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
     character: 'goddess-iso',
     // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
-    blocks: [...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY],
+    blocks: [...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY, ...RIO_BRUSHES],
     tools: false,
     farming: false,
     sheep: false,

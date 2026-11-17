@@ -25,6 +25,11 @@ export interface ChunkBlocksOptions {
   transform(cell: { x: number; y: number; level: number; shape: CubeShape; n: number }): { x: number; y: number; z: number };
   /** Materiais do bloco por face do `BoxGeometry`. */
   material(id: BlockId): THREE.Material[];
+  /**
+   * Id usado só para ESCOLHER O MATERIAL da célula (agrupamento e `material`): permite peças diferentes para o mesmo bloco, conforme os vizinhos (Rio das Fadas,
+   * ADR 0036). `cell.id` continua o do mapa. Padrão: o próprio id.
+   */
+  variant?(world: BlockWorld, id: BlockId, x: number, y: number, level: number): BlockId;
   /** Reconstruções de chunk por quadro. */
   maxBuildsPerFrame?: number;
 }
@@ -160,9 +165,10 @@ export class ChunkBlocks {
           let n = 1;
           if (Q > 1) while (level + n < levels && this.world.getLevel(x, y, level + n) === id) n++;
           const base = Q > 1 ? level : 0;
-          const key = id + ':' + shape + ':' + base + ':' + n;
+          const drawId = this.opts.variant ? this.opts.variant(this.world, id, x, y, level) : id;
+          const key = drawId + ':' + shape + ':' + base + ':' + n;
           let bucket = buckets.get(key);
-          if (!bucket) { bucket = { id, shape, base, n, cells: [] }; buckets.set(key, bucket); }
+          if (!bucket) { bucket = { id: drawId, shape, base, n, cells: [] }; buckets.set(key, bucket); }
           bucket.cells.push({ x, y, level, id, n });
           level += n - 1;
         }

@@ -41,6 +41,7 @@ import { actorScaleFor, cellsTallFromSearch, ISO_CELLS_TALL, objectScaleFor, WOR
 import { ChimneySmoke, chimneyWorldPos, type Chimney } from './three/chimneySmoke';
 import { chimneyMouths, isTownArt } from './townArt';
 import { hash2 } from '../world/random';
+import { isRioBrush, rioPieceAt, rioVirtualId } from '../world/rio';
 import { ChunkWalls } from './three/chunkWalls';
 import { DEFAULT_WALL_THICKNESS } from '../world/walls';
 import { ThreeStage } from './three/stage';
@@ -249,6 +250,8 @@ export class WorldThreeRenderer implements GameRenderer {
       transform: (cell) => (this.world.cubeLevels > 1
         ? { x: cell.x + 0.5, y: (cell.level + cell.n / 2) / this.world.cubeLevels, z: cell.y + 0.5 }
         : sanctuaryBlockTransform(cell)),
+      // Rio das Fadas (Santuário): o mapa guarda só o pincel; a peça de água vem dos 4 vizinhos do mesmo nível.
+      variant: (w, id, x, y, level) => (isRioBrush(id) ? rioVirtualId(rioPieceAt((gx, gy, gl) => w.getLevel(gx, gy, gl), x, y, level)) : id),
       material: (id) => this.blockMaterials.get(id).block,
     });
 

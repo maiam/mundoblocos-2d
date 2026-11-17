@@ -1,5 +1,14 @@
 # Changelog
 
+## Orvalis v0.93.147 — Santuário: Rio das Fadas com autotile (17/11/2026)
+- **Pedido do dono do produto:** incluir o pacote "Rio das Fadas" (`.bbmodel` + atlas + teste de encaixe) no Santuário, como blocos únicos e transições automáticas. Decisões dele: o cubo fica **inteiro** (a laje de água de 7/16 se apoia numa base de terra) e a entrada é **autotile**.
+- **Dois pincéis na barra** (70 peças no total): `Rio: Canal` e `Rio: Lago` (`world/rio.ts`; ids 253 e 166, os únicos do rio no mapa e no salvamento — ids de bloco são escassos: 210–225 e 250–252 são faixas aposentadas).
+- **26 peças** com código de bordas N L S O (D seco, C canal, F lago). A peça que desenha cada célula é escolhida **na hora de desenhar** (`rioPieceAt`, lê os 4 vizinhos do mesmo nível; hook `ChunkBlocksOptions.variant`, ids virtuais ≥ 1000 só no render). Canal isolado = Poça de fadas, lago isolado = Lago das ninfeias; água lisa varia por hash da posição (calma/ondulada/espuma/rochedos); sem peça exata usa a de menor custo (leste/sul pesam mais: são as laterais visíveis).
+- `World.setLevel` avisa o chunk vizinho (`Chunk.touch`) quando uma célula do rio muda na borda; a água do rio nunca preenche buraco do chão.
+- **Arte:** `scripts/extract-iso-rio.py` (`assets-src/iso-set/rio-atlas.png`, `rio-teste-de-encaixe.json`) → `src/assets/iso-rio.webp` (topos 128 px + laterais seco/canal/lago já com a base de terra) e dois ícones.
+- **Fora desta entrega:** Prado (seco liso), Corredeira e Cascata (relevo 3D) e as peças que faltam no conjunto (lista em NEXT_STEPS).
+- `tsc` e testes verdes; conferido no navegador (canal em L, lago 3×3, em cima e no nível da grama). Sem mudança de save/protocolo; `package.json` 0.93.147.
+
 ## Orvalis v0.93.146 — Santuário: Piso de Terra corrigido + todos os blocos do Mundo (17/11/2026)
 - **Piso de Terra deformado:** a lateral esticava um pedaço da lateral do bloco de grama; agora é o próprio piso de terra escurecido (`render/isoSet.ts`). Só esse bloco mudou.
 - **Blocos do Mundo no Santuário, como blocos NOVOS** (`WORLD_BLOCKS_IN_SANCTUARY`, 42 peças: materiais, porta de carvalho, tenda, baú, fogueira, caldeirão, forno, cadeira, estaca de cerca e flores); nenhum id do conjunto isométrico foi sobrescrito (perfil = 26 + 42 = 68). Arte do pacote do Mundo reaproveitada em `render/art/santuario.ts`.

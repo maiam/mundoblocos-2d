@@ -1,5 +1,6 @@
 import { TILE } from '../config';
 import { Block, ISO_BIG, ISO_CUBES, ISO_PROPS, ISO_SCALE, type BlockId } from '../world/blocks';
+import { RIO_CANAL, RIO_LAGO, RIO_PIECES, rioVirtualId } from '../world/rio';
 import { ISO_GROUND_ORDER, ISO_PROPS_ATLAS } from './isoSetManifest';
 import type { Sprite } from './textures';
 
@@ -19,6 +20,8 @@ export interface IsoSetImages {
   props: HTMLImageElement;
   /** Bloco de Pedra (`scripts/extract-iso-stone.py`): topo, sul e leste, 3 quadrados de 128 px em 1 linha. */
   stone: HTMLImageElement;
+  /** Rio das Fadas (`scripts/extract-iso-rio.py`): topos de 128 px (7 por linha, ordem de `RIO_PIECES`) e, na linha de baixo, as laterais seco / canal / lago. */
+  rio: HTMLImageElement;
 }
 
 /** Pixels da prancha por célula, na horizontal (a largura do losango é 1,414 célula) e na vertical (aresta × cos 35,264°). */
@@ -57,7 +60,7 @@ export function isoSetTextures(
   images: IsoSetImages, iconUrls: Readonly<Record<string, string>>,
   groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, cubes: Map<BlockId, IsoCubeFaces>,
 ): void {
-  const { ground, cube, props, stone } = images;
+  const { ground, cube, props, stone, rio } = images;
   const tops = new Map<string, HTMLCanvasElement>();
   ISO_GROUND_ORDER.forEach((key, i) => tops.set(key, slice(ground, (i % 5) * FACE, Math.floor(i / 5) * FACE, FACE, FACE)));
   const south = slice(cube, 0, 0, FACE, FACE);
@@ -90,6 +93,25 @@ export function isoSetTextures(
     // +X (leste), −X, +Y (topo), −Y, +Z (sul), −Z
     cubes.set(id, [e, e, top, s, s, s]);
   }
+  // Rio das Fadas: uma face-conjunto por peça (id virtual, só do desenho). A lateral sul vem da borda S da peça e a leste da borda L; a laje (7/16) fica em cima
+  // de uma base de terra (já composta na folha).
+  const RIO_COLS = 7;
+  const rioBase = Math.ceil(RIO_PIECES.length / RIO_COLS) * FACE;
+  const rioSides: Record<string, [HTMLCanvasElement, HTMLCanvasElement]> = {};
+  ['D', 'C', 'F'].forEach((edge, j) => {
+    const face = slice(rio, j * FACE, rioBase, FACE, FACE);
+    rioSides[edge] = [darken(face, 0.1), darken(face, 0.24)];
+  });
+  for (const p of RIO_PIECES) {
+    const top = slice(rio, (p.index % RIO_COLS) * FACE, Math.floor(p.index / RIO_COLS) * FACE, FACE, FACE);
+    const s = rioSides[p.edges[2]][0], e = rioSides[p.edges[1]][1];
+    cubes.set(rioVirtualId(p), [e, e, top, s, s, s]);
+  }
+  // Os pincéis (cursor fantasma e ícone) usam a peça de exemplo: canal norte–sul e água calma.
+  cubes.set(RIO_CANAL, cubes.get(rioVirtualId(RIO_PIECES.find((p) => p.key === 'canal_ns')!))!);
+  cubes.set(RIO_LAGO, cubes.get(rioVirtualId(RIO_PIECES.find((p) => p.key === 'calma')!))!);
+  if (iconUrls['rio-canal']) icons.set(RIO_CANAL, iconUrls['rio-canal']);
+  if (iconUrls['rio-lago']) icons.set(RIO_LAGO, iconUrls['rio-lago']);
   for (const id of ISO_PROPS) {
     const key = ISO_KEY.get(id)!;
     const r = ISO_PROPS_ATLAS[key];

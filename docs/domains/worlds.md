@@ -9,7 +9,7 @@
 | objetos | no nível 0 da célula | **em cima da pilha de cubos** (`surfaceObjects`): árvore, cerca, casa… ficam no nível 3 e não contam como altura de piso |
 | `bounds` | ilimitado | **16 chunks = 4×4** (`cx -2..1`, `cy -2..1`) → 64×64 células |
 | `character` | heroína | **Deusa da Vida** |
-| `blocks` | materiais, objetos, paredes… | **68 peças**: 26 do conjunto isométrico (`ISO_BLOCKS`) + 42 do Mundo como blocos novos (`WORLD_BLOCKS_IN_SANCTUARY`; sem paredes) —: 4 cubos (3 pisos + Bloco de Pedra) + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
+| `blocks` | materiais, objetos, paredes… | **70 peças**: 26 do conjunto isométrico (`ISO_BLOCKS`) + 42 do Mundo como blocos novos (`WORLD_BLOCKS_IN_SANCTUARY`; sem paredes) + 2 pincéis do Rio das Fadas (`RIO_BRUSHES`) —: 4 cubos (3 pisos + Bloco de Pedra) + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
 | câmera | 3/4 (oblíqua) | **isométrica fixa** (45° / 35,264°, sem seletor) |
 | `sky` (fundo além das bordas) | escuro | degradê azul → lilás |
