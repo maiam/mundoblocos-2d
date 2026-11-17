@@ -8,6 +8,7 @@
 - **Arte:** `scripts/extract-iso-rio.py` (`assets-src/iso-set/rio-atlas.png`, `rio-teste-de-encaixe.json`) → `src/assets/iso-rio.webp` (topos 128 px + laterais seco/canal/lago já com a base de terra) e dois ícones.
 - **Fora desta entrega:** Prado (seco liso), Corredeira e Cascata (relevo 3D) e as peças que faltam no conjunto (lista em NEXT_STEPS).
 - `tsc` e testes verdes; conferido no navegador (canal em L, lago 3×3, em cima e no nível da grama). Sem mudança de save/protocolo; `package.json` 0.93.147.
+- **CI:** `npm audit` passa a olhar só dependências de produção (`--omit=dev`) por causa do advisory do `picomatch` em vite/vitest (ver NEXT_STEPS).
 
 ## Orvalis v0.93.146 — Santuário: Piso de Terra corrigido + todos os blocos do Mundo (17/11/2026)
 - **Piso de Terra deformado:** a lateral esticava um pedaço da lateral do bloco de grama; agora é o próprio piso de terra escurecido (`render/isoSet.ts`). Só esse bloco mudou.

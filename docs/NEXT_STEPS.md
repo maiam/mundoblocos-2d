@@ -393,3 +393,6 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - **Arte que falta para o autotile cobrir tudo** (hoje usa a peça de menor custo): canal — curvas sul–leste (`DCCD`) e sul–oeste (`DDCC`), os outros 3 Ts (`CCCD`, `CCDC`, `CDCC`) e a ponta `DDDC` (nascente oeste); lago — `DDDF`, `DFDD`, `FDDD`, `DFDF`, `FDFD`, `FFDF`.
 - Entram depois: **Prado** (seco liso), **Corredeira** e **Cascata baixa** (malhas de relevo 3D do `.bbmodel`; terminam na cota da borda) e as peças soltas (poça/ninfeias fixas) se o dono do produto quiser colocar à mão.
 - Ids de bloco são escassos (210–225 e 250–252 aposentados); o rio usa só 2 e ids virtuais no desenho.
+
+## Dependências (17/11/2026)
+- `npm audit` acusa o `picomatch` (ReDoS, GHSA-fc5q-39xc-vjpf; vem de vite/vitest, sem versão corrigida no npm). O CI passou a auditar só dependências de produção (`--omit=dev`). Reverter para auditar tudo quando houver correção ou ao atualizar `vite`/`vitest`.
