@@ -6,6 +6,7 @@ import { blockDef, type BlockId } from '../world/blocks';
 import { canCraft, type ItemId, ITEMS, monsterDrops, type Recipe, type StackId, STATION_REACH, stackBlock, TOOLS } from '../world/items';
 import { art } from '../render/art';
 import { World } from '../world/world';
+import { tilledIn } from '../world/farmPlot';
 import { type WorldProfile } from '../world/profiles';
 import type { Facing } from './walker';
 import { Camera, initialZoomMultiplier } from './camera';
@@ -39,7 +40,7 @@ import { noteBuy, noteTalk, shopGreeting, tierOf } from './npcBrain/memory';
 import { phaseAt, scheduleOf, shopOpen } from './npcBrain/schedule';
 import {
   accept as acceptMissionLog, complete as completeMission, COIN, goalsOf, isReady as isMissionReady, type Mission, type MissionEvent, marksOf as missionMarks,
-  missionOf, nextMission, onEvent as onMissionEvent,
+  bonusFor, missionOf, nextMission, onEvent as onMissionEvent,
 } from './npcBrain/missions';
 import { haveOf, markOf, phaseOf, type QuestDef, questOf, questsFor, takeOf } from './npcBrain/quests';
 import { applySave, captureSave, type SaveData, type SaveStore } from './save';
@@ -855,6 +856,9 @@ export class Game {
   }
 
   /** Um acontecimento para a missão ativa (falar, abater, construir…); atualiza o diário se algo andou. */
+  /** Metas lidas do mundo (não contadas por evento): terra arada no terreno indicado. */
+  private missionProbe = (key: string): number => (key === 'plot-tilled' && this.world.farmPlot ? tilledIn(this.world, this.world.farmPlot) : 0);
+
   private missionEvent(e: MissionEvent): void {
     if (onMissionEvent(this.entities.missions, e)) this.refreshMissionHud();
   }
@@ -864,7 +868,7 @@ export class Game {
     const log = this.entities.missions;
     const m = missionOf(log.active);
     if (!m) { this.hud.setMission(null); return; }
-    const goals = goalsOf(m, log, (id) => this.inventory.count(id));
+    const goals = goalsOf(m, log, (id) => this.inventory.count(id), this.missionProbe);
     this.hud.setMission(m.title, goals.map(({ goal, have, done }) => `${done ? '✓ ' : ''}${goal.text}${goal.count > 1 ? ` ${have}/${goal.count}` : ''}`));
   }
 
@@ -882,19 +886,22 @@ export class Game {
     const base = { npc: v.npc, name: v.name };
     const open = (conv: Conversation): void => { this.dialogue.open(conv, v, () => v.release()); v.conversation(); };
     if (active && active.turnIn === key) {
-      if (!isMissionReady(active, log, count)) {
+      if (!isMissionReady(active, log, count, this.missionProbe)) {
         if (key !== 'guild') return false; // fora da guilda só a entrega pronta interrompe a conversa normal
         open({ ...base, text: active.progress });
         return true;
       }
       if (!canCarry(this.inventory, this.hotbar, COIN) && this.inventory.count(COIN) === 0) { this.hud.toast('Sem espaço na bolsa'); return true; }
-      if (!completeMission(log, active, count, (id, n) => this.inventory.take(id, n))) return true;
-      this.inventory.add(COIN, active.reward.coins);
+      const taken: Array<[StackId, number]> = [];
+      if (!completeMission(log, active, count, (id, n) => this.inventory.take(id, n), taken, this.missionProbe)) return true;
+      const bonus = bonusFor(active, taken);
+      const coins = active.reward.coins + bonus;
+      this.inventory.add(COIN, coins);
       this.hotbar.autoPlace(COIN);
       this.hotbar.prune(this.inventory);
       this.refreshSelection();
       noteBuy(this.entities.memory, v.memoryKey, 5);
-      this.hud.toast(`Missão cumprida: ${active.title} (+${active.reward.coins} Moedas de Cobre)`);
+      this.hud.toast(`Missão cumprida: ${active.title} (+${coins} Moedas de Cobre${bonus > 0 ? `, ${bonus} dos itens` : ''})`);
       this.refreshMissionHud();
       open({ ...base, text: active.complete });
       return true;
@@ -1003,7 +1010,7 @@ export class Game {
       }
     }
     // Missões do Capítulo 1: ! no Mestre que oferece, ? em quem recebe (azulado em andamento, dourado pronta); vence o sinal do Silvano na mesma pessoa.
-    Object.assign(marks, missionMarks(this.entities.missions, (id) => this.inventory.count(id)));
+    Object.assign(marks, missionMarks(this.entities.missions, (id) => this.inventory.count(id), this.missionProbe));
     this.refreshMissionHud();
     this.entities.marks = marks as typeof this.entities.marks;
   }
@@ -1168,6 +1175,7 @@ export class Game {
       dungeonArea: this.inDungeon ? this.world.dungeon!.area : null,
       interior: room,
       fade: this.fade,
+      zones: !room && !this.inDungeon && this.entities.missions.active === 'm07' && this.world.farmPlot ? [this.world.farmPlot] : undefined,
       time: this.time,
       elapsed: this.elapsed,
       dt,

@@ -38,6 +38,8 @@ export interface RenderOptions {
   interior?: InteriorLayout | null;
   /** Escurecer ao passar por uma porta (1 → 0). */
   fade?: number;
+  /** Terrenos marcados por missão (contorno dourado no chão, em células inclusivas). */
+  zones?: Rect[];
 }
 
 
@@ -101,6 +103,7 @@ export const SANCTUARY_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport>
   dungeonArea: 'ignored',
   interior: 'ignored',        // interiores (Fase 4)
   fade: 'ignored',
+  zones: 'ignored',
 };
 
 /**
@@ -125,4 +128,5 @@ export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
   dungeonArea: 'honored',     // M4.2: escuro fora do labirinto, na camada 2D
   interior: 'honored',        // M4.1: o cômodo isolado substitui o mundo
   fade: 'honored',            // M3.2: escurecer de porta na camada 2D
+  zones: 'honored',           // contorno dourado de terreno de missão
 };

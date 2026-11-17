@@ -5,10 +5,11 @@
  * cumpridas, a jogadora entrega a missão a quem a recebe (`turnIn`: o Mestre ou outro NPC). Os contratos repetíveis da guilda ficam em outra camada.
  */
 import { Block } from '../../world/blocks';
-import { blockStack, Item, type StackId } from '../../world/items';
+import { blockStack, Item, type ItemId, type StackId } from '../../world/items';
+import { SELL_PRICE } from '../../world/shop';
 import { type MonsterKind, WOLF_KINDS } from '../../world/dungeon';
 
-export type MissionId = 'm01' | 'm02' | 'm03';
+export type MissionId = 'm01' | 'm02' | 'm03' | 'm04' | 'm05' | 'm06' | 'm07';
 
 /** Um acontecimento do jogo que pode andar uma meta (`MissionLog.progress`). */
 export type MissionEvent =
@@ -23,8 +24,10 @@ export interface Goal {
   /** Quantas vezes (ou unidades). */
   count: number;
   /** `have`: unidades no inventário (somando as pilhas; entregues no fim); os outros: contador do evento, só depois de aceitar. */
-  kind: 'have' | 'event';
+  /** `have`: inventário; `event`: contagem de eventos depois de aceitar; `probe`: lido do mundo (`probe(key)`), ex.: terra arada no terreno indicado. */
+  kind: 'have' | 'event' | 'probe';
   items?: readonly StackId[];
+  probe?: string;
   match?: (e: MissionEvent) => boolean;
 }
 
@@ -38,6 +41,8 @@ export interface Mission {
   turnIn: string;
   goals: readonly Goal[];
   reward: { coins: number };
+  /** Bônus por unidade entregue (a Guilda paga o valor de cada espólio: `SELL_PRICE`). */
+  bonusPerItem?: Readonly<Partial<Record<string, number>>>;
   /** Conversa ao oferecer (a pergunta `prompt` vem depois, com Aceitar/Agora não) e ao aceitar. */
   offer: string;
   prompt: string;
@@ -47,6 +52,9 @@ export interface Mission {
   complete: string;
 }
 
+/** Espólios de monstro que a Guilda compra (sem a Moeda de Cobre). */
+const LOOT_FOR_SALE: readonly StackId[] = [Item.SILK, Item.FANG, Item.WOLF_FANG, Item.WOLF_PELT, Item.QUEEN_HEART];
+const placed = (blocks: readonly number[]): ((e: MissionEvent) => boolean) => (e) => e.type === 'place' && blocks.includes(e.block);
 const talk = (npc: string): ((e: MissionEvent) => boolean) => (e) => e.type === 'talk' && e.npc === npc;
 const kills = (kinds: readonly MonsterKind[]): ((e: MissionEvent) => boolean) => (e) => e.type === 'kill' && kinds.includes(e.monster);
 
@@ -90,6 +98,53 @@ export const MISSIONS: readonly Mission[] = [
     progress: 'Os lobos ainda estão soltos. O contrato pede 3 abatidos; cuide da sua vida e volte quando terminar.',
     complete: 'Três lobos a menos! As estradas ficam mais seguras graças a você. Aqui está o seu pagamento.',
   },
+  {
+    id: 'm04', chapter: 1, title: 'O valor de uma aventura', kind: 'Economia', turnIn: 'guild',
+    goals: [{ id: 'loot', text: 'Juntar espólios de monstros', count: 5, kind: 'have', items: LOOT_FOR_SALE }],
+    reward: { coins: 10 },
+    bonusPerItem: SELL_PRICE,
+    offer: 'A guilda compra o que os monstros deixam: seda de aranha, presas e pelagem de lobo. Isso tem valor, e voltar à cidade com a mochila cheia pode ser lucrativo. Traga 5 itens de criaturas derrotadas: eu pago 10 moedas pelo contrato e mais o valor de cada item entregue.',
+    prompt: 'Aceita levar espólios para a guilda?',
+    accepted: 'Combinado. Derrote criaturas fora da muralha e junte 5 espólios (seda, presas, pelagem…). Quando tiver, volte aqui: pago o contrato e cada item.',
+    progress: 'Ainda faltam espólios de monstros: o contrato pede 5 itens (seda, presas, pelagem de lobo). Traga quando tiver.',
+    complete: 'Ótimos espólios! Isso rende bom dinheiro. Aqui estão as moedas do contrato e o valor de cada item que você trouxe.',
+  },
+  {
+    id: 'm05', chapter: 1, title: 'A floresta das teias', kind: 'Caçada', turnIn: 'guild',
+    goals: [
+      { id: 'small', text: 'Derrotar aranhas pequenas', count: 4, kind: 'event', match: kills(['spider-small']) },
+      { id: 'big', text: 'Derrotar uma aranha grande', count: 1, kind: 'event', match: kills(['spider-big']) },
+    ],
+    reward: { coins: 22 },
+    offer: 'As aranhas estão se multiplicando na floresta e nas cavernas. O contrato pede 4 aranhas pequenas e 1 grande. As grandes mordem forte e aguentam mais golpes: leve vida cheia e uma boa arma.',
+    prompt: 'Aceita caçar as aranhas?',
+    accepted: 'Contrato aceito. Derrote 4 aranhas pequenas e 1 grande e volte aqui. Cuidado com as teias!',
+    progress: 'As aranhas ainda não foram contidas: faltam as 4 pequenas e a grande do contrato. Volte quando terminar.',
+    complete: 'As teias vão dar uma trégua à cidade. Excelente trabalho! Aqui está o seu pagamento.',
+  },
+  {
+    id: 'm06', chapter: 1, title: 'Protegendo nossas terras', kind: 'Construção', turnIn: 'guild',
+    goals: [
+      { id: 'fence', text: 'Construir trechos de cerca', count: 6, kind: 'event', match: placed([Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY]) },
+      { id: 'gate', text: 'Construir uma porteira', count: 1, kind: 'event', match: placed([Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY]) },
+    ],
+    reward: { coins: 25 },
+    offer: 'Os moradores querem reforçar uma área perto da cidade para proteger as plantações. Preciso de 6 trechos de cerca e 1 porteira de madeira, construídos por você. Faça as tábuas, monte as peças fora da muralha e me avise.',
+    prompt: 'Aceita construir a cerca?',
+    accepted: 'Ótimo. Construa 6 trechos de cerca e 1 porteira fora da muralha (cercas e porteiras se fazem com tábuas). Depois volte aqui.',
+    progress: 'A cerca ainda não está pronta: faltam trechos e a porteira. Construa fora da muralha e volte.',
+    complete: 'Agora sim, as terras estão protegidas! A porteira ficou ótima. Aqui está o seu pagamento.',
+  },
+  {
+    id: 'm07', chapter: 1, title: 'Terra para o futuro', kind: 'Preparação do terreno', turnIn: 'guild',
+    goals: [{ id: 'soil', text: 'Arar terra no terreno marcado', count: 12, kind: 'probe', probe: 'plot-tilled' }],
+    reward: { coins: 18 },
+    offer: 'A cidade precisa ampliar a área de produção. Marquei um terreno perto do portão, com um contorno dourado no chão: preciso que você prepare 12 blocos de terra arada ali. Use a enxada, que vira a grama em terra pronta para plantar.',
+    prompt: 'Aceita preparar o terreno?',
+    accepted: 'Combinado! O terreno está marcado com um contorno dourado perto do portão. Ara 12 blocos ali com a enxada e volte.',
+    progress: 'O terreno marcado ainda não tem 12 blocos de terra arada. Use a enxada dentro do contorno dourado.',
+    complete: 'Terra boa e pronta para o futuro! A cidade agradece. Aqui está o seu pagamento.',
+  },
 ];
 
 export interface MissionLog {
@@ -119,16 +174,16 @@ export function accept(log: MissionLog, id: MissionId): void {
 }
 
 /** Quanto cada meta já tem (`have` lê o inventário; evento lê a contagem), limitado ao alvo. */
-export function goalsOf(m: Mission, log: MissionLog, count: (id: StackId) => number): Array<{ goal: Goal; have: number; done: boolean }> {
+export function goalsOf(m: Mission, log: MissionLog, count: (id: StackId) => number, probe: (key: string) => number = () => 0): Array<{ goal: Goal; have: number; done: boolean }> {
   return m.goals.map((goal) => {
-    const raw = goal.kind === 'have' ? (goal.items ?? []).reduce((n, id) => n + count(id), 0) : log.progress[goal.id] ?? 0;
+    const raw = goal.kind === 'have' ? (goal.items ?? []).reduce((n, id) => n + count(id), 0) : goal.kind === 'probe' ? probe(goal.probe ?? '') : log.progress[goal.id] ?? 0;
     const have = Math.min(goal.count, raw);
     return { goal, have, done: have >= goal.count };
   });
 }
 
-export function isReady(m: Mission, log: MissionLog, count: (id: StackId) => number): boolean {
-  return goalsOf(m, log, count).every((g) => g.done);
+export function isReady(m: Mission, log: MissionLog, count: (id: StackId) => number, probe?: (key: string) => number): boolean {
+  return goalsOf(m, log, count, probe).every((g) => g.done);
 }
 
 /** Um acontecimento: anda as metas de evento da missão ativa. Devolve se algo mudou. */
@@ -147,14 +202,18 @@ export function onEvent(log: MissionLog, e: MissionEvent): boolean {
 }
 
 /** Entrega: tira as unidades das metas `have`, marca a missão como cumprida e limpa a ativa. Devolve false (sem mexer em nada) se não está pronta. */
-export function complete(log: MissionLog, m: Mission, count: (id: StackId) => number, take: (id: StackId, n: number) => boolean): boolean {
-  if (log.active !== m.id || !isReady(m, log, count)) return false;
+export function complete(
+  log: MissionLog, m: Mission, count: (id: StackId) => number, take: (id: StackId, n: number) => boolean,
+  /** Recebe o que foi entregue (para o bônus por item). */
+  taken?: Array<[StackId, number]>, probe?: (key: string) => number,
+): boolean {
+  if (log.active !== m.id || !isReady(m, log, count, probe)) return false;
   for (const g of m.goals) {
     if (g.kind !== 'have') continue;
     let left = g.count;
     for (const id of g.items ?? []) {
       const n = Math.min(left, count(id));
-      if (n > 0 && take(id, n)) left -= n;
+      if (n > 0 && take(id, n)) { left -= n; taken?.push([id, n]); }
       if (left === 0) break;
     }
   }
@@ -165,9 +224,9 @@ export function complete(log: MissionLog, m: Mission, count: (id: StackId) => nu
 }
 
 /** Sinal sobre a cabeça: ! em quem oferece a próxima missão, ? azulado em quem a receberá (em andamento) e ? dourado quando pronta. Chave = NPC (`guild` ou id). */
-export function marksOf(log: MissionLog, count: (id: StackId) => number): Record<string, 'offer' | 'progress' | 'ready'> {
+export function marksOf(log: MissionLog, count: (id: StackId) => number, probe?: (key: string) => number): Record<string, 'offer' | 'progress' | 'ready'> {
   const m = missionOf(log.active);
-  if (m) return { [m.turnIn]: isReady(m, log, count) ? 'ready' : 'progress' };
+  if (m) return { [m.turnIn]: isReady(m, log, count, probe) ? 'ready' : 'progress' };
   return nextMission(log) ? { guild: 'offer' } : {};
 }
 
@@ -186,6 +245,12 @@ export function sanitizeMissions(raw: unknown): MissionLog {
     }
   }
   return log;
+}
+
+/** Moedas do bônus por item entregue (`bonusPerItem`) para o que foi realmente tirado. */
+export function bonusFor(m: Mission, taken: ReadonlyArray<readonly [StackId, number]>): number {
+  if (!m.bonusPerItem) return 0;
+  return taken.reduce((sum, [id, n]) => sum + (m.bonusPerItem![id as ItemId] ?? 0) * n, 0);
 }
 
 export const COIN: StackId = Item.COPPER_COIN;

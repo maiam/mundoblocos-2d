@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.129 — Capítulo 1: missões 04–07 (17/11/2026)
+- **Missões** (`npcBrain/missions.ts`, texto do dono do produto; valores provisórios): **04 O valor de uma aventura** (5 espólios — seda, presas, pelagem, coração da rainha; 10 + valor de cada item), **05 A floresta das teias** (4 aranhas pequenas + 1 grande; 22), **06 Protegendo nossas terras** (6 cercas + 1 porteira de qualquer madeira, eventos `place`; 25), **07 Terra para o futuro** (12 blocos de terra arada no terreno marcado; 18). A corrente agora vai até a 07.
+- **Motor:** meta `probe` (lida do mundo, não por evento; `goalsOf/isReady/marksOf/complete` ganham `probe`), `Mission.bonusPerItem` + `bonusFor` (bônus por unidade entregue) e `complete` devolve o que tirou (`taken`).
+- **Decisão (missão 04):** a Guilda **paga valor fixo por item** (`SELL_PRICE` em `world/shop.ts`: seda 1, presa 2, pelagem 3, coração da rainha 25); **sem aba Vender** nas lojas por ora.
+- **Terreno da 07:** `world/farmPlot.ts` (`planFarmPlot`, 6×4, determinístico pela seed, perto do portão, grama/terra livre, fora de áreas protegidas e do canteiro do Silvano; `World.farmPlot`, `tilledIn`). `RenderOptions.zones` desenha o **contorno dourado** no chão enquanto a 07 está ativa.
+- Sem mudança de save (`SAVE_VERSION` 21) nem de protocolo (29): a zona é derivada da seed. Testes novos (`missions.test.ts`, `farmPlot.test.ts`); `tsc` e 662 testes verdes.
+
 ## Orvalis v0.93.128 — landing page (pintura a óleo) com Jogar e barra de Entrar/Cadastrar (17/11/2026)
 - **Pedido do dono do produto:** uma landing page do jogo (itens, elementos, personagens) em visual **pintado a mão, tinta a óleo**, que explica o jogo e tem o botão **Jogar**; só então muda para a escolha de personagem. Barra superior com **login e cadastro** já pronta, para o jogador entrar logado no futuro.
 - **Landing** (`src/landing/landing.ts` + `landing.css`): topo (Orvalis, links, Entrar/Cadastrar), **alto** com o castelo num céu de aurora e o botão **Jogar**, "O que é o Orvalis" (4 cartões), **A Cidade do Despertar** (castelo, Guilda, Ferraria, Hospedaria, Floricultura, Guarita + carvalho, cerejeira, bétula e macieira), **Personagens** (os 6 heróis animados + 8 moradores com retrato), **Itens e elementos** (ferramentas, colheita e espólios, fogueira/caldeirão/forno/cadeira e as 15 Flores Fofas) e chamada final. **Só reaproveita a arte do próprio jogo** (`art()`, `getTownImages()`, `CharacterPreview`): nada de imagem nova.

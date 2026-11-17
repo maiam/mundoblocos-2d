@@ -13,6 +13,7 @@ import { SanctuarySeedGenerator } from './sanctuarySeedGenerator';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
 import { type FlowerPatch, FlowerPatchTerrain, planFlowerPatch } from './flowerPatch';
+import { planFarmPlot } from './farmPlot';
 import { GoblinCampTerrain, planGoblinCamps, planLizardPacks, type GoblinCamp, type LizardPack } from './goblins';
 import { WORLD_PROFILES, type WorldProfile } from './profiles';
 import type { TerrainSource } from './terrain';
@@ -122,6 +123,8 @@ export class World {
   private readonly holeAge = new Map<string, number>();
   /** Canteiro de flores da missão do Silvano (null fora do Mundo da Cidade). */
   flowerPatch: FlowerPatch | null = null;
+  /** Terreno indicado para arar (missão 07); null fora do Mundo da Cidade. Não altera o mapa. */
+  farmPlot: Rect | null = null;
   /** Spawn calculado no terreno base (a dungeon é posta longe dele e não o altera). */
   private spawn: [number, number] | null = null;
 
@@ -186,6 +189,7 @@ export class World {
       this.flowerPatch = planFlowerPatch(seed, this.generator, this.outsideGate(), avoid);
       if (this.flowerPatch) this.generator = new FlowerPatchTerrain(this.generator, this.flowerPatch);
     }
+    if (this.town && profile.dungeon) this.farmPlot = planFarmPlot(this);
     if (baseTerrain instanceof WorldGenerator) this.lizardPacks.push(...planLizardPacks(this, (x, y) => baseTerrain.riverAt(x, y), this.goblinCamps));
   }
 

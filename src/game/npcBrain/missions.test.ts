@@ -3,7 +3,7 @@ import { Block } from '../../world/blocks';
 import { blockStack, Item } from '../../world/items';
 import { Inventory } from '../inventory';
 import {
-  accept, complete, EMPTY_LOG, goalsOf, isReady, MISSIONS, marksOf, missionOf, nextMission, onEvent, sanitizeMissions,
+  accept, bonusFor, complete, EMPTY_LOG, goalsOf, isReady, MISSIONS, marksOf, missionOf, nextMission, onEvent, sanitizeMissions,
 } from './missions';
 
 const inv = () => new Inventory({});
@@ -17,7 +17,7 @@ describe('Capítulo 1: corrente de missões (ADR 0034)', () => {
     expect(marksOf(log, () => 0)).toEqual({ guild: 'offer' });
     log.done.push('m01');
     expect(nextMission(log)!.id).toBe('m02');
-    log.done.push('m02', 'm03');
+    log.done.push('m02', 'm03', 'm04', 'm05', 'm06', 'm07');
     expect(nextMission(log)).toBeNull();
     expect(marksOf(log, () => 0)).toEqual({});
   });
@@ -76,12 +76,58 @@ describe('Capítulo 1: corrente de missões (ADR 0034)', () => {
   });
 
   it('as recompensas e os textos existem; o save valida (descarta lixo, limita contagem)', () => {
-    expect(MISSIONS.map((m) => m.reward.coins)).toEqual([8, 12, 15]);
+    expect(MISSIONS.map((m) => m.reward.coins)).toEqual([8, 12, 15, 10, 22, 25, 18]);
     for (const m of MISSIONS) for (const t of [m.offer, m.prompt, m.accepted, m.progress, m.complete]) expect(t.length).toBeGreaterThan(10);
     expect(Item.COPPER_COIN).toBe('copper_coin');
     const clean = sanitizeMissions({ done: ['m01', 'xx', 'm02'], active: 'm03', progress: { wolves: 99, lixo: 4 } });
     expect(clean).toEqual({ done: ['m01', 'm02'], active: 'm03', progress: { wolves: 3 } });
     expect(sanitizeMissions({ done: ['m01'], active: 'm01' }).active).toBeNull(); // missão cumprida não fica ativa
     expect(sanitizeMissions(null)).toEqual(EMPTY_LOG());
+  });
+
+  it('m04: 5 espólios; paga 10 + o valor de cada item entregue (SELL_PRICE)', () => {
+    const log = EMPTY_LOG();
+    const i = inv();
+    log.done.push('m01', 'm02', 'm03');
+    accept(log, 'm04');
+    const m = missionOf('m04')!;
+    i.add(Item.SILK, 3);
+    i.add(Item.WOLF_PELT, 1);
+    expect(isReady(m, log, counter(i))).toBe(false);
+    i.add(Item.FANG, 1);
+    const taken: Array<[never, number]> = [];
+    expect(complete(log, m, counter(i), taker(i), taken as never)).toBe(true);
+    expect(bonusFor(m, taken)).toBe(3 * 1 + 3 + 2);
+    expect(i.count(Item.SILK)).toBe(0);
+  });
+
+  it('m05: 4 aranhas pequenas e 1 grande; m06: 6 cercas e 1 porteira de qualquer madeira', () => {
+    const log = EMPTY_LOG();
+    log.done.push('m01', 'm02', 'm03', 'm04');
+    accept(log, 'm05');
+    const m5 = missionOf('m05')!;
+    for (let n = 0; n < 6; n++) onEvent(log, { type: 'kill', monster: 'spider-small' } as never);
+    onEvent(log, { type: 'kill', monster: 'spider-big' } as never);
+    expect(isReady(m5, log, () => 0)).toBe(true);
+    expect(goalsOf(m5, log, () => 0)[0].have).toBe(4);
+    log.active = null; log.progress = {}; log.done.push('m05');
+    accept(log, 'm06');
+    const m6 = missionOf('m06')!;
+    for (let n = 0; n < 3; n++) onEvent(log, { type: 'place', block: Block.FENCE });
+    for (let n = 0; n < 3; n++) onEvent(log, { type: 'place', block: Block.FENCE_CHERRY });
+    expect(isReady(m6, log, () => 0)).toBe(false);
+    onEvent(log, { type: 'place', block: Block.FENCE_GATE_BIRCH });
+    expect(isReady(m6, log, () => 0)).toBe(true);
+  });
+
+  it('m07: a meta vem do mundo (probe), não de evento', () => {
+    const log = EMPTY_LOG();
+    log.done.push('m01', 'm02', 'm03', 'm04', 'm05', 'm06');
+    accept(log, 'm07');
+    const m = missionOf('m07')!;
+    expect(isReady(m, log, () => 0, () => 11)).toBe(false);
+    expect(isReady(m, log, () => 0, () => 12)).toBe(true);
+    expect(marksOf(log, () => 0, () => 12)).toEqual({ guild: 'ready' });
+    expect(complete(log, m, () => 0, () => true, undefined, () => 12)).toBe(true);
   });
 });

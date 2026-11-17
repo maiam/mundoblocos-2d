@@ -9,6 +9,14 @@ import { foodValue } from './progression';
  */
 export const CURRENCY: ItemId = Item.COPPER_COIN;
 
+/**
+ * Quanto a Guilda paga por unidade de cada espólio de monstro (v0.93.129, missão "O valor de uma aventura"): preços provisórios, a equilibrar com os dos equipamentos.
+ * Fonte única para a futura aba "Vender" das lojas.
+ */
+export const SELL_PRICE: Readonly<Partial<Record<ItemId, number>>> = {
+  [Item.SILK]: 1, [Item.FANG]: 2, [Item.WOLF_FANG]: 2, [Item.WOLF_PELT]: 3, [Item.QUEEN_HEART]: 25,
+};
+
 export interface ShopOffer {
   /** O que se vende: um item (Mercado) ou um bloco (`blockStack`, Floricultura). */
   item: StackId;
