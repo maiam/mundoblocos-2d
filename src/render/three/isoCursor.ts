@@ -39,11 +39,11 @@ export class IsoCursor {
   }
 
   /** `active` = câmera isométrica ligada; fora dela o cursor 2D de sempre cuida da seleção. */
-  update(opts: Pick<RenderOptions, 'hover' | 'focus' | 'breaking'>, active: boolean): void {
+  update(opts: Pick<RenderOptions, 'hover' | 'focus' | 'breaking'>, active: boolean, objectHighlighted = false): void {
     const w = this.world;
     const cl = w.cubeLevels;
     const h = 1 / cl;
-    const cell = active ? opts.hover ?? opts.focus : null;
+    const cell = active && !objectHighlighted ? opts.hover ?? opts.focus : null; // sobre um objeto (sprite) o destaque é o próprio objeto, não o cubo
     if (cell && w.inBounds(cell.x, cell.y)) {
       const stack = w.stackHeight(cell.x, cell.y);
       // Pilha cheia: nada entra em cima; marca o bloco do topo.

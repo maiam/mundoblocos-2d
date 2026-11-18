@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.154 — Santuário: a seleção destaca o próprio objeto (18/11/2026)
+- **Pedido do dono do produto:** quando o cursor está na célula de um objeto que não é bloco (flor, barril, pedra, árvore, arbusto…), em vez do cubo de seleção, destacar **o próprio objeto**.
+- `ChunkSprites.setHighlight(alvo)`: desenha a **silhueta do próprio sprite** — um halo (cópia maior, desenhada antes dos sprites, só aparece em volta) e um véu pulsante por cima — em amarelo (alvo válido) ou vermelho (inválido). `WorldThreeRenderer` chama antes do cursor 3D e passa `objectHighlighted` ao `IsoCursor`, que então não mostra o cubo. Células sem objeto continuam com o cubo.
+- Só na câmera isométrica do Santuário. Cercas/portões 3D e portas (que não são sprites) ainda mostram o cubo.
+- Conferido no navegador (arbustos com contorno e véu; célula sem objeto com cubo). `tsc` e testes verdes. Sem mudança de save, protocolo ou servidor.
+
 ## Orvalis v0.93.153 — Santuário: o telhado some quando você entra na casa (18/11/2026)
 - **Pedido do dono do produto:** numa casa totalmente fechada, ao entrar o telhado some (ou fica transparente) para ver o interior.
 - **Regra do corte** (`render/three/cutaway.ts`, função pura): se há um cubo a **2 níveis ou mais acima do piso** onde a jogadora pisa (telhado sobre a cabeça), a construção inteira — as células ligadas que têm telhado, paredes incluídas — **esconde tudo acima do 1º nível de parede** (piso + 1 fileira de parede ficam, porta incluída). Ao sair (ou ao subir no telhado), tudo volta.

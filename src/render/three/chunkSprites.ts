@@ -509,7 +509,82 @@ export class ChunkSprites {
     return cell && spriteHit(hit.point, cell, this.opts.tile, this.opts.k) ? cell : undefined;
   }
 
+  /** Destaque do objeto apontado (silhueta do próprio sprite: halo atrás + véu por cima), no lugar do cubo de seleção. */
+  private hl: { halo: THREE.Mesh; veil: THREE.Mesh; uniforms: Array<{ map: { value: THREE.Texture | null }; color: { value: THREE.Color }; alpha: { value: number } }> } | null = null;
+
+  /**
+   * Destaca o objeto de sprite da célula (flor, barril, pedra, árvore, arbusto, casa…). Devolve `true` se há objeto ali (aí o cursor em cubo não aparece); `null` ou
+   * célula sem objeto apaga o destaque e devolve `false`. `valid` escolhe a cor (amarelo / vermelho). Só mexe na cena.
+   */
+  setHighlight(target: { x: number; y: number; valid: boolean } | null, elapsed = 0): boolean {
+    const found = target ? this.findCell(target.x, target.y) : null;
+    if (!found) { if (this.hl) { this.hl.halo.visible = false; this.hl.veil.visible = false; } return false; }
+    const { cell, mesh, index } = found;
+    const a = this.asset(cell.sprite);
+    if (!this.hl) this.hl = this.makeHighlight();
+    const hl = this.hl;
+    const m = new THREE.Matrix4();
+    mesh.getMatrixAt(index, m);
+    const wc = cell.sprite.w / this.opts.tile, hc = cell.sprite.h / this.opts.tile / this.opts.k;
+    // Halo: cópia maior (em volta do centro do desenho) um fio atrás; véu: o mesmo desenho um fio à frente (na câmera isométrica a frente do plano é o −z local).
+    const grow = new THREE.Matrix4().makeTranslation(wc / 2, hc / 2, 0.004)
+      .multiply(new THREE.Matrix4().makeScale(1.12, 1.1, 1)).multiply(new THREE.Matrix4().makeTranslation(-wc / 2, -hc / 2, 0));
+    hl.halo.geometry = a.geometry; hl.veil.geometry = a.geometry;
+    hl.halo.matrix.copy(m).multiply(grow);
+    hl.veil.matrix.copy(m).multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.004));
+    const col = target!.valid ? 0xffe27a : 0xff6b7d;
+    const pulse = 0.5 + 0.5 * Math.sin(elapsed * 5);
+    for (const u of hl.uniforms) u.color.value.set(col);
+    hl.uniforms[0].alpha.value = 0.95;
+    hl.uniforms[1].alpha.value = 0.16 + 0.12 * pulse;
+    for (const u of hl.uniforms) u.map.value = a.texture;
+    hl.halo.visible = true;
+    hl.veil.visible = true;
+    return true;
+  }
+
+  private findCell(x: number, y: number): { cell: SpriteCell; mesh: THREE.InstancedMesh; index: number } | null {
+    const build = this.builds.get(Math.floor(x / CHUNK_SIZE) + ',' + Math.floor(y / CHUNK_SIZE));
+    if (!build) return null;
+    let best: { cell: SpriteCell; mesh: THREE.InstancedMesh; index: number } | null = null;
+    for (const g of build.groups) {
+      g.cells.forEach((cell, index) => {
+        if (cell.x !== x || cell.y !== y || (cell.bias ?? 0) < 0) return; // a sombra no chão não conta
+        if (!best || (cell.lift ?? 0) >= (best.cell.lift ?? 0)) best = { cell, mesh: g.mesh, index };
+      });
+    }
+    return best;
+  }
+
+  private makeHighlight(): NonNullable<ChunkSprites['hl']> {
+    const uniforms: Array<{ map: { value: THREE.Texture | null }; color: { value: THREE.Color }; alpha: { value: number } }> = [];
+    const make = (order: number): THREE.Mesh => {
+      const u = { map: { value: null as THREE.Texture | null }, color: { value: new THREE.Color(0xffe27a) }, alpha: { value: 1 } };
+      uniforms.push(u);
+      const mat = new THREE.ShaderMaterial({
+        uniforms: u,
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: 'uniform sampler2D map; uniform vec3 color; uniform float alpha; varying vec2 vUv; void main(){ float a = texture2D(map, vUv).a; if (a < 0.25) discard; gl_FragColor = vec4(color, alpha); }',
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      mesh.matrixAutoUpdate = false;
+      mesh.frustumCulled = false;
+      mesh.renderOrder = order;
+      mesh.visible = false;
+      mesh.name = 'Mundo: destaque do objeto';
+      this.scene.add(mesh);
+      return mesh;
+    };
+    const halo = make(-1), veil = make(6); // o halo é desenhado ANTES dos sprites (que podem ser translúcidos e não gravam profundidade): só aparece em volta da silhueta
+    return { halo, veil, uniforms };
+  }
+
   dispose(): void {
+    if (this.hl) {
+      for (const m of [this.hl.halo, this.hl.veil]) { this.scene.remove(m); (m.material as THREE.Material).dispose(); }
+      this.hl = null;
+    }
     for (const f of this.falling) { this.scene.remove(f.pivot); f.mat.dispose(); }
     this.falling = [];
     for (const f of this.fading) { this.scene.remove(f.mesh); f.mat.dispose(); }
