@@ -1,5 +1,5 @@
 import { mulberry32 } from '../world/random';
-import { valeGoblinHomes } from '../world/sanctuaryValeGoblin';
+import { valeGoblinCamps } from '../world/sanctuaryValeGoblin';
 import type { World } from '../world/world';
 import { Walker } from './walker';
 
@@ -28,7 +28,12 @@ export interface GoblinView {
   swing: number;
   parry: number;
   spark: number;
+  /** Paleta de roupa (0 = a original do modelo; ver `GOBLIN_STYLES` no renderer). */
+  style: number;
 }
+
+/** Paleta de roupa de cada posição do acampamento (0 = original): cerca de metade dos goblins veste a cor original e os outros usam uma de 4 paletas (`GOBLIN_STYLES` no renderer). */
+const STYLE_OF = [0, 1, 0, 2, 0, 3, 4];
 
 /** Quanto cada goblin se afasta do ponto de nascimento (células). */
 const ROAM = 4;
@@ -78,6 +83,8 @@ export class ValeGoblin extends Walker {
   spark = -1;
   look = 0;
   mode: Mode = 'idle';
+  /** Paleta de roupa (veja `STYLE_OF`). */
+  style = 0;
   /** Os outros goblins (preenchido por `ValeGoblins`), para escolher com quem conversar e não lotar a fogueira. */
   crew: readonly ValeGoblin[] = [];
   private timer: number;
@@ -316,20 +323,29 @@ export class ValeGoblin extends Walker {
     return {
       id: this.id, x: this.x, y: this.y, z: this.visualZ, yaw: this.yaw, walk: this.walkBlend, run: this.runBlend, phase: this.phase,
       sit: this.sitBlend, stoke: this.stokeBlend, talk: this.talkBlend, look: this.look,
-      fight: this.fightBlend, swing: this.swing, parry: this.parry, spark: this.spark,
+      fight: this.fightBlend, swing: this.swing, parry: this.parry, spark: this.spark, style: this.style,
     };
   }
 }
 
-/** Os 7 goblins do Vale Goblin (só no Santuário). Só andam os que estão em chunks carregados. */
+/** Os 28 goblins do Vale Goblin — 7 em volta de cada uma das 4 fogueiras (só no Santuário). Só andam os que estão em chunks carregados; cada acampamento vive por conta própria (conversa, duelo e fogueira só entre os 7 dele). */
 export class ValeGoblins {
   readonly goblins: ValeGoblin[];
   private readonly list: GoblinView[] = [];
 
   constructor(world: World, seed = 0x60b11) {
-    const { homes, fire } = valeGoblinHomes();
-    this.goblins = homes.map(([x, y], i) => new ValeGoblin(i, x, y, fire[0], fire[1], seed));
-    for (const g of this.goblins) { g.crew = this.goblins; g.z = world.standHeight(Math.floor(g.x), Math.floor(g.y)) ?? 0; g.visualZ = g.z / world.cubeLevels; } // nascem em cima do chão do vale (o degrau 0 não os faria subir)
+    this.goblins = [];
+    valeGoblinCamps().forEach((camp, ci) => {
+      const crew = camp.homes.map(([x, y], k) => {
+        const g = new ValeGoblin(this.goblins.length + k, x, y, camp.fire[0], camp.fire[1], seed);
+        g.style = STYLE_OF[(ci * 3 + k) % STYLE_OF.length];
+        g.z = world.standHeight(Math.floor(g.x), Math.floor(g.y)) ?? 0; // nascem em cima do chão do vale (o degrau 0 não os faria subir)
+        g.visualZ = g.z / world.cubeLevels;
+        return g;
+      });
+      for (const g of crew) g.crew = crew;
+      this.goblins.push(...crew);
+    });
   }
 
   private active(g: ValeGoblin, world: World): boolean {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Block, blockDef } from './blocks';
 import { WORLD_PROFILES } from './profiles';
-import { buildValeGoblin, valeGoblinHomes, valeHeights, valeLevel, VALE_N, VALE_ORIGIN } from './sanctuaryValeGoblin';
+import { buildValeGoblin, valeGoblinCamps, valeGoblinHomes, valeHeights, VALE_CAMP_OFFSETS, VALE_EXTRA_FIRES, valeLevel, VALE_N, VALE_ORIGIN } from './sanctuaryValeGoblin';
 import { VALE_ALTURAS, VALE_CAVERNA, VALE_FOGUEIRA, VALE_GOBLINS, VALE_SUPERFICIES } from './valeGoblinData';
 import { World } from './world';
 
@@ -69,12 +69,36 @@ describe('Vale Goblin do Santuário (v0.93.158, ADR 0038)', () => {
     const [fx, , fz] = VALE_FOGUEIRA;
     expect(w.getLevel(wx(fx), wy(fz), 2)).toBe(Block.CAMPFIRE);
     const { homes, fire } = valeGoblinHomes();
-    expect(homes).toHaveLength(7);
+    expect(homes).toHaveLength(28); // 4 acampamentos × 7 (o primeiro é o do pacote)
     expect(fire).toEqual([wx(fx) + 0.5, wy(fz) + 0.5]);
-    for (const [x, y] of homes) {
+    for (const [x, y] of homes.slice(0, 7)) {
       expect(w.standHeight(Math.floor(x), Math.floor(y)), `goblin em ${x},${y}`).toBe(2); // chão do vale, sem objeto
       expect(Math.hypot(x - fire[0], y - fire[1])).toBeLessThan(7);
     }
+  });
+
+  it('3 acampamentos extras (v0.93.169): fogueira, clareira de terra batida e 7 goblins cada, em chão plano do piso do vale, longe uns dos outros', () => {
+    const w = vale();
+    const camps = valeGoblinCamps();
+    expect(camps).toHaveLength(4);
+    expect(VALE_EXTRA_FIRES).toHaveLength(3);
+    expect(VALE_CAMP_OFFSETS).toHaveLength(7);
+    for (const [i, c] of camps.entries()) {
+      expect(c.homes).toHaveLength(7);
+      const fx = Math.floor(c.fire[0]), fy = Math.floor(c.fire[1]);
+      expect(w.getLevel(fx, fy, 2), `fogueira ${i}`).toBe(Block.CAMPFIRE);
+      for (const [x, y] of c.homes) {
+        expect(w.standHeight(Math.floor(x), Math.floor(y)), `acampamento ${i}: goblin em ${x},${y}`).toBe(2);
+        expect(Math.hypot(x - c.fire[0], y - c.fire[1])).toBeLessThan(5.5);
+      }
+      // a clareira em volta da fogueira é toda plana (nível 2): os goblins andam até 4 células sem degrau
+      for (let dy = -4; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) {
+        const h = w.standHeight(fx + dx, fy + dy);
+        if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3 && !(dx === 0 && dy === 0)) expect(h, `acampamento ${i} em ${dx},${dy}`).toBe(2);
+      }
+      for (const o of camps.slice(i + 1)) expect(Math.hypot(c.fire[0] - o.fire[0], c.fire[1] - o.fire[1])).toBeGreaterThan(12);
+    }
+    for (const [ex, ez] of VALE_EXTRA_FIRES) expect(w.getGround(wx(ex), wy(ez))).not.toBe(Block.VOID);
   });
 
   it('a caverna da borda sul liga a trilha do vale à plataforma externa e ao bloco original (túnel de piso 3 com teto de rocha)', () => {
@@ -102,5 +126,7 @@ describe('Vale Goblin do Santuário (v0.93.158, ADR 0038)', () => {
       }
     }
     expect(seen.has(goal)).toBe(true);
+    // e dali, andando pelo piso do vale, até a fogueira de cada acampamento extra
+    for (const c of valeGoblinCamps()) expect(seen.has(`${Math.floor(c.fire[0])},${Math.floor(c.fire[1]) + 1}`), `fogueira em ${c.fire}`).toBe(true);
   });
 });

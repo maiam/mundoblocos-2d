@@ -1,5 +1,18 @@
 # Changelog
 
+## Orvalis v0.93.169 — Santuário: 4 acampamentos com 28 goblins e roupas de várias cores (18/11/2026)
+- **Pedido do dono do produto:** mudar a cor da roupa de alguns goblins e incluir 3 fogueiras com 7 goblins cada uma no vale (mais goblins no cenário).
+- **Mundo (`world/sanctuaryValeGoblin.ts`):** 3 acampamentos extras (`VALE_EXTRA_FIRES`) em clareiras planas do piso do vale (nível 2, sem trilha nem rocha; escolhidas varrendo `valeHeights`), cada um com fogueira, clareira de terra batida, caixa e barris e os mesmos 7 pontos de nascimento do acampamento original (`VALE_CAMP_OFFSETS`). `valeGoblinCamps()` devolve os 4 acampamentos; `valeGoblinHomes()` agora lista os 28 pontos. O acampamento original e o resto do vale não mudaram.
+- **Atores (`game/valeGoblins.ts`):** `ValeGoblins` cria 28 goblins, 7 por fogueira; cada acampamento vive por conta própria (`crew` = os 7 dele: conversa, duelo, sentar e mexer na fogueira só entre eles, olhando a fogueira do próprio grupo). Só andam os de chunks carregados, como antes.
+- **Roupas (`render/three/isoGoblins.ts`):** o extrator marca a parte do modelo (`part: head | body | clothes`); o traje ganha 1 de 5 paletas (`GOBLIN_STYLES`, giro de matiz no shader com uniforme por material; o verde da pele e os tons claros da camisa ficam como estão). Cerca de metade dos goblins mantém a cor original; cada acampamento mistura ao menos 4 paletas (`STYLE_OF`). `GoblinView.style`.
+- Testes: 4 acampamentos (fogueira, 7 pontos pisáveis no nível 2, clareira plana, distância entre eles), alcance a pé de cada fogueira a partir do nascimento, 28 goblins com grupos certos, mistura de paletas. `tsc`, 715 testes e build verdes; conferido no navegador (os 4 acampamentos, goblins de roupas azul, magenta, verde, roxa). Sem mudança de save/protocolo; `package.json` 0.93.169.
+- **Atenção:** são 28 goblins de 17 mil triângulos (só os de chunks carregados são desenhados); falta medir o desempenho em celular real.
+
+## Orvalis v0.93.168 — Santuário: goblin musculoso e textura mais escura (18/11/2026)
+- **Pedido do dono do produto:** mais músculos no goblin e textura um pouco mais escura (`Goblin_Orvalis_Musculoso.glb`: mesma estrutura do modelo anterior — 4 grupos, 10 756 vértices, 17 268 triângulos, mesmo esqueleto de 26 ossos —, com pele em verde-musgo escuro e atlas `Goblin_Verde_Escuro_BaseColor_2K`).
+- Troca direta: `scripts/extract-iso-goblin.py` lê o GLB novo (substitui o `Corpo_Refinado` em `assets-src/iso-set/goblin/`; `Previa_musculoso.png` fica de referência) e regera `iso-goblin.json` (947 KB), `iso-goblin.webp` e `iso-goblin-hair.webp`. Nenhum código mudou.
+- `tsc`, 713 testes verdes; conferido no navegador (parado e duelo). Sem mudança de save/protocolo; `package.json` 0.93.168. O `Corpo_Goblin_Musculoso_T_Pose.glb` (base nua em T) e o `.blend` não entram no jogo.
+
 ## Orvalis v0.93.167 — Santuário: goblin com o corpo 3D refinado (18/11/2026)
 - **Pedido do dono do produto:** atualizar o NPC goblin com o 3D refinado (`Goblin_Orvalis_Corpo_Refinado.glb`: corpo esculpido, cabeça com cabelo próprio e traje; 10 756 vértices e 17 268 triângulos, contra 3 455 e 3 000 do modelo anterior).
 - **Mesmo esqueleto** (26 ossos, posições e hierarquia idênticas — conferido osso a osso): a caminhada, as poses sociais, a adaga e o duelo continuam valendo sem mudança de código de pose.

@@ -8,7 +8,7 @@ export interface IsoGoblinRig {
   /** Faixas da malha por material: 'base' (atlas: cabeça e traje), 'hair' (pintura do cabelo) e 'skin' (cor de vértice, `skinColors`). */
   groups: IsoGoblinGroup[]; skinColors: number[];
 }
-export interface IsoGoblinGroup { material: 'base' | 'hair' | 'skin'; start: number; count: number; firstVertex: number; vertexCount: number }
+export interface IsoGoblinGroup { material: 'base' | 'hair' | 'skin'; part: 'head' | 'body' | 'clothes'; start: number; count: number; firstVertex: number; vertexCount: number }
 /** A adaga (`scripts/extract-iso-dagger.py`): malha em cor de vértice, origem no meio do cabo, lâmina para +y. */
 export interface IsoDaggerMesh { length: number; positions: number[]; normals: number[]; colors: number[]; indices: number[] }
 /** Arte do goblin: o rig, a imagem da cor base do atlas e a adaga da mão direita. */
@@ -35,6 +35,35 @@ function sparkTexture(): THREE.Texture | null {
   return t;
 }
 
+/**
+ * Paletas de roupa dos goblins (v0.93.169): `hue` = giro de matiz (fração de volta), `sat` e `val` multiplicam saturação e brilho. Só o traje (colete, calça, botas) é recolorido; o verde da pele
+ * e os tons claros (camisa) ficam como estão. A paleta 0 é a cor original do modelo.
+ */
+export const GOBLIN_STYLES: ReadonlyArray<{ hue: number; sat: number; val: number }> = [
+  { hue: 0, sat: 1, val: 1 },
+  { hue: 0.55, sat: 1, val: 1 },    // colete azulado, calça esverdeada
+  { hue: -0.09, sat: 1.1, val: 0.95 }, // colete vermelho, calça azul-violeta
+  { hue: 0.27, sat: 0.95, val: 1 },  // colete amarelo-esverdeado, calça azul
+  { hue: 0.75, sat: 1, val: 1 },     // colete verde-azulado, calça avermelhada
+];
+const TINT_GLSL = `
+uniform vec3 uTint;
+vec3 goblinTint(vec3 c) {
+  vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+  vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+  vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+  float d = q.x - min(q.w, q.y);
+  vec3 hsv = vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x);
+  float green = smoothstep(0.17, 0.22, hsv.x) * (1.0 - smoothstep(0.42, 0.48, hsv.x));
+  float w = (1.0 - green) * smoothstep(0.12, 0.3, hsv.y);
+  hsv.x = fract(hsv.x + uTint.x * w);
+  hsv.y = clamp(hsv.y * mix(1.0, uTint.y, w), 0.0, 1.0);
+  hsv.z *= mix(1.0, uTint.z, w);
+  vec4 K2 = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 pp = abs(fract(hsv.xxx + K2.xyz) * 6.0 - K2.www);
+  return hsv.z * mix(K2.xxx, clamp(pp - K2.xxx, 0.0, 1.0), hsv.y);
+}`;
+
 interface Instance { group: THREE.Group; bones: THREE.Bone[]; trail: THREE.Mesh; sparks: THREE.Points }
 
 /** Arco do golpe (plano y–z à frente do goblin, centrado no ombro direito): raio interno/externo (unidades do modelo) e abertura em graus (0 = à frente, 90 = para cima). */
@@ -58,8 +87,11 @@ export class IsoGoblins {
   private readonly hairTexture: THREE.Texture;
   private readonly hairMaterial: THREE.MeshBasicMaterial;
   private readonly skinMaterial: THREE.MeshBasicMaterial;
-  /** Um material por grupo da malha (atlas, cabelo, pele). */
-  private readonly materials: THREE.MeshBasicMaterial[];
+  private readonly clothesMaterials: THREE.MeshBasicMaterial[];
+  private materialsFor(style: number): THREE.MeshBasicMaterial[] {
+    const clothes = this.clothesMaterials[((style % GOBLIN_STYLES.length) + GOBLIN_STYLES.length) % GOBLIN_STYLES.length];
+    return this.art.rig.groups.map((gr) => (gr.part === 'clothes' ? clothes : gr.material === 'base' ? this.material : gr.material === 'hair' ? this.hairMaterial : this.skinMaterial));
+  }
   private readonly poser: GoblinPoser;
   private readonly inverses: THREE.Matrix4[];
   private readonly instances = new Map<number, Instance>();
@@ -116,7 +148,21 @@ export class IsoGoblins {
     this.material = shade(new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.DoubleSide }));
     this.hairMaterial = shade(new THREE.MeshBasicMaterial({ map: this.hairTexture, side: THREE.DoubleSide }));
     this.skinMaterial = shade(new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
-    this.materials = r.groups.map((gr) => (gr.material === 'base' ? this.material : gr.material === 'hair' ? this.hairMaterial : this.skinMaterial));
+    // traje recolorido: um material por paleta (a 0 é o original); o giro de matiz vai em um uniforme próprio de cada material
+    this.clothesMaterials = GOBLIN_STYLES.map((st, i) => {
+      if (i === 0) return this.material;
+      const m = new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.DoubleSide });
+      const base = shade(m).onBeforeCompile;
+      m.onBeforeCompile = (shader, renderer) => {
+        base.call(m, shader, renderer);
+        shader.uniforms.uTint = { value: new THREE.Vector3(st.hue, st.sat, st.val) };
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>' + TINT_GLSL)
+          .replace('#include <map_fragment>', '#include <map_fragment>\n  diffuseColor.rgb = goblinTint(diffuseColor.rgb);');
+      };
+      m.customProgramCacheKey = () => 'goblin-shade-tint';
+      return m;
+    });
     // adaga na mão direita (cor de vértice + o mesmo sombreado fixo por normal)
     if (art.dagger) {
       const d = art.dagger;
@@ -152,7 +198,7 @@ export class IsoGoblins {
     this.sparkMaterial = new THREE.PointsMaterial({ color: 0xffe7a0, size: 9, map: sparkTexture(), sizeAttenuation: false, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
   }
 
-  private make(): Instance {
+  private make(style: number): Instance {
     const r = this.art.rig;
     const bones = r.bones.map((b) => {
       const o = new THREE.Bone();
@@ -162,7 +208,7 @@ export class IsoGoblins {
       o.scale.fromArray(b.s);
       return o;
     });
-    const mesh = new THREE.SkinnedMesh(this.geometry, this.materials);
+    const mesh = new THREE.SkinnedMesh(this.geometry, this.materialsFor(style));
     r.bones.forEach((b, i) => (b.parent >= 0 ? bones[b.parent] : mesh).add(bones[i]));
     mesh.frustumCulled = false;
     mesh.name = 'Santuário: goblin 3D';
@@ -223,7 +269,7 @@ export class IsoGoblins {
     for (const v of goblins) {
       seen.add(v.id);
       let inst = this.instances.get(v.id);
-      if (!inst) { inst = this.make(); this.instances.set(v.id, inst); }
+      if (!inst) { inst = this.make(v.style); this.instances.set(v.id, inst); }
       inst.group.position.set(v.x, v.z, v.y);
       inst.group.rotation.y = v.yaw;
       this.poser.pose(inst.bones, v, time + v.id * 0.7);
@@ -278,6 +324,7 @@ export class IsoGoblins {
     this.geometry.dispose();
     this.material.dispose();
     this.hairMaterial.dispose();
+    for (const m of this.clothesMaterials) m.dispose();
     this.skinMaterial.dispose();
     this.texture.dispose();
     this.hairTexture.dispose();
