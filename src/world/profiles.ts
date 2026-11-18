@@ -26,6 +26,8 @@ export interface WorldProfile {
   /** Ferramentas, sementes/trigo e inventário de itens. */
   tools: boolean;
   farming: boolean;
+  /** Sementes e vegetais (trigo, batata, tomate, cenoura) na grade fixa, em quantidade infinita (Santuário; no Mundo vêm do inventário). */
+  crops?: boolean;
   /** Rebanho de ovelhas no início. */
   sheep: boolean;
   /** Bandos de lobos soltos pelo mapa (só mundos com cidade; v0.91.0). */
@@ -92,6 +94,7 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     blocks: [...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY, ...RIO_BRUSHES],
     tools: false,
     farming: false,
+    crops: true,
     sheep: false,
     wolves: false,
     dungeon: false,

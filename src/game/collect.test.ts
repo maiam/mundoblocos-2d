@@ -85,10 +85,10 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com as 70 peças (conjunto isométrico + blocos do Mundo + 2 pincéis do rio), sem bolsa', () => {
+  it('Santuário continua infinito: grade fixa com as 75 peças (70 de construção + 5 sementes e vegetais), sem bolsa', () => {
     const grid = new Hotbar(WORLD_PROFILES.santuario);
     expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(70);
+    expect(grid.length).toBe(75);
     grid.assign(0, null);
     expect(grid.stack(0)).toBe(blockStack(Block.ISO_G_GRASS));
   });

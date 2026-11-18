@@ -73,7 +73,10 @@ const pack: ArtPack = {
   flowers: world.flowers,
   flowerIcons: world.flowerIcons,
   town: world.town && { 'village-stake-low': world.town['village-stake-low'], 'village-stake-tall': world.town['village-stake-tall'], 'village-stake-icon': world.town['village-stake-icon'] },
-  itemIcons: {},
+  // Sementes e vegetais na grade (trigo, cenoura, batata, tomate): ícones e folhas de crescimento do Mundo.
+  itemIcons: world.itemIcons && { wheat_seed: world.itemIcons.wheat_seed, wheat: world.itemIcons.wheat, potato: world.itemIcons.potato, tomato: world.itemIcons.tomato, carrot: world.itemIcons.carrot },
+  wheatCrop: world.wheatCrop,
+  crops: world.crops,
   toolIcons: {},
 };
 export default pack;

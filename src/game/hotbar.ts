@@ -51,12 +51,16 @@ export function stackSlot(id: StackId): HotbarSlot {
   return { kind: 'item', item: id as ItemId };
 }
 
+/** Sementes e vegetais plantáveis, na ordem da grade (o vegetal é a própria semente de batata, tomate e cenoura). */
+const CROP_ITEMS: readonly ItemId[] = [Item.WHEAT_SEED, Item.WHEAT, Item.CARROT, Item.POTATO, Item.TOMATO];
+
 /** Grade fixa de um mundo sem coleta (Santuário): ferramentas/cultivo do perfil + todos os blocos dele. */
 export function hotbarFor(profile: WorldProfile): HotbarSlot[] {
   return [
     ...(profile.tools ? TOOL_ORDER.map((tool) => ({ kind: 'tool' as const, tool })) : []),
     ...(profile.farming ? [{ kind: 'item' as const, item: Item.WHEAT_SEED }, { kind: 'item' as const, item: Item.WHEAT }] : []),
     ...profile.blocks.map((block) => ({ kind: 'block' as const, block })),
+    ...(profile.crops ? CROP_ITEMS.map((item) => ({ kind: 'item' as const, item })) : []),
   ];
 }
 
