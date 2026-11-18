@@ -7,7 +7,7 @@
 | `terrain` | procedural (`WorldGenerator`) | **plano em camadas** (`FlatGenerator` com `layers`): chão de grama + **Bloco de Pedra no nível 1** + **Grama no nível 2**; a Deusa e tudo o mais no **nível 3** |
 | quebrar | pela ferramenta (1 s) ou mão (2 s) | **1 s para qualquer bloco** (`breakSeconds`) |
 | objetos | no nível 0 da célula | **em cima da pilha de cubos** (`surfaceObjects`): árvore, cerca, casa… ficam no nível 3 e não contam como altura de piso |
-| `bounds` | ilimitado | **48 chunks = 12×4** (`cx -2..9`, `cy -2..1`) → 192×64 células (o original `cx -2..1`, a Fazenda `cx 2..5` — v0.93.152 — e o Vale Goblin `cx 6..9` — v0.93.158, ADR 0038) |
+| `bounds` | ilimitado | **64 chunks = 8×8** (`cx -2..5`, `cy -6..1`) → 128×128 células: o original (`cx -2..1`, `cy -2..1`), a Fazenda a leste (`cx 2..5` — v0.93.152) e o Vale Goblin ao norte do original (`cx -2..1`, `cy -6..-3` — v0.93.158/159, ADR 0038); o canto `cx 2..5`, `cy -6..-3` é VOID |
 | `character` | heroína | **Deusa da Vida** |
 | `blocks` | materiais, objetos, paredes… | **82 peças**: 38 do conjunto isométrico (`ISO_BLOCKS`, com as 12 árvores novas) + 42 do Mundo como blocos novos (`WORLD_BLOCKS_IN_SANCTUARY`; sem paredes) + 2 pincéis do Rio das Fadas (`RIO_BRUSHES`) —: 4 cubos (3 pisos + Bloco de Pedra) + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |

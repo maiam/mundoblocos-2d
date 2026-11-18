@@ -413,6 +413,6 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 
 ## Santuário — Vale Goblin (v0.93.158, ADR 0038)
 - **Goblins:** os 7 do pacote (`VALE_GOBLINS`) são só dados; o Santuário é solo e sem monstros. Decidir se ganha monstros/combate (hoje `Entities` só os cria no Mundo).
-- **Passagem:** não há caminho pronto da Fazenda ao vale (a caverna abre na borda sul do mundo): abrir um desfiladeiro/portal ou aceitar que se cava.
+- **Canto VOID:** o canto ao norte da Fazenda (`cx 2..5`, `cy −6..−3`) está vazio (VOID); pode virar mais um espaço ou ganhar um fundo melhor que o escuro com grade.
 - **Relevo:** a compressão 3–14 → 2–6 e rocha → 7/8 perde a altura real das montanhas (até 32); se a pilha crescer, refazer `valeLevel`. Desempenho do mundo maior (192 × 64) a conferir em aparelho real.
 - **Acampamento:** o pacote só traz a fogueira; barracas, caixa e barris foram posicionados por mim (aproximados da prévia).

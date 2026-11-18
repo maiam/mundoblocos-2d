@@ -145,4 +145,4 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 - **Santuário — Caldeirão 3D (v0.93.157):** o `Block.CAULDRON` é desenhado como malha 3D com a textura da Pedra Rachada (`render/three/isoCauldrons.ts`, `scripts/extract-iso-cauldron.py`); o sprite do Mundo não é usado na vista isométrica.
 
-- **Santuário — Vale Goblin (v0.93.158, ADR 0038):** o mundo tem 12 × 4 chunks; o Vale Goblin (`cx 6..9`) é um vale fechado por montanhas com caverna-túnel na borda sul e acampamento com fogueira; goblins só como dados.
+- **Santuário — Vale Goblin (v0.93.158, ADR 0038):** o mundo tem 8 × 8 chunks; o Vale Goblin (`cx −2..1`, `cy −6..−3`, ao norte do original) é um vale fechado por montanhas com caverna-túnel cuja plataforma encosta na borda norte do original e acampamento com fogueira; o canto ao norte da Fazenda é VOID; goblins só como dados.

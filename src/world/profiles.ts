@@ -87,8 +87,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     // Santuário refeito do zero (ADR 0036): solo, vista isométrica, cubos cheios (1 nível = 1 célula). Terreno plano em **camadas** (v0.93.143): chão de grama,
     // uma camada de Bloco de Pedra (nível 1) e uma de Grama (nível 2); a Deusa e tudo o mais ficam em cima (nível 3).
     terrain: { kind: 'flat', ground: Block.ISO_G_GRASS, layers: [Block.ISO_STONE_BLOCK, Block.ISO_G_GRASS], landscape: true },
-    // 48 chunks: 12 × 4 (cx −2..9, cy −2..1): o Santuário original (cx −2..1), a leste a Fazenda do heightmap (cx 2..5) e, depois dela, o Vale Goblin (cx 6..9).
-    bounds: { cx0: -2, cy0: -2, cx1: 9, cy1: 1 },
+    // 64 chunks: 8 × 8 (cx −2..5, cy −6..1): o Santuário original (cx −2..1, cy −2..1), a leste a Fazenda (cx 2..5, cy −2..1) e, ao norte do original, o Vale Goblin (cx −2..1, cy −6..−3); o canto cx 2..5, cy −6..−3 é céu aberto (VOID).
+    bounds: { cx0: -2, cy0: -6, cx1: 5, cy1: 1 },
     character: 'goddess-iso',
     // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
     blocks: [...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY, ...RIO_BRUSHES],
