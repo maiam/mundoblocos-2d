@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.149 — hotbar do Santuário em uma única linha com rolagem horizontal (18/11/2026)
+- **Pedido do dono do produto:** limitar a hotbar do Santuário (70 peças) a **uma linha**, rolando na horizontal. Antes ela quebrava em linhas e, com mais de 40 peças, rolava na vertical (até 1/3 da tela).
+- `style.css`: `.hotbar-row.hand.many` agora é `nowrap` com `overflow-x: auto` (paisagem e retrato); `.huge` só mantém as peças menores. `Hud.update` traz a peça escolhida para a vista (`scrollIntoView`). O Mundo normal (≤ 20 espaços) não muda.
+- Conferido no navegador (paisagem 900×420 e retrato 420×800: 70 peças em uma linha, rolagem horizontal, sem erros). Sem mudança de save, protocolo ou servidor.
+
 ## Orvalis v0.93.148 — Santuário: paisagem fixa da seed 1835638650 (17/11/2026)
 - **Pedido do dono do produto:** construir um mundo na seed 1835638650 só com blocos do Mundo (terra, grama, água, areia, pedra, madeira, árvore, arbustos, flores), usando os níveis para dar forma. Decisões dele: água/árvore/arbustos são os que o Santuário já tem (Rio: Lago e Canal, Carvalho e Arbustos do conjunto isométrico) e a paisagem vale **só nessa seed** (as outras seguem planas e vazias).
 - `world/sanctuaryLandscape.ts` (`SanctuaryLandscape`, função pura da seed; `LANDSCAPE_SEEDS`): planície (altura 2: pedra + grama), duas colinas (altura 3: pedra + terra + grama, afloramento de pedra), lago com praia de areia, rio de uma nascente ao norte até a margem do lago, ponte e cais de tábuas (erguidos 1 cubo sobre a água, estacas de tora), casa de madeira (piso, paredes de toras e tábuas, porta de carvalho entre batentes, telhado na 5ª camada), jardim cercado com flores, florestas de Carvalho, arbustos e manchas de flores. Clareira de 6 células onde a Deusa nasce. Todo degrau entre vizinhos é de 1 cubo.
