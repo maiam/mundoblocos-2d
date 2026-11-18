@@ -7,7 +7,7 @@ GLB não é usada. A normal e a rugosidade do pacote também não (a cena não t
   src/assets/iso-goblin.json  { height, positions, normals, uvs, skinIndex, skinWeight, indices, groups, skinColors, bones, ibm }  (26 ossos)
       posições nas UNIDADES do modelo (altura 2,0, pés em y = 0, frente = +z, x = lateral); normais em centésimos (inteiros); `skinWeight` em 1/255; `bones` na ordem de `JOINTS_0`:
       { name, parent (−1 = raiz), t, q, s } = posição, quaternion (x, y, z, w) e escala locais de repouso; `ibm` = as matrizes inversas de bind (16 floats cada).
-      `groups` = [{ material: 'base' | 'hair' | 'skin', start, count, firstVertex, vertexCount }] (faixas de `indices`/de vértices); `skinColors` = cor de vértice (linear, 1/255) dos vértices do grupo 'skin'.
+      `groups` = [{ material: 'base' | 'hair' | 'skin', part: 'head' | 'body' | 'clothes' (o traje é recolorido por goblin), start, count, firstVertex, vertexCount }] (faixas de `indices`/de vértices); `skinColors` = cor de vértice (linear, 1/255) dos vértices do grupo 'skin'.
   src/assets/iso-goblin.webp       atlas de cor 'base' (cabeça e traje) reduzido a 1024 × 1024.
   src/assets/iso-goblin-hair.webp  pintura do cabelo reduzida a 512 × 512.
 Uso: python3 scripts/extract-iso-goblin.py
@@ -56,7 +56,8 @@ for mesh in gltf['meshes']:
         ii = accessor(prim['indices']).reshape(-1).astype(np.int64) + base_v
         idx.append(ii)
         material = MATERIAL_OF[prim['material']]
-        groups.append({'material': material, 'start': base_i, 'count': len(ii), 'firstVertex': base_v, 'vertexCount': len(p)})
+        part = 'clothes' if mesh['name'].startswith('Túnica') else 'body' if material == 'skin' else 'head'
+        groups.append({'material': material, 'part': part, 'start': base_i, 'count': len(ii), 'firstVertex': base_v, 'vertexCount': len(p)})
         if material == 'skin':
             skin_colors.append(accessor(at['COLOR_0'])[:, :3])
         base_v += len(p)

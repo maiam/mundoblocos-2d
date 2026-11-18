@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { WORLD_PROFILES } from '../world/profiles';
-import { valeGoblinHomes } from '../world/sanctuaryValeGoblin';
+import { valeGoblinCamps, valeGoblinHomes } from '../world/sanctuaryValeGoblin';
 import { World } from '../world/world';
 import { ValeGoblins } from './valeGoblins';
 
@@ -12,17 +12,29 @@ function vale(): World {
 }
 
 describe('Goblins do Vale que andam (v0.93.161)', () => {
-  it('nascem 7, nos pontos do pacote, virados para a fogueira e em chão firme', () => {
+  it('nascem 28 (7 por acampamento), nos pontos de cada fogueira, virados para ela e em chão firme', () => {
     const w = vale();
     const g = new ValeGoblins(w);
-    const { homes, fire } = valeGoblinHomes();
-    expect(g.goblins).toHaveLength(7);
+    const camps = valeGoblinCamps();
+    expect(g.goblins).toHaveLength(28);
     g.goblins.forEach((gb, i) => {
-      expect([gb.x, gb.y]).toEqual(homes[i]);
+      const c = camps[Math.floor(i / 7)];
+      expect([gb.x, gb.y]).toEqual(c.homes[i % 7]);
       expect(gb.z).toBe(2);
-      expect(gb.yaw).toBeCloseTo(Math.atan2(fire[0] - homes[i][0], fire[1] - homes[i][1]), 5);
+      expect(gb.yaw).toBeCloseTo(Math.atan2(c.fire[0] - gb.x, c.fire[1] - gb.y), 5);
+      expect(gb.crew.map((x) => x.id)).toEqual(Array.from({ length: 7 }, (_, k) => Math.floor(i / 7) * 7 + k)); // o grupo é o do acampamento
     });
-    expect(g.views(w)).toHaveLength(7);
+    expect(g.views(w)).toHaveLength(28);
+  });
+
+  it('roupas: cerca de metade usa a cor original e as outras 4 paletas aparecem em todos os acampamentos', () => {
+    const w = vale();
+    const g = new ValeGoblins(w);
+    const styles = g.goblins.map((x) => x.style);
+    expect(styles.filter((s) => s === 0).length).toBeGreaterThanOrEqual(10);
+    expect(styles.filter((s) => s === 0).length).toBeLessThanOrEqual(18);
+    for (const s of [1, 2, 3, 4]) expect(styles).toContain(s);
+    for (let c = 0; c < 4; c++) expect(new Set(styles.slice(c * 7, c * 7 + 7)).size).toBeGreaterThanOrEqual(4);
   });
 
   it('andam (alguns saem do lugar e a fase de caminhada avança) e nunca passam de 4 células do ponto de nascimento nem entram em objeto sólido', () => {
@@ -64,7 +76,7 @@ describe('Vida social dos goblins (v0.93.165)', () => {
   it('ao longo de 3 minutos, cada comportamento acontece: caminhar, correr, sentar, mexer na fogueira e conversar (com o parceiro de frente e as falas alternando)', () => {
     const w = vale();
     const g = new ValeGoblins(w);
-    const { homes, fire } = valeGoblinHomes();
+    const { homes } = valeGoblinHomes();
     const seen = { run: 0, sit: 0, stoke: 0, chat: 0, speakA: 0, speakB: 0, duel: 0, practice: 0, swing: 0, spark: 0, parry: 0 };
     for (let t = 0; t < 60 * 180; t++) {
       g.update(1 / 60, w);
@@ -74,7 +86,7 @@ describe('Vida social dos goblins (v0.93.165)', () => {
         if (gb.mode === 'sit' && gb.sitBlend > 0.9) seen.sit++;
         if (gb.mode === 'stoke' && gb.stokeBlend > 0.9) {
           seen.stoke++;
-          expect(Math.hypot(gb.x - fire[0], gb.y - fire[1])).toBeLessThan(1.6); // perto da fogueira
+          expect(Math.hypot(gb.x - gb.fireX, gb.y - gb.fireY)).toBeLessThan(1.6); // perto da fogueira
         }
         if (gb.mode === 'practice') { seen.practice++; expect(gb.spark, 'treino sozinho não faísca').toBe(-1); }
         if (gb.mode === 'duel') {

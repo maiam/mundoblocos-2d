@@ -15,10 +15,27 @@ export const VALE_N = 64;
 /** Canto noroeste do vale (coluna 0, linha 0) no mundo: ao norte do bloco original (x −32, y −96). */
 export const VALE_ORIGIN = { x: -32, y: -96 } as const;
 
-/** Pontos de nascimento dos 7 goblins (centro da célula, no mundo) e a fogueira em volta da qual vivem. */
-export function valeGoblinHomes(): { homes: Array<[number, number]>; fire: [number, number] } {
+/** Um acampamento: a fogueira e os pontos de nascimento dos 7 goblins que vivem em volta dela (centro da célula, no mundo). */
+export interface ValeCamp { fire: [number, number]; homes: Array<[number, number]> }
+
+/**
+ * Fogueiras dos acampamentos extras (v0.93.169), em células do vale (x = coluna − 32, z = linha − 32, o mesmo sistema de `VALE_FOGUEIRA`): clareiras planas do piso do vale (nível 2, sem trilha
+ * nem rocha), longe uma da outra e do acampamento original — escolhidas olhando o mapa (`valeHeights`); o teste confere que a área em volta continua plana.
+ */
+export const VALE_EXTRA_FIRES: ReadonlyArray<readonly [number, number]> = [[-9, 9], [-9, -12], [12, -7]];
+/** Onde cada um dos 7 goblins nasce em relação à fogueira (as mesmas posições do acampamento original do pacote). */
+export const VALE_CAMP_OFFSETS: ReadonlyArray<readonly [number, number]> = VALE_GOBLINS.map(([x, , z]) => [x - VALE_FOGUEIRA[0], z - VALE_FOGUEIRA[2]] as const);
+
+/** Os 4 acampamentos (o original e os 3 extras), com a fogueira e os 7 pontos de nascimento de cada um, em coordenadas do mundo. */
+export function valeGoblinCamps(): ValeCamp[] {
   const toWorld = (x: number, z: number): [number, number] => [VALE_ORIGIN.x + 32 + x + 0.5, VALE_ORIGIN.y + 32 + z + 0.5];
-  return { homes: VALE_GOBLINS.map(([x, , z]) => toWorld(x, z)), fire: toWorld(VALE_FOGUEIRA[0], VALE_FOGUEIRA[2]) };
+  const fires: Array<readonly [number, number]> = [[VALE_FOGUEIRA[0], VALE_FOGUEIRA[2]], ...VALE_EXTRA_FIRES];
+  return fires.map(([fx, fz]) => ({ fire: toWorld(fx, fz), homes: VALE_CAMP_OFFSETS.map(([ox, oz]) => toWorld(fx + ox, fz + oz)) }));
+}
+/** Todos os pontos de nascimento (acampamento a acampamento) e a fogueira do acampamento original. */
+export function valeGoblinHomes(): { homes: Array<[number, number]>; fire: [number, number] } {
+  const camps = valeGoblinCamps();
+  return { homes: camps.flatMap((c) => c.homes), fire: camps[0].fire };
 }
 /** Pilha máxima (`SANCTUARY_MAX_STACK`). */
 const MAX_STACK = 8;
@@ -107,6 +124,18 @@ export function buildValeGoblin(seed: number): Column[] {
 
   // Os 7 goblins do pacote (`valeGoblinHomes`) nascem em volta da fogueira como atores (`game/valeGoblins.ts`): o chão fica livre para eles andarem.
   for (const [gx, , gz] of VALE_GOBLINS) keep[cell(gx, gz)] = 1;
+
+  // Acampamentos extras (v0.93.169): fogueira, clareira de terra batida, caixa e barris, e o chão livre para os 7 goblins de cada um.
+  for (const [ex, ez] of VALE_EXTRA_FIRES) {
+    const er = ez + 32, ec = ex + 32;
+    for (let dr = -4; dr <= 4; dr++) for (let dc = -4; dc <= 4; dc++) if (dr * dr + dc * dc <= 11 && ok(er + dr, ec + dc)) { top[at(er + dr, ec + dc)] = Block.PATH; keep[at(er + dr, ec + dc)] = 1; }
+    for (let dr = -3; dr <= 3; dr++) for (let dc = -3; dc <= 3; dc++) keep[at(er + dr, ec + dc)] = 1;
+    obj[at(er, ec)] = Block.CAMPFIRE;
+    obj[at(er + 3, ec + 5)] = Block.ISO_CRATE;
+    obj[at(er + 5, ec - 2)] = Block.ISO_BARREL;
+    obj[at(er - 4, ec - 5)] = Block.ISO_BARREL;
+    for (const [ox, oz] of VALE_CAMP_OFFSETS) keep[at(er + oz, ec + ox)] = 1;
+  }
 
   // Árvores (carvalho e as 4 espécies × 3 tamanhos), arbustos e pedras no chão de grama livre.
   const free = (r: number, c: number): boolean => ok(r, c) && !rock[at(r, c)] && top[at(r, c)] === Block.GRASS && !keep[at(r, c)] && !obj[at(r, c)] && !custom.has(at(r, c)) && level[at(r, c)] <= MAX_FLOOR;
