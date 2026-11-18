@@ -23,6 +23,11 @@ export interface GoblinView {
   talk: number;
   /** Giro da cabeça em relação ao corpo (rad). */
   look: number;
+  /** Postura de luta (0 … 1), golpe de adaga (progresso 0 … 1; −1 = sem golpe), defesa (0 … 1) e segundos desde o choque das adagas (−1 = sem faíscas). */
+  fight: number;
+  swing: number;
+  parry: number;
+  spark: number;
 }
 
 /** Quanto cada goblin se afasta do ponto de nascimento (células). */
@@ -46,8 +51,12 @@ function angleDiff(a: number, b: number): number {
 const smooth = (cur: number, target: number, rate: number, dt: number): number => cur + (target - cur) * (1 - Math.exp(-rate * dt));
 
 /** O que o goblin está fazendo. `walk` = indo a um ponto (para depois sentar, cutucar a fogueira ou conversar); `wait` = esperando um visitante que vem conversar. */
-type Mode = 'idle' | 'walk' | 'sit' | 'stoke' | 'chat' | 'wait';
-type Arrive = 'none' | 'sit' | 'stoke' | 'chat';
+type Mode = 'idle' | 'walk' | 'sit' | 'stoke' | 'chat' | 'wait' | 'duel' | 'practice';
+type Arrive = 'none' | 'sit' | 'stoke' | 'chat' | 'duel';
+/** Duração de um golpe de treino (s) e instantes (fração) do impacto e da defesa: ver `SWING_*` no renderer. */
+const SWING_TIME = 1.4;
+const HIT = 0.5;
+const DUEL_DIST = 1.3;
 
 /**
  * Um goblin do Vale (v0.93.161; vida social na v0.93.165): vive em volta da fogueira. Parado olha para ela e espia em volta; de vez em quando caminha (às vezes corre) até um ponto a até
@@ -63,6 +72,10 @@ export class ValeGoblin extends Walker {
   sitBlend = 0;
   stokeBlend = 0;
   talkBlend = 0;
+  fightBlend = 0;
+  swing = -1;
+  parry = 0;
+  spark = -1;
   look = 0;
   mode: Mode = 'idle';
   /** Os outros goblins (preenchido por `ValeGoblins`), para escolher com quem conversar e não lotar a fogueira. */
@@ -81,6 +94,8 @@ export class ValeGoblin extends Walker {
   private speakTimer = 0;
   private lookTarget = 0;
   private lookTimer = 1;
+  /** Relógio do treino (s): o de quem puxa o duelo vale para os dois; o de quem treina sozinho vale só para ele. */
+  private fightClock = 0;
   private readonly rand: () => number;
 
   constructor(readonly id: number, readonly homeX: number, readonly homeY: number, readonly fireX: number, readonly fireY: number, seed: number) {
@@ -90,8 +105,10 @@ export class ValeGoblin extends Walker {
     this.timer = 0.5 + this.rand() * 2.5;
   }
 
-  get busy(): boolean { return this.mode !== 'idle' || this.sitBlend > 0.15 || this.stokeBlend > 0.15; }
-  get chatting(): boolean { return this.mode === 'chat' || this.mode === 'wait'; }
+  get busy(): boolean { return this.mode !== 'idle' || this.sitBlend > 0.15 || this.stokeBlend > 0.15 || this.fightBlend > 0.15; }
+  /** Com quem conversa ou duela agora (ou espera). */
+  get mate(): ValeGoblin | null { return this.partner; }
+  get chatting(): boolean { return this.mode === 'chat' || this.mode === 'wait' || this.mode === 'duel'; }
 
   /** O ponto (x, y) é pisável no mesmo nível e perto do nascimento? */
   private reachable(x: number, y: number, world: World, slack = 0.3): boolean {
@@ -131,22 +148,29 @@ export class ValeGoblin extends Walker {
   }
 
   /** Chama um vizinho livre e perto para conversar: vai até ele; ele espera virado para cá. */
-  private pickChat(world: World): boolean {
+  private pickChat(world: World, kind: 'chat' | 'duel' = 'chat'): boolean {
+    const dist = kind === 'duel' ? DUEL_DIST : CHAT_DIST;
     let best: ValeGoblin | null = null, bd = 7;
     for (const o of this.crew) {
       if (o === this || o.busy || o.partner) continue;
       const d = Math.hypot(o.x - this.x, o.y - this.y);
-      if (d < bd && d > CHAT_DIST) { best = o; bd = d; }
+      if (d < bd && d > dist) { best = o; bd = d; }
     }
     if (!best) return false;
     const dx = this.x - best.x, dy = this.y - best.y, d = Math.hypot(dx, dy);
-    const tx = best.x + (dx / d) * CHAT_DIST, ty = best.y + (dy / d) * CHAT_DIST;
+    const tx = best.x + (dx / d) * dist, ty = best.y + (dy / d) * dist;
     if (!this.reachable(tx, ty, world)) return false;
     this.partner = best; this.leads = true;
     best.partner = this; best.leads = false;
     best.mode = 'wait';
     best.timer = 14;
-    this.goTo(tx, ty, 'chat', d > 3.5 && this.rand() < 0.3);
+    this.goTo(tx, ty, kind, d > 3.5 && this.rand() < 0.3);
+    return true;
+  }
+
+  /** Treina golpes sozinho, de frente para a fogueira. */
+  private startPractice(): boolean {
+    this.mode = 'practice'; this.timer = 3.5 + this.rand() * 3; this.fightClock = 0;
     return true;
   }
 
@@ -155,17 +179,19 @@ export class ValeGoblin extends Walker {
     this.partner = null;
     this.speaking = false;
     this.leads = false;
-    if (this.mode === 'chat' || this.mode === 'wait') { this.mode = 'idle'; this.timer = 1.5 + this.rand() * 3; }
+    if (this.mode === 'chat' || this.mode === 'wait' || this.mode === 'duel') { this.mode = 'idle'; this.timer = 1.5 + this.rand() * 3; }
     if (o && o.partner === this) o.endChat();
   }
 
   private decide(world: World): void {
     const r = this.rand();
     let done = false;
-    if (r < 0.28) done = this.pickWander(world);
-    else if (r < 0.5) done = this.pickSit(world);
-    else if (r < 0.66) done = this.pickStoke(world);
-    else if (r < 0.92) done = this.pickChat(world) || this.pickWander(world);
+    if (r < 0.22) done = this.pickWander(world);
+    else if (r < 0.40) done = this.pickSit(world);
+    else if (r < 0.52) done = this.pickStoke(world);
+    else if (r < 0.72) done = this.pickChat(world) || this.pickWander(world);
+    else if (r < 0.88) done = this.pickChat(world, 'duel') || this.startPractice();
+    else if (r < 0.96) done = this.startPractice();
     if (!done) this.timer = 1.2 + this.rand() * 2.5;
   }
 
@@ -177,7 +203,8 @@ export class ValeGoblin extends Walker {
   update(dt: number, world: World): void {
     let moved = 0;
     let targetSpeed = 0;
-    let wantSit = 0, wantStoke = 0, wantTalk = 0;
+    let wantSit = 0, wantStoke = 0, wantTalk = 0, wantFight = 0;
+    this.swing = -1; this.parry = 0; this.spark = -1;
     const fireYaw = (): void => this.turnToward(this.fireX, this.fireY, 4, dt);
     switch (this.mode) {
       case 'idle':
@@ -213,6 +240,26 @@ export class ValeGoblin extends Walker {
         if (this.timer <= 0) this.endChat();
         break;
       }
+      case 'practice':
+        wantFight = 1; fireYaw();
+        this.fightClock += dt;
+        this.swing = (this.fightClock % SWING_TIME) / SWING_TIME;
+        this.timer -= dt;
+        if (this.timer <= 0) { this.mode = 'idle'; this.timer = 1 + this.rand() * 2; }
+        break;
+      case 'duel': {
+        const o = this.partner;
+        if (!o) { this.endChat(); break; }
+        wantFight = 1; this.turnToward(o.x, o.y, 6, dt);
+        if (this.leads) this.fightClock += dt;
+        const T = this.leads ? this.fightClock : o.fightClock;
+        const k = Math.floor(T / SWING_TIME), u = T / SWING_TIME - k;
+        const attacker = (k % 2 === 0) === this.leads;
+        if (attacker) { this.swing = u; if (u >= HIT) this.spark = (u - HIT) * SWING_TIME; } else this.parry = Math.max(0, 1 - Math.abs(u - 0.55) / 0.2);
+        this.timer -= dt;
+        if (this.timer <= 0) this.endChat();
+        break;
+      }
       case 'walk': {
         const dx = this.tx - this.x, dy = this.ty - this.y;
         const dist = Math.hypot(dx, dy);
@@ -226,7 +273,10 @@ export class ValeGoblin extends Walker {
           else if (a === 'chat' && this.partner) {
             this.mode = 'chat'; this.timer = 6 + this.rand() * 6; this.speaking = true; this.speakTimer = 1.8 + this.rand() * 2;
             this.partner.mode = 'chat'; this.partner.timer = this.timer;
-          } else if (a === 'chat') this.endChat();
+          } else if (a === 'duel' && this.partner) {
+            this.mode = 'duel'; this.timer = 8 + this.rand() * 5; this.fightClock = 0;
+            this.partner.mode = 'duel'; this.partner.timer = this.timer;
+          } else if (a === 'chat' || a === 'duel') this.endChat();
           break;
         }
         this.spec.speed = this.speedNow = smooth(this.speedNow, targetSpeed, 5, dt);
@@ -249,10 +299,11 @@ export class ValeGoblin extends Walker {
     this.sitBlend = smooth(this.sitBlend, wantSit, 3.2, dt);
     this.stokeBlend = smooth(this.stokeBlend, wantStoke, 3.2, dt);
     this.talkBlend = smooth(this.talkBlend, wantTalk, 5, dt);
+    this.fightBlend = smooth(this.fightBlend, wantFight, 5, dt);
     // olhar: em conversa, para o parceiro (o corpo já está virado); no resto, espia em volta de vez em quando
     this.lookTimer -= dt;
     if (this.lookTimer <= 0) { this.lookTimer = 1.5 + this.rand() * 3.5; this.lookTarget = this.mode === 'idle' || this.mode === 'sit' ? (this.rand() - 0.5) * 1.6 : 0; }
-    this.look = smooth(this.look, this.mode === 'walk' || this.mode === 'stoke' || this.chatting ? 0 : this.lookTarget, 3, dt);
+    this.look = smooth(this.look, this.mode === 'walk' || this.mode === 'stoke' || this.chatting || this.mode === 'practice' ? 0 : this.lookTarget, 3, dt);
   }
 
   /** Empurra de leve (separação entre goblins). */
@@ -265,6 +316,7 @@ export class ValeGoblin extends Walker {
     return {
       id: this.id, x: this.x, y: this.y, z: this.visualZ, yaw: this.yaw, walk: this.walkBlend, run: this.runBlend, phase: this.phase,
       sit: this.sitBlend, stoke: this.stokeBlend, talk: this.talkBlend, look: this.look,
+      fight: this.fightBlend, swing: this.swing, parry: this.parry, spark: this.spark,
     };
   }
 }

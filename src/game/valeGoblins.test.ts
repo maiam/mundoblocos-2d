@@ -65,7 +65,7 @@ describe('Vida social dos goblins (v0.93.165)', () => {
     const w = vale();
     const g = new ValeGoblins(w);
     const { homes, fire } = valeGoblinHomes();
-    const seen = { run: 0, sit: 0, stoke: 0, chat: 0, speakA: 0, speakB: 0 };
+    const seen = { run: 0, sit: 0, stoke: 0, chat: 0, speakA: 0, speakB: 0, duel: 0, practice: 0, swing: 0, spark: 0, parry: 0 };
     for (let t = 0; t < 60 * 180; t++) {
       g.update(1 / 60, w);
       for (const [i, gb] of g.goblins.entries()) {
@@ -75,6 +75,17 @@ describe('Vida social dos goblins (v0.93.165)', () => {
         if (gb.mode === 'stoke' && gb.stokeBlend > 0.9) {
           seen.stoke++;
           expect(Math.hypot(gb.x - fire[0], gb.y - fire[1])).toBeLessThan(1.6); // perto da fogueira
+        }
+        if (gb.mode === 'practice') { seen.practice++; expect(gb.spark, 'treino sozinho não faísca').toBe(-1); }
+        if (gb.mode === 'duel') {
+          seen.duel++;
+          const o = gb.mate!;
+          expect(o, `goblin ${i} duela sozinho`).not.toBeNull();
+          expect(o.mate).toBe(gb);
+          if (gb.swing > 0.05 && gb.swing < 0.95 && o.mode === 'duel') expect(o.swing, 'só um golpeia por vez').toBe(-1);
+          if (gb.swing >= 0) seen.swing++;
+          if (gb.spark >= 0) seen.spark++;
+          if (gb.parry > 0.5) seen.parry++;
         }
         if (gb.mode === 'chat') {
           seen.chat++;
@@ -90,6 +101,11 @@ describe('Vida social dos goblins (v0.93.165)', () => {
     expect(seen.chat).toBeGreaterThan(0);
     expect(seen.speakA).toBeGreaterThan(0);
     expect(seen.speakB).toBeGreaterThan(0);
+    expect(seen.practice).toBeGreaterThan(0);
+    expect(seen.duel).toBeGreaterThan(0);
+    expect(seen.swing).toBeGreaterThan(0);
+    expect(seen.spark).toBeGreaterThan(0);
+    expect(seen.parry).toBeGreaterThan(0);
   });
 
   it('não ficam um dentro do outro (fora de quem conversa ou está sentado) e o movimento é determinístico', () => {
@@ -111,6 +127,6 @@ describe('Vida social dos goblins (v0.93.165)', () => {
     const w = vale();
     const g = new ValeGoblins(w);
     const v = g.views(w)[0];
-    for (const k of ['walk', 'run', 'phase', 'sit', 'stoke', 'talk', 'look'] as const) expect(typeof v[k]).toBe('number');
+    for (const k of ['walk', 'run', 'phase', 'sit', 'stoke', 'talk', 'look', 'fight', 'swing', 'parry', 'spark'] as const) expect(typeof v[k]).toBe('number');
   });
 });

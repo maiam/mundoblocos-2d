@@ -10,6 +10,7 @@ import isoWood from '../../assets/iso-wood.webp';
 import isoCauldronModel from '../../assets/iso-cauldron.json';
 import isoGoblinRig from '../../assets/iso-goblin.json';
 import isoGoblinTexture from '../../assets/iso-goblin.webp';
+import isoDagger from '../../assets/iso-dagger.json';
 import iconCauldron from '../../assets/icon-iso-cauldron.webp';
 import iconFence from '../../assets/icon-block-fence.webp';
 import iconFenceBirch from '../../assets/icon-block-fence-betula.webp';
@@ -19,7 +20,7 @@ import iconGateBirch from '../../assets/icon-block-fence-gate-betula.webp';
 import iconGateCherry from '../../assets/icon-block-fence-gate-cerejeira.webp';
 import { Block } from '../../world/blocks';
 import type { IsoFenceModel } from '../three/isoFences';
-import type { IsoGoblinRig } from '../three/isoGoblins';
+import type { IsoDaggerMesh, IsoGoblinRig } from '../three/isoGoblins';
 import isoTrees from '../../assets/iso-trees.webp';
 import goddessIsoWalk from '../../assets/goddess-iso-walk.webp';
 import goddessIsoIdle from '../../assets/goddess-iso-idle.webp';
@@ -62,7 +63,7 @@ const pack: ArtPack = {
   },
   isoSet: { ground: isoGround, cube: isoCube, props: isoProps, stone: isoStone, rio: isoRio, trees: isoTrees, icons },
   isoCauldron: { model: isoCauldronModel, icon: iconCauldron },
-  isoGoblin: { rig: isoGoblinRig as IsoGoblinRig, texture: isoGoblinTexture },
+  isoGoblin: { rig: isoGoblinRig as IsoGoblinRig, texture: isoGoblinTexture, dagger: isoDagger as IsoDaggerMesh },
   isoFence: {
     model: isoFenceModel as IsoFenceModel, wood: isoWood,
     icons: {
