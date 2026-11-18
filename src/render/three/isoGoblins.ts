@@ -15,7 +15,7 @@ export const GOBLIN_HEIGHT = 1.5;
 interface Instance { group: THREE.Group; bones: THREE.Bone[] }
 
 /**
- * Goblins do Vale como **malhas 3D com pele** (v0.93.161): o modelo do dono do produto (Blender, 3000 triângulos, 22 ossos) com a cor base do atlas dele. O jogo (`game/valeGoblins.ts`) manda a
+ * Goblins do Vale como **malhas 3D com pele** (v0.93.161): o modelo do dono do produto (Blender, 3000 triângulos, 26 ossos) com a cor base do atlas dele. O jogo (`game/valeGoblins.ts`) manda a
  * posição, a direção e a fase de caminhada de cada um a cada quadro; aqui só se monta uma `SkinnedMesh` por goblin (esqueleto próprio, geometria e material compartilhados) e se aplica a pose
  * procedural (`goblinPose.ts`). A cena não tem luzes: o relevo vem de um sombreado fixo por normal no espaço da câmera (injetado no `MeshBasicMaterial`), que acompanha a pele e o giro.
  */
