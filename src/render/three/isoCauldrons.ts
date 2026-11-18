@@ -12,8 +12,10 @@ export interface IsoCauldronWorld {
   getLevel(x: number, y: number, level: number): BlockId;
 }
 
-/** Células cobertas por UMA repetição da textura de pedra (a UV é projetada pela posição, então não há costura de UV). */
-const TEX_CELLS = 0.45;
+/** Fator de tamanho do desenho (pedido do dono do produto, 18/11/2026: 2× e depois mais 3×): a malha tem ~1 célula de largura e aqui vira ~6, passando da própria célula (só visual). */
+export const CAULDRON_SCALE = 6;
+/** Unidades da malha cobertas por UMA repetição da textura de pedra: 1 célula do mundo, como nos blocos (a UV é projetada pela posição, então não há costura). */
+const TEX_CELLS = 1 / CAULDRON_SCALE;
 /** Giro (rad) do caldeirão: as alças ficam nos lados da tela na câmera isométrica. */
 const YAW = Math.PI / 4;
 
@@ -84,6 +86,7 @@ export class IsoCauldrons {
     const mesh = new THREE.Mesh(this.geometry, this.materialFor());
     mesh.position.set(x + 0.5, level, y + 0.5);
     mesh.rotation.y = YAW;
+    mesh.scale.setScalar(CAULDRON_SCALE);
     mesh.name = 'Santuário: caldeirão 3D';
     mesh.userData.cell = { x, y };
     this.scene.add(mesh);
