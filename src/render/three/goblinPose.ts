@@ -179,8 +179,8 @@ export class GoblinPoser {
         // braço direito: adaga à frente (golpe: arma para cima e para trás, desce à frente); esquerdo: guarda
         if (leg === 'R') {
           const stance = 0.7 + 0.6 * parry;
-          fwd = lerp(fwd, swinging ? seg(sw, stance, -2.3, 1.55) : stance, fight);
-          elb = fight * (swinging ? seg(sw, 0.95, 1.3, 0.3) : 0.95 + 0.5 * parry);
+          fwd = lerp(fwd, swinging ? seg(sw, stance, -2.5, 1.1) : stance, fight);
+          elb = fight * (swinging ? seg(sw, 0.95, 0.7, 0.2) : 0.95 + 0.5 * parry);
         } else {
           fwd = lerp(fwd, swinging ? seg(sw, 0.9, 0.5, 0.1) : 0.9, fight);
           elb = fight * 1.2;

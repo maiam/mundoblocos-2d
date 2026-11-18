@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import rig from '../../assets/iso-goblin.json';
-import { GoblinPoser, WALK_CYCLE_CELLS } from './goblinPose';
+import dagger from '../../assets/iso-dagger.json';
+import { GoblinPoser, SWING_HIT, SWING_WINDUP, WALK_CYCLE_CELLS } from './goblinPose';
 
 function make(): { poser: GoblinPoser; bones: THREE.Bone[] } {
   const poser = new GoblinPoser(rig.bones, rig.ibm);
@@ -135,5 +136,47 @@ describe('Poses novas do goblin (v0.93.165)', () => {
     const x0 = worldPos(bones, 'ear_tip.L').z;
     poser.pose(bones, { look: 0.8 }, 0);
     expect(Math.abs(worldPos(bones, 'ear_tip.L').z - x0)).toBeGreaterThan(0.05);
+  });
+});
+
+describe('Golpe de adaga e postura de luta (v0.93.166)', () => {
+  it('golpe: arma a mão direita acima do ombro e atrás, depois a leva à frente e abaixo; volta à postura no fim', () => {
+    const { poser, bones } = make();
+    poser.pose(bones, { fight: 1 }, 0);
+    const stance = worldPos(bones, 'hand.R').clone();
+    poser.pose(bones, { fight: 1, swing: SWING_WINDUP }, 0);
+    const armed = worldPos(bones, 'hand.R').clone();
+    expect(armed.y).toBeGreaterThan(worldPos(bones, 'upper_arm.R').y); // acima do ombro
+    expect(armed.z).toBeLessThan(stance.z - 0.2); // e para trás
+    poser.pose(bones, { fight: 1, swing: SWING_HIT + 0.04 }, 0);
+    const hit = worldPos(bones, 'hand.R');
+    expect(hit.z).toBeGreaterThan(armed.z + 0.5); // varreu para a frente
+    expect(hit.y).toBeLessThan(armed.y - 0.2);    // e para baixo
+    poser.pose(bones, { fight: 1, swing: 0.999 }, 0);
+    expect(worldPos(bones, 'hand.R').distanceTo(stance)).toBeLessThan(0.1);
+    for (const b of bones) expect(b.quaternion.length()).toBeCloseTo(1, 4);
+  });
+
+  it('postura de luta: agachado de leve, adaga à frente, braço esquerdo em guarda, pés no chão; defender ergue a adaga', () => {
+    const { poser, bones } = make();
+    const rest = worldPos(bones, 'pelvis').y;
+    poser.pose(bones, { fight: 1 }, 0);
+    expect(worldPos(bones, 'pelvis').y).toBeLessThan(rest - 0.05);
+    expect(worldPos(bones, 'hand.R').z).toBeGreaterThan(0.25);
+    expect(worldPos(bones, 'hand.L').z).toBeGreaterThan(0.25);
+    for (const f of ['foot.L', 'foot.R', 'toe.L', 'toe.R']) expect(worldPos(bones, f).y, f).toBeGreaterThan(-0.08);
+    const low = worldPos(bones, 'hand.R').y;
+    poser.pose(bones, { fight: 1, parry: 1 }, 0);
+    expect(worldPos(bones, 'hand.R').y).toBeGreaterThan(low + 0.05);
+  });
+
+  it('adaga: 4 materiais em cor de vértice, lâmina para +y, origem no cabo', () => {
+    expect(dagger.positions.length / 3).toBe(dagger.colors.length / 3);
+    expect(dagger.positions.length / 3).toBe(dagger.normals.length / 3);
+    expect(Math.max(...dagger.indices)).toBeLessThan(dagger.positions.length / 3);
+    const ys = dagger.positions.filter((_, i) => i % 3 === 1);
+    expect(Math.max(...ys)).toBeGreaterThan(0.4);   // ponta
+    expect(Math.min(...ys)).toBeLessThan(-0.08);    // pomo
+    expect(dagger.length).toBeCloseTo(0.585, 2);
   });
 });

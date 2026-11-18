@@ -35,7 +35,7 @@ function sparkTexture(): THREE.Texture | null {
 interface Instance { group: THREE.Group; bones: THREE.Bone[]; trail: THREE.Mesh; sparks: THREE.Points }
 
 /** Arco do golpe (plano y–z à frente do goblin, centrado no ombro direito): raio interno/externo (unidades do modelo) e abertura em graus (0 = à frente, 90 = para cima). */
-const TRAIL = { r0: 0.55, r1: 1.0, from: -25, to: 150, segs: 30, center: new THREE.Vector3(-0.12, 1.22, 0.02), roll: 0.65 };
+const TRAIL = { r0: 0.72, r1: 1.02, from: -25, to: 150, segs: 30, center: new THREE.Vector3(-0.12, 1.22, 0.02), roll: 0.65 };
 /** Faíscas do choque das adagas: quantas, quanto duram (s) e onde nascem (à frente do goblin que golpeia, no meio do caminho até o parceiro). */
 const SPARK = { n: 12, life: 0.45, origin: new THREE.Vector3(-0.1, 1.0, 0.8) };
 const sparkDirs = Array.from({ length: SPARK.n }, (_, i) => {
@@ -120,11 +120,11 @@ export class IsoGoblins {
     const cols = new Float32Array((TRAIL.segs + 1) * 2 * 4);
     for (let j = 0; j < 2; j++) for (let i = 0; i <= TRAIL.segs; i++) {
       const k = (j * (TRAIL.segs + 1) + i) * 4, a = (1 - i / TRAIL.segs) ** 0.8 * (j === 0 ? 0.12 : 1);
-      cols.set([0.75, 0.95, 1, a], k);
+      cols.set([0.88, 0.98, 1, a * 0.9], k);
     }
     ring.setAttribute('color', new THREE.BufferAttribute(cols, 4));
     this.trailGeometry = ring;
-    this.trailMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+    this.trailMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide });
     this.sparkMaterial = new THREE.PointsMaterial({ color: 0xffe7a0, size: 9, map: sparkTexture(), sizeAttenuation: false, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
   }
 

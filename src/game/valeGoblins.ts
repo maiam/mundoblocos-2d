@@ -106,6 +106,8 @@ export class ValeGoblin extends Walker {
   }
 
   get busy(): boolean { return this.mode !== 'idle' || this.sitBlend > 0.15 || this.stokeBlend > 0.15 || this.fightBlend > 0.15; }
+  /** Com quem conversa ou duela agora (ou espera). */
+  get mate(): ValeGoblin | null { return this.partner; }
   get chatting(): boolean { return this.mode === 'chat' || this.mode === 'wait' || this.mode === 'duel'; }
 
   /** O ponto (x, y) é pisável no mesmo nível e perto do nascimento? */
