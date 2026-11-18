@@ -1,4 +1,4 @@
-import { Block, cropId, FLOWER_BLOCKS } from './blocks';
+import { Block, cropId, FLOWER_BLOCKS, ISO_TREE_IDS, ISO_TREE_SET } from './blocks';
 import { FAZENDA_AGUA, FAZENDA_ALTURAS } from './fazendaData';
 import { hash2 } from './random';
 import { RIO_LAGO } from './rio';
@@ -154,7 +154,11 @@ export function buildFazenda(seed: number): Column[] {
       if (!free(r, c) || near(r, c, 2, (j) => !!keep[j] && !wet[j] && top[j] !== Block.SAND)) continue;
       const x = c + 32, y = r - 32;
       const p = hash2(seed, x, y);
-      if (p < (h[i] >= 4 ? 0.05 : 0.012) && !near(r, c, 2, (j) => obj[j] === Block.ISO_TREE)) obj[i] = Block.ISO_TREE;
+      if (p < (h[i] >= 4 ? 0.05 : 0.012) && !near(r, c, 2, (j) => ISO_TREE_IDS.has(obj[j]))) {
+        // A mata mistura o carvalho de sempre e as 4 espécies × 3 tamanhos (sorteio pela posição).
+        const pick = Math.floor(hash2(seed ^ 0x51, x, y) * (ISO_TREE_SET.length + 1));
+        obj[i] = pick === 0 ? Block.ISO_TREE : ISO_TREE_SET[pick - 1][0];
+      }
     }
   }
   for (let r = 0; r < N; r++) {
@@ -162,7 +166,7 @@ export function buildFazenda(seed: number): Column[] {
       const i = at(r, c);
       if (!free(r, c)) continue;
       const q = hash2(seed ^ 0x2b, c + 32, r - 32);
-      const treeNear = near(r, c, 2, (j) => obj[j] === Block.ISO_TREE);
+      const treeNear = near(r, c, 2, (j) => ISO_TREE_IDS.has(obj[j]));
       const bank = near(r, c, 2, (j) => !!wet[j]);
       if ((treeNear && q < 0.1) || (bank && q < 0.06)) obj[i] = q < 0.02 ? Block.ISO_BUSH_L : q < 0.04 ? Block.ISO_BUSH_M : Block.ISO_BUSH_S;
       else if (h[i] <= 2 && q > 0.9 && hash2(seed ^ 0x3c, c >> 2, r >> 2) < 0.35) obj[i] = FLOWER_BLOCKS[Math.floor(hash2(seed ^ 0x77, c >> 1, r >> 1) * FLOWER_BLOCKS.length)];

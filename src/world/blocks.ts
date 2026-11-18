@@ -221,12 +221,27 @@ export const Block = {
   ISO_HOUSE: 5,
   ISO_HOUSE_PART: 7,
   ISO_STALL_PART: 84,
+  /** Árvores do Santuário (v0.93.156): 4 espécies × 3 tamanhos (pequena, média, grande), pranchas do dono do produto (`scripts/extract-iso-trees.py`). */
+  ISO_BETULA_S: 86, ISO_BETULA_M: 87, ISO_BETULA_L: 88,
+  ISO_CEREJEIRA_S: 89, ISO_CEREJEIRA_M: 90, ISO_CEREJEIRA_L: 91,
+  ISO_MACIEIRA_S: 92, ISO_MACIEIRA_M: 93, ISO_MACIEIRA_L: 94,
+  ISO_CARVALHO_S: 95, ISO_CARVALHO_M: 96, ISO_CARVALHO_L: 97,
   /** Bloco de Pedra isométrico (v0.93.143): a camada de baixo do terreno do Santuário. */
   ISO_STONE_BLOCK: 85,
   /** Pincéis do Rio das Fadas (v0.93.147, `world/rio.ts`): a peça de água certa é escolhida na hora de desenhar, pelos vizinhos. */
   ISO_RIO_CANAL: RIO_CANAL,
   ISO_RIO_LAGO: RIO_LAGO,
 } as const;
+
+/** Árvores do Santuário (bétula, cerejeira, macieira, carvalho × pequena, média, grande): id e nome, na ordem da hotbar. */
+export const ISO_TREE_SET: ReadonlyArray<readonly [BlockId, string]> = [
+  [Block.ISO_BETULA_S, 'Bétula Pequena'], [Block.ISO_BETULA_M, 'Bétula Média'], [Block.ISO_BETULA_L, 'Bétula Grande'],
+  [Block.ISO_CEREJEIRA_S, 'Cerejeira Pequena'], [Block.ISO_CEREJEIRA_M, 'Cerejeira Média'], [Block.ISO_CEREJEIRA_L, 'Cerejeira Grande'],
+  [Block.ISO_MACIEIRA_S, 'Macieira Pequena'], [Block.ISO_MACIEIRA_M, 'Macieira Média'], [Block.ISO_MACIEIRA_L, 'Macieira Grande'],
+  [Block.ISO_CARVALHO_S, 'Carvalho Pequeno'], [Block.ISO_CARVALHO_M, 'Carvalho Médio'], [Block.ISO_CARVALHO_L, 'Carvalho Grande'],
+];
+export const ISO_TREE_IDS: ReadonlySet<number> = new Set<number>([Block.ISO_TREE, ...ISO_TREE_SET.map(([id]) => id)]);
+
 
 /** Número de estágios de crescimento do trigo e primeiro id da sequência. */
 export const WHEAT_STAGES = 16;
@@ -429,6 +444,7 @@ const defs: BlockDef[] = [
   object(Block.ISO_RIO_CANAL, 'Rio: Canal'),
   object(Block.ISO_RIO_LAGO, 'Rio: Lago'),
   object(Block.ISO_TREE, 'Carvalho', { shape: 'rock' }),
+  ...ISO_TREE_SET.map(([id, name]) => object(id, name, { shape: 'rock' })),
   object(Block.ISO_BUSH_L, 'Arbusto Grande', { shape: 'rock' }),
   object(Block.ISO_BUSH_M, 'Arbusto Médio', { shape: 'rock' }),
   object(Block.ISO_BUSH_S, 'Arbusto Pequeno', { shape: 'decoration', solid: false }),
@@ -622,7 +638,7 @@ export function isGrowingTree(id: BlockId): boolean {
 /** Conjunto isométrico do Santuário na ordem da hotbar: 3 pisos (grama, terra, pedra) e 16 objetos (as partes de casa e barraca não são colocáveis). */
 export const ISO_CUBES: readonly BlockId[] = [Block.ISO_G_GRASS, Block.ISO_G_DIRT, Block.ISO_G_STONE, Block.ISO_STONE_BLOCK];
 export const ISO_PROPS: readonly BlockId[] = [
-  Block.ISO_TREE, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, Block.ISO_ROCK_L, Block.ISO_PEBBLES, Block.ISO_TUFT, Block.ISO_DAISIES,
+  Block.ISO_TREE, ...ISO_TREE_SET.map(([id]) => id), Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, Block.ISO_ROCK_L, Block.ISO_PEBBLES, Block.ISO_TUFT, Block.ISO_DAISIES,
   Block.ISO_LAVENDER, Block.ISO_LANTERN, Block.ISO_STALL, Block.ISO_PLANTER, Block.ISO_STONE_PLANTER, Block.ISO_BARREL, Block.ISO_CRATE, Block.ISO_HOUSE,
 ];
 /**
@@ -634,7 +650,7 @@ export const ISO_BIG: Readonly<Record<number, { size: number; part: BlockId }>> 
   [Block.ISO_STALL]: { size: 3, part: Block.ISO_STALL_PART },
 };
 /** Fator de tamanho do desenho de cada objeto do conjunto (os demais: 1). */
-export const ISO_SCALE: Readonly<Record<number, number>> = { [Block.ISO_TREE]: 2, [Block.ISO_HOUSE]: 4, [Block.ISO_STALL]: 3 };
+export const ISO_SCALE: Readonly<Record<number, number>> = { [Block.ISO_TREE]: 2, ...Object.fromEntries(ISO_TREE_SET.map(([id]) => [id, 2])), [Block.ISO_HOUSE]: 4, [Block.ISO_STALL]: 3 };
 /** Cercas e portões (Carvalho, Bétula, Cerejeira): no Santuário isométrico são o modelo 3D (`render/three/isoFences.ts`), não os sprites do Mundo. */
 export const ISO_FENCES: readonly BlockId[] = [
   Block.FENCE, Block.FENCE_BIRCH, Block.FENCE_CHERRY, Block.FENCE_GATE, Block.FENCE_GATE_BIRCH, Block.FENCE_GATE_CHERRY,

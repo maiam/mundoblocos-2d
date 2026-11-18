@@ -112,9 +112,9 @@ describe('Santuário (terreno em camadas, ADR 0036)', () => {
     const e = new Entities(new Player(x + 0.5, y + 0.5), Math.random, S.character);
     expect(e.actors[0].kind).toBe('goddess-iso-idle'); // parada: folha de idle; andando, 'goddess-iso'
     const hb = hotbarFor(S);
-    expect(hb).toHaveLength(75); // 70 peças + 5 sementes/vegetais (v0.93.152)
-    expect(hb.filter((s) => s.kind === 'block')).toHaveLength(70);
-    expect(hb.slice(70).every((s) => s.kind === 'item')).toBe(true);
+    expect(hb).toHaveLength(87); // 82 peças (v0.93.156: + 12 árvores) + 5 sementes/vegetais (v0.93.152)
+    expect(hb.filter((s) => s.kind === 'block')).toHaveLength(82);
+    expect(hb.slice(82).every((s) => s.kind === 'item')).toBe(true);
     expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(58); // (v0.93.110: + 15 Flores Fofas; v0.93.99: + Portões de Bétula e de Cerejeira; v0.93.96: + Cercas de Bétula e de Cerejeira; v0.93.90: + Cerca de Estacas) 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + 3 cercas (Carvalho, Bétula, Cerejeira) + 3 portões + 15 flores fofas + 2 paredes + porta de parede (W5)
   });
 });

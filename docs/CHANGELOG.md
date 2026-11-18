@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.156 — Santuário: 4 espécies de árvores × 3 tamanhos no mapa e na hotbar (18/11/2026)
+- **Pedido do dono do produto:** incluir as árvores das 4 pranchas (bétula, cerejeira, macieira e carvalho, cada uma pequena, média e grande) no mapa e na hotbar do Santuário.
+- **Arte** (`scripts/extract-iso-trees.py`, pranchas em `assets-src/trees/iso-*.png`): fundo e **base de grama/terra/pedras somem** ("só a árvore", como no carvalho anterior): abaixo da linha da base só fica o tronco (cor do tronco, faixa do tronco com leve alargamento para as raízes); cada espécie mantém a proporção da prancha e a grande mede como o carvalho já existente. Saídas: `iso-trees.webp` (atlas), `isoTreesManifest.ts`, 12 ícones `icon-iso-<espécie>-<s|m|l>.webp`.
+- **12 blocos novos** `ISO_BETULA_S/M/L`, `ISO_CEREJEIRA_*`, `ISO_MACIEIRA_*`, `ISO_CARVALHO_*` (ids 86–97, `ISO_TREE_SET`), objetos sólidos desenhados 2× como o carvalho antigo (`ISO_SCALE`), logo depois do Carvalho na hotbar (82 peças + 5 sementes = 87 espaços). `isoSetTextures` lê o atlas novo (`images.trees`, carregado em `blockArt`).
+- **Mapa:** a mata da Fazenda sorteia, por posição, entre o carvalho de sempre e as 12 árvores novas. O bloco original do Santuário não mudou.
+- Conferido no navegador (macieira grande na mata; ícones na hotbar). `tsc` e 685 testes verdes (contagens de peças atualizadas). Sem mudança de save, protocolo ou servidor.
+- Limites: as árvores novas são estáticas (a macieira não dá/colhe maçãs); extração por cor/posição pode deixar pequenas sobras de base — ajustes em `SPECIES` do script.
+
 ## Orvalis v0.93.154 — Santuário: a seleção destaca o próprio objeto (18/11/2026)
 - **Pedido do dono do produto:** quando o cursor está na célula de um objeto que não é bloco (flor, barril, pedra, árvore, arbusto…), em vez do cubo de seleção, destacar **o próprio objeto**.
 - `ChunkSprites.setHighlight(alvo)`: desenha a **silhueta do próprio sprite** — um halo (cópia maior, desenhada antes dos sprites, só aparece em volta) e um véu pulsante por cima — em amarelo (alvo válido) ou vermelho (inválido). `WorldThreeRenderer` chama antes do cursor 3D e passa `objectHighlighted` ao `IsoCursor`, que então não mostra o cubo. Células sem objeto continuam com o cubo.

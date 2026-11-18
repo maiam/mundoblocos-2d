@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, blockDef, cropId, FLOWER_BLOCKS } from './blocks';
+import { Block, blockDef, cropId, FLOWER_BLOCKS, ISO_TREE_IDS } from './blocks';
 import { WORLD_PROFILES } from './profiles';
 import { RIO_CANAL, RIO_LAGO, rioPieceAt } from './rio';
 import { landscapeFor, LANDSCAPE_HUT, LANDSCAPE_SEEDS } from './sanctuaryLandscape';
@@ -38,7 +38,7 @@ describe('Paisagem fixa do Santuário (v0.93.148)', () => {
   it('usa só blocos do Mundo (materiais, madeira, flores) e os já existentes no Santuário para água, árvore e arbustos', () => {
     const allowed = new Set<number>([
       Block.AIR, Block.GRASS, Block.DIRT, Block.SAND, Block.STONE, Block.STONE_COBBLE, Block.OAK_LOG, Block.OAK_PLANKS, Block.OAK_DOOR, Block.FENCE, Block.FENCE_GATE,
-      RIO_CANAL, RIO_LAGO, Block.ISO_TREE, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, ...FLOWER_BLOCKS,
+      RIO_CANAL, RIO_LAGO, Block.ISO_TREE, ...ISO_TREE_IDS, Block.ISO_BUSH_L, Block.ISO_BUSH_M, Block.ISO_BUSH_S, ...FLOWER_BLOCKS,
     ]);
     const w = build();
     const seen = new Set<number>();

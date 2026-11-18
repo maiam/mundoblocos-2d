@@ -15,6 +15,7 @@ import iconGateBirch from '../../assets/icon-block-fence-gate-betula.webp';
 import iconGateCherry from '../../assets/icon-block-fence-gate-cerejeira.webp';
 import { Block } from '../../world/blocks';
 import type { IsoFenceModel } from '../three/isoFences';
+import isoTrees from '../../assets/iso-trees.webp';
 import goddessIsoWalk from '../../assets/goddess-iso-walk.webp';
 import goddessIsoIdle from '../../assets/goddess-iso-idle.webp';
 import goddessIsoSit from '../../assets/goddess-iso-sit.webp';
@@ -54,7 +55,7 @@ const pack: ArtPack = {
     'goddess-iso-pickaxe-attack': goddessIsoPickaxeAttack,
     'goddess-iso-shovel-attack': goddessIsoShovelAttack,
   },
-  isoSet: { ground: isoGround, cube: isoCube, props: isoProps, stone: isoStone, rio: isoRio, icons },
+  isoSet: { ground: isoGround, cube: isoCube, props: isoProps, stone: isoStone, rio: isoRio, trees: isoTrees, icons },
   isoFence: {
     model: isoFenceModel as IsoFenceModel, wood: isoWood,
     icons: {

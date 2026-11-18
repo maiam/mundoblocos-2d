@@ -221,6 +221,8 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 **Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
 `python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`
 
+**Árvores do Santuário** (v0.93.156): `python3 scripts/extract-iso-trees.py` lê `assets-src/trees/iso-{betula,cerejeira,macieira,carvalho}.png` (3 tamanhos cada) e gera `src/assets/iso-trees.webp`, `src/render/isoTreesManifest.ts` e `icon-iso-<espécie>-<s|m|l>.webp`; a prévia fica em `assets-src/trees/_previa-arvores-iso.png`. Os cortes da base por árvore estão em `SPECIES` no script.
+
 **Fazenda do Santuário** (heightmap, ADR 0037): `python3 scripts/make-fazenda-data.py` lê `assets-src/santuario-fazenda/{alturas_celulas,agua_superficie}_64x64.csv` e regrava `src/world/fazendaData.ts` (não edite à mão); o pacote original (script do heightmap, PNGs, LEIA-ME) fica na mesma pasta.
 
 **Rio das Fadas** (Santuário): `python3 scripts/extract-iso-rio.py` (atlas `assets-src/iso-set/rio-atlas.png`, extraído do `.bbmodel`) → `src/assets/iso-rio.webp` + `icon-iso-rio-{canal,lago}.webp`; a ordem das peças em `TILES` deve ser a de `RIO_PIECES` (`world/rio.ts`).
