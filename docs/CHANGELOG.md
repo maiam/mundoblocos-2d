@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.150 — Santuário: toque na tela coloca/quebra blocos no celular (18/11/2026)
+- **Pedido do dono do produto:** liberar no celular, para o Santuário, o toque na tela para colocar ou quebrar blocos. Antes o canvas ignorava `pointerType === 'touch'` no celular (ação só pelo botão); agora `Game.touchActs` (perfil `santuario`) deixa o toque agir como o clique (toque curto = colocar; segurar = quebrar). O botão de ação continua. O Mundo normal no celular não muda.
+- Conferido no navegador (celular emulado com toque): o toque altera o mundo como o clique do mouse. Sem mudança de save, protocolo ou servidor.
+
 ## Orvalis v0.93.148 — Santuário: paisagem fixa da seed 1835638650 (17/11/2026)
 - **Pedido do dono do produto:** construir um mundo na seed 1835638650 só com blocos do Mundo (terra, grama, água, areia, pedra, madeira, árvore, arbustos, flores), usando os níveis para dar forma. Decisões dele: água/árvore/arbustos são os que o Santuário já tem (Rio: Lago e Canal, Carvalho e Arbustos do conjunto isométrico) e a paisagem vale **só nessa seed** (as outras seguem planas e vazias).
 - `world/sanctuaryLandscape.ts` (`SanctuaryLandscape`, função pura da seed; `LANDSCAPE_SEEDS`): planície (altura 2: pedra + grama), duas colinas (altura 3: pedra + terra + grama, afloramento de pedra), lago com praia de areia, rio de uma nascente ao norte até a margem do lago, ponte e cais de tábuas (erguidos 1 cubo sobre a água, estacas de tora), casa de madeira (piso, paredes de toras e tábuas, porta de carvalho entre batentes, telhado na 5ª camada), jardim cercado com flores, florestas de Carvalho, arbustos e manchas de flores. Clareira de 6 células onde a Deusa nasce. Todo degrau entre vizinhos é de 1 cubo.
