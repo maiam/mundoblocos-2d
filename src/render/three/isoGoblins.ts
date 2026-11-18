@@ -91,7 +91,7 @@ export class IsoGoblins {
       if (!inst) { inst = this.make(); this.instances.set(v.id, inst); }
       inst.group.position.set(v.x, v.z, v.y);
       inst.group.rotation.y = v.yaw;
-      this.poser.pose(inst.bones, v.phase, v.walk, time + v.id * 0.7);
+      this.poser.pose(inst.bones, v, time + v.id * 0.7);
     }
     for (const [id, inst] of this.instances) {
       if (seen.has(id)) continue;

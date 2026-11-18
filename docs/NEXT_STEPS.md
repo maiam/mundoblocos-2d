@@ -412,7 +412,7 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - O mesmo caminho (GLB → `extract-*.py` → malha por bloco) serve para a fogueira e o forno.
 
 ## Santuário — Vale Goblin (v0.93.158, ADR 0038)
-- **Goblins:** andam em volta da fogueira (v0.93.161, caminhada procedural), sem combate nem interação. Falta: animação de ataque/correr/idle própria (hoje só andar e respirar), desviar da Deusa, e decidir se ganham combate (o Santuário é solo e sem monstros; `Entities` só cria goblins no Mundo).
+- **Goblins:** andam em volta da fogueira (v0.93.161, caminhada procedural), sem combate nem interação. Vida social e poses feitas na v0.93.165 (correr, sentar, agachar/cutucar a fogueira, conversar). Falta: animação de ataque, reagir à Deusa (olhar, acenar, desviar — hoje atravessam-na), goblins sentando em objetos (hoje só no chão) e dormir à noite, e decidir se ganham combate (o Santuário é solo e sem monstros; `Entities` só cria goblins no Mundo).
 - **Canto VOID:** o canto ao norte da Fazenda (`cx 2..5`, `cy −6..−3`) está vazio (VOID); pode virar mais um espaço ou ganhar um fundo melhor que o escuro com grade.
 - **Relevo:** a compressão 3–14 → 2–6 e rocha → 7/8 perde a altura real das montanhas (até 32); se a pilha crescer, refazer `valeLevel`. Desempenho do mundo maior (192 × 64) a conferir em aparelho real.
 - **Acampamento:** o pacote só traz a fogueira; barracas, caixa e barris foram posicionados por mim (aproximados da prévia).
