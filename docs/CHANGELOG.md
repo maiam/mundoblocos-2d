@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.93.150 — Santuário: toque na tela coloca/quebra blocos no celular (18/11/2026)
+- **Pedido do dono do produto:** liberar no celular, para o Santuário, o toque na tela para colocar ou quebrar blocos. Antes o canvas ignorava `pointerType === 'touch'` no celular (ação só pelo botão); agora `Game.touchActs` (perfil `santuario`) deixa o toque agir como o clique (toque curto = colocar; segurar = quebrar). O botão de ação continua. O Mundo normal no celular não muda.
+- Conferido no navegador (celular emulado com toque): o toque altera o mundo como o clique do mouse. Sem mudança de save, protocolo ou servidor.
 ## Orvalis v0.93.149 — hotbar do Santuário em uma única linha com rolagem horizontal (18/11/2026)
 - **Pedido do dono do produto:** limitar a hotbar do Santuário (70 peças) a **uma linha**, rolando na horizontal. Antes ela quebrava em linhas e, com mais de 40 peças, rolava na vertical (até 1/3 da tela).
 - `style.css`: `.hotbar-row.hand.many` agora é `nowrap` com `overflow-x: auto` (paisagem e retrato); `.huge` só mantém as peças menores. `Hud.update` traz a peça escolhida para a vista (`scrollIntoView`). O Mundo normal (≤ 20 espaços) não muda.

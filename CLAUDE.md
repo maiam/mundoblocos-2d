@@ -75,7 +75,7 @@ Pipeline completo de assets: `docs/OPERATIONS.md`.
   colorido antes de usar.
 - `Entities.update`: ordem **concluir namoro → parear → iniciar**, senão o namoro reinicia em loop.
 - No celular, o canvas ignora `pointerType === 'touch'` (ação só pelo botão); no **tablet** (`ScreenMode.isTablet`) o
-  toque age como clique **e** o botão de ação fica. Testes de toque: celular pelo botão; tablet pelos dois.
+  toque age como clique **e** o botão de ação fica; no **Santuário** (`Game.touchActs`, v0.93.150) o toque na tela também coloca/quebra no celular. Testes de toque: celular pelo botão (Santuário e tablet: pelos dois).
 - **Zoom do navegador**: o Safari ignora `user-scalable=no`; o `ScreenMode` bloqueia toque duplo/pinça/duplo clique
   (fora de botões e campos) e todo botão usa `touch-action: manipulation`. Toda captura de ponteiro trata
   `lostpointercapture` como fim do toque (senão o botão fica "apertado" e ignora os próximos toques).
