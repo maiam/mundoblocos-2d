@@ -196,7 +196,7 @@ export class WorldThreeRenderer implements GameRenderer {
     const cauldronArt = getIsoCauldron();
     // Caldeirão 3D do Santuário: malha do dono do produto com a textura da Pedra Rachada do Mundo (sem sprite)
     const goblinArt = getIsoGoblin();
-    this.isoGoblins = goblinArt ? new IsoGoblins(this.worldLayer, world, goblinArt) : null; // goblins 3D do Vale (Santuário)
+    this.isoGoblins = goblinArt ? new IsoGoblins(this.worldLayer, goblinArt) : null; // goblins 3D com pele do Vale (Santuário)
     this.isoCauldrons = cauldronArt ? new IsoCauldrons(this.worldLayer, world, cauldronArt.model, () => this.textures.groundTop.get(Block.STONE_CRACKED)) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures, world.profile.view === 'isometric'), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
@@ -304,7 +304,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.gates.update(rect, opts.elapsed);
       this.isoFences?.update(rect, opts.dt);
       this.isoCauldrons?.update(rect);
-      this.isoGoblins?.update(rect);
+      this.isoGoblins?.sync(opts.goblins ?? [], opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
       this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
@@ -586,8 +586,8 @@ export class WorldThreeRenderer implements GameRenderer {
       this.stage.syncCamera(cam);
       this.stage.aim(cam, sx, sy);
     }
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? []), ...(this.isoCauldrons?.meshes() ?? []), ...(this.isoGoblins?.meshes() ?? [])])) {
-      const block = this.isoFences?.cellOf(hit.object) ?? this.isoCauldrons?.cellOf(hit.object) ?? this.isoGoblins?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? []), ...(this.isoCauldrons?.meshes() ?? [])])) {
+      const block = this.isoFences?.cellOf(hit.object) ?? this.isoCauldrons?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();

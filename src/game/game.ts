@@ -15,6 +15,7 @@ import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { canSit, Entities, HERO_NAMES, type HeroBody } from './entities';
+import { ValeGoblins } from './valeGoblins';
 import { CharacterWindow } from './characterWindow';
 import { exitDoorAt, type InteriorDoor, type InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
@@ -115,6 +116,8 @@ export class Game {
   private lastZoomPortrait: boolean | null = null;
   readonly player: Player;
   readonly entities: Entities;
+  /** Goblins do Vale Goblin (só no Santuário). */
+  readonly valeGoblins: ValeGoblins | null;
   readonly inventory: Inventory;
   /** Grade deste mundo: 8 espaços + bolsa (com coleta) ou lista fixa do perfil (Santuário). */
   readonly hotbar: Hotbar;
@@ -219,6 +222,7 @@ export class Game {
     }
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
+    this.valeGoblins = profile.id === 'santuario' ? new ValeGoblins(this.world) : null;
     if (options.body) this.entities.body = options.body;
     // Animais e monstros: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
     if (options.net) this.entities.remote = true;
@@ -1143,6 +1147,7 @@ export class Game {
     this.updateQuests(dt);
     this.entities.time = this.time;
     this.entities.update(dt, this.world);
+    this.valeGoblins?.update(dt, this.world);
     this.updateDialogue();
     this.updateNet(realDt);
     this.updateHealth(dt);
@@ -1188,6 +1193,7 @@ export class Game {
     this.renderer.draw(this.camera, {
       player: this.player,
       actors: this.remotes.size ? [...this.entities.actors, ...this.remotes.actors] : this.entities.actors,
+      goblins: this.valeGoblins?.views(this.world),
       showChunkBorders: this.showChunkBorders,
       // Vitrine: sem marcação de célula (ninguém está jogando).
       ...(this.options.showcase ? { hover: null, hoverSheep: null, focus: null, breaking: null } : this.actions.targets()),

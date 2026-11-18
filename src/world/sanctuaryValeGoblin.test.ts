@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Block, blockDef } from './blocks';
 import { WORLD_PROFILES } from './profiles';
-import { buildValeGoblin, valeHeights, valeLevel, VALE_N } from './sanctuaryValeGoblin';
+import { buildValeGoblin, valeGoblinHomes, valeHeights, valeLevel, VALE_N, VALE_ORIGIN } from './sanctuaryValeGoblin';
 import { VALE_ALTURAS, VALE_CAVERNA, VALE_FOGUEIRA, VALE_GOBLINS, VALE_SUPERFICIES } from './valeGoblinData';
 import { World } from './world';
 
 const S = WORLD_PROFILES.santuario;
-const X0 = -32, Y0 = -96; // canto noroeste do Vale Goblin no mundo (coluna 0 / linha 0): ao norte do bloco original
+const X0 = VALE_ORIGIN.x, Y0 = VALE_ORIGIN.y; // canto noroeste do Vale Goblin no mundo (coluna 0 / linha 0): ao norte do bloco original
 
 function vale(): World {
   const w = new World(1, S);
@@ -48,7 +48,7 @@ describe('Vale Goblin do Santuário (v0.93.158, ADR 0038)', () => {
     expect(a).toEqual(b);
     for (const col of a) {
       expect(col.length).toBeLessThanOrEqual(8);
-      for (const id of col) if (id !== Block.AIR) expect(S.blocks.includes(id) || id === Block.TENT_PART || id === Block.CAMPFIRE || id === Block.ISO_GOBLIN, `id ${id}`).toBe(true);
+      for (const id of col) if (id !== Block.AIR) expect(S.blocks.includes(id) || id === Block.TENT_PART || id === Block.CAMPFIRE, `id ${id}`).toBe(true);
     }
   });
 
@@ -64,15 +64,16 @@ describe('Vale Goblin do Santuário (v0.93.158, ADR 0038)', () => {
     expect(w.standHeight(wx(0), wy(0))).toBe(2); // chão do vale
   });
 
-  it('fogueira no lugar do pacote e os 7 goblins (malhas 3D, sólidos) nas posições do pacote, no chão do vale', () => {
+  it('fogueira no lugar do pacote e os 7 pontos de nascimento dos goblins são chão livre e pisável, em volta dela', () => {
     const w = vale();
     const [fx, , fz] = VALE_FOGUEIRA;
     expect(w.getLevel(wx(fx), wy(fz), 2)).toBe(Block.CAMPFIRE);
-    for (const [x, , z] of VALE_GOBLINS) {
-      expect(w.getLevel(wx(x), wy(z), 2), `goblin em ${x},${z}`).toBe(Block.ISO_GOBLIN);
-      expect(w.getLevel(wx(x), wy(z), 1)).not.toBe(Block.AIR); // em cima do chão (planície de 2 cubos)
-      expect(w.standHeight(wx(x), wy(z))).toBeNull(); // sólido
-      expect(blockDef(Block.ISO_GOBLIN).placeable).toBe(false);
+    const { homes, fire } = valeGoblinHomes();
+    expect(homes).toHaveLength(7);
+    expect(fire).toEqual([wx(fx) + 0.5, wy(fz) + 0.5]);
+    for (const [x, y] of homes) {
+      expect(w.standHeight(Math.floor(x), Math.floor(y)), `goblin em ${x},${y}`).toBe(2); // chão do vale, sem objeto
+      expect(Math.hypot(x - fire[0], y - fire[1])).toBeLessThan(7);
     }
   });
 

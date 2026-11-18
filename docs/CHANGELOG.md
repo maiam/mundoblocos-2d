@@ -1,5 +1,20 @@
 # Changelog
 
+## Orvalis v0.93.162 — Santuário: goblin com palmas e juntas melhoradas (18/11/2026)
+- **Pedido do dono do produto:** trocar o goblin pela versão com **palmas das mãos e juntas melhoradas** (`Goblin_Orvalis_Palmas.glb`: mesma malha de 3455 vértices e 3000 triângulos, agora com **26 ossos**: entraram as orelhas, `ear_base`/`ear_tip` L e R; palmas voltadas para as coxas na pose A).
+- `scripts/extract-iso-goblin.py` lê o GLB novo (`assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb`, no lugar do anterior) e regera `iso-goblin.json` (263 KB) e `iso-goblin.webp`; o script passou a achar os nós do esqueleto e da malha pelo nome (os índices mudaram).
+- `goblinPose.ts`: as **orelhas balançam** de leve a cada passo (osso da ponta atrasa em relação à base); o resto da caminhada não mudou (os deltas são no espaço do modelo, então valem com a pose nova das mãos).
+- Testes: 26 ossos (com orelhas) e `ibm` de 26 matrizes; `tsc` e 701 testes verdes; conferido no navegador (goblins andando, braços junto ao corpo). Sem mudança de save/protocolo; `package.json` 0.93.162.
+
+## Orvalis v0.93.161 — Santuário: os goblins do Vale andam (rig + caminhada) (18/11/2026)
+- **Pedido do dono do produto:** com o rig do goblin enviado (`Goblin_Orvalis_Rig.glb`: malha única de 3455 vértices, 22 ossos), incluir o movimento de caminhada.
+- **Rig no jogo:** `scripts/extract-iso-goblin.py` agora lê o GLB com rig → `src/assets/iso-goblin.json` (posições, normais, UV, ossos e pesos por vértice, ossos de repouso e inversas de bind; 262 KB) + `iso-goblin.webp` (cor base 1024). A animação de teste do GLB não é usada: a caminhada é **procedural** (`render/three/goblinPose.ts`, `GoblinPoser`): rotações no espaço do modelo por osso (coxas, joelhos, pés, braços que descem da pose A e balançam ao contrário, cotovelos, torção do quadril e do tronco, subida do corpo a cada passo, respiração parado), com mistura suave parado ↔ andando.
+- **Render:** `render/three/isoGoblins.ts` monta uma `THREE.SkinnedMesh` por goblin (esqueleto próprio; geometria, textura e material compartilhados); o sombreado fixo por normal agora é injetado no `MeshBasicMaterial` (espaço da câmera), então acompanha a pele e o giro. `RenderOptions.goblins` (`GoblinView`: posição, altura dos pés, giro, mistura e fase de caminhada) alimenta o renderer; o 2D/Santuário antigo o ignora.
+- **Lógica:** `game/valeGoblins.ts`: `ValeGoblin extends Walker` (colisão por `World.standHeight`, não sobe degraus) — parado olhando para a fogueira; de vez em quando escolhe um ponto a até 4 células do nascimento e anda até lá (virando-se), parando se bater em algo; fase de caminhada pela distância (1 ciclo = 1,2 célula). Determinístico (sorteio pela semente). Só andam os de chunks carregados. `Game` os cria só no Santuário.
+- **Saem os blocos:** `Block.ISO_GOBLIN` (v0.93.160) foi removido (id 98 livre de novo); os pontos de nascimento vêm de `valeGoblinHomes()` (`sanctuaryValeGoblin.ts`, `VALE_ORIGIN`).
+- Testes novos: pose (pés alternados, braços ao contrário, quaternions unitários, pés no chão, passo ~0,8 da altura), malha e pesos do rig, goblins (nascem em volta da fogueira, andam até 4 células, determinismo, só em chunk carregado). `tsc` e 701 testes verdes; conferido no navegador (goblins andando, braços junto ao corpo). Sem mudança de save/protocolo; `package.json` 0.93.161.
+- Limites: sem combate nem interação; não desviam da Deusa (passam por ela); só andar e ficar parado (sem animação de ataque, correr ou virar); a mesma pose para todos (sem variação de passo).
+
 ## Orvalis v0.93.160 — Santuário: os goblins 3D no Vale Goblin (18/11/2026)
 - **Pedido do dono do produto:** adicionar o goblin no Vale usando o modelo 3D criado (Blender, pose A, 50 peças, 3000 triângulos; GLB leve + GLB PBR 2K).
 - `scripts/extract-iso-goblin.py`: `assets-src/iso-set/goblin/Goblin_Orvalis_Pose_A.glb` (+ `Goblin_BaseColor_2K.png` extraída do GLB PBR) → `src/assets/iso-goblin.json` (3455 vértices fundidos por UV, altura 1, 194 KB) e `iso-goblin.webp` (cor base 1024 × 1024, 128 KB). Normal e rugosidade do pacote não são usadas (a cena não tem luzes).
