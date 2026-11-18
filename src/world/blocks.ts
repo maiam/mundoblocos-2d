@@ -231,6 +231,8 @@ export const Block = {
   /** Pincéis do Rio das Fadas (v0.93.147, `world/rio.ts`): a peça de água certa é escolhida na hora de desenhar, pelos vizinhos. */
   ISO_RIO_CANAL: RIO_CANAL,
   ISO_RIO_LAGO: RIO_LAGO,
+  /** Goblin do Vale (v0.93.160): objeto sólido desenhado como malha 3D (`render/three/isoGoblins.ts`); só nasce no mapa (Vale Goblin), não é colocável. */
+  ISO_GOBLIN: 98,
 } as const;
 
 /** Árvores do Santuário (bétula, cerejeira, macieira, carvalho × pequena, média, grande): id e nome, na ordem da hotbar. */
@@ -443,6 +445,7 @@ const defs: BlockDef[] = [
   object(Block.ISO_STONE_BLOCK, 'Bloco de Pedra', { stone: true }),
   object(Block.ISO_RIO_CANAL, 'Rio: Canal'),
   object(Block.ISO_RIO_LAGO, 'Rio: Lago'),
+  object(Block.ISO_GOBLIN, 'Goblin', { shape: 'rock', placeable: false }),
   object(Block.ISO_TREE, 'Carvalho', { shape: 'rock' }),
   ...ISO_TREE_SET.map(([id, name]) => object(id, name, { shape: 'rock' })),
   object(Block.ISO_BUSH_L, 'Arbusto Grande', { shape: 'rock' }),

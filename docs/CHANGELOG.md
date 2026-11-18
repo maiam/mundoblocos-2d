@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.160 — Santuário: os goblins 3D no Vale Goblin (18/11/2026)
+- **Pedido do dono do produto:** adicionar o goblin no Vale usando o modelo 3D criado (Blender, pose A, 50 peças, 3000 triângulos; GLB leve + GLB PBR 2K).
+- `scripts/extract-iso-goblin.py`: `assets-src/iso-set/goblin/Goblin_Orvalis_Pose_A.glb` (+ `Goblin_BaseColor_2K.png` extraída do GLB PBR) → `src/assets/iso-goblin.json` (3455 vértices fundidos por UV, altura 1, 194 KB) e `iso-goblin.webp` (cor base 1024 × 1024, 128 KB). Normal e rugosidade do pacote não são usadas (a cena não tem luzes).
+- **Bloco novo** `Block.ISO_GOBLIN` (id 98, objeto sólido, não colocável: só nasce no mapa) nas 7 posições do pacote (`VALE_GOBLINS`) em volta da fogueira. `render/three/isoGoblins.ts` (`IsoGoblins`, como as cercas e o caldeirão 3D): uma malha por goblin, **olhando para a fogueira mais próxima** (8 direções; o sombreado fixo por normal é calculado por direção), textura = o atlas do modelo; altura `GOBLIN_HEIGHT` = 1,5 célula (~0,7 da Deusa, medido na tela).
+- Estático: sem animação, combate nem movimento (o Santuário é solo, sem monstros). Seleção/quebra pela célula (qualquer bloco quebra em 1 s).
+- Testes novos (`isoGoblins.test.ts`; goblins no vale em `sanctuaryValeGoblin.test.ts`); `tsc` e 695 testes verdes; conferido no navegador (goblins em volta da fogueira, olhando para ela). Sem mudança de save/protocolo; `package.json` 0.93.160.
+
 ## Orvalis v0.93.159 — Santuário: o Vale Goblin passa para o norte do original (18/11/2026)
 - **Pedido do dono do produto:** mudar os chunks de lugar para a entrada da caverna coincidir. O vale saiu do leste da Fazenda e ficou ao **norte do bloco original** (`cx −2..1`, `cy −6..−3`): a plataforma da caverna (borda sul do vale, x 8..11) encosta na borda norte do original (y = −32), com um degrau de 1 cubo (piso 3 → planície 2). Os x do pacote são os do mundo.
 - Limites 8 × 8 chunks (`cx −2..5`, `cy −6..1`, 64 chunks); o canto sem bloco (ao norte da Fazenda, `cx 2..5`, `cy −6..−3`) tem chão **VOID** (`SanctuaryLandscape.cellAt` devolve VOID fora dos blocos; `generateChunk` põe o chão por célula). Faixa x 6..13 junto à borda norte do original sem árvores, arbustos nem flores.
