@@ -87,8 +87,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     // Santuário refeito do zero (ADR 0036): solo, vista isométrica, cubos cheios (1 nível = 1 célula). Terreno plano em **camadas** (v0.93.143): chão de grama,
     // uma camada de Bloco de Pedra (nível 1) e uma de Grama (nível 2); a Deusa e tudo o mais ficam em cima (nível 3).
     terrain: { kind: 'flat', ground: Block.ISO_G_GRASS, layers: [Block.ISO_STONE_BLOCK, Block.ISO_G_GRASS], landscape: true },
-    // 16 chunks: 4 × 4, centrados na origem (cx −2..1, cy −2..1).
-    bounds: { cx0: -2, cy0: -2, cx1: 1, cy1: 1 },
+    // 32 chunks: 8 × 4 (cx −2..5, cy −2..1): o Santuário original (cx −2..1) e, a leste, a Fazenda do heightmap (cx 2..5).
+    bounds: { cx0: -2, cy0: -2, cx1: 5, cy1: 1 },
     character: 'goddess-iso',
     // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
     blocks: [...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY, ...RIO_BRUSHES],

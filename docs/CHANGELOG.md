@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.152 — Santuário: paisagem única e Fazenda do heightmap (18/11/2026)
+- **Decisão do dono do produto (ADR 0037):** a paisagem da seed 1835638650 passa a ser **única** (toda seed do Santuário abre igual; a seed só distingue os salvamentos locais) e o mundo ganha **mais 16 chunks a leste** (8 × 4 = 32 chunks, 128 × 64 células) feitos de um **heightmap**.
+- **Fazenda** (`world/sanctuaryFazenda.ts` + `world/fazendaData.ts`, gerado por `scripts/make-fazenda-data.py` de `assets-src/santuario-fazenda`): terreno em até 7 cubos (planície no nível 2, patamares 4/6/7), rio escavado com o pincel Lago (376 células, degraus de água na queda), margens de areia, ponte, pátio, duas casas, cinco áreas cercadas com Terra Arada e culturas maduras (trigo, tomate, cenoura, batata; talhão só preparado), árvores, arbustos e flores.
+- **Pilha de 8 níveis** no Santuário (`SANCTUARY_MAX_STACK` 5 → 8); salvamentos antigos continuam abrindo (camadas novas vazias). A Deusa continua nascendo na origem.
+- Testes: seed única, 376 células de água, vizinhos secos ≤ 1 nível, plantações, determinismo, salvamento antigo de 5 camadas; testes de mecânica passaram a usar o Santuário liso (`landscape: false`). Conferido no navegador (patamares, rio, queda, ponte, campos). `tsc` e 683 testes verdes. Sem mudança de save (21), protocolo ou servidor.
+- Limites: sem cascata/curvas do canal (rio só com o pincel Lago); desempenho do mundo maior a conferir em aparelho real.
+
 ## Orvalis v0.93.151 — Santuário: sementes e vegetais do Mundo na hotbar (18/11/2026)
 - **Pedido do dono do produto:** incluir na hotbar do Santuário as sementes e vegetais do mundo principal: trigo, cenoura, batata e tomate. Nova flag `WorldProfile.crops` (Santuário `true`): a grade fixa ganha, depois das 70 peças, **semente de trigo, trigo, cenoura, batata e tomate** (75 espaços), em **quantidade infinita** (sem contador; sem coleta não gasta).
 - **Plantio no Santuário:** como o terreno é em camadas, planta-se **sobre um cubo de Terra Arada** no topo da pilha (`World.canPlant/plant` com `surfaceObjects`); a planta fica no nível da superfície e **cresce** com o tempo (`tickGrowth` lê `surfaceObject`/`surfaceLevel`). Grama/pedra não aceitam semente.

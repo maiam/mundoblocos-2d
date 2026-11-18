@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Block, blockDef, FLOWER_BLOCKS } from './blocks';
+import { Block, blockDef, cropId, FLOWER_BLOCKS } from './blocks';
 import { WORLD_PROFILES } from './profiles';
 import { RIO_CANAL, RIO_LAGO, rioPieceAt } from './rio';
 import { landscapeFor, LANDSCAPE_HUT, LANDSCAPE_SEEDS } from './sanctuaryLandscape';
@@ -20,13 +20,11 @@ const cells = function* (): Generator<[number, number]> {
 const inHut = (x: number, y: number): boolean => x >= LANDSCAPE_HUT.x && x < LANDSCAPE_HUT.x + LANDSCAPE_HUT.w && y >= LANDSCAPE_HUT.y && y < LANDSCAPE_HUT.y + LANDSCAPE_HUT.h;
 
 describe('Paisagem fixa do Santuário (v0.93.148)', () => {
-  it('só as seeds da lista têm paisagem; as outras seguem planas e vazias', () => {
+  it('a paisagem é única (v0.93.152): qualquer seed abre igual à 1835638650 (a seed só distingue os salvamentos)', () => {
     expect(LANDSCAPE_SEEDS.has(SEED)).toBe(true);
-    expect(landscapeFor(7, Block.ISO_G_GRASS)).toBeNull();
-    const flat = build(7);
-    expect(flat.getLevel(5, 5, 0)).toBe(Block.ISO_STONE_BLOCK);
-    expect(flat.getLevel(5, 5, 1)).toBe(Block.ISO_G_GRASS);
-    expect(flat.getLevel(5, 5, 2)).toBe(Block.AIR);
+    expect(landscapeFor(7, Block.ISO_G_GRASS)).not.toBeNull();
+    const a = build(SEED), b = build(7);
+    for (const [x, y] of cells()) for (let l = 0; l < 5; l++) expect(b.getLevel(x, y, l)).toBe(a.getLevel(x, y, l));
   });
 
   it('é determinística (duas construções iguais) e a Deusa nasce numa clareira pisável', () => {
@@ -114,3 +112,62 @@ describe('Paisagem fixa do Santuário (v0.93.148)', () => {
     expect(w.getLevel(dx, dy - 1, 4)).toBe(Block.OAK_PLANKS); // telhado
   });
 });
+
+describe('Fazenda do Santuário (heightmap, v0.93.152)', () => {
+  const FX0 = 32, FY0 = -32; // a Fazenda ocupa as colunas 32..95 e as linhas -32..31 (mais 4 × 4 chunks a leste)
+  const farm = (): World => {
+    const w = new World(11, S);
+    for (let cx = 2; cx <= 5; cx++) for (let cy = -2; cy <= 1; cy++) w.loadChunk(cx, cy);
+    return w;
+  };
+
+  it('tem 376 células de água (pincel Lago) e a planície do pátio e das plantações no nível 2', () => {
+    const w = farm();
+    let water = 0;
+    for (let r = 0; r < 64; r++) for (let c = 0; c < 64; c++) {
+      for (let l = 0; l < 8; l++) if (w.getLevel(FX0 + c, FY0 + r, l) === RIO_LAGO) { water++; break; } // (sob as tábuas da ponte também conta)
+    }
+    expect(water).toBe(376);
+    for (const [c, r] of [[0, 40], [10, 30], [25, 50], [63, 60]] as const) expect(w.stackHeight(FX0 + c, FY0 + r)).toBe(2);
+  });
+
+  it('os patamares do norte sobem até 7 e o jogador consegue subir: vizinhos secos diferem no máximo 1 nível', () => {
+    const w = farm();
+    let max = 0;
+    for (let y = FY0; y < FY0 + 64; y++) for (let x = FX0; x < FX0 + 64; x++) {
+      const h = w.stackHeight(x, y);
+      max = Math.max(max, h);
+      for (const [dx, dy] of [[1, 0], [0, 1]] as const) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= FX0 + 64 || ny >= FY0 + 64) continue;
+        const a = w.topBlock(x, y), b = w.topBlock(nx, ny);
+        if (!a || !b || a.id === RIO_LAGO || b.id === RIO_LAGO || a.id === Block.OAK_PLANKS || b.id === Block.OAK_PLANKS) continue; // água e ponte à parte
+        if (blockDef(a.id).solid || blockDef(b.id).solid) continue;
+        expect(Math.abs(w.stackHeight(nx, ny) - h)).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(max).toBe(7);
+  });
+
+  it('plantações cercadas: Terra Arada com a cultura madura; o talhão preparado só com Terra Arada', () => {
+    const w = farm();
+    const A = { milho: [5, 35], horta: [5, 45], talhao: [5, 55] } as const;
+    const at = (c: number, r: number) => [FX0 + c, FY0 + r] as const;
+    const [mx, my] = at(...A.milho);
+    expect(w.getLevel(mx, my, 1)).toBe(Block.TILLED);
+    expect(w.surfaceObject(mx, my)).toBe(cropId('wheat', 15));
+    const [tx, ty] = at(...A.talhao);
+    expect(w.getLevel(tx, ty, 1)).toBe(Block.TILLED);
+    expect(w.surfaceObject(tx, ty)).toBe(Block.AIR);
+    const [hx, hy] = at(...A.horta);
+    expect(w.getLevel(hx, hy, 1)).toBe(Block.TILLED);
+  });
+
+  it('é determinística e chunks fora dos limites continuam sem terreno', () => {
+    const a = farm(), b = farm();
+    for (let y = FY0; y < FY0 + 64; y += 3) for (let x = FX0; x < FX0 + 64; x += 3) for (let l = 0; l < 8; l++) expect(a.getLevel(x, y, l)).toBe(b.getLevel(x, y, l));
+    expect(a.inBounds(96, 0)).toBe(false);
+    expect(a.inBounds(95, 31)).toBe(true);
+  });
+});
+

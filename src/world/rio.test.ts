@@ -4,7 +4,7 @@ import { RIO_CANAL, RIO_LAGO, RIO_PIECES, RIO_VIRTUAL_FIRST, isRioBrush, rioEdge
 import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
-const S = WORLD_PROFILES.santuario;
+const S = { ...WORLD_PROFILES.santuario, terrain: { ...WORLD_PROFILES.santuario.terrain, landscape: false } }; // terreno liso em camadas (sem a paisagem fixa): base dos testes de mecânica
 /** Mapa de teste: células de água em (x, y) → pincel. */
 const grid = (cells: Record<string, number>) => (x: number, y: number) => (cells[x + ',' + y] ?? Block.AIR) as number;
 

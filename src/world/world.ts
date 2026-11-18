@@ -956,7 +956,8 @@ export class World {
       const cx = Math.floor(((b.cx0 + b.cx1 + 1) * CHUNK_SIZE) / 2);
       const cy = Math.floor(((b.cy0 + b.cy1 + 1) * CHUNK_SIZE) / 2);
       // Santuário (terreno em camadas): o centro da área; a Deusa nasce em cima da pilha.
-      if (this.profile.surfaceObjects) return [cx, cy];
+      // (v0.93.152: o Santuário cresceu para leste, mas a Deusa continua nascendo na clareira do bloco original, na origem.)
+      if (this.profile.surfaceObjects) return [0, 0];
       return this.nearestWalkable(cx, cy, 64);
     }
     const welcoming = new Set(['meadow', 'sakura', 'enchanted']);
