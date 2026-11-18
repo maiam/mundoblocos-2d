@@ -83,7 +83,7 @@ export async function loadBlockArt(): Promise<void> {
   isoSet = null;
   isoFence = null;
   isoCauldron = a.isoCauldron ?? null;
-  isoGoblin = a.isoGoblin ? { rig: a.isoGoblin.rig, image: await load(a.isoGoblin.texture), dagger: a.isoGoblin.dagger } : null;
+  isoGoblin = a.isoGoblin ? { rig: a.isoGoblin.rig, image: await load(a.isoGoblin.texture), hair: await load(a.isoGoblin.hairTexture), dagger: a.isoGoblin.dagger } : null;
   if (a.isoFence) isoFence = { art: { model: a.isoFence.model, wood: await load(a.isoFence.wood) }, icons: a.isoFence.icons };
   if (a.isoSet) {
     const [ground, cube, props, stone, rio, trees] = await Promise.all([load(a.isoSet.ground), load(a.isoSet.cube), load(a.isoSet.props), load(a.isoSet.stone), load(a.isoSet.rio), maybe(a.isoSet.trees)]);
