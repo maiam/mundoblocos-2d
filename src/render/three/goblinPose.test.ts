@@ -14,10 +14,17 @@ function make(): { poser: GoblinPoser; bones: THREE.Bone[] } {
 const worldPos = (bones: THREE.Bone[], name: string): THREE.Vector3 => { bones[0].updateMatrixWorld(true); return new THREE.Vector3().setFromMatrixPosition(bones.find((b) => b.name === name)!.matrixWorld); };
 
 describe('Goblin com pele: malha e esqueleto do GLB', () => {
-  it('3455 vértices, 3000 triângulos, 26 ossos (com orelhas) e pesos de pele por vértice', () => {
+  it('10756 vértices, 17268 triângulos em 4 grupos (atlas, cabelo, pele), 26 ossos (com orelhas) e pesos de pele por vértice', () => {
     const n = rig.positions.length / 3;
-    expect(n).toBe(3455);
-    expect(rig.indices.length / 3).toBe(3000);
+    expect(n).toBe(10756);
+    expect(rig.indices.length / 3).toBe(17268);
+    // os grupos cobrem os índices e os vértices sem buraco nem sobreposição, e só a pele usa cor de vértice
+    expect(rig.groups.map((g) => g.material).sort()).toEqual(['base', 'base', 'hair', 'skin']);
+    expect(rig.groups.reduce((a, g) => a + g.count, 0)).toBe(rig.indices.length);
+    expect(rig.groups.reduce((a, g) => a + g.vertexCount, 0)).toBe(n);
+    rig.groups.forEach((g, i) => { if (i > 0) { expect(g.start).toBe(rig.groups[i - 1].start + rig.groups[i - 1].count); expect(g.firstVertex).toBe(rig.groups[i - 1].firstVertex + rig.groups[i - 1].vertexCount); } });
+    const skin = rig.groups.find((g) => g.material === 'skin')!;
+    expect(rig.skinColors).toHaveLength(skin.vertexCount * 3);
     expect(rig.bones).toHaveLength(26);
     expect(rig.bones.map((b) => b.name)).toEqual(expect.arrayContaining(['ear_base.L', 'ear_tip.R', 'hand.L', 'toe.R']));
     expect(rig.ibm).toHaveLength(26 * 16);

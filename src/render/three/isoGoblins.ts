@@ -5,11 +5,14 @@ import { GoblinPoser, SWING_END, SWING_WINDUP, type RigBone } from './goblinPose
 /** A malha do goblin com pele (`scripts/extract-iso-goblin.py`): posições (unidades do modelo, altura ~2), normais em centésimos, UV, ossos por vértice, índices, ossos de repouso e inversas de bind. */
 export interface IsoGoblinRig {
   height: number; positions: number[]; normals: number[]; uvs: number[]; skinIndex: number[]; skinWeight: number[]; indices: number[]; bones: RigBone[]; ibm: number[];
+  /** Faixas da malha por material: 'base' (atlas: cabeça e traje), 'hair' (pintura do cabelo) e 'skin' (cor de vértice, `skinColors`). */
+  groups: IsoGoblinGroup[]; skinColors: number[];
 }
+export interface IsoGoblinGroup { material: 'base' | 'hair' | 'skin'; start: number; count: number; firstVertex: number; vertexCount: number }
 /** A adaga (`scripts/extract-iso-dagger.py`): malha em cor de vértice, origem no meio do cabo, lâmina para +y. */
 export interface IsoDaggerMesh { length: number; positions: number[]; normals: number[]; colors: number[]; indices: number[] }
 /** Arte do goblin: o rig, a imagem da cor base do atlas e a adaga da mão direita. */
-export interface IsoGoblinArt { rig: IsoGoblinRig; image: HTMLImageElement; dagger?: IsoDaggerMesh }
+export interface IsoGoblinArt { rig: IsoGoblinRig; image: HTMLImageElement; hair: HTMLImageElement; dagger?: IsoDaggerMesh }
 
 /** Altura do goblin em células: medida na tela, com 1,15 ele ficava com 0,53 da altura da Deusa (halo aos pés); 1,5 dá ~0,7 (goblin menor que ela). */
 export const GOBLIN_HEIGHT = 1.5;
@@ -52,6 +55,11 @@ export class IsoGoblins {
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.MeshBasicMaterial;
   private readonly texture: THREE.Texture;
+  private readonly hairTexture: THREE.Texture;
+  private readonly hairMaterial: THREE.MeshBasicMaterial;
+  private readonly skinMaterial: THREE.MeshBasicMaterial;
+  /** Um material por grupo da malha (atlas, cabelo, pele). */
+  private readonly materials: THREE.MeshBasicMaterial[];
   private readonly poser: GoblinPoser;
   private readonly inverses: THREE.Matrix4[];
   private readonly instances = new Map<number, Instance>();
@@ -74,25 +82,41 @@ export class IsoGoblins {
     g.setAttribute('uv', new THREE.Float32BufferAttribute(r.uvs, 2));
     g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(r.skinIndex, 4));
     g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(Float32Array.from(r.skinWeight, (v) => v / 255), 4));
+    // cor de vértice: só o grupo 'skin' (pele) usa; o resto fica branco e é pintado pelas texturas
+    const colors = new Float32Array(r.positions.length).fill(1);
+    for (const gr of r.groups) if (gr.material === 'skin') for (let i = 0; i < gr.vertexCount * 3; i++) colors[gr.firstVertex * 3 + i] = r.skinColors[i] / 255;
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     g.setIndex(r.indices);
+    r.groups.forEach((gr, i) => g.addGroup(gr.start, gr.count, i));
     this.geometry = g;
     this.inverses = r.bones.map((_, i) => new THREE.Matrix4().fromArray(r.ibm, i * 16));
-    this.texture = new THREE.Texture(art.image);
-    this.texture.colorSpace = THREE.SRGBColorSpace;
-    this.texture.flipY = false; // UV do glTF: origem no canto superior esquerdo
-    this.texture.anisotropy = 4;
-    this.texture.needsUpdate = true;
-    this.material = new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.DoubleSide });
-    this.material.onBeforeCompile = (shader) => {
-      // sombreado fixo (luz de cima e da esquerda da câmera) pela normal da pele, no espaço da câmera
-      shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying float vGoblinShade;')
-        .replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\n  vGoblinShade = 0.55 + 0.45 * max(0.0, dot(normalize(transformedNormal), normalize(vec3(-0.3, 0.7, 0.65))));');
-      shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying float vGoblinShade;')
-        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n  gl_FragColor.rgb *= vGoblinShade;');
+    const tex = (img: HTMLImageElement): THREE.Texture => {
+      const t = new THREE.Texture(img);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.flipY = false; // UV do glTF: origem no canto superior esquerdo
+      t.anisotropy = 4;
+      t.needsUpdate = true;
+      return t;
     };
-    this.material.customProgramCacheKey = () => 'goblin-shade';
+    this.texture = tex(art.image);
+    this.hairTexture = tex(art.hair);
+    const shade = (m: THREE.MeshBasicMaterial): THREE.MeshBasicMaterial => {
+      m.onBeforeCompile = (shader) => {
+        // sombreado fixo (luz de cima e da esquerda da câmera) pela normal da pele, no espaço da câmera
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying float vGoblinShade;')
+          .replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\n  vGoblinShade = 0.55 + 0.45 * max(0.0, dot(normalize(transformedNormal), normalize(vec3(-0.3, 0.7, 0.65))));');
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nvarying float vGoblinShade;')
+          .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n  gl_FragColor.rgb *= vGoblinShade;');
+      };
+      m.customProgramCacheKey = () => 'goblin-shade';
+      return m;
+    };
+    this.material = shade(new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.DoubleSide }));
+    this.hairMaterial = shade(new THREE.MeshBasicMaterial({ map: this.hairTexture, side: THREE.DoubleSide }));
+    this.skinMaterial = shade(new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+    this.materials = r.groups.map((gr) => (gr.material === 'base' ? this.material : gr.material === 'hair' ? this.hairMaterial : this.skinMaterial));
     // adaga na mão direita (cor de vértice + o mesmo sombreado fixo por normal)
     if (art.dagger) {
       const d = art.dagger;
@@ -138,7 +162,7 @@ export class IsoGoblins {
       o.scale.fromArray(b.s);
       return o;
     });
-    const mesh = new THREE.SkinnedMesh(this.geometry, this.material);
+    const mesh = new THREE.SkinnedMesh(this.geometry, this.materials);
     r.bones.forEach((b, i) => (b.parent >= 0 ? bones[b.parent] : mesh).add(bones[i]));
     mesh.frustumCulled = false;
     mesh.name = 'Santuário: goblin 3D';
@@ -253,7 +277,10 @@ export class IsoGoblins {
     this.instances.clear();
     this.geometry.dispose();
     this.material.dispose();
+    this.hairMaterial.dispose();
+    this.skinMaterial.dispose();
     this.texture.dispose();
+    this.hairTexture.dispose();
     this.daggerGeometry?.dispose();
     this.daggerMaterial?.dispose();
     this.trailGeometry.dispose();

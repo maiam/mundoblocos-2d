@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.167 — Santuário: goblin com o corpo 3D refinado (18/11/2026)
+- **Pedido do dono do produto:** atualizar o NPC goblin com o 3D refinado (`Goblin_Orvalis_Corpo_Refinado.glb`: corpo esculpido, cabeça com cabelo próprio e traje; 10 756 vértices e 17 268 triângulos, contra 3 455 e 3 000 do modelo anterior).
+- **Mesmo esqueleto** (26 ossos, posições e hierarquia idênticas — conferido osso a osso): a caminhada, as poses sociais, a adaga e o duelo continuam valendo sem mudança de código de pose.
+- **Malha em 4 grupos/materiais** (`scripts/extract-iso-goblin.py` agora junta as 4 primitivas do GLB): crânio e traje com o atlas `base_rgb` (1024), **cabelo** com a pintura própria (512, `iso-goblin-hair.webp`) e **pele em cor de vértice**. `IsoGoblins` cria a `SkinnedMesh` com um material por grupo (mesmo sombreado fixo por normal); `IsoGoblinArt` ganhou `hair`, `art/types.ts`/`santuario.ts`/`blockArt.ts` carregam a textura nova. `iso-goblin.json` passou de 263 KB para ~950 KB.
+- Teste da malha atualizado (grupos cobrem índices e vértices sem buraco; só a pele tem cor de vértice). `tsc`, 713 testes e build verdes; conferido no navegador (parado, golpe e duelo). Sem mudança de save/protocolo; `package.json` 0.93.167. O `Corpo_Goblin_Orvalis_T_Pose.glb` (base nua em T) e os `.blend` não entram no jogo.
+
 ## Orvalis v0.93.166 — Santuário: adaga nas mãos dos goblins e ataques com efeito (18/11/2026)
 - **Pedido do dono do produto:** colocar a adaga do goblin (`Adaga_Goblin_Orvalis.glb`) na mão direita dos goblins e incluir movimentos de ataque com algum efeito.
 - **Adaga:** `scripts/extract-iso-dagger.py` → `src/assets/iso-dagger.json` (1560 vértices, 4 materiais em cor de vértice, origem no cabo, lâmina em +y). `IsoGoblins` a prende ao osso `hand.R` (a lâmina segue o antebraço, fio para a frente) e a adaga acompanha a mão em qualquer pose; sombreado fixo próprio (o `MeshBasicMaterial` só calcula normal com pele/envmap, então a normal vem do atributo). Arte pelo mesmo caminho do goblin (`art/santuario.ts` → `blockArt.ts`).
