@@ -14,6 +14,7 @@ const ELBOW = 0.35;
 const ARM_DOWN = 0.62; // a pose A tem os braços abertos ~45°: na caminhada eles descem para junto do corpo
 const BOB = 0.035;
 const TWIST = 0.09;
+const EAR = 0.12;
 
 const AX = new THREE.Vector3(1, 0, 0), AY = new THREE.Vector3(0, 1, 0), AZ = new THREE.Vector3(0, 0, 1);
 
@@ -81,6 +82,13 @@ export class GoblinPoser {
     set('spine', ry(-tw * 1.4));
     set('chest', rx(-0.02 * breathe));
     set('head', ry(tw * 0.5));
+    // orelhas: balançam de leve a cada passo (o osso da ponta atrasa em relação à base)
+    for (const e of ['L', 'R'] as const) {
+      if (!this.index.has(`ear_base.${e}`)) continue;
+      const side = this.side[this.id(`ear_base.${e}`)];
+      set(`ear_base.${e}`, rz(side * EAR * Math.sin(2 * phase + 0.6) * walk));
+      set(`ear_tip.${e}`, rz(side * EAR * 1.4 * Math.sin(2 * phase + 1.3) * walk));
+    }
     for (const [leg, s, c] of [['L', sL, cL], ['R', sR, cR]] as const) {
       // perna: a coxa balança (frente = −x girado), o joelho dobra para trás na fase de avanço, o pé acompanha
       const swing = -THIGH * s * walk;

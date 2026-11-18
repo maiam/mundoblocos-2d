@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Goblin 3D do Vale com rig (v0.93.161): `assets-src/iso-set/goblin/Goblin_Orvalis_Rig.glb` (Blender: malha única de 3455 vértices, esqueleto de 22 ossos, atlas PBR 2K) → malha com pesos de pele,
+"""Goblin 3D do Vale com rig (v0.93.161): `assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb` (Blender: malha única de 3455 vértices, esqueleto de 26 ossos (com orelhas), palmas e juntas melhoradas, atlas PBR 2K) → malha com pesos de pele,
 ossos e textura de cor.
 
 O Santuário monta uma `THREE.SkinnedMesh` por goblin (`render/three/isoGoblins.ts`) e anda os ossos por código (`goblinPose.ts`: ciclo de caminhada procedural); a animação de teste do
 GLB (`Teste_Articulacoes`) não é usada. A normal e a rugosidade do pacote também não (a cena não tem luzes). Saídas:
-  src/assets/iso-goblin.json  { height, positions, normals, uvs, skinIndex, skinWeight, indices, bones, ibm }
+  src/assets/iso-goblin.json  { height, positions, normals, uvs, skinIndex, skinWeight, indices, bones, ibm }  (26 ossos)
       posições nas UNIDADES do modelo (altura 2,0, pés em y = 0, frente = +z, x = lateral); normais em centésimos (inteiros); `skinWeight` em 1/255; `bones` na ordem de `JOINTS_0`:
-      { name, parent (−1 = raiz), t, q, s } = posição, quaternion (x, y, z, w) e escala locais de repouso; `ibm` = as 22 matrizes inversas de bind (16 floats cada).
+      { name, parent (−1 = raiz), t, q, s } = posição, quaternion (x, y, z, w) e escala locais de repouso; `ibm` = as matrizes inversas de bind (16 floats cada).
   src/assets/iso-goblin.webp  cor base reduzida a 1024 × 1024.
 Uso: python3 scripts/extract-iso-goblin.py
 """
@@ -18,7 +18,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Rig.glb'
+SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb'
 d = SRC.read_bytes()
 _, _, total = struct.unpack('<III', d[:12])
 off, chunks = 12, []
@@ -62,8 +62,10 @@ for node_i in order:
     p = parent.get(node_i)
     bones.append({'name': node['name'], 'parent': slot.get(p, -1), 't': [round(v, 6) for v in node.get('translation', [0, 0, 0])],
                   'q': [round(v, 6) for v in node.get('rotation', [0, 0, 0, 1])], 's': [round(v, 6) for v in node.get('scale', [1, 1, 1])]})
-# o nó do esqueleto (Goblin_Rig) e a malha estão na identidade: os ossos já estão no espaço da malha
-assert all(k not in nodes[22] for k in ('translation', 'rotation', 'scale')) and all(k not in nodes[23] for k in ('translation', 'rotation', 'scale'))
+# o nó do esqueleto (Goblin_Rig) e o da malha estão na identidade: os ossos já estão no espaço da malha
+for n in nodes:
+    if n['name'].startswith('Goblin_'):
+        assert all(k not in n for k in ('translation', 'rotation', 'scale')), n['name']
 out = {
     'height': round(float(pos[:, 1].max()), 4),
     'positions': [round(float(v), 4) for v in pos.reshape(-1)],

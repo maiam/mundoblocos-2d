@@ -223,7 +223,7 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 
 **Árvores do Santuário** (v0.93.156): `python3 scripts/extract-iso-trees.py` lê `assets-src/trees/iso-{betula,cerejeira,macieira,carvalho}.png` (3 tamanhos cada) e gera `src/assets/iso-trees.webp`, `src/render/isoTreesManifest.ts` e `icon-iso-<espécie>-<s|m|l>.webp`; a prévia fica em `assets-src/trees/_previa-arvores-iso.png`. Os cortes da base por árvore estão em `SPECIES` no script.
 
-**Goblin 3D do Vale**: `python3 scripts/extract-iso-goblin.py` (`assets-src/iso-set/goblin/Goblin_Orvalis_Rig.glb`, com esqueleto e o atlas PBR 2K) → `src/assets/iso-goblin.{json,webp}` (malha com pele, ossos e cor base 1024); a animação de teste do GLB não é usada, a caminhada é procedural (`render/three/goblinPose.ts`).
+**Goblin 3D do Vale**: `python3 scripts/extract-iso-goblin.py` (`assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb`, com 26 ossos (inclui as orelhas) e o atlas PBR 2K) → `src/assets/iso-goblin.{json,webp}` (malha com pele, ossos e cor base 1024); a animação de teste do GLB não é usada, a caminhada é procedural (`render/three/goblinPose.ts`).
 
 **Vale Goblin do Santuário** (ADR 0038): `python3 scripts/make-vale-goblin-data.py` lê `assets-src/santuario-vale-goblin/seed.json` → `src/world/valeGoblinData.ts` (alturas, superfícies, caverna, fogueira, goblins); a conversão para cubos é `world/sanctuaryValeGoblin.ts`.
 

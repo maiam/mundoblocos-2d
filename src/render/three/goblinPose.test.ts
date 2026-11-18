@@ -13,14 +13,15 @@ function make(): { poser: GoblinPoser; bones: THREE.Bone[] } {
 const worldPos = (bones: THREE.Bone[], name: string): THREE.Vector3 => { bones[0].updateMatrixWorld(true); return new THREE.Vector3().setFromMatrixPosition(bones.find((b) => b.name === name)!.matrixWorld); };
 
 describe('Goblin com pele: malha e esqueleto do GLB', () => {
-  it('3455 vértices, 3000 triângulos, 22 ossos e pesos de pele por vértice', () => {
+  it('3455 vértices, 3000 triângulos, 26 ossos (com orelhas) e pesos de pele por vértice', () => {
     const n = rig.positions.length / 3;
     expect(n).toBe(3455);
     expect(rig.indices.length / 3).toBe(3000);
-    expect(rig.bones).toHaveLength(22);
-    expect(rig.ibm).toHaveLength(22 * 16);
+    expect(rig.bones).toHaveLength(26);
+    expect(rig.bones.map((b) => b.name)).toEqual(expect.arrayContaining(['ear_base.L', 'ear_tip.R', 'hand.L', 'toe.R']));
+    expect(rig.ibm).toHaveLength(26 * 16);
     expect(rig.skinIndex).toHaveLength(n * 4);
-    expect(Math.max(...rig.skinIndex)).toBeLessThan(22);
+    expect(Math.max(...rig.skinIndex)).toBeLessThan(26);
     for (let v = 0; v < n; v++) {
       const sum = rig.skinWeight.slice(v * 4, v * 4 + 4).reduce((a, b) => a + b, 0);
       expect(Math.abs(sum - 255), `vértice ${v}`).toBeLessThanOrEqual(3);

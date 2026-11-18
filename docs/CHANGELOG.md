@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.93.162 — Santuário: goblin com palmas e juntas melhoradas (18/11/2026)
+- **Pedido do dono do produto:** trocar o goblin pela versão com **palmas das mãos e juntas melhoradas** (`Goblin_Orvalis_Palmas.glb`: mesma malha de 3455 vértices e 3000 triângulos, agora com **26 ossos**: entraram as orelhas, `ear_base`/`ear_tip` L e R; palmas voltadas para as coxas na pose A).
+- `scripts/extract-iso-goblin.py` lê o GLB novo (`assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb`, no lugar do anterior) e regera `iso-goblin.json` (263 KB) e `iso-goblin.webp`; o script passou a achar os nós do esqueleto e da malha pelo nome (os índices mudaram).
+- `goblinPose.ts`: as **orelhas balançam** de leve a cada passo (osso da ponta atrasa em relação à base); o resto da caminhada não mudou (os deltas são no espaço do modelo, então valem com a pose nova das mãos).
+- Testes: 26 ossos (com orelhas) e `ibm` de 26 matrizes; `tsc` e 701 testes verdes; conferido no navegador (goblins andando, braços junto ao corpo). Sem mudança de save/protocolo; `package.json` 0.93.162.
+
 ## Orvalis v0.93.161 — Santuário: os goblins do Vale andam (rig + caminhada) (18/11/2026)
 - **Pedido do dono do produto:** com o rig do goblin enviado (`Goblin_Orvalis_Rig.glb`: malha única de 3455 vértices, 22 ossos), incluir o movimento de caminhada.
 - **Rig no jogo:** `scripts/extract-iso-goblin.py` agora lê o GLB com rig → `src/assets/iso-goblin.json` (posições, normais, UV, ossos e pesos por vértice, ossos de repouso e inversas de bind; 262 KB) + `iso-goblin.webp` (cor base 1024). A animação de teste do GLB não é usada: a caminhada é **procedural** (`render/three/goblinPose.ts`, `GoblinPoser`): rotações no espaço do modelo por osso (coxas, joelhos, pés, braços que descem da pose A e balançam ao contrário, cotovelos, torção do quadril e do tronco, subida do corpo a cada passo, respiração parado), com mistura suave parado ↔ andando.
