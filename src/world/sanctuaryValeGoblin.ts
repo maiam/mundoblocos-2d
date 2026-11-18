@@ -9,9 +9,17 @@ import { VALE_ALTURAS, VALE_CAVERNA, VALE_FOGUEIRA, VALE_GOBLINS, VALE_SUPERFICI
  * Um vale fechado por montanhas (alturas 2–32 no pacote). Conversão para a pilha de 8 níveis do Santuário: o chão do vale (3) é a planície de 2 cubos; os terraços de
  * grama (3–14) sobem de 2 a 6 (relevo comprimido e alisado: vizinhos caminháveis diferem no máximo 1 nível, o degrau da Deusa); a rocha (15–32) vira 7 ou 8 (paredes sem
  * objetos em cima). A caverna da borda sul vira um túnel (piso no nível 3, dois níveis livres, teto de rocha). Objetos: fogueira, duas barracas, caixas e barris no
- * acampamento, lampiões na boca da caverna, árvores, arbustos e pedras. Os 7 goblins do pacote viram `Block.ISO_GOBLIN` (malhas 3D estáticas, v0.93.160).
+ * acampamento, lampiões na boca da caverna, árvores, arbustos e pedras. Os 7 goblins do pacote nascem em volta da fogueira como atores 3D que andam (`game/valeGoblins.ts`, v0.93.161).
  */
 export const VALE_N = 64;
+/** Canto noroeste do vale (coluna 0, linha 0) no mundo: ao norte do bloco original (x −32, y −96). */
+export const VALE_ORIGIN = { x: -32, y: -96 } as const;
+
+/** Pontos de nascimento dos 7 goblins (centro da célula, no mundo) e a fogueira em volta da qual vivem. */
+export function valeGoblinHomes(): { homes: Array<[number, number]>; fire: [number, number] } {
+  const toWorld = (x: number, z: number): [number, number] => [VALE_ORIGIN.x + 32 + x + 0.5, VALE_ORIGIN.y + 32 + z + 0.5];
+  return { homes: VALE_GOBLINS.map(([x, , z]) => toWorld(x, z)), fire: toWorld(VALE_FOGUEIRA[0], VALE_FOGUEIRA[2]) };
+}
 /** Pilha máxima (`SANCTUARY_MAX_STACK`). */
 const MAX_STACK = 8;
 /** Último nível em que ainda cabe um objeto em cima da pilha. */
@@ -97,8 +105,8 @@ export function buildValeGoblin(seed: number): Column[] {
   obj[at(camp.r - 4, camp.c - 5)] = Block.ISO_BARREL;
   for (let dr = -3; dr <= 3; dr++) for (let dc = -3; dc <= 3; dc++) keep[at(camp.r + dr, camp.c + dc)] = 1;
 
-  // Os 7 goblins do pacote, em volta da fogueira (malhas 3D; olham para ela).
-  for (const [gx, , gz] of VALE_GOBLINS) { const i = cell(gx, gz); obj[i] = Block.ISO_GOBLIN; keep[i] = 1; }
+  // Os 7 goblins do pacote (`valeGoblinHomes`) nascem em volta da fogueira como atores (`game/valeGoblins.ts`): o chão fica livre para eles andarem.
+  for (const [gx, , gz] of VALE_GOBLINS) keep[cell(gx, gz)] = 1;
 
   // Árvores (carvalho e as 4 espécies × 3 tamanhos), arbustos e pedras no chão de grama livre.
   const free = (r: number, c: number): boolean => ok(r, c) && !rock[at(r, c)] && top[at(r, c)] === Block.GRASS && !keep[at(r, c)] && !obj[at(r, c)] && !custom.has(at(r, c)) && level[at(r, c)] <= MAX_FLOOR;

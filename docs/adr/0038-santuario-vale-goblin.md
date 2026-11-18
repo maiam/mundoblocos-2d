@@ -13,8 +13,8 @@ O dono do produto enviou o terreno de um "vale goblin" (`assets-src/santuario-va
    paredes dos terraços, grama ou Caminho de Terra (trilha) no topo.
 3. **Caverna:** os 24 vazios do pacote viram um túnel de piso no nível 3 (o da trilha), dois níveis livres e teto de rocha; a trilha do vale, o túnel e a plataforma externa (lampiões nos dois lados da boca) são
    contínuos a pé. A plataforma externa (piso 3) é um degrau acima da planície do original (piso 2): do ponto de nascimento dá para ir a pé até a fogueira do vale pela caverna (teste). A faixa x 6..13 junto à borda norte do original fica sem árvores.
-4. **Objetos:** fogueira na posição do pacote, duas barracas, caixa e barris no acampamento, árvores (carvalho e as 12 do conjunto), arbustos e pedras. **Os 7 goblins** (v0.93.160) são `Block.ISO_GOBLIN`, malhas 3D estáticas desenhadas por `render/three/isoGoblins.ts` com o modelo do dono do produto; o Santuário
-   é solo, sem monstros nem combate, então não se movem nem atacam.
+4. **Objetos:** fogueira na posição do pacote, duas barracas, caixa e barris no acampamento, árvores (carvalho e as 12 do conjunto), arbustos e pedras. **Os 7 goblins** (v0.93.160–161) são atores 3D com pele (`render/three/isoGoblins.ts`, `game/valeGoblins.ts`) com o modelo e o rig do dono do produto: vivem em volta da fogueira e andam com caminhada
+   procedural; o Santuário é solo, sem combate, então não atacam.
 
 ## Consequências
 - Mais faces para o renderer (mundo 2× maior em chunks, 64): conferir desempenho em aparelho real. O canto VOID aparece como fundo escuro com grade, não como o céu degradê das bordas comuns.

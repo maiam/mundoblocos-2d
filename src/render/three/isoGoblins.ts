@@ -1,158 +1,111 @@
 import * as THREE from 'three';
-import { CHUNK_SIZE } from '../../config';
-import { Block, type BlockId } from '../../world/blocks';
-import type { Chunk } from '../../world/chunk';
-import { hash2 } from '../../world/random';
-import type { ChunkRect } from '../../world/world';
+import type { GoblinView } from '../../game/valeGoblins';
+import { GoblinPoser, type RigBone } from './goblinPose';
 
-/** A malha do goblin (`scripts/extract-iso-goblin.py`): altura 1 (pés em y = 0, centrada em x/z), UV do atlas, normais em centésimos e índices dos triângulos. */
-export interface IsoGoblinModel { positions: number[]; normals: number[]; uvs: number[]; indices: number[] }
-/** Arte do goblin: a malha e a imagem da cor base do atlas. */
-export interface IsoGoblinArt { model: IsoGoblinModel; image: HTMLImageElement }
-
-export interface IsoGoblinWorld {
-  getChunk(cx: number, cy: number): Chunk | null | undefined;
-  getLevel(x: number, y: number, level: number): BlockId;
+/** A malha do goblin com pele (`scripts/extract-iso-goblin.py`): posições (unidades do modelo, altura ~2), normais em centésimos, UV, ossos por vértice, índices, ossos de repouso e inversas de bind. */
+export interface IsoGoblinRig {
+  height: number; positions: number[]; normals: number[]; uvs: number[]; skinIndex: number[]; skinWeight: number[]; indices: number[]; bones: RigBone[]; ibm: number[];
 }
+/** Arte do goblin: o rig e a imagem da cor base do atlas. */
+export interface IsoGoblinArt { rig: IsoGoblinRig; image: HTMLImageElement }
 
 /** Altura do goblin em células: medida na tela, com 1,15 ele ficava com 0,53 da altura da Deusa (halo aos pés); 1,5 dá ~0,7 (goblin menor que ela). */
 export const GOBLIN_HEIGHT = 1.5;
-/** Raio (células) em que o goblin procura a fogueira para olhar para ela. */
-const FIRE_RADIUS = 10;
-const STEPS = 8;
 
-interface Entry { x: number; y: number; level: number; mesh: THREE.Mesh }
+interface Instance { group: THREE.Group; bones: THREE.Bone[] }
 
 /**
- * Goblins do Vale como **malhas 3D** no Santuário isométrico (v0.93.160): o modelo do dono do produto (Blender, pose A, 3000 triângulos) com a cor base do atlas dele, em cada
- * célula com `Block.ISO_GOBLIN`. Cada um olha para a fogueira mais próxima (8 direções; sem fogueira, uma direção sorteada pela posição). Estático: sem animação nem combate
- * (o Santuário é solo). A cena não tem luzes: o relevo vem do sombreado fixo por normal, calculado por direção (as normais giram junto com a malha).
+ * Goblins do Vale como **malhas 3D com pele** (v0.93.161): o modelo do dono do produto (Blender, 3000 triângulos, 22 ossos) com a cor base do atlas dele. O jogo (`game/valeGoblins.ts`) manda a
+ * posição, a direção e a fase de caminhada de cada um a cada quadro; aqui só se monta uma `SkinnedMesh` por goblin (esqueleto próprio, geometria e material compartilhados) e se aplica a pose
+ * procedural (`goblinPose.ts`). A cena não tem luzes: o relevo vem de um sombreado fixo por normal no espaço da câmera (injetado no `MeshBasicMaterial`), que acompanha a pele e o giro.
  */
 export class IsoGoblins {
-  private readonly lists = new Map<string, { version: number; entries: Entry[] }>();
-  private readonly base: THREE.BufferGeometry;
-  private readonly normals: Float32Array;
-  private readonly variants: THREE.BufferGeometry[] = [];
+  private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.MeshBasicMaterial;
   private readonly texture: THREE.Texture;
-  private pickables: THREE.Mesh[] = [];
-  private dirty = true;
+  private readonly poser: GoblinPoser;
+  private readonly inverses: THREE.Matrix4[];
+  private readonly instances = new Map<number, Instance>();
+  private readonly scale: number;
 
-  constructor(private readonly scene: THREE.Object3D, private readonly world: IsoGoblinWorld, art: IsoGoblinArt) {
-    const m = art.model;
-    this.base = new THREE.BufferGeometry();
-    this.base.setAttribute('position', new THREE.Float32BufferAttribute(m.positions, 3));
-    this.base.setAttribute('uv', new THREE.Float32BufferAttribute(m.uvs, 2));
-    this.base.setIndex(m.indices);
-    this.normals = Float32Array.from(m.normals, (v) => v / 100);
+  constructor(private readonly scene: THREE.Object3D, private readonly art: IsoGoblinArt) {
+    const r = art.rig;
+    this.poser = new GoblinPoser(r.bones, r.ibm);
+    this.scale = GOBLIN_HEIGHT / r.height;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(r.positions, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(Float32Array.from(r.normals, (v) => v / 100), 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(r.uvs, 2));
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(r.skinIndex, 4));
+    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(Float32Array.from(r.skinWeight, (v) => v / 255), 4));
+    g.setIndex(r.indices);
+    this.geometry = g;
+    this.inverses = r.bones.map((_, i) => new THREE.Matrix4().fromArray(r.ibm, i * 16));
     this.texture = new THREE.Texture(art.image);
     this.texture.colorSpace = THREE.SRGBColorSpace;
     this.texture.flipY = false; // UV do glTF: origem no canto superior esquerdo
     this.texture.anisotropy = 4;
     this.texture.needsUpdate = true;
-    this.material = new THREE.MeshBasicMaterial({ map: this.texture, vertexColors: true, side: THREE.DoubleSide });
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.DoubleSide });
+    this.material.onBeforeCompile = (shader) => {
+      // sombreado fixo (luz de cima e da esquerda da câmera) pela normal da pele, no espaço da câmera
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying float vGoblinShade;')
+        .replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\n  vGoblinShade = 0.55 + 0.45 * max(0.0, dot(normalize(transformedNormal), normalize(vec3(-0.3, 0.7, 0.65))));');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vGoblinShade;')
+        .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n  gl_FragColor.rgb *= vGoblinShade;');
+    };
+    this.material.customProgramCacheKey = () => 'goblin-shade';
   }
 
-  /** Geometria para a direção `k` (0..7): a mesma malha com o sombreado das normais já giradas. */
-  private geometryFor(k: number): THREE.BufferGeometry {
-    let g = this.variants[k];
-    if (g) return g;
-    g = new THREE.BufferGeometry();
-    g.setAttribute('position', this.base.getAttribute('position'));
-    g.setAttribute('uv', this.base.getAttribute('uv'));
-    g.setIndex(this.base.getIndex());
-    const a = (k * Math.PI * 2) / STEPS, cos = Math.cos(a), sin = Math.sin(a);
-    const light = new THREE.Vector3(-0.35, 0.85, 0.4).normalize();
-    const n = this.normals;
-    const col = new Float32Array(n.length);
-    for (let i = 0; i < n.length; i += 3) {
-      const nx = n[i] * cos + n[i + 2] * sin, ny = n[i + 1], nz = -n[i] * sin + n[i + 2] * cos; // rotação em y
-      const s = 0.55 + 0.45 * Math.max(0, nx * light.x + ny * light.y + nz * light.z);
-      col[i] = col[i + 1] = col[i + 2] = s;
-    }
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    this.variants[k] = g;
-    return g;
-  }
-
-  /** Direção (0..7) para olhar a fogueira mais próxima; sem fogueira por perto, sorteada pela posição. */
-  private facing(x: number, y: number, chunk: Chunk): number {
-    let best = -1, bx = 0, by = 0;
-    for (let dy = -FIRE_RADIUS; dy <= FIRE_RADIUS; dy++) {
-      for (let dx = -FIRE_RADIUS; dx <= FIRE_RADIUS; dx++) {
-        const d = dx * dx + dy * dy;
-        if (best >= 0 && d >= best) continue;
-        for (let l = 0; l < chunk.levels.length; l++) if (this.world.getLevel(x + dx, y + dy, l) === Block.CAMPFIRE) { best = d; bx = dx; by = dy; break; }
-      }
-    }
-    const angle = best >= 0 ? Math.atan2(bx, by) : hash2(0x60b1, x, y) * Math.PI * 2;
-    return ((Math.round((angle / (Math.PI * 2)) * STEPS) % STEPS) + STEPS) % STEPS;
-  }
-
-  private make(x: number, y: number, level: number, chunk: Chunk): Entry {
-    const k = this.facing(x, y, chunk);
-    const mesh = new THREE.Mesh(this.geometryFor(k), this.material);
-    mesh.position.set(x + 0.5, level, y + 0.5);
-    mesh.rotation.y = (k * Math.PI * 2) / STEPS;
-    mesh.scale.setScalar(GOBLIN_HEIGHT);
+  private make(): Instance {
+    const r = this.art.rig;
+    const bones = r.bones.map((b) => {
+      const o = new THREE.Bone();
+      o.name = b.name;
+      o.position.fromArray(b.t);
+      o.quaternion.fromArray(b.q);
+      o.scale.fromArray(b.s);
+      return o;
+    });
+    const mesh = new THREE.SkinnedMesh(this.geometry, this.material);
+    r.bones.forEach((b, i) => (b.parent >= 0 ? bones[b.parent] : mesh).add(bones[i]));
+    mesh.frustumCulled = false;
     mesh.name = 'Santuário: goblin 3D';
-    mesh.userData.cell = { x, y };
-    this.scene.add(mesh);
-    return { x, y, level, mesh };
+    mesh.bind(new THREE.Skeleton(bones, this.inverses), new THREE.Matrix4());
+    const group = new THREE.Group();
+    group.name = 'Santuário: goblin';
+    group.scale.setScalar(this.scale);
+    group.add(mesh);
+    this.scene.add(group);
+    return { group, bones };
   }
 
-  update(rect: ChunkRect): void {
-    const keep = new Set<string>();
-    for (let cy = rect.cy0; cy <= rect.cy1; cy++) {
-      for (let cx = rect.cx0; cx <= rect.cx1; cx++) {
-        const chunk = this.world.getChunk(cx, cy);
-        if (!chunk) continue;
-        const key = cx + ',' + cy;
-        keep.add(key);
-        const old = this.lists.get(key);
-        if (old && old.version === chunk.version) continue;
-        if (old) for (const e of old.entries) this.scene.remove(e.mesh);
-        const entries: Entry[] = [];
-        for (let ly = 0; ly < CHUNK_SIZE; ly++) {
-          for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-            const x = cx * CHUNK_SIZE + lx, y = cy * CHUNK_SIZE + ly;
-            for (let level = 0; level < chunk.levels.length; level++) {
-              if (this.world.getLevel(x, y, level) !== Block.ISO_GOBLIN) continue;
-              entries.push(this.make(x, y, level, chunk));
-              break;
-            }
-          }
-        }
-        this.lists.set(key, { version: chunk.version, entries });
-        this.dirty = true;
-      }
+  /** Põe cada goblin na posição, direção e pose recebidas (cria os que faltam e remove os que sumiram). `time` = segundos (respiração). */
+  sync(goblins: readonly GoblinView[], time: number): void {
+    const seen = new Set<number>();
+    for (const v of goblins) {
+      seen.add(v.id);
+      let inst = this.instances.get(v.id);
+      if (!inst) { inst = this.make(); this.instances.set(v.id, inst); }
+      inst.group.position.set(v.x, v.z, v.y);
+      inst.group.rotation.y = v.yaw;
+      this.poser.pose(inst.bones, v.phase, v.walk, time + v.id * 0.7);
     }
-    for (const [key, list] of this.lists) {
-      if (keep.has(key)) continue;
-      for (const e of list.entries) this.scene.remove(e.mesh);
-      this.lists.delete(key);
-      this.dirty = true;
-    }
-    if (this.dirty) {
-      this.pickables = [...this.lists.values()].flatMap((l) => l.entries.map((e) => e.mesh));
-      this.dirty = false;
+    for (const [id, inst] of this.instances) {
+      if (seen.has(id)) continue;
+      this.scene.remove(inst.group);
+      this.instances.delete(id);
     }
   }
 
-  /** Malhas para o raio de seleção (cada uma leva `userData.cell`). */
-  meshes(): THREE.Mesh[] { return this.pickables; }
-
-  cellOf(object: THREE.Object3D): { x: number; y: number } | undefined {
-    return object.userData.cell as { x: number; y: number } | undefined;
-  }
-
-  get count(): number { return this.pickables.length; }
+  get count(): number { return this.instances.size; }
 
   dispose(): void {
-    for (const l of this.lists.values()) for (const e of l.entries) this.scene.remove(e.mesh);
-    this.lists.clear();
-    for (const g of this.variants) g?.dispose();
-    this.base.dispose();
+    for (const inst of this.instances.values()) this.scene.remove(inst.group);
+    this.instances.clear();
+    this.geometry.dispose();
     this.material.dispose();
     this.texture.dispose();
   }

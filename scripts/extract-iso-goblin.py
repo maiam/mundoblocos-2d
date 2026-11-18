@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Goblin 3D do Vale (v0.93.160): `assets-src/iso-set/goblin/Goblin_Orvalis_Pose_A.glb` (Blender, 50 peças, pose A) → malha única + textura de cor.
+"""Goblin 3D do Vale com rig (v0.93.161): `assets-src/iso-set/goblin/Goblin_Orvalis_Rig.glb` (Blender: malha única de 3455 vértices, esqueleto de 22 ossos, atlas PBR 2K) → malha com pesos de pele,
+ossos e textura de cor.
 
-O Santuário desenha cada goblin como malha 3D (`render/three/isoGoblins.ts`) com a cor base do atlas do modelo (`Goblin_BaseColor_2K.png`, extraída do GLB PBR); a normal e a
-rugosidade do pacote não são usadas (a cena não tem luzes). Saídas:
-  src/assets/iso-goblin.json   { positions, normals, uvs, indices }: UNIDADES de altura (altura total = 1, pés em y = 0, centrado em x/z), UV do atlas (origem no canto
-                               superior esquerdo, como no glTF), normais em centésimos (inteiros −100..100).
-  src/assets/iso-goblin.webp   cor base reduzida a 1024 × 1024.
+O Santuário monta uma `THREE.SkinnedMesh` por goblin (`render/three/isoGoblins.ts`) e anda os ossos por código (`goblinPose.ts`: ciclo de caminhada procedural); a animação de teste do
+GLB (`Teste_Articulacoes`) não é usada. A normal e a rugosidade do pacote também não (a cena não tem luzes). Saídas:
+  src/assets/iso-goblin.json  { height, positions, normals, uvs, skinIndex, skinWeight, indices, bones, ibm }
+      posições nas UNIDADES do modelo (altura 2,0, pés em y = 0, frente = +z, x = lateral); normais em centésimos (inteiros); `skinWeight` em 1/255; `bones` na ordem de `JOINTS_0`:
+      { name, parent (−1 = raiz), t, q, s } = posição, quaternion (x, y, z, w) e escala locais de repouso; `ibm` = as 22 matrizes inversas de bind (16 floats cada).
+  src/assets/iso-goblin.webp  cor base reduzida a 1024 × 1024.
 Uso: python3 scripts/extract-iso-goblin.py
 """
 import json
@@ -16,8 +18,8 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / 'assets-src/iso-set/goblin'
-d = (SRC / 'Goblin_Orvalis_Pose_A.glb').read_bytes()
+SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Rig.glb'
+d = SRC.read_bytes()
 _, _, total = struct.unpack('<III', d[:12])
 off, chunks = 12, []
 while off < total:
@@ -25,38 +27,60 @@ while off < total:
     chunks.append(d[off + 8:off + 8 + n])
     off += 8 + n
 gltf, blob = json.loads(chunks[0]), chunks[1]
+nodes = gltf['nodes']
 
 
 def accessor(i):
     a = gltf['accessors'][i]
     view = gltf['bufferViews'][a['bufferView']]
-    comps = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3}[a['type']]
-    dtype = {5126: '<f4', 5125: '<u4', 5123: '<u2'}[a['componentType']]
+    comps = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}[a['type']]
+    dtype = {5126: '<f4', 5125: '<u4', 5123: '<u2', 5121: 'u1'}[a['componentType']]
     start = view.get('byteOffset', 0) + a.get('byteOffset', 0)
     return np.frombuffer(blob, dtype=dtype, count=a['count'] * comps, offset=start).reshape(a['count'], comps)
 
 
-P, N, T, I = [], [], [], []
-base = 0
-for node in gltf['nodes']:
-    assert not any(k in node for k in ('matrix', 'rotation', 'scale', 'translation')), node['name']
-    prim = gltf['meshes'][node['mesh']]['primitives'][0]
-    pos = accessor(prim['attributes']['POSITION']).astype(np.float64)
-    P.append(pos)
-    N.append(accessor(prim['attributes']['NORMAL']).astype(np.float64))
-    T.append(accessor(prim['attributes']['TEXCOORD_0']).astype(np.float64))
-    I.append(accessor(prim['indices']).reshape(-1).astype(np.int64) + base)
-    base += len(pos)
-pos, nor, uv, idx = np.vstack(P), np.vstack(N), np.vstack(T), np.concatenate(I)
-lo, hi = pos.min(0), pos.max(0)
-height = hi[1] - lo[1]
-pos = (pos - np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])) / height
+prim = gltf['meshes'][0]['primitives'][0]
+at = prim['attributes']
+pos = accessor(at['POSITION']).astype(np.float64)
+nor = accessor(at['NORMAL']).astype(np.float64)
+uv = accessor(at['TEXCOORD_0']).astype(np.float64)
+joints = accessor(at['JOINTS_0']).astype(np.int64)
+weights = accessor(at['WEIGHTS_0']).astype(np.float64)
+idx = accessor(prim['indices']).reshape(-1).astype(np.int64)
+skin = gltf['skins'][0]
+ibm = accessor(skin['inverseBindMatrices']).astype(np.float64)
+assert abs(pos[:, 1].min()) < 0.01, pos[:, 1].min()
+order = skin['joints']
+slot = {node: i for i, node in enumerate(order)}
+parent = {}
+for i, node in enumerate(nodes):
+    for c in node.get('children', []):
+        parent[c] = i
+bones = []
+for node_i in order:
+    node = nodes[node_i]
+    p = parent.get(node_i)
+    bones.append({'name': node['name'], 'parent': slot.get(p, -1), 't': [round(v, 6) for v in node.get('translation', [0, 0, 0])],
+                  'q': [round(v, 6) for v in node.get('rotation', [0, 0, 0, 1])], 's': [round(v, 6) for v in node.get('scale', [1, 1, 1])]})
+# o nó do esqueleto (Goblin_Rig) e a malha estão na identidade: os ossos já estão no espaço da malha
+assert all(k not in nodes[22] for k in ('translation', 'rotation', 'scale')) and all(k not in nodes[23] for k in ('translation', 'rotation', 'scale'))
 out = {
+    'height': round(float(pos[:, 1].max()), 4),
     'positions': [round(float(v), 4) for v in pos.reshape(-1)],
     'normals': [int(round(float(v) * 100)) for v in nor.reshape(-1)],
     'uvs': [round(float(v), 4) for v in uv.reshape(-1)],
+    'skinIndex': [int(v) for v in joints.reshape(-1)],
+    'skinWeight': [int(round(float(v) * 255)) for v in weights.reshape(-1)],
     'indices': [int(i) for i in idx],
+    'bones': bones,
+    'ibm': [round(float(v), 6) for v in ibm.reshape(-1)],
 }
 (ROOT / 'src/assets/iso-goblin.json').write_text(json.dumps(out, separators=(',', ':')))
-Image.open(SRC / 'Goblin_BaseColor_2K.png').convert('RGB').resize((1024, 1024), Image.LANCZOS).save(ROOT / 'src/assets/iso-goblin.webp', quality=88)
-print('ok', len(pos), 'vértices,', len(idx) // 3, 'triângulos; largura/altura', round(float((hi[0] - lo[0]) / height), 3), 'profundidade/altura', round(float((hi[2] - lo[2]) / height), 3), '; json', (ROOT / 'src/assets/iso-goblin.json').stat().st_size // 1024, 'KB; webp', (ROOT / 'src/assets/iso-goblin.webp').stat().st_size // 1024, 'KB')
+tex = gltf['textures'][gltf['materials'][0]['pbrMetallicRoughness']['baseColorTexture']['index']]
+bv = gltf['bufferViews'][gltf['images'][tex['source']]['bufferView']]
+png = blob[bv.get('byteOffset', 0):bv.get('byteOffset', 0) + bv['byteLength']]
+tmp = ROOT / 'assets-src/iso-set/goblin/Goblin_BaseColor_2K.png'
+tmp.write_bytes(png)
+Image.open(tmp).convert('RGB').resize((1024, 1024), Image.LANCZOS).save(ROOT / 'src/assets/iso-goblin.webp', quality=88)
+tmp.unlink()
+print('ok', len(pos), 'vértices,', len(idx) // 3, 'triângulos,', len(bones), 'ossos; json', (ROOT / 'src/assets/iso-goblin.json').stat().st_size // 1024, 'KB; webp', (ROOT / 'src/assets/iso-goblin.webp').stat().st_size // 1024, 'KB; altura', out['height'])
