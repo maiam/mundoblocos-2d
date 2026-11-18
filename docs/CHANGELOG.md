@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.151 — Santuário: sementes e vegetais do Mundo na hotbar (18/11/2026)
+- **Pedido do dono do produto:** incluir na hotbar do Santuário as sementes e vegetais do mundo principal: trigo, cenoura, batata e tomate. Nova flag `WorldProfile.crops` (Santuário `true`): a grade fixa ganha, depois das 70 peças, **semente de trigo, trigo, cenoura, batata e tomate** (75 espaços), em **quantidade infinita** (sem contador; sem coleta não gasta).
+- **Plantio no Santuário:** como o terreno é em camadas, planta-se **sobre um cubo de Terra Arada** no topo da pilha (`World.canPlant/plant` com `surfaceObjects`); a planta fica no nível da superfície e **cresce** com o tempo (`tickGrowth` lê `surfaceObject`/`surfaceLevel`). Grama/pedra não aceitam semente.
+- Ícones e folhas de crescimento vêm do pacote do Mundo (`art/santuario.ts`: `itemIcons`, `wheatCrop`, `crops`). `stackView` não mostra contador de item sem coleta.
+- Conferido no navegador (ícones, Terra Arada + cenoura plantada e crescendo). Testes novos; `tsc` e 679 testes verdes. Sem mudança de save, protocolo ou servidor.
+- **Pendência:** colher (quebrar a planta madura) no Santuário só remove a planta (sem coleta); o crescimento na sala multiplayer não se aplica (Santuário é solo).
+
 ## Orvalis v0.93.150 — Santuário: toque na tela coloca/quebra blocos no celular (18/11/2026)
 - **Pedido do dono do produto:** liberar no celular, para o Santuário, o toque na tela para colocar ou quebrar blocos. Antes o canvas ignorava `pointerType === 'touch'` no celular (ação só pelo botão); agora `Game.touchActs` (perfil `santuario`) deixa o toque agir como o clique (toque curto = colocar; segurar = quebrar). O botão de ação continua. O Mundo normal no celular não muda.
 - Conferido no navegador (celular emulado com toque): o toque altera o mundo como o clique do mouse. Sem mudança de save, protocolo ou servidor.

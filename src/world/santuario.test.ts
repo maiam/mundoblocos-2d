@@ -112,8 +112,9 @@ describe('Santuário (terreno em camadas, ADR 0036)', () => {
     const e = new Entities(new Player(x + 0.5, y + 0.5), Math.random, S.character);
     expect(e.actors[0].kind).toBe('goddess-iso-idle'); // parada: folha de idle; andando, 'goddess-iso'
     const hb = hotbarFor(S);
-    expect(hb).toHaveLength(70);
-    expect(hb.every((s) => s.kind === 'block')).toBe(true);
+    expect(hb).toHaveLength(75); // 70 peças + 5 sementes/vegetais (v0.93.152)
+    expect(hb.filter((s) => s.kind === 'block')).toHaveLength(70);
+    expect(hb.slice(70).every((s) => s.kind === 'item')).toBe(true);
     expect(hotbarFor(WORLD_PROFILES.principal)).toHaveLength(58); // (v0.93.110: + 15 Flores Fofas; v0.93.99: + Portões de Bétula e de Cerejeira; v0.93.96: + Cercas de Bétula e de Cerejeira; v0.93.90: + Cerca de Estacas) 5 ferramentas + 2 itens + 19 materiais (8 + 7 pedras + 2 de cerejeira + 2 de bétula) + porta + tenda + baú + fogueira + caldeirão + forno + cadeira + 3 cercas (Carvalho, Bétula, Cerejeira) + 3 portões + 15 flores fofas + 2 paredes + porta de parede (W5)
   });
 });
@@ -142,3 +143,25 @@ describe('Blocos do Mundo no Santuário (v0.93.146): objetos de superfície', ()
     expect(w.placeBlock(x + 4, y + 5, Block.FLOWER_HONEY)).toBe(true);
   });
 });
+
+describe('Sementes e vegetais no Santuário (v0.93.152)', () => {
+  it('a grade fixa termina com trigo (semente e vegetal), cenoura, batata e tomate', () => {
+    const items = hotbarFor(S).filter((h) => h.kind === 'item').map((h) => (h as { item: string }).item);
+    expect(items).toEqual(['wheat_seed', 'wheat', 'carrot', 'potato', 'tomato']);
+  });
+
+  it('planta só sobre Terra Arada, no topo da pilha, e a planta cresce', () => {
+    const w = new World(1, S);
+    const [x, y] = [0, 0];
+    expect(w.canPlant(x, y, Block.CARROT_0)).toBe(false); // grama não serve
+    const level = w.stackHeight(x, y);
+    expect(w.placeBlockAt(x, y, Block.TILLED, level)).toBe(true);
+    expect(w.canPlant(x, y, Block.CARROT_0)).toBe(true);
+    expect(w.plant(x, y, Block.CARROT_0)).toBe(true);
+    expect(w.surfaceObject(x, y)).toBe(Block.CARROT_0);
+    expect(w.canPlant(x, y, Block.CARROT_0)).toBe(false); // já ocupada
+    for (let i = 0; i < 200; i++) w.tick(100, () => 0, true);
+    expect(w.surfaceObject(x, y)).not.toBe(Block.CARROT_0);
+  });
+});
+

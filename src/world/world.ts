@@ -503,7 +503,7 @@ export class World {
       // Rio das Fadas: a peça desenhada depende dos 4 vizinhos; na borda do chunk o vizinho mora noutro chunk, que também precisa redesenhar.
       if (isRioBrush(id) || isRioBrush(prev)) this.touchChunkNeighbors(cx, cy, lx, ly);
     }
-    if (level === 0) {
+    if (level === 0 || (this.profile.surfaceObjects && typeof level === 'number' && isCrop(id))) {
       if (isCrop(id)) this.crops.add(chunkKey(x, y));
       else this.crops.delete(chunkKey(x, y));
       if (isGrowingTree(id)) this.trees.add(chunkKey(x, y));
@@ -982,7 +982,15 @@ export class World {
    */
   canPlant(x: number, y: number, id: BlockId = Block.WHEAT_0): boolean {
     if (this.isProtected(x, y)) return false;
-    if (!isCropSeedling(id) || this.getGround(x, y) !== PLANTABLE_GROUND) return false;
+    if (!isCropSeedling(id)) return false;
+    if (this.profile.surfaceObjects) {
+      // Santuário (terreno em camadas): planta-se sobre um cubo de Terra Arada no topo da pilha, na superfície da célula.
+      const h = this.stackHeight(x, y);
+      if (h < 1 || h >= this.maxStack || this.getLevel(x, y, h - 1) !== PLANTABLE_GROUND) return false;
+      const on = blockDef(this.getLevel(x, y, h));
+      return on.id === Block.AIR || on.shape === 'decoration';
+    }
+    if (this.getGround(x, y) !== PLANTABLE_GROUND) return false;
     const base = blockDef(this.getObject(x, y));
     return base.id === Block.AIR || base.shape === 'decoration';
   }
@@ -1027,7 +1035,7 @@ export class World {
 
   plant(x: number, y: number, id: BlockId = Block.WHEAT_0): boolean {
     if (!this.canPlant(x, y, id)) return false;
-    this.setLevel(x, y, 0, id);
+    this.setLevel(x, y, this.surfaceLevel(x, y), id);
     return true;
   }
 
@@ -1131,7 +1139,12 @@ export class World {
     const set = (x: number, y: number, id: BlockId) => { this.setLevel(x, y, 0, id); onGrow?.(x, y, id); };
     for (const key of [...this.crops]) {
       const [x, y] = key.split(',').map(Number);
-      const id = this.getObject(x, y);
+      const id = this.surfaceObject(x, y); // Santuário: a planta fica no topo da pilha de cubos
+      if (this.profile.surfaceObjects && isCrop(id)) {
+        const kind = cropKind(id)!, stage = cropStage(id);
+        if (stage < CROP_STAGES - 1 && rand() < dt / CROP_STAGE_SECONDS[kind]) { const next = cropId(kind, stage + 1); this.setLevel(x, y, this.surfaceLevel(x, y), next); onGrow?.(x, y, next); }
+        continue;
+      }
       const kind = cropKind(id);
       if (!kind) { this.crops.delete(key); continue; }
       const stage = cropStage(id);

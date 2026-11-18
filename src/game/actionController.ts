@@ -247,7 +247,7 @@ export class ActionController {
     }
     const plants = ITEMS[slot.item].plants;
     // Muda de árvore é sólida: não se planta onde há alguém em pé.
-    if (plants) return this.inventory.count(slot.item) > 0 && this.world.canPlant(x, y, plants)
+    if (plants) return (!this.ctx.collectBlocks || this.inventory.count(slot.item) > 0) && this.world.canPlant(x, y, plants)
       && (isCrop(plants) || !this.entities.occupies(x, y));
     return false;
   }
@@ -348,7 +348,7 @@ export class ActionController {
     }
     const def = ITEMS[slot.item];
     if (def.plants) {
-      if (this.canUseAt(slot, x, y) && this.inventory.take(slot.item) && this.world.plant(x, y, def.plants)) {
+      if (this.canUseAt(slot, x, y) && (!this.ctx.collectBlocks || this.inventory.take(slot.item)) && this.world.plant(x, y, def.plants)) { // sem coleta (Santuário): quantidade infinita
         this.ctx.onAction?.(def.plants === Block.WHEAT_0 ? { kind: 'plant', x, y } : { kind: 'plant', x, y, block: def.plants });
         this.entities.settleAll(this.world); // muda é sólida: ninguém fica preso nela
       }

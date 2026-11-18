@@ -676,7 +676,7 @@ export class Game {
   private stackView(id: StackId, n: number | null): SlotView {
     const s = stackSlotOf(id);
     if (s.kind === 'tool') return { icon: toolIconUrl(s.tool), name: TOOLS[s.tool].name, count: null };
-    if (s.kind === 'item') return { icon: itemIconUrl(s.item), name: ITEMS[s.item].name, count: n };
+    if (s.kind === 'item') return { icon: itemIconUrl(s.item), name: ITEMS[s.item].name, count: this.collect || this.hotbar.dynamic ? n : null };
     return { icon: this.renderer.iconFor(s.block), name: blockDef(s.block).name, count: this.collect ? n : null };
   }
 
