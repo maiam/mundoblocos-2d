@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.168 — Santuário: goblin musculoso e textura mais escura (18/11/2026)
+- **Pedido do dono do produto:** mais músculos no goblin e textura um pouco mais escura (`Goblin_Orvalis_Musculoso.glb`: mesma estrutura do modelo anterior — 4 grupos, 10 756 vértices, 17 268 triângulos, mesmo esqueleto de 26 ossos —, com pele em verde-musgo escuro e atlas `Goblin_Verde_Escuro_BaseColor_2K`).
+- Troca direta: `scripts/extract-iso-goblin.py` lê o GLB novo (substitui o `Corpo_Refinado` em `assets-src/iso-set/goblin/`; `Previa_musculoso.png` fica de referência) e regera `iso-goblin.json` (947 KB), `iso-goblin.webp` e `iso-goblin-hair.webp`. Nenhum código mudou.
+- `tsc`, 713 testes verdes; conferido no navegador (parado e duelo). Sem mudança de save/protocolo; `package.json` 0.93.168. O `Corpo_Goblin_Musculoso_T_Pose.glb` (base nua em T) e o `.blend` não entram no jogo.
+
 ## Orvalis v0.93.167 — Santuário: goblin com o corpo 3D refinado (18/11/2026)
 - **Pedido do dono do produto:** atualizar o NPC goblin com o 3D refinado (`Goblin_Orvalis_Corpo_Refinado.glb`: corpo esculpido, cabeça com cabelo próprio e traje; 10 756 vértices e 17 268 triângulos, contra 3 455 e 3 000 do modelo anterior).
 - **Mesmo esqueleto** (26 ossos, posições e hierarquia idênticas — conferido osso a osso): a caminhada, as poses sociais, a adaga e o duelo continuam valendo sem mudança de código de pose.

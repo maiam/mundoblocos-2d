@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Goblin 3D do Vale com rig (v0.93.161; corpo refinado na v0.93.167): `assets-src/iso-set/goblin/Goblin_Orvalis_Corpo_Refinado.glb` (Blender: 4 primitivas — crânio e traje com o atlas `base_rgb`, cabelo com a pintura `Cabelo_Pintura_2K`,
+"""Goblin 3D do Vale com rig (v0.93.161; corpo refinado na v0.93.167, musculoso e verde-musgo na v0.93.168): `assets-src/iso-set/goblin/Goblin_Orvalis_Musculoso.glb` (Blender: 4 primitivas — crânio e traje com o atlas `base_rgb`, cabelo com a pintura `Cabelo_Pintura_2K`,
 corpo/pele só em cor de vértice —, 10 756 vértices, 17 268 triângulos, esqueleto de 26 ossos (com orelhas), atlas PBR 2K) → malha única com pesos de pele, grupos por material, ossos e texturas de cor.
 
 O Santuário monta uma `THREE.SkinnedMesh` por goblin (`render/three/isoGoblins.ts`, um material por grupo) e anda os ossos por código (`goblinPose.ts`: ciclo de caminhada procedural); a animação de teste do
@@ -20,7 +20,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Corpo_Refinado.glb'
+SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Musculoso.glb'
 d = SRC.read_bytes()
 _, _, total = struct.unpack('<III', d[:12])
 off, chunks = 12, []
