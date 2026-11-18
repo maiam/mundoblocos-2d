@@ -41,7 +41,7 @@ export const CUBE_LEVELS = 4;
 /** Limite de níveis (blocos de 1/4) por célula no Mundo principal e no servidor. */
 export const MAX_STACK = CUBE_LEVELS;
 /** Santuário pode construir até cinco níveis sem alterar o protocolo do Mundo principal. */
-export const SANCTUARY_MAX_STACK = 5;
+export const SANCTUARY_MAX_STACK = 8;
 
 /** Quantos cubos cheios o personagem consegue subir de uma vez (no Mundo: `World.stepLevels` converte para 3 blocos de 1/4). */
 export const STEP_HEIGHT = 1;

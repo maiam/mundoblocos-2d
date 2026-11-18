@@ -78,7 +78,7 @@ describe('conjunto isométrico — objetos grandes e enfeites (ADR 0036)', () =>
     w.placeBlock(0, 0, Block.ISO_BARREL);
     expect(w.canPlace(-3, 5, Block.ISO_HOUSE)).toBe(false); // cobriria o barril
     expect(w.canPlace(-30, 30, Block.ISO_HOUSE)).toBe(true);
-    expect(w.canPlace(25, 0, Block.ISO_HOUSE)).toBe(false); // sairia pelo limite leste (x até 36 > 31)
+    expect(w.canPlace(90, 0, Block.ISO_HOUSE)).toBe(false); // sairia pelo limite leste (x até 101 > 95)
   });
 
   it('enfeites (capim, flores, pedrinhas) deixam andar por cima; árvore e barril bloqueiam', () => {

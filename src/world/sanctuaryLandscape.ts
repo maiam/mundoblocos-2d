@@ -3,6 +3,7 @@ import { type Biome, BIOMES } from './biomes';
 import { Block, type BlockId, FLOWER_BLOCKS } from './blocks';
 import { Noise } from './noise';
 import { hash2 } from './random';
+import { buildFazenda } from './sanctuaryFazenda';
 import { RIO_CANAL, RIO_LAGO } from './rio';
 import type { Cell, TerrainSource } from './terrain';
 
@@ -14,18 +15,21 @@ import type { Cell, TerrainSource } from './terrain';
  * árvore (Carvalho) e arbustos. Relevo em 3 alturas de cubos (1 só na beira, 2 = planície e água rente ao chão, 3 = colinas e passarelas erguidas); toda diferença entre vizinhos é de 1 (o degrau da Deusa).
  * Objetos ficam EM CIMA da pilha (`surfaceObjects`), no nível = altura da coluna.
  */
-export const LANDSCAPE_SEEDS: ReadonlySet<number> = new Set([1835638650]);
+export const LANDSCAPE_SEED = 1835638650;
+/** (v0.93.152) A paisagem é **única**: toda seed do Santuário abre igual a esta (a seed só distingue os salvamentos locais). */
+export const LANDSCAPE_SEEDS: ReadonlySet<number> = new Set([LANDSCAPE_SEED]);
 
 /** Casa de madeira da paisagem (células): piso, 2 níveis de parede e telhado; a porta fica na parede sul (a 3ª célula). */
 export const LANDSCAPE_HUT = { x: -10, y: -14, w: 6, h: 5 } as const;
 
-/** Limites do Santuário (4 × 4 chunks, centrados na origem). */
+/** Limites do Santuário: o bloco original de 4 × 4 chunks (centrado na origem) e, a leste, a Fazenda (mais 4 × 4): 8 × 4 chunks no total. */
 const MIN = -2 * CHUNK_SIZE;
 const SIZE = 4 * CHUNK_SIZE;
 const MAX_LEVELS = 5;
 
-export function landscapeFor(seed: number, ground: BlockId): SanctuaryLandscape | null {
-  return LANDSCAPE_SEEDS.has(seed >>> 0) ? new SanctuaryLandscape(seed, ground) : null;
+/** Paisagem do Santuário: a mesma para qualquer seed (v0.93.152). */
+export function landscapeFor(_seed: number, ground: BlockId): SanctuaryLandscape {
+  return new SanctuaryLandscape(LANDSCAPE_SEED, ground);
 }
 
 type Column = number[];
@@ -34,15 +38,19 @@ export class SanctuaryLandscape implements TerrainSource {
   readonly seed: number;
   /** Coluna de cada célula (índice (y − MIN) · SIZE + (x − MIN)): ids por nível da pilha, do chão para cima. */
   private readonly cols: Column[];
+  /** Colunas da Fazenda (64 × 64, a leste do bloco original). */
+  private readonly farm: Column[];
   private readonly biome: Biome = BIOMES.celestial;
 
   constructor(seed: number, private readonly ground: BlockId) {
     this.seed = seed >>> 0;
     this.cols = buildLandscape(this.seed);
+    this.farm = buildFazenda(this.seed);
   }
 
   private column(x: number, y: number): Column | undefined {
-    if (x < MIN || y < MIN || x >= MIN + SIZE || y >= MIN + SIZE) return undefined;
+    if (x < MIN || y < MIN || y >= MIN + SIZE || x >= MIN + 2 * SIZE) return undefined;
+    if (x >= MIN + SIZE) return this.farm[(y - MIN) * SIZE + (x - MIN - SIZE)];
     return this.cols[(y - MIN) * SIZE + (x - MIN)];
   }
 

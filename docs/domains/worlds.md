@@ -7,7 +7,7 @@
 | `terrain` | procedural (`WorldGenerator`) | **plano em camadas** (`FlatGenerator` com `layers`): chão de grama + **Bloco de Pedra no nível 1** + **Grama no nível 2**; a Deusa e tudo o mais no **nível 3** |
 | quebrar | pela ferramenta (1 s) ou mão (2 s) | **1 s para qualquer bloco** (`breakSeconds`) |
 | objetos | no nível 0 da célula | **em cima da pilha de cubos** (`surfaceObjects`): árvore, cerca, casa… ficam no nível 3 e não contam como altura de piso |
-| `bounds` | ilimitado | **16 chunks = 4×4** (`cx -2..1`, `cy -2..1`) → 64×64 células |
+| `bounds` | ilimitado | **32 chunks = 8×4** (`cx -2..5`, `cy -2..1`) → 128×64 células (v0.93.152: o original `cx -2..1` + a Fazenda `cx 2..5`) |
 | `character` | heroína | **Deusa da Vida** |
 | `blocks` | materiais, objetos, paredes… | **70 peças**: 26 do conjunto isométrico (`ISO_BLOCKS`) + 42 do Mundo como blocos novos (`WORLD_BLOCKS_IN_SANCTUARY`; sem paredes) + 2 pincéis do Rio das Fadas (`RIO_BRUSHES`) —: 4 cubos (3 pisos + Bloco de Pedra) + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
@@ -60,4 +60,4 @@ Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `godde
 - O artefato próprio (`build:artifact:santuario`) e o `?celestial=1` foram **removidos** (v0.93.133, ADR 0036). O Santuário será refeito do zero em vista isométrica (NEXT_STEPS); este perfil (nuvem, 18 blocos celestiais) é o conteúdo a ser substituído.
 - Subdomínio real (`santuario.<domínio>`) exige hospedar o build estático (`dist/`) no domínio — pendente.
 
-- **Paisagem por seed** (v0.93.148, `world/sanctuaryLandscape.ts`): só as seeds de `LANDSCAPE_SEEDS` (hoje 1835638650) têm terreno modelado; `World` troca o `FlatGenerator` por `landscapeFor(seed)` quando `terrain.landscape` está ligado e usa `generateLevels` para os níveis 2..4. Seed fora da lista = terreno plano de sempre. Água = pincéis do rio rentes ao chão (a arte das peças já traz a margem); passarelas erguem 1 cubo.
+- **Paisagem por seed** (v0.93.148, `world/sanctuaryLandscape.ts`): **paisagem única** (v0.93.152, ADR 0037): `landscapeFor` ignora a seed e usa `LANDSCAPE_SEED` (1835638650); `World` troca o `FlatGenerator` por ela quando `terrain.landscape` está ligado e usa `generateLevels` para os níveis 2..7. A **Fazenda** (`sanctuaryFazenda.ts`, heightmap) ocupa `cx 2..5`. Água = pincéis do rio rentes ao chão (a arte das peças já traz a margem); passarelas erguem 1 cubo.
