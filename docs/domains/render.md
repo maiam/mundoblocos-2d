@@ -196,3 +196,4 @@ A forma da estrutura é determinada pelo bloco do **nível 0**, calculando apena
 - Personagens que flutuam (`SheetSpec.float`, hoje a Deusa): quadros em vai-e-volta contínuo, sprite pairando
   com balanço senoidal sub-pixel, sombra no chão que encolhe ao subir.
 
+- **Corte da casa (v0.93.153, Santuário):** `render/three/cutaway.ts` (`computeCutaway`, pura) acha as células cobertas por telhado (cubo a ≥ piso + 2) ligadas à jogadora e `ChunkBlocks.setCutaway` esconde (escala 0) tudo acima do 1º nível de parede nelas; recalculado em `WorldThreeRenderer.updateCutaway`.

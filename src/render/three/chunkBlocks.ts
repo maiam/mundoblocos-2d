@@ -51,7 +51,7 @@ export function stackGeometry(base: number, n: number, levels: number): THREE.Bo
   return g;
 }
 
-interface Group { mesh: THREE.InstancedMesh; cells: BlockCell[] }
+interface Group { mesh: THREE.InstancedMesh; cells: BlockCell[]; shape: CubeShape; hidden: Set<number> }
 interface Build { version: number; groups: Group[] }
 
 /**
@@ -191,9 +191,40 @@ export class ChunkBlocks {
       mesh.frustumCulled = false;
       mesh.userData.cells = cells;
       this.scene.add(mesh);
-      groups.push({ mesh, cells });
+      groups.push({ mesh, cells, shape, hidden: new Set() });
     }
-    return { version: chunk.version, groups };
+    const built = { version: chunk.version, groups };
+    this.applyCut(built);
+    return built;
+  }
+
+  /** Corte da casa (`render/three/cutaway.ts`): célula "x,y" → menor nível escondido; `null` mostra tudo. Esconde as instâncias por escala 0 (o pick as ignora). */
+  private cut: Map<string, number> | null = null;
+  setCutaway(region: Map<string, number> | null): void {
+    const prev = this.cut;
+    this.cut = region;
+    if (!prev && !region) return;
+    for (const build of this.builds.values()) this.applyCut(build);
+  }
+
+  private applyCut(build: Build): void {
+    for (const g of build.groups) {
+      let changed = false;
+      g.cells.forEach((cell, i) => {
+        const min = this.cut?.get(cell.x + ',' + cell.y);
+        const want = min !== undefined && cell.level >= min;
+        if (want === g.hidden.has(i)) return;
+        const t = this.opts.transform({ x: cell.x, y: cell.y, level: cell.level, shape: g.shape, n: cell.n ?? 1 });
+        this.dummy.position.set(t.x, t.y, t.z);
+        this.dummy.rotation.set(0, 0, 0);
+        this.dummy.scale.set(want ? 0 : 1, want ? 0 : 1, want ? 0 : 1);
+        this.dummy.updateMatrix();
+        g.mesh.setMatrixAt(i, this.dummy.matrix);
+        if (want) g.hidden.add(i); else g.hidden.delete(i);
+        changed = true;
+      });
+      if (changed) g.mesh.instanceMatrix.needsUpdate = true;
+    }
   }
 
   private release(build: Build): void {

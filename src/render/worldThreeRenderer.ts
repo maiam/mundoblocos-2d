@@ -60,6 +60,7 @@ import { Particles } from './particles';
 import { skyAt } from './daycycle';
 import { drawBreakingRing, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { selectionRect3d } from './worldSelection';
+import { computeCutaway } from './three/cutaway';
 import { IsoCursor } from './three/isoCursor';
 import { IsoFences } from './three/isoFences';
 import { darkenOutside, drawBeacon } from './dungeonFx';
@@ -286,6 +287,7 @@ export class WorldThreeRenderer implements GameRenderer {
       const rect = cam.visibleChunks(FLOOR_MARGIN);
       this.floor.update(rect);
       this.blocks.update(rect);
+      this.updateCutaway(opts);
       if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
       this.sprites.update(rect);
       this.walls.update(rect);
@@ -384,6 +386,19 @@ export class WorldThreeRenderer implements GameRenderer {
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }
+  }
+
+  private cutawayAt = -1;
+  private cutawayKey = '';
+  /** Corte da casa (só no Santuário, cubos cheios): sob telhado, a construção perde o que passa do 1º nível de parede. Recalcula a cada 0,25 s ou ao mudar de célula. */
+  private updateCutaway(opts: RenderOptions): void {
+    if (!this.world.profile.surfaceObjects || this.world.cubeLevels !== 1) return;
+    const p = opts.player;
+    const key = p.cellX + ',' + p.cellY;
+    if (key === this.cutawayKey && opts.elapsed - this.cutawayAt < 0.25) return;
+    this.cutawayKey = key;
+    this.cutawayAt = opts.elapsed;
+    this.blocks.setCutaway(computeCutaway(this.world, p.cellX, p.cellY));
   }
 
   /** Escuridão com poças de luz pela hora do dia (`opts.time`) e pelo covil (`opts.inDungeon`); dia pleno: nada é desenhado. */
