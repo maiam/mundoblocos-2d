@@ -48,7 +48,7 @@ describe('Vale Goblin do Santuário (v0.93.158, ADR 0038)', () => {
     expect(a).toEqual(b);
     for (const col of a) {
       expect(col.length).toBeLessThanOrEqual(8);
-      for (const id of col) if (id !== Block.AIR) expect(S.blocks.includes(id) || id === Block.TENT_PART || id === Block.CAMPFIRE, `id ${id}`).toBe(true);
+      for (const id of col) if (id !== Block.AIR) expect(S.blocks.includes(id) || id === Block.TENT_PART || id === Block.CAMPFIRE || id === Block.ISO_GOBLIN, `id ${id}`).toBe(true);
     }
   });
 
@@ -64,14 +64,15 @@ describe('Vale Goblin do Santuário (v0.93.158, ADR 0038)', () => {
     expect(w.standHeight(wx(0), wy(0))).toBe(2); // chão do vale
   });
 
-  it('fogueira no lugar do pacote e as 7 posições dos goblins são chão livre e pisável', () => {
+  it('fogueira no lugar do pacote e os 7 goblins (malhas 3D, sólidos) nas posições do pacote, no chão do vale', () => {
     const w = vale();
     const [fx, , fz] = VALE_FOGUEIRA;
     expect(w.getLevel(wx(fx), wy(fz), 2)).toBe(Block.CAMPFIRE);
     for (const [x, , z] of VALE_GOBLINS) {
-      const sh = w.standHeight(wx(x), wy(z));
-      expect(sh, `goblin em ${x},${z}`).not.toBeNull();
-      expect(blockDef(w.getLevel(wx(x), wy(z), sh!)).solid).toBe(false);
+      expect(w.getLevel(wx(x), wy(z), 2), `goblin em ${x},${z}`).toBe(Block.ISO_GOBLIN);
+      expect(w.getLevel(wx(x), wy(z), 1)).not.toBe(Block.AIR); // em cima do chão (planície de 2 cubos)
+      expect(w.standHeight(wx(x), wy(z))).toBeNull(); // sólido
+      expect(blockDef(Block.ISO_GOBLIN).placeable).toBe(false);
     }
   });
 

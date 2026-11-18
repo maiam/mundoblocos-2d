@@ -30,7 +30,7 @@ import type { RenderOptions } from './rendererContract';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { getFxArt, getIsoCauldron, getIsoFence, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { getFxArt, getIsoCauldron, getIsoFence, getIsoGoblin, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
 import { SpriteFx } from './three/spriteFx';
 import { TOOLS } from '../world/items';
 import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, joinsFence, isWaterPlant, type BlockId } from '../world/blocks';
@@ -64,6 +64,7 @@ import { computeCutaway } from './three/cutaway';
 import { IsoCursor } from './three/isoCursor';
 import { IsoFences } from './three/isoFences';
 import { IsoCauldrons } from './three/isoCauldrons';
+import { IsoGoblins } from './three/isoGoblins';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
@@ -105,6 +106,7 @@ export class WorldThreeRenderer implements GameRenderer {
   /** Cercas e portões como malhas 3D (Santuário isométrico); null nos outros mundos. */
   private readonly isoFences: IsoFences | null;
   private readonly isoCauldrons: IsoCauldrons | null;
+  private readonly isoGoblins: IsoGoblins | null;
   private readonly interiorLayer = new THREE.Group();
   private readonly room: InteriorRoom;
   private readonly skyColor: THREE.Color;
@@ -193,6 +195,8 @@ export class WorldThreeRenderer implements GameRenderer {
     this.isoFences = fenceArt ? new IsoFences(this.worldLayer, world, fenceArt.art) : null;
     const cauldronArt = getIsoCauldron();
     // Caldeirão 3D do Santuário: malha do dono do produto com a textura da Pedra Rachada do Mundo (sem sprite)
+    const goblinArt = getIsoGoblin();
+    this.isoGoblins = goblinArt ? new IsoGoblins(this.worldLayer, world, goblinArt) : null; // goblins 3D do Vale (Santuário)
     this.isoCauldrons = cauldronArt ? new IsoCauldrons(this.worldLayer, world, cauldronArt.model, () => this.textures.groundTop.get(Block.STONE_CRACKED)) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
     this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures, world.profile.view === 'isometric'), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
@@ -300,6 +304,7 @@ export class WorldThreeRenderer implements GameRenderer {
       this.gates.update(rect, opts.elapsed);
       this.isoFences?.update(rect, opts.dt);
       this.isoCauldrons?.update(rect);
+      this.isoGoblins?.update(rect);
       this.groundFx.update(view, opts.elapsed);
       this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
@@ -581,8 +586,8 @@ export class WorldThreeRenderer implements GameRenderer {
       this.stage.syncCamera(cam);
       this.stage.aim(cam, sx, sy);
     }
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? []), ...(this.isoCauldrons?.meshes() ?? [])])) {
-      const block = this.isoFences?.cellOf(hit.object) ?? this.isoCauldrons?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? []), ...(this.isoCauldrons?.meshes() ?? []), ...(this.isoGoblins?.meshes() ?? [])])) {
+      const block = this.isoFences?.cellOf(hit.object) ?? this.isoCauldrons?.cellOf(hit.object) ?? this.isoGoblins?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -668,6 +673,7 @@ export class WorldThreeRenderer implements GameRenderer {
     this.isoCursor.dispose();
     this.isoFences?.dispose();
     this.isoCauldrons?.dispose();
+    this.isoGoblins?.dispose();
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();

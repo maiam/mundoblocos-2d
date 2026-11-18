@@ -31,6 +31,8 @@ export interface ArtPack {
   /** Cerca e portão 3D do Santuário isométrico (`scripts/extract-iso-fence.py`, ADR 0036): modelo (geometria), imagem das tábuas e ícones por id de bloco. */
   /** Caldeirão de Pedra 3D do Santuário (`scripts/extract-iso-cauldron.py`): malha e ícone; a textura é a da Pedra Rachada do Mundo. */
   isoCauldron?: { model: import('../three/isoCauldrons').IsoCauldronModel; icon: string };
+  /** Goblin 3D do Vale (`scripts/extract-iso-goblin.py`): malha e cor base do atlas do modelo. */
+  isoGoblin?: { model: import('../three/isoGoblins').IsoGoblinModel; texture: string };
   isoFence?: { model: import('../three/isoFences').IsoFenceModel; wood: string; icons: Partial<Record<number, string>> };
   /** Atlas de paredes por bloco (W3, ADR 0027; `scripts/build-wall-atlas.py`): 16 tampas + 4 frentes. Sem ele, o bloco usa as cores lisas do protótipo. */
   wallAtlases?: Partial<Record<number, string>>;

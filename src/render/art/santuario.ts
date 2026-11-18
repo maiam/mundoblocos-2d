@@ -8,6 +8,8 @@ import isoRio from '../../assets/iso-rio.webp';
 import isoFenceModel from '../../assets/iso-fence-model.json';
 import isoWood from '../../assets/iso-wood.webp';
 import isoCauldronModel from '../../assets/iso-cauldron.json';
+import isoGoblinModel from '../../assets/iso-goblin.json';
+import isoGoblinTexture from '../../assets/iso-goblin.webp';
 import iconCauldron from '../../assets/icon-iso-cauldron.webp';
 import iconFence from '../../assets/icon-block-fence.webp';
 import iconFenceBirch from '../../assets/icon-block-fence-betula.webp';
@@ -59,6 +61,7 @@ const pack: ArtPack = {
   },
   isoSet: { ground: isoGround, cube: isoCube, props: isoProps, stone: isoStone, rio: isoRio, trees: isoTrees, icons },
   isoCauldron: { model: isoCauldronModel, icon: iconCauldron },
+  isoGoblin: { model: isoGoblinModel, texture: isoGoblinTexture },
   isoFence: {
     model: isoFenceModel as IsoFenceModel, wood: isoWood,
     icons: {

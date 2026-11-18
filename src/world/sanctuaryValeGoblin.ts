@@ -1,6 +1,6 @@
 import { Block, ISO_TREE_IDS, ISO_TREE_SET } from './blocks';
 import { hash2 } from './random';
-import { VALE_ALTURAS, VALE_CAVERNA, VALE_FOGUEIRA, VALE_SUPERFICIES } from './valeGoblinData';
+import { VALE_ALTURAS, VALE_CAVERNA, VALE_FOGUEIRA, VALE_GOBLINS, VALE_SUPERFICIES } from './valeGoblinData';
 
 /**
  * Vale Goblin do Santuário (v0.93.158, ADR 0038): o terceiro bloco de 4 × 4 chunks (64 × 64 células), a leste da Fazenda, feito a partir do terreno do dono do produto
@@ -9,7 +9,7 @@ import { VALE_ALTURAS, VALE_CAVERNA, VALE_FOGUEIRA, VALE_SUPERFICIES } from './v
  * Um vale fechado por montanhas (alturas 2–32 no pacote). Conversão para a pilha de 8 níveis do Santuário: o chão do vale (3) é a planície de 2 cubos; os terraços de
  * grama (3–14) sobem de 2 a 6 (relevo comprimido e alisado: vizinhos caminháveis diferem no máximo 1 nível, o degrau da Deusa); a rocha (15–32) vira 7 ou 8 (paredes sem
  * objetos em cima). A caverna da borda sul vira um túnel (piso no nível 3, dois níveis livres, teto de rocha). Objetos: fogueira, duas barracas, caixas e barris no
- * acampamento, lampiões na boca da caverna, árvores, arbustos e pedras. Os 7 goblins ficam só como dados (`VALE_GOBLINS`): o Santuário ainda não tem monstros.
+ * acampamento, lampiões na boca da caverna, árvores, arbustos e pedras. Os 7 goblins do pacote viram `Block.ISO_GOBLIN` (malhas 3D estáticas, v0.93.160).
  */
 export const VALE_N = 64;
 /** Pilha máxima (`SANCTUARY_MAX_STACK`). */
@@ -96,6 +96,9 @@ export function buildValeGoblin(seed: number): Column[] {
   obj[at(camp.r + 2, camp.c + 6)] = Block.ISO_BARREL;
   obj[at(camp.r - 4, camp.c - 5)] = Block.ISO_BARREL;
   for (let dr = -3; dr <= 3; dr++) for (let dc = -3; dc <= 3; dc++) keep[at(camp.r + dr, camp.c + dc)] = 1;
+
+  // Os 7 goblins do pacote, em volta da fogueira (malhas 3D; olham para ela).
+  for (const [gx, , gz] of VALE_GOBLINS) { const i = cell(gx, gz); obj[i] = Block.ISO_GOBLIN; keep[i] = 1; }
 
   // Árvores (carvalho e as 4 espécies × 3 tamanhos), arbustos e pedras no chão de grama livre.
   const free = (r: number, c: number): boolean => ok(r, c) && !rock[at(r, c)] && top[at(r, c)] === Block.GRASS && !keep[at(r, c)] && !obj[at(r, c)] && !custom.has(at(r, c)) && level[at(r, c)] <= MAX_FLOOR;
