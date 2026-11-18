@@ -27,7 +27,7 @@ export interface ArtPack {
    */
   materialsV2?: { atlas: string; manifest: import('../materialsV2').MaterialsV2Manifest; masks?: string };
   /** Conjunto isométrico do Santuário (`scripts/extract-iso-set.py`, ADR 0036): atlas de pisos, faces do bloco de grama, atlas de objetos e ícones por chave da peça. */
-  isoSet?: { ground: string; cube: string; props: string; stone: string; rio: string; icons: Record<string, string> };
+  isoSet?: { ground: string; cube: string; props: string; stone: string; rio: string; /** Árvores (bétula, cerejeira, macieira, carvalho × 3 tamanhos). */ trees?: string; icons: Record<string, string> };
   /** Cerca e portão 3D do Santuário isométrico (`scripts/extract-iso-fence.py`, ADR 0036): modelo (geometria), imagem das tábuas e ícones por id de bloco. */
   isoFence?: { model: import('../three/isoFences').IsoFenceModel; wood: string; icons: Partial<Record<number, string>> };
   /** Atlas de paredes por bloco (W3, ADR 0027; `scripts/build-wall-atlas.py`): 16 tampas + 4 frentes. Sem ele, o bloco usa as cores lisas do protótipo. */

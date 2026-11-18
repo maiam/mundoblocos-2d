@@ -2,6 +2,7 @@ import { TILE } from '../config';
 import { Block, ISO_BIG, ISO_CUBES, ISO_PROPS, ISO_SCALE, type BlockId } from '../world/blocks';
 import { RIO_CANAL, RIO_LAGO, RIO_PIECES, rioVirtualId } from '../world/rio';
 import { ISO_GROUND_ORDER, ISO_PROPS_ATLAS } from './isoSetManifest';
+import { ISO_TREES_ATLAS } from './isoTreesManifest';
 import type { Sprite } from './textures';
 
 /**
@@ -18,6 +19,8 @@ export interface IsoSetImages {
   ground: HTMLImageElement;
   cube: HTMLImageElement;
   props: HTMLImageElement;
+  /** Árvores (`scripts/extract-iso-trees.py`): atlas com a bétula, a cerejeira, a macieira e o carvalho em 3 tamanhos. */
+  trees?: HTMLImageElement;
   /** Bloco de Pedra (`scripts/extract-iso-stone.py`): topo, sul e leste, 3 quadrados de 128 px em 1 linha. */
   stone: HTMLImageElement;
   /** Rio das Fadas (`scripts/extract-iso-rio.py`): topos de 128 px (7 por linha, ordem de `RIO_PIECES`) e, na linha de baixo, as laterais seco / canal / lago. */
@@ -60,7 +63,7 @@ export function isoSetTextures(
   images: IsoSetImages, iconUrls: Readonly<Record<string, string>>,
   groundTop: Map<BlockId, HTMLCanvasElement>, objects: Map<BlockId, Sprite>, icons: Map<BlockId, string>, cubes: Map<BlockId, IsoCubeFaces>,
 ): void {
-  const { ground, cube, props, stone, rio } = images;
+  const { ground, cube, props, stone, rio, trees } = images;
   const tops = new Map<string, HTMLCanvasElement>();
   ISO_GROUND_ORDER.forEach((key, i) => tops.set(key, slice(ground, (i % 5) * FACE, Math.floor(i / 5) * FACE, FACE, FACE)));
   const south = slice(cube, 0, 0, FACE, FACE);
@@ -114,13 +117,14 @@ export function isoSetTextures(
   if (iconUrls['rio-lago']) icons.set(RIO_LAGO, iconUrls['rio-lago']);
   for (const id of ISO_PROPS) {
     const key = ISO_KEY.get(id)!;
-    const r = ISO_PROPS_ATLAS[key];
-    if (!r) continue;
+    const fromTrees = !ISO_PROPS_ATLAS[key] && !!ISO_TREES_ATLAS[key];
+    const r = ISO_PROPS_ATLAS[key] ?? ISO_TREES_ATLAS[key];
+    if (!r || (fromTrees && !trees)) continue;
     const [x, y, w, h] = r;
     const c = document.createElement('canvas');
     c.width = w;
     c.height = h;
-    c.getContext('2d')!.drawImage(props, x, y, w, h, 0, 0, w, h);
+    c.getContext('2d')!.drawImage(fromTrees ? trees! : props, x, y, w, h, 0, 0, w, h);
     const k = ISO_SCALE[id] ?? 1; // a árvore 2×, a casa 4×, a barraca 3× (pedido do dono do produto)
     const pw = (w / ART_PER_CELL_X) * TILE * k, ph = (h / ART_PER_CELL_Y) * TILE * k;
     const cells = ISO_BIG[id]?.size ?? 1; // a casa ocupa 12 × 12 e a barraca 3 × 3
