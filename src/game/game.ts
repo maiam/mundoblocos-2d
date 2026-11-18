@@ -125,6 +125,8 @@ export class Game {
   private heroPicked: StackId | null = null;
   /** Materiais precisam ser coletados neste mundo (perfil). */
   private readonly collect: boolean;
+  /** O toque na tela age (colocar/quebrar) mesmo no celular: Santuário, área de criação. */
+  private readonly touchActs: boolean;
   /** Missões, carteira e painel do personagem ligados (`WorldProfile.progression`; desligado na Sala 2). */
   private readonly progression: boolean;
   readonly drops = new Drops();
@@ -199,6 +201,7 @@ export class Game {
     this.world = new World(seed, profile);
     this.questDefs = questsFor(this.world);
     this.collect = profile.collectBlocks;
+    this.touchActs = profile.id === 'santuario';
     this.isoInput = profile.view === 'isometric';
     this.progression = profile.progression;
     this.hotbar = new Hotbar(profile, (options.save?.hotbar ?? options.net?.bag?.hotbar ?? undefined) as (StackId | null)[] | undefined);
@@ -810,10 +813,10 @@ export class Game {
     }, { passive: false });
 
     // Toque/clique curto = usar. Segurar sobre o mesmo alvo = quebrar.
-    // No celular, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela); no tablet, o toque
+    // No celular, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela); no tablet e no Santuário, o toque
     // na tela age como o clique do computador e o botão de ação também fica.
     this.listen(c, 'pointerdown', (e) => {
-      if (e.pointerType === 'touch' && !this.screenMode?.isTablet) return;
+      if (e.pointerType === 'touch' && !this.screenMode?.isTablet && !this.touchActs) return; // Santuário (criação): o toque na tela também coloca/quebra no celular
       if (this.dialogue.isOpen) { this.dialogue.advance(); return; } // clique no mundo com a conversa aberta: avança
       if (!this.actions.pointerDown(e.pointerId, e.offsetX, e.offsetY)) return;
       try { c.setPointerCapture(e.pointerId); } catch { /* ponteiro já liberado */ }
