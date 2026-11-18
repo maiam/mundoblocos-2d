@@ -59,6 +59,7 @@ export function worldSpriteArt(world: World, textures: BlockTextures, isometric 
 
   return (id, x, y) => {
     if (id === Block.AIR) return null;
+    if (isometric && id === Block.CAULDRON) return null; // o Santuário desenha o caldeirão como malha 3D (`IsoCauldrons`)
     const def = blockDef(id);
     if (def.shape === 'cube' || def.shape === 'wall' || def.shape === 'wall-door') return null;
     if (isGate(id) && textures.gateFrames.size) return null; // porteira animada: `DoorSprites` (instância própria)

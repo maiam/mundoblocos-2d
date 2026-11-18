@@ -4,6 +4,7 @@ import { art } from './art';
 import { setMaterialsV2 } from './materialsV2';
 import type { IsoSetImages } from './isoSet';
 import type { IsoFenceArt } from './three/isoFences';
+import type { IsoCauldronModel } from './three/isoCauldrons';
 
 /**
  * Imagens de blocos carregadas antes do jogo começar (para chão e cubos já nascerem com a arte), a partir do
@@ -18,8 +19,14 @@ let atlas: HTMLImageElement | null = null;
 let oakDoor: HTMLImageElement | null = null;
 /** Conjunto isométrico do Santuário (null nos outros mundos). */
 let isoSet: { images: IsoSetImages; icons: Record<string, string> } | null = null;
+/** Caldeirão 3D do Santuário (malha e ícone), ou null. */
+export function getIsoCauldron(): { model: IsoCauldronModel; icon: string } | null {
+  return isoCauldron;
+}
+
 /** Cerca e portão 3D do Santuário (null nos outros mundos). */
 let isoFence: { art: IsoFenceArt; icons: Partial<Record<number, string>> } | null = null;
+let isoCauldron: { model: IsoCauldronModel; icon: string } | null = null;
 /** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras, blocos decorados e paredes. */
 export interface DungeonArt {
   ground: HTMLImageElement;
@@ -68,6 +75,7 @@ export async function loadBlockArt(): Promise<void> {
   [atlas, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.oakDoor)]);
   isoSet = null;
   isoFence = null;
+  isoCauldron = a.isoCauldron ?? null;
   if (a.isoFence) isoFence = { art: { model: a.isoFence.model, wood: await load(a.isoFence.wood) }, icons: a.isoFence.icons };
   if (a.isoSet) {
     const [ground, cube, props, stone, rio, trees] = await Promise.all([load(a.isoSet.ground), load(a.isoSet.cube), load(a.isoSet.props), load(a.isoSet.stone), load(a.isoSet.rio), maybe(a.isoSet.trees)]);

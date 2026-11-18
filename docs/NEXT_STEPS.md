@@ -405,3 +405,8 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - O rio é reto porque faltam as curvas sul–leste/oeste e os Ts de canal; com essas peças ele pode meandrar (a lista completa está em "Rio das Fadas").
 - Outras seeds com paisagem: acrescentar a seed em `LANDSCAPE_SEEDS` reaproveita o mesmo desenho; para paisagens diferentes por seed, parametrizar `buildLandscape` (posições do lago, rio, casa).
 - Colocar/quebrar blocos nessa seed salva só os chunks editados; limpar o salvamento da seed para ver a paisagem intacta.
+
+## Santuário — Caldeirão 3D (v0.93.157)
+- O GLB veio sem animação, colisor e fogo: o caldeirão é só a malha (o brilho de fogo segue o `glow` do bloco). Fogo/fumaça ou líquido dentro dele são trabalho futuro.
+- Textura: a da Pedra Rachada do Mundo (projeção em caixa, 0,45 célula por repetição); se o dono do produto quiser a pintura do GLB, usar as texturas 2K do pacote.
+- O mesmo caminho (GLB → `extract-*.py` → malha por bloco) serve para a fogueira e o forno.

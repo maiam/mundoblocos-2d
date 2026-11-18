@@ -4,7 +4,7 @@ import { mulberry32 } from '../world/random';
 import { art } from './art';
 import { materialsV2InWorld, transitionMasks, v2Faces, v2GroundTop, v2WaterTop } from './materialsV2';
 import { TRANSITION_PIECES, TRANSITION_RULES, type TransitionRule } from './transitions';
-import { getBlockAtlas, getIsoFence, getIsoSet, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
+import { getBlockAtlas, getIsoCauldron, getIsoFence, getIsoSet, getCraftableSprite, getDungeonArt, getFenceArt, getOakDoorSheet, getChestSprite, getRockArt, getFlowerArt, getTentSprite, getTownImages, getTreeArt, getWaterArt, type TreeArt } from './blockArt';
 import type { CraftableArt } from './art/types';
 import { rgba, shade } from './color';
 import { FENCE_FRAME, FENCE_OFFSET, FENCE_SCALE, GATE_FRAME, GATE_SIDE_FRAME } from './fence';
@@ -748,6 +748,8 @@ export function createBlockTextures(opts: { town?: boolean } = {}): BlockTexture
   // Poste de luz: a lanterna fica pendurada à direita, ~1,6 célula acima do pé.
   // Fogo do caldeirão e do forno fica na base do desenho.
   const glowAt = new Map<BlockId, [number, number]>([[Block.LAMP, [0.32, -1.6]], [Block.CAULDRON, [0, -0.25]], [Block.OVEN, [0, -0.6]]]);
+  const cauldronIcon = getIsoCauldron()?.icon;
+  if (cauldronIcon) icons.set(Block.CAULDRON, cauldronIcon); // Santuário: o ícone do caldeirão 3D (o do Mundo segue o sprite)
   return { groundTop, continuousGround, transitionOver, transitionOnto, groundVariants, water, objects, icons, glowColor, glowAt, bankColor, doorFrames, gateFrames, gateFramesSide, variants, stackDraw, fencePieces, isoCube };
 }
 
