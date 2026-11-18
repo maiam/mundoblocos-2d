@@ -7,6 +7,9 @@
 - **Mapa:** a mata da Fazenda sorteia, por posição, entre o carvalho de sempre e as 12 árvores novas. O bloco original do Santuário não mudou.
 - Conferido no navegador (macieira grande na mata; ícones na hotbar). `tsc` e 685 testes verdes (contagens de peças atualizadas). Sem mudança de save, protocolo ou servidor.
 - Limites: as árvores novas são estáticas (a macieira não dá/colhe maçãs); extração por cor/posição pode deixar pequenas sobras de base — ajustes em `SPECIES` do script.
+## Orvalis v0.93.155 — seleção do objeto: só o contorno (18/11/2026)
+- **Correção (feedback do dono do produto, no iPhone):** o destaque da v0.93.154 pintava o sprite inteiro de amarelo (a cópia "atrás" saía por cima nesse aparelho). Agora é **só o contorno da silhueta**: um plano um pouco maior que o desenho cujo shader pinta apenas os pixels transparentes que têm pixel opaco por perto (`ChunkSprites.setHighlight`), sem véu e sem depender da ordem de desenho. Espessura constante em células (`HL_RADIUS`), cor amarela (válido) ou vermelha (inválido), pulsando de leve.
+- Conferido no navegador (arbusto: contorno fino, desenho intacto). `tsc` e testes verdes. Sem mudança de save, protocolo ou servidor.
 
 ## Orvalis v0.93.154 — Santuário: a seleção destaca o próprio objeto (18/11/2026)
 - **Pedido do dono do produto:** quando o cursor está na célula de um objeto que não é bloco (flor, barril, pedra, árvore, arbusto…), em vez do cubo de seleção, destacar **o próprio objeto**.

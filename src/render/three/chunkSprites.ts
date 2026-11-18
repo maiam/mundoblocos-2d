@@ -169,6 +169,10 @@ interface Build { version: number; groups: Group[]; /** Árvores que balançam (
  * reconstruído só quando `chunk.version` muda (com orçamento por quadro). Objetos sólidos usam `alphaTest` e escrevem
  * profundidade (o personagem some atrás deles); os de passar por cima não escrevem, para nunca cobrir o personagem.
  */
+/** Contorno do objeto: o plano de destaque é HL_PAD vezes maior que o desenho e a espessura vale HL_RADIUS (em células). */
+const HL_PAD = 1.3;
+const HL_RADIUS = 0.05; // células
+
 export class ChunkSprites {
   private readonly builds = new Map<string, Build>();
   private readonly assets = new Map<HTMLCanvasElement, Asset>();
@@ -509,16 +513,18 @@ export class ChunkSprites {
     return cell && spriteHit(hit.point, cell, this.opts.tile, this.opts.k) ? cell : undefined;
   }
 
-  /** Destaque do objeto apontado (silhueta do próprio sprite: halo atrás + véu por cima), no lugar do cubo de seleção. */
-  private hl: { halo: THREE.Mesh; veil: THREE.Mesh; uniforms: Array<{ map: { value: THREE.Texture | null }; color: { value: THREE.Color }; alpha: { value: number } }> } | null = null;
+  /** Destaque do objeto apontado: só o CONTORNO da silhueta do próprio sprite (nada cobre o desenho), no lugar do cubo de seleção. */
+  private hl: { mesh: THREE.Mesh; uniforms: { map: { value: THREE.Texture | null }; color: { value: THREE.Color }; alpha: { value: number }; uPad: { value: number }; uRadius: { value: THREE.Vector2 } } } | null = null;
 
   /**
-   * Destaca o objeto de sprite da célula (flor, barril, pedra, árvore, arbusto, casa…). Devolve `true` se há objeto ali (aí o cursor em cubo não aparece); `null` ou
-   * célula sem objeto apaga o destaque e devolve `false`. `valid` escolhe a cor (amarelo / vermelho). Só mexe na cena.
+   * Destaca o objeto de sprite da célula (flor, barril, pedra, árvore, arbusto, casa…) com um contorno. Devolve `true` se há objeto ali (aí o cursor em cubo não
+   * aparece); `null` ou célula sem objeto apaga o destaque e devolve `false`. `valid` escolhe a cor (amarelo / vermelho). Só mexe na cena.
+   * O contorno é calculado no shader: um plano maior que o desenho pinta só os pixels transparentes que têm pixel opaco por perto — por isso não depende da ordem de
+   * desenho nem da profundidade (em alguns aparelhos a cópia "atrás" saía por cima e pintava o sprite inteiro).
    */
   setHighlight(target: { x: number; y: number; valid: boolean } | null, elapsed = 0): boolean {
     const found = target ? this.findCell(target.x, target.y) : null;
-    if (!found) { if (this.hl) { this.hl.halo.visible = false; this.hl.veil.visible = false; } return false; }
+    if (!found) { if (this.hl) this.hl.mesh.visible = false; return false; }
     const { cell, mesh, index } = found;
     const a = this.asset(cell.sprite);
     if (!this.hl) this.hl = this.makeHighlight();
@@ -526,20 +532,16 @@ export class ChunkSprites {
     const m = new THREE.Matrix4();
     mesh.getMatrixAt(index, m);
     const wc = cell.sprite.w / this.opts.tile, hc = cell.sprite.h / this.opts.tile / this.opts.k;
-    // Halo: cópia maior (em volta do centro do desenho) um fio atrás; véu: o mesmo desenho um fio à frente (na câmera isométrica a frente do plano é o −z local).
-    const grow = new THREE.Matrix4().makeTranslation(wc / 2, hc / 2, 0.004)
-      .multiply(new THREE.Matrix4().makeScale(1.12, 1.1, 1)).multiply(new THREE.Matrix4().makeTranslation(-wc / 2, -hc / 2, 0));
-    hl.halo.geometry = a.geometry; hl.veil.geometry = a.geometry;
-    hl.halo.matrix.copy(m).multiply(grow);
-    hl.veil.matrix.copy(m).multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.004));
-    const col = target!.valid ? 0xffe27a : 0xff6b7d;
-    const pulse = 0.5 + 0.5 * Math.sin(elapsed * 5);
-    for (const u of hl.uniforms) u.color.value.set(col);
-    hl.uniforms[0].alpha.value = 0.95;
-    hl.uniforms[1].alpha.value = 0.16 + 0.12 * pulse;
-    for (const u of hl.uniforms) u.map.value = a.texture;
-    hl.halo.visible = true;
-    hl.veil.visible = true;
+    // O plano cresce HL_PAD em volta do centro do desenho e um fio à frente (o −z local na câmera isométrica); o shader devolve a coordenada do desenho.
+    const grow = new THREE.Matrix4().makeTranslation(wc / 2, hc / 2, -0.004)
+      .multiply(new THREE.Matrix4().makeScale(HL_PAD, HL_PAD, 1)).multiply(new THREE.Matrix4().makeTranslation(-wc / 2, -hc / 2, 0));
+    hl.mesh.geometry = a.geometry;
+    hl.mesh.matrix.copy(m).multiply(grow);
+    hl.uniforms.color.value.set(target!.valid ? 0xffe27a : 0xff6b7d);
+    hl.uniforms.alpha.value = 0.8 + 0.2 * Math.sin(elapsed * 5);
+    hl.uniforms.map.value = a.texture;
+    (hl.uniforms.uRadius.value as THREE.Vector2).set(Math.min(0.1, HL_RADIUS / wc), Math.min(0.1, HL_RADIUS / hc)); // espessura constante na tela (células), não no desenho
+    hl.mesh.visible = true;
     return true;
   }
 
@@ -557,34 +559,40 @@ export class ChunkSprites {
   }
 
   private makeHighlight(): NonNullable<ChunkSprites['hl']> {
-    const uniforms: Array<{ map: { value: THREE.Texture | null }; color: { value: THREE.Color }; alpha: { value: number } }> = [];
-    const make = (order: number): THREE.Mesh => {
-      const u = { map: { value: null as THREE.Texture | null }, color: { value: new THREE.Color(0xffe27a) }, alpha: { value: 1 } };
-      uniforms.push(u);
-      const mat = new THREE.ShaderMaterial({
-        uniforms: u,
-        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-        fragmentShader: 'uniform sampler2D map; uniform vec3 color; uniform float alpha; varying vec2 vUv; void main(){ float a = texture2D(map, vUv).a; if (a < 0.25) discard; gl_FragColor = vec4(color, alpha); }',
-        transparent: true, depthWrite: false, side: THREE.DoubleSide,
-      });
-      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
-      mesh.matrixAutoUpdate = false;
-      mesh.frustumCulled = false;
-      mesh.renderOrder = order;
-      mesh.visible = false;
-      mesh.name = 'Mundo: destaque do objeto';
-      this.scene.add(mesh);
-      return mesh;
-    };
-    const halo = make(-1), veil = make(6); // o halo é desenhado ANTES dos sprites (que podem ser translúcidos e não gravam profundidade): só aparece em volta da silhueta
-    return { halo, veil, uniforms };
+    const uniforms = { map: { value: null as THREE.Texture | null }, color: { value: new THREE.Color(0xffe27a) }, alpha: { value: 1 }, uPad: { value: HL_PAD }, uRadius: { value: new THREE.Vector2(0.02, 0.02) } };
+    const mat = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `
+        uniform sampler2D map; uniform vec3 color; uniform float alpha; uniform float uPad; uniform vec2 uRadius; varying vec2 vUv;
+        float opaqueAt(vec2 uv) { if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0; return texture2D(map, uv).a > 0.3 ? 1.0 : 0.0; }
+        void main() {
+          vec2 uv = (vUv - 0.5) * uPad + 0.5;
+          if (opaqueAt(uv) > 0.5) discard;
+          float near = 0.0;
+          for (int i = 0; i < 16; i++) {
+            float ang = 6.2831853 * float(i) / 16.0;
+            vec2 d = vec2(cos(ang), sin(ang));
+            near = max(near, opaqueAt(uv + d * uRadius));
+            near = max(near, opaqueAt(uv + d * uRadius * 0.5));
+          }
+          if (near < 0.5) discard;
+          gl_FragColor = vec4(color, alpha);
+        }`,
+      transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    mesh.matrixAutoUpdate = false;
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 6;
+    mesh.visible = false;
+    mesh.name = 'Mundo: contorno do objeto';
+    this.scene.add(mesh);
+    return { mesh, uniforms };
   }
 
   dispose(): void {
-    if (this.hl) {
-      for (const m of [this.hl.halo, this.hl.veil]) { this.scene.remove(m); (m.material as THREE.Material).dispose(); }
-      this.hl = null;
-    }
+    if (this.hl) { this.scene.remove(this.hl.mesh); (this.hl.mesh.material as THREE.Material).dispose(); this.hl = null; }
     for (const f of this.falling) { this.scene.remove(f.pivot); f.mat.dispose(); }
     this.falling = [];
     for (const f of this.fading) { this.scene.remove(f.mesh); f.mat.dispose(); }
