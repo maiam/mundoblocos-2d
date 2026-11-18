@@ -13,10 +13,10 @@ export interface IsoCauldronWorld {
 }
 
 /**
- * Fator de tamanho do desenho (pedido do dono do produto, 18/11/2026: metade do tamanho do personagem). A malha tem 1,05 célula de largura e 143 px de altura
- * na tela; a Deusa (do halo aos pés) tem 371 px na mesma câmera, então metade = 185 px = 1,3×.
+ * Fator de tamanho do desenho (pedido do dono do produto, 18/11/2026: 3/4 do tamanho do personagem). A malha tem 1,05 célula de largura e 143 px de altura
+ * na tela; a Deusa (do halo aos pés) tem 371 px na mesma câmera, então 3/4 = 278 px = 1,95×.
  */
-export const CAULDRON_SCALE = 1.3;
+export const CAULDRON_SCALE = 1.95;
 /** Unidades da malha cobertas por UMA repetição da textura de pedra (a UV é projetada pela posição, então não há costura); rachaduras finas, de objeto pequeno. */
 const TEX_CELLS = 0.4;
 /** Giro (rad) do caldeirão: as alças ficam nos lados da tela na câmera isométrica. */
