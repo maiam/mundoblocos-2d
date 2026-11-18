@@ -59,3 +59,58 @@ describe('Goblins do Vale que andam (v0.93.161)', () => {
     expect(g.views(bare)).toHaveLength(0);
   });
 });
+
+describe('Vida social dos goblins (v0.93.165)', () => {
+  it('ao longo de 3 minutos, cada comportamento acontece: caminhar, correr, sentar, mexer na fogueira e conversar (com o parceiro de frente e as falas alternando)', () => {
+    const w = vale();
+    const g = new ValeGoblins(w);
+    const { homes, fire } = valeGoblinHomes();
+    const seen = { run: 0, sit: 0, stoke: 0, chat: 0, speakA: 0, speakB: 0 };
+    for (let t = 0; t < 60 * 180; t++) {
+      g.update(1 / 60, w);
+      for (const [i, gb] of g.goblins.entries()) {
+        expect(Math.hypot(gb.x - homes[i][0], gb.y - homes[i][1]), `goblin ${i} t=${t}`).toBeLessThan(4.7);
+        if (gb.runBlend > 0.6) seen.run++;
+        if (gb.mode === 'sit' && gb.sitBlend > 0.9) seen.sit++;
+        if (gb.mode === 'stoke' && gb.stokeBlend > 0.9) {
+          seen.stoke++;
+          expect(Math.hypot(gb.x - fire[0], gb.y - fire[1])).toBeLessThan(1.6); // perto da fogueira
+        }
+        if (gb.mode === 'chat') {
+          seen.chat++;
+          const o = gb.crew.find((x) => x !== gb && x.mode === 'chat' && Math.hypot(x.x - gb.x, x.y - gb.y) < 2)!;
+          expect(o, `goblin ${i} conversa sozinho`).toBeDefined();
+          if (gb.talkBlend > 0.8) seen.speakA++; else if (gb.talkBlend < 0.5) seen.speakB++;
+        }
+      }
+    }
+    expect(seen.run).toBeGreaterThan(0);
+    expect(seen.sit).toBeGreaterThan(0);
+    expect(seen.stoke).toBeGreaterThan(0);
+    expect(seen.chat).toBeGreaterThan(0);
+    expect(seen.speakA).toBeGreaterThan(0);
+    expect(seen.speakB).toBeGreaterThan(0);
+  });
+
+  it('não ficam um dentro do outro (fora de quem conversa ou está sentado) e o movimento é determinístico', () => {
+    const run = (): string => {
+      const w = vale();
+      const g = new ValeGoblins(w);
+      let minD = 9;
+      for (let t = 0; t < 60 * 60; t++) {
+        g.update(1 / 60, w);
+        if (t > 60 * 5) for (const a of g.goblins) for (const b of g.goblins) if (a.id < b.id && !(a.chatting && b.chatting) && a.sitBlend < 0.3 && b.sitBlend < 0.3) minD = Math.min(minD, Math.hypot(a.x - b.x, a.y - b.y));
+      }
+      expect(minD).toBeGreaterThan(0.25);
+      return g.goblins.map((x) => `${x.x.toFixed(3)},${x.y.toFixed(3)},${x.mode}`).join('|');
+    };
+    expect(run()).toBe(run());
+  });
+
+  it('as visões trazem as misturas de pose (sentar, agachar, falar, correr, olhar)', () => {
+    const w = vale();
+    const g = new ValeGoblins(w);
+    const v = g.views(w)[0];
+    for (const k of ['walk', 'run', 'phase', 'sit', 'stoke', 'talk', 'look'] as const) expect(typeof v[k]).toBe('number');
+  });
+});

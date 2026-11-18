@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Goblin 3D do Vale com rig (v0.93.161): `assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb` (Blender: malha única de 3455 vértices, esqueleto de 26 ossos (com orelhas), palmas e juntas melhoradas, atlas PBR 2K) → malha com pesos de pele,
+"""Goblin 3D do Vale com rig (v0.93.161): `assets-src/iso-set/goblin/Goblin_Orvalis_Pintura_Vibrante.glb` (Blender: malha única de 3455 vértices, esqueleto de 26 ossos (com orelhas), pintura vibrante, atlas PBR 2K) → malha com pesos de pele,
 ossos e textura de cor.
 
 O Santuário monta uma `THREE.SkinnedMesh` por goblin (`render/three/isoGoblins.ts`) e anda os ossos por código (`goblinPose.ts`: ciclo de caminhada procedural); a animação de teste do
@@ -18,7 +18,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb'
+SRC = ROOT / 'assets-src/iso-set/goblin/Goblin_Orvalis_Pintura_Vibrante.glb'
 d = SRC.read_bytes()
 _, _, total = struct.unpack('<III', d[:12])
 off, chunks = 12, []

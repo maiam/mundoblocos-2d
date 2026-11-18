@@ -1,5 +1,21 @@
 # Changelog
 
+## Orvalis v0.93.165 — Santuário: goblins com movimento fluido e vida social (18/11/2026)
+- **Pedido do dono do produto:** movimento mais fluido na caminhada e socialização entre os goblins (sentar e abaixar, mexer na fogueira, correr) e melhorar a posição parado (braços abertos da pose A do modelo).
+- **Pose (`render/three/goblinPose.ts`):** `pose(bones, GoblinPoseParams, time)` com `walk`, `run`, `sit`, `stoke`, `talk` e `look`. Braços agora pendem junto do corpo também parado (a pose A tem os braços ~33° abaixo da horizontal: descem ~0,9 rad, ombros caem um pouco); respiração, balanço de peso e olhar. Caminhada mais fluida: joelho dobra com curva suave (sem corte), balanço do corpo corrigido (sobe com as pernas juntas), pé acompanha o chão, balanço lateral do quadril. **Corrida:** passada e braços maiores, cotovelos a 90°, tronco inclinado. **Sentado:** joelhos para cima, pés planos, mãos nos joelhos. **Agachado:** coxa na horizontal, braço direito cutuca a fogueira. **Conversa:** falando gesticula com os braços e a cabeça; ouvindo acena.
+- **Comportamento (`game/valeGoblins.ts`):** máquina de estados por goblin (parado, caminhar/correr até um ponto com ação ao chegar, sentar, agachar, esperar visitante, conversar), sempre dentro de 4 células do nascimento e no mesmo nível; só um goblin mexe na fogueira por vez; a conversa é combinada entre dois vizinhos livres (o visitante vem, o outro espera e se vira; alternam falas por temporizador; abortam se um trava); aceleração/freada suaves, giro suave e **separação** entre goblins. Tudo determinístico pela semente. `GoblinView` ganhou `run/sit/stoke/talk/look`.
+- Testes novos (poses: braços pendendo, sentar/agachar com pés no chão, cutucar, corrida, gesto, olhar; comportamento: todos os estados ocorrem em 3 min, conversas sempre em par, sem sobreposição, determinismo). `tsc` e 710 testes verdes; poses conferidas no navegador (frente e perfil). Sem mudança de save/protocolo; `package.json` 0.93.165.
+
+## Orvalis v0.93.164 — Santuário: goblin com pintura vibrante (18/11/2026)
+- **Pedido do dono do produto:** atualizar o pacote de texturas do goblin para a **pintura vibrante** (`Goblin_Orvalis_Pintura_Vibrante.glb`: mesma malha de 3455 vértices e mesmo rig de 26 ossos; só muda a cor base 2K — verde mais vivo, calça roxa; ORM e normal não são usados, a cena não tem luzes).
+- `scripts/extract-iso-goblin.py` lê o GLB novo (`assets-src/iso-set/goblin/`, substitui o `Refinado`; `Prancha_pintura_vibrante.png` fica como referência) e regera `iso-goblin.json`/`iso-goblin.webp` (165 KB). Nenhum código mudou.
+- `tsc` e testes verdes; conferido no navegador. Sem mudança de save/protocolo; `package.json` 0.93.164.
+
+## Orvalis v0.93.163 — Santuário: goblin refinado (18/11/2026)
+- **Pedido do dono do produto:** trocar o goblin pelo **modelo refinado** (`Goblin_Orvalis_Refinado.glb`; o pacote traz também o `.blend` da escultura de acabamento, não usado no jogo).
+- Mesmo rig (26 ossos) e mesma malha de jogo (3455 vértices, 3000 triângulos): troca direta — `scripts/extract-iso-goblin.py` agora lê `assets-src/iso-set/goblin/Goblin_Orvalis_Refinado.glb` (substitui o `Goblin_Orvalis_Palmas.glb`) e regera `iso-goblin.json`/`iso-goblin.webp`; o `Comparativo_refinado.png` fica ao lado como referência. Nenhum código de render/caminhada mudou.
+- `tsc` e 701 testes verdes; conferido no navegador (goblins do Vale com o visual novo). Sem mudança de save/protocolo; `package.json` 0.93.163.
+
 ## Orvalis v0.93.162 — Santuário: goblin com palmas e juntas melhoradas (18/11/2026)
 - **Pedido do dono do produto:** trocar o goblin pela versão com **palmas das mãos e juntas melhoradas** (`Goblin_Orvalis_Palmas.glb`: mesma malha de 3455 vértices e 3000 triângulos, agora com **26 ossos**: entraram as orelhas, `ear_base`/`ear_tip` L e R; palmas voltadas para as coxas na pose A).
 - `scripts/extract-iso-goblin.py` lê o GLB novo (`assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb`, no lugar do anterior) e regera `iso-goblin.json` (263 KB) e `iso-goblin.webp`; o script passou a achar os nós do esqueleto e da malha pelo nome (os índices mudaram).
