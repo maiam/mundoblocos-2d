@@ -1,0 +1,19 @@
+ORVALIS — Caldeirao de pedra — v1
+Reconstrucao interpretada da referencia aprovada, Blender 4.3.2.
+
+QuadriFlow executado com target_faces=3000.
+Resultado: 2757 faces quadrangulares / 5514 triangulos no GLB.
+Base anterior a retopologia: 30788 faces, preservada em Caldeirao_Base.blend.
+Interior oco, borda grossa, duas alcas e tres pes unidos a malha.
+A imagem unica nao determina as partes ocultas: essas regioes foram inferidas.
+
+Texturas 2048x2048: BaseColor, Roughness, Normal OpenGL, Emission (preto).
+Metallic=0. A cor usa amostras da imagem fornecida, redistribuidas pela UV.
+A textura nao e uma recuperacao exata da pintura de cada ponto da imagem.
+Rugosidade e relevo normal sao sinteticos, nao propriedades medidas da pedra.
+Ha iluminacao pintada residual nas amostras. Nao foram geradas texturas 4K.
+
+GLB: texturas embutidas. BLEND: texturas empacotadas e cameras de previa.
+Previa, costas e lateral: renders reais do modelo, fundo transparente.
+Sem animacao, colisores ou teste no motor Three.js do projeto.
+Script build.py incluido; ajustar caminho da imagem para executar em outra maquina.
