@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.93.153 — Santuário: o telhado some quando você entra na casa (18/11/2026)
+- **Pedido do dono do produto:** numa casa totalmente fechada, ao entrar o telhado some (ou fica transparente) para ver o interior.
+- **Regra do corte** (`render/three/cutaway.ts`, função pura): se há um cubo a **2 níveis ou mais acima do piso** onde a jogadora pisa (telhado sobre a cabeça), a construção inteira — as células ligadas que têm telhado, paredes incluídas — **esconde tudo acima do 1º nível de parede** (piso + 1 fileira de parede ficam, porta incluída). Ao sair (ou ao subir no telhado), tudo volta.
+- `ChunkBlocks.setCutaway(região)` esconde as instâncias por escala 0 (o `pick`/seleção as ignora) e reaplica quando um chunk é refeito; `WorldThreeRenderer.updateCutaway` recalcula ao mudar de célula ou a cada 0,25 s. **Só no Santuário** (cubos cheios, `surfaceObjects`); o Mundo normal não muda.
+- Conferido no navegador (fora: casa fechada; dentro: telhado e paredes altas somem; ao sair volta). Teste novo (`cutaway.test.ts`); `tsc` e testes verdes. Sem mudança de save, protocolo ou servidor.
+- Limites: o corte é instantâneo (sem fade); objetos de sprite em cima do telhado (árvores, lampiões) e cercas/portões 3D não são escondidos; cobre qualquer coisa com cubo a 2+ níveis sobre a cabeça (ex.: arco ou ponte alta).
+
 ## Orvalis v0.93.152 — Santuário: paisagem única e Fazenda do heightmap (18/11/2026)
 - **Decisão do dono do produto (ADR 0037):** a paisagem da seed 1835638650 passa a ser **única** (toda seed do Santuário abre igual; a seed só distingue os salvamentos locais) e o mundo ganha **mais 16 chunks a leste** (8 × 4 = 32 chunks, 128 × 64 células) feitos de um **heightmap**.
 - **Fazenda** (`world/sanctuaryFazenda.ts` + `world/fazendaData.ts`, gerado por `scripts/make-fazenda-data.py` de `assets-src/santuario-fazenda`): terreno em até 7 cubos (planície no nível 2, patamares 4/6/7), rio escavado com o pincel Lago (376 células, degraus de água na queda), margens de areia, ponte, pátio, duas casas, cinco áreas cercadas com Terra Arada e culturas maduras (trigo, tomate, cenoura, batata; talhão só preparado), árvores, arbustos e flores.
