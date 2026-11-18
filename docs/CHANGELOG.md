@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.93.163 — Santuário: goblin refinado (18/11/2026)
+- **Pedido do dono do produto:** trocar o goblin pelo **modelo refinado** (`Goblin_Orvalis_Refinado.glb`; o pacote traz também o `.blend` da escultura de acabamento, não usado no jogo).
+- Mesmo rig (26 ossos) e mesma malha de jogo (3455 vértices, 3000 triângulos): troca direta — `scripts/extract-iso-goblin.py` agora lê `assets-src/iso-set/goblin/Goblin_Orvalis_Refinado.glb` (substitui o `Goblin_Orvalis_Palmas.glb`) e regera `iso-goblin.json`/`iso-goblin.webp`; o `Comparativo_refinado.png` fica ao lado como referência. Nenhum código de render/caminhada mudou.
+- `tsc` e 701 testes verdes; conferido no navegador (goblins do Vale com o visual novo). Sem mudança de save/protocolo; `package.json` 0.93.163.
+
 ## Orvalis v0.93.162 — Santuário: goblin com palmas e juntas melhoradas (18/11/2026)
 - **Pedido do dono do produto:** trocar o goblin pela versão com **palmas das mãos e juntas melhoradas** (`Goblin_Orvalis_Palmas.glb`: mesma malha de 3455 vértices e 3000 triângulos, agora com **26 ossos**: entraram as orelhas, `ear_base`/`ear_tip` L e R; palmas voltadas para as coxas na pose A).
 - `scripts/extract-iso-goblin.py` lê o GLB novo (`assets-src/iso-set/goblin/Goblin_Orvalis_Palmas.glb`, no lugar do anterior) e regera `iso-goblin.json` (263 KB) e `iso-goblin.webp`; o script passou a achar os nós do esqueleto e da malha pelo nome (os índices mudaram).
