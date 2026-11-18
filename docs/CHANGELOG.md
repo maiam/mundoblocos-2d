@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.93.155 — seleção do objeto: só o contorno (18/11/2026)
+- **Correção (feedback do dono do produto, no iPhone):** o destaque da v0.93.154 pintava o sprite inteiro de amarelo (a cópia "atrás" saía por cima nesse aparelho). Agora é **só o contorno da silhueta**: um plano um pouco maior que o desenho cujo shader pinta apenas os pixels transparentes que têm pixel opaco por perto (`ChunkSprites.setHighlight`), sem véu e sem depender da ordem de desenho. Espessura constante em células (`HL_RADIUS`), cor amarela (válido) ou vermelha (inválido), pulsando de leve.
+- Conferido no navegador (arbusto: contorno fino, desenho intacto). `tsc` e testes verdes. Sem mudança de save, protocolo ou servidor.
+
 ## Orvalis v0.93.154 — Santuário: a seleção destaca o próprio objeto (18/11/2026)
 - **Pedido do dono do produto:** quando o cursor está na célula de um objeto que não é bloco (flor, barril, pedra, árvore, arbusto…), em vez do cubo de seleção, destacar **o próprio objeto**.
 - `ChunkSprites.setHighlight(alvo)`: desenha a **silhueta do próprio sprite** — um halo (cópia maior, desenhada antes dos sprites, só aparece em volta) e um véu pulsante por cima — em amarelo (alvo válido) ou vermelho (inválido). `WorldThreeRenderer` chama antes do cursor 3D e passa `objectHighlighted` ao `IsoCursor`, que então não mostra o cubo. Células sem objeto continuam com o cubo.
