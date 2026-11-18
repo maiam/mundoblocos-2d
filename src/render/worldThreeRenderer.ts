@@ -333,7 +333,10 @@ export class WorldThreeRenderer implements GameRenderer {
     this.ripples?.update(opts.dt, skyAt(opts.time).night);
     // Câmera isométrica (azimute 45°): os planos dos atores encaram a câmera (sem isso saem achatados em 0,71).
     this.actors.setYaw(this.sanctuaryCameras?.current === 'isometrico' ? Math.PI / 4 : 0);
-    this.isoCursor.update(opts, this.sanctuaryCameras?.current === 'isometrico');
+    const isoOn = this.sanctuaryCameras?.current === 'isometrico';
+    const target = isoOn ? opts.hover ?? opts.focus : null;
+    const onObject = this.sprites.setHighlight(target && this.world.inBounds(target.x, target.y) ? target : null, opts.elapsed);
+    this.isoCursor.update(opts, isoOn, onObject);
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
