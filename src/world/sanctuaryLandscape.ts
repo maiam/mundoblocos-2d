@@ -4,6 +4,7 @@ import { Block, type BlockId, FLOWER_BLOCKS } from './blocks';
 import { Noise } from './noise';
 import { hash2 } from './random';
 import { buildFazenda } from './sanctuaryFazenda';
+import { buildValeGoblin } from './sanctuaryValeGoblin';
 import { RIO_CANAL, RIO_LAGO } from './rio';
 import type { Cell, TerrainSource } from './terrain';
 
@@ -22,7 +23,11 @@ export const LANDSCAPE_SEEDS: ReadonlySet<number> = new Set([LANDSCAPE_SEED]);
 /** Casa de madeira da paisagem (células): piso, 2 níveis de parede e telhado; a porta fica na parede sul (a 3ª célula). */
 export const LANDSCAPE_HUT = { x: -10, y: -14, w: 6, h: 5 } as const;
 
-/** Limites do Santuário: o bloco original de 4 × 4 chunks (centrado na origem) e, a leste, a Fazenda (mais 4 × 4): 8 × 4 chunks no total. */
+/**
+ * Limites do Santuário (v0.93.159): o bloco original de 4 × 4 chunks (centrado na origem), a leste dele a Fazenda e, ao NORTE do original, o Vale Goblin (4 × 4 cada), de modo
+ * que a plataforma da caverna do vale (borda sul do bloco, x 8..11) encosta na borda norte do original. O retângulo de limites (8 × 8 chunks) tem um canto sem bloco
+ * (x 32..95, y −96..−33, ao norte da Fazenda): lá o chão é VOID (céu aberto: não pisável, não aceita bloco).
+ */
 const MIN = -2 * CHUNK_SIZE;
 const SIZE = 4 * CHUNK_SIZE;
 const MAX_LEVELS = 5;
@@ -40,22 +45,27 @@ export class SanctuaryLandscape implements TerrainSource {
   private readonly cols: Column[];
   /** Colunas da Fazenda (64 × 64, a leste do bloco original). */
   private readonly farm: Column[];
+  /** Colunas do Vale Goblin (64 × 64, a leste da Fazenda). */
+  private readonly vale: Column[];
   private readonly biome: Biome = BIOMES.celestial;
 
   constructor(seed: number, private readonly ground: BlockId) {
     this.seed = seed >>> 0;
     this.cols = buildLandscape(this.seed);
     this.farm = buildFazenda(this.seed);
+    this.vale = buildValeGoblin(this.seed);
   }
 
   private column(x: number, y: number): Column | undefined {
-    if (x < MIN || y < MIN || y >= MIN + SIZE || x >= MIN + 2 * SIZE) return undefined;
+    if (x < MIN || x >= MIN + 2 * SIZE || y < MIN - SIZE || y >= MIN + SIZE) return undefined;
+    if (y < MIN) return x < MIN + SIZE ? this.vale[(y - MIN + SIZE) * SIZE + (x - MIN)] : undefined; // ao norte: o Vale Goblin (e o canto vazio)
     if (x >= MIN + SIZE) return this.farm[(y - MIN) * SIZE + (x - MIN - SIZE)];
     return this.cols[(y - MIN) * SIZE + (x - MIN)];
   }
 
   cellAt(x: number, y: number): Cell {
     const c = this.column(x, y);
+    if (!c) return { ground: Block.VOID, object: Block.AIR, upper: Block.AIR }; // fora dos blocos (o canto vazio dentro dos limites): céu aberto
     return { ground: this.ground, object: (c?.[0] ?? Block.AIR) as BlockId, upper: (c?.[1] ?? Block.AIR) as BlockId };
   }
   groundAt(): BlockId { return this.ground; }
@@ -64,10 +74,10 @@ export class SanctuaryLandscape implements TerrainSource {
   biomeAt(): Biome { return this.biome; }
 
   generateChunk(cx: number, cy: number, ground: Uint8Array, objects: Uint8Array, upper: Uint8Array): void {
-    ground.fill(this.ground, 0, CHUNK_SIZE * CHUNK_SIZE);
     for (let ly = 0; ly < CHUNK_SIZE; ly++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
         const c = this.cellAt(cx * CHUNK_SIZE + lx, cy * CHUNK_SIZE + ly);
+        ground[ly * CHUNK_SIZE + lx] = c.ground;
         objects[ly * CHUNK_SIZE + lx] = c.object;
         upper[ly * CHUNK_SIZE + lx] = c.upper;
       }
@@ -199,6 +209,9 @@ function buildLandscape(seed: number): Column[] {
       else if (hash2(seed, x, y) < 0.7) p.obj[i] = FLOWER_BLOCKS[Math.floor(hash2(seed ^ 0x77, x >> 1, y >> 1) * 4) + 3];
     }
   }
+
+  // Passagem até a caverna do Vale Goblin (ao norte, x 8..11): sem árvores, arbustos nem flores na faixa junto à borda norte.
+  for (let y = MIN; y < MIN + 6; y++) for (let x = 6; x <= 13; x++) p.keep[idx(x, y)] = 1;
 
   // 7. Árvores (Carvalho), arbustos e flores nas cells livres de grama (planície e colinas).
   const grass = (x: number, y: number): boolean => {
