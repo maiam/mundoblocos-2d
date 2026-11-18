@@ -23,8 +23,22 @@ export interface GoblinPoseParams {
   talk: number;
   /** Giro da cabeça em relação ao corpo (rad, + = para a esquerda do goblin). */
   look: number;
+  /** Postura de luta (v0.93.166): agachado de leve, adaga à frente, braço esquerdo em guarda. */
+  fight: number;
+  /** Golpe de adaga: progresso 0 … 1 (armar → golpear → recuperar); negativo = sem golpe. */
+  swing: number;
+  /** Defesa (aparar com a adaga) 0 … 1. */
+  parry: number;
 }
-export const REST_POSE: GoblinPoseParams = { phase: 0, walk: 0, run: 0, sit: 0, stoke: 0, talk: 0, look: 0 };
+export const REST_POSE: GoblinPoseParams = { phase: 0, walk: 0, run: 0, sit: 0, stoke: 0, talk: 0, look: 0, fight: 0, swing: -1, parry: 0 };
+/** Instantes do golpe (fração do ciclo `swing`): fim do armar, instante do impacto e fim do avanço. */
+export const SWING_WINDUP = 0.35, SWING_HIT = 0.5, SWING_END = 0.58;
+/** Interpola três tempos do golpe: `a` = postura, `b` = armado, `c` = fim do avanço; volta a `a` ao recuperar. */
+function seg(u: number, a: number, b: number, c: number): number {
+  if (u < SWING_WINDUP) return lerp(a, b, ease(u / SWING_WINDUP));
+  if (u < SWING_END) { const t = (u - SWING_WINDUP) / (SWING_END - SWING_WINDUP); return lerp(b, c, 1 - (1 - t) ** 3); }
+  return lerp(c, a, ease((u - SWING_END) / (1 - SWING_END)));
+}
 
 // Amplitudes (rad) e altura do balanço (unidades do modelo, altura 2,0). Eixos do modelo: x = lateral, y = para cima, frente = +z.
 const THIGH = 0.5, THIGH_RUN = 0.85;
@@ -73,6 +87,11 @@ export class GoblinPoser {
     this.global = bones.map(() => new THREE.Quaternion());
   }
 
+  /** Rotação global (espaço do modelo) do osso `name` na última `pose`. */
+  globalRotation(name: string): THREE.Quaternion {
+    return this.global[this.id(name)];
+  }
+
   /** Posição de repouso (espaço do modelo) do osso `name`. */
   restPosition(name: string): THREE.Vector3 {
     return this.restPos[this.index.get(name)!];
@@ -90,7 +109,8 @@ export class GoblinPoser {
    */
   pose(bones: readonly THREE.Bone[], p: Partial<GoblinPoseParams>, time: number): void {
     const n = this.bones.length;
-    const { phase, walk, run } = { ...REST_POSE, ...p };
+    const { phase, walk, run, fight, swing, parry } = { ...REST_POSE, ...p };
+    const sw = swing >= 0 ? swing : 0, swinging = swing >= 0 ? 1 : 0;
     const sit = ease(p.sit ?? 0), stoke = ease(p.stoke ?? 0), talk = p.talk ?? 0, look = p.look ?? 0;
     const sL = Math.sin(phase), sR = -sL;
     const cL = Math.cos(phase), cR = -cL;
@@ -112,7 +132,8 @@ export class GoblinPoser {
     add('pelvis', rz(0.03 * Math.cos(phase) * walk + 0.02 * sway * still));
     add('spine', ry(-tw * 1.4));
     add('spine', rz(-0.03 * Math.cos(phase) * walk - 0.015 * sway * still));
-    add('spine', rx(lean * 0.6 + 0.16 * sit + 0.34 * stoke));
+    add('spine', rx(lean * 0.6 + 0.16 * sit + 0.34 * stoke + fight * (0.08 + (swinging ? seg(sw, 0, -0.05, 0.28) : 0) - 0.12 * parry)));
+    add('spine', ry(fight * (swinging ? seg(sw, 0.15, -0.65, 0.55) : 0.15 - 0.2 * parry)));
     add('chest', rx(lean * 0.4 - 0.02 * breathe * (1 - walk) + 0.06 * sit + 0.12 * stoke));
     // pescoço e cabeça: compensam a inclinação (o olhar segue em frente), olham para o lado `look` e acenam/gesticulam ao conversar
     add('neck', rx(-(lean * 0.5 + 0.1 * sit + 0.2 * stoke)));
@@ -138,6 +159,10 @@ export class GoblinPoser {
       // sentado (joelhos para cima, pés planos) e agachado (coxa na horizontal, canela na vertical)
       const sd = this.side[this.id(`thigh.${leg}`)];
       add(`thigh.${leg}`, rx(-1.85 * sit - 1.55 * stoke));
+      // luta: pernas semiflexionadas, a esquerda à frente; no golpe, avanço de passo
+      const lead = leg === 'L' ? 1 : -1;
+      add(`thigh.${leg}`, rx(fight * (-0.3 - 0.12 * lead + (swinging ? lead * seg(sw, 0, 0.1, -0.35) : 0))));
+      add(`shin.${leg}`, rx(fight * (0.45 + (swinging ? seg(sw, 0, 0.1, 0.2) : 0))));
       add(`thigh.${leg}`, rz(sd * 0.1 * sit));
       add(`shin.${leg}`, rx(0.75 * sit + 1.55 * stoke));
       add(`foot.${leg}`, rx(1.1 * sit));
@@ -146,12 +171,25 @@ export class GoblinPoser {
       const armSwing = armA * s * walk;
       const g1 = 0.5 + 0.5 * Math.sin(time * 3.1 + (spk ? 0 : 2)), g2 = 0.5 + 0.5 * Math.sin(time * 4.3 + (spk ? 1 : 3));
       const gest = talk > 0.6 ? talk * (spk ? 1 : 0.55) : 0; // fala com os dois braços, o esquerdo mais
-      const down = ARM_DOWN * (1 - 0.3 * gest * g2);
-      const fwd = 0.1 + 0.55 * gest * (0.4 + 0.6 * g1) + 0.38 * sit + (leg === 'R' ? 1.25 * stoke : 0.35 * stoke);
+      // golpe: o braço direito abre para a direita ao armar (menos descida) e cruza o corpo ao golpear
+      const down = ARM_DOWN * (1 - 0.3 * gest * g2) * (leg === 'R' && swinging ? lerp(1, seg(sw, 1, 0.35, 1.1), fight) : 1);
+      let fwd = 0.1 + 0.55 * gest * (0.4 + 0.6 * g1) + 0.38 * sit + (leg === 'R' ? 1.25 * stoke : 0.35 * stoke);
+      let elb = 0;
+      if (fight > 0) {
+        // braço direito: adaga à frente (golpe: arma para cima e para trás, desce à frente); esquerdo: guarda
+        if (leg === 'R') {
+          const stance = 0.7 + 0.6 * parry;
+          fwd = lerp(fwd, swinging ? seg(sw, stance, -2.3, 1.55) : stance, fight);
+          elb = fight * (swinging ? seg(sw, 0.95, 1.3, 0.3) : 0.95 + 0.5 * parry);
+        } else {
+          fwd = lerp(fwd, swinging ? seg(sw, 0.9, 0.5, 0.1) : 0.9, fight);
+          elb = fight * 1.2;
+        }
+      }
       add(`clavicle.${leg}`, rz(-side * 0.12));
       add(`upper_arm.${leg}`, rx(armSwing - fwd).multiply(rz(-side * down)));
       const poke = leg === 'R' ? 0.4 * Math.sin(time * 6.5) : 0;
-      add(`forearm.${leg}`, rx(-(0.3 * (1 - walk) * (1 - sit) + elbowA * walk + 0.25 * Math.max(0, -armSwing) + 0.55 * gest * (0.5 + 0.5 * g2) + 0.6 * sit + (0.55 + poke) * stoke * (leg === 'R' ? 1 : 0.6))));
+      add(`forearm.${leg}`, rx(-(0.3 * (1 - walk) * (1 - sit) + elbowA * walk + 0.25 * Math.max(0, -armSwing) + 0.55 * gest * (0.5 + 0.5 * g2) + 0.6 * sit + (0.55 + poke) * stoke * (leg === 'R' ? 1 : 0.6) + elb)));
     }
 
     for (let i = 0; i < n; i++) {
@@ -169,6 +207,7 @@ export class GoblinPoser {
     const root = bones[0];
     root.position.fromArray(this.bones[0].t);
     root.position.y += lerp(BOB, BOB_RUN, run) * Math.cos(2 * phase) * walk - 0.025 * run * walk + 0.006 * breathe * still - 0.52 * sit - 0.28 * stoke;
-    root.position.z += -0.14 * sit - 0.08 * stoke;
+    root.position.z += -0.14 * sit - 0.08 * stoke + fight * ((swinging ? seg(sw, 0, -0.05, 0.16) : 0) - 0.05 * parry);
+    root.position.y -= fight * 0.07;
   }
 }

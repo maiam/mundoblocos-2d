@@ -32,7 +32,7 @@ export interface ArtPack {
   /** Caldeirão de Pedra 3D do Santuário (`scripts/extract-iso-cauldron.py`): malha e ícone; a textura é a da Pedra Rachada do Mundo. */
   isoCauldron?: { model: import('../three/isoCauldrons').IsoCauldronModel; icon: string };
   /** Goblin 3D do Vale (`scripts/extract-iso-goblin.py`): malha com pele, esqueleto e cor base do atlas do modelo. */
-  isoGoblin?: { rig: import('../three/isoGoblins').IsoGoblinRig; texture: string };
+  isoGoblin?: { rig: import('../three/isoGoblins').IsoGoblinRig; texture: string; /** Adaga da mão direita (`scripts/extract-iso-dagger.py`). */ dagger?: import('../three/isoGoblins').IsoDaggerMesh };
   isoFence?: { model: import('../three/isoFences').IsoFenceModel; wood: string; icons: Partial<Record<number, string>> };
   /** Atlas de paredes por bloco (W3, ADR 0027; `scripts/build-wall-atlas.py`): 16 tampas + 4 frentes. Sem ele, o bloco usa as cores lisas do protótipo. */
   wallAtlases?: Partial<Record<number, string>>;
