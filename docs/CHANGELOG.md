@@ -1,11 +1,11 @@
 # Changelog
 
-## Orvalis v0.93.149 — Santuário: Caldeirão de Pedra 3D (18/11/2026)
+## Orvalis v0.93.157 — Santuário: Caldeirão de Pedra 3D (18/11/2026)
 - **Pedido do dono do produto:** incluir no Santuário o caldeirão novo (GLB do Blender, 2757 quadriláteros, 3 pés e 2 alças) no lugar do que já havia, com a textura da **Pedra Rachada**.
 - `scripts/extract-iso-cauldron.py`: `assets-src/iso-set/caldeirao/Caldeirao_Orvalis_3k.glb` → `src/assets/iso-cauldron.json` (2755 vértices fundidos, 5514 triângulos, 132 KB; em células, base em 0, 1,05 de largura com as alças). A textura pintada do GLB não é usada.
 - `render/three/isoCauldrons.ts` (`IsoCauldrons`, como `IsoFences`): uma malha por caldeirão, no nível da pilha em que está; textura = a da Pedra Rachada do Mundo (`textures.groundTop`), UV por projeção em caixa (sem costura), sombreado fixo por normal (a cena não tem luzes). O sprite do Mundo some no Santuário (`worldSpriteArt`); seleção/quebra seguem pela célula (`cellOf`). Regras (estação de cozinha, luz do fogo, blocos) não mudaram: continua o `Block.CAULDRON`.
 - Ícone novo (`icon-iso-cauldron.webp`, renderizado da própria malha) só no Santuário; o Mundo segue com o sprite.
-- `tsc` e testes verdes (novo: `isoCauldrons.test.ts`); conferido no navegador. Sem mudança de save/protocolo; `package.json` 0.93.149.
+- `tsc` e testes verdes (novo: `isoCauldrons.test.ts`); conferido no navegador. Sem mudança de save/protocolo; `package.json` 0.93.157. O caldeirão 3D mostra o cubo de seleção (como as cercas 3D), não o contorno do objeto da v0.93.154.
 
 ## Orvalis v0.93.156 — Santuário: 4 espécies de árvores × 3 tamanhos no mapa e na hotbar (18/11/2026)
 - **Pedido do dono do produto:** incluir as árvores das 4 pranchas (bétula, cerejeira, macieira e carvalho, cada uma pequena, média e grande) no mapa e na hotbar do Santuário.

@@ -142,3 +142,5 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 - **Flores fofas (v0.93.97):** a Flor (`Block.FLOWER`, enfeite sem colisão) tem 15 variantes de arte (`assets-src/flores/`, `scripts/extract-flowers.py`, `flowers.webp`) sorteadas por célula.
 - **Floricultura (v0.93.110):** construção da cidade (a oeste da Praça Central) com cômodo próprio e a florista Rosendo fixa; vende as 15 Flores Fofas (2 Moedas de Cobre), blocos de enfeite colocáveis (`FLOWER_BLOCKS`), sem efeito além do visual. A janela da loja serve Mercado e Floricultura (`ShopStyle`).
 - **Animais da vila (v0.93.106):** 3 de cada espécie (ovelha, vaca, galinha, capivara, cavalo) nascem na Vila Camponesa, no mundo e na sala; salas do servidor gravadas antes são ajustadas ao abrir (v0.93.108, `RoomSnapshot` 7); os mundos salvos no aparelho mantêm os que tinham.
+
+- **Santuário — Caldeirão 3D (v0.93.157):** o `Block.CAULDRON` é desenhado como malha 3D com a textura da Pedra Rachada (`render/three/isoCauldrons.ts`, `scripts/extract-iso-cauldron.py`); o sprite do Mundo não é usado na vista isométrica.

@@ -61,3 +61,4 @@ Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `godde
 - Subdomínio real (`santuario.<domínio>`) exige hospedar o build estático (`dist/`) no domínio — pendente.
 
 - **Paisagem por seed** (v0.93.148, `world/sanctuaryLandscape.ts`): **paisagem única** (v0.93.152, ADR 0037): `landscapeFor` ignora a seed e usa `LANDSCAPE_SEED` (1835638650); `World` troca o `FlatGenerator` por ela quando `terrain.landscape` está ligado e usa `generateLevels` para os níveis 2..7. A **Fazenda** (`sanctuaryFazenda.ts`, heightmap) ocupa `cx 2..5`. Água = pincéis do rio rentes ao chão (a arte das peças já traz a margem); passarelas erguem 1 cubo.
+- **Caldeirão 3D** (v0.93.157, `render/three/isoCauldrons.ts`): o `Block.CAULDRON` no Santuário é desenhado como malha (`scripts/extract-iso-cauldron.py` → `iso-cauldron.json`) com a textura da Pedra Rachada do Mundo; o sprite do Mundo não é usado na vista isométrica.

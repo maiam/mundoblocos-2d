@@ -225,6 +225,8 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 
 **Fazenda do Santuário** (heightmap, ADR 0037): `python3 scripts/make-fazenda-data.py` lê `assets-src/santuario-fazenda/{alturas_celulas,agua_superficie}_64x64.csv` e regrava `src/world/fazendaData.ts` (não edite à mão); o pacote original (script do heightmap, PNGs, LEIA-ME) fica na mesma pasta.
 
+**Caldeirão 3D** (Santuário): `python3 scripts/extract-iso-cauldron.py` (GLB em `assets-src/iso-set/caldeirao/`) → `src/assets/iso-cauldron.json`; o ícone (`icon-iso-cauldron.webp`) é um render da malha com fundo removido, refeito à mão quando o modelo muda.
+
 **Rio das Fadas** (Santuário): `python3 scripts/extract-iso-rio.py` (atlas `assets-src/iso-set/rio-atlas.png`, extraído do `.bbmodel`) → `src/assets/iso-rio.webp` + `icon-iso-rio-{canal,lago}.webp`; a ordem das peças em `TILES` deve ser a de `RIO_PIECES` (`world/rio.ts`).
 
 **Cerca e portão 3D do Santuário** (modelos `assets-src/cerca-betula/*.bbmodel`): `python3 scripts/extract-iso-fence.py` → `src/assets/iso-fence-model.json` (geometria) e `iso-wood.webp` (texturas de madeira do dono do produto, `assets-src/iso-set/madeira-*.png`); os sprites 3/4 do Mundo seguem em `extract-fence-model.py`.
