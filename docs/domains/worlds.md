@@ -7,7 +7,7 @@
 | `terrain` | procedural (`WorldGenerator`) | **plano em camadas** (`FlatGenerator` com `layers`): chão de grama + **Bloco de Pedra no nível 1** + **Grama no nível 2**; a Deusa e tudo o mais no **nível 3** |
 | quebrar | pela ferramenta (1 s) ou mão (2 s) | **1 s para qualquer bloco** (`breakSeconds`) |
 | objetos | no nível 0 da célula | **em cima da pilha de cubos** (`surfaceObjects`): árvore, cerca, casa… ficam no nível 3 e não contam como altura de piso |
-| `bounds` | ilimitado | **32 chunks = 8×4** (`cx -2..5`, `cy -2..1`) → 128×64 células (v0.93.152: o original `cx -2..1` + a Fazenda `cx 2..5`) |
+| `bounds` | ilimitado | **48 chunks = 12×4** (`cx -2..9`, `cy -2..1`) → 192×64 células (o original `cx -2..1`, a Fazenda `cx 2..5` — v0.93.152 — e o Vale Goblin `cx 6..9` — v0.93.158, ADR 0038) |
 | `character` | heroína | **Deusa da Vida** |
 | `blocks` | materiais, objetos, paredes… | **82 peças**: 38 do conjunto isométrico (`ISO_BLOCKS`, com as 12 árvores novas) + 42 do Mundo como blocos novos (`WORLD_BLOCKS_IN_SANCTUARY`; sem paredes) + 2 pincéis do Rio das Fadas (`RIO_BRUSHES`) —: 4 cubos (3 pisos + Bloco de Pedra) + 16 objetos do conjunto isométrico + 6 cercas/portões 3D; pilha de 5, cubos cheios |
 | ferramentas / cultivo / ovelhas / cidade / missões | sim | **não** |
@@ -62,3 +62,4 @@ Personagem `goddess-iso` (perfil `santuario`): folhas `goddess-iso-walk`, `godde
 
 - **Paisagem por seed** (v0.93.148, `world/sanctuaryLandscape.ts`): **paisagem única** (v0.93.152, ADR 0037): `landscapeFor` ignora a seed e usa `LANDSCAPE_SEED` (1835638650); `World` troca o `FlatGenerator` por ela quando `terrain.landscape` está ligado e usa `generateLevels` para os níveis 2..7. A **Fazenda** (`sanctuaryFazenda.ts`, heightmap) ocupa `cx 2..5`. Água = pincéis do rio rentes ao chão (a arte das peças já traz a margem); passarelas erguem 1 cubo.
 - **Caldeirão 3D** (v0.93.157, `render/three/isoCauldrons.ts`): o `Block.CAULDRON` no Santuário é desenhado como malha (`scripts/extract-iso-cauldron.py` → `iso-cauldron.json`) com a textura da Pedra Rachada do Mundo; o sprite do Mundo não é usado na vista isométrica.
+- **Vale Goblin** (v0.93.158, ADR 0038, `world/sanctuaryValeGoblin.ts` + `valeGoblinData.ts`): vale fechado por montanhas (pilha até 8), caverna-túnel na borda sul, acampamento com fogueira; os 7 goblins do pacote são só dados (`VALE_GOBLINS`).

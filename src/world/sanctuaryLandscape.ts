@@ -4,6 +4,7 @@ import { Block, type BlockId, FLOWER_BLOCKS } from './blocks';
 import { Noise } from './noise';
 import { hash2 } from './random';
 import { buildFazenda } from './sanctuaryFazenda';
+import { buildValeGoblin } from './sanctuaryValeGoblin';
 import { RIO_CANAL, RIO_LAGO } from './rio';
 import type { Cell, TerrainSource } from './terrain';
 
@@ -22,7 +23,7 @@ export const LANDSCAPE_SEEDS: ReadonlySet<number> = new Set([LANDSCAPE_SEED]);
 /** Casa de madeira da paisagem (células): piso, 2 níveis de parede e telhado; a porta fica na parede sul (a 3ª célula). */
 export const LANDSCAPE_HUT = { x: -10, y: -14, w: 6, h: 5 } as const;
 
-/** Limites do Santuário: o bloco original de 4 × 4 chunks (centrado na origem) e, a leste, a Fazenda (mais 4 × 4): 8 × 4 chunks no total. */
+/** Limites do Santuário: o bloco original de 4 × 4 chunks (centrado na origem), a leste a Fazenda e, depois dela, o Vale Goblin (4 × 4 cada): 12 × 4 chunks no total. */
 const MIN = -2 * CHUNK_SIZE;
 const SIZE = 4 * CHUNK_SIZE;
 const MAX_LEVELS = 5;
@@ -40,16 +41,20 @@ export class SanctuaryLandscape implements TerrainSource {
   private readonly cols: Column[];
   /** Colunas da Fazenda (64 × 64, a leste do bloco original). */
   private readonly farm: Column[];
+  /** Colunas do Vale Goblin (64 × 64, a leste da Fazenda). */
+  private readonly vale: Column[];
   private readonly biome: Biome = BIOMES.celestial;
 
   constructor(seed: number, private readonly ground: BlockId) {
     this.seed = seed >>> 0;
     this.cols = buildLandscape(this.seed);
     this.farm = buildFazenda(this.seed);
+    this.vale = buildValeGoblin(this.seed);
   }
 
   private column(x: number, y: number): Column | undefined {
-    if (x < MIN || y < MIN || y >= MIN + SIZE || x >= MIN + 2 * SIZE) return undefined;
+    if (x < MIN || y < MIN || y >= MIN + SIZE || x >= MIN + 3 * SIZE) return undefined;
+    if (x >= MIN + 2 * SIZE) return this.vale[(y - MIN) * SIZE + (x - MIN - 2 * SIZE)];
     if (x >= MIN + SIZE) return this.farm[(y - MIN) * SIZE + (x - MIN - SIZE)];
     return this.cols[(y - MIN) * SIZE + (x - MIN)];
   }

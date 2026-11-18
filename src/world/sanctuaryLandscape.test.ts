@@ -166,8 +166,8 @@ describe('Fazenda do Santuário (heightmap, v0.93.152)', () => {
   it('é determinística e chunks fora dos limites continuam sem terreno', () => {
     const a = farm(), b = farm();
     for (let y = FY0; y < FY0 + 64; y += 3) for (let x = FX0; x < FX0 + 64; x += 3) for (let l = 0; l < 8; l++) expect(a.getLevel(x, y, l)).toBe(b.getLevel(x, y, l));
-    expect(a.inBounds(96, 0)).toBe(false);
-    expect(a.inBounds(95, 31)).toBe(true);
+    expect(a.inBounds(160, 0)).toBe(false); // o Vale Goblin termina em x = 159
+    expect(a.inBounds(159, 31)).toBe(true);
   });
 });
 

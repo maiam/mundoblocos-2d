@@ -410,3 +410,9 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - O GLB veio sem animação, colisor e fogo: o caldeirão é só a malha (o brilho de fogo segue o `glow` do bloco). Fogo/fumaça ou líquido dentro dele são trabalho futuro.
 - Textura: a da Pedra Rachada do Mundo (projeção em caixa, 0,45 célula por repetição); se o dono do produto quiser a pintura do GLB, usar as texturas 2K do pacote.
 - O mesmo caminho (GLB → `extract-*.py` → malha por bloco) serve para a fogueira e o forno.
+
+## Santuário — Vale Goblin (v0.93.158, ADR 0038)
+- **Goblins:** os 7 do pacote (`VALE_GOBLINS`) são só dados; o Santuário é solo e sem monstros. Decidir se ganha monstros/combate (hoje `Entities` só os cria no Mundo).
+- **Passagem:** não há caminho pronto da Fazenda ao vale (a caverna abre na borda sul do mundo): abrir um desfiladeiro/portal ou aceitar que se cava.
+- **Relevo:** a compressão 3–14 → 2–6 e rocha → 7/8 perde a altura real das montanhas (até 32); se a pilha crescer, refazer `valeLevel`. Desempenho do mundo maior (192 × 64) a conferir em aparelho real.
+- **Acampamento:** o pacote só traz a fogueira; barracas, caixa e barris foram posicionados por mim (aproximados da prévia).

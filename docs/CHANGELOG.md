@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.93.158 — Santuário: Vale Goblin (18/11/2026)
+- **Pedido do dono do produto:** criar mais um espaço no mundo Santuário, o **Vale Goblin**, a partir do terreno enviado (`seed.json`, 64 × 64 células, alturas 2–32, caverna na borda sul, fogueira e 7 goblins). Decisões no **ADR 0038**.
+- **Mundo 12 × 4 chunks** (`cx −2..9`): o vale ocupa `cx 6..9`, a leste da Fazenda (`profiles.ts`, `sanctuaryLandscape.ts`). A Deusa continua nascendo na origem.
+- `scripts/make-vale-goblin-data.py` → `world/valeGoblinData.ts`; `world/sanctuaryValeGoblin.ts` (função pura): chão do vale = planície de 2 cubos; terraços de grama 3–14 → 2–6 (alisados, degrau de 1); rocha 15–32 → 7/8; trilha = Caminho de Terra; **túnel da caverna** (piso 3, dois níveis livres, teto de rocha) ligando a trilha do vale à plataforma externa com lampiões; fogueira, 2 barracas, caixa e barris; árvores (carvalho + as 12 do conjunto), arbustos e pedras.
+- Pacote guardado em `assets-src/santuario-vale-goblin` (dados, prévias, LEIA-ME); o `terreno.glb` (malha 3,9 MB) não foi guardado.
+- Testes novos (`sanctuaryValeGoblin.test.ts`): dados, conversão e degraus, determinismo e pilha ≤ 8, fogueira e goblins em chão livre, e **caminho a pé da fogueira até a plataforma externa pela caverna**; contagens de limites (48 chunks, `x ≤ 159`) atualizadas. `tsc` e 693 testes verdes; conferido no navegador (acampamento, terraços, plataforma da caverna). Sem mudança de save, protocolo ou servidor; `package.json` 0.93.158.
+- Limites: goblins só como dados (sem monstros no Santuário); sem passagem pronta Fazenda → vale (a caverna abre na borda sul do mundo; dá para cavar); a compressão do relevo perde a altura real das montanhas; posição das barracas aproximada.
+
 ## Orvalis v0.93.157 — Santuário: Caldeirão de Pedra 3D (18/11/2026)
 - **Pedido do dono do produto:** incluir no Santuário o caldeirão novo (GLB do Blender, 2757 quadriláteros, 3 pés e 2 alças) no lugar do que já havia, com a textura da **Pedra Rachada**.
 - `scripts/extract-iso-cauldron.py`: `assets-src/iso-set/caldeirao/Caldeirao_Orvalis_3k.glb` → `src/assets/iso-cauldron.json` (2755 vértices fundidos, 5514 triângulos, 132 KB; em células, base em 0, 1,05 de largura com as alças). A textura pintada do GLB não é usada.

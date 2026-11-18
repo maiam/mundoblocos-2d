@@ -19,9 +19,9 @@ describe('Perfis de mundo', () => {
     expect(resolveWorldId('qualquer.host.com', '', 'santuario')).toBe('santuario');
   });
 
-  it('Santuário tem 32 chunks (8 × 4: o original e a Fazenda a leste); o Mundo principal é ilimitado', () => {
-    expect(chunkCount(S.bounds)).toBe(32);
-    expect(S.bounds!.cx1 - S.bounds!.cx0 + 1).toBe(8);
+  it('Santuário tem 48 chunks (12 × 4: o original, a Fazenda e o Vale Goblin a leste); o Mundo principal é ilimitado', () => {
+    expect(chunkCount(S.bounds)).toBe(48);
+    expect(S.bounds!.cx1 - S.bounds!.cx0 + 1).toBe(12);
     expect(S.bounds!.cy1 - S.bounds!.cy0 + 1).toBe(4);
     expect(chunkCount(WORLD_PROFILES.principal.bounds)).toBeNull();
   });
@@ -64,10 +64,10 @@ describe('Santuário (terreno em camadas, ADR 0036)', () => {
     expect(WORLD_PROFILES.principal.terrain.kind).toBe('procedural');
   });
 
-  it('nunca carrega mais que 32 chunks', () => {
+  it('nunca carrega mais que 48 chunks', () => {
     const w = new World(1, S);
     while (w.ensureChunks({ cx0: -20, cy0: -20, cx1: 20, cy1: 20 }, 50) > 0);
-    expect(w.loadedCount).toBe(32);
+    expect(w.loadedCount).toBe(48);
   });
 
   it('só deixa colocar as 68 peças (a porta exige batentes); cubos empilham e objetos ficam EM CIMA do terreno (nível 3)', () => {

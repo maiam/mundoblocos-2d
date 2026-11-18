@@ -223,6 +223,8 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 
 **Árvores do Santuário** (v0.93.156): `python3 scripts/extract-iso-trees.py` lê `assets-src/trees/iso-{betula,cerejeira,macieira,carvalho}.png` (3 tamanhos cada) e gera `src/assets/iso-trees.webp`, `src/render/isoTreesManifest.ts` e `icon-iso-<espécie>-<s|m|l>.webp`; a prévia fica em `assets-src/trees/_previa-arvores-iso.png`. Os cortes da base por árvore estão em `SPECIES` no script.
 
+**Vale Goblin do Santuário** (ADR 0038): `python3 scripts/make-vale-goblin-data.py` lê `assets-src/santuario-vale-goblin/seed.json` → `src/world/valeGoblinData.ts` (alturas, superfícies, caverna, fogueira, goblins); a conversão para cubos é `world/sanctuaryValeGoblin.ts`.
+
 **Fazenda do Santuário** (heightmap, ADR 0037): `python3 scripts/make-fazenda-data.py` lê `assets-src/santuario-fazenda/{alturas_celulas,agua_superficie}_64x64.csv` e regrava `src/world/fazendaData.ts` (não edite à mão); o pacote original (script do heightmap, PNGs, LEIA-ME) fica na mesma pasta.
 
 **Caldeirão 3D** (Santuário): `python3 scripts/extract-iso-cauldron.py` (GLB em `assets-src/iso-set/caldeirao/`) → `src/assets/iso-cauldron.json`; o ícone (`icon-iso-cauldron.webp`) é um render da malha com fundo removido, refeito à mão quando o modelo muda.
