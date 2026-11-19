@@ -71,6 +71,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   view.setItems(session.items.remaining());
   if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
     line: () => perf.line(),
+    lines: () => [...(scene ? [`cena: ${spots.length} lanternas${autoEdit ? ' · editando sem parar' : ''}`] : []), ...perf.reportLines()],
     report: () => ({ cena: scene ? 'lanternas' : null, lanternas: spots.length, ...perf.report() }),
     style: { top: '64px', whiteSpace: 'normal', maxWidth: 'min(70vw, 560px)' },
   });
