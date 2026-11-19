@@ -310,6 +310,9 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 - `?mundo=titan&cena=lanternas&n=12` (1–64): **cena de desenvolvimento** com `n` lanternas e uma parede de areia ao lado de cada uma, seed 42 (ou `&seed=`); **nada é gravado** (armazenamento em memória, o save real não é tocado) e o botão **"Editar sem parar"** (canto superior direito) coloca e retira um bloco ao lado das lanternas a cada 120 ms para estressar luz e malha. Já liga o painel; o dia (20 min) corre normalmente e `&hora=manha|tarde|noite` congela a visualização. Existe em qualquer build (para testar no celular pela prévia do PR). A partida normal só tem 1 cápsula, por isso a cena.
 - Como ler: o gargalo é a etapa com p95 acima de ~4 ms por quadro ou `buildFrame` acima de ~16 ms nos quadros de edição. `draw` e `quadro+malha` são só o JS do desenho; o custo real da GPU aparece no FPS.
 
+## Rachaduras do Titã (v0.97.0)
+`python3 scripts/make-titan-cracks.py [--preview prancha.png]` gera `src/assets/titan-cracks-16px.webp` (10 estágios de 16 × 16 lado a lado, WebP **sem perdas**: não passa pelo `optimize-assets.py`, que comprimiria com perdas). A prévia mostra os estágios sobre areia, gelo e rocha escura. Trocar a arte = substituir o arquivo mantendo 160 × 16.
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

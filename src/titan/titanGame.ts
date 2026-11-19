@@ -1,14 +1,17 @@
 import './titan.css';
-import { titanAtlasUrl, titanHotbarUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, placeFromSlot } from './actions';
+import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
+import { type GestureTarget, InteractionGesture } from './gesture';
 import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
 import { ITEM_NAMES } from './items';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, parseHora, phaseName } from './sky';
+import { T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError } from './session';
@@ -20,7 +23,6 @@ import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVers
 const AUTOSAVE_AFTER_EDIT_MS = 700;
 const AUTOSAVE_PLAYER_MS = 5000;
 const RETRY_MS = 3000;
-const REPEAT_MS = 240;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -62,14 +64,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
   if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
   // `?hora=manha|tarde|noite`: congela só a visualização (teste); a hora do jogo continua correndo e é a que vai no save
   const forcedHour = parseHora(q.get('hora'));
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(session.items.remaining());
   if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
@@ -171,7 +173,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     bagOpen = open;
     panel.hidden = !open;
     sel = null;
-    if (open) { if (document.pointerLockElement) document.exitPointerLock(); input.place = input.remove = false; keys.clear(); }
+    if (open) { if (document.pointerLockElement) document.exitPointerLock(); gesture.cancel(); keys.clear(); }
     else {
       if (!inv.returnCraft()) notice('Sem espaço: os itens ficam na grade');
       if (!coarse) void canvas.requestPointerLock?.();
@@ -221,7 +223,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const box = el('div', '', start);
   el('h1', '', box, 'Titã');
   el('p', '', box, session.resumed ? 'Sua partida foi encontrada. Continue de onde parou.' : 'Uma costa de areia ocre e um lago escuro sob a névoa da tarde.');
-  el('p', '', box, coarse ? 'Esquerda: andar · direita: olhar · botões: colocar, quebrar e pular.' : 'WASD anda · Espaço pula · mouse olha · clique esquerdo coloca · clique direito remove · 1–4 ou roda troca o bloco.');
+  el('p', '', box, coarse ? 'Esquerda: andar · direita: toque curto coloca, segurar quebra, arrastar gira a câmera · botões: pular e mochila.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–7 ou roda troca o bloco · E abre a mochila.');
   const go = el('button', 'titan-btn', box, session.resumed ? 'Continuar' : 'Começar');
   go.type = 'button';
   let playing = false;
@@ -237,7 +239,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   // ---- Entrada ----
   const keys = new Set<string>();
-  const input = { jump: false, place: false, remove: false, stickX: 0, stickY: 0 };
+  const input = { jump: false, stickX: 0, stickY: 0 };
   window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     keys.add(e.code);
@@ -246,15 +248,22 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (e.code === 'Escape' && bagOpen) toggleBag(false);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
-  window.addEventListener('blur', () => keys.clear());
-  document.addEventListener('mousemove', (e) => { if (document.pointerLockElement) look(e.movementX * 0.0022, e.movementY * 0.0022); });
+  window.addEventListener('blur', () => { keys.clear(); gesture.cancel(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') gesture.cancel(); });
+  // mouse capturado: clique primário curto coloca, segurar quebra (ADR 0042); o movimento relativo da mira conta como arrasto; o botão direito não faz nada
+  let mouseAcc = 0;
+  document.addEventListener('mousemove', (e) => {
+    if (!document.pointerLockElement) return;
+    look(e.movementX * 0.0022, e.movementY * 0.0022);
+    if (gesture.activePointer === 'mouse') { mouseAcc += Math.hypot(e.movementX, e.movementY); gesture.drag('mouse', mouseAcc); }
+  });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('mousedown', (e) => {
-    if (!document.pointerLockElement) return;
-    if (e.button === 0) { input.place = true; act('place'); }
-    if (e.button === 2) { input.remove = true; act('remove'); }
+    if (!document.pointerLockElement || bagOpen || e.button !== 0) return;
+    mouseAcc = 0;
+    gesture.press('mouse', e.timeStamp, toTarget(target)); // o tempo vem do evento (monotônico), não do quadro
   });
-  window.addEventListener('mouseup', (e) => { if (e.button === 0) input.place = false; if (e.button === 2) input.remove = false; });
+  window.addEventListener('mouseup', (e) => { if (e.button === 0) gesture.release('mouse', e.timeStamp, toTarget(target)); });
   window.addEventListener('wheel', (e) => { if (document.pointerLockElement && !bagOpen && e.deltaY) select(session.selected + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   function look(dx: number, dy: number): void {
     session.yaw -= dx;
@@ -268,15 +277,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const knob = el('i', '', stick);
   const lookPad = el('div', 'titan-look', touch);
   const acts = el('div', 'titan-acts', touch);
+  // Colocar e quebrar não têm mais botões: a área de interação (metade direita) coloca ao tocar e quebra ao segurar; arrastar gira a câmera
   const mk = (txt: string): HTMLButtonElement => { const b = el('button', 'titan-btn', acts, txt); b.type = 'button'; return b; };
-  const bPlace = mk('Colocar'), bRemove = mk('Quebrar'), bJump = mk('Pular'), bBag = mk('Mochila');
+  const bJump = mk('Pular'), bBag = mk('Mochila');
   bBag.addEventListener('click', () => toggleBag(!bagOpen));
   const hold = (b: HTMLElement, on: () => void, off: () => void): void => {
     b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); on(); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) b.addEventListener(t, off);
   };
-  hold(bPlace, () => { input.place = true; act('place'); }, () => { input.place = false; });
-  hold(bRemove, () => { input.remove = true; act('remove'); }, () => { input.remove = false; });
   hold(bJump, () => { input.jump = true; }, () => { input.jump = false; });
   let stickId = -1;
   const moveStick = (e: PointerEvent): void => {
@@ -291,23 +299,53 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   stick.addEventListener('pointerdown', (e) => { if (stickId >= 0) return; stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
   stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) moveStick(e); });
   for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) stick.addEventListener(t, endStick);
-  let lookId = -1, lx = 0, ly = 0;
-  lookPad.addEventListener('pointerdown', (e) => { if (lookId >= 0) return; lookId = e.pointerId; lookPad.setPointerCapture(e.pointerId); lx = e.clientX; ly = e.clientY; });
-  lookPad.addEventListener('pointermove', (e) => { if (e.pointerId !== lookId) return; look((e.clientX - lx) * 0.006, (e.clientY - ly) * 0.006); lx = e.clientX; ly = e.clientY; });
-  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) lookPad.addEventListener(t, (e) => { if ((e as PointerEvent).pointerId === lookId) lookId = -1; });
+  // área de interação do toque (metade direita): toque curto coloca, segurar quebra, arrastar gira a câmera (zona morta de 10 px: sem girar enquanto ainda pode ser toque)
+  let lookId = -1, lx = 0, ly = 0, sx = 0, sy = 0, exceeded = false;
+  lookPad.addEventListener('pointerdown', (e) => {
+    if (lookId >= 0 || !playing || bagOpen) return; // um segundo dedo na área não arma nada
+    lookId = e.pointerId; lookPad.setPointerCapture(e.pointerId);
+    lx = sx = e.clientX; ly = sy = e.clientY;
+    gesture.press(e.pointerId, e.timeStamp, toTarget(target));
+    exceeded = gesture.state === 'CAMERA_DRAG'; // sem alvo na mira o gesto é só câmera, sem zona morta
+  });
+  lookPad.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== lookId) return;
+    const dist = Math.hypot(e.clientX - sx, e.clientY - sy);
+    gesture.drag(e.pointerId, dist);
+    if (!exceeded && dist > DRAG_TOLERANCE_PX) { exceeded = true; lx = e.clientX; ly = e.clientY; } // a câmera passa a girar daqui, sem salto
+    if (exceeded) look((e.clientX - lx) * 0.006, (e.clientY - ly) * 0.006);
+    lx = e.clientX; ly = e.clientY;
+  });
+  lookPad.addEventListener('pointerup', (e) => { if (e.pointerId !== lookId) return; lookId = -1; gesture.release(e.pointerId, e.timeStamp, toTarget(target)); });
+  // ponteiro cancelado ou captura perdida: limpa o gesto sem agir
+  for (const t of ['pointercancel', 'lostpointercapture'] as const) lookPad.addEventListener(t, (e) => { if ((e as PointerEvent).pointerId === lookId) { lookId = -1; gesture.cancel(); } });
 
-  // ---- Ações ----
+  // ---- Ações: gesto primário (ADR 0042) ----
   let target: Hit | null = null;
-  function act(kind: 'place' | 'remove'): void {
-    if (!playing || bagOpen || !target) return;
+  const toTarget = (h: Hit | null): GestureTarget | null => {
+    if (!h) return null;
+    if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, kind: 'shard', item: h.item };
+    const id = vol.get(h.x, h.y, h.z);
+    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
+  };
+  const ring = el('div', 'titan-collect', ui); // indicador discreto de recolhimento (lanterna e lasca): anel em volta da mira
+  ring.hidden = true;
+  const gesture = new InteractionGesture({
+    totalMs: (t) => breakTotalMs(t.kind, t.block),
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
-    const r = kind === 'remove' ? breakOrCollect(session, target) : placeFromSlot(session, target, session.selected);
-    if (r.msg) notice(r.msg);
-    if (!r.ok) return;
-    if (target.item) view.setItems(session.items.remaining());
-    onEdited();
-    refresh();
-  }
+    place: (t) => { const r = placeFromSlot(session, t, session.selected); if (r.msg) notice(r.msg); if (r.ok) { onEdited(); refresh(); } return { ok: r.ok }; },
+    complete: (t) => {
+      const r = breakOrCollect(session, t);
+      if (r.msg) notice(r.msg);
+      if (r.ok) { if (t.item) view.setItems(session.items.remaining()); onEdited(); refresh(); }
+      return { ok: r.ok };
+    },
+    effect: (t, p, stage) => {
+      if (!t) { view.setCrack(null); ring.hidden = true; return; }
+      if (t.kind === 'block') { view.setCrack(t, stage); ring.hidden = true; } // rachaduras progressivas só em blocos; sem refazer malha
+      else { view.setCrack(null); ring.hidden = false; ring.style.setProperty('--p', String(p)); }
+    },
+  });
 
   // ---- Gravação ----
   let lastSavedTime = session.time;
@@ -335,7 +373,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   void saveNow(); // grava o cabeçalho da partida nova já na abertura (a seed passa a existir no banco)
 
   // ---- Laço ----
-  let last = performance.now(), nextRepeat = 0, nextAuto = 0, autoStep = 0;
+  let last = performance.now(), nextAuto = 0, autoStep = 0;
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -352,7 +390,6 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const moved = dirX !== 0 || dirZ !== 0;
       stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump }, dt);
       if (moved || !b.onGround) playerDirty = true;
-      if ((input.place || input.remove) && now > nextRepeat) { nextRepeat = now + REPEAT_MS; if (!target) { /* nada apontado */ } else act(input.place ? 'place' : 'remove'); }
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
@@ -365,6 +402,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
     target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items) : null;
+    if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.render(eye, session.yaw, session.pitch, target, now / 1000);
     cross.hidden = !active;
     posLine.textContent = `x ${b.x.toFixed(1)} · y ${b.y.toFixed(1)} · z ${b.z.toFixed(1)}`;
@@ -376,5 +414,5 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   };
   requestAnimationFrame(frame);
 
-  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, toggleBag, refresh, perf, get target() { return target; } };
+  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, toggleBag, refresh, perf, gesture, get target() { return target; } };
 }

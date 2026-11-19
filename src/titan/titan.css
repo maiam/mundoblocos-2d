@@ -45,3 +45,8 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-look { position: absolute; right: 0; top: 0; width: 50%; height: 70%; pointer-events: auto; touch-action: none; }
 .titan-acts { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(2, auto); gap: 8px; pointer-events: auto; }
 .titan-acts .titan-btn { min-width: 74px; min-height: 48px; }
+
+/* Indicador discreto de recolhimento (lanterna e lasca solta, ADR 0042): anel fino em volta da mira que enche em 0,35 s; sem rachaduras */
+.titan-collect { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; --p: 0;
+  background: conic-gradient(#f2cc93 calc(var(--p) * 360deg), #f2cc9333 0);
+  -webkit-mask: radial-gradient(circle, transparent 10px, #000 11px); mask: radial-gradient(circle, transparent 10px, #000 11px); pointer-events: none; }

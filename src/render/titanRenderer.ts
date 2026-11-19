@@ -30,6 +30,9 @@ export class TitanRenderer {
   private readonly skyColors: THREE.Float32BufferAttribute;
   private readonly skyHeights: Float32Array;
   private readonly sun: THREE.Sprite;
+  /** Sobreposição de rachaduras sobre o bloco em quebra: uma caixa só, reaproveitada (nenhuma malha de chunk muda). */
+  private readonly crack: THREE.Mesh;
+  private readonly crackTex: THREE.Texture;
   /** Luz do dia compartilhada pelos materiais do terreno (uniform do shader). */
   private readonly ambient = { value: 1 };
   private lastSky = -1;
@@ -39,7 +42,7 @@ export class TitanRenderer {
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -85,6 +88,19 @@ export class TitanRenderer {
     this.sun.visible = false;
     this.scene.add(this.sun);
     this.setSky(0.375);
+
+    // rachaduras: caixa do tamanho do bloco (um pouco maior, com polygonOffset, para não cintilar sobre as faces), atlas de 10 estágios deslocado por estágio
+    this.crackTex = new THREE.Texture(cracksAtlas);
+    this.crackTex.colorSpace = THREE.SRGBColorSpace;
+    this.crackTex.magFilter = THREE.NearestFilter;
+    this.crackTex.minFilter = THREE.NearestFilter;
+    this.crackTex.generateMipmaps = false;
+    this.crackTex.repeat.set(0.1, 1);
+    this.crackTex.needsUpdate = true;
+    this.crack = new THREE.Mesh(new THREE.BoxGeometry(1.004, 1.004, 1.004), new THREE.MeshBasicMaterial({ map: this.crackTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, fog: true }));
+    this.crack.visible = false;
+    this.crack.matrixAutoUpdate = true;
+    this.scene.add(this.crack);
 
     // contorno da célula apontada
     const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.004, 1.004, 1.004));
@@ -224,6 +240,19 @@ export class TitanRenderer {
 
   private sunDir: [number, number, number] = [0, 1, 0];
   private itemDim = 1;
+
+  /** Mostra as rachaduras (estágio 0–9) sobre a célula `cell`, ou as esconde (`null`): sai no mesmo quadro do cancelamento e não refaz malha. */
+  setCrack(cell: { x: number; y: number; z: number } | null, stage = 0): void {
+    if (!cell) { this.crack.visible = false; return; }
+    this.crackTex.offset.x = Math.min(9, Math.max(0, stage)) * 0.1;
+    this.crack.position.set(cell.x + 0.5, cell.y + 0.5, cell.z + 0.5);
+    this.crack.visible = true;
+  }
+
+  /** Estado das rachaduras (diagnóstico e testes de navegador). */
+  crackInfo(): { visible: boolean; stage: number; x: number; y: number; z: number } {
+    return { visible: this.crack.visible, stage: Math.round(this.crackTex.offset.x / 0.1), x: this.crack.position.x - 0.5, y: this.crack.position.y - 0.5, z: this.crack.position.z - 0.5 };
+  }
 
   /** Contadores da GPU para o painel de desempenho. */
   gpuStats(): { calls: number; triangles: number; geometries: number; textures: number; contextLost: boolean } {
