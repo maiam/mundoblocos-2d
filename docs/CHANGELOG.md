@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.100.1 — Titã: o junco de vidro agora se recolhe e cai como item (19/11/2026)
+- **Relato do dono do produto:** ao mirar no junco de vidro o jogo quebrava o bloco de areia úmida embaixo dele e o junco sumia sem render nada.
+- **Junco recolhível:** passou a ser alvo da mira (`ItemLookup`, como as lascas legadas; id `reed:x,y,z`) e se recolhe segurando 0,35 s (anel de recolhimento), rendendo 1 **Junco de vidro** (item 12, pilha de 64, ícone no índice 11 do atlas de itens). O bloco de baixo **não** é quebrado. Mochila cheia deixa a planta no lugar. A planta recolhida não renasce (o id fica em `collected`, já gravado no save).
+- **Sem o apoio:** quebrar o bloco onde o junco está solta o junco como item no chão (drop persistente, coleta por proximidade) em vez de sumir.
+- Item sem receita por ora (o prompt diz que o junco orienta a exploração e não é consumido pelas receitas); fica como material para a evolução. Sem mudança de gerador nem de formato de save (`drops` aceita o item 12).
+- Testes (`fabricacao.test.ts`): mira acerta o junco e não o bloco, coleta, não renasce ao reabrir, mochila cheia, queda sem apoio persistente, partida legada. Verificado no Chromium (seed 42: alvo `reed:2,65,-20`, 1 junco na hotbar, areia úmida intacta).
+
 ## Orvalis v0.100.0 — Titã: "Uma luz para voltar" (livro de receitas, Mesa de Trabalho, brasa de âmbar e junco de vidro) (19/11/2026)
 - **Pedido do dono do produto (primeira entrega do prompt "Uma luz para voltar"):** o jogador chega de mãos vazias, recolhe rocha, descobre a receita da mesa e fabrica a própria lanterna com materiais locais. Decisões na **ADR 0045**.
 - **Receitas** (`titan/recipes.ts`): mesa (4 rochas, mochila), lente de gelo (1 fragmento de gelo, mesa) e lanterna (2 fragmentos de rocha + lente + brasa, mesa). Cartões com ícone, nome e quantidade, **possui/precisa**, estação e **Fabricar** (mochila: aba Receitas; mesa: painel da estação). Fabricação **atômica** (`Inventory.tryCraft`): capacidade calculada depois dos débitos, falha não muda nada e mostra o motivo; a grade 2 × 2 usa o mesmo catálogo. Descoberta derivada do estado (primeira rocha; save antigo com rocha ou mesa já reconhece).

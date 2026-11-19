@@ -34,8 +34,8 @@ export interface TitanHeader {
   /** v4: adições localizadas feitas numa partida de gerador antigo: o depósito de brasa dado uma vez (a célula; some do mapa se o jogador o quebrar). */
   grants?: { ember?: [number, number, number] };
 }
-/** Lasca solta: 5 = fragmento de rocha, 6 = fragmento de gelo, 11 = brasa de âmbar (ids de item). A célula é onde ela pousa. */
-export interface Drop { id: string; item: 5 | 6 | 11; x: number; y: number; z: number }
+/** Lasca solta: 5 = fragmento de rocha, 6 = fragmento de gelo, 11 = brasa de âmbar, 12 = junco de vidro (ids de item). A célula é onde ela pousa. */
+export interface Drop { id: string; item: 5 | 6 | 11 | 12; x: number; y: number; z: number }
 import type { InventoryData } from './inventory';
 
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }

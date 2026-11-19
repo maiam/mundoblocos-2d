@@ -12,6 +12,7 @@ const FULL: ActionResult = { ok: false, msg: 'Mochila cheia' };
 
 /** Recolhe um fragmento de superfície à mão: 1 lasca = 1 fragmento. Mochila cheia: a lasca fica no lugar. */
 export function collectItem(s: TitanSession, id: string): ActionResult {
+  if (id.startsWith('reed:')) return collectReed(s, id);
   const it = s.volume.gen.surfaceItems.find((i) => i.id === id);
   if (!it || s.collected.has(id)) return { ok: false };
   const item = it.item === 5 ? Item.ROCK_SHARD : Item.FROST_SHARD;
@@ -22,15 +23,28 @@ export function collectItem(s: TitanSession, id: string): ActionResult {
   return { ok: true };
 }
 
+/** Junco de vidro à mão (ADR 0045): 1 junco = 1 item; mochila cheia deixa a planta no lugar. A planta recolhida não volta (o id fica em `collected`, que já vai no save). */
+function collectReed(s: TitanSession, id: string): ActionResult {
+  const m = /^reed:(-?\d+),(-?\d+),(-?\d+)$/.exec(id);
+  if (!m || s.items.at(Number(m[1]), Number(m[2]), Number(m[3])) !== id) return { ok: false };
+  if (!s.inventory.canAdd(Item.GLASS_REED)) return FULL;
+  s.inventory.add(Item.GLASS_REED);
+  s.collected.add(id);
+  s.collectedRev++;
+  return { ok: true };
+}
+
 /** Botão de quebrar/recolher no alvo: fragmento de superfície → coleta; bloco ou lanterna → volta como item, se couber. */
 export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   if (hit.item) return collectItem(s, hit.item);
   const { x, y, z } = hit;
   if (!s.volume.breakable(x, y, z)) return { ok: false };
+  const reed = s.items.at(x, y + 1, z); // junco que se apoia neste bloco: sem o apoio ele cai como item
   if (s.volume.get(x, y, z) === T.EMBER) {
     // depósito de brasa: rende só a brasa, solta no chão (como a lasca do veio); o minério some e não se recria
     if (!s.volume.remove(x, y, z)) return { ok: false };
     dropShard(s, Item.EMBER, x, y, z);
+    releaseReed(s, reed, x, y + 1, z);
     return { ok: true };
   }
   const item = itemOfBlock(s.volume.get(x, y, z));
@@ -42,11 +56,20 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
+  releaseReed(s, reed, x, y + 1, z);
   return { ok: true };
 }
 
+/** O bloco de baixo foi quebrado: o junco que estava em cima vira um item solto (a planta é recolhida, como se tivesse sido colhida). */
+function releaseReed(s: TitanSession, id: string | null, x: number, y: number, z: number): void {
+  if (!id || !id.startsWith('reed:') || s.collected.has(id)) return;
+  s.collected.add(id);
+  s.collectedRev++;
+  dropShard(s, Item.GLASS_REED, x, y, z);
+}
+
 /** Pousa uma lasca perto do ponto de quebra: na célula do veio, descendo até o primeiro apoio sólido. */
-function dropShard(s: TitanSession, item: 5 | 6 | 11, x: number, y: number, z: number): void {
+function dropShard(s: TitanSession, item: 5 | 6 | 11 | 12, x: number, y: number, z: number): void {
   const id = `v:${x},${y},${z}`;
   if (s.drops.has(id)) return;
   s.drops.set(id, { id, item, x, y: restY(s, x, y, z), z });
