@@ -128,16 +128,15 @@ describe('lanterna: fabricar, colocar, iluminar, recuperar e salvar', () => {
     expect(s.volume.light(bx + 2, y, bz)).toBe(0);
   });
 
-  it('a lanterna aparece na malha (objeto pequeno) e os blocos vizinhos ficam mais claros', async () => {
+  it('a lanterna sai da malha do terreno (é o modelo 3D do renderer) e os blocos vizinhos ficam mais claros', async () => {
     const { s } = await open();
     const { bx, bz } = spot(s);
     s.volume.place(bx, 150, bz, T.SAND); s.volume.place(bx, 151, bz, T.LANTERN);
     const m = meshSection(s.volume, Math.floor(bx / 16), 13, Math.floor(bz / 16)).opaque!;
-    // 6 faces do bloco (5 expostas + a de baixo encostada na lanterna não, a lanterna é não-sólida: 6) + 6 da lanterna
-    expect(m.idx.length / 6).toBeGreaterThanOrEqual(12);
-    const glowMax = Math.max(...m.glow); // a face do bloco ao lado da lanterna recebeu brilho quente, no atributo próprio (não no sombreado)
-    expect(glowMax).toBeGreaterThan(1);
+    expect(m.idx.length / 6).toBe(6); // só as 6 faces do bloco; nenhuma da lanterna
+    expect(Math.max(...m.glow)).toBeGreaterThan(1 - 1); // a face do bloco ao lado da lanterna recebeu brilho quente, no atributo próprio
     expect(Math.max(...m.col)).toBeLessThanOrEqual(1);
+    expect(s.volume.lanternVersion).toBeGreaterThan(0);
   });
 
   it('save da v1 (sem inventário) abre com a cápsula e passa a gravar a v2', async () => {

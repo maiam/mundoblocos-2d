@@ -31,20 +31,17 @@ const FACES = [
   { n: [0, 0, 1], light: 0.78, f: 'side' as Face, c: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] },
   { n: [0, 0, -1], light: 0.7, f: 'side' as Face, c: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },
 ];
-const LANTERN_BOX: Box = [0.3, 0, 0.3, 0.7, 0.7, 0.7];
 const CORNER_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
 /** A rocha-mãe é mais escura que a rocha comum. */
 const TINT: Record<number, number> = { [T.BEDROCK]: 0.55 };
 
 /** Brilho quente somado por nível de luz de lanterna (0–15): sobe mais forte perto da fonte. */
 const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX, 1.3) * 0.7 : 0);
-type Box = readonly [number, number, number, number, number, number];
-const UNIT: Box = [0, 0, 0, 1, 1, 1];
 
 class Builder {
   pos: number[] = []; uv: number[] = []; col: number[] = []; glow: number[] = []; idx: number[] = [];
-  /** `level` = luz de lanterna na célula que a face enxerga; `fixed` = cor própria (a lanterna emite, não recebe). */
-  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, box: Box = UNIT, fixed?: readonly [number, number, number]): void {
+  /** `level` = luz de lanterna na célula que a face enxerga. */
+  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0): void {
     const F = FACES[fi];
     const [u0, v0, u1, v1] = tileUV(tile);
     const base = this.pos.length / 3;
@@ -52,10 +49,10 @@ class Builder {
     const w = warm(level);
     for (let k = 0; k < 4; k++) {
       const c = F.c[k];
-      this.pos.push(x + box[0] + c[0] * (box[3] - box[0]), y + box[1] + c[1] * (box[4] - box[1]), z + box[2] + c[2] * (box[5] - box[2]));
+      this.pos.push(x + c[0], y + c[1], z + c[2]);
       this.uv.push(CORNER_UV[k][0] ? u1 : u0, CORNER_UV[k][1] ? v1 : v0);
-      if (fixed) { this.col.push(0, 0, 0); this.glow.push(fixed[0] * F.light, fixed[1] * F.light, fixed[2] * F.light); } // a lanterna emite: só brilho próprio
-      else { this.col.push(shade, shade, shade); this.glow.push(w, w * 0.72, w * 0.38); }
+      this.col.push(shade, shade, shade);
+      this.glow.push(w, w * 0.72, w * 0.38);
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -82,11 +79,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
   for (let ly = 0; ly < SECTION; ly++) for (let lz = 0; lz < SECTION; lz++) for (let lx = 0; lx < SECTION; lx++) {
     const id = at(lx, ly, lz);
     if (id === T.AIR) continue;
-    if (id === T.LANTERN) {
-      // objeto pequeno e brilhante (0,4 × 0,7 × 0,4 no chão da célula): âmbar da direção de arte, sem receber sombra
-      for (let fi = 0; fi < 6; fi++) op.face(x0 + lx, y0 + ly, z0 + lz, fi, 0, 1, 0, LANTERN_BOX, [1.7, 1.15, 0.5]);
-      continue;
-    }
+    if (id === T.LANTERN) continue; // a lanterna é o modelo 3D do renderer (instâncias, ADR 0043): não entra na malha do terreno
     for (let fi = 0; fi < 6; fi++) {
       const n = FACES[fi].n;
       const nb = at(lx + n[0], ly + n[1], lz + n[2]);

@@ -313,6 +313,8 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 ## Rachaduras do Titã (v0.97.0)
 `python3 scripts/make-titan-cracks.py [--preview prancha.png]` gera `src/assets/titan-cracks-16px.webp` (10 estágios de 16 × 16 lado a lado, WebP **sem perdas**: não passa pelo `optimize-assets.py`, que comprimiria com perdas). A prévia mostra os estágios sobre areia, gelo e rocha escura. Trocar a arte = substituir o arquivo mantendo 160 × 16.
 
+`python3 -I scripts/extract-titan-lantern.py` converte o pacote da Lanterna da Margem (`assets-src/titan/lanterna/Lanterna_da_Margem.glb`, ADR 0043) em `src/assets/titan-lantern.json` (dois lotes: estrutura e núcleo âmbar) e `titan-lantern-atlas.webp` (32 × 32, sem perdas, fora do `optimize-assets.py`). O script confere 312 triângulos, 0,375 × 0,625 × 0,375 m e pivô na base; arte nova = trocar o GLB e rodar de novo.
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

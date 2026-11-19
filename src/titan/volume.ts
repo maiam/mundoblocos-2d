@@ -177,9 +177,12 @@ export class TitanVolume {
       for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
     }
     this.light$.ready = false; // a luz é calculada por inteiro na primeira consulta
+    this.lanternVersion++;
   }
 
   // ---- Luz de lanterna ----
+  /** Muda a cada lanterna posta ou retirada (o renderer refaz as instâncias só então). */
+  lanternVersion = 0;
   get hasLanterns(): boolean { return this.lanterns.size > 0; }
   lanternCells(): Array<[number, number, number]> { return [...this.lanterns.values()]; }
 
@@ -201,8 +204,8 @@ export class TitanVolume {
   private updateLight(x: number, y: number, z: number, before: number, after: number): void {
     const key = lightKey(x, y, z);
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
-    if (wasLantern && !isLantern) this.lanterns.delete(key);
-    if (isLantern && !wasLantern) this.lanterns.set(key, [x, y, z]);
+    if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
+    if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
     if (!this.light$.ready) return;
     const t0 = this.onLightMs ? performance.now() : 0;
     if (wasLantern && !isLantern) this.light$.sourceRemoved(x, y, z);
