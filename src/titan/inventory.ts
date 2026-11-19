@@ -1,8 +1,9 @@
-import { isItem, Item, LANTERN_RECIPE, maxStack } from './items';
+import { isItem, maxStack } from './items';
+import { matchGrid, type Recipe, type Stackable } from './recipes';
 
 /**
  * Inventário do Titã (ADR 0040): hotbar de 7 espaços (índices 0–6) + mochila de 24 (7–30, 4 fileiras de 6) + grade de fabricação 2 × 2 (31–34).
- * Sem DOM. Toda regra de espaço e quantidade fica aqui; a interface só chama estes métodos. Não existe descarte: cápsula e lanterna nunca se perdem.
+ * Sem DOM. Toda regra de espaço e quantidade fica aqui; a interface só chama estes métodos. Não existe descarte: nada se perde. A fabricação (`tryCraft`) é atômica: débito e resultado juntos, ou nada.
  */
 export const HOTBAR = 7;
 export const BAG = 24;
@@ -20,8 +21,8 @@ export class Inventory {
   /** Sobe a cada mudança (o save compara com a revisão gravada). */
   rev = 0;
 
-  /** Inventário inicial: só a cápsula de luz (briefing: "a cápsula inicial"). */
-  static starting(): Inventory { const i = new Inventory(); i.s[HOTBAR] = { item: Item.CAPSULE, count: 1 }; return i; }
+  /** Inventário inicial: **vazio** (ADR 0045: o jogador chega de mãos vazias; a cápsula saiu, o id 7 fica reservado). */
+  static starting(): Inventory { return new Inventory(); }
 
   get(slot: number): Stack | null { return this.s[slot] ? { ...this.s[slot]! } : null; }
   /** Quantidade total de um item na hotbar e na mochila (a grade não conta). */
@@ -85,36 +86,70 @@ export class Inventory {
     return true;
   }
 
-  // ---- Fabricação 2 × 2 ----
-  /** Resultado da grade: 1 lanterna se a grade tem exatamente cápsula + fragmento de rocha + fragmento de gelo (1 de cada, qualquer disposição). */
-  craftResult(): number | null {
+  // ---- Fabricação ----
+  /** Débito simulado: copia dos espaços (hotbar + mochila) depois de tirar os ingredientes, ou `null` se faltar algum. Tira da mochila antes da hotbar, das pilhas menores primeiro. */
+  private debited(ingredients: readonly Stackable[]): Array<Stack | null> | null {
+    const copy = this.s.map((c) => (c ? { ...c } : null));
+    for (const g of ingredients) {
+      let left = g.count;
+      const order = [...Array(SLOTS).keys()].filter((i) => copy[i]?.item === g.item).sort((a, b) => (a >= HOTBAR ? 0 : 1) - (b >= HOTBAR ? 0 : 1) || copy[a]!.count - copy[b]!.count || b - a);
+      for (const i of order) {
+        const c = copy[i]!, t = Math.min(c.count, left);
+        c.count -= t; left -= t;
+        if (c.count <= 0) copy[i] = null;
+        if (left === 0) break;
+      }
+      if (left > 0) return null;
+    }
+    return copy;
+  }
+
+  /** Quanto de `item` cabe numa cópia dos espaços (mesma regra de `room`). */
+  private static roomIn(copy: ReadonlyArray<Stack | null>, item: number): number {
+    const m = maxStack(item);
+    let r = 0;
+    for (let i = 0; i < SLOTS; i++) { const c = copy[i]; r += c ? (c.item === item ? m - c.count : 0) : m; }
+    return r;
+  }
+
+  /** Dá para fabricar? Tem os ingredientes e, **depois dos débitos**, o resultado cabe. Não muda nada. */
+  canCraft(ingredients: readonly Stackable[], result: Stackable): boolean {
+    const d = this.debited(ingredients);
+    return !!d && Inventory.roomIn(d, result.item) >= result.count;
+  }
+
+  /** Fabrica de forma atômica: consumo e resultado numa operação só. Falhou → as pilhas ficam como estavam e devolve o motivo. */
+  tryCraft(ingredients: readonly Stackable[], result: Stackable): 'ok' | 'missing' | 'full' {
+    const d = this.debited(ingredients);
+    if (!d) return 'missing';
+    if (Inventory.roomIn(d, result.item) < result.count) return 'full';
+    for (let i = 0; i < SLOTS; i++) this.s[i] = d[i];
+    this.add(result.item, result.count); // cabe: conferido acima (sobe a revisão)
+    return 'ok';
+  }
+
+  /** Receita pessoal formada pela grade 2 × 2 (1 por espaço, qualquer disposição), ou `null`. */
+  craftRecipe(): Recipe | null {
     const items: number[] = [];
     for (let i = 0; i < CRAFT_SLOTS; i++) { const c = this.s[CRAFT_START + i]; if (c) { if (c.count !== 1) return null; items.push(c.item); } }
-    if (items.length !== LANTERN_RECIPE.length) return null;
-    return LANTERN_RECIPE.every((r) => items.includes(r)) ? Item.LANTERN : null;
+    return items.length ? matchGrid(items) : null;
   }
+  craftResult(): Stackable | null { const r = this.craftRecipe(); return r ? { ...r.result } : null; }
 
-  /** Botão da receita: leva 1 cápsula, 1 fragmento de rocha e 1 de gelo da hotbar/mochila à grade (precisa de grade vazia e dos três itens). */
-  fillRecipe(): boolean {
-    for (let i = 0; i < CRAFT_SLOTS; i++) if (this.s[CRAFT_START + i]) return false;
-    if (!LANTERN_RECIPE.every((r) => this.total(r) >= 1)) return false;
-    LANTERN_RECIPE.forEach((r, k) => {
-      for (let i = 0; i < SLOTS; i++) {
-        const c = this.s[i];
-        if (c && c.item === r) { if (--c.count <= 0) this.s[i] = null; break; }
-      }
-      this.s[CRAFT_START + k] = { item: r, count: 1 };
-    });
-    this.rev++;
-    return true;
-  }
-
-  /** Pegar o resultado: precisa caber na hotbar/mochila; consome os ingredientes da grade. Sem espaço ou sem receita, não muda nada. */
+  /** Pegar o resultado da grade: precisa caber na hotbar/mochila (a grade esvazia, então os ingredientes não ocupam mais espaço); consome a grade. Sem espaço ou sem receita, nada muda. */
   takeResult(): boolean {
     const r = this.craftResult();
-    if (r === null || !this.canAdd(r, 1)) return false;
+    if (!r || !this.canAdd(r.item, r.count)) return false;
     for (let i = 0; i < CRAFT_SLOTS; i++) this.s[CRAFT_START + i] = null;
-    return this.add(r, 1);
+    return this.add(r.item, r.count);
+  }
+
+  /** Troca todas as pilhas de `from` por `to` (hotbar, mochila e grade), uma a uma e com a mesma quantidade. Devolve quantas unidades trocou. Usado na migração da cápsula (ADR 0045). */
+  convertItem(from: number, to: number): number {
+    let n = 0;
+    for (let i = 0; i < this.s.length; i++) { const c = this.s[i]; if (c && c.item === from) { n += c.count; this.s[i] = { item: to, count: Math.min(c.count, maxStack(to)) }; } }
+    if (n) this.rev++;
+    return n;
   }
 
   /** Ao fechar a mochila: devolve o que está na grade à hotbar/mochila (cabe sempre: os itens vieram de lá). Devolve se tudo voltou. */

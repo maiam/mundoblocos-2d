@@ -21,7 +21,8 @@ export function breakTotalMs(kind: TargetKind, block?: number): number | null {
   switch (block) {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
     case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
-    case T.DARK_ROCK: case T.VEIN_ROCK: return BREAK_MS.rock;
+    case T.DARK_ROCK: case T.VEIN_ROCK: case T.WORKBENCH: return BREAK_MS.rock;
+    case T.EMBER: return BREAK_MS.ice; // depósito de brasa: cristal em rocha mole, como o gelo
     default: return null;
   }
 }

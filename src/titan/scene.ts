@@ -1,4 +1,3 @@
-import { Item } from './items';
 import type { TitanSession } from './session';
 import { T } from './voxel';
 
@@ -44,4 +43,4 @@ export function autoEditStep(s: TitanSession, spots: Array<[number, number, numb
 }
 
 /** Itens para o teste: nada muda no inventário (a cena é só mundo). */
-export const SCENE_NOTE = `Cena de teste: nada é gravado · cápsula única (${Item.CAPSULE})`;
+export const SCENE_NOTE = `Cena de teste: nada é gravado`;

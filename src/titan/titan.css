@@ -11,7 +11,8 @@ body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; displa
 .titan-slot[aria-pressed='true'] { outline: 2px solid #f2cc93; outline-offset: -2px; background-color: #533e2c; }
 .titan-slot[data-sel='true'] { outline: 2px solid #8ca1bc; outline-offset: -2px; }
 .titan-slot.out { border-color: #d99342; }
-.titan-icon { display: block; width: calc(16px * var(--s)); height: calc(16px * var(--s)); background-size: calc(64px * var(--s)) calc(32px * var(--s)); image-rendering: pixelated; pointer-events: none; }
+.titan-icon { display: block; width: calc(16px * var(--s)); height: calc(16px * var(--s)); background-size: calc(64px * var(--s)) calc(48px * var(--s)); image-rendering: pixelated; pointer-events: none; }
+.titan-icon.sm { --s2: 1.5; display: inline-block; flex: none; width: calc(16px * var(--s2)); height: calc(16px * var(--s2)); background-size: calc(64px * var(--s2)) calc(48px * var(--s2)); }
 .titan-slot .key { position: absolute; top: 2px; left: 3px; font: 700 10px ui-monospace, monospace; color: #f2cc93; text-shadow: 1px 1px #171410; pointer-events: none; }
 .titan-slot .count { position: absolute; right: 3px; bottom: 1px; font: 700 11px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; pointer-events: none; }
 .titan-panel { position: absolute; z-index: 5; left: 0; right: 0; margin: 0 auto; width: max-content; top: max(8px, env(safe-area-inset-top)); max-width: calc(100vw - 16px); max-height: calc(100vh - 100px); overflow: auto; background: #171c20f7; border: 1px solid #a37350; border-radius: 7px; padding: 10px 12px; box-shadow: 0 10px 36px #0b0907a8; pointer-events: auto; }
@@ -51,3 +52,27 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-collect { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; --p: 0;
   background: conic-gradient(#f2cc93 calc(var(--p) * 360deg), #f2cc9333 0);
   -webkit-mask: radial-gradient(circle, transparent 10px, #000 11px); mask: radial-gradient(circle, transparent 10px, #000 11px); pointer-events: none; }
+/* Livro de receitas e Mesa de Trabalho (ADR 0045) */
+.titan-recipes { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; max-width: 520px; }
+.titan-recipes > small { flex: 0 0 100%; color: #8ca1bc; font-size: 12px; }
+.titan-recipes.station { max-width: none; }
+.titan-card { display: grid; gap: 3px; width: 168px; padding: 6px 8px; background: #211e1d; border: 1px solid #765943; border-radius: 4px; }
+.titan-card.off { border-color: #534438; }
+.titan-card.off .titan-cardtop { opacity: 0.75; }
+.titan-cardtop { display: flex; align-items: center; gap: 6px; color: #f2cc93; }
+.titan-ing { display: grid; gap: 1px; }
+.titan-ing span { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 1.15; }
+.titan-recipes.station .titan-card .station { display: none; } /* na mesa todas as receitas são da estação: a linha só ocupa espaço */
+.titan-ing span.ok em { color: #bfe3b4; font-style: normal; }
+.titan-ing span.lack em { color: #f0a08a; font-style: normal; }
+.titan-card .station { color: #c8b29a; font-size: 11px; }
+.titan-card .why { color: #f0a08a; font-size: 11px; line-height: 1.25; }
+.titan-card .titan-btn { padding: 4px 10px; min-height: 36px; }
+.titan-card .titan-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.titan-use { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px); transform: translateX(-50%); z-index: 4; pointer-events: auto; min-height: 44px; min-width: 96px; font-size: 15px; }
+.titan-tabs { display: flex; gap: 6px; margin-left: 12px; margin-right: auto; }
+.titan-tabs .titan-btn { padding: 5px 10px; }
+.titan-tabs .titan-btn.on { background: #533e2c; border-color: #f2cc93; }
+.titan-panel { touch-action: pan-y; }
+.titan-recipes { flex-wrap: nowrap; overflow-x: auto; max-width: none; touch-action: pan-x; }
+.titan-recipes > small { display: none; } /* o título é a aba (mochila) ou o cabeçalho do painel (mesa) */

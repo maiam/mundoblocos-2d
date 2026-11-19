@@ -33,8 +33,9 @@ function reachable(g: TitanGenerator): Set<number> {
 
 describe('gerador v3: veios', () => {
   it('seed 42: 3 veios de rocha e 3 de gelo no topo da formação, sem lascas pré-posicionadas', () => {
-    const g = new TitanGenerator(42), v = new TitanVolume(g);
+    const g = new TitanGenerator(42, 3), v = new TitanVolume(g);
     expect(g.version).toBe(3);
+    expect(g.emberSite).toBeNull(); // a brasa é da v4
     expect(g.surfaceItems).toHaveLength(0);
     const cells = g.veinCells();
     expect(cells.filter((c) => c.kind === 'rock')).toHaveLength(3);
@@ -72,6 +73,8 @@ describe('gerador v3: veios', () => {
       expect(veins.filter((c) => c.kind === 'rock').length, `seed ${seed} rocha`).toBe(3);
       expect(veins.filter((c) => c.kind === 'ice').length, `seed ${seed} gelo`).toBe(3);
       if (g.outcropFallback) fallbacks++;
+      expect(g.emberSite, `seed ${seed} brasa`).not.toBeNull(); // v4: o depósito de brasa existe em toda seed
+      expect(g.reeds.length, `seed ${seed} juncos`).toBeGreaterThan(0);
       if (seed % 50 === 0) { // alcance sobre as colunas reais, em amostra (cada BFS lê o volume inteiro)
         const seen = reachable(g);
         for (const c of veins) {
@@ -211,28 +214,16 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     expect(r.items.remaining().length).toBe(6);
   });
 
-  it('fluxo completo na seed 42 (partida nova v3): dois veios → lascas → lanterna → colocar → recuperar → reabrir', async () => {
-    const { st, s } = await open();
-    for (const kind of ['rock', 'ice'] as const) {
-      const v = veinOf(s, kind);
+  it('fluxo dos veios na seed 42 (partida v3): dois veios de rocha e um de gelo → lascas na mochila', async () => {
+    const { s } = await open();
+    const rocks = s.volume.gen.veinCells().filter((c) => c.kind === 'rock').slice(0, 2), ice = veinOf(s, 'ice');
+    for (const v of [...rocks, ice]) {
       expect(breakOrCollect(s, hit(v)).ok).toBe(true);
       expect(collectNearby(s, v.x + 0.5, v.y, v.z + 0.5).collected).toBe(1);
     }
-    expect(s.inventory.total(Item.ROCK_SHARD)).toBe(1);
+    expect(s.inventory.total(Item.ROCK_SHARD)).toBe(2);
     expect(s.inventory.total(Item.FROST_SHARD)).toBe(1);
-    expect(s.inventory.fillRecipe()).toBe(true);
-    expect(s.inventory.takeResult()).toBe(true);
-    expect(s.inventory.total(Item.LANTERN)).toBe(1);
-    const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.LANTERN)!;
-    s.inventory.move(slot, 2);
-    const a = s.volume.gen.arrival, bx = Math.floor(a.x), bz = Math.floor(a.z);
-    expect(placeFromSlot(s, { x: bx + 2, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 2).ok).toBe(true);
-    await flush(st, s);
-    const r = await openSession(st, null, () => 1);
-    expect(r.volume.get(bx + 2, 65, bz)).toBe(T.LANTERN);
-    expect(r.drops.size).toBe(0);
-    expect(breakOrCollect(r, { x: bx + 2, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
-    expect(r.inventory.total(Item.LANTERN)).toBe(1);
+    expect(s.inventory.total(Item.DARK_ROCK)).toBe(2); // cada veio devolve o bloco inteiro
   });
 
   it('mochila cheia ao quebrar o veio: nada muda (o bloco não cabe) e nenhuma lasca é solta', async () => {

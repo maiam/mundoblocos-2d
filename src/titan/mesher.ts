@@ -32,6 +32,8 @@ const FACES = [
   { n: [0, 0, -1], light: 0.7, f: 'side' as Face, c: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },
 ];
 const CORNER_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
+/** Brilho próprio do depósito de brasa (somado depois da luz do dia: legível de dia e de noite). */
+const EMBER_GLOW = 0.42;
 /** A rocha-mãe é mais escura que a rocha comum. */
 const TINT: Record<number, number> = { [T.BEDROCK]: 0.55 };
 
@@ -41,7 +43,7 @@ const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX,
 class Builder {
   pos: number[] = []; uv: number[] = []; col: number[] = []; glow: number[] = []; idx: number[] = [];
   /** `level` = luz de lanterna na célula que a face enxerga. */
-  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0): void {
+  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0): void {
     const F = FACES[fi];
     const [u0, v0, u1, v1] = tileUV(tile);
     const base = this.pos.length / 3;
@@ -52,7 +54,7 @@ class Builder {
       this.pos.push(x + c[0], y + c[1], z + c[2]);
       this.uv.push(CORNER_UV[k][0] ? u1 : u0, CORNER_UV[k][1] ? v1 : v0);
       this.col.push(shade, shade, shade);
-      this.glow.push(w, w * 0.72, w * 0.38);
+      this.glow.push(w + emit, w * 0.72 + emit * 0.6, w * 0.38 + emit * 0.25);
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -79,7 +81,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
   for (let ly = 0; ly < SECTION; ly++) for (let lz = 0; lz < SECTION; lz++) for (let lx = 0; lx < SECTION; lx++) {
     const id = at(lx, ly, lz);
     if (id === T.AIR) continue;
-    if (id === T.LANTERN) continue; // a lanterna é o modelo 3D do renderer (instâncias, ADR 0043): não entra na malha do terreno
+    if (id === T.LANTERN || id === T.WORKBENCH) continue; // lanterna e mesa são modelos 3D do renderer (instâncias, ADR 0043/0045): não entram na malha do terreno (a mesa, sólida, ainda esconde as faces vizinhas)
     for (let fi = 0; fi < 6; fi++) {
       const n = FACES[fi].n;
       const nb = at(lx + n[0], ly + n[1], lz + n[2]);
@@ -87,7 +89,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
       if (id === T.LAKE) {
         if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level); // só a superfície (e bordas expostas ao ar)
       } else if (!isSolid(nb)) {
-        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level);
+        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level, id === T.EMBER ? EMBER_GLOW : 0); // o depósito de brasa brilha de dia e de noite
       }
     }
   }

@@ -172,6 +172,7 @@ describe('versões do gerador', () => {
     const v2 = new TitanGenerator(42, 2);
     expect(v2.version).toBe(2);
     expect(v2.arrival).toEqual(v1.arrival);
-    expect(new TitanGenerator(42).version).toBe(3);
+    expect(new TitanGenerator(42).version).toBe(4); // a versão atual (ADR 0045)
+    expect(new TitanGenerator(42, 3).version).toBe(3);
   });
 });

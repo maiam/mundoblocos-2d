@@ -1,0 +1,685 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "Mesa_de_Trabalho_Tita",
+  "resolution": {
+    "width": 60,
+    "height": 40
+  },
+  "elements": [
+    {
+      "type": "cube",
+      "uuid": "abd9df94-6b41-5cd6-b073-2335ad032873",
+      "name": "Base",
+      "from": [
+        -8,
+        0,
+        -8
+      ],
+      "to": [
+        8,
+        3,
+        8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            2,
+            15,
+            18,
+            18
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            2,
+            35,
+            18,
+            38
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            42,
+            15,
+            58,
+            18
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            15,
+            38,
+            18
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            42,
+            22,
+            58,
+            38
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            42,
+            22,
+            58,
+            38
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "d960f058-ee3c-52fc-bc53-e59bc0af8f76",
+      "name": "Tampo gravado",
+      "from": [
+        -8,
+        13,
+        -8
+      ],
+      "to": [
+        8,
+        16,
+        8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            2,
+            2,
+            18,
+            5
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            2,
+            22,
+            18,
+            25
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            42,
+            2,
+            58,
+            5
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            2,
+            38,
+            5
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            22,
+            22,
+            38,
+            38
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            42,
+            22,
+            58,
+            38
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "8a920181-317b-5ea9-9f75-40c45e6f8f3a",
+      "name": "Pilar esquerdo",
+      "from": [
+        -8,
+        3,
+        -8
+      ],
+      "to": [
+        -5,
+        13,
+        8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            15,
+            5,
+            18,
+            15
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            2,
+            25,
+            5,
+            35
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            42,
+            5,
+            58,
+            15
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            5,
+            38,
+            15
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            42,
+            22,
+            45,
+            38
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            42,
+            22,
+            45,
+            38
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "86d74ed6-a9fe-5399-9e66-c70004281f22",
+      "name": "Pilar direito",
+      "from": [
+        5,
+        3,
+        -8
+      ],
+      "to": [
+        8,
+        13,
+        8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            2,
+            5,
+            5,
+            15
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            15,
+            25,
+            18,
+            35
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            42,
+            5,
+            58,
+            15
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            5,
+            38,
+            15
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            55,
+            22,
+            58,
+            38
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            55,
+            22,
+            58,
+            38
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "4af303fd-cc29-5933-aadf-3db4cb867035",
+      "name": "Parede posterior do nicho",
+      "from": [
+        -5,
+        3,
+        -4
+      ],
+      "to": [
+        5,
+        13,
+        8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            5,
+            5,
+            15,
+            15
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            5,
+            25,
+            15,
+            35
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            42,
+            5,
+            54,
+            15
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            26,
+            5,
+            38,
+            15
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            45,
+            26,
+            55,
+            38
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            45,
+            22,
+            55,
+            34
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "507674d4-3dee-5c2e-890d-be29792afd22",
+      "name": "Verga do nicho",
+      "from": [
+        -5,
+        12,
+        -8
+      ],
+      "to": [
+        5,
+        13,
+        -4
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            5,
+            5,
+            15,
+            6
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            5,
+            25,
+            15,
+            26
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            54,
+            5,
+            58,
+            6
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            5,
+            26,
+            6
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            45,
+            22,
+            55,
+            26
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            45,
+            34,
+            55,
+            38
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "e7f810d0-946b-54fc-82ac-b363767b1f36",
+      "name": "Ombro esquerdo do arco",
+      "from": [
+        -5,
+        9,
+        -8
+      ],
+      "to": [
+        -3,
+        12,
+        -4
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            13,
+            6,
+            15,
+            9
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            5,
+            26,
+            7,
+            29
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            54,
+            6,
+            58,
+            9
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            6,
+            26,
+            9
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            45,
+            22,
+            47,
+            26
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            45,
+            34,
+            47,
+            38
+          ]
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "25140ebe-43d0-5316-90d8-1a1e8e5ee93e",
+      "name": "Ombro direito do arco",
+      "from": [
+        3,
+        9,
+        -8
+      ],
+      "to": [
+        5,
+        12,
+        -4
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            5,
+            6,
+            7,
+            9
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            13,
+            26,
+            15,
+            29
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            54,
+            6,
+            58,
+            9
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            22,
+            6,
+            26,
+            9
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            53,
+            22,
+            55,
+            26
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            53,
+            34,
+            55,
+            38
+          ]
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "uuid": "f4ba819d-c149-5293-bbce-d60480aca9ba",
+      "name": "Mesa de Trabalho · Basalto",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "f4ba819d-c149-5293-bbce-d60480aca9ba",
+      "isOpen": true,
+      "children": [
+        "abd9df94-6b41-5cd6-b073-2335ad032873",
+        "d960f058-ee3c-52fc-bc53-e59bc0af8f76",
+        "8a920181-317b-5ea9-9f75-40c45e6f8f3a",
+        "86d74ed6-a9fe-5399-9e66-c70004281f22",
+        "4af303fd-cc29-5933-aadf-3db4cb867035",
+        "507674d4-3dee-5c2e-890d-be29792afd22",
+        "e7f810d0-946b-54fc-82ac-b363767b1f36",
+        "25140ebe-43d0-5316-90d8-1a1e8e5ee93e"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "Mesa_de_Trabalho_Atlas.png",
+      "uuid": "1be9b380-1e96-5266-a16b-79433e05791a",
+      "id": "0",
+      "mode": "bitmap",
+      "internal": true,
+      "width": 60,
+      "height": 40,
+      "uv_width": 60,
+      "uv_height": 40,
+      "source": "data:image/png;base64,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"
+    }
+  ]
+}

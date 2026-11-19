@@ -6,8 +6,9 @@
 /**
  * v2 (entrega 2, ADR 0040): `inventory` passa a existir (mochila, grade, fragmentos recolhidos). v1 (sem inventário) continua abrindo.
  * v3 (ADR 0044): `drops` = lascas soltas por veios quebrados e ainda não recolhidas. v1 e v2 continuam abrindo (sem drops).
+ * v4 (ADR 0045): `recipes` (receitas descobertas) e `grants` (adição localizada de brasa em partida legada); a cápsula remanescente vira brasa uma única vez ao abrir um save < 4.
  */
-export const TITAN_SAVE_VERSION = 3;
+export const TITAN_SAVE_VERSION = 4;
 const DB_NAME = 'orvalis-titan';
 
 export interface TitanHeader {
@@ -28,9 +29,13 @@ export interface TitanHeader {
   inventory: { bag: InventoryData; collected: string[] } | null;
   /** v3: lascas soltas ainda no mundo (id `v:x,y,z` do veio que as soltou); gravadas na mesma transação do inventário e das edições. Ausente = nenhuma. */
   drops?: Drop[];
+  /** v4: ids das receitas já descobertas (`mesa`, `bancada`): a descoberta é derivada do estado, mas fica gravada para não depender de um evento único. */
+  recipes?: string[];
+  /** v4: adições localizadas feitas numa partida de gerador antigo: o depósito de brasa dado uma vez (a célula; some do mapa se o jogador o quebrar). */
+  grants?: { ember?: [number, number, number] };
 }
-/** Lasca solta: 5 = fragmento de rocha, 6 = fragmento de gelo (ids de item). A célula é onde ela pousa. */
-export interface Drop { id: string; item: 5 | 6; x: number; y: number; z: number }
+/** Lasca solta: 5 = fragmento de rocha, 6 = fragmento de gelo, 11 = brasa de âmbar (ids de item). A célula é onde ela pousa. */
+export interface Drop { id: string; item: 5 | 6 | 11; x: number; y: number; z: number }
 import type { InventoryData } from './inventory';
 
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }

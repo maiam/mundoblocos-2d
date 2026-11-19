@@ -27,6 +27,12 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   if (hit.item) return collectItem(s, hit.item);
   const { x, y, z } = hit;
   if (!s.volume.breakable(x, y, z)) return { ok: false };
+  if (s.volume.get(x, y, z) === T.EMBER) {
+    // depósito de brasa: rende só a brasa, solta no chão (como a lasca do veio); o minério some e não se recria
+    if (!s.volume.remove(x, y, z)) return { ok: false };
+    dropShard(s, Item.EMBER, x, y, z);
+    return { ok: true };
+  }
   const item = itemOfBlock(s.volume.get(x, y, z));
   if (item === null) return { ok: false };
   if (!s.inventory.canAdd(item)) return FULL;
@@ -40,7 +46,7 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
 }
 
 /** Pousa uma lasca perto do ponto de quebra: na célula do veio, descendo até o primeiro apoio sólido. */
-function dropShard(s: TitanSession, item: 5 | 6, x: number, y: number, z: number): void {
+function dropShard(s: TitanSession, item: 5 | 6 | 11, x: number, y: number, z: number): void {
   const id = `v:${x},${y},${z}`;
   if (s.drops.has(id)) return;
   s.drops.set(id, { id, item, x, y: restY(s, x, y, z), z });
@@ -66,7 +72,7 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
     if (ry !== d.y) { s.drops.set(d.id, { ...d, y: ry }); s.dropsRev++; moved = true; }
     const dd = s.drops.get(d.id)!;
     if (Math.hypot(dd.x + 0.5 - px, dd.z + 0.5 - pz) > PICKUP_RADIUS || py > dd.y + 1.5 || py + 1.8 < dd.y) continue;
-    const item = dd.item === 5 ? Item.ROCK_SHARD : Item.FROST_SHARD;
+    const item = dd.item; // o id do item é o próprio campo (5 = fragmento de rocha, 6 = de gelo, 11 = brasa)
     if (!s.inventory.canAdd(item)) { full = true; continue; }
     s.inventory.add(item);
     s.drops.delete(dd.id);
