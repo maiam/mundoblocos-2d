@@ -1,4 +1,5 @@
 import type { TitanVolume } from './volume';
+import { LIGHT_MAX } from './light';
 import { isSolid, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
 
 /**
@@ -26,22 +27,34 @@ const FACES = [
   { n: [0, 0, 1], light: 0.78, f: 'side' as Face, c: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] },
   { n: [0, 0, -1], light: 0.7, f: 'side' as Face, c: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },
 ];
+const LANTERN_BOX: Box = [0.3, 0, 0.3, 0.7, 0.7, 0.7];
 const CORNER_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
 /** A rocha-mãe é mais escura que a rocha comum. */
 const TINT: Record<number, number> = { [T.BEDROCK]: 0.55 };
 
+/** Luz ambiente da tarde fixa (1). `?hora=noite` (teste) baixa para ver a luz da lanterna; é global do renderer (o volume não depende dela). */
+let ambient = 1;
+export function setAmbient(a: number): void { ambient = a; }
+/** Brilho quente somado por nível de luz de lanterna (0–15): sobe mais forte perto da fonte. */
+const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX, 1.3) * 0.7 : 0);
+type Box = readonly [number, number, number, number, number, number];
+const UNIT: Box = [0, 0, 0, 1, 1, 1];
+
 class Builder {
   pos: number[] = []; uv: number[] = []; col: number[] = []; idx: number[] = [];
-  face(x: number, y: number, z: number, fi: number, tile: number, tint: number): void {
+  /** `level` = luz de lanterna na célula que a face enxerga; `fixed` = cor própria (a lanterna emite, não recebe). */
+  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, box: Box = UNIT, fixed?: readonly [number, number, number]): void {
     const F = FACES[fi];
     const [u0, v0, u1, v1] = tileUV(tile);
     const base = this.pos.length / 3;
-    const shade = F.light * tint;
+    const shade = F.light * tint * ambient;
+    const w = warm(level);
     for (let k = 0; k < 4; k++) {
       const c = F.c[k];
-      this.pos.push(x + c[0], y + c[1], z + c[2]);
+      this.pos.push(x + box[0] + c[0] * (box[3] - box[0]), y + box[1] + c[1] * (box[4] - box[1]), z + box[2] + c[2] * (box[5] - box[2]));
       this.uv.push(CORNER_UV[k][0] ? u1 : u0, CORNER_UV[k][1] ? v1 : v0);
-      this.col.push(shade, shade, shade);
+      if (fixed) this.col.push(fixed[0] * F.light, fixed[1] * F.light, fixed[2] * F.light);
+      else this.col.push(shade + w, shade + w * 0.72, shade + w * 0.38);
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -64,16 +77,23 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
   if (!any) return { opaque: null, liquid: null };
   const op = new Builder(), lq = new Builder();
   const at = (lx: number, ly: number, lz: number): number => cells[((ly + 1) * N + (lz + 1)) * N + (lx + 1)];
+  const lit = vol.hasLanterns;
   for (let ly = 0; ly < SECTION; ly++) for (let lz = 0; lz < SECTION; lz++) for (let lx = 0; lx < SECTION; lx++) {
     const id = at(lx, ly, lz);
     if (id === T.AIR) continue;
+    if (id === T.LANTERN) {
+      // objeto pequeno e brilhante (0,4 × 0,7 × 0,4 no chão da célula): âmbar da direção de arte, sem receber sombra
+      for (let fi = 0; fi < 6; fi++) op.face(x0 + lx, y0 + ly, z0 + lz, fi, 0, 1, 0, LANTERN_BOX, [1.7, 1.15, 0.5]);
+      continue;
+    }
     for (let fi = 0; fi < 6; fi++) {
       const n = FACES[fi].n;
       const nb = at(lx + n[0], ly + n[1], lz + n[2]);
+      const level = lit ? vol.light(x0 + lx + n[0], y0 + ly + n[1], z0 + lz + n[2]) : 0;
       if (id === T.LAKE) {
-        if (nb === T.AIR) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1); // só a superfície (e bordas expostas ao ar)
+        if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level); // só a superfície (e bordas expostas ao ar)
       } else if (!isSolid(nb)) {
-        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1);
+        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level);
       }
     }
   }

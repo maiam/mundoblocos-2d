@@ -3,7 +3,8 @@
  * Cabeçalho + jogador + chunks alterados vão **na mesma transação** (a gravação só é "confirmada" no `oncomplete`); a inventário/coleta da
  * entrega 2 entra no mesmo registro `games` sem mudar o modelo. A base nunca é guardada: só `seed + generatorVersion` e os deltas.
  */
-export const TITAN_SAVE_VERSION = 1;
+/** v2 (entrega 2, ADR 0040): `inventory` passa a existir (mochila, grade, fragmentos recolhidos). v1 (sem inventário) continua abrindo. */
+export const TITAN_SAVE_VERSION = 2;
 const DB_NAME = 'orvalis-titan';
 
 export interface TitanHeader {
@@ -15,9 +16,14 @@ export interface TitanHeader {
   player: { x: number; y: number; z: number; yaw: number; pitch: number };
   /** Bloco selecionado na hotbar (índice). */
   selected: number;
-  /** Reservado para a entrega 2 (mochila, hotbar, fragmentos recolhidos, lanternas): vai neste registro, na mesma transação. */
-  inventory: null;
+  /**
+   * Hotbar, mochila e grade de fabricação + ids dos fragmentos de superfície já recolhidos; vai neste registro, **na mesma transação** das edições de chunk
+   * (as lanternas colocadas são edições de chunk). `null` = save da v1: abre com o inventário inicial.
+   */
+  inventory: { bag: InventoryData; collected: string[] } | null;
 }
+import type { InventoryData } from './inventory';
+
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }
 export interface TitanSave { header: TitanHeader; chunks: ChunkRecord[] }
 

@@ -1,5 +1,6 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
-import { newBody, safePosition, type Body } from './physics';
+import { Inventory } from './inventory';
+import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
 
@@ -18,11 +19,34 @@ export interface TitanSession {
   resumed: boolean;
   /** Mensagem se a posição gravada estava obstruída e foi trocada por uma segura. */
   relocated: boolean;
+  /** Hotbar, mochila e grade (ADR 0040). */
+  inventory: Inventory;
+  /** Ids dos fragmentos de superfície já recolhidos (a base os recria; o save lembra quais sumiram). */
+  collected: Set<string>;
+  /** Revisões do que não é chunk (inventário + coleta): só a confirmada fica limpa. */
+  collectedRev: number;
+  savedStateRev: number;
+  /** Fragmentos de superfície ainda no mundo, por célula (para a mira e o desenho). */
+  items: ItemLookup & { remaining(): Array<{ id: string; item: number; x: number; y: number; z: number }> };
+}
+
+const stateRev = (s: TitanSession): number => s.inventory.rev + s.collectedRev;
+/** Há inventário/coleta ainda não confirmados no banco? */
+export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.savedStateRev;
+
+function makeItems(s: { volume: TitanVolume; collected: Set<string> }): TitanSession['items'] {
+  const all = s.volume.gen.surfaceItems;
+  const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
+  const byCell = new Map(all.map((i) => [key(i.x, i.y, i.z), i.id]));
+  return {
+    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : null; },
+    remaining: () => all.filter((i) => !s.collected.has(i.id)),
+  };
 }
 
 export type GeneratorFactory = (seed: number, version: number) => TitanGenerator | null;
 /** Versões suportadas: uma partida antiga nunca é reinterpretada por um gerador novo (docs Titã 05 §6). */
-export const generatorFor: GeneratorFactory = (seed, version) => (version === GENERATOR_VERSION ? new TitanGenerator(seed) : null);
+export const generatorFor: GeneratorFactory = (seed, version) => (version === 1 || version === GENERATOR_VERSION ? new TitanGenerator(seed, version) : null);
 
 export class UnsupportedVersionError extends Error {}
 
@@ -42,7 +66,9 @@ export async function openSession(storage: TitanStorage, explicitSeed: number | 
 export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
-  return { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false };
+  const collected = new Set<string>();
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, items: makeItems({ volume, collected }) };
+  return s;
 }
 
 function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
@@ -52,11 +78,17 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const p = save.header.player;
   const safe = safePosition(volume, p, a);
   const moved = Math.abs(safe.x - p.x) > 1e-6 || Math.abs(safe.y - p.y) > 1e-6 || Math.abs(safe.z - p.z) > 1e-6;
-  return { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: save.header.selected | 0, resumed: true, relocated: moved };
+  // save da v1 (sem inventário) abre com o inventário inicial; o que estava na grade de fabricação volta para a mochila
+  const inv = save.header.inventory ? Inventory.fromData(save.header.inventory.bag) : Inventory.starting();
+  const revBefore = inv.rev;
+  inv.returnCraft();
+  const collected = new Set<string>((save.header.inventory?.collected ?? []).filter((x): x is string => typeof x === 'string'));
+  const savedStateRev = save.header.inventory && inv.rev === revBefore ? inv.rev : -1; // v1 ou grade devolvida: há o que gravar
+  return { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, inventory: inv, collected, collectedRev: 0, savedStateRev, items: makeItems({ volume, collected }) };
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, inventory: null };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() } };
 }
 
 /**
@@ -64,9 +96,11 @@ export function headerOf(s: TitanSession): TitanHeader {
  * tentativa e o erro sobe (a interface o mostra e o último estado confirmado continua no banco).
  */
 export async function flush(storage: TitanStorage, s: TitanSession): Promise<void> {
+  const rev = stateRev(s); // inventário e coleta saem no mesmo instante da cópia dos chunks e do cabeçalho
   const dirty = s.volume.dirtyChunks();
   const puts: ChunkRecord[] = dirty.filter((c) => c.edits.length > 0).map(({ cx, cz, edits }) => ({ cx, cz, edits }));
   const deletes = dirty.filter((c) => c.edits.length === 0).map(({ cx, cz }) => ({ cx, cz }));
   await storage.commit(headerOf(s), puts, deletes);
   s.volume.markClean(dirty); // só a revisão confirmada: edição feita durante a gravação continua pendente
+  s.savedStateRev = rev; // idem para inventário e coleta
 }

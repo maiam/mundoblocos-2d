@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
+import { setAmbient } from '../titan/mesher';
 import type { TitanVolume } from '../titan/volume';
 
 /**
@@ -9,7 +10,8 @@ import type { TitanVolume } from '../titan/volume';
  * líquido, atlas compartilhado de pixels nítidos, luz de tarde fixa (embutida nos vértices) e névoa âmbar. Só **lê** o volume.
  * Malhas feitas no quadro (limite por quadro, mais perto primeiro); workers ficam para a otimização posterior (NEXT_STEPS).
  */
-const FOG_COLOR = 0xd2a066; // âmbar da tarde (mistura da atmosfera e do cobre da direção de arte)
+const FOG_DAY = 0xd2a066; // âmbar da tarde (mistura da atmosfera e do cobre da direção de arte)
+const FOG_NIGHT = 0x14101c; // noite de teste (`?hora=noite`): carvão-violeta
 const HORIZON = 0xf2cc93;
 const ZENITH = 0xb96e33;
 /** Alcance de render (blocos): a região de teste é pequena; a névoa começa em 70% e fecha antes da borda carregada. */
@@ -28,8 +30,13 @@ export class TitanRenderer {
   private readonly outline: THREE.LineSegments;
   private readonly sky: THREE.Mesh;
   private frame = 0;
+  private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
+  private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement) {
+  /** `night`: teste da luz da lanterna (a tarde fixa é a regra desta entrega; o ciclo do céu fica para depois). */
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, night = false) {
+    const FOG_COLOR = night ? FOG_NIGHT : FOG_DAY;
+    setAmbient(night ? 0.3 : 1);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(FOG_COLOR);
@@ -49,6 +56,14 @@ export class TitanRenderer {
     this.liquidTex.needsUpdate = true;
     this.liquidMat = new THREE.MeshBasicMaterial({ map: this.liquidTex, vertexColors: true, fog: true, transparent: true, opacity: 0.94 });
 
+    const htex = new THREE.Texture(hotbarAtlas);
+    htex.colorSpace = THREE.SRGBColorSpace;
+    htex.magFilter = THREE.NearestFilter;
+    htex.minFilter = THREE.NearestFilter;
+    htex.generateMipmaps = false;
+    htex.needsUpdate = true;
+    this.hotbarTex = htex;
+
     // céu: cúpula com degradê procedural (cobre no alto → âmbar → névoa pálida no horizonte), acompanha a câmera
     const dome = new THREE.SphereGeometry(300, 24, 12);
     const colors: number[] = [];
@@ -59,6 +74,8 @@ export class TitanRenderer {
       if (h < 0.35) c.copy(hor).lerp(mid, h / 0.35); else c.copy(mid).lerp(zen, (h - 0.35) / 0.65);
       colors.push(c.r, c.g, c.b);
     }
+    dome.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    if (night) for (let i = 0; i < colors.length; i++) colors[i] *= 0.08;
     dome.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     this.sky = new THREE.Mesh(dome, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
     this.sky.renderOrder = -1;
@@ -82,6 +99,31 @@ export class TitanRenderer {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   };
+
+  /** Fragmentos de superfície ainda no mundo (sprites do atlas da hotbar: rocha = índice 4, gelo = 5). Chamar de novo depois de uma coleta. */
+  setItems(items: Array<{ id: string; item: number; x: number; y: number; z: number }>): void {
+    const keep = new Set(items.map((i) => i.id));
+    for (const [id, e] of this.itemSprites) if (!keep.has(id)) { this.scene.remove(e.sprite); this.itemSprites.delete(id); }
+    for (const it of items) {
+      if (this.itemSprites.has(it.id)) continue;
+      const mat = this.itemMats[it.item] ??= this.spriteMaterial(it.item - 1);
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.set(0.6, 0.6, 1);
+      const baseY = it.y + 0.32;
+      sprite.position.set(it.x + 0.5, baseY, it.z + 0.5);
+      this.scene.add(sprite);
+      this.itemSprites.set(it.id, { sprite, baseY });
+    }
+  }
+
+  private hotbarTex!: THREE.Texture;
+  private spriteMaterial(index: number): THREE.SpriteMaterial {
+    const tex = this.hotbarTex.clone();
+    tex.needsUpdate = true;
+    tex.repeat.set(0.25, 0.5);
+    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) * 0.5);
+    return new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.4, fog: true });
+  }
 
   /** Seções que ainda faltam (diagnóstico e testes de navegador). */
   get pendingSections(): number { return this.pending.size; }
@@ -123,6 +165,8 @@ export class TitanRenderer {
         if (performance.now() - t0 > MESH_BUDGET_MS && this.frame > 1) break;
       }
     }
+    let n = 0;
+    for (const e of this.itemSprites.values()) e.sprite.position.y = e.baseY + 0.06 * Math.sin(time * 2 + n++);
     this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
     this.outline.visible = !!target;
     if (target) this.outline.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5);
