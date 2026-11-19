@@ -8,6 +8,7 @@ import { horizonAt, skyAt, type Sky } from '../titan/sky';
 import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
+import { REED_VARIANTS, reedVariant } from '../titan/reeds';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -40,8 +41,9 @@ export class TitanRenderer {
   private readonly ambient = { value: new THREE.Vector3(1, 1, 1) };
   private workbenchMesh!: THREE.InstancedMesh;
   private workbenchSeen = -1;
-  private reedMesh!: THREE.InstancedMesh;
-  private reedGeo!: THREE.BufferGeometry;
+  /** Junco de Vidro: uma malha instanciada por silhueta (broto baixo, haste bifurcada, tufo aberto), cada uma com o seu terço do atlas. */
+  private reedMeshes: THREE.InstancedMesh[] = [];
+  private reedGeos: THREE.BufferGeometry[] = [];
   private reedMat!: THREE.MeshBasicMaterial;
   private readonly timeU = { value: 0 };
   private lanternStructure: THREE.InstancedMesh;
@@ -145,12 +147,16 @@ export class TitanRenderer {
     rtex.needsUpdate = true;
     const rmat = new THREE.MeshBasicMaterial({ map: rtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(rmat, this.ambient, { time: this.timeU });
-    this.reedGeo = reedGeometry();
     this.reedMat = rmat;
-    this.reedMesh = new THREE.InstancedMesh(this.reedGeo, rmat, 64);
-    this.reedMesh.count = 0;
-    this.reedMesh.frustumCulled = false;
-    this.scene.add(this.reedMesh);
+    for (let v = 0; v < REED_VARIANTS; v++) {
+      const geo = reedGeometry(v);
+      const mesh = new THREE.InstancedMesh(geo, rmat, 32);
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      this.scene.add(mesh);
+      this.reedGeos.push(geo);
+      this.reedMeshes.push(mesh);
+    }
 
     // contorno da célula apontada
     const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1));
@@ -216,24 +222,32 @@ export class TitanRenderer {
   /** Mesas desenhadas (diagnóstico e testes de navegador). */
   get workbenchCount(): number { return this.workbenchMesh.count; }
 
-  /** Juncos de vidro: `list` = células de ar sobre areia úmida (o jogo filtra as que foram construídas). Rotação e tamanho por planta, determinísticos pela posição. */
+  /** Juncos de vidro: `list` = células de ar sobre areia úmida (o jogo filtra as que foram construídas). Silhueta, rotação e tamanho por planta, determinísticos pela posição. */
   setReeds(list: ReadonlyArray<{ x: number; y: number; z: number }>): void {
-    if (list.length > this.reedMesh.instanceMatrix.count) {
-      this.scene.remove(this.reedMesh);
-      this.reedMesh = new THREE.InstancedMesh(this.reedGeo, this.reedMat, Math.max(list.length, this.reedMesh.instanceMatrix.count * 2));
-      this.reedMesh.frustumCulled = false;
-      this.scene.add(this.reedMesh);
+    const groups: Array<Array<{ x: number; y: number; z: number; f: number }>> = Array.from({ length: REED_VARIANTS }, () => []);
+    for (const r of list) {
+      const h = Math.sin(r.x * 12.9898 + r.z * 78.233) * 43758.5453, f = h - Math.floor(h);
+      groups[reedVariant(r.x, r.z)].push({ ...r, f });
     }
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    list.forEach((r, i) => {
-      const h = Math.sin(r.x * 12.9898 + r.z * 78.233) * 43758.5453, f = h - Math.floor(h);
-      q.setFromAxisAngle(up, f * Math.PI);
-      sc.set(0.85 + f * 0.3, 0.8 + ((f * 7) % 1) * 0.5, 0.85 + f * 0.3);
-      m.compose(p.set(r.x + 0.5, r.y, r.z + 0.5), q, sc);
-      this.reedMesh.setMatrixAt(i, m);
+    groups.forEach((g, v) => {
+      let mesh = this.reedMeshes[v];
+      if (g.length > mesh.instanceMatrix.count) {
+        this.scene.remove(mesh);
+        mesh = new THREE.InstancedMesh(this.reedGeos[v], this.reedMat, Math.max(g.length, mesh.instanceMatrix.count * 2));
+        mesh.frustumCulled = false;
+        this.scene.add(mesh);
+        this.reedMeshes[v] = mesh;
+      }
+      g.forEach((r, i) => {
+        q.setFromAxisAngle(up, r.f * Math.PI);
+        sc.set(0.85 + r.f * 0.3, 0.8 + ((r.f * 7) % 1) * 0.5, 0.85 + r.f * 0.3);
+        m.compose(p.set(r.x + 0.5, r.y, r.z + 0.5), q, sc);
+        mesh.setMatrixAt(i, m);
+      });
+      mesh.count = g.length;
+      mesh.instanceMatrix.needsUpdate = true;
     });
-    this.reedMesh.count = list.length;
-    this.reedMesh.instanceMatrix.needsUpdate = true;
   }
 
   /** Lanternas desenhadas (diagnóstico e testes de navegador). */
@@ -443,10 +457,11 @@ function workbenchGeometry(): THREE.BufferGeometry {
   return g;
 }
 
-/** Junco de vidro: duas faixas verticais cruzadas de 1 × 1 (base em y = 0, topo em y = 1: o balanço do shader cresce com a altura). */
-function reedGeometry(): THREE.BufferGeometry {
+/** Junco de vidro: duas faixas verticais cruzadas de 1 × 1 (base em y = 0, topo em y = 1: o balanço do shader cresce com a altura). `variant` escolhe o terço do atlas. */
+function reedGeometry(variant: number): THREE.BufferGeometry {
   const pos = [-0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0, 0, 0, -0.5, 0, 0, 0.5, 0, 1, 0.5, 0, 1, -0.5];
-  const uv = [0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1];
+  const u0 = variant / REED_VARIANTS, u1 = (variant + 1) / REED_VARIANTS;
+  const uv = [u0, 0, u1, 0, u1, 1, u0, 1, u0, 0, u1, 0, u1, 1, u0, 1];
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));

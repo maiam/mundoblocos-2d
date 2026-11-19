@@ -33,7 +33,7 @@ export const titanLanternModel = lanternModel as { size: number[]; structure: La
 
 import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
 import workbenchModel from '../../assets/titan-workbench.json';
-import reedSprite from '../../assets/titan-reed-16px.webp';
+import reedSprite from '../../assets/titan-junco-variantes-16px.webp';
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
  * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).
@@ -41,6 +41,7 @@ import reedSprite from '../../assets/titan-reed-16px.webp';
  */
 export const titanWorkbenchAtlasUrl: string = workbenchAtlas;
 export const titanWorkbenchModel = workbenchModel as { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] };
+/** Junco de Vidro em campo: atlas de 48 × 16 px com as 3 silhuetas (broto baixo, haste bifurcada, tufo aberto), 16 × 16 cada. */
 export const titanReedUrl: string = reedSprite;
 
 import basalt from '../../assets/titan-basalt-32px.webp';
