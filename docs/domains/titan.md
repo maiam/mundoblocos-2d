@@ -10,8 +10,8 @@
 | Blocos | Areia ocre, Areia úmida, Rocha escura, Gelo fosco (colocáveis); Lago escuro (líquido), Rocha-mãe | `titan/voxel.ts` (`T`) |
 | Edição | esquerdo **coloca** na face apontada, direito **remove**; líquido é deslocado e volta ao remover o sólido; rocha-mãe e fora da região não editam | `titan/volume.ts` |
 | Física | caixa 0,6 × 1,8 × 0,6; pulo de 1 bloco (não 2); líquido freia e flutua | `titan/physics.ts` |
-| Save | IndexedDB `orvalis-titan`: `games` (cabeçalho, jogador, `inventory` reservado) + `chunks` (deltas); uma transação; autosave 0,7 s após editar e 5 s de posição | `titan/save.ts`, `titan/session.ts` |
-| Malha/visual | seção 16³, faces expostas, atlas `render/art/titan.ts` (WebP sem perdas), tarde fixa e névoa âmbar | `titan/mesher.ts`, `render/titanRenderer.ts` |
+| Save | IndexedDB `orvalis-titan`: `games` (cabeçalho, jogador, `inventory` reservado) + `chunks` (deltas); uma transação; autosave 0,7 s após editar e 5 s de posição; **revisão por chunk**: só a revisão confirmada fica limpa, edição feita durante a gravação continua pendente | `titan/save.ts`, `titan/session.ts` |
+| Malha/visual | seção 16³, faces expostas, atlas `render/art/titan.ts` (WebP sem perdas), tarde fixa e névoa âmbar | `titan/mesher.ts`, `titan/sections.ts` (fila inicial: relevo + seções editadas), `render/titanRenderer.ts` |
 
 **Verificações da entrega:** `titan/*.test.ts` (endereçamento nas bordas, determinismo, 20 seeds com chegada seca/clareira/percurso até lago e formações, bacia × praia, divisa de chunks, física,
 mira, save/retomada/posição segura/falha de gravação/versão desconhecida, malha). **Perf:** não medida em celular real.

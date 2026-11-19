@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { flush, generatorFor, openSession, UnsupportedVersionError } from './session';
-import { MemoryTitanStorage } from './save';
+import { MemoryTitanStorage, type ChunkRecord, type TitanHeader } from './save';
+import { initialSections } from './sections';
+import { meshSection } from './mesher';
 import { collides } from './physics';
 import { T } from './voxel';
 import { TitanGenerator } from './generator';
@@ -83,5 +85,65 @@ describe('sessão e save do Titã', () => {
     st.games.get(42)!.generatorVersion = 99;
     await expect(openSession(st, 42, () => 1)).rejects.toBeInstanceOf(UnsupportedVersionError);
     expect(generatorFor(42, 1)).toBeInstanceOf(TitanGenerator);
+  });
+
+  it('edição feita durante a gravação continua pendente e entra na próxima (sem perder o segundo bloco)', async () => {
+    // armazenamento com a transação "pendurada" até o teste liberar
+    class SlowStorage extends MemoryTitanStorage {
+      release!: () => void;
+      private readonly gate = new Promise<void>((r) => { this.release = r; });
+      override async commit(h: TitanHeader, puts: ChunkRecord[], deletes: Array<{ cx: number; cz: number }>): Promise<void> {
+        await this.gate;
+        return super.commit(h, puts, deletes);
+      }
+    }
+    const st = new SlowStorage();
+    const s = await openSession(st, 42, () => 1);
+    const a = s.volume.gen.arrival;
+    const bx = Math.floor(a.x), bz = Math.floor(a.z);
+    s.volume.place(bx, 65, bz, T.SAND); // bloco A
+    const saving = flush(st, s); // transação pendente
+    s.volume.place(bx + 1, 65, bz, T.DARK_ROCK); // bloco B, mesmo chunk, durante a gravação
+    st.release();
+    await saving;
+    expect(s.volume.hasDirty).toBe(true); // o chunk NÃO foi marcado limpo: B ainda não foi confirmado
+    // reabrir agora só tem o A (último estado confirmado)
+    const mid = await openSession(st, 42, () => 1);
+    expect(mid.volume.get(bx, 65, bz)).toBe(T.SAND);
+    expect(mid.volume.get(bx + 1, 65, bz)).toBe(T.AIR);
+    await flush(st, s); // próxima gravação automática
+    expect(s.volume.hasDirty).toBe(false);
+    const r = await openSession(st, 42, () => 1);
+    expect(r.volume.get(bx, 65, bz)).toBe(T.SAND);
+    expect(r.volume.get(bx + 1, 65, bz)).toBe(T.DARK_ROCK);
+  });
+
+  it('markClean só limpa a revisão confirmada', async () => {
+    const s = await openSession(new MemoryTitanStorage(), 42, () => 1);
+    const a = s.volume.gen.arrival, bx = Math.floor(a.x), bz = Math.floor(a.z);
+    s.volume.place(bx, 65, bz, T.SAND);
+    const snap = s.volume.dirtyChunks();
+    s.volume.place(bx + 1, 65, bz, T.SAND);
+    s.volume.markClean(snap);
+    expect(s.volume.hasDirty).toBe(true);
+    s.volume.markClean(s.volume.dirtyChunks());
+    expect(s.volume.hasDirty).toBe(false);
+  });
+
+  it('construção alta (Y = 150) salva e reaberta entra na fila inicial, tem malha e colisão', async () => {
+    const st = new MemoryTitanStorage();
+    const s = await openSession(st, 42, () => 1);
+    const a = s.volume.gen.arrival, bx = Math.floor(a.x), bz = Math.floor(a.z);
+    // sem a edição, a seção do Y = 150 (seção 13) não está na fila do relevo natural
+    const key = `${Math.floor(bx / 16)},13,${Math.floor(bz / 16)}`;
+    expect(initialSections(s.volume)).not.toContain(key);
+    expect(s.volume.place(bx, 150, bz, T.SAND)).toBe(true);
+    await flush(st, s);
+    const r = await openSession(st, 42, () => 1);
+    expect(r.volume.get(bx, 150, bz)).toBe(T.SAND);
+    expect(initialSections(r.volume)).toContain(key);
+    const mesh = meshSection(r.volume, Math.floor(bx / 16), 13, Math.floor(bz / 16));
+    expect(mesh.opaque?.idx.length).toBe(36); // 6 faces
+    expect(collides(r.volume, bx + 0.5, 149.5, bz + 0.5)).toBe(true); // colisão ativa onde há malha
   });
 });

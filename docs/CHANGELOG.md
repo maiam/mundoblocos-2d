@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.94.1 — Titã: persistência durante o save e construções altas ao reabrir (19/11/2026)
+- **Correção 1 — edição durante a gravação não se perde:** o chunk era marcado limpo quando a transação terminava, mesmo que tivesse sido editado de novo no meio dela (o segundo bloco sumia ao reabrir). `TitanVolume` agora guarda uma **revisão por chunk**; `dirtyChunks()` devolve a revisão do instante da cópia e `markClean` só limpa a revisão confirmada. A edição posterior continua pendente, a interface mostra "alterações pendentes…" (em vez de "salvo ✓") e a próxima gravação automática a grava; o movimento do jogador durante a gravação também continua pendente.
+- **Correção 2 — construção alta aparece ao reabrir:** a fila inicial de malhas era calculada só pela altura do relevo natural, então um bloco restaurado acima dele (ex.: Y = 150) ficava invisível com colisão ativa. A fila virou `titan/sections.ts` (`initialSections`: relevo + `TitanVolume.editedSections()`, com as seções vizinhas das bordas).
+- Testes (`titan/session.test.ts`): gravação atrasada com segundo bloco no mesmo chunk (reabre só com o confirmado; depois da próxima gravação, os dois), `markClean` por revisão, e construção em Y = 150 salva/reaberta com fila, malha e colisão. Sem mudança em `TITAN_SAVE_VERSION`, `GENERATOR_VERSION`, `SAVE_VERSION` ou `PROTOCOL_VERSION`; formato do banco igual.
+
 ## Orvalis v0.94.0 — Titã: costa voxel jogável e persistente (19/11/2026)
 - **Pedido do dono do produto (briefing "Titã"):** primeira entrega do mundo `?mundo=titan` — costa voxel em primeira pessoa, editável e salva. Decisão registrada na **ADR 0039**.
 - **Entrada:** perfil `titan` registrado em `world/profiles.ts`; `main.ts` abre `src/titan/titanGame.ts` em vez do `Game` (sem `World`, sem `SUBDIV`, sem sala). Principal e Santuário abrem como antes (conferido no navegador).
