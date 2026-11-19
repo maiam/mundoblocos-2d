@@ -12,7 +12,7 @@ import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
-import { advanceDay, parseHora, phaseName } from './sky';
+import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
 import { T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
@@ -73,6 +73,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
   // `?hora=manha|tarde|noite`: congela só a visualização (teste); a hora do jogo continua correndo e é a que vai no save
   const forcedHour = parseHora(q.get('hora'));
+  // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
+  const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
   const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
@@ -535,7 +537,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
+      const before = session.time;
       session.time = advanceDay(session.time, dt);
+      if (session.time < before) { session.days++; playerDirty = true; } // virou o dia: o contador vai no save
       if (((session.time - lastSavedTime + 1) % 1) > 0.01) playerDirty = true; // ~12 s de jogo (1/100 do dia de 20 min): grava a hora junto da posição
     }
     if (playing && session.drops.size) {
@@ -546,6 +550,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       dropFull = c.full;
     }
     view.setSky(forcedHour ?? session.time);
+    view.setSaturn(forcedSaturn ?? saturnVisibility(session.days, forcedHour ?? session.time, session.seed)); // raro: poucos dias, janela curta
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };

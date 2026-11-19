@@ -138,13 +138,14 @@ src/
    nuvens → dia/noite → partículas → foco/cursor/rachaduras. Depois HUD e botão de ação.
 Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 
-## Titã (ADR 0039–0047, v0.102.0)
+## Titã (ADR 0039–0048, v0.103.0)
 `src/titan/` é um **segundo motor, isolado**: volume voxel por `(x, y, z)` (`voxel.ts`, `generator.ts`, `volume.ts`, `mesher.ts`, `physics.ts`, `save.ts`, `session.ts`, `sections.ts`, `inventory.ts`, `items.ts`, `actions.ts`, `light.ts`, `sky.ts`, `gesture.ts`, `breaking.ts`; sem DOM, determinístico) + `titanGame.ts` (entrada e laço) +
 A **lanterna** é um modelo 3D do renderer (ADR 0043: `InstancedMesh` ×2, fora da malha do terreno); a mira dela usa a caixa do objeto (`titan/lantern.ts`, puro, sem DOM).
 O **gerador v3** (ADR 0044) põe veios naturais (ids de bloco 8 e 9) nas formações e garante fontes alcançáveis a pé; as lascas soltas por veios são estado de sessão (`TitanSession.drops`) gravado no cabeçalho do save, junto do inventário.
 As **receitas** são um catálogo puro (`titan/recipes.ts`, ADR 0045) que os cartões, a validação, o consumo e a grade 2 × 2 compartilham; a Mesa de Trabalho é um modelo 3D instanciado (`T.WORKBENCH`) e o gerador v4 acrescenta o depósito de brasa (`T.EMBER`) e os juncos de vidro (decoração fora do volume).
 A **Laje de Rocha** (ADR 0046) introduz altura por bloco (`blockHeight`/`isFull`): colisão, pouso, degrau de 0,5 m, mira por caixa e culling da malha leem dela.
 A **bolsa** (ADR 0047) é hotbar de 9 + 27 + grade 2 × 2 e o livro de receitas lê o mesmo catálogo (`recipes.ts`, com `group`); o inventário gravado é `v: 2` e migra o formato antigo por seção.
+O **céu** (ADR 0048) é um shader na cúpula (`render/titanSkyDome.ts`) alimentado por `titan/sky.ts` (puro): bruma direcional, estrelas e Saturno raro são uniforms, sem remalhar; a névoa segue a cor do céu do lado para onde se olha.
 `render/titanRenderer.ts` (Three.js) + `render/art/titan.ts` (atlas do terreno e da hotbar). Só `main.ts` (`?mundo=titan`) e `world/profiles.ts` (registro do perfil) tocam o resto do jogo; nada de `World`, `Game`, `SUBDIV` ou `SaveStore`.
 
 ## Regras de dependência

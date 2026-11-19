@@ -4,7 +4,8 @@ import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
-import { skyAt, type RGB } from '../titan/sky';
+import { horizonAt, skyAt, type Sky } from '../titan/sky';
+import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 
@@ -28,15 +29,15 @@ export class TitanRenderer {
   private readonly sections = new Map<string, { opaque?: THREE.Mesh; liquid?: THREE.Mesh; rev: number }>();
   private readonly pending = new Set<string>();
   private readonly outline: THREE.LineSegments;
-  private readonly sky: THREE.Mesh;
-  private readonly skyColors: THREE.Float32BufferAttribute;
-  private readonly skyHeights: Float32Array;
+  private readonly sky: SkyDome;
+  private curSky!: Sky;
+  private lastFogYaw = 1e9;
   private readonly sun: THREE.Sprite;
   /** Sobreposição de rachaduras sobre o bloco em quebra: uma caixa só, reaproveitada (nenhuma malha de chunk muda). */
   private readonly crack: THREE.Mesh;
   private readonly crackTex: THREE.Texture;
   /** Luz do dia compartilhada pelos materiais do terreno (uniform do shader). */
-  private readonly ambient = { value: 1 };
+  private readonly ambient = { value: new THREE.Vector3(1, 1, 1) };
   private workbenchMesh!: THREE.InstancedMesh;
   private workbenchSeen = -1;
   private reedMesh!: THREE.InstancedMesh;
@@ -83,16 +84,9 @@ export class TitanRenderer {
     htex.needsUpdate = true;
     this.hotbarTex = htex;
 
-    // céu: cúpula com degradê procedural (horizonte → meio → zênite) que muda com a hora; acompanha a câmera
-    const dome = new THREE.SphereGeometry(300, 24, 12);
-    const pos = dome.getAttribute('position');
-    this.skyHeights = new Float32Array(pos.count);
-    for (let i = 0; i < pos.count; i++) this.skyHeights[i] = Math.max(0, pos.getY(i) / 300); // 0 horizonte … 1 zênite
-    this.skyColors = new THREE.Float32BufferAttribute(new Float32Array(pos.count * 3), 3);
-    dome.setAttribute('color', this.skyColors);
-    this.sky = new THREE.Mesh(dome, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
-    this.sky.renderOrder = -1;
-    this.scene.add(this.sky);
+    // céu: cúpula com shader (degradê, bruma direcional, faixas de bruma, estrelas e Saturno raro; ADR 0048) que acompanha a câmera
+    this.sky = new SkyDome();
+    this.scene.add(this.sky.mesh);
     // sol: um ponto quadrado (combina com os voxels), só aparece com o sol alto
     this.sun = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xfff0c8, fog: false, transparent: true, depthWrite: false }));
     this.sun.scale.set(16, 16, 1);
@@ -308,7 +302,9 @@ export class TitanRenderer {
   render(eye: { x: number; y: number; z: number }, yaw: number, pitch: number, target: { x: number; y: number; z: number; box?: Box } | null, time: number): void {
     this.camera.position.set(eye.x, eye.y, eye.z);
     this.camera.rotation.set(pitch, yaw, 0);
-    this.sky.position.copy(this.camera.position);
+    this.sky.mesh.position.copy(this.camera.position);
+    this.sky.setTime(time);
+    this.fogToward(yaw);
     this.sun.position.set(eye.x + this.sunDir[0] * 270, eye.y + this.sunDir[1] * 270, eye.z + this.sunDir[2] * 270);
     // edições aparecem no mesmo quadro (sem orçamento); só a geração inicial é repartida entre quadros
     this.built = 0;
@@ -355,19 +351,10 @@ export class TitanRenderer {
     if (Math.abs(frac - this.lastSky) < 0.0005) return;
     this.lastSky = frac;
     const sky = skyAt(frac);
-    this.ambient.value = sky.ambient;
-    const c = new THREE.Color();
-    const set = (col: THREE.Color, v: RGB): THREE.Color => col.setRGB(v[0], v[1], v[2], THREE.SRGBColorSpace);
-    set(this.scene.background as THREE.Color, sky.fog);
-    set((this.scene.fog as THREE.Fog).color, sky.fog);
-    const zen = set(new THREE.Color(), sky.zenith), mid = set(new THREE.Color(), sky.mid), hor = set(new THREE.Color(), sky.horizon);
-    const arr = this.skyColors.array as Float32Array;
-    for (let i = 0; i < this.skyHeights.length; i++) {
-      const h = this.skyHeights[i];
-      if (h < 0.35) c.copy(hor).lerp(mid, h / 0.35); else c.copy(mid).lerp(zen, (h - 0.35) / 0.65);
-      arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b;
-    }
-    this.skyColors.needsUpdate = true;
+    this.curSky = sky;
+    this.ambient.value.set(sky.ambient * sky.tint[0], sky.ambient * sky.tint[1], sky.ambient * sky.tint[2]); // luz do dia (quente de dia, fria de noite)
+    this.sky.update(sky);
+    this.lastFogYaw = 1e9; // a névoa se refaz no próximo quadro com a cor do céu daquele lado
     this.sun.visible = sky.sun.alpha > 0.01;
     (this.sun.material as THREE.SpriteMaterial).opacity = sky.sun.alpha;
     this.sunDir = sky.sun.dir;
@@ -375,6 +362,19 @@ export class TitanRenderer {
     const k = Math.max(0.4, sky.ambient);
     for (const m of Object.values(this.itemMats)) m.color.setScalar(k);
     this.itemDim = k;
+  }
+
+  /** Saturno: 0 (escondido) a 1 (no pico da janela rara). Só um número no shader do céu. */
+  setSaturn(v: number): void { this.sky.setSaturn(v); }
+
+  /** A névoa e o fundo ganham a cor do céu **do lado para onde a câmera olha** (a costa distante some na cor daquele lado do céu). Só refaz quando o olhar gira o bastante. */
+  private fogToward(yaw: number): void {
+    if (Math.abs(yaw - this.lastFogYaw) < 0.01 || !this.curSky) return;
+    this.lastFogYaw = yaw;
+    const c = horizonAt(this.curSky, -Math.sin(yaw), -Math.cos(yaw));
+    const col = this.sky.tint(c);
+    (this.scene.background as THREE.Color).copy(col);
+    (this.scene.fog as THREE.Fog).color.copy(col);
   }
 
   private sunDir: [number, number, number] = [0, 1, 0];
@@ -472,7 +472,7 @@ function toGeometry(d: MeshData): THREE.BufferGeometry {
  * (atributo de cada vértice) e a luz do dia é um uniform: mudar a hora é só mudar o número, sem refazer nenhuma malha. Névoa, mapa de tons e espaço de cor seguem o
  * material do Three.js.
  */
-function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: number }, opts: { instGlow?: boolean; time?: { value: number } } = {}): void {
+function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: THREE.Vector3 }, opts: { instGlow?: boolean; time?: { value: number } } = {}): void {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uAmbient = ambient;
     if (opts.time) sh.uniforms.uTime = opts.time;
@@ -481,7 +481,7 @@ function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: number },
       .replace('#include <common>', `#include <common>\nattribute vec3 glow;\n${opts.instGlow ? 'attribute vec3 iGlow;\n' : ''}${opts.time ? 'uniform float uTime;\n' : ''}varying vec3 vGlow;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>\nvGlow = glow${opts.instGlow ? ' + iGlow' : ''};${sway}`);
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uAmbient;\nvarying vec3 vGlow;')
+      .replace('#include <common>', '#include <common>\nuniform vec3 uAmbient;\nvarying vec3 vGlow;')
       .replace('#include <color_fragment>', 'diffuseColor.rgb *= vColor.rgb * uAmbient + vGlow;');
   };
   mat.customProgramCacheKey = () => `titan-daylight${opts.instGlow ? '-ig' : ''}${opts.time ? '-sway' : ''}`;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceDay, AFTERNOON, DAY_SECONDS, DAY_TICKS, FIXED_HOURS, parseHora, PHASE_TICKS, phaseName, skyAt, tickFrac, TICKS_PER_SECOND, validDay, type RGB } from './sky';
+import { advanceDay, AFTERNOON, DAY_SECONDS, DAY_TICKS, FIXED_HOURS, horizonAt, parseHora, PHASE_TICKS, phaseName, SATURN_DAY_CHANCE, saturnVisibility, skyAt, tickFrac, TICKS_PER_SECOND, validDay, type RGB } from './sky';
 import { flush, headerOf, openSession } from './session';
 import { MemoryTitanStorage } from './save';
 import { TitanGenerator } from './generator';
@@ -72,9 +72,10 @@ describe('céu', () => {
     const m = skyAt(FIXED_HOURS.manha), n = skyAt(FIXED_HOURS.noite), t = skyAt(FIXED_HOURS.tarde);
     expect(m.horizon[0]).toBeGreaterThan(m.horizon[2] + 0.2); // pêssego: vermelho >> azul
     expect(luma(n.zenith)).toBeLessThan(0.08);
-    expect(n.horizon[0]).toBeGreaterThan(n.zenith[0] + 0.15); // resto de cobre no horizonte
+    expect(n.horizon[0]).toBeGreaterThan(n.zenith[0] + 0.08); // o horizonte guarda um tom de cobre (a claridade do poente vem de `glowK`)
     expect(n.horizon[0]).toBeGreaterThan(n.horizon[2]);
-    expect(n.ambient).toBe(0.3);
+    expect(n.ambient).toBe(0.22); // mais escura que antes (0,3), com luz fria (ADR 0048)
+    expect(n.tint[2]).toBeGreaterThan(n.tint[0] + 0.3); // azulada: a costa fica legível em tons frios
     expect(luma(n.fog)).toBeLessThan(luma(t.fog) / 3);
     expect(m.ambient).toBeGreaterThan(n.ambient); expect(m.ambient).toBeLessThan(t.ambient + 1e-9);
   });
@@ -83,7 +84,7 @@ describe('céu', () => {
     let maxStep = 0, prev = skyAt(0);
     for (let i = 1; i <= 4800; i++) {
       const s = skyAt(i / 4800); // 0,25 s de jogo por amostra
-      maxStep = Math.max(maxStep, Math.abs(s.ambient - prev.ambient), ...s.horizon.map((v, k) => Math.abs(v - prev.horizon[k])), ...s.zenith.map((v, k) => Math.abs(v - prev.zenith[k])));
+      maxStep = Math.max(maxStep, Math.abs(s.ambient - prev.ambient), ...s.horizon.map((v, k) => Math.abs(v - prev.horizon[k])), ...s.zenith.map((v, k) => Math.abs(v - prev.zenith[k])), Math.abs(s.glowK - prev.glowK), Math.abs(s.stars - prev.stars), Math.abs(s.haze - prev.haze), Math.abs(s.coolK - prev.coolK), ...s.tint.map((v, k) => Math.abs(v - prev.tint[k])));
       prev = s;
     }
     expect(maxStep).toBeLessThan(0.01);
@@ -94,10 +95,10 @@ describe('céu', () => {
   it('o pôr do sol escurece o céu gradualmente em 1 min 30 s e a noite fica estável até o nascer do sol', () => {
     const t = (ticks: number) => skyAt(tickFrac(ticks));
     expect(t(12000).ambient).toBe(1);
-    expect(t(12900).ambient).toBeGreaterThan(0.3); expect(t(12900).ambient).toBeLessThan(1);
-    expect(t(13800).ambient).toBeCloseTo(0.3, 9);
-    for (const ticks of [13800, 18000, 22199]) expect(t(ticks).ambient).toBeCloseTo(0.3, 9);
-    expect(t(23000).ambient).toBeGreaterThan(0.3); // nascer do sol: o céu clareia
+    expect(t(12900).ambient).toBeGreaterThan(0.22); expect(t(12900).ambient).toBeLessThan(1);
+    expect(t(13800).ambient).toBeCloseTo(0.22, 9);
+    for (const ticks of [13800, 18000, 22199]) expect(t(ticks).ambient).toBeCloseTo(0.22, 9);
+    expect(t(23000).ambient).toBeGreaterThan(0.22); // nascer do sol: o céu clareia
     expect(t(24000 - 1).ambient).toBeLessThan(t(0).ambient);
   });
 
@@ -111,6 +112,82 @@ describe('céu', () => {
     const d = skyAt(tickFrac(6000)).sun.dir;
     expect(Math.hypot(...d)).toBeCloseTo(1, 6);
     expect(d[1]).toBeGreaterThan(0.5); // alto
+  });
+});
+
+describe('céu direcional, estrelas e Saturno raro (ADR 0048)', () => {
+  const luma = (c: RGB): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  const E = [1, 0], W = [-1, 0];
+
+  it('a claridade tem lado: o nascer acende o leste, a tarde acompanha o Sol e o pôr do sol guarda o poente (oeste)', () => {
+    expect(skyAt(tickFrac(0)).glowDir[0]).toBeGreaterThan(0.8); // leste
+    expect(skyAt(tickFrac(23500)).glowDir[0]).toBeGreaterThan(0.8); // pouco antes do nascer
+    expect(skyAt(tickFrac(13000)).glowDir[0]).toBeLessThan(-0.8); // oeste
+    expect(skyAt(tickFrac(16000)).glowDir[0]).toBeLessThan(-0.8);
+    const noon = skyAt(tickFrac(6000));
+    expect(noon.glowDir[1]).toBeGreaterThan(0.5); // o halo fica em volta do Sol alto
+    for (const t of [0, 3000, 6000, 12000, 13000, 18000, 23000]) expect(Math.hypot(...skyAt(tickFrac(t)).glowDir)).toBeCloseTo(1, 6);
+  });
+
+  it('manhã: a bruma é mais clara e quente a leste (onde o Sol nasce) do que a oeste; no crepúsculo é o contrário', () => {
+    const m = skyAt(FIXED_HOURS.manha), c = skyAt(FIXED_HOURS.crepusculo);
+    expect(luma(horizonAt(m, E[0], E[1]))).toBeGreaterThan(luma(horizonAt(m, W[0], W[1])) + 0.04);
+    expect(horizonAt(m, E[0], E[1])[0] - horizonAt(m, E[0], E[1])[2]).toBeGreaterThan(horizonAt(m, W[0], W[1])[0] - horizonAt(m, W[0], W[1])[2]); // mais quente
+    expect(luma(horizonAt(c, W[0], W[1]))).toBeGreaterThan(luma(horizonAt(c, E[0], E[1])) + 0.03);
+  });
+
+  it('o cobre do poente é forte no crepúsculo e quase some à meia-noite; a costa continua legível (ambiente > 0)', () => {
+    const c = skyAt(FIXED_HOURS.crepusculo), n = skyAt(FIXED_HOURS.noite);
+    expect(c.glowK).toBeGreaterThan(0.5);
+    expect(n.glowK).toBeLessThan(0.1);
+    expect(n.ambient).toBeGreaterThan(0.15);
+    expect(luma(n.zenith)).toBeLessThan(0.04); // noite bem escura
+  });
+
+  it('estrelas: poucas, só de noite (somem de dia, nascem depois do pôr do sol e vão sumindo antes do nascer)', () => {
+    expect(skyAt(FIXED_HOURS.tarde).stars).toBe(0);
+    expect(skyAt(FIXED_HOURS.manha).stars).toBe(0);
+    expect(skyAt(tickFrac(13800)).stars).toBe(0);
+    expect(skyAt(FIXED_HOURS.noite).stars).toBe(1);
+    expect(skyAt(tickFrac(20999)).stars).toBe(1);
+    expect(skyAt(tickFrac(22000)).stars).toBeGreaterThan(0); expect(skyAt(tickFrac(22000)).stars).toBeLessThan(1);
+    expect(skyAt(tickFrac(23000)).stars).toBe(0);
+  });
+
+  it('Saturno é raro e curto: ~12% dos dias, uma janela de poucos segundos em plena luz do dia; determinístico por partida', () => {
+    let days = 0, seconds = 0;
+    const N = 800;
+    for (let day = 0; day < N; day++) {
+      let seen = false;
+      for (let k = 0; k < 2400; k++) { const v = saturnVisibility(day, k / 2400, 42); if (v > 0.05) { seen = true; seconds += DAY_SECONDS / 2400; expect(k / 2400).toBeLessThan(0.5); } } // só de dia (primeira metade)
+      if (seen) days++;
+    }
+    expect(days / N).toBeGreaterThan(SATURN_DAY_CHANCE - 0.05); expect(days / N).toBeLessThan(SATURN_DAY_CHANCE + 0.05);
+    expect(seconds / days).toBeLessThan(40); // alguns instantes (a janela aparente dura menos de 40 s de jogo)
+    expect(seconds / days).toBeGreaterThan(5);
+    expect(saturnVisibility(7, 0.3, 42)).toBe(saturnVisibility(7, 0.3, 42)); // determinístico
+    expect(saturnVisibility(0, 0.9999, 1)).toBeGreaterThanOrEqual(0); expect(saturnVisibility(10 ** 6, 0.2, 99)).toBeLessThanOrEqual(1);
+  });
+
+  it('os dias de Saturno variam com a seed e o pico muda de hora de um dia para outro', () => {
+    const peak = (day: number, seed: number): number => { let best = -1, at = 0; for (let k = 0; k < 4800; k++) { const v = saturnVisibility(day, k / 4800, seed); if (v > best) { best = v; at = k / 4800; } } return best > 0.9 ? at : -1; };
+    const a = [...Array(120).keys()].filter((d) => peak(d, 42) >= 0), b = [...Array(120).keys()].filter((d) => peak(d, 43) >= 0);
+    expect(a.length).toBeGreaterThan(3); expect(a).not.toEqual(b);
+    const peaks = a.map((d) => peak(d, 42));
+    expect(Math.max(...peaks) - Math.min(...peaks)).toBeGreaterThan(0.05);
+  });
+
+  it('o contador de dias vai no save e volta ao reabrir (save antigo e lixo = 0)', async () => {
+    const st = new MemoryTitanStorage();
+    const s = await openSession(st, 42, () => 1);
+    expect(s.days).toBe(0);
+    s.days = 5;
+    await flush(st, s);
+    expect((await openSession(st, null, () => 1)).days).toBe(5);
+    delete st.games.get(42)!.days;
+    expect((await openSession(st, null, () => 1)).days).toBe(0);
+    st.games.get(42)!.days = -3;
+    expect((await openSession(st, null, () => 1)).days).toBe(0);
   });
 });
 
