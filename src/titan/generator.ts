@@ -10,8 +10,11 @@ import { LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel';
 /**
  * v1 (entrega 1): formações em qualquer ponto seco e baixo. v2 (entrega 2, ADR 0040): as formações só entram em terreno **plano** (raio 3 com diferença ≤ 1 bloco),
  * para as lascas de superfície ficarem alcançáveis a pé em toda seed. O terreno fora das formações é idêntico nas duas versões.
+ * v3 (ADR 0044): as lascas pré-posicionadas saem; as formações passam a ter **veios** (blocos `VEIN_ROCK`/`VEIN_FROST`) que soltam a lasca ao quebrar. A busca só aceita
+ * formação **alcançável a pé** desde a chegada (BFS de degraus de 1 bloco) e, se a busca natural falhar, um **afloramento de reserva** garante as duas fontes.
+ * O terreno fora das formações segue idêntico nas três versões.
  */
-export const GENERATOR_VERSION = 2;
+export const GENERATOR_VERSION = 3;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -35,7 +38,7 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10 } as const;
 
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
@@ -54,6 +57,10 @@ export class TitanGenerator {
   readonly formations: ReadonlyArray<{ kind: 'rock' | 'ice'; x: number; z: number }>;
   /** Fragmentos de superfície (lascas) sobre as formações: 3 de cada, com **id determinístico** (`rock:0`…), recolhidos à mão. Item 5 = rocha, 6 = gelo (`titan/items.ts`). */
   readonly surfaceItems: ReadonlyArray<{ id: string; item: 5 | 6; x: number; y: number; z: number }>;
+  /** v3: veios naturais (3 de rocha e 3 de gelo), por coluna (x, z); o voxel é o topo da coluna. Vazio na v1 e na v2. */
+  private readonly veins = new Map<number, 'rock' | 'ice'>();
+  /** v3: a busca natural não achou as duas formações e o afloramento de reserva entrou (diagnóstico e testes). */
+  outcropFallback = false;
 
   constructor(readonly seed: number, version: number = GENERATOR_VERSION) {
     this.version = version;
@@ -64,8 +71,88 @@ export class TitanGenerator {
     const theta = hash2(derive(seed, PURPOSE.lago), 1, 1) * Math.PI * 2;
     this.lake = { x: Math.round(Math.cos(theta) * 21), z: Math.round(Math.sin(theta) * 21), r: 17 };
     this.arrival = this.findArrival();
-    this.formations = this.placeFormations();
-    this.surfaceItems = this.placeSurfaceItems();
+    const reach = version >= 3 ? this.walkableFromArrival() : null;
+    this.formations = this.placeFormations(reach);
+    this.surfaceItems = version >= 3 ? [] : this.placeSurfaceItems();
+    if (version >= 3) this.placeVeins();
+  }
+
+  // ---- v3: alcance a pé e veios ----
+
+  /** Topo da coluna sem formações (relevo bruto com a clareira nivelada). Usado só para o alcance a pé. */
+  private baseTop(x: number, z: number): number {
+    const raw = this.rawTop(x, z);
+    if (this.inClearing(x, z)) return 64;
+    if (this.inClearing(x, z, 2)) return clamp(raw, 63, 65);
+    return raw;
+  }
+
+  /** Colunas alcançáveis a pé desde a chegada: vizinhas por degraus de até 1 bloco, fora d'água funda (topo ≥ 63) e dentro da região. */
+  private walkableFromArrival(): Set<number> {
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    const seen = new Set<number>();
+    const a = this.arrival;
+    const queue: Array<[number, number]> = [[Math.floor(a.x), Math.floor(a.z)]];
+    seen.add(key(queue[0][0], queue[0][1]));
+    for (let i = 0; i < queue.length; i++) {
+      const [x, z] = queue[i];
+      const t = this.baseTop(x, z);
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, nz = z + dz;
+        if (nx < REGION_MIN + 1 || nx >= REGION_MAX - 1 || nz < REGION_MIN + 1 || nz >= REGION_MAX - 1) continue;
+        const k = key(nx, nz);
+        if (seen.has(k)) continue;
+        const nt = this.baseTop(nx, nz);
+        if (nt < 63 || Math.abs(nt - t) > 1) continue;
+        seen.add(k);
+        queue.push([nx, nz]);
+      }
+    }
+    return seen;
+  }
+
+  /** Afloramento de reserva: a célula alcançável mais perto da chegada, seca, baixa e livre de outras formações (varredura em ordem fixa). */
+  private outcropSpot(reach: Set<number>, others: ReadonlyArray<{ x: number; z: number }>, strict: boolean): { x: number; z: number } | null {
+    const a = this.arrival;
+    const cells: Array<{ x: number; z: number; d: number }> = [];
+    for (const k of reach) {
+      const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
+      cells.push({ x, z, d: Math.hypot(x - a.x, z - a.z) });
+    }
+    cells.sort((p, q) => p.d - q.d || p.x - q.x || p.z - q.z);
+    for (const c of cells) {
+      if (this.inClearing(c.x, c.z, strict ? 4 : 3)) continue;
+      if (c.x < REGION_MIN + 4 || c.x >= REGION_MAX - 4 || c.z < REGION_MIN + 4 || c.z >= REGION_MAX - 4) continue;
+      if (strict && (this.lakeField(c.x, c.z) > -3 || this.rawTop(c.x, c.z) > 68)) continue;
+      if (others.some((o) => Math.hypot(o.x - c.x, o.z - c.z) < (strict ? 8 : 6))) continue;
+      return { x: c.x, z: c.z };
+    }
+    return null;
+  }
+
+  /** 3 veios por formação: o centro e os dois vizinhos de menor sorteio, no topo da coluna (superfície de rocha escura ou gelo fosco). */
+  private placeVeins(): void {
+    const base = derive(this.seed, PURPOSE.veioSuperficie);
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    for (const f of this.formations) {
+      const want = f.kind === 'rock' ? T.DARK_ROCK : T.FROST;
+      const ring: Array<{ x: number; z: number; h: number }> = [];
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dz) continue;
+        const x = f.x + dx, z = f.z + dz;
+        if (this.column(x, z).surface === want) ring.push({ x, z, h: hash2(base, x * 131 + z, f.kind === 'rock' ? 1 : 2) });
+      }
+      ring.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+      this.veins.set(key(f.x, f.z), f.kind);
+      for (const c of ring.slice(0, 2)) this.veins.set(key(c.x, c.z), f.kind);
+    }
+  }
+
+  /** Posições (x, y, z) dos veios naturais (v3), com o tipo. Vazio nas versões anteriores. */
+  veinCells(): Array<{ kind: 'rock' | 'ice'; x: number; y: number; z: number }> {
+    const out: Array<{ kind: 'rock' | 'ice'; x: number; y: number; z: number }> = [];
+    for (const [k, kind] of this.veins) { const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096; out.push({ kind, x, y: this.column(x, z).top, z }); }
+    return out;
   }
 
   // ---- Campos 2D (relevo bruto; ignoram clareira e formações) ----
@@ -142,13 +229,14 @@ export class TitanGenerator {
     return x >= c.x0 - pad && x < c.x0 + c.size + pad && z >= c.z0 - pad && z < c.z0 + c.size + pad;
   }
 
-  private placeFormations(): ReadonlyArray<{ kind: 'rock' | 'ice'; x: number; z: number }> {
+  private placeFormations(reach: Set<number> | null): ReadonlyArray<{ kind: 'rock' | 'ice'; x: number; z: number }> {
     const out: Array<{ kind: 'rock' | 'ice'; x: number; z: number }> = [];
     const base = derive(this.seed, PURPOSE.formacao);
     const v1 = this.version < 2;
     const a = this.arrival;
     for (const [i, kind] of (['rock', 'ice'] as const).entries()) {
       const phi0 = hash2(base, i, 5) * Math.PI * 2;
+      let found = false;
       for (let k = 0; k < (v1 ? 48 : 240); k++) {
         const phi = phi0 + k * 2.399963; // ângulo áureo: varre em ordem fixa
         const dist = v1 ? 9 + (k % 4) * 2 : 8 + (k % 6) * 2; // v1: 9..15; v2: 8..18 blocos da chegada
@@ -159,9 +247,16 @@ export class TitanGenerator {
         if (this.lakeField(x, z) > -4) continue; // seca e afastada da margem
         if (this.rawTop(x, z) > 68) continue; // não sobre a falésia
         if (!v1 && !this.flatAround(x, z)) continue; // v2: terreno plano em volta (lascas alcançáveis)
+        if (reach && !reach.has((x + 4096) * 8192 + (z + 4096))) continue; // v3: alcançável a pé desde a chegada
         if (out.some((o) => Math.hypot(o.x - x, o.z - z) < 8)) continue;
         out.push({ kind, x, z });
+        found = true;
         break;
+      }
+      if (!found && reach) {
+        // afloramento de reserva: a busca natural falhou, a fonte vai para a célula alcançável mais próxima (regras estritas, depois relaxadas)
+        const spot = this.outcropSpot(reach, out, true) ?? this.outcropSpot(reach, out, false);
+        if (spot) { out.push({ kind, x: spot.x, z: spot.z }); this.outcropFallback = true; }
       }
     }
     return out;
@@ -237,7 +332,10 @@ export class TitanGenerator {
     if (y <= Y_MIN) return T.BEDROCK;
     const c = this.column(x, z);
     if (y > c.top) return y <= LAKE_LAST_Y ? T.LAKE : T.AIR;
-    if (y === c.top) return c.surface;
+    if (y === c.top) {
+      if (this.veins.size) { const v = this.veins.get((x + 4096) * 8192 + (z + 4096)); if (v) return v === 'rock' ? T.VEIN_ROCK : T.VEIN_FROST; }
+      return c.surface;
+    }
     if (y >= c.top - 3) return c.sub;
     if (y >= -32 && y < 0 && hash2(derive(this.seed, PURPOSE.veios), x * 31 + z, y) < 0.012) return T.FROST; // veios de gelo no subsolo intermediário
     return T.DARK_ROCK;

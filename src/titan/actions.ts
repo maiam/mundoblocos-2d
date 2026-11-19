@@ -1,4 +1,5 @@
 import { blockOfItem, Item, itemOfBlock } from './items';
+import { isSolid, isVein, T, Y_MIN } from './voxel';
 import { canPlaceAt, type Hit } from './physics';
 import type { TitanSession } from './session';
 
@@ -29,9 +30,50 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   const item = itemOfBlock(s.volume.get(x, y, z));
   if (item === null) return { ok: false };
   if (!s.inventory.canAdd(item)) return FULL;
+  const block = s.volume.get(x, y, z);
   if (!s.volume.remove(x, y, z)) return { ok: false };
   s.inventory.add(item);
+  // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
+  // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
+  if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
   return { ok: true };
+}
+
+/** Pousa uma lasca perto do ponto de quebra: na célula do veio, descendo até o primeiro apoio sólido. */
+function dropShard(s: TitanSession, item: 5 | 6, x: number, y: number, z: number): void {
+  const id = `v:${x},${y},${z}`;
+  if (s.drops.has(id)) return;
+  s.drops.set(id, { id, item, x, y: restY(s, x, y, z), z });
+  s.dropsRev++;
+}
+
+/** Altura em que uma lasca solta repousa: desce enquanto não há sólido embaixo (nunca abaixo da rocha-mãe). */
+function restY(s: TitanSession, x: number, y: number, z: number): number {
+  let yy = y;
+  while (yy > Y_MIN + 1 && !isSolid(s.volume.get(x, yy - 1, z))) yy--;
+  return yy;
+}
+
+const PICKUP_RADIUS = 1.25;
+/**
+ * Coleta por proximidade (ADR 0044): toda lasca solta dentro de 1,25 m (horizontal) dos pés e a uma altura alcançável entra na mochila, uma a uma; se não couber,
+ * fica no lugar e `full` avisa. Lascas sem apoio (o bloco de baixo foi quebrado) descem antes. Tudo muda inventário e lasca juntos (um único `dropsRev`).
+ */
+export function collectNearby(s: TitanSession, px: number, py: number, pz: number): { collected: number; full: boolean; moved: boolean } {
+  let collected = 0, full = false, moved = false;
+  for (const d of [...s.drops.values()]) {
+    const ry = restY(s, d.x, d.y, d.z);
+    if (ry !== d.y) { s.drops.set(d.id, { ...d, y: ry }); s.dropsRev++; moved = true; }
+    const dd = s.drops.get(d.id)!;
+    if (Math.hypot(dd.x + 0.5 - px, dd.z + 0.5 - pz) > PICKUP_RADIUS || py > dd.y + 1.5 || py + 1.8 < dd.y) continue;
+    const item = dd.item === 5 ? Item.ROCK_SHARD : Item.FROST_SHARD;
+    if (!s.inventory.canAdd(item)) { full = true; continue; }
+    s.inventory.add(item);
+    s.drops.delete(dd.id);
+    s.dropsRev++;
+    collected++;
+  }
+  return { collected, full, moved };
 }
 
 /** Coloca o item do espaço `slot` da hotbar na célula adjacente à face apontada. Gasta 1; fragmentos e cápsula não se colocam. */
@@ -41,7 +83,8 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   const block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
-  if (!canPlaceAt(s.volume, s.body, x, y, z, s.items) || !s.volume.place(x, y, z, block)) return { ok: false };
+  const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
+  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied) || !s.volume.place(x, y, z, block)) return { ok: false };
   s.inventory.consume(slot);
   return { ok: true };
 }

@@ -39,9 +39,9 @@ describe('gerador (determinismo, chegada, lago)', () => {
     const rev = [...pts].reverse().map(([x, z]) => b.blockAt(x, 60, z)).reverse();
     expect(fwd).toEqual(rev);
   });
-  for (const seed of SEEDS) {
-    it(`seed ${seed}: chegada seca (solo em Y=64, pés em 65, 2 blocos livres), clareira 6×6, formações e acessibilidade`, () => {
-      const g = new TitanGenerator(seed), v = new TitanVolume(g);
+  for (const seed of SEEDS) for (const version of [2, 3]) {
+    it(`seed ${seed} (gerador v${version}): chegada seca (solo em Y=64, pés em 65, 2 blocos livres), clareira 6×6, formações e acessibilidade`, () => {
+      const g = new TitanGenerator(seed, version), v = new TitanVolume(g);
       const a = g.arrival;
       expect(a.y).toBe(65);
       expect(inRegion(a.x, a.z)).toBe(true);
@@ -79,6 +79,7 @@ describe('gerador (determinismo, chegada, lago)', () => {
       expect(reachedShore).toBe(true);
       for (const f of g.formations) expect(seen.has(key(f.x, f.z))).toBe(true);
       // fragmentos de superfície: 3 lascas de rocha e 3 de gelo, ids únicos, sobre o solo da formação e alcançáveis a pé
+      if (version === 3) { expect(g.surfaceItems).toHaveLength(0); return; } // v3: as lascas saem; a fonte é o veio (testes em `veins.test.ts`)
       expect(g.surfaceItems.filter((i) => i.item === 5)).toHaveLength(3);
       expect(g.surfaceItems.filter((i) => i.item === 6)).toHaveLength(3);
       expect(new Set(g.surfaceItems.map((i) => i.id)).size).toBe(6);
@@ -168,8 +169,9 @@ describe('versões do gerador', () => {
     expect(v1.version).toBe(1);
     expect(v1.formations).toEqual(RECORDED_V1_SEED_42);
     // terreno fora das formações é igual nas duas versões
-    const v2 = new TitanGenerator(42);
+    const v2 = new TitanGenerator(42, 2);
     expect(v2.version).toBe(2);
     expect(v2.arrival).toEqual(v1.arrival);
+    expect(new TitanGenerator(42).version).toBe(3);
   });
 });

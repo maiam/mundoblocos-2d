@@ -138,9 +138,10 @@ src/
    nuvens → dia/noite → partículas → foco/cursor/rachaduras. Depois HUD e botão de ação.
 Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 
-## Titã (ADR 0039–0043, v0.98.0)
+## Titã (ADR 0039–0044, v0.99.0)
 `src/titan/` é um **segundo motor, isolado**: volume voxel por `(x, y, z)` (`voxel.ts`, `generator.ts`, `volume.ts`, `mesher.ts`, `physics.ts`, `save.ts`, `session.ts`, `sections.ts`, `inventory.ts`, `items.ts`, `actions.ts`, `light.ts`, `sky.ts`, `gesture.ts`, `breaking.ts`; sem DOM, determinístico) + `titanGame.ts` (entrada e laço) +
 A **lanterna** é um modelo 3D do renderer (ADR 0043: `InstancedMesh` ×2, fora da malha do terreno); a mira dela usa a caixa do objeto (`titan/lantern.ts`, puro, sem DOM).
+O **gerador v3** (ADR 0044) põe veios naturais (ids de bloco 8 e 9) nas formações e garante fontes alcançáveis a pé; as lascas soltas por veios são estado de sessão (`TitanSession.drops`) gravado no cabeçalho do save, junto do inventário.
 `render/titanRenderer.ts` (Three.js) + `render/art/titan.ts` (atlas do terreno e da hotbar). Só `main.ts` (`?mundo=titan`) e `world/profiles.ts` (registro do perfil) tocam o resto do jogo; nada de `World`, `Game`, `SUBDIV` ou `SaveStore`.
 
 ## Regras de dependência

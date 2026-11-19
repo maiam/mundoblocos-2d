@@ -24,6 +24,8 @@ export function blockOfItem(item: number): number | null {
 /** Item que um bloco devolve ao ser quebrado (null = não se quebra: rocha-mãe, líquido). */
 export function itemOfBlock(block: number): ItemId | null {
   if (block >= T.SAND && block <= T.FROST) return block as ItemId;
+  if (block === T.VEIN_ROCK) return Item.DARK_ROCK; // o veio devolve o bloco inteiro (a lasca vem à parte, em `actions.ts`)
+  if (block === T.VEIN_FROST) return Item.FROST;
   if (block === T.LANTERN) return Item.LANTERN;
   return null;
 }

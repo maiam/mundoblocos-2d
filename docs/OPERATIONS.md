@@ -315,6 +315,8 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 
 `python3 -I scripts/extract-titan-lantern.py` converte o pacote da Lanterna da Margem (`assets-src/titan/lanterna/Lanterna_da_Margem.glb`, ADR 0043) em `src/assets/titan-lantern.json` (dois lotes: estrutura e núcleo âmbar) e `titan-lantern-atlas.webp` (32 × 32, sem perdas, fora do `optimize-assets.py`). O script confere 312 triângulos, 0,375 × 0,625 × 0,375 m e pivô na base; arte nova = trocar o GLB e rodar de novo.
 
+`python3 -I scripts/make-titan-veins.py [--preview prancha.png]` acrescenta (ou regrava) os tiles 8 e 9 (veio de rocha e de gelo) no atlas `src/assets/titan-atlas-16px.webp` (80 × 60, WebP **sem perdas**, fora do `optimize-assets.py`), partindo dos tiles 4 e 5; repetível. Os tiles 0–7 não são tocados.
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

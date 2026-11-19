@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.99.0 — Titã: gerador v3 (veios naturais), lascas soltas e seleção de texto bloqueada (19/11/2026)
+- **Pedido do dono do produto (etapa 3 de 3 do prompt "Interação, fragmentos e lanterna 3D"):** fragmentos como drops de veios naturais, fontes garantidas e persistência consistente. Decisões na **ADR 0044**.
+- **Veios:** blocos `VEIN_ROCK`/`VEIN_FROST` (ids 8 e 9, linha 3 do atlas, `scripts/make-titan-veins.py`): rocha com marca mineral cobre e gelo com nervuras azuladas. Quebrar devolve o bloco inteiro e solta uma lasca; a fonte se consome (o veio some) e recolocar rocha/gelo põe o bloco comum, que não solta nada.
+- **Gerador v3:** sem lascas pré-posicionadas; 3 veios de rocha e 3 de gelo nas formações, **alcançáveis a pé** (BFS por degraus de 1 bloco) e, se a busca natural falhar, **afloramento de reserva**. Em 1.000 seeds: 9 usam a reserva, todas com as duas fontes alcançáveis. v1 e v2 inalteradas.
+- **Lascas soltas (drops):** sem colisão, coleta por proximidade (1,25 m), mochila cheia deixa no lugar com aviso; persistem em `header.drops` (`TITAN_SAVE_VERSION` 3), na mesma transação do inventário e das edições, sem duplicar ao reabrir (id `v:x,y,z`).
+- **Correção:** pressionar e segurar no celular não vira mais seleção de texto (`user-select: none`, `-webkit-touch-callout: none`, `selectstart` cancelado).
+- Testes: `titan/veins.test.ts` (12 + fluxo completo, mochila cheia, reabrir, falha de gravação, lote de 1.000 seeds e seeds de reserva), `generator.test.ts` parametrizado em v2/v3, `delivery2` fixado em v2 (legado), `mesher.test.ts` (atlas 4 × 3). Verificado no navegador (seed 42, v3): veio visível, quebra com rachaduras, lasca no chão, coleta por proximidade.
+
 ## Orvalis v0.98.0 — Titã: lanterna em modelo 3D e mira pela caixa do objeto (19/11/2026)
 - **Pedido do dono do produto (etapa 2 de 3 do prompt "Interação, fragmentos e lanterna 3D"):** trocar a caixa-proxy âmbar pelo modelo 3D da Lanterna da Margem (pacote do Drive) e fazer a mira respeitar o objeto. Decisões na **ADR 0043**.
 - **Modelo:** `assets-src/titan/lanterna/` (GLB, bbmodel, atlas 32 × 32) → `scripts/extract-titan-lantern.py` → `src/assets/titan-lantern.json` + `titan-lantern-atlas.webp` (sem perdas), exportados por `render/art/titan.ts`. 312 triângulos em dois lotes (estrutura 300, núcleo âmbar 12) desenhados por `InstancedMesh`: 2 chamadas para qualquer quantidade; mesmo shader do terreno, núcleo emissivo (igual de dia e de noite, hora não refaz nada).

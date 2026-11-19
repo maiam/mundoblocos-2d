@@ -74,3 +74,11 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 - **Luz:** mesmo shader do terreno; núcleo com `color = 0` e `glow` fixo (emite de dia e de noite), estrutura com sombreado por face. A lanterna **não está mais na malha do terreno** (`mesher.ts` a ignora).
 - **Mira** (`titan/lantern.ts`, puro): raio × caixa do objeto; folga mouse 4 cm / toque 14 cm; fora da caixa o raio passa; contorno com o tamanho da caixa (`Hit.box`). Testes: `lantern.test.ts`.
 - **Medição (emulador, cena 12 lanternas, antes → depois):** triângulos 12 938 → 16 538, chamadas 26 → 27, JS do desenho p95 1,2 → 1,2 ms. **Aparelho real: pendente.**
+
+## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
+- **Veios:** `T.VEIN_ROCK` (8) e `T.VEIN_FROST` (9), tiles 8 e 9 do atlas 4 × 3 (`scripts/make-titan-veins.py`). Gerador v3: 3 veios por formação (centro + 2 vizinhos), sem lascas pré-posicionadas; v1/v2 inalteradas. Alcance a pé por BFS (`walkableFromArrival`) e afloramento de reserva (`outcropSpot`, `outcropFallback`): 9 em 1.000 seeds.
+- **Quebra:** devolve o bloco inteiro e solta uma lasca (`actions.breakOrCollect` → `Drop` id `v:x,y,z`); mochila cheia = nada muda. Recolocar rocha/gelo põe o bloco comum, sem lasca.
+- **Drops:** `TitanSession.drops`/`dropsRev`; `collectNearby` (1,25 m, uma a uma, "Mochila cheia" uma vez por aproximação); `visibleItems` = lascas legadas + drops (desenho); `TitanHeader.drops` (save v3) na mesma transação do inventário e dos chunks.
+- **Seleção de texto:** `body.titan` com `user-select: none`, `-webkit-touch-callout: none` e `selectstart` cancelado (o jogo não tem campos de texto).
+- Testes: `veins.test.ts`.
+

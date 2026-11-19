@@ -20,8 +20,8 @@ export function breakTotalMs(kind: TargetKind, block?: number): number | null {
   if (kind === 'lantern' || kind === 'shard') return BREAK_MS.collect;
   switch (block) {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
-    case T.FROST: return BREAK_MS.ice;
-    case T.DARK_ROCK: return BREAK_MS.rock;
+    case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
+    case T.DARK_ROCK: case T.VEIN_ROCK: return BREAK_MS.rock;
     default: return null;
   }
 }
