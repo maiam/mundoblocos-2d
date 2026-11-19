@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
+import { breakOrCollect, collectItem, collectNearby, placeFromSlot } from './actions';
+import { raycast } from './physics';
 import { breakTotalMs } from './breaking';
 import { TitanGenerator } from './generator';
 import { Item } from './items';
@@ -290,5 +291,61 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     expect(breakOrCollect(r, hit({ x: bx, y: 65, z: bz + 2 })).ok).toBe(true);
     expect(r.inventory.total(Item.LANTERN)).toBe(1);
     expect(r.known.has('mesa') && r.known.has('bancada')).toBe(true);
+  });
+});
+
+describe('junco de vidro: mira, recolher e cair sem o apoio', () => {
+  it('o junco é alvo da mira (como as lascas) e se recolhe: 1 junco = 1 item, some do mundo e não volta ao reabrir', async () => {
+    const { st, s } = await open();
+    const r = standingReeds(s)[0], id = `reed:${r.x},${r.y},${r.z}`;
+    expect(s.items.at(r.x, r.y, r.z)).toBe(id);
+    const h = raycast(s.volume, r.x + 0.5, r.y + 3, r.z + 0.5, 0, -1, 0, 6, s.items)!; // de cima: a mira acerta o junco, não o bloco de baixo
+    expect(h.item).toBe(id);
+    expect(breakOrCollect(s, h).ok).toBe(true);
+    expect(s.inventory.total(Item.GLASS_REED)).toBe(1);
+    expect(s.items.at(r.x, r.y, r.z)).toBeNull();
+    expect(standingReeds(s).some((q) => q.x === r.x && q.z === r.z)).toBe(false);
+    expect(s.volume.get(r.x, r.y - 1, r.z)).toBe(T.DAMP_SAND); // o bloco de baixo ficou intacto
+    await flush(st, s);
+    const r2 = await openSession(st, null, () => 1);
+    expect(r2.items.at(r.x, r.y, r.z)).toBeNull(); // não renasce
+    expect(r2.inventory.total(Item.GLASS_REED)).toBe(1);
+    expect(collectItem(r2, id)).toEqual({ ok: false }); // nem duplica
+  });
+
+  it('mochila cheia: o junco fica no lugar', async () => {
+    const { s } = await open();
+    const r = standingReeds(s)[0], id = `reed:${r.x},${r.y},${r.z}`;
+    let n = 0; while (s.inventory.canAdd(Item.SAND) && n++ < 5000) s.inventory.add(Item.SAND, 1);
+    expect(collectItem(s, id)).toEqual({ ok: false, msg: 'Mochila cheia' });
+    expect(s.items.at(r.x, r.y, r.z)).toBe(id);
+  });
+
+  it('quebrar o bloco de baixo solta o junco como item no chão recolhido por proximidade e persistente', async () => {
+    const { st, s } = await open();
+    const r = standingReeds(s)[0];
+    expect(breakOrCollect(s, hit({ x: r.x, y: r.y - 1, z: r.z })).ok).toBe(true);
+    expect(s.volume.get(r.x, r.y - 1, r.z)).toBe(T.AIR);
+    const d = [...s.drops.values()].find((q) => q.item === Item.GLASS_REED)!;
+    expect(d).toBeDefined();
+    expect(d.y).toBeLessThanOrEqual(r.y);
+    await flush(st, s);
+    const r2 = await openSession(st, null, () => 1);
+    expect([...r2.drops.values()].filter((q) => q.item === Item.GLASS_REED)).toHaveLength(1); // a queda sobrevive à reabertura
+    expect(r2.items.at(r.x, r.y, r.z)).toBeNull();
+    expect(collectNearby(r2, d.x + 0.5, d.y, d.z + 0.5).collected).toBe(1);
+    expect(r2.inventory.total(Item.GLASS_REED)).toBe(1);
+  });
+
+  it('partida legada com a brasa dada: os juncos em volta também são recolhíveis', async () => {
+    const st = new MemoryTitanStorage();
+    const s0 = await openSession(st, 42, () => 1, undefined, 3);
+    await flush(st, s0);
+    const h = st.games.get(42)!; h.v = 3; delete h.recipes; delete h.grants;
+    const s = await openSession(st, null, () => 1);
+    const r = standingReeds(s)[0];
+    expect(r).toBeDefined();
+    expect(collectItem(s, `reed:${r.x},${r.y},${r.z}`).ok).toBe(true);
+    expect(s.inventory.total(Item.GLASS_REED)).toBe(1);
   });
 });

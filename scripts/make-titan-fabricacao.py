@@ -2,7 +2,7 @@
 
 Entradas : Atlas_Texturas_Margem_16px.png (80 × 40, grade de 20 px com 2 px de borda: tile 5 = lente de gelo, 6 = brasa de âmbar, 7 = junco de vidro),
            Mesa_de_Trabalho.png (ilustração de referência da mesa, reduzida a 16 × 16 só para o ícone da hotbar).
-Saídas   : src/assets/titan-hotbar-sprites-16px.webp  64 × 48 (grade 4 × 3): acrescenta 8 = mesa, 9 = lente de gelo, 10 = brasa (índice = id do item − 1); a linha 3 col 3 fica livre (laje)
+Saídas   : src/assets/titan-hotbar-sprites-16px.webp  64 × 48 (grade 4 × 3): acrescenta 8 = mesa, 9 = lente de gelo, 10 = brasa, 11 = junco de vidro (índice = id do item − 1); a laje (segunda entrega) pede uma linha nova
            src/assets/titan-atlas-16px.webp           tile 10 = rocha com cristal de brasa (depósito de brasa de âmbar), mesma arte nas 6 faces
            src/assets/titan-reed-16px.webp            16 × 16 RGBA: o junco de vidro (faixa cruzada no renderer)
 Tudo em WebP SEM perdas (fora do optimize-assets.py). Repetível. Uso: python3 -I scripts/make-titan-fabricacao.py
@@ -52,7 +52,7 @@ def main():
     assert hot.size in ((64, 32), (64, 48))
     if hot.size == (64, 32):
         big = Image.new('RGBA', (64, 48), (0, 0, 0, 0)); big.paste(hot, (0, 0)); hot = big
-    for i, t in ((8, mesa), (9, lens), (10, ember)):
+    for i, t in ((8, mesa), (9, lens), (10, ember), (11, reed)):
         hot.paste(Image.new('RGBA', (16, 16), (0, 0, 0, 0)), ((i % 4) * 16, (i // 4) * 16))
         hot.alpha_composite(t, ((i % 4) * 16, (i // 4) * 16))
     hot.save(HOTBAR, 'WEBP', lossless=True, method=6)

@@ -51,22 +51,36 @@ export function visibleItems(s: TitanSession): Array<{ id: string; item: number;
 /** Há inventário/coleta ainda não confirmados no banco? */
 export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.savedStateRev;
 
-function makeItems(s: { volume: TitanVolume; collected: Set<string> }): TitanSession['items'] {
+/** Id do junco de vidro numa célula: entra em `collected` (já gravado no save) quando ele é recolhido ou perde o apoio. */
+export const reedId = (x: number, y: number, z: number): string => `reed:${x},${y},${z}`;
+
+function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: TitanSession['grants'] }): TitanSession['items'] {
   const all = s.volume.gen.surfaceItems;
   const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
   const byCell = new Map(all.map((i) => [key(i.x, i.y, i.z), i.id]));
+  // juncos de vidro (v4, ou a partir da brasa dada numa partida legada): também são alvo da mira e se recolhem como as lascas; montado só na primeira consulta (a adição da migração já foi feita)
+  let reeds: Map<string, string> | null = null;
+  const reedAt = (x: number, y: number, z: number): string | null => {
+    if (!reeds) {
+      const gen = s.volume.gen;
+      const list = gen.version >= 4 ? gen.reeds : s.grants.ember ? gen.reedsFor(s.grants.ember[0], s.grants.ember[2]) : [];
+      reeds = new Map(list.map((r) => [key(r.x, r.y, r.z), reedId(r.x, r.y, r.z)]));
+    }
+    const id = reeds.get(key(x, y, z));
+    return id && !s.collected.has(id) && s.volume.get(x, y, z) === T.AIR && isSolid(s.volume.get(x, y - 1, z)) ? id : null;
+  };
   return {
-    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : null; },
+    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : reedAt(x, y, z); },
     remaining: () => all.filter((i) => !s.collected.has(i.id)),
   };
 }
 
-/** Lascas gravadas: só entradas bem formadas (id, item 5/6/11 e células inteiras no domínio); o resto é descartado. */
+/** Lascas gravadas: só entradas bem formadas (id, item 5/6/11/12 e células inteiras no domínio); o resto é descartado. */
 function validDrops(raw: unknown): Map<string, Drop> {
   const out = new Map<string, Drop>();
   if (!Array.isArray(raw)) return out;
   for (const d of raw as Drop[]) {
-    if (d && typeof d.id === 'string' && (d.item === 5 || d.item === 6 || d.item === 11) && [d.x, d.y, d.z].every(Number.isInteger) && d.y > Y_MIN && d.y <= Y_MAX && inRegion(d.x, d.z)) out.set(d.id, { id: d.id, item: d.item, x: d.x, y: d.y, z: d.z });
+    if (d && typeof d.id === 'string' && (d.item === 5 || d.item === 6 || d.item === 11 || d.item === 12) && [d.x, d.y, d.z].every(Number.isInteger) && d.y > Y_MIN && d.y <= Y_MAX && inRegion(d.x, d.z)) out.set(d.id, { id: d.id, item: d.item, x: d.x, y: d.y, z: d.z });
   }
   return out;
 }
@@ -95,7 +109,8 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
   const collected = new Set<string>();
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, known: new Set<string>(), grants: {}, metaRev: 0, items: makeItems({ volume, collected }) };
+  const grants: TitanSession['grants'] = {};
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
   return s;
 }
 
@@ -117,7 +132,7 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -161,7 +176,7 @@ export function discoverRecipes(s: TitanSession): string[] {
 export function standingReeds(s: TitanSession): Array<{ x: number; y: number; z: number }> {
   const gen = s.volume.gen;
   const list = gen.version >= 4 ? gen.reeds : s.grants.ember ? gen.reedsFor(s.grants.ember[0], s.grants.ember[2]) : [];
-  return list.filter((r) => s.volume.get(r.x, r.y, r.z) === T.AIR && isSolid(s.volume.get(r.x, r.y - 1, r.z)));
+  return list.filter((r) => !s.collected.has(reedId(r.x, r.y, r.z)) && s.volume.get(r.x, r.y, r.z) === T.AIR && isSolid(s.volume.get(r.x, r.y - 1, r.z)));
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
