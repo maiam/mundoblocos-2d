@@ -119,9 +119,32 @@ export function perfLine(s: PerfSnapshot, gpu: RendererStats | null, heapMB: num
   return parts.join(' · ');
 }
 
+/**
+ * Relatório legível para **imprimir na tela do celular** (print): poucas linhas curtas em fonte monoespaçada, números principais primeiro.
+ * `extraLines` = linhas do mundo (o Titã traz a tabela por etapa). Puro: só formata o `PerfReport`.
+ */
+export function formatReport(r: PerfReport, extraLines: string[] = []): string {
+  const n1 = (v: number): string => v.toFixed(1);
+  const lines = [
+    `RELATÓRIO · ${r.seconds}s de sessão · ${r.viewport[0]}×${r.viewport[1]} @${r.devicePixelRatio}x`,
+    r.steady.frames > 0
+      ? `FPS estável ${n1(r.steady.avgFps)} · 5% piores ${n1(r.steady.lowFps)} · pior quadro ${r.steady.worstMs} ms`
+      : `FPS ${n1(r.avgFps)} · 5% piores ${n1(r.lowFps)} · pior ${r.worstMs} ms (ainda sem ${WARMUP_S}s estáveis: jogue mais um pouco)`,
+    r.steady.frames > 0 ? `quadros >33 ms: ${n1(r.steady.pctOver33)}% · >50 ms: ${n1(r.steady.pctOver50)}% · ${r.steady.frames} quadros (${r.steady.seconds}s)` : '',
+    r.gpu ? `GPU ${r.gpu.calls} calls · ${n1(r.gpu.triangles / 1000)}k tri · ${r.gpu.geometries} geo · ${r.gpu.textures} tex${r.gpu.contextLost ? ' · CONTEXTO PERDIDO' : ''}` : '',
+    r.jsDrawMs ? `JS do desenho: ${r.jsDrawMs.avg} ms (p95 ${r.jsDrawMs.p95}, máx ${r.jsDrawMs.max})` : '',
+    r.heapMB !== null ? `memória JS ${r.heapMB} MB` : '',
+    r.pauses.count ? `pausas do navegador: ${r.pauses.count} (${r.pauses.seconds}s)` : '',
+    ...extraLines,
+    `aparelho: ${r.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90)}`,
+    `url: ${r.url.replace(/^https?:\/\/[^/]+/, '')}`,
+  ];
+  return lines.filter((l) => l !== '').join('\n');
+}
+
 /** Cria o painel e o laço de medição. `getStats` devolve os contadores da GPU (null até o renderer existir). */
 /** `extra` (opcional): linha de texto e campos a mais no relatório (o Titã mede luz, malha e geometria por etapa). */
-export interface PerfExtra { line(): string; report(): Record<string, unknown>; /** Ajuste de estilo do painel (posição e quebra de linha). */ style?: Partial<CSSStyleDeclaration> }
+export interface PerfExtra { line(): string; report(): Record<string, unknown>; /** Linhas de texto (em português) que entram no relatório da tela, depois dos números gerais. */ lines?(): string[]; /** Ajuste de estilo do painel (posição e quebra de linha). */ style?: Partial<CSSStyleDeclaration> }
 
 export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () => { samples: ArrayLike<number>; count: number }, extra?: PerfExtra): () => void {
   const meter = new PerfMeter();
@@ -133,7 +156,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
     userSelect: 'none', whiteSpace: 'nowrap', maxWidth: 'calc(100vw - 12px)', overflow: 'hidden',
   } as Partial<CSSStyleDeclaration>);
   if (extra?.style) Object.assign(box.style, extra.style);
-  box.title = 'Toque para copiar o relatório';
+  box.title = 'Toque para abrir o relatório';
   document.body.appendChild(box);
   const heap = (): number | null => {
     const m = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
@@ -158,38 +181,55 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
       ...(extra ? { extra: extra.report() } : {}),
     };
   };
-  let sheet: HTMLTextAreaElement | null = null;
+  let sheet: HTMLDivElement | null = null;
   let raf = 0;
   const loop = (now: number) => { meter.frame(now); raf = requestAnimationFrame(loop); };
   raf = requestAnimationFrame(loop);
   let holdUntil = 0; // mensagens ('copiado', instruções) ficam um tempo antes da linha de medição voltar
   const timer = window.setInterval(() => {
-    if (sheet || performance.now() < holdUntil) return;
+    if (sheet || performance.now() < holdUntil) return; // com o relatório aberto o painel fica parado
     const d = draw();
     box.textContent = perfLine(meter.snapshot(), getStats(), heap(), d && d.n ? d.avg : null) + (extra ? ` | ${extra.line()}` : '');
   }, 500);
-  /** Plano B quando o navegador não libera a área de transferência (HTTP na rede local): o relatório numa caixa de texto selecionada. */
-  const showReport = (text: string): void => {
-    sheet?.remove();
-    sheet = document.createElement('textarea');
-    sheet.readOnly = true;
-    sheet.value = text;
-    Object.assign(sheet.style, {
-      position: 'fixed', left: '6px', right: '6px', top: '34px', height: '55vh', zIndex: '10000', font: '12px/1.3 ui-monospace, Menlo, monospace',
-      background: 'rgba(10,6,24,0.94)', color: '#fff', border: '1px solid #8a7cff', borderRadius: '6px', padding: '6px',
+  /**
+   * Toque no painel: relatório **legível na tela** (para tirar print no celular), com os botões Atualizar, Copiar JSON e Fechar. O JSON completo continua
+   * disponível (Copiar JSON; se o navegador não liberar a área de transferência, ele aparece numa caixa de texto selecionada).
+   */
+  const closeSheet = (): void => { sheet?.remove(); sheet = null; };
+  const openSheet = (): void => {
+    closeSheet();
+    const box2 = document.createElement('div');
+    Object.assign(box2.style, {
+      position: 'fixed', left: '6px', top: '6px', maxWidth: 'calc(100vw - 12px)', maxHeight: 'calc(100vh - 12px)', overflow: 'auto', zIndex: '10000',
+      background: 'rgba(10,6,24,0.96)', color: '#fff', border: '1px solid #8a7cff', borderRadius: '6px', padding: '8px 10px', touchAction: 'manipulation',
     } as Partial<CSSStyleDeclaration>);
-    sheet.addEventListener('click', () => { sheet?.remove(); sheet = null; box.textContent = 'Relatório fechado (toque aqui para abrir de novo)'; });
-    document.body.appendChild(sheet);
-    sheet.focus();
-    sheet.select();
-    box.textContent = 'Selecione tudo e copie (ou tire um print). Toque na caixa para fechar.';
+    const pre = document.createElement('pre');
+    Object.assign(pre.style, { margin: '0 0 6px', font: '11px/1.4 ui-monospace, Menlo, monospace', whiteSpace: 'pre-wrap', userSelect: 'text' } as Partial<CSSStyleDeclaration>);
+    const render = (): void => { pre.textContent = formatReport(report(), extra?.lines?.() ?? []); };
+    render();
+    const row = document.createElement('div');
+    row.style.display = 'flex'; row.style.gap = '6px';
+    const btn = (label: string, on: () => void): void => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label;
+      Object.assign(b.style, { font: '12px system-ui, sans-serif', padding: '6px 10px', borderRadius: '4px', border: '1px solid #8a7cff', background: '#241c4a', color: '#fff', touchAction: 'manipulation' } as Partial<CSSStyleDeclaration>);
+      b.addEventListener('click', (e) => { e.stopPropagation(); on(); });
+      row.appendChild(b);
+    };
+    btn('Atualizar', render);
+    btn('Copiar JSON', () => {
+      const json = JSON.stringify(report(), null, 2);
+      const clip = navigator.clipboard;
+      const fallback = (): void => { pre.textContent = json; const r = document.createRange(); r.selectNodeContents(pre); const sel = getSelection(); sel?.removeAllRanges(); sel?.addRange(r); };
+      if (clip?.writeText) void clip.writeText(json).then(() => { pre.textContent = 'JSON copiado ✓ (toque em Atualizar para ver o relatório de novo)'; }, fallback);
+      else fallback();
+    });
+    btn('Fechar', closeSheet);
+    box2.append(pre, row);
+    box2.addEventListener('click', (e) => e.stopPropagation());
+    document.body.appendChild(box2);
+    sheet = box2;
   };
-  box.addEventListener('click', () => {
-    const text = JSON.stringify(report(), null, 2);
-    if (sheet) { sheet.remove(); sheet = null; return; }
-    const clip = navigator.clipboard;
-    if (clip?.writeText) void clip.writeText(text).then(() => { box.textContent = 'Relatório copiado ✓'; holdUntil = performance.now() + 3000; }, () => showReport(text));
-    else showReport(text);
-  });
+  box.addEventListener('click', () => { if (sheet) closeSheet(); else openSheet(); });
   return () => { cancelAnimationFrame(raf); clearInterval(timer); box.remove(); };
 }

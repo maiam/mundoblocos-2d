@@ -56,4 +56,4 @@ mira, save/retomada/posição segura/falha de gravação/versão desconhecida, m
 3. Colocar a lanterna e **editar blocos perto dela** (colocar e quebrar várias vezes): observar engasgos e ler `luz`/`malha`/`quadro+malha` no painel.
 4. Esperar "salvo ✓", recarregar `?mundo=titan` sem `?seed=` e conferir inventário, lanterna e fragmentos já recolhidos; recuperar a lanterna.
 5. Comparar a luz na tarde padrão e com `&hora=noite`.
-6. Repetir 3 com `?mundo=titan&cena=lanternas&n=12&fps=1` + "Editar sem parar" (pior caso) e **tocar no painel para copiar o relatório**.
+6. Repetir 3 com `?mundo=titan&cena=lanternas&n=12&fps=1` + "Editar sem parar" (pior caso). Andar uns 30 s e **tocar no painel pequeno do canto superior esquerdo**: o relatório abre na tela para **tirar print** (Atualizar, Copiar JSON, Fechar).

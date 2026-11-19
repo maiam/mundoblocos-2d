@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.95.3 — Titã: relatório de desempenho legível na tela do celular (19/11/2026)
+- **Pedido do dono do produto:** só dá para testar no celular, então o relatório precisa aparecer na tela para tirar print (antes o toque no painel só copiava o JSON para a área de transferência).
+- **Painel `?fps=1` (`dev/perfHud.ts`):** tocar nele abre o relatório na tela (`formatReport`, puro): FPS estável e 5% piores, quadros acima de 33/50 ms, GPU, memória, JS do desenho e, no Titã, a tabela por etapa (luz, malha, geometria, malha do quadro, desenho) com média/p95/máx/n, mais o aparelho e a URL; cabe em ~320 px de altura. Botões **Atualizar**, **Copiar JSON** (se a área de transferência não liberar, o JSON aparece selecionado) e **Fechar**. Vale também para o Mundo principal (`?fps=1`).
+- Testes (`titan/perf.test.ts`): números principais primeiro, tabela do Titã, sem linhas vazias, no máximo 18 linhas de até 100 colunas, aviso antes dos 8 s estáveis. Sem mudança de gameplay, save, gerador ou protocolo.
+
 ## Orvalis v0.95.2 — Titã: luz incremental (edição perto de lanterna sem engasgo) (19/11/2026)
 - **Motivo:** a medição da v0.95.1 mostrou que cada edição perto de uma lanterna refazia 28–37 seções (caixa cega de ±15 blocos) e recalculava o mapa de luz inteiro: ~28 ms com 1 lanterna e ~204 ms com 12 a CPU 4× mais lenta.
 - **Motor de luz incremental (`titan/light.ts`):** `LightStore` (4 bits por célula, 2 KB por seção) e `LightEngine` com **fila de remoção e fila de adição** (tirar uma lanterna perto de outra devolve a luz da outra; editar perto de 12 lanternas custa quase o mesmo que perto de 1). O primeiro uso faz o cálculo completo; depois só se propaga o que muda. `computeLight` (completo) fica como referência dos testes.

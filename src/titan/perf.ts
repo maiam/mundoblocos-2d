@@ -38,6 +38,16 @@ export class TitanPerf {
     return { stages, counters: Object.fromEntries([...this.counters].sort()) };
   }
 
+  /** Linhas do relatório na tela: uma tabela por etapa (ms) e os contadores, em português. */
+  reportLines(): string[] {
+    const names: Array<[string, string]> = [['light', 'luz'], ['mesh', 'malha (1 seção)'], ['geom', 'geometria'], ['buildFrame', 'malha do quadro'], ['drawAfterBuild', 'desenho c/ malha nova'], ['draw', 'desenho']];
+    const f = (n: number): string => n.toFixed(1).padStart(6);
+    const out = ['etapa (ms)'.padEnd(22) + 'média'.padStart(6) + 'p95'.padStart(6) + 'máx'.padStart(6) + 'n'.padStart(6)];
+    for (const [k, label] of names) { const s = this.stats(k); if (s.n) out.push(`${label.padEnd(22)}${f(s.avg)}${f(s.p95)}${f(s.max)} ${String(s.n).padStart(5)}`); }
+    out.push(`seções refeitas ${this.counter('sections')} · lanternas ${this.counter('lanterns')}`);
+    return out;
+  }
+
   /** Linha curta do painel: média e p95 de cada etapa, em ms. */
   line(): string {
     const part = (label: string, stage: string): string => { const s = this.stats(stage); return s.n ? `${label} ${s.avg.toFixed(1)}/${s.p95.toFixed(1)}` : `${label} –`; };
