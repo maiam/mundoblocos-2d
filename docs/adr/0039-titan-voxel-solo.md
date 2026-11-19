@@ -20,7 +20,7 @@ grade global** do Mundo principal e do Santuário.
 4. **Edições = deltas por chunk**: ausência = base; entrada = id gravado (0 = remoção explícita). Devolver a célula ao que a base diz **apaga** a entrada: a bacia recupera o líquido ao retirar o sólido que
    o deslocou, e a remoção de um bloco da praia fica gravada como ar. Uma versão nova do gerador nunca reinterpreta partida antiga (`generatorFor`; versão desconhecida → aviso, não abre).
 5. **Save em IndexedDB** (`orvalis-titan`, stores `games` e `chunks`, `TITAN_SAVE_VERSION = 1`), separado do `localStorage` dos outros mundos: cabeçalho + jogador + chunks sujos na **mesma transação**
-   (`flush`; "confirmado" só no `oncomplete`; falha preserva o último estado e tenta de novo). A partida mais recente vem do próprio banco (índice `savedAt`), sem ponteiro em `localStorage`. Sem `?seed=`:
+   (`flush`; "confirmado" só no `oncomplete`; falha preserva o último estado e tenta de novo). Cada chunk tem uma **revisão**: a gravação limpa só a revisão confirmada, e edição feita durante ela continua pendente (v0.94.1). A partida mais recente vem do próprio banco (índice `savedAt`), sem ponteiro em `localStorage`. Sem `?seed=`:
    continua a última, ou sorteia na primeira visita; "Nova partida" (UI, confirmação por segundo toque) sorteia outra.
 6. **Malha**: 1 `BufferGeometry` por seção 16³ para o opaco e outra para o líquido; cópia da seção com margem de 1 bloco (junção sem frestas); edição na borda refaz também as seções vizinhas e aparece no
    mesmo quadro. Atlas compartilhado (WebP sem perdas), pixels nítidos, luz de tarde fixa nos vértices, névoa âmbar de 70% do alcance, céu em degradê.

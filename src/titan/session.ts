@@ -60,13 +60,13 @@ export function headerOf(s: TitanSession): TitanHeader {
 }
 
 /**
- * Grava jogador + chunks sujos na mesma transação. Só marca limpo depois da confirmação; se falhar, o estado sujo fica para a próxima
+ * Grava jogador + chunks sujos na mesma transação (a cópia e a revisão de cada chunk são tiradas no início). Só marca limpo, e só aquela revisão, depois da confirmação; se falhar, o estado sujo fica para a próxima
  * tentativa e o erro sobe (a interface o mostra e o último estado confirmado continua no banco).
  */
 export async function flush(storage: TitanStorage, s: TitanSession): Promise<void> {
   const dirty = s.volume.dirtyChunks();
-  const puts: ChunkRecord[] = dirty.filter((c) => c.edits.length > 0);
+  const puts: ChunkRecord[] = dirty.filter((c) => c.edits.length > 0).map(({ cx, cz, edits }) => ({ cx, cz, edits }));
   const deletes = dirty.filter((c) => c.edits.length === 0).map(({ cx, cz }) => ({ cx, cz }));
   await storage.commit(headerOf(s), puts, deletes);
-  s.volume.markClean(dirty);
+  s.volume.markClean(dirty); // só a revisão confirmada: edição feita durante a gravação continua pendente
 }

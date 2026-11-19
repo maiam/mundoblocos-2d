@@ -195,9 +195,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function saveNow(): Promise<void> {
     if (saving) return saving;
     setSave('salvando…');
+    playerDirty = false; // o que se mexer durante a gravação continua pendente para a próxima
+    lastPlayerSave = performance.now();
     saving = flush(storage, session).then(
-      () => { failed = false; playerDirty = false; lastPlayerSave = performance.now(); setSave('salvo ✓'); },
-      (e) => { failed = true; retryAt = performance.now() + RETRY_MS; setSave('falha ao salvar — tentando de novo (o último estado confirmado está preservado)', true); console.error('Titã: falha ao salvar', e); },
+      // edição feita durante a gravação não foi confirmada: continua pendente e entra na próxima gravação automática
+      () => { failed = false; if (vol.hasDirty) { lastEdit = performance.now(); setSave('alterações pendentes…'); } else setSave('salvo ✓'); },
+      (e) => { failed = true; playerDirty = true; retryAt = performance.now() + RETRY_MS; setSave('falha ao salvar — tentando de novo (o último estado confirmado está preservado)', true); console.error('Titã: falha ao salvar', e); },
     ).finally(() => { saving = null; });
     return saving;
   }

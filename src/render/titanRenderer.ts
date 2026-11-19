@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
+import { initialSections } from '../titan/sections';
 import type { TitanVolume } from '../titan/volume';
-import { SECTIONS } from '../titan/voxel';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -71,20 +71,9 @@ export class TitanRenderer {
     this.scene.add(this.outline);
 
     // fila inicial: todas as seções não vazias da região (4 × 4 chunks), da mais perto da chegada para fora
-    this.queueRegion();
+    for (const k of initialSections(this.volume)) this.pending.add(k);
     this.resize();
     window.addEventListener('resize', this.resize);
-  }
-
-  private queueRegion(): void {
-    const g = this.volume.gen;
-    for (let cx = -2; cx <= 1; cx++) for (let cz = -2; cz <= 1; cz++) {
-      // alturas úteis: do fundo (rocha-mãe) até a maior coluna do chunk (+ edições mexem nas seções acima via `takeTouched`)
-      let maxTop = 0;
-      for (let z = 0; z < 16; z++) for (let x = 0; x < 16; x++) maxTop = Math.max(maxTop, g.column(cx * 16 + x, cz * 16 + z).top);
-      const top = Math.min(SECTIONS - 1, Math.floor((maxTop + 64) / 16) + 1);
-      for (let sy = 0; sy <= top; sy++) this.pending.add(`${cx},${sy},${cz}`);
-    }
   }
 
   readonly resize = (): void => {
