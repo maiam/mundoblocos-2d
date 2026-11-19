@@ -22,6 +22,7 @@ Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece
 | Cultivo, itens, ferramentas, inventário | `world/items.ts`, `World` (plantio), `game/inventory.ts` | [farming.md](domains/farming.md) |
 | Jogador: movimento, câmera, entrada, botão de ação, tela | `game/player.ts`, `game/walker.ts`, `game/game.ts`, `game/actionController.ts` | [player.md](domains/player.md) |
 | NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
+| Titã: mundo voxel solo, geração, save, malha (ADR 0039) | `src/titan/`, `render/titanRenderer.ts` | [titan.md](domains/titan.md) |
 | Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Cidade do Despertar: início, muralha, ruas, construções | `world/town.ts`, `render/townArt.ts`, `World` | [town.md](domains/town.md) |
 | Vila Camponesa: área fixa ao sul da cidade (arte recebida; código a fazer) | `world/village.ts` (a criar), `assets-src/vila-camponesa/` | [village.md](domains/village.md) |

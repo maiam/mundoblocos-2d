@@ -138,7 +138,12 @@ src/
    nuvens → dia/noite → partículas → foco/cursor/rachaduras. Depois HUD e botão de ação.
 Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 
+## Titã (ADR 0039, v0.94.0)
+`src/titan/` é um **segundo motor, isolado**: volume voxel por `(x, y, z)` (`voxel.ts`, `generator.ts`, `volume.ts`, `mesher.ts`, `physics.ts`, `save.ts`, `session.ts`; sem DOM, determinístico) + `titanGame.ts` (entrada e laço) +
+`render/titanRenderer.ts` (Three.js) + `render/art/titan.ts` (atlas). Só `main.ts` (`?mundo=titan`) e `world/profiles.ts` (registro do perfil) tocam o resto do jogo; nada de `World`, `Game`, `SUBDIV` ou `SaveStore`.
+
 ## Regras de dependência
+- `titan/` não importa `world/` além de `noise.ts`/`random.ts` (utilitários puros) e não é importado pelo motor do Orvalis.
 - `world/` não importa `render/` nem `game/`; não usa DOM; aleatoriedade só por seed.
 - `render/` só lê o mundo (e tipos de `game/`). `game/` orquestra; regra de domínio fica em `world/`.
 - Arte (`?inline`) só em `render/art/<mundo>.ts`; o resto do código lê o pacote carregado (`art()`).
