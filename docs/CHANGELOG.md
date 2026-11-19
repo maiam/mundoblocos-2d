@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.109.0 — Titã: som da rocha sintetizado na hora (19/11/2026)
+- **Proposta do dono do produto:** o primeiro som do Titã, sem arquivos de áudio. **ADR 0054.**
+- `titan/rockAudio.ts` (Web Audio): golpe seco a cada 250 ms enquanto a rocha racha (o tom sobe com o progresso) e quebra em camadas ao concluir (pancada grave, três rajadas de estilhaços defasadas e corpo grave), com variação aleatória; ganho mestre de 0,6. `isRockSound` (`breaking.ts`): rocha escura, veio, laje e mesa; areia, gelo e brasa em silêncio por ora. O contexto é liberado no primeiro toque ou tecla (iOS/Safari); sem Web Audio vira silêncio.
+- Testes (`rockAudio.test.ts`, +4, com `AudioContext` de mentira): família da rocha, camadas por som, retomada do contexto suspenso, silêncio sem suporte. Conferido no navegador: 3 golpes em 0,9 s e a quebra ao concluir, sem erros.
+
 ## Orvalis v0.108.0 — Titã: arte de 32 × 32 nos fragmentos, na lanterna e no junco (19/11/2026)
 - **Arte do dono do produto** (Drive): fragmento de rocha, fragmento de gelo, Lanterna da Margem (ícone redesenhado a partir do high-poly) e Junco de Vidro, em 32 px. **ADR 0053.**
 - Atlas de itens **128 × 128** (células de 32 px; os demais itens = arte antiga ampliada 2×) por `scripts/make-titan-arte32.py`; interface em **escala inteira** (64 px no desktop e no tablet, 32 px no celular), `pixelated`; junco com atlas de 128 × 32 (`REED_COLUMNS`). Ids e saves inalterados. Lascas no chão e ícones usam o mesmo atlas.
