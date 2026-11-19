@@ -8,6 +8,7 @@ import { ITEM_NAMES } from './items';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
+import { advanceDay, parseHora, phaseName } from './sky';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError } from './session';
@@ -66,8 +67,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
   if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
-  // `?hora=noite`: ferramenta de teste da luz da lanterna (a tarde fixa é a regra desta entrega)
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, new URLSearchParams(search).get('hora') === 'noite', perf);
+  // `?hora=manha|tarde|noite`: congela só a visualização (teste); a hora do jogo continua correndo e é a que vai no save
+  const forcedHour = parseHora(q.get('hora'));
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, perf);
+  view.setSky(forcedHour ?? session.time);
   view.setItems(session.items.remaining());
   if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
     line: () => perf.line(),
@@ -83,6 +86,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   seedLine.innerHTML = `Titã · Margem Silenciosa · semente <b>${session.seed}</b> · gerador v${vol.gen.version}`;
   const saveLine = el('span', '', status, scene ? SCENE_NOTE : 'salvo');
   const posLine = el('span', '', status);
+  const skyLine = el('span', '', status);
   const label = el('div', 'titan-label', ui);
   const hotbar = el('div', 'titan-hotbar', ui);
   /** Espaço da interface: ícone do atlas da hotbar (por id do item), quantidade e tecla. */
@@ -306,6 +310,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
 
   // ---- Gravação ----
+  let lastSavedTime = session.time;
   let lastEdit = 0, lastPlayerSave = performance.now(), playerDirty = false, saving: Promise<void> | null = null, failed = false, retryAt = 0;
   const setSave = (txt: string, err = false): void => { saveLine.textContent = txt; saveLine.className = err ? 'err' : ''; };
   function onEdited(): void { lastEdit = performance.now(); setSave('alterações pendentes…'); }
@@ -314,6 +319,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     setSave('salvando…');
     playerDirty = false; // o que se mexer durante a gravação continua pendente para a próxima
     lastPlayerSave = performance.now();
+    lastSavedTime = session.time;
     saving = flush(storage, session).then(
       // edição feita durante a gravação não foi confirmada: continua pendente e entra na próxima gravação automática
       () => { failed = false; if (vol.hasDirty || hasPendingState(session)) { lastEdit = performance.now(); setSave('alterações pendentes…'); } else setSave('salvo ✓'); },
@@ -348,6 +354,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (moved || !b.onGround) playerDirty = true;
       if ((input.place || input.remove) && now > nextRepeat) { nextRepeat = now + REPEAT_MS; if (!target) { /* nada apontado */ } else act(input.place ? 'place' : 'remove'); }
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
+    // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
+    if (playing) {
+      session.time = advanceDay(session.time, dt);
+      if (((session.time - lastSavedTime + 1) % 1) > 0.02) playerDirty = true; // ~10 s de jogo: grava a hora junto da posição
+    }
+    view.setSky(forcedHour ?? session.time);
+    skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
@@ -363,5 +376,5 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   };
   requestAnimationFrame(frame);
 
-  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, toggleBag, refresh, get target() { return target; } };
+  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, toggleBag, refresh, perf, get target() { return target; } };
 }

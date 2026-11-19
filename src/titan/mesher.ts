@@ -5,9 +5,13 @@ import { isSolid, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
  * junção entre seções e chunks não ter frestas nem faces escondidas duplicadas. Sem Three.js: devolve arrays (o renderer monta a `BufferGeometry`).
- * Luz de tarde fixa embutida na cor dos vértices (sol baixo vindo de +X/−Z); névoa âmbar é do material.
+ * Sombreado fixo por face na cor dos vértices (sol baixo vindo de +X/−Z); a luz do dia (ambiente) é um uniform do shader e a névoa é do material.
  */
-export interface MeshData { pos: Float32Array; uv: Float32Array; col: Float32Array; idx: Uint32Array }
+/**
+ * `col` = sombreado das faces (sem luz ambiente: o shader multiplica pelo uniform do dia); `glow` = luz de lanterna e emissão, somada **depois**, sem depender do dia.
+ * Por isso mudar a hora não refaz nenhuma malha.
+ */
+export interface MeshData { pos: Float32Array; uv: Float32Array; col: Float32Array; glow: Float32Array; idx: Uint32Array }
 export interface SectionMesh { opaque: MeshData | null; liquid: MeshData | null }
 
 const ATLAS_W = 80, ATLAS_H = 40, PITCH = 20, PAD = 2, TILE = 16;
@@ -32,34 +36,31 @@ const CORNER_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
 /** A rocha-mãe é mais escura que a rocha comum. */
 const TINT: Record<number, number> = { [T.BEDROCK]: 0.55 };
 
-/** Luz ambiente da tarde fixa (1). `?hora=noite` (teste) baixa para ver a luz da lanterna; é global do renderer (o volume não depende dela). */
-let ambient = 1;
-export function setAmbient(a: number): void { ambient = a; }
 /** Brilho quente somado por nível de luz de lanterna (0–15): sobe mais forte perto da fonte. */
 const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX, 1.3) * 0.7 : 0);
 type Box = readonly [number, number, number, number, number, number];
 const UNIT: Box = [0, 0, 0, 1, 1, 1];
 
 class Builder {
-  pos: number[] = []; uv: number[] = []; col: number[] = []; idx: number[] = [];
+  pos: number[] = []; uv: number[] = []; col: number[] = []; glow: number[] = []; idx: number[] = [];
   /** `level` = luz de lanterna na célula que a face enxerga; `fixed` = cor própria (a lanterna emite, não recebe). */
   face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, box: Box = UNIT, fixed?: readonly [number, number, number]): void {
     const F = FACES[fi];
     const [u0, v0, u1, v1] = tileUV(tile);
     const base = this.pos.length / 3;
-    const shade = F.light * tint * ambient;
+    const shade = F.light * tint;
     const w = warm(level);
     for (let k = 0; k < 4; k++) {
       const c = F.c[k];
       this.pos.push(x + box[0] + c[0] * (box[3] - box[0]), y + box[1] + c[1] * (box[4] - box[1]), z + box[2] + c[2] * (box[5] - box[2]));
       this.uv.push(CORNER_UV[k][0] ? u1 : u0, CORNER_UV[k][1] ? v1 : v0);
-      if (fixed) this.col.push(fixed[0] * F.light, fixed[1] * F.light, fixed[2] * F.light);
-      else this.col.push(shade + w, shade + w * 0.72, shade + w * 0.38);
+      if (fixed) { this.col.push(0, 0, 0); this.glow.push(fixed[0] * F.light, fixed[1] * F.light, fixed[2] * F.light); } // a lanterna emite: só brilho próprio
+      else { this.col.push(shade, shade, shade); this.glow.push(w, w * 0.72, w * 0.38); }
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
   done(): MeshData | null {
-    return this.idx.length ? { pos: new Float32Array(this.pos), uv: new Float32Array(this.uv), col: new Float32Array(this.col), idx: new Uint32Array(this.idx) } : null;
+    return this.idx.length ? { pos: new Float32Array(this.pos), uv: new Float32Array(this.uv), col: new Float32Array(this.col), glow: new Float32Array(this.glow), idx: new Uint32Array(this.idx) } : null;
   }
 }
 

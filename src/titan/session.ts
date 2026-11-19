@@ -1,5 +1,6 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { Inventory } from './inventory';
+import { AFTERNOON, validDay } from './sky';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
@@ -19,6 +20,8 @@ export interface TitanSession {
   resumed: boolean;
   /** Mensagem se a posição gravada estava obstruída e foi trocada por uma segura. */
   relocated: boolean;
+  /** Hora do dia (fração 0–1 do dia de 8 minutos): avança com o jogo ativo e vai no save (ADR 0041). */
+  time: number;
   /** Hotbar, mochila e grade (ADR 0040). */
   inventory: Inventory;
   /** Ids dos fragmentos de superfície já recolhidos (a base os recria; o save lembra quais sumiram). */
@@ -67,7 +70,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
   const collected = new Set<string>();
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, items: makeItems({ volume, collected }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, items: makeItems({ volume, collected }) };
   return s;
 }
 
@@ -84,11 +87,11 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   inv.returnCraft();
   const collected = new Set<string>((save.header.inventory?.collected ?? []).filter((x): x is string => typeof x === 'string'));
   const savedStateRev = save.header.inventory && inv.rev === revBefore ? inv.rev : -1; // v1 ou grade devolvida: há o que gravar
-  return { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, inventory: inv, collected, collectedRev: 0, savedStateRev, items: makeItems({ volume, collected }) };
+  return { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev, items: makeItems({ volume, collected }) };
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() } };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() } };
 }
 
 /**

@@ -1,5 +1,14 @@
 # Changelog
 
+## Orvalis v0.96.0 — Titã: ciclo simples de céu (dia de 8 minutos) (19/11/2026)
+- **Pedido do dono do produto:** depois da validação em aparelho real da luz (iPhone: 59,9 FPS estáveis, 0,4% de quadros acima de 33 ms), seguir com o ciclo simples de céu em 4 × 4 chunks e deixar o worker de malha em espera. Decisões na **ADR 0041**.
+- **Relógio e save** (`titan/sky.ts`, `session.time`, `TitanHeader.time?`): dia de 8 minutos; partidas novas e saves antigos sem hora começam à **tarde**; a hora avança com o jogo ativo e para na tela de início e com a aba oculta; vai no save (campo opcional, sem subir a versão do save).
+- **Céu:** manhã pêssego → tarde cobre e âmbar → noite carvão-violeta com cobre no horizonte, interpolados com suavidade (inclusive na meia-noite); **sol** em ponto quando alto; **névoa e fundo** seguem o horizonte; sprites de fragmento escurecem à noite.
+- **Luz do dia como uniform, zero remalhagens:** a luz ambiente deixou de ficar gravada nos vértices. `col` = sombreado das faces; novo atributo `glow` = brilho de lanterna e emissão; o shader calcula `textura × (col × uAmbient + glow)` (`titanRenderer.patchDayLight`). Mudar a hora não refaz seção nenhuma (164 → 164 ao percorrer o dia) e a luz da lanterna não depende dela.
+- **Teste:** `?hora=manha|tarde|noite` congela só a visualização (substitui o `?hora=noite`, que só baixava a luz ambiente); a hora do jogo segue correndo e é a gravada; sem o parâmetro volta a hora do save.
+- **Medições registradas** em `domains/titan.md`: emulador 204 → 12,3 ms e, com o ciclo rodando, 12,9 ms; iPhone real 59,9 FPS e malha do quadro 3,0 ms na cena de 12 lanternas; pico de 135 ms com causa em aberto.
+- Testes (`titan/sky.test.ts`): dia de 8 min, tarde = visual anterior, manhã/noite, transições sem salto (0,1 s de passo), sol só quando alto, `?hora=`, hora no save, save antigo e hora inválida → tarde, malha sem luz ambiente e `glow` da lanterna. Verificado no navegador (celular emulado): relógio parado no início e avançando ao jogar, hora gravada e restaurada, hora forçada não gravada, save sem hora → tarde, cena de 12 lanternas com o ciclo rodando sem perda de desempenho.
+
 ## Orvalis v0.95.3 — Titã: relatório de desempenho legível na tela do celular (19/11/2026)
 - **Pedido do dono do produto:** só dá para testar no celular, então o relatório precisa aparecer na tela para tirar print (antes o toque no painel só copiava o JSON para a área de transferência).
 - **Painel `?fps=1` (`dev/perfHud.ts`):** tocar nele abre o relatório na tela (`formatReport`, puro): FPS estável e 5% piores, quadros acima de 33/50 ms, GPU, memória, JS do desenho e, no Titã, a tabela por etapa (luz, malha, geometria, malha do quadro, desenho) com média/p95/máx/n, mais o aparelho e a URL; cabe em ~320 px de altura. Botões **Atualizar**, **Copiar JSON** (se a área de transferência não liberar, o JSON aparece selecionado) e **Fechar**. Vale também para o Mundo principal (`?fps=1`).
