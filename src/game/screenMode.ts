@@ -4,7 +4,7 @@
  * - No primeiro toque (gesto exigido pelos navegadores), pede tela cheia. **Não trava a orientação** (antes travava em paisagem e,
  *   onde não dava, cobria o jogo com "Gire o aparelho"): quem quiser jogar em pé, joga em pé.
  * - Se o jogador sair da tela cheia, o próximo toque volta a pedi-la — menos ao tocar num campo de texto ou com um
- *   campo em foco: o teclado na tela tira o navegador da tela cheia, e pedi-la de novo fechava o teclado em loop
+ *   campo em foco (e ao focar um campo sai da tela cheia, senão o Safari do iPad avisa "digitando em tela cheia"): o teclado na tela tira o navegador da tela cheia, e pedi-la de novo fechava o teclado em loop
  *   (não dava para digitar o nome no "Jogar com amigos" no tablet).
  * - Expõe `data-orientation` (`portrait`/`landscape`) e `data-device` (`phone`/`tablet`/`desktop`) em `<html>` para o CSS e `isPortrait`
  *   para a câmera (a vertical mostra mais mundo na altura e menos na largura).
@@ -39,6 +39,11 @@ export class ScreenMode {
       };
       window.addEventListener('pointerup', onGesture, true);
       this.cleanup.push(() => window.removeEventListener('pointerup', onGesture, true));
+      // Campo de texto em foco dentro da tela cheia: o Safari do iPad mostra "Parece que você está digitando em tela cheia".
+      // Sai da tela cheia ao focar; o toque seguinte fora do campo volta a pedi-la (onGesture ignora campos em foco).
+      const onFocus = (e: Event) => { if (isTextField(e.target)) void this.exitFullscreen(); };
+      document.addEventListener('focusin', onFocus, true);
+      this.cleanup.push(() => document.removeEventListener('focusin', onFocus, true));
     }
     this.blockPageZoom();
     this.syncAttributes();
@@ -99,6 +104,18 @@ export class ScreenMode {
       else await el.webkitRequestFullscreen?.();
     } catch {
       // navegador/iframe não permite: o jogo segue na janela normal
+    }
+  }
+
+  /** Sai da tela cheia (para digitar). Falhas são ignoradas. */
+  private async exitFullscreen(): Promise<void> {
+    if (!this.isFullscreen) return;
+    const d = document as FsDocument & { webkitExitFullscreen?: () => Promise<void> | void };
+    try {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else await d.webkitExitFullscreen?.();
+    } catch {
+      // sem efeito: segue na janela atual
     }
   }
 
