@@ -151,6 +151,6 @@ describe('hora no save e luz sem remalhar', () => {
     expect(Math.max(...before.glow)).toBe(0); // sem lanterna perto: nenhum brilho
     v.place(bx + 1, 150, bz, T.LANTERN);
     const lit = meshSection(v, Math.floor(bx / 16), 13, Math.floor(bz / 16)).opaque!;
-    expect(Math.max(...lit.glow)).toBeGreaterThan(1); // a lanterna é emissão própria, independente do dia
+    expect(Math.max(...lit.glow)).toBeGreaterThan(0.5); // o calor da lanterna é emissão própria, independente do dia
   });
 });

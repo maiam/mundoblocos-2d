@@ -1,0 +1,2245 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "Lanterna_da_Margem",
+  "resolution": {
+    "width": 32,
+    "height": 32
+  },
+  "elements": [
+    {
+      "type": "cube",
+      "uuid": "e2808ad3-c3c0-5b8f-b8b0-36ab5a2d056b",
+      "name": "Base de rocha",
+      "from": [
+        -3,
+        0,
+        -3
+      ],
+      "to": [
+        3,
+        1.25,
+        3
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            8,
+            8
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            8,
+            8
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "19780625-eb7d-570b-b69f-da32305e3779",
+      "name": "Tampa de rocha",
+      "from": [
+        -3,
+        7.25,
+        -3
+      ],
+      "to": [
+        3,
+        8.5,
+        3
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            8,
+            3
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            8,
+            8
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            8,
+            8
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "af2a16ab-4d48-51c2-b5af-287298e2662f",
+      "name": "Montante NO",
+      "from": [
+        -2.8,
+        1.25,
+        -2.8
+      ],
+      "to": [
+        -2.05,
+        7.25,
+        -2.05
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "ef351c59-50c8-5050-888b-067afe79f539",
+      "name": "Montante NE",
+      "from": [
+        2.05,
+        1.25,
+        -2.8
+      ],
+      "to": [
+        2.8,
+        7.25,
+        -2.05
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "8e2cce63-cd90-50a8-ace6-e2f6fa8a7f7e",
+      "name": "Montante SO",
+      "from": [
+        -2.8,
+        1.25,
+        2.05
+      ],
+      "to": [
+        -2.05,
+        7.25,
+        2.8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "73442750-0e78-53a0-a45a-f7133e45f785",
+      "name": "Montante SE",
+      "from": [
+        2.05,
+        1.25,
+        2.05
+      ],
+      "to": [
+        2.8,
+        7.25,
+        2.8
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            8
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "dcb8d06d-9e56-5018-af92-8c0ef391e253",
+      "name": "Norte · travessa inferior",
+      "from": [
+        -2.05,
+        3,
+        -2.53
+      ],
+      "to": [
+        2.05,
+        3.36,
+        -2.26
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "d84a0ccf-e290-58c7-853f-56c41ad7a61a",
+      "name": "Norte · travessa superior",
+      "from": [
+        -2.05,
+        5.5,
+        -2.53
+      ],
+      "to": [
+        2.05,
+        5.86,
+        -2.26
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "bce97b56-83ab-526e-bd92-357c66e8ee21",
+      "name": "Norte · friso O",
+      "from": [
+        -1.38,
+        1.25,
+        -2.4899999999999998
+      ],
+      "to": [
+        -0.9799999999999999,
+        7.25,
+        -2.3
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "2294de5b-ba98-5944-ae27-dee630e21940",
+      "name": "Norte · friso L",
+      "from": [
+        0.98,
+        1.25,
+        -2.4899999999999998
+      ],
+      "to": [
+        1.38,
+        7.25,
+        -2.3
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "8e8ebe79-b986-543a-b58e-afc21600f12a",
+      "name": "Sul · travessa inferior",
+      "from": [
+        -2.05,
+        3,
+        2.26
+      ],
+      "to": [
+        2.05,
+        3.36,
+        2.53
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "dda6e792-107c-5702-9f9b-cb41239bb10b",
+      "name": "Sul · travessa superior",
+      "from": [
+        -2.05,
+        5.5,
+        2.26
+      ],
+      "to": [
+        2.05,
+        5.86,
+        2.53
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "8128b067-ea72-51ae-8232-ae413d244eba",
+      "name": "Sul · friso O",
+      "from": [
+        -1.38,
+        1.25,
+        2.3
+      ],
+      "to": [
+        -0.9799999999999999,
+        7.25,
+        2.4899999999999998
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "efd530f7-e096-5a6c-823b-cc3b518d2571",
+      "name": "Sul · friso L",
+      "from": [
+        0.98,
+        1.25,
+        2.3
+      ],
+      "to": [
+        1.38,
+        7.25,
+        2.4899999999999998
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "1ecedc44-41ac-5a90-9a3d-ba48ce4a1998",
+      "name": "Oeste · travessa inferior",
+      "from": [
+        -2.53,
+        3,
+        -2.05
+      ],
+      "to": [
+        -2.26,
+        3.36,
+        2.05
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "87c3a907-59de-57a5-9c70-12d2b7b5ad2a",
+      "name": "Oeste · travessa superior",
+      "from": [
+        -2.53,
+        5.5,
+        -2.05
+      ],
+      "to": [
+        -2.26,
+        5.86,
+        2.05
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "54830123-272b-5887-a646-bb268e4dd694",
+      "name": "Oeste · friso N",
+      "from": [
+        -2.4899999999999998,
+        1.25,
+        -1.38
+      ],
+      "to": [
+        -2.3,
+        7.25,
+        -0.9799999999999999
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "65991b30-73c4-510e-8e7b-3b3223e1d75e",
+      "name": "Oeste · friso S",
+      "from": [
+        -2.4899999999999998,
+        1.25,
+        0.98
+      ],
+      "to": [
+        -2.3,
+        7.25,
+        1.38
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "b81bad75-919e-5f57-badb-182a57ea2531",
+      "name": "Leste · travessa inferior",
+      "from": [
+        2.26,
+        3,
+        -2.05
+      ],
+      "to": [
+        2.53,
+        3.36,
+        2.05
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "a8ffdcb9-e21d-52f8-9a14-23c23d1900ab",
+      "name": "Leste · travessa superior",
+      "from": [
+        2.26,
+        5.5,
+        -2.05
+      ],
+      "to": [
+        2.53,
+        5.86,
+        2.05
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            6,
+            15
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            18
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "c8d2fab3-1da0-5c56-b2cd-b5240647113c",
+      "name": "Leste · friso N",
+      "from": [
+        2.3,
+        1.25,
+        -1.38
+      ],
+      "to": [
+        2.4899999999999998,
+        7.25,
+        -0.9799999999999999
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "9c960c31-d4d6-52b5-a4af-284eb0c1bf87",
+      "name": "Leste · friso S",
+      "from": [
+        2.3,
+        1.25,
+        0.98
+      ],
+      "to": [
+        2.4899999999999998,
+        7.25,
+        1.38
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            2,
+            14,
+            3,
+            20
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            2,
+            14,
+            3,
+            15
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "26b2cfdd-570f-53c6-9d9b-12166d5eab69",
+      "name": "Núcleo emissivo",
+      "from": [
+        -1,
+        1.25,
+        -1
+      ],
+      "to": [
+        1,
+        7.25,
+        1
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 15,
+      "faces": {
+        "north": {
+          "uv": [
+            15,
+            14,
+            21,
+            22
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            15,
+            14,
+            21,
+            22
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            15,
+            14,
+            21,
+            22
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            15,
+            14,
+            21,
+            22
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            15,
+            14,
+            21,
+            22
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            15,
+            14,
+            21,
+            22
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "6dd3d9f6-a08d-5bab-9a23-9553e90a1f25",
+      "name": "Pé O da alça",
+      "from": [
+        -1.7,
+        8.5,
+        -0.38
+      ],
+      "to": [
+        -1.1,
+        9.45,
+        0.38
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "60a2c8b2-b6cb-5cfa-bd8a-88be82b56a87",
+      "name": "Pé L da alça",
+      "from": [
+        1.1,
+        8.5,
+        -0.38
+      ],
+      "to": [
+        1.7,
+        9.45,
+        0.38
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "uuid": "53f63174-1a3f-5cff-8dd2-bd64f9e15992",
+      "name": "Travessa da alça",
+      "from": [
+        -1.7,
+        9.45,
+        -0.38
+      ],
+      "to": [
+        1.7,
+        10,
+        0.38
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "box_uv": false,
+      "autouv": 0,
+      "shade": true,
+      "light_emission": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2,
+            17,
+            3
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            14,
+            2,
+            17,
+            3
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            14,
+            2,
+            15,
+            3
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            14,
+            2,
+            17,
+            3
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            14,
+            2,
+            17,
+            3
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "uuid": "07204442-a8e9-51b5-a0cb-d3b7f96dd431",
+      "name": "01 · Pedra",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    },
+    {
+      "uuid": "e478dce4-7f16-52d2-adf7-795b509f568a",
+      "name": "02 · Montantes de cobre",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    },
+    {
+      "uuid": "cf97ac83-272b-57ec-8c8a-975ec9152224",
+      "name": "03 · Grades",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    },
+    {
+      "uuid": "e3800acc-d8c5-501c-bf64-05f263ac5f01",
+      "name": "04 · Núcleo âmbar",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    },
+    {
+      "uuid": "7029f38a-1e4b-52f0-b338-008015c1efa2",
+      "name": "05 · Alça",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "07204442-a8e9-51b5-a0cb-d3b7f96dd431",
+      "isOpen": true,
+      "children": [
+        "e2808ad3-c3c0-5b8f-b8b0-36ab5a2d056b",
+        "19780625-eb7d-570b-b69f-da32305e3779"
+      ]
+    },
+    {
+      "uuid": "e478dce4-7f16-52d2-adf7-795b509f568a",
+      "isOpen": true,
+      "children": [
+        "af2a16ab-4d48-51c2-b5af-287298e2662f",
+        "ef351c59-50c8-5050-888b-067afe79f539",
+        "8e2cce63-cd90-50a8-ace6-e2f6fa8a7f7e",
+        "73442750-0e78-53a0-a45a-f7133e45f785"
+      ]
+    },
+    {
+      "uuid": "cf97ac83-272b-57ec-8c8a-975ec9152224",
+      "isOpen": true,
+      "children": [
+        "dcb8d06d-9e56-5018-af92-8c0ef391e253",
+        "d84a0ccf-e290-58c7-853f-56c41ad7a61a",
+        "bce97b56-83ab-526e-bd92-357c66e8ee21",
+        "2294de5b-ba98-5944-ae27-dee630e21940",
+        "8e8ebe79-b986-543a-b58e-afc21600f12a",
+        "dda6e792-107c-5702-9f9b-cb41239bb10b",
+        "8128b067-ea72-51ae-8232-ae413d244eba",
+        "efd530f7-e096-5a6c-823b-cc3b518d2571",
+        "1ecedc44-41ac-5a90-9a3d-ba48ce4a1998",
+        "87c3a907-59de-57a5-9c70-12d2b7b5ad2a",
+        "54830123-272b-5887-a646-bb268e4dd694",
+        "65991b30-73c4-510e-8e7b-3b3223e1d75e",
+        "b81bad75-919e-5f57-badb-182a57ea2531",
+        "a8ffdcb9-e21d-52f8-9a14-23c23d1900ab",
+        "c8d2fab3-1da0-5c56-b2cd-b5240647113c",
+        "9c960c31-d4d6-52b5-a4af-284eb0c1bf87"
+      ]
+    },
+    {
+      "uuid": "e3800acc-d8c5-501c-bf64-05f263ac5f01",
+      "isOpen": true,
+      "children": [
+        "26b2cfdd-570f-53c6-9d9b-12166d5eab69"
+      ]
+    },
+    {
+      "uuid": "7029f38a-1e4b-52f0-b338-008015c1efa2",
+      "isOpen": true,
+      "children": [
+        "6dd3d9f6-a08d-5bab-9a23-9553e90a1f25",
+        "60a2c8b2-b6cb-5cfa-bd8a-88be82b56a87",
+        "53f63174-1a3f-5cff-8dd2-bd64f9e15992"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "uuid": "776d7820-69e0-56e8-ae7f-287f5ad34955",
+      "id": "0",
+      "name": "Atlas_Lanterna.png",
+      "path": "",
+      "relative_path": "Atlas_Lanterna.png",
+      "width": 32,
+      "height": 32,
+      "uv_width": 32,
+      "uv_height": 32,
+      "internal": true,
+      "mode": "bitmap",
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAC2ElEQVR4nO2VX0taYRzHPzYxPf47lplHU2NqxGFBMYIVBMLudjGIXfQGdrdX0F1vot136cVuvdtVUIFQgsOCWVSjNLE0taNJ0S6O58yWMY1Bg/m5eZ7nPA/P7/v7dx54ZgwAU1Ov7wCuFIVwwE/+vKQfsAqDFIrq+mB/1wDw4ePSHUCsmGZuXiaeSLIgS6w1QzgcQyw2dgB4/3nL8CcBA3/ZoZ4xguqlNlbrCt5hF/s/TvC4XdgtAvaAAMDB/i6geg4wNy+zmh+hEnnD0vgtsY00IZOD9UyuNwGdCAf8APfSoRHyOQCIJ5J8ejdLfDsJE7MA+MbHCJ5WehNwpVyjjgoAUtROrlSlUCwRDvixmV8AkFYdZ60ZAiAmVognkgRFK6v5ERZ9DjY3MrrAHgQoutf58xK5UhUAj9vVMQIvs1tqJGRJL0L3dgJkiZDPoQuEre4EeNwuAKp1Ra96qyDoUdH2NRZkCUDNdSZHULTqhpcn1FoA+NJtBNqRXHaulGsifjfZkyIAdotw74xvfAyAonmGxcYOa80QsdM0y/O3ekt2ixHQ+zwc8JM9KWIVBqk1bvEOu6i2OqOdeCIJwKIssZ7JERMrzM3LbG5kWGh965Zn/w/0MQDMTMp3ALVGk6gkkiv9yrlgNlEo1wD4fpg1AORWhu4AvK9E9VBkWh2zKQDy38oASCsX//5bMACql4LZhEe0cVm/QXIJ1BpNBLMJp8VIVBKJSmLnGzTvf593yaNvgWawPR2PMv5WHQ+/Pk2A0mgCag0ABEfHOD4rUyjXiEoiTocNgJ29DNAh9+1EpvGSai0uuhOgGdYK8PisDIBHtJErKd1F4YkYNUMAl/UbveptZhOaOG1fQ6tyL6mHUcim9P2uBbQTHBVRGk0mQx72jgoAOC2PlorKE3KvMQBQKNcolGs4LUb2jgoIZhOXlRqSS9A747J+0/mGVu8/mPcioE+fPn3+a34C/l4YEuIb5nMAAAAASUVORK5CYII="
+    }
+  ]
+}

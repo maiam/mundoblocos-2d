@@ -1,3 +1,4 @@
+import { lanternBox, rayBox, type Box } from './lantern';
 import type { TitanVolume } from './volume';
 import { isOccupied, isTarget, T, Y_MAX, Y_MIN } from './voxel';
 
@@ -77,12 +78,12 @@ export function lookVector(yaw: number, pitch: number): [number, number, number]
   return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp];
 }
 
-export interface Hit { x: number; y: number; z: number; nx: number; ny: number; nz: number; /** id do fragmento de superfície apontado (coleta à mão). */ item?: string }
+export interface Hit { x: number; y: number; z: number; nx: number; ny: number; nz: number; /** id do fragmento de superfície apontado (coleta à mão). */ item?: string; /** caixa do objeto apontado (lanterna), para o contorno. */ box?: Box }
 /** Fragmentos de superfície ainda no mundo, por célula. */
 export interface ItemLookup { at(x: number, y: number, z: number): string | null }
 
-/** Raio por células (Amanatides–Woo) até o primeiro alvo — sólido, lanterna ou fragmento de superfície; a mira ignora ar e líquido. Devolve a célula e a face atingida. */
-export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach = 6, items?: ItemLookup): Hit | null {
+/** Raio por células (Amanatides–Woo) até o primeiro alvo — sólido, lanterna ou fragmento de superfície; a mira ignora ar e líquido. Devolve a célula e a face atingida; a lanterna só vale dentro da sua caixa (`pad` = folga de toque). */
+export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach = 6, items?: ItemLookup, pad = 0): Hit | null {
   let x = Math.floor(ox), y = Math.floor(oy), z = Math.floor(oz);
   const sx = Math.sign(dx), sy = Math.sign(dy), sz = Math.sign(dz);
   const tdx = dx !== 0 ? Math.abs(1 / dx) : Infinity, tdy = dy !== 0 ? Math.abs(1 / dy) : Infinity, tdz = dz !== 0 ? Math.abs(1 / dz) : Infinity;
@@ -94,7 +95,12 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
     if (y >= Y_MIN && y <= Y_MAX && (nx || ny || nz)) {
       const it = items?.at(x, y, z);
       if (it) return { x, y, z, nx, ny, nz, item: it };
-      if (isTarget(v.get(x, y, z))) return { x, y, z, nx, ny, nz };
+      const id = v.get(x, y, z);
+      if (id === T.LANTERN) {
+        // a lanterna é pequena: acerta só a caixa do objeto (com folga de toque); fora dela o raio segue e pega o que está atrás
+        const box = lanternBox(x, y, z, pad), h = rayBox(ox, oy, oz, dx, dy, dz, box);
+        if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, box: lanternBox(x, y, z) };
+      } else if (isTarget(id)) return { x, y, z, nx, ny, nz };
     }
     if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; nx = -sx; ny = 0; nz = 0; }
     else if (ty < tz) { y += sy; t = ty; ty += tdy; nx = 0; ny = -sy; nz = 0; }

@@ -20,3 +20,13 @@ import cracks from '../../assets/titan-cracks-16px.webp';
  * do projeto para a quebra progressiva (ADR 0042). Usada como sobreposição reutilizável sobre o bloco em quebra, sem refazer a malha do chunk.
  */
 export const titanCracksUrl: string = cracks;
+
+import lanternAtlas from '../../assets/titan-lantern-atlas.webp';
+import lanternModel from '../../assets/titan-lantern.json';
+/**
+ * Lanterna da Margem em 3D (ADR 0043; pacote de arte em `assets-src/titan/lanterna`, convertido por `scripts/extract-titan-lantern.py`): atlas 32 × 32 (WebP sem perdas)
+ * e geometria em dois lotes — `structure` (Pedra, Cobre, Grade) e `core` (Âmbar, o único emissivo) — 312 triângulos ao todo.
+ */
+export const titanLanternAtlasUrl: string = lanternAtlas;
+export interface LanternBatch { pos: number[]; nrm: number[]; uv: number[]; idx: number[] }
+export const titanLanternModel = lanternModel as { size: number[]; structure: LanternBatch; core: LanternBatch };

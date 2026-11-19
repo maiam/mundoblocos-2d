@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.98.0 — Titã: lanterna em modelo 3D e mira pela caixa do objeto (19/11/2026)
+- **Pedido do dono do produto (etapa 2 de 3 do prompt "Interação, fragmentos e lanterna 3D"):** trocar a caixa-proxy âmbar pelo modelo 3D da Lanterna da Margem (pacote do Drive) e fazer a mira respeitar o objeto. Decisões na **ADR 0043**.
+- **Modelo:** `assets-src/titan/lanterna/` (GLB, bbmodel, atlas 32 × 32) → `scripts/extract-titan-lantern.py` → `src/assets/titan-lantern.json` + `titan-lantern-atlas.webp` (sem perdas), exportados por `render/art/titan.ts`. 312 triângulos em dois lotes (estrutura 300, núcleo âmbar 12) desenhados por `InstancedMesh`: 2 chamadas para qualquer quantidade; mesmo shader do terreno, núcleo emissivo (igual de dia e de noite, hora não refaz nada).
+- **Mesher:** a lanterna deixou de entrar na malha do terreno; o renderer refaz as instâncias só quando `TitanVolume.lanternVersion` muda. Save, gerador e protocolo inalterados (save com lanterna antiga abre com o modelo novo).
+- **Mira (`titan/lantern.ts`):** raio × caixa 0,375 × 0,625 × 0,375 m com folga (mouse 4 cm, toque 14 cm); fora da caixa o raio passa e acerta o que há atrás; contorno com o tamanho do objeto; face de colocação pela entrada na caixa.
+- Testes: `titan/lantern.test.ts` (caixa, `rayBox`, passagem do raio, folga de toque); `delivery2`/`sky` ajustados (a malha do terreno não tem mais as faces da lanterna). Verificado no navegador (`&hora=tarde` e `&hora=noite`) e na cena de 12 lanternas (+3 600 triângulos, +1 chamada, JS do desenho igual).
+
 ## Orvalis v0.97.0 — Titã: toque curto coloca, segurar quebra, com rachaduras progressivas (19/11/2026)
 - **Pedido do dono do produto (etapa 1 de 3 do prompt "Interação, fragmentos e lanterna 3D"):** substituir a quebra instantânea por um gesto único. Decisões na **ADR 0042**; as etapas 2 (lanterna 3D e mira, aguardando o pacote de arte) e 3 (gerador v3 e drops) vêm em PRs próprios.
 - **Gesto primário** (`titan/gesture.ts`, máquina de estados pura): `ARMED` → soltar antes de 200 ms, sem arrasto e com o mesmo alvo e face **coloca**; `CAMERA_DRAG` (> 10 px) entrega à câmera; `BREAKING` depois de 200 ms no mesmo bloco; `COMPLETED` com **uma ação por pressão** (soltar e pressionar de novo). O tempo é conferido também no `pointerup`/`mouseup` (carimbo do evento): uma pressão de 200 ms ou mais nunca vira colocação por quadro atrasado. Cancelam: ponteiro cancelado, perda de foco/captura, aba oculta, mochila aberta, troca de alvo, saída do alcance. Um segundo dedo em outro controle não interfere.

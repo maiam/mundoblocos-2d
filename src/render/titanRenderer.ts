@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { titanLanternModel, type LanternBatch } from './art/titan';
+import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
@@ -35,6 +37,9 @@ export class TitanRenderer {
   private readonly crackTex: THREE.Texture;
   /** Luz do dia compartilhada pelos materiais do terreno (uniform do shader). */
   private readonly ambient = { value: 1 };
+  private lanternStructure: THREE.InstancedMesh;
+  private lanternCore: THREE.InstancedMesh;
+  private lanternSeen = -1;
   private lastSky = -1;
   private frame = 0;
   /** Seções refeitas no quadro atual (medição). */
@@ -42,7 +47,7 @@ export class TitanRenderer {
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -102,8 +107,22 @@ export class TitanRenderer {
     this.crack.matrixAutoUpdate = true;
     this.scene.add(this.crack);
 
+    // lanternas (ADR 0043): modelo 3D em duas instâncias (estrutura e núcleo âmbar), 2 chamadas de desenho para quantas houver; atlas com flipY = false (UV do glTF)
+    const ltex = new THREE.Texture(lanternAtlas);
+    ltex.colorSpace = THREE.SRGBColorSpace;
+    ltex.magFilter = THREE.NearestFilter;
+    ltex.minFilter = THREE.NearestFilter;
+    ltex.generateMipmaps = false;
+    ltex.flipY = false;
+    ltex.needsUpdate = true;
+    const lmat = new THREE.MeshBasicMaterial({ map: ltex, vertexColors: true, fog: true });
+    patchDayLight(lmat, this.ambient);
+    this.lanternStructure = new THREE.InstancedMesh(lanternGeometry(titanLanternModel.structure, false), lmat, 16);
+    this.lanternCore = new THREE.InstancedMesh(lanternGeometry(titanLanternModel.core, true), lmat, 16);
+    for (const m of [this.lanternStructure, this.lanternCore]) { m.count = 0; m.frustumCulled = false; this.scene.add(m); }
+
     // contorno da célula apontada
-    const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.004, 1.004, 1.004));
+    const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1));
     this.outline = new THREE.LineSegments(box, new THREE.LineBasicMaterial({ color: 0xfff3d8 }));
     this.outline.visible = false;
     this.scene.add(this.outline);
@@ -113,6 +132,30 @@ export class TitanRenderer {
     this.resize();
     window.addEventListener('resize', this.resize);
   }
+
+  /** Refaz as instâncias das lanternas quando alguma foi posta ou retirada (ou o mapa foi carregado). Cresce a capacidade dobrando. */
+  private syncLanterns(): void {
+    if (this.lanternSeen === this.volume.lanternVersion) return;
+    this.lanternSeen = this.volume.lanternVersion;
+    const cells = this.volume.lanternCells();
+    if (cells.length > this.lanternStructure.instanceMatrix.count) {
+      const cap = Math.max(cells.length, this.lanternStructure.instanceMatrix.count * 2);
+      for (const m of [this.lanternStructure, this.lanternCore]) {
+        const n = new THREE.InstancedMesh(m.geometry, m.material, cap);
+        n.frustumCulled = false;
+        this.scene.remove(m);
+        this.scene.add(n);
+        if (m === this.lanternStructure) this.lanternStructure = n; else this.lanternCore = n;
+      }
+    }
+    const mat = new THREE.Matrix4();
+    cells.forEach(([x, y, z], i) => { mat.makeTranslation(x + 0.5, y, z + 0.5); this.lanternStructure.setMatrixAt(i, mat); this.lanternCore.setMatrixAt(i, mat); });
+    this.lanternStructure.count = this.lanternCore.count = cells.length;
+    this.lanternStructure.instanceMatrix.needsUpdate = this.lanternCore.instanceMatrix.needsUpdate = true;
+  }
+
+  /** Lanternas desenhadas (diagnóstico e testes de navegador). */
+  get lanternCount(): number { return this.lanternStructure.count; }
 
   readonly resize = (): void => {
     const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
@@ -174,7 +217,7 @@ export class TitanRenderer {
   }
 
   /** Um quadro: câmera, malhas pendentes (mais perto primeiro, com orçamento de tempo), contorno e desenho. */
-  render(eye: { x: number; y: number; z: number }, yaw: number, pitch: number, target: { x: number; y: number; z: number } | null, time: number): void {
+  render(eye: { x: number; y: number; z: number }, yaw: number, pitch: number, target: { x: number; y: number; z: number; box?: Box } | null, time: number): void {
     this.camera.position.set(eye.x, eye.y, eye.z);
     this.camera.rotation.set(pitch, yaw, 0);
     this.sky.position.copy(this.camera.position);
@@ -196,11 +239,17 @@ export class TitanRenderer {
         if (performance.now() - t0 > MESH_BUDGET_MS && this.frame > 1) break;
       }
     }
+    this.syncLanterns();
     let n = 0;
     for (const e of this.itemSprites.values()) e.sprite.position.y = e.baseY + 0.06 * Math.sin(time * 2 + n++);
     this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
     this.outline.visible = !!target;
-    if (target) this.outline.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5);
+    if (target) {
+      // célula inteira (bloco) ou a caixa do objeto (lanterna), 2 mm maior para não cintilar sobre as faces
+      const b = target.box ?? [target.x, target.y, target.z, target.x + 1, target.y + 1, target.z + 1];
+      this.outline.position.set((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2);
+      this.outline.scale.set(b[3] - b[0] + 0.004, b[4] - b[1] + 0.004, b[5] - b[2] + 0.004);
+    }
     if (this.perf && this.built) this.perf.record('buildFrame', performance.now() - tb); // malha + geometria de todo o quadro
     const tr = this.perf ? performance.now() : 0;
     this.renderer.render(this.scene, this.camera);
@@ -268,6 +317,23 @@ export class TitanRenderer {
     for (const e of this.sections.values()) { e.opaque?.geometry.dispose(); e.liquid?.geometry.dispose(); }
     this.renderer.dispose();
   }
+}
+
+/** Geometria de um lote da lanterna: sombreado por face como o terreno (`color`) e brilho próprio (`glow`): o núcleo âmbar emite; a estrutura só recebe o calor da própria luz. */
+function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
+  const n = b.pos.length / 3, col = new Float32Array(n * 3), glow = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const nx = b.nrm[i * 3], ny = b.nrm[i * 3 + 1], nz = b.nrm[i * 3 + 2];
+    const shade = ny > 0.5 ? 1 : ny < -0.5 ? 0.5 : nx > 0.5 ? 0.86 : nx < -0.5 ? 0.66 : nz > 0.5 ? 0.78 : 0.7; // mesmos fatores do terreno (mesher FACES)
+    if (core) { glow.set([1.7, 1.15, 0.5], i * 3); } else { col.set([shade, shade, shade], i * 3); glow.set([0.28, 0.2, 0.1], i * 3); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('glow', new THREE.BufferAttribute(glow, 3));
+  g.setIndex(b.idx);
+  return g;
 }
 
 function toGeometry(d: MeshData): THREE.BufferGeometry {
