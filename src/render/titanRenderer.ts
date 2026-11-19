@@ -3,6 +3,7 @@ import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
 import { setAmbient } from '../titan/mesher';
+import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 
 /**
@@ -30,11 +31,13 @@ export class TitanRenderer {
   private readonly outline: THREE.LineSegments;
   private readonly sky: THREE.Mesh;
   private frame = 0;
+  /** Seções refeitas no quadro atual (medição). */
+  private built = 0;
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
   /** `night`: teste da luz da lanterna (a tarde fixa é a regra desta entrega; o ciclo do céu fica para depois). */
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, night = false) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, night = false, private readonly perf: TitanPerf | null = null) {
     const FOG_COLOR = night ? FOG_NIGHT : FOG_DAY;
     setAmbient(night ? 0.3 : 1);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
@@ -131,7 +134,9 @@ export class TitanRenderer {
 
   private build(key: string): void {
     const [cx, sy, cz] = key.split(',').map(Number);
+    const t0 = this.perf ? performance.now() : 0;
     const m = meshSection(this.volume, cx, sy, cz);
+    const t1 = this.perf ? performance.now() : 0;
     const entry = this.sections.get(key) ?? { rev: 0 };
     for (const k of ['opaque', 'liquid'] as const) {
       const old = entry[k];
@@ -144,6 +149,7 @@ export class TitanRenderer {
       this.scene.add(mesh);
       entry[k] = mesh;
     }
+    if (this.perf) { this.perf.record('mesh', t1 - t0); this.perf.record('geom', performance.now() - t1); this.perf.count('sections'); this.built++; }
     entry.rev = this.volume.sectionRevision(cx, sy, cz);
     if (entry.opaque || entry.liquid) this.sections.set(key, entry); else this.sections.delete(key);
   }
@@ -154,7 +160,12 @@ export class TitanRenderer {
     this.camera.rotation.set(pitch, yaw, 0);
     this.sky.position.copy(this.camera.position);
     // edições aparecem no mesmo quadro (sem orçamento); só a geração inicial é repartida entre quadros
-    for (const k of this.volume.takeTouched()) { this.build(k); this.pending.delete(k); }
+    this.built = 0;
+    const tb = this.perf ? performance.now() : 0;
+    // a seção editada aparece no mesmo quadro; as que só mudaram de luz entram na fila com orçamento (a luz da parede distante pode atrasar uns quadros)
+    const urgent = this.volume.takeTouched();
+    for (const k of urgent) { this.build(k); this.pending.delete(k); }
+    for (const k of this.volume.takeLightTouched()) if (!urgent.includes(k)) this.pending.add(k);
     if (this.pending.size) {
       const px = eye.x / 16, pz = eye.z / 16, py = (eye.y + 64) / 16;
       const order = [...this.pending].map((k) => { const [cx, sy, cz] = k.split(',').map(Number); return { k, d: (cx + 0.5 - px) ** 2 + (cz + 0.5 - pz) ** 2 + (sy + 0.5 - py) ** 2 }; }).sort((a, b) => a.d - b.d);
@@ -170,8 +181,17 @@ export class TitanRenderer {
     this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
     this.outline.visible = !!target;
     if (target) this.outline.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5);
+    if (this.perf && this.built) this.perf.record('buildFrame', performance.now() - tb); // malha + geometria de todo o quadro
+    const tr = this.perf ? performance.now() : 0;
     this.renderer.render(this.scene, this.camera);
+    if (this.perf) this.perf.record(this.built ? 'drawAfterBuild' : 'draw', performance.now() - tr); // JS do desenho; no quadro com malha nova inclui o envio à GPU
     this.frame++;
+  }
+
+  /** Contadores da GPU para o painel de desempenho. */
+  gpuStats(): { calls: number; triangles: number; geometries: number; textures: number; contextLost: boolean } {
+    const i = this.renderer.info;
+    return { calls: i.render.calls, triangles: i.render.triangles, geometries: i.memory.geometries, textures: i.memory.textures, contextLost: this.renderer.getContext().isContextLost() };
   }
 
   /** Altura dos olhos a partir dos pés. */

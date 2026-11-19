@@ -6,7 +6,10 @@ import { breakOrCollect, placeFromSlot } from './actions';
 import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
 import { ITEM_NAMES } from './items';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
-import { defaultTitanStorage, type TitanStorage } from './save';
+import { startPerfHud } from '../dev/perfHud';
+import { TitanPerf } from './perf';
+import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
+import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError } from './session';
 
 /**
@@ -33,7 +36,13 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   return img;
 }
 
-export async function startTitan(canvas: HTMLCanvasElement, search: string, storage: TitanStorage = defaultTitanStorage()): Promise<void> {
+export async function startTitan(canvas: HTMLCanvasElement, search: string, storageArg?: TitanStorage): Promise<void> {
+  const q = new URLSearchParams(search);
+  // `?cena=lanternas[&n=12]`: cena de desenvolvimento para medir luz e malhas com várias lanternas — **nada é gravado** (armazenamento em memória).
+  const scene = q.get('cena') === 'lanternas';
+  const storage = storageArg ?? (scene ? new MemoryTitanStorage() : defaultTitanStorage());
+  // `?fps=1`: painel de desempenho (FPS, GPU, memória) com o tempo de cada etapa do Titã: luz, malha, geometria, desenho.
+  const perf = q.get('fps') === '1' || scene ? new TitanPerf() : null;
   document.body.classList.add('titan');
   const ui = el('div', 'titan-ui', document.body);
   const toast = (msg: string, ms = 3500): void => {
@@ -44,7 +53,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const probe = document.createElement('canvas');
   if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { toast('Este aparelho não oferece WebGL: o Titã não abre aqui.', 60000); return; }
 
-  const param = new URLSearchParams(search).get('seed');
+  const param = q.get('seed') ?? (scene ? '42' : null);
   let session: TitanSession;
   try {
     session = await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
@@ -55,16 +64,23 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const [atlas, hotbarAtlas] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
+  const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
+  if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
   // `?hora=noite`: ferramenta de teste da luz da lanterna (a tarde fixa é a regra desta entrega)
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, new URLSearchParams(search).get('hora') === 'noite');
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, new URLSearchParams(search).get('hora') === 'noite', perf);
   view.setItems(session.items.remaining());
+  if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
+    line: () => perf.line(),
+    report: () => ({ cena: scene ? 'lanternas' : null, lanternas: spots.length, ...perf.report() }),
+    style: { top: '64px', whiteSpace: 'normal', maxWidth: 'min(70vw, 560px)' },
+  });
 
   // ---- HUD ----
   const cross = el('div', 'titan-cross', ui);
   const status = el('div', 'titan-status', ui);
   const seedLine = el('span', '', status);
   seedLine.innerHTML = `Titã · Margem Silenciosa · semente <b>${session.seed}</b> · gerador v${vol.gen.version}`;
-  const saveLine = el('span', '', status, 'salvo');
+  const saveLine = el('span', '', status, scene ? SCENE_NOTE : 'salvo');
   const posLine = el('span', '', status);
   const label = el('div', 'titan-label', ui);
   const hotbar = el('div', 'titan-hotbar', ui);
@@ -159,7 +175,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
   closeBtn.addEventListener('click', () => toggleBag(false));
   const menu = el('div', 'titan-menu', ui);
+  let autoEdit = false;
+  if (scene) {
+    const ae = el('button', 'titan-btn', menu, 'Editar sem parar: desligado');
+    ae.type = 'button';
+    ae.addEventListener('click', () => { autoEdit = !autoEdit; ae.textContent = `Editar sem parar: ${autoEdit ? 'ligado' : 'desligado'}`; });
+  }
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
+  if (scene) newBtn.hidden = true;
   newBtn.type = 'button';
   let confirming = 0;
   newBtn.addEventListener('click', () => {
@@ -305,7 +328,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   void saveNow(); // grava o cabeçalho da partida nova já na abertura (a seed passa a existir no banco)
 
   // ---- Laço ----
-  let last = performance.now(), nextRepeat = 0;
+  let last = performance.now(), nextRepeat = 0, nextAuto = 0, autoStep = 0;
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -324,6 +347,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (moved || !b.onGround) playerDirty = true;
       if ((input.place || input.remove) && now > nextRepeat) { nextRepeat = now + REPEAT_MS; if (!target) { /* nada apontado */ } else act(input.place ? 'place' : 'remove'); }
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
+    if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
     target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items) : null;

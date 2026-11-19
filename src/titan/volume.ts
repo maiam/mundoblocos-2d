@@ -1,5 +1,5 @@
 import { TitanGenerator } from './generator';
-import { computeLight, LIGHT_MAX, lightKey } from './light';
+import { LightEngine, lightKey } from './light';
 import { chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, localOf, sectionOf, T, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
@@ -16,10 +16,16 @@ export class TitanVolume {
   private chunkRev = 0;
   /** Lanternas colocadas (as únicas fontes de luz) e o mapa de luz calculado sob demanda. */
   private readonly lanterns = new Map<number, [number, number, number]>();
-  private lightMap = new Map<number, number>();
-  private lightDirty = false;
+  /** Luz incremental em 4 bits por célula (ver `light.ts`); `ready` só depois da primeira consulta (cálculo completo sob demanda). */
+  private readonly light$ = new LightEngine((x, y, z) => isSolid(this.get(x, y, z)), (x, y, z) => this.markLightCell(x, y, z));
+  /** Medição opcional do tempo de cada atualização do mapa de luz (ms): cálculo completo e cada edição. */
+  onLightMs: ((ms: number) => void) | null = null;
+  /** Seções cuja luz mudou (só luz, sem edição de bloco), a refazer com orçamento por quadro. Chave numérica → `"cx,sy,cz"`. */
+  private readonly lightTouched = new Set<number>();
   /** Chunks (e seções) tocados desde a última coleta pelo renderer. */
   private readonly touched = new Set<string>();
+  /** Seções cuja luz mudou (refazer sem pressa, com orçamento). */
+  private readonly lightOnly = new Set<string>();
   /** Revisão de cada seção: sobe a cada edição (descarta malhas antigas). */
   private readonly rev = new Map<string, number>();
 
@@ -77,7 +83,7 @@ export class TitanVolume {
     }
     this.dirty.set(key, ++this.chunkRev);
     this.markSections(x, y, z);
-    this.onLights(x, y, z, current, id);
+    this.updateLight(x, y, z, current, id);
     return true;
   }
 
@@ -129,7 +135,19 @@ export class TitanVolume {
   sectionRevision(cx: number, sy: number, cz: number): number { return this.rev.get(`${cx},${sy},${cz}`) ?? 0; }
 
   /** Seções tocadas por edições desde a última chamada (`"cx,sy,cz"`). */
-  takeTouched(): string[] { const out = [...this.touched]; this.touched.clear(); return out; }
+  takeTouched(): string[] {
+    const out = [...this.touched];
+    this.touched.clear();
+    for (const k of out) this.lightOnly.delete(k); // já vão ser refeitas agora: não repetem na fila de só-luz
+    return out;
+  }
+
+  /** Seções em que **só a luz** mudou (sem edição de bloco): a malha pode esperar uns quadros. As já devolvidas por `takeTouched` não repetem. */
+  takeLightTouched(): string[] {
+    const out = [...this.lightOnly];
+    this.lightOnly.clear();
+    return out;
+  }
 
   // ---- Persistência ----
 
@@ -158,42 +176,67 @@ export class TitanVolume {
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
       for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
     }
-    this.lightDirty = this.lanterns.size > 0;
+    this.light$.ready = false; // a luz é calculada por inteiro na primeira consulta
   }
 
   // ---- Luz de lanterna ----
   get hasLanterns(): boolean { return this.lanterns.size > 0; }
   lanternCells(): Array<[number, number, number]> { return [...this.lanterns.values()]; }
 
-  /** Nível de luz (0–15) da célula. Recalcula o mapa só se uma lanterna ou um bloco perto dela mudou. */
+  /** Nível de luz (0–15) da célula. O primeiro uso faz o cálculo completo; depois a luz é mantida de forma incremental. */
   light(x: number, y: number, z: number): number {
     if (!this.lanterns.size) return 0;
-    if (this.lightDirty) { this.lightMap = computeLight((a, b, c) => this.get(a, b, c), this.lanterns.values()); this.lightDirty = false; }
-    return this.lightMap.get(lightKey(x, y, z)) ?? 0;
-  }
-
-  /** Atualiza a lista de lanternas e refaz as malhas que a luz alcança (caixa de ±15 blocos de cada lanterna próxima da edição). */
-  private onLights(x: number, y: number, z: number, before: number, after: number): void {
-    const key = lightKey(x, y, z);
-    const was = before === T.LANTERN, is = after === T.LANTERN;
-    if (was && !is) this.lanterns.delete(key);
-    if (is && !was) this.lanterns.set(key, [x, y, z]);
-    if (!this.lanterns.size && !was) return;
-    const near = [...this.lanterns.values()].filter(([lx, ly, lz]) => Math.max(Math.abs(lx - x), Math.abs(ly - y), Math.abs(lz - z)) <= LIGHT_MAX);
-    if (!near.length && !was) return;
-    this.lightDirty = true;
-    const boxes = was && !is ? [...near, [x, y, z] as [number, number, number]] : near; // a lanterna retirada também apaga o que iluminava
-    for (const [lx, ly, lz] of boxes) this.touchBox(lx, ly, lz, LIGHT_MAX);
-  }
-
-  private touchBox(x: number, y: number, z: number, r: number): void {
-    for (let cx = chunkOf(x - r); cx <= chunkOf(x + r); cx++) for (let cz = chunkOf(z - r); cz <= chunkOf(z + r); cz++) {
-      for (let sy = Math.max(0, sectionOf(Math.max(Y_MIN, y - r))); sy <= Math.min(23, sectionOf(Math.min(Y_MAX, y + r))); sy++) {
-        const k = `${cx},${sy},${cz}`;
-        this.touched.add(k);
-        this.rev.set(k, (this.rev.get(k) ?? 0) + 1);
-      }
+    if (!this.light$.ready) {
+      const t0 = this.onLightMs ? performance.now() : 0;
+      this.light$.rebuild(this.lanterns.values());
+      this.onLightMs?.(performance.now() - t0);
     }
+    return this.light$.get(x, y, z);
+  }
+
+  /**
+   * Atualiza a luz depois de uma edição já aplicada (`before` → `after`): só propaga o que muda, e cada célula cuja luz mudou marca a sua seção
+   * (e as vizinhas das bordas) para refazer a malha. Antes de o mapa existir (nada desenhado ainda) não há o que atualizar.
+   */
+  private updateLight(x: number, y: number, z: number, before: number, after: number): void {
+    const key = lightKey(x, y, z);
+    const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
+    if (wasLantern && !isLantern) this.lanterns.delete(key);
+    if (isLantern && !wasLantern) this.lanterns.set(key, [x, y, z]);
+    if (!this.light$.ready) return;
+    const t0 = this.onLightMs ? performance.now() : 0;
+    if (wasLantern && !isLantern) this.light$.sourceRemoved(x, y, z);
+    if (isLantern && !wasLantern) this.light$.sourceAdded(x, y, z);
+    // sólido: entrou (bloqueia) ou saiu (libera); lanterna e ar não bloqueiam
+    const solidBefore = isSolid(before), solidAfter = isSolid(after);
+    if (!solidBefore && solidAfter) this.light$.blockPlaced(x, y, z);
+    else if (solidBefore && !solidAfter) this.light$.blockRemoved(x, y, z);
+    this.flushLightTouched();
+    this.onLightMs?.(performance.now() - t0);
+  }
+
+  /** Uma célula mudou de nível de luz: as faces dos sólidos vizinhos leem esse valor, então a seção dela e as vizinhas da borda refazem a malha. */
+  private markLightCell(x: number, y: number, z: number): void {
+    const cx = x >> 4, cz = z >> 4, yy = y - Y_MIN, sy = yy >> 4, lx = x & 15, lz = z & 15, ly = yy & 15;
+    const add = (dcx: number, dsy: number, dcz: number): void => { const s = sy + dsy; if (s >= 0 && s < 24) this.lightTouched.add(((cx + dcx + 2048) * 4096 + (cz + dcz + 2048)) * 32 + s); };
+    add(0, 0, 0);
+    if (lx === 0) add(-1, 0, 0);
+    if (lx === 15) add(1, 0, 0);
+    if (lz === 0) add(0, 0, -1);
+    if (lz === 15) add(0, 0, 1);
+    if (ly === 0) add(0, -1, 0);
+    if (ly === 15) add(0, 1, 0);
+  }
+
+  /** Passa as seções de luz alteradas para a revisão de malha (a revisão sobe; a lista de só-luz fica para o renderer pegar com orçamento). */
+  private flushLightTouched(): void {
+    for (const n of this.lightTouched) {
+      const s = n & 31, rest = Math.floor(n / 32), cz = (rest % 4096) - 2048, cx = Math.floor(rest / 4096) - 2048;
+      const k = `${cx},${s},${cz}`;
+      this.rev.set(k, (this.rev.get(k) ?? 0) + 1);
+      this.lightOnly.add(k);
+    }
+    this.lightTouched.clear();
   }
 
   /** Quantas edições o volume guarda (testes e diagnóstico). */
