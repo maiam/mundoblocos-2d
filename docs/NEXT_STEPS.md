@@ -4,11 +4,12 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
-## Titã (ADR 0039, v0.94.0) — primeira entrega feita, falta validar
-**Feito:** costa 4 × 4 chunks, chegada seca, lago, edição por face, save em IndexedDB, visual de tarde. **Falta (dono do produto/aparelho):** (1) validar a costa e a mira em desktop e **celular em paisagem** (joystick/olhar/botões são básicos); (2) medir fluidez ao caminhar e editar (malha na thread principal); (3) vídeo/captura da chegada e da reabertura para o PR.
-**Segunda entrega (briefing §4):** hotbar de 7 espaços e mochila de 24 (E), fragmentos de rocha e gelo recolhidos à mão nas `formations` do gerador (IDs determinísticos, vão no save), cápsula e **lanterna** (luz local 0–15, receita 2 × 2, recolher), inventário cheio; usar o atlas `Titan_Hotbar_Sprites_16px.png` (Drive) — **ainda não importado** — e gravar tudo no registro `games.inventory`, na mesma transação.
-**Depois:** malha e geração em **workers** com revisão por seção; greedy meshing; expandir além de 4 × 4 chunks com horizonte e névoa; ciclo manhã/tarde/noite; cavernas; sala/multiplayer (exige `src/titan/` no `orvalis-servidor` e protocolo novo); coleta de blocos (hoje a construção é livre, sem custo); migração de partidas quando houver `GENERATOR_VERSION` 2.
-**Dependência do core/servidor:** nenhuma nesta entrega (solo, local).
+## Titã (ADR 0039/0040, v0.95.0) — entregas 1 e 2 feitas
+**Feito:** costa 4 × 4 chunks, edição por face, save em IndexedDB (validado em celular real, v0.94.1) e, na v0.95.0, inventário (hotbar 7 + mochila 24), fragmentos de superfície, lanterna com luz e save v2 na mesma transação.
+**Falta validar (dono do produto/aparelho):** (1) a segunda entrega em **celular em paisagem** (mochila por toque, receita, colocar/recuperar a lanterna, reabrir) e em desktop; (2) fluidez com várias lanternas (a luz refaz as seções num raio de 15 blocos); (3) a leitura da luz de lanterna de tarde (hoje só se vê bem com `?hora=noite`); (4) captura/vídeo para o PR.
+**Decisões a confirmar com o dono do produto:** o jogador **nasce só com a cápsula** (construir exige quebrar blocos antes); lanterna sempre acesa (sem apagar); sem descarte de itens.
+**Depois:** malha e geração em **workers** com revisão por seção; greedy meshing; expandir além de 4 × 4 chunks com horizonte e névoa; ciclo manhã/tarde/noite (a luz da lanterna ganha sentido); cavernas; sala/multiplayer (exige `src/titan/` no `orvalis-servidor` e protocolo novo); luz de céu vs. sombra; sprites de fragmento iluminados; migração de partidas quando houver `GENERATOR_VERSION` 3.
+**Dependência do core/servidor:** nenhuma (solo, local).
 
 ## Santuário isométrico solo (ADR 0036, decisão do dono do produto, 17/11/2026)
 **Feito (v0.93.133, limpeza):** removidos `SanctuaryThreeRenderer`, protótipos de parede, joystick de câmera, pacotes de arte do laboratório, `?celestial=1`, `VITE_WORLD=santuario` e `build:artifact:santuario`. O Mundo principal não mudou.

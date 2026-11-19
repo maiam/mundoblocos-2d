@@ -7,7 +7,11 @@ import { LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel';
  * Seeds derivadas por finalidade (`derive`), ruído próprio (`world/noise.ts`). Mudar qualquer regra, limiar ou ordem de busca = nova
  * `GENERATOR_VERSION` (o save antigo continua abrindo com a versão em que foi gravado).
  */
-export const GENERATOR_VERSION = 1;
+/**
+ * v1 (entrega 1): formações em qualquer ponto seco e baixo. v2 (entrega 2, ADR 0040): as formações só entram em terreno **plano** (raio 3 com diferença ≤ 1 bloco),
+ * para as lascas de superfície ficarem alcançáveis a pé em toda seed. O terreno fora das formações é idêntico nas duas versões.
+ */
+export const GENERATOR_VERSION = 2;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -37,7 +41,7 @@ const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
 
 export class TitanGenerator {
-  readonly version = GENERATOR_VERSION;
+  readonly version: number;
   private readonly nDunas: Noise;
   private readonly nLago: Noise;
   private readonly nRocha: Noise;
@@ -48,8 +52,11 @@ export class TitanGenerator {
   readonly arrival: Arrival;
   /** Formações de superfície reservadas (rocha e gelo recolhíveis na entrega 2), em área seca e alcançável. */
   readonly formations: ReadonlyArray<{ kind: 'rock' | 'ice'; x: number; z: number }>;
+  /** Fragmentos de superfície (lascas) sobre as formações: 3 de cada, com **id determinístico** (`rock:0`…), recolhidos à mão. Item 5 = rocha, 6 = gelo (`titan/items.ts`). */
+  readonly surfaceItems: ReadonlyArray<{ id: string; item: 5 | 6; x: number; y: number; z: number }>;
 
-  constructor(readonly seed: number) {
+  constructor(readonly seed: number, version: number = GENERATOR_VERSION) {
+    this.version = version;
     this.nDunas = new Noise(derive(seed, PURPOSE.dunas));
     this.nLago = new Noise(derive(seed, PURPOSE.lago));
     this.nRocha = new Noise(derive(seed, PURPOSE.rocha));
@@ -58,6 +65,7 @@ export class TitanGenerator {
     this.lake = { x: Math.round(Math.cos(theta) * 21), z: Math.round(Math.sin(theta) * 21), r: 17 };
     this.arrival = this.findArrival();
     this.formations = this.placeFormations();
+    this.surfaceItems = this.placeSurfaceItems();
   }
 
   // ---- Campos 2D (relevo bruto; ignoram clareira e formações) ----
@@ -137,21 +145,49 @@ export class TitanGenerator {
   private placeFormations(): ReadonlyArray<{ kind: 'rock' | 'ice'; x: number; z: number }> {
     const out: Array<{ kind: 'rock' | 'ice'; x: number; z: number }> = [];
     const base = derive(this.seed, PURPOSE.formacao);
+    const v1 = this.version < 2;
     const a = this.arrival;
     for (const [i, kind] of (['rock', 'ice'] as const).entries()) {
       const phi0 = hash2(base, i, 5) * Math.PI * 2;
-      for (let k = 0; k < 48; k++) {
+      for (let k = 0; k < (v1 ? 48 : 240); k++) {
         const phi = phi0 + k * 2.399963; // ângulo áureo: varre em ordem fixa
-        const dist = 9 + (k % 4) * 2;
+        const dist = v1 ? 9 + (k % 4) * 2 : 8 + (k % 6) * 2; // v1: 9..15; v2: 8..18 blocos da chegada
         const x = Math.round(a.x + Math.cos(phi) * dist);
         const z = Math.round(a.z + Math.sin(phi) * dist);
-        if (x < REGION_MIN + 6 || x >= REGION_MAX - 6 || z < REGION_MIN + 6 || z >= REGION_MAX - 6) continue;
+        const m = v1 ? 6 : 5;
+        if (x < REGION_MIN + m || x >= REGION_MAX - m || z < REGION_MIN + m || z >= REGION_MAX - m) continue;
         if (this.lakeField(x, z) > -4) continue; // seca e afastada da margem
         if (this.rawTop(x, z) > 68) continue; // não sobre a falésia
+        if (!v1 && !this.flatAround(x, z)) continue; // v2: terreno plano em volta (lascas alcançáveis)
         if (out.some((o) => Math.hypot(o.x - x, o.z - z) < 8)) continue;
         out.push({ kind, x, z });
         break;
       }
+    }
+    return out;
+  }
+
+  /** Raio 3 seco e com diferença de altura ≤ 1 bloco em relação ao centro. */
+  private flatAround(x: number, z: number): boolean {
+    const t = this.rawTop(x, z);
+    for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) {
+      if (this.lakeField(x + dx, z + dz) > -3 || Math.abs(this.rawTop(x + dx, z + dz) - t) > 1) return false;
+    }
+    return true;
+  }
+
+  private placeSurfaceItems(): ReadonlyArray<{ id: string; item: 5 | 6; x: number; z: number; y: number }> {
+    const out: Array<{ id: string; item: 5 | 6; x: number; y: number; z: number }> = [];
+    const base = derive(this.seed, PURPOSE.seixos);
+    for (const f of this.formations) {
+      const want = f.kind === 'rock' ? T.DARK_ROCK : T.FROST;
+      const cells: Array<{ x: number; z: number; h: number }> = [];
+      for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+        const x = f.x + dx, z = f.z + dz;
+        if (this.column(x, z).surface === want) cells.push({ x, z, h: hash2(base, x * 131 + z, f.kind === 'rock' ? 1 : 2) });
+      }
+      cells.sort((a, b) => a.h - b.h || a.x - b.x || a.z - b.z); // ordem fixa; empate resolvido por coordenada
+      cells.slice(0, 3).forEach((c, i) => out.push({ id: `${f.kind}:${i}`, item: f.kind === 'rock' ? 5 : 6, x: c.x, y: this.column(c.x, c.z).top + 1, z: c.z }));
     }
     return out;
   }

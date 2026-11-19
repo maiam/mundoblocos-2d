@@ -1,5 +1,5 @@
 import type { TitanVolume } from './volume';
-import { isSolid, T, Y_MAX, Y_MIN } from './voxel';
+import { isOccupied, isTarget, T, Y_MAX, Y_MIN } from './voxel';
 
 /** Corpo do jogador: caixa de 0,6 × 1,8 × 0,6 m, olhos a 1,62 m dos pés. Pés em y (base do corpo). */
 export const BODY_HALF = 0.3;
@@ -77,10 +77,12 @@ export function lookVector(yaw: number, pitch: number): [number, number, number]
   return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp];
 }
 
-export interface Hit { x: number; y: number; z: number; nx: number; ny: number; nz: number }
+export interface Hit { x: number; y: number; z: number; nx: number; ny: number; nz: number; /** id do fragmento de superfície apontado (coleta à mão). */ item?: string }
+/** Fragmentos de superfície ainda no mundo, por célula. */
+export interface ItemLookup { at(x: number, y: number, z: number): string | null }
 
-/** Raio por células (Amanatides–Woo) até o primeiro sólido — a mira ignora ar e líquido. Devolve a célula e a face atingida. */
-export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach = 6): Hit | null {
+/** Raio por células (Amanatides–Woo) até o primeiro alvo — sólido, lanterna ou fragmento de superfície; a mira ignora ar e líquido. Devolve a célula e a face atingida. */
+export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach = 6, items?: ItemLookup): Hit | null {
   let x = Math.floor(ox), y = Math.floor(oy), z = Math.floor(oz);
   const sx = Math.sign(dx), sy = Math.sign(dy), sz = Math.sign(dz);
   const tdx = dx !== 0 ? Math.abs(1 / dx) : Infinity, tdy = dy !== 0 ? Math.abs(1 / dy) : Infinity, tdz = dz !== 0 ? Math.abs(1 / dz) : Infinity;
@@ -89,7 +91,11 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
   let tz = dz !== 0 ? (dz > 0 ? z + 1 - oz : oz - z) * tdz : Infinity;
   let nx = 0, ny = 0, nz = 0, t = 0;
   while (t <= reach) {
-    if (y >= Y_MIN && y <= Y_MAX && isSolid(v.get(x, y, z)) && (nx || ny || nz)) return { x, y, z, nx, ny, nz };
+    if (y >= Y_MIN && y <= Y_MAX && (nx || ny || nz)) {
+      const it = items?.at(x, y, z);
+      if (it) return { x, y, z, nx, ny, nz, item: it };
+      if (isTarget(v.get(x, y, z))) return { x, y, z, nx, ny, nz };
+    }
     if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; nx = -sx; ny = 0; nz = 0; }
     else if (ty < tz) { y += sy; t = ty; ty += tdy; nx = 0; ny = -sy; nz = 0; }
     else { z += sz; t = tz; tz += tdz; nx = 0; ny = 0; nz = -sz; }
@@ -98,8 +104,8 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
 }
 
 /** Colocar na célula adjacente à face aponta­da: livre (ar ou líquido), editável e fora do corpo do jogador. */
-export function canPlaceAt(v: TitanVolume, b: Body, x: number, y: number, z: number): boolean {
-  if (!v.editable(x, y, z) || isSolid(v.get(x, y, z))) return false;
+export function canPlaceAt(v: TitanVolume, b: Body, x: number, y: number, z: number, items?: ItemLookup): boolean {
+  if (!v.editable(x, y, z) || isOccupied(v.get(x, y, z)) || items?.at(x, y, z)) return false;
   const overlap = x + 1 > b.x - BODY_HALF && x < b.x + BODY_HALF && z + 1 > b.z - BODY_HALF && z < b.z + BODY_HALF && y + 1 > b.y && y < b.y + BODY_HEIGHT;
   return !overlap;
 }

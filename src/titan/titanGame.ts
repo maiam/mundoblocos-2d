@@ -1,11 +1,13 @@
 import './titan.css';
-import { titanAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanHotbarUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
-import { canPlaceAt, EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
+import { breakOrCollect, placeFromSlot } from './actions';
+import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
+import { ITEM_NAMES } from './items';
+import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { defaultTitanStorage, type TitanStorage } from './save';
-import { flush, openSession, type TitanSession, UnsupportedVersionError } from './session';
-import { BLOCK_NAMES, PLACEABLE, T } from './voxel';
+import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError } from './session';
 
 /**
  * Titã — jogo solo em primeira pessoa (ADR 0039): liga entrada (teclado/mouse/toque), laço de quadros, renderer, mira e gravação.
@@ -24,9 +26,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?:
   return e;
 };
 
-async function loadAtlas(): Promise<HTMLImageElement> {
+async function loadImage(url: string): Promise<HTMLImageElement> {
   const img = new Image();
-  img.src = titanAtlasUrl;
+  img.src = url;
   await img.decode();
   return img;
 }
@@ -50,9 +52,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const atlas = await loadAtlas();
+  const [atlas, hotbarAtlas] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl)]);
   const vol = session.volume;
-  const view = new TitanRenderer(canvas, vol, atlas);
+  const inv = session.inventory;
+  // `?hora=noite`: ferramenta de teste da luz da lanterna (a tarde fixa é a regra desta entrega)
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, new URLSearchParams(search).get('hora') === 'noite');
+  view.setItems(session.items.remaining());
 
   // ---- HUD ----
   const cross = el('div', 'titan-cross', ui);
@@ -63,19 +68,96 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const posLine = el('span', '', status);
   const label = el('div', 'titan-label', ui);
   const hotbar = el('div', 'titan-hotbar', ui);
-  const slots = PLACEABLE.map((id, i) => {
-    const b = el('button', 'titan-slot', hotbar);
+  /** Espaço da interface: ícone do atlas da hotbar (por id do item), quantidade e tecla. */
+  const mkSlot = (parent: HTMLElement, index: number, key?: string): HTMLButtonElement => {
+    const b = el('button', 'titan-slot', parent);
     b.type = 'button';
-    b.setAttribute('aria-label', BLOCK_NAMES[id]);
-    const tile = id === T.SAND ? 0 : id === T.DAMP_SAND ? 2 : id === T.DARK_ROCK ? 4 : 5;
-    const S = 3, col = tile % 4, row = (tile / 4) | 0; // atlas 80 × 40 ampliado 3×: tile de 16 px = 48 px
-    b.style.backgroundImage = `url(${titanAtlasUrl})`;
-    b.style.backgroundSize = `${80 * S}px ${40 * S}px`;
-    b.style.backgroundPosition = `-${(col * 20 + 2) * S}px -${(row * 20 + 2) * S}px`;
-    el('span', '', b, String(i + 1));
-    b.addEventListener('click', () => select(i));
+    b.dataset.slot = String(index);
+    if (key) el('span', 'key', b, key);
+    el('i', 'titan-icon', b);
+    el('em', 'count', b);
+    b.addEventListener('click', () => tapSlot(index));
     return b;
-  });
+  };
+  const hotSlots = Array.from({ length: HOTBAR }, (_, i) => mkSlot(hotbar, i, String(i + 1)));
+
+  // ---- Mochila: 24 espaços (4 fileiras de 6), fabricação 2 × 2, receita ----
+  const panel = el('div', 'titan-panel', ui);
+  panel.hidden = true;
+  const head = el('div', 'titan-panelhead', panel);
+  el('b', '', head, 'Mochila');
+  const closeBtn = el('button', 'titan-btn', head, 'Fechar');
+  closeBtn.type = 'button';
+  const body = el('div', 'titan-panelbody', panel);
+  const bagGrid = el('div', 'titan-bag', body);
+  const bagSlots = Array.from({ length: SLOTS - HOTBAR }, (_, i) => mkSlot(bagGrid, HOTBAR + i));
+  const craftBox = el('div', 'titan-craft', body);
+  el('small', '', craftBox, 'Fabricação');
+  const craftRow = el('div', 'titan-craftrow', craftBox);
+  const craftGrid = el('div', 'titan-craftgrid', craftRow);
+  const craftSlots = Array.from({ length: CRAFT_SLOTS }, (_, i) => mkSlot(craftGrid, CRAFT_START + i));
+  el('span', 'arrow', craftRow, '→');
+  const outSlot = mkSlot(craftRow, OUTPUT);
+  outSlot.classList.add('out');
+  const recipeBtn = el('button', 'titan-btn', craftBox, 'Receita da lanterna');
+  recipeBtn.type = 'button';
+  el('small', 'hint', craftBox, 'Cápsula + fragmento de rocha + fragmento de gelo, em qualquer posição.');
+  let bagOpen = false;
+  let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
+
+  /** Redesenha todos os espaços a partir do inventário (é barato: 36 espaços). */
+  function refresh(): void {
+    const draw = (b: HTMLButtonElement, i: number, forced?: { item: number; count: number } | null): void => {
+      const st = forced === undefined ? inv.get(i) : forced;
+      const icon = b.querySelector('i') as HTMLElement;
+      const count = b.querySelector('em') as HTMLElement;
+      b.classList.toggle('empty', !st);
+      if (st) {
+        const idx = st.item - 1, col = idx % 4, row = (idx / 4) | 0;
+        icon.style.backgroundImage = `url(${titanHotbarUrl})`;
+        icon.style.backgroundPosition = `calc(-${col * 16}px * var(--s)) calc(-${row * 16}px * var(--s))`;
+        icon.style.visibility = 'visible';
+        count.textContent = st.count > 1 ? String(st.count) : '';
+        b.setAttribute('aria-label', `${ITEM_NAMES[st.item]}${st.count > 1 ? ` × ${st.count}` : ''}`);
+      } else { icon.style.visibility = 'hidden'; count.textContent = ''; b.setAttribute('aria-label', 'vazio'); }
+      b.dataset.sel = String(sel === i);
+    };
+    hotSlots.forEach((b, i) => { draw(b, i); b.setAttribute('aria-pressed', String(i === session.selected)); });
+    bagSlots.forEach((b, i) => draw(b, HOTBAR + i));
+    craftSlots.forEach((b, i) => draw(b, CRAFT_START + i));
+    const r = inv.craftResult();
+    draw(outSlot, OUTPUT, r ? { item: r, count: 1 } : null);
+    const held = inv.get(session.selected);
+    label.textContent = held ? ITEM_NAMES[held.item] : '';
+  }
+
+  function tapSlot(i: number): void {
+    if (i === OUTPUT) {
+      if (!inv.takeResult()) notice(inv.craftResult() ? 'Mochila cheia' : 'Monte a receita primeiro');
+      refresh();
+      return;
+    }
+    if (!bagOpen) { if (i < HOTBAR) select(i); return; }
+    if (sel === null) { if (inv.get(i)) sel = i; }
+    else if (sel === i) sel = null;
+    else { if (!inv.move(sel, i)) notice('Não dá para mover para lá'); sel = null; }
+    refresh();
+  }
+  recipeBtn.addEventListener('click', () => { if (!inv.fillRecipe()) notice('Falta algum ingrediente, ou a grade não está vazia'); refresh(); });
+
+  function toggleBag(open: boolean): void {
+    if (open === bagOpen) return;
+    bagOpen = open;
+    panel.hidden = !open;
+    sel = null;
+    if (open) { if (document.pointerLockElement) document.exitPointerLock(); input.place = input.remove = false; keys.clear(); }
+    else {
+      if (!inv.returnCraft()) notice('Sem espaço: os itens ficam na grade');
+      if (!coarse) void canvas.requestPointerLock?.();
+    }
+    refresh();
+  }
+  closeBtn.addEventListener('click', () => toggleBag(false));
   const menu = el('div', 'titan-menu', ui);
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
   newBtn.type = 'button';
@@ -91,10 +173,17 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   });
 
   function select(i: number): void {
-    session.selected = ((i % PLACEABLE.length) + PLACEABLE.length) % PLACEABLE.length;
-    slots.forEach((s, k) => s.setAttribute('aria-pressed', String(k === session.selected)));
-    label.textContent = BLOCK_NAMES[PLACEABLE[session.selected]];
+    session.selected = ((i % HOTBAR) + HOTBAR) % HOTBAR;
     playerDirty = true;
+    refresh();
+  }
+
+  let lastNotice = '', lastNoticeAt = 0;
+  function notice(msg: string): void {
+    const now = performance.now();
+    if (msg === lastNotice && now - lastNoticeAt < 1500) return;
+    lastNotice = msg; lastNoticeAt = now;
+    toast(msg, 1800);
   }
 
   // ---- Início (ponteiro preso no desktop) ----
@@ -115,7 +204,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   };
   go.addEventListener('click', begin);
   canvas.addEventListener('click', () => { if (!coarse && !document.pointerLockElement) begin(); });
-  document.addEventListener('pointerlockchange', () => { if (!coarse && !document.pointerLockElement && playing) { playing = false; start.hidden = false; go.textContent = 'Continuar'; } });
+  document.addEventListener('pointerlockchange', () => { if (!coarse && !document.pointerLockElement && playing && !bagOpen) { playing = false; start.hidden = false; go.textContent = 'Continuar'; } });
   if (session.relocated) toast('A posição salva estava obstruída: você voltou a um ponto seguro.');
 
   // ---- Entrada ----
@@ -124,7 +213,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     keys.add(e.code);
-    if (e.code >= 'Digit1' && e.code <= 'Digit9') { const n = Number(e.code.slice(5)) - 1; if (n < PLACEABLE.length) select(n); }
+    if (e.code >= 'Digit1' && e.code <= 'Digit9') { const n = Number(e.code.slice(5)) - 1; if (n < HOTBAR) select(n); }
+    if (e.code === 'KeyE' && playing) toggleBag(!bagOpen);
+    if (e.code === 'Escape' && bagOpen) toggleBag(false);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
   window.addEventListener('blur', () => keys.clear());
@@ -136,7 +227,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (e.button === 2) { input.remove = true; act('remove'); }
   });
   window.addEventListener('mouseup', (e) => { if (e.button === 0) input.place = false; if (e.button === 2) input.remove = false; });
-  window.addEventListener('wheel', (e) => { if (document.pointerLockElement && e.deltaY) select(session.selected + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+  window.addEventListener('wheel', (e) => { if (document.pointerLockElement && !bagOpen && e.deltaY) select(session.selected + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   function look(dx: number, dy: number): void {
     session.yaw -= dx;
     session.pitch = Math.max(-1.55, Math.min(1.55, session.pitch - dy));
@@ -150,7 +241,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const lookPad = el('div', 'titan-look', touch);
   const acts = el('div', 'titan-acts', touch);
   const mk = (txt: string): HTMLButtonElement => { const b = el('button', 'titan-btn', acts, txt); b.type = 'button'; return b; };
-  const bPlace = mk('Colocar'), bRemove = mk('Quebrar'), bJump = mk('Pular');
+  const bPlace = mk('Colocar'), bRemove = mk('Quebrar'), bJump = mk('Pular'), bBag = mk('Mochila');
+  bBag.addEventListener('click', () => toggleBag(!bagOpen));
   const hold = (b: HTMLElement, on: () => void, off: () => void): void => {
     b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); on(); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) b.addEventListener(t, off);
@@ -179,13 +271,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // ---- Ações ----
   let target: Hit | null = null;
   function act(kind: 'place' | 'remove'): void {
-    if (!playing || !target) return;
-    if (kind === 'remove') {
-      if (vol.remove(target.x, target.y, target.z)) onEdited();
-    } else {
-      const x = target.x + target.nx, y = target.y + target.ny, z = target.z + target.nz;
-      if (canPlaceAt(vol, session.body, x, y, z) && vol.place(x, y, z, PLACEABLE[session.selected])) onEdited();
-    }
+    if (!playing || bagOpen || !target) return;
+    // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
+    const r = kind === 'remove' ? breakOrCollect(session, target) : placeFromSlot(session, target, session.selected);
+    if (r.msg) notice(r.msg);
+    if (!r.ok) return;
+    if (target.item) view.setItems(session.items.remaining());
+    onEdited();
+    refresh();
   }
 
   // ---- Gravação ----
@@ -199,12 +292,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     lastPlayerSave = performance.now();
     saving = flush(storage, session).then(
       // edição feita durante a gravação não foi confirmada: continua pendente e entra na próxima gravação automática
-      () => { failed = false; if (vol.hasDirty) { lastEdit = performance.now(); setSave('alterações pendentes…'); } else setSave('salvo ✓'); },
+      () => { failed = false; if (vol.hasDirty || hasPendingState(session)) { lastEdit = performance.now(); setSave('alterações pendentes…'); } else setSave('salvo ✓'); },
       (e) => { failed = true; playerDirty = true; retryAt = performance.now() + RETRY_MS; setSave('falha ao salvar — tentando de novo (o último estado confirmado está preservado)', true); console.error('Titã: falha ao salvar', e); },
     ).finally(() => { saving = null; });
     return saving;
   }
-  const onHide = (): void => { if (vol.hasDirty || playerDirty) void saveNow(); };
+  const onHide = (): void => { if (vol.hasDirty || hasPendingState(session) || playerDirty) void saveNow(); };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') onHide(); });
   window.addEventListener('pagehide', onHide);
 
@@ -217,7 +310,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     const b = session.body;
-    if (playing) {
+    const active = playing && !bagOpen;
+    if (active) {
       let fx = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - input.stickY;
       let sx = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) + input.stickX;
       const m = Math.hypot(fx, sx);
@@ -232,17 +326,17 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
-    target = playing ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6) : null;
+    target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items) : null;
     view.render(eye, session.yaw, session.pitch, target, now / 1000);
-    cross.hidden = !playing;
+    cross.hidden = !active;
     posLine.textContent = `x ${b.x.toFixed(1)} · y ${b.y.toFixed(1)} · z ${b.z.toFixed(1)}`;
     // autosave: pequena espera depois de editar; posição de tempos em tempos; nova tentativa após falha
     if (!saving) {
-      if (failed ? now >= retryAt : (vol.hasDirty && now - lastEdit > AUTOSAVE_AFTER_EDIT_MS) || (playerDirty && now - lastPlayerSave > AUTOSAVE_PLAYER_MS)) void saveNow();
+      if (failed ? now >= retryAt : ((vol.hasDirty || hasPendingState(session)) && now - lastEdit > AUTOSAVE_AFTER_EDIT_MS) || (playerDirty && now - lastPlayerSave > AUTOSAVE_PLAYER_MS)) void saveNow();
     }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 
-  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, get target() { return target; } };
+  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, toggleBag, refresh, get target() { return target; } };
 }

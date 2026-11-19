@@ -4,6 +4,8 @@ import { TitanVolume } from './volume';
 import { collides, newBody, raycast, safePosition, stepBody } from './physics';
 import { chunkOf, columnIndex, inRegion, isSolid, localOf, localY, REGION_MAX, REGION_MIN, sectionOf, T } from './voxel';
 
+/** Formações da seed 42 como a entrega 1 (v0.94.0) as gerou: os saves da v1 não podem mudar. */
+const RECORDED_V1_SEED_42 = [{ kind: 'rock', x: -6, z: -16 }, { kind: 'ice', x: -11, z: -26 }];
 const SEEDS = [42, 7, 1, 2, 3, 99, 1234, 777777, 2 ** 31 - 1, 31337, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15];
 
 describe('endereçamento (docs Titã 05 §2/§7)', () => {
@@ -76,6 +78,11 @@ describe('gerador (determinismo, chegada, lago)', () => {
       }
       expect(reachedShore).toBe(true);
       for (const f of g.formations) expect(seen.has(key(f.x, f.z))).toBe(true);
+      // fragmentos de superfície: 3 lascas de rocha e 3 de gelo, ids únicos, sobre o solo da formação e alcançáveis a pé
+      expect(g.surfaceItems.filter((i) => i.item === 5)).toHaveLength(3);
+      expect(g.surfaceItems.filter((i) => i.item === 6)).toHaveLength(3);
+      expect(new Set(g.surfaceItems.map((i) => i.id)).size).toBe(6);
+      for (const it of g.surfaceItems) { expect(seen.has(key(it.x, it.z))).toBe(true); expect(isSolid(v.get(it.x, it.y - 1, it.z))).toBe(true); expect(v.get(it.x, it.y, it.z)).toBe(T.AIR); }
     });
   }
 });
@@ -152,5 +159,17 @@ describe('física e mira', () => {
     const p = safePosition(v, { x: a.x, y: 50, z: a.z }, a); // dentro da rocha
     expect(collides(v, p.x, p.y, p.z)).toBe(false);
     expect(safePosition(v, { x: NaN, y: 0, z: 0 }, a)).toEqual({ x: a.x, y: a.y, z: a.z });
+  });
+});
+
+describe('versões do gerador', () => {
+  it('v1 (entrega 1) continua gerando a mesma costa e as mesmas formações para os saves antigos', () => {
+    const v1 = new TitanGenerator(42, 1);
+    expect(v1.version).toBe(1);
+    expect(v1.formations).toEqual(RECORDED_V1_SEED_42);
+    // terreno fora das formações é igual nas duas versões
+    const v2 = new TitanGenerator(42);
+    expect(v2.version).toBe(2);
+    expect(v2.arrival).toEqual(v1.arrival);
   });
 });

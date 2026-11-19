@@ -6,3 +6,10 @@ import atlas from '../../assets/titan-atlas-16px.webp';
  * Só o Titã importa esta imagem; o mapa de tiles está em `titan/voxel.ts` (`tileFor`) e `titan/mesher.ts` (`tileUV`).
  */
 export const titanAtlasUrl: string = atlas;
+
+import hotbar from '../../assets/titan-hotbar-sprites-16px.webp';
+/**
+ * Atlas de itens da hotbar (64 × 32 px RGBA, grade 4 × 2 de sprites 16 × 16 sem espaçamento; WebP sem perdas): areia ocre, areia úmida, rocha escura,
+ * gelo fosco, fragmento de rocha, fragmento de gelo, cápsula de luz e lanterna da margem — nessa ordem (índice = id do item − 1, `titan/items.ts`).
+ */
+export const titanHotbarUrl: string = hotbar;

@@ -17,15 +17,17 @@ export const REGION_MIN = -32;
 export const REGION_MAX = 32;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7 } as const;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-/** Blocos que o jogador pode colocar (hotbar da primeira entrega, construção livre). */
-export const PLACEABLE: readonly TitanBlock[] = [T.SAND, T.DAMP_SAND, T.DARK_ROCK, T.FROST];
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem' };
 
-/** Sólido = colide, é alvo da mira e esconde as faces vizinhas. Líquido e ar não. */
-export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE;
+/** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN;
+/** Alvo da mira (e do "quebrar"): sólido ou lanterna. O líquido e o ar são atravessados. */
+export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN;
+/** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
+export const isOccupied = isTarget;
 
 export type Face = 'top' | 'side' | 'bottom';
 

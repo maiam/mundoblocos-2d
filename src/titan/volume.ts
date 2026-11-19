@@ -1,5 +1,6 @@
 import { TitanGenerator } from './generator';
-import { chunkKey, chunkOf, columnIndex, inRegion, isSolid, localOf, sectionOf, T, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { computeLight, LIGHT_MAX, lightKey } from './light';
+import { chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, localOf, sectionOf, T, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -13,6 +14,10 @@ export class TitanVolume {
   /** Chunks com edição ainda não gravada → revisão da última edição (sobe a cada `set` que muda o chunk). */
   private readonly dirty = new Map<string, number>();
   private chunkRev = 0;
+  /** Lanternas colocadas (as únicas fontes de luz) e o mapa de luz calculado sob demanda. */
+  private readonly lanterns = new Map<number, [number, number, number]>();
+  private lightMap = new Map<number, number>();
+  private lightDirty = false;
   /** Chunks (e seções) tocados desde a última coleta pelo renderer. */
   private readonly touched = new Set<string>();
   /** Revisão de cada seção: sobe a cada edição (descarta malhas antigas). */
@@ -43,6 +48,11 @@ export class TitanVolume {
     return isSolid(this.get(x, y, z));
   }
 
+  /** Pode quebrar esta célula? Editável e alvo da mira (sólido ou lanterna); rocha-mãe e líquido não. */
+  breakable(x: number, y: number, z: number): boolean {
+    return this.editable(x, y, z) && isTarget(this.get(x, y, z));
+  }
+
   /** Pode editar esta célula? Dentro da região e do domínio Y, e nunca a rocha-mãe (Y = −64). */
   editable(x: number, y: number, z: number): boolean {
     return inRegion(x, z) && y > Y_MIN && y <= Y_MAX;
@@ -67,6 +77,7 @@ export class TitanVolume {
     }
     this.dirty.set(key, ++this.chunkRev);
     this.markSections(x, y, z);
+    this.onLights(x, y, z, current, id);
     return true;
   }
 
@@ -78,9 +89,8 @@ export class TitanVolume {
 
   /** Coloca um sólido na célula (ar ou líquido; o líquido é deslocado, mas continua na base para voltar depois). */
   place(x: number, y: number, z: number, id: number): boolean {
-    if (!isSolid(id)) return false;
-    const cur = this.get(x, y, z);
-    if (isSolid(cur)) return false;
+    if (!isSolid(id) && id !== T.LANTERN) return false;
+    if (isOccupied(this.get(x, y, z))) return false;
     return this.set(x, y, z, id);
   }
 
@@ -144,8 +154,45 @@ export class TitanVolume {
   load(chunks: Array<{ cx: number; cz: number; edits: Array<[number, number]> }>): void {
     for (const c of chunks) {
       const m = new Map<number, number>();
-      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.BEDROCK) m.set(idx, id);
+      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.LANTERN) m.set(idx, id);
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
+      for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
+    }
+    this.lightDirty = this.lanterns.size > 0;
+  }
+
+  // ---- Luz de lanterna ----
+  get hasLanterns(): boolean { return this.lanterns.size > 0; }
+  lanternCells(): Array<[number, number, number]> { return [...this.lanterns.values()]; }
+
+  /** Nível de luz (0–15) da célula. Recalcula o mapa só se uma lanterna ou um bloco perto dela mudou. */
+  light(x: number, y: number, z: number): number {
+    if (!this.lanterns.size) return 0;
+    if (this.lightDirty) { this.lightMap = computeLight((a, b, c) => this.get(a, b, c), this.lanterns.values()); this.lightDirty = false; }
+    return this.lightMap.get(lightKey(x, y, z)) ?? 0;
+  }
+
+  /** Atualiza a lista de lanternas e refaz as malhas que a luz alcança (caixa de ±15 blocos de cada lanterna próxima da edição). */
+  private onLights(x: number, y: number, z: number, before: number, after: number): void {
+    const key = lightKey(x, y, z);
+    const was = before === T.LANTERN, is = after === T.LANTERN;
+    if (was && !is) this.lanterns.delete(key);
+    if (is && !was) this.lanterns.set(key, [x, y, z]);
+    if (!this.lanterns.size && !was) return;
+    const near = [...this.lanterns.values()].filter(([lx, ly, lz]) => Math.max(Math.abs(lx - x), Math.abs(ly - y), Math.abs(lz - z)) <= LIGHT_MAX);
+    if (!near.length && !was) return;
+    this.lightDirty = true;
+    const boxes = was && !is ? [...near, [x, y, z] as [number, number, number]] : near; // a lanterna retirada também apaga o que iluminava
+    for (const [lx, ly, lz] of boxes) this.touchBox(lx, ly, lz, LIGHT_MAX);
+  }
+
+  private touchBox(x: number, y: number, z: number, r: number): void {
+    for (let cx = chunkOf(x - r); cx <= chunkOf(x + r); cx++) for (let cz = chunkOf(z - r); cz <= chunkOf(z + r); cz++) {
+      for (let sy = Math.max(0, sectionOf(Math.max(Y_MIN, y - r))); sy <= Math.min(23, sectionOf(Math.min(Y_MAX, y + r))); sy++) {
+        const k = `${cx},${sy},${cz}`;
+        this.touched.add(k);
+        this.rev.set(k, (this.rev.get(k) ?? 0) + 1);
+      }
     }
   }
 
