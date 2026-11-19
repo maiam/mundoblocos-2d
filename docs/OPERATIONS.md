@@ -317,6 +317,8 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 
 `python3 -I scripts/make-titan-veins.py [--preview prancha.png]` acrescenta (ou regrava) os tiles 8 e 9 (veio de rocha e de gelo) no atlas `src/assets/titan-atlas-16px.webp` (80 × 60, WebP **sem perdas**, fora do `optimize-assets.py`), partindo dos tiles 4 e 5; repetível. Os tiles 0–7 não são tocados.
 
+`python3 -I scripts/make-titan-fabricacao.py` gera, a partir de `assets-src/titan/fabricacao/` (pacote de arte da mesa e atlas 80 × 40), os sprites de item (atlas da hotbar 64 × 48: 8 = mesa, 9 = lente, 10 = brasa), o tile 10 do terreno (depósito de brasa) e `src/assets/titan-reed-16px.webp` (junco), todos WebP **sem perdas**; repetível. `python3 -I scripts/extract-titan-workbench.py` converte o GLB da Mesa de Trabalho em `src/assets/titan-workbench.json` + `titan-workbench-atlas.webp` (confere 96 triângulos, 1 × 1 × 1 e pivô na base).
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

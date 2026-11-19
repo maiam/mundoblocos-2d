@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { breakOrCollect, collectItem, placeFromSlot } from './actions';
+import { craft, recipeById } from './recipes';
 import { CRAFT_START, HOTBAR, SLOTS } from './inventory';
 import { Item } from './items';
 import { MemoryTitanStorage, TITAN_SAVE_VERSION } from './save';
@@ -27,14 +28,16 @@ describe('coleta e inventário no mundo', () => {
     expect(s.inventory.total(Item.SAND)).toBe(0);
   });
 
-  it('rocha-mãe e líquido não se quebram; cápsula e fragmento não se colocam', async () => {
+  it('rocha-mãe e líquido não se quebram; cápsula (legada) e fragmento não se colocam', async () => {
     const { s } = await open();
+    s.inventory.add(Item.CAPSULE, 1); // o id 7 segue reservado: um save antigo ainda pode trazer a peça
     expect(breakOrCollect(s, { x: 0, y: -64, z: 0, nx: 0, ny: 1, nz: 0 }).ok).toBe(false);
     const { bx, bz } = spot(s);
-    const r = placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, HOTBAR); // espaço 7 = cápsula
+    const r = placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 0); // espaço 0 = cápsula
     expect(r).toEqual({ ok: false, msg: 'Este item não se coloca' });
     expect(s.volume.get(bx, 65, bz)).toBe(T.AIR);
     expect(s.inventory.total(Item.CAPSULE)).toBe(1); // nada se perde
+    expect(HOTBAR).toBe(7);
   });
 
   it('fragmento de superfície: 1 lasca = 1 fragmento, some do mundo, o id recolhido vai no save', async () => {
@@ -78,15 +81,17 @@ describe('coleta e inventário no mundo', () => {
 });
 
 describe('lanterna: fabricar, colocar, iluminar, recuperar e salvar', () => {
-  const craft = (s: Awaited<ReturnType<typeof openSession>>): void => {
-    for (const id of ['rock:0', 'ice:0']) collectItem(s, id);
-    expect(s.inventory.fillRecipe()).toBe(true);
-    expect(s.inventory.takeResult()).toBe(true);
+  /** Fluxo do legado (v2, lascas pré-posicionadas) até a lanterna: 2 fragmentos de rocha, lente de gelo (do fragmento de gelo, na mesa) e brasa. */
+  const craftLantern = (s: Awaited<ReturnType<typeof openSession>>): void => {
+    for (const id of ['rock:0', 'rock:1', 'ice:0']) collectItem(s, id);
+    expect(craft(s.inventory, recipeById('lente')!, 'workbench').ok).toBe(true);
+    s.inventory.add(Item.EMBER, 1);
+    expect(craft(s.inventory, recipeById('lanterna')!, 'workbench').ok).toBe(true);
   };
 
   it('coleta → fabricação → colocação → reabertura: tudo sobrevive junto, na mesma transação', async () => {
     const { st, s } = await open();
-    craft(s);
+    craftLantern(s);
     const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.LANTERN)!;
     s.inventory.move(slot, 2);
     const { bx, bz } = spot(s);
@@ -97,14 +102,14 @@ describe('lanterna: fabricar, colocar, iluminar, recuperar e salvar', () => {
     // um único commit levou inventário e lanterna: o cabeçalho e o chunk da lanterna estão no banco
     const saved = await st.load(42);
     expect(saved!.header.v).toBe(TITAN_SAVE_VERSION);
-    expect(saved!.header.inventory!.collected.sort()).toEqual(['ice:0', 'rock:0']);
+    expect(saved!.header.inventory!.collected.sort()).toEqual(['ice:0', 'rock:0', 'rock:1']);
     expect(saved!.chunks.length).toBeGreaterThan(0);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(bx + 2, 65, bz)).toBe(T.LANTERN); // posição e estado
     expect(r.volume.light(bx + 2, 65, bz)).toBe(15);
-    expect(r.inventory.total(Item.CAPSULE)).toBe(0);
+    expect(r.inventory.total(Item.EMBER)).toBe(0);
     expect(r.inventory.total(Item.ROCK_SHARD)).toBe(0);
-    expect(r.items.remaining()).toHaveLength(4);
+    expect(r.items.remaining()).toHaveLength(3);
     // recuperar devolve o item inteiro e apaga a luz
     expect(breakOrCollect(r, { x: bx + 2, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
     expect(r.inventory.total(Item.LANTERN)).toBe(1);
@@ -140,14 +145,14 @@ describe('lanterna: fabricar, colocar, iluminar, recuperar e salvar', () => {
     expect(s.volume.lanternVersion).toBeGreaterThan(0);
   });
 
-  it('save da v1 (sem inventário) abre com a cápsula e passa a gravar a v2', async () => {
+  it('save da v1 (sem inventário) abre de mãos vazias e passa a gravar a versão atual', async () => {
     const { st, s } = await open();
     await flush(st, s);
     const legacy = st.games.get(42)!;
     legacy.v = 1; legacy.inventory = null; legacy.generatorVersion = 1; // gravado pela entrega 1
     const r = await openSession(st, null, () => 1);
     expect(r.volume.gen.version).toBe(1); // continua na versão em que foi gravado
-    expect(r.inventory.total(Item.CAPSULE)).toBe(1);
+    expect(r.inventory.total(Item.CAPSULE)).toBe(0); // a cápsula saiu da abertura (ADR 0045)
     expect(hasPendingState(r)).toBe(true); // há o que gravar
     await flush(st, r);
     expect(hasPendingState(r)).toBe(false);
@@ -156,12 +161,12 @@ describe('lanterna: fabricar, colocar, iluminar, recuperar e salvar', () => {
 
   it('grade de fabricação com itens na hora de salvar: ao reabrir, voltam para a mochila', async () => {
     const { st, s } = await open();
-    collectItem(s, 'rock:0'); collectItem(s, 'ice:0');
-    s.inventory.fillRecipe();
+    s.inventory.add(Item.DARK_ROCK, 4);
+    for (let k = 0; k < 4; k++) s.inventory.move(0, CRAFT_START + k);
     expect(s.inventory.get(CRAFT_START)).not.toBeNull();
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
-    expect(r.inventory.total(Item.CAPSULE) + r.inventory.total(Item.ROCK_SHARD) + r.inventory.total(Item.FROST_SHARD)).toBe(3);
+    expect(r.inventory.total(Item.DARK_ROCK)).toBe(4);
     expect(r.inventory.get(CRAFT_START)).toBeNull();
   });
 

@@ -30,3 +30,15 @@ import lanternModel from '../../assets/titan-lantern.json';
 export const titanLanternAtlasUrl: string = lanternAtlas;
 export interface LanternBatch { pos: number[]; nrm: number[]; uv: number[]; idx: number[] }
 export const titanLanternModel = lanternModel as { size: number[]; structure: LanternBatch; core: LanternBatch };
+
+import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
+import workbenchModel from '../../assets/titan-workbench.json';
+import reedSprite from '../../assets/titan-reed-16px.webp';
+/**
+ * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
+ * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).
+ * O atlas de itens (`titanHotbarUrl`, agora 64 × 48) traz mesa, lente de gelo e brasa de âmbar nos índices 8–10.
+ */
+export const titanWorkbenchAtlasUrl: string = workbenchAtlas;
+export const titanWorkbenchModel = workbenchModel as { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] };
+export const titanReedUrl: string = reedSprite;

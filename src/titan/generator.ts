@@ -1,6 +1,6 @@
 import { Noise } from '../world/noise';
 import { hash2 } from '../world/random';
-import { LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel';
+import { inRegion, LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel';
 
 /**
  * Gerador da Margem Silenciosa (ADR 0039). Função pura de **seed + versão + coordenadas globais**: nada depende da ordem de carregamento.
@@ -13,8 +13,9 @@ import { LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel';
  * v3 (ADR 0044): as lascas pré-posicionadas saem; as formações passam a ter **veios** (blocos `VEIN_ROCK`/`VEIN_FROST`) que soltam a lasca ao quebrar. A busca só aceita
  * formação **alcançável a pé** desde a chegada (BFS de degraus de 1 bloco) e, se a busca natural falhar, um **afloramento de reserva** garante as duas fontes.
  * O terreno fora das formações segue idêntico nas três versões.
+ * v4 (ADR 0045): o depósito de **brasa de âmbar** (`T.EMBER`, no topo de uma coluna de areia úmida alcançável a pé) e os grupos de **junco de vidro** em volta dele; tudo o mais é igual à v3.
  */
-export const GENERATOR_VERSION = 3;
+export const GENERATOR_VERSION = 4;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -38,7 +39,7 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12 } as const;
 
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
@@ -59,6 +60,10 @@ export class TitanGenerator {
   readonly surfaceItems: ReadonlyArray<{ id: string; item: 5 | 6; x: number; y: number; z: number }>;
   /** v3: veios naturais (3 de rocha e 3 de gelo), por coluna (x, z); o voxel é o topo da coluna. Vazio na v1 e na v2. */
   private readonly veins = new Map<number, 'rock' | 'ice'>();
+  /** v4: o depósito de brasa (célula do topo da coluna, `blockAt` devolve `T.EMBER` ali) e os juncos de vidro (decoração sem colisão, célula de ar sobre areia úmida). Nulo/vazio antes da v4. */
+  readonly emberSite: { x: number; y: number; z: number } | null = null;
+  readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  private reachMemo: Set<number> | null = null;
   /** v3: a busca natural não achou as duas formações e o afloramento de reserva entrou (diagnóstico e testes). */
   outcropFallback = false;
 
@@ -75,6 +80,61 @@ export class TitanGenerator {
     this.formations = this.placeFormations(reach);
     this.surfaceItems = version >= 3 ? [] : this.placeSurfaceItems();
     if (version >= 3) this.placeVeins();
+    if (version >= 4) {
+      const site = this.planEmber()[0] ?? this.planEmber(false)[0] ?? null; // sem areia úmida alcançável: depósito de reserva em outra coluna livre
+      this.emberSite = site ? { x: site.x, y: this.column(site.x, site.z).top, z: site.z } : null;
+      this.reeds = site ? this.reedsFor(site.x, site.z) : [];
+    }
+  }
+
+  // ---- v4: brasa de âmbar e junco de vidro ----
+
+  /** Colunas alcançáveis a pé (memoizado; o mesmo cálculo da v3, para qualquer versão). */
+  private walkable(): Set<number> { return this.reachMemo ??= this.walkableFromArrival(); }
+
+  /**
+   * Candidatos ao depósito de brasa, em ordem fixa por seed: coluna de **areia úmida** alcançável a pé, perto da chegada, fora da clareira e das formações, com os 4 vizinhos também
+   * alcançáveis (a brasa fica acessível por qualquer lado). Serve a v4 (usa o primeiro) e a migração de partidas antigas (usa o primeiro que ainda estiver intacto).
+   */
+  planEmber(strict = true): Array<{ x: number; z: number }> {
+    const a = this.arrival, base = derive(this.seed, PURPOSE.brasa), reach = this.walkable();
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    const out: Array<{ x: number; z: number; h: number }> = [];
+    for (const k of reach) {
+      const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
+      if (x < REGION_MIN + 4 || x >= REGION_MAX - 4 || z < REGION_MIN + 4 || z >= REGION_MAX - 4) continue;
+      if (Math.hypot(x - a.x, z - a.z) > 30 || this.inClearing(x, z, 3)) continue;
+      const c = this.column(x, z);
+      if (strict && (c.surface !== T.DAMP_SAND || c.top < 63 || c.top > 65)) continue; // reserva (`strict = false`): qualquer coluna alcançável e livre
+      if (c.surface !== T.DAMP_SAND && c.surface !== T.SAND) continue; // nunca sobre rocha, gelo ou formação
+      if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 5)) continue;
+      if (![[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => reach.has(key(x + dx, z + dz)))) continue;
+      out.push({ x, z, h: hash2(base, x * 131 + z, 3) });
+    }
+    out.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+    return out.map(({ x, z }) => ({ x, z }));
+  }
+
+  /** Grupos de junco de vidro: um em volta do depósito (sem os 8 vizinhos, para a passagem e a brasa ficarem livres) e outro afastado, só em areia úmida alcançável. Puro por seed e posição. */
+  reedsFor(ex: number, ez: number): Array<{ x: number; y: number; z: number }> {
+    const reach = this.walkable(), base = derive(this.seed, PURPOSE.junco);
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    const centers: Array<{ x: number; z: number }> = [{ x: ex, z: ez }];
+    const far = this.planEmber().find((c) => Math.hypot(c.x - ex, c.z - ez) >= 9);
+    if (far) centers.push(far);
+    const seen = new Set<number>(), out: Array<{ x: number; y: number; z: number }> = [];
+    for (const c of centers) {
+      for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) {
+        const x = c.x + dx, z = c.z + dz, k = key(x, z);
+        if (seen.has(k) || (Math.abs(x - ex) <= 1 && Math.abs(z - ez) <= 1) || !reach.has(k) || !inRegion(x, z)) continue;
+        const col = this.column(x, z);
+        if (col.surface !== T.DAMP_SAND || col.top < 63 || col.top > 65) continue;
+        if (hash2(base, x * 131 + z, 5) > 0.5) continue;
+        seen.add(k);
+        out.push({ x, y: col.top + 1, z });
+      }
+    }
+    return out;
   }
 
   // ---- v3: alcance a pé e veios ----
@@ -333,6 +393,7 @@ export class TitanGenerator {
     const c = this.column(x, z);
     if (y > c.top) return y <= LAKE_LAST_Y ? T.LAKE : T.AIR;
     if (y === c.top) {
+      if (this.emberSite && x === this.emberSite.x && z === this.emberSite.z) return T.EMBER;
       if (this.veins.size) { const v = this.veins.get((x + 4096) * 8192 + (z + 4096)); if (v) return v === 'rock' ? T.VEIN_ROCK : T.VEIN_FROST; }
       return c.surface;
     }

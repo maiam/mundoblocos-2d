@@ -1,10 +1,11 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { Inventory } from './inventory';
+import { Item } from './items';
 import { AFTERNOON, validDay } from './sky';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
-import { inRegion, Y_MAX, Y_MIN } from './voxel';
+import { inRegion, isSolid, T, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Sessão solo do Titã: seed + versão do gerador + volume + jogador + gravação confirmada (ADR 0039). Sem DOM: o `titanGame.ts` só liga entrada e vídeo.
@@ -33,11 +34,16 @@ export interface TitanSession {
   /** Lascas soltas por veios quebrados (v3, ADR 0044): recolhidas por proximidade; vão no cabeçalho do save. */
   drops: Map<string, Drop>;
   dropsRev: number;
+  /** Receitas descobertas (`mesa`, `bancada`; ADR 0045) e adições localizadas de partida legada (a brasa dada uma vez). Vão no cabeçalho do save. */
+  known: Set<string>;
+  grants: { ember?: [number, number, number] };
+  /** Revisão do que não é inventário nem chunk (descobertas e adições). */
+  metaRev: number;
   /** Fragmentos de superfície ainda no mundo, por célula (para a mira e o desenho). */
   items: ItemLookup & { remaining(): Array<{ id: string; item: number; x: number; y: number; z: number }> };
 }
 
-const stateRev = (s: TitanSession): number => s.inventory.rev + s.collectedRev + s.dropsRev;
+const stateRev = (s: TitanSession): number => s.inventory.rev + s.collectedRev + s.dropsRev + s.metaRev;
 /** Tudo o que está solto no mundo para desenhar: lascas legadas (v1/v2) ainda não recolhidas e as lascas dos veios (v3). */
 export function visibleItems(s: TitanSession): Array<{ id: string; item: number; x: number; y: number; z: number }> {
   return [...s.items.remaining(), ...s.drops.values()];
@@ -55,12 +61,12 @@ function makeItems(s: { volume: TitanVolume; collected: Set<string> }): TitanSes
   };
 }
 
-/** Lascas gravadas: só entradas bem formadas (id, item 5/6 e células inteiras no domínio); o resto é descartado. */
+/** Lascas gravadas: só entradas bem formadas (id, item 5/6/11 e células inteiras no domínio); o resto é descartado. */
 function validDrops(raw: unknown): Map<string, Drop> {
   const out = new Map<string, Drop>();
   if (!Array.isArray(raw)) return out;
   for (const d of raw as Drop[]) {
-    if (d && typeof d.id === 'string' && (d.item === 5 || d.item === 6) && [d.x, d.y, d.z].every(Number.isInteger) && d.y > Y_MIN && d.y <= Y_MAX && inRegion(d.x, d.z)) out.set(d.id, { id: d.id, item: d.item, x: d.x, y: d.y, z: d.z });
+    if (d && typeof d.id === 'string' && (d.item === 5 || d.item === 6 || d.item === 11) && [d.x, d.y, d.z].every(Number.isInteger) && d.y > Y_MIN && d.y <= Y_MAX && inRegion(d.x, d.z)) out.set(d.id, { id: d.id, item: d.item, x: d.x, y: d.y, z: d.z });
   }
   return out;
 }
@@ -89,7 +95,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
   const collected = new Set<string>();
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, items: makeItems({ volume, collected }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, known: new Set<string>(), grants: {}, metaRev: 0, items: makeItems({ volume, collected }) };
   return s;
 }
 
@@ -100,17 +106,66 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const p = save.header.player;
   const safe = safePosition(volume, p, a);
   const moved = Math.abs(safe.x - p.x) > 1e-6 || Math.abs(safe.y - p.y) > 1e-6 || Math.abs(safe.z - p.z) > 1e-6;
-  // save da v1 (sem inventário) abre com o inventário inicial; o que estava na grade de fabricação volta para a mochila
+  // save da v1 (sem inventário) abre com o inventário inicial (vazio desde a v4); o que estava na grade de fabricação volta para a mochila
   const inv = save.header.inventory ? Inventory.fromData(save.header.inventory.bag) : Inventory.starting();
   const revBefore = inv.rev;
+  // migração da cápsula (ADR 0045): save anterior à v4 → a cápsula remanescente (mochila ou grade, inclusive receita antiga já iniciada) vira brasa de âmbar, uma única vez (o save regravado já é v4)
+  const converted = save.header.v < TITAN_SAVE_VERSION ? inv.convertItem(Item.CAPSULE, Item.EMBER) : 0;
   inv.returnCraft();
   const collected = new Set<string>((save.header.inventory?.collected ?? []).filter((x): x is string => typeof x === 'string'));
-  const savedStateRev = save.header.inventory && inv.rev === revBefore ? inv.rev : -1; // v1 ou grade devolvida: há o que gravar
-  return { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev, drops: validDrops(save.header.drops), dropsRev: 0, items: makeItems({ volume, collected }) };
+  const grants: TitanSession['grants'] = {};
+  const g = save.header.grants?.ember;
+  if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
+  const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected }) };
+  // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
+  const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
+  discoverRecipes(s);
+  const clean = save.header.inventory && inv.rev === revBefore && !converted && !granted && save.header.v >= TITAN_SAVE_VERSION; // v1/v2/v3, grade devolvida, cápsula convertida ou brasa dada: há o que gravar
+  s.savedStateRev = clean ? stateRev(s) : -1;
+  return s;
+}
+
+/**
+ * Adição localizada do depósito de brasa em partida de gerador antigo (ADR 0045): o primeiro candidato determinístico (`planEmber`) cuja coluna continua intacta
+ * (nenhuma edição, ar em cima, sem lasca no lugar). Fica registrada em `grants` (reabrir não repete nem recria o minério depois de consumido).
+ */
+export function grantEmber(s: TitanSession): boolean {
+  const gen = s.volume.gen, v = s.volume;
+  for (const c of [...gen.planEmber(), ...gen.planEmber(false)]) {
+    const y = gen.column(c.x, c.z).top;
+    if (v.get(c.x, y, c.z) !== gen.blockAt(c.x, y, c.z) || v.get(c.x, y + 1, c.z) !== T.AIR || s.drops.has(`v:${c.x},${y},${c.z}`)) continue;
+    if (!v.set(c.x, y, c.z, T.EMBER)) continue;
+    s.grants.ember = [c.x, y, c.z];
+    s.metaRev++;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Descoberta de receitas, derivada do **estado** (nunca de um evento único): a Mesa de Trabalho aparece ao ter rocha escura (ou uma mesa no inventário ou no mundo); as receitas da
+ * mesa, ao ter ou colocar uma mesa. Devolve as que acabaram de ser descobertas (a interface avisa uma vez).
+ */
+export function discoverRecipes(s: TitanSession): string[] {
+  const out: string[] = [];
+  const hasBench = s.inventory.total(Item.WORKBENCH) > 0 || s.volume.workbenchCells().length > 0;
+  const add = (id: string, cond: boolean): void => { if (cond && !s.known.has(id)) { s.known.add(id); out.push(id); } };
+  add('bancada', hasBench);
+  add('mesa', s.inventory.total(Item.DARK_ROCK) > 0 || hasBench);
+  if (out.length) s.metaRev++;
+  return out;
+}
+
+/** Lista dos juncos de vidro ainda em pé: a posição de ar sobre sólido, sem nada construído no lugar (o gerador v4 os traz; partida legada, a partir da brasa dada). */
+export function standingReeds(s: TitanSession): Array<{ x: number; y: number; z: number }> {
+  const gen = s.volume.gen;
+  const list = gen.version >= 4 ? gen.reeds : s.grants.ember ? gen.reedsFor(s.grants.ember[0], s.grants.ember[2]) : [];
+  return list.filter((r) => s.volume.get(r.x, r.y, r.z) === T.AIR && isSolid(s.volume.get(r.x, r.y - 1, r.z)));
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)) };
 }
 
 /**

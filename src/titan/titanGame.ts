@@ -1,8 +1,9 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
+import { blockedReason, CRAFT_MESSAGES, craft, ingredientStatus, RECIPES, STATION_NAMES, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
@@ -15,7 +16,7 @@ import { advanceDay, parseHora, phaseName } from './sky';
 import { T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
-import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems } from './session';
+import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds } from './session';
 
 /**
  * Titã — jogo solo em primeira pessoa (ADR 0039): liga entrada (teclado/mouse/toque), laço de quadros, renderer, mira e gravação.
@@ -65,16 +66,17 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
   if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
   // `?hora=manha|tarde|noite`: congela só a visualização (teste); a hora do jogo continua correndo e é a que vai no save
   const forcedHour = parseHora(q.get('hora'));
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
+  view.setReeds(standingReeds(session));
   if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
     line: () => perf.line(),
     lines: () => [...(scene ? [`cena: ${spots.length} lanternas${autoEdit ? ' · editando sem parar' : ''}`] : []), ...perf.reportLines()],
@@ -110,6 +112,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   panel.hidden = true;
   const head = el('div', 'titan-panelhead', panel);
   el('b', '', head, 'Mochila');
+  const tabs = el('div', 'titan-tabs', head);
+  const tabItems = el('button', 'titan-btn on', tabs, 'Itens');
+  const tabRecipes = el('button', 'titan-btn', tabs, 'Receitas');
+  tabItems.type = tabRecipes.type = 'button';
   const closeBtn = el('button', 'titan-btn', head, 'Fechar');
   closeBtn.type = 'button';
   const body = el('div', 'titan-panelbody', panel);
@@ -123,9 +129,23 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   el('span', 'arrow', craftRow, '→');
   const outSlot = mkSlot(craftRow, OUTPUT);
   outSlot.classList.add('out');
-  const recipeBtn = el('button', 'titan-btn', craftBox, 'Receita da lanterna');
-  recipeBtn.type = 'button';
-  el('small', 'hint', craftBox, 'Cápsula + fragmento de rocha + fragmento de gelo, em qualquer posição.');
+  el('small', 'hint', craftBox, 'Quatro blocos de rocha escura, em qualquer posição, formam a Mesa de Trabalho. A aba Receitas fabrica direto.');
+  const bagCards = el('div', 'titan-recipes', body);
+  const stationBody = el('div', 'titan-recipes station', panel); // cartões da Mesa de Trabalho
+  stationBody.hidden = true;
+  const panelTitle = head.querySelector('b') as HTMLElement;
+  let stationAt: { x: number; y: number; z: number } | null = null;
+  /** Aba da mochila: itens (grade, fabricação 2 × 2) ou receitas (cartões). Em paisagem de celular os dois não cabem juntos e o painel não rola. */
+  let tab: 'items' | 'recipes' = 'items';
+  function showTab(t: 'items' | 'recipes'): void {
+    tab = t;
+    const st = stationAt !== null;
+    tabItems.classList.toggle('on', t === 'items'); tabRecipes.classList.toggle('on', t === 'recipes');
+    bagGrid.hidden = craftBox.hidden = st || t !== 'items';
+    bagCards.hidden = st || t !== 'recipes';
+  }
+  tabItems.addEventListener('click', () => showTab('items'));
+  tabRecipes.addEventListener('click', () => showTab('recipes'));
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
 
@@ -150,14 +170,89 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     bagSlots.forEach((b, i) => draw(b, HOTBAR + i));
     craftSlots.forEach((b, i) => draw(b, CRAFT_START + i));
     const r = inv.craftResult();
-    draw(outSlot, OUTPUT, r ? { item: r, count: 1 } : null);
+    draw(outSlot, OUTPUT, r);
+    for (const id of discoverRecipes(session)) toast(id === 'mesa' ? 'Nova receita: Mesa de Trabalho (4 blocos de rocha escura). Abra a mochila (aba Receitas).' : 'Receitas da mesa: use a Mesa de Trabalho (F ou botão Usar).', 3500);
+    drawCards(bagCards, null);
+    if (stationAt) drawCards(stationBody, 'workbench');
     const held = inv.get(session.selected);
     label.textContent = held ? ITEM_NAMES[held.item] : '';
   }
 
+  /**
+   * Livro de receitas (ADR 0045): um cartão por receita com ícone, nome e quantidade do resultado, ingredientes **possui / precisa**, estação e **Fabricar**. Na mochila aparecem as
+   * receitas descobertas (as da mesa ficam apagadas, com o motivo); na Mesa de Trabalho, as da estação. Tudo vem do mesmo catálogo (`titan/recipes.ts`).
+   */
+  function drawCards(into: HTMLElement, at: Station | null): void {
+    into.textContent = '';
+    const list = RECIPES.filter((r) => (at === 'workbench' ? r.station === 'workbench' : session.known.has(r.station === 'workbench' ? 'bancada' : 'mesa')));
+    if (!list.length) { el('small', 'hint', into, 'Colete rocha escura para descobrir a primeira receita.'); return; }
+    el('small', '', into, at === 'workbench' ? 'Receitas da Mesa de Trabalho' : 'Receitas');
+    for (const r of list) {
+      const reason = blockedReason(inv, r, at);
+      const card = el('div', 'titan-card', into);
+      card.classList.toggle('off', reason !== null);
+      const top = el('div', 'titan-cardtop', card);
+      iconOf(top, r.result.item);
+      el('b', '', top, `${r.name}${r.result.count > 1 ? ` ×${r.result.count}` : ''}`);
+      const ing = el('div', 'titan-ing', card);
+      for (const g of ingredientStatus(inv, r)) {
+        const row = el('span', g.have >= g.need ? 'ok' : 'lack', ing);
+        iconOf(row, g.item);
+        el('em', '', row, `${ITEM_NAMES[g.item]} ${g.have}/${g.need}`);
+      }
+      el('small', 'station', card, STATION_NAMES[r.station]);
+      const btn = el('button', 'titan-btn', card, 'Fabricar');
+      btn.type = 'button';
+      btn.disabled = reason !== null;
+      if (reason && reason !== 'ok') el('small', 'why', card, CRAFT_MESSAGES[reason]);
+      btn.addEventListener('click', () => doCraft(r, at));
+    }
+  }
+  function iconOf(parent: HTMLElement, item: number): void {
+    const i = el('i', 'titan-icon sm', parent);
+    const idx = item - 1;
+    i.style.backgroundImage = `url(${titanHotbarUrl})`;
+    i.style.backgroundPosition = `calc(-${(idx % 4) * 16}px * var(--s2)) calc(-${((idx / 4) | 0) * 16}px * var(--s2))`;
+  }
+  /** Fabricar: valida a estação (e o alcance, na mesa), consome e entrega numa operação só; se falhar, nada muda e o motivo aparece. */
+  function doCraft(r: Recipe, at: Station | null): void {
+    if (at === 'workbench' && !stationInReach()) { closeStation('Mesa fora de alcance'); return; }
+    const res = craft(inv, r, at);
+    if (!res.ok) notice(CRAFT_MESSAGES[res.reason as 'station' | 'missing' | 'full']);
+    else { notice(`Fabricado: ${r.name}`); onEdited(); }
+    refresh();
+  }
+
+  // ---- Mesa de Trabalho: mirar → Usar (botão ou F) → receitas da estação; sair do alcance ou perder a mesa encerra ----
+  const USE_REACH = 5;
+  const useBtn = el('button', 'titan-btn titan-use', ui, coarse0() ? 'Usar' : 'Usar [F]');
+  useBtn.type = 'button';
+  useBtn.hidden = true;
+  function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
+  const benchAimed = (): { x: number; y: number; z: number } | null => {
+    if (!target || target.item || vol.get(target.x, target.y, target.z) !== T.WORKBENCH) return null;
+    return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z } : null;
+  };
+  function stationInReach(): boolean {
+    if (!stationAt) return false;
+    const b = session.body;
+    return vol.get(stationAt.x, stationAt.y, stationAt.z) === T.WORKBENCH && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
+  }
+  function openStation(): void {
+    const at = benchAimed();
+    if (!at || bagOpen || !playing) return;
+    stationAt = at;
+    toggleBag(true);
+  }
+  function closeStation(msg?: string): void {
+    if (msg) notice(msg);
+    if (bagOpen) toggleBag(false);
+  }
+  useBtn.addEventListener('click', openStation);
+
   function tapSlot(i: number): void {
     if (i === OUTPUT) {
-      if (!inv.takeResult()) notice(inv.craftResult() ? 'Mochila cheia' : 'Monte a receita primeiro');
+      if (!inv.takeResult()) notice(inv.craftResult() ? 'Mochila cheia' : 'Monte uma receita primeiro');
       refresh();
       return;
     }
@@ -167,13 +262,19 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     else { if (!inv.move(sel, i)) notice('Não dá para mover para lá'); sel = null; }
     refresh();
   }
-  recipeBtn.addEventListener('click', () => { if (!inv.fillRecipe()) notice('Falta algum ingrediente, ou a grade não está vazia'); refresh(); });
 
   function toggleBag(open: boolean): void {
     if (open === bagOpen) return;
     bagOpen = open;
     panel.hidden = !open;
     sel = null;
+    // mesa: o painel mostra só os cartões da estação; mochila: grade, fabricação 2 × 2 e receitas
+    const st = open && stationAt !== null;
+    panelTitle.textContent = st ? 'Mesa de Trabalho' : 'Mochila';
+    stationBody.hidden = !st;
+    tabs.hidden = st;
+    if (!open) stationAt = null;
+    showTab(st ? 'items' : tab);
     if (open) { if (document.pointerLockElement) document.exitPointerLock(); gesture.cancel(); keys.clear(); }
     else {
       if (!inv.returnCraft()) notice('Sem espaço: os itens ficam na grade');
@@ -245,7 +346,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (e.repeat) return;
     keys.add(e.code);
     if (e.code >= 'Digit1' && e.code <= 'Digit9') { const n = Number(e.code.slice(5)) - 1; if (n < HOTBAR) select(n); }
-    if (e.code === 'KeyE' && playing) toggleBag(!bagOpen);
+    if (e.code === 'KeyE' && playing) { if (bagOpen) toggleBag(false); else { stationAt = null; toggleBag(true); } }
+    if (e.code === 'KeyF' && playing && !bagOpen) openStation();
     if (e.code === 'Escape' && bagOpen) toggleBag(false);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
@@ -282,7 +384,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // Colocar e quebrar não têm mais botões: a área de interação (metade direita) coloca ao tocar e quebra ao segurar; arrastar gira a câmera
   const mk = (txt: string): HTMLButtonElement => { const b = el('button', 'titan-btn', acts, txt); b.type = 'button'; return b; };
   const bJump = mk('Pular'), bBag = mk('Mochila');
-  bBag.addEventListener('click', () => toggleBag(!bagOpen));
+  bBag.addEventListener('click', () => { if (bagOpen) toggleBag(false); else { stationAt = null; toggleBag(true); } });
   const hold = (b: HTMLElement, on: () => void, off: () => void): void => {
     b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); on(); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) b.addEventListener(t, off);
@@ -354,7 +456,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let lastSavedTime = session.time;
   let lastEdit = 0, lastPlayerSave = performance.now(), playerDirty = false, saving: Promise<void> | null = null, failed = false, retryAt = 0;
   const setSave = (txt: string, err = false): void => { saveLine.textContent = txt; saveLine.className = err ? 'err' : ''; };
-  function onEdited(): void { lastEdit = performance.now(); setSave('alterações pendentes…'); }
+  function onEdited(): void { lastEdit = performance.now(); setSave('alterações pendentes…'); view.setReeds(standingReeds(session)); } // o junco some onde se construiu
   function saveNow(): Promise<void> {
     if (saving) return saving;
     setSave('salvando…');
@@ -412,6 +514,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
     target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE) : null;
+    useBtn.hidden = !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar"
+    if (stationAt && bagOpen && !stationInReach()) closeStation(vol.get(stationAt.x, stationAt.y, stationAt.z) === T.WORKBENCH ? 'Mesa fora de alcance' : 'A mesa sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.render(eye, session.yaw, session.pitch, target, now / 1000);
     cross.hidden = !active;

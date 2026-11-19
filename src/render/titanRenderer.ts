@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { titanLanternModel, type LanternBatch } from './art/titan';
+import { titanLanternModel, titanWorkbenchModel, type LanternBatch } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -37,6 +37,12 @@ export class TitanRenderer {
   private readonly crackTex: THREE.Texture;
   /** Luz do dia compartilhada pelos materiais do terreno (uniform do shader). */
   private readonly ambient = { value: 1 };
+  private workbenchMesh!: THREE.InstancedMesh;
+  private workbenchSeen = -1;
+  private reedMesh!: THREE.InstancedMesh;
+  private reedGeo!: THREE.BufferGeometry;
+  private reedMat!: THREE.MeshBasicMaterial;
+  private readonly timeU = { value: 0 };
   private lanternStructure: THREE.InstancedMesh;
   private lanternCore: THREE.InstancedMesh;
   private lanternSeen = -1;
@@ -47,7 +53,7 @@ export class TitanRenderer {
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -121,6 +127,37 @@ export class TitanRenderer {
     this.lanternCore = new THREE.InstancedMesh(lanternGeometry(titanLanternModel.core, true), lmat, 16);
     for (const m of [this.lanternStructure, this.lanternCore]) { m.count = 0; m.frustumCulled = false; this.scene.add(m); }
 
+    // Mesa de Trabalho (ADR 0045): o mesmo modelo para todas as instâncias; `iGlow` por instância leva a luz de lanterna das células vizinhas (o terreno recebe a dele nos vértices)
+    const wtex = new THREE.Texture(extra.workbenchAtlas);
+    wtex.colorSpace = THREE.SRGBColorSpace;
+    wtex.magFilter = THREE.NearestFilter;
+    wtex.minFilter = THREE.NearestFilter;
+    wtex.generateMipmaps = false;
+    wtex.flipY = false;
+    wtex.needsUpdate = true;
+    const wmat = new THREE.MeshBasicMaterial({ map: wtex, vertexColors: true, fog: true });
+    patchDayLight(wmat, this.ambient, { instGlow: true });
+    this.workbenchMesh = new THREE.InstancedMesh(workbenchGeometry(), wmat, 8);
+    this.workbenchMesh.count = 0;
+    this.workbenchMesh.frustumCulled = false;
+    this.scene.add(this.workbenchMesh);
+
+    // junco de vidro: duas faixas cruzadas por planta, balanço leve no shader (uTime), sem colisão (não existe no volume)
+    const rtex = new THREE.Texture(extra.reed);
+    rtex.colorSpace = THREE.SRGBColorSpace;
+    rtex.magFilter = THREE.NearestFilter;
+    rtex.minFilter = THREE.NearestFilter;
+    rtex.generateMipmaps = false;
+    rtex.needsUpdate = true;
+    const rmat = new THREE.MeshBasicMaterial({ map: rtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
+    patchDayLight(rmat, this.ambient, { time: this.timeU });
+    this.reedGeo = reedGeometry();
+    this.reedMat = rmat;
+    this.reedMesh = new THREE.InstancedMesh(this.reedGeo, rmat, 64);
+    this.reedMesh.count = 0;
+    this.reedMesh.frustumCulled = false;
+    this.scene.add(this.reedMesh);
+
     // contorno da célula apontada
     const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1));
     this.outline = new THREE.LineSegments(box, new THREE.LineBasicMaterial({ color: 0xfff3d8 }));
@@ -154,6 +191,57 @@ export class TitanRenderer {
     this.lanternStructure.instanceMatrix.needsUpdate = this.lanternCore.instanceMatrix.needsUpdate = true;
   }
 
+  /** Refaz as instâncias das mesas (posta, retirada, carregada) e o brilho de cada uma (maior luz de lanterna nas 6 células vizinhas). */
+  private syncWorkbenches(force: boolean): void {
+    if (!force && this.workbenchSeen === this.volume.workbenchVersion) return;
+    this.workbenchSeen = this.volume.workbenchVersion;
+    const cells = this.volume.workbenchCells();
+    if (cells.length > this.workbenchMesh.instanceMatrix.count) {
+      const old = this.workbenchMesh;
+      const n = new THREE.InstancedMesh(old.geometry, old.material, Math.max(cells.length, old.instanceMatrix.count * 2));
+      n.frustumCulled = false;
+      this.scene.remove(old);
+      this.scene.add(n);
+      this.workbenchMesh = n;
+    }
+    const glow = new Float32Array(this.workbenchMesh.instanceMatrix.count * 3);
+    const mat = new THREE.Matrix4();
+    cells.forEach(([x, y, z], i) => {
+      mat.makeTranslation(x + 0.5, y, z + 0.5);
+      this.workbenchMesh.setMatrixAt(i, mat);
+      let lv = 0;
+      for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
+      const w = lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0;
+      glow.set([w, w * 0.72, w * 0.38], i * 3);
+    });
+    this.workbenchMesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));
+    this.workbenchMesh.count = cells.length;
+    this.workbenchMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /** Mesas desenhadas (diagnóstico e testes de navegador). */
+  get workbenchCount(): number { return this.workbenchMesh.count; }
+
+  /** Juncos de vidro: `list` = células de ar sobre areia úmida (o jogo filtra as que foram construídas). Rotação e tamanho por planta, determinísticos pela posição. */
+  setReeds(list: ReadonlyArray<{ x: number; y: number; z: number }>): void {
+    if (list.length > this.reedMesh.instanceMatrix.count) {
+      this.scene.remove(this.reedMesh);
+      this.reedMesh = new THREE.InstancedMesh(this.reedGeo, this.reedMat, Math.max(list.length, this.reedMesh.instanceMatrix.count * 2));
+      this.reedMesh.frustumCulled = false;
+      this.scene.add(this.reedMesh);
+    }
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    list.forEach((r, i) => {
+      const h = Math.sin(r.x * 12.9898 + r.z * 78.233) * 43758.5453, f = h - Math.floor(h);
+      q.setFromAxisAngle(up, f * Math.PI);
+      sc.set(0.85 + f * 0.3, 0.8 + ((f * 7) % 1) * 0.5, 0.85 + f * 0.3);
+      m.compose(p.set(r.x + 0.5, r.y, r.z + 0.5), q, sc);
+      this.reedMesh.setMatrixAt(i, m);
+    });
+    this.reedMesh.count = list.length;
+    this.reedMesh.instanceMatrix.needsUpdate = true;
+  }
+
   /** Lanternas desenhadas (diagnóstico e testes de navegador). */
   get lanternCount(): number { return this.lanternStructure.count; }
 
@@ -185,8 +273,8 @@ export class TitanRenderer {
   private spriteMaterial(index: number): THREE.SpriteMaterial {
     const tex = this.hotbarTex.clone();
     tex.needsUpdate = true;
-    tex.repeat.set(0.25, 0.5);
-    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) * 0.5);
+    tex.repeat.set(0.25, 1 / 3); // atlas de itens 4 × 3 (64 × 48 px)
+    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / 3);
     return new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.4, fog: true });
   }
 
@@ -240,6 +328,8 @@ export class TitanRenderer {
       }
     }
     this.syncLanterns();
+    this.syncWorkbenches(this.built > 0);
+    this.timeU.value = time;
     let n = 0;
     for (const e of this.itemSprites.values()) e.sprite.position.y = e.baseY + 0.06 * Math.sin(time * 2 + n++);
     this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
@@ -336,6 +426,36 @@ function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
   return g;
 }
 
+/** Mesa de Trabalho: sombreado por face (mesmos fatores do terreno) e luz do dia no shader; o brilho de lanterna entra por instância (`iGlow`). UV do glTF (origem no canto superior esquerdo). */
+function workbenchGeometry(): THREE.BufferGeometry {
+  const m = titanWorkbenchModel, n = m.pos.length / 3, col = new Float32Array(n * 3), glow = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const nx = m.nrm[i * 3], ny = m.nrm[i * 3 + 1], nz = m.nrm[i * 3 + 2];
+    const shade = ny > 0.5 ? 1 : ny < -0.5 ? 0.5 : nx > 0.5 ? 0.86 : nx < -0.5 ? 0.66 : nz > 0.5 ? 0.78 : 0.7;
+    col.set([shade, shade, shade], i * 3);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(m.pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(m.uv, 2));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('glow', new THREE.BufferAttribute(glow, 3));
+  g.setIndex(m.idx);
+  return g;
+}
+
+/** Junco de vidro: duas faixas verticais cruzadas de 1 × 1 (base em y = 0, topo em y = 1: o balanço do shader cresce com a altura). */
+function reedGeometry(): THREE.BufferGeometry {
+  const pos = [-0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0, 0, 0, -0.5, 0, 0, 0.5, 0, 1, 0.5, 0, 1, -0.5];
+  const uv = [0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(new Array(8 * 3).fill(0.95), 3));
+  g.setAttribute('glow', new THREE.Float32BufferAttribute(new Array(8 * 3).fill(0.05), 3)); // o junco não some na noite: só um leve resto de luz
+  g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+  return g;
+}
+
 function toGeometry(d: MeshData): THREE.BufferGeometry {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(d.pos, 3));
@@ -352,15 +472,17 @@ function toGeometry(d: MeshData): THREE.BufferGeometry {
  * (atributo de cada vértice) e a luz do dia é um uniform: mudar a hora é só mudar o número, sem refazer nenhuma malha. Névoa, mapa de tons e espaço de cor seguem o
  * material do Three.js.
  */
-function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: number }): void {
+function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: number }, opts: { instGlow?: boolean; time?: { value: number } } = {}): void {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uAmbient = ambient;
+    if (opts.time) sh.uniforms.uTime = opts.time;
+    const sway = opts.time ? '\n#ifdef USE_INSTANCING\ntransformed.x += sin(uTime * 1.7 + instanceMatrix[3].x * 0.9 + instanceMatrix[3].z * 0.7) * 0.07 * position.y;\ntransformed.z += cos(uTime * 1.3 + instanceMatrix[3].z * 0.8) * 0.04 * position.y;\n#endif' : '';
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec3 glow;\nvarying vec3 vGlow;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = glow;');
+      .replace('#include <common>', `#include <common>\nattribute vec3 glow;\n${opts.instGlow ? 'attribute vec3 iGlow;\n' : ''}${opts.time ? 'uniform float uTime;\n' : ''}varying vec3 vGlow;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvGlow = glow${opts.instGlow ? ' + iGlow' : ''};${sway}`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uAmbient;\nvarying vec3 vGlow;')
       .replace('#include <color_fragment>', 'diffuseColor.rgb *= vColor.rgb * uAmbient + vGlow;');
   };
-  mat.customProgramCacheKey = () => 'titan-daylight';
+  mat.customProgramCacheKey = () => `titan-daylight${opts.instGlow ? '-ig' : ''}${opts.time ? '-sway' : ''}`;
 }

@@ -17,10 +17,10 @@ export const REGION_MIN = -32;
 export const REGION_MAX = 32;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11 } as const;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN;
@@ -44,6 +44,7 @@ export function tileFor(id: number, face: Face): number {
     case T.LAKE: return 6; // quadro 1 (o quadro 2 = 7 é alternado no render)
     case T.VEIN_ROCK: return 8; // veios naturais (gerador v3): linha 3 do atlas, mesma arte nas 6 faces
     case T.VEIN_FROST: return 9;
+    case T.EMBER: return 10; // depósito de brasa de âmbar (gerador v4): rocha com cristal; a mesa (10) é o modelo 3D do renderer, não usa o atlas
     default: return 4;
   }
 }
