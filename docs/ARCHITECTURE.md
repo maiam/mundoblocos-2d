@@ -138,8 +138,8 @@ src/
    nuvens → dia/noite → partículas → foco/cursor/rachaduras. Depois HUD e botão de ação.
 Detalhado em [MAPS §2](MAPS.md#2-um-quadro-frame).
 
-## Titã (ADR 0039/0040/0041, v0.96.0)
-`src/titan/` é um **segundo motor, isolado**: volume voxel por `(x, y, z)` (`voxel.ts`, `generator.ts`, `volume.ts`, `mesher.ts`, `physics.ts`, `save.ts`, `session.ts`, `sections.ts`, `inventory.ts`, `items.ts`, `actions.ts`, `light.ts`, `sky.ts`; sem DOM, determinístico) + `titanGame.ts` (entrada e laço) +
+## Titã (ADR 0039–0042, v0.97.0)
+`src/titan/` é um **segundo motor, isolado**: volume voxel por `(x, y, z)` (`voxel.ts`, `generator.ts`, `volume.ts`, `mesher.ts`, `physics.ts`, `save.ts`, `session.ts`, `sections.ts`, `inventory.ts`, `items.ts`, `actions.ts`, `light.ts`, `sky.ts`, `gesture.ts`, `breaking.ts`; sem DOM, determinístico) + `titanGame.ts` (entrada e laço) +
 `render/titanRenderer.ts` (Three.js) + `render/art/titan.ts` (atlas do terreno e da hotbar). Só `main.ts` (`?mundo=titan`) e `world/profiles.ts` (registro do perfil) tocam o resto do jogo; nada de `World`, `Game`, `SUBDIV` ou `SaveStore`.
 
 ## Regras de dependência

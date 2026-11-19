@@ -13,3 +13,10 @@ import hotbar from '../../assets/titan-hotbar-sprites-16px.webp';
  * gelo fosco, fragmento de rocha, fragmento de gelo, cápsula de luz e lanterna da margem — nessa ordem (índice = id do item − 1, `titan/items.ts`).
  */
 export const titanHotbarUrl: string = hotbar;
+
+import cracks from '../../assets/titan-cracks-16px.webp';
+/**
+ * Dez estágios de rachadura (160 × 16 px RGBA, 16 × 16 por estágio, lado a lado; WebP sem perdas) desenhados por `scripts/make-titan-cracks.py`: arte própria
+ * do projeto para a quebra progressiva (ADR 0042). Usada como sobreposição reutilizável sobre o bloco em quebra, sem refazer a malha do chunk.
+ */
+export const titanCracksUrl: string = cracks;
