@@ -97,6 +97,6 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Bolsa e livro de receitas (v0.102.0, ADR 0047)
 - **Inventário:** 9 + 27 + grade 2 × 2 (36–39) + saída (40); `Inventory.fromData` migra `v: 1` (7 + 24) por seção; `TITAN_SAVE_VERSION` 5. Seleção até 8 (`HOTBAR - 1`).
-- **Tela única** (`titanGame.ts`): categorias | grade de receitas (busca, Só fabricáveis) | detalhe (Tenho / Preciso, Fabricar ×N) e a bolsa 3 × 9 embaixo; a mesa (Usar/F) abre a mesma tela com a estação ativa. `Recipe.group` define a categoria. Com a bolsa aberta o toque do mundo some (`titan-bag-open`).
+- **Tela única** (`titanGame.ts`): grupos (a Bolsa por último) | grade de receitas (busca, Só fabricáveis) | grade de fabricação com ingredientes (tenho / preciso; 2 × 2 na bolsa, 3 × 3 na mesa) e o item final, que se toca para fabricar; no grupo Bolsa: os 27 espaços e a grade 2 × 2 de verdade. A mesa (Usar/F) abre a mesma tela com a estação ativa. `Recipe.group` define o grupo. Com a tela aberta o toque do mundo some (`titan-bag-open`).
 - Testes: `inventory.test.ts` (migração por seção) e `fabricacao.test.ts` (save v4 → v5). Medição: emulador/desktop; **aparelho real pendente** (360 px de altura, rolagem da lista, teclado virtual na busca).
 

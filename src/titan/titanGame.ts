@@ -3,7 +3,7 @@ import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, ti
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
-import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, ingredientStatus, RECIPES, STATION_NAMES, type Group, type Recipe, type Station } from './recipes';
+import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, ingredientStatus, RECIPES, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
@@ -107,39 +107,41 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   };
   const hotSlots = Array.from({ length: HOTBAR }, (_, i) => mkSlot(hotbar, i, String(i + 1)));
 
-  // ---- Bolsa e livro de receitas (ADR 0047): categorias à esquerda, receitas no centro, ingredientes e Fabricar à direita; a bolsa (3 × 9) fica embaixo, alinhada à hotbar ----
-  const hbMenu = el('button', 'titan-btn titan-hbmenu', ui, '☰'); // abre a bolsa direto; fica à direita da hotbar, fora dos nove espaços
+  // ---- Bolsa e livro de receitas (ADR 0047): grupos à esquerda (a bolsa é o último), receitas no centro, grade de fabricação e item final à direita ----
+  const hbMenu = el('button', 'titan-btn titan-hbmenu', ui, '☰'); // abre a tela direto; fica à direita da hotbar, fora dos nove espaços
   hbMenu.type = 'button';
   hbMenu.setAttribute('aria-label', 'Bolsa e receitas');
   const panel = el('div', 'titan-panel', ui);
   panel.hidden = true;
   const top = el('div', 'titan-bagtop', panel);
   const cats = el('nav', 'titan-cats', top);
-  type Cat = 'todas' | Group | 'manual';
-  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['manual', 'Manual 2 × 2']];
+  type Cat = 'todas' | Group | 'bag';
+  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['bag', 'Bolsa']];
   const catBtns = new Map<Cat, HTMLButtonElement>();
-  for (const [id, name] of catDefs) { const b = el('button', 'titan-cat', cats, name); b.type = 'button'; catBtns.set(id, b); b.addEventListener('click', () => { cat = id; refresh(); }); }
+  for (const [id, name] of catDefs) { const b = el('button', 'titan-cat', cats, name); b.type = 'button'; catBtns.set(id, b); b.addEventListener('click', () => { cat = id; sel = null; refresh(); }); }
   const center = el('section', 'titan-center', top);
   const tools = el('div', 'titan-tools', center);
   const searchBox = el('input', 'titan-search', tools);
   searchBox.type = 'search'; searchBox.placeholder = 'Buscar'; searchBox.setAttribute('aria-label', 'Buscar receita'); searchBox.autocomplete = 'off';
   const onlyBtn = el('button', 'titan-btn titan-only', tools, 'Só fabricáveis');
   onlyBtn.type = 'button';
-  const closeBtn = el('button', 'titan-btn titan-x', tools, '✕');
-  closeBtn.type = 'button'; closeBtn.setAttribute('aria-label', 'Fechar');
   const rgrid = el('div', 'titan-rgrid', center);
-  const manual = el('div', 'titan-craft titan-manual', center);
-  el('small', '', manual, 'Montagem manual 2 × 2');
-  const craftRow = el('div', 'titan-craftrow', manual);
+  const bagGrid = el('div', 'titan-bag', center); // grupo "Bolsa": os 27 espaços (3 × 9)
+  const bagSlots = Array.from({ length: SLOTS - HOTBAR }, (_, i) => mkSlot(bagGrid, HOTBAR + i));
+  const right = el('aside', 'titan-right', top);
+  const rhead = el('div', 'titan-rhead', right);
+  el('small', 'th', rhead, 'Fabricação');
+  const closeBtn = el('button', 'titan-btn titan-x', rhead, '✕');
+  closeBtn.type = 'button'; closeBtn.setAttribute('aria-label', 'Fechar');
+  const detail = el('div', 'titan-detail', right); // receita escolhida: ingredientes na grade e o item final
+  const manual = el('div', 'titan-detail titan-manual', right); // grupo "Bolsa": a grade 2 × 2 de verdade
+  const craftRow = el('div', 'titan-craftcol', manual);
   const craftGrid = el('div', 'titan-craftgrid', craftRow);
   const craftSlots = Array.from({ length: CRAFT_SLOTS }, (_, i) => mkSlot(craftGrid, CRAFT_START + i));
-  el('span', 'arrow', craftRow, '→');
+  el('span', 'arrow', craftRow, '↓');
   const outSlot = mkSlot(craftRow, OUTPUT);
   outSlot.classList.add('out');
   el('small', 'hint', manual, 'Quatro blocos de rocha escura, em qualquer posição, formam a Mesa de Trabalho.');
-  const detail = el('aside', 'titan-detail', top);
-  const bagGrid = el('div', 'titan-bag', panel);
-  const bagSlots = Array.from({ length: SLOTS - HOTBAR }, (_, i) => mkSlot(bagGrid, HOTBAR + i));
   let stationAt: { x: number; y: number; z: number } | null = null;
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
@@ -181,7 +183,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function visibleRecipes(): Recipe[] {
     const at = ctxStation();
     return RECIPES.filter((r) => (r.station === 'workbench' ? session.known.has('bancada') || at === 'workbench' : session.known.has('mesa')))
-      .filter((r) => cat === 'todas' || cat === 'manual' || r.group === cat)
+      .filter((r) => cat === 'todas' || cat === 'bag' || r.group === cat)
       .filter((r) => !query || norm(r.name).includes(query))
       .filter((r) => !onlyOk || blockedReason(inv, r, at) === null);
   }
@@ -192,53 +194,57 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
     onlyBtn.classList.toggle('on', onlyOk);
     onlyBtn.setAttribute('aria-pressed', String(onlyOk));
-    const isManual = cat === 'manual';
-    searchBox.hidden = onlyBtn.hidden = isManual;
-    rgrid.hidden = isManual;
-    manual.hidden = !isManual;
-    // grade de receitas
+    const isBag = cat === 'bag';
+    tools.hidden = rgrid.hidden = isBag;
+    bagGrid.hidden = !isBag;
+    manual.hidden = !isBag;
+    detail.hidden = isBag;
+    if (isBag) return; // grupo Bolsa: a grade de itens e a fabricação 2 × 2 são slots fixos (já desenhados acima)
+    // centro: grade de receitas (ícone do resultado; ×N no canto; selo quando bloqueada)
     rgrid.textContent = '';
     const list = visibleRecipes();
-    if (!isManual) {
-      if (selRecipe === null || !list.some((r) => r.id === selRecipe)) selRecipe = list[0]?.id ?? null;
-      if (!list.length) el('small', 'hint', rgrid, session.known.has('mesa') ? 'Nenhuma receita neste filtro.' : 'Colete rocha escura para descobrir a primeira receita.');
-      for (const r of list) {
-        const reason = blockedReason(inv, r, at);
-        const c = el('button', 'titan-rcell', rgrid);
-        c.type = 'button';
-        c.classList.toggle('sel', r.id === selRecipe);
-        c.classList.toggle('off', reason !== null);
-        iconOf(c, r.result.item, 'md');
-        if (r.result.count > 1) el('em', 'count', c, String(r.result.count));
-        if (reason && reason !== 'ok') el('span', 'badge', c, BADGE[reason]);
-        c.setAttribute('aria-label', `${r.name}${reason && reason !== 'ok' ? ` — ${CRAFT_MESSAGES[reason]}` : ''}`);
-        c.addEventListener('click', () => { selRecipe = r.id; drawBook(); });
-      }
+    if (selRecipe === null || !list.some((r) => r.id === selRecipe)) selRecipe = list[0]?.id ?? null;
+    if (!list.length) el('small', 'hint', rgrid, session.known.has('mesa') ? 'Nenhuma receita neste filtro.' : 'Colete rocha escura para descobrir a primeira receita.');
+    for (const r of list) {
+      const reason = blockedReason(inv, r, at);
+      const c = el('button', 'titan-rcell', rgrid);
+      c.type = 'button';
+      c.classList.toggle('sel', r.id === selRecipe);
+      c.classList.toggle('off', reason !== null);
+      iconOf(c, r.result.item, 'md');
+      if (r.result.count > 1) el('em', 'count', c, String(r.result.count));
+      if (reason && reason !== 'ok') el('span', 'badge', c, BADGE[reason]);
+      c.setAttribute('aria-label', `${r.name}${reason && reason !== 'ok' ? ` — ${CRAFT_MESSAGES[reason]}` : ''}`);
+      c.addEventListener('click', () => { selRecipe = r.id; drawBook(); });
     }
-    // detalhe: resultado, estação, Tenho / Preciso e Fabricar
+    // direita: os ingredientes na grade de fabricação (2 × 2 na bolsa, 3 × 3 na mesa; "tenho / preciso" em cada um) e o item final embaixo, com nome; tocar nele fabrica
     detail.textContent = '';
-    const r = isManual ? undefined : RECIPES.find((q) => q.id === selRecipe);
-    if (!r) { el('small', 'hint', detail, isManual ? 'Arraste itens da bolsa para a grade 2 × 2 (1 por espaço) e pegue o resultado.' : 'Toque numa receita para ver o que ela pede.'); return; }
+    const r = RECIPES.find((q) => q.id === selRecipe);
+    if (!r) { el('small', 'hint', detail, 'Toque numa receita para ver o que ela pede.'); return; }
     const reason = blockedReason(inv, r, at);
-    const head = el('div', 'titan-dhead', detail);
-    iconOf(head, r.result.item, 'md');
-    el('b', '', head, `${r.name}${r.result.count > 1 ? ` ×${r.result.count}` : ''}`);
-    const stn = r.station === 'workbench' ? (at === 'workbench' ? 'Mesa · ativa' : 'Mesa · use a mesa') : 'Bolsa';
-    const meta = el('div', 'titan-dmeta', detail);
-    el('small', r.station === 'workbench' && at !== 'workbench' ? 'station lack' : 'station', meta, stn);
-    el('small', 'th', meta, 'Tenho / Preciso');
-    meta.title = r.station === 'workbench' ? `${STATION_NAMES.workbench}` : STATION_NAMES.personal;
-    for (const g of ingredientStatus(inv, r)) {
-      const row = el('span', g.have >= g.need ? 'ing ok' : 'ing lack', detail);
-      iconOf(row, g.item, 'sm');
-      el('em', '', row, ITEM_NAMES[g.item]);
-      el('b', '', row, `${g.have} / ${g.need}`);
+    el('small', r.station === 'workbench' && at !== 'workbench' ? 'station lack' : 'station', detail, r.station === 'workbench' ? (at === 'workbench' ? 'Mesa de Trabalho · ativa' : 'Use a Mesa de Trabalho') : 'Fabricação pessoal');
+    const n = r.station === 'workbench' ? 3 : 2;
+    const ing = ingredientStatus(inv, r);
+    const igrid = el('div', n === 3 ? 'titan-igrid n3' : 'titan-igrid', detail);
+    for (let k = 0; k < n * n; k++) {
+      const g = ing[k];
+      const cell = el('div', g ? (g.have >= g.need ? 'titan-icell ok' : 'titan-icell lack') : 'titan-icell', igrid);
+      if (!g) continue;
+      iconOf(cell, g.item, 'md');
+      el('em', 'count', cell, `${g.have}/${g.need}`);
+      cell.title = `${ITEM_NAMES[g.item]}: tenho ${g.have}, preciso ${g.need}`;
+      cell.setAttribute('aria-label', cell.title);
     }
-    const btn = el('button', 'titan-btn titan-fab', detail, r.result.count > 1 ? `Fabricar ×${r.result.count}` : 'Fabricar');
-    btn.type = 'button';
-    btn.disabled = reason !== null;
+    el('span', 'arrow', detail, '↓');
+    const res = el('button', reason === null ? 'titan-result ok' : 'titan-result off', detail);
+    res.type = 'button';
+    iconOf(res, r.result.item, 'md');
+    if (r.result.count > 1) el('em', 'count', res, String(r.result.count));
+    res.setAttribute('aria-label', `Fabricar ${r.result.count > 1 ? `${r.result.count} × ` : ''}${r.name}`);
+    res.addEventListener('click', () => doCraft(r));
+    el('b', 'rname', detail, `${r.name}${r.result.count > 1 ? ` ×${r.result.count}` : ''}`);
     if (reason && reason !== 'ok') el('small', 'why', detail, CRAFT_MESSAGES[reason]);
-    btn.addEventListener('click', () => doCraft(r));
+    else el('small', 'tip', detail, 'Toque no item para fabricar');
   }
   function iconOf(parent: HTMLElement, item: number, size: 'sm' | 'md'): void {
     const i = el('i', `titan-icon ${size}`, parent);
@@ -289,7 +295,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       refresh();
       return;
     }
-    if (!bagOpen) { if (i < HOTBAR) select(i); return; }
+    if (!bagOpen || cat !== 'bag') { if (i < HOTBAR) select(i); return; } // só no grupo Bolsa os toques movem itens
     if (sel === null) { if (inv.get(i)) sel = i; }
     else if (sel === i) sel = null;
     else { if (!inv.move(sel, i)) notice('Não dá para mover para lá'); sel = null; }
