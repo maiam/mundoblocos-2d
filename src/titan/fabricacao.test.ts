@@ -8,7 +8,7 @@ import { Item } from './items';
 import { craft, recipeById } from './recipes';
 import { MemoryTitanStorage, TITAN_SAVE_VERSION } from './save';
 import { discoverRecipes, flush, hasPendingState, openSession, standingReeds, type TitanSession } from './session';
-import { inRegion, isSolid, T } from './voxel';
+import { inRegion, isSolid, isWorkbench, T, workbenchId, workbenchTurn, workbenchTurnFacing } from './voxel';
 import { TitanVolume } from './volume';
 
 const open = async (st = new MemoryTitanStorage(), version?: number) => ({ st, s: await openSession(st, 42, () => 1, undefined, version) });
@@ -78,9 +78,10 @@ describe('Mesa de Trabalho no mundo', () => {
     expect(craft(s.inventory, recipeById('mesa')!, null).ok).toBe(true);
     const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
     s.inventory.move(slot, 1);
+    s.yaw = Math.PI; // olhando ao sul: a frente fica ao norte, o giro original (ADR 0052)
     expect(placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 1).ok).toBe(true);
     expect(s.volume.get(bx, 65, bz)).toBe(T.WORKBENCH);
-    expect(s.volume.workbenchCells()).toEqual([[bx, 65, bz]]);
+    expect(s.volume.workbenchCells()).toEqual([[bx, 65, bz, 0]]);
     expect(isSolid(T.WORKBENCH)).toBe(true);
     expect(breakTotalMs('block', T.WORKBENCH)).toBe(1600);
     // inventário cheio: a quebra falha e a mesa fica
@@ -100,7 +101,7 @@ describe('Mesa de Trabalho no mundo', () => {
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(bx, 65, bz)).toBe(T.WORKBENCH);
-    expect(r.volume.workbenchCells()).toEqual([[bx, 65, bz]]);
+    expect(r.volume.workbenchCells()).toEqual([[bx, 65, bz, 0]]);
     expect(r.volume.workbenchVersion).toBeGreaterThan(0);
   });
 });
@@ -267,6 +268,7 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 2, bz = Math.floor(a.z);
     const mslot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
     s.inventory.move(mslot, 1);
+    s.yaw = Math.PI; // giro original (ADR 0052)
     expect(placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 1).ok).toBe(true);
     expect(discoverRecipes(s)).toContain('bancada');
     // lente: fragmento de gelo, na mesa
@@ -376,5 +378,38 @@ describe('migração do inventário (save v4 → v5, hotbar de 9 e bolsa de 27)'
     const r2 = await openSession(st, null, () => 1);
     for (let i = 0; i < SLOTS; i++) expect(r2.inventory.get(i)).toEqual(r.inventory.get(i)); // reabrir não muda nada nem duplica
     expect(hasPendingState(r2)).toBe(false);
+  });
+});
+
+describe('orientação da Mesa de Trabalho (ADR 0052)', () => {
+  it('a frente fica voltada para o jogador: olhando ao norte a frente vai ao sul, e assim nas quatro direções', () => {
+    // giro 0 = frente ao norte (−Z); 1 = oeste; 2 = sul; 3 = leste. yaw 0 olha para −Z; π/2 para −X; π para +Z; −π/2 para +X.
+    expect(workbenchTurnFacing(0)).toBe(2);
+    expect(workbenchTurnFacing(Math.PI / 2)).toBe(3);
+    expect(workbenchTurnFacing(Math.PI)).toBe(0);
+    expect(workbenchTurnFacing(-Math.PI / 2)).toBe(1);
+    expect(workbenchTurnFacing(0.3)).toBe(2); // arredonda ao eixo mais próximo
+    expect(workbenchTurnFacing(-7 * Math.PI)).toBe(0); // voltas completas
+    for (let t = 0; t < 4; t++) { expect(workbenchTurn(workbenchId(t))).toBe(t); expect(isWorkbench(workbenchId(t))).toBe(true); expect(isSolid(workbenchId(t))).toBe(true); }
+    expect(isWorkbench(T.SLAB)).toBe(false);
+  });
+  it('colocada com o giro do olhar, persiste ao reabrir, vira item ao quebrar e continua sendo uma mesa', async () => {
+    const { s, st } = await open();
+    const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 2, bz = Math.floor(a.z);
+    for (const [k, yaw] of [0, Math.PI / 2].entries()) {
+      s.inventory.add(Item.WORKBENCH, 1);
+      const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
+      s.yaw = yaw;
+      expect(placeFromSlot(s, { x: bx, y: 64, z: bz + k * 2, nx: 0, ny: 1, nz: 0 }, slot).ok).toBe(true);
+    }
+    expect(s.volume.workbenchCells()).toEqual([[bx, 65, bz, 2], [bx, 65, bz + 2, 3]]);
+    expect(s.volume.place(bx, 65, bz + 4, workbenchId(1))).toBe(true); // giro 1 (frente a oeste) direto no volume
+    expect(s.volume.isWorkbench(bx, 65, bz)).toBe(true);
+    await flush(st, s);
+    const r = await openSession(st, null, () => 1);
+    expect(r.volume.workbenchCells().sort((p, q) => p[2] - q[2])).toEqual([[bx, 65, bz, 2], [bx, 65, bz + 2, 3], [bx, 65, bz + 4, 1]]);
+    expect(breakOrCollect(r, hit({ x: bx, y: 65, z: bz })).ok).toBe(true);
+    expect(r.inventory.total(Item.WORKBENCH)).toBe(1);
+    expect(r.volume.workbenchCells().length).toBe(2);
   });
 });

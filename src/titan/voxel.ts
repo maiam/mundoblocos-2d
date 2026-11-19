@@ -17,10 +17,10 @@ export const REGION_MIN = -32;
 export const REGION_MAX = 32;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15 } as const;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN;
@@ -34,6 +34,21 @@ export const blockHeight = (id: number): number => (id === T.SLAB ? 0.5 : isSoli
 export const isFull = (id: number): boolean => isSolid(id) && id !== T.SLAB;
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
+
+/**
+ * Mesa de Trabalho com quatro orientações (ADR 0052): o id 10 é a original (frente = o nicho voltado para −Z, norte) e 13–15 a giram 90°, 180° e 270° (anti-horário visto de cima). O giro vale **no id**,
+ * então salva, quebra e carrega sem estado extra; todo código que pergunta "é uma mesa?" usa `isWorkbench`.
+ */
+const WORKBENCH_IDS = [T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270] as const;
+export const isWorkbench = (id: number): boolean => id === T.WORKBENCH || (id >= T.WORKBENCH_90 && id <= T.WORKBENCH_270);
+/** Giro da mesa em quartos de volta (0–3) a partir do id; 0 para qualquer outro bloco. */
+export const workbenchTurn = (id: number): number => (id === T.WORKBENCH ? 0 : id >= T.WORKBENCH_90 && id <= T.WORKBENCH_270 ? id - T.WORKBENCH_90 + 1 : 0);
+export const workbenchId = (turn: number): number => WORKBENCH_IDS[((turn % 4) + 4) % 4];
+/**
+ * Giro (0–3) que deixa a frente da mesa voltada **para o jogador**: a direção de olhar (yaw 0 = −Z) arredondada ao eixo mais próximo, invertida. Olhando ao norte a frente fica ao sul,
+ * olhando a leste fica a oeste, e assim por diante.
+ */
+export const workbenchTurnFacing = (yaw: number): number => ((Math.round((yaw + Math.PI) / (Math.PI / 2)) % 4) + 4) % 4;
 
 export type Face = 'top' | 'side' | 'bottom';
 

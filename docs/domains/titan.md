@@ -106,6 +106,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Bancada 3 × 3 e painéis de basalto (v0.104.0, ADR 0049)
 - **Grade da mesa** (`inventory.ts`): `BENCH_START` 41–49, saída `BENCH_OUT` 50, separada da pessoal; `matchBench` (quantidades exatas, qualquer disposição), `takeBenchResult` (atômica), `returnBench` (devolve ao fechar; o que não couber fica na grade e no save). Inventário gravado `v: 3` com `bench`.
+- **Mesa de Trabalho** (ADR 0052): 4 ids (10, 13–15 = giro 0–3), frente voltada para o jogador ao colocar; sempre `isWorkbench(id)`, nunca `=== T.WORKBENCH`.
 - **Junco de Vidro** (ADR 0051): 3 silhuetas (`titan/reeds.ts`, atlas 48 × 16), uma `InstancedMesh` por silhueta; célula lógica inalterada.
 - **Interface** (`titanGame.ts`): grade 3 × 3 no grupo Bolsa (ADR 0050, sem exigir a Mesa; receita da Mesa sem a Mesa bloqueia a saída), `takeBench` revalida mesa e alcance a cada toque; prévia 3 × 3 com `previewCells`. Basalto por `--basalt` (`render/art/titan.ts` → `titanBasaltUrl`).
 - Testes: `bench.test.ts`. Medição: emulador (740 × 360); **aparelho real pendente**.

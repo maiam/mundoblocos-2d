@@ -1,4 +1,4 @@
-import { T } from './voxel';
+import { isWorkbench, T } from './voxel';
 
 /**
  * Itens do Titã (ADR 0040). O id é o índice do sprite no atlas da hotbar + 1 (`render/art/titan.ts`): a ordem do atlas não depende da ordem dos espaços da barra.
@@ -29,7 +29,7 @@ export function itemOfBlock(block: number): ItemId | null {
   if (block === T.VEIN_ROCK) return Item.DARK_ROCK; // o veio devolve o bloco inteiro (a lasca vem à parte, em `actions.ts`)
   if (block === T.VEIN_FROST) return Item.FROST;
   if (block === T.LANTERN) return Item.LANTERN;
-  if (block === T.WORKBENCH) return Item.WORKBENCH;
+  if (isWorkbench(block)) return Item.WORKBENCH;
   if (block === T.SLAB) return Item.SLAB;
   return null;
 }

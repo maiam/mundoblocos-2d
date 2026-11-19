@@ -206,8 +206,8 @@ export class TitanRenderer {
     }
     const glow = new Float32Array(this.workbenchMesh.instanceMatrix.count * 3);
     const mat = new THREE.Matrix4();
-    cells.forEach(([x, y, z], i) => {
-      mat.makeTranslation(x + 0.5, y, z + 0.5);
+    cells.forEach(([x, y, z, turn], i) => {
+      mat.makeRotationY(turn * Math.PI / 2).setPosition(x + 0.5, y, z + 0.5);
       this.workbenchMesh.setMatrixAt(i, mat);
       let lv = 0;
       for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));

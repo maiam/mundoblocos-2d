@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.107.0 — Titã: a Mesa de Trabalho fica voltada para o jogador (19/11/2026)
+- **Pedido do dono do produto:** a mesa saía sempre virada para o mesmo lado. Agora a frente (o nicho) fica voltada para quem a coloca (olhando ao norte, a frente fica ao sul). **ADR 0052.**
+- Quatro ids de bloco (`T.WORKBENCH`, `_90`, `_180`, `_270`; giro no id, sem estado extra nem `TITAN_SAVE_VERSION`); `isWorkbench`/`workbenchTurn`/`workbenchId`/`workbenchTurnFacing` em `voxel.ts`; `workbenchCells()` devolve `[x, y, z, giro]`; o renderer gira cada instância. Mesas antigas (id 10) abrem como estavam.
+- Testes (`fabricacao.test.ts`): giro pelas quatro direções, persistência ao reabrir, quebra devolve o item. Conferido a 740 × 360 pela colocação real (clique) nas quatro direções.
+
 ## Orvalis v0.106.0 — Titã: Junco de Vidro com três silhuetas (19/11/2026)
 - **Arte do dono do produto** (Drive): atlas de 48 × 16 px com broto baixo, haste bifurcada e tufo aberto. **ADR 0051.**
 - `titan/reeds.ts` (`reedVariant`, pura): silhueta determinística pela célula; `TitanRenderer` usa 3 `InstancedMesh` (uma por silhueta, mesmo material e plano cruzado, só o UV muda). Mira, coleta, queda e save inalterados.
