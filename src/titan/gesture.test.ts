@@ -23,11 +23,12 @@ function rig(opts: { placeOk?: boolean; completeOk?: boolean } = {}) {
 
 describe('tempos de quebra', () => {
   it('areia 0,6 s, gelo 1,2 s, rocha 1,6 s; lanterna e lasca 0,35 s; rocha-mãe e líquido não quebram', () => {
-    expect(BREAK_MS).toEqual({ sand: 600, ice: 1200, rock: 1600, collect: 350 });
+    expect(BREAK_MS).toEqual({ sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350 });
     expect(breakTotalMs('block', T.SAND)).toBe(600);
     expect(breakTotalMs('block', T.DAMP_SAND)).toBe(600);
     expect(breakTotalMs('block', T.FROST)).toBe(1200);
     expect(breakTotalMs('block', T.DARK_ROCK)).toBe(1600);
+    expect(breakTotalMs('block', T.SLAB)).toBe(1000); // a laje (meio bloco de rocha) cede mais depressa
     expect(breakTotalMs('lantern')).toBe(350);
     expect(breakTotalMs('shard')).toBe(350);
     expect(breakTotalMs('block', T.BEDROCK)).toBeNull();

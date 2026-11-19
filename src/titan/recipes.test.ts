@@ -8,8 +8,9 @@ const fill = (i: Inventory, item: number): void => { while (i.canAdd(item)) i.ad
 const snapshot = (i: Inventory): string => JSON.stringify(i.toData());
 
 describe('catálogo de receitas (ADR 0045)', () => {
-  it('a primeira entrega tem mesa (4 rochas, pessoal), lente (1 fragmento de gelo, mesa) e lanterna (2 fragmentos de rocha + lente + brasa, mesa)', () => {
-    expect(RECIPES.map((r) => r.id)).toEqual(['mesa', 'lente', 'lanterna']);
+  it('o catálogo tem mesa (4 rochas, pessoal), lente (1 fragmento de gelo, mesa), lanterna (2 fragmentos de rocha + lente + brasa, mesa) e laje (3 rochas → 6 lajes, mesa)', () => {
+    expect(RECIPES.map((r) => r.id)).toEqual(['mesa', 'lente', 'lanterna', 'laje']);
+    expect(recipeById('laje')).toMatchObject({ station: 'workbench', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }] });
     expect(mesa).toMatchObject({ station: 'personal', result: { item: Item.WORKBENCH, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }] });
     expect(lente).toMatchObject({ station: 'workbench', result: { item: Item.ICE_LENS, count: 1 }, ingredients: [{ item: Item.FROST_SHARD, count: 1 }] });
     expect(lanterna.ingredients).toEqual([{ item: Item.ROCK_SHARD, count: 2 }, { item: Item.ICE_LENS, count: 1 }, { item: Item.EMBER, count: 1 }]);

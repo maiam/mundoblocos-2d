@@ -17,10 +17,10 @@ export const REGION_MIN = -32;
 export const REGION_MAX = 32;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12 } as const;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN;
@@ -28,6 +28,10 @@ export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE &&
 export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN;
 /** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
 export const isOccupied = isTarget;
+/** Altura do bloco dentro da célula (0–1): 1 = cubo inteiro, 0,5 = laje (ADR 0046), 0 = não sólido. A física e a mira usam esta altura. */
+export const blockHeight = (id: number): number => (id === T.SLAB ? 0.5 : isSolid(id) ? 1 : 0);
+/** Cubo inteiro: só ele esconde as faces vizinhas (a laje deixa a metade de cima da célula aberta). */
+export const isFull = (id: number): boolean => isSolid(id) && id !== T.SLAB;
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 
@@ -39,6 +43,7 @@ export function tileFor(id: number, face: Face): number {
     case T.SAND: return face === 'top' ? 0 : 1;
     case T.DAMP_SAND: return face === 'top' ? 2 : 3;
     case T.DARK_ROCK:
+    case T.SLAB: // a laje reaproveita a rocha escura: topo de 16 × 16 e lateral com 8 px de altura (ADR 0046)
     case T.BEDROCK: return 4;
     case T.FROST: return 5;
     case T.LAKE: return 6; // quadro 1 (o quadro 2 = 7 é alternado no render)

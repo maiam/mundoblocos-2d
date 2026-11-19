@@ -21,8 +21,26 @@ export function collides(v: TitanVolume, x: number, y: number, z: number): boole
   const x0 = Math.floor(x - BODY_HALF + EPS), x1 = Math.floor(x + BODY_HALF - EPS);
   const y0 = Math.floor(y + EPS), y1 = Math.floor(y + BODY_HEIGHT - EPS);
   const z0 = Math.floor(z - BODY_HALF + EPS), z1 = Math.floor(z + BODY_HALF - EPS);
-  for (let yy = y0; yy <= y1; yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) if (v.solidForBody(xx, yy, zz)) return true;
+  for (let yy = y0; yy <= y1; yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) {
+    const h = v.bodyHeight(xx, yy, zz);
+    if (h >= 1 || (h > 0 && y < yy + h - EPS)) return true; // laje (meia altura): só colide se os pés estão abaixo do topo dela
+  }
   return false;
+}
+
+/** Degrau automático de meia altura (a laje): o corpo sobe a laje andando, sem pular; contra cubo inteiro (1 m) continua barrado. */
+const STEP = 0.5;
+
+/** Altura do apoio ao cair: o topo mais alto sob os pés entre a posição nova (`ny`) e a anterior (`oldY`). Cai no chão inteiro ou na laje. */
+function landingY(v: TitanVolume, x: number, z: number, ny: number, oldY: number): number {
+  const x0 = Math.floor(x - BODY_HALF + EPS), x1 = Math.floor(x + BODY_HALF - EPS);
+  const z0 = Math.floor(z - BODY_HALF + EPS), z1 = Math.floor(z + BODY_HALF - EPS);
+  let best = -Infinity;
+  for (let yy = Math.floor(ny + EPS); yy <= Math.floor(oldY + EPS); yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) {
+    const h = v.bodyHeight(xx, yy, zz);
+    if (h > 0 && yy + h > ny + EPS && yy + h <= oldY + 2 * EPS) best = Math.max(best, yy + h);
+  }
+  return best === -Infinity ? Math.floor(ny + EPS) + 1 : best;
 }
 
 export interface MoveInput {
@@ -65,11 +83,13 @@ function moveAxis(v: TitanVolume, b: Body, axis: 'x' | 'y' | 'z', d: number): vo
   if (d === 0) return;
   const nx = axis === 'x' ? b.x + d : b.x, ny = axis === 'y' ? b.y + d : b.y, nz = axis === 'z' ? b.z + d : b.z;
   if (!collides(v, nx, ny, nz)) { b.x = nx; b.y = ny; b.z = nz; return; }
+  // no chão, contra uma laje: sobe o degrau de meia altura e segue andando
+  if (axis !== 'y' && b.onGround && !collides(v, nx, b.y + STEP, nz) && collides(v, nx, b.y + STEP / 2, nz)) { b.x = nx; b.y += STEP; b.z = nz; return; }
   // encosta na face do bloco que barrou
   if (axis === 'x') { b.x = d > 0 ? Math.floor(nx + BODY_HALF - EPS) - BODY_HALF - EPS : Math.floor(nx - BODY_HALF + EPS) + 1 + BODY_HALF + EPS; b.vx = 0; }
   else if (axis === 'z') { b.z = d > 0 ? Math.floor(nz + BODY_HALF - EPS) - BODY_HALF - EPS : Math.floor(nz - BODY_HALF + EPS) + 1 + BODY_HALF + EPS; b.vz = 0; }
   else if (d > 0) { b.y = Math.floor(ny + BODY_HEIGHT - EPS) - BODY_HEIGHT - EPS; b.vy = 0; }
-  else { b.y = Math.floor(ny + EPS) + 1; b.vy = 0; b.onGround = true; }
+  else { b.y = landingY(v, b.x, b.z, ny, b.y); b.vy = 0; b.onGround = true; }
 }
 
 /** Direção de olhar (yaw/pitch, Three.js: yaw 0 olha para −Z) → vetor unitário. */
@@ -100,6 +120,10 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
         // a lanterna é pequena: acerta só a caixa do objeto (com folga de toque); fora dela o raio segue e pega o que está atrás
         const box = lanternBox(x, y, z, pad), h = rayBox(ox, oy, oz, dx, dy, dz, box);
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, box: lanternBox(x, y, z) };
+      } else if (id === T.SLAB) {
+        // a laje ocupa só a metade de baixo da célula: a mira acerta essa caixa (o topo fica em y + 0,5) e o raio segue por cima dela
+        const box: Box = [x, y, z, x + 1, y + 0.5, z + 1], h = rayBox(ox, oy, oz, dx, dy, dz, box);
+        if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, box };
       } else if (isTarget(id)) return { x, y, z, nx, ny, nz };
     }
     if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; nx = -sx; ny = 0; nz = 0; }
@@ -110,9 +134,9 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
 }
 
 /** Colocar na célula adjacente à face aponta­da: livre (ar ou líquido), editável e fora do corpo do jogador. */
-export function canPlaceAt(v: TitanVolume, b: Body, x: number, y: number, z: number, items?: ItemLookup): boolean {
+export function canPlaceAt(v: TitanVolume, b: Body, x: number, y: number, z: number, items?: ItemLookup, height = 1): boolean {
   if (!v.editable(x, y, z) || isOccupied(v.get(x, y, z)) || items?.at(x, y, z)) return false;
-  const overlap = x + 1 > b.x - BODY_HALF && x < b.x + BODY_HALF && z + 1 > b.z - BODY_HALF && z < b.z + BODY_HALF && y + 1 > b.y && y < b.y + BODY_HEIGHT;
+  const overlap = x + 1 > b.x - BODY_HALF && x < b.x + BODY_HALF && z + 1 > b.z - BODY_HALF && z < b.z + BODY_HALF && y + height > b.y + EPS && y < b.y + BODY_HEIGHT;
   return !overlap;
 }
 

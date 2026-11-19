@@ -273,8 +273,8 @@ export class TitanRenderer {
   private spriteMaterial(index: number): THREE.SpriteMaterial {
     const tex = this.hotbarTex.clone();
     tex.needsUpdate = true;
-    tex.repeat.set(0.25, 1 / 3); // atlas de itens 4 × 3 (64 × 48 px)
-    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / 3);
+    tex.repeat.set(0.25, 0.25); // atlas de itens 4 × 4 (64 × 64 px)
+    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / 4);
     return new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.4, fog: true });
   }
 
