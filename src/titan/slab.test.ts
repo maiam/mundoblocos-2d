@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { breakOrCollect, placeFromSlot } from './actions';
 import { TitanGenerator } from './generator';
+import { SLOTS } from './inventory';
 import { Item } from './items';
 import { meshSection } from './mesher';
 import { BODY_HEIGHT, canPlaceAt, collides, newBody, raycast, stepBody } from './physics';
@@ -122,7 +123,7 @@ describe('Laje de Rocha: fabricar, colocar, quebrar e persistir', () => {
     expect(craft(s.inventory, recipeById('laje')!, 'workbench').ok).toBe(true);
     expect(s.inventory.total(Item.SLAB)).toBe(6); expect(s.inventory.total(Item.DARK_ROCK)).toBe(0);
     const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 2, bz = Math.floor(a.z);
-    const slot = [...Array(31).keys()].find((i) => s.inventory.get(i)?.item === Item.SLAB)!;
+    const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.SLAB)!;
     s.inventory.move(slot, 0);
     expect(placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 0).ok).toBe(true);
     expect(s.volume.get(bx, 65, bz)).toBe(T.SLAB);

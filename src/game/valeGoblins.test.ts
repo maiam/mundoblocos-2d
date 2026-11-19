@@ -118,7 +118,7 @@ describe('Vida social dos goblins (v0.93.165)', () => {
     expect(seen.swing).toBeGreaterThan(0);
     expect(seen.spark).toBeGreaterThan(0);
     expect(seen.parry).toBeGreaterThan(0);
-  });
+  }, 30_000); // simula 3 minutos de jogo (~1,6 s sozinho; passou de 5 s no runner com os outros arquivos em paralelo): o limite padrão era apertado
 
   it('não ficam um dentro do outro (fora de quem conversa ou está sentado) e o movimento é determinístico', () => {
     const run = (): string => {

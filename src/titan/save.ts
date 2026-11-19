@@ -6,9 +6,10 @@
 /**
  * v2 (entrega 2, ADR 0040): `inventory` passa a existir (mochila, grade, fragmentos recolhidos). v1 (sem inventário) continua abrindo.
  * v3 (ADR 0044): `drops` = lascas soltas por veios quebrados e ainda não recolhidas. v1 e v2 continuam abrindo (sem drops).
+ * v5 (ADR 0047): hotbar de 9 + mochila de 27; o inventário gravado vira `v: 2` (36 espaços); saves v1–v4 migram por seção ao abrir (`Inventory.fromData`).
  * v4 (ADR 0045): `recipes` (receitas descobertas) e `grants` (adição localizada de brasa em partida legada); a cápsula remanescente vira brasa uma única vez ao abrir um save < 4.
  */
-export const TITAN_SAVE_VERSION = 4;
+export const TITAN_SAVE_VERSION = 5;
 const DB_NAME = 'orvalis-titan';
 
 export interface TitanHeader {

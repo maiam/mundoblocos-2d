@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.102.0 — Titã: bolsa com livro de receitas numa tela só (hotbar de 9, ☰, bolsa 3 × 9) (19/11/2026)
+- **Pedido do dono do produto:** manter o fluxo de fabricação da referência (9 espaços na hotbar, ☰ para a bolsa, categorias à esquerda, receitas no centro, ingredientes à direita) com arte da Margem Silenciosa. Decisões na **ADR 0047**.
+- **Interface (fluxo da referência do dono do produto):** hotbar de **9** com o **☰** fora dos espaços (teclado 1–9, E); **grupos à esquerda** (Todas, Construção, Utilidades, Materiais e a **Bolsa** por último); **receitas no centro** (grade de ícones, busca e **Só fabricáveis**; bloqueadas selecionáveis, com selo); **à direita a grade de fabricação** com os ingredientes e **tenho / preciso** (2 × 2 na bolsa, 3 × 3 na mesa) e o **item final com nome**: **tocar nele fabrica**. O grupo Bolsa mostra os 27 espaços (3 × 9) e a grade 2 × 2 de verdade. As abas Itens/Receitas e os cartões saíram. Mesa: **Usar** abre a mesma tela com a estação ativa; fora do alcance ou mesa removida bloqueia a fabricação de bancada na hora.
+- **Migração por seção (save v5):** os 7 espaços antigos da hotbar vão para 1–7 (8–9 vazios), os 24 da bolsa para o novo início da grade, 3 espaços novos vazios; seleção e grade 2 × 2 preservadas; inventário gravado como `v: 2`. A cápsula → brasa só vale para saves < v4.
+- **Celular em paisagem:** com a bolsa aberta o toque do mundo some (sem girar câmera nem colocar/quebrar); a lista rola no painel central; o botão "Mochila" do toque saiu (o ☰ o substitui); o painel cabe em 360 px de altura. A busca é o único texto selecionável e os atalhos param enquanto se digita.
+- Sem mudança de gerador, receitas ou regras de fabricação (`recipes.ts` ganhou só `group`).
+- Testes: migração do inventário com a bolsa cheia de itens distintos em cada seção (formato e save), seleção preservada, reabrir estável; constantes do inventário nos testes antigos. Verificado no Chromium (celular emulado em paisagem: ☰, categorias, busca, Só fabricáveis, mesa → lanterna, laje ×6, Manual 2 × 2, sem erros; desktop: 1–9, E, digitar na busca sem atalhos, Esc). **Aparelho real pendente.**
+
 ## Orvalis v0.101.0 — Titã: Laje de Rocha, bloco de meia altura (segunda entrega de "Uma luz para voltar") (19/11/2026)
 - **Pedido do dono do produto:** o teste da mesa em celular real passou; seguir para a segunda entrega. Decisões na **ADR 0046**.
 - **Laje de Rocha:** bloco `T.SLAB` (12) e item 13; receita **3 blocos de rocha escura → 6 lajes na Mesa de Trabalho** (mesmo catálogo/fabricação atômica). Quebra em 1,0 s e devolve 1 laje; só de fundo; persiste como edição de chunk.

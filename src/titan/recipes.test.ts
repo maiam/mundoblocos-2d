@@ -78,6 +78,6 @@ describe('catálogo de receitas (ADR 0045)', () => {
   it('grade 2 × 2 usa o mesmo catálogo (só receitas pessoais)', () => {
     expect(matchGrid([Item.DARK_ROCK, Item.DARK_ROCK, Item.DARK_ROCK, Item.DARK_ROCK])?.id).toBe('mesa');
     expect(matchGrid([Item.FROST_SHARD])).toBeNull(); // a lente é da mesa
-    expect(SLOTS).toBe(31);
+    expect(SLOTS).toBe(36);
   });
 });

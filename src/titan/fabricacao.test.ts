@@ -3,6 +3,7 @@ import { breakOrCollect, collectItem, collectNearby, placeFromSlot } from './act
 import { raycast } from './physics';
 import { breakTotalMs } from './breaking';
 import { TitanGenerator } from './generator';
+import { CRAFT_START, SLOTS } from './inventory';
 import { Item } from './items';
 import { craft, recipeById } from './recipes';
 import { MemoryTitanStorage, TITAN_SAVE_VERSION } from './save';
@@ -75,7 +76,7 @@ describe('Mesa de Trabalho no mundo', () => {
     const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 2, bz = Math.floor(a.z);
     s.inventory.add(Item.DARK_ROCK, 4);
     expect(craft(s.inventory, recipeById('mesa')!, null).ok).toBe(true);
-    const slot = [...Array(31).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
+    const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
     s.inventory.move(slot, 1);
     expect(placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 1).ok).toBe(true);
     expect(s.volume.get(bx, 65, bz)).toBe(T.WORKBENCH);
@@ -143,7 +144,7 @@ describe('depósito de brasa: quebrar, soltar, coletar, não recriar', () => {
     expect(collectNearby(r, e.x + 0.5, e.y, e.z + 0.5).collected).toBe(1);
     expect(r.inventory.total(Item.EMBER)).toBe(1);
     r.inventory.add(Item.SAND, 1);
-    const slot = [...Array(31).keys()].find((i) => r.inventory.get(i)?.item === Item.SAND)!;
+    const slot = [...Array(SLOTS).keys()].find((i) => r.inventory.get(i)?.item === Item.SAND)!;
     expect(placeFromSlot(r, { x: e.x, y: e.y - 1, z: e.z, nx: 0, ny: 1, nz: 0 }, slot).ok).toBe(true);
     expect(r.volume.get(e.x, e.y, e.z)).toBe(T.SAND); // bloco comum
     expect(breakOrCollect(r, hit(e)).ok).toBe(true);
@@ -194,7 +195,7 @@ describe('migração do save (v4)', () => {
     expect(r.inventory.total(Item.EMBER)).toBe(1);
     expect(r.inventory.total(Item.ROCK_SHARD)).toBe(1);
     expect(r.inventory.total(Item.FROST_SHARD)).toBe(1);
-    expect(r.inventory.get(31)).toBeNull();
+    expect(r.inventory.get(CRAFT_START)).toBeNull();
   });
 
   it('save sem cápsula: nada é convertido; a partida de gerador antigo ganha o depósito de brasa localizado (uma vez)', async () => {
@@ -264,7 +265,7 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     expect(craft(s.inventory, recipeById('mesa')!, null).ok).toBe(true);
     // colocar a mesa perto da chegada
     const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 2, bz = Math.floor(a.z);
-    const mslot = [...Array(31).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
+    const mslot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.WORKBENCH)!;
     s.inventory.move(mslot, 1);
     expect(placeFromSlot(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }, 1).ok).toBe(true);
     expect(discoverRecipes(s)).toContain('bancada');
@@ -280,7 +281,7 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     expect(craft(s.inventory, recipeById('lanterna')!, null)).toEqual({ ok: false, reason: 'station' });
     expect(craft(s.inventory, recipeById('lanterna')!, 'workbench').ok).toBe(true);
     expect(s.inventory.total(Item.LANTERN)).toBe(1);
-    const lslot = [...Array(31).keys()].find((i) => s.inventory.get(i)?.item === Item.LANTERN)!;
+    const lslot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.LANTERN)!;
     s.inventory.move(lslot, 2);
     expect(placeFromSlot(s, { x: bx, y: 64, z: bz + 2, nx: 0, ny: 1, nz: 0 }, 2).ok).toBe(true);
     await flush(st, s);
@@ -347,5 +348,33 @@ describe('junco de vidro: mira, recolher e cair sem o apoio', () => {
     expect(r).toBeDefined();
     expect(collectItem(s, `reed:${r.x},${r.y},${r.z}`).ok).toBe(true);
     expect(s.inventory.total(Item.GLASS_REED)).toBe(1);
+  });
+});
+
+describe('migração do inventário (save v4 → v5, hotbar de 9 e bolsa de 27)', () => {
+  it('save anterior com a bolsa cheia de itens distintos em cada seção: cada seção vai para o lugar novo, a seleção e a grade seguem, e reabrir é estável', async () => {
+    const st = new MemoryTitanStorage();
+    const s0 = await openSession(st, 42, () => 1);
+    await flush(st, s0);
+    const h = st.games.get(42)!;
+    const slots: Array<[number, number] | null> = Array.from({ length: 31 }, (_, i) => [(i % 11) + 1, (i % 11) + 1 === Item.CAPSULE || (i % 11) + 1 === Item.LANTERN || (i % 11) + 1 === Item.WORKBENCH ? 1 : (i % 4) + 1]);
+    h.v = 4; h.selected = 5;
+    h.inventory = { bag: { v: 1, slots, craft: [[Item.DARK_ROCK, 1], null, null, null] }, collected: [] };
+    const r = await openSession(st, null, () => 1);
+    // seções: hotbar antiga → 0–6, 7–8 vazios, bolsa antiga → 9–32, 33–35 novos vazios
+    for (let i = 0; i < 7; i++) expect(r.inventory.get(i)?.item).toBe(slots[i]![0]);
+    expect(r.inventory.get(7)).toBeNull(); expect(r.inventory.get(8)).toBeNull();
+    for (let i = 0; i < 24; i++) expect(r.inventory.get(9 + i)).toEqual({ item: slots[7 + i]![0], count: slots[7 + i]![1] });
+    for (let i = 33; i < SLOTS; i++) expect(r.inventory.get(i)).toBeNull();
+    expect(r.selected).toBe(5); // a seleção continua no mesmo espaço
+    expect(r.inventory.get(CRAFT_START)).toBeNull(); // a grade voltou para a bolsa ao abrir (como sempre); a rocha não se perdeu
+    expect(r.inventory.total(Item.DARK_ROCK)).toBe(slots.reduce((n, e) => n + (e && e[0] === Item.DARK_ROCK ? e[1] : 0), 0) + 1);
+    expect(hasPendingState(r)).toBe(true); // há o que gravar no formato novo
+    await flush(st, r);
+    expect(st.games.get(42)!.v).toBe(TITAN_SAVE_VERSION);
+    expect(st.games.get(42)!.inventory!.bag.v).toBe(2);
+    const r2 = await openSession(st, null, () => 1);
+    for (let i = 0; i < SLOTS; i++) expect(r2.inventory.get(i)).toEqual(r.inventory.get(i)); // reabrir não muda nada nem duplica
+    expect(hasPendingState(r2)).toBe(false);
   });
 });

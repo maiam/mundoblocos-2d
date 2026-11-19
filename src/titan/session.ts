@@ -1,5 +1,5 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
-import { Inventory } from './inventory';
+import { HOTBAR, Inventory } from './inventory';
 import { Item } from './items';
 import { AFTERNOON, validDay } from './sky';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
@@ -125,14 +125,14 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const inv = save.header.inventory ? Inventory.fromData(save.header.inventory.bag) : Inventory.starting();
   const revBefore = inv.rev;
   // migração da cápsula (ADR 0045): save anterior à v4 → a cápsula remanescente (mochila ou grade, inclusive receita antiga já iniciada) vira brasa de âmbar, uma única vez (o save regravado já é v4)
-  const converted = save.header.v < TITAN_SAVE_VERSION ? inv.convertItem(Item.CAPSULE, Item.EMBER) : 0;
+  const converted = save.header.v < 4 ? inv.convertItem(Item.CAPSULE, Item.EMBER) : 0;
   inv.returnCraft();
   const collected = new Set<string>((save.header.inventory?.collected ?? []).filter((x): x is string => typeof x === 'string'));
   const grants: TitanSession['grants'] = {};
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(6, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
