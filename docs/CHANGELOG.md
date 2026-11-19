@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.104.1 — Tablet: sem o aviso "digitando em tela cheia" ao usar a busca (19/11/2026)
+- `ScreenMode`: ao focar um campo de texto dentro da tela cheia, sai dela (`exitFullscreen`); o `onGesture` já não a pede de novo com campo em foco, então não há laço com o teclado. O próximo toque fora do campo volta à tela cheia. Causa: busca de receitas do Titã (v0.102.0) no Safari do iPad. Teclado físico (WASD) em tela cheia pode ainda avisar — a registrar se ocorrer.
+
 ## Orvalis v0.104.0 — Titã: bancada 3 × 3 interativa e painéis de basalto (19/11/2026)
 - **Pedido do dono do produto:** grade 3 × 3 interativa na Mesa de Trabalho e arte própria em basalto nos painéis. Decisões na **ADR 0049**.
 - **Bancada 3 × 3:** com a mesa ativa (Usar/F) aparece o grupo **Montar 3 × 3**: nove espaços interativos (uma unidade por toque) e a saída com ícone, quantidade e nome; **Receitas** volta ao livro. Separada da grade pessoal 2 × 2. Quantidades **exatas** em qualquer disposição (`matchBench`, mesmo catálogo): lente, lanterna e **3 rochas → 6 lajes numa única retirada**; extra, errado ou faltando deixa a saída vazia.
