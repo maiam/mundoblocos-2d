@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CRAFT_START, HOTBAR, Inventory, OUTPUT, SLOTS } from './inventory';
+import { BENCH_START, CRAFT_START, HOTBAR, Inventory, OUTPUT, SLOTS } from './inventory';
 import { Item, maxStack } from './items';
 
 const full = (): Inventory => { const i = new Inventory(); for (let n = 0; n < SLOTS; n++) i.add(Item.CAPSULE, 1); return i; };
@@ -39,29 +39,29 @@ describe('inventário do Titã', () => {
     expect(i.get(1)).toEqual({ item: Item.ROCK_SHARD, count: 3 }); expect(i.get(20)).toEqual({ item: Item.SAND, count: 10 });
     expect(i.total(Item.SAND)).toBe(74);
   });
-  it('grade 2 × 2: quatro blocos de rocha escura, em qualquer disposição, formam a Mesa de Trabalho; pegar consome a grade', () => {
+  it('grade 3 × 3 única: quatro rochas formam a Mesa de Trabalho sem estação (receita pessoal); a saída consome a grade', () => {
     const i = Inventory.starting(); i.add(Item.DARK_ROCK, 6);
-    for (let k = 0; k < 4; k++) i.move(0, CRAFT_START + k); // 1 por vez
-    expect(i.craftResult()).toEqual({ item: Item.WORKBENCH, count: 1 });
+    for (let k = 0; k < 4; k++) i.move(0, BENCH_START + k); // 1 por vez
+    expect(i.benchResult()).toEqual({ item: Item.WORKBENCH, count: 1 });
     expect(i.total(Item.DARK_ROCK)).toBe(2); // as outras duas continuam
-    expect(i.takeResult()).toBe(true);
-    expect(i.total(Item.WORKBENCH)).toBe(1); expect(i.craftResult()).toBeNull();
+    expect(i.takeBenchResult(null)).toBe('ok');
+    expect(i.total(Item.WORKBENCH)).toBe(1); expect(i.benchResult()).toBeNull();
   });
-  it('grade com ingredientes a menos, a mais ou diferentes não forma receita', () => {
+  it('receita da Mesa montada na grade sem a Mesa não sai (station); com ingredientes a menos, a mais ou diferentes não forma receita', () => {
     const i = Inventory.starting(); i.add(Item.DARK_ROCK, 5); i.add(Item.SAND, 1);
-    for (let k = 0; k < 3; k++) i.move(0, CRAFT_START + k);
-    expect(i.craftResult()).toBeNull(); // só 3 rochas
-    i.move(1, CRAFT_START + 3);
-    expect(i.craftResult()).toBeNull(); // 3 rochas + areia
+    for (let k = 0; k < 3; k++) i.move(0, BENCH_START + k);
+    expect(i.benchResult()?.item).toBe(Item.SLAB); // 3 rochas = laje (da Mesa)
+    expect(i.takeBenchResult(null)).toBe('station'); expect(i.benchTotals().get(Item.DARK_ROCK)).toBe(3); // nada consumido
+    i.move(1, BENCH_START + 3);
+    expect(i.benchResult()).toBeNull(); // 3 rochas + areia
   });
   it('mochila cheia: a mesa da grade só sai se couber; os ingredientes ficam na grade', () => {
     const i = Inventory.starting(); i.add(Item.DARK_ROCK, 4);
-    for (let k = 0; k < 4; k++) i.move(0, CRAFT_START + k);
+    for (let k = 0; k < 4; k++) i.move(0, BENCH_START + k);
     for (let n = 0; n < SLOTS; n++) i.add(Item.SAND, 64); // enche tudo
-    expect(i.takeResult()).toBe(false);
-    expect(i.craftResult()).not.toBeNull(); // nada foi consumido
-    expect(i.returnCraft()).toBe(false);
-    expect(i.get(CRAFT_START)).not.toBeNull();
+    expect(i.takeBenchResult(null)).toBe('full');
+    expect(i.benchResult()).not.toBeNull(); // nada foi consumido
+    expect(i.returnBench()).toBeGreaterThan(0);
   });
   it('convertItem troca as pilhas de um item por outro, uma única vez', () => {
     const i = Inventory.fromData({ v: 1, slots: [[Item.CAPSULE, 1], null, [Item.SAND, 3]], craft: [[Item.CAPSULE, 1]] });

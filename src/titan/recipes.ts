@@ -24,6 +24,19 @@ export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) =
 
 export const STATION_NAMES: Record<Station, string> = { personal: 'Fabricação pessoal (mochila)', workbench: 'Mesa de Trabalho' };
 
+/**
+ * Prévia da receita na grade 3 × 3 (ADR 0050): **uma célula por unidade pedida** (4 rochas = 4 células com 1 ícone cada, o resto vazio) e, em cada célula, quanto do que o jogador tem cabe
+ * a ela, repartido por igual com o resto nas primeiras (tem 12 → 3,3,3,3; tem 9 → 3,2,2,2; tem 3 de 4 → 1,1,1,0). Até 9 células (o catálogo pede no máximo 4).
+ */
+export function previewCells(inv: Inventory, r: Recipe): Array<{ item: number; share: number; have: number; need: number }> {
+  const out: Array<{ item: number; share: number; have: number; need: number }> = [];
+  for (const g of r.ingredients) {
+    const have = inv.total(g.item);
+    for (let u = 0; u < g.count && out.length < 9; u++) out.push({ item: g.item, share: Math.floor(have / g.count) + (u < have % g.count ? 1 : 0), have, need: g.count });
+  }
+  return out;
+}
+
 /** Ingredientes com o que o jogador tem (hotbar + mochila) e o que a receita pede. */
 export function ingredientStatus(inv: Inventory, r: Recipe): Array<{ item: number; have: number; need: number }> {
   return r.ingredients.map((g) => ({ item: g.item, have: inv.total(g.item), need: g.count }));
@@ -53,24 +66,12 @@ export function blockedReason(inv: Inventory, r: Recipe, at: Station | null): Cr
   return inv.canCraft(r.ingredients, r.result) ? null : 'full';
 }
 
-/** Receita pessoal que a grade 2 × 2 forma (mesmos ingredientes do cartão, em qualquer disposição, 1 por espaço), ou `null`. */
-export function matchGrid(items: readonly number[]): Recipe | null {
-  for (const r of RECIPES) {
-    if (r.station !== 'personal') continue;
-    const need = r.ingredients.flatMap((g) => Array<number>(g.count).fill(g.item)).sort((a, b) => a - b);
-    const got = [...items].sort((a, b) => a - b);
-    if (need.length === got.length && need.every((v, i) => v === got[i])) return r;
-  }
-  return null;
-}
-
 /**
- * Receita da **Mesa de Trabalho** formada por uma grade 3 × 3 (ADR 0049): as quantidades por item têm de ser **exatamente** as dos ingredientes, em qualquer disposição das células.
- * Ingrediente extra, errado ou faltando → `null`. Só as receitas de estação `workbench` (a grade pessoal usa `matchGrid`).
+ * Receita formada pela grade 3 × 3 (a **única** grade de montagem, ADR 0049/0050): as quantidades por item têm de ser **exatamente** as dos ingredientes, em qualquer disposição das células.
+ * Ingrediente extra, errado ou faltando → `null`. Vale para todas as receitas; quem exige a Mesa de Trabalho é a hora de retirar a saída (`Inventory.takeBenchResult`).
  */
 export function matchBench(totals: ReadonlyMap<number, number>): Recipe | null {
   for (const r of RECIPES) {
-    if (r.station !== 'workbench') continue;
     if (r.ingredients.length === totals.size && r.ingredients.every((g) => totals.get(g.item) === g.count)) return r;
   }
   return null;

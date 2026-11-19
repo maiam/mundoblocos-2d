@@ -1,8 +1,8 @@
 import { isItem, maxStack } from './items';
-import { matchBench, matchGrid, type Recipe, type Stackable } from './recipes';
+import { matchBench, type Recipe, type Stackable, type Station } from './recipes';
 
 /**
- * Inventário do Titã (ADR 0040, 0047): hotbar de **9** espaços (índices 0–8) + mochila de **27** (9–35, 3 × 9 alinhada à hotbar) + grade de fabricação 2 × 2 (36–39) + grade 3 × 3 da **Mesa de Trabalho** (41–49, ADR 0049), separada da grade pessoal.
+ * Inventário do Titã (ADR 0040, 0047): hotbar de **9** espaços (índices 0–8) + mochila de **27** (9–35, 3 × 9 alinhada à hotbar) + grade 3 × 3 de montagem (41–49, ADR 0049/0050), a única. As posições 36–39 eram a grade 2 × 2 (removida na v0.105.0): só existem para ler saves antigos, e `returnCraft` as devolve à bolsa.
  * Sem DOM. Toda regra de espaço e quantidade fica aqui; a interface só chama estes métodos. Não existe descarte: nada se perde. A fabricação (`tryCraft`) é atômica: débito e resultado juntos, ou nada.
  */
 export const HOTBAR = 9;
@@ -135,22 +135,6 @@ export class Inventory {
     return 'ok';
   }
 
-  /** Receita pessoal formada pela grade 2 × 2 (1 por espaço, qualquer disposição), ou `null`. */
-  craftRecipe(): Recipe | null {
-    const items: number[] = [];
-    for (let i = 0; i < CRAFT_SLOTS; i++) { const c = this.s[CRAFT_START + i]; if (c) { if (c.count !== 1) return null; items.push(c.item); } }
-    return items.length ? matchGrid(items) : null;
-  }
-  craftResult(): Stackable | null { const r = this.craftRecipe(); return r ? { ...r.result } : null; }
-
-  /** Pegar o resultado da grade: precisa caber na hotbar/mochila (a grade esvazia, então os ingredientes não ocupam mais espaço); consome a grade. Sem espaço ou sem receita, nada muda. */
-  takeResult(): boolean {
-    const r = this.craftResult();
-    if (!r || !this.canAdd(r.item, r.count)) return false;
-    for (let i = 0; i < CRAFT_SLOTS; i++) this.s[CRAFT_START + i] = null;
-    return this.add(r.item, r.count);
-  }
-
   /** Troca todas as pilhas de `from` por `to` (hotbar, mochila e grade), uma a uma e com a mesma quantidade. Devolve quantas unidades trocou. Usado na migração da cápsula (ADR 0045). */
   convertItem(from: number, to: number): number {
     let n = 0;
@@ -159,7 +143,7 @@ export class Inventory {
     return n;
   }
 
-  /** Ao fechar a mochila: devolve o que está na grade à hotbar/mochila (cabe sempre: os itens vieram de lá). Devolve se tudo voltou. */
+  /** Legado (grade 2 × 2 removida, ADR 0050): devolve à hotbar/mochila o que um save antigo deixou nas posições 36–39 (cabe sempre: os itens vieram de lá). Devolve se tudo voltou. */
   returnCraft(): boolean {
     let ok = true;
     for (let i = 0; i < CRAFT_SLOTS; i++) {
@@ -171,24 +155,26 @@ export class Inventory {
     return ok; // `add` já sobe a revisão; sem nada na grade, nada muda
   }
 
-  // ---- Grade 3 × 3 da Mesa de Trabalho (ADR 0049) ----
+  // ---- Grade 3 × 3 da de montagem (ADR 0049/0050) ----
   /** Quantidade por item na grade da mesa (somando as células). */
   benchTotals(): Map<number, number> {
     const m = new Map<number, number>();
     for (let i = 0; i < BENCH_SLOTS; i++) { const c = this.s[BENCH_START + i]; if (c) m.set(c.item, (m.get(c.item) ?? 0) + c.count); }
     return m;
   }
-  /** Receita da mesa formada pela grade: ingredientes **exatos** (qualquer disposição); extra, errado ou faltando = `null` (a saída fica vazia). Mesmo catálogo da fabricação direta. */
+  /** Receita formada pela grade: ingredientes **exatos** (qualquer disposição); extra, errado ou faltando = `null` (a saída fica vazia). Mesmo catálogo da fabricação direta. */
   benchRecipe(): Recipe | null { const t = this.benchTotals(); return t.size ? matchBench(t) : null; }
   benchResult(): Stackable | null { const r = this.benchRecipe(); return r ? { ...r.result } : null; }
 
   /**
-   * Recolhe a saída da mesa: consome **todos** os ingredientes da grade e entrega o resultado numa operação só. Sem receita completa → `none`; sem espaço para o resultado na hotbar/mochila → `full`
+   * Recolhe a saída: consome **todos** os ingredientes da grade e entrega o resultado numa operação só. `at` = estação em uso (`null` = só a bolsa): receita da Mesa sem a Mesa → `station`. Sem receita completa → `none`; sem espaço para o resultado na hotbar/mochila → `full`
    * (nada muda: os ingredientes continuam na grade). A validação da mesa e do alcance é da interface, a cada toque.
    */
-  takeBenchResult(): 'ok' | 'none' | 'full' {
-    const r = this.benchResult();
-    if (!r) return 'none';
+  takeBenchResult(at: Station | null): 'ok' | 'none' | 'station' | 'full' {
+    const rec = this.benchRecipe();
+    if (!rec) return 'none';
+    if (rec.station === 'workbench' && at !== 'workbench') return 'station';
+    const r = rec.result;
     if (!this.canAdd(r.item, r.count)) return 'full';
     for (let i = 0; i < BENCH_SLOTS; i++) this.s[BENCH_START + i] = null;
     this.add(r.item, r.count); // cabe: conferido acima

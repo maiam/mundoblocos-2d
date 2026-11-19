@@ -20,7 +20,7 @@ describe('grade 3 × 3 da Mesa de Trabalho (ADR 0049)', () => {
     expect(matchBench(new Map([[Item.FROST_SHARD, 1]]))?.id).toBe('lente');
     expect(matchBench(new Map([[Item.EMBER, 1], [Item.ROCK_SHARD, 2], [Item.ICE_LENS, 1]]))?.id).toBe('lanterna');
     expect(matchBench(new Map([[Item.DARK_ROCK, 3]]))?.id).toBe('laje');
-    expect(matchBench(new Map([[Item.DARK_ROCK, 4]]))).toBeNull(); // extra
+    expect(matchBench(new Map([[Item.DARK_ROCK, 5]]))).toBeNull(); // extra (4 = Mesa de Trabalho, ADR 0050)
     expect(matchBench(new Map([[Item.DARK_ROCK, 2]]))).toBeNull(); // faltando
     expect(matchBench(new Map([[Item.FROST_SHARD, 1], [Item.SAND, 1]]))).toBeNull(); // errado
     expect(matchBench(new Map([[Item.ROCK_SHARD, 2], [Item.ICE_LENS, 1]]))).toBeNull(); // sem a brasa
@@ -41,14 +41,14 @@ describe('grade 3 × 3 da Mesa de Trabalho (ADR 0049)', () => {
   it('fabrica as três receitas manualmente: lente, lanterna e **três rochas rendem seis lajes em uma única retirada**', () => {
     const i = Inventory.starting(); i.add(Item.FROST_SHARD, 1); i.add(Item.ROCK_SHARD, 2); i.add(Item.EMBER, 1); i.add(Item.DARK_ROCK, 3);
     put(i, Item.FROST_SHARD, 4);
-    expect(i.takeBenchResult()).toBe('ok');
+    expect(i.takeBenchResult('workbench')).toBe('ok');
     expect(i.total(Item.ICE_LENS)).toBe(1); expect(i.total(Item.FROST_SHARD)).toBe(0);
     put(i, Item.ROCK_SHARD, 0, 2); put(i, Item.ICE_LENS, 1); put(i, Item.EMBER, 8);
     expect(i.benchResult()).toEqual({ item: Item.LANTERN, count: 1 });
-    expect(i.takeBenchResult()).toBe('ok');
+    expect(i.takeBenchResult('workbench')).toBe('ok');
     expect(i.total(Item.LANTERN)).toBe(1);
     put(i, Item.DARK_ROCK, 3, 3);
-    expect(i.takeBenchResult()).toBe('ok');
+    expect(i.takeBenchResult('workbench')).toBe('ok');
     expect(i.total(Item.SLAB)).toBe(6); // uma única retirada
     expect(i.total(Item.DARK_ROCK)).toBe(0);
     for (let c = 0; c < BENCH_SLOTS; c++) expect(i.get(BENCH_START + c)).toBeNull(); // a grade ficou vazia
@@ -59,16 +59,16 @@ describe('grade 3 × 3 da Mesa de Trabalho (ADR 0049)', () => {
     put(i, Item.FROST_SHARD, 0); put(i, Item.SAND, 1);
     expect(i.benchResult()).toBeNull(); // errado: gelo + areia
     const before = snap(i);
-    expect(i.takeBenchResult()).toBe('none');
+    expect(i.takeBenchResult('workbench')).toBe('none');
     expect(snap(i)).toBe(before);
     expect(i.move(BENCH_START + 1, HOTBAR + 3)).toBe(true); // tira a areia para um espaço vazio da bolsa
     expect(i.benchResult()?.item).toBe(Item.ICE_LENS);
     put(i, Item.FROST_SHARD, 2); // extra: 2 fragmentos de gelo na grade
     expect(i.benchResult()).toBeNull();
-    expect(i.takeBenchResult()).toBe('none');
+    expect(i.takeBenchResult('workbench')).toBe('none');
     expect(i.move(BENCH_START + 2, HOTBAR + 4)).toBe(true); // devolve o extra
-    expect(i.takeBenchResult()).toBe('ok');
-    expect(i.takeBenchResult()).toBe('none'); // segundo toque na saída: a grade está vazia, nada duplica
+    expect(i.takeBenchResult('workbench')).toBe('ok');
+    expect(i.takeBenchResult('workbench')).toBe('none'); // segundo toque na saída: a grade está vazia, nada duplica
     expect(i.total(Item.ICE_LENS)).toBe(1);
     expect(i.total(Item.FROST_SHARD)).toBe(1); // 2 fragmentos: 1 virou lente, o outro voltou para a bolsa
   });
@@ -79,7 +79,7 @@ describe('grade 3 × 3 da Mesa de Trabalho (ADR 0049)', () => {
     fill(i, Item.SAND);
     expect(i.canAdd(Item.SLAB)).toBe(false);
     const before = snap(i);
-    expect(i.takeBenchResult()).toBe('full');
+    expect(i.takeBenchResult('workbench')).toBe('full');
     expect(snap(i)).toBe(before);
     expect(i.get(BENCH_START)).toEqual({ item: Item.DARK_ROCK, count: 3 });
   });
@@ -89,9 +89,8 @@ describe('grade 3 × 3 da Mesa de Trabalho (ADR 0049)', () => {
     put(i, Item.DARK_ROCK, 0);
     expect(i.total(Item.DARK_ROCK)).toBe(3); // a grade não conta
     expect(i.benchTotals().get(Item.DARK_ROCK)).toBe(1);
-    expect(i.craftRecipe()).toBeNull(); // a grade pessoal continua vazia
-    for (let k = 0; k < 4; k++) i.move(0, CRAFT_START + k);
-    expect(i.benchTotals().get(Item.DARK_ROCK)).toBe(1); // e a da mesa não mudou
+    for (let k = 0; k < 4; k++) i.move(0, CRAFT_START + k); // posições legadas (2 × 2 removida)
+    expect(i.benchTotals().get(Item.DARK_ROCK)).toBe(1); // a grade 3 × 3 não mudou
   });
 
   it('fechar devolve a grade à bolsa e à hotbar; o que não couber fica na grade, com a contagem do que sobrou', () => {

@@ -3,10 +3,10 @@ import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, ti
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
-import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, ingredientStatus, RECIPES, type Group, type Recipe, type Station } from './recipes';
+import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { type GestureTarget, InteractionGesture } from './gesture';
-import { BENCH_OUT, BENCH_SLOTS, BENCH_START, CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
+import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
@@ -118,8 +118,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   panel.hidden = true;
   const top = el('div', 'titan-bagtop', panel);
   const cats = el('nav', 'titan-cats', top);
-  type Cat = 'todas' | Group | 'bench' | 'bag';
-  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['bench', 'Montar 3 × 3'], ['bag', 'Bolsa']];
+  type Cat = 'todas' | Group | 'bag';
+  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['bag', 'Bolsa']];
   const catBtns = new Map<Cat, HTMLButtonElement>();
   for (const [id, name] of catDefs) { const b = el('button', 'titan-cat', cats, name); b.type = 'button'; catBtns.set(id, b); b.addEventListener('click', () => { cat = id; sel = null; refresh(); }); }
   const center = el('section', 'titan-center', top);
@@ -137,27 +137,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const closeBtn = el('button', 'titan-btn titan-x', rhead, '✕');
   closeBtn.type = 'button'; closeBtn.setAttribute('aria-label', 'Fechar');
   const detail = el('div', 'titan-detail', right); // receita escolhida: ingredientes na grade e o item final
-  const manual = el('div', 'titan-detail titan-manual', right); // grupo "Bolsa": a grade 2 × 2 de verdade
-  const craftRow = el('div', 'titan-craftcol', manual);
-  const craftGrid = el('div', 'titan-craftgrid', craftRow);
-  const craftSlots = Array.from({ length: CRAFT_SLOTS }, (_, i) => mkSlot(craftGrid, CRAFT_START + i));
-  el('span', 'arrow', craftRow, '↓');
-  const outSlot = mkSlot(craftRow, OUTPUT);
-  outSlot.classList.add('out');
-  el('small', 'hint', manual, 'Quatro blocos de rocha escura, em qualquer posição, formam a Mesa de Trabalho.');
-  // grupo "Montar 3 × 3" (só com a Mesa de Trabalho ativa, ADR 0049): os nove espaços interativos da bancada e a saída; ficam separados da grade pessoal 2 × 2
+  // grupo "Bolsa": os 27 espaços + a grade 3 × 3 de montagem, a **única** grade (ADR 0050); a Mesa de Trabalho só é exigida por algumas receitas, na hora de retirar a saída
   const benchBox = el('div', 'titan-detail titan-manual titan-bench', right);
-  const benchHead = el('div', 'titan-benchhead', benchBox);
-  el('small', '', benchHead, 'Montar 3 × 3');
-  const backBtn = el('button', 'titan-btn titan-back', benchHead, 'Receitas');
-  backBtn.type = 'button';
+  el('small', '', benchBox, 'Montar 3 × 3');
   const benchGrid = el('div', 'titan-benchgrid', benchBox);
   const benchSlots = Array.from({ length: BENCH_SLOTS }, (_, i) => mkSlot(benchGrid, BENCH_START + i));
   el('span', 'arrow', benchBox, '↓');
   const benchOut = mkSlot(benchBox, BENCH_OUT);
   benchOut.classList.add('out');
   const benchName = el('b', 'rname', benchBox, '');
-  el('small', 'hint', benchBox, 'Toque numa pilha e na célula: cada toque põe uma unidade. Toque na saída para fabricar.');
+  const benchWhy = el('small', 'hint', benchBox, '');
   let stationAt: { x: number; y: number; z: number } | null = null;
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
@@ -187,14 +176,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     };
     hotSlots.forEach((b, i) => { draw(b, i); b.setAttribute('aria-pressed', String(i === session.selected)); });
     bagSlots.forEach((b, i) => draw(b, HOTBAR + i));
-    craftSlots.forEach((b, i) => draw(b, CRAFT_START + i));
-    draw(outSlot, OUTPUT, inv.craftResult());
     benchSlots.forEach((b, i) => draw(b, BENCH_START + i));
-    const br = inv.benchResult();
+    const brec = inv.benchRecipe();
+    const needStation = !!brec && brec.station === 'workbench' && ctxStation() !== 'workbench'; // receita da Mesa montada fora da Mesa: a saída fica bloqueada
+    const br = brec && !needStation ? { ...brec.result } : null;
     draw(benchOut, BENCH_OUT, br);
-    benchName.textContent = br ? `${ITEM_NAMES[br.item]}${br.count > 1 ? ` ×${br.count}` : ''}` : '';
+    benchName.textContent = brec ? `${brec.name}${brec.result.count > 1 ? ` ×${brec.result.count}` : ''}` : '';
+    benchWhy.textContent = needStation ? 'Precisa da Mesa de Trabalho' : 'Toque na pilha e na célula; na saída, fabrica.';
     benchOut.classList.toggle('ready', !!br);
-    outSlot.classList.toggle('ready', !!inv.craftResult());
     for (const id of discoverRecipes(session)) toast(id === 'mesa' ? 'Nova receita: Mesa de Trabalho (4 blocos de rocha escura). Abra a bolsa (☰ ou E).' : 'Receitas da mesa: use a Mesa de Trabalho (F ou botão Usar).', 3500);
     if (bagOpen) drawBook();
     const held = inv.get(session.selected);
@@ -216,16 +205,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
     onlyBtn.classList.toggle('on', onlyOk);
     onlyBtn.setAttribute('aria-pressed', String(onlyOk));
-    if (cat === 'bench' && !stationAt) cat = 'todas'; // sem mesa ativa não há grade 3 × 3
-    catBtns.get('bench')!.hidden = !stationAt; // "Montar 3 × 3" só aparece com a Mesa de Trabalho ativa
-    for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
-    const isBag = cat === 'bag', isBench = cat === 'bench', slots = isBag || isBench;
+    const slots = cat === 'bag';
     tools.hidden = rgrid.hidden = slots;
-    bagGrid.hidden = !slots; // "Bolsa" e "Montar 3 × 3" mostram os 27 espaços para mover os itens
-    manual.hidden = !isBag; // grade 2 × 2 pessoal
-    benchBox.hidden = !isBench; // grade 3 × 3 da mesa
+    bagGrid.hidden = !slots; // "Bolsa": os 27 espaços para mover os itens
+    benchBox.hidden = !slots; // e a grade 3 × 3 de montagem
     detail.hidden = slots;
-    if (slots) return; // nesses grupos as grades são slots fixos (já desenhados acima)
+    if (slots) return; // nesse grupo as grades são slots fixos (já desenhados acima)
     // centro: grade de receitas (ícone do resultado; ×N no canto; selo quando bloqueada)
     rgrid.textContent = '';
     const list = visibleRecipes();
@@ -249,15 +234,15 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!r) { el('small', 'hint', detail, 'Toque numa receita para ver o que ela pede.'); return; }
     const reason = blockedReason(inv, r, at);
     el('small', r.station === 'workbench' && at !== 'workbench' ? 'station lack' : 'station', detail, r.station === 'workbench' ? (at === 'workbench' ? 'Mesa de Trabalho · ativa' : 'Use a Mesa de Trabalho') : 'Fabricação pessoal');
-    const n = r.station === 'workbench' ? 3 : 2;
-    const ing = ingredientStatus(inv, r);
-    const igrid = el('div', n === 3 ? 'titan-igrid n3' : 'titan-igrid', detail);
-    for (let k = 0; k < n * n; k++) {
-      const g = ing[k];
-      const cell = el('div', g ? (g.have >= g.need ? 'titan-icell ok' : 'titan-icell lack') : 'titan-icell', igrid);
+    // grade 3 × 3 sempre (ADR 0050): uma célula por unidade pedida; o número é quanto do que você tem cabe a ela (tem 9 de 4 → 3, 2, 2, 2)
+    const cells = previewCells(inv, r);
+    const igrid = el('div', 'titan-igrid', detail);
+    for (let k = 0; k < 9; k++) {
+      const g = cells[k];
+      const cell = el('div', g ? (g.share >= 1 ? 'titan-icell ok' : 'titan-icell lack') : 'titan-icell', igrid);
       if (!g) continue;
       iconOf(cell, g.item, 'md');
-      el('em', 'count', cell, `${g.have}/${g.need}`);
+      el('em', 'count', cell, String(g.share));
       cell.title = `${ITEM_NAMES[g.item]}: tenho ${g.have}, preciso ${g.need}`;
       cell.setAttribute('aria-label', cell.title);
     }
@@ -316,13 +301,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.addEventListener('click', openStation);
 
   function tapSlot(i: number): void {
-    if (i === OUTPUT) {
-      if (!inv.takeResult()) notice(inv.craftResult() ? 'Mochila cheia' : 'Monte uma receita primeiro');
-      refresh();
-      return;
-    }
     if (i === BENCH_OUT) { takeBench(); return; }
-    if (!bagOpen || (cat !== 'bag' && cat !== 'bench')) { if (i < HOTBAR) select(i); return; } // só em "Bolsa" e "Montar 3 × 3" os toques movem itens
+    if (!bagOpen || cat !== 'bag') { if (i < HOTBAR) select(i); return; } // só em "Bolsa" os toques movem itens
     if (sel === null) { if (inv.get(i)) sel = i; }
     else if (sel === i) sel = null;
     else { if (!inv.move(sel, i)) notice('Não dá para mover para lá'); sel = null; }
@@ -331,14 +311,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   /** Recolhe a saída da bancada 3 × 3: revalida a mesa e o alcance **a cada toque**; consome os ingredientes e entrega o resultado juntos; se falhar, tudo continua na grade. */
   function takeBench(): void {
-    if (!stationAt || !stationInReach()) { closeStation('Mesa fora de alcance'); return; } // fechar devolve a grade à bolsa
-    const r = inv.benchResult();
-    const res = inv.takeBenchResult();
-    if (res === 'ok') { notice(`Fabricado: ${r!.count > 1 ? `${r!.count} × ` : ''}${ITEM_NAMES[r!.item]}`); onEdited(); }
-    else notice(res === 'full' ? 'Mochila cheia: libere espaço para o resultado' : 'Monte uma receita da mesa primeiro');
+    if (stationAt && !stationInReach()) { closeStation('Mesa fora de alcance'); return; } // fechar devolve a grade à bolsa
+    const r = inv.benchRecipe();
+    const res = inv.takeBenchResult(ctxStation());
+    if (res === 'ok') { notice(`Fabricado: ${r!.result.count > 1 ? `${r!.result.count} × ` : ''}${r!.name}`); onEdited(); }
+    else notice(res === 'full' ? 'Mochila cheia: libere espaço para o resultado' : res === 'station' ? 'Precisa da Mesa de Trabalho' : 'Monte uma receita primeiro');
     refresh();
   }
-  backBtn.addEventListener('click', () => { cat = 'todas'; sel = null; refresh(); });
 
   function toggleBag(open: boolean): void {
     if (open === bagOpen) return;
@@ -350,8 +329,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (open) { if (document.pointerLockElement) document.exitPointerLock(); gesture.cancel(); keys.clear(); }
     else {
       searchBox.blur();
-      if (!inv.returnCraft()) notice('Sem espaço: os itens ficam na grade');
-      if (inv.returnBench() > 0) notice('Sem espaço: os itens da bancada ficam na grade 3 × 3');
+      inv.returnCraft(); // legado: posições da antiga grade 2 × 2
+      if (inv.returnBench() > 0) notice('Sem espaço: os itens ficam na grade 3 × 3');
       if (!coarse) void canvas.requestPointerLock?.();
     }
     refresh();

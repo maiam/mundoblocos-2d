@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.105.0 — Titã: grade 3 × 3 única e prévia com itens distribuídos (19/11/2026)
+- **Pedido do dono do produto:** a grade é sempre 3 × 3 (a única). Decisões na **ADR 0050**.
+- **Prévia de receitas:** uma célula por unidade pedida e o número em cada uma é o que o jogador tem repartido (`previewCells`: tem 12 → 3,3,3,3; tem 9 → 3,2,2,2; tem 3 de 4 → 1,1,1,0).
+- **Grade 2 × 2 removida:** a montagem manual é a 3 × 3 no grupo **Bolsa**, sem exigir a Mesa; receita da Mesa montada fora dela fica bloqueada ("Precisa da Mesa de Trabalho", `takeBenchResult(at)` → `station`). Grupo "Montar 3 × 3" e botão "Receitas" saem. Posições 36–39 só leem saves antigos (`returnCraft`).
+- Testes (`recipes/inventory/bench.test.ts`): prévia distribuída, Mesa montada sem estação, estação exigida, bolsa cheia. Conferido a 740 × 360.
+
 ## Orvalis v0.104.1 — Tablet: sem o aviso "digitando em tela cheia" ao usar a busca (19/11/2026)
 - `ScreenMode`: ao focar um campo de texto dentro da tela cheia, sai dela (`exitFullscreen`); o `onGesture` já não a pede de novo com campo em foco, então não há laço com o teclado. O próximo toque fora do campo volta à tela cheia. Causa: busca de receitas do Titã (v0.102.0) no Safari do iPad. Teclado físico (WASD) em tela cheia pode ainda avisar — a registrar se ocorrer.
 
