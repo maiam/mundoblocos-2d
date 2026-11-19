@@ -2,7 +2,7 @@
 body.titan { margin: 0; overflow: hidden; background: #171c20; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 body.titan * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.titan-ui { --s: 3; position: fixed; inset: 0; pointer-events: none; font: 600 13px system-ui, sans-serif; color: #fff0da; }
+.titan-ui { --s: 3; --s2: 1; --s3: 2; --slot: calc(16px * var(--s) + 8px); --hbw: calc(9 * var(--slot) + 8 * 4px + 14px); --hbb: max(14px, env(safe-area-inset-bottom)); position: fixed; inset: 0; pointer-events: none; font: 600 13px system-ui, sans-serif; color: #fff0da; }
 .titan-ui [hidden] { display: none !important; }
 .titan-cross { position: absolute; top: 50%; left: 50%; width: 5px; height: 5px; background: #fff3d8; outline: 1px solid #362b20; transform: translate(-50%, -50%); }
 .titan-hotbar { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; background: #171c20ed; border: 1px solid #775438; border-radius: 6px; pointer-events: auto; }
@@ -12,21 +12,16 @@ body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; displa
 .titan-slot[data-sel='true'] { outline: 2px solid #8ca1bc; outline-offset: -2px; }
 .titan-slot.out { border-color: #d99342; }
 .titan-icon { display: block; width: calc(16px * var(--s)); height: calc(16px * var(--s)); background-size: calc(64px * var(--s)) calc(64px * var(--s)); image-rendering: pixelated; pointer-events: none; }
-.titan-icon.sm { --s2: 1.5; display: inline-block; flex: none; width: calc(16px * var(--s2)); height: calc(16px * var(--s2)); background-size: calc(64px * var(--s2)) calc(64px * var(--s2)); }
+.titan-icon.sm { display: inline-block; flex: none; width: calc(16px * var(--s2)); height: calc(16px * var(--s2)); background-size: calc(64px * var(--s2)) calc(64px * var(--s2)); }
 .titan-slot .key { position: absolute; top: 2px; left: 3px; font: 700 10px ui-monospace, monospace; color: #f2cc93; text-shadow: 1px 1px #171410; pointer-events: none; }
 .titan-slot .count { position: absolute; right: 3px; bottom: 1px; font: 700 11px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; pointer-events: none; }
-.titan-panel { position: absolute; z-index: 5; left: 0; right: 0; margin: 0 auto; width: max-content; top: max(8px, env(safe-area-inset-top)); max-width: calc(100vw - 16px); max-height: calc(100vh - 100px); overflow: auto; background: #171c20f7; border: 1px solid #a37350; border-radius: 7px; padding: 10px 12px; box-shadow: 0 10px 36px #0b0907a8; pointer-events: auto; }
-.titan-panelhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #f2cc93; font: 600 16px Georgia, serif; }
-.titan-panelhead .titan-btn { padding: 5px 10px; }
-.titan-panelbody { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-.titan-bag { display: grid; grid-template-columns: repeat(6, auto); gap: 4px; }
 .titan-craft { display: grid; gap: 6px; max-width: 200px; }
 .titan-craft small { color: #8ca1bc; font-size: 12px; }
 .titan-craft .hint { color: #c8b29a; line-height: 1.35; }
 .titan-craftrow { display: flex; align-items: center; gap: 8px; }
 .titan-craftgrid { display: grid; grid-template-columns: repeat(2, auto); gap: 4px; }
 .titan-craftrow .arrow { color: #f2cc93; }
-@media (max-height: 460px), (max-width: 820px) { .titan-ui { --s: 2; } .titan-panelbody { gap: 10px; } .titan-panel { padding: 6px 8px; } }
+@media (max-height: 460px), (max-width: 820px) { .titan-ui { --s: 2; --hbb: max(8px, env(safe-area-inset-bottom)); } }
 .titan-label { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 68px); transform: translateX(-50%); color: #fff3df; text-shadow: 0 1px 3px #000; min-height: 18px; }
 .titan-status { position: absolute; top: max(8px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); display: grid; gap: 2px; color: #fff3dfcc; text-shadow: 0 1px 3px #000; font-size: 12px; }
 .titan-status b { color: #f2cc93; }
@@ -52,27 +47,53 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-collect { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; --p: 0;
   background: conic-gradient(#f2cc93 calc(var(--p) * 360deg), #f2cc9333 0);
   -webkit-mask: radial-gradient(circle, transparent 10px, #000 11px); mask: radial-gradient(circle, transparent 10px, #000 11px); pointer-events: none; }
-/* Livro de receitas e Mesa de Trabalho (ADR 0045) */
-.titan-recipes { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; max-width: 520px; }
-.titan-recipes > small { flex: 0 0 100%; color: #8ca1bc; font-size: 12px; }
-.titan-recipes.station { max-width: none; }
-.titan-card { display: grid; gap: 3px; width: 168px; padding: 6px 8px; background: #211e1d; border: 1px solid #765943; border-radius: 4px; }
-.titan-card.off { border-color: #534438; }
-.titan-card.off .titan-cardtop { opacity: 0.75; }
-.titan-cardtop { display: flex; align-items: center; gap: 6px; color: #f2cc93; }
-.titan-ing { display: grid; gap: 1px; }
-.titan-ing span { display: flex; align-items: center; gap: 5px; font-size: 12px; line-height: 1.15; }
-.titan-recipes.station .titan-card .station { display: none; } /* na mesa todas as receitas são da estação: a linha só ocupa espaço */
-.titan-ing span.ok em { color: #bfe3b4; font-style: normal; }
-.titan-ing span.lack em { color: #f0a08a; font-style: normal; }
-.titan-card .station { color: #c8b29a; font-size: 11px; }
-.titan-card .why { color: #f0a08a; font-size: 11px; line-height: 1.25; }
-.titan-card .titan-btn { padding: 4px 10px; min-height: 36px; }
-.titan-card .titan-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .titan-use { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px); transform: translateX(-50%); z-index: 4; pointer-events: auto; min-height: 44px; min-width: 96px; font-size: 15px; }
-.titan-tabs { display: flex; gap: 6px; margin-left: 12px; margin-right: auto; }
-.titan-tabs .titan-btn { padding: 5px 10px; }
-.titan-tabs .titan-btn.on { background: #533e2c; border-color: #f2cc93; }
-.titan-panel { touch-action: pan-y; }
-.titan-recipes { flex-wrap: nowrap; overflow-x: auto; max-width: none; touch-action: pan-x; }
-.titan-recipes > small { display: none; } /* o título é a aba (mochila) ou o cabeçalho do painel (mesa) */
+
+/* Bolsa e livro de receitas (ADR 0047): hotbar de 9 com ☰ fora dos espaços; categorias | receitas | ingredientes; bolsa 3 × 9 alinhada à hotbar */
+.titan-hotbar { width: var(--hbw); box-sizing: border-box; justify-content: space-between; }
+.titan-hbmenu { position: absolute; left: calc(50% + var(--hbw) / 2 + 8px); bottom: var(--hbb); width: calc(var(--slot) + 14px); height: calc(var(--slot) + 14px); padding: 0; font-size: 22px; line-height: 1; pointer-events: auto; }
+.titan-icon.md { display: block; flex: none; width: calc(16px * var(--s3)); height: calc(16px * var(--s3)); background-size: calc(64px * var(--s3)) calc(64px * var(--s3)); }
+.titan-panel { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); width: min(calc(100vw - 16px), 660px); box-sizing: border-box; bottom: calc(var(--hbb) + var(--slot) + 14px + 5px); height: min(calc(100vh - var(--hbb) - var(--slot) - 14px - 5px - max(6px, env(safe-area-inset-top))), 420px);
+  display: flex; flex-direction: column; gap: 4px; padding: 5px; overflow: hidden; background: #171c20f7; border: 1px solid #765943; border-radius: 6px; pointer-events: auto; touch-action: none; }
+.titan-bagtop { display: grid; grid-template-columns: 96px minmax(0, 1fr) 208px; gap: 6px; min-height: 0; flex: 1 1 auto; }
+.titan-cats { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; touch-action: pan-y; }
+.titan-cat { background: #211e1d; color: #c8b29a; border: 1px solid #534438; border-radius: 3px; padding: 2px 5px; min-height: 23px; flex: none; font: 600 11px system-ui, sans-serif; text-align: left; cursor: pointer; touch-action: manipulation; }
+.titan-cat.on { background: #533e2c; color: #f2cc93; border-color: #d99342; }
+.titan-center { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; }
+.titan-tools { display: flex; gap: 4px; align-items: center; }
+.titan-search { flex: 1 1 60px; min-width: 0; height: 28px; box-sizing: border-box; background: #211e1d; color: #fff0da; border: 1px solid #765943; border-radius: 3px; padding: 0 6px; font: 16px system-ui, sans-serif; user-select: text; -webkit-user-select: text; }
+.titan-tools .titan-btn { padding: 3px 7px; min-height: 28px; font-size: 12px; }
+.titan-only.on { background: #533e2c; border-color: #f2cc93; }
+.titan-x { margin-left: auto; }
+.titan-rgrid { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 4px; align-content: start; overflow-y: auto; min-height: 0; touch-action: pan-y; }
+.titan-rcell { position: relative; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: #2b2421; border: 1px solid #765943; border-radius: 3px; cursor: pointer; touch-action: manipulation; }
+.titan-rcell.off .titan-icon { opacity: 0.55; }
+.titan-rcell.sel { outline: 2px solid #f2cc93; outline-offset: -2px; background: #533e2c; }
+.titan-rcell .count { position: absolute; right: 2px; bottom: 0; font: 700 11px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; }
+.titan-rcell .badge { position: absolute; left: 2px; top: 0; font: 700 12px system-ui, sans-serif; color: #f0a08a; text-shadow: 1px 1px #171410; }
+.titan-rgrid .hint { grid-column: 1 / -1; color: #c8b29a; font-weight: 500; line-height: 1.3; }
+.titan-detail { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; padding: 4px 6px; background: #211e1d; border: 1px solid #534438; border-radius: 4px; touch-action: pan-y; }
+.titan-dhead { display: flex; align-items: center; gap: 5px; color: #f2cc93; line-height: 1.15; }
+.titan-detail .station { color: #c8b29a; font-size: 11px; }
+.titan-detail .station.lack { color: #f0a08a; }
+.titan-dmeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 6px; }
+.titan-detail .th { color: #8ca1bc; font-size: 10px; }
+.titan-detail .ing { display: flex; align-items: center; gap: 4px; font-size: 12px; line-height: 1.1; }
+.titan-detail .ing em { flex: 1; font-style: normal; min-width: 0; }
+.titan-detail .ing.ok b { color: #bfe3b4; }
+.titan-detail .ing.lack b { color: #f0a08a; }
+.titan-detail .hint { color: #c8b29a; font-weight: 500; line-height: 1.3; }
+.titan-detail .why { color: #f0a08a; font-size: 11px; line-height: 1.2; }
+.titan-fab { position: sticky; bottom: 0; margin-top: auto; padding: 3px 8px; min-height: 30px; background: #171c20; } /* fica à vista mesmo quando a lista de ingredientes rola */
+.titan-fab:disabled { opacity: 0.45; cursor: not-allowed; }
+.titan-manual { display: grid; gap: 6px; align-content: start; }
+.titan-manual small { color: #8ca1bc; font-size: 12px; }
+.titan-manual .hint { color: #c8b29a; line-height: 1.3; font-weight: 500; }
+.titan-craftrow { display: flex; align-items: center; gap: 8px; }
+.titan-craftgrid { display: grid; grid-template-columns: repeat(2, auto); gap: 4px; }
+.titan-craftrow .arrow { color: #f2cc93; }
+.titan-bag { display: grid; grid-template-columns: repeat(9, var(--slot)); justify-content: space-between; gap: 4px; padding: 0; flex: none; width: calc(var(--hbw) - 14px); align-self: center; box-sizing: border-box; } /* mesmas colunas e tamanho da hotbar, centrada como ela */
+body.titan-bag-open .titan-touch { display: none; } /* com a bolsa aberta o toque fica só na interface: nada gira a câmera nem coloca/quebra */
+body.titan input { user-select: text; -webkit-user-select: text; }
+.titan-use { z-index: 4; }
+

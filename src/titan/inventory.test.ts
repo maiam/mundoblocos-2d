@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CRAFT_START, HOTBAR, Inventory, OUTPUT, SLOTS } from './inventory';
-import { Item } from './items';
+import { Item, maxStack } from './items';
 
 const full = (): Inventory => { const i = new Inventory(); for (let n = 0; n < SLOTS; n++) i.add(Item.CAPSULE, 1); return i; };
 
 describe('inventário do Titã', () => {
   it('começa de mãos vazias (a cápsula saiu, o id 7 fica reservado); hotbar de 7 + mochila de 24', () => {
     const i = Inventory.starting();
-    expect(HOTBAR).toBe(7); expect(SLOTS - HOTBAR).toBe(24);
+    expect(HOTBAR).toBe(9); expect(SLOTS - HOTBAR).toBe(27); // hotbar de 9 + mochila 3 × 9 (ADR 0047)
     for (let n = 0; n < SLOTS; n++) expect(i.get(n)).toBeNull();
     expect(Item.CAPSULE).toBe(7);
   });
@@ -41,7 +41,7 @@ describe('inventário do Titã', () => {
   });
   it('grade 2 × 2: quatro blocos de rocha escura, em qualquer disposição, formam a Mesa de Trabalho; pegar consome a grade', () => {
     const i = Inventory.starting(); i.add(Item.DARK_ROCK, 6);
-    for (let k = 0; k < 4; k++) i.move(HOTBAR - 7, CRAFT_START + k); // 1 por vez
+    for (let k = 0; k < 4; k++) i.move(0, CRAFT_START + k); // 1 por vez
     expect(i.craftResult()).toEqual({ item: Item.WORKBENCH, count: 1 });
     expect(i.total(Item.DARK_ROCK)).toBe(2); // as outras duas continuam
     expect(i.takeResult()).toBe(true);
@@ -79,6 +79,26 @@ describe('inventário do Titã', () => {
     expect(j.total(Item.DARK_ROCK)).toBe(2);
     const bad = Inventory.fromData({ v: 1, slots: [[99, 1], [Item.SAND, 500], [Item.SAND, 3]], craft: [] });
     expect(bad.total(Item.SAND)).toBe(3);
-    expect(OUTPUT).toBe(35);
+    expect(OUTPUT).toBe(40);
+  });
+
+  it('migração por seção (save anterior): 7 da hotbar → 1–7, 8–9 vazios, 24 da bolsa → 10–33, 3 novos vazios, grade preservada, sem perder nem duplicar', () => {
+    // bolsa cheia com itens distintos em cada seção (itens 1–11 em sequência, contagens diferentes)
+    const slots: Array<[number, number] | null> = Array.from({ length: 31 }, (_, i) => [(i % 11) + 1, Math.min(maxStack((i % 11) + 1), (i % 5) + 1)]);
+    const craft: Array<[number, number] | null> = [[Item.DARK_ROCK, 1], null, [Item.SAND, 1], null];
+    const old = { v: 1 as const, slots, craft };
+    const j = Inventory.fromData(old);
+    for (let i = 0; i < 7; i++) expect(j.get(i)).toEqual({ item: slots[i]![0], count: slots[i]![1] }); // hotbar antiga → 0–6
+    expect(j.get(7)).toBeNull(); expect(j.get(8)).toBeNull(); // 8 e 9 vazios
+    for (let i = 0; i < 24; i++) expect(j.get(9 + i)).toEqual({ item: slots[7 + i]![0], count: slots[7 + i]![1] }); // bolsa antiga → 9–32
+    for (let i = 33; i < SLOTS; i++) expect(j.get(i)).toBeNull(); // 3 espaços novos
+    expect(j.get(CRAFT_START)).toEqual({ item: Item.DARK_ROCK, count: 1 }); expect(j.get(CRAFT_START + 1)).toBeNull(); expect(j.get(CRAFT_START + 2)).toEqual({ item: Item.SAND, count: 1 });
+    // nada some e nada duplica: totais por item iguais
+    const sum = (arr: Array<[number, number] | null>, item: number): number => arr.reduce((n, e) => n + (e && e[0] === item ? e[1] : 0), 0);
+    for (let item = 1; item <= 11; item++) expect(j.total(item)).toBe(sum(slots, item));
+    // gravar de novo usa o formato novo e é estável ao reabrir
+    const d = j.toData();
+    expect(d.v).toBe(2); expect(d.slots).toHaveLength(SLOTS);
+    expect(JSON.stringify(Inventory.fromData(JSON.parse(JSON.stringify(d))).toData())).toBe(JSON.stringify(d));
   });
 });

@@ -37,7 +37,7 @@ describe('coleta e inventário no mundo', () => {
     expect(r).toEqual({ ok: false, msg: 'Este item não se coloca' });
     expect(s.volume.get(bx, 65, bz)).toBe(T.AIR);
     expect(s.inventory.total(Item.CAPSULE)).toBe(1); // nada se perde
-    expect(HOTBAR).toBe(7);
+    expect(HOTBAR).toBe(9);
   });
 
   it('fragmento de superfície: 1 lasca = 1 fragmento, some do mundo, o id recolhido vai no save', async () => {

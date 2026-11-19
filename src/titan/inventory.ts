@@ -2,18 +2,20 @@ import { isItem, maxStack } from './items';
 import { matchGrid, type Recipe, type Stackable } from './recipes';
 
 /**
- * Inventário do Titã (ADR 0040): hotbar de 7 espaços (índices 0–6) + mochila de 24 (7–30, 4 fileiras de 6) + grade de fabricação 2 × 2 (31–34).
+ * Inventário do Titã (ADR 0040, 0047): hotbar de **9** espaços (índices 0–8) + mochila de **27** (9–35, 3 × 9 alinhada à hotbar) + grade de fabricação 2 × 2 (36–39).
  * Sem DOM. Toda regra de espaço e quantidade fica aqui; a interface só chama estes métodos. Não existe descarte: nada se perde. A fabricação (`tryCraft`) é atômica: débito e resultado juntos, ou nada.
  */
-export const HOTBAR = 7;
-export const BAG = 24;
-export const SLOTS = HOTBAR + BAG; // 31
+export const HOTBAR = 9;
+export const BAG = 27;
+export const SLOTS = HOTBAR + BAG; // 36
+/** Layout anterior (até o save v4, ADR 0040): 7 + 24 + grade. A migração leva cada seção para o novo lugar (`Inventory.fromData`). */
+export const OLD_HOTBAR = 7, OLD_BAG = 24;
 export const CRAFT_SLOTS = 4;
 export const CRAFT_START = SLOTS; // 31..34
-export const OUTPUT = CRAFT_START + CRAFT_SLOTS; // 35: resultado (virtual)
+export const OUTPUT = CRAFT_START + CRAFT_SLOTS; // 40: resultado (virtual)
 
 export interface Stack { item: number; count: number }
-export interface InventoryData { v: 1; slots: Array<[number, number] | null>; craft: Array<[number, number] | null> }
+export interface InventoryData { v: 1 | 2; slots: Array<[number, number] | null>; craft: Array<[number, number] | null> }
 
 export class Inventory {
   /** hotbar + mochila + grade (índices 0–34). */
@@ -167,7 +169,7 @@ export class Inventory {
   // ---- Save ----
   toData(): InventoryData {
     const pack = (c: Stack | null): [number, number] | null => (c ? [c.item, c.count] : null);
-    return { v: 1, slots: this.s.slice(0, SLOTS).map(pack), craft: this.s.slice(SLOTS, SLOTS + CRAFT_SLOTS).map(pack) };
+    return { v: 2, slots: this.s.slice(0, SLOTS).map(pack), craft: this.s.slice(SLOTS, SLOTS + CRAFT_SLOTS).map(pack) };
   }
 
   /** Lê um registro gravado, descartando o que não for válido (item desconhecido, contagem fora do limite). */
@@ -181,7 +183,11 @@ export class Inventory {
         if (Array.isArray(e) && isItem(e[0]) && Number.isInteger(e[1]) && e[1] >= 1 && e[1] <= maxStack(e[0])) inv.s[off + i] = { item: e[0], count: e[1] };
       }
     };
-    read(o?.slots, SLOTS, 0);
+    if (o?.v === 1) {
+      // migração por seção (ADR 0047): os 7 espaços antigos da hotbar vão para 1–7 (8–9 vazios) e os 24 da bolsa para o novo início da grade (9–32); a grade 2 × 2 não muda de conteúdo
+      read(Array.isArray(o.slots) ? o.slots.slice(0, OLD_HOTBAR) : [], OLD_HOTBAR, 0);
+      read(Array.isArray(o.slots) ? o.slots.slice(OLD_HOTBAR, OLD_HOTBAR + OLD_BAG) : [], OLD_BAG, HOTBAR);
+    } else read(o?.slots, SLOTS, 0);
     read(o?.craft, CRAFT_SLOTS, SLOTS);
     return inv;
   }
