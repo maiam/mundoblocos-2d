@@ -13,7 +13,7 @@ export const DRAG_TOLERANCE_PX = 10;
 export type TargetKind = 'block' | 'lantern' | 'shard';
 
 /** Tempos iniciais totais (ms), desde a pressão. */
-export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, collect: 350 } as const;
+export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350 } as const;
 
 /** Tempo total para concluir a ação sobre o alvo, ou `null` se não há o que quebrar (rocha-mãe, líquido). */
 export function breakTotalMs(kind: TargetKind, block?: number): number | null {
@@ -22,6 +22,7 @@ export function breakTotalMs(kind: TargetKind, block?: number): number | null {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
     case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
     case T.DARK_ROCK: case T.VEIN_ROCK: case T.WORKBENCH: return BREAK_MS.rock;
+    case T.SLAB: return BREAK_MS.slab; // meio bloco de rocha: mais rápida que o cubo
     case T.EMBER: return BREAK_MS.ice; // depósito de brasa: cristal em rocha mole, como o gelo
     default: return null;
   }

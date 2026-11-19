@@ -5,7 +5,7 @@ import { Item } from './items';
  * Catálogo de receitas do Titã (ADR 0045). **Uma fonte só**: os cartões do livro de receitas, a validação, o consumo e a grade 2 × 2 leem daqui.
  * Sem DOM. Cada receita tem estação (`personal` = fabricação pessoal 2 × 2 na mochila; `workbench` = Mesa de Trabalho) e é fabricada por inteiro ou nada
  * (`craft`: confere estação e ingredientes, calcula a capacidade **depois** dos débitos e aplica consumo e resultado numa operação só).
- * A Laje de Rocha (3 blocos → 6 lajes) é da segunda entrega e entra aqui depois do aceite da mesa.
+ * A Laje de Rocha (3 blocos → 6 lajes, mesa) entrou na segunda entrega (ADR 0046), depois do aceite da mesa.
  */
 export type Station = 'personal' | 'workbench';
 export interface Stackable { item: number; count: number }
@@ -15,6 +15,7 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'mesa', name: 'Mesa de Trabalho', result: { item: Item.WORKBENCH, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }], station: 'personal' },
   { id: 'lente', name: 'Lente de Gelo', result: { item: Item.ICE_LENS, count: 1 }, ingredients: [{ item: Item.FROST_SHARD, count: 1 }], station: 'workbench' },
   { id: 'lanterna', name: 'Lanterna da Margem', result: { item: Item.LANTERN, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 2 }, { item: Item.ICE_LENS, count: 1 }, { item: Item.EMBER, count: 1 }], station: 'workbench' },
+  { id: 'laje', name: 'Laje de Rocha', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }], station: 'workbench' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 

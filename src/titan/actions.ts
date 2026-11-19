@@ -1,5 +1,5 @@
 import { blockOfItem, Item, itemOfBlock } from './items';
-import { isSolid, isVein, T, Y_MIN } from './voxel';
+import { blockHeight, isSolid, isVein, T, Y_MIN } from './voxel';
 import { canPlaceAt, type Hit } from './physics';
 import type { TitanSession } from './session';
 
@@ -113,7 +113,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
   const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
-  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied) || !s.volume.place(x, y, z, block)) return { ok: false };
+  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockHeight(block)) || !s.volume.place(x, y, z, block)) return { ok: false };
   s.inventory.consume(slot);
   return { ok: true };
 }

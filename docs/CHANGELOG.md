@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.101.0 — Titã: Laje de Rocha, bloco de meia altura (segunda entrega de "Uma luz para voltar") (19/11/2026)
+- **Pedido do dono do produto:** o teste da mesa em celular real passou; seguir para a segunda entrega. Decisões na **ADR 0046**.
+- **Laje de Rocha:** bloco `T.SLAB` (12) e item 13; receita **3 blocos de rocha escura → 6 lajes na Mesa de Trabalho** (mesmo catálogo/fabricação atômica). Quebra em 1,0 s e devolve 1 laje; só de fundo; persiste como edição de chunk.
+- **Física:** colisão por altura (`blockHeight`/`bodyHeight`), pouso no topo da laje, **degrau automático de 0,5 m** (sobe a laje andando; cubo inteiro a partir do piso continua barrando), cabeça livre por baixo; `canPlaceAt` por altura.
+- **Mira e malha:** a mira acerta só a metade de baixo da célula (raio por cima segue para o que está atrás, contorno de meia altura); laterais de 16 × 8 px, topo em y + 0,5, culling por `isFull` (laje não esconde os vizinhos).
+- Atlas de itens 64 × 64 com o ícone da laje (`scripts/make-titan-fabricacao.py`). Sem mudança de gerador, formato de save ou protocolo.
+- Testes (+14): `slab.test.ts` (altura/oclusão, colisão, degrau, queda, degraus laje→cubo, cabeça, mira, colocar, malha, fabricar/colocar/quebrar/persistir, mochila cheia), receita e tempo de quebra. Verificado no Chromium (laje de tarde e de noite, andar de verdade contra a laje sobe o degrau, cartão "Laje de Rocha ×6" na mesa). **Aparelho real pendente.**
+
 ## Orvalis v0.100.1 — Titã: o junco de vidro agora se recolhe e cai como item (19/11/2026)
 - **Relato do dono do produto:** ao mirar no junco de vidro o jogo quebrava o bloco de areia úmida embaixo dele e o junco sumia sem render nada.
 - **Junco recolhível:** passou a ser alvo da mira (`ItemLookup`, como as lascas legadas; id `reed:x,y,z`) e se recolhe segurando 0,35 s (anel de recolhimento), rendendo 1 **Junco de vidro** (item 12, pilha de 64, ícone no índice 11 do atlas de itens). O bloco de baixo **não** é quebrado. Mochila cheia deixa a planta no lugar. A planta recolhida não renasce (o id fica em `collected`, já gravado no save).

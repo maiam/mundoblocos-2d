@@ -10,7 +10,7 @@
 | Blocos | Areia ocre, Areia úmida, Rocha escura, Gelo fosco (colocáveis); Lago escuro (líquido), Rocha-mãe; **Lanterna** (id 7, objeto não sólido que emite luz) | `titan/voxel.ts` (`T`) |
 | Relógio e céu | dia de **20 min = 24 000 ticks** no ritmo do Minecraft (dia 10 min, pôr do sol 1 min 30 s, noite 7 min, nascer do sol 1 min 30 s; `DAY_SECONDS` = 1 200), hora = fração do dia em `session.time`, avança com o jogo ativo e para na tela de início e com a aba oculta; partidas novas e saves sem hora começam à tarde (tick 9 000 = 0,375); no save (`header.time`, ~10 s); manhã pêssego → tarde cobre/âmbar → noite carvão-violeta com cobre no horizonte; sol em ponto quando alto; névoa segue o horizonte; luz do dia = uniform do shader (mudar a hora refaz 0 seções) | `titan/sky.ts`, `render/titanRenderer.ts` (`setSky`, `patchDayLight`), `titan/titanGame.ts` |
 | Hora de teste | `?hora=manha\|tarde\|noite` (ticks 720, 9 000 e 18 000) congela só a visualização; a hora do jogo segue correndo e é a gravada; sem o parâmetro volta a do save | `titan/sky.ts` (`parseHora`) |
-| Itens | 12 ids = índice no atlas da hotbar (64 × 48) + 1: 1–4 blocos, 5–6 fragmentos, **7 cápsula (legada, id reservado)**, 8 lanterna, 9 Mesa de Trabalho, 10 Lente de Gelo, 11 Brasa de âmbar, 12 Junco de vidro; pilhas de 64 (blocos, fragmentos, lente, brasa) e 1 (cápsula, lanterna, mesa) | `titan/items.ts` |
+| Itens | 13 ids = índice no atlas da hotbar (64 × 64) + 1: 1–4 blocos, 5–6 fragmentos, **7 cápsula (legada, id reservado)**, 8 lanterna, 9 Mesa de Trabalho, 10 Lente de Gelo, 11 Brasa de âmbar, 12 Junco de vidro, 13 Laje de rocha; pilhas de 64 (blocos, fragmentos, lente, brasa) e 1 (cápsula, lanterna, mesa) | `titan/items.ts` |
 | Inventário | hotbar 7 + mochila 24 (E) + grade 2 × 2 + saída; começa **vazio** (v4); sem descarte; "Mochila cheia" preserva lasca e bloco | `titan/inventory.ts`, `titan/actions.ts` |
 | Fragmentos | 3 lascas de rocha e 3 de gelo sobre as formações (ids `rock:0`…), recolhidas à mão (segurar 0,35 s), 1 lasca = 1 fragmento; ids recolhidos vão no save | `titan/generator.ts` (`surfaceItems`), `titan/session.ts` |
 | Lanterna | **2 fragmentos de rocha + lente de gelo + brasa de âmbar, na Mesa de Trabalho** (ADR 0045); colocada no chão/parede, luz 15 −1 por célula, bloqueada por sólidos; recuperável; estado = posição (edição de chunk) | `titan/light.ts`, `titan/volume.ts`, `titan/mesher.ts` |
@@ -89,3 +89,9 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 - **Migração (save v4):** cápsula → 1 brasa uma única vez (mochila e grade); partida de gerador antigo sem brasa ganha `grants.ember` (adição localizada em coluna intacta). Detalhes na ADR 0045 e testes em `fabricacao.test.ts`.
 - **Medição:** só emulador e desktop; aparelho real pendente (cartões e área de toque do Usar em paisagem, brilho da brasa de dia, lanterna à noite).
 - **Junco recolhível (v0.100.1):** alvo da mira como as lascas (`session.items.at` devolve `reed:x,y,z`), `collectItem` rende o item 12 sem quebrar o bloco de baixo; quebrar o apoio solta o item 12 como drop (`releaseReed`); o id vai em `collected` (não renasce).
+
+## Laje de Rocha (v0.101.0, ADR 0046)
+- `T.SLAB` (12) / item 13: meia altura (`blockHeight` 0,5), só de fundo; receita `laje` (3 rochas → 6 lajes, mesa). Quebra 1,0 s.
+- **Física:** colisão por altura, pouso no topo (`landingY`), degrau automático de 0,5 m no chão (`STEP`); cubo inteiro a partir do piso barra; passa por baixo de lajes a ≥ 1,8 m. **Mira:** raio × caixa de meia altura (raio por cima segue). **Malha:** topo a y + 0,5, lateral 16 × 8 px do tile da rocha escura, `isFull` no culling.
+- Testes: `slab.test.ts`. Medição: emulador/desktop; **aparelho real pendente**.
+
