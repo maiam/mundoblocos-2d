@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Inventory, SLOTS } from './inventory';
 import { Item } from './items';
-import { blockedReason, craft, ingredientStatus, matchGrid, recipeById, RECIPES } from './recipes';
+import { blockedReason, craft, ingredientStatus, matchBench, previewCells, recipeById, RECIPES } from './recipes';
 
 const lanterna = recipeById('lanterna')!, lente = recipeById('lente')!, mesa = recipeById('mesa')!;
 const fill = (i: Inventory, item: number): void => { while (i.canAdd(item)) i.add(item, 1); };
@@ -75,9 +75,22 @@ describe('catálogo de receitas (ADR 0045)', () => {
     expect(i.get(0)?.item).toBe(Item.FROST_SHARD); // o da hotbar ficou
   });
 
-  it('grade 2 × 2 usa o mesmo catálogo (só receitas pessoais)', () => {
-    expect(matchGrid([Item.DARK_ROCK, Item.DARK_ROCK, Item.DARK_ROCK, Item.DARK_ROCK])?.id).toBe('mesa');
-    expect(matchGrid([Item.FROST_SHARD])).toBeNull(); // a lente é da mesa
+  it('a grade 3 × 3 usa o mesmo catálogo (todas as receitas)', () => {
+    expect(matchBench(new Map([[Item.DARK_ROCK, 4]]))?.id).toBe('mesa');
+    expect(matchBench(new Map([[Item.FROST_SHARD, 1]]))?.id).toBe('lente');
     expect(SLOTS).toBe(36);
+  });
+
+  it('prévia: uma célula por unidade pedida; o tanto que o jogador tem é repartido (4 → 1,1,1,1 · 3 → 1,1,1,0 · 12 → 3 cada · 9 → 3,2,2,2)', () => {
+    const mesa = recipeById('mesa')!;
+    const shares = (n: number): number[] => { const i = Inventory.starting(); if (n) i.add(Item.DARK_ROCK, n); return previewCells(i, mesa).map((c) => c.share); };
+    expect(shares(4)).toEqual([1, 1, 1, 1]);
+    expect(shares(3)).toEqual([1, 1, 1, 0]);
+    expect(shares(12)).toEqual([3, 3, 3, 3]);
+    expect(shares(9)).toEqual([3, 2, 2, 2]);
+    expect(shares(0)).toEqual([0, 0, 0, 0]);
+    const inv = Inventory.starting(); inv.add(Item.ROCK_SHARD, 2); inv.add(Item.ICE_LENS, 1);
+    const l = previewCells(inv, recipeById('lanterna')!);
+    expect(l.map((c) => [c.item, c.share])).toEqual([[Item.ROCK_SHARD, 1], [Item.ROCK_SHARD, 1], [Item.ICE_LENS, 1], [Item.EMBER, 0]]);
   });
 });

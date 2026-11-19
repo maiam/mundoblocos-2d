@@ -81,8 +81,7 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-detail { display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 0; text-align: center; padding-top: 2px; }
 .titan-detail .station { color: #c8b29a; font-size: 11px; }
 .titan-detail .station.lack { color: #f0a08a; }
-.titan-igrid { display: grid; grid-template-columns: repeat(2, 38px); gap: 2px; }
-.titan-igrid.n3 { grid-template-columns: repeat(3, 38px); }
+.titan-igrid { display: grid; grid-template-columns: repeat(3, 38px); gap: 2px; }
 .titan-icell { position: relative; display: grid; place-items: center; width: 38px; height: 38px; background: #4a4340; border: 2px solid #2a2523; border-radius: 2px; }
 .titan-icell.ok { border-color: #5d7d58; }
 .titan-icell.lack { border-color: #a0503f; background: #4a3532; }
