@@ -8,6 +8,8 @@
 | Unidades | 1 bloco = 1 m; Y de −64 a 319 (24 seções de 16³); região de teste x/z em [−32, 32) (4 × 4 chunks) | `titan/voxel.ts` |
 | Lago | última célula líquida Y = 63, superfície em 64; areia da chegada em Y = 64, pés em 65 | `titan/generator.ts` |
 | Blocos | Areia ocre, Areia úmida, Rocha escura, Gelo fosco (colocáveis); Lago escuro (líquido), Rocha-mãe; **Lanterna** (id 7, objeto não sólido que emite luz) | `titan/voxel.ts` (`T`) |
+| Relógio e céu | dia de **20 min = 24 000 ticks** no ritmo do Minecraft (dia 10 min, pôr do sol 1 min 30 s, noite 7 min, nascer do sol 1 min 30 s; `DAY_SECONDS` = 1 200), hora = fração do dia em `session.time`, avança com o jogo ativo e para na tela de início e com a aba oculta; partidas novas e saves sem hora começam à tarde (tick 9 000 = 0,375); no save (`header.time`, ~10 s); manhã pêssego → tarde cobre/âmbar → noite carvão-violeta com cobre no horizonte; sol em ponto quando alto; névoa segue o horizonte; luz do dia = uniform do shader (mudar a hora refaz 0 seções) | `titan/sky.ts`, `render/titanRenderer.ts` (`setSky`, `patchDayLight`), `titan/titanGame.ts` |
+| Hora de teste | `?hora=manha\|tarde\|noite` (ticks 720, 9 000 e 18 000) congela só a visualização; a hora do jogo segue correndo e é a gravada; sem o parâmetro volta a do save | `titan/sky.ts` (`parseHora`) |
 | Itens | 8 ids = índice no atlas da hotbar + 1; pilhas de 64 (blocos, fragmentos) e 1 (cápsula, lanterna) | `titan/items.ts` |
 | Inventário | hotbar 7 + mochila 24 (E) + grade 2 × 2 + saída; começa só com a cápsula; sem descarte; "Mochila cheia" preserva lasca e bloco | `titan/inventory.ts`, `titan/actions.ts` |
 | Fragmentos | 3 lascas de rocha e 3 de gelo sobre as formações (ids `rock:0`…), recolhidas à mão (clique direito/Quebrar), 1 lasca = 1 fragmento; ids recolhidos vão no save | `titan/generator.ts` (`surfaceItems`), `titan/session.ts` |
@@ -15,9 +17,9 @@
 | Edição | esquerdo **coloca** na face apontada, direito **remove**; líquido é deslocado e volta ao remover o sólido; rocha-mãe e fora da região não editam | `titan/volume.ts` |
 | Física | caixa 0,6 × 1,8 × 0,6; pulo de 1 bloco (não 2); líquido freia e flutua | `titan/physics.ts` |
 | Save | IndexedDB `orvalis-titan` (`TITAN_SAVE_VERSION` 2): `games` (cabeçalho, jogador, **`inventory` = mochila + grade + fragmentos recolhidos**) + `chunks` (deltas, inclusive lanternas); uma transação; autosave 0,7 s após editar e 5 s de posição; **revisão por chunk e do inventário**: só a revisão confirmada fica limpa, o que muda durante a gravação continua pendente | `titan/save.ts`, `titan/session.ts` |
-| Malha/visual | seção 16³, faces expostas, atlas `render/art/titan.ts` (WebP sem perdas), tarde fixa e névoa âmbar | `titan/mesher.ts`, `titan/sections.ts` (fila inicial: relevo + seções editadas), `render/titanRenderer.ts` |
+| Malha/visual | seção 16³, faces expostas, atlas `render/art/titan.ts` (WebP sem perdas), sombreado fixo por face (`col`) e brilho de lanterna (`glow`); a luz do dia é um uniform do shader | `titan/mesher.ts`, `titan/sections.ts` (fila inicial: relevo + seções editadas), `render/titanRenderer.ts` |
 
-**Gerador:** `GENERATOR_VERSION` 2 (formações só em terreno plano); a v1 segue disponível e idêntica para saves antigos. **Teste de luz:** `?hora=noite` baixa a luz ambiente (só para ver a lanterna).
+**Gerador:** `GENERATOR_VERSION` 2 (formações só em terreno plano); a v1 segue disponível e idêntica para saves antigos. **Teste de luz:** `?hora=noite` congela a visualização na noite (só para ver a lanterna).
 
 **Verificações da entrega:** `titan/*.test.ts` (endereçamento nas bordas, determinismo, 20 seeds com chegada seca/clareira/percurso até lago e formações, bacia × praia, divisa de chunks, física,
 mira, save/retomada/posição segura/falha de gravação/versão desconhecida, malha). **Perf:** não medida em celular real.
@@ -55,5 +57,11 @@ mira, save/retomada/posição segura/falha de gravação/versão desconhecida, m
 2. Coletar as lascas de rocha e gelo (botão Quebrar), abrir a mochila por toque, **Receita da lanterna**, pegar a lanterna, movê-la para a hotbar.
 3. Colocar a lanterna e **editar blocos perto dela** (colocar e quebrar várias vezes): observar engasgos e ler `luz`/`malha`/`quadro+malha` no painel.
 4. Esperar "salvo ✓", recarregar `?mundo=titan` sem `?seed=` e conferir inventário, lanterna e fragmentos já recolhidos; recuperar a lanterna.
-5. Comparar a luz na tarde padrão e com `&hora=noite`.
+5. Deixar o dia correr (20 min; o pôr do sol vem 2 min 30 s depois de começar) e comparar a luz da lanterna na tarde e na noite; `&hora=manha|tarde|noite` congela a visualização.
 6. Repetir 3 com `?mundo=titan&cena=lanternas&n=12&fps=1` + "Editar sem parar" (pior caso). Andar uns 30 s e **tocar no painel pequeno do canto superior esquerdo**: o relatório abre na tela para **tirar print** (Atualizar, Copiar JSON, Fechar).
+
+## Medições registradas
+- **Emulador** (Chromium emulando celular em paisagem, CPU 4× mais lenta, cena de 12 lanternas com edição contínua): refazer malhas por edição **204 ms → 12,3 ms** com a luz incremental (v0.95.2); com o ciclo de céu rodando (v0.96.0) **12,9 ms**, 54 FPS estáveis.
+- **iPhone real** (Safari, 932×320, seed 42, 19/11/2026): partida normal, 151 s: **60 FPS** estáveis, 5% piores 47,2, pior quadro 36 ms, 0,4% de quadros acima de 33 ms, 0% acima de 50 ms, malha de uma seção 0,7 ms. **Cena de 12 lanternas com "Editar sem parar", 62 s: 59,9 FPS**, 5% piores 37,7, **malha do quadro 3,0 ms** (validação em aparelho real da luz incremental), luz 0,13 ms, ~3 seções por quadro com malha. O Safari arredonda os tempos para 1 ms (p95 e máx ficam em 1) e não expõe a memória do JS.
+- **Pico de 135 ms** (pior quadro da cena no iPhone, coerente com `buildFrame` máx 132 ms): 0% dos quadros acima de 50 ms, ou seja, um ou poucos quadros. **Causa em aberto** (geração inicial, toque no painel ou outro): registrar se aparecer de novo ao jogar.
+- **Worker de malha: em espera.** Android de gama média ainda não testado.
