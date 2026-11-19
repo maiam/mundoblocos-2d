@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.104.0 — Titã: bancada 3 × 3 interativa e painéis de basalto (19/11/2026)
+- **Pedido do dono do produto:** grade 3 × 3 interativa na Mesa de Trabalho e arte própria em basalto nos painéis. Decisões na **ADR 0049**.
+- **Bancada 3 × 3:** com a mesa ativa (Usar/F) aparece o grupo **Montar 3 × 3**: nove espaços interativos (uma unidade por toque) e a saída com ícone, quantidade e nome; **Receitas** volta ao livro. Separada da grade pessoal 2 × 2. Quantidades **exatas** em qualquer disposição (`matchBench`, mesmo catálogo): lente, lanterna e **3 rochas → 6 lajes numa única retirada**; extra, errado ou faltando deixa a saída vazia.
+- **Retirada atômica e revalidada** a cada toque (mesa, alcance, ingredientes e espaço); bolsa cheia ou mesa perdida preservam tudo. **Fechar devolve** a grade à hotbar/bolsa; o que não couber fica na grade e no save, com aviso. Saves anteriores abrem com a grade vazia (inventário gravado `v: 3`, sem mudar `TITAN_SAVE_VERSION`).
+- **Basalto:** ladrilho 32 × 32 sem emenda (`scripts/make-titan-basalt.py`, carvão e violeta escuro, relevo discreto) na moldura e nos fundos dos painéis e da hotbar, com acabamento cobre fosco; âmbar só para seleção, foco e saída pronta; espaços lisos e calmos.
+- Testes (`bench.test.ts`, +10): catálogo exato, uma unidade por toque, as três receitas e as lajes ×6, errado/extra/faltando, toque repetido, bolsa cheia, separação da grade pessoal, devolver ao fechar (parcial, sem perder nada), save v3 e saves anteriores, sessão (pendente sobrevive ao reabrir). Verificado no Chromium em celular emulado (740 × 360): as três receitas, ingrediente errado, toque repetido, bolsa cheia e mesa removida; capturas do livro e da bancada com saída válida. **Aparelho real pendente.**
+
 ## Orvalis v0.103.0 — Titã: céu com bruma direcional, noite mais escura e fria, estrelas e Saturno raro (19/11/2026)
 - **Pedido do dono do produto:** céu mais rico em bruma e mais escuro à noite, com Saturno aparecendo raramente (um trecho dos anéis por alguns instantes, sempre no mesmo ponto do céu). Decisões na **ADR 0048**.
 - **Cúpula em shader** (`render/titanSkyDome.ts`): mudar a hora continua sendo só uniforms (zero remalhagem). **Bruma direcional:** o nascer acende o leste, de dia o halo largo e suave acompanha o Sol (o núcleo segue o ponto quadrado), o poente guarda a última claridade ao pôr do sol, e o lado oposto ganha um ocre mais frio; duas faixas finas de bruma baixa derivam devagar.

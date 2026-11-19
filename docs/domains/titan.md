@@ -104,3 +104,8 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 - `titan/sky.ts` (puro) devolve, além das cores, a claridade direcional (`glowDir`/`glow`/`glowK`), o lado frio (`cool`/`coolK`), `haze`, `stars` e `tint` da luz ambiente; `horizonAt` dá a cor da bruma baixa por direção (a névoa e o fundo a seguem a cada giro); `saturnVisibility(day, frac, seed)` decide o Saturno raro (~12% dos dias, janela de ~10 s de dia).
 - `render/titanSkyDome.ts`: shader da cúpula (degradê, halo, bruma, estrelas, Saturno); `TitanRenderer.setSky/setSaturn`. `session.days` no save (`header.days?`). Testes: `sky.test.ts`. Teste visual: mesma câmera, `?hora=manha|tarde|crepusculo|noite` olhando leste e oeste; `?saturno=1`.
 
+## Bancada 3 × 3 e painéis de basalto (v0.104.0, ADR 0049)
+- **Grade da mesa** (`inventory.ts`): `BENCH_START` 41–49, saída `BENCH_OUT` 50, separada da pessoal; `matchBench` (quantidades exatas, qualquer disposição), `takeBenchResult` (atômica), `returnBench` (devolve ao fechar; o que não couber fica na grade e no save). Inventário gravado `v: 3` com `bench`.
+- **Interface** (`titanGame.ts`): grupo "Montar 3 × 3" (só com a mesa ativa), `takeBench` revalida mesa e alcance a cada toque; "Receitas" volta ao livro. Basalto por `--basalt` (`render/art/titan.ts` → `titanBasaltUrl`).
+- Testes: `bench.test.ts`. Medição: emulador (740 × 360); **aparelho real pendente**.
+

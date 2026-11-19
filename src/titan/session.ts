@@ -129,6 +129,7 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   // migração da cápsula (ADR 0045): save anterior à v4 → a cápsula remanescente (mochila ou grade, inclusive receita antiga já iniciada) vira brasa de âmbar, uma única vez (o save regravado já é v4)
   const converted = save.header.v < 4 ? inv.convertItem(Item.CAPSULE, Item.EMBER) : 0;
   inv.returnCraft();
+  inv.returnBench(); // a grade da mesa volta à bolsa ao abrir; o que não couber fica na grade (e no save) até haver espaço
   const collected = new Set<string>((save.header.inventory?.collected ?? []).filter((x): x is string => typeof x === 'string'));
   const grants: TitanSession['grants'] = {};
   const g = save.header.grants?.ember;
