@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.95.1 — Titã: medição por etapa e cena de lanternas para o aceite em aparelho (19/11/2026)
+- **Pedido do dono do produto:** fechar o aceite da entrega 2 em celular real com uma medição de desempenho no mesmo teste, e medir **antes** de mover trabalho para workers.
+- **Painel `?fps=1` no Titã:** o painel existente (`dev/perfHud.ts`, ganhou o gancho opcional `PerfExtra`) agora mostra e copia, além de FPS/GPU/memória, o tempo de cada etapa: `luz`, `malha`, `geometria`, desenho com e sem malha nova (`titan/perf.ts`, instrumentação em `titanRenderer.ts` e em `TitanVolume.onLightMs`).
+- **Cena `?cena=lanternas&n=12`** (`titan/scene.ts`): `n` lanternas com uma parede ao lado, seed 42, **sem gravar** (armazenamento em memória) e botão "Editar sem parar" que estressa luz e malha. Necessária porque a partida normal só tem uma cápsula e a receita a consome.
+- **Primeira medição** (Chromium emulando celular, `domains/titan.md`): o desenho e a GPU são baratos; o custo é refazer ~28–37 seções por edição perto de uma lanterna (~28 ms com 1 lanterna; ~113 ms a CPU 4× mais lenta) e o BFS de luz (1,5–27 ms). Recomendação registrada: invalidar só o que mudou e medir de novo antes de qualquer worker.
+- Docs: `OPERATIONS.md` (como medir), `domains/titan.md` (roteiro de aceite e tabela), `NEXT_STEPS.md` (decisões confirmadas, ordem do trabalho, pendências do site e das seeds). Sem mudança de gameplay, save, gerador ou protocolo. Testes: `titan/perf.test.ts` (estatísticas, cena determinística, "editar sem parar" reversível, luz recalcula só quando muda).
+
 ## Orvalis v0.95.0 — Titã, entrega 2: inventário, fragmentos à mão e lanterna (19/11/2026)
 - **Pedido do dono do produto (briefing §4):** hotbar, mochila e fragmentos recolhíveis à mão; receita opcional da lanterna; lanterna que ilumina, pode ser recuperada e mantém o estado no save. Decisões na **ADR 0040**.
 - **Inventário (`titan/inventory.ts`, `items.ts`, `actions.ts`):** hotbar de 7 + mochila de 24 (tecla E ou botão "Mochila") + grade 2 × 2; blocos e fragmentos até 64, cápsula e lanterna até 1; ícones do atlas da hotbar (`src/assets/titan-hotbar-sprites-16px.webp`, WebP sem perdas). Começa só com a cápsula; quebrar bloco devolve o bloco (se couber); colocar gasta 1; sem descarte.

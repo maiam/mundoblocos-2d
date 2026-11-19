@@ -21,3 +21,26 @@
 
 **Verificações da entrega:** `titan/*.test.ts` (endereçamento nas bordas, determinismo, 20 seeds com chegada seca/clareira/percurso até lago e formações, bacia × praia, divisa de chunks, física,
 mira, save/retomada/posição segura/falha de gravação/versão desconhecida, malha). **Perf:** não medida em celular real.
+
+## Medição e roteiro de aceite da entrega 2 (v0.95.1)
+**Como medir:** ver `OPERATIONS.md` § "Medir o Titã em aparelho real" (`?fps=1`, `?cena=lanternas`). Código: `titan/perf.ts` (`TitanPerf`), `titan/scene.ts` (cena e "editar sem parar"), `dev/perfHud.ts` (painel).
+
+**Primeira medição (Chromium emulando celular em paisagem, GL por software, `cena=lanternas` com "editar sem parar"; não substitui o aparelho real):**
+
+| Lanternas | CPU | `buildFrame` médio (malha de um quadro de edição) | `luz` médio | seções refeitas por edição | `draw` |
+|---|---|---|---|---|---|
+| 1 | 1× | 28 ms | 1,5 ms | ~28 | 0,25 ms |
+| 1 | 4× mais lenta | 113 ms | 6,3 ms | ~28 | ~1,5 ms |
+| 4 | 1× | 40 ms | 3,4 ms | ~37 | – |
+| 12 | 1× | 45 ms | 5,4 ms | ~37 | 0,25 ms |
+| 12 | 4× mais lenta | 204 ms | 27 ms | ~37 | 1,5 ms |
+
+**Leitura:** o desenho e o envio à GPU são baratos (`draw` < 2 ms; `geo` < 1 ms). O custo está em **refazer malhas**: cada edição perto de uma lanterna invalida a caixa de ±15 blocos em volta dela (`TitanVolume.touchBox`), que atravessa ~27 a 37 seções (3 × 3 chunks × 3–4 camadas) a ~1 ms cada, **mesmo que a luz mude em poucas células**. A luz (BFS com `Map`) é a segunda parcela e cresce com o número de lanternas. Mover isso para worker tiraria o trabalho da thread principal, mas **não reduziria o trabalho**; o primeiro ganho é invalidar só as seções cuja luz (ou bloco) realmente mudou, comparando o mapa de luz antes e depois.
+
+**Roteiro de aceite em celular real (paisagem), seed 42:**
+1. Abrir `?mundo=titan&seed=42&fps=1`. Andar, mirar, editar blocos: anotar FPS e quadros lentos.
+2. Coletar as lascas de rocha e gelo (botão Quebrar), abrir a mochila por toque, **Receita da lanterna**, pegar a lanterna, movê-la para a hotbar.
+3. Colocar a lanterna e **editar blocos perto dela** (colocar e quebrar várias vezes): observar engasgos e ler `luz`/`malha`/`quadro+malha` no painel.
+4. Esperar "salvo ✓", recarregar `?mundo=titan` sem `?seed=` e conferir inventário, lanterna e fragmentos já recolhidos; recuperar a lanterna.
+5. Comparar a luz na tarde padrão e com `&hora=noite`.
+6. Repetir 3 com `?mundo=titan&cena=lanternas&n=12&fps=1` + "Editar sem parar" (pior caso) e **tocar no painel para copiar o relatório**.

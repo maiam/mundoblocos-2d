@@ -18,6 +18,8 @@ export class TitanVolume {
   private readonly lanterns = new Map<number, [number, number, number]>();
   private lightMap = new Map<number, number>();
   private lightDirty = false;
+  /** Medição opcional do tempo de cada recálculo do mapa de luz (ms). */
+  onLightMs: ((ms: number) => void) | null = null;
   /** Chunks (e seções) tocados desde a última coleta pelo renderer. */
   private readonly touched = new Set<string>();
   /** Revisão de cada seção: sobe a cada edição (descarta malhas antigas). */
@@ -168,7 +170,12 @@ export class TitanVolume {
   /** Nível de luz (0–15) da célula. Recalcula o mapa só se uma lanterna ou um bloco perto dela mudou. */
   light(x: number, y: number, z: number): number {
     if (!this.lanterns.size) return 0;
-    if (this.lightDirty) { this.lightMap = computeLight((a, b, c) => this.get(a, b, c), this.lanterns.values()); this.lightDirty = false; }
+    if (this.lightDirty) {
+      const t0 = this.onLightMs ? performance.now() : 0;
+      this.lightMap = computeLight((a, b, c) => this.get(a, b, c), this.lanterns.values());
+      this.lightDirty = false;
+      this.onLightMs?.(performance.now() - t0); // medição (`?fps=1`): custo de recalcular o mapa de luz
+    }
     return this.lightMap.get(lightKey(x, y, z)) ?? 0;
   }
 

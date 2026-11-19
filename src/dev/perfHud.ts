@@ -100,6 +100,8 @@ export interface PerfReport {
   jsDrawMs: { avg: number; p95: number; max: number; frames: number } | null;
   gpu: RendererStats | null;
   heapMB: number | null;
+  /** Campos extras do mundo (Titã: tempo por etapa). */
+  extra?: Record<string, unknown>;
 }
 
 const fmt = (n: number, d = 0) => n.toFixed(d);
@@ -118,7 +120,10 @@ export function perfLine(s: PerfSnapshot, gpu: RendererStats | null, heapMB: num
 }
 
 /** Cria o painel e o laço de medição. `getStats` devolve os contadores da GPU (null até o renderer existir). */
-export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () => { samples: ArrayLike<number>; count: number }): () => void {
+/** `extra` (opcional): linha de texto e campos a mais no relatório (o Titã mede luz, malha e geometria por etapa). */
+export interface PerfExtra { line(): string; report(): Record<string, unknown>; /** Ajuste de estilo do painel (posição e quebra de linha). */ style?: Partial<CSSStyleDeclaration> }
+
+export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () => { samples: ArrayLike<number>; count: number }, extra?: PerfExtra): () => void {
   const meter = new PerfMeter();
   const t0 = performance.now();
   const box = document.createElement('div');
@@ -127,6 +132,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
     background: 'rgba(10,6,24,0.72)', padding: '4px 7px', borderRadius: '6px', touchAction: 'manipulation',
     userSelect: 'none', whiteSpace: 'nowrap', maxWidth: 'calc(100vw - 12px)', overflow: 'hidden',
   } as Partial<CSSStyleDeclaration>);
+  if (extra?.style) Object.assign(box.style, extra.style);
   box.title = 'Toque para copiar o relatório';
   document.body.appendChild(box);
   const heap = (): number | null => {
@@ -149,6 +155,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
       },
       jsDrawMs: d && d.n ? { avg: round1(d.avg), p95: round1(d.p95), max: round1(d.max), frames: d.n } : null,
       gpu: getStats(), heapMB: heap() === null ? null : Math.round(heap()!),
+      ...(extra ? { extra: extra.report() } : {}),
     };
   };
   let sheet: HTMLTextAreaElement | null = null;
@@ -159,7 +166,7 @@ export function startPerfHud(getStats: () => RendererStats | null, getDraw?: () 
   const timer = window.setInterval(() => {
     if (sheet || performance.now() < holdUntil) return;
     const d = draw();
-    box.textContent = perfLine(meter.snapshot(), getStats(), heap(), d && d.n ? d.avg : null);
+    box.textContent = perfLine(meter.snapshot(), getStats(), heap(), d && d.n ? d.avg : null) + (extra ? ` | ${extra.line()}` : '');
   }, 500);
   /** Plano B quando o navegador não libera a área de transferência (HTTP na rede local): o relatório numa caixa de texto selecionada. */
   const showReport = (text: string): void => {
