@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.95.2 — Titã: luz incremental (edição perto de lanterna sem engasgo) (19/11/2026)
+- **Motivo:** a medição da v0.95.1 mostrou que cada edição perto de uma lanterna refazia 28–37 seções (caixa cega de ±15 blocos) e recalculava o mapa de luz inteiro: ~28 ms com 1 lanterna e ~204 ms com 12 a CPU 4× mais lenta.
+- **Motor de luz incremental (`titan/light.ts`):** `LightStore` (4 bits por célula, 2 KB por seção) e `LightEngine` com **fila de remoção e fila de adição** (tirar uma lanterna perto de outra devolve a luz da outra; editar perto de 12 lanternas custa quase o mesmo que perto de 1). O primeiro uso faz o cálculo completo; depois só se propaga o que muda. `computeLight` (completo) fica como referência dos testes.
+- **Invalidação cirúrgica (`TitanVolume`):** só as seções das células cuja luz realmente mudou refazem a malha (mais as vizinhas quando a célula está na borda). A seção editada continua no mesmo quadro (`takeTouched`); as que só mudaram de luz saem em `takeLightTouched` e o renderer as refaz com orçamento de tempo por quadro.
+- **Resultado (mesma cena, `?cena=lanternas`, Chromium emulando celular):** refazer malhas por edição 28 → 3 ms (1 lanterna) e 204 → 12 ms (12 lanternas, CPU 4× mais lenta); seções refeitas por edição ~28–37 → ~3–4; FPS estável a CPU 4× mais lenta 5–12 → 52–53. Falta confirmar no aparelho real.
+- Testes (`titan/light.test.ts`): armazenamento de 4 bits nas bordas, **equivalência com o cálculo completo após 400 edições aleatórias**, luz de outra lanterna devolvida, poucas seções por edição, nenhuma seção de luz fora do alcance, borda de seção, separação entre seção editada e só-luz. Sem mudança de save, gerador, gameplay nem protocolo; ADR 0040 ganhou a revisão.
+
 ## Orvalis v0.95.1 — Titã: medição por etapa e cena de lanternas para o aceite em aparelho (19/11/2026)
 - **Pedido do dono do produto:** fechar o aceite da entrega 2 em celular real com uma medição de desempenho no mesmo teste, e medir **antes** de mover trabalho para workers.
 - **Painel `?fps=1` no Titã:** o painel existente (`dev/perfHud.ts`, ganhou o gancho opcional `PerfExtra`) agora mostra e copia, além de FPS/GPU/memória, o tempo de cada etapa: `luz`, `malha`, `geometria`, desenho com e sem malha nova (`titan/perf.ts`, instrumentação em `titanRenderer.ts` e em `TitanVolume.onLightMs`).

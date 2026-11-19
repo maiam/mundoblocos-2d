@@ -35,7 +35,20 @@ mira, save/retomada/posição segura/falha de gravação/versão desconhecida, m
 | 12 | 1× | 45 ms | 5,4 ms | ~37 | 0,25 ms |
 | 12 | 4× mais lenta | 204 ms | 27 ms | ~37 | 1,5 ms |
 
-**Leitura:** o desenho e o envio à GPU são baratos (`draw` < 2 ms; `geo` < 1 ms). O custo está em **refazer malhas**: cada edição perto de uma lanterna invalida a caixa de ±15 blocos em volta dela (`TitanVolume.touchBox`), que atravessa ~27 a 37 seções (3 × 3 chunks × 3–4 camadas) a ~1 ms cada, **mesmo que a luz mude em poucas células**. A luz (BFS com `Map`) é a segunda parcela e cresce com o número de lanternas. Mover isso para worker tiraria o trabalho da thread principal, mas **não reduziria o trabalho**; o primeiro ganho é invalidar só as seções cuja luz (ou bloco) realmente mudou, comparando o mapa de luz antes e depois.
+**Leitura (antes da v0.95.2):** o desenho e o envio à GPU são baratos (`draw` < 2 ms; `geo` < 1 ms). O custo está em **refazer malhas**: cada edição perto de uma lanterna invalida a caixa de ±15 blocos em volta dela (`TitanVolume.touchBox`), que atravessa ~27 a 37 seções (3 × 3 chunks × 3–4 camadas) a ~1 ms cada, **mesmo que a luz mude em poucas células**. A luz (BFS com `Map`) é a segunda parcela e cresce com o número de lanternas. Mover isso para worker tiraria o trabalho da thread principal, mas **não reduziria o trabalho**; o primeiro ganho é invalidar só as seções cuja luz (ou bloco) realmente mudou, comparando o mapa de luz antes e depois.
+
+**Depois da luz incremental (v0.95.2, mesma cena e mesmo método):**
+
+| Lanternas | CPU | `buildFrame` médio | `luz` médio | seções refeitas por edição | FPS estável (5% piores) |
+|---|---|---|---|---|---|
+| 1 | 1× | 3,4 ms (era 28) | 0,5 ms (era 1,5) | ~4 (era ~28) | 60 (60; era 53 e 29) |
+| 1 | 4× mais lenta | 9,4 ms (era 113) | 2,0 ms (era 6,3) | ~4 | 53 (30; era 12 e 6) |
+| 12 | 1× | 3,3 ms (era 45) | 0,3 ms (era 5,4) | ~3 | 60 (60; era 45 e 20) |
+| 12 | 4× mais lenta | 12,3 ms (era 204) | 1,4 ms (era 27) | ~3 | 52 (28; era 5 e 4) |
+
+(`buildFrame.max` de 150–600 ms é a geração inicial da região, nos primeiros quadros; o regime estável é o da tabela.) Nada disso substitui o aparelho real: confirmar com `?fps=1` no celular.
+
+**Luz incremental** (`titan/light.ts`, ADR 0040 revisão): a luz é mantida entre as edições (`LightEngine`, 4 bits por célula em `LightStore`, 2 KB por seção) com **fila de remoção + fila de adição** (tirar uma lanterna perto de outra devolve a luz da outra), e **só as seções cuja luz realmente mudou** refazem a malha (mais as vizinhas quando a célula está na borda). A seção editada continua sendo refeita no mesmo quadro (`takeTouched`); as que só mudaram de luz vão para a fila com orçamento de tempo (`takeLightTouched` → `pending` do renderer). Teste de equivalência: depois de 400 edições aleatórias (blocos e lanternas) o mapa incremental é idêntico ao calculado do zero.
 
 **Roteiro de aceite em celular real (paisagem), seed 42:**
 1. Abrir `?mundo=titan&seed=42&fps=1`. Andar, mirar, editar blocos: anotar FPS e quadros lentos.

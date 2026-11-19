@@ -15,3 +15,6 @@
 ## Consequências
 - Construir passa a custar blocos (antes era livre); o mundo é uma fonte de blocos finita só no sentido de que cada bloco quebrado volta uma vez.
 - Pendências: sprites de fragmento sem luz de lanterna; sem som; sem lanterna apagável; luz só sobre o terreno (sem céu aberto vs. sombra: a tarde é fixa).
+
+## Revisão v0.95.2 — luz incremental (medida antes de qualquer worker)
+A medição por etapa (`?fps=1`, cena `?cena=lanternas`) mostrou que o custo estava em **refazer malhas** (cada edição perto de uma lanterna invalidava a caixa de ±15 blocos: 28–37 seções), não no desenho. Decisão: **luz incremental** em vez de worker. O motor (`titan/light.ts`) mantém o mapa entre as edições (4 bits por célula, 2 KB por seção, só para seções com luz), propaga só o que muda com fila de remoção + fila de adição e avisa cada célula cuja luz mudou; o volume refaz só as seções dessas células (e as vizinhas das bordas, porque a face do vizinho lê a luz da borda). A seção editada vem de `takeTouched` (mesmo quadro); as que só mudaram de luz vêm de `takeLightTouched` e o renderer as refaz com orçamento por quadro. O cálculo completo (`computeLight`) fica como referência dos testes e o primeiro uso do mapa faz o cálculo completo uma vez. **Worker de malha** (com revisão por seção) só se o aparelho real ainda engasgar. Sem mudança de save, gerador nem protocolo.

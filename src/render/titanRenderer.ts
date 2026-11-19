@@ -162,7 +162,10 @@ export class TitanRenderer {
     // edições aparecem no mesmo quadro (sem orçamento); só a geração inicial é repartida entre quadros
     this.built = 0;
     const tb = this.perf ? performance.now() : 0;
-    for (const k of this.volume.takeTouched()) { this.build(k); this.pending.delete(k); }
+    // a seção editada aparece no mesmo quadro; as que só mudaram de luz entram na fila com orçamento (a luz da parede distante pode atrasar uns quadros)
+    const urgent = this.volume.takeTouched();
+    for (const k of urgent) { this.build(k); this.pending.delete(k); }
+    for (const k of this.volume.takeLightTouched()) if (!urgent.includes(k)) this.pending.add(k);
     if (this.pending.size) {
       const px = eye.x / 16, pz = eye.z / 16, py = (eye.y + 64) / 16;
       const order = [...this.pending].map((k) => { const [cx, sy, cz] = k.split(',').map(Number); return { k, d: (cx + 0.5 - px) ** 2 + (cz + 0.5 - pz) ** 2 + (sy + 0.5 - py) ** 2 }; }).sort((a, b) => a.d - b.d);

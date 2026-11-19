@@ -10,7 +10,7 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.95.1 | `package.json` |
+| Versão do jogo | 0.95.2 | `package.json` |
 | `PROTOCOL_VERSION` (multiplayer) | 29 | `src/net/protocol.ts` |
 | `SAVE_VERSION` (salvamento local) | 21 | `src/game/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
