@@ -20,7 +20,7 @@ export interface TitanSession {
   resumed: boolean;
   /** Mensagem se a posição gravada estava obstruída e foi trocada por uma segura. */
   relocated: boolean;
-  /** Hora do dia (fração 0–1 do dia de 8 minutos): avança com o jogo ativo e vai no save (ADR 0041). */
+  /** Hora do dia (fração 0–1 do dia de 20 minutos): avança com o jogo ativo e vai no save (ADR 0041). */
   time: number;
   /** Hotbar, mochila e grade (ADR 0040). */
   inventory: Inventory;

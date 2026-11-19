@@ -84,7 +84,7 @@ export class TitanRenderer {
     this.sun.scale.set(16, 16, 1);
     this.sun.visible = false;
     this.scene.add(this.sun);
-    this.setSky(0.55);
+    this.setSky(0.375);
 
     // contorno da célula apontada
     const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.004, 1.004, 1.004));

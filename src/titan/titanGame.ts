@@ -357,7 +357,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
       session.time = advanceDay(session.time, dt);
-      if (((session.time - lastSavedTime + 1) % 1) > 0.02) playerDirty = true; // ~10 s de jogo: grava a hora junto da posição
+      if (((session.time - lastSavedTime + 1) % 1) > 0.01) playerDirty = true; // ~12 s de jogo (1/100 do dia de 20 min): grava a hora junto da posição
     }
     view.setSky(forcedHour ?? session.time);
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
