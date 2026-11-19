@@ -7,7 +7,7 @@ import type { ChunkRect } from './world';
  * O motor (World, Game, Renderer) é o mesmo; o perfil decide terreno, limites,
  * personagem, blocos disponíveis e sistemas ativos.
  */
-export type WorldId = 'principal' | 'santuario';
+export type WorldId = 'principal' | 'santuario' | 'titan';
 
 /** Personagens jogáveis (folhas de sprite em `render/character.ts`). */
 /** `goddess` = Deusa flutuante (Sala 2 online); `goddess-iso` = Deusa isométrica do Santuário solo (ADR 0036). */
@@ -107,6 +107,33 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     surfaceObjects: true,
     view: 'isometric',
     sky: ['#8fb8ff', '#f6d9ff'],
+  },
+  /**
+   * Titã (ADR 0039, v0.94.0): mundo voxel solo em primeira pessoa. Fica **fora** do motor de chão e pilhas (`World`/`Game`/`SUBDIV`): o perfil só
+   * registra o mundo na resolução da URL (`?mundo=titan`) e `main.ts` abre `src/titan/` em vez do `Game`. Os campos do motor 2.5D ficam
+   * desligados e não são lidos (nenhum `World` é criado com este perfil).
+   */
+  titan: {
+    id: 'titan',
+    name: 'Titã · Margem Silenciosa',
+    terrain: { kind: 'procedural' },
+    bounds: null,
+    character: 'heroine',
+    blocks: [],
+    tools: false,
+    farming: false,
+    sheep: false,
+    wolves: false,
+    dungeon: false,
+    town: false,
+    collectBlocks: false,
+    minimap: false,
+    progression: false,
+    hunger: false,
+    breakSeconds: null,
+    surfaceObjects: false,
+    view: 'oblique',
+    sky: ['#d99342', '#f2cc93'],
   },
 };
 

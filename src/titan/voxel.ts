@@ -1,0 +1,55 @@
+/**
+ * Titã — grade voxel (ADR 0039). Independente de `SUBDIV`, de `World` e da grade de chão/pilhas do Orvalis: aqui a unidade é 1 bloco = 1 m
+ * e a ocupação é por `(x, y, z)`. Sem DOM e sem `Math.random()`: roda em Node (testes) e é determinística por seed + versão do gerador.
+ */
+
+/** Altura mínima/máxima (inclusivas) das células: 384 camadas, 24 seções de 16. Y é a base do voxel. */
+export const Y_MIN = -64;
+export const Y_MAX = 319;
+export const SECTION = 16;
+export const SECTIONS = (Y_MAX - Y_MIN + 1) / SECTION; // 24
+/** Nível do lago: última célula líquida em Y = 63; a superfície fica em Y = 64. */
+export const LAKE_LAST_Y = 63;
+export const LAKE_SURFACE_Y = 64;
+
+/** Região de teste da primeira entrega: 4 × 4 chunks (64 × 64 blocos) em volta da origem, x/z em [-32, 32). */
+export const REGION_MIN = -32;
+export const REGION_MAX = 32;
+
+/** Ids de bloco (um byte; 0 = ar). */
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6 } as const;
+export type TitanBlock = (typeof T)[keyof typeof T];
+
+/** Blocos que o jogador pode colocar (hotbar da primeira entrega, construção livre). */
+export const PLACEABLE: readonly TitanBlock[] = [T.SAND, T.DAMP_SAND, T.DARK_ROCK, T.FROST];
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe' };
+
+/** Sólido = colide, é alvo da mira e esconde as faces vizinhas. Líquido e ar não. */
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE;
+
+export type Face = 'top' | 'side' | 'bottom';
+
+/** Índice do tile no atlas 4 × 2 (col = i % 4, linha = i / 4 | 0): ver `render/art/titan.ts` e a direção de arte. */
+export function tileFor(id: number, face: Face): number {
+  switch (id) {
+    case T.SAND: return face === 'top' ? 0 : 1;
+    case T.DAMP_SAND: return face === 'top' ? 2 : 3;
+    case T.DARK_ROCK:
+    case T.BEDROCK: return 4;
+    case T.FROST: return 5;
+    case T.LAKE: return 6; // quadro 1 (o quadro 2 = 7 é alternado no render)
+    default: return 4;
+  }
+}
+
+export const inRegion = (x: number, z: number): boolean => x >= REGION_MIN && x < REGION_MAX && z >= REGION_MIN && z < REGION_MAX;
+
+// ---- Endereçamento (docs Titã 05, §2) ----
+export const chunkOf = (v: number): number => Math.floor(v / 16);
+export const localOf = (v: number): number => v - chunkOf(v) * 16;
+export const sectionOf = (y: number): number => Math.floor((y - Y_MIN) / SECTION);
+export const localY = (y: number): number => (y - Y_MIN) - sectionOf(y) * SECTION;
+/** Índice de uma célula dentro da coluna do chunk (0..98303): camada de Y desde o fundo, depois z e x locais. */
+export const columnIndex = (lx: number, y: number, lz: number): number => ((y - Y_MIN) * 16 + lz) * 16 + lx;
+export const unpackIndex = (i: number): { lx: number; y: number; lz: number } => ({ lx: i & 15, lz: (i >> 4) & 15, y: (i >> 8) + Y_MIN });
+export const chunkKey = (cx: number, cz: number): string => `${cx},${cz}`;

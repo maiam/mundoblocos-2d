@@ -1,5 +1,14 @@
 # Changelog
 
+## Orvalis v0.94.0 — Titã: costa voxel jogável e persistente (19/11/2026)
+- **Pedido do dono do produto (briefing "Titã"):** primeira entrega do mundo `?mundo=titan` — costa voxel em primeira pessoa, editável e salva. Decisão registrada na **ADR 0039**.
+- **Entrada:** perfil `titan` registrado em `world/profiles.ts`; `main.ts` abre `src/titan/titanGame.ts` em vez do `Game` (sem `World`, sem `SUBDIV`, sem sala). Principal e Santuário abrem como antes (conferido no navegador).
+- **Volume e gerador (`src/titan/`):** células por `(x, y, z)`, Y −64..319, seções de 16³; gerador versionado (`GENERATOR_VERSION` 1) com heightmap e lago da seed, chegada seca com clareira 6 × 6, duas formações (rocha e gelo) reservadas para a coleta; região 4 × 4 chunks.
+- **Edição e física:** coloca (esquerdo) e remove (direito) pela face apontada; o líquido da bacia é deslocado e volta; rocha-mãe e fora da região intocáveis; pulo de 1 bloco; mira por células.
+- **Save:** IndexedDB `orvalis-titan`, cabeçalho + jogador + chunks sujos na mesma transação, retomada sem `?seed=`, posição segura se obstruída, falha de gravação preserva o último estado.
+- **Visual:** atlas de 16 px do dono do produto (`src/assets/titan-atlas-16px.webp`, WebP sem perdas), malha por seção, luz de tarde fixa, névoa âmbar, céu em degradê, hotbar de 4 blocos; toque básico (joystick, olhar, botões) ainda não validado em aparelho real.
+- Testes: `src/titan/*.test.ts` (38). `tsc`, 753+ testes verdes. `package.json` 0.94.0. Sem mudança em `SAVE_VERSION`, `PROTOCOL_VERSION` ou no gerador do Mundo.
+
 ## Orvalis v0.93.169 — Santuário: 4 acampamentos com 28 goblins e roupas de várias cores (18/11/2026)
 - **Pedido do dono do produto:** mudar a cor da roupa de alguns goblins e incluir 3 fogueiras com 7 goblins cada uma no vale (mais goblins no cenário).
 - **Mundo (`world/sanctuaryValeGoblin.ts`):** 3 acampamentos extras (`VALE_EXTRA_FIRES`) em clareiras planas do piso do vale (nível 2, sem trilha nem rocha; escolhidas varrendo `valeHeights`), cada um com fogueira, clareira de terra batida, caixa e barris e os mesmos 7 pontos de nascimento do acampamento original (`VALE_CAMP_OFFSETS`). `valeGoblinCamps()` devolve os 4 acampamentos; `valeGoblinHomes()` agora lista os 28 pontos. O acampamento original e o resto do vale não mudaram.

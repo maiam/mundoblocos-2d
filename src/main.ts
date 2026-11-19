@@ -57,7 +57,8 @@ let soloSeed = 0;
 // ---- Multiplayer (ADR 0016): mundo normal e Santuário como salas independentes ----
 const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
-const online = !gridProto && !sanctuarySolo ? {
+const titanWorld = profile.id === 'titan';
+const online = !gridProto && !sanctuarySolo && !titanWorld ? {
   get name() { return savedName(); },
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
   available: onlineAvailable(window.location.hostname),
@@ -231,37 +232,43 @@ function showTitle(fromLanding = false): void {
 
 const query = new URLSearchParams(window.location.search);
 const param = query.get('seed');
-// Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
-const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal' || gridProto;
-// Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para comparar).
-const blocksV2 = blocksV2FromSearch(window.location.search);
-// Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
-void loadArtPack(profile.id)
-  .then(() => loadBlockArt())
-  .then(() => loadMaterialsV2(blocksV2))
-  .then(async () => {
-    // Renderer 2.5D em WebGL (Three.js), carregado sob demanda (chunks separados do Santuário e do Mundo). O Canvas 2D foi removido na v0.93.105:
-    // sem WebGL (ou se o módulo falhar) o jogo avisa em vez de abrir.
-    const probe = document.createElement('canvas');
-    const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
-    if (webgl) {
-      try {
-        if (sanctuarySolo) {
-          // Santuário solo: renderer do Mundo com a câmera isométrica fixa (sem seletor).
-          const mod = await import('./render/worldThreeRenderer');
-          worldRendererCtor = mod.WorldThreeRenderer;
-          threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world, false, true);
-        } else if (profile.id === 'principal') {
-          const mod = await import('./render/worldThreeRenderer');
-          worldRendererCtor = mod.WorldThreeRenderer;
-          threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
+if (titanWorld) {
+  // Titã (ADR 0039): mundo voxel solo e independente do motor de chão e pilhas; abre `src/titan/` em vez do `Game` (sem pacote de arte do Mundo).
+  document.getElementById('world')?.setAttribute('aria-label', 'Titã');
+  void import('./titan/titanGame').then((m) => m.startTitan(canvas, window.location.search));
+} else {
+  // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
+  const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal' || gridProto;
+  // Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para comparar).
+  const blocksV2 = blocksV2FromSearch(window.location.search);
+  // Pacote de arte do mundo (só a arte dele) → imagens dos blocos (antes de montar chão e cubos) → jogo.
+  void loadArtPack(profile.id)
+    .then(() => loadBlockArt())
+    .then(() => loadMaterialsV2(blocksV2))
+    .then(async () => {
+      // Renderer 2.5D em WebGL (Three.js), carregado sob demanda (chunks separados do Santuário e do Mundo). O Canvas 2D foi removido na v0.93.105:
+      // sem WebGL (ou se o módulo falhar) o jogo avisa em vez de abrir.
+      const probe = document.createElement('canvas');
+      const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
+      if (webgl) {
+        try {
+          if (sanctuarySolo) {
+            // Santuário solo: renderer do Mundo com a câmera isométrica fixa (sem seletor).
+            const mod = await import('./render/worldThreeRenderer');
+            worldRendererCtor = mod.WorldThreeRenderer;
+            threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world, false, true);
+          } else if (profile.id === 'principal') {
+            const mod = await import('./render/worldThreeRenderer');
+            worldRendererCtor = mod.WorldThreeRenderer;
+            threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);
+          }
+        } catch (error) {
+          console.error('Renderer 3D indisponível', error);
         }
-      } catch (error) {
-        console.error('Renderer 3D indisponível', error);
       }
-    }
-    if (!threeRendererFactory) { showUnsupported(webgl ? 'load-failed' : 'no-webgl'); return; }
+      if (!threeRendererFactory) { showUnsupported(webgl ? 'load-failed' : 'no-webgl'); return; }
 
-    if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
-    else showLandingPage();
-  });
+      if (skipTitle) start(param ? seedFromString(param) : store.lastSeed() ?? randomSeed());
+      else showLandingPage();
+    });
+}
