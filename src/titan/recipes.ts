@@ -63,3 +63,16 @@ export function matchGrid(items: readonly number[]): Recipe | null {
   }
   return null;
 }
+
+/**
+ * Receita da **Mesa de Trabalho** formada por uma grade 3 × 3 (ADR 0049): as quantidades por item têm de ser **exatamente** as dos ingredientes, em qualquer disposição das células.
+ * Ingrediente extra, errado ou faltando → `null`. Só as receitas de estação `workbench` (a grade pessoal usa `matchGrid`).
+ */
+export function matchBench(totals: ReadonlyMap<number, number>): Recipe | null {
+  for (const r of RECIPES) {
+    if (r.station !== 'workbench') continue;
+    if (r.ingredients.length === totals.size && r.ingredients.every((g) => totals.get(g.item) === g.count)) return r;
+  }
+  return null;
+}
+

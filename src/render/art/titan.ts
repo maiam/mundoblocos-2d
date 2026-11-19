@@ -42,3 +42,10 @@ import reedSprite from '../../assets/titan-reed-16px.webp';
 export const titanWorkbenchAtlasUrl: string = workbenchAtlas;
 export const titanWorkbenchModel = workbenchModel as { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] };
 export const titanReedUrl: string = reedSprite;
+
+import basalt from '../../assets/titan-basalt-32px.webp';
+/**
+ * Ladrilho de basalto da interface (ADR 0049): 32 × 32 px sem emenda (carvão e violeta escuro, relevo discreto), gerado por `scripts/make-titan-basalt.py` (WebP sem perdas).
+ * Vira o fundo e a moldura dos painéis da bolsa, do livro de receitas e da bancada, repetido com filtro de pixel (a interface o usa por uma variável CSS).
+ */
+export const titanBasaltUrl: string = basalt;

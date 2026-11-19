@@ -9,7 +9,7 @@
 | Lago | última célula líquida Y = 63, superfície em 64; areia da chegada em Y = 64, pés em 65 | `titan/generator.ts` |
 | Blocos | Areia ocre, Areia úmida, Rocha escura, Gelo fosco (colocáveis); Lago escuro (líquido), Rocha-mãe; **Lanterna** (id 7, objeto não sólido que emite luz) | `titan/voxel.ts` (`T`) |
 | Relógio e céu | dia de **20 min = 24 000 ticks** no ritmo do Minecraft (dia 10 min, pôr do sol 1 min 30 s, noite 7 min, nascer do sol 1 min 30 s; `DAY_SECONDS` = 1 200), hora = fração do dia em `session.time`, avança com o jogo ativo e para na tela de início e com a aba oculta; partidas novas e saves sem hora começam à tarde (tick 9 000 = 0,375); no save (`header.time`, ~10 s); manhã pêssego → tarde cobre/âmbar → noite carvão-violeta com cobre no horizonte; sol em ponto quando alto; névoa segue o horizonte; luz do dia = uniform do shader (mudar a hora refaz 0 seções) | `titan/sky.ts`, `render/titanRenderer.ts` (`setSky`, `patchDayLight`), `titan/titanGame.ts` |
-| Hora de teste | `?hora=manha\|tarde\|noite` (ticks 720, 9 000 e 18 000) congela só a visualização; a hora do jogo segue correndo e é a gravada; sem o parâmetro volta a do save | `titan/sky.ts` (`parseHora`) |
+| Hora de teste | `?hora=manha\|tarde\|crepusculo\|noite` (ticks 720, 9 000, 12 900 e 18 000) congela só a visualização; `?saturno=1` força o Saturno raro à vista; a hora do jogo segue correndo e é a gravada; sem o parâmetro volta a do save | `titan/sky.ts` (`parseHora`) |
 | Itens | 13 ids = índice no atlas da hotbar (64 × 64) + 1: 1–4 blocos, 5–6 fragmentos, **7 cápsula (legada, id reservado)**, 8 lanterna, 9 Mesa de Trabalho, 10 Lente de Gelo, 11 Brasa de âmbar, 12 Junco de vidro, 13 Laje de rocha; pilhas de 64 (blocos, fragmentos, lente, brasa) e 1 (cápsula, lanterna, mesa) | `titan/items.ts` |
 | Inventário | hotbar **9** + bolsa **27** (3 × 9; E ou ☰) + grade 2 × 2 + saída (ADR 0047); começa **vazio** (v4); sem descarte; "Mochila cheia" preserva lasca e bloco | `titan/inventory.ts`, `titan/actions.ts` |
 | Fragmentos | 3 lascas de rocha e 3 de gelo sobre as formações (ids `rock:0`…), recolhidas à mão (segurar 0,35 s), 1 lasca = 1 fragmento; ids recolhidos vão no save | `titan/generator.ts` (`surfaceItems`), `titan/session.ts` |
@@ -99,4 +99,13 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 - **Inventário:** 9 + 27 + grade 2 × 2 (36–39) + saída (40); `Inventory.fromData` migra `v: 1` (7 + 24) por seção; `TITAN_SAVE_VERSION` 5. Seleção até 8 (`HOTBAR - 1`).
 - **Tela única** (`titanGame.ts`): grupos (a Bolsa por último) | grade de receitas (busca, Só fabricáveis) | grade de fabricação com ingredientes (tenho / preciso; 2 × 2 na bolsa, 3 × 3 na mesa) e o item final, que se toca para fabricar; no grupo Bolsa: os 27 espaços e a grade 2 × 2 de verdade. A mesa (Usar/F) abre a mesma tela com a estação ativa. `Recipe.group` define o grupo. Com a tela aberta o toque do mundo some (`titan-bag-open`).
 - Testes: `inventory.test.ts` (migração por seção) e `fabricacao.test.ts` (save v4 → v5). Medição: emulador/desktop; **aparelho real pendente** (360 px de altura, rolagem da lista, teclado virtual na busca).
+
+## Céu: bruma direcional, estrelas e Saturno (v0.103.0, ADR 0048)
+- `titan/sky.ts` (puro) devolve, além das cores, a claridade direcional (`glowDir`/`glow`/`glowK`), o lado frio (`cool`/`coolK`), `haze`, `stars` e `tint` da luz ambiente; `horizonAt` dá a cor da bruma baixa por direção (a névoa e o fundo a seguem a cada giro); `saturnVisibility(day, frac, seed)` decide o Saturno raro (~12% dos dias, janela de ~10 s de dia).
+- `render/titanSkyDome.ts`: shader da cúpula (degradê, halo, bruma, estrelas, Saturno); `TitanRenderer.setSky/setSaturn`. `session.days` no save (`header.days?`). Testes: `sky.test.ts`. Teste visual: mesma câmera, `?hora=manha|tarde|crepusculo|noite` olhando leste e oeste; `?saturno=1`.
+
+## Bancada 3 × 3 e painéis de basalto (v0.104.0, ADR 0049)
+- **Grade da mesa** (`inventory.ts`): `BENCH_START` 41–49, saída `BENCH_OUT` 50, separada da pessoal; `matchBench` (quantidades exatas, qualquer disposição), `takeBenchResult` (atômica), `returnBench` (devolve ao fechar; o que não couber fica na grade e no save). Inventário gravado `v: 3` com `bench`.
+- **Interface** (`titanGame.ts`): grupo "Montar 3 × 3" (só com a mesa ativa), `takeBench` revalida mesa e alcance a cada toque; "Receitas" volta ao livro. Basalto por `--basalt` (`render/art/titan.ts` → `titanBasaltUrl`).
+- Testes: `bench.test.ts`. Medição: emulador (740 × 360); **aparelho real pendente**.
 

@@ -372,7 +372,7 @@ describe('migração do inventário (save v4 → v5, hotbar de 9 e bolsa de 27)'
     expect(hasPendingState(r)).toBe(true); // há o que gravar no formato novo
     await flush(st, r);
     expect(st.games.get(42)!.v).toBe(TITAN_SAVE_VERSION);
-    expect(st.games.get(42)!.inventory!.bag.v).toBe(2);
+    expect(st.games.get(42)!.inventory!.bag.v).toBe(3);
     const r2 = await openSession(st, null, () => 1);
     for (let i = 0; i < SLOTS; i++) expect(r2.inventory.get(i)).toEqual(r.inventory.get(i)); // reabrir não muda nada nem duplica
     expect(hasPendingState(r2)).toBe(false);

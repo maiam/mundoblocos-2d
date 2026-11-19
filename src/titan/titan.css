@@ -56,7 +56,7 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-panel { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); width: min(calc(100vw - 16px), 724px); box-sizing: border-box; bottom: calc(var(--hbb) + var(--slot) + 14px + 5px);
   height: min(calc(100vh - var(--hbb) - var(--slot) - 14px - 5px - max(6px, env(safe-area-inset-top))), 420px);
   display: flex; flex-direction: column; padding: 5px; overflow: hidden; background: #171c20f7; border: 1px solid #765943; border-radius: 6px; pointer-events: auto; touch-action: none; }
-.titan-bagtop { display: grid; grid-template-columns: 88px minmax(0, 1fr) 158px; gap: 6px; min-height: 0; flex: 1 1 auto; }
+.titan-bagtop { display: grid; grid-template-columns: 100px minmax(0, 1fr) 172px; gap: 6px; min-height: 0; flex: 1 1 auto; }
 .titan-cats { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; touch-action: pan-y; }
 .titan-cat { background: #2b2421; color: #c8b29a; border: 1px solid #534438; border-radius: 3px; padding: 4px 6px; min-height: 34px; flex: none; font: 600 12px system-ui, sans-serif; text-align: left; cursor: pointer; touch-action: manipulation; }
 .titan-cat:last-child { margin-top: auto; } /* a bolsa é o último grupo, embaixo */
@@ -73,7 +73,7 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-rcell.sel { outline: 2px solid #f2cc93; outline-offset: -2px; background: #533e2c; }
 .titan-rcell .count { position: absolute; right: 2px; bottom: 0; font: 700 11px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; }
 .titan-rcell .badge { position: absolute; left: 2px; top: 0; font: 700 12px system-ui, sans-serif; color: #f0a08a; text-shadow: 1px 1px #171410; }
-.titan-rgrid .hint { grid-column: 1 / -1; padding: 8px; color: #c8b29a; font-weight: 500; line-height: 1.3; }
+.titan-rgrid .hint { background: #0b0910c0; grid-column: 1 / -1; padding: 8px; color: #c8b29a; font-weight: 500; line-height: 1.3; }
 .titan-right { position: relative; display: flex; flex-direction: column; min-height: 0; background: #211e1d; border: 1px solid #534438; border-radius: 4px; padding: 4px 6px; overflow-y: auto; touch-action: pan-y; }
 .titan-rhead { display: flex; align-items: center; justify-content: space-between; flex: none; }
 .titan-rhead .th { color: #8ca1bc; font-size: 12px; }
@@ -106,3 +106,33 @@ body.titan-touch-on .titan-touch { display: block; }
 body.titan-bag-open .titan-touch { display: none; } /* com a tela aberta o toque do mundo some: nada gira a câmera nem coloca/quebra */
 body.titan input { user-select: text; -webkit-user-select: text; }
 .titan-use { z-index: 4; }
+
+/* Painéis de basalto (ADR 0049): moldura e fundos em basalto do Titã (carvão e violeta escuro, relevo discreto) com acabamento cobre fosco; o âmbar fica só para seleção, foco e saída pronta;
+   os fundos dos espaços ficam calmos (lisos) para dar contraste aos ícones e às contagens. */
+.titan-ui { --amber: #eaa94a; --amber-soft: #eaa94a55; --copper: #8c5b3a; --copper-hi: #b9814f; --basalt-dim: linear-gradient(#0b091070, #0b091070); }
+.titan-panel, .titan-hotbar { background: var(--basalt-dim), var(--basalt); background-size: auto, 64px 64px; image-rendering: pixelated; border: 2px solid var(--copper);
+  box-shadow: inset 0 0 0 1px #0b0910, inset 0 2px 0 #b9814f2e, 0 2px 8px #000a; }
+.titan-hbmenu, .titan-btn { background: var(--basalt-dim), var(--basalt); background-size: auto, 64px 64px; border-color: var(--copper); color: #e8d3b8; }
+.titan-btn:hover:not(:disabled) { border-color: var(--copper-hi); }
+.titan-right, .titan-rgrid { background: var(--basalt-dim), var(--basalt); background-size: auto, 64px 64px; border-color: #3a2f3d; image-rendering: pixelated; }
+.titan-cat { background: #1c1a22; color: #b9ad9a; border-color: #3a2f3d; }
+.titan-cat.on { background: #2a2030; color: var(--amber); border-color: var(--amber); }
+.titan-slot, .titan-rcell, .titan-icell, .titan-result { background-color: #19171d; border-color: #35293a; }
+.titan-slot.empty { background-color: #141217; border-color: #2a2230; }
+.titan-slot[aria-pressed='true'] { outline: 2px solid var(--amber); outline-offset: -2px; background-color: #2a2030; }
+.titan-slot[data-sel='true'] { outline: 2px solid var(--amber); outline-offset: -2px; background-color: #2e2434; } /* seleção = âmbar */
+.titan-rcell.off { background-color: #1f1519; }
+.titan-rcell.sel { outline-color: var(--amber); background-color: #2a2030; }
+.titan-slot.out, .titan-result.off { border-color: #4a3a4d; }
+.titan-slot.out.ready, .titan-result.ok { border-color: var(--amber); background-color: #2e2230; box-shadow: 0 0 0 2px var(--amber-soft), 0 0 10px var(--amber-soft); } /* saída pronta */
+.titan-icell.ok { border-color: #5d7d58; }
+.titan-search { background: #141217; border-color: #0b0910; }
+.titan-only.on { border-color: var(--amber); color: var(--amber); }
+.titan-btn:focus-visible, .titan-cat:focus-visible, .titan-rcell:focus-visible, .titan-slot:focus-visible, .titan-result:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; } /* foco */
+.titan-benchhead { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
+.titan-benchhead small { color: #9fb3cc; font-size: 11px; white-space: nowrap; }
+.titan-back { padding: 3px 8px; min-height: 26px; font-size: 12px; }
+.titan-benchgrid { display: grid; grid-template-columns: repeat(3, auto); gap: 4px; }
+.titan-bench { gap: 3px; }
+.titan-bench .rname { color: var(--amber); }
+

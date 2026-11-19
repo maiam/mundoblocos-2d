@@ -319,6 +319,8 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 
 `python3 -I scripts/make-titan-fabricacao.py` gera, a partir de `assets-src/titan/fabricacao/` (pacote de arte da mesa e atlas 80 × 40), os sprites de item (atlas da hotbar 64 × 64: 8 = mesa, 9 = lente, 10 = brasa, 11 = junco, 12 = laje; a ilustração da laje está em `assets-src/titan/fabricacao/Laje_de_Rocha.png`), o tile 10 do terreno (depósito de brasa) e `src/assets/titan-reed-16px.webp` (junco), todos WebP **sem perdas**; repetível. `python3 -I scripts/extract-titan-workbench.py` converte o GLB da Mesa de Trabalho em `src/assets/titan-workbench.json` + `titan-workbench-atlas.webp` (confere 96 triângulos, 1 × 1 × 1 e pivô na base).
 
+`python3 -I scripts/make-titan-basalt.py [--preview prancha.png]` gera o ladrilho de basalto da interface (`src/assets/titan-basalt-32px.webp`, 32 × 32 sem emenda, WebP **sem perdas**, determinístico). Ele entra nos painéis pela variável CSS `--basalt`.
+
 ## Testes no navegador
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie

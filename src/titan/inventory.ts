@@ -1,8 +1,8 @@
 import { isItem, maxStack } from './items';
-import { matchGrid, type Recipe, type Stackable } from './recipes';
+import { matchBench, matchGrid, type Recipe, type Stackable } from './recipes';
 
 /**
- * Inventário do Titã (ADR 0040, 0047): hotbar de **9** espaços (índices 0–8) + mochila de **27** (9–35, 3 × 9 alinhada à hotbar) + grade de fabricação 2 × 2 (36–39).
+ * Inventário do Titã (ADR 0040, 0047): hotbar de **9** espaços (índices 0–8) + mochila de **27** (9–35, 3 × 9 alinhada à hotbar) + grade de fabricação 2 × 2 (36–39) + grade 3 × 3 da **Mesa de Trabalho** (41–49, ADR 0049), separada da grade pessoal.
  * Sem DOM. Toda regra de espaço e quantidade fica aqui; a interface só chama estes métodos. Não existe descarte: nada se perde. A fabricação (`tryCraft`) é atômica: débito e resultado juntos, ou nada.
  */
 export const HOTBAR = 9;
@@ -13,13 +13,18 @@ export const OLD_HOTBAR = 7, OLD_BAG = 24;
 export const CRAFT_SLOTS = 4;
 export const CRAFT_START = SLOTS; // 31..34
 export const OUTPUT = CRAFT_START + CRAFT_SLOTS; // 40: resultado (virtual)
+/** Grade 3 × 3 da mesa (ADR 0049): 41–49; a saída virtual da mesa é 50. Os ingredientes dela ficam separados dos da grade pessoal. */
+export const BENCH_SLOTS = 9;
+export const BENCH_START = OUTPUT + 1;
+export const BENCH_OUT = BENCH_START + BENCH_SLOTS;
+const isGrid = (i: number): boolean => (i >= CRAFT_START && i < OUTPUT) || (i >= BENCH_START && i < BENCH_OUT);
 
 export interface Stack { item: number; count: number }
-export interface InventoryData { v: 1 | 2; slots: Array<[number, number] | null>; craft: Array<[number, number] | null> }
+export interface InventoryData { v: 1 | 2 | 3; slots: Array<[number, number] | null>; craft: Array<[number, number] | null>; /** v3: grade 3 × 3 da mesa (ausente nos saves anteriores = vazia). */ bench?: Array<[number, number] | null> }
 
 export class Inventory {
-  /** hotbar + mochila + grade (índices 0–34). */
-  private readonly s: Array<Stack | null> = new Array(SLOTS + CRAFT_SLOTS).fill(null);
+  /** hotbar + mochila + grade 2 × 2 + (40 sem uso) + grade 3 × 3 da mesa (índices 0–49). */
+  private readonly s: Array<Stack | null> = new Array(BENCH_OUT).fill(null);
   /** Sobe a cada mudança (o save compara com a revisão gravada). */
   rev = 0;
 
@@ -65,15 +70,15 @@ export class Inventory {
   }
 
   /**
-   * Move/une/troca entre dois espaços (0–34; a saída 35 só sai; para a grade de fabricação vai 1 de cada vez). Vazio → move; mesmo item empilhável → une até o limite (o resto fica na origem);
+   * Move/une/troca entre dois espaços (0–39 e 41–49; as saídas 40 e 50 são virtuais; para as grades de fabricação vai 1 de cada vez). Vazio → move; mesmo item empilhável → une até o limite (o resto fica na origem);
    * item diferente → troca. Devolve se algo mudou.
    */
   move(from: number, to: number): boolean {
-    if (from === to || from < 0 || from >= OUTPUT || to < 0 || to >= OUTPUT) return false;
+    if (from === to || from < 0 || from >= BENCH_OUT || from === OUTPUT || to < 0 || to >= BENCH_OUT || to === OUTPUT) return false;
     const a = this.s[from], b = this.s[to];
     if (!a) return false;
-    if (to >= CRAFT_START && a.count > 1) {
-      // na grade de fabricação entra 1 por vez (a receita usa 1 de cada)
+    if (isGrid(to) && a.count > 1) {
+      // nas grades de fabricação (pessoal e da mesa) entra 1 por vez
       if (b && (b.item !== a.item || b.count >= maxStack(a.item))) return false;
       if (b) b.count++; else this.s[to] = { item: a.item, count: 1 };
       a.count--;
@@ -166,10 +171,52 @@ export class Inventory {
     return ok; // `add` já sobe a revisão; sem nada na grade, nada muda
   }
 
+  // ---- Grade 3 × 3 da Mesa de Trabalho (ADR 0049) ----
+  /** Quantidade por item na grade da mesa (somando as células). */
+  benchTotals(): Map<number, number> {
+    const m = new Map<number, number>();
+    for (let i = 0; i < BENCH_SLOTS; i++) { const c = this.s[BENCH_START + i]; if (c) m.set(c.item, (m.get(c.item) ?? 0) + c.count); }
+    return m;
+  }
+  /** Receita da mesa formada pela grade: ingredientes **exatos** (qualquer disposição); extra, errado ou faltando = `null` (a saída fica vazia). Mesmo catálogo da fabricação direta. */
+  benchRecipe(): Recipe | null { const t = this.benchTotals(); return t.size ? matchBench(t) : null; }
+  benchResult(): Stackable | null { const r = this.benchRecipe(); return r ? { ...r.result } : null; }
+
+  /**
+   * Recolhe a saída da mesa: consome **todos** os ingredientes da grade e entrega o resultado numa operação só. Sem receita completa → `none`; sem espaço para o resultado na hotbar/mochila → `full`
+   * (nada muda: os ingredientes continuam na grade). A validação da mesa e do alcance é da interface, a cada toque.
+   */
+  takeBenchResult(): 'ok' | 'none' | 'full' {
+    const r = this.benchResult();
+    if (!r) return 'none';
+    if (!this.canAdd(r.item, r.count)) return 'full';
+    for (let i = 0; i < BENCH_SLOTS; i++) this.s[BENCH_START + i] = null;
+    this.add(r.item, r.count); // cabe: conferido acima
+    return 'ok';
+  }
+
+  /**
+   * Devolve a grade da mesa à hotbar/mochila (ao fechar o painel, perder a mesa ou abrir o save). O que não couber **fica na grade** (e no save). Devolve quantas unidades ficaram.
+   */
+  returnBench(): number {
+    let left = 0;
+    for (let i = 0; i < BENCH_SLOTS; i++) {
+      const c = this.s[BENCH_START + i];
+      if (!c) continue;
+      this.s[BENCH_START + i] = null;
+      if (this.add(c.item, c.count)) continue;
+      let rest = c.count;
+      while (rest > 0 && this.add(c.item, 1)) rest--; // devolve o que couber, uma unidade por vez
+      if (rest > 0) { this.s[BENCH_START + i] = { item: c.item, count: rest }; left += rest; this.rev++; }
+    }
+    return left;
+  }
+
   // ---- Save ----
   toData(): InventoryData {
     const pack = (c: Stack | null): [number, number] | null => (c ? [c.item, c.count] : null);
-    return { v: 2, slots: this.s.slice(0, SLOTS).map(pack), craft: this.s.slice(SLOTS, SLOTS + CRAFT_SLOTS).map(pack) };
+    const bench = this.s.slice(BENCH_START, BENCH_OUT).map(pack);
+    return { v: 3, slots: this.s.slice(0, SLOTS).map(pack), craft: this.s.slice(SLOTS, SLOTS + CRAFT_SLOTS).map(pack), ...(bench.some(Boolean) ? { bench } : {}) };
   }
 
   /** Lê um registro gravado, descartando o que não for válido (item desconhecido, contagem fora do limite). */
@@ -189,6 +236,7 @@ export class Inventory {
       read(Array.isArray(o.slots) ? o.slots.slice(OLD_HOTBAR, OLD_HOTBAR + OLD_BAG) : [], OLD_BAG, HOTBAR);
     } else read(o?.slots, SLOTS, 0);
     read(o?.craft, CRAFT_SLOTS, SLOTS);
+    read(o?.bench, BENCH_SLOTS, BENCH_START); // saves anteriores: sem grade da mesa = vazia
     return inv;
   }
 }

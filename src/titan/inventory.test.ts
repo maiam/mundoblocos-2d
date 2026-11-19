@@ -98,7 +98,7 @@ describe('inventário do Titã', () => {
     for (let item = 1; item <= 11; item++) expect(j.total(item)).toBe(sum(slots, item));
     // gravar de novo usa o formato novo e é estável ao reabrir
     const d = j.toData();
-    expect(d.v).toBe(2); expect(d.slots).toHaveLength(SLOTS);
+    expect(d.v).toBe(3); expect(d.slots).toHaveLength(SLOTS);
     expect(JSON.stringify(Inventory.fromData(JSON.parse(JSON.stringify(d))).toData())).toBe(JSON.stringify(d));
   });
 });

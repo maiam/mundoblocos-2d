@@ -1,18 +1,18 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, ingredientStatus, RECIPES, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { type GestureTarget, InteractionGesture } from './gesture';
-import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
+import { BENCH_OUT, BENCH_SLOTS, BENCH_START, CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
 import { ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
-import { advanceDay, parseHora, phaseName } from './sky';
+import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
 import { T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
@@ -50,6 +50,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const perf = q.get('fps') === '1' || scene ? new TitanPerf() : null;
   document.body.classList.add('titan');
   const ui = el('div', 'titan-ui', document.body);
+  ui.style.setProperty('--basalt', `url(${titanBasaltUrl})`); // fundo e moldura dos painéis (ADR 0049)
   const toast = (msg: string, ms = 3500): void => {
     const t = el('div', 'titan-toast', ui, msg);
     window.setTimeout(() => t.remove(), ms);
@@ -73,6 +74,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
   // `?hora=manha|tarde|noite`: congela só a visualização (teste); a hora do jogo continua correndo e é a que vai no save
   const forcedHour = parseHora(q.get('hora'));
+  // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
+  const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
   const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
@@ -115,8 +118,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   panel.hidden = true;
   const top = el('div', 'titan-bagtop', panel);
   const cats = el('nav', 'titan-cats', top);
-  type Cat = 'todas' | Group | 'bag';
-  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['bag', 'Bolsa']];
+  type Cat = 'todas' | Group | 'bench' | 'bag';
+  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['bench', 'Montar 3 × 3'], ['bag', 'Bolsa']];
   const catBtns = new Map<Cat, HTMLButtonElement>();
   for (const [id, name] of catDefs) { const b = el('button', 'titan-cat', cats, name); b.type = 'button'; catBtns.set(id, b); b.addEventListener('click', () => { cat = id; sel = null; refresh(); }); }
   const center = el('section', 'titan-center', top);
@@ -142,6 +145,19 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const outSlot = mkSlot(craftRow, OUTPUT);
   outSlot.classList.add('out');
   el('small', 'hint', manual, 'Quatro blocos de rocha escura, em qualquer posição, formam a Mesa de Trabalho.');
+  // grupo "Montar 3 × 3" (só com a Mesa de Trabalho ativa, ADR 0049): os nove espaços interativos da bancada e a saída; ficam separados da grade pessoal 2 × 2
+  const benchBox = el('div', 'titan-detail titan-manual titan-bench', right);
+  const benchHead = el('div', 'titan-benchhead', benchBox);
+  el('small', '', benchHead, 'Montar 3 × 3');
+  const backBtn = el('button', 'titan-btn titan-back', benchHead, 'Receitas');
+  backBtn.type = 'button';
+  const benchGrid = el('div', 'titan-benchgrid', benchBox);
+  const benchSlots = Array.from({ length: BENCH_SLOTS }, (_, i) => mkSlot(benchGrid, BENCH_START + i));
+  el('span', 'arrow', benchBox, '↓');
+  const benchOut = mkSlot(benchBox, BENCH_OUT);
+  benchOut.classList.add('out');
+  const benchName = el('b', 'rname', benchBox, '');
+  el('small', 'hint', benchBox, 'Toque numa pilha e na célula: cada toque põe uma unidade. Toque na saída para fabricar.');
   let stationAt: { x: number; y: number; z: number } | null = null;
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
@@ -173,6 +189,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     bagSlots.forEach((b, i) => draw(b, HOTBAR + i));
     craftSlots.forEach((b, i) => draw(b, CRAFT_START + i));
     draw(outSlot, OUTPUT, inv.craftResult());
+    benchSlots.forEach((b, i) => draw(b, BENCH_START + i));
+    const br = inv.benchResult();
+    draw(benchOut, BENCH_OUT, br);
+    benchName.textContent = br ? `${ITEM_NAMES[br.item]}${br.count > 1 ? ` ×${br.count}` : ''}` : '';
+    benchOut.classList.toggle('ready', !!br);
+    outSlot.classList.toggle('ready', !!inv.craftResult());
     for (const id of discoverRecipes(session)) toast(id === 'mesa' ? 'Nova receita: Mesa de Trabalho (4 blocos de rocha escura). Abra a bolsa (☰ ou E).' : 'Receitas da mesa: use a Mesa de Trabalho (F ou botão Usar).', 3500);
     if (bagOpen) drawBook();
     const held = inv.get(session.selected);
@@ -194,12 +216,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
     onlyBtn.classList.toggle('on', onlyOk);
     onlyBtn.setAttribute('aria-pressed', String(onlyOk));
-    const isBag = cat === 'bag';
-    tools.hidden = rgrid.hidden = isBag;
-    bagGrid.hidden = !isBag;
-    manual.hidden = !isBag;
-    detail.hidden = isBag;
-    if (isBag) return; // grupo Bolsa: a grade de itens e a fabricação 2 × 2 são slots fixos (já desenhados acima)
+    if (cat === 'bench' && !stationAt) cat = 'todas'; // sem mesa ativa não há grade 3 × 3
+    catBtns.get('bench')!.hidden = !stationAt; // "Montar 3 × 3" só aparece com a Mesa de Trabalho ativa
+    for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
+    const isBag = cat === 'bag', isBench = cat === 'bench', slots = isBag || isBench;
+    tools.hidden = rgrid.hidden = slots;
+    bagGrid.hidden = !slots; // "Bolsa" e "Montar 3 × 3" mostram os 27 espaços para mover os itens
+    manual.hidden = !isBag; // grade 2 × 2 pessoal
+    benchBox.hidden = !isBench; // grade 3 × 3 da mesa
+    detail.hidden = slots;
+    if (slots) return; // nesses grupos as grades são slots fixos (já desenhados acima)
     // centro: grade de receitas (ícone do resultado; ×N no canto; selo quando bloqueada)
     rgrid.textContent = '';
     const list = visibleRecipes();
@@ -295,12 +321,24 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       refresh();
       return;
     }
-    if (!bagOpen || cat !== 'bag') { if (i < HOTBAR) select(i); return; } // só no grupo Bolsa os toques movem itens
+    if (i === BENCH_OUT) { takeBench(); return; }
+    if (!bagOpen || (cat !== 'bag' && cat !== 'bench')) { if (i < HOTBAR) select(i); return; } // só em "Bolsa" e "Montar 3 × 3" os toques movem itens
     if (sel === null) { if (inv.get(i)) sel = i; }
     else if (sel === i) sel = null;
     else { if (!inv.move(sel, i)) notice('Não dá para mover para lá'); sel = null; }
     refresh();
   }
+
+  /** Recolhe a saída da bancada 3 × 3: revalida a mesa e o alcance **a cada toque**; consome os ingredientes e entrega o resultado juntos; se falhar, tudo continua na grade. */
+  function takeBench(): void {
+    if (!stationAt || !stationInReach()) { closeStation('Mesa fora de alcance'); return; } // fechar devolve a grade à bolsa
+    const r = inv.benchResult();
+    const res = inv.takeBenchResult();
+    if (res === 'ok') { notice(`Fabricado: ${r!.count > 1 ? `${r!.count} × ` : ''}${ITEM_NAMES[r!.item]}`); onEdited(); }
+    else notice(res === 'full' ? 'Mochila cheia: libere espaço para o resultado' : 'Monte uma receita da mesa primeiro');
+    refresh();
+  }
+  backBtn.addEventListener('click', () => { cat = 'todas'; sel = null; refresh(); });
 
   function toggleBag(open: boolean): void {
     if (open === bagOpen) return;
@@ -313,6 +351,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     else {
       searchBox.blur();
       if (!inv.returnCraft()) notice('Sem espaço: os itens ficam na grade');
+      if (inv.returnBench() > 0) notice('Sem espaço: os itens da bancada ficam na grade 3 × 3');
       if (!coarse) void canvas.requestPointerLock?.();
     }
     refresh();
@@ -535,7 +574,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
+      const before = session.time;
       session.time = advanceDay(session.time, dt);
+      if (session.time < before) { session.days++; playerDirty = true; } // virou o dia: o contador vai no save
       if (((session.time - lastSavedTime + 1) % 1) > 0.01) playerDirty = true; // ~12 s de jogo (1/100 do dia de 20 min): grava a hora junto da posição
     }
     if (playing && session.drops.size) {
@@ -546,6 +587,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       dropFull = c.full;
     }
     view.setSky(forcedHour ?? session.time);
+    view.setSaturn(forcedSaturn ?? saturnVisibility(session.days, forcedHour ?? session.time, session.seed)); // raro: poucos dias, janela curta
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };

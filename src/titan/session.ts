@@ -24,6 +24,8 @@ export interface TitanSession {
   relocated: boolean;
   /** Hora do dia (fração 0–1 do dia de 20 minutos): avança com o jogo ativo e vai no save (ADR 0041). */
   time: number;
+  /** Dias completos vividos (ADR 0048). */
+  days: number;
   /** Hotbar, mochila e grade (ADR 0040). */
   inventory: Inventory;
   /** Ids dos fragmentos de superfície já recolhidos (a base os recria; o save lembra quais sumiram). */
@@ -110,7 +112,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const a = gen.arrival;
   const collected = new Set<string>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
   return s;
 }
 
@@ -127,12 +129,13 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   // migração da cápsula (ADR 0045): save anterior à v4 → a cápsula remanescente (mochila ou grade, inclusive receita antiga já iniciada) vira brasa de âmbar, uma única vez (o save regravado já é v4)
   const converted = save.header.v < 4 ? inv.convertItem(Item.CAPSULE, Item.EMBER) : 0;
   inv.returnCraft();
+  inv.returnBench(); // a grade da mesa volta à bolsa ao abrir; o que não couber fica na grade (e no save) até haver espaço
   const collected = new Set<string>((save.header.inventory?.collected ?? []).filter((x): x is string => typeof x === 'string'));
   const grants: TitanSession['grants'] = {};
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -180,7 +183,7 @@ export function standingReeds(s: TitanSession): Array<{ x: number; y: number; z:
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)) };
 }
 
 /**

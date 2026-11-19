@@ -23,6 +23,8 @@ export interface TitanHeader {
   selected: number;
   /** Hora do dia: fração 0–1 do dia de 8 minutos (ADR 0041). Ausente em saves antigos: começam à tarde. A hora forçada de teste (`?hora=`) nunca é gravada. */
   time?: number;
+  /** Dias completos já vividos na partida (sobe quando o relógio passa de 1 para 0; ADR 0048): só escolhe, de forma determinística, os raros dias em que Saturno aparece. Ausente = 0. */
+  days?: number;
   /**
    * Hotbar, mochila e grade de fabricação + ids dos fragmentos de superfície já recolhidos; vai neste registro, **na mesma transação** das edições de chunk
    * (as lanternas colocadas são edições de chunk). `null` = save da v1: abre com o inventário inicial.
