@@ -1,5 +1,5 @@
 import { blockOfItem, Item, itemOfBlock } from './items';
-import { blockHeight, isSolid, isVein, T, Y_MIN } from './voxel';
+import { blockHeight, isSolid, isVein, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { canPlaceAt, type Hit } from './physics';
 import type { TitanSession } from './session';
 
@@ -109,8 +109,9 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
-  const block = blockOfItem(stack.item);
+  let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
+  if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
   const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
   if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockHeight(block)) || !s.volume.place(x, y, z, block)) return { ok: false };

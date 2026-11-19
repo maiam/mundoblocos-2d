@@ -106,7 +106,15 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Bancada 3 × 3 e painéis de basalto (v0.104.0, ADR 0049)
 - **Grade da mesa** (`inventory.ts`): `BENCH_START` 41–49, saída `BENCH_OUT` 50, separada da pessoal; `matchBench` (quantidades exatas, qualquer disposição), `takeBenchResult` (atômica), `returnBench` (devolve ao fechar; o que não couber fica na grade e no save). Inventário gravado `v: 3` com `bench`.
+- **Mesa de Trabalho** (ADR 0052): 4 ids (10, 13–15 = giro 0–3), frente voltada para o jogador ao colocar; sempre `isWorkbench(id)`, nunca `=== T.WORKBENCH`.
 - **Junco de Vidro** (ADR 0051): 3 silhuetas (`titan/reeds.ts`, atlas 48 × 16), uma `InstancedMesh` por silhueta; célula lógica inalterada.
 - **Interface** (`titanGame.ts`): grade 3 × 3 no grupo Bolsa (ADR 0050, sem exigir a Mesa; receita da Mesa sem a Mesa bloqueia a saída), `takeBench` revalida mesa e alcance a cada toque; prévia 3 × 3 com `previewCells`. Basalto por `--basalt` (`render/art/titan.ts` → `titanBasaltUrl`).
 - Testes: `bench.test.ts`. Medição: emulador (740 × 360); **aparelho real pendente**.
+
+## Referência de arte: legibilidade de pixel art em 16 × 16 (registrada em 19/11/2026)
+Nota do dono do produto, **referência**, não decisão. Serve de critério ao avaliar ícones, itens e blocos novos (ícones 3D do piloto, lascas, lanterna, ferramentas futuras).
+- **Borrão** = filtro bilinear ou escala não inteira. Hoje já está certo: a interface recorta o atlas com `image-rendering: pixelated` e escalas inteiras (`--s` = 3 ou 2, `--s2` = 1, `--s3` = 2, ver `titan.css`) e o 3D usa `NearestFilter`, sem mipmaps. Qualquer tamanho novo de ícone deve ser **múltiplo inteiro** da textura (16 → 32, 48, 64 px); 16 em 50 px faz pixels de 3 e 4 px (cintilação).
+- **Resolução:** 16 × 16 é a unidade do mundo (1 bloco = 1 m = 16 px). Para itens detalhados (lascas de cristal, lanterna, ferramentas) **32 × 32 é o ponto doce**: mesma estética, 4× os pixels (1.024 contra 256), bordas chanfradas, brilho e curvas. Se a leitura em 16 × 16 limitar, a saída proposta é a prancha de itens em 32 × 32 exibida em 64 × 64 px, mantendo `pixelated`/`Nearest`. **Não adotado**: mudaria atlas, `ItemId − 1` por célula e cálculos de recorte em `titanGame.ts`/`titan.css`.
+- **Técnicas de arte em 16 × 16 ou 32 × 32:** (1) contorno colorido (versão bem escura da cor do material), nunca preto puro, que engole 2 px; (2) sub-pixeling: 1 px de cor intermediária na quina interna de diagonais e curvas; (3) realce de 1 px nas quinas superiores esquerdas (luz de cima/esquerda); (4) aproveitar a diagonal (≈ 22,6 px contra 16): lascas, gravetos e ferramentas desenhados a 45°.
+- **Consistência com o projeto:** a luz fixa dos ícones de bloco é 100% topo, 80% esquerda e 60% direita (doc 03 do Drive); a produção dos ícones é offline (sem `toDataURL`, regra do `CLAUDE.md`).
 

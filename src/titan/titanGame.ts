@@ -13,7 +13,7 @@ import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
-import { T } from './voxel';
+import { isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds } from './session';
@@ -280,13 +280,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.hidden = true;
   function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
   const benchAimed = (): { x: number; y: number; z: number } | null => {
-    if (!target || target.item || vol.get(target.x, target.y, target.z) !== T.WORKBENCH) return null;
+    if (!target || target.item || !isWorkbench(vol.get(target.x, target.y, target.z))) return null;
     return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z } : null;
   };
   function stationInReach(): boolean {
     if (!stationAt) return false;
     const b = session.body;
-    return vol.get(stationAt.x, stationAt.y, stationAt.z) === T.WORKBENCH && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
+    return isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
   function openStation(): void {
     const at = benchAimed();
@@ -573,7 +573,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
     target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE) : null;
     useBtn.hidden = !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar"
-    if (stationAt && bagOpen && !stationInReach()) closeStation(vol.get(stationAt.x, stationAt.y, stationAt.z) === T.WORKBENCH ? 'Mesa fora de alcance' : 'A mesa sumiu');
+    if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? 'Mesa fora de alcance' : 'A mesa sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.render(eye, session.yaw, session.pitch, target, now / 1000);
     cross.hidden = !active;

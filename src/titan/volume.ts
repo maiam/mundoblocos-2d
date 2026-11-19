@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, localOf, sectionOf, T, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { blockHeight, chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, isWorkbench, localOf, sectionOf, T, unpackIndex, workbenchTurn, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -178,9 +178,9 @@ export class TitanVolume {
   load(chunks: Array<{ cx: number; cz: number; edits: Array<[number, number]> }>): void {
     for (const c of chunks) {
       const m = new Map<number, number>();
-      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.SLAB) m.set(idx, id);
+      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.WORKBENCH_270) m.set(idx, id);
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
-      for (const [idx, id] of m) if (id === T.WORKBENCH) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.workbenches.set(lightKey(x, u.y, z), [x, u.y, z]); }
+      for (const [idx, id] of m) if (isWorkbench(id)) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.workbenches.set(lightKey(x, u.y, z), [x, u.y, z, workbenchTurn(id)]); }
       for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
     }
     this.light$.ready = false; // a luz é calculada por inteiro na primeira consulta
@@ -190,11 +190,12 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Mesas de Trabalho colocadas (o renderer desenha o modelo 3D por instância); `workbenchVersion` muda a cada mesa posta, retirada ou carregada. */
-  private readonly workbenches = new Map<number, [number, number, number]>();
+  private readonly workbenches = new Map<number, [number, number, number, number]>();
   workbenchVersion = 0;
-  workbenchCells(): Array<[number, number, number]> { return [...this.workbenches.values()]; }
+  /** Cada mesa: `[x, y, z, giro]` (giro 0–3, ver `workbenchTurn`). */
+  workbenchCells(): Array<[number, number, number, number]> { return [...this.workbenches.values()]; }
   /** Há uma Mesa de Trabalho nesta célula? */
-  isWorkbench(x: number, y: number, z: number): boolean { return this.get(x, y, z) === T.WORKBENCH; }
+  isWorkbench(x: number, y: number, z: number): boolean { return isWorkbench(this.get(x, y, z)); }
   /** Muda a cada lanterna posta ou retirada (o renderer refaz as instâncias só então). */
   lanternVersion = 0;
   get hasLanterns(): boolean { return this.lanterns.size > 0; }
@@ -217,8 +218,8 @@ export class TitanVolume {
    */
   private updateLight(x: number, y: number, z: number, before: number, after: number): void {
     const key = lightKey(x, y, z);
-    if (before === T.WORKBENCH && after !== T.WORKBENCH) { this.workbenches.delete(key); this.workbenchVersion++; }
-    if (after === T.WORKBENCH && before !== T.WORKBENCH) { this.workbenches.set(key, [x, y, z]); this.workbenchVersion++; }
+    if (isWorkbench(before) && !isWorkbench(after)) { this.workbenches.delete(key); this.workbenchVersion++; }
+    if (isWorkbench(after) && !isWorkbench(before)) { this.workbenches.set(key, [x, y, z, workbenchTurn(after)]); this.workbenchVersion++; }
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
     if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
     if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
