@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.106.0 — Titã: Junco de Vidro com três silhuetas (19/11/2026)
+- **Arte do dono do produto** (Drive): atlas de 48 × 16 px com broto baixo, haste bifurcada e tufo aberto. **ADR 0051.**
+- `titan/reeds.ts` (`reedVariant`, pura): silhueta determinística pela célula; `TitanRenderer` usa 3 `InstancedMesh` (uma por silhueta, mesmo material e plano cruzado, só o UV muda). Mira, coleta, queda e save inalterados.
+- Testes (`reeds.test.ts`): determinismo e proporção das três silhuetas na região de 64 × 64. Conferido de tarde e à noite a 740 × 360 (seed 42: 16 + 12 + 12 plantas).
+
 ## Orvalis v0.105.0 — Titã: grade 3 × 3 única e prévia com itens distribuídos (19/11/2026)
 - **Pedido do dono do produto:** a grade é sempre 3 × 3 (a única). Decisões na **ADR 0050**.
 - **Prévia de receitas:** uma célula por unidade pedida e o número em cada uma é o que o jogador tem repartido (`previewCells`: tem 12 → 3,3,3,3; tem 9 → 3,2,2,2; tem 3 de 4 → 1,1,1,0).
