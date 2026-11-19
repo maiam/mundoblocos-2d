@@ -8,7 +8,8 @@ import { raycast } from './physics';
 import { meshSection } from './mesher';
 import { T } from './voxel';
 
-const open = async (st = new MemoryTitanStorage()) => ({ st, s: await openSession(st, 42, () => 1) });
+/** Partida do legado (v2: lascas de superfície pré-posicionadas); o fluxo dos veios (v3) está em `veins.test.ts`. */
+const open = async (st = new MemoryTitanStorage()) => ({ st, s: await openSession(st, 42, () => 1, undefined, 2) });
 const spot = (s: Awaited<ReturnType<typeof openSession>>) => { const a = s.volume.gen.arrival; return { bx: Math.floor(a.x), bz: Math.floor(a.z) }; };
 
 describe('coleta e inventário no mundo', () => {
@@ -171,7 +172,7 @@ describe('lanterna: fabricar, colocar, iluminar, recuperar e salvar', () => {
       override async commit(...a: Parameters<MemoryTitanStorage['commit']>): Promise<void> { await this.gate; return super.commit(...a); }
     }
     const st = new Slow();
-    const s = await openSession(st, 42, () => 1);
+    const s = await openSession(st, 42, () => 1, undefined, 2);
     const p = flush(st, s);
     collectItem(s, 'rock:0'); // durante a gravação
     st.release(); await p;

@@ -172,7 +172,7 @@ export class TitanVolume {
   load(chunks: Array<{ cx: number; cz: number; edits: Array<[number, number]> }>): void {
     for (const c of chunks) {
       const m = new Map<number, number>();
-      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.LANTERN) m.set(idx, id);
+      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.VEIN_FROST) m.set(idx, id);
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
       for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
     }

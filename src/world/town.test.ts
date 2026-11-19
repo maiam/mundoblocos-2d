@@ -136,7 +136,7 @@ describe('Cidade do Despertar', () => {
       }
       expect(w.isWalkable(...w.dungeon!.doorstep), `seed ${seed}`).toBe(true);
     }
-  });
+  }, 30_000); // gera 40 mundos (~2 s sozinho, mais de 5 s no runner com os outros arquivos em paralelo): o limite padrão era apertado
 
   it('salvamento antigo com terreno na área da cidade volta à cidade ao carregar', () => {
     const w = new World(13);

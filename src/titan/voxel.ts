@@ -17,10 +17,10 @@ export const REGION_MIN = -32;
 export const REGION_MAX = 32;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9 } as const;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN;
@@ -28,6 +28,8 @@ export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE &&
 export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN;
 /** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
 export const isOccupied = isTarget;
+/** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
+export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 
 export type Face = 'top' | 'side' | 'bottom';
 
@@ -40,6 +42,8 @@ export function tileFor(id: number, face: Face): number {
     case T.BEDROCK: return 4;
     case T.FROST: return 5;
     case T.LAKE: return 6; // quadro 1 (o quadro 2 = 7 é alternado no render)
+    case T.VEIN_ROCK: return 8; // veios naturais (gerador v3): linha 3 do atlas, mesma arte nas 6 faces
+    case T.VEIN_FROST: return 9;
     default: return 4;
   }
 }

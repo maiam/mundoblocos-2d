@@ -2,7 +2,7 @@ import './titan.css';
 import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
-import { breakOrCollect, placeFromSlot } from './actions';
+import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { CRAFT_SLOTS, CRAFT_START, HOTBAR, OUTPUT, SLOTS } from './inventory';
@@ -15,7 +15,7 @@ import { advanceDay, parseHora, phaseName } from './sky';
 import { T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
-import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError } from './session';
+import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems } from './session';
 
 /**
  * Titã — jogo solo em primeira pessoa (ADR 0039): liga entrada (teclado/mouse/toque), laço de quadros, renderer, mira e gravação.
@@ -74,7 +74,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora'));
   const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, perf);
   view.setSky(forcedHour ?? session.time);
-  view.setItems(session.items.remaining());
+  view.setItems(visibleItems(session));
   if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
     line: () => perf.line(),
     lines: () => [...(scene ? [`cena: ${spots.length} lanternas${autoEdit ? ' · editando sem parar' : ''}`] : []), ...perf.reportLines()],
@@ -259,6 +259,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (gesture.activePointer === 'mouse') { mouseAcc += Math.hypot(e.movementX, e.movementY); gesture.drag('mouse', mouseAcc); }
   });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('selectstart', (e) => e.preventDefault()); // pressionar e segurar no celular não pode virar seleção de texto (o jogo não tem campos de texto)
   canvas.addEventListener('mousedown', (e) => {
     if (!document.pointerLockElement || bagOpen || e.button !== 0) return;
     mouseAcc = 0;
@@ -338,7 +339,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
-      if (r.ok) { if (t.item) view.setItems(session.items.remaining()); onEdited(); refresh(); }
+      if (r.ok) { view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },
     effect: (t, p, stage) => {
@@ -349,6 +350,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   });
 
   // ---- Gravação ----
+  let dropFull = false;
   let lastSavedTime = session.time;
   let lastEdit = 0, lastPlayerSave = performance.now(), playerDirty = false, saving: Promise<void> | null = null, failed = false, retryAt = 0;
   const setSave = (txt: string, err = false): void => { saveLine.textContent = txt; saveLine.className = err ? 'err' : ''; };
@@ -396,6 +398,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (playing) {
       session.time = advanceDay(session.time, dt);
       if (((session.time - lastSavedTime + 1) % 1) > 0.01) playerDirty = true; // ~12 s de jogo (1/100 do dia de 20 min): grava a hora junto da posição
+    }
+    if (playing && session.drops.size) {
+      // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
+      const c = collectNearby(session, b.x, b.y, b.z);
+      if (c.collected || c.moved) { view.setItems(visibleItems(session)); if (c.collected) { onEdited(); refresh(); } }
+      if (c.full && !dropFull) notice('Mochila cheia');
+      dropFull = c.full;
     }
     view.setSky(forcedHour ?? session.time);
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);

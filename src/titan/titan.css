@@ -1,5 +1,6 @@
 /* Titã: interface mínima da primeira entrega (ADR 0039). Paleta da direção de arte: carvão do lago, marrom das dunas, cobre, âmbar, névoa. */
-body.titan { margin: 0; overflow: hidden; background: #171c20; touch-action: none; }
+body.titan { margin: 0; overflow: hidden; background: #171c20; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+body.titan * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 .titan-ui { --s: 3; position: fixed; inset: 0; pointer-events: none; font: 600 13px system-ui, sans-serif; color: #fff0da; }
 .titan-ui [hidden] { display: none !important; }
