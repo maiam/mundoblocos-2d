@@ -7,10 +7,10 @@ import atlas from '../../assets/titan-atlas-16px.webp';
  */
 export const titanAtlasUrl: string = atlas;
 
-import hotbar from '../../assets/titan-hotbar-sprites-16px.webp';
+import hotbar from '../../assets/titan-itens-32px.webp';
 /**
- * Atlas de itens da hotbar (64 × 32 px RGBA, grade 4 × 2 de sprites 16 × 16 sem espaçamento; WebP sem perdas): areia ocre, areia úmida, rocha escura,
- * gelo fosco, fragmento de rocha, fragmento de gelo, cápsula de luz e lanterna da margem — nessa ordem (índice = id do item − 1, `titan/items.ts`).
+ * Atlas de itens (ADR 0053; 128 × 128 px RGBA, grade 4 × 4 de células de **32 × 32**, sem espaçamento; WebP sem perdas; gerado por `scripts/make-titan-arte32.py`): índice = id do item − 1
+ * (`titan/items.ts`). Fragmentos de rocha e gelo e a lanterna têm arte de 32 px; os demais itens são a arte de 16 px ampliada 2× (vizinho mais próximo) até haver arte nova.
  */
 export const titanHotbarUrl: string = hotbar;
 
@@ -33,7 +33,7 @@ export const titanLanternModel = lanternModel as { size: number[]; structure: La
 
 import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
 import workbenchModel from '../../assets/titan-workbench.json';
-import reedSprite from '../../assets/titan-junco-variantes-16px.webp';
+import reedSprite from '../../assets/titan-junco-variantes-32px.webp';
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
  * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).
@@ -41,7 +41,7 @@ import reedSprite from '../../assets/titan-junco-variantes-16px.webp';
  */
 export const titanWorkbenchAtlasUrl: string = workbenchAtlas;
 export const titanWorkbenchModel = workbenchModel as { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] };
-/** Junco de Vidro em campo: atlas de 48 × 16 px com as 3 silhuetas (broto baixo, haste bifurcada, tufo aberto), 16 × 16 cada. */
+/** Junco de Vidro em campo (ADR 0053): atlas de 128 × 32 px, 4 colunas de 32 × 32 — as 3 silhuetas (broto baixo, haste bifurcada, tufo aberto) e uma célula vazia. */
 export const titanReedUrl: string = reedSprite;
 
 import basalt from '../../assets/titan-basalt-32px.webp';

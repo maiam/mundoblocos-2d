@@ -8,7 +8,7 @@ import { horizonAt, skyAt, type Sky } from '../titan/sky';
 import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
-import { REED_VARIANTS, reedVariant } from '../titan/reeds';
+import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -281,7 +281,7 @@ export class TitanRenderer {
   private spriteMaterial(index: number): THREE.SpriteMaterial {
     const tex = this.hotbarTex.clone();
     tex.needsUpdate = true;
-    tex.repeat.set(0.25, 0.25); // atlas de itens 4 × 4 (64 × 64 px)
+    tex.repeat.set(0.25, 0.25); // atlas de itens 4 × 4 (128 × 128 px, células de 32 px; ADR 0053)
     tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / 4);
     return new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.4, fog: true });
   }
@@ -460,7 +460,7 @@ function workbenchGeometry(): THREE.BufferGeometry {
 /** Junco de vidro: duas faixas verticais cruzadas de 1 × 1 (base em y = 0, topo em y = 1: o balanço do shader cresce com a altura). `variant` escolhe o terço do atlas. */
 function reedGeometry(variant: number): THREE.BufferGeometry {
   const pos = [-0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0, 0, 0, -0.5, 0, 0, 0.5, 0, 1, 0.5, 0, 1, -0.5];
-  const u0 = variant / REED_VARIANTS, u1 = (variant + 1) / REED_VARIANTS;
+  const u0 = variant / REED_COLUMNS, u1 = (variant + 1) / REED_COLUMNS; // o atlas tem uma coluna vazia depois das silhuetas
   const uv = [u0, 0, u1, 0, u1, 1, u0, 1, u0, 0, u1, 0, u1, 1, u0, 1];
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));

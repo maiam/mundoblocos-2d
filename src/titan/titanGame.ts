@@ -167,7 +167,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (st) {
         const idx = st.item - 1, col = idx % 4, row = (idx / 4) | 0;
         icon.style.backgroundImage = `url(${titanHotbarUrl})`;
-        icon.style.backgroundPosition = `calc(-${col * 16}px * var(--s)) calc(-${row * 16}px * var(--s))`;
+        icon.style.backgroundPosition = `calc(${-col} * var(--ic)) calc(${-row} * var(--ic))`; // célula de 32 px do atlas, na escala inteira da interface (ADR 0053)
         icon.style.visibility = 'visible';
         count.textContent = st.count > 1 ? String(st.count) : '';
         b.setAttribute('aria-label', `${ITEM_NAMES[st.item]}${st.count > 1 ? ` × ${st.count}` : ''}`);
@@ -257,11 +257,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (reason && reason !== 'ok') el('small', 'why', detail, CRAFT_MESSAGES[reason]);
     else el('small', 'tip', detail, 'Toque no item para fabricar');
   }
-  function iconOf(parent: HTMLElement, item: number, size: 'sm' | 'md'): void {
+  function iconOf(parent: HTMLElement, item: number, size: 'md'): void {
     const i = el('i', `titan-icon ${size}`, parent);
-    const idx = item - 1, k = size === 'md' ? 'var(--s3)' : 'var(--s2)';
+    const idx = item - 1;
     i.style.backgroundImage = `url(${titanHotbarUrl})`;
-    i.style.backgroundPosition = `calc(-${(idx % 4) * 16}px * ${k}) calc(-${((idx / 4) | 0) * 16}px * ${k})`;
+    i.style.backgroundPosition = `${-(idx % 4) * 32}px ${-((idx / 4) | 0) * 32}px`; // `md` = 32 px fixos (1×): a célula do atlas, sem ampliar
   }
   /** Fabricar: revalida estação, alcance, materiais e espaço **a cada toque**; consome e entrega numa operação só. Falhou → nada muda e o motivo aparece. */
   function doCraft(r: Recipe): void {

@@ -1,8 +1,10 @@
 /**
- * Silhuetas do Junco de Vidro (ADR 0051): o atlas `titan-junco-variantes-16px.webp` tem 3 colunas de 16 × 16 px (broto baixo, haste bifurcada, tufo aberto).
+ * Silhuetas do Junco de Vidro (ADR 0051): o atlas `titan-junco-variantes-32px.webp` tem 4 colunas de 32 × 32 px (3 silhuetas + 1 vazia) (broto baixo, haste bifurcada, tufo aberto).
  * A escolha é uma função pura da coluna/linha da célula: a mesma planta tem sempre a mesma silhueta, em qualquer sessão e em qualquer save. Sem DOM.
  */
 export const REED_VARIANTS = 3;
+/** Colunas do atlas (ADR 0053): 3 silhuetas + 1 célula vazia; o UV de cada silhueta é `coluna / REED_COLUMNS`. */
+export const REED_COLUMNS = 4;
 
 export function reedVariant(x: number, z: number): number {
   const h = Math.sin(x * 4.1414 + z * 91.3458) * 24634.6345;
