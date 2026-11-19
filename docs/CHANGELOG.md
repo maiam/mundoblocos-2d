@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.108.0 — Titã: arte de 32 × 32 nos fragmentos, na lanterna e no junco (19/11/2026)
+- **Arte do dono do produto** (Drive): fragmento de rocha, fragmento de gelo, Lanterna da Margem (ícone redesenhado a partir do high-poly) e Junco de Vidro, em 32 px. **ADR 0053.**
+- Atlas de itens **128 × 128** (células de 32 px; os demais itens = arte antiga ampliada 2×) por `scripts/make-titan-arte32.py`; interface em **escala inteira** (64 px no desktop e no tablet, 32 px no celular), `pixelated`; junco com atlas de 128 × 32 (`REED_COLUMNS`). Ids e saves inalterados. Lascas no chão e ícones usam o mesmo atlas.
+- Conferido a 740 × 360, 1024 × 768 e 1280 × 720 (hotbar, bolsa e junco em campo), sem estouro de layout.
+
 ## Orvalis v0.107.0 — Titã: a Mesa de Trabalho fica voltada para o jogador (19/11/2026)
 - **Pedido do dono do produto:** a mesa saía sempre virada para o mesmo lado. Agora a frente (o nicho) fica voltada para quem a coloca (olhando ao norte, a frente fica ao sul). **ADR 0052.**
 - Quatro ids de bloco (`T.WORKBENCH`, `_90`, `_180`, `_270`; giro no id, sem estado extra nem `TITAN_SAVE_VERSION`); `isWorkbench`/`workbenchTurn`/`workbenchId`/`workbenchTurnFacing` em `voxel.ts`; `workbenchCells()` devolve `[x, y, z, giro]`; o renderer gira cada instância. Mesas antigas (id 10) abrem como estavam.
