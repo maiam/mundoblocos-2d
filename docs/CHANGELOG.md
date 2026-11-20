@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.113.0 — Titã: conjunto completo de ícones de 32 px (20/11/2026)
+- **Arte do dono do produto** (Drive): blocos (areia ocre e úmida, rocha escura, gelo fosco), laje e mesa em vista 3/4, mais lente de gelo, brasa de âmbar e item de junco de vidro, todos em 32 × 32 px. **ADR 0053 (extensão).**
+- `make-titan-arte32.py` passa a montar o atlas de itens 128 × 128 com sprites de 32 px para todos os itens, exceto a cápsula legada (id 7, base de 16 px ampliada 2×). Sem mudar código de interface, ids nem saves. Conferido a 740 × 360, 1024 × 768 e 1280 × 720 (hotbar, bolsa e receitas), sem erros.
+
 ## Orvalis v0.112.0 — Titã: lajes superior e dupla (20/11/2026)
 - **Regras de laje do Minecraft** (dono do produto). **ADR 0056.**
 - Ids `SLAB_TOP` (16, metade de cima) e `SLAB_DOUBLE` (17, cubo; devolve 2 lajes); sem mudar o save. Colocação por face e altura clicadas (`slabs.ts`, `Hit.hy`): superior no teto ou na metade alta da lateral, inferior no resto, **fusão em laje dupla** pelo topo da inferior ou pela base da superior (gasta 1; recusa se invadir o corpo).
