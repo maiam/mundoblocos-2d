@@ -1,5 +1,13 @@
 # Changelog
 
+## Orvalis v0.133.0 — Titã: Margem como bioma, noz em 1 % da areia seca e Farejadores por planta (gerador v12) (20/11/2026)
+- **Pedido do dono do produto.** **ADR 0074.** `titan/biomes.ts` (Margem Silenciosa); a **Noz de Duna só em areia seca**, em **1 %** da areia seca elegível (~22 plantas na seed 42, antes 6), com espaçamento ≥ 4, as 2 perto da chegada e a enseada da toca mantidas.
+- **Um Farejador pequeno por planta**, junto dela, e **um grande a cada 5 plantas** (seed 42: 22 pequenos e 4 grandes). A volta depois do abate agora é **por animal** (`respawn` por id; partidas antigas seguem com o par da toca). Só os 56 m em volta simulam e só os 8 mais próximos são desenhados.
+- Documentação: ADR 0060 corrigido (a v5–v11 aceitava areia seca ou úmida). Testes `bioma.test.ts` (+4; 1.050 no total, 1 ignorado). Conferido a 740 × 360: 22 plantas, 26 animais, 8 desenhados, pequeno junto da planta com o rótulo de vida.
+
+## Orvalis v0.132.1 — Documentação: onde nasce a Noz de Duna (20/11/2026)
+- ADR 0060 e comentários do gerador diziam "areia seca", mas `nutsFor` aceita areia seca **ou úmida** (topo 64–66). Medido em 21 seeds: ~86 % das plantas em seca e ~14 % em úmida. Só texto; o gerador não mudou.
+
 ## Orvalis v0.132.0 — Titã: golpe procedural da adaga, repetido ao agir (20/11/2026)
 - **Referência do Minecraft do dono do produto** (`ItemInHandRenderer`): o golpe é 100 % procedural, sem keyframes, por um contador normalizado `p` (0 → 1 em **0,3 s**, 6 ticks) e três curvas de seno (`sin1`, `sin2` = ease-out, `sinSq` = giro do pulso). **ADR 0071 (atualização).**
 - `render/heldPose.ts` reescrito (puro): `swingCurves`, `handPose(p, bob, dip)` (a mão cruza para a esquerda, avança, sobe e a lâmina desce 48°; recua e volta), `bobOffset` (balanço ao andar, respiração parada) e a classe `HandAnim` (golpe isolado com afundamento de 0,45 que recupera, golpe **repetido sem pausa enquanto se segura para quebrar**, afundamento menor no ciclo).

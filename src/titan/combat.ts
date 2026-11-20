@@ -1,4 +1,4 @@
-import { hurtFarejador, KINDS, newFarejador, type Farejador, type Kind } from './creature';
+import { creatureSpecs, hurtFarejador, KINDS, newFromSpec, type Farejador, type Kind } from './creature';
 import { Item } from './items';
 import type { TitanSession } from './session';
 import { restDrop, wearHeldTool } from './actions';
@@ -31,9 +31,9 @@ export function attackCreature(s: TitanSession, index: number): AttackResult {
   if (!r.dead) return { ok: true, damage, dead: false, broken: w.broken, toolName: w.name, msg: w.broken ? `${w.name} quebrou` : undefined };
   const loot = LOOT[f.kind];
   s.creatures.splice(index, 1);
-  s.respawn.set(f.kind, RESPAWN_S);
+  s.respawn.set(f.id, RESPAWN_S);
   s.metaRev++;
-  const base = `m:${f.kind}:${Math.floor(f.clock * 10)}`; let n = 0;
+  const base = `m:${f.id}:${Math.floor(f.clock * 10)}`; let n = 0;
   while (s.drops.has(`${base}:${n}:0`) || s.drops.has(`${base}:${n}:1`)) n++; // dois abates no mesmo instante não perdem o espólio
   restDrop(s, `${base}:${n}:0`, Item.RAW_MEAT, f.body.x, f.body.y, f.body.z, loot.meat);
   restDrop(s, `${base}:${n}:1`, Item.PLATE, f.body.x, f.body.y, f.body.z, loot.plate);
@@ -43,12 +43,13 @@ export function attackCreature(s: TitanSession, index: number): AttackResult {
 /** Passa `dt` s de jogo ativo para as voltas dos animais abatidos; devolve os que voltaram à toca (na lista da sessão). */
 export function tickRespawn(s: TitanSession, dt: number): Farejador[] {
   const back: Farejador[] = [];
-  const den = s.volume.gen.den;
-  for (const [kind, left] of [...s.respawn]) {
+  const gen = s.volume.gen;
+  for (const [id, left] of [...s.respawn]) {
     const rest = left - dt;
-    if (rest > 0) { s.respawn.set(kind, rest); continue; }
-    s.respawn.delete(kind);
-    if (den) { const f = newFarejador(kind, den, s.volume.gen.seed); s.creatures.push(f); back.push(f); }
+    if (rest > 0) { s.respawn.set(id, rest); continue; }
+    s.respawn.delete(id);
+    const sp = creatureSpecs(gen).find((c) => c.id === id);
+    if (sp && !s.creatures.some((c) => c.id === id)) { const f = newFromSpec(sp, gen.seed); s.creatures.push(f); back.push(f); }
     s.metaRev++;
   }
   return back;

@@ -4,7 +4,7 @@ import { TitanGenerator } from './generator';
 import { foodOf, Item } from './items';
 import { NUT_REGROW_S, NUT_YIELD, nutId, parseNutId } from './nuts';
 import { MemoryTitanStorage } from './save';
-import { flush, openSession, standingNuts, tickRegrow } from './session';
+import { flush, generatorFor, openSession, standingNuts, tickRegrow } from './session';
 import { T } from './voxel';
 import { addExhaustion, EXHAUSTION, eat, newVitals, STARVATION_FLOOR, updatePlayerVitals } from './vitals';
 
@@ -13,7 +13,7 @@ const SEEDS = [1, 2, 3, 5, 7, 9, 42, 99, 1234];
 describe('gerador v5: plantas de Noz de Duna (ADR 0060)', () => {
   it('toda seed tem 6 plantas: 2 seguras perto da chegada e uma enseada afastada, sobre areia seca, em célula de ar livre de junco e brasa', () => {
     for (const seed of SEEDS) {
-      const g = new TitanGenerator(seed), a = g.arrival;
+      const g = new TitanGenerator(seed, 11), a = g.arrival;
       expect(g.nutPlants.length).toBe(6);
       const d = g.nutPlants.map((p) => Math.hypot(p.x - a.x, p.z - a.z));
       expect(d.filter((x) => x >= 7 && x <= 16).length).toBeGreaterThanOrEqual(2);
@@ -38,7 +38,7 @@ describe('gerador v5: plantas de Noz de Duna (ADR 0060)', () => {
 describe('colher, rebrotar e comer', () => {
   it('colher rende 4 nozes de uma vez, a planta fica sem frutos e rebrota depois de NUT_REGROW_S segundos de jogo; vai no save', async () => {
     const st = new MemoryTitanStorage();
-    const s = await openSession(st, 42, () => 1);
+    const s = await openSession(st, 42, () => 1, generatorFor, 11);
     const p = s.volume.gen.nutPlants[0], id = nutId(p.x, p.y, p.z);
     expect(parseNutId(id)).toEqual(p);
     expect(s.items.at(p.x, p.y, p.z)).toBe(id);
@@ -55,7 +55,7 @@ describe('colher, rebrotar e comer', () => {
     expect(tickRegrow(r2, 2)).toBe(true); expect(r2.items.at(p.x, p.y, p.z)).toBe(id); expect(r2.regrow.size).toBe(0); // rebrotou
   });
   it('mochila sem espaço para as 4 nozes: não colhe nada (tudo ou nada)', async () => {
-    const s = await openSession(new MemoryTitanStorage(), 42, () => 1);
+    const s = await openSession(new MemoryTitanStorage(), 42, () => 1, generatorFor, 11);
     for (let i = 0; i < 36; i++) s.inventory.add(Item.SAND, 64); // enche todos os espaços
     const p = s.volume.gen.nutPlants[0], id = nutId(p.x, p.y, p.z);
     const r = collectItem(s, id);
@@ -63,7 +63,7 @@ describe('colher, rebrotar e comer', () => {
   });
   it('construir sobre a planta a remove do desenho; rebrote gravado estragado é descartado', async () => {
     const st = new MemoryTitanStorage();
-    const s = await openSession(st, 42, () => 1);
+    const s = await openSession(st, 42, () => 1, generatorFor, 11);
     const p = s.volume.gen.nutPlants[1];
     expect(s.volume.place(p.x, p.y, p.z, T.SAND)).toBe(true);
     expect(standingNuts(s)).toHaveLength(5);
@@ -73,7 +73,7 @@ describe('colher, rebrotar e comer', () => {
     expect([...r.regrow.keys()]).toEqual(['nut:1,2,3']);
   });
   it('comer: a noz recupera 4 de fome e 2,4 de saturação; fome cheia não gasta a noz; com a noz na mão o toque no mundo também come', async () => {
-    const s = await openSession(new MemoryTitanStorage(), 42, () => 1);
+    const s = await openSession(new MemoryTitanStorage(), 42, () => 1, generatorFor, 11);
     s.inventory.add(Item.NOZ, 3);
     const slot = Array.from({ length: 36 }, (_, i) => i).find((i) => s.inventory.get(i)?.item === Item.NOZ)!;
     s.selected = slot;

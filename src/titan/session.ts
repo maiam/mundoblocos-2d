@@ -1,7 +1,7 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
-import { type Farejador, type Kind, KINDS, newPack } from './creature';
+import { creatureSpecs, type Farejador, newFromSpec } from './creature';
 import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isWorking } from './furnace';
 import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
@@ -41,8 +41,8 @@ export interface TitanSession {
   furnaces: Map<string, FurnaceState>;
   /** Plantas de Noz de Duna colhidas: id → segundos de jogo que faltam para rebrotar (ADR 0060). Vai no save (`header.regrow`). */
   regrow: Map<string, number>;
-  /** Animais abatidos que ainda não voltaram (ADR 0069): tamanho → segundos de jogo ativo que faltam. Vai no save (`header.respawn`). */
-  respawn: Map<Kind, number>;
+  /** Animais abatidos que ainda não voltaram (ADR 0069): id do animal → segundos de jogo ativo que faltam (ADR 0074; nas partidas v ≤ 11 o id é o tamanho). Vai no save (`header.respawn`). */
+  respawn: Map<string, number>;
   /** Farejadores de Duna da enseada (um grande e um pequeno, ADR 0061): estado só de execução, nascem na toca a cada abertura (não vão no save). Vazio sem toca (gerador antigo ou região sem enseada). */
   creatures: Farejador[];
   savedStateRev: number;
@@ -130,10 +130,10 @@ export function tickFurnaces(s: TitanSession, dt: number): boolean {
 }
 
 /** Voltas gravadas dos animais abatidos: só tamanhos conhecidos, segundos finitos em (0, 3600]. */
-function validRespawn(raw: unknown): Map<Kind, number> {
-  const out = new Map<Kind, number>();
+function validRespawn(raw: unknown, ids: ReadonlySet<string>): Map<string, number> {
+  const out = new Map<string, number>();
   if (!raw || typeof raw !== 'object') return out;
-  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (k in KINDS && typeof v === 'number' && Number.isFinite(v) && v > 0) out.set(k as Kind, Math.min(v, 3600));
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (ids.has(k) && typeof v === 'number' && Number.isFinite(v) && v > 0) out.set(k, Math.min(v, 3600));
   return out;
 }
 
@@ -180,7 +180,7 @@ export async function openSession(storage: TitanStorage, explicitSeed: number | 
 }
 
 /** Os Farejadores nascem na toca, com o passeio derivado da seed. */
-const creaturesFor = (gen: TitanGenerator): Farejador[] => (gen.den ? newPack(gen.den, gen.seed) : []);
+const creaturesFor = (gen: TitanGenerator): Farejador[] => creatureSpecs(gen).map((sp) => newFromSpec(sp, gen.seed));
 
 export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
@@ -188,7 +188,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const collected = new Set<string>();
   const regrow = new Map<string, number>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, furnaces: new Map<string, FurnaceState>(), respawn: new Map<Kind, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, furnaces: new Map<string, FurnaceState>(), respawn: new Map<string, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
   return s;
 }
 
@@ -211,9 +211,9 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const regrow = validRegrow(save.header.regrow);
-  const respawn = validRespawn(save.header.respawn);
+  const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, furnaces: validFurnaces(save.header.furnaces, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.kind)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, furnaces: validFurnaces(save.header.furnaces, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);

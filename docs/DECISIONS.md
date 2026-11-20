@@ -44,6 +44,7 @@
 | 0065 | **Aceita** — Titã: Braseiro de Rocha (apagado/aceso, 8 preparações por Brasa de Âmbar, estação `brazier`), Lingote de Cobre, Picareta de Cobre e adagas; `stationMet` como regra única |
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
+| 0074 | **Aceita** — Titã: Margem como bioma (`biomes.ts`), Noz de Duna só em areia seca em 1 % da areia elegível, um Farejador pequeno por planta e um grande a cada 5 (gerador v12; volta por id; só os 8 mais próximos desenhados) |
 | 0073 | **Aceita** — Titã: Brasa de Âmbar como combustível comum (gerador v11; 4 depósitos com juncos, Veio de Âmbar 3–8 blocos com picareta, veio garantido perto da chegada, Bloco de Âmbar Compactado 9×; braseiro: 1 brasa = 4 preparações e carga só gasta ao cozinhar) |
 | 0072 | **Aceita** — Titã: fragmentos à vista (gerador v10; veios de rocha em 12 %/6 % da rocha escura alta/baixa e de gelo em 6 % das manchas; fora de formações, abrigos e cobre) |
 | 0071 | **Aceita** — Titã: Adaga de Rocha na mão em primeira pessoa (GLB de 338 KB, cena de mão própria sobre o mundo, golpe animado no ataque ao Farejador) |

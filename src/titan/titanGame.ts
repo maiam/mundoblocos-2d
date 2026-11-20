@@ -34,6 +34,8 @@ import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVers
 const AUTOSAVE_AFTER_EDIT_MS = 700;
 const AUTOSAVE_PLAYER_MS = 5000;
 const RETRY_MS = 3000;
+/** Farejadores (ADR 0074): só os que estão a até `SIM_RADIUS` m do viajante (ou em ação) são simulados; só os `SHOW_MAX` mais próximos, a até `SHOW_RADIUS` m, vão para o desenho. */
+const SIM_RADIUS = 56, SHOW_RADIUS = 64, SHOW_MAX = 8;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -759,11 +761,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (session.creatures.length) {
       for (const fj of session.creatures) {
         if (!active) break;
+        if (fj.phase === 'wander' && Math.hypot(fj.body.x - b.x, fj.body.z - b.z) > SIM_RADIUS) continue; // animal longe e sossegado: não gasta tempo de simulação
         const ev = stepFarejador(fj, vol, { x: b.x, y: b.y, z: b.z }, dt);
         if (ev.hit) { damage(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
         if (ev.phase === 'charge' || (fj.phase === 'charge' && now >= nextScrape)) { nextScrape = now + 520; gameAudio.playScrape(); }
       }
-      view.setFarejadores(session.creatures.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
+      const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
+      view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
     if (playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
     if (bagOpen) paintFurnace();

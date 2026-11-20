@@ -1,5 +1,6 @@
 import { Noise } from '../world/noise';
 import { hash2 } from '../world/random';
+import { biomeAt } from './biomes';
 import { attemptsFor, mulberry32, type OreRule, sampleOreY, veinCells } from './ores';
 import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel';
 
@@ -21,11 +22,13 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v8 (ADR 0066): **abrigos** (2 vãos entre dois pilares de rocha, cada um com uma **placa de carapaça** no chão), fora do território do Farejador; o resto é a v7.
  * v9 (ADR 0070): **veios subterrâneos** (cobre, rocha e gelo enterrados, altura triangular, descarte por exposição ao ar, só substituem a rocha profunda; `ORE_RULES`); os
  * gelos soltos do subsolo da v1–v8 saem; a superfície é idêntica à v8.
+ * v12 (ADR 0074): a Margem é um bioma (`biomes.ts`); a Noz de Duna nasce **só em areia seca** e na proporção de 1 % da areia seca elegível (cerca de 25 plantas por seed), com espaçamento mínimo de 4; ao menos 2
+ * perto da chegada e a enseada da toca continuam. Cada planta tem um Farejador pequeno (`creatureSpecs`) e há um grande a cada 5 plantas. O resto é a v11.
  * v11 (ADR 0073): **brasa de âmbar comum**: 4 depósitos superficiais acessíveis a pé nos 4 × 4 chunks iniciais (cada um com juncos em volta), **veios de âmbar** enterrados de 3 a 8 blocos e ao menos um
  * veio garantido perto da chegada; o resto é a v10.
  * v10 (ADR 0072): **fragmentos à vista**: veios de rocha espalhados pela rocha escura da superfície (mais densos nas camadas altas, Y ≥ 72) e de gelo nas manchas de gelo; o resto é a v9.
  */
-export const GENERATOR_VERSION = 11;
+export const GENERATOR_VERSION = 12;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -95,7 +98,7 @@ export class TitanGenerator {
   private readonly amberKeys = new Map<number, true>();
   private readonly emberKeys = new Set<number>();
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
-  /** v5: plantas de Noz de Duna (célula de ar sobre areia seca, sem colisão como o junco). Vazio antes da v5. */
+  /** v5: plantas de Noz de Duna (célula de ar sobre areia, seca ou úmida — hoje ~86 % em seca —, sem colisão como o junco). Vazio antes da v5. */
   readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }> = [];
   /** v7: afloramentos de rocha com veios de cobre (ADR 0063): montes como as formações, longe da toca; os veios (3 por afloramento) ficam no topo. */
   /** Só `placeCopper` (no construtor) escreve; nunca mude depois. */
@@ -264,7 +267,7 @@ export class TitanGenerator {
   }
 
   /**
-   * Plantas de Noz de Duna (v5): candidatas = coluna de areia **seca** (topo 64–66, fora d'água) alcançável a pé com os 4 vizinhos também alcançáveis, fora da clareira (3), das formações (4),
+   * Plantas de Noz de Duna (v5): candidatas = coluna de areia, **seca ou úmida** (topo 64–66, fora d'água) alcançável a pé com os 4 vizinhos também alcançáveis, fora da clareira (3), das formações (4),
    * da brasa (2) e dos juncos. Em ordem de hash por seed: até 2 plantas "seguras" entre 7 e 16 blocos da chegada (afastadas entre si ≥ 3) e uma enseada de até 4 plantas (afastadas ≥ 2, no raio
    * de 4 do centro) a 26 blocos ou mais da chegada (18 se a região não tiver lugar mais longe). Puro por seed.
    */
@@ -279,6 +282,7 @@ export class TitanGenerator {
       if (this.inClearing(x, z, 3) || reeds.has(key(x, z))) continue;
       const c = this.column(x, z);
       if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 64 || c.top > 66) continue;
+      if (this.version >= 12 && c.surface !== T.SAND) continue; // v12: só areia seca
       if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 4)) continue;
       if (this.emberSites.some((e) => Math.hypot(e.x - x, e.z - z) < 3)) continue;
       if (this.copperSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6) || this.shelterSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6)) continue; // v7/v8: nada em cima dos afloramentos de cobre nem dos abrigos
@@ -302,6 +306,14 @@ export class TitanGenerator {
       den = { x: far.x, y: far.top + 1, z: far.z };
       let n = 0;
       for (const c of cands) { if (n >= 4) break; if (Math.hypot(c.x - far.x, c.z - far.z) <= 4 && take(c, 2)) n++; }
+    }
+    if (this.version >= 12) { // bioma: planta em 1 % da areia seca elegível, espaçadas, longe da chegada, do cobre e dos abrigos (o território dos animais não cobre o minério)
+      const b = biomeAt(a.x, a.z), target = Math.round(b.nutRate * cands.length);
+      for (const c of cands) {
+        if (out.length >= target) break;
+        if (c.d < 18 || this.copperSites.some((s) => Math.hypot(s.x - c.x, s.z - c.z) < 22) || this.shelterSites.some((s) => Math.hypot(s.x - c.x, s.z - c.z) < 18)) continue;
+        take(c, b.nutSpacing);
+      }
     }
     return { plants: out, den };
   }

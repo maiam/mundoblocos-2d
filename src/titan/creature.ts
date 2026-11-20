@@ -1,4 +1,5 @@
 import { hash2 } from '../world/random';
+import { biomeAt } from './biomes';
 import { newBody, stepBody, type Body } from './physics';
 import { isSolid, T } from './voxel';
 import type { TitanVolume } from './volume';
@@ -36,6 +37,8 @@ export const FAREJADOR = {
 export type Phase = 'wander' | 'charge' | 'stunned' | 'return';
 
 export interface Farejador {
+  /** Identidade estável (o ninho): `grande`/`pequeno` nas partidas antigas (v ≤ 11); `g0`, `p3`… no bioma (v12). A volta depois do abate é por id. */
+  id: string;
   kind: Kind;
   body: Body;
   /** Giro do modelo em torno de Y (rad, `rotation.y` do Three.js): o modelo olha para −X com 0. Ver `facingYaw`. */
@@ -65,12 +68,47 @@ export interface Farejador {
 export interface FarejadorEvents { hit: boolean; damage: number; phase: Phase | null; moving: boolean }
 
 /** Cria o animal parado na toca (célula `den`, pés em `den.y`). */
-export function newFarejador(kind: Kind, den: { x: number; y: number; z: number }, seed: number): Farejador {
-  const hx = den.x + 0.5, hz = den.z + 0.5, s = ((seed >>> 0) + (kind === 'grande' ? 7919 : 104729)) >>> 0;
-  return { kind, body: newBody(hx, den.y, hz), yaw: Math.PI / 2, phase: 'wander', t: 0, home: { x: hx, z: hz }, goal: { x: hx, z: hz }, pause: kind === 'grande' ? 1.5 : 0.4, cooldown: 0, stuck: 0, hp: KINDS[kind].hp, aggro: 0, hurt: 99, clock: 0, seed: s };
+export function newFarejador(kind: Kind, den: { x: number; y: number; z: number }, seed: number, id: string = kind): Farejador {
+  const hx = den.x + 0.5, hz = den.z + 0.5, idSalt = id === kind ? 0 : [...id].reduce((a, ch) => (Math.imul(a, 31) + ch.charCodeAt(0)) >>> 0, 7), s = ((seed >>> 0) + (kind === 'grande' ? 7919 : 104729) + idSalt) >>> 0;
+  return { id, kind, body: newBody(hx, den.y, hz), yaw: Math.PI / 2, phase: 'wander', t: 0, home: { x: hx, z: hz }, goal: { x: hx, z: hz }, pause: kind === 'grande' ? 1.5 : 0.4, cooldown: 0, stuck: 0, hp: KINDS[kind].hp, aggro: 0, hurt: 99, clock: 0, seed: s };
 }
 
 /** Os animais de uma toca: um grande e um pequeno. */
+/** O que o gerador diz sobre os animais: quem existe, onde nasce (célula, pés em `y`) e o tipo. A volta depois do abate recria pelo `id`. */
+export interface CreatureSpec { id: string; kind: Kind; x: number; y: number; z: number }
+interface PackSource { version: number; seed: number; arrival: { x: number; z: number }; den: { x: number; y: number; z: number } | null; nutPlants: ReadonlyArray<{ x: number; y: number; z: number }>; column(x: number, z: number): { top: number } }
+
+/**
+ * Animais da seed. Até a v11: um grande e um pequeno na toca. v12 (ADR 0074, bioma): **um pequeno por planta de noz**, a 2–3 células dela, e **um grande a cada `plantsPerGrande` plantas** (o primeiro na toca da
+ * enseada; os outros junto de plantas afastadas ≥ 24 da chegada e ≥ 20 entre si, relaxando até 18 e 10 se faltar lugar). Puro e determinístico.
+ */
+export function creatureSpecs(g: PackSource): CreatureSpec[] {
+  if (g.version < 12) return g.den ? [{ id: 'grande', kind: 'grande', ...g.den }, { id: 'pequeno', kind: 'pequeno', ...g.den }] : [];
+  const biome = biomeAt(g.arrival.x, g.arrival.z), out: CreatureSpec[] = [];
+  const near = (p: { x: number; y: number; z: number }, id: string, kind: Kind, r: number): CreatureSpec => {
+    const k = [...id].reduce((a, ch) => (Math.imul(a, 31) + ch.charCodeAt(0)) >>> 0, 11);
+    for (let i = 0; i < 8; i++) { // primeira direção (a partir de uma sorteada) com chão plano ao lado da planta
+      const ang = ((Math.floor(hash2(g.seed, k, 3) * 8) + i) % 8) * (Math.PI / 4), x = Math.round(p.x + Math.cos(ang) * r), z = Math.round(p.z + Math.sin(ang) * r), top = g.column(x, z).top;
+      if (Math.abs(top - (p.y - 1)) <= 1 && top >= 64) return { id, kind, x, y: top + 1, z };
+    }
+    return { id, kind, x: p.x, y: p.y, z: p.z };
+  };
+  const wanted = Math.max(1, Math.floor(g.nutPlants.length / biome.plantsPerGrande));
+  if (g.den) out.push({ id: 'g0', kind: 'grande', ...g.den });
+  const bigs = g.den ? [g.den] : [];
+  for (const [minArrival, apart] of [[24, 20], [20, 14], [18, 10]]) { // relaxa a distância se a seed não tiver lugar para todos
+    for (let i = 0; i < g.nutPlants.length && bigs.length < wanted; i++) {
+      const p = g.nutPlants[i];
+      if (Math.hypot(p.x - g.arrival.x, p.z - g.arrival.z) < minArrival || bigs.some((o) => Math.hypot(o.x - p.x, o.z - p.z) < apart)) continue;
+      bigs.push(p); out.push(near(p, `g${bigs.length - 1}`, 'grande', 3));
+    }
+  }
+  g.nutPlants.forEach((p, i) => { for (let k = 0; k < biome.pequenoPerPlant; k++) out.push(near(p, k ? `p${i}_${k}` : `p${i}`, 'pequeno', 2)); });
+  return out;
+}
+
+export const newFromSpec = (sp: CreatureSpec, seed: number): Farejador => newFarejador(sp.kind, sp, seed, sp.id);
+
 export const newPack = (den: { x: number; y: number; z: number }, seed: number): Farejador[] => [newFarejador('grande', den, seed), newFarejador('pequeno', den, seed)];
 
 const dist = (ax: number, az: number, bx: number, bz: number): number => Math.hypot(ax - bx, az - bz);
