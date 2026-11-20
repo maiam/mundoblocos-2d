@@ -95,7 +95,7 @@ export class TitanGenerator {
   private readonly amberKeys = new Map<number, true>();
   private readonly emberKeys = new Set<number>();
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
-  /** v5: plantas de Noz de Duna (célula de ar sobre areia seca, sem colisão como o junco). Vazio antes da v5. */
+  /** v5: plantas de Noz de Duna (célula de ar sobre areia, seca ou úmida — hoje ~86 % em seca —, sem colisão como o junco). Vazio antes da v5. */
   readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }> = [];
   /** v7: afloramentos de rocha com veios de cobre (ADR 0063): montes como as formações, longe da toca; os veios (3 por afloramento) ficam no topo. */
   /** Só `placeCopper` (no construtor) escreve; nunca mude depois. */
@@ -264,7 +264,7 @@ export class TitanGenerator {
   }
 
   /**
-   * Plantas de Noz de Duna (v5): candidatas = coluna de areia **seca** (topo 64–66, fora d'água) alcançável a pé com os 4 vizinhos também alcançáveis, fora da clareira (3), das formações (4),
+   * Plantas de Noz de Duna (v5): candidatas = coluna de areia, **seca ou úmida** (topo 64–66, fora d'água) alcançável a pé com os 4 vizinhos também alcançáveis, fora da clareira (3), das formações (4),
    * da brasa (2) e dos juncos. Em ordem de hash por seed: até 2 plantas "seguras" entre 7 e 16 blocos da chegada (afastadas entre si ≥ 3) e uma enseada de até 4 plantas (afastadas ≥ 2, no raio
    * de 4 do centro) a 26 blocos ou mais da chegada (18 se a região não tiver lugar mais longe). Puro por seed.
    */

@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.132.1 — Documentação: onde nasce a Noz de Duna (20/11/2026)
+- ADR 0060 e comentários do gerador diziam "areia seca", mas `nutsFor` aceita areia seca **ou úmida** (topo 64–66). Medido em 21 seeds: ~86 % das plantas em seca e ~14 % em úmida. Só texto; o gerador não mudou.
+
 ## Orvalis v0.132.0 — Titã: golpe procedural da adaga, repetido ao agir (20/11/2026)
 - **Referência do Minecraft do dono do produto** (`ItemInHandRenderer`): o golpe é 100 % procedural, sem keyframes, por um contador normalizado `p` (0 → 1 em **0,3 s**, 6 ticks) e três curvas de seno (`sin1`, `sin2` = ease-out, `sinSq` = giro do pulso). **ADR 0071 (atualização).**
 - `render/heldPose.ts` reescrito (puro): `swingCurves`, `handPose(p, bob, dip)` (a mão cruza para a esquerda, avança, sobe e a lâmina desce 48°; recua e volta), `bobOffset` (balanço ao andar, respiração parada) e a classe `HandAnim` (golpe isolado com afundamento de 0,45 que recupera, golpe **repetido sem pausa enquanto se segura para quebrar**, afundamento menor no ciclo).
