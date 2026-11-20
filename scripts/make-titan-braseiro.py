@@ -1,4 +1,4 @@
-"""Tiles do Braseiro de Rocha (ADR 0065) no atlas de terreno do Titã: 12 = lateral (rocha violeta em blocos), 13 = topo apagado (cuba escura com cinza e brasas mortas), 14 = topo aceso (cuba com a brasa de âmbar
+"""Tiles do Braseiro de Rocha (ADR 0065) no atlas de terreno do Titã: 15 = revestimento de carapaça (ADR 0066, escamas); 12 = lateral (rocha violeta em blocos), 13 = topo apagado (cuba escura com cinza e brasas mortas), 14 = topo aceso (cuba com a brasa de âmbar
 brilhando). O atlas passa de 80 × 60 para 80 × 80 (4 × 4 tiles de 16 px, passo 20, 2 px de borda duplicada; `titan/mesher.ts` lê `ATLAS_H = 80`). Parte do tile 4 (rocha) e do 11 (veio de cobre, sem os veios).
 Conceito: `assets-src/titan/conceito/Braseiro_de_Rocha.png`. Repetível (regrava só os tiles 12–14). WebP SEM perdas. Uso: python3 -I scripts/make-titan-braseiro.py
 """
@@ -64,8 +64,19 @@ def main():
                     q[xx, yy] = (255, 214, 96, 255) if d < 2.5 else (255, 160, 56, 255) if d < 4 else (226, 104, 36, 255)
             q[7, 7] = q[8, 8] = (255, 244, 190, 255)
         put(img, tile, t)
+    # 15: revestimento de carapaça (ADR 0066) — fileiras de placas sobrepostas (escamas) sobre rocha violeta
+    t = base.copy(); q = t.load()
+    for row in range(4):
+        for col in range(4):
+            cx, cy = col * 4 + (2 if row % 2 else 0), row * 4
+            for yy in range(4):
+                for xx in range(5):
+                    px, py = (cx + xx) % TILE, cy + yy
+                    c = (150, 84, 52) if (yy == 3 or xx == 0) else (118, 78, 110)
+                    q[px, py] = (c[0] + rnd.randrange(-8, 9), c[1] + rnd.randrange(-6, 7), c[2] + rnd.randrange(-8, 9), 255)
+    put(img, 15, t)
     img.save(PATH, 'WEBP', lossless=True, method=6)
-    print('tiles 12–14 gravados em', PATH, img.size)
+    print('tiles 12–15 gravados em', PATH, img.size)
 
 
 if __name__ == '__main__':

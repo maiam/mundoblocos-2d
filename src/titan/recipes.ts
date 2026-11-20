@@ -23,6 +23,7 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'laje', name: 'Laje de Rocha', group: 'construcao', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }], station: 'workbench' },
   { id: 'picareta-rocha', name: 'Picareta de Rocha', group: 'ferramentas', result: { item: Item.STONE_PICK, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 3 }, { item: Item.DRY_REED, count: 2 }], station: 'workbench' },
   { id: 'braseiro', name: 'Braseiro de Rocha', group: 'utilidades', result: { item: Item.BRAZIER, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }], station: 'workbench' },
+  { id: 'revestimento', name: 'Revestimento de Carapaça', group: 'construcao', result: { item: Item.CARAPACE, count: 2 }, ingredients: [{ item: Item.PLATE, count: 1 }, { item: Item.DARK_ROCK, count: 1 }], station: 'workbench' },
   { id: 'lingote-cobre', name: 'Lingote de Cobre de Duna', group: 'materiais', result: { item: Item.COPPER_INGOT, count: 1 }, ingredients: [{ item: Item.COPPER_SHARD, count: 2 }], station: 'brazier' },
   { id: 'picareta-cobre', name: 'Picareta de Cobre', group: 'ferramentas', result: { item: Item.COPPER_PICK, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 3 }, { item: Item.DRY_REED, count: 2 }], station: 'workbench' },
   { id: 'adaga-rocha', name: 'Adaga de Rocha', group: 'ferramentas', result: { item: Item.STONE_DAGGER, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 1 }, { item: Item.DRY_REED, count: 1 }], station: 'workbench' },

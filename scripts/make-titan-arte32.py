@@ -21,6 +21,7 @@ NEW = {  # id do item -> arte de 32 px
     14: 'Marco_de_Margem_Icone_32px.png', 15: 'Painel_de_Junco_Icone_32px.png', 16: 'Noz_de_Duna_Item_32px.png',
     17: 'Fragmento_de_Cobre_de_Duna_Item_32px.png', 18: 'Lingote_de_Cobre_de_Duna_Item_32px.png', 19: 'Haste_Seca_de_Junco_Item_32px.png', 20: 'Picareta_de_Rocha_Item_32px.png',
     21: 'Braseiro_de_Rocha_Item_32px.png', 22: 'Adaga_de_Rocha_Item_32px.png', 23: 'Picareta_de_Cobre_Item_32px.png', 24: 'Adaga_de_Cobre_Item_32px.png',
+    25: 'Placa_de_Carapaca_Item_32px.png', 26: 'Revestimento_de_Carapaca_Item_32px.png',
 }
 
 

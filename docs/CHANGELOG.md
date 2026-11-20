@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.123.0 — Titã: abrigos, Placa e Revestimento de Carapaça (20/11/2026)
+- **Etapa 3 de 4 do pacote "O que a duna guarda"** (arte e números provisórios). **ADR 0066.**
+- **Gerador v8:** 2 abrigos (vão entre dois pilares de rocha escura) por seed, fora do território do Farejador, cada um com uma **Placa de Carapaça** no chão (item 25, recolhida à mão).
+- **Revestimento de Carapaça** (item 26, bloco 27, tile 15): 1 Placa + 1 Rocha Escura → 2 na Mesa; cubo sólido de rocha.
+- Testes `abrigo.test.ts` (+3; 1.010 no total). Conferido a 740 × 360: abrigo com a placa ao fundo, fileira de revestimento colocada, ícones na hotbar. O tile do revestimento lê como tijolo (provisório).
+
 ## Orvalis v0.122.0 — Titã: Braseiro de Rocha, Lingote de Cobre e ferramentas de cobre (20/11/2026)
 - **Etapa 2 de 4 do pacote "O que a duna guarda"** (números provisórios autorizados). **ADR 0065.**
 - **Braseiro de Rocha** (blocos 25 apagado e 26 aceso; item 21; receita 4 Rochas Escuras na Mesa): a Brasa de Âmbar o acende com 8 preparações (`session.braziers`, `header.braziers` opcional); só o aceso é estação (Usar/F), mostra só as receitas dele e apaga ao zerar as cargas.
