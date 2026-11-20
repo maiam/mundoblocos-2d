@@ -22,6 +22,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Fragmentos à vista (v0.129.0, ADR 0072):** balanço das densidades (12 %/6 %) e do rendimento por veio; incluir os novos veios em `veinCells()` se algum teste de alcance precisar.
 
+**Bioma e animais por planta (v0.133.0, ADR 0074):** balanço (1 % de plantas, 1 pequeno por planta, 1 grande a cada 5, dano e volta); decidir se as 2 plantas perto da chegada ficam sem guardião; aceite em aparelho do custo de ~8 rigs; mais biomas além da Margem.
+
 **Golpe da adaga (v0.132.0, ADR 0071):** aceite em aparelho (amplitudes ajustadas só a 740 × 360); sincronizar o dano/rachadura e o som ao ponto de corte do ciclo (hoje o dano é no toque e o ciclo é só visual); tranco de câmera e rastro opcionais; golpe em terceira pessoa (sem corpo do jogador ainda).
 
 **Adaga na mão (v0.128.0, ADR 0071):** validar escala/posição em aparelho; golpe também ao quebrar bloco; modelos da adaga de cobre e das picaretas (trocar o `if (item !== 22)` de `setHeld` por um mapa item → URL); adaga solta no chão como modelo.

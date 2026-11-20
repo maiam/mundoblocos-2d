@@ -4,11 +4,11 @@ import { creatureAim, hitSphere, hurtFarejador, KINDS, stepFarejador } from './c
 import { COOK_TIME_S, newFurnace, tickFurnace } from './furnace';
 import { foodOf, Item } from './items';
 import { MemoryTitanStorage } from './save';
-import { flush, openSession } from './session';
+import { flush, generatorFor, openSession } from './session';
 
 async function open() {
   const st = new MemoryTitanStorage();
-  const s = await openSession(st, 42, () => 1);
+  const s = await openSession(st, 42, () => 1, generatorFor, 11);
   return { st, s };
 }
 const slotOf = (s: { inventory: { get(i: number): { item: number } | null } }, item: number): number => Array.from({ length: 9 }, (_, i) => i).find((i) => s.inventory.get(i)?.item === item)!;
