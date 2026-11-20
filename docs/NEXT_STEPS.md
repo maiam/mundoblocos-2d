@@ -16,6 +16,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 **Braseiro e ferramentas de cobre (v0.122.0, ADR 0065, etapa 2 de 4):** aceite em aparelho; luz do braseiro aceso e partículas; modelo 3D; as adagas só ganham função no combate (etapa 4); calibrar 10 s / 80 s e os fatores 0,6/0,4.
 **Abrigos e carapaça (v0.123.0, ADR 0066, etapa 3 de 4):** aceite em aparelho; tile final do revestimento (hoje parece tijolo, deveria ser escamas), meia altura ou modelo 3D, sprite da placa no chão; etapa 4 entregue (v0.126.0, ADR 0069).
 **Durabilidade (v0.124.0, ADR 0067):** aceite em aparelho (barra legível a 32 px, rótulo); calibrar 131/190; decidir reparo (juntar duas iguais); o combate da etapa 4 desgasta a adaga com `wearHeldTool(s, { type: 'attack' })`.
+**Veios subterrâneos (v0.127.0, ADR 0070):** balanço de raridade/tamanho das `ORE_RULES`; novos minérios; subsolo escuro e cavernas (hoje sem ar enterrado); aceite em aparelho.
+
 **Combate com o Farejador e carne (v0.126.0, ADR 0069):** balanço dos números (vida, dano, espólio, 600 s de volta); animação/efeito de morte e som próprio; aceite em aparelho do toque curto e da mira a 360 px; trocar ícones/arte provisórios.
 
 **Braseiro como fornalha (v0.125.0, ADR 0068):** aceite em aparelho do painel (entrada/combustível/saída a 360 px de altura) e do fluxo tocar-na-pilha → tocar-no-espaço; luz e partículas do braseiro aceso; Baú de Rocha (27 espaços) reaproveitando o mesmo padrão de bloco com estado; (a carne assada já entrou, v0.126.0).
