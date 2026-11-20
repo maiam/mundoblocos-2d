@@ -12,3 +12,10 @@
 ## Consequências
 - Itens 1–4, 7, 9–13 ainda em 16 px ampliado: próximas rodadas de arte. Os arquivos de 16 px do junco e do item antigo (`titan-reed-16px.webp`, atlas de 16 px) deixam de ser importados.
 - Desktop/tablet: slots de 72 px (hotbar de ~700 px); conferido a 740 × 360, 1024 × 768 e 1280 × 720, sem estouro do painel.
+
+## Extensão (v0.113.0): conjunto completo de ícones de 32 px
+Pacotes do dono do produto (`Tita_Blocos_32px.zip`, `Tita_Materiais_32px.zip`): sprites de 32 × 32 px para **areia ocre (1), areia úmida (2), rocha escura (3), gelo fosco (4), mesa (9), lente de gelo (10), brasa de âmbar (11), junco de vidro (12) e laje (13)**, somando-se aos fragmentos (5, 6) e à lanterna (8).
+- Blocos, laje e mesa em **vista 3/4** (projeção ortográfica a 45° e 30°; a mesa orientada para mostrar o arco e a marca do tampo); lente, brasa e junco são sprites planos. Os sprites ficam em `assets-src/titan/arte32/` e `make-titan-arte32.py` (tabela `NEW`) monta o atlas de 128 × 128.
+- Só a **cápsula (7)**, legada, continua com a arte de 16 px ampliada 2×. O atlas dedicado de blocos de 128 × 64 do pacote (ordem própria) **não** é usado: o mapeamento é explícito por id de item.
+- Substitui o piloto de ícones 3/4 de 16 px, que nunca foi integrado. Conferido a 740 × 360, 1024 × 768 e 1280 × 720 (hotbar, bolsa e receitas).
+

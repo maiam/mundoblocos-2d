@@ -1,9 +1,9 @@
 """Arte de 32 × 32 px do Titã (ADR 0053): atlas de itens e junco com mais definição, a partir do pacote de arte em `assets-src/titan/arte32/`.
 
-Entradas : src/assets/titan-hotbar-sprites-16px.webp (atlas de itens 4 × 4 de 16 px, gerado por make-titan-fabricacao.py; é a base dos itens que ainda não têm arte de 32 px),
-           assets-src/titan/arte32/fragmento_de_rocha_32px.png (id 5), fragmento_de_gelo_32px.png (id 6), lanterna_da_margem_32px.png (id 8),
+Entradas : src/assets/titan-hotbar-sprites-16px.webp (atlas de itens 4 × 4 de 16 px, gerado por make-titan-fabricacao.py; só a cápsula legada, id 7, ainda vem dele),
+           assets-src/titan/arte32/*.png: um sprite de 32 × 32 por item (tabela `NEW` abaixo; blocos e mesa em vista 3/4, o resto plano),
            titan-junco-variantes-32px.png (128 × 32, 3 silhuetas + 1 célula vazia).
-Saídas   : src/assets/titan-itens-32px.webp          128 × 128 (grade 4 × 4 de 32 px, índice = id do item − 1): a base ampliada 2× (vizinho mais próximo) e, por cima, as células 5, 6 e 8 em 32 px de verdade
+Saídas   : src/assets/titan-itens-32px.webp          128 × 128 (grade 4 × 4 de 32 px, índice = id do item − 1): todos os itens em 32 px de verdade; a célula 7 (cápsula legada) é a base de 16 px ampliada 2× (vizinho mais próximo)
            src/assets/titan-junco-variantes-32px.webp 128 × 32 (colunas 0–2 = broto baixo, haste bifurcada, tufo aberto; coluna 3 vazia)
 Tudo em WebP SEM perdas (fora do optimize-assets.py). Repetível: lê só a base de 16 px e o pacote, nunca o próprio resultado. Uso: python3 -I scripts/make-titan-arte32.py
 """
@@ -12,7 +12,11 @@ from PIL import Image
 BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
 OUT_ITEMS, OUT_REED = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp'
-NEW = {5: 'fragmento_de_rocha_32px.png', 6: 'fragmento_de_gelo_32px.png', 8: 'lanterna_da_margem_32px.png'}  # id do item -> arte de 32 px
+NEW = {  # id do item -> arte de 32 px
+    1: 'areia_ocre_32px.png', 2: 'areia_umida_32px.png', 3: 'rocha_escura_32px.png', 4: 'gelo_fosco_32px.png',
+    5: 'fragmento_de_rocha_32px.png', 6: 'fragmento_de_gelo_32px.png', 8: 'lanterna_da_margem_32px.png',
+    9: 'mesa_de_trabalho_32px.png', 10: 'Lente_de_Gelo_32px.png', 11: 'Brasa_de_Ambar_32px.png', 12: 'Junco_de_Vidro_Item_32px.png', 13: 'laje_de_rocha_32px.png',
+}
 
 
 def main() -> None:
