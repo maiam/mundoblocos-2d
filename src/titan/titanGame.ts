@@ -2,7 +2,7 @@ import './titan.css';
 import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
-import { COOK_TIME_S, type FurnaceSlot } from './furnace';
+import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
 import { tickFurnaces } from './session';
 import { durabilityHue, durabilityRatio, maxDurability } from './wear';
 import { furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
@@ -205,7 +205,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const fCook = el('div', 'titan-farrow', fGrid);
   const fOut = fSlot(fGrid, 'output', 'Resultado');
   fOut.classList.add('out');
-  const fHint = el('small', 'hint', furnaceBox, 'Toque numa pilha da bolsa e depois em Entrada ou Combustível. A Brasa de Âmbar queima 80 s (8 preparações).');
+  const fHint = el('small', 'hint', furnaceBox, 'Toque numa pilha da bolsa e depois em Entrada ou Combustível. Uma Brasa de Âmbar rende 4 preparações e o Bloco de Âmbar, 36; a carga só gasta ao cozinhar.');
   const benchName = el('b', 'rname', benchBox, '');
   const benchWhy = el('small', 'hint', benchBox, '');
   let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null = null;
@@ -384,7 +384,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     paint(fIn, f.input); paint(fFuel, f.fuel); paint(fOut, f.output);
     fFlame.style.setProperty('--p', String(f.burnTotal > 0 ? f.burnLeft / f.burnTotal : 0));
     fCook.style.setProperty('--p', String(f.cook / COOK_TIME_S));
-    fHint.textContent = f.burnLeft > 0 ? `Aceso: ${Math.ceil(f.burnLeft)} s de fogo` : 'Apagado. Coloque Brasa de Âmbar no combustível e algo para cozinhar.';
+    fHint.textContent = f.burnLeft > 0 ? `Carga: ${prepsLeft(f)} ${prepsLeft(f) === 1 ? 'preparação' : 'preparações'} (${f.fuel ? `mais ${f.fuel.count} no combustível` : 'sem combustível reserva'})` : f.fuel ? 'Sem carga acesa: ao cozinhar, uma unidade do combustível é gasta.' : 'Sem carga. Coloque Brasa de Âmbar no combustível e algo para cozinhar.';
   }
   function stationInReach(): boolean {
     if (!stationAt) return false;
@@ -636,7 +636,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const gesture = new InteractionGesture({
     totalMs: (t) => { // com picareta na mão a rocha cede mais depressa e o veio de cobre se quebra (ADR 0063)
       const ms = breakTotalMs(t.kind, t.block, isPick(session.inventory.get(session.selected)?.item));
-      if (ms === null && t.kind === 'block' && t.block === T.VEIN_COPPER) notice('Só pó nos dedos. Falta uma picareta.');
+      if (ms === null && t.kind === 'block' && (t.block === T.VEIN_COPPER || t.block === T.EMBER_VEIN)) notice('Só pó nos dedos. Falta uma picareta.');
       return ms;
     },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save

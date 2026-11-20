@@ -21,9 +21,11 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v8 (ADR 0066): **abrigos** (2 vãos entre dois pilares de rocha, cada um com uma **placa de carapaça** no chão), fora do território do Farejador; o resto é a v7.
  * v9 (ADR 0070): **veios subterrâneos** (cobre, rocha e gelo enterrados, altura triangular, descarte por exposição ao ar, só substituem a rocha profunda; `ORE_RULES`); os
  * gelos soltos do subsolo da v1–v8 saem; a superfície é idêntica à v8.
+ * v11 (ADR 0073): **brasa de âmbar comum**: 4 depósitos superficiais acessíveis a pé nos 4 × 4 chunks iniciais (cada um com juncos em volta), **veios de âmbar** enterrados de 3 a 8 blocos e ao menos um
+ * veio garantido perto da chegada; o resto é a v10.
  * v10 (ADR 0072): **fragmentos à vista**: veios de rocha espalhados pela rocha escura da superfície (mais densos nas camadas altas, Y ≥ 72) e de gelo nas manchas de gelo; o resto é a v9.
  */
-export const GENERATOR_VERSION = 10;
+export const GENERATOR_VERSION = 11;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -47,14 +49,18 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16, mina: 17, fragmentos: 18 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16, mina: 17, fragmentos: 18, ambar: 19 } as const;
 
 /** Regras dos veios subterrâneos (v9). Faixas escaladas do Minecraft para um mundo de superfície em Y ≈ 64 e fundo em Y −64. */
 export const ORE_RULES: readonly OreRule[] = [
   { blockId: T.VEIN_COPPER, veinsPerChunk: 3, veinSize: 6, minY: -48, maxY: 48, peakY: 8, airDiscardChance: 0.5 },
   { blockId: T.VEIN_ROCK, veinsPerChunk: 5, veinSize: 5, minY: -60, maxY: 56, airDiscardChance: 0.5 },
   { blockId: T.VEIN_FROST, veinsPerChunk: 3, veinSize: 5, minY: -44, maxY: 8, peakY: -24, airDiscardChance: 0 },
+  // v11 (ADR 0073): veio de âmbar de 3 a 8 blocos, mais fundo que a rocha e o cobre (pico em Y −10)
+  { blockId: T.EMBER_VEIN, veinsPerChunk: 2, veinSize: 3, veinSizeMax: 8, minY: -48, maxY: 30, peakY: -10, airDiscardChance: 0.3 },
 ];
+/** Regras de veio da versão: a v9 e a v10 têm as três primeiras; o âmbar entra na v11. */
+const oreRulesFor = (version: number): readonly OreRule[] => (version >= 11 ? ORE_RULES : ORE_RULES.slice(0, 3));
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
 
@@ -82,6 +88,12 @@ export class TitanGenerator {
   private readonly copper = new Set<number>();
   /** v4: o depósito de brasa (célula do topo da coluna, `blockAt` devolve `T.EMBER` ali) e os juncos de vidro (decoração sem colisão, célula de ar sobre areia úmida). Nulo/vazio antes da v4. */
   readonly emberSite: { x: number; y: number; z: number } | null = null;
+  /** v11 (ADR 0073): os 4 depósitos de brasa acessíveis a pé (o primeiro é `emberSite`). Antes da v11 só há o primeiro; antes da v4, nenhum. */
+  readonly emberSites: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  /** v11: células do veio de âmbar garantido perto da chegada (a menos de 20 blocos, sob a superfície; alcançável cavando). */
+  amberGuaranteed: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  private readonly amberKeys = new Map<number, true>();
+  private readonly emberKeys = new Set<number>();
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
   /** v5: plantas de Noz de Duna (célula de ar sobre areia seca, sem colisão como o junco). Vazio antes da v5. */
   readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }> = [];
@@ -125,10 +137,14 @@ export class TitanGenerator {
     if (version >= 4) {
       const site = this.planEmber()[0] ?? this.planEmber(false)[0] ?? null; // sem areia úmida alcançável: depósito de reserva em outra coluna livre
       this.emberSite = site ? { x: site.x, y: this.column(site.x, site.z).top, z: site.z } : null;
-      this.reeds = site ? this.reedsFor(site.x, site.z) : [];
+      this.emberSites = version >= 11 ? this.emberSitesFor(site) : this.emberSite ? [this.emberSite] : [];
+      if (version >= 11) this.emberSite = this.emberSites[0] ?? null; // o primeiro depósito dentro dos 4 × 4 chunks iniciais
+      for (const e of this.emberSites) this.emberKeys.add((e.x + 4096) * 8192 + (e.z + 4096));
+      this.reeds = version >= 11 ? this.reedsForSites() : site ? this.reedsFor(site.x, site.z) : [];
     }
     if (version >= 5) { const n = this.nutsFor(); this.nutPlants = n.plants; this.den = n.den; }
     if (version >= 7) this.dryReeds = this.dryReedsFor();
+    if (version >= 11) this.placeAmberGuaranteed();
   }
 
   // ---- v4: brasa de âmbar e junco de vidro ----
@@ -157,6 +173,72 @@ export class TitanGenerator {
     }
     out.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
     return out.map(({ x, z }) => ({ x, z }));
+  }
+
+  /**
+   * v11 (ADR 0073): até 4 depósitos acessíveis a pé nos 4 × 4 chunks iniciais (|x|, |z| ≤ 30), afastados ≥ 12 entre si. O primeiro é o da v4 (`first`); os outros, na ordem fixa de `planEmber`
+   * (areia úmida rasa primeiro, depois qualquer coluna livre), sem repetir a região da planta de noz (que sai depois e já se afasta dos depósitos).
+   */
+  private emberSitesFor(first: { x: number; z: number } | null): Array<{ x: number; y: number; z: number }> {
+    const out: Array<{ x: number; y: number; z: number }> = [];
+    const take = (c: { x: number; z: number }, apart: number): void => {
+      if (out.length >= 4 || out.some((o) => Math.hypot(o.x - c.x, o.z - c.z) < apart)) return;
+      out.push({ x: c.x, y: this.column(c.x, c.z).top, z: c.z });
+    };
+    const inStart = (c: { x: number; z: number }): boolean => Math.abs(c.x) <= 30 && Math.abs(c.z) <= 30;
+    if (first && inStart(first)) take(first, 0); // o da v4, se já estiver nos chunks iniciais
+    for (const apart of [12, 8, 5]) for (const c of [...this.planEmber(), ...this.planEmber(false)]) if (inStart(c)) take(c, apart);
+    return out;
+  }
+
+  /** Juncos de todos os depósitos (v11): a união dos grupos, sem repetir célula e sem tocar nos 8 vizinhos de nenhum depósito. */
+  private reedsForSites(): Array<{ x: number; y: number; z: number }> {
+    const seen = new Set<number>(), out: Array<{ x: number; y: number; z: number }> = [];
+    for (const e of this.emberSites) for (const r of this.reedsFor(e.x, e.z)) {
+      const k = (r.x + 4096) * 8192 + (r.z + 4096);
+      if (seen.has(k) || this.emberSites.some((o) => Math.abs(r.x - o.x) <= 1 && Math.abs(r.z - o.z) <= 1)) continue;
+      seen.add(k); out.push(r);
+    }
+    // depósito de reserva sem junco por perto (coluna que não é areia úmida rasa): até 3 juncos em volta, em areia alcançável (o junco é a pista para achar a brasa)
+    const reach = this.walkable(), base = derive(this.seed, PURPOSE.junco);
+    for (const e of this.emberSites) {
+      if (out.some((r) => Math.hypot(r.x - e.x, r.z - e.z) <= 5)) continue;
+      const ring: Array<{ x: number; z: number; h: number }> = [];
+      for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) {
+        const x = e.x + dx, z = e.z + dz, k = (x + 4096) * 8192 + (z + 4096), c = Math.max(Math.abs(dx), Math.abs(dz));
+        if (c < 2 || seen.has(k) || !reach.has(k) || !this.inRegion(x, z)) continue;
+        const col = this.column(x, z);
+        if ((col.surface !== T.SAND && col.surface !== T.DAMP_SAND) || this.emberKeys.has(k) || this.copper.has(k)) continue;
+        ring.push({ x, z, h: hash2(base, x * 131 + z, 9) });
+      }
+      ring.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+      for (const c of ring.slice(0, 3)) { seen.add((c.x + 4096) * 8192 + (c.z + 4096)); out.push({ x: c.x, y: this.column(c.x, c.z).top + 1, z: c.z }); }
+    }
+    return out;
+  }
+
+  /**
+   * Veio de âmbar garantido (v11, ADR 0073): o Titã ainda não tem cavernas, então a "primeira caverna acessível" é um veio de 5 a 8 blocos entre 6 e 20 blocos da chegada, 6 a 9 blocos sob a superfície
+   * (alcançável cavando). Escolhe, em ordem fixa por seed, a primeira coluna que dá pelo menos 4 células de rocha profunda.
+   */
+  private placeAmberGuaranteed(): void {
+    const a = this.arrival, base = derive(this.seed, PURPOSE.ambar), cands: Array<{ x: number; z: number; h: number }> = [];
+    for (let dz = -20; dz <= 20; dz++) for (let dx = -20; dx <= 20; dx++) {
+      const x = Math.floor(a.x) + dx, z = Math.floor(a.z) + dz, d = Math.hypot(dx, dz);
+      if (d < 6 || d > 20 || !this.inRegion(x, z) || this.inClearing(x, z, 2)) continue;
+      cands.push({ x, z, h: hash2(base, x * 131 + z, 1) });
+    }
+    cands.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+    const replaceable = (x: number, y: number, z: number): boolean => y > Y_MIN && this.inRegion(x, z) && y < this.column(x, z).top - 3;
+    for (const c of cands) {
+      const top = this.column(c.x, c.z).top, rng = mulberry32((base ^ Math.imul(c.x * 131 + c.z + 1, 0x9e3779b1)) >>> 0);
+      const cells = veinCells(rng, c.x, top - 6 - Math.floor(rng() * 4), c.z, { blockId: T.EMBER_VEIN, veinsPerChunk: 1, veinSize: 8, minY: 0, maxY: 0, airDiscardChance: 0 }, replaceable, () => false);
+      const uniq = [...new Map(cells.map(([x, y, z]) => [`${x},${y},${z}`, { x, y, z }])).values()];
+      if (uniq.length < 4) continue;
+      this.amberGuaranteed = uniq;
+      for (const u of uniq) this.amberKeys.set(((u.x + 4096) * 8192 + (u.z + 4096)) * 512 + (u.y + 64), true);
+      return;
+    }
   }
 
   /** Grupos de junco de vidro: um em volta do depósito (sem os 8 vizinhos, para a passagem e a brasa ficarem livres) e outro afastado, só em areia úmida alcançável. Puro por seed e posição. */
@@ -198,7 +280,7 @@ export class TitanGenerator {
       const c = this.column(x, z);
       if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 64 || c.top > 66) continue;
       if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 4)) continue;
-      if (this.emberSite && Math.hypot(this.emberSite.x - x, this.emberSite.z - z) < 3) continue;
+      if (this.emberSites.some((e) => Math.hypot(e.x - x, e.z - z) < 3)) continue;
       if (this.copperSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6) || this.shelterSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6)) continue; // v7/v8: nada em cima dos afloramentos de cobre nem dos abrigos
       if (![[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => reach.has(key(x + dx, z + dz)))) continue;
       cands.push({ x, z, top: c.top, h: hash2(base, x * 131 + z, 7), d: Math.hypot(x - a.x, z - a.z) });
@@ -370,7 +452,7 @@ export class TitanGenerator {
       seen.add(k);
       const c = this.column(x, z);
       if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 63 || c.top > 66) continue;
-      if (this.copper.has(k) || (this.emberSite && x === this.emberSite.x && z === this.emberSite.z)) continue;
+      if (this.copper.has(k) || this.emberKeys.has(k)) continue;
       cands.push({ x, z, top: c.top, h: hash2(base, x * 131 + z, 5) });
     }
     cands.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
@@ -573,7 +655,7 @@ export class TitanGenerator {
     const c = this.column(x, z);
     if (y > c.top) return y <= LAKE_LAST_Y ? T.LAKE : T.AIR;
     if (y === c.top) {
-      if (this.emberSite && x === this.emberSite.x && z === this.emberSite.z) return T.EMBER;
+      if (this.emberKeys.has((x + 4096) * 8192 + (z + 4096))) return T.EMBER;
       if (this.copper.size && this.copper.has((x + 4096) * 8192 + (z + 4096))) return T.VEIN_COPPER;
       if (this.veins.size) { const v = this.veins.get((x + 4096) * 8192 + (z + 4096)); if (v) return v === 'rock' ? T.VEIN_ROCK : T.VEIN_FROST; }
       if (this.version >= 10) { const f = this.fragmentAt(x, z, c); if (f) return f; }
@@ -601,7 +683,9 @@ export class TitanGenerator {
       for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) this.genOreChunk(cx + dx, cz + dz);
       this.oreReady.add(rk);
     }
-    return this.ores.get(((x + 4096) * 8192 + (z + 4096)) * 512 + (y + 64))?.id ?? null;
+    const k = ((x + 4096) * 8192 + (z + 4096)) * 512 + (y + 64);
+    if (this.amberKeys.has(k)) return T.EMBER_VEIN; // o veio garantido da chegada vale mais que o sorteio
+    return this.ores.get(k)?.id ?? null;
   }
 
   private genOreChunk(cx: number, cz: number): void {
@@ -611,7 +695,7 @@ export class TitanGenerator {
     if (!inRegion(cx * 16 + 8, cz * 16 + 8, this.region) && !inRegion(cx * 16, cz * 16, this.region) && !inRegion(cx * 16 + 15, cz * 16 + 15, this.region)) return;
     const replaceable = (x: number, y: number, z: number): boolean => y > Y_MIN && inRegion(x, z, this.region) && y < this.column(x, z).top - 3;
     const exposed = (x: number, y: number, z: number): boolean => [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([dx, dy, dz]) => y + dy > this.column(x + dx, z + dz).top && y + dy > LAKE_LAST_Y);
-    ORE_RULES.forEach((rule, ri) => {
+    oreRulesFor(this.version).forEach((rule, ri) => {
       const rng = mulberry32((derive(this.seed, PURPOSE.mina) ^ Math.imul(ck + 1, 0x9e3779b1) ^ Math.imul(ri + 1, 0x85ebca6b)) >>> 0);
       const n = attemptsFor(rng, rule.veinsPerChunk);
       for (let k = 0; k < n; k++) {

@@ -21,20 +21,20 @@ export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | bool
   if (kind === 'creature') return null; // animal na mira: o toque curto golpeia, segurar não quebra nada (ADR 0069)
   if (kind === 'lantern' || kind === 'shard') return BREAK_MS.collect;
   const tier: Tier | null = pick === true ? 'rock' : pick || null;
-  if (block === T.VEIN_COPPER) return tier ? Math.round(BREAK_MS.rock * PICK_FACTOR[tier]) : null; // só uma picareta o quebra (ADR 0063)
+  if (block === T.VEIN_COPPER || block === T.EMBER_VEIN) return tier ? Math.round(BREAK_MS.rock * PICK_FACTOR[tier]) : null; // só uma picareta o quebra (ADR 0063)
   const t = baseBreakMs(block);
   return t !== null && tier && ROCK_CLASS.has(block as number) ? Math.round(t * PICK_FACTOR[tier]) : t;
 }
 
 /** Com picareta, os blocos de rocha cedem nesta fração do tempo, por nível (provisório, ADR 0063 e 0065). */
 export const PICK_FACTOR: Readonly<Record<Tier, number>> = { rock: 0.6, copper: 0.4 };
-const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE]);
+const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK]);
 
 function baseBreakMs(block?: number): number | null {
   switch (block) {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
     case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
-    case T.DARK_ROCK: case T.VEIN_ROCK: case T.BRAZIER: case T.BRAZIER_LIT: case T.CARAPACE: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: return BREAK_MS.rock;
+    case T.DARK_ROCK: case T.VEIN_ROCK: case T.BRAZIER: case T.BRAZIER_LIT: case T.CARAPACE: case T.EMBER_BLOCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: return BREAK_MS.rock;
     case T.MARCO: case T.MARCO_90: case T.MARCO_180: case T.MARCO_270: case T.PAINEL: case T.PAINEL_Z: return BREAK_MS.collect; // peças pequenas da margem: recolhidas como a lanterna
     case T.SLAB_DOUBLE: return BREAK_MS.rock; // duas lajes juntas: como o cubo de rocha
     case T.SLAB: case T.SLAB_TOP: return BREAK_MS.slab; // meio bloco de rocha: mais rápida que o cubo

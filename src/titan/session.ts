@@ -2,7 +2,7 @@ import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
 import { type Farejador, type Kind, KINDS, newPack } from './creature';
-import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isLit } from './furnace';
+import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isWorking } from './furnace';
 import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
@@ -123,7 +123,7 @@ export function tickFurnaces(s: TitanSession, dt: number): boolean {
     if (!r.changed) continue;
     any = true; s.metaRev++;
     const [x, y, z] = k.split(',').map(Number);
-    const want = isLit(f) ? T.BRAZIER_LIT : T.BRAZIER, cur = s.volume.get(x, y, z);
+    const want = isWorking(f) ? T.BRAZIER_LIT : T.BRAZIER, cur = s.volume.get(x, y, z);
     if ((cur === T.BRAZIER || cur === T.BRAZIER_LIT) && cur !== want) s.volume.set(x, y, z, want);
   }
   return any;

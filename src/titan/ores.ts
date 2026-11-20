@@ -10,8 +10,9 @@ export interface OreRule {
   blockId: number;
   /** Tentativas de veio por chunk de 16 × 16 (a parte fracionária é sorteada). */
   veinsPerChunk: number;
-  /** Blocos por veio (passos da caminhada; passos fora da rocha não contam). */
+  /** Blocos por veio (passos da caminhada; passos fora da rocha não contam). Com `veinSizeMax`, o tamanho sai sorteado entre `veinSize` e `veinSizeMax`. */
   veinSize: number;
+  veinSizeMax?: number;
   minY: number;
   maxY: number;
   /** Com valor: distribuição triangular com pico nessa altura; sem: uniforme. */
@@ -38,7 +39,8 @@ export function sampleOreY(rng: () => number, rule: OreRule): number {
  */
 export function veinCells(rng: () => number, x: number, y: number, z: number, rule: OreRule, replaceable: (x: number, y: number, z: number) => boolean, exposed: (x: number, y: number, z: number) => boolean): Array<[number, number, number]> {
   const out: Array<[number, number, number]> = [];
-  for (let i = 0; i < rule.veinSize; i++) {
+  const size = rule.veinSizeMax !== undefined ? rule.veinSize + Math.floor(rng() * (rule.veinSizeMax - rule.veinSize + 1)) : rule.veinSize;
+  for (let i = 0; i < size; i++) {
     if (replaceable(x, y, z) && !(exposed(x, y, z) && rng() < rule.airDiscardChance)) out.push([x, y, z]);
     const axis = Math.floor(rng() * 3), dir = rng() < 0.5 ? -1 : 1;
     if (axis === 0) x += dir; else if (axis === 1) y += dir; else z += dir;

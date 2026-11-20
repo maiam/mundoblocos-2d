@@ -29,6 +29,8 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'picareta-cobre', name: 'Picareta de Cobre', group: 'ferramentas', result: { item: Item.COPPER_PICK, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 3 }, { item: Item.DRY_REED, count: 2 }], station: 'workbench' },
   { id: 'adaga-rocha', name: 'Adaga de Rocha', group: 'ferramentas', result: { item: Item.STONE_DAGGER, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 1 }, { item: Item.DRY_REED, count: 1 }], station: 'workbench' },
   { id: 'adaga-cobre', name: 'Adaga de Cobre', group: 'ferramentas', result: { item: Item.COPPER_DAGGER, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 1 }, { item: Item.DRY_REED, count: 1 }], station: 'workbench' },
+  { id: 'ambar-compactado', name: 'Bloco de Âmbar Compactado', group: 'construcao', result: { item: Item.EMBER_BLOCK, count: 1 }, ingredients: [{ item: Item.EMBER, count: 9 }], station: 'workbench' },
+  { id: 'ambar-desmontar', name: 'Desmontar Bloco de Âmbar', group: 'materiais', result: { item: Item.EMBER, count: 9 }, ingredients: [{ item: Item.EMBER_BLOCK, count: 1 }], station: 'workbench' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 
