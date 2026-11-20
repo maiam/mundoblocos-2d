@@ -1,6 +1,7 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
+import { type Farejador, newFarejador } from './creature';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { AFTERNOON, validDay } from './sky';
@@ -36,6 +37,8 @@ export interface TitanSession {
   collectedRev: number;
   /** Plantas de Noz de Duna colhidas: id → segundos de jogo que faltam para rebrotar (ADR 0060). Vai no save (`header.regrow`). */
   regrow: Map<string, number>;
+  /** Farejador de Duna da enseada (ADR 0061): estado só de execução, nasce na toca a cada abertura (não vai no save). Nulo sem toca (gerador antigo ou região sem enseada). */
+  creature: Farejador | null;
   savedStateRev: number;
   /** Lascas soltas por veios quebrados (v3, ADR 0044): recolhidas por proximidade; vão no cabeçalho do save. */
   drops: Map<string, Drop>;
@@ -131,13 +134,16 @@ export async function openSession(storage: TitanStorage, explicitSeed: number | 
   return fresh(new TitanGenerator(seed ?? newSeed(), freshVersion));
 }
 
+/** O Farejador nasce parado na toca, com o passeio derivado da seed. */
+const creatureFor = (gen: TitanGenerator): Farejador | null => (gen.den ? newFarejador(gen.den, gen.seed) : null);
+
 export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
   const collected = new Set<string>();
   const regrow = new Map<string, number>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, creature: creatureFor(gen), savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
   return s;
 }
 
@@ -161,7 +167,7 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const regrow = validRegrow(save.header.regrow);
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, creature: creatureFor(gen), savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);

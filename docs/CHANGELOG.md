@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.118.0 — Titã: Farejador de Duna (20/11/2026)
+- **Arte do dono do produto** (Drive: GLB low-poly de 3.538 triângulos, atlas, história "O dono da enseada"). **ADR 0061.**
+- **Toca** no centro da enseada (`TitanGenerator.den`, na v5 ainda não publicada). **Comportamento** (`creature.ts`): fareja perto da toca; a ≤ 9 m raspa a pata (aviso); se o viajante chega a < 5 m, investida curta e uma batida de 2 pontos; volta à toca e fica 4 s sem reagir; recuar a ≥ 11 m acalma; nunca persegue além de 13 m da toca.
+- Desenho em 7 partes com pivô (`extract-titan-farejador.py`, atlas 224 × 36), pose por partes (passo, cabeça, cauda, raspar, galope) e `playScrape`. Sem rig, sem combate, fora do save.
+- Testes `creature.test.ts` (+8; 990 no total). Conferido a 740 × 360: aviso, investida, batida com 1 coração a menos e volta a farejar.
+
 ## Orvalis v0.117.0 — Titã: Noz de Duna, comida e fome ligada (20/11/2026)
 - **Arte e história do dono do produto** (Drive: planta low-poly, atlas de 32 px, "O dono da enseada"). **ADR 0060.**
 - **Gerador v5:** 6 plantas por seed (2 perto da chegada, enseada de até 4 afastada); terreno, brasa e juncos como na v4 (`GENERATOR_VERSION` 5).

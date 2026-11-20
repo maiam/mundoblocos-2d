@@ -41,6 +41,8 @@ import margemAtlas from '../../assets/titan-margem-atlas.webp';
 import nozPlantaModel from '../../assets/titan-noz-planta.json';
 import nozFrutosModel from '../../assets/titan-noz-frutos.json';
 import nozAtlas from '../../assets/titan-noz-atlas.webp';
+import farejadorModel from '../../assets/titan-farejador.json';
+import farejadorAtlas from '../../assets/titan-farejador-atlas.webp';
 import hudAtlas from '../../assets/titan-hud-32px.webp';
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
@@ -71,6 +73,10 @@ export const titanMargemAtlasUrl: string = margemAtlas;
 export const titanNozPlantaModel = nozPlantaModel as ModelData;
 export const titanNozFrutosModel = nozFrutosModel as ModelData;
 export const titanNozAtlasUrl: string = nozAtlas;
+/** Farejador de Duna (3.538 triângulos, ADR 0061; `scripts/extract-titan-farejador.py`): 7 partes (tronco, cabeça, cauda, 4 patas), cada uma com `pivot` e geometria relativa ao pivô; atlas de 224 × 36 px. Voltado para −X. */
+export interface PartData extends ModelData { pivot: number[] }
+export const titanFarejadorModel = farejadorModel as { size: number[]; parts: Record<'tronco' | 'cabeca' | 'cauda' | 'pata_dd' | 'pata_de' | 'pata_td' | 'pata_te', PartData> };
+export const titanFarejadorAtlasUrl: string = farejadorAtlas;
 export interface ModelData { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] }
 /** HUD de ar, vida e fome (ADR 0059): atlas de 96 × 96 px, 3 linhas (ar, vida, fome) × 3 colunas (cheio, parcial, vazio) de 32 × 32 px. */
 export const titanHudUrl: string = hudAtlas;

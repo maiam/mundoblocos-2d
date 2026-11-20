@@ -37,6 +37,7 @@
 | 0058 | **Aceita** — Titã: Marco de Margem e Painel de Junco (modelos 3D low-poly, receitas na Mesa, giro/eixo no id do bloco, painel sólido de 0,944 m que deixa a luz passar) | [adr/0058](adr/0058-titan-marco-de-margem-e-painel-de-junco.md) |
 | 0059 | **Aceita** — Titã: vida, ar e fome (`titan/vitals.ts`, fome pronta (ligada na ADR 0060), morte solta pilhas e renasce na chegada, HUD em atlas de 32 px) |
 | 0060 | **Aceita** — Titã: Noz de Duna (gerador v5 com 6 plantas, colheita de 4 e rebrote de 5 min, comer por toque/Q), fome ligada sem inanição letal |
+| 0061 | **Aceita** — Titã: Farejador de Duna (toca no gerador v5, fases farejar/aviso/investida/volta, 7 partes com pivô, 1 batida de 2 pontos por investida) |
 | 0057 | **Aceita** — Titã: Lago Escuro V2 (atlas próprio de 32 px) e visual submerso por uniforms/cores, sem remalhar | [adr/0057](adr/0057-titan-lago-escuro-v2-e-visual-submerso.md) |
 | 0056 | **Aceita** — Titã: Laje de Rocha inferior, superior e dupla (ids no bloco, colocação por face e altura, física pela faixa da célula) | [adr/0056](adr/0056-titan-lajes-superior-e-dupla.md) |
 | 0055 | **Aceita** — Titã: salto automático em degrau de 1 bloco e quebra contínua ao arrastar a mira segurando (altera em parte a ADR 0042) | [adr/0055](adr/0055-titan-salto-automatico-e-quebra-continua.md) |

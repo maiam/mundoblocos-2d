@@ -14,7 +14,7 @@ import { inRegion, LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel
  * formação **alcançável a pé** desde a chegada (BFS de degraus de 1 bloco) e, se a busca natural falhar, um **afloramento de reserva** garante as duas fontes.
  * O terreno fora das formações segue idêntico nas três versões.
  * v4 (ADR 0045): o depósito de **brasa de âmbar** (`T.EMBER`, no topo de uma coluna de areia úmida alcançável a pé) e os grupos de **junco de vidro** em volta dele; tudo o mais é igual à v3.
- * v5 (ADR 0060): as **plantas de Noz de Duna** (comida): 2 perto da chegada, em terreno seco e alcançável, e um grupo de até 4 numa enseada afastada; terreno, brasa e juncos idênticos à v4.
+ * v5 (ADR 0060, 0061): as **plantas de Noz de Duna** (comida): 2 perto da chegada, em terreno seco e alcançável, e um grupo de até 4 numa enseada afastada, com a **toca do Farejador de Duna** (`den`) no centro dela; terreno, brasa e juncos idênticos à v4.
  */
 export const GENERATOR_VERSION = 5;
 
@@ -66,6 +66,8 @@ export class TitanGenerator {
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
   /** v5: plantas de Noz de Duna (célula de ar sobre areia seca, sem colisão como o junco). Vazio antes da v5. */
   readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  /** v5: a toca do Farejador de Duna (ADR 0061), no centro da enseada de plantas; null se a região não teve enseada. */
+  readonly den: { x: number; y: number; z: number } | null = null;
   private reachMemo: Set<number> | null = null;
   /** v3: a busca natural não achou as duas formações e o afloramento de reserva entrou (diagnóstico e testes). */
   outcropFallback = false;
@@ -88,7 +90,7 @@ export class TitanGenerator {
       this.emberSite = site ? { x: site.x, y: this.column(site.x, site.z).top, z: site.z } : null;
       this.reeds = site ? this.reedsFor(site.x, site.z) : [];
     }
-    if (version >= 5) this.nutPlants = this.nutsFor();
+    if (version >= 5) { const n = this.nutsFor(); this.nutPlants = n.plants; this.den = n.den; }
   }
 
   // ---- v4: brasa de âmbar e junco de vidro ----
@@ -146,7 +148,7 @@ export class TitanGenerator {
    * da brasa (2) e dos juncos. Em ordem de hash por seed: até 2 plantas "seguras" entre 7 e 16 blocos da chegada (afastadas entre si ≥ 3) e uma enseada de até 4 plantas (afastadas ≥ 2, no raio
    * de 4 do centro) a 26 blocos ou mais da chegada (18 se a região não tiver lugar mais longe). Puro por seed.
    */
-  private nutsFor(): Array<{ x: number; y: number; z: number }> {
+  private nutsFor(): { plants: Array<{ x: number; y: number; z: number }>; den: { x: number; y: number; z: number } | null } {
     const a = this.arrival, reach = this.walkable(), base = derive(this.seed, PURPOSE.noz);
     const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
     const reeds = new Set(this.reeds.map((r) => key(r.x, r.z)));
@@ -172,11 +174,13 @@ export class TitanGenerator {
     let near = 0;
     for (const c of cands) { if (near >= 2) break; if (c.d >= 7 && c.d <= 16 && take(c, 3)) near++; }
     const far = cands.find((c) => c.d >= 26) ?? cands.find((c) => c.d >= 18);
+    let den: { x: number; y: number; z: number } | null = null;
     if (far) {
+      den = { x: far.x, y: far.top + 1, z: far.z };
       let n = 0;
       for (const c of cands) { if (n >= 4) break; if (Math.hypot(c.x - far.x, c.z - far.z) <= 4 && take(c, 2)) n++; }
     }
-    return out;
+    return { plants: out, den };
   }
 
   // ---- v3: alcance a pé e veios ----

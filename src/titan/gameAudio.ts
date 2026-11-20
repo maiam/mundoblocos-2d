@@ -178,6 +178,15 @@ export class GameSoundSynthesizer {
     });
   }
 
+  /** Raspar de pata na areia (Farejador de Duna em aviso, ADR 0061): ruído áspero curto e grave. */
+  playScrape(): void {
+    this.safe((now) => {
+      const j = 0.9 + Math.random() * 0.2;
+      this.burst(now, 0.16, 1500 * j, 0.7, 0.2, 'bandpass', 0.02);
+      this.burst(now + 0.05, 0.12, 700 * j, 0.9, 0.16, 'lowpass', 0.01);
+    });
+  }
+
   // ---- Passos por superfície ----
   playFootstep(material: SurfaceMaterial = 'rock'): void {
     this.safe((now) => {

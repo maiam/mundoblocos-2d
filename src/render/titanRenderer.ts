@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -62,6 +62,9 @@ export class TitanRenderer {
   /** Planta da Noz de Duna (todas as plantas) e as nozes (só as maduras): duas malhas instanciadas do mesmo atlas. */
   private nutPlantMesh!: THREE.InstancedMesh;
   private nutFruitMesh!: THREE.InstancedMesh;
+  /** Farejador de Duna: grupo de partes (tronco, cabeça, cauda, 4 patas), cada uma girando em torno do pivô; invisível sem animal. */
+  private farejador!: THREE.Group;
+  private farejadorParts = {} as Record<string, THREE.Mesh>;
   private readonly timeU = { value: 0 };
   private lanternStructure: THREE.InstancedMesh;
   private lanternCore: THREE.InstancedMesh;
@@ -73,7 +76,7 @@ export class TitanRenderer {
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -190,6 +193,27 @@ export class TitanRenderer {
       this.scene.add(mesh);
       this[key] = mesh;
     }
+
+    // Farejador de Duna (ADR 0061): atlas de 224 × 36 px; uma malha por parte, em torno do pivô de cada uma
+    const ftex = new THREE.Texture(extra.farejadorAtlas);
+    ftex.colorSpace = THREE.SRGBColorSpace;
+    ftex.magFilter = THREE.NearestFilter;
+    ftex.minFilter = THREE.NearestFilter;
+    ftex.generateMipmaps = false;
+    ftex.flipY = false;
+    ftex.needsUpdate = true;
+    const fmat = new THREE.MeshBasicMaterial({ map: ftex, vertexColors: true, fog: true });
+    patchDayLight(fmat, this.ambient);
+    this.farejador = new THREE.Group();
+    this.farejador.visible = false;
+    for (const [name, part] of Object.entries(titanFarejadorModel.parts)) {
+      const mesh = new THREE.Mesh(modelGeometry(part), fmat);
+      mesh.position.set(part.pivot[0], part.pivot[1], part.pivot[2]);
+      mesh.frustumCulled = false;
+      this.farejadorParts[name] = mesh;
+      this.farejador.add(mesh);
+    }
+    this.scene.add(this.farejador);
 
     // junco de vidro: duas faixas cruzadas por planta, balanço leve no shader (uTime), sem colisão (não existe no volume)
     const rtex = new THREE.Texture(extra.reed);
@@ -326,6 +350,17 @@ export class TitanRenderer {
     };
     this.nutPlantMesh = fill(this.nutPlantMesh, list);
     this.nutFruitMesh = fill(this.nutFruitMesh, list.filter((n) => n.ripe));
+  }
+  /** Farejador de Duna: posição dos pés, giro (`rotation.y`) e pose das partes; `null` esconde o animal. */
+  setFarejador(s: { x: number; y: number; z: number; yaw: number; pose: { bob: number; headPitch: number; headYaw: number; tailYaw: number; legs: readonly number[] } } | null): void {
+    this.farejador.visible = !!s;
+    if (!s) return;
+    this.farejador.position.set(s.x, s.y + s.pose.bob, s.z);
+    this.farejador.rotation.y = s.yaw;
+    const p = this.farejadorParts;
+    p.cabeca.rotation.set(0, s.pose.headYaw, s.pose.headPitch);
+    p.cauda.rotation.set(0, s.pose.tailYaw, 0);
+    (['pata_dd', 'pata_de', 'pata_td', 'pata_te'] as const).forEach((k, i) => p[k].rotation.set(0, 0, s.pose.legs[i]));
   }
   /** Plantas e nozes desenhadas (diagnóstico e testes de navegador). */
   get nutPlantCount(): number { return this.nutPlantMesh.count; }
