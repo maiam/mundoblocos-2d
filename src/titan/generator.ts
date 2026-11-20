@@ -14,8 +14,9 @@ import { inRegion, LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel
  * formação **alcançável a pé** desde a chegada (BFS de degraus de 1 bloco) e, se a busca natural falhar, um **afloramento de reserva** garante as duas fontes.
  * O terreno fora das formações segue idêntico nas três versões.
  * v4 (ADR 0045): o depósito de **brasa de âmbar** (`T.EMBER`, no topo de uma coluna de areia úmida alcançável a pé) e os grupos de **junco de vidro** em volta dele; tudo o mais é igual à v3.
+ * v5 (ADR 0060): as **plantas de Noz de Duna** (comida): 2 perto da chegada, em terreno seco e alcançável, e um grupo de até 4 numa enseada afastada; terreno, brasa e juncos idênticos à v4.
  */
-export const GENERATOR_VERSION = 4;
+export const GENERATOR_VERSION = 5;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -39,7 +40,7 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13 } as const;
 
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
@@ -63,6 +64,8 @@ export class TitanGenerator {
   /** v4: o depósito de brasa (célula do topo da coluna, `blockAt` devolve `T.EMBER` ali) e os juncos de vidro (decoração sem colisão, célula de ar sobre areia úmida). Nulo/vazio antes da v4. */
   readonly emberSite: { x: number; y: number; z: number } | null = null;
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  /** v5: plantas de Noz de Duna (célula de ar sobre areia seca, sem colisão como o junco). Vazio antes da v5. */
+  readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }> = [];
   private reachMemo: Set<number> | null = null;
   /** v3: a busca natural não achou as duas formações e o afloramento de reserva entrou (diagnóstico e testes). */
   outcropFallback = false;
@@ -85,6 +88,7 @@ export class TitanGenerator {
       this.emberSite = site ? { x: site.x, y: this.column(site.x, site.z).top, z: site.z } : null;
       this.reeds = site ? this.reedsFor(site.x, site.z) : [];
     }
+    if (version >= 5) this.nutPlants = this.nutsFor();
   }
 
   // ---- v4: brasa de âmbar e junco de vidro ----
@@ -133,6 +137,44 @@ export class TitanGenerator {
         seen.add(k);
         out.push({ x, y: col.top + 1, z });
       }
+    }
+    return out;
+  }
+
+  /**
+   * Plantas de Noz de Duna (v5): candidatas = coluna de areia **seca** (topo 64–66, fora d'água) alcançável a pé com os 4 vizinhos também alcançáveis, fora da clareira (3), das formações (4),
+   * da brasa (2) e dos juncos. Em ordem de hash por seed: até 2 plantas "seguras" entre 7 e 16 blocos da chegada (afastadas entre si ≥ 3) e uma enseada de até 4 plantas (afastadas ≥ 2, no raio
+   * de 4 do centro) a 26 blocos ou mais da chegada (18 se a região não tiver lugar mais longe). Puro por seed.
+   */
+  private nutsFor(): Array<{ x: number; y: number; z: number }> {
+    const a = this.arrival, reach = this.walkable(), base = derive(this.seed, PURPOSE.noz);
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    const reeds = new Set(this.reeds.map((r) => key(r.x, r.z)));
+    const cands: Array<{ x: number; z: number; top: number; h: number; d: number }> = [];
+    for (const k of reach) {
+      const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
+      if (x < REGION_MIN + 4 || x >= REGION_MAX - 4 || z < REGION_MIN + 4 || z >= REGION_MAX - 4) continue;
+      if (this.inClearing(x, z, 3) || reeds.has(key(x, z))) continue;
+      const c = this.column(x, z);
+      if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 64 || c.top > 66) continue;
+      if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 4)) continue;
+      if (this.emberSite && Math.hypot(this.emberSite.x - x, this.emberSite.z - z) < 3) continue;
+      if (![[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => reach.has(key(x + dx, z + dz)))) continue;
+      cands.push({ x, z, top: c.top, h: hash2(base, x * 131 + z, 7), d: Math.hypot(x - a.x, z - a.z) });
+    }
+    cands.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+    const out: Array<{ x: number; y: number; z: number }> = [];
+    const take = (c: { x: number; z: number; top: number }, spacing: number): boolean => {
+      if (out.some((o) => Math.hypot(o.x - c.x, o.z - c.z) < spacing)) return false;
+      out.push({ x: c.x, y: c.top + 1, z: c.z });
+      return true;
+    };
+    let near = 0;
+    for (const c of cands) { if (near >= 2) break; if (c.d >= 7 && c.d <= 16 && take(c, 3)) near++; }
+    const far = cands.find((c) => c.d >= 26) ?? cands.find((c) => c.d >= 18);
+    if (far) {
+      let n = 0;
+      for (const c of cands) { if (n >= 4) break; if (Math.hypot(c.x - far.x, c.z - far.z) <= 4 && take(c, 2)) n++; }
     }
     return out;
   }

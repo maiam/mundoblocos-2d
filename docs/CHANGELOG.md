@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.117.0 — Titã: Noz de Duna, comida e fome ligada (20/11/2026)
+- **Arte e história do dono do produto** (Drive: planta low-poly, atlas de 32 px, "O dono da enseada"). **ADR 0060.**
+- **Gerador v5:** 6 plantas por seed (2 perto da chegada, enseada de até 4 afastada); terreno, brasa e juncos como na v4 (`GENERATOR_VERSION` 5).
+- **Noz de Duna** (item 16): colher rende 4 nozes, a planta fica sem frutos e rebrota em 5 min de jogo (`header.regrow`, sem bump); comer por toque no espaço, Q ou toque no mundo (+4 fome). Ícone provisório (`make-titan-noz-icone.py`).
+- **Fome ligada:** exaustão por andar, pular e quebrar (`EXHAUSTION`), inanição para em 1 ponto (não mata), barra de fome no HUD.
+- Planta 3D (3.008 tris) em duas malhas instanciadas (`extract-titan-noz.py`, `setNuts`). Testes `noz.test.ts` (+7; 982 no total). Conferido a 740 × 360: planta, colheita, comer e barra de fome.
+
 ## Orvalis v0.116.0 — Titã: vida, ar e fome (20/11/2026)
 - **Regras e HUD do dono do produto** (Drive, pranchas Ar/Vida/Fome + modelo `updatePlayerVitals`). **ADR 0059.**
 - `titan/vitals.ts`: vida 0–20, ar 15 s (afogamento 2 pts/s, recarga em 2 s), dano de queda `⌈h − 3⌉`, regra completa de fome (exaustão/saturação/inanição) pronta mas **desligada** (`HUNGER_ENABLED`); regeneração provisória de 1 ponto/1,5 s.

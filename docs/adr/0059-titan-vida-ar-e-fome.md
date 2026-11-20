@@ -1,6 +1,6 @@
 # ADR 0059 — Titã: vida, ar e fome (v0.116.0)
 
-**Status:** Aceita. Contexto: regras e pranchas de HUD (Ar/Vida/Fome) do dono do produto, no modelo do Minecraft.
+**Status:** Aceita (a fome foi ligada na ADR 0060). Contexto: regras e pranchas de HUD (Ar/Vida/Fome) do dono do produto, no modelo do Minecraft.
 
 ## Decisão
 - **Fonte de verdade:** `src/titan/vitals.ts` (puro, sem DOM): `PlayerVitals`, `updatePlayerVitals(v, dt, cabeçaSubmersa, fomeLigada)`, `fallDamage`, `damage`, `revive`, `vitalsToData/FromData`. Vida 0–20 (10 corações), ar 15 s, fome 0–20.

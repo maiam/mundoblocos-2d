@@ -37,6 +37,8 @@ export interface TitanHeader {
   /** v4: adições localizadas feitas numa partida de gerador antigo: o depósito de brasa dado uma vez (a célula; some do mapa se o jogador o quebrar). */
   grants?: { ember?: [number, number, number] };
   /** Vida, fome, saturação e ar (ADR 0059). Ausente (saves antigos) = tudo cheio. */
+  /** Plantas de Noz de Duna colhidas (ADR 0060): id `nut:x,y,z` → segundos de jogo para rebrotar. Ausente = todas maduras. */
+  regrow?: Record<string, number>;
   vitals?: { health: number; hunger: number; saturation: number; air: number };
 }
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */

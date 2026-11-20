@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -9,6 +9,7 @@ import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
+import { nutTurn } from '../titan/nuts';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
 import { T } from '../titan/voxel';
 
@@ -58,6 +59,9 @@ export class TitanRenderer {
   private reedMeshes: THREE.InstancedMesh[] = [];
   private reedGeos: THREE.BufferGeometry[] = [];
   private reedMat!: THREE.MeshBasicMaterial;
+  /** Planta da Noz de Duna (todas as plantas) e as nozes (só as maduras): duas malhas instanciadas do mesmo atlas. */
+  private nutPlantMesh!: THREE.InstancedMesh;
+  private nutFruitMesh!: THREE.InstancedMesh;
   private readonly timeU = { value: 0 };
   private lanternStructure: THREE.InstancedMesh;
   private lanternCore: THREE.InstancedMesh;
@@ -69,7 +73,7 @@ export class TitanRenderer {
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -167,6 +171,24 @@ export class TitanRenderer {
       mesh.frustumCulled = false;
       this.scene.add(mesh);
       this.modelMeshes[kind] = mesh;
+    }
+
+    // Noz de Duna (ADR 0060): atlas de 144 × 36 px; planta e frutos em malhas separadas para a colhida perder só os frutos. Sem brilho de lanterna por instância (decoração baixa).
+    const ntex = new THREE.Texture(extra.nozAtlas);
+    ntex.colorSpace = THREE.SRGBColorSpace;
+    ntex.magFilter = THREE.NearestFilter;
+    ntex.minFilter = THREE.NearestFilter;
+    ntex.generateMipmaps = false;
+    ntex.flipY = false;
+    ntex.needsUpdate = true;
+    const nmat = new THREE.MeshBasicMaterial({ map: ntex, vertexColors: true, fog: true, side: THREE.DoubleSide });
+    patchDayLight(nmat, this.ambient);
+    for (const [model, key] of [[titanNozPlantaModel, 'nutPlantMesh'], [titanNozFrutosModel, 'nutFruitMesh']] as const) {
+      const mesh = new THREE.InstancedMesh(modelGeometry(model), nmat, 8);
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      this.scene.add(mesh);
+      this[key] = mesh;
     }
 
     // junco de vidro: duas faixas cruzadas por planta, balanço leve no shader (uTime), sem colisão (não existe no volume)
@@ -285,6 +307,29 @@ export class TitanRenderer {
       mesh.instanceMatrix.needsUpdate = true;
     });
   }
+
+  /** Plantas de Noz de Duna de pé: a planta sempre, os frutos só nas maduras. Giro fixo pela posição. */
+  setNuts(list: ReadonlyArray<{ x: number; y: number; z: number; ripe: boolean }>): void {
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
+    const fill = (mesh: THREE.InstancedMesh, items: ReadonlyArray<{ x: number; y: number; z: number }>): THREE.InstancedMesh => {
+      if (items.length > mesh.instanceMatrix.count) {
+        const n = new THREE.InstancedMesh(mesh.geometry, mesh.material, Math.max(items.length, mesh.instanceMatrix.count * 2));
+        n.frustumCulled = false;
+        this.scene.remove(mesh);
+        this.scene.add(n);
+        mesh = n;
+      }
+      items.forEach((n, i) => { q.setFromAxisAngle(up, nutTurn(n.x, n.z) * Math.PI * 2); m.compose(p.set(n.x + 0.5, n.y, n.z + 0.5), q, sc); mesh.setMatrixAt(i, m); });
+      mesh.count = items.length;
+      mesh.instanceMatrix.needsUpdate = true;
+      return mesh;
+    };
+    this.nutPlantMesh = fill(this.nutPlantMesh, list);
+    this.nutFruitMesh = fill(this.nutFruitMesh, list.filter((n) => n.ripe));
+  }
+  /** Plantas e nozes desenhadas (diagnóstico e testes de navegador). */
+  get nutPlantCount(): number { return this.nutPlantMesh.count; }
+  get nutFruitCount(): number { return this.nutFruitMesh.count; }
 
   /** Lanternas desenhadas (diagnóstico e testes de navegador). */
   get lanternCount(): number { return this.lanternStructure.count; }

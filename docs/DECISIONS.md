@@ -35,7 +35,8 @@
 | 0047 | **Aceita** — Titã: hotbar de 9 + bolsa 3 × 9, livro de receitas numa tela só (categorias, grade, detalhe Tenho/Preciso) e migração do inventário por seção (save v5) | domains/titan, [ADR 0047](adr/0047-titan-bolsa-hotbar-9-e-livro-de-receitas.md) |
 | 0046 | **Aceita** — Titã: Laje de Rocha (bloco de meia altura): receita 3 rochas → 6 lajes na mesa, física com degrau de 0,5, mira por caixa, laterais de 16 × 8 px | domains/titan, [ADR 0046](adr/0046-titan-laje-de-rocha-meia-altura.md) |
 | 0058 | **Aceita** — Titã: Marco de Margem e Painel de Junco (modelos 3D low-poly, receitas na Mesa, giro/eixo no id do bloco, painel sólido de 0,944 m que deixa a luz passar) | [adr/0058](adr/0058-titan-marco-de-margem-e-painel-de-junco.md) |
-| 0059 | **Aceita** — Titã: vida, ar e fome (`titan/vitals.ts`, fome desligada até haver comida, morte solta pilhas e renasce na chegada, HUD em atlas de 32 px) |
+| 0059 | **Aceita** — Titã: vida, ar e fome (`titan/vitals.ts`, fome pronta (ligada na ADR 0060), morte solta pilhas e renasce na chegada, HUD em atlas de 32 px) |
+| 0060 | **Aceita** — Titã: Noz de Duna (gerador v5 com 6 plantas, colheita de 4 e rebrote de 5 min, comer por toque/Q), fome ligada sem inanição letal |
 | 0057 | **Aceita** — Titã: Lago Escuro V2 (atlas próprio de 32 px) e visual submerso por uniforms/cores, sem remalhar | [adr/0057](adr/0057-titan-lago-escuro-v2-e-visual-submerso.md) |
 | 0056 | **Aceita** — Titã: Laje de Rocha inferior, superior e dupla (ids no bloco, colocação por face e altura, física pela faixa da célula) | [adr/0056](adr/0056-titan-lajes-superior-e-dupla.md) |
 | 0055 | **Aceita** — Titã: salto automático em degrau de 1 bloco e quebra contínua ao arrastar a mira segurando (altera em parte a ADR 0042) | [adr/0055](adr/0055-titan-salto-automatico-e-quebra-continua.md) |
