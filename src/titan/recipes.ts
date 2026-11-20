@@ -10,8 +10,8 @@ import { Item } from './items';
 export type Station = 'personal' | 'workbench';
 export interface Stackable { item: number; count: number }
 /** Grupo do livro de receitas (faixa da esquerda): pelo tipo do item fabricado. */
-export type Group = 'construcao' | 'utilidades' | 'materiais';
-export const GROUP_NAMES: Record<Group, string> = { construcao: 'Construção', utilidades: 'Utilidades', materiais: 'Materiais' };
+export type Group = 'construcao' | 'utilidades' | 'materiais' | 'ferramentas';
+export const GROUP_NAMES: Record<Group, string> = { construcao: 'Construção', utilidades: 'Utilidades', materiais: 'Materiais', ferramentas: 'Ferramentas' };
 export interface Recipe { id: string; name: string; group: Group; result: Stackable; ingredients: readonly Stackable[]; station: Station }
 
 export const RECIPES: readonly Recipe[] = [
@@ -21,6 +21,7 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'marco', name: 'Marco de Margem', group: 'construcao', result: { item: Item.MARCO, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 1 }, { item: Item.GLASS_REED, count: 1 }], station: 'workbench' },
   { id: 'painel', name: 'Painel de Junco', group: 'construcao', result: { item: Item.PAINEL, count: 2 }, ingredients: [{ item: Item.GLASS_REED, count: 2 }, { item: Item.DARK_ROCK, count: 1 }], station: 'workbench' },
   { id: 'laje', name: 'Laje de Rocha', group: 'construcao', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }], station: 'workbench' },
+  { id: 'picareta-rocha', name: 'Picareta de Rocha', group: 'ferramentas', result: { item: Item.STONE_PICK, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 3 }, { item: Item.DRY_REED, count: 2 }], station: 'workbench' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 

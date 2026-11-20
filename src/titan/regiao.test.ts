@@ -52,6 +52,6 @@ describe('região por versão do gerador (ADR 0062)', () => {
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(50, 120, -50)).toBe(T.DARK_ROCK); expect(r.volume.get(-60, 120, 60)).toBe(T.SAND);
-    expect(r.volume.gen.version).toBe(6);
+    expect(r.volume.gen.version).toBe(7);
   });
 });

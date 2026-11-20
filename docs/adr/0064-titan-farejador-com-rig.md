@@ -1,0 +1,13 @@
+# ADR 0064 — Titã: Farejador de Duna com rig e textura 2K (v0.121.0)
+
+**Status:** Aceita. Contexto: o dono do produto enviou ao Drive a retopologia, o UV, o baking, as texturas 2K (Base Color, Normal, ORM) e o **rig** do Farejador (GLB com skin, 27 ossos no Blender, 18 de deformação no GLB). Substitui o modelo de 7 partes rígidas da ADR 0061 (que continua como reserva).
+
+## Decisão
+1. **GLB leve** (`scripts/extract-titan-farejador-rig.py`): as 81 malhas skinadas do pacote viram **uma malha só** (23.768 triângulos, 16.785 vértices; POSITION, NORMAL, TEXCOORD_0, JOINTS_0, WEIGHTS_0) com o esqueleto original (18 ossos) e **um material** com a Base Color reduzida de 2048² para **1024² JPEG**. Normal, ORM e tangentes ficam de fora: o Titã não tem luzes de cena (a luz do dia é um uniform, ADR 0041) e o relevo da textura já vem na cor. `titan-farejador-rig.glb` = 1,2 MB; mesma caixa (1,85 m, pivô no chão, voltado para −X) do modelo antigo, então escala, colisão e investida não mudam.
+2. **Carga em segundo plano** (`render/farejadorRig.ts`, `GLTFLoader` + `SkeletonUtils.clone`): só quando há Farejadores na sessão; até o GLB chegar valem as 7 partes (e se falhar, ficam as 7 partes). `vite.config.ts` ganhou `assetsInclude: ['**/*.glb']` (arquivo separado como as imagens, ADR 0013). Material `MeshBasicMaterial` com `patchDayLight` (luz do dia por uniform, cor de sombreado fixa por face e `glow` zero, como os outros modelos).
+3. **Animação sem clipes**: o pacote traz o rig e uma pose de teste só no Blender, sem animações no GLB, então `RigInstance.apply(pose)` gira os ossos **no espaço do modelo** a partir do repouso (`local = P⁻¹ · R · P · repouso`, independente do roll dos ossos): perna alta balança em Z, o joelho dobra e o pé acompanha quando a perna sobe, pescoço e cabeça dividem o arfar e o giro, a cauda balança em Y crescendo até a ponta. A pose (`farejadorPose`: passo, investida, atordoado) e o giro/rolagem de costas do grupo são os mesmos da ADR 0061.
+4. Verificado no navegador: 18 ossos reconhecidos, pé com ângulo negativo vai para a frente e para cima, cabeça desce com `headPitch` positivo, cauda gira; os dois tamanhos (0,5× e 1,3×) com a textura nova; atordoado de costas.
+
+## Consequências
+- Pendências: o **mapa de normais e o ORM** não são usados (para usá-los, precisaria de luz de cena; avaliar um sombreado barato por normal no shader); animações autorais do Blender (andar, raspar, investir) viram clipes quando existirem; textura de 2K opcional em aparelho forte; sombra no chão e luz de lanterna no animal; descartar o modelo de 7 partes quando o rig for aceito em aparelho.
+- Testes: `farejadorRig.test.ts` (+2: mapeamento dos 18 ossos e conteúdo do GLB leve).

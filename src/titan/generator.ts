@@ -16,8 +16,9 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v4 (ADR 0045): o depósito de **brasa de âmbar** (`T.EMBER`, no topo de uma coluna de areia úmida alcançável a pé) e os grupos de **junco de vidro** em volta dele; tudo o mais é igual à v3.
  * v5 (ADR 0060, 0061): as **plantas de Noz de Duna** (comida): 2 perto da chegada, em terreno seco e alcançável, e um grupo de até 4 numa enseada afastada, com a **toca do Farejador de Duna** (`den`) no centro dela; terreno, brasa e juncos idênticos à v4.
  * v6 (ADR 0062): a região passa a **8 × 8 chunks (128 × 128 blocos)**; o relevo longe do lago deixa de subir em paredões (a subida é gradual e limitada: o mundo além da bacia é uma planície de dunas que sobe devagar até a borda); o resto das regras é o da v5.
+ * v7 (ADR 0063): **afloramentos de cobre** (2 montes de rocha com 3 veios de cobre cada, longe da toca do Farejador) e **hastes secas** de junco no chão; o resto é a v6.
  */
-export const GENERATOR_VERSION = 6;
+export const GENERATOR_VERSION = 7;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -41,7 +42,7 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15 } as const;
 
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
@@ -62,11 +63,19 @@ export class TitanGenerator {
   readonly surfaceItems: ReadonlyArray<{ id: string; item: 5 | 6; x: number; y: number; z: number }>;
   /** v3: veios naturais (3 de rocha e 3 de gelo), por coluna (x, z); o voxel é o topo da coluna. Vazio na v1 e na v2. */
   private readonly veins = new Map<number, 'rock' | 'ice'>();
+  /** v7: colunas (chave x/z) cujo topo é veio de cobre. */
+  private readonly copper = new Set<number>();
   /** v4: o depósito de brasa (célula do topo da coluna, `blockAt` devolve `T.EMBER` ali) e os juncos de vidro (decoração sem colisão, célula de ar sobre areia úmida). Nulo/vazio antes da v4. */
   readonly emberSite: { x: number; y: number; z: number } | null = null;
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
   /** v5: plantas de Noz de Duna (célula de ar sobre areia seca, sem colisão como o junco). Vazio antes da v5. */
   readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  /** v7: afloramentos de rocha com veios de cobre (ADR 0063): montes como as formações, longe da toca; os veios (3 por afloramento) ficam no topo. */
+  /** Só `placeCopper` (no construtor) escreve; nunca mude depois. */
+  copperSites: ReadonlyArray<{ x: number; z: number }> = [];
+  copperCells: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  /** v7: hastes secas de junco, no chão perto dos juncos (id `dry:x,y,z`, item 19), recolhidas à mão (ADR 0063). */
+  readonly dryReeds: ReadonlyArray<{ id: string; item: 19; x: number; y: number; z: number }> = [];
   /** v5: a toca do Farejador de Duna (ADR 0061), no centro da enseada de plantas; null se a região não teve enseada. */
   readonly den: { x: number; y: number; z: number } | null = null;
   private reachMemo: Set<number> | null = null;
@@ -91,6 +100,7 @@ export class TitanGenerator {
     const reach = version >= 3 ? this.walkableFromArrival() : null;
     this.formations = this.placeFormations(reach);
     this.surfaceItems = version >= 3 ? [] : this.placeSurfaceItems();
+    if (version >= 7) this.placeCopper(); // antes de qualquer coluna usada pelas buscas seguintes: os montes entram em `computeColumn`
     if (version >= 3) this.placeVeins();
     if (version >= 4) {
       const site = this.planEmber()[0] ?? this.planEmber(false)[0] ?? null; // sem areia úmida alcançável: depósito de reserva em outra coluna livre
@@ -98,6 +108,7 @@ export class TitanGenerator {
       this.reeds = site ? this.reedsFor(site.x, site.z) : [];
     }
     if (version >= 5) { const n = this.nutsFor(); this.nutPlants = n.plants; this.den = n.den; }
+    if (version >= 7) this.dryReeds = this.dryReedsFor();
   }
 
   // ---- v4: brasa de âmbar e junco de vidro ----
@@ -168,6 +179,7 @@ export class TitanGenerator {
       if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 64 || c.top > 66) continue;
       if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 4)) continue;
       if (this.emberSite && Math.hypot(this.emberSite.x - x, this.emberSite.z - z) < 3) continue;
+      if (this.copperSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6)) continue; // v7: nada em cima dos afloramentos de cobre
       if (![[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => reach.has(key(x + dx, z + dz)))) continue;
       cands.push({ x, z, top: c.top, h: hash2(base, x * 131 + z, 7), d: Math.hypot(x - a.x, z - a.z) });
     }
@@ -180,7 +192,9 @@ export class TitanGenerator {
     };
     let near = 0;
     for (const c of cands) { if (near >= 2) break; if (c.d >= 7 && c.d <= 16 && take(c, 3)) near++; }
-    const far = cands.find((c) => c.d >= 26) ?? cands.find((c) => c.d >= 18);
+    // a enseada (e a toca do Farejador) ficam ≥ 28 blocos dos afloramentos de cobre: o território do animal não cobre o minério (ADR 0063)
+    const apart = (c: { x: number; z: number }): boolean => this.copperSites.every((s) => Math.hypot(s.x - c.x, s.z - c.z) >= 28);
+    const far = cands.find((c) => c.d >= 26 && apart(c)) ?? cands.find((c) => c.d >= 18 && apart(c)) ?? cands.find((c) => c.d >= 26) ?? cands.find((c) => c.d >= 18);
     let den: { x: number; y: number; z: number } | null = null;
     if (far) {
       den = { x: far.x, y: far.top + 1, z: far.z };
@@ -265,6 +279,63 @@ export class TitanGenerator {
   veinCells(): Array<{ kind: 'rock' | 'ice'; x: number; y: number; z: number }> {
     const out: Array<{ kind: 'rock' | 'ice'; x: number; y: number; z: number }> = [];
     for (const [k, kind] of this.veins) { const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096; out.push({ kind, x, y: this.column(x, z).top, z }); }
+    return out;
+  }
+
+  /**
+   * Afloramentos de cobre (v7, ADR 0063): 2 montes de rocha escura em terra seca alcançável a pé (18–55 blocos da chegada, ≥ 10 da costa, relevo plano em volta, longe das formações),
+   * afastados ≥ 20 entre si; cada um com 3 veios de cobre no topo (centro + 2 vizinhas). Ordem de hash por seed; usa só o relevo bruto (as colunas ainda não foram memoizadas).
+   */
+  private placeCopper(): void {
+    const a = this.arrival, base = derive(this.seed, PURPOSE.cobre), reach = this.walkable();
+    const cands: Array<{ x: number; z: number; h: number }> = [];
+    for (const k of reach) {
+      const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
+      if (x < this.region.min + 8 || x >= this.region.max - 8 || z < this.region.min + 8 || z >= this.region.max - 8) continue;
+      const d = Math.hypot(x - a.x, z - a.z), t = this.rawTop(x, z);
+      if (d < 18 || d > 55 || this.lakeField(x, z) > -10 || t < 64 || t > 72) continue;
+      if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 8) || !this.flatAround(x, z)) continue;
+      cands.push({ x, z, h: hash2(base, x * 131 + z, 3) });
+    }
+    cands.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+    const sites: Array<{ x: number; z: number }> = [];
+    for (const c of cands) { if (sites.length >= 2) break; if (sites.every((s) => Math.hypot(s.x - c.x, s.z - c.z) >= 20)) sites.push({ x: c.x, z: c.z }); }
+    this.copperSites = sites;
+    this.cols.clear();
+    const cells: Array<{ x: number; y: number; z: number }> = [];
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    for (const s of sites) {
+      const ring: Array<{ x: number; z: number; h: number }> = [];
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (dx || dz) ring.push({ x: s.x + dx, z: s.z + dz, h: hash2(base, (s.x + dx) * 131 + s.z + dz, 9) });
+      ring.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+      for (const c of [{ x: s.x, z: s.z }, ...ring.slice(0, 2)]) { this.copper.add(key(c.x, c.z)); cells.push({ x: c.x, y: this.column(c.x, c.z).top, z: c.z }); }
+    }
+    this.copperCells = cells;
+  }
+
+  /** Hastes secas (v7): até 8 em colunas de areia perto dos grupos de junco (≤ 7 blocos de um junco), fora das células de junco e de planta, alcançáveis a pé, afastadas ≥ 2 entre si. */
+  private dryReedsFor(): Array<{ id: string; item: 19; x: number; y: number; z: number }> {
+    const reach = this.walkable(), base = derive(this.seed, PURPOSE.haste);
+    const key = (x: number, z: number): number => (x + 4096) * 8192 + (z + 4096);
+    const taken = new Set([...this.reeds, ...this.nutPlants].map((r) => key(r.x, r.z)));
+    const cands: Array<{ x: number; z: number; top: number; h: number }> = [];
+    const seen = new Set<number>();
+    for (const r of this.reeds) for (let dz = -7; dz <= 7; dz++) for (let dx = -7; dx <= 7; dx++) {
+      const x = r.x + dx, z = r.z + dz, k = key(x, z);
+      if (seen.has(k) || taken.has(k) || !reach.has(k) || !this.inRegion(x, z)) continue;
+      seen.add(k);
+      const c = this.column(x, z);
+      if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 63 || c.top > 66) continue;
+      if (this.copper.has(k) || (this.emberSite && x === this.emberSite.x && z === this.emberSite.z)) continue;
+      cands.push({ x, z, top: c.top, h: hash2(base, x * 131 + z, 5) });
+    }
+    cands.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+    const out: Array<{ id: string; item: 19; x: number; y: number; z: number }> = [];
+    for (const c of cands) {
+      if (out.length >= 8) break;
+      if (out.some((o) => Math.hypot(o.x - c.x, o.z - c.z) < 2)) continue;
+      out.push({ id: `dry:${c.x},${c.top + 1},${c.z}`, item: 19, x: c.x, y: c.top + 1, z: c.z });
+    }
     return out;
   }
 
@@ -432,6 +503,10 @@ export class TitanGenerator {
         if (bump > 0) { top = Math.max(top, raw + bump); formation = f.kind; }
       }
     }
+    for (const f of this.copperSites) { // afloramento de cobre (v7): monte de rocha escura como as formações
+      const d = Math.hypot(x - f.x, z - f.z);
+      if (d < 3.2) { const bump = Math.max(0, 3 - Math.floor(d)); if (bump > 0) { top = Math.max(top, raw + bump); formation = 'rock'; } }
+    }
     // materiais de superfície
     let surface: number = T.SAND;
     if (formation === 'rock') surface = T.DARK_ROCK;
@@ -451,6 +526,7 @@ export class TitanGenerator {
     if (y > c.top) return y <= LAKE_LAST_Y ? T.LAKE : T.AIR;
     if (y === c.top) {
       if (this.emberSite && x === this.emberSite.x && z === this.emberSite.z) return T.EMBER;
+      if (this.copper.size && this.copper.has((x + 4096) * 8192 + (z + 4096))) return T.VEIN_COPPER;
       if (this.veins.size) { const v = this.veins.get((x + 4096) * 8192 + (z + 4096)); if (v) return v === 'rock' ? T.VEIN_ROCK : T.VEIN_FROST; }
       return c.surface;
     }

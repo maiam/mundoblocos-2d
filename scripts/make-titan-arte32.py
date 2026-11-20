@@ -19,13 +19,15 @@ NEW = {  # id do item -> arte de 32 px
     5: 'fragmento_de_rocha_32px.png', 6: 'fragmento_de_gelo_32px.png', 8: 'lanterna_da_margem_32px.png',
     9: 'mesa_de_trabalho_32px.png', 10: 'Lente_de_Gelo_32px.png', 11: 'Brasa_de_Ambar_32px.png', 12: 'Junco_de_Vidro_Item_32px.png', 13: 'laje_de_rocha_32px.png',
     14: 'Marco_de_Margem_Icone_32px.png', 15: 'Painel_de_Junco_Icone_32px.png', 16: 'Noz_de_Duna_Item_32px.png',
+    17: 'Fragmento_de_Cobre_de_Duna_Item_32px.png', 18: 'Lingote_de_Cobre_de_Duna_Item_32px.png', 19: 'Haste_Seca_de_Junco_Item_32px.png', 20: 'Picareta_de_Rocha_Item_32px.png',
 }
 
 
 def main() -> None:
     base = Image.open(BASE).convert('RGBA')
     assert base.size == (64, 64), base.size
-    atlas = base.resize((128, 128), Image.NEAREST)  # a base 2×, sem suavização
+    atlas = Image.new('RGBA', (128, 256), (0, 0, 0, 0))  # 4 colunas × 8 linhas de 32 px (32 ids; o CSS lê `4 × 8`)
+    atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')
         assert t.size == (32, 32), (name, t.size)

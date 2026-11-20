@@ -1,7 +1,7 @@
-import { blockOfItem, dropCountOf, foodOf, Item, itemOfBlock } from './items';
+import { blockOfItem, dropCountOf, foodOf, isPick, Item, itemOfBlock } from './items';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
-import { blockSpan, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockSpan, isCopperVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -12,14 +12,16 @@ import { eat, revive } from './vitals';
  */
 export interface ActionResult { ok: boolean; msg?: string }
 const FULL: ActionResult = { ok: false, msg: 'Mochila cheia' };
+/** Fragmentos de cobre que um veio solta (provisório, ADR 0063). */
+export const COPPER_YIELD = 2;
 
 /** Recolhe um fragmento de superfície à mão: 1 lasca = 1 fragmento. Mochila cheia: a lasca fica no lugar. */
 export function collectItem(s: TitanSession, id: string): ActionResult {
   if (id.startsWith('reed:')) return collectReed(s, id);
   if (id.startsWith('nut:')) return collectNut(s, id);
-  const it = s.volume.gen.surfaceItems.find((i) => i.id === id);
+  const it = s.volume.gen.surfaceItems.find((i) => i.id === id) ?? s.volume.gen.dryReeds.find((i) => i.id === id); // lasca legada (v1/v2) ou haste seca (v6)
   if (!it || s.collected.has(id)) return { ok: false };
-  const item = it.item === 5 ? Item.ROCK_SHARD : Item.FROST_SHARD;
+  const item: number = it.item; // 5 = fragmento de rocha, 6 = de gelo, 19 = haste seca (os ids de item do catálogo)
   if (!s.inventory.canAdd(item)) return FULL;
   s.inventory.add(item);
   s.collected.add(id);
@@ -68,6 +70,14 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   if (hit.item) return collectItem(s, hit.item);
   const { x, y, z } = hit;
   if (!s.volume.breakable(x, y, z)) return { ok: false };
+  if (isCopperVein(s.volume.get(x, y, z))) { // veio de cobre (ADR 0063): só com picareta na mão; solta fragmentos no chão, nunca o bloco
+    if (!isPick(s.inventory.get(s.selected)?.item)) return { ok: false, msg: 'Só pó nos dedos. Falta uma picareta.' };
+    const reed0 = s.items.at(x, y + 1, z);
+    if (!s.volume.remove(x, y, z)) return { ok: false };
+    dropShard(s, Item.COPPER_SHARD, x, y, z, COPPER_YIELD);
+    releaseReed(s, reed0, x, y + 1, z);
+    return { ok: true };
+  }
   const reed = s.items.at(x, y + 1, z); // junco que se apoia neste bloco: sem o apoio ele cai como item
   if (s.volume.get(x, y, z) === T.EMBER) {
     // depósito de brasa: rende só a brasa, solta no chão (como a lasca do veio); o minério some e não se recria
@@ -99,10 +109,10 @@ function releaseReed(s: TitanSession, id: string | null, x: number, y: number, z
 }
 
 /** Pousa uma lasca perto do ponto de quebra: na célula do veio, descendo até o primeiro apoio sólido. */
-function dropShard(s: TitanSession, item: number, x: number, y: number, z: number): void {
+function dropShard(s: TitanSession, item: number, x: number, y: number, z: number, count = 1): void {
   const id = `v:${x},${y},${z}`;
   if (s.drops.has(id)) return;
-  s.drops.set(id, { id, item, x, y: restY(s, x, y, z), z });
+  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x, y: restY(s, x, y, z), z });
   s.dropsRev++;
 }
 
