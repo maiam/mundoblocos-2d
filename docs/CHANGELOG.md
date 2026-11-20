@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.116.0 — Titã: vida, ar e fome (20/11/2026)
+- **Regras e HUD do dono do produto** (Drive, pranchas Ar/Vida/Fome + modelo `updatePlayerVitals`). **ADR 0059.**
+- `titan/vitals.ts`: vida 0–20, ar 15 s (afogamento 2 pts/s, recarga em 2 s), dano de queda `⌈h − 3⌉`, regra completa de fome (exaustão/saturação/inanição) pronta mas **desligada** (`HUNGER_ENABLED`); regeneração provisória de 1 ponto/1,5 s.
+- Morte: itens caem em pilhas no ponto e o jogador renasce na chegada (`dieAndRespawn`); `Drop.count`; `TitanHeader.vitals` opcional (sem bump de versão).
+- HUD (corações, bolhas, tremor/véu de dano, som de dano) com atlas `titan-hud-32px.webp`.
+- Testes (`vitals.test.ts`, +8; 975 no total). Conferido a 740 × 360: corações, bolhas, mensagem de morte e pilha deixada no ponto.
+
 ## Orvalis v0.115.0 — Titã: Marco de Margem e Painel de Junco (20/11/2026)
 - **Arte e regras do dono do produto** (Drive, doc 08; GLBs low-poly de 148 e 832 triângulos e ícones de 32 px). **ADR 0058.**
 - **Receitas na Mesa:** 1 fragmento de rocha + 1 junco → 1 Marco; 2 juncos + 1 rocha escura → 2 Painéis. Itens 14 e 15; blocos 18–21 (Marco, giro) e 22–23 (Painel, eixo X ou Z); sem mudar o save.

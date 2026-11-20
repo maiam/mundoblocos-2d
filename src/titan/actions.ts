@@ -1,8 +1,9 @@
 import { blockOfItem, dropCountOf, Item, itemOfBlock } from './items';
 import { resolveSlabPlacement } from './slabs';
 import { blockSpan, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
-import { BODY_HALF, BODY_HEIGHT, canPlaceAt, type Hit } from './physics';
+import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
+import { revive } from './vitals';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -71,7 +72,7 @@ function releaseReed(s: TitanSession, id: string | null, x: number, y: number, z
 }
 
 /** Pousa uma lasca perto do ponto de quebra: na célula do veio, descendo até o primeiro apoio sólido. */
-function dropShard(s: TitanSession, item: 5 | 6 | 11 | 12, x: number, y: number, z: number): void {
+function dropShard(s: TitanSession, item: number, x: number, y: number, z: number): void {
   const id = `v:${x},${y},${z}`;
   if (s.drops.has(id)) return;
   s.drops.set(id, { id, item, x, y: restY(s, x, y, z), z });
@@ -97,9 +98,9 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
     if (ry !== d.y) { s.drops.set(d.id, { ...d, y: ry }); s.dropsRev++; moved = true; }
     const dd = s.drops.get(d.id)!;
     if (Math.hypot(dd.x + 0.5 - px, dd.z + 0.5 - pz) > PICKUP_RADIUS || py > dd.y + 1.5 || py + 1.8 < dd.y) continue;
-    const item = dd.item; // o id do item é o próprio campo (5 = fragmento de rocha, 6 = de gelo, 11 = brasa)
-    if (!s.inventory.canAdd(item)) { full = true; continue; }
-    s.inventory.add(item);
+    const item = dd.item, count = dd.count ?? 1; // o id do item é o próprio campo (5 = fragmento de rocha, 6 = de gelo, 11 = brasa; pilha de morte: qualquer item e `count`)
+    if (!s.inventory.canAdd(item, count)) { full = true; continue; }
+    s.inventory.add(item, count);
     s.drops.delete(dd.id);
     s.dropsRev++;
     collected++;
@@ -136,3 +137,25 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   s.inventory.consume(slot);
   return { ok: true };
 }
+
+/**
+ * Morte (ADR 0059): todos os itens (hotbar, mochila e grades) caem numa pilha por espaço **onde o jogador morreu** (descem até o primeiro apoio; no lago ficam no fundo) e o jogador renasce
+ * na chegada com vida, fome e ar cheios. As pilhas se recolhem por proximidade como as lascas e vão no save (`header.drops`). Devolve quantas pilhas caíram.
+ */
+export function dieAndRespawn(s: TitanSession): number {
+  const x = Math.floor(s.body.x), y = Math.max(Y_MIN + 2, Math.floor(s.body.y)), z = Math.floor(s.body.z);
+  const stacks = s.inventory.takeAll();
+  const ry = restY(s, x, y, z);
+  stacks.forEach((st, n) => {
+    const id = `d:${x},${ry},${z}:${n}`;
+    s.drops.set(id, { id, item: st.item, ...(st.count > 1 ? { count: st.count } : {}), x, y: ry, z });
+  });
+  if (stacks.length) s.dropsRev++;
+  s.selected = Math.min(s.selected, 8);
+  const a = s.volume.gen.arrival;
+  s.body = newBody(a.x, a.y, a.z);
+  s.yaw = a.yaw; s.pitch = -0.12;
+  revive(s.vitals);
+  return stacks.length;
+}
+

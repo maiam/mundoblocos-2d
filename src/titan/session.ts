@@ -1,6 +1,7 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { HOTBAR, Inventory } from './inventory';
-import { Item } from './items';
+import { isItem, Item } from './items';
+import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { AFTERNOON, validDay } from './sky';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
@@ -41,6 +42,8 @@ export interface TitanSession {
   grants: { ember?: [number, number, number] };
   /** Revisão do que não é inventário nem chunk (descobertas e adições). */
   metaRev: number;
+  /** Vida, fome e ar (ADR 0059): gravados junto da posição. */
+  vitals: PlayerVitals;
   /** Fragmentos de superfície ainda no mundo, por célula (para a mira e o desenho). */
   items: ItemLookup & { remaining(): Array<{ id: string; item: number; x: number; y: number; z: number }> };
 }
@@ -77,12 +80,15 @@ function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: Tit
   };
 }
 
-/** Lascas gravadas: só entradas bem formadas (id, item 5/6/11/12 e células inteiras no domínio); o resto é descartado. */
+/** Itens soltos gravados: só entradas bem formadas (id, item conhecido, contagem 1–64 opcional e células inteiras no domínio); o resto é descartado. */
 function validDrops(raw: unknown): Map<string, Drop> {
   const out = new Map<string, Drop>();
   if (!Array.isArray(raw)) return out;
   for (const d of raw as Drop[]) {
-    if (d && typeof d.id === 'string' && (d.item === 5 || d.item === 6 || d.item === 11 || d.item === 12) && [d.x, d.y, d.z].every(Number.isInteger) && d.y > Y_MIN && d.y <= Y_MAX && inRegion(d.x, d.z)) out.set(d.id, { id: d.id, item: d.item, x: d.x, y: d.y, z: d.z });
+    if (!d || typeof d.id !== 'string' || !isItem(d.item) || ![d.x, d.y, d.z].every(Number.isInteger) || !(d.y > Y_MIN && d.y <= Y_MAX) || !inRegion(d.x, d.z)) continue;
+    const count = d.count === undefined ? undefined : Number.isInteger(d.count) && d.count >= 1 && d.count <= 64 ? d.count : null;
+    if (count === null) continue;
+    out.set(d.id, { id: d.id, item: d.item, ...(count && count > 1 ? { count } : {}), x: d.x, y: d.y, z: d.z });
   }
   return out;
 }
@@ -112,7 +118,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const a = gen.arrival;
   const collected = new Set<string>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
   return s;
 }
 
@@ -135,7 +141,7 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -183,7 +189,7 @@ export function standingReeds(s: TitanSession): Array<{ x: number; y: number; z:
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals) };
 }
 
 /**
