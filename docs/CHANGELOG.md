@@ -1,5 +1,18 @@
 # Changelog
 
+## Orvalis v0.125.0 — Titã: Braseiro como fornalha, bloco com estado (20/11/2026)
+- **Regras de interação do dono do produto** (Mesa sem memória; Fornalha/Baú como blocos com estado). **ADR 0068.**
+- O **Braseiro de Rocha** guarda **entrada, combustível e saída** na coordenada do bloco (`session.furnaces`, `header.furnaces` opcional); **cozimento de 10 s**, **Brasa de Âmbar queima 80 s** (8 preparações), o fogo acende consumindo 1 combustível na hora, sem fogo o progresso regride; corre **com a tela aberta ou fechada, só com o jogo ativo**; o bloco acende e apaga sozinho. **Quebrar cospe o conteúdo** no chão.
+- Painel do braseiro (Usar/F): tocar numa pilha da mochila e depois em Entrada/Combustível; tocar no espaço tira. O gesto de colocar encostado continua como era. A Brasa não acende mais por toque; os cartões do lingote saíram do livro (ficam no painel).
+- Testes `furnace.test.ts` (+7; 1.019 no total). Conferido a 740 × 360: painel com os três espaços e as barras, "Aceso: 76 s de fogo", e o fogo e o cozimento seguindo com a tela fechada.
+
+## Orvalis v0.124.0 — Titã: durabilidade das ferramentas (20/11/2026)
+- **Regra do dono do produto** (modelo do Minecraft). **ADR 0067.**
+- `Stack.wear` guarda o desgaste no próprio espaço do inventário; máximos **131** (rocha) e **190** (cobre) em `titan/wear.ts`. Quebrar bloco gasta a ferramenta na mão: **picareta −1, adaga −2** (uso impróprio); o golpe (etapa 4) será adaga −1 e picareta −2; recolher lanterna, Marco e Painel não gasta. Ao chegar no máximo o item **quebra**, some, avisa e toca o estilhaço.
+- Barra de durabilidade na hotbar e na bolsa (verde → vermelho, escondida enquanto intacta) e `restante/máximo` no rótulo; o desgaste vai no save (`[item, count, wear]`, sem subir versão) e acompanha a pilha solta ao morrer.
+- Fora do escopo: Inquebrável, Remendo, Bigorna e reparo; armadura e escudo.
+- Testes `desgaste.test.ts` (+5; 1.015 no total). Conferido a 740 × 360: barras verde, amarela e vermelha, ferramentas intactas sem barra, rótulo "Picareta de Cobre · 95/190".
+
 ## Orvalis v0.123.0 — Titã: abrigos, Placa e Revestimento de Carapaça (20/11/2026)
 - **Etapa 3 de 4 do pacote "O que a duna guarda"** (arte e números provisórios). **ADR 0066.**
 - **Gerador v8:** 2 abrigos (vão entre dois pilares de rocha escura) por seed, fora do território do Farejador, cada um com uma **Placa de Carapaça** no chão (item 25, recolhida à mão).

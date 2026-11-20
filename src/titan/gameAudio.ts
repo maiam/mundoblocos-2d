@@ -187,6 +187,17 @@ export class GameSoundSynthesizer {
     });
   }
 
+  /** Ferramenta quebrou (ADR 0067): estalo seco, estilhaços e um tom que cai. */
+  playToolBreak(): void {
+    this.safe((now) => {
+      const j = 0.94 + Math.random() * 0.12;
+      this.burst(now, 0.05, 3200 * j, 0.9, 0.26, 'highpass', 0.002);
+      this.burst(now + 0.04, 0.16, 2400 * j, 1.2, 0.2, 'bandpass', 0.004);
+      this.burst(now + 0.09, 0.12, 1700 * j, 1.4, 0.14, 'bandpass', 0.004);
+      this.tone(now + 0.02, 520 * j, 150 * j, 0.22, 'triangle', 0.16);
+    });
+  }
+
   // ---- Passos por superfície ----
   playFootstep(material: SurfaceMaterial = 'rock'): void {
     this.safe((now) => {

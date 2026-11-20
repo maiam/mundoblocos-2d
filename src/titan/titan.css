@@ -7,6 +7,9 @@ body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; displa
 .titan-cross { position: absolute; top: 50%; left: 50%; width: 5px; height: 5px; background: #fff3d8; outline: 1px solid #362b20; transform: translate(-50%, -50%); }
 .titan-hotbar { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; background: #171c20ed; border: 1px solid #775438; border-radius: 6px; pointer-events: auto; }
 .titan-slot { position: relative; display: grid; place-items: center; width: var(--slot); height: var(--slot); padding: 0; background-color: #2b2421; border: 1px solid #765943; border-top-color: #9a7352; border-radius: 2px; touch-action: manipulation; cursor: pointer; }
+.titan-dur { position: absolute; left: 12%; right: 12%; bottom: 6%; height: 4px; background: #14110f; border-radius: 1px; pointer-events: none; }
+.titan-dur::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--r, 1) * 100%); background: hsl(var(--h, 120) 70% 48%); border-radius: 1px; }
+.titan-dur[hidden] { display: none; }
 .titan-slot.empty { background-color: #211e1d; border-color: #534438; }
 .titan-slot[aria-pressed='true'] { outline: 2px solid #f2cc93; outline-offset: -2px; background-color: #533e2c; }
 .titan-slot[data-sel='true'] { outline: 2px solid #8ca1bc; outline-offset: -2px; }
@@ -147,3 +150,15 @@ body.titan input { user-select: text; -webkit-user-select: text; }
 .titan-bench { gap: 3px; }
 .titan-bench .rname { color: var(--amber); }
 
+
+/* Braseiro de Rocha como fornalha (ADR 0068): três espaços e duas barras (fogo e cozimento) */
+.titan-furnace { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.titan-frow { display: flex; justify-content: center; align-items: flex-start; }
+.titan-furnace .titan-fcol { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; margin: 0 2px; min-width: 0; }
+.titan-furnace .flabel { color: #cdb89a; font-size: 10px; white-space: nowrap; }
+.titan-furnace .titan-fslot { width: var(--icm); height: var(--icm); }
+.titan-furnace .titan-fslot .titan-icon { width: var(--icm); height: var(--icm); background-size: calc(var(--icm) * 4) calc(var(--icm) * 8); }
+.titan-fbars { display: flex; gap: 10px; width: 100%; padding: 0 8px; box-sizing: border-box; }
+.titan-fbar { position: relative; flex: 1; height: 8px; background: #14110f; border-radius: 2px; overflow: hidden; }
+.titan-fbar::after { content: ''; position: absolute; inset: 0; width: calc(var(--p, 0) * 100%); background: #e08a2e; }
+.titan-fbar.cook::after { background: #d6c27a; }

@@ -37,14 +37,14 @@ export interface TitanHeader {
   /** v4: adições localizadas feitas numa partida de gerador antigo: o depósito de brasa dado uma vez (a célula; some do mapa se o jogador o quebrar). */
   grants?: { ember?: [number, number, number] };
   /** Vida, fome, saturação e ar (ADR 0059). Ausente (saves antigos) = tudo cheio. */
-  /** Braseiros acesos (ADR 0065): `x,y,z` → preparações restantes. Ausente = nenhum aceso. */
-  braziers?: Record<string, number>;
+  /** Braseiros com estado (ADR 0068): `x,y,z` → `{ i, f, o, b, t, c }` (entrada, combustível, saída, fogo restante, fogo total, cozimento). Ausente = nenhum. */
+  furnaces?: Record<string, { i?: [number, number]; f?: [number, number]; o?: [number, number]; b: number; t: number; c: number }>;
   /** Plantas de Noz de Duna colhidas (ADR 0060): id `nut:x,y,z` → segundos de jogo para rebrotar. Ausente = todas maduras. */
   regrow?: Record<string, number>;
   vitals?: { health: number; hunger: number; saturation: number; air: number };
 }
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */
-export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; x: number; y: number; z: number }
+export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; /** Ferramenta desgastada caída na morte (ADR 0067): pontos de desgaste. */ wear?: number; x: number; y: number; z: number }
 import type { InventoryData } from './inventory';
 
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }

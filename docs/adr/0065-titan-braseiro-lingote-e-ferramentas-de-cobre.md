@@ -1,6 +1,6 @@
 # ADR 0065 — Titã: Braseiro de Rocha, Lingote de Cobre, Picareta e Adagas (v0.122.0)
 
-**Status:** Aceita (etapa 2 de 4 do pacote "O que a duna guarda"; números provisórios autorizados pelo dono do produto). Continua a ADR 0063.
+**Status:** Aceita (a parte "acender com a brasa, 8 cargas" foi substituída pela fornalha da ADR 0068; etapa 2 de 4 do pacote "O que a duna guarda"; números provisórios autorizados pelo dono do produto). Continua a ADR 0063.
 
 ## Decisão
 1. **Braseiro de Rocha** = dois blocos (`T.BRAZIER` 25 apagado, `T.BRAZIER_LIT` 26 aceso; `isBrazier`), cubo de rocha com cuba no topo (tiles 12 lateral, 13 topo apagado, 14 topo aceso do atlas de terreno, que passou a 80 × 80; `mesher.ts` lê `ATLAS_H = 80`; `scripts/make-titan-braseiro.py`). Item 21; receita na Mesa: 4 Rochas Escuras. Só o **aceso** é estação.

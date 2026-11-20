@@ -1,4 +1,5 @@
 import { isItem, maxStack } from './items';
+import { maxDurability } from './wear';
 import { matchBench, type Recipe, type Stackable, type Station, stationMet } from './recipes';
 
 /**
@@ -19,8 +20,10 @@ export const BENCH_START = OUTPUT + 1;
 export const BENCH_OUT = BENCH_START + BENCH_SLOTS;
 const isGrid = (i: number): boolean => (i >= CRAFT_START && i < OUTPUT) || (i >= BENCH_START && i < BENCH_OUT);
 
-export interface Stack { item: number; count: number }
-export interface InventoryData { v: 1 | 2 | 3; slots: Array<[number, number] | null>; craft: Array<[number, number] | null>; /** v3: grade 3 × 3 da mesa (ausente nos saves anteriores = vazia). */ bench?: Array<[number, number] | null> }
+/** `wear` = pontos de desgaste da ferramenta (ADR 0067); ausente = intacta. Só ferramentas (pilha de 1) o têm. */
+export interface Stack { item: number; count: number; wear?: number }
+type Packed = [number, number] | [number, number, number];
+export interface InventoryData { v: 1 | 2 | 3; slots: Array<Packed | null>; craft: Array<Packed | null>; /** v3: grade 3 × 3 da mesa (ausente nos saves anteriores = vazia). */ bench?: Array<Packed | null> }
 
 export class Inventory {
   /** hotbar + mochila + grade 2 × 2 + (40 sem uso) + grade 3 × 3 da mesa (índices 0–49). */
@@ -45,7 +48,7 @@ export class Inventory {
   canAdd(item: number, count = 1): boolean { return this.room(item) >= count; }
 
   /** Põe `count` de `item` (completa pilhas da hotbar e da mochila, depois espaços vazios). Tudo ou nada: sem espaço, não muda nada e devolve false. */
-  add(item: number, count = 1): boolean {
+  add(item: number, count = 1, wear = 0): boolean {
     if (!isItem(item) || count < 1 || !this.canAdd(item, count)) return false;
     const m = maxStack(item);
     let left = count;
@@ -54,7 +57,7 @@ export class Inventory {
       if (c && c.item === item && c.count < m) { const t = Math.min(m - c.count, left); c.count += t; left -= t; }
     }
     for (let i = 0; i < SLOTS && left > 0; i++) {
-      if (!this.s[i]) { const t = Math.min(m, left); this.s[i] = { item, count: t }; left -= t; }
+      if (!this.s[i]) { const t = Math.min(m, left); this.s[i] = { item, count: t, ...(wear > 0 && maxDurability(item) !== null ? { wear } : {}) }; left -= t; }
     }
     this.rev++;
     return true;
@@ -66,6 +69,20 @@ export class Inventory {
     for (let i = 0; i < BENCH_OUT; i++) { const c = this.s[i]; if (i === OUTPUT || !c) continue; out.push({ ...c }); this.s[i] = null; }
     if (out.length) this.rev++;
     return out;
+  }
+
+  /**
+   * Desgasta a ferramenta do espaço (ADR 0067): soma `points` ao contador; ao chegar em `maxDurability` o item **quebra** e o espaço fica vazio. Devolve se quebrou e quanto resta
+   * (`null` se o espaço não tem ferramenta desgastável ou `points` ≤ 0: nada muda).
+   */
+  damage(slot: number, points: number): { broken: boolean; left: number } | null {
+    const c = this.s[slot], max = c ? maxDurability(c.item) : null;
+    if (!c || max === null || points <= 0) return null;
+    const wear = Math.min(max, (c.wear ?? 0) + points);
+    this.rev++;
+    if (wear >= max) { this.s[slot] = null; return { broken: true, left: 0 }; }
+    c.wear = wear;
+    return { broken: false, left: max - wear };
   }
 
   /** Gasta 1 do espaço (colocar bloco/lanterna). */
@@ -208,7 +225,7 @@ export class Inventory {
 
   // ---- Save ----
   toData(): InventoryData {
-    const pack = (c: Stack | null): [number, number] | null => (c ? [c.item, c.count] : null);
+    const pack = (c: Stack | null): Packed | null => (c ? (c.wear ? [c.item, c.count, c.wear] : [c.item, c.count]) : null);
     const bench = this.s.slice(BENCH_START, BENCH_OUT).map(pack);
     return { v: 3, slots: this.s.slice(0, SLOTS).map(pack), craft: this.s.slice(SLOTS, SLOTS + CRAFT_SLOTS).map(pack), ...(bench.some(Boolean) ? { bench } : {}) };
   }
@@ -220,8 +237,11 @@ export class Inventory {
     const read = (arr: unknown, n: number, off: number): void => {
       if (!Array.isArray(arr)) return;
       for (let i = 0; i < n && i < arr.length; i++) {
-        const e = arr[i] as [number, number] | null;
-        if (Array.isArray(e) && isItem(e[0]) && Number.isInteger(e[1]) && e[1] >= 1 && e[1] <= maxStack(e[0])) inv.s[off + i] = { item: e[0], count: e[1] };
+        const e = arr[i] as Packed | null;
+        if (Array.isArray(e) && isItem(e[0]) && Number.isInteger(e[1]) && e[1] >= 1 && e[1] <= maxStack(e[0])) {
+          const max = maxDurability(e[0]), w = e[2];
+          inv.s[off + i] = { item: e[0], count: e[1], ...(max !== null && Number.isInteger(w) && (w as number) >= 1 && (w as number) < max ? { wear: w as number } : {}) }; // desgaste só em ferramenta e dentro do limite
+        }
       }
     };
     if (o?.v === 1) {
