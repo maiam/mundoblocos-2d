@@ -124,3 +124,12 @@ Nota do dono do produto, **referência**, não decisão. Serve de critério ao a
 - **Técnicas de arte em 16 × 16 ou 32 × 32:** (1) contorno colorido (versão bem escura da cor do material), nunca preto puro, que engole 2 px; (2) sub-pixeling: 1 px de cor intermediária na quina interna de diagonais e curvas; (3) realce de 1 px nas quinas superiores esquerdas (luz de cima/esquerda); (4) aproveitar a diagonal (≈ 22,6 px contra 16): lascas, gravetos e ferramentas desenhados a 45°.
 - **Consistência com o projeto:** a luz fixa dos ícones de bloco é 100% topo, 80% esquerda e 60% direita (doc 03 do Drive); a produção dos ícones é offline (sem `toDataURL`, regra do `CLAUDE.md`).
 
+## Referência: aparência submersa do Minecraft (nota do dono do produto, 20/11/2026)
+**Referência**, não decisão; a aparência do Titã já está na ADR 0057 (`titan/underwater.ts`, `TitanRenderer.applyUnderwater`). Comparação:
+- **Trocar a névoa ao cruzar `eyeY` para dentro d'água, mais curta e colorida, com adaptação visual:** o Titã já faz (olhos em `T.LAKE` abaixo de Y = 64; `near` 1 e `far` de 8 a 14 blocos em 2 s). O Minecraft adapta em ~15 s (de 15–20 para 40–60 blocos). Se a leitura do fundo pedir, é só aumentar `UNDERWATER_ADAPT_SECONDS` e `UNDERWATER_FAR_ADAPTED`.
+- **Cor:** o Minecraft tinge pelo bioma (azul). O Lago Escuro é um mar de metano e etano: **carvão-violeta** (`#2B2742`), por decisão de arte (docs 03 e 08), não o azul `#1A4D7C` do exemplo.
+- **Overlay 2D:** mesma ideia (véu de tela, vinheta nas bordas, transição curta); o Titã usa um gradiente radial carvão-violeta (`.titan-veil`).
+- **Como aplicar:** o exemplo recria `scene.fog` e `scene.background` a cada quadro (`new FogExp2`). No Titã isso fica proibido: altera-se `color`/`near`/`far` da névoa existente (sem recriar objetos nem trocar o shader) e nada remalha ao entrar e sair.
+- **Luz:** o Minecraft propaga a luz do céu **por coluna** (−1 por bloco de água sobre cada ponto: o fundo raso fica claro mesmo visto do fundo fundo). O Titã atenua a luz ambiente pela **profundidade da câmera** (`max(0,18, exp(−0,18 d))`), uma simplificação; a atenuação por coluna (luz de céu por voxel) é melhoria futura, anotada no doc 04 do Drive.
+- **Superfície por baixo e faces internas:** já feito (a malha do líquido não desenha faces entre voxels líquidos; a face de cima é dupla).
+
