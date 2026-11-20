@@ -43,6 +43,7 @@ import nozFrutosModel from '../../assets/titan-noz-frutos.json';
 import nozAtlas from '../../assets/titan-noz-atlas.webp';
 import farejadorModel from '../../assets/titan-farejador.json';
 import farejadorRigUrl from '../../assets/titan-farejador-rig.glb?url';
+import adagaRochaUrl from '../../assets/titan-adaga-rocha.glb?url';
 import farejadorAtlas from '../../assets/titan-farejador-atlas.webp';
 import hudAtlas from '../../assets/titan-hud-32px.webp';
 /**
@@ -80,6 +81,8 @@ export const titanFarejadorModel = farejadorModel as { size: number[]; parts: Re
 export const titanFarejadorAtlasUrl: string = farejadorAtlas;
 /** Farejador de Duna com rig (ADR 0064): GLB leve de uma malha skinada (carrega em segundo plano; até chegar, o jogo usa as 7 partes acima). */
 export const titanFarejadorRigUrl: string = farejadorRigUrl;
+/** Modelo 3D da Adaga de Rocha na mão (ADR 0071): GLB leve, carregado só quando a adaga é escolhida. */
+export const titanAdagaRochaUrl: string = adagaRochaUrl;
 export interface ModelData { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] }
 /** HUD de ar, vida e fome (ADR 0059): atlas de 96 × 96 px, 3 linhas (ar, vida, fome) × 3 colunas (cheio, parcial, vazio) de 32 × 32 px. */
 export const titanHudUrl: string = hudAtlas;

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { handPose, SWING_S } from './heldPose';
+import { loadHeldModel } from './heldItem';
+import { titanAdagaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -70,6 +72,12 @@ export class TitanRenderer {
   /** Rig do Farejador (ADR 0064): carrega em segundo plano na primeira vez que há animais; até lá valem as 7 partes. */
   private rigTemplate: RigTemplate | null = null;
   private rigLoading = false;
+  /** Mão em primeira pessoa (ADR 0071): cena e câmera próprias, desenhadas por cima do mundo (a profundidade é limpa, a mão não entra em paredes). */
+  private readonly handScene = new THREE.Scene();
+  private readonly handCamera = new THREE.PerspectiveCamera(75, 1, 0.02, 10);
+  private readonly held = new Map<number, THREE.Group | 'loading' | 'failed'>();
+  private heldItem: number | null = null;
+  private swingAt = -1;
   private farejadorGeos = {} as Record<string, THREE.BufferGeometry>;
   private farejadorMat!: THREE.MeshBasicMaterial;
   private readonly timeU = { value: 0 };
@@ -391,6 +399,24 @@ export class TitanRenderer {
       return m;
     }).then((t) => { this.rigTemplate = t; }, (e) => { console.warn('Titã: rig do Farejador não carregou; ficam as 7 partes', e); });
   }
+  /** Item na mão (id do item ou null): carrega o modelo na primeira vez e só mostra quem tem modelo (hoje a Adaga de Rocha, id 22). */
+  setHeld(item: number | null): void {
+    if (item === this.heldItem) return;
+    const old = this.heldItem !== null ? this.held.get(this.heldItem) : undefined;
+    if (old && typeof old !== 'string') old.visible = false;
+    this.heldItem = item;
+    if (item === null || item !== 22 || this.held.has(item)) { const g = item !== null ? this.held.get(item) : undefined; if (g && typeof g !== 'string') g.visible = true; return; }
+    this.held.set(item, 'loading');
+    loadHeldModel(titanAdagaRochaUrl, (map) => {
+      const m = new THREE.MeshBasicMaterial({ map, vertexColors: true });
+      patchDayLight(m, this.ambient);
+      return m;
+    }).then((g) => { g.visible = this.heldItem === item; this.handScene.add(g); this.held.set(item, g); }, (e) => { this.held.set(item, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
+  }
+  /** Começa o golpe da mão (animação de `SWING_S`). */
+  swingHand(): void { this.swingAt = performance.now(); }
+  /** A mão tem modelo carregado e visível? (diagnóstico e testes de navegador.) */
+  get heldVisible(): boolean { const g = this.heldItem !== null ? this.held.get(this.heldItem) : undefined; return !!g && typeof g !== 'string' && g.visible; }
   /** O Farejador usa o rig? (diagnóstico e testes de navegador.) */
   get farejadorRigAtivo(): boolean { return this.farejadores.some((e) => !!e.rig); }
   /** Plantas e nozes desenhadas (diagnóstico e testes de navegador). */
@@ -405,6 +431,8 @@ export class TitanRenderer {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    this.handCamera.aspect = w / h;
+    this.handCamera.updateProjectionMatrix();
   };
 
   /** Fragmentos de superfície ainda no mundo (sprites do atlas da hotbar: rocha = índice 4, gelo = 5). Chamar de novo depois de uma coleta. */
@@ -501,6 +529,14 @@ export class TitanRenderer {
     if (this.perf && this.built) this.perf.record('buildFrame', performance.now() - tb); // malha + geometria de todo o quadro
     const tr = this.perf ? performance.now() : 0;
     this.renderer.render(this.scene, this.camera);
+    const hand = this.heldItem !== null ? this.held.get(this.heldItem) : undefined;
+    if (hand && typeof hand !== 'string' && hand.visible) {
+      const st = this.swingAt >= 0 ? (performance.now() - this.swingAt) / 1000 : -1;
+      if (st >= SWING_S) this.swingAt = -1;
+      const hp = handPose(st, time);
+      hand.position.set(hp.x, hp.y, hp.z); hand.rotation.set(hp.rx, hp.ry, hp.rz);
+      this.renderer.autoClear = false; this.renderer.clearDepth(); this.renderer.render(this.handScene, this.handCamera); this.renderer.autoClear = true;
+    }
     if (this.perf) this.perf.record(this.built ? 'drawAfterBuild' : 'draw', performance.now() - tr); // JS do desenho; no quadro com malha nova inclui o envio à GPU
     this.frame++;
   }

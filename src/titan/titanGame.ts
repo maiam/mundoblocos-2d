@@ -616,6 +616,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const r = attackCreature(session, index);
     if (!r.ok) return false;
     gameAudio.playStrike();
+    view.swingHand();
     if (r.broken) gameAudio.playToolBreak();
     if (r.msg) notice(r.msg);
     if (r.dead) { view.setItems(visibleItems(session)); }
@@ -786,6 +787,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     useBtn.hidden = !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar"
     if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
+    view.setHeld(session.inventory.get(session.selected)?.item ?? null);
     view.render(eye, session.yaw, session.pitch, aimCreature ? null : target, now / 1000);
     veil.style.opacity = String(view.submersion); // 0 fora d'água; entra e sai em ~150 ms
     cross.hidden = !active;
