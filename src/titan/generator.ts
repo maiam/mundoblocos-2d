@@ -17,8 +17,9 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v5 (ADR 0060, 0061): as **plantas de Noz de Duna** (comida): 2 perto da chegada, em terreno seco e alcançável, e um grupo de até 4 numa enseada afastada, com a **toca do Farejador de Duna** (`den`) no centro dela; terreno, brasa e juncos idênticos à v4.
  * v6 (ADR 0062): a região passa a **8 × 8 chunks (128 × 128 blocos)**; o relevo longe do lago deixa de subir em paredões (a subida é gradual e limitada: o mundo além da bacia é uma planície de dunas que sobe devagar até a borda); o resto das regras é o da v5.
  * v7 (ADR 0063): **afloramentos de cobre** (2 montes de rocha com 3 veios de cobre cada, longe da toca do Farejador) e **hastes secas** de junco no chão; o resto é a v6.
+ * v8 (ADR 0066): **abrigos** (2 vãos entre dois pilares de rocha, cada um com uma **placa de carapaça** no chão), fora do território do Farejador; o resto é a v7.
  */
-export const GENERATOR_VERSION = 7;
+export const GENERATOR_VERSION = 8;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -42,7 +43,7 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16 } as const;
 
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
@@ -74,6 +75,10 @@ export class TitanGenerator {
   /** Só `placeCopper` (no construtor) escreve; nunca mude depois. */
   copperSites: ReadonlyArray<{ x: number; z: number }> = [];
   copperCells: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  /** v8: abrigos (ADR 0066): centro do vão, os dois pilares de rocha (montes estreitos) e a placa de carapaça no chão entre eles. */
+  shelterSites: ReadonlyArray<{ x: number; z: number }> = [];
+  plates: ReadonlyArray<{ id: string; item: 25; x: number; y: number; z: number }> = [];
+  private pillars: ReadonlyArray<{ x: number; z: number }> = [];
   /** v7: hastes secas de junco, no chão perto dos juncos (id `dry:x,y,z`, item 19), recolhidas à mão (ADR 0063). */
   readonly dryReeds: ReadonlyArray<{ id: string; item: 19; x: number; y: number; z: number }> = [];
   /** v5: a toca do Farejador de Duna (ADR 0061), no centro da enseada de plantas; null se a região não teve enseada. */
@@ -100,7 +105,8 @@ export class TitanGenerator {
     const reach = version >= 3 ? this.walkableFromArrival() : null;
     this.formations = this.placeFormations(reach);
     this.surfaceItems = version >= 3 ? [] : this.placeSurfaceItems();
-    if (version >= 7) this.placeCopper(); // antes de qualquer coluna usada pelas buscas seguintes: os montes entram em `computeColumn`
+    if (version >= 7) this.placeCopper();
+    if (version >= 8) this.placeShelters(); // antes de qualquer coluna usada pelas buscas seguintes: os montes entram em `computeColumn`
     if (version >= 3) this.placeVeins();
     if (version >= 4) {
       const site = this.planEmber()[0] ?? this.planEmber(false)[0] ?? null; // sem areia úmida alcançável: depósito de reserva em outra coluna livre
@@ -179,7 +185,7 @@ export class TitanGenerator {
       if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 64 || c.top > 66) continue;
       if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 4)) continue;
       if (this.emberSite && Math.hypot(this.emberSite.x - x, this.emberSite.z - z) < 3) continue;
-      if (this.copperSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6)) continue; // v7: nada em cima dos afloramentos de cobre
+      if (this.copperSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6) || this.shelterSites.some((s) => Math.hypot(s.x - x, s.z - z) < 6)) continue; // v7/v8: nada em cima dos afloramentos de cobre nem dos abrigos
       if (![[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => reach.has(key(x + dx, z + dz)))) continue;
       cands.push({ x, z, top: c.top, h: hash2(base, x * 131 + z, 7), d: Math.hypot(x - a.x, z - a.z) });
     }
@@ -193,7 +199,7 @@ export class TitanGenerator {
     let near = 0;
     for (const c of cands) { if (near >= 2) break; if (c.d >= 7 && c.d <= 16 && take(c, 3)) near++; }
     // a enseada (e a toca do Farejador) ficam ≥ 28 blocos dos afloramentos de cobre: o território do animal não cobre o minério (ADR 0063)
-    const apart = (c: { x: number; z: number }): boolean => this.copperSites.every((s) => Math.hypot(s.x - c.x, s.z - c.z) >= 28);
+    const apart = (c: { x: number; z: number }): boolean => this.copperSites.every((s) => Math.hypot(s.x - c.x, s.z - c.z) >= 28) && this.shelterSites.every((s) => Math.hypot(s.x - c.x, s.z - c.z) >= 24);
     const far = cands.find((c) => c.d >= 26 && apart(c)) ?? cands.find((c) => c.d >= 18 && apart(c)) ?? cands.find((c) => c.d >= 26) ?? cands.find((c) => c.d >= 18);
     let den: { x: number; y: number; z: number } | null = null;
     if (far) {
@@ -311,6 +317,30 @@ export class TitanGenerator {
       for (const c of [{ x: s.x, z: s.z }, ...ring.slice(0, 2)]) { this.copper.add(key(c.x, c.z)); cells.push({ x: c.x, y: this.column(c.x, c.z).top, z: c.z }); }
     }
     this.copperCells = cells;
+  }
+
+  /**
+   * Abrigos (v8, ADR 0066): 2 vãos estreitos entre dois pilares de rocha escura (a ±2 blocos do centro, ao longo de X), em terra seca alcançável a pé, 16–55 blocos da chegada, ≥ 10 da costa, em relevo plano,
+   * afastados ≥ 14 dos afloramentos de cobre e ≥ 20 entre si; uma **placa de carapaça** no chão do vão. Usa só o relevo bruto (as colunas ainda não foram memoizadas) e roda logo depois do cobre.
+   */
+  private placeShelters(): void {
+    const a = this.arrival, base = derive(this.seed, PURPOSE.abrigo), reach = this.walkable();
+    const cands: Array<{ x: number; z: number; h: number }> = [];
+    for (const k of reach) {
+      const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
+      if (x < this.region.min + 8 || x >= this.region.max - 8 || z < this.region.min + 8 || z >= this.region.max - 8) continue;
+      const d = Math.hypot(x - a.x, z - a.z), t = this.rawTop(x, z);
+      if (d < 16 || d > 55 || this.lakeField(x, z) > -10 || t < 64 || t > 70) continue;
+      if (this.formations.some((f) => Math.hypot(f.x - x, f.z - z) < 8) || this.copperSites.some((c) => Math.hypot(c.x - x, c.z - z) < 14) || !this.flatAround(x, z)) continue;
+      cands.push({ x, z, h: hash2(base, x * 131 + z, 3) });
+    }
+    cands.sort((p, q) => p.h - q.h || p.x - q.x || p.z - q.z);
+    const sites: Array<{ x: number; z: number }> = [];
+    for (const c of cands) { if (sites.length >= 2) break; if (sites.every((s) => Math.hypot(s.x - c.x, s.z - c.z) >= 20)) sites.push({ x: c.x, z: c.z }); }
+    this.shelterSites = sites;
+    this.pillars = sites.flatMap((s) => [{ x: s.x - 2, z: s.z }, { x: s.x + 2, z: s.z }]);
+    this.cols.clear();
+    this.plates = sites.map((s) => ({ id: `plate:${s.x},${this.column(s.x, s.z).top + 1},${s.z}`, item: 25 as const, x: s.x, y: this.column(s.x, s.z).top + 1, z: s.z }));
   }
 
   /** Hastes secas (v7): até 8 em colunas de areia perto dos grupos de junco (≤ 7 blocos de um junco), fora das células de junco e de planta, alcançáveis a pé, afastadas ≥ 2 entre si. */
@@ -502,6 +532,10 @@ export class TitanGenerator {
         const bump = Math.max(0, 3 - Math.floor(d));
         if (bump > 0) { top = Math.max(top, raw + bump); formation = f.kind; }
       }
+    }
+    for (const f of this.pillars) { // pilares dos abrigos (v8): montes estreitos de rocha escura
+      const d = Math.hypot(x - f.x, z - f.z);
+      if (d < 1.6) { top = Math.max(top, raw + 3 - Math.floor(d)); formation = 'rock'; }
     }
     for (const f of this.copperSites) { // afloramento de cobre (v7): monte de rocha escura como as formações
       const d = Math.hypot(x - f.x, z - f.z);

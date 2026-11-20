@@ -8,7 +8,7 @@ Uso: python3 -I scripts/make-titan-icones-conceito.py
 from PIL import Image, ImageFilter
 
 SRC, OUT = 'assets-src/titan/conceito/', 'assets-src/titan/arte32/'
-ITEMS = ['Fragmento_de_Cobre_de_Duna', 'Lingote_de_Cobre_de_Duna', 'Haste_Seca_de_Junco', 'Picareta_de_Rocha', 'Braseiro_de_Rocha', 'Adaga_de_Rocha', 'Picareta_de_Cobre', 'Adaga_de_Cobre']
+ITEMS = ['Fragmento_de_Cobre_de_Duna', 'Lingote_de_Cobre_de_Duna', 'Haste_Seca_de_Junco', 'Picareta_de_Rocha', 'Braseiro_de_Rocha', 'Adaga_de_Rocha', 'Picareta_de_Cobre', 'Adaga_de_Cobre', 'Placa_de_Carapaca', 'Revestimento_de_Carapaca']
 SIZE, PALETTE = 28, 22
 
 

@@ -20,9 +20,9 @@ export const COPPER_YIELD = 2;
 export function collectItem(s: TitanSession, id: string): ActionResult {
   if (id.startsWith('reed:')) return collectReed(s, id);
   if (id.startsWith('nut:')) return collectNut(s, id);
-  const it = s.volume.gen.surfaceItems.find((i) => i.id === id) ?? s.volume.gen.dryReeds.find((i) => i.id === id); // lasca legada (v1/v2) ou haste seca (v6)
+  const it = s.volume.gen.surfaceItems.find((i) => i.id === id) ?? s.volume.gen.dryReeds.find((i) => i.id === id) ?? s.volume.gen.plates.find((i) => i.id === id); // lasca legada (v1/v2), haste seca (v7) ou placa de carapaça (v8)
   if (!it || s.collected.has(id)) return { ok: false };
-  const item: number = it.item; // 5 = fragmento de rocha, 6 = de gelo, 19 = haste seca (os ids de item do catálogo)
+  const item: number = it.item; // 5 = fragmento de rocha, 6 = de gelo, 19 = haste seca, 25 = placa de carapaça (os ids de item do catálogo)
   if (!s.inventory.canAdd(item)) return FULL;
   s.inventory.add(item);
   s.collected.add(id);
