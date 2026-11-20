@@ -72,6 +72,8 @@ body.titan-touch-on .titan-touch { display: block; }
   height: min(calc(100vh - var(--hbb) - var(--slot) - 14px - 5px - max(6px, env(safe-area-inset-top))), 420px);
   display: flex; flex-direction: column; padding: 5px; overflow: hidden; background: #171c20f7; border: 1px solid #765943; border-radius: 6px; pointer-events: auto; touch-action: none; }
 .titan-bagtop { display: grid; grid-template-columns: 100px minmax(0, 1fr) 172px; gap: 6px; min-height: 0; flex: 1 1 auto; }
+.titan-bagtop.furn { grid-template-columns: 100px minmax(0, 1fr) 232px; }
+.titan-bagtop.furn .titan-bag { grid-template-columns: repeat(auto-fill, var(--slot)); }
 .titan-cats { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; touch-action: pan-y; }
 .titan-cat { background: #2b2421; color: #c8b29a; border: 1px solid #534438; border-radius: 3px; padding: 4px 6px; min-height: 34px; flex: none; font: 600 12px system-ui, sans-serif; text-align: left; cursor: pointer; touch-action: manipulation; }
 .titan-cat:last-child { margin-top: auto; } /* a bolsa é o último grupo, embaixo */
@@ -151,14 +153,111 @@ body.titan input { user-select: text; -webkit-user-select: text; }
 .titan-bench .rname { color: var(--amber); }
 
 
-/* Braseiro de Rocha como fornalha (ADR 0068): três espaços e duas barras (fogo e cozimento) */
-.titan-furnace { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.titan-frow { display: flex; justify-content: center; align-items: flex-start; }
-.titan-furnace .titan-fcol { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; margin: 0 2px; min-width: 0; }
-.titan-furnace .flabel { color: #cdb89a; font-size: 10px; white-space: nowrap; }
-.titan-furnace .titan-fslot { width: var(--icm); height: var(--icm); }
+/* Braseiro de Rocha como fornalha (ADR 0068, v0.130.0): entrada em cima, chama no meio e combustível embaixo à esquerda, seta de progresso e resultado grande à direita (como a Fornalha do Minecraft) */
+.titan-furnace { display: flex; flex-direction: column; align-items: center; gap: 6px; --fsz: 56px; --fbig: 72px; }
+.titan-furnace .titan-fgrid { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.titan-furnace .titan-fleft { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.titan-furnace .titan-fcol { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.titan-furnace .flabel { color: #cdb89a; font-size: 11px; white-space: nowrap; }
+.titan-furnace .titan-fslot { width: var(--fsz); height: var(--fsz); border-width: 2px; }
 .titan-furnace .titan-fslot .titan-icon { width: var(--icm); height: var(--icm); background-size: calc(var(--icm) * 4) calc(var(--icm) * 8); }
-.titan-fbars { display: flex; gap: 10px; width: 100%; padding: 0 8px; box-sizing: border-box; }
-.titan-fbar { position: relative; flex: 1; height: 8px; background: #14110f; border-radius: 2px; overflow: hidden; }
-.titan-fbar::after { content: ''; position: absolute; inset: 0; width: calc(var(--p, 0) * 100%); background: #e08a2e; }
-.titan-fbar.cook::after { background: #d6c27a; }
+.titan-furnace .titan-fslot .count { font-size: 12px; right: 4px; bottom: 2px; }
+.titan-furnace .titan-fslot.out { --icm: 64px; width: var(--fbig); height: var(--fbig); } /* o resultado em escala 2× (inteira) */
+.titan-furnace .titan-fslot.out .count { font-size: 14px; right: 5px; bottom: 3px; }
+/* chama (esvazia de cima para baixo conforme o fogo acaba) e seta (enche da esquerda para a direita conforme cozinha): formas por clip-path, preenchimento por --p */
+.titan-fflame { width: 28px; height: 34px; background: linear-gradient(to top, #f0a23a calc(var(--p, 0) * 100%), #3a312b 0); clip-path: polygon(50% 0, 66% 22%, 84% 46%, 90% 70%, 76% 92%, 50% 100%, 24% 92%, 10% 70%, 16% 48%, 32% 30%, 40% 48%, 46% 24%); }
+.titan-farrow { width: 38px; height: 34px; background: linear-gradient(to right, #e6cf86 calc(var(--p, 0) * 100%), #3a312b 0); clip-path: polygon(0 32%, 60% 32%, 60% 0, 100% 50%, 60% 100%, 60% 68%, 0 68%); }
+
+/* Indicador discreto de recolhimento (lanterna e lasca solta, ADR 0042): anel fino em volta da mira que enche em 0,35 s; sem rachaduras */
+.titan-collect { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; --p: 0;
+  background: conic-gradient(#f2cc93 calc(var(--p) * 360deg), #f2cc9333 0);
+  -webkit-mask: radial-gradient(circle, transparent 10px, #000 11px); mask: radial-gradient(circle, transparent 10px, #000 11px); pointer-events: none; }
+.titan-use { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px); transform: translateX(-50%); z-index: 4; pointer-events: auto; min-height: 44px; min-width: 96px; font-size: 15px; }
+
+/* Bolsa e livro de receitas (ADR 0047): hotbar de 9 com ☰ fora dos espaços; grupos | receitas | grade de fabricação e item final (a bolsa é o último grupo) */
+.titan-hotbar { width: var(--hbw); box-sizing: border-box; justify-content: space-between; }
+.titan-hbmenu { position: absolute; left: calc(50% + var(--hbw) / 2 + 8px); bottom: var(--hbb); width: calc(var(--slot) + 14px); height: calc(var(--slot) + 14px); padding: 0; font-size: 22px; line-height: 1; pointer-events: auto; }
+.titan-icon.md { display: block; flex: none; width: var(--icm); height: var(--icm); background-size: calc(var(--icm) * 4) calc(var(--icm) * 8); }
+.titan-panel { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); width: min(calc(100vw - 16px), 724px); box-sizing: border-box; bottom: calc(var(--hbb) + var(--slot) + 14px + 5px);
+  height: min(calc(100vh - var(--hbb) - var(--slot) - 14px - 5px - max(6px, env(safe-area-inset-top))), 420px);
+  display: flex; flex-direction: column; padding: 5px; overflow: hidden; background: #171c20f7; border: 1px solid #765943; border-radius: 6px; pointer-events: auto; touch-action: none; }
+.titan-bagtop { display: grid; grid-template-columns: 100px minmax(0, 1fr) 172px; gap: 6px; min-height: 0; flex: 1 1 auto; }
+.titan-cats { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; touch-action: pan-y; }
+.titan-cat { background: #2b2421; color: #c8b29a; border: 1px solid #534438; border-radius: 3px; padding: 4px 6px; min-height: 34px; flex: none; font: 600 12px system-ui, sans-serif; text-align: left; cursor: pointer; touch-action: manipulation; }
+.titan-cat:last-child { margin-top: auto; } /* a bolsa é o último grupo, embaixo */
+.titan-cat.on { background: #533e2c; color: #f2cc93; border-color: #d99342; }
+.titan-center { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; }
+.titan-tools { display: flex; gap: 4px; align-items: center; }
+.titan-search { flex: 1 1 60px; min-width: 0; height: 30px; box-sizing: border-box; background: #4a4340; color: #fff0da; border: 2px solid #171410; border-radius: 3px; padding: 0 6px; font: 16px system-ui, sans-serif; user-select: text; -webkit-user-select: text; }
+.titan-tools .titan-btn { padding: 3px 7px; min-height: 30px; font-size: 12px; }
+.titan-only.on { background: #533e2c; border-color: #f2cc93; }
+.titan-rgrid { display: grid; grid-template-columns: repeat(auto-fill, 48px); gap: 0; align-content: start; overflow-y: auto; min-height: 0; background: #211e1d; border: 1px solid #534438; touch-action: pan-y; }
+.titan-rcell { position: relative; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; background: #2b2421; border: 1px solid #171410; cursor: pointer; touch-action: manipulation; }
+.titan-rcell.off { background: #3a2423; }
+.titan-rcell.off .titan-icon { opacity: 0.6; }
+.titan-rcell.sel { outline: 2px solid #f2cc93; outline-offset: -2px; background: #533e2c; }
+.titan-rcell .count { position: absolute; right: 2px; bottom: 0; font: 700 11px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; }
+.titan-rcell .badge { position: absolute; left: 2px; top: 0; font: 700 12px system-ui, sans-serif; color: #f0a08a; text-shadow: 1px 1px #171410; }
+.titan-rgrid .hint { background: #0b0910c0; grid-column: 1 / -1; padding: 8px; color: #c8b29a; font-weight: 500; line-height: 1.3; }
+.titan-right { position: relative; display: flex; flex-direction: column; min-height: 0; background: #211e1d; border: 1px solid #534438; border-radius: 4px; padding: 4px 6px; overflow-y: auto; touch-action: pan-y; }
+.titan-rhead { display: flex; align-items: center; justify-content: space-between; flex: none; }
+.titan-rhead .th { color: #8ca1bc; font-size: 12px; }
+.titan-x { padding: 0; width: 30px; height: 30px; }
+.titan-detail { display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 0; text-align: center; padding-top: 2px; }
+.titan-detail .station { color: #c8b29a; font-size: 11px; }
+.titan-detail .station.lack { color: #f0a08a; }
+.titan-igrid { display: grid; grid-template-columns: repeat(3, 38px); gap: 2px; }
+.titan-icell { position: relative; display: grid; place-items: center; width: 38px; height: 38px; background: #4a4340; border: 2px solid #2a2523; border-radius: 2px; }
+.titan-icell.ok { border-color: #5d7d58; }
+.titan-icell.lack { border-color: #a0503f; background: #4a3532; }
+.titan-icell .count { position: absolute; right: 1px; bottom: -1px; font: 700 10px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; }
+.titan-icell.lack .count { color: #ffb4a0; }
+.titan-detail .arrow, .titan-craftcol .arrow { color: #8e8680; font-size: 16px; line-height: 1; }
+.titan-result { position: relative; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: #4a4340; border: 2px solid #8e8680; border-radius: 2px; cursor: pointer; touch-action: manipulation; }
+.titan-result.ok { border-color: #f2cc93; background: #533e2c; box-shadow: 0 0 0 2px #d9934255; }
+.titan-result.off { opacity: 0.6; }
+.titan-result .count { position: absolute; right: 2px; bottom: 0; font: 700 11px ui-monospace, monospace; font-style: normal; color: #fff3df; text-shadow: 1px 1px #171410; }
+.titan-detail .rname { color: #f2cc93; font-size: 12px; line-height: 1.15; }
+.titan-detail .why { color: #f0a08a; font-size: 11px; line-height: 1.2; }
+.titan-detail .tip { color: #8ca1bc; font-size: 10px; }
+.titan-detail .hint { color: #c8b29a; font-weight: 500; line-height: 1.3; }
+.titan-manual { align-items: center; }
+.titan-manual small { color: #8ca1bc; font-size: 12px; }
+.titan-manual .hint { color: #c8b29a; line-height: 1.3; font-weight: 500; font-size: 11px; }
+.titan-craftcol { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.titan-craftgrid { display: grid; grid-template-columns: repeat(2, auto); gap: 4px; }
+.titan-bag { display: grid; grid-template-columns: repeat(9, var(--slot)); justify-content: space-between; align-content: start; gap: 4px; padding: 0; overflow-y: auto; min-height: 0; touch-action: pan-y; }
+body.titan-bag-open .titan-touch { display: none; } /* com a tela aberta o toque do mundo some: nada gira a câmera nem coloca/quebra */
+body.titan input { user-select: text; -webkit-user-select: text; }
+.titan-use { z-index: 4; }
+
+/* Painéis de basalto (ADR 0049): moldura e fundos em basalto do Titã (carvão e violeta escuro, relevo discreto) com acabamento cobre fosco; o âmbar fica só para seleção, foco e saída pronta;
+   os fundos dos espaços ficam calmos (lisos) para dar contraste aos ícones e às contagens. */
+.titan-ui { --amber: #eaa94a; --amber-soft: #eaa94a55; --copper: #8c5b3a; --copper-hi: #b9814f; --basalt-dim: linear-gradient(#0b091070, #0b091070); }
+.titan-panel, .titan-hotbar { background: var(--basalt-dim), var(--basalt); background-size: auto, 64px 64px; image-rendering: pixelated; border: 2px solid var(--copper);
+  box-shadow: inset 0 0 0 1px #0b0910, inset 0 2px 0 #b9814f2e, 0 2px 8px #000a; }
+.titan-hbmenu, .titan-btn { background: var(--basalt-dim), var(--basalt); background-size: auto, 64px 64px; border-color: var(--copper); color: #e8d3b8; }
+.titan-btn:hover:not(:disabled) { border-color: var(--copper-hi); }
+.titan-right, .titan-rgrid { background: var(--basalt-dim), var(--basalt); background-size: auto, 64px 64px; border-color: #3a2f3d; image-rendering: pixelated; }
+.titan-cat { background: #1c1a22; color: #b9ad9a; border-color: #3a2f3d; }
+.titan-cat.on { background: #2a2030; color: var(--amber); border-color: var(--amber); }
+.titan-slot, .titan-rcell, .titan-icell, .titan-result { background-color: #19171d; border-color: #35293a; }
+.titan-slot.empty { background-color: #141217; border-color: #2a2230; }
+.titan-slot[aria-pressed='true'] { outline: 2px solid var(--amber); outline-offset: -2px; background-color: #2a2030; }
+.titan-slot[data-sel='true'] { outline: 2px solid var(--amber); outline-offset: -2px; background-color: #2e2434; } /* seleção = âmbar */
+.titan-rcell.off { background-color: #1f1519; }
+.titan-rcell.sel { outline-color: var(--amber); background-color: #2a2030; }
+.titan-slot.out, .titan-result.off { border-color: #4a3a4d; }
+.titan-slot.out.ready, .titan-result.ok { border-color: var(--amber); background-color: #2e2230; box-shadow: 0 0 0 2px var(--amber-soft), 0 0 10px var(--amber-soft); } /* saída pronta */
+.titan-icell.ok { border-color: #5d7d58; }
+.titan-search { background: #141217; border-color: #0b0910; }
+.titan-only.on { border-color: var(--amber); color: var(--amber); }
+.titan-btn:focus-visible, .titan-cat:focus-visible, .titan-rcell:focus-visible, .titan-slot:focus-visible, .titan-result:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; } /* foco */
+.titan-benchhead { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
+.titan-benchhead small { color: #9fb3cc; font-size: 11px; white-space: nowrap; }
+.titan-back { padding: 3px 8px; min-height: 26px; font-size: 12px; }
+.titan-benchgrid { display: grid; grid-template-columns: repeat(3, auto); gap: 4px; }
+.titan-bench { gap: 3px; }
+.titan-bench .rname { color: var(--amber); }
+
+

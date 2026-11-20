@@ -9,6 +9,9 @@
 4. **Interação** (`furnaceAt`, `furnaceMoveIn`, `furnaceTakeOut`, tudo ou nada): Usar/F (ou o botão Usar) abre o painel do braseiro; **tocar numa pilha da mochila e depois em Entrada/Combustível** leva a pilha (só o que serve; espaço vazio recebe tudo, o mesmo item soma, outro item não troca); tocar num espaço sem pilha escolhida (ou na Saída) tira para a mochila (mochila cheia: nada muda). **Quebrar o braseiro cospe os três espaços no chão** (`f:x,y,z:n`) e devolve o bloco. **O gesto não muda** (decisão do dono do produto): tocar com um bloco na mão continua colocando encostado no braseiro e na Mesa; a tela abre só pelo Usar/F. Alcance de uso 5 blocos (+1,5 para manter aberta), como já era.
 5. Os cartões de receita do braseiro saíram do livro (ficam no painel dele: entrada → saída); a Brasa de Âmbar **não** acende mais o braseiro por toque (não é mais colocável: vai no combustível).
 
+## Atualização (v0.130.0): layout
+O painel foi redesenhado a pedido do dono do produto (referência da Fornalha do Minecraft), sem mudar nenhuma regra: Entrada em cima, chama no meio, Combustível embaixo à esquerda; seta de progresso e Resultado grande (ícone 2×) à direita; espaços de 56 px; coluna direita de 232 px com o braseiro aberto.
+
 ## Consequências
 - Base pronta para outros blocos com estado (Baú de Rocha, 27 espaços; Bigorna) reaproveitando `session.<mapa>` + `header.<campo>` + "cuspir ao quebrar"; sem sincronização multijogador (o Titã é solo).
 - Pendências: luz do braseiro aceso e partículas de brasa; mostrar o progresso no próprio bloco; modelo 3D; XP não existe; aceite em aparelho do painel a 360 px de altura.

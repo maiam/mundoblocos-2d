@@ -21,8 +21,9 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v8 (ADR 0066): **abrigos** (2 vãos entre dois pilares de rocha, cada um com uma **placa de carapaça** no chão), fora do território do Farejador; o resto é a v7.
  * v9 (ADR 0070): **veios subterrâneos** (cobre, rocha e gelo enterrados, altura triangular, descarte por exposição ao ar, só substituem a rocha profunda; `ORE_RULES`); os
  * gelos soltos do subsolo da v1–v8 saem; a superfície é idêntica à v8.
+ * v10 (ADR 0072): **fragmentos à vista**: veios de rocha espalhados pela rocha escura da superfície (mais densos nas camadas altas, Y ≥ 72) e de gelo nas manchas de gelo; o resto é a v9.
  */
-export const GENERATOR_VERSION = 9;
+export const GENERATOR_VERSION = 10;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -46,7 +47,7 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16, mina: 17 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16, mina: 17, fragmentos: 18 } as const;
 
 /** Regras dos veios subterrâneos (v9). Faixas escaladas do Minecraft para um mundo de superfície em Y ≈ 64 e fundo em Y −64. */
 export const ORE_RULES: readonly OreRule[] = [
@@ -575,12 +576,22 @@ export class TitanGenerator {
       if (this.emberSite && x === this.emberSite.x && z === this.emberSite.z) return T.EMBER;
       if (this.copper.size && this.copper.has((x + 4096) * 8192 + (z + 4096))) return T.VEIN_COPPER;
       if (this.veins.size) { const v = this.veins.get((x + 4096) * 8192 + (z + 4096)); if (v) return v === 'rock' ? T.VEIN_ROCK : T.VEIN_FROST; }
+      if (this.version >= 10) { const f = this.fragmentAt(x, z, c); if (f) return f; }
       return c.surface;
     }
     if (y >= c.top - 3) return c.sub;
     if (this.version >= 9) { const o = this.oreAt(x, y, z); return o ?? T.DARK_ROCK; }
     if (y >= -32 && y < 0 && hash2(derive(this.seed, PURPOSE.veios), x * 31 + z, y) < 0.012) return T.FROST; // veios de gelo no subsolo intermediário (v1–v8)
     return T.DARK_ROCK;
+  }
+
+  /** Veio de fragmento solto na superfície (v10): rocha na rocha escura (12 % nas camadas altas, Y ≥ 72; 6 % abaixo) e gelo nas manchas de gelo (6 %); nunca perto das formações, abrigos e afloramentos de cobre, que têm o seu desenho. */
+  private fragmentAt(x: number, z: number, c: Column): number | null {
+    if (c.surface !== T.DARK_ROCK && c.surface !== T.FROST) return null;
+    const near = (l: ReadonlyArray<{ x: number; z: number }>): boolean => l.some((f) => Math.hypot(f.x - x, f.z - z) < 5);
+    if (near(this.formations) || near(this.copperSites) || near(this.shelterSites) || near(this.pillars)) return null;
+    const rock = c.surface === T.DARK_ROCK, chance = rock ? (c.top >= 72 ? 0.12 : 0.06) : 0.06;
+    return hash2(derive(this.seed, PURPOSE.fragmentos), x, z) < chance ? (rock ? T.VEIN_ROCK : T.VEIN_FROST) : null;
   }
 
   /** Minério da célula (v9), ou `null`. Garante que os 3 × 3 chunks em volta já foram gerados, porque um veio passa de um chunk para o vizinho. */
