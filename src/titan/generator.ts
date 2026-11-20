@@ -1,5 +1,6 @@
 import { Noise } from '../world/noise';
 import { hash2 } from '../world/random';
+import { attemptsFor, mulberry32, type OreRule, sampleOreY, veinCells } from './ores';
 import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel';
 
 /**
@@ -18,8 +19,10 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v6 (ADR 0062): a região passa a **8 × 8 chunks (128 × 128 blocos)**; o relevo longe do lago deixa de subir em paredões (a subida é gradual e limitada: o mundo além da bacia é uma planície de dunas que sobe devagar até a borda); o resto das regras é o da v5.
  * v7 (ADR 0063): **afloramentos de cobre** (2 montes de rocha com 3 veios de cobre cada, longe da toca do Farejador) e **hastes secas** de junco no chão; o resto é a v6.
  * v8 (ADR 0066): **abrigos** (2 vãos entre dois pilares de rocha, cada um com uma **placa de carapaça** no chão), fora do território do Farejador; o resto é a v7.
+ * v9 (ADR 0070): **veios subterrâneos** (cobre, rocha e gelo enterrados, altura triangular, descarte por exposição ao ar, só substituem a rocha profunda; `ORE_RULES`); os
+ * gelos soltos do subsolo da v1–v8 saem; a superfície é idêntica à v8.
  */
-export const GENERATOR_VERSION = 8;
+export const GENERATOR_VERSION = 9;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -43,8 +46,14 @@ export interface Arrival {
 export function derive(seed: number, purpose: number): number {
   return (Math.imul(hash2(seed >>> 0, purpose, 0x9e37) * 4294967296 >>> 0, 1) ^ (purpose * 0x85ebca6b)) >>> 0;
 }
-const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16 } as const;
+const PURPOSE = { relevo: 1, dunas: 2, lago: 3, rocha: 4, gelo: 5, chegada: 6, formacao: 7, veios: 8, seixos: 9, veioSuperficie: 10, brasa: 11, junco: 12, noz: 13, cobre: 14, haste: 15, abrigo: 16, mina: 17 } as const;
 
+/** Regras dos veios subterrâneos (v9). Faixas escaladas do Minecraft para um mundo de superfície em Y ≈ 64 e fundo em Y −64. */
+export const ORE_RULES: readonly OreRule[] = [
+  { blockId: T.VEIN_COPPER, veinsPerChunk: 3, veinSize: 6, minY: -48, maxY: 48, peakY: 8, airDiscardChance: 0.5 },
+  { blockId: T.VEIN_ROCK, veinsPerChunk: 5, veinSize: 5, minY: -60, maxY: 56, airDiscardChance: 0.5 },
+  { blockId: T.VEIN_FROST, veinsPerChunk: 3, veinSize: 5, minY: -44, maxY: 8, peakY: -24, airDiscardChance: 0 },
+];
 const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
 
@@ -55,6 +64,10 @@ export class TitanGenerator {
   private readonly nRocha: Noise;
   private readonly nGelo: Noise;
   private readonly cols = new Map<number, Column>();
+  /** Veios subterrâneos (v9): célula → minério e prioridade (menor vence: o resultado não depende da ordem de carga). */
+  private readonly ores = new Map<number, { id: number; pri: number }>();
+  private readonly oreReady = new Set<number>();
+  private readonly oreDone = new Set<number>();
   /** Centro do lago (derivado da seed): a bacia fica de um lado da região. */
   readonly lake: { x: number; z: number; r: number };
   readonly arrival: Arrival;
@@ -565,7 +578,39 @@ export class TitanGenerator {
       return c.surface;
     }
     if (y >= c.top - 3) return c.sub;
-    if (y >= -32 && y < 0 && hash2(derive(this.seed, PURPOSE.veios), x * 31 + z, y) < 0.012) return T.FROST; // veios de gelo no subsolo intermediário
+    if (this.version >= 9) { const o = this.oreAt(x, y, z); return o ?? T.DARK_ROCK; }
+    if (y >= -32 && y < 0 && hash2(derive(this.seed, PURPOSE.veios), x * 31 + z, y) < 0.012) return T.FROST; // veios de gelo no subsolo intermediário (v1–v8)
     return T.DARK_ROCK;
+  }
+
+  /** Minério da célula (v9), ou `null`. Garante que os 3 × 3 chunks em volta já foram gerados, porque um veio passa de um chunk para o vizinho. */
+  private oreAt(x: number, y: number, z: number): number | null {
+    const cx = x >> 4, cz = z >> 4, rk = (cx + 512) * 1024 + (cz + 512);
+    if (!this.oreReady.has(rk)) {
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) this.genOreChunk(cx + dx, cz + dz);
+      this.oreReady.add(rk);
+    }
+    return this.ores.get(((x + 4096) * 8192 + (z + 4096)) * 512 + (y + 64))?.id ?? null;
+  }
+
+  private genOreChunk(cx: number, cz: number): void {
+    const ck = (cx + 512) * 1024 + (cz + 512);
+    if (this.oreDone.has(ck)) return;
+    this.oreDone.add(ck);
+    if (!inRegion(cx * 16 + 8, cz * 16 + 8, this.region) && !inRegion(cx * 16, cz * 16, this.region) && !inRegion(cx * 16 + 15, cz * 16 + 15, this.region)) return;
+    const replaceable = (x: number, y: number, z: number): boolean => y > Y_MIN && inRegion(x, z, this.region) && y < this.column(x, z).top - 3;
+    const exposed = (x: number, y: number, z: number): boolean => [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([dx, dy, dz]) => y + dy > this.column(x + dx, z + dz).top && y + dy > LAKE_LAST_Y);
+    ORE_RULES.forEach((rule, ri) => {
+      const rng = mulberry32((derive(this.seed, PURPOSE.mina) ^ Math.imul(ck + 1, 0x9e3779b1) ^ Math.imul(ri + 1, 0x85ebca6b)) >>> 0);
+      const n = attemptsFor(rng, rule.veinsPerChunk);
+      for (let k = 0; k < n; k++) {
+        const x = cx * 16 + Math.floor(rng() * 16), z = cz * 16 + Math.floor(rng() * 16), y = sampleOreY(rng, rule);
+        const pri = ri * 1e10 + ck * 1000 + k;
+        for (const [vx, vy, vz] of veinCells(rng, x, y, z, rule, replaceable, exposed)) {
+          const key = ((vx + 4096) * 8192 + (vz + 4096)) * 512 + (vy + 64), old = this.ores.get(key);
+          if (!old || pri < old.pri) this.ores.set(key, { id: rule.blockId, pri });
+        }
+      }
+    });
   }
 }

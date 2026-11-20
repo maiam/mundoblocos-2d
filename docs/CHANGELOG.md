@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.127.0 — Titã: veios subterrâneos (gerador v9) (20/11/2026)
+- **Referência do Minecraft 1.18 do dono do produto.** **ADR 0070.**
+- `GENERATOR_VERSION` 9: **cobre, rocha e gelo enterrados** com altura triangular (pico: cobre Y 8, gelo Y −24; rocha uniforme), veios por caminhada aleatória, descarte por exposição ao ar e só substituindo a rocha profunda. Os gelos soltos do subsolo saem na v9 (v1–v8 ficam como eram); a superfície é idêntica à v8. Seeds novas abrem na v9; partidas salvas continuam na versão delas.
+- `titan/ores.ts` (puro) + `ORE_RULES` no gerador; resultado independente da ordem de leitura (3 × 3 chunks, prioridade fixa).
+- Testes `ores.test.ts` (+6; 1.033 no total). Conferido a 740 × 360: poço até um veio de cobre enterrado, com a textura do veio no fundo.
+
 ## Orvalis v0.126.1 — Titã: revisão de docs e espólio sem colisão (20/11/2026)
 - NEXT_STEPS deixava a etapa 4 como pendente (já entregue em 0.126.0): corrigido. Ids do espólio (`m:<tipo>:<n>:<k>`) agora têm sufixo livre: dois abates no mesmo instante não perdem itens. Teste +1 (1.026).
 - Revisão: sem outras inconsistências entre docs e código (ids de itens/blocos, atlas, ADRs, MAPS, CLAUDE.md).
