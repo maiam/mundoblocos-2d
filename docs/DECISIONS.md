@@ -40,6 +40,7 @@
 | 0061 | **Aceita** — Titã: Farejadores de Duna (pequeno ½ e grande 1,3×; passeiam, investem ao avistar, caem de costas e ficam 2 s atordoados ao bater; dano 2 e 4; toca no gerador v5) |
 | 0062 | **Aceita** — Titã: região de 8 × 8 chunks por versão do gerador (v6 = 128 × 128, relevo gradual) e lote de 200 seeds nos testes de levantamento |
 | 0063 | **Aceita** — Titã: cobre de Duna (gerador v7: afloramentos e hastes secas), Veio de Cobre só quebra com picareta, itens 17–20 e ferramentas por `TOOLS` |
+| 0064 | **Aceita** — Titã: Farejador de Duna com rig e textura 2K (GLB leve de uma malha skinada, carga em segundo plano, pose por rotação de ossos no espaço do modelo) |
 | 0057 | **Aceita** — Titã: Lago Escuro V2 (atlas próprio de 32 px) e visual submerso por uniforms/cores, sem remalhar | [adr/0057](adr/0057-titan-lago-escuro-v2-e-visual-submerso.md) |
 | 0056 | **Aceita** — Titã: Laje de Rocha inferior, superior e dupla (ids no bloco, colocação por face e altura, física pela faixa da célula) | [adr/0056](adr/0056-titan-lajes-superior-e-dupla.md) |
 | 0055 | **Aceita** — Titã: salto automático em degrau de 1 bloco e quebra contínua ao arrastar a mira segurando (altera em parte a ADR 0042) | [adr/0055](adr/0055-titan-salto-automatico-e-quebra-continua.md) |

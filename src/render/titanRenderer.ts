@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -10,6 +10,7 @@ import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
 import { nutTurn } from '../titan/nuts';
+import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
 import { T } from '../titan/voxel';
 
@@ -65,7 +66,10 @@ export class TitanRenderer {
   private nutPlantMesh!: THREE.InstancedMesh;
   private nutFruitMesh!: THREE.InstancedMesh;
   /** Farejadores de Duna: um grupo de partes (tronco, cabeça, cauda, 4 patas) por animal, cada parte girando em torno do pivô; criados sob demanda (geometria e material compartilhados). */
-  private farejadores: Array<{ group: THREE.Group; parts: Record<string, THREE.Mesh> }> = [];
+  private farejadores: Array<{ group: THREE.Group; parts: Record<string, THREE.Mesh>; rig?: RigInstance }> = [];
+  /** Rig do Farejador (ADR 0064): carrega em segundo plano na primeira vez que há animais; até lá valem as 7 partes. */
+  private rigTemplate: RigTemplate | null = null;
+  private rigLoading = false;
   private farejadorGeos = {} as Record<string, THREE.BufferGeometry>;
   private farejadorMat!: THREE.MeshBasicMaterial;
   private readonly timeU = { value: 0 };
@@ -360,18 +364,35 @@ export class TitanRenderer {
       this.scene.add(group);
       this.farejadores.push({ group, parts });
     }
-    this.farejadores.forEach(({ group, parts }, i) => {
+    if (list.length && !this.rigTemplate && !this.rigLoading) this.loadRig();
+    this.farejadores.forEach((e, i) => {
       const s = list[i];
-      group.visible = !!s;
+      if (this.rigTemplate && !e.rig) { e.rig = this.rigTemplate.make(); this.scene.add(e.rig.group); } // o molde chegou: este animal passa ao rig
+      const active = e.rig ? e.rig.group : e.group;
+      e.group.visible = !!s && !e.rig;
+      if (e.rig) e.rig.group.visible = !!s;
       if (!s) return;
-      group.scale.setScalar(s.scale);
-      group.position.set(s.x, s.y + (s.pose.bob + 0.72 * Math.sin(s.pose.roll / 2)) * s.scale, s.z); // de costas o dorso fica no chão: sobe o centro para não afundar
-      group.rotation.set(s.pose.roll, s.yaw, 0);
-      parts.cabeca.rotation.set(0, s.pose.headYaw, s.pose.headPitch);
-      parts.cauda.rotation.set(0, s.pose.tailYaw, 0);
-      (['pata_dd', 'pata_de', 'pata_td', 'pata_te'] as const).forEach((k, j) => parts[k].rotation.set(0, 0, s.pose.legs[j]));
+      active.scale.setScalar(s.scale);
+      active.position.set(s.x, s.y + (s.pose.bob + 0.72 * Math.sin(s.pose.roll / 2)) * s.scale, s.z); // de costas o dorso fica no chão: sobe o centro para não afundar
+      active.rotation.order = 'YXZ';
+      active.rotation.set(s.pose.roll, s.yaw, 0);
+      if (e.rig) { e.rig.apply(s.pose); return; }
+      e.parts.cabeca.rotation.set(0, s.pose.headYaw, s.pose.headPitch);
+      e.parts.cauda.rotation.set(0, s.pose.tailYaw, 0);
+      (['pata_dd', 'pata_de', 'pata_td', 'pata_te'] as const).forEach((k, j) => e.parts[k].rotation.set(0, 0, s.pose.legs[j]));
     });
   }
+  /** Carrega o GLB com rig uma vez (falha = continua nas 7 partes, sem tentar de novo). */
+  private loadRig(): void {
+    this.rigLoading = true;
+    loadFarejadorRig(titanFarejadorRigUrl, (map) => {
+      const m = new THREE.MeshBasicMaterial({ map, vertexColors: true, fog: true, side: THREE.DoubleSide });
+      patchDayLight(m, this.ambient);
+      return m;
+    }).then((t) => { this.rigTemplate = t; }, (e) => { console.warn('Titã: rig do Farejador não carregou; ficam as 7 partes', e); });
+  }
+  /** O Farejador usa o rig? (diagnóstico e testes de navegador.) */
+  get farejadorRigAtivo(): boolean { return this.farejadores.some((e) => !!e.rig); }
   /** Plantas e nozes desenhadas (diagnóstico e testes de navegador). */
   get nutPlantCount(): number { return this.nutPlantMesh.count; }
   get nutFruitCount(): number { return this.nutFruitMesh.count; }

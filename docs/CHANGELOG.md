@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.121.0 — Titã: Farejador de Duna com rig e textura 2K (20/11/2026)
+- **Arte do dono do produto** (Drive: retopologia, UV, baking, texturas 2K e rig). **ADR 0064.**
+- GLB leve (`extract-titan-farejador-rig.py`): 81 malhas → 1 malha skinada de 23.768 triângulos, 18 ossos, Base Color 1024² JPEG (1,2 MB), mesma caixa do modelo antigo. Carrega em segundo plano; até chegar (ou se falhar) valem as 7 partes. `assetsInclude` de `.glb` no Vite.
+- `render/farejadorRig.ts`: ossos girados no espaço do modelo pela `farejadorPose` (passo com joelho e pé, cabeça e pescoço, cauda em três segmentos, galope, atordoado de costas); sem clipes (o pacote não traz animações no GLB).
+- Testes `farejadorRig.test.ts` (+2; 1.003 no total). Conferido a 740 × 360: os dois tamanhos com a textura nova, de costas atordoado, e pés/cabeça/cauda movendo no sentido certo.
+
 ## Orvalis v0.120.0 — Titã: cobre de Duna, Haste Seca e Picareta de Rocha (20/11/2026)
 - **Etapa 1 de 4 do pacote "O que a duna guarda"** (Drive; números provisórios autorizados). **ADR 0063.**
 - **Gerador v7:** 2 afloramentos de rocha com 3 veios de cobre cada (≥ 28 blocos da toca do Farejador) e até 8 hastes secas de junco no chão; região e relevo da v6.
