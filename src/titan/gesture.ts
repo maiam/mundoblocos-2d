@@ -7,7 +7,9 @@ import { DRAG_TOLERANCE_PX, HOLD_MS, breakProgress, crackStage, type TargetKind 
  *  IDLE ──press(alvo)──▶ ARMED ──solta <200 ms, sem arrasto, alvo e face iguais──▶ coloca (uma vez) ──▶ IDLE
  *                          │ arrasto > tolerância ──▶ CAMERA_DRAG ──solta──▶ IDLE (sem ação)
  *                          │ ≥ 200 ms no mesmo bloco ──▶ BREAKING ──tempo total──▶ COMPLETED (uma ação) ──solta──▶ IDLE
- *                          │ alvo mudou/saiu do alcance ──▶ COMPLETED (consumido, sem ação) ──solta──▶ IDLE
+ *                          │ alvo mudou antes dos 200 ms ou saiu do alcance ──▶ COMPLETED (consumido, sem ação) ──solta──▶ IDLE
+ *  Continuar quebrando (ADR 0055): **segurando**, ao arrastar a mira para outro bloco, a quebra segue nele (tempo cheio, do zero). Em BREAKING, trocar de bloco quebrável recomeça no novo;
+ *  depois de uma quebra (COMPLETED), arrastar além da tolerância e apontar um bloco quebrável recomeça a quebra. Sem arrastar não há quebra em série (o bloco de trás não cede sozinho).
  * O tempo é conferido também em `release`: uma pressão de 200 ms ou mais **nunca** vira colocação por atraso de quadro.
  */
 export type GestureState = 'IDLE' | 'ARMED' | 'CAMERA_DRAG' | 'BREAKING' | 'COMPLETED';
@@ -47,6 +49,11 @@ export class InteractionGesture {
   private t0 = 0;
   private start: GestureTarget | null = null;
   private total: number | null = null;
+  /** O gesto já chegou a quebrar (BREAKING): só então arrastar a mira recomeça a quebra no próximo bloco. */
+  private mined = false;
+  /** Último valor de arrasto recebido (toque: distância do ponto de pressão; mouse: movimento acumulado) e o valor na última (re)partida/conclusão. */
+  private lastDist = 0;
+  private dragBase = 0;
 
   constructor(private readonly hooks: GestureHooks, private readonly holdMs = HOLD_MS, private readonly dragTolerance = DRAG_TOLERANCE_PX) {}
 
@@ -63,6 +70,7 @@ export class InteractionGesture {
     this.pointer = pointer;
     this.t0 = now;
     this.lastOutcome = null;
+    this.mined = false; this.lastDist = 0; this.dragBase = 0;
     if (!target) { this.start = null; this.total = null; this.state = 'CAMERA_DRAG'; return true; }
     this.start = { ...target };
     this.total = this.hooks.totalMs(target);
@@ -72,8 +80,9 @@ export class InteractionGesture {
 
   /** Distância do ponteiro até onde pressionou (toque) ou movimento relativo acumulado (mouse capturado), em px. */
   drag(pointer: number | string, distancePx: number): void {
-    if (pointer !== this.pointer || this.state !== 'ARMED') return;
-    if (distancePx > this.dragTolerance) this.state = 'CAMERA_DRAG'; // entrega o movimento à câmera; ao soltar, nada acontece
+    if (pointer !== this.pointer) return;
+    this.lastDist = distancePx;
+    if (this.state === 'ARMED' && distancePx > this.dragTolerance) this.state = 'CAMERA_DRAG'; // entrega o movimento à câmera; ao soltar, nada acontece
   }
 
   /** Chamar a cada quadro com a mira atual (ou null). */
@@ -83,9 +92,23 @@ export class InteractionGesture {
       if (now - this.t0 >= this.holdMs) {
         if (this.total === null) { this.consume('cancelled'); return; } // nada a quebrar (rocha-mãe)
         this.state = 'BREAKING';
+        this.mined = true;
         this.tick(now, target!);
       }
     } else if (this.state === 'BREAKING') this.tick(now, target);
+    else if (this.state === 'COMPLETED' && this.mined && Math.abs(this.lastDist - this.dragBase) > this.dragTolerance && target && this.hooks.totalMs(target) !== null) this.begin(now, target); // arrastou depois de quebrar: segue no próximo
+  }
+
+  /** Começa (ou recomeça) a quebra de `target` com o gesto ainda pressionado: tempo cheio, do zero. */
+  private begin(now: number, target: GestureTarget): void {
+    this.start = { ...target };
+    this.total = this.hooks.totalMs(target);
+    this.t0 = now;
+    this.dragBase = this.lastDist;
+    this.lastElapsed = 0;
+    this.mined = true;
+    this.state = 'BREAKING';
+    this.tick(now, target);
   }
 
   /** Soltou. O tempo vem do evento de soltar (`pointerup`/`mouseup`), não do quadro. */
@@ -116,7 +139,12 @@ export class InteractionGesture {
   private lastElapsed = 0;
 
   private tick(now: number, target: GestureTarget | null): void {
-    if (!sameCell(target, this.start)) { this.consume('cancelled'); return; } // trocou de bloco ou saiu do alcance
+    if (!sameCell(target, this.start)) { // trocou de bloco: segue no novo se quebra; sem alvo ou rocha-mãe, espera o próximo arrasto
+      if (target && this.hooks.totalMs(target) !== null) { this.begin(now, target); return; }
+      this.dragBase = this.lastDist;
+      this.consume('cancelled');
+      return;
+    }
     const elapsed = now - this.t0;
     this.lastElapsed = elapsed;
     if (this.total !== null && elapsed >= this.total) { this.doComplete(target!); return; }
@@ -132,6 +160,7 @@ export class InteractionGesture {
   private doComplete(t: GestureTarget): void {
     this.lastOutcome = this.hooks.complete(t).ok ? 'broke' : 'failed';
     this.hooks.effect(null, 0, 0);
+    this.dragBase = this.lastDist;
     this.state = 'COMPLETED';
   }
 
@@ -148,5 +177,6 @@ export class InteractionGesture {
     this.start = null;
     this.total = null;
     this.lastElapsed = 0;
+    this.mined = false;
   }
 }

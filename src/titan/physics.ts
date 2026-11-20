@@ -30,6 +30,9 @@ export function collides(v: TitanVolume, x: number, y: number, z: number): boole
 
 /** Degrau automático de meia altura (a laje): o corpo sobe a laje andando, sem pular; contra cubo inteiro (1 m) continua barrado. */
 const STEP = 0.5;
+/** Salto automático (ADR 0055): andando no chão contra um degrau de 1 bloco com espaço livre em cima, o corpo pula sozinho e sobe se continuar andando. */
+const AUTO_JUMP_PROBE = 0.35;
+const AUTO_JUMP_MIN_INPUT = 0.35; // só conta a componente de entrada que empurra contra o bloco (raspar numa parede na diagonal não pula)
 
 /** Altura do apoio ao cair: o topo mais alto sob os pés entre a posição nova (`ny`) e a anterior (`oldY`). Cai no chão inteiro ou na laje. */
 function landingY(v: TitanVolume, x: number, z: number, ny: number, oldY: number): number {
@@ -73,23 +76,31 @@ function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
     b.vy = Math.max(b.vy - GRAVITY * dt, -TERMINAL);
     if (input.jump && grounded) b.vy = JUMP_SPEED;
   }
-  moveAxis(v, b, 'x', b.vx * dt);
-  moveAxis(v, b, 'z', b.vz * dt);
+  const wasGrounded = b.onGround && !b.inLiquid;
+  const blockedX = moveAxis(v, b, 'x', b.vx * dt);
+  const blockedZ = moveAxis(v, b, 'z', b.vz * dt);
+  // salto automático: barrado por um degrau de 1 bloco (e o espaço em cima do degrau, na direção do passo, está livre) → pula sem apertar o botão
+  if (wasGrounded && !input.jump && ((blockedX && Math.abs(input.dirX) >= AUTO_JUMP_MIN_INPUT) || (blockedZ && Math.abs(input.dirZ) >= AUTO_JUMP_MIN_INPUT))) {
+    const m = Math.hypot(input.dirX, input.dirZ) || 1;
+    if (!collides(v, b.x + (input.dirX / m) * AUTO_JUMP_PROBE, b.y + 1, b.z + (input.dirZ / m) * AUTO_JUMP_PROBE)) b.vy = JUMP_SPEED;
+  }
   b.onGround = false; // `moveAxis` volta a ligar quando a queda é barrada pelo chão
   moveAxis(v, b, 'y', b.vy * dt);
 }
 
-function moveAxis(v: TitanVolume, b: Body, axis: 'x' | 'y' | 'z', d: number): void {
-  if (d === 0) return;
+/** Move o corpo num eixo; devolve se um sólido barrou o movimento (e o degrau de meia altura não resolveu). */
+function moveAxis(v: TitanVolume, b: Body, axis: 'x' | 'y' | 'z', d: number): boolean {
+  if (d === 0) return false;
   const nx = axis === 'x' ? b.x + d : b.x, ny = axis === 'y' ? b.y + d : b.y, nz = axis === 'z' ? b.z + d : b.z;
-  if (!collides(v, nx, ny, nz)) { b.x = nx; b.y = ny; b.z = nz; return; }
+  if (!collides(v, nx, ny, nz)) { b.x = nx; b.y = ny; b.z = nz; return false; }
   // no chão, contra uma laje: sobe o degrau de meia altura e segue andando
-  if (axis !== 'y' && b.onGround && !collides(v, nx, b.y + STEP, nz) && collides(v, nx, b.y + STEP / 2, nz)) { b.x = nx; b.y += STEP; b.z = nz; return; }
+  if (axis !== 'y' && b.onGround && !collides(v, nx, b.y + STEP, nz) && collides(v, nx, b.y + STEP / 2, nz)) { b.x = nx; b.y += STEP; b.z = nz; return false; }
   // encosta na face do bloco que barrou
   if (axis === 'x') { b.x = d > 0 ? Math.floor(nx + BODY_HALF - EPS) - BODY_HALF - EPS : Math.floor(nx - BODY_HALF + EPS) + 1 + BODY_HALF + EPS; b.vx = 0; }
   else if (axis === 'z') { b.z = d > 0 ? Math.floor(nz + BODY_HALF - EPS) - BODY_HALF - EPS : Math.floor(nz - BODY_HALF + EPS) + 1 + BODY_HALF + EPS; b.vz = 0; }
   else if (d > 0) { b.y = Math.floor(ny + BODY_HEIGHT - EPS) - BODY_HEIGHT - EPS; b.vy = 0; }
   else { b.y = landingY(v, b.x, b.z, ny, b.y); b.vy = 0; b.onGround = true; }
+  return true;
 }
 
 /** Direção de olhar (yaw/pitch, Three.js: yaw 0 olha para −Z) → vetor unitário. */
