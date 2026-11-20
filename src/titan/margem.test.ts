@@ -15,7 +15,7 @@ import { blockSpan, blocksLight, isCollectBlock, isFull, isMarco, isPanel, isSol
 
 const FLAT_Y = 200;
 function arena(): TitanVolume {
-  const v = new TitanVolume(new TitanGenerator(42));
+  const v = new TitanVolume(new TitanGenerator(42, 5));
   for (let x = 4; x <= 20; x++) for (let z = 4; z <= 20; z++) v.place(x, FLAT_Y - 1, z, T.DARK_ROCK);
   return v;
 }
@@ -74,7 +74,7 @@ describe('Marco de Margem e Painel de Junco: ids, modelos e regras (ADR 0058)', 
 describe('fabricar, colocar, recolher e persistir', () => {
   it('Marco: 1 fragmento + 1 junco (Mesa) → 1 marco, recolhido inteiro, com o giro no id e persistência', async () => {
     const st = new MemoryTitanStorage();
-    const s = await openSession(st, 42, () => 1);
+    const s = await openSession(st, 42, () => 1, undefined, 5);
     s.inventory.add(Item.ROCK_SHARD, 1); s.inventory.add(Item.GLASS_REED, 1);
     expect(craft(s.inventory, recipeById('marco')!, null)).toEqual({ ok: false, reason: 'station' });
     expect(craft(s.inventory, recipeById('marco')!, 'workbench').ok).toBe(true);
@@ -96,7 +96,7 @@ describe('fabricar, colocar, recolher e persistir', () => {
 
   it('Painel: 2 juncos + 1 rocha (Mesa) → 2 painéis; o eixo vem do olhar; persiste e é recolhido', async () => {
     const st = new MemoryTitanStorage();
-    const s = await openSession(st, 42, () => 1);
+    const s = await openSession(st, 42, () => 1, undefined, 5);
     s.inventory.add(Item.GLASS_REED, 2); s.inventory.add(Item.DARK_ROCK, 1);
     expect(craft(s.inventory, recipeById('painel')!, 'workbench').ok).toBe(true);
     expect(s.inventory.total(Item.PAINEL)).toBe(2);
@@ -117,7 +117,7 @@ describe('fabricar, colocar, recolher e persistir', () => {
   });
 
   it('a luz de uma lanterna atravessa o painel (trama aberta) mas não a rocha', async () => {
-    const s = await openSession(new MemoryTitanStorage(), 42, () => 1);
+    const s = await openSession(new MemoryTitanStorage(), 42, () => 1, undefined, 5);
     const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 3, bz = Math.floor(a.z) + 2;
     s.volume.place(bx, 65, bz, T.LANTERN);
     s.volume.place(bx + 1, 65, bz, T.PAINEL); s.volume.place(bx + 1, 66, bz, T.DARK_ROCK);

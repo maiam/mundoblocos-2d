@@ -12,9 +12,13 @@ export const SECTIONS = (Y_MAX - Y_MIN + 1) / SECTION; // 24
 export const LAKE_LAST_Y = 63;
 export const LAKE_SURFACE_Y = 64;
 
-/** Região de teste da primeira entrega: 4 × 4 chunks (64 × 64 blocos) em volta da origem, x/z em [-32, 32). */
-export const REGION_MIN = -32;
-export const REGION_MAX = 32;
+/** Região jogável em volta da origem, x/z em [min, max). Por versão do gerador (ADR 0062): v1–v5 = 4 × 4 chunks (64 × 64 blocos); v6 em diante = 8 × 8 chunks (128 × 128). */
+export interface Region { readonly min: number; readonly max: number }
+export const REGION_LEGACY: Region = { min: -32, max: 32 };
+export const REGION_V6: Region = { min: -64, max: 64 };
+export const regionFor = (generatorVersion: number): Region => (generatorVersion >= 6 ? REGION_V6 : REGION_LEGACY);
+export const REGION_MIN = REGION_LEGACY.min;
+export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
 export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23 } as const;
@@ -108,7 +112,7 @@ export function tileFor(id: number, face: Face): number {
   }
 }
 
-export const inRegion = (x: number, z: number): boolean => x >= REGION_MIN && x < REGION_MAX && z >= REGION_MIN && z < REGION_MAX;
+export const inRegion = (x: number, z: number, r: Region = REGION_LEGACY): boolean => x >= r.min && x < r.max && z >= r.min && z < r.max;
 
 // ---- Endereçamento (docs Titã 05, §2) ----
 export const chunkOf = (v: number): number => Math.floor(v / 16);

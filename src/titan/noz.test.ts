@@ -28,7 +28,7 @@ describe('gerador v5: plantas de Noz de Duna (ADR 0060)', () => {
     }
   });
   it('é puro por seed e não muda o terreno da v4', () => {
-    const a = new TitanGenerator(42), b = new TitanGenerator(42), old = new TitanGenerator(42, 4);
+    const a = new TitanGenerator(42, 5), b = new TitanGenerator(42, 5), old = new TitanGenerator(42, 4);
     expect(b.nutPlants).toEqual(a.nutPlants);
     for (let x = -20; x <= 20; x += 5) for (let z = -20; z <= 20; z += 5) for (const y of [60, 64, 65]) expect(a.blockAt(x, y, z)).toBe(old.blockAt(x, y, z));
     expect(a.reeds).toEqual(old.reeds);

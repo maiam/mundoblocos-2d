@@ -1,6 +1,6 @@
 import { Noise } from '../world/noise';
 import { hash2 } from '../world/random';
-import { inRegion, LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel';
+import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel';
 
 /**
  * Gerador da Margem Silenciosa (ADR 0039). Função pura de **seed + versão + coordenadas globais**: nada depende da ordem de carregamento.
@@ -15,8 +15,9 @@ import { inRegion, LAKE_LAST_Y, REGION_MAX, REGION_MIN, T, Y_MIN } from './voxel
  * O terreno fora das formações segue idêntico nas três versões.
  * v4 (ADR 0045): o depósito de **brasa de âmbar** (`T.EMBER`, no topo de uma coluna de areia úmida alcançável a pé) e os grupos de **junco de vidro** em volta dele; tudo o mais é igual à v3.
  * v5 (ADR 0060, 0061): as **plantas de Noz de Duna** (comida): 2 perto da chegada, em terreno seco e alcançável, e um grupo de até 4 numa enseada afastada, com a **toca do Farejador de Duna** (`den`) no centro dela; terreno, brasa e juncos idênticos à v4.
+ * v6 (ADR 0062): a região passa a **8 × 8 chunks (128 × 128 blocos)**; o relevo longe do lago deixa de subir em paredões (a subida é gradual e limitada: o mundo além da bacia é uma planície de dunas que sobe devagar até a borda); o resto das regras é o da v5.
  */
-export const GENERATOR_VERSION = 5;
+export const GENERATOR_VERSION = 6;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -69,11 +70,17 @@ export class TitanGenerator {
   /** v5: a toca do Farejador de Duna (ADR 0061), no centro da enseada de plantas; null se a região não teve enseada. */
   readonly den: { x: number; y: number; z: number } | null = null;
   private reachMemo: Set<number> | null = null;
+  /** A coluna (x, z) está dentro da região jogável desta versão? */
+  inRegion(x: number, z: number): boolean { return inRegion(x, z, this.region); }
   /** v3: a busca natural não achou as duas formações e o afloramento de reserva entrou (diagnóstico e testes). */
   outcropFallback = false;
 
+  /** Região jogável desta versão (v1–v5: 64 × 64; v6: 128 × 128). */
+  readonly region: Region;
+
   constructor(readonly seed: number, version: number = GENERATOR_VERSION) {
     this.version = version;
+    this.region = regionFor(version);
     this.nDunas = new Noise(derive(seed, PURPOSE.dunas));
     this.nLago = new Noise(derive(seed, PURPOSE.lago));
     this.nRocha = new Noise(derive(seed, PURPOSE.rocha));
@@ -108,7 +115,7 @@ export class TitanGenerator {
     const out: Array<{ x: number; z: number; h: number }> = [];
     for (const k of reach) {
       const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
-      if (x < REGION_MIN + 4 || x >= REGION_MAX - 4 || z < REGION_MIN + 4 || z >= REGION_MAX - 4) continue;
+      if (x < this.region.min + 4 || x >= this.region.max - 4 || z < this.region.min + 4 || z >= this.region.max - 4) continue;
       if (Math.hypot(x - a.x, z - a.z) > 30 || this.inClearing(x, z, 3)) continue;
       const c = this.column(x, z);
       if (strict && (c.surface !== T.DAMP_SAND || c.top < 63 || c.top > 65)) continue; // reserva (`strict = false`): qualquer coluna alcançável e livre
@@ -132,7 +139,7 @@ export class TitanGenerator {
     for (const c of centers) {
       for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) {
         const x = c.x + dx, z = c.z + dz, k = key(x, z);
-        if (seen.has(k) || (Math.abs(x - ex) <= 1 && Math.abs(z - ez) <= 1) || !reach.has(k) || !inRegion(x, z)) continue;
+        if (seen.has(k) || (Math.abs(x - ex) <= 1 && Math.abs(z - ez) <= 1) || !reach.has(k) || !this.inRegion(x, z)) continue;
         const col = this.column(x, z);
         if (col.surface !== T.DAMP_SAND || col.top < 63 || col.top > 65) continue;
         if (hash2(base, x * 131 + z, 5) > 0.5) continue;
@@ -155,7 +162,7 @@ export class TitanGenerator {
     const cands: Array<{ x: number; z: number; top: number; h: number; d: number }> = [];
     for (const k of reach) {
       const x = Math.floor(k / 8192) - 4096, z = (k % 8192) - 4096;
-      if (x < REGION_MIN + 4 || x >= REGION_MAX - 4 || z < REGION_MIN + 4 || z >= REGION_MAX - 4) continue;
+      if (x < this.region.min + 4 || x >= this.region.max - 4 || z < this.region.min + 4 || z >= this.region.max - 4) continue;
       if (this.inClearing(x, z, 3) || reeds.has(key(x, z))) continue;
       const c = this.column(x, z);
       if ((c.surface !== T.SAND && c.surface !== T.DAMP_SAND) || c.top < 64 || c.top > 66) continue;
@@ -205,7 +212,7 @@ export class TitanGenerator {
       const t = this.baseTop(x, z);
       for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, nz = z + dz;
-        if (nx < REGION_MIN + 1 || nx >= REGION_MAX - 1 || nz < REGION_MIN + 1 || nz >= REGION_MAX - 1) continue;
+        if (nx < this.region.min + 1 || nx >= this.region.max - 1 || nz < this.region.min + 1 || nz >= this.region.max - 1) continue;
         const k = key(nx, nz);
         if (seen.has(k)) continue;
         const nt = this.baseTop(nx, nz);
@@ -228,7 +235,7 @@ export class TitanGenerator {
     cells.sort((p, q) => p.d - q.d || p.x - q.x || p.z - q.z);
     for (const c of cells) {
       if (this.inClearing(c.x, c.z, strict ? 4 : 3)) continue;
-      if (c.x < REGION_MIN + 4 || c.x >= REGION_MAX - 4 || c.z < REGION_MIN + 4 || c.z >= REGION_MAX - 4) continue;
+      if (c.x < this.region.min + 4 || c.x >= this.region.max - 4 || c.z < this.region.min + 4 || c.z >= this.region.max - 4) continue;
       if (strict && (this.lakeField(c.x, c.z) > -3 || this.rawTop(c.x, c.z) > 68)) continue;
       if (others.some((o) => Math.hypot(o.x - c.x, o.z - c.z) < (strict ? 8 : 6))) continue;
       return { x: c.x, z: c.z };
@@ -280,6 +287,10 @@ export class TitanGenerator {
       return LAKE_LAST_Y - 1 - Math.min(9, Math.floor((d - 1) * 0.9));
     }
     const dunes = Math.max(0, this.nDunas.noise2(x / 9 + 2.2, z / 9 + 5.4)) * 2.6;
+    if (this.version >= 6) { // v6: subida gradual e limitada (sem o degrau de 5 blocos em s = 24): a região de 128 × 128 continua andável até a borda
+      const gentle = Math.min(6, Math.max(0, s - 3) * 0.16), slope = s > 24 ? Math.min(14, Math.floor((s - 24) * 0.22)) : 0;
+      return 64 + Math.floor(gentle + dunes) + slope;
+    }
     const rise = Math.max(0, s - 3) * 0.16;
     const scarp = s > 24 ? 5 + Math.floor((s - 24) * 0.45) : 0;
     return 64 + Math.floor(rise + dunes) + scarp;
@@ -290,7 +301,7 @@ export class TitanGenerator {
   /** Raspa de rugosidade da caixa da clareira no relevo bruto; Infinity = não serve (lago, fora da região ou desnivelada demais). */
   private clearingScore(x0: number, z0: number): number {
     // margem de 2 blocos em volta da clareira também precisa ser seca e estar dentro da região
-    if (x0 - 2 < REGION_MIN + 2 || z0 - 2 < REGION_MIN + 2 || x0 + CLEARING + 2 > REGION_MAX - 2 || z0 + CLEARING + 2 > REGION_MAX - 2) return Infinity;
+    if (x0 - 2 < this.region.min + 2 || z0 - 2 < this.region.min + 2 || x0 + CLEARING + 2 > this.region.max - 2 || z0 + CLEARING + 2 > this.region.max - 2) return Infinity;
     let rough = 0;
     for (let dx = -2; dx < CLEARING + 2; dx++) for (let dz = -2; dz < CLEARING + 2; dz++) {
       const x = x0 + dx, z = z0 + dz;
@@ -311,14 +322,14 @@ export class TitanGenerator {
     let best: { x0: number; z0: number } | null = null;
     // busca em ordem determinística: sorteios derivados da seed, tentativas limitadas; aceita o primeiro de rugosidade baixa
     for (let k = 0; k < 600 && !best; k++) {
-      const x0 = Math.floor(hash2(base, k, 11) * (REGION_MAX - REGION_MIN - 16)) + REGION_MIN + 8;
-      const z0 = Math.floor(hash2(base, k, 23) * (REGION_MAX - REGION_MIN - 16)) + REGION_MIN + 8;
+      const x0 = Math.floor(hash2(base, k, 11) * (this.region.max - this.region.min - 16)) + this.region.min + 8;
+      const z0 = Math.floor(hash2(base, k, 23) * (this.region.max - this.region.min - 16)) + this.region.min + 8;
       if (this.clearingScore(x0, z0) <= 14) best = { x0, z0 };
     }
     // alternativa segura (mesma seed): varredura em ordem fixa, escolhe a de menor rugosidade (empate = primeira)
     if (!best) {
       let bestScore = Infinity;
-      for (let z0 = REGION_MIN; z0 < REGION_MAX; z0++) for (let x0 = REGION_MIN; x0 < REGION_MAX; x0++) {
+      for (let z0 = this.region.min; z0 < this.region.max; z0++) for (let x0 = this.region.min; x0 < this.region.max; x0++) {
         const sc = this.clearingScore(x0, z0);
         if (sc < bestScore) { bestScore = sc; best = { x0, z0 }; }
       }
@@ -349,7 +360,7 @@ export class TitanGenerator {
         const x = Math.round(a.x + Math.cos(phi) * dist);
         const z = Math.round(a.z + Math.sin(phi) * dist);
         const m = v1 ? 6 : 5;
-        if (x < REGION_MIN + m || x >= REGION_MAX - m || z < REGION_MIN + m || z >= REGION_MAX - m) continue;
+        if (x < this.region.min + m || x >= this.region.max - m || z < this.region.min + m || z >= this.region.max - m) continue;
         if (this.lakeField(x, z) > -4) continue; // seca e afastada da margem
         if (this.rawTop(x, z) > 68) continue; // não sobre a falésia
         if (!v1 && !this.flatAround(x, z)) continue; // v2: terreno plano em volta (lascas alcançáveis)

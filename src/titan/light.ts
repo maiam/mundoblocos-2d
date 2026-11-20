@@ -73,11 +73,11 @@ export class LightEngine {
   /** Durante o cálculo completo as mudanças não são avisadas. */
   private silent = false;
 
-  constructor(private readonly isOpaque: (x: number, y: number, z: number) => boolean, private readonly onChange: (x: number, y: number, z: number) => void = () => {}) {}
+  constructor(private readonly isOpaque: (x: number, y: number, z: number) => boolean, private readonly onChange: (x: number, y: number, z: number) => void = () => {}, private readonly inRegionXZ: (x: number, z: number) => boolean = (x, z) => inRegion(x, z)) {}
 
   get(x: number, y: number, z: number): number { return this.store.get(x, y, z); }
 
-  private inside(x: number, y: number, z: number): boolean { return y >= Y_MIN && y <= Y_MAX && inRegion(x, z); }
+  private inside(x: number, y: number, z: number): boolean { return y >= Y_MIN && y <= Y_MAX && this.inRegionXZ(x, z); }
 
   private put(x: number, y: number, z: number, v: number): void {
     if (this.store.get(x, y, z) === v) return;

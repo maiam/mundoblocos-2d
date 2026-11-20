@@ -15,7 +15,7 @@ import { blockSpan, isFull, isSlab, isSolid, T } from './voxel';
 
 const FLAT_Y = 200;
 function arena(): TitanVolume {
-  const v = new TitanVolume(new TitanGenerator(42));
+  const v = new TitanVolume(new TitanGenerator(42, 5));
   for (let x = 4; x <= 20; x++) for (let z = 4; z <= 20; z++) v.place(x, FLAT_Y - 1, z, T.DARK_ROCK);
   return v;
 }
@@ -119,7 +119,7 @@ describe('malha das lajes superior e dupla', () => {
 describe('lajes na sessão: colocar, fundir, quebrar e persistir', () => {
   it('inferior no chão, superior no teto/na lateral alta, dupla ao fundir; a dupla devolve 2 lajes; tudo persiste ao reabrir', async () => {
     const st = new MemoryTitanStorage();
-    const s = await openSession(st, 42, () => 1);
+    const s = await openSession(st, 42, () => 1, undefined, 5);
     s.inventory.add(Item.SLAB, 10);
     const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.SLAB)!;
     s.inventory.move(slot, 0);
@@ -154,7 +154,7 @@ describe('lajes na sessão: colocar, fundir, quebrar e persistir', () => {
   });
 
   it('não funde por cima do corpo do jogador, e a laje dupla com a mochila sem espaço para 2 fica no lugar', async () => {
-    const s = await openSession(new MemoryTitanStorage(), 42, () => 1);
+    const s = await openSession(new MemoryTitanStorage(), 42, () => 1, undefined, 5);
     s.inventory.add(Item.SLAB, 2);
     const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.SLAB)!;
     s.inventory.move(slot, 0);
