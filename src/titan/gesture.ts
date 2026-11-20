@@ -18,6 +18,8 @@ export interface GestureTarget {
   x: number; y: number; z: number;
   /** Normal da face apontada (a colocação vai para a célula adjacente). */
   nx: number; ny: number; nz: number;
+  /** Altura 0–1 do ponto apontado dentro da célula (laje superior × inferior ao colocar, ADR 0056). */
+  hy?: number;
   kind: TargetKind;
   /** Id do bloco (kind 'block') e id da lasca (kind 'shard'). */
   block?: number;

@@ -496,9 +496,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let target: Hit | null = null;
   const toTarget = (h: Hit | null): GestureTarget | null => {
     if (!h) return null;
-    if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, kind: 'shard', item: h.item };
+    if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: 'shard', item: h.item };
     const id = vol.get(h.x, h.y, h.z);
-    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
+    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
   };
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
   window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto

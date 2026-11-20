@@ -106,6 +106,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Bancada 3 × 3 e painéis de basalto (v0.104.0, ADR 0049)
 - **Grade da mesa** (`inventory.ts`): `BENCH_START` 41–49, saída `BENCH_OUT` 50, separada da pessoal; `matchBench` (quantidades exatas, qualquer disposição), `takeBenchResult` (atômica), `returnBench` (devolve ao fechar; o que não couber fica na grade e no save). Inventário gravado `v: 3` com `bench`.
+- **Lajes superior e dupla** (ADR 0056): ids 12/16/17 (inferior, superior, dupla); colocação por face e altura (`slabs.ts`, `Hit.hy`), fusão em dupla (devolve 2); física pela faixa da célula (`blockSpan`); nunca trate a laje como metade fixa de baixo.
 - **Salto automático e quebra contínua** (ADR 0055): contra degrau de 1 bloco o corpo pula sozinho (`physics.ts`); segurando, a quebra segue no próximo bloco ao trocar de alvo ou ao arrastar depois de quebrar (`gesture.ts`, tempo cheio por bloco, sem quebra em série sem arrasto).
 - **Som** (ADR 0054): Web Audio sintetizada (`titan/gameAudio.ts`; regras puras em `titan/sounds.ts`): quebra por material (rocha, areia, gelo), colocar, lanterna, coleta e passos (a cada 2,4 blocos no chão); `unlock()` no primeiro gesto (iOS); botão de mudo no menu (`localStorage` `orvalis-titan-som`).
 - **Arte de 32 px** (ADR 0053): atlas de itens 128 × 128 (`titan-itens-32px.webp`; ids 5, 6 e 8 em 32 px, o resto 2× da arte de 16 px) e junco de 128 × 32; interface em escala inteira (`--ic` 64/32 px, `--icm` 32 px), nunca 1,5×.

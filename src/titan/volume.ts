@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, isWorkbench, localOf, sectionOf, T, unpackIndex, workbenchTurn, Y_MAX, Y_MIN } from './voxel';
+import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, isWorkbench, localOf, sectionOf, T, unpackIndex, workbenchTurn, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -58,6 +58,12 @@ export class TitanVolume {
   bodyHeight(x: number, y: number, z: number): number {
     if (!inRegion(x, z)) return 1;
     return blockHeight(this.get(x, y, z));
+  }
+
+  /** Faixa `[baixo, topo]` ocupada na célula para o corpo (a parede invisível em volta da região conta como cubo inteiro). */
+  bodySpan(x: number, y: number, z: number): readonly [number, number] {
+    if (!inRegion(x, z)) return [0, 1];
+    return blockSpan(this.get(x, y, z));
   }
 
   /** Pode quebrar esta célula? Editável e alvo da mira (sólido ou lanterna); rocha-mãe e líquido não. */
@@ -178,7 +184,7 @@ export class TitanVolume {
   load(chunks: Array<{ cx: number; cz: number; edits: Array<[number, number]> }>): void {
     for (const c of chunks) {
       const m = new Map<number, number>();
-      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.WORKBENCH_270) m.set(idx, id);
+      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.SLAB_DOUBLE) m.set(idx, id);
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
       for (const [idx, id] of m) if (isWorkbench(id)) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.workbenches.set(lightKey(x, u.y, z), [x, u.y, z, workbenchTurn(id)]); }
       for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }

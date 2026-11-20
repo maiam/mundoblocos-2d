@@ -1,6 +1,6 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
-import { isFull, isWorkbench, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
+import { isFull, isSlab, isWorkbench, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -43,7 +43,7 @@ const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX,
 class Builder {
   pos: number[] = []; uv: number[] = []; col: number[] = []; glow: number[] = []; idx: number[] = [];
   /** `level` = luz de lanterna na célula que a face enxerga. */
-  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0, half = false): void {
+  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0, half: 0 | 1 | 2 = 0): void {
     const F = FACES[fi];
     let [u0, v0, u1, v1] = tileUV(tile);
     // laje (meia altura): a lateral usa só os 8 px de cima do tile (16 × 8 px: mesma densidade de texels do cubo) e o topo/base ficam inteiros
@@ -53,7 +53,7 @@ class Builder {
     const w = warm(level);
     for (let k = 0; k < 4; k++) {
       const c = F.c[k];
-      this.pos.push(x + c[0], y + (half ? c[1] * 0.5 : c[1]), z + c[2]);
+      this.pos.push(x + c[0], y + (half === 2 ? 0.5 + c[1] * 0.5 : half === 1 ? c[1] * 0.5 : c[1]), z + c[2]); // half: 1 = laje inferior, 2 = superior
       this.uv.push(CORNER_UV[k][0] ? u1 : u0, CORNER_UV[k][1] ? v1 : v0);
       this.col.push(shade, shade, shade);
       this.glow.push(w + emit, w * 0.72 + emit * 0.6, w * 0.38 + emit * 0.25);
@@ -90,9 +90,12 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
       const level = lit ? vol.light(x0 + lx + n[0], y0 + ly + n[1], z0 + lz + n[2]) : 0;
       if (id === T.LAKE) {
         if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level); // só a superfície (e bordas expostas ao ar)
-      } else if (id === T.SLAB) {
-        // laje: o topo sempre aparece (fica em y + 0,5); a base só sem cubo inteiro embaixo; as laterais só sem cubo inteiro nem outra laje ao lado
-        if (fi === 2 || (fi === 3 ? !isFull(nb) : !isFull(nb) && nb !== T.SLAB)) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, true);
+      } else if (isSlab(id)) {
+        // laje inferior: o topo sempre aparece (fica em y + 0,5); a base some sob cubo inteiro ou laje superior; as laterais só sem cubo inteiro nem outra laje inferior ao lado.
+        // laje superior: a base sempre aparece (y + 0,5); o topo some sob cubo inteiro ou laje inferior; as laterais só sem cubo inteiro nem outra laje superior ao lado.
+        const bottom = id === T.SLAB;
+        const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? !isFull(nb) && nb !== (bottom ? T.SLAB_TOP : T.SLAB) : !isFull(nb) && nb !== id);
+        if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, bottom ? 1 : 2);
       } else if (!isFull(nb)) {
         op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level, id === T.EMBER ? EMBER_GLOW : 0); // o depósito de brasa brilha de dia e de noite
       }

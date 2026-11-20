@@ -22,7 +22,8 @@ export function breakTotalMs(kind: TargetKind, block?: number): number | null {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
     case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
     case T.DARK_ROCK: case T.VEIN_ROCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: return BREAK_MS.rock;
-    case T.SLAB: return BREAK_MS.slab; // meio bloco de rocha: mais rápida que o cubo
+    case T.SLAB_DOUBLE: return BREAK_MS.rock; // duas lajes juntas: como o cubo de rocha
+    case T.SLAB: case T.SLAB_TOP: return BREAK_MS.slab; // meio bloco de rocha: mais rápida que o cubo
     case T.EMBER: return BREAK_MS.ice; // depósito de brasa: cristal em rocha mole, como o gelo
     default: return null;
   }

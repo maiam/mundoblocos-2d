@@ -97,8 +97,8 @@ describe('Laje de Rocha: bloco de meia altura (ADR 0046)', () => {
   it('colocar: a laje ocupa só 0,5 do espaço (cabe junto ao corpo logo acima dela), e some do espaço de cima', () => {
     const v = arena();
     const b = newBody(8.5, FLAT_Y + 0.5, 8.5); // de pé a 0,5 acima da célula (8, FLAT_Y, 8)
-    expect(canPlaceAt(v, b, 8, FLAT_Y, 8, undefined, 0.5)).toBe(true); // laje embaixo dos pés: não invade o corpo
-    expect(canPlaceAt(v, b, 8, FLAT_Y, 8, undefined, 1)).toBe(false); // um cubo inteiro invadiria
+    expect(canPlaceAt(v, b, 8, FLAT_Y, 8, undefined, [0, 0.5])).toBe(true); // laje embaixo dos pés: não invade o corpo
+    expect(canPlaceAt(v, b, 8, FLAT_Y, 8, undefined, [0, 1])).toBe(false); // um cubo inteiro invadiria
   });
 
   it('malha: laje com topo a 0,5, lateral de 8 px, sem face lateral entre lajes iguais; cubo vizinho mostra a face que a laje não cobre', () => {
