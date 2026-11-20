@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.114.0 — Titã: Lago Escuro V2 e visual submerso (20/11/2026)
+- **Arte e regras do dono do produto** (Drive, doc 08 e seções de aparência submersa dos docs 03 e 04). **ADR 0057.**
+- **Texturas V2 de 32 px** no líquido (atlas próprio de 128 × 32, topo em dois quadros, lateral exposta; a lateral sem a faixa clara nas faces com líquido em cima); a face de cima também aparece por baixo.
+- **Visual submerso** (`underwater.ts`, `TitanRenderer.applyUnderwater`): olhos dentro do líquido → névoa carvão-violeta de 8 a 14 blocos (adaptação de 2 s), luz ambiente por profundidade `max(0,18, exp(−0,18 d))`, céu e sol somem, véu de tela em ~150 ms. Sem remalhar (26 seções antes e depois).
+- Testes (`underwater.test.ts`, +4): olhos × célula, curvas, entrada/saída/adaptação, UV da malha. Conferido a 740 × 360 de tarde e à noite, no raso e a 9 blocos. Fora desta entrega: ar, dano, rota de saída, Marco e Painel.
+
 ## Orvalis v0.113.0 — Titã: conjunto completo de ícones de 32 px (20/11/2026)
 - **Arte do dono do produto** (Drive): blocos (areia ocre e úmida, rocha escura, gelo fosco), laje e mesa em vista 3/4, mais lente de gelo, brasa de âmbar e item de junco de vidro, todos em 32 × 32 px. **ADR 0053 (extensão).**
 - `make-titan-arte32.py` passa a montar o atlas de itens 128 × 128 com sprites de 32 px para todos os itens, exceto a cápsula legada (id 7, base de 16 px ampliada 2×). Sem mudar código de interface, ids nem saves. Conferido a 740 × 360, 1024 × 768 e 1280 × 720 (hotbar, bolsa e receitas), sem erros.

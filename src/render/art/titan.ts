@@ -34,6 +34,7 @@ export const titanLanternModel = lanternModel as { size: number[]; structure: La
 import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
 import workbenchModel from '../../assets/titan-workbench.json';
 import reedSprite from '../../assets/titan-junco-variantes-32px.webp';
+import lakeAtlas from '../../assets/titan-lago-32px.webp';
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
  * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).
@@ -50,3 +51,6 @@ import basalt from '../../assets/titan-basalt-32px.webp';
  * Vira o fundo e a moldura dos painéis da bolsa, do livro de receitas e da bancada, repetido com filtro de pixel (a interface o usa por uma variável CSS).
  */
 export const titanBasaltUrl: string = basalt;
+/** Lago Escuro V2 (ADR 0057): atlas de 128 × 32 px (topo 1, topo 2, lateral exposta e a mesma lateral), células de 32 × 32 px; filtro Nearest, sem mipmaps. */
+export const titanLakeUrl: string = lakeAtlas;
+

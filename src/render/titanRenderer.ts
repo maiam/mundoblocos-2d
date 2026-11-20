@@ -9,6 +9,8 @@ import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
+import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
+import { T } from '../titan/voxel';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -39,6 +41,16 @@ export class TitanRenderer {
   private readonly crackTex: THREE.Texture;
   /** Luz do dia compartilhada pelos materiais do terreno (uniform do shader). */
   private readonly ambient = { value: new THREE.Vector3(1, 1, 1) };
+  /** Luz do dia sem a atenuação submersa (a `ambient` é esta × o fator de profundidade). */
+  private readonly ambientBase = new THREE.Vector3(1, 1, 1);
+  private under: UnderwaterState = { mix: 0, adapt: 0 };
+  private underDepth = 0;
+  private lastRenderT = 0;
+  /** Cor da névoa/fundo do céu do lado para onde a câmera olha (sem o mergulho). */
+  private readonly skyFog = new THREE.Color(0xd2a066);
+  private readonly waterFog = new THREE.Color(0x2b2742);
+  /** 0 (fora d'água) a 1 (submerso): a interface desenha o véu de tela com isto. */
+  get submersion(): number { return this.under.mix; }
   private workbenchMesh!: THREE.InstancedMesh;
   private workbenchSeen = -1;
   /** Junco de Vidro: uma malha instanciada por silhueta (broto baixo, haste bifurcada, tufo aberto), cada uma com o seu terço do atlas. */
@@ -56,7 +68,7 @@ export class TitanRenderer {
   private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -72,10 +84,14 @@ export class TitanRenderer {
     tex.needsUpdate = true;
     this.opaqueMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true });
     patchDayLight(this.opaqueMat, this.ambient);
-    // o líquido compartilha a névoa e alterna o quadro (frame 1 ↔ 2 do atlas: deslocamento de 20 px em u)
-    this.liquidTex = tex.clone();
+    // o líquido tem atlas próprio de 32 px (Lago Escuro V2, ADR 0057: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
+    this.liquidTex = new THREE.Texture(extra.lake);
+    this.liquidTex.colorSpace = THREE.SRGBColorSpace;
+    this.liquidTex.magFilter = THREE.NearestFilter;
+    this.liquidTex.minFilter = THREE.NearestFilter;
+    this.liquidTex.generateMipmaps = false;
     this.liquidTex.needsUpdate = true;
-    this.liquidMat = new THREE.MeshBasicMaterial({ map: this.liquidTex, vertexColors: true, fog: true, transparent: true, opacity: 0.94 });
+    this.liquidMat = new THREE.MeshBasicMaterial({ map: this.liquidTex, vertexColors: true, fog: true, transparent: true, opacity: 0.94, side: THREE.DoubleSide });
     patchDayLight(this.liquidMat, this.ambient);
 
     const htex = new THREE.Texture(hotbarAtlas);
@@ -319,6 +335,7 @@ export class TitanRenderer {
     this.sky.mesh.position.copy(this.camera.position);
     this.sky.setTime(time);
     this.fogToward(yaw);
+    this.updateUnderwater(eye, time);
     this.sun.position.set(eye.x + this.sunDir[0] * 270, eye.y + this.sunDir[1] * 270, eye.z + this.sunDir[2] * 270);
     // edições aparecem no mesmo quadro (sem orçamento); só a geração inicial é repartida entre quadros
     this.built = 0;
@@ -366,7 +383,7 @@ export class TitanRenderer {
     this.lastSky = frac;
     const sky = skyAt(frac);
     this.curSky = sky;
-    this.ambient.value.set(sky.ambient * sky.tint[0], sky.ambient * sky.tint[1], sky.ambient * sky.tint[2]); // luz do dia (quente de dia, fria de noite)
+    this.ambientBase.set(sky.ambient * sky.tint[0], sky.ambient * sky.tint[1], sky.ambient * sky.tint[2]); // luz do dia (quente de dia, fria de noite)
     this.sky.update(sky);
     this.lastFogYaw = 1e9; // a névoa se refaz no próximo quadro com a cor do céu daquele lado
     this.sun.visible = sky.sun.alpha > 0.01;
@@ -376,6 +393,7 @@ export class TitanRenderer {
     const k = Math.max(0.4, sky.ambient);
     for (const m of Object.values(this.itemMats)) m.color.setScalar(k);
     this.itemDim = k;
+    this.applyUnderwater(); // por último: o mergulho compõe por cima do céu da hora (ambiente, cúpula, sol)
   }
 
   /** Saturno: 0 (escondido) a 1 (no pico da janela rara). Só um número no shader do céu. */
@@ -387,8 +405,37 @@ export class TitanRenderer {
     this.lastFogYaw = yaw;
     const c = horizonAt(this.curSky, -Math.sin(yaw), -Math.cos(yaw));
     const col = this.sky.tint(c);
-    (this.scene.background as THREE.Color).copy(col);
-    (this.scene.fog as THREE.Fog).color.copy(col);
+    this.skyFog.copy(col);
+    this.applyUnderwater();
+  }
+
+  /**
+   * Compõe o céu do dia com o mergulho num ponto só (ADR 0057): cor de fundo e da névoa, `near`/`far` da névoa, luz ambiente por profundidade e a visibilidade da cúpula e do sol.
+   * Só mexe em cores e números (sem recriar objetos nem trocar de shader), então entrar e sair da água não remalha nada. Fora d'água (mix = 0) é exatamente o céu da hora.
+   */
+  private applyUnderwater(): void {
+    const mix = this.under.mix, fog = this.scene.fog as THREE.Fog, bg = this.scene.background as THREE.Color;
+    bg.copy(this.skyFog).lerp(this.waterFog, mix);
+    fog.color.copy(bg);
+    fog.near = RANGE * 0.7 + (UNDERWATER_FOG_NEAR - RANGE * 0.7) * mix;
+    fog.far = RANGE * 0.97 + (underwaterFar(this.under.adapt) - RANGE * 0.97) * mix;
+    const f = 1 + (underwaterAmbient(this.underDepth) - 1) * mix; // só a parcela do dia; o brilho de lanterna (`glow`) fica de fora
+    this.ambient.value.copy(this.ambientBase).multiplyScalar(f);
+    this.sky.mesh.visible = mix < 0.6; // a cúpula e o sol não passam pela névoa: somem ao mergulhar
+    this.sun.visible = !!this.curSky && this.curSky.sun.alpha > 0.01 && mix < 0.6;
+  }
+
+  /** Estado de imersão do quadro: olhos dentro do líquido (célula do olho), mistura de 150 ms e adaptação de 2 s. */
+  private updateUnderwater(eye: { x: number; y: number; z: number }, time: number): void {
+    const dt = Math.min(0.1, Math.max(0, time - this.lastRenderT));
+    this.lastRenderT = time;
+    const inWater = eyesSubmerged(eye.y, this.volume.get(Math.floor(eye.x), Math.floor(eye.y), Math.floor(eye.z)), T.LAKE);
+    const before = this.under, next = stepUnderwater(before, inWater, dt);
+    const depth = eyeDepth(eye.y, inWater);
+    const changed = next.mix !== before.mix || next.adapt !== before.adapt || (next.mix > 0 && Math.abs(depth - this.underDepth) > 0.02);
+    this.under = next;
+    this.underDepth = depth;
+    if (changed) this.applyUnderwater();
   }
 
   private sunDir: [number, number, number] = [0, 1, 0];
