@@ -31,6 +31,10 @@ const FACES = [
   { n: [0, 0, 1], light: 0.78, f: 'side' as Face, c: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] },
   { n: [0, 0, -1], light: 0.7, f: 'side' as Face, c: [[1, 0, 0], [0, 0, 0], [0, 1, 0], [1, 1, 0]] },
 ];
+/** UV (u0, v0, u1, v1) das células do atlas do lago (4 colunas de 32 px, uma linha): topo (0), lateral exposta (2) e a lateral sem a faixa clara de cima. */
+export const LAKE_TOP_UV = [0, 0, 0.25, 1] as const;
+export const LAKE_SIDE_UV = [0.5, 0, 0.75, 1] as const;
+export const LAKE_SIDE_DEEP_UV = [0.5, 0, 0.75, 0.75] as const;
 const CORNER_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
 /** Brilho próprio do depósito de brasa (somado depois da luz do dia: legível de dia e de noite). */
 const EMBER_GLOW = 0.42;
@@ -43,9 +47,9 @@ const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX,
 class Builder {
   pos: number[] = []; uv: number[] = []; col: number[] = []; glow: number[] = []; idx: number[] = [];
   /** `level` = luz de lanterna na célula que a face enxerga. */
-  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0, half: 0 | 1 | 2 = 0): void {
+  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0, half: 0 | 1 | 2 = 0, uv?: readonly [number, number, number, number]): void {
     const F = FACES[fi];
-    let [u0, v0, u1, v1] = tileUV(tile);
+    let [u0, v0, u1, v1] = uv ?? tileUV(tile);
     // laje (meia altura): a lateral usa só os 8 px de cima do tile (16 × 8 px: mesma densidade de texels do cubo) e o topo/base ficam inteiros
     if (half && F.f === 'side') v0 = v1 - (v1 - v0) / 2;
     const base = this.pos.length / 3;
@@ -89,7 +93,9 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
       const nb = at(lx + n[0], ly + n[1], lz + n[2]);
       const level = lit ? vol.light(x0 + lx + n[0], y0 + ly + n[1], z0 + lz + n[2]) : 0;
       if (id === T.LAKE) {
-        if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level); // só a superfície (e bordas expostas ao ar)
+        // só a superfície (e bordas expostas ao ar). Atlas próprio do lago (ADR 0057, 128 × 32: topo, topo 2, lateral): o topo usa a célula 0; a lateral exposta, a célula 2, inteira na face que
+        // encontra a superfície e sem a faixa clara de cima (75 % de baixo) nas faces de baixo, quando há líquido em cima.
+        if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level, 0, 0, fi === 2 || fi === 3 ? LAKE_TOP_UV : at(lx, ly + 1, lz) === T.LAKE ? LAKE_SIDE_DEEP_UV : LAKE_SIDE_UV);
       } else if (isSlab(id)) {
         // laje inferior: o topo sempre aparece (fica em y + 0,5); a base some sob cubo inteiro ou laje superior; as laterais só sem cubo inteiro nem outra laje inferior ao lado.
         // laje superior: a base sempre aparece (y + 0,5); o topo some sob cubo inteiro ou laje inferior; as laterais só sem cubo inteiro nem outra laje superior ao lado.

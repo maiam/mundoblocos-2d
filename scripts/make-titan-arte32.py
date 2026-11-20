@@ -5,13 +5,15 @@ Entradas : src/assets/titan-hotbar-sprites-16px.webp (atlas de itens 4 × 4 de 1
            titan-junco-variantes-32px.png (128 × 32, 3 silhuetas + 1 célula vazia).
 Saídas   : src/assets/titan-itens-32px.webp          128 × 128 (grade 4 × 4 de 32 px, índice = id do item − 1): todos os itens em 32 px de verdade; a célula 7 (cápsula legada) é a base de 16 px ampliada 2× (vizinho mais próximo)
            src/assets/titan-junco-variantes-32px.webp 128 × 32 (colunas 0–2 = broto baixo, haste bifurcada, tufo aberto; coluna 3 vazia)
+           src/assets/titan-lago-32px.webp            128 × 32 (Lago Escuro V2, ADR 0057): células 0 = topo quadro 1, 1 = topo quadro 2, 2 = lateral exposta, 3 = a mesma lateral (a ondulação desloca o UV em 1 célula: o quadro 2 do topo
+                                                      cai na célula 1 e a lateral cai na 3, igual à 2). Fontes: lago_topo_01/02_32px.png e lago_lateral_exposta_32px.png.
 Tudo em WebP SEM perdas (fora do optimize-assets.py). Repetível: lê só a base de 16 px e o pacote, nunca o próprio resultado. Uso: python3 -I scripts/make-titan-arte32.py
 """
 from PIL import Image
 
 BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
-OUT_ITEMS, OUT_REED = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp'
+OUT_ITEMS, OUT_REED, OUT_LAKE = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp', 'src/assets/titan-lago-32px.webp'
 NEW = {  # id do item -> arte de 32 px
     1: 'areia_ocre_32px.png', 2: 'areia_umida_32px.png', 3: 'rocha_escura_32px.png', 4: 'gelo_fosco_32px.png',
     5: 'fragmento_de_rocha_32px.png', 6: 'fragmento_de_gelo_32px.png', 8: 'lanterna_da_margem_32px.png',
@@ -34,7 +36,13 @@ def main() -> None:
     reed = Image.open(SRC + 'titan-junco-variantes-32px.png').convert('RGBA')
     assert reed.size == (128, 32), reed.size
     reed.save(OUT_REED, lossless=True, quality=100, method=6)
-    print(OUT_ITEMS, atlas.size, '|', OUT_REED, reed.size)
+    lake = Image.new('RGBA', (128, 32), (0, 0, 0, 0))
+    top1, top2, side = (Image.open(SRC + n).convert('RGBA') for n in ('lago_topo_01_32px.png', 'lago_topo_02_32px.png', 'lago_lateral_exposta_32px.png'))
+    for k, t in enumerate((top1, top2, side, side)):
+        assert t.size == (32, 32), t.size
+        lake.paste(t, (k * 32, 0))
+    lake.save(OUT_LAKE, lossless=True, quality=100, method=6)
+    print(OUT_ITEMS, atlas.size, '|', OUT_REED, reed.size, '|', OUT_LAKE, lake.size)
 
 
 if __name__ == '__main__':
