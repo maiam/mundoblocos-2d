@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
@@ -15,7 +15,7 @@ import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
-import { isWorkbench, T } from './voxel';
+import { isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds } from './session';
@@ -70,7 +70,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg, lakeImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl), loadImage(titanLakeUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg, lakeImg, margemImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -79,7 +79,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora'));
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg, lake: lakeImg }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg, lake: lakeImg, margemAtlas: margemImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
@@ -499,7 +499,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!h) return null;
     if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: 'shard', item: h.item };
     const id = vol.get(h.x, h.y, h.z);
-    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
+    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: isCollectBlock(id) ? 'lantern' : 'block', block: id }; // lanterna, Marco e Painel: recolhimento curto, sem rachaduras
   };
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
   window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
@@ -523,7 +523,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
-      if (r.ok) { if (t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern') gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
+      if (r.ok) { if (t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern' && t.block === T.LANTERN) gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },
     effect: (t, p, stage) => {

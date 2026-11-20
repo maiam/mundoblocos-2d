@@ -1,0 +1,14 @@
+# ADR 0058 — Titã: Marco de Margem e Painel de Junco
+
+**Status:** aceito (dono do produto, 20/11/2026: doc 08 "Lago Escuro e construção da margem", pacotes `Tita_Marco_de_Margem_Low_Poly.zip` e `Tita_Painel_de_Junco_Low_Poly.zip`). Segunda parte da proposta do lago (a primeira é a ADR 0057). Estende as ADR 0045, 0050 e 0052.
+
+## Decisão
+1. **Dois itens e duas famílias de blocos** (ids de bloco sem estado extra, sem mudar `TITAN_SAVE_VERSION`; o carregamento aceita ids até `T_MAX` = 23): **Marco de Margem** (item 14; blocos 18–21 = giro 0–3) e **Painel de Junco** (item 15; blocos 22 = encaixe ao longo de X e 23 = ao longo de Z).
+2. **Receitas na Mesa** (grupo Construção, mesma transação atômica): **1 fragmento de rocha + 1 junco de vidro → 1 Marco** e **2 juncos de vidro + 1 rocha escura → 2 Painéis**. Fora da Mesa a saída fica bloqueada (ADR 0050). A disponibilidade de junco por seed continua a ser validada em jogo.
+3. **Modelos 3D de arte própria**: GLB low-poly (148 e 832 triângulos; `scripts/extract-titan-margem.py` junta as malhas, aplica a translação dos nós e grava `titan-marco.json`, `titan-painel.json` e o atlas compartilhado de 144 × 72 px). O volume mantém uma lista de instâncias por modelo (`TitanVolume.modelCells(kind)`, `modelVersion`; `workbenchCells()` virou atalho) e o renderer desenha uma `InstancedMesh` por modelo, com a luz do dia por uniform e a luz de lanterna por instância (`iGlow`): o Marco **reflete** a luz recebida e **não emite** a própria. Os modelos saem da malha do terreno (`isModelBlock`).
+4. **Marco**: peça pequena, **atravessável** (como a lanterna), alvo da mira pela caixa do modelo (0,56 × 0,629 × 0,43 m; largura ↔ profundidade nos giros ímpares), **frente voltada para o jogador** ao colocar (`marcoTurnFacing`). **Painel**: **sólido** na célula inteira até **0,944 m** (`blockSpan`), não é cubo (`isFull` falso: não esconde faces vizinhas), **não bloqueia a luz** (`blocksLight`: a trama tem vãos), mira pela caixa fina (1,00 × 0,944 × 0,224 m), eixo escolhido de través ao olhar (`panelIdFacing`); o salto automático (ADR 0055) o vence (0,944 m < 1 m). Dois módulos em linha se encostam (largura de 1 m).
+5. **Recolhimento curto** (0,35 s, anel, sem rachaduras, volta inteiro ao inventário; mochila cheia deixa no lugar) como a lanterna, via `isCollectBlock`. Som: Marco como rocha, Painel como areia (trançado abafado). Ícones de 32 px do pacote entram no atlas de itens (células 13 e 14; `make-titan-arte32.py`).
+
+## Consequências
+- Ainda não feito (propostas do doc 08): medidor de ar e perda de vida, rota de saída garantida pelo gerador e afundar gradual; a seleção do painel é só pela caixa (sem tolerância extra além da folga de toque), e a colisão dele ocupa a célula inteira (não o 0,224 m do modelo), por simplicidade da física por faixa de altura.
+- O sombreado fixo por face dos modelos é no espaço do modelo (como na mesa): ao girar a peça a face "clara" gira junto.

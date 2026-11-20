@@ -1,6 +1,6 @@
 import { blockOfItem, dropCountOf, Item, itemOfBlock } from './items';
 import { resolveSlabPlacement } from './slabs';
-import { blockSpan, isSolid, isVein, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockSpan, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, type Hit } from './physics';
 import type { TitanSession } from './session';
 
@@ -114,6 +114,8 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
+  else if (block === T.MARCO) block = marcoId(marcoTurnFacing(s.yaw)); // idem o Marco de Margem (ADR 0058)
+  else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   if (block === T.SLAB) { // laje (ADR 0056): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
     const r = resolveSlabPlacement(s.volume.get(hit.x, hit.y, hit.z), hit.ny, hit.hy);
     if (r.merge) {

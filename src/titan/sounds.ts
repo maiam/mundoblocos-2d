@@ -9,7 +9,8 @@ export type SurfaceMaterial = 'rock' | 'sand' | 'ice';
 /** Material sonoro de um bloco (quebra, colocação e passos); `null` = silêncio (ar, líquido, lanterna). Rocha: escura, veio, laje, mesa e rocha-mãe; areia: ocre e úmida; gelo: fosco, veio e brasa de âmbar (cristal). */
 export function surfaceOf(block: number | undefined): SurfaceMaterial | null {
   switch (block) {
-    case T.SAND: case T.DAMP_SAND: return 'sand';
+    case T.SAND: case T.DAMP_SAND: case T.PAINEL: case T.PAINEL_Z: return 'sand'; // o painel é um trançado de junco sobre base de basalto: soa abafado
+    case T.MARCO: case T.MARCO_90: case T.MARCO_180: case T.MARCO_270: return 'rock';
     case T.FROST: case T.VEIN_FROST: case T.EMBER: return 'ice';
     case T.DARK_ROCK: case T.VEIN_ROCK: case T.SLAB: case T.SLAB_TOP: case T.SLAB_DOUBLE: case T.BEDROCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: return 'rock';
     default: return null;

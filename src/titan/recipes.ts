@@ -18,6 +18,8 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'mesa', name: 'Mesa de Trabalho', group: 'utilidades', result: { item: Item.WORKBENCH, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }], station: 'personal' },
   { id: 'lente', name: 'Lente de Gelo', group: 'materiais', result: { item: Item.ICE_LENS, count: 1 }, ingredients: [{ item: Item.FROST_SHARD, count: 1 }], station: 'workbench' },
   { id: 'lanterna', name: 'Lanterna da Margem', group: 'utilidades', result: { item: Item.LANTERN, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 2 }, { item: Item.ICE_LENS, count: 1 }, { item: Item.EMBER, count: 1 }], station: 'workbench' },
+  { id: 'marco', name: 'Marco de Margem', group: 'construcao', result: { item: Item.MARCO, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 1 }, { item: Item.GLASS_REED, count: 1 }], station: 'workbench' },
+  { id: 'painel', name: 'Painel de Junco', group: 'construcao', result: { item: Item.PAINEL, count: 2 }, ingredients: [{ item: Item.GLASS_REED, count: 2 }, { item: Item.DARK_ROCK, count: 1 }], station: 'workbench' },
   { id: 'laje', name: 'Laje de Rocha', group: 'construcao', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }], station: 'workbench' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);

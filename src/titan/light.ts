@@ -1,4 +1,4 @@
-import { inRegion, isSolid, Y_MAX, Y_MIN } from './voxel';
+import { blocksLight, inRegion, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Luz de bloco do Titã (ADR 0040): cada lanterna emite 15 e perde 1 por célula (6 vizinhas); sólidos bloqueiam. Calculada sob demanda pelo volume,
@@ -20,7 +20,7 @@ export function computeLight(get: (x: number, y: number, z: number) => number, l
     for (const [dx, dy, dz] of DIRS) {
       const nx = x + dx, ny = y + dy, nz = z + dz;
       if (ny < Y_MIN || ny > Y_MAX || !inRegion(nx, nz)) continue;
-      if (isSolid(get(nx, ny, nz))) continue; // opaco bloqueia
+      if (blocksLight(get(nx, ny, nz))) continue; // opaco bloqueia (o painel de junco, de trama aberta, deixa passar)
       const k = lightKey(nx, ny, nz);
       if ((out.get(k) ?? 0) >= l - 1) continue;
       out.set(k, l - 1);

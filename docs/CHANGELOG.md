@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.115.0 — Titã: Marco de Margem e Painel de Junco (20/11/2026)
+- **Arte e regras do dono do produto** (Drive, doc 08; GLBs low-poly de 148 e 832 triângulos e ícones de 32 px). **ADR 0058.**
+- **Receitas na Mesa:** 1 fragmento de rocha + 1 junco → 1 Marco; 2 juncos + 1 rocha escura → 2 Painéis. Itens 14 e 15; blocos 18–21 (Marco, giro) e 22–23 (Painel, eixo X ou Z); sem mudar o save.
+- **Marco:** atravessável, frente voltada para o jogador, caixa de mira própria. **Painel:** sólido até 0,944 m na célula inteira (o salto automático o vence), deixa a luz passar, corre de través ao olhar, módulos de 1 m em linha. Recolhimento curto como a lanterna.
+- Infra: `TitanVolume.modelCells(kind)`/`modelVersion` (mesa, Marco e Painel), `models.ts` (caixas), `blocksLight`, `isCollectBlock`, `T_MAX`; `TitanRenderer` com uma `InstancedMesh` por modelo (luz do dia por uniform, `iGlow` por instância); `scripts/extract-titan-margem.py`.
+- Testes (`margem.test.ts`, +7; catálogo de receitas atualizado). Conferido a 740 × 360: 4 giros do Marco, painéis em linha e de través, caixa de mira justa; build ok.
+
 ## Orvalis v0.114.0 — Titã: Lago Escuro V2 e visual submerso (20/11/2026)
 - **Arte e regras do dono do produto** (Drive, doc 08 e seções de aparência submersa dos docs 03 e 04). **ADR 0057.**
 - **Texturas V2 de 32 px** no líquido (atlas próprio de 128 × 32, topo em dois quadros, lateral exposta; a lateral sem a faixa clara nas faces com líquido em cima); a face de cima também aparece por baixo.

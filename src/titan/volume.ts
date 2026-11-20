@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, inRegion, isOccupied, isSolid, isTarget, isWorkbench, localOf, sectionOf, T, unpackIndex, workbenchTurn, Y_MAX, Y_MIN } from './voxel';
+import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, inRegion, blocksLight, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, modelOf, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -17,7 +17,7 @@ export class TitanVolume {
   /** Lanternas colocadas (as únicas fontes de luz) e o mapa de luz calculado sob demanda. */
   private readonly lanterns = new Map<number, [number, number, number]>();
   /** Luz incremental em 4 bits por célula (ver `light.ts`); `ready` só depois da primeira consulta (cálculo completo sob demanda). */
-  private readonly light$ = new LightEngine((x, y, z) => isSolid(this.get(x, y, z)), (x, y, z) => this.markLightCell(x, y, z));
+  private readonly light$ = new LightEngine((x, y, z) => blocksLight(this.get(x, y, z)), (x, y, z) => this.markLightCell(x, y, z));
   /** Medição opcional do tempo de cada atualização do mapa de luz (ms): cálculo completo e cada edição. */
   onLightMs: ((ms: number) => void) | null = null;
   /** Seções cuja luz mudou (só luz, sem edição de bloco), a refazer com orçamento por quadro. Chave numérica → `"cx,sy,cz"`. */
@@ -107,7 +107,7 @@ export class TitanVolume {
 
   /** Coloca um sólido na célula (ar ou líquido; o líquido é deslocado, mas continua na base para voltar depois). */
   place(x: number, y: number, z: number, id: number): boolean {
-    if (!isSolid(id) && id !== T.LANTERN) return false;
+    if (!isSolid(id) && id !== T.LANTERN && !isMarco(id)) return false;
     if (isOccupied(this.get(x, y, z))) return false;
     return this.set(x, y, z, id);
   }
@@ -184,22 +184,23 @@ export class TitanVolume {
   load(chunks: Array<{ cx: number; cz: number; edits: Array<[number, number]> }>): void {
     for (const c of chunks) {
       const m = new Map<number, number>();
-      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T.SLAB_DOUBLE) m.set(idx, id);
+      for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T_MAX) m.set(idx, id);
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
-      for (const [idx, id] of m) if (isWorkbench(id)) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.workbenches.set(lightKey(x, u.y, z), [x, u.y, z, workbenchTurn(id)]); }
+      for (const [idx, id] of m) { const md = modelOf(id); if (md) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.models[md.kind].set(lightKey(x, u.y, z), [x, u.y, z, md.turn]); } }
       for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
     }
     this.light$.ready = false; // a luz é calculada por inteiro na primeira consulta
     this.lanternVersion++;
-    this.workbenchVersion++;
+    this.modelVersion++;
   }
 
   // ---- Luz de lanterna ----
-  /** Mesas de Trabalho colocadas (o renderer desenha o modelo 3D por instância); `workbenchVersion` muda a cada mesa posta, retirada ou carregada. */
-  private readonly workbenches = new Map<number, [number, number, number, number]>();
-  workbenchVersion = 0;
-  /** Cada mesa: `[x, y, z, giro]` (giro 0–3, ver `workbenchTurn`). */
-  workbenchCells(): Array<[number, number, number, number]> { return [...this.workbenches.values()]; }
+  /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
+  private readonly models: Record<'workbench' | 'marco' | 'painel', Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map() };
+  modelVersion = 0;
+  /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
+  modelCells(kind: 'workbench' | 'marco' | 'painel'): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }
+  workbenchCells(): Array<[number, number, number, number]> { return this.modelCells('workbench'); }
   /** Há uma Mesa de Trabalho nesta célula? */
   isWorkbench(x: number, y: number, z: number): boolean { return isWorkbench(this.get(x, y, z)); }
   /** Muda a cada lanterna posta ou retirada (o renderer refaz as instâncias só então). */
@@ -224,8 +225,9 @@ export class TitanVolume {
    */
   private updateLight(x: number, y: number, z: number, before: number, after: number): void {
     const key = lightKey(x, y, z);
-    if (isWorkbench(before) && !isWorkbench(after)) { this.workbenches.delete(key); this.workbenchVersion++; }
-    if (isWorkbench(after) && !isWorkbench(before)) { this.workbenches.set(key, [x, y, z, workbenchTurn(after)]); this.workbenchVersion++; }
+    const mBefore = modelOf(before), mAfter = modelOf(after);
+    if (mBefore) { this.models[mBefore.kind].delete(key); this.modelVersion++; }
+    if (mAfter) { this.models[mAfter.kind].set(key, [x, y, z, mAfter.turn]); this.modelVersion++; }
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
     if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
     if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
@@ -234,7 +236,7 @@ export class TitanVolume {
     if (wasLantern && !isLantern) this.light$.sourceRemoved(x, y, z);
     if (isLantern && !wasLantern) this.light$.sourceAdded(x, y, z);
     // sólido: entrou (bloqueia) ou saiu (libera); lanterna e ar não bloqueiam
-    const solidBefore = isSolid(before), solidAfter = isSolid(after);
+    const solidBefore = blocksLight(before), solidAfter = blocksLight(after);
     if (!solidBefore && solidAfter) this.light$.blockPlaced(x, y, z);
     else if (solidBefore && !solidAfter) this.light$.blockRemoved(x, y, z);
     this.flushLightTouched();

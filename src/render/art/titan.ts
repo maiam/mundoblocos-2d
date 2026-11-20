@@ -35,6 +35,9 @@ import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
 import workbenchModel from '../../assets/titan-workbench.json';
 import reedSprite from '../../assets/titan-junco-variantes-32px.webp';
 import lakeAtlas from '../../assets/titan-lago-32px.webp';
+import marcoModel from '../../assets/titan-marco.json';
+import painelModel from '../../assets/titan-painel.json';
+import margemAtlas from '../../assets/titan-margem-atlas.webp';
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
  * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).
@@ -53,4 +56,12 @@ import basalt from '../../assets/titan-basalt-32px.webp';
 export const titanBasaltUrl: string = basalt;
 /** Lago Escuro V2 (ADR 0057): atlas de 128 × 32 px (topo 1, topo 2, lateral exposta e a mesma lateral), células de 32 × 32 px; filtro Nearest, sem mipmaps. */
 export const titanLakeUrl: string = lakeAtlas;
+/**
+ * Marco de Margem (148 triângulos) e Painel de Junco (832), ADR 0058: geometria única por modelo (`scripts/extract-titan-margem.py`, UV com origem no canto superior esquerdo como no glTF) e o atlas
+ * compartilhado de 144 × 72 px (basalto e junco). Pivô no centro da base; o Painel corre ao longo de X.
+ */
+export const titanMarcoModel = marcoModel as ModelData;
+export const titanPainelModel = painelModel as ModelData;
+export const titanMargemAtlasUrl: string = margemAtlas;
+export interface ModelData { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] }
 
