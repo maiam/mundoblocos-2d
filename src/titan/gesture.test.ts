@@ -153,11 +153,54 @@ describe('segurar quebra', () => {
     expect(g.state).toBe('IDLE');
   });
 
-  it('mudar de bloco ou sair do alcance cancela e consome o gesto até soltar (voltar à mira não retoma)', () => {
-    const a = rig(); a.g.press(1, 0, sand); a.g.update(200, sand); a.g.update(300, rock);
-    expect(a.g.state).toBe('COMPLETED'); a.g.update(400, sand); a.g.update(2000, sand); a.g.release(1, 2100, sand); expect(a.log).toEqual([]);
+  it('sair do alcance (ou apontar algo que não quebra) cancela a quebra e espera: voltar à mira sem arrastar não retoma', () => {
     const b = rig(); b.g.press(1, 0, sand); b.g.update(200, sand); b.g.update(300, null);
-    expect(b.g.state).toBe('COMPLETED'); b.g.update(400, sand); b.g.release(1, 2000, sand); expect(b.log).toEqual([]);
+    expect(b.g.state).toBe('COMPLETED'); b.g.update(400, sand); b.g.update(2000, sand); b.g.release(1, 2100, sand); expect(b.log).toEqual([]);
+    const c = rig(); c.g.press(1, 0, sand); c.g.update(200, sand); c.g.update(300, bedrock);
+    expect(c.g.state).toBe('COMPLETED'); c.g.update(2000, bedrock); expect(c.log).toEqual([]); // rocha-mãe não quebra
+  });
+
+  it('segurando e arrastando para outro bloco, a quebra segue nele com o tempo cheio, do zero (ADR 0055)', () => {
+    const { g, log, effects } = rig();
+    g.press(1, 0, sand); g.update(200, sand); g.update(400, sand); // meio da areia
+    g.update(500, rock); // a mira passou para a rocha
+    expect(g.state).toBe('BREAKING');
+    expect(effects[effects.length - 1].t).toMatchObject({ x: 5 }); // a rachadura vai para o novo bloco
+    expect(effects[effects.length - 1].p).toBe(0); // progresso do zero
+    g.update(500 + 1599, rock); expect(log).toEqual([]); // rocha: 1 600 ms cheios desde a troca
+    g.update(500 + 1600, rock); expect(log).toEqual(['complete@5,64,4']);
+    g.release(1, 3000, rock);
+    expect(log).toEqual(['complete@5,64,4']); // a areia deixada pela metade nunca quebrou
+  });
+
+  it('depois de quebrar, sem arrastar o bloco de trás não cede sozinho; arrastando além da tolerância, a quebra recomeça no próximo', () => {
+    const a = rig(); a.g.press(1, 0, sand); a.g.update(200, sand); a.g.update(600, sand); // quebrou
+    expect(a.log).toEqual(['complete@3,64,4']); expect(a.g.state).toBe('COMPLETED');
+    a.g.update(700, rock); a.g.update(5000, rock); // a mira agora pega o bloco de trás, sem arrastar
+    expect(a.log).toEqual(['complete@3,64,4']); expect(a.g.state).toBe('COMPLETED');
+    const b = rig(); b.g.press(1, 0, sand); b.g.update(200, sand); b.g.update(600, sand);
+    b.g.drag(1, DRAG_TOLERANCE_PX - 2); b.g.update(650, rock); expect(b.g.state).toBe('COMPLETED'); // arrasto curto: ainda não
+    b.g.drag(1, DRAG_TOLERANCE_PX + 25); b.g.update(700, rock);
+    expect(b.g.state).toBe('BREAKING');
+    b.g.update(700 + 1600, rock);
+    expect(b.log).toEqual(['complete@3,64,4', 'complete@5,64,4']);
+    b.g.release(1, 3000, rock);
+  });
+
+  it('soltar encerra tudo: pressionar de novo é um gesto novo, e o arrasto de antes não conta', () => {
+    const { g, log } = rig();
+    g.press(1, 0, sand); g.update(200, sand); g.update(600, sand); g.drag(1, 200);
+    g.release(1, 700, sand);
+    expect(g.state).toBe('IDLE');
+    g.press(1, 800, rock); g.update(1000, rock); g.update(1500, rock);
+    expect(log).toEqual(['complete@3,64,4']); // a rocha ainda está no meio (1 600 ms)
+  });
+
+  it('um gesto que nunca quebrou (rocha-mãe aos 200 ms) não recomeça ao arrastar', () => {
+    const { g, log } = rig();
+    g.press(1, 0, bedrock); g.update(250, bedrock); expect(g.state).toBe('COMPLETED');
+    g.drag(1, 200); g.update(400, sand); g.update(2000, sand);
+    expect(log).toEqual([]);
   });
 
   it('mudar só a face do mesmo bloco mantém o progresso', () => {

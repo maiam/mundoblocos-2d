@@ -38,10 +38,10 @@ describe('Laje de Rocha: bloco de meia altura (ADR 0046)', () => {
     walk(v, b, 1, 0, 0.45); // anda para +x (até x ≈ 8,4): encontra a laje na borda e sobe
     expect(b.y).toBeCloseTo(FLAT_Y + 0.5, 5); // subiu o degrau de meia altura sem pular
     expect(b.x).toBeGreaterThan(8);
-    // contra o cubo inteiro (mesma altura de piso) o degrau não vale
+    // contra o cubo inteiro (1 m) o degrau de meia altura não vale: o corpo só sobe pelo salto automático (ADR 0055), nunca encaixado como na laje
     const c = newBody(9.5, FLAT_Y, 10.5); v.place(11, FLAT_Y, 10, T.DARK_ROCK);
-    walk(v, c, 0, 0, 0.3); walk(v, c, 1, 0, 1);
-    expect(c.y).toBeCloseTo(FLAT_Y, 5); expect(c.x).toBeLessThan(11 - 0.3 + 0.01);
+    walk(v, c, 0, 0, 0.3); walk(v, c, 1, 0, 0.12);
+    expect(c.y).toBeCloseTo(FLAT_Y, 5); expect(c.x).toBeLessThan(11 - 0.3 + 0.01); // antes de o salto automático se completar, o cubo ainda barra
   });
 
   it('queda sobre a laje: pousa no topo dela (y + 0,5), não no piso do cubo', () => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.111.0 — Titã: salto automático e quebra contínua ao arrastar (20/11/2026)
+- **Pedido do dono do produto.** **ADR 0055** (altera em parte a ADR 0042).
+- **Salto automático** (`physics.ts`): andando no chão contra um degrau de 1 bloco com espaço em cima, o corpo pula sozinho e sobe se continua andando (entrada ≥ 0,35 contra o bloco; não pula no ar/água, parede de 2 blocos, teto baixo nem repete). Pular pelo botão e o degrau da laje seguem iguais.
+- **Quebra contínua** (`gesture.ts`): segurando, ao apontar outro bloco a quebra recomeça nele (tempo cheio, do zero); depois de quebrar, arrastar além de 10 px recomeça no próximo; sem arrastar não há quebra em série. Toque curto continua colocando.
+- Testes: `autojump.test.ts` (6) e `gesture.test.ts` (+4, 1 reescrito: trocar de bloco agora segue no novo); `slab.test.ts` ajustado (o cubo de 1 m é subido pelo salto automático). Conferido no navegador (740 × 360, sem erros): sobe o degrau de 1 bloco andando; trocar de bloco durante a quebra e arrastar depois de quebrar seguem no próximo.
+
 ## Orvalis v0.110.0 — Titã: sintetizador de som unificado (rocha, areia, gelo, ações e passos) (20/11/2026)
 - **Proposta do dono do produto** (`gameAudio.ts`), no lugar do sintetizador só da rocha. **ADR 0054 (extensão).**
 - Quebra e golpe seco para rocha, areia e gelo; colocar bloco por material; lanterna (colocar e recolher); coleta de item/lasca (gesto e proximidade); **passos** por superfície a cada 2,4 blocos no chão. `titan/sounds.ts` (puro): `surfaceOf`, `FootstepClock`. Botão **Som: ligado/desligado** no menu, lembrado no aparelho.
