@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { breakOrCollect, furnaceAt, furnaceMoveIn, furnaceTakeOut } from './actions';
-import { accepts, canSmelt, COOK_TIME_S, FUEL_TIME_S, furnaceFromData, furnaceToData, isFuel, isLit, newFurnace, smeltRecipe, tickFurnace } from './furnace';
+import { accepts, canSmelt, COOK_TIME_S, FUEL_TIME_S, furnaceFromData, furnaceToData, isFuel, isLit, isWorking, newFurnace, prepsLeft, smeltRecipe, tickFurnace } from './furnace';
 import { Item } from './items';
 import { MemoryTitanStorage } from './save';
 import { flush, openSession, tickFurnaces } from './session';
@@ -14,24 +14,28 @@ describe('fornalha (ADR 0068): regras puras', () => {
   it('só aceita o que serve: entrada com receita (fragmento de cobre), combustível que queima (brasa)', () => {
     expect(smeltRecipe(Item.COPPER_SHARD)!.result.item).toBe(Item.COPPER_INGOT); expect(smeltRecipe(Item.SAND)).toBeNull();
     expect(accepts('input', Item.COPPER_SHARD)).toBe(true); expect(accepts('input', Item.EMBER)).toBe(false); expect(accepts('fuel', Item.EMBER)).toBe(true); expect(accepts('fuel', Item.SAND)).toBe(false); expect(accepts('output', Item.EMBER)).toBe(false);
-    expect(isFuel(Item.EMBER)).toBe(true); expect(FUEL_TIME_S[Item.EMBER]).toBe(80); expect(COOK_TIME_S).toBe(10);
+    expect(isFuel(Item.EMBER)).toBe(true); expect(FUEL_TIME_S[Item.EMBER]).toBe(40); expect(FUEL_TIME_S[Item.EMBER_BLOCK]).toBe(360); expect(COOK_TIME_S).toBe(10);
+    expect(accepts('fuel', Item.EMBER_BLOCK)).toBe(true); expect(accepts('input', Item.EMBER_BLOCK)).toBe(false); // o bloco de âmbar também é combustível (ADR 0073)
   });
-  it('acende só quando há o que cozinhar e consome 1 combustível na hora; 10 s por lingote (2 fragmentos); a brasa rende 8 preparações', () => {
+  it('acende só quando há o que cozinhar e consome 1 combustível na hora; 10 s por lingote (2 fragmentos); a brasa rende 4 preparações e o bloco, 36 (ADR 0073)', () => {
     const f = newFurnace(); f.fuel = { item: Item.EMBER, count: 2 };
-    run(f, 5); expect(isLit(f)).toBe(false); expect(f.fuel.count).toBe(2); // sem entrada: não acende
-    f.input = { item: Item.COPPER_SHARD, count: 4 };
-    tickFurnace(f, 0.1); expect(isLit(f)).toBe(true); expect(f.fuel.count).toBe(1); expect(f.burnTotal).toBe(80);
-    run(f, 10); expect(f.output).toEqual({ item: Item.COPPER_INGOT, count: 1 }); expect(f.input!.count).toBe(2);
-    run(f, 10.5); expect(f.output!.count).toBe(2); expect(f.input).toBeNull();
-    run(f, 70); expect(isLit(f)).toBe(false); expect(f.fuel!.count).toBe(1); // sem entrada o fogo corre até o fim e a segunda brasa não é gasta
-    expect(f.cook).toBe(0);
+    run(f, 5); expect(isWorking(f)).toBe(false); expect(f.fuel.count).toBe(2); expect(f.burnLeft).toBe(0); // sem entrada: não acende
+    f.input = { item: Item.COPPER_SHARD, count: 10 };
+    tickFurnace(f, 0.1); expect(isWorking(f)).toBe(true); expect(f.fuel.count).toBe(1); expect(f.burnTotal).toBe(40); expect(prepsLeft(f)).toBe(4);
+    run(f, 10); expect(f.output).toEqual({ item: Item.COPPER_INGOT, count: 1 }); expect(f.input!.count).toBe(8);
+    run(f, 30); expect(f.output!.count).toBe(4); expect(f.input!.count).toBe(2); // 4 preparações com uma brasa
+    run(f, 0.5); expect(f.fuel).toBeNull(); expect(isWorking(f)).toBe(true); // a segunda acende só ao faltar carga, com algo para cozinhar
+    const b = newFurnace(); b.fuel = { item: Item.EMBER_BLOCK, count: 1 }; b.input = { item: Item.RAW_MEAT, count: 40 };
+    tickFurnace(b, 0.1); expect(b.burnTotal).toBe(360); expect(prepsLeft(b)).toBe(36); run(b, 359.9); expect(b.output).toEqual({ item: Item.COOKED_MEAT, count: 36 }); expect(b.input!.count).toBe(4); expect(isWorking(b)).toBe(false); expect(b.fuel).toBeNull();
   });
-  it('tirar a entrada depois de acender não apaga (o combustível já foi gasto); sem fogo o progresso regride; saída cheia ou com outro item bloqueia', () => {
-    const f = newFurnace(); f.fuel = { item: Item.EMBER, count: 1 }; f.input = { item: Item.COPPER_SHARD, count: 2 };
-    run(f, 4); expect(isLit(f)).toBe(true); expect(f.cook).toBeGreaterThan(3.5);
-    f.input = null; run(f, 1); expect(isLit(f)).toBe(true); expect(f.burnLeft).toBeGreaterThan(70); expect(f.cook).toBeLessThan(2.2); // fogo continua, cozimento regride
+  it('a carga só diminui enquanto processa: parado o saldo fica (e o bloco apagado); sem entrada o progresso regride; saída cheia ou com outro item bloqueia', () => {
+    const f = newFurnace(); f.fuel = { item: Item.EMBER, count: 1 }; f.input = { item: Item.COPPER_SHARD, count: 4 };
+    run(f, 14); expect(f.output!.count).toBe(1); expect(isWorking(f)).toBe(true);
+    const left = f.burnLeft; f.input = null; run(f, 100); // parou de usar a oficina
+    expect(f.burnLeft).toBeCloseTo(left, 5); expect(isLit(f)).toBe(true); expect(isWorking(f)).toBe(false); expect(f.cook).toBe(0); expect(f.fuel).toBeNull();
+    f.input = { item: Item.COPPER_SHARD, count: 2 }; run(f, 10.5); expect(f.output!.count).toBe(2); expect(f.burnLeft).toBeLessThan(left - 9); // continua do saldo, sem gastar outra brasa
     const g = newFurnace(); g.input = { item: Item.COPPER_SHARD, count: 2 }; g.output = { item: Item.COPPER_INGOT, count: 64 }; g.fuel = { item: Item.EMBER, count: 1 };
-    expect(canSmelt(g)).toBe(false); run(g, 5); expect(isLit(g)).toBe(false); expect(g.fuel.count).toBe(1);
+    expect(canSmelt(g)).toBe(false); run(g, 5); expect(isWorking(g)).toBe(false); expect(g.fuel.count).toBe(1);
     g.output = { item: Item.SAND, count: 1 }; expect(canSmelt(g)).toBe(false);
   });
   it('gravar e ler com limites; entrada/combustível que não servem são descartados', () => {
@@ -60,9 +64,9 @@ describe('fornalha no mundo (ADR 0068)', () => {
     expect(s.volume.get(x, Y, z)).toBe(T.BRAZIER_LIT); expect(furnaceAt(s, x, Y, z)!.output!.count).toBe(1);
     await flush(st, s);
     const o = await openSession(st, null, () => 1); // reabrir no meio: o estado volta
-    const f = furnaceAt(o, x, Y, z)!; expect(f.output!.count).toBe(1); expect(f.burnLeft).toBeGreaterThan(60); expect(o.volume.get(x, Y, z)).toBe(T.BRAZIER_LIT);
+    const f = furnaceAt(o, x, Y, z)!; expect(f.output!.count).toBe(1); expect(f.burnLeft).toBeGreaterThan(20); expect(o.volume.get(x, Y, z)).toBe(T.BRAZIER_LIT);
     for (let t = 0; t < 100; t += 0.1) tickFurnaces(o, 0.1);
-    expect(o.volume.get(x, Y, z)).toBe(T.BRAZIER); expect(furnaceAt(o, x, Y, z)!.output!.count).toBe(2); expect(isLit(furnaceAt(o, x, Y, z)!)).toBe(false);
+    expect(o.volume.get(x, Y, z)).toBe(T.BRAZIER); expect(furnaceAt(o, x, Y, z)!.output!.count).toBe(2); expect(isWorking(furnaceAt(o, x, Y, z)!)).toBe(false); expect(furnaceAt(o, x, Y, z)!.burnLeft).toBeGreaterThan(15); // o saldo fica para a próxima vez
     expect(furnaceTakeOut(o, x, Y, z, 'output').ok).toBe(true); expect(o.inventory.total(Item.COPPER_INGOT)).toBe(2); expect(furnaceAt(o, x, Y, z)!.output).toBeNull();
   });
   it('quebrar o braseiro cospe o conteúdo no chão e devolve o bloco; mochila cheia não deixa tirar da saída', async () => {

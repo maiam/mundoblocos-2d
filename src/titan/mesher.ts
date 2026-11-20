@@ -14,7 +14,7 @@ import { isFull, isModelBlock, isSlab, SECTION, T, tileFor, type Face, Y_MIN } f
 export interface MeshData { pos: Float32Array; uv: Float32Array; col: Float32Array; glow: Float32Array; idx: Uint32Array }
 export interface SectionMesh { opaque: MeshData | null; liquid: MeshData | null }
 
-const ATLAS_W = 80, ATLAS_H = 80, PITCH = 20, PAD = 2, TILE = 16;
+const ATLAS_W = 80, ATLAS_H = 100, PITCH = 20, PAD = 2, TILE = 16;
 /** UV (u0, v0, u1, v1) de um tile do atlas 4 × 3; v do WebGL cresce para cima (textura com flipY). */
 export function tileUV(tile: number): [number, number, number, number] {
   const col = tile % 4, row = (tile / 4) | 0;
@@ -38,6 +38,8 @@ export const LAKE_SIDE_DEEP_UV = [0.5, 0, 0.75, 0.75] as const;
 const CORNER_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
 /** Brilho próprio do depósito de brasa (somado depois da luz do dia: legível de dia e de noite). */
 const EMBER_GLOW = 0.42;
+/** Brilho próprio discreto (ADR 0073): o depósito brilha mais, o veio e o bloco de âmbar só o suficiente para chamar a atenção na penumbra. */
+const glowOf = (id: number): number => (id === T.EMBER ? EMBER_GLOW : id === T.EMBER_VEIN ? 0.3 : id === T.EMBER_BLOCK ? 0.22 : 0);
 /** A rocha-mãe é mais escura que a rocha comum. */
 const TINT: Record<number, number> = { [T.BEDROCK]: 0.55 };
 
@@ -103,7 +105,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
         const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? !isFull(nb) && nb !== (bottom ? T.SLAB_TOP : T.SLAB) : !isFull(nb) && nb !== id);
         if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, bottom ? 1 : 2);
       } else if (!isFull(nb)) {
-        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level, id === T.EMBER ? EMBER_GLOW : 0); // o depósito de brasa brilha de dia e de noite
+        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level, glowOf(id)); // o depósito de brasa brilha de dia e de noite
       }
     }
   }

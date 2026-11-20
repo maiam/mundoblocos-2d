@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.131.0 — Titã: Brasa de Âmbar como combustível comum (gerador v11) (20/11/2026)
+- **Proposta do dono do produto.** **ADR 0073.** Decisão: sem cavernas ainda (ficam como pendência); veios enterrados no lugar.
+- **Gerador v11:** 4 depósitos de brasa acessíveis a pé nos 4 × 4 chunks iniciais, cada um com juncos de vidro; **Veio de Âmbar** (bloco 28) enterrado em veios de 3 a 8 blocos, só com picareta (rende 1–2 brasas), com brilho discreto; um veio garantido a 6–20 blocos da chegada. Partidas antigas seguem na versão delas.
+- **Bloco de Âmbar Compactado** (item e bloco 29): 9 brasas na Mesa → 1 bloco, e o inverso; colocável, combustível de 36 preparações.
+- **Braseiro:** 1 brasa = 4 preparações; a carga só é gasta ao cozinhar e o saldo fica guardado; painel mostra "Carga: n preparações". Arte provisória (tiles 16 e 17, atlas 80 × 100; ícone do bloco).
+- Testes `ambar.test.ts` (+5; 1.043 no total) e `furnace.test.ts` atualizado. Conferido a 740 × 360: veio garantido com brilho no fundo de um poço, bloco como combustível no painel (hotbar com o ícone).
+
 ## Orvalis v0.130.0 — Titã: painel do braseiro maior e mais claro (20/11/2026)
 - **Referência da Fornalha do Minecraft do dono do produto.** Layout do ADR 0068 reorganizado (sem mudar regras): **Entrada** em cima, **chama** no meio e **Combustível** embaixo à esquerda; **seta** de progresso e **Resultado** grande à direita (ícone em escala 2×); espaços de 56 px (antes 32).
 - Chama (esvazia com o fogo) e seta (enche com o cozimento) desenhadas em CSS (`clip-path`), no lugar das duas barras. Com o braseiro aberto, a coluna da direita passa de 172 para 232 px e a bolsa quebra em menos colunas (`.titan-bagtop.furn`). Removida uma duplicata do CSS antigo do braseiro.

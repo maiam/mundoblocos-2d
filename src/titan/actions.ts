@@ -1,8 +1,9 @@
 import { blockOfItem, dropCountOf, foodOf, isPick, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
+import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
-import { blockSpan, isBrazier, isCopperVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockSpan, isBrazier, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -16,6 +17,8 @@ export interface ActionResult { ok: boolean; msg?: string; /** A ferramenta na m
 const FULL: ActionResult = { ok: false, msg: 'Mochila cheia' };
 /** Fragmentos de cobre que um veio solta (provisório, ADR 0063). */
 export const COPPER_YIELD = 2;
+/** Brasas de um Veio de Âmbar (ADR 0073): 1 ou 2, decidido pela célula (o mesmo número sempre). */
+export const amberYield = (x: number, y: number, z: number): 1 | 2 => (hash2(0xa3b2, x * 31 + z, y) < 0.5 ? 1 : 2);
 
 /** Recolhe um fragmento de superfície à mão: 1 lasca = 1 fragmento. Mochila cheia: a lasca fica no lugar. */
 export function collectItem(s: TitanSession, id: string): ActionResult {
@@ -153,6 +156,14 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
     const reed0 = s.items.at(x, y + 1, z);
     if (!s.volume.remove(x, y, z)) return { ok: false };
     dropShard(s, Item.COPPER_SHARD, x, y, z, COPPER_YIELD);
+    releaseReed(s, reed0, x, y + 1, z);
+    return { ok: true };
+  }
+  if (isAmberVein(s.volume.get(x, y, z))) { // veio de âmbar (ADR 0073): só com picareta; solta 1–2 brasas (pelo hash da célula, sempre o mesmo número)
+    if (!isPick(s.inventory.get(s.selected)?.item)) return { ok: false, msg: 'Só pó nos dedos. Falta uma picareta.' };
+    const reed0 = s.items.at(x, y + 1, z);
+    if (!s.volume.remove(x, y, z)) return { ok: false };
+    dropShard(s, Item.EMBER, x, y, z, amberYield(x, y, z));
     releaseReed(s, reed0, x, y + 1, z);
     return { ok: true };
   }
