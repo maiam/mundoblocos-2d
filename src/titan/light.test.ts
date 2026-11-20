@@ -31,7 +31,7 @@ function sameAsFull(v: TitanVolume, centers: Array<[number, number, number]>, r 
 
 describe('luz incremental = cálculo completo', () => {
   it('depois de centenas de edições aleatórias (blocos e lanternas, perto e entre divisas), o mapa é idêntico ao recalculado do zero', () => {
-    const g = new TitanGenerator(42), v = new TitanVolume(g);
+    const g = new TitanGenerator(42, 5), v = new TitanVolume(g);
     const a = g.arrival, bx = Math.floor(a.x), bz = Math.floor(a.z), y0 = 150; // ar livre acima do relevo
     const rnd = mulberry32(7);
     v.place(bx, y0, bz, T.LANTERN);
@@ -51,7 +51,7 @@ describe('luz incremental = cálculo completo', () => {
   });
 
   it('tirar uma lanterna perto de outra devolve a luz da outra às células que ficaram escuras', () => {
-    const g = new TitanGenerator(42), v = new TitanVolume(g);
+    const g = new TitanGenerator(42, 5), v = new TitanVolume(g);
     const a = g.arrival, bx = Math.floor(a.x), bz = Math.floor(a.z), y = 150;
     v.place(bx, y, bz, T.LANTERN); v.place(bx + 6, y, bz, T.LANTERN);
     v.light(bx, y, bz);
@@ -65,7 +65,7 @@ describe('luz incremental = cálculo completo', () => {
 
 describe('invalidação cirúrgica (o ganho de desempenho)', () => {
   const setup = () => {
-    const g = new TitanGenerator(42), v = new TitanVolume(g);
+    const g = new TitanGenerator(42, 5), v = new TitanVolume(g);
     const a = g.arrival, bx = Math.floor(a.x), bz = Math.floor(a.z), y = 150;
     v.place(bx, y, bz, T.LANTERN);
     v.light(bx, y, bz); // motor ligado
@@ -105,7 +105,7 @@ describe('invalidação cirúrgica (o ganho de desempenho)', () => {
   });
 
   it('célula de luz alterada na borda de seção marca também a seção vizinha', () => {
-    const g = new TitanGenerator(42), v = new TitanVolume(g);
+    const g = new TitanGenerator(42, 5), v = new TitanVolume(g);
     const y = 150, ex = 14; // lanterna em x = 14: o alcance passa da divisa x = 15|16
     v.place(ex, y, 0, T.LANTERN); v.light(ex, y, 0); v.takeTouched(); v.takeLightTouched();
     v.place(ex + 1, y, 0, T.DARK_ROCK); // bloqueia: a luz em x = 15 muda

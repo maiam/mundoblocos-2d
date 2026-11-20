@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, inRegion, blocksLight, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, modelOf, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, blocksLight, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, modelOf, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -17,7 +17,7 @@ export class TitanVolume {
   /** Lanternas colocadas (as únicas fontes de luz) e o mapa de luz calculado sob demanda. */
   private readonly lanterns = new Map<number, [number, number, number]>();
   /** Luz incremental em 4 bits por célula (ver `light.ts`); `ready` só depois da primeira consulta (cálculo completo sob demanda). */
-  private readonly light$ = new LightEngine((x, y, z) => blocksLight(this.get(x, y, z)), (x, y, z) => this.markLightCell(x, y, z));
+  private readonly light$ = new LightEngine((x, y, z) => blocksLight(this.get(x, y, z)), (x, y, z) => this.markLightCell(x, y, z), (x, z) => this.gen.inRegion(x, z));
   /** Medição opcional do tempo de cada atualização do mapa de luz (ms): cálculo completo e cada edição. */
   onLightMs: ((ms: number) => void) | null = null;
   /** Seções cuja luz mudou (só luz, sem edição de bloco), a refazer com orçamento por quadro. Chave numérica → `"cx,sy,cz"`. */
@@ -50,19 +50,19 @@ export class TitanVolume {
 
   /** Colisão: sólido, mais uma parede invisível em volta da região de teste e a rocha-mãe. */
   solidForBody(x: number, y: number, z: number): boolean {
-    if (!inRegion(x, z)) return true;
+    if (!this.gen.inRegion(x, z)) return true;
     return isSolid(this.get(x, y, z));
   }
 
   /** Altura sólida da célula para o corpo do jogador (0–1; a parede invisível em volta da região conta como cubo inteiro). */
   bodyHeight(x: number, y: number, z: number): number {
-    if (!inRegion(x, z)) return 1;
+    if (!this.gen.inRegion(x, z)) return 1;
     return blockHeight(this.get(x, y, z));
   }
 
   /** Faixa `[baixo, topo]` ocupada na célula para o corpo (a parede invisível em volta da região conta como cubo inteiro). */
   bodySpan(x: number, y: number, z: number): readonly [number, number] {
-    if (!inRegion(x, z)) return [0, 1];
+    if (!this.gen.inRegion(x, z)) return [0, 1];
     return blockSpan(this.get(x, y, z));
   }
 
@@ -73,7 +73,7 @@ export class TitanVolume {
 
   /** Pode editar esta célula? Dentro da região e do domínio Y, e nunca a rocha-mãe (Y = −64). */
   editable(x: number, y: number, z: number): boolean {
-    return inRegion(x, z) && y > Y_MIN && y <= Y_MAX;
+    return this.gen.inRegion(x, z) && y > Y_MIN && y <= Y_MAX;
   }
 
   /** Grava `id` na célula respeitando a regra de edição. Devolve se algo mudou. */

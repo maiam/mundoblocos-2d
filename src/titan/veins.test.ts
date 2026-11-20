@@ -7,7 +7,7 @@ import { Item } from './items';
 import { MemoryTitanStorage } from './save';
 import { flush, hasPendingState, openSession, visibleItems, type TitanSession } from './session';
 import { TitanVolume } from './volume';
-import { inRegion, isSolid, T } from './voxel';
+import { isSolid, T } from './voxel';
 
 const open = async (st = new MemoryTitanStorage(), version = 3) => ({ st, s: await openSession(st, 42, () => 1, undefined, version) });
 const veinOf = (s: TitanSession, kind: 'rock' | 'ice') => s.volume.gen.veinCells().find((v) => v.kind === kind)!;
@@ -24,7 +24,7 @@ function reachable(g: TitanGenerator): Set<number> {
     const [x, z] = q.pop()!;
     for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = x + dx, nz = z + dz;
-      if (!inRegion(nx, nz) || seen.has(key(nx, nz)) || top(nx, nz) < 63 || Math.abs(top(nx, nz) - top(x, z)) > 1) continue;
+      if (!g.inRegion(nx, nz) || seen.has(key(nx, nz)) || top(nx, nz) < 63 || Math.abs(top(nx, nz) - top(x, z)) > 1) continue;
       seen.add(key(nx, nz)); q.push([nx, nz]);
     }
   }
@@ -65,9 +65,9 @@ describe('gerador v3: veios', () => {
     }
   });
 
-  it('lote de 1.000 seeds: sempre uma fonte de rocha e uma de gelo alcançáveis a pé, determinísticas, e o afloramento de reserva só entra se preciso', () => {
+  it('lote de 200 seeds (v6, região 128 × 128): sempre uma fonte de rocha e uma de gelo alcançáveis a pé, determinísticas, e o afloramento de reserva só entra se preciso', () => {
     let fallbacks = 0;
-    for (let seed = 1; seed <= 1000; seed++) {
+    for (let seed = 1; seed <= 200; seed++) {
       const g = new TitanGenerator(seed);
       const veins = g.veinCells();
       expect(veins.filter((c) => c.kind === 'rock').length, `seed ${seed} rocha`).toBe(3);
@@ -75,7 +75,7 @@ describe('gerador v3: veios', () => {
       if (g.outcropFallback) fallbacks++;
       expect(g.emberSite, `seed ${seed} brasa`).not.toBeNull(); // v4: o depósito de brasa existe em toda seed
       expect(g.reeds.length, `seed ${seed} juncos`).toBeGreaterThan(0);
-      if (seed % 50 === 0) { // alcance sobre as colunas reais, em amostra (cada BFS lê o volume inteiro)
+      if (seed % 40 === 0) { // alcance sobre as colunas reais, em amostra (cada BFS lê o volume inteiro)
         const seen = reachable(g);
         for (const c of veins) {
           const near = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => seen.has((c.x + dx) * 1000 + (c.z + dz)));
@@ -83,12 +83,12 @@ describe('gerador v3: veios', () => {
         }
       }
     }
-    expect(fallbacks).toBeLessThan(1000);
+    expect(fallbacks).toBeLessThan(200);
   }, 90_000);
 
   it('seeds em que a busca natural falha (afloramento de reserva): as duas fontes existem, longe da clareira e alcançáveis a pé', () => {
-    for (const seed of [448, 597, 635, 717, 869, 871, 918, 934, 985]) { // achadas no lote de 1.000: a busca natural não tinha formação alcançável
-      const g = new TitanGenerator(seed);
+    for (const seed of [448, 597, 635, 717, 869, 871, 918, 934, 985]) { // achadas num lote antigo de 1.000 (região 64 × 64): a busca natural não tinha formação alcançável
+      const g = new TitanGenerator(seed, 5); // regressão da v5 (a v6 tem outra geometria)
       expect(g.outcropFallback, `seed ${seed}`).toBe(true);
       expect(g.formations.map((f) => f.kind).sort()).toEqual(['ice', 'rock']);
       const seen = reachable(g), c = g.arrival.clearing;

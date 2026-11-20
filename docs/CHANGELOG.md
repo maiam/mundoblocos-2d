@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.119.0 — Titã: região de 8 × 8 chunks (gerador v6) e lote de 200 seeds (20/11/2026)
+- **Pedido do dono do produto:** ampliar a região para 8 × 8 chunks e reduzir o levantamento de 1.000 para 200 seeds. **ADR 0062.**
+- **Gerador v6:** região de 128 × 128 blocos (a v1–v5 continua em 64 × 64: região por versão em `voxel.ts`/`TitanGenerator.region`); relevo longe do lago gradual e limitado (sem o degrau de 5 blocos), Y ≈ 53–84, andável até a borda; chegada, formações, veios, brasa, juncos, plantas e toca como na v5, sorteados na região maior.
+- Volume, luz (`LightEngine`), seções iniciais, drops do save e buscas do gerador leem a região do gerador; a abertura continua em ≈ 1,5 s.
+- Testes: `regiao.test.ts` (+5); lote de levantamento em 200 seeds (v6) e as 9 seeds de reserva viraram regressão da v5; testes de luz, lajes e Marco/Painel fixam a v5. Conferido a 740 × 360 na borda leste e no sul (x = 58, z = 50).
+
 ## Orvalis v0.118.0 — Titã: Farejadores de Duna (20/11/2026)
 - **Arte e regras do dono do produto** (Drive: GLB low-poly de 3.538 triângulos, atlas, história "O dono da enseada"; um pequeno ½ e um grande 1,3×). **ADR 0061.**
 - **Toca** no centro da enseada (`TitanGenerator.den`, na v5 ainda não publicada) com um Farejador **grande** (escala 1,3, dano 4) e um **pequeno** (½, dano 2). Passeiam em volta da toca; ao avistar o viajante (8 m o pequeno, 11 m o grande) **investem**; ao bater **caem de costas como um tatu e ficam 2 s parados, estonteados**, antes de nova investida. Investida que erra: pausa e volta à toca. Nunca perseguem além de 20 m da toca.

@@ -8,7 +8,7 @@ import { AFTERNOON, validDay } from './sky';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
-import { inRegion, isSolid, T, Y_MAX, Y_MIN } from './voxel';
+import { isSolid, T, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Sessão solo do Titã: seed + versão do gerador + volume + jogador + gravação confirmada (ADR 0039). Sem DOM: o `titanGame.ts` só liga entrada e vídeo.
@@ -102,11 +102,11 @@ function validRegrow(raw: unknown): Map<string, number> {
 }
 
 /** Itens soltos gravados: só entradas bem formadas (id, item conhecido, contagem 1–64 opcional e células inteiras no domínio); o resto é descartado. */
-function validDrops(raw: unknown): Map<string, Drop> {
+function validDrops(raw: unknown, gen: TitanGenerator): Map<string, Drop> {
   const out = new Map<string, Drop>();
   if (!Array.isArray(raw)) return out;
   for (const d of raw as Drop[]) {
-    if (!d || typeof d.id !== 'string' || !isItem(d.item) || ![d.x, d.y, d.z].every(Number.isInteger) || !(d.y > Y_MIN && d.y <= Y_MAX) || !inRegion(d.x, d.z)) continue;
+    if (!d || typeof d.id !== 'string' || !isItem(d.item) || ![d.x, d.y, d.z].every(Number.isInteger) || !(d.y > Y_MIN && d.y <= Y_MAX) || !gen.inRegion(d.x, d.z)) continue;
     const count = d.count === undefined ? undefined : Number.isInteger(d.count) && d.count >= 1 && d.count <= 64 ? d.count : null;
     if (count === null) continue;
     out.set(d.id, { id: d.id, item: d.item, ...(count && count > 1 ? { count } : {}), x: d.x, y: d.y, z: d.z });
@@ -167,7 +167,7 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const regrow = validRegrow(save.header.regrow);
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, creatures: creaturesFor(gen), savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, creatures: creaturesFor(gen), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
