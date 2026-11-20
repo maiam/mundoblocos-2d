@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { handPose, SWING_S } from './heldPose';
+import { DIP_SINGLE, HandAnim } from './heldPose';
 import { loadHeldModel } from './heldItem';
 import { titanAdagaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
@@ -77,7 +77,9 @@ export class TitanRenderer {
   private readonly handCamera = new THREE.PerspectiveCamera(75, 1, 0.02, 10);
   private readonly held = new Map<number, THREE.Group | 'loading' | 'failed'>();
   private heldItem: number | null = null;
-  private swingAt = -1;
+  private readonly handAnim = new HandAnim();
+  private handMove = { speed: 0, grounded: true, acting: false };
+  private lastRenderMs = 0;
   private farejadorGeos = {} as Record<string, THREE.BufferGeometry>;
   private farejadorMat!: THREE.MeshBasicMaterial;
   private readonly timeU = { value: 0 };
@@ -413,8 +415,10 @@ export class TitanRenderer {
       return m;
     }).then((g) => { g.visible = this.heldItem === item; this.handScene.add(g); this.held.set(item, g); }, (e) => { this.held.set(item, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
   }
-  /** Começa o golpe da mão (animação de `SWING_S`). */
-  swingHand(): void { this.swingAt = performance.now(); }
+  /** Começa um golpe da mão (animação de `SWING_S`, com o afundamento do golpe isolado). */
+  swingHand(): void { this.handAnim.trigger(DIP_SINGLE); }
+  /** Estado do jogador para a mão: velocidade horizontal e chão (balanço ao andar) e `acting` (segurando para quebrar: o golpe se repete). */
+  setHandMotion(speed: number, grounded: boolean, acting: boolean): void { this.handMove = { speed, grounded, acting }; }
   /** A mão tem modelo carregado e visível? (diagnóstico e testes de navegador.) */
   get heldVisible(): boolean { const g = this.heldItem !== null ? this.held.get(this.heldItem) : undefined; return !!g && typeof g !== 'string' && g.visible; }
   /** O Farejador usa o rig? (diagnóstico e testes de navegador.) */
@@ -531,9 +535,9 @@ export class TitanRenderer {
     this.renderer.render(this.scene, this.camera);
     const hand = this.heldItem !== null ? this.held.get(this.heldItem) : undefined;
     if (hand && typeof hand !== 'string' && hand.visible) {
-      const st = this.swingAt >= 0 ? (performance.now() - this.swingAt) / 1000 : -1;
-      if (st >= SWING_S) this.swingAt = -1;
-      const hp = handPose(st, time);
+      const now = performance.now(), dt = this.lastRenderMs ? Math.min(0.1, (now - this.lastRenderMs) / 1000) : 0;
+      this.lastRenderMs = now;
+      const hp = this.handAnim.update(dt, this.handMove.speed, this.handMove.grounded, this.handMove.acting);
       hand.position.set(hp.x, hp.y, hp.z); hand.rotation.set(hp.rx, hp.ry, hp.rz);
       this.renderer.autoClear = false; this.renderer.clearDepth(); this.renderer.render(this.handScene, this.handCamera); this.renderer.autoClear = true;
     }

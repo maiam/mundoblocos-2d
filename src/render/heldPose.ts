@@ -1,28 +1,61 @@
 /**
- * Pose da mão em primeira pessoa (ADR 0071): funções puras, em espaço de câmera (−Z à frente, +Y acima, +X à direita), sem THREE nem DOM.
- * Repouso: o item pende à direita e embaixo com a ponta para frente e para cima; o golpe levanta, desce cortando e volta (`SWING_S`).
+ * Pose da mão em primeira pessoa (ADR 0071, 0074): procedural, no modelo do Minecraft (`ItemInHandRenderer`): nenhum keyframe, só um contador normalizado de golpe `p` (0 → 1 em `SWING_S` = 6 ticks)
+ * e três curvas de seno. Puro (sem THREE nem DOM); espaço de câmera (−Z à frente, +Y acima, +X à direita).
  */
-export const SWING_S = 0.34;
+export const SWING_S = 0.3;
+/** Quanto a mão afunda depois de um golpe isolado e enquanto se repete o golpe (recupera a ~1,1 por segundo; 1 = 0,3 m). */
+export const DIP_SINGLE = 0.45, DIP_LOOP = 0.15;
 
 export interface HandPose { x: number; y: number; z: number; rx: number; ry: number; rz: number }
 
-/** Posição e giro de repouso da adaga (a ponta do modelo é +Y). */
-export const REST: HandPose = { x: 0.24, y: -0.17, z: -0.5, rx: -0.8, ry: 0.0, rz: 0.3 };
+/** Repouso da adaga: pende à direita e embaixo, ponta para frente e para cima (a ponta do modelo é +Y). */
+export const REST: HandPose = { x: 0.26, y: -0.12, z: -0.52, rx: -0.8, ry: 0, rz: 0.3 };
+const DEG = Math.PI / 180;
 
-/** Curva do golpe: 0 → recuo (−0,45) → corte (+1) → volta a 0. `t` de 0 a 1. */
-export function swingCurve(t: number): number {
-  if (t <= 0 || t >= 1) return 0;
-  if (t < 0.25) return -0.45 * (t / 0.25);
-  if (t < 0.55) { const u = (t - 0.25) / 0.3; return -0.45 + 1.45 * (u * u * (3 - 2 * u)); }
-  const u = (t - 0.55) / 0.45; return 1 - u * u * (3 - 2 * u);
+/** As três curvas do Minecraft para o progresso `p` (0–1): `sin1` sobe e desce (pico em 0,5), `sin2` acelera o começo (ease-out), `sinSq` é o giro do pulso. Fora de 0–1 tudo vale 0. */
+export function swingCurves(p: number): { sin1: number; sin2: number; sinSq: number } {
+  if (p <= 0 || p >= 1) return { sin1: 0, sin2: 0, sinSq: 0 };
+  return { sin1: Math.sin(p * Math.PI), sin2: Math.sin(Math.sqrt(p) * Math.PI), sinSq: Math.sin(p * p * Math.PI) };
 }
 
-/** Pose no instante: `swingT` em segundos desde o início do golpe (≥ `SWING_S` ou negativo = parado), `time` em segundos para o balanço leve. */
-export function handPose(swingT: number, time: number): HandPose {
-  const a = swingT >= 0 && swingT < SWING_S ? swingCurve(swingT / SWING_S) : 0, fwd = Math.max(0, a);
-  const bob = Math.sin(time * 1.6) * 0.004;
+/** Balanço da câmera ao andar (no chão, acima de 0,1 m/s) ou respiração parada, a partir de um contador de fase. */
+export function bobOffset(timer: number, speed: number, grounded: boolean): { x: number; y: number } {
+  if (grounded && speed > 0.1) return { x: Math.cos(timer) * 0.025, y: -Math.abs(Math.sin(timer)) * 0.025 };
+  return { x: 0, y: Math.sin(timer) * 0.006 };
+}
+
+/** Posição e giro da mão para o progresso `p`, o balanço `bob` e o afundamento `dip` (0–1) após o golpe. */
+export function handPose(p: number, bob: { x: number; y: number } = { x: 0, y: 0 }, dip = 0): HandPose {
+  const { sin1, sin2, sinSq } = swingCurves(p);
   return {
-    x: REST.x - fwd * 0.1, y: REST.y + bob - fwd * 0.07, z: REST.z - fwd * 0.16,
-    rx: REST.rx + a * 0.95, ry: REST.ry - fwd * 0.25, rz: REST.rz - fwd * 0.2,
+    x: REST.x - sin2 * 0.3 + bob.x,
+    y: REST.y + sin1 * 0.1 - dip * 0.3 + bob.y,
+    z: REST.z - sin2 * 0.18,
+    rx: REST.rx - sin2 * 48 * DEG,
+    ry: REST.ry + sin2 * 42 * DEG - sinSq * 20 * DEG,
+    rz: REST.rz + sin2 * 48 * DEG,
   };
+}
+
+/** Estado da animação da mão: golpe (um disparo ou repetido enquanto se age), afundamento e balanço. `update` devolve a pose do quadro. */
+export class HandAnim {
+  /** Segundos desde o início do golpe em curso (−1 = parada). */
+  swingElapsed = -1;
+  equipOffset = 0;
+  private bobTimer = 0;
+
+  /** Dispara um golpe (reinicia se já houver um); `dip` é o afundamento que a mão recupera depois. */
+  trigger(dip = DIP_SINGLE): void { this.swingElapsed = 0; this.equipOffset = Math.max(this.equipOffset, dip); }
+  get swinging(): boolean { return this.swingElapsed >= 0; }
+
+  /** `looping` = o jogador está agindo (segurando para quebrar): ao terminar um golpe começa outro na hora, sem parar. */
+  update(dt: number, speed: number, grounded: boolean, looping: boolean): HandPose {
+    if (this.swingElapsed >= 0) {
+      this.swingElapsed += dt;
+      if (this.swingElapsed >= SWING_S) this.swingElapsed = looping ? this.swingElapsed - SWING_S : -1;
+    } else if (looping) this.trigger(DIP_LOOP);
+    if (this.equipOffset > 0) this.equipOffset = Math.max(0, this.equipOffset - dt * 1.1);
+    this.bobTimer += dt * (grounded && speed > 0.1 ? Math.min(speed, 6) * 2.2 : 1.8);
+    return handPose(this.swingElapsed >= 0 ? this.swingElapsed / SWING_S : 0, bobOffset(this.bobTimer, speed, grounded), this.equipOffset);
+  }
 }

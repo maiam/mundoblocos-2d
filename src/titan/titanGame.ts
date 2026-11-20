@@ -793,6 +793,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);
+    view.setHandMotion(Math.hypot(b.vx, b.vz), b.onGround, active && gesture.state === 'BREAKING');
     view.render(eye, session.yaw, session.pitch, aimCreature ? null : target, now / 1000);
     veil.style.opacity = String(view.submersion); // 0 fora d'água; entra e sai em ~150 ms
     cross.hidden = !active;

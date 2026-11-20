@@ -9,6 +9,9 @@
 3. **No `TitanRenderer`**: cena e câmera próprias da mão (`handScene`/`handCamera`), desenhadas depois do mundo com a profundidade limpa (a mão não entra em paredes); `setHeld(item)` carrega o modelo na primeira vez que a adaga (id 22) é escolhida, em segundo plano (falha = sem mão, só aviso no console); `swingHand()` dispara o golpe; o `titanGame` chama `setHeld` a cada quadro com o item selecionado e `swingHand` em `strike` (golpe no Farejador).
 4. Só a Adaga de Rocha tem modelo; outros itens seguem sem mão (a tabela de modelos é o `if (item !== 22)` de `setHeld`: um segundo modelo exige trocá-lo por um mapa item → URL).
 
+## Atualização (v0.132.0): golpe procedural
+Seguindo o `ItemInHandRenderer` do Minecraft, `heldPose.ts` virou procedural: um contador `p` (0 → 1 em 0,3 s) com `sin1`, `sin2` e `sinSq`; translação (esquerda, cima, frente), giro em X (lâmina desce 48°), Y e Z (pulso); balanço ao andar e respiração parada; `HandAnim` repete o golpe sem pausa enquanto se segura para quebrar (afundamento de 0,15) e dá o afundamento de 0,45 após um golpe isolado. `setHandMotion` leva velocidade, chão e "agindo" do `titanGame` ao renderer.
+
 ## Consequências
 - Custo: +338 KB carregados só quando a adaga é escolhida; um desenho extra e uma limpeza de profundidade por quadro com modelo na mão.
 - Pendências: escala e posição ajustadas só no desktop a 740 × 360 (validar em aparelho); golpe também ao quebrar bloco com a adaga; modelo da adaga de cobre e das picaretas; normal/ORM não usados; adaga no chão (item solto) continua sprite.

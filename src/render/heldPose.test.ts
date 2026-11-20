@@ -1,21 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import glbInline from '../assets/titan-adaga-rocha.glb?inline';
-import { handPose, REST, SWING_S, swingCurve } from './heldPose';
+import { bobOffset, DIP_LOOP, DIP_SINGLE, HandAnim, handPose, REST, SWING_S, swingCurves } from './heldPose';
 
-describe('item na mão em primeira pessoa (ADR 0071)', () => {
-  it('curva do golpe: começa e termina em 0, recua, corta além do repouso e volta', () => {
-    expect(swingCurve(0)).toBe(0); expect(swingCurve(1)).toBe(0); expect(swingCurve(-1)).toBe(0); expect(swingCurve(2)).toBe(0);
-    expect(swingCurve(0.25)).toBeCloseTo(-0.45, 5); expect(swingCurve(0.55)).toBeCloseTo(1, 5);
-    let max = -9, min = 9; for (let t = 0; t <= 1; t += 0.01) { max = Math.max(max, swingCurve(t)); min = Math.min(min, swingCurve(t)); }
-    expect(max).toBeCloseTo(1, 1); expect(min).toBeCloseTo(-0.45, 1);
+describe('item na mão em primeira pessoa (ADR 0071, 0074)', () => {
+  it('curvas do Minecraft: sin1 sobe e desce (pico em p = 0,5), sin2 acelera o começo (pico em p = 0,25), sinSq gira o pulso no fim; tudo 0 fora de 0–1', () => {
+    for (const p of [-1, 0, 1, 2]) expect(swingCurves(p)).toEqual({ sin1: 0, sin2: 0, sinSq: 0 });
+    expect(swingCurves(0.5).sin1).toBeCloseTo(1, 6); expect(swingCurves(0.25).sin2).toBeCloseTo(1, 6);
+    expect(swingCurves(0.1).sin2).toBeGreaterThan(swingCurves(0.1).sin1); // o começo é rápido (ease-out)
+    expect(swingCurves(0.9).sinSq).toBeGreaterThan(swingCurves(0.5).sinSq * 0.3);
+    expect(SWING_S).toBe(0.3); // 6 ticks
   });
-  it('pose: parada fica no repouso (só um balanço de milímetros); no corte a mão avança e gira; passado o tempo volta', () => {
-    const r = handPose(-1, 0);
-    expect(r.x).toBe(REST.x); expect(r.rx).toBe(REST.rx); expect(Math.abs(r.y - REST.y)).toBeLessThan(0.006);
-    const hit = handPose(SWING_S * 0.55, 0);
-    expect(hit.z).toBeLessThan(REST.z - 0.1); expect(hit.rx).toBeGreaterThan(REST.rx + 0.8); expect(hit.y).toBeLessThan(REST.y);
-    const done = handPose(SWING_S + 0.01, 0); expect(done.rx).toBe(REST.rx); expect(done.z).toBe(REST.z);
-    for (const t of [0, 0.05, 0.1, 0.2, 0.3]) for (const v of Object.values(handPose(t, 1.3))) expect(Number.isFinite(v)).toBe(true);
+  it('pose: parada fica no repouso; no corte a mão cruza para a esquerda, avança, sobe e a lâmina desce 48°; em 1 volta ao repouso', () => {
+    const r = handPose(0);
+    expect(r).toEqual({ x: REST.x, y: REST.y, z: REST.z, rx: REST.rx, ry: REST.ry, rz: REST.rz });
+    const mid = handPose(0.25);
+    expect(mid.x).toBeLessThan(REST.x - 0.25); expect(mid.z).toBeLessThan(REST.z - 0.15); expect(mid.rx).toBeLessThan(REST.rx - 0.75); expect(mid.rz).toBeGreaterThan(REST.rz + 0.7);
+    expect(handPose(0.5).y).toBeGreaterThan(REST.y + 0.05); expect(handPose(1)).toEqual(handPose(0));
+    expect(handPose(0, { x: 0, y: 0 }, 1).y).toBeCloseTo(REST.y - 0.3, 6); // afundamento depois do golpe
+    for (const p of [0, 0.1, 0.3, 0.6, 0.9]) for (const v of Object.values(handPose(p, bobOffset(1.3, 3, true), 0.2))) expect(Number.isFinite(v)).toBe(true);
+  });
+  it('balanço: andando no chão oscila; parado, só uma respiração de milímetros', () => {
+    expect(Math.abs(bobOffset(0.4, 4, true).y)).toBeGreaterThan(0.005); expect(Math.abs(bobOffset(0.4, 4, true).x)).toBeGreaterThan(0.01);
+    expect(Math.abs(bobOffset(0.4, 0, true).x)).toBe(0); expect(Math.abs(bobOffset(0.4, 0, true).y)).toBeLessThan(0.007); expect(bobOffset(0.4, 4, false).x).toBe(0); // no ar não balança
+  });
+  it('HandAnim: um golpe isolado dura 0,3 s e para; segurando, o golpe se repete sem pausa; o afundamento é recuperado', () => {
+    const a = new HandAnim(); a.update(0.016, 0, true, false); expect(a.swinging).toBe(false);
+    a.trigger(); expect(a.swinging).toBe(true); expect(a.equipOffset).toBeCloseTo(DIP_SINGLE, 6);
+    for (let i = 0; i < 9; i++) a.update(0.03, 0, true, false); expect(a.swinging).toBe(true); // 0,27 s
+    a.update(0.03, 0, true, false); a.update(0.03, 0, true, false); expect(a.swinging).toBe(false);
+    for (let t = 0; t < 0.6; t += 0.03) a.update(0.03, 0, true, false); expect(a.equipOffset).toBe(0);
+    const l = new HandAnim(); let starts = 0, was = false;
+    for (let t = 0; t < 1.5; t += 0.016) { l.update(0.016, 0, true, true); if (l.swinging && !was) starts++; was = l.swinging; }
+    expect(starts).toBe(1); expect(l.swinging).toBe(true); // ficou em golpe contínuo (nunca parou entre os ciclos)
+    let stops = 0; const m = new HandAnim(); m.trigger(); for (let t = 0; t < 1.5; t += 0.016) { m.update(0.016, 0, true, true); if (!m.swinging) stops++; } expect(stops).toBe(0);
+    for (let t = 0; t < 0.5; t += 0.016) l.update(0.016, 0, true, false); expect(l.swinging).toBe(false); // soltou: termina o ciclo e para
+    expect(l.equipOffset).toBeLessThanOrEqual(DIP_LOOP);
   });
   it('o GLB leve da Adaga de Rocha tem 3 peças sob o pivô CTRL_Adaga com o marcador da palma, uma textura WebP e cabe em 2 MB', () => {
     const bin = atob(glbInline.slice(glbInline.indexOf(',') + 1)), b = Uint8Array.from(bin, (c) => c.charCodeAt(0)), dv = new DataView(b.buffer);

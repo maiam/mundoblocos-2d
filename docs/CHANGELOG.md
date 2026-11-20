@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.132.0 — Titã: golpe procedural da adaga, repetido ao agir (20/11/2026)
+- **Referência do Minecraft do dono do produto** (`ItemInHandRenderer`): o golpe é 100 % procedural, sem keyframes, por um contador normalizado `p` (0 → 1 em **0,3 s**, 6 ticks) e três curvas de seno (`sin1`, `sin2` = ease-out, `sinSq` = giro do pulso). **ADR 0071 (atualização).**
+- `render/heldPose.ts` reescrito (puro): `swingCurves`, `handPose(p, bob, dip)` (a mão cruza para a esquerda, avança, sobe e a lâmina desce 48°; recua e volta), `bobOffset` (balanço ao andar, respiração parada) e a classe `HandAnim` (golpe isolado com afundamento de 0,45 que recupera, golpe **repetido sem pausa enquanto se segura para quebrar**, afundamento menor no ciclo).
+- `TitanRenderer.setHandMotion(velocidade, no chão, agindo)` alimenta a mão a cada quadro; o golpe no Farejador continua disparando um golpe isolado. A mão segue em cena própria desenhada por cima do mundo (nunca atravessa paredes).
+- Amplitudes ajustadas ao nosso modelo (pivô na palma): a descida da lâmina ficou em 48° (78° tirava a adaga da tela a 360 px de altura). Testes +2 (1.046 no total). Conferido a 740 × 360 em 5 fases do golpe.
+
 ## Orvalis v0.131.1 — Titã: mira nos Farejadores pequenos (20/11/2026)
 - **Relato do dono do produto:** os pequenos "não dropam nem somem quando mortos". O abate em si funciona (3 golpes de adaga: o animal some, solta carne e placa e volta em 600 s; conferido no navegador), mas a mira tinha dois defeitos que impediam de chegar a ele: o pequeno nasce **na mesma célula do grande** e ficava dentro da esfera dele (o grande sempre vencia a mira), e o pequeno colado nos pés só se acertava olhando quase na vertical.
 - `creatureAim` agora escolhe, entre as esferas acertadas, a que está **mais perto do eixo da mira** (proporcional ao tamanho) e, sem acerto, faz uma **ajuda de mira** rente aos pés (≤ 1,4 m, dentro de 60° do olhar, escondida por bloco mais perto). Observação: o espólio que cai perto do jogador é recolhido na hora (a mensagem "abatido: …" confirma).
