@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.131.1 — Titã: mira nos Farejadores pequenos (20/11/2026)
+- **Relato do dono do produto:** os pequenos "não dropam nem somem quando mortos". O abate em si funciona (3 golpes de adaga: o animal some, solta carne e placa e volta em 600 s; conferido no navegador), mas a mira tinha dois defeitos que impediam de chegar a ele: o pequeno nasce **na mesma célula do grande** e ficava dentro da esfera dele (o grande sempre vencia a mira), e o pequeno colado nos pés só se acertava olhando quase na vertical.
+- `creatureAim` agora escolhe, entre as esferas acertadas, a que está **mais perto do eixo da mira** (proporcional ao tamanho) e, sem acerto, faz uma **ajuda de mira** rente aos pés (≤ 1,4 m, dentro de 60° do olhar, escondida por bloco mais perto). Observação: o espólio que cai perto do jogador é recolhido na hora (a mensagem "abatido: …" confirma).
+- Teste +1 em `combat.test.ts` (1.044 no total).
+
 ## Orvalis v0.131.0 — Titã: Brasa de Âmbar como combustível comum (gerador v11) (20/11/2026)
 - **Proposta do dono do produto.** **ADR 0073.** Decisão: sem cavernas ainda (ficam como pendência); veios enterrados no lugar.
 - **Gerador v11:** 4 depósitos de brasa acessíveis a pé nos 4 × 4 chunks iniciais, cada um com juncos de vidro; **Veio de Âmbar** (bloco 28) enterrado em veios de 3 a 8 blocos, só com picareta (rende 1–2 brasas), com brilho discreto; um veio garantido a 6–20 blocos da chegada. Partidas antigas seguem na versão delas.

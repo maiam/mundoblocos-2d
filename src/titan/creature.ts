@@ -145,11 +145,12 @@ export function hurtFarejador(f: Farejador, damage: number): { dead: boolean } {
 export const hitSphere = (f: Farejador): { x: number; y: number; z: number; r: number } => ({ x: f.body.x, y: f.body.y + 0.45 * KINDS[f.kind].scale, z: f.body.z, r: 0.95 * KINDS[f.kind].scale });
 
 /**
- * Mira nos animais (ADR 0069): o animal mais próximo cuja esfera de acerto o raio do olhar atravessa a no máximo `reach` m (medido até a superfície), mais perto que `blockDist` (um bloco na frente
- * esconde o animal). Devolve o índice na lista e a distância.
+ * Animal na mira (ADR 0069, 0074): raio do olhar contra a esfera de cada animal até `reach` m, escondido por bloco mais perto (`blockDist`). Entre os que o raio acerta vence o que está **mais perto do eixo
+ * da mira** em proporção ao tamanho (o pequeno não fica escondido atrás da esfera do grande quando os dois estão juntos). Sem acerto de esfera, uma **ajuda de mira** pega o animal bem perto dos pés
+ * (≤ 1,4 m na horizontal e dentro de 60° do olhar), onde olhar para baixo o bastante para acertar a esfera pequena seria incômodo.
  */
 export function creatureAim(list: readonly Farejador[], ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach: number, blockDist = Infinity): { index: number; dist: number } | null {
-  let best: { index: number; dist: number } | null = null;
+  let best: { index: number; dist: number; score: number } | null = null;
   list.forEach((f, index) => {
     const s = hitSphere(f), lx = s.x - ox, ly = s.y - oy, lz = s.z - oz;
     const t0 = lx * dx + ly * dy + lz * dz; // projeção do centro no raio
@@ -158,9 +159,21 @@ export function creatureAim(list: readonly Farejador[], ox: number, oy: number, 
     const t = t0 - Math.sqrt(s.r * s.r - d2); // entrada na esfera (se estamos dentro dela, t < 0: acerta a 0)
     const dist = Math.max(0, t);
     if (t0 < 0 || dist > reach || dist >= blockDist) return;
-    if (!best || dist < best.dist) best = { index, dist };
+    const score = d2 / (s.r * s.r);
+    if (!best || score < best.score) best = { index, dist, score };
   });
-  return best;
+  const hit = best as { index: number; dist: number } | null;
+  if (hit) return { index: hit.index, dist: hit.dist };
+  let near: { index: number; dist: number } | null = null;
+  const hl = Math.hypot(dx, dz);
+  list.forEach((f, index) => {
+    const lx = f.body.x - ox, lz = f.body.z - oz, h = Math.hypot(lx, lz);
+    if (h > 1.4 || h >= blockDist || hl < 1e-6) return;
+    const cos = h < 1e-6 ? 1 : (lx * dx + lz * dz) / (h * hl); // o animal está na frente (dentro de 60° do olhar na horizontal)
+    if (cos < 0.5) return;
+    if (!near || h < near.dist) near = { index, dist: h };
+  });
+  return near as { index: number; dist: number } | null;
 }
 
 /** Pose das partes do modelo (rad, em torno do pivô de cada parte; o modelo olha para −X, o eixo lateral é Z). Pura do estado: sem rig, cada parte gira em torno do próprio pivô. */
