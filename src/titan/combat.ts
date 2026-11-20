@@ -33,8 +33,10 @@ export function attackCreature(s: TitanSession, index: number): AttackResult {
   s.creatures.splice(index, 1);
   s.respawn.set(f.kind, RESPAWN_S);
   s.metaRev++;
-  restDrop(s, `m:${f.kind}:${Math.floor(f.clock * 10)}:0`, Item.RAW_MEAT, f.body.x, f.body.y, f.body.z, loot.meat);
-  restDrop(s, `m:${f.kind}:${Math.floor(f.clock * 10)}:1`, Item.PLATE, f.body.x, f.body.y, f.body.z, loot.plate);
+  const base = `m:${f.kind}:${Math.floor(f.clock * 10)}`; let n = 0;
+  while (s.drops.has(`${base}:${n}:0`) || s.drops.has(`${base}:${n}:1`)) n++; // dois abates no mesmo instante não perdem o espólio
+  restDrop(s, `${base}:${n}:0`, Item.RAW_MEAT, f.body.x, f.body.y, f.body.z, loot.meat);
+  restDrop(s, `${base}:${n}:1`, Item.PLATE, f.body.x, f.body.y, f.body.z, loot.plate);
   return { ok: true, damage, dead: true, broken: w.broken, toolName: w.name, loot, msg: `${KINDS[f.kind].name} abatido: ${loot.meat} ${loot.meat > 1 ? 'porções' : 'porção'} de carne e ${loot.plate} placa${w.broken ? `; ${w.name} quebrou` : ''}` };
 }
 

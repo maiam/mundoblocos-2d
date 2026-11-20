@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.126.1 — Titã: revisão de docs e espólio sem colisão (20/11/2026)
+- NEXT_STEPS deixava a etapa 4 como pendente (já entregue em 0.126.0): corrigido. Ids do espólio (`m:<tipo>:<n>:<k>`) agora têm sufixo livre: dois abates no mesmo instante não perdem itens. Teste +1 (1.026).
+- Revisão: sem outras inconsistências entre docs e código (ids de itens/blocos, atlas, ADRs, MAPS, CLAUDE.md).
+
 ## Orvalis v0.126.0 — Titã: combate com o Farejador e carne (20/11/2026)
 - **Etapa 4 de 4 do pacote "O que a duna guarda"** (números e ícones provisórios). **ADR 0069.**
 - Farejadores têm **vida** (pequeno 10, grande 30) e reagem ao golpe (tranco no modelo, investem por 8 s mesmo sem avistar). Mira por raio × esfera a até 3 m; rótulo "Farejador grande · 26/30"; só o **toque curto** golpeia (pausa de 0,6 s); dano por arma: punho 1, picareta 2/3, adaga 4/6, com o desgaste do ADR 0067.
