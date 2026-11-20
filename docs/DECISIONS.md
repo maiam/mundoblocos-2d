@@ -44,6 +44,7 @@
 | 0065 | **Aceita** — Titã: Braseiro de Rocha (apagado/aceso, 8 preparações por Brasa de Âmbar, estação `brazier`), Lingote de Cobre, Picareta de Cobre e adagas; `stationMet` como regra única |
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
+| 0071 | **Aceita** — Titã: Adaga de Rocha na mão em primeira pessoa (GLB de 338 KB, cena de mão própria sobre o mundo, golpe animado no ataque ao Farejador) |
 | 0070 | **Aceita** — Titã: veios subterrâneos (gerador v9; altura triangular, caminhada aleatória, descarte por exposição ao ar, só rocha profunda; independente da ordem de leitura) |
 | 0069 | **Aceita** — Titã: vida do Farejador, golpe por toque curto (punho 1, adaga 4/6), espólio de carne e placa, volta na toca em 600 s de jogo ativo, carne assada no braseiro |
 | 0068 | **Aceita** — Titã: Braseiro como fornalha (bloco com estado: entrada, combustível e saída; 10 s por preparação; Brasa de Âmbar 80 s; corre com a tela fechada só com o jogo ativo; quebrar cospe o conteúdo); Mesa segue sem memória |

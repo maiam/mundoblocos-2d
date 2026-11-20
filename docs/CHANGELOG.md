@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.128.0 — Titã: Adaga de Rocha na mão (primeira pessoa) (20/11/2026)
+- **Pacote 3D "Adaga de Rocha" do dono do produto, limite de 2 MB.** **ADR 0071.**
+- GLB reduzido de 11,5 MB para **338 KB** (3 peças, 6.272 triângulos, BaseColor 1024 px em WebP) por `scripts/export-titan-adaga.py`; carregado só quando a adaga é escolhida.
+- Com a adaga selecionada, o modelo aparece na mão (cena própria desenhada por cima do mundo) e **balança no golpe no Farejador** (0,34 s).
+- Testes `heldPose.test.ts` (+3; 1.035 no total, 1 ignorado). Conferido a 740 × 360: lâmina violeta, cabo ocre e amarração, parada e em pleno golpe.
+
 ## Orvalis v0.127.0 — Titã: veios subterrâneos (gerador v9) (20/11/2026)
 - **Referência do Minecraft 1.18 do dono do produto.** **ADR 0070.**
 - `GENERATOR_VERSION` 9: **cobre, rocha e gelo enterrados** com altura triangular (pico: cobre Y 8, gelo Y −24; rocha uniforme), veios por caminhada aleatória, descarte por exposição ao ar e só substituindo a rocha profunda. Os gelos soltos do subsolo saem na v9 (v1–v8 ficam como eram); a superfície é idêntica à v8. Seeds novas abrem na v9; partidas salvas continuam na versão delas.
