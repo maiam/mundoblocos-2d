@@ -322,6 +322,7 @@ baixo de uma franja alta; apaga o `PROVISORIO.txt`).
 `python3 -I scripts/extract-titan-farejador.py` converte o GLB do Farejador de Duna (`assets-src/titan/farejador/`, 3.538 triângulos) em `titan-farejador.json` (7 partes com pivô) e `titan-farejador-atlas.webp` (224 × 36: atlas do pacote + 4 colunas de cor sólida). ADR 0061.
 `python3 -I scripts/extract-titan-farejador-rig.py` funde as 81 malhas skinadas do `Farejador_de_Duna_Rig.glb` (`assets-src/titan/farejador/`) numa só e reduz a Base Color para 1024² JPEG, gerando `src/assets/titan-farejador-rig.glb` (1,2 MB). ADR 0064.
 `python3 -I scripts/make-titan-icones-conceito.py` gera os ícones provisórios de 32 px dos itens do pacote "O que a duna guarda" (de `assets-src/titan/conceito/` para `assets-src/titan/arte32/`), `python3 -I scripts/make-titan-veio-cobre.py` grava o tile 11 do atlas de terreno (veio de cobre) e `make-titan-arte32.py` monta o atlas de itens de 128 × 256 (4 × 8). ADR 0063.
+`python3 -I scripts/make-titan-braseiro.py` estende o atlas de terreno para 80 × 80 e grava os tiles 12–14 (braseiro: lateral, topo apagado, topo aceso). ADR 0065.
 
 `python3 -I scripts/make-titan-basalt.py [--preview prancha.png]` gera o ladrilho de basalto da interface (`src/assets/titan-basalt-32px.webp`, 32 × 32 sem emenda, WebP **sem perdas**, determinístico). Ele entra nos painéis pela variável CSS `--basalt`.
 

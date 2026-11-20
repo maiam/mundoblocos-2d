@@ -1,5 +1,5 @@
 import { isItem, maxStack } from './items';
-import { matchBench, type Recipe, type Stackable, type Station } from './recipes';
+import { matchBench, type Recipe, type Stackable, type Station, stationMet } from './recipes';
 
 /**
  * Inventário do Titã (ADR 0040, 0047): hotbar de **9** espaços (índices 0–8) + mochila de **27** (9–35, 3 × 9 alinhada à hotbar) + grade 3 × 3 de montagem (41–49, ADR 0049/0050), a única. As posições 36–39 eram a grade 2 × 2 (removida na v0.105.0): só existem para ler saves antigos, e `returnCraft` as devolve à bolsa.
@@ -181,7 +181,7 @@ export class Inventory {
   takeBenchResult(at: Station | null): 'ok' | 'none' | 'station' | 'full' {
     const rec = this.benchRecipe();
     if (!rec) return 'none';
-    if (rec.station === 'workbench' && at !== 'workbench') return 'station';
+    if (!stationMet(rec, at)) return 'station';
     const r = rec.result;
     if (!this.canAdd(r.item, r.count)) return 'full';
     for (let i = 0; i < BENCH_SLOTS; i++) this.s[BENCH_START + i] = null;

@@ -7,7 +7,7 @@ import { Item } from './items';
  * (`craft`: confere estação e ingredientes, calcula a capacidade **depois** dos débitos e aplica consumo e resultado numa operação só).
  * A Laje de Rocha (3 blocos → 6 lajes, mesa) entrou na segunda entrega (ADR 0046), depois do aceite da mesa.
  */
-export type Station = 'personal' | 'workbench';
+export type Station = 'personal' | 'workbench' | 'brazier';
 export interface Stackable { item: number; count: number }
 /** Grupo do livro de receitas (faixa da esquerda): pelo tipo do item fabricado. */
 export type Group = 'construcao' | 'utilidades' | 'materiais' | 'ferramentas';
@@ -22,10 +22,15 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'painel', name: 'Painel de Junco', group: 'construcao', result: { item: Item.PAINEL, count: 2 }, ingredients: [{ item: Item.GLASS_REED, count: 2 }, { item: Item.DARK_ROCK, count: 1 }], station: 'workbench' },
   { id: 'laje', name: 'Laje de Rocha', group: 'construcao', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }], station: 'workbench' },
   { id: 'picareta-rocha', name: 'Picareta de Rocha', group: 'ferramentas', result: { item: Item.STONE_PICK, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 3 }, { item: Item.DRY_REED, count: 2 }], station: 'workbench' },
+  { id: 'braseiro', name: 'Braseiro de Rocha', group: 'utilidades', result: { item: Item.BRAZIER, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }], station: 'workbench' },
+  { id: 'lingote-cobre', name: 'Lingote de Cobre de Duna', group: 'materiais', result: { item: Item.COPPER_INGOT, count: 1 }, ingredients: [{ item: Item.COPPER_SHARD, count: 2 }], station: 'brazier' },
+  { id: 'picareta-cobre', name: 'Picareta de Cobre', group: 'ferramentas', result: { item: Item.COPPER_PICK, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 3 }, { item: Item.DRY_REED, count: 2 }], station: 'workbench' },
+  { id: 'adaga-rocha', name: 'Adaga de Rocha', group: 'ferramentas', result: { item: Item.STONE_DAGGER, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 1 }, { item: Item.DRY_REED, count: 1 }], station: 'workbench' },
+  { id: 'adaga-cobre', name: 'Adaga de Cobre', group: 'ferramentas', result: { item: Item.COPPER_DAGGER, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 1 }, { item: Item.DRY_REED, count: 1 }], station: 'workbench' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 
-export const STATION_NAMES: Record<Station, string> = { personal: 'Fabricação pessoal (mochila)', workbench: 'Mesa de Trabalho' };
+export const STATION_NAMES: Record<Station, string> = { personal: 'Fabricação pessoal (mochila)', workbench: 'Mesa de Trabalho', brazier: 'Braseiro de Rocha aceso' };
 
 /**
  * Prévia da receita na grade 3 × 3 (ADR 0050): **uma célula por unidade pedida** (4 rochas = 4 células com 1 ícone cada, o resto vazio) e, em cada célula, quanto do que o jogador tem cabe
@@ -56,15 +61,18 @@ export const CRAFT_MESSAGES: Record<Exclude<CraftReason, 'ok'>, string> = {
  * Fabrica `r` com os materiais do inventário. `at` = estação em uso (`null` = só a mochila). Falhou → nada muda e o motivo volta em `reason`.
  * A mesma função serve o cartão "Fabricar" e a grade 2 × 2 (esta consome da grade, não daqui).
  */
+/** A estação em uso atende a receita? Pessoal serve em qualquer lugar; Mesa e Braseiro aceso só nas suas (ADR 0065). */
+export const stationMet = (r: Recipe, at: Station | null): boolean => r.station === 'personal' || r.station === at;
+
 export function craft(inv: Inventory, r: Recipe, at: Station | null): { ok: boolean; reason: CraftReason } {
-  if (r.station === 'workbench' && at !== 'workbench') return { ok: false, reason: 'station' };
+  if (!stationMet(r, at)) return { ok: false, reason: 'station' };
   const res = inv.tryCraft(r.ingredients, r.result);
   return { ok: res === 'ok', reason: res };
 }
 
 /** Motivo pelo qual o cartão está indisponível agora (ou `null` se pode fabricar): estação, ingredientes e, depois do débito simulado, espaço. */
 export function blockedReason(inv: Inventory, r: Recipe, at: Station | null): CraftReason | null {
-  if (r.station === 'workbench' && at !== 'workbench') return 'station';
+  if (!stationMet(r, at)) return 'station';
   if (ingredientStatus(inv, r).some((g) => g.have < g.need)) return 'missing';
   return inv.canCraft(r.ingredients, r.result) ? null : 'full';
 }

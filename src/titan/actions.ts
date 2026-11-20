@@ -1,7 +1,8 @@
 import { blockOfItem, dropCountOf, foodOf, isPick, Item, itemOfBlock } from './items';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
-import { blockSpan, isCopperVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { BRAZIER_CHARGES, brazierKey } from './braziers';
+import { blockSpan, isBrazier, isCopperVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -65,6 +66,28 @@ export function eatFromSlot(s: TitanSession, slot: number): ActionResult {
   return { ok: true };
 }
 
+/** Acende o braseiro apontado com a brasa do espaço (ADR 0065): `BRAZIER_CHARGES` preparações; braseiro aceso ou outro bloco não gasta a brasa. */
+export function igniteBrazier(s: TitanSession, hit: Hit, slot: number): ActionResult {
+  const id = s.volume.get(hit.x, hit.y, hit.z);
+  if (id === T.BRAZIER_LIT) return { ok: false, msg: 'O braseiro já está aceso' };
+  if (id !== T.BRAZIER) return { ok: false, msg: 'A brasa acende um Braseiro de Rocha' };
+  if (!s.volume.set(hit.x, hit.y, hit.z, T.BRAZIER_LIT)) return { ok: false };
+  s.inventory.consume(slot);
+  s.braziers.set(brazierKey(hit.x, hit.y, hit.z), BRAZIER_CHARGES);
+  s.metaRev++;
+  return { ok: true, msg: `Braseiro aceso: ${BRAZIER_CHARGES} preparações` };
+}
+
+/** Gasta uma preparação do braseiro em `at`; ao zerar ele apaga. Devolve se apagou (carga sem registro = cheia: save que perdeu o campo). */
+export function useBrazierCharge(s: TitanSession, x: number, y: number, z: number): { burnedOut: boolean } {
+  const k = brazierKey(x, y, z), left = (s.braziers.get(k) ?? BRAZIER_CHARGES) - 1;
+  s.metaRev++;
+  if (left > 0) { s.braziers.set(k, left); return { burnedOut: false }; }
+  s.braziers.delete(k);
+  s.volume.set(x, y, z, T.BRAZIER);
+  return { burnedOut: true };
+}
+
 /** Botão de quebrar/recolher no alvo: fragmento de superfície → coleta; bloco ou lanterna → volta como item, se couber. */
 export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   if (hit.item) return collectItem(s, hit.item);
@@ -93,6 +116,7 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   const block = s.volume.get(x, y, z);
   if (!s.volume.remove(x, y, z)) return { ok: false };
   s.inventory.add(item, count);
+  if (isBrazier(block) && s.braziers.delete(brazierKey(x, y, z))) s.metaRev++; // o braseiro aceso levado perde a carga
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
@@ -149,6 +173,7 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
+  if (stack.item === Item.EMBER) return igniteBrazier(s, hit, slot); // a Brasa de Âmbar acende o braseiro apontado
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };

@@ -2,11 +2,11 @@ import './titan.css';
 import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
-import { breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
+import { useBrazierCharge, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { farejadorPose, KINDS, stepFarejador } from './creature';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
-import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
+import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, stationMet, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
 import { FootstepClock, surfaceOf } from './sounds';
@@ -18,7 +18,7 @@ import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
-import { isCollectBlock, isWorkbench, T } from './voxel';
+import { isBrazier, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, tickRegrow } from './session';
@@ -180,7 +180,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   benchOut.classList.add('out');
   const benchName = el('b', 'rname', benchBox, '');
   const benchWhy = el('small', 'hint', benchBox, '');
-  let stationAt: { x: number; y: number; z: number } | null = null;
+  let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null = null;
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
   let cat: Cat = 'todas', query = '', onlyOk = false, selRecipe: string | null = null;
@@ -188,7 +188,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   searchBox.addEventListener('input', () => { query = norm(searchBox.value.trim()); refresh(); });
   onlyBtn.addEventListener('click', () => { onlyOk = !onlyOk; refresh(); });
   /** Contexto de fabricação: a bolsa pessoal (`null`) ou a Mesa de Trabalho em uso. Muda na hora que a mesa sai do alcance ou some. */
-  const ctxStation = (): Station | null => (stationAt ? 'workbench' : null);
+  const ctxStation = (): Station | null => (stationAt ? stationAt.kind : null);
+  const stationName = (k: Station | null): string => (k === 'brazier' ? 'Braseiro de Rocha aceso' : 'Mesa de Trabalho');
 
   /** Redesenha todos os espaços e o livro de receitas a partir do inventário (barato: 36 espaços e 4 receitas). */
   function refresh(): void {
@@ -211,13 +212,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     bagSlots.forEach((b, i) => draw(b, HOTBAR + i));
     benchSlots.forEach((b, i) => draw(b, BENCH_START + i));
     const brec = inv.benchRecipe();
-    const needStation = !!brec && brec.station === 'workbench' && ctxStation() !== 'workbench'; // receita da Mesa montada fora da Mesa: a saída fica bloqueada
+    const needStation = !!brec && !stationMet(brec, ctxStation()); // receita da Mesa (ou do Braseiro) montada fora dela: a saída fica bloqueada
     const br = brec && !needStation ? { ...brec.result } : null;
     draw(benchOut, BENCH_OUT, br);
     benchName.textContent = brec ? `${brec.name}${brec.result.count > 1 ? ` ×${brec.result.count}` : ''}` : '';
-    benchWhy.textContent = needStation ? 'Precisa da Mesa de Trabalho' : 'Toque na pilha e na célula; na saída, fabrica.';
+    benchWhy.textContent = needStation ? `Precisa de ${brec!.station === 'brazier' ? 'um Braseiro aceso' : 'a Mesa de Trabalho'}` : 'Toque na pilha e na célula; na saída, fabrica.';
     benchOut.classList.toggle('ready', !!br);
-    for (const id of discoverRecipes(session)) toast(id === 'mesa' ? 'Nova receita: Mesa de Trabalho (4 blocos de rocha escura). Abra a bolsa (☰ ou E).' : 'Receitas da mesa: use a Mesa de Trabalho (F ou botão Usar).', 3500);
+    for (const id of discoverRecipes(session)) toast(id === 'mesa' ? 'Nova receita: Mesa de Trabalho (4 blocos de rocha escura). Abra a bolsa (☰ ou E).' : id === 'braseiro' ? 'Receitas do Braseiro: acenda um Braseiro de Rocha com uma Brasa de Âmbar e use-o (F ou botão Usar).' : 'Receitas da mesa: use a Mesa de Trabalho (F ou botão Usar).', 3500);
     if (bagOpen) drawBook();
     const held = inv.get(session.selected);
     label.textContent = held ? ITEM_NAMES[held.item] : '';
@@ -226,7 +227,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   /** Receitas visíveis: as descobertas (as da mesa também ficam à mostra na bolsa, bloqueadas com o motivo), filtradas por grupo, busca e "só fabricáveis". */
   function visibleRecipes(): Recipe[] {
     const at = ctxStation();
-    return RECIPES.filter((r) => (r.station === 'workbench' ? session.known.has('bancada') || at === 'workbench' : session.known.has('mesa')))
+    return RECIPES.filter((r) => (r.station === 'brazier' ? session.known.has('braseiro') || at === 'brazier' : r.station === 'workbench' ? session.known.has('bancada') || at === 'workbench' : session.known.has('mesa')))
       .filter((r) => cat === 'todas' || cat === 'bag' || r.group === cat)
       .filter((r) => !query || norm(r.name).includes(query))
       .filter((r) => !onlyOk || blockedReason(inv, r, at) === null);
@@ -266,7 +267,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const r = RECIPES.find((q) => q.id === selRecipe);
     if (!r) { el('small', 'hint', detail, 'Toque numa receita para ver o que ela pede.'); return; }
     const reason = blockedReason(inv, r, at);
-    el('small', r.station === 'workbench' && at !== 'workbench' ? 'station lack' : 'station', detail, r.station === 'workbench' ? (at === 'workbench' ? 'Mesa de Trabalho · ativa' : 'Use a Mesa de Trabalho') : 'Fabricação pessoal');
+    el('small', !stationMet(r, at) ? 'station lack' : 'station', detail, r.station === 'personal' ? 'Fabricação pessoal' : at === r.station ? `${stationName(at)} · ativo` : `Use ${r.station === 'brazier' ? 'um Braseiro aceso' : 'a Mesa de Trabalho'}`);
     // grade 3 × 3 sempre (ADR 0050): uma célula por unidade pedida; o número é quanto do que você tem cabe a ela (tem 9 de 4 → 3, 2, 2, 2)
     const cells = previewCells(inv, r);
     const igrid = el('div', 'titan-igrid', detail);
@@ -299,10 +300,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   /** Fabricar: revalida estação, alcance, materiais e espaço **a cada toque**; consome e entrega numa operação só. Falhou → nada muda e o motivo aparece. */
   function doCraft(r: Recipe): void {
     const at = ctxStation();
-    if (at === 'workbench' && !stationInReach()) { closeStation('Mesa fora de alcance'); return; }
+    if (at && at !== 'personal' && !stationInReach()) { closeStation(`${stationName(at)} fora de alcance`); return; }
     const res = craft(inv, r, at);
     if (!res.ok) notice(CRAFT_MESSAGES[res.reason as 'station' | 'missing' | 'full']);
-    else { notice(`Fabricado: ${r.result.count > 1 ? `${r.result.count} × ` : ''}${r.name}`); onEdited(); }
+    else { notice(`Fabricado: ${r.result.count > 1 ? `${r.result.count} × ` : ''}${r.name}`); spendBrazier(r.station); onEdited(); }
     refresh();
   }
 
@@ -312,14 +313,23 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.type = 'button';
   useBtn.hidden = true;
   function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
-  const benchAimed = (): { x: number; y: number; z: number } | null => {
-    if (!target || target.item || !isWorkbench(vol.get(target.x, target.y, target.z))) return null;
-    return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z } : null;
+  /** Estação na mira (Mesa de Trabalho ou Braseiro **aceso**) ao alcance de uso. */
+  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null => {
+    if (!target || target.item) return null;
+    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : id === T.BRAZIER_LIT ? 'brazier' : null;
+    if (!kind) return null;
+    return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z, kind } : null;
   };
+  /** Gasta uma preparação do braseiro em uso (só receitas do braseiro); apagou → fecha a tela. */
+  function spendBrazier(station: Station): void {
+    if (station !== 'brazier' || !stationAt) return;
+    if (useBrazierCharge(session, stationAt.x, stationAt.y, stationAt.z).burnedOut) { onEdited(); closeStation('O braseiro apagou. Acenda de novo com uma Brasa de Âmbar.'); }
+  }
   function stationInReach(): boolean {
     if (!stationAt) return false;
     const b = session.body;
-    return isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
+    const blk = vol.get(stationAt.x, stationAt.y, stationAt.z);
+    return (stationAt.kind === 'workbench' ? isWorkbench(blk) : blk === T.BRAZIER_LIT) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
   function openStation(): void {
     const at = benchAimed();
@@ -350,11 +360,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   /** Recolhe a saída da bancada 3 × 3: revalida a mesa e o alcance **a cada toque**; consome os ingredientes e entrega o resultado juntos; se falhar, tudo continua na grade. */
   function takeBench(): void {
-    if (stationAt && !stationInReach()) { closeStation('Mesa fora de alcance'); return; } // fechar devolve a grade à bolsa
+    if (stationAt && !stationInReach()) { closeStation(`${stationName(stationAt.kind)} fora de alcance`); return; } // fechar devolve a grade à bolsa
     const r = inv.benchRecipe();
     const res = inv.takeBenchResult(ctxStation());
-    if (res === 'ok') { notice(`Fabricado: ${r!.result.count > 1 ? `${r!.result.count} × ` : ''}${r!.name}`); onEdited(); }
-    else notice(res === 'full' ? 'Mochila cheia: libere espaço para o resultado' : res === 'station' ? 'Precisa da Mesa de Trabalho' : 'Monte uma receita primeiro');
+    if (res === 'ok') { notice(`Fabricado: ${r!.result.count > 1 ? `${r!.result.count} × ` : ''}${r!.name}`); spendBrazier(r!.station); onEdited(); }
+    else notice(res === 'full' ? 'Mochila cheia: libere espaço para o resultado' : res === 'station' ? (r?.station === 'brazier' ? 'Precisa de um Braseiro aceso' : 'Precisa da Mesa de Trabalho') : 'Monte uma receita primeiro');
     refresh();
   }
 
@@ -688,7 +698,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
     target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE) : null;
     useBtn.hidden = !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar"
-    if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? 'Mesa fora de alcance' : 'A mesa sumiu');
+    if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.render(eye, session.yaw, session.pitch, target, now / 1000);
     veil.style.opacity = String(view.submersion); // 0 fora d'água; entra e sai em ~150 ms
