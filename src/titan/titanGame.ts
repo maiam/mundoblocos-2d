@@ -12,7 +12,7 @@ import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
 import { FootstepClock, surfaceOf } from './sounds';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
-import { blockOfItem, foodOf, ITEM_NAMES } from './items';
+import { blockOfItem, foodOf, isPick, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -152,7 +152,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const top = el('div', 'titan-bagtop', panel);
   const cats = el('nav', 'titan-cats', top);
   type Cat = 'todas' | Group | 'bag';
-  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['bag', 'Bolsa']];
+  const catDefs: Array<[Cat, string]> = [['todas', 'Todas'], ['construcao', GROUP_NAMES.construcao], ['utilidades', GROUP_NAMES.utilidades], ['materiais', GROUP_NAMES.materiais], ['ferramentas', GROUP_NAMES.ferramentas], ['bag', 'Bolsa']];
   const catBtns = new Map<Cat, HTMLButtonElement>();
   for (const [id, name] of catDefs) { const b = el('button', 'titan-cat', cats, name); b.type = 'button'; catBtns.set(id, b); b.addEventListener('click', () => { cat = id; sel = null; refresh(); }); }
   const center = el('section', 'titan-center', top);
@@ -544,7 +544,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const ring = el('div', 'titan-collect', ui); // indicador discreto de recolhimento (lanterna e lasca): anel em volta da mira
   ring.hidden = true;
   const gesture = new InteractionGesture({
-    totalMs: (t) => breakTotalMs(t.kind, t.block),
+    totalMs: (t) => { // com picareta na mão a rocha cede mais depressa e o veio de cobre se quebra (ADR 0063)
+      const ms = breakTotalMs(t.kind, t.block, isPick(session.inventory.get(session.selected)?.item));
+      if (ms === null && t.kind === 'block' && t.block === T.VEIN_COPPER) notice('Só pó nos dedos. Falta uma picareta.');
+      return ms;
+    },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto

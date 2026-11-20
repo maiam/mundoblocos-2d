@@ -21,6 +21,8 @@ import { T } from '../titan/voxel';
  */
 /** Alcance de render (blocos): a região de teste é pequena; a névoa começa em 70% e fecha antes da borda carregada. */
 const RANGE = 64;
+/** Linhas do atlas de itens (4 colunas × 8 linhas de 32 px = 32 ids). */
+const ITEM_ROWS = 8;
 const MESH_BUDGET_MS = 6;
 
 export class TitanRenderer {
@@ -405,8 +407,8 @@ export class TitanRenderer {
   private spriteMaterial(index: number): THREE.SpriteMaterial {
     const tex = this.hotbarTex.clone();
     tex.needsUpdate = true;
-    tex.repeat.set(0.25, 0.25); // atlas de itens 4 × 4 (128 × 128 px, células de 32 px; ADR 0053)
-    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / 4);
+    tex.repeat.set(0.25, 1 / ITEM_ROWS); // atlas de itens 4 × 8 (128 × 256 px, células de 32 px; ADR 0053, 0063)
+    tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / ITEM_ROWS);
     return new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.4, fog: true });
   }
 

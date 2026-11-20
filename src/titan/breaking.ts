@@ -16,8 +16,18 @@ export type TargetKind = 'block' | 'lantern' | 'shard';
 export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350 } as const;
 
 /** Tempo total para concluir a ação sobre o alvo, ou `null` se não há o que quebrar (rocha-mãe, líquido). */
-export function breakTotalMs(kind: TargetKind, block?: number): number | null {
+export function breakTotalMs(kind: TargetKind, block?: number, pick = false): number | null {
   if (kind === 'lantern' || kind === 'shard') return BREAK_MS.collect;
+  if (block === T.VEIN_COPPER) return pick ? Math.round(BREAK_MS.rock * PICK_FACTOR) : null; // só uma picareta o quebra (ADR 0063)
+  const t = baseBreakMs(block);
+  return t !== null && pick && ROCK_CLASS.has(block as number) ? Math.round(t * PICK_FACTOR) : t;
+}
+
+/** Com picareta, os blocos de rocha cedem nesta fração do tempo (provisório, ADR 0063). */
+export const PICK_FACTOR = 0.6;
+const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE]);
+
+function baseBreakMs(block?: number): number | null {
   switch (block) {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
     case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;

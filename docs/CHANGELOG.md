@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.120.0 — Titã: cobre de Duna, Haste Seca e Picareta de Rocha (20/11/2026)
+- **Etapa 1 de 4 do pacote "O que a duna guarda"** (Drive; números provisórios autorizados). **ADR 0063.**
+- **Gerador v7:** 2 afloramentos de rocha com 3 veios de cobre cada (≥ 28 blocos da toca do Farejador) e até 8 hastes secas de junco no chão; região e relevo da v6.
+- **Veio de Cobre** (bloco 24, tile 11): só quebra com **picareta** (sem ela, "só pó nos dedos"); solta 2 Fragmentos de Cobre no chão. Itens 17–20 (Fragmento e Lingote de Cobre, Haste Seca, Picareta de Rocha); receita na Mesa (3 fragmentos de rocha + 2 hastes secas), grupo **Ferramentas**; com picareta a rocha cede a 60 % do tempo.
+- Atlas de itens 128 × 256 (4 × 8); ícones e tile **provisórios** gerados das ilustrações (`make-titan-icones-conceito.py`, `make-titan-veio-cobre.py`).
+- Testes `cobre.test.ts` (+8; 1.001 no total). Conferido a 740 × 360: afloramento, hotbar com os novos ícones, sem picareta o veio não quebra, com ela solta 2 fragmentos.
+
 ## Orvalis v0.119.0 — Titã: região de 8 × 8 chunks (gerador v6) e lote de 200 seeds (20/11/2026)
 - **Pedido do dono do produto:** ampliar a região para 8 × 8 chunks e reduzir o levantamento de 1.000 para 200 seeds. **ADR 0062.**
 - **Gerador v6:** região de 128 × 128 blocos (a v1–v5 continua em 64 × 64: região por versão em `voxel.ts`/`TitanGenerator.region`); relevo longe do lago gradual e limitado (sem o degrau de 5 blocos), Y ≈ 53–84, andável até a borda; chegada, formações, veios, brasa, juncos, plantas e toca como na v5, sorteados na região maior.

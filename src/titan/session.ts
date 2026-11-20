@@ -66,7 +66,7 @@ export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.s
 export const reedId = (x: number, y: number, z: number): string => `reed:${x},${y},${z}`;
 
 function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: TitanSession['grants']; regrow: Map<string, number> }): TitanSession['items'] {
-  const all = s.volume.gen.surfaceItems;
+  const all: Array<{ id: string; item: number; x: number; y: number; z: number }> = [...s.volume.gen.surfaceItems, ...s.volume.gen.dryReeds];
   const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
   const byCell = new Map(all.map((i) => [key(i.x, i.y, i.z), i.id]));
   // juncos de vidro (v4, ou a partir da brasa dada numa partida legada): também são alvo da mira e se recolhem como as lascas; montado só na primeira consulta (a adição da migração já foi feita)
