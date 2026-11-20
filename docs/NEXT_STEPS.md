@@ -22,6 +22,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Fragmentos à vista (v0.129.0, ADR 0072):** balanço das densidades (12 %/6 %) e do rendimento por veio; incluir os novos veios em `veinCells()` se algum teste de alcance precisar.
 
+**Golpe da adaga (v0.132.0, ADR 0071):** aceite em aparelho (amplitudes ajustadas só a 740 × 360); sincronizar o dano/rachadura e o som ao ponto de corte do ciclo (hoje o dano é no toque e o ciclo é só visual); tranco de câmera e rastro opcionais; golpe em terceira pessoa (sem corpo do jogador ainda).
+
 **Adaga na mão (v0.128.0, ADR 0071):** validar escala/posição em aparelho; golpe também ao quebrar bloco; modelos da adaga de cobre e das picaretas (trocar o `if (item !== 22)` de `setHeld` por um mapa item → URL); adaga solta no chão como modelo.
 
 **Veios subterrâneos (v0.127.0, ADR 0070):** balanço de raridade/tamanho das `ORE_RULES`; novos minérios; subsolo escuro e cavernas (hoje sem ar enterrado); aceite em aparelho.
