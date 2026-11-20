@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.130.0 — Titã: painel do braseiro maior e mais claro (20/11/2026)
+- **Referência da Fornalha do Minecraft do dono do produto.** Layout do ADR 0068 reorganizado (sem mudar regras): **Entrada** em cima, **chama** no meio e **Combustível** embaixo à esquerda; **seta** de progresso e **Resultado** grande à direita (ícone em escala 2×); espaços de 56 px (antes 32).
+- Chama (esvazia com o fogo) e seta (enche com o cozimento) desenhadas em CSS (`clip-path`), no lugar das duas barras. Com o braseiro aberto, a coluna da direita passa de 172 para 232 px e a bolsa quebra em menos colunas (`.titan-bagtop.furn`). Removida uma duplicata do CSS antigo do braseiro.
+- Conferido a 740 × 360: tudo cabe sem rolagem. Sem teste novo (só apresentação); tsc, vitest e build passam.
+
 ## Orvalis v0.129.0 — Titã: fragmentos à vista na rocha escura (gerador v10) (20/11/2026)
 - **Pedido do dono do produto: fragmentos em abundância nas rochas escuras das camadas altas.** **ADR 0072.**
 - `GENERATOR_VERSION` 10: veios de rocha em 12 % da rocha escura de Y ≥ 72 e 6 % abaixo, e de gelo em 6 % das manchas de gelo; ao todo mais de 60 de rocha e 30 de gelo à vista por seed (eram 3 e 3). Relevo e tudo o mais idênticos à v9; fora das formações, abrigos e montes de cobre.

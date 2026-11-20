@@ -16,6 +16,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 **Braseiro e ferramentas de cobre (v0.122.0, ADR 0065, etapa 2 de 4):** aceite em aparelho; luz do braseiro aceso e partículas; modelo 3D; as adagas só ganham função no combate (etapa 4); calibrar 10 s / 80 s e os fatores 0,6/0,4.
 **Abrigos e carapaça (v0.123.0, ADR 0066, etapa 3 de 4):** aceite em aparelho; tile final do revestimento (hoje parece tijolo, deveria ser escamas), meia altura ou modelo 3D, sprite da placa no chão; etapa 4 entregue (v0.126.0, ADR 0069).
 **Durabilidade (v0.124.0, ADR 0067):** aceite em aparelho (barra legível a 32 px, rótulo); calibrar 131/190; decidir reparo (juntar duas iguais); o combate da etapa 4 desgasta a adaga com `wearHeldTool(s, { type: 'attack' })`.
+**Painel do braseiro (v0.130.0):** aceite em aparelho do novo layout (slots de 56 px, resultado 2×) a 360 px de altura e em telas estreitas (< 650 px de largura: a coluna de 232 px aperta a bolsa).
+
 **Fragmentos à vista (v0.129.0, ADR 0072):** balanço das densidades (12 %/6 %) e do rendimento por veio; incluir os novos veios em `veinCells()` se algum teste de alcance precisar.
 
 **Adaga na mão (v0.128.0, ADR 0071):** validar escala/posição em aparelho; golpe também ao quebrar bloco; modelos da adaga de cobre e das picaretas (trocar o `if (item !== 22)` de `setHeld` por um mapa item → URL); adaga solta no chão como modelo.

@@ -187,9 +187,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const furnaceBox = el('div', 'titan-detail titan-manual titan-furnace', right);
   furnaceBox.hidden = true;
   el('small', '', furnaceBox, 'Braseiro de Rocha');
-  const fRow = el('div', 'titan-frow', furnaceBox);
-  const fSlot = (kind: FurnaceSlot, label: string): HTMLButtonElement => {
-    const wrap = el('div', 'titan-fcol', fRow);
+  // como a Fornalha do Minecraft: entrada em cima, chama no meio e combustível embaixo à esquerda; seta de progresso e o resultado grande à direita
+  const fGrid = el('div', 'titan-fgrid', furnaceBox);
+  const fSlot = (parent: HTMLElement, kind: FurnaceSlot, label: string): HTMLButtonElement => {
+    const wrap = el('div', 'titan-fcol', parent);
     el('small', 'flabel', wrap, label);
     const b = el('button', 'titan-slot titan-fslot', wrap);
     b.type = 'button';
@@ -197,10 +198,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     b.addEventListener('click', () => tapFurnace(kind));
     return b;
   };
-  const fIn = fSlot('input', 'Entrada'), fFuel = fSlot('fuel', 'Combustível'), fOut = fSlot('output', 'Saída');
+  const fLeft = el('div', 'titan-fleft', fGrid);
+  const fIn = fSlot(fLeft, 'input', 'Entrada');
+  const fFlame = el('div', 'titan-fflame', fLeft);
+  const fFuel = fSlot(fLeft, 'fuel', 'Combustível');
+  const fCook = el('div', 'titan-farrow', fGrid);
+  const fOut = fSlot(fGrid, 'output', 'Resultado');
   fOut.classList.add('out');
-  const fBars = el('div', 'titan-fbars', furnaceBox);
-  const fFlame = el('div', 'titan-fbar flame', fBars), fCook = el('div', 'titan-fbar cook', fBars);
   const fHint = el('small', 'hint', furnaceBox, 'Toque numa pilha da bolsa e depois em Entrada ou Combustível. A Brasa de Âmbar queima 80 s (8 preparações).');
   const benchName = el('b', 'rname', benchBox, '');
   const benchWhy = el('small', 'hint', benchBox, '');
@@ -274,6 +278,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const furn = stationAt?.kind === 'brazier';
     benchBox.hidden = !slots || furn; // e a grade 3 × 3 de montagem (no braseiro, o painel dele)
     furnaceBox.hidden = !(slots && furn);
+    top.classList.toggle('furn', !!(slots && furn)); // o braseiro ganha uma coluna mais larga (a bolsa quebra em menos colunas)
     detail.hidden = slots;
     if (slots) return; // nesse grupo as grades são slots fixos (já desenhados acima)
     // centro: grade de receitas (ícone do resultado; ×N no canto; selo quando bloqueada)
