@@ -151,6 +151,15 @@ export class GameSoundSynthesizer {
     });
   }
 
+  // ---- Dano ----
+  playHurt(): void {
+    this.safe((now) => {
+      const j = 0.92 + Math.random() * 0.16;
+      this.tone(now, 170 * j, 55, 0.13, 'triangle', 0.4);
+      this.burst(now, 0.09, 420, 0.8, 0.3, 'lowpass');
+    });
+  }
+
   // ---- Coleta de item ou lasca ----
   playItemPickup(): void {
     this.safe((now) => {

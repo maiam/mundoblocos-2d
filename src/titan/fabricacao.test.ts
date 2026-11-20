@@ -102,7 +102,7 @@ describe('Mesa de Trabalho no mundo', () => {
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(bx, 65, bz)).toBe(T.WORKBENCH);
     expect(r.volume.workbenchCells()).toEqual([[bx, 65, bz, 0]]);
-    expect(r.volume.workbenchVersion).toBeGreaterThan(0);
+    expect(r.volume.modelVersion).toBeGreaterThan(0);
   });
 });
 

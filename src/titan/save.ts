@@ -36,9 +36,11 @@ export interface TitanHeader {
   recipes?: string[];
   /** v4: adições localizadas feitas numa partida de gerador antigo: o depósito de brasa dado uma vez (a célula; some do mapa se o jogador o quebrar). */
   grants?: { ember?: [number, number, number] };
+  /** Vida, fome, saturação e ar (ADR 0059). Ausente (saves antigos) = tudo cheio. */
+  vitals?: { health: number; hunger: number; saturation: number; air: number };
 }
-/** Lasca solta: 5 = fragmento de rocha, 6 = fragmento de gelo, 11 = brasa de âmbar, 12 = junco de vidro (ids de item). A célula é onde ela pousa. */
-export interface Drop { id: string; item: 5 | 6 | 11 | 12; x: number; y: number; z: number }
+/** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */
+export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; x: number; y: number; z: number }
 import type { InventoryData } from './inventory';
 
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }

@@ -60,6 +60,14 @@ export class Inventory {
     return true;
   }
 
+  /** Esvazia tudo (hotbar, mochila e as grades) e devolve as pilhas: usado ao morrer, quando os itens caem no chão (ADR 0059). */
+  takeAll(): Stack[] {
+    const out: Stack[] = [];
+    for (let i = 0; i < BENCH_OUT; i++) { const c = this.s[i]; if (i === OUTPUT || !c) continue; out.push({ ...c }); this.s[i] = null; }
+    if (out.length) this.rev++;
+    return out;
+  }
+
   /** Gasta 1 do espaço (colocar bloco/lanterna). */
   consume(slot: number): boolean {
     const c = this.s[slot];

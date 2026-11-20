@@ -1,8 +1,10 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
-import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
+import { breakOrCollect, collectNearby, dieAndRespawn, placeFromSlot } from './actions';
+import { eyesSubmerged } from './underwater';
+import { damage, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
@@ -15,7 +17,7 @@ import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
-import { isWorkbench, T } from './voxel';
+import { isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds } from './session';
@@ -52,7 +54,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const perf = q.get('fps') === '1' || scene ? new TitanPerf() : null;
   document.body.classList.add('titan');
   const ui = el('div', 'titan-ui', document.body);
-  const veil = el('div', 'titan-veil', ui); // véu carvão-violeta da imersão (ADR 0057): primeiro filho, abaixo de todos os controles; sem toque
+  const veil = el('div', 'titan-veil', ui);
+  const hurt = el('div', 'titan-hurt', ui); // clarão vermelho ao tomar dano (ADR 0059)
+  ui.style.setProperty('--hud', `url(${titanHudUrl})`); // véu carvão-violeta da imersão (ADR 0057): primeiro filho, abaixo de todos os controles; sem toque
   ui.style.setProperty('--basalt', `url(${titanBasaltUrl})`); // fundo e moldura dos painéis (ADR 0049)
   const toast = (msg: string, ms = 3500): void => {
     const t = el('div', 'titan-toast', ui, msg);
@@ -70,7 +74,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg, lakeImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl), loadImage(titanLakeUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg, lakeImg, margemImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -79,7 +83,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora'));
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg, lake: lakeImg }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg, lake: lakeImg, margemAtlas: margemImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
@@ -98,6 +102,30 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const saveLine = el('span', '', status, scene ? SCENE_NOTE : 'salvo');
   const posLine = el('span', '', status);
   const skyLine = el('span', '', status);
+  // ---- Vida, ar e fome (ADR 0059): 10 marcas de 2 pontos (meia marca = 1) acima da hotbar; o ar só aparece com a cabeça no lago ou enchendo ----
+  const vitals = session.vitals;
+  const hud = el('div', 'titan-vitals', ui);
+  const marksOf = (parent: HTMLElement): HTMLElement[] => Array.from({ length: 10 }, () => el('i', 'titan-mark', parent));
+  const healthMarks = marksOf(el('div', 'titan-bar', hud));
+  const hungerBar = el('div', 'titan-bar', hud);
+  const hungerMarks = marksOf(hungerBar);
+  hungerBar.hidden = !HUNGER_ENABLED; // sem comida no jogo a fome fica oculta (vitals.ts)
+  const airBar = el('div', 'titan-airbar', ui);
+  const airMarks = marksOf(airBar);
+  airBar.hidden = true;
+  const hudKey = { health: -1, hunger: -1, air: -1 };
+  /** Pinta uma fileira: `row` do atlas (0 ar, 1 vida, 2 fome); a marca i vale `points − 2i`: ≥ 2 cheia, 1 parcial, ≤ 0 vazia. */
+  const paintMarks = (marks: HTMLElement[], row: number, points: number): void => marks.forEach((m, i) => { const p = points - i * 2, col = p >= 2 ? 0 : p === 1 ? 1 : 2; m.style.backgroundPosition = `calc(${-col} * var(--hudm)) calc(${-row} * var(--hudm))`; });
+  function paintVitals(submerged: boolean): void {
+    const h = Math.ceil(vitals.health - 1e-9), f = Math.ceil(vitals.hunger - 1e-9), a = Math.ceil((vitals.air / vitals.maxAir) * 20 - 1e-6);
+    if (h !== hudKey.health) { hudKey.health = h; paintMarks(healthMarks, 1, h); }
+    if (f !== hudKey.hunger) { hudKey.hunger = f; paintMarks(hungerMarks, 2, f); }
+    if (a !== hudKey.air) { hudKey.air = a; paintMarks(airMarks, 0, a); }
+    airBar.hidden = !(submerged || vitals.air < vitals.maxAir - 0.01);
+  }
+  paintVitals(false);
+  const onHurt = (): void => { hurt.classList.remove('on'); void hurt.offsetWidth; hurt.classList.add('on'); gameAudio.playHurt(); playerDirty = true; };
+  let airTop = session.body.y, wasAir = false; // queda: o ponto mais alto desde que saiu do chão (a água amortece)
   const label = el('div', 'titan-label', ui);
   const hotbar = el('div', 'titan-hotbar', ui);
   /** Espaço da interface: ícone do atlas da hotbar (por id do item), quantidade e tecla. */
@@ -499,7 +527,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!h) return null;
     if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: 'shard', item: h.item };
     const id = vol.get(h.x, h.y, h.z);
-    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
+    return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: isCollectBlock(id) ? 'lantern' : 'block', block: id }; // lanterna, Marco e Painel: recolhimento curto, sem rachaduras
   };
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
   window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
@@ -523,7 +551,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
-      if (r.ok) { if (t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern') gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
+      if (r.ok) { if (t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern' && t.block === T.LANTERN) gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },
     effect: (t, p, stage) => {
@@ -566,6 +594,15 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   // ---- Laço ----
   let last = performance.now(), nextAuto = 0, autoStep = 0;
+  /** Morreu: os itens caem onde estava e o jogador renasce na chegada (ADR 0059). */
+  function die(): void {
+    const n = dieAndRespawn(session);
+    airTop = session.body.y; wasAir = false;
+    steps.reset();
+    view.setItems(visibleItems(session)); onEdited(); refresh();
+    paintVitals(false);
+    notice(n ? 'Você desmaiou e voltou à chegada. Seus itens ficaram onde caiu.' : 'Você desmaiou e voltou à chegada.');
+  }
   const steps = new FootstepClock();
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -584,6 +621,18 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const px = b.x, pz = b.z;
       stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump }, dt);
       if (moved || !b.onGround) playerDirty = true;
+      // queda: dano = ⌈altura − 3⌉ ao pousar no chão; cair na água não machuca
+      if (b.inLiquid) { airTop = b.y; wasAir = false; }
+      else if (b.onGround) { if (wasAir) { const d = fallDamage(airTop - b.y); if (d > 0) { damage(vitals, d); onHurt(); } } airTop = b.y; wasAir = false; }
+      else { wasAir = true; airTop = Math.max(airTop, b.y); }
+      // ar, regeneração e (sem comida) vida: os olhos dentro do lago gastam o fôlego; sem ar, 1 coração por segundo
+      const underwater = eyesSubmerged(b.y + EYE_HEIGHT, vol.get(Math.floor(b.x), Math.floor(b.y + EYE_HEIGHT), Math.floor(b.z)), T.LAKE);
+      const hb = vitals.health;
+      updatePlayerVitals(vitals, dt, underwater);
+      if (vitals.health < hb) { onHurt(); }
+      if (vitals.health !== hb) playerDirty = true;
+      paintVitals(underwater);
+      if (isDead(vitals)) die();
       if (steps.step(Math.hypot(b.x - px, b.z - pz), b.onGround && !b.inLiquid)) { // um passo a cada ~2,4 blocos no chão; o timbre vem do bloco sob os pés
         const m = surfaceOf(vol.get(Math.floor(b.x), Math.floor(b.y - 0.01), Math.floor(b.z)));
         if (m) gameAudio.playFootstep(m);

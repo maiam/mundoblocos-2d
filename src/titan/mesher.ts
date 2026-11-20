@@ -1,6 +1,6 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
-import { isFull, isSlab, isWorkbench, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
+import { isFull, isModelBlock, isSlab, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -87,7 +87,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
   for (let ly = 0; ly < SECTION; ly++) for (let lz = 0; lz < SECTION; lz++) for (let lx = 0; lx < SECTION; lx++) {
     const id = at(lx, ly, lz);
     if (id === T.AIR) continue;
-    if (id === T.LANTERN || isWorkbench(id)) continue; // lanterna e mesa são modelos 3D do renderer (instâncias, ADR 0043/0045): não entram na malha do terreno (a mesa, sólida, ainda esconde as faces vizinhas)
+    if (isModelBlock(id)) continue; // lanterna e mesa são modelos 3D do renderer (instâncias, ADR 0043/0045): não entram na malha do terreno (a mesa, sólida, ainda esconde as faces vizinhas)
     for (let fi = 0; fi < 6; fi++) {
       const n = FACES[fi].n;
       const nb = at(lx + n[0], ly + n[1], lz + n[2]);

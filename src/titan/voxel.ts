@@ -17,15 +17,19 @@ export const REGION_MIN = -32;
 export const REGION_MAX = 32;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23 } as const;
+/** Maior id de bloco (o carregamento do save descarta ids acima disto). */
+export const T_MAX = T.PAINEL_Z;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
-export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN;
-/** Alvo da mira (e do "quebrar"): sólido ou lanterna. O líquido e o ar são atravessados. */
-export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN;
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id);
+/** Alvo da mira (e do "quebrar"): sólido, lanterna ou Marco de Margem. O líquido e o ar são atravessados. */
+export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id);
+/** Bloco que bloqueia a luz de lanterna: sólido, menos o Painel de Junco (a trama tem vãos: a luz atravessa). */
+export const blocksLight = (id: number): boolean => isSolid(id) && !isPanel(id);
 /** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
 export const isOccupied = isTarget;
 /** Altura do bloco dentro da célula (0–1): 1 = cubo inteiro, 0,5 = laje (ADR 0046), 0 = não sólido. A física e a mira usam esta altura. */
@@ -34,12 +38,13 @@ export const blockHeight = (id: number): number => blockSpan(id)[1];
 export const isSlab = (id: number): boolean => id === T.SLAB || id === T.SLAB_TOP;
 /** Faixa de altura que o bloco ocupa dentro da célula, `[baixo, topo]` em 0–1 (a laje superior ocupa [0,5, 1]; não sólido = [0, 0]). A física e a mira leem esta faixa. */
 export function blockSpan(id: number): readonly [number, number] {
+  if (isPanel(id)) return [0, PANEL_HEIGHT]; // o painel barra o corpo na altura dele (0,944 m), na célula inteira
   if (id === T.SLAB) return [0, 0.5];
   if (id === T.SLAB_TOP) return [0.5, 1];
   return isSolid(id) ? [0, 1] : [0, 0];
 }
 /** Cubo inteiro: só ele esconde as faces vizinhas (a laje, inferior ou superior, deixa metade da célula aberta; a laje dupla é cubo). */
-export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id);
+export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id);
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 
@@ -57,6 +62,32 @@ export const workbenchId = (turn: number): number => WORKBENCH_IDS[((turn % 4) +
  * olhando a leste fica a oeste, e assim por diante.
  */
 export const workbenchTurnFacing = (yaw: number): number => ((Math.round((yaw + Math.PI) / (Math.PI / 2)) % 4) + 4) % 4;
+
+/**
+ * Marco de Margem e Painel de Junco (ADR 0058): modelos 3D de arte própria (como a mesa), com o giro no id. **Marco** (18–21 = giro 0–3, a frente fica voltada para quem o coloca): peça pequena,
+ * atravessável (como a lanterna), alvo da mira pela caixa do modelo. **Painel** (22 = encaixe ao longo de X, 23 = ao longo de Z): sólido na célula inteira até 0,944 m, com vãos que deixam a luz passar.
+ */
+const MARCO_IDS = [T.MARCO, T.MARCO_90, T.MARCO_180, T.MARCO_270] as const;
+export const isMarco = (id: number): boolean => id >= T.MARCO && id <= T.MARCO_270;
+export const marcoTurn = (id: number): number => (isMarco(id) ? id - T.MARCO : 0);
+export const marcoId = (turn: number): number => MARCO_IDS[((turn % 4) + 4) % 4];
+/** Giro (0–3) que deixa a frente do Marco (+Z do modelo) voltada para o jogador: o yaw arredondado ao eixo mais próximo. */
+export const marcoTurnFacing = (yaw: number): number => ((Math.round(yaw / (Math.PI / 2)) % 4) + 4) % 4;
+export const isPanel = (id: number): boolean => id === T.PAINEL || id === T.PAINEL_Z;
+export const PANEL_HEIGHT = 0.944;
+/** Id do painel que fica de frente para o jogador: olhando ao longo de Z (norte/sul) o painel corre ao longo de X; olhando ao longo de X, ao longo de Z. */
+export const panelIdFacing = (yaw: number): number => (Math.abs(Math.cos(yaw)) >= Math.abs(Math.sin(yaw)) ? T.PAINEL : T.PAINEL_Z);
+/** Peça recolhida com um toque longo curto (0,35 s, com anel e sem rachaduras): a lanterna e as peças pequenas da margem (Marco e Painel). */
+export const isCollectBlock = (id: number): boolean => id === T.LANTERN || isMarco(id) || isPanel(id);
+/** Modelo 3D (instâncias do renderer) deste bloco, ou `null`. `turn` = giro em quartos de volta ao redor de Y. */
+export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel'; turn: number } | null {
+  if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
+  if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
+  if (isPanel(id)) return { kind: 'painel', turn: id === T.PAINEL ? 0 : 1 };
+  return null;
+}
+/** Bloco que sai da malha do terreno por ser modelo 3D (lanterna e os modelos acima). */
+export const isModelBlock = (id: number): boolean => id === T.LANTERN || modelOf(id) !== null;
 
 export type Face = 'top' | 'side' | 'bottom';
 
