@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.122.0 — Titã: Braseiro de Rocha, Lingote de Cobre e ferramentas de cobre (20/11/2026)
+- **Etapa 2 de 4 do pacote "O que a duna guarda"** (números provisórios autorizados). **ADR 0065.**
+- **Braseiro de Rocha** (blocos 25 apagado e 26 aceso; item 21; receita 4 Rochas Escuras na Mesa): a Brasa de Âmbar o acende com 8 preparações (`session.braziers`, `header.braziers` opcional); só o aceso é estação (Usar/F), mostra só as receitas dele e apaga ao zerar as cargas.
+- **Lingote de Cobre** (2 Fragmentos, braseiro aceso), **Picareta de Cobre** (3 Lingotes + 2 Hastes; rocha em 40 % do tempo), **Adaga de Rocha** e **Adaga de Cobre** (sem efeito até o combate). Itens 21–24; `stationMet` como regra única de estação.
+- Atlas de terreno 80 × 80 (tiles 12–14 do braseiro, `make-titan-braseiro.py`); ícones provisórios das ilustrações.
+- Testes `braseiro.test.ts` (+4; 1.007 no total). Conferido a 740 × 360: braseiro aceso com a cuba brilhando, "Usar [F]", tela só com a receita do braseiro, fabricar o lingote gasta 2 fragmentos e 1 carga.
+
 ## Orvalis v0.121.0 — Titã: Farejador de Duna com rig e textura 2K (20/11/2026)
 - **Arte do dono do produto** (Drive: retopologia, UV, baking, texturas 2K e rig). **ADR 0064.**
 - GLB leve (`extract-titan-farejador-rig.py`): 81 malhas → 1 malha skinada de 23.768 triângulos, 18 ossos, Base Color 1024² JPEG (1,2 MB), mesma caixa do modelo antigo. Carrega em segundo plano; até chegar (ou se falhar) valem as 7 partes. `assetsInclude` de `.glb` no Vite.

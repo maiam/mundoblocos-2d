@@ -7,13 +7,13 @@ import { T } from './voxel';
 describe('malha por seção', () => {
   it('uv de cada tile cai na área útil de 16 px (sem a borda de 2 px do atlas)', () => {
     const [u0, v0, u1, v1] = tileUV(0);
-    [u0 * 80, u1 * 80, (1 - v1) * 60, (1 - v0) * 60].forEach((n, i) => expect(n).toBeCloseTo([2, 18, 2, 18][i], 6));
+    [u0 * 80, u1 * 80, (1 - v1) * 80, (1 - v0) * 80].forEach((n, i) => expect(n).toBeCloseTo([2, 18, 2, 18][i], 6));
     const [a, , b] = tileUV(7);
     expect(a * 80).toBeCloseTo(62, 6);
     expect(b * 80).toBeCloseTo(78, 6);
     const [, w0, , w1] = tileUV(9); // linha 3: veios (ADR 0044)
-    expect((1 - w1) * 60).toBeCloseTo(42, 6);
-    expect((1 - w0) * 60).toBeCloseTo(58, 6);
+    expect((1 - w1) * 80).toBeCloseTo(42, 6);
+    expect((1 - w0) * 80).toBeCloseTo(58, 6);
   });
   it('seção de ar não gera malha; a da superfície gera faces e o lago tem malha própria', () => {
     const g = new TitanGenerator(42), v = new TitanVolume(g);

@@ -14,7 +14,7 @@ import { isFull, isModelBlock, isSlab, SECTION, T, tileFor, type Face, Y_MIN } f
 export interface MeshData { pos: Float32Array; uv: Float32Array; col: Float32Array; glow: Float32Array; idx: Uint32Array }
 export interface SectionMesh { opaque: MeshData | null; liquid: MeshData | null }
 
-const ATLAS_W = 80, ATLAS_H = 60, PITCH = 20, PAD = 2, TILE = 16;
+const ATLAS_W = 80, ATLAS_H = 80, PITCH = 20, PAD = 2, TILE = 16;
 /** UV (u0, v0, u1, v1) de um tile do atlas 4 × 3; v do WebGL cresce para cima (textura com flipY). */
 export function tileUV(tile: number): [number, number, number, number] {
   const col = tile % 4, row = (tile / 4) | 0;

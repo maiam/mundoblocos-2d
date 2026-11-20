@@ -69,8 +69,8 @@ describe('gerador v7: afloramentos de cobre e hastes secas (ADR 0063)', () => {
 describe('picareta e veio de cobre', () => {
   it('só picareta quebra o veio; com ela a rocha cede em 60% do tempo; ferramenta não empilha', () => {
     expect(isCopperVein(T.VEIN_COPPER)).toBe(true); expect(isSolid(T.VEIN_COPPER)).toBe(true);
-    expect(breakTotalMs('block', T.VEIN_COPPER)).toBeNull(); expect(breakTotalMs('block', T.VEIN_COPPER, true)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR));
-    expect(breakTotalMs('block', T.DARK_ROCK, true)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR));
+    expect(breakTotalMs('block', T.VEIN_COPPER)).toBeNull(); expect(breakTotalMs('block', T.VEIN_COPPER, true)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.rock));
+    expect(breakTotalMs('block', T.DARK_ROCK, true)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.rock));
     expect(breakTotalMs('block', T.SAND, true)).toBe(BREAK_MS.sand); // areia não muda
     expect(isPick(Item.STONE_PICK)).toBe(true); expect(isPick(Item.NOZ)).toBe(false); expect(isTool(Item.STONE_PICK)).toBe(true);
     expect(toolOf(Item.STONE_PICK)).toEqual({ kind: 'pick', tier: 'rock' }); expect(maxStack(Item.STONE_PICK)).toBe(1);
