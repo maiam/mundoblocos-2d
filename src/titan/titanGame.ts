@@ -4,7 +4,8 @@ import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
-import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
+import { breakTotalMs, DRAG_TOLERANCE_PX, isRockSound } from './breaking';
+import { HIT_INTERVAL_MS, rockAudio } from './rockAudio';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { ITEM_NAMES } from './items';
@@ -487,6 +488,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const id = vol.get(h.x, h.y, h.z);
     return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
   };
+  let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
+  window.addEventListener('pointerdown', () => { rockAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
+  window.addEventListener('keydown', () => { rockAudio.unlock(); }, { capture: true, passive: true });
   const ring = el('div', 'titan-collect', ui); // indicador discreto de recolhimento (lanterna e lasca): anel em volta da mira
   ring.hidden = true;
   const gesture = new InteractionGesture({
@@ -496,12 +500,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
-      if (r.ok) { view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
+      if (r.ok) { if (t.kind === 'block' && isRockSound(t.block)) rockAudio.playRockBreak(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },
     effect: (t, p, stage) => {
-      if (!t) { view.setCrack(null); ring.hidden = true; return; }
-      if (t.kind === 'block') { view.setCrack(t, stage); ring.hidden = true; } // rachaduras progressivas só em blocos; sem refazer malha
+      if (!t) { view.setCrack(null); ring.hidden = true; hitAt = 0; return; }
+      if (t.kind === 'block') {
+        view.setCrack(t, stage); ring.hidden = true;
+        const now = performance.now(); // golpe seco a cada 250 ms enquanto a rocha racha; o primeiro vem junto do primeiro estágio
+        if (isRockSound(t.block) && now - hitAt >= HIT_INTERVAL_MS) { hitAt = now; rockAudio.playRockHit(p); }
+      } // rachaduras progressivas só em blocos; sem refazer malha
       else { view.setCrack(null); ring.hidden = false; ring.style.setProperty('--p', String(p)); }
     },
   });
