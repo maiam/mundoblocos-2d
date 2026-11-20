@@ -30,7 +30,7 @@ describe('veios subterrâneos (ADR 0070, gerador v9)', () => {
     expect(attemptsFor(() => 0.99, 2.5)).toBe(2); expect(attemptsFor(() => 0.1, 2.5)).toBe(3);
   });
   it('v9 gera os três minérios sob a rocha, nunca na camada de superfície nem acima da faixa; é determinístico e não depende da ordem de leitura', () => {
-    expect(GENERATOR_VERSION).toBe(9);
+    expect(GENERATOR_VERSION).toBeGreaterThanOrEqual(9);
     const a = scan(new TitanGenerator(42, 9));
     for (const rule of ORE_RULES) {
       const cells = a.get(rule.blockId) ?? [];

@@ -172,7 +172,7 @@ describe('versões do gerador', () => {
     const v2 = new TitanGenerator(42, 2);
     expect(v2.version).toBe(2);
     expect(v2.arrival).toEqual(v1.arrival);
-    expect(new TitanGenerator(42).version).toBe(9); // a versão atual (ADR 0070)
+    expect(new TitanGenerator(42).version).toBe(10); // a versão atual (ADR 0072)
     expect(new TitanGenerator(42, 5).region).toEqual({ min: -32, max: 32 }); expect(new TitanGenerator(42).region).toEqual({ min: -64, max: 64 }); // região por versão
     expect(new TitanGenerator(42, 4).nutPlants).toHaveLength(0); // a v4 não tem plantas de noz
     expect(new TitanGenerator(42, 3).version).toBe(3);

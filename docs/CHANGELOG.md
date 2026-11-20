@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.129.0 — Titã: fragmentos à vista na rocha escura (gerador v10) (20/11/2026)
+- **Pedido do dono do produto: fragmentos em abundância nas rochas escuras das camadas altas.** **ADR 0072.**
+- `GENERATOR_VERSION` 10: veios de rocha em 12 % da rocha escura de Y ≥ 72 e 6 % abaixo, e de gelo em 6 % das manchas de gelo; ao todo mais de 60 de rocha e 30 de gelo à vista por seed (eram 3 e 3). Relevo e tudo o mais idênticos à v9; fora das formações, abrigos e montes de cobre.
+- Testes `fragmentos.test.ts` (+3; 1.038 no total). Conferido a 740 × 360: faixa de rocha escura com vários veios na camada alta.
+
 ## Orvalis v0.128.0 — Titã: Adaga de Rocha na mão (primeira pessoa) (20/11/2026)
 - **Pacote 3D "Adaga de Rocha" do dono do produto, limite de 2 MB.** **ADR 0071.**
 - GLB reduzido de 11,5 MB para **338 KB** (3 peças, 6.272 triângulos, BaseColor 1024 px em WebP) por `scripts/export-titan-adaga.py`; carregado só quando a adaga é escolhida.
