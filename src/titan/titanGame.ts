@@ -4,7 +4,7 @@ import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
-import { FAREJADOR, farejadorPose, stepFarejador } from './creature';
+import { farejadorPose, KINDS, stepFarejador } from './creature';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
@@ -614,7 +614,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     notice(n ? 'Você desmaiou e voltou à chegada. Seus itens ficaram onde caiu.' : 'Você desmaiou e voltou à chegada.');
   }
   const steps = new FootstepClock();
-  let nextScrape = 0; // instante do próximo raspar de pata do Farejador em aviso
+  let nextScrape = 0; // instante do próximo raspar de pata de um Farejador em investida
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -659,15 +659,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (session.time < before) { session.days++; playerDirty = true; } // virou o dia: o contador vai no save
       if (((session.time - lastSavedTime + 1) % 1) > 0.01) playerDirty = true; // ~12 s de jogo (1/100 do dia de 20 min): grava a hora junto da posição
     }
-    const fj = session.creature;
-    if (fj) {
-      if (active) {
+    if (session.creatures.length) {
+      for (const fj of session.creatures) {
+        if (!active) break;
         const ev = stepFarejador(fj, vol, { x: b.x, y: b.y, z: b.z }, dt);
-        if (ev.hit) { damage(vitals, FAREJADOR.damage); onHurt(); notice('O Farejador de Duna te acertou. Recue até ele se acalmar.'); }
-        if (fj.phase === 'warn' && now >= nextScrape) { nextScrape = now + 520; gameAudio.playScrape(); }
-        else if (ev.phase === 'charge') gameAudio.playScrape();
+        if (ev.hit) { damage(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
+        if (ev.phase === 'charge' || (fj.phase === 'charge' && now >= nextScrape)) { nextScrape = now + 520; gameAudio.playScrape(); }
       }
-      view.setFarejador({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) });
+      view.setFarejadores(session.creatures.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
     if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
     if (playing && session.drops.size) {

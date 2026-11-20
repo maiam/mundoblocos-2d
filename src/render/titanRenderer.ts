@@ -62,9 +62,10 @@ export class TitanRenderer {
   /** Planta da Noz de Duna (todas as plantas) e as nozes (só as maduras): duas malhas instanciadas do mesmo atlas. */
   private nutPlantMesh!: THREE.InstancedMesh;
   private nutFruitMesh!: THREE.InstancedMesh;
-  /** Farejador de Duna: grupo de partes (tronco, cabeça, cauda, 4 patas), cada uma girando em torno do pivô; invisível sem animal. */
-  private farejador!: THREE.Group;
-  private farejadorParts = {} as Record<string, THREE.Mesh>;
+  /** Farejadores de Duna: um grupo de partes (tronco, cabeça, cauda, 4 patas) por animal, cada parte girando em torno do pivô; criados sob demanda (geometria e material compartilhados). */
+  private farejadores: Array<{ group: THREE.Group; parts: Record<string, THREE.Mesh> }> = [];
+  private farejadorGeos = {} as Record<string, THREE.BufferGeometry>;
+  private farejadorMat!: THREE.MeshBasicMaterial;
   private readonly timeU = { value: 0 };
   private lanternStructure: THREE.InstancedMesh;
   private lanternCore: THREE.InstancedMesh;
@@ -204,16 +205,8 @@ export class TitanRenderer {
     ftex.needsUpdate = true;
     const fmat = new THREE.MeshBasicMaterial({ map: ftex, vertexColors: true, fog: true });
     patchDayLight(fmat, this.ambient);
-    this.farejador = new THREE.Group();
-    this.farejador.visible = false;
-    for (const [name, part] of Object.entries(titanFarejadorModel.parts)) {
-      const mesh = new THREE.Mesh(modelGeometry(part), fmat);
-      mesh.position.set(part.pivot[0], part.pivot[1], part.pivot[2]);
-      mesh.frustumCulled = false;
-      this.farejadorParts[name] = mesh;
-      this.farejador.add(mesh);
-    }
-    this.scene.add(this.farejador);
+    this.farejadorMat = fmat;
+    for (const [name, part] of Object.entries(titanFarejadorModel.parts)) this.farejadorGeos[name] = modelGeometry(part);
 
     // junco de vidro: duas faixas cruzadas por planta, balanço leve no shader (uTime), sem colisão (não existe no volume)
     const rtex = new THREE.Texture(extra.reed);
@@ -351,16 +344,31 @@ export class TitanRenderer {
     this.nutPlantMesh = fill(this.nutPlantMesh, list);
     this.nutFruitMesh = fill(this.nutFruitMesh, list.filter((n) => n.ripe));
   }
-  /** Farejador de Duna: posição dos pés, giro (`rotation.y`) e pose das partes; `null` esconde o animal. */
-  setFarejador(s: { x: number; y: number; z: number; yaw: number; pose: { bob: number; headPitch: number; headYaw: number; tailYaw: number; legs: readonly number[] } } | null): void {
-    this.farejador.visible = !!s;
-    if (!s) return;
-    this.farejador.position.set(s.x, s.y + s.pose.bob, s.z);
-    this.farejador.rotation.y = s.yaw;
-    const p = this.farejadorParts;
-    p.cabeca.rotation.set(0, s.pose.headYaw, s.pose.headPitch);
-    p.cauda.rotation.set(0, s.pose.tailYaw, 0);
-    (['pata_dd', 'pata_de', 'pata_td', 'pata_te'] as const).forEach((k, i) => p[k].rotation.set(0, 0, s.pose.legs[i]));
+  /** Farejadores de Duna: pés, giro (`rotation.y`), escala, rolagem de costas e pose das partes de cada animal; a lista vazia esconde todos. */
+  setFarejadores(list: ReadonlyArray<{ x: number; y: number; z: number; yaw: number; scale: number; pose: { bob: number; roll: number; headPitch: number; headYaw: number; tailYaw: number; legs: readonly number[] } }>): void {
+    while (this.farejadores.length < list.length) {
+      const group = new THREE.Group(), parts: Record<string, THREE.Mesh> = {};
+      group.rotation.order = 'YXZ'; // gira em Y (rumo) e depois rola em X (eixo do comprimento: o modelo olha para −X)
+      for (const [name, part] of Object.entries(titanFarejadorModel.parts)) {
+        const mesh = new THREE.Mesh(this.farejadorGeos[name], this.farejadorMat);
+        mesh.position.set(part.pivot[0], part.pivot[1], part.pivot[2]);
+        mesh.frustumCulled = false;
+        parts[name] = mesh; group.add(mesh);
+      }
+      this.scene.add(group);
+      this.farejadores.push({ group, parts });
+    }
+    this.farejadores.forEach(({ group, parts }, i) => {
+      const s = list[i];
+      group.visible = !!s;
+      if (!s) return;
+      group.scale.setScalar(s.scale);
+      group.position.set(s.x, s.y + (s.pose.bob + 0.72 * Math.sin(s.pose.roll / 2)) * s.scale, s.z); // de costas o dorso fica no chão: sobe o centro para não afundar
+      group.rotation.set(s.pose.roll, s.yaw, 0);
+      parts.cabeca.rotation.set(0, s.pose.headYaw, s.pose.headPitch);
+      parts.cauda.rotation.set(0, s.pose.tailYaw, 0);
+      (['pata_dd', 'pata_de', 'pata_td', 'pata_te'] as const).forEach((k, j) => parts[k].rotation.set(0, 0, s.pose.legs[j]));
+    });
   }
   /** Plantas e nozes desenhadas (diagnóstico e testes de navegador). */
   get nutPlantCount(): number { return this.nutPlantMesh.count; }
