@@ -4,11 +4,12 @@ import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { breakOrCollect, collectNearby, placeFromSlot } from './actions';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
-import { breakTotalMs, DRAG_TOLERANCE_PX, isRockSound } from './breaking';
-import { HIT_INTERVAL_MS, rockAudio } from './rockAudio';
+import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
+import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
+import { FootstepClock, surfaceOf } from './sounds';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
-import { ITEM_NAMES } from './items';
+import { blockOfItem, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -346,6 +347,17 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     ae.type = 'button';
     ae.addEventListener('click', () => { autoEdit = !autoEdit; ae.textContent = `Editar sem parar: ${autoEdit ? 'ligado' : 'desligado'}`; });
   }
+  const soundBtn = el('button', 'titan-btn', menu); // mudo: lembrado neste aparelho (localStorage pode falhar: o jogo não depende dele)
+  soundBtn.type = 'button';
+  try { gameAudio.muted = window.localStorage.getItem('orvalis-titan-som') === 'off'; } catch { /* sem armazenamento */ }
+  const paintSound = (): void => { soundBtn.textContent = `Som: ${gameAudio.muted ? 'desligado' : 'ligado'}`; };
+  paintSound();
+  soundBtn.addEventListener('click', () => {
+    gameAudio.muted = !gameAudio.muted;
+    try { window.localStorage.setItem('orvalis-titan-som', gameAudio.muted ? 'off' : 'on'); } catch { /* sem armazenamento */ }
+    paintSound();
+    if (!gameAudio.muted) gameAudio.playItemPickup(); // confirma que o som voltou
+  });
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
   if (scene) newBtn.hidden = true;
   newBtn.type = 'button';
@@ -489,18 +501,28 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, kind: id === T.LANTERN ? 'lantern' : 'block', block: id };
   };
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
-  window.addEventListener('pointerdown', () => { rockAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
-  window.addEventListener('keydown', () => { rockAudio.unlock(); }, { capture: true, passive: true });
+  window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
+  window.addEventListener('keydown', () => { gameAudio.unlock(); }, { capture: true, passive: true });
   const ring = el('div', 'titan-collect', ui); // indicador discreto de recolhimento (lanterna e lasca): anel em volta da mira
   ring.hidden = true;
   const gesture = new InteractionGesture({
     totalMs: (t) => breakTotalMs(t.kind, t.block),
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
-    place: (t) => { const r = placeFromSlot(session, t, session.selected); if (r.msg) notice(r.msg); if (r.ok) { onEdited(); refresh(); } return { ok: r.ok }; },
+    place: (t) => {
+      const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
+      const r = placeFromSlot(session, t, session.selected);
+      if (r.msg) notice(r.msg);
+      if (r.ok) {
+        const b = held ? blockOfItem(held.item) : null;
+        if (b === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b ?? undefined) ?? 'rock');
+        onEdited(); refresh();
+      }
+      return { ok: r.ok };
+    },
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
-      if (r.ok) { if (t.kind === 'block' && isRockSound(t.block)) rockAudio.playRockBreak(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
+      if (r.ok) { if (t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern') gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },
     effect: (t, p, stage) => {
@@ -508,7 +530,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (t.kind === 'block') {
         view.setCrack(t, stage); ring.hidden = true;
         const now = performance.now(); // golpe seco a cada 250 ms enquanto a rocha racha; o primeiro vem junto do primeiro estágio
-        if (isRockSound(t.block) && now - hitAt >= HIT_INTERVAL_MS) { hitAt = now; rockAudio.playRockHit(p); }
+        const m = surfaceOf(t.block);
+        if (m && now - hitAt >= HIT_INTERVAL_MS) { hitAt = now; gameAudio.playHit(m, p); }
       } // rachaduras progressivas só em blocos; sem refazer malha
       else { view.setCrack(null); ring.hidden = false; ring.style.setProperty('--p', String(p)); }
     },
@@ -542,6 +565,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   // ---- Laço ----
   let last = performance.now(), nextAuto = 0, autoStep = 0;
+  const steps = new FootstepClock();
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -556,8 +580,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const dirX = -Math.sin(session.yaw) * fx + Math.cos(session.yaw) * sx;
       const dirZ = -Math.cos(session.yaw) * fx - Math.sin(session.yaw) * sx;
       const moved = dirX !== 0 || dirZ !== 0;
+      const px = b.x, pz = b.z;
       stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump }, dt);
       if (moved || !b.onGround) playerDirty = true;
+      if (steps.step(Math.hypot(b.x - px, b.z - pz), b.onGround && !b.inLiquid)) { // um passo a cada ~2,4 blocos no chão; o timbre vem do bloco sob os pés
+        const m = surfaceOf(vol.get(Math.floor(b.x), Math.floor(b.y - 0.01), Math.floor(b.z)));
+        if (m) gameAudio.playFootstep(m);
+      }
     } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
@@ -569,7 +598,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (playing && session.drops.size) {
       // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
       const c = collectNearby(session, b.x, b.y, b.z);
-      if (c.collected || c.moved) { view.setItems(visibleItems(session)); if (c.collected) { onEdited(); refresh(); } }
+      if (c.collected || c.moved) { view.setItems(visibleItems(session)); if (c.collected) { gameAudio.playItemPickup(); onEdited(); refresh(); } }
       if (c.full && !dropFull) notice('Mochila cheia');
       dropFull = c.full;
     }

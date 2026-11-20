@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.110.0 — Titã: sintetizador de som unificado (rocha, areia, gelo, ações e passos) (20/11/2026)
+- **Proposta do dono do produto** (`gameAudio.ts`), no lugar do sintetizador só da rocha. **ADR 0054 (extensão).**
+- Quebra e golpe seco para rocha, areia e gelo; colocar bloco por material; lanterna (colocar e recolher); coleta de item/lasca (gesto e proximidade); **passos** por superfície a cada 2,4 blocos no chão. `titan/sounds.ts` (puro): `surfaceOf`, `FootstepClock`. Botão **Som: ligado/desligado** no menu, lembrado no aparelho.
+- Testes (+8: `sounds.test.ts`, `gameAudio.test.ts`; `rockAudio.test.ts` removido). Conferido no navegador (740 × 360, sem erros): quebra de rocha/areia/gelo, colocar, lanterna, passos e o botão.
+
 ## Orvalis v0.109.0 — Titã: som da rocha sintetizado na hora (19/11/2026)
 - **Proposta do dono do produto:** o primeiro som do Titã, sem arquivos de áudio. **ADR 0054.**
 - `titan/rockAudio.ts` (Web Audio): golpe seco a cada 250 ms enquanto a rocha racha (o tom sobe com o progresso) e quebra em camadas ao concluir (pancada grave, três rajadas de estilhaços defasadas e corpo grave), com variação aleatória; ganho mestre de 0,6. `isRockSound` (`breaking.ts`): rocha escura, veio, laje e mesa; areia, gelo e brasa em silêncio por ora. O contexto é liberado no primeiro toque ou tecla (iOS/Safari); sem Web Audio vira silêncio.

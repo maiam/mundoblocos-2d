@@ -106,7 +106,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Bancada 3 × 3 e painéis de basalto (v0.104.0, ADR 0049)
 - **Grade da mesa** (`inventory.ts`): `BENCH_START` 41–49, saída `BENCH_OUT` 50, separada da pessoal; `matchBench` (quantidades exatas, qualquer disposição), `takeBenchResult` (atômica), `returnBench` (devolve ao fechar; o que não couber fica na grade e no save). Inventário gravado `v: 3` com `bench`.
-- **Som** (ADR 0054): Web Audio sintetizada (`titan/rockAudio.ts`), golpe seco a cada 250 ms e quebra ao concluir, só rocha/veio/laje/mesa; `unlock()` no primeiro gesto (iOS).
+- **Som** (ADR 0054): Web Audio sintetizada (`titan/gameAudio.ts`; regras puras em `titan/sounds.ts`): quebra por material (rocha, areia, gelo), colocar, lanterna, coleta e passos (a cada 2,4 blocos no chão); `unlock()` no primeiro gesto (iOS); botão de mudo no menu (`localStorage` `orvalis-titan-som`).
 - **Arte de 32 px** (ADR 0053): atlas de itens 128 × 128 (`titan-itens-32px.webp`; ids 5, 6 e 8 em 32 px, o resto 2× da arte de 16 px) e junco de 128 × 32; interface em escala inteira (`--ic` 64/32 px, `--icm` 32 px), nunca 1,5×.
 - **Mesa de Trabalho** (ADR 0052): 4 ids (10, 13–15 = giro 0–3), frente voltada para o jogador ao colocar; sempre `isWorkbench(id)`, nunca `=== T.WORKBENCH`.
 - **Junco de Vidro** (ADR 0051): 3 silhuetas (`titan/reeds.ts`, atlas 48 × 16), uma `InstancedMesh` por silhueta; célula lógica inalterada.
