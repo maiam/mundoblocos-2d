@@ -11,7 +11,7 @@ export function surfaceOf(block: number | undefined): SurfaceMaterial | null {
   switch (block) {
     case T.SAND: case T.DAMP_SAND: return 'sand';
     case T.FROST: case T.VEIN_FROST: case T.EMBER: return 'ice';
-    case T.DARK_ROCK: case T.VEIN_ROCK: case T.SLAB: case T.BEDROCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: return 'rock';
+    case T.DARK_ROCK: case T.VEIN_ROCK: case T.SLAB: case T.SLAB_TOP: case T.SLAB_DOUBLE: case T.BEDROCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: return 'rock';
     default: return null;
   }
 }

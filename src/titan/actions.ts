@@ -1,6 +1,7 @@
-import { blockOfItem, Item, itemOfBlock } from './items';
-import { blockHeight, isSolid, isVein, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
-import { canPlaceAt, type Hit } from './physics';
+import { blockOfItem, dropCountOf, Item, itemOfBlock } from './items';
+import { resolveSlabPlacement } from './slabs';
+import { blockSpan, isSolid, isVein, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { BODY_HALF, BODY_HEIGHT, canPlaceAt, type Hit } from './physics';
 import type { TitanSession } from './session';
 
 /**
@@ -49,10 +50,11 @@ export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
   }
   const item = itemOfBlock(s.volume.get(x, y, z));
   if (item === null) return { ok: false };
-  if (!s.inventory.canAdd(item)) return FULL;
+  const count = dropCountOf(s.volume.get(x, y, z)); // a laje dupla devolve 2 lajes
+  if (!s.inventory.canAdd(item, count)) return FULL;
   const block = s.volume.get(x, y, z);
   if (!s.volume.remove(x, y, z)) return { ok: false };
-  s.inventory.add(item);
+  s.inventory.add(item, count);
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
@@ -112,9 +114,23 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
+  if (block === T.SLAB) { // laje (ADR 0056): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
+    const r = resolveSlabPlacement(s.volume.get(hit.x, hit.y, hit.z), hit.ny, hit.hy);
+    if (r.merge) {
+      // funde na célula apontada: a metade que falta não pode invadir o corpo do jogador
+      const target = s.volume.get(hit.x, hit.y, hit.z);
+      const added: readonly [number, number] = target === T.SLAB ? [0.5, 1] : [0, 0.5];
+      const b = s.body;
+      const overlap = hit.x + 1 > b.x - BODY_HALF && hit.x < b.x + BODY_HALF && hit.z + 1 > b.z - BODY_HALF && hit.z < b.z + BODY_HALF && hit.y + added[1] > b.y + 1e-4 && hit.y + added[0] < b.y + BODY_HEIGHT;
+      if (overlap || !s.volume.editable(hit.x, hit.y, hit.z) || !s.volume.set(hit.x, hit.y, hit.z, r.block)) return { ok: false };
+      s.inventory.consume(slot);
+      return { ok: true };
+    }
+    block = r.block;
+  }
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
   const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
-  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockHeight(block)) || !s.volume.place(x, y, z, block)) return { ok: false };
+  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockSpan(block)) || !s.volume.place(x, y, z, block)) return { ok: false };
   s.inventory.consume(slot);
   return { ok: true };
 }

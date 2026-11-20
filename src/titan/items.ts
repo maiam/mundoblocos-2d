@@ -30,6 +30,8 @@ export function itemOfBlock(block: number): ItemId | null {
   if (block === T.VEIN_FROST) return Item.FROST;
   if (block === T.LANTERN) return Item.LANTERN;
   if (isWorkbench(block)) return Item.WORKBENCH;
-  if (block === T.SLAB) return Item.SLAB;
+  if (block === T.SLAB || block === T.SLAB_TOP || block === T.SLAB_DOUBLE) return Item.SLAB; // a laje dupla devolve 2 (`dropCountOf`)
   return null;
 }
+/** Quantas unidades do item o bloco devolve ao ser quebrado: a laje dupla devolve 2 lajes (não vira bloco maciço). */
+export const dropCountOf = (block: number): number => (block === T.SLAB_DOUBLE ? 2 : 1);

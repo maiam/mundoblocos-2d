@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.112.0 — Titã: lajes superior e dupla (20/11/2026)
+- **Regras de laje do Minecraft** (dono do produto). **ADR 0056.**
+- Ids `SLAB_TOP` (16, metade de cima) e `SLAB_DOUBLE` (17, cubo; devolve 2 lajes); sem mudar o save. Colocação por face e altura clicadas (`slabs.ts`, `Hit.hy`): superior no teto ou na metade alta da lateral, inferior no resto, **fusão em laje dupla** pelo topo da inferior ou pela base da superior (gasta 1; recusa se invadir o corpo).
+- Física pela faixa da célula (`blockSpan`/`bodySpan`/`ceilingY`): a superior bloqueia só a metade de cima (corredor de 1,5 m: o corpo de 1,8 m não passa), pouso e salto automático nela, cabeça bate no meio da célula; mira e malha pela metade ocupada. Quebra: laje 1 s, dupla 1,6 s.
+- Testes (`slabs.test.ts`, +11; `slab.test.ts` ajustado ao novo `canPlaceAt` por faixa). Conferido no navegador (740 × 360): mira alta (hy 0,62) → superior; média/baixa (hy 0,21 e 0) → inferior.
+
 ## Orvalis v0.111.0 — Titã: salto automático e quebra contínua ao arrastar (20/11/2026)
 - **Pedido do dono do produto.** **ADR 0055** (altera em parte a ADR 0042).
 - **Salto automático** (`physics.ts`): andando no chão contra um degrau de 1 bloco com espaço em cima, o corpo pula sozinho e sobe se continua andando (entrada ≥ 0,35 contra o bloco; não pula no ar/água, parede de 2 blocos, teto baixo nem repete). Pular pelo botão e o degrau da laje seguem iguais.

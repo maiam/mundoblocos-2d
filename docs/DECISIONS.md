@@ -34,6 +34,7 @@
 | 0048 | **Aceita** — Titã: céu em shader com bruma direcional, noite mais escura e fria, estrelas discretas e Saturno raro (janela curta em ~12% dos dias) | domains/titan, [ADR 0048](adr/0048-titan-ceu-bruma-direcional-estrelas-e-saturno.md) |
 | 0047 | **Aceita** — Titã: hotbar de 9 + bolsa 3 × 9, livro de receitas numa tela só (categorias, grade, detalhe Tenho/Preciso) e migração do inventário por seção (save v5) | domains/titan, [ADR 0047](adr/0047-titan-bolsa-hotbar-9-e-livro-de-receitas.md) |
 | 0046 | **Aceita** — Titã: Laje de Rocha (bloco de meia altura): receita 3 rochas → 6 lajes na mesa, física com degrau de 0,5, mira por caixa, laterais de 16 × 8 px | domains/titan, [ADR 0046](adr/0046-titan-laje-de-rocha-meia-altura.md) |
+| 0056 | **Aceita** — Titã: Laje de Rocha inferior, superior e dupla (ids no bloco, colocação por face e altura, física pela faixa da célula) | [adr/0056](adr/0056-titan-lajes-superior-e-dupla.md) |
 | 0055 | **Aceita** — Titã: salto automático em degrau de 1 bloco e quebra contínua ao arrastar a mira segurando (altera em parte a ADR 0042) | [adr/0055](adr/0055-titan-salto-automatico-e-quebra-continua.md) |
 | 0054 | **Aceita** — Titã: som da rocha sintetizado na hora com a Web Audio API (sem arquivos), golpe seco e quebra em camadas | [adr/0054](adr/0054-titan-som-sintetizado-da-rocha.md) |
 | 0053 | **Aceita** — Titã: arte de 32 × 32 nos fragmentos, na lanterna e no junco; atlas de itens 128 × 128 e interface em escala inteira | [adr/0053](adr/0053-titan-arte-32px-itens-e-junco.md) |
