@@ -1,7 +1,7 @@
-import { blockOfItem, dropCountOf, foodOf, isPick, Item, ITEM_NAMES, itemOfBlock } from './items';
+import { blockOfItem, dropCountOf, foodOf, isPick, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
-import { BRAZIER_CHARGES, brazierKey } from './braziers';
+import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
 import { blockSpan, isBrazier, isCopperVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
@@ -67,26 +67,58 @@ export function eatFromSlot(s: TitanSession, slot: number): ActionResult {
   return { ok: true };
 }
 
-/** Acende o braseiro apontado com a brasa do espaço (ADR 0065): `BRAZIER_CHARGES` preparações; braseiro aceso ou outro bloco não gasta a brasa. */
-export function igniteBrazier(s: TitanSession, hit: Hit, slot: number): ActionResult {
-  const id = s.volume.get(hit.x, hit.y, hit.z);
-  if (id === T.BRAZIER_LIT) return { ok: false, msg: 'O braseiro já está aceso' };
-  if (id !== T.BRAZIER) return { ok: false, msg: 'A brasa acende um Braseiro de Rocha' };
-  if (!s.volume.set(hit.x, hit.y, hit.z, T.BRAZIER_LIT)) return { ok: false };
-  s.inventory.consume(slot);
-  s.braziers.set(brazierKey(hit.x, hit.y, hit.z), BRAZIER_CHARGES);
-  s.metaRev++;
-  return { ok: true, msg: `Braseiro aceso: ${BRAZIER_CHARGES} preparações` };
+/**
+ * Braseiro como bloco com estado (ADR 0068): o estado (`session.furnaces`) nasce na primeira vez que se abre ou se mexe no braseiro. Mover entre mochila e espaços é **tudo ou nada**
+ * e atualiza as duas pontas juntas.
+ */
+export function furnaceAt(s: TitanSession, x: number, y: number, z: number): FurnaceState | null {
+  const id = s.volume.get(x, y, z);
+  if (id !== T.BRAZIER && id !== T.BRAZIER_LIT) return null;
+  const k = furnaceKey(x, y, z);
+  let f = s.furnaces.get(k);
+  if (!f) { f = newFurnace(); s.furnaces.set(k, f); s.metaRev++; }
+  return f;
 }
 
-/** Gasta uma preparação do braseiro em `at`; ao zerar ele apaga. Devolve se apagou (carga sem registro = cheia: save que perdeu o campo). */
-export function useBrazierCharge(s: TitanSession, x: number, y: number, z: number): { burnedOut: boolean } {
-  const k = brazierKey(x, y, z), left = (s.braziers.get(k) ?? BRAZIER_CHARGES) - 1;
+/** Leva a pilha do espaço da mochila para a entrada ou o combustível: só item que serve; espaço vazio recebe tudo, o mesmo item soma até o limite, outro item não troca. */
+export function furnaceMoveIn(s: TitanSession, x: number, y: number, z: number, slot: 'input' | 'fuel', invSlot: number): ActionResult {
+  const f = furnaceAt(s, x, y, z), st = s.inventory.get(invSlot);
+  if (!f || !st) return { ok: false };
+  if (!accepts(slot, st.item)) return { ok: false, msg: slot === 'fuel' ? 'Isso não queima' : 'O braseiro não cozinha isso' };
+  const cur = f[slot];
+  if (cur && cur.item !== st.item) return { ok: false, msg: 'O espaço já tem outro item' };
+  const room = maxStack(st.item) - (cur?.count ?? 0), n = Math.min(room, st.count);
+  if (n <= 0) return { ok: false, msg: 'O espaço está cheio' };
+  f[slot] = { item: st.item, count: (cur?.count ?? 0) + n };
+  for (let i = 0; i < n; i++) s.inventory.consume(invSlot);
   s.metaRev++;
-  if (left > 0) { s.braziers.set(k, left); return { burnedOut: false }; }
-  s.braziers.delete(k);
-  s.volume.set(x, y, z, T.BRAZIER);
-  return { burnedOut: true };
+  return { ok: true };
+}
+
+/** Tira a pilha de um espaço do braseiro para a mochila (tudo ou nada: sem espaço para ela, nada muda). */
+export function furnaceTakeOut(s: TitanSession, x: number, y: number, z: number, slot: FurnaceSlot): ActionResult {
+  const f = furnaceAt(s, x, y, z), st = f?.[slot];
+  if (!f || !st) return { ok: false };
+  if (!s.inventory.canAdd(st.item, st.count)) return FULL;
+  s.inventory.add(st.item, st.count);
+  f[slot] = null;
+  s.metaRev++;
+  return { ok: true };
+}
+
+/** Quebrar o braseiro **cospe o conteúdo** no chão (entrada, combustível e saída) e apaga o estado. */
+function spillFurnace(s: TitanSession, x: number, y: number, z: number): void {
+  const k = furnaceKey(x, y, z), f = s.furnaces.get(k);
+  if (!f) return;
+  const ry = restY(s, x, y, z);
+  (['input', 'fuel', 'output'] as const).forEach((slot, n) => {
+    const st = f[slot];
+    if (!st) return;
+    const id = `f:${x},${y},${z}:${n}`;
+    s.drops.set(id, { id, item: st.item, ...(st.count > 1 ? { count: st.count } : {}), x, y: ry, z });
+    s.dropsRev++;
+  });
+  s.furnaces.delete(k); s.metaRev++;
 }
 
 /** Botão de quebrar/recolher no alvo: fragmento de superfície → coleta; bloco ou lanterna → volta como item, se couber. */
@@ -139,7 +171,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   const block = s.volume.get(x, y, z);
   if (!s.volume.remove(x, y, z)) return { ok: false };
   s.inventory.add(item, count);
-  if (isBrazier(block) && s.braziers.delete(brazierKey(x, y, z))) s.metaRev++; // o braseiro aceso levado perde a carga
+  if (isBrazier(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro cai no chão
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
@@ -196,7 +228,6 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
-  if (stack.item === Item.EMBER) return igniteBrazier(s, hit, slot); // a Brasa de Âmbar acende o braseiro apontado
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };

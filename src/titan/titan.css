@@ -150,3 +150,15 @@ body.titan input { user-select: text; -webkit-user-select: text; }
 .titan-bench { gap: 3px; }
 .titan-bench .rname { color: var(--amber); }
 
+
+/* Braseiro de Rocha como fornalha (ADR 0068): três espaços e duas barras (fogo e cozimento) */
+.titan-furnace { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.titan-frow { display: flex; justify-content: center; align-items: flex-start; }
+.titan-furnace .titan-fcol { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; margin: 0 2px; min-width: 0; }
+.titan-furnace .flabel { color: #cdb89a; font-size: 10px; white-space: nowrap; }
+.titan-furnace .titan-fslot { width: var(--icm); height: var(--icm); }
+.titan-furnace .titan-fslot .titan-icon { width: var(--icm); height: var(--icm); background-size: calc(var(--icm) * 4) calc(var(--icm) * 8); }
+.titan-fbars { display: flex; gap: 10px; width: 100%; padding: 0 8px; box-sizing: border-box; }
+.titan-fbar { position: relative; flex: 1; height: 8px; background: #14110f; border-radius: 2px; overflow: hidden; }
+.titan-fbar::after { content: ''; position: absolute; inset: 0; width: calc(var(--p, 0) * 100%); background: #e08a2e; }
+.titan-fbar.cook::after { background: #d6c27a; }

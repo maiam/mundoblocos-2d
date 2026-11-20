@@ -2,8 +2,10 @@ import './titan.css';
 import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
+import { COOK_TIME_S, type FurnaceSlot } from './furnace';
+import { tickFurnaces } from './session';
 import { durabilityHue, durabilityRatio, maxDurability } from './wear';
-import { useBrazierCharge, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
+import { furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { farejadorPose, KINDS, stepFarejador } from './creature';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
@@ -180,6 +182,25 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   el('span', 'arrow', benchBox, '↓');
   const benchOut = mkSlot(benchBox, BENCH_OUT);
   benchOut.classList.add('out');
+  // painel do Braseiro (ADR 0068): entrada, combustível e saída guardados no bloco; fogo e cozimento correm com a tela fechada
+  const furnaceBox = el('div', 'titan-detail titan-manual titan-furnace', right);
+  furnaceBox.hidden = true;
+  el('small', '', furnaceBox, 'Braseiro de Rocha');
+  const fRow = el('div', 'titan-frow', furnaceBox);
+  const fSlot = (kind: FurnaceSlot, label: string): HTMLButtonElement => {
+    const wrap = el('div', 'titan-fcol', fRow);
+    el('small', 'flabel', wrap, label);
+    const b = el('button', 'titan-slot titan-fslot', wrap);
+    b.type = 'button';
+    el('i', 'titan-icon', b); el('em', 'count', b);
+    b.addEventListener('click', () => tapFurnace(kind));
+    return b;
+  };
+  const fIn = fSlot('input', 'Entrada'), fFuel = fSlot('fuel', 'Combustível'), fOut = fSlot('output', 'Saída');
+  fOut.classList.add('out');
+  const fBars = el('div', 'titan-fbars', furnaceBox);
+  const fFlame = el('div', 'titan-fbar flame', fBars), fCook = el('div', 'titan-fbar cook', fBars);
+  const fHint = el('small', 'hint', furnaceBox, 'Toque numa pilha da bolsa e depois em Entrada ou Combustível. A Brasa de Âmbar queima 80 s (8 preparações).');
   const benchName = el('b', 'rname', benchBox, '');
   const benchWhy = el('small', 'hint', benchBox, '');
   let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null = null;
@@ -232,7 +253,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   /** Receitas visíveis: as descobertas (as da mesa também ficam à mostra na bolsa, bloqueadas com o motivo), filtradas por grupo, busca e "só fabricáveis". */
   function visibleRecipes(): Recipe[] {
     const at = ctxStation();
-    return RECIPES.filter((r) => (r.station === 'brazier' ? session.known.has('braseiro') || at === 'brazier' : r.station === 'workbench' ? session.known.has('bancada') || at === 'workbench' : session.known.has('mesa')))
+    return RECIPES.filter((r) => r.station !== 'brazier') // as do braseiro ficam no painel dele (entrada → saída), não em cartões
+      .filter((r) => (r.station === 'brazier' ? session.known.has('braseiro') || at === 'brazier' : r.station === 'workbench' ? session.known.has('bancada') || at === 'workbench' : session.known.has('mesa')))
       .filter((r) => cat === 'todas' || cat === 'bag' || r.group === cat)
       .filter((r) => !query || norm(r.name).includes(query))
       .filter((r) => !onlyOk || blockedReason(inv, r, at) === null);
@@ -241,13 +263,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   function drawBook(): void {
     const at = ctxStation();
+    if (stationAt?.kind === 'brazier') cat = 'bag'; // no braseiro a mochila fica à vista para mover as pilhas
     for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
     onlyBtn.classList.toggle('on', onlyOk);
     onlyBtn.setAttribute('aria-pressed', String(onlyOk));
     const slots = cat === 'bag';
     tools.hidden = rgrid.hidden = slots;
     bagGrid.hidden = !slots; // "Bolsa": os 27 espaços para mover os itens
-    benchBox.hidden = !slots; // e a grade 3 × 3 de montagem
+    const furn = stationAt?.kind === 'brazier';
+    benchBox.hidden = !slots || furn; // e a grade 3 × 3 de montagem (no braseiro, o painel dele)
+    furnaceBox.hidden = !(slots && furn);
     detail.hidden = slots;
     if (slots) return; // nesse grupo as grades são slots fixos (já desenhados acima)
     // centro: grade de receitas (ícone do resultado; ×N no canto; selo quando bloqueada)
@@ -308,7 +333,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (at && at !== 'personal' && !stationInReach()) { closeStation(`${stationName(at)} fora de alcance`); return; }
     const res = craft(inv, r, at);
     if (!res.ok) notice(CRAFT_MESSAGES[res.reason as 'station' | 'missing' | 'full']);
-    else { notice(`Fabricado: ${r.result.count > 1 ? `${r.result.count} × ` : ''}${r.name}`); spendBrazier(r.station); onEdited(); }
+    else { notice(`Fabricado: ${r.result.count > 1 ? `${r.result.count} × ` : ''}${r.name}`); onEdited(); }
     refresh();
   }
 
@@ -318,23 +343,48 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.type = 'button';
   useBtn.hidden = true;
   function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
-  /** Estação na mira (Mesa de Trabalho ou Braseiro **aceso**) ao alcance de uso. */
+  /** Estação na mira (Mesa de Trabalho ou Braseiro) ao alcance de uso. */
   const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null => {
     if (!target || target.item) return null;
-    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : id === T.BRAZIER_LIT ? 'brazier' : null;
+    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : isBrazier(id) ? 'brazier' : null;
     if (!kind) return null;
     return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z, kind } : null;
   };
-  /** Gasta uma preparação do braseiro em uso (só receitas do braseiro); apagou → fecha a tela. */
-  function spendBrazier(station: Station): void {
-    if (station !== 'brazier' || !stationAt) return;
-    if (useBrazierCharge(session, stationAt.x, stationAt.y, stationAt.z).burnedOut) { onEdited(); closeStation('O braseiro apagou. Acenda de novo com uma Brasa de Âmbar.'); }
+  /** Toque num espaço do braseiro: com uma pilha da mochila escolhida leva para entrada/combustível; sem escolha (ou na saída) tira para a mochila. */
+  function tapFurnace(kind: FurnaceSlot): void {
+    if (!stationAt || stationAt.kind !== 'brazier') return;
+    if (!stationInReach()) { closeStation('Braseiro fora de alcance'); return; }
+    const { x, y, z } = stationAt;
+    const r = kind !== 'output' && sel !== null ? furnaceMoveIn(session, x, y, z, kind, sel) : furnaceTakeOut(session, x, y, z, kind);
+    if (r.msg) notice(r.msg);
+    if (r.ok) { sel = null; onEdited(); }
+    refresh();
+  }
+  let furnaceKeyShown = '';
+  /** Redesenha o painel do braseiro (espaços e barras) só quando algo mudou; chamado a cada quadro com a tela aberta. */
+  function paintFurnace(): void {
+    if (!stationAt || stationAt.kind !== 'brazier') return;
+    const f = furnaceAt(session, stationAt.x, stationAt.y, stationAt.z);
+    if (!f) return;
+    const key = `${f.input?.item}:${f.input?.count}|${f.fuel?.item}:${f.fuel?.count}|${f.output?.item}:${f.output?.count}|${Math.round(f.burnLeft)}|${Math.round(f.cook * 4)}`;
+    if (key === furnaceKeyShown) return;
+    furnaceKeyShown = key;
+    const paint = (b: HTMLButtonElement, st: { item: number; count: number } | null): void => {
+      const icon = b.querySelector('i') as HTMLElement, count = b.querySelector('em') as HTMLElement;
+      b.classList.toggle('empty', !st);
+      if (st) { const idx = st.item - 1; icon.style.backgroundImage = `url(${titanHotbarUrl})`; icon.style.backgroundPosition = `calc(${-(idx % 4)} * var(--icm)) calc(${-((idx / 4) | 0)} * var(--icm))`; icon.style.visibility = 'visible'; count.textContent = st.count > 1 ? String(st.count) : ''; b.setAttribute('aria-label', `${ITEM_NAMES[st.item]} × ${st.count}`); }
+      else { icon.style.visibility = 'hidden'; count.textContent = ''; b.setAttribute('aria-label', 'vazio'); }
+    };
+    paint(fIn, f.input); paint(fFuel, f.fuel); paint(fOut, f.output);
+    fFlame.style.setProperty('--p', String(f.burnTotal > 0 ? f.burnLeft / f.burnTotal : 0));
+    fCook.style.setProperty('--p', String(f.cook / COOK_TIME_S));
+    fHint.textContent = f.burnLeft > 0 ? `Aceso: ${Math.ceil(f.burnLeft)} s de fogo` : 'Apagado. Coloque Brasa de Âmbar no combustível e algo para cozinhar.';
   }
   function stationInReach(): boolean {
     if (!stationAt) return false;
     const b = session.body;
     const blk = vol.get(stationAt.x, stationAt.y, stationAt.z);
-    return (stationAt.kind === 'workbench' ? isWorkbench(blk) : blk === T.BRAZIER_LIT) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
+    return (stationAt.kind === 'workbench' ? isWorkbench(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
   function openStation(): void {
     const at = benchAimed();
@@ -368,7 +418,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (stationAt && !stationInReach()) { closeStation(`${stationName(stationAt.kind)} fora de alcance`); return; } // fechar devolve a grade à bolsa
     const r = inv.benchRecipe();
     const res = inv.takeBenchResult(ctxStation());
-    if (res === 'ok') { notice(`Fabricado: ${r!.result.count > 1 ? `${r!.result.count} × ` : ''}${r!.name}`); spendBrazier(r!.station); onEdited(); }
+    if (res === 'ok') { notice(`Fabricado: ${r!.result.count > 1 ? `${r!.result.count} × ` : ''}${r!.name}`); onEdited(); }
     else notice(res === 'full' ? 'Mochila cheia: libere espaço para o resultado' : res === 'station' ? (r?.station === 'brazier' ? 'Precisa de um Braseiro aceso' : 'Precisa da Mesa de Trabalho') : 'Monte uma receita primeiro');
     refresh();
   }
@@ -688,6 +738,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       }
       view.setFarejadores(session.creatures.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
+    if (playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
+    if (bagOpen) paintFurnace();
     if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
     if (playing && session.drops.size) {
       // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
