@@ -80,4 +80,10 @@ describe('combate com os Farejadores (ADR 0069)', () => {
     for (let t = 0; t < COOK_TIME_S + 0.5; t += 0.1) tickFurnace(f, 0.1);
     expect(f.output).toEqual({ item: Item.COOKED_MEAT, count: 1 }); expect(f.input!.count).toBe(1);
   });
+  it('dois abates no mesmo instante não perdem o espólio (ids distintos)', async () => {
+    const { s } = await open();
+    const [a, b] = s.creatures; a.kind = b.kind = 'pequeno'; a.clock = b.clock = 5; a.hp = b.hp = 1;
+    attackCreature(s, 0); attackCreature(s, 0);
+    expect([...s.drops.values()].filter((d) => d.item === Item.RAW_MEAT)).toHaveLength(2);
+  });
 });
