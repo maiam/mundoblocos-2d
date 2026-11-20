@@ -168,6 +168,25 @@ export class GameSoundSynthesizer {
     });
   }
 
+  /** Comer (ADR 0060): duas mordidas secas de casca, com um estalo grave no fim. */
+  playEat(): void {
+    this.safe((now) => {
+      const j = 0.92 + Math.random() * 0.16;
+      this.burst(now, 0.05, 2200 * j, 1.4, 0.2, 'bandpass', 0.01);
+      this.burst(now + 0.11, 0.06, 1700 * j, 1.2, 0.22, 'bandpass', 0.01);
+      this.tone(now + 0.2, 220 * j, 140 * j, 0.09, 'triangle', 0.14);
+    });
+  }
+
+  /** Raspar de pata na areia (Farejador de Duna em aviso, ADR 0061): ruído áspero curto e grave. */
+  playScrape(): void {
+    this.safe((now) => {
+      const j = 0.9 + Math.random() * 0.2;
+      this.burst(now, 0.16, 1500 * j, 0.7, 0.2, 'bandpass', 0.02);
+      this.burst(now + 0.05, 0.12, 700 * j, 0.9, 0.16, 'lowpass', 0.01);
+    });
+  }
+
   // ---- Passos por superfície ----
   playFootstep(material: SurfaceMaterial = 'rock'): void {
     this.safe((now) => {

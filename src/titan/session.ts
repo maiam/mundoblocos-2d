@@ -1,6 +1,8 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
+import { type Farejador, newPack } from './creature';
+import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { AFTERNOON, validDay } from './sky';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
@@ -33,6 +35,10 @@ export interface TitanSession {
   collected: Set<string>;
   /** Revisões do que não é chunk (inventário + coleta): só a confirmada fica limpa. */
   collectedRev: number;
+  /** Plantas de Noz de Duna colhidas: id → segundos de jogo que faltam para rebrotar (ADR 0060). Vai no save (`header.regrow`). */
+  regrow: Map<string, number>;
+  /** Farejadores de Duna da enseada (um grande e um pequeno, ADR 0061): estado só de execução, nascem na toca a cada abertura (não vão no save). Vazio sem toca (gerador antigo ou região sem enseada). */
+  creatures: Farejador[];
   savedStateRev: number;
   /** Lascas soltas por veios quebrados (v3, ADR 0044): recolhidas por proximidade; vão no cabeçalho do save. */
   drops: Map<string, Drop>;
@@ -59,7 +65,7 @@ export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.s
 /** Id do junco de vidro numa célula: entra em `collected` (já gravado no save) quando ele é recolhido ou perde o apoio. */
 export const reedId = (x: number, y: number, z: number): string => `reed:${x},${y},${z}`;
 
-function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: TitanSession['grants'] }): TitanSession['items'] {
+function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: TitanSession['grants']; regrow: Map<string, number> }): TitanSession['items'] {
   const all = s.volume.gen.surfaceItems;
   const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
   const byCell = new Map(all.map((i) => [key(i.x, i.y, i.z), i.id]));
@@ -74,10 +80,25 @@ function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: Tit
     const id = reeds.get(key(x, y, z));
     return id && !s.collected.has(id) && s.volume.get(x, y, z) === T.AIR && isSolid(s.volume.get(x, y - 1, z)) ? id : null;
   };
+  // plantas de Noz de Duna (v5): alvo da mira só enquanto maduras (não colhidas e ainda de pé); a colhida continua desenhada, só não se apanha
+  let nuts: Map<string, string> | null = null;
+  const nutAt = (x: number, y: number, z: number): string | null => {
+    if (!nuts) nuts = new Map(s.volume.gen.nutPlants.map((n) => [key(n.x, n.y, n.z), nutId(n.x, n.y, n.z)]));
+    const id = nuts.get(key(x, y, z));
+    return id && !s.regrow.has(id) && s.volume.get(x, y, z) === T.AIR && isSolid(s.volume.get(x, y - 1, z)) ? id : null;
+  };
   return {
-    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : reedAt(x, y, z); },
+    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : reedAt(x, y, z) ?? nutAt(x, y, z); },
     remaining: () => all.filter((i) => !s.collected.has(i.id)),
   };
+}
+
+/** Rebrote gravado: só `nut:x,y,z` com segundos finitos em (0, `NUT_REGROW_S`]; o resto é descartado. */
+function validRegrow(raw: unknown): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [id, v] of Object.entries(raw as Record<string, unknown>)) if (parseNutId(id) && typeof v === 'number' && Number.isFinite(v) && v > 0) out.set(id, Math.min(v, NUT_REGROW_S));
+  return out;
 }
 
 /** Itens soltos gravados: só entradas bem formadas (id, item conhecido, contagem 1–64 opcional e células inteiras no domínio); o resto é descartado. */
@@ -113,12 +134,16 @@ export async function openSession(storage: TitanStorage, explicitSeed: number | 
   return fresh(new TitanGenerator(seed ?? newSeed(), freshVersion));
 }
 
+/** Os Farejadores nascem na toca, com o passeio derivado da seed. */
+const creaturesFor = (gen: TitanGenerator): Farejador[] => (gen.den ? newPack(gen.den, gen.seed) : []);
+
 export function fresh(gen: TitanGenerator): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
   const collected = new Set<string>();
+  const regrow = new Map<string, number>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
   return s;
 }
 
@@ -140,8 +165,9 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const grants: TitanSession['grants'] = {};
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
+  const regrow = validRegrow(save.header.regrow);
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, creatures: creaturesFor(gen), savedStateRev: -1, drops: validDrops(save.header.drops), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -188,8 +214,25 @@ export function standingReeds(s: TitanSession): Array<{ x: number; y: number; z:
   return list.filter((r) => !s.collected.has(reedId(r.x, r.y, r.z)) && s.volume.get(r.x, r.y, r.z) === T.AIR && isSolid(s.volume.get(r.x, r.y - 1, r.z)));
 }
 
+/** Plantas de Noz de Duna de pé (célula de ar sobre sólido, sem construção por cima), com o estado: `ripe` = com frutos. Sem plantas antes do gerador v5. */
+export function standingNuts(s: TitanSession): Array<{ x: number; y: number; z: number; ripe: boolean }> {
+  return s.volume.gen.nutPlants
+    .filter((n) => s.volume.get(n.x, n.y, n.z) === T.AIR && isSolid(s.volume.get(n.x, n.y - 1, n.z)))
+    .map((n) => ({ ...n, ripe: !s.regrow.has(nutId(n.x, n.y, n.z)) }));
+}
+
+/** Passa `dt` segundos de jogo ativo para as plantas colhidas; devolve se alguma voltou a dar frutos (o desenho precisa refazer). */
+export function tickRegrow(s: TitanSession, dt: number): boolean {
+  let ripened = false;
+  for (const [id, left] of [...s.regrow]) {
+    const rest = left - dt;
+    if (rest <= 0) { s.regrow.delete(id); ripened = true; } else s.regrow.set(id, rest);
+  }
+  return ripened;
+}
+
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}) };
 }
 
 /**

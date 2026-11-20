@@ -1,17 +1,18 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
-import { breakOrCollect, collectNearby, dieAndRespawn, placeFromSlot } from './actions';
+import { breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
-import { damage, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
+import { farejadorPose, KINDS, stepFarejador } from './creature';
+import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
 import { FootstepClock, surfaceOf } from './sounds';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
-import { blockOfItem, ITEM_NAMES } from './items';
+import { blockOfItem, foodOf, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -20,7 +21,7 @@ import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
 import { isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
-import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds } from './session';
+import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, tickRegrow } from './session';
 
 /**
  * Titã — jogo solo em primeira pessoa (ADR 0039): liga entrada (teclado/mouse/toque), laço de quadros, renderer, mira e gravação.
@@ -74,7 +75,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg, lakeImg, margemImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, reedImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanReedUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -83,10 +84,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora'));
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg, lake: lakeImg, margemAtlas: margemImg }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, reed: reedImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
+  view.setNuts(standingNuts(session));
   if (perf) startPerfHud(() => view.gpuStats(), () => ({ samples: perf.samples('draw'), count: perf.samples('draw').length }), {
     line: () => perf.line(),
     lines: () => [...(scene ? [`cena: ${spots.length} lanternas${autoEdit ? ' · editando sem parar' : ''}`] : []), ...perf.reportLines()],
@@ -331,9 +333,15 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
   useBtn.addEventListener('click', openStation);
 
+  /** Come a comida do espaço escolhido (ADR 0060): toque no espaço, tecla Q ou toque no mundo com a comida na mão. */
+  function eatSelected(): void {
+    const r = eatFromSlot(session, session.selected);
+    if (r.msg) notice(r.msg);
+    if (r.ok) { gameAudio.playEat(); playerDirty = true; paintVitals(false); refresh(); }
+  }
   function tapSlot(i: number): void {
     if (i === BENCH_OUT) { takeBench(); return; }
-    if (!bagOpen || cat !== 'bag') { if (i < HOTBAR) select(i); return; } // só em "Bolsa" os toques movem itens
+    if (!bagOpen || cat !== 'bag') { if (i < HOTBAR) { if (i === session.selected && !bagOpen && foodOf(inv.get(i)?.item ?? 0)) eatSelected(); else select(i); } return; } // tocar de novo no espaço de comida escolhido: come // só em "Bolsa" os toques movem itens
     if (sel === null) { if (inv.get(i)) sel = i; }
     else if (sel === i) sel = null;
     else { if (!inv.move(sel, i)) notice('Não dá para mover para lá'); sel = null; }
@@ -446,6 +454,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (e.code >= 'Digit1' && e.code <= 'Digit9') { const n = Number(e.code.slice(5)) - 1; if (n < HOTBAR) select(n); }
     if (e.code === 'KeyE' && playing) toggleFromMenu();
     if (e.code === 'KeyF' && playing && !bagOpen) openStation();
+    if (e.code === 'KeyQ' && playing && !bagOpen) eatSelected();
     if (e.code === 'Escape' && bagOpen) toggleBag(false);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
@@ -539,6 +548,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
+      if (held && foodOf(held.item)) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come
       const r = placeFromSlot(session, t, session.selected);
       if (r.msg) notice(r.msg);
       if (r.ok) {
@@ -551,7 +561,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
-      if (r.ok) { if (t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern' && t.block === T.LANTERN) gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
+      if (r.ok) { if (t.kind === 'block') { addExhaustion(vitals, EXHAUSTION.breakBlock); const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern' && t.block === T.LANTERN) gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },
     effect: (t, p, stage) => {
@@ -571,7 +581,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let lastSavedTime = session.time;
   let lastEdit = 0, lastPlayerSave = performance.now(), playerDirty = false, saving: Promise<void> | null = null, failed = false, retryAt = 0;
   const setSave = (txt: string, err = false): void => { saveLine.textContent = txt; saveLine.className = err ? 'err' : ''; };
-  function onEdited(): void { lastEdit = performance.now(); setSave('alterações pendentes…'); view.setReeds(standingReeds(session)); } // o junco some onde se construiu
+  function onEdited(): void { lastEdit = performance.now(); setSave('alterações pendentes…'); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); } // o junco e a planta somem onde se construiu; a colhida perde os frutos
   function saveNow(): Promise<void> {
     if (saving) return saving;
     setSave('salvando…');
@@ -604,6 +614,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     notice(n ? 'Você desmaiou e voltou à chegada. Seus itens ficaram onde caiu.' : 'Você desmaiou e voltou à chegada.');
   }
   const steps = new FootstepClock();
+  let nextScrape = 0; // instante do próximo raspar de pata de um Farejador em investida
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -619,7 +630,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const dirZ = -Math.cos(session.yaw) * fx - Math.sin(session.yaw) * sx;
       const moved = dirX !== 0 || dirZ !== 0;
       const px = b.x, pz = b.z;
+      const wasOnGround = b.onGround;
       stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump }, dt);
+      if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
+      addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * EXHAUSTION.walkPerBlock);
       if (moved || !b.onGround) playerDirty = true;
       // queda: dano = ⌈altura − 3⌉ ao pousar no chão; cair na água não machuca
       if (b.inLiquid) { airTop = b.y; wasAir = false; }
@@ -645,6 +659,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (session.time < before) { session.days++; playerDirty = true; } // virou o dia: o contador vai no save
       if (((session.time - lastSavedTime + 1) % 1) > 0.01) playerDirty = true; // ~12 s de jogo (1/100 do dia de 20 min): grava a hora junto da posição
     }
+    if (session.creatures.length) {
+      for (const fj of session.creatures) {
+        if (!active) break;
+        const ev = stepFarejador(fj, vol, { x: b.x, y: b.y, z: b.z }, dt);
+        if (ev.hit) { damage(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
+        if (ev.phase === 'charge' || (fj.phase === 'charge' && now >= nextScrape)) { nextScrape = now + 520; gameAudio.playScrape(); }
+      }
+      view.setFarejadores(session.creatures.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
+    }
+    if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
     if (playing && session.drops.size) {
       // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
       const c = collectNearby(session, b.x, b.y, b.z);

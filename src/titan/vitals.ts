@@ -2,10 +2,15 @@
  * Vida, fome e ar do jogador (ADR 0059), no modelo do Minecraft: três contadores ligados. Sem DOM, sem aleatoriedade, testável em Node; `dt` em segundos.
  * Vida 0–20 (10 corações de 2 pontos; meio coração = 1); fome 0–20 + saturação 0–20 (nunca acima da fome) + exaustão 0–4; ar 0–15 s (10 bolhas de 1,5 s).
  *
- * **Fome desligada por enquanto** (`HUNGER_ENABLED = false`): o Titã ainda não tem comida, então a fome ficaria só caindo sem como se recuperar. Desligada, fome e saturação ficam
- * fixas em 20 e 5, a exaustão não corre e a vida regenera a 1 ponto por `REGEN_NO_FOOD_S` (provisório). Ligada, vale a regra do Minecraft (regeneração por fome ≥ 18, exaustão, inanição).
+ * **Fome ligada** (ADR 0060, `HUNGER_ENABLED = true`) desde que o Titã tem comida (Noz de Duna): vale a regra do Minecraft (regeneração por fome ≥ 18, exaustão → saturação → fome, inanição).
+ * A inanição **não mata** (para em `STARVATION_FLOOR` pontos, como na dificuldade normal): decisão provisória. Desligada (testes, `hungerEnabled = false`), fome e saturação ficam fixas em 20 e 5,
+ * a exaustão não corre e a vida regenera a 1 ponto por `REGEN_NO_FOOD_S`.
  */
-export const HUNGER_ENABLED = false;
+export const HUNGER_ENABLED = true;
+/** Inanição (fome 0) tira vida só até este mínimo: passar fome nunca derruba o jogador. */
+export const STARVATION_FLOOR = 1;
+/** Exaustão (4 = 1 ponto de saturação, depois de fome) por atividade. Provisório, a calibrar em jogo: andar por bloco, pular, quebrar bloco. */
+export const EXHAUSTION = { walkPerBlock: 0.1, jump: 0.2, breakBlock: 0.05 } as const;
 export const MAX_HEALTH = 20, MAX_HUNGER = 20, MAX_AIR = 15;
 /** Sem comida no jogo: 1 ponto de vida a cada tanto (segundos). */
 export const REGEN_NO_FOOD_S = 1.5;
@@ -28,6 +33,15 @@ export const isDead = (v: PlayerVitals): boolean => v.health <= 0;
 export function damage(v: PlayerVitals, points: number): void { if (points > 0) v.health = Math.max(0, v.health - points); }
 /** Dano de uma queda de `height` blocos: ⌈altura − 3⌉ (0 se ≤ 3). */
 export const fallDamage = (height: number): number => (height > SAFE_FALL ? Math.ceil(height - SAFE_FALL - 1e-9) : 0);
+/** Cansaço da ação: soma exaustão (só com a fome ligada). */
+export function addExhaustion(v: PlayerVitals, amount: number, hungerEnabled: boolean = HUNGER_ENABLED): void { if (hungerEnabled && amount > 0) v.exhaustion += amount; }
+/** Comer: soma fome (até o máximo) e saturação (nunca acima da fome). Devolve se algo mudou; fome cheia não come. */
+export function eat(v: PlayerVitals, food: { hunger: number; saturation: number }): boolean {
+  if (v.hunger >= v.maxHunger) return false;
+  v.hunger = Math.min(v.maxHunger, v.hunger + food.hunger);
+  v.saturation = Math.min(v.hunger, v.saturation + food.saturation);
+  return true;
+}
 /** Renasce: vida, fome e ar cheios, contadores zerados. */
 export function revive(v: PlayerVitals): void { Object.assign(v, newVitals()); }
 
@@ -67,7 +81,7 @@ export function updatePlayerVitals(v: PlayerVitals, dt: number, isHeadUnderwater
   // 4. inanição: fome 0 → 1 ponto a cada 4 s
   if (hungerEnabled && v.hunger === 0 && v.health > 0) {
     v.starveTimer += dt;
-    while (v.starveTimer >= 4) { v.starveTimer -= 4; damage(v, 1); }
+    while (v.starveTimer >= 4) { v.starveTimer -= 4; if (v.health > STARVATION_FLOOR) damage(v, Math.min(1, v.health - STARVATION_FLOOR)); }
   } else v.starveTimer = 0;
 }
 

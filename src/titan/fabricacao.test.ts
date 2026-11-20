@@ -35,7 +35,7 @@ function reachable(g: TitanGenerator): Set<number> {
 
 describe('gerador v4: depósito de brasa e junco de vidro', () => {
   it('seed 42: brasa no topo de uma coluna de areia úmida alcançável; juncos em volta, com a passagem livre', () => {
-    const g = new TitanGenerator(42), v = new TitanVolume(g);
+    const g = new TitanGenerator(42, 4), v = new TitanVolume(g);
     expect(g.version).toBe(4);
     const e = g.emberSite!;
     expect(v.get(e.x, e.y, e.z)).toBe(T.EMBER);

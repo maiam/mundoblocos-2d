@@ -172,7 +172,8 @@ describe('versões do gerador', () => {
     const v2 = new TitanGenerator(42, 2);
     expect(v2.version).toBe(2);
     expect(v2.arrival).toEqual(v1.arrival);
-    expect(new TitanGenerator(42).version).toBe(4); // a versão atual (ADR 0045)
+    expect(new TitanGenerator(42).version).toBe(5); // a versão atual (ADR 0060)
+    expect(new TitanGenerator(42, 4).nutPlants).toHaveLength(0); // a v4 não tem plantas de noz
     expect(new TitanGenerator(42, 3).version).toBe(3);
   });
 });

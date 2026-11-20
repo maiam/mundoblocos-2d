@@ -1,9 +1,10 @@
-import { blockOfItem, dropCountOf, Item, itemOfBlock } from './items';
+import { blockOfItem, dropCountOf, foodOf, Item, itemOfBlock } from './items';
+import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { blockSpan, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
-import { revive } from './vitals';
+import { eat, revive } from './vitals';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -15,6 +16,7 @@ const FULL: ActionResult = { ok: false, msg: 'Mochila cheia' };
 /** Recolhe um fragmento de superfície à mão: 1 lasca = 1 fragmento. Mochila cheia: a lasca fica no lugar. */
 export function collectItem(s: TitanSession, id: string): ActionResult {
   if (id.startsWith('reed:')) return collectReed(s, id);
+  if (id.startsWith('nut:')) return collectNut(s, id);
   const it = s.volume.gen.surfaceItems.find((i) => i.id === id);
   if (!it || s.collected.has(id)) return { ok: false };
   const item = it.item === 5 ? Item.ROCK_SHARD : Item.FROST_SHARD;
@@ -33,6 +35,31 @@ function collectReed(s: TitanSession, id: string): ActionResult {
   s.inventory.add(Item.GLASS_REED);
   s.collected.add(id);
   s.collectedRev++;
+  return { ok: true };
+}
+
+/**
+ * Colhe uma planta de Noz de Duna (ADR 0060): rende `NUT_YIELD` nozes de uma vez e a planta passa a rebrotar (`regrow`, `NUT_REGROW_S` s de jogo ativo). Só colhe se as 4 couberem na mochila
+ * (tudo ou nada); a planta colhida continua no mundo, sem frutos.
+ */
+function collectNut(s: TitanSession, id: string): ActionResult {
+  if (s.regrow.has(id) || !/^nut:(-?\d+),(-?\d+),(-?\d+)$/.test(id)) return { ok: false };
+  const m = /^nut:(-?\d+),(-?\d+),(-?\d+)$/.exec(id)!;
+  if (s.items.at(Number(m[1]), Number(m[2]), Number(m[3])) !== id) return { ok: false };
+  if (!s.inventory.canAdd(Item.NOZ, NUT_YIELD)) return FULL;
+  s.inventory.add(Item.NOZ, NUT_YIELD);
+  s.regrow.set(id, NUT_REGROW_S);
+  s.collectedRev++;
+  return { ok: true, msg: `${NUT_YIELD} nozes colhidas` };
+}
+
+/** Come uma unidade do item do espaço (ADR 0060): precisa ser comida e a fome não pode estar cheia. Muda fome e inventário juntos. */
+export function eatFromSlot(s: TitanSession, slot: number): ActionResult {
+  const stack = s.inventory.get(slot);
+  const food = stack ? foodOf(stack.item) : null;
+  if (!stack || !food) return { ok: false };
+  if (!eat(s.vitals, food)) return { ok: false, msg: 'Sem fome agora' };
+  s.inventory.consume(slot);
   return { ok: true };
 }
 
@@ -112,6 +139,7 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
+  if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
