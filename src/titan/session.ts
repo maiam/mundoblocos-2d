@@ -1,7 +1,7 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
-import { type Farejador, newPack } from './creature';
+import { type Farejador, type Kind, KINDS, newPack } from './creature';
 import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isLit } from './furnace';
 import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
@@ -41,6 +41,8 @@ export interface TitanSession {
   furnaces: Map<string, FurnaceState>;
   /** Plantas de Noz de Duna colhidas: id → segundos de jogo que faltam para rebrotar (ADR 0060). Vai no save (`header.regrow`). */
   regrow: Map<string, number>;
+  /** Animais abatidos que ainda não voltaram (ADR 0069): tamanho → segundos de jogo ativo que faltam. Vai no save (`header.respawn`). */
+  respawn: Map<Kind, number>;
   /** Farejadores de Duna da enseada (um grande e um pequeno, ADR 0061): estado só de execução, nascem na toca a cada abertura (não vão no save). Vazio sem toca (gerador antigo ou região sem enseada). */
   creatures: Farejador[];
   savedStateRev: number;
@@ -127,6 +129,14 @@ export function tickFurnaces(s: TitanSession, dt: number): boolean {
   return any;
 }
 
+/** Voltas gravadas dos animais abatidos: só tamanhos conhecidos, segundos finitos em (0, 3600]. */
+function validRespawn(raw: unknown): Map<Kind, number> {
+  const out = new Map<Kind, number>();
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (k in KINDS && typeof v === 'number' && Number.isFinite(v) && v > 0) out.set(k as Kind, Math.min(v, 3600));
+  return out;
+}
+
 /** Rebrote gravado: só `nut:x,y,z` com segundos finitos em (0, `NUT_REGROW_S`]; o resto é descartado. */
 function validRegrow(raw: unknown): Map<string, number> {
   const out = new Map<string, number>();
@@ -178,7 +188,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const collected = new Set<string>();
   const regrow = new Map<string, number>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, furnaces: new Map<string, FurnaceState>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, furnaces: new Map<string, FurnaceState>(), respawn: new Map<Kind, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
   return s;
 }
 
@@ -201,8 +211,9 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const regrow = validRegrow(save.header.regrow);
+  const respawn = validRespawn(save.header.respawn);
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, furnaces: validFurnaces(save.header.furnaces, volume), creatures: creaturesFor(gen), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, furnaces: validFurnaces(save.header.furnaces, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.kind)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -268,7 +279,7 @@ export function tickRegrow(s: TitanSession, dt: number): boolean {
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}) };
 }
 
 /**

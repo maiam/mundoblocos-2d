@@ -187,6 +187,14 @@ function releaseReed(s: TitanSession, id: string | null, x: number, y: number, z
   dropShard(s, Item.GLASS_REED, x, y, z);
 }
 
+/** Pousa uma pilha solta com id próprio na célula de `(x, y, z)` (desce até o apoio): espólio de animal abatido (ADR 0069). */
+export function restDrop(s: TitanSession, id: string, item: number, x: number, y: number, z: number, count: number): void {
+  if (count < 1 || s.drops.has(id)) return;
+  const cx = Math.floor(x), cy = Math.floor(y), cz = Math.floor(z);
+  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x: cx, y: restY(s, cx, cy, cz), z: cz });
+  s.dropsRev++;
+}
+
 /** Pousa uma lasca perto do ponto de quebra: na célula do veio, descendo até o primeiro apoio sólido. */
 function dropShard(s: TitanSession, item: number, x: number, y: number, z: number, count = 1): void {
   const id = `v:${x},${y},${z}`;

@@ -7,7 +7,8 @@ import { tickFurnaces } from './session';
 import { durabilityHue, durabilityRatio, maxDurability } from './wear';
 import { furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
-import { farejadorPose, KINDS, stepFarejador } from './creature';
+import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
+import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, tickRespawn } from './combat';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, stationMet, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
@@ -597,12 +598,30 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   // ---- Ações: gesto primário (ADR 0042) ----
   let target: Hit | null = null;
+  /** Animal na mira (ADR 0069): vence o bloco que está atrás dele; o toque curto o golpeia. */
+  let aimCreature: { index: number; dist: number } | null = null;
+  let nextAttackAt = 0;
   const toTarget = (h: Hit | null): GestureTarget | null => {
+    if (aimCreature) { const c = session.creatures[aimCreature.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: String(aimCreature.index) } : null; }
     if (!h) return null;
     if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: 'shard', item: h.item };
     const id = vol.get(h.x, h.y, h.z);
     return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: isCollectBlock(id) ? 'lantern' : 'block', block: id }; // lanterna, Marco e Painel: recolhimento curto, sem rachaduras
   };
+  /** Golpe no animal (toque curto): pausa de 0,6 s entre golpes; desgasta a arma; abatido solta carne e placa. */
+  function strike(index: number): boolean {
+    const nowMs = performance.now();
+    if (nowMs < nextAttackAt) return false;
+    nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    const r = attackCreature(session, index);
+    if (!r.ok) return false;
+    gameAudio.playStrike();
+    if (r.broken) gameAudio.playToolBreak();
+    if (r.msg) notice(r.msg);
+    if (r.dead) { view.setItems(visibleItems(session)); }
+    onEdited(); refresh();
+    return true;
+  }
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
   window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
   window.addEventListener('keydown', () => { gameAudio.unlock(); }, { capture: true, passive: true });
@@ -616,6 +635,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
+      if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
       if (held && foodOf(held.item)) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come
       const r = placeFromSlot(session, t, session.selected);
@@ -684,6 +704,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     notice(n ? 'Você desmaiou e voltou à chegada. Seus itens ficaram onde caiu.' : 'Você desmaiou e voltou à chegada.');
   }
   const steps = new FootstepClock();
+  let lastAimText: string | null = null;
   let nextScrape = 0; // instante do próximo raspar de pata de um Farejador em investida
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -740,6 +761,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     }
     if (playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
     if (bagOpen) paintFurnace();
+    if (active && session.respawn.size) tickRespawn(session, dt); // o animal abatido volta à toca depois de um tempo
     if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
     if (playing && session.drops.size) {
       // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
@@ -755,10 +777,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
     target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE) : null;
+    { // animal na mira: mais perto que o bloco apontado (ADR 0069); rótulo com a vida
+      const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5) : Infinity;
+      aimCreature = active ? creatureAim(session.creatures, eye.x, eye.y, eye.z, dx, dy, dz, ATTACK_REACH, blockDist) : null;
+      const c = aimCreature ? session.creatures[aimCreature.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : null;
+      if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
+    }
     useBtn.hidden = !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar"
     if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
-    view.render(eye, session.yaw, session.pitch, target, now / 1000);
+    view.render(eye, session.yaw, session.pitch, aimCreature ? null : target, now / 1000);
     veil.style.opacity = String(view.submersion); // 0 fora d'água; entra e sai em ~150 ms
     cross.hidden = !active;
     posLine.textContent = `x ${b.x.toFixed(1)} · y ${b.y.toFixed(1)} · z ${b.z.toFixed(1)}`;
