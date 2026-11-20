@@ -86,4 +86,19 @@ describe('combate com os Farejadores (ADR 0069)', () => {
     attackCreature(s, 0); attackCreature(s, 0);
     expect([...s.drops.values()].filter((d) => d.item === Item.RAW_MEAT)).toHaveLength(2);
   });
+  it('mira: o pequeno colado no grande (nascem na mesma célula) é acertado quando se mira nele; a ajuda de mira pega o animal rente aos pés, na frente, e só ele', async () => {
+    const { s } = await open();
+    const [g, q] = s.creatures; expect([g.kind, q.kind]).toEqual(['grande', 'pequeno']);
+    g.body.x = q.body.x = 10; g.body.y = q.body.y = 66; g.body.z = q.body.z = 0; // a toca: os dois no mesmo ponto
+    const ey = 66 + 1.62, sq = hitSphere(q), len = Math.hypot(6, sq.y - ey);
+    expect(creatureAim([g, q], 4, ey, 0, 6 / len, (sq.y - ey) / len, 0, ATTACK_REACH + 3)).toMatchObject({ index: 1 }); // mirando no centro do pequeno
+    const sg = hitSphere(g), lg = Math.hypot(6, sg.y + 0.9 - ey);
+    expect(creatureAim([g, q], 4, ey, 0, 6 / lg, (sg.y + 0.9 - ey) / lg, 0, ATTACK_REACH + 3)).toMatchObject({ index: 0 }); // mirando no alto do grande
+    // rente aos pés: o pequeno a 0,5 m, olhar quase na horizontal para baixo (a esfera dele fica abaixo do raio)
+    q.body.x = 10.5; q.body.z = 0; g.body.x = 40; const pitch = -0.55, d = [Math.cos(pitch), Math.sin(pitch), 0];
+    expect(creatureAim([q], 10, ey, 0, d[0], d[1], d[2], ATTACK_REACH)).toMatchObject({ index: 0 });
+    expect(creatureAim([q], 10, ey, 0, -d[0], d[1], d[2], ATTACK_REACH)).toBeNull(); // de costas para ele
+    q.body.x = 14; expect(creatureAim([q], 10, ey, 0, d[0], d[1], d[2], ATTACK_REACH)).toBeNull(); // longe demais (nem esfera nem ajuda)
+    q.body.x = 10.5; expect(creatureAim([q], 10, ey, 0, d[0], d[1], d[2], ATTACK_REACH, 0.3)).toBeNull(); // bloco na frente esconde
+  });
 });

@@ -10,6 +10,9 @@
 5. **Comida**: itens 27 Carne Crua (fome 2, sat. 1,2) e 28 Carne Assada (8 / 12,8), pelo `FOOD`/`foodOf` de sempre; receita `carne-assada` (1 crua → 1 assada) com estação `brazier`, 10 s no braseiro (ADR 0068). Atlas de ícones 128 × 256 (ícones provisórios do conceito).
 6. Sem ADR novo de multiplayer: o Titã é solo; `GENERATOR_VERSION` e `TITAN_SAVE_VERSION` não mudam.
 
+## Atualização (v0.131.1): mira
+`creatureAim` desempata pelo animal mais perto do eixo da mira (proporcional ao raio, para o pequeno não ficar escondido na esfera do grande, que nasce na mesma célula) e tem uma ajuda de mira rente aos pés (≤ 1,4 m, dentro de 60° do olhar, escondida por bloco mais perto).
+
 ## Consequências
 - Primeiro dano ao viajante já existia (investida); agora há resposta. O animal não tem cadáver nem animação de morte (some e solta os itens).
 - Pendências: balanço dos números; animação/efeito de morte e de golpe recebido no modelo com rig; som próprio do Farejador; aceite em aparelho do toque curto (mira a 360 px).
