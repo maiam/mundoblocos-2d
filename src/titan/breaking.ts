@@ -39,8 +39,3 @@ export function breakProgress(elapsedMs: number, totalMs: number): number {
 export function crackStage(progress: number): number {
   return Math.min(CRACK_STAGES - 1, Math.max(0, Math.floor(progress * CRACK_STAGES)));
 }
-
-/** Blocos que soam como rocha ao quebrar (ADR 0054): rocha escura, veio de rocha, laje e Mesa de Trabalho (basalto). Areia, gelo e brasa ainda não têm som. */
-export function isRockSound(block: number | undefined): boolean {
-  return block === T.DARK_ROCK || block === T.VEIN_ROCK || block === T.SLAB || block === T.WORKBENCH || block === T.WORKBENCH_90 || block === T.WORKBENCH_180 || block === T.WORKBENCH_270;
-}
