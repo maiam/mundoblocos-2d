@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.124.0 — Titã: durabilidade das ferramentas (20/11/2026)
+- **Regra do dono do produto** (modelo do Minecraft). **ADR 0067.**
+- `Stack.wear` guarda o desgaste no próprio espaço do inventário; máximos **131** (rocha) e **190** (cobre) em `titan/wear.ts`. Quebrar bloco gasta a ferramenta na mão: **picareta −1, adaga −2** (uso impróprio); o golpe (etapa 4) será adaga −1 e picareta −2; recolher lanterna, Marco e Painel não gasta. Ao chegar no máximo o item **quebra**, some, avisa e toca o estilhaço.
+- Barra de durabilidade na hotbar e na bolsa (verde → vermelho, escondida enquanto intacta) e `restante/máximo` no rótulo; o desgaste vai no save (`[item, count, wear]`, sem subir versão) e acompanha a pilha solta ao morrer.
+- Fora do escopo: Inquebrável, Remendo, Bigorna e reparo; armadura e escudo.
+- Testes `desgaste.test.ts` (+5; 1.015 no total). Conferido a 740 × 360: barras verde, amarela e vermelha, ferramentas intactas sem barra, rótulo "Picareta de Cobre · 95/190".
+
 ## Orvalis v0.123.0 — Titã: abrigos, Placa e Revestimento de Carapaça (20/11/2026)
 - **Etapa 3 de 4 do pacote "O que a duna guarda"** (arte e números provisórios). **ADR 0066.**
 - **Gerador v8:** 2 abrigos (vão entre dois pilares de rocha escura) por seed, fora do território do Farejador, cada um com uma **Placa de Carapaça** no chão (item 25, recolhida à mão).

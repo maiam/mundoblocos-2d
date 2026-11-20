@@ -3,6 +3,7 @@ import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
 import { type Farejador, newPack } from './creature';
 import { BRAZIER_CHARGES } from './braziers';
+import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { AFTERNOON, validDay } from './sky';
@@ -123,7 +124,8 @@ function validDrops(raw: unknown, gen: TitanGenerator): Map<string, Drop> {
     if (!d || typeof d.id !== 'string' || !isItem(d.item) || ![d.x, d.y, d.z].every(Number.isInteger) || !(d.y > Y_MIN && d.y <= Y_MAX) || !gen.inRegion(d.x, d.z)) continue;
     const count = d.count === undefined ? undefined : Number.isInteger(d.count) && d.count >= 1 && d.count <= 64 ? d.count : null;
     if (count === null) continue;
-    out.set(d.id, { id: d.id, item: d.item, ...(count && count > 1 ? { count } : {}), x: d.x, y: d.y, z: d.z });
+    const max = maxDurability(d.item), wear = max !== null && Number.isInteger(d.wear) && (d.wear as number) >= 1 && (d.wear as number) < max ? (d.wear as number) : undefined;
+    out.set(d.id, { id: d.id, item: d.item, ...(count && count > 1 ? { count } : {}), ...(wear ? { wear } : {}), x: d.x, y: d.y, z: d.z });
   }
   return out;
 }

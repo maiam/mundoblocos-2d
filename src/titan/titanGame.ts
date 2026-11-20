@@ -2,6 +2,7 @@ import './titan.css';
 import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
+import { durabilityHue, durabilityRatio, maxDurability } from './wear';
 import { useBrazierCharge, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { farejadorPose, KINDS, stepFarejador } from './creature';
@@ -138,6 +139,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (key) el('span', 'key', b, key);
     el('i', 'titan-icon', b);
     el('em', 'count', b);
+    el('b', 'titan-dur', b).hidden = true; // barra de durabilidade (ADR 0067): só depois do primeiro desgaste
     b.addEventListener('click', () => tapSlot(index));
     return b;
   };
@@ -193,7 +195,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   /** Redesenha todos os espaços e o livro de receitas a partir do inventário (barato: 36 espaços e 4 receitas). */
   function refresh(): void {
-    const draw = (b: HTMLButtonElement, i: number, forced?: { item: number; count: number } | null): void => {
+    const draw = (b: HTMLButtonElement, i: number, forced?: { item: number; count: number; wear?: number } | null): void => {
       const st = forced === undefined ? inv.get(i) : forced;
       const icon = b.querySelector('i') as HTMLElement;
       const count = b.querySelector('em') as HTMLElement;
@@ -204,8 +206,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         icon.style.backgroundPosition = `calc(${-col} * var(--ic)) calc(${-row} * var(--ic))`; // célula de 32 px do atlas, na escala inteira da interface (ADR 0053)
         icon.style.visibility = 'visible';
         count.textContent = st.count > 1 ? String(st.count) : '';
-        b.setAttribute('aria-label', `${ITEM_NAMES[st.item]}${st.count > 1 ? ` × ${st.count}` : ''}`);
+        b.setAttribute('aria-label', `${ITEM_NAMES[st.item]}${st.count > 1 ? ` × ${st.count}` : ''}${maxDurability(st.item) !== null ? ` · durabilidade ${maxDurability(st.item)! - (st.wear ?? 0)}/${maxDurability(st.item)}` : ''}`);
       } else { icon.style.visibility = 'hidden'; count.textContent = ''; b.setAttribute('aria-label', 'vazio'); }
+      const bar = b.querySelector('.titan-dur') as HTMLElement | null;
+      const ratio = st ? durabilityRatio(st.item, st.wear) : null;
+      if (bar) { bar.hidden = ratio === null; if (ratio !== null) { bar.style.setProperty('--r', String(ratio)); bar.style.setProperty('--h', String(durabilityHue(ratio))); } }
       b.dataset.sel = String(sel === i);
     };
     hotSlots.forEach((b, i) => { draw(b, i); b.setAttribute('aria-pressed', String(i === session.selected)); });
@@ -221,7 +226,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     for (const id of discoverRecipes(session)) toast(id === 'mesa' ? 'Nova receita: Mesa de Trabalho (4 blocos de rocha escura). Abra a bolsa (☰ ou E).' : id === 'braseiro' ? 'Receitas do Braseiro: acenda um Braseiro de Rocha com uma Brasa de Âmbar e use-o (F ou botão Usar).' : 'Receitas da mesa: use a Mesa de Trabalho (F ou botão Usar).', 3500);
     if (bagOpen) drawBook();
     const held = inv.get(session.selected);
-    label.textContent = held ? ITEM_NAMES[held.item] : '';
+    label.textContent = held ? `${ITEM_NAMES[held.item]}${maxDurability(held.item) !== null ? ` · ${maxDurability(held.item)! - (held.wear ?? 0)}/${maxDurability(held.item)}` : ''}` : '';
   }
 
   /** Receitas visíveis: as descobertas (as da mesa também ficam à mostra na bolsa, bloqueadas com o motivo), filtradas por grupo, busca e "só fabricáveis". */
@@ -575,6 +580,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     complete: (t) => {
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
+      if (r.broken) gameAudio.playToolBreak(); // a ferramenta quebrou (ADR 0067)
       if (r.ok) { if (t.kind === 'block') { addExhaustion(vitals, EXHAUSTION.breakBlock); const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } else if (t.kind === 'lantern' && t.block === T.LANTERN) gameAudio.playLanternPickup(); else gameAudio.playItemPickup(); view.setItems(visibleItems(session)); onEdited(); refresh(); } // a lasca de um veio aparece no mesmo quadro
       return { ok: r.ok };
     },

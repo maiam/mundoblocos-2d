@@ -44,7 +44,7 @@ export interface TitanHeader {
   vitals?: { health: number; hunger: number; saturation: number; air: number };
 }
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */
-export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; x: number; y: number; z: number }
+export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; /** Ferramenta desgastada caída na morte (ADR 0067): pontos de desgaste. */ wear?: number; x: number; y: number; z: number }
 import type { InventoryData } from './inventory';
 
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }

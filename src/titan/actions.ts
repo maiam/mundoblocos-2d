@@ -1,4 +1,4 @@
-import { blockOfItem, dropCountOf, foodOf, isPick, Item, itemOfBlock } from './items';
+import { blockOfItem, dropCountOf, foodOf, isPick, Item, ITEM_NAMES, itemOfBlock } from './items';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { BRAZIER_CHARGES, brazierKey } from './braziers';
@@ -6,12 +6,13 @@ import { blockSpan, isBrazier, isCopperVein, isSolid, isVein, marcoId, marcoTurn
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
+import { wearCost, type WearAction } from './wear';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
  * (tudo ou nada) e muda mundo e inventário juntos, para o save sempre gravar os dois no mesmo instante.
  */
-export interface ActionResult { ok: boolean; msg?: string }
+export interface ActionResult { ok: boolean; msg?: string; /** A ferramenta na mão quebrou nesta ação (toca o estilhaço; ADR 0067). */ broken?: boolean }
 const FULL: ActionResult = { ok: false, msg: 'Mochila cheia' };
 /** Fragmentos de cobre que um veio solta (provisório, ADR 0063). */
 export const COPPER_YIELD = 2;
@@ -89,7 +90,29 @@ export function useBrazierCharge(s: TitanSession, x: number, y: number, z: numbe
 }
 
 /** Botão de quebrar/recolher no alvo: fragmento de superfície → coleta; bloco ou lanterna → volta como item, se couber. */
+/**
+ * Desgasta a ferramenta do espaço escolhido pela ação feita (ADR 0067). Sem ferramenta na mão ou ação sem custo: nada. Quebrou → o espaço fica vazio e o resultado diz isso.
+ * O combate chama com `{ type: 'attack' }`.
+ */
+export function wearHeldTool(s: TitanSession, action: WearAction): { broken: boolean; name?: string } {
+  const held = s.inventory.get(s.selected);
+  if (!held) return { broken: false };
+  const cost = wearCost(held.item, action);
+  const r = cost > 0 ? s.inventory.damage(s.selected, cost) : null;
+  return r?.broken ? { broken: true, name: ITEM_NAMES[held.item] } : { broken: false };
+}
+
+/** Botão de quebrar/recolher no alvo: quebrar bloco **desgasta** a ferramenta na mão (picareta −1, adaga −2; recolhimento instantâneo não gasta). */
 export function breakOrCollect(s: TitanSession, hit: Hit): ActionResult {
+  if (hit.item) return collectItem(s, hit.item);
+  const block = s.volume.get(hit.x, hit.y, hit.z);
+  const r = breakOrCollectBlock(s, hit);
+  if (!r.ok) return r;
+  const w = wearHeldTool(s, { type: 'break_block', block });
+  return w.broken ? { ...r, broken: true, msg: `${w.name} quebrou` } : r;
+}
+
+function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (hit.item) return collectItem(s, hit.item);
   const { x, y, z } = hit;
   if (!s.volume.breakable(x, y, z)) return { ok: false };
@@ -161,7 +184,7 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
     if (Math.hypot(dd.x + 0.5 - px, dd.z + 0.5 - pz) > PICKUP_RADIUS || py > dd.y + 1.5 || py + 1.8 < dd.y) continue;
     const item = dd.item, count = dd.count ?? 1; // o id do item é o próprio campo (5 = fragmento de rocha, 6 = de gelo, 11 = brasa; pilha de morte: qualquer item e `count`)
     if (!s.inventory.canAdd(item, count)) { full = true; continue; }
-    s.inventory.add(item, count);
+    s.inventory.add(item, count, dd.wear ?? 0);
     s.drops.delete(dd.id);
     s.dropsRev++;
     collected++;
@@ -211,7 +234,7 @@ export function dieAndRespawn(s: TitanSession): number {
   const ry = restY(s, x, y, z);
   stacks.forEach((st, n) => {
     const id = `d:${x},${ry},${z}:${n}`;
-    s.drops.set(id, { id, item: st.item, ...(st.count > 1 ? { count: st.count } : {}), x, y: ry, z });
+    s.drops.set(id, { id, item: st.item, ...(st.count > 1 ? { count: st.count } : {}), ...(st.wear ? { wear: st.wear } : {}), x, y: ry, z }); // a ferramenta desgastada leva o desgaste
   });
   if (stacks.length) s.dropsRev++;
   s.selected = Math.min(s.selected, 8);
