@@ -12,9 +12,9 @@ import type { TitanVolume } from './volume';
  */
 export type Kind = 'pequeno' | 'grande';
 
-export const KINDS: Readonly<Record<Kind, { scale: number; damage: number; sight: number; walk: number; charge: number; hitRadius: number }>> = {
-  pequeno: { scale: 0.5, damage: 2, sight: 8, walk: 0.2, charge: 1.15, hitRadius: 0.8 },
-  grande: { scale: 1.3, damage: 4, sight: 11, walk: 0.14, charge: 0.95, hitRadius: 1.5 },
+export const KINDS: Readonly<Record<Kind, { scale: number; damage: number; sight: number; walk: number; charge: number; hitRadius: number; hp: number; name: string }>> = {
+  pequeno: { scale: 0.5, damage: 2, sight: 8, walk: 0.2, charge: 1.15, hitRadius: 0.8, hp: 10, name: 'Farejador pequeno' },
+  grande: { scale: 1.3, damage: 4, sight: 11, walk: 0.14, charge: 0.95, hitRadius: 1.5, hp: 30, name: 'Farejador grande' },
 };
 
 export const FAREJADOR = {
@@ -51,6 +51,12 @@ export interface Farejador {
   cooldown: number;
   /** Segundos sem chegar ao alvo do passeio (travado num obstáculo: escolhe outro). */
   stuck: number;
+  /** Vida (ADR 0069): ao zerar o animal é abatido. */
+  hp: number;
+  /** Segundos de provocação depois de levar um golpe: enxerga o viajante além do alcance de visão (dentro do raio de perseguição). */
+  aggro: number;
+  /** Segundos desde o último golpe levado (animação de recuo e rótulo). */
+  hurt: number;
   /** Relógio do animal, só para o passeio e a animação (s). */
   clock: number;
   seed: number;
@@ -61,7 +67,7 @@ export interface FarejadorEvents { hit: boolean; damage: number; phase: Phase | 
 /** Cria o animal parado na toca (célula `den`, pés em `den.y`). */
 export function newFarejador(kind: Kind, den: { x: number; y: number; z: number }, seed: number): Farejador {
   const hx = den.x + 0.5, hz = den.z + 0.5, s = ((seed >>> 0) + (kind === 'grande' ? 7919 : 104729)) >>> 0;
-  return { kind, body: newBody(hx, den.y, hz), yaw: Math.PI / 2, phase: 'wander', t: 0, home: { x: hx, z: hz }, goal: { x: hx, z: hz }, pause: kind === 'grande' ? 1.5 : 0.4, cooldown: 0, stuck: 0, clock: 0, seed: s };
+  return { kind, body: newBody(hx, den.y, hz), yaw: Math.PI / 2, phase: 'wander', t: 0, home: { x: hx, z: hz }, goal: { x: hx, z: hz }, pause: kind === 'grande' ? 1.5 : 0.4, cooldown: 0, stuck: 0, hp: KINDS[kind].hp, aggro: 0, hurt: 99, clock: 0, seed: s };
 }
 
 /** Os animais de uma toca: um grande e um pequeno. */
@@ -93,10 +99,12 @@ export function stepFarejador(f: Farejador, vol: TitanVolume, player: { x: numbe
   const K = KINDS[f.kind];
   f.clock += dt; f.t += dt;
   if (f.cooldown > 0) f.cooldown = Math.max(0, f.cooldown - dt);
+  if (f.aggro > 0) f.aggro = Math.max(0, f.aggro - dt);
+  f.hurt += dt;
   const b = f.body;
   const pd = player ? dist(b.x, b.z, player.x, player.z) : Infinity;
   const playerHome = player ? dist(f.home.x, f.home.z, player.x, player.z) : Infinity;
-  const sees = !!player && f.cooldown === 0 && Math.abs(player.y - b.y) < 3 && pd <= K.sight && playerHome <= FAREJADOR.chaseRadius;
+  const sees = !!player && f.cooldown === 0 && Math.abs(player.y - b.y) < 3 && (pd <= K.sight || (f.aggro > 0 && pd <= FAREJADOR.chaseRadius)) && playerHome <= FAREJADOR.chaseRadius;
   let dirX = 0, dirZ = 0, speed = 0;
   const walkTo = (tx: number, tz: number, s: number): void => {
     const dx = tx - b.x, dz = tz - b.z, d = Math.hypot(dx, dz);
@@ -126,6 +134,35 @@ export function stepFarejador(f: Farejador, vol: TitanVolume, player: { x: numbe
   return ev;
 }
 
+/** Golpe levado (ADR 0069): tira vida, provoca (investe mesmo fora do alcance de visão por `aggro` s) e interrompe a pausa de uma investida que errou. Devolve se morreu. */
+export function hurtFarejador(f: Farejador, damage: number): { dead: boolean } {
+  f.hp = Math.max(0, f.hp - Math.max(0, damage));
+  f.hurt = 0; f.aggro = 8; f.cooldown = 0;
+  return { dead: f.hp <= 0 };
+}
+
+/** Raio da esfera de acerto (m): o corpo inteiro do modelo (1,85 m de comprimento × escala), centrada a ~0,45 da altura do modelo. */
+export const hitSphere = (f: Farejador): { x: number; y: number; z: number; r: number } => ({ x: f.body.x, y: f.body.y + 0.45 * KINDS[f.kind].scale, z: f.body.z, r: 0.95 * KINDS[f.kind].scale });
+
+/**
+ * Mira nos animais (ADR 0069): o animal mais próximo cuja esfera de acerto o raio do olhar atravessa a no máximo `reach` m (medido até a superfície), mais perto que `blockDist` (um bloco na frente
+ * esconde o animal). Devolve o índice na lista e a distância.
+ */
+export function creatureAim(list: readonly Farejador[], ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach: number, blockDist = Infinity): { index: number; dist: number } | null {
+  let best: { index: number; dist: number } | null = null;
+  list.forEach((f, index) => {
+    const s = hitSphere(f), lx = s.x - ox, ly = s.y - oy, lz = s.z - oz;
+    const t0 = lx * dx + ly * dy + lz * dz; // projeção do centro no raio
+    const d2 = lx * lx + ly * ly + lz * lz - t0 * t0;
+    if (d2 > s.r * s.r) return;
+    const t = t0 - Math.sqrt(s.r * s.r - d2); // entrada na esfera (se estamos dentro dela, t < 0: acerta a 0)
+    const dist = Math.max(0, t);
+    if (t0 < 0 || dist > reach || dist >= blockDist) return;
+    if (!best || dist < best.dist) best = { index, dist };
+  });
+  return best;
+}
+
 /** Pose das partes do modelo (rad, em torno do pivô de cada parte; o modelo olha para −X, o eixo lateral é Z). Pura do estado: sem rig, cada parte gira em torno do próprio pivô. */
 export interface FarejadorPose {
   /** Sobe/desce do tronco inteiro (m, na escala do modelo) e rolagem do corpo em torno do eixo do comprimento (0 = de pé, π = de costas). */
@@ -141,6 +178,8 @@ export interface FarejadorPose {
 export function farejadorPose(f: Farejador, moving: boolean): FarejadorPose {
   const c = f.clock;
   const pose: FarejadorPose = { bob: 0, roll: 0, headPitch: 0, headYaw: 0, tailYaw: Math.sin(c * 1.6) * 0.12, legs: [0, 0, 0, 0] };
+  const flinch = f.hurt < 0.3 ? 1 - f.hurt / 0.3 : 0; // recuo curto ao levar um golpe (ADR 0069)
+  const out = (p: FarejadorPose): FarejadorPose => { p.headPitch -= 0.45 * flinch; p.bob += 0.05 * flinch; return p; };
   if (f.phase === 'stunned') {
     const fl = FAREJADOR.flipS;
     // cai de costas rápido (primeiros `flipS` s), fica de barriga para cima balançando as patas, e se vira de volta nos últimos `flipS` s
@@ -150,13 +189,13 @@ export function farejadorPose(f: Farejador, moving: boolean): FarejadorPose {
     pose.legs = [Math.sin(c * 7) * 0.5 * lying, Math.sin(c * 7 + 2) * 0.5 * lying, Math.sin(c * 6 + 1) * 0.5 * lying, Math.sin(c * 6 + 3) * 0.5 * lying];
     pose.headPitch = 0.25 * lying; pose.headYaw = Math.sin(c * 4) * 0.35 * lying; // estonteado: a cabeça balança
     pose.tailYaw = Math.sin(c * 3) * 0.25 * lying;
-    return pose;
+    return out(pose);
   }
   if (f.phase === 'charge') {
     const w = c * 17;
     pose.legs = [Math.sin(w) * 0.8, Math.sin(w + Math.PI) * 0.8, Math.sin(w + Math.PI * 0.5) * 0.8, Math.sin(w + Math.PI * 1.5) * 0.8];
     pose.headPitch = 0.12; pose.bob = Math.abs(Math.sin(w)) * 0.05; pose.tailYaw = Math.sin(w * 0.5) * 0.1;
-    return pose;
+    return out(pose);
   }
   const w = c * (f.phase === 'return' ? 8 : 4.2);
   if (moving) {
@@ -166,5 +205,5 @@ export function farejadorPose(f: Farejador, moving: boolean): FarejadorPose {
   // farejar: a cabeça desce e sobe em pequenos movimentos, de um lado a outro
   pose.headPitch = 0.1 + Math.sin(c * 3.1) * 0.12 + (moving ? 0 : 0.06);
   pose.headYaw = Math.sin(c * 1.3) * 0.22;
-  return pose;
+  return out(pose);
 }

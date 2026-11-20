@@ -16,7 +16,9 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 **Braseiro e ferramentas de cobre (v0.122.0, ADR 0065, etapa 2 de 4):** aceite em aparelho; luz do braseiro aceso e partículas; modelo 3D; as adagas só ganham função no combate (etapa 4); calibrar 10 s / 80 s e os fatores 0,6/0,4.
 **Abrigos e carapaça (v0.123.0, ADR 0066, etapa 3 de 4):** aceite em aparelho; tile final do revestimento (hoje parece tijolo, deveria ser escamas), meia altura ou modelo 3D, sprite da placa no chão; falta só a etapa 4 (vida do Farejador, carne, combate com adaga).
 **Durabilidade (v0.124.0, ADR 0067):** aceite em aparelho (barra legível a 32 px, rótulo); calibrar 131/190; decidir reparo (juntar duas iguais); o combate da etapa 4 desgasta a adaga com `wearHeldTool(s, { type: 'attack' })`.
-**Braseiro como fornalha (v0.125.0, ADR 0068):** aceite em aparelho do painel (entrada/combustível/saída a 360 px de altura) e do fluxo tocar-na-pilha → tocar-no-espaço; luz e partículas do braseiro aceso; Baú de Rocha (27 espaços) reaproveitando o mesmo padrão de bloco com estado; a carne assada (etapa 4) entra como receita de entrada única do braseiro.
+**Combate com o Farejador e carne (v0.126.0, ADR 0069):** balanço dos números (vida, dano, espólio, 600 s de volta); animação/efeito de morte e som próprio; aceite em aparelho do toque curto e da mira a 360 px; trocar ícones/arte provisórios.
+
+**Braseiro como fornalha (v0.125.0, ADR 0068):** aceite em aparelho do painel (entrada/combustível/saída a 360 px de altura) e do fluxo tocar-na-pilha → tocar-no-espaço; luz e partículas do braseiro aceso; Baú de Rocha (27 espaços) reaproveitando o mesmo padrão de bloco com estado; (a carne assada já entrou, v0.126.0).
 **Decisões do dono do produto (19/11/2026):** o jogador chega **de mãos vazias** (a cápsula saiu; id 7 reservado); a **lanterna fica acesa enquanto colocada**; **inventário sem descarte**; **worker de malha em espera**; ciclo de céu de 20 min (ADR 0041); **gesto: toque curto coloca e segurar quebra** (ADR 0042).
 
 ## Santuário isométrico solo (ADR 0036, decisão do dono do produto, 17/11/2026)

@@ -11,13 +11,14 @@ export const CRACK_STAGES = 10;
 export const DRAG_TOLERANCE_PX = 10;
 
 /** O que está na mira: bloco, lanterna instalada ou lasca solta (item de superfície). */
-export type TargetKind = 'block' | 'lantern' | 'shard';
+export type TargetKind = 'block' | 'lantern' | 'shard' | 'creature';
 
 /** Tempos iniciais totais (ms), desde a pressão. */
 export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350 } as const;
 
 /** Tempo total para concluir a ação sobre o alvo, ou `null` se não há o que quebrar (rocha-mãe, líquido). */
 export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | boolean | null = false): number | null {
+  if (kind === 'creature') return null; // animal na mira: o toque curto golpeia, segurar não quebra nada (ADR 0069)
   if (kind === 'lantern' || kind === 'shard') return BREAK_MS.collect;
   const tier: Tier | null = pick === true ? 'rock' : pick || null;
   if (block === T.VEIN_COPPER) return tier ? Math.round(BREAK_MS.rock * PICK_FACTOR[tier]) : null; // só uma picareta o quebra (ADR 0063)

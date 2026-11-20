@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.126.0 — Titã: combate com o Farejador e carne (20/11/2026)
+- **Etapa 4 de 4 do pacote "O que a duna guarda"** (números e ícones provisórios). **ADR 0069.**
+- Farejadores têm **vida** (pequeno 10, grande 30) e reagem ao golpe (tranco no modelo, investem por 8 s mesmo sem avistar). Mira por raio × esfera a até 3 m; rótulo "Farejador grande · 26/30"; só o **toque curto** golpeia (pausa de 0,6 s); dano por arma: punho 1, picareta 2/3, adaga 4/6, com o desgaste do ADR 0067.
+- Abatido solta **Carne Crua** (1 ou 2) e **Placa**; a **Carne Assada** sai do braseiro (10 s, fome 8). O animal volta na toca após 600 s de jogo ativo (`header.respawn` opcional; sem subir versões).
+- Testes `combat.test.ts` (+6; 1.025 no total). Conferido a 740 × 360: rótulo com a vida, golpe por toque (30 → 26, adaga 130/131); abate, espólio e respawn só nos testes.
+
 ## Orvalis v0.125.0 — Titã: Braseiro como fornalha, bloco com estado (20/11/2026)
 - **Regras de interação do dono do produto** (Mesa sem memória; Fornalha/Baú como blocos com estado). **ADR 0068.**
 - O **Braseiro de Rocha** guarda **entrada, combustível e saída** na coordenada do bloco (`session.furnaces`, `header.furnaces` opcional); **cozimento de 10 s**, **Brasa de Âmbar queima 80 s** (8 preparações), o fogo acende consumindo 1 combustível na hora, sem fogo o progresso regride; corre **com a tela aberta ou fechada, só com o jogo ativo**; o bloco acende e apaga sozinho. **Quebrar cospe o conteúdo** no chão.

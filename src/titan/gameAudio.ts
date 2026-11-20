@@ -187,6 +187,15 @@ export class GameSoundSynthesizer {
     });
   }
 
+  /** Golpe no animal (ADR 0069): pancada seca e grave com um estalo curto. */
+  playStrike(): void {
+    this.safe((now) => {
+      const j = 0.92 + Math.random() * 0.16;
+      this.tone(now, 180 * j, 70 * j, 0.1, 'triangle', 0.3);
+      this.burst(now, 0.07, 1300 * j, 0.8, 0.22, 'bandpass', 0.003);
+    });
+  }
+
   /** Ferramenta quebrou (ADR 0067): estalo seco, estilhaços e um tom que cai. */
   playToolBreak(): void {
     this.safe((now) => {
