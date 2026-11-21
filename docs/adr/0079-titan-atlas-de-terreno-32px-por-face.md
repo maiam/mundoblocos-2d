@@ -9,7 +9,7 @@
 4. **Fora do atlas** (decisão registrada): o **Lago Escuro** segue com o atlas próprio de 32 px do ADR 0057 (o pacote novo traz superfície A/B e vista de baixo, sem a lateral exposta; trocar exige decisão de arte); a **Mesa, a lanterna, o Marco e o Painel** são modelos 3D com UV próprio (as amostras do pacote são só materiais). O atlas de 16 px (`titan-atlas-16px.webp`) fica no repositório só como legado dos scripts antigos (não é mais carregado).
 
 ## Revisão (v0.142.0)
-O dono do produto revisou **Areia Ocre, Areia Úmida, Rocha Escura e Rocha com Veio** (texturas seamless: bordas opostas coincidem nos dois eixos; o veio termina no interior da face). Os 12 PNGs desses blocos em `assets-src/titan/texturas32/` foram trocados e o atlas regravado (44 KB). Nenhuma regra mudou; `tiles.json` e os nomes são os mesmos.
+O dono do produto revisou **Areia Ocre, Areia Úmida, Rocha Escura e Rocha com Veio** (texturas seamless: bordas opostas coincidem nos dois eixos; o veio termina no interior da face). Os 12 PNGs desses blocos em `assets-src/titan/texturas32/` foram trocados e o atlas regravado (44 KB). Nenhuma regra mudou; `tiles.json` e os nomes são os mesmos. Na v0.143.0 a **Laje de Rocha Escura** também foi revista (`11-laje-de-rocha/topo` e `lateral`; a `base` fica só como fonte).
 
 ## Consequências
 - Mais definição em todo o terreno, com a mesma contagem de triângulos; o custo é o atlas (42 KB e ~0,25 MB de textura na GPU).

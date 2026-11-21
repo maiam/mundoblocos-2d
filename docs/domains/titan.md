@@ -77,6 +77,9 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Arte de cultivo (v0.143.0, só fonte):** `assets-src/titan/cultivo/` guarda os sprites 32 × 32 do Junco de Vidro (muda, crescendo, adulto com duas mudas, ressecado) e as texturas da Esteira de Junco, **sem uso no jogo**; regras propostas em `NEXT_STEPS`. A Laje de Rocha Escura revisada já está no atlas.
+
+
 - **Bloco quebrado cai no chão (v0.141.0, ADR 0082):** `spillBlock` (id `b:x,y,z:n`), `session.dropFx` (atraso 0,45 s e idade, só de execução), `collectNearby(..., dt)` com raio 1,45 m, sumiço em 300 s só dos `b:`; lanterna direta para a mochila; quebrar não falha por mochila cheia. Salto/voo em `titanRenderer.setItems`. Testes que quebram e conferem a mochila usam `dropTestUtil.sweep`.
 
 - **Veios:** `T.VEIN_ROCK` (8) e `T.VEIN_FROST` (9), tiles 8 e 9 do atlas 4 × 3 (`scripts/make-titan-veins.py`). Gerador v3: 3 veios por formação (centro + 2 vizinhos), sem lascas pré-posicionadas; v1/v2 inalteradas. Alcance a pé por BFS (`walkableFromArrival`) e afloramento de reserva (`outcropSpot`, `outcropFallback`): 9 em 1.000 seeds.

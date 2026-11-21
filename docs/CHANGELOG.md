@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.143.0 — Titã: Laje de Rocha revisada e arte de cultivo importada (21/11/2026)
+- **Só arte, a pedido do dono do produto** (rodada "cultivo e oficina da Margem" do Drive). A **Laje de Rocha Escura** (topo 32 × 32, lateral 32 × 16, base) é a versão seamless revisada; `topo.png`/`lateral.png` trocados, `base.png` guardado (o atlas não usa base de laje), atlas regravado. Nota de revisão na ADR 0079.
+- Importados como **assets-fonte, sem uso no jogo**: `assets-src/titan/cultivo/junco/` (muda plantada, crescendo, adulto com duas mudas, ressecado; 32 × 32) e `assets-src/titan/cultivo/esteira/` (trama seamless e borda; 32 × 32).
+- **Regras propostas, ainda não implementadas** (registradas em `NEXT_STEPS`): Muda de Junco em 3 fases na Areia Úmida (2 mudas por colheita, planta-mãe preservada), Junco Ressecado na Areia Ocre (corta = Junco Seco), Esteira de Junco (Mesa, 3 Junco Seco), Noz Torrada (Braseiro, 1 Noz) e plantio da Noz. Tempos, rendimentos e fome em aberto. Sem mudança de código, gerador ou save.
+
 ## Orvalis v0.142.0 — Titã: texturas seamless revisadas de quatro materiais (21/11/2026)
 - **Arte revisada do dono do produto (Drive):** Areia Ocre (lisa), Areia Úmida (escura, manchas sutis), Rocha Escura (basalto rugoso) e Rocha com Veio (derivada do basalto, veio termina dentro da face). As bordas opostas de cada face coincidem nos dois eixos. Sem decisão nova: **ADR 0079** ganhou a nota de revisão.
 - `assets-src/titan/texturas32/` atualizado (12 PNGs + `LEIA-ME.txt`); `make-titan-atlas32.py` regravou `titan-atlas-32px.webp` (288 × 216, 44 KB). Os outros 15 materiais são idênticos ao pacote anterior. Sem mudança de código, gerador ou save. Conferido a 740 × 360 (areia sem emenda visível).
