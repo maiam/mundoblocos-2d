@@ -519,7 +519,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const box = el('div', '', start);
   el('h1', '', box, 'Titã');
   el('p', '', box, session.resumed ? 'Sua partida foi encontrada. Continue de onde parou.' : 'Uma costa de areia ocre e um lago escuro sob a névoa da tarde.');
-  el('p', '', box, coarse ? 'Setas: andar (segure ▲ para correr) · toque curto onde quiser coloca, segurar quebra (o anel mostra o progresso), arrastar gira a câmera · "Mira" no menu troca para a mira central · botão ⤒ pula · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
+  el('p', '', box, coarse ? 'Joystick: andar (empurre até o fim para correr) · toque curto onde quiser coloca, segurar quebra (o anel mostra o progresso), arrastar gira a câmera · "Mira" no menu troca para a mira central · botão ⤒ pula · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
   const go = el('button', 'titan-btn', box, session.resumed ? 'Continuar' : 'Começar');
   go.type = 'button';
   let playing = false;
@@ -577,16 +577,21 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   touch.addEventListener('contextmenu', (e) => e.preventDefault()); // segurar não abre o menu do navegador (ADR 0077)
   const touchRing = el('div', 'titan-touchring', touch); // anel no ponto do toque: azul ao tocar, enche ao quebrar
   touchRing.hidden = true;
-  // setas no lugar do joystick (como o Minecraft de toque): ▲ anda, ▼ recua, ◀ ▶ andam de lado; segurar duas dá a diagonal
-  const dpad = el('div', 'titan-dpad', touch);
-  const dirs = { up: false, down: false, left: false, right: false };
-  let upSince = 0; // instante em que ▲ foi pressionada (a corrida liga depois de 0,2 s)
-  const syncDirs = (): void => { input.stickY = (dirs.down ? 1 : 0) - (dirs.up ? 1 : 0); input.stickX = (dirs.right ? 1 : 0) - (dirs.left ? 1 : 0); };
-  for (const [key, glyph] of [['up', '▲'], ['left', '◀'], ['right', '▶'], ['down', '▼']] as const) {
-    const bt = el('button', `titan-dir ${key}`, dpad, glyph); bt.type = 'button'; bt.setAttribute('aria-label', { up: 'Andar', down: 'Recuar', left: 'Esquerda', right: 'Direita' }[key]);
-    bt.addEventListener('pointerdown', (e) => { e.preventDefault(); bt.setPointerCapture(e.pointerId); dirs[key] = true; if (key === 'up') upSince = performance.now(); bt.classList.add('on'); syncDirs(); });
-    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) bt.addEventListener(ev, () => { dirs[key] = false; bt.classList.remove('on'); syncDirs(); });
-  }
+  // joystick analógico (ADR 0075, revisto na ADR 0081): arrastar o miolo anda; empurrar até o fim para a frente por 0,2 s liga a corrida
+  const stick = el('div', 'titan-stick', touch); const knob = el('i', '', stick);
+  let stickId = -1;
+  let fwdSince = 0; // instante em que o joystick passou a ficar todo para a frente (0 = fora dessa posição)
+  const moveStick = (e: PointerEvent): void => {
+    const r = stick.getBoundingClientRect();
+    let dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; }
+    input.stickX = dx; input.stickY = dy; knob.style.transform = `translate(${dx * 36}px, ${dy * 36}px)`;
+    if (dy <= -0.85) { if (!fwdSince) fwdSince = performance.now(); } else fwdSince = 0;
+  };
+  const endStick = (e: PointerEvent): void => { if (e.pointerId !== stickId) return; stickId = -1; fwdSince = 0; input.stickX = input.stickY = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerdown', (e) => { if (stickId >= 0) return; e.preventDefault(); stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
+  stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) moveStick(e); });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) stick.addEventListener(t, endStick);
   const acts = el('div', 'titan-acts', touch);
   // Colocar e quebrar não têm mais botões: a área de interação (metade direita) coloca ao tocar e quebra ao segurar; arrastar gira a câmera
   const mk = (txt: string): HTMLButtonElement => { const b = el('button', 'titan-btn', acts, txt); b.type = 'button'; return b; };
@@ -770,7 +775,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const moved = dirX !== 0 || dirZ !== 0;
       const px = b.x, pz = b.z;
       const wasOnGround = b.onGround;
-      const sprint = dirs.up && !dirs.down && now - upSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // segurar ▲ por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
+      const sprint = fwdSince > 0 && now - fwdSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // joystick todo à frente por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
       sprintOn = sprint; view.setSprint(sprint);
       stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint }, dt);
       if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
