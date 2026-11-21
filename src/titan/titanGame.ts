@@ -14,6 +14,7 @@ import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPE
 import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
 import { FootstepClock, surfaceOf } from './sounds';
+import { rayThrough } from './aim';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { blockOfItem, foodOf, isPick, ITEM_NAMES } from './items';
@@ -35,6 +36,8 @@ const AUTOSAVE_AFTER_EDIT_MS = 700;
 const AUTOSAVE_PLAYER_MS = 5000;
 const RETRY_MS = 3000;
 /** Farejadores (ADR 0074): só os que estão a até `SIM_RADIUS` m do viajante (ou em ação) são simulados; só os `SHOW_MAX` mais próximos, a até `SHOW_RADIUS` m, vão para o desenho. */
+const SPRINT_HOLD_MS = 200; // ADR 0076
+let sprintOn = false;
 const SIM_RADIUS = 56, SHOW_RADIUS = 64, SHOW_MAX = 8;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
@@ -499,11 +502,24 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // ---- Início (ponteiro preso no desktop) ----
   const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
   if (coarse) document.body.classList.add('titan-touch-on');
+  // modo de mira no toque (ADR 0076): 'dedo' = a ação é no ponto tocado (padrão, ADR 0075); 'central' = mira + no centro e arrastar só gira (como no PC); lembrado no aparelho
+  let aimMode: 'dedo' | 'central' = 'dedo';
+  try { if (window.localStorage.getItem('orvalis-titan-mira') === 'central') aimMode = 'central'; } catch { /* sem armazenamento */ }
+  const aimBtn = el('button', 'titan-btn', menu);
+  aimBtn.type = 'button'; aimBtn.hidden = !coarse;
+  const fingerMode = (): boolean => coarse && aimMode === 'dedo';
+  const paintAim = (): void => { aimBtn.textContent = `Mira: ${aimMode === 'dedo' ? 'no dedo' : 'central'}`; document.body.classList.toggle('titan-aim-finger', fingerMode()); };
+  paintAim();
+  aimBtn.addEventListener('click', () => {
+    aimMode = aimMode === 'dedo' ? 'central' : 'dedo';
+    try { window.localStorage.setItem('orvalis-titan-mira', aimMode); } catch { /* sem armazenamento */ }
+    fingerNdc = null; touchRing.hidden = true; paintAim();
+  });
   const start = el('div', 'titan-start', ui);
   const box = el('div', '', start);
   el('h1', '', box, 'Titã');
   el('p', '', box, session.resumed ? 'Sua partida foi encontrada. Continue de onde parou.' : 'Uma costa de areia ocre e um lago escuro sob a névoa da tarde.');
-  el('p', '', box, coarse ? 'Esquerda: andar · direita: toque curto coloca, segurar quebra, arrastar gira a câmera · botão Pular · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
+  el('p', '', box, coarse ? 'Setas: andar (segure ▲ para correr) · toque curto onde quiser coloca, segurar quebra (o anel mostra o progresso), arrastar gira a câmera · "Mira" no menu troca para a mira central · botão ⤒ pula · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
   const go = el('button', 'titan-btn', box, session.resumed ? 'Continuar' : 'Começar');
   go.type = 'button';
   let playing = false;
@@ -557,54 +573,76 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   // toque (paisagem; ainda sem validação em aparelho real — NEXT_STEPS)
   const touch = el('div', 'titan-touch', ui);
-  const stick = el('div', 'titan-stick', touch);
-  const knob = el('i', '', stick);
-  const lookPad = el('div', 'titan-look', touch);
+  const lookPad = el('div', 'titan-look', touch); // a tela toda (menos os controles, que ficam por cima): o dedo age no ponto tocado (ADR 0075)
+  const touchRing = el('div', 'titan-touchring', touch); // anel no ponto do toque: azul ao tocar, enche ao quebrar
+  touchRing.hidden = true;
+  // setas no lugar do joystick (como o Minecraft de toque): ▲ anda, ▼ recua, ◀ ▶ andam de lado; segurar duas dá a diagonal
+  const dpad = el('div', 'titan-dpad', touch);
+  const dirs = { up: false, down: false, left: false, right: false };
+  let upSince = 0; // instante em que ▲ foi pressionada (a corrida liga depois de 0,2 s)
+  const syncDirs = (): void => { input.stickY = (dirs.down ? 1 : 0) - (dirs.up ? 1 : 0); input.stickX = (dirs.right ? 1 : 0) - (dirs.left ? 1 : 0); };
+  for (const [key, glyph] of [['up', '▲'], ['left', '◀'], ['right', '▶'], ['down', '▼']] as const) {
+    const bt = el('button', `titan-dir ${key}`, dpad, glyph); bt.type = 'button'; bt.setAttribute('aria-label', { up: 'Andar', down: 'Recuar', left: 'Esquerda', right: 'Direita' }[key]);
+    bt.addEventListener('pointerdown', (e) => { e.preventDefault(); bt.setPointerCapture(e.pointerId); dirs[key] = true; if (key === 'up') upSince = performance.now(); bt.classList.add('on'); syncDirs(); });
+    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) bt.addEventListener(ev, () => { dirs[key] = false; bt.classList.remove('on'); syncDirs(); });
+  }
   const acts = el('div', 'titan-acts', touch);
   // Colocar e quebrar não têm mais botões: a área de interação (metade direita) coloca ao tocar e quebra ao segurar; arrastar gira a câmera
   const mk = (txt: string): HTMLButtonElement => { const b = el('button', 'titan-btn', acts, txt); b.type = 'button'; return b; };
-  const bJump = mk('Pular'); // a bolsa abre pelo ☰ ao lado da hotbar
+  const bJump = mk('⤒'); bJump.classList.add('jump'); bJump.setAttribute('aria-label', 'Pular'); // seta para cima, como o Minecraft de toque; a bolsa abre pelo ☰ ao lado da hotbar
   const hold = (b: HTMLElement, on: () => void, off: () => void): void => {
     b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); on(); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) b.addEventListener(t, off);
   };
   hold(bJump, () => { input.jump = true; }, () => { input.jump = false; });
-  let stickId = -1;
-  const moveStick = (e: PointerEvent): void => {
-    const r = stick.getBoundingClientRect();
-    let dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
-    const m = Math.hypot(dx, dy);
-    if (m > 1) { dx /= m; dy /= m; }
-    input.stickX = dx; input.stickY = dy;
-    knob.style.transform = `translate(${dx * 36}px, ${dy * 36}px)`;
-  };
-  const endStick = (e: PointerEvent): void => { if (e.pointerId !== stickId) return; stickId = -1; input.stickX = input.stickY = 0; knob.style.transform = ''; };
-  stick.addEventListener('pointerdown', (e) => { if (stickId >= 0) return; stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
-  stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) moveStick(e); });
-  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) stick.addEventListener(t, endStick);
-  // área de interação do toque (metade direita): toque curto coloca, segurar quebra, arrastar gira a câmera (zona morta de 10 px: sem girar enquanto ainda pode ser toque)
+  // área de interação do toque (a tela toda, ADR 0075): a ação acontece **onde o dedo toca** (sem mirar o centro): toque curto coloca, segurar quebra (anel de progresso no dedo), arrastar gira a câmera (zona morta de 10 px: sem girar enquanto ainda pode ser toque)
   let lookId = -1, lx = 0, ly = 0, sx = 0, sy = 0, exceeded = false;
+  const setFinger = (e: PointerEvent): void => {
+    const r = canvas.getBoundingClientRect();
+    fingerNdc = { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -(((e.clientY - r.top) / r.height) * 2 - 1) };
+    touchRing.style.left = `${e.clientX}px`; touchRing.style.top = `${e.clientY}px`;
+  };
   lookPad.addEventListener('pointerdown', (e) => {
     if (lookId >= 0 || !playing || bagOpen) return; // um segundo dedo na área não arma nada
     lookId = e.pointerId; lookPad.setPointerCapture(e.pointerId);
     lx = sx = e.clientX; ly = sy = e.clientY;
+    setFinger(e); computeAim(); // o alvo é o que está sob o dedo agora, não o do quadro anterior
     gesture.press(e.pointerId, e.timeStamp, toTarget(target));
-    exceeded = gesture.state === 'CAMERA_DRAG'; // sem alvo na mira o gesto é só câmera, sem zona morta
+    exceeded = gesture.state === 'CAMERA_DRAG'; // sem alvo sob o dedo o gesto é só câmera, sem zona morta
+    touchRing.hidden = !fingerMode(); touchRing.style.setProperty('--p', '0');
   });
   lookPad.addEventListener('pointermove', (e) => {
     if (e.pointerId !== lookId) return;
+    setFinger(e);
     const dist = Math.hypot(e.clientX - sx, e.clientY - sy);
     gesture.drag(e.pointerId, dist);
     if (!exceeded && dist > DRAG_TOLERANCE_PX) { exceeded = true; lx = e.clientX; ly = e.clientY; } // a câmera passa a girar daqui, sem salto
     if (exceeded) look((e.clientX - lx) * 0.006, (e.clientY - ly) * 0.006);
     lx = e.clientX; ly = e.clientY;
   });
-  lookPad.addEventListener('pointerup', (e) => { if (e.pointerId !== lookId) return; lookId = -1; gesture.release(e.pointerId, e.timeStamp, toTarget(target)); });
+  lookPad.addEventListener('pointerup', (e) => { if (e.pointerId !== lookId) return; lookId = -1; computeAim(); gesture.release(e.pointerId, e.timeStamp, toTarget(target)); endFinger(); });
   // ponteiro cancelado ou captura perdida: limpa o gesto sem agir
-  for (const t of ['pointercancel', 'lostpointercapture'] as const) lookPad.addEventListener(t, (e) => { if ((e as PointerEvent).pointerId === lookId) { lookId = -1; gesture.cancel(); } });
+  for (const t of ['pointercancel', 'lostpointercapture'] as const) lookPad.addEventListener(t, (e) => { if ((e as PointerEvent).pointerId === lookId) { lookId = -1; gesture.cancel(); endFinger(); } });
+  /** Dedo levantado: some o anel e o alvo volta ao nada (no toque não há mira central). */
+  function endFinger(): void { fingerNdc = null; touchRing.hidden = true; }
 
   // ---- Ações: gesto primário (ADR 0042) ----
   let target: Hit | null = null;
+  /** Toque (ADR 0075): ponto da tela sob o dedo em −1…1 (`null` = sem dedo: no toque não há alvo nem mira central). */
+  let fingerNdc: { x: number; y: number } | null = null;
+  /** Recalcula o alvo (bloco, lasca ou animal) e o rótulo: no PC e no tablet sem dedo, o raio do centro da tela; no toque (ADR 0075), o raio que passa pelo dedo, e sem dedo nada. */
+  function computeAim(): void {
+    const act = playing && !bagOpen, b = session.body, eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
+    const ray = !act ? null : fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
+    if (!ray) { target = null; aimCreature = null; } else {
+      const [dx, dy, dz] = ray;
+      target = raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE);
+      const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5) : Infinity;
+      aimCreature = creatureAim(session.creatures, eye.x, eye.y, eye.z, dx, dy, dz, ATTACK_REACH, blockDist); // animal na mira: mais perto que o bloco apontado (ADR 0069)
+    }
+    const c = aimCreature ? session.creatures[aimCreature.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : null;
+    if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
+  }
   /** Animal na mira (ADR 0069): vence o bloco que está atrás dele; o toque curto o golpeia. */
   let aimCreature: { index: number; dist: number } | null = null;
   let nextAttackAt = 0;
@@ -644,6 +682,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
       if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
+      if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
       if (held && foodOf(held.item)) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come
       const r = placeFromSlot(session, t, session.selected);
@@ -730,9 +769,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const moved = dirX !== 0 || dirZ !== 0;
       const px = b.x, pz = b.z;
       const wasOnGround = b.onGround;
-      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump }, dt);
+      const sprint = dirs.up && !dirs.down && now - upSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // segurar ▲ por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
+      sprintOn = sprint; view.setSprint(sprint);
+      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint }, dt);
       if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
-      addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * EXHAUSTION.walkPerBlock);
+      addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * (sprintOn ? EXHAUSTION.sprintPerBlock : EXHAUSTION.walkPerBlock));
       if (moved || !b.onGround) playerDirty = true;
       // queda: dano = ⌈altura − 3⌉ ao pousar no chão; cair na água não machuca
       if (b.inLiquid) { airTop = b.y; wasAir = false; }
@@ -750,7 +791,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         const m = surfaceOf(vol.get(Math.floor(b.x), Math.floor(b.y - 0.01), Math.floor(b.z)));
         if (m) gameAudio.playFootstep(m);
       }
-    } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
+    } else { sprintOn = false; view.setSprint(false); if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); } // parado: só assenta no chão
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
       const before = session.time;
@@ -785,15 +826,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
-    const [dx, dy, dz] = lookVector(session.yaw, session.pitch);
-    target = active ? raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE) : null;
-    { // animal na mira: mais perto que o bloco apontado (ADR 0069); rótulo com a vida
-      const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5) : Infinity;
-      aimCreature = active ? creatureAim(session.creatures, eye.x, eye.y, eye.z, dx, dy, dz, ATTACK_REACH, blockDist) : null;
-      const c = aimCreature ? session.creatures[aimCreature.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : null;
-      if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
+    computeAim();
+    if (fingerMode()) { // anel no dedo: enche enquanto quebra (ADR 0075)
+      touchRing.classList.toggle('on', gesture.state === 'ARMED' || gesture.state === 'BREAKING');
+      touchRing.style.setProperty('--p', String(gesture.progress));
     }
-    useBtn.hidden = !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar"
+    useBtn.hidden = fingerMode() || !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar" (no toque, tocar na estação a abre)
     if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);

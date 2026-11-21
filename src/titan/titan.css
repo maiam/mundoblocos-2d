@@ -52,11 +52,18 @@ body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; displa
 .titan-touch { position: absolute; inset: 0; display: none; }
 body.titan-touch-on .titan-touch { display: block; }
 .titan-acts { grid-template-columns: repeat(2, auto); }
-.titan-stick { position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); width: 120px; height: 120px; border-radius: 50%; background: #171c2088; border: 1px solid #77543888; pointer-events: auto; touch-action: none; }
-.titan-stick i { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; background: #d99342aa; }
-.titan-look { position: absolute; right: 0; top: 0; width: 50%; height: 70%; pointer-events: auto; touch-action: none; }
+.titan-look { position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 84px); pointer-events: auto; touch-action: none; } /* a tela toda acima da hotbar: a ação é no ponto do toque (ADR 0075); os controles ficam por cima */
 .titan-acts { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(2, auto); gap: 8px; pointer-events: auto; }
 .titan-acts .titan-btn { min-width: 74px; min-height: 48px; }
+/* Toque (ADR 0075), como o Minecraft de toque: setas no lugar do joystick, botão de pular quadrado com a seta para cima e anel no ponto do toque */
+body.titan-aim-finger .titan-cross { display: none; } /* mira no dedo: sem cruzeta central; no modo central (ADR 0076) ela volta */
+.titan-dpad { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); width: 168px; height: 112px; pointer-events: auto; touch-action: none; }
+.titan-dir { position: absolute; width: 56px; height: 56px; padding: 0; border: 2px solid #171c20; border-radius: 4px; background: #8e8680cc; color: #2a2220; font: 700 22px system-ui, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+.titan-dir.on { background: #d99342; color: #171410; }
+.titan-dir.up { left: 56px; top: 0; } .titan-dir.left { left: 0; top: 28px; } .titan-dir.right { left: 112px; top: 28px; } .titan-dir.down { left: 56px; top: 56px; }
+.titan-acts .titan-btn.jump { width: 64px; height: 64px; min-width: 0; min-height: 0; padding: 0; background: #8e8680cc; color: #2a2220; border: 2px solid #171c20; font: 700 26px system-ui, sans-serif; }
+.titan-touchring { position: fixed; z-index: 3; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; border: 3px solid #8ca1bc; box-sizing: border-box; pointer-events: none; --p: 0; opacity: 0; }
+.titan-touchring.on { opacity: 1; background: conic-gradient(#8ca1bc88 calc(var(--p) * 360deg), transparent 0); }
 
 /* Indicador discreto de recolhimento (lanterna e lasca solta, ADR 0042): anel fino em volta da mira que enche em 0,35 s; sem rachaduras */
 .titan-collect { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; --p: 0;
