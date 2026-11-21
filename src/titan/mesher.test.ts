@@ -2,18 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { TitanGenerator } from './generator';
 import { meshSection, tileUV } from './mesher';
 import { TitanVolume } from './volume';
+import tilesCfg from './tiles.json';
 import { T } from './voxel';
 
 describe('malha por seção', () => {
-  it('uv de cada tile cai na área útil de 16 px (sem a borda de 2 px do atlas)', () => {
+  it('uv de cada tile cai na área útil de 32 px (sem a borda de 2 px do atlas de 36 px de passo, 8 colunas)', () => {
+    const W = 288, H = 216;
     const [u0, v0, u1, v1] = tileUV(0);
-    [u0 * 80, u1 * 80, (1 - v1) * 100, (1 - v0) * 100].forEach((n, i) => expect(n).toBeCloseTo([2, 18, 2, 18][i], 6));
-    const [a, , b] = tileUV(7);
-    expect(a * 80).toBeCloseTo(62, 6);
-    expect(b * 80).toBeCloseTo(78, 6);
-    const [, w0, , w1] = tileUV(9); // linha 3: veios (ADR 0044)
-    expect((1 - w1) * 100).toBeCloseTo(42, 6);
-    expect((1 - w0) * 100).toBeCloseTo(58, 6);
+    [u0 * W, u1 * W, (1 - v1) * H, (1 - v0) * H].forEach((n, i) => expect(n).toBeCloseTo([2, 34, 2, 34][i], 6));
+    const [a, , b] = tileUV(9); // 2.ª coluna da 2.ª linha: x = 1 * 36 + 2
+    expect(a * W).toBeCloseTo(38, 6); expect(b * W).toBeCloseTo(70, 6);
+    const [, w0, , w1] = tileUV(17); // 2.ª linha (índice 8..15) e a 3.ª (16..23): linha 2, coluna 1
+    expect((1 - w1) * H).toBeCloseTo(2 * 36 + 2, 6); expect((1 - w0) * H).toBeCloseTo(2 * 36 + 34, 6);
+  });
+  it('o atlas de terreno cobre todos os tiles do tiles.json com 41 entradas únicas', () => {
+    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles).toHaveLength(41); expect(tilesCfg.cols * tilesCfg.cols).toBeGreaterThanOrEqual(tilesCfg.tiles.length);
   });
   it('seção de ar não gera malha; a da superfície gera faces e o lago tem malha própria', () => {
     const g = new TitanGenerator(42), v = new TitanVolume(g);

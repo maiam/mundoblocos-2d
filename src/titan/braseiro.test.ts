@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { BREAK_MS, breakTotalMs, PICK_FACTOR } from './breaking';
 import { blockOfItem, isDagger, isPick, Item, itemOfBlock, maxStack, pickTier } from './items';
 import { craft, RECIPES, stationMet } from './recipes';
-import { isBrazier, isSolid, T, tileFor } from './voxel';
+import { isBrazier, isSolid, T, tileFor, tileIndex } from './voxel';
 import { Inventory } from './inventory';
 
 
 describe('Braseiro de Rocha e ferramentas de cobre (ADR 0065, 0068)', () => {
   it('ids, tiles, itens e tempos: braseiro de rocha, picareta de cobre mais rápida, adagas', () => {
     expect(isBrazier(T.BRAZIER) && isBrazier(T.BRAZIER_LIT)).toBe(true); expect(isSolid(T.BRAZIER)).toBe(true);
-    expect(tileFor(T.BRAZIER, 'top')).toBe(13); expect(tileFor(T.BRAZIER_LIT, 'top')).toBe(14); expect(tileFor(T.BRAZIER, 'side')).toBe(12); expect(tileFor(T.BRAZIER_LIT, 'bottom')).toBe(12);
+    expect(tileFor(T.BRAZIER, 'top')).toBe(tileIndex('17-braseiro-de-rocha/topo-apagado')); expect(tileFor(T.BRAZIER_LIT, 'top')).toBe(tileIndex('17-braseiro-de-rocha/topo-aceso')); expect(tileFor(T.BRAZIER, 'side')).toBe(tileIndex('17-braseiro-de-rocha/lateral-comum')); expect(tileFor(T.BRAZIER_LIT, 'bottom')).toBe(tileIndex('17-braseiro-de-rocha/lateral-comum'));
     expect(blockOfItem(Item.BRAZIER)).toBe(T.BRAZIER); expect(itemOfBlock(T.BRAZIER_LIT)).toBe(Item.BRAZIER); expect(itemOfBlock(T.BRAZIER)).toBe(Item.BRAZIER);
     expect(breakTotalMs('block', T.BRAZIER)).toBe(BREAK_MS.rock);
     expect(breakTotalMs('block', T.VEIN_COPPER, 'copper')).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.copper)); expect(PICK_FACTOR.copper).toBeLessThan(PICK_FACTOR.rock);

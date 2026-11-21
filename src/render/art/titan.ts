@@ -1,4 +1,4 @@
-import atlas from '../../assets/titan-atlas-16px.webp';
+import atlas from '../../assets/titan-atlas-32px.webp';
 
 /**
  * Arte do Titã (ADR 0010/0039): o atlas de terreno da Margem Silenciosa (80 × 40 px, 4 × 2 tiles de 16 px com 2 px de borda duplicada).

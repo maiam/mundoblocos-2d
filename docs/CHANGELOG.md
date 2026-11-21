@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.138.0 — Titã: atlas de terreno de 32 px por face (21/11/2026)
+- **Pranchas individuais de texturas do dono do produto (32 px); substituem também os blocos existentes.** **ADR 0079.** Atlas novo (288 × 216, 42 KB) com topo, lateral e base próprios em todos os blocos do terreno (areia, rocha, gelo, veios, cobre, depósito, laje, carapaça, braseiro, veio e bloco de âmbar).
+- `src/titan/tiles.json` (ordem dos 41 tiles) é a fonte única do script `make-titan-atlas32.py` e do TypeScript; `tileFor` devolve o tile por face e `tileIndex(nome)` busca pelo nome.
+- Lago e modelos 3D (mesa, lanterna, Marco, Painel) ficam como estavam. Testes de UV e de `tileFor` atualizados (1.058 no total). Conferido a 740 × 360.
+
 ## Orvalis v0.137.0 — Titã: Picareta de Rocha na mão (21/11/2026)
 - **Pacote 3D "Picareta de Rocha" do dono do produto.** **ADR 0078.** GLB de 3,1 MB (com rig e clipe) → **325 KB** só com a malha (4.632 triângulos) e o BaseColor 1024 px em WebP, por `scripts/export-titan-picareta.py`; carregado só quando a picareta é escolhida.
 - A picareta aparece na mão com **golpe próprio, por cima** (`STYLES` em `heldPose.ts`; a adaga segue cortando em diagonal) e se repete ao segurar para quebrar. `HELD_MODELS` mapeia item → modelo, estilo e escala.

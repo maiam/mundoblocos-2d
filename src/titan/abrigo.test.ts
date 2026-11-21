@@ -7,7 +7,7 @@ import { blockOfItem, Item, itemOfBlock } from './items';
 import { craft, RECIPES } from './recipes';
 import { MemoryTitanStorage } from './save';
 import { flush, openSession, visibleItems } from './session';
-import { isSolid, T, tileFor } from './voxel';
+import { isSolid, T, tileFor, tileIndex } from './voxel';
 
 const SEEDS = [1, 2, 7, 42, 99, 150];
 
@@ -34,7 +34,7 @@ describe('gerador v8: abrigos com placa de carapaça (ADR 0066)', () => {
     for (const v of [5, 6, 7]) { const old = new TitanGenerator(42, v); expect(old.plates).toHaveLength(0); expect(old.shelterSites).toHaveLength(0); }
   });
   it('revestimento: tile e item, rocha no tempo de quebra, receita 1 placa + 1 rocha escura → 2 (mesa)', () => {
-    expect(isSolid(T.CARAPACE)).toBe(true); expect(tileFor(T.CARAPACE, 'top')).toBe(15); expect(tileFor(T.CARAPACE, 'side')).toBe(15);
+    expect(isSolid(T.CARAPACE)).toBe(true); expect(tileFor(T.CARAPACE, 'top')).toBe(tileIndex('12-revestimento-de-carapaca/topo')); expect(tileFor(T.CARAPACE, 'side')).toBe(tileIndex('12-revestimento-de-carapaca/lateral'));
     expect(blockOfItem(Item.CARAPACE)).toBe(T.CARAPACE); expect(itemOfBlock(T.CARAPACE)).toBe(Item.CARAPACE); expect(breakTotalMs('block', T.CARAPACE)).toBe(BREAK_MS.rock);
     const r = RECIPES.find((x) => x.id === 'revestimento')!;
     expect(r.station).toBe('workbench'); expect(r.group).toBe('construcao'); expect(r.result).toEqual({ item: Item.CARAPACE, count: 2 });

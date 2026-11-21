@@ -2,6 +2,7 @@
  * Titã — grade voxel (ADR 0039). Independente de `SUBDIV`, de `World` e da grade de chão/pilhas do Orvalis: aqui a unidade é 1 bloco = 1 m
  * e a ocupação é por `(x, y, z)`. Sem DOM e sem `Math.random()`: roda em Node (testes) e é determinística por seed + versão do gerador.
  */
+import tilesCfg from './tiles.json';
 
 /** Altura mínima/máxima (inclusivas) das células: 384 camadas, 24 seções de 16. Y é a base do voxel. */
 export const Y_MIN = -64;
@@ -103,27 +104,33 @@ export const isModelBlock = (id: number): boolean => id === T.LANTERN || modelOf
 
 export type Face = 'top' | 'side' | 'bottom';
 
-/** Índice do tile no atlas 4 × 2 (col = i % 4, linha = i / 4 | 0): ver `render/art/titan.ts` e a direção de arte. */
+/** Os tiles do atlas de terreno (32 px por face, ADR 0079), na ordem do `tiles.json` (a mesma que o script do atlas lê). */
+const TILE_NAMES: readonly string[] = tilesCfg.tiles;
+const TILE_INDEX = new Map(TILE_NAMES.map((n, i) => [n, i]));
+/** Índice de um tile pelo nome (`'03-rocha-escura/topo'`); falha cedo se o nome não existe. */
+export function tileIndex(name: string): number {
+  const i = TILE_INDEX.get(name);
+  if (i === undefined) throw new Error(`tile desconhecido: ${name}`);
+  return i;
+}
+const faces3 = (prefix: string): readonly [number, number, number] => [tileIndex(`${prefix}/topo`), tileIndex(`${prefix}/lateral`), tileIndex(`${prefix}/base`)];
+const ROCK = faces3('03-rocha-escura');
+/** Tiles [topo, lateral, base] de cada bloco do terreno. O resto (e a laje dupla, da família da rocha escura) cai na rocha escura. */
+const BLOCK_TILES: Record<number, readonly [number, number, number]> = {
+  [T.SAND]: faces3('01-areia-ocre'), [T.DAMP_SAND]: faces3('02-areia-umida'), [T.DARK_ROCK]: ROCK, [T.FROST]: faces3('04-gelo-fosco'), [T.BEDROCK]: faces3('05-rocha-mae'),
+  [T.LAKE]: ROCK, // o líquido tem atlas próprio (ADR 0057); este tile só preenche o índice
+  [T.VEIN_ROCK]: faces3('06-rocha-com-veio'), [T.VEIN_FROST]: faces3('07-gelo-com-veio'), [T.VEIN_COPPER]: faces3('08-veio-de-cobre-de-duna'), [T.EMBER]: faces3('09-deposito-de-brasa'),
+  [T.SLAB]: [tileIndex('11-laje-de-rocha/topo'), tileIndex('11-laje-de-rocha/lateral'), tileIndex('11-laje-de-rocha/topo')], // a lateral tem 32 × 16 e usa a metade de cima do tile
+  [T.CARAPACE]: faces3('12-revestimento-de-carapaca'), [T.EMBER_VEIN]: faces3('18-veio-de-ambar'), [T.EMBER_BLOCK]: faces3('19-bloco-de-ambar-compactado'),
+  [T.BRAZIER]: [tileIndex('17-braseiro-de-rocha/topo-apagado'), tileIndex('17-braseiro-de-rocha/lateral-comum'), tileIndex('17-braseiro-de-rocha/lateral-comum')],
+  [T.BRAZIER_LIT]: [tileIndex('17-braseiro-de-rocha/topo-aceso'), tileIndex('17-braseiro-de-rocha/lateral-comum'), tileIndex('17-braseiro-de-rocha/lateral-comum')],
+};
+BLOCK_TILES[T.SLAB_TOP] = BLOCK_TILES[T.SLAB];
+
+/** Índice do tile da face de um bloco no atlas de terreno de 32 px (ADR 0079): topo, lateral e base são texturas próprias; a mesa, a lanterna, o Marco e o Painel são modelos 3D e não usam o atlas. */
 export function tileFor(id: number, face: Face): number {
-  switch (id) {
-    case T.EMBER_VEIN: return 16; // veio de âmbar (gerador v11): rocha violeta com veios alaranjados, mesma arte nas 6 faces
-    case T.EMBER_BLOCK: return 17; // bloco de âmbar compactado: placas de âmbar em todas as faces
-    case T.CARAPACE: return 15; // fileiras de placas sobrepostas, em todas as faces
-    case T.BRAZIER: return face === 'top' ? 13 : 12; // cuba apagada no topo, rocha violeta nas laterais
-    case T.BRAZIER_LIT: return face === 'top' ? 14 : 12; // cuba com a brasa acesa
-    case T.SAND: return face === 'top' ? 0 : 1;
-    case T.DAMP_SAND: return face === 'top' ? 2 : 3;
-    case T.DARK_ROCK:
-    case T.SLAB: case T.SLAB_TOP: case T.SLAB_DOUBLE: // a laje reaproveita a rocha escura: topo de 16 × 16 e lateral com 8 px de altura (ADR 0046)
-    case T.BEDROCK: return 4;
-    case T.FROST: return 5;
-    case T.LAKE: return 6; // quadro 1 (o quadro 2 = 7 é alternado no render)
-    case T.VEIN_ROCK: return 8; // veios naturais (gerador v3): linha 3 do atlas, mesma arte nas 6 faces
-    case T.VEIN_FROST: return 9;
-    case T.VEIN_COPPER: return 11; // veio de cobre de Duna (gerador v6): rocha violeta com veios cor de cobre, mesma arte nas 6 faces
-    case T.EMBER: return 10; // depósito de brasa de âmbar (gerador v4): rocha com cristal; a mesa (10) é o modelo 3D do renderer, não usa o atlas
-    default: return 4;
-  }
+  const t = BLOCK_TILES[id] ?? ROCK;
+  return face === 'top' ? t[0] : face === 'bottom' ? t[2] : t[1];
 }
 
 export const inRegion = (x: number, z: number, r: Region = REGION_LEGACY): boolean => x >= r.min && x < r.max && z >= r.min && z < r.max;
