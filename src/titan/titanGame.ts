@@ -23,7 +23,8 @@ import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
-import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
+import { advanceDay, isNightTime, parseHora, phaseName, saturnVisibility } from './sky';
+import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepVeil } from './sleep';
 import { isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
@@ -66,6 +67,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   document.body.classList.add('titan');
   const ui = el('div', 'titan-ui', document.body);
   const veil = el('div', 'titan-veil', ui);
+  const sleepEl = el('div', 'titan-sleep', ui); // véu escuro do sono na cama (ADR 0093)
   const hurt = el('div', 'titan-hurt', ui); // clarão vermelho ao tomar dano (ADR 0059)
   ui.style.setProperty('--hud', `url(${titanHudUrl})`); // véu carvão-violeta da imersão (ADR 0057): primeiro filho, abaixo de todos os controles; sem toque
   ui.style.setProperty('--basalt', `url(${titanBasaltUrl})`); // fundo e moldura dos painéis (ADR 0049)
@@ -431,13 +433,24 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const blk = vol.get(stationAt.x, stationAt.y, stationAt.z);
     return (stationAt.kind === 'workbench' ? isWorkbench(blk) : stationAt.kind === 'chest' ? isChest(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
+  /** Sono (ADR 0093): `sleepStart` = instante do início (0 = acordado); a noite passa em `SLEEP_APPLY_MS` e o controle volta em `SLEEP_CONTROL_MS`. */
+  let sleepStart = 0, sleepApplied = false, sleepBed: { x: number; y: number; z: number } | null = null;
+  function applyBed(x: number, y: number, z: number): void {
+    const r = useBed(session, x, y, z);
+    if (r.msg) notice(r.msg);
+    if (r.ok) { onEdited(); playerDirty = true; }
+  }
   function openStation(): void {
     const at = benchAimed();
     if (!at || bagOpen || !playing) return;
     if (at.kind === 'bed') { // a cama não abre tela: marca o ponto de retorno e, à noite, dorme até o amanhecer (ADR 0090)
-      const r = useBed(session, at.x, at.y, at.z);
-      if (r.msg) notice(r.msg);
-      if (r.ok) { onEdited(); playerDirty = true; }
+      if (isNightTime(session.time)) { // à noite: o véu escurece, a noite passa com a tela preta e ele clareia (ADR 0093)
+        if (sleepStart) return;
+        sleepStart = performance.now(); sleepApplied = false; sleepBed = { x: at.x, y: at.y, z: at.z };
+        keys.clear(); gesture.cancel();
+        return;
+      }
+      applyBed(at.x, at.y, at.z);
       return;
     }
     stationAt = { x: at.x, y: at.y, z: at.z, kind: at.kind };
@@ -803,7 +816,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     const b = session.body;
-    const active = playing && !bagOpen;
+    let sleeping = false;
+    if (sleepStart) { // véu do sono (ADR 0093)
+      const ms = now - sleepStart;
+      if (!sleepApplied && ms >= SLEEP_APPLY_MS) { sleepApplied = true; if (sleepBed) applyBed(sleepBed.x, sleepBed.y, sleepBed.z); }
+      sleepEl.style.opacity = String(sleepVeil(ms));
+      sleeping = ms < SLEEP_CONTROL_MS;
+      if (ms >= SLEEP_TOTAL_MS) { sleepStart = 0; sleepEl.style.opacity = '0'; }
+    }
+    const active = playing && !bagOpen && !sleeping;
+    view.setOpenChest(bagOpen && stationAt?.kind === 'chest' ? stationAt : null); // a tampa do baú abre com o painel (ADR 0093)
     if (active) {
       let fx = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - input.stickY;
       let sx = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) + input.stickX;

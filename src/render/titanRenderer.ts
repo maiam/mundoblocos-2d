@@ -4,7 +4,7 @@ import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
 import { loadHeldModel } from './heldItem';
-import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanCamaModel, titanBraseiroModel, titanBraseiroAcesoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanBraseiroAcesoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -19,6 +19,7 @@ import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
 import { type ModelKindName, T } from '../titan/voxel';
+import { lidIdle, stepLid } from '../titan/lid';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -252,7 +253,7 @@ export class TitanRenderer {
     brtex.needsUpdate = true;
     const brmat = new THREE.MeshBasicMaterial({ map: brtex, vertexColors: true, fog: true });
     patchDayLight(brmat, this.ambient, { instGlow: true });
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat]];
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -372,27 +373,63 @@ export class TitanRenderer {
     const mat = new THREE.Matrix4();
     for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso'] as const) {
       const cells = this.volume.modelCells(kind);
-      let mesh = this.modelMeshes[kind];
-      if (cells.length > mesh.instanceMatrix.count) {
-        const n = new THREE.InstancedMesh(mesh.geometry, mesh.material, Math.max(cells.length, mesh.instanceMatrix.count * 2));
-        n.frustumCulled = false;
-        this.scene.remove(mesh);
-        this.scene.add(n);
-        mesh = this.modelMeshes[kind] = n;
+      for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
+        let mesh = this.modelMeshes[target];
+        if (cells.length > mesh.instanceMatrix.count) {
+          const n = new THREE.InstancedMesh(mesh.geometry, mesh.material, Math.max(cells.length, mesh.instanceMatrix.count * 2));
+          n.frustumCulled = false;
+          this.scene.remove(mesh);
+          this.scene.add(n);
+          mesh = this.modelMeshes[target] = n;
+        }
+        const glow = new Float32Array(mesh.instanceMatrix.count * 3);
+        if (target === 'bauTampa') this.lidIndex.clear();
+        cells.forEach(([x, y, z, turn], i) => {
+          if (target === 'bauTampa') { this.lidIndex.set(lidKey(x, y, z), { i, x, y, z, turn }); this.setLidMatrix(mesh, i, x, y, z, turn, this.lidAngles.get(lidKey(x, y, z)) ?? 0); }
+          else { mat.makeRotationY(turn * Math.PI / 2).setPosition(x + 0.5, y, z + 0.5); mesh.setMatrixAt(i, mat); }
+          let lv = 0;
+          for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
+          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : 0); // o braseiro aceso brilha sozinho, de dia e de noite
+          glow.set([w, w * 0.72, w * 0.38], i * 3);
+        });
+        mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));
+        mesh.count = cells.length;
+        mesh.instanceMatrix.needsUpdate = true;
       }
-      const glow = new Float32Array(mesh.instanceMatrix.count * 3);
-      cells.forEach(([x, y, z, turn], i) => {
-        mat.makeRotationY(turn * Math.PI / 2).setPosition(x + 0.5, y, z + 0.5);
-        mesh.setMatrixAt(i, mat);
-        let lv = 0;
-        for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
-        const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : 0); // o braseiro aceso brilha sozinho, de dia e de noite
-        glow.set([w, w * 0.72, w * 0.38], i * 3);
-      });
-      mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));
-      mesh.count = cells.length;
-      mesh.instanceMatrix.needsUpdate = true;
     }
+  }
+
+  // ---- Tampa do baú (ADR 0093) ----
+  private readonly lidAngles = new Map<string, number>();
+  private readonly lidIndex = new Map<string, { i: number; x: number; y: number; z: number; turn: number }>();
+  private openChest: string | null = null;
+  private lidTime = 0;
+  /** Matriz da tampa: a posição do baú, o giro, a dobradiça e a abertura (a frente sobe; a dobradiça fica atrás, em −z). */
+  private setLidMatrix(mesh: THREE.InstancedMesh, i: number, x: number, y: number, z: number, turn: number, angle: number): void {
+    const [px, py, pz] = titanBauTampaModel.pivot, t = new THREE.Matrix4();
+    const m = new THREE.Matrix4().makeTranslation(x + 0.5, y, z + 0.5);
+    m.multiply(t.makeRotationY(turn * Math.PI / 2)).multiply(t.makeTranslation(px, py, pz)).multiply(t.makeRotationX(-angle));
+    mesh.setMatrixAt(i, m);
+  }
+  /** O baú cujo painel está aberto (a tampa abre) ou `null`; o que estava aberto fecha sozinho. */
+  setOpenChest(cell: { x: number; y: number; z: number } | null): void {
+    this.openChest = cell ? lidKey(cell.x, cell.y, cell.z) : null;
+    if (this.openChest && !this.lidAngles.has(this.openChest)) this.lidAngles.set(this.openChest, 0);
+  }
+  /** Quantos baús estão com a tampa em movimento ou aberta (diagnóstico e testes de navegador). */
+  get lidsActive(): number { return this.lidAngles.size; }
+  lidAngle(x: number, y: number, z: number): number { return this.lidAngles.get(lidKey(x, y, z)) ?? 0; }
+  private animateLids(time: number): void {
+    const dt = this.lidTime ? time - this.lidTime : 0;
+    this.lidTime = time;
+    if (!this.lidAngles.size) return;
+    const mesh = this.modelMeshes.bauTampa;
+    for (const [key, angle] of [...this.lidAngles]) {
+      const open = key === this.openChest, next = stepLid(angle, open, dt), cell = this.lidIndex.get(key);
+      if (cell) this.setLidMatrix(mesh, cell.i, cell.x, cell.y, cell.z, cell.turn, next);
+      if (!open && lidIdle(next, false)) this.lidAngles.delete(key); else this.lidAngles.set(key, next);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
   }
 
   /** Mesas desenhadas (diagnóstico e testes de navegador). */
@@ -724,6 +761,7 @@ export class TitanRenderer {
     }
     this.syncLanterns();
     this.syncModels(this.built > 0);
+    this.animateLids(time);
     this.timeU.value = time;
     let n = 0;
     this.clock = time;
@@ -878,7 +916,8 @@ function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
 }
 
 /** Mesa de Trabalho: sombreado por face (mesmos fatores do terreno) e luz do dia no shader; o brilho de lanterna entra por instância (`iGlow`). UV do glTF (origem no canto superior esquerdo). */
-type ModelKind = ModelKindName;
+type ModelKind = ModelKindName | 'bauTampa';
+const lidKey = (x: number, y: number, z: number): string => `${x},${y},${z}`;
 /** Brilho fixo do Braseiro aceso (ADR 0092), na mesma escala do brilho de lanterna por instância (`iGlow`). */
 const EMBER_GLOW = 0.55;
 
