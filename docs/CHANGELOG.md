@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.154.0 — Titã: tampa do baú e véu do sono (21/11/2026)
+- **ADR 0093.** O Baú de Rocha e Junco passa a ter a **tampa animada**: ela é uma malha própria (1.700 triângulos) e gira em torno da dobradiça atrás do baú, abrindo (~109° em ~0,35 s) com o painel do baú e fechando ao fechar o painel. Só desenho: sem mudança de save.
+- **Dormir na cama** ganha um **véu escuro**: a tela escurece, a noite passa com ela preta e o véu clareia devagar; o controle volta antes do fim. De dia a cama continua só marcando o ponto de retorno.
+- `extract-titan-bau.py` agora separa corpo e tampa. Testes: +3 (1.160 no total). Conferido a 740 × 360 e no jogo.
+
 ## Orvalis v0.153.0 — Titã: Braseiro de Rocha em 3D (21/11/2026)
 - **Fecha a rodada "Itens do Abrigo". ADR 0092.** O Braseiro de Rocha ganha modelo 3D do pacote de arte, apagado e aceso (mesmos blocos 25 e 26; a troca ao acender já existia). 0,935 × 0,935 m na base e 0,774 m de altura: barra o corpo nessa altura, a mira acerta a caixa do modelo e deixa de ser cubo inteiro.
 - O aceso mostra as brasas e brilha por conta própria, de dia e de noite (sem emitir luz no mapa ainda). Na mão o item vira sprite extrudado.

@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Tampa do baú e véu do sono (v0.154.0, ADR 0093):** `titan/lid.ts` (`stepLid`, `LID_OPEN_ANGLE`) e `titan/sleep.ts` (`sleepVeil`, `SLEEP_APPLY_MS`) puros; `ModelKind` `bauTampa` no renderer (mesmas células do baú), `setOpenChest`/`animateLids`; véu `.titan-sleep` e `sleeping` em `titanGame.ts`.
 - **Braseiro 3D (v0.153.0, ADR 0092):** `modelOf(T.BRAZIER/BRAZIER_LIT)` = `braseiro`/`braseiroAceso` (`ModelKindName` em `voxel.ts`); `BRAZIER_HEIGHT` 0,774 em `blockSpan`, fora de `isFull`; `modelBox`/`raycast` com `isBrazier`; `EMBER_GLOW` do renderer; `scripts/extract-titan-braseiro.py`.
 - **Balde de Cobre (v0.152.0, ADR 0091):** `Item.BALDE` (35) e `Item.BALDE_CHEIO` (36), `isBucket` em `items.ts`; `raycast(…, liquid)` mira `T.LAKE` com balde na mão; `actions.useBucket` (recolhe a célula de cima da coluna → ar; despeja em ar livre com Y ≤ `LAKE_LAST_Y` → `T.LAKE`); `Inventory.replace`; sem fluxo de líquido.
 - **Cama de Junco (v0.151.0, ADR 0090):** `T.BED`…`BED_HEAD_270` (39–46, pé e cabeceira) e `Item.CAMA` (34); `isBed`/`isBedFoot`/`isBedHead`/`bedPartnerOffset`/`bedTurnFacing`/`BED_HEIGHT` em `voxel.ts`; `actions.placeBed`/`breakBed`/`useBed`/`bedSpawn` (e `dieAndRespawn`); `session.spawn` + `header.spawn`; `sky.isNightTime`/`WAKE_TICKS`; modelo `cama` instanciado só no pé.

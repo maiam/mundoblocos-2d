@@ -45,6 +45,7 @@ import braseiroAcesoModel from '../../assets/titan-braseiro-aceso.json';
 import braseiroAtlas from '../../assets/titan-braseiro-atlas.webp';
 import bauModel from '../../assets/titan-bau.json';
 import bauAtlas from '../../assets/titan-bau-atlas.webp';
+import bauTampaModel from '../../assets/titan-bau-tampa.json';
 import escadaAtlas from '../../assets/titan-escada-atlas.webp';
 import painelModel from '../../assets/titan-painel.json';
 import margemAtlas from '../../assets/titan-margem-atlas.webp';
@@ -90,6 +91,8 @@ export const titanEscadaAtlasUrl: string = escadaAtlas;
 /** Baú de Rocha e Junco (ADR 0089): 1.800 triângulos reduzidos do GLB de jogo (`scripts/extract-titan-bau.py`) e a cor-base de 256 px. */
 export const titanBauModel = bauModel as ModelData;
 export const titanBauAtlasUrl: string = bauAtlas;
+/** Tampa do baú (ADR 0093): 1.700 triângulos com os vértices relativos à dobradiça; `pivot` = a dobradiça no espaço do baú. O corpo (acima) são só 124 triângulos. */
+export const titanBauTampaModel = bauTampaModel as ModelData & { pivot: [number, number, number] };
 /** Cama de Junco (ADR 0090): 2.200 triângulos reduzidos do GLB de jogo (`scripts/extract-titan-cama.py`), cobrem as duas células (pé na origem, cabeceira em +z), e a cor-base de 256 px. */
 export const titanCamaModel = camaModel as ModelData;
 export const titanCamaAtlasUrl: string = camaAtlas;

@@ -16,6 +16,7 @@ body.titan #world { position: fixed; inset: 0; width: 100%; height: 100%; displa
 .titan-slot.out { border-color: #d99342; }
 /* Ícones de item (ADR 0053): atlas de 32 px por célula (4 × 4 = 128 px), sempre exibido em ESCALA INTEIRA (32 → 32 ou 64 px) com `pixelated`: nunca 1,5×. */
 /* Véu da imersão no Lago Escuro (ADR 0057): carvão-violeta sobre a cena, abaixo da interface */
+.titan-sleep { position: absolute; inset: 0; background: #04050a; opacity: 0; pointer-events: none; z-index: 5; }
 .titan-veil { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(40, 34, 70, 0.1) 0%, rgba(16, 12, 30, 0.42) 100%); opacity: 0; pointer-events: none; }
 /* Vida, ar e fome (ADR 0059): marcas do atlas de 96 × 96 px (3 × 3 de 32 px) reduzidas ao tamanho do HUD (só redução, sem `pixelated`) */
 .titan-ui { --hudm: 22px; }
