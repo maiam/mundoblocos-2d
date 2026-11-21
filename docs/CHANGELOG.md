@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.144.0 — Titã: cultivo do Junco de Vidro (21/11/2026)
+- **Etapa 1 da rodada "cultivo e oficina da Margem". ADR 0083.** Plantar a muda (o próprio Junco de Vidro) no topo da areia: **úmida** → junco de vidro em 3 fases; **ocre** → junco ressecado. Adulto colhido rende 2 mudas (úmido, volta a "crescendo") ou 2 Hastes Secas (ressecado, volta a muda); a planta nunca é arrancada. Quebrar a areia derruba a planta e devolve a muda no chão.
+- Crescimento por **random ticks** (média de 30 s por planta, só perto do viajante) com a fórmula do Minecraft (pontos da areia e vizinhas, metade se aglomerada, luz ≥ 9: céu aberto de dia ou lanterna). `titan/crops.ts` (puro) + `session.tickCrops`; `header.crops` opcional (sem subir a versão do save).
+- Atlas `titan-cultivo-32px.webp` (`scripts/make-titan-cultivo32.py`) e `TitanRenderer.setCrops`. Testes: +17 (1.086 no total). Conferido a 740 × 360: as quatro fases e a mira na planta adulta.
+- Decidido para a etapa 3: a Esteira de Junco segue a placa de pressão do Minecraft sem pressão (1/16 m, sem colisão, precisa de apoio).
+
 ## Orvalis v0.143.0 — Titã: Laje de Rocha revisada e arte de cultivo importada (21/11/2026)
 - **Só arte, a pedido do dono do produto** (rodada "cultivo e oficina da Margem" do Drive). A **Laje de Rocha Escura** (topo 32 × 32, lateral 32 × 16, base) é a versão seamless revisada; `topo.png`/`lateral.png` trocados, `base.png` guardado (o atlas não usa base de laje), atlas regravado. Nota de revisão na ADR 0079.
 - Importados como **assets-fonte, sem uso no jogo**: `assets-src/titan/cultivo/junco/` (muda plantada, crescendo, adulto com duas mudas, ressecado; 32 × 32) e `assets-src/titan/cultivo/esteira/` (trama seamless e borda; 32 × 32).

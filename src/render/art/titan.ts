@@ -34,6 +34,7 @@ export const titanLanternModel = lanternModel as { size: number[]; structure: La
 import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
 import workbenchModel from '../../assets/titan-workbench.json';
 import reedSprite from '../../assets/titan-junco-variantes-32px.webp';
+import cultivoSprite from '../../assets/titan-cultivo-32px.webp';
 import lakeAtlas from '../../assets/titan-lago-32px.webp';
 import marcoModel from '../../assets/titan-marco.json';
 import painelModel from '../../assets/titan-painel.json';
@@ -56,6 +57,8 @@ export const titanWorkbenchAtlasUrl: string = workbenchAtlas;
 export const titanWorkbenchModel = workbenchModel as { size: number[]; pos: number[]; nrm: number[]; uv: number[]; idx: number[] };
 /** Junco de Vidro em campo (ADR 0053): atlas de 128 × 32 px, 4 colunas de 32 × 32 — as 3 silhuetas (broto baixo, haste bifurcada, tufo aberto) e uma célula vazia. */
 export const titanReedUrl: string = reedSprite;
+/** Cultivo do Junco de Vidro (ADR 0083): atlas de 128 × 32 px, 4 colunas (muda, crescendo, adulto de duas mudas, ressecado). */
+export const titanCultivoUrl: string = cultivoSprite;
 
 import basalt from '../../assets/titan-basalt-32px.webp';
 /**

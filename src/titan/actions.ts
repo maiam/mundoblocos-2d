@@ -8,6 +8,7 @@ import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
 import { wearCost, type WearAction } from './wear';
+import { cropKey, harvestOf, isRipe, parseCropId, soilKind } from './crops';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -24,6 +25,7 @@ export const amberYield = (x: number, y: number, z: number): 1 | 2 => (hash2(0xa
 export function collectItem(s: TitanSession, id: string): ActionResult {
   if (id.startsWith('reed:')) return collectReed(s, id);
   if (id.startsWith('nut:')) return collectNut(s, id);
+  if (id.startsWith('crop:')) return collectCrop(s, id);
   const it = s.volume.gen.surfaceItems.find((i) => i.id === id) ?? s.volume.gen.dryReeds.find((i) => i.id === id) ?? s.volume.gen.plates.find((i) => i.id === id); // lasca legada (v1/v2), haste seca (v7) ou placa de carapaça (v8)
   if (!it || s.collected.has(id)) return { ok: false };
   const item: number = it.item; // 5 = fragmento de rocha, 6 = de gelo, 19 = haste seca, 25 = placa de carapaça (os ids de item do catálogo)
@@ -32,6 +34,42 @@ export function collectItem(s: TitanSession, id: string): ActionResult {
   s.collected.add(id);
   s.collectedRev++;
   return { ok: true };
+}
+
+/**
+ * Colhe uma planta cultivada adulta (ADR 0083): o junco úmido rende 2 mudas e volta à fase "crescendo"; o ressecado rende 2 hastes secas e volta a muda. A planta nunca é arrancada.
+ * Tudo ou nada: sem espaço na mochila, nada muda. Planta ainda crescendo: só avisa.
+ */
+function collectCrop(s: TitanSession, id: string): ActionResult {
+  const p = parseCropId(id), crop = p ? s.crops.get(cropKey(p[0], p[1], p[2])) : undefined;
+  const kind = crop ? soilKind(s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
+  if (!crop || !kind) return { ok: false };
+  if (!isRipe(kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
+  const h = harvestOf(kind);
+  if (!s.inventory.canAdd(h.item, h.count)) return FULL;
+  s.inventory.add(h.item, h.count);
+  crop.age = h.backTo;
+  s.metaRev++;
+  return { ok: true, msg: `${h.count} ${h.label}` };
+}
+
+/** Planta a muda (junco de vidro) no topo de uma areia: úmida dá junco de vidro, ocre dá junco ressecado. Gasta 1; a célula de cima precisa estar livre. */
+function plantReed(s: TitanSession, hit: Hit, slot: number): ActionResult {
+  const x = hit.x, y = hit.y + 1, z = hit.z;
+  if (hit.ny !== 1 || !soilKind(s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A muda se planta no topo da areia' };
+  const busy = s.items.at(x, y, z) || [...s.drops.values()].some((d) => d.x === x && d.y === y && d.z === z);
+  if (s.volume.get(x, y, z) !== T.AIR || busy || s.crops.has(cropKey(x, y, z))) return { ok: false };
+  s.crops.set(cropKey(x, y, z), { x, y, z, age: 0 });
+  s.inventory.consume(slot);
+  s.metaRev++;
+  return { ok: true };
+}
+
+/** O apoio de uma planta cultivada foi quebrado: ela some e devolve a muda como item solto. */
+function releaseCrop(s: TitanSession, x: number, y: number, z: number): void {
+  if (!s.crops.delete(cropKey(x, y, z))) return;
+  s.metaRev++;
+  dropShard(s, Item.GLASS_REED, x, y, z);
 }
 
 /** Junco de vidro à mão (ADR 0045): 1 junco = 1 item; mochila cheia deixa a planta no lugar. A planta recolhida não volta (o id fica em `collected`, que já vai no save). */
@@ -189,6 +227,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
   releaseReed(s, reed, x, y + 1, z);
+  releaseCrop(s, x, y + 1, z);
   return { ok: true };
 }
 
@@ -272,6 +311,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
+  if (stack.item === Item.GLASS_REED) return plantReed(s, hit, slot); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
