@@ -8,7 +8,7 @@ import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
 import { wearCost, type WearAction } from './wear';
-import { cropKey, harvestOf, isRipe, parseCropId, soilKind } from './crops';
+import { type Species, cropKey, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKind } from './crops';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -44,8 +44,8 @@ function collectCrop(s: TitanSession, id: string): ActionResult {
   const p = parseCropId(id), crop = p ? s.crops.get(cropKey(p[0], p[1], p[2])) : undefined;
   const kind = crop ? soilKind(s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
   if (!crop || !kind) return { ok: false };
-  if (!isRipe(kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
-  const h = harvestOf(kind);
+  if (!isRipe(crop.species, kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
+  const h = harvestOf(crop.species, kind);
   if (!s.inventory.canAdd(h.item, h.count)) return FULL;
   s.inventory.add(h.item, h.count);
   crop.age = h.backTo;
@@ -53,13 +53,22 @@ function collectCrop(s: TitanSession, id: string): ActionResult {
   return { ok: true, msg: `${h.count} ${h.label}` };
 }
 
-/** Planta a muda (junco de vidro) no topo de uma areia: úmida dá junco de vidro, ocre dá junco ressecado. Gasta 1; a célula de cima precisa estar livre. */
-function plantReed(s: TitanSession, hit: Hit, slot: number): ActionResult {
+/** A célula de cima do bloco apontado está livre para uma planta (ar, sem item, planta ou pilha solta)? */
+function plantSpotFree(s: TitanSession, hit: Hit): boolean {
   const x = hit.x, y = hit.y + 1, z = hit.z;
-  if (hit.ny !== 1 || !soilKind(s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A muda se planta no topo da areia' };
   const busy = s.items.at(x, y, z) || [...s.drops.values()].some((d) => d.x === x && d.y === y && d.z === z);
-  if (s.volume.get(x, y, z) !== T.AIR || busy || s.crops.has(cropKey(x, y, z))) return { ok: false };
-  s.crops.set(cropKey(x, y, z), { x, y, z, age: 0 });
+  return s.volume.get(x, y, z) === T.AIR && !busy && !s.crops.has(cropKey(x, y, z));
+}
+
+/** A Noz na mão se planta aqui? Só no topo da areia ocre com a célula de cima livre; senão o toque come (ADR 0083). */
+export const canPlantNut = (s: TitanSession, hit: Hit): boolean => hit.ny === 1 && !hit.item && plantableSoil('noz', s.volume.get(hit.x, hit.y, hit.z)) && plantSpotFree(s, hit);
+
+/** Planta a muda (junco de vidro: úmida dá junco de vidro, ocre dá ressecado) ou a Noz (só na ocre) no topo de uma areia. Gasta 1; a célula de cima precisa estar livre. */
+function plantCrop(s: TitanSession, hit: Hit, slot: number, species: Species): ActionResult {
+  if (hit.ny !== 1 || !plantableSoil(species, s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A muda se planta no topo da areia' };
+  if (!plantSpotFree(s, hit)) return { ok: false };
+  const x = hit.x, y = hit.y + 1, z = hit.z;
+  s.crops.set(cropKey(x, y, z), { x, y, z, age: 0, species });
   s.inventory.consume(slot);
   s.metaRev++;
   return { ok: true };
@@ -67,9 +76,11 @@ function plantReed(s: TitanSession, hit: Hit, slot: number): ActionResult {
 
 /** O apoio de uma planta cultivada foi quebrado: ela some e devolve a muda como item solto. */
 function releaseCrop(s: TitanSession, x: number, y: number, z: number): void {
-  if (!s.crops.delete(cropKey(x, y, z))) return;
+  const crop = s.crops.get(cropKey(x, y, z));
+  if (!crop) return;
+  s.crops.delete(cropKey(x, y, z));
   s.metaRev++;
-  dropShard(s, Item.GLASS_REED, x, y, z);
+  dropShard(s, seedOf(crop.species), x, y, z);
 }
 
 /** Junco de vidro à mão (ADR 0045): 1 junco = 1 item; mochila cheia deixa a planta no lugar. A planta recolhida não volta (o id fica em `collected`, que já vai no save). */
@@ -310,8 +321,9 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
+  if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
-  if (stack.item === Item.GLASS_REED) return plantReed(s, hit, slot); // a muda se planta (ADR 0083)
+  if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
   if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)

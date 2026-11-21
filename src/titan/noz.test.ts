@@ -85,7 +85,7 @@ describe('colher, rebrotar e comer', () => {
     expect(s.vitals.hunger).toBe(14); expect(s.vitals.saturation).toBeCloseTo(2.4, 5); expect(s.inventory.total(Item.NOZ)).toBe(2);
     const a = s.volume.gen.arrival;
     const before = s.volume.get(a.x, a.y - 1, a.z);
-    expect(placeFromSlot(s, { x: a.x, y: a.y - 1, z: a.z, nx: 0, ny: 1, nz: 0 }, slot).ok).toBe(true); // come em vez de colocar
+    expect(placeFromSlot(s, { x: a.x, y: a.y - 1, z: a.z, nx: 1, ny: 0, nz: 0 }, slot).ok).toBe(true); // come em vez de colocar (na lateral não há onde plantar; no topo da areia ocre a noz se planta, ADR 0083)
     expect(s.vitals.hunger).toBe(18); expect(s.volume.get(a.x, a.y, a.z)).toBe(T.AIR); expect(s.volume.get(a.x, a.y - 1, a.z)).toBe(before);
     s.vitals.hunger = 19; expect(eat(s.vitals, { hunger: 4, saturation: 2.4 })).toBe(true); expect(s.vitals.hunger).toBe(20); expect(s.vitals.saturation).toBeLessThanOrEqual(20);
   });

@@ -1,4 +1,5 @@
 import { Item } from './items';
+import { NUT_YIELD } from './nuts';
 import { T } from './voxel';
 
 /**
@@ -6,8 +7,10 @@ import { T } from './voxel';
  * A planta guarda só um inteiro, `age`; cresce por **random ticks** (média de `CROP_TICK_MEAN_S` s por planta) com a chance do Minecraft
  * `1 / (⌊25 / pontos⌋ + 1)`, onde os pontos vêm da areia sob a planta e das oito vizinhas, e caem pela metade se houver planta da mesma espécie ao lado.
  */
+/** `umido`/`seco` = a areia sob a planta; a espécie é o que se plantou: o junco de vidro (a areia decide a variante) ou a Noz de Duna (só na areia ocre). */
 export type CropKind = 'umido' | 'seco';
-export interface Crop { x: number; y: number; z: number; age: number }
+export type Species = 'junco' | 'noz';
+export interface Crop { x: number; y: number; z: number; age: number; species: Species }
 
 /** Segundos de jogo ativo entre dois sorteios de uma planta, em média. */
 export const CROP_TICK_MEAN_S = 30;
@@ -29,10 +32,20 @@ export function parseCropId(id: string): [number, number, number] | null {
 export const soilKind = (block: number): CropKind | null => (block === T.DAMP_SAND ? 'umido' : block === T.SAND ? 'seco' : null);
 /** Idade da planta adulta: muda (0) → crescendo (1) → adulta (2); o ressecado tem muda (0) → ressecado (1). */
 export const maxAge = (kind: CropKind): number => (kind === 'umido' ? 2 : 1);
-export const isRipe = (kind: CropKind, age: number): boolean => age >= maxAge(kind);
+/** Idade da planta adulta da espécie sobre a areia `soil`: a Noz tem 3 fases (broto, planta sem frutos, com frutos). */
+export const maxAgeOf = (species: Species, soil: CropKind): number => (species === 'noz' ? 2 : maxAge(soil));
+export const isRipe = (species: Species, soil: CropKind, age: number): boolean => age >= maxAgeOf(species, soil);
 /** O que a colheita entrega e a idade para onde a planta recua. */
-export const harvestOf = (kind: CropKind): { item: number; count: number; backTo: number; label: string } =>
-  kind === 'umido' ? { item: Item.GLASS_REED, count: CROP_YIELD, backTo: 1, label: 'mudas de junco' } : { item: Item.DRY_REED, count: CROP_YIELD, backTo: 0, label: 'hastes secas' };
+export function harvestOf(species: Species, soil: CropKind): { item: number; count: number; backTo: number; label: string } {
+  if (species === 'noz') return { item: Item.NOZ, count: NUT_YIELD, backTo: 1, label: 'nozes' };
+  return soil === 'umido' ? { item: Item.GLASS_REED, count: CROP_YIELD, backTo: 1, label: 'mudas de junco' } : { item: Item.DRY_REED, count: CROP_YIELD, backTo: 0, label: 'hastes secas' };
+}
+/** O item que volta ao chão quando o apoio da planta é quebrado (a muda ou a noz plantada). */
+export const seedOf = (species: Species): number => (species === 'noz' ? Item.NOZ : Item.GLASS_REED);
+/** Onde a espécie se planta: o junco em qualquer areia; a Noz só na areia ocre (seca). */
+export const plantableSoil = (species: Species, block: number): boolean => (species === 'noz' ? block === T.SAND : soilKind(block) !== null);
+/** Aparência da Noz plantada: o broto é pequeno, depois a planta inteira, e os frutos só na adulta (o modelo é o da Noz de Duna silvestre). */
+export const nutLook = (age: number): { scale: number; ripe: boolean } => ({ scale: age <= 0 ? 0.4 : 1, ripe: age >= 2 });
 /** Coluna do atlas de cultivo (`titan-cultivo-32px.webp`): 0 muda, 1 crescendo, 2 adulto de duas mudas, 3 ressecado. */
 export const spriteFrame = (kind: CropKind, age: number): number => (kind === 'umido' ? Math.min(2, age) : age >= 1 ? 3 : 0);
 export const CROP_FRAMES = 4;
@@ -72,7 +85,7 @@ export interface CropContext {
 /** Um random tick: devolve se a planta subiu de fase. Não passa da fase adulta nem cresce no escuro. */
 export function randomTick(crop: Crop, ctx: CropContext, rng: () => number): boolean {
   const kind = ctx.soilAt(0, 0);
-  if (!kind || crop.age >= maxAge(kind) || ctx.light < CROP_MIN_LIGHT) return false;
+  if (!kind || (crop.species === 'noz' && kind !== 'seco') || crop.age >= maxAgeOf(crop.species, kind) || ctx.light < CROP_MIN_LIGHT) return false;
   let points = growthPoints(ctx.soilAt);
   if (crowded(ctx.sameAt)) points *= 0.5;
   if (rng() < growChance(points)) { crop.age++; return true; }

@@ -5,7 +5,7 @@ import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
 import { tickFurnaces } from './session';
 import { durabilityHue, durabilityRatio, maxDurability } from './wear';
-import { furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
+import { canPlantNut, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, tickRespawn } from './combat';
@@ -17,7 +17,7 @@ import { FootstepClock, surfaceOf } from './sounds';
 import { rayThrough } from './aim';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
-import { blockOfItem, foodOf, isPick, ITEM_NAMES } from './items';
+import { blockOfItem, foodOf, isPick, Item, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -691,7 +691,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
       if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
-      if (held && foodOf(held.item)) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come
+      if (held && foodOf(held.item) && !(held.item === Item.NOZ && t.kind === 'block' && canPlantNut(session, t))) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come (a noz, só se não houver onde plantá-la)
       const r = placeFromSlot(session, t, session.selected);
       if (r.msg) notice(r.msg);
       if (r.ok) {

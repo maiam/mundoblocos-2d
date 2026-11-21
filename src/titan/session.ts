@@ -7,7 +7,7 @@ import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { AFTERNOON, skyAt, validDay } from './sky';
-import { CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, maxAge, randomTick, soilKind, spriteFrame, CROP_TICK_MEAN_S } from './crops';
+import { CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, maxAgeOf, nutLook, plantableSoil, randomTick, soilKind, spriteFrame, CROP_TICK_MEAN_S } from './crops';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
@@ -148,9 +148,10 @@ function validCrops(raw: unknown, vol: TitanVolume): Map<string, Crop> {
   if (!raw || typeof raw !== 'object') return out;
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
     const m = /^(-?\d+),(-?\d+),(-?\d+)$/.exec(k);
-    if (!m || typeof v !== 'number' || !Number.isInteger(v) || v < 0) continue;
-    const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])], kind = soilKind(vol.get(x, y - 1, z));
-    if (kind && vol.get(x, y, z) === T.AIR && vol.gen.inRegion(x, z) && v <= maxAge(kind)) out.set(k, { x, y, z, age: v });
+    const noz = !!v && typeof v === 'object' && (v as { s?: unknown }).s === 'noz', age = noz ? (v as { a?: unknown }).a : v; // junco = só a idade; noz = { s: 'noz', a: idade }
+    if (!m || typeof age !== 'number' || !Number.isInteger(age) || age < 0) continue;
+    const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])], species = noz ? 'noz' : 'junco', below = vol.get(x, y - 1, z), kind = soilKind(below);
+    if (kind && plantableSoil(species, below) && vol.get(x, y, z) === T.AIR && vol.gen.inRegion(x, z) && age <= maxAgeOf(species, kind)) out.set(k, { x, y, z, age, species });
   }
   return out;
 }
@@ -282,10 +283,11 @@ export function standingReeds(s: TitanSession): Array<{ x: number; y: number; z:
 }
 
 /** Plantas de Noz de Duna de pé (célula de ar sobre sólido, sem construção por cima), com o estado: `ripe` = com frutos. Sem plantas antes do gerador v5. */
-export function standingNuts(s: TitanSession): Array<{ x: number; y: number; z: number; ripe: boolean }> {
+export function standingNuts(s: TitanSession): Array<{ x: number; y: number; z: number; ripe: boolean; s?: number }> {
   return s.volume.gen.nutPlants
     .filter((n) => s.volume.get(n.x, n.y, n.z) === T.AIR && isSolid(s.volume.get(n.x, n.y - 1, n.z)))
-    .map((n) => ({ ...n, ripe: !s.regrow.has(nutId(n.x, n.y, n.z)) }));
+    .map((n) => ({ ...n, ripe: !s.regrow.has(nutId(n.x, n.y, n.z)) } as { x: number; y: number; z: number; ripe: boolean; s?: number }))
+    .concat([...s.crops.values()].filter((c) => c.species === 'noz' && s.volume.get(c.x, c.y, c.z) === T.AIR && s.volume.get(c.x, c.y - 1, c.z) === T.SAND).map((c) => { const l = nutLook(c.age); return { x: c.x, y: c.y, z: c.z, ripe: l.ripe, s: l.scale }; })); // as plantadas pelo viajante (ADR 0083), com o tamanho da fase
 }
 
 /** Passa `dt` segundos de jogo ativo para as plantas colhidas; devolve se alguma voltou a dar frutos (o desenho precisa refazer). */
@@ -303,7 +305,7 @@ export function standingCrops(s: TitanSession): Array<{ x: number; y: number; z:
   const out: Array<{ x: number; y: number; z: number; frame: number }> = [];
   for (const c of s.crops.values()) {
     const kind = soilKind(s.volume.get(c.x, c.y - 1, c.z));
-    if (kind && s.volume.get(c.x, c.y, c.z) === T.AIR) out.push({ x: c.x, y: c.y, z: c.z, frame: Math.min(CROP_FRAMES - 1, spriteFrame(kind, c.age)) });
+    if (c.species === 'junco' && kind && s.volume.get(c.x, c.y, c.z) === T.AIR) out.push({ x: c.x, y: c.y, z: c.z, frame: Math.min(CROP_FRAMES - 1, spriteFrame(kind, c.age)) });
   }
   return out;
 }
@@ -326,14 +328,14 @@ export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: 
     if (Math.hypot(c.x + 0.5 - near.x, c.z + 0.5 - near.z) > CROP_SIM_RADIUS || rng() >= pTick) continue;
     const kindAt = (dx: number, dz: number): CropKind | null => soilKind(s.volume.get(c.x + dx, c.y - 1, c.z + dz));
     const self = kindAt(0, 0);
-    const sameAt = (dx: number, dz: number): boolean => !!self && s.crops.has(cropKey(c.x + dx, c.y, c.z + dz)) && kindAt(dx, dz) === self;
+    const sameAt = (dx: number, dz: number): boolean => !!self && s.crops.get(cropKey(c.x + dx, c.y, c.z + dz))?.species === c.species && kindAt(dx, dz) === self;
     if (randomTick(c, { soilAt: kindAt, sameAt, light: cropLight(s, c.x, c.y, c.z) }, rng)) { changed = true; s.metaRev++; }
   }
   return changed;
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.age])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'noz' ? { s: 'noz', a: c.age } : c.age])) } : {}) };
 }
 
 /**

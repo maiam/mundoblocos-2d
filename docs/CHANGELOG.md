@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.145.0 — Titã: Noz plantada e Noz Torrada (21/11/2026)
+- **Etapa 2 da rodada "cultivo e oficina da Margem". ADR 0084.** A Noz de Duna se planta no topo da Areia Ocre (toque com a noz na mão; em outro alvo continua comendo) e cresce em 3 fases pelo mesmo motor de random ticks do junco; a adulta rende 4 nozes sem ser arrancada e recua. Não cria Farejador. Só cresce na ocre.
+- **Noz Torrada** (item 30): Braseiro, 1 Noz → 1 (10 s), fome 7 e saturação 5,6. Ícone provisório gerado por script (`make-titan-noz-torrada.py`); atlas de itens regravado.
+- `Crop.species`; `header.crops` aceita `{ s: 'noz', a }` (sem subir a versão do save); `setNuts` com tamanho do broto. Testes: 1.090 no total. Conferido a 740 × 360.
+
 ## Orvalis v0.144.0 — Titã: cultivo do Junco de Vidro (21/11/2026)
 - **Etapa 1 da rodada "cultivo e oficina da Margem". ADR 0083.** Plantar a muda (o próprio Junco de Vidro) no topo da areia: **úmida** → junco de vidro em 3 fases; **ocre** → junco ressecado. Adulto colhido rende 2 mudas (úmido, volta a "crescendo") ou 2 Hastes Secas (ressecado, volta a muda); a planta nunca é arrancada. Quebrar a areia derruba a planta e devolve a muda no chão.
 - Crescimento por **random ticks** (média de 30 s por planta, só perto do viajante) com a fórmula do Minecraft (pontos da areia e vizinhas, metade se aglomerada, luz ≥ 9: céu aberto de dia ou lanterna). `titan/crops.ts` (puro) + `session.tickCrops`; `header.crops` opcional (sem subir a versão do save).
