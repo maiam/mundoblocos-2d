@@ -574,6 +574,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // toque (paisagem; ainda sem validação em aparelho real — NEXT_STEPS)
   const touch = el('div', 'titan-touch', ui);
   const lookPad = el('div', 'titan-look', touch); // a tela toda (menos os controles, que ficam por cima): o dedo age no ponto tocado (ADR 0075)
+  touch.addEventListener('contextmenu', (e) => e.preventDefault()); // segurar não abre o menu do navegador (ADR 0077)
   const touchRing = el('div', 'titan-touchring', touch); // anel no ponto do toque: azul ao tocar, enche ao quebrar
   touchRing.hidden = true;
   // setas no lugar do joystick (como o Minecraft de toque): ▲ anda, ▼ recua, ◀ ▶ andam de lado; segurar duas dá a diagonal
