@@ -38,6 +38,8 @@ import cultivoSprite from '../../assets/titan-cultivo-32px.webp';
 import lakeAtlas from '../../assets/titan-lago-32px.webp';
 import marcoModel from '../../assets/titan-marco.json';
 import escadaModel from '../../assets/titan-escada.json';
+import camaModel from '../../assets/titan-cama.json';
+import camaAtlas from '../../assets/titan-cama-atlas.webp';
 import bauModel from '../../assets/titan-bau.json';
 import bauAtlas from '../../assets/titan-bau-atlas.webp';
 import escadaAtlas from '../../assets/titan-escada-atlas.webp';
@@ -85,6 +87,9 @@ export const titanEscadaAtlasUrl: string = escadaAtlas;
 /** Baú de Rocha e Junco (ADR 0089): 1.800 triângulos reduzidos do GLB de jogo (`scripts/extract-titan-bau.py`) e a cor-base de 256 px. */
 export const titanBauModel = bauModel as ModelData;
 export const titanBauAtlasUrl: string = bauAtlas;
+/** Cama de Junco (ADR 0090): 2.200 triângulos reduzidos do GLB de jogo (`scripts/extract-titan-cama.py`), cobrem as duas células (pé na origem, cabeceira em +z), e a cor-base de 256 px. */
+export const titanCamaModel = camaModel as ModelData;
+export const titanCamaAtlasUrl: string = camaAtlas;
 /** Planta da Noz de Duna (3.008 triângulos, ADR 0060; `scripts/extract-titan-noz.py`): a planta sem frutos (2.160) e as 4 nozes (848), um atlas de 144 × 36 px. Pivô ao nível do solo. */
 export const titanNozPlantaModel = nozPlantaModel as ModelData;
 export const titanNozFrutosModel = nozFrutosModel as ModelData;

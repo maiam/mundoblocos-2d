@@ -3,7 +3,8 @@ import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
-import { blockSpan, chestId, chestTurnFacing, isBrazier, isChest, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { isNightTime, tickFrac, WAKE_TICKS } from './sky';
+import { BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -91,6 +92,63 @@ function releaseLadders(s: TitanSession, x: number, y: number, z: number): void 
 function releaseMat(s: TitanSession, x: number, y: number, z: number): void {
   if (!isMat(s.volume.get(x, y, z)) || !s.volume.remove(x, y, z)) return;
   spillBlock(s, Item.ESTEIRA, 1, x, y, z);
+}
+
+/** Coloca a cama de Junco (ADR 0090): o pé na célula apontada e a cabeceira uma adiante, no sentido do olhar; as duas precisam estar livres e sobre piso firme. */
+function placeBed(s: TitanSession, hit: Hit, slot: number): ActionResult {
+  const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz, turn = bedTurnFacing(s.yaw), [fx, fz] = ladderFacing(turn), hx = x + fx, hz = z + fz;
+  const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
+  for (const [cx, cz] of [[x, z], [hx, hz]]) {
+    if (!matSupported(s, cx, y, cz)) return { ok: false, msg: 'A cama precisa de piso firme nas duas células' };
+    if (!canPlaceAt(s.volume, s.body, cx, y, cz, occupied, [0, BED_HEIGHT])) return { ok: false };
+  }
+  if (!s.volume.place(x, y, z, bedFootId(turn))) return { ok: false };
+  if (!s.volume.place(hx, y, hz, bedHeadId(turn))) { s.volume.remove(x, y, z); return { ok: false }; }
+  s.inventory.consume(slot);
+  return { ok: true };
+}
+
+/** Quebrar qualquer metade tira a cama inteira e devolve uma cama como item solto. */
+function breakBed(s: TitanSession, x: number, y: number, z: number): ActionResult {
+  const id = s.volume.get(x, y, z);
+  if (!isBed(id) || !s.volume.breakable(x, y, z)) return { ok: false };
+  const [dx, dz] = bedPartnerOffset(id), px = x + dx, pz = z + dz;
+  s.volume.remove(x, y, z);
+  if (isBed(s.volume.get(px, y, pz)) && bedTurn(s.volume.get(px, y, pz)) === bedTurn(id)) s.volume.remove(px, y, pz);
+  const fx = isBedFoot(id) ? x : px, fz = isBedFoot(id) ? z : pz;
+  spillBlock(s, Item.CAMA, 1, fx, y, fz);
+  return { ok: true };
+}
+
+/**
+ * Usar a cama (ADR 0090): guarda o **ponto de retorno** (o pé da cama) e, **à noite**, dorme até o amanhecer (o relógio do dia pula para logo depois do nascer do sol; passar da meia-noite soma um dia).
+ * De dia só marca o ponto de retorno.
+ */
+export function useBed(s: TitanSession, x: number, y: number, z: number): ActionResult {
+  const id = s.volume.get(x, y, z);
+  if (!isBed(id)) return { ok: false };
+  const [dx, dz] = bedPartnerOffset(id), footX = isBedFoot(id) ? x : x + dx, footZ = isBedFoot(id) ? z : z + dz;
+  s.spawn = { x: footX, y, z: footZ };
+  s.metaRev++;
+  if (!isNightTime(s.time)) return { ok: true, msg: 'Ponto de retorno marcado. Só se dorme à noite.' };
+  const wake = tickFrac(WAKE_TICKS);
+  if (s.time > wake) s.days++;
+  s.time = wake;
+  return { ok: true, msg: 'Você dormiu até o amanhecer. Ponto de retorno marcado.' };
+}
+
+/** Onde renascer: ao lado da cama do ponto de retorno (uma célula livre e firme em volta das duas), olhando para ela; `null` se não há ponto, a cama sumiu ou não há lugar (volta à chegada). */
+export function bedSpawn(s: TitanSession): { x: number; y: number; z: number; yaw: number } | null {
+  const p = s.spawn;
+  if (!p || !isBedFoot(s.volume.get(p.x, p.y, p.z))) return null;
+  const [fx, fz] = ladderFacing(bedTurn(s.volume.get(p.x, p.y, p.z))), cells = [[p.x, p.z], [p.x + fx, p.z + fz]];
+  const isBedCell = (cx: number, cz: number): boolean => cells.some(([a, b]) => a === cx && b === cz);
+  for (const [cx, cz] of cells) for (const [dx, dz] of [[fz, fx], [-fz, -fx], [-fx, -fz], [fx, fz]]) { // primeiro os lados da cama, depois as pontas
+    const nx = cx + dx, nz = cz + dz;
+    if (isBedCell(nx, nz) || s.volume.get(nx, p.y, nz) !== T.AIR || s.volume.get(nx, p.y + 1, nz) !== T.AIR || !matSupported(s, nx, p.y, nz)) continue;
+    return { x: nx + 0.5, y: p.y, z: nz + 0.5, yaw: Math.atan2(-(cx - nx), -(cz - nz)) };
+  }
+  return null;
 }
 
 /** O apoio de uma planta cultivada foi quebrado: ela some e devolve a muda como item solto. */
@@ -266,6 +324,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (hit.item) return collectItem(s, hit.item);
   const { x, y, z } = hit;
   if (!s.volume.breakable(x, y, z)) return { ok: false };
+  if (isBed(s.volume.get(x, y, z))) return breakBed(s, x, y, z); // as duas metades saem juntas (ADR 0090)
   if (isCopperVein(s.volume.get(x, y, z))) { // veio de cobre (ADR 0063): só com picareta na mão; solta fragmentos no chão, nunca o bloco
     if (!isPick(s.inventory.get(s.selected)?.item)) return { ok: false, msg: 'Só pó nos dedos. Falta uma picareta.' };
     const reed0 = s.items.at(x, y + 1, z);
@@ -308,6 +367,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   releaseCrop(s, x, y + 1, z);
   releaseMat(s, x, y + 1, z);
   releaseLadders(s, x, y, z);
+  if (isBed(s.volume.get(x, y + 1, z))) breakBed(s, x, y + 1, z); // o piso da cama sumiu
   return { ok: true };
 }
 
@@ -395,6 +455,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
+  if (block === T.BED) return placeBed(s, hit, slot); // a cama ocupa duas células (ADR 0090)
   if (block === T.LADDER) { // escada (ADR 0088): prende-se à lateral de um cubo inteiro e a frente aponta para fora dele
     if (hit.ny !== 0 || hit.item) return { ok: false, msg: 'A escada se prende à lateral de um bloco' };
     if (!isFull(s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A escada precisa de um bloco inteiro atrás' };
@@ -439,7 +500,7 @@ export function dieAndRespawn(s: TitanSession): number {
   });
   if (stacks.length) s.dropsRev++;
   s.selected = Math.min(s.selected, 8);
-  const a = s.volume.gen.arrival;
+  const a = bedSpawn(s) ?? s.volume.gen.arrival; // a cama do ponto de retorno, se ainda houver lugar ao lado dela (ADR 0090)
   s.body = newBody(a.x, a.y, a.z);
   s.yaw = a.yaw; s.pitch = -0.12;
   revive(s.vitals);
