@@ -40,6 +40,9 @@ import marcoModel from '../../assets/titan-marco.json';
 import escadaModel from '../../assets/titan-escada.json';
 import camaModel from '../../assets/titan-cama.json';
 import camaAtlas from '../../assets/titan-cama-atlas.webp';
+import braseiroModel from '../../assets/titan-braseiro.json';
+import braseiroAcesoModel from '../../assets/titan-braseiro-aceso.json';
+import braseiroAtlas from '../../assets/titan-braseiro-atlas.webp';
 import bauModel from '../../assets/titan-bau.json';
 import bauAtlas from '../../assets/titan-bau-atlas.webp';
 import escadaAtlas from '../../assets/titan-escada-atlas.webp';
@@ -90,6 +93,10 @@ export const titanBauAtlasUrl: string = bauAtlas;
 /** Cama de Junco (ADR 0090): 2.200 triângulos reduzidos do GLB de jogo (`scripts/extract-titan-cama.py`), cobrem as duas células (pé na origem, cabeceira em +z), e a cor-base de 256 px. */
 export const titanCamaModel = camaModel as ModelData;
 export const titanCamaAtlasUrl: string = camaAtlas;
+/** Braseiro de Rocha 3D (ADR 0092): apagado e aceso (1.068 e 1.194 triângulos, `scripts/extract-titan-braseiro.py`) e um atlas de 256 × 320 px (basalto + amostras lisas das brasas). */
+export const titanBraseiroModel = braseiroModel as ModelData;
+export const titanBraseiroAcesoModel = braseiroAcesoModel as ModelData;
+export const titanBraseiroAtlasUrl: string = braseiroAtlas;
 /** Planta da Noz de Duna (3.008 triângulos, ADR 0060; `scripts/extract-titan-noz.py`): a planta sem frutos (2.160) e as 4 nozes (848), um atlas de 144 × 36 px. Pivô ao nível do solo. */
 export const titanNozPlantaModel = nozPlantaModel as ModelData;
 export const titanNozFrutosModel = nozFrutosModel as ModelData;

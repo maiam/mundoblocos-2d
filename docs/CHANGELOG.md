@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.153.0 — Titã: Braseiro de Rocha em 3D (21/11/2026)
+- **Fecha a rodada "Itens do Abrigo". ADR 0092.** O Braseiro de Rocha ganha modelo 3D do pacote de arte, apagado e aceso (mesmos blocos 25 e 26; a troca ao acender já existia). 0,935 × 0,935 m na base e 0,774 m de altura: barra o corpo nessa altura, a mira acerta a caixa do modelo e deixa de ser cubo inteiro.
+- O aceso mostra as brasas e brilha por conta própria, de dia e de noite (sem emitir luz no mapa ainda). Na mão o item vira sprite extrudado.
+- Modelos reduzidos por `extract-titan-braseiro.py` (1.068 e 1.194 triângulos, atlas único de 256 × 320 px). Testes: +3 (1.157 no total). Conferido a 740 × 360 e no jogo.
+
 ## Orvalis v0.152.0 — Titã: Balde de Cobre (21/11/2026)
 - **Quarta entrega da rodada "Itens do Abrigo". ADR 0091.** Receita na Mesa: 3 Lingotes de Cobre de Duna → Balde de Cobre (itens 35 vazio e 36 cheio, pilha de 1).
 - Com o balde na mão a mira acerta o líquido. **Vazio**, o toque recolhe a célula de cima da coluna do lago (vira ar; o balde enche); **cheio**, o toque despeja o líquido numa célula livre em Y ≤ 63 (cavidade escavada) e o balde volta vazio. Sem fluxo de líquido; sólido colocado sobre o líquido o desloca como antes.
