@@ -28,6 +28,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Picareta na mão (v0.137.0, ADR 0078):** aceite em aparelho; modelos da picareta e da adaga de cobre; usar o clipe "Minerar" do rig só se o golpe procedural não servir.
 
+**Item na mão por categoria (v0.148.0, ADR 0087):** ajustar poses/escalas no toque real e a cor do braço (provisória); ícone novo ou trocado pede `make-titan-arte32.py` e depois `make-titan-item-masks.py`; considerar golpe da mão ao colocar bloco (hoje só ao quebrar/atacar) e modelos 3D próprios para as ferramentas de cobre.
+
 **Cultivo e oficina da Margem (rodada do Drive, ADR 0083):** as 4 etapas estão feitas (v0.144.0 junco por random ticks; v0.145.0 Noz plantada e Noz Torrada; v0.146.0 Esteira de Junco; v0.147.0 gerador v13 com 2 hastes avulsas e a primeira Noz sem guarda). Faltam: ícones finais da Noz Torrada e da Esteira (os atuais são provisórios); testar no toque a mira na esteira (1/16 m) e plantar/comer a Noz; calibrar o cultivo em jogo. Calibrar em jogo: tick médio (30 s), luz mínima, rendimento; a Picareta de Rocha segue com 2 hastes secas. Arte em `assets-src/titan/cultivo/`.
 
 **Texturas revisadas (v0.142.0):** aceite visual em aparelho e à noite; os outros 15 materiais seguem como no pacote anterior. As quatro ilustrações da abertura (Drive, "Cenas da abertura") são referência de arte, ainda sem uso no jogo; o `README` do Drive está em v0.133.0.

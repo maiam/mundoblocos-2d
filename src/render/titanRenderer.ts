@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
-import { DIP_SINGLE, HandAnim, type HandKind } from './heldPose';
+import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
+import { extrudeMask, itemMask } from '../titan/extrude';
+import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
 import { loadHeldModel } from './heldItem';
 import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
-import { meshSection, type MeshData } from '../titan/mesher';
+import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
 import { horizonAt, skyAt, type Sky } from '../titan/sky';
@@ -85,6 +87,13 @@ export class TitanRenderer {
   private readonly handCamera = new THREE.PerspectiveCamera(FOV_DEG, 1, 0.02, 10);
   private readonly held = new Map<number, THREE.Group | 'loading' | 'failed'>();
   private heldItem: number | null = null;
+  /** Item na mão (ADR 0087): `heldKey` = id do item (0 = mão vazia); `shownKey` = o que está visível (durante a troca ainda o antigo); a troca afunda o velho e sobe o novo. */
+  private heldKey = 0;
+  private shownKey = 0;
+  private heldInit = false;
+  private readonly heldKinds = new Map<number, HandKind>();
+  private readonly equip = new EquipAnim();
+  private heldFlatMat: THREE.MeshBasicMaterial | null = null;
   private readonly handAnim = new HandAnim();
   private sprintFov = 0; // 0 = FOV normal; 1 = corrida (ADR 0076)
   private sprintOn = false;
@@ -464,28 +473,99 @@ export class TitanRenderer {
       return m;
     }).then((t) => { this.rigTemplate = t; }, (e) => { console.warn('Titã: rig do Farejador não carregou; ficam as 7 partes', e); });
   }
-  /** Item na mão (id do item ou null): carrega o modelo na primeira vez e só mostra quem tem modelo (hoje a Adaga de Rocha, 22, e a Picareta de Rocha, 20; ADR 0071 e 0078). */
+  /**
+   * Item na mão (id do item ou null = mão vazia; ADR 0087): cada categoria tem a sua malha, feita uma vez e guardada: **modelo** (GLB: Adaga e Picareta de Rocha, ADRs 0071 e 0078), **bloco**
+   * (cubo com as texturas do terreno), **item plano** e **ferramenta** (sprite extrudado a partir da máscara de `itemMasks.json`) e **mão vazia** (o braço). Trocar de item afunda o antigo e sobe o novo.
+   */
   setHeld(item: number | null): void {
-    if (item === this.heldItem) return;
-    const old = this.heldItem !== null ? this.held.get(this.heldItem) : undefined;
-    if (old && typeof old !== 'string') old.visible = false;
+    if (this.heldInit && item === this.heldItem) return;
+    const first = !this.heldInit, prev = this.heldKey;
+    this.heldInit = true;
     this.heldItem = item;
-    const spec = item !== null ? HELD_MODELS[item] : undefined;
-    if (spec) this.handAnim.kind = spec.kind;
-    if (item === null || !spec || this.held.has(item)) { const g = item !== null ? this.held.get(item) : undefined; if (g && typeof g !== 'string') g.visible = true; return; }
-    this.held.set(item, 'loading');
-    loadHeldModel(spec.url, (map) => {
-      const m = new THREE.MeshBasicMaterial({ map, vertexColors: true });
-      patchDayLight(m, this.ambient);
-      return m;
-    }).then((g) => { g.scale.setScalar(spec.scale); g.visible = this.heldItem === item; this.handScene.add(g); this.held.set(item, g); }, (e) => { this.held.set(item, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
+    this.heldKey = item ?? 0;
+    this.ensureHeld(item);
+    if (first) this.shownKey = this.heldKey;
+    else { if (!this.equip.active) this.shownKey = prev; this.equip.start(); }
+  }
+  private ensureHeld(item: number | null): void {
+    const key = item ?? 0, spec = item !== null ? HELD_MODELS[item] : undefined, cat = heldCategory(item, !!spec);
+    this.heldKinds.set(key, cat === 'model' ? spec!.kind : cat === 'hand' ? 'hand' : cat === 'block' ? 'block' : cat === 'tool' ? 'tool' : 'flat');
+    if (this.held.has(key)) return;
+    if (cat === 'model') {
+      this.held.set(key, 'loading');
+      loadHeldModel(spec!.url, (map) => {
+        const m = new THREE.MeshBasicMaterial({ map, vertexColors: true });
+        patchDayLight(m, this.ambient);
+        return m;
+      }).then((g) => { g.scale.setScalar(spec!.scale); g.visible = false; this.handScene.add(g); this.held.set(key, g); }, (e) => { this.held.set(key, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
+      return;
+    }
+    const g = cat === 'hand' ? this.buildArm() : cat === 'block' ? this.buildBlock(item!) : this.buildFlat(item!, cat === 'tool');
+    if (!g) { this.held.set(key, 'failed'); return; }
+    g.visible = false;
+    this.handScene.add(g);
+    this.held.set(key, g);
+  }
+  /** Braço direito da mão vazia (4 × 12 × 4 px da skin: 0,25 × 0,75 × 0,25), com a base na origem para girar a partir do ombro. */
+  private buildArm(): THREE.Group {
+    const geo = new THREE.BoxGeometry(0.25, 0.75, 0.25);
+    geo.translate(0, 0.375, 0);
+    shadeHeld(geo, (nx, ny, nz) => Math.max(0.55, Math.min(1, 0.75 + 0.2 * ny + 0.1 * nx + 0.1 * nz)));
+    const m = new THREE.MeshBasicMaterial({ color: 0xc4966c, vertexColors: true });
+    patchDayLight(m, this.ambient);
+    const mesh = new THREE.Mesh(geo, m);
+    mesh.frustumCulled = false;
+    const g = new THREE.Group();
+    g.add(mesh);
+    return g;
+  }
+  /** Bloco cúbico na mão: cubo de 0,4 com as texturas do terreno (topo, lateral e base) e o sombreado fixo por face; gira 45° na pose para mostrar duas laterais e o topo. */
+  private buildBlock(item: number): THREE.Group | null {
+    const tiles = heldBlockTiles(item);
+    if (!tiles) return null;
+    const geo = new THREE.BoxGeometry(1, 1, 1), uv = geo.getAttribute('uv') as THREE.BufferAttribute;
+    [tiles[1], tiles[1], tiles[0], tiles[2], tiles[1], tiles[1]].forEach((tile, f) => { // ordem do BoxGeometry: +x, −x, +y, −y, +z, −z
+      const [u0, v0, u1, v1] = tileUV(tile);
+      uv.setXY(f * 4, u0, v1); uv.setXY(f * 4 + 1, u1, v1); uv.setXY(f * 4 + 2, u0, v0); uv.setXY(f * 4 + 3, u1, v0);
+    });
+    shadeHeld(geo, (nx, ny, nz) => (ny > 0.5 ? 1 : ny < -0.5 ? 0.55 : nx > 0.5 ? 0.86 : nx < -0.5 ? 0.66 : nz > 0.5 ? 0.78 : 0.7));
+    const mesh = new THREE.Mesh(geo, this.opaqueMat);
+    mesh.frustumCulled = false;
+    const g = new THREE.Group();
+    g.add(mesh);
+    g.scale.setScalar(0.22);
+    return g;
+  }
+  /**
+   * Item plano ou ferramenta: o sprite do item vira malha 3D (frente, verso e bordas de 1/16, `extrudeMask`) com a textura do atlas de itens. A ferramenta tem o pivô no cabo (canto de baixo à
+   * esquerda do sprite), como o `handheld` do Minecraft; o item plano gira pelo centro.
+   */
+  private buildFlat(item: number, handle: boolean): THREE.Group | null {
+    const m = itemMask(item);
+    if (!m) return null;
+    const ex = extrudeMask(m.mask, m.w, m.h, 1 / 16), idx = item - 1, col = idx % 4, row = (idx / 4) | 0;
+    const uv = ex.uv.map((v, i) => (i % 2 === 0 ? (col + v) / 4 : 1 - (row + (1 - v)) / ITEM_ROWS)); // sprite → célula do atlas de itens
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(ex.pos, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(ex.nrm, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(ex.idx);
+    shadeHeld(geo, (nx, ny, nz) => (Math.abs(nz) > 0.5 ? 0.95 : 0.62 + 0.25 * Math.max(0, ny) + 0.1 * nx));
+    this.heldFlatMat ??= (() => { const mat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, side: THREE.DoubleSide }); patchDayLight(mat, this.ambient); return mat; })();
+    const mesh = new THREE.Mesh(geo, this.heldFlatMat);
+    mesh.frustumCulled = false;
+    if (handle) mesh.position.set(0.5, 0.5, 0); // o cabo (canto de baixo à esquerda do sprite) fica na origem: é o pivô do golpe
+    const g = new THREE.Group();
+    g.add(mesh);
+    g.scale.setScalar(handle ? 0.42 : 0.28);
+    return g;
   }
   /** Começa um golpe da mão (animação de `SWING_S`, com o afundamento do golpe isolado). */
   swingHand(): void { this.handAnim.trigger(DIP_SINGLE); }
   /** Estado do jogador para a mão: velocidade horizontal e chão (balanço ao andar) e `acting` (segurando para quebrar: o golpe se repete). */
   setHandMotion(speed: number, grounded: boolean, acting: boolean): void { this.handMove = { speed, grounded, acting }; }
   /** A mão tem modelo carregado e visível? (diagnóstico e testes de navegador.) */
-  get heldVisible(): boolean { const g = this.heldItem !== null ? this.held.get(this.heldItem) : undefined; return !!g && typeof g !== 'string' && g.visible; }
+  get heldVisible(): boolean { const g = this.held.get(this.shownKey); return !!g && typeof g !== 'string' && g.visible; }
   /** O Farejador usa o rig? (diagnóstico e testes de navegador.) */
   get farejadorRigAtivo(): boolean { return this.farejadores.some((e) => !!e.rig); }
   /** Plantas e nozes desenhadas (diagnóstico e testes de navegador). */
@@ -619,12 +699,16 @@ export class TitanRenderer {
     if (this.perf && this.built) this.perf.record('buildFrame', performance.now() - tb); // malha + geometria de todo o quadro
     const tr = this.perf ? performance.now() : 0;
     this.renderer.render(this.scene, this.camera);
-    const hand = this.heldItem !== null ? this.held.get(this.heldItem) : undefined;
-    if (hand && typeof hand !== 'string' && hand.visible) {
-      const now = performance.now(), dt = this.lastRenderMs ? Math.min(0.1, (now - this.lastRenderMs) / 1000) : 0;
-      this.lastRenderMs = now;
+    const now = performance.now(), dt = this.lastRenderMs ? Math.min(0.1, (now - this.lastRenderMs) / 1000) : 0;
+    this.lastRenderMs = now;
+    const eq = this.equip.update(dt); // troca de item: afunda o velho e sobe o novo (ADR 0087)
+    if (eq.swapped) this.shownKey = this.heldKey;
+    const hand = this.held.get(this.shownKey);
+    for (const g of this.held.values()) if (typeof g !== 'string') g.visible = g === hand;
+    if (hand && typeof hand !== 'string') {
+      this.handAnim.kind = this.heldKinds.get(this.shownKey) ?? 'dagger';
       const hp = this.handAnim.update(dt, this.handMove.speed, this.handMove.grounded, this.handMove.acting);
-      hand.position.set(hp.x, hp.y, hp.z); hand.rotation.set(hp.rx, hp.ry, hp.rz);
+      hand.position.set(hp.x, hp.y + eq.offset, hp.z); hand.rotation.set(hp.rx, hp.ry, hp.rz);
       this.renderer.autoClear = false; this.renderer.clearDepth(); this.renderer.render(this.handScene, this.handCamera); this.renderer.autoClear = true;
     }
     if (this.perf) this.perf.record(this.built ? 'drawAfterBuild' : 'draw', performance.now() - tr); // JS do desenho; no quadro com malha nova inclui o envio à GPU
@@ -794,6 +878,14 @@ function toGeometry(d: MeshData): THREE.BufferGeometry {
  * (atributo de cada vértice) e a luz do dia é um uniform: mudar a hora é só mudar o número, sem refazer nenhuma malha. Névoa, mapa de tons e espaço de cor seguem o
  * material do Three.js.
  */
+/** Dá à malha o sombreado fixo por vértice (`color`, a partir da normal) e o brilho zero (`glow`) que o `patchDayLight` espera (a luz do dia é um uniform; ADR 0041). */
+function shadeHeld(geo: THREE.BufferGeometry, shade: (nx: number, ny: number, nz: number) => number): void {
+  const nrm = geo.getAttribute('normal'), n = nrm.count, col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { const v = shade(nrm.getX(i), nrm.getY(i), nrm.getZ(i)); col.set([v, v, v], i * 3); }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('glow', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+}
+
 /** Itens com modelo na mão: arquivo, estilo de golpe e escala (a picareta tem 60 cm, quase o dobro da adaga). */
 const HELD_MODELS: Readonly<Record<number, { url: string; kind: HandKind; scale: number }>> = {
   22: { url: titanAdagaRochaUrl, kind: 'dagger', scale: 1 },

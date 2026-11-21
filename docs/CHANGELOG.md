@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.148.0 — Titã: item na mão por categoria e troca animada (21/11/2026)
+- **Especificação de exibição na mão do Minecraft. ADR 0087.** Mão vazia (braço), blocos cúbicos (cubo com as texturas do terreno, 45°), itens planos e ferramentas de cobre (sprite extrudado 1/16, pivô no cabo) agora aparecem; a Adaga e a Picareta de Rocha seguem com os GLB. Trocar de item afunda o antigo (0,12 s) e sobe o novo (0,15 s).
+- A extrusão usa `itemMasks.json` (script `make-titan-item-masks.py`), nunca lê canvas. `heldKinds.ts`, `extrude.ts` e `EquipAnim` são puros e testados. Testes: +12 (1.113 no total). Conferido a 740 × 360.
+
 ## Orvalis v0.147.0 — Titã: gerador v13 (21/11/2026)
 - **Etapa 4 da rodada "cultivo e oficina da Margem". ADR 0086.** `GENERATOR_VERSION` 13 (partidas v1–v12 não mudam): as hastes secas avulsas caem de até 8 para as **2 mais próximas da chegada** (uma Picareta de Rocha; o resto vem do Junco Ressecado) e a **Noz de Duna mais próxima da chegada fica sem Farejador**.
 - Terreno, juncos, plantas, toca, âmbar, cobre e abrigos idênticos à v12. Testes: `v13.test.ts` (+4, 1.102 no total); `cobre`, `generator` e `regiao` ajustados. Conferido no jogo (seed 42): v13, 2 hastes, 22 plantas, a mais próxima sem guarda.

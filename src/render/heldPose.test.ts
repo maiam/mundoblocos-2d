@@ -64,3 +64,29 @@ describe('item na mão em primeira pessoa (ADR 0071, 0074)', () => {
     expect(b.length).toBeLessThan(2 * 1024 * 1024);
   });
 });
+
+import { EQUIP_DEPTH, EQUIP_DOWN_S, EQUIP_UP_S, EquipAnim } from './heldPose';
+
+describe('troca de item (ADR 0087)', () => {
+  it('parada: sem deslocamento e o item novo já aparece', () => {
+    expect(new EquipAnim().update(0.016)).toEqual({ offset: 0, swapped: true });
+  });
+  it('afunda, troca no fundo e sobe de volta ao repouso', () => {
+    const e = new EquipAnim(); e.start();
+    expect(e.active).toBe(true);
+    const meio = e.update(EQUIP_DOWN_S / 2); expect(meio.swapped).toBe(false); expect(meio.offset).toBeCloseTo(-EQUIP_DEPTH / 2, 6);
+    const fundo = e.update(EQUIP_DOWN_S / 2 + 0.001); expect(fundo.swapped).toBe(true); expect(fundo.offset).toBeLessThan(-EQUIP_DEPTH * 0.97);
+    const subindo = e.update(EQUIP_UP_S / 2); expect(subindo.swapped).toBe(true); expect(subindo.offset).toBeCloseTo(-EQUIP_DEPTH / 2, 1);
+    const fim = e.update(EQUIP_UP_S); expect(fim).toEqual({ offset: 0, swapped: true }); expect(e.active).toBe(false);
+  });
+  it('trocar de novo no meio da subida volta a afundar sem salto', () => {
+    const e = new EquipAnim(); e.start(); e.update(EQUIP_DOWN_S + EQUIP_UP_S * 0.5);
+    const antes = -EQUIP_DEPTH * 0.5;
+    e.start();
+    expect(e.update(0).offset).toBeCloseTo(antes, 6);
+    expect(e.update(0.001).swapped).toBe(false);
+  });
+  it('toda categoria tem estilo de repouso e amplitudes de golpe', () => {
+    for (const k of ['dagger', 'pick', 'hand', 'block', 'flat', 'tool'] as const) { expect(STYLES[k].rest).toBeDefined(); expect(STYLES[k].drx).toBeGreaterThan(0); }
+  });
+});
