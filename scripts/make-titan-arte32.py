@@ -24,6 +24,7 @@ NEW = {  # id do item -> arte de 32 px
     25: 'Placa_de_Carapaca_Item_32px.png', 26: 'Revestimento_de_Carapaca_Item_32px.png',
     27: 'Carne_Crua_de_Farejador_Item_32px.png', 28: 'Carne_Assada_de_Farejador_Item_32px.png',
     29: 'Bloco_de_Ambar_Compactado_Item_32px.png', 30: 'Noz_Torrada_Item_32px.png',
+    31: 'Esteira_de_Junco_Item_32px.png',
 }
 
 

@@ -3,7 +3,7 @@ import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
-import { blockSpan, isBrazier, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockSpan, isBrazier, isMat, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -72,6 +72,15 @@ function plantCrop(s: TitanSession, hit: Hit, slot: number, species: Species): A
   s.inventory.consume(slot);
   s.metaRev++;
   return { ok: true };
+}
+
+/** A célula tem piso firme para uma esteira? O bloco de baixo precisa ocupar a célula até o topo (cubo inteiro, laje superior ou dupla). */
+export const matSupported = (s: TitanSession, x: number, y: number, z: number): boolean => isSolid(s.volume.get(x, y - 1, z)) && blockSpan(s.volume.get(x, y - 1, z))[1] >= 1;
+
+/** O piso de uma esteira foi quebrado: a esteira sai do lugar e cai como item solto. */
+function releaseMat(s: TitanSession, x: number, y: number, z: number): void {
+  if (!isMat(s.volume.get(x, y, z)) || !s.volume.remove(x, y, z)) return;
+  spillBlock(s, Item.ESTEIRA, 1, x, y, z);
 }
 
 /** O apoio de uma planta cultivada foi quebrado: ela some e devolve a muda como item solto. */
@@ -239,6 +248,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
   releaseReed(s, reed, x, y + 1, z);
   releaseCrop(s, x, y + 1, z);
+  releaseMat(s, x, y + 1, z);
   return { ok: true };
 }
 
@@ -344,6 +354,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
     block = r.block;
   }
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
+  if (block === T.MAT && !matSupported(s, x, y, z)) return { ok: false, msg: 'A esteira precisa de piso firme' }; // ADR 0085: face superior sólida embaixo
   const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
   if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockSpan(block)) || !s.volume.place(x, y, z, block)) return { ok: false };
   s.inventory.consume(slot);

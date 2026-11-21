@@ -15,8 +15,8 @@ describe('malha por seção', () => {
     const [, w0, , w1] = tileUV(17); // 2.ª linha (índice 8..15) e a 3.ª (16..23): linha 2, coluna 1
     expect((1 - w1) * H).toBeCloseTo(2 * 36 + 2, 6); expect((1 - w0) * H).toBeCloseTo(2 * 36 + 34, 6);
   });
-  it('o atlas de terreno cobre todos os tiles do tiles.json com 41 entradas únicas', () => {
-    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles).toHaveLength(41); expect(tilesCfg.cols * tilesCfg.cols).toBeGreaterThanOrEqual(tilesCfg.tiles.length);
+  it('o atlas de terreno cobre todos os tiles do tiles.json com 43 entradas únicas', () => {
+    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles).toHaveLength(43); expect(tilesCfg.cols * tilesCfg.cols).toBeGreaterThanOrEqual(tilesCfg.tiles.length);
   });
   it('seção de ar não gera malha; a da superfície gera faces e o lago tem malha própria', () => {
     const g = new TitanGenerator(42), v = new TitanVolume(g);

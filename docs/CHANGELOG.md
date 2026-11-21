@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.146.0 — Titã: Esteira de Junco (21/11/2026)
+- **Etapa 3 da rodada "cultivo e oficina da Margem". ADR 0085.** Peça fina de piso (1/16 m), no modelo das placas de pressão do Minecraft **sem** as regras de pressão: sem colisão (anda-se por cima), alvo da mira só pela faixa fina, exige piso firme embaixo (quebrar o piso derruba a esteira), não bloqueia luz. Receita na Mesa: 3 Hastes Secas → 1.
+- Bloco 30 / item 31; malha do terreno com `half = 3` (topo = trama, laterais = borda); 2 tiles novos no atlas de 32 px (43). Ícone provisório gerado por script. `T_MAX` 30, `isItem` até 31.
+- Testes: `esteira.test.ts` (+8, 1.098 no total). Conferido a 740 × 360: piso 3 × 3 e ícone na hotbar.
+
 ## Orvalis v0.145.0 — Titã: Noz plantada e Noz Torrada (21/11/2026)
 - **Etapa 2 da rodada "cultivo e oficina da Margem". ADR 0084.** A Noz de Duna se planta no topo da Areia Ocre (toque com a noz na mão; em outro alvo continua comendo) e cresce em 3 fases pelo mesmo motor de random ticks do junco; a adulta rende 4 nozes sem ser arrancada e recua. Não cria Farejador. Só cresce na ocre.
 - **Noz Torrada** (item 30): Braseiro, 1 Noz → 1 (10 s), fome 7 e saturação 5,6. Ícone provisório gerado por script (`make-titan-noz-torrada.py`); atlas de itens regravado.

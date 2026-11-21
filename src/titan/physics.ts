@@ -1,7 +1,7 @@
 import { lanternBox, rayBox, type Box } from './lantern';
 import type { TitanVolume } from './volume';
 import { modelBox } from './models';
-import { isMarco, isOccupied, isPanel, isTarget, T, Y_MAX, Y_MIN } from './voxel';
+import { isMarco, isOccupied, isPanel, isTarget, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
 
 /** Corpo do jogador: caixa de 0,6 × 1,8 × 0,6 m, olhos a 1,62 m dos pés. Pés em y (base do corpo). */
 export const BODY_HALF = 0.3;
@@ -158,6 +158,10 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
         // Marco e Painel: a mira acerta a caixa do modelo (com folga de toque); fora dela o raio segue e pega o que está atrás
         const h = rayBox(ox, oy, oz, dx, dy, dz, modelBox(id, x, y, z, pad));
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box: modelBox(id, x, y, z) };
+      } else if (id === T.MAT) {
+        // a esteira é fina (1/16 m): a mira acerta só a caixa dela (com folga de toque para cima) e o raio segue por baixo e pelos lados
+        const h = rayBox(ox, oy, oz, dx, dy, dz, [x, y, z, x + 1, y + MAT_HEIGHT + pad, z + 1]);
+        if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box: [x, y, z, x + 1, y + MAT_HEIGHT, z + 1] };
       } else if (id === T.SLAB || id === T.SLAB_TOP) {
         // a laje ocupa só a metade de baixo da célula: a mira acerta essa caixa (o topo fica em y + 0,5) e o raio segue por cima dela
         const lo = id === T.SLAB ? 0 : 0.5, box: Box = [x, y + lo, z, x + 1, y + lo + 0.5, z + 1], h = rayBox(ox, oy, oz, dx, dy, dz, box);
