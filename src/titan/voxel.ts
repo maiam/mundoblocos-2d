@@ -60,6 +60,9 @@ export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VE
 export const isBrazier = (id: number): boolean => id === T.BRAZIER || id === T.BRAZIER_LIT;
 /** Altura do Braseiro de Rocha 3D (ADR 0092): 0,774 m, e 0,935 m de lado, centrado na célula. */
 export const BRAZIER_HEIGHT = 0.774;
+/** Luz de bloco que cada emissor irradia (0–15; perde 1 por célula, ADR 0040): a lanterna 15 e o Braseiro aceso 13 (ADR 0094). Emissor novo entra aqui, nunca `id === …` solto na luz. */
+export const BRAZIER_LIGHT = 13;
+export const lightLevelOf = (id: number): number => (id === T.LANTERN ? 15 : id === T.BRAZIER_LIT ? BRAZIER_LIGHT : 0);
 export const isCopperVein = (id: number): boolean => id === T.VEIN_COPPER;
 /** Veio de Âmbar (ADR 0073): só uma picareta o quebra; solta 1–2 Brasas de Âmbar, nunca o bloco. */
 export const isAmberVein = (id: number): boolean => id === T.EMBER_VEIN;

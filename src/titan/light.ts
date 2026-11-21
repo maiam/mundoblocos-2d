@@ -9,11 +9,13 @@ export const lightKey = (x: number, y: number, z: number): number => ((x + 2048)
 
 const DIRS: ReadonlyArray<readonly [number, number, number]> = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
 
-/** Níveis de luz (chave `lightKey` → 1..15) a partir das lanternas. A célula da lanterna vale 15; vence o maior valor de cada célula. */
-export function computeLight(get: (x: number, y: number, z: number) => number, lanterns: Iterable<readonly [number, number, number]>): Map<number, number> {
+/** Níveis de luz (chave `lightKey` → 1..15) a partir dos emissores. A célula da lanterna vale 15 (a do braseiro aceso, 13); vence o maior valor de cada célula. */
+/** Cada emissor é `[x, y, z, nível?]` (sem nível = 15, a lanterna). */
+export type LightSource = readonly [number, number, number, number?];
+export function computeLight(get: (x: number, y: number, z: number) => number, lanterns: Iterable<LightSource>): Map<number, number> {
   const out = new Map<number, number>();
   const queue: Array<[number, number, number, number]> = [];
-  for (const [x, y, z] of lanterns) { out.set(lightKey(x, y, z), LIGHT_MAX); queue.push([x, y, z, LIGHT_MAX]); }
+  for (const [x, y, z, lv = LIGHT_MAX] of lanterns) { out.set(lightKey(x, y, z), Math.max(out.get(lightKey(x, y, z)) ?? 0, lv)); queue.push([x, y, z, lv]); }
   for (let head = 0; head < queue.length; head++) {
     const [x, y, z, l] = queue[head];
     if (l <= 1) continue;
@@ -122,21 +124,21 @@ export class LightEngine {
   }
 
   /** Cálculo completo (abertura da partida): espalha a luz de todas as lanternas. Não avisa mudanças (nada foi desenhado ainda). */
-  rebuild(lanterns: Iterable<readonly [number, number, number]>): void {
+  rebuild(lanterns: Iterable<LightSource>): void {
     this.store.clear();
     const q: number[] = [];
-    for (const [x, y, z] of lanterns) { this.store.set(x, y, z, LIGHT_MAX); q.push(x, y, z, LIGHT_MAX); }
+    for (const [x, y, z, lv = LIGHT_MAX] of lanterns) { this.store.set(x, y, z, Math.max(this.store.get(x, y, z), lv)); q.push(x, y, z, lv); }
     this.silent = true;
     this.spread(q);
     this.silent = false;
     this.ready = true;
   }
 
-  /** Uma lanterna foi colocada em (x, y, z). */
-  sourceAdded(x: number, y: number, z: number): void {
-    if (!this.inside(x, y, z) || this.store.get(x, y, z) >= LIGHT_MAX) return;
-    this.put(x, y, z, LIGHT_MAX);
-    const q = [x, y, z, LIGHT_MAX];
+  /** Um emissor (lanterna, nível 15; braseiro aceso, 13) foi colocado em (x, y, z). */
+  sourceAdded(x: number, y: number, z: number, level = LIGHT_MAX): void {
+    if (!this.inside(x, y, z) || this.store.get(x, y, z) >= level) return;
+    this.put(x, y, z, level);
+    const q = [x, y, z, level];
     this.spread(q);
   }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.155.0 — Titã: luz do Braseiro aceso (21/11/2026)
+- **ADR 0094.** O Braseiro aceso passa a **iluminar o entorno** (luz de bloco 13, perde 1 por célula; a lanterna segue 15). Emissores agora têm nível (`lightLevelOf`); acender, apagar, quebrar e carregar o save acendem e apagam a luz pelo mesmo motor incremental da lanterna.
+- Como o braseiro aceso é sólido e emissor, o motor trata a ordem emissor-sai → sólido → emissor-entra. Sem mudança de save nem de gerador. Testes: +4 (1.164 no total). Conferido a 740 × 360 de noite.
+
 ## Orvalis v0.154.0 — Titã: tampa do baú e véu do sono (21/11/2026)
 - **ADR 0093.** O Baú de Rocha e Junco passa a ter a **tampa animada**: ela é uma malha própria (1.700 triângulos) e gira em torno da dobradiça atrás do baú, abrindo (~109° em ~0,35 s) com o painel do baú e fechando ao fechar o painel. Só desenho: sem mudança de save.
 - **Dormir na cama** ganha um **véu escuro**: a tela escurece, a noite passa com ela preta e o véu clareia devagar; o controle volta antes do fim. De dia a cama continua só marcando o ponto de retorno.
