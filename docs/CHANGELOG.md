@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.137.0 — Titã: Picareta de Rocha na mão (21/11/2026)
+- **Pacote 3D "Picareta de Rocha" do dono do produto.** **ADR 0078.** GLB de 3,1 MB (com rig e clipe) → **325 KB** só com a malha (4.632 triângulos) e o BaseColor 1024 px em WebP, por `scripts/export-titan-picareta.py`; carregado só quando a picareta é escolhida.
+- A picareta aparece na mão com **golpe próprio, por cima** (`STYLES` em `heldPose.ts`; a adaga segue cortando em diagonal) e se repete ao segurar para quebrar. `HELD_MODELS` mapeia item → modelo, estilo e escala.
+- Testes `heldPose.test.ts` (+2; 1.057 no total, 1 ignorado). Conferido a 740 × 360 em 5 fases do golpe.
+
 ## Orvalis v0.136.0 — Titã: tela cheia no toque (bordas livres e volta imediata) (21/11/2026)
 - **Relato do dono do produto (tablet na horizontal):** segurar o toque às vezes tira o navegador da tela cheia (e ao soltar ela volta). **ADR 0077.**
 - Controles e área de ação a **36 px das bordas** (faixas dos gestos do sistema), menu do alto mais para dentro, segurar sem menu do navegador, e, se a tela cheia cair com o dedo na tela, o jogo a pede **na hora** de volta (não volta se foi gesto de voltar sem toque, campo de texto ou aba escondida).
