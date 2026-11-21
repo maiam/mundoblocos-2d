@@ -282,3 +282,26 @@ describe('ponteiros e cancelamentos', () => {
     }
   });
 });
+
+describe('golpe no animal (ADR 0080)', () => {
+  const mob = (i: number, x: number): GestureTarget => ({ x, y: 65, z: 4, nx: 0, ny: 1, nz: 0, kind: 'creature', item: String(i) });
+  it('o animal anda: o toque curto vale mesmo com a célula dele mudando entre o press e o release (é o mesmo animal)', () => {
+    const { g, log } = rig();
+    g.press(1, 0, mob(0, 10)); g.update(50, mob(0, 11)); g.release(1, 100, mob(0, 12));
+    expect(log).toHaveLength(1); expect(g.lastOutcome).toBe('placed'); // o golpe vai pelo índice do animal (item), não pela célula
+  });
+  it('segurar no animal golpeia em sequência (a cada quadro o gancho aplica a pausa), sem quebrar nada, e soltar encerra sem golpe extra', () => {
+    const { g, log } = rig();
+    g.press(1, 0, mob(0, 10)); g.update(100, mob(0, 10)); expect(g.state).toBe('ARMED');
+    g.update(250, mob(0, 10)); expect(g.state).toBe('ATTACKING'); expect(log).toHaveLength(1);
+    g.update(300, mob(0, 11)); g.update(900, mob(0, 12)); expect(log.length).toBeGreaterThanOrEqual(3); // a pausa de 0,6 s é do gancho, não do gesto
+    const n = log.length; g.release(1, 1000, mob(0, 12)); expect(log).toHaveLength(n); expect(g.state).toBe('IDLE');
+  });
+  it('trocar de animal segue no novo; sair da mira ou arrastar a câmera para de golpear', () => {
+    const a = rig(); a.g.press(1, 0, mob(0, 10)); a.g.update(250, mob(0, 10));
+    a.g.update(300, mob(1, 14)); expect(a.log[a.log.length - 1]).toBe('place@14,65,4'); expect(a.g.state).toBe('ATTACKING');
+    a.g.update(350, sand); expect(a.g.state).toBe('COMPLETED'); const n = a.log.length; a.g.update(400, mob(1, 14)); expect(a.log).toHaveLength(n);
+    const b = rig(); b.g.press(1, 0, mob(0, 10)); b.g.update(250, mob(0, 10)); b.g.drag(1, DRAG_TOLERANCE_PX + 1); expect(b.g.state).toBe('CAMERA_DRAG');
+    const c = rig(); c.g.press(1, 0, mob(0, 10)); c.g.update(50, mob(1, 10)); expect(c.g.state).toBe('COMPLETED'); expect(c.log).toHaveLength(0); // trocou antes de armar: nada
+  });
+});

@@ -12,7 +12,7 @@ import { DRAG_TOLERANCE_PX, HOLD_MS, breakProgress, crackStage, type TargetKind 
  *  depois de uma quebra (COMPLETED), arrastar além da tolerância e apontar um bloco quebrável recomeça a quebra. Sem arrastar não há quebra em série (o bloco de trás não cede sozinho).
  * O tempo é conferido também em `release`: uma pressão de 200 ms ou mais **nunca** vira colocação por atraso de quadro.
  */
-export type GestureState = 'IDLE' | 'ARMED' | 'CAMERA_DRAG' | 'BREAKING' | 'COMPLETED';
+export type GestureState = 'IDLE' | 'ARMED' | 'CAMERA_DRAG' | 'BREAKING' | 'ATTACKING' | 'COMPLETED';
 
 export interface GestureTarget {
   x: number; y: number; z: number;
@@ -39,9 +39,10 @@ export interface GestureHooks {
   effect(t: GestureTarget | null, progress: number, stage: number): void;
 }
 
+/** Mesmo alvo? Bloco/lasca: mesma célula e face de item; **animal: o mesmo animal** (ele anda, e a célula muda a cada passo; ADR 0080). */
 const sameCell = (a: GestureTarget | null, b: GestureTarget | null): boolean =>
-  !!a && !!b && a.x === b.x && a.y === b.y && a.z === b.z && a.kind === b.kind && a.item === b.item;
-const sameFace = (a: GestureTarget, b: GestureTarget): boolean => a.nx === b.nx && a.ny === b.ny && a.nz === b.nz;
+  !!a && !!b && a.kind === b.kind && a.item === b.item && (a.kind === 'creature' || (a.x === b.x && a.y === b.y && a.z === b.z));
+const sameFace = (a: GestureTarget, b: GestureTarget): boolean => a.kind === 'creature' || (a.nx === b.nx && a.ny === b.ny && a.nz === b.nz);
 
 export class InteractionGesture {
   state: GestureState = 'IDLE';
@@ -84,7 +85,7 @@ export class InteractionGesture {
   drag(pointer: number | string, distancePx: number): void {
     if (pointer !== this.pointer) return;
     this.lastDist = distancePx;
-    if (this.state === 'ARMED' && distancePx > this.dragTolerance) this.state = 'CAMERA_DRAG'; // entrega o movimento à câmera; ao soltar, nada acontece
+    if ((this.state === 'ARMED' || this.state === 'ATTACKING') && distancePx > this.dragTolerance) this.state = 'CAMERA_DRAG'; // entrega o movimento à câmera; ao soltar, nada acontece
   }
 
   /** Chamar a cada quadro com a mira atual (ou null). */
@@ -92,11 +93,16 @@ export class InteractionGesture {
     if (this.state === 'ARMED') {
       if (!sameCell(target, this.start)) { this.consume('cancelled'); return; } // alvo mudou ou saiu do alcance: consome até soltar
       if (now - this.t0 >= this.holdMs) {
+        if (this.total === null && target?.kind === 'creature') { this.state = 'ATTACKING'; this.doPlace(target); return; } // segurar no animal golpeia em sequência (o ritmo é da pausa entre golpes, ADR 0080)
         if (this.total === null) { this.consume('cancelled'); return; } // nada a quebrar (rocha-mãe)
         this.state = 'BREAKING';
         this.mined = true;
         this.tick(now, target!);
       }
+    } else if (this.state === 'ATTACKING') {
+      if (sameCell(target, this.start)) this.doPlace(target!); // o gancho aplica a pausa entre golpes; só falha se ainda não deu o tempo
+      else if (target?.kind === 'creature') { this.start = { ...target }; this.doPlace(target); } // passou para outro animal: segue nele
+      else { this.lastOutcome = 'cancelled'; this.state = 'COMPLETED'; } // saiu da mira: espera soltar
     } else if (this.state === 'BREAKING') this.tick(now, target);
     else if (this.state === 'COMPLETED' && this.mined && Math.abs(this.lastDist - this.dragBase) > this.dragTolerance && target && this.hooks.totalMs(target) !== null) this.begin(now, target); // arrastou depois de quebrar: segue no próximo
   }

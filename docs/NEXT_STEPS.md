@@ -22,6 +22,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Fragmentos à vista (v0.129.0, ADR 0072):** balanço das densidades (12 %/6 %) e do rendimento por veio; incluir os novos veios em `veinCells()` se algum teste de alcance precisar.
 
+**Golpe em sequência (v0.139.0, ADR 0080):** aceite em aparelho; som e efeito de acerto no animal.
+
 **Atlas de 32 px (v0.138.0, ADR 0079):** aceite visual em aparelho e à noite; texturas do lago (falta a lateral exposta) e dos modelos 3D (mesa, lanterna, Marco, Painel: pedem UV); limpar os scripts e o atlas de 16 px legados.
 
 **Picareta na mão (v0.137.0, ADR 0078):** aceite em aparelho; modelos da picareta e da adaga de cobre; usar o clipe "Minerar" do rig só se o golpe procedural não servir.

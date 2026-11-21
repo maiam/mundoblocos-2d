@@ -829,14 +829,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     computeAim();
     if (fingerMode()) { // anel no dedo: enche enquanto quebra (ADR 0075)
-      touchRing.classList.toggle('on', gesture.state === 'ARMED' || gesture.state === 'BREAKING');
+      touchRing.classList.toggle('on', gesture.state === 'ARMED' || gesture.state === 'BREAKING' || gesture.state === 'ATTACKING');
       touchRing.style.setProperty('--p', String(gesture.progress));
     }
     useBtn.hidden = fingerMode() || !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar" (no toque, tocar na estação a abre)
     if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);
-    view.setHandMotion(Math.hypot(b.vx, b.vz), b.onGround, active && gesture.state === 'BREAKING');
+    view.setHandMotion(Math.hypot(b.vx, b.vz), b.onGround, active && gesture.state === 'BREAKING'); // golpe no animal: cada golpe (`strike`) dispara o seu balanço, no ritmo da pausa entre golpes
     view.render(eye, session.yaw, session.pitch, aimCreature ? null : target, now / 1000);
     veil.style.opacity = String(view.submersion); // 0 fora d'água; entra e sai em ~150 ms
     cross.hidden = !active;

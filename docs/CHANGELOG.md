@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.139.0 — Titã: segurar no animal golpeia em sequência (21/11/2026)
+- **Relato do dono do produto:** a adaga repetia o golpe contra blocos, mas não dava dano no Farejador. **ADR 0080.** Causas: segurar cancelava o gesto sem golpear (só o toque curto golpeava) e o animal, ao andar, mudava a célula do alvo e cancelava o toque.
+- O gesto compara o **mesmo animal** (não a célula); novo estado `ATTACKING`: segurar golpeia em sequência (pausa de 0,6 s do `strike`), troca de animal segue no novo, sair da mira ou arrastar encerra.
+- Testes `gesture.test.ts` (+3; 1.061 no total, 1 ignorado). Conferido a 740 × 360 com emulação de toque: cinco golpes em 2,7 s (100 → 80).
+
 ## Orvalis v0.138.0 — Titã: atlas de terreno de 32 px por face (21/11/2026)
 - **Pranchas individuais de texturas do dono do produto (32 px); substituem também os blocos existentes.** **ADR 0079.** Atlas novo (288 × 216, 42 KB) com topo, lateral e base próprios em todos os blocos do terreno (areia, rocha, gelo, veios, cobre, depósito, laje, carapaça, braseiro, veio e bloco de âmbar).
 - `src/titan/tiles.json` (ordem dos 41 tiles) é a fonte única do script `make-titan-atlas32.py` e do TypeScript; `tileFor` devolve o tile por face e `tileIndex(nome)` busca pelo nome.
