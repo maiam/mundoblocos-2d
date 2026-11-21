@@ -149,8 +149,8 @@ export interface Hit { x: number; y: number; z: number; nx: number; ny: number; 
 /** Fragmentos de superfície ainda no mundo, por célula. */
 export interface ItemLookup { at(x: number, y: number, z: number): string | null }
 
-/** Raio por células (Amanatides–Woo) até o primeiro alvo — sólido, lanterna ou fragmento de superfície; a mira ignora ar e líquido. Devolve a célula e a face atingida; a lanterna só vale dentro da sua caixa (`pad` = folga de toque). */
-export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach = 6, items?: ItemLookup, pad = 0): Hit | null {
+/** Raio por células (Amanatides–Woo) até o primeiro alvo — sólido, lanterna ou fragmento de superfície; a mira ignora ar e líquido (salvo `liquid`, com o balde na mão). Devolve a célula e a face atingida; a lanterna só vale dentro da sua caixa (`pad` = folga de toque). */
+export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach = 6, items?: ItemLookup, pad = 0, liquid = false): Hit | null {
   let x = Math.floor(ox), y = Math.floor(oy), z = Math.floor(oz);
   const sx = Math.sign(dx), sy = Math.sign(dy), sz = Math.sign(dz);
   const tdx = dx !== 0 ? Math.abs(1 / dx) : Infinity, tdy = dy !== 0 ? Math.abs(1 / dy) : Infinity, tdz = dz !== 0 ? Math.abs(1 / dz) : Infinity;
@@ -180,7 +180,7 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
         // a laje ocupa só a metade de baixo da célula: a mira acerta essa caixa (o topo fica em y + 0,5) e o raio segue por cima dela
         const lo = id === T.SLAB ? 0 : 0.5, box: Box = [x, y + lo, z, x + 1, y + lo + 0.5, z + 1], h = rayBox(ox, oy, oz, dx, dy, dz, box);
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box };
-      } else if (isTarget(id)) return { x, y, z, nx, ny, nz, hy };
+      } else if (isTarget(id) || (liquid && id === T.LAKE)) return { x, y, z, nx, ny, nz, hy }; // `liquid`: o balde mira o líquido (ADR 0091)
     }
     if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; nx = -sx; ny = 0; nz = 0; }
     else if (ty < tz) { y += sy; t = ty; ty += tdy; nx = 0; ny = -sy; nz = 0; }

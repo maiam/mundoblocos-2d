@@ -94,6 +94,15 @@ export class Inventory {
     return { broken: false, left: max - wear };
   }
 
+  /** Troca o item de uma pilha de 1 (balde vazio ↔ cheio, ADR 0091); o espaço continua o mesmo. */
+  replace(slot: number, item: number): boolean {
+    const c = this.s[slot];
+    if (!c || c.count !== 1) return false;
+    this.s[slot] = { item, count: 1 };
+    this.rev++;
+    return true;
+  }
+
   /** Gasta 1 do espaço (colocar bloco/lanterna). */
   consume(slot: number): boolean {
     const c = this.s[slot];

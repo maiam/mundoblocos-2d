@@ -18,7 +18,7 @@ import { rayThrough } from './aim';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { CHEST_SLOTS } from './chest';
-import { blockOfItem, foodOf, isPick, Item, ITEM_NAMES } from './items';
+import { blockOfItem, foodOf, isBucket, isPick, Item, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -682,7 +682,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const ray = !act ? null : fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
     if (!ray) { target = null; aimCreature = null; } else {
       const [dx, dy, dz] = ray;
-      target = raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE);
+      target = raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, isBucket(session.inventory.get(session.selected)?.item)); // balde na mão: a mira acerta o líquido (ADR 0091); cheio, é por ele que se olha a cavidade
       const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5) : Infinity;
       aimCreature = creatureAim(session.creatures, eye.x, eye.y, eye.z, dx, dy, dz, ATTACK_REACH, blockDist); // animal na mira: mais perto que o bloco apontado (ADR 0069)
     }

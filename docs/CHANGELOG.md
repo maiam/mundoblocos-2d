@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.152.0 — Titã: Balde de Cobre (21/11/2026)
+- **Quarta entrega da rodada "Itens do Abrigo". ADR 0091.** Receita na Mesa: 3 Lingotes de Cobre de Duna → Balde de Cobre (itens 35 vazio e 36 cheio, pilha de 1).
+- Com o balde na mão a mira acerta o líquido. **Vazio**, o toque recolhe a célula de cima da coluna do lago (vira ar; o balde enche); **cheio**, o toque despeja o líquido numa célula livre em Y ≤ 63 (cavidade escavada) e o balde volta vazio. Sem fluxo de líquido; sólido colocado sobre o líquido o desloca como antes.
+- Ícones de 32 px da arte 2D do pacote (provisórios); balde na mão como sprite extrudado. Testes: +6 (1.154 no total). Conferido a 740 × 360 e no jogo.
+- A fundição do pacote (1 lingote por 2 fragmentos) já era a receita atual. Resta o Braseiro 3D da rodada.
+
 ## Orvalis v0.151.0 — Titã: Cama de Junco (21/11/2026)
 - **Terceira entrega da rodada "Itens do Abrigo". ADR 0090.** Receita na Mesa: 3 Rochas Escuras + 2 Esteiras. Cama de **duas células** (pé 39–42 e cabeceira 43–46, item 34) colocada no sentido do olhar, sobre piso firme; quebrar qualquer metade tira as duas e devolve uma.
 - **Usar** marca o **ponto de retorno** (`session.spawn`, `header.spawn` opcional, sem subir a versão do save) e, **à noite**, dorme até o amanhecer (o relógio vai para logo depois do nascer do sol; passar da meia-noite soma um dia). Ao morrer o jogador renasce **ao lado da cama**; sem a cama volta à chegada.
