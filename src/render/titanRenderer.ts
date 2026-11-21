@@ -4,7 +4,7 @@ import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
 import { loadHeldModel } from './heldItem';
-import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -121,7 +121,7 @@ export class TitanRenderer {
   private clock = 0;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -212,7 +212,17 @@ export class TitanRenderer {
     mtex.needsUpdate = true;
     const mmat = new THREE.MeshBasicMaterial({ map: mtex, vertexColors: true, fog: true });
     patchDayLight(mmat, this.ambient, { instGlow: true });
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat]];
+    // Escada de Junco (ADR 0088): cor-base de 256 px própria; a trama de junco pede os dois lados (DoubleSide)
+    const etex = new THREE.Texture(extra.escadaAtlas);
+    etex.colorSpace = THREE.SRGBColorSpace;
+    etex.magFilter = THREE.NearestFilter;
+    etex.minFilter = THREE.NearestFilter;
+    etex.generateMipmaps = false;
+    etex.flipY = false;
+    etex.needsUpdate = true;
+    const emat = new THREE.MeshBasicMaterial({ map: etex, vertexColors: true, fog: true, side: THREE.DoubleSide });
+    patchDayLight(emat, this.ambient, { instGlow: true });
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -330,7 +340,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel'] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada'] as const) {
       const cells = this.volume.modelCells(kind);
       let mesh = this.modelMeshes[kind];
       if (cells.length > mesh.instanceMatrix.count) {
@@ -360,6 +370,8 @@ export class TitanRenderer {
   /** Marcos e Painéis desenhados (diagnóstico e testes de navegador). */
   get marcoCount(): number { return this.modelMeshes.marco.count; }
   get painelCount(): number { return this.modelMeshes.painel.count; }
+  /** Escadas desenhadas (diagnóstico e testes de navegador). */
+  get escadaCount(): number { return this.modelMeshes.escada.count; }
 
   /** Juncos de vidro: `list` = células de ar sobre areia úmida (o jogo filtra as que foram construídas). Silhueta, rotação e tamanho por planta, determinísticos pela posição. */
   setReeds(list: ReadonlyArray<{ x: number; y: number; z: number }>): void {
@@ -829,7 +841,7 @@ function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
 }
 
 /** Mesa de Trabalho: sombreado por face (mesmos fatores do terreno) e luz do dia no shader; o brilho de lanterna entra por instância (`iGlow`). UV do glTF (origem no canto superior esquerdo). */
-type ModelKind = 'workbench' | 'marco' | 'painel';
+type ModelKind = 'workbench' | 'marco' | 'painel' | 'escada';
 
 /** Geometria de um modelo 3D de bloco (mesa, Marco, Painel): sombreado fixo por face na cor dos vértices, UV do glTF. */
 function modelGeometry(m: ModelData): THREE.BufferGeometry {

@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.149.0 — Titã: Escada de Junco (21/11/2026)
+- **Primeira entrega da rodada "Itens do Abrigo". ADR 0088.** Receita na Mesa: 4 Hastes Secas → 3 escadas. Cada escada se prende à lateral de um cubo inteiro (a frente aponta para fora; 4 giros no id, blocos 31–34, item 32), não é sólida e **se sobe**: empurrar para a parede ou pular sobe a 2,3 m/s, soltar escorrega a 1,2 m/s, sem dano de queda. Quebrar o apoio derruba as escadas como itens.
+- Modelo 3D do pacote de arte reduzido a 1.398 triângulos pelo Blender (`extract-titan-escada.py`), atlas de 256 px; mira na placa fina. Ícone provisório gerado por script. Testes: +13 (1.125 no total). Conferido a 740 × 360.
+- Baú, cama, balde de cobre e Braseiro 3D da mesma rodada ficam para as próximas entregas.
+
 ## Orvalis v0.148.0 — Titã: item na mão por categoria e troca animada (21/11/2026)
 - **Especificação de exibição na mão do Minecraft. ADR 0087.** Mão vazia (braço), blocos cúbicos (cubo com as texturas do terreno, 45°), itens planos e ferramentas de cobre (sprite extrudado 1/16, pivô no cabo) agora aparecem; a Adaga e a Picareta de Rocha seguem com os GLB. Trocar de item afunda o antigo (0,12 s) e sobe o novo (0,15 s).
 - A extrusão usa `itemMasks.json` (script `make-titan-item-masks.py`), nunca lê canvas. `heldKinds.ts`, `extrude.ts` e `EquipAnim` são puros e testados. Testes: +12 (1.113 no total). Conferido a 740 × 360.

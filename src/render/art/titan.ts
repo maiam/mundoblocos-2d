@@ -37,6 +37,8 @@ import reedSprite from '../../assets/titan-junco-variantes-32px.webp';
 import cultivoSprite from '../../assets/titan-cultivo-32px.webp';
 import lakeAtlas from '../../assets/titan-lago-32px.webp';
 import marcoModel from '../../assets/titan-marco.json';
+import escadaModel from '../../assets/titan-escada.json';
+import escadaAtlas from '../../assets/titan-escada-atlas.webp';
 import painelModel from '../../assets/titan-painel.json';
 import margemAtlas from '../../assets/titan-margem-atlas.webp';
 import nozPlantaModel from '../../assets/titan-noz-planta.json';
@@ -75,6 +77,9 @@ export const titanLakeUrl: string = lakeAtlas;
 export const titanMarcoModel = marcoModel as ModelData;
 export const titanPainelModel = painelModel as ModelData;
 export const titanMargemAtlasUrl: string = margemAtlas;
+/** Escada de Junco (ADR 0088): 1.398 triângulos reduzidos do GLB de jogo (`scripts/extract-titan-escada.py`) e a cor-base de 256 px. */
+export const titanEscadaModel = escadaModel as ModelData;
+export const titanEscadaAtlasUrl: string = escadaAtlas;
 /** Planta da Noz de Duna (3.008 triângulos, ADR 0060; `scripts/extract-titan-noz.py`): a planta sem frutos (2.160) e as 4 nozes (848), um atlas de 144 × 36 px. Pivô ao nível do solo. */
 export const titanNozPlantaModel = nozPlantaModel as ModelData;
 export const titanNozFrutosModel = nozFrutosModel as ModelData;

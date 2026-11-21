@@ -22,17 +22,17 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.MAT;
+export const T_MAX = T.LADDER_270;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
-export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT;
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id);
 /** Alvo da mira (e do "quebrar"): sólido, lanterna ou Marco de Margem. O líquido e o ar são atravessados. */
-export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id) || id === T.MAT;
+export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id) || id === T.MAT || isLadder(id);
 /** Bloco que bloqueia a luz de lanterna: sólido, menos o Painel de Junco (a trama tem vãos: a luz atravessa). */
 export const blocksLight = (id: number): boolean => isSolid(id) && !isPanel(id);
 /** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
@@ -91,7 +91,7 @@ export const PANEL_HEIGHT = 0.944;
 /** Id do painel que fica de frente para o jogador: olhando ao longo de Z (norte/sul) o painel corre ao longo de X; olhando ao longo de X, ao longo de Z. */
 export const panelIdFacing = (yaw: number): number => (Math.abs(Math.cos(yaw)) >= Math.abs(Math.sin(yaw)) ? T.PAINEL : T.PAINEL_Z);
 /** Peça recolhida com um toque longo curto (0,35 s, com anel e sem rachaduras): a lanterna e as peças pequenas da margem (Marco e Painel). */
-export const isCollectBlock = (id: number): boolean => id === T.LANTERN || isMarco(id) || isPanel(id) || id === T.MAT;
+export const isCollectBlock = (id: number): boolean => id === T.LANTERN || isMarco(id) || isPanel(id) || id === T.MAT || isLadder(id);
 /**
  * Esteira de Junco (ADR 0085): peça fina de piso, no modelo das placas de pressão do Minecraft **sem** as regras de pressão: 1/16 m de altura, sem colisão (anda-se por cima, como na
  * lanterna e no Marco), alvo da mira pela própria caixa, exige face superior sólida abaixo e, sem o apoio, vira item. Faz parte da malha do terreno (topo = trama, laterais = borda).
@@ -99,10 +99,23 @@ export const isCollectBlock = (id: number): boolean => id === T.LANTERN || isMar
 export const MAT_HEIGHT = 0.0625;
 export const isMat = (id: number): boolean => id === T.MAT;
 /** Modelo 3D (instâncias do renderer) deste bloco, ou `null`. `turn` = giro em quartos de volta ao redor de Y. */
-export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel'; turn: number } | null {
+/**
+ * Escada de Junco (ADR 0088): 4 ids com o giro no id (31–34); a **frente** da escada aponta para onde se sobe e a **face de apoio** fica na borda da célula do lado oposto. Giro `t` (quartos de volta ao
+ * redor de Y, como o Marco): 0 frente +Z, 1 frente +X, 2 frente −Z, 3 frente −X. Não é sólida (sobe-se por ela), é alvo da mira pela placa fina e exige um cubo inteiro atrás.
+ */
+export const isLadder = (id: number): boolean => id >= T.LADDER && id <= T.LADDER_270;
+export const ladderTurn = (id: number): number => (isLadder(id) ? id - T.LADDER : 0);
+export const ladderId = (turn: number): number => T.LADDER + (((turn % 4) + 4) % 4);
+/** Direção horizontal da frente da escada de giro `turn`, [x, z]. */
+export const ladderFacing = (turn: number): readonly [number, number] => [[0, 1], [1, 0], [0, -1], [-1, 0]][((turn % 4) + 4) % 4] as [number, number];
+/** Giro da escada que fica de frente para a normal horizontal (nx, nz) da face onde foi presa; 0 se a normal não for horizontal. */
+export const ladderTurnOf = (nx: number, nz: number): number => (nz > 0 ? 0 : nx > 0 ? 1 : nz < 0 ? 2 : nx < 0 ? 3 : 0);
+
+export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel' | 'escada'; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
   if (isPanel(id)) return { kind: 'painel', turn: id === T.PAINEL ? 0 : 1 };
+  if (isLadder(id)) return { kind: 'escada', turn: ladderTurn(id) };
   return null;
 }
 /** Bloco que sai da malha do terreno por ser modelo 3D (lanterna e os modelos acima). */

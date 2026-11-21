@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, blocksLight, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, modelOf, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, modelOf, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -107,7 +107,7 @@ export class TitanVolume {
 
   /** Coloca um sólido na célula (ar ou líquido; o líquido é deslocado, mas continua na base para voltar depois). */
   place(x: number, y: number, z: number, id: number): boolean {
-    if (!isSolid(id) && id !== T.LANTERN && !isMarco(id) && id !== T.MAT) return false;
+    if (!isSolid(id) && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id)) return false;
     if (isOccupied(this.get(x, y, z))) return false;
     return this.set(x, y, z, id);
   }
@@ -196,10 +196,10 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<'workbench' | 'marco' | 'painel', Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map() };
+  private readonly models: Record<'workbench' | 'marco' | 'painel' | 'escada', Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map() };
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
-  modelCells(kind: 'workbench' | 'marco' | 'painel'): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }
+  modelCells(kind: 'workbench' | 'marco' | 'painel' | 'escada'): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }
   workbenchCells(): Array<[number, number, number, number]> { return this.modelCells('workbench'); }
   /** Há uma Mesa de Trabalho nesta célula? */
   isWorkbench(x: number, y: number, z: number): boolean { return isWorkbench(this.get(x, y, z)); }
