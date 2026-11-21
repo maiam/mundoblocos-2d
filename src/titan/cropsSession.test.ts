@@ -1,17 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { breakOrCollect, collectItem, placeFromSlot } from './actions';
+import { breakOrCollect, canPlantNut, collectItem, placeFromSlot } from './actions';
 import { cropId, cropKey } from './crops';
-import { Item } from './items';
+import { foodOf, Item } from './items';
+import { smeltRecipe } from './furnace';
 import { MemoryTitanStorage } from './save';
-import { flush, openSession, standingCrops, tickCrops } from './session';
+import { flush, openSession, standingCrops, standingNuts, tickCrops } from './session';
 import { AFTERNOON, FIXED_HOURS } from './sky';
 import { T } from './voxel';
 
 /** Cultivo do junco na sessão (ADR 0083): plantar, crescer por sorteio, colher, perder o apoio e persistir. */
 const open = async (st = new MemoryTitanStorage()) => ({ st, s: await openSession(st, 42, () => 1, undefined, 2) });
 const Y = 150;
-const field = (s: Awaited<ReturnType<typeof openSession>>, block: number = T.DAMP_SAND) => {
-  const a = s.volume.gen.arrival, x = Math.floor(a.x) + 6, z = Math.floor(a.z) + 6;
+const field = (s: Awaited<ReturnType<typeof openSession>>, block: number = T.DAMP_SAND, dx = 0) => {
+  const a = s.volume.gen.arrival, x = Math.floor(a.x) + 6 + dx, z = Math.floor(a.z) + 6;
   s.volume.set(x, Y, z, block);
   return { x, z, hit: { x, y: Y, z, nx: 0, ny: 1, nz: 0 } };
 };
@@ -94,5 +95,41 @@ describe('cultivo do junco na sessão', () => {
     h.crops = { ...(h.crops ?? {}), [cropKey(f.x + 9, Y + 1, f.z)]: 1, [cropKey(f.x, Y + 1, f.z)]: 9 };
     const r2 = await openSession(st, null, () => 1);
     expect(r2.crops.size).toBe(0); // uma sem areia, outra com idade acima do limite
+  });
+  it('a Noz: planta no topo da ocre (broto), cresce, colhe 4 nozes e recua; na areia úmida o toque come', async () => {
+    const { s } = await open(); const f = field(s, T.SAND); hold(s, Item.NOZ);
+    expect(placeFromSlot(s, f.hit, 0).ok).toBe(true);
+    expect(s.crops.get(cropKey(f.x, Y + 1, f.z))).toMatchObject({ age: 0, species: 'noz' });
+    expect(s.creatures.length).toBeGreaterThanOrEqual(0);
+    expect(standingNuts(s).find((n) => n.x === f.x && n.z === f.z)).toMatchObject({ ripe: false, s: 0.4 });
+    tickCrops(s, 1000, () => 0, near(f.x, f.z)); tickCrops(s, 1000, () => 0, near(f.x, f.z));
+    expect(standingNuts(s).find((n) => n.x === f.x && n.z === f.z)).toMatchObject({ ripe: true, s: 1 });
+    const antes = s.inventory.total(Item.NOZ);
+    expect(collectItem(s, cropId(f.x, Y + 1, f.z))).toMatchObject({ ok: true, msg: '4 nozes' });
+    expect(s.inventory.total(Item.NOZ)).toBe(antes + 4);
+    expect(s.crops.get(cropKey(f.x, Y + 1, f.z))).toMatchObject({ age: 1, species: 'noz' });
+    expect(standingNuts(s).find((n) => n.x === f.x && n.z === f.z)).toMatchObject({ ripe: false, s: 1 }); // planta crescida, sem frutos
+    const g = field(s, T.DAMP_SAND, 5); // noz na úmida: não se planta, o toque come
+    s.vitals.hunger = 5;
+    expect(canPlantNut(s, g.hit)).toBe(false);
+    const n0 = s.inventory.total(Item.NOZ);
+    expect(placeFromSlot(s, g.hit, 0).ok).toBe(true);
+    expect(s.inventory.total(Item.NOZ)).toBe(n0 - 1); expect(s.crops.has(cropKey(g.x, Y + 1, g.z))).toBe(false);
+  });
+  it('a Noz plantada não cria Farejador e persiste com a espécie; quebrar o apoio devolve a noz', async () => {
+    const { st, s } = await open(); const f = field(s, T.SAND); hold(s, Item.NOZ);
+    const animais = s.creatures.length;
+    placeFromSlot(s, f.hit, 0); tickCrops(s, 1000, () => 0, near(f.x, f.z));
+    expect(s.creatures.length).toBe(animais);
+    await flush(st, s);
+    const r = await openSession(st, null, () => 1);
+    expect(r.crops.get(cropKey(f.x, Y + 1, f.z))).toMatchObject({ age: 1, species: 'noz' });
+    expect(breakOrCollect(r, f.hit).ok).toBe(true);
+    expect(r.crops.size).toBe(0);
+    expect([...r.drops.values()].some((d) => d.item === Item.NOZ)).toBe(true);
+  });
+  it('a Noz torrada: 1 noz no braseiro rende 1 e recupera mais fome que a crua', () => {
+    expect(smeltRecipe(Item.NOZ)).toMatchObject({ id: 'noz-torrada', result: { item: Item.NOZ_TORRADA, count: 1 } });
+    expect(foodOf(Item.NOZ_TORRADA)!.hunger).toBeGreaterThan(foodOf(Item.NOZ)!.hunger);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CROP_MIN_LIGHT, crowded, growChance, growthPoints, harvestOf, isRipe, maxAge, parseCropId, randomTick, soilKind, spriteFrame, type Crop, type CropContext, type CropKind } from './crops';
+import { CROP_MIN_LIGHT, crowded, growChance, growthPoints, harvestOf, isRipe, maxAge, nutLook, parseCropId, plantableSoil, randomTick, seedOf, soilKind, spriteFrame, type Crop, type CropContext, type CropKind } from './crops';
 import { Item } from './items';
 import { T } from './voxel';
 
@@ -9,13 +9,14 @@ describe('cultivo do junco (ADR 0083): regras puras', () => {
   it('a areia decide o cultivo e as fases', () => {
     expect(soilKind(T.DAMP_SAND)).toBe('umido'); expect(soilKind(T.SAND)).toBe('seco'); expect(soilKind(T.DARK_ROCK)).toBeNull();
     expect(maxAge('umido')).toBe(2); expect(maxAge('seco')).toBe(1);
-    expect(isRipe('umido', 1)).toBe(false); expect(isRipe('umido', 2)).toBe(true); expect(isRipe('seco', 1)).toBe(true);
+    expect(isRipe('junco', 'umido', 1)).toBe(false); expect(isRipe('junco', 'umido', 2)).toBe(true); expect(isRipe('junco', 'seco', 1)).toBe(true);
     expect([0, 1, 2].map((a) => spriteFrame('umido', a))).toEqual([0, 1, 2]);
     expect([0, 1].map((a) => spriteFrame('seco', a))).toEqual([0, 3]);
   });
   it('a colheita: úmido rende 2 mudas e recua a "crescendo"; seco rende 2 hastes secas e recua a muda', () => {
-    expect(harvestOf('umido')).toMatchObject({ item: Item.GLASS_REED, count: 2, backTo: 1 });
-    expect(harvestOf('seco')).toMatchObject({ item: Item.DRY_REED, count: 2, backTo: 0 });
+    expect(harvestOf('junco', 'umido')).toMatchObject({ item: Item.GLASS_REED, count: 2, backTo: 1 });
+    expect(harvestOf('junco', 'seco')).toMatchObject({ item: Item.DRY_REED, count: 2, backTo: 0 });
+    expect(harvestOf('noz', 'seco')).toMatchObject({ item: Item.NOZ, count: 4, backTo: 1 });
   });
   it('pontos de fertilidade: úmida cercada = 10; seca cercada = 4; isolada = 4 ou 2', () => {
     expect(growthPoints(() => 'umido')).toBe(10);
@@ -35,18 +36,28 @@ describe('cultivo do junco (ADR 0083): regras puras', () => {
     expect(crowded(at([1, 0]))).toBe(false);
   });
   it('random tick: sobe uma fase com sorteio baixo, não cresce no escuro nem passa da fase adulta', () => {
-    const c: Crop = { x: 0, y: 0, z: 0, age: 0 };
+    const c: Crop = { x: 0, y: 0, z: 0, age: 0, species: 'junco' };
     expect(randomTick(c, ctx('umido'), () => 0)).toBe(true); expect(c.age).toBe(1);
     expect(randomTick(c, ctx('umido'), () => 0.99)).toBe(false); expect(c.age).toBe(1); // sorteio alto
     expect(randomTick(c, ctx('umido', { light: CROP_MIN_LIGHT - 1 }), () => 0)).toBe(false); // no escuro
     expect(randomTick(c, ctx('umido', { light: CROP_MIN_LIGHT }), () => 0)).toBe(true); expect(c.age).toBe(2);
     expect(randomTick(c, ctx('umido'), () => 0)).toBe(false); // já adulta
-    expect(randomTick({ x: 0, y: 0, z: 0, age: 0 }, ctx(null), () => 0)).toBe(false); // sem areia
+    expect(randomTick({ x: 0, y: 0, z: 0, age: 0, species: 'junco' }, ctx(null), () => 0)).toBe(false); // sem areia
   });
   it('aglomerada cresce mais devagar: a chance cai pela metade dos pontos', () => {
     const rng = (): number => 0.2; // 0,2 < 1/3 (10 pontos) mas não < 1/4 (5 pontos: ⌊25/5⌋+1 = 6 → 1/6)
-    expect(randomTick({ x: 0, y: 0, z: 0, age: 0 }, ctx('umido'), rng)).toBe(true);
-    expect(randomTick({ x: 0, y: 0, z: 0, age: 0 }, ctx('umido', { sameAt: (dx, dz) => dx === 1 && dz === 1 }), rng)).toBe(false);
+    expect(randomTick({ x: 0, y: 0, z: 0, age: 0, species: 'junco' }, ctx('umido'), rng)).toBe(true);
+    expect(randomTick({ x: 0, y: 0, z: 0, age: 0, species: 'junco' }, ctx('umido', { sameAt: (dx, dz) => dx === 1 && dz === 1 }), rng)).toBe(false);
+  });
+  it('a Noz: 3 fases só na areia ocre, tamanho do broto e semente que volta', () => {
+    expect(plantableSoil('noz', T.SAND)).toBe(true); expect(plantableSoil('noz', T.DAMP_SAND)).toBe(false); expect(plantableSoil('junco', T.DAMP_SAND)).toBe(true);
+    expect(isRipe('noz', 'seco', 1)).toBe(false); expect(isRipe('noz', 'seco', 2)).toBe(true);
+    expect([0, 1, 2].map((a) => nutLook(a))).toEqual([{ scale: 0.4, ripe: false }, { scale: 1, ripe: false }, { scale: 1, ripe: true }]);
+    expect(seedOf('noz')).toBe(Item.NOZ); expect(seedOf('junco')).toBe(Item.GLASS_REED);
+    const n: Crop = { x: 0, y: 0, z: 0, age: 0, species: 'noz' };
+    expect(randomTick(n, ctx('seco'), () => 0)).toBe(true); expect(randomTick(n, ctx('seco'), () => 0)).toBe(true); expect(n.age).toBe(2);
+    expect(randomTick(n, ctx('seco'), () => 0)).toBe(false); // adulta
+    expect(randomTick({ x: 0, y: 0, z: 0, age: 0, species: 'noz' }, ctx('umido'), () => 0)).toBe(false); // na areia úmida não cresce
   });
   it('id de planta', () => { expect(parseCropId('crop:3,-4,5')).toEqual([3, -4, 5]); expect(parseCropId('reed:1,2,3')).toBeNull(); });
 });

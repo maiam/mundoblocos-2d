@@ -405,9 +405,9 @@ export class TitanRenderer {
   }
 
   /** Plantas de Noz de Duna de pé: a planta sempre, os frutos só nas maduras. Giro fixo pela posição. */
-  setNuts(list: ReadonlyArray<{ x: number; y: number; z: number; ripe: boolean }>): void {
+  setNuts(list: ReadonlyArray<{ x: number; y: number; z: number; ripe: boolean; s?: number }>): void {
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
-    const fill = (mesh: THREE.InstancedMesh, items: ReadonlyArray<{ x: number; y: number; z: number }>): THREE.InstancedMesh => {
+    const fill = (mesh: THREE.InstancedMesh, items: ReadonlyArray<{ x: number; y: number; z: number; s?: number }>): THREE.InstancedMesh => {
       if (items.length > mesh.instanceMatrix.count) {
         const n = new THREE.InstancedMesh(mesh.geometry, mesh.material, Math.max(items.length, mesh.instanceMatrix.count * 2));
         n.frustumCulled = false;
@@ -415,7 +415,7 @@ export class TitanRenderer {
         this.scene.add(n);
         mesh = n;
       }
-      items.forEach((n, i) => { q.setFromAxisAngle(up, nutTurn(n.x, n.z) * Math.PI * 2); m.compose(p.set(n.x + 0.5, n.y, n.z + 0.5), q, sc); mesh.setMatrixAt(i, m); });
+      items.forEach((n, i) => { q.setFromAxisAngle(up, nutTurn(n.x, n.z) * Math.PI * 2); m.compose(p.set(n.x + 0.5, n.y, n.z + 0.5), q, sc.setScalar(n.s ?? 1)); mesh.setMatrixAt(i, m); }); // `s` = tamanho do broto da noz plantada (ADR 0083)
       mesh.count = items.length;
       mesh.instanceMatrix.needsUpdate = true;
       return mesh;

@@ -43,8 +43,8 @@ export interface TitanHeader {
   furnaces?: Record<string, { i?: [number, number]; f?: [number, number]; o?: [number, number]; b: number; t: number; c: number }>;
   /** Plantas de Noz de Duna colhidas (ADR 0060): id `nut:x,y,z` → segundos de jogo para rebrotar. Ausente = todas maduras. */
   regrow?: Record<string, number>;
-  /** Plantas de junco cultivadas (ADR 0083): `x,y,z` → idade (0 muda … 2 adulto). Campo opcional: saves sem ele abrem sem plantas. */
-  crops?: Record<string, number>;
+  /** Plantas de junco cultivadas (ADR 0083): `x,y,z` → idade (0 muda … 2 adulto); a Noz plantada vai como `{ s: 'noz', a: idade }`. Campo opcional: saves sem ele abrem sem plantas. */
+  crops?: Record<string, number | { s: 'noz'; a: number }>;
   vitals?: { health: number; hunger: number; saturation: number; air: number };
 }
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */
