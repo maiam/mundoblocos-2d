@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -16,6 +16,8 @@ export class TitanVolume {
   private chunkRev = 0;
   /** Lanternas colocadas (as únicas fontes de luz) e o mapa de luz calculado sob demanda. */
   private readonly lanterns = new Map<number, [number, number, number]>();
+  /** Todos os emissores de luz de bloco (lanterna e braseiro aceso, `lightLevelOf`): `[x, y, z, nível]`. As lanternas também ficam em `lanterns`, que desenha o modelo delas. */
+  private readonly emitters = new Map<number, [number, number, number, number]>();
   /** Luz incremental em 4 bits por célula (ver `light.ts`); `ready` só depois da primeira consulta (cálculo completo sob demanda). */
   private readonly light$ = new LightEngine((x, y, z) => blocksLight(this.get(x, y, z)), (x, y, z) => this.markLightCell(x, y, z), (x, z) => this.gen.inRegion(x, z));
   /** Medição opcional do tempo de cada atualização do mapa de luz (ms): cálculo completo e cada edição. */
@@ -187,7 +189,7 @@ export class TitanVolume {
       for (const [idx, id] of c.edits) if (Number.isInteger(idx) && idx >= 0 && idx < 384 * 256 && Number.isInteger(id) && id >= 0 && id <= T_MAX) m.set(idx, id);
       if (m.size) this.edits.set(chunkKey(c.cx, c.cz), m);
       for (const [idx, id] of m) { const md = modelOf(id); if (md) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.models[md.kind].set(lightKey(x, u.y, z), [x, u.y, z, md.turn]); } }
-      for (const [idx, id] of m) if (id === T.LANTERN) { const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
+      for (const [idx, id] of m) { const lv = lightLevelOf(id); if (!lv) continue; const u = unpackIndex(idx); const x = c.cx * 16 + u.lx, z = c.cz * 16 + u.lz; this.emitters.set(lightKey(x, u.y, z), [x, u.y, z, lv]); if (id === T.LANTERN) this.lanterns.set(lightKey(x, u.y, z), [x, u.y, z]); }
     }
     this.light$.ready = false; // a luz é calculada por inteiro na primeira consulta
     this.lanternVersion++;
@@ -205,15 +207,16 @@ export class TitanVolume {
   isWorkbench(x: number, y: number, z: number): boolean { return isWorkbench(this.get(x, y, z)); }
   /** Muda a cada lanterna posta ou retirada (o renderer refaz as instâncias só então). */
   lanternVersion = 0;
-  get hasLanterns(): boolean { return this.lanterns.size > 0; }
+  /** Há algum emissor de luz de bloco (lanterna ou braseiro aceso)? Sem emissor a malha não calcula o brilho. */
+  get hasLanterns(): boolean { return this.emitters.size > 0; }
   lanternCells(): Array<[number, number, number]> { return [...this.lanterns.values()]; }
 
   /** Nível de luz (0–15) da célula. O primeiro uso faz o cálculo completo; depois a luz é mantida de forma incremental. */
   light(x: number, y: number, z: number): number {
-    if (!this.lanterns.size) return 0;
+    if (!this.emitters.size) return 0;
     if (!this.light$.ready) {
       const t0 = this.onLightMs ? performance.now() : 0;
-      this.light$.rebuild(this.lanterns.values());
+      this.light$.rebuild(this.emitters.values());
       this.onLightMs?.(performance.now() - t0);
     }
     return this.light$.get(x, y, z);
@@ -231,14 +234,16 @@ export class TitanVolume {
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
     if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
     if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
+    const lvBefore = lightLevelOf(before), lvAfter = lightLevelOf(after);
+    if (lvBefore !== lvAfter) { if (lvAfter) this.emitters.set(key, [x, y, z, lvAfter]); else this.emitters.delete(key); }
     if (!this.light$.ready) return;
     const t0 = this.onLightMs ? performance.now() : 0;
-    if (wasLantern && !isLantern) this.light$.sourceRemoved(x, y, z);
-    if (isLantern && !wasLantern) this.light$.sourceAdded(x, y, z);
-    // sólido: entrou (bloqueia) ou saiu (libera); lanterna e ar não bloqueiam
+    // ordem: emissor que sai, sólido que entra ou sai, emissor que entra (o braseiro aceso é sólido e emissor: um emissor novo não pode ser apagado pelo sólido que o acompanha)
+    if (lvBefore && !lvAfter) this.light$.sourceRemoved(x, y, z);
     const solidBefore = blocksLight(before), solidAfter = blocksLight(after);
     if (!solidBefore && solidAfter) this.light$.blockPlaced(x, y, z);
     else if (solidBefore && !solidAfter) this.light$.blockRemoved(x, y, z);
+    if (lvAfter && lvAfter !== lvBefore) this.light$.sourceAdded(x, y, z, lvAfter);
     this.flushLightTouched();
     this.onLightMs?.(performance.now() - t0);
   }

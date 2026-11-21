@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Luz do braseiro aceso (v0.155.0, ADR 0094):** `lightLevelOf`/`BRAZIER_LIGHT` em `voxel.ts` (lanterna 15, braseiro aceso 13); `light.ts` com `LightSource` `[x, y, z, nível?]` e `sourceAdded(…, nível)`; `TitanVolume.emitters` (ao lado de `lanterns`) e a ordem emissor-sai → sólido → emissor-entra em `updateLight`.
 - **Tampa do baú e véu do sono (v0.154.0, ADR 0093):** `titan/lid.ts` (`stepLid`, `LID_OPEN_ANGLE`) e `titan/sleep.ts` (`sleepVeil`, `SLEEP_APPLY_MS`) puros; `ModelKind` `bauTampa` no renderer (mesmas células do baú), `setOpenChest`/`animateLids`; véu `.titan-sleep` e `sleeping` em `titanGame.ts`.
 - **Braseiro 3D (v0.153.0, ADR 0092):** `modelOf(T.BRAZIER/BRAZIER_LIT)` = `braseiro`/`braseiroAceso` (`ModelKindName` em `voxel.ts`); `BRAZIER_HEIGHT` 0,774 em `blockSpan`, fora de `isFull`; `modelBox`/`raycast` com `isBrazier`; `EMBER_GLOW` do renderer; `scripts/extract-titan-braseiro.py`.
 - **Balde de Cobre (v0.152.0, ADR 0091):** `Item.BALDE` (35) e `Item.BALDE_CHEIO` (36), `isBucket` em `items.ts`; `raycast(…, liquid)` mira `T.LAKE` com balde na mão; `actions.useBucket` (recolhe a célula de cima da coluna → ar; despeja em ar livre com Y ≤ `LAKE_LAST_Y` → `T.LAKE`); `Inventory.replace`; sem fluxo de líquido.
