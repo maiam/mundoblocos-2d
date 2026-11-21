@@ -45,6 +45,8 @@ export interface TitanHeader {
   regrow?: Record<string, number>;
   /** Plantas de junco cultivadas (ADR 0083): `x,y,z` → idade (0 muda … 2 adulto); a Noz plantada vai como `{ s: 'noz', a: idade }`. Campo opcional: saves sem ele abrem sem plantas. */
   crops?: Record<string, number | { s: 'noz'; a: number }>;
+  /** Baús (ADR 0089): `x,y,z` → 18 espaços `[item, contagem]` ou `[item, contagem, desgaste]` (vazio = null). Campo opcional: saves sem ele abrem com baús vazios. */
+  chests?: Record<string, Array<[number, number] | [number, number, number] | null>>;
   vitals?: { health: number; hunger: number; saturation: number; air: number };
 }
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */

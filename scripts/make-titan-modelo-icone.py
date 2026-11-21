@@ -1,22 +1,28 @@
-"""Ícone provisório da Escada de Junco do Titã (ADR 0088): o próprio modelo desenhado em vista 3/4, 32 × 32 px.
+"""Ícone provisório de um modelo 3D do Titã (ADR 0088, 0089): o próprio modelo desenhado em vista 3/4, 32 × 32 px. Modelos: `escada` (item 32) e `bau` (item 33).
 
-Entradas : `src/assets/titan-escada.json` (malha reduzida) e `src/assets/titan-escada-atlas.webp` (cor-base), gerados por `extract-titan-escada.py`.
-Saída    : `assets-src/titan/arte32/Escada_de_Junco_Item_32px.png` (item 32); rode depois `make-titan-arte32.py` e `make-titan-item-masks.py`.
+Entradas : `src/assets/titan-<modelo>.json` (malha reduzida) e `src/assets/titan-<modelo>-atlas.webp` (cor-base), gerados por `extract-titan-<modelo>.py`.
+Saída    : `assets-src/titan/arte32/<Nome>_Item_32px.png`; rode depois `make-titan-arte32.py` e `make-titan-item-masks.py`.
 Rasteriza os triângulos com z-buffer e luz fixa em 4× (128 × 128), reduz para 32 e deixa o alfa binário. Arte provisória gerada por código (determinística); o dono do produto pode trocar o
-arquivo pelo desenho final. Uso: python3 -I scripts/make-titan-escada-icone.py
+arquivo pelo desenho final. Uso: python3 -I scripts/make-titan-modelo-icone.py [escada|bau]  (sem argumento, faz os dois)
 """
 import json
 import math
+import sys
 
 import numpy as np
 from PIL import Image
 
-MODEL, ATLAS = 'src/assets/titan-escada.json', 'src/assets/titan-escada-atlas.webp'
-OUT = 'assets-src/titan/arte32/Escada_de_Junco_Item_32px.png'
 S = 128  # supersample
+# por modelo: arquivo de saída, giro em Y e inclinação em X (graus), ponto central (no espaço do modelo) e o diâmetro, em metros, que ocupa o ícone
+MODELS = {
+    'escada': dict(out='Escada_de_Junco_Item_32px.png', yaw=-32, tilt=18, center=(0, 0.5, -0.45), span=1.1),
+    'bau': dict(out='Bau_de_Rocha_e_Junco_Item_32px.png', yaw=-35, tilt=28, center=(0, 0.36, 0), span=1.25),
+}
 
 
-def main() -> None:
+def render(name: str) -> None:
+    cfg = MODELS[name]
+    MODEL, ATLAS, OUT = f'src/assets/titan-{name}.json', f'src/assets/titan-{name}-atlas.webp', 'assets-src/titan/arte32/' + cfg['out']
     m = json.load(open(MODEL))
     pos = np.array(m['pos'], dtype=float).reshape(-1, 3)
     nrm = np.array(m['nrm'], dtype=float).reshape(-1, 3)
@@ -24,15 +30,15 @@ def main() -> None:
     idx = np.array(m['idx'], dtype=int).reshape(-1, 3)
     atlas = np.array(Image.open(ATLAS).convert('RGB'))
     ah, aw = atlas.shape[:2]
-    yaw, tilt = math.radians(-32), math.radians(18)
+    yaw, tilt = math.radians(cfg['yaw']), math.radians(cfg['tilt'])
     cy, sy, cx, sx = math.cos(yaw), math.sin(yaw), math.cos(tilt), math.sin(tilt)
     def rot(v):  # gira em Y e depois inclina em X (vista de cima)
         x, y, z = v[:, 0], v[:, 1], v[:, 2]
         x1, z1 = x * cy + z * sy, -x * sy + z * cy
         return np.stack([x1, y * cx - z1 * sx, y * sx + z1 * cx], axis=1)
-    p = rot(pos - np.array([0, 0.5, -0.45]))
+    p = rot(pos - np.array(cfg['center']))
     n = rot(nrm)
-    scale = S * 0.88 / 1.1
+    scale = S * 0.88 / cfg['span']
     sxp, syp = p[:, 0] * scale + S / 2, S / 2 - p[:, 1] * scale
     img = np.zeros((S, S, 4), dtype=np.uint8)
     zbuf = np.full((S, S), -1e9)
@@ -66,6 +72,11 @@ def main() -> None:
     a[..., 3] = np.where(a[..., 3] > 128, 255, 0)
     Image.fromarray(a, 'RGBA').save(OUT)
     print(OUT, (32, 32))
+
+
+def main() -> None:
+    for name in (sys.argv[1:] or list(MODELS)):
+        render(name)
 
 
 if __name__ == '__main__':

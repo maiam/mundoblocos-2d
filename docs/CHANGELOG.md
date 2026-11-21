@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.150.0 — Titã: Baú de Rocha e Junco (21/11/2026)
+- **Segunda entrega da rodada "Itens do Abrigo". ADR 0089.** Receita na Mesa: 4 Rochas Escuras + 1 Esteira. Bloco com 4 giros (35–38, item 33), sólido até 0,73 m, frente para o jogador. **18 espaços** guardados no bloco (`session.chests`, `header.chests` opcional, sem subir a versão do save); usar (botão, F ou toque) abre o painel do baú ao lado da bolsa: toque numa pilha e num espaço do baú guarda, toque no espaço tira (tudo ou nada). Quebrar o baú cospe o conteúdo.
+- Modelo 3D do pacote reduzido de 8.124 a 1.800 triângulos pelo Blender (`extract-titan-bau.py`), atlas de 256 px. **Atlas de itens ampliado a 4 × 10 (40 ids).** `make-titan-escada-icone.py` virou `make-titan-modelo-icone.py` (escada e baú). Ícone provisório. Testes: +14 (1.136 no total). Conferido a 740 × 360.
+- Cama, balde de cobre e Braseiro 3D da mesma rodada ficam para as próximas.
+
 ## Orvalis v0.149.0 — Titã: Escada de Junco (21/11/2026)
 - **Primeira entrega da rodada "Itens do Abrigo". ADR 0088.** Receita na Mesa: 4 Hastes Secas → 3 escadas. Cada escada se prende à lateral de um cubo inteiro (a frente aponta para fora; 4 giros no id, blocos 31–34, item 32), não é sólida e **se sobe**: empurrar para a parede ou pular sobe a 2,3 m/s, soltar escorrega a 1,2 m/s, sem dano de queda. Quebrar o apoio derruba as escadas como itens.
 - Modelo 3D do pacote de arte reduzido a 1.398 triângulos pelo Blender (`extract-titan-escada.py`), atlas de 256 px; mira na placa fina. Ícone provisório gerado por script. Testes: +13 (1.125 no total). Conferido a 740 × 360.

@@ -23,7 +23,7 @@ const hold = (s: Awaited<ReturnType<typeof openSession>>) => { s.inventory.add(I
 
 describe('escada de junco: ids e regras do bloco', () => {
   it('4 giros no id, não sólida, alvo da mira, ocupa a célula, não bloqueia luz e recolhe rápido', () => {
-    expect(T_MAX).toBe(T.LADDER_270);
+    expect(T_MAX).toBeGreaterThanOrEqual(T.LADDER_270); // o baú (ADR 0089) veio depois
     for (const [t, id] of [T.LADDER, T.LADDER_90, T.LADDER_180, T.LADDER_270].entries()) {
       expect(isLadder(id)).toBe(true); expect(ladderTurn(id)).toBe(t); expect(ladderId(t)).toBe(id);
       expect(isSolid(id)).toBe(false); expect(isFull(id)).toBe(false); expect(isTarget(id)).toBe(true); expect(isOccupied(id)).toBe(true); expect(blocksLight(id)).toBe(false); expect(isCollectBlock(id)).toBe(true);

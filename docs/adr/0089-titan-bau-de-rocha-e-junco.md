@@ -1,0 +1,16 @@
+# ADR 0089 — Titã: Baú de Rocha e Junco (v0.150.0)
+
+**Status:** Aceita. Segunda entrega da rodada "Itens do Abrigo" do Drive (ordem do material: escada, baú, cama, balde). Segue o padrão do **bloco com estado** do Braseiro (ADR 0068).
+
+## Decisão
+1. **Blocos 35–38 e item 33 (`Item.BAU`):** 4 ids com o giro no id (`T.CHEST` … `CHEST_270`; `isChest`, `chestTurn`, `chestId`, `chestTurnFacing`), como a Mesa; a **frente** (o fecho, +Z do modelo) fica voltada para o jogador ao colocar. **Sólido até 0,73 m** na célula inteira (`CHEST_HEIGHT`; `blockSpan` [0, 0,73]), **não é cubo inteiro** (`isFull` falso: as faces vizinhas aparecem) e bloqueia a luz. Alvo da mira pela caixa do modelo (`modelBox`, `CHEST_SIZE`). Quebra no tempo da rocha. `T_MAX` 38, `isItem` até 33.
+2. **Receita** na Mesa de Trabalho: **4 Rochas Escuras + 1 Esteira de Junco → 1 baú** (grupo Construção).
+3. **Conteúdo = estado da sessão** (`session.chests`, `x,y,z` → 18 espaços; `titan/chest.ts` puro): nasce na primeira vez que se abre (`actions.chestAt`), vai no save como campo opcional `header.chests` (`[item, contagem]` ou `[item, contagem, desgaste]`; baú vazio não grava) sem subir `TITAN_SAVE_VERSION`, e na leitura só entra baú que ainda existe e itens válidos. **Guardar e retirar são tudo ou nada** (`chestMoveIn`, `chestTakeOut`; mensagens "Baú cheio" e "Mochila cheia"); a ferramenta desgastada leva o desgaste e não se funde. Novo `Inventory.take(slot)`.
+4. **Quebrar o baú cospe o conteúdo** no chão (`k:x,y,z:n`, uma pilha por espaço ocupado, como o braseiro) e devolve o baú como item; isso cumpre o "esvaziar antes de desmontar" do material sem perder itens.
+5. **Interface:** usar (botão "Usar", F ou toque no baú ao alcance) abre a tela da bolsa com o painel do baú (6 × 3 espaços); toque numa pilha da mochila e depois num espaço do baú guarda-a, toque num espaço do baú tira a pilha. O baú não fabrica (conta como a bolsa pessoal) e fecha ao sair do alcance.
+6. **Desenho:** modelo 3D instanciado (`ModelKind` `bau`), como o Marco. O GLB de jogo 1K (8.124 triângulos, três PNG de 1K) é reduzido pelo Blender a **1.800 triângulos** (`scripts/extract-titan-bau.py`, `titan-bau.json` de 236 KB, centrado em x e z e com a base em y = 0) e a cor-base vai para um atlas de 256 px (`titan-bau-atlas.webp`, 74 KB). A tampa não abre (modelo fechado); o GLB original fica em `assets-src/titan/bau/`.
+7. **Atlas de itens ampliado de 4 × 8 para 4 × 10** (128 × 320, 40 ids): o baú é o item 33, além dos 32 do atlas anterior. `ITEM_ROWS` do renderer e o `background-size` do CSS passam a 10; `make-titan-arte32.py` e `make-titan-item-masks.py` leem o novo tamanho. O ícone é provisório, gerado pelo modelo (`scripts/make-titan-modelo-icone.py`, que substitui o `make-titan-escada-icone.py` e atende escada e baú).
+
+## Consequências
+- Sem mudança de gerador. Pendências: animação de abrir a tampa; aceite no toque real do painel do baú; ícone final; cama e balde da mesma rodada, e o Braseiro 3D.
+- Testes: `bau.test.ts` (+11: espaços puros, save validado, ids, caixa da mira, colocar/mirar/colidir, guardar e retirar, cheio, quebrar cospe, persistência). Conferido a 740 × 360: baú colocado com "Usar [F]", painel aberto e itens movidos da hotbar para o baú.
