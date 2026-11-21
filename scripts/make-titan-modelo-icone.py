@@ -1,9 +1,9 @@
-"""Ícone provisório de um modelo 3D do Titã (ADR 0088, 0089): o próprio modelo desenhado em vista 3/4, 32 × 32 px. Modelos: `escada` (item 32) e `bau` (item 33).
+"""Ícone provisório de um modelo 3D do Titã (ADR 0088, 0089): o próprio modelo desenhado em vista 3/4, 32 × 32 px. Modelos: `escada` (item 32), `bau` (item 33) e `cama` (item 34).
 
 Entradas : `src/assets/titan-<modelo>.json` (malha reduzida) e `src/assets/titan-<modelo>-atlas.webp` (cor-base), gerados por `extract-titan-<modelo>.py`.
 Saída    : `assets-src/titan/arte32/<Nome>_Item_32px.png`; rode depois `make-titan-arte32.py` e `make-titan-item-masks.py`.
 Rasteriza os triângulos com z-buffer e luz fixa em 4× (128 × 128), reduz para 32 e deixa o alfa binário. Arte provisória gerada por código (determinística); o dono do produto pode trocar o
-arquivo pelo desenho final. Uso: python3 -I scripts/make-titan-modelo-icone.py [escada|bau]  (sem argumento, faz os dois)
+arquivo pelo desenho final. Uso: python3 -I scripts/make-titan-modelo-icone.py [escada|bau|cama]  (sem argumento, faz os dois)
 """
 import json
 import math
@@ -17,6 +17,7 @@ S = 128  # supersample
 MODELS = {
     'escada': dict(out='Escada_de_Junco_Item_32px.png', yaw=-32, tilt=18, center=(0, 0.5, -0.45), span=1.1),
     'bau': dict(out='Bau_de_Rocha_e_Junco_Item_32px.png', yaw=-35, tilt=28, center=(0, 0.36, 0), span=1.25),
+    'cama': dict(out='Cama_de_Junco_Item_32px.png', yaw=-50, tilt=32, center=(0, 0.2, 0.5), span=2.1),
 }
 
 

@@ -16,6 +16,9 @@ export const PHASE_TICKS = { sunsetStart: 12000, nightStart: 13800, sunriseStart
 export const tickFrac = (ticks: number): number => ticks / DAY_TICKS;
 /** Fração do dia (0–1) em que partidas novas, e saves antigos sem hora, começam: a tarde (tick 9 000), a 2 min 30 s do pôr do sol. */
 export const AFTERNOON = tickFrac(9000);
+/** Dormir na cama (ADR 0090): só da noite em diante (`PHASE_TICKS.nightStart`) e acorda logo depois do nascer do sol. */
+export const WAKE_TICKS = 600;
+export const isNightTime = (frac: number): boolean => frac * DAY_TICKS >= PHASE_TICKS.nightStart;
 /** `?hora=` fixa a visualização nestas frações do dia (teste; não é gravada): manhã (tick 720), tarde (9 000), crepúsculo (12 900, o pôr do sol já avançado) e a meia-noite (18 000). */
 export const FIXED_HOURS: Readonly<Record<string, number>> = { manha: tickFrac(720), tarde: tickFrac(9000), crepusculo: tickFrac(12900), noite: tickFrac(18000) };
 

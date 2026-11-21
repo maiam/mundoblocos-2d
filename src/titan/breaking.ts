@@ -34,7 +34,7 @@ function baseBreakMs(block?: number): number | null {
   switch (block) {
     case T.SAND: case T.DAMP_SAND: return BREAK_MS.sand;
     case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
-    case T.DARK_ROCK: case T.VEIN_ROCK: case T.BRAZIER: case T.BRAZIER_LIT: case T.CARAPACE: case T.EMBER_BLOCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: case T.CHEST: case T.CHEST_90: case T.CHEST_180: case T.CHEST_270: return BREAK_MS.rock;
+    case T.DARK_ROCK: case T.VEIN_ROCK: case T.BRAZIER: case T.BRAZIER_LIT: case T.CARAPACE: case T.EMBER_BLOCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: case T.CHEST: case T.CHEST_90: case T.CHEST_180: case T.CHEST_270: case T.BED: case T.BED_90: case T.BED_180: case T.BED_270: case T.BED_HEAD: case T.BED_HEAD_90: case T.BED_HEAD_180: case T.BED_HEAD_270: return BREAK_MS.rock;
     case T.MARCO: case T.MARCO_90: case T.MARCO_180: case T.MARCO_270: case T.PAINEL: case T.PAINEL_Z: return BREAK_MS.collect; // peças pequenas da margem: recolhidas como a lanterna
     case T.SLAB_DOUBLE: return BREAK_MS.rock; // duas lajes juntas: como o cubo de rocha
     case T.SLAB: case T.SLAB_TOP: return BREAK_MS.slab; // meio bloco de rocha: mais rápida que o cubo

@@ -22,12 +22,12 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.CHEST_270;
+export const T_MAX = T.BED_HEAD_270;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id);
@@ -44,13 +44,14 @@ export const isSlab = (id: number): boolean => id === T.SLAB || id === T.SLAB_TO
 /** Faixa de altura que o bloco ocupa dentro da célula, `[baixo, topo]` em 0–1 (a laje superior ocupa [0,5, 1]; não sólido = [0, 0]). A física e a mira leem esta faixa. */
 export function blockSpan(id: number): readonly [number, number] {
   if (isChest(id)) return [0, CHEST_HEIGHT]; // o baú barra o corpo na altura dele (0,73 m), na célula inteira
+  if (isBed(id)) return [0, BED_HEIGHT]; // a cama barra o corpo na altura dela (0,45 m), nas duas células
   if (isPanel(id)) return [0, PANEL_HEIGHT]; // o painel barra o corpo na altura dele (0,944 m), na célula inteira
   if (id === T.SLAB) return [0, 0.5];
   if (id === T.SLAB_TOP) return [0.5, 1];
   return isSolid(id) ? [0, 1] : [0, 0];
 }
 /** Cubo inteiro: só ele esconde as faces vizinhas (a laje, inferior ou superior, deixa metade da célula aberta; a laje dupla é cubo). */
-export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id);
+export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id);
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 /** Veio de cobre (ADR 0063): só uma picareta o quebra; solta fragmentos de cobre, nunca o bloco. */
@@ -123,16 +124,37 @@ export const chestId = (turn: number): number => T.CHEST + (((turn % 4) + 4) % 4
 /** Giro (0–3) que deixa a frente do baú voltada para o jogador: o yaw arredondado ao eixo mais próximo (o mesmo do Marco). */
 export const chestTurnFacing = (yaw: number): number => ((Math.round(yaw / (Math.PI / 2)) % 4) + 4) % 4;
 
-export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel' | 'escada' | 'bau'; turn: number } | null {
+/**
+ * Cama de Junco (ADR 0090): ocupa **duas células**, cada uma com o seu id e o giro nele. O **pé** (39–42) guarda a instância do modelo 3D, que cobre as duas; a **cabeceira** (43–46) fica uma célula adiante na
+ * direção do giro (`ladderFacing`) e só barra o corpo e a mira. Giro `t`: a cabeceira está em +Z (0), +X (1), −Z (2) ou −X (3) a partir do pé. Sólida até 0,45 m, não é cubo, bloqueia a luz.
+ * Quebrar qualquer metade tira as duas e devolve uma cama.
+ */
+export const BED_HEIGHT = 0.4527;
+export const isBedFoot = (id: number): boolean => id >= T.BED && id <= T.BED_270;
+export const isBedHead = (id: number): boolean => id >= T.BED_HEAD && id <= T.BED_HEAD_270;
+export const isBed = (id: number): boolean => id >= T.BED && id <= T.BED_HEAD_270;
+export const bedTurn = (id: number): number => (isBedFoot(id) ? id - T.BED : isBedHead(id) ? id - T.BED_HEAD : 0);
+export const bedFootId = (turn: number): number => T.BED + (((turn % 4) + 4) % 4);
+export const bedHeadId = (turn: number): number => T.BED_HEAD + (((turn % 4) + 4) % 4);
+/** Giro que estende a cama para **longe** do jogador (a cabeceira no sentido do olhar): o olhar (−sen yaw, −cos yaw) é a frente do giro `yaw / 90° + 2`. */
+export const bedTurnFacing = (yaw: number): number => ((Math.round(yaw / (Math.PI / 2)) + 2) % 4 + 4) % 4;
+/** A outra metade da cama: a cabeceira do pé (uma célula adiante no giro) ou o pé da cabeceira (uma atrás). `[dx, dz]` a somar à célula. */
+export function bedPartnerOffset(id: number): readonly [number, number] {
+  const [fx, fz] = ladderFacing(bedTurn(id));
+  return isBedFoot(id) ? [fx, fz] : [fx === 0 ? 0 : -fx, fz === 0 ? 0 : -fz]; // sem −0
+}
+
+export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama'; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
   if (isPanel(id)) return { kind: 'painel', turn: id === T.PAINEL ? 0 : 1 };
   if (isLadder(id)) return { kind: 'escada', turn: ladderTurn(id) };
   if (isChest(id)) return { kind: 'bau', turn: chestTurn(id) };
+  if (isBedFoot(id)) return { kind: 'cama', turn: bedTurn(id) };
   return null;
 }
 /** Bloco que sai da malha do terreno por ser modelo 3D (lanterna e os modelos acima). */
-export const isModelBlock = (id: number): boolean => id === T.LANTERN || modelOf(id) !== null;
+export const isModelBlock = (id: number): boolean => id === T.LANTERN || modelOf(id) !== null || isBedHead(id); // a cabeceira da cama não tem instância (o modelo do pé cobre as duas células), mas também não entra na malha do terreno
 
 export type Face = 'top' | 'side' | 'bottom';
 

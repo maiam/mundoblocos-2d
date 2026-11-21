@@ -44,6 +44,7 @@
 | 0065 | **Aceita** — Titã: Braseiro de Rocha (apagado/aceso, 8 preparações por Brasa de Âmbar, estação `brazier`), Lingote de Cobre, Picareta de Cobre e adagas; `stationMet` como regra única |
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
+| 0090 | **Aceita** — Titã: Cama de Junco (duas células: pé 39–42 e cabeceira 43–46, item 34; usar marca o ponto de retorno e, à noite, dorme até o amanhecer; renasce ao lado da cama; `header.spawn` opcional) |
 | 0089 | **Aceita** — Titã: Baú de Rocha e Junco (blocos 35–38/item 33, 18 espaços em `session.chests`/`header.chests`, guardar/retirar tudo ou nada, cospe ao quebrar; atlas de itens ampliado a 4 × 10) |
 | 0088 | **Aceita** — Titã: Escada de Junco (blocos 31–34/item 32, presa à lateral de um cubo inteiro, não sólida, sobe empurrando para a parede ou pulando, escorrega ao soltar; modelo 3D reduzido a 1.398 triângulos) |
 | 0087 | **Aceita** — Titã: item na mão por categoria (mão vazia, bloco, plano, ferramenta, modelo), sprites extrudados por máscara pré-calculada (sem ler canvas) e animação de troca |

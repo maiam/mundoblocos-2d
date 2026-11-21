@@ -196,10 +196,10 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<'workbench' | 'marco' | 'painel' | 'escada' | 'bau', Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map() };
+  private readonly models: Record<'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama', Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map() };
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
-  modelCells(kind: 'workbench' | 'marco' | 'painel' | 'escada' | 'bau'): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }
+  modelCells(kind: 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama'): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }
   workbenchCells(): Array<[number, number, number, number]> { return this.modelCells('workbench'); }
   /** Há uma Mesa de Trabalho nesta célula? */
   isWorkbench(x: number, y: number, z: number): boolean { return isWorkbench(this.get(x, y, z)); }

@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.151.0 — Titã: Cama de Junco (21/11/2026)
+- **Terceira entrega da rodada "Itens do Abrigo". ADR 0090.** Receita na Mesa: 3 Rochas Escuras + 2 Esteiras. Cama de **duas células** (pé 39–42 e cabeceira 43–46, item 34) colocada no sentido do olhar, sobre piso firme; quebrar qualquer metade tira as duas e devolve uma.
+- **Usar** marca o **ponto de retorno** (`session.spawn`, `header.spawn` opcional, sem subir a versão do save) e, **à noite**, dorme até o amanhecer (o relógio vai para logo depois do nascer do sol; passar da meia-noite soma um dia). Ao morrer o jogador renasce **ao lado da cama**; sem a cama volta à chegada.
+- Modelo 3D reduzido de 8.828 a 2.200 triângulos pelo Blender (`extract-titan-cama.py`), atlas de 256 px. Ícone provisório. Testes: +12 (1.148 no total). Conferido a 740 × 360 e no jogo (dormir de noite).
+- Balde de Cobre e Braseiro 3D da mesma rodada ficam para as próximas.
+
 ## Orvalis v0.150.0 — Titã: Baú de Rocha e Junco (21/11/2026)
 - **Segunda entrega da rodada "Itens do Abrigo". ADR 0089.** Receita na Mesa: 4 Rochas Escuras + 1 Esteira. Bloco com 4 giros (35–38, item 33), sólido até 0,73 m, frente para o jogador. **18 espaços** guardados no bloco (`session.chests`, `header.chests` opcional, sem subir a versão do save); usar (botão, F ou toque) abre o painel do baú ao lado da bolsa: toque numa pilha e num espaço do baú guarda, toque no espaço tira (tudo ou nada). Quebrar o baú cospe o conteúdo.
 - Modelo 3D do pacote reduzido de 8.124 a 1.800 triângulos pelo Blender (`extract-titan-bau.py`), atlas de 256 px. **Atlas de itens ampliado a 4 × 10 (40 ids).** `make-titan-escada-icone.py` virou `make-titan-modelo-icone.py` (escada e baú). Ícone provisório. Testes: +14 (1.136 no total). Conferido a 740 × 360.

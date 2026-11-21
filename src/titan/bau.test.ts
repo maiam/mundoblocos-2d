@@ -41,7 +41,7 @@ describe('baú: regras puras dos 18 espaços', () => {
 
 describe('baú: ids e regras do bloco', () => {
   it('4 giros no id, sólido até 0,73 m, não é cubo, bloqueia luz, alvo da mira e modelo 3D', () => {
-    expect(T_MAX).toBe(T.CHEST_270);
+    expect(T_MAX).toBeGreaterThanOrEqual(T.CHEST_270); // a cama (ADR 0090) veio depois
     for (const [t, id] of [T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270].entries()) {
       expect(isChest(id)).toBe(true); expect(chestTurn(id)).toBe(t); expect(chestId(t)).toBe(id);
       expect(isSolid(id)).toBe(true); expect(isFull(id)).toBe(false); expect(blockSpan(id)).toEqual([0, CHEST_HEIGHT]); expect(blocksLight(id)).toBe(true); expect(isTarget(id)).toBe(true);

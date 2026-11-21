@@ -1,5 +1,5 @@
 import type { Box } from './lantern';
-import { CHEST_HEIGHT, chestTurn, isChest, isLadder, isMarco, isPanel, ladderFacing, ladderTurn, marcoTurn, PANEL_HEIGHT, T } from './voxel';
+import { BED_HEIGHT, CHEST_HEIGHT, chestTurn, isBed, isChest, isLadder, isMarco, isPanel, ladderFacing, ladderTurn, marcoTurn, PANEL_HEIGHT, T } from './voxel';
 
 /**
  * Caixas dos modelos 3D pequenos (ADR 0058): a mira acerta a caixa do objeto (com folga `pad` de toque), não a célula inteira. Marco de Margem: 0,56 × 0,629 × 0,43 m, a largura vira
@@ -19,6 +19,7 @@ export function modelBox(id: number, x: number, y: number, z: number, pad = 0): 
   let hx: number, hz: number, h: number;
   if (isMarco(id)) { const odd = marcoTurn(id) % 2 === 1; hx = (odd ? MARCO_SIZE.d : MARCO_SIZE.w) / 2; hz = (odd ? MARCO_SIZE.w : MARCO_SIZE.d) / 2; h = MARCO_SIZE.h; }
   else if (isPanel(id)) { const alongX = id === T.PAINEL; hx = (alongX ? PANEL_SIZE.w : PANEL_SIZE.d) / 2; hz = (alongX ? PANEL_SIZE.d : PANEL_SIZE.w) / 2; h = PANEL_SIZE.h; }
+  else if (isBed(id)) return [x - pad, y - pad, z - pad, x + 1 + pad, y + BED_HEIGHT + pad, z + 1 + pad]; // cada metade da cama: a célula inteira até 0,45 m
   else if (isChest(id)) { const odd = chestTurn(id) % 2 === 1; hx = (odd ? CHEST_SIZE.d : CHEST_SIZE.w) / 2; hz = (odd ? CHEST_SIZE.w : CHEST_SIZE.d) / 2; h = CHEST_SIZE.h; }
   else if (isLadder(id)) {
     // a face de apoio fica na borda oposta à frente: a placa ocupa [apoio, apoio + 0,12] ao longo da frente e a largura inteira de lado
