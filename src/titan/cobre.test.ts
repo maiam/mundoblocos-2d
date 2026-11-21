@@ -50,9 +50,9 @@ describe('gerador v7: afloramentos de cobre e hastes secas (ADR 0063)', () => {
       }
     }
   });
-  it('hastes secas: até 8 por seed, perto dos juncos, em areia, ids únicos e determinísticos', () => {
+  it('hastes secas (v7–v12): até 8 por seed, perto dos juncos, em areia, ids únicos e determinísticos', () => {
     for (const seed of SEEDS) {
-      const g = new TitanGenerator(seed);
+      const g = new TitanGenerator(seed, 12); // a v13 só deixa as 2 mais próximas da chegada (ADR 0086)
       expect(g.dryReeds.length).toBeGreaterThanOrEqual(3); expect(g.dryReeds.length).toBeLessThanOrEqual(8);
       expect(new Set(g.dryReeds.map((d) => d.id)).size).toBe(g.dryReeds.length);
       for (const d of g.dryReeds) {
@@ -61,7 +61,7 @@ describe('gerador v7: afloramentos de cobre e hastes secas (ADR 0063)', () => {
         expect(g.reeds.some((r) => r.x === d.x && r.z === d.z)).toBe(false);
         expect(d.item).toBe(Item.DRY_REED); expect(d.id).toBe(`dry:${d.x},${d.y},${d.z}`);
       }
-      expect(new TitanGenerator(seed).dryReeds).toEqual(g.dryReeds);
+      expect(new TitanGenerator(seed, 12).dryReeds).toEqual(g.dryReeds);
     }
   });
 });

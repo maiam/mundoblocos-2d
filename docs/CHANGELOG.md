@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.147.0 — Titã: gerador v13 (21/11/2026)
+- **Etapa 4 da rodada "cultivo e oficina da Margem". ADR 0086.** `GENERATOR_VERSION` 13 (partidas v1–v12 não mudam): as hastes secas avulsas caem de até 8 para as **2 mais próximas da chegada** (uma Picareta de Rocha; o resto vem do Junco Ressecado) e a **Noz de Duna mais próxima da chegada fica sem Farejador**.
+- Terreno, juncos, plantas, toca, âmbar, cobre e abrigos idênticos à v12. Testes: `v13.test.ts` (+4, 1.102 no total); `cobre`, `generator` e `regiao` ajustados. Conferido no jogo (seed 42): v13, 2 hastes, 22 plantas, a mais próxima sem guarda.
+
 ## Orvalis v0.146.0 — Titã: Esteira de Junco (21/11/2026)
 - **Etapa 3 da rodada "cultivo e oficina da Margem". ADR 0085.** Peça fina de piso (1/16 m), no modelo das placas de pressão do Minecraft **sem** as regras de pressão: sem colisão (anda-se por cima), alvo da mira só pela faixa fina, exige piso firme embaixo (quebrar o piso derruba a esteira), não bloqueia luz. Receita na Mesa: 3 Hastes Secas → 1.
 - Bloco 30 / item 31; malha do terreno com `half = 3` (topo = trama, laterais = borda); 2 tiles novos no atlas de 32 px (43). Ícone provisório gerado por script. `T_MAX` 30, `isItem` até 31.
