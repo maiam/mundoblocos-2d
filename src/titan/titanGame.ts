@@ -822,7 +822,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
     if (playing && session.drops.size) {
       // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
-      const c = collectNearby(session, b.x, b.y, b.z);
+      const c = collectNearby(session, b.x, b.y, b.z, dt);
       if (c.collected || c.moved) { view.setItems(visibleItems(session)); if (c.collected) { gameAudio.playItemPickup(); onEdited(); refresh(); } }
       if (c.full && !dropFull) notice('Mochila cheia');
       dropFull = c.full;

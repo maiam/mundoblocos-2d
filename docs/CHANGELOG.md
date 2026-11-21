@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.141.0 — Titã: o bloco quebrado cai no chão (21/11/2026)
+- **Pedido do dono do produto (modelo do Minecraft).** **ADR 0082.** Todo bloco comum quebrado vira item solto na célula (`b:x,y,z:n`) e é recolhido por proximidade (raio 1,45 m, atraso de 0,45 s, some em 5 min); quebrar não falha mais por mochila cheia. A lanterna segue direto para a mochila.
+- Desenho: o item salta ao nascer, não se sobrepõe a outros na célula e voa 0,14 s até o jogador ao ser recolhido. Sem mudança de formato de save nem de gerador.
+- Testes: `dropsBloco.test.ts` (+8, 1.069 no total); oito arquivos ajustados com `dropTestUtil.ts`. Conferido no navegador: o drop é recolhido ao chegar perto.
+
 ## Orvalis v0.140.0 — Titã: joystick analógico de volta no toque (21/11/2026)
 - **Pedido do dono do produto:** não gostou das setas; voltou o joystick antigo. **ADR 0081.** `.titan-stick` (120 px, miolo arrastável, `input.stickX/Y` analógico) no lugar de `.titan-dpad`, respeitando a margem `--edge`. Corrida: joystick empurrado até o fim para a frente (`stickY ≤ −0,85`) por 0,2 s. Ação no ponto do dedo, modo de mira, anel e margens (ADR 0075–0077) não mudam.
 

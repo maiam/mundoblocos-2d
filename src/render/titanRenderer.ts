@@ -27,6 +27,8 @@ import { T } from '../titan/voxel';
 const RANGE = 64;
 /** Linhas do atlas de itens (4 colunas × 8 linhas de 32 px = 32 ids). */
 const ITEM_ROWS = 8;
+/** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
+const ITEM_HOP_S = 0.4, ITEM_FLY_S = 0.14;
 const MESH_BUDGET_MS = 6;
 
 export class TitanRenderer {
@@ -98,7 +100,11 @@ export class TitanRenderer {
   private frame = 0;
   /** Seções refeitas no quadro atual (medição). */
   private built = 0;
-  private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number }>();
+  private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number; ox: number; oz: number; born: number }>();
+  /** Itens recolhidos que ainda voam até o jogador (~0,14 s) antes de sumir (ADR 0082). */
+  private readonly flying: Array<{ sprite: THREE.Sprite; t0: number; x: number; y: number; z: number }> = [];
+  private itemsLoaded = false; // a primeira lista (partida retomada) não "salta"; as seguintes sim
+  private clock = 0;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
@@ -452,7 +458,9 @@ export class TitanRenderer {
   /** Fragmentos de superfície ainda no mundo (sprites do atlas da hotbar: rocha = índice 4, gelo = 5). Chamar de novo depois de uma coleta. */
   setItems(items: Array<{ id: string; item: number; x: number; y: number; z: number }>): void {
     const keep = new Set(items.map((i) => i.id));
-    for (const [id, e] of this.itemSprites) if (!keep.has(id)) { this.scene.remove(e.sprite); this.itemSprites.delete(id); }
+    for (const [id, e] of this.itemSprites) if (!keep.has(id)) { this.flying.push({ sprite: e.sprite, t0: this.clock, x: e.sprite.position.x, y: e.sprite.position.y, z: e.sprite.position.z }); this.itemSprites.delete(id); }
+    const fresh = this.itemsLoaded;
+    this.itemsLoaded = true;
     for (const it of items) {
       if (this.itemSprites.has(it.id)) continue;
       const mat = this.itemMats[it.item] ??= this.spriteMaterial(it.item - 1);
@@ -460,9 +468,11 @@ export class TitanRenderer {
       const sprite = new THREE.Sprite(mat);
       sprite.scale.set(0.6, 0.6, 1);
       const baseY = it.y + 0.32;
-      sprite.position.set(it.x + 0.5, baseY, it.z + 0.5);
+      let h = 2166136261; for (let i = 0; i < it.id.length; i++) h = Math.imul(h ^ it.id.charCodeAt(i), 16777619);
+      const ox = (((h >>> 0) % 1000) / 1000 - 0.5) * 0.36, oz = (((h >>> 10) % 1000) / 1000 - 0.5) * 0.36; // itens na mesma célula não se sobrepõem
+      sprite.position.set(it.x + 0.5 + ox, baseY, it.z + 0.5 + oz);
       this.scene.add(sprite);
-      this.itemSprites.set(it.id, { sprite, baseY });
+      this.itemSprites.set(it.id, { sprite, baseY, ox, oz, born: fresh ? this.clock : -1e9 });
     }
   }
 
@@ -538,7 +548,17 @@ export class TitanRenderer {
     this.syncModels(this.built > 0);
     this.timeU.value = time;
     let n = 0;
-    for (const e of this.itemSprites.values()) e.sprite.position.y = e.baseY + 0.06 * Math.sin(time * 2 + n++);
+    this.clock = time;
+    for (const e of this.itemSprites.values()) {
+      const u = Math.min(1, (time - e.born) / ITEM_HOP_S); // salto de saída ao nascer (ADR 0082)
+      e.sprite.position.y = e.baseY + 0.06 * Math.sin(time * 2 + n++) + (u < 1 ? 0.42 * Math.sin(Math.PI * u) + 0.18 * (1 - u) : 0);
+    }
+    for (let i = this.flying.length - 1; i >= 0; i--) { // voo curto até a cintura do jogador e some
+      const f = this.flying[i], t = Math.min(1, (time - f.t0) / ITEM_FLY_S);
+      f.sprite.position.set(f.x + (eye.x - f.x) * t, f.y + (eye.y - 0.6 - f.y) * t, f.z + (eye.z - f.z) * t);
+      f.sprite.scale.setScalar(0.6 * (1 - 0.7 * t));
+      if (t >= 1) { this.scene.remove(f.sprite); this.flying.splice(i, 1); }
+    }
     this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
     this.outline.visible = !!target;
     if (target) {

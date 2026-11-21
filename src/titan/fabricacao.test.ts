@@ -10,6 +10,7 @@ import { MemoryTitanStorage, TITAN_SAVE_VERSION } from './save';
 import { discoverRecipes, flush, hasPendingState, openSession, standingReeds, type TitanSession } from './session';
 import { inRegion, isSolid, isWorkbench, T, workbenchId, workbenchTurn, workbenchTurnFacing } from './voxel';
 import { TitanVolume } from './volume';
+import { sweep } from './dropTestUtil';
 
 const open = async (st = new MemoryTitanStorage(), version?: number) => ({ st, s: await openSession(st, 42, () => 1, undefined, version) });
 const hit = (c: { x: number; y: number; z: number }) => ({ x: c.x, y: c.y, z: c.z, nx: 0, ny: 1, nz: 0 });
@@ -86,10 +87,11 @@ describe('Mesa de Trabalho no mundo', () => {
     expect(breakTotalMs('block', T.WORKBENCH)).toBe(1600);
     // inventário cheio: a quebra falha e a mesa fica
     let n = 0; while (s.inventory.canAdd(Item.SAND) && n++ < 5000) s.inventory.add(Item.SAND, 1);
-    expect(breakOrCollect(s, hit({ x: bx, y: 65, z: bz }))).toEqual({ ok: false, msg: 'Mochila cheia' });
-    expect(s.volume.get(bx, 65, bz)).toBe(T.WORKBENCH);
+    expect(breakOrCollect(s, hit({ x: bx, y: 65, z: bz })).ok).toBe(true); // ADR 0082: quebra e cai; cheia, não recolhe
+    expect(s.volume.get(bx, 65, bz)).toBe(T.AIR);
+    expect(sweep(s)).toBe(0);
     for (let k = 0; k < 64; k++) s.inventory.consume(5); // esvazia uma pilha de areia inteira: agora há espaço para a mesa
-    expect(breakOrCollect(s, hit({ x: bx, y: 65, z: bz })).ok).toBe(true);
+    expect(sweep(s)).toBe(1); sweep(s);
     expect(s.inventory.total(Item.WORKBENCH)).toBe(1);
     expect(s.volume.workbenchCells()).toEqual([]);
   });
@@ -148,7 +150,7 @@ describe('depósito de brasa: quebrar, soltar, coletar, não recriar', () => {
     const slot = [...Array(SLOTS).keys()].find((i) => r.inventory.get(i)?.item === Item.SAND)!;
     expect(placeFromSlot(r, { x: e.x, y: e.y - 1, z: e.z, nx: 0, ny: 1, nz: 0 }, slot).ok).toBe(true);
     expect(r.volume.get(e.x, e.y, e.z)).toBe(T.SAND); // bloco comum
-    expect(breakOrCollect(r, hit(e)).ok).toBe(true);
+    expect(breakOrCollect(r, hit(e)).ok).toBe(true); sweep(r);
     expect(r.drops.size).toBe(0); // a fonte não se recria
     await flush(st, r);
     const r2 = await openSession(st, null, () => 1);
@@ -259,9 +261,9 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     expect(s.inventory.total(Item.CAPSULE)).toBe(0); // de mãos vazias
     const rocks = veins(s, 'rock'), ice = veins(s, 'ice')[0];
     // 3 veios de rocha (3 blocos + 3 lascas) + 1 bloco de rocha comum abaixo de um deles = 4 blocos
-    for (const v of rocks) { expect(breakOrCollect(s, hit(v)).ok).toBe(true); expect(collectNearby(s, v.x + 0.5, v.y, v.z + 0.5).collected).toBe(1); }
+    for (const v of rocks) { expect(breakOrCollect(s, hit(v)).ok).toBe(true); expect(sweep(s)).toBe(2); } // o bloco e a lasca
     expect(discoverRecipes(s)).toContain('mesa');
-    expect(breakOrCollect(s, hit({ x: rocks[0].x, y: rocks[0].y - 1, z: rocks[0].z })).ok).toBe(true);
+    expect(breakOrCollect(s, hit({ x: rocks[0].x, y: rocks[0].y - 1, z: rocks[0].z })).ok).toBe(true); sweep(s);
     expect(s.inventory.total(Item.DARK_ROCK)).toBe(4);
     expect(craft(s.inventory, recipeById('mesa')!, null).ok).toBe(true);
     // colocar a mesa perto da chegada
@@ -273,7 +275,7 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     expect(discoverRecipes(s)).toContain('bancada');
     // lente: fragmento de gelo, na mesa
     expect(breakOrCollect(s, hit(ice)).ok).toBe(true);
-    expect(collectNearby(s, ice.x + 0.5, ice.y, ice.z + 0.5).collected).toBe(1);
+    expect(sweep(s)).toBe(2); // o bloco de gelo e a lasca
     expect(craft(s.inventory, recipeById('lente')!, 'workbench').ok).toBe(true);
     // brasa: depósito perto do junco
     const e = s.volume.gen.emberSite!;
@@ -336,7 +338,7 @@ describe('junco de vidro: mira, recolher e cair sem o apoio', () => {
     const r2 = await openSession(st, null, () => 1);
     expect([...r2.drops.values()].filter((q) => q.item === Item.GLASS_REED)).toHaveLength(1); // a queda sobrevive à reabertura
     expect(r2.items.at(r.x, r.y, r.z)).toBeNull();
-    expect(collectNearby(r2, d.x + 0.5, d.y, d.z + 0.5).collected).toBe(1);
+    expect(collectNearby(r2, d.x + 0.5, d.y, d.z + 0.5).collected).toBe(2); // o junco e o bloco de apoio, que caiu junto (ADR 0082)
     expect(r2.inventory.total(Item.GLASS_REED)).toBe(1);
   });
 
@@ -408,7 +410,7 @@ describe('orientação da Mesa de Trabalho (ADR 0052)', () => {
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.workbenchCells().sort((p, q) => p[2] - q[2])).toEqual([[bx, 65, bz, 2], [bx, 65, bz + 2, 3], [bx, 65, bz + 4, 1]]);
-    expect(breakOrCollect(r, hit({ x: bx, y: 65, z: bz })).ok).toBe(true);
+    expect(breakOrCollect(r, hit({ x: bx, y: 65, z: bz })).ok).toBe(true); sweep(r);
     expect(r.inventory.total(Item.WORKBENCH)).toBe(1);
     expect(r.volume.workbenchCells().length).toBe(2);
   });

@@ -12,6 +12,7 @@ import { flush, openSession } from './session';
 import { surfaceOf } from './sounds';
 import { TitanVolume } from './volume';
 import { blockSpan, blocksLight, isCollectBlock, isFull, isMarco, isPanel, isSolid, isTarget, marcoId, marcoTurn, marcoTurnFacing, modelOf, panelIdFacing, PANEL_HEIGHT, T } from './voxel';
+import { sweep } from './dropTestUtil';
 
 const FLAT_Y = 200;
 function arena(): TitanVolume {
@@ -90,7 +91,7 @@ describe('fabricar, colocar, recolher e persistir', () => {
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(bx, 65, bz)).toBe(T.MARCO_90); expect(r.volume.modelCells('marco')).toEqual([[bx, 65, bz, 1]]);
-    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(r);
     expect(r.inventory.total(Item.MARCO)).toBe(1); expect(r.volume.modelCells('marco')).toEqual([]);
   });
 
@@ -112,7 +113,7 @@ describe('fabricar, colocar, recolher e persistir', () => {
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(bx, 65, bz)).toBe(T.PAINEL); expect(r.volume.get(bx + 2, 65, bz)).toBe(T.PAINEL_Z);
-    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(r);
     expect(r.inventory.total(Item.PAINEL)).toBe(1);
   });
 

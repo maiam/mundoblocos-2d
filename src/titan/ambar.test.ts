@@ -10,6 +10,7 @@ import { craft, recipeById } from './recipes';
 import { MemoryTitanStorage } from './save';
 import { openSession } from './session';
 import { T, Y_MIN } from './voxel';
+import { sweep } from './dropTestUtil';
 
 const slotOf = (s: { inventory: { get(i: number): { item: number } | null } }, item: number): number => Array.from({ length: 9 }, (_, i) => i).find((i) => s.inventory.get(i)?.item === item)!;
 
@@ -73,7 +74,7 @@ describe('Brasa de Âmbar como combustível comum (ADR 0073, gerador v11)', () =
     expect(blockOfItem(Item.EMBER_BLOCK)).toBe(T.EMBER_BLOCK); expect(itemOfBlock(T.EMBER_BLOCK)).toBe(Item.EMBER_BLOCK);
     const [x, y, z] = [12, 150, 12];
     s.volume.place(x, y, z, T.EMBER_BLOCK); s.inventory.consume(slotOf(s, Item.EMBER_BLOCK));
-    expect(breakOrCollect(s, { x, y, z, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); expect(s.inventory.total(Item.EMBER_BLOCK)).toBe(1); // desmontável de volta
+    expect(breakOrCollect(s, { x, y, z, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(s); expect(s.inventory.total(Item.EMBER_BLOCK)).toBe(1); // desmontável de volta
     expect(craft(s.inventory, recipeById('ambar-desmontar')!, 'workbench').ok).toBe(true); expect(s.inventory.total(Item.EMBER)).toBe(9); expect(s.inventory.total(Item.EMBER_BLOCK)).toBe(0);
     expect(FUEL_TIME_S[Item.EMBER_BLOCK]).toBe(9 * FUEL_TIME_S[Item.EMBER]); // o mesmo rendimento das 9 unidades
     const f = newFurnace(); f.fuel = { item: Item.EMBER_BLOCK, count: 1 }; f.input = { item: Item.RAW_MEAT, count: 1 }; tickFurnace(f, 0.1);

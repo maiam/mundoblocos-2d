@@ -28,6 +28,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Picareta na mão (v0.137.0, ADR 0078):** aceite em aparelho; modelos da picareta e da adaga de cobre; usar o clipe "Minerar" do rig só se o golpe procedural não servir.
 
+**Drops de bloco (v0.141.0, ADR 0082):** sentir no jogo real (raio de 1,45 m, atraso, minerar em sequência com a mochila cheia); avaliar coleta parcial de pilha, atração magnética que puxa o item e impulso físico no salto; o relógio dos drops não vai no save (recarregar zera a vida de 5 min).
+
 **Tela cheia no toque (v0.136.0, ADR 0077):** confirmar no tablet do relato; se a tela cheia ainda cair, anotar navegador, modelo e onde está o dedo; iPad/Safari tem regras próprias.
 
 **Mira no toque e corrida (v0.135.0, ADR 0076):** calibrar a corrida (+30 %, FOV +6°, fome) e testar o modo central em aparelho; alternativa descartada por ora: joystick flutuante com zona morta e corrida ao empurrar até o limite; corrida no teclado.

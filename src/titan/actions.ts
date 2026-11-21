@@ -178,10 +178,12 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   const item = itemOfBlock(s.volume.get(x, y, z));
   if (item === null) return { ok: false };
   const count = dropCountOf(s.volume.get(x, y, z)); // a laje dupla devolve 2 lajes
-  if (!s.inventory.canAdd(item, count)) return FULL;
   const block = s.volume.get(x, y, z);
+  const direct = item === Item.LANTERN; // a lanterna é o item-chave: vai direto para a mochila e, se não couber, fica no lugar (nunca cai em precipício ou água)
+  if (direct && !s.inventory.canAdd(item, count)) return FULL;
   if (!s.volume.remove(x, y, z)) return { ok: false };
-  s.inventory.add(item, count);
+  if (direct) s.inventory.add(item, count);
+  else spillBlock(s, item, count, x, y, z); // ADR 0082: o bloco comum cai no chão e é recolhido por proximidade
   if (isBrazier(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro cai no chão
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
@@ -214,6 +216,20 @@ function dropShard(s: TitanSession, item: number, x: number, y: number, z: numbe
   s.dropsRev++;
 }
 
+/** Atraso de coleta de um item recém-solto (ADR 0082) e tempo de vida de um drop de bloco, em segundos de jogo ativo. */
+export const PICKUP_DELAY_S = 0.45;
+export const DROP_LIFE_S = 300;
+
+/** O bloco quebrado cai como item solto no centro da célula (ADR 0082): id `b:x,y,z:n` único, atraso de coleta e relógio de vida só de execução (`session.dropFx`). */
+function spillBlock(s: TitanSession, item: number, count: number, x: number, y: number, z: number): void {
+  let n = 0;
+  while (s.drops.has(`b:${x},${y},${z}:${n}`)) n++;
+  const id = `b:${x},${y},${z}:${n}`;
+  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x, y: restY(s, x, y, z), z });
+  s.dropFx.set(id, { delay: PICKUP_DELAY_S, age: 0 });
+  s.dropsRev++;
+}
+
 /** Altura em que uma lasca solta repousa: desce enquanto não há sólido embaixo (nunca abaixo da rocha-mãe). */
 function restY(s: TitanSession, x: number, y: number, z: number): number {
   let yy = y;
@@ -221,14 +237,21 @@ function restY(s: TitanSession, x: number, y: number, z: number): number {
   return yy;
 }
 
-const PICKUP_RADIUS = 1.25;
+const PICKUP_RADIUS = 1.45;
 /**
  * Coleta por proximidade (ADR 0044): toda lasca solta dentro de 1,25 m (horizontal) dos pés e a uma altura alcançável entra na mochila, uma a uma; se não couber,
  * fica no lugar e `full` avisa. Lascas sem apoio (o bloco de baixo foi quebrado) descem antes. Tudo muda inventário e lasca juntos (um único `dropsRev`).
  */
-export function collectNearby(s: TitanSession, px: number, py: number, pz: number): { collected: number; full: boolean; moved: boolean } {
+export function collectNearby(s: TitanSession, px: number, py: number, pz: number, dt = 0): { collected: number; full: boolean; moved: boolean } {
   let collected = 0, full = false, moved = false;
   for (const d of [...s.drops.values()]) {
+    let fx = s.dropFx.get(d.id);
+    if (!fx && d.id.startsWith('b:')) { fx = { delay: 0, age: 0 }; s.dropFx.set(d.id, fx); } // drop de bloco vindo do save: sem atraso, vida de 5 min a contar daqui
+    if (fx) { // só drops recém-soltos têm relógio: atraso de coleta e, nos de bloco (`b:`), sumiço depois de 5 min
+      fx.delay = Math.max(0, fx.delay - dt); fx.age += dt;
+      if (d.id.startsWith('b:') && fx.age >= DROP_LIFE_S) { s.drops.delete(d.id); s.dropFx.delete(d.id); s.dropsRev++; moved = true; continue; }
+      if (fx.delay > 0) continue;
+    }
     const ry = restY(s, d.x, d.y, d.z);
     if (ry !== d.y) { s.drops.set(d.id, { ...d, y: ry }); s.dropsRev++; moved = true; }
     const dd = s.drops.get(d.id)!;
@@ -237,6 +260,7 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
     if (!s.inventory.canAdd(item, count)) { full = true; continue; }
     s.inventory.add(item, count, dd.wear ?? 0);
     s.drops.delete(dd.id);
+    s.dropFx.delete(dd.id);
     s.dropsRev++;
     collected++;
   }

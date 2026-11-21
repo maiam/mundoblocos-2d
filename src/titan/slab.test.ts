@@ -10,6 +10,7 @@ import { MemoryTitanStorage } from './save';
 import { flush, openSession } from './session';
 import { TitanVolume } from './volume';
 import { blockHeight, isFull, isSolid, T } from './voxel';
+import { sweep } from './dropTestUtil';
 
 const FLAT_Y = 200; // alto, longe do terreno: um piso de rocha de teste
 function arena(): TitanVolume {
@@ -132,7 +133,7 @@ describe('Laje de Rocha: fabricar, colocar, quebrar e persistir', () => {
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(bx, 65, bz)).toBe(T.SLAB); // edição de chunk: sobrevive
     expect(r.inventory.total(Item.SLAB)).toBe(5);
-    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(r);
     expect(r.inventory.total(Item.SLAB)).toBe(6);
     expect(r.volume.get(bx, 65, bz)).toBe(T.AIR);
   });
@@ -142,7 +143,8 @@ describe('Laje de Rocha: fabricar, colocar, quebrar e persistir', () => {
     const a = s.volume.gen.arrival, bx = Math.floor(a.x) + 2, bz = Math.floor(a.z);
     s.volume.place(bx, 65, bz, T.SLAB);
     let n = 0; while (s.inventory.canAdd(Item.SAND) && n++ < 5000) s.inventory.add(Item.SAND, 1);
-    expect(breakOrCollect(s, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 })).toEqual({ ok: false, msg: 'Mochila cheia' });
-    expect(s.volume.get(bx, 65, bz)).toBe(T.SLAB);
+    expect(breakOrCollect(s, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); // ADR 0082: cai no chão e fica lá com a mochila cheia
+    expect(s.volume.get(bx, 65, bz)).toBe(T.AIR);
+    expect(sweep(s)).toBe(0);
   });
 });
