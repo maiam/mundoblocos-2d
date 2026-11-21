@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.142.0 — Titã: texturas seamless revisadas de quatro materiais (21/11/2026)
+- **Arte revisada do dono do produto (Drive):** Areia Ocre (lisa), Areia Úmida (escura, manchas sutis), Rocha Escura (basalto rugoso) e Rocha com Veio (derivada do basalto, veio termina dentro da face). As bordas opostas de cada face coincidem nos dois eixos. Sem decisão nova: **ADR 0079** ganhou a nota de revisão.
+- `assets-src/titan/texturas32/` atualizado (12 PNGs + `LEIA-ME.txt`); `make-titan-atlas32.py` regravou `titan-atlas-32px.webp` (288 × 216, 44 KB). Os outros 15 materiais são idênticos ao pacote anterior. Sem mudança de código, gerador ou save. Conferido a 740 × 360 (areia sem emenda visível).
+- Drive também ganhou as quatro **Cenas da abertura** (ilustrações, ~2 MB cada, só referência de arte, fora do jogo) e atualizou `01_Historia`; o `README` do Drive segue em v0.133.0.
+
 ## Orvalis v0.141.0 — Titã: o bloco quebrado cai no chão (21/11/2026)
 - **Pedido do dono do produto (modelo do Minecraft).** **ADR 0082.** Todo bloco comum quebrado vira item solto na célula (`b:x,y,z:n`) e é recolhido por proximidade (raio 1,45 m, atraso de 0,45 s, some em 5 min); quebrar não falha mais por mochila cheia. A lanterna segue direto para a mochila.
 - Desenho: o item salta ao nascer, não se sobrepõe a outros na célula e voa 0,14 s até o jogador ao ser recolhido. Sem mudança de formato de save nem de gerador.

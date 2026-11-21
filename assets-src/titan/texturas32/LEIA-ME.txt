@@ -6,3 +6,5 @@ A laje inferior e a superior usam o mesmo material. A laje dupla pertence à fam
 As superfícies A e B do Lago Escuro são amostras para sua animação. O braseiro usa uma lateral comum aos dois estados.
 Os materiais da lanterna, mesa, marco e painel são amostras para os modelos 3D. A aplicação exige o mapeamento UV.
 Usar filtro Nearest e verificar o atlas, a repetição e a leitura sob a iluminação do jogo antes da troca.
+
+Revisão de terreno. Areia Ocre, Areia Úmida, Rocha Escura e Rocha com Veio usam as pranchas e texturas seamless atualizadas. As bordas opostas de cada face desses quatro materiais coincidem nos dois eixos. O veio termina no interior das faces e preserva a borda da Rocha Escura.

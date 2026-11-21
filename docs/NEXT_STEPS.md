@@ -28,6 +28,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Picareta na mão (v0.137.0, ADR 0078):** aceite em aparelho; modelos da picareta e da adaga de cobre; usar o clipe "Minerar" do rig só se o golpe procedural não servir.
 
+**Texturas revisadas (v0.142.0):** aceite visual em aparelho e à noite; os outros 15 materiais seguem como no pacote anterior. As quatro ilustrações da abertura (Drive, "Cenas da abertura") são referência de arte, ainda sem uso no jogo; o `README` do Drive está em v0.133.0.
+
 **Drops de bloco (v0.141.0, ADR 0082):** sentir no jogo real (raio de 1,45 m, atraso, minerar em sequência com a mochila cheia); avaliar coleta parcial de pilha, atração magnética que puxa o item e impulso físico no salto; o relógio dos drops não vai no save (recarregar zera a vida de 5 min).
 
 **Tela cheia no toque (v0.136.0, ADR 0077):** confirmar no tablet do relato; se a tela cheia ainda cair, anotar navegador, modelo e onde está o dedo; iPad/Safari tem regras próprias.

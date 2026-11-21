@@ -8,6 +8,9 @@
 3. **Laje** (`11-laje-de-rocha`): topo 32 × 32 e lateral 32 × 16, guardada na **metade de cima** do tile (o mesher já usa os 16 px de cima na laje de meia altura); a laje dupla é da família da rocha escura (cubo com as texturas dela). A rocha-mãe é só mais escura (`TINT`).
 4. **Fora do atlas** (decisão registrada): o **Lago Escuro** segue com o atlas próprio de 32 px do ADR 0057 (o pacote novo traz superfície A/B e vista de baixo, sem a lateral exposta; trocar exige decisão de arte); a **Mesa, a lanterna, o Marco e o Painel** são modelos 3D com UV próprio (as amostras do pacote são só materiais). O atlas de 16 px (`titan-atlas-16px.webp`) fica no repositório só como legado dos scripts antigos (não é mais carregado).
 
+## Revisão (v0.142.0)
+O dono do produto revisou **Areia Ocre, Areia Úmida, Rocha Escura e Rocha com Veio** (texturas seamless: bordas opostas coincidem nos dois eixos; o veio termina no interior da face). Os 12 PNGs desses blocos em `assets-src/titan/texturas32/` foram trocados e o atlas regravado (44 KB). Nenhuma regra mudou; `tiles.json` e os nomes são os mesmos.
+
 ## Consequências
 - Mais definição em todo o terreno, com a mesma contagem de triângulos; o custo é o atlas (42 KB e ~0,25 MB de textura na GPU).
 - Pendências: aceite visual em aparelho e à noite (luz de lanterna sobre as texturas novas); trocar as texturas dos modelos 3D e o lago quando houver UV e a lateral; os scripts `make-titan-veins/veio-cobre/braseiro/ambar.py` ficam como histórico.
