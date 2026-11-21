@@ -22,17 +22,17 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.EMBER_BLOCK;
+export const T_MAX = T.MAT;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
-export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id);
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT;
 /** Alvo da mira (e do "quebrar"): sólido, lanterna ou Marco de Margem. O líquido e o ar são atravessados. */
-export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id);
+export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id) || id === T.MAT;
 /** Bloco que bloqueia a luz de lanterna: sólido, menos o Painel de Junco (a trama tem vãos: a luz atravessa). */
 export const blocksLight = (id: number): boolean => isSolid(id) && !isPanel(id);
 /** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
@@ -91,7 +91,13 @@ export const PANEL_HEIGHT = 0.944;
 /** Id do painel que fica de frente para o jogador: olhando ao longo de Z (norte/sul) o painel corre ao longo de X; olhando ao longo de X, ao longo de Z. */
 export const panelIdFacing = (yaw: number): number => (Math.abs(Math.cos(yaw)) >= Math.abs(Math.sin(yaw)) ? T.PAINEL : T.PAINEL_Z);
 /** Peça recolhida com um toque longo curto (0,35 s, com anel e sem rachaduras): a lanterna e as peças pequenas da margem (Marco e Painel). */
-export const isCollectBlock = (id: number): boolean => id === T.LANTERN || isMarco(id) || isPanel(id);
+export const isCollectBlock = (id: number): boolean => id === T.LANTERN || isMarco(id) || isPanel(id) || id === T.MAT;
+/**
+ * Esteira de Junco (ADR 0085): peça fina de piso, no modelo das placas de pressão do Minecraft **sem** as regras de pressão: 1/16 m de altura, sem colisão (anda-se por cima, como na
+ * lanterna e no Marco), alvo da mira pela própria caixa, exige face superior sólida abaixo e, sem o apoio, vira item. Faz parte da malha do terreno (topo = trama, laterais = borda).
+ */
+export const MAT_HEIGHT = 0.0625;
+export const isMat = (id: number): boolean => id === T.MAT;
 /** Modelo 3D (instâncias do renderer) deste bloco, ou `null`. `turn` = giro em quartos de volta ao redor de Y. */
 export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel'; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
@@ -121,6 +127,7 @@ const BLOCK_TILES: Record<number, readonly [number, number, number]> = {
   [T.LAKE]: ROCK, // o líquido tem atlas próprio (ADR 0057); este tile só preenche o índice
   [T.VEIN_ROCK]: faces3('06-rocha-com-veio'), [T.VEIN_FROST]: faces3('07-gelo-com-veio'), [T.VEIN_COPPER]: faces3('08-veio-de-cobre-de-duna'), [T.EMBER]: faces3('09-deposito-de-brasa'),
   [T.SLAB]: [tileIndex('11-laje-de-rocha/topo'), tileIndex('11-laje-de-rocha/lateral'), tileIndex('11-laje-de-rocha/topo')], // a lateral tem 32 × 16 e usa a metade de cima do tile
+  [T.MAT]: [tileIndex('20-esteira-de-junco/topo'), tileIndex('20-esteira-de-junco/lateral'), tileIndex('20-esteira-de-junco/lateral')],
   [T.CARAPACE]: faces3('12-revestimento-de-carapaca'), [T.EMBER_VEIN]: faces3('18-veio-de-ambar'), [T.EMBER_BLOCK]: faces3('19-bloco-de-ambar-compactado'),
   [T.BRAZIER]: [tileIndex('17-braseiro-de-rocha/topo-apagado'), tileIndex('17-braseiro-de-rocha/lateral-comum'), tileIndex('17-braseiro-de-rocha/lateral-comum')],
   [T.BRAZIER_LIT]: [tileIndex('17-braseiro-de-rocha/topo-aceso'), tileIndex('17-braseiro-de-rocha/lateral-comum'), tileIndex('17-braseiro-de-rocha/lateral-comum')],

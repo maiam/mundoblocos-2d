@@ -9,7 +9,7 @@ const snapshot = (i: Inventory): string => JSON.stringify(i.toData());
 
 describe('catálogo de receitas (ADR 0045)', () => {
   it('o catálogo tem mesa (4 rochas, pessoal), lente (1 fragmento de gelo, mesa), lanterna (2 fragmentos de rocha + lente + brasa, mesa) laje (3 rochas → 6 lajes, mesa), Marco de Margem e Painel de Junco (mesa)', () => {
-    expect(RECIPES.map((r) => r.id)).toEqual(['mesa', 'lente', 'lanterna', 'marco', 'painel', 'laje', 'picareta-rocha', 'braseiro', 'revestimento', 'lingote-cobre', 'noz-torrada', 'carne-assada', 'picareta-cobre', 'adaga-rocha', 'adaga-cobre', 'ambar-compactado', 'ambar-desmontar']);
+    expect(RECIPES.map((r) => r.id)).toEqual(['mesa', 'lente', 'lanterna', 'marco', 'painel', 'laje', 'picareta-rocha', 'braseiro', 'revestimento', 'lingote-cobre', 'esteira', 'noz-torrada', 'carne-assada', 'picareta-cobre', 'adaga-rocha', 'adaga-cobre', 'ambar-compactado', 'ambar-desmontar']);
     expect(recipeById('marco')).toMatchObject({ station: 'workbench', group: 'construcao', result: { item: Item.MARCO, count: 1 }, ingredients: [{ item: Item.ROCK_SHARD, count: 1 }, { item: Item.GLASS_REED, count: 1 }] });
     expect(recipeById('painel')).toMatchObject({ station: 'workbench', group: 'construcao', result: { item: Item.PAINEL, count: 2 }, ingredients: [{ item: Item.GLASS_REED, count: 2 }, { item: Item.DARK_ROCK, count: 1 }] });
     expect(recipeById('laje')).toMatchObject({ station: 'workbench', result: { item: Item.SLAB, count: 6 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }] });

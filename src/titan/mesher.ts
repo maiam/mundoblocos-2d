@@ -1,6 +1,6 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
-import { isFull, isModelBlock, isSlab, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
+import { isFull, isModelBlock, isSlab, MAT_HEIGHT, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -53,17 +53,18 @@ const warm = (level: number): number => (level > 0 ? Math.pow(level / LIGHT_MAX,
 class Builder {
   pos: number[] = []; uv: number[] = []; col: number[] = []; glow: number[] = []; idx: number[] = [];
   /** `level` = luz de lanterna na célula que a face enxerga. */
-  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0, half: 0 | 1 | 2 = 0, uv?: readonly [number, number, number, number]): void {
+  face(x: number, y: number, z: number, fi: number, tile: number, tint: number, level = 0, emit = 0, half: 0 | 1 | 2 | 3 = 0, uv?: readonly [number, number, number, number]): void {
     const F = FACES[fi];
     let [u0, v0, u1, v1] = uv ?? tileUV(tile);
     // laje (meia altura): a lateral usa só os 8 px de cima do tile (16 × 8 px: mesma densidade de texels do cubo) e o topo/base ficam inteiros
-    if (half && F.f === 'side') v0 = v1 - (v1 - v0) / 2;
+    if (half === 3 && F.f === 'side') v0 = v1 - (v1 - v0) * MAT_HEIGHT; // esteira: a lateral é só a faixa de cima da borda (1/16 m)
+    else if (half && F.f === 'side') v0 = v1 - (v1 - v0) / 2;
     const base = this.pos.length / 3;
     const shade = F.light * tint;
     const w = warm(level);
     for (let k = 0; k < 4; k++) {
       const c = F.c[k];
-      this.pos.push(x + c[0], y + (half === 2 ? 0.5 + c[1] * 0.5 : half === 1 ? c[1] * 0.5 : c[1]), z + c[2]); // half: 1 = laje inferior, 2 = superior
+      this.pos.push(x + c[0], y + (half === 3 ? c[1] * MAT_HEIGHT : half === 2 ? 0.5 + c[1] * 0.5 : half === 1 ? c[1] * 0.5 : c[1]), z + c[2]); // half: 1 = laje inferior, 2 = superior
       this.uv.push(CORNER_UV[k][0] ? u1 : u0, CORNER_UV[k][1] ? v1 : v0);
       this.col.push(shade, shade, shade);
       this.glow.push(w + emit, w * 0.72 + emit * 0.6, w * 0.38 + emit * 0.25);
@@ -102,6 +103,10 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
         // só a superfície (e bordas expostas ao ar). Atlas próprio do lago (ADR 0057, 128 × 32: topo, topo 2, lateral): o topo usa a célula 0; a lateral exposta, a célula 2, inteira na face que
         // encontra a superfície e sem a faixa clara de cima (75 % de baixo) nas faces de baixo, quando há líquido em cima.
         if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level, 0, 0, fi === 2 || fi === 3 ? LAKE_TOP_UV : at(lx, ly + 1, lz) === T.LAKE ? LAKE_SIDE_DEEP_UV : LAKE_SIDE_UV);
+      } else if (id === T.MAT) {
+        // esteira (ADR 0085): fina, 1/16 m. O topo sempre aparece; a base nunca (há piso firme); as laterais só sem cubo inteiro nem outra esteira ao lado.
+        const show = fi === 2 || (fi !== 3 && !isFull(nb) && nb !== id);
+        if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, 3);
       } else if (isSlab(id)) {
         // laje inferior: o topo sempre aparece (fica em y + 0,5); a base some sob cubo inteiro ou laje superior; as laterais só sem cubo inteiro nem outra laje inferior ao lado.
         // laje superior: a base sempre aparece (y + 0,5); o topo some sob cubo inteiro ou laje inferior; as laterais só sem cubo inteiro nem outra laje superior ao lado.

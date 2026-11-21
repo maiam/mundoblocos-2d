@@ -107,7 +107,7 @@ export class TitanVolume {
 
   /** Coloca um sólido na célula (ar ou líquido; o líquido é deslocado, mas continua na base para voltar depois). */
   place(x: number, y: number, z: number, id: number): boolean {
-    if (!isSolid(id) && id !== T.LANTERN && !isMarco(id)) return false;
+    if (!isSolid(id) && id !== T.LANTERN && !isMarco(id) && id !== T.MAT) return false;
     if (isOccupied(this.get(x, y, z))) return false;
     return this.set(x, y, z, id);
   }

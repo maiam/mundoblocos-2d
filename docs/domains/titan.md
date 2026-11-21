@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Esteira de Junco (v0.146.0, ADR 0085):** `T.MAT` (30)/`Item.ESTEIRA` (31), `isMat`/`MAT_HEIGHT` em `voxel.ts` (não sólida, alvo, ocupa, não bloqueia luz), malha com `half = 3` no mesher, ramo próprio no `raycast`, `actions.matSupported`/`releaseMat`, receita `esteira`.
 - **Noz plantada e Noz Torrada (v0.145.0, ADR 0084):** `Crop.species`, `plantableSoil`/`maxAgeOf`/`harvestOf`/`seedOf`/`nutLook` em `titan/crops.ts`, `actions.canPlantNut`/`plantCrop`, `standingNuts` junta silvestres e plantadas; item 30 + receita `noz-torrada` + `FOOD`.
 - **Cultivo do Junco (v0.144.0, ADR 0083):** `titan/crops.ts` (regras puras: fases, pontos, aglomeração, chance, colheita), `session.crops`/`tickCrops`/`standingCrops`/`cropLight`, `actions.plantReed`/`collectCrop`/`releaseCrop`, `header.crops` opcional, atlas `titan-cultivo-32px.webp` e `TitanRenderer.setCrops`. Alvo da mira = `crop:x,y,z`.
 - **Arte de cultivo (v0.143.0):** `assets-src/titan/cultivo/` guarda os sprites 32 × 32 do Junco de Vidro (muda, crescendo, adulto com duas mudas, ressecado) e as texturas da Esteira de Junco, **sem uso no jogo**; regras propostas em `NEXT_STEPS`. A Laje de Rocha Escura revisada já está no atlas.
