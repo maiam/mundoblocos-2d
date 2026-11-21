@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.134.0 — Titã: toque no estilo do Minecraft (setas e ação no ponto tocado) (21/11/2026)
+- **Referência do Minecraft de toque do dono do produto.** **ADR 0075.** Joystick → **setas** ▲ ▼ ◀ ▶ (multitoque, diagonal) e botão de pular quadrado ⤒.
+- **A ação acontece onde o dedo toca:** toque curto coloca/golpeia, segurar quebra, arrastar gira; o alvo é o que está sob o dedo (`rayThrough`, `computeAim`), com **anel azul** no ponto que enche com o progresso; some a mira central no toque e tocar na Mesa/Braseiro abre a estação. PC sem mudança.
+- Testes `aim.test.ts` (+2; 1.052 no total, 1 ignorado). Conferido a 740 × 360 com emulação de toque.
+
 ## Orvalis v0.133.0 — Titã: Margem como bioma, noz em 1 % da areia seca e Farejadores por planta (gerador v12) (20/11/2026)
 - **Pedido do dono do produto.** **ADR 0074.** `titan/biomes.ts` (Margem Silenciosa); a **Noz de Duna só em areia seca**, em **1 %** da areia seca elegível (~22 plantas na seed 42, antes 6), com espaçamento ≥ 4, as 2 perto da chegada e a enseada da toca mantidas.
 - **Um Farejador pequeno por planta**, junto dela, e **um grande a cada 5 plantas** (seed 42: 22 pequenos e 4 grandes). A volta depois do abate agora é **por animal** (`respawn` por id; partidas antigas seguem com o par da toca). Só os 56 m em volta simulam e só os 8 mais próximos são desenhados.

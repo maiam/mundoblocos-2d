@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, HandAnim } from './heldPose';
 import { loadHeldModel } from './heldItem';
 import { titanAdagaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
@@ -74,7 +75,7 @@ export class TitanRenderer {
   private rigLoading = false;
   /** Mão em primeira pessoa (ADR 0071): cena e câmera próprias, desenhadas por cima do mundo (a profundidade é limpa, a mão não entra em paredes). */
   private readonly handScene = new THREE.Scene();
-  private readonly handCamera = new THREE.PerspectiveCamera(75, 1, 0.02, 10);
+  private readonly handCamera = new THREE.PerspectiveCamera(FOV_DEG, 1, 0.02, 10);
   private readonly held = new Map<number, THREE.Group | 'loading' | 'failed'>();
   private heldItem: number | null = null;
   private readonly handAnim = new HandAnim();
@@ -98,7 +99,7 @@ export class TitanRenderer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
     this.scene.fog = new THREE.Fog(0xd2a066, RANGE * 0.7, RANGE * 0.97);
-    this.camera = new THREE.PerspectiveCamera(75, 1, 0.05, 400);
+    this.camera = new THREE.PerspectiveCamera(FOV_DEG, 1, 0.05, 400);
     this.camera.rotation.order = 'YXZ';
 
     const tex = new THREE.Texture(atlas);
