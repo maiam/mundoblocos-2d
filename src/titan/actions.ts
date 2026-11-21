@@ -1,10 +1,10 @@
-import { blockOfItem, dropCountOf, foodOf, isPick, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
+import { blockOfItem, dropCountOf, foodOf, isBucket, isPick, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
 import { isNightTime, tickFrac, WAKE_TICKS } from './sky';
-import { BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -447,9 +447,35 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
 }
 
 /** Coloca o item do espaço `slot` da hotbar na célula adjacente à face apontada. Gasta 1; fragmentos e cápsula não se colocam. */
+/**
+ * Balde de Cobre (ADR 0091): vazio, o toque numa célula do lago (mira com `liquid`) a recolhe, **só a de cima da coluna** (sem buraco de ar no meio da água) — a célula vira ar e o balde vem cheio;
+ * cheio, o toque numa face despeja o líquido na célula vizinha, que precisa estar livre e **abaixo da superfície** (Y ≤ `LAKE_LAST_Y`): o líquido só existe na altura do lago. O líquido não escorre
+ * (nenhuma simulação de fluxo): o que se despeja fica onde caiu e o que se recolhe deixa uma cavidade. Recolocar sólido sobre o líquido o desloca, como no lago original.
+ */
+function useBucket(s: TitanSession, hit: Hit, slot: number): ActionResult {
+  const stack = s.inventory.get(slot);
+  if (!stack) return { ok: false };
+  const v = s.volume;
+  if (stack.item === Item.BALDE) {
+    if (v.get(hit.x, hit.y, hit.z) !== T.LAKE) return { ok: false, msg: 'Aponte o balde para o lago' };
+    if (v.get(hit.x, hit.y + 1, hit.z) === T.LAKE) return { ok: false, msg: 'O balde só recolhe a superfície do lago' };
+    if (!v.set(hit.x, hit.y, hit.z, T.AIR)) return { ok: false };
+    s.inventory.replace(slot, Item.BALDE_CHEIO);
+    return { ok: true, msg: 'Balde cheio' };
+  }
+  const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
+  if (hit.item || !v.editable(x, y, z) || v.get(x, y, z) !== T.AIR) return { ok: false, msg: 'Aqui não dá para despejar' };
+  if (y > LAKE_LAST_Y) return { ok: false, msg: 'O líquido só se despeja em cavidade abaixo da superfície do lago' };
+  const occupied = s.items.at(x, y, z) ?? [...s.drops.values()].find((d) => d.x === x && d.y === y && d.z === z)?.id ?? null;
+  if (occupied || !v.set(x, y, z, T.LAKE)) return { ok: false, msg: 'Aqui não dá para despejar' };
+  s.inventory.replace(slot, Item.BALDE);
+  return { ok: true, msg: 'Líquido despejado' };
+}
+
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
+  if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
