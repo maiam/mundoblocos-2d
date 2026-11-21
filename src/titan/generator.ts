@@ -22,13 +22,15 @@ import { inRegion, LAKE_LAST_Y, regionFor, type Region, T, Y_MIN } from './voxel
  * v8 (ADR 0066): **abrigos** (2 vãos entre dois pilares de rocha, cada um com uma **placa de carapaça** no chão), fora do território do Farejador; o resto é a v7.
  * v9 (ADR 0070): **veios subterrâneos** (cobre, rocha e gelo enterrados, altura triangular, descarte por exposição ao ar, só substituem a rocha profunda; `ORE_RULES`); os
  * gelos soltos do subsolo da v1–v8 saem; a superfície é idêntica à v8.
+ * v13 (ADR 0086): o cultivo do junco assume a Haste Seca: as **hastes secas avulsas** caem de até 8 para as **2 mais próximas da chegada** (uma Picareta de Rocha), e a **Noz de Duna mais próxima da
+ * chegada fica sem Farejador** (a primeira refeição é segura; `creatureSpecs`). O resto é a v12.
  * v12 (ADR 0074): a Margem é um bioma (`biomes.ts`); a Noz de Duna nasce **só em areia seca** e na proporção de 1 % da areia seca elegível (cerca de 25 plantas por seed), com espaçamento mínimo de 4; ao menos 2
  * perto da chegada e a enseada da toca continuam. Cada planta tem um Farejador pequeno (`creatureSpecs`) e há um grande a cada 5 plantas. O resto é a v11.
  * v11 (ADR 0073): **brasa de âmbar comum**: 4 depósitos superficiais acessíveis a pé nos 4 × 4 chunks iniciais (cada um com juncos em volta), **veios de âmbar** enterrados de 3 a 8 blocos e ao menos um
  * veio garantido perto da chegada; o resto é a v10.
  * v10 (ADR 0072): **fragmentos à vista**: veios de rocha espalhados pela rocha escura da superfície (mais densos nas camadas altas, Y ≥ 72) e de gelo nas manchas de gelo; o resto é a v9.
  */
-export const GENERATOR_VERSION = 12;
+export const GENERATOR_VERSION = 13;
 
 export interface Column {
   /** Y do voxel sólido mais alto da coluna. */
@@ -474,7 +476,10 @@ export class TitanGenerator {
       if (out.some((o) => Math.hypot(o.x - c.x, o.z - c.z) < 2)) continue;
       out.push({ id: `dry:${c.x},${c.top + 1},${c.z}`, item: 19, x: c.x, y: c.top + 1, z: c.z });
     }
-    return out;
+    if (this.version < 13) return out;
+    // v13 (ADR 0086): o cultivo do junco assume a Haste Seca; ficam só as 2 avulsas mais próximas da chegada (o suficiente para a primeira picareta)
+    const a = this.arrival;
+    return out.sort((p, q) => Math.hypot(p.x - a.x, p.z - a.z) - Math.hypot(q.x - a.x, q.z - a.z) || p.x - q.x || p.z - q.z).slice(0, 2);
   }
 
   // ---- Campos 2D (relevo bruto; ignoram clareira e formações) ----

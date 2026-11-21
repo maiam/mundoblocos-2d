@@ -93,17 +93,21 @@ export function creatureSpecs(g: PackSource): CreatureSpec[] {
     }
     return { id, kind, x: p.x, y: p.y, z: p.z };
   };
+  // v13 (ADR 0086): a planta mais próxima da chegada fica sem guarda (nem pequeno nem grande): a primeira refeição é segura
+  let free = -1;
+  if (g.version >= 13) g.nutPlants.forEach((p, i) => { if (free < 0 || Math.hypot(p.x - g.arrival.x, p.z - g.arrival.z) < Math.hypot(g.nutPlants[free].x - g.arrival.x, g.nutPlants[free].z - g.arrival.z)) free = i; });
   const wanted = Math.max(1, Math.floor(g.nutPlants.length / biome.plantsPerGrande));
   if (g.den) out.push({ id: 'g0', kind: 'grande', ...g.den });
   const bigs = g.den ? [g.den] : [];
   for (const [minArrival, apart] of [[24, 20], [20, 14], [18, 10]]) { // relaxa a distância se a seed não tiver lugar para todos
     for (let i = 0; i < g.nutPlants.length && bigs.length < wanted; i++) {
+      if (i === free) continue;
       const p = g.nutPlants[i];
       if (Math.hypot(p.x - g.arrival.x, p.z - g.arrival.z) < minArrival || bigs.some((o) => Math.hypot(o.x - p.x, o.z - p.z) < apart)) continue;
       bigs.push(p); out.push(near(p, `g${bigs.length - 1}`, 'grande', 3));
     }
   }
-  g.nutPlants.forEach((p, i) => { for (let k = 0; k < biome.pequenoPerPlant; k++) out.push(near(p, k ? `p${i}_${k}` : `p${i}`, 'pequeno', 2)); });
+  g.nutPlants.forEach((p, i) => { if (i === free) return; for (let k = 0; k < biome.pequenoPerPlant; k++) out.push(near(p, k ? `p${i}_${k}` : `p${i}`, 'pequeno', 2)); });
   return out;
 }
 
