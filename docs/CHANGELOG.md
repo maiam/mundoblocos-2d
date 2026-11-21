@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.140.0 — Titã: joystick analógico de volta no toque (21/11/2026)
+- **Pedido do dono do produto:** não gostou das setas; voltou o joystick antigo. **ADR 0081.** `.titan-stick` (120 px, miolo arrastável, `input.stickX/Y` analógico) no lugar de `.titan-dpad`, respeitando a margem `--edge`. Corrida: joystick empurrado até o fim para a frente (`stickY ≤ −0,85`) por 0,2 s. Ação no ponto do dedo, modo de mira, anel e margens (ADR 0075–0077) não mudam.
+
 ## Orvalis v0.139.0 — Titã: segurar no animal golpeia em sequência (21/11/2026)
 - **Relato do dono do produto:** a adaga repetia o golpe contra blocos, mas não dava dano no Farejador. **ADR 0080.** Causas: segurar cancelava o gesto sem golpear (só o toque curto golpeava) e o animal, ao andar, mudava a célula do alvo e cancelava o toque.
 - O gesto compara o **mesmo animal** (não a célula); novo estado `ATTACKING`: segurar golpeia em sequência (pausa de 0,6 s do `strike`), troca de animal segue no novo, sair da mira ou arrastar encerra.
