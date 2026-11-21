@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FOV_DEG } from '../titan/aim';
+import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, HandAnim } from './heldPose';
 import { loadHeldModel } from './heldItem';
 import { titanAdagaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
@@ -79,6 +79,13 @@ export class TitanRenderer {
   private readonly held = new Map<number, THREE.Group | 'loading' | 'failed'>();
   private heldItem: number | null = null;
   private readonly handAnim = new HandAnim();
+  private sprintFov = 0; // 0 = FOV normal; 1 = corrida (ADR 0076)
+  private sprintOn = false;
+  private lastFovMs = 0;
+  /** Campo de visão atual da câmera do mundo (a corrida o abre `SPRINT_FOV_DEG` graus). */
+  get fov(): number { return FOV_DEG + this.sprintFov * SPRINT_FOV_DEG; }
+  /** Liga ou desliga o efeito de corrida (abre o FOV suavemente). */
+  setSprint(on: boolean): void { this.sprintOn = on; }
   private handMove = { speed: 0, grounded: true, acting: false };
   private lastRenderMs = 0;
   private farejadorGeos = {} as Record<string, THREE.BufferGeometry>;
@@ -494,6 +501,13 @@ export class TitanRenderer {
 
   /** Um quadro: câmera, malhas pendentes (mais perto primeiro, com orçamento de tempo), contorno e desenho. */
   render(eye: { x: number; y: number; z: number }, yaw: number, pitch: number, target: { x: number; y: number; z: number; box?: Box } | null, time: number): void {
+    const fovGoal = this.sprintOn ? 1 : 0;
+    if (this.sprintFov !== fovGoal) { // abre e fecha o campo de visão em ~0,15 s
+      const now = performance.now(), dt = this.lastFovMs ? Math.min(0.1, (now - this.lastFovMs) / 1000) : 0.016;
+      this.sprintFov += Math.sign(fovGoal - this.sprintFov) * Math.min(Math.abs(fovGoal - this.sprintFov), dt * 7);
+      this.camera.fov = this.fov; this.camera.updateProjectionMatrix();
+    }
+    this.lastFovMs = performance.now();
     this.camera.position.set(eye.x, eye.y, eye.z);
     this.camera.rotation.set(pitch, yaw, 0);
     this.sky.mesh.position.copy(this.camera.position);

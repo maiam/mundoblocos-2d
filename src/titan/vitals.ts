@@ -10,7 +10,7 @@ export const HUNGER_ENABLED = true;
 /** Inanição (fome 0) tira vida só até este mínimo: passar fome nunca derruba o jogador. */
 export const STARVATION_FLOOR = 1;
 /** Exaustão (4 = 1 ponto de saturação, depois de fome) por atividade. Provisório, a calibrar em jogo: andar por bloco, pular, quebrar bloco. */
-export const EXHAUSTION = { walkPerBlock: 0.1, jump: 0.2, breakBlock: 0.05 } as const;
+export const EXHAUSTION = { walkPerBlock: 0.1, sprintPerBlock: 0.2, jump: 0.2, breakBlock: 0.05 } as const;
 export const MAX_HEALTH = 20, MAX_HUNGER = 20, MAX_AIR = 15;
 /** Sem comida no jogo: 1 ponto de vida a cada tanto (segundos). */
 export const REGEN_NO_FOOD_S = 1.5;

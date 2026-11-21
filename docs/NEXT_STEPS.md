@@ -22,6 +22,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Fragmentos à vista (v0.129.0, ADR 0072):** balanço das densidades (12 %/6 %) e do rendimento por veio; incluir os novos veios em `veinCells()` se algum teste de alcance precisar.
 
+**Mira no toque e corrida (v0.135.0, ADR 0076):** calibrar a corrida (+30 %, FOV +6°, fome) e testar o modo central em aparelho; alternativa descartada por ora: joystick flutuante com zona morta e corrida ao empurrar até o limite; corrida no teclado.
+
 **Toque estilo Minecraft (v0.134.0, ADR 0075):** aceite em tablet e celular reais (tamanho e posição das setas, anel, sensibilidade da câmera, toque em controles e hotbar); considerar botão central de agachar se o Titã ganhar essa ação; tablet com teclado.
 
 **Bioma e animais por planta (v0.133.0, ADR 0074):** balanço (1 % de plantas, 1 pequeno por planta, 1 grande a cada 5, dano e volta); decidir se as 2 plantas perto da chegada ficam sem guardião; aceite em aparelho do custo de ~8 rigs; mais biomas além da Margem.

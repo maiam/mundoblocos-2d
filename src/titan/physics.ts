@@ -11,6 +11,8 @@ const GRAVITY = 28;
 /** Salta 1 bloco (e um pouco mais): v = √(2 g h) com h = 1,25 m. */
 const JUMP_SPEED = Math.sqrt(2 * GRAVITY * 1.25);
 const WALK_SPEED = 4.3;
+/** Fator da corrida sobre a caminhada (ADR 0076). */
+export const SPRINT_FACTOR = 1.3;
 const TERMINAL = 20;
 const EPS = 1e-4;
 
@@ -68,6 +70,8 @@ export interface MoveInput {
   /** Direção de caminhada no mundo (já girada pelo olhar), módulo ≤ 1. */
   dirX: number; dirZ: number;
   jump: boolean;
+  /** Corrida (ADR 0076): +30 % de velocidade fora d'água. */
+  sprint?: boolean;
 }
 
 /** Um passo de física (dt em s; passos grandes são divididos): gravidade, salto de 1 bloco, colisão por eixo, líquido que freia. */
@@ -83,7 +87,7 @@ export function stepBody(v: TitanVolume, b: Body, input: MoveInput, dt: number):
 function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
   const feetCell = v.get(Math.floor(b.x), Math.floor(b.y + 0.2), Math.floor(b.z));
   b.inLiquid = feetCell === T.LAKE;
-  const speed = WALK_SPEED * (b.inLiquid ? 0.6 : 1);
+  const speed = WALK_SPEED * (b.inLiquid ? 0.6 : input.sprint ? SPRINT_FACTOR : 1);
   b.vx = input.dirX * speed;
   b.vz = input.dirZ * speed;
   if (b.inLiquid) {

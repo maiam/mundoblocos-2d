@@ -36,6 +36,8 @@ const AUTOSAVE_AFTER_EDIT_MS = 700;
 const AUTOSAVE_PLAYER_MS = 5000;
 const RETRY_MS = 3000;
 /** Farejadores (ADR 0074): só os que estão a até `SIM_RADIUS` m do viajante (ou em ação) são simulados; só os `SHOW_MAX` mais próximos, a até `SHOW_RADIUS` m, vão para o desenho. */
+const SPRINT_HOLD_MS = 200; // ADR 0076
+let sprintOn = false;
 const SIM_RADIUS = 56, SHOW_RADIUS = 64, SHOW_MAX = 8;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
@@ -500,11 +502,24 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // ---- Início (ponteiro preso no desktop) ----
   const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
   if (coarse) document.body.classList.add('titan-touch-on');
+  // modo de mira no toque (ADR 0076): 'dedo' = a ação é no ponto tocado (padrão, ADR 0075); 'central' = mira + no centro e arrastar só gira (como no PC); lembrado no aparelho
+  let aimMode: 'dedo' | 'central' = 'dedo';
+  try { if (window.localStorage.getItem('orvalis-titan-mira') === 'central') aimMode = 'central'; } catch { /* sem armazenamento */ }
+  const aimBtn = el('button', 'titan-btn', menu);
+  aimBtn.type = 'button'; aimBtn.hidden = !coarse;
+  const fingerMode = (): boolean => coarse && aimMode === 'dedo';
+  const paintAim = (): void => { aimBtn.textContent = `Mira: ${aimMode === 'dedo' ? 'no dedo' : 'central'}`; document.body.classList.toggle('titan-aim-finger', fingerMode()); };
+  paintAim();
+  aimBtn.addEventListener('click', () => {
+    aimMode = aimMode === 'dedo' ? 'central' : 'dedo';
+    try { window.localStorage.setItem('orvalis-titan-mira', aimMode); } catch { /* sem armazenamento */ }
+    fingerNdc = null; touchRing.hidden = true; paintAim();
+  });
   const start = el('div', 'titan-start', ui);
   const box = el('div', '', start);
   el('h1', '', box, 'Titã');
   el('p', '', box, session.resumed ? 'Sua partida foi encontrada. Continue de onde parou.' : 'Uma costa de areia ocre e um lago escuro sob a névoa da tarde.');
-  el('p', '', box, coarse ? 'Setas: andar · toque curto onde quiser coloca, segurar quebra (o anel mostra o progresso), arrastar gira a câmera · botão ⤒ pula · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
+  el('p', '', box, coarse ? 'Setas: andar (segure ▲ para correr) · toque curto onde quiser coloca, segurar quebra (o anel mostra o progresso), arrastar gira a câmera · "Mira" no menu troca para a mira central · botão ⤒ pula · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
   const go = el('button', 'titan-btn', box, session.resumed ? 'Continuar' : 'Começar');
   go.type = 'button';
   let playing = false;
@@ -564,10 +579,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // setas no lugar do joystick (como o Minecraft de toque): ▲ anda, ▼ recua, ◀ ▶ andam de lado; segurar duas dá a diagonal
   const dpad = el('div', 'titan-dpad', touch);
   const dirs = { up: false, down: false, left: false, right: false };
+  let upSince = 0; // instante em que ▲ foi pressionada (a corrida liga depois de 0,2 s)
   const syncDirs = (): void => { input.stickY = (dirs.down ? 1 : 0) - (dirs.up ? 1 : 0); input.stickX = (dirs.right ? 1 : 0) - (dirs.left ? 1 : 0); };
   for (const [key, glyph] of [['up', '▲'], ['left', '◀'], ['right', '▶'], ['down', '▼']] as const) {
     const bt = el('button', `titan-dir ${key}`, dpad, glyph); bt.type = 'button'; bt.setAttribute('aria-label', { up: 'Andar', down: 'Recuar', left: 'Esquerda', right: 'Direita' }[key]);
-    bt.addEventListener('pointerdown', (e) => { e.preventDefault(); bt.setPointerCapture(e.pointerId); dirs[key] = true; bt.classList.add('on'); syncDirs(); });
+    bt.addEventListener('pointerdown', (e) => { e.preventDefault(); bt.setPointerCapture(e.pointerId); dirs[key] = true; if (key === 'up') upSince = performance.now(); bt.classList.add('on'); syncDirs(); });
     for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) bt.addEventListener(ev, () => { dirs[key] = false; bt.classList.remove('on'); syncDirs(); });
   }
   const acts = el('div', 'titan-acts', touch);
@@ -593,7 +609,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     setFinger(e); computeAim(); // o alvo é o que está sob o dedo agora, não o do quadro anterior
     gesture.press(e.pointerId, e.timeStamp, toTarget(target));
     exceeded = gesture.state === 'CAMERA_DRAG'; // sem alvo sob o dedo o gesto é só câmera, sem zona morta
-    touchRing.hidden = false; touchRing.style.setProperty('--p', '0');
+    touchRing.hidden = !fingerMode(); touchRing.style.setProperty('--p', '0');
   });
   lookPad.addEventListener('pointermove', (e) => {
     if (e.pointerId !== lookId) return;
@@ -617,7 +633,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   /** Recalcula o alvo (bloco, lasca ou animal) e o rótulo: no PC e no tablet sem dedo, o raio do centro da tela; no toque (ADR 0075), o raio que passa pelo dedo, e sem dedo nada. */
   function computeAim(): void {
     const act = playing && !bagOpen, b = session.body, eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
-    const ray = !act ? null : coarse ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1)) : null) : lookVector(session.yaw, session.pitch);
+    const ray = !act ? null : fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
     if (!ray) { target = null; aimCreature = null; } else {
       const [dx, dy, dz] = ray;
       target = raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE);
@@ -666,7 +682,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
       if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
-      if (coarse && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
+      if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
       if (held && foodOf(held.item)) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come
       const r = placeFromSlot(session, t, session.selected);
@@ -753,9 +769,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const moved = dirX !== 0 || dirZ !== 0;
       const px = b.x, pz = b.z;
       const wasOnGround = b.onGround;
-      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump }, dt);
+      const sprint = dirs.up && !dirs.down && now - upSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // segurar ▲ por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
+      sprintOn = sprint; view.setSprint(sprint);
+      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint }, dt);
       if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
-      addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * EXHAUSTION.walkPerBlock);
+      addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * (sprintOn ? EXHAUSTION.sprintPerBlock : EXHAUSTION.walkPerBlock));
       if (moved || !b.onGround) playerDirty = true;
       // queda: dano = ⌈altura − 3⌉ ao pousar no chão; cair na água não machuca
       if (b.inLiquid) { airTop = b.y; wasAir = false; }
@@ -773,7 +791,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         const m = surfaceOf(vol.get(Math.floor(b.x), Math.floor(b.y - 0.01), Math.floor(b.z)));
         if (m) gameAudio.playFootstep(m);
       }
-    } else if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); // parado: só assenta no chão
+    } else { sprintOn = false; view.setSprint(false); if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); } // parado: só assenta no chão
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
       const before = session.time;
@@ -809,11 +827,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
     computeAim();
-    if (coarse) { // anel no dedo: enche enquanto quebra (ADR 0075)
+    if (fingerMode()) { // anel no dedo: enche enquanto quebra (ADR 0075)
       touchRing.classList.toggle('on', gesture.state === 'ARMED' || gesture.state === 'BREAKING');
       touchRing.style.setProperty('--p', String(gesture.progress));
     }
-    useBtn.hidden = coarse || !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar" (no toque, tocar na estação a abre)
+    useBtn.hidden = fingerMode() || !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar" (no toque, tocar na estação a abre)
     if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);

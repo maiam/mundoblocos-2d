@@ -56,7 +56,7 @@ body.titan-touch-on .titan-touch { display: block; }
 .titan-acts { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(2, auto); gap: 8px; pointer-events: auto; }
 .titan-acts .titan-btn { min-width: 74px; min-height: 48px; }
 /* Toque (ADR 0075), como o Minecraft de toque: setas no lugar do joystick, botão de pular quadrado com a seta para cima e anel no ponto do toque */
-body.titan-touch-on .titan-cross { display: none; }
+body.titan-aim-finger .titan-cross { display: none; } /* mira no dedo: sem cruzeta central; no modo central (ADR 0076) ela volta */
 .titan-dpad { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); width: 168px; height: 112px; pointer-events: auto; touch-action: none; }
 .titan-dir { position: absolute; width: 56px; height: 56px; padding: 0; border: 2px solid #171c20; border-radius: 4px; background: #8e8680cc; color: #2a2220; font: 700 22px system-ui, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
 .titan-dir.on { background: #d99342; color: #171410; }

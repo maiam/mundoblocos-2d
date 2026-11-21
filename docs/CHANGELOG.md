@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.135.0 — Titã: modo de mira no toque e corrida (21/11/2026)
+- **Referência do Minecraft de toque do dono do produto.** **ADR 0076.** Botão **"Mira: no dedo / central"** no menu (só toque; lembrado no aparelho): no dedo = ação no ponto tocado (ADR 0075); central = cruzeta + no centro e arrastar só gira (o "Usar" volta).
+- **Corrida:** segurar ▲ por 0,2 s (andando) dá +30 % de velocidade, FOV +6° e 0,2 de cansaço por bloco (antes 0,1).
+- O raycast já era o 3D DDA (Amanatides–Woo) e o multitoque já era isolado por ponteiro; joystick flutuante não foi feito (setas, por escolha do dono do produto). Testes `corrida.test.ts` (+3; 1.055 no total, 1 ignorado).
+
 ## Orvalis v0.134.0 — Titã: toque no estilo do Minecraft (setas e ação no ponto tocado) (21/11/2026)
 - **Referência do Minecraft de toque do dono do produto.** **ADR 0075.** Joystick → **setas** ▲ ▼ ◀ ▶ (multitoque, diagonal) e botão de pular quadrado ⤒.
 - **A ação acontece onde o dedo toca:** toque curto coloca/golpeia, segurar quebra, arrastar gira; o alvo é o que está sob o dedo (`rayThrough`, `computeAim`), com **anel azul** no ponto que enche com o progresso; some a mira central no toque e tocar na Mesa/Braseiro abre a estação. PC sem mudança.
