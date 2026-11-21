@@ -44,6 +44,7 @@
 | 0065 | **Aceita** — Titã: Braseiro de Rocha (apagado/aceso, 8 preparações por Brasa de Âmbar, estação `brazier`), Lingote de Cobre, Picareta de Cobre e adagas; `stationMet` como regra única |
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
+| 0080 | **Aceita** — Titã: segurar no animal golpeia em sequência (`ATTACKING`) e o alvo-animal é o mesmo animal, não a mesma célula |
 | 0079 | **Aceita** — Titã: atlas de terreno de 32 px com textura por face (topo, lateral, base) em todos os blocos; `tiles.json` como fonte única da ordem; lago e modelos 3D fora |
 | 0078 | **Aceita** — Titã: Picareta de Rocha na mão (GLB de 325 KB sem rig; golpe por cima por item em `STYLES`; `HELD_MODELS`) |
 | 0077 | **Aceita** — Titã: tela cheia no toque (controles a 36 px das bordas, sem menu de segurar, volta imediata se cair com o dedo na tela) |
