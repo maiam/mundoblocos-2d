@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Escada de Junco (v0.149.0, ADR 0088):** `T.LADDER`…`LADDER_270` (31–34) e `Item.ESCADA` (32); `isLadder`/`ladderFacing`/`ladderTurnOf` em `voxel.ts`; `modelBox` (placa fina) em `models.ts`; `physics.ladderUnder` + `CLIMB_UP`/`CLIMB_SLIDE` e `Body.onLadder`; `actions.placeFromSlot` (lateral de cubo inteiro) e `releaseLadders`; modelo `escada` instanciado no renderer.
 - **Gerador v13 (v0.147.0, ADR 0086):** `dryReedsFor` devolve só as 2 hastes avulsas mais próximas da chegada; `creatureSpecs` deixa a planta de noz mais próxima da chegada sem Farejador (`free`); v1–v12 inalteradas.
 - **Esteira de Junco (v0.146.0, ADR 0085):** `T.MAT` (30)/`Item.ESTEIRA` (31), `isMat`/`MAT_HEIGHT` em `voxel.ts` (não sólida, alvo, ocupa, não bloqueia luz), malha com `half = 3` no mesher, ramo próprio no `raycast`, `actions.matSupported`/`releaseMat`, receita `esteira`.
 - **Noz plantada e Noz Torrada (v0.145.0, ADR 0084):** `Crop.species`, `plantableSoil`/`maxAgeOf`/`harvestOf`/`seedOf`/`nutLook` em `titan/crops.ts`, `actions.canPlantNut`/`plantCrop`, `standingNuts` junta silvestres e plantadas; item 30 + receita `noz-torrada` + `FOOD`.

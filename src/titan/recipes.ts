@@ -25,6 +25,7 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'braseiro', name: 'Braseiro de Rocha', group: 'utilidades', result: { item: Item.BRAZIER, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }], station: 'workbench' },
   { id: 'revestimento', name: 'Revestimento de Carapaça', group: 'construcao', result: { item: Item.CARAPACE, count: 2 }, ingredients: [{ item: Item.PLATE, count: 1 }, { item: Item.DARK_ROCK, count: 1 }], station: 'workbench' },
   { id: 'lingote-cobre', name: 'Lingote de Cobre de Duna', group: 'materiais', result: { item: Item.COPPER_INGOT, count: 1 }, ingredients: [{ item: Item.COPPER_SHARD, count: 2 }], station: 'brazier' },
+  { id: 'escada', name: 'Escada de Junco', group: 'construcao', result: { item: Item.ESCADA, count: 3 }, ingredients: [{ item: Item.DRY_REED, count: 4 }], station: 'workbench' },
   { id: 'esteira', name: 'Esteira de Junco', group: 'construcao', result: { item: Item.ESTEIRA, count: 1 }, ingredients: [{ item: Item.DRY_REED, count: 3 }], station: 'workbench' },
   { id: 'noz-torrada', name: 'Noz Torrada', group: 'materiais', result: { item: Item.NOZ_TORRADA, count: 1 }, ingredients: [{ item: Item.NOZ, count: 1 }], station: 'brazier' },
   { id: 'carne-assada', name: 'Carne Assada de Farejador', group: 'materiais', result: { item: Item.COOKED_MEAT, count: 1 }, ingredients: [{ item: Item.RAW_MEAT, count: 1 }], station: 'brazier' },

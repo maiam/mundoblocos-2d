@@ -1,7 +1,7 @@
 import { lanternBox, rayBox, type Box } from './lantern';
 import type { TitanVolume } from './volume';
 import { modelBox } from './models';
-import { isMarco, isOccupied, isPanel, isTarget, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
+import { isLadder, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
 
 /** Corpo do jogador: caixa de 0,6 × 1,8 × 0,6 m, olhos a 1,62 m dos pés. Pés em y (base do corpo). */
 export const BODY_HALF = 0.3;
@@ -14,9 +14,11 @@ const WALK_SPEED = 4.3;
 /** Fator da corrida sobre a caminhada (ADR 0076). */
 export const SPRINT_FACTOR = 1.3;
 const TERMINAL = 20;
+/** Escada (ADR 0088): sobe a 2,3 m/s pulando ou empurrando para a parede; sem comando, escorrega a 1,2 m/s (soltar é descer); de lado o corpo anda a 60 %. */
+export const CLIMB_UP = 2.3, CLIMB_SLIDE = 1.2, LADDER_WALK = 0.6;
 const EPS = 1e-4;
 
-export interface Body { x: number; y: number; z: number; vx: number; vy: number; vz: number; onGround: boolean; inLiquid: boolean }
+export interface Body { x: number; y: number; z: number; vx: number; vy: number; vz: number; onGround: boolean; inLiquid: boolean; /** Está numa escada (ADR 0088): sem gravidade e sem dano de queda. */ onLadder?: boolean }
 export const newBody = (x: number, y: number, z: number): Body => ({ x, y, z, vx: 0, vy: 0, vz: 0, onGround: false, inLiquid: false });
 
 /** A caixa em (x, y, z) toca algum sólido? */
@@ -84,13 +86,25 @@ export function stepBody(v: TitanVolume, b: Body, input: MoveInput, dt: number):
   }
 }
 
+/** Frente [x, z] da escada que o corpo ocupa (pés, cintura ou cabeça na célula dela), ou null. */
+export function ladderUnder(v: TitanVolume, b: Body): readonly [number, number] | null {
+  const cx = Math.floor(b.x), cz = Math.floor(b.z);
+  for (const dy of [0.2, 1.0, 1.7]) { const id = v.get(cx, Math.floor(b.y + dy), cz); if (isLadder(id)) return ladderFacing(ladderTurn(id)); }
+  return null;
+}
+
 function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
   const feetCell = v.get(Math.floor(b.x), Math.floor(b.y + 0.2), Math.floor(b.z));
   b.inLiquid = feetCell === T.LAKE;
-  const speed = WALK_SPEED * (b.inLiquid ? 0.6 : input.sprint ? SPRINT_FACTOR : 1);
+  const ladder = b.inLiquid ? null : ladderUnder(v, b);
+  b.onLadder = !!ladder;
+  const speed = WALK_SPEED * (b.inLiquid ? 0.6 : ladder ? LADDER_WALK : input.sprint ? SPRINT_FACTOR : 1);
   b.vx = input.dirX * speed;
   b.vz = input.dirZ * speed;
-  if (b.inLiquid) {
+  if (ladder) {
+    const into = -(input.dirX * ladder[0] + input.dirZ * ladder[1]); // > 0: empurrando para a parede (a frente da escada aponta para fora dela)
+    b.vy = input.jump || into > 0.3 ? CLIMB_UP : -CLIMB_SLIDE;
+  } else if (b.inLiquid) {
     b.vy = Math.max(b.vy - GRAVITY * 0.25 * dt, -2.5);
     if (input.jump) b.vy = 3;
   } else {
@@ -154,7 +168,7 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
         // a lanterna é pequena: acerta só a caixa do objeto (com folga de toque); fora dela o raio segue e pega o que está atrás
         const box = lanternBox(x, y, z, pad), h = rayBox(ox, oy, oz, dx, dy, dz, box);
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, box: lanternBox(x, y, z) };
-      } else if (isMarco(id) || isPanel(id)) {
+      } else if (isMarco(id) || isPanel(id) || isLadder(id)) {
         // Marco e Painel: a mira acerta a caixa do modelo (com folga de toque); fora dela o raio segue e pega o que está atrás
         const h = rayBox(ox, oy, oz, dx, dy, dz, modelBox(id, x, y, z, pad));
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box: modelBox(id, x, y, z) };

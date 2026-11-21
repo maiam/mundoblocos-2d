@@ -3,7 +3,7 @@ import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
-import { blockSpan, isBrazier, isMat, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockSpan, isBrazier, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -76,6 +76,14 @@ function plantCrop(s: TitanSession, hit: Hit, slot: number, species: Species): A
 
 /** A célula tem piso firme para uma esteira? O bloco de baixo precisa ocupar a célula até o topo (cubo inteiro, laje superior ou dupla). */
 export const matSupported = (s: TitanSession, x: number, y: number, z: number): boolean => isSolid(s.volume.get(x, y - 1, z)) && blockSpan(s.volume.get(x, y - 1, z))[1] >= 1;
+
+/** O bloco de apoio de uma escada foi quebrado: cada escada presa à face dele (a frente aponta para fora da célula) cai como item solto. */
+function releaseLadders(s: TitanSession, x: number, y: number, z: number): void {
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const id = s.volume.get(x + dx, y, z + dz), [fx, fz] = isLadder(id) ? ladderFacing(ladderTurn(id)) : [0, 0];
+    if (isLadder(id) && fx === dx && fz === dz && s.volume.remove(x + dx, y, z + dz)) spillBlock(s, Item.ESCADA, 1, x + dx, y, z + dz);
+  }
+}
 
 /** O piso de uma esteira foi quebrado: a esteira sai do lugar e cai como item solto. */
 function releaseMat(s: TitanSession, x: number, y: number, z: number): void {
@@ -249,6 +257,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   releaseReed(s, reed, x, y + 1, z);
   releaseCrop(s, x, y + 1, z);
   releaseMat(s, x, y + 1, z);
+  releaseLadders(s, x, y, z);
   return { ok: true };
 }
 
@@ -336,7 +345,11 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
-  if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
+  if (block === T.LADDER) { // escada (ADR 0088): prende-se à lateral de um cubo inteiro e a frente aponta para fora dele
+    if (hit.ny !== 0 || hit.item) return { ok: false, msg: 'A escada se prende à lateral de um bloco' };
+    if (!isFull(s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A escada precisa de um bloco inteiro atrás' };
+    block = ladderId(ladderTurnOf(hit.nx, hit.nz));
+  } else if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
   else if (block === T.MARCO) block = marcoId(marcoTurnFacing(s.yaw)); // idem o Marco de Margem (ADR 0058)
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   if (block === T.SLAB) { // laje (ADR 0056): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
