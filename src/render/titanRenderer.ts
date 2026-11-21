@@ -12,6 +12,7 @@ import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
+import { CROP_FRAMES } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
@@ -65,6 +66,10 @@ export class TitanRenderer {
   private modelSeen = -1;
   /** Junco de Vidro: uma malha instanciada por silhueta (broto baixo, haste bifurcada, tufo aberto), cada uma com o seu terço do atlas. */
   private reedMeshes: THREE.InstancedMesh[] = [];
+  /** Plantas de junco cultivadas (ADR 0083): uma malha instanciada por fase (coluna do atlas de cultivo). */
+  private cropMeshes: THREE.InstancedMesh[] = [];
+  private cropGeos: THREE.BufferGeometry[] = [];
+  private cropMat!: THREE.MeshBasicMaterial;
   private reedGeos: THREE.BufferGeometry[] = [];
   private reedMat!: THREE.MeshBasicMaterial;
   /** Planta da Noz de Duna (todas as plantas) e as nozes (só as maduras): duas malhas instanciadas do mesmo atlas. */
@@ -107,7 +112,7 @@ export class TitanRenderer {
   private clock = 0;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -258,6 +263,26 @@ export class TitanRenderer {
       this.reedMeshes.push(mesh);
     }
 
+    // junco cultivado (ADR 0083): as mesmas faixas cruzadas do junco, com o atlas de cultivo (muda, crescendo, adulto, ressecado)
+    const ctex = new THREE.Texture(extra.cultivo);
+    ctex.colorSpace = THREE.SRGBColorSpace;
+    ctex.magFilter = THREE.NearestFilter;
+    ctex.minFilter = THREE.NearestFilter;
+    ctex.generateMipmaps = false;
+    ctex.needsUpdate = true;
+    const cmat = new THREE.MeshBasicMaterial({ map: ctex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
+    patchDayLight(cmat, this.ambient, { time: this.timeU });
+    this.cropMat = cmat;
+    for (let f = 0; f < CROP_FRAMES; f++) {
+      const geo = reedGeometry(f, CROP_FRAMES);
+      const mesh = new THREE.InstancedMesh(geo, cmat, 16);
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      this.scene.add(mesh);
+      this.cropGeos.push(geo);
+      this.cropMeshes.push(mesh);
+    }
+
     // contorno da célula apontada
     const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1));
     this.outline = new THREE.LineSegments(box, new THREE.LineBasicMaterial({ color: 0xfff3d8 }));
@@ -353,6 +378,30 @@ export class TitanRenderer {
       mesh.count = g.length;
       mesh.instanceMatrix.needsUpdate = true;
     });
+  }
+
+  /** Plantas de junco cultivadas de pé (ADR 0083): `frame` = coluna do atlas de cultivo. Giro fixo pela posição; a lista vazia esconde todas. */
+  setCrops(list: ReadonlyArray<{ x: number; y: number; z: number; frame: number }>): void {
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
+    for (let f = 0; f < CROP_FRAMES; f++) {
+      const g = list.filter((c) => c.frame === f);
+      let mesh = this.cropMeshes[f];
+      if (g.length > mesh.instanceMatrix.count) {
+        this.scene.remove(mesh);
+        mesh = new THREE.InstancedMesh(this.cropGeos[f], this.cropMat, Math.max(g.length, mesh.instanceMatrix.count * 2));
+        mesh.frustumCulled = false;
+        this.scene.add(mesh);
+        this.cropMeshes[f] = mesh;
+      }
+      g.forEach((c, i) => {
+        const h = Math.sin(c.x * 12.9898 + c.z * 78.233) * 43758.5453, r = h - Math.floor(h);
+        q.setFromAxisAngle(up, r * Math.PI);
+        m.compose(p.set(c.x + 0.5, c.y, c.z + 0.5), q, sc);
+        mesh.setMatrixAt(i, m);
+      });
+      mesh.count = g.length;
+      mesh.instanceMatrix.needsUpdate = true;
+    }
   }
 
   /** Plantas de Noz de Duna de pé: a planta sempre, os frutos só nas maduras. Giro fixo pela posição. */
@@ -716,9 +765,9 @@ function modelGeometry(m: ModelData): THREE.BufferGeometry {
 }
 
 /** Junco de vidro: duas faixas verticais cruzadas de 1 × 1 (base em y = 0, topo em y = 1: o balanço do shader cresce com a altura). `variant` escolhe o terço do atlas. */
-function reedGeometry(variant: number): THREE.BufferGeometry {
+function reedGeometry(variant: number, columns: number = REED_COLUMNS): THREE.BufferGeometry {
   const pos = [-0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0, 0, 0, -0.5, 0, 0, 0.5, 0, 1, 0.5, 0, 1, -0.5];
-  const u0 = variant / REED_COLUMNS, u1 = (variant + 1) / REED_COLUMNS; // o atlas tem uma coluna vazia depois das silhuetas
+  const u0 = variant / columns, u1 = (variant + 1) / columns; // o atlas tem uma coluna vazia depois das silhuetas
   const uv = [u0, 0, u1, 0, u1, 1, u0, 1, u0, 0, u1, 0, u1, 1, u0, 1];
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));

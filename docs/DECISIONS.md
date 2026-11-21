@@ -44,6 +44,7 @@
 | 0065 | **Aceita** — Titã: Braseiro de Rocha (apagado/aceso, 8 preparações por Brasa de Âmbar, estação `brazier`), Lingote de Cobre, Picareta de Cobre e adagas; `stationMet` como regra única |
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
+| 0083 | **Aceita** — Titã: cultivo do Junco de Vidro por random ticks (muda = junco de vidro, 3 fases na areia úmida, ressecado na ocre; colheita de 2 mudas ou 2 hastes secas; `header.crops` opcional); esteira = placa de pressão sem pressão (a fazer) |
 | 0082 | **Aceita** — Titã: o bloco quebrado cai no chão (atraso de 0,45 s, raio 1,45 m, some em 5 min, salto e voo na coleta); a lanterna segue direto para a mochila |
 | 0081 | **Aceita** — Titã: joystick analógico de volta no toque (substitui as setas da ADR 0075; corrida = empurrar todo à frente) |
 | 0080 | **Aceita** — Titã: segurar no animal golpeia em sequência (`ATTACKING`) e o alvo-animal é o mesmo animal, não a mesma célula |

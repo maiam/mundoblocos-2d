@@ -77,7 +77,8 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
-- **Arte de cultivo (v0.143.0, só fonte):** `assets-src/titan/cultivo/` guarda os sprites 32 × 32 do Junco de Vidro (muda, crescendo, adulto com duas mudas, ressecado) e as texturas da Esteira de Junco, **sem uso no jogo**; regras propostas em `NEXT_STEPS`. A Laje de Rocha Escura revisada já está no atlas.
+- **Cultivo do Junco (v0.144.0, ADR 0083):** `titan/crops.ts` (regras puras: fases, pontos, aglomeração, chance, colheita), `session.crops`/`tickCrops`/`standingCrops`/`cropLight`, `actions.plantReed`/`collectCrop`/`releaseCrop`, `header.crops` opcional, atlas `titan-cultivo-32px.webp` e `TitanRenderer.setCrops`. Alvo da mira = `crop:x,y,z`.
+- **Arte de cultivo (v0.143.0):** `assets-src/titan/cultivo/` guarda os sprites 32 × 32 do Junco de Vidro (muda, crescendo, adulto com duas mudas, ressecado) e as texturas da Esteira de Junco, **sem uso no jogo**; regras propostas em `NEXT_STEPS`. A Laje de Rocha Escura revisada já está no atlas.
 
 
 - **Bloco quebrado cai no chão (v0.141.0, ADR 0082):** `spillBlock` (id `b:x,y,z:n`), `session.dropFx` (atraso 0,45 s e idade, só de execução), `collectNearby(..., dt)` com raio 1,45 m, sumiço em 300 s só dos `b:`; lanterna direta para a mochila; quebrar não falha por mochila cheia. Salto/voo em `titanRenderer.setItems`. Testes que quebram e conferem a mochila usam `dropTestUtil.sweep`.

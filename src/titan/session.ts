@@ -6,7 +6,8 @@ import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isWorki
 import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
-import { AFTERNOON, validDay } from './sky';
+import { AFTERNOON, skyAt, validDay } from './sky';
+import { CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, maxAge, randomTick, soilKind, spriteFrame, CROP_TICK_MEAN_S } from './crops';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
@@ -41,6 +42,8 @@ export interface TitanSession {
   furnaces: Map<string, FurnaceState>;
   /** Plantas de Noz de Duna colhidas: id → segundos de jogo que faltam para rebrotar (ADR 0060). Vai no save (`header.regrow`). */
   regrow: Map<string, number>;
+  /** Plantas de junco cultivadas (ADR 0083), por `x,y,z` da célula de ar sobre a areia; a idade vai no save (`header.crops`). */
+  crops: Map<string, Crop>;
   /** Animais abatidos que ainda não voltaram (ADR 0069): id do animal → segundos de jogo ativo que faltam (ADR 0074; nas partidas v ≤ 11 o id é o tamanho). Vai no save (`header.respawn`). */
   respawn: Map<string, number>;
   /** Farejadores de Duna da enseada (um grande e um pequeno, ADR 0061): estado só de execução, nascem na toca a cada abertura (não vão no save). Vazio sem toca (gerador antigo ou região sem enseada). */
@@ -73,7 +76,7 @@ export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.s
 /** Id do junco de vidro numa célula: entra em `collected` (já gravado no save) quando ele é recolhido ou perde o apoio. */
 export const reedId = (x: number, y: number, z: number): string => `reed:${x},${y},${z}`;
 
-function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: TitanSession['grants']; regrow: Map<string, number> }): TitanSession['items'] {
+function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: TitanSession['grants']; regrow: Map<string, number>; crops: Map<string, Crop> }): TitanSession['items'] {
   const all: Array<{ id: string; item: number; x: number; y: number; z: number }> = [...s.volume.gen.surfaceItems, ...s.volume.gen.dryReeds, ...s.volume.gen.plates];
   const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
   const byCell = new Map(all.map((i) => [key(i.x, i.y, i.z), i.id]));
@@ -96,7 +99,7 @@ function makeItems(s: { volume: TitanVolume; collected: Set<string>; grants: Tit
     return id && !s.regrow.has(id) && s.volume.get(x, y, z) === T.AIR && isSolid(s.volume.get(x, y - 1, z)) ? id : null;
   };
   return {
-    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : reedAt(x, y, z) ?? nutAt(x, y, z); },
+    at: (x, y, z) => { const id = byCell.get(key(x, y, z)); return id && !s.collected.has(id) ? id : reedAt(x, y, z) ?? nutAt(x, y, z) ?? (s.crops.has(cropKey(x, y, z)) ? cropId(x, y, z) : null); },
     remaining: () => all.filter((i) => !s.collected.has(i.id)),
   };
 }
@@ -136,6 +139,19 @@ function validRespawn(raw: unknown, ids: ReadonlySet<string>): Map<string, numbe
   const out = new Map<string, number>();
   if (!raw || typeof raw !== 'object') return out;
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (ids.has(k) && typeof v === 'number' && Number.isFinite(v) && v > 0) out.set(k, Math.min(v, 3600));
+  return out;
+}
+
+/** Plantas de junco gravadas (`x,y,z` → idade): só com areia sob a célula, ar nela e idade inteira dentro do limite da espécie; o resto é descartado. */
+function validCrops(raw: unknown, vol: TitanVolume): Map<string, Crop> {
+  const out = new Map<string, Crop>();
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    const m = /^(-?\d+),(-?\d+),(-?\d+)$/.exec(k);
+    if (!m || typeof v !== 'number' || !Number.isInteger(v) || v < 0) continue;
+    const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])], kind = soilKind(vol.get(x, y - 1, z));
+    if (kind && vol.get(x, y, z) === T.AIR && vol.gen.inRegion(x, z) && v <= maxAge(kind)) out.set(k, { x, y, z, age: v });
+  }
   return out;
 }
 
@@ -189,8 +205,9 @@ export function fresh(gen: TitanGenerator): TitanSession {
   const a = gen.arrival;
   const collected = new Set<string>();
   const regrow = new Map<string, number>();
+  const crops = new Map<string, Crop>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, furnaces: new Map<string, FurnaceState>(), respawn: new Map<string, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), respawn: new Map<string, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
   return s;
 }
 
@@ -213,9 +230,10 @@ function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const regrow = validRegrow(save.header.regrow);
+  const crops = validCrops(save.header.crops, volume);
   const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, furnaces: validFurnaces(save.header.furnaces, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -280,8 +298,42 @@ export function tickRegrow(s: TitanSession, dt: number): boolean {
   return ripened;
 }
 
+/** Plantas de junco cultivadas para desenhar: a coluna do atlas de cultivo (0 muda, 1 crescendo, 2 adulto, 3 ressecado). */
+export function standingCrops(s: TitanSession): Array<{ x: number; y: number; z: number; frame: number }> {
+  const out: Array<{ x: number; y: number; z: number; frame: number }> = [];
+  for (const c of s.crops.values()) {
+    const kind = soilKind(s.volume.get(c.x, c.y - 1, c.z));
+    if (kind && s.volume.get(c.x, c.y, c.z) === T.AIR) out.push({ x: c.x, y: c.y, z: c.z, frame: Math.min(CROP_FRAMES - 1, spriteFrame(kind, c.age)) });
+  }
+  return out;
+}
+
+/** Luz (0–15) no bloco de cima da planta: o céu aberto vale `ambiente do dia × 15` (0,3 à noite … 1 à tarde) e a lanterna, o seu nível; vale o maior. */
+export function cropLight(s: TitanSession, x: number, y: number, z: number): number {
+  let open = true;
+  for (let yy = y + 1; yy <= Y_MAX; yy++) if (isSolid(s.volume.get(x, yy, z))) { open = false; break; }
+  return Math.max(open ? skyAt(s.time).ambient * 15 : 0, s.volume.light(x, y + 1, z));
+}
+
+/**
+ * Random ticks das plantas de junco (ADR 0083): passa `dt` s de jogo ativo; cada planta a até `CROP_SIM_RADIUS` m do viajante sorteia em média a cada `CROP_TICK_MEAN_S` s.
+ * Devolve se alguma subiu de fase (o desenho e o save precisam refazer). `rng` entra de fora (testes determinísticos).
+ */
+export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: { x: number; z: number }): boolean {
+  let changed = false;
+  const pTick = 1 - Math.exp(-dt / CROP_TICK_MEAN_S);
+  for (const c of s.crops.values()) {
+    if (Math.hypot(c.x + 0.5 - near.x, c.z + 0.5 - near.z) > CROP_SIM_RADIUS || rng() >= pTick) continue;
+    const kindAt = (dx: number, dz: number): CropKind | null => soilKind(s.volume.get(c.x + dx, c.y - 1, c.z + dz));
+    const self = kindAt(0, 0);
+    const sameAt = (dx: number, dz: number): boolean => !!self && s.crops.has(cropKey(c.x + dx, c.y, c.z + dz)) && kindAt(dx, dz) === self;
+    if (randomTick(c, { soilAt: kindAt, sameAt, light: cropLight(s, c.x, c.y, c.z) }, rng)) { changed = true; s.metaRev++; }
+  }
+  return changed;
+}
+
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.age])) } : {}) };
 }
 
 /**
