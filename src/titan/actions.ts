@@ -3,11 +3,13 @@ import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
-import { blockSpan, isBrazier, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockSpan, chestId, chestTurnFacing, isBrazier, isChest, isFull, isLadder, isMat, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
 import { wearCost, type WearAction } from './wear';
+import { SLOTS } from './inventory';
+import { CHEST_SLOTS, type ChestState, chestPut, chestRoom, newChest } from './chest';
 import { type Species, cropKey, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKind } from './crops';
 
 /**
@@ -175,6 +177,53 @@ export function furnaceTakeOut(s: TitanSession, x: number, y: number, z: number,
   return { ok: true };
 }
 
+/**
+ * Baú de Rocha e Junco (ADR 0089): o conteúdo (18 espaços) é estado da sessão, criado na primeira vez que se abre. Guardar e retirar são **tudo ou nada** e mudam mochila e baú juntos.
+ */
+export function chestAt(s: TitanSession, x: number, y: number, z: number): ChestState | null {
+  if (!isChest(s.volume.get(x, y, z))) return null;
+  const k = furnaceKey(x, y, z);
+  let c = s.chests.get(k);
+  if (!c) { c = newChest(); s.chests.set(k, c); }
+  return c;
+}
+
+/** Guarda a pilha inteira do espaço `invSlot` (hotbar ou mochila) no baú. Sem espaço para ela inteira, nada muda. */
+export function chestMoveIn(s: TitanSession, x: number, y: number, z: number, invSlot: number): ActionResult {
+  const c = chestAt(s, x, y, z), st = s.inventory.get(invSlot);
+  if (!c || !st || invSlot >= SLOTS) return { ok: false };
+  if (chestRoom(c, st.item) < st.count) return { ok: false, msg: 'Baú cheio' };
+  const taken = s.inventory.take(invSlot)!;
+  chestPut(c, taken);
+  s.metaRev++;
+  return { ok: true };
+}
+
+/** Tira a pilha do espaço `slot` do baú para a mochila (tudo ou nada: sem espaço para ela, fica). */
+export function chestTakeOut(s: TitanSession, x: number, y: number, z: number, slot: number): ActionResult {
+  const c = chestAt(s, x, y, z), st = c && Number.isInteger(slot) && slot >= 0 && slot < CHEST_SLOTS ? c[slot] : null;
+  if (!c || !st) return { ok: false };
+  if (!s.inventory.canAdd(st.item, st.count)) return FULL;
+  s.inventory.add(st.item, st.count, st.wear ?? 0);
+  c[slot] = null;
+  s.metaRev++;
+  return { ok: true };
+}
+
+/** Quebrar o baú **cospe o conteúdo** no chão (uma pilha por espaço ocupado) e apaga o estado. */
+function spillChest(s: TitanSession, x: number, y: number, z: number): void {
+  const k = furnaceKey(x, y, z), c = s.chests.get(k);
+  if (!c) return;
+  const ry = restY(s, x, y, z);
+  c.forEach((st, n) => {
+    if (!st) return;
+    const id = `k:${x},${y},${z}:${n}`;
+    s.drops.set(id, { id, item: st.item, ...(st.count > 1 ? { count: st.count } : {}), ...(st.wear ? { wear: st.wear } : {}), x, y: ry, z });
+    s.dropsRev++;
+  });
+  s.chests.delete(k); s.metaRev++;
+}
+
 /** Quebrar o braseiro **cospe o conteúdo** no chão (entrada, combustível e saída) e apaga o estado. */
 function spillFurnace(s: TitanSession, x: number, y: number, z: number): void {
   const k = furnaceKey(x, y, z), f = s.furnaces.get(k);
@@ -251,6 +300,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (direct) s.inventory.add(item, count);
   else spillBlock(s, item, count, x, y, z); // ADR 0082: o bloco comum cai no chão e é recolhido por proximidade
   if (isBrazier(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro cai no chão
+  if (isChest(block)) spillChest(s, x, y, z); // e o do baú (ADR 0089)
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
   if (isVein(block)) dropShard(s, block === T.VEIN_ROCK ? 5 : 6, x, y, z);
@@ -352,6 +402,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   } else if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
   else if (block === T.MARCO) block = marcoId(marcoTurnFacing(s.yaw)); // idem o Marco de Margem (ADR 0058)
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
+  else if (block === T.CHEST) block = chestId(chestTurnFacing(s.yaw)); // a frente do baú (o fecho) fica voltada para o jogador (ADR 0089)
   if (block === T.SLAB) { // laje (ADR 0056): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
     const r = resolveSlabPlacement(s.volume.get(hit.x, hit.y, hit.z), hit.ny, hit.hy);
     if (r.merge) {

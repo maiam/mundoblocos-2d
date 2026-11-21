@@ -1,5 +1,5 @@
 import type { Box } from './lantern';
-import { isLadder, isMarco, isPanel, ladderFacing, ladderTurn, marcoTurn, PANEL_HEIGHT, T } from './voxel';
+import { CHEST_HEIGHT, chestTurn, isChest, isLadder, isMarco, isPanel, ladderFacing, ladderTurn, marcoTurn, PANEL_HEIGHT, T } from './voxel';
 
 /**
  * Caixas dos modelos 3D pequenos (ADR 0058): a mira acerta a caixa do objeto (com folga `pad` de toque), não a célula inteira. Marco de Margem: 0,56 × 0,629 × 0,43 m, a largura vira
@@ -11,11 +11,15 @@ export const PANEL_SIZE = { w: 1, d: 0.224, h: PANEL_HEIGHT } as const;
 /** Placa da Escada de Junco (ADR 0088): 0,63 de largura, 1 m de altura e 0,12 m de fundo, encostada na borda da célula do lado do apoio. */
 export const LADDER_SIZE = { w: 0.63, d: 0.12, h: 1 } as const;
 
+/** Baú de Rocha e Junco (ADR 0089): 0,95 de largura e 0,946 de fundo, 0,73 m de altura; a largura vira profundidade nos giros ímpares. */
+export const CHEST_SIZE = { w: 0.95, d: 0.946, h: CHEST_HEIGHT } as const;
+
 export function modelBox(id: number, x: number, y: number, z: number, pad = 0): Box {
   const cx = x + 0.5, cz = z + 0.5;
   let hx: number, hz: number, h: number;
   if (isMarco(id)) { const odd = marcoTurn(id) % 2 === 1; hx = (odd ? MARCO_SIZE.d : MARCO_SIZE.w) / 2; hz = (odd ? MARCO_SIZE.w : MARCO_SIZE.d) / 2; h = MARCO_SIZE.h; }
   else if (isPanel(id)) { const alongX = id === T.PAINEL; hx = (alongX ? PANEL_SIZE.w : PANEL_SIZE.d) / 2; hz = (alongX ? PANEL_SIZE.d : PANEL_SIZE.w) / 2; h = PANEL_SIZE.h; }
+  else if (isChest(id)) { const odd = chestTurn(id) % 2 === 1; hx = (odd ? CHEST_SIZE.d : CHEST_SIZE.w) / 2; hz = (odd ? CHEST_SIZE.w : CHEST_SIZE.d) / 2; h = CHEST_SIZE.h; }
   else if (isLadder(id)) {
     // a face de apoio fica na borda oposta à frente: a placa ocupa [apoio, apoio + 0,12] ao longo da frente e a largura inteira de lado
     const [fx, fz] = ladderFacing(ladderTurn(id)), hw = LADDER_SIZE.w / 2;

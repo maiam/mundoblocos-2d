@@ -24,14 +24,14 @@ NEW = {  # id do item -> arte de 32 px
     25: 'Placa_de_Carapaca_Item_32px.png', 26: 'Revestimento_de_Carapaca_Item_32px.png',
     27: 'Carne_Crua_de_Farejador_Item_32px.png', 28: 'Carne_Assada_de_Farejador_Item_32px.png',
     29: 'Bloco_de_Ambar_Compactado_Item_32px.png', 30: 'Noz_Torrada_Item_32px.png',
-    31: 'Esteira_de_Junco_Item_32px.png', 32: 'Escada_de_Junco_Item_32px.png',
+    31: 'Esteira_de_Junco_Item_32px.png', 32: 'Escada_de_Junco_Item_32px.png', 33: 'Bau_de_Rocha_e_Junco_Item_32px.png',
 }
 
 
 def main() -> None:
     base = Image.open(BASE).convert('RGBA')
     assert base.size == (64, 64), base.size
-    atlas = Image.new('RGBA', (128, 256), (0, 0, 0, 0))  # 4 colunas × 8 linhas de 32 px (32 ids; o CSS lê `4 × 8`)
+    atlas = Image.new('RGBA', (128, 320), (0, 0, 0, 0))  # 4 colunas × 10 linhas de 32 px (40 ids; o CSS lê `4 × 10`; ADR 0089)
     atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')

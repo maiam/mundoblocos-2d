@@ -1,11 +1,11 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
 import { tickFurnaces } from './session';
 import { durabilityHue, durabilityRatio, maxDurability } from './wear';
-import { canPlantNut, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
+import { canPlantNut, chestAt, chestMoveIn, chestTakeOut, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, tickRespawn } from './combat';
@@ -17,13 +17,14 @@ import { FootstepClock, surfaceOf } from './sounds';
 import { rayThrough } from './aim';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
+import { CHEST_SLOTS } from './chest';
 import { blockOfItem, foodOf, isPick, Item, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, parseHora, phaseName, saturnVisibility } from './sky';
-import { isBrazier, isCollectBlock, isWorkbench, T } from './voxel';
+import { isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, tickCrops, tickRegrow } from './session';
@@ -84,7 +85,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -93,7 +94,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora'));
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
@@ -141,7 +142,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const label = el('div', 'titan-label', ui);
   const hotbar = el('div', 'titan-hotbar', ui);
   /** Espaço da interface: ícone do atlas da hotbar (por id do item), quantidade e tecla. */
-  const mkSlot = (parent: HTMLElement, index: number, key?: string): HTMLButtonElement => {
+  const mkSlot = (parent: HTMLElement, index: number, key?: string, tap: (i: number) => void = (i) => tapSlot(i)): HTMLButtonElement => {
     const b = el('button', 'titan-slot', parent);
     b.type = 'button';
     b.dataset.slot = String(index);
@@ -149,7 +150,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     el('i', 'titan-icon', b);
     el('em', 'count', b);
     el('b', 'titan-dur', b).hidden = true; // barra de durabilidade (ADR 0067): só depois do primeiro desgaste
-    b.addEventListener('click', () => tapSlot(index));
+    b.addEventListener('click', () => tap(index));
     return b;
   };
   const hotSlots = Array.from({ length: HOTBAR }, (_, i) => mkSlot(hotbar, i, String(i + 1)));
@@ -212,9 +213,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const fOut = fSlot(fGrid, 'output', 'Resultado');
   fOut.classList.add('out');
   const fHint = el('small', 'hint', furnaceBox, 'Toque numa pilha da bolsa e depois em Entrada ou Combustível. Uma Brasa de Âmbar rende 4 preparações e o Bloco de Âmbar, 36; a carga só gasta ao cozinhar.');
+  // painel do Baú de Rocha e Junco (ADR 0089): 18 espaços guardados no bloco; a bolsa fica à vista para mover as pilhas (toque na pilha e depois no espaço do baú, ou toque no espaço do baú para tirar)
+  const chestBox = el('div', 'titan-detail titan-manual titan-chest', right);
+  chestBox.hidden = true;
+  el('small', '', chestBox, 'Baú de Rocha e Junco');
+  const chestGrid = el('div', 'titan-chestgrid', chestBox);
+  const chestSlots = Array.from({ length: CHEST_SLOTS }, (_, i) => mkSlot(chestGrid, i, undefined, (n) => tapChest(n)));
+  el('small', 'hint', chestBox, 'Toque numa pilha da bolsa e depois num espaço do baú para guardá-la; toque num espaço do baú para tirar a pilha. Quebrar o baú derruba o que estiver dentro.');
   const benchName = el('b', 'rname', benchBox, '');
   const benchWhy = el('small', 'hint', benchBox, '');
-  let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null = null;
+  let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'chest' } | null = null;
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
   let cat: Cat = 'todas', query = '', onlyOk = false, selRecipe: string | null = null;
@@ -222,8 +230,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   searchBox.addEventListener('input', () => { query = norm(searchBox.value.trim()); refresh(); });
   onlyBtn.addEventListener('click', () => { onlyOk = !onlyOk; refresh(); });
   /** Contexto de fabricação: a bolsa pessoal (`null`) ou a Mesa de Trabalho em uso. Muda na hora que a mesa sai do alcance ou some. */
-  const ctxStation = (): Station | null => (stationAt ? stationAt.kind : null);
-  const stationName = (k: Station | null): string => (k === 'brazier' ? 'Braseiro de Rocha aceso' : 'Mesa de Trabalho');
+  const ctxStation = (): Station | null => (stationAt && stationAt.kind !== 'chest' ? stationAt.kind : null); // o baú não fabrica: conta como a bolsa pessoal
+  const stationName = (k: Station | 'chest' | null): string => (k === 'brazier' ? 'Braseiro de Rocha aceso' : k === 'chest' ? 'Baú' : 'Mesa de Trabalho');
 
   /** Redesenha todos os espaços e o livro de receitas a partir do inventário (barato: 36 espaços e 4 receitas). */
   function refresh(): void {
@@ -248,6 +256,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     hotSlots.forEach((b, i) => { draw(b, i); b.setAttribute('aria-pressed', String(i === session.selected)); });
     bagSlots.forEach((b, i) => draw(b, HOTBAR + i));
     benchSlots.forEach((b, i) => draw(b, BENCH_START + i));
+    const chestNow = stationAt?.kind === 'chest' ? chestAt(session, stationAt.x, stationAt.y, stationAt.z) : null;
+    chestSlots.forEach((b, i) => draw(b, -1 - i, chestNow ? chestNow[i] : null)); // índices negativos: nunca coincidem com a pilha escolhida (`sel`)
     const brec = inv.benchRecipe();
     const needStation = !!brec && !stationMet(brec, ctxStation()); // receita da Mesa (ou do Braseiro) montada fora dela: a saída fica bloqueada
     const br = brec && !needStation ? { ...brec.result } : null;
@@ -274,7 +284,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   function drawBook(): void {
     const at = ctxStation();
-    if (stationAt?.kind === 'brazier') cat = 'bag'; // no braseiro a mochila fica à vista para mover as pilhas
+    if (stationAt?.kind === 'brazier' || stationAt?.kind === 'chest') cat = 'bag'; // no braseiro e no baú a mochila fica à vista para mover as pilhas
     for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
     onlyBtn.classList.toggle('on', onlyOk);
     onlyBtn.setAttribute('aria-pressed', String(onlyOk));
@@ -282,9 +292,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     tools.hidden = rgrid.hidden = slots;
     bagGrid.hidden = !slots; // "Bolsa": os 27 espaços para mover os itens
     const furn = stationAt?.kind === 'brazier';
-    benchBox.hidden = !slots || furn; // e a grade 3 × 3 de montagem (no braseiro, o painel dele)
+    const chest = stationAt?.kind === 'chest';
+    benchBox.hidden = !slots || furn || chest; // e a grade 3 × 3 de montagem (no braseiro e no baú, o painel deles)
     furnaceBox.hidden = !(slots && furn);
-    top.classList.toggle('furn', !!(slots && furn)); // o braseiro ganha uma coluna mais larga (a bolsa quebra em menos colunas)
+    chestBox.hidden = !(slots && chest);
+    top.classList.toggle('furn', !!(slots && (furn || chest))); // o braseiro ganha uma coluna mais larga (a bolsa quebra em menos colunas)
     detail.hidden = slots;
     if (slots) return; // nesse grupo as grades são slots fixos (já desenhados acima)
     // centro: grade de receitas (ícone do resultado; ×N no canto; selo quando bloqueada)
@@ -356,9 +368,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.hidden = true;
   function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
   /** Estação na mira (Mesa de Trabalho ou Braseiro) ao alcance de uso. */
-  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' } | null => {
+  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'chest' } | null => {
     if (!target || target.item) return null;
-    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : isBrazier(id) ? 'brazier' : null;
+    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isChest(id) ? 'chest' : null;
     if (!kind) return null;
     return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z, kind } : null;
   };
@@ -370,6 +382,27 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const r = kind !== 'output' && sel !== null ? furnaceMoveIn(session, x, y, z, kind, sel) : furnaceTakeOut(session, x, y, z, kind);
     if (r.msg) notice(r.msg);
     if (r.ok) { sel = null; onEdited(); }
+    refresh();
+  }
+  /** Toque num espaço do baú: com uma pilha da mochila escolhida guarda-a (a pilha inteira, tudo ou nada); sem escolha tira a pilha do espaço para a mochila. */
+  function tapChest(i: number): void {
+    if (!stationAt || stationAt.kind !== 'chest') return;
+    if (!stationInReach()) { closeStation('Baú fora de alcance'); return; }
+    const { x, y, z } = stationAt;
+    const r = sel !== null ? chestMoveIn(session, x, y, z, sel) : chestTakeOut(session, x, y, z, i);
+    if (r.msg) notice(r.msg);
+    if (r.ok) { sel = null; onEdited(); }
+    refresh();
+  }
+  let chestKeyShown = '';
+  /** Redesenha os 18 espaços do baú só quando algo mudou; chamado a cada quadro com a tela aberta. */
+  function paintChest(): void {
+    if (!stationAt || stationAt.kind !== 'chest') return;
+    const c = chestAt(session, stationAt.x, stationAt.y, stationAt.z);
+    if (!c) return;
+    const key = c.map((s) => (s ? `${s.item}:${s.count}:${s.wear ?? 0}` : '-')).join('|');
+    if (key === chestKeyShown) return;
+    chestKeyShown = key;
     refresh();
   }
   let furnaceKeyShown = '';
@@ -396,7 +429,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!stationAt) return false;
     const b = session.body;
     const blk = vol.get(stationAt.x, stationAt.y, stationAt.z);
-    return (stationAt.kind === 'workbench' ? isWorkbench(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
+    return (stationAt.kind === 'workbench' ? isWorkbench(blk) : stationAt.kind === 'chest' ? isChest(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
   function openStation(): void {
     const at = benchAimed();
@@ -818,7 +851,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
     if (playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
-    if (bagOpen) paintFurnace();
+    if (bagOpen) { paintFurnace(); paintChest(); }
     if (active && session.respawn.size) tickRespawn(session, dt); // o animal abatido volta à toca depois de um tempo
     if (active && session.crops.size && tickCrops(session, dt, Math.random, b)) { view.setCrops(standingCrops(session)); playerDirty = true; } // o junco cultivado cresce por sorteio (ADR 0083)
     if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
@@ -840,7 +873,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       touchRing.style.setProperty('--p', String(gesture.progress));
     }
     useBtn.hidden = fingerMode() || !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar" (no toque, tocar na estação a abre)
-    if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
+    if (stationAt && bagOpen && !stationInReach()) closeStation(isWorkbench(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isChest(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);
     view.setHandMotion(Math.hypot(b.vx, b.vz), b.onGround, active && gesture.state === 'BREAKING'); // golpe no animal: cada golpe (`strike`) dispara o seu balanço, no ritmo da pausa entre golpes

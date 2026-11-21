@@ -63,6 +63,15 @@ export class Inventory {
     return true;
   }
 
+  /** Tira a pilha inteira de um espaço da hotbar ou da mochila e a devolve (`null` se vazio ou fora delas): usado ao guardar no baú (ADR 0089). */
+  take(slot: number): Stack | null {
+    if (!Number.isInteger(slot) || slot < 0 || slot >= SLOTS || !this.s[slot]) return null;
+    const c = { ...this.s[slot]! };
+    this.s[slot] = null;
+    this.rev++;
+    return c;
+  }
+
   /** Esvazia tudo (hotbar, mochila e as grades) e devolve as pilhas: usado ao morrer, quando os itens caem no chão (ADR 0059). */
   takeAll(): Stack[] {
     const out: Stack[] = [];

@@ -9,7 +9,7 @@
 4. **Não sólida, alvo da mira:** sem colisão (sobe-se por ela), ocupa a célula, não bloqueia luz; a mira acerta a **placa fina** (0,63 × 1 × 0,12 m, `modelBox`/`LADDER_SIZE`), com a folga de toque dos outros modelos. Recolhe rápido (0,35 s, `isCollectBlock`) e devolve o item solto.
 5. **Escalar** (`physics.stepOnce`, `ladderUnder`): o corpo ocupa a célula da escada (pés, cintura ou cabeça). **Empurrar para a parede ou pular sobe a 2,3 m/s; sem comando escorrega a 1,2 m/s** (soltar é descer, como no Minecraft sem agachar); de lado anda a 60 %. Sem gravidade nem dano de queda (`Body.onLadder`; `titanGame` zera o ponto de queda). A água vence a escada.
 6. **Desenho:** modelo 3D instanciado (`ModelKind` `escada`, `TitanVolume.modelCells`), como o Marco. O GLB de jogo 1K do pacote (5.448 triângulos, três PNG de 1K) é reduzido pelo Blender a **1.398 triângulos** (`scripts/extract-titan-escada.py`, `titan-escada.json` de 168 KB, com o apoio deslocado para a borda da célula) e a cor-base vai para um atlas de 256 px (`titan-escada-atlas.webp`, 79 KB); o jogo usa luz própria, sem normal nem ORM. O GLB original fica em `assets-src/titan/escada/`.
-7. **Ícone provisório** (`scripts/make-titan-escada-icone.py`: o modelo rasterizado em vista 3/4); entra no atlas de itens por `make-titan-arte32.py` e na mão como item plano (`make-titan-item-masks.py`).
+7. **Ícone provisório** (`scripts/make-titan-modelo-icone.py`: o modelo rasterizado em vista 3/4); entra no atlas de itens por `make-titan-arte32.py` e na mão como item plano (`make-titan-item-masks.py`).
 
 ## Consequências
 - Sem mudança de gerador nem de versão do save (os ids novos cabem no formato de edições de chunk).
