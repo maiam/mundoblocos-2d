@@ -23,6 +23,13 @@ export class ScreenMode {
   readonly isTablet = isTabletScreen(this.isTouch, window.screen.width, window.screen.height);
   private readonly portraitQuery = window.matchMedia('(orientation: portrait)');
   private readonly cleanup: (() => void)[] = [];
+  private wasFullscreen = false;
+  /** Há dedo na tela (ou levantou há menos de 0,8 s): só então a saída é tratada como acidente do toque (ADR 0077). */
+  private down = 0;
+  private lastUp = -1e9;
+  private touchRecent(): boolean { return this.down > 0 || performance.now() - this.lastUp < TOUCH_RECENT_MS; }
+  /** A saída da tela cheia foi nossa (campo de texto em foco): não volta sozinha. */
+  private intentionalExit = false;
 
   constructor() {
     const update = () => this.syncAttributes();
@@ -41,6 +48,15 @@ export class ScreenMode {
       this.cleanup.push(() => window.removeEventListener('pointerup', onGesture, true));
       // Campo de texto em foco dentro da tela cheia: o Safari do iPad mostra "Parece que você está digitando em tela cheia".
       // Sai da tela cheia ao focar; o toque seguinte fora do campo volta a pedi-la (onGesture ignora campos em foco).
+      // Saída inesperada da tela cheia (gesto de borda do sistema, voltar, barra que aparece) com o dedo ainda na tela: volta na hora, enquanto o toque ainda vale como gesto do usuário (ADR 0077)
+      const onFsChange = () => { const now = this.isFullscreen, was = this.wasFullscreen; this.wasFullscreen = now; if (shouldReenter(was, now, this.intentionalExit, document.visibilityState === 'visible', this.touchRecent())) void this.enterFullscreen(); if (!now) this.intentionalExit = false; };
+      const onDown = () => { this.down++; };
+      const onUp = () => { this.down = Math.max(0, this.down - 1); this.lastUp = performance.now(); };
+      window.addEventListener('pointerdown', onDown, true); window.addEventListener('pointerup', onUp, true); window.addEventListener('pointercancel', onUp, true);
+      this.cleanup.push(() => { window.removeEventListener('pointerdown', onDown, true); window.removeEventListener('pointerup', onUp, true); window.removeEventListener('pointercancel', onUp, true); });
+      document.addEventListener('fullscreenchange', onFsChange);
+      document.addEventListener('webkitfullscreenchange', onFsChange);
+      this.cleanup.push(() => { document.removeEventListener('fullscreenchange', onFsChange); document.removeEventListener('webkitfullscreenchange', onFsChange); });
       const onFocus = (e: Event) => { if (isTextField(e.target)) void this.exitFullscreen(); };
       document.addEventListener('focusin', onFocus, true);
       this.cleanup.push(() => document.removeEventListener('focusin', onFocus, true));
@@ -110,6 +126,7 @@ export class ScreenMode {
   /** Sai da tela cheia (para digitar). Falhas são ignoradas. */
   private async exitFullscreen(): Promise<void> {
     if (!this.isFullscreen) return;
+    this.intentionalExit = true;
     const d = document as FsDocument & { webkitExitFullscreen?: () => Promise<void> | void };
     try {
       if (document.exitFullscreen) await document.exitFullscreen();
@@ -133,6 +150,13 @@ const DOUBLE_TAP_MS = 350;
 function isTextField(el: EventTarget | Element | null): boolean {
   return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable);
 }
+
+/** Devemos pedir a tela cheia de volta agora? Só se estava em tela cheia, saiu, a saída não foi nossa, a página está visível (aba trocada não conta) e há toque na tela (quem sai de propósito, pelo gesto de voltar, não é puxado de volta). Pura, testável. */
+export function shouldReenter(was: boolean, now: boolean, intentional: boolean, visible: boolean, touching: boolean): boolean {
+  return was && !now && !intentional && visible && touching;
+}
+/** Quanto tempo depois de levantar o dedo uma saída ainda conta como acidente do toque (ms). */
+const TOUCH_RECENT_MS = 800;
 
 /** Lado menor da tela ≥ 600 px num aparelho de toque = tablet (função pura, testável). */
 export function isTabletScreen(touch: boolean, w: number, h: number): boolean {

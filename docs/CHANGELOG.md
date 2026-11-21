@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.136.0 — Titã: tela cheia no toque (bordas livres e volta imediata) (21/11/2026)
+- **Relato do dono do produto (tablet na horizontal):** segurar o toque às vezes tira o navegador da tela cheia (e ao soltar ela volta). **ADR 0077.**
+- Controles e área de ação a **36 px das bordas** (faixas dos gestos do sistema), menu do alto mais para dentro, segurar sem menu do navegador, e, se a tela cheia cair com o dedo na tela, o jogo a pede **na hora** de volta (não volta se foi gesto de voltar sem toque, campo de texto ou aba escondida).
+- Setas menores (50 px). Asserts novos de `shouldReenter` em `player.test.ts` (1.055 testes, 1 ignorado). Não reproduzido em aparelho real: aceite no tablet pendente.
+
 ## Orvalis v0.135.0 — Titã: modo de mira no toque e corrida (21/11/2026)
 - **Referência do Minecraft de toque do dono do produto.** **ADR 0076.** Botão **"Mira: no dedo / central"** no menu (só toque; lembrado no aparelho): no dedo = ação no ponto tocado (ADR 0075); central = cruzeta + no centro e arrastar só gira (o "Usar" volta).
 - **Corrida:** segurar ▲ por 0,2 s (andando) dá +30 % de velocidade, FOV +6° e 0,2 de cansaço por bloco (antes 0,1).

@@ -73,9 +73,14 @@ describe('Player', () => {
   });
 });
 
-import { isTabletScreen } from './screenMode';
+import { isTabletScreen, shouldReenter } from './screenMode';
 describe('Tablet', () => {
   it('toque com lado menor ≥ 600 px é tablet; celular deitado e computador não', () => {
+    expect(shouldReenter(true, false, false, true, true)).toBe(true); // saiu com o dedo na tela: volta (ADR 0077)
+    expect(shouldReenter(true, false, true, true, true)).toBe(false); // saída nossa (campo de texto)
+    expect(shouldReenter(true, false, false, false, true)).toBe(false); // aba escondida
+    expect(shouldReenter(true, false, false, true, false)).toBe(false); // sem toque: foi de propósito (gesto de voltar)
+    expect(shouldReenter(false, false, false, true, true)).toBe(false); expect(shouldReenter(true, true, false, true, true)).toBe(false);
     expect(isTabletScreen(true, 1180, 820)).toBe(true); // iPad Air
     expect(isTabletScreen(true, 1280, 800)).toBe(true); // tablet Android
     expect(isTabletScreen(true, 844, 390)).toBe(false); // iPhone deitado
