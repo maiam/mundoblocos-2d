@@ -42,8 +42,8 @@ describe('categorias do item na mão (ADR 0087)', () => {
     expect(heldCategory(null, false)).toBe('hand');
     expect(heldCategory(Item.STONE_DAGGER, true)).toBe('model'); expect(heldCategory(Item.STONE_PICK, true)).toBe('model');
     expect(heldCategory(Item.COPPER_PICK, false)).toBe('tool'); expect(heldCategory(Item.COPPER_DAGGER, false)).toBe('tool');
-    for (const it of [Item.SAND, Item.DAMP_SAND, Item.DARK_ROCK, Item.FROST, Item.EMBER_BLOCK, Item.CARAPACE, Item.BRAZIER]) expect(heldCategory(it, false), `item ${it}`).toBe('block');
-    for (const it of [Item.NOZ, Item.NOZ_TORRADA, Item.RAW_MEAT, Item.ROCK_SHARD, Item.EMBER, Item.GLASS_REED, Item.DRY_REED, Item.COPPER_INGOT, Item.ESTEIRA, Item.SLAB, Item.LANTERN, Item.WORKBENCH, Item.MARCO, Item.PAINEL]) expect(heldCategory(it, false), `item ${it}`).toBe('flat');
+    for (const it of [Item.SAND, Item.DAMP_SAND, Item.DARK_ROCK, Item.FROST, Item.EMBER_BLOCK, Item.CARAPACE]) expect(heldCategory(it, false), `item ${it}`).toBe('block');
+    for (const it of [Item.NOZ, Item.NOZ_TORRADA, Item.RAW_MEAT, Item.ROCK_SHARD, Item.EMBER, Item.GLASS_REED, Item.DRY_REED, Item.COPPER_INGOT, Item.ESTEIRA, Item.SLAB, Item.LANTERN, Item.WORKBENCH, Item.MARCO, Item.PAINEL, Item.BRAZIER]) expect(heldCategory(it, false), `item ${it}`).toBe('flat');
   });
   it('só o cubo inteiro mostra as texturas do terreno (topo, lateral e base do bloco)', () => {
     expect(heldBlockOf(Item.SAND)).toBe(T.SAND); expect(heldBlockOf(Item.SLAB)).toBeNull(); expect(heldBlockOf(Item.WORKBENCH)).toBeNull();

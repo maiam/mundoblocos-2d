@@ -43,6 +43,7 @@ export const blockHeight = (id: number): number => blockSpan(id)[1];
 export const isSlab = (id: number): boolean => id === T.SLAB || id === T.SLAB_TOP;
 /** Faixa de altura que o bloco ocupa dentro da célula, `[baixo, topo]` em 0–1 (a laje superior ocupa [0,5, 1]; não sólido = [0, 0]). A física e a mira leem esta faixa. */
 export function blockSpan(id: number): readonly [number, number] {
+  if (isBrazier(id)) return [0, BRAZIER_HEIGHT]; // o braseiro 3D barra o corpo na altura dele (0,774 m), na célula inteira (ADR 0092)
   if (isChest(id)) return [0, CHEST_HEIGHT]; // o baú barra o corpo na altura dele (0,73 m), na célula inteira
   if (isBed(id)) return [0, BED_HEIGHT]; // a cama barra o corpo na altura dela (0,45 m), nas duas células
   if (isPanel(id)) return [0, PANEL_HEIGHT]; // o painel barra o corpo na altura dele (0,944 m), na célula inteira
@@ -51,12 +52,14 @@ export function blockSpan(id: number): readonly [number, number] {
   return isSolid(id) ? [0, 1] : [0, 0];
 }
 /** Cubo inteiro: só ele esconde as faces vizinhas (a laje, inferior ou superior, deixa metade da célula aberta; a laje dupla é cubo). */
-export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id);
+export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id);
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 /** Veio de cobre (ADR 0063): só uma picareta o quebra; solta fragmentos de cobre, nunca o bloco. */
 /** Braseiro de Rocha (ADR 0065): apagado (25) ou aceso (26, com carga de preparações em `session.braziers`). Cubo de rocha com uma cuba no topo; só o aceso serve de estação. */
 export const isBrazier = (id: number): boolean => id === T.BRAZIER || id === T.BRAZIER_LIT;
+/** Altura do Braseiro de Rocha 3D (ADR 0092): 0,774 m, e 0,935 m de lado, centrado na célula. */
+export const BRAZIER_HEIGHT = 0.774;
 export const isCopperVein = (id: number): boolean => id === T.VEIN_COPPER;
 /** Veio de Âmbar (ADR 0073): só uma picareta o quebra; solta 1–2 Brasas de Âmbar, nunca o bloco. */
 export const isAmberVein = (id: number): boolean => id === T.EMBER_VEIN;
@@ -144,13 +147,16 @@ export function bedPartnerOffset(id: number): readonly [number, number] {
   return isBedFoot(id) ? [fx, fz] : [fx === 0 ? 0 : -fx, fz === 0 ? 0 : -fz]; // sem −0
 }
 
-export function modelOf(id: number): { kind: 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama'; turn: number } | null {
+export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso';
+export function modelOf(id: number): { kind: ModelKindName; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
   if (isPanel(id)) return { kind: 'painel', turn: id === T.PAINEL ? 0 : 1 };
   if (isLadder(id)) return { kind: 'escada', turn: ladderTurn(id) };
   if (isChest(id)) return { kind: 'bau', turn: chestTurn(id) };
   if (isBedFoot(id)) return { kind: 'cama', turn: bedTurn(id) };
+  if (id === T.BRAZIER) return { kind: 'braseiro', turn: 0 }; // apagado e aceso são dois ids e dois modelos (ADR 0092)
+  if (id === T.BRAZIER_LIT) return { kind: 'braseiroAceso', turn: 0 };
   return null;
 }
 /** Bloco que sai da malha do terreno por ser modelo 3D (lanterna e os modelos acima). */

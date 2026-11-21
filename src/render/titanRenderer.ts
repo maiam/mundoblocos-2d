@@ -4,7 +4,7 @@ import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
 import { loadHeldModel } from './heldItem';
-import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanCamaModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanCamaModel, titanBraseiroModel, titanBraseiroAcesoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -18,7 +18,7 @@ import { CROP_FRAMES } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
-import { T } from '../titan/voxel';
+import { type ModelKindName, T } from '../titan/voxel';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -121,7 +121,7 @@ export class TitanRenderer {
   private clock = 0;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -242,7 +242,17 @@ export class TitanRenderer {
     ctex2.needsUpdate = true;
     const camat = new THREE.MeshBasicMaterial({ map: ctex2, vertexColors: true, fog: true });
     patchDayLight(camat, this.ambient, { instGlow: true });
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['cama', titanCamaModel, camat]];
+    // Braseiro de Rocha (ADR 0092): apagado e aceso dividem o atlas de 256 × 320 px; o aceso ganha brilho fixo (ver `syncModels`)
+    const brtex = new THREE.Texture(extra.braseiroAtlas);
+    brtex.colorSpace = THREE.SRGBColorSpace;
+    brtex.magFilter = THREE.NearestFilter;
+    brtex.minFilter = THREE.NearestFilter;
+    brtex.generateMipmaps = false;
+    brtex.flipY = false;
+    brtex.needsUpdate = true;
+    const brmat = new THREE.MeshBasicMaterial({ map: brtex, vertexColors: true, fog: true });
+    patchDayLight(brmat, this.ambient, { instGlow: true });
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -360,7 +370,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama'] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso'] as const) {
       const cells = this.volume.modelCells(kind);
       let mesh = this.modelMeshes[kind];
       if (cells.length > mesh.instanceMatrix.count) {
@@ -376,7 +386,7 @@ export class TitanRenderer {
         mesh.setMatrixAt(i, mat);
         let lv = 0;
         for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
-        const w = lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0;
+        const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : 0); // o braseiro aceso brilha sozinho, de dia e de noite
         glow.set([w, w * 0.72, w * 0.38], i * 3);
       });
       mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));
@@ -396,6 +406,9 @@ export class TitanRenderer {
   get bauCount(): number { return this.modelMeshes.bau.count; }
   /** Camas desenhadas (diagnóstico e testes de navegador). */
   get camaCount(): number { return this.modelMeshes.cama.count; }
+  /** Braseiros desenhados, apagados e acesos (diagnóstico e testes de navegador). */
+  get braseiroCount(): number { return this.modelMeshes.braseiro.count; }
+  get braseiroAcesoCount(): number { return this.modelMeshes.braseiroAceso.count; }
 
   /** Juncos de vidro: `list` = células de ar sobre areia úmida (o jogo filtra as que foram construídas). Silhueta, rotação e tamanho por planta, determinísticos pela posição. */
   setReeds(list: ReadonlyArray<{ x: number; y: number; z: number }>): void {
@@ -865,7 +878,9 @@ function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
 }
 
 /** Mesa de Trabalho: sombreado por face (mesmos fatores do terreno) e luz do dia no shader; o brilho de lanterna entra por instância (`iGlow`). UV do glTF (origem no canto superior esquerdo). */
-type ModelKind = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama';
+type ModelKind = ModelKindName;
+/** Brilho fixo do Braseiro aceso (ADR 0092), na mesma escala do brilho de lanterna por instância (`iGlow`). */
+const EMBER_GLOW = 0.55;
 
 /** Geometria de um modelo 3D de bloco (mesa, Marco, Painel): sombreado fixo por face na cor dos vértices, UV do glTF. */
 function modelGeometry(m: ModelData): THREE.BufferGeometry {
