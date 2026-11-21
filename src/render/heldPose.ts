@@ -8,8 +8,15 @@ export const DIP_SINGLE = 0.45, DIP_LOOP = 0.15;
 
 export interface HandPose { x: number; y: number; z: number; rx: number; ry: number; rz: number }
 
+/** Estilo de golpe do item na mão: a adaga corta em diagonal; a picareta desce por cima (ADR 0078). */
+export type HandKind = 'dagger' | 'pick';
 /** Repouso da adaga: pende à direita e embaixo, ponta para frente e para cima (a ponta do modelo é +Y). */
 export const REST: HandPose = { x: 0.26, y: -0.12, z: -0.52, rx: -0.8, ry: 0, rz: 0.3 };
+/** Repouso e amplitudes do golpe de cada estilo (o da adaga é o histórico; a picareta segura o cabo na vertical com a cabeça para cima e à frente). */
+export const STYLES: Record<HandKind, { rest: HandPose; dx: number; dy: number; dz: number; drx: number; dry: number; drz: number }> = {
+  dagger: { rest: REST, dx: 0.3, dy: 0.1, dz: 0.18, drx: 48, dry: 42, drz: 48 },
+  pick: { rest: { x: 0.3, y: -0.22, z: -0.55, rx: -0.45, ry: -0.25, rz: 0.22 }, dx: 0.14, dy: 0.12, dz: 0.22, drx: 78, dry: 14, drz: 10 },
+};
 const DEG = Math.PI / 180;
 
 /** As três curvas do Minecraft para o progresso `p` (0–1): `sin1` sobe e desce (pico em 0,5), `sin2` acelera o começo (ease-out), `sinSq` é o giro do pulso. Fora de 0–1 tudo vale 0. */
@@ -25,15 +32,15 @@ export function bobOffset(timer: number, speed: number, grounded: boolean): { x:
 }
 
 /** Posição e giro da mão para o progresso `p`, o balanço `bob` e o afundamento `dip` (0–1) após o golpe. */
-export function handPose(p: number, bob: { x: number; y: number } = { x: 0, y: 0 }, dip = 0): HandPose {
-  const { sin1, sin2, sinSq } = swingCurves(p);
+export function handPose(p: number, bob: { x: number; y: number } = { x: 0, y: 0 }, dip = 0, kind: HandKind = 'dagger'): HandPose {
+  const { sin1, sin2, sinSq } = swingCurves(p), st = STYLES[kind], r = st.rest;
   return {
-    x: REST.x - sin2 * 0.3 + bob.x,
-    y: REST.y + sin1 * 0.1 - dip * 0.3 + bob.y,
-    z: REST.z - sin2 * 0.18,
-    rx: REST.rx - sin2 * 48 * DEG,
-    ry: REST.ry + sin2 * 42 * DEG - sinSq * 20 * DEG,
-    rz: REST.rz + sin2 * 48 * DEG,
+    x: r.x - sin2 * st.dx + bob.x,
+    y: r.y + sin1 * st.dy - dip * 0.3 + bob.y,
+    z: r.z - sin2 * st.dz,
+    rx: r.rx - sin2 * st.drx * DEG,
+    ry: r.ry + sin2 * st.dry * DEG - sinSq * 20 * DEG,
+    rz: r.rz + sin2 * st.drz * DEG,
   };
 }
 
@@ -42,6 +49,8 @@ export class HandAnim {
   /** Segundos desde o início do golpe em curso (−1 = parada). */
   swingElapsed = -1;
   equipOffset = 0;
+  /** Estilo do item na mão (muda ao trocar o item). */
+  kind: HandKind = 'dagger';
   private bobTimer = 0;
 
   /** Dispara um golpe (reinicia se já houver um); `dip` é o afundamento que a mão recupera depois. */
@@ -56,6 +65,6 @@ export class HandAnim {
     } else if (looping) this.trigger(DIP_LOOP);
     if (this.equipOffset > 0) this.equipOffset = Math.max(0, this.equipOffset - dt * 1.1);
     this.bobTimer += dt * (grounded && speed > 0.1 ? Math.min(speed, 6) * 2.2 : 1.8);
-    return handPose(this.swingElapsed >= 0 ? this.swingElapsed / SWING_S : 0, bobOffset(this.bobTimer, speed, grounded), this.equipOffset);
+    return handPose(this.swingElapsed >= 0 ? this.swingElapsed / SWING_S : 0, bobOffset(this.bobTimer, speed, grounded), this.equipOffset, this.kind);
   }
 }

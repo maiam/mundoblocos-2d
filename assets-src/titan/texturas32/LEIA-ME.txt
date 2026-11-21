@@ -1,0 +1,8 @@
+TITÃ · MARGEM SILENCIOSA
+
+01-Pranchas contém as folhas individuais com fundo transparente.
+02-Texturas-PNG contém as amostras de 32 × 32 px. A lateral da laje mede 32 × 16 px.
+A laje inferior e a superior usam o mesmo material. A laje dupla pertence à família da Rocha Escura.
+As superfícies A e B do Lago Escuro são amostras para sua animação. O braseiro usa uma lateral comum aos dois estados.
+Os materiais da lanterna, mesa, marco e painel são amostras para os modelos 3D. A aplicação exige o mapeamento UV.
+Usar filtro Nearest e verificar o atlas, a repetição e a leitura sob a iluminação do jogo antes da troca.

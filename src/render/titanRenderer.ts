@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
-import { DIP_SINGLE, HandAnim } from './heldPose';
+import { DIP_SINGLE, HandAnim, type HandKind } from './heldPose';
 import { loadHeldModel } from './heldItem';
-import { titanAdagaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -409,19 +409,21 @@ export class TitanRenderer {
       return m;
     }).then((t) => { this.rigTemplate = t; }, (e) => { console.warn('Titã: rig do Farejador não carregou; ficam as 7 partes', e); });
   }
-  /** Item na mão (id do item ou null): carrega o modelo na primeira vez e só mostra quem tem modelo (hoje a Adaga de Rocha, id 22). */
+  /** Item na mão (id do item ou null): carrega o modelo na primeira vez e só mostra quem tem modelo (hoje a Adaga de Rocha, 22, e a Picareta de Rocha, 20; ADR 0071 e 0078). */
   setHeld(item: number | null): void {
     if (item === this.heldItem) return;
     const old = this.heldItem !== null ? this.held.get(this.heldItem) : undefined;
     if (old && typeof old !== 'string') old.visible = false;
     this.heldItem = item;
-    if (item === null || item !== 22 || this.held.has(item)) { const g = item !== null ? this.held.get(item) : undefined; if (g && typeof g !== 'string') g.visible = true; return; }
+    const spec = item !== null ? HELD_MODELS[item] : undefined;
+    if (spec) this.handAnim.kind = spec.kind;
+    if (item === null || !spec || this.held.has(item)) { const g = item !== null ? this.held.get(item) : undefined; if (g && typeof g !== 'string') g.visible = true; return; }
     this.held.set(item, 'loading');
-    loadHeldModel(titanAdagaRochaUrl, (map) => {
+    loadHeldModel(spec.url, (map) => {
       const m = new THREE.MeshBasicMaterial({ map, vertexColors: true });
       patchDayLight(m, this.ambient);
       return m;
-    }).then((g) => { g.visible = this.heldItem === item; this.handScene.add(g); this.held.set(item, g); }, (e) => { this.held.set(item, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
+    }).then((g) => { g.scale.setScalar(spec.scale); g.visible = this.heldItem === item; this.handScene.add(g); this.held.set(item, g); }, (e) => { this.held.set(item, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
   }
   /** Começa um golpe da mão (animação de `SWING_S`, com o afundamento do golpe isolado). */
   swingHand(): void { this.handAnim.trigger(DIP_SINGLE); }
@@ -723,6 +725,12 @@ function toGeometry(d: MeshData): THREE.BufferGeometry {
  * (atributo de cada vértice) e a luz do dia é um uniform: mudar a hora é só mudar o número, sem refazer nenhuma malha. Névoa, mapa de tons e espaço de cor seguem o
  * material do Three.js.
  */
+/** Itens com modelo na mão: arquivo, estilo de golpe e escala (a picareta tem 60 cm, quase o dobro da adaga). */
+const HELD_MODELS: Readonly<Record<number, { url: string; kind: HandKind; scale: number }>> = {
+  22: { url: titanAdagaRochaUrl, kind: 'dagger', scale: 1 },
+  20: { url: titanPicaretaRochaUrl, kind: 'pick', scale: 0.8 },
+};
+
 function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: THREE.Vector3 }, opts: { instGlow?: boolean; time?: { value: number } } = {}): void {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uAmbient = ambient;
