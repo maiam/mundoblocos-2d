@@ -12,6 +12,7 @@ import { resolveSlabPlacement } from './slabs';
 import { surfaceOf } from './sounds';
 import { TitanVolume } from './volume';
 import { blockSpan, isFull, isSlab, isSolid, T } from './voxel';
+import { sweep } from './dropTestUtil';
 
 const FLAT_Y = 200;
 function arena(): TitanVolume {
@@ -147,9 +148,9 @@ describe('lajes na sessão: colocar, fundir, quebrar e persistir', () => {
     expect(r.volume.get(bx, 65, bz)).toBe(T.SLAB_DOUBLE); expect(r.volume.get(bx + 1, 65, bz)).toBe(T.SLAB_DOUBLE); expect(r.volume.get(bx, 65, bz + 1)).toBe(T.SLAB);
     // quebrar a dupla devolve 2 lajes
     const antes = r.inventory.total(Item.SLAB);
-    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(r, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(r);
     expect(r.inventory.total(Item.SLAB)).toBe(antes + 2);
-    expect(breakOrCollect(r, { x: bx, y: 65, z: bz + 1, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(r, { x: bx, y: 65, z: bz + 1, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(r);
     expect(r.inventory.total(Item.SLAB)).toBe(antes + 3);
   });
 
@@ -169,7 +170,8 @@ describe('lajes na sessão: colocar, fundir, quebrar e persistir', () => {
     s.inventory.add(Item.SLAB, 63);
     let n = 0; while (s.inventory.canAdd(Item.SAND) && n++ < 5000) s.inventory.add(Item.SAND, 1); // o resto da mochila cheio de areia
     expect(s.inventory.canAdd(Item.SLAB, 1)).toBe(true); expect(s.inventory.canAdd(Item.SLAB, 2)).toBe(false); // cabe 1 laje, não 2
-    expect(breakOrCollect(s, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 })).toEqual({ ok: false, msg: 'Mochila cheia' }); // a dupla devolve 2: fica no lugar
-    expect(s.volume.get(bx, 65, bz)).toBe(T.SLAB_DOUBLE);
+    expect(breakOrCollect(s, { x: bx, y: 65, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); // a dupla solta 2 lajes numa pilha que não cabe: fica no chão (ADR 0082)
+    expect(s.volume.get(bx, 65, bz)).toBe(T.AIR);
+    expect(sweep(s)).toBe(0); expect(s.drops.size).toBe(1);
   });
 });

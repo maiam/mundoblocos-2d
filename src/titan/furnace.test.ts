@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { sweep } from './dropTestUtil';
 import { breakOrCollect, furnaceAt, furnaceMoveIn, furnaceTakeOut } from './actions';
 import { accepts, canSmelt, COOK_TIME_S, FUEL_TIME_S, furnaceFromData, furnaceToData, isFuel, isLit, isWorking, newFurnace, prepsLeft, smeltRecipe, tickFurnace } from './furnace';
 import { Item } from './items';
@@ -80,6 +81,7 @@ describe('fornalha no mundo (ADR 0068)', () => {
     // libera a mochila para o bloco do braseiro voltar
     for (let i = 0; i < 64; i++) s.inventory.consume(5);
     expect(breakOrCollect(s, { x, y: Y, z, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(s.drops.get(`b:${x},${Y},${z}:0`)?.item).toBe(Item.BRAZIER); sweep(s); // o braseiro cai como item (ADR 0082); o conteúdo cospe junto
     expect(s.inventory.total(Item.BRAZIER)).toBe(1); expect(s.furnaces.size).toBe(0);
     const spilled = [...s.drops.values()].filter((d) => d.id.startsWith('f:'));
     expect(spilled.map((d) => [d.item, d.count ?? 1]).sort()).toEqual([[Item.COPPER_SHARD, 3], [Item.EMBER, 1], [Item.COPPER_INGOT, 2]].sort());

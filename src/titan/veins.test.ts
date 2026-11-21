@@ -8,6 +8,7 @@ import { MemoryTitanStorage } from './save';
 import { flush, hasPendingState, openSession, visibleItems, type TitanSession } from './session';
 import { TitanVolume } from './volume';
 import { isSolid, T } from './voxel';
+import { sweepBlocks } from './dropTestUtil';
 
 const open = async (st = new MemoryTitanStorage(), version = 3) => ({ st, s: await openSession(st, 42, () => 1, undefined, version) });
 const veinOf = (s: TitanSession, kind: 'rock' | 'ice') => s.volume.gen.veinCells().find((v) => v.kind === kind)!;
@@ -112,7 +113,7 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     const r = veinOf(s, 'rock');
     expect(breakTotalMs('block', T.VEIN_ROCK)).toBe(1600);
     expect(breakTotalMs('block', T.VEIN_FROST)).toBe(1200);
-    expect(breakOrCollect(s, hit(r)).ok).toBe(true);
+    expect(breakOrCollect(s, hit(r)).ok).toBe(true); sweepBlocks(s);
     expect(s.volume.get(r.x, r.y, r.z)).toBe(T.AIR);
     expect(s.inventory.total(Item.DARK_ROCK)).toBe(1);
     expect(s.drops.size).toBe(1);
@@ -121,14 +122,14 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     expect(visibleItems(s)).toContainEqual(d);
     // rocha comum (sem veio) devolve só o bloco
     s.volume.place(r.x, 150, r.z, T.DARK_ROCK);
-    expect(breakOrCollect(s, { x: r.x, y: 150, z: r.z, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(s, { x: r.x, y: 150, z: r.z, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweepBlocks(s);
     expect(s.drops.size).toBe(1);
   });
 
   it('recolocar o bloco no lugar do veio põe o bloco comum e quebrar de novo não solta lasca', async () => {
     const { s } = await open();
     const r = veinOf(s, 'ice');
-    breakOrCollect(s, hit(r));
+    breakOrCollect(s, hit(r)); sweepBlocks(s);
     const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.FROST)!;
     s.inventory.move(slot, 0);
     // a lasca ocupa a célula: não dá para soterrá-la; recolhe antes
@@ -136,14 +137,14 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     expect(collectNearby(s, r.x + 0.5, r.y, r.z + 0.5).collected).toBe(1);
     expect(placeFromSlot(s, { x: r.x, y: r.y - 1, z: r.z, nx: 0, ny: 1, nz: 0 }, 0).ok).toBe(true);
     expect(s.volume.get(r.x, r.y, r.z)).toBe(T.FROST); // bloco comum
-    expect(breakOrCollect(s, hit(r)).ok).toBe(true);
+    expect(breakOrCollect(s, hit(r)).ok).toBe(true); sweepBlocks(s);
     expect(s.drops.size).toBe(0);
   });
 
   it('coleta por proximidade: de longe não pega; perto pega uma vez; mochila cheia deixa no lugar', async () => {
     const { s } = await open();
     const r = veinOf(s, 'rock');
-    breakOrCollect(s, hit(r));
+    breakOrCollect(s, hit(r)); sweepBlocks(s);
     expect(collectNearby(s, r.x + 5, r.y, r.z + 5).collected).toBe(0);
     // encher a mochila até não caber mais fragmento de rocha
     let i = 0;
@@ -161,7 +162,7 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
   it('a lasca sem apoio desce até o primeiro sólido e a coleta exige altura alcançável', async () => {
     const { s } = await open();
     const r = veinOf(s, 'rock');
-    breakOrCollect(s, hit(r));
+    breakOrCollect(s, hit(r)); sweepBlocks(s);
     s.volume.remove(r.x, r.y - 1, r.z); // some o apoio
     expect(collectNearby(s, r.x + 5, r.y, r.z + 5).moved).toBe(true);
     expect([...s.drops.values()][0].y).toBeLessThan(r.y);
@@ -171,7 +172,7 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
   it('salvar e reabrir logo depois: o veio quebrado, o inventário e a lasca pendente persistem sem duplicar', async () => {
     const { st, s } = await open();
     const r = veinOf(s, 'rock');
-    breakOrCollect(s, hit(r));
+    breakOrCollect(s, hit(r)); sweepBlocks(s);
     expect(hasPendingState(s)).toBe(true);
     await flush(st, s);
     expect(hasPendingState(s)).toBe(false);
@@ -193,7 +194,7 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
   it('falha de gravação: nada se perde nem duplica (lasca e veio continuam pendentes juntos)', async () => {
     const { st, s } = await open();
     const r = veinOf(s, 'ice');
-    breakOrCollect(s, hit(r));
+    breakOrCollect(s, hit(r)); sweepBlocks(s);
     st.failNext = true;
     await expect(flush(st, s)).rejects.toThrow();
     expect(hasPendingState(s)).toBe(true);
@@ -218,7 +219,7 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     const { s } = await open();
     const rocks = s.volume.gen.veinCells().filter((c) => c.kind === 'rock').slice(0, 2), ice = veinOf(s, 'ice');
     for (const v of [...rocks, ice]) {
-      expect(breakOrCollect(s, hit(v)).ok).toBe(true);
+      expect(breakOrCollect(s, hit(v)).ok).toBe(true); sweepBlocks(s);
       expect(collectNearby(s, v.x + 0.5, v.y, v.z + 0.5).collected).toBe(1);
     }
     expect(s.inventory.total(Item.ROCK_SHARD)).toBe(2);
@@ -231,9 +232,10 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     const r = veinOf(s, 'rock');
     let i = 0;
     while (s.inventory.canAdd(Item.DARK_ROCK) && i++ < 5000) s.inventory.add(Item.DARK_ROCK);
-    expect(breakOrCollect(s, hit(r))).toEqual({ ok: false, msg: 'Mochila cheia' });
-    expect(s.volume.get(r.x, r.y, r.z)).toBe(T.VEIN_ROCK);
-    expect(s.drops.size).toBe(0);
+    expect(breakOrCollect(s, hit(r)).ok).toBe(true); // ADR 0082: quebra e cai; com a mochila cheia o bloco e a lasca ficam no chão
+    expect(s.volume.get(r.x, r.y, r.z)).toBe(T.AIR);
+    expect(sweepBlocks(s)).toBe(0);
+    expect(s.drops.size).toBe(2);
   });
 
   it('o veio aparece na malha com o tile próprio (linha 3 do atlas)', async () => {

@@ -8,6 +8,7 @@ import { craft, RECIPES } from './recipes';
 import { MemoryTitanStorage } from './save';
 import { flush, openSession, visibleItems } from './session';
 import { isSolid, T, tileFor, tileIndex } from './voxel';
+import { sweep } from './dropTestUtil';
 
 const SEEDS = [1, 2, 7, 42, 99, 150];
 
@@ -58,6 +59,6 @@ describe('gerador v8: abrigos com placa de carapaça (ADR 0066)', () => {
     await flush(st, s);
     const r = await openSession(st, null, () => 1);
     expect(r.volume.get(20, 151, 20)).toBe(T.CARAPACE); expect(r.items.at(p.x, p.y, p.z)).toBeNull();
-    expect(breakOrCollect(r, { x: 20, y: 151, z: 20, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); expect(r.inventory.total(Item.CARAPACE)).toBe(2);
+    expect(breakOrCollect(r, { x: 20, y: 151, z: 20, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(r); expect(r.inventory.total(Item.CARAPACE)).toBe(2);
   });
 });

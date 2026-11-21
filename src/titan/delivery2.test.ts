@@ -8,6 +8,7 @@ import { flush, hasPendingState, openSession } from './session';
 import { raycast } from './physics';
 import { meshSection } from './mesher';
 import { T } from './voxel';
+import { sweep } from './dropTestUtil';
 
 /** Partida do legado (v2: lascas de superfície pré-posicionadas); o fluxo dos veios (v3) está em `veins.test.ts`. */
 const open = async (st = new MemoryTitanStorage()) => ({ st, s: await openSession(st, 42, () => 1, undefined, 2) });
@@ -17,7 +18,7 @@ describe('coleta e inventário no mundo', () => {
   it('quebrar um bloco devolve o bloco (não fragmento); colocar gasta 1 da hotbar', async () => {
     const { s } = await open();
     const { bx, bz } = spot(s);
-    expect(breakOrCollect(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(breakOrCollect(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); sweep(s);
     expect(s.volume.get(bx, 64, bz)).toBe(T.AIR);
     expect(s.inventory.total(Item.SAND)).toBe(1);
     expect(s.inventory.total(Item.ROCK_SHARD)).toBe(0);
@@ -66,8 +67,9 @@ describe('coleta e inventário no mundo', () => {
     expect(collectItem(s, it.id)).toEqual({ ok: false, msg: 'Mochila cheia' });
     expect(s.items.at(it.x, it.y, it.z)).toBe(it.id);
     const { bx, bz } = spot(s);
-    expect(breakOrCollect(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 })).toEqual({ ok: false, msg: 'Mochila cheia' });
-    expect(s.volume.get(bx, 64, bz)).toBe(T.SAND);
+    expect(breakOrCollect(s, { x: bx, y: 64, z: bz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true); // ADR 0082: o bloco quebra e cai; a mochila cheia só impede de recolher
+    expect(s.volume.get(bx, 64, bz)).toBe(T.AIR);
+    expect(sweep(s)).toBe(0); expect(s.drops.size).toBe(1); // fica no chão até haver espaço
   });
 
   it('não dá para colocar bloco em cima de um fragmento ainda no mundo', async () => {
