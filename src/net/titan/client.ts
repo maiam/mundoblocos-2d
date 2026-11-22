@@ -1,9 +1,12 @@
+import { chestFromData } from '../../titan/chest';
+import type { Farejador } from '../../titan/creature';
+import { furnaceFromData } from '../../titan/furnace';
 import { Inventory } from '../../titan/inventory';
 import { newBody } from '../../titan/physics';
 import { generatorFor, resume, type TitanSession } from '../../titan/session';
-import { vitalsFromData } from '../../titan/vitals';
+import { vitalsFromData, vitalsToData } from '../../titan/vitals';
 import type { TitanTransport } from './loopback';
-import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireHit } from './protocol';
+import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireCreature, type WireHit } from './protocol';
 
 /**
  * Lado do aparelho numa sala do Titã (ADR 0104, fatia B). Sem DOM: recebe um `TitanTransport` (loopback nos testes, WebSocket no navegador).
@@ -18,6 +21,12 @@ export interface TitanClientEvents {
   onBag?: () => void;
   /** Lista de jogadores remotos mudou. */
   onPlayers?: () => void;
+  /** Um Farejador acertou este jogador (o aparelho tira a vida). */
+  onHurt?: (damage: number, kind: 'pequeno' | 'grande') => void;
+  /** Renasceu depois de morrer (posição e vida já trocadas na sessão). */
+  onRespawn?: () => void;
+  /** Baús ou braseiros mudaram (outro jogador mexeu, ou o braseiro andou). */
+  onContainers?: () => void;
   /** Conexão fechada ou erro da sala. */
   onClose?: (reason: string) => void;
 }
@@ -52,7 +61,7 @@ export class TitanClient {
 
   sendState(): void {
     const s = this.session, b = s.body;
-    this.transport.send(JSON.stringify({ t: 'state', s: { x: b.x, y: b.y, z: b.z, yaw: s.yaw, pitch: s.pitch, sel: s.selected } }));
+    this.transport.send(JSON.stringify({ t: 'state', s: { x: b.x, y: b.y, z: b.z, yaw: s.yaw, pitch: s.pitch, sel: s.selected }, v: vitalsToData(s.vitals) }));
   }
 
   /** Manda a ação e espera a resposta da sala. */
@@ -62,6 +71,15 @@ export class TitanClient {
   place(hit: WireHit, slot: number): Promise<ApplyResult> { return this.act({ k: 'place', hit, slot }); }
   breakAt(hit: WireHit): Promise<ApplyResult> { return this.act({ k: 'break', hit }); }
   use(x: number, y: number, z: number): Promise<ApplyResult> { return this.act({ k: 'use', x, y, z }); }
+
+  chestIn(x: number, y: number, z: number, slot: number): Promise<ApplyResult> { return this.act({ k: 'chest', x, y, z, op: 'in', slot }); }
+  chestOut(x: number, y: number, z: number, i: number): Promise<ApplyResult> { return this.act({ k: 'chest', x, y, z, op: 'out', i }); }
+  furnaceIn(x: number, y: number, z: number, kind: 'input' | 'fuel', slot: number): Promise<ApplyResult> { return this.act({ k: 'furnace', x, y, z, op: 'in', kind, slot }); }
+  furnaceOut(x: number, y: number, z: number, kind: 'input' | 'fuel' | 'output'): Promise<ApplyResult> { return this.act({ k: 'furnace', x, y, z, op: 'out', kind }); }
+  /** Golpe no Farejador `id`. */
+  strike(id: string): Promise<ApplyResult> { return this.act({ k: 'strike', id }); }
+  /** Morreu: manda a vida zerada e pede o renascer (a sala solta as pilhas). */
+  die(): Promise<ApplyResult> { this.sendState(); return this.act({ k: 'die' }); }
 
   /** Chamada a cada quadro/segundo: se a interface mexeu na bolsa desde a última da sala, manda a cópia. */
   syncBag(): boolean {
@@ -77,6 +95,22 @@ export class TitanClient {
     Object.assign(inv, next);
     inv.rev = rev; this.syncedRev = rev; // veio da sala: não é uma mexida da interface para devolver
     this.events.onBag?.();
+  }
+
+  /** Espelha os Farejadores da sala: atualiza no lugar por id (a mira guarda o índice), cria os novos e tira os que sumiram. */
+  private mirrorCreatures(list: WireCreature[]): void {
+    const s = this.session;
+    if (!s) return;
+    const byId = new Map(s.creatures.map((f) => [f.id, f]));
+    const next: Farejador[] = [];
+    for (const w of list) {
+      let f = byId.get(w.id);
+      if (!f) f = { id: w.id, kind: w.kind, body: newBody(w.x, w.y, w.z), yaw: w.yaw, phase: w.phase, t: w.t, home: { x: w.x, z: w.z }, goal: { x: w.x, z: w.z }, pause: 0, cooldown: 0, stuck: 0, hp: w.hp, aggro: w.aggro, hurt: w.hurt, clock: w.clock, seed: 0 };
+      f.body.x = w.x; f.body.y = w.y; f.body.z = w.z; f.body.vx = w.vx; f.body.vz = w.vz;
+      f.yaw = w.yaw; f.phase = w.phase; f.t = w.t; f.hp = w.hp; f.hurt = w.hurt; f.clock = w.clock; f.aggro = w.aggro;
+      next.push(f);
+    }
+    s.creatures = next;
   }
 
   private receive(m: TitanServerMessage): void {
@@ -113,6 +147,24 @@ export class TitanClient {
         for (const id of [...s.dropFx.keys()]) if (!s.drops.has(id)) s.dropFx.delete(id);
         s.dropsRev++;
         this.events.onWorld?.();
+        return;
+      }
+      case 'creatures': this.mirrorCreatures(m.list); return;
+      case 'hurt': this.events.onHurt?.(m.damage, m.kind); return;
+      case 'chest': if (this.session) { this.session.chests.set(m.key, chestFromData(m.data)); this.events.onContainers?.(); } return;
+      case 'furnaces': {
+        if (!this.session) return;
+        this.session.furnaces.clear();
+        for (const [k, d] of Object.entries(m.data)) this.session.furnaces.set(k, furnaceFromData(d));
+        this.events.onContainers?.();
+        return;
+      }
+      case 'respawn': {
+        const s = this.session;
+        if (!s) return;
+        s.body = newBody(m.x, m.y, m.z); s.yaw = m.yaw; s.pitch = -0.12;
+        Object.assign(s.vitals, vitalsFromData(m.vitals));
+        this.events.onRespawn?.();
         return;
       }
       case 'time': if (this.session) { this.session.time = m.time; this.session.days = m.days; } return;

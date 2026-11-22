@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Item } from '../../titan/items';
+import { newFarejador } from '../../titan/creature';
 import { T } from '../../titan/voxel';
 import { TitanClient } from './client';
 import { TitanLoopbackServer } from './loopback';
@@ -61,5 +62,38 @@ describe('cliente da sala do Titã', () => {
     await flush();
     srv.tick(0.2); await flush();
     expect(cb.remotes.get(ca.id)!.x).toBeCloseTo(ca.session.body.x, 6);
+  });
+
+  it('Farejadores da sala são espelhados por id; o golpe e o `hurt` passam pela sala', async () => {
+    const { ca, srv, room, x, z } = await setup();
+    const f = newFarejador('pequeno', { x: x + 1.5, y: Y, z: z + 0.5 }, 1, 'p0'); f.body.x = x + 1.5; f.body.y = Y; f.body.z = z + 0.5; f.hp = 2; f.phase = 'stunned';
+    room.world.creatures.length = 0; room.world.creatures.push(f); // só o animal do teste
+    srv.tick(0.1); await flush();
+    expect(ca.session.creatures.map((c) => c.id)).toEqual(['p0']);
+    const first = ca.session.creatures[0];
+    srv.tick(0.1); await flush();
+    expect(ca.session.creatures[0]).toBe(first); // atualizado no lugar (a mira guarda o índice)
+    const hurts: number[] = []; ca.events.onHurt = (d) => hurts.push(d);
+    const p = ca.strike('p0'); await flush();
+    expect(await p).toMatchObject({ ok: true }); expect(f.hp).toBeLessThan(2);
+    f.phase = 'charge'; f.t = 0; f.hp = 9;
+    for (let i = 0; i < 80 && !hurts.length; i++) { ca.sendState(); srv.tick(0.05); await flush(); }
+    expect(hurts.length).toBeGreaterThan(0);
+  });
+  it('baú: o conteúdo chega aos dois aparelhos; morrer pede o renascer e troca posição e vida', async () => {
+    const { ca, cb, room, x, z } = await setup();
+    const p = ca.place({ x, y: Y - 1, z, nx: 0, ny: 1, nz: 0 }, 0); await flush(); await p; // a bolsa tem rocha, não baú: só confere que a recusa não quebra nada
+    room.world.volume.set(x + 1, Y, z, T.CHEST);
+    const v = room.viewOf(ca.id)!; const slot = [...Array(36).keys()].find((i) => v.inventory.get(i)?.item === Item.DARK_ROCK)!;
+    const r = ca.chestIn(x + 1, Y, z, slot); await flush();
+    expect(await r).toMatchObject({ ok: true });
+    expect(ca.session.chests.get(`${x + 1},${Y},${z}`)?.[0]?.item).toBe(Item.DARK_ROCK);
+    expect(cb.session.chests.get(`${x + 1},${Y},${z}`)?.[0]?.item).toBe(Item.DARK_ROCK);
+    ca.session.vitals.health = 0;
+    let respawned = false; ca.events.onRespawn = () => { respawned = true; };
+    const d = ca.die(); await flush();
+    expect(await d).toMatchObject({ ok: true }); expect(respawned).toBe(true);
+    expect(ca.session.vitals.health).toBeGreaterThan(0);
+    expect(ca.session.body.x).not.toBeCloseTo(x + 0.5, 1);
   });
 });

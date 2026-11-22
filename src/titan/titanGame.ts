@@ -400,6 +400,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!stationAt || stationAt.kind !== 'brazier') return;
     if (!stationInReach()) { closeStation('Braseiro fora de alcance'); return; }
     const { x, y, z } = stationAt;
+    if (client) { // na sala o braseiro é do mundo: a sala faz a troca e devolve a bolsa e o estado (ADR 0104)
+      const slot = kind !== 'output' && sel !== null ? sel : null;
+      sel = null;
+      void (slot !== null && kind !== 'output' ? client.furnaceIn(x, y, z, kind, slot) : client.furnaceOut(x, y, z, kind)).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return;
+    }
     const r = kind !== 'output' && sel !== null ? furnaceMoveIn(session, x, y, z, kind, sel) : furnaceTakeOut(session, x, y, z, kind);
     if (r.msg) notice(r.msg);
     if (r.ok) { sel = null; onEdited(); }
@@ -410,6 +416,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!stationAt || stationAt.kind !== 'chest') return;
     if (!stationInReach()) { closeStation('Baú fora de alcance'); return; }
     const { x, y, z } = stationAt;
+    if (client) {
+      const slot = sel;
+      sel = null;
+      void (slot !== null ? client.chestIn(x, y, z, slot) : client.chestOut(x, y, z, i)).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return;
+    }
     const r = sel !== null ? chestMoveIn(session, x, y, z, sel) : chestTakeOut(session, x, y, z, i);
     if (r.msg) notice(r.msg);
     if (r.ok) { sel = null; onEdited(); }
@@ -463,7 +475,6 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function openStation(): void {
     const at = benchAimed();
     if (!at || bagOpen || !playing) return;
-    if (client && (at.kind === 'chest' || at.kind === 'brazier')) { notice('Baús e braseiros nas salas: em breve'); return; } // fatia C do ADR 0104
     if (client && (at.kind === 'door' || at.kind === 'bed')) { // a sala decide (porta; cama marca o ponto de retorno, sem dormir ainda)
       void client.use(at.x, at.y, at.z).then((r) => { if (r.msg) notice(r.msg); if (r.ok && at.kind === 'door') gameAudio.playDoor(!!r.open); });
       return;
@@ -497,7 +508,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function eatSelected(): void {
     const r = eatFromSlot(session, session.selected);
     if (r.msg) notice(r.msg);
-    if (r.ok) { gameAudio.playEat(); playerDirty = true; paintVitals(false); refresh(); }
+    if (r.ok) { gameAudio.playEat(); playerDirty = true; paintVitals(false); refresh(); if (client) { client.syncBag(); client.sendState(); } } // na sala a bolsa e a fome seguem na hora (a comida é local)
   }
   function tapSlot(i: number): void {
     if (i === BENCH_OUT) { takeBench(); return; }
@@ -754,6 +765,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const nowMs = performance.now();
     if (nowMs < nextAttackAt) return false;
     nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    if (client) { // na sala o golpe vai ao servidor, que confere alcance, pausa e espólio (ADR 0104)
+      const id = session.creatures[index]?.id;
+      if (!id) return false;
+      gameAudio.playStrike(); view.swingHand();
+      void client.strike(id).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return true;
+    }
     const r = attackCreature(session, index);
     if (!r.ok) return false;
     gameAudio.playStrike();
@@ -826,11 +844,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       onWorld: () => { view.setItems(visibleItems(session)); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); view.setCrops(standingCrops(session)); },
       onBag: () => { if (inited) { gameAudio.playItemPickup(); refresh(); } },
       onPlayers: () => view.setRemotePlayers([...client!.remotes.values()]),
+      onHurt: (d, kind) => { damage(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
+      onRespawn: () => { dying = false; airTop = session.body.y; wasAir = false; steps.reset(); view.setItems(visibleItems(session)); paintVitals(false); refresh(); },
       onClose: (why) => toast(`Sala: ${why}`, 60000),
     };
     view.setRemotePlayers([...client.remotes.values()]);
   }
-  let inited = true, lastStateAt = 0, lastBagAt = 0;
+  let inited = true, lastStateAt = 0, lastBagAt = 0, dying = false;
   // ---- Gravação ----
   let dropFull = false;
   let lastSavedTime = session.time;
@@ -861,6 +881,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let last = performance.now(), nextAuto = 0, autoStep = 0;
   /** Morreu: os itens caem onde estava e o jogador renasce na chegada (ADR 0059). */
   function die(): void {
+    if (client) { // na sala a morte solta as pilhas lá; o renascer volta em `respawn` (ADR 0104)
+      if (dying) return;
+      dying = true;
+      void client.die().then((r) => { if (r.ok) notice('Você desmaiou. Seus itens ficaram onde caiu.'); else dying = false; }).catch(() => { dying = false; });
+      window.setTimeout(() => { dying = false; }, 4000); // reserva: o renascer (`respawn`) já limpa a espera
+      return;
+    }
     const n = dieAndRespawn(session);
     airTop = session.body.y; wasAir = false;
     steps.reset();
@@ -939,6 +966,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       for (const fj of session.creatures) {
         if (!active) break;
         if (fj.phase === 'wander' && Math.hypot(fj.body.x - b.x, fj.body.z - b.z) > SIM_RADIUS) continue; // animal longe e sossegado: não gasta tempo de simulação
+        if (client) continue; // na sala os bichos são da sala (mensagem `creatures`); aqui só se desenha
         const ev = stepFarejador(fj, vol, { x: b.x, y: b.y, z: b.z }, dt);
         if (ev.hit) { damage(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
         if (ev.phase === 'charge' || (fj.phase === 'charge' && now >= nextScrape)) { nextScrape = now + 520; gameAudio.playScrape(); }

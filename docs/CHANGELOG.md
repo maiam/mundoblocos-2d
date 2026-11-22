@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.165.0 — Titã: salas do servidor, fatia C (sobrevivência compartilhada) (22/11/2026)
+- **ADR 0104 (`TITAN_PROTOCOL_VERSION` 2).** Nas salas do Titã: **baús e braseiros compartilhados** (a sala faz a troca e manda o conteúdo a todos; o braseiro corre na sala), **Farejadores da sala** (simulados e mandados a 10×/s; golpe por id com pausa e alcance; o investido recebe `hurt`), **morte** que solta as pilhas na sala e **renasce** (`respawn`), vida/fome/ar do aparelho enviados no `state` e guardados, e a **noite só passa com todos na cama**.
+- Limites: a vida é calculada no aparelho (sem anti-trapaça), sem véu de sono, comer é local. Servidor real ainda precisa rotear `room ≥ 101` (e agora usar `TITAN_PROTOCOL_VERSION` 2). Testes: +9 (1.235 no total). Conferido a 740 × 360 (Farejador da sala desenhado no aparelho).
+
 ## Orvalis v0.164.0 — Titã: salas do servidor, fatia B (cliente) (22/11/2026)
 - **ADR 0104.** O jogo entra numa sala do Titã por `?sala=101` ou pelo botão **Jogar na sala** do ☰ (e `&loopback=1` para um servidor em memória, no teste). `TitanClient` abre a sessão do `welcome` e espelha a sala (edições, itens soltos, hora, bolsa, jogadores); colocar, quebrar e usar porta/cama vão ao servidor e só valem com `applied`. Os outros jogadores aparecem com nome. Nada é gravado no aparelho; braseiros, plantas, itens soltos e bichos não são simulados no aparelho.
 - Limites: baús e braseiros ainda não (fatia C), vida/fome/morte locais, sem reconexão. Servidor real ainda precisa rotear `room ≥ 101`. Testes: +5 (1.226 no total). Conferido a 740 × 360 com um segundo jogador em memória (nome, colocar com `applied`, bolsa).

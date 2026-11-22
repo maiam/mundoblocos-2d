@@ -1,4 +1,4 @@
-# ADR 0104 — Titã: salas do servidor, cooperativas de sobrevivência (v0.163.0 fatia A, v0.164.0 fatia B)
+# ADR 0104 — Titã: salas do servidor, cooperativas de sobrevivência (v0.163.0 fatia A, v0.164.0 fatia B, v0.165.0 fatia C)
 
 **Status:** Aceita (fatia A de três). Pedido: salas do servidor para o Titã como no mundo principal; escolha do dono: **cooperativa de sobrevivência** (vida, fome, ar e morte valem; sem modo criativo).
 
@@ -19,9 +19,16 @@ O Titã tem motor próprio (`TitanVolume` sobre `TitanGenerator`, sem `World`/`S
 - **Jogo (`titanGame.ts`):** `?sala=101` (e `&loopback=1` para um servidor em memória na página, com `window.__titanLoop` no dev; `&nome=` ou `localStorage`), botão **Jogar na sala / Sair da sala** no ☰, nada é gravado no aparelho (armazenamento em memória). Na sala o aparelho **não simula** braseiros, plantas, rebrotes, itens soltos nem Farejadores. Posição enviada ~10×/s; jogadores remotos desenhados por `TitanRenderer.setRemotePlayers` (boneco simples e nome).
 - **Limites desta fatia:** baús e braseiros avisam "em breve"; cama só marca o ponto de retorno (sem dormir); vida/fome/morte seguem **locais** (fatia C); comer é local (a bolsa volta pela sincronização); sem previsão de ação (latência visível) e sem reconexão.
 
+## Fatia C — sobrevivência compartilhada (v0.165.0, `TITAN_PROTOCOL_VERSION` 2)
+- **Baús e braseiros** são do mundo: ações `chest` (`in`/`out`) e `furnace` (`in`/`out`) rodam as mesmas `chestMoveIn/TakeOut` e `furnaceMoveIn/TakeOut` na visão de quem agiu; a sala manda `chest` (conteúdo, a todos) e `furnaces` (todos os braseiros, a cada 1 s e depois de cada troca). O braseiro corre só na sala; o aparelho espelha.
+- **Farejadores** são da sala: `stepFarejador` perto de algum jogador (≤ 56 m, ou em ação), `tickRespawn`, lista `creatures` a 10×/s para os a ≤ 64 m de alguém; o aparelho os **espelha no lugar por id** (a mira guarda o índice) e só desenha. Golpe = ação `strike` por **id** (alcance 5 m, pausa de 0,6 s por jogador, `attackCreature` na visão de quem bate: desgasta a arma, espólio e volta). O investido recebe `hurt` (só ele) e o aparelho tira a vida.
+- **Vida, fome e ar:** o aparelho continua simulando o corpo (queda, ar, fome) e manda `v` junto do `state`; a sala guarda e persiste. **Morte:** ação `die` (vale só com vida zerada no último `state`): `dieAndRespawn` na sala solta as pilhas onde caiu (todos veem `drops`) e manda `respawn` (posição e vida cheia).
+- **Noite:** o relógio é da sala; usar a cama à noite marca o ponto de retorno e o voto (`Player.bed`); a noite só passa quando **todos** estão na cama (sair >3 m da cama desfaz o voto; quem sai da sala não impede). Sem véu de sono no aparelho (a mensagem diz quantos estão na cama).
+- Limites: a vida é do aparelho (sem anti-trapaça: a sala confia no `state`); comer é local (bolsa e fome seguem na hora por `syncBag`/`state`); dois jogadores no mesmo baú/braseiro ao mesmo tempo: vale o último; cria-se o baú vazio localmente ao abrir (a sala é quem manda o conteúdo).
+
 ## Fora da fatia A (próximas)
 - ~~**B — cliente**~~ (entregue na v0.164.0, ver acima); falta: lista de salas com contagem, tela de espera e reconexão.
-- **C — sobrevivência compartilhada:** vida/fome/ar/morte e queda **na sala** (hoje só no aparelho), Farejadores espelhados (`session.creatures` com `avatars`), baús e braseiros abertos por mais de um jogador (mensagens `chest`/`furnace`), sono e cama com a sala (hora é de todos), recolher por `take`.
+- ~~**C — sobrevivência compartilhada**~~ (entregue na v0.165.0, ver acima); falta: vida/queda **calculadas na sala** (hoje do aparelho), véu de sono, previsão de ação.
 - **Servidor** (`orvalis-servidor`): rotear `hello` com `room ≥ 101` para `TitanRoom`, `build:net` + `sync-net`, gravar `titan-sala-<id>.json` com `snapshot()`, tick ~10×/s, `GET /salas` listando as do Titã. **Não testado contra o servidor real** (só loopback).
 
 ## Consequências

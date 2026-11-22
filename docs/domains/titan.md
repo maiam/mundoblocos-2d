@@ -77,7 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
-- **Salas do servidor (v0.163.0–0.164.0, ADR 0104, fatias A e B):** `src/net/titan/` (`protocol.ts`, `room.ts`, `loopback.ts`, `client.ts`, `socket.ts`), `?sala=`/`&loopback=1` em `titanGame.ts`, `TitanRenderer.setRemotePlayers`, `TitanVolume.onSet`, `resume` exportado; domínio em `multiplayer.md`.
+- **Salas do servidor (v0.163.0–0.165.0, ADR 0104, fatias A, B e C):** `src/net/titan/` (`protocol.ts`, `room.ts`, `loopback.ts`, `client.ts`, `socket.ts`), `?sala=`/`&loopback=1` em `titanGame.ts`, `TitanRenderer.setRemotePlayers`, `TitanVolume.onSet`, `resume` exportado; domínio em `multiplayer.md`.
 - **Auto-step (v0.162.0, ADR 0103):** `STEP_HEIGHT` 0,6, `autoStepUp` em `physics.ts`, `Body.stepSmooth` lido só pela câmera.
 - **Porta de Junco (v0.162.0, ADR 0102):** item 41, blocos 58–89 com o estado no id (`doorId`/`isDoor`/`isDoorUpper`/`isDoorOpen`/`isDoorHingeRight`/`doorTurn`/`doorToggled`/`doorRight` em `voxel.ts`), `placeDoor`/`breakDoor`/`useDoor`/`doorHingeFor` em `actions.ts`, modelo `porta` (só a metade de baixo), pose pura em `titan/doorPose.ts`, abertura visual em `doorAmt` no renderer, `playDoor`; atlas de itens 4 × 11; `scripts/make-titan-porta.py`.
 - **Família do Junco (v0.161.0, ADR 0100/0101):** blocos 47–57 (`REED_BLOCK`, `REED_SLAB`/`_TOP`, `REED_STAIR` 50–53, `REED_CHAIR` 54–57), itens 37–40; `isSlabBottom`/`slabPartner` e `resolveSlabPlacement(…, laje)`; `blockBoxes`/`CellBox`/`isStair`/`isChair` em `voxel.ts`, `TitanVolume.bodyBoxes`, caixas em `collides`/`landingY`/`ceilingY`/`raycast`; modelos `degrau`/`cadeira`; `scripts/make-titan-junco.py` e `make-titan-junco-modelos.py`.
