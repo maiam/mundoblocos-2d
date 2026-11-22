@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Regra visual de itens (v0.158.0, ADR 0097):** `titan/extrude.ts` (`itemMask` lê `small` de 16 × 16 e depois os 32 × 32), `scripts/make-titan-sprites16.py` → `assets-src/titan/arte16/` + `itens.json`, `make-titan-arte32.py` e `make-titan-item-masks.py`; sem `HELD_MODELS`/`HELD_MESHES` nem GLB na mão (a categoria `model` é reserva do tridente e da besta).
 - **Sons da tampa e do sono (v0.157.0, ADR 0096):** `gameAudio.playChestOpen`/`playChestClose`/`playSleepDown`/`playWake`; transições puras `lidSound` (`lid.ts`) e `sleepCue`/`SLEEP_WAKE_MS` (`sleep.ts`), com `lidWasOpen` e `sleepPrevMs` em `titanGame.ts`.
 - **Balde 3D na mão e som de água (v0.156.0, ADR 0095):** `HELD_MESHES` e `buildHeldMesh` no renderer (itens 35/36, malhas JSON + atlas, `HandKind` `bucket` em `heldPose.ts`); `gameAudio.playWaterScoop`/`playWaterPour`; `scripts/extract-titan-balde.py`.
 - **Luz do braseiro aceso (v0.155.0, ADR 0094):** `lightLevelOf`/`BRAZIER_LIGHT` em `voxel.ts` (lanterna 15, braseiro aceso 13); `light.ts` com `LightSource` `[x, y, z, nível?]` e `sourceAdded(…, nível)`; `TitanVolume.emitters` (ao lado de `lanterns`) e a ordem emissor-sai → sólido → emissor-entra em `updateLight`.

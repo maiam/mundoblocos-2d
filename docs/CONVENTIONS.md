@@ -44,6 +44,7 @@
 - Controles na tela só em toque (`@media (hover: hover) and (pointer: fine)` esconde).
 
 ## Arte e assets
+- **Armas, ferramentas e itens = sprite 2D extrudado de 16 × 16** (ADR 0097, regra do dono do produto): PNG plano de 16 × 16; o jogo cria a malha (frente, verso e só as bordas onde o pixel toca o transparente, 1/16 de espessura; `titan/extrude.ts`), nunca um modelo 3D esculpido nem cubinhos. Cabo no canto de baixo à esquerda (pivô do golpe). Exceção: tridente e besta carregada (caixas finas em 3D). Arte nova começa em 16 × 16; os 32 × 32 antigos seguem até serem redesenhados.
 - **Escala**: ao integrar arte nova, confira-a no jogo ao lado dos personagens, animais e objetos existentes (a cena de escala `?escala=1` foi removida com o Canvas 2D, v0.93.105; `docs/assets/escala-referencia.jpg` fica como referência); não mude `TILE`, chunks nem colisão para "consertar" um desenho — ajuste a escala/âncora do sprite.
 - **Texturas sempre na direção em que foram desenhadas** (regra do dono do produto, 2026-11-03): chão, cubos e
   construções nunca giram nem espelham por célula — ele planeja a arte contando com essa direção. Para variar, ele

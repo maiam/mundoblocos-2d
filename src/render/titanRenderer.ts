@@ -3,8 +3,7 @@ import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
-import { loadHeldModel } from './heldItem';
-import { titanAdagaRochaUrl, titanPicaretaRochaUrl, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanBraseiroAcesoModel, titanBaldeModel, titanBaldeCheioModel, titanBaldeAtlasUrl, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanBraseiroAcesoModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -574,51 +573,14 @@ export class TitanRenderer {
     else { if (!this.equip.active) this.shownKey = prev; this.equip.start(); }
   }
   private ensureHeld(item: number | null): void {
-    const key = item ?? 0, spec = item !== null ? HELD_MODELS[item] : undefined, mesh = item !== null ? HELD_MESHES[item] : undefined, cat = heldCategory(item, !!spec || !!mesh);
-    this.heldKinds.set(key, cat === 'model' ? (spec ?? mesh)!.kind : cat === 'hand' ? 'hand' : cat === 'block' ? 'block' : cat === 'tool' ? 'tool' : 'flat');
+    const key = item ?? 0, cat = heldCategory(item, false); // arma, ferramenta e item são sprite extrudado (ADR 0097); `model` fica reservado às exceções em 3D (tridente, besta)
+    this.heldKinds.set(key, cat === 'hand' ? 'hand' : cat === 'block' ? 'block' : cat === 'tool' ? 'tool' : 'flat');
     if (this.held.has(key)) return;
-    if (cat === 'model' && mesh) { // modelo embutido (JSON + atlas): sem carregar arquivo
-      const g = this.buildHeldMesh(mesh);
-      g.visible = false;
-      this.handScene.add(g);
-      this.held.set(key, g);
-      return;
-    }
-    if (cat === 'model') {
-      this.held.set(key, 'loading');
-      loadHeldModel(spec!.url, (map) => {
-        const m = new THREE.MeshBasicMaterial({ map, vertexColors: true });
-        patchDayLight(m, this.ambient);
-        return m;
-      }).then((g) => { g.scale.setScalar(spec!.scale); g.visible = false; this.handScene.add(g); this.held.set(key, g); }, (e) => { this.held.set(key, 'failed'); console.warn('Titã: modelo do item na mão não carregou', e); });
-      return;
-    }
     const g = cat === 'hand' ? this.buildArm() : cat === 'block' ? this.buildBlock(item!) : this.buildFlat(item!, cat === 'tool');
     if (!g) { this.held.set(key, 'failed'); return; }
     g.visible = false;
     this.handScene.add(g);
     this.held.set(key, g);
-  }
-  private heldMeshMat: THREE.MeshBasicMaterial | null = null;
-  /** Item na mão com malha embutida (balde, ADR 0095): geometria do JSON, atlas próprio e a mesma luz do dia dos outros modelos. */
-  private buildHeldMesh(spec: { model: ModelData; scale: number }): THREE.Group {
-    this.heldMeshMat ??= (() => {
-      const tex = new THREE.TextureLoader().load(titanBaldeAtlasUrl);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      tex.generateMipmaps = false;
-      tex.flipY = false;
-      const m = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true });
-      patchDayLight(m, this.ambient);
-      return m;
-    })();
-    const mesh = new THREE.Mesh(modelGeometry(spec.model), this.heldMeshMat);
-    mesh.frustumCulled = false;
-    const g = new THREE.Group();
-    g.add(mesh);
-    g.scale.setScalar(spec.scale);
-    return g;
   }
   /** Braço direito da mão vazia (4 × 12 × 4 px da skin: 0,25 × 0,75 × 0,25), com a base na origem para girar a partir do ombro. */
   private buildArm(): THREE.Group {
@@ -671,7 +633,7 @@ export class TitanRenderer {
     if (handle) mesh.position.set(0.5, 0.5, 0); // o cabo (canto de baixo à esquerda do sprite) fica na origem: é o pivô do golpe
     const g = new THREE.Group();
     g.add(mesh);
-    g.scale.setScalar(handle ? 0.42 : 0.28);
+    g.scale.setScalar(handle ? 0.34 : 0.28);
     return g;
   }
   /** Começa um golpe da mão (animação de `SWING_S`, com o afundamento do golpe isolado). */
@@ -1003,18 +965,6 @@ function shadeHeld(geo: THREE.BufferGeometry, shade: (nx: number, ny: number, nz
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.setAttribute('glow', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
 }
-
-/** Itens com modelo na mão: arquivo, estilo de golpe e escala (a picareta tem 60 cm, quase o dobro da adaga). */
-const HELD_MODELS: Readonly<Record<number, { url: string; kind: HandKind; scale: number }>> = {
-  22: { url: titanAdagaRochaUrl, kind: 'dagger', scale: 1 },
-  20: { url: titanPicaretaRochaUrl, kind: 'pick', scale: 0.8 },
-};
-
-/** Itens com malha embutida na mão (balde vazio 35 e cheio 36; ADR 0095): modelo, estilo de golpe e escala. */
-const HELD_MESHES: Readonly<Record<number, { model: ModelData; kind: HandKind; scale: number }>> = {
-  35: { model: titanBaldeModel, kind: 'bucket', scale: 0.66 },
-  36: { model: titanBaldeCheioModel, kind: 'bucket', scale: 0.66 },
-};
 
 function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: THREE.Vector3 }, opts: { instGlow?: boolean; time?: { value: number } } = {}): void {
   mat.onBeforeCompile = (sh) => {

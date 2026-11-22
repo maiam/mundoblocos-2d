@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.158.0 — Titã: regra visual de armas, ferramentas e itens (22/11/2026)
+- **ADR 0097.** Armas, ferramentas e itens são **sprite 2D extrudado de 16 × 16** (frente, verso e bordas só onde o pixel toca o transparente, espessura 1/16; nunca modelo 3D esculpido). A técnica já era a do ADR 0087; agora o **padrão de arte é 16 × 16** e o motor aceita 16 e 32.
+- Com as artes do Drive (Adaga e Picareta de Rocha e de Cobre, Balde), esses itens passam de modelo 3D para sprite extrudado: novo `make-titan-sprites16.py` reduz a ilustração ao grid de 16, e as máscaras `small` de `itemMasks.json` e o atlas (ampliação 2× sem suavização) leem essa arte. Saem os GLB de arquivo, `heldItem.ts`, as malhas do balde e os scripts de exportação 3D.
+- Sem mudança de regra, de save nem de gerador. Testes: +3 e −3 (1.167 no total). Conferido a 740 × 360 (na mão e no inventário). Exceção documentada: tridente e besta.
+
 ## Orvalis v0.157.0 — Titã: sons da tampa do baú e do sono (22/11/2026)
 - **ADR 0096.** A tampa do baú **range ao abrir** e **bate ao fechar**; dormir toca uma nota grave que afunda ao escurecer e três notas suaves que sobem ao acordar. Tudo sintetizado (Web Audio, sem arquivos), disparado só nas transições (`lidSound`, `sleepCue`), uma vez cada.
 - Sem mudança de regra, de save nem de gerador. Testes: +2 (1.168 no total). Os sons não foram ouvidos nesta sessão (só a lógica e o fluxo foram conferidos).

@@ -1,6 +1,6 @@
 # ADR 0095 — Titã: balde 3D na mão e som de água (v0.156.0)
 
-**Status:** Aceita. Fecha duas pendências do ADR 0091 (o balde aparecia como sprite extrudado e recolher/despejar usavam o som de colocar bloco).
+**Status:** Aceita; **a malha 3D do balde foi substituída pelo sprite extrudado de 16 × 16 no ADR 0097 (v0.158.0)**; o som de água segue valendo. Fecha duas pendências do ADR 0091 (o balde aparecia como sprite extrudado e recolher/despejar usavam o som de colocar bloco).
 
 ## Decisão
 1. **Malha embutida na mão:** o GLB de jogo 1K do pacote (corpo e alça de cobre com a textura PBR e, no cheio, um disco de líquido) é convertido por `scripts/extract-titan-balde.py` (Blender) em dois JSON (`titan-balde.json`, 1.400 triângulos; `titan-balde-cheio.json`, 1.424) e um atlas único de 256 × 320 px sem perdas (cobre nas 256 linhas de cima, uma amostra do líquido do lago embaixo). O cobre é decimado a 1.400 triângulos com as UVs mantidas. **Pivô no topo da alça**, centrado em x e z, o balde pende para −y. No GLB de jogo a alça já vem tombada contra o corpo; o pivô fica no topo do conjunto.

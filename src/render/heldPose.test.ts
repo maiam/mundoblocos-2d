@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import glbInline from '../assets/titan-adaga-rocha.glb?inline';
-import picaInline from '../assets/titan-picareta-rocha.glb?inline';
 import { bobOffset, DIP_LOOP, DIP_SINGLE, HandAnim, handPose, REST, STYLES, SWING_S, swingCurves } from './heldPose';
 
 describe('item na mão em primeira pessoa (ADR 0071, 0074)', () => {
@@ -37,31 +35,12 @@ describe('item na mão em primeira pessoa (ADR 0071, 0074)', () => {
     for (let t = 0; t < 0.5; t += 0.016) l.update(0.016, 0, true, false); expect(l.swinging).toBe(false); // soltou: termina o ciclo e para
     expect(l.equipOffset).toBeLessThanOrEqual(DIP_LOOP);
   });
-  it('o GLB leve da Adaga de Rocha tem 3 peças sob o pivô CTRL_Adaga com o marcador da palma, uma textura WebP e cabe em 2 MB', () => {
-    const bin = atob(glbInline.slice(glbInline.indexOf(',') + 1)), b = Uint8Array.from(bin, (c) => c.charCodeAt(0)), dv = new DataView(b.buffer);
-    expect(dv.getUint32(0, true)).toBe(0x46546c67);
-    const j = JSON.parse(new TextDecoder().decode(b.subarray(20, 20 + dv.getUint32(12, true))));
-    const names: string[] = j.nodes.map((n: { name: string }) => n.name);
-    expect(names).toEqual(expect.arrayContaining(['CTRL_Adaga', 'Socket_Palma', 'Lâmina de basalto', 'Cabo de junco', 'Amarrações de fibra']));
-    expect(j.meshes).toHaveLength(3); expect(j.images).toHaveLength(1); expect(j.images[0].mimeType).toBe('image/webp'); expect(j.textures).toHaveLength(1);
-    const tris = j.meshes.reduce((s: number, m: { primitives: Array<{ indices: number }> }) => s + m.primitives.reduce((a, p) => a + j.accessors[p.indices].count / 3, 0), 0);
-    expect(tris).toBe(6272);
-    expect(b.length).toBeLessThan(2 * 1024 * 1024); // orçamento do dono do produto
-  });
   it('picareta (ADR 0078): repouso e golpe próprios; desce por cima (gira mais em X e menos de lado que a adaga); o HandAnim usa o estilo do item', () => {
     const rest = handPose(0, { x: 0, y: 0 }, 0, 'pick'), hit = handPose(0.25, { x: 0, y: 0 }, 0, 'pick'), dag = handPose(0.25, { x: 0, y: 0 }, 0, 'dagger');
     expect(rest).toEqual({ ...STYLES.pick.rest }); expect(rest.rx).not.toBe(REST.rx);
     expect(hit.rx).toBeLessThan(rest.rx - 1.2); expect(Math.abs(hit.rz - rest.rz)).toBeLessThan(Math.abs(dag.rz - REST.rz)); expect(handPose(1, { x: 0, y: 0 }, 0, 'pick')).toEqual(rest);
     const a = new HandAnim(); a.kind = 'pick'; a.trigger(); const p = a.update(0.075, 0, true, false);
     expect(p.rx).toBeLessThan(STYLES.pick.rest.rx); expect(p.x).toBeLessThan(STYLES.pick.rest.x + 0.01);
-  });
-  it('o GLB leve da Picareta de Rocha: uma malha de 4.632 triângulos, sem osso nem clipe, uma textura WebP, cabe em 2 MB', () => {
-    const bin = atob(picaInline.slice(picaInline.indexOf(',') + 1)), b = Uint8Array.from(bin, (c) => c.charCodeAt(0)), dv = new DataView(b.buffer);
-    expect(dv.getUint32(0, true)).toBe(0x46546c67);
-    const j = JSON.parse(new TextDecoder().decode(b.subarray(20, 20 + dv.getUint32(12, true))));
-    expect(j.meshes).toHaveLength(1); expect(j.skins).toBeUndefined(); expect(j.animations).toBeUndefined(); expect(j.images).toHaveLength(1); expect(j.images[0].mimeType).toBe('image/webp');
-    expect(j.accessors[j.meshes[0].primitives[0].indices].count / 3).toBe(4632);
-    expect(b.length).toBeLessThan(2 * 1024 * 1024);
   });
 });
 

@@ -1,6 +1,6 @@
 # ADR 0071 — Titã: Adaga de Rocha na mão, em primeira pessoa (v0.128.0)
 
-**Status:** Aceita. Arte do dono do produto (pacote "Adaga de Rocha" do Drive: GLB com 3 peças, mapas 4K, cenas Blender) com **orçamento de 2 MB** para o arquivo. Primeiro item 3D na mão do Titã; antes o item aparecia só como ícone de 32 px.
+**Status:** Aceita; **o item 3D (GLB) na mão foi substituído pelo sprite extrudado de 16 × 16 no ADR 0097 (v0.158.0)**; a cena de mão, a pose e o golpe seguem valendo. Arte do dono do produto (pacote "Adaga de Rocha" do Drive: GLB com 3 peças, mapas 4K, cenas Blender) com **orçamento de 2 MB** para o arquivo. Primeiro item 3D na mão do Titã; antes o item aparecia só como ícone de 32 px.
 
 ## Decisão
 1. **Asset leve** (`src/assets/titan-adaga-rocha.glb`, **338 KB**): o GLB original tem 11,5 MB (acima do que o conector do Drive baixa e do orçamento). `scripts/export-titan-adaga.py` (bpy + Pillow) abre `Adaga_de_Rocha_Rig.blend`, mantém as 3 peças (lâmina de basalto, cabo de junco, amarração de fibra; **6.272 triângulos**) sob o pivô `CTRL_Adaga` com `Socket_Palma` (palma da mão; ponta +Y), troca o material por um só BaseColor reduzido de 4096 para **1024 px em WebP** (`EXT_texture_webp`) e descarta normal/ORM (o jogo não usa luzes de cena). Fontes ficam no Drive.
