@@ -748,7 +748,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (r.msg) notice(r.msg);
       if (r.ok) {
         const b = held ? blockOfItem(held.item) : null;
-        if (b === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b ?? undefined) ?? 'rock');
+        if (held && isBucket(held.item)) { if (held.item === Item.BALDE) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } // recolher e despejar têm som de água (ADR 0095)
+        else if (b === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b ?? undefined) ?? 'rock');
         onEdited(); refresh();
       }
       return { ok: r.ok };

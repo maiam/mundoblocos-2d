@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.156.0 — Titã: balde 3D na mão e som de água (22/11/2026)
+- **ADR 0095.** O Balde de Cobre aparece na mão como **modelo 3D** do pacote de arte (vazio e cheio, com o líquido escuro à vista), no lugar do sprite extrudado. Malhas de 1.400 e 1.424 triângulos (Blender, `extract-titan-balde.py`) embutidas no jogo, com estilo de mão próprio.
+- **Som de água** sintetizado ao recolher (gole que sobe) e ao despejar (fio de água e glub), em vez do som de colocar bloco.
+- Sem mudança de regra, de save nem de gerador. Testes: +2 (1.166 no total). Conferido a 740 × 360 e no jogo.
+
 ## Orvalis v0.155.0 — Titã: luz do Braseiro aceso (21/11/2026)
 - **ADR 0094.** O Braseiro aceso passa a **iluminar o entorno** (luz de bloco 13, perde 1 por célula; a lanterna segue 15). Emissores agora têm nível (`lightLevelOf`); acender, apagar, quebrar e carregar o save acendem e apagam a luz pelo mesmo motor incremental da lanterna.
 - Como o braseiro aceso é sólido e emissor, o motor trata a ordem emissor-sai → sólido → emissor-entra. Sem mudança de save nem de gerador. Testes: +4 (1.164 no total). Conferido a 740 × 360 de noite.
