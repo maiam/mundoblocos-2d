@@ -43,6 +43,9 @@ import camaAtlas from '../../assets/titan-cama-atlas.webp';
 import braseiroModel from '../../assets/titan-braseiro.json';
 import braseiroAcesoModel from '../../assets/titan-braseiro-aceso.json';
 import braseiroAtlas from '../../assets/titan-braseiro-atlas.webp';
+import baldeModel from '../../assets/titan-balde.json';
+import baldeCheioModel from '../../assets/titan-balde-cheio.json';
+import baldeAtlas from '../../assets/titan-balde-atlas.webp';
 import bauModel from '../../assets/titan-bau.json';
 import bauAtlas from '../../assets/titan-bau-atlas.webp';
 import bauTampaModel from '../../assets/titan-bau-tampa.json';
@@ -100,6 +103,10 @@ export const titanCamaAtlasUrl: string = camaAtlas;
 export const titanBraseiroModel = braseiroModel as ModelData;
 export const titanBraseiroAcesoModel = braseiroAcesoModel as ModelData;
 export const titanBraseiroAtlasUrl: string = braseiroAtlas;
+/** Balde de Cobre na mão (ADR 0095): vazio e cheio (1.400 e 1.424 triângulos, `scripts/extract-titan-balde.py`), pivô no topo e atlas de 256 × 320 px (cobre + amostra do líquido). */
+export const titanBaldeModel = baldeModel as ModelData;
+export const titanBaldeCheioModel = baldeCheioModel as ModelData;
+export const titanBaldeAtlasUrl: string = baldeAtlas;
 /** Planta da Noz de Duna (3.008 triângulos, ADR 0060; `scripts/extract-titan-noz.py`): a planta sem frutos (2.160) e as 4 nozes (848), um atlas de 144 × 36 px. Pivô ao nível do solo. */
 export const titanNozPlantaModel = nozPlantaModel as ModelData;
 export const titanNozFrutosModel = nozFrutosModel as ModelData;

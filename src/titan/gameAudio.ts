@@ -151,6 +151,26 @@ export class GameSoundSynthesizer {
     });
   }
 
+  /** Balde de Cobre (ADR 0095): recolher, a água entra num gole que sobe (ruído filtrado subindo e duas bolhas curtas). */
+  playWaterScoop(): void {
+    this.safe((now) => {
+      const j = 0.94 + Math.random() * 0.14;
+      this.burst(now, 0.26, 700 * j, 2.2, 0.22, 'bandpass', 0.05);
+      this.tone(now + 0.03, 360 * j, 760 * j, 0.09, 'sine', 0.16);
+      this.tone(now + 0.12, 520 * j, 1040 * j, 0.08, 'sine', 0.12);
+      this.burst(now + 0.14, 0.14, 1800 * j, 1.4, 0.08, 'bandpass', 0.02);
+    });
+  }
+  /** Despejar: um fio de água que cai (ruído mais longo e descendo) e um glub grave no fim. */
+  playWaterPour(): void {
+    this.safe((now) => {
+      const j = 0.94 + Math.random() * 0.14;
+      this.burst(now, 0.38, 1500 * j, 1.2, 0.2, 'bandpass', 0.03);
+      this.burst(now + 0.08, 0.3, 900 * j, 1.8, 0.16, 'bandpass', 0.05);
+      this.tone(now + 0.3, 520 * j, 210 * j, 0.12, 'sine', 0.2);
+    });
+  }
+
   // ---- Dano ----
   playHurt(): void {
     this.safe((now) => {

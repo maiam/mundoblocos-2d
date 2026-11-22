@@ -9,7 +9,7 @@ export const DIP_SINGLE = 0.45, DIP_LOOP = 0.15;
 export interface HandPose { x: number; y: number; z: number; rx: number; ry: number; rz: number }
 
 /** Estilo de golpe do item na mão: a adaga corta em diagonal; a picareta desce por cima (ADR 0078). */
-export type HandKind = 'dagger' | 'pick' | 'hand' | 'block' | 'flat' | 'tool';
+export type HandKind = 'dagger' | 'pick' | 'hand' | 'block' | 'flat' | 'tool' | 'bucket';
 /** Repouso da adaga: pende à direita e embaixo, ponta para frente e para cima (a ponta do modelo é +Y). */
 export const REST: HandPose = { x: 0.26, y: -0.12, z: -0.52, rx: -0.8, ry: 0, rz: 0.3 };
 /** Repouso e amplitudes do golpe de cada estilo (o da adaga é o histórico; a picareta segura o cabo na vertical com a cabeça para cima e à frente). */
@@ -20,6 +20,8 @@ export const STYLES: Record<HandKind, { rest: HandPose; dx: number; dy: number; 
   hand: { rest: { x: 0.46, y: -0.52, z: -0.5, rx: -0.95, ry: 0.55, rz: -0.4 }, dx: 0.12, dy: 0.1, dz: 0.2, drx: 40, dry: 20, drz: 14 },
   block: { rest: { x: 0.3, y: -0.1, z: -0.62, rx: 0.1, ry: 0.785, rz: 0 }, dx: 0.14, dy: 0.1, dz: 0.18, drx: 36, dry: 16, drz: 12 },
   flat: { rest: { x: 0.26, y: -0.08, z: -0.55, rx: 0.12, ry: -0.5, rz: 0.12 }, dx: 0.14, dy: 0.1, dz: 0.18, drx: 36, dry: 18, drz: 16 },
+  // balde 3D (ADR 0095): pivô no topo da alça/borda, o balde pende para baixo; inclina um pouco para mostrar a boca
+  bucket: { rest: { x: 0.34, y: 0.02, z: -0.58, rx: 0.55, ry: -0.5, rz: 0.08 }, dx: 0.12, dy: 0.1, dz: 0.18, drx: 40, dry: 16, drz: 12 },
   tool: { rest: { x: 0.3, y: -0.2, z: -0.55, rx: -0.3, ry: -0.5, rz: 0.4 }, dx: 0.14, dy: 0.12, dz: 0.2, drx: 70, dry: 14, drz: 10 },
 };
 const DEG = Math.PI / 180;
