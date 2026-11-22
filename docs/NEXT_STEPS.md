@@ -30,6 +30,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Família do Junco (v0.161.0, ADR 0100 e 0101):** calibrar as receitas (provisórias); sentar na cadeira; degrau em canto e invertido; colisão das pernas da cadeira; textura de bloco sem moldura (se o dono enviar); som próprio de junco; o atlas de itens tem 44 ids (41 ocupados).
 
+**Salas do Titã (ADR 0104) — bloqueio atual:** o servidor no ar ainda não tem as salas (roteiro em `SERVIDOR_TITA.md`; o acesso do assistente ao repositório `orvalis-servidor` foi negado, então a integração fica com o dono ou numa sessão com esse repositório liberado).
+
 **Salas do Titã (ADR 0104):** fatias B e C entregues (v0.164.0/0.165.0); `GET /salas` do servidor listar a sala 101 (a contagem do ☰ depende disso), reconexão sem recarregar a página, previsão local de ação, vida/queda calculadas na sala (anti-trapaça), véu de sono; **servidor** (`orvalis-servidor`: rotear `room ≥ 101`, `sync-net`, gravar `snapshot()`, `GET /salas`); calibrar alcance (8 m) e atraso.
 
 **Auto-step (ADR 0103):** calibrar `STEP_HEIGHT` e a suavização da câmera em aparelho real.

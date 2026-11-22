@@ -52,7 +52,7 @@ export class TitanClient {
   /** Entra na sala e resolve com a sessão local (mundo da sala). Rejeita com a mensagem de erro da sala. */
   connect(name: string, room: number): Promise<TitanSession> {
     return new Promise((resolve, reject) => {
-      this.welcome = resolve; this.failed = reject;
+      this.welcome = resolve; this.failed = (why) => reject(new Error(why)); // rejeita sempre com `Error` (a interface lê `.message`)
       this.transport.send(JSON.stringify({ t: 'hello', v: TITAN_PROTOCOL_VERSION, name, room }));
     });
   }

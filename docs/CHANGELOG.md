@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.167.0 — Titã: sala recusada cai para o modo solo (22/11/2026)
+- **Diagnóstico:** o servidor no ar ainda não tem as salas do Titã (`GET /salas` só traz a Sala 1 e o Santuário; o `hello` do Titã recebe `Sala não encontrada.`). Por isso não dava para entrar.
+- **Jogo:** se a sala recusa ou não responde, o jogo volta ao modo solo com um aviso claro (**O servidor ainda não tem as salas do Titã. Jogando sozinho.**) em vez de parar; o botão do ☰ fica desativado (**Salas do Titã: servidor sem suporte ainda**) quando `/salas` responde sem a sala 101; `TitanClient.connect` passa a rejeitar sempre com `Error`.
+- **Docs:** novo `docs/SERVIDOR_TITA.md` com o roteiro da integração no `orvalis-servidor` (rotear `room ≥ 100`, tick, snapshot, `/salas`). Sem mudança de protocolo, gerador nem save.
+
 ## Orvalis v0.166.0 — Titã: lista de salas, espera e reconexão (22/11/2026)
 - **ADR 0104.** O botão de sala do ☰ mostra a **contagem de jogadores** (`Jogar na sala: Titã 1 (N/10)` pelo `GET /salas`; dentro da sala, `Sair da sala (N/10)`), há um aviso **Entrando na sala…** enquanto conecta e, com a conexão perdida, o botão vira **Reconectar à sala**. O servidor precisa listar a sala 101 em `GET /salas`. Sem mudança de protocolo, gerador nem save. Conferido a 740 × 360 (contagem 1/10 → 2/10 com um segundo jogador e botão de reconectar).
 
