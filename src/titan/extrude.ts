@@ -1,7 +1,7 @@
 import masks from './itemMasks.json';
 
 /**
- * Extrusão de sprite (ADR 0087), no modelo do `ItemModelGenerator` do Minecraft: a malha do item plano é a frente e o verso do sprite (um quadrado por pixel opaco) mais uma tirinha lateral de
+ * Extrusão de sprite (ADR 0087; regra visual do ADR 0097), no modelo do `ItemModelGenerator` do Minecraft: a malha do item plano é a frente e o verso do sprite (um quadrado por pixel opaco) mais uma tirinha lateral de
  * `depth` onde o pixel opaco faz fronteira com um transparente. Puro e sem canvas: a máscara de pixels vem pronta de `itemMasks.json` (script `make-titan-item-masks.py`), porque ler um canvas
  * pode ser bloqueado no Artifact. As posições saem centradas em [−0,5, 0,5] (x à direita, y acima, z para a câmera) e as UVs em coordenadas do sprite (u à direita, v acima, 0–1).
  */
@@ -18,8 +18,13 @@ export function maskFromHex(hex: string, w: number, h: number): Uint8Array {
   return out;
 }
 
-/** Máscara do ícone do item (`w × h`), ou null se o item não tem ícone. */
+/**
+ * Máscara do ícone do item, ou null se o item não tem ícone. Arma, ferramenta e item novos têm arte de **16 × 16** (`masks.small`, ADR 0097, a regra visual); os demais seguem na máscara de
+ * 32 × 32. A malha não depende da resolução: o sprite ocupa sempre 1 de lado e a espessura é 1/16 dele (a mesma do 16 × 16).
+ */
 export function itemMask(item: number): { mask: Uint8Array; w: number; h: number } | null {
+  const small = (masks.small.items as Record<string, string>)[String(item)];
+  if (small) return { mask: maskFromHex(small, masks.small.w, masks.small.h), w: masks.small.w, h: masks.small.h };
   const hex = (masks.items as Record<string, string>)[String(item)];
   return hex ? { mask: maskFromHex(hex, masks.w, masks.h), w: masks.w, h: masks.h } : null;
 }

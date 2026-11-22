@@ -30,10 +30,36 @@ describe('extrusão de sprite (ADR 0087)', () => {
     for (let item = 1; item <= Item.ESTEIRA; item++) {
       const m = itemMask(item);
       expect(m, `item ${item}`).not.toBeNull();
-      expect(m!.w).toBe(32); expect(m!.mask.length).toBe(1024); expect(m!.mask.some((b) => b === 1)).toBe(true);
+      expect([16, 32]).toContain(m!.w); expect(m!.h).toBe(m!.w); expect(m!.mask.length).toBe(m!.w * m!.h); expect(m!.mask.some((b) => b === 1)).toBe(true);
       expect(extrudeMask(m!.mask, m!.w, m!.h, 1 / 16).quads).toBeLessThan(3500);
     }
     expect(itemMask(999)).toBeNull();
+  });
+});
+
+/** Regra visual (ADR 0097): arma, ferramenta e item são sprite 2D extrudado de 16 × 16, nunca modelo 3D esculpido. */
+describe('regra visual: sprite 2D extrudado de 16 × 16 (ADR 0097)', () => {
+  const SPRITES = [Item.STONE_PICK, Item.STONE_DAGGER, Item.COPPER_PICK, Item.COPPER_DAGGER, Item.BALDE, Item.BALDE_CHEIO];
+  it('armas, ferramentas e o balde têm arte de 16 × 16 e são "ferramenta" ou item plano, nunca modelo', () => {
+    for (const it of SPRITES) { const m = itemMask(it)!; expect([m.w, m.h], `item ${it}`).toEqual([16, 16]); expect(heldCategory(it, false), `item ${it}`).not.toBe('model'); }
+    for (const it of [Item.STONE_PICK, Item.STONE_DAGGER, Item.COPPER_PICK, Item.COPPER_DAGGER]) expect(heldCategory(it, false)).toBe('tool');
+    for (const it of [Item.BALDE, Item.BALDE_CHEIO]) expect(heldCategory(it, false)).toBe('flat');
+  });
+  it('a malha é um adesivo grosso: frente e verso (1 quadrado por pixel opaco) e só as bordas onde o vizinho é transparente, com 1/16 de espessura', () => {
+    for (const it of SPRITES) {
+      const { mask, w, h } = itemMask(it)!, e = extrudeMask(mask, w, h, 1 / 16);
+      const on = (x: number, y: number): boolean => x >= 0 && x < w && y >= 0 && y < h && mask[y * w + x] > 0;
+      let opaque = 0, edges = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (on(x, y)) { opaque++; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) if (!on(x + dx, y + dy)) edges++; }
+      expect(e.quads, `item ${it}`).toBe(2 * opaque + edges); // sem faces internas: nada de cubinhos empilhados
+      const zs = e.pos.filter((_, i) => i % 3 === 2);
+      expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(1 / 16, 10);
+      expect(e.quads * 2).toBeLessThan(1200); // 16 × 16: leve por definição
+    }
+  });
+  it('a espessura é 1/16 do item em qualquer resolução (16 ou 32): o mesmo adesivo', () => {
+    const z = (n: number): number => { const e = extrudeMask(new Array(n * n).fill(1), n, n, 1 / 16), zs = e.pos.filter((_, i) => i % 3 === 2); return Math.max(...zs) - Math.min(...zs); };
+    expect(z(16)).toBeCloseTo(1 / 16, 10); expect(z(32)).toBeCloseTo(1 / 16, 10);
   });
 });
 

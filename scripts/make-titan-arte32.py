@@ -2,6 +2,7 @@
 
 Entradas : src/assets/titan-hotbar-sprites-16px.webp (atlas de itens 4 × 4 de 16 px, gerado por make-titan-fabricacao.py; só a cápsula legada, id 7, ainda vem dele),
            assets-src/titan/arte32/*.png: um sprite de 32 × 32 por item (tabela `NEW` abaixo; blocos e mesa em vista 3/4, o resto plano),
+           assets-src/titan/arte16/*.png + itens.json: sprites de 16 × 16 de armas, ferramentas e itens (ADR 0097; `make-titan-sprites16.py`), ampliados 2× sem suavização,
            titan-junco-variantes-32px.png (128 × 32, 3 silhuetas + 1 célula vazia).
 Saídas   : src/assets/titan-itens-32px.webp          128 × 128 (grade 4 × 4 de 32 px, índice = id do item − 1): todos os itens em 32 px de verdade; a célula 7 (cápsula legada) é a base de 16 px ampliada 2× (vizinho mais próximo)
            src/assets/titan-junco-variantes-32px.webp 128 × 32 (colunas 0–2 = broto baixo, haste bifurcada, tufo aberto; coluna 3 vazia)
@@ -9,22 +10,25 @@ Saídas   : src/assets/titan-itens-32px.webp          128 × 128 (grade 4 × 4 d
                                                       cai na célula 1 e a lateral cai na 3, igual à 2). Fontes: lago_topo_01/02_32px.png e lago_lateral_exposta_32px.png.
 Tudo em WebP SEM perdas (fora do optimize-assets.py). Repetível: lê só a base de 16 px e o pacote, nunca o próprio resultado. Uso: python3 -I scripts/make-titan-arte32.py
 """
+import json
+
 from PIL import Image
 
 BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
+SRC16 = 'assets-src/titan/arte16/'  # armas, ferramentas e itens de 16 × 16 px (ADR 0097): `itens.json` diz qual item usa qual arquivo
 OUT_ITEMS, OUT_REED, OUT_LAKE = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp', 'src/assets/titan-lago-32px.webp'
 NEW = {  # id do item -> arte de 32 px
     1: 'areia_ocre_32px.png', 2: 'areia_umida_32px.png', 3: 'rocha_escura_32px.png', 4: 'gelo_fosco_32px.png',
     5: 'fragmento_de_rocha_32px.png', 6: 'fragmento_de_gelo_32px.png', 8: 'lanterna_da_margem_32px.png',
     9: 'mesa_de_trabalho_32px.png', 10: 'Lente_de_Gelo_32px.png', 11: 'Brasa_de_Ambar_32px.png', 12: 'Junco_de_Vidro_Item_32px.png', 13: 'laje_de_rocha_32px.png',
     14: 'Marco_de_Margem_Icone_32px.png', 15: 'Painel_de_Junco_Icone_32px.png', 16: 'Noz_de_Duna_Item_32px.png',
-    17: 'Fragmento_de_Cobre_de_Duna_Item_32px.png', 18: 'Lingote_de_Cobre_de_Duna_Item_32px.png', 19: 'Haste_Seca_de_Junco_Item_32px.png', 20: 'Picareta_de_Rocha_Item_32px.png',
-    21: 'Braseiro_de_Rocha_Item_32px.png', 22: 'Adaga_de_Rocha_Item_32px.png', 23: 'Picareta_de_Cobre_Item_32px.png', 24: 'Adaga_de_Cobre_Item_32px.png',
+    17: 'Fragmento_de_Cobre_de_Duna_Item_32px.png', 18: 'Lingote_de_Cobre_de_Duna_Item_32px.png', 19: 'Haste_Seca_de_Junco_Item_32px.png',
+    21: 'Braseiro_de_Rocha_Item_32px.png',
     25: 'Placa_de_Carapaca_Item_32px.png', 26: 'Revestimento_de_Carapaca_Item_32px.png',
     27: 'Carne_Crua_de_Farejador_Item_32px.png', 28: 'Carne_Assada_de_Farejador_Item_32px.png',
     29: 'Bloco_de_Ambar_Compactado_Item_32px.png', 30: 'Noz_Torrada_Item_32px.png',
-    31: 'Esteira_de_Junco_Item_32px.png', 32: 'Escada_de_Junco_Item_32px.png', 33: 'Bau_de_Rocha_e_Junco_Item_32px.png', 34: 'Cama_de_Junco_Item_32px.png', 35: 'Balde_de_Cobre_Vazio_Item_32px.png', 36: 'Balde_de_Cobre_Cheio_Item_32px.png',
+    31: 'Esteira_de_Junco_Item_32px.png', 32: 'Escada_de_Junco_Item_32px.png', 33: 'Bau_de_Rocha_e_Junco_Item_32px.png', 34: 'Cama_de_Junco_Item_32px.png',
 }
 
 
@@ -40,6 +44,15 @@ def main() -> None:
         x, y = (idx % 4) * 32, (idx // 4) * 32
         atlas.paste(Image.new('RGBA', (32, 32), (0, 0, 0, 0)), (x, y))  # limpa a célula antes (paste com alfa não substitui o fundo)
         atlas.paste(t, (x, y))
+    atlas.save(OUT_ITEMS, lossless=True, quality=100, method=6)
+    for item, name in json.load(open(SRC16 + 'itens.json')).items():  # arte de 16 px: ampliada 2× sem suavização para a célula de 32 px (a extrusão lê a grade de 16: `make-titan-item-masks.py`)
+        t = Image.open(SRC16 + name).convert('RGBA')
+        assert t.size == (16, 16), (name, t.size)
+        idx = int(item) - 1
+        x, y = (idx % 4) * 32, (idx // 4) * 32
+        assert item not in {str(k) for k in NEW}, f'item {item} está nas duas tabelas'
+        atlas.paste(Image.new('RGBA', (32, 32), (0, 0, 0, 0)), (x, y))
+        atlas.paste(t.resize((32, 32), Image.NEAREST), (x, y))
     atlas.save(OUT_ITEMS, lossless=True, quality=100, method=6)
     reed = Image.open(SRC + 'titan-junco-variantes-32px.png').convert('RGBA')
     assert reed.size == (128, 32), reed.size

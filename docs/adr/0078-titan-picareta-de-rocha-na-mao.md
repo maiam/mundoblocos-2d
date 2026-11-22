@@ -1,6 +1,6 @@
 # ADR 0078 — Titã: Picareta de Rocha na mão (v0.137.0)
 
-**Status:** Aceita. Arte do dono do produto (pasta "Picareta de Rocha" do Drive: GLB de 3,1 MB com rig, clipe "Minerar" e 3 texturas 1K; ZIP completo com Blender e mapas 4K). Segue o ADR 0071 (adaga): mesmo carregador, mesma cena de mão, orçamento de 2 MB.
+**Status:** Aceita; **o GLB da picareta foi substituído pelo sprite extrudado de 16 × 16 no ADR 0097 (v0.158.0)**. Arte do dono do produto (pasta "Picareta de Rocha" do Drive: GLB de 3,1 MB com rig, clipe "Minerar" e 3 texturas 1K; ZIP completo com Blender e mapas 4K). Segue o ADR 0071 (adaga): mesmo carregador, mesma cena de mão, orçamento de 2 MB.
 
 ## Decisão
 1. **Asset leve** (`src/assets/titan-picareta-rocha.glb`, **325 KB**): `scripts/export-titan-picareta.py` (bpy + Pillow) lê o GLB original, extrai o BaseColor, o reduz para 1024 px em WebP e exporta **só a malha** (4.632 triângulos, 60 cm, cabeça de 43 cm, pivô no centro da empunhadura), sem osso `Grip` nem clipe `Minerar`: o golpe é procedural (ADR 0071/0076). Normal e ORM não entram (o jogo usa material sem luzes de cena).
