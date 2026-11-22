@@ -29,6 +29,7 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'laje-junco', name: 'Laje de Junco', group: 'construcao', result: { item: Item.LAJE_JUNCO, count: 6 }, ingredients: [{ item: Item.BLOCO_JUNCO, count: 3 }], station: 'workbench' },
   { id: 'degrau-junco', name: 'Degrau de Junco', group: 'construcao', result: { item: Item.DEGRAU_JUNCO, count: 4 }, ingredients: [{ item: Item.BLOCO_JUNCO, count: 3 }], station: 'workbench' },
   { id: 'cadeira-junco', name: 'Cadeira de Junco', group: 'construcao', result: { item: Item.CADEIRA_JUNCO, count: 1 }, ingredients: [{ item: Item.DRY_REED, count: 3 }, { item: Item.ESTEIRA, count: 1 }], station: 'workbench' },
+  { id: 'porta-junco', name: 'Porta de Junco', group: 'construcao', result: { item: Item.PORTA_JUNCO, count: 1 }, ingredients: [{ item: Item.BLOCO_JUNCO, count: 3 }], station: 'workbench' }, // provisória (ADR 0102): pede calibragem em jogo
   { id: 'balde', name: 'Balde de Cobre', group: 'ferramentas', result: { item: Item.BALDE, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 3 }], station: 'workbench' },
   { id: 'cama', name: 'Cama de Junco', group: 'construcao', result: { item: Item.CAMA, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 3 }, { item: Item.ESTEIRA, count: 2 }], station: 'workbench' },
   { id: 'bau', name: 'Baú de Rocha e Junco', group: 'construcao', result: { item: Item.BAU, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }, { item: Item.ESTEIRA, count: 1 }], station: 'workbench' },

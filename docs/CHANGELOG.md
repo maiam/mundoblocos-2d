@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.162.0 — Titã: Porta de Junco (22/11/2026)
+- **ADR 0102.** Nova **Porta de Junco** (item 41; blocos 58–89): bloco de **duas células na vertical** com o estado (giro, aberta, dobradiça, metade) **no id**; dobradiça automática (a segunda porta ao lado prende no lado oposto e as duas abrem juntas); abre e fecha por **toque/clique, F ou Usar**, com giro de 90° animado em torno da dobradiça (eixo a 0,40625 m, folha de 1 × 2 × 3/16 m) e colisão por caixa que muda com o estado (a folha aberta fica rente à lateral da célula). Quebrar qualquer metade tira a porta inteira e solta 1; tirar o piso a leva junto. Fechar é recusado com o corpo na folha. Som `playDoor`.
+- Item plano extrudado (ADR 0097); o **atlas de itens passa a 4 × 11** (44 ids). Arte do Drive recortada por quadrilátero (`scripts/make-titan-porta.py`, `titan-porta.webp` 64 × 128). Receita provisória: 3 Blocos de Junco → 1 Porta. Sem mudança de gerador nem de save. Testes: +9 (1.207 no total). Conferido a 740 × 360.
+
 ## Orvalis v0.161.0 — Titã: família do Junco (22/11/2026)
 - **ADR 0100 e 0101.** Quatro itens novos de junco com as artes do Drive: **Bloco de Junco**, **Laje de Junco**, **Degrau de Junco** e **Cadeira de Junco** (itens 37–40; blocos 47–57), todos fabricados na Mesa de Trabalho (receitas **provisórias**: 6 Hastes Secas → Bloco; 3 Blocos → 6 Lajes ou 4 Degraus; 3 Hastes + 1 Esteira → Cadeira).
 - A laje passa a ter **famílias** (rocha e junco; a fusão de duas lajes de junco é o Bloco de Junco). Degrau e cadeira são os primeiros **sólidos de várias caixas**: colisão e mira por caixa (sobe-se o degrau andando; o raio passa pelos vãos) e modelos instanciados de caixas com a trama repetida (`blockBoxes`, `bodyBoxes`).

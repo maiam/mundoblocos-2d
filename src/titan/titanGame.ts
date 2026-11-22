@@ -1,11 +1,11 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
 import { tickFurnaces } from './session';
 import { durabilityHue, durabilityRatio, maxDurability } from './wear';
-import { canPlantNut, chestAt, chestMoveIn, chestTakeOut, useBed, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
+import { canPlantNut, useDoor, chestAt, chestMoveIn, chestTakeOut, useBed, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, tickRespawn } from './combat';
@@ -26,7 +26,7 @@ import { TitanPerf } from './perf';
 import { advanceDay, isNightTime, parseHora, phaseName, saturnVisibility } from './sky';
 import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepCue, sleepVeil } from './sleep';
 import { lidSound } from './lid';
-import { isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
+import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, tickCrops, tickRegrow } from './session';
@@ -88,7 +88,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -97,7 +97,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora'));
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
@@ -371,9 +371,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.hidden = true;
   function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
   /** Estação na mira (Mesa de Trabalho ou Braseiro) ao alcance de uso. */
-  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'chest' | 'bed' } | null => {
+  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'chest' | 'bed' | 'door' } | null => {
     if (!target || target.item) return null;
-    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isChest(id) ? 'chest' : isBed(id) ? 'bed' : null;
+    const id = vol.get(target.x, target.y, target.z), kind = isWorkbench(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isChest(id) ? 'chest' : isBed(id) ? 'bed' : isDoor(id) ? 'door' : null;
     if (!kind) return null;
     return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z, kind } : null;
   };
@@ -445,6 +445,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function openStation(): void {
     const at = benchAimed();
     if (!at || bagOpen || !playing) return;
+    if (at.kind === 'door') { // a porta abre e fecha na hora, sem tela (ADR 0102)
+      const r = useDoor(session, at.x, at.y, at.z);
+      if (r.msg) notice(r.msg);
+      if (r.ok) { gameAudio.playDoor(!!r.open); onEdited(); }
+      return;
+    }
     if (at.kind === 'bed') { // a cama não abre tela: marca o ponto de retorno e, à noite, dorme até o amanhecer (ADR 0090)
       if (isNightTime(session.time)) { // à noite: o véu escurece, a noite passa com a tela preta e ele clareia (ADR 0093)
         if (sleepStart) return;
@@ -743,6 +749,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
       if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
+      if (t.kind === 'block' && isDoor(vol.get(t.x, t.y, t.z)) && benchAimed()) { openStation(); return { ok: true }; } // tocar/clicar na porta (ao alcance) abre ou fecha, com qualquer coisa na mão (ADR 0102)
       if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
       if (held && foodOf(held.item) && !(held.item === Item.NOZ && t.kind === 'block' && canPlantNut(session, t))) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come (a noz, só se não houver onde plantá-la)
