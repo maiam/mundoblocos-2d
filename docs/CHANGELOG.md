@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.168.0 — Titã: `TitanRoom` pronta para o servidor (22/11/2026)
+- `TitanRoom` ganha `size` (jogadores) e `dirty` (há o que gravar: ações, bolsa, saída de jogador, braseiros, plantas, coleta; `snapshot()`/`restore()` limpam), a mesma forma que o `src/app.js` do `orvalis-servidor` lê da `Room` do mundo principal. Sem mudança de protocolo (`TITAN_PROTOCOL_VERSION` 2), gerador nem save. Testes: +1 (1.236 no total). Ao lado, a integração no servidor (roteamento da sala 101, tick, gravação e `/salas`) segue em branch do `orvalis-servidor`.
+
 ## Orvalis v0.167.0 — Titã: sala recusada cai para o modo solo (22/11/2026)
 - **Diagnóstico:** o servidor no ar ainda não tem as salas do Titã (`GET /salas` só traz a Sala 1 e o Santuário; o `hello` do Titã recebe `Sala não encontrada.`). Por isso não dava para entrar.
 - **Jogo:** se a sala recusa ou não responde, o jogo volta ao modo solo com um aviso claro (**O servidor ainda não tem as salas do Titã. Jogando sozinho.**) em vez de parar; o botão do ☰ fica desativado (**Salas do Titã: servidor sem suporte ainda**) quando `/salas` responde sem a sala 101; `TitanClient.connect` passa a rejeitar sempre com `Error`.

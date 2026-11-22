@@ -5,6 +5,8 @@ Roteiro para quem for mexer no repositório `maiam/orvalis-servidor` (ADR 0104).
 ## O que o pacote traz (`dist-net/orvalis-net.cjs`, gerado aqui por `npm run build:net` e copiado por `npm run sync-net`)
 `TitanRoom`, `TITAN_ROOMS` (`[{ id: 101, name: 'Titã 1', seed: 20261122 }]`), `titanRoomById`, `parseTitanClientMessage`, `TITAN_PROTOCOL_VERSION` (hoje **2**), `TITAN_MAX_PLAYERS`, `TITAN_SNAPSHOT_VERSION`, tipos `TitanClientMessage`/`TitanServerMessage`/`TitanOutgoing`/`TitanRoomSnapshot`.
 
+`TitanRoom` expõe o que o `src/app.js` do servidor lê das salas: `id`, `name`, `size` (jogadores), `dirty` (grava quando há mudança; `snapshot()` e `restore()` limpam), `tick`, `join`, `handle`, `leave`, `snapshot`, `restore`. `droppedOnRestore` não existe nela (o servidor trata como indefinido).
+
 ## O que o servidor precisa fazer
 1. **Criar as salas:** para cada item de `TITAN_ROOMS`, `new TitanRoom(r.id, r.name, r.seed)` (o terceiro argumento opcional é o `rand`, padrão `Math.random`). Restaurar do arquivo `titan-sala-<id>.json` em `DATA_DIR` com `room.restore(JSON.parse(...))` antes de aceitar conexões (devolve `false` se a seed ou o gerador não batem: nesse caso comece a sala limpa e preserve o arquivo antigo).
 2. **Rotear pelo `hello`:** o primeiro texto de cada conexão é um `hello`; leia só `room` e `t` (JSON). `room >= 100` (ou `titanRoomById(room)`) → fluxo do Titã; senão, o fluxo atual. Uma conexão fica numa sala só.

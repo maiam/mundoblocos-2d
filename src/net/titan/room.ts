@@ -72,6 +72,10 @@ export class TitanRoom {
   }
 
   get playerCount(): number { return this.players.size; }
+  /** Quantos jogadores há (o servidor lê `room.size`, como na `Room` do mundo principal). */
+  get size(): number { return this.players.size; }
+  /** Há algo novo para gravar em disco (o servidor grava quando `dirty`; `snapshot()` limpa). */
+  dirty = false;
   playerNames(): string[] { return [...this.players.values()].map((p) => p.name); }
   viewOf(id: number): TitanSession | undefined { return this.players.get(id)?.view; }
 
@@ -105,6 +109,7 @@ export class TitanRoom {
     const p = this.players.get(id);
     if (!p) return [];
     this.keep(p);
+    this.dirty = true; // a bolsa e a posição de quem saiu vão para o arquivo
     this.players.delete(id);
     const rest = [...this.players.values()]; // quem ficou já estava todo na cama: a noite passa
     if (rest.length && rest.every((o) => o.bed) && isNightTime(this.world.time)) { const o = rest[0]; useBed(o.view, o.bed!.x, o.bed!.y, o.bed!.z, true); for (const q of rest) q.bed = null; this.timeDirty = true; }
@@ -130,6 +135,7 @@ export class TitanRoom {
       }
       case 'bag': {
         p.view.inventory = Inventory.fromData(m.bag);
+        this.dirty = true;
         return [];
       }
       case 'act': return this.act(p, m.seq, m.a);
@@ -163,6 +169,7 @@ export class TitanRoom {
         case 'die': r = this.die(p, out); break;
       }
     }
+    this.dirty = true;
     return [{ to: p.id, msg: { t: 'applied', seq, ok: r.ok, ...(r.msg ? { msg: r.msg } : {}), ...(r.open !== undefined ? { open: r.open } : {}), bag: v.inventory.toData() } }, ...out, ...this.flush()];
   }
 
@@ -225,14 +232,15 @@ export class TitanRoom {
     w.time = advanceDay(w.time, dt);
     if (w.time < before) w.days++;
     this.clock += dt;
-    tickFurnaces(w, dt);
-    tickRegrow(w, dt);
+    if (tickFurnaces(w, dt)) this.dirty = true;
+    if (tickRegrow(w, dt)) this.dirty = true;
     stepDrops(w, dt);
     const n = Math.max(1, this.players.size);
     for (const p of this.players.values()) {
       const b = p.view.body;
-      tickCrops(w, dt / n, this.rand, { x: b.x, z: b.z });
+      if (tickCrops(w, dt / n, this.rand, { x: b.x, z: b.z })) this.dirty = true;
       const c = collectNearby(p.view, b.x, b.y, b.z, dt);
+      if (c.collected) this.dirty = true;
       if (c.collected) out.push({ to: p.id, msg: { t: 'bag', bag: p.view.inventory.toData() } });
     }
     // Farejadores (ADR 0061/0074): simulam perto de algum jogador; quem é acertado recebe `hurt`
@@ -268,6 +276,7 @@ export class TitanRoom {
 
   /** Estado para gravar: cabeçalho do mundo (mesmo formato do save local), chunks editados e os jogadores por nome (quem está na sala entra com o estado atual). */
   snapshot(): TitanRoomSnapshot {
+    this.dirty = false;
     for (const p of this.players.values()) this.keep(p);
     return { v: TITAN_SNAPSHOT_VERSION, header: headerOf(this.world), chunks: this.world.volume.dirtyChunks().map(({ cx, cz, edits }) => ({ cx, cz, edits })), players: Object.fromEntries(this.saved) };
   }
@@ -282,6 +291,7 @@ export class TitanRoom {
     for (const [k, v] of Object.entries(snap.players ?? {})) this.saved.set(k, v);
     this.pending = [];
     this.hook();
+    this.dirty = false;
     return true;
   }
 }
