@@ -13,6 +13,9 @@ fixas salvas), [0021](../adr/0021-bichos-da-sala.md) (bichos da sala). Plano e p
 - Mudou uma mensagem de forma incompatível → suba `PROTOCOL_VERSION` (hoje **19**) e o servidor junto; servidor novo e
   cliente antigo (e o inverso) recebem `error: version`.
 
+## Salas do Titã (v0.163.0, ADR 0104)
+Protocolo e sala **paralelos** em `src/net/titan/` (`protocol.ts` com `TITAN_PROTOCOL_VERSION`, `room.ts` = `TitanRoom`, `loopback.ts`); cooperativas de sobrevivência, ids ≥ 101. Uma visão por jogador (`playerView`) sobre o mundo compartilhado; as ações são as de `titan/actions.ts`. Fatia A entregue (sala + protocolo + testes); cliente e sobrevivência compartilhada pendentes (`NEXT_STEPS.md`).
+
 ## Módulos (`src/net/`)
 | Arquivo | Papel |
 |---|---|

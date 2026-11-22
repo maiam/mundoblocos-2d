@@ -7,3 +7,7 @@ export {
   MAX_PLAYERS, PROTOCOL_VERSION, ROOMS, roomById, parseClientMessage, sanitizeName,
   type ClientMessage, type ServerMessage,
 } from './protocol';
+
+/** Salas do Titã (ADR 0104): motor voxel próprio, protocolo paralelo ao do mundo principal. */
+export { TitanRoom, TITAN_SNAPSHOT_VERSION, type TitanOutgoing, type TitanRoomSnapshot } from './titan/room';
+export { TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, TITAN_ROOMS, titanRoomById, parseTitanClientMessage, type TitanClientMessage, type TitanServerMessage } from './titan/protocol';
