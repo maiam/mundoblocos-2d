@@ -14,7 +14,7 @@ fixas salvas), [0021](../adr/0021-bichos-da-sala.md) (bichos da sala). Plano e p
   cliente antigo (e o inverso) recebem `error: version`.
 
 ## Salas do Titã (v0.163.0, ADR 0104)
-Protocolo e sala **paralelos** em `src/net/titan/` (`protocol.ts` com `TITAN_PROTOCOL_VERSION`, `room.ts` = `TitanRoom`, `loopback.ts`); cooperativas de sobrevivência, ids ≥ 101. Uma visão por jogador (`playerView`) sobre o mundo compartilhado; as ações são as de `titan/actions.ts`. Fatia A entregue (sala + protocolo + testes); cliente e sobrevivência compartilhada pendentes (`NEXT_STEPS.md`).
+Protocolo e sala **paralelos** em `src/net/titan/` (`protocol.ts` com `TITAN_PROTOCOL_VERSION`, `room.ts` = `TitanRoom`, `loopback.ts`); cooperativas de sobrevivência, ids ≥ 101. Uma visão por jogador (`playerView`) sobre o mundo compartilhado; as ações são as de `titan/actions.ts`. Fatia A (sala + protocolo + testes) e B (cliente: `src/net/titan/client.ts` + `socket.ts`, `?sala=101`, jogadores remotos no renderer) entregues; sobrevivência compartilhada pendente (`NEXT_STEPS.md`).
 
 ## Módulos (`src/net/`)
 | Arquivo | Papel |

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.164.0 — Titã: salas do servidor, fatia B (cliente) (22/11/2026)
+- **ADR 0104.** O jogo entra numa sala do Titã por `?sala=101` ou pelo botão **Jogar na sala** do ☰ (e `&loopback=1` para um servidor em memória, no teste). `TitanClient` abre a sessão do `welcome` e espelha a sala (edições, itens soltos, hora, bolsa, jogadores); colocar, quebrar e usar porta/cama vão ao servidor e só valem com `applied`. Os outros jogadores aparecem com nome. Nada é gravado no aparelho; braseiros, plantas, itens soltos e bichos não são simulados no aparelho.
+- Limites: baús e braseiros ainda não (fatia C), vida/fome/morte locais, sem reconexão. Servidor real ainda precisa rotear `room ≥ 101`. Testes: +5 (1.226 no total). Conferido a 740 × 360 com um segundo jogador em memória (nome, colocar com `applied`, bolsa).
+
 ## Orvalis v0.163.0 — Titã: salas do servidor, fatia A (22/11/2026)
 - **ADR 0104.** Base das **salas cooperativas de sobrevivência do Titã**: protocolo próprio (`src/net/titan/protocol.ts`, sala **Titã 1**, id 101), **`TitanRoom`** autoritativa e pura (entrar/sair, colocar, quebrar, usar porta/cama, recolher itens, relógio, braseiros, plantas, itens soltos em queda, snapshot/restore) e `TitanLoopbackServer` para testes. Cada jogador tem uma **visão** (corpo, bolsa, vida, ponto de retorno) sobre o mundo compartilhado e as ações são as mesmas de `titan/actions.ts`; `TitanVolume.onSet` repassa as edições a todos.
 - Ainda **sem cliente** (fatia B) e sem vida/fome/Farejadores/baús compartilhados (fatia C); o servidor (outro repositório) precisa rotear `room ≥ 101` para `TitanRoom`. Sem mudança de gerador nem de save. Testes: +9 (1.221 no total).
