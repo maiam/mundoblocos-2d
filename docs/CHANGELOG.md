@@ -1,5 +1,17 @@
 # Changelog
 
+## Orvalis v0.165.0 — Titã: salas do servidor, fatia C (sobrevivência compartilhada) (22/11/2026)
+- **ADR 0104 (`TITAN_PROTOCOL_VERSION` 2).** Nas salas do Titã: **baús e braseiros compartilhados** (a sala faz a troca e manda o conteúdo a todos; o braseiro corre na sala), **Farejadores da sala** (simulados e mandados a 10×/s; golpe por id com pausa e alcance; o investido recebe `hurt`), **morte** que solta as pilhas na sala e **renasce** (`respawn`), vida/fome/ar do aparelho enviados no `state` e guardados, e a **noite só passa com todos na cama**.
+- Limites: a vida é calculada no aparelho (sem anti-trapaça), sem véu de sono, comer é local. Servidor real ainda precisa rotear `room ≥ 101` (e agora usar `TITAN_PROTOCOL_VERSION` 2). Testes: +9 (1.235 no total). Conferido a 740 × 360 (Farejador da sala desenhado no aparelho).
+
+## Orvalis v0.164.0 — Titã: salas do servidor, fatia B (cliente) (22/11/2026)
+- **ADR 0104.** O jogo entra numa sala do Titã por `?sala=101` ou pelo botão **Jogar na sala** do ☰ (e `&loopback=1` para um servidor em memória, no teste). `TitanClient` abre a sessão do `welcome` e espelha a sala (edições, itens soltos, hora, bolsa, jogadores); colocar, quebrar e usar porta/cama vão ao servidor e só valem com `applied`. Os outros jogadores aparecem com nome. Nada é gravado no aparelho; braseiros, plantas, itens soltos e bichos não são simulados no aparelho.
+- Limites: baús e braseiros ainda não (fatia C), vida/fome/morte locais, sem reconexão. Servidor real ainda precisa rotear `room ≥ 101`. Testes: +5 (1.226 no total). Conferido a 740 × 360 com um segundo jogador em memória (nome, colocar com `applied`, bolsa).
+
+## Orvalis v0.163.0 — Titã: salas do servidor, fatia A (22/11/2026)
+- **ADR 0104.** Base das **salas cooperativas de sobrevivência do Titã**: protocolo próprio (`src/net/titan/protocol.ts`, sala **Titã 1**, id 101), **`TitanRoom`** autoritativa e pura (entrar/sair, colocar, quebrar, usar porta/cama, recolher itens, relógio, braseiros, plantas, itens soltos em queda, snapshot/restore) e `TitanLoopbackServer` para testes. Cada jogador tem uma **visão** (corpo, bolsa, vida, ponto de retorno) sobre o mundo compartilhado e as ações são as mesmas de `titan/actions.ts`; `TitanVolume.onSet` repassa as edições a todos.
+- Ainda **sem cliente** (fatia B) e sem vida/fome/Farejadores/baús compartilhados (fatia C); o servidor (outro repositório) precisa rotear `room ≥ 101` para `TitanRoom`. Sem mudança de gerador nem de save. Testes: +9 (1.221 no total).
+
 ## Orvalis v0.162.0 — Titã: Porta de Junco (22/11/2026)
 - **ADR 0102.** Nova **Porta de Junco** (item 41; blocos 58–89): bloco de **duas células na vertical** com o estado (giro, aberta, dobradiça, metade) **no id**; dobradiça automática (a segunda porta ao lado prende no lado oposto e as duas abrem juntas); abre e fecha por **toque/clique, F ou Usar**, com giro de 90° animado em torno da dobradiça (eixo a 0,40625 m, folha de 1 × 2 × 3/16 m) e colisão por caixa que muda com o estado (a folha aberta fica rente à lateral da célula). Quebrar qualquer metade tira a porta inteira e solta 1; tirar o piso a leva junto. Fechar é recusado com o corpo na folha. Som `playDoor`.
 - Item plano extrudado (ADR 0097); o **atlas de itens passa a 4 × 11** (44 ids). Arte do Drive recortada por quadrilátero (`scripts/make-titan-porta.py`, `titan-porta.webp` 64 × 128). Receita provisória: 3 Blocos de Junco → 1 Porta. Sem mudança de gerador nem de save. Testes: +9. Conferido a 740 × 360.

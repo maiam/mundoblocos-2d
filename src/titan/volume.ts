@@ -83,6 +83,9 @@ export class TitanVolume {
     return this.gen.inRegion(x, z) && y > Y_MIN && y <= Y_MAX;
   }
 
+  /** Gancho de edição (ADR 0104): a sala do servidor o usa para repassar cada célula mudada aos jogadores. Fora da sala fica nulo. */
+  onSet: ((x: number, y: number, z: number, id: number) => void) | null = null;
+
   /** Grava `id` na célula respeitando a regra de edição. Devolve se algo mudou. */
   set(x: number, y: number, z: number, id: number): boolean {
     if (!this.editable(x, y, z)) return false;
@@ -103,6 +106,7 @@ export class TitanVolume {
     this.dirty.set(key, ++this.chunkRev);
     this.markSections(x, y, z);
     this.updateLight(x, y, z, current, id);
+    this.onSet?.(x, y, z, id);
     return true;
   }
 

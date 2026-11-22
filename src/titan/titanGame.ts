@@ -29,6 +29,10 @@ import { lidSound } from './lid';
 import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
+import { TitanClient } from '../net/titan/client';
+import { TitanLoopbackServer } from '../net/titan/loopback';
+import { TitanSocket } from '../net/titan/socket';
+import { TITAN_ROOMS, titanRoomById, type WireHit } from '../net/titan/protocol';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, tickCrops, tickRegrow } from './session';
 
 /**
@@ -58,11 +62,15 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   return img;
 }
 
+const TITAN_ROOMS_FIRST = TITAN_ROOMS[0];
 export async function startTitan(canvas: HTMLCanvasElement, search: string, storageArg?: TitanStorage): Promise<void> {
   const q = new URLSearchParams(search);
   // `?cena=lanternas[&n=12]`: cena de desenvolvimento para medir luz e malhas com várias lanternas — **nada é gravado** (armazenamento em memória).
   const scene = q.get('cena') === 'lanternas';
-  const storage = storageArg ?? (scene ? new MemoryTitanStorage() : defaultTitanStorage());
+  // `?sala=101`: entra numa sala cooperativa do servidor (ADR 0104); `&loopback=1` usa um servidor em memória na própria página (teste). Sala = nada é gravado neste aparelho.
+  const roomId = Number(q.get('sala')), room = titanRoomById(roomId) ?? null;
+  const storage = storageArg ?? (scene || room ? new MemoryTitanStorage() : defaultTitanStorage());
+  let client: TitanClient | null = null;
   // `?fps=1`: painel de desempenho (FPS, GPU, memória) com o tempo de cada etapa do Titã: luz, malha, geometria, desenho.
   const perf = q.get('fps') === '1' || scene ? new TitanPerf() : null;
   document.body.classList.add('titan');
@@ -83,8 +91,18 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const param = q.get('seed') ?? (scene ? '42' : null);
   let session: TitanSession;
   try {
-    session = await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
+    if (room) {
+      const loop = q.get('loopback') === '1' ? new TitanLoopbackServer() : null;
+      if (loop) { window.setInterval(() => loop.tick(0.1), 100); if (import.meta.env.DEV) (window as unknown as { __titanLoop: unknown }).__titanLoop = loop; }
+      let nick = q.get('nome') ?? '';
+      try { nick = nick || window.localStorage.getItem('orvalis-titan-nome') || ''; } catch { /* sem armazenamento */ }
+      nick = nick || `Viajante${Math.floor(100 + Math.random() * 900)}`;
+      client = new TitanClient(loop ? loop.connect() : new TitanSocket());
+      const timeout = new Promise<never>((_, rej) => window.setTimeout(() => rej(new Error('O servidor não respondeu a tempo.')), 10000));
+      session = await Promise.race([client.connect(nick, room.id), timeout]);
+    } else session = await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
   } catch (e) {
+    if (room) { toast(e instanceof Error ? e.message : 'Não foi possível entrar na sala.', 60000); return; }
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
@@ -115,7 +133,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const status = el('div', 'titan-status', ui);
   const seedLine = el('span', '', status);
   seedLine.innerHTML = `Titã · Margem Silenciosa · semente <b>${session.seed}</b> · gerador v${vol.gen.version}`;
-  const saveLine = el('span', '', status, scene ? SCENE_NOTE : 'salvo');
+  const saveLine = el('span', '', status, scene ? SCENE_NOTE : room ? `${room.name} · online` : 'salvo');
   const posLine = el('span', '', status);
   const skyLine = el('span', '', status);
   // ---- Vida, ar e fome (ADR 0059): 10 marcas de 2 pontos (meia marca = 1) acima da hotbar; o ar só aparece com a cabeça no lago ou enchendo ----
@@ -382,6 +400,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!stationAt || stationAt.kind !== 'brazier') return;
     if (!stationInReach()) { closeStation('Braseiro fora de alcance'); return; }
     const { x, y, z } = stationAt;
+    if (client) { // na sala o braseiro é do mundo: a sala faz a troca e devolve a bolsa e o estado (ADR 0104)
+      const slot = kind !== 'output' && sel !== null ? sel : null;
+      sel = null;
+      void (slot !== null && kind !== 'output' ? client.furnaceIn(x, y, z, kind, slot) : client.furnaceOut(x, y, z, kind)).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return;
+    }
     const r = kind !== 'output' && sel !== null ? furnaceMoveIn(session, x, y, z, kind, sel) : furnaceTakeOut(session, x, y, z, kind);
     if (r.msg) notice(r.msg);
     if (r.ok) { sel = null; onEdited(); }
@@ -392,6 +416,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (!stationAt || stationAt.kind !== 'chest') return;
     if (!stationInReach()) { closeStation('Baú fora de alcance'); return; }
     const { x, y, z } = stationAt;
+    if (client) {
+      const slot = sel;
+      sel = null;
+      void (slot !== null ? client.chestIn(x, y, z, slot) : client.chestOut(x, y, z, i)).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return;
+    }
     const r = sel !== null ? chestMoveIn(session, x, y, z, sel) : chestTakeOut(session, x, y, z, i);
     if (r.msg) notice(r.msg);
     if (r.ok) { sel = null; onEdited(); }
@@ -445,6 +475,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function openStation(): void {
     const at = benchAimed();
     if (!at || bagOpen || !playing) return;
+    if (client && (at.kind === 'door' || at.kind === 'bed')) { // a sala decide (porta; cama marca o ponto de retorno, sem dormir ainda)
+      void client.use(at.x, at.y, at.z).then((r) => { if (r.msg) notice(r.msg); if (r.ok && at.kind === 'door') gameAudio.playDoor(!!r.open); });
+      return;
+    }
     if (at.kind === 'door') { // a porta abre e fecha na hora, sem tela (ADR 0102)
       const r = useDoor(session, at.x, at.y, at.z);
       if (r.msg) notice(r.msg);
@@ -474,7 +508,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function eatSelected(): void {
     const r = eatFromSlot(session, session.selected);
     if (r.msg) notice(r.msg);
-    if (r.ok) { gameAudio.playEat(); playerDirty = true; paintVitals(false); refresh(); }
+    if (r.ok) { gameAudio.playEat(); playerDirty = true; paintVitals(false); refresh(); if (client) { client.syncBag(); client.sendState(); } } // na sala a bolsa e a fome seguem na hora (a comida é local)
   }
   function tapSlot(i: number): void {
     if (i === BENCH_OUT) { takeBench(); return; }
@@ -532,8 +566,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     paintSound();
     if (!gameAudio.muted) gameAudio.playItemPickup(); // confirma que o som voltou
   });
+  const roomBtn = el('button', 'titan-btn', menu, room ? 'Sair da sala' : `Jogar na sala: ${TITAN_ROOMS_FIRST.name}`);
+  roomBtn.type = 'button';
+  roomBtn.hidden = scene;
+  roomBtn.addEventListener('click', () => { const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(TITAN_ROOMS_FIRST.id)); window.location.assign(u); });
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
-  if (scene) newBtn.hidden = true;
+  if (scene || room) newBtn.hidden = true;
   newBtn.type = 'button';
   let confirming = 0;
   newBtn.addEventListener('click', () => {
@@ -552,6 +590,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     refresh();
   }
 
+  /** O alvo no formato da rede (sem os campos só do aparelho). */
+  const wireHit = (t: Hit): WireHit => ({ x: t.x, y: t.y, z: t.z, nx: t.nx, ny: t.ny, nz: t.nz, ...(t.hy !== undefined ? { hy: t.hy } : {}), ...(t.item !== undefined ? { item: t.item } : {}) });
   let lastNotice = '', lastNoticeAt = 0;
   function notice(msg: string): void {
     const now = performance.now();
@@ -725,6 +765,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const nowMs = performance.now();
     if (nowMs < nextAttackAt) return false;
     nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    if (client) { // na sala o golpe vai ao servidor, que confere alcance, pausa e espólio (ADR 0104)
+      const id = session.creatures[index]?.id;
+      if (!id) return false;
+      gameAudio.playStrike(); view.swingHand();
+      void client.strike(id).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return true;
+    }
     const r = attackCreature(session, index);
     if (!r.ok) return false;
     gameAudio.playStrike();
@@ -752,6 +799,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (t.kind === 'block' && isDoor(vol.get(t.x, t.y, t.z)) && benchAimed()) { openStation(); return { ok: true }; } // tocar/clicar na porta (ao alcance) abre ou fecha, com qualquer coisa na mão (ADR 0102)
       if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
+      if (client && !(held && foodOf(held.item))) { // na sala a ação vai ao servidor e só vale com a resposta dele (ADR 0104)
+        const b0 = held ? blockOfItem(held.item) : null, bucket = !!held && isBucket(held.item), bucketEmpty = held?.item === Item.BALDE;
+        void client.place(wireHit(t), session.selected).then((r) => { if (r.msg) notice(r.msg); if (!r.ok) return; if (bucket) { if (bucketEmpty) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } else if (b0 === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b0 ?? undefined) ?? 'rock'); refresh(); });
+        return { ok: true };
+      }
       if (held && foodOf(held.item) && !(held.item === Item.NOZ && t.kind === 'block' && canPlantNut(session, t))) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come (a noz, só se não houver onde plantá-la)
       const r = placeFromSlot(session, t, session.selected);
       if (r.msg) notice(r.msg);
@@ -764,6 +816,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       return { ok: r.ok };
     },
     complete: (t) => {
+      if (client) { // quebrar na sala: o servidor confere alcance e regras; o item solto chega por `drops`
+        void client.breakAt(wireHit(t)).then((r) => { if (r.msg) notice(r.msg); if (r.ok && t.kind === 'block') { const m = surfaceOf(t.block); if (m) gameAudio.playBreak(m); } });
+        return { ok: true };
+      }
       const r = breakOrCollect(session, t);
       if (r.msg) notice(r.msg);
       if (r.broken) gameAudio.playToolBreak(); // a ferramenta quebrou (ADR 0067)
@@ -782,11 +838,24 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     },
   });
 
+  // ---- Sala (ADR 0104): o aparelho espelha o mundo da sala; o que muda chega por mensagem ----
+  if (client) {
+    client.events = {
+      onWorld: () => { view.setItems(visibleItems(session)); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); view.setCrops(standingCrops(session)); },
+      onBag: () => { if (inited) { gameAudio.playItemPickup(); refresh(); } },
+      onPlayers: () => view.setRemotePlayers([...client!.remotes.values()]),
+      onHurt: (d, kind) => { damage(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
+      onRespawn: () => { dying = false; airTop = session.body.y; wasAir = false; steps.reset(); view.setItems(visibleItems(session)); paintVitals(false); refresh(); },
+      onClose: (why) => toast(`Sala: ${why}`, 60000),
+    };
+    view.setRemotePlayers([...client.remotes.values()]);
+  }
+  let inited = true, lastStateAt = 0, lastBagAt = 0, dying = false;
   // ---- Gravação ----
   let dropFull = false;
   let lastSavedTime = session.time;
   let lastEdit = 0, lastPlayerSave = performance.now(), playerDirty = false, saving: Promise<void> | null = null, failed = false, retryAt = 0;
-  const setSave = (txt: string, err = false): void => { saveLine.textContent = txt; saveLine.className = err ? 'err' : ''; };
+  const setSave = (txt: string, err = false): void => { if (client) return; saveLine.textContent = txt; saveLine.className = err ? 'err' : ''; };
   function onEdited(): void { lastEdit = performance.now(); setSave('alterações pendentes…'); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); view.setCrops(standingCrops(session)); } // o junco e a planta somem onde se construiu; a colhida perde os frutos
   function saveNow(): Promise<void> {
     if (saving) return saving;
@@ -812,6 +881,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let last = performance.now(), nextAuto = 0, autoStep = 0;
   /** Morreu: os itens caem onde estava e o jogador renasce na chegada (ADR 0059). */
   function die(): void {
+    if (client) { // na sala a morte solta as pilhas lá; o renascer volta em `respawn` (ADR 0104)
+      if (dying) return;
+      dying = true;
+      void client.die().then((r) => { if (r.ok) notice('Você desmaiou. Seus itens ficaram onde caiu.'); else dying = false; }).catch(() => { dying = false; });
+      window.setTimeout(() => { dying = false; }, 4000); // reserva: o renascer (`respawn`) já limpa a espera
+      return;
+    }
     const n = dieAndRespawn(session);
     airTop = session.body.y; wasAir = false;
     steps.reset();
@@ -875,6 +951,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         if (m) gameAudio.playFootstep(m);
       }
     } else { sprintOn = false; view.setSprint(false); if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); } // parado: só assenta no chão
+    if (client && playing) { // posição ~10×/s e a bolsa mexida na interface a cada segundo
+      if (now - lastStateAt >= 100) { lastStateAt = now; client.sendState(); }
+      if (now - lastBagAt >= 1000) { lastBagAt = now; client.syncBag(); }
+    }
     // relógio do dia: só corre com o jogo ativo (a aba oculta para os quadros; a tela de pausa também para a hora); a hora forçada só muda a visualização
     if (playing) {
       const before = session.time;
@@ -886,6 +966,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       for (const fj of session.creatures) {
         if (!active) break;
         if (fj.phase === 'wander' && Math.hypot(fj.body.x - b.x, fj.body.z - b.z) > SIM_RADIUS) continue; // animal longe e sossegado: não gasta tempo de simulação
+        if (client) continue; // na sala os bichos são da sala (mensagem `creatures`); aqui só se desenha
         const ev = stepFarejador(fj, vol, { x: b.x, y: b.y, z: b.z }, dt);
         if (ev.hit) { damage(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
         if (ev.phase === 'charge' || (fj.phase === 'charge' && now >= nextScrape)) { nextScrape = now + 520; gameAudio.playScrape(); }
@@ -893,12 +974,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
-    if (playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
+    if (!client && playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
     if (bagOpen) { paintFurnace(); paintChest(); }
-    if (active && session.respawn.size) tickRespawn(session, dt); // o animal abatido volta à toca depois de um tempo
-    if (active && session.crops.size && tickCrops(session, dt, Math.random, b)) { view.setCrops(standingCrops(session)); playerDirty = true; } // o junco cultivado cresce por sorteio (ADR 0083)
-    if (active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
-    if (playing && session.drops.size) {
+    if (!client && active && session.respawn.size) tickRespawn(session, dt); // o animal abatido volta à toca depois de um tempo
+    if (!client && active && session.crops.size && tickCrops(session, dt, Math.random, b)) { view.setCrops(standingCrops(session)); playerDirty = true; } // o junco cultivado cresce por sorteio (ADR 0083)
+    if (!client && active && session.regrow.size && tickRegrow(session, dt)) { view.setNuts(standingNuts(session)); playerDirty = true; } // a planta colhida volta a dar frutos
+    if (!client && playing && session.drops.size) {
       // lascas soltas por veios: coleta por proximidade (mochila cheia deixa a lasca no lugar, com um aviso por aproximação)
       const c = collectNearby(session, b.x, b.y, b.z, dt);
       if (c.collected || c.moved) { view.setItems(visibleItems(session)); if (c.collected) { gameAudio.playItemPickup(); onEdited(); refresh(); } }
@@ -932,5 +1013,5 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   };
   requestAnimationFrame(frame);
 
-  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view, vol, storage, saveNow, begin, toggleBag, refresh, perf, gesture, get target() { return target; } };
+  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { client, session, view, vol, storage, saveNow, begin, toggleBag, refresh, perf, gesture, get target() { return target; } };
 }

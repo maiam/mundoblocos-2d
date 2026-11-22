@@ -580,6 +580,37 @@ export class TitanRenderer {
     this.nutFruitMesh = fill(this.nutFruitMesh, list.filter((n) => n.ripe));
   }
   /** Farejadores de Duna: pés, giro (`rotation.y`), escala, rolagem de costas e pose das partes de cada animal; a lista vazia esconde todos. */
+  // ---- Jogadores da sala (ADR 0104): boneco simples (corpo e cabeça) e o nome em cima ----
+  private readonly remotes = new Map<number, { g: THREE.Group; label: string }>();
+  /** Desenha os outros jogadores da sala; quem saiu da lista some. Posição é a dos pés; `yaw` do olhar. */
+  setRemotePlayers(list: ReadonlyArray<{ id: number; name: string; x: number; y: number; z: number; yaw: number }>): void {
+    const seen = new Set<number>();
+    for (const p of list) {
+      seen.add(p.id);
+      let r = this.remotes.get(p.id);
+      if (!r || r.label !== p.name) {
+        if (r) { this.scene.remove(r.g); }
+        const g = new THREE.Group(), hue = (p.id * 0.17) % 1;
+        const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color().setHSL(hue, 0.55, 0.55), fog: true });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.28), mat); body.position.y = 0.75;
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), new THREE.MeshBasicMaterial({ color: 0xe8c9a0, fog: true })); head.position.y = 1.42;
+        const nose = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), new THREE.MeshBasicMaterial({ color: 0x222222 })); nose.position.set(0, 1.42, -0.19); // a frente do olhar (−Z com yaw 0)
+        const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48;
+        const c = cv.getContext('2d')!; c.font = 'bold 30px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000b'; c.fillStyle = '#fff';
+        c.strokeText(p.name, 128, 24); c.fillText(p.name, 128, 24);
+        const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })); label.scale.set(1.6, 0.3, 1); label.position.y = 1.95;
+        g.add(body, head, nose, label);
+        this.scene.add(g);
+        r = { g, label: p.name };
+        this.remotes.set(p.id, r);
+      }
+      r.g.position.set(p.x, p.y, p.z);
+      r.g.rotation.y = p.yaw;
+    }
+    for (const [id, r] of [...this.remotes]) if (!seen.has(id)) { this.scene.remove(r.g); this.remotes.delete(id); }
+  }
+
   setFarejadores(list: ReadonlyArray<{ x: number; y: number; z: number; yaw: number; scale: number; pose: { bob: number; roll: number; headPitch: number; headYaw: number; tailYaw: number; legs: readonly number[] } }>): void {
     while (this.farejadores.length < list.length) {
       const group = new THREE.Group(), parts: Record<string, THREE.Mesh> = {};

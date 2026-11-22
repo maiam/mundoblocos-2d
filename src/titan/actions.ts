@@ -181,13 +181,14 @@ export function useDoor(s: TitanSession, x: number, y: number, z: number): Actio
  * Usar a cama (ADR 0090): guarda o **ponto de retorno** (o pé da cama) e, **à noite**, dorme até o amanhecer (o relógio do dia pula para logo depois do nascer do sol; passar da meia-noite soma um dia).
  * De dia só marca o ponto de retorno.
  */
-export function useBed(s: TitanSession, x: number, y: number, z: number): ActionResult {
+export function useBed(s: TitanSession, x: number, y: number, z: number, sleep = true): ActionResult {
   const id = s.volume.get(x, y, z);
   if (!isBed(id)) return { ok: false };
   const [dx, dz] = bedPartnerOffset(id), footX = isBedFoot(id) ? x : x + dx, footZ = isBedFoot(id) ? z : z + dz;
   s.spawn = { x: footX, y, z: footZ };
   s.metaRev++;
   if (!isNightTime(s.time)) return { ok: true, msg: 'Ponto de retorno marcado. Só se dorme à noite.' };
+  if (!sleep) return { ok: true, msg: 'Ponto de retorno marcado.' }; // na sala a noite só passa com todos na cama (ADR 0104): quem deita só marca o ponto
   const wake = tickFrac(WAKE_TICKS);
   if (s.time > wake) s.days++;
   s.time = wake;

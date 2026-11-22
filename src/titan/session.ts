@@ -238,7 +238,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   return s;
 }
 
-function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
+export function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
   const volume = new TitanVolume(gen);
   volume.load(save.chunks);
   const a = gen.arrival;
