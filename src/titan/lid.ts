@@ -13,5 +13,8 @@ export function stepLid(angle: number, open: boolean, dt: number): number {
   return angle < target ? Math.min(target, angle + step) : Math.max(target, angle - step);
 }
 
+/** Som da tampa (ADR 0096): a transição do painel do baú (`antes` → `agora`) decide o rangido de abrir ou a batida de fechar; sem mudança, nada. */
+export const lidSound = (before: boolean, now: boolean): 'open' | 'close' | null => (before === now ? null : now ? 'open' : 'close');
+
 /** A tampa ainda está em movimento (ou aberta)? Quando é falso e fechada, o renderer deixa de acompanhá-la. */
 export const lidIdle = (angle: number, open: boolean): boolean => (open ? angle >= LID_OPEN_ANGLE : angle <= 0);

@@ -12,6 +12,16 @@ export const SLEEP_TOTAL_MS = SLEEP_FADE_IN_MS + SLEEP_HOLD_MS + SLEEP_FADE_OUT_
 /** Quando o jogador volta a andar e agir (o véu ainda está clareando). */
 export const SLEEP_CONTROL_MS = SLEEP_FADE_IN_MS + SLEEP_HOLD_MS + 600;
 
+/** Instante em que o véu começa a clarear (o jogador acorda). */
+export const SLEEP_WAKE_MS = SLEEP_FADE_IN_MS + SLEEP_HOLD_MS;
+
+/** Dicas de som do sono (ADR 0096) entre dois instantes consecutivos (`ms` desde o início, `-1` = ainda sem sono): `'down'` ao começar a escurecer e `'wake'` quando o véu começa a clarear. */
+export function sleepCue(prevMs: number, ms: number): 'down' | 'wake' | null {
+  if (prevMs < 0 && ms >= 0) return 'down';
+  if (prevMs < SLEEP_WAKE_MS && ms >= SLEEP_WAKE_MS) return 'wake';
+  return null;
+}
+
 const smooth = (t: number): number => t * t * (3 - 2 * t);
 
 /** Opacidade do véu (0–1) `ms` depois do início: sobe, segura e desce. */

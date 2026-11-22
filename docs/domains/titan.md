@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Sons da tampa e do sono (v0.157.0, ADR 0096):** `gameAudio.playChestOpen`/`playChestClose`/`playSleepDown`/`playWake`; transições puras `lidSound` (`lid.ts`) e `sleepCue`/`SLEEP_WAKE_MS` (`sleep.ts`), com `lidWasOpen` e `sleepPrevMs` em `titanGame.ts`.
 - **Balde 3D na mão e som de água (v0.156.0, ADR 0095):** `HELD_MESHES` e `buildHeldMesh` no renderer (itens 35/36, malhas JSON + atlas, `HandKind` `bucket` em `heldPose.ts`); `gameAudio.playWaterScoop`/`playWaterPour`; `scripts/extract-titan-balde.py`.
 - **Luz do braseiro aceso (v0.155.0, ADR 0094):** `lightLevelOf`/`BRAZIER_LIGHT` em `voxel.ts` (lanterna 15, braseiro aceso 13); `light.ts` com `LightSource` `[x, y, z, nível?]` e `sourceAdded(…, nível)`; `TitanVolume.emitters` (ao lado de `lanterns`) e a ordem emissor-sai → sólido → emissor-entra em `updateLight`.
 - **Tampa do baú e véu do sono (v0.154.0, ADR 0093):** `titan/lid.ts` (`stepLid`, `LID_OPEN_ANGLE`) e `titan/sleep.ts` (`sleepVeil`, `SLEEP_APPLY_MS`) puros; `ModelKind` `bauTampa` no renderer (mesmas células do baú), `setOpenChest`/`animateLids`; véu `.titan-sleep` e `sleeping` em `titanGame.ts`.

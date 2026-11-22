@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.157.0 — Titã: sons da tampa do baú e do sono (22/11/2026)
+- **ADR 0096.** A tampa do baú **range ao abrir** e **bate ao fechar**; dormir toca uma nota grave que afunda ao escurecer e três notas suaves que sobem ao acordar. Tudo sintetizado (Web Audio, sem arquivos), disparado só nas transições (`lidSound`, `sleepCue`), uma vez cada.
+- Sem mudança de regra, de save nem de gerador. Testes: +2 (1.168 no total). Os sons não foram ouvidos nesta sessão (só a lógica e o fluxo foram conferidos).
+
 ## Orvalis v0.156.0 — Titã: balde 3D na mão e som de água (22/11/2026)
 - **ADR 0095.** O Balde de Cobre aparece na mão como **modelo 3D** do pacote de arte (vazio e cheio, com o líquido escuro à vista), no lugar do sprite extrudado. Malhas de 1.400 e 1.424 triângulos (Blender, `extract-titan-balde.py`) embutidas no jogo, com estilo de mão próprio.
 - **Som de água** sintetizado ao recolher (gole que sobe) e ao despejar (fio de água e glub), em vez do som de colocar bloco.
