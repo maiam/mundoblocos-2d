@@ -171,6 +171,42 @@ export class GameSoundSynthesizer {
     });
   }
 
+  /** Baú de Rocha e Junco (ADR 0096): a tampa de junco range ao abrir (serra grave que sobe devagar, filtrada) e um estalo seco de trama. */
+  playChestOpen(): void {
+    this.safe((now) => {
+      const j = 0.94 + Math.random() * 0.12;
+      this.tone(now, 150 * j, 330 * j, 0.32, 'sawtooth', 0.12, 700);
+      this.tone(now + 0.04, 230 * j, 410 * j, 0.24, 'triangle', 0.08, 900);
+      this.burst(now + 0.02, 0.2, 1300 * j, 1.6, 0.07, 'bandpass', 0.05);
+      this.burst(now + 0.3, 0.05, 2000 * j, 1.5, 0.1, 'bandpass', 0.005);
+    });
+  }
+  /** Fechar a tampa: uma batida surda de rocha e junco, com um rastro curto de trama. */
+  playChestClose(): void {
+    this.safe((now) => {
+      const j = 0.94 + Math.random() * 0.12;
+      this.tone(now, 130 * j, 55 * j, 0.14, 'triangle', 0.3, 500);
+      this.burst(now, 0.1, 700 * j, 1.1, 0.2, 'lowpass', 0.004);
+      this.burst(now + 0.03, 0.12, 1700 * j, 1.5, 0.07, 'bandpass', 0.01);
+    });
+  }
+  /** Dormir (ADR 0096): uma nota grave e macia que afunda enquanto a tela escurece. */
+  playSleepDown(): void {
+    this.safe((now) => {
+      this.tone(now, 330, 196, 0.75, 'sine', 0.16, 900);
+      this.tone(now + 0.08, 247, 147, 0.7, 'sine', 0.1, 700);
+    });
+  }
+  /** Acordar: três notas suaves que sobem (um amanhecer), de longe. */
+  playWake(): void {
+    this.safe((now) => {
+      this.tone(now, 392, 392, 0.5, 'sine', 0.1, 1800);
+      this.tone(now + 0.22, 523, 523, 0.5, 'sine', 0.1, 2200);
+      this.tone(now + 0.44, 659, 659, 0.9, 'sine', 0.11, 2600);
+      this.burst(now + 0.5, 0.8, 3200, 0.8, 0.025, 'highpass', 0.3);
+    });
+  }
+
   // ---- Dano ----
   playHurt(): void {
     this.safe((now) => {

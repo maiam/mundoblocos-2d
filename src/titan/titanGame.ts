@@ -24,7 +24,8 @@ import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
 import { advanceDay, isNightTime, parseHora, phaseName, saturnVisibility } from './sky';
-import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepVeil } from './sleep';
+import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepCue, sleepVeil } from './sleep';
+import { lidSound } from './lid';
 import { isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
@@ -434,6 +435,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     return (stationAt.kind === 'workbench' ? isWorkbench(blk) : stationAt.kind === 'chest' ? isChest(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
   /** Sono (ADR 0093): `sleepStart` = instante do início (0 = acordado); a noite passa em `SLEEP_APPLY_MS` e o controle volta em `SLEEP_CONTROL_MS`. */
+  let sleepPrevMs = -1, lidWasOpen = false;
   let sleepStart = 0, sleepApplied = false, sleepBed: { x: number; y: number; z: number } | null = null;
   function applyBed(x: number, y: number, z: number): void {
     const r = useBed(session, x, y, z);
@@ -446,7 +448,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (at.kind === 'bed') { // a cama não abre tela: marca o ponto de retorno e, à noite, dorme até o amanhecer (ADR 0090)
       if (isNightTime(session.time)) { // à noite: o véu escurece, a noite passa com a tela preta e ele clareia (ADR 0093)
         if (sleepStart) return;
-        sleepStart = performance.now(); sleepApplied = false; sleepBed = { x: at.x, y: at.y, z: at.z };
+        sleepStart = performance.now(); sleepApplied = false; sleepPrevMs = -1; sleepBed = { x: at.x, y: at.y, z: at.z };
         keys.clear(); gesture.cancel();
         return;
       }
@@ -820,13 +822,18 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     let sleeping = false;
     if (sleepStart) { // véu do sono (ADR 0093)
       const ms = now - sleepStart;
+      const cue = sleepCue(sleepPrevMs, ms); sleepPrevMs = ms; // sons do sono (ADR 0096)
+      if (cue === 'down') gameAudio.playSleepDown(); else if (cue === 'wake') gameAudio.playWake();
       if (!sleepApplied && ms >= SLEEP_APPLY_MS) { sleepApplied = true; if (sleepBed) applyBed(sleepBed.x, sleepBed.y, sleepBed.z); }
       sleepEl.style.opacity = String(sleepVeil(ms));
       sleeping = ms < SLEEP_CONTROL_MS;
       if (ms >= SLEEP_TOTAL_MS) { sleepStart = 0; sleepEl.style.opacity = '0'; }
     }
     const active = playing && !bagOpen && !sleeping;
-    view.setOpenChest(bagOpen && stationAt?.kind === 'chest' ? stationAt : null); // a tampa do baú abre com o painel (ADR 0093)
+    const chestOpen = bagOpen && stationAt?.kind === 'chest';
+    view.setOpenChest(chestOpen ? stationAt : null); // a tampa do baú abre com o painel (ADR 0093)
+    const lid = lidSound(lidWasOpen, chestOpen); lidWasOpen = chestOpen; // e range ao abrir e bate ao fechar (ADR 0096)
+    if (lid === 'open') gameAudio.playChestOpen(); else if (lid === 'close') gameAudio.playChestClose();
     if (active) {
       let fx = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - input.stickY;
       let sx = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) + input.stickX;
