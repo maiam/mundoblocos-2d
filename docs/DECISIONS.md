@@ -45,6 +45,8 @@
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
 | 0101 | **Aceita** — Titã: Degrau e Cadeira de Junco (sólidos de várias caixas: `blockBoxes`, colisão e mira por caixa, modelos instanciados de caixas com a trama repetida) |
+| 0102 | **Aceita** — Titã: Porta de Junco (bloco de duas células com o estado no id — giro, aberta, dobradiça, metade; ids 58–89; dobradiça automática e porta dupla; abrir por toque/F/Usar com giro de 90° em torno da dobradiça; colisão por caixa que muda com o estado; item plano extrudado; atlas de itens 4 × 11). | [0102](adr/0102-titan-porta-de-junco.md) |
+| 0103 | **Aceita** — Titã: auto-step de 0,6 m (só no chão e com o eixo barrado; teto livre, snap down no topo real do apoio; câmera suave por `Body.stepSmooth`). | [0103](adr/0103-titan-auto-step.md) |
 | 0100 | **Aceita** — Titã: Bloco de Junco e Laje de Junco (laje por família, a fusão de lajes de junco vira o bloco; 5 tiles novos; itens 37–40 fecham o atlas de 40 ids) |
 | 0099 | **Aceita** — Titã: pular encostado num bloco até 1 nível acima tira o jogador da água; quebrar sólido ao lado de água do mesmo nível enche o espaço de água |
 | 0098 | **Aceita** — Titã: gravidade dos itens soltos (queda acelerada, afunda devagar na água) e deslocamento do item para uma célula vizinha quando um bloco é colocado na célula dele |

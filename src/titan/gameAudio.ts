@@ -172,6 +172,14 @@ export class GameSoundSynthesizer {
   }
 
   /** Baú de Rocha e Junco (ADR 0096): a tampa de junco range ao abrir (serra grave que sobe devagar, filtrada) e um estalo seco de trama. */
+  /** Porta de Junco (ADR 0102): abrir range (varredura de ruído e um rangido de tom que sobe); fechar bate seco (tom grave curto e estalo). */
+  playDoor(open: boolean): void {
+    this.safe((now) => {
+      const j = 0.94 + Math.random() * 0.14;
+      if (open) { this.burst(now, 0.22, 520 * j, 3, 0.1, 'bandpass', 0.04); this.tone(now, 210 * j, 330 * j, 0.2, 'sawtooth', 0.04, 900); }
+      else { this.tone(now, 150 * j, 70 * j, 0.1, 'sine', 0.2); this.burst(now + 0.02, 0.07, 1200 * j, 1.2, 0.12, 'bandpass', 0.002); }
+    });
+  }
   playChestOpen(): void {
     this.safe((now) => {
       const j = 0.94 + Math.random() * 0.12;

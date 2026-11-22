@@ -4,7 +4,7 @@ import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
 import { isNightTime, tickFrac, WAKE_TICKS } from './sky';
-import { BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -18,7 +18,7 @@ import { type Species, cropKey, harvestOf, isRipe, parseCropId, plantableSoil, s
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
  * (tudo ou nada) e muda mundo e inventário juntos, para o save sempre gravar os dois no mesmo instante.
  */
-export interface ActionResult { ok: boolean; msg?: string; /** A ferramenta na mão quebrou nesta ação (toca o estilhaço; ADR 0067). */ broken?: boolean }
+export interface ActionResult { ok: boolean; msg?: string; /** A ferramenta na mão quebrou nesta ação (toca o estilhaço; ADR 0067). */ broken?: boolean; /** Porta: ficou aberta (true) ou fechada (false) depois do uso (ADR 0102). */ open?: boolean }
 const FULL: ActionResult = { ok: false, msg: 'Mochila cheia' };
 /** Fragmentos de cobre que um veio solta (provisório, ADR 0063). */
 export const COPPER_YIELD = 2;
@@ -122,6 +122,59 @@ function breakBed(s: TitanSession, x: number, y: number, z: number): ActionResul
   const fx = isBedFoot(id) ? x : px, fz = isBedFoot(id) ? z : pz;
   spillBlock(s, Item.CAMA, 1, fx, y, fz);
   return { ok: true };
+}
+
+/** Dobradiça automática (ADR 0102): padrão à esquerda; se a porta vizinha da esquerda (mesmo giro) tem a dobradiça à esquerda, a nova prende à direita e as duas abrem simétricas. */
+export function doorHingeFor(v: TitanSession['volume'], x: number, y: number, z: number, turn: number): boolean {
+  const [rx, rz] = doorRight(turn), left = v.get(x - rx, y, z - rz);
+  return isDoor(left) && !isDoorUpper(left) && doorTurn(left) === turn && !isDoorHingeRight(left);
+}
+
+/** Porta de Junco (ADR 0102): ocupa a célula e a de cima; a frente fica voltada para quem a põe, a folha rente à borda dele; precisa de piso firme e das duas células livres. */
+function placeDoor(s: TitanSession, hit: Hit, slot: number): ActionResult {
+  const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz, turn = marcoTurnFacing(s.yaw);
+  if (!matSupported(s, x, y, z)) return { ok: false, msg: 'A porta precisa de piso firme' };
+  if (!canPlaceAt(s.volume, s.body, x, y, z, s.items, [0, 1])) return { ok: false };
+  if (!canPlaceAt(s.volume, s.body, x, y + 1, z, s.items, [0, 1])) return { ok: false, msg: 'Falta espaço em cima para a porta' };
+  const plan = planDisplace(s, [[x, y, z], [x, y + 1, z]]);
+  if (!plan) return { ok: false, msg: 'Há um item no local e não há espaço ao lado para ele' };
+  const hinge = doorHingeFor(s.volume, x, y, z, turn);
+  if (!s.volume.place(x, y, z, doorId(turn, hinge, false, false))) return { ok: false };
+  if (!s.volume.place(x, y + 1, z, doorId(turn, hinge, false, true))) { s.volume.remove(x, y, z); return { ok: false }; }
+  applyDisplace(s, plan);
+  s.inventory.consume(slot);
+  return { ok: true };
+}
+
+/** Quebrar qualquer metade tira a porta inteira e devolve uma porta como item solto. */
+function breakDoor(s: TitanSession, x: number, y: number, z: number): ActionResult {
+  const id = s.volume.get(x, y, z);
+  if (!isDoor(id) || !s.volume.breakable(x, y, z)) return { ok: false };
+  const ly = isDoorUpper(id) ? y - 1 : y;
+  for (const yy of [ly, ly + 1]) if (isDoor(s.volume.get(x, yy, z))) s.volume.remove(x, yy, z);
+  spillBlock(s, Item.PORTA_JUNCO, 1, x, ly, z);
+  return { ok: true };
+}
+
+/**
+ * Abrir ou fechar a porta (ADR 0102): troca as duas metades de uma vez; uma porta dupla (a vizinha do lado livre, mesmo giro e dobradiça oposta) acompanha. Fechar não vale com o corpo
+ * dentro da faixa da folha (o jogador não fica preso na porta).
+ */
+export function useDoor(s: TitanSession, x: number, y: number, z: number): ActionResult {
+  const id = s.volume.get(x, y, z);
+  if (!isDoor(id)) return { ok: false };
+  const ly = isDoorUpper(id) ? y - 1 : y, lo = s.volume.get(x, ly, z);
+  if (!isDoor(lo) || isDoorUpper(lo) || !isDoor(s.volume.get(x, ly + 1, z))) return { ok: false };
+  const closing = isDoorOpen(lo);
+  if (closing) { // a folha fechada ocupa a faixa rente à borda: o corpo não pode estar nela
+    const cb = blockBoxes(doorToggled(lo))?.[0], b = s.body;
+    if (cb && b.x + BODY_HALF > x + cb[0] && b.x - BODY_HALF < x + cb[3] && b.z + BODY_HALF > z + cb[2] && b.z - BODY_HALF < z + cb[5] && b.y < ly + 2 && b.y + BODY_HEIGHT > ly) return { ok: false, msg: 'Tem alguém no caminho da porta' };
+  }
+  const flip = (cx: number, cz: number): void => { for (const yy of [ly, ly + 1]) { const d = s.volume.get(cx, yy, cz); if (isDoor(d) && isDoorOpen(d) === closing) s.volume.set(cx, yy, cz, doorToggled(d)); } };
+  flip(x, z);
+  const [rx, rz] = doorRight(doorTurn(lo)), sgn = isDoorHingeRight(lo) ? -1 : 1, px = x + sgn * rx, pz = z + sgn * rz, pd = s.volume.get(px, ly, pz);
+  if (isDoor(pd) && !isDoorUpper(pd) && doorTurn(pd) === doorTurn(lo) && isDoorHingeRight(pd) !== isDoorHingeRight(lo)) flip(px, pz);
+  return { ok: true, open: !closing };
 }
 
 /**
@@ -329,6 +382,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   const { x, y, z } = hit;
   if (!s.volume.breakable(x, y, z)) return { ok: false };
   if (isBed(s.volume.get(x, y, z))) return breakBed(s, x, y, z); // as duas metades saem juntas (ADR 0090)
+  if (isDoor(s.volume.get(x, y, z))) return breakDoor(s, x, y, z); // idem a porta (ADR 0102)
   if (isCopperVein(s.volume.get(x, y, z))) { // veio de cobre (ADR 0063): só com picareta na mão; solta fragmentos no chão, nunca o bloco
     if (!isPick(s.inventory.get(s.selected)?.item)) return { ok: false, msg: 'Só pó nos dedos. Falta uma picareta.' };
     const reed0 = s.items.at(x, y + 1, z);
@@ -372,6 +426,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   releaseMat(s, x, y + 1, z);
   releaseLadders(s, x, y, z);
   if (isBed(s.volume.get(x, y + 1, z))) breakBed(s, x, y + 1, z); // o piso da cama sumiu
+  if (isDoor(s.volume.get(x, y + 1, z))) breakDoor(s, x, y + 1, z); // e o da porta (a metade de baixo está logo acima)
   return { ok: true };
 }
 
@@ -476,6 +531,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
+  if (block === T.DOOR) return placeDoor(s, hit, slot); // a porta ocupa duas células na vertical (ADR 0102)
   if (block === T.BED) return placeBed(s, hit, slot); // a cama ocupa duas células (ADR 0090)
   if (block === T.LADDER) { // escada (ADR 0088): prende-se à lateral de um cubo inteiro e a frente aponta para fora dele
     if (hit.ny !== 0 || hit.item) return { ok: false, msg: 'A escada se prende à lateral de um bloco' };

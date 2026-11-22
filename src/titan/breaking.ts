@@ -31,6 +31,7 @@ export const PICK_FACTOR: Readonly<Record<Tier, number>> = { rock: 0.6, copper: 
 const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
 
 function baseBreakMs(block?: number): number | null {
+  if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return BREAK_MS.slab; // a porta cede como os móveis de junco (ADR 0102)
   switch (block) {
     case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: return BREAK_MS.sand; // o bloco de junco cede como a areia (ADR 0100)
     case T.REED_SLAB: case T.REED_SLAB_TOP: return BREAK_MS.slab;

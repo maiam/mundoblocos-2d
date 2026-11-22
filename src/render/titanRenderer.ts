@@ -17,7 +17,8 @@ import { CROP_FRAMES } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
-import { type ModelKindName, T } from '../titan/voxel';
+import { DOOR_THICK, type ModelKindName, T } from '../titan/voxel';
+import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
 import { lidIdle, stepLid } from '../titan/lid';
 
 /**
@@ -28,8 +29,8 @@ import { lidIdle, stepLid } from '../titan/lid';
  */
 /** Alcance de render (blocos): a região de teste é pequena; a névoa começa em 70% e fecha antes da borda carregada. */
 const RANGE = 64;
-/** Linhas do atlas de itens (4 colunas × 8 linhas de 32 px = 32 ids). */
-const ITEM_ROWS = 10;
+/** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
+const ITEM_ROWS = 11;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
 const ITEM_HOP_S = 0.4, ITEM_FLY_S = 0.14;
 const MESH_BUDGET_MS = 6;
@@ -121,7 +122,7 @@ export class TitanRenderer {
   private clock = 0;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -263,7 +264,17 @@ export class TitanRenderer {
     jtex.needsUpdate = true;
     const jmat = new THREE.MeshBasicMaterial({ map: jtex, vertexColors: true, fog: true });
     patchDayLight(jmat, this.ambient, { instGlow: true });
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['cadeira', titanCadeiraModel, jmat]];
+    // Porta de Junco (ADR 0102): a folha de 64 × 128 px, de frente; dois lados visíveis e a matriz espelha para a dobradiça à direita (por isso DoubleSide)
+    const ptex = new THREE.Texture(extra.porta);
+    ptex.colorSpace = THREE.SRGBColorSpace;
+    ptex.magFilter = THREE.NearestFilter;
+    ptex.minFilter = THREE.NearestFilter;
+    ptex.generateMipmaps = false;
+    ptex.flipY = false;
+    ptex.needsUpdate = true;
+    const pmat = new THREE.MeshBasicMaterial({ map: ptex, vertexColors: true, fog: true, side: THREE.DoubleSide });
+    patchDayLight(pmat, this.ambient, { instGlow: true });
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -381,7 +392,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'cadeira'] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'cadeira', 'porta'] as const) {
       const cells = this.volume.modelCells(kind);
       for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
         let mesh = this.modelMeshes[target];
@@ -394,8 +405,15 @@ export class TitanRenderer {
         }
         const glow = new Float32Array(mesh.instanceMatrix.count * 3);
         if (target === 'bauTampa') this.lidIndex.clear();
+        if (target === 'porta') this.doorIndex.clear();
         cells.forEach(([x, y, z, turn], i) => {
           if (target === 'bauTampa') { this.lidIndex.set(lidKey(x, y, z), { i, x, y, z, turn }); this.setLidMatrix(mesh, i, x, y, z, turn, this.lidAngles.get(lidKey(x, y, z)) ?? 0); }
+          else if (target === 'porta') { // o `turn` leva giro (0–3), abertura (bit 2) e dobradiça à direita (bit 3); a folha parte da abertura que já tinha (ADR 0102)
+            const key = lidKey(x, y, z), open = (turn & 4) !== 0, d = { i, x, y, z, turn: turn & 3, hingeRight: (turn & 8) !== 0, open };
+            this.doorIndex.set(key, d);
+            if (!this.doorAmt.has(key)) this.doorAmt.set(key, open ? 1 : 0);
+            this.setDoorMatrix(mesh, d, this.doorAmt.get(key)!);
+          }
           else { mat.makeRotationY(turn * Math.PI / 2).setPosition(x + 0.5, y, z + 0.5); mesh.setMatrixAt(i, mat); }
           let lv = 0;
           for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
@@ -405,9 +423,42 @@ export class TitanRenderer {
         mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));
         mesh.count = cells.length;
         mesh.instanceMatrix.needsUpdate = true;
+        if (target === 'porta') for (const k of [...this.doorAmt.keys()]) if (!this.doorIndex.has(k)) this.doorAmt.delete(k); // porta que saiu: a próxima nasce no estado dela
       }
     }
   }
+
+  // ---- Porta de Junco (ADR 0102) ----
+  private readonly doorAmt = new Map<string, number>();
+  private readonly doorIndex = new Map<string, { i: number; x: number; y: number; z: number; turn: number; hingeRight: boolean; open: boolean }>();
+  private doorTime = 0;
+  /** Matriz da folha: posição da célula, giro, eixo da dobradiça e abertura (`doorPose`); com a dobradiça à direita o modelo (dobradiça à esquerda) é espelhado em x. */
+  private setDoorMatrix(mesh: THREE.InstancedMesh, d: { i: number; x: number; y: number; z: number; turn: number; hingeRight: boolean }, amount: number): void {
+    const [px, pz] = doorPivot(d.hingeRight), [cx, cz] = DOOR_CLOSED_CENTER, t = new THREE.Matrix4();
+    const m = new THREE.Matrix4().makeTranslation(d.x + 0.5, d.y, d.z + 0.5);
+    m.multiply(t.makeRotationY(d.turn * Math.PI / 2)).multiply(t.makeTranslation(px, 0, pz)).multiply(t.makeRotationY(doorAngle(d.hingeRight, amount))).multiply(t.makeTranslation(cx - px, 0, cz - pz));
+    if (d.hingeRight) m.multiply(t.makeScale(-1, 1, 1));
+    mesh.setMatrixAt(d.i, m);
+  }
+  private animateDoors(time: number): void {
+    const dt = this.doorTime ? Math.min(0.1, time - this.doorTime) : 0;
+    this.doorTime = time;
+    let moved = false;
+    const mesh = this.modelMeshes.porta;
+    for (const [key, d] of this.doorIndex) {
+      const amt = this.doorAmt.get(key) ?? 0;
+      if (!doorMoving(amt, d.open)) continue;
+      const next = stepDoor(amt, d.open, dt);
+      this.doorAmt.set(key, next);
+      this.setDoorMatrix(mesh, d, next);
+      moved = true;
+    }
+    if (moved) mesh.instanceMatrix.needsUpdate = true;
+  }
+  /** Abertura visual da porta da célula (0 fechada, 1 aberta; testes de navegador). */
+  doorAmount(x: number, y: number, z: number): number { return this.doorAmt.get(lidKey(x, y, z)) ?? 0; }
+  /** Portas desenhadas (diagnóstico e testes de navegador). */
+  get portaCount(): number { return this.modelMeshes.porta.count; }
 
   // ---- Tampa do baú (ADR 0093) ----
   private readonly lidAngles = new Map<string, number>();
@@ -768,6 +819,7 @@ export class TitanRenderer {
     this.syncLanterns();
     this.syncModels(this.built > 0);
     this.animateLids(time);
+    this.animateDoors(time);
     this.timeU.value = time;
     let n = 0;
     this.clock = time;
@@ -923,6 +975,19 @@ function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
 
 /** Mesa de Trabalho: sombreado por face (mesmos fatores do terreno) e luz do dia no shader; o brilho de lanterna entra por instância (`iGlow`). UV do glTF (origem no canto superior esquerdo). */
 type ModelKind = ModelKindName | 'bauTampa';
+
+/** Caixa da folha da Porta de Junco (ADR 0102): 1 × 2 × 3/16 m, base em y = 0, centrada em x e z; a folha de frente nas duas faces (a argola nos dois lados) e uma tira da moldura nos cantos. */
+function doorModelData(): ModelData {
+  const h = 0.5, d = DOOR_THICK / 2, H = 2, pos: number[] = [], nrm: number[] = [], uv: number[] = [], idx: number[] = [];
+  const quad = (p: number[][], n: number[], t: number[][]): void => { const b = pos.length / 3; p.forEach((v, i) => { pos.push(...v); nrm.push(...n); uv.push(...t[i]); }); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); };
+  quad([[-h, 0, d], [h, 0, d], [h, H, d], [-h, H, d]], [0, 0, 1], [[0, 1], [1, 1], [1, 0], [0, 0]]); // frente (u = x + 0,5 nas duas faces: a dobradiça fica do mesmo lado)
+  quad([[h, 0, -d], [-h, 0, -d], [-h, H, -d], [h, H, -d]], [0, 0, -1], [[1, 1], [0, 1], [0, 0], [1, 0]]); // verso
+  quad([[-h, 0, -d], [-h, 0, d], [-h, H, d], [-h, H, -d]], [-1, 0, 0], [[0.02, 1], [0.06, 1], [0.06, 0], [0.02, 0]]); // lados: a tira da moldura
+  quad([[h, 0, d], [h, 0, -d], [h, H, -d], [h, H, d]], [1, 0, 0], [[0.94, 1], [0.98, 1], [0.98, 0], [0.94, 0]]);
+  quad([[-h, H, d], [h, H, d], [h, H, -d], [-h, H, -d]], [0, 1, 0], [[0.2, 0.01], [0.8, 0.01], [0.8, 0.03], [0.2, 0.03]]);
+  quad([[-h, 0, -d], [h, 0, -d], [h, 0, d], [-h, 0, d]], [0, -1, 0], [[0.2, 0.97], [0.8, 0.97], [0.8, 0.99], [0.2, 0.99]]);
+  return { size: [1, H, DOOR_THICK], pos, nrm, uv, idx };
+}
 const lidKey = (x: number, y: number, z: number): string => `${x},${y},${z}`;
 /** Brilho fixo do Braseiro aceso (ADR 0092), na mesma escala do brilho de lanterna por instância (`iGlow`). */
 const EMBER_GLOW = 0.55;
