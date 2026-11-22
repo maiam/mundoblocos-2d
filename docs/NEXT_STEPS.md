@@ -30,6 +30,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Família do Junco (v0.161.0, ADR 0100 e 0101):** calibrar as receitas (provisórias); sentar na cadeira; degrau em canto e invertido; colisão das pernas da cadeira; textura de bloco sem moldura (se o dono enviar); som próprio de junco; o atlas de itens tem 44 ids (41 ocupados).
 
+**Auto-step (ADR 0103):** calibrar `STEP_HEIGHT` e a suavização da câmera em aparelho real.
+
 **Porta de Junco (v0.162.0, ADR 0102):** calibrar a receita (provisória); usar a folha de 8 vistas da etapa 2 (frente/verso × 0°, 30°, 60°, 90°) se o dono enviar, em vez do giro em 3D; textura de verso própria; luz atravessando a porta aberta (hoje bloqueia); porta de ferro e acionamento; estado `open` por clique em qualquer metade da dupla já funciona, mas não há som espacial.
 
 **Água (v0.160.0, ADR 0099):** pulo de saída e enchente prontos; faltam som de sair da água, rota de saída garantida na geração do lago e aceite no toque.

@@ -909,7 +909,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     view.setSaturn(forcedSaturn ?? saturnVisibility(session.days, forcedHour ?? session.time, session.seed)); // raro: poucos dias, janela curta
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
-    const eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
+    const eye = { x: b.x, y: b.y + EYE_HEIGHT + (b.stepSmooth ?? 0), z: b.z }; // só a câmera desliza ao subir degrau (ADR 0103); a mira segue a física
     computeAim();
     if (fingerMode()) { // anel no dedo: enche enquanto quebra (ADR 0075)
       touchRing.classList.toggle('on', gesture.state === 'ARMED' || gesture.state === 'BREAKING' || gesture.state === 'ATTACKING');

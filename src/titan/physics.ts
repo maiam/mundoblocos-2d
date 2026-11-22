@@ -18,7 +18,7 @@ const TERMINAL = 20;
 export const CLIMB_UP = 2.3, CLIMB_SLIDE = 1.2, LADDER_WALK = 0.6;
 const EPS = 1e-4;
 
-export interface Body { x: number; y: number; z: number; vx: number; vy: number; vz: number; onGround: boolean; inLiquid: boolean; /** Está numa escada (ADR 0088): sem gravidade e sem dano de queda. */ onLadder?: boolean; /** Pulo para sair da água (ADR 0099): direção do degrau (`dx`, `dz`), topo dele (`ledge`) e tempo restante do empurrão (`t`). */ hop?: { dx: number; dz: number; ledge: number; t: number } }
+export interface Body { x: number; y: number; z: number; vx: number; vy: number; vz: number; onGround: boolean; inLiquid: boolean; /** Está numa escada (ADR 0088): sem gravidade e sem dano de queda. */ onLadder?: boolean; /** Pulo para sair da água (ADR 0099): direção do degrau (`dx`, `dz`), topo dele (`ledge`) e tempo restante do empurrão (`t`). */ hop?: { dx: number; dz: number; ledge: number; t: number }; /** Suavização visual da câmera depois de subir um degrau (ADR 0103): deslocamento em y (≤ 0) que decai até 0; só o render o lê, a física não. */ stepSmooth?: number }
 export const newBody = (x: number, y: number, z: number): Body => ({ x, y, z, vx: 0, vy: 0, vz: 0, onGround: false, inLiquid: false });
 
 /** A caixa em (x, y, z) toca algum sólido? */
@@ -40,8 +40,10 @@ export function collides(v: TitanVolume, x: number, y: number, z: number): boole
   return false;
 }
 
-/** Degrau automático de meia altura (a laje): o corpo sobe a laje andando, sem pular; contra cubo inteiro (1 m) continua barrado. */
-const STEP = 0.5;
+/** Auto-step (ADR 0103): altura máxima que o corpo sobe andando, no chão, ao bater num obstáculo baixo (0,6 m, como o Minecraft); o corpo encaixa no topo real do degrau (laje, degrau, assento), não numa altura fixa. Contra cubo inteiro (1 m) continua barrado. */
+export const STEP_HEIGHT = 0.6;
+/** Suavização da câmera ao subir: decai como `exp(−22·dt)` (~0,08 s para sumir). */
+const STEP_SMOOTH_RATE = 22;
 /** Salto automático (ADR 0055): andando no chão contra um degrau de 1 bloco com espaço livre em cima, o corpo pula sozinho e sobe se continuar andando. */
 const AUTO_JUMP_PROBE = 0.35;
 const AUTO_JUMP_MIN_INPUT = 0.35; // só conta a componente de entrada que empurra contra o bloco (raspar numa parede na diagonal não pula)
@@ -140,6 +142,7 @@ export function stepBody(v: TitanVolume, b: Body, input: MoveInput, dt: number):
     stepOnce(v, b, input, h);
     left -= h;
   }
+  if (b.stepSmooth) { b.stepSmooth *= Math.exp(-STEP_SMOOTH_RATE * dt); if (Math.abs(b.stepSmooth) < 0.001) b.stepSmooth = 0; }
 }
 
 /** Frente [x, z] da escada que o corpo ocupa (pés, cintura ou cabeça na célula dela), ou null. */
@@ -189,13 +192,28 @@ function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
   moveAxis(v, b, 'y', b.vy * dt);
 }
 
+/**
+ * Auto-step (ADR 0103): teste geométrico em três passos, só com o corpo no chão e o eixo barrado. 1) há teto livre para subir `STEP_HEIGHT` aqui; 2) a caixa elevada cabe na posição nova;
+ * 3) desce até o topo real do apoio entre a altura atual e a elevada (snap down). Devolve quanto sobe (0 = não sobe: obstáculo alto demais, sem teto ou sem apoio mais alto que os pés).
+ */
+function autoStepUp(v: TitanVolume, b: Body, nx: number, nz: number): number {
+  if (collides(v, b.x, b.y + STEP_HEIGHT, b.z) || collides(v, nx, b.y + STEP_HEIGHT, nz)) return 0;
+  const top = landingY(v, nx, nz, b.y, b.y + STEP_HEIGHT);
+  const up = top - b.y;
+  if (up <= 0.01 || up > STEP_HEIGHT + 1e-4 || collides(v, nx, top, nz)) return 0;
+  return up;
+}
+
 /** Move o corpo num eixo; devolve se um sólido barrou o movimento (e o degrau de meia altura não resolveu). */
 function moveAxis(v: TitanVolume, b: Body, axis: 'x' | 'y' | 'z', d: number): boolean {
   if (d === 0) return false;
   const nx = axis === 'x' ? b.x + d : b.x, ny = axis === 'y' ? b.y + d : b.y, nz = axis === 'z' ? b.z + d : b.z;
   if (!collides(v, nx, ny, nz)) { b.x = nx; b.y = ny; b.z = nz; return false; }
   // no chão, contra uma laje: sobe o degrau de meia altura e segue andando
-  if (axis !== 'y' && b.onGround && !collides(v, nx, b.y + STEP, nz) && collides(v, nx, b.y + STEP / 2, nz)) { b.x = nx; b.y += STEP; b.z = nz; return false; }
+  if (axis !== 'y' && b.onGround) {
+    const up = autoStepUp(v, b, nx, nz);
+    if (up > 0) { b.x = nx; b.z = nz; b.y += up; b.stepSmooth = (b.stepSmooth ?? 0) - up; return false; }
+  }
   // encosta na face do bloco que barrou
   if (axis === 'x') { b.x = d > 0 ? Math.floor(nx + BODY_HALF - EPS) - BODY_HALF - EPS : Math.floor(nx - BODY_HALF + EPS) + 1 + BODY_HALF + EPS; b.vx = 0; }
   else if (axis === 'z') { b.z = d > 0 ? Math.floor(nz + BODY_HALF - EPS) - BODY_HALF - EPS : Math.floor(nz - BODY_HALF + EPS) + 1 + BODY_HALF + EPS; b.vz = 0; }
