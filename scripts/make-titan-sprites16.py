@@ -10,6 +10,7 @@ Redução: recorta a caixa do desenho, ajusta o lado maior a 16 px (centrado, co
 pré-multiplicado, realça um pouco a saturação e o contraste (para ler bem em 16 px) e deixa o alfa binário. Repetível e determinístico. Uso: python3 -I scripts/make-titan-sprites16.py
 """
 import json
+from collections import deque
 
 import numpy as np
 from PIL import Image, ImageFilter
@@ -19,12 +20,55 @@ N = 16
 # id do item -> (nome do arquivo de origem sem "_Arte.png", giro em graus (sentido horário), margem em px dentro do 16 × 16)
 ITEMS = {
     20: ('Picareta_de_Rocha', 0, 0), 22: ('Adaga_de_Rocha', 180, 0), 23: ('Picareta_de_Cobre', 0, 0), 24: ('Adaga_de_Cobre', 180, 0),
-    35: ('Balde_de_Cobre_Vazio', 0, 1), 36: ('Balde_de_Cobre_Cheio', 0, 1),
+    35: ('Balde_de_Cobre_Vazio', 0, 1), 36: ('Balde_de_Cobre_Cheio_Agua', 0, 1),
 }
+# ilustrações sem alfa (fundo preto chapado): o fundo vira transparente por inundação a partir das bordas, e só o maior pedaço fica (tira marca d'água e sobras)
+KEYED = {'Balde_de_Cobre_Cheio_Agua'}
+
+
+def key_black(im: Image.Image, thresh: int = 40, work: int = 512) -> Image.Image:
+    small = np.array(im.convert('RGB').resize((work, work), Image.BOX)).max(axis=2)
+    dark = small < thresh
+    bg = np.zeros_like(dark)
+    q = deque()
+    for i in range(work):
+        for y, x in ((0, i), (work - 1, i), (i, 0), (i, work - 1)):
+            if dark[y, x] and not bg[y, x]:
+                bg[y, x] = True; q.append((y, x))
+    while q:
+        y, x = q.popleft()
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            ny, nx = y + dy, x + dx
+            if 0 <= ny < work and 0 <= nx < work and dark[ny, nx] and not bg[ny, nx]:
+                bg[ny, nx] = True; q.append((ny, nx))
+    fg = ~bg
+    seen = np.zeros_like(fg)
+    best = None
+    for y in range(work):
+        for x in range(work):
+            if fg[y, x] and not seen[y, x]:
+                comp = [(y, x)]; seen[y, x] = True; q = deque([(y, x)])
+                while q:
+                    cy, cx = q.popleft()
+                    for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        ny, nx = cy + dy, cx + dx
+                        if 0 <= ny < work and 0 <= nx < work and fg[ny, nx] and not seen[ny, nx]:
+                            seen[ny, nx] = True; q.append((ny, nx)); comp.append((ny, nx))
+                if best is None or len(comp) > len(best):
+                    best = comp
+    mask = np.zeros_like(fg)
+    for y, x in best:
+        mask[y, x] = True
+    full = Image.fromarray((mask * 255).astype(np.uint8)).resize(im.size, Image.NEAREST)
+    out = im.convert('RGBA')
+    out.putalpha(full)
+    return out
 
 
 def reduce(name: str, rot: int, margin: int) -> Image.Image:
     im = Image.open(SRC + name + '_Arte.png').convert('RGBA')
+    if name in KEYED:
+        im = key_black(im)
     a = im.getchannel('A')
     core = a.point(lambda v: 255 if v > 128 else 0).filter(ImageFilter.MinFilter(3))  # tira a franja de 1 px do contorno
     im.putalpha(Image.fromarray((np.array(a) * (np.array(core) > 0)).astype(np.uint8)))
