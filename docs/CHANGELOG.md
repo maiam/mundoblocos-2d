@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.160.0 — Titã: sair da água pulando e enchente ao quebrar (22/11/2026)
+- **ADR 0099.** **Sair da água:** na água, encostado num bloco fora dela com o topo a até 1 nível acima da célula dos pés, **pular** leva o jogador para cima do bloco (pulo de saída com um empurrãozinho para o degrau; sem empurrar também sobe).
+- **Quebrar bloco ao lado da água do mesmo nível enche o espaço de água** (só sólido; em cadeia ao escavar; sem fluxo). O item solto afunda na célula cheia.
+- Sem mudança de save nem de gerador. Testes: +9 (1.185 no total). Conferido no jogo.
+
 ## Orvalis v0.159.0 — Titã: gravidade e deslocamento dos itens soltos (22/11/2026)
 - **ADR 0098.** Itens soltos agora **caem por gravidade** (para o centro do planeta/lua), acelerando, em vez de aparecer no apoio; na água afundam devagar. Bloco quebrado, lasca, espólio, conteúdo de baú e braseiro e pilha da morte nascem na célula de origem e caem de lá; tirar o apoio de um item faz ele cair.
 - **Item numa célula que recebe bloco é deslocado** para uma célula vizinha livre (ou para cima do bloco) em vez de barrar a colocação; sem lugar nenhum a colocação é recusada sem mudar nada. Vale para blocos e para as duas células da cama.

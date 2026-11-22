@@ -44,7 +44,7 @@ describe('malha do lago com o atlas V2 (ADR 0057)', () => {
       throw new Error(`sem borda de lago em y = ${y}`);
     };
     const a = find(63, false), b = find(62, true); // a: lateral junto da superfície; b: lateral com líquido em cima
-    expect(v.remove(a.x + 1, 63, a.z)).toBe(true); expect(v.remove(b.x + 1, 62, b.z)).toBe(true);
+    expect(v.set(a.x + 1, 63, a.z, T.AIR)).toBe(true); expect(v.set(b.x + 1, 62, b.z, T.AIR)).toBe(true); // `set` e não `remove`: remover um bloco ao lado da água a enche (ADR 0099)
     const sec = (p: { x: number; z: number }, y: number) => meshSection(v, Math.floor(p.x / 16), Math.floor((y + 64) / 16), Math.floor(p.z / 16)).liquid!;
     const parts = [sec(a, 63), sec(b, 62)];
     const m = { uv: parts.flatMap((p) => [...p.uv]) };

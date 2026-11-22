@@ -28,6 +28,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Picareta na mão (v0.137.0, ADR 0078):** aceite em aparelho; modelos da picareta e da adaga de cobre; usar o clipe "Minerar" do rig só se o golpe procedural não servir.
 
+**Água (v0.160.0, ADR 0099):** pulo de saída e enchente prontos; faltam som de sair da água, rota de saída garantida na geração do lago e aceite no toque.
+
 **Itens soltos (v0.159.0, ADR 0098):** gravidade e deslocamento prontos; faltam impulso horizontal ao nascer, quique ao pousar, som de queda e conferir a sensação da queda no aparelho.
 
 **Regra visual de itens (v0.158.0, ADR 0097):** sprite 2D extrudado de 16 × 16 para arma, ferramenta e item (as artes de adaga, picareta e balde já entraram como redução automática: trocar por pixel art feita à mão em `assets-src/titan/arte16/`); pendentes: poses de golpe por tipo (adaga que corta, picareta que desce) com o pivô no cabo, contorno escuro de 1 px, arco, machado, pá e maça (sprites novos), e redesenhar os itens antigos de 32 px em 16 se o dono quiser.
