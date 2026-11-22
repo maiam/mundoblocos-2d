@@ -120,4 +120,13 @@ describe('sala do Titã: snapshot e loopback', () => {
     await Promise.resolve(); await Promise.resolve();
     expect(seen.some((m) => m.t === 'edits' && m.cells.some((c) => c[0] === x && c[1] === Y && c[3] === T.DARK_ROCK))).toBe(true);
   });
+  it('`size` e `dirty` para o servidor: grava só o que mudou, e `snapshot` limpa a marca', () => {
+    const r = room();
+    expect(r.size).toBe(0); expect(r.dirty).toBe(false);
+    const a = r.join(hello('Ana')).id!;
+    expect(r.size).toBe(1); expect(r.dirty).toBe(false); // entrar não muda o que vai para o arquivo
+    r.leave(a);
+    expect(r.dirty).toBe(true); r.snapshot(); expect(r.dirty).toBe(false);
+    expect(r.restore(JSON.parse(JSON.stringify(r.snapshot())))).toBe(true); expect(r.dirty).toBe(false);
+  });
 });
