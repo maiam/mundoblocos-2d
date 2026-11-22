@@ -1,6 +1,6 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
-import { isFull, isModelBlock, isSlab, MAT_HEIGHT, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
+import { isFull, isModelBlock, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -110,8 +110,8 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
       } else if (isSlab(id)) {
         // laje inferior: o topo sempre aparece (fica em y + 0,5); a base some sob cubo inteiro ou laje superior; as laterais só sem cubo inteiro nem outra laje inferior ao lado.
         // laje superior: a base sempre aparece (y + 0,5); o topo some sob cubo inteiro ou laje inferior; as laterais só sem cubo inteiro nem outra laje superior ao lado.
-        const bottom = id === T.SLAB;
-        const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? !isFull(nb) && nb !== (bottom ? T.SLAB_TOP : T.SLAB) : !isFull(nb) && nb !== id);
+        const bottom = isSlabBottom(id);
+        const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? !isFull(nb) && nb !== slabPartner(id) : !isFull(nb) && nb !== id);
         if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, bottom ? 1 : 2);
       } else if (!isFull(nb)) {
         op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level, glowOf(id)); // o depósito de brasa brilha de dia e de noite

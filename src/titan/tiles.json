@@ -45,6 +45,11 @@
   "19-bloco-de-ambar-compactado/lateral",
   "19-bloco-de-ambar-compactado/base",
   "20-esteira-de-junco/topo",
-  "20-esteira-de-junco/lateral"
+  "20-esteira-de-junco/lateral",
+  "21-bloco-de-junco/topo",
+  "21-bloco-de-junco/lateral",
+  "21-bloco-de-junco/base",
+  "22-laje-de-junco/topo",
+  "22-laje-de-junco/lateral"
  ]
 }

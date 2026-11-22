@@ -43,6 +43,9 @@ import camaAtlas from '../../assets/titan-cama-atlas.webp';
 import braseiroModel from '../../assets/titan-braseiro.json';
 import braseiroAcesoModel from '../../assets/titan-braseiro-aceso.json';
 import braseiroAtlas from '../../assets/titan-braseiro-atlas.webp';
+import degrauModel from '../../assets/titan-degrau.json';
+import cadeiraModel from '../../assets/titan-cadeira.json';
+import juncoTile from '../../assets/titan-junco-tile.webp';
 import bauModel from '../../assets/titan-bau.json';
 import bauAtlas from '../../assets/titan-bau-atlas.webp';
 import bauTampaModel from '../../assets/titan-bau-tampa.json';
@@ -98,6 +101,10 @@ export const titanCamaAtlasUrl: string = camaAtlas;
 export const titanBraseiroModel = braseiroModel as ModelData;
 export const titanBraseiroAcesoModel = braseiroAcesoModel as ModelData;
 export const titanBraseiroAtlasUrl: string = braseiroAtlas;
+/** Degrau e Cadeira de Junco (ADR 0101): caixas com UV em metros sobre a trama de 64 px (1 m) repetida. */
+export const titanDegrauModel = degrauModel as ModelData;
+export const titanCadeiraModel = cadeiraModel as ModelData;
+export const titanJuncoTileUrl: string = juncoTile;
 /** Planta da Noz de Duna (3.008 triângulos, ADR 0060; `scripts/extract-titan-noz.py`): a planta sem frutos (2.160) e as 4 nozes (848), um atlas de 144 × 36 px. Pivô ao nível do solo. */
 export const titanNozPlantaModel = nozPlantaModel as ModelData;
 export const titanNozFrutosModel = nozFrutosModel as ModelData;

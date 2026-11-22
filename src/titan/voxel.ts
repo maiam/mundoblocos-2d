@@ -22,12 +22,12 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.BED_HEAD_270;
+export const T_MAX = T.REED_CHAIR_270;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
-export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco' };
+export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco', 47: 'Bloco de Junco', 48: 'Laje de Junco', 49: 'Laje de Junco', 50: 'Degrau de Junco', 51: 'Degrau de Junco', 52: 'Degrau de Junco', 53: 'Degrau de Junco', 54: 'Cadeira de Junco', 55: 'Cadeira de Junco', 56: 'Cadeira de Junco', 57: 'Cadeira de Junco' };
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id);
@@ -40,23 +40,51 @@ export const isOccupied = isTarget;
 /** Altura do bloco dentro da célula (0–1): 1 = cubo inteiro, 0,5 = laje (ADR 0046), 0 = não sólido. A física e a mira usam esta altura. */
 export const blockHeight = (id: number): number => blockSpan(id)[1];
 /** Laje (ADR 0046, 0056): inferior (`SLAB`, metade de baixo da célula) ou superior (`SLAB_TOP`, metade de cima); as duas juntas viram `SLAB_DOUBLE` (cubo inteiro). */
-export const isSlab = (id: number): boolean => id === T.SLAB || id === T.SLAB_TOP;
+export const isSlab = (id: number): boolean => id === T.SLAB || id === T.SLAB_TOP || id === T.REED_SLAB || id === T.REED_SLAB_TOP; // a de rocha e a de junco (ADR 0100)
+/** Laje inferior (metade de baixo da célula)? A superior é o par dela: `slabPartner`. */
+export const isSlabBottom = (id: number): boolean => id === T.SLAB || id === T.REED_SLAB;
+export const slabPartner = (id: number): number => (id === T.SLAB ? T.SLAB_TOP : id === T.SLAB_TOP ? T.SLAB : id === T.REED_SLAB ? T.REED_SLAB_TOP : T.REED_SLAB);
 /** Faixa de altura que o bloco ocupa dentro da célula, `[baixo, topo]` em 0–1 (a laje superior ocupa [0,5, 1]; não sólido = [0, 0]). A física e a mira leem esta faixa. */
 export function blockSpan(id: number): readonly [number, number] {
+  if (isStair(id) || isChair(id)) return [0, 1]; // a caixa envolvente (a forma exata vem de `blockBoxes`)
   if (isBrazier(id)) return [0, BRAZIER_HEIGHT]; // o braseiro 3D barra o corpo na altura dele (0,774 m), na célula inteira (ADR 0092)
   if (isChest(id)) return [0, CHEST_HEIGHT]; // o baú barra o corpo na altura dele (0,73 m), na célula inteira
   if (isBed(id)) return [0, BED_HEIGHT]; // a cama barra o corpo na altura dela (0,45 m), nas duas células
   if (isPanel(id)) return [0, PANEL_HEIGHT]; // o painel barra o corpo na altura dele (0,944 m), na célula inteira
-  if (id === T.SLAB) return [0, 0.5];
-  if (id === T.SLAB_TOP) return [0.5, 1];
+  if (isSlab(id)) return isSlabBottom(id) ? [0, 0.5] : [0.5, 1];
   return isSolid(id) ? [0, 1] : [0, 0];
 }
 /** Cubo inteiro: só ele esconde as faces vizinhas (a laje, inferior ou superior, deixa metade da célula aberta; a laje dupla é cubo). */
-export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id);
+export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id) && !isStair(id) && !isChair(id);
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 /** Veio de cobre (ADR 0063): só uma picareta o quebra; solta fragmentos de cobre, nunca o bloco. */
 /** Braseiro de Rocha (ADR 0065): apagado (25) ou aceso (26, com carga de preparações em `session.braziers`). Cubo de rocha com uma cuba no topo; só o aceso serve de estação. */
+// ---- Degrau e Cadeira de Junco (ADR 0101): sólidos de várias caixas ----
+export const isStair = (id: number): boolean => id >= T.REED_STAIR && id <= T.REED_STAIR_270;
+export const isChair = (id: number): boolean => id >= T.REED_CHAIR && id <= T.REED_CHAIR_270;
+export const stairTurn = (id: number): number => (isStair(id) ? id - T.REED_STAIR : 0);
+export const chairTurn = (id: number): number => (isChair(id) ? id - T.REED_CHAIR : 0);
+export const stairId = (turn: number): number => T.REED_STAIR + (((turn % 4) + 4) % 4);
+export const chairId = (turn: number): number => T.REED_CHAIR + (((turn % 4) + 4) % 4);
+/** Caixa sólida dentro da célula, em coordenadas locais 0–1: `[x0, y0, z0, x1, y1, z1]`. */
+export type CellBox = readonly [number, number, number, number, number, number];
+/** Formas de base (frente em +Z, giro 0): o degrau tem o patamar de baixo na célula inteira e o de cima só na metade de trás; a cadeira, o assento maciço até 0,5 m e o encosto fino atrás. */
+const STAIR_BASE: readonly CellBox[] = [[0, 0, 0, 1, 0.5, 1], [0, 0.5, 0, 1, 1, 0.5]];
+const CHAIR_BASE: readonly CellBox[] = [[0.1, 0, 0.1, 0.9, 0.5, 0.9], [0.1, 0.5, 0.1, 0.9, 1, 0.22]];
+/** Gira a caixa em torno do centro da célula, `turn` quartos de volta, no mesmo sentido do renderer (+Z → +X no giro 1). */
+function rotateBox(b: CellBox, turn: number): CellBox {
+  let [x0, y0, z0, x1, y1, z1] = b;
+  for (let i = 0; i < ((turn % 4) + 4) % 4; i++) { // (cx, cz) → (cz, −cx)
+    const nx0 = z0, nx1 = z1, nz0 = 1 - x1, nz1 = 1 - x0;
+    x0 = Math.min(nx0, nx1); x1 = Math.max(nx0, nx1); z0 = nz0; z1 = nz1;
+  }
+  return [x0, y0, z0, x1, y1, z1];
+}
+const BOXES = new Map<number, readonly CellBox[]>();
+for (let t = 0; t < 4; t++) { BOXES.set(T.REED_STAIR + t, STAIR_BASE.map((b) => rotateBox(b, t))); BOXES.set(T.REED_CHAIR + t, CHAIR_BASE.map((b) => rotateBox(b, t))); }
+/** Caixas sólidas do bloco (degrau e cadeira) ou null se ele é cubo, laje ou tem outra forma. A física e a mira leem estas caixas. */
+export const blockBoxes = (id: number): readonly CellBox[] | null => BOXES.get(id) ?? null;
 export const isBrazier = (id: number): boolean => id === T.BRAZIER || id === T.BRAZIER_LIT;
 /** Altura do Braseiro de Rocha 3D (ADR 0092): 0,774 m, e 0,935 m de lado, centrado na célula. */
 export const BRAZIER_HEIGHT = 0.774;
@@ -150,7 +178,7 @@ export function bedPartnerOffset(id: number): readonly [number, number] {
   return isBedFoot(id) ? [fx, fz] : [fx === 0 ? 0 : -fx, fz === 0 ? 0 : -fz]; // sem −0
 }
 
-export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso';
+export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'cadeira';
 export function modelOf(id: number): { kind: ModelKindName; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
@@ -158,6 +186,8 @@ export function modelOf(id: number): { kind: ModelKindName; turn: number } | nul
   if (isLadder(id)) return { kind: 'escada', turn: ladderTurn(id) };
   if (isChest(id)) return { kind: 'bau', turn: chestTurn(id) };
   if (isBedFoot(id)) return { kind: 'cama', turn: bedTurn(id) };
+  if (isStair(id)) return { kind: 'degrau', turn: stairTurn(id) };
+  if (isChair(id)) return { kind: 'cadeira', turn: chairTurn(id) };
   if (id === T.BRAZIER) return { kind: 'braseiro', turn: 0 }; // apagado e aceso são dois ids e dois modelos (ADR 0092)
   if (id === T.BRAZIER_LIT) return { kind: 'braseiroAceso', turn: 0 };
   return null;
@@ -190,6 +220,10 @@ const BLOCK_TILES: Record<number, readonly [number, number, number]> = {
   [T.BRAZIER_LIT]: [tileIndex('17-braseiro-de-rocha/topo-aceso'), tileIndex('17-braseiro-de-rocha/lateral-comum'), tileIndex('17-braseiro-de-rocha/lateral-comum')],
 };
 BLOCK_TILES[T.SLAB_TOP] = BLOCK_TILES[T.SLAB];
+// Família do Junco (ADR 0100): o bloco usa a trama nas seis faces; a laje, o topo de 32 × 32 e a lateral de 32 × 16 (metade de cima do tile)
+BLOCK_TILES[T.REED_BLOCK] = faces3('21-bloco-de-junco');
+BLOCK_TILES[T.REED_SLAB] = [tileIndex('22-laje-de-junco/topo'), tileIndex('22-laje-de-junco/lateral'), tileIndex('22-laje-de-junco/topo')];
+BLOCK_TILES[T.REED_SLAB_TOP] = BLOCK_TILES[T.REED_SLAB];
 
 /** Índice do tile da face de um bloco no atlas de terreno de 32 px (ADR 0079): topo, lateral e base são texturas próprias; a mesa, a lanterna, o Marco e o Painel são modelos 3D e não usam o atlas. */
 export function tileFor(id: number, face: Face): number {

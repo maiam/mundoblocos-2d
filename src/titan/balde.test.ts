@@ -22,7 +22,7 @@ const hold = (s: S, item: number): void => { s.inventory.add(item, 1); const k =
 
 describe('balde de cobre', () => {
   it('itens 35 e 36, pilha de 1 e receita de 3 lingotes na Mesa', () => {
-    expect(isItem(Item.BALDE) && isItem(Item.BALDE_CHEIO)).toBe(true); expect(isItem(37)).toBe(false);
+    expect(isItem(Item.BALDE) && isItem(Item.BALDE_CHEIO)).toBe(true); expect(isItem(41)).toBe(false);
     expect(isBucket(Item.BALDE) && isBucket(Item.BALDE_CHEIO) && !isBucket(Item.COPPER_INGOT)).toBe(true);
     expect(maxStack(Item.BALDE)).toBe(1); expect(maxStack(Item.BALDE_CHEIO)).toBe(1);
     const r = recipeById('balde')!;

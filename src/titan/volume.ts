@@ -1,6 +1,6 @@
 import { TitanGenerator } from './generator';
 import { LightEngine, lightKey } from './light';
-import { blockHeight, blockSpan, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -60,6 +60,11 @@ export class TitanVolume {
   bodyHeight(x: number, y: number, z: number): number {
     if (!this.gen.inRegion(x, z)) return 1;
     return blockHeight(this.get(x, y, z));
+  }
+
+  /** Caixas sólidas da célula (degrau e cadeira, ADR 0101) para o corpo, ou null (a parede invisível em volta da região é cubo inteiro). */
+  bodyBoxes(x: number, y: number, z: number): readonly CellBox[] | null {
+    return this.gen.inRegion(x, z) ? blockBoxes(this.get(x, y, z)) : null;
   }
 
   /** Faixa `[baixo, topo]` ocupada na célula para o corpo (a parede invisível em volta da região conta como cubo inteiro). */
@@ -202,7 +207,7 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map() };
+  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), cadeira: new Map() };
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
   modelCells(kind: ModelKindName): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }

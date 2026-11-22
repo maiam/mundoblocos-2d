@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.161.0 — Titã: família do Junco (22/11/2026)
+- **ADR 0100 e 0101.** Quatro itens novos de junco com as artes do Drive: **Bloco de Junco**, **Laje de Junco**, **Degrau de Junco** e **Cadeira de Junco** (itens 37–40; blocos 47–57), todos fabricados na Mesa de Trabalho (receitas **provisórias**: 6 Hastes Secas → Bloco; 3 Blocos → 6 Lajes ou 4 Degraus; 3 Hastes + 1 Esteira → Cadeira).
+- A laje passa a ter **famílias** (rocha e junco; a fusão de duas lajes de junco é o Bloco de Junco). Degrau e cadeira são os primeiros **sólidos de várias caixas**: colisão e mira por caixa (sobe-se o degrau andando; o raio passa pelos vãos) e modelos instanciados de caixas com a trama repetida (`blockBoxes`, `bodyBoxes`).
+- Novos scripts `make-titan-junco.py` (tiles e ícones) e `make-titan-junco-modelos.py`; 5 tiles no atlas de terreno; o atlas de itens fecha os 40 ids. Sem mudança de gerador. Testes: +13 (1.198 no total). Conferido a 740 × 360.
+
 ## Orvalis v0.160.0 — Titã: sair da água pulando e enchente ao quebrar (22/11/2026)
 - **ADR 0099.** **Sair da água:** na água, encostado num bloco fora dela com o topo a até 1 nível acima da célula dos pés, **pular** leva o jogador para cima do bloco (pulo de saída com um empurrãozinho para o degrau; sem empurrar também sobe).
 - **Quebrar bloco ao lado da água do mesmo nível enche o espaço de água** (só sólido; em cadeia ao escavar; sem fluxo). O item solto afunda na célula cheia.

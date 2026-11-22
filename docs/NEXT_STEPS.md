@@ -28,6 +28,8 @@ vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
 **Picareta na mão (v0.137.0, ADR 0078):** aceite em aparelho; modelos da picareta e da adaga de cobre; usar o clipe "Minerar" do rig só se o golpe procedural não servir.
 
+**Família do Junco (v0.161.0, ADR 0100 e 0101):** calibrar as receitas (provisórias); sentar na cadeira; degrau em canto e invertido; colisão das pernas da cadeira; textura de bloco sem moldura (se o dono enviar); som próprio de junco; o próximo item de inventário amplia o atlas de itens (40 ids ocupados).
+
 **Água (v0.160.0, ADR 0099):** pulo de saída e enchente prontos; faltam som de sair da água, rota de saída garantida na geração do lago e aceite no toque.
 
 **Itens soltos (v0.159.0, ADR 0098):** gravidade e deslocamento prontos; faltam impulso horizontal ao nascer, quique ao pousar, som de queda e conferir a sensação da queda no aparelho.

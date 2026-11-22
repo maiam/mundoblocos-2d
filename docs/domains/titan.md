@@ -77,6 +77,7 @@ Máquina de estados em `titan/gesture.ts` (testes em `gesture.test.ts`: fronteir
 
 ## Veios, drops e gerador v3 (v0.99.0, ADR 0044)
 
+- **Família do Junco (v0.161.0, ADR 0100/0101):** blocos 47–57 (`REED_BLOCK`, `REED_SLAB`/`_TOP`, `REED_STAIR` 50–53, `REED_CHAIR` 54–57), itens 37–40; `isSlabBottom`/`slabPartner` e `resolveSlabPlacement(…, laje)`; `blockBoxes`/`CellBox`/`isStair`/`isChair` em `voxel.ts`, `TitanVolume.bodyBoxes`, caixas em `collides`/`landingY`/`ceilingY`/`raycast`; modelos `degrau`/`cadeira`; `scripts/make-titan-junco.py` e `make-titan-junco-modelos.py`.
 - **Água: pulo de saída e enchente (v0.160.0, ADR 0099):** `physics.waterLedge`/`LEDGE_REACH`/`Body.hop` (pulo de saída em `stepOnce`) e `TitanVolume.remove` (sólido ao lado de líquido no mesmo nível vira líquido).
 - **Gravidade e deslocamento dos itens soltos (v0.159.0, ADR 0098):** `titan/drops.ts` (`stepDrops`, `settleDrops`, `restY`, `planDisplace`, `applyDisplace`); `session.dropFx` com `fy`/`vy`; `visibleItems` com a altura real; `setItems` do renderer acompanha queda e célula; `placeFromSlot`/`placeBed` deslocam em vez de recusar.
 - **Regra visual de itens (v0.158.0, ADR 0097):** `titan/extrude.ts` (`itemMask` lê `small` de 16 × 16 e depois os 32 × 32), `scripts/make-titan-sprites16.py` → `assets-src/titan/arte16/` + `itens.json`, `make-titan-arte32.py` e `make-titan-item-masks.py`; sem `HELD_MODELS`/`HELD_MESHES` nem GLB na mão (a categoria `model` é reserva do tridente e da besta).
