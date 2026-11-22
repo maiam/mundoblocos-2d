@@ -101,10 +101,14 @@ export class TitanVolume {
     return true;
   }
 
-  /** Remove o sólido da célula: na bacia, a célula volta a ser líquida; fora dela, vira ar (remoção explícita se a base era sólida). */
+  /**
+   * Remove o sólido da célula: na bacia, a célula volta a ser líquida; fora dela, vira ar (remoção explícita se a base era sólida) — **salvo** se uma das quatro células vizinhas **do mesmo nível**
+   * é líquido: então o espaço se enche de líquido (ADR 0099). Só vale para sólido removido (lanterna, escada e esteira não enchem).
+   */
   remove(x: number, y: number, z: number): boolean {
-    const baseId = this.gen.blockAt(x, y, z);
-    return this.set(x, y, z, baseId === T.LAKE ? T.LAKE : T.AIR);
+    const baseId = this.gen.blockAt(x, y, z), before = this.get(x, y, z);
+    const floods = baseId !== T.LAKE && isSolid(before) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => this.get(x + dx, y, z + dz) === T.LAKE);
+    return this.set(x, y, z, baseId === T.LAKE || floods ? T.LAKE : T.AIR);
   }
 
   /** Coloca um sólido na célula (ar ou líquido; o líquido é deslocado, mas continua na base para voltar depois). */

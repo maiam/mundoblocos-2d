@@ -18,7 +18,7 @@ const TERMINAL = 20;
 export const CLIMB_UP = 2.3, CLIMB_SLIDE = 1.2, LADDER_WALK = 0.6;
 const EPS = 1e-4;
 
-export interface Body { x: number; y: number; z: number; vx: number; vy: number; vz: number; onGround: boolean; inLiquid: boolean; /** Está numa escada (ADR 0088): sem gravidade e sem dano de queda. */ onLadder?: boolean }
+export interface Body { x: number; y: number; z: number; vx: number; vy: number; vz: number; onGround: boolean; inLiquid: boolean; /** Está numa escada (ADR 0088): sem gravidade e sem dano de queda. */ onLadder?: boolean; /** Pulo para sair da água (ADR 0099): direção do degrau (`dx`, `dz`), topo dele (`ledge`) e tempo restante do empurrão (`t`). */ hop?: { dx: number; dz: number; ledge: number; t: number } }
 export const newBody = (x: number, y: number, z: number): Body => ({ x, y, z, vx: 0, vy: 0, vz: 0, onGround: false, inLiquid: false });
 
 /** A caixa em (x, y, z) toca algum sólido? */
@@ -68,6 +68,39 @@ function ceilingY(v: TitanVolume, x: number, z: number, ny: number, oldY: number
   return best === Infinity ? Math.floor(ny + BODY_HEIGHT - EPS) : best;
 }
 
+/** Sair da água (ADR 0099): maior diferença de altura, em níveis (1 nível = 1 bloco), entre o topo da célula onde estão os pés (na superfície, o nível da água) e o topo do bloco ao lado que o pulo alcança. */
+export const LEDGE_REACH = 1;
+/** Tempo (s) e velocidade (m/s) do empurrão em direção ao degrau durante o pulo de saída. */
+const HOP_TIME = 0.7, HOP_PUSH = 1.8;
+
+/**
+ * Degrau para sair da água (ADR 0099): o jogador na água, encostado (a ≤ 0,15 m) num bloco **fora da água** cujo topo fica a até `LEDGE_REACH` acima dos pés e com espaço livre em cima para o corpo.
+ * Olha primeiro o lado para onde se empurra e depois os outros (sem direção, os quatro). Devolve a direção unitária do bloco e a altura do topo, ou null. Puro e sem efeitos.
+ */
+export function waterLedge(v: TitanVolume, b: Body, dirX: number, dirZ: number): { dx: number; dz: number; ledge: number } | null {
+  if (!b.inLiquid) return null;
+  const ax = Math.abs(dirX), az = Math.abs(dirZ), sx = Math.sign(dirX), sz = Math.sign(dirZ);
+  const order: Array<[number, number]> = ax > 0.2 || az > 0.2 ? (ax >= az ? [[sx, 0], [0, sz]] : [[0, sz], [sx, 0]]) : [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const reach = BODY_HALF + 0.15;
+  for (const [dx, dz] of order) {
+    if (!dx && !dz) continue;
+    const cx = Math.floor(b.x + dx * reach), cz = Math.floor(b.z + dz * reach);
+    if (cx === Math.floor(b.x) && cz === Math.floor(b.z)) continue; // ainda não encostou na parede
+    let best: number | null = null;
+    const cellTop = Math.floor(b.y + 0.2) + 1; // topo da célula dos pés: na superfície, o nível da água
+    for (let yy = Math.floor(b.y + EPS); yy <= cellTop + LEDGE_REACH; yy++) {
+      const id = v.get(cx, yy, cz), h = v.bodyHeight(cx, yy, cz);
+      if (h <= 0 || id === T.LAKE) continue;
+      const top = yy + h;
+      if (top - cellTop > LEDGE_REACH + EPS || top - b.y < 0.05) continue;
+      if (collides(v, cx + 0.5, top, cz + 0.5)) continue; // sem espaço para o corpo em cima
+      if (best === null || top > best) best = top;
+    }
+    if (best !== null) return { dx, dz, ledge: best };
+  }
+  return null;
+}
+
 export interface MoveInput {
   /** Direção de caminhada no mundo (já girada pelo olhar), módulo ≤ 1. */
   dirX: number; dirZ: number;
@@ -101,12 +134,21 @@ function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
   const speed = WALK_SPEED * (b.inLiquid ? 0.6 : ladder ? LADDER_WALK : input.sprint ? SPRINT_FACTOR : 1);
   b.vx = input.dirX * speed;
   b.vz = input.dirZ * speed;
+  if (b.hop) { // empurrão para o degrau enquanto dura o pulo de saída (se o jogador não está empurrando já)
+    b.hop.t -= dt;
+    if (b.hop.t <= 0 || (b.onGround && !b.inLiquid)) b.hop = undefined;
+    else if (input.dirX * b.hop.dx + input.dirZ * b.hop.dz < 0.3) { b.vx = b.hop.dx * HOP_PUSH; b.vz = b.hop.dz * HOP_PUSH; }
+  }
   if (ladder) {
     const into = -(input.dirX * ladder[0] + input.dirZ * ladder[1]); // > 0: empurrando para a parede (a frente da escada aponta para fora dela)
     b.vy = input.jump || into > 0.3 ? CLIMB_UP : -CLIMB_SLIDE;
   } else if (b.inLiquid) {
-    b.vy = Math.max(b.vy - GRAVITY * 0.25 * dt, -2.5);
-    if (input.jump) b.vy = 3;
+    b.vy = Math.max(b.vy - GRAVITY * 0.25 * dt, b.hop ? -TERMINAL : -2.5);
+    if (input.jump && !b.hop) {
+      const l = waterLedge(v, b, input.dirX, input.dirZ); // pular encostado num bloco até 1 nível acima: sai da água (ADR 0099)
+      if (l) { b.vy = Math.sqrt(2 * GRAVITY * (l.ledge - b.y + 0.3)); b.hop = { dx: l.dx, dz: l.dz, ledge: l.ledge, t: HOP_TIME }; }
+      else b.vy = 3;
+    }
   } else {
     const grounded = b.onGround;
     b.vy = Math.max(b.vy - GRAVITY * dt, -TERMINAL);
