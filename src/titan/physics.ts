@@ -1,7 +1,7 @@
 import { lanternBox, rayBox, type Box } from './lantern';
 import type { TitanVolume } from './volume';
 import { modelBox } from './models';
-import { isBed, isBrazier, isChest, isLadder, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
+import { blockBoxes, isBed, isBrazier, isSlab, isSlabBottom, isChest, isLadder, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
 
 /** Corpo do jogador: caixa de 0,6 × 1,8 × 0,6 m, olhos a 1,62 m dos pés. Pés em y (base do corpo). */
 export const BODY_HALF = 0.3;
@@ -27,6 +27,11 @@ export function collides(v: TitanVolume, x: number, y: number, z: number): boole
   const y0 = Math.floor(y + EPS), y1 = Math.floor(y + BODY_HEIGHT - EPS);
   const z0 = Math.floor(z - BODY_HALF + EPS), z1 = Math.floor(z + BODY_HALF - EPS);
   for (let yy = y0; yy <= y1; yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) {
+    const boxes = v.bodyBoxes(xx, yy, zz); // degrau e cadeira (ADR 0101): várias caixas, cada uma com a sua faixa horizontal
+    if (boxes) {
+      for (const b of boxes) if (x - BODY_HALF < xx + b[3] - EPS && x + BODY_HALF > xx + b[0] + EPS && y < yy + b[4] - EPS && y + BODY_HEIGHT > yy + b[1] + EPS && z - BODY_HALF < zz + b[5] - EPS && z + BODY_HALF > zz + b[2] + EPS) return true;
+      continue;
+    }
     const [lo, hi] = v.bodySpan(xx, yy, zz);
     if (hi <= lo) continue; // não sólido
     if (lo === 0 && hi === 1) return true; // cubo inteiro
@@ -47,6 +52,15 @@ function landingY(v: TitanVolume, x: number, z: number, ny: number, oldY: number
   const z0 = Math.floor(z - BODY_HALF + EPS), z1 = Math.floor(z + BODY_HALF - EPS);
   let best = -Infinity;
   for (let yy = Math.floor(ny + EPS); yy <= Math.floor(oldY + EPS); yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) {
+    const boxes = v.bodyBoxes(xx, yy, zz);
+    if (boxes) { // degrau e cadeira: o apoio é o topo da caixa mais alta sob o corpo (ADR 0101)
+      for (const b of boxes) {
+        if (!(x - BODY_HALF < xx + b[3] - EPS && x + BODY_HALF > xx + b[0] + EPS && z - BODY_HALF < zz + b[5] - EPS && z + BODY_HALF > zz + b[2] + EPS)) continue;
+        const top = yy + b[4];
+        if (top > ny + EPS && top <= oldY + 2 * EPS) best = Math.max(best, top);
+      }
+      continue;
+    }
     const h = v.bodyHeight(xx, yy, zz);
     if (h > 0 && yy + h > ny + EPS && yy + h <= oldY + 2 * EPS) best = Math.max(best, yy + h);
   }
@@ -60,6 +74,15 @@ function ceilingY(v: TitanVolume, x: number, z: number, ny: number, oldY: number
   const oldHead = oldY + BODY_HEIGHT;
   let best = Infinity;
   for (let yy = Math.floor(oldHead - 1 + EPS); yy <= Math.floor(ny + BODY_HEIGHT - EPS); yy++) for (let zz = z0; zz <= z1; zz++) for (let xx = x0; xx <= x1; xx++) {
+    const boxes = v.bodyBoxes(xx, yy, zz);
+    if (boxes) { // degrau e cadeira (ADR 0101)
+      for (const b of boxes) {
+        if (!(x - BODY_HALF < xx + b[3] - EPS && x + BODY_HALF > xx + b[0] + EPS && z - BODY_HALF < zz + b[5] - EPS && z + BODY_HALF > zz + b[2] + EPS)) continue;
+        const cand = yy + b[1];
+        if (cand >= oldHead - 2 * EPS && ny + BODY_HEIGHT > cand + EPS && ny < yy + b[4] - EPS) best = Math.min(best, cand);
+      }
+      continue;
+    }
     const [lo, hi] = v.bodySpan(xx, yy, zz);
     if (hi <= lo) continue;
     const cand = yy + lo;
@@ -214,13 +237,21 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
         // Marco e Painel: a mira acerta a caixa do modelo (com folga de toque); fora dela o raio segue e pega o que está atrás
         const h = rayBox(ox, oy, oz, dx, dy, dz, modelBox(id, x, y, z, pad));
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box: modelBox(id, x, y, z) };
+      } else if (blockBoxes(id)) {
+        // degrau e cadeira (ADR 0101): o raio acerta a caixa mais próxima e passa pelos vãos (o patamar de cima do degrau, o espaço sob o encosto)
+        let nearest: { t: number; nx: number; ny: number; nz: number; box: Box } | null = null;
+        for (const b of blockBoxes(id)!) {
+          const box: Box = [x + b[0], y + b[1], z + b[2], x + b[3], y + b[4], z + b[5]], h = rayBox(ox, oy, oz, dx, dy, dz, box);
+          if (h && h.t <= reach && (!nearest || h.t < nearest.t)) nearest = { t: h.t, nx: h.nx, ny: h.ny, nz: h.nz, box };
+        }
+        if (nearest) return { x, y, z, nx: nearest.nx, ny: nearest.ny, nz: nearest.nz, hy: oy + dy * nearest.t - y, box: nearest.box };
       } else if (id === T.MAT) {
         // a esteira é fina (1/16 m): a mira acerta só a caixa dela (com folga de toque para cima) e o raio segue por baixo e pelos lados
         const h = rayBox(ox, oy, oz, dx, dy, dz, [x, y, z, x + 1, y + MAT_HEIGHT + pad, z + 1]);
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box: [x, y, z, x + 1, y + MAT_HEIGHT, z + 1] };
-      } else if (id === T.SLAB || id === T.SLAB_TOP) {
+      } else if (isSlab(id)) {
         // a laje ocupa só a metade de baixo da célula: a mira acerta essa caixa (o topo fica em y + 0,5) e o raio segue por cima dela
-        const lo = id === T.SLAB ? 0 : 0.5, box: Box = [x, y + lo, z, x + 1, y + lo + 0.5, z + 1], h = rayBox(ox, oy, oz, dx, dy, dz, box);
+        const lo = isSlabBottom(id) ? 0 : 0.5, box: Box = [x, y + lo, z, x + 1, y + lo + 0.5, z + 1], h = rayBox(ox, oy, oz, dx, dy, dz, box);
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box };
       } else if (isTarget(id) || (liquid && id === T.LAKE)) return { x, y, z, nx, ny, nz, hy }; // `liquid`: o balde mira o líquido (ADR 0091)
     }

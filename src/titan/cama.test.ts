@@ -24,7 +24,7 @@ const away = (s: Awaited<ReturnType<typeof openSession>>, f: { x: number; z: num
 
 describe('cama: ids e regras do bloco', () => {
   it('pé e cabeceira com o giro no id, sólidos até 0,45 m, não cubo; só o pé tem instância', () => {
-    expect(T_MAX).toBe(T.BED_HEAD_270);
+    expect(T_MAX).toBeGreaterThanOrEqual(T.BED_HEAD_270); // a família do Junco (ADR 0100) veio depois
     for (let t = 0; t < 4; t++) {
       const foot = bedFootId(t), head = bedHeadId(t);
       expect(isBedFoot(foot)).toBe(true); expect(isBedHead(head)).toBe(true); expect(isBed(foot) && isBed(head)).toBe(true); expect(bedTurn(foot)).toBe(t); expect(bedTurn(head)).toBe(t);

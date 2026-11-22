@@ -9,7 +9,7 @@ export type SurfaceMaterial = 'rock' | 'sand' | 'ice';
 /** Material sonoro de um bloco (quebra, colocação e passos); `null` = silêncio (ar, líquido, lanterna). Rocha: escura, veio, laje, mesa e rocha-mãe; areia: ocre e úmida; gelo: fosco, veio e brasa de âmbar (cristal). */
 export function surfaceOf(block: number | undefined): SurfaceMaterial | null {
   switch (block) {
-    case T.SAND: case T.DAMP_SAND: case T.PAINEL: case T.PAINEL_Z: case T.MAT: case T.LADDER: case T.LADDER_90: case T.LADDER_180: case T.LADDER_270: return 'sand';
+    case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: case T.REED_SLAB: case T.REED_SLAB_TOP: case T.REED_STAIR: case T.REED_STAIR_90: case T.REED_STAIR_180: case T.REED_STAIR_270: case T.REED_CHAIR: case T.REED_CHAIR_90: case T.REED_CHAIR_180: case T.REED_CHAIR_270: case T.PAINEL: case T.PAINEL_Z: case T.MAT: case T.LADDER: case T.LADDER_90: case T.LADDER_180: case T.LADDER_270: return 'sand';
     case T.CHEST: case T.CHEST_90: case T.CHEST_180: case T.CHEST_270: return 'rock';
     case T.BED: case T.BED_90: case T.BED_180: case T.BED_270: case T.BED_HEAD: case T.BED_HEAD_90: case T.BED_HEAD_180: case T.BED_HEAD_270: return 'sand'; // o painel é um trançado de junco sobre base de basalto: soa abafado
     case T.MARCO: case T.MARCO_90: case T.MARCO_180: case T.MARCO_270: return 'rock';
