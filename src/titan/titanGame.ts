@@ -89,6 +89,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const probe = document.createElement('canvas');
   if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { toast('Este aparelho não oferece WebGL: o Titã não abre aqui.', 60000); return; }
 
+  const aviso = q.get('aviso'); // veio de uma sala que recusou: explica e limpa o endereço
+  if (aviso) { toast(aviso.slice(0, 160), 9000); const u = new URL(window.location.href); u.searchParams.delete('aviso'); window.history.replaceState(null, '', u); }
   const param = q.get('seed') ?? (scene ? '42' : null);
   let session: TitanSession;
   try {
@@ -104,7 +106,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       try { session = await Promise.race([client.connect(nick, room.id), timeout]); } finally { waiting.remove(); }
     } else session = await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
   } catch (e) {
-    if (room) { toast(e instanceof Error ? e.message : 'Não foi possível entrar na sala.', 60000); return; }
+    if (room) { // a sala recusou ou não respondeu: volta ao modo solo com um aviso (nada de página parada)
+      const msg = e instanceof Error ? e.message : '';
+      const why = /não encontrada/i.test(msg) ? 'O servidor ainda não tem as salas do Titã.' : /versão/i.test(msg) ? 'O servidor está em outra versão do jogo.' : msg || 'Não foi possível entrar na sala.';
+      const u = new URL(window.location.href);
+      u.searchParams.delete('sala'); u.searchParams.delete('loopback'); u.searchParams.set('aviso', `${why} Jogando sozinho.`);
+      window.location.replace(u);
+      return;
+    }
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
@@ -572,14 +581,15 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const roomBtn = el('button', 'titan-btn', menu);
   roomBtn.type = 'button';
   roomBtn.hidden = scene;
-  let roomCount: { players: number; max: number } | null = null, roomLost = false;
+  let roomCount: { players: number; max: number } | null = null, roomLost = false, roomSupported = true;
   const paintRoomBtn = (): void => {
     const max = roomCount?.max ?? TITAN_MAX_PLAYERS;
-    roomBtn.textContent = roomLost ? 'Reconectar à sala' : room ? `Sair da sala (${(client?.remotes.size ?? 0) + 1}/${max})` : `Jogar na sala: ${TITAN_ROOMS_FIRST.name}${roomCount ? ` (${roomCount.players}/${roomCount.max})` : ''}`;
+    roomBtn.disabled = !room && !roomSupported;
+    roomBtn.textContent = !room && !roomSupported ? 'Salas do Titã: servidor sem suporte ainda' : roomLost ? 'Reconectar à sala' : room ? `Sair da sala (${(client?.remotes.size ?? 0) + 1}/${max})` : `Jogar na sala: ${TITAN_ROOMS_FIRST.name}${roomCount ? ` (${roomCount.players}/${roomCount.max})` : ''}`;
   };
   paintRoomBtn();
   if (!scene && !room && onlineAvailable(window.location.hostname)) { // fora do site oficial o servidor recusa a conexão: não consulta
-    const poll = (): void => { void fetchRoomCounts().then((c) => { roomCount = c?.[TITAN_ROOMS_FIRST.id] ?? null; paintRoomBtn(); }); };
+    const poll = (): void => { void fetchRoomCounts().then((c) => { roomCount = c?.[TITAN_ROOMS_FIRST.id] ?? null; roomSupported = c === null || !!c[TITAN_ROOMS_FIRST.id]; paintRoomBtn(); }); }; // /salas respondeu sem a sala do Titã = o servidor ainda não a tem
     poll(); window.setInterval(poll, 20000);
   }
   roomBtn.addEventListener('click', () => { if (roomLost) { window.location.reload(); return; } const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(TITAN_ROOMS_FIRST.id)); window.location.assign(u); });
