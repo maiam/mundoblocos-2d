@@ -1,6 +1,6 @@
 # ADR 0082 — Titã: o bloco quebrado cai no chão e é recolhido por proximidade (v0.141.0)
 
-**Status:** Aceita. Pedido do dono do produto (especificação de drops do Minecraft). Estende a ADR 0044 (lascas soltas) a **todo** bloco comum.
+**Status:** Aceita; **a queda por gravidade e o deslocamento do item ao colocar bloco foram acrescentados no ADR 0098 (v0.159.0)**. Pedido do dono do produto (especificação de drops do Minecraft). Estende a ADR 0044 (lascas soltas) a **todo** bloco comum.
 
 - **Regra:** quebrar um bloco comum remove o bloco e solta o item na célula quebrada (`actions.spillBlock`, id `b:x,y,z:n`, `n` livre; desce até o apoio por `restY`). Não passa mais pela mochila: quebrar **nunca falha por mochila cheia**; o item espera no chão (a laje dupla solta 2 numa pilha).
 - **Exceção:** a lanterna continua indo direto para a mochila e, sem espaço, fica no lugar (item-chave; não se perde em precipício ou água). Lascas de veio, brasa, cobre e espólio seguem como antes; veio solta o bloco **e** a lasca.

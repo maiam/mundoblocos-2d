@@ -44,6 +44,7 @@
 | 0065 | **Aceita** — Titã: Braseiro de Rocha (apagado/aceso, 8 preparações por Brasa de Âmbar, estação `brazier`), Lingote de Cobre, Picareta de Cobre e adagas; `stationMet` como regra única |
 | 0066 | **Aceita** — Titã: abrigos no gerador v8 (2 vãos entre pilares de rocha com Placa de Carapaça no chão, fora do território do Farejador) e Revestimento de Carapaça (bloco 27, 1 placa + 1 rocha → 2) |
 | 0067 | **Aceita** — Titã: durabilidade das ferramentas (contador `wear` no espaço, 131 rocha e 190 cobre, picareta −1/−2 e adaga −2/−1, barra verde→vermelho, quebra com estilhaço, vai no save e na pilha da morte) |
+| 0098 | **Aceita** — Titã: gravidade dos itens soltos (queda acelerada, afunda devagar na água) e deslocamento do item para uma célula vizinha quando um bloco é colocado na célula dele |
 | 0097 | **Aceita** — Titã: regra visual de armas, ferramentas e itens = sprite 2D extrudado de 16 × 16 (1/16 de espessura, bordas só onde toca o transparente); substitui os GLB/malhas 3D na mão de adaga, picareta e balde; exceção: tridente e besta |
 | 0096 | **Aceita** — Titã: sons da tampa do baú (abrir e fechar) e do sono (escurecer e acordar), sintetizados e disparados por transições puras (`lidSound`, `sleepCue`) |
 | 0095 | **Aceita** — Titã: balde 3D na mão (malha embutida de JSON + atlas, `HELD_MESHES`, estilo `bucket`) e som de água sintetizado ao recolher e despejar |

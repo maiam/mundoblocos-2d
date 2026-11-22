@@ -57,7 +57,7 @@ export interface TitanSession {
   /** Lascas soltas por veios quebrados (v3, ADR 0044): recolhidas por proximidade; vão no cabeçalho do save. */
   drops: Map<string, Drop>;
   /** Relógio só de execução dos drops de bloco (ADR 0082): atraso de coleta e idade; fora do save (recarregar zera). */
-  dropFx: Map<string, { delay: number; age: number }>;
+  dropFx: Map<string, { delay: number; age: number; /** Queda (ADR 0098): altura real em células e velocidade para baixo; ausentes = repousa. */ fy?: number; vy?: number }>;
   dropsRev: number;
   /** Receitas descobertas (`mesa`, `bancada`; ADR 0045) e adições localizadas de partida legada (a brasa dada uma vez). Vão no cabeçalho do save. */
   known: Set<string>;
@@ -73,7 +73,7 @@ export interface TitanSession {
 const stateRev = (s: TitanSession): number => s.inventory.rev + s.collectedRev + s.dropsRev + s.metaRev;
 /** Tudo o que está solto no mundo para desenhar: lascas legadas (v1/v2) ainda não recolhidas e as lascas dos veios (v3). */
 export function visibleItems(s: TitanSession): Array<{ id: string; item: number; x: number; y: number; z: number }> {
-  return [...s.items.remaining(), ...s.drops.values()];
+  return [...s.items.remaining(), ...[...s.drops.values()].map((d) => { const fy = s.dropFx.get(d.id)?.fy; return fy === undefined ? d : { ...d, y: fy }; })]; // o item em queda desenha na altura real (ADR 0098)
 }
 /** Há inventário/coleta ainda não confirmados no banco? */
 export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.savedStateRev;

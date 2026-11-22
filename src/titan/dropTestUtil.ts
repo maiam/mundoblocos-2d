@@ -1,9 +1,11 @@
 import { collectNearby } from './actions';
+import { settleDrops } from './drops';
 import type { TitanSession } from './session';
 
 /** Só para testes (ADR 0082): o bloco quebrado agora cai no chão; isto recolhe tudo o que há solto como se o jogador passasse por cada pilha (já sem o atraso de coleta). */
 export function sweep(s: TitanSession): number {
   let n = 0;
+  settleDrops(s); // os itens já pousaram (a gravidade, ADR 0098, é animada no jogo)
   for (const d of [...s.drops.values()]) n += collectNearby(s, d.x + 0.5, d.y, d.z + 0.5, 1).collected;
   return n;
 }
