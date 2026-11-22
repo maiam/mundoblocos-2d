@@ -114,7 +114,7 @@ export class TitanRenderer {
   private frame = 0;
   /** Seções refeitas no quadro atual (medição). */
   private built = 0;
-  private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number; ox: number; oz: number; born: number }>();
+  private readonly itemSprites = new Map<string, { sprite: THREE.Sprite; baseY: number; ox: number; oz: number; born: number; cx: number; cz: number }>();
   /** Itens recolhidos que ainda voam até o jogador (~0,14 s) antes de sumir (ADR 0082). */
   private readonly flying: Array<{ sprite: THREE.Sprite; t0: number; x: number; y: number; z: number }> = [];
   private itemsLoaded = false; // a primeira lista (partida retomada) não "salta"; as seguintes sim
@@ -667,7 +667,12 @@ export class TitanRenderer {
     const fresh = this.itemsLoaded;
     this.itemsLoaded = true;
     for (const it of items) {
-      if (this.itemSprites.has(it.id)) continue;
+      const old = this.itemSprites.get(it.id);
+      if (old) { // já existe: acompanha a queda (altura real) e o deslocamento de célula (ADR 0098)
+        old.baseY = it.y + 0.32;
+        if (old.cx !== it.x || old.cz !== it.z) { old.cx = it.x; old.cz = it.z; old.sprite.position.x = it.x + 0.5 + old.ox; old.sprite.position.z = it.z + 0.5 + old.oz; }
+        continue;
+      }
       const mat = this.itemMats[it.item] ??= this.spriteMaterial(it.item - 1);
       mat.color.setScalar(this.itemDim);
       const sprite = new THREE.Sprite(mat);
@@ -677,7 +682,7 @@ export class TitanRenderer {
       const ox = (((h >>> 0) % 1000) / 1000 - 0.5) * 0.36, oz = (((h >>> 10) % 1000) / 1000 - 0.5) * 0.36; // itens na mesma célula não se sobrepõem
       sprite.position.set(it.x + 0.5 + ox, baseY, it.z + 0.5 + oz);
       this.scene.add(sprite);
-      this.itemSprites.set(it.id, { sprite, baseY, ox, oz, born: fresh ? this.clock : -1e9 });
+      this.itemSprites.set(it.id, { sprite, baseY, ox, oz, born: fresh ? this.clock : -1e9, cx: it.x, cz: it.z });
     }
   }
 

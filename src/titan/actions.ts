@@ -10,6 +10,7 @@ import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
 import { wearCost, type WearAction } from './wear';
 import { SLOTS } from './inventory';
+import { applyDisplace, planDisplace, settleDrops, stepDrops } from './drops';
 import { CHEST_SLOTS, type ChestState, chestPut, chestRoom, newChest } from './chest';
 import { type Species, cropKey, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKind } from './crops';
 
@@ -97,13 +98,16 @@ function releaseMat(s: TitanSession, x: number, y: number, z: number): void {
 /** Coloca a cama de Junco (ADR 0090): o pé na célula apontada e a cabeceira uma adiante, no sentido do olhar; as duas precisam estar livres e sobre piso firme. */
 function placeBed(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz, turn = bedTurnFacing(s.yaw), [fx, fz] = ladderFacing(turn), hx = x + fx, hz = z + fz;
-  const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
+  const occupied = s.items; // só as lascas legadas barram; o item solto é deslocado (ADR 0098)
   for (const [cx, cz] of [[x, z], [hx, hz]]) {
     if (!matSupported(s, cx, y, cz)) return { ok: false, msg: 'A cama precisa de piso firme nas duas células' };
     if (!canPlaceAt(s.volume, s.body, cx, y, cz, occupied, [0, BED_HEIGHT])) return { ok: false };
   }
+  const plan = planDisplace(s, [[x, y, z], [hx, y, hz]]); // item solto nas células da cama vai para o lado (ADR 0098)
+  if (!plan) return { ok: false, msg: 'Há um item no local e não há espaço ao lado para ele' };
   if (!s.volume.place(x, y, z, bedFootId(turn))) return { ok: false };
   if (!s.volume.place(hx, y, hz, bedHeadId(turn))) { s.volume.remove(x, y, z); return { ok: false }; }
+  applyDisplace(s, plan);
   s.inventory.consume(slot);
   return { ok: true };
 }
@@ -272,7 +276,7 @@ export function chestTakeOut(s: TitanSession, x: number, y: number, z: number, s
 function spillChest(s: TitanSession, x: number, y: number, z: number): void {
   const k = furnaceKey(x, y, z), c = s.chests.get(k);
   if (!c) return;
-  const ry = restY(s, x, y, z);
+  const ry = y; // o conteúdo cai por gravidade (ADR 0098)
   c.forEach((st, n) => {
     if (!st) return;
     const id = `k:${x},${y},${z}:${n}`;
@@ -286,7 +290,7 @@ function spillChest(s: TitanSession, x: number, y: number, z: number): void {
 function spillFurnace(s: TitanSession, x: number, y: number, z: number): void {
   const k = furnaceKey(x, y, z), f = s.furnaces.get(k);
   if (!f) return;
-  const ry = restY(s, x, y, z);
+  const ry = y;
   (['input', 'fuel', 'output'] as const).forEach((slot, n) => {
     const st = f[slot];
     if (!st) return;
@@ -383,7 +387,7 @@ function releaseReed(s: TitanSession, id: string | null, x: number, y: number, z
 export function restDrop(s: TitanSession, id: string, item: number, x: number, y: number, z: number, count: number): void {
   if (count < 1 || s.drops.has(id)) return;
   const cx = Math.floor(x), cy = Math.floor(y), cz = Math.floor(z);
-  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x: cx, y: restY(s, cx, cy, cz), z: cz });
+  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x: cx, y: cy, z: cz }  /* cai por gravidade (ADR 0098) */);
   s.dropsRev++;
 }
 
@@ -391,7 +395,7 @@ export function restDrop(s: TitanSession, id: string, item: number, x: number, y
 function dropShard(s: TitanSession, item: number, x: number, y: number, z: number, count = 1): void {
   const id = `v:${x},${y},${z}`;
   if (s.drops.has(id)) return;
-  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x, y: restY(s, x, y, z), z });
+  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x, y, z }); // cai por gravidade (ADR 0098)
   s.dropsRev++;
 }
 
@@ -404,16 +408,9 @@ function spillBlock(s: TitanSession, item: number, count: number, x: number, y: 
   let n = 0;
   while (s.drops.has(`b:${x},${y},${z}:${n}`)) n++;
   const id = `b:${x},${y},${z}:${n}`;
-  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x, y: restY(s, x, y, z), z });
+  s.drops.set(id, { id, item, ...(count > 1 ? { count } : {}), x, y, z }); // cai por gravidade (ADR 0098)
   s.dropFx.set(id, { delay: PICKUP_DELAY_S, age: 0 });
   s.dropsRev++;
-}
-
-/** Altura em que uma lasca solta repousa: desce enquanto não há sólido embaixo (nunca abaixo da rocha-mãe). */
-function restY(s: TitanSession, x: number, y: number, z: number): number {
-  let yy = y;
-  while (yy > Y_MIN + 1 && !isSolid(s.volume.get(x, yy - 1, z))) yy--;
-  return yy;
 }
 
 const PICKUP_RADIUS = 1.45;
@@ -422,7 +419,7 @@ const PICKUP_RADIUS = 1.45;
  * fica no lugar e `full` avisa. Lascas sem apoio (o bloco de baixo foi quebrado) descem antes. Tudo muda inventário e lasca juntos (um único `dropsRev`).
  */
 export function collectNearby(s: TitanSession, px: number, py: number, pz: number, dt = 0): { collected: number; full: boolean; moved: boolean } {
-  let collected = 0, full = false, moved = false;
+  let collected = 0, full = false, moved = dt > 0 ? stepDrops(s, dt) : settleDrops(s); // gravidade (ADR 0098); sem dt (testes), pousa na hora
   for (const d of [...s.drops.values()]) {
     let fx = s.dropFx.get(d.id);
     if (!fx && d.id.startsWith('b:')) { fx = { delay: 0, age: 0 }; s.dropFx.set(d.id, fx); } // drop de bloco vindo do save: sem atraso, vida de 5 min a contar daqui
@@ -431,8 +428,6 @@ export function collectNearby(s: TitanSession, px: number, py: number, pz: numbe
       if (d.id.startsWith('b:') && fx.age >= DROP_LIFE_S) { s.drops.delete(d.id); s.dropFx.delete(d.id); s.dropsRev++; moved = true; continue; }
       if (fx.delay > 0) continue;
     }
-    const ry = restY(s, d.x, d.y, d.z);
-    if (ry !== d.y) { s.drops.set(d.id, { ...d, y: ry }); s.dropsRev++; moved = true; }
     const dd = s.drops.get(d.id)!;
     if (Math.hypot(dd.x + 0.5 - px, dd.z + 0.5 - pz) > PICKUP_RADIUS || py > dd.y + 1.5 || py + 1.8 < dd.y) continue;
     const item = dd.item, count = dd.count ?? 1; // o id do item é o próprio campo (5 = fragmento de rocha, 6 = de gelo, 11 = brasa; pilha de morte: qualquer item e `count`)
@@ -506,8 +501,12 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   }
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
   if (block === T.MAT && !matSupported(s, x, y, z)) return { ok: false, msg: 'A esteira precisa de piso firme' }; // ADR 0085: face superior sólida embaixo
-  const occupied = { at: (cx: number, cy: number, cz: number): string | null => s.items.at(cx, cy, cz) ?? [...s.drops.values()].find((d) => d.x === cx && d.y === cy && d.z === cz)?.id ?? null };
-  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockSpan(block)) || !s.volume.place(x, y, z, block)) return { ok: false };
+  const occupied = s.items; // só as lascas legadas barram; o item solto é deslocado (ADR 0098)
+  if (!canPlaceAt(s.volume, s.body, x, y, z, occupied, blockSpan(block))) return { ok: false };
+  const plan = planDisplace(s, [[x, y, z]]); // item solto na célula vai para uma vizinha livre e cai de lá (ADR 0098)
+  if (!plan) return { ok: false, msg: 'Há um item no local e não há espaço ao lado para ele' };
+  if (!s.volume.place(x, y, z, block)) return { ok: false };
+  applyDisplace(s, plan);
   s.inventory.consume(slot);
   return { ok: true };
 }
@@ -519,7 +518,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
 export function dieAndRespawn(s: TitanSession): number {
   const x = Math.floor(s.body.x), y = Math.max(Y_MIN + 2, Math.floor(s.body.y)), z = Math.floor(s.body.z);
   const stacks = s.inventory.takeAll();
-  const ry = restY(s, x, y, z);
+  const ry = y; // a pilha da morte cai por gravidade; na água, afunda (ADR 0098)
   stacks.forEach((st, n) => {
     const id = `d:${x},${ry},${z}:${n}`;
     s.drops.set(id, { id, item: st.item, ...(st.count > 1 ? { count: st.count } : {}), ...(st.wear ? { wear: st.wear } : {}), x, y: ry, z }); // a ferramenta desgastada leva o desgaste

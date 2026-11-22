@@ -132,11 +132,12 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
     breakOrCollect(s, hit(r)); sweepBlocks(s);
     const slot = [...Array(SLOTS).keys()].find((i) => s.inventory.get(i)?.item === Item.FROST)!;
     s.inventory.move(slot, 0);
-    // a lasca ocupa a célula: não dá para soterrá-la; recolhe antes
-    expect(placeFromSlot(s, { x: r.x, y: r.y - 1, z: r.z, nx: 0, ny: 1, nz: 0 }, 0).ok).toBe(false);
-    expect(collectNearby(s, r.x + 0.5, r.y, r.z + 0.5).collected).toBe(1);
+    // a lasca ocupa a célula: o bloco entra e a lasca é deslocada para uma célula vizinha (ADR 0098), ainda recolhível
     expect(placeFromSlot(s, { x: r.x, y: r.y - 1, z: r.z, nx: 0, ny: 1, nz: 0 }, 0).ok).toBe(true);
     expect(s.volume.get(r.x, r.y, r.z)).toBe(T.FROST); // bloco comum
+    const lasca = [...s.drops.values()].find((d) => d.id.startsWith('v:'))!;
+    expect(lasca.x === r.x && lasca.y === r.y && lasca.z === r.z).toBe(false);
+    expect(collectNearby(s, lasca.x + 0.5, lasca.y, lasca.z + 0.5).collected).toBe(1);
     expect(breakOrCollect(s, hit(r)).ok).toBe(true); sweepBlocks(s);
     expect(s.drops.size).toBe(0);
   });

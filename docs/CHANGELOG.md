@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.159.0 — Titã: gravidade e deslocamento dos itens soltos (22/11/2026)
+- **ADR 0098.** Itens soltos agora **caem por gravidade** (para o centro do planeta/lua), acelerando, em vez de aparecer no apoio; na água afundam devagar. Bloco quebrado, lasca, espólio, conteúdo de baú e braseiro e pilha da morte nascem na célula de origem e caem de lá; tirar o apoio de um item faz ele cair.
+- **Item numa célula que recebe bloco é deslocado** para uma célula vizinha livre (ou para cima do bloco) em vez de barrar a colocação; sem lugar nenhum a colocação é recusada sem mudar nada. Vale para blocos e para as duas células da cama.
+- Estado de queda só de execução (fora do save); o desenho acompanha a altura real e a mudança de célula. Testes: +9 (1.176 no total). Conferido no jogo.
+
 ## Orvalis v0.158.0 — Titã: regra visual de armas, ferramentas e itens (22/11/2026)
 - **ADR 0097.** Armas, ferramentas e itens são **sprite 2D extrudado de 16 × 16** (frente, verso e bordas só onde o pixel toca o transparente, espessura 1/16; nunca modelo 3D esculpido). A técnica já era a do ADR 0087; agora o **padrão de arte é 16 × 16** e o motor aceita 16 e 32.
 - Com as artes do Drive (Adaga e Picareta de Rocha e de Cobre, Balde), esses itens passam de modelo 3D para sprite extrudado: novo `make-titan-sprites16.py` reduz a ilustração ao grid de 16, e as máscaras `small` de `itemMasks.json` e o atlas (ampliação 2× sem suavização) leem essa arte. O balde cheio usa a nova arte com água (`Balde_de_Cobre_Cheio_Agua.png`, fundo preto removido pelo script). Saem os GLB de arquivo, `heldItem.ts`, as malhas do balde e os scripts de exportação 3D.

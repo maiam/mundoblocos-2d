@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { breakOrCollect, collectNearby, DROP_LIFE_S, PICKUP_DELAY_S, dieAndRespawn } from './actions';
+import { settleDrops } from './drops';
 import { Item } from './items';
 import { MemoryTitanStorage } from './save';
 import { flush, openSession } from './session';
@@ -83,7 +84,7 @@ describe('drop de bloco', () => {
     const { bx, bz } = cell(s);
     breakOrCollect(s, hit(bx, 64, bz));
     s.inventory.add(Item.EMBER, 3);
-    dieAndRespawn(s);
+    dieAndRespawn(s); settleDrops(s); // a pilha da morte cai por gravidade (ADR 0098): aqui já pousou
     const mortos = [...s.drops.keys()].filter((k) => k.startsWith('d:')).length;
     expect(mortos).toBeGreaterThan(0);
     const far = { x: bx + 40, y: 64, z: bz + 40 };
