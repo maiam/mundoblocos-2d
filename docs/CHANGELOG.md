@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.166.0 — Titã: lista de salas, espera e reconexão (22/11/2026)
+- **ADR 0104.** O botão de sala do ☰ mostra a **contagem de jogadores** (`Jogar na sala: Titã 1 (N/10)` pelo `GET /salas`; dentro da sala, `Sair da sala (N/10)`), há um aviso **Entrando na sala…** enquanto conecta e, com a conexão perdida, o botão vira **Reconectar à sala**. O servidor precisa listar a sala 101 em `GET /salas`. Sem mudança de protocolo, gerador nem save. Conferido a 740 × 360 (contagem 1/10 → 2/10 com um segundo jogador e botão de reconectar).
+
 ## Orvalis v0.165.0 — Titã: salas do servidor, fatia C (sobrevivência compartilhada) (22/11/2026)
 - **ADR 0104 (`TITAN_PROTOCOL_VERSION` 2).** Nas salas do Titã: **baús e braseiros compartilhados** (a sala faz a troca e manda o conteúdo a todos; o braseiro corre na sala), **Farejadores da sala** (simulados e mandados a 10×/s; golpe por id com pausa e alcance; o investido recebe `hurt`), **morte** que solta as pilhas na sala e **renasce** (`respawn`), vida/fome/ar do aparelho enviados no `state` e guardados, e a **noite só passa com todos na cama**.
 - Limites: a vida é calculada no aparelho (sem anti-trapaça), sem véu de sono, comer é local. Servidor real ainda precisa rotear `room ≥ 101` (e agora usar `TITAN_PROTOCOL_VERSION` 2). Testes: +9 (1.235 no total). Conferido a 740 × 360 (Farejador da sala desenhado no aparelho).

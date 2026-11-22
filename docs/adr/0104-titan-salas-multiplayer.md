@@ -26,6 +26,10 @@ O Titã tem motor próprio (`TitanVolume` sobre `TitanGenerator`, sem `World`/`S
 - **Noite:** o relógio é da sala; usar a cama à noite marca o ponto de retorno e o voto (`Player.bed`); a noite só passa quando **todos** estão na cama (sair >3 m da cama desfaz o voto; quem sai da sala não impede). Sem véu de sono no aparelho (a mensagem diz quantos estão na cama).
 - Limites: a vida é do aparelho (sem anti-trapaça: a sala confia no `state`); comer é local (bolsa e fome seguem na hora por `syncBag`/`state`); dois jogadores no mesmo baú/braseiro ao mesmo tempo: vale o último; cria-se o baú vazio localmente ao abrir (a sala é quem manda o conteúdo).
 
+## Lista de salas, espera e reconexão (v0.166.0)
+- O botão do ☰ mostra **Jogar na sala: Titã 1 (N/10)** com a contagem de `GET /salas` (`fetchRoomCounts`, a cada 20 s, só em endereços onde o servidor aceita conexão, `onlineAvailable`; sem resposta, sem número) e, dentro da sala, **Sair da sala (N/10)** com os jogadores da sala. Ao abrir, um aviso **Entrando na sala…** (tela de espera) some ao conectar ou falhar (limite de 10 s). Se a conexão cai, o botão vira **Reconectar à sala** (recarrega a página: o nome fica guardado e a sala devolve a bolsa por nome).
+- **Dependência do servidor:** `GET /salas` precisa listar também as salas do Titã (`numero` 101, `jogadores`, `maximo`).
+
 ## Fora da fatia A (próximas)
 - ~~**B — cliente**~~ (entregue na v0.164.0, ver acima); falta: lista de salas com contagem, tela de espera e reconexão.
 - ~~**C — sobrevivência compartilhada**~~ (entregue na v0.165.0, ver acima); falta: vida/queda **calculadas na sala** (hoje do aparelho), véu de sono, previsão de ação.

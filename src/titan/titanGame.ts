@@ -29,10 +29,11 @@ import { lidSound } from './lid';
 import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
+import { fetchRoomCounts, onlineAvailable } from '../net/socket';
 import { TitanClient } from '../net/titan/client';
 import { TitanLoopbackServer } from '../net/titan/loopback';
 import { TitanSocket } from '../net/titan/socket';
-import { TITAN_ROOMS, titanRoomById, type WireHit } from '../net/titan/protocol';
+import { TITAN_MAX_PLAYERS, TITAN_ROOMS, titanRoomById, type WireHit } from '../net/titan/protocol';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, tickCrops, tickRegrow } from './session';
 
 /**
@@ -97,9 +98,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       let nick = q.get('nome') ?? '';
       try { nick = nick || window.localStorage.getItem('orvalis-titan-nome') || ''; } catch { /* sem armazenamento */ }
       nick = nick || `Viajante${Math.floor(100 + Math.random() * 900)}`;
+      const waiting = el('div', 'titan-toast', ui, `Entrando na sala ${room.name}…`); // tela de espera: some ao abrir ou ao falhar
       client = new TitanClient(loop ? loop.connect() : new TitanSocket());
       const timeout = new Promise<never>((_, rej) => window.setTimeout(() => rej(new Error('O servidor não respondeu a tempo.')), 10000));
-      session = await Promise.race([client.connect(nick, room.id), timeout]);
+      try { session = await Promise.race([client.connect(nick, room.id), timeout]); } finally { waiting.remove(); }
     } else session = await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
   } catch (e) {
     if (room) { toast(e instanceof Error ? e.message : 'Não foi possível entrar na sala.', 60000); return; }
@@ -566,10 +568,21 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     paintSound();
     if (!gameAudio.muted) gameAudio.playItemPickup(); // confirma que o som voltou
   });
-  const roomBtn = el('button', 'titan-btn', menu, room ? 'Sair da sala' : `Jogar na sala: ${TITAN_ROOMS_FIRST.name}`);
+  // Lista de salas (ADR 0104): o botão mostra quantos jogam agora (`GET /salas`, a cada 20 s); dentro da sala, quantos estão aqui; com a conexão perdida, oferece reconectar
+  const roomBtn = el('button', 'titan-btn', menu);
   roomBtn.type = 'button';
   roomBtn.hidden = scene;
-  roomBtn.addEventListener('click', () => { const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(TITAN_ROOMS_FIRST.id)); window.location.assign(u); });
+  let roomCount: { players: number; max: number } | null = null, roomLost = false;
+  const paintRoomBtn = (): void => {
+    const max = roomCount?.max ?? TITAN_MAX_PLAYERS;
+    roomBtn.textContent = roomLost ? 'Reconectar à sala' : room ? `Sair da sala (${(client?.remotes.size ?? 0) + 1}/${max})` : `Jogar na sala: ${TITAN_ROOMS_FIRST.name}${roomCount ? ` (${roomCount.players}/${roomCount.max})` : ''}`;
+  };
+  paintRoomBtn();
+  if (!scene && !room && onlineAvailable(window.location.hostname)) { // fora do site oficial o servidor recusa a conexão: não consulta
+    const poll = (): void => { void fetchRoomCounts().then((c) => { roomCount = c?.[TITAN_ROOMS_FIRST.id] ?? null; paintRoomBtn(); }); };
+    poll(); window.setInterval(poll, 20000);
+  }
+  roomBtn.addEventListener('click', () => { if (roomLost) { window.location.reload(); return; } const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(TITAN_ROOMS_FIRST.id)); window.location.assign(u); });
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
   if (scene || room) newBtn.hidden = true;
   newBtn.type = 'button';
@@ -843,10 +856,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     client.events = {
       onWorld: () => { view.setItems(visibleItems(session)); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); view.setCrops(standingCrops(session)); },
       onBag: () => { if (inited) { gameAudio.playItemPickup(); refresh(); } },
-      onPlayers: () => view.setRemotePlayers([...client!.remotes.values()]),
+      onPlayers: () => { view.setRemotePlayers([...client!.remotes.values()]); paintRoomBtn(); },
       onHurt: (d, kind) => { damage(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
       onRespawn: () => { dying = false; airTop = session.body.y; wasAir = false; steps.reset(); view.setItems(visibleItems(session)); paintVitals(false); refresh(); },
-      onClose: (why) => toast(`Sala: ${why}`, 60000),
+      onClose: (why) => { roomLost = true; paintRoomBtn(); toast(`Sala: ${why}. Use o ☰ para reconectar.`, 60000); },
     };
     view.setRemotePlayers([...client.remotes.values()]);
   }
