@@ -276,3 +276,6 @@ body.titan input { user-select: text; -webkit-user-select: text; }
 .titan-chest { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .titan-chest .titan-chestgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; width: 100%; }
 .titan-chest .titan-chestgrid .titan-slot { width: 100%; height: auto; aspect-ratio: 1; min-width: 0; } /* os 6 espaços escalam à largura do painel */
+
+/* cena de texturas (`?cena=texturas`, só no dev): legenda dos blocos da vitrine */
+.titan-texnames { position: fixed; left: 8px; top: 96px; max-width: min(46vw, 420px); padding: 4px 6px; font: 11px/1.35 ui-monospace, monospace; color: #fff; background: rgba(0, 0, 0, .55); white-space: pre-wrap; pointer-events: none; user-select: none; z-index: 5; }
