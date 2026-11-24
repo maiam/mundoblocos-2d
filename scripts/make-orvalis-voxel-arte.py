@@ -4,7 +4,7 @@ Entradas : assets-src/materiais/<material>/top.png e front.png (128 × 128, seam
 Saídas   : assets-src/orvalis-voxel/texturas32/orvalis/<tile>.png   32 × 32 (os nomes são os de `src/titan/tiles.json` com o prefixo `orvalis/`; o atlas é montado por make-titan-atlas32.py)
            assets-src/orvalis-voxel/icones32/<bloco>.png            32 × 32, bloco em vista 3/4 (lidos por make-titan-arte32.py: itens 42–51)
            src/assets/orvalis-agua-32px.webp                        128 × 32 (4 células: topo quadro 1, topo quadro 2, lateral, lateral; o mesmo formato do Lago Escuro do Titã)
-**Os PNGs de `texturas32/` e `agua/` são a fonte editável:** o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2) e **nunca sobrescreve** uma textura que você editou; ícones e água do jogo são sempre refeitos a partir deles.
+**Os PNGs de `texturas32/` e `agua/` são a fonte editável (32 px ou maiores, quadrados — 64, 512, 2048…: a redução para 32 px é feita aqui e no atlas, sem alterar o arquivo):** o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2) e **nunca sobrescreve** uma textura que você editou; ícones e água do jogo são sempre refeitos a partir deles.
 As folhas são PROVISÓRIAS (sorteio determinístico de 3 verdes/rosas): ainda não há arte de folhas nos Materiais V2. Repetível. Uso: python3 scripts/make-orvalis-voxel-arte.py [--force]  (precisa do Pillow: `pip3 install pillow`)
 """
 import os
@@ -40,6 +40,15 @@ def leaves(dark: tuple, mid: tuple, light: tuple, seed: int) -> Image.Image:
     for _ in range(26):  # furos: um pixel mais escuro, dá relevo de folha
         px[rng.randrange(32), rng.randrange(32)] = (*tuple(int(c * 0.6) for c in dark), 255)
     return im
+
+
+def to_tile(im: Image.Image, name: str) -> Image.Image:
+    """Reduz a textura em disco para 32 × 32 se ela vier maior (o arquivo não muda; o atlas faz a mesma redução)."""
+    w, h = im.size
+    if w == 32 and h == 32:
+        return im
+    assert w > 32 and w == h, (name, im.size)
+    return im.resize((32, 32), Image.BOX if w % 32 == 0 else Image.LANCZOS)
 
 
 def shade(im: Image.Image, k: float) -> Image.Image:
@@ -88,7 +97,7 @@ def main() -> None:
         if force or not os.path.exists(f'{TEX}{name}.png'):  # nunca sobrescreve a textura editada
             im.save(f'{TEX}{name}.png')
             made += 1
-    disk = {name: Image.open(f'{TEX}{name}.png').convert('RGBA') for name in tiles}  # daqui para a frente vale o que está em disco (editado ou não)
+    disk = {name: to_tile(Image.open(f'{TEX}{name}.png').convert('RGBA'), name) for name in tiles}  # daqui para a frente vale o que está em disco (editado ou não)
     icons = {  # nome do ícone -> (topo, lateral); a ordem dos itens 42–51 está em make-titan-arte32.py
         'terra_com_grama': ('grama-topo', 'grama-lateral'), 'terra': ('terra', 'terra'), 'pedra': ('pedra-topo', 'pedra-lateral'), 'areia_da_praia': ('areia', 'areia'),
         'tora_de_carvalho': ('tora-carvalho-topo', 'tora-carvalho-lateral'), 'folhas_de_carvalho': ('folhas-carvalho', 'folhas-carvalho'),
@@ -99,8 +108,7 @@ def main() -> None:
         cube_icon(disk[t], disk[s]).save(f'{ICO}{name}.png')
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)
-    w1 = Image.open(WATER_SRC).convert('RGBA')
-    assert w1.size == (32, 32), WATER_SRC
+    w1 = to_tile(Image.open(WATER_SRC).convert('RGBA'), WATER_SRC)
     w2 = Image.new('RGBA', (32, 32))  # 2º quadro: a mesma água deslocada (a textura é seamless): a ondulação de 2 quadros do motor
     for y in range(32):
         for x in range(32):

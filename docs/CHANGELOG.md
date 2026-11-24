@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.170.2 — Texturas do Orvalis em alta resolução (24/11/2026)
+- `npm run texturas` falhava com `AssertionError: ('orvalis/terra', (2048, 2048))` quando o PNG de textura tinha mais de 32 px. Agora a arte do Orvalis (`assets-src/orvalis-voxel/texturas32/orvalis/` e `agua/agua_32px.png`) pode ter qualquer tamanho quadrado (64, 512, 2048…; a lateral da laje, largura × metade): `make-titan-atlas32.py` e `make-orvalis-voxel-arte.py` reduzem para 32 px (média por área, `BOX`) sem alterar o arquivo de origem. Testado com um PNG de 2048 × 2048 de duas cores: o tile do atlas sai com as duas metades corretas. As texturas do Titã seguem exigindo 32 px exatos.
+
 ## Orvalis v0.170.1 — `npm run texturas` não sobrescreve mais as texturas editadas (24/11/2026)
 - **Correção:** `make-orvalis-voxel-arte.py` regravava os 15 PNGs de `assets-src/orvalis-voxel/texturas32/orvalis/` a partir dos Materiais V2 a cada execução, apagando qualquer edição. Agora os PNGs (e `agua/agua_32px.png`, novo) são a **fonte editável**: o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2); ícones e água do jogo saem sempre do que está em disco. Testado: PNG editado → `npm run texturas` → tile do atlas com a edição.
 - `npm run texturas` chama `python3` sem `-I` (o modo isolado ignora pacotes instalados com `pip install --user`, e o Pillow no Mac falhava); pré-requisito documentado: `pip3 install pillow`.
