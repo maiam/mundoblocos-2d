@@ -17,6 +17,8 @@ from PIL import Image
 BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
 SRC16 = 'assets-src/titan/arte16/'  # armas, ferramentas e itens de 16 × 16 px (ADR 0097): `itens.json` diz qual item usa qual arquivo
+SRC_ORV = 'assets-src/orvalis-voxel/icones32/'  # blocos do Orvalis em voxel (ADR 0105; `make-orvalis-voxel-arte.py`): itens 42–51
+ORV_ICONS = {42: 'terra_com_grama', 43: 'terra', 44: 'pedra', 45: 'areia_da_praia', 46: 'tora_de_carvalho', 47: 'folhas_de_carvalho', 48: 'tora_de_cerejeira', 49: 'folhas_de_cerejeira', 50: 'tora_de_betula', 51: 'folhas_de_betula'}
 OUT_ITEMS, OUT_REED, OUT_LAKE = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp', 'src/assets/titan-lago-32px.webp'
 NEW = {  # id do item -> arte de 32 px
     1: 'areia_ocre_32px.png', 2: 'areia_umida_32px.png', 3: 'rocha_escura_32px.png', 4: 'gelo_fosco_32px.png',
@@ -35,7 +37,7 @@ NEW = {  # id do item -> arte de 32 px
 def main() -> None:
     base = Image.open(BASE).convert('RGBA')
     assert base.size == (64, 64), base.size
-    atlas = Image.new('RGBA', (128, 352), (0, 0, 0, 0))  # 4 colunas × 11 linhas de 32 px (44 ids, 41 em uso; o CSS lê `4 × 11`; ADR 0089, 0102)
+    atlas = Image.new('RGBA', (128, 416), (0, 0, 0, 0))  # 4 colunas × 13 linhas de 32 px (52 ids, 51 em uso; o CSS lê `4 × 13`; ADR 0089, 0102, 0105)
     atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')
@@ -44,6 +46,10 @@ def main() -> None:
         x, y = (idx % 4) * 32, (idx // 4) * 32
         atlas.paste(Image.new('RGBA', (32, 32), (0, 0, 0, 0)), (x, y))  # limpa a célula antes (paste com alfa não substitui o fundo)
         atlas.paste(t, (x, y))
+    for item, name in ORV_ICONS.items():
+        t = Image.open(f'{SRC_ORV}{name}.png').convert('RGBA')
+        assert t.size == (32, 32), (name, t.size)
+        atlas.paste(t, (((item - 1) % 4) * 32, ((item - 1) // 4) * 32))
     atlas.save(OUT_ITEMS, lossless=True, quality=100, method=6)
     for item, name in json.load(open(SRC16 + 'itens.json')).items():  # arte de 16 px: ampliada 2× sem suavização para a célula de 32 px (a extrusão lê a grade de 16: `make-titan-item-masks.py`)
         t = Image.open(SRC16 + name).convert('RGBA')

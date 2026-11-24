@@ -50,6 +50,21 @@
   "21-bloco-de-junco/lateral",
   "21-bloco-de-junco/base",
   "22-laje-de-junco/topo",
-  "22-laje-de-junco/lateral"
+  "22-laje-de-junco/lateral",
+  "orvalis/grama-topo",
+  "orvalis/grama-lateral",
+  "orvalis/terra",
+  "orvalis/pedra-topo",
+  "orvalis/pedra-lateral",
+  "orvalis/areia",
+  "orvalis/tora-carvalho-topo",
+  "orvalis/tora-carvalho-lateral",
+  "orvalis/folhas-carvalho",
+  "orvalis/tora-cerejeira-topo",
+  "orvalis/tora-cerejeira-lateral",
+  "orvalis/folhas-cerejeira",
+  "orvalis/tora-betula-topo",
+  "orvalis/tora-betula-lateral",
+  "orvalis/folhas-betula"
  ]
 }

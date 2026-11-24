@@ -1,4 +1,4 @@
-import { TitanGenerator } from './generator';
+import type { TerrainGen } from './terrain';
 import { LightEngine, lightKey } from './light';
 import { blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
@@ -31,7 +31,7 @@ export class TitanVolume {
   /** Revisão de cada seção: sobe a cada edição (descarta malhas antigas). */
   private readonly rev = new Map<string, number>();
 
-  constructor(readonly gen: TitanGenerator) {}
+  constructor(readonly gen: TerrainGen) {}
 
   get seed(): number { return this.gen.seed; }
 

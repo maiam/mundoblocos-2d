@@ -14,7 +14,7 @@ export const DRAG_TOLERANCE_PX = 10;
 export type TargetKind = 'block' | 'lantern' | 'shard' | 'creature';
 
 /** Tempos iniciais totais (ms), desde a pressão. */
-export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350 } as const;
+export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350, wood: 1000, leaves: 400 } as const;
 
 /** Tempo total para concluir a ação sobre o alvo, ou `null` se não há o que quebrar (rocha-mãe, líquido). */
 export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | boolean | null = false): number | null {
@@ -28,11 +28,15 @@ export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | bool
 
 /** Com picareta, os blocos de rocha cedem nesta fração do tempo, por nível (provisório, ADR 0063 e 0065). */
 export const PICK_FACTOR: Readonly<Record<Tier, number>> = { rock: 0.6, copper: 0.4 };
-const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
+const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270, T.STONE]);
 
 function baseBreakMs(block?: number): number | null {
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return BREAK_MS.slab; // a porta cede como os móveis de junco (ADR 0102)
   switch (block) {
+    case T.GRASS: case T.DIRT: case T.BEACH: return BREAK_MS.sand; // Orvalis em voxel (ADR 0105): terra, grama e areia da praia cedem como a areia
+    case T.STONE: return BREAK_MS.rock;
+    case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: return BREAK_MS.wood;
+    case T.LEAVES_OAK: case T.LEAVES_CHERRY: case T.LEAVES_BIRCH: return BREAK_MS.leaves;
     case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: return BREAK_MS.sand; // o bloco de junco cede como a areia (ADR 0100)
     case T.REED_SLAB: case T.REED_SLAB_TOP: return BREAK_MS.slab;
     case T.REED_STAIR: case T.REED_STAIR_90: case T.REED_STAIR_180: case T.REED_STAIR_270: case T.REED_CHAIR: case T.REED_CHAIR_90: case T.REED_CHAIR_180: case T.REED_CHAIR_270: return BREAK_MS.slab; // móveis de junco: cedem como a laje

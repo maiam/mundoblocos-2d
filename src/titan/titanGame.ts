@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, orvalisWaterUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
@@ -29,6 +29,8 @@ import { lidSound } from './lid';
 import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
+import type { VoxelWorld } from './terrain';
+import { ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './orvalis/generator';
 import { fetchRoomCounts, onlineAvailable } from '../net/socket';
 import { TitanClient } from '../net/titan/client';
 import { TitanLoopbackServer } from '../net/titan/loopback';
@@ -64,13 +66,14 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 const TITAN_ROOMS_FIRST = TITAN_ROOMS[0];
-export async function startTitan(canvas: HTMLCanvasElement, search: string, storageArg?: TitanStorage): Promise<void> {
+export async function startTitan(canvas: HTMLCanvasElement, search: string, storageArg?: TitanStorage, world: VoxelWorld = 'titan'): Promise<void> {
   const q = new URLSearchParams(search);
+  const orvalis = world === 'orvalis'; // Orvalis em voxel (ADR 0105): o mesmo motor com outro gerador, outro banco, céu azul e a água do Orvalis; sem salas por enquanto
   // `?cena=lanternas[&n=12]`: cena de desenvolvimento para medir luz e malhas com várias lanternas — **nada é gravado** (armazenamento em memória).
   const scene = q.get('cena') === 'lanternas';
   // `?sala=101`: entra numa sala cooperativa do servidor (ADR 0104); `&loopback=1` usa um servidor em memória na própria página (teste). Sala = nada é gravado neste aparelho.
-  const roomId = Number(q.get('sala')), room = titanRoomById(roomId) ?? null;
-  const storage = storageArg ?? (scene || room ? new MemoryTitanStorage() : defaultTitanStorage());
+  const roomId = Number(q.get('sala')), room = orvalis ? null : titanRoomById(roomId) ?? null;
+  const storage = storageArg ?? (scene || room ? new MemoryTitanStorage() : defaultTitanStorage(world));
   let client: TitanClient | null = null;
   // `?fps=1`: painel de desempenho (FPS, GPU, memória) com o tempo de cada etapa do Titã: luz, malha, geometria, desenho.
   const perf = q.get('fps') === '1' || scene ? new TitanPerf() : null;
@@ -87,7 +90,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   };
 
   const probe = document.createElement('canvas');
-  if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { toast('Este aparelho não oferece WebGL: o Titã não abre aqui.', 60000); return; }
+  if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) { toast(`Este aparelho não oferece WebGL: ${orvalis ? 'o Orvalis' : 'o Titã'} não abre aqui.`, 60000); return; }
 
   const aviso = q.get('aviso'); // veio de uma sala que recusou: explica e limpa o endereço
   if (aviso) { toast(aviso.slice(0, 160), 9000); const u = new URL(window.location.href); u.searchParams.delete('aviso'); window.history.replaceState(null, '', u); }
@@ -104,7 +107,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       client = new TitanClient(loop ? loop.connect() : new TitanSocket());
       const timeout = new Promise<never>((_, rej) => window.setTimeout(() => rej(new Error('O servidor não respondeu a tempo.')), 10000));
       try { session = await Promise.race([client.connect(nick, room.id), timeout]); } finally { waiting.remove(); }
-    } else session = await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
+    } else session = orvalis
+      ? await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31), orvalisGeneratorFor, ORVALIS_GENERATOR_VERSION, (s, v) => new OrvalisGenerator(s, v))
+      : await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
   } catch (e) {
     if (room) { // a sala recusou ou não respondeu: volta ao modo solo com um aviso (nada de página parada)
       const msg = e instanceof Error ? e.message : '';
@@ -117,7 +122,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -127,6 +132,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
   const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
+  if (orvalis) view.setPalette('orvalis');
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
@@ -143,7 +149,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const cross = el('div', 'titan-cross', ui);
   const status = el('div', 'titan-status', ui);
   const seedLine = el('span', '', status);
-  seedLine.innerHTML = `Titã · Margem Silenciosa · semente <b>${session.seed}</b> · gerador v${vol.gen.version}`;
+  seedLine.innerHTML = `${orvalis ? 'Orvalis · Ilha das Florestas' : 'Titã · Margem Silenciosa'} · semente <b>${session.seed}</b> · gerador v${vol.gen.version}`;
   const saveLine = el('span', '', status, scene ? SCENE_NOTE : room ? `${room.name} · online` : 'salvo');
   const posLine = el('span', '', status);
   const skyLine = el('span', '', status);
@@ -580,7 +586,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // Lista de salas (ADR 0104): o botão mostra quantos jogam agora (`GET /salas`, a cada 20 s); dentro da sala, quantos estão aqui; com a conexão perdida, oferece reconectar
   const roomBtn = el('button', 'titan-btn', menu);
   roomBtn.type = 'button';
-  roomBtn.hidden = scene;
+  roomBtn.hidden = scene || orvalis; // salas do Orvalis em voxel: ainda não (ADR 0105)
   let roomCount: { players: number; max: number } | null = null, roomLost = false, roomSupported = true;
   const paintRoomBtn = (): void => {
     const max = roomCount?.max ?? TITAN_MAX_PLAYERS;
@@ -641,8 +647,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   });
   const start = el('div', 'titan-start', ui);
   const box = el('div', '', start);
-  el('h1', '', box, 'Titã');
-  el('p', '', box, session.resumed ? 'Sua partida foi encontrada. Continue de onde parou.' : 'Uma costa de areia ocre e um lago escuro sob a névoa da tarde.');
+  el('h1', '', box, orvalis ? 'Orvalis' : 'Titã');
+  el('p', '', box, session.resumed ? 'Sua partida foi encontrada. Continue de onde parou.' : orvalis ? 'Uma ilha de campos, bosques de sakura e rios, cercada de mar.' : 'Uma costa de areia ocre e um lago escuro sob a névoa da tarde.');
   el('p', '', box, coarse ? 'Joystick: andar (empurre até o fim para correr) · toque curto onde quiser coloca, segurar quebra (o anel mostra o progresso), arrastar gira a câmera · "Mira" no menu troca para a mira central · botão ⤒ pula · ☰ abre a bolsa.' : 'WASD anda · Espaço pula · mouse olha · clique curto coloca, segurar quebra · 1–9 ou roda troca o bloco · E ou ☰ abre a bolsa.');
   const go = el('button', 'titan-btn', box, session.resumed ? 'Continuar' : 'Começar');
   go.type = 'button';
@@ -1010,7 +1016,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       dropFull = c.full;
     }
     view.setSky(forcedHour ?? session.time);
-    view.setSaturn(forcedSaturn ?? saturnVisibility(session.days, forcedHour ?? session.time, session.seed)); // raro: poucos dias, janela curta
+    view.setSaturn(orvalis ? 0 : forcedSaturn ?? saturnVisibility(session.days, forcedHour ?? session.time, session.seed)); // raro: poucos dias, janela curta
     skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT + (b.stepSmooth ?? 0), z: b.z }; // só a câmera desliza ao subir degrau (ADR 0103); a mira segue a física

@@ -11,6 +11,7 @@ from PIL import Image
 
 CFG = json.load(open('src/titan/tiles.json'))
 SRC = 'assets-src/titan/texturas32/02-Texturas-PNG/'
+SRC_ORV = 'assets-src/orvalis-voxel/texturas32/'  # tiles `orvalis/…` (ADR 0105; `make-orvalis-voxel-arte.py`)
 OUT = 'src/assets/titan-atlas-32px.webp'
 TILE, PAD, COLS = CFG['tile'], CFG['pad'], CFG['cols']
 PITCH = TILE + 2 * PAD
@@ -20,7 +21,7 @@ def main() -> None:
     rows = math.ceil(len(CFG['tiles']) / COLS)
     atlas = Image.new('RGBA', (COLS * PITCH, rows * PITCH), (0, 0, 0, 0))
     for i, name in enumerate(CFG['tiles']):
-        src = Image.open(f'{SRC}{name}.png').convert('RGBA')
+        src = Image.open(f'{SRC_ORV if name.startswith("orvalis/") else SRC}{name}.png').convert('RGBA')
         assert src.size[0] == TILE and src.size[1] in (TILE, TILE // 2), (name, src.size)
         t = Image.new('RGBA', (TILE, TILE), (0, 0, 0, 0)); t.paste(src, (0, 0))
         x0, y0 = (i % COLS) * PITCH + PAD, (i // COLS) * PITCH + PAD

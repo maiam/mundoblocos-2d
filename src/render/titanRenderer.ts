@@ -8,7 +8,7 @@ import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
-import { horizonAt, skyAt, type Sky } from '../titan/sky';
+import { horizonAt, skyAt, type Sky, type SkyPalette } from '../titan/sky';
 import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
@@ -30,7 +30,7 @@ import { lidIdle, stepLid } from '../titan/lid';
 /** Alcance de render (blocos): a região de teste é pequena; a névoa começa em 70% e fecha antes da borda carregada. */
 const RANGE = 64;
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 11;
+const ITEM_ROWS = 13;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
 const ITEM_HOP_S = 0.4, ITEM_FLY_S = 0.14;
 const MESH_BUDGET_MS = 6;
@@ -783,7 +783,7 @@ export class TitanRenderer {
   private spriteMaterial(index: number): THREE.SpriteMaterial {
     const tex = this.hotbarTex.clone();
     tex.needsUpdate = true;
-    tex.repeat.set(0.25, 1 / ITEM_ROWS); // atlas de itens 4 × 10 (128 × 320 px, células de 32 px; ADR 0053, 0063, 0089)
+    tex.repeat.set(0.25, 1 / ITEM_ROWS); // atlas de itens 4 × 13 (128 × 416 px, células de 32 px; ADR 0053, 0063, 0089)
     tex.offset.set((index % 4) * 0.25, 1 - (((index / 4) | 0) + 1) / ITEM_ROWS);
     return new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.4, fog: true });
   }
@@ -895,10 +895,13 @@ export class TitanRenderer {
    * Aplica a hora (fração do dia, 0–1): luz ambiente do shader, cores do céu, névoa, fundo e sol. **Não refaz nenhuma malha** (a luz do dia é um uniform).
    * Só recalcula quando a hora mudou o bastante para aparecer (~0,25 s de jogo).
    */
+  /** Paleta do céu do mundo (ADR 0105): o Orvalis tem céu azul. Troca-se antes do primeiro `setSky`. */
+  private palette: SkyPalette = 'titan';
+  setPalette(p: SkyPalette): void { this.palette = p; this.lastSky = -1; }
   setSky(frac: number): void {
     if (Math.abs(frac - this.lastSky) < 0.0005) return;
     this.lastSky = frac;
-    const sky = skyAt(frac);
+    const sky = skyAt(frac, this.palette);
     this.curSky = sky;
     this.ambientBase.set(sky.ambient * sky.tint[0], sky.ambient * sky.tint[1], sky.ambient * sky.tint[2]); // luz do dia (quente de dia, fria de noite)
     this.sky.update(sky);

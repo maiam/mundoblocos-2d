@@ -181,3 +181,17 @@ Nota do dono do produto, **referência**, não decisão. Serve de critério ao a
 - **Luz:** o Minecraft propaga a luz do céu **por coluna** (−1 por bloco de água sobre cada ponto: o fundo raso fica claro mesmo visto do fundo fundo). O Titã atenua a luz ambiente pela **profundidade da câmera** (`max(0,18, exp(−0,18 d))`), uma simplificação; a atenuação por coluna (luz de céu por voxel) é melhoria futura, anotada no doc 04 do Drive.
 - **Superfície por baixo e faces internas:** já feito (a malha do líquido não desenha faces entre voxels líquidos; a face de cima é dupla).
 
+
+## Orvalis em voxel (ADR 0105, v0.169.0)
+O mesmo motor roda um segundo mundo: `?mundo=orvalis3d` (perfil `orvalis3d`) → `startTitan(…, 'orvalis')`. **Fonte de verdade:** `TitanVolume` sobre `OrvalisGenerator` (`titan/orvalis/generator.ts`, `ORVALIS_GENERATOR_VERSION` 1), via o contrato `TerrainGen` (`titan/terrain.ts`).
+| Tema | Regra | Arquivo |
+|---|---|---|
+| Região e mar | 128 × 128 (`REGION_V6`), faixa de 20 blocos de mar nas bordas (costa ondulada); líquido = `T.LAKE`, superfície em Y = 64 | `orvalis/generator.ts` (`rawTop`) |
+| Relevo | base 69 ± colinas; montanhas onde o ruído passa de 0,05; baías onde o ruído de mar é baixo; rios = faixas finas cavadas até 61 (não cortam picos) | `rawTop` |
+| Superfície | topo ≤ 65 = Areia da Praia; topo ≥ 86 ou encosta ≥ 4 = Pedra; o resto Terra com Grama sobre 3 de Terra e Pedra abaixo; sem cavernas nem minérios ainda | `computeColumn`, `blockAt` |
+| Árvores | uma raiz por célula de 5 × 5 (jitter por seed); grama com topo ≥ 66, fora da clareira e a 4 da borda; Sakura 50 % (80 % cerejeira), Campos 20 % (carvalho 55 %, bétula 35 %, cerejeira 10 %) mais manchas de mata; tronco 4–7 de tora, copa por camadas (cerejeira mais larga) com borda irregular; calculadas em `blockAt`, nunca gravadas | `treeIn`, `treeBlock` |
+| Chegada | clareira de grama 6 × 6, nivelada, em terreno plano (67–78) a ≥ 26 da borda, sem árvores a 4; olhar para a água mais próxima | `findArrival` |
+| Blocos e itens | ids 90–99 (`T.GRASS … T.LEAVES_BIRCH`) ↔ itens 42–51; tempos: terra/areia 0,6 s, tora 1 s, folha 0,4 s, pedra 1,6 s (picareta de rocha × 0,6) | `voxel.ts`, `items.ts`, `breaking.ts` |
+| Arte | Materiais V2 → 32 px (`make-orvalis-voxel-arte.py`); folhas provisórias; água `orvalis-agua-32px.webp`; céu azul (`skyAt(frac, 'orvalis')`), sem Saturno | `render/art/titan.ts`, `sky.ts` |
+| Save | `header.world = 'orvalis'`, banco IndexedDB `orvalis-voxel` (o do Titã segue `orvalis-titan`); retomada pela mesma versão do gerador | `save.ts`, `session.ts` |
+Testes: `titan/orvalis/generator.test.ts` e `mundo.test.ts`. Pendências e próximas fatias: `NEXT_STEPS.md`.

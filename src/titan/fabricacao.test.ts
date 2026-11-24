@@ -14,7 +14,7 @@ import { sweep } from './dropTestUtil';
 
 const open = async (st = new MemoryTitanStorage(), version?: number) => ({ st, s: await openSession(st, 42, () => 1, undefined, version) });
 const hit = (c: { x: number; y: number; z: number }) => ({ x: c.x, y: c.y, z: c.z, nx: 0, ny: 1, nz: 0 });
-const veins = (s: TitanSession, kind: 'rock' | 'ice') => s.volume.gen.veinCells().filter((v) => v.kind === kind);
+const veins = (s: TitanSession, kind: 'rock' | 'ice') => (s.volume.gen as TitanGenerator).veinCells().filter((v) => v.kind === kind);
 
 /** Alcance a pé sobre as colunas reais. */
 function reachable(g: TitanGenerator): Set<number> {
@@ -135,7 +135,7 @@ describe('descoberta de receitas', () => {
 describe('depósito de brasa: quebrar, soltar, coletar, não recriar', () => {
   it('quebrar rende só a brasa solta no chão; coleta por proximidade; recolocar bloco comum não recria o minério; persiste', async () => {
     const { st, s } = await open();
-    const e = s.volume.gen.emberSite!;
+    const e = (s.volume.gen as TitanGenerator).emberSite!;
     expect(breakTotalMs('block', T.EMBER)).toBe(1200);
     expect(breakOrCollect(s, hit(e)).ok).toBe(true);
     expect(s.volume.get(e.x, e.y, e.z)).toBe(T.AIR);
@@ -278,7 +278,7 @@ describe('partida nova (v4), seed 42: do primeiro bloco à lanterna', () => {
     expect(sweep(s)).toBe(2); // o bloco de gelo e a lasca
     expect(craft(s.inventory, recipeById('lente')!, 'workbench').ok).toBe(true);
     // brasa: depósito perto do junco
-    const e = s.volume.gen.emberSite!;
+    const e = (s.volume.gen as TitanGenerator).emberSite!;
     expect(breakOrCollect(s, hit(e)).ok).toBe(true);
     expect(collectNearby(s, e.x + 0.5, e.y, e.z + 0.5).collected).toBe(1);
     // lanterna: 2 fragmentos de rocha + lente + brasa, na mesa; longe da mesa a receita não fabrica

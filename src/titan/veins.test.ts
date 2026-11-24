@@ -11,7 +11,7 @@ import { isSolid, T } from './voxel';
 import { sweepBlocks } from './dropTestUtil';
 
 const open = async (st = new MemoryTitanStorage(), version = 3) => ({ st, s: await openSession(st, 42, () => 1, undefined, version) });
-const veinOf = (s: TitanSession, kind: 'rock' | 'ice') => s.volume.gen.veinCells().find((v) => v.kind === kind)!;
+const veinOf = (s: TitanSession, kind: 'rock' | 'ice') => (s.volume.gen as TitanGenerator).veinCells().find((v) => v.kind === kind)!;
 const hit = (v: { x: number; y: number; z: number }) => ({ x: v.x, y: v.y, z: v.z, nx: 0, ny: 1, nz: 0 });
 
 /** Alcance a pé sobre as colunas reais (formações incluídas): degraus de até 1 bloco, sem água funda. */
@@ -218,7 +218,7 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
 
   it('fluxo dos veios na seed 42 (partida v3): dois veios de rocha e um de gelo → lascas na mochila', async () => {
     const { s } = await open();
-    const rocks = s.volume.gen.veinCells().filter((c) => c.kind === 'rock').slice(0, 2), ice = veinOf(s, 'ice');
+    const rocks = (s.volume.gen as TitanGenerator).veinCells().filter((c) => c.kind === 'rock').slice(0, 2), ice = veinOf(s, 'ice');
     for (const v of [...rocks, ice]) {
       expect(breakOrCollect(s, hit(v)).ok).toBe(true); sweepBlocks(s);
       expect(collectNearby(s, v.x + 0.5, v.y, v.z + 0.5).collected).toBe(1);

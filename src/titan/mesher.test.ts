@@ -7,7 +7,7 @@ import { T } from './voxel';
 
 describe('malha por seção', () => {
   it('uv de cada tile cai na área útil de 32 px (sem a borda de 2 px do atlas de 36 px de passo, 8 colunas)', () => {
-    const W = 288, H = 216;
+    const W = 288, H = 288; // 63 tiles em 8 colunas = 8 linhas (ADR 0105 acrescentou 15 tiles do Orvalis)
     const [u0, v0, u1, v1] = tileUV(0);
     [u0 * W, u1 * W, (1 - v1) * H, (1 - v0) * H].forEach((n, i) => expect(n).toBeCloseTo([2, 34, 2, 34][i], 6));
     const [a, , b] = tileUV(9); // 2.ª coluna da 2.ª linha: x = 1 * 36 + 2
@@ -15,8 +15,8 @@ describe('malha por seção', () => {
     const [, w0, , w1] = tileUV(17); // 2.ª linha (índice 8..15) e a 3.ª (16..23): linha 2, coluna 1
     expect((1 - w1) * H).toBeCloseTo(2 * 36 + 2, 6); expect((1 - w0) * H).toBeCloseTo(2 * 36 + 34, 6);
   });
-  it('o atlas de terreno cobre todos os tiles do tiles.json com 48 entradas únicas', () => {
-    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles).toHaveLength(48); expect(tilesCfg.cols * tilesCfg.cols).toBeGreaterThanOrEqual(tilesCfg.tiles.length);
+  it('o atlas de terreno cobre todos os tiles do tiles.json com 63 entradas únicas', () => {
+    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles).toHaveLength(63); expect(tilesCfg.cols * tilesCfg.cols).toBeGreaterThanOrEqual(tilesCfg.tiles.length);
   });
   it('seção de ar não gera malha; a da superfície gera faces e o lago tem malha própria', () => {
     const g = new TitanGenerator(42), v = new TitanVolume(g);

@@ -149,8 +149,11 @@ O **céu** (ADR 0048) é um shader na cúpula (`render/titanSkyDome.ts`) aliment
 A **bancada 3 × 3** (ADR 0049) é uma grade do inventário separada da pessoal, validada pelo mesmo catálogo (`matchBench`) e retirada de forma atômica; os painéis usam um ladrilho de basalto pela variável CSS `--basalt`.
 `render/titanRenderer.ts` (Three.js) + `render/art/titan.ts` (atlas do terreno e da hotbar). Só `main.ts` (`?mundo=titan`) e `world/profiles.ts` (registro do perfil) tocam o resto do jogo; nada de `World`, `Game`, `SUBDIV` ou `SaveStore`.
 
+## Orvalis em voxel (ADR 0105, v0.169.0)
+Segundo mundo do **mesmo motor** `src/titan/`. `titan/terrain.ts` define `TerrainGen` (o que o motor lê do gerador) e `VoxelWorld`; `TitanGenerator` (Margem Silenciosa) e `titan/orvalis/generator.ts` (`OrvalisGenerator`, ilha de florestas) o implementam. `TitanVolume`, `session.ts` (`openSession(…, create)`) e as validações só conhecem `TerrainGen`; o mundo vem do `gen.world`, gravado em `header.world` (bancos `orvalis-titan` e `orvalis-voxel`). `startTitan(canvas, search, storage, world)` escolhe gerador, banco, arte da água (`render/art/titan.ts`) e paleta do céu (`skyAt(frac, paleta)`); `main.ts` abre `?mundo=orvalis3d` pelo perfil `orvalis3d`. Blocos 90–99 em `voxel.ts` (tiles `orvalis/…` no fim de `tiles.json`), itens 42–51 em `items.ts` (`ORVALIS_ITEM_BLOCKS`).
+
 ## Regras de dependência
-- `titan/` não importa `world/` além de `noise.ts`/`random.ts` (utilitários puros) e não é importado pelo motor do Orvalis.
+- `titan/` não importa `world/` além de `noise.ts`/`random.ts` (utilitários puros) e não é importado pelo motor do Orvalis 2.5D. O Orvalis em voxel (`titan/orvalis/`) vive dentro de `titan/` e segue a mesma regra.
 - `world/` não importa `render/` nem `game/`; não usa DOM; aleatoriedade só por seed.
 - `render/` só lê o mundo (e tipos de `game/`). `game/` orquestra; regra de domínio fica em `world/`.
 - Arte (`?inline`) só em `render/art/<mundo>.ts`; o resto do código lê o pacote carregado (`art()`).

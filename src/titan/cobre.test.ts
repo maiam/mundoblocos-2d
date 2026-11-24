@@ -88,7 +88,7 @@ describe('picareta e veio de cobre', () => {
     expect(visibleItems(s).some((i) => i.id === dry.id && i.item === Item.DRY_REED)).toBe(true); // desenhada como item no chão
     expect(collectItem(s, dry.id).ok).toBe(true); expect(s.inventory.total(Item.DRY_REED)).toBe(1);
     expect(collectItem(s, dry.id).ok).toBe(false); expect(s.items.at(dry.x, dry.y, dry.z)).toBeNull();
-    const c = s.volume.gen.copperCells[0];
+    const c = (s.volume.gen as TitanGenerator).copperCells[0];
     const hit = { x: c.x, y: c.y, z: c.z, nx: 0, ny: 1, nz: 0 };
     const none = breakOrCollect(s, hit);
     expect(none.ok).toBe(false); expect(none.msg).toBe('Só pó nos dedos. Falta uma picareta.'); expect(s.volume.get(c.x, c.y, c.z)).toBe(T.VEIN_COPPER);
