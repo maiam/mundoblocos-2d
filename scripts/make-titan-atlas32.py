@@ -17,11 +17,21 @@ TILE, PAD, COLS = CFG['tile'], CFG['pad'], CFG['cols']
 PITCH = TILE + 2 * PAD
 
 
+def to_tile(im: Image.Image, name: str) -> Image.Image:
+    """Reduz a fonte para 32 px de largura se ela for maior (a arte de origem pode ter 64, 512, 2048 px…; o arquivo em disco não muda). Altura = largura (ou metade, para a lateral da laje)."""
+    w, h = im.size
+    if w == 32:
+        return im
+    assert w > 32 and h in (w, w // 2), (name, im.size)
+    return im.resize((32, h * 32 // w), Image.BOX if w % 32 == 0 else Image.LANCZOS)
+
+
 def main() -> None:
     rows = math.ceil(len(CFG['tiles']) / COLS)
     atlas = Image.new('RGBA', (COLS * PITCH, rows * PITCH), (0, 0, 0, 0))
     for i, name in enumerate(CFG['tiles']):
         src = Image.open(f'{SRC_ORV if name.startswith("orvalis/") else SRC}{name}.png').convert('RGBA')
+        if name.startswith('orvalis/'): src = to_tile(src, name)  # a arte do Orvalis pode vir em alta resolução (reduzida aqui)
         assert src.size[0] == TILE and src.size[1] in (TILE, TILE // 2), (name, src.size)
         t = Image.new('RGBA', (TILE, TILE), (0, 0, 0, 0)); t.paste(src, (0, 0))
         x0, y0 = (i % COLS) * PITCH + PAD, (i // COLS) * PITCH + PAD
