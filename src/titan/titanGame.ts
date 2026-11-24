@@ -23,11 +23,12 @@ import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
-import { advanceDay, isNightTime, parseHora, phaseName, saturnVisibility } from './sky';
+import { advanceDay, FIXED_HOURS, isNightTime, parseHora, phaseName, saturnVisibility } from './sky';
 import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepCue, sleepVeil } from './sleep';
 import { lidSound } from './lid';
 import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isWorkbench, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
+import { texturesCaption, texturesSession } from './texturas';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
 import type { VoxelWorld } from './terrain';
 import { ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './orvalis/generator';
@@ -71,9 +72,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const orvalis = world === 'orvalis'; // Orvalis em voxel (ADR 0105): o mesmo motor com outro gerador, outro banco, céu azul e a água do Orvalis; sem salas por enquanto
   // `?cena=lanternas[&n=12]`: cena de desenvolvimento para medir luz e malhas com várias lanternas — **nada é gravado** (armazenamento em memória).
   const scene = q.get('cena') === 'lanternas';
+  // `?cena=texturas` (só no `npm run dev`): vitrine plana de blocos para conferir a arte do atlas no motor; nada é gravado (ADR 0105)
+  const texScene = import.meta.env.DEV && q.get('cena') === 'texturas';
   // `?sala=101`: entra numa sala cooperativa do servidor (ADR 0104); `&loopback=1` usa um servidor em memória na própria página (teste). Sala = nada é gravado neste aparelho.
   const roomId = Number(q.get('sala')), room = orvalis ? null : titanRoomById(roomId) ?? null;
-  const storage = storageArg ?? (scene || room ? new MemoryTitanStorage() : defaultTitanStorage(world));
+  const storage = storageArg ?? (scene || texScene || room ? new MemoryTitanStorage() : defaultTitanStorage(world));
   let client: TitanClient | null = null;
   // `?fps=1`: painel de desempenho (FPS, GPU, memória) com o tempo de cada etapa do Titã: luz, malha, geometria, desenho.
   const perf = q.get('fps') === '1' || scene ? new TitanPerf() : null;
@@ -107,7 +110,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       client = new TitanClient(loop ? loop.connect() : new TitanSocket());
       const timeout = new Promise<never>((_, rej) => window.setTimeout(() => rej(new Error('O servidor não respondeu a tempo.')), 10000));
       try { session = await Promise.race([client.connect(nick, room.id), timeout]); } finally { waiting.remove(); }
-    } else session = orvalis
+    } else if (texScene) session = texturesSession(42, world);
+    else session = orvalis
       ? await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31), orvalisGeneratorFor, ORVALIS_GENERATOR_VERSION, (s, v) => new OrvalisGenerator(s, v))
       : await openSession(storage, param ? seedFromString(param) : null, () => Math.floor(Math.random() * 2 ** 31));
   } catch (e) {
@@ -128,7 +132,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
   if (perf) { perf.count('lanterns', spots.length); vol.onLightMs = (ms) => perf.record('light', ms); }
   // `?hora=manha|tarde|noite`: congela só a visualização (teste); a hora do jogo continua correndo e é a que vai no save
-  const forcedHour = parseHora(q.get('hora'));
+  const forcedHour = parseHora(q.get('hora')) ?? (texScene ? FIXED_HOURS.tarde : null); // a vitrine fica à tarde, para a cor não variar entre testes
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
   const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
@@ -150,7 +154,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const status = el('div', 'titan-status', ui);
   const seedLine = el('span', '', status);
   seedLine.innerHTML = `${orvalis ? 'Orvalis · Ilha das Florestas' : 'Titã · Margem Silenciosa'} · semente <b>${session.seed}</b> · gerador v${vol.gen.version}`;
-  const saveLine = el('span', '', status, scene ? SCENE_NOTE : room ? `${room.name} · online` : 'salvo');
+  const saveLine = el('span', '', status, scene || texScene ? SCENE_NOTE : room ? `${room.name} · online` : 'salvo');
+  if (texScene) el('div', 'titan-texnames', ui, texturesCaption().join('\n')); // legenda da vitrine (ordem dos blocos e tile no atlas)
   const posLine = el('span', '', status);
   const skyLine = el('span', '', status);
   // ---- Vida, ar e fome (ADR 0059): 10 marcas de 2 pontos (meia marca = 1) acima da hotbar; o ar só aparece com a cabeça no lago ou enchendo ----
@@ -586,7 +591,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // Lista de salas (ADR 0104): o botão mostra quantos jogam agora (`GET /salas`, a cada 20 s); dentro da sala, quantos estão aqui; com a conexão perdida, oferece reconectar
   const roomBtn = el('button', 'titan-btn', menu);
   roomBtn.type = 'button';
-  roomBtn.hidden = scene || orvalis; // salas do Orvalis em voxel: ainda não (ADR 0105)
+  roomBtn.hidden = scene || texScene || orvalis; // salas do Orvalis em voxel: ainda não (ADR 0105)
   let roomCount: { players: number; max: number } | null = null, roomLost = false, roomSupported = true;
   const paintRoomBtn = (): void => {
     const max = roomCount?.max ?? TITAN_MAX_PLAYERS;
@@ -600,7 +605,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
   roomBtn.addEventListener('click', () => { if (roomLost) { window.location.reload(); return; } const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(TITAN_ROOMS_FIRST.id)); window.location.assign(u); });
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
-  if (scene || room) newBtn.hidden = true;
+  if (scene || texScene || room) newBtn.hidden = true;
   newBtn.type = 'button';
   let confirming = 0;
   newBtn.addEventListener('click', () => {

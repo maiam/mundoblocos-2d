@@ -195,3 +195,5 @@ O mesmo motor roda um segundo mundo: `?mundo=orvalis3d` (perfil `orvalis3d`) →
 | Arte | Materiais V2 → 32 px (`make-orvalis-voxel-arte.py`); folhas provisórias; água `orvalis-agua-32px.webp`; céu azul (`skyAt(frac, 'orvalis')`), sem Saturno | `render/art/titan.ts`, `sky.ts` |
 | Save | `header.world = 'orvalis'`, banco IndexedDB `orvalis-voxel` (o do Titã segue `orvalis-titan`); retomada pela mesma versão do gerador | `save.ts`, `session.ts` |
 Testes: `titan/orvalis/generator.test.ts` e `mundo.test.ts`. Pendências e próximas fatias: `NEXT_STEPS.md`.
+
+**Cena de texturas (v0.170.0, só no dev):** `?cena=texturas` abre uma vitrine plana (`titan/texturas.ts`: `TexturesGen` + `texturesSession`) com cada bloco em cubo, massa 3 × 3 × 3 e parede 3 × 3, mais uma piscina; bloco novo de terreno entra nas listas `ORVALIS_ROW`/`TITAN_ROW` para aparecer nela. Memória, hora fixa à tarde. Uso e ciclo em `OPERATIONS.md`.

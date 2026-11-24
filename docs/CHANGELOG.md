@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.170.0 — Caminho de desenvolvimento para testar texturas: `?cena=texturas` (24/11/2026)
+- **Cena `?cena=texturas`** (só no `npm run dev`; ignorada em produção): vitrine plana no motor do Titã (`titan/texturas.ts`, funciona com `?mundo=orvalis3d` e `?mundo=titan`) com cada bloco de terreno em **cubo**, **massa 3 × 3 × 3** (emendas e repetição) e **parede 3 × 3**, mais uma **piscina** de água. Fila 1 = os 10 blocos do Orvalis; fila 2 = o terreno do Titã (13 blocos). Hora fixa à tarde (`&hora=noite` para ver sob lanterna); legenda na tela com a ordem dos blocos e o tile de cada um; **nada é gravado**.
+- **`npm run texturas`:** `make-orvalis-voxel-arte.py` → `make-titan-atlas32.py` → `make-titan-arte32.py`; o Vite recarrega a página quando o atlas muda.
+- Testes em `titan/texturas.test.ts`. Sem mudança de gerador, save nem protocolo.
+
 ## Orvalis v0.169.0 — Orvalis em voxel: o mundo principal em primeira pessoa, fatia 1 (24/11/2026)
 - **ADR 0105.** Novo mundo `?mundo=orvalis3d`: a ilha de florestas do Orvalis refeita em **blocos de 1 m e primeira pessoa**, sobre o motor do Titã (física, gesto, quebra e recolhimento, mochila, vida/fome, ciclo de 20 min, save). O mundo 2.5D segue no ar; saves 2D não migram.
 - **Terreno** (`titan/orvalis/generator.ts`, `ORVALIS_GENERATOR_VERSION` 1): região 128 × 128 cercada de mar, Campos e Bosque de Sakura, colinas, montanhas de pedra, rios, praias e árvores de tora e folha (carvalho, bétula, cerejeira); chegada numa clareira de grama.
