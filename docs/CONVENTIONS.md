@@ -29,6 +29,10 @@
 - Diferenças entre mundos vêm **só** de campos do `WorldProfile` (`world/profiles.ts`); não espalhar `if (mundo === …)`.
 - Mundo limitado: fora dos limites é `VOID`; nada carrega fora (`clampRect`). Blocos colocáveis = `profile.blocks`.
 
+## Mundos voxel (Titã e Orvalis em voxel, ADR 0105)
+- Um mundo voxel novo **não copia o motor**: implementa `TerrainGen` (`titan/terrain.ts`), ganha um valor em `VoxelWorld`, o próprio banco (`save.ts`), paleta de céu e arte de água, e entra por `startTitan(…, world)`. Conteúdo próprio do Titã (lascas, juncos, nozes, toca, brasa) fica **vazio** no gerador que não o tem; nada de `if (mundo === …)` no motor.
+- Bloco novo: id em `T` (suba `T_MAX`), nome em `BLOCK_NAMES`, tiles no **fim** de `tiles.json` + `BLOCK_TILES`, item em `Item`/`blockOfItem`/`itemOfBlock`, tempo em `breaking.ts`, som em `sounds.ts`; ícone → `make-titan-arte32.py`. Mudou qualquer regra de um gerador → suba a versão **dele** (`GENERATOR_VERSION` ou `ORVALIS_GENERATOR_VERSION`).
+
 ## Jogo
 - Regra de ação do jogador por célula no `ActionController` (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; a
   origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.

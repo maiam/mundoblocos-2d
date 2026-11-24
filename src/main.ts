@@ -57,7 +57,7 @@ let soloSeed = 0;
 // ---- Multiplayer (ADR 0016): mundo normal e Santuário como salas independentes ----
 const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
-const titanWorld = profile.id === 'titan';
+const titanWorld = profile.id === 'titan' || profile.id === 'orvalis3d'; // os dois mundos voxel (Titã e Orvalis em voxel, ADR 0105) abrem o motor `src/titan/`
 const online = !gridProto && !sanctuarySolo && !titanWorld ? {
   get name() { return savedName(); },
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
@@ -234,8 +234,8 @@ const query = new URLSearchParams(window.location.search);
 const param = query.get('seed');
 if (titanWorld) {
   // Titã (ADR 0039): mundo voxel solo e independente do motor de chão e pilhas; abre `src/titan/` em vez do `Game` (sem pacote de arte do Mundo).
-  document.getElementById('world')?.setAttribute('aria-label', 'Titã');
-  void import('./titan/titanGame').then((m) => m.startTitan(canvas, window.location.search));
+  document.getElementById('world')?.setAttribute('aria-label', profile.id === 'orvalis3d' ? 'Orvalis' : 'Titã');
+  void import('./titan/titanGame').then((m) => m.startTitan(canvas, window.location.search, undefined, profile.id === 'orvalis3d' ? 'orvalis' : 'titan'));
 } else {
   // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
   const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal' || gridProto;

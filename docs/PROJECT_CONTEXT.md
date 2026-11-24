@@ -38,6 +38,9 @@ O que isso pede (ainda não existe; ver `NEXT_STEPS`, Fase 6): sistema de **nív
 igual em toda seed como a Cidade 1, ADR 0012), **viagem** entre cidades e conteúdo que libera com o nível. Com
 jogadores online, a concentração por cidade vira também ponto de encontro (multiplayer = backend do Orvalis).
 
+## Direção: mundo principal também em voxel (dono do produto, 24/11/2026, ADR 0105)
+O mundo principal ganha um caminho em **primeira pessoa com blocos voxel ao estilo Minecraft**, sobre o motor do Titã (`?mundo=orvalis3d`). O mundo 2.5D descrito acima continua sendo o que está no ar até o voxel ter paridade (cidade, animais, NPCs, cultivo, missões); a aposentadoria do 2D será decidida por ADR.
+
 ## Posição no ecossistema
 - Repositório **apenas frontend** (site estático, Vite + TypeScript, sem framework).
 - Não há backend **neste** repositório e não deve ser criado aqui. Multiplayer, contas e mundos na nuvem pertencem ao

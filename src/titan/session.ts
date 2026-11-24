@@ -1,4 +1,5 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
+import type { TerrainGen } from './terrain';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
 import { creatureSpecs, type Farejador, newFromSpec } from './creature';
@@ -191,7 +192,7 @@ function validRegrow(raw: unknown): Map<string, number> {
 }
 
 /** Itens soltos gravados: só entradas bem formadas (id, item conhecido, contagem 1–64 opcional e células inteiras no domínio); o resto é descartado. */
-function validDrops(raw: unknown, gen: TitanGenerator): Map<string, Drop> {
+function validDrops(raw: unknown, gen: TerrainGen): Map<string, Drop> {
   const out = new Map<string, Drop>();
   if (!Array.isArray(raw)) return out;
   for (const d of raw as Drop[]) {
@@ -204,15 +205,15 @@ function validDrops(raw: unknown, gen: TitanGenerator): Map<string, Drop> {
   return out;
 }
 
-export type GeneratorFactory = (seed: number, version: number) => TitanGenerator | null;
+export type GeneratorFactory = (seed: number, version: number) => TerrainGen | null;
 /** Versões suportadas: uma partida antiga nunca é reinterpretada por um gerador novo (docs Titã 05 §6). */
 export const generatorFor: GeneratorFactory = (seed, version) => (version >= 1 && version <= GENERATOR_VERSION && Number.isInteger(version) ? new TitanGenerator(seed, version) : null);
 
 export class UnsupportedVersionError extends Error {}
 
 /** `explicitSeed`: vindo de `?seed=`; `newSeed`: sorteio para a primeira visita ou "Nova partida". */
-/** `freshVersion`: gerador da partida nova (padrão = o atual; testes do legado pedem a v1/v2). */
-export async function openSession(storage: TitanStorage, explicitSeed: number | null, newSeed: () => number, factory: GeneratorFactory = generatorFor, freshVersion: number = GENERATOR_VERSION): Promise<TitanSession> {
+/** `freshVersion`: gerador da partida nova (padrão = o atual; testes do legado pedem a v1/v2). `create`: como se constrói o gerador da partida nova (o Titã por padrão; o Orvalis passa o dele, ADR 0105). */
+export async function openSession(storage: TitanStorage, explicitSeed: number | null, newSeed: () => number, factory: GeneratorFactory = generatorFor, freshVersion: number = GENERATOR_VERSION, create: (seed: number, version: number) => TerrainGen = (s, v) => new TitanGenerator(s, v)): Promise<TitanSession> {
   let seed = explicitSeed;
   if (seed === null) seed = await storage.latestSeed();
   const saved = seed !== null ? await storage.load(seed) : null;
@@ -221,13 +222,13 @@ export async function openSession(storage: TitanStorage, explicitSeed: number | 
     if (!gen) throw new UnsupportedVersionError(`Esta partida usa o gerador v${saved.header.generatorVersion}, que esta versão do jogo não tem.`);
     return resume(gen, saved);
   }
-  return fresh(new TitanGenerator(seed ?? newSeed(), freshVersion));
+  return fresh(create(seed ?? newSeed(), freshVersion));
 }
 
 /** Os Farejadores nascem na toca, com o passeio derivado da seed. */
-const creaturesFor = (gen: TitanGenerator): Farejador[] => creatureSpecs(gen).map((sp) => newFromSpec(sp, gen.seed));
+const creaturesFor = (gen: TerrainGen): Farejador[] => creatureSpecs(gen).map((sp) => newFromSpec(sp, gen.seed));
 
-export function fresh(gen: TitanGenerator): TitanSession {
+export function fresh(gen: TerrainGen): TitanSession {
   const volume = new TitanVolume(gen);
   const a = gen.arrival;
   const collected = new Set<string>();
@@ -238,7 +239,7 @@ export function fresh(gen: TitanGenerator): TitanSession {
   return s;
 }
 
-export function resume(gen: TitanGenerator, save: TitanSave): TitanSession {
+export function resume(gen: TerrainGen, save: TitanSave): TitanSession {
   const volume = new TitanVolume(gen);
   volume.load(save.chunks);
   const a = gen.arrival;
@@ -361,7 +362,7 @@ export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: 
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: 'titan', seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'noz' ? { s: 'noz', a: c.age } : c.age])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'noz' ? { s: 'noz', a: c.age } : c.age])) } : {}) };
 }
 
 /**

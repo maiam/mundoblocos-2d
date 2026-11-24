@@ -1,5 +1,12 @@
 # Changelog
 
+## Orvalis v0.169.0 — Orvalis em voxel: o mundo principal em primeira pessoa, fatia 1 (24/11/2026)
+- **ADR 0105.** Novo mundo `?mundo=orvalis3d`: a ilha de florestas do Orvalis refeita em **blocos de 1 m e primeira pessoa**, sobre o motor do Titã (física, gesto, quebra e recolhimento, mochila, vida/fome, ciclo de 20 min, save). O mundo 2.5D segue no ar; saves 2D não migram.
+- **Terreno** (`titan/orvalis/generator.ts`, `ORVALIS_GENERATOR_VERSION` 1): região 128 × 128 cercada de mar, Campos e Bosque de Sakura, colinas, montanhas de pedra, rios, praias e árvores de tora e folha (carvalho, bétula, cerejeira); chegada numa clareira de grama.
+- **Blocos e itens:** 10 blocos novos (ids 90–99) e itens 42–51; quebrar/colocar/recolher como no Titã; tempos por material (terra e areia 0,6 s, tora 1 s, folha 0,4 s, pedra 1,6 s). Atlas de terreno com 15 tiles novos e atlas de itens 4 × 13, feitos dos Materiais V2 por `scripts/make-orvalis-voxel-arte.py` (**folhas provisórias**).
+- **Motor:** contrato `TerrainGen` (`titan/terrain.ts`) no lugar do `TitanGenerator` em volume, sessão e validações; `header.world` aceita `orvalis` e o Orvalis grava no banco `orvalis-voxel`; `skyAt(frac, paleta)` com céu azul; água do Orvalis (`orvalis-agua-32px.webp`); interface com os textos do mundo; botão de sala oculto.
+- **Testes:** gerador (determinismo, chegada, mar/praia/mata) e mundo (sessão, quebrar → recolher → colocar, itens ↔ blocos, save/retomada, céu); 8 testes do Titã com limites escritos à mão atualizados. Sem mudança de `GENERATOR_VERSION`, `TITAN_SAVE_VERSION` nem protocolo; o Titã segue idêntico.
+
 ## Orvalis v0.168.0 — Titã: `TitanRoom` pronta para o servidor (22/11/2026)
 - `TitanRoom` ganha `size` (jogadores) e `dirty` (há o que gravar: ações, bolsa, saída de jogador, braseiros, plantas, coleta; `snapshot()`/`restore()` limpam), a mesma forma que o `src/app.js` do `orvalis-servidor` lê da `Room` do mundo principal. Sem mudança de protocolo (`TITAN_PROTOCOL_VERSION` 2), gerador nem save. Testes: +1 (1.236 no total). Ao lado, a integração no servidor (roteamento da sala 101, tick, gravação e `/salas`) segue em branch do `orvalis-servidor`.
 

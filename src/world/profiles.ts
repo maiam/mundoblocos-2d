@@ -7,7 +7,7 @@ import type { ChunkRect } from './world';
  * O motor (World, Game, Renderer) é o mesmo; o perfil decide terreno, limites,
  * personagem, blocos disponíveis e sistemas ativos.
  */
-export type WorldId = 'principal' | 'santuario' | 'titan';
+export type WorldId = 'principal' | 'santuario' | 'titan' | 'orvalis3d';
 
 /** Personagens jogáveis (folhas de sprite em `render/character.ts`). */
 /** `goddess` = Deusa flutuante (Sala 2 online); `goddess-iso` = Deusa isométrica do Santuário solo (ADR 0036). */
@@ -134,6 +134,32 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     surfaceObjects: false,
     view: 'oblique',
     sky: ['#d99342', '#f2cc93'],
+  },
+  /**
+   * Orvalis em voxel (ADR 0105): o mundo principal refeito em blocos de 1 m e primeira pessoa, sobre o **motor do Titã** (`src/titan/`, gerador `titan/orvalis/`). Como o Titã, fica fora do
+   * motor de chão e pilhas: o perfil só registra o mundo na URL (`?mundo=orvalis3d`) e `main.ts` abre `startTitan(…, 'orvalis')`. Campos do 2.5D desligados e não lidos.
+   */
+  orvalis3d: {
+    id: 'orvalis3d',
+    name: 'Orvalis · Ilha das Florestas',
+    terrain: { kind: 'procedural' },
+    bounds: null,
+    character: 'heroine',
+    blocks: [],
+    tools: false,
+    farming: false,
+    sheep: false,
+    wolves: false,
+    dungeon: false,
+    town: false,
+    collectBlocks: false,
+    minimap: false,
+    progression: false,
+    hunger: false,
+    breakSeconds: null,
+    surfaceObjects: false,
+    view: 'oblique',
+    sky: ['#6fa4e6', '#cfe6f7'],
   },
 };
 

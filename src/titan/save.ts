@@ -11,10 +11,12 @@
  */
 export const TITAN_SAVE_VERSION = 5;
 const DB_NAME = 'orvalis-titan';
+/** Banco de cada mundo voxel: o Orvalis tem o próprio (as seeds dos dois mundos nunca se misturam; ADR 0105). */
+const DB_NAMES: Record<VoxelWorld, string> = { titan: DB_NAME, orvalis: 'orvalis-voxel' };
 
 export interface TitanHeader {
   v: number;
-  world: 'titan';
+  world: VoxelWorld;
   seed: number;
   generatorVersion: number;
   savedAt: number;
@@ -54,6 +56,7 @@ export interface TitanHeader {
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */
 export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; /** Ferramenta desgastada caída na morte (ADR 0067): pontos de desgaste. */ wear?: number; x: number; y: number; z: number }
 import type { InventoryData } from './inventory';
+import type { VoxelWorld } from './terrain';
 
 export interface ChunkRecord { cx: number; cz: number; edits: Array<[number, number]> }
 export interface TitanSave { header: TitanHeader; chunks: ChunkRecord[] }
@@ -71,7 +74,7 @@ export interface TitanStorage {
 const chunkId = (seed: number, cx: number, cz: number): string => `${seed}:${cx}:${cz}`;
 const valid = (h: unknown): h is TitanHeader => {
   const o = h as TitanHeader | null;
-  return !!o && o.world === 'titan' && Number.isInteger(o.seed) && Number.isInteger(o.generatorVersion) && !!o.player && [o.player.x, o.player.y, o.player.z, o.player.yaw, o.player.pitch].every(Number.isFinite);
+  return !!o && (o.world === 'titan' || o.world === 'orvalis') && Number.isInteger(o.seed) && Number.isInteger(o.generatorVersion) && !!o.player && [o.player.x, o.player.y, o.player.z, o.player.yaw, o.player.pitch].every(Number.isFinite);
 };
 
 /** Memória (testes e navegadores sem IndexedDB). */
@@ -106,9 +109,10 @@ export class MemoryTitanStorage implements TitanStorage {
 /** IndexedDB: `games` (chave `seed`, índice `savedAt`) e `chunks` (chave `seed:cx:cz`, índice `seed`). */
 export class IdbTitanStorage implements TitanStorage {
   private db: Promise<IDBDatabase> | null = null;
+  constructor(private readonly dbName: string = DB_NAME) {}
   private open(): Promise<IDBDatabase> {
     this.db ??= new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
+      const req = indexedDB.open(this.dbName, 1);
       req.onupgradeneeded = () => {
         const db = req.result;
         db.createObjectStore('games', { keyPath: 'seed' }).createIndex('savedAt', 'savedAt');
@@ -164,7 +168,7 @@ export class IdbTitanStorage implements TitanStorage {
   }
 }
 
-export function defaultTitanStorage(): TitanStorage {
-  try { if (typeof indexedDB !== 'undefined') return new IdbTitanStorage(); } catch { /* cai para a memória */ }
+export function defaultTitanStorage(world: VoxelWorld = 'titan'): TitanStorage {
+  try { if (typeof indexedDB !== 'undefined') return new IdbTitanStorage(DB_NAMES[world]); } catch { /* cai para a memória */ }
   return new MemoryTitanStorage();
 }

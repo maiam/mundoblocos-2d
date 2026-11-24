@@ -60,6 +60,9 @@ import farejadorModel from '../../assets/titan-farejador.json';
 import farejadorRigUrl from '../../assets/titan-farejador-rig.glb?url';
 import farejadorAtlas from '../../assets/titan-farejador-atlas.webp';
 import hudAtlas from '../../assets/titan-hud-32px.webp';
+import orvalisWater from '../../assets/orvalis-agua-32px.webp';
+/** Água do Orvalis em voxel (ADR 0105): o mesmo formato do Lago Escuro (4 células de 32 px), feita dos Materiais V2 por `scripts/make-orvalis-voxel-arte.py`. */
+export const orvalisWaterUrl: string = orvalisWater;
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
  * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).

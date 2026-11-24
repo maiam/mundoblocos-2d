@@ -17,6 +17,7 @@
 
 > O conteúdo celestial antigo (nuvem, 18 blocos, Deusa-laboratório, abaixo) é **histórico**: o código foi removido (v0.93.133–134) ou aguarda a limpeza final (`celestialArt.ts`, `art/santuario.ts`, ids 80–97 em `blocks.ts`). A Sala 2 online segue em `ROOM_RULES`/servidor, mas a página do Santuário não a oferece mais.
 
+> **Orvalis em voxel** (v0.169.0, ADR 0105) é registrado em `WORLD_PROFILES.orvalis3d` só para a URL (`?mundo=orvalis3d`); roda no motor do Titã, ver [titan.md](titan.md).
 > **Titã** (v0.94.0, ADR 0039) é registrado em `WORLD_PROFILES.titan` só para a URL (`?mundo=titan`); é um motor voxel à parte, ver [titan.md](titan.md).
 
 ## Como o mundo é escolhido (`resolveWorldId`)

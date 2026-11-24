@@ -49,13 +49,19 @@ const MANHA = { zenith: hex(0xb07a52), mid: hex(0xd9965c), horizon: hex(0xf4c09a
 const TARDE = { zenith: hex(0xb96e33), mid: hex(0xd99342), horizon: hex(0xf2cc93), fog: hex(0xd2a066), ambient: 1, tint: [1, 1, 1] as RGB }; // cobre no alto, âmbar no horizonte (o visual das entregas anteriores)
 // noite (ADR 0048): mais escura que antes (ambient 0,3 → 0,22) e **fria** (`tint` azulado): a costa fica legível em tons frios e a lanterna domina perto do jogador; o cobre do horizonte vem da claridade do poente (`glowK`), não da paleta
 const NOITE = { zenith: hex(0x05040a), mid: hex(0x0b0812), horizon: hex(0x241418), fog: hex(0x110b10), ambient: 0.22, tint: [0.84, 0.95, 1.22] as RGB };
-const LOOKS: readonly Look[] = [
-  { t: 0, ...MANHA },
-  { t: tickFrac(6000), ...TARDE },
-  { t: tickFrac(PHASE_TICKS.sunsetStart), ...TARDE },
-  { t: tickFrac(PHASE_TICKS.nightStart), ...NOITE },
-  { t: tickFrac(PHASE_TICKS.sunriseStart), ...NOITE },
+// Orvalis (ADR 0105): céu azul de dia, quente só na manhã e no poente; a noite é a mesma (luz fria e baixa)
+const MANHA_O = { zenith: hex(0x6fa4e6), mid: hex(0x9cc8f0), horizon: hex(0xf6d9b8), fog: hex(0xbcd6ee), ambient: 0.85, tint: [1, 0.98, 0.94] as RGB };
+const TARDE_O = { zenith: hex(0x4f95e8), mid: hex(0x86bff2), horizon: hex(0xcfe6f7), fog: hex(0xb4d4f0), ambient: 1, tint: [1, 1, 1] as RGB };
+const NOITE_O = { zenith: hex(0x050818), mid: hex(0x0a1030), horizon: hex(0x182446), fog: hex(0x0c1428), ambient: 0.22, tint: [0.84, 0.95, 1.22] as RGB };
+export type SkyPalette = 'titan' | 'orvalis';
+const looksOf = (m: typeof MANHA, t: typeof TARDE, n: typeof NOITE): readonly Look[] => [
+  { t: 0, ...m },
+  { t: tickFrac(6000), ...t },
+  { t: tickFrac(PHASE_TICKS.sunsetStart), ...t },
+  { t: tickFrac(PHASE_TICKS.nightStart), ...n },
+  { t: tickFrac(PHASE_TICKS.sunriseStart), ...n },
 ];
+const LOOKS_BY: Record<SkyPalette, readonly Look[]> = { titan: looksOf(MANHA, TARDE, NOITE), orvalis: looksOf(MANHA_O, TARDE_O, NOITE_O) };
 
 const mix = (a: RGB, b: RGB, k: number): RGB => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
 const ease = (k: number): number => k * k * (3 - 2 * k);
@@ -86,7 +92,8 @@ const COOL: RGB = [0.86, 0.93, 1.06];
 const SUNSET = PHASE_TICKS.sunsetStart, NIGHT = PHASE_TICKS.nightStart, SUNRISE = PHASE_TICKS.sunriseStart;
 
 /** Aparência do céu na fração `frac` (0–1) do dia: interpolação suave e contínua, inclusive na virada da meia-noite. */
-export function skyAt(frac: number): Sky {
+export function skyAt(frac: number, palette: SkyPalette = 'titan'): Sky {
+  const LOOKS = LOOKS_BY[palette];
   const f = ((frac % 1) + 1) % 1;
   // acha o par de momentos que cerca f (o último liga ao primeiro do dia seguinte)
   let i = LOOKS.length - 1;

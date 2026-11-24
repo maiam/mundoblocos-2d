@@ -70,6 +70,7 @@ const CLEARING = 6;
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
 
 export class TitanGenerator {
+  readonly world = 'titan' as const;
   readonly version: number;
   private readonly nDunas: Noise;
   private readonly nLago: Noise;

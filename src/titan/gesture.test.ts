@@ -23,7 +23,7 @@ function rig(opts: { placeOk?: boolean; completeOk?: boolean } = {}) {
 
 describe('tempos de quebra', () => {
   it('areia 0,6 s, gelo 1,2 s, rocha 1,6 s; lanterna e lasca 0,35 s; rocha-mãe e líquido não quebram', () => {
-    expect(BREAK_MS).toEqual({ sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350 });
+    expect(BREAK_MS).toEqual({ sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350, wood: 1000, leaves: 400 });
     expect(breakTotalMs('block', T.SAND)).toBe(600);
     expect(breakTotalMs('block', T.DAMP_SAND)).toBe(600);
     expect(breakTotalMs('block', T.FROST)).toBe(1200);

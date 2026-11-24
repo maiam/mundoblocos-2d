@@ -22,13 +22,18 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.DOOR_LAST;
+export const T_MAX = T.LEAVES_BIRCH;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
 export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco', 47: 'Bloco de Junco', 48: 'Laje de Junco', 49: 'Laje de Junco', 50: 'Degrau de Junco', 51: 'Degrau de Junco', 52: 'Degrau de Junco', 53: 'Degrau de Junco', 54: 'Cadeira de Junco', 55: 'Cadeira de Junco', 56: 'Cadeira de Junco', 57: 'Cadeira de Junco' };
 for (let id = T.DOOR; id <= T.DOOR_LAST; id++) BLOCK_NAMES[id] = 'Porta de Junco';
+/** Blocos do Orvalis em voxel (ADR 0105): terreno de floresta, praia e árvores. Água = `T.LAKE` (líquido do motor, com a arte da água do Orvalis). */
+Object.assign(BLOCK_NAMES, { 90: 'Terra com Grama', 91: 'Terra', 92: 'Pedra', 93: 'Areia da Praia', 94: 'Tora de Carvalho', 95: 'Folhas de Carvalho', 96: 'Tora de Cerejeira', 97: 'Folhas de Cerejeira', 98: 'Tora de Bétula', 99: 'Folhas de Bétula' });
+/** Folhas das árvores do Orvalis (cubo inteiro opaco por enquanto) e toras. */
+export const isLeaves = (id: number): boolean => id === T.LEAVES_OAK || id === T.LEAVES_CHERRY || id === T.LEAVES_BIRCH;
+export const isLog = (id: number): boolean => id === T.LOG_OAK || id === T.LOG_CHERRY || id === T.LOG_BIRCH;
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
 export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id);
@@ -243,6 +248,18 @@ const BLOCK_TILES: Record<number, readonly [number, number, number]> = {
   [T.BRAZIER_LIT]: [tileIndex('17-braseiro-de-rocha/topo-aceso'), tileIndex('17-braseiro-de-rocha/lateral-comum'), tileIndex('17-braseiro-de-rocha/lateral-comum')],
 };
 BLOCK_TILES[T.SLAB_TOP] = BLOCK_TILES[T.SLAB];
+// Orvalis em voxel (ADR 0105): as artes dos Materiais V2 reduzidas a 32 px (`scripts/make-orvalis-voxel-arte.py`); folhas provisórias (procedurais)
+const ot = (a: string, b: string = a, c: string = b): readonly [number, number, number] => [tileIndex(`orvalis/${a}`), tileIndex(`orvalis/${b}`), tileIndex(`orvalis/${c}`)];
+BLOCK_TILES[T.GRASS] = ot('grama-topo', 'grama-lateral', 'terra');
+BLOCK_TILES[T.DIRT] = ot('terra');
+BLOCK_TILES[T.STONE] = ot('pedra-topo', 'pedra-lateral', 'pedra-topo');
+BLOCK_TILES[T.BEACH] = ot('areia');
+BLOCK_TILES[T.LOG_OAK] = ot('tora-carvalho-topo', 'tora-carvalho-lateral', 'tora-carvalho-topo');
+BLOCK_TILES[T.LEAVES_OAK] = ot('folhas-carvalho');
+BLOCK_TILES[T.LOG_CHERRY] = ot('tora-cerejeira-topo', 'tora-cerejeira-lateral', 'tora-cerejeira-topo');
+BLOCK_TILES[T.LEAVES_CHERRY] = ot('folhas-cerejeira');
+BLOCK_TILES[T.LOG_BIRCH] = ot('tora-betula-topo', 'tora-betula-lateral', 'tora-betula-topo');
+BLOCK_TILES[T.LEAVES_BIRCH] = ot('folhas-betula');
 // Família do Junco (ADR 0100): o bloco usa a trama nas seis faces; a laje, o topo de 32 × 32 e a lateral de 32 × 16 (metade de cima do tile)
 BLOCK_TILES[T.REED_BLOCK] = faces3('21-bloco-de-junco');
 BLOCK_TILES[T.REED_SLAB] = [tileIndex('22-laje-de-junco/topo'), tileIndex('22-laje-de-junco/lateral'), tileIndex('22-laje-de-junco/topo')];
