@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.170.1 — `npm run texturas` não sobrescreve mais as texturas editadas (24/11/2026)
+- **Correção:** `make-orvalis-voxel-arte.py` regravava os 15 PNGs de `assets-src/orvalis-voxel/texturas32/orvalis/` a partir dos Materiais V2 a cada execução, apagando qualquer edição. Agora os PNGs (e `agua/agua_32px.png`, novo) são a **fonte editável**: o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2); ícones e água do jogo saem sempre do que está em disco. Testado: PNG editado → `npm run texturas` → tile do atlas com a edição.
+- `npm run texturas` chama `python3` sem `-I` (o modo isolado ignora pacotes instalados com `pip install --user`, e o Pillow no Mac falhava); pré-requisito documentado: `pip3 install pillow`.
+
 ## Orvalis v0.170.0 — Caminho de desenvolvimento para testar texturas: `?cena=texturas` (24/11/2026)
 - **Cena `?cena=texturas`** (só no `npm run dev`; ignorada em produção): vitrine plana no motor do Titã (`titan/texturas.ts`, funciona com `?mundo=orvalis3d` e `?mundo=titan`) com cada bloco de terreno em **cubo**, **massa 3 × 3 × 3** (emendas e repetição) e **parede 3 × 3**, mais uma **piscina** de água. Fila 1 = os 10 blocos do Orvalis; fila 2 = o terreno do Titã (13 blocos). Hora fixa à tarde (`&hora=noite` para ver sob lanterna); legenda na tela com a ordem dos blocos e o tile de cada um; **nada é gravado**.
 - **`npm run texturas`:** `make-orvalis-voxel-arte.py` → `make-titan-atlas32.py` → `make-titan-arte32.py`; o Vite recarrega a página quando o atlas muda.
