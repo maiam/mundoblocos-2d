@@ -8,6 +8,7 @@ import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
 import { initialSections } from '../titan/sections';
+import { isoCamera, ISO_DISTANCE, ISO_PITCH } from '../titan/iso';
 import { horizonAt, skyAt, type Sky, type SkyPalette } from '../titan/sky';
 import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
@@ -29,6 +30,12 @@ import { lidIdle, stepLid } from '../titan/lid';
  */
 /** Alcance de render (blocos): a região de teste é pequena; a névoa começa em 70% e fecha antes da borda carregada. */
 const RANGE = 64;
+/** Textura de pixel art: sem filtro nem mipmaps. */
+function pixelTexture(img: HTMLImageElement): THREE.Texture {
+  const t = new THREE.Texture(img);
+  t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  return t;
+}
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
 const ITEM_ROWS = 13;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
@@ -120,9 +127,19 @@ export class TitanRenderer {
   private readonly flying: Array<{ sprite: THREE.Sprite; t0: number; x: number; y: number; z: number }> = [];
   private itemsLoaded = false; // a primeira lista (partida retomada) não "salta"; as seguintes sim
   private clock = 0;
+  // ---- Vista isométrica 2:1 (ADR 0106) ----
+  private mode: 'fp' | 'iso' = 'fp';
+  private readonly isoCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, ISO_DISTANCE * 2 + 400);
+  /** Texturas de cada vista: 16 px na primeira pessoa, 8 px na isométrica (o `material.map` troca; são objetos separados porque o tamanho da imagem muda). */
+  private atlasTex!: THREE.Texture;
+  private atlasTexIso: THREE.Texture | null = null;
+  private liquidTexIso: THREE.Texture | null = null;
+  private bufW = 1; private bufH = 1;
+  /** Boneco provisório do jogador (só na isométrica) e a silhueta que aparece por trás do terreno. */
+  private avatar: THREE.Group | null = null;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -136,6 +153,8 @@ export class TitanRenderer {
     tex.minFilter = THREE.NearestFilter;
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
+    this.atlasTex = tex;
+    if (extra.iso) { this.atlasTexIso = pixelTexture(extra.iso.atlas); this.liquidTexIso = pixelTexture(extra.iso.lake); }
     this.opaqueMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true });
     patchDayLight(this.opaqueMat, this.ambient);
     // o líquido tem atlas próprio de 16 px (Lago Escuro V2, ADR 0057, reduzido na ADR 0106: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
@@ -746,12 +765,78 @@ export class TitanRenderer {
 
   readonly resize = (): void => {
     const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
+    this.bufW = w; this.bufH = h;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.handCamera.aspect = w / h;
     this.handCamera.updateProjectionMatrix();
   };
+
+  // ---- Vista isométrica 2:1 (ADR 0106) ----
+  get viewMode(): 'fp' | 'iso' { return this.mode; }
+  private isoHalf = [0, 0];
+  /** Troca a vista: na isométrica o buffer tem 1 pixel por pixel CSS e a tela o amplia **sem suavização** (blocos de 8 × 8 px de textura), o atlas e a água passam a ser os de 8 px e somem céu, sol, névoa e mão. */
+  setViewMode(mode: 'fp' | 'iso'): void {
+    if (mode === this.mode) return;
+    this.mode = mode;
+    const iso = mode === 'iso';
+    this.renderer.setPixelRatio(iso ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+    this.canvas.style.imageRendering = iso ? 'pixelated' : '';
+    this.opaqueMat.map = iso && this.atlasTexIso ? this.atlasTexIso : this.atlasTex;
+    this.liquidMat.map = iso && this.liquidTexIso ? this.liquidTexIso : this.liquidTex;
+    if (iso) { this.under = { mix: 0, adapt: 0 }; this.underDepth = 0; }
+    if (iso && !this.avatar) this.avatar = this.buildAvatar();
+    if (this.avatar) this.avatar.visible = iso;
+    this.resize();
+    this.applyUnderwater();
+    this.lastFogYaw = 1e9; this.lastSky = -1; // refaz o fundo e a luz do céu no próximo quadro
+  }
+
+  private placeIsoCamera(eye: { x: number; y: number; z: number }, yaw: number): void {
+    const cam = isoCamera([eye.x, eye.y - EYE_HEIGHT + 0.9, eye.z], yaw, this.bufW, this.bufH), c = this.isoCam;
+    if (this.isoHalf[0] !== cam.halfW || this.isoHalf[1] !== cam.halfH) {
+      this.isoHalf = [cam.halfW, cam.halfH];
+      c.left = -cam.halfW; c.right = cam.halfW; c.top = cam.halfH; c.bottom = -cam.halfH; c.updateProjectionMatrix();
+    }
+    c.position.set(cam.pos[0], cam.pos[1], cam.pos[2]);
+    c.rotation.order = 'YXZ';
+    c.rotation.set(-ISO_PITCH, yaw, 0);
+  }
+
+  /** Boneco provisório (0,6 × 1,8 m: corpo, cabeça e nariz na frente) e, por trás do terreno, a mesma figura em silhueta azul translúcida (só onde o teste de profundidade falha). */
+  private buildAvatar(): THREE.Group {
+    const g = new THREE.Group();
+    const parts: Array<[THREE.BoxGeometry, number, [number, number, number]]> = [
+      [new THREE.BoxGeometry(0.5, 0.9, 0.3), 0xd9623b, [0, 0.75, 0]], [new THREE.BoxGeometry(0.4, 0.4, 0.4), 0xe8c9a0, [0, 1.5, 0]], [new THREE.BoxGeometry(0.1, 0.1, 0.1), 0x222222, [0, 1.5, -0.25]], [new THREE.BoxGeometry(0.46, 0.3, 0.3), 0x3b4a8c, [0, 0.15, 0]],
+    ];
+    for (const [geo, color, [x, y, z]] of parts) {
+      const solid = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, fog: false }));
+      solid.position.set(x, y, z);
+      const ghost = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x7fd0ff, transparent: true, opacity: 0.6, depthFunc: THREE.GreaterDepth, depthWrite: false, fog: false }));
+      ghost.position.set(x, y, z); ghost.renderOrder = 10;
+      g.add(solid, ghost);
+    }
+    g.visible = false;
+    this.scene.add(g);
+    return g;
+  }
+
+  /** Onde o ponto do mundo `(x, y, z)` cai na tela, em px CSS do canvas (câmera da vista atual); `null` se estiver atrás da câmera. Para testes de navegador e diagnóstico. */
+  screenOf(x: number, y: number, z: number): { x: number; y: number } | null {
+    const cam = this.mode === 'iso' ? this.isoCam : this.camera;
+    cam.updateMatrixWorld();
+    const v = new THREE.Vector3(x, y, z).project(cam);
+    if (v.z < -1 || v.z > 1) return null;
+    return { x: ((v.x + 1) / 2) * this.bufW, y: ((1 - v.y) / 2) * this.bufH };
+  }
+
+  /** Posição dos pés e a direção em que o boneco olha (mesma convenção do `yaw`: 0 = −Z). Só aparece na isométrica. */
+  setAvatar(x: number, y: number, z: number, yaw: number): void {
+    if (!this.avatar) return;
+    this.avatar.position.set(x, y, z);
+    this.avatar.rotation.y = yaw;
+  }
 
   /** Fragmentos de superfície ainda no mundo (sprites do atlas da hotbar: rocha = índice 4, gelo = 5). Chamar de novo depois de uma coleta. */
   setItems(items: Array<{ id: string; item: number; x: number; y: number; z: number }>): void {
@@ -823,12 +908,16 @@ export class TitanRenderer {
       this.camera.fov = this.fov; this.camera.updateProjectionMatrix();
     }
     this.lastFovMs = performance.now();
-    this.camera.position.set(eye.x, eye.y, eye.z);
-    this.camera.rotation.set(pitch, yaw, 0);
-    this.sky.mesh.position.copy(this.camera.position);
+    const iso = this.mode === 'iso';
+    if (iso) this.placeIsoCamera(eye, yaw);
+    else {
+      this.camera.position.set(eye.x, eye.y, eye.z);
+      this.camera.rotation.set(pitch, yaw, 0);
+    }
+    this.sky.mesh.position.copy(iso ? this.isoCam.position : this.camera.position);
     this.sky.setTime(time);
     this.fogToward(yaw);
-    this.updateUnderwater(eye, time);
+    if (!iso) this.updateUnderwater(eye, time); // na isométrica a câmera não está na água: sem mergulho
     this.sun.position.set(eye.x + this.sunDir[0] * 270, eye.y + this.sunDir[1] * 270, eye.z + this.sunDir[2] * 270);
     // edições aparecem no mesmo quadro (sem orçamento); só a geração inicial é repartida entre quadros
     this.built = 0;
@@ -865,6 +954,7 @@ export class TitanRenderer {
       if (t >= 1) { this.scene.remove(f.sprite); this.flying.splice(i, 1); }
     }
     this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
+    if (this.liquidTexIso) this.liquidTexIso.offset.x = this.liquidTex.offset.x;
     this.outline.visible = !!target;
     if (target) {
       // célula inteira (bloco) ou a caixa do objeto (lanterna), 2 mm maior para não cintilar sobre as faces
@@ -874,14 +964,14 @@ export class TitanRenderer {
     }
     if (this.perf && this.built) this.perf.record('buildFrame', performance.now() - tb); // malha + geometria de todo o quadro
     const tr = this.perf ? performance.now() : 0;
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene, iso ? this.isoCam : this.camera);
     const now = performance.now(), dt = this.lastRenderMs ? Math.min(0.1, (now - this.lastRenderMs) / 1000) : 0;
     this.lastRenderMs = now;
     const eq = this.equip.update(dt); // troca de item: afunda o velho e sobe o novo (ADR 0087)
     if (eq.swapped) this.shownKey = this.heldKey;
     const hand = this.held.get(this.shownKey);
     for (const g of this.held.values()) if (typeof g !== 'string') g.visible = g === hand;
-    if (hand && typeof hand !== 'string') {
+    if (hand && typeof hand !== 'string' && !iso) { // na isométrica não há mão (o boneco é o jogador)
       this.handAnim.kind = this.heldKinds.get(this.shownKey) ?? 'dagger';
       const hp = this.handAnim.update(dt, this.handMove.speed, this.handMove.grounded, this.handMove.acting);
       hand.position.set(hp.x, hp.y + eq.offset, hp.z); hand.rotation.set(hp.rx, hp.ry, hp.rz);
@@ -906,7 +996,7 @@ export class TitanRenderer {
     this.ambientBase.set(sky.ambient * sky.tint[0], sky.ambient * sky.tint[1], sky.ambient * sky.tint[2]); // luz do dia (quente de dia, fria de noite)
     this.sky.update(sky);
     this.lastFogYaw = 1e9; // a névoa se refaz no próximo quadro com a cor do céu daquele lado
-    this.sun.visible = sky.sun.alpha > 0.01;
+    this.sun.visible = sky.sun.alpha > 0.01 && this.mode === 'fp';
     (this.sun.material as THREE.SpriteMaterial).opacity = sky.sun.alpha;
     this.sunDir = sky.sun.dir;
     // os fragmentos de superfície (sprites) escurecem com a noite, sem sumir
@@ -941,8 +1031,10 @@ export class TitanRenderer {
     fog.far = RANGE * 0.97 + (underwaterFar(this.under.adapt) - RANGE * 0.97) * mix;
     const f = 1 + (underwaterAmbient(this.underDepth) - 1) * mix; // só a parcela do dia; o brilho de lanterna (`glow`) fica de fora
     this.ambient.value.copy(this.ambientBase).multiplyScalar(f);
-    this.sky.mesh.visible = mix < 0.6; // a cúpula e o sol não passam pela névoa: somem ao mergulhar
-    this.sun.visible = !!this.curSky && this.curSky.sun.alpha > 0.01 && mix < 0.6;
+    const fp = this.mode === 'fp';
+    if (!fp) { fog.near = 1e5; fog.far = 2e5; } // isométrica: sem névoa de distância (o fundo é a cor do céu)
+    this.sky.mesh.visible = fp && mix < 0.6; // a cúpula e o sol não passam pela névoa: somem ao mergulhar (e não existem na isométrica)
+    this.sun.visible = fp && !!this.curSky && this.curSky.sun.alpha > 0.01 && mix < 0.6;
   }
 
   /** Estado de imersão do quadro: olhos dentro do líquido (célula do olho), mistura de 150 ms e adaptação de 2 s. */

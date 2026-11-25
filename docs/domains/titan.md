@@ -197,3 +197,13 @@ O mesmo motor roda um segundo mundo: `?mundo=orvalis3d` (perfil `orvalis3d`) →
 Testes: `titan/orvalis/generator.test.ts` e `mundo.test.ts`. Pendências e próximas fatias: `NEXT_STEPS.md`.
 
 **Cena de texturas (v0.170.0, só no dev):** `?cena=texturas` abre uma vitrine plana (`titan/texturas.ts`: `TexturesGen` + `texturesSession`) com cada bloco em cubo, massa 3 × 3 × 3 e parede 3 × 3, mais uma piscina; bloco novo de terreno entra nas listas `ORVALIS_ROW`/`TITAN_ROW` para aparecer nela. Memória, hora fixa à tarde. Uso e ciclo em `OPERATIONS.md`.
+
+## 16 px e vista isométrica (ADR 0106, v0.172.0)
+**Fonte de verdade:** `titan/iso.ts` (câmera e raios) e `render/titanRenderer.ts` (`setViewMode`). O terreno e a água são renderizados a **16 px por face** (a tabela de arte acima que cita 32 px é histórica); na isométrica o atlas é o de 8 px.
+| Tema | Regra | Arquivo |
+|---|---|---|
+| Atlas | `tiles.json`: `tile` 16 / `pad` 2 e `iso.tile` 8 / `iso.pad` 1 (mesma proporção: os mesmos UVs); fonte reduzida por média | `scripts/make-titan-atlas32.py`, `render/art/titan.ts` |
+| Câmera | ortográfica, elevação 30° (topo 2:1), `ISO_PX_PER_BLOCK` = 16/√2 (topo 16 × 8 px, aresta ~8 px), 4 vistas de 90° a partir de 45°, presa à grade de pixels | `titan/iso.ts` |
+| Buffer | 1 px por px CSS, `image-rendering: pixelated`; sem céu, sol, névoa, mergulho nem mão | `TitanRenderer.setViewMode` |
+| Entrada | `Visão` no menu / V; ⟲ ⟳ / Z X; cursor livre; ação no ponto do mouse ou do dedo; alcance `ISO_REACH` = 6 | `titanGame.ts` (`setIso`, `computeAim`) |
+| Boneco | caixas provisórias + silhueta azul `GreaterDepth` atrás do terreno | `TitanRenderer.buildAvatar` |

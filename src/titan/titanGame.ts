@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, orvalisWaterUrl, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
@@ -15,6 +15,7 @@ import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
 import { FootstepClock, surfaceOf } from './sounds';
 import { rayThrough } from './aim';
+import { isoCamera, isoQuarterOf, isoRay, isoYawOf, ISO_RAY_MAX, ISO_REACH, stepIsoYaw } from './iso';
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { CHEST_SLOTS } from './chest';
@@ -126,7 +127,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg, atlas8Img, lake8Img] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl), loadImage(titanAtlas8Url), loadImage(orvalis ? orvalisWater8Url : titanLake8Url)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -135,7 +136,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora')) ?? (texScene ? FIXED_HOURS.tarde : null); // a vitrine fica à tarde, para a cor não variar entre testes
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
+  if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view }; // só no dev (como o window.__game do mundo 2.5D): testes de navegador
   if (orvalis) view.setPalette('orvalis');
   view.setSky(forcedHour ?? session.time);
   view.setItems(visibleItems(session));
@@ -577,6 +579,22 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     ae.type = 'button';
     ae.addEventListener('click', () => { autoEdit = !autoEdit; ae.textContent = `Editar sem parar: ${autoEdit ? 'ligado' : 'desligado'}`; });
   }
+  // ---- Vista (ADR 0106): primeira pessoa ou isométrica 2:1 (blocos de 8 × 8 px, câmera em 4 vistas de 90°) ----
+  let iso = false;
+  try { iso = window.localStorage.getItem('orvalis-titan-visao') === 'iso'; } catch { /* sem armazenamento */ }
+  if (q.get('visao') === 'iso') iso = true; else if (q.get('visao') === 'pessoa') iso = false; // atalho de teste
+  let isoQuarter = isoQuarterOf(session.yaw), isoYaw = isoYawOf(isoQuarter), facing = session.yaw;
+  const viewBtn = el('button', 'titan-btn', menu); viewBtn.type = 'button'; menu.prepend(viewBtn); // o primeiro botão do canto superior direito
+  const rotL = el('button', 'titan-btn titan-rot', menu, '⟲'), rotR = el('button', 'titan-btn titan-rot', menu, '⟳');
+  rotL.type = rotR.type = 'button'; rotL.title = 'Girar a câmera (Z)'; rotR.title = 'Girar a câmera (X)';
+  menu.insertBefore(rotL, viewBtn.nextSibling); menu.insertBefore(rotR, rotL.nextSibling);
+  const paintView = (): void => { viewBtn.textContent = `Visão: ${iso ? 'isométrica' : '1ª pessoa'}`; rotL.hidden = rotR.hidden = !iso; document.body.classList.toggle('titan-iso', iso); };
+  paintView();
+  if (iso) view.setViewMode('iso');
+  /** Gira a câmera isométrica um quarto de volta (+1 anti-horário visto de cima, −1 horário); a transição é suave e só nas vistas de 90° o losango é 2:1 exato. */
+  const rotateIso = (dir: 1 | -1): void => { if (iso) isoQuarter += dir; };
+  rotL.addEventListener('click', () => rotateIso(1)); rotR.addEventListener('click', () => rotateIso(-1));
+  viewBtn.addEventListener('click', () => setIso(!iso)); viewBtn.title = 'Alternar a vista (V)';
   const soundBtn = el('button', 'titan-btn', menu); // mudo: lembrado neste aparelho (localStorage pode falhar: o jogo não depende dele)
   soundBtn.type = 'button';
   try { gameAudio.muted = window.localStorage.getItem('orvalis-titan-som') === 'off'; } catch { /* sem armazenamento */ }
@@ -642,7 +660,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   try { if (window.localStorage.getItem('orvalis-titan-mira') === 'central') aimMode = 'central'; } catch { /* sem armazenamento */ }
   const aimBtn = el('button', 'titan-btn', menu);
   aimBtn.type = 'button'; aimBtn.hidden = !coarse;
-  const fingerMode = (): boolean => coarse && aimMode === 'dedo';
+  const fingerMode = (): boolean => iso || (coarse && aimMode === 'dedo'); // na isométrica a ação é sempre no ponto do mouse ou do dedo
   const paintAim = (): void => { aimBtn.textContent = `Mira: ${aimMode === 'dedo' ? 'no dedo' : 'central'}`; document.body.classList.toggle('titan-aim-finger', fingerMode()); };
   paintAim();
   aimBtn.addEventListener('click', () => {
@@ -661,11 +679,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const begin = (): void => {
     playing = true;
     start.hidden = true;
-    if (!coarse) void canvas.requestPointerLock?.();
+    if (!coarse && !iso) void canvas.requestPointerLock?.(); // na isométrica o cursor fica livre (a mira é o ponto do mouse)
   };
   go.addEventListener('click', begin);
-  canvas.addEventListener('click', () => { if (!coarse && !document.pointerLockElement) begin(); });
-  document.addEventListener('pointerlockchange', () => { if (!coarse && !document.pointerLockElement && playing && !bagOpen) { playing = false; start.hidden = false; go.textContent = 'Continuar'; } });
+  canvas.addEventListener('click', () => { if (!coarse && !iso && !document.pointerLockElement) begin(); });
+  document.addEventListener('pointerlockchange', () => { if (!coarse && !iso && !document.pointerLockElement && playing && !bagOpen) { playing = false; start.hidden = false; go.textContent = 'Continuar'; } });
   if (session.relocated) toast('A posição salva estava obstruída: você voltou a um ponto seguro.');
 
   // ---- Entrada ----
@@ -679,6 +697,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (e.code === 'KeyE' && playing) toggleFromMenu();
     if (e.code === 'KeyF' && playing && !bagOpen) openStation();
     if (e.code === 'KeyQ' && playing && !bagOpen) eatSelected();
+    if (iso && playing && !bagOpen) { if (e.code === 'KeyZ') rotateIso(1); else if (e.code === 'KeyX') rotateIso(-1); } // girar a câmera isométrica
+    if (e.code === 'KeyV' && playing && !bagOpen) setIso(!iso); // alternar a vista sem soltar o mouse (V)
     if (e.code === 'Escape' && bagOpen) toggleBag(false);
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
@@ -686,7 +706,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') gesture.cancel(); });
   // mouse capturado: clique primário curto coloca, segurar quebra (ADR 0042); o movimento relativo da mira conta como arrasto; o botão direito não faz nada
   let mouseAcc = 0;
+  let isoDown = { x: 0, y: 0 }; // onde o mouse foi pressionado na isométrica (o arrasto cancela a ação)
+  const mouseNdc = (e: MouseEvent): void => { // o ponto do mouse sobre o canvas em −1…1 (fora do canvas, ou sobre a interface, não há alvo)
+    const r = canvas.getBoundingClientRect();
+    fingerNdc = e.target === canvas ? { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -(((e.clientY - r.top) / r.height) * 2 - 1) } : null;
+  };
   document.addEventListener('mousemove', (e) => {
+    if (iso && !coarse) { mouseNdc(e); if (gesture.activePointer === 'mouse') gesture.drag('mouse', Math.hypot(e.clientX - isoDown.x, e.clientY - isoDown.y)); return; }
     if (!document.pointerLockElement) return;
     look(e.movementX * 0.0022, e.movementY * 0.0022);
     if (gesture.activePointer === 'mouse') { mouseAcc += Math.hypot(e.movementX, e.movementY); gesture.drag('mouse', mouseAcc); }
@@ -694,16 +720,31 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   document.addEventListener('selectstart', (e) => { if ((e.target as HTMLElement | null)?.tagName !== 'INPUT') e.preventDefault(); }); // pressionar e segurar no celular não pode virar seleção de texto (o jogo não tem campos de texto)
   canvas.addEventListener('mousedown', (e) => {
-    if (!document.pointerLockElement || bagOpen || e.button !== 0) return;
+    if ((!document.pointerLockElement && !(iso && !coarse && playing)) || bagOpen || e.button !== 0) return;
+    if (iso) { mouseNdc(e); isoDown = { x: e.clientX, y: e.clientY }; computeAim(); } // o alvo é o que está sob o mouse agora
     mouseAcc = 0;
     gesture.press('mouse', e.timeStamp, toTarget(target)); // o tempo vem do evento (monotônico), não do quadro
   });
   window.addEventListener('mouseup', (e) => { if (e.button === 0) gesture.release('mouse', e.timeStamp, toTarget(target)); });
-  window.addEventListener('wheel', (e) => { if (document.pointerLockElement && !bagOpen && e.deltaY) select(session.selected + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+  window.addEventListener('wheel', (e) => { if ((document.pointerLockElement || (iso && playing)) && !bagOpen && e.deltaY) select(session.selected + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   function look(dx: number, dy: number): void {
+    if (iso) return; // a câmera isométrica só gira em passos de 90° (botões ⟲ ⟳ ou Z/X)
     session.yaw -= dx;
     session.pitch = Math.max(-1.55, Math.min(1.55, session.pitch - dy));
     playerDirty = true;
+  }
+  /** Alterna entre a primeira pessoa e a isométrica 2:1 (botão do menu, ADR 0106): a escolha fica lembrada neste aparelho; o giro da isométrica parte da vista de 90° mais próxima do olhar atual. */
+  function setIso(on: boolean): void {
+    if (on === iso) return;
+    iso = on;
+    try { window.localStorage.setItem('orvalis-titan-visao', iso ? 'iso' : 'pessoa'); } catch { /* sem armazenamento */ }
+    gesture.cancel(); fingerNdc = null; touchRing.hidden = true; keys.clear();
+    if (iso) { // o cursor fica livre; a vista parte do quarto de volta mais perto do olhar de agora
+      if (document.pointerLockElement) document.exitPointerLock();
+      isoQuarter = isoQuarterOf(session.yaw); isoYaw = session.yaw; facing = session.yaw;
+    } else if (playing && !coarse) void canvas.requestPointerLock?.(); // volta ao mouse capturado (o clique no botão é o gesto que o permite)
+    view.setViewMode(iso ? 'iso' : 'fp');
+    paintView(); paintAim(); computeAim();
   }
 
   // toque (paisagem; ainda sem validação em aparelho real — NEXT_STEPS)
@@ -774,12 +815,20 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   /** Recalcula o alvo (bloco, lasca ou animal) e o rótulo: no PC e no tablet sem dedo, o raio do centro da tela; no toque (ADR 0075), o raio que passa pelo dedo, e sem dedo nada. */
   function computeAim(): void {
     const act = playing && !bagOpen, b = session.body, eye = { x: b.x, y: b.y + EYE_HEIGHT, z: b.z };
-    const ray = !act ? null : fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
+    // isométrica (ADR 0106): o raio é paralelo ao olhar da câmera e passa pelo ponto do mouse ou do dedo; começa perto do plano do jogador e só vale a até `ISO_REACH` dos olhos dele
+    let o = eye, reach = 6, creatureReach = ATTACK_REACH;
+    let ray: [number, number, number] | null;
+    if (!act) ray = null;
+    else if (iso) {
+      if (fingerNdc) { const r = isoRay(isoCamera([b.x, b.y + 0.9, b.z], session.yaw, canvas.clientWidth || 2, canvas.clientHeight || 1), fingerNdc.x, fingerNdc.y); o = { x: r.origin[0], y: r.origin[1], z: r.origin[2] }; ray = [r.dir[0], r.dir[1], r.dir[2]]; reach = creatureReach = ISO_RAY_MAX; } else ray = null;
+    } else ray = fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
     if (!ray) { target = null; aimCreature = null; } else {
       const [dx, dy, dz] = ray;
-      target = raycast(vol, eye.x, eye.y, eye.z, dx, dy, dz, 6, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, isBucket(session.inventory.get(session.selected)?.item)); // balde na mão: a mira acerta o líquido (ADR 0091); cheio, é por ele que se olha a cavidade
-      const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5) : Infinity;
-      aimCreature = creatureAim(session.creatures, eye.x, eye.y, eye.z, dx, dy, dz, ATTACK_REACH, blockDist); // animal na mira: mais perto que o bloco apontado (ADR 0069)
+      target = raycast(vol, o.x, o.y, o.z, dx, dy, dz, reach, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, isBucket(session.inventory.get(session.selected)?.item)); // balde na mão: a mira acerta o líquido (ADR 0091); cheio, é por ele que se olha a cavidade
+      if (iso && target && Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5 > ISO_REACH) target = null; // longe demais para alcançar
+      const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - o.x, target.y + 0.5 - o.y, target.z + 0.5 - o.z) - 0.5) : Infinity;
+      aimCreature = creatureAim(session.creatures, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist);
+      if (iso && aimCreature) { const c = session.creatures[aimCreature.index]; if (!c || Math.hypot(c.body.x - b.x, c.body.y - b.y, c.body.z - b.z) > ATTACK_REACH) aimCreature = null; } // animal na mira: mais perto que o bloco apontado (ADR 0069)
     }
     const c = aimCreature ? session.creatures[aimCreature.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : null;
     if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
@@ -951,6 +1000,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     view.setOpenChest(chestOpen ? stationAt : null); // a tampa do baú abre com o painel (ADR 0093)
     const lid = lidSound(lidWasOpen, chestOpen); lidWasOpen = chestOpen; // e range ao abrir e bate ao fechar (ADR 0096)
     if (lid === 'open') gameAudio.playChestOpen(); else if (lid === 'close') gameAudio.playChestClose();
+    if (iso) { isoYaw = stepIsoYaw(isoYaw, isoYawOf(isoQuarter), dt); session.yaw = isoYaw; } // a câmera isométrica gira em passos de 90° e o andar é relativo a ela
     if (active) {
       let fx = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - input.stickY;
       let sx = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) + input.stickX;
@@ -960,6 +1010,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const dirX = -Math.sin(session.yaw) * fx + Math.cos(session.yaw) * sx;
       const dirZ = -Math.cos(session.yaw) * fx - Math.sin(session.yaw) * sx;
       const moved = dirX !== 0 || dirZ !== 0;
+      if (iso && moved) facing = Math.atan2(-dirX, -dirZ); // o boneco olha para onde anda
       const px = b.x, pz = b.z;
       const wasOnGround = b.onGround;
       const sprint = fwdSince > 0 && now - fwdSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // joystick todo à frente por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
@@ -1035,6 +1086,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);
     view.setHandMotion(Math.hypot(b.vx, b.vz), b.onGround, active && gesture.state === 'BREAKING'); // golpe no animal: cada golpe (`strike`) dispara o seu balanço, no ritmo da pausa entre golpes
+    if (iso) view.setAvatar(b.x, b.y, b.z, facing);
     view.render(eye, session.yaw, session.pitch, aimCreature ? null : target, now / 1000);
     veil.style.opacity = String(view.submersion); // 0 fora d'água; entra e sai em ~150 ms
     cross.hidden = !active;

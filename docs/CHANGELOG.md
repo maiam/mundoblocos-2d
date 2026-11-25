@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.172.0 — Titã a 16 px e vista isométrica 2:1 (25/11/2026)
+- **ADR 0106.** O motor do Titã (`?mundo=titan` e `?mundo=orvalis3d`) passa a renderizar o terreno e a água a **16 px por face** (regra do Minecraft); a arte-fonte pode ser maior e é reduzida ao montar o atlas (`titan-atlas-16px.webp`, 160 × 160; água `titan-lago-16px` e `orvalis-agua-16px`). Os atlas de 32 px de terreno e água saíram; o de itens segue 32 px. Testes de UV valem para 16 e 8 px.
+- **Botão de vista** no canto superior direito do menu: **Visão: 1ª pessoa / isométrica** (tecla **V**; lembrado no aparelho; `?visao=iso`). **Isométrica 2:1:** câmera ortográfica a 30° (topo do bloco 16 × 8 px, 8 × 8 texels por face, atlas de 8 px), buffer de 1 pixel por pixel CSS ampliado sem suavização, câmera presa à grade de pixels; **4 vistas de 90°** (botões ⟲ ⟳, teclas Z/X, transição suave); andar relativo à câmera; mira e ação no ponto do mouse ou do dedo (quebrar segurando, colocar com toque curto; alcance de 6 blocos); **boneco provisório** com **silhueta azul atrás do terreno**; sem céu, sol, névoa, mergulho nem mão.
+- **Código:** `titan/iso.ts` (câmera e raios puros, `iso.test.ts`), `TitanRenderer` (`setViewMode`, `setAvatar`, `screenOf`), `titanGame.ts`, `tiles.json` (`tile` 16, `iso.tile` 8), `window.__titan` no dev. Sem mudança de gerador, save nem protocolo.
+
 ## Orvalis v0.171.2 — Nova textura de pedra no Orvalis em voxel (25/11/2026)
 - A pedra foi trocada pela nova versão do Drive (`orvalis/Texturas32px/pedra.png`: cinza em pixel art, 2048 px; mesma limpeza da marca d'água e fonte guardada a 256 px). Vale para o bloco Pedra (topo e lateral) e para o ícone isométrico (regerado). Atlas de terreno e de itens regravados.
 - Limite conhecido: a grade da arte tem ~36 × 36 pixels (57 px por pixel de arte), que não encaixa em 32 × 32; a redução por média mistura as bordas e a pedra fica levemente suave. Para ficar nítida, a arte ideal tem grade de 32 × 32 (ou 16 × 16 ou 64 × 64) pixels.
