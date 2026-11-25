@@ -1,7 +1,11 @@
 {
- "tile": 32,
+ "tile": 16,
  "pad": 2,
  "cols": 8,
+ "iso": {
+  "tile": 8,
+  "pad": 1
+ },
  "tiles": [
   "01-areia-ocre/topo",
   "01-areia-ocre/lateral",

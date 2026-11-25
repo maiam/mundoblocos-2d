@@ -1,11 +1,14 @@
-import atlas from '../../assets/titan-atlas-32px.webp';
+import atlas from '../../assets/titan-atlas-16px.webp';
+import atlas8 from '../../assets/titan-atlas-8px.webp';
 
 /**
- * Arte do Titã (ADR 0010/0039): o atlas de terreno da Margem Silenciosa (80 × 40 px, 4 × 2 tiles de 16 px com 2 px de borda duplicada).
+ * Arte do Titã (ADR 0010/0039): o atlas de terreno dos mundos voxel em **16 px por face** (ADR 0106; 160 × 160 px, 8 colunas com 2 px de borda duplicada), regra do Minecraft; a arte-fonte pode ser maior (`scripts/make-titan-atlas32.py`).
+ * A vista isométrica usa a variante de **8 px** (`titanAtlas8Url`, 80 × 80, mesma proporção de borda: os mesmos UVs).
  * Fica em WebP **sem perdas** (pixel art; `optimize-assets.py` só converte PNG, então este arquivo não passa pela compressão com perdas).
  * Só o Titã importa esta imagem; o mapa de tiles está em `titan/voxel.ts` (`tileFor`) e `titan/mesher.ts` (`tileUV`).
  */
 export const titanAtlasUrl: string = atlas;
+export const titanAtlas8Url: string = atlas8;
 
 import hotbar from '../../assets/titan-itens-32px.webp';
 /**
@@ -35,7 +38,8 @@ import workbenchAtlas from '../../assets/titan-workbench-atlas.webp';
 import workbenchModel from '../../assets/titan-workbench.json';
 import reedSprite from '../../assets/titan-junco-variantes-32px.webp';
 import cultivoSprite from '../../assets/titan-cultivo-32px.webp';
-import lakeAtlas from '../../assets/titan-lago-32px.webp';
+import lakeAtlas from '../../assets/titan-lago-16px.webp';
+import lakeAtlas8 from '../../assets/titan-lago-8px.webp';
 import marcoModel from '../../assets/titan-marco.json';
 import escadaModel from '../../assets/titan-escada.json';
 import camaModel from '../../assets/titan-cama.json';
@@ -60,9 +64,11 @@ import farejadorModel from '../../assets/titan-farejador.json';
 import farejadorRigUrl from '../../assets/titan-farejador-rig.glb?url';
 import farejadorAtlas from '../../assets/titan-farejador-atlas.webp';
 import hudAtlas from '../../assets/titan-hud-32px.webp';
-import orvalisWater from '../../assets/orvalis-agua-32px.webp';
-/** Água do Orvalis em voxel (ADR 0105): o mesmo formato do Lago Escuro (4 células de 32 px), feita dos Materiais V2 por `scripts/make-orvalis-voxel-arte.py`. */
+import orvalisWater from '../../assets/orvalis-agua-16px.webp';
+import orvalisWater8 from '../../assets/orvalis-agua-8px.webp';
+/** Água do Orvalis em voxel (ADR 0105): o mesmo formato do Lago Escuro (4 células de 16 px; 8 px na isométrica), feita dos Materiais V2 por `scripts/make-orvalis-voxel-arte.py`. */
 export const orvalisWaterUrl: string = orvalisWater;
+export const orvalisWater8Url: string = orvalisWater8;
 /**
  * Mesa de Trabalho em 3D (ADR 0045; pacote em `assets-src/titan/fabricacao`, convertido por `scripts/extract-titan-workbench.py`): atlas 60 × 40 (WebP sem perdas) e a geometria
  * (8 cuboides, 96 triângulos, 1 × 1 × 1, pivô no centro da base). E o **junco de vidro** (16 × 16 RGBA, decoração em faixas cruzadas com balanço, sem colisão).
@@ -83,6 +89,7 @@ import basalt from '../../assets/titan-basalt-32px.webp';
 export const titanBasaltUrl: string = basalt;
 /** Lago Escuro V2 (ADR 0057): atlas de 128 × 32 px (topo 1, topo 2, lateral exposta e a mesma lateral), células de 32 × 32 px; filtro Nearest, sem mipmaps. */
 export const titanLakeUrl: string = lakeAtlas;
+export const titanLake8Url: string = lakeAtlas8;
 /**
  * Marco de Margem (148 triângulos) e Painel de Junco (832), ADR 0058: geometria única por modelo (`scripts/extract-titan-margem.py`, UV com origem no canto superior esquerdo como no glTF) e o atlas
  * compartilhado de 144 × 72 px (basalto e junco). Pivô no centro da base; o Painel corre ao longo de X.

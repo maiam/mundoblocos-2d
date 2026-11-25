@@ -33,6 +33,10 @@
 - Um mundo voxel novo **não copia o motor**: implementa `TerrainGen` (`titan/terrain.ts`), ganha um valor em `VoxelWorld`, o próprio banco (`save.ts`), paleta de céu e arte de água, e entra por `startTitan(…, world)`. Conteúdo próprio do Titã (lascas, juncos, nozes, toca, brasa) fica **vazio** no gerador que não o tem; nada de `if (mundo === …)` no motor.
 - Bloco novo: id em `T` (suba `T_MAX`), nome em `BLOCK_NAMES`, tiles no **fim** de `tiles.json` + `BLOCK_TILES`, item em `Item`/`blockOfItem`/`itemOfBlock`, tempo em `breaking.ts`, som em `sounds.ts`; ícone → `make-titan-arte32.py`. Mudou qualquer regra de um gerador → suba a versão **dele** (`GENERATOR_VERSION` ou `ORVALIS_GENERATOR_VERSION`).
 
+## Titã: 16 px e isométrica (ADR 0106)
+- **O mundo voxel é renderizado a 16 px por face**; a arte-fonte pode ser maior (reduzida pelo script do atlas). Arte nova de terreno entra no atlas de 16 px **e** no de 8 px (o script gera os dois); nunca importe uma textura de mundo direto no renderer.
+- **Vista isométrica 2:1:** só `titan/iso.ts` define a câmera (30°, 4 vistas de 90°, `ISO_PX_PER_BLOCK`); renderer e jogo a usam igual. Na isométrica não há *pointer lock*, a ação é no ponto do mouse/dedo (`fingerMode()`), `look()` não gira e `session.yaw` é o giro da câmera. Elemento novo da cena que só existe em uma vista decide por `mode` no renderer, nunca por `if (mundo === …)`.
+
 ## Jogo
 - Regra de ação do jogador por célula no `ActionController` (`canUseAt/canBreakAt/applyUse`), delegando ao `World`; a
   origem do alvo (cursor ou frente da personagem) só escolhe a célula. Não duplicar regra por entrada.

@@ -279,3 +279,7 @@ body.titan input { user-select: text; -webkit-user-select: text; }
 
 /* cena de texturas (`?cena=texturas`, só no dev): legenda dos blocos da vitrine */
 .titan-texnames { position: fixed; left: 8px; top: 96px; max-width: min(46vw, 420px); padding: 4px 6px; font: 11px/1.35 ui-monospace, monospace; color: #fff; background: rgba(0, 0, 0, .55); white-space: pre-wrap; pointer-events: none; user-select: none; z-index: 5; }
+
+/* vista isométrica (ADR 0106): sem cruzeta central; botões de girar a câmera ao lado do botão de vista */
+body.titan-iso .titan-cross { display: none; }
+.titan-rot { min-width: 40px; font-size: 18px; line-height: 1; }

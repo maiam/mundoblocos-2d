@@ -16,7 +16,7 @@ export interface SectionMesh { opaque: MeshData | null; liquid: MeshData | null 
 
 import tilesCfg from './tiles.json';
 
-/** Atlas de terreno de 32 px por face (ADR 0079): `COLS` colunas, tile de `TILE` px com `PAD` px de borda duplicada, ordem dos tiles em `tiles.json`. */
+/** Atlas de terreno de 16 px por face (ADR 0106; era 32 px, ADR 0079; a variante de 8 px da isométrica tem as mesmas proporções): `COLS` colunas, tile de `TILE` px com `PAD` px de borda duplicada, ordem dos tiles em `tiles.json`. */
 const TILE = tilesCfg.tile, PAD = tilesCfg.pad, COLS = tilesCfg.cols, PITCH = TILE + 2 * PAD;
 const ATLAS_W = COLS * PITCH, ATLAS_H = Math.ceil(tilesCfg.tiles.length / COLS) * PITCH;
 /** UV (u0, v0, u1, v1) de um tile do atlas; v do WebGL cresce para cima (textura com flipY). */
