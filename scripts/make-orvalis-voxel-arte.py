@@ -2,7 +2,7 @@
 
 Entradas : assets-src/materiais/<material>/top.png e front.png (128 × 128, seamless).
 Saídas   : assets-src/orvalis-voxel/texturas32/orvalis/<tile>.png   32 × 32 (os nomes são os de `src/titan/tiles.json` com o prefixo `orvalis/`; o atlas é montado por make-titan-atlas32.py)
-           assets-src/orvalis-voxel/icones32/<bloco>.png            32 × 32, bloco em vista 3/4 (lidos por make-titan-arte32.py: itens 42–51)
+           assets-src/orvalis-voxel/icones32/<bloco>.png            32 × 32, bloco em vista isométrica (2:1; luz 100/80/60 %) (lidos por make-titan-arte32.py: itens 42–51)
            src/assets/orvalis-agua-32px.webp                        128 × 32 (4 células: topo quadro 1, topo quadro 2, lateral, lateral; o mesmo formato do Lago Escuro do Titã)
 **Os PNGs de `texturas32/` e `agua/` são a fonte editável (32 px ou maiores, quadrados — 64, 512, 2048…: a redução para 32 px é feita aqui e no atlas, sem alterar o arquivo):** o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2) e **nunca sobrescreve** uma textura que você editou; ícones e água do jogo são sempre refeitos a partir deles.
 As folhas são PROVISÓRIAS (sorteio determinístico de 3 verdes/rosas): ainda não há arte de folhas nos Materiais V2. Repetível. Uso: python3 scripts/make-orvalis-voxel-arte.py [--force]  (precisa do Pillow: `pip3 install pillow`)
@@ -61,12 +61,30 @@ def shade(im: Image.Image, k: float) -> Image.Image:
     return out
 
 
+def _face(tile: Image.Image, origin: tuple, u_vec: tuple, v_vec: tuple, size: int) -> Image.Image:
+    """Projeta o tile (quadrado) no paralelogramo `origin + u·u_vec + v·v_vec` de uma tela `size × size` (fora do paralelogramo fica transparente)."""
+    (ux, uy), (vx, vy) = u_vec, v_vec
+    det = ux * vy - vx * uy
+    # inverso de [[ux, vx], [uy, vy]]: (x, y) − origem → (u, v); o PIL pede o mapa saída → entrada, em pixels do tile
+    a, b = vy / det, -vx / det
+    c, d = -uy / det, ux / det
+    w, h = tile.size
+    ox, oy = origin
+    coef = (a * w, b * w, -(a * ox + b * oy) * w, c * h, d * h, -(c * ox + d * oy) * h)
+    return tile.transform((size, size), Image.AFFINE, coef, Image.NEAREST)
+
+
 def cube_icon(top: Image.Image, side: Image.Image) -> Image.Image:
-    """Bloco em vista 3/4 de 32 × 32: tampa achatada em cima e a frente (um pouco mais escura) embaixo."""
-    ic = Image.new('RGBA', (32, 32), (0, 0, 0, 0))
-    ic.alpha_composite(top.resize((26, 10), Image.BOX), (3, 5))
-    ic.alpha_composite(shade(side, 0.82).resize((26, 16), Image.BOX), (3, 15))
-    return ic
+    """Bloco **isométrico** (2:1) de 32 × 32: losango do topo e duas laterais, com a luz fixa dos ícones de bloco do projeto (100 % topo, 80 % esquerda, 60 % direita). Desenhado a 4× e reduzido por média."""
+    k = 4
+    n = 32 * k
+    t = (16 * k, 2 * k); r = (30 * k, 9 * k); b = (16 * k, 16 * k); l = (2 * k, 9 * k); drop = (0, 14 * k)
+    big = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    src_top, src_side = top.resize((n, n), Image.NEAREST), side.resize((n, n), Image.NEAREST)
+    big.alpha_composite(_face(shade(src_side, 0.80), l, (b[0] - l[0], b[1] - l[1]), drop, n))  # lateral esquerda
+    big.alpha_composite(_face(shade(src_side, 0.60), b, (r[0] - b[0], r[1] - b[1]), drop, n))  # lateral direita
+    big.alpha_composite(_face(src_top, t, (r[0] - t[0], r[1] - t[1]), (l[0] - t[0], l[1] - t[1]), n))  # topo
+    return big.resize((32, 32), Image.BOX)
 
 
 def main() -> None:

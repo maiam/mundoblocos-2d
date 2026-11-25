@@ -1,5 +1,14 @@
 # Changelog
 
+## Orvalis v0.171.1 — Ícones de bloco do Orvalis em vista isométrica (25/11/2026)
+- Os 10 ícones de bloco da hotbar (itens 42–51) eram desenhados como tampa achatada + frente (parecia vista de cima). `make-orvalis-voxel-arte.py` agora monta um **cubo isométrico 2:1** de 32 × 32 a partir dos tiles (projeção afim a 4× e redução por média), com a luz fixa dos ícones do projeto: 100 % topo, 80 % lateral esquerda, 60 % direita. Os ícones seguem **derivados**: trocou a textura, `npm run texturas` refaz o ícone. Só arte (atlas de itens); sem mudança de código, gerador, save nem protocolo.
+
+## Orvalis v0.171.0 — Texturas escolhidas pelo dono do produto no Orvalis em voxel (25/11/2026)
+- **Importadas do Drive (`orvalis/Texturas32px`):** grama, terra com grama no topo (lateral da grama), terra, pedra (topo e lateral iguais), tora de bétula (topo e lateral). Originais de 2048 px (grama: 1024 px) com a **marca d'água do gerador removida** (trecho vizinho copiado por cima) e guardados a **256 px** (média 8×; a 32 px o resultado é idêntico ao dos 2048); `npm run texturas` regravou o atlas e os ícones. Conferido no jogo (`?cena=texturas` e a paisagem da seed 42).
+- **Extras guardados, sem bloco ainda:** `terra-arada`, `terra-infertil`, `terra-caminho` em `assets-src/orvalis-voxel/extras/` (cultivo e trilha são fatias futuras).
+- **Seguem dos Materiais V2 / provisórias:** areia da praia, toras e folhas de carvalho e de cerejeira, folhas de bétula. `assets-src/orvalis-voxel/README.md` registra a origem de cada arquivo.
+- Sem mudança de código, gerador, save nem protocolo.
+
 ## Orvalis v0.170.2 — Texturas do Orvalis em alta resolução (24/11/2026)
 - `npm run texturas` falhava com `AssertionError: ('orvalis/terra', (2048, 2048))` quando o PNG de textura tinha mais de 32 px. Agora a arte do Orvalis (`assets-src/orvalis-voxel/texturas32/orvalis/` e `agua/agua_32px.png`) pode ter qualquer tamanho quadrado (64, 512, 2048…; a lateral da laje, largura × metade): `make-titan-atlas32.py` e `make-orvalis-voxel-arte.py` reduzem para 32 px (média por área, `BOX`) sem alterar o arquivo de origem. Testado com um PNG de 2048 × 2048 de duas cores: o tile do atlas sai com as duas metades corretas. As texturas do Titã seguem exigindo 32 px exatos.
 
