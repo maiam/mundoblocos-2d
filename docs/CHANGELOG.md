@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.171.2 — Nova textura de pedra no Orvalis em voxel (25/11/2026)
+- A pedra foi trocada pela nova versão do Drive (`orvalis/Texturas32px/pedra.png`: cinza em pixel art, 2048 px; mesma limpeza da marca d'água e fonte guardada a 256 px). Vale para o bloco Pedra (topo e lateral) e para o ícone isométrico (regerado). Atlas de terreno e de itens regravados.
+- Limite conhecido: a grade da arte tem ~36 × 36 pixels (57 px por pixel de arte), que não encaixa em 32 × 32; a redução por média mistura as bordas e a pedra fica levemente suave. Para ficar nítida, a arte ideal tem grade de 32 × 32 (ou 16 × 16 ou 64 × 64) pixels.
+
 ## Orvalis v0.171.1 — Ícones de bloco do Orvalis em vista isométrica (25/11/2026)
 - Os 10 ícones de bloco da hotbar (itens 42–51) eram desenhados como tampa achatada + frente (parecia vista de cima). `make-orvalis-voxel-arte.py` agora monta um **cubo isométrico 2:1** de 32 × 32 a partir dos tiles (projeção afim a 4× e redução por média), com a luz fixa dos ícones do projeto: 100 % topo, 80 % lateral esquerda, 60 % direita. Os ícones seguem **derivados**: trocou a textura, `npm run texturas` refaz o ícone. Só arte (atlas de itens); sem mudança de código, gerador, save nem protocolo.
 
