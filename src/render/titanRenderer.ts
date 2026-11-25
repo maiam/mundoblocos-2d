@@ -138,7 +138,7 @@ export class TitanRenderer {
     tex.needsUpdate = true;
     this.opaqueMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true });
     patchDayLight(this.opaqueMat, this.ambient);
-    // o líquido tem atlas próprio de 32 px (Lago Escuro V2, ADR 0057: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
+    // o líquido tem atlas próprio de 16 px (Lago Escuro V2, ADR 0057, reduzido na ADR 0106: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
     this.liquidTex = new THREE.Texture(extra.lake);
     this.liquidTex.colorSpace = THREE.SRGBColorSpace;
     this.liquidTex.magFilter = THREE.NearestFilter;

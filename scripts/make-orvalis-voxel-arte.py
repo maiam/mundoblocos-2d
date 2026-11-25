@@ -3,7 +3,7 @@
 Entradas : assets-src/materiais/<material>/top.png e front.png (128 × 128, seamless).
 Saídas   : assets-src/orvalis-voxel/texturas32/orvalis/<tile>.png   32 × 32 (os nomes são os de `src/titan/tiles.json` com o prefixo `orvalis/`; o atlas é montado por make-titan-atlas32.py)
            assets-src/orvalis-voxel/icones32/<bloco>.png            32 × 32, bloco em vista isométrica (2:1; luz 100/80/60 %) (lidos por make-titan-arte32.py: itens 42–51)
-           src/assets/orvalis-agua-32px.webp                        128 × 32 (4 células: topo quadro 1, topo quadro 2, lateral, lateral; o mesmo formato do Lago Escuro do Titã)
+           src/assets/orvalis-agua-16px.webp / -8px.webp             64 × 16 e 32 × 8 (4 células: topo quadro 1, topo quadro 2, lateral, lateral; o mesmo formato do Lago Escuro do Titã)
 **Os PNGs de `texturas32/` e `agua/` são a fonte editável (32 px ou maiores, quadrados — 64, 512, 2048…: a redução para 32 px é feita aqui e no atlas, sem alterar o arquivo):** o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2) e **nunca sobrescreve** uma textura que você editou; ícones e água do jogo são sempre refeitos a partir deles.
 As folhas são PROVISÓRIAS (sorteio determinístico de 3 verdes/rosas): ainda não há arte de folhas nos Materiais V2. Repetível. Uso: python3 scripts/make-orvalis-voxel-arte.py [--force]  (precisa do Pillow: `pip3 install pillow`)
 """
@@ -17,7 +17,7 @@ MAT = 'assets-src/materiais/'
 TEX = 'assets-src/orvalis-voxel/texturas32/orvalis/'
 ICO = 'assets-src/orvalis-voxel/icones32/'
 WATER_SRC = 'assets-src/orvalis-voxel/agua/agua_32px.png'  # 1º quadro do topo da água (32 × 32, seamless); editável
-WATER_OUT = 'src/assets/orvalis-agua-32px.webp'
+WATER_OUT = {16: 'src/assets/orvalis-agua-16px.webp', 8: 'src/assets/orvalis-agua-8px.webp'}  # 16 px (padrão) e 8 px (isométrica), ADR 0106
 
 
 def load(path: str) -> Image.Image:
@@ -132,11 +132,13 @@ def main() -> None:
         for x in range(32):
             w2.putpixel(((x + 11) % 32, (y + 7) % 32), w1.getpixel((x, y)))
     lat = shade(w1, 0.9)
-    sheet = Image.new('RGBA', (128, 32))
-    for i, c in enumerate((w1, w2, lat, lat)):
-        sheet.paste(c, (i * 32, 0))
-    sheet.save(WATER_OUT, 'WEBP', lossless=True, method=6)
-    print(f'tiles: {made} criados de {len(tiles)} (os outros já existiam e foram mantidos) · ícones {len(icons)} · {WATER_OUT}')
+    for px, out in WATER_OUT.items():  # 4 células por tamanho (topo 1, topo 2, lateral, lateral), reduzidas por média
+        sheet = Image.new('RGBA', (4 * px, px))
+        for i, c in enumerate((w1, w2, lat, lat)):
+            sheet.paste(c.resize((px, px), Image.BOX), (i * px, 0))
+        sheet.save(out, 'WEBP', lossless=True, method=6)
+    water = ', '.join(WATER_OUT.values())
+    print(f'tiles: {made} criados de {len(tiles)} (os outros já existiam e foram mantidos) · ícones {len(icons)} · {water}')
 
 
 if __name__ == '__main__':
