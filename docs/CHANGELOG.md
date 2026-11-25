@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.171.1 — Ícones de bloco do Orvalis em vista isométrica (25/11/2026)
+- Os 10 ícones de bloco da hotbar (itens 42–51) eram desenhados como tampa achatada + frente (parecia vista de cima). `make-orvalis-voxel-arte.py` agora monta um **cubo isométrico 2:1** de 32 × 32 a partir dos tiles (projeção afim a 4× e redução por média), com a luz fixa dos ícones do projeto: 100 % topo, 80 % lateral esquerda, 60 % direita. Os ícones seguem **derivados**: trocou a textura, `npm run texturas` refaz o ícone. Só arte (atlas de itens); sem mudança de código, gerador, save nem protocolo.
+
 ## Orvalis v0.171.0 — Texturas escolhidas pelo dono do produto no Orvalis em voxel (25/11/2026)
 - **Importadas do Drive (`orvalis/Texturas32px`):** grama, terra com grama no topo (lateral da grama), terra, pedra (topo e lateral iguais), tora de bétula (topo e lateral). Originais de 2048 px (grama: 1024 px) com a **marca d'água do gerador removida** (trecho vizinho copiado por cima) e guardados a **256 px** (média 8×; a 32 px o resultado é idêntico ao dos 2048); `npm run texturas` regravou o atlas e os ícones. Conferido no jogo (`?cena=texturas` e a paisagem da seed 42).
 - **Extras guardados, sem bloco ainda:** `terra-arada`, `terra-infertil`, `terra-caminho` em `assets-src/orvalis-voxel/extras/` (cultivo e trilha são fatias futuras).
