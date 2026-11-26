@@ -44,7 +44,7 @@ describe('madeira básica (ADR 0107)', () => {
     expect(blockOfItem(Item.MESA_CARPINTARIA)).toBe(T.CARPENTRY);
     for (let t = 0; t < 4; t++) { expect(itemOfBlock(carpentryId(t))).toBe(Item.MESA_CARPINTARIA); expect(isCarpentry(carpentryId(t))).toBe(true); expect(carpentryTurn(carpentryId(t))).toBe(t); }
     expect(blockOfItem(Item.HASTE)).toBeNull(); expect(ITEM_NAMES[Item.HASTE]).toBe('Haste de Madeira');
-    expect(isItem(Item.MESA_CARPINTARIA)).toBe(true); expect(isItem(60)).toBe(false);
+    expect(isItem(Item.MESA_CARPINTARIA)).toBe(true); expect(isItem(61)).toBe(false);
   });
 
   it('a Mesa de Carpintaria é bancada como a Mesa de Trabalho, mas só a do Titã é modelo 3D', () => {

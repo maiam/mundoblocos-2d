@@ -211,7 +211,7 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), cadeira: new Map(), porta: new Map() };
+  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map() };
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
   modelCells(kind: ModelKindName): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }

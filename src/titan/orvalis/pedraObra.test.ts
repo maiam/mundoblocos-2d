@@ -9,7 +9,7 @@ import { MemoryTitanStorage } from '../save';
 import { openSession } from '../session';
 import { resolveSlabPlacement } from '../slabs';
 import { surfaceOf } from '../sounds';
-import { blockSpan, isFull, isSlab, isSlabBottom, isSolid, slabPartner, T, tileFor } from '../voxel';
+import { blockBoxes, blockSpan, isFull, isSlab, isSlabBottom, isSolid, isStair, isStoneStair, modelOf, slabPartner, stairId, stairTurn, T, tileFor } from '../voxel';
 import { ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './generator';
 
 /** Pedra de obra do Orvalis em voxel (ADR 0108): Pedra Lisa, Tijolo de Pedra e Laje de Pedra (que funde na Pedra Lisa). */
@@ -36,7 +36,7 @@ describe('pedra de obra (ADR 0108)', () => {
     expect(blockOfItem(Item.TIJOLO_PEDRA)).toBe(T.STONE_BRICK); expect(itemOfBlock(T.STONE_BRICK)).toBe(Item.TIJOLO_PEDRA);
     expect(blockOfItem(Item.LAJE_PEDRA)).toBe(T.STONE_SLAB); expect(itemOfBlock(T.STONE_SLAB)).toBe(Item.LAJE_PEDRA); expect(itemOfBlock(T.STONE_SLAB_TOP)).toBe(Item.LAJE_PEDRA);
     for (const [i, n] of [[Item.PEDRA_LISA, 'Pedra Lisa'], [Item.TIJOLO_PEDRA, 'Tijolo de Pedra'], [Item.LAJE_PEDRA, 'Laje de Pedra']] as const) { expect(isItem(i)).toBe(true); expect(ITEM_NAMES[i]).toBe(n); }
-    expect(isItem(60)).toBe(false);
+    expect(isItem(61)).toBe(false);
     expect(isFull(T.STONE_SMOOTH) && isFull(T.STONE_BRICK)).toBe(true);
     expect(isSlab(T.STONE_SLAB) && isSlab(T.STONE_SLAB_TOP) && !isFull(T.STONE_SLAB)).toBe(true);
     expect(blockSpan(T.STONE_SLAB)).toEqual([0, 0.5]); expect(blockSpan(T.STONE_SLAB_TOP)).toEqual([0.5, 1]);
@@ -73,5 +73,41 @@ describe('pedra de obra (ADR 0108)', () => {
     expect(new Set([tileFor(T.STONE, 'top'), tileFor(T.STONE_SMOOTH, 'top'), tileFor(T.STONE_BRICK, 'top'), tileFor(T.STONE_SLAB, 'top')]).size).toBe(4);
     expect(tileFor(T.STONE_SLAB, 'side')).not.toBe(tileFor(T.STONE_SLAB, 'top'));
     expect(tileFor(T.STONE_SLAB_TOP, 'side')).toBe(tileFor(T.STONE_SLAB, 'side'));
+  });
+});
+
+describe('degrau de pedra (ADR 0109)', () => {
+  it('ids 111–114 com o giro no id, item 60, mesmas caixas do degrau de junco, modelo próprio, sólido que não é cubo', () => {
+    expect(T.STONE_STAIR).toBe(111); expect(T.STONE_STAIR_270).toBe(114);
+    for (let t = 0; t < 4; t++) {
+      const id = stairId(t, true);
+      expect(id).toBe(T.STONE_STAIR + t); expect(isStoneStair(id) && isStair(id) && stairTurn(id) === t).toBe(true);
+      expect(modelOf(id)).toEqual({ kind: 'degrauPedra', turn: t });
+      expect(blockBoxes(id)).toEqual(blockBoxes(stairId(t))); // a forma e a física são as do degrau de junco
+      expect(isSolid(id) && !isFull(id)).toBe(true);
+      expect(itemOfBlock(id)).toBe(Item.DEGRAU_PEDRA);
+      expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(1000);
+    }
+    expect(modelOf(T.REED_STAIR)).toEqual({ kind: 'degrau', turn: 0 }); // o de junco segue com o modelo dele
+    expect(blockOfItem(Item.DEGRAU_PEDRA)).toBe(T.STONE_STAIR); expect(ITEM_NAMES[Item.DEGRAU_PEDRA]).toBe('Degrau de Pedra');
+    expect(isItem(Item.DEGRAU_PEDRA) && !isItem(61)).toBe(true);
+  });
+
+  it('receita: 3 Pedra Lisa → 4 Degraus (na mesa, só no Orvalis); colocar gira para o jogador e quebrar devolve 1', async () => {
+    const s = await open();
+    s.inventory.add(Item.PEDRA_LISA, 3);
+    expect(craft(s.inventory, recipeById('degrau-pedra')!, null)).toEqual({ ok: false, reason: 'station' });
+    expect(craft(s.inventory, recipeById('degrau-pedra')!, 'workbench').ok).toBe(true);
+    expect(s.inventory.total(Item.DEGRAU_PEDRA)).toBe(4); expect(s.inventory.total(Item.PEDRA_LISA)).toBe(0);
+    expect(recipeById('degrau-pedra')!.world).toBe('orvalis');
+    const a = s.volume.gen.arrival, cx = Math.floor(a.x) + 2, cz = Math.floor(a.z);
+    s.yaw = 0;
+    expect(placeFromSlot(s, { x: cx, y: a.y - 1, z: cz, nx: 0, ny: 1, nz: 0 }, slotOf(s, Item.DEGRAU_PEDRA)).ok).toBe(true);
+    const placed = s.volume.get(cx, a.y, cz);
+    expect(isStoneStair(placed)).toBe(true); expect(s.inventory.total(Item.DEGRAU_PEDRA)).toBe(3);
+    expect(s.volume.modelCells('degrauPedra').length).toBe(1);
+    expect(breakOrCollect(s, { x: cx, y: a.y, z: cz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    sweep(s); expect(s.inventory.total(Item.DEGRAU_PEDRA)).toBe(4);
+    expect(s.volume.modelCells('degrauPedra').length).toBe(0);
   });
 });

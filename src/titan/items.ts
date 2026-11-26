@@ -4,7 +4,7 @@ import { BLOCK_NAMES, isCarpentry, isMarco, isPanel, isWorkbench, T } from './vo
  * Itens do Titã (ADR 0040). O id é o índice do sprite no atlas da hotbar + 1 (`render/art/titan.ts`): a ordem do atlas não depende da ordem dos espaços da barra.
  * Os quatro primeiros coincidem com os ids de bloco `T.SAND … T.FROST`.
  */
-export const Item = { SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, ROCK_SHARD: 5, FROST_SHARD: 6, CAPSULE: 7, LANTERN: 8, WORKBENCH: 9, ICE_LENS: 10, EMBER: 11, GLASS_REED: 12, SLAB: 13, MARCO: 14, PAINEL: 15, NOZ: 16, COPPER_SHARD: 17, COPPER_INGOT: 18, DRY_REED: 19, STONE_PICK: 20, BRAZIER: 21, STONE_DAGGER: 22, COPPER_PICK: 23, COPPER_DAGGER: 24, PLATE: 25, CARAPACE: 26, RAW_MEAT: 27, COOKED_MEAT: 28, EMBER_BLOCK: 29, NOZ_TORRADA: 30, ESTEIRA: 31, ESCADA: 32, BAU: 33, CAMA: 34, BALDE: 35, BALDE_CHEIO: 36, BLOCO_JUNCO: 37, LAJE_JUNCO: 38, DEGRAU_JUNCO: 39, CADEIRA_JUNCO: 40, PORTA_JUNCO: 41, GRASS: 42, DIRT: 43, STONE: 44, BEACH: 45, LOG_OAK: 46, LEAVES_OAK: 47, LOG_CHERRY: 48, LEAVES_CHERRY: 49, LOG_BIRCH: 50, LEAVES_BIRCH: 51, TABUA_CARVALHO: 52, TABUA_CEREJEIRA: 53, TABUA_BETULA: 54, HASTE: 55, MESA_CARPINTARIA: 56, PEDRA_LISA: 57, TIJOLO_PEDRA: 58, LAJE_PEDRA: 59 } as const;
+export const Item = { SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, ROCK_SHARD: 5, FROST_SHARD: 6, CAPSULE: 7, LANTERN: 8, WORKBENCH: 9, ICE_LENS: 10, EMBER: 11, GLASS_REED: 12, SLAB: 13, MARCO: 14, PAINEL: 15, NOZ: 16, COPPER_SHARD: 17, COPPER_INGOT: 18, DRY_REED: 19, STONE_PICK: 20, BRAZIER: 21, STONE_DAGGER: 22, COPPER_PICK: 23, COPPER_DAGGER: 24, PLATE: 25, CARAPACE: 26, RAW_MEAT: 27, COOKED_MEAT: 28, EMBER_BLOCK: 29, NOZ_TORRADA: 30, ESTEIRA: 31, ESCADA: 32, BAU: 33, CAMA: 34, BALDE: 35, BALDE_CHEIO: 36, BLOCO_JUNCO: 37, LAJE_JUNCO: 38, DEGRAU_JUNCO: 39, CADEIRA_JUNCO: 40, PORTA_JUNCO: 41, GRASS: 42, DIRT: 43, STONE: 44, BEACH: 45, LOG_OAK: 46, LEAVES_OAK: 47, LOG_CHERRY: 48, LEAVES_CHERRY: 49, LOG_BIRCH: 50, LEAVES_BIRCH: 51, TABUA_CARVALHO: 52, TABUA_CEREJEIRA: 53, TABUA_BETULA: 54, HASTE: 55, MESA_CARPINTARIA: 56, PEDRA_LISA: 57, TIJOLO_PEDRA: 58, LAJE_PEDRA: 59, DEGRAU_PEDRA: 60 } as const;
 export type ItemId = (typeof Item)[keyof typeof Item];
 
 export const ITEM_NAMES: Record<number, string> = {
@@ -15,10 +15,11 @@ export const ITEM_NAMES: Record<number, string> = {
 export const ORVALIS_ITEM_BLOCKS: Readonly<Record<number, number>> = { [Item.GRASS]: T.GRASS, [Item.DIRT]: T.DIRT, [Item.STONE]: T.STONE, [Item.BEACH]: T.BEACH, [Item.LOG_OAK]: T.LOG_OAK, [Item.LEAVES_OAK]: T.LEAVES_OAK, [Item.LOG_CHERRY]: T.LOG_CHERRY, [Item.LEAVES_CHERRY]: T.LEAVES_CHERRY, [Item.LOG_BIRCH]: T.LOG_BIRCH, [Item.LEAVES_BIRCH]: T.LEAVES_BIRCH, [Item.TABUA_CARVALHO]: T.PLANKS_OAK, [Item.TABUA_CEREJEIRA]: T.PLANKS_CHERRY, [Item.TABUA_BETULA]: T.PLANKS_BIRCH, [Item.MESA_CARPINTARIA]: T.CARPENTRY, [Item.PEDRA_LISA]: T.STONE_SMOOTH, [Item.TIJOLO_PEDRA]: T.STONE_BRICK, [Item.LAJE_PEDRA]: T.STONE_SLAB };
 const ORVALIS_BLOCK_ITEMS: Readonly<Record<number, number>> = Object.fromEntries(Object.entries(ORVALIS_ITEM_BLOCKS).map(([item, block]) => [block, Number(item)]));
 for (const [item, block] of Object.entries(ORVALIS_ITEM_BLOCKS)) ITEM_NAMES[Number(item)] = BLOCK_NAMES[block];
+ITEM_NAMES[Item.DEGRAU_PEDRA] = 'Degrau de Pedra'; // sem entrada em ORVALIS_ITEM_BLOCKS: o giro vem do olhar (ADR 0109)
 ITEM_NAMES[Item.HASTE] = 'Haste de Madeira'; // item sem bloco (ADR 0107)
 /** Pilhas: blocos, fragmentos, lente e brasa até 64; cápsula (legada, id reservado), lanterna e mesa até 1 (a mesa 1 por espaço: é uma peça grande). */
 export const maxStack = (item: number): number => (item === Item.CAPSULE || item === Item.LANTERN || item === Item.WORKBENCH || isBucket(item) || isTool(item) ? 1 : 64);
-export const isItem = (n: unknown): n is ItemId => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 59;
+export const isItem = (n: unknown): n is ItemId => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 60;
 /** Balde de Cobre (ADR 0091): vazio recolhe uma célula do lago, cheio a despeja. Pergunte aqui, nunca compare ids soltos. */
 export const isBucket = (item: number | undefined | null): boolean => item === Item.BALDE || item === Item.BALDE_CHEIO;
 
@@ -26,6 +27,7 @@ export const isBucket = (item: number | undefined | null): boolean => item === I
 export function blockOfItem(item: number): number | null {
   if (item >= Item.SAND && item <= Item.FROST) return item; // mesmos ids
   if (ORVALIS_ITEM_BLOCKS[item]) return ORVALIS_ITEM_BLOCKS[item]; // Orvalis em voxel (ADR 0105)
+  if (item === Item.DEGRAU_PEDRA) return T.STONE_STAIR; // o giro vem do olhar de quem coloca (`placeFromSlot`, ADR 0109)
   if (item === Item.LANTERN) return T.LANTERN;
   if (item === Item.WORKBENCH) return T.WORKBENCH;
   if (item === Item.SLAB) return T.SLAB;
@@ -50,6 +52,7 @@ export function itemOfBlock(block: number): ItemId | null {
   if (block >= T.SAND && block <= T.FROST) return block as ItemId;
   if (ORVALIS_BLOCK_ITEMS[block]) return ORVALIS_BLOCK_ITEMS[block] as ItemId; // Orvalis em voxel (ADR 0105)
   if (block === T.STONE_SLAB_TOP) return Item.LAJE_PEDRA; // a superior devolve a mesma laje (a fusão é a Pedra Lisa: 1 bloco = 2 lajes, ADR 0108)
+  if (block >= T.STONE_STAIR && block <= T.STONE_STAIR_270) return Item.DEGRAU_PEDRA;
   if (isCarpentry(block)) return Item.MESA_CARPINTARIA; // as 4 orientações da mesa devolvem 1 mesa (ADR 0107)
   if (block === T.VEIN_ROCK) return Item.DARK_ROCK; // o veio devolve o bloco inteiro (a lasca vem à parte, em `actions.ts`)
   if (block === T.VEIN_FROST) return Item.FROST;

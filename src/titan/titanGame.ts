@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
@@ -127,7 +127,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg, atlas8Img, lake8Img] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl), loadImage(titanAtlas8Url), loadImage(orvalis ? orvalisWater8Url : titanLake8Url)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, degrauPedraImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg, atlas8Img, lake8Img] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanDegrauPedraUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl), loadImage(titanAtlas8Url), loadImage(orvalis ? orvalisWater8Url : titanLake8Url)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -136,7 +136,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora')) ?? (texScene ? FIXED_HOURS.tarde : null); // a vitrine fica à tarde, para a cor não variar entre testes
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
   if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view }; // só no dev (como o window.__game do mundo 2.5D): testes de navegador
   if (orvalis) view.setPalette('orvalis');
   view.setSky(forcedHour ?? session.time);
