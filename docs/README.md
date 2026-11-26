@@ -2,6 +2,8 @@
 
 Documentação viva de **Orvalis** (antes MundoBlocos 2D). Agentes de IA: comece por [`../CLAUDE.md`](../CLAUDE.md).
 
+Para planejar mecânicas, consulte o [Guia de regras de mundo aberto](GUIA_REGRAS_MUNDO_ABERTO.md).
+
 ## Ordem de leitura
 | # | Documento | Para quê | Atualizar quando |
 |---|---|---|---|
