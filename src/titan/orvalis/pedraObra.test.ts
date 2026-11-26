@@ -9,7 +9,9 @@ import { MemoryTitanStorage } from '../save';
 import { openSession } from '../session';
 import { resolveSlabPlacement } from '../slabs';
 import { surfaceOf } from '../sounds';
-import { blockBoxes, blockSpan, isFull, isSlab, isSlabBottom, isSolid, isStair, isStoneStair, modelOf, slabPartner, stairId, stairTurn, T, tileFor } from '../voxel';
+import { blockBoxes, blockSpan, isFull, isSlab, isSlabBottom, isSolid, isStair, isStoneStair, modelOf, slabPartner, isWall, wallId, wallMask, wallBoxes, WALL_E, WALL_W, WALL_N, WALL_S, WALL_HEIGHT, stairId, stairTurn, T, tileFor } from '../voxel';
+import { wallModelData } from '../../render/muretaModel';
+import { newBody, raycast, stepBody } from '../physics';
 import { ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './generator';
 
 /** Pedra de obra do Orvalis em voxel (ADR 0108): Pedra Lisa, Tijolo de Pedra e Laje de Pedra (que funde na Pedra Lisa). */
@@ -36,7 +38,7 @@ describe('pedra de obra (ADR 0108)', () => {
     expect(blockOfItem(Item.TIJOLO_PEDRA)).toBe(T.STONE_BRICK); expect(itemOfBlock(T.STONE_BRICK)).toBe(Item.TIJOLO_PEDRA);
     expect(blockOfItem(Item.LAJE_PEDRA)).toBe(T.STONE_SLAB); expect(itemOfBlock(T.STONE_SLAB)).toBe(Item.LAJE_PEDRA); expect(itemOfBlock(T.STONE_SLAB_TOP)).toBe(Item.LAJE_PEDRA);
     for (const [i, n] of [[Item.PEDRA_LISA, 'Pedra Lisa'], [Item.TIJOLO_PEDRA, 'Tijolo de Pedra'], [Item.LAJE_PEDRA, 'Laje de Pedra']] as const) { expect(isItem(i)).toBe(true); expect(ITEM_NAMES[i]).toBe(n); }
-    expect(isItem(61)).toBe(false);
+    expect(isItem(62)).toBe(false);
     expect(isFull(T.STONE_SMOOTH) && isFull(T.STONE_BRICK)).toBe(true);
     expect(isSlab(T.STONE_SLAB) && isSlab(T.STONE_SLAB_TOP) && !isFull(T.STONE_SLAB)).toBe(true);
     expect(blockSpan(T.STONE_SLAB)).toEqual([0, 0.5]); expect(blockSpan(T.STONE_SLAB_TOP)).toEqual([0.5, 1]);
@@ -90,7 +92,7 @@ describe('degrau de pedra (ADR 0109)', () => {
     }
     expect(modelOf(T.REED_STAIR)).toEqual({ kind: 'degrau', turn: 0 }); // o de junco segue com o modelo dele
     expect(blockOfItem(Item.DEGRAU_PEDRA)).toBe(T.STONE_STAIR); expect(ITEM_NAMES[Item.DEGRAU_PEDRA]).toBe('Degrau de Pedra');
-    expect(isItem(Item.DEGRAU_PEDRA) && !isItem(61)).toBe(true);
+    expect(isItem(Item.DEGRAU_PEDRA) && !isItem(62)).toBe(true);
   });
 
   it('receita: 3 Pedra Lisa → 4 Degraus (na mesa, só no Orvalis); colocar gira para o jogador e quebrar devolve 1', async () => {
@@ -109,5 +111,69 @@ describe('degrau de pedra (ADR 0109)', () => {
     expect(breakOrCollect(s, { x: cx, y: a.y, z: cz, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
     sweep(s); expect(s.inventory.total(Item.DEGRAU_PEDRA)).toBe(4);
     expect(s.volume.modelCells('degrauPedra').length).toBe(0);
+  });
+});
+
+describe('mureta de pedra (ADR 0110)', () => {
+  const free = async () => { const s = await open(), a = s.volume.gen.arrival; return { s, x: Math.floor(a.x) + 3, y: a.y, z: Math.floor(a.z) + 3 }; };
+
+  it('ids 115–130 pela máscara, item 61, 0,75 m de altura, sólida que não é cubo, modelo por máscara', () => {
+    expect(T.STONE_WALL).toBe(115); expect(T.STONE_WALL_LAST).toBe(130);
+    for (let m = 0; m < 16; m++) {
+      const id = wallId(m);
+      expect(isWall(id) && wallMask(id) === m && isSolid(id) && !isFull(id)).toBe(true);
+      expect(modelOf(id)).toEqual({ kind: `mureta${m}`, turn: 0 });
+      expect(blockBoxes(id)).toEqual(wallBoxes(m)); expect(blockSpan(id)).toEqual([0, WALL_HEIGHT]);
+      expect(itemOfBlock(id)).toBe(Item.MURETA_PEDRA); expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(1000);
+    }
+    expect(blockBoxes(wallId(0))).toHaveLength(1); expect(blockBoxes(wallId(15))).toHaveLength(5); // poste e braços
+    expect(blockOfItem(Item.MURETA_PEDRA)).toBe(T.STONE_WALL); expect(ITEM_NAMES[Item.MURETA_PEDRA]).toBe('Mureta de Pedra'); expect(isItem(61) && !isItem(62)).toBe(true);
+    for (let m = 0; m < 16; m++) { const d = wallModelData(m); expect(d.idx.length / 3).toBe(d.pos.length / 3 / 2); expect(d.uv.every((v) => v >= 0 && v <= 1)).toBe(true); }
+    expect(wallModelData(0).idx.length / 6).toBe(5); // o poste sozinho: topo e 4 laterais
+    expect(wallModelData(WALL_E | WALL_W).idx.length / 6).toBeLessThan(wallModelData(0).idx.length / 6 + 10);
+  });
+
+  it('liga sozinha às vizinhas e a cubo inteiro, e se desliga quando o vizinho sai', async () => {
+    const { s, x, y, z } = await free();
+    s.volume.set(x, y, z, T.STONE_WALL);
+    expect(s.volume.get(x, y, z)).toBe(wallId(0)); // sozinha: só o poste
+    s.volume.set(x + 1, y, z, T.STONE_WALL); // à direita (leste)
+    expect(s.volume.get(x, y, z)).toBe(wallId(WALL_E)); expect(s.volume.get(x + 1, y, z)).toBe(wallId(WALL_W)); // as duas se ligam
+    s.volume.set(x, y, z + 1, T.STONE_SMOOTH); // um cubo inteiro ao sul
+    expect(wallMask(s.volume.get(x, y, z))).toBe(WALL_E | WALL_S);
+    s.volume.set(x, y, z - 1, T.STONE_SLAB); // laje não é cubo inteiro: não liga
+    expect(wallMask(s.volume.get(x, y, z))).toBe(WALL_E | WALL_S);
+    s.volume.remove(x + 1, y, z); s.volume.remove(x, y, z + 1);
+    expect(s.volume.get(x, y, z)).toBe(wallId(0));
+    expect(wallMask(wallId(WALL_N))).toBe(WALL_N);
+    expect(s.volume.modelCells('mureta0').length).toBe(1); // a instância troca de modelo junto com a máscara
+  });
+
+  it('receita 6 Pedra Lisa → 6; colocar liga à vizinha, quebrar devolve 1 e desliga a vizinha; a sala repassa a vizinha (onSet)', async () => {
+    const { s, x, y, z } = await free();
+    s.inventory.add(Item.PEDRA_LISA, 6);
+    expect(craft(s.inventory, recipeById('mureta-pedra')!, null)).toEqual({ ok: false, reason: 'station' });
+    expect(craft(s.inventory, recipeById('mureta-pedra')!, 'workbench').ok).toBe(true);
+    expect(s.inventory.total(Item.MURETA_PEDRA)).toBe(6); expect(recipeById('mureta-pedra')!.world).toBe('orvalis');
+    const sent: number[] = []; s.volume.onSet = (_a, _b, _c, id) => { if (isWall(id)) sent.push(id); };
+    for (const dx of [0, 1]) expect(placeFromSlot(s, { x: x + dx, y: y - 1, z, nx: 0, ny: 1, nz: 0 }, slotOf(s, Item.MURETA_PEDRA)).ok).toBe(true);
+    expect(s.volume.get(x, y, z)).toBe(wallId(WALL_E)); expect(s.volume.get(x + 1, y, z)).toBe(wallId(WALL_W));
+    expect(sent).toContain(wallId(WALL_E)); // a primeira foi reenviada com o braço quando a segunda chegou
+    expect(breakOrCollect(s, { x: x + 1, y, z, nx: 0, ny: 1, nz: 0 }).ok).toBe(true);
+    expect(s.volume.get(x, y, z)).toBe(wallId(0));
+    sweep(s); expect(s.inventory.total(Item.MURETA_PEDRA)).toBe(5);
+  });
+
+  it('física: o braço barra o corpo; o vão ao lado do poste passa; a mira acerta o poste e passa por cima da mureta', async () => {
+    const { s, x, y, z } = await free();
+    s.volume.set(x, y, z, T.STONE_WALL); s.volume.set(x + 1, y, z, T.STONE_WALL); // trecho de 2 células ao longo de X
+    const b = newBody(x + 0.5, y, z + 2.5);
+    for (let i = 0; i < 40; i++) stepBody(s.volume, b, { dirX: 0, dirZ: -1, jump: false }, 0.05);
+    expect(b.z).toBeGreaterThan(z + 0.75); // parou na frente da mureta (a caixa vai até z + 0,75)
+    const c = newBody(x + 1.5, y, z + 2.5); // saindo do alcance do poste: a mureta de duas células ocupa x de 0,25 a 1,75 do trecho
+    const hit = raycast(s.volume, x + 0.5, y + 0.4, z + 3, 0, 0, -1, 6)!;
+    expect(hit).not.toBeNull(); expect(hit.x).toBe(x);
+    expect(raycast(s.volume, x + 0.5, y + 0.9, z + 3, 0, 0, -1, 6)).toBeNull(); // acima de 0,75 m passa
+    expect(c.z).toBeGreaterThan(z);
   });
 });

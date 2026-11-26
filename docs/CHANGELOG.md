@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.177.0 — Mureta de Pedra no Orvalis em voxel (E2c, 26/11/2026)
+- **ADR 0110.** **Mureta de Pedra** (blocos 115–130, item 61): poste de 8 × 8 e braços para as muretas e cubos inteiros vizinhos, 0,75 m de altura (dá para pular por cima). A máscara de conexão vai no id e `TitanVolume.set` a mantém: ao colocar ou tirar qualquer bloco, as muretas dos quatro lados se refazem (e a sala repassa cada uma pelo `onSet`). Modelo por máscara gerado em `render/muretaModel.ts` sobre a tira topo | face de `scripts/make-orvalis-mureta.py`. Receita na Mesa: 6 Pedra Lisa → 6 (provisória).
+- Atlas de itens 4 × 16 (`ITEM_ROWS`, CSS e script). Testes novos em `orvalis/pedraObra.test.ts`; limites `isItem(61)` → 62 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E2 (pedra de obra) completa; fila: E3 solo e cerâmica → E6.
+
 ## Orvalis v0.176.0 — Degrau de Pedra no Orvalis em voxel (E2b, 26/11/2026)
 - **ADR 0109.** **Degrau de Pedra** (blocos 111–114 com o giro no id, item 60): a forma, a física, a mira e a colocação são as do degrau de junco (ADR 0101); o modelo `degrauPedra` usa a arte do pacote (topo, frente, perfil) numa tira de 3 tiles de 16 px (`scripts/make-orvalis-degrau.py`, também no `npm run texturas`). Ícone isométrico gerado. Receita na Mesa: 3 Pedra Lisa → 4 Degraus (provisória). Quebra 1 s, som de rocha.
 - `isStair` vale para as duas famílias (`isReedStair`/`isStoneStair`, `stairId(giro, pedra)`). Vitrine com o degrau. Testes novos em `orvalis/pedraObra.test.ts`; limites `isItem(60)` → 61 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E2b feita; fila: E2c mureta → E6.
