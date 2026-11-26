@@ -1,4 +1,5 @@
-import { blockOfItem, dropCountOf, foodOf, isBucket, isPick, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
+import { hoeResult, shovelResult } from './soil';
+import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
@@ -523,9 +524,22 @@ function useBucket(s: TitanSession, hit: Hit, slot: number): ActionResult {
   return { ok: true, msg: 'Líquido despejado' };
 }
 
+/** Enxada e pá no toque sobre a face de cima do solo (ADR 0112): a enxada ara (terra, grama, caminho; úmida se há água ao alcance) e a pá abre caminho na grama e na terra; gasta 1 de durabilidade. */
+function useSoilTool(s: TitanSession, hit: Hit, hoe: boolean): ActionResult {
+  const { x, y, z } = hit;
+  if (hit.item || hit.ny !== 1 || !s.volume.editable(x, y, z)) return { ok: false, msg: hoe ? 'A enxada ara a face de cima da terra' : 'A pá abre caminho na face de cima da grama' };
+  const block = s.volume.get(x, y, z), to = hoe ? hoeResult(s.volume, block, x, y, z) : shovelResult(block);
+  if (to === null) return { ok: false, msg: hoe ? 'Aqui não dá para arar' : 'Aqui não dá para abrir caminho' };
+  if (s.volume.get(x, y + 1, z) !== T.AIR) return { ok: false, msg: 'Falta espaço livre em cima' };
+  if (!s.volume.set(x, y, z, to)) return { ok: false };
+  const w = wearHeldTool(s, { type: 'use' });
+  return w.broken ? { ok: true, broken: true, msg: `${w.name} quebrou` } : { ok: true };
+}
+
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
+  if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)

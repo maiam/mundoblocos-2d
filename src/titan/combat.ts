@@ -12,7 +12,8 @@ export const ATTACK_REACH = 3;
 export const ATTACK_COOLDOWN_S = 0.6;
 /** Dano por golpe (pontos de vida do animal) por item na mão; sem arma = punho. */
 export const FIST_DAMAGE = 1;
-export const WEAPON_DAMAGE: Readonly<Record<number, number>> = { [Item.STONE_DAGGER]: 4, [Item.COPPER_DAGGER]: 6, [Item.STONE_PICK]: 2, [Item.COPPER_PICK]: 3 };
+export const WEAPON_DAMAGE: Readonly<Record<number, number>> = { [Item.STONE_DAGGER]: 4, [Item.COPPER_DAGGER]: 6, [Item.STONE_PICK]: 2, [Item.COPPER_PICK]: 3,
+  [Item.PICARETA_MADEIRA]: 1, [Item.PICARETA_PEDRA]: 2, [Item.MACHADO_MADEIRA]: 2, [Item.MACHADO_PEDRA]: 3, [Item.PA_MADEIRA]: 1, [Item.PA_PEDRA]: 2, [Item.ENXADA_MADEIRA]: 1, [Item.ENXADA_PEDRA]: 1 }; // Orvalis (ADR 0112)
 export const damageOf = (item: number | undefined | null): number => (item ? WEAPON_DAMAGE[item] ?? FIST_DAMAGE : FIST_DAMAGE);
 /** O que cada tamanho solta ao ser abatido: porções de carne crua e placas de carapaça. */
 export const LOOT: Readonly<Record<Kind, { meat: number; plate: number }>> = { pequeno: { meat: 1, plate: 1 }, grande: { meat: 2, plate: 1 } };

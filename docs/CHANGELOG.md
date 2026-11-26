@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.179.0 — Ferramentas de madeira e de pedra no Orvalis em voxel (E4, 26/11/2026)
+- **ADR 0112.** **Picareta, machado, pá e enxada** de madeira e de pedra (itens 70–77, durabilidade 59/131, sprites 16 × 16 do pacote). `TOOLS` ganha os tipos `axe`/`shovel`/`hoe` e o nível `wood`; a ferramenta certa acelera o bloco certo (`blockToolOf`, `toolAdvantage`). **A enxada ara** terra, grama e caminho (úmida se há lago a até 4 células, `soil.ts`) e **a pá abre Caminho de Terra**, gastando 1 de durabilidade; terra arada e caminho devolvem Terra. Receitas na Mesa (material + 2 hastes); as receitas provisórias de solo do ADR 0111 saíram.
+- **Correção:** a picareta de cobre do Titã passou a quebrar a rocha a 40 % do tempo (o ADR 0065 já dizia isso; o jogo aplicava 60 % a toda picareta). Atlas de itens 4 × 20. Testes novos em `orvalis/ferramentas.test.ts`; limites `isItem(70)` → 78 nos antigos. Sem mudança de gerador, save nem protocolo. Fila: E5 horta, E6 vedações e abrigo.
+
 ## Orvalis v0.178.0 — Solo de cultivo e cerâmica no Orvalis em voxel (E3, 26/11/2026)
 - **ADR 0111.** **Terra Arada Seca e Úmida, Caminho de Terra, Terra Infértil, Bloco de Argila e Bloco de Tijolos** (blocos 131–136, itens 62–67; cubos inteiros) e **Bola de Argila** e **Tijolo** (itens 68–69, sprites 16 × 16 do pacote). Receitas **provisórias** na Mesa de Carpintaria (a enxada, a água do cultivo, a argila no terreno e a fundição ainda não existem). Quebra e som por classe (solo como terra, tijolos como pedra).
 - Atlas de terreno com 82 tiles e de itens 4 × 18 (`ITEM_ROWS`, CSS, scripts). Testes novos em `orvalis/solo.test.ts`; limites `isItem(61)` → 70 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E3 feita; fila: E4 ferramentas, E5 horta, E6 vedações e abrigo. Vasos ficam sem entrega.
