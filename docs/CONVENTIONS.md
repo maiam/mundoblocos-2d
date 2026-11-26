@@ -37,7 +37,8 @@
 - **O mundo voxel é renderizado a 16 px por face**; a arte-fonte pode ser maior (reduzida pelo script do atlas). Arte nova de terreno entra no atlas de 16 px **e** no de 8 px (o script gera os dois); nunca importe uma textura de mundo direto no renderer.
 - **Vista isométrica 2:1:** só `titan/iso.ts` define a câmera (30°, 4 vistas de 90°, `ISO_PX_PER_BLOCK`); renderer e jogo a usam igual. Na isométrica não há *pointer lock*, a ação é no ponto do mouse/dedo (`fingerMode()`), `look()` não gira e `session.yaw` é o giro da câmera. Elemento novo da cena que só existe em uma vista decide por `mode` no renderer, nunca por `if (mundo === …)`.
 
-## Receitas por mundo (ADR 0107)
+## Receitas por mundo (ADR 0107) e itens por mundo (ADR 0114)
+- **Regra do dono do produto: os itens do Titã e os do Orvalis em voxel não são compartilhados.** Ids de item 1–41 = Titã; 42 em diante = Orvalis; blocos do Orvalis a partir do 90. Receita, bloco, semente, ferramenta e bancada de um mundo não servem no outro; `titan/itensPorMundo.test.ts` barra a mistura. Compartilhar exige decisão nova (ADR).
 - `Recipe.world` ausente = Titã; `'orvalis'` = só no Orvalis em voxel. O livro mostra as do `gen.world` aberto. Receita nova de um mundo nasce com o `world` dele; bancada nova entra em `isCraftingTable` (nunca `isWorkbench` sozinho).
 
 ## Jogo
