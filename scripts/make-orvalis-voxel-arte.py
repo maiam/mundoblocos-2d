@@ -16,6 +16,7 @@ from PIL import Image
 MAT = 'assets-src/materiais/'
 TEX = 'assets-src/orvalis-voxel/texturas32/orvalis/'
 ICO = 'assets-src/orvalis-voxel/icones32/'
+DEGRAU = 'assets-src/orvalis-voxel/texturas32/degrau-pedra/'  # topo, frente, perfil do Degrau de Pedra (ADR 0109)
 WATER_SRC = 'assets-src/orvalis-voxel/agua/agua_32px.png'  # 1º quadro do topo da água (32 × 32, seamless); editável
 WATER_OUT = {16: 'src/assets/orvalis-agua-16px.webp', 8: 'src/assets/orvalis-agua-8px.webp'}  # 16 px (padrão) e 8 px (isométrica), ADR 0106
 
@@ -94,6 +95,36 @@ def cube_icon(top: Image.Image, side: Image.Image, left: Image.Image | None = No
     return big.resize((32, 32), Image.BOX)
 
 
+def stair_icon(top: Image.Image, front: Image.Image, side: Image.Image) -> Image.Image:
+    """Degrau **isométrico** (2:1) de 32 × 32 (mesma luz e mesma moldura do `cube_icon`): patamar de baixo na célula inteira e o de cima só na metade de trás; frente na lateral esquerda, perfil na direita. `front` e `side` são os PNGs do pacote (a pedra do espelho na metade de baixo; o perfil em L)."""
+    k = 4
+    n = 32 * k
+    big = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    P = lambda x, y: (x * k, y * k)  # noqa: E731
+    s8 = lambda im, w, h: im.resize((w, h), Image.NEAREST)  # noqa: E731
+    fw, fh = front.size
+    front_lo = s8(front.crop((0, fh // 2, fw, fh)), n, n // 2)  # espelho: a metade de baixo do PNG
+    sw, sh = side.size
+    side_lo = s8(side.crop((0, sh // 2, sw, sh)), n, n // 2)  # perfil: patamar de baixo
+    side_hi = s8(side.crop((sw // 2, 0, sw, sh // 2)), n // 2, n // 2)  # perfil: patamar de cima, só o quarto de trás (u de 8 a 16)
+    tw, th = top.size
+    top_front = s8(top.crop((0, th // 2, tw, th)), n, n // 2)  # a metade da frente do piso (a de trás fica sob o patamar de cima)
+    top_back = s8(top.crop((0, 0, tw, th // 2)), n, n // 2)  # o piso do patamar de cima
+    l, b, r, t = P(2, 16), P(16, 23), P(30, 16), P(16, 9)  # losango do patamar de baixo (topo a meia altura)
+    m1, m2 = P(9, 12.5), P(23, 19.5)  # linha do espelho (meio do piso de baixo)
+    h7 = (0, 7 * k)
+    sub = lambda a, c: (a[0] - c[0], a[1] - c[1])  # noqa: E731
+    big.alpha_composite(_face(shade(front_lo, 0.80), l, sub(b, l), h7, n))  # espelho de baixo (esquerda)
+    big.alpha_composite(_face(shade(side_lo, 0.60), b, sub(r, b), h7, n))  # lateral de baixo (direita)
+    big.alpha_composite(_face(top_front, m1, sub(m2, m1), sub(l, m1), n))  # piso da frente
+    t0, r0 = P(16, 2), P(30, 9)
+    mm1, mm2 = P(9, 5.5), P(23, 12.5)
+    big.alpha_composite(_face(shade(front_lo, 0.80), mm1, sub(mm2, mm1), h7, n))  # espelho de cima
+    big.alpha_composite(_face(shade(side_hi, 0.60), mm2, sub(r0, mm2), h7, n))  # lateral de cima (direita)
+    big.alpha_composite(_face(top_back, t0, sub(r0, t0), sub(mm1, t0), n))  # piso de cima
+    return big.resize((32, 32), Image.BOX)
+
+
 def main() -> None:
     force = '--force' in sys.argv
     os.makedirs(os.path.dirname(WATER_SRC), exist_ok=True)
@@ -134,6 +165,8 @@ def main() -> None:
     }
     for name, spec in icons.items():
         cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name == 'laje_de_pedra').save(f'{ICO}{name}.png')
+    dg = {nome: Image.open(f'{DEGRAU}{nome}.png').convert('RGBA') for nome in ('topo', 'frente', 'perfil')}
+    stair_icon(dg['topo'], dg['frente'], dg['perfil']).save(f'{ICO}degrau_de_pedra.png')  # item 60 (ADR 0109)
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)
     w1 = to_tile(Image.open(WATER_SRC).convert('RGBA'), WATER_SRC)

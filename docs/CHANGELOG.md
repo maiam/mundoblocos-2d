@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.176.0 — Degrau de Pedra no Orvalis em voxel (E2b, 26/11/2026)
+- **ADR 0109.** **Degrau de Pedra** (blocos 111–114 com o giro no id, item 60): a forma, a física, a mira e a colocação são as do degrau de junco (ADR 0101); o modelo `degrauPedra` usa a arte do pacote (topo, frente, perfil) numa tira de 3 tiles de 16 px (`scripts/make-orvalis-degrau.py`, também no `npm run texturas`). Ícone isométrico gerado. Receita na Mesa: 3 Pedra Lisa → 4 Degraus (provisória). Quebra 1 s, som de rocha.
+- `isStair` vale para as duas famílias (`isReedStair`/`isStoneStair`, `stairId(giro, pedra)`). Vitrine com o degrau. Testes novos em `orvalis/pedraObra.test.ts`; limites `isItem(60)` → 61 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E2b feita; fila: E2c mureta → E6.
+
 ## Orvalis v0.175.0 — Pedra de obra no Orvalis em voxel (E2a, 26/11/2026)
 - **ADR 0108.** **Pedra Lisa**, **Tijolo de Pedra** e **Laje de Pedra** (blocos 107–110, itens 57–59). A laje entra na família das lajes (inferior e superior; **duas lajes na mesma célula viram a Pedra Lisa**; só funde com a de pedra). Receitas na Mesa de Carpintaria: 1 Pedra → 1 Pedra Lisa (provisório, no Minecraft é fundição), 4 Pedra → 4 Tijolos, 3 Pedra Lisa → 6 Lajes. Quebra 1,6 s (laje 1 s); ícones isométricos (laje em meia altura); atlas de itens 4 × 15.
 - **Vitrine de texturas** com 3 fileiras (terreno e árvores, madeira e pedra, Titã). Degrau e mureta de pedra do pacote ficam para E2b e E2c (pedem forma própria).
