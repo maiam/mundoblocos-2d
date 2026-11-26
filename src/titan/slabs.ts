@@ -13,6 +13,7 @@ export type SlabPlacement = { merge: boolean; block: number };
 const FAMILY = {
   rock: { bottom: T.SLAB, top: T.SLAB_TOP, whole: T.SLAB_DOUBLE },
   reed: { bottom: T.REED_SLAB, top: T.REED_SLAB_TOP, whole: T.REED_BLOCK },
+  stone: { bottom: T.STONE_SLAB, top: T.STONE_SLAB_TOP, whole: T.STONE_SMOOTH }, // a Laje de Pedra funde na Pedra Lisa (ADR 0108)
 } as const;
 
 /**
@@ -20,7 +21,7 @@ const FAMILY = {
  * (ausente = inferior nas laterais); `held` = a laje na mão (inferior de rocha ou de junco). Só funde com a laje **da mesma família**.
  */
 export function resolveSlabPlacement(targetId: number, ny: number, hy: number | undefined, held: number = T.SLAB): SlabPlacement {
-  const f = held === T.REED_SLAB || held === T.REED_SLAB_TOP ? FAMILY.reed : FAMILY.rock;
+  const f = held === T.REED_SLAB || held === T.REED_SLAB_TOP ? FAMILY.reed : held === T.STONE_SLAB || held === T.STONE_SLAB_TOP ? FAMILY.stone : FAMILY.rock;
   if (targetId === f.bottom && ny === 1) return { merge: true, block: f.whole };
   if (targetId === f.top && ny === -1) return { merge: true, block: f.whole };
   const top = ny === -1 || (ny === 0 && (hy ?? 0) >= 0.5);

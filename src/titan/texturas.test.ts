@@ -7,8 +7,8 @@ describe('cena de texturas (dev)', () => {
     const g = new TexturesGen(1);
     expect(g.blockAt(10, 63, -10)).toBe(T.BEDROCK);
     expect(g.blockAt(10, 64, -10)).toBe(T.AIR);
-    expect(g.blockAt(2, 62, 22)).toBe(T.LAKE);
-    expect(g.blockAt(2, 60, 22)).toBe(T.BEDROCK);
+    expect(g.blockAt(2, 62, 32)).toBe(T.LAKE);
+    expect(g.blockAt(2, 60, 32)).toBe(T.BEDROCK);
     const a = g.arrival;
     for (let y = a.y; y < a.y + 3; y++) expect(isSolid(g.blockAt(Math.floor(a.x), y, Math.floor(a.z)))).toBe(false);
   });
@@ -23,14 +23,13 @@ describe('cena de texturas (dev)', () => {
       expect(BLOCK_NAMES[id]).toBeTruthy();
       expect(tileFor(id, 'top')).toBeGreaterThanOrEqual(0);
     }));
-    const last = ROWS[1].blocks.length - 1;
-    expect(X0 + last * STEP + 2).toBeLessThan(64); // cabe na região
+    for (const r of ROWS) expect(X0 + (r.blocks.length - 1) * STEP + 2).toBeLessThan(64); // cabe na região
   });
 
   it('a legenda lista os blocos das duas fileiras', () => {
     const c = texturesCaption();
-    expect(c).toHaveLength(3);
+    expect(c).toHaveLength(4);
     expect(c[0]).toContain('Terra com Grama');
-    expect(c[1]).toContain('Areia ocre');
+    expect(c[1]).toContain('Tábuas de Carvalho'); expect(c[2]).toContain('Areia ocre');
   });
 });

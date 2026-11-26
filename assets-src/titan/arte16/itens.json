@@ -4,5 +4,21 @@
  "23": "Picareta_de_Cobre_Item_16px.png",
  "24": "Adaga_de_Cobre_Item_16px.png",
  "35": "Balde_de_Cobre_Vazio_Item_16px.png",
- "36": "Balde_de_Cobre_Cheio_Agua_Item_16px.png"
+ "36": "Balde_de_Cobre_Cheio_Agua_Item_16px.png",
+ "55": "orvalis_haste_madeira_16x16.png",
+ "68": "orvalis_bola_argila_16x16.png",
+ "69": "orvalis_tijolo_16x16.png",
+ "70": "orvalis_picareta_madeira_16x16.png",
+ "71": "orvalis_picareta_pedra_16x16.png",
+ "72": "orvalis_machado_madeira_16x16.png",
+ "73": "orvalis_machado_pedra_16x16.png",
+ "74": "orvalis_pa_madeira_16x16.png",
+ "75": "orvalis_pa_pedra_16x16.png",
+ "76": "orvalis_enxada_madeira_16x16.png",
+ "77": "orvalis_enxada_pedra_16x16.png",
+ "78": "orvalis_semente_trigo_16x16.png",
+ "79": "orvalis_trigo_16x16.png",
+ "80": "orvalis_cenoura_16x16.png",
+ "81": "orvalis_batata_16x16.png",
+ "82": "orvalis_tomate_16x16.png"
 }

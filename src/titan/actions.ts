@@ -1,10 +1,11 @@
-import { blockOfItem, dropCountOf, foodOf, isBucket, isPick, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
+import { hoeResult, shovelResult } from './soil';
+import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
 import { isNightTime, tickFrac, WAKE_TICKS } from './sky';
-import { blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { carpentryId, carpentryTurnFacing, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -12,7 +13,7 @@ import { wearCost, type WearAction } from './wear';
 import { SLOTS } from './inventory';
 import { applyDisplace, planDisplace, settleDrops, stepDrops } from './drops';
 import { CHEST_SLOTS, type ChestState, chestPut, chestRoom, newChest } from './chest';
-import { type Species, cropKey, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKind } from './crops';
+import { type Species, cropKey, gardenSpeciesOf, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKindFor, wildSeedAt } from './crops';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -46,7 +47,7 @@ export function collectItem(s: TitanSession, id: string): ActionResult {
  */
 function collectCrop(s: TitanSession, id: string): ActionResult {
   const p = parseCropId(id), crop = p ? s.crops.get(cropKey(p[0], p[1], p[2])) : undefined;
-  const kind = crop ? soilKind(s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
+  const kind = crop ? soilKindFor(crop.species, s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
   if (!crop || !kind) return { ok: false };
   if (!isRipe(crop.species, kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
   const h = harvestOf(crop.species, kind);
@@ -69,7 +70,7 @@ export const canPlantNut = (s: TitanSession, hit: Hit): boolean => hit.ny === 1 
 
 /** Planta a muda (junco de vidro: úmida dá junco de vidro, ocre dá ressecado) ou a Noz (só na ocre) no topo de uma areia. Gasta 1; a célula de cima precisa estar livre. */
 function plantCrop(s: TitanSession, hit: Hit, slot: number, species: Species): ActionResult {
-  if (hit.ny !== 1 || !plantableSoil(species, s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A muda se planta no topo da areia' };
+  if (hit.ny !== 1 || !plantableSoil(species, s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: gardenSpeciesOf(seedOf(species)) ? 'Isto se planta no topo da terra arada' : 'A muda se planta no topo da areia' };
   if (!plantSpotFree(s, hit)) return { ok: false };
   const x = hit.x, y = hit.y + 1, z = hit.z;
   s.crops.set(cropKey(x, y, z), { x, y, z, age: 0, species });
@@ -417,6 +418,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (!s.volume.remove(x, y, z)) return { ok: false };
   if (direct) s.inventory.add(item, count);
   else spillBlock(s, item, count, x, y, z); // ADR 0082: o bloco comum cai no chão e é recolhido por proximidade
+  if (block === T.GRASS) { const seed = wildSeedAt(x, y, z); if (seed !== null) spillBlock(s, seed, 1, x, y, z); } // semente silvestre da grama (ADR 0113)
   if (isBrazier(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro cai no chão
   if (isChest(block)) spillChest(s, x, y, z); // e o do baú (ADR 0089)
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
@@ -523,11 +525,27 @@ function useBucket(s: TitanSession, hit: Hit, slot: number): ActionResult {
   return { ok: true, msg: 'Líquido despejado' };
 }
 
+/** Enxada e pá no toque sobre a face de cima do solo (ADR 0112): a enxada ara (terra, grama, caminho; úmida se há água ao alcance) e a pá abre caminho na grama e na terra; gasta 1 de durabilidade. */
+function useSoilTool(s: TitanSession, hit: Hit, hoe: boolean): ActionResult {
+  const { x, y, z } = hit;
+  if (hit.item || hit.ny !== 1 || !s.volume.editable(x, y, z)) return { ok: false, msg: hoe ? 'A enxada ara a face de cima da terra' : 'A pá abre caminho na face de cima da grama' };
+  const block = s.volume.get(x, y, z), to = hoe ? hoeResult(s.volume, block, x, y, z) : shovelResult(block);
+  if (to === null) return { ok: false, msg: hoe ? 'Aqui não dá para arar' : 'Aqui não dá para abrir caminho' };
+  if (s.volume.get(x, y + 1, z) !== T.AIR) return { ok: false, msg: 'Falta espaço livre em cima' };
+  if (!s.volume.set(x, y, z, to)) return { ok: false };
+  const w = wearHeldTool(s, { type: 'use' });
+  return w.broken ? { ok: true, broken: true, msg: `${w.name} quebrou` } : { ok: true };
+}
+
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
+  if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
+  const garden = gardenSpeciesOf(stack.item); // a horta (ADR 0113): semente de trigo, cenoura, batata e tomate se plantam no topo da terra arada; cenoura, batata e tomate, onde não dá para plantar, se comem
+  if (garden && hit.ny === 1 && !hit.item && plantableSoil(garden, s.volume.get(hit.x, hit.y, hit.z)) && plantSpotFree(s, hit)) return plantCrop(s, hit, slot, garden);
+  if (garden && !foodOf(stack.item)) return { ok: false, msg: 'A semente se planta no topo da terra arada' };
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
@@ -542,9 +560,11 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   else if (block === T.MARCO) block = marcoId(marcoTurnFacing(s.yaw)); // idem o Marco de Margem (ADR 0058)
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   else if (block === T.REED_STAIR) block = stairId(marcoTurnFacing(s.yaw)); // a frente (o lado baixo) fica voltada para o jogador: giro 0 = frente em +Z (ADR 0101)
+  else if (block === T.STONE_STAIR) block = stairId(marcoTurnFacing(s.yaw), true); // Degrau de Pedra: mesma regra do de junco (ADR 0109)
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
+  else if (block === T.CARPENTRY) block = carpentryId(carpentryTurnFacing(s.yaw)); // a frente da Mesa de Carpintaria fica voltada para o jogador (ADR 0107)
   else if (block === T.CHEST) block = chestId(chestTurnFacing(s.yaw)); // a frente do baú (o fecho) fica voltada para o jogador (ADR 0089)
-  if (block === T.SLAB || block === T.REED_SLAB) { // laje (ADR 0056; a de junco, ADR 0100): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
+  if (isSlabBottom(block)) { // laje (ADR 0056; a de junco, ADR 0100; a de pedra, ADR 0108): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
     const r = resolveSlabPlacement(s.volume.get(hit.x, hit.y, hit.z), hit.ny, hit.hy, block);
     if (r.merge) {
       // funde na célula apontada: a metade que falta não pode invadir o corpo do jogador

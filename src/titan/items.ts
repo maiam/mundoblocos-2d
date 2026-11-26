@@ -1,10 +1,10 @@
-import { BLOCK_NAMES, isMarco, isPanel, isWorkbench, T } from './voxel';
+import { BLOCK_NAMES, isCarpentry, isMarco, isPanel, isWorkbench, T } from './voxel';
 
 /**
  * Itens do Titã (ADR 0040). O id é o índice do sprite no atlas da hotbar + 1 (`render/art/titan.ts`): a ordem do atlas não depende da ordem dos espaços da barra.
  * Os quatro primeiros coincidem com os ids de bloco `T.SAND … T.FROST`.
  */
-export const Item = { SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, ROCK_SHARD: 5, FROST_SHARD: 6, CAPSULE: 7, LANTERN: 8, WORKBENCH: 9, ICE_LENS: 10, EMBER: 11, GLASS_REED: 12, SLAB: 13, MARCO: 14, PAINEL: 15, NOZ: 16, COPPER_SHARD: 17, COPPER_INGOT: 18, DRY_REED: 19, STONE_PICK: 20, BRAZIER: 21, STONE_DAGGER: 22, COPPER_PICK: 23, COPPER_DAGGER: 24, PLATE: 25, CARAPACE: 26, RAW_MEAT: 27, COOKED_MEAT: 28, EMBER_BLOCK: 29, NOZ_TORRADA: 30, ESTEIRA: 31, ESCADA: 32, BAU: 33, CAMA: 34, BALDE: 35, BALDE_CHEIO: 36, BLOCO_JUNCO: 37, LAJE_JUNCO: 38, DEGRAU_JUNCO: 39, CADEIRA_JUNCO: 40, PORTA_JUNCO: 41, GRASS: 42, DIRT: 43, STONE: 44, BEACH: 45, LOG_OAK: 46, LEAVES_OAK: 47, LOG_CHERRY: 48, LEAVES_CHERRY: 49, LOG_BIRCH: 50, LEAVES_BIRCH: 51 } as const;
+export const Item = { SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, ROCK_SHARD: 5, FROST_SHARD: 6, CAPSULE: 7, LANTERN: 8, WORKBENCH: 9, ICE_LENS: 10, EMBER: 11, GLASS_REED: 12, SLAB: 13, MARCO: 14, PAINEL: 15, NOZ: 16, COPPER_SHARD: 17, COPPER_INGOT: 18, DRY_REED: 19, STONE_PICK: 20, BRAZIER: 21, STONE_DAGGER: 22, COPPER_PICK: 23, COPPER_DAGGER: 24, PLATE: 25, CARAPACE: 26, RAW_MEAT: 27, COOKED_MEAT: 28, EMBER_BLOCK: 29, NOZ_TORRADA: 30, ESTEIRA: 31, ESCADA: 32, BAU: 33, CAMA: 34, BALDE: 35, BALDE_CHEIO: 36, BLOCO_JUNCO: 37, LAJE_JUNCO: 38, DEGRAU_JUNCO: 39, CADEIRA_JUNCO: 40, PORTA_JUNCO: 41, GRASS: 42, DIRT: 43, STONE: 44, BEACH: 45, LOG_OAK: 46, LEAVES_OAK: 47, LOG_CHERRY: 48, LEAVES_CHERRY: 49, LOG_BIRCH: 50, LEAVES_BIRCH: 51, TABUA_CARVALHO: 52, TABUA_CEREJEIRA: 53, TABUA_BETULA: 54, HASTE: 55, MESA_CARPINTARIA: 56, PEDRA_LISA: 57, TIJOLO_PEDRA: 58, LAJE_PEDRA: 59, DEGRAU_PEDRA: 60, MURETA_PEDRA: 61, TERRA_ARADA_SECA: 62, TERRA_ARADA_UMIDA: 63, CAMINHO_TERRA: 64, TERRA_INFERTIL: 65, BLOCO_ARGILA: 66, BLOCO_TIJOLOS: 67, BOLA_ARGILA: 68, TIJOLO: 69, PICARETA_MADEIRA: 70, PICARETA_PEDRA: 71, MACHADO_MADEIRA: 72, MACHADO_PEDRA: 73, PA_MADEIRA: 74, PA_PEDRA: 75, ENXADA_MADEIRA: 76, ENXADA_PEDRA: 77, SEMENTE_TRIGO: 78, TRIGO: 79, CENOURA: 80, BATATA: 81, TOMATE: 82 } as const;
 export type ItemId = (typeof Item)[keyof typeof Item];
 
 export const ITEM_NAMES: Record<number, string> = {
@@ -12,12 +12,18 @@ export const ITEM_NAMES: Record<number, string> = {
   5: 'Fragmento de rocha', 6: 'Fragmento de gelo', 7: 'Cápsula de luz', 8: 'Lanterna da margem', 9: 'Mesa de Trabalho', 10: 'Lente de Gelo', 11: 'Brasa de âmbar', 12: 'Junco de vidro', 13: 'Laje de rocha', 14: 'Marco de Margem', 15: 'Painel de Junco', 16: 'Noz de Duna', 17: 'Fragmento de Cobre de Duna', 18: 'Lingote de Cobre de Duna', 19: 'Haste Seca de Junco', 20: 'Picareta de Rocha', 21: 'Braseiro de Rocha', 22: 'Adaga de Rocha', 23: 'Picareta de Cobre', 24: 'Adaga de Cobre', 25: 'Placa de Carapaça', 26: 'Revestimento de Carapaça', 27: 'Carne Crua de Farejador', 28: 'Carne Assada de Farejador', 29: 'Bloco de Âmbar Compactado', 30: 'Noz Torrada', 31: 'Esteira de Junco', 32: 'Escada de Junco', 33: 'Baú de Rocha e Junco', 34: 'Cama de Junco', 35: 'Balde de Cobre', 36: 'Balde de Cobre (cheio)', 37: 'Bloco de Junco', 38: 'Laje de Junco', 39: 'Degrau de Junco', 40: 'Cadeira de Junco', 41: 'Porta de Junco',
 };
 /** Itens-bloco do Orvalis em voxel (ADR 0105, ids 42–51): o item é o próprio bloco (mesma ordem de `T.GRASS … T.LEAVES_BIRCH`). */
-export const ORVALIS_ITEM_BLOCKS: Readonly<Record<number, number>> = { [Item.GRASS]: T.GRASS, [Item.DIRT]: T.DIRT, [Item.STONE]: T.STONE, [Item.BEACH]: T.BEACH, [Item.LOG_OAK]: T.LOG_OAK, [Item.LEAVES_OAK]: T.LEAVES_OAK, [Item.LOG_CHERRY]: T.LOG_CHERRY, [Item.LEAVES_CHERRY]: T.LEAVES_CHERRY, [Item.LOG_BIRCH]: T.LOG_BIRCH, [Item.LEAVES_BIRCH]: T.LEAVES_BIRCH };
+export const ORVALIS_ITEM_BLOCKS: Readonly<Record<number, number>> = { [Item.GRASS]: T.GRASS, [Item.DIRT]: T.DIRT, [Item.STONE]: T.STONE, [Item.BEACH]: T.BEACH, [Item.LOG_OAK]: T.LOG_OAK, [Item.LEAVES_OAK]: T.LEAVES_OAK, [Item.LOG_CHERRY]: T.LOG_CHERRY, [Item.LEAVES_CHERRY]: T.LEAVES_CHERRY, [Item.LOG_BIRCH]: T.LOG_BIRCH, [Item.LEAVES_BIRCH]: T.LEAVES_BIRCH, [Item.TABUA_CARVALHO]: T.PLANKS_OAK, [Item.TABUA_CEREJEIRA]: T.PLANKS_CHERRY, [Item.TABUA_BETULA]: T.PLANKS_BIRCH, [Item.MESA_CARPINTARIA]: T.CARPENTRY, [Item.PEDRA_LISA]: T.STONE_SMOOTH, [Item.TIJOLO_PEDRA]: T.STONE_BRICK, [Item.LAJE_PEDRA]: T.STONE_SLAB, [Item.TERRA_ARADA_SECA]: T.FARMLAND_DRY, [Item.TERRA_ARADA_UMIDA]: T.FARMLAND_WET, [Item.CAMINHO_TERRA]: T.PATH, [Item.TERRA_INFERTIL]: T.DIRT_INFERTILE, [Item.BLOCO_ARGILA]: T.CLAY_BLOCK, [Item.BLOCO_TIJOLOS]: T.BRICK_BLOCK };
 const ORVALIS_BLOCK_ITEMS: Readonly<Record<number, number>> = Object.fromEntries(Object.entries(ORVALIS_ITEM_BLOCKS).map(([item, block]) => [block, Number(item)]));
 for (const [item, block] of Object.entries(ORVALIS_ITEM_BLOCKS)) ITEM_NAMES[Number(item)] = BLOCK_NAMES[block];
+Object.assign(ITEM_NAMES, { 70: 'Picareta de Madeira', 71: 'Picareta de Pedra', 72: 'Machado de Madeira', 73: 'Machado de Pedra', 74: 'Pá de Madeira', 75: 'Pá de Pedra', 76: 'Enxada de Madeira', 77: 'Enxada de Pedra' }); // ferramentas do Orvalis (ADR 0112)
+Object.assign(ITEM_NAMES, { 78: 'Semente de Trigo', 79: 'Trigo', 80: 'Cenoura', 81: 'Batata', 82: 'Tomate' }); // horta (ADR 0113)
+ITEM_NAMES[Item.BOLA_ARGILA] = 'Bola de Argila'; ITEM_NAMES[Item.TIJOLO] = 'Tijolo'; // itens sem bloco (ADR 0111)
+ITEM_NAMES[Item.MURETA_PEDRA] = 'Mureta de Pedra'; // a conexão vem dos vizinhos (ADR 0110)
+ITEM_NAMES[Item.DEGRAU_PEDRA] = 'Degrau de Pedra'; // sem entrada em ORVALIS_ITEM_BLOCKS: o giro vem do olhar (ADR 0109)
+ITEM_NAMES[Item.HASTE] = 'Haste de Madeira'; // item sem bloco (ADR 0107)
 /** Pilhas: blocos, fragmentos, lente e brasa até 64; cápsula (legada, id reservado), lanterna e mesa até 1 (a mesa 1 por espaço: é uma peça grande). */
 export const maxStack = (item: number): number => (item === Item.CAPSULE || item === Item.LANTERN || item === Item.WORKBENCH || isBucket(item) || isTool(item) ? 1 : 64);
-export const isItem = (n: unknown): n is ItemId => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 51;
+export const isItem = (n: unknown): n is ItemId => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 82;
 /** Balde de Cobre (ADR 0091): vazio recolhe uma célula do lago, cheio a despeja. Pergunte aqui, nunca compare ids soltos. */
 export const isBucket = (item: number | undefined | null): boolean => item === Item.BALDE || item === Item.BALDE_CHEIO;
 
@@ -25,6 +31,8 @@ export const isBucket = (item: number | undefined | null): boolean => item === I
 export function blockOfItem(item: number): number | null {
   if (item >= Item.SAND && item <= Item.FROST) return item; // mesmos ids
   if (ORVALIS_ITEM_BLOCKS[item]) return ORVALIS_ITEM_BLOCKS[item]; // Orvalis em voxel (ADR 0105)
+  if (item === Item.MURETA_PEDRA) return T.STONE_WALL; // `set` liga aos vizinhos
+  if (item === Item.DEGRAU_PEDRA) return T.STONE_STAIR; // o giro vem do olhar de quem coloca (`placeFromSlot`, ADR 0109)
   if (item === Item.LANTERN) return T.LANTERN;
   if (item === Item.WORKBENCH) return T.WORKBENCH;
   if (item === Item.SLAB) return T.SLAB;
@@ -47,7 +55,12 @@ export function blockOfItem(item: number): number | null {
 /** Item que um bloco devolve ao ser quebrado (null = não se quebra: rocha-mãe, líquido). */
 export function itemOfBlock(block: number): ItemId | null {
   if (block >= T.SAND && block <= T.FROST) return block as ItemId;
+  if (block === T.FARMLAND_DRY || block === T.FARMLAND_WET || block === T.PATH) return Item.DIRT; // como no Minecraft, a terra arada e o caminho devolvem terra (ADR 0112)
   if (ORVALIS_BLOCK_ITEMS[block]) return ORVALIS_BLOCK_ITEMS[block] as ItemId; // Orvalis em voxel (ADR 0105)
+  if (block === T.STONE_SLAB_TOP) return Item.LAJE_PEDRA; // a superior devolve a mesma laje (a fusão é a Pedra Lisa: 1 bloco = 2 lajes, ADR 0108)
+  if (block >= T.STONE_STAIR && block <= T.STONE_STAIR_270) return Item.DEGRAU_PEDRA;
+  if (block >= T.STONE_WALL && block <= T.STONE_WALL_LAST) return Item.MURETA_PEDRA;
+  if (isCarpentry(block)) return Item.MESA_CARPINTARIA; // as 4 orientações da mesa devolvem 1 mesa (ADR 0107)
   if (block === T.VEIN_ROCK) return Item.DARK_ROCK; // o veio devolve o bloco inteiro (a lasca vem à parte, em `actions.ts`)
   if (block === T.VEIN_FROST) return Item.FROST;
   if (block === T.LANTERN) return Item.LANTERN;
@@ -73,21 +86,31 @@ export function itemOfBlock(block: number): ItemId | null {
 export const dropCountOf = (block: number): number => (block === T.SLAB_DOUBLE ? 2 : 1);
 
 /** Comida (ADR 0060): fome recuperada (pontos de 0 a 20) e saturação somada (como no Minecraft: `fome + saturação` limitada à fome). Provisório, pede teste em jogo. */
-export const FOOD: Readonly<Record<number, { hunger: number; saturation: number }>> = { [Item.NOZ]: { hunger: 4, saturation: 2.4 }, [Item.NOZ_TORRADA]: { hunger: 7, saturation: 5.6 }, [Item.RAW_MEAT]: { hunger: 2, saturation: 1.2 }, [Item.COOKED_MEAT]: { hunger: 8, saturation: 12.8 } };
+export const FOOD: Readonly<Record<number, { hunger: number; saturation: number }>> = { [Item.NOZ]: { hunger: 4, saturation: 2.4 }, [Item.NOZ_TORRADA]: { hunger: 7, saturation: 5.6 }, [Item.RAW_MEAT]: { hunger: 2, saturation: 1.2 }, [Item.COOKED_MEAT]: { hunger: 8, saturation: 12.8 }, [Item.CENOURA]: { hunger: 3, saturation: 3.6 }, [Item.BATATA]: { hunger: 1, saturation: 0.6 }, [Item.TOMATE]: { hunger: 2, saturation: 2.4 } }; // horta do Orvalis (ADR 0113): cenoura e batata como no Minecraft; o tomate é nosso (provisório)
 export const foodOf = (item: number): { hunger: number; saturation: number } | null => FOOD[item] ?? null;
 
 /**
  * Ferramentas (ADR 0063): o item na mão muda o que se quebra e a velocidade. `pick` = picareta (quebra veio de cobre e rocha mais depressa). Provisório: sem durabilidade.
  * Ferramenta nova entra aqui (nunca `item === …` solto no jogo).
  */
-export type Tier = 'rock' | 'copper';
-export const TOOLS: Readonly<Record<number, { kind: 'pick' | 'dagger'; tier: Tier }>> = {
+export type Tier = 'wood' | 'rock' | 'copper';
+export type ToolKind = 'pick' | 'dagger' | 'axe' | 'shovel' | 'hoe';
+export const TOOLS: Readonly<Record<number, { kind: ToolKind; tier: Tier }>> = {
   [Item.STONE_PICK]: { kind: 'pick', tier: 'rock' }, [Item.COPPER_PICK]: { kind: 'pick', tier: 'copper' },
   [Item.STONE_DAGGER]: { kind: 'dagger', tier: 'rock' }, [Item.COPPER_DAGGER]: { kind: 'dagger', tier: 'copper' },
+  // Orvalis em voxel (ADR 0112): madeira e pedra (a pedra usa o nível `rock`, o mesmo da picareta de rocha do Titã)
+  [Item.PICARETA_MADEIRA]: { kind: 'pick', tier: 'wood' }, [Item.PICARETA_PEDRA]: { kind: 'pick', tier: 'rock' },
+  [Item.MACHADO_MADEIRA]: { kind: 'axe', tier: 'wood' }, [Item.MACHADO_PEDRA]: { kind: 'axe', tier: 'rock' },
+  [Item.PA_MADEIRA]: { kind: 'shovel', tier: 'wood' }, [Item.PA_PEDRA]: { kind: 'shovel', tier: 'rock' },
+  [Item.ENXADA_MADEIRA]: { kind: 'hoe', tier: 'wood' }, [Item.ENXADA_PEDRA]: { kind: 'hoe', tier: 'rock' },
 };
 export const toolOf = (item: number | undefined | null): (typeof TOOLS)[number] | null => (item ? TOOLS[item] ?? null : null);
 export const isTool = (item: number): boolean => item in TOOLS;
 export const isPick = (item: number | undefined | null): boolean => toolOf(item)?.kind === 'pick';
 /** Nível da picareta na mão (`null` = não é picareta). */
 export const pickTier = (item: number | undefined | null): Tier | null => { const t = toolOf(item); return t?.kind === 'pick' ? t.tier : null; };
+/** Machado, pá e enxada (ADR 0112): pergunte aqui, nunca ids soltos. */
+export const isAxe = (item: number | undefined | null): boolean => toolOf(item)?.kind === 'axe';
+export const isShovel = (item: number | undefined | null): boolean => toolOf(item)?.kind === 'shovel';
+export const isHoe = (item: number | undefined | null): boolean => toolOf(item)?.kind === 'hoe';
 export const isDagger = (item: number | undefined | null): boolean => toolOf(item)?.kind === 'dagger';

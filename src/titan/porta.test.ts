@@ -27,7 +27,7 @@ const put = (s: S, x: number, z: number, yaw = 0) => { s.yaw = yaw; if (s.invent
 describe('porta de junco: regras do bloco', () => {
   it('32 ids (giro, abertura, dobradiça, metade), sólidos que não são cubo, uma instância só na metade de baixo, item 41', () => {
     expect(T_MAX).toBeGreaterThanOrEqual(T.DOOR_LAST); // o Orvalis em voxel (ids 90–99, ADR 0105) vem depois das portas
-    expect(isItem(Item.PORTA_JUNCO) && !isItem(52)).toBe(true);
+    expect(isItem(Item.PORTA_JUNCO) && !isItem(83)).toBe(true);
     let n = 0;
     for (let t = 0; t < 4; t++) for (const hr of [false, true]) for (const op of [false, true]) for (const up of [false, true]) {
       const id = doorId(t, hr, op, up); n++;

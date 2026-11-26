@@ -69,6 +69,25 @@
   "orvalis/folhas-cerejeira",
   "orvalis/tora-betula-topo",
   "orvalis/tora-betula-lateral",
-  "orvalis/folhas-betula"
+  "orvalis/folhas-betula",
+  "orvalis/tabua-carvalho",
+  "orvalis/tabua-cerejeira",
+  "orvalis/tabua-betula",
+  "orvalis/mesa-topo",
+  "orvalis/mesa-frente",
+  "orvalis/mesa-lateral",
+  "orvalis/pedra-lisa",
+  "orvalis/tijolo-pedra",
+  "orvalis/laje-topo",
+  "orvalis/laje-face",
+  "orvalis/terra-arada-seca-topo",
+  "orvalis/terra-arada-seca-lateral",
+  "orvalis/terra-arada-umida-topo",
+  "orvalis/terra-arada-umida-lateral",
+  "orvalis/caminho-topo",
+  "orvalis/caminho-lateral",
+  "orvalis/terra-infertil",
+  "orvalis/bloco-argila",
+  "orvalis/bloco-tijolos"
  ]
 }

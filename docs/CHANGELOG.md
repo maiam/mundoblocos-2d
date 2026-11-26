@@ -1,5 +1,41 @@
 # Changelog
 
+## Orvalis v0.180.0 — Horta no Orvalis em voxel (E5, 26/11/2026)
+- **ADR 0113.** **Trigo, cenoura, batata e tomate** (itens 78–82; Semente de Trigo, Trigo, Cenoura, Batata, Tomate): plantam-se no topo da terra arada (o trigo com a semente; os outros com o próprio produto, que onde não dá para plantar se **come**), têm 3 fases, crescem pelos mesmos random ticks do junco (fertilidade pela terra úmida ou seca), colhem-se 2 e a planta volta a broto. **A terra arada agora seca e umedece** conforme o lago a até 4 células. Semente silvestre provisória ao quebrar grama; receita de Semente de Trigo.
+- Atlas da horta (12 quadros de 16 px, malha em '#') e de itens 4 × 21; `header.crops` guarda a espécie da horta. Testes novos em `orvalis/horta.test.ts`; limites `isItem(78)` → 83 nos antigos. Sem mudança de gerador, versão de save nem protocolo. Fila: E6 vedações e abrigo.
+
+## Orvalis v0.179.0 — Ferramentas de madeira e de pedra no Orvalis em voxel (E4, 26/11/2026)
+- **ADR 0112.** **Picareta, machado, pá e enxada** de madeira e de pedra (itens 70–77, durabilidade 59/131, sprites 16 × 16 do pacote). `TOOLS` ganha os tipos `axe`/`shovel`/`hoe` e o nível `wood`; a ferramenta certa acelera o bloco certo (`blockToolOf`, `toolAdvantage`). **A enxada ara** terra, grama e caminho (úmida se há lago a até 4 células, `soil.ts`) e **a pá abre Caminho de Terra**, gastando 1 de durabilidade; terra arada e caminho devolvem Terra. Receitas na Mesa (material + 2 hastes); as receitas provisórias de solo do ADR 0111 saíram.
+- **Correção:** a picareta de cobre do Titã passou a quebrar a rocha a 40 % do tempo (o ADR 0065 já dizia isso; o jogo aplicava 60 % a toda picareta). Atlas de itens 4 × 20. Testes novos em `orvalis/ferramentas.test.ts`; limites `isItem(70)` → 78 nos antigos. Sem mudança de gerador, save nem protocolo. Fila: E5 horta, E6 vedações e abrigo.
+
+## Orvalis v0.178.0 — Solo de cultivo e cerâmica no Orvalis em voxel (E3, 26/11/2026)
+- **ADR 0111.** **Terra Arada Seca e Úmida, Caminho de Terra, Terra Infértil, Bloco de Argila e Bloco de Tijolos** (blocos 131–136, itens 62–67; cubos inteiros) e **Bola de Argila** e **Tijolo** (itens 68–69, sprites 16 × 16 do pacote). Receitas **provisórias** na Mesa de Carpintaria (a enxada, a água do cultivo, a argila no terreno e a fundição ainda não existem). Quebra e som por classe (solo como terra, tijolos como pedra).
+- Atlas de terreno com 82 tiles e de itens 4 × 18 (`ITEM_ROWS`, CSS, scripts). Testes novos em `orvalis/solo.test.ts`; limites `isItem(61)` → 70 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E3 feita; fila: E4 ferramentas, E5 horta, E6 vedações e abrigo. Vasos ficam sem entrega.
+
+## Orvalis v0.177.0 — Mureta de Pedra no Orvalis em voxel (E2c, 26/11/2026)
+- **ADR 0110.** **Mureta de Pedra** (blocos 115–130, item 61): poste de 8 × 8 e braços para as muretas e cubos inteiros vizinhos, 0,75 m de altura (dá para pular por cima). A máscara de conexão vai no id e `TitanVolume.set` a mantém: ao colocar ou tirar qualquer bloco, as muretas dos quatro lados se refazem (e a sala repassa cada uma pelo `onSet`). Modelo por máscara gerado em `render/muretaModel.ts` sobre a tira topo | face de `scripts/make-orvalis-mureta.py`. Receita na Mesa: 6 Pedra Lisa → 6 (provisória).
+- Atlas de itens 4 × 16 (`ITEM_ROWS`, CSS e script). Testes novos em `orvalis/pedraObra.test.ts`; limites `isItem(61)` → 62 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E2 (pedra de obra) completa; fila: E3 solo e cerâmica → E6.
+
+## Orvalis v0.176.0 — Degrau de Pedra no Orvalis em voxel (E2b, 26/11/2026)
+- **ADR 0109.** **Degrau de Pedra** (blocos 111–114 com o giro no id, item 60): a forma, a física, a mira e a colocação são as do degrau de junco (ADR 0101); o modelo `degrauPedra` usa a arte do pacote (topo, frente, perfil) numa tira de 3 tiles de 16 px (`scripts/make-orvalis-degrau.py`, também no `npm run texturas`). Ícone isométrico gerado. Receita na Mesa: 3 Pedra Lisa → 4 Degraus (provisória). Quebra 1 s, som de rocha.
+- `isStair` vale para as duas famílias (`isReedStair`/`isStoneStair`, `stairId(giro, pedra)`). Vitrine com o degrau. Testes novos em `orvalis/pedraObra.test.ts`; limites `isItem(60)` → 61 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E2b feita; fila: E2c mureta → E6.
+
+## Orvalis v0.175.0 — Pedra de obra no Orvalis em voxel (E2a, 26/11/2026)
+- **ADR 0108.** **Pedra Lisa**, **Tijolo de Pedra** e **Laje de Pedra** (blocos 107–110, itens 57–59). A laje entra na família das lajes (inferior e superior; **duas lajes na mesma célula viram a Pedra Lisa**; só funde com a de pedra). Receitas na Mesa de Carpintaria: 1 Pedra → 1 Pedra Lisa (provisório, no Minecraft é fundição), 4 Pedra → 4 Tijolos, 3 Pedra Lisa → 6 Lajes. Quebra 1,6 s (laje 1 s); ícones isométricos (laje em meia altura); atlas de itens 4 × 15.
+- **Vitrine de texturas** com 3 fileiras (terreno e árvores, madeira e pedra, Titã). Degrau e mureta de pedra do pacote ficam para E2b e E2c (pedem forma própria).
+- Testes novos (`orvalis/pedraObra.test.ts`); 2 testes com contagens fixas ajustados. Sem mudança de gerador, save nem protocolo.
+
+## Orvalis v0.174.0 — Madeira básica no Orvalis em voxel (E1, 26/11/2026)
+- **ADR 0107.** Tábuas de carvalho, cerejeira e bétula, haste de madeira e **Mesa de Carpintaria** (blocos 100–106, itens 52–56), com as regras do Minecraft: 1 tora → 4 tábuas; 2 tábuas → 4 hastes; 4 tábuas → 1 mesa (uma receita por madeira, 9 no total, na mochila). A mesa tem a frente voltada para quem a coloca (face própria na malha, `tileForFace`) e é **bancada** como a Mesa de Trabalho (`isCraftingTable`).
+- **Receitas por mundo** (`Recipe.world`): o Orvalis vê só as de madeira e o Titã só as dele; avisos de descoberta próprios. Atlas de itens 4 × 14; ícones isométricos das tábuas e da mesa; a haste é sprite extrudado de 16 × 16.
+- Testes novos (`orvalis/madeira.test.ts`) e 3 antigos com contagens fixas ajustados. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E1 feita; fila: E2 pedra de obra → E6.
+
+## Orvalis v0.173.0 — Pacote Texturas16px importado e arte nova no Orvalis em voxel (26/11/2026)
+- **Pacote do Drive `orvalis/Texturas16px`** (94 PNGs de 16 × 16 em 10 pastas: madeira, vedação de bétula, folhas e orla, pedra de obra, solo de cultivo, horta, ferramentas, junco, abrigo, cerâmica) importado **inteiro** para `assets-src/orvalis-voxel/catalogo/` com um `LEIAME.md` que mapeia cada pacote à entrega que o liga ao jogo. Decisão do dono do produto: tudo, em várias entregas seguidas, com PR e merge a cada uma.
+- **No jogo agora (E0):** folhas de carvalho, bétula e cerejeira, toras de carvalho e cerejeira, areia da praia e a **pedra bruta como bloco Pedra** do terreno (topo e lateral) — pixel art de 16 px, no atlas de 16 px e na variante de 8 px da isométrica; os ícones isométricos dos 7 blocos afetados foram regerados. A tora de bétula e a grama/terra seguem as do Drive anterior.
+- `make-orvalis-voxel-arte.py` aceita fontes **menores** que 32 px (amplia em múltiplo inteiro, sem suavização) para os ícones.
+- Sem mudança de código do jogo, gerador, save nem protocolo.
+
 ## Orvalis v0.172.0 — Titã a 16 px e vista isométrica 2:1 (25/11/2026)
 - **ADR 0106.** O motor do Titã (`?mundo=titan` e `?mundo=orvalis3d`) passa a renderizar o terreno e a água a **16 px por face** (regra do Minecraft); a arte-fonte pode ser maior e é reduzida ao montar o atlas (`titan-atlas-16px.webp`, 160 × 160; água `titan-lago-16px` e `orvalis-agua-16px`). Os atlas de 32 px de terreno e água saíram; o de itens segue 32 px. Testes de UV valem para 16 e 8 px.
 - **Botão de vista** no canto superior direito do menu: **Visão: 1ª pessoa / isométrica** (tecla **V**; lembrado no aparelho; `?visao=iso`). **Isométrica 2:1:** câmera ortográfica a 30° (topo do bloco 16 × 8 px, 8 × 8 texels por face, atlas de 8 px), buffer de 1 pixel por pixel CSS ampliado sem suavização, câmera presa à grade de pixels; **4 vistas de 90°** (botões ⟲ ⟳, teclas Z/X, transição suave); andar relativo à câmera; mira e ação no ponto do mouse ou do dedo (quebrar segurando, colocar com toque curto; alcance de 6 blocos); **boneco provisório** com **silhueta azul atrás do terreno**; sem céu, sol, névoa, mergulho nem mão.

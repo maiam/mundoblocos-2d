@@ -12,7 +12,8 @@ export interface Stackable { item: number; count: number }
 /** Grupo do livro de receitas (faixa da esquerda): pelo tipo do item fabricado. */
 export type Group = 'construcao' | 'utilidades' | 'materiais' | 'ferramentas';
 export const GROUP_NAMES: Record<Group, string> = { construcao: 'Construção', utilidades: 'Utilidades', materiais: 'Materiais', ferramentas: 'Ferramentas' };
-export interface Recipe { id: string; name: string; group: Group; result: Stackable; ingredients: readonly Stackable[]; station: Station }
+/** `world`: a receita só existe nesse mundo voxel (ausente = Titã). O livro de receitas mostra só as do mundo aberto (ADR 0107). */
+export interface Recipe { id: string; name: string; group: Group; result: Stackable; ingredients: readonly Stackable[]; station: Station; world?: 'orvalis' }
 
 export const RECIPES: readonly Recipe[] = [
   { id: 'mesa', name: 'Mesa de Trabalho', group: 'utilidades', result: { item: Item.WORKBENCH, count: 1 }, ingredients: [{ item: Item.DARK_ROCK, count: 4 }], station: 'personal' },
@@ -42,6 +43,39 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'adaga-cobre', name: 'Adaga de Cobre', group: 'ferramentas', result: { item: Item.COPPER_DAGGER, count: 1 }, ingredients: [{ item: Item.COPPER_INGOT, count: 1 }, { item: Item.DRY_REED, count: 1 }], station: 'workbench' },
   { id: 'ambar-compactado', name: 'Bloco de Âmbar Compactado', group: 'construcao', result: { item: Item.EMBER_BLOCK, count: 1 }, ingredients: [{ item: Item.EMBER, count: 9 }], station: 'workbench' },
   { id: 'ambar-desmontar', name: 'Desmontar Bloco de Âmbar', group: 'materiais', result: { item: Item.EMBER, count: 9 }, ingredients: [{ item: Item.EMBER_BLOCK, count: 1 }], station: 'workbench' },
+  // Madeira básica do Orvalis em voxel (ADR 0107): regras do Minecraft (1 tora → 4 tábuas; 2 tábuas → 4 hastes; 4 tábuas → mesa), uma receita por madeira (o catálogo não tem "qualquer tábua")
+  { id: 'tabuas-carvalho', name: 'Tábuas de Carvalho', group: 'construcao', result: { item: Item.TABUA_CARVALHO, count: 4 }, ingredients: [{ item: Item.LOG_OAK, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'tabuas-cerejeira', name: 'Tábuas de Cerejeira', group: 'construcao', result: { item: Item.TABUA_CEREJEIRA, count: 4 }, ingredients: [{ item: Item.LOG_CHERRY, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'tabuas-betula', name: 'Tábuas de Bétula', group: 'construcao', result: { item: Item.TABUA_BETULA, count: 4 }, ingredients: [{ item: Item.LOG_BIRCH, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'hastes-carvalho', name: 'Hastes de Madeira (tábuas de carvalho)', group: 'materiais', result: { item: Item.HASTE, count: 4 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 2 }], station: 'personal', world: 'orvalis' },
+  { id: 'hastes-cerejeira', name: 'Hastes de Madeira (tábuas de cerejeira)', group: 'materiais', result: { item: Item.HASTE, count: 4 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 2 }], station: 'personal', world: 'orvalis' },
+  { id: 'hastes-betula', name: 'Hastes de Madeira (tábuas de bétula)', group: 'materiais', result: { item: Item.HASTE, count: 4 }, ingredients: [{ item: Item.TABUA_BETULA, count: 2 }], station: 'personal', world: 'orvalis' },
+  { id: 'mesa-carpintaria-carvalho', name: 'Mesa de Carpintaria (tábuas de carvalho)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 4 }], station: 'personal', world: 'orvalis' },
+  { id: 'mesa-carpintaria-cerejeira', name: 'Mesa de Carpintaria (tábuas de cerejeira)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 4 }], station: 'personal', world: 'orvalis' },
+  { id: 'mesa-carpintaria-betula', name: 'Mesa de Carpintaria (tábuas de bétula)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_BETULA, count: 4 }], station: 'personal', world: 'orvalis' },
+  // Pedra de obra do Orvalis em voxel (ADR 0108), na Mesa de Carpintaria (a fundição em Braseiro ainda não existe no Orvalis: o polimento é provisório)
+  { id: 'pedra-lisa', name: 'Pedra Lisa', group: 'construcao', result: { item: Item.PEDRA_LISA, count: 1 }, ingredients: [{ item: Item.STONE, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'tijolo-pedra', name: 'Tijolo de Pedra', group: 'construcao', result: { item: Item.TIJOLO_PEDRA, count: 4 }, ingredients: [{ item: Item.STONE, count: 4 }], station: 'workbench', world: 'orvalis' },
+  { id: 'degrau-pedra', name: 'Degrau de Pedra', group: 'construcao', result: { item: Item.DEGRAU_PEDRA, count: 4 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
+  { id: 'mureta-pedra', name: 'Mureta de Pedra', group: 'construcao', result: { item: Item.MURETA_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 6 }], station: 'workbench', world: 'orvalis' },
+  // Solo e cerâmica do Orvalis em voxel (ADR 0111): receitas PROVISÓRIAS até existirem a água do cultivo (E5), a argila no terreno e a fundição; terra arada e caminho agora vêm da enxada e da pá (ADR 0112)
+  { id: 'terra-infertil', name: 'Terra Infértil', group: 'construcao', result: { item: Item.TERRA_INFERTIL, count: 2 }, ingredients: [{ item: Item.DIRT, count: 1 }, { item: Item.BEACH, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'bola-argila', name: 'Bola de Argila', group: 'materiais', result: { item: Item.BOLA_ARGILA, count: 2 }, ingredients: [{ item: Item.DIRT, count: 2 }, { item: Item.BEACH, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'tijolo', name: 'Tijolo', group: 'materiais', result: { item: Item.TIJOLO, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'bloco-argila', name: 'Bloco de Argila', group: 'construcao', result: { item: Item.BLOCO_ARGILA, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 4 }], station: 'workbench', world: 'orvalis' },
+  { id: 'bloco-tijolos', name: 'Bloco de Tijolos', group: 'construcao', result: { item: Item.BLOCO_TIJOLOS, count: 1 }, ingredients: [{ item: Item.TIJOLO, count: 4 }], station: 'workbench', world: 'orvalis' },
+  // Ferramentas do Orvalis em voxel (ADR 0112), na Mesa de Carpintaria; a de madeira só de tábuas de carvalho por ora (pendência: "qualquer tábua")
+  { id: 'picareta-madeira', name: 'Picareta de Madeira', group: 'ferramentas', result: { item: Item.PICARETA_MADEIRA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 3 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'picareta-pedra', name: 'Picareta de Pedra', group: 'ferramentas', result: { item: Item.PICARETA_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 3 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'machado-madeira', name: 'Machado de Madeira', group: 'ferramentas', result: { item: Item.MACHADO_MADEIRA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 3 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'machado-pedra', name: 'Machado de Pedra', group: 'ferramentas', result: { item: Item.MACHADO_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 3 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'pa-madeira', name: 'Pá de Madeira', group: 'ferramentas', result: { item: Item.PA_MADEIRA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 1 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'pa-pedra', name: 'Pá de Pedra', group: 'ferramentas', result: { item: Item.PA_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 1 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'enxada-madeira', name: 'Enxada de Madeira', group: 'ferramentas', result: { item: Item.ENXADA_MADEIRA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 2 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  { id: 'enxada-pedra', name: 'Enxada de Pedra', group: 'ferramentas', result: { item: Item.ENXADA_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 2 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  // Horta (ADR 0113): o trigo fecha o ciclo (a cenoura, a batata e o tomate se plantam com o próprio produto)
+  { id: 'semente-trigo', name: 'Semente de Trigo', group: 'materiais', result: { item: Item.SEMENTE_TRIGO, count: 1 }, ingredients: [{ item: Item.TRIGO, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 
