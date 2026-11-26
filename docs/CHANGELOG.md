@@ -1,5 +1,9 @@
 # Changelog
 
+## Documentação — guia de itens e texturas (26/11/2026)
+
+- Catálogo de candidatos para Orvalis e Titã, com referência ao inventário do Minecraft, prioridades sugeridas e entregáveis de arte por peça.
+
 ## Orvalis v0.180.0 — Horta no Orvalis em voxel (E5, 26/11/2026)
 - **ADR 0113.** **Trigo, cenoura, batata e tomate** (itens 78–82; Semente de Trigo, Trigo, Cenoura, Batata, Tomate): plantam-se no topo da terra arada (o trigo com a semente; os outros com o próprio produto, que onde não dá para plantar se **come**), têm 3 fases, crescem pelos mesmos random ticks do junco (fertilidade pela terra úmida ou seca), colhem-se 2 e a planta volta a broto. **A terra arada agora seca e umedece** conforme o lago a até 4 células. Semente silvestre provisória ao quebrar grama; receita de Semente de Trigo.
 - Atlas da horta (12 quadros de 16 px, malha em '#') e de itens 4 × 21; `header.crops` guarda a espécie da horta. Testes novos em `orvalis/horta.test.ts`; limites `isItem(78)` → 83 nos antigos. Sem mudança de gerador, versão de save nem protocolo. Fila: E6 vedações e abrigo.

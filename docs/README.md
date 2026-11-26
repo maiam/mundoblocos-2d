@@ -33,6 +33,10 @@ Para planejar mecânicas, consulte o [Guia de regras de mundo aberto](GUIA_REGRA
 | Salvamento e menu | `game/save.ts`, `game/menu.ts`, `main.ts` | [save.md](domains/save.md) |
 | Render e arte | `src/render/`, `assets-src/`, `scripts/` | [render.md](domains/render.md) |
 
+## Guias de produção
+
+- [Guia de itens e texturas](GUIA_ITENS_TEXTURAS.md) — catálogo de candidatos para Orvalis e Titã, prioridades e arte por tipo de peça.
+
 ## ADRs
 Índice completo com a decisão de cada um em [DECISIONS.md](DECISIONS.md) (arquivos em [adr/](adr/)): 0001 geração pura e
 chunks · 0002 texturas procedurais (parcialmente substituída) · 0003 vista 3/4 · 0004 entidades `Walker` · 0005 itens e

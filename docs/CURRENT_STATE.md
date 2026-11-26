@@ -88,6 +88,8 @@ uma seção por versão) e registre a mudança no `CHANGELOG`.
   Artifacts (versão de teste). Verificação (GitHub Actions) em todo PR: `tsc`, testes, build, pacote do multiplayer
   e `npm audit`. Ver `OPERATIONS.md` e `CONVENTIONS.md`.
 
+A referência para planejar novas coleções está no [Guia de itens e texturas](GUIA_ITENS_TEXTURAS.md). O guia identifica a arte disponível e as famílias candidatas por mundo.
+
 ## Limitações conhecidas
 - Salvamento só neste navegador/aparelho (nuvem/contas dependem do backend do Orvalis, ADR 0015).
 - NPCs só dizem falas fixas (2 cada; sem escolhas, loja ou missões); só Ferraria e Tenda têm interior.
