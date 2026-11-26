@@ -58,6 +58,15 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'tijolo-pedra', name: 'Tijolo de Pedra', group: 'construcao', result: { item: Item.TIJOLO_PEDRA, count: 4 }, ingredients: [{ item: Item.STONE, count: 4 }], station: 'workbench', world: 'orvalis' },
   { id: 'degrau-pedra', name: 'Degrau de Pedra', group: 'construcao', result: { item: Item.DEGRAU_PEDRA, count: 4 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
   { id: 'mureta-pedra', name: 'Mureta de Pedra', group: 'construcao', result: { item: Item.MURETA_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 6 }], station: 'workbench', world: 'orvalis' },
+  // Solo e cerâmica do Orvalis em voxel (ADR 0111): receitas PROVISÓRIAS até existirem a enxada/pá (E4), a água do cultivo (E5), a argila no terreno e a fundição
+  { id: 'terra-arada-seca', name: 'Terra Arada Seca', group: 'construcao', result: { item: Item.TERRA_ARADA_SECA, count: 1 }, ingredients: [{ item: Item.DIRT, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'terra-arada-umida', name: 'Terra Arada Úmida', group: 'construcao', result: { item: Item.TERRA_ARADA_UMIDA, count: 1 }, ingredients: [{ item: Item.TERRA_ARADA_SECA, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'caminho-terra', name: 'Caminho de Terra', group: 'construcao', result: { item: Item.CAMINHO_TERRA, count: 1 }, ingredients: [{ item: Item.DIRT, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'terra-infertil', name: 'Terra Infértil', group: 'construcao', result: { item: Item.TERRA_INFERTIL, count: 2 }, ingredients: [{ item: Item.DIRT, count: 1 }, { item: Item.BEACH, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'bola-argila', name: 'Bola de Argila', group: 'materiais', result: { item: Item.BOLA_ARGILA, count: 2 }, ingredients: [{ item: Item.DIRT, count: 2 }, { item: Item.BEACH, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'tijolo', name: 'Tijolo', group: 'materiais', result: { item: Item.TIJOLO, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'bloco-argila', name: 'Bloco de Argila', group: 'construcao', result: { item: Item.BLOCO_ARGILA, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 4 }], station: 'workbench', world: 'orvalis' },
+  { id: 'bloco-tijolos', name: 'Bloco de Tijolos', group: 'construcao', result: { item: Item.BLOCO_TIJOLOS, count: 1 }, ingredients: [{ item: Item.TIJOLO, count: 4 }], station: 'workbench', world: 'orvalis' },
   { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);

@@ -79,6 +79,15 @@
   "orvalis/pedra-lisa",
   "orvalis/tijolo-pedra",
   "orvalis/laje-topo",
-  "orvalis/laje-face"
+  "orvalis/laje-face",
+  "orvalis/terra-arada-seca-topo",
+  "orvalis/terra-arada-seca-lateral",
+  "orvalis/terra-arada-umida-topo",
+  "orvalis/terra-arada-umida-lateral",
+  "orvalis/caminho-topo",
+  "orvalis/caminho-lateral",
+  "orvalis/terra-infertil",
+  "orvalis/bloco-argila",
+  "orvalis/bloco-tijolos"
  ]
 }

@@ -29,7 +29,7 @@ describe('Marco de Margem e Painel de Junco: ids, modelos e regras (ADR 0058)', 
     expect(modelOf(T.PAINEL)).toEqual({ kind: 'painel', turn: 0 }); expect(modelOf(T.PAINEL_Z)).toEqual({ kind: 'painel', turn: 1 });
     expect(modelOf(T.DARK_ROCK)).toBeNull(); expect(blocksLight(T.DARK_ROCK)).toBe(true);
     expect(blockOfItem(Item.MARCO)).toBe(T.MARCO); expect(blockOfItem(Item.PAINEL)).toBe(T.PAINEL);
-    expect(isItem(Item.MARCO) && isItem(Item.PAINEL)).toBe(true); expect(isItem(40)).toBe(true); expect(isItem(62)).toBe(false);
+    expect(isItem(Item.MARCO) && isItem(Item.PAINEL)).toBe(true); expect(isItem(40)).toBe(true); expect(isItem(70)).toBe(false);
     expect(breakTotalMs('lantern', T.MARCO)).toBe(350); expect(breakTotalMs('block', T.PAINEL)).toBe(350);
     expect(surfaceOf(T.MARCO)).toBe('rock'); expect(surfaceOf(T.PAINEL)).toBe('sand');
   });
