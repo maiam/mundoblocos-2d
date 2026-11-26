@@ -43,11 +43,14 @@ def leaves(dark: tuple, mid: tuple, light: tuple, seed: int) -> Image.Image:
 
 
 def to_tile(im: Image.Image, name: str) -> Image.Image:
-    """Reduz a textura em disco para 32 × 32 se ela vier maior (o arquivo não muda; o atlas faz a mesma redução)."""
+    """Leva a textura em disco a 32 × 32 para o ícone: reduz se vier maior (média) e amplia sem suavização se vier menor, em múltiplo inteiro (16 → 32). O arquivo não muda; o atlas faz a redução dele."""
     w, h = im.size
     if w == 32 and h == 32:
         return im
-    assert w > 32 and w == h, (name, im.size)
+    assert w == h, (name, im.size)
+    if w < 32:
+        assert 32 % w == 0, (name, im.size)
+        return im.resize((32, 32), Image.NEAREST)
     return im.resize((32, 32), Image.BOX if w % 32 == 0 else Image.LANCZOS)
 
 

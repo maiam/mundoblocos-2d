@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.173.0 — Pacote Texturas16px importado e arte nova no Orvalis em voxel (26/11/2026)
+- **Pacote do Drive `orvalis/Texturas16px`** (94 PNGs de 16 × 16 em 10 pastas: madeira, vedação de bétula, folhas e orla, pedra de obra, solo de cultivo, horta, ferramentas, junco, abrigo, cerâmica) importado **inteiro** para `assets-src/orvalis-voxel/catalogo/` com um `LEIAME.md` que mapeia cada pacote à entrega que o liga ao jogo. Decisão do dono do produto: tudo, em várias entregas seguidas, com PR e merge a cada uma.
+- **No jogo agora (E0):** folhas de carvalho, bétula e cerejeira, toras de carvalho e cerejeira, areia da praia e a **pedra bruta como bloco Pedra** do terreno (topo e lateral) — pixel art de 16 px, no atlas de 16 px e na variante de 8 px da isométrica; os ícones isométricos dos 7 blocos afetados foram regerados. A tora de bétula e a grama/terra seguem as do Drive anterior.
+- `make-orvalis-voxel-arte.py` aceita fontes **menores** que 32 px (amplia em múltiplo inteiro, sem suavização) para os ícones.
+- Sem mudança de código do jogo, gerador, save nem protocolo.
+
 ## Orvalis v0.172.0 — Titã a 16 px e vista isométrica 2:1 (25/11/2026)
 - **ADR 0106.** O motor do Titã (`?mundo=titan` e `?mundo=orvalis3d`) passa a renderizar o terreno e a água a **16 px por face** (regra do Minecraft); a arte-fonte pode ser maior e é reduzida ao montar o atlas (`titan-atlas-16px.webp`, 160 × 160; água `titan-lago-16px` e `orvalis-agua-16px`). Os atlas de 32 px de terreno e água saíram; o de itens segue 32 px. Testes de UV valem para 16 e 8 px.
 - **Botão de vista** no canto superior direito do menu: **Visão: 1ª pessoa / isométrica** (tecla **V**; lembrado no aparelho; `?visao=iso`). **Isométrica 2:1:** câmera ortográfica a 30° (topo do bloco 16 × 8 px, 8 × 8 texels por face, atlas de 8 px), buffer de 1 pixel por pixel CSS ampliado sem suavização, câmera presa à grade de pixels; **4 vistas de 90°** (botões ⟲ ⟳, teclas Z/X, transição suave); andar relativo à câmera; mira e ação no ponto do mouse ou do dedo (quebrar segurando, colocar com toque curto; alcance de 6 blocos); **boneco provisório** com **silhueta azul atrás do terreno**; sem céu, sol, névoa, mergulho nem mão.
