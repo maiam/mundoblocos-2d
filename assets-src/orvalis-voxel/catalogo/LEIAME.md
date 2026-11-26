@@ -10,7 +10,7 @@
 | **P1-05** Solo de cultivo | terra arada úmida e seca (topo, lateral); caminho de terra (topo, lateral); terra infértil | E3 | **no jogo (E3, v0.178.0**, ADR 0111) |
 | **P2-01** Cerâmica | bola de argila, tijolo, bloco de argila e de tijolos (textura e ícone), vaso de flor e decorado | E3 | **no jogo (E3, v0.178.0**, ADR 0111; vasos sem entrega) |
 | **P1-07** Ferramentas iniciais | picareta, machado, pá e enxada, de madeira e de pedra (ícones) | E4 | **no jogo (E4, v0.179.0**, ADR 0112) |
-| **P1-06** Horta | trigo, cenoura, batata e tomate (fases 01–03 e ícone), semente de trigo | E5 | fila |
+| **P1-06** Horta | trigo, cenoura, batata e tomate (fases 01–03 e ícone), semente de trigo | E5 | **no jogo (E5, v0.180.0**, ADR 0113) |
 | **P1-02** Vedação de bétula | porta (frente, verso, borda), portão (fechado, aberto), cerca, degrau, laje | E6 | fila |
 | **P1-08** Fechamento de junco | portão (ícone, fechado, aberto), alçapão (ícone, fechado, aberto), cerca (ícone, poste, travessa), trama | E6 | fila |
 | **P1-09** Abrigo da margem | caixote raso, prateleira, cobertura de junco (topo, frente, trama, ícone) | E6 | fila |

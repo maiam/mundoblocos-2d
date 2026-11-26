@@ -1,11 +1,11 @@
 {
   "name": "mundoblocos-2d",
   "private": true,
-  "version": "0.179.0",
+  "version": "0.180.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "texturas": "python3 scripts/make-orvalis-voxel-arte.py && python3 scripts/make-orvalis-degrau.py && python3 scripts/make-orvalis-mureta.py && python3 scripts/make-titan-atlas32.py && python3 scripts/make-titan-arte32.py",
+    "texturas": "python3 scripts/make-orvalis-voxel-arte.py && python3 scripts/make-orvalis-degrau.py && python3 scripts/make-orvalis-mureta.py && python3 scripts/make-orvalis-horta.py && python3 scripts/make-titan-atlas32.py && python3 scripts/make-titan-arte32.py",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

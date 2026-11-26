@@ -13,7 +13,7 @@ import { wearCost, type WearAction } from './wear';
 import { SLOTS } from './inventory';
 import { applyDisplace, planDisplace, settleDrops, stepDrops } from './drops';
 import { CHEST_SLOTS, type ChestState, chestPut, chestRoom, newChest } from './chest';
-import { type Species, cropKey, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKind } from './crops';
+import { type Species, cropKey, gardenSpeciesOf, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKindFor, wildSeedAt } from './crops';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -47,7 +47,7 @@ export function collectItem(s: TitanSession, id: string): ActionResult {
  */
 function collectCrop(s: TitanSession, id: string): ActionResult {
   const p = parseCropId(id), crop = p ? s.crops.get(cropKey(p[0], p[1], p[2])) : undefined;
-  const kind = crop ? soilKind(s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
+  const kind = crop ? soilKindFor(crop.species, s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
   if (!crop || !kind) return { ok: false };
   if (!isRipe(crop.species, kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
   const h = harvestOf(crop.species, kind);
@@ -70,7 +70,7 @@ export const canPlantNut = (s: TitanSession, hit: Hit): boolean => hit.ny === 1 
 
 /** Planta a muda (junco de vidro: úmida dá junco de vidro, ocre dá ressecado) ou a Noz (só na ocre) no topo de uma areia. Gasta 1; a célula de cima precisa estar livre. */
 function plantCrop(s: TitanSession, hit: Hit, slot: number, species: Species): ActionResult {
-  if (hit.ny !== 1 || !plantableSoil(species, s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A muda se planta no topo da areia' };
+  if (hit.ny !== 1 || !plantableSoil(species, s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: gardenSpeciesOf(seedOf(species)) ? 'Isto se planta no topo da terra arada' : 'A muda se planta no topo da areia' };
   if (!plantSpotFree(s, hit)) return { ok: false };
   const x = hit.x, y = hit.y + 1, z = hit.z;
   s.crops.set(cropKey(x, y, z), { x, y, z, age: 0, species });
@@ -418,6 +418,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (!s.volume.remove(x, y, z)) return { ok: false };
   if (direct) s.inventory.add(item, count);
   else spillBlock(s, item, count, x, y, z); // ADR 0082: o bloco comum cai no chão e é recolhido por proximidade
+  if (block === T.GRASS) { const seed = wildSeedAt(x, y, z); if (seed !== null) spillBlock(s, seed, 1, x, y, z); } // semente silvestre da grama (ADR 0113)
   if (isBrazier(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro cai no chão
   if (isChest(block)) spillChest(s, x, y, z); // e o do baú (ADR 0089)
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
@@ -542,6 +543,9 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
+  const garden = gardenSpeciesOf(stack.item); // a horta (ADR 0113): semente de trigo, cenoura, batata e tomate se plantam no topo da terra arada; cenoura, batata e tomate, onde não dá para plantar, se comem
+  if (garden && hit.ny === 1 && !hit.item && plantableSoil(garden, s.volume.get(hit.x, hit.y, hit.z)) && plantSpotFree(s, hit)) return plantCrop(s, hit, slot, garden);
+  if (garden && !foodOf(stack.item)) return { ok: false, msg: 'A semente se planta no topo da terra arada' };
   if (foodOf(stack.item)) return eatFromSlot(s, slot); // comida na mão: o toque come (não se coloca)
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);

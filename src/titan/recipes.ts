@@ -73,6 +73,8 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'pa-pedra', name: 'Pá de Pedra', group: 'ferramentas', result: { item: Item.PA_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 1 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
   { id: 'enxada-madeira', name: 'Enxada de Madeira', group: 'ferramentas', result: { item: Item.ENXADA_MADEIRA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 2 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
   { id: 'enxada-pedra', name: 'Enxada de Pedra', group: 'ferramentas', result: { item: Item.ENXADA_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 2 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
+  // Horta (ADR 0113): o trigo fecha o ciclo (a cenoura, a batata e o tomate se plantam com o próprio produto)
+  { id: 'semente-trigo', name: 'Semente de Trigo', group: 'materiais', result: { item: Item.SEMENTE_TRIGO, count: 1 }, ingredients: [{ item: Item.TRIGO, count: 1 }], station: 'personal', world: 'orvalis' },
   { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
