@@ -50,6 +50,7 @@ import braseiroAtlas from '../../assets/titan-braseiro-atlas.webp';
 import degrauModel from '../../assets/titan-degrau.json';
 import degrauPedraModel from '../../assets/titan-degrau-pedra.json';
 import degrauPedraTex from '../../assets/titan-degrau-pedra.webp';
+import muretaPedraTex from '../../assets/titan-mureta-pedra.webp';
 import cadeiraModel from '../../assets/titan-cadeira.json';
 import juncoTile from '../../assets/titan-junco-tile.webp';
 import portaTex from '../../assets/titan-porta.webp';
@@ -119,6 +120,7 @@ export const titanDegrauModel = degrauModel as ModelData;
 /** Degrau de Pedra (ADR 0109): as mesmas caixas, UV sobre a tira de 3 tiles de 16 px do pacote. */
 export const titanDegrauPedraModel = degrauPedraModel as ModelData;
 export const titanDegrauPedraUrl: string = degrauPedraTex;
+export const titanMuretaPedraUrl: string = muretaPedraTex; // Mureta de Pedra (ADR 0110): tira topo | face; o modelo sai de `render/muretaModel.ts`
 export const titanCadeiraModel = cadeiraModel as ModelData;
 export const titanJuncoTileUrl: string = juncoTile;
 /** Folha da Porta de Junco (ADR 0102): 64 × 128 px, de frente, dobradiças à esquerda. */

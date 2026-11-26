@@ -22,9 +22,9 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106, STONE_SMOOTH: 107, STONE_BRICK: 108, STONE_SLAB: 109, STONE_SLAB_TOP: 110, STONE_STAIR: 111, STONE_STAIR_90: 112, STONE_STAIR_180: 113, STONE_STAIR_270: 114 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106, STONE_SMOOTH: 107, STONE_BRICK: 108, STONE_SLAB: 109, STONE_SLAB_TOP: 110, STONE_STAIR: 111, STONE_STAIR_90: 112, STONE_STAIR_180: 113, STONE_STAIR_270: 114, STONE_WALL: 115, STONE_WALL_LAST: 130 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.STONE_STAIR_270;
+export const T_MAX = T.STONE_WALL_LAST;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
 export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco', 47: 'Bloco de Junco', 48: 'Laje de Junco', 49: 'Laje de Junco', 50: 'Degrau de Junco', 51: 'Degrau de Junco', 52: 'Degrau de Junco', 53: 'Degrau de Junco', 54: 'Cadeira de Junco', 55: 'Cadeira de Junco', 56: 'Cadeira de Junco', 57: 'Cadeira de Junco' };
@@ -43,6 +43,7 @@ export const carpentryTurnFacing = (yaw: number): number => ((Math.round(yaw / (
 export const isCraftingTable = (id: number): boolean => isWorkbench(id) || isCarpentry(id);
 /** Pedra de obra do Orvalis em voxel (ADR 0108): Pedra Lisa, Tijolo de Pedra e a Laje de Pedra (inferior e superior; duas lajes na mesma célula viram a Pedra Lisa). */
 Object.assign(BLOCK_NAMES, { 107: 'Pedra Lisa', 108: 'Tijolo de Pedra', 109: 'Laje de Pedra', 110: 'Laje de Pedra', 111: 'Degrau de Pedra', 112: 'Degrau de Pedra', 113: 'Degrau de Pedra', 114: 'Degrau de Pedra' });
+for (let m = 0; m < 16; m++) BLOCK_NAMES[115 + m] = 'Mureta de Pedra';
 /** Folhas das árvores do Orvalis (cubo inteiro opaco por enquanto) e toras. */
 export const isLeaves = (id: number): boolean => id === T.LEAVES_OAK || id === T.LEAVES_CHERRY || id === T.LEAVES_BIRCH;
 export const isLog = (id: number): boolean => id === T.LOG_OAK || id === T.LOG_CHERRY || id === T.LOG_BIRCH;
@@ -64,6 +65,7 @@ export const isSlabBottom = (id: number): boolean => id === T.SLAB || id === T.R
 export const slabPartner = (id: number): number => (id === T.SLAB ? T.SLAB_TOP : id === T.SLAB_TOP ? T.SLAB : id === T.REED_SLAB ? T.REED_SLAB_TOP : id === T.REED_SLAB_TOP ? T.REED_SLAB : id === T.STONE_SLAB ? T.STONE_SLAB_TOP : T.STONE_SLAB);
 /** Faixa de altura que o bloco ocupa dentro da célula, `[baixo, topo]` em 0–1 (a laje superior ocupa [0,5, 1]; não sólido = [0, 0]). A física e a mira leem esta faixa. */
 export function blockSpan(id: number): readonly [number, number] {
+  if (isWall(id)) return [0, WALL_HEIGHT]; // a mureta (ADR 0110): a caixa envolvente; a forma exata vem de `blockBoxes`
   if (isStair(id) || isChair(id) || isDoor(id)) return [0, 1]; // a caixa envolvente (a forma exata vem de `blockBoxes`)
   if (isBrazier(id)) return [0, BRAZIER_HEIGHT]; // o braseiro 3D barra o corpo na altura dele (0,774 m), na célula inteira (ADR 0092)
   if (isChest(id)) return [0, CHEST_HEIGHT]; // o baú barra o corpo na altura dele (0,73 m), na célula inteira
@@ -73,7 +75,7 @@ export function blockSpan(id: number): readonly [number, number] {
   return isSolid(id) ? [0, 1] : [0, 0];
 }
 /** Cubo inteiro: só ele esconde as faces vizinhas (a laje, inferior ou superior, deixa metade da célula aberta; a laje dupla é cubo). */
-export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id) && !isStair(id) && !isChair(id) && !isDoor(id);
+export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id) && !isStair(id) && !isChair(id) && !isDoor(id) && !isWall(id);
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 /** Veio de cobre (ADR 0063): só uma picareta o quebra; solta fragmentos de cobre, nunca o bloco. */
@@ -88,6 +90,29 @@ export const stairTurn = (id: number): number => (isReedStair(id) ? id - T.REED_
 export const chairTurn = (id: number): number => (isChair(id) ? id - T.REED_CHAIR : 0);
 export const stairId = (turn: number, stone = false): number => (stone ? T.STONE_STAIR : T.REED_STAIR) + (((turn % 4) + 4) % 4);
 export const chairId = (turn: number): number => T.REED_CHAIR + (((turn % 4) + 4) % 4);
+// ---- Mureta de Pedra (ADR 0110): poste central + braços para os vizinhos, a conexão vai no id ----
+/** Bits de conexão da mureta: norte (−Z) 1, leste (+X) 2, sul (+Z) 4, oeste (−X) 8. O id é `STONE_WALL + máscara` (115–130). */
+export const WALL_N = 1, WALL_E = 2, WALL_S = 4, WALL_W = 8;
+/** Altura da mureta em metros (12 px da arte de 16): a pessoa pula por cima, como de uma mureta de verdade. */
+export const WALL_HEIGHT = 0.75;
+export const isWall = (id: number): boolean => id >= T.STONE_WALL && id <= T.STONE_WALL_LAST;
+export const wallMask = (id: number): number => (isWall(id) ? id - T.STONE_WALL : 0);
+export const wallId = (mask: number): number => T.STONE_WALL + (mask & 15);
+/** A mureta se liga a outra mureta e a cubo inteiro (a lateral inteira fecha o vão). */
+export const wallConnects = (id: number): boolean => isWall(id) || isFull(id);
+/** Máscara de conexão da mureta em (x, y, z), lida dos quatro vizinhos do mesmo nível. */
+export function wallMaskFor(get: (x: number, y: number, z: number) => number, x: number, y: number, z: number): number {
+  return (wallConnects(get(x, y, z - 1)) ? WALL_N : 0) | (wallConnects(get(x + 1, y, z)) ? WALL_E : 0) | (wallConnects(get(x, y, z + 1)) ? WALL_S : 0) | (wallConnects(get(x - 1, y, z)) ? WALL_W : 0);
+}
+/** Caixas da mureta pela máscara: o poste de 8 × 8 no centro e um braço de 8 de largura por vizinho ligado, do poste até a borda da célula. */
+export function wallBoxes(mask: number): readonly CellBox[] {
+  const h = WALL_HEIGHT, out: CellBox[] = [[0.25, 0, 0.25, 0.75, h, 0.75]];
+  if (mask & WALL_N) out.push([0.25, 0, 0, 0.75, h, 0.25]);
+  if (mask & WALL_E) out.push([0.75, 0, 0.25, 1, h, 0.75]);
+  if (mask & WALL_S) out.push([0.25, 0, 0.75, 0.75, h, 1]);
+  if (mask & WALL_W) out.push([0, 0, 0.25, 0.25, h, 0.75]);
+  return out;
+}
 /** Caixa sólida dentro da célula, em coordenadas locais 0–1: `[x0, y0, z0, x1, y1, z1]`. */
 export type CellBox = readonly [number, number, number, number, number, number];
 /** Formas de base (frente em +Z, giro 0): o degrau tem o patamar de baixo na célula inteira e o de cima só na metade de trás; a cadeira, o assento maciço até 0,5 m e o encosto fino atrás. */
@@ -124,6 +149,7 @@ function doorBox(hingeRight: boolean, open: boolean): CellBox {
 }
 const BOXES = new Map<number, readonly CellBox[]>();
 for (let t = 0; t < 4; t++) for (const hr of [false, true]) for (const op of [false, true]) for (const up of [false, true]) BOXES.set(doorId(t, hr, op, up), [rotateBox(doorBox(hr, op), t)]);
+for (let m = 0; m < 16; m++) BOXES.set(T.STONE_WALL + m, wallBoxes(m));
 for (let t = 0; t < 4; t++) { BOXES.set(T.REED_STAIR + t, STAIR_BASE.map((b) => rotateBox(b, t))); BOXES.set(T.STONE_STAIR + t, STAIR_BASE.map((b) => rotateBox(b, t))); BOXES.set(T.REED_CHAIR + t, CHAIR_BASE.map((b) => rotateBox(b, t))); }
 /** Caixas sólidas do bloco (degrau e cadeira) ou null se ele é cubo, laje ou tem outra forma. A física e a mira leem estas caixas. */
 export const blockBoxes = (id: number): readonly CellBox[] | null => BOXES.get(id) ?? null;
@@ -220,7 +246,10 @@ export function bedPartnerOffset(id: number): readonly [number, number] {
   return isBedFoot(id) ? [fx, fz] : [fx === 0 ? 0 : -fx, fz === 0 ? 0 : -fz]; // sem −0
 }
 
-export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'degrauPedra' | 'cadeira' | 'porta';
+/** Um modelo de mureta por máscara de conexão (ADR 0110): `mureta0` … `mureta15`. */
+export const MURETA_KINDS = ['mureta0', 'mureta1', 'mureta2', 'mureta3', 'mureta4', 'mureta5', 'mureta6', 'mureta7', 'mureta8', 'mureta9', 'mureta10', 'mureta11', 'mureta12', 'mureta13', 'mureta14', 'mureta15'] as const;
+export type MuretaKind = (typeof MURETA_KINDS)[number];
+export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'degrauPedra' | MuretaKind | 'cadeira' | 'porta';
 export function modelOf(id: number): { kind: ModelKindName; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
@@ -229,6 +258,7 @@ export function modelOf(id: number): { kind: ModelKindName; turn: number } | nul
   if (isChest(id)) return { kind: 'bau', turn: chestTurn(id) };
   if (isBedFoot(id)) return { kind: 'cama', turn: bedTurn(id) };
   if (isReedStair(id)) return { kind: 'degrau', turn: stairTurn(id) };
+  if (isWall(id)) return { kind: MURETA_KINDS[wallMask(id)], turn: 0 }; // Mureta de Pedra (ADR 0110): o modelo já é a forma da máscara
   if (isStoneStair(id)) return { kind: 'degrauPedra', turn: stairTurn(id) }; // Degrau de Pedra (ADR 0109): mesma forma, arte do pacote
   if (isChair(id)) return { kind: 'cadeira', turn: chairTurn(id) };
   if (isDoor(id) && !isDoorUpper(id)) return { kind: 'porta', turn: (id - T.DOOR) & 15 }; // só a metade de baixo tem instância; o `turn` leva giro, abertura e dobradiça

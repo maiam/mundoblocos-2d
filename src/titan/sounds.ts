@@ -1,4 +1,4 @@
-import { T } from './voxel';
+import { isWall, T } from './voxel';
 
 /**
  * Regras puras do som do Titã (ADR 0054; sem DOM, testável em Node): qual material soa em cada bloco e o relógio dos passos.
@@ -8,6 +8,7 @@ export type SurfaceMaterial = 'rock' | 'sand' | 'ice';
 
 /** Material sonoro de um bloco (quebra, colocação e passos); `null` = silêncio (ar, líquido, lanterna). Rocha: escura, veio, laje, mesa e rocha-mãe; areia: ocre e úmida; gelo: fosco, veio e brasa de âmbar (cristal). */
 export function surfaceOf(block: number | undefined): SurfaceMaterial | null {
+  if (block !== undefined && isWall(block)) return 'rock'; // mureta de pedra (ADR 0110)
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return 'sand'; // a porta de junco soa como o resto do junco (ADR 0102)
   switch (block) {
     case T.GRASS: case T.DIRT: case T.BEACH: case T.LEAVES_OAK: case T.LEAVES_CHERRY: case T.LEAVES_BIRCH: return 'sand'; // Orvalis em voxel (ADR 0105): sem timbre próprio ainda; terra, areia e folhas soam como areia

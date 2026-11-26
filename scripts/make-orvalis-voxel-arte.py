@@ -16,6 +16,7 @@ from PIL import Image
 MAT = 'assets-src/materiais/'
 TEX = 'assets-src/orvalis-voxel/texturas32/orvalis/'
 ICO = 'assets-src/orvalis-voxel/icones32/'
+MURETA = 'assets-src/orvalis-voxel/texturas32/mureta-pedra/'  # topo e face da Mureta de Pedra (ADR 0110)
 DEGRAU = 'assets-src/orvalis-voxel/texturas32/degrau-pedra/'  # topo, frente, perfil do Degrau de Pedra (ADR 0109)
 WATER_SRC = 'assets-src/orvalis-voxel/agua/agua_32px.png'  # 1º quadro do topo da água (32 × 32, seamless); editável
 WATER_OUT = {16: 'src/assets/orvalis-agua-16px.webp', 8: 'src/assets/orvalis-agua-8px.webp'}  # 16 px (padrão) e 8 px (isométrica), ADR 0106
@@ -125,6 +126,29 @@ def stair_icon(top: Image.Image, front: Image.Image, side: Image.Image) -> Image
     return big.resize((32, 32), Image.BOX)
 
 
+def wall_icon(top: Image.Image, face: Image.Image) -> Image.Image:
+    """Mureta **isométrica** (2:1) de 32 × 32: um trecho reto ao longo de X (8/16 de espessura, 12/16 de altura), com a luz fixa dos ícones (100 % topo, 80 % frente, 60 % ponta)."""
+    k = 4
+    n = 32 * k
+    big = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    P = lambda x, y, z: (k * (16 + 14 * x - 14 * z), k * (2 + 7 * x + 7 * z + 14 * (1 - y)))  # noqa: E731  x leste, z frente, y altura (cubo de 1)
+    sub = lambda a, c: (a[0] - c[0], a[1] - c[1])  # noqa: E731
+    s = lambda im, w, h: im.resize((w, h), Image.NEAREST)  # noqa: E731
+    tw, th = top.size
+    top_s = s(top.crop((0, th // 4, tw, th * 3 // 4)), n, n // 2)  # as linhas 4–11 de 16: o trecho de 8 de largura
+    fw, fh = face.size
+    front = s(face.crop((0, fh // 4, fw, fh)), n, n * 3 // 4)  # linhas 4–15: 12/16 de altura
+    end = s(face.crop((fw // 4, fh // 4, fw * 3 // 4, fh)), n // 2, n * 3 // 4)  # a ponta: 8 de largura por 12 de altura
+    h = 0.75
+    o = P(0, h, 0.75)
+    big.alpha_composite(_face(shade(front, 0.80), o, sub(P(1, h, 0.75), o), sub(P(0, 0, 0.75), o), n))  # frente (+Z)
+    o = P(1, h, 0.75)
+    big.alpha_composite(_face(shade(end, 0.60), o, sub(P(1, h, 0.25), o), sub(P(1, 0, 0.75), o), n))  # ponta (+X)
+    o = P(0, h, 0.25)
+    big.alpha_composite(_face(top_s, o, sub(P(1, h, 0.25), o), sub(P(0, h, 0.75), o), n))  # topo
+    return big.resize((32, 32), Image.BOX)
+
+
 def main() -> None:
     force = '--force' in sys.argv
     os.makedirs(os.path.dirname(WATER_SRC), exist_ok=True)
@@ -167,6 +191,8 @@ def main() -> None:
         cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name == 'laje_de_pedra').save(f'{ICO}{name}.png')
     dg = {nome: Image.open(f'{DEGRAU}{nome}.png').convert('RGBA') for nome in ('topo', 'frente', 'perfil')}
     stair_icon(dg['topo'], dg['frente'], dg['perfil']).save(f'{ICO}degrau_de_pedra.png')  # item 60 (ADR 0109)
+    mu = {nome: Image.open(f'{MURETA}{nome}.png').convert('RGBA') for nome in ('topo', 'face')}
+    wall_icon(mu['topo'], mu['face']).save(f'{ICO}mureta_de_pedra.png')  # item 61 (ADR 0110)
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)
     w1 = to_tile(Image.open(WATER_SRC).convert('RGBA'), WATER_SRC)
