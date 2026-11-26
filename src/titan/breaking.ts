@@ -35,6 +35,9 @@ function baseBreakMs(block?: number): number | null {
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return BREAK_MS.slab; // a porta cede como os móveis de junco (ADR 0102)
   switch (block) {
     case T.GRASS: case T.DIRT: case T.BEACH: return BREAK_MS.sand; // Orvalis em voxel (ADR 0105): terra, grama e areia da praia cedem como a areia
+    case T.PATH: case T.DIRT_INFERTILE: case T.FARMLAND_DRY: case T.FARMLAND_WET: return BREAK_MS.sand; // solo: cede como a terra (ADR 0111)
+    case T.CLAY_BLOCK: return BREAK_MS.sand;
+    case T.BRICK_BLOCK: return BREAK_MS.rock;
     case T.STONE: case T.STONE_SMOOTH: case T.STONE_BRICK: return BREAK_MS.rock; // pedra de obra (ADR 0108)
     case T.STONE_SLAB: case T.STONE_SLAB_TOP: case T.STONE_STAIR: case T.STONE_STAIR_90: case T.STONE_STAIR_180: case T.STONE_STAIR_270: return BREAK_MS.slab;
     case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: case T.PLANKS_OAK: case T.PLANKS_CHERRY: case T.PLANKS_BIRCH: case T.CARPENTRY: case T.CARPENTRY_90: case T.CARPENTRY_180: case T.CARPENTRY_270: return BREAK_MS.wood; // tábuas e mesa (ADR 0107)

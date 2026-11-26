@@ -38,7 +38,7 @@ describe('pedra de obra (ADR 0108)', () => {
     expect(blockOfItem(Item.TIJOLO_PEDRA)).toBe(T.STONE_BRICK); expect(itemOfBlock(T.STONE_BRICK)).toBe(Item.TIJOLO_PEDRA);
     expect(blockOfItem(Item.LAJE_PEDRA)).toBe(T.STONE_SLAB); expect(itemOfBlock(T.STONE_SLAB)).toBe(Item.LAJE_PEDRA); expect(itemOfBlock(T.STONE_SLAB_TOP)).toBe(Item.LAJE_PEDRA);
     for (const [i, n] of [[Item.PEDRA_LISA, 'Pedra Lisa'], [Item.TIJOLO_PEDRA, 'Tijolo de Pedra'], [Item.LAJE_PEDRA, 'Laje de Pedra']] as const) { expect(isItem(i)).toBe(true); expect(ITEM_NAMES[i]).toBe(n); }
-    expect(isItem(62)).toBe(false);
+    expect(isItem(70)).toBe(false);
     expect(isFull(T.STONE_SMOOTH) && isFull(T.STONE_BRICK)).toBe(true);
     expect(isSlab(T.STONE_SLAB) && isSlab(T.STONE_SLAB_TOP) && !isFull(T.STONE_SLAB)).toBe(true);
     expect(blockSpan(T.STONE_SLAB)).toEqual([0, 0.5]); expect(blockSpan(T.STONE_SLAB_TOP)).toEqual([0.5, 1]);
@@ -92,7 +92,7 @@ describe('degrau de pedra (ADR 0109)', () => {
     }
     expect(modelOf(T.REED_STAIR)).toEqual({ kind: 'degrau', turn: 0 }); // o de junco segue com o modelo dele
     expect(blockOfItem(Item.DEGRAU_PEDRA)).toBe(T.STONE_STAIR); expect(ITEM_NAMES[Item.DEGRAU_PEDRA]).toBe('Degrau de Pedra');
-    expect(isItem(Item.DEGRAU_PEDRA) && !isItem(62)).toBe(true);
+    expect(isItem(Item.DEGRAU_PEDRA) && !isItem(70)).toBe(true);
   });
 
   it('receita: 3 Pedra Lisa → 4 Degraus (na mesa, só no Orvalis); colocar gira para o jogador e quebrar devolve 1', async () => {
@@ -127,7 +127,7 @@ describe('mureta de pedra (ADR 0110)', () => {
       expect(itemOfBlock(id)).toBe(Item.MURETA_PEDRA); expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(1000);
     }
     expect(blockBoxes(wallId(0))).toHaveLength(1); expect(blockBoxes(wallId(15))).toHaveLength(5); // poste e braços
-    expect(blockOfItem(Item.MURETA_PEDRA)).toBe(T.STONE_WALL); expect(ITEM_NAMES[Item.MURETA_PEDRA]).toBe('Mureta de Pedra'); expect(isItem(61) && !isItem(62)).toBe(true);
+    expect(blockOfItem(Item.MURETA_PEDRA)).toBe(T.STONE_WALL); expect(ITEM_NAMES[Item.MURETA_PEDRA]).toBe('Mureta de Pedra'); expect(isItem(69) && !isItem(70)).toBe(true);
     for (let m = 0; m < 16; m++) { const d = wallModelData(m); expect(d.idx.length / 3).toBe(d.pos.length / 3 / 2); expect(d.uv.every((v) => v >= 0 && v <= 1)).toBe(true); }
     expect(wallModelData(0).idx.length / 6).toBe(5); // o poste sozinho: topo e 4 laterais
     expect(wallModelData(WALL_E | WALL_W).idx.length / 6).toBeLessThan(wallModelData(0).idx.length / 6 + 10);

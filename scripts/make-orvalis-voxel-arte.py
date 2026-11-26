@@ -186,6 +186,8 @@ def main() -> None:
         'tabuas_de_carvalho': ('tabua-carvalho', 'tabua-carvalho'), 'tabuas_de_cerejeira': ('tabua-cerejeira', 'tabua-cerejeira'), 'tabuas_de_betula': ('tabua-betula', 'tabua-betula'),
         'mesa_de_carpintaria': ('mesa-topo', 'mesa-lateral', 'mesa-frente'),
         'pedra_lisa': ('pedra-lisa', 'pedra-lisa'), 'tijolo_de_pedra': ('tijolo-pedra', 'tijolo-pedra'), 'laje_de_pedra': ('laje-topo', 'laje-face'),
+        'terra_arada_seca': ('terra-arada-seca-topo', 'terra-arada-seca-lateral'), 'terra_arada_umida': ('terra-arada-umida-topo', 'terra-arada-umida-lateral'), 'caminho_de_terra': ('caminho-topo', 'caminho-lateral'),
+        'terra_infertil': ('terra-infertil', 'terra-infertil'), 'bloco_de_argila': ('bloco-argila', 'bloco-argila'), 'bloco_de_tijolos': ('bloco-tijolos', 'bloco-tijolos'),  # ADR 0111
     }
     for name, spec in icons.items():
         cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name == 'laje_de_pedra').save(f'{ICO}{name}.png')

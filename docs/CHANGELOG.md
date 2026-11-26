@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.178.0 — Solo de cultivo e cerâmica no Orvalis em voxel (E3, 26/11/2026)
+- **ADR 0111.** **Terra Arada Seca e Úmida, Caminho de Terra, Terra Infértil, Bloco de Argila e Bloco de Tijolos** (blocos 131–136, itens 62–67; cubos inteiros) e **Bola de Argila** e **Tijolo** (itens 68–69, sprites 16 × 16 do pacote). Receitas **provisórias** na Mesa de Carpintaria (a enxada, a água do cultivo, a argila no terreno e a fundição ainda não existem). Quebra e som por classe (solo como terra, tijolos como pedra).
+- Atlas de terreno com 82 tiles e de itens 4 × 18 (`ITEM_ROWS`, CSS, scripts). Testes novos em `orvalis/solo.test.ts`; limites `isItem(61)` → 70 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E3 feita; fila: E4 ferramentas, E5 horta, E6 vedações e abrigo. Vasos ficam sem entrega.
+
 ## Orvalis v0.177.0 — Mureta de Pedra no Orvalis em voxel (E2c, 26/11/2026)
 - **ADR 0110.** **Mureta de Pedra** (blocos 115–130, item 61): poste de 8 × 8 e braços para as muretas e cubos inteiros vizinhos, 0,75 m de altura (dá para pular por cima). A máscara de conexão vai no id e `TitanVolume.set` a mantém: ao colocar ou tirar qualquer bloco, as muretas dos quatro lados se refazem (e a sala repassa cada uma pelo `onSet`). Modelo por máscara gerado em `render/muretaModel.ts` sobre a tira topo | face de `scripts/make-orvalis-mureta.py`. Receita na Mesa: 6 Pedra Lisa → 6 (provisória).
 - Atlas de itens 4 × 16 (`ITEM_ROWS`, CSS e script). Testes novos em `orvalis/pedraObra.test.ts`; limites `isItem(61)` → 62 nos antigos. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E2 (pedra de obra) completa; fila: E3 solo e cerâmica → E6.

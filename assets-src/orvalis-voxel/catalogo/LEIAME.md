@@ -7,8 +7,8 @@
 | **P1-03** Folhas e orla | folhas de carvalho, bétula e cerejeira; toras de carvalho e cerejeira (topo, lateral); areia da praia | **E0 (v0.173.0)** | **no jogo** (tiles `orvalis/…`); a tora de bétula segue a de 2048 px do Drive anterior (este pacote não a traz) |
 | **P1-04** Pedra de obra | pedra bruta, pedra lisa, tijolo de pedra; laje (topo, face); degrau (topo, frente, perfil); mureta (topo, face) | E0 / E2a / E2b / E2c | **no jogo:** pedra bruta = bloco Pedra do terreno (E0); pedra lisa, tijolo e laje (**E2a, v0.175.0**, ADR 0108). **Fila:** degrau e mureta de pedra feitos (**E2c, v0.177.0**, ADR 0110); degrau na **E2b (v0.176.0**, ADR 0109) |
 | **P1-01** Madeira básica | tábuas de carvalho, cerejeira e bétula; haste de madeira; mesa de carpintaria (topo, frente, lateral) | **E1 (v0.174.0)** | **no jogo** (ADR 0107) |
-| **P1-05** Solo de cultivo | terra arada úmida e seca (topo, lateral); caminho de terra (topo, lateral); terra infértil | E3 | fila |
-| **P2-01** Cerâmica | bola de argila, tijolo, bloco de argila e de tijolos (textura e ícone), vaso de flor e decorado | E3 | fila |
+| **P1-05** Solo de cultivo | terra arada úmida e seca (topo, lateral); caminho de terra (topo, lateral); terra infértil | E3 | **no jogo (E3, v0.178.0**, ADR 0111) |
+| **P2-01** Cerâmica | bola de argila, tijolo, bloco de argila e de tijolos (textura e ícone), vaso de flor e decorado | E3 | **no jogo (E3, v0.178.0**, ADR 0111; vasos sem entrega) |
 | **P1-07** Ferramentas iniciais | picareta, machado, pá e enxada, de madeira e de pedra (ícones) | E4 | fila |
 | **P1-06** Horta | trigo, cenoura, batata e tomate (fases 01–03 e ícone), semente de trigo | E5 | fila |
 | **P1-02** Vedação de bétula | porta (frente, verso, borda), portão (fechado, aberto), cerca, degrau, laje | E6 | fila |
