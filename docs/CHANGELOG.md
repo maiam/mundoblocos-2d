@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.181.0 — Orvalis 3D é o mundo padrão; Titã só por ?mundo=titan (etapa 1 da limpeza, 26/11/2026)
+- **ADR 0115 (decisão do dono do produto).** A raiz do site abre o **Orvalis 3D**; o **Titã só abre com `?mundo=titan`** (nunca por subdomínio nem como padrão). `build:artifact` agora gera o Artifact do Orvalis 3D (`VITE_WORLD=orvalis3d`). **Orvalis 2D, Santuário e a isométrica do 2.5D vão sair** em duas etapas (2: Santuário; 3: 2.5D, landing e ajuste do `orvalis-servidor`); o botão **Visão** do voxel (ADR 0106) fica. Até a remoção, o 2.5D e o Santuário só abrem por `?mundo=principal|santuario`.
+- Teste de resolução de mundo atualizado (`world/santuario.test.ts`). Sem mudança de gerador, save do voxel nem protocolo. O "início" do Artifact está em ~13 MB (orçamento 3 MB) enquanto o 2.5D estiver no pacote.
+
 ## Documentação — itens por mundo não são compartilhados (26/11/2026)
 - **ADR 0114 (regra do dono do produto).** Os itens do Titã e os do Orvalis em voxel são **diferentes e só servem para o próprio mundo**: um catálogo partido em duas faixas (ids 1–41 Titã, 42 em diante Orvalis; blocos do Orvalis a partir do 90), receitas só com itens do próprio mundo, bancadas separadas. Novo teste `titan/itensPorMundo.test.ts` impõe a regra. Sem mudança de jogo, save nem protocolo.
 
