@@ -4,6 +4,8 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+Para escolher o próximo lote de arte, consulte o [Guia de itens e texturas](GUIA_ITENS_TEXTURAS.md). A fila P1 detalha as peças e texturas para madeira, cultivo e a coleção de junco.
+
 ## Titã 16 px e vista isométrica (ADR 0106, v0.172.0) — falta o aceite em aparelho de toque
 **Aceite pendente:** celular e iPad (toque na isométrica: tocar para colocar, segurar para quebrar, joystick relativo à câmera, botões ⟲ ⟳ e Visão no canto superior direito, legibilidade a 8 px); desempenho da isométrica (região inteira visível); conferir o aspecto dos blocos a 16 px (mais suave que a 32) e da água.
 **Pendências:** modelos 3D (mesa, baú, porta, escada, cama, braseiro, Marco, Painel, lanterna, Farejador) e itens com arte de resolução própria misturam densidades na isométrica; **oclusão** (hoje só silhueta; avaliar corte por altura ou transparência do que cobre o jogador); fundo além da região (cor do céu, sem mar até o horizonte); céu, sol e estrelas na isométrica; arrastar para girar; arte e sombra do personagem (hoje caixas); salvar a vista (quarto de volta) no save; sala online na isométrica (`TitanClient`, boneco dos outros); a vista isométrica ignora a mira central (`Mira: central`) e o alcance de 6 blocos pode ser curto de longe. **Inconsistência anotada:** `docs/domains/titan.md` e a ADR 0079 ainda falam do atlas de 32 px (histórico; vale o ADR 0106).
