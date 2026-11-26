@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.175.0 — Pedra de obra no Orvalis em voxel (E2a, 26/11/2026)
+- **ADR 0108.** **Pedra Lisa**, **Tijolo de Pedra** e **Laje de Pedra** (blocos 107–110, itens 57–59). A laje entra na família das lajes (inferior e superior; **duas lajes na mesma célula viram a Pedra Lisa**; só funde com a de pedra). Receitas na Mesa de Carpintaria: 1 Pedra → 1 Pedra Lisa (provisório, no Minecraft é fundição), 4 Pedra → 4 Tijolos, 3 Pedra Lisa → 6 Lajes. Quebra 1,6 s (laje 1 s); ícones isométricos (laje em meia altura); atlas de itens 4 × 15.
+- **Vitrine de texturas** com 3 fileiras (terreno e árvores, madeira e pedra, Titã). Degrau e mureta de pedra do pacote ficam para E2b e E2c (pedem forma própria).
+- Testes novos (`orvalis/pedraObra.test.ts`); 2 testes com contagens fixas ajustados. Sem mudança de gerador, save nem protocolo.
+
 ## Orvalis v0.174.0 — Madeira básica no Orvalis em voxel (E1, 26/11/2026)
 - **ADR 0107.** Tábuas de carvalho, cerejeira e bétula, haste de madeira e **Mesa de Carpintaria** (blocos 100–106, itens 52–56), com as regras do Minecraft: 1 tora → 4 tábuas; 2 tábuas → 4 hastes; 4 tábuas → 1 mesa (uma receita por madeira, 9 no total, na mochila). A mesa tem a frente voltada para quem a coloca (face própria na malha, `tileForFace`) e é **bancada** como a Mesa de Trabalho (`isCraftingTable`).
 - **Receitas por mundo** (`Recipe.world`): o Orvalis vê só as de madeira e o Titã só as dele; avisos de descoberta próprios. Atlas de itens 4 × 14; ícones isométricos das tábuas e da mesa; a haste é sprite extrudado de 16 × 16.

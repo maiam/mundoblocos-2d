@@ -53,6 +53,10 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'mesa-carpintaria-carvalho', name: 'Mesa de Carpintaria (tábuas de carvalho)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 4 }], station: 'personal', world: 'orvalis' },
   { id: 'mesa-carpintaria-cerejeira', name: 'Mesa de Carpintaria (tábuas de cerejeira)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 4 }], station: 'personal', world: 'orvalis' },
   { id: 'mesa-carpintaria-betula', name: 'Mesa de Carpintaria (tábuas de bétula)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_BETULA, count: 4 }], station: 'personal', world: 'orvalis' },
+  // Pedra de obra do Orvalis em voxel (ADR 0108), na Mesa de Carpintaria (a fundição em Braseiro ainda não existe no Orvalis: o polimento é provisório)
+  { id: 'pedra-lisa', name: 'Pedra Lisa', group: 'construcao', result: { item: Item.PEDRA_LISA, count: 1 }, ingredients: [{ item: Item.STONE, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'tijolo-pedra', name: 'Tijolo de Pedra', group: 'construcao', result: { item: Item.TIJOLO_PEDRA, count: 4 }, ingredients: [{ item: Item.STONE, count: 4 }], station: 'workbench', world: 'orvalis' },
+  { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 

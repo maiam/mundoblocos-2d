@@ -545,7 +545,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
   else if (block === T.CARPENTRY) block = carpentryId(carpentryTurnFacing(s.yaw)); // a frente da Mesa de Carpintaria fica voltada para o jogador (ADR 0107)
   else if (block === T.CHEST) block = chestId(chestTurnFacing(s.yaw)); // a frente do baú (o fecho) fica voltada para o jogador (ADR 0089)
-  if (block === T.SLAB || block === T.REED_SLAB) { // laje (ADR 0056; a de junco, ADR 0100): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
+  if (isSlabBottom(block)) { // laje (ADR 0056; a de junco, ADR 0100; a de pedra, ADR 0108): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
     const r = resolveSlabPlacement(s.volume.get(hit.x, hit.y, hit.z), hit.ny, hit.hy, block);
     if (r.merge) {
       // funde na célula apontada: a metade que falta não pode invadir o corpo do jogador
