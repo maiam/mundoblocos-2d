@@ -4,7 +4,7 @@ import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
 import { isNightTime, tickFrac, WAKE_TICKS } from './sky';
-import { blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { carpentryId, carpentryTurnFacing, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -543,6 +543,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   else if (block === T.REED_STAIR) block = stairId(marcoTurnFacing(s.yaw)); // a frente (o lado baixo) fica voltada para o jogador: giro 0 = frente em +Z (ADR 0101)
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
+  else if (block === T.CARPENTRY) block = carpentryId(carpentryTurnFacing(s.yaw)); // a frente da Mesa de Carpintaria fica voltada para o jogador (ADR 0107)
   else if (block === T.CHEST) block = chestId(chestTurnFacing(s.yaw)); // a frente do baú (o fecho) fica voltada para o jogador (ADR 0089)
   if (block === T.SLAB || block === T.REED_SLAB) { // laje (ADR 0056; a de junco, ADR 0100): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
     const r = resolveSlabPlacement(s.volume.get(hit.x, hit.y, hit.z), hit.ny, hit.hy, block);

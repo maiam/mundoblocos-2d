@@ -22,15 +22,25 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.LEAVES_BIRCH;
+export const T_MAX = T.CARPENTRY_270;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
 export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco', 47: 'Bloco de Junco', 48: 'Laje de Junco', 49: 'Laje de Junco', 50: 'Degrau de Junco', 51: 'Degrau de Junco', 52: 'Degrau de Junco', 53: 'Degrau de Junco', 54: 'Cadeira de Junco', 55: 'Cadeira de Junco', 56: 'Cadeira de Junco', 57: 'Cadeira de Junco' };
 for (let id = T.DOOR; id <= T.DOOR_LAST; id++) BLOCK_NAMES[id] = 'Porta de Junco';
 /** Blocos do Orvalis em voxel (ADR 0105): terreno de floresta, praia e árvores. Água = `T.LAKE` (líquido do motor, com a arte da água do Orvalis). */
 Object.assign(BLOCK_NAMES, { 90: 'Terra com Grama', 91: 'Terra', 92: 'Pedra', 93: 'Areia da Praia', 94: 'Tora de Carvalho', 95: 'Folhas de Carvalho', 96: 'Tora de Cerejeira', 97: 'Folhas de Cerejeira', 98: 'Tora de Bétula', 99: 'Folhas de Bétula' });
+/** Madeira básica do Orvalis em voxel (ADR 0107): tábuas de 3 madeiras e a Mesa de Carpintaria (4 ids, o giro no id; a frente fica voltada para quem a coloca, como o baú). */
+Object.assign(BLOCK_NAMES, { 100: 'Tábuas de Carvalho', 101: 'Tábuas de Cerejeira', 102: 'Tábuas de Bétula', 103: 'Mesa de Carpintaria', 104: 'Mesa de Carpintaria', 105: 'Mesa de Carpintaria', 106: 'Mesa de Carpintaria' });
+export const isPlanks = (id: number): boolean => id >= T.PLANKS_OAK && id <= T.PLANKS_BIRCH;
+export const isCarpentry = (id: number): boolean => id >= T.CARPENTRY && id <= T.CARPENTRY_270;
+export const carpentryTurn = (id: number): number => (isCarpentry(id) ? id - T.CARPENTRY : 0);
+export const carpentryId = (turn: number): number => T.CARPENTRY + (((turn % 4) + 4) % 4);
+/** Giro (0–3) que deixa a frente da mesa voltada para o jogador: o yaw arredondado ao eixo mais próximo (o mesmo do baú). */
+export const carpentryTurnFacing = (yaw: number): number => ((Math.round(yaw / (Math.PI / 2)) % 4) + 4) % 4;
+/** Qualquer mesa de fabricação em 3 × 3: a Mesa de Trabalho do Titã (modelo 3D) ou a Mesa de Carpintaria do Orvalis (cubo). Pergunte aqui, nunca `isWorkbench` sozinho, ao decidir se há bancada. */
+export const isCraftingTable = (id: number): boolean => isWorkbench(id) || isCarpentry(id);
 /** Folhas das árvores do Orvalis (cubo inteiro opaco por enquanto) e toras. */
 export const isLeaves = (id: number): boolean => id === T.LEAVES_OAK || id === T.LEAVES_CHERRY || id === T.LEAVES_BIRCH;
 export const isLog = (id: number): boolean => id === T.LOG_OAK || id === T.LOG_CHERRY || id === T.LOG_BIRCH;
@@ -260,6 +270,10 @@ BLOCK_TILES[T.LOG_CHERRY] = ot('tora-cerejeira-topo', 'tora-cerejeira-lateral', 
 BLOCK_TILES[T.LEAVES_CHERRY] = ot('folhas-cerejeira');
 BLOCK_TILES[T.LOG_BIRCH] = ot('tora-betula-topo', 'tora-betula-lateral', 'tora-betula-topo');
 BLOCK_TILES[T.LEAVES_BIRCH] = ot('folhas-betula');
+BLOCK_TILES[T.PLANKS_OAK] = ot('tabua-carvalho');
+BLOCK_TILES[T.PLANKS_CHERRY] = ot('tabua-cerejeira');
+BLOCK_TILES[T.PLANKS_BIRCH] = ot('tabua-betula');
+for (let t = 0; t < 4; t++) BLOCK_TILES[T.CARPENTRY + t] = [tileIndex('orvalis/mesa-topo'), tileIndex('orvalis/mesa-lateral'), tileIndex('orvalis/tabua-carvalho')]; // a base é de tábuas; a frente tem tile próprio (`tileForFace`)
 // Família do Junco (ADR 0100): o bloco usa a trama nas seis faces; a laje, o topo de 32 × 32 e a lateral de 32 × 16 (metade de cima do tile)
 BLOCK_TILES[T.REED_BLOCK] = faces3('21-bloco-de-junco');
 BLOCK_TILES[T.REED_SLAB] = [tileIndex('22-laje-de-junco/topo'), tileIndex('22-laje-de-junco/lateral'), tileIndex('22-laje-de-junco/topo')];
@@ -270,6 +284,16 @@ export function tileFor(id: number, face: Face): number {
   const t = BLOCK_TILES[id] ?? ROCK;
   return face === 'top' ? t[0] : face === 'bottom' ? t[2] : t[1];
 }
+
+/** Tile da face de um bloco olhando para a normal `n`: igual a `tileFor`, salvo a **frente** da Mesa de Carpintaria (a direção do giro, `ladderFacing`), que tem arte própria. */
+export function tileForFace(id: number, face: Face, n: readonly [number, number, number]): number {
+  if (id >= T.CARPENTRY && id <= T.CARPENTRY_270 && face === 'side') {
+    const [fx, fz] = ladderFacing(id - T.CARPENTRY);
+    if (n[0] === fx && n[2] === fz) return FRONT_CARPENTRY;
+  }
+  return tileFor(id, face);
+}
+const FRONT_CARPENTRY = tileIndex('orvalis/mesa-frente');
 
 export const inRegion = (x: number, z: number, r: Region = REGION_LEGACY): boolean => x >= r.min && x < r.max && z >= r.min && z < r.max;
 

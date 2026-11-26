@@ -10,7 +10,7 @@ import { BLOCK_NAMES, inRegion, REGION_V6, type Region, T, tileFor } from './vox
  */
 
 /** Fileiras da vitrine, da esquerda para a direita: o Orvalis em voxel e o terreno do Titã (cubos inteiros e a laje de rocha). */
-export const ORVALIS_ROW: readonly number[] = [T.GRASS, T.DIRT, T.STONE, T.BEACH, T.LOG_OAK, T.LEAVES_OAK, T.LOG_CHERRY, T.LEAVES_CHERRY, T.LOG_BIRCH, T.LEAVES_BIRCH];
+export const ORVALIS_ROW: readonly number[] = [T.GRASS, T.DIRT, T.STONE, T.BEACH, T.LOG_OAK, T.LEAVES_OAK, T.LOG_CHERRY, T.LEAVES_CHERRY, T.LOG_BIRCH, T.LEAVES_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY];
 export const TITAN_ROW: readonly number[] = [T.SAND, T.DAMP_SAND, T.DARK_ROCK, T.FROST, T.VEIN_ROCK, T.VEIN_FROST, T.VEIN_COPPER, T.EMBER, T.CARAPACE, T.EMBER_VEIN, T.EMBER_BLOCK, T.REED_BLOCK, T.SLAB];
 export const ROWS: ReadonlyArray<{ z0: number; blocks: readonly number[]; label: string }> = [
   { z0: 0, blocks: ORVALIS_ROW, label: 'Fila 1 (Orvalis)' },
