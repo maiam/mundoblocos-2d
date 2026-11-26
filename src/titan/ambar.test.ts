@@ -29,7 +29,7 @@ describe('Brasa de Âmbar como combustível comum (ADR 0073, gerador v11)', () =
       for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) expect(Math.hypot(g.emberSites[i].x - g.emberSites[j].x, g.emberSites[i].z - g.emberSites[j].z)).toBeGreaterThanOrEqual(5);
     }
     expect(new TitanGenerator(42, 10).emberSites).toHaveLength(1); expect(new TitanGenerator(42, 3).emberSites).toHaveLength(0);
-  });
+  }, 30000); // 20 seeds com geração completa: ~4 s numa máquina rápida, rente ao limite padrão de 5 s (estourou na CI do PR #352 sem relação com o diff)
   it('veios de âmbar têm de 3 a 8 blocos; existem enterrados na v11 e não na v10', () => {
     const sizes = new Set<number>();
     for (let i = 0; i < 400; i++) sizes.add(veinCells(mulberry32(i + 1), 0, 0, 0, { blockId: T.EMBER_VEIN, veinsPerChunk: 1, veinSize: 3, veinSizeMax: 8, minY: 0, maxY: 0, airDiscardChance: 0 }, () => true, () => false).length);

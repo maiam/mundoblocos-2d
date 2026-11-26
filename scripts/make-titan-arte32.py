@@ -18,7 +18,7 @@ BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
 SRC16 = 'assets-src/titan/arte16/'  # armas, ferramentas e itens de 16 × 16 px (ADR 0097): `itens.json` diz qual item usa qual arquivo
 SRC_ORV = 'assets-src/orvalis-voxel/icones32/'  # blocos do Orvalis em voxel (ADR 0105; `make-orvalis-voxel-arte.py`): itens 42–51
-ORV_ICONS = {42: 'terra_com_grama', 43: 'terra', 44: 'pedra', 45: 'areia_da_praia', 46: 'tora_de_carvalho', 47: 'folhas_de_carvalho', 48: 'tora_de_cerejeira', 49: 'folhas_de_cerejeira', 50: 'tora_de_betula', 51: 'folhas_de_betula'}
+ORV_ICONS = {42: 'terra_com_grama', 43: 'terra', 44: 'pedra', 45: 'areia_da_praia', 46: 'tora_de_carvalho', 47: 'folhas_de_carvalho', 48: 'tora_de_cerejeira', 49: 'folhas_de_cerejeira', 50: 'tora_de_betula', 51: 'folhas_de_betula', 52: 'tabuas_de_carvalho', 53: 'tabuas_de_cerejeira', 54: 'tabuas_de_betula', 56: 'mesa_de_carpintaria', 57: 'pedra_lisa', 58: 'tijolo_de_pedra', 59: 'laje_de_pedra', 60: 'degrau_de_pedra', 61: 'mureta_de_pedra', 62: 'terra_arada_seca', 63: 'terra_arada_umida', 64: 'caminho_de_terra', 65: 'terra_infertil', 66: 'bloco_de_argila', 67: 'bloco_de_tijolos'}
 OUT_ITEMS, OUT_REED = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp'
 OUT_LAKE = {16: 'src/assets/titan-lago-16px.webp', 8: 'src/assets/titan-lago-8px.webp'}  # a água do mundo: 16 px (padrão) e 8 px (isométrica), ADR 0106
 NEW = {  # id do item -> arte de 32 px
@@ -38,7 +38,7 @@ NEW = {  # id do item -> arte de 32 px
 def main() -> None:
     base = Image.open(BASE).convert('RGBA')
     assert base.size == (64, 64), base.size
-    atlas = Image.new('RGBA', (128, 416), (0, 0, 0, 0))  # 4 colunas × 13 linhas de 32 px (52 ids, 51 em uso; o CSS lê `4 × 13`; ADR 0089, 0102, 0105)
+    atlas = Image.new('RGBA', (128, 672), (0, 0, 0, 0))  # 4 colunas × 21 linhas de 32 px (84 ids, 82 em uso; o CSS lê `4 × 21`; ADR 0089, 0102, 0105, 0107, 0108)
     atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')

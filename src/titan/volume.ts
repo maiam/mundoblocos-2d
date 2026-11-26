@@ -1,6 +1,6 @@
 import type { TerrainGen } from './terrain';
 import { LightEngine, lightKey } from './light';
-import { blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -89,6 +89,7 @@ export class TitanVolume {
   /** Grava `id` na célula respeitando a regra de edição. Devolve se algo mudou. */
   set(x: number, y: number, z: number, id: number): boolean {
     if (!this.editable(x, y, z)) return false;
+    if (isWall(id)) id = wallId(wallMaskFor((a, b, c) => this.get(a, b, c), x, y, z)); // a mureta nasce já ligada aos vizinhos (ADR 0110)
     const cx = chunkOf(x), cz = chunkOf(z);
     const key = chunkKey(cx, cz);
     const idx = columnIndex(localOf(x), y, localOf(z));
@@ -107,7 +108,16 @@ export class TitanVolume {
     this.markSections(x, y, z);
     this.updateLight(x, y, z, current, id);
     this.onSet?.(x, y, z, id);
+    this.refreshWalls(x, y, z);
     return true;
+  }
+
+  /** Mureta vizinha (ADR 0110): depois de qualquer mudança na célula, as muretas dos quatro lados refazem a máscara de conexão (a edição passa por `set`, então a sala também repassa). */
+  private refreshWalls(x: number, y: number, z: number): void {
+    for (const [dx, dz] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const nx = x + dx, nz = z + dz, n = this.get(nx, y, nz);
+      if (isWall(n) && n !== wallId(wallMaskFor((a, b, c) => this.get(a, b, c), nx, y, nz))) this.set(nx, y, nz, n); // `set` normaliza o id
+    }
   }
 
   /**
@@ -211,7 +221,7 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), cadeira: new Map(), porta: new Map() };
+  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
   modelCells(kind: ModelKindName): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }

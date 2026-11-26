@@ -1,6 +1,6 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
-import { isFull, isModelBlock, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, type Face, Y_MIN } from './voxel';
+import { isFull, isModelBlock, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, tileForFace, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -114,7 +114,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
         const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? !isFull(nb) && nb !== slabPartner(id) : !isFull(nb) && nb !== id);
         if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, bottom ? 1 : 2);
       } else if (!isFull(nb)) {
-        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), TINT[id] ?? 1, level, glowOf(id)); // o depósito de brasa brilha de dia e de noite
+        op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileForFace(id, FACES[fi].f, FACES[fi].n as [number, number, number]), TINT[id] ?? 1, level, glowOf(id)); // o depósito de brasa brilha de dia e de noite
       }
     }
   }

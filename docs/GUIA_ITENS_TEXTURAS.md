@@ -16,32 +16,32 @@ Fontes: [Item, Minecraft Wiki em português](https://pt.minecraft.wiki/w/Item#Li
 |---|---|
 | Orvalis 2.5D | Tábuas de carvalho, bétula e cerejeira, paredes, portas, cercas, portões, cadeira, baú, fogueira, caldeirão e forno. Trigo, batata, cenoura, tomate e alimentos de cozinha. Ferramentas como espada, enxada, picareta, pá e machado. Ver [itens e receitas](../src/world/items.ts), [blocos](../src/world/blocks.ts) e [cultivo](domains/farming.md). |
 | Santuário | Conjunto de construção com árvores, plantas, cercas e portões, além de objetos de feira e jardim. As peças já desenhadas podem orientar novas coleções e variantes. Ver [perfis de mundo](domains/worlds.md). |
-| Orvalis em voxel | Grama, terra, pedra, areia de praia, toras e folhas de carvalho, bétula e cerejeira. Algumas fontes ainda são provisórias. Terra arada, terra infértil e caminho já têm PNG de referência em `extras/` e aguardam blocos. Ver [fontes das texturas](../assets-src/orvalis-voxel/README.md). |
+| Orvalis em voxel | Grama, terra, pedra, areia de praia, toras e folhas de carvalho, bétula e cerejeira. Algumas fontes ainda são provisórias. Madeira, pedra de obra, solo de cultivo, ferramentas e horta já são blocos e itens (entregas E1 a E5); as fontes de terra arada, infértil e caminho em `extras/` ficaram como referência antiga, valendo as do pacote Texturas16px. Ver [fontes das texturas](../assets-src/orvalis-voxel/README.md). |
 | Titã | Rocha, gelo, areia, Âmbar e Cobre de Duna. Junco de Vidro, bloco, laje, degrau, cadeira, esteira, painel, escada e porta. Mesa de Trabalho, baú, cama, lanterna, braseiro, balde, picaretas, adagas, Noz de Duna e carnes. Ver [itens](../src/titan/items.ts), [blocos](../src/titan/voxel.ts) e [receitas](../src/titan/recipes.ts). |
 
 ## Fila de produção
 
-**P1** completa uma família ou um ciclo já planejado. **P2** amplia um sistema existente. **P3** depende de explorar um sistema novo. Cada linha é um lote candidato, com exemplos de peças e o mínimo de arte para começar.
+O **estado** das entregas do pacote Texturas16px é mantido em `NEXT_STEPS.md` e em `assets-src/orvalis-voxel/catalogo/LEIAME.md`; a coluna de estado do P1 é um retrato de 26/11/2026. **P1** completa uma família ou um ciclo já planejado. **P2** amplia um sistema existente. **P3** depende de explorar um sistema novo. Cada linha é um lote candidato, com exemplos de peças e o mínimo de arte para começar.
 
 ### P1 · Construção, cultivo e sobrevivência
 
-| Lote | Mundo | Peças candidatas | Arte a produzir ou adaptar |
-|---|---|---|---|
-| P1-01 Madeira básica | Orvalis voxel | Tábua de bétula, carvalho e cerejeira, haste de madeira, mesa de carpintaria | Reaproveitar as fontes V2 das tábuas. Ícone da haste. Topo de trabalho, laterais e ícone da mesa. Começar pela bétula, cuja tora já tem arte escolhida. |
-| P1-02 Vedação de madeira | Orvalis voxel | Laje, degrau, cerca, portão e porta de bétula | Derivar laje e degrau da tábua. Modelos e ícones para cerca, portão e porta. Prever encaixe das travessas e dobradiças para aberto e fechado. |
-| P1-03 Folhas e orla | Orvalis voxel | Folhas de bétula, carvalho e cerejeira, areia de praia, toras de carvalho e cerejeira | Copas com silhuetas distintas, areia repetível e toras com anéis no topo e casca lateral. Substituir as versões provisórias por família. |
-| P1-04 Pedra de obra | Orvalis voxel | Pedra bruta, pedra lisa, tijolo de pedra, laje, degrau e mureta | Criar a partir da pedra local. Testar juntas repetíveis e cortes da laje e do degrau com a mesma escala de textura. |
-| P1-05 Solo de cultivo | Orvalis voxel | Terra arada seca e úmida, terra infértil, caminho | Adaptar as três fontes em `extras/`. Topo por estado e lateral compatível com a terra do jogo. Conferir o nível visual do sulco e do caminho. |
-| P1-06 Horta | Orvalis voxel | Semente de trigo, trigo, cenoura, batata, tomate | Ícone para cada pilha, variações de crescimento e silhuetas distintas na colheita. Aproveitar a identidade das plantas do Orvalis 2.5D. |
-| P1-07 Ferramentas iniciais | Orvalis voxel | Machado, picareta, pá e enxada de madeira e pedra | Sprites planos transparentes com pivô no cabo. Começar com machado e picareta para completar o ciclo de madeira e pedra. |
-| P1-08 Fechamento de junco | Titã | Cerca, portão e alçapão de Junco de Vidro | Usar a trama do painel e da porta existentes. Criar travessas, pivôs, estados aberto/fechado e silhuetas próprias para os ícones. |
-| P1-09 Abrigo da margem | Titã | Caixote raso, prateleira, cobertura leve de junco | Reusar madeira ou fibra apenas quando a fonte for coerente com o kit. Usar o baú, a cama e a lanterna já existentes para validar o conjunto no mundo. |
+| Lote | Mundo | Peças candidatas | Arte a produzir ou adaptar | Estado (v0.180.0) |
+|---|---|---|---|---|
+| P1-01 Madeira básica | Orvalis voxel | Tábua de bétula, carvalho e cerejeira, haste de madeira, mesa de carpintaria | Reaproveitar as fontes V2 das tábuas. Ícone da haste. Topo de trabalho, laterais e ícone da mesa. Começar pela bétula, cuja tora já tem arte escolhida. | **integrado** (E1, ADR 0107) |
+| P1-02 Vedação de madeira | Orvalis voxel | Laje, degrau, cerca, portão e porta de bétula | Derivar laje e degrau da tábua. Modelos e ícones para cerca, portão e porta. Prever encaixe das travessas e dobradiças para aberto e fechado. | **parcial**: degrau e laje de junco já existem no Titã; bétula (porta, portão, cerca, degrau, laje) fica para a E6 |
+| P1-03 Folhas e orla | Orvalis voxel | Folhas de bétula, carvalho e cerejeira, areia de praia, toras de carvalho e cerejeira | Copas com silhuetas distintas, areia repetível e toras com anéis no topo e casca lateral. Substituir as versões provisórias por família. | **integrado** (E0; a tora de bétula segue a fonte anterior) |
+| P1-04 Pedra de obra | Orvalis voxel | Pedra bruta, pedra lisa, tijolo de pedra, laje, degrau e mureta | Criar a partir da pedra local. Testar juntas repetíveis e cortes da laje e do degrau com a mesma escala de textura. | **integrado** (E2a a E2c, ADR 0108 a 0110) |
+| P1-05 Solo de cultivo | Orvalis voxel | Terra arada seca e úmida, terra infértil, caminho | Adaptar as três fontes em `extras/`. Topo por estado e lateral compatível com a terra do jogo. Conferir o nível visual do sulco e do caminho. | **integrado** (E3, ADR 0111; a arada reage à água na E5) |
+| P1-06 Horta | Orvalis voxel | Semente de trigo, trigo, cenoura, batata, tomate | Ícone para cada pilha, variações de crescimento e silhuetas distintas na colheita. Aproveitar a identidade das plantas do Orvalis 2.5D. | **integrado** (E5, ADR 0113) |
+| P1-07 Ferramentas iniciais | Orvalis voxel | Machado, picareta, pá e enxada de madeira e pedra | Sprites planos transparentes com pivô no cabo. Começar com machado e picareta para completar o ciclo de madeira e pedra. | **integrado** (E4, ADR 0112) |
+| P1-08 Fechamento de junco | Titã | Cerca, portão e alçapão de Junco de Vidro | Usar a trama do painel e da porta existentes. Criar travessas, pivôs, estados aberto/fechado e silhuetas próprias para os ícones. | **arte pronta** (E6, pendente) |
+| P1-09 Abrigo da margem | Titã | Caixote raso, prateleira, cobertura leve de junco | Reusar madeira ou fibra apenas quando a fonte for coerente com o kit. Usar o baú, a cama e a lanterna já existentes para validar o conjunto no mundo. | **arte pronta** (E6, pendente) |
 
 ### P2 · Ofícios, móveis e exploração
 
 | Lote | Mundo | Peças candidatas | Arte a produzir ou adaptar |
 |---|---|---|---|
-| P2-01 Cerâmica | Orvalis voxel | Argila, tijolo cru, tijolo queimado, bloco, telha, vaso | Ícones por etapa. Textura repetível de tijolos. Modelos ou formas próprias para telha e vaso. |
+| P2-01 Cerâmica | Orvalis voxel | Argila, tijolo cru, tijolo queimado, bloco, telha, vaso (**parcial**: argila, tijolo e os dois blocos na E3; telha e vaso pendentes) | Ícones por etapa. Textura repetível de tijolos. Modelos ou formas próprias para telha e vaso. |
 | P2-02 Construção colorida | Orvalis | Vidro, painel de vidro, tecido, tapete e reboco pigmentado | Transparência e bordas para o vidro. Trama base e pequena paleta para tecido e reboco. Derivar cores da mesma base quando preservarem a leitura. |
 | P2-03 Bancadas de ofício | Orvalis voxel | Bancada de corte de pedra, bigorna, tear, bancada de tintura | Um conjunto por função com área de trabalho legível, ícone e modelo ou faces distintas. |
 | P2-04 Armazenamento e sinalização | Orvalis voxel | Baú de madeira, barril, placa, moldura, estante | Tampa do baú em movimento, placa de parede e de chão, madeira reaproveitada. O conteúdo exibido pode variar com a mesma moldura. |

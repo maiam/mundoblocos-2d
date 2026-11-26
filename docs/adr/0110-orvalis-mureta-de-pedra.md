@@ -1,0 +1,15 @@
+# ADR 0110 — Orvalis em voxel: Mureta de Pedra com conexões (v0.177.0, entrega E2c)
+
+**Status:** Aceita. Última peça da pedra de obra (P1-04). Primeiro bloco do motor cuja **forma depende dos vizinhos**; o padrão fica registrado para vedações futuras (E6: cerca, portão).
+
+## Decisão
+- **Blocos 115–130** (`T.STONE_WALL` + máscara de 4 bits, `T_MAX` = 130), **item 61** (atlas de itens 4 × **16**: `ITEM_ROWS` e o CSS passam a 16; 64 ids, 61 em uso). Máscara: norte (−Z) 1, leste (+X) 2, sul (+Z) 4, oeste (−X) 8. Pergunte `isWall`/`wallMask`/`wallId`/`wallConnects`, nunca ids soltos.
+- **Forma:** poste central de 8 × 8 mais um braço de 8 de largura por vizinho ligado (`wallBoxes`, mesmas caixas da física e da mira, `blockBoxes`). **Altura 0,75 m** (12 px da arte de 16): é uma mureta, o jogador **pula por cima** (o degrau automático de 0,6 m não sobe sozinho). Não é cubo (`isFull` falso), esconde a luz como o baú.
+- **Conexão no id, atualizada pelo volume:** `TitanVolume.set` normaliza qualquer id de mureta para a máscara dos quatro vizinhos do mesmo nível (liga a **mureta e a cubo inteiro**; laje, degrau e porta não ligam) e, depois de **qualquer** mudança numa célula, `refreshWalls` refaz a máscara das muretas vizinhas por `set`. Por passar por `set`, a sala (`onSet`) repassa cada vizinha mudada sem código novo, e o cliente reaplica o mesmo resultado. O item coloca `T.STONE_WALL` e a máscara nasce certa.
+- **Modelo por máscara:** 16 tipos de instância `mureta0…mureta15` (`MURETA_KINDS`), gerados em TypeScript por `render/muretaModel.ts` a partir das próprias caixas (sem arquivo de modelo): faces escondidas (ponta externa e interna do braço, face do poste para um braço, base) não entram. Textura: tira de 2 tiles de 16 px `titan-mureta-pedra.webp` (topo | face), por `scripts/make-orvalis-mureta.py` (entra no `npm run texturas`); UV recuadas em v para a amostragem não pegar o transparente do PNG (pontos pretos). Topo dos braços norte/sul gira 90° e a lateral −X/trás sai espelhada (inevitável numa peça que corre nos dois eixos; a arte é neutra).
+- **Receita** (Mesa, `world: 'orvalis'`, provisória): 6 Pedra Lisa → 6 Muretas. Quebra 1 s, som de rocha. Ícone isométrico (`wall_icon`, trecho reto em X). Fora da vitrine de texturas (a vitrine empilha em massa 3 × 3 × 3, onde a máscara muda por vizinho).
+
+## Consequências
+- Sem mudança de gerador, save nem protocolo: os 16 ids ficam acima do `T_MAX` anterior e a máscara vai no próprio id gravado (um save abre igual; a máscara só se refaz ao editar um vizinho).
+- Pendências: a máscara não reage a vizinho em chunk ainda não carregado nem a mudança feita fora de `set` (carga de save já traz os ids certos); sem conexão a degrau/laje/porta; sem poste alto quando há passagem, sem variantes por altura (Minecraft tem braço baixo/alto); aceite no toque; calibrar receita.
+- Testes: `orvalis/pedraObra.test.ts` (ids e máscaras, modelo por máscara, liga e desliga com muretas e cubos, laje não liga, colocar/quebrar com `onSet`, barra o corpo, mira acerta e passa por cima de 0,75 m). Conferido no navegador (primeira pessoa e isométrica): muretas ligando entre si e a cubos.

@@ -1,5 +1,5 @@
-import type { Tier } from './items';
-import { T } from './voxel';
+import { toolOf, type Tier, type ToolKind } from './items';
+import { isPickVein, isWall, T } from './voxel';
 
 /**
  * Tempos de quebra e estágios de rachadura do Titã (ADR 0042). Puro. Os tempos são **totais desde a pressão**: os primeiros 200 ms são a espera que
@@ -23,19 +23,41 @@ export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | bool
   const tier: Tier | null = pick === true ? 'rock' : pick || null;
   if (block === T.VEIN_COPPER || block === T.EMBER_VEIN) return tier ? Math.round(BREAK_MS.rock * PICK_FACTOR[tier]) : null; // só uma picareta o quebra (ADR 0063)
   const t = baseBreakMs(block);
-  return t !== null && tier && ROCK_CLASS.has(block as number) ? Math.round(t * PICK_FACTOR[tier]) : t;
+  return t !== null && tier && (pick === true ? blockToolOf(block) === 'pick' : blockToolOf(block) !== null) ? Math.round(t * PICK_FACTOR[tier]) : t; // quem decide se a ferramenta serve para o bloco é `toolAdvantage`
 }
 
 /** Com picareta, os blocos de rocha cedem nesta fração do tempo, por nível (provisório, ADR 0063 e 0065). */
-export const PICK_FACTOR: Readonly<Record<Tier, number>> = { rock: 0.6, copper: 0.4 };
-const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270, T.STONE]);
+export const PICK_FACTOR: Readonly<Record<Tier, number>> = { wood: 0.8, rock: 0.6, copper: 0.4 }; // a madeira (Orvalis, ADR 0112) é a mais lenta
+
+const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270, T.STONE, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.BRICK_BLOCK, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m), T.STONE_SLAB, T.STONE_SLAB_TOP]);
+
+const WOOD_CLASS: ReadonlySet<number> = new Set([T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270]);
+const SOIL_CLASS: ReadonlySet<number> = new Set([T.GRASS, T.DIRT, T.BEACH, T.PATH, T.FARMLAND_DRY, T.FARMLAND_WET, T.DIRT_INFERTILE, T.CLAY_BLOCK, T.SAND, T.DAMP_SAND]);
+/** Que ferramenta é a certa para o bloco (como no Minecraft): picareta para rocha e veios, machado para madeira, pá para solo; `null` = nenhuma ajuda. */
+export function blockToolOf(block: number | undefined): ToolKind | null {
+  if (block === undefined) return null;
+  if (ROCK_CLASS.has(block) || isPickVein(block) || isWall(block)) return 'pick';
+  if (WOOD_CLASS.has(block)) return 'axe';
+  if (SOIL_CLASS.has(block)) return 'shovel';
+  return null;
+}
+/** Nível da ferramenta na mão **se ela é a certa para o bloco** (senão `null`: a mão nua): é o que `breakTotalMs` recebe (ADR 0112; antes recebia só "tem picareta", sempre no nível de rocha). */
+export function toolAdvantage(item: number | undefined | null, block: number | undefined): Tier | null {
+  const t = toolOf(item);
+  return t && blockToolOf(block) === t.kind ? t.tier : null;
+}
 
 function baseBreakMs(block?: number): number | null {
+  if (block !== undefined && isWall(block)) return BREAK_MS.slab; // a mureta de pedra (16 ids de conexão, ADR 0110) cede como a laje
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return BREAK_MS.slab; // a porta cede como os móveis de junco (ADR 0102)
   switch (block) {
     case T.GRASS: case T.DIRT: case T.BEACH: return BREAK_MS.sand; // Orvalis em voxel (ADR 0105): terra, grama e areia da praia cedem como a areia
-    case T.STONE: return BREAK_MS.rock;
-    case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: return BREAK_MS.wood;
+    case T.PATH: case T.DIRT_INFERTILE: case T.FARMLAND_DRY: case T.FARMLAND_WET: return BREAK_MS.sand; // solo: cede como a terra (ADR 0111)
+    case T.CLAY_BLOCK: return BREAK_MS.sand;
+    case T.BRICK_BLOCK: return BREAK_MS.rock;
+    case T.STONE: case T.STONE_SMOOTH: case T.STONE_BRICK: return BREAK_MS.rock; // pedra de obra (ADR 0108)
+    case T.STONE_SLAB: case T.STONE_SLAB_TOP: case T.STONE_STAIR: case T.STONE_STAIR_90: case T.STONE_STAIR_180: case T.STONE_STAIR_270: return BREAK_MS.slab;
+    case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: case T.PLANKS_OAK: case T.PLANKS_CHERRY: case T.PLANKS_BIRCH: case T.CARPENTRY: case T.CARPENTRY_90: case T.CARPENTRY_180: case T.CARPENTRY_270: return BREAK_MS.wood; // tábuas e mesa (ADR 0107)
     case T.LEAVES_OAK: case T.LEAVES_CHERRY: case T.LEAVES_BIRCH: return BREAK_MS.leaves;
     case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: return BREAK_MS.sand; // o bloco de junco cede como a areia (ADR 0100)
     case T.REED_SLAB: case T.REED_SLAB_TOP: return BREAK_MS.slab;

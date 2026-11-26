@@ -11,15 +11,17 @@ import { BLOCK_NAMES, inRegion, REGION_V6, type Region, T, tileFor } from './vox
 
 /** Fileiras da vitrine, da esquerda para a direita: o Orvalis em voxel e o terreno do Titã (cubos inteiros e a laje de rocha). */
 export const ORVALIS_ROW: readonly number[] = [T.GRASS, T.DIRT, T.STONE, T.BEACH, T.LOG_OAK, T.LEAVES_OAK, T.LOG_CHERRY, T.LEAVES_CHERRY, T.LOG_BIRCH, T.LEAVES_BIRCH];
+export const ORVALIS_ROW2: readonly number[] = [T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_SLAB, T.STONE_STAIR, T.FARMLAND_DRY, T.FARMLAND_WET, T.PATH, T.DIRT_INFERTILE, T.CLAY_BLOCK, T.BRICK_BLOCK]; // madeira e pedra de obra (ADR 0107, 0108, 0109, 0111)
 export const TITAN_ROW: readonly number[] = [T.SAND, T.DAMP_SAND, T.DARK_ROCK, T.FROST, T.VEIN_ROCK, T.VEIN_FROST, T.VEIN_COPPER, T.EMBER, T.CARAPACE, T.EMBER_VEIN, T.EMBER_BLOCK, T.REED_BLOCK, T.SLAB];
 export const ROWS: ReadonlyArray<{ z0: number; blocks: readonly number[]; label: string }> = [
-  { z0: 0, blocks: ORVALIS_ROW, label: 'Fila 1 (Orvalis)' },
-  { z0: 10, blocks: TITAN_ROW, label: 'Fila 2 (Titã)' },
+  { z0: 0, blocks: ORVALIS_ROW, label: 'Fila 1 (Orvalis: terreno e árvores)' },
+  { z0: 10, blocks: ORVALIS_ROW2, label: 'Fila 2 (Orvalis: madeira, pedra, solo e cerâmica)' },
+  { z0: 20, blocks: TITAN_ROW, label: 'Fila 3 (Titã)' },
 ];
 /** Distância entre blocos no eixo X, início da fileira e piscina de água (x, z, lado). */
 export const STEP = 4;
 export const X0 = 0;
-export const POOL = { x: 0, z: 20, size: 6 } as const;
+export const POOL = { x: 0, z: 30, size: 6 } as const;
 const FLOOR_Y = 63;
 const POOL_FLOOR_Y = 60;
 

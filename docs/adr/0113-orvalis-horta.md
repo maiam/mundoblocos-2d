@@ -1,0 +1,15 @@
+# ADR 0113 — Orvalis em voxel: horta (trigo, cenoura, batata e tomate) — v0.180.0, entrega E5
+
+**Status:** Aceita. Sétima entrega do pacote Texturas16px (P1-06). Estende o cultivo do Titã (ADR 0083, 0084) em vez de abrir outro sistema.
+
+## Decisão
+- **Itens 78–82** (atlas de itens **4 × 21**, 84 ids): Semente de Trigo, Trigo, Cenoura, Batata, Tomate (sprites 16 × 16 do pacote). Cenoura, batata e tomate são **comida** (`FOOD`: 3/3,6, 1/0,6 e 2/2,4 — o tomate é nosso, provisório) e **se plantam com o próprio produto**; o trigo com a semente. Tocar com a cenoura/batata/tomate onde não dá para plantar **come**; a semente de trigo avisa onde plantar.
+- **Espécies novas** em `crops.ts`: `trigo`, `cenoura`, `batata`, `tomate` (`GARDEN_SPECIES`, `isGarden`), **3 fases** (broto 0, crescendo 1, madura 2). Crescem **só na terra arada** (`plantableSoil`; o junco e a Noz seguem só na areia): `soilKindFor(espécie, bloco)` lê a terra arada úmida (4 pontos de fertilidade, vizinhas 0,75) e seca (2, vizinhas 0,25) com a mesma conta e os mesmos random ticks do junco (luz mínima 9, metade se aglomerada). **Colher rende 2** do produto e a planta volta a broto (a planta-mãe nunca é arrancada, como no junco); quebrar a terra sob ela devolve a semente solta (`seedOf`).
+- **A terra arada reage à água** (a pendência do ADR 0111/0112): a cada tick de uma planta da horta, a terra seca vira úmida se há lago a até 4 células (nível ou 1 acima, `isHydrated`) e a úmida volta a seca se a água sumiu (`tickCrops`).
+- **Semente silvestre provisória** (`wildSeedAt`, até haver plantas selvagens no gerador): quebrar um bloco de grama solta, pelo hash da célula (sempre o mesmo resultado), semente de trigo em 1 de 6 e cenoura, batata ou tomate em 1 de 24 cada. Receita de **Semente de Trigo** (1 Trigo, na mão, `world: 'orvalis'`) fecha o ciclo do trigo.
+- **Desenho:** atlas `orvalis-horta-16px.webp` (12 quadros de 16 px: espécie × fase, `scripts/make-orvalis-horta.py`, no `npm run texturas`) e malha em **'#'** (quatro faixas a 1/4 das bordas, alfa recortado, sem giro) por quadro, `GARDEN_FRAMES`; o `standingCrops` devolve `gardenFrame` (4 a 15, depois das 4 colunas do junco) e o `setCrops` do renderer separa os dois atlas.
+- **Save:** `header.crops` aceita `{ s: espécie, a: idade }` também para a horta (campo opcional; o junco segue só a idade); o carregamento descarta planta sem terra arada, sobre areia ou com idade acima do limite. Sem mudança de `TITAN_SAVE_VERSION`, gerador nem protocolo.
+
+## Consequências
+- Pendências: **pão** e outros usos do trigo (hoje só vira semente); sementes e plantas selvagens no gerador (a versão 2 do Orvalis); colher sem rebrotar/arrancar a planta; pisotear a terra arada; vasos; a sala (servidor) ainda não simula a horta (`TitanRoom`); calibrar fertilidade, rendimento e fome; aceite no toque.
+- Testes: `orvalis/horta.test.ts` (itens e comida, regras de solo, plantar/crescer/colher nas 4 espécies, só terra arada, comer × plantar, umedecer/secar, semente solta, silvestre e receita, persistência); limites `isItem(78)` → 83 nos antigos. Conferido no navegador (as 12 fases desenhadas).

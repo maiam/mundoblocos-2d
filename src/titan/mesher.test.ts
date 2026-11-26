@@ -18,8 +18,8 @@ describe('malha por seção', () => {
     }
     expect(tilesCfg.iso.tile * 2).toBe(tilesCfg.tile); expect(tilesCfg.iso.pad * 2).toBe(tilesCfg.pad); // a variante de 8 px vale com os mesmos UVs
   });
-  it('o atlas de terreno cobre todos os tiles do tiles.json com 63 entradas únicas', () => {
-    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles).toHaveLength(63); expect(tilesCfg.cols * tilesCfg.cols).toBeGreaterThanOrEqual(tilesCfg.tiles.length);
+  it('o atlas de terreno cobre todos os tiles do tiles.json com entradas únicas (63 ou mais)', () => {
+    expect(new Set(tilesCfg.tiles).size).toBe(tilesCfg.tiles.length); expect(tilesCfg.tiles.length).toBeGreaterThanOrEqual(63); expect(Math.ceil(tilesCfg.tiles.length / tilesCfg.cols)).toBeLessThanOrEqual(64); // as linhas do atlas crescem com os tiles (8 colunas; era uma grade quadrada de 64 até o Orvalis em voxel)
   });
   it('seção de ar não gera malha; a da superfície gera faces e o lago tem malha própria', () => {
     const g = new TitanGenerator(42), v = new TitanVolume(g);
