@@ -4,7 +4,7 @@ import { BLOCK_NAMES, isCarpentry, isMarco, isPanel, isWorkbench, T } from './vo
  * Itens do Titã (ADR 0040). O id é o índice do sprite no atlas da hotbar + 1 (`render/art/titan.ts`): a ordem do atlas não depende da ordem dos espaços da barra.
  * Os quatro primeiros coincidem com os ids de bloco `T.SAND … T.FROST`.
  */
-export const Item = { SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, ROCK_SHARD: 5, FROST_SHARD: 6, CAPSULE: 7, LANTERN: 8, WORKBENCH: 9, ICE_LENS: 10, EMBER: 11, GLASS_REED: 12, SLAB: 13, MARCO: 14, PAINEL: 15, NOZ: 16, COPPER_SHARD: 17, COPPER_INGOT: 18, DRY_REED: 19, STONE_PICK: 20, BRAZIER: 21, STONE_DAGGER: 22, COPPER_PICK: 23, COPPER_DAGGER: 24, PLATE: 25, CARAPACE: 26, RAW_MEAT: 27, COOKED_MEAT: 28, EMBER_BLOCK: 29, NOZ_TORRADA: 30, ESTEIRA: 31, ESCADA: 32, BAU: 33, CAMA: 34, BALDE: 35, BALDE_CHEIO: 36, BLOCO_JUNCO: 37, LAJE_JUNCO: 38, DEGRAU_JUNCO: 39, CADEIRA_JUNCO: 40, PORTA_JUNCO: 41, GRASS: 42, DIRT: 43, STONE: 44, BEACH: 45, LOG_OAK: 46, LEAVES_OAK: 47, LOG_CHERRY: 48, LEAVES_CHERRY: 49, LOG_BIRCH: 50, LEAVES_BIRCH: 51, TABUA_CARVALHO: 52, TABUA_CEREJEIRA: 53, TABUA_BETULA: 54, HASTE: 55, MESA_CARPINTARIA: 56, PEDRA_LISA: 57, TIJOLO_PEDRA: 58, LAJE_PEDRA: 59, DEGRAU_PEDRA: 60, MURETA_PEDRA: 61, TERRA_ARADA_SECA: 62, TERRA_ARADA_UMIDA: 63, CAMINHO_TERRA: 64, TERRA_INFERTIL: 65, BLOCO_ARGILA: 66, BLOCO_TIJOLOS: 67, BOLA_ARGILA: 68, TIJOLO: 69, PICARETA_MADEIRA: 70, PICARETA_PEDRA: 71, MACHADO_MADEIRA: 72, MACHADO_PEDRA: 73, PA_MADEIRA: 74, PA_PEDRA: 75, ENXADA_MADEIRA: 76, ENXADA_PEDRA: 77 } as const;
+export const Item = { SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, ROCK_SHARD: 5, FROST_SHARD: 6, CAPSULE: 7, LANTERN: 8, WORKBENCH: 9, ICE_LENS: 10, EMBER: 11, GLASS_REED: 12, SLAB: 13, MARCO: 14, PAINEL: 15, NOZ: 16, COPPER_SHARD: 17, COPPER_INGOT: 18, DRY_REED: 19, STONE_PICK: 20, BRAZIER: 21, STONE_DAGGER: 22, COPPER_PICK: 23, COPPER_DAGGER: 24, PLATE: 25, CARAPACE: 26, RAW_MEAT: 27, COOKED_MEAT: 28, EMBER_BLOCK: 29, NOZ_TORRADA: 30, ESTEIRA: 31, ESCADA: 32, BAU: 33, CAMA: 34, BALDE: 35, BALDE_CHEIO: 36, BLOCO_JUNCO: 37, LAJE_JUNCO: 38, DEGRAU_JUNCO: 39, CADEIRA_JUNCO: 40, PORTA_JUNCO: 41, GRASS: 42, DIRT: 43, STONE: 44, BEACH: 45, LOG_OAK: 46, LEAVES_OAK: 47, LOG_CHERRY: 48, LEAVES_CHERRY: 49, LOG_BIRCH: 50, LEAVES_BIRCH: 51, TABUA_CARVALHO: 52, TABUA_CEREJEIRA: 53, TABUA_BETULA: 54, HASTE: 55, MESA_CARPINTARIA: 56, PEDRA_LISA: 57, TIJOLO_PEDRA: 58, LAJE_PEDRA: 59, DEGRAU_PEDRA: 60, MURETA_PEDRA: 61, TERRA_ARADA_SECA: 62, TERRA_ARADA_UMIDA: 63, CAMINHO_TERRA: 64, TERRA_INFERTIL: 65, BLOCO_ARGILA: 66, BLOCO_TIJOLOS: 67, BOLA_ARGILA: 68, TIJOLO: 69, PICARETA_MADEIRA: 70, PICARETA_PEDRA: 71, MACHADO_MADEIRA: 72, MACHADO_PEDRA: 73, PA_MADEIRA: 74, PA_PEDRA: 75, ENXADA_MADEIRA: 76, ENXADA_PEDRA: 77, SEMENTE_TRIGO: 78, TRIGO: 79, CENOURA: 80, BATATA: 81, TOMATE: 82 } as const;
 export type ItemId = (typeof Item)[keyof typeof Item];
 
 export const ITEM_NAMES: Record<number, string> = {
@@ -16,13 +16,14 @@ export const ORVALIS_ITEM_BLOCKS: Readonly<Record<number, number>> = { [Item.GRA
 const ORVALIS_BLOCK_ITEMS: Readonly<Record<number, number>> = Object.fromEntries(Object.entries(ORVALIS_ITEM_BLOCKS).map(([item, block]) => [block, Number(item)]));
 for (const [item, block] of Object.entries(ORVALIS_ITEM_BLOCKS)) ITEM_NAMES[Number(item)] = BLOCK_NAMES[block];
 Object.assign(ITEM_NAMES, { 70: 'Picareta de Madeira', 71: 'Picareta de Pedra', 72: 'Machado de Madeira', 73: 'Machado de Pedra', 74: 'Pá de Madeira', 75: 'Pá de Pedra', 76: 'Enxada de Madeira', 77: 'Enxada de Pedra' }); // ferramentas do Orvalis (ADR 0112)
+Object.assign(ITEM_NAMES, { 78: 'Semente de Trigo', 79: 'Trigo', 80: 'Cenoura', 81: 'Batata', 82: 'Tomate' }); // horta (ADR 0113)
 ITEM_NAMES[Item.BOLA_ARGILA] = 'Bola de Argila'; ITEM_NAMES[Item.TIJOLO] = 'Tijolo'; // itens sem bloco (ADR 0111)
 ITEM_NAMES[Item.MURETA_PEDRA] = 'Mureta de Pedra'; // a conexão vem dos vizinhos (ADR 0110)
 ITEM_NAMES[Item.DEGRAU_PEDRA] = 'Degrau de Pedra'; // sem entrada em ORVALIS_ITEM_BLOCKS: o giro vem do olhar (ADR 0109)
 ITEM_NAMES[Item.HASTE] = 'Haste de Madeira'; // item sem bloco (ADR 0107)
 /** Pilhas: blocos, fragmentos, lente e brasa até 64; cápsula (legada, id reservado), lanterna e mesa até 1 (a mesa 1 por espaço: é uma peça grande). */
 export const maxStack = (item: number): number => (item === Item.CAPSULE || item === Item.LANTERN || item === Item.WORKBENCH || isBucket(item) || isTool(item) ? 1 : 64);
-export const isItem = (n: unknown): n is ItemId => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 77;
+export const isItem = (n: unknown): n is ItemId => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 82;
 /** Balde de Cobre (ADR 0091): vazio recolhe uma célula do lago, cheio a despeja. Pergunte aqui, nunca compare ids soltos. */
 export const isBucket = (item: number | undefined | null): boolean => item === Item.BALDE || item === Item.BALDE_CHEIO;
 
@@ -85,7 +86,7 @@ export function itemOfBlock(block: number): ItemId | null {
 export const dropCountOf = (block: number): number => (block === T.SLAB_DOUBLE ? 2 : 1);
 
 /** Comida (ADR 0060): fome recuperada (pontos de 0 a 20) e saturação somada (como no Minecraft: `fome + saturação` limitada à fome). Provisório, pede teste em jogo. */
-export const FOOD: Readonly<Record<number, { hunger: number; saturation: number }>> = { [Item.NOZ]: { hunger: 4, saturation: 2.4 }, [Item.NOZ_TORRADA]: { hunger: 7, saturation: 5.6 }, [Item.RAW_MEAT]: { hunger: 2, saturation: 1.2 }, [Item.COOKED_MEAT]: { hunger: 8, saturation: 12.8 } };
+export const FOOD: Readonly<Record<number, { hunger: number; saturation: number }>> = { [Item.NOZ]: { hunger: 4, saturation: 2.4 }, [Item.NOZ_TORRADA]: { hunger: 7, saturation: 5.6 }, [Item.RAW_MEAT]: { hunger: 2, saturation: 1.2 }, [Item.COOKED_MEAT]: { hunger: 8, saturation: 12.8 }, [Item.CENOURA]: { hunger: 3, saturation: 3.6 }, [Item.BATATA]: { hunger: 1, saturation: 0.6 }, [Item.TOMATE]: { hunger: 2, saturation: 2.4 } }; // horta do Orvalis (ADR 0113): cenoura e batata como no Minecraft; o tomate é nosso (provisório)
 export const foodOf = (item: number): { hunger: number; saturation: number } | null => FOOD[item] ?? null;
 
 /**

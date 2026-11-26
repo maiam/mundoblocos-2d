@@ -33,7 +33,7 @@ describe('ferramentas do Orvalis (ADR 0112)', () => {
       expect(wearCost(item, { type: 'use' })).toBe(1); expect(wearCost(item, { type: 'break_block', block: T.STONE })).toBe(1); expect(wearCost(item, { type: 'attack' })).toBe(2);
       expect(damageOf(item)).toBeGreaterThanOrEqual(1);
     }
-    expect(isItem(77) && !isItem(78)).toBe(true);
+    expect(isItem(82) && !isItem(83)).toBe(true);
   });
 
   it('receitas na Mesa (só no Orvalis): 3/3/1/2 materiais + 2 hastes; madeira = tábuas de carvalho, pedra = Pedra', async () => {

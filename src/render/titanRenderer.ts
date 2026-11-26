@@ -14,7 +14,7 @@ import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
-import { CROP_FRAMES } from '../titan/crops';
+import { CROP_FRAMES, GARDEN_FRAMES } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
@@ -38,7 +38,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 20;
+const ITEM_ROWS = 21;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
 const ITEM_HOP_S = 0.4, ITEM_FLY_S = 0.14;
 const MESH_BUDGET_MS = 6;
@@ -81,6 +81,10 @@ export class TitanRenderer {
   private cropMeshes: THREE.InstancedMesh[] = [];
   private cropGeos: THREE.BufferGeometry[] = [];
   private cropMat!: THREE.MeshBasicMaterial;
+  /** Horta do Orvalis (ADR 0113): uma malha instanciada por quadro do atlas da horta (espécie × fase), em faixas cruzadas em '#'. */
+  private gardenMeshes: THREE.InstancedMesh[] = [];
+  private gardenGeos: THREE.BufferGeometry[] = [];
+  private gardenMat!: THREE.MeshBasicMaterial;
   private reedGeos: THREE.BufferGeometry[] = [];
   private reedMat!: THREE.MeshBasicMaterial;
   /** Planta da Noz de Duna (todas as plantas) e as nozes (só as maduras): duas malhas instanciadas do mesmo atlas. */
@@ -140,7 +144,7 @@ export class TitanRenderer {
   private avatar: THREE.Group | null = null;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; muretaPedra: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -393,6 +397,24 @@ export class TitanRenderer {
       this.cropGeos.push(geo);
       this.cropMeshes.push(mesh);
     }
+    // horta do Orvalis (ADR 0113): atlas de 12 quadros de 16 px; faixas em '#' (como as plantações do Minecraft), sem repetição
+    const gtex = new THREE.Texture(extra.horta);
+    gtex.colorSpace = THREE.SRGBColorSpace;
+    gtex.magFilter = THREE.NearestFilter;
+    gtex.minFilter = THREE.NearestFilter;
+    gtex.generateMipmaps = false;
+    gtex.needsUpdate = true;
+    this.gardenMat = new THREE.MeshBasicMaterial({ map: gtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
+    patchDayLight(this.gardenMat, this.ambient, { time: this.timeU });
+    for (let f = 0; f < GARDEN_FRAMES; f++) {
+      const geo = gardenGeometry(f, GARDEN_FRAMES);
+      const mesh = new THREE.InstancedMesh(geo, this.gardenMat, 16);
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      this.scene.add(mesh);
+      this.gardenGeos.push(geo);
+      this.gardenMeshes.push(mesh);
+    }
 
     // contorno da célula apontada
     const box = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1));
@@ -595,6 +617,20 @@ export class TitanRenderer {
         m.compose(p.set(c.x + 0.5, c.y, c.z + 0.5), q, sc);
         mesh.setMatrixAt(i, m);
       });
+      mesh.count = g.length;
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+    for (let f = 0; f < GARDEN_FRAMES; f++) { // a horta: os quadros `CROP_FRAMES + f` (sem giro por posição: as faixas em '#' são simétricas)
+      const g = list.filter((c) => c.frame === CROP_FRAMES + f);
+      let mesh = this.gardenMeshes[f];
+      if (g.length > mesh.instanceMatrix.count) {
+        this.scene.remove(mesh);
+        mesh = new THREE.InstancedMesh(this.gardenGeos[f], this.gardenMat, Math.max(g.length, mesh.instanceMatrix.count * 2));
+        mesh.frustumCulled = false;
+        this.scene.add(mesh);
+        this.gardenMeshes[f] = mesh;
+      }
+      g.forEach((c, i) => { m.compose(p.set(c.x + 0.5, c.y, c.z + 0.5), q.identity(), sc); mesh.setMatrixAt(i, m); });
       mesh.count = g.length;
       mesh.instanceMatrix.needsUpdate = true;
     }
@@ -1167,6 +1203,25 @@ function reedGeometry(variant: number, columns: number = REED_COLUMNS): THREE.Bu
   g.setAttribute('color', new THREE.Float32BufferAttribute(new Array(8 * 3).fill(0.95), 3));
   g.setAttribute('glow', new THREE.Float32BufferAttribute(new Array(8 * 3).fill(0.05), 3)); // o junco não some na noite: só um leve resto de luz
   g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+  return g;
+}
+
+/** Plantação em '#' (ADR 0113): quatro faixas de 1 × 1 a 1/4 de cada borda, a arte do quadro `frame` do atlas da horta (alfa recortado). */
+function gardenGeometry(frame: number, columns: number): THREE.BufferGeometry {
+  const a = 0.25, pos = [
+    -0.5, 0, -a, 0.5, 0, -a, 0.5, 1, -a, -0.5, 1, -a,
+    -0.5, 0, a, 0.5, 0, a, 0.5, 1, a, -0.5, 1, a,
+    -a, 0, -0.5, -a, 0, 0.5, -a, 1, 0.5, -a, 1, -0.5,
+    a, 0, -0.5, a, 0, 0.5, a, 1, 0.5, a, 1, -0.5,
+  ];
+  const u0 = frame / columns, u1 = (frame + 1) / columns, uv: number[] = [];
+  for (let i = 0; i < 4; i++) uv.push(u0, 0, u1, 0, u1, 1, u0, 1);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(new Array(16 * 3).fill(0.95), 3));
+  g.setAttribute('glow', new THREE.Float32BufferAttribute(new Array(16 * 3).fill(0.05), 3));
+  g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15]);
   return g;
 }
 

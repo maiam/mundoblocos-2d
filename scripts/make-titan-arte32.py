@@ -38,7 +38,7 @@ NEW = {  # id do item -> arte de 32 px
 def main() -> None:
     base = Image.open(BASE).convert('RGBA')
     assert base.size == (64, 64), base.size
-    atlas = Image.new('RGBA', (128, 640), (0, 0, 0, 0))  # 4 colunas × 20 linhas de 32 px (80 ids, 77 em uso; o CSS lê `4 × 20`; ADR 0089, 0102, 0105, 0107, 0108)
+    atlas = Image.new('RGBA', (128, 672), (0, 0, 0, 0))  # 4 colunas × 21 linhas de 32 px (84 ids, 82 em uso; o CSS lê `4 × 21`; ADR 0089, 0102, 0105, 0107, 0108)
     atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')

@@ -31,7 +31,7 @@ describe('solo de cultivo e cerâmica (ADR 0111)', () => {
     }
     for (const item of [Item.BOLA_ARGILA, Item.TIJOLO]) { expect(isItem(item)).toBe(true); expect(blockOfItem(item)).toBeNull(); }
     expect(ITEM_NAMES[Item.BOLA_ARGILA]).toBe('Bola de Argila'); expect(ITEM_NAMES[Item.TIJOLO]).toBe('Tijolo');
-    expect(isItem(77) && !isItem(78)).toBe(true);
+    expect(isItem(82) && !isItem(83)).toBe(true);
     // a arada e o caminho têm topo e lateral próprios; a infértil e os blocos de cerâmica, o mesmo tile nas faces
     for (const b of [T.FARMLAND_DRY, T.FARMLAND_WET, T.PATH]) expect(tileFor(b, 'top')).not.toBe(tileFor(b, 'side'));
     expect(tileFor(T.FARMLAND_DRY, 'top')).not.toBe(tileFor(T.FARMLAND_WET, 'top'));

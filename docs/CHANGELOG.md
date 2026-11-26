@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.180.0 — Horta no Orvalis em voxel (E5, 26/11/2026)
+- **ADR 0113.** **Trigo, cenoura, batata e tomate** (itens 78–82; Semente de Trigo, Trigo, Cenoura, Batata, Tomate): plantam-se no topo da terra arada (o trigo com a semente; os outros com o próprio produto, que onde não dá para plantar se **come**), têm 3 fases, crescem pelos mesmos random ticks do junco (fertilidade pela terra úmida ou seca), colhem-se 2 e a planta volta a broto. **A terra arada agora seca e umedece** conforme o lago a até 4 células. Semente silvestre provisória ao quebrar grama; receita de Semente de Trigo.
+- Atlas da horta (12 quadros de 16 px, malha em '#') e de itens 4 × 21; `header.crops` guarda a espécie da horta. Testes novos em `orvalis/horta.test.ts`; limites `isItem(78)` → 83 nos antigos. Sem mudança de gerador, versão de save nem protocolo. Fila: E6 vedações e abrigo.
+
 ## Orvalis v0.179.0 — Ferramentas de madeira e de pedra no Orvalis em voxel (E4, 26/11/2026)
 - **ADR 0112.** **Picareta, machado, pá e enxada** de madeira e de pedra (itens 70–77, durabilidade 59/131, sprites 16 × 16 do pacote). `TOOLS` ganha os tipos `axe`/`shovel`/`hoe` e o nível `wood`; a ferramenta certa acelera o bloco certo (`blockToolOf`, `toolAdvantage`). **A enxada ara** terra, grama e caminho (úmida se há lago a até 4 células, `soil.ts`) e **a pá abre Caminho de Terra**, gastando 1 de durabilidade; terra arada e caminho devolvem Terra. Receitas na Mesa (material + 2 hastes); as receitas provisórias de solo do ADR 0111 saíram.
 - **Correção:** a picareta de cobre do Titã passou a quebrar a rocha a 40 % do tempo (o ADR 0065 já dizia isso; o jogo aplicava 60 % a toda picareta). Atlas de itens 4 × 20. Testes novos em `orvalis/ferramentas.test.ts`; limites `isItem(70)` → 78 nos antigos. Sem mudança de gerador, save nem protocolo. Fila: E5 horta, E6 vedações e abrigo.
