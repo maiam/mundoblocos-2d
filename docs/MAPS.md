@@ -145,7 +145,7 @@ flowchart LR
   P -->|optimize-assets.py| WB[src/assets/*.webp]
   WB -->|import ?inline em render/art/mundo.ts| JS[bundle Vite]
   JS -->|npm run build| D[dist/ site estático]
-  JS -->|build:artifact VITE_WORLD=principal| A[artifact/mundoblocos.html]
+  JS -->|build:artifact VITE_WORLD=orvalis3d| A[artifact/mundoblocos.html]
   P2[assets-src/icone-orvalis.webp] -->|make-icons.py| PW[public/icon-*.png + apple-touch-icon PWA]
 ```
 

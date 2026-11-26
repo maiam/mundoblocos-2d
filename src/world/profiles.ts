@@ -168,7 +168,7 @@ export const SUBDOMAINS: Record<string, WorldId> = { santuario: 'santuario' };
 
 /**
  * Escolhe o mundo: build fixo (VITE_WORLD, usado no artefato próprio) → subdomínio
- * do endereço → parâmetro `?mundo=` → mundo principal.
+ * do endereço → parâmetro `?mundo=` → **Orvalis 3D** (o mundo padrão, ADR 0115). O Titã só abre com `?mundo=titan` (ou build fixo).
  */
 export function resolveWorldId(hostname: string, search: string, fixed?: string): WorldId {
   if (fixed && fixed in WORLD_PROFILES) return fixed as WorldId;
@@ -176,7 +176,7 @@ export function resolveWorldId(hostname: string, search: string, fixed?: string)
   if (hostname.split('.').length > 2 && sub in SUBDOMAINS) return SUBDOMAINS[sub];
   const param = new URLSearchParams(search).get('mundo')?.toLowerCase();
   if (param && param in WORLD_PROFILES) return param as WorldId;
-  return 'principal';
+  return 'orvalis3d';
 }
 
 /** Número de chunks dentro dos limites (null = ilimitado). */

@@ -38,6 +38,9 @@ O que isso pede (ainda não existe; ver `NEXT_STEPS`, Fase 6): sistema de **nív
 igual em toda seed como a Cidade 1, ADR 0012), **viagem** entre cidades e conteúdo que libera com o nível. Com
 jogadores online, a concentração por cidade vira também ponto de encontro (multiplayer = backend do Orvalis).
 
+## Decisão de 26/11/2026 (ADR 0115): Orvalis 3D é o mundo padrão; o 2D e o Santuário saem
+O **Orvalis 3D** (voxel, primeira pessoa) é o mundo padrão; o **Titã** só abre com `?mundo=titan`; o **Orvalis 2D/2.5D, o Santuário e a isométrica 2.5D serão removidos** em etapas (o texto sobre o 2.5D abaixo é histórico até lá). Itens dos dois mundos voxel não se compartilham (ADR 0114).
+
 ## Direção: mundo principal também em voxel (dono do produto, 24/11/2026, ADR 0105)
 O mundo principal ganha um caminho em **primeira pessoa com blocos voxel ao estilo Minecraft**, sobre o motor do Titã (`?mundo=orvalis3d`). O mundo 2.5D descrito acima continua sendo o que está no ar até o voxel ter paridade (cidade, animais, NPCs, cultivo, missões); a aposentadoria do 2D será decidida por ADR.
 

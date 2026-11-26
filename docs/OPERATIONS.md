@@ -54,7 +54,7 @@ Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em
 | Comando de construção | `npm run build` (typecheck + build) |
 | Gerenciador de pacotes | npm (usa o `package-lock.json`) |
 | Diretório de saída | `dist` |
-| Variáveis de ambiente | nenhuma — **não** defina `VITE_WORLD` (sem ela, o site traz os dois mundos e escolhe pelo endereço) |
+| Variáveis de ambiente | nenhuma — **não** defina `VITE_WORLD` (sem ela, o site escolhe pelo endereço: o padrão é o Orvalis 3D e o Titã só abre com `?mundo=titan`, ADR 0115) |
 
 **No ar desde 2026-11-03** (conferido de fora: HTTPS, LiteSpeed; `index.html` com `no-cache`, `assets/` com cache de
 1 ano, manifesto como `application/manifest+json`, `.htaccess` inacessível (403); jogo, celular e Santuário sem erros).

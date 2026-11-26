@@ -4,6 +4,9 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
+## Limpeza: sair o Orvalis 2D, o Santuário e a isométrica 2.5D (ADR 0115) — etapa 1 feita (v0.181.0)
+**Feito:** Orvalis 3D é o padrão e o Titã só por `?mundo=titan`. **Falta:** **etapa 2** — remover o Santuário (perfil, `sanctuary*`, Fazenda, Vale Goblin, Rio, peças isométricas, arte, testes, docs); **etapa 3** — remover o 2.5D (`src/world`, `src/game`, render 2.5D, `src/landing`, partes de `src/net`) e **ajustar o `orvalis-servidor` junto** (`vendor/orvalis-net.cjs` passa a trazer só a sala do Titã; `PROTOCOL_VERSION`), limpar invariantes do `CLAUDE.md`, marcar ADRs substituídas, refazer o orçamento do Artifact (hoje ~13 MB de "início", meta 3 MB) e testar WebGL no iframe do Artifact. Um PR por etapa; o botão Visão do voxel fica.
+
 Para escolher o próximo lote de arte, consulte o [Guia de itens e texturas](GUIA_ITENS_TEXTURAS.md) (catálogo de candidatos). O **estado** das entregas do pacote Texturas16px está na seção abaixo e em `assets-src/orvalis-voxel/catalogo/LEIAME.md`.
 
 ## Pacote Texturas16px do Orvalis em voxel (v0.173.0) — fila de entregas (decisão do dono do produto: tudo, uma entrega por vez, PR e merge a cada uma)

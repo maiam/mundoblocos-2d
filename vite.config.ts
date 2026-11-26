@@ -10,7 +10,7 @@ export default defineConfig({
     // No site genérico, os imports são CHUNKS separados: Three.js baixa só
     // para o Santuário. O Mundo principal não transfere nem executa WebGL.
     rollupOptions: {
-      output: { inlineDynamicImports: process.env.VITE_WORLD === 'principal' },
+      output: { inlineDynamicImports: process.env.VITE_WORLD === 'orvalis3d' },
     },
   },
   test: {

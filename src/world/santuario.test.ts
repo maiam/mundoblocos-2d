@@ -13,9 +13,12 @@ describe('Perfis de mundo', () => {
   it('escolhe o mundo por build fixo, subdomínio e ?mundo=', () => {
     expect(resolveWorldId('santuario.orvalis.pensamentos.online', '')).toBe('santuario');
     expect(resolveWorldId('orvalis.pensamentos.online', '?mundo=santuario')).toBe('santuario');
-    expect(resolveWorldId('localhost', '')).toBe('principal');
-    expect(resolveWorldId('santuario.com', '')).toBe('principal'); // domínio de 2 partes não é subdomínio
-    expect(resolveWorldId('localhost', '?mundo=xyz')).toBe('principal');
+    expect(resolveWorldId('localhost', '')).toBe('orvalis3d'); // o mundo padrão é o Orvalis 3D (ADR 0115)
+    expect(resolveWorldId('santuario.com', '')).toBe('orvalis3d'); // domínio de 2 partes não é subdomínio
+    expect(resolveWorldId('localhost', '?mundo=xyz')).toBe('orvalis3d');
+    expect(resolveWorldId('localhost', '?mundo=titan')).toBe('titan'); // o Titã só por ?mundo=titan
+    expect(resolveWorldId('titan.orvalis.pensamentos.online', '')).toBe('orvalis3d'); // nunca por subdomínio
+    expect(resolveWorldId('localhost', '?mundo=principal')).toBe('principal'); // o 2.5D segue acessível só até sair (ADR 0115, etapa 3)
     expect(resolveWorldId('qualquer.host.com', '', 'santuario')).toBe('santuario');
   });
 
