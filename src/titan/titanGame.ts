@@ -11,7 +11,7 @@ import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, tickRespawn } from './combat';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, stationMet, type Group, type Recipe, type Station } from './recipes';
-import { breakTotalMs, DRAG_TOLERANCE_PX } from './breaking';
+import { breakTotalMs, DRAG_TOLERANCE_PX, toolAdvantage } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
 import { FootstepClock, surfaceOf } from './sounds';
 import { rayThrough } from './aim';
@@ -19,7 +19,7 @@ import { isoCamera, isoQuarterOf, isoRay, isoYawOf, ISO_RAY_MAX, ISO_REACH, step
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { CHEST_SLOTS } from './chest';
-import { blockOfItem, foodOf, isBucket, isPick, Item, ITEM_NAMES } from './items';
+import { blockOfItem, foodOf, isBucket, Item, ITEM_NAMES } from './items';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -873,7 +873,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   ring.hidden = true;
   const gesture = new InteractionGesture({
     totalMs: (t) => { // com picareta na mão a rocha cede mais depressa e o veio de cobre se quebra (ADR 0063)
-      const ms = breakTotalMs(t.kind, t.block, isPick(session.inventory.get(session.selected)?.item));
+      const ms = breakTotalMs(t.kind, t.block, toolAdvantage(session.inventory.get(session.selected)?.item, t.block));
       if (ms === null && t.kind === 'block' && (t.block === T.VEIN_COPPER || t.block === T.EMBER_VEIN)) notice('Só pó nos dedos. Falta uma picareta.');
       return ms;
     },

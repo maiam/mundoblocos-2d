@@ -9,10 +9,13 @@ import { Item, toolOf } from './items';
 export const MAX_DURABILITY: Readonly<Record<number, number>> = {
   [Item.STONE_PICK]: 131, [Item.STONE_DAGGER]: 131,
   [Item.COPPER_PICK]: 190, [Item.COPPER_DAGGER]: 190,
+  // Orvalis (ADR 0112), como o Minecraft: madeira 59, pedra 131
+  [Item.PICARETA_MADEIRA]: 59, [Item.MACHADO_MADEIRA]: 59, [Item.PA_MADEIRA]: 59, [Item.ENXADA_MADEIRA]: 59,
+  [Item.PICARETA_PEDRA]: 131, [Item.MACHADO_PEDRA]: 131, [Item.PA_PEDRA]: 131, [Item.ENXADA_PEDRA]: 131,
 };
 export const maxDurability = (item: number): number | null => MAX_DURABILITY[item] ?? null;
 
-export type WearAction = { type: 'break_block'; block: number } | { type: 'attack' };
+export type WearAction = { type: 'break_block'; block: number } | { type: 'attack' } | { type: 'use' };
 
 /**
  * Pontos de desgaste de uma ação (regra do Minecraft):
@@ -23,6 +26,7 @@ export type WearAction = { type: 'break_block'; block: number } | { type: 'attac
 export function wearCost(tool: number, action: WearAction): number {
   const t = toolOf(tool);
   if (!t) return 0;
+  if (action.type === 'use') return 1; // arar com a enxada, abrir caminho com a pá (ADR 0112)
   if (action.type === 'break_block') return isCollectBlock(action.block) ? 0 : t.kind === 'dagger' ? 2 : 1;
   return t.kind === 'dagger' ? 1 : 2;
 }

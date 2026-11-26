@@ -24,7 +24,7 @@ const walk = (s: S, b: Body, dirX: number, dirZ: number, secs: number): number =
 describe('degrau e cadeira: regras do bloco', () => {
   it('ids 50–53 e 54–57 com o giro no id, itens 39 e 40, receitas na Mesa, modelo instanciado', () => {
     expect(T_MAX).toBeGreaterThanOrEqual(T.REED_CHAIR_270);
-    expect(isItem(Item.DEGRAU_JUNCO) && isItem(Item.CADEIRA_JUNCO) && isItem(Item.PORTA_JUNCO) && !isItem(70)).toBe(true);
+    expect(isItem(Item.DEGRAU_JUNCO) && isItem(Item.CADEIRA_JUNCO) && isItem(Item.PORTA_JUNCO) && !isItem(78)).toBe(true);
     for (let t = 0; t < 4; t++) {
       const s = stairId(t), c = chairId(t);
       expect(isStair(s) && isChair(c) && stairTurn(s) === t && chairTurn(c) === t).toBe(true);
