@@ -1,6 +1,6 @@
 # Guia de referência para jogos de mundo aberto
 
-**Orvalis e Titã · 26/11/2026 · base do jogo v0.172.0**
+**Orvalis e Titã · 26/11/2026 · escrito sobre a v0.172.0 e conferido com a v0.180.0**
 
 Use este guia para desenhar uma mecânica, localizar suas dependências e definir como ela será testada. **Referência** descreve padrões observados no Minecraft Java. **Hoje** descreve este repositório. **Proposta** indica um caminho para discussão. Os valores locais servem para entender o ponto de partida e devem ser conferidos no código antes de mudar uma regra.
 
@@ -13,7 +13,7 @@ A pesquisa usa o Minecraft Java 26.3 como recorte. A wiki em português mistura 
 | Orvalis 2.5D | Grade X/Y, altura de pilha separada, terreno por seed, Cidade do Despertar fixa e interiores em áreas reservadas. | `World` decide onde pisar, colocar e quebrar. Use `SUBDIV` ao converter medidas de jogabilidade para células e `cubeLevels` para converter níveis em altura visual. |
 | Santuário | Perfil do motor 2.5D, região finita, cenário e construção próprios, câmera isométrica fixa. | Defina exceções em `WorldProfile`. Confira a disponibilidade de peças e a proteção ou liberdade de edição no perfil. |
 | Titã | Volume voxel X/Y/Z, 1 m por bloco, gerador próprio. Região atual de 128 × 128 no gerador recente, com eixo Y de −64 a 319. A região dos saves antigos pode ser menor. | `TitanVolume` sobre `TerrainGen`. Versão do gerador do Titã: 13. Preservar as versões que os saves usam. |
-| Orvalis voxel | Mesmo motor do Titã, gerador próprio, ilha de 128 × 128 com Campos, Bosque de Sakura e mar. | `OrvalisGenerator` v1, banco separado e perfil próprio. Cidade, cavernas, minérios, fauna e cultivo do Orvalis ainda aguardam integração neste modo. |
+| Orvalis voxel | Mesmo motor do Titã, gerador próprio, ilha de 128 × 128 com Campos, Bosque de Sakura e mar. | `OrvalisGenerator` v1, banco separado e perfil próprio. Madeira, pedra de obra, solo, ferramentas e horta já estão integradas (E1 a E5, ADR 0107 a 0113). Cidade, cavernas, minérios e fauna do Orvalis ainda aguardam integração neste modo. |
 
 Fontes do projeto: [mapas do sistema](MAPS.md), [mundo 2.5D](domains/world.md), [perfis](domains/worlds.md), [Titã e Orvalis voxel](domains/titan.md). Os dois motores têm unidades diferentes: escreva sempre **blocos**, **células**, **níveis**, **metros** ou **pixels** junto da medida.
 
@@ -165,7 +165,7 @@ Exemplo: **seixo arremessável no Titã**. Só tira uma unidade da pilha se o la
 ## 12. Ordem sugerida para evoluir o mundo
 
 1. **Base mensurável.** Registrar coordenadas, camadas do gerador, distância de renderização e de simulação em um painel de desenvolvimento. Medir costuras, travessia e memória com seeds fixas.
-2. **Ciclo de sobrevivência.** Validar coleta, hotbar, fabricação, construção, luz, noite, retorno e save como sequência completa. No Orvalis voxel, começar pelo lote de madeira e pelas ferramentas que fecham esse ciclo.
+2. **Ciclo de sobrevivência.** Validar coleta, hotbar, fabricação, construção, luz, noite, retorno e save como sequência completa. No Orvalis voxel, madeira, pedra, ferramentas e horta já fecham o essencial do ciclo (E1 a E5). Falta validar luz, noite, retorno e save em conjunto e completar a vedação (E6).
 3. **Mundo habitado.** Levar primeiro uma faixa de fauna e cultivo ao Orvalis voxel. Fazer uma vila ou trecho da Cidade do Despertar com um morador, um horário, uma troca e uma missão curta antes de escalar a população.
 4. **Exploração e física.** Ensaiar uma rota por caverna com minério e iluminação. Experimentar arremesso e blocos em queda separadamente para medir colisão, persistência e efeito de rede.
 5. **Escala e identidade.** Expandir regiões, clima e distâncias somente após medir o impacto em aparelhos reais. Ajustar ritmo, materiais e riscos para os perfis do Orvalis e do Titã.
