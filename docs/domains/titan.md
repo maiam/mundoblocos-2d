@@ -183,6 +183,7 @@ Nota do dono do produto, **referência**, não decisão. Serve de critério ao a
 
 
 ## Orvalis em voxel (ADR 0105, v0.169.0)
+**Regra (ADR 0114): os itens do Titã e os do Orvalis em voxel são diferentes e só servem no próprio mundo (ids 1–41 Titã, 42+ Orvalis; blocos do Orvalis a partir do 90; receitas e bancadas separadas); nada é compartilhado.**
 O mesmo motor roda um segundo mundo: `?mundo=orvalis3d` (perfil `orvalis3d`) → `startTitan(…, 'orvalis')`. **Fonte de verdade:** `TitanVolume` sobre `OrvalisGenerator` (`titan/orvalis/generator.ts`, `ORVALIS_GENERATOR_VERSION` 1), via o contrato `TerrainGen` (`titan/terrain.ts`).
 | Tema | Regra | Arquivo |
 |---|---|---|

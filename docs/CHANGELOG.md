@@ -1,5 +1,8 @@
 # Changelog
 
+## Documentação — itens por mundo não são compartilhados (26/11/2026)
+- **ADR 0114 (regra do dono do produto).** Os itens do Titã e os do Orvalis em voxel são **diferentes e só servem para o próprio mundo**: um catálogo partido em duas faixas (ids 1–41 Titã, 42 em diante Orvalis; blocos do Orvalis a partir do 90), receitas só com itens do próprio mundo, bancadas separadas. Novo teste `titan/itensPorMundo.test.ts` impõe a regra. Sem mudança de jogo, save nem protocolo.
+
 ## Documentação — guia de itens e texturas (26/11/2026)
 
 - Catálogo de candidatos para Orvalis e Titã, com referência ao inventário do Minecraft, prioridades sugeridas e entregáveis de arte por peça.
