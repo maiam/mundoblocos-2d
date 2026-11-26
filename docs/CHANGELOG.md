@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.174.0 — Madeira básica no Orvalis em voxel (E1, 26/11/2026)
+- **ADR 0107.** Tábuas de carvalho, cerejeira e bétula, haste de madeira e **Mesa de Carpintaria** (blocos 100–106, itens 52–56), com as regras do Minecraft: 1 tora → 4 tábuas; 2 tábuas → 4 hastes; 4 tábuas → 1 mesa (uma receita por madeira, 9 no total, na mochila). A mesa tem a frente voltada para quem a coloca (face própria na malha, `tileForFace`) e é **bancada** como a Mesa de Trabalho (`isCraftingTable`).
+- **Receitas por mundo** (`Recipe.world`): o Orvalis vê só as de madeira e o Titã só as dele; avisos de descoberta próprios. Atlas de itens 4 × 14; ícones isométricos das tábuas e da mesa; a haste é sprite extrudado de 16 × 16.
+- Testes novos (`orvalis/madeira.test.ts`) e 3 antigos com contagens fixas ajustados. Sem mudança de gerador, save nem protocolo. Pacote Texturas16px: E1 feita; fila: E2 pedra de obra → E6.
+
 ## Orvalis v0.173.0 — Pacote Texturas16px importado e arte nova no Orvalis em voxel (26/11/2026)
 - **Pacote do Drive `orvalis/Texturas16px`** (94 PNGs de 16 × 16 em 10 pastas: madeira, vedação de bétula, folhas e orla, pedra de obra, solo de cultivo, horta, ferramentas, junco, abrigo, cerâmica) importado **inteiro** para `assets-src/orvalis-voxel/catalogo/` com um `LEIAME.md` que mapeia cada pacote à entrega que o liga ao jogo. Decisão do dono do produto: tudo, em várias entregas seguidas, com PR e merge a cada uma.
 - **No jogo agora (E0):** folhas de carvalho, bétula e cerejeira, toras de carvalho e cerejeira, areia da praia e a **pedra bruta como bloco Pedra** do terreno (topo e lateral) — pixel art de 16 px, no atlas de 16 px e na variante de 8 px da isométrica; os ícones isométricos dos 7 blocos afetados foram regerados. A tora de bétula e a grama/terra seguem as do Drive anterior.

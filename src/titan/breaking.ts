@@ -35,7 +35,7 @@ function baseBreakMs(block?: number): number | null {
   switch (block) {
     case T.GRASS: case T.DIRT: case T.BEACH: return BREAK_MS.sand; // Orvalis em voxel (ADR 0105): terra, grama e areia da praia cedem como a areia
     case T.STONE: return BREAK_MS.rock;
-    case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: return BREAK_MS.wood;
+    case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: case T.PLANKS_OAK: case T.PLANKS_CHERRY: case T.PLANKS_BIRCH: case T.CARPENTRY: case T.CARPENTRY_90: case T.CARPENTRY_180: case T.CARPENTRY_270: return BREAK_MS.wood; // tábuas e mesa (ADR 0107)
     case T.LEAVES_OAK: case T.LEAVES_CHERRY: case T.LEAVES_BIRCH: return BREAK_MS.leaves;
     case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: return BREAK_MS.sand; // o bloco de junco cede como a areia (ADR 0100)
     case T.REED_SLAB: case T.REED_SLAB_TOP: return BREAK_MS.slab;

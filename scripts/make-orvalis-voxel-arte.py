@@ -77,14 +77,15 @@ def _face(tile: Image.Image, origin: tuple, u_vec: tuple, v_vec: tuple, size: in
     return tile.transform((size, size), Image.AFFINE, coef, Image.NEAREST)
 
 
-def cube_icon(top: Image.Image, side: Image.Image) -> Image.Image:
+def cube_icon(top: Image.Image, side: Image.Image, left: Image.Image | None = None) -> Image.Image:
     """Bloco **isométrico** (2:1) de 32 × 32: losango do topo e duas laterais, com a luz fixa dos ícones de bloco do projeto (100 % topo, 80 % esquerda, 60 % direita). Desenhado a 4× e reduzido por média."""
     k = 4
     n = 32 * k
     t = (16 * k, 2 * k); r = (30 * k, 9 * k); b = (16 * k, 16 * k); l = (2 * k, 9 * k); drop = (0, 14 * k)
     big = Image.new('RGBA', (n, n), (0, 0, 0, 0))
     src_top, src_side = top.resize((n, n), Image.NEAREST), side.resize((n, n), Image.NEAREST)
-    big.alpha_composite(_face(shade(src_side, 0.80), l, (b[0] - l[0], b[1] - l[1]), drop, n))  # lateral esquerda
+    src_left = left.resize((n, n), Image.NEAREST) if left is not None else src_side  # a frente (se houver) fica na lateral esquerda
+    big.alpha_composite(_face(shade(src_left, 0.80), l, (b[0] - l[0], b[1] - l[1]), drop, n))  # lateral esquerda
     big.alpha_composite(_face(shade(src_side, 0.60), b, (r[0] - b[0], r[1] - b[1]), drop, n))  # lateral direita
     big.alpha_composite(_face(src_top, t, (r[0] - t[0], r[1] - t[1]), (l[0] - t[0], l[1] - t[1]), n))  # topo
     return big.resize((32, 32), Image.BOX)
@@ -118,15 +119,17 @@ def main() -> None:
         if force or not os.path.exists(f'{TEX}{name}.png'):  # nunca sobrescreve a textura editada
             im.save(f'{TEX}{name}.png')
             made += 1
-    disk = {name: to_tile(Image.open(f'{TEX}{name}.png').convert('RGBA'), name) for name in tiles}  # daqui para a frente vale o que está em disco (editado ou não)
+    disk = {f[:-4]: to_tile(Image.open(TEX + f).convert('RGBA'), f) for f in sorted(os.listdir(TEX)) if f.endswith('.png')}  # daqui para a frente vale o que está em disco (editado, do catálogo ou gerado): todo PNG da pasta
     icons = {  # nome do ícone -> (topo, lateral); a ordem dos itens 42–51 está em make-titan-arte32.py
         'terra_com_grama': ('grama-topo', 'grama-lateral'), 'terra': ('terra', 'terra'), 'pedra': ('pedra-topo', 'pedra-lateral'), 'areia_da_praia': ('areia', 'areia'),
         'tora_de_carvalho': ('tora-carvalho-topo', 'tora-carvalho-lateral'), 'folhas_de_carvalho': ('folhas-carvalho', 'folhas-carvalho'),
         'tora_de_cerejeira': ('tora-cerejeira-topo', 'tora-cerejeira-lateral'), 'folhas_de_cerejeira': ('folhas-cerejeira', 'folhas-cerejeira'),
         'tora_de_betula': ('tora-betula-topo', 'tora-betula-lateral'), 'folhas_de_betula': ('folhas-betula', 'folhas-betula'),
+        'tabuas_de_carvalho': ('tabua-carvalho', 'tabua-carvalho'), 'tabuas_de_cerejeira': ('tabua-cerejeira', 'tabua-cerejeira'), 'tabuas_de_betula': ('tabua-betula', 'tabua-betula'),
+        'mesa_de_carpintaria': ('mesa-topo', 'mesa-lateral', 'mesa-frente'),
     }
-    for name, (t, s) in icons.items():
-        cube_icon(disk[t], disk[s]).save(f'{ICO}{name}.png')
+    for name, spec in icons.items():
+        cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None).save(f'{ICO}{name}.png')
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)
     w1 = to_tile(Image.open(WATER_SRC).convert('RGBA'), WATER_SRC)

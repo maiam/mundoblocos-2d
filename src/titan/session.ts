@@ -295,8 +295,9 @@ export function discoverRecipes(s: TitanSession): string[] {
   const out: string[] = [];
   const hasBench = s.inventory.total(Item.WORKBENCH) > 0 || s.volume.workbenchCells().length > 0;
   const add = (id: string, cond: boolean): void => { if (cond && !s.known.has(id)) { s.known.add(id); out.push(id); } };
-  add('bancada', hasBench);
-  add('mesa', s.inventory.total(Item.DARK_ROCK) > 0 || hasBench);
+  const hasWood = [Item.LOG_OAK, Item.LOG_CHERRY, Item.LOG_BIRCH, Item.TABUA_CARVALHO, Item.TABUA_CEREJEIRA, Item.TABUA_BETULA, Item.HASTE].some((i) => s.inventory.total(i) > 0); // madeira revela as receitas pessoais (ADR 0107)
+  add('bancada', hasBench || s.inventory.total(Item.MESA_CARPINTARIA) > 0);
+  add('mesa', s.inventory.total(Item.DARK_ROCK) > 0 || hasBench || hasWood);
   add('braseiro', s.inventory.total(Item.COPPER_SHARD) > 0 || s.inventory.total(Item.COPPER_INGOT) > 0 || s.inventory.total(Item.BRAZIER) > 0 || s.furnaces.size > 0); // o cobre ou um braseiro revela as receitas do braseiro
   if (out.length) s.metaRev++;
   return out;
