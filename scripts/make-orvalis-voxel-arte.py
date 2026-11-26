@@ -47,6 +47,8 @@ def to_tile(im: Image.Image, name: str) -> Image.Image:
     w, h = im.size
     if w == 32 and h == 32:
         return im
+    if h * 2 == w:  # lateral de laje (largura × metade): vai a 32 × 16
+        return im if w == 32 else im.resize((32, 16), Image.NEAREST if w < 32 else Image.BOX)
     assert w == h, (name, im.size)
     if w < 32:
         assert 32 % w == 0, (name, im.size)
@@ -77,14 +79,15 @@ def _face(tile: Image.Image, origin: tuple, u_vec: tuple, v_vec: tuple, size: in
     return tile.transform((size, size), Image.AFFINE, coef, Image.NEAREST)
 
 
-def cube_icon(top: Image.Image, side: Image.Image, left: Image.Image | None = None) -> Image.Image:
+def cube_icon(top: Image.Image, side: Image.Image, left: Image.Image | None = None, half: bool = False) -> Image.Image:
     """Bloco **isométrico** (2:1) de 32 × 32: losango do topo e duas laterais, com a luz fixa dos ícones de bloco do projeto (100 % topo, 80 % esquerda, 60 % direita). Desenhado a 4× e reduzido por média."""
     k = 4
     n = 32 * k
-    t = (16 * k, 2 * k); r = (30 * k, 9 * k); b = (16 * k, 16 * k); l = (2 * k, 9 * k); drop = (0, 14 * k)
+    dy = 7 * k if half else 0  # laje: meia altura, assentada na base do ícone
+    t = (16 * k, 2 * k + dy); r = (30 * k, 9 * k + dy); b = (16 * k, 16 * k + dy); l = (2 * k, 9 * k + dy); drop = (0, (7 if half else 14) * k)
     big = Image.new('RGBA', (n, n), (0, 0, 0, 0))
-    src_top, src_side = top.resize((n, n), Image.NEAREST), side.resize((n, n), Image.NEAREST)
-    src_left = left.resize((n, n), Image.NEAREST) if left is not None else src_side  # a frente (se houver) fica na lateral esquerda
+    src_top, src_side = top.resize((n, n), Image.NEAREST), side.resize((n, n * side.height // side.width), Image.NEAREST)  # a lateral da laje tem meia altura
+    src_left = left.resize((n, n * left.height // left.width), Image.NEAREST) if left is not None else src_side  # a frente (se houver) fica na lateral esquerda
     big.alpha_composite(_face(shade(src_left, 0.80), l, (b[0] - l[0], b[1] - l[1]), drop, n))  # lateral esquerda
     big.alpha_composite(_face(shade(src_side, 0.60), b, (r[0] - b[0], r[1] - b[1]), drop, n))  # lateral direita
     big.alpha_composite(_face(src_top, t, (r[0] - t[0], r[1] - t[1]), (l[0] - t[0], l[1] - t[1]), n))  # topo
@@ -127,9 +130,10 @@ def main() -> None:
         'tora_de_betula': ('tora-betula-topo', 'tora-betula-lateral'), 'folhas_de_betula': ('folhas-betula', 'folhas-betula'),
         'tabuas_de_carvalho': ('tabua-carvalho', 'tabua-carvalho'), 'tabuas_de_cerejeira': ('tabua-cerejeira', 'tabua-cerejeira'), 'tabuas_de_betula': ('tabua-betula', 'tabua-betula'),
         'mesa_de_carpintaria': ('mesa-topo', 'mesa-lateral', 'mesa-frente'),
+        'pedra_lisa': ('pedra-lisa', 'pedra-lisa'), 'tijolo_de_pedra': ('tijolo-pedra', 'tijolo-pedra'), 'laje_de_pedra': ('laje-topo', 'laje-face'),
     }
     for name, spec in icons.items():
-        cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None).save(f'{ICO}{name}.png')
+        cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name == 'laje_de_pedra').save(f'{ICO}{name}.png')
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)
     w1 = to_tile(Image.open(WATER_SRC).convert('RGBA'), WATER_SRC)

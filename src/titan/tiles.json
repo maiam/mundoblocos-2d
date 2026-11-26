@@ -75,6 +75,10 @@
   "orvalis/tabua-betula",
   "orvalis/mesa-topo",
   "orvalis/mesa-frente",
-  "orvalis/mesa-lateral"
+  "orvalis/mesa-lateral",
+  "orvalis/pedra-lisa",
+  "orvalis/tijolo-pedra",
+  "orvalis/laje-topo",
+  "orvalis/laje-face"
  ]
 }

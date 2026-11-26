@@ -44,7 +44,7 @@ describe('madeira básica (ADR 0107)', () => {
     expect(blockOfItem(Item.MESA_CARPINTARIA)).toBe(T.CARPENTRY);
     for (let t = 0; t < 4; t++) { expect(itemOfBlock(carpentryId(t))).toBe(Item.MESA_CARPINTARIA); expect(isCarpentry(carpentryId(t))).toBe(true); expect(carpentryTurn(carpentryId(t))).toBe(t); }
     expect(blockOfItem(Item.HASTE)).toBeNull(); expect(ITEM_NAMES[Item.HASTE]).toBe('Haste de Madeira');
-    expect(isItem(Item.MESA_CARPINTARIA)).toBe(true); expect(isItem(57)).toBe(false);
+    expect(isItem(Item.MESA_CARPINTARIA)).toBe(true); expect(isItem(60)).toBe(false);
   });
 
   it('a Mesa de Carpintaria é bancada como a Mesa de Trabalho, mas só a do Titã é modelo 3D', () => {
@@ -81,7 +81,7 @@ describe('madeira básica (ADR 0107)', () => {
   });
 
   it('cada mundo mostra só as suas receitas: as 9 de madeira são do Orvalis, o resto (Mesa de Trabalho, lanterna…) é do Titã', () => {
-    const orv = RECIPES.filter((r) => r.world === 'orvalis').map((r) => r.id).sort();
+    const orv = RECIPES.filter((r) => r.world === 'orvalis' && /^(tabuas|hastes|mesa-carpintaria)-/.test(r.id)).map((r) => r.id).sort(); // as de madeira (as de pedra, ADR 0108, também são do Orvalis)
     expect(orv).toEqual(['hastes-betula', 'hastes-carvalho', 'hastes-cerejeira', 'mesa-carpintaria-betula', 'mesa-carpintaria-carvalho', 'mesa-carpintaria-cerejeira', 'tabuas-betula', 'tabuas-carvalho', 'tabuas-cerejeira']);
     expect(recipeById('mesa')!.world).toBeUndefined(); expect(recipeById('lanterna')!.world).toBeUndefined();
   });

@@ -49,7 +49,7 @@ describe('Orvalis em voxel — mundo no motor do Titã', () => {
       expect(surfaceOf(block)).not.toBeNull();
       expect(tileFor(block, 'top')).toBeGreaterThanOrEqual(48); // tiles do Orvalis no fim do atlas
     }
-    expect(isItem(57)).toBe(false);
+    expect(isItem(60)).toBe(false);
     expect(blockOfItem(Item.SAND)).toBe(T.SAND); // os itens do Titã seguem iguais
   });
 

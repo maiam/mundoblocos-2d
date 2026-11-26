@@ -28,13 +28,14 @@ export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | bool
 
 /** Com picareta, os blocos de rocha cedem nesta fração do tempo, por nível (provisório, ADR 0063 e 0065). */
 export const PICK_FACTOR: Readonly<Record<Tier, number>> = { rock: 0.6, copper: 0.4 };
-const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270, T.STONE]);
+const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270, T.STONE, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_SLAB, T.STONE_SLAB_TOP]);
 
 function baseBreakMs(block?: number): number | null {
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return BREAK_MS.slab; // a porta cede como os móveis de junco (ADR 0102)
   switch (block) {
     case T.GRASS: case T.DIRT: case T.BEACH: return BREAK_MS.sand; // Orvalis em voxel (ADR 0105): terra, grama e areia da praia cedem como a areia
-    case T.STONE: return BREAK_MS.rock;
+    case T.STONE: case T.STONE_SMOOTH: case T.STONE_BRICK: return BREAK_MS.rock; // pedra de obra (ADR 0108)
+    case T.STONE_SLAB: case T.STONE_SLAB_TOP: return BREAK_MS.slab; // meio bloco: mais rápida que o cubo
     case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: case T.PLANKS_OAK: case T.PLANKS_CHERRY: case T.PLANKS_BIRCH: case T.CARPENTRY: case T.CARPENTRY_90: case T.CARPENTRY_180: case T.CARPENTRY_270: return BREAK_MS.wood; // tábuas e mesa (ADR 0107)
     case T.LEAVES_OAK: case T.LEAVES_CHERRY: case T.LEAVES_BIRCH: return BREAK_MS.leaves;
     case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: return BREAK_MS.sand; // o bloco de junco cede como a areia (ADR 0100)
