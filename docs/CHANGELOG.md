@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.193.1 — ícones definitivos do espólio da fauna (27/11/2026)
+- Os ícones provisórios de pena e das 8 carnes (itens 91–99) foram trocados pelos **do Drive** (costeleta de porco, carne bovina, carne de carneiro, frango e pena); couro e lã já eram do Drive. `make-orvalis-fazenda.py` não desenha mais ícones. Atlas de itens regerado (4 × 25). Sem mudança de regra, de gerador, de save nem de protocolo; 676 testes passam.
+
 ## Orvalis v0.193.0 — fauna de fazenda: porco, vaca, ovelha e galinha (auditoria #35, 27/11/2026)
 - **ADR 0124 (ciclo da ADR 0116 cumprido; aprovada nos 4 pontos).** Animais passivos do Orvalis em `titan/fauna.ts`: vida da Wiki (10/10/8/4), **caixa de acerto da Wiki** (0,9×0,9; 0,9×1,4; 0,9×1,3; 0,4×0,7), grupos de 4 em grama pelos pesos 12/10/10/8, passeio e fuga ao ser ferido, espólio da Wiki. **Gerador do Orvalis v3** (só liga a fauna; terreno igual ao da v2); seed 42 = 66 animais.
 - **Itens 89–99:** couro, lã, pena e as carnes crua e assada de porco, vaca, ovelha e galinha (comida com os valores da Wiki; a Fornalha assa cada uma). Ícones de couro e lã do Drive; os demais **provisórios**. **Atlas de itens 4 × 25.**
