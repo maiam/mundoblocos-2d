@@ -97,5 +97,11 @@
  "163": "orvalis_cerejeira_cerca_frente_16x16.png",
  "166": "orvalis_cerejeira_portao_fechado_16x16.png",
  "164": "orvalis_betula_cerca_frente_16x16.png",
- "167": "orvalis_betula_portao_fechado_16x16.png"
+ "167": "orvalis_betula_portao_fechado_16x16.png",
+ "168": "orvalis_carvalho_porta_frente_16x16.png",
+ "171": "orvalis_carvalho_alcapao_face_16x16.png",
+ "169": "orvalis_cerejeira_porta_frente_16x16.png",
+ "172": "orvalis_cerejeira_alcapao_face_16x16.png",
+ "170": "orvalis_betula_porta_frente_16x16.png",
+ "173": "orvalis_betula_alcapao_face_16x16.png"
 }

@@ -5,7 +5,7 @@ import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
-import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanDegrauMadeiraModels, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanDegrauMadeiraModels, titanPortaMadeiraModels, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -24,7 +24,7 @@ import { FazendaView, type FazendaItem, type FazendaModels } from './fazenda';
 import type { FaunaKind } from '../titan/fauna';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
 import { fenceModelData, gateModelData } from './cercaModel';
-import { DOOR_THICK, FENCE_KINDS, GATE_KINDS, MURETA_KINDS, WOOD_STAIR_KINDS, type ModelKindName, T } from '../titan/voxel';
+import { DOOR_THICK, TRAPDOOR_KINDS, WOOD_DOOR_KINDS, FENCE_KINDS, GATE_KINDS, MURETA_KINDS, WOOD_STAIR_KINDS, type ModelKindName, T } from '../titan/voxel';
 import { wallModelData } from './muretaModel';
 import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
 import { lidIdle, stepLid } from '../titan/lid';
@@ -47,7 +47,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 42;
+const ITEM_ROWS = 44;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
@@ -167,7 +167,7 @@ export class TitanRenderer {
   private avatar: THREE.Group | null = null;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; degrauMadeira: HTMLImageElement; cercaMadeira: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal. */ fazenda?: Record<FaunaKind, HTMLImageElement>; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; degrauMadeira: HTMLImageElement; cercaMadeira: HTMLImageElement; portaMadeira: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal. */ fazenda?: Record<FaunaKind, HTMLImageElement>; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -348,6 +348,16 @@ export class TitanRenderer {
     cetex.needsUpdate = true;
     const cemat = new THREE.MeshBasicMaterial({ map: cetex, vertexColors: true, fog: true });
     patchDayLight(cemat, this.ambient, { instGlow: true, instSky: true });
+    // Porta e Alçapão de madeira (ADR 0141): tira 192 × 16 (por madeira: frente | verso | borda | alçapão); a arte tem margem transparente: `alphaTest`
+    const pwtex = new THREE.Texture(extra.portaMadeira);
+    pwtex.colorSpace = THREE.SRGBColorSpace;
+    pwtex.magFilter = THREE.NearestFilter;
+    pwtex.minFilter = THREE.NearestFilter;
+    pwtex.generateMipmaps = false;
+    pwtex.flipY = false;
+    pwtex.needsUpdate = true;
+    const pwmat = new THREE.MeshBasicMaterial({ map: pwtex, vertexColors: true, fog: true, side: THREE.DoubleSide, alphaTest: 0.5 });
+    patchDayLight(pwmat, this.ambient, { instGlow: true, instSky: true });
     // Mureta de Pedra (ADR 0110): tira de 2 tiles de 16 px (topo | face); um modelo por máscara de conexão, gerado em `muretaModel.ts`
     const mtex2 = new THREE.Texture(extra.muretaPedra);
     mtex2.colorSpace = THREE.SRGBColorSpace;
@@ -376,7 +386,7 @@ export class TitanRenderer {
     const floraMat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(floraMat, this.ambient, { instGlow: true, instSky: true });
     const flora = (Object.keys(FLORA_CELLS) as ModelKind[]).map((k) => [k, floraModel(k, ITEM_ROWS), floraMat] as [ModelKind, ModelData, THREE.Material]);
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...WOOD_STAIR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanDegrauMadeiraModels[(['carvalho', 'cerejeira', 'betula'] as const)[i]], wdmat]), ...FENCE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, fenceModelData(i >> 4, i & 15), cemat]), ...GATE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, gateModelData(i >> 1, (i & 1) === 1), cemat]), ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...WOOD_STAIR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanDegrauMadeiraModels[(['carvalho', 'cerejeira', 'betula'] as const)[i]], wdmat]), ...FENCE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, fenceModelData(i >> 4, i & 15), cemat]), ...GATE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, gateModelData(i >> 1, (i & 1) === 1), cemat]), ...WOOD_DOOR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanPortaMadeiraModels.portas[(['carvalho', 'cerejeira', 'betula'] as const)[i]], pwmat]), ...TRAPDOOR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanPortaMadeiraModels.alcapoes[(['carvalho', 'cerejeira', 'betula'] as const)[(i / 3) | 0]][(['baixo', 'cima', 'aberto'] as const)[i % 3]], pwmat]), ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -513,7 +523,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...WOOD_STAIR_KINDS, ...FENCE_KINDS, ...GATE_KINDS, ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...WOOD_STAIR_KINDS, ...FENCE_KINDS, ...GATE_KINDS, ...WOOD_DOOR_KINDS, ...TRAPDOOR_KINDS, ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
       const cells = this.volume.modelCells(kind);
       for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
         let mesh = this.modelMeshes[target];
@@ -526,11 +536,11 @@ export class TitanRenderer {
         }
         const glow = new Float32Array(mesh.instanceMatrix.count * 3), skyI = new Float32Array(mesh.instanceMatrix.count).fill(1);
         if (target === 'bauTampa') this.lidIndex.clear();
-        if (target === 'porta') this.doorIndex.clear();
+        if (isDoorKind(target)) for (const [k, d] of [...this.doorIndex]) if (d.kind === target) this.doorIndex.delete(k);
         cells.forEach(([x, y, z, turn], i) => {
           if (target === 'bauTampa') { this.lidIndex.set(lidKey(x, y, z), { i, x, y, z, turn }); this.setLidMatrix(mesh, i, x, y, z, turn, this.lidAngles.get(lidKey(x, y, z)) ?? 0); }
-          else if (target === 'porta') { // o `turn` leva giro (0–3), abertura (bit 2) e dobradiça à direita (bit 3); a folha parte da abertura que já tinha (ADR 0102)
-            const key = lidKey(x, y, z), open = (turn & 4) !== 0, d = { i, x, y, z, turn: turn & 3, hingeRight: (turn & 8) !== 0, open };
+          else if (isDoorKind(target)) { // o `turn` leva giro (0–3), abertura (bit 2) e dobradiça à direita (bit 3); a folha parte da abertura que já tinha (ADR 0102)
+            const key = lidKey(x, y, z), open = (turn & 4) !== 0, d = { kind: target, i, x, y, z, turn: turn & 3, hingeRight: (turn & 8) !== 0, open };
             this.doorIndex.set(key, d);
             if (!this.doorAmt.has(key)) this.doorAmt.set(key, open ? 1 : 0);
             this.setDoorMatrix(mesh, d, this.doorAmt.get(key)!);
@@ -546,14 +556,14 @@ export class TitanRenderer {
         mesh.geometry.setAttribute('iSky', new THREE.InstancedBufferAttribute(skyI, 1));
         mesh.count = cells.length;
         mesh.instanceMatrix.needsUpdate = true;
-        if (target === 'porta') for (const k of [...this.doorAmt.keys()]) if (!this.doorIndex.has(k)) this.doorAmt.delete(k); // porta que saiu: a próxima nasce no estado dela
+        if (isDoorKind(target)) for (const k of [...this.doorAmt.keys()]) if (!this.doorIndex.has(k)) this.doorAmt.delete(k); // porta que saiu: a próxima nasce no estado dela
       }
     }
   }
 
   // ---- Porta de Junco (ADR 0102) ----
   private readonly doorAmt = new Map<string, number>();
-  private readonly doorIndex = new Map<string, { i: number; x: number; y: number; z: number; turn: number; hingeRight: boolean; open: boolean }>();
+  private readonly doorIndex = new Map<string, { kind: DoorKind; i: number; x: number; y: number; z: number; turn: number; hingeRight: boolean; open: boolean }>();
   private doorTime = 0;
   /** Matriz da folha: posição da célula, giro, eixo da dobradiça e abertura (`doorPose`); com a dobradiça à direita o modelo (dobradiça à esquerda) é espelhado em x. */
   private setDoorMatrix(mesh: THREE.InstancedMesh, d: { i: number; x: number; y: number; z: number; turn: number; hingeRight: boolean }, amount: number): void {
@@ -566,17 +576,17 @@ export class TitanRenderer {
   private animateDoors(time: number): void {
     const dt = this.doorTime ? Math.min(0.1, time - this.doorTime) : 0;
     this.doorTime = time;
-    let moved = false;
-    const mesh = this.modelMeshes.porta;
+    const moved = new Set<THREE.InstancedMesh>();
     for (const [key, d] of this.doorIndex) {
+      const mesh = this.modelMeshes[d.kind];
       const amt = this.doorAmt.get(key) ?? 0;
       if (!doorMoving(amt, d.open)) continue;
       const next = stepDoor(amt, d.open, dt);
       this.doorAmt.set(key, next);
       this.setDoorMatrix(mesh, d, next);
-      moved = true;
+      moved.add(mesh);
     }
-    if (moved) mesh.instanceMatrix.needsUpdate = true;
+    for (const mesh of moved) mesh.instanceMatrix.needsUpdate = true;
   }
   /** Abertura visual da porta da célula (0 fechada, 1 aberta; testes de navegador). */
   doorAmount(x: number, y: number, z: number): number { return this.doorAmt.get(lidKey(x, y, z)) ?? 0; }
@@ -1274,6 +1284,9 @@ function lanternGeometry(b: LanternBatch, core: boolean): THREE.BufferGeometry {
 
 /** Mesa de Trabalho: sombreado por face (mesmos fatores do terreno) e luz do dia no shader; o brilho de lanterna entra por instância (`iGlow`). UV do glTF (origem no canto superior esquerdo). */
 type ModelKind = ModelKindName | 'bauTampa';
+/** Os tipos de modelo que são porta com folha animada (a de junco e as três de madeira, ADR 0141). */
+type DoorKind = 'porta' | (typeof WOOD_DOOR_KINDS)[number];
+const isDoorKind = (k: ModelKind): k is DoorKind => k === 'porta' || (WOOD_DOOR_KINDS as readonly string[]).includes(k);
 
 /** Caixa da folha da Porta de Junco (ADR 0102): 1 × 2 × 3/16 m, base em y = 0, centrada em x e z; a folha de frente nas duas faces (a argola nos dois lados) e uma tira da moldura nos cantos. */
 function doorModelData(): ModelData {

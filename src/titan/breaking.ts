@@ -50,6 +50,7 @@ setH(0.2, T.LEAVES_OAK, T.LEAVES_CHERRY, T.LEAVES_BIRCH, T.BED, T.BED_90, T.BED_
 setH(LEGACY_SAND, T.REED_BLOCK);
 setH(LEGACY_SLAB, T.REED_SLAB, T.REED_SLAB_TOP, T.REED_STAIR, T.REED_STAIR_90, T.REED_STAIR_180, T.REED_STAIR_270, T.REED_CHAIR, T.REED_CHAIR_90, T.REED_CHAIR_180, T.REED_CHAIR_270);
 for (let d = T.DOOR; d <= T.DOOR_LAST; d++) HARDNESS.set(d, LEGACY_SLAB);
+for (let d = T.DOOR_WOOD; d <= T.TRAPDOOR_LAST; d++) HARDNESS.set(d, 3); // porta e alçapão de madeira: dureza 3 (Wiki, de memória; ADR 0141)
 setH(LEGACY_ICE, T.FROST, T.VEIN_FROST, T.EMBER);
 for (let i = 0; i < 10; i++) setH(1.5, T.CORAL_BLOCK + i); // blocos de coral (Wiki: dureza 1,5, ADR 0136)
 setH(0.5, T.DRIED_KELP_BLOCK); // bloco de alga seca (Wiki: dureza 0,5, ADR 0135)
@@ -79,7 +80,7 @@ export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | bool
 
 const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, ...Array.from({ length: 8 }, (_, t) => T.FURNACE + t), T.CARAPACE, T.EMBER_BLOCK, T.COAL_ORE, T.COAL_BLOCK, T.STONE, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.BRICK_BLOCK, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m), T.STONE_SLAB, T.STONE_SLAB_TOP]);
 
-const WOOD_CLASS: ReadonlySet<number> = new Set([...Array.from({ length: 6 }, (_, i) => T.SLAB_OAK + i), ...Array.from({ length: 12 }, (_, i) => T.STAIR_OAK + i), ...Array.from({ length: 48 }, (_, i) => T.FENCE_OAK + i), ...Array.from({ length: 24 }, (_, i) => T.GATE_OAK + i), T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
+const WOOD_CLASS: ReadonlySet<number> = new Set([...Array.from({ length: T.TRAPDOOR_LAST - T.DOOR_WOOD + 1 }, (_, i) => T.DOOR_WOOD + i), ...Array.from({ length: 6 }, (_, i) => T.SLAB_OAK + i), ...Array.from({ length: 12 }, (_, i) => T.STAIR_OAK + i), ...Array.from({ length: 48 }, (_, i) => T.FENCE_OAK + i), ...Array.from({ length: 24 }, (_, i) => T.GATE_OAK + i), T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
 const SOIL_CLASS: ReadonlySet<number> = new Set([T.GRASS, T.DIRT, T.BEACH, T.PATH, T.FARMLAND_DRY, T.FARMLAND_WET, T.DIRT_INFERTILE, T.CLAY_BLOCK, T.SAND, T.DAMP_SAND]);
 /** Que ferramenta é a certa para o bloco (como no Minecraft): picareta para rocha e veios, machado para madeira, pá para solo; `null` = nenhuma ajuda. */
 export function blockToolOf(block: number | undefined): ToolKind | null {

@@ -240,3 +240,4 @@
 | **Orvalis em sala, entrega C (27/11/2026):** pesca no servidor com a boia só do dono; botes compartilhados com piloto validado (só água, velocidade); protocolo 5 | ADR 0138 |
 | **Famílias das madeiras, W1 (27/11/2026):** lajes e degraus de carvalho, cerejeira e bétula (blocos 190–207, itens 156–161), receitas da Wiki, mesher em `Uint16Array` | ADR 0139 |
 | **Famílias das madeiras, W2 (27/11/2026):** cerca com conexão no id e portão com giro/abertura no id (blocos 208–279, itens 162–167), colisão a 1,5 m, abre para longe de quem usa | ADR 0140 |
+| **Famílias das madeiras, W3 (27/11/2026):** porta de madeira no sistema da de junco (3 famílias de 32 ids) e alçapão (376–423), itens 168–173 | ADR 0141 |

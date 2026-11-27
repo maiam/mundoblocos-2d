@@ -20,7 +20,7 @@ const WOODS = [
 
 describe('cerca e portão de madeira (ADR 0140)', () => {
   it('ids 208–279, itens 162–167, nomes e receitas da Wiki (cerca 4 tábuas + 2 hastes → 3; portão 2 + 4 → 1)', () => {
-    expect(T_MAX).toBe(279); expect(T.FENCE_OAK).toBe(208); expect(T.GATE_OAK).toBe(256);
+    expect(T_MAX).toBeGreaterThanOrEqual(279); expect(T.FENCE_OAK).toBe(208); expect(T.GATE_OAK).toBe(256);
     for (const k of WOODS) {
       expect(isItem(k.fence) && isItem(k.gate)).toBe(true);
       expect(ITEM_NAMES[k.fence]).toBe(`Cerca de ${k.nome}`); expect(ITEM_NAMES[k.gate]).toBe(`Portão de ${k.nome}`);
@@ -30,7 +30,7 @@ describe('cerca e portão de madeira (ADR 0140)', () => {
       for (let m = 0; m < 16; m++) { const id = fenceId(k.w, m); expect(isFence(id) && woodOf(id) === k.w && fenceMask(id) === m).toBe(true); expect(itemOfBlock(id)).toBe(k.fence); expect(modelOf(id)).toEqual({ kind: FENCE_KINDS[k.w * 16 + m], turn: 0 }); expect(surfaceOf(id)).toBe('rock'); }
       for (let t = 0; t < 4; t++) for (const op of [false, true]) { const id = gateId(k.w, t, op); expect(isGate(id) && woodOf(id) === k.w && gateTurn(id) === t && isGateOpen(id) === op).toBe(true); expect(itemOfBlock(id)).toBe(k.gate); expect(modelOf(id)).toEqual({ kind: GATE_KINDS[k.w * 2 + (op ? 1 : 0)], turn: t }); expect(gateToggled(gateToggled(id))).toBe(id); }
     }
-    expect(isItem(168)).toBe(false);
+    expect(isItem(174)).toBe(false);
   });
 
   it('forma: cerca e portão fechado são sólidos não cúbicos; o portão aberto é só alvo da mira; modelos têm geometria', () => {
