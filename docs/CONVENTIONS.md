@@ -2,6 +2,9 @@
 
 Só o motor voxel (Orvalis 3D e Titã). As convenções do 2.5D (renderização por perfil, `World`/`ActionController`, arte 3/4, paredes, SUBDIV) estão em [`archive/2d/CONVENTIONS.md`](archive/2d/CONVENTIONS.md).
 
+## Regras de mundo (ADR 0116, regra do dono do produto)
+- **Antes de implementar ou mudar uma regra de mundo:** Minecraft Wiki (funcionamento, fontes, parâmetros) → Orvalis/Titã atuais (código e valores) → proposta (manter, adaptar ou retirar, e por quê) → **pergunta e aprovação**. Sem resposta, não altera. Vale também para o que já está implementado: o que não passou por esse ciclo está **pendente de auditoria** em `AUDITORIA_REGRAS.md`.
+
 ## Código
 - TypeScript estrito, ES modules, sem framework. Identificadores em inglês; UI, comentários e docs em pt-BR.
 - Coordenadas voxel: X leste, Z sul, Y altura (1 bloco = 1 m); coordenada de chunk sempre por divisão com arredondamento para baixo (`chunkOf`, `localOf` em `titan/voxel.ts`).
