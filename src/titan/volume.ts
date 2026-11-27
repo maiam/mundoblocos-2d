@@ -243,6 +243,8 @@ export class TitanVolume {
     return (this.sky ??= this.buildSky()).at(x, y, z);
   }
   private sky: SkyLight | null = null;
+  /** Sobe a cada mudança real do céu depois de calculado: o renderer relê o céu das plantas (que não passam pelas instâncias de modelo). */
+  skyRev = 0;
   private static skyKind(id: number): SkyKind { return blocksLight(id) ? 2 : isLeaves(id) || id === T.LAKE ? 1 : 0; }
   private buildSky(): SkyLight {
     const r = this.gen.region, sky = new SkyLight({ kind: (x, y, z) => TitanVolume.skyKind(this.get(x, y, z)), x0: r.min, x1: r.max, z0: r.min, z1: r.max, yMin: Y_MIN, yMax: Y_MAX });
@@ -275,7 +277,7 @@ export class TitanVolume {
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
     if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
     if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
-    if (this.sky && TitanVolume.skyKind(before) !== TitanVolume.skyKind(after)) { let moved = false; this.sky.update(x, y, z, (cx, cy, cz) => { moved = true; this.markLightCell(cx, cy, cz); }); this.flushLightTouched(); if (moved) this.modelVersion++; } // o céu só muda quando a célula muda de classe; as seções das células que mudaram refazem a malha (ADR 0123)
+    if (this.sky && TitanVolume.skyKind(before) !== TitanVolume.skyKind(after)) { let moved = false; this.sky.update(x, y, z, (cx, cy, cz) => { moved = true; this.markLightCell(cx, cy, cz); }); this.flushLightTouched(); if (moved) { this.modelVersion++; this.skyRev++; } } // o céu só muda quando a célula muda de classe; as seções das células que mudaram refazem a malha (ADR 0123)
     const lvBefore = lightLevelOf(before), lvAfter = lightLevelOf(after);
     if (lvBefore !== lvAfter) { if (lvAfter) this.emitters.set(key, [x, y, z, lvAfter]); else this.emitters.delete(key); }
     if (!this.light$.ready) return;

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.192.0 — luz do céu, fase 3: plantas e mergulho (auditoria #32, 27/11/2026)
+- **ADR 0123, fase 3.** As **plantas** (junco, cultivo, horta e Noz de Duna) passam a escurecer sob tetos e em cavernas (`iSky` por instância, relido quando o céu muda: `TitanVolume.skyRev`). O **mergulho** não escurece mais a luz pela profundidade da câmera: isso agora vem do céu (a água filtra 1 por bloco), então não escurece duas vezes.
+- Ficam como dívida: itens soltos, animais, a mão e os outros jogadores da sala (sem céu). O `npm run bench` do plano não existe (saiu com o 2.5D); a nota foi tirada do `CLAUDE.md`. 649 testes passam. Conferido no navegador (trigo na boca e no fundo de um corredor coberto; vista submersa). Pacote da sala muda (volume): o servidor precisa do `sync-net`.
+
 ## Orvalis v0.191.0 — luz do céu, fase 2: cavernas e interiores escuros (auditoria #32, 27/11/2026)
 - **ADR 0123, fase 2.** O mesher grava a luz do céu da célula que cada face enxerga (`MeshData.sky`) e o shader passa a usar `luz do dia × céu^1,4`, com piso de ~5 % (o escuro total da Wiki) e a luz de bloco somando por cima: **túneis, poços, cômodos fechados e o fundo de escavações ficam escuros de dia, nos dois mundos**, e a lanterna, o braseiro, a fornalha e a tocha passam a fazer diferença. Hora, chuva e noite seguem pelo `uAmbient` (inalterados).
 - Uma edição que fecha ou abre luz refaz só as seções afetadas; as instâncias (mesa, baú, cama, porta, tocha…) leem o céu da vizinhança (`iSky`). O motor ficou mais rápido: **primeira conta ~220 ms e ~3 ms por edição** (eram ~540 e ~17). 648 testes passam. Conferido no navegador (corredor coberto com tocha).

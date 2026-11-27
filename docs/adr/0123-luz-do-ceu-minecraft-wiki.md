@@ -1,6 +1,6 @@
 # ADR 0123 — Luz do céu, pela Minecraft Wiki (auditoria #32), em três fases
 
-**Status:** Fases 1 (v0.190.0) e 2 (v0.191.0) implementadas. Regra aprovada pelo dono do produto em 27/11/2026: luz do céu **nos dois mundos** (um motor só, sem `if (mundo)`), depois da Tocha (ADR 0121) e com a Fornalha/Carvão antes (ADR 0120/0122). Fase 3 em andamento.
+**Status:** Fases 1 (v0.190.0), 2 (v0.191.0) e 3 (v0.192.0, parcial) implementadas. Regra aprovada pelo dono do produto em 27/11/2026: luz do céu **nos dois mundos** (um motor só, sem `if (mundo)`), depois da Tocha (ADR 0121) e com a Fornalha/Carvão antes (ADR 0120/0122). O que a fase 3 deixou de fora está em *Consequências e dívidas*.
 
 ## Wiki (página "Light")
 Luz do céu 0–15: coluna aberta vale 15; desce **sem perder nível** por blocos transparentes e perde 1 a mais em blocos que filtram (folhas, água); bloco opaco barra; para os lados e para cima perde 1 por célula (inundação), então entra por janelas e portas e esmaece (14, 13…). **Não cai à noite**: o que escurece é o "nível interno" por hora e clima (15 ao meio-dia, 12 na chuva, 4 à meia-noite). A claridade final é o maior entre o céu (escurecido pela hora) e a luz de bloco; no escuro total, ~5 %.
@@ -8,7 +8,7 @@ Luz do céu 0–15: coluna aberta vale 15; desce **sem perder nível** por bloco
 ## Fases
 1. **Motor puro e API do volume (v0.190.0 — esta):** `titan/skylight.ts` (`SkyLight`: `compute` inteiro, `update` local por edição, `at`) e `TitanVolume.skyLight(x, y, z)` (lazy; atualiza por edição quando a classe da célula — opaco, filtro, transparente — muda). **Sem efeito visível**: nada o chama ainda além dos testes, então não custa nada em jogo.
 2. **Desenho (v0.191.0 — feita):** o mesher guarda o nível do céu da célula vizinha de cada face num atributo `sky` (0–1); o shader passa a usar `max(céu × luz do dia, luz de bloco)` com piso de ~5 % (`patchDayLight`); `update` avisa as células cujo nível mudou para remalhar só as seções afetadas; instâncias (baú, tocha, porta…) leem o céu da própria célula.
-3. **Ajuste e desempenho:** a hora e a chuva já vêm de `skyAt` (a luz do dia é o uniform `uAmbient`: 1 → 0,22 à noite, 0,8 na chuva); conferir mergulho (`underwater.ts`) para não escurecer duas vezes pela água; `npm run bench`; captura de tela de caverna, poço e cômodo nos dois mundos.
+3. **Ajuste (v0.192.0 — feita em parte):** as plantas (junco, cultivo, horta, Noz de Duna) levam o céu da própria célula (`iSky`) e o releem quando o céu muda (`skyRev`); o mergulho deixou de atenuar a luz pela profundidade da câmera (a água já filtra 1 por bloco no céu: escureceria duas vezes); a hora e a chuva seguem no uniform `uAmbient` (1 → 0,22 à noite, 0,8 na chuva). O `npm run bench` citado no plano não existe mais (saiu com o 2.5D); o custo foi medido direto (ver abaixo).
 
 ## Decisão da fase 1
 - Classes por célula (`SkyKind`): **opaco** = `blocksLight` (cubo inteiro que não é folha, ADR 0119); **filtro** = folhas e `T.LAKE`; **transparente** = o resto (ar, tocha, laje, baú, porta…).
@@ -22,5 +22,9 @@ Luz do céu 0–15: coluna aberta vale 15; desce **sem perder nível** por bloco
 - **Instâncias** (mesa, baú, cama, braseiro, degrau, porta, tocha, mureta, cadeira…): atributo `iSky` por instância = o maior céu entre a célula e as 6 vizinhas; relido quando o céu muda (`modelVersion`).
 - **Otimização do motor:** o resultado da varredura vertical fica guardado (`base`); `update` refaz só a coluna editada, copia o resto, e a inundação só olha o bloco quando o vizinho ainda pode subir de nível. Medido no Orvalis (seed 42): **primeira conta ~220 ms** (era ~540) e **~3 ms por edição** (~0,5 ms numa coluna sem bloco acima; era ~17 ms).
 
+## Decisão da fase 3 (v0.192.0)
+- **Plantas:** `setReeds`/`setCrops`/`setNuts` guardam a última lista e gravam `iSky` por instância (`setInstSky`); o renderer relê o céu de todas quando `TitanVolume.skyRev` sobe (só sobe com mudança real do céu depois de calculado). Os materiais de planta usam `instSky` junto de `time`.
+- **Mergulho:** `applyUnderwater` não aplica mais `underwaterAmbient(profundidade)` à luz ambiente (a função e seu teste ficam em `underwater.ts`, sem uso no renderer): a luz que some com a profundidade vem do céu (lago de 5 de fundo → fundo com 10/15, curva do shader), e o véu, a névoa e a adaptação seguem como no ADR 0057.
+
 ## Consequências e dívidas
-A primeira conta (~220 ms) acontece de uma vez na primeira malha; a fase 3 avalia fazê-la progressiva. **Não usam o céu ainda** (ficam sob a luz do dia mesmo numa caverna): plantas (cultivo, junco, noz), itens soltos, animais, a mão e o jogador. O céu não conhece a `LAKE` rasa como filtro parcial nem a laje/degrau direcional da Wiki (passam em todas as direções). Sem mudança de gerador, de save nem de protocolo.
+A primeira conta (~220 ms) acontece de uma vez na primeira malha; a fase 3 avalia fazê-la progressiva. **Não usam o céu ainda** (ficam sob a luz do dia mesmo numa caverna): itens soltos (sprites de material compartilhado), animais, a mão e os outros jogadores da sala. O céu não conhece a `LAKE` rasa como filtro parcial nem a laje/degrau direcional da Wiki (passam em todas as direções). Sem mudança de gerador, de save nem de protocolo.
