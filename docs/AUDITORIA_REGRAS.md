@@ -28,7 +28,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 18 | Blocos e ações | Drops de bloco e coleta (itens soltos: gravidade, tempo de coleta, validade) | `titan/drops.ts`, `titan/actions.ts` (`spillBlock`) | pendente |
 | 19 | Blocos e ações | Formas especiais: laje, degrau, mureta, porta, cama, baú, escada, esteira | `titan/voxel.ts`, `titan/slabs.ts`, `titan/actions.ts` | pendente |
 | 20 | Fabricação | Receitas, bancada 3 × 3 e estações | `titan/recipes.ts`, `titan/inventory.ts` | pendente |
-| 21 | Fabricação | Braseiro: fundição, combustível e tempo | `titan/furnace.ts` | pendente |
+| 21 | Fabricação | Braseiro (Titã) e **Fornalha do Orvalis**: fundição, combustível e tempo; carvão vegetal | `titan/furnace.ts` | proposta enviada (27/11/2026) |
 | 22 | Cultivo | Junco, Noz de Duna e horta: crescimento, fertilidade, umidade, colheita | `titan/crops.ts`, `titan/soil.ts`, `titan/nuts.ts` | pendente |
 | 23 | Sobrevivência | Vida, fome, saturação, ar, regeneração e inanição | `titan/vitals.ts` | pendente |
 | 24 | Sobrevivência | Morte, itens da morte, renascer, cama e sono | `titan/actions.ts` (`dieAndRespawn`, `useBed`), `titan/sleep.ts` | pendente |
