@@ -1,6 +1,6 @@
 # Guia de itens e texturas — Orvalis e Titã
 
-Consulta em 26/11/2026. Referência de escopo: Minecraft Java Edition 26.3. As prioridades são sugestões de produção. O catálogo abaixo reúne peças que fazem sentido para os mundos do projeto e indica a arte necessária para cada uma.
+Consulta em 26/11/2026 (o Orvalis 2D/2.5D e o Santuário foram removidos na v0.183.0, ADR 0115: as linhas sobre eles são só referência histórica). Referência de escopo: Minecraft Java Edition 26.3. As prioridades são sugestões de produção. O catálogo abaixo reúne peças que fazem sentido para os mundos do projeto e indica a arte necessária para cada uma.
 
 ## O que aproveitar da referência
 
@@ -14,7 +14,7 @@ Fontes: [Item, Minecraft Wiki em português](https://pt.minecraft.wiki/w/Item#Li
 
 | Mundo | O que já existe e pode orientar a produção |
 |---|---|
-| Orvalis 2.5D | Tábuas de carvalho, bétula e cerejeira, paredes, portas, cercas, portões, cadeira, baú, fogueira, caldeirão e forno. Trigo, batata, cenoura, tomate e alimentos de cozinha. Ferramentas como espada, enxada, picareta, pá e machado. Ver [itens e receitas](../src/world/items.ts), [blocos](../src/world/blocks.ts) e [cultivo](domains/farming.md). |
+| Orvalis 2.5D | Tábuas de carvalho, bétula e cerejeira, paredes, portas, cercas, portões, cadeira, baú, fogueira, caldeirão e forno. Trigo, batata, cenoura, tomate e alimentos de cozinha. Ferramentas como espada, enxada, picareta, pá e machado. Ver [itens e receitas](archive/2d/CURRENT_STATE.md), [blocos](archive/2d/CURRENT_STATE.md) e [cultivo](archive/2d/farming.md). |
 | Santuário | Conjunto de construção com árvores, plantas, cercas e portões, além de objetos de feira e jardim. As peças já desenhadas podem orientar novas coleções e variantes. Ver [perfis de mundo](domains/worlds.md). |
 | Orvalis em voxel | Grama, terra, pedra, areia de praia, toras e folhas de carvalho, bétula e cerejeira. Algumas fontes ainda são provisórias. Madeira, pedra de obra, solo de cultivo, ferramentas e horta já são blocos e itens (entregas E1 a E5); as fontes de terra arada, infértil e caminho em `extras/` ficaram como referência antiga, valendo as do pacote Texturas16px. Ver [fontes das texturas](../assets-src/orvalis-voxel/README.md). |
 | Titã | Rocha, gelo, areia, Âmbar e Cobre de Duna. Junco de Vidro, bloco, laje, degrau, cadeira, esteira, painel, escada e porta. Mesa de Trabalho, baú, cama, lanterna, braseiro, balde, picaretas, adagas, Noz de Duna e carnes. Ver [itens](../src/titan/items.ts), [blocos](../src/titan/voxel.ts) e [receitas](../src/titan/recipes.ts). |
@@ -72,7 +72,7 @@ O **estado** das entregas do pacote Texturas16px é mantido em `NEXT_STEPS.md` e
 
 | Tipo | Arquivos ou estados | Conferência |
 |---|---|---|
-| Bloco do Orvalis 2.5D | Prancha frontal-superior híbrida com topo quadrado e face frontal. Separar topo, frente e franja quando o contrato pedir. | Testar o encaixe, empilhamento e continuidade do material no jogo. [Materiais V2](materiais-v2/README.md) |
+| Bloco do Orvalis 2.5D | Prancha frontal-superior híbrida com topo quadrado e face frontal. Separar topo, frente e franja quando o contrato pedir. | Testar o encaixe, empilhamento e continuidade do material no jogo. [Materiais V2](archive/2d/materiais-v2/README.md) |
 | Bloco voxel | PNG fonte por face distinta. Tora pede corte e casca. Grama pede topo, transição lateral e base quando diferente. O terreno usa 16 px por face e 8 px na vista isométrica. | Testar repetição em 4 × 4 e em pilha. Conferir em primeira pessoa e na isométrica, inclusive bordas de peças cortadas. [ADR 0106](adr/0106-titan-16px-e-visao-isometrica-2-1.md) |
 | Item plano voxel | Sprite de 16 × 16 com alfa, sem marca d’água. O atlas da interface recebe arte de 16 ampliada para 32. Ferramenta diagonal com cabo embaixo à esquerda. | Conferir na hotbar, no inventário e na mão. A extrusão usa o contorno dos pixels opacos. [ADR 0097](adr/0097-titan-regra-visual-sprite-2d-extrudado.md) |
 | Peça colocável com modelo | Modelo, textura, ícone próprio ou derivado e estados que o jogador reconhece, como tampa aberta ou braseiro aceso. | Conferir pivô, rotação, escala, colisão aproximada e leitura com peças vizinhas. |

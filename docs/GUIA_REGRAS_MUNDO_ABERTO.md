@@ -1,5 +1,7 @@
 # Guia de referência para jogos de mundo aberto
 
+> **Nota (v0.183.0):** o Orvalis 2D/2.5D e o Santuário foram removidos (ADR 0115); as referências a `World`, `ActionController`, NPCs e à sala 2.5D descrevem o código antigo, hoje em `archive/2d/`.
+
 **Orvalis e Titã · 26/11/2026 · escrito sobre a v0.172.0 e conferido com a v0.180.0**
 
 Use este guia para desenhar uma mecânica, localizar suas dependências e definir como ela será testada. **Referência** descreve padrões observados no Minecraft Java. **Hoje** descreve este repositório. **Proposta** indica um caminho para discussão. Os valores locais servem para entender o ponto de partida e devem ser conferidos no código antes de mudar uma regra.
@@ -15,7 +17,7 @@ A pesquisa usa o Minecraft Java 26.3 como recorte. A wiki em português mistura 
 | Titã | Volume voxel X/Y/Z, 1 m por bloco, gerador próprio. Região atual de 128 × 128 no gerador recente, com eixo Y de −64 a 319. A região dos saves antigos pode ser menor. | `TitanVolume` sobre `TerrainGen`. Versão do gerador do Titã: 13. Preservar as versões que os saves usam. |
 | Orvalis voxel | Mesmo motor do Titã, gerador próprio, ilha de 128 × 128 com Campos, Bosque de Sakura e mar. | `OrvalisGenerator` v1, banco separado e perfil próprio. Madeira, pedra de obra, solo, ferramentas e horta já estão integradas (E1 a E5, ADR 0107 a 0113). Cidade, cavernas, minérios e fauna do Orvalis ainda aguardam integração neste modo. |
 
-Fontes do projeto: [mapas do sistema](MAPS.md), [mundo 2.5D](domains/world.md), [perfis](domains/worlds.md), [Titã e Orvalis voxel](domains/titan.md). Os dois motores têm unidades diferentes: escreva sempre **blocos**, **células**, **níveis**, **metros** ou **pixels** junto da medida.
+Fontes do projeto: [mapas do sistema](MAPS.md), [mundo 2.5D](archive/2d/world.md), [perfis](domains/worlds.md), [Titã e Orvalis voxel](domains/titan.md). Os dois motores têm unidades diferentes: escreva sempre **blocos**, **células**, **níveis**, **metros** ou **pixels** junto da medida.
 
 ## 2. Seed, geração de terreno e exploração
 
@@ -86,7 +88,7 @@ A referência Java usa nominalmente 20 tiques de jogo por segundo e distingue at
 
 **Comportamento.** Uma máquina de estados pode começar com repouso, patrulha, alerta, perseguição, ação, fuga e retorno. NPCs precisam também de destinos e tarefas por horário. Use percepção por alcance e linha de visão, navegação com tentativas limitadas e alternativa para caminho bloqueado. Agende busca de caminho por necessidade. A dificuldade pode ajustar frequência de encontros, agressividade, dano ou recompensas, com parâmetros configurados por mundo.
 
-Fontes: [Geração](https://pt.minecraft.wiki/w/Spawn), [Criatura](https://pt.minecraft.wiki/w/Criatura), [Aldeão](https://pt.minecraft.wiki/w/Alde%C3%A3o), [Comércio](https://pt.minecraft.wiki/w/Com%C3%A9rcio), [NPCs do Orvalis](domains/npc.md), [Criatura voxel](../src/titan/creature.ts).
+Fontes: [Geração](https://pt.minecraft.wiki/w/Spawn), [Criatura](https://pt.minecraft.wiki/w/Criatura), [Aldeão](https://pt.minecraft.wiki/w/Alde%C3%A3o), [Comércio](https://pt.minecraft.wiki/w/Com%C3%A9rcio), [NPCs do Orvalis](archive/2d/npc.md), [Criatura voxel](../src/titan/creature.ts).
 
 ## 7. Blocos, ferramentas, ações e fabricação
 
@@ -144,7 +146,7 @@ Fontes: [Item](https://pt.minecraft.wiki/w/Item), [Guia para iniciantes](https:/
 | Performance | Medir jogo novo, caminhada longa, retorno ao ponto inicial, construção com luz e muitos atores. Acompanhar FPS, quadros lentos, fila de malha, contagem de entidades, tempo de simulação e memória. Testar em PC, celular e tablet. |
 | Feedback | Condições como ocupação, ausência de espaço, bloqueio de área ou estação exigida devem ter mensagem ou indicação visual compreensível. Efeitos e sons reagem ao resultado confirmado. |
 
-Fontes: [Salvamento 2.5D](domains/save.md), [Salvamento voxel](../src/titan/save.ts), [Multiplayer](domains/multiplayer.md), [Sala do Titã](../src/net/titan/room.ts), [Operações e desempenho](OPERATIONS.md).
+Fontes: [Salvamento 2.5D](archive/2d/save.md), [Salvamento voxel](../src/titan/save.ts), [Multiplayer](archive/2d/multiplayer.md), [Sala do Titã](../src/net/titan/room.ts), [Operações e desempenho](OPERATIONS.md).
 
 ## 11. Ficha para uma regra nova
 

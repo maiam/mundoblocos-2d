@@ -9,8 +9,8 @@ Para planejar mecânicas, consulte o [Guia de regras de mundo aberto](GUIA_REGRA
 |---|---|---|---|
 | 1 | [PROJECT_CONTEXT](PROJECT_CONTEXT.md) | O que é, objetivos, independência (ADR 0015) | Muda o propósito ou o escopo |
 | 2 | [CURRENT_STATE](CURRENT_STATE.md) | O que funciona hoje e limitações | **Toda entrega** |
-| 3 | [ARCHITECTURE](ARCHITECTURE.md) | Módulos, fluxo do frame, dependências, desempenho | Arquivo/módulo novo ou fluxo alterado |
-| 4 | [MAPS](MAPS.md) | Diagramas: módulos, frame, regras, ciclos, assets, "onde mexer" | Junto com ARCHITECTURE/domínios |
+| 3 | [ARCHITECTURE](ARCHITECTURE.md) | Módulos do motor voxel, dependências | Arquivo/módulo novo ou fluxo alterado |
+| 4 | [MAPS](MAPS.md) | "Onde mexer para…" | Junto com ARCHITECTURE/domínios |
 | 5 | [CONVENTIONS](CONVENTIONS.md) | Regras de código, arte e organização | Padrão novo ou armadilha descoberta |
 | 6 | [NEXT_STEPS](NEXT_STEPS.md) | Prioridades e pendências | **Toda entrega** |
 | 7 | [OPERATIONS](OPERATIONS.md) | Comandos, pipeline de assets, Artifact, testes | Comando/script/processo novo |
@@ -20,18 +20,10 @@ Para planejar mecânicas, consulte o [Guia de regras de mundo aberto](GUIA_REGRA
 ## Domínios (`domains/`)
 | Domínio | Fonte de verdade | Documento |
 |---|---|---|
-| Mundo: blocos, geração, regras de pisar/colocar/quebrar | `src/world/` (`World`, `WorldGenerator`, `blocks.ts`) | [world.md](domains/world.md) |
-| Cultivo, itens, ferramentas, inventário | `world/items.ts`, `World` (plantio), `game/inventory.ts` | [farming.md](domains/farming.md) |
-| Jogador: movimento, câmera, entrada, botão de ação, tela | `game/player.ts`, `game/walker.ts`, `game/game.ts`, `game/actionController.ts` | [player.md](domains/player.md) |
-| NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
-| Titã: mundo voxel solo, geração, save, malha (ADR 0039) | `src/titan/`, `render/titanRenderer.ts` | [titan.md](domains/titan.md) |
-| Mundos: perfis e limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
-| Cidade do Despertar: início, muralha, ruas, construções | `world/town.ts`, `render/townArt.ts`, `World` | [town.md](domains/town.md) |
-| Vila Camponesa: área fixa ao sul da cidade (arte recebida; código a fazer) | `world/village.ts` (a criar), `assets-src/vila-camponesa/` | [village.md](domains/village.md) |
-| Dungeon e monstros: área protegida, aranhas, chefe | `world/dungeon.ts`, `game/monster.ts`, `game/entities.ts` | [dungeon.md](domains/dungeon.md) |
-| Multiplayer: salas, protocolo, servidor, bichos da sala | `src/net/`, `world/actions.ts`, `game/entities.ts` | [multiplayer.md](domains/multiplayer.md) |
-| Salvamento e menu | `game/save.ts`, `game/menu.ts`, `main.ts` | [save.md](domains/save.md) |
-| Render e arte | `src/render/`, `assets-src/`, `scripts/` | [render.md](domains/render.md) |
+| Titã e Orvalis 3D: motor voxel solo, geração, save, malha, receitas, itens (ADR 0039, 0105) | `src/titan/`, `render/titanRenderer.ts` | [titan.md](domains/titan.md) |
+| Mundos: escolha do mundo, limites | `titan/worldId.ts` | [worlds.md](domains/worlds.md) |
+
+> Os domínios do **Orvalis 2D/2.5D** (mundo, cultivo 2D, jogador, NPCs, cidade, vila, dungeon, multiplayer 2.5D, salvamento, render 2.5D) foram removidos do código na v0.183.0 (ADR 0115) e ficam em [archive/2d/](archive/2d/) como histórico.
 
 ## Guias de produção
 
@@ -46,15 +38,13 @@ independente · 0016 multiplayer co-op · 0017 personagem modular (removido)  ·
 andares · 0020 salas fixas salvas · 0021 bichos da sala · 0022 escala visual e cena de escala · 0025 NPCs nomeados e caixa de conversa · 0026 render 2.5D em WebGL · 0027 paredes de nível único · 0028 escala (relações Core Keeper) · 0029 iluminação 2.5D · 0030 orientação vertical · 0023 Padrão de Materiais V2 (em validação). · 0031 plano de migração do Mundo para Three.js (aceita)
 
 ## Histórico
-Mudanças antigas (vista lateral, cavernas, biomas removidos) aparecem só no CHANGELOG e nas ADRs, como
-registro. Os demais documentos descrevem **apenas o estado atual**. O diário técnico por versão que o `CURRENT_STATE`
-acumulou até a v0.80.0 está em [archive/estado-por-versao.md](archive/estado-por-versao.md) (arquivo, não atualizar).
+O **Orvalis 2D/2.5D e o Santuário** (removidos na v0.183.0, ADR 0115) estão documentados em [archive/2d/](archive/2d/) (estado, arquitetura, mapas, operações, convenções, plano antigo, domínios, Materiais V2) e no CHANGELOG/ADRs. O diário técnico por versão até a v0.80.0 está em [archive/estado-por-versao.md](archive/estado-por-versao.md). Os demais documentos descrevem **apenas o estado atual**.
 
 ## Mapa de pastas do repositório
 | Pasta | Conteúdo |
 |---|---|
-| `src/` | jogo: `world/` (regras puras), `game/` (execução), `render/` (desenho, arte em `render/art/`), `net/` (multiplayer), `assets/` (WebP gerado) |
-| `assets-src/` | arte original (folhas, pranchas, contratos de personagem e ferramentas); fonte dos scripts |
-| `scripts/` | pipeline de arte (Python) e builds do artifact e do pacote de rede (Node) |
-| `docs/` | esta documentação; `adr/` decisões, `domains/` por assunto, `archive/` histórico, `assets/` imagens de apoio |
-| `bench/`, `public/`, `.github/` | benchmarks, manifesto PWA e ícones, CI (Verificação) |
+| `src/` | jogo: `titan/` (motor voxel e mundos Orvalis 3D e Titã), `render/` (Three.js, arte em `render/art/titan.ts`), `net/titan/` (salas do Titã), `world/` (só `noise.ts` e `random.ts`), `assets/` (WebP/JSON gerados) |
+| `assets-src/` | arte original do voxel (`titan/`, `orvalis-voxel/`, `materiais/`, ícone); fonte dos scripts |
+| `scripts/` | pipeline de arte do voxel (Python) e builds do artifact e do pacote de rede (Node) |
+| `docs/` | esta documentação; `adr/` decisões, `domains/` por assunto, `archive/` histórico (`archive/2d/` = o 2.5D removido), `assets/` imagens de apoio |
+| `public/`, `.github/` | manifesto PWA e ícones, CI (Verificação) |
