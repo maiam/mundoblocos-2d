@@ -9,7 +9,7 @@
  * v5 (ADR 0047): hotbar de 9 + mochila de 27; o inventário gravado vira `v: 2` (36 espaços); saves v1–v4 migram por seção ao abrir (`Inventory.fromData`).
  * v4 (ADR 0045): `recipes` (receitas descobertas) e `grants` (adição localizada de brasa em partida legada); a cápsula remanescente vira brasa uma única vez ao abrir um save < 4.
  */
-export const TITAN_SAVE_VERSION = 6;
+export const TITAN_SAVE_VERSION = 7;
 const DB_NAME = 'orvalis-titan';
 /** Banco de cada mundo voxel: o Orvalis tem o próprio (as seeds dos dois mundos nunca se misturam; ADR 0105). */
 const DB_NAMES: Record<VoxelWorld, string> = { titan: DB_NAME, orvalis: 'orvalis-voxel' };

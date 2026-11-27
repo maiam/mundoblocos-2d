@@ -28,9 +28,10 @@ describe('horta do Orvalis (ADR 0113)', () => {
     expect([78, 79, 80, 81, 82].map((i) => ITEM_NAMES[i])).toEqual(['Semente de Trigo', 'Trigo', 'Cenoura', 'Batata', 'Tomate']);
     expect(foodOf(Item.CENOURA)).toEqual({ hunger: 3, saturation: 3.6 }); expect(foodOf(Item.BATATA)).toEqual({ hunger: 1, saturation: 0.6 }); expect(foodOf(Item.TOMATE)).not.toBeNull();
     expect(foodOf(Item.TRIGO)).toBeNull(); expect(foodOf(Item.SEMENTE_TRIGO)).toBeNull();
-    for (const [sp, item] of SEEDS) { expect(gardenSpeciesOf(item)).toBe(sp); expect(seedOf(sp as never)).toBe(item); expect(maxAgeOf(sp as never, 'seco')).toBe(2); }
+    for (const [sp, item] of SEEDS) { expect(gardenSpeciesOf(item)).toBe(sp); expect(seedOf(sp as never)).toBe(item); expect(maxAgeOf(sp as never, 'seco')).toBe(sp === 'tomate' ? 2 : 7); }
     expect(gardenSpeciesOf(Item.TRIGO)).toBeNull(); expect(gardenSpeciesOf(Item.NOZ)).toBeNull();
-    expect(GARDEN_SPECIES.filter((sp) => ['trigo', 'cenoura', 'batata', 'tomate'].includes(sp)).flatMap((sp) => [0, 1, 2].map((a) => gardenFrame(sp, a)))).toEqual([...Array(12).keys()].map((n) => n + 4)); // atlas da horta depois das 4 do junco
+    expect(['trigo', 'cenoura', 'batata'].flatMap((sp) => [0, 7].map((a) => gardenFrame(sp as never, a)))).toEqual([4, 11, 12, 19, 20, 27]); // atlas da horta (ADR 0129): 8 idades cada, depois das 4 do junco
+    expect([0, 1, 2].map((a) => gardenFrame('tomate', a))).toEqual([28, 29, 30]); // o tomate segue com 3 fases
   });
 
   it('solo: a horta só na terra arada (úmida ou seca), o junco só na areia; a terra arada conta como solo só para a horta', () => {
@@ -40,7 +41,7 @@ describe('horta do Orvalis (ADR 0113)', () => {
     expect(soilKindFor('trigo', T.FARMLAND_WET)).toBe('umido'); expect(soilKindFor('trigo', T.FARMLAND_DRY)).toBe('seco'); expect(soilKindFor('trigo', T.SAND)).toBeNull(); expect(soilKindFor('junco', T.FARMLAND_WET)).toBeNull();
   });
 
-  it('planta cada espécie na terra arada, cresce por sorteio nas 3 fases, colhe 2 e a planta volta a broto', async () => {
+  it('planta cada espécie na terra arada, cresce por sorteio até a idade madura (7; o tomate, 2), colhe pelas regras da Wiki e a planta volta a broto', async () => {
     const { s } = await open();
     for (const [i, [sp, item]] of SEEDS.entries()) {
       const f = field(s, T.FARMLAND_WET, i * 3); hold(s, item);
@@ -49,10 +50,12 @@ describe('horta do Orvalis (ADR 0113)', () => {
       expect(standingCrops(s).find((q) => q.x === f.x)).toMatchObject({ frame: gardenFrame(sp as never, 0) });
       const id = cropId(f.x, Y + 1, f.z);
       expect(collectItem(s, id)).toMatchObject({ ok: false, msg: 'Ainda está crescendo' });
-      tickCrops(s, 1000, () => 0, near(f.x, f.z)); tickCrops(s, 1000, () => 0, near(f.x, f.z));
-      expect(c.age).toBe(2); expect(standingCrops(s).find((q) => q.x === f.x)!.frame).toBe(gardenFrame(sp as never, 2));
+      const max = sp === 'tomate' ? 2 : 7;
+      for (let k = 0; k < max + 1; k++) tickCrops(s, 1000, () => 0, near(f.x, f.z));
+      expect(c.age).toBe(max); expect(standingCrops(s).find((q) => q.x === f.x)!.frame).toBe(gardenFrame(sp as never, max));
       const out = harvestOf(sp as never, 'umido').item, before = s.inventory.total(out);
-      expect(collectItem(s, id)).toMatchObject({ ok: true }); expect(s.inventory.total(out)).toBe(before + 2); expect(c.age).toBe(0);
+      expect(collectItem(s, id)).toMatchObject({ ok: true }); const got = s.inventory.total(out) - before; expect(c.age).toBe(0);
+      if (sp === 'trigo') expect(got).toBe(1); else if (sp === 'tomate') expect(got).toBe(2); else { expect(got).toBeGreaterThanOrEqual(2); expect(got).toBeLessThanOrEqual(5); }
     }
   });
 

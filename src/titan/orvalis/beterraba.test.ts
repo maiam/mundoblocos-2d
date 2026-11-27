@@ -26,8 +26,8 @@ describe('Beterraba: itens, comida e porco', () => {
 describe('Beterraba: planta de 4 idades', () => {
   it('semeia com a semente, 4 idades (0 a 3), quadros depois dos 12 das outras', () => {
     expect(gardenSpeciesOf(Item.SEMENTE_BETERRABA)).toBe('beterraba'); expect(seedOf('beterraba')).toBe(Item.SEMENTE_BETERRABA); expect(gardenSpeciesOf(Item.BETERRABA)).toBeNull();
-    expect(maxAgeOf('beterraba', 'umido')).toBe(BEET_MAX_AGE); expect(BEET_MAX_AGE).toBe(3); expect(maxAgeOf('trigo', 'umido')).toBe(2);
-    expect([0, 1, 2, 3].map((a) => gardenFrame('beterraba', a))).toEqual([16, 17, 18, 19]); expect(gardenFrame('beterraba', 9)).toBe(19); expect(GARDEN_FRAMES).toBe(34);
+    expect(maxAgeOf('beterraba', 'umido')).toBe(BEET_MAX_AGE); expect(BEET_MAX_AGE).toBe(3); expect(maxAgeOf('trigo', 'umido')).toBe(7); expect(maxAgeOf('tomate', 'umido')).toBe(2);
+    expect([0, 1, 2, 3].map((a) => gardenFrame('beterraba', a))).toEqual([31, 32, 33, 34]); expect(gardenFrame('beterraba', 9)).toBe(34); expect(GARDEN_FRAMES).toBe(49);
   });
   it('1/3 dos sorteios não avança (Wiki): sorteio abaixo de 1/3 nunca sobe; acima, segue a chance normal', () => {
     const mk = (): Crop => ({ x: 0, y: 70, z: 0, age: 0, species: 'beterraba' });

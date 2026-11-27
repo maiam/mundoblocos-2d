@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.198.0 — as 8 idades da horta (auditoria #40, 27/11/2026)
+- **ADR 0129 (ciclo da ADR 0116; aprovada nos 4 pontos).** **Trigo, cenoura e batata passam a 8 idades** (Wiki), maduras na 7, amadurecem ~3,5× mais devagar (~10 min em terra bem úmida); o **tomate segue com 3 fases**. **Colheita da Wiki:** trigo 1 + 1–4 sementes; cenoura e batata 2–5 (batata venenosa fora). A planta volta a broto (convenção do Orvalis).
+- **Atlas da horta de 784 × 16** (49 colunas, `GARDEN_LAYOUT`), montado pelas regras do pacote Cultivos (sprites novos do trigo e aparência 03 da cenoura e da batata). **Migração do save:** `TITAN_SAVE_VERSION` 7; nos saves até a v6 as plantas de trigo, cenoura e batata trocam a idade (0 → 0, 1 → 3, 2 → 7), então a madura continua madura.
+- 727 testes passam (8 novos em `oitoIdades.test.ts`); conferido no navegador (as 8 idades desenhadas). Sem mudança de gerador nem de protocolo.
+
 ## Orvalis v0.197.0 — abóbora e melancia (auditoria #39, 27/11/2026)
 - **ADR 0128 (ciclo da ADR 0116; aprovada nos 4 pontos).** **Caule de 8 idades** (abóbora e melancia, plantados com a semente na terra arada): maduro, com luz ≥ 9, gera o **fruto como bloco** numa das 4 células vizinhas sobre grama, terra ou terra arada, e vira **caule conectado** (a placa aponta para o fruto, girada em 90°); sem o fruto volta a tentar. **Blocos 152 Melancia e 153 Abóbora** (dureza 1, machado); a melancia solta **3–7 fatias**, a abóbora volta como bloco. O caule não se colhe; quebrar a terra sob ele solta 0–3 sementes.
 - **Itens 102 Semente de Abóbora, 103 Semente de Melancia, 104 Fatia de Melancia (comida 2/1,2) e 105 Bloco de Abóbora** (ícones do Drive; **atlas de itens 4 × 27**); fabricações Bloco de Abóbora → 4 sementes e Fatia → 1 semente; sementes silvestres raras no capim (1 de 24 cada; adaptação). Atlas da horta 544 × 16; `header.crops` ganha `d` (direção, opcional).

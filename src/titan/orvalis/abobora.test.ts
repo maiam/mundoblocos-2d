@@ -52,10 +52,10 @@ describe('Caule: 8 idades e quadros', () => {
     expect(gardenSpeciesOf(Item.SEMENTE_ABOBORA)).toBe('abobora'); expect(gardenSpeciesOf(Item.SEMENTE_MELANCIA)).toBe('melancia'); expect(seedOf('melancia')).toBe(Item.SEMENTE_MELANCIA);
   });
   it('quadros: 8 idades de cada, depois o conectado por direção (malhas extras)', () => {
-    expect(GARDEN_FRAMES).toBe(34); expect(GARDEN_MESHES).toBe(42);
-    expect([0, 1, 7].map((a) => gardenFrame('abobora', a))).toEqual([4 + 16, 4 + 17, 4 + 23]);
-    expect([0, 7].map((a) => gardenFrame('melancia', a))).toEqual([4 + 24, 4 + 31]);
-    expect([0, 1, 2, 3].map((d) => gardenFrame('abobora', 7, d))).toEqual([38, 39, 40, 41]); expect([0, 3].map((d) => gardenFrame('melancia', 7, d))).toEqual([42, 45]);
+    expect(GARDEN_FRAMES).toBe(49); expect(GARDEN_MESHES).toBe(57);
+    expect([0, 1, 7].map((a) => gardenFrame('abobora', a))).toEqual([4 + 31, 4 + 32, 4 + 38]);
+    expect([0, 7].map((a) => gardenFrame('melancia', a))).toEqual([4 + 39, 4 + 46]);
+    expect([0, 1, 2, 3].map((d) => gardenFrame('abobora', 7, d))).toEqual([53, 54, 55, 56]); expect([0, 3].map((d) => gardenFrame('melancia', 7, d))).toEqual([57, 60]);
     expect(Math.max(...[0, 1, 2, 3].map((d) => gardenFrame('melancia', 7, d))) - 4).toBe(GARDEN_MESHES - 1);
   });
 });
