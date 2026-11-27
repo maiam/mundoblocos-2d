@@ -1,0 +1,6 @@
+15 ícones do progresso Uma dieta equilibrada e 1 ícone de bolo.
+As quatro faces de bolo são topo, base, lateral e corte. Use todo o quadro
+no topo e na base. Na lateral e no corte, use x=0, y=8, largura=16, altura=8
+em pixels, medidos a partir do canto superior esquerdo.
+A prancha segue a ordem dos ícones no ZIP, cinco colunas por linha, seguida das faces.
+Fonte de catálogo: https://pt.minecraft.wiki/w/Alimento

@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.193.2 — arte: alimentos complemento na fila (27/11/2026)
+- Entra como **arte-fonte** (`assets-src/orvalis-voxel/alimentos/`, com LEIAME) o pacote `Alimentos Complemento` do Drive: 20 PNGs de 16 × 16 (beterraba, cenoura dourada, batata assada e venenosa, maçãs, melancia, fruta do coro, ensopados, biscoito, frasco de mel, olho de aranha e o bolo com 4 faces) e a prancha. **Nada entra no jogo:** cada comida passa pelo ciclo da ADR 0116. A **beterraba** destrava a comida do porco da reprodução (pendente de aprovação). Sem código, sem gerador, sem save, sem protocolo.
+
 ## Orvalis v0.193.1 — ícones definitivos do espólio da fauna (27/11/2026)
 - Os ícones provisórios de pena e das 8 carnes (itens 91–99) foram trocados pelos **do Drive** (costeleta de porco, carne bovina, carne de carneiro, frango e pena); couro e lã já eram do Drive. `make-orvalis-fazenda.py` não desenha mais ícones. Atlas de itens regerado (4 × 25). Sem mudança de regra, de gerador, de save nem de protocolo; 676 testes passam.
 
