@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.190.0 — luz do céu, fase 1: o motor (auditoria #32, 27/11/2026)
+- **ADR 0123 (aprovada nos dois mundos, ciclo da ADR 0116).** Novo `titan/skylight.ts` (`SkyLight`) com as regras da Wiki — céu aberto 15, desce sem perder por blocos transparentes, folhas e água tiram 1 a mais, lados e para cima perdem 1 por célula — e `TitanVolume.skyLight(x, y, z)`, que mantém o céu **por edição** (`update` local, igual à conta inteira nos testes). **Sem efeito visível:** o mesher e o shader ainda não o usam (fase 2); nada o chama em jogo, então não custa nada.
+- Medido: primeira conta ~540 ms e ~17 ms por edição (a otimizar). 646 testes passam (novos: `skylight.test.ts` com 200 edições aleatórias contra a conta inteira, e `orvalis/ceuLuz.test.ts`). Sem mudança de gerador, de save nem de protocolo.
+
 ## Orvalis v0.189.0 — carvão mineral pela Minecraft Wiki (auditoria #34, 27/11/2026)
 - **ADR 0122 (aprovada pelo dono do produto, ciclo da ADR 0116).** O Orvalis ganha **minério de carvão** na pedra (**gerador v2**: 20 veios por chunk, 4–30 blocos, Y −60 a 90 com pico em 40, metade dos expostos ao ar descartada; ~0,75 % da pedra), **Carvão** (item 87; 80 s de combustível, entra na Tocha) e **Bloco de Carvão** (item 88; 9 Carvões; queima **800 s**). O minério tem dureza 3 e **só solta o Carvão com picareta**; o bloco, dureza 5.
 - Partidas antigas continuam no gerador v1, sem minério. O limite de queima gravado no save sobe de 600 para 800 s. Receitas: 9 Carvões ↔ Bloco; Tocha também com Carvão. 636 testes passam. Pacote da sala muda: o servidor precisa do `sync-net` (protocolo e save iguais).

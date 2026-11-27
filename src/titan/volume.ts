@@ -1,6 +1,7 @@
 import type { TerrainGen } from './terrain';
 import { LightEngine, lightKey } from './light';
-import { isTorch, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { SkyLight, type SkyKind } from './skylight';
+import { isLeaves, isTorch, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -234,6 +235,23 @@ export class TitanVolume {
   get hasLanterns(): boolean { return this.emitters.size > 0; }
   lanternCells(): Array<[number, number, number]> { return [...this.lanterns.values()]; }
 
+  /**
+   * Luz do céu (ADR 0123): 0–15 por célula, nas regras da Wiki (céu aberto 15, filtros −1, lados e para cima −1 por célula). O primeiro uso faz a conta inteira da região (o céu das colunas; o mundo gerado
+   * não tem cavernas) e cada edição que muda a classe da célula (opaco, filtro, transparente) refaz só a vizinhança (`SkyLight.update`). Fora da região vale 15.
+   */
+  skyLight(x: number, y: number, z: number): number {
+    return (this.sky ??= this.buildSky()).at(x, y, z);
+  }
+  private sky: SkyLight | null = null;
+  private static skyKind(id: number): SkyKind { return blocksLight(id) ? 2 : isLeaves(id) || id === T.LAKE ? 1 : 0; }
+  private buildSky(): SkyLight {
+    const r = this.gen.region, sky = new SkyLight({ kind: (x, y, z) => TitanVolume.skyKind(this.get(x, y, z)), x0: r.min, x1: r.max, z0: r.min, z1: r.max, yMin: Y_MIN, yMax: Y_MAX });
+    const edited: Array<[number, number, number]> = [];
+    for (const c of this.dirtyChunks()) for (const [idx] of c.edits) { const u = unpackIndex(idx); edited.push([c.cx * 16 + u.lx, u.y, c.cz * 16 + u.lz]); }
+    sky.compute((x, z) => this.gen.column(x, z).top, edited);
+    return sky;
+  }
+
   /** Nível de luz (0–15) da célula. O primeiro uso faz o cálculo completo; depois a luz é mantida de forma incremental. */
   light(x: number, y: number, z: number): number {
     if (!this.emitters.size) return 0;
@@ -257,6 +275,7 @@ export class TitanVolume {
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
     if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
     if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
+    if (this.sky && TitanVolume.skyKind(before) !== TitanVolume.skyKind(after)) this.sky.update(x, y, z); // o céu só muda quando a célula muda de classe (ADR 0123)
     const lvBefore = lightLevelOf(before), lvAfter = lightLevelOf(after);
     if (lvBefore !== lvAfter) { if (lvAfter) this.emitters.set(key, [x, y, z, lvAfter]); else this.emitters.delete(key); }
     if (!this.light$.ready) return;
