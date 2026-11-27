@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.189.0 — carvão mineral pela Minecraft Wiki (auditoria #34, 27/11/2026)
+- **ADR 0122 (aprovada pelo dono do produto, ciclo da ADR 0116).** O Orvalis ganha **minério de carvão** na pedra (**gerador v2**: 20 veios por chunk, 4–30 blocos, Y −60 a 90 com pico em 40, metade dos expostos ao ar descartada; ~0,75 % da pedra), **Carvão** (item 87; 80 s de combustível, entra na Tocha) e **Bloco de Carvão** (item 88; 9 Carvões; queima **800 s**). O minério tem dureza 3 e **só solta o Carvão com picareta**; o bloco, dureza 5.
+- Partidas antigas continuam no gerador v1, sem minério. O limite de queima gravado no save sobe de 600 para 800 s. Receitas: 9 Carvões ↔ Bloco; Tocha também com Carvão. 636 testes passam. Pacote da sala muda: o servidor precisa do `sync-net` (protocolo e save iguais).
+
 ## Orvalis v0.188.0 — Tocha pela Minecraft Wiki (auditoria #33, 27/11/2026)
 - **ADR 0121 (aprovada pelo dono do produto, ciclo da ADR 0116).** Nova **Tocha** (item 85) do Orvalis: **em pé** sobre o topo de um cubo ou **presa à lateral** de um cubo inteiro (a chama aponta para fora), **luz 14**, sem colisão, quebra instantânea e se solta quando o apoio some. Receita da Wiki: **1 Carvão Vegetal + 1 Haste → 4 Tochas**. Blocos 145–149; feita do sprite do pacote P2-11, extrudado (dois planos cruzados em pé, um plano na parede).
 - Atlas de itens **4 × 22** (a célula 86 guarda só a textura da tocha de parede; não é item). `releaseTorches` na cascata de quebra. 629 testes passam. Pacote da sala muda: o servidor precisa do `sync-net` (protocolo e save iguais).

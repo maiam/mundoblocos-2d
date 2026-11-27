@@ -187,6 +187,7 @@ def main() -> None:
         'mesa_de_carpintaria': ('mesa-topo', 'mesa-lateral', 'mesa-frente'),
         'pedra_lisa': ('pedra-lisa', 'pedra-lisa'), 'tijolo_de_pedra': ('tijolo-pedra', 'tijolo-pedra'), 'laje_de_pedra': ('laje-topo', 'laje-face'),
         'terra_arada_seca': ('terra-arada-seca-topo', 'terra-arada-seca-lateral'), 'terra_arada_umida': ('terra-arada-umida-topo', 'terra-arada-umida-lateral'), 'caminho_de_terra': ('caminho-topo', 'caminho-lateral'),
+        'bloco_de_carvao': ('bloco-carvao', 'bloco-carvao'),  # item 88 (ADR 0122)
         'fornalha': ('fornalha-topo', 'fornalha-lateral', 'fornalha-frente-apagada'),  # item 83 (ADR 0120)
         'terra_infertil': ('terra-infertil', 'terra-infertil'), 'bloco_de_argila': ('bloco-argila', 'bloco-argila'), 'bloco_de_tijolos': ('bloco-tijolos', 'bloco-tijolos'),  # ADR 0111
     }

@@ -17,7 +17,7 @@ export const COOK_TIME_S = 10;
 export const FUEL_TIME_S: Readonly<Record<number, number>> = {
   [Item.EMBER]: 40, [Item.EMBER_BLOCK]: 360, // Titã (braseiro)
   // Orvalis (Fornalha, ADR 0120): segundos de queima da Minecraft Wiki — carvão vegetal 80, tora/tábuas/Mesa de Carpintaria 15, haste 5 (os itens dos dois mundos nunca se misturam, ADR 0114)
-  [Item.CARVAO_VEGETAL]: 80, [Item.LOG_OAK]: 15, [Item.LOG_CHERRY]: 15, [Item.LOG_BIRCH]: 15, [Item.TABUA_CARVALHO]: 15, [Item.TABUA_CEREJEIRA]: 15, [Item.TABUA_BETULA]: 15, [Item.MESA_CARPINTARIA]: 15, [Item.HASTE]: 5,
+  [Item.CARVAO_VEGETAL]: 80, [Item.CARVAO]: 80, [Item.BLOCO_CARVAO]: 800, [Item.LOG_OAK]: 15, [Item.LOG_CHERRY]: 15, [Item.LOG_BIRCH]: 15, [Item.TABUA_CARVALHO]: 15, [Item.TABUA_CEREJEIRA]: 15, [Item.TABUA_BETULA]: 15, [Item.MESA_CARPINTARIA]: 15, [Item.HASTE]: 5,
 };
 /** Preparações que ainda cabem na carga acesa (arredondado para cima), para mostrar na tela. */
 export const prepsLeft = (f: FurnaceState): number => Math.ceil(f.burnLeft / COOK_TIME_S - 1e-9);
@@ -127,6 +127,6 @@ export function furnaceFromData(d: unknown, rules: FurnaceRules = BRAZIER_RULES)
   const f = newFurnace();
   const i = unpack(o.i), fu = unpack(o.f);
   f.input = i && accepts('input', i.item, rules.station) ? i : null; f.fuel = fu && accepts('fuel', fu.item) ? fu : null; f.output = unpack(o.o);
-  f.burnTotal = num(o.t, 0, 600); f.burnLeft = Math.min(num(o.b, 0, 600), f.burnTotal); f.cook = num(o.c, 0, COOK_TIME_S);
+  f.burnTotal = num(o.t, 0, 800); f.burnLeft = Math.min(num(o.b, 0, 800), f.burnTotal); f.cook = num(o.c, 0, COOK_TIME_S);
   return f;
 }

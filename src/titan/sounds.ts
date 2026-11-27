@@ -10,6 +10,7 @@ export type SurfaceMaterial = 'rock' | 'sand' | 'ice';
 export function surfaceOf(block: number | undefined): SurfaceMaterial | null {
   if (block !== undefined && isWall(block)) return 'rock'; // mureta de pedra (ADR 0110)
   if (block !== undefined && isFurnace(block)) return 'rock'; // fornalha do Orvalis (ADR 0120)
+  if (block === T.COAL_ORE || block === T.COAL_BLOCK) return 'rock'; // carvão do Orvalis (ADR 0122)
   if (block !== undefined && isTorch(block)) return 'sand'; // tocha (ADR 0121): madeira leve, sem timbre próprio ainda
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return 'sand'; // a porta de junco soa como o resto do junco (ADR 0102)
   switch (block) {
