@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.187.0 — Fornalha e Carvão Vegetal pela Minecraft Wiki (auditoria #21, 27/11/2026)
+- **ADR 0120 (aprovada pelo dono do produto, ciclo da ADR 0116).** Nova **Fornalha** do Orvalis (8 Pedras na bancada; cubo com a frente para o jogador, apagada ou acesa, luz 13, dureza 3,5 com picareta, cospe o conteúdo ao quebrar) e o item **Carvão Vegetal** (ícone provisório). O motor do braseiro (`titan/furnace.ts`) ganhou **regras por tipo de bloco**: a fornalha segue a Wiki (10 s por preparação, o combustível queima até o fim mesmo sem entrada); o Braseiro do Titã fica como era. Combustíveis: carvão vegetal 80 s, tora, tábuas e Mesa 15 s, haste 5 s. Tora → Carvão Vegetal; **Pedra Lisa e Tijolo saem da bancada e vão para a fornalha**.
+- Blocos 137–144, itens 83–84 (atlas de itens 4 × 21 cheio), tiles `orvalis/fornalha-*`. Sem mudança de gerador, de save nem de protocolo (3). `make-titan-arte32.py` voltou a funcionar sem a base removida em 0.183. 621 testes passam.
+
 ## Arte — pacote P2-06 Cozinha importado (27/11/2026)
 - 13 PNGs de 16 × 16 do Drive (`Banco de Assets/itens-de-minecraft/P2-06 — Cozinha`: pão, ensopado de cogumelos, torta de abóbora, tigela, caldeirão e fornalha em vários estados) em `assets-src/orvalis-voxel/cozinha/`, com `LEIAME.md`, folha de contato e linha no catálogo. **Só arte-fonte, sem uso no jogo e sem mudança de código.** A Fornalha é a candidata natural à fundição do Orvalis (regra #21) e à origem do carvão vegetal da Tocha (#33).
 

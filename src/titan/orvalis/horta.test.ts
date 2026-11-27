@@ -24,7 +24,7 @@ const SEEDS: ReadonlyArray<[string, number]> = [['trigo', Item.SEMENTE_TRIGO], [
 describe('horta do Orvalis (ADR 0113)', () => {
   it('itens 78–82, nomes, comida (cenoura, batata, tomate) e o que cada um semeia', () => {
     for (const i of [78, 79, 80, 81, 82]) expect(isItem(i)).toBe(true);
-    expect(isItem(83)).toBe(false);
+    expect(isItem(85)).toBe(false);
     expect([78, 79, 80, 81, 82].map((i) => ITEM_NAMES[i])).toEqual(['Semente de Trigo', 'Trigo', 'Cenoura', 'Batata', 'Tomate']);
     expect(foodOf(Item.CENOURA)).toEqual({ hunger: 3, saturation: 3.6 }); expect(foodOf(Item.BATATA)).toEqual({ hunger: 1, saturation: 0.6 }); expect(foodOf(Item.TOMATE)).not.toBeNull();
     expect(foodOf(Item.TRIGO)).toBeNull(); expect(foodOf(Item.SEMENTE_TRIGO)).toBeNull();

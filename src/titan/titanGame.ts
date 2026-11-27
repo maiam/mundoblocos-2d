@@ -28,7 +28,7 @@ import { smoothRain } from './weather';
 import { advanceDay, canSleep, FIXED_HOURS, parseHora, phaseName, saturnVisibility } from './sky';
 import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepCue, sleepVeil } from './sleep';
 import { lidSound } from './lid';
-import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isCraftingTable, T } from './voxel';
+import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isCraftingTable, isFurnace, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { texturesCaption, texturesSession } from './texturas';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
@@ -241,7 +241,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // painel do Braseiro (ADR 0068): entrada, combustível e saída guardados no bloco; fogo e cozimento correm com a tela fechada
   const furnaceBox = el('div', 'titan-detail titan-manual titan-furnace', right);
   furnaceBox.hidden = true;
-  el('small', '', furnaceBox, 'Braseiro de Rocha');
+  const fTitle = el('small', '', furnaceBox, 'Braseiro de Rocha'); // vira 'Fornalha' na do Orvalis (ADR 0120)
   // como a Fornalha do Minecraft: entrada em cima, chama no meio e combustível embaixo à esquerda; seta de progresso e o resultado grande à direita
   const fGrid = el('div', 'titan-fgrid', furnaceBox);
   const fSlot = (parent: HTMLElement, kind: FurnaceSlot, label: string): HTMLButtonElement => {
@@ -270,7 +270,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   el('small', 'hint', chestBox, 'Toque numa pilha da bolsa e depois num espaço do baú para guardá-la; toque num espaço do baú para tirar a pilha. Quebrar o baú derruba o que estiver dentro.');
   const benchName = el('b', 'rname', benchBox, '');
   const benchWhy = el('small', 'hint', benchBox, '');
-  let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'chest' } | null = null;
+  let stationAt: { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'furnace' | 'chest' } | null = null;
   let bagOpen = false;
   let sel: number | null = null; // espaço escolhido para mover (destaque azul-gelo)
   let cat: Cat = 'todas', query = '', onlyOk = false, selRecipe: string | null = null;
@@ -279,7 +279,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   onlyBtn.addEventListener('click', () => { onlyOk = !onlyOk; refresh(); });
   /** Contexto de fabricação: a bolsa pessoal (`null`) ou a Mesa de Trabalho em uso. Muda na hora que a mesa sai do alcance ou some. */
   const ctxStation = (): Station | null => (stationAt && stationAt.kind !== 'chest' ? stationAt.kind : null); // o baú não fabrica: conta como a bolsa pessoal
-  const stationName = (k: Station | 'chest' | null): string => (k === 'brazier' ? 'Braseiro de Rocha aceso' : k === 'chest' ? 'Baú' : 'Mesa de Trabalho');
+  const stationName = (k: Station | 'chest' | null): string => (k === 'brazier' ? 'Braseiro de Rocha aceso' : k === 'furnace' ? 'Fornalha' : k === 'chest' ? 'Baú' : 'Mesa de Trabalho');
 
   /** Redesenha todos os espaços e o livro de receitas a partir do inventário (barato: 36 espaços e 4 receitas). */
   function refresh(): void {
@@ -323,7 +323,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   function visibleRecipes(): Recipe[] {
     const at = ctxStation();
     return RECIPES.filter((r) => (r.world ?? 'titan') === session.volume.gen.world) // cada mundo mostra só as suas receitas (ADR 0107)
-      .filter((r) => r.station !== 'brazier') // as do braseiro ficam no painel dele (entrada → saída), não em cartões
+      .filter((r) => r.station !== 'brazier' && r.station !== 'furnace') // as do braseiro e as da fornalha ficam no painel deles (entrada → saída), não em cartões
       .filter((r) => (r.station === 'brazier' ? session.known.has('braseiro') || at === 'brazier' : r.station === 'workbench' ? session.known.has('bancada') || at === 'workbench' : session.known.has('mesa')))
       .filter((r) => cat === 'todas' || cat === 'bag' || r.group === cat)
       .filter((r) => !query || norm(r.name).includes(query))
@@ -333,14 +333,14 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
 
   function drawBook(): void {
     const at = ctxStation();
-    if (stationAt?.kind === 'brazier' || stationAt?.kind === 'chest') cat = 'bag'; // no braseiro e no baú a mochila fica à vista para mover as pilhas
+    if (stationAt?.kind === 'brazier' || stationAt?.kind === 'furnace' || stationAt?.kind === 'chest') cat = 'bag'; // no braseiro e no baú a mochila fica à vista para mover as pilhas
     for (const [id, b] of catBtns) b.classList.toggle('on', id === cat);
     onlyBtn.classList.toggle('on', onlyOk);
     onlyBtn.setAttribute('aria-pressed', String(onlyOk));
     const slots = cat === 'bag';
     tools.hidden = rgrid.hidden = slots;
     bagGrid.hidden = !slots; // "Bolsa": os 27 espaços para mover os itens
-    const furn = stationAt?.kind === 'brazier';
+    const furn = stationAt?.kind === 'brazier' || stationAt?.kind === 'furnace';
     const chest = stationAt?.kind === 'chest';
     benchBox.hidden = !slots || furn || chest; // e a grade 3 × 3 de montagem (no braseiro e no baú, o painel deles)
     furnaceBox.hidden = !(slots && furn);
@@ -417,16 +417,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   useBtn.hidden = true;
   function coarse0(): boolean { return window.matchMedia?.('(pointer: coarse)').matches ?? false; }
   /** Estação na mira (Mesa de Trabalho ou Braseiro) ao alcance de uso. */
-  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'chest' | 'bed' | 'door' } | null => {
+  const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'furnace' | 'chest' | 'bed' | 'door' } | null => {
     if (!target || target.item) return null;
-    const id = vol.get(target.x, target.y, target.z), kind = isCraftingTable(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isChest(id) ? 'chest' : isBed(id) ? 'bed' : isDoor(id) ? 'door' : null;
+    const id = vol.get(target.x, target.y, target.z), kind = isCraftingTable(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isFurnace(id) ? 'furnace' : isChest(id) ? 'chest' : isBed(id) ? 'bed' : isDoor(id) ? 'door' : null;
     if (!kind) return null;
     return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z, kind } : null;
   };
   /** Toque num espaço do braseiro: com uma pilha da mochila escolhida leva para entrada/combustível; sem escolha (ou na saída) tira para a mochila. */
   function tapFurnace(kind: FurnaceSlot): void {
-    if (!stationAt || stationAt.kind !== 'brazier') return;
-    if (!stationInReach()) { closeStation('Braseiro fora de alcance'); return; }
+    if (!stationAt || (stationAt.kind !== 'brazier' && stationAt.kind !== 'furnace')) return;
+    if (!stationInReach()) { closeStation(`${stationName(stationAt.kind)} fora de alcance`); return; }
     const { x, y, z } = stationAt;
     if (client) { // na sala o braseiro é do mundo: a sala faz a troca e devolve a bolsa e o estado (ADR 0104)
       const slot = kind !== 'output' && sel !== null ? sel : null;
@@ -469,7 +469,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let furnaceKeyShown = '';
   /** Redesenha o painel do braseiro (espaços e barras) só quando algo mudou; chamado a cada quadro com a tela aberta. */
   function paintFurnace(): void {
-    if (!stationAt || stationAt.kind !== 'brazier') return;
+    if (!stationAt || (stationAt.kind !== 'brazier' && stationAt.kind !== 'furnace')) return;
+    fTitle.textContent = stationAt.kind === 'furnace' ? 'Fornalha' : 'Braseiro de Rocha';
     const f = furnaceAt(session, stationAt.x, stationAt.y, stationAt.z);
     if (!f) return;
     const key = `${f.input?.item}:${f.input?.count}|${f.fuel?.item}:${f.fuel?.count}|${f.output?.item}:${f.output?.count}|${Math.round(f.burnLeft)}|${Math.round(f.cook * 4)}`;
@@ -484,13 +485,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     paint(fIn, f.input); paint(fFuel, f.fuel); paint(fOut, f.output);
     fFlame.style.setProperty('--p', String(f.burnTotal > 0 ? f.burnLeft / f.burnTotal : 0));
     fCook.style.setProperty('--p', String(f.cook / COOK_TIME_S));
-    fHint.textContent = f.burnLeft > 0 ? `Carga: ${prepsLeft(f)} ${prepsLeft(f) === 1 ? 'preparação' : 'preparações'} (${f.fuel ? `mais ${f.fuel.count} no combustível` : 'sem combustível reserva'})` : f.fuel ? 'Sem carga acesa: ao cozinhar, uma unidade do combustível é gasta.' : 'Sem carga. Coloque Brasa de Âmbar no combustível e algo para cozinhar.';
+    fHint.textContent = f.burnLeft > 0 ? `Carga: ${prepsLeft(f)} ${prepsLeft(f) === 1 ? 'preparação' : 'preparações'} (${f.fuel ? `mais ${f.fuel.count} no combustível` : 'sem combustível reserva'})` : f.fuel ? 'Sem carga acesa: ao cozinhar, uma unidade do combustível é gasta.' : stationAt.kind === 'furnace' ? 'Sem carga. Coloque carvão vegetal, tora ou tábuas no combustível e algo para cozinhar.' : 'Sem carga. Coloque Brasa de Âmbar no combustível e algo para cozinhar.';
   }
   function stationInReach(): boolean {
     if (!stationAt) return false;
     const b = session.body;
     const blk = vol.get(stationAt.x, stationAt.y, stationAt.z);
-    return (stationAt.kind === 'workbench' ? isCraftingTable(blk) : stationAt.kind === 'chest' ? isChest(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
+    return (stationAt.kind === 'workbench' ? isCraftingTable(blk) : stationAt.kind === 'chest' ? isChest(blk) : stationAt.kind === 'furnace' ? isFurnace(blk) : isBrazier(blk)) && Math.hypot(stationAt.x + 0.5 - b.x, stationAt.y + 0.5 - (b.y + EYE_HEIGHT), stationAt.z + 0.5 - b.z) <= USE_REACH + 1.5;
   }
   /** Sono (ADR 0093): `sleepStart` = instante do início (0 = acordado); a noite passa em `SLEEP_APPLY_MS` e o controle volta em `SLEEP_CONTROL_MS`. */
   let sleepPrevMs = -1, lidWasOpen = false;
@@ -1089,7 +1090,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       touchRing.style.setProperty('--p', String(gesture.progress));
     }
     useBtn.hidden = fingerMode() || !(active && benchAimed()); // mirar na mesa, dentro do alcance, oferece "Usar" (no toque, tocar na estação a abre)
-    if (stationAt && bagOpen && !stationInReach()) closeStation(isCraftingTable(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isChest(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
+    if (stationAt && bagOpen && !stationInReach()) closeStation(isCraftingTable(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isBrazier(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isFurnace(vol.get(stationAt.x, stationAt.y, stationAt.z)) || isChest(vol.get(stationAt.x, stationAt.y, stationAt.z)) ? `${stationName(stationAt.kind)} fora de alcance` : 'A estação sumiu');
     if (active) gesture.update(now, toTarget(target)); else gesture.cancel(); // mochila aberta ou pausa: o gesto em andamento é cancelado
     view.setHeld(session.inventory.get(session.selected)?.item ?? null);
     view.setHandMotion(Math.hypot(b.vx, b.vz), b.onGround, active && gesture.state === 'BREAKING'); // golpe no animal: cada golpe (`strike`) dispara o seu balanço, no ritmo da pausa entre golpes

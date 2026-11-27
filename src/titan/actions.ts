@@ -3,10 +3,10 @@ import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, It
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
-import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
+import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { carpentryId, carpentryTurnFacing, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { carpentryId, carpentryTurnFacing, furnaceId, isFurnace, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -263,7 +263,7 @@ export function eatFromSlot(s: TitanSession, slot: number): ActionResult {
  */
 export function furnaceAt(s: TitanSession, x: number, y: number, z: number): FurnaceState | null {
   const id = s.volume.get(x, y, z);
-  if (id !== T.BRAZIER && id !== T.BRAZIER_LIT) return null;
+  if (!rulesOf(id)) return null; // Braseiro (Titã) ou Fornalha (Orvalis, ADR 0120): o mesmo estado, regras do bloco
   const k = furnaceKey(x, y, z);
   let f = s.furnaces.get(k);
   if (!f) { f = newFurnace(); s.furnaces.set(k, f); s.metaRev++; }
@@ -274,7 +274,8 @@ export function furnaceAt(s: TitanSession, x: number, y: number, z: number): Fur
 export function furnaceMoveIn(s: TitanSession, x: number, y: number, z: number, slot: 'input' | 'fuel', invSlot: number): ActionResult {
   const f = furnaceAt(s, x, y, z), st = s.inventory.get(invSlot);
   if (!f || !st) return { ok: false };
-  if (!accepts(slot, st.item)) return { ok: false, msg: slot === 'fuel' ? 'Isso não queima' : 'O braseiro não cozinha isso' };
+  const rules = rulesOf(s.volume.get(x, y, z))!;
+  if (!accepts(slot, st.item, rules.station)) return { ok: false, msg: slot === 'fuel' ? 'Isso não queima' : rules.station === 'furnace' ? 'A fornalha não cozinha isso' : 'O braseiro não cozinha isso' };
   const cur = f[slot];
   if (cur && cur.item !== st.item) return { ok: false, msg: 'O espaço já tem outro item' };
   const room = maxStack(st.item) - (cur?.count ?? 0), n = Math.min(room, st.count);
@@ -421,7 +422,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (direct) s.inventory.add(item, count);
   else spillBlock(s, item, count, x, y, z); // ADR 0082: o bloco comum cai no chão e é recolhido por proximidade
   if (block === T.GRASS) { const seed = wildSeedAt(x, y, z); if (seed !== null) spillBlock(s, seed, 1, x, y, z); } // semente silvestre da grama (ADR 0113)
-  if (isBrazier(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro cai no chão
+  if (isBrazier(block) || isFurnace(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro ou da fornalha cai no chão
   if (isChest(block)) spillChest(s, x, y, z); // e o do baú (ADR 0089)
   // veio natural: além do bloco inteiro, solta uma lasca garantida onde estava. O veio some do mapa (a edição grava ar); recolocar rocha/gelo põe o bloco comum,
   // que não solta nada — a fonte não se recria. O id da lasca vem da célula do veio, então não há como soltar duas vezes.
@@ -564,6 +565,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   else if (block === T.REED_STAIR) block = stairId(marcoTurnFacing(s.yaw)); // a frente (o lado baixo) fica voltada para o jogador: giro 0 = frente em +Z (ADR 0101)
   else if (block === T.STONE_STAIR) block = stairId(marcoTurnFacing(s.yaw), true); // Degrau de Pedra: mesma regra do de junco (ADR 0109)
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
+  else if (block === T.FURNACE) block = furnaceId(carpentryTurnFacing(s.yaw), false); // a frente da Fornalha fica voltada para o jogador, sempre apagada (ADR 0120)
   else if (block === T.CARPENTRY) block = carpentryId(carpentryTurnFacing(s.yaw)); // a frente da Mesa de Carpintaria fica voltada para o jogador (ADR 0107)
   else if (block === T.CHEST) block = chestId(chestTurnFacing(s.yaw)); // a frente do baú (o fecho) fica voltada para o jogador (ADR 0089)
   if (isSlabBottom(block)) { // laje (ADR 0056; a de junco, ADR 0100; a de pedra, ADR 0108): inferior, superior ou fusão em laje dupla conforme a face e a altura clicadas
