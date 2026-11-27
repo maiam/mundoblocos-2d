@@ -11,7 +11,7 @@ Alimentar um adulto o põe em **modo de amor**; sai se não cruzar em **30 s**. 
 3. **Amor e cruzamento:** 30 s. Dois adultos da mesma espécie em amor, a até 8 m (e no mesmo nível ±2), andam um até o outro; ao se encostarem (1,2 m) nasce um filhote entre eles, o amor acaba e os dois descansam 300 s (`tickBreeding`).
 4. **Filhote:** **metade da caixa de acerto e da vida** (arredondada para cima), modelo do adulto a ½ de escala (o pacote só traz o adulto), segue o adulto da espécie mais perto (≤ 12 m) quando está a mais de 2,5 m, **não solta espólio**, cresce em **1200 s** (alimentar corta 10 % do que falta) e vira adulto com a vida cheia.
 5. **Retirado:** XP (o Orvalis não tem). **Adaptação:** teto de **200 animais vivos** (`MAX_FAUNA`; a Wiki não tem); com o teto, ninguém nasce.
-6. **Persistência: mantida como dívida** ("Ok" à proposta): filhotes, amor, descanso e crescimento **não vão ao save**; reabrir o mundo traz só a população da seed (v3). Persistir pede `TITAN_SAVE_VERSION` nova e campo opcional no cabeçalho.
+6. **Persistência: mantida como dívida (superada pela [ADR 0126](0126-fauna-de-fazenda-no-save.md), v0.195.0)** ("Ok" à proposta): filhotes, amor, descanso e crescimento **não vão ao save**; reabrir o mundo traz só a população da seed (v3). Persistir pede `TITAN_SAVE_VERSION` nova e campo opcional no cabeçalho.
 7. O crescimento e o amor só correm para quem está a até 48 m do viajante (a simulação da fauna, ADR 0124).
 
 ## Fora do escopo

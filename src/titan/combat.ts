@@ -69,7 +69,7 @@ export function attackFauna(s: TitanSession, index: number): AttackResult {
   const r = hurtFauna(f, damage, s.body.x, s.body.z);
   const broke = w.broken ? `${w.name} quebrou` : undefined;
   if (!r.dead) return { ok: true, damage, dead: false, broken: w.broken, toolName: w.name, msg: broke };
-  s.fauna.splice(index, 1);
+  s.fauna.splice(index, 1); s.metaRev++; // o abate vai ao save (ADR 0126)
   const loot = faunaLoot(f.kind, s.seed, Math.floor(f.clock * 10) + index * 7919, f.baby), base = `m:${f.id}`;
   let n = 0;
   while (loot.some((_, i) => s.drops.has(`${base}:${n}:${i}`))) n++; // o animal volta ao reabrir: um espólio antigo ainda no chão não apaga o novo

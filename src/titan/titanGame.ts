@@ -1101,7 +1101,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         if (fa.phase === 'wander' && Math.hypot(fa.body.x - b.x, fa.body.z - b.z) > FAUNA_SIM_RADIUS) continue;
         fauna.moving.set(fa.id, stepFauna(fa, vol, dt).moving);
       }
-      if (active) { const born = tickBreeding(session.fauna, fauna.counter); if (born.length) notice('Nasceu um filhote'); }
+      if (active) { const born = tickBreeding(session.fauna, fauna.counter); if (born.length) { session.metaRev++; notice('Nasceu um filhote'); } }
       const near = session.fauna.filter((fa) => Math.hypot(fa.body.x - b.x, fa.body.z - b.z) <= FAUNA_SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, FAUNA_SHOW_MAX);
       view.setFauna(near.map((fa) => ({ kind: fa.kind, x: fa.body.x, y: fa.body.y, z: fa.body.z, yaw: fa.yaw, scale: fa.baby ? BABY_SCALE : 1, pose: faunaPose(fa, fauna.moving.get(fa.id) ?? false) })));
       fauna.shown = near.length > 0;

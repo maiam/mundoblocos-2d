@@ -292,3 +292,28 @@ export function tickBreeding(list: Fauna[], counter: { n: number }): Fauna[] {
   list.push(...born);
   return born;
 }
+
+/**
+ * Fauna no save (ADR 0126): instantâneo opcional do cabeçalho (`header.fauna`). **Presente (mesmo vazio) = a população da partida, no lugar da seed**; ausente (saves antigos) = a população da seed.
+ * Grava id, espécie, posição, vida, filhote (`b`), segundos que faltam para crescer (`g`) e descanso (`r`); o modo de amor (30 s) não vai.
+ */
+export interface FaunaData { id: string; k: FaunaKind; x: number; y: number; z: number; hp: number; b?: 1; g?: number; r?: number }
+const r2 = (n: number): number => Math.round(n * 100) / 100;
+export const faunaToData = (list: readonly Fauna[]): FaunaData[] => list.map((f) => ({ id: f.id, k: f.kind, x: r2(f.body.x), y: r2(f.body.y), z: r2(f.body.z), hp: f.hp, ...(f.baby ? { b: 1 as const, g: r2(f.grow) } : {}), ...(f.rest > 0 ? { r: r2(f.rest) } : {}) }));
+
+/** Lê `header.fauna` com cuidado (save de fora): descarta o que não é um animal válido; sem o campo devolve `null` (vale a seed). Vida, crescimento e descanso são limitados; no máximo `MAX_FAUNA`. */
+export function faunaFromData(raw: unknown, seed: number, inRegion: (x: number, z: number) => boolean): Fauna[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: Fauna[] = [], ids = new Set<string>(), num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  for (const d of raw as Partial<FaunaData>[]) {
+    if (out.length >= MAX_FAUNA) break;
+    if (!d || typeof d.id !== 'string' || d.id.length > 64 || ids.has(d.id) || !(d.k && d.k in FAUNA_KINDS) || !num(d.x) || !num(d.y) || !num(d.z) || !inRegion(Math.floor(d.x), Math.floor(d.z))) continue;
+    const f = newFauna({ id: d.id, kind: d.k, x: Math.floor(d.x), y: Math.floor(d.y), z: Math.floor(d.z) }, seed);
+    f.body.x = d.x; f.body.y = d.y; f.body.z = d.z;
+    if (d.b === 1) { f.baby = true; f.grow = num(d.g) ? Math.min(GROW_S, Math.max(1, d.g)) : GROW_S; }
+    f.hp = num(d.hp) ? Math.min(maxHp(f), Math.max(1, Math.round(d.hp))) : maxHp(f);
+    if (num(d.r)) f.rest = Math.min(BREED_COOLDOWN_S, Math.max(0, d.r));
+    ids.add(d.id); out.push(f);
+  }
+  return out;
+}
