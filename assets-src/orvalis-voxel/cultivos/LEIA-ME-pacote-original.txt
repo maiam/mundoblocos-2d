@@ -1,0 +1,17 @@
+# Complemento de cultivos em 16 × 16 px
+
+PNGs originais em RGBA. As plantas são desenhadas de frente em folhas planas com fundo transparente. Os frutos têm texturas quadradas opacas por face.
+
+| Cultura | Arquivos e estados |
+|---|---|
+| Trigo | Novos sprites para idades 1, 2, 3, 4 e 6. Use os antigos fase 01, 02 e 03 (na pasta Horta original) para idades 0, 5 e 7. |
+| Cenoura e batata | Use as fases 01 e 02 já presentes para idades 0–1 e 2–3. Use o novo sprite aparência 03 para idades 4–6 e o antigo fase 03 na idade 7. |
+| Beterraba | Ícone da semente e sprites para idades 0–3. O ícone da raiz está em Cozinha / Alimentos — Complemento. |
+| Abóbora e melancia | Uma semente, oito alturas de caule, caule conectado e faces de topo e lateral por fruto. Espelhe ou gire o caule conectado conforme a posição do fruto. Use a face de topo também na base, se o modelo pedir. |
+| Bagas doces | Nova fase 04 com arbusto de carga cheia. As três imagens anteriores estão em Plantas silvestres. |
+| Cacau | Ícone das sementes e vistas frontais da vagem nas idades 0–2. |
+| Verruga do Nether | Use as aparências 01, 02, 02 e 03 para as idades 0, 1, 2 e 3. Inclui ícone do item usado no plantio. |
+| Flor-tocha | Ícone da semente, duas fases jovens e flor madura. |
+| Planta-jarro | Ícone da vesícula e cinco fases. Nas duas últimas use os arquivos de base e topo em blocos sobrepostos. |
+
+Referências: https://minecraft.wiki/w/Tutorial:Crop_farming · https://minecraft.wiki/w/Tutorial:Pumpkin_and_melon_farming · https://minecraft.wiki/w/Sweet_Berries · https://minecraft.wiki/w/Cocoa_Beans · https://minecraft.wiki/w/Nether_Wart · https://minecraft.wiki/w/Torchflower · https://minecraft.wiki/w/Pitcher_Pod

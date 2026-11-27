@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.193.3 — arte: cultivos complemento na fila (27/11/2026)
+- Entra como **arte-fonte** (`assets-src/orvalis-voxel/cultivos/`, com LEIAME) o pacote `Cultivos — Minecraft Wiki` do Drive: 57 PNGs de 16 × 16 (trigo com as 8 idades, cenoura e batata idades 4–6, **beterraba** com 4 idades e semente, abóbora e melancia com caule de 8 alturas e faces do fruto, bagas doces fase 4, cacau, verruga do Nether, flor-tocha e planta-jarro) e a prancha. **Nada entra no jogo:** cada cultura passa pelo ciclo da ADR 0116; usar as 8 idades muda a horta de 3 para 8 fases (auditoria própria). Sem código, gerador, save nem protocolo.
+
 ## Orvalis v0.193.2 — arte: alimentos complemento na fila (27/11/2026)
 - Entra como **arte-fonte** (`assets-src/orvalis-voxel/alimentos/`, com LEIAME) o pacote `Alimentos Complemento` do Drive: 20 PNGs de 16 × 16 (beterraba, cenoura dourada, batata assada e venenosa, maçãs, melancia, fruta do coro, ensopados, biscoito, frasco de mel, olho de aranha e o bolo com 4 faces) e a prancha. **Nada entra no jogo:** cada comida passa pelo ciclo da ADR 0116. A **beterraba** destrava a comida do porco da reprodução (pendente de aprovação). Sem código, sem gerador, sem save, sem protocolo.
 
