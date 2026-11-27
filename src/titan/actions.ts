@@ -14,7 +14,7 @@ import { wearCost, type WearAction } from './wear';
 import { SLOTS } from './inventory';
 import { applyDisplace, planDisplace, settleDrops, stepDrops } from './drops';
 import { CHEST_SLOTS, type ChestState, chestPut, chestRoom, newChest } from './chest';
-import { type Species, cropKey, gardenSpeciesOf, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKindFor, wildSeedAt } from './crops';
+import { isStem, STEM_MAX_AGE, type Species, cropKey, gardenSpeciesOf, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKindFor, wildSeedAt } from './crops';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -50,6 +50,7 @@ function collectCrop(s: TitanSession, id: string): ActionResult {
   const p = parseCropId(id), crop = p ? s.crops.get(cropKey(p[0], p[1], p[2])) : undefined;
   const kind = crop ? soilKindFor(crop.species, s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
   if (!crop || !kind) return { ok: false };
+  if (isStem(crop.species)) return { ok: false, msg: crop.dir === undefined ? (crop.age >= STEM_MAX_AGE ? 'O caule está maduro: o fruto vem logo' : 'Ainda está crescendo') : 'O fruto está ao lado: quebre-o' }; // o caule não se colhe (ADR 0128)
   if (!isRipe(crop.species, kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
   const h = harvestOf(crop.species, kind);
   if (!s.inventory.canAdd(h.item, h.count)) return FULL;
@@ -238,7 +239,8 @@ function releaseCrop(s: TitanSession, x: number, y: number, z: number): void {
   if (!crop) return;
   s.crops.delete(cropKey(x, y, z));
   s.metaRev++;
-  dropShard(s, seedOf(crop.species), x, y, z);
+  const n = isStem(crop.species) ? Math.floor(hash2(s.seed, (Math.imul(x, 73856093) ^ Math.imul(z, 83492791)) | 0, y + s.days * 1009 + Math.floor(s.time * 1000)) * 4) : 1; // caule quebrado: 0–3 sementes (Wiki, ADR 0128); as outras plantas devolvem a muda
+  if (n > 0) dropShard(s, seedOf(crop.species), x, y, z, n);
 }
 
 /** Junco de vidro à mão (ADR 0045): 1 junco = 1 item; mochila cheia deixa a planta no lugar. A planta recolhida não volta (o id fica em `collected`, que já vai no save). */
@@ -434,7 +436,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   }
   const item = itemOfBlock(s.volume.get(x, y, z));
   if (item === null) return { ok: false };
-  const count = dropCountOf(s.volume.get(x, y, z)); // a laje dupla devolve 2 lajes
+  const count = s.volume.get(x, y, z) === T.MELON ? 3 + Math.floor(hash2(s.seed, (Math.imul(x, 73856093) ^ Math.imul(z, 83492791)) | 0, y) * 5) : dropCountOf(s.volume.get(x, y, z)); // a laje dupla devolve 2 lajes; a melancia, 3–7 fatias (Wiki, ADR 0128; pelo hash da célula, sempre o mesmo número)
   const block = s.volume.get(x, y, z);
   const direct = item === Item.LANTERN; // a lanterna é o item-chave: vai direto para a mochila e, se não couber, fica no lugar (nunca cai em precipício ou água)
   if (direct && !s.inventory.canAdd(item, count)) return FULL;

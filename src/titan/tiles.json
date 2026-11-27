@@ -94,6 +94,10 @@
   "orvalis/fornalha-frente-apagada",
   "orvalis/fornalha-frente-acesa",
   "orvalis/minerio-carvao",
-  "orvalis/bloco-carvao"
+  "orvalis/bloco-carvao",
+  "orvalis/abobora-topo",
+  "orvalis/abobora-lateral",
+  "orvalis/melancia-topo",
+  "orvalis/melancia-lateral"
  ]
 }

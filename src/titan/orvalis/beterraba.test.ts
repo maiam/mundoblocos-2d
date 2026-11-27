@@ -14,7 +14,7 @@ const open = async () => openSession(new MemoryTitanStorage(), 42, () => 1, orva
 describe('Beterraba: itens, comida e porco', () => {
   it('itens 100 e 101, nomes, pilha 64 e comida da Wiki (1 de fome, 1,2 de saciedade)', () => {
     expect(Item.BETERRABA).toBe(100); expect(Item.SEMENTE_BETERRABA).toBe(101);
-    expect(isItem(100) && isItem(101)).toBe(true); expect(isItem(102)).toBe(false);
+    expect(isItem(100) && isItem(101)).toBe(true); expect(isItem(106)).toBe(false);
     expect(ITEM_NAMES[100]).toBe('Beterraba'); expect(ITEM_NAMES[101]).toBe('Semente de Beterraba'); expect(maxStack(100)).toBe(64);
     expect(foodOf(Item.BETERRABA)).toEqual({ hunger: 1, saturation: 1.2 }); expect(foodOf(Item.SEMENTE_BETERRABA)).toBeNull();
   });
@@ -27,7 +27,7 @@ describe('Beterraba: planta de 4 idades', () => {
   it('semeia com a semente, 4 idades (0 a 3), quadros depois dos 12 das outras', () => {
     expect(gardenSpeciesOf(Item.SEMENTE_BETERRABA)).toBe('beterraba'); expect(seedOf('beterraba')).toBe(Item.SEMENTE_BETERRABA); expect(gardenSpeciesOf(Item.BETERRABA)).toBeNull();
     expect(maxAgeOf('beterraba', 'umido')).toBe(BEET_MAX_AGE); expect(BEET_MAX_AGE).toBe(3); expect(maxAgeOf('trigo', 'umido')).toBe(2);
-    expect([0, 1, 2, 3].map((a) => gardenFrame('beterraba', a))).toEqual([16, 17, 18, 19]); expect(gardenFrame('beterraba', 9)).toBe(19); expect(GARDEN_FRAMES).toBe(16);
+    expect([0, 1, 2, 3].map((a) => gardenFrame('beterraba', a))).toEqual([16, 17, 18, 19]); expect(gardenFrame('beterraba', 9)).toBe(19); expect(GARDEN_FRAMES).toBe(34);
   });
   it('1/3 dos sorteios não avança (Wiki): sorteio abaixo de 1/3 nunca sobe; acima, segue a chance normal', () => {
     const mk = (): Crop => ({ x: 0, y: 70, z: 0, age: 0, species: 'beterraba' });

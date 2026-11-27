@@ -51,6 +51,7 @@ setH(LEGACY_SAND, T.REED_BLOCK);
 setH(LEGACY_SLAB, T.REED_SLAB, T.REED_SLAB_TOP, T.REED_STAIR, T.REED_STAIR_90, T.REED_STAIR_180, T.REED_STAIR_270, T.REED_CHAIR, T.REED_CHAIR_90, T.REED_CHAIR_180, T.REED_CHAIR_270);
 for (let d = T.DOOR; d <= T.DOOR_LAST; d++) HARDNESS.set(d, LEGACY_SLAB);
 setH(LEGACY_ICE, T.FROST, T.VEIN_FROST, T.EMBER);
+setH(1, T.MELON); setH(1, T.PUMPKIN); // melancia e abóbora (Wiki: dureza 1, machado, ADR 0128)
 setH(3, T.COAL_ORE); setH(5, T.COAL_BLOCK); // minério de carvão (3) e bloco de carvão (5): picareta (Wiki, ADR 0122)
 setH(0, T.TORCH, T.TORCH_WALL, T.TORCH_WALL_90, T.TORCH_WALL_180, T.TORCH_WALL_270); // tocha: dureza 0, sai assim que o gesto de quebrar começa (Wiki: instantânea)
 setH(LEGACY_COLLECT, T.MARCO, T.MARCO_90, T.MARCO_180, T.MARCO_270, T.PAINEL, T.PAINEL_Z);
@@ -82,7 +83,7 @@ const SOIL_CLASS: ReadonlySet<number> = new Set([T.GRASS, T.DIRT, T.BEACH, T.PAT
 export function blockToolOf(block: number | undefined): ToolKind | null {
   if (block === undefined) return null;
   if (ROCK_CLASS.has(block) || isPickVein(block) || isWall(block)) return 'pick';
-  if (WOOD_CLASS.has(block)) return 'axe';
+  if (WOOD_CLASS.has(block) || block === T.MELON || block === T.PUMPKIN) return 'axe'; // melancia e abóbora: machado (Wiki, ADR 0128)
   if (SOIL_CLASS.has(block)) return 'shovel';
   return null;
 }

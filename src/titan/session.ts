@@ -11,7 +11,7 @@ import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { skyAt, START_FRAC, validDay } from './sky';
 import { hasWeather, newWeather, stepWeather, weatherFromData, weatherToData, type Weather } from './weather';
-import { CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, gardenFrame, GARDEN_SPECIES, isFarmland, isGarden, maxAgeOf, nutLook, plantableSoil, randomTick, type Species, soilKind, soilKindFor, spriteFrame, CROP_TICK_MEAN_S } from './crops';
+import { crowded, FRUIT_BLOCK, fruitGround, growthPoints, isStem, STEM_DIRS, STEM_MAX_AGE, stemFruitTick, CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, gardenFrame, GARDEN_SPECIES, isFarmland, isGarden, maxAgeOf, nutLook, plantableSoil, randomTick, type Species, soilKind, soilKindFor, spriteFrame, CROP_TICK_MEAN_S } from './crops';
 import { isHydrated } from './soil';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
@@ -189,7 +189,8 @@ function validCrops(raw: unknown, vol: TitanVolume): Map<string, Crop> {
     const age = other ? (v as { a?: unknown }).a : v;
     if (!m || typeof age !== 'number' || !Number.isInteger(age) || age < 0) continue;
     const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])], species: Species = other ? (tag as Species) : 'junco', below = vol.get(x, y - 1, z), kind = soilKindFor(species, below);
-    if (kind && plantableSoil(species, below) && vol.get(x, y, z) === T.AIR && vol.gen.inRegion(x, z) && age <= maxAgeOf(species, kind)) out.set(k, { x, y, z, age, species });
+    const d = other ? (v as { d?: unknown }).d : undefined, dir = isStem(species) && age >= STEM_MAX_AGE && typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 3 ? d : undefined; // a direção só vale no caule maduro
+    if (kind && plantableSoil(species, below) && vol.get(x, y, z) === T.AIR && vol.gen.inRegion(x, z) && age <= maxAgeOf(species, kind)) out.set(k, { x, y, z, age, species, ...(dir !== undefined ? { dir } : {}) });
   }
   return out;
 }
@@ -355,7 +356,7 @@ export function standingCrops(s: TitanSession): Array<{ x: number; y: number; z:
     const below = s.volume.get(c.x, c.y - 1, c.z), kind = soilKind(below);
     if (s.volume.get(c.x, c.y, c.z) !== T.AIR) continue;
     if (c.species === 'junco' && kind) out.push({ x: c.x, y: c.y, z: c.z, frame: Math.min(CROP_FRAMES - 1, spriteFrame(kind, c.age)) });
-    else if (isGarden(c.species) && isFarmland(below)) out.push({ x: c.x, y: c.y, z: c.z, frame: gardenFrame(c.species, c.age) }); // a horta usa o atlas dela (ADR 0113)
+    else if (isGarden(c.species) && isFarmland(below)) out.push({ x: c.x, y: c.y, z: c.z, frame: gardenFrame(c.species, c.age, c.dir) }); // a horta usa o atlas dela (ADR 0113)
   }
   return out;
 }
@@ -392,13 +393,24 @@ export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: 
     }
     const self = kindAt(0, 0);
     const sameAt = (dx: number, dz: number): boolean => !!self && s.crops.get(cropKey(c.x + dx, c.y, c.z + dz))?.species === c.species && kindAt(dx, dz) === self;
-    if (randomTick(c, { soilAt: kindAt, sameAt, light: cropLight(s, c.x, c.y, c.z) }, rng)) { changed = true; s.metaRev++; }
+    const light = cropLight(s, c.x, c.y, c.z);
+    if (randomTick(c, { soilAt: kindAt, sameAt, light }, rng)) { changed = true; s.metaRev++; }
+    if (isStem(c.species)) { // caule de abóbora/melancia (ADR 0128): maduro, gera o fruto vizinho; se o fruto some, volta a tentar
+      if (c.dir !== undefined) {
+        const [dx, dz] = STEM_DIRS[c.dir];
+        if (s.volume.get(c.x + dx, c.y, c.z + dz) !== FRUIT_BLOCK[c.species]) { delete c.dir; changed = true; s.metaRev++; }
+      } else {
+        let pts = growthPoints(kindAt); if (crowded(sameAt)) pts *= 0.5;
+        const dir = stemFruitTick(c, pts, light, rng, (d) => { const [dx, dz] = STEM_DIRS[d], fx = c.x + dx, fz = c.z + dz; return s.volume.get(fx, c.y, fz) === T.AIR && fruitGround(s.volume.get(fx, c.y - 1, fz)) && !s.crops.has(cropKey(fx, c.y, fz)) && s.items.at(fx, c.y, fz) === null; });
+        if (dir !== null) { const [dx, dz] = STEM_DIRS[dir]; s.volume.set(c.x + dx, c.y, c.z + dz, FRUIT_BLOCK[c.species]); c.dir = dir; changed = true; s.metaRev++; }
+      }
+    }
   }
   return changed;
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, ...(hasWeather(s.volume.gen.world) ? { weather: weatherToData(s.weather) } : {}), ...(hasFauna(s.volume.gen) ? { fauna: faunaToData(s.fauna) } : {}), inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'junco' ? c.age : { s: c.species, a: c.age }])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, ...(hasWeather(s.volume.gen.world) ? { weather: weatherToData(s.weather) } : {}), ...(hasFauna(s.volume.gen) ? { fauna: faunaToData(s.fauna) } : {}), inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'junco' ? c.age : { s: c.species, a: c.age, ...(c.dir !== undefined ? { d: c.dir } : {}) }])) } : {}) };
 }
 
 /**

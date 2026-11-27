@@ -40,12 +40,12 @@ def main() -> None:
     if os.path.exists(BASE):
         base = Image.open(BASE).convert('RGBA')
         assert base.size == (64, 64), base.size
-        atlas = Image.new('RGBA', (128, 832), (0, 0, 0, 0))  # 4 colunas × 26 linhas de 32 px (104 células, ids até 101; os de 89 a 99 são a fauna de fazenda, ADR 0124, e 100–101 a beterraba, ADR 0127; 86 em uso: 85 = Tocha e 86 = textura da Tocha de parede, que não é item; o CSS lê `4 × 26`; ADR 0089, 0102, 0105, 0107, 0108, 0121)
+        atlas = Image.new('RGBA', (128, 864), (0, 0, 0, 0))  # 4 colunas × 27 linhas de 32 px (108 células, ids até 105; os de 89 a 99 são a fauna de fazenda, ADR 0124, 100–101 a beterraba, ADR 0127, e 102–105 a abóbora e a melancia, ADR 0128; 86 em uso: 85 = Tocha e 86 = textura da Tocha de parede, que não é item; o CSS lê `4 × 27`; ADR 0089, 0102, 0105, 0107, 0108, 0121)
         atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     else:  # a base de 16 px saiu com a arte do 2.5D (ADR 0115): o atlas já gravado (cápsula legada e demais células) passa a ser o ponto de partida
         old = Image.open(OUT_ITEMS).convert('RGBA')
-        assert old.size[0] == 128 and old.size[1] in (672, 704, 800, 832), old.size  # 21 linhas (antes da Tocha) ou 22
-        atlas = Image.new('RGBA', (128, 832), (0, 0, 0, 0))
+        assert old.size[0] == 128 and old.size[1] in (672, 704, 800, 832, 864), old.size  # 21 linhas (antes da Tocha) ou 22
+        atlas = Image.new('RGBA', (128, 864), (0, 0, 0, 0))
         atlas.paste(old, (0, 0))
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')
