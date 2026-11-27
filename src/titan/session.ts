@@ -3,6 +3,7 @@ import type { TerrainGen } from './terrain';
 import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
 import { creatureSpecs, type Farejador, newFromSpec } from './creature';
+import { type Fauna, faunaSpecs, newFaunaFromSpecs } from './fauna';
 import { type ChestState, chestFromData, chestIsEmpty, chestToData } from './chest';
 import { type FurnaceState, furnaceFromData, furnaceToData, rulesOf, showsLit, tickFurnace } from './furnace';
 import { maxDurability } from './wear';
@@ -58,6 +59,8 @@ export interface TitanSession {
   respawn: Map<string, number>;
   /** Farejadores de Duna da enseada (um grande e um pequeno, ADR 0061): estado só de execução, nascem na toca a cada abertura (não vão no save). Vazio sem toca (gerador antigo ou região sem enseada). */
   creatures: Farejador[];
+  /** Fauna de fazenda do Orvalis (ADR 0124): porco, vaca, ovelha e galinha; só de execução, nascem pela seed a cada abertura (não vão ao save: o abate vale até fechar). Vazia no Titã e na v ≤ 2. */
+  fauna: Fauna[];
   savedStateRev: number;
   /** Lascas soltas por veios quebrados (v3, ADR 0044): recolhidas por proximidade; vão no cabeçalho do save. */
   drops: Map<string, Drop>;
@@ -235,6 +238,7 @@ export async function openSession(storage: TitanStorage, explicitSeed: number | 
 
 /** Os Farejadores nascem na toca, com o passeio derivado da seed. */
 const creaturesFor = (gen: TerrainGen): Farejador[] => creatureSpecs(gen).map((sp) => newFromSpec(sp, gen.seed));
+const faunaFor = (gen: TerrainGen): Fauna[] => newFaunaFromSpecs(faunaSpecs(gen), gen.seed);
 
 export function fresh(gen: TerrainGen): TitanSession {
   const volume = new TitanVolume(gen);
@@ -243,7 +247,7 @@ export function fresh(gen: TerrainGen): TitanSession {
   const regrow = new Map<string, number>();
   const crops = new Map<string, Crop>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), fauna: faunaFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
   return s;
 }
 
@@ -269,7 +273,7 @@ export function resume(gen: TerrainGen, save: TitanSave): TitanSession {
   const crops = validCrops(save.header.crops, volume);
   const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), fauna: faunaFor(gen), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);

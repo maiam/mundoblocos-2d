@@ -63,3 +63,7 @@ Só o motor voxel (Orvalis 3D e Titã). As convenções do 2.5D (renderização 
 - Ações e estados importantes usam **ícone + cor** (✓ verde = fazer, ✕ vermelho = voltar, ✓/✗ = tem/falta) com, no
   máximo, uma palavra curta ao lado; o texto completo vai em `title`/`aria-label`. Vale para fichas, avisos de
   requisito e botões novos (v0.57.1).
+
+## Mobs: caixa de acerto da Wiki, desenho livre (ADR 0124)
+- A **caixa de mira e de golpe** de um mob é a da Minecraft Wiki (Java), em largura × altura, centrada nos pés (porco 0,9 × 0,9; vaca 0,9 × 1,4; ovelha 0,9 × 1,3; galinha 0,4 × 0,7; filhote = metade; olhos: vaca 1,3, ovelha 1,235, porco 0,765, galinha 0,644). O jogo lê só `faunaBox`; **nunca** a malha do desenho, que vem do pacote de arte e pode diferir.
+- Modelo de mob = caixas articuladas do pacote (`tamanho`, `pivô`, `deslocamento` e UV em px, frente −Z, 16 unidades por bloco), filtro vizinho mais próximo; mob novo entra em `FAUNA_KINDS`, em `fazenda-modelos.json` (`make-orvalis-fazenda.py`) e passa pelo ciclo da ADR 0116.

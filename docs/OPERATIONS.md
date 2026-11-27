@@ -103,3 +103,5 @@ enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só 
 Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie
 `pkill` com outros comandos (ver `CLAUDE.md`).
+
+`python3 -I scripts/make-orvalis-fazenda.py` (Pillow) converte as 4 texturas dos animais de fazenda (`assets-src/orvalis-voxel/mobs/*_uv_64x64.png`) em `src/assets/orvalis-fazenda-*.webp`, extrai `fazenda-uv.json` para `src/render/art/fazenda-modelos.json` e desenha os ícones provisórios do espólio (`assets-src/titan/arte16/`); depois rode `make-titan-arte32.py` (atlas de itens 4 × 25) e `make-titan-item-masks.py` (ADR 0124).

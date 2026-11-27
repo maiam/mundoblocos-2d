@@ -1,7 +1,8 @@
 import { creatureSpecs, hurtFarejador, KINDS, newFromSpec, type Farejador, type Kind } from './creature';
-import { Item } from './items';
+import { Item, ITEM_NAMES } from './items';
 import type { TitanSession } from './session';
 import { restDrop, wearHeldTool } from './actions';
+import { FAUNA_KINDS, faunaLoot, hurtFauna } from './fauna';
 
 /**
  * Combate com os Farejadores de Duna (ADR 0069): o jogador golpeia o animal na mira (toque curto, alcance de 3 m, pausa de 0,6 s entre golpes). Dano pela arma na mão; a adaga é arma (desgasta −1), a
@@ -54,4 +55,25 @@ export function tickRespawn(s: TitanSession, dt: number): Farejador[] {
     s.metaRev++;
   }
   return back;
+}
+
+/**
+ * Golpe na fauna de fazenda (ADR 0124): mesma arma, dano e desgaste do golpe no Farejador; o animal ferido foge de onde veio o golpe. Abatido, solta o espólio da Wiki no chão e **não volta** (sem
+ * geração contínua; a seed o traz de novo ao reabrir o mundo).
+ */
+export function attackFauna(s: TitanSession, index: number): AttackResult {
+  const f = s.fauna[index];
+  if (!f) return { ok: false, damage: 0, dead: false, broken: false };
+  const damage = damageOf(s.inventory.get(s.selected)?.item);
+  const w = wearHeldTool(s, { type: 'attack' });
+  const r = hurtFauna(f, damage, s.body.x, s.body.z);
+  const broke = w.broken ? `${w.name} quebrou` : undefined;
+  if (!r.dead) return { ok: true, damage, dead: false, broken: w.broken, toolName: w.name, msg: broke };
+  s.fauna.splice(index, 1);
+  const loot = faunaLoot(f.kind, s.seed, Math.floor(f.clock * 10) + index * 7919), base = `m:${f.id}`;
+  let n = 0;
+  while (loot.some((_, i) => s.drops.has(`${base}:${n}:${i}`))) n++; // o animal volta ao reabrir: um espólio antigo ainda no chão não apaga o novo
+  loot.forEach((l, i) => restDrop(s, `${base}:${n}:${i}`, l.item, f.body.x, f.body.y, f.body.z, l.count));
+  const txt = loot.map((l) => `${l.count} ${ITEM_NAMES[l.item]}`).join(', ');
+  return { ok: true, damage, dead: true, broken: w.broken, toolName: w.name, msg: `${FAUNA_KINDS[f.kind].name} abatido${txt ? `: ${txt}` : ''}${broke ? `; ${broke}` : ''}` };
 }
