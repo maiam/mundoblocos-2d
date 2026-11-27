@@ -8,7 +8,7 @@ import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -113,6 +113,31 @@ function releaseTorches(s: TitanSession, x: number, y: number, z: number): void 
   for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const id = s.volume.get(x + dx, y, z + dz);
     if (isWallTorch(id)) { const [fx, fz] = ladderFacing(wallTorchTurn(id)); if (fx === dx && fz === dz) drop(x + dx, y, z + dz); } // a chama aponta para longe do apoio
+  }
+}
+
+/**
+ * Flora marinha (ADR 0135). Erva marinha e alga se plantam **dentro da água**, na célula vizinha da face apontada: a célula precisa ser água (com mais água em cima, para o jogador nunca abrir buraco na superfície) e ter piso — cubo
+ * inteiro para a erva marinha; cubo inteiro ou outra alga para a alga, que se estende para cima (a ponta vira corpo). Plantar gasta 1 item.
+ */
+function placeWaterPlant(s: TitanSession, hit: Hit, slot: number, kelp: boolean): ActionResult {
+  const v = s.volume, x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
+  if (hit.item || !v.editable(x, y, z) || v.get(x, y, z) !== T.LAKE || v.get(x, y + 1, z) !== T.LAKE) return { ok: false, msg: kelp ? 'A alga se planta dentro da água, sob a superfície' : 'A erva marinha se planta dentro da água, sob a superfície' };
+  const below = v.get(x, y - 1, z);
+  if (!(isFull(below) || (kelp && (below === T.KELP || below === T.KELP_TOP)))) return { ok: false, msg: 'Precisa de um piso firme' };
+  if (!v.set(x, y, z, kelp ? T.KELP_TOP : T.SEAGRASS)) return { ok: false };
+  if (kelp && below === T.KELP_TOP) v.set(x, y - 1, z, T.KELP); // a ponta anterior vira corpo
+  s.inventory.consume(slot);
+  return { ok: true };
+}
+
+/** O apoio de uma planta aquática sumiu: as plantas empilhadas acima caem como item (a alga em coluna, a erva alta pela metade de cima); quebrar a metade de cima da erva alta leva também a de baixo. */
+function releaseWaterPlants(s: TitanSession, x: number, y: number, z: number, was: number): void {
+  if (was === T.SEAGRASS_TALL_TOP && s.volume.get(x, y - 1, z) === T.SEAGRASS_TALL && s.volume.remove(x, y - 1, z)) spillBlock(s, Item.ERVA_MARINHA, 1, x, y - 1, z);
+  for (let yy = y + 1; isWaterPlant(s.volume.get(x, yy, z)); yy++) {
+    const item = itemOfBlock(s.volume.get(x, yy, z));
+    if (!s.volume.remove(x, yy, z)) break;
+    if (item !== null) spillBlock(s, item, 1, x, yy, z);
   }
 }
 
@@ -459,6 +484,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   releaseMat(s, x, y + 1, z);
   releaseLadders(s, x, y, z);
   releaseTorches(s, x, y, z);
+  releaseWaterPlants(s, x, y, z, block); // a flora marinha sobre o bloco quebrado (ou acima da alga quebrada) cai (ADR 0135)
   if (isBed(s.volume.get(x, y + 1, z))) breakBed(s, x, y + 1, z); // o piso da cama sumiu
   if (isDoor(s.volume.get(x, y + 1, z))) breakDoor(s, x, y + 1, z); // e o da porta (a metade de baixo está logo acima)
   return { ok: true };
@@ -631,6 +657,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
   if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
+  if (stack.item === Item.ERVA_MARINHA || stack.item === Item.ALGA) return placeWaterPlant(s, hit, slot, stack.item === Item.ALGA); // flora marinha (ADR 0135)
   if (stack.item === Item.VARA_PESCA) return useRod(s, hit, slot); // lançar e recolher a linha (ADR 0133)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)

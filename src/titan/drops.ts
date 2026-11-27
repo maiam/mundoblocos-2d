@@ -1,6 +1,6 @@
 import type { Drop } from './save';
 import type { TitanSession } from './session';
-import { isSolid, T, Y_MIN } from './voxel';
+import { isLiquidCell, isSolid, Y_MIN } from './voxel';
 
 /**
  * Física dos itens soltos (ADR 0098), pura e sem DOM: (1) **gravidade** — o item cai para o "baixo" do mundo (−Y, o centro do planeta/lua), acelerando, em vez de aparecer no apoio; na água afunda devagar;
@@ -33,7 +33,7 @@ export function stepDrops(s: TitanSession, dt: number): boolean {
       if (fy <= ry + EPS && d.y <= ry) { if (fx && fx.fy !== undefined) { delete fx.fy; delete fx.vy; active = true; } continue; } // repousa (ou acabou de pousar)
       const state = fx ?? { delay: 0, age: 0 };
       if (!fx) s.dropFx.set(d.id, state);
-      const wet = s.volume.get(d.x, Math.floor(fy + EPS), d.z) === T.LAKE;
+      const wet = isLiquidCell(s.volume.get(d.x, Math.floor(fy + EPS), d.z)); // água com ou sem planta aquática (ADR 0135)
       const vy = Math.min(wet ? LIQUID_TERMINAL : DROP_TERMINAL, (state.vy ?? 0) + (wet ? LIQUID_GRAVITY : DROP_GRAVITY) * h);
       fy -= vy * h;
       if (fy <= ry + EPS) { fy = ry; delete state.fy; delete state.vy; } else { state.fy = fy; state.vy = vy; }

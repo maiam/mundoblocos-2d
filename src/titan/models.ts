@@ -1,5 +1,5 @@
 import type { Box } from './lantern';
-import { BED_HEIGHT, BRAZIER_HEIGHT, CHEST_HEIGHT, isWallTorch, wallTorchTurn, isBrazier, chestTurn, isBed, isChest, isLadder, isMarco, isPanel, ladderFacing, ladderTurn, marcoTurn, PANEL_HEIGHT, T } from './voxel';
+import { BED_HEIGHT, BRAZIER_HEIGHT, CHEST_HEIGHT, isWallTorch, wallTorchTurn, isBrazier, chestTurn, isBed, isChest, isLadder, isMarco, isWaterPlant, isPanel, ladderFacing, ladderTurn, marcoTurn, PANEL_HEIGHT, T } from './voxel';
 
 /**
  * Caixas dos modelos 3D pequenos (ADR 0058): a mira acerta a caixa do objeto (com folga `pad` de toque), não a célula inteira. Marco de Margem: 0,56 × 0,629 × 0,43 m, a largura vira
@@ -33,6 +33,8 @@ export function modelBox(id: number, x: number, y: number, z: number, pad = 0): 
     const [fx, fz] = ladderFacing(wallTorchTurn(id)), ax = fx === 0 ? [cx - TORCH_BOX.w / 2, cx + TORCH_BOX.w / 2] : fx > 0 ? [x, x + TORCH_BOX.reach] : [x + 1 - TORCH_BOX.reach, x + 1];
     const az = fz === 0 ? [cz - TORCH_BOX.w / 2, cz + TORCH_BOX.w / 2] : fz > 0 ? [z, z + TORCH_BOX.reach] : [z + 1 - TORCH_BOX.reach, z + 1];
     return [ax[0] - pad, y + 0.2 - pad, az[0] - pad, ax[1] + pad, y + 0.9 + pad, az[1] + pad];
+  } else if (isWaterPlant(id)) { // flora marinha (ADR 0135): caixa de mira estreita, baixa na erva marinha curta
+    return [cx - 0.3 - pad, y - pad, cz - 0.3 - pad, cx + 0.3 + pad, y + (id === T.SEAGRASS ? 0.6 : 1) + pad, cz + 0.3 + pad];
   } else if (isLadder(id)) {
     // a face de apoio fica na borda oposta à frente: a placa ocupa [apoio, apoio + 0,12] ao longo da frente e a largura inteira de lado
     const [fx, fz] = ladderFacing(ladderTurn(id)), hw = LADDER_SIZE.w / 2;

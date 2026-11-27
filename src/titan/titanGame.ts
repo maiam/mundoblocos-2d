@@ -1064,7 +1064,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       else if (b.onGround) { if (wasAir) { const d = fallDamage(airTop - b.y); if (d > 0) { hurtVitals(vitals, d); onHurt(); } } airTop = b.y; wasAir = false; }
       else { wasAir = true; airTop = Math.max(airTop, b.y); }
       // ar, regeneração e (sem comida) vida: os olhos dentro do lago gastam o fôlego; sem ar, 1 coração por segundo
-      const underwater = eyesSubmerged(b.y + EYE_HEIGHT, vol.get(Math.floor(b.x), Math.floor(b.y + EYE_HEIGHT), Math.floor(b.z)), T.LAKE);
+      const underwater = eyesSubmerged(b.y + EYE_HEIGHT, vol.get(Math.floor(b.x), Math.floor(b.y + EYE_HEIGHT), Math.floor(b.z)), T.LAKE); // `eyesSubmerged` já conta a planta aquática (ADR 0135)
       const hb = vitals.health;
       updatePlayerVitals(vitals, dt, underwater);
       if (vitals.health < hb) { onHurt(); }

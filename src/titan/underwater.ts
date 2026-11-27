@@ -1,4 +1,4 @@
-import { LAKE_SURFACE_Y } from './voxel';
+import { isWaterPlant, LAKE_SURFACE_Y } from './voxel';
 
 /**
  * Aparência submersa do Lago Escuro (ADR 0057): regras puras, sem DOM nem Three.js. O renderer consulta a célula do **olho** (não os pés: `Body.inLiquid` segue só para a física)
@@ -16,7 +16,7 @@ export const UNDERWATER_AMBIENT_FLOOR = 0.18;
 
 /** Os olhos estão dentro do líquido? `cell` = bloco da célula do olho; só vale abaixo da superfície (Y = 64). */
 export function eyesSubmerged(eyeY: number, cell: number, lake: number): boolean {
-  return eyeY < LAKE_SURFACE_Y && cell === lake;
+  return eyeY < LAKE_SURFACE_Y && (cell === lake || isWaterPlant(cell)); // com ou sem planta aquática (ADR 0135)
 }
 
 /** Profundidade dos olhos abaixo da superfície, em blocos (0 fora d'água). */

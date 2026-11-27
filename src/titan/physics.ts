@@ -1,7 +1,7 @@
 import { lanternBox, rayBox, type Box } from './lantern';
 import type { TitanVolume } from './volume';
 import { modelBox } from './models';
-import { blockBoxes, isBed, isBrazier, isTorch, isSlab, isSlabBottom, isChest, isLadder, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
+import { blockBoxes, isBed, isBrazier, isTorch, isSlab, isSlabBottom, isChest, isLadder, isLiquidCell, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
 
 /** Corpo do jogador: caixa de 0,6 × 1,8 × 0,6 m, olhos a 1,62 m dos pés. Pés em y (base do corpo). */
 export const BODY_HALF = 0.3;
@@ -117,7 +117,7 @@ export function waterLedge(v: TitanVolume, b: Body, dirX: number, dirZ: number):
     const cellTop = Math.floor(b.y + 0.2) + 1; // topo da célula dos pés: na superfície, o nível da água
     for (let yy = Math.floor(b.y + EPS); yy <= cellTop + LEDGE_REACH; yy++) {
       const id = v.get(cx, yy, cz), h = v.bodyHeight(cx, yy, cz);
-      if (h <= 0 || id === T.LAKE) continue;
+      if (h <= 0 || isLiquidCell(id)) continue;
       const top = yy + h;
       if (top - cellTop > LEDGE_REACH + EPS || top - b.y < 0.05) continue;
       if (collides(v, cx + 0.5, top, cz + 0.5)) continue; // sem espaço para o corpo em cima
@@ -158,7 +158,7 @@ export function ladderUnder(v: TitanVolume, b: Body): readonly [number, number] 
 
 function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
   const feetCell = v.get(Math.floor(b.x), Math.floor(b.y + 0.2), Math.floor(b.z));
-  b.inLiquid = feetCell === T.LAKE;
+  b.inLiquid = isLiquidCell(feetCell); // água com ou sem planta aquática (ADR 0135)
   const ladder = b.inLiquid ? null : ladderUnder(v, b);
   b.onLadder = !!ladder;
   const speed = WALK_SPEED * (b.inLiquid ? 0.6 : ladder ? LADDER_WALK : input.sprint ? SPRINT_FACTOR : 1);
