@@ -23,6 +23,7 @@ import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory'
 import { CHEST_SLOTS } from './chest';
 import { aimsLiquid, blockOfItem, foodOf, isBucket, Item, ITEM_NAMES } from './items';
 import { stepFishing } from './fishing';
+import { stepCoral } from './coral';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -1099,6 +1100,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
+    if (active && session.coralWatch.size && stepCoral(session, dt)) onEdited(); // bloco de coral vivo sem água morre (ADR 0136)
     if (active) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)
     if (session.fauna.length || fauna.shown) { // fauna de fazenda (ADR 0124): passeia perto do viajante e foge ao ser ferida
       for (const fa of session.fauna) {

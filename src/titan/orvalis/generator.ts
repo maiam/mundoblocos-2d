@@ -17,15 +17,21 @@ import { inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, Y_MIN } from '../voxe
  * v4 (ADR 0124): a fauna de fazenda passa à **probabilidade de grupo da Wiki** (0,1 por chunk; a v3 usava 0,4); terreno e blocos iguais.
  * v3 (ADR 0124): **fauna de fazenda** (`titan/fauna.ts`, `faunaSpecs`): o relevo, os blocos e os veios são os da v2; a versão só liga os grupos de porco, vaca, ovelha e galinha em grama.
  */
-export const ORVALIS_GENERATOR_VERSION = 5;
+export const ORVALIS_GENERATOR_VERSION = 6;
+/**
+ * v6 (ADR 0136): **recifes de coral** em manchas rasas do fundo (profundidade 3 a 10 de água), por um ruído de baixa frequência (`REEF`): montes de 0 a 2 blocos de coral vivo de uma família por mancha, com coral ou gorgônia por cima;
+ * no recife não há erva marinha nem alga. Terreno, blocos e flora são os da v5 fora dos recifes.
+ */
 /**
  * v5 (ADR 0135): **flora marinha** no fundo de areia da água (mar, baías, lagos e rios) com 2 ou mais blocos de água acima do piso — erva marinha (baixa; alta em duas células) e alga (colunas até a superfície menos 1), por
  * regra pura da seed (`floraAt`); o terreno, os blocos e os veios são os da v4.
  */
 /** Chances por coluna de fundo (Wiki: oceano morno-ameno tem erva marinha e alga; as densidades são adaptação): alga só com 5+ de água, erva marinha com 2+, alta com 3+. */
+/** Recifes (v6): onde o ruído passa do limiar nasce uma mancha; a família é a mesma por quadra de 9 blocos; monte de 0 (35 %), 1 (40 %) ou 2 (25 %) blocos; 35 % têm coral e 25 %, gorgônia por cima (adaptação da Wiki: recifes só no oceano morno). */
+export const REEF = { threshold: 0.3, scale: 16, famCell: 9, minDepth: 3, maxDepth: 10, h0: 0.35, h1: 0.75, plant: 0.35, fan: 0.6 } as const;
 export const FLORA = { kelp: 0.05, seagrass: 0.2, tallShare: 0.4, kelpMinDepth: 5, kelpBase: 3, kelpSpread: 10 } as const;
 
-const PURPOSE = { relevo: 1, colinas: 2, mar: 3, rio: 4, montanha: 5, bioma: 6, bosque: 7, arvore: 8, chegada: 9, mina: 10 } as const;
+const PURPOSE = { recife: 11, relevo: 1, colinas: 2, mar: 3, rio: 4, montanha: 5, bioma: 6, bosque: 7, arvore: 8, chegada: 9, mina: 10 } as const;
 /**
  * Veios do Orvalis (v2, ADR 0122), do Minecraft 1.18 adaptados: 20 tentativas por chunk, veios de 4 a 30 blocos (a Wiki fala em 0–37), altura triangular com pico no meio da pedra (Y 40; a Wiki pica em 96 num mundo
  * de 192 de pedra) e descarte de metade dos blocos expostos ao ar. Só substituem a pedra (abaixo do subsolo de 3 blocos).
@@ -69,6 +75,7 @@ export class OrvalisGenerator implements TerrainGen {
   private readonly nMount: Noise;
   private readonly nBiome: Noise;
   private readonly nForest: Noise;
+  private readonly nReef: Noise;
   private readonly cols = new Map<number, Column>();
   private readonly treeCells = new Map<number, Tree | null>();
   private readonly near = new Map<number, readonly Tree[]>();
@@ -84,6 +91,7 @@ export class OrvalisGenerator implements TerrainGen {
     this.nMount = new Noise(derive(seed, PURPOSE.montanha));
     this.nBiome = new Noise(derive(seed, PURPOSE.bioma));
     this.nForest = new Noise(derive(seed, PURPOSE.bosque));
+    this.nReef = new Noise(derive(seed, PURPOSE.recife));
     this.arrival = this.findArrival();
   }
 
@@ -211,10 +219,34 @@ export class OrvalisGenerator implements TerrainGen {
     return LEAVES[t.sp];
   }
 
+  /** O recife da coluna (v6, ADR 0136), ou null: altura do monte de coral, a planta de cima (0 = nenhuma) e a família (0–4). Só em fundo de areia, com `REEF.minDepth` a `REEF.maxDepth` de água, onde o ruído passa do limiar. */
+  private reefInfo(x: number, z: number, top: number): { h: number; plant: number } | null {
+    const depth = LAKE_LAST_Y - top;
+    if (depth < REEF.minDepth || depth > REEF.maxDepth || top > 60) return null;
+    const cl = this.arrival.clearing;
+    if (this.column(x, z).surface !== T.BEACH || (x >= cl.x0 && x < cl.x0 + cl.size && z >= cl.z0 && z < cl.z0 + cl.size)) return null;
+    if (this.nReef.fbm2(x / REEF.scale + 3.5, z / REEF.scale + 8.5, 2) < REEF.threshold) return null;
+    const r = hash2(this.seed ^ 0x7e1, x, z), r2 = hash2(this.seed ^ 0x3a9, x, z);
+    const fam = Math.floor(hash2(this.seed ^ 0x2c5, Math.floor(x / REEF.famCell), Math.floor(z / REEF.famCell)) * 5);
+    const h = Math.min(depth - 2, r < REEF.h0 ? 0 : r < REEF.h1 ? 1 : 2); // a planta de cima fica no máximo em Y = 62: a superfície nunca é tocada
+    return { h, plant: r2 < REEF.plant ? T.CORAL + fam : r2 < REEF.fan ? T.CORAL_FAN + fam : 0 };
+  }
+
+  /** Bloco do recife na célula `(x, y, z)` acima do piso `top` (0 = nada): monte de coral vivo e, por cima, coral ou gorgônia. */
+  private reefBlock(x: number, y: number, z: number, top: number): number {
+    const k = y - top;
+    if (k < 1 || k > 3) return 0;
+    const r = this.reefInfo(x, z, top);
+    if (!r) return 0;
+    if (k <= r.h) return T.CORAL_BLOCK + Math.floor(hash2(this.seed ^ 0x2c5, Math.floor(x / REEF.famCell), Math.floor(z / REEF.famCell)) * 5);
+    return k === r.h + 1 ? r.plant : 0;
+  }
+
   /** Planta aquática da célula `(x, y, z)` acima do piso `top` (0 = só água): erva marinha, erva alta ou alga, pela regra pura `FLORA` (v5, ADR 0135). */
   private floraBlock(x: number, y: number, z: number, top: number): number {
     const k = y - top, depth = LAKE_LAST_Y - top; // k = altura sobre o piso; depth = blocos de água acima do piso (top + 1 até a superfície)
     if (k < 1 || k > 13 || depth < 2 || top > 61) return 0;
+    if (this.version >= 6 && this.reefInfo(x, z, top) !== null) return 0; // no recife não há erva marinha nem alga (v6)
     const c = this.column(x, z);
     if (c.surface !== T.BEACH || this.arrival.clearing && x >= this.arrival.clearing.x0 && x < this.arrival.clearing.x0 + this.arrival.clearing.size && z >= this.arrival.clearing.z0 && z < this.arrival.clearing.z0 + this.arrival.clearing.size) return 0;
     const r = hash2(this.seed ^ 0x51ea, x, z), r2 = hash2(this.seed ^ 0xa17, x, z);
@@ -234,7 +266,7 @@ export class OrvalisGenerator implements TerrainGen {
     if (y <= Y_MIN) return T.BEDROCK;
     const c = this.column(x, z);
     if (y > c.top) {
-      if (y <= LAKE_LAST_Y) { const f = this.version >= 5 ? this.floraBlock(x, y, z, c.top) : 0; return f || T.LAKE; } // v5: flora marinha dentro da água
+      if (y <= LAKE_LAST_Y) { const f = (this.version >= 6 ? this.reefBlock(x, y, z, c.top) : 0) || (this.version >= 5 ? this.floraBlock(x, y, z, c.top) : 0); return f || T.LAKE; } // v5: flora marinha; v6: recifes de coral
       const ts = this.treesNear(x, z);
       for (let i = 0; i < ts.length; i++) { const b = this.treeBlock(ts[i], x, y, z); if (b) return b; }
       return T.AIR;

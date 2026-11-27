@@ -1,5 +1,5 @@
 import { liquidRowOffset, liquidRowsOf } from '../titan/liquidFrames';
-import { FLORA_CELLS, floraModel, type FloraKind } from './floraModel';
+import { FLORA_CELLS, floraModel } from './floraModel';
 import * as THREE from 'three';
 import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
@@ -45,7 +45,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 31;
+const ITEM_ROWS = 38;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
@@ -351,7 +351,7 @@ export class TitanRenderer {
     // Flora marinha (ADR 0135): planos cruzados com a textura do atlas de itens; recorte por alfa, dois lados
     const floraMat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(floraMat, this.ambient, { instGlow: true, instSky: true });
-    const flora = (Object.keys(FLORA_CELLS) as FloraKind[]).map((k) => [k, floraModel(k, ITEM_ROWS), floraMat] as [ModelKind, ModelData, THREE.Material]);
+    const flora = (Object.keys(FLORA_CELLS) as ModelKind[]).map((k) => [k, floraModel(k, ITEM_ROWS), floraMat] as [ModelKind, ModelData, THREE.Material]);
     const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
@@ -489,7 +489,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as FloraKind[])] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
       const cells = this.volume.modelCells(kind);
       for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
         let mesh = this.modelMeshes[target];

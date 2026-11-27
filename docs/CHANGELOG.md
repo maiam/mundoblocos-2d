@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.205.0 — corais e recifes do Orvalis (auditoria #14 E3b, 27/11/2026)
+- **ADR 0136 (ciclo da ADR 0116; aprovada na ADR 0135).** **Cinco famílias de coral** (tubo, cérebro, bolha, fogo, chifre) em coral, gorgônia e bloco, vivos e mortos: blocos 160–189 e itens 123–152 (**atlas de itens 4 × 38**, 10 tiles de terreno novos). Coral e gorgônia são plantas aquáticas (só na água, sobre piso firme); o **bloco vivo sem água morre em 3 a 6 s**; quebrar solta o próprio item (sem Toque de Seda). **Gerador v6** com recifes em manchas rasas do mar.
+- 763 testes passam (7 novos em `orvalis/corais.test.ts`); conferido no navegador (blocos e plantas de coral). Sem mudança de save nem de protocolo. Seeds novas mudam o fundo do mar (`ORVALIS_GENERATOR_VERSION` 6).
+
 ## Orvalis v0.204.0 — flora marinha: erva marinha, alga e alga seca (auditoria #14 E3a, 27/11/2026)
 - **ADR 0135 (ciclo da ADR 0116; aprovada nos 5 pontos).** Blocos 154–159 (erva marinha baixa e alta, alga, bloco de alga seca) e itens 115–118; **as plantas aquáticas contam como água** (física, mergulho, itens, luz, remoção); modelos de planos cruzados instanciados; **gerador v5** com erva marinha (20 %) e alga (5 %) sobre o fundo de areia; plantar na água, quebrar com cascata; alga assa em alga seca (comida 1, combustível 200 s) e o bloco (2000 s). **Atlas de itens 4 × 31.**
 - 756 testes passam (7 novos em `orvalis/floraMarinha.test.ts`); conferido no navegador (as plantas aparecem sob a água). Sem mudança de save nem de protocolo. Seeds novas mudam o fundo do mar (`ORVALIS_GENERATOR_VERSION` 5). Corais ficam para a E3b.

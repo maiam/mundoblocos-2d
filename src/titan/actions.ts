@@ -2,13 +2,14 @@ import { hoeResult, shovelResult } from './soil';
 import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import type { Drop } from './save';
 import { newBobber, rollFish } from './fishing';
+import { watchCoral } from './coral';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -120,12 +121,13 @@ function releaseTorches(s: TitanSession, x: number, y: number, z: number): void 
  * Flora marinha (ADR 0135). Erva marinha e alga se plantam **dentro da água**, na célula vizinha da face apontada: a célula precisa ser água (com mais água em cima, para o jogador nunca abrir buraco na superfície) e ter piso — cubo
  * inteiro para a erva marinha; cubo inteiro ou outra alga para a alga, que se estende para cima (a ponta vira corpo). Plantar gasta 1 item.
  */
-function placeWaterPlant(s: TitanSession, hit: Hit, slot: number, kelp: boolean): ActionResult {
+function placeWaterPlant(s: TitanSession, hit: Hit, slot: number, block: number): ActionResult {
+  const kelp = block === T.KELP, label = kelp ? 'A alga' : isCoralPlant(block) || isCoralFan(block) ? (isCoralFan(block) ? 'A gorgônia' : 'O coral') : 'A erva marinha';
   const v = s.volume, x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz;
-  if (hit.item || !v.editable(x, y, z) || v.get(x, y, z) !== T.LAKE || v.get(x, y + 1, z) !== T.LAKE) return { ok: false, msg: kelp ? 'A alga se planta dentro da água, sob a superfície' : 'A erva marinha se planta dentro da água, sob a superfície' };
+  if (hit.item || !v.editable(x, y, z) || v.get(x, y, z) !== T.LAKE || v.get(x, y + 1, z) !== T.LAKE) return { ok: false, msg: `${label} se planta dentro da água, sob a superfície` };
   const below = v.get(x, y - 1, z);
   if (!(isFull(below) || (kelp && (below === T.KELP || below === T.KELP_TOP)))) return { ok: false, msg: 'Precisa de um piso firme' };
-  if (!v.set(x, y, z, kelp ? T.KELP_TOP : T.SEAGRASS)) return { ok: false };
+  if (!v.set(x, y, z, kelp ? T.KELP_TOP : block)) return { ok: false };
   if (kelp && below === T.KELP_TOP) v.set(x, y - 1, z, T.KELP); // a ponta anterior vira corpo
   s.inventory.consume(slot);
   return { ok: true };
@@ -653,11 +655,19 @@ function useSoilTool(s: TitanSession, hit: Hit, hoe: boolean): ActionResult {
   return w.broken ? { ok: true, broken: true, msg: `${w.name} quebrou` } : { ok: true };
 }
 
+/** Coloca o item do espaço `slot`; o bloco de coral vivo posto sem água em volta começa a morrer (ADR 0136). */
 export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionResult {
+  const held = s.inventory.get(slot)?.item, block = held ? blockOfItem(held) : null;
+  const r = placeFromSlotCore(s, hit, slot);
+  if (r.ok && block !== null && isCoralBlock(block)) watchCoral(s, hit.x + hit.nx, hit.y + hit.ny, hit.z + hit.nz);
+  return r;
+}
+
+function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
   if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
-  if (stack.item === Item.ERVA_MARINHA || stack.item === Item.ALGA) return placeWaterPlant(s, hit, slot, stack.item === Item.ALGA); // flora marinha (ADR 0135)
+  { const wp = blockOfItem(stack.item); if (wp !== null && (stack.item === Item.ERVA_MARINHA || stack.item === Item.ALGA || isCoralPlant(wp) || isCoralFan(wp))) return placeWaterPlant(s, hit, slot, wp === T.KELP ? T.KELP : wp); } // flora marinha e corais (ADR 0135, 0136)
   if (stack.item === Item.VARA_PESCA) return useRod(s, hit, slot); // lançar e recolher a linha (ADR 0133)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
