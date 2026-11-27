@@ -1,4 +1,15 @@
-import type { RendererStats } from '../render/rendererContract';
+/** Contadores de desempenho do renderer (linha de base da Fase 1, ADR 0026). */
+export interface RendererStats {
+  /** Chamadas de desenho do último quadro. */
+  calls: number;
+  /** Triângulos do último quadro. */
+  triangles: number;
+  /** Geometrias e texturas vivas na GPU. */
+  geometries: number;
+  textures: number;
+  /** O contexto WebGL está perdido (aparelho tirou a GPU do jogo)? */
+  contextLost: boolean;
+}
 
 /**
  * Medição de desempenho para o piloto do Mundo em 2.5D (ADR 0031, M0/M5): `?fps=1` mostra um painel pequeno com FPS, tempo de

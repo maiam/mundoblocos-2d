@@ -1,0 +1,262 @@
+# Mapas do sistema
+
+Diagramas em Mermaid (o GitHub renderiza). Mantenha-os em sincronia com `ARCHITECTURE.md` e os domínios.
+
+> **PR #87 — mudança dirigida:** `config.ts` limita `MAX_STACK=2`; `render/renderer.ts` → `render/adaptiveWalls.ts` seleciona e desenha paredes horizontais de construção no renderizador top-down oficial, preservando a face frontal. Não altera `World` além da validação de nível obsoleto nem a renderização de terreno natural.
+
+> **Mundo em 2.5D (M2.1–M2.4, M3.1–M3.4 e M4.1–M4.2, v0.93.30–39; só dev `?render=3d`):** `render/worldThreeRenderer.ts` · `render/three/chunkFloor.ts` · `render/three/chunkBlocks.ts` · `render/three/chunkSprites.ts` · `render/worldBlockFaces.ts` · `render/worldSpriteArt.ts` · `render/three/groundFx.ts` + `render/groundFxMath.ts` · `render/three/actorBillboards.ts` · `render/three/itemSprites.ts` · `render/three/overlay2d.ts` · `render/worldLight.ts` (+ `sanctuaryLighting.ts`) · `render/three/doorSprites.ts` + `render/doorAnim.ts` · `render/three/interiorRoom.ts` · `render/dungeonFx.ts` · `WORLD_THREE_OPTIONS` em `rendererContract.ts` · `main.ts` (flag sob `import.meta.env.DEV`).
+> **Núcleo 2.5D genérico (M1, v0.93.29):** `render/three/{stage,selection,blockMaterials}.ts` · usado pelo `worldThreeRenderer.ts` (o `sanctuaryThreeRenderer.ts` foi removido na v0.93.133).
+> **Porta de parede (v0.93.25):** `Block.WALL_DOOR_*`, `World.canPlaceWallDoor` · `wallAtlas.ts` (`doorPieceFor`, `wallArtBase`) · `sanctuaryWallArt.ts` · contrato 3b + `gabarito-porta.png`.
+> **Paredes com arte (W3, v0.93.22):** `scripts/build-wall-atlas.py` → `src/assets/walls-<material>.webp` · `render/wallAtlas.ts` (layout + `wallArtPiece`) · `render/sanctuaryWallArt.ts` (planos instanciados) · `ArtPack.wallAtlases` em `render/art/santuario.ts`.
+
+> **Iluminação (ADR 0029, v0.93.19):** `render/lighting.ts` (regras puras, `?luz=`) · `render/sanctuaryLighting.ts` (shader de escuridão com poças de luz).
+
+> **Paredes (ADR 0027, v0.93.15):** `world/walls.ts` (autotile puro: frente, tampa de 16 peças, cantos internos) · `Block.WALL_PLANKS`/`WALL_STONE` em `world/blocks.ts` (`isWall`, `WALL_BLOCKS`) · `World.isWallAt`/`wallPieceAt` · `render/sanctuaryWallPrototype.ts` (protótipo de cores lisas, `?paredes=autotile`). Arte e render final: W1/W3.
+
+> **v0.93.x — vista e escala do Santuário:** `render/sanctuaryObliqueView.ts` (projeção oblíqua, K = 1) · `render/worldScale.ts` (relações do Core Keeper: cubo 1,0, parede ≈ 1,2, personagem ≈ 1,2) · `render/sanctuaryWallProportionTest.ts` (teste `?paredes=teste`, descartável) · `Camera.setCellsTall` + `GameRenderer.preferredCellsTall` (células visíveis). ADRs 0026–0028.
+
+> **Histórico (PR #89, removido na v0.93.133, ADR 0036):** o Santuário Celestial tinha renderer próprio (`sanctuaryThreeRenderer.ts`, protótipos de parede, vista oblíqua em laboratório). Hoje o perfil Santuário também passa pelo `worldThreeRenderer.ts`; `sanctuaryThreeLayout`, `sanctuaryLighting`, `sanctuaryCameraModes` e `sanctuaryWallArt` ficam porque o renderer do Mundo os usa.
+
+## 1. Módulos e dependências
+Setas = "importa/usa". `world/` é a base e não conhece ninguém acima dele.
+
+```mermaid
+flowchart TD
+  main[main.ts] --> art[render/art pacote do mundo]
+  main --> blockArt[render/blockArt]
+  main --> game[game/game.ts]
+  main --> screen[game/screenMode]
+  game --> ent[game/entities] --> sheep[game/sheep] --> walker[game/walker]
+  game --> player[game/player] --> walker
+  game --> inv[game/inventory]
+  game --> drops[game/drops]
+  game --> hud[game/hud + hotbar]
+  game --> ui[game/joystick + actionButton]
+  game --> act[game/actionController]
+  game --> cam[game/camera]
+  game --> renderer[render/renderer]
+  renderer --> chunkR[render/chunkRenderer]
+  renderer --> tex[render/textures] --> blockArt
+  renderer --> chars[render/character + itemArt]
+  renderer --> fx[render/daycycle + particles]
+  walker --> world
+  ent --> world
+  game --> world
+  renderer -. só leitura .-> world
+  subgraph world [world/ — domínio, sem DOM]
+    W[world.ts] --> G[generator.ts] --> N[noise + random]
+    W --> C[chunk + coords]
+    W --> B[blocks + biomes + items]
+    W --> PR[profiles: principal · titan · orvalis3d]
+    W --> FG[flatGenerator]
+  end
+```
+
+## 2. Um quadro (frame)
+
+```mermaid
+flowchart LR
+  A[Entrada<br/>teclado + joystick] --> B[Player.update<br/>Walker.move]
+  B --> C[Entities.update<br/>ovelhas, pares, filhotes]
+  C --> D[World.tick<br/>trigo cresce]
+  D --> E[Drops.update<br/>coleta]
+  E --> F[Camera.follow<br/>posição lógica]
+  F --> G[updateBreaking<br/>segurar 2 s mão · 1 s ferramenta]
+  G --> H[World.ensureChunks<br/>4 por frame · unloadFar 1/s]
+  H --> I[Renderer.draw]
+  I --> I1[chão: cache por chunk<br/>≤ 2 re-renders/frame]
+  I1 --> I2[objetos + atores por linha]
+  I2 --> I3[nuvens · dia/noite · partículas]
+  I3 --> I4[foco · cursor · rachaduras]
+  I4 --> J[Hud.update + botão de ação]
+```
+
+## 3. Célula do mundo e regras
+
+```mermaid
+flowchart TB
+  subgraph Célula
+    U[nível 1: segundo cubo] --> O[nível 0: cubo · árvore · enfeite · trigo · porta]
+    O --> GR[chão: material · água · buraco]
+  end
+  Q{standHeight} -->|água, buraco, árvore, cacto, porta fechada| X[null: bloqueado]
+  Q -->|chão livre / porta aberta| Z0[0]
+  Q -->|1 a 2 cubos| Z12[1 / 2]
+  BR[quebrar] --> BR1[topo da pilha] --> BR2[nível 0] --> BR3[chão vira buraco]
+  PL[colocar material] --> P1{alvo}
+  P1 -->|buraco| PF[vira piso nivelado]
+  P1 -->|vazio/enfeite| P0[nível 0]
+  P1 -->|cubo com espaço| P2[próximo nível · máx. 3]
+```
+
+## 4. Ciclo do trigo
+
+```mermaid
+stateDiagram-v2
+  [*] --> Semente: plantar (grama/terra/arada)
+  Semente --> Crescendo: World.tick (média 6 s/estágio)
+  Crescendo --> Crescendo: 16 estágios
+  Crescendo --> Maduro: estágio 15
+  Crescendo --> [*]: quebrar → 1 semente
+  Maduro --> [*]: quebrar → 1 trigo + 1–2 sementes (Drops)
+```
+
+## 5. Ciclo da ovelha
+
+```mermaid
+stateDiagram-v2
+  [*] --> Passeando
+  Passeando --> Parada: fim do passeio / travou
+  Parada --> Passeando: timer
+  Passeando --> Apaixonada: come trigo (25 s, coração)
+  Apaixonada --> ComPar: outra apaixonada a ≤ 6 células
+  ComPar --> Namorando: distância ≤ 1,5 (2,6 s, coraçõezinhos)
+  ComPar --> Apaixonada: travou 4 s / amor acabou
+  Namorando --> Espera: nasce filhote
+  Espera --> Passeando: 45 s
+  [*] --> Filhote: nascimento
+  Filhote --> Passeando: cresce em 120 s
+```
+
+## 6. Ação do jogador
+
+```mermaid
+sequenceDiagram
+  participant U as Jogador
+  participant B as Botão de ação / mouse
+  participant G as ActionController
+  participant W as World
+  U->>B: toque curto
+  B->>G: alvo = célula à frente (ou sob o cursor)
+  G->>G: canUseAt(slot, célula)?
+  G->>W: placeBlock / plant  (ou Sheep.feed)
+  U->>B: segurar 2 s (1 s com ferramenta)
+  B->>G: advanceHold (progresso, reinicia se o alvo mudar)
+  G->>W: breakBlock → dropsFor → Drops
+  W-->>G: chunk.version++ (cache do chão invalida)
+```
+
+## 7. Pipeline de assets
+
+```mermaid
+flowchart LR
+  S1[assets-src/*-sheet.png<br/>folhas 4×4] -->|process-sprite.py<br/>fundo, ancoragem, --rows-map| P[src/assets/*.png]
+  S2[assets-src/blocks-sheet-34.png<br/>prancha 3/4] -->|extract-blocks.py| P
+  P -->|optimize-assets.py| WB[src/assets/*.webp]
+  WB -->|import ?inline em render/art/mundo.ts| JS[bundle Vite]
+  JS -->|npm run build| D[dist/ site estático]
+  JS -->|build:artifact VITE_WORLD=orvalis3d| A[artifact/mundoblocos.html]
+  P2[assets-src/icone-orvalis.webp] -->|make-icons.py| PW[public/icon-*.png + apple-touch-icon PWA]
+```
+
+## 8. Onde mexer para…
+| Tarefa | Arquivos principais | Docs a atualizar |
+|---|---|---|
+| Novo bloco/material | `world/blocks.ts` (`MATERIALS`), prancha 3/4 + `scripts/extract-blocks.py`, `render/textures.ts` (contorno/barranca) | world, render, CHANGELOG |
+| Transição entre chãos (forma por par, água, grama) | `assets-src/materiais/_mascaras/`, `scripts/import-transition.py` (da pintura do par) ou `import-mask.py` + `build-materials.py` (`transitions-v2.webp`), `render/transitions.ts` (`TRANSITION_RULES`, `transitionPieces`), `render/textures.ts` (`buildTransitions`), `render/chunkRenderer.ts`, `world/world.ts` (`touch` diagonal) | render, ADR 0023 |
+| Material no Padrão V2 (ADR 0023) | `assets-src/materiais/<material>/` + `CONTRATO.md`, `scripts/import-material.py`, `scripts/build-materials.py`, `render/materialsV2.ts` (`V2_BLOCKS`), `render/textures.ts` (`composeCube`, `applyMaterialsV2`), `render/three/blockMaterials.ts`/`worldBlockFaces.ts` (faces do cubo no 3D), `render/chunkRenderer.ts` (grade sutil; `continuousGround`), `render/blockArt.ts` (`loadMaterialsV2`), `main.ts` (chaves) | render, ADR 0022, CONVENTIONS |
+| Titã: terreno, edição, física, save, malha | `titan/generator.ts` (+ `GENERATOR_VERSION`), `volume.ts`, `physics.ts`, `session.ts`/`save.ts`, `mesher.ts`, `sections.ts`, `render/titanRenderer.ts` + `titan/*.test.ts` | domains/titan, ADR 0039, CHANGELOG |
+| Titã: vista isométrica 2:1, botão Visão, câmera e mira | `titan/iso.ts` (+ `iso.test.ts`), `render/titanRenderer.ts` (`setViewMode`, `setAvatar`, `screenOf`), `titan/titanGame.ts` (`iso`, `setIso`, `computeAim`), `titan/titan.css` | domains/titan, ADR 0106, CHANGELOG |
+| Testar texturas dos mundos voxel (dev) | `titan/texturas.ts` (`?cena=texturas`, listas `ORVALIS_ROW`/`TITAN_ROW`), `npm run texturas`, `scripts/make-orvalis-voxel-arte.py`, `make-titan-atlas32.py` | OPERATIONS, domains/titan, CHANGELOG |
+| Horta do Orvalis (espécies, fases, terra arada, semente silvestre) | `titan/crops.ts` (`GARDEN_SPECIES`, `soilKindFor`, `wildSeedAt`), `titan/session.ts` (`tickCrops`, `standingCrops`), `titan/actions.ts` (`placeFromSlot`), `render/titanRenderer.ts` (`gardenGeometry`), `scripts/make-orvalis-horta.py`, ADR 0113 |
+| Ferramentas do Orvalis (madeira e pedra), enxada e pá no solo | `titan/items.ts` (`TOOLS`, `ToolKind`), `titan/breaking.ts` (`blockToolOf`, `toolAdvantage`), `titan/wear.ts`, `titan/soil.ts`, `titan/actions.ts` (`useSoilTool`), ADR 0112 |
+| Solo de cultivo e cerâmica do Orvalis (blocos 131–136, itens 62–69) | `titan/voxel.ts` (`BLOCK_TILES`), `titan/items.ts`, `titan/recipes.ts`, `titan/tiles.json`, ADR 0111 |
+| Mureta de Pedra (máscara, ligação, modelo) | `titan/voxel.ts` (`isWall`, `wallBoxes`, `wallMaskFor`), `titan/volume.ts` (`set`/`refreshWalls`), `render/muretaModel.ts`, `scripts/make-orvalis-mureta.py`, ADR 0110 |
+| Degrau de Pedra (forma, arte, ícone) | `titan/voxel.ts` (`isStoneStair`, `STAIR_BASE`), `scripts/make-orvalis-degrau.py`, `render/titanRenderer.ts` (material `degrauPedra`), ADR 0109 |
+| Orvalis em voxel: terreno, blocos, árvores, chegada, céu e água | `titan/orvalis/generator.ts` (+ `ORVALIS_GENERATOR_VERSION`), `titan/terrain.ts`, `titan/voxel.ts` (ids 90–99, tiles), `titan/items.ts` (42–51), `breaking.ts`, `sounds.ts`, `sky.ts` (paleta), `titanGame.ts` (`world`), `scripts/make-orvalis-voxel-arte.py` + atlas | domains/titan, ADR 0105, CHANGELOG |
+| Titã: inventário, coleta, lanterna e luz | `titan/inventory.ts`, `items.ts`, `actions.ts`, `light.ts`, `titanGame.ts` (interface), `render/art/titan.ts` (atlas da hotbar) | domains/titan, ADR 0040, CHANGELOG |
+| Titã: Marco de Margem e Painel de Junco | `titan/voxel.ts` (`isMarco`, `isPanel`, `modelOf`, `blocksLight`, `isCollectBlock`), `titan/models.ts` (`modelBox`), `titan/volume.ts` (`modelCells`), `titan/actions.ts` (`placeFromSlot`), `titan/recipes.ts`, `render/titanRenderer.ts` (`syncModels`), `scripts/extract-titan-margem.py` | ADR 0058 |
+| Titã: vida, ar e fome (ADR 0059) | `titan/vitals.ts`, `titan/actions.ts` (`dieAndRespawn`), `titan/session.ts` (persistência), `titan/titanGame.ts` (HUD e laço), `titan/titan.css`, `render/art/titan.ts` |
+| Titã: Noz de Duna e comida (ADR 0060) | `titan/generator.ts` (`nutsFor`), `titan/nuts.ts`, `titan/actions.ts` (`collectNut`, `eatFromSlot`), `titan/session.ts` (`regrow`, `standingNuts`, `tickRegrow`), `titan/items.ts` (`FOOD`), `render/titanRenderer.ts` (`setNuts`), `scripts/extract-titan-noz.py` |
+| Titã: Farejadores de Duna (ADR 0061, 0064) | `titan/creature.ts` (`KINDS`, fases, `farejadorPose`), `titan/generator.ts` (`den`), `titan/session.ts` (`creatures`), `titan/titanGame.ts` (laço), `render/titanRenderer.ts` (`setFarejadores`), `render/farejadorRig.ts` (rig), `scripts/extract-titan-farejador.py`, `scripts/extract-titan-farejador-rig.py` |
+| Titã: tamanho da região (ADR 0062) | `titan/voxel.ts` (`Region`, `regionFor`), `titan/generator.ts` (`region`, `inRegion`, `rawTop` v6), `titan/volume.ts`, `titan/light.ts`, `titan/sections.ts` |
+| Titã: cobre, hastes secas e ferramentas (ADR 0063) | `titan/generator.ts` (`placeCopper`, `dryReedsFor`), `titan/items.ts` (`TOOLS`, ids 17–20), `titan/breaking.ts` (`pick`), `titan/actions.ts` (veio de cobre), `titan/recipes.ts`, `scripts/make-titan-veio-cobre.py`, `scripts/make-titan-icones-conceito.py` |
+| Titã: modo de mira no toque e corrida (ADR 0076) | `titan/titanGame.ts` (`aimMode`, `fingerMode`, `SPRINT_HOLD_MS`), `titan/physics.ts` (`sprint`), `titan/aim.ts` (`SPRINT_FOV_DEG`), `render/titanRenderer.ts` (`setSprint`, `fov`) |
+| Titã: controles de toque (joystick, ação no dedo, anel) (ADR 0075/0081) | `titan/titanGame.ts` (`stick`, `lookPad`, `computeAim`, `fingerNdc`), `titan/aim.ts`, `titan/titan.css` (`.titan-stick`, `.titan-touchring`, `.titan-look`) |
+| Titã: salas do servidor (ADR 0104) | `net/titan/protocol.ts`, `net/titan/room.ts`, `net/titan/loopback.ts`, `net/titan/client.ts`, `net/titan/socket.ts`, `titan/titanGame.ts` (`client`, `wireHit`), `render/titanRenderer.ts` (`setRemotePlayers`), `net/index.ts`, `titan/volume.ts` (`onSet`), `titan/session.ts` (`resume`) |
+| Titã: auto-step (ADR 0103) | `titan/physics.ts` (`autoStepUp`, `STEP_HEIGHT`, `Body.stepSmooth`), `titan/titanGame.ts` (olho da câmera) |
+| Titã: Porta de Junco (ADR 0102) | `titan/voxel.ts` (`isDoor`, `doorId`, `blockBoxes`), `titan/actions.ts` (`placeDoor`, `breakDoor`, `useDoor`), `titan/doorPose.ts`, `render/titanRenderer.ts` (`doorModelData`, `setDoorMatrix`, `animateDoors`), `titan/titanGame.ts` (`openStation`), `scripts/make-titan-porta.py` |
+| Titã: família do Junco (ADR 0100/0101) | `titan/voxel.ts` (`isSlab`, `blockBoxes`, `isStair`, `isChair`), `titan/slabs.ts`, `titan/physics.ts` (caixas em `collides`/`raycast`), `titan/volume.ts` (`bodyBoxes`), `titan/mesher.ts` (laje), `titan/actions.ts` (`placeFromSlot`), `scripts/make-titan-junco.py`, `make-titan-junco-modelos.py` |
+| Titã: sair da água e enchente (ADR 0099) | `titan/physics.ts` (`waterLedge`, `stepOnce`, `Body.hop`), `titan/volume.ts` (`remove`) |
+| Titã: gravidade e deslocamento dos itens soltos (ADR 0098) | `titan/drops.ts`, `titan/actions.ts` (`collectNearby`, `placeFromSlot`, `placeBed`, `spillBlock`), `titan/session.ts` (`dropFx`, `visibleItems`), `render/titanRenderer.ts` (`setItems`) |
+| Titã: item na mão = sprite extrudado de 16 × 16 (ADR 0097) | `titan/extrude.ts`, `titan/itemMasks.json`, `titan/heldKinds.ts`, `render/titanRenderer.ts` (`buildFlat`), `scripts/make-titan-sprites16.py`, `make-titan-arte32.py`, `make-titan-item-masks.py` |
+| Titã: sons da tampa e do sono (ADR 0096) | `titan/gameAudio.ts` (`playChestOpen`, `playChestClose`, `playSleepDown`, `playWake`), `titan/lid.ts` (`lidSound`), `titan/sleep.ts` (`sleepCue`), `titan/titanGame.ts` |
+| Titã: balde 3D na mão e som de água (ADR 0095) | `render/titanRenderer.ts` (`HELD_MESHES`, `buildHeldMesh`), `render/heldPose.ts` (`bucket`), `titan/gameAudio.ts` (`playWaterScoop`, `playWaterPour`), `scripts/extract-titan-balde.py` |
+| Titã: luz do braseiro aceso (ADR 0094) | `titan/voxel.ts` (`lightLevelOf`), `titan/light.ts` (`LightSource`, `sourceAdded`), `titan/volume.ts` (`emitters`, `updateLight`) |
+| Titã: tampa do baú e véu do sono (ADR 0093) | `titan/lid.ts`, `titan/sleep.ts`, `render/titanRenderer.ts` (`bauTampa`, `setOpenChest`, `animateLids`), `titan/titanGame.ts` (`sleepStart`, `.titan-sleep`), `scripts/extract-titan-bau.py` |
+| Titã: Braseiro 3D (ADR 0092) | `titan/voxel.ts` (`modelOf`, `BRAZIER_HEIGHT`), `titan/models.ts` (`BRAZIER_SIZE`), `render/titanRenderer.ts` (`braseiro`, `braseiroAceso`, `EMBER_GLOW`), `scripts/extract-titan-braseiro.py` |
+| Titã: Balde de Cobre (ADR 0091) | `titan/items.ts` (`isBucket`), `titan/actions.ts` (`useBucket`), `titan/physics.ts` (`raycast` com `liquid`), `titan/titanGame.ts` (`computeAim`), `scripts/make-titan-balde-icone.py` |
+| Titã: Cama de Junco (ADR 0090) | `titan/voxel.ts` (`isBed`, `bedPartnerOffset`), `titan/actions.ts` (`placeBed`, `breakBed`, `useBed`, `bedSpawn`, `dieAndRespawn`), `titan/session.ts` (`spawn`), `titan/sky.ts` (`isNightTime`), `render/titanRenderer.ts` (modelo `cama`), `scripts/extract-titan-cama.py` |
+| Titã: Baú de Rocha e Junco (ADR 0089) | `titan/chest.ts`, `titan/voxel.ts` (`isChest`), `titan/actions.ts` (`chestAt`, `chestMoveIn`, `chestTakeOut`, `spillChest`), `titan/session.ts` (`chests`, `validChests`), `titan/titanGame.ts` (`chestBox`, `tapChest`), `render/titanRenderer.ts` (modelo `bau`), `scripts/extract-titan-bau.py` |
+| Titã: Escada de Junco (ADR 0088) | `titan/voxel.ts` (`isLadder`, `ladderFacing`), `titan/models.ts` (`modelBox`), `titan/physics.ts` (`ladderUnder`, `stepOnce`), `titan/actions.ts` (`placeFromSlot`, `releaseLadders`), `render/titanRenderer.ts` (modelo `escada`), `scripts/extract-titan-escada.py`, `scripts/make-titan-modelo-icone.py` |
+| Titã: item na mão por categoria e troca (ADR 0087) | `titan/heldKinds.ts`, `titan/extrude.ts`, `titan/itemMasks.json`, `render/heldPose.ts` (`STYLES`, `EquipAnim`), `render/titanRenderer.ts` (`setHeld`, `buildFlat`, `buildBlock`, `buildArm`), `scripts/make-titan-item-masks.py` |
+| Titã: cultivo do Junco de Vidro (ADR 0083) | `titan/crops.ts`, `titan/session.ts` (`tickCrops`, `standingCrops`, `validCrops`), `titan/actions.ts` (`plantReed`, `collectCrop`), `render/titanRenderer.ts` (`setCrops`, `setNuts`), `scripts/make-titan-cultivo32.py`; Noz plantada/Torrada (ADR 0084): `canPlantNut`, `scripts/make-titan-noz-torrada.py`; Esteira de Junco (ADR 0085): `voxel.ts` (`isMat`), `mesher.ts` (`half = 3`), `physics.ts` (`raycast`), `actions.ts` (`matSupported`), `scripts/make-titan-esteira-icone.py` |
+| Titã: bioma, noz por proporção e animais por planta (ADR 0074) | `titan/biomes.ts`, `titan/generator.ts` (`nutsFor`), `titan/creature.ts` (`creatureSpecs`, `newFromSpec`), `titan/combat.ts` (`tickRespawn` por id), `titan/session.ts` (`respawn`), `titan/titanGame.ts` (raios de simulação e desenho) |
+| Titã: brasa de âmbar comum, veio e bloco compactado (ADR 0073) | `titan/generator.ts` (`emberSites`, `placeAmberGuaranteed`, `ORE_RULES`), `titan/ores.ts` (`veinSizeMax`), `titan/furnace.ts` (carga), `titan/actions.ts` (`amberYield`), `titan/voxel.ts`/`items.ts`/`recipes.ts`, `titan/mesher.ts` (`glowOf`), `scripts/make-titan-ambar.py` |
+| Titã: fragmentos de superfície (ADR 0072) | `titan/generator.ts` (`fragmentAt`, `blockAt`, `PURPOSE.fragmentos`), `titan/fragmentos.test.ts` |
+| Titã: item 3D na mão (ADR 0071) | `render/heldItem.ts`, `render/heldPose.ts`, `render/titanRenderer.ts` (`setHeld`, `swingHand`, `handScene`), `render/art/titan.ts`, `titan/titanGame.ts` (chamadas por quadro), `scripts/export-titan-adaga.py` |
+| Titã: veios subterrâneos / minérios por altura (ADR 0070) | `titan/ores.ts` (regras puras), `titan/generator.ts` (`ORE_RULES`, `genOreChunk`, `oreAt`, `blockAt`), `titan/ores.test.ts` |
+| Titã: combate com o Farejador e carne (ADR 0069) | `titan/combat.ts` (dano, abate, espólio, respawn), `titan/creature.ts` (`hp`, `hurtFarejador`, `creatureAim`), `titan/titanGame.ts` (`strike`, alvo `creature`), `titan/session.ts` (`respawn`), `titan/items.ts` (`FOOD`), `titan/recipes.ts` (`carne-assada`) |
+| Titã: braseiro como fornalha (ADR 0065, 0068) | `titan/furnace.ts` (regras puras e save), `titan/actions.ts` (`furnaceAt`, `furnaceMoveIn`, `furnaceTakeOut`, cuspir ao quebrar), `titan/session.ts` (`furnaces`, `tickFurnaces`), `titan/recipes.ts` (`Station`, `stationMet`), `titan/titanGame.ts` (`tapFurnace`, `paintFurnace`), `scripts/make-titan-braseiro.py` |
+| Titã: abrigos e carapaça (ADR 0066) | `titan/generator.ts` (`placeShelters`, `plates`, `pillars` em `computeColumn`), `titan/voxel.ts` (`T.CARAPACE`), `titan/items.ts` (25–26), `titan/recipes.ts` (`revestimento`), `titan/session.ts`/`actions.ts` (placa como item do chão) |
+| Titã: durabilidade (ADR 0067) | `titan/wear.ts` (tabela, `wearCost`, barra), `titan/inventory.ts` (`Stack.wear`, `damage`, save), `titan/actions.ts` (`wearHeldTool`, `breakOrCollect`), `titan/titanGame.ts` e `titan.css` (barra e rótulo), `titan/gameAudio.ts` (`playToolBreak`) |
+| Titã: lago V2 e visual submerso | `titan/underwater.ts`, `render/titanRenderer.ts` (`applyUnderwater`, `updateUnderwater`), `titan/mesher.ts` (`LAKE_*_UV`), `assets/titan-lago-32px.webp`, `titan/titan.css` (`.titan-veil`) | ADR 0057 |
+| Titã: lajes superior e dupla | `titan/slabs.ts` (`resolveSlabPlacement`), `titan/voxel.ts` (`blockSpan`, `isSlab`), `titan/physics.ts` (`collides`, `ceilingY`, `raycast` `hy`), `titan/mesher.ts`, `titan/actions.ts` (`placeFromSlot`, `breakOrCollect`) | ADR 0056 |
+| Titã: salto automático e quebra contínua | `titan/physics.ts` (`stepOnce`, `moveAxis`), `titan/gesture.ts` (`begin`, `tick`, `update`) | ADR 0055 |
+| Titã: som | `titan/gameAudio.ts` (síntese), `titan/sounds.ts` (`surfaceOf`, `FootstepClock`), `titan/titanGame.ts` (`effect`, `complete`, `place`, passos, botão de mudo) | ADR 0054 |
+| Titã: arte de 32 px (itens e junco) | `scripts/make-titan-arte32.py`, `assets-src/titan/arte32/`, `render/art/titan.ts`, `titan/titan.css` (`--ic`, `--icm`), `titan/titanGame.ts` (`draw`, `iconOf`), `titan/reeds.ts` (`REED_COLUMNS`) | ADR 0053 |
+| Titã: orientação da mesa | `titan/voxel.ts` (`isWorkbench`, `workbenchTurnFacing`), `titan/actions.ts` (`placeFromSlot`), `titan/volume.ts` (`workbenchCells`), `render/titanRenderer.ts` (`syncWorkbenches`) | ADR 0052 |
+| Titã: silhuetas do junco | `titan/reeds.ts` (`reedVariant`), `render/titanRenderer.ts` (`setReeds`, `reedGeometry`), `assets/titan-junco-variantes-32px.webp` | ADR 0051 |
+| Titã: bancada 3 × 3 e painéis de basalto | `titan/inventory.ts` (`benchRecipe`, `takeBenchResult`, `returnBench`), `titan/recipes.ts` (`matchBench`), `titan/titanGame.ts` (`takeBench`, grade 3 × 3 no grupo Bolsa; `previewCells`), `titan/titan.css`, `scripts/make-titan-basalt.py` | domains/titan, ADR 0049, CHANGELOG |
+| Titã: céu (bruma direcional, estrelas, Saturno raro) | `titan/sky.ts` (`skyAt`, `horizonAt`, `saturnVisibility`), `render/titanSkyDome.ts`, `render/titanRenderer.ts` (`setSky`, `setSaturn`, `fogToward`) | domains/titan, ADR 0048, CHANGELOG |
+| Titã: bolsa, hotbar de 9 e livro de receitas (tela única, migração do inventário) | `titan/inventory.ts` (`fromData`), `titan/recipes.ts` (`group`), `titan/titanGame.ts` (bolsa, `drawBook`), `titan/titan.css` | domains/titan, ADR 0047, CHANGELOG |
+| Titã: Laje de Rocha (meia altura, degrau, mira por caixa) | `titan/voxel.ts` (`blockHeight`, `isFull`), `titan/physics.ts` (`collides`, `landingY`, `STEP`, `raycast`), `titan/mesher.ts` (laje), `titan/recipes.ts` | domains/titan, ADR 0046, CHANGELOG |
+| Titã: receitas, Mesa de Trabalho, brasa, junco e migração do save v4 | `titan/recipes.ts`, `titan/inventory.ts` (`tryCraft`), `titan/session.ts` (`discoverRecipes`, `grantEmber`, `standingReeds`), `titan/generator.ts` (`planEmber`, `reedsFor`), `titan/titanGame.ts` (cartões, Usar), `render/titanRenderer.ts` (`syncWorkbenches`, `setReeds`), `scripts/make-titan-fabricacao.py`, `scripts/extract-titan-workbench.py` | domains/titan, ADR 0045, CHANGELOG |
+| Titã: veios, gerador v3 e lascas soltas e bloco que cai no chão (drops, ADR 0082) | `titan/generator.ts` (`placeVeins`, `walkableFromArrival`), `titan/actions.ts` (`breakOrCollect`, `collectNearby`), `titan/session.ts` (`drops`, `visibleItems`), `titan/save.ts` (`drops`), `scripts/make-titan-veins.py` | domains/titan, ADR 0044, CHANGELOG |
+| Titã: lanterna 3D (modelo, instâncias, mira pela caixa) | `titan/lantern.ts`, `titan/physics.ts` (`raycast`), `render/titanRenderer.ts` (`syncLanterns`), `render/art/titan.ts`, `scripts/extract-titan-lantern.py` | domains/titan, ADR 0043, CHANGELOG |
+| Titã: gesto de colocar/quebrar, tempos e rachaduras | `titan/gesture.ts`, `titan/breaking.ts`, `titan/titanGame.ts` (entrada de mouse e toque), `render/titanRenderer.ts` (`setCrack`), `scripts/make-titan-cracks.py` | domains/titan, ADR 0042, CHANGELOG |
+| Titã: relógio, céu, sol, névoa e luz do dia | `titan/sky.ts` (`skyAt`, `advanceDay`, `parseHora`), `render/titanRenderer.ts` (`setSky`, `patchDayLight`), `titan/mesher.ts` (`col` × `glow`) | domains/titan, ADR 0041, CHANGELOG |
+| Regra de colocar/quebrar/pisar | `world/world.ts` (`placementLevel`, `breakTarget`, `standHeight`) + testes | world, MAPS §3 |
+| Geração do mapa/biomas | `world/generator.ts` (`cellAt`), `world/biomes.ts` + `npm run bench` | world |
+| Novo item ou ferramenta | `world/items.ts` (`StackId`, drops), `game/inventory.ts` (começo), `game/hotbar.ts`, `render/art/<mundo>.ts` (ícone) | farming |
+| Água (substituir, encher buracos) | `world/world.ts` (`REPLACES_WATER`, `scheduleFlow/tickWater`), `render/three/groundFx.ts` (água enchendo) | world, render |
+| Receita / profissão nova | `world/items.ts` (`RECIPES`, `PROFESSIONS`), ícone em `render/art/<mundo>.ts`; tela em `game/skills.ts` | farming |
+| O que um bloco devolve ao quebrar | `world/items.ts` (`blockDrops/breakDrops`) | farming |
+| Ação de ferramenta / toque / clique | `game/actionController.ts` (`canUseAt/applyUse/advanceHold`), `world/world.ts` | player, farming, MAPS §6 |
+| Arte nova (qualquer) | gerar em `src/assets/`, importar no pacote do mundo `render/art/<mundo>.ts` (+ campo em `types.ts` se for tipo novo); se não for usada no começo, carregar em segundo plano | render, OPERATIONS, ADR 0010/0013 |
+| Novo animal/NPC | `game/<animal>.ts` estendendo `Wanderer` (passeio) ou `Walker`, `game/entities.ts`, `render/character.ts` (`ActorKind`) | npc, MAPS §5 |
+| Interior da tenda (entrar/sair, mapa) | `world/interiors.ts` (`TENT_INTERIOR`, `tentLayout`), `world/world.ts` (`tentRoom`, `tentDoorAt`), `game/game.ts` (`updateInteriors`, `roomExit`, `tentReturn`), `render/art/principal.ts` (`interiors.tent`) | town, ADR 0014 |
+| Interior de construção | `assets-src/interiors/<id>.png`, `world/interiors.ts` (`InteriorDef`: mapa, construção, morador), `scripts/extract-interiors.py --grid`, `render/art/principal.ts` (`interiors`) | town, ADR 0014, OPERATIONS |
+| Personagem pronto (Heroína/Herói) e escolha no Novo mundo | `game/entities.ts` (`HeroBody`, `body`), `render/character.ts` (`SPECS` hero*), `render/art/principal.ts`, `game/title.ts` (`creatorOnly`), `render/characterPreview.ts`, `main.ts` (`chooseCharacterForNewWorld`), `game/save.ts` (`body`) | player, save |
+| Multiplayer — itens no chão e baús da sala | `net/room.ts` (`spawnDrops`, `take`, `chest`), `net/protocol.ts` (`RoomDrop`, `parseChestSlots`), `net/session.ts` (`onDrops`, `onTaken`, `onChest`, `take`, `sendChest`), `game/drops.ts` (`addShared`, `claim`, `resolveClaim`), `game/actionController.ts` (`sharedLoot`), `game/game.ts` (`refreshChestUi`) | ADR 0020 |
+| Multiplayer — bichos da sala (aranhas e animais) | `game/entities.ts` (`avatars`, `onBite`, `strikeFrom`, `biteFrom`, `remote`, `extra`, `spawnWildlife`), `net/room.ts` (`entities`, `mobsNear`, `strike`/`feed`, `MOBS_EVERY`), `net/protocol.ts` (`MobState`, `FACING_ORDER`), `net/session.ts` (`onMobs`, `onBite`, `onHits`, `onFed`, `strike`, `feed`), `game/creatureMirror.ts`, `game/actionController.ts` (`onFeed`), `game/game.ts`; servidor `src/app.js` (`TICK_MS`) | npc, dungeon, ADR 0021 |
+| Multiplayer — aparência de cada jogador (e ferramenta/golpe: `PlayerState.tool`/`swing`, `heroActorKind`, `Player.swings`) | `net/protocol.ts` (`Appearance`, `parseAppearance`, `parseState`), `net/room.ts` (`PlayerInfo.appearance`), `game/remotePlayers.ts`, `main.ts` (`goOnline`) | player, ADR 0016 |
+| Multiplayer — salas fixas, mundo e bolsa salvos | `net/protocol.ts` (`ROOMS`, `RoomBag`, `parseBag`), `net/room.ts` (`snapshot`, `restore`), `net/session.ts` (`bag`, `sendBag`), `net/socket.ts` (`fetchRoomCounts`), `game/menu.ts`, `game/game.ts` (`sendBag`), `main.ts`; servidor `src/app.js`, `src/store.js` | ADR 0020 |
+| Multiplayer — hora e crescimento da sala | `net/room.ts` (`time`, `tick`, `grown`), `net/session.ts` (`time`, `onTime`, `grow`), `world/world.ts` (`tick` com `grow`/`onGrow`, `applyGrowth`), `game/game.ts`; servidor `src/app.js` (relógio 10×/s; plantas de segundo em segundo) | ADR 0016 |
+| Multiplayer (mensagem nova, regra de sala, ação nova) | `src/net/protocol.ts` (+ `PROTOCOL_VERSION` se incompatível), `src/net/room.ts`, `src/world/actions.ts`, `src/net/net.test.ts`; o servidor (`maiam/orvalis-servidor`) atualiza o pacote | ADR 0016, NEXT_STEPS Fase M |
+| NPC novo / nome / fala / retrato | `assets-src/npcs/`, `game/npcs.ts` (`NPCS`), `game/villager.ts`, `scripts/make-portraits.py`, `render/art/principal.ts`, `render/character.ts` (`SPECS`) | npc |
+| Caixa de conversa (moldura, páginas, setinha) | `game/dialogue.ts` (`DialogueBox`, `paginate`), `style.css` (`.dlg-*`), `game/game.ts` (`talkTo`, `updateDialogue`), `assets-src/dialogo-moldura.png` | npc |
+| Sprite da personagem | `assets-src/`, `process-sprite.py`, `optimize-assets.py`, `render/character.ts` | render, OPERATIONS |
+| Ferramentas novas (níveis/materiais) — contrato de arte | `assets-src/ferramentas/CONTRATO.md`, `catalogo.json`, `world/items.ts` (`TOOLS`), `world/progression.ts` (`WEAPON_POWER`) | ADR 0018, farming |
+| Pedregulhos (arte, gerador, drops) | `world/blocks.ts` (`ROCK_BOULDER`), `world/generator.ts`, `world/items.ts` (`blockDrops`), `render/textures.ts`, `scripts/extract-rocks.py` | world |
+| Bloco que saiu do jogo (antigas paredes 210–225): dados antigos viram vazio | `world/blocks.ts` (`isRemovedBlock`, `isRemovedStack`), `world/world.ts` (`restoreChunk`, `setLevel`), `game/save.ts` (`withoutRemovedBlocks`), `net/protocol.ts` (`parseBag`, `parseChestSlots`) | world, save, ADR 0016 |
+| Cerca e portão (emenda por vizinhos, abrir/fechar, receitas) | `world/blocks.ts` (`FENCE*`, `joinsFence`, `toggled`), `world/world.ts` (`toggleDoor`), `world/items.ts` (receitas, `blockDrops`), `render/fence.ts` (`fenceParts`), `render/renderer.ts` (`drawFence`), `render/textures.ts` (`fenceTextures`), `scripts/extract-fence.py` | world, render |
+| Bolsa (12, à direita) e ficha de receita | `game/hotbar.ts` (`BAG_SLOTS`), `game/bag.ts` (`peek`), `game/skills.ts` (`openDetail`, `renderDetail`), `game/hud.ts` (`.hotbar-side`), `game/game.ts` (`craftDestination`, `spillBagOverflow`), `style.css` (`.recipe-*`) | farming |
+| Fome, comida, Cozinheiro (pesos, comer, receitas no caldeirão) | `world/progression.ts` (`HUNGER`, `FOOD`), `game/player.ts` (`hunger`, `eat`), `game/actionController.ts` (`eatInstead`), `world/items.ts` (`Recipe.station`, `cook`), `game/skills.ts`, `game/hud.ts` (`setHunger`), `game/game.ts` (`nearStation`) | player, farming |
+| Covil isolado e entrada de caverna (posição, entrar/sair, escuridão) | `world/dungeon.ts` (`isolatedDungeon`, `planCave`, `DungeonTerrain`), `world/world.ts` (`cave`, `isCaveDoor`, `isDungeonExit`), `game/game.ts` (`updateInteriors`), `render/renderer.ts` (`darkenOutside`), `render/textures.ts` (caverna) | dungeon, ADR 0019 |
+| Biomas do mundo da Cidade 1 | `world/biomes.ts` (`pickBiome`) | world, ADR 0019 |
+| Culturas da horta (trigo, batata, tomate, cenoura) | `world/blocks.ts` (`CROPS`), `world/items.ts` (`ITEMS`, `dropsFor`), `world/world.ts` (`CROP_STAGE_SECONDS`), `render/itemArt.ts` (`loadCropSprites`), `scripts/extract-crops.py` | farming |
+| Lobos (bandos, regra das 3 células, ficha) | `world/wolves.ts` (`wolfPacks`), `game/monster.ts` (`MONSTERS`, `WOLF_SIGHT`), `world/progression.ts` (`MONSTER_STATS`), `game/entities.ts` (`spawnWolves`, `ACTIVE_RADIUS`), `render/character.ts` (`SPECS`), `assets-src/lobos/` | dungeon, render |
+| Árvores adultas (variantes) / maçãs / madeira de cerejeira | `world/blocks.ts` (`TREE_NEXT`, `GROWTH_STAGE_ADULT`, `CHERRY_*`, `BIRCH_*`), `world/biomes.ts` (`altTrees`), `world/world.ts` (`pick`, `tick`, `inWallChunk`), `world/items.ts` (`treeDrops`, `blockDrops`, `pickDrops`), `render/textures.ts` (`growthTreeSprites`, `TREE_FRAMES`), `scripts/process-trees.py` (carvalho, macieira, cerejeira, bétula), `scripts/extract-trees.py` (cacto), `scripts/make-material-icons.py` | farming, render |
+| Animais do campo (cavalo, vaca, galinha), filhotes e reprodução | `game/breeder.ts` (`Breeder`), `world/items.ts` (`feeds`), `game/actionController.ts` (`feedInstead`), `game/horse.ts` (`FarmAnimal`, `FARM`, `BABY_KIND`), `game/entities.ts` (`spawnAnimals`), `render/character.ts` (`SPECS`) | npc |
+| Minimapa e névoa (cores, marcadores, raio, salvamento) | `src/render/minimap.ts`, `render/mapColors.ts`, `game/exploration.ts`, `game/game.ts` (`updateMinimap`, `REVEAL_RADIUS`), `world/profiles.ts` (`minimap`) | render, save |
+| Tela de entrada / montar o personagem (escolher entre os 5 prontos, nome, Continuar) | `src/game/title.ts`, `render/characterPreview.ts`, `render/modular.ts` (`lookOptions`, `randomLook`, `cleanLook`), `game/game.ts` (`showcase`, `look`), `main.ts` (`showTitle`) | player, save |
+| HUD / controles na tela | `game/hud.ts`, `game/actionButton.ts`, `game/joystick.ts`, `style.css` | player, README |
+| Câmera / zoom | `game/camera.ts` | player |
+| Visual do chão | `render/chunkRenderer.ts` (cache por chunk) | render |
+| Novo mundo / mudar um mundo | `world/profiles.ts` (perfil), `world/flatGenerator.ts` ou gerador próprio, `render/character.ts` (personagem), script `build:artifact:<mundo>` | worlds, ADR 0008, OPERATIONS |
+| Combate (vida, dano, espólios) | `world/progression.ts` (atributos, armas, `MONSTER_STATS`, `rollDamage`), `game/player.ts` (vida), `game/monster.ts` (`MONSTERS`: comportamento), `game/entities.ts` (mordida, mapa de distâncias, renascimento), `world/items.ts` (`monsterDrops`), `game/hud.ts` | dungeon, farming |
+| Cidade (ruas, construções, regras) | `world/town.ts` (`buildTown`, `TOWN_SIZES`, `TownTerrain`), `world/blocks.ts` (ids 120–142), arte em `assets-src/town/` + `scripts/extract-town.py`, `World` (`isProtected`, `townBuildingAt`), `render/townArt.ts` + `town.test.ts` | town, ADR 0012 |
+| Dungeon / monstro novo | `world/dungeon.ts` (área, spawns), `game/monster.ts` (`MONSTERS`), `game/entities.ts`, `render/character.ts` (`cycle`), `scripts/extract-dungeon.py` | dungeon, render, OPERATIONS, ADR 0009 |
+| Estado novo que deve ser salvo / menu | `game/save.ts` (`SaveData`, `SAVE_VERSION`, captura/aplica), `game/menu.ts`, `main.ts` | save, ADR 0011 |
+| Desempenho | `bench/perf.bench.ts`, `world/generator.ts`, `world/world.ts`, `render/worldThreeRenderer.ts` | ARCHITECTURE §Desempenho |

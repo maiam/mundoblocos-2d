@@ -1,4 +1,4 @@
-// Pacote do multiplayer para o servidor (ADR 0016): src/net/index.ts (+ as regras de src/world que a sala usa) num
+// Pacote do multiplayer para o servidor (ADR 0016, 0104 e 0115): src/net/titan/index.ts (+ as regras do Titã que a sala usa) num
 // único arquivo CommonJS para Node, sem dependências → dist-net/orvalis-net.cjs. O servidor (maiam/orvalis-servidor)
 // copia este arquivo para vendor/ com `npm run sync-net` (ver README dele). O cabeçalho diz de qual versão/commit veio.
 import { build } from 'esbuild';
@@ -9,7 +9,7 @@ const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 let commit = 'desconhecido';
 try { commit = execSync('git rev-parse --short HEAD').toString().trim(); } catch { /* fora de um repositório git */ }
 await build({
-  entryPoints: ['src/net/index.ts'],
+  entryPoints: ['src/net/titan/index.ts'],
   outfile: 'dist-net/orvalis-net.cjs',
   bundle: true,
   platform: 'node',

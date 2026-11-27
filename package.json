@@ -1,7 +1,7 @@
 {
   "name": "mundoblocos-2d",
   "private": true,
-  "version": "0.182.0",
+  "version": "0.183.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,11 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build:artifact": "VITE_WORLD=orvalis3d npm run build && node scripts/build-artifact.mjs",
-    "bench": "vitest bench --run --config bench/vitest.config.ts",
     "pack:site": "npm run build && rm -f orvalis-site.zip && cd dist && zip -qr ../orvalis-site.zip .",
-    "build:net": "node scripts/build-net.mjs",
-    "perf:cpu:3d": "node scripts/perf-cpu-3d.cjs",
-    "leak:3d": "node scripts/leak-3d.cjs"
+    "build:net": "node scripts/build-net.mjs"
   },
   "devDependencies": {
     "@types/three": "0.187.0",

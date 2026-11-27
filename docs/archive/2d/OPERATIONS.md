@@ -1,0 +1,315 @@
+# Operações
+
+## Requisitos
+Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. Sem variáveis de ambiente
+(não há `env.example`). Fonte Nunito via Google Fonts, com fallback `system-ui`.
+
+## Comandos
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor local em `http://localhost:5173` (`?seed=<número|texto>`); expõe `window.__game` |
+| `npm test` | Testes Vitest (`src/**/*.test.ts`) |
+| `npx tsc --noEmit` | Typecheck |
+| `npm run bench` | Benchmarks de geração/leitura de chunks (`bench/`, `vitest bench`) |
+| `npm audit` | Deve mostrar 0 vulnerabilidades (a Hostinger também verifica as dependências do repositório) |
+| `npm run build` | Typecheck + `dist/` estático (`base: './'`, qualquer subcaminho/CDN; inclui PWA) |
+| `npm run build:artifact` | `dist/` → `artifact/mundoblocos.html` (código embutido, sem esqueleto `<html>`) + imagens em `artifact/mundoblocos-assets/` + mapa `artifact/mundoblocos-files.json` (ADR 0013) |
+
+## Artifacts (versões jogáveis, privadas — compartilhar pelo menu Share)
+| Mundo | URL | Atualizar |
+|---|---|---|
+| Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
+- Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`);.
+
+## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
+Endereço **provisório** até o domínio próprio do Orvalis (ADR 0015: sem maiamapps): subdomínio de `pensamentos.online`,
+na Hostinger. Site estático: nenhum servidor aqui; o servidor do jogo será outro app num subdomínio próprio
+`orvalis-servidor.pensamentos.online`, publicado do repositório `maiam/orvalis-servidor` (app web Node.js na Hostinger,
+Node 22, entrada `server.js`, sem build; porta de `PORT`). WebSocket de entrada **validado** em 2026-11-04 (página de
+teste em `/`, saúde em `/saude`, eco em `/ws`).
+**Dados das salas** (servidor 0.9.0): `~/orvalis-dados/sala-<n>.json` (ou `DATA_DIR`). Conferir em `/saude` → `dados`
+(pasta, última gravação, `carregadaDoDisco`). Apagar o arquivo (com o servidor parado) recomeça a sala do zero.
+**Sala travada em "Conectando…"** (06/11): o app Node da Hostinger reiniciou sozinho (`/saude` com `segundosNoAr` ~0) e
+voltou em seguida; o jogo agora desiste em 10 s e tenta de novo uma vez. Se ficar frequente: plano B (VPS, Fase M).
+**Sala não abre?** `/saude` deve mostrar o `protocolo` igual ao `PROTOCOL_VERSION` do jogo. O servidor só aceita
+conexões das origens da lista dele (`DEFAULT_ORIGINS`, espelhada em `ONLINE_HOSTS` no jogo): o Artifact e as prévias da
+Hostinger jogam só sozinhos (o menu mostra o link do site). O app do jogo continua app Node.js (preset Vite) por causa do build
+automático a cada merge.
+
+**Multiplayer: mudou `src/net/` ou `src/world/`?** `npm run build:net` aqui → no servidor `npm run sync-net --
+../mundoblocos-2d` → PR no servidor. Mudança incompatível de mensagem: suba `PROTOCOL_VERSION` e publique jogo e
+servidor juntos (versões diferentes recebem "recarregue a página").
+
+**Publicação pelo GitHub (forma principal)**: a Hostinger compila o repositório a cada push na branch escolhida.
+Configuração no hPanel (conferida com build limpo `npm ci && npm run build` em Node 22):
+
+| Campo | Valor |
+|---|---|
+| Configuração predefinida | Vite |
+| Branch | `main` (publicar = mesclar o PR da entrega em `main` após a Verificação passar — `CONVENTIONS`) |
+| Versão do Node | 22.x |
+| Diretório raiz | `./` |
+| Comando de construção | `npm run build` (typecheck + build) |
+| Gerenciador de pacotes | npm (usa o `package-lock.json`) |
+| Diretório de saída | `dist` |
+| Variáveis de ambiente | nenhuma — **não** defina `VITE_WORLD` (sem ela, o site escolhe pelo endereço: o padrão é o Orvalis 3D e o Titã só abre com `?mundo=titan`, ADR 0115) |
+
+**No ar desde 2026-11-03** (conferido de fora: HTTPS, LiteSpeed; `index.html` com `no-cache`, `assets/` com cache de
+1 ano, manifesto como `application/manifest+json`, `.htaccess` inacessível (403); jogo, celular e Santuário sem erros).
+A Hostinger também lista vulnerabilidades das dependências do repositório: mantenha `npm audit` em 0.
+
+**Pacote manual (alternativa)**: `npm run pack:site` → `npm run build` (sem `VITE_WORLD`: os dois mundos, escolhidos pelo endereço) e
+`orvalis-site.zip` na raiz do repositório (não versionado) com o **conteúdo** de `dist/`: `index.html`,
+`manifest.webmanifest`, ícones, `.htaccess` (tipos MIME e cache: página `no-cache`, arquivos com hash 1 ano) e `assets/`.
+
+**Primeira vez (hPanel)**:
+1. **Sites** → `pensamentos.online` → **Painel** → menu **Domínios** → **Subdomínios**: criar `orvalis`. Deixe a
+   pasta padrão (`public_html/orvalis`, ou `domains/pensamentos.online/public_html/orvalis` conforme o plano).
+   Se o DNS de `pensamentos.online` **não** usa os nameservers da Hostinger, crie também um registro **A** `orvalis`
+   apontando para o IP do servidor (hPanel → Painel → "Detalhes do plano"/IP).
+2. **Arquivos** → **Gerenciador de Arquivos** → abrir a pasta do subdomínio → apagar o `default.php`/`index.php` de
+   boas-vindas, se existir → **Enviar** `orvalis-site.zip` → clicar com o botão direito → **Extrair** aqui (os arquivos
+   devem ficar direto na pasta, com `index.html` na raiz dela) → apagar o `.zip`.
+3. **Segurança** → **SSL**: conferir/instalar o certificado grátis para `orvalis.pensamentos.online` (pode levar
+   alguns minutos até horas) e ativar **Forçar HTTPS**. HTTPS é necessário para instalar como app.
+5. Conferir: abrir no celular (deitado), jogar, recarregar (continua salvo), instalar na tela inicial.
+
+**Atualizar**: `npm run pack:site` → no Gerenciador de Arquivos, apagar a pasta `assets/` e o `index.html` antigos →
+enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só ocupam espaço.)
+
+**Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
+
+## Pipeline de arte
+**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=orvalis3d`): leva a arte do mundo em arquivos ao lado da página (ADR 0013). O artefato do Santuário (`build:artifact:santuario`) foi removido (ADR 0036).
+
+**Sprites** — `P="python3 scripts/process-sprite.py"`:
+```bash
+$P assets-src/heroine-sheet.png        src/assets/heroine.png     --frame-h 144
+for t in sword hoe pickaxe axe; do
+  $P assets-src/heroine-$t-sheet.png   src/assets/heroine-$t.png  --frame-h 144 --rows-map 0,3,1,2
+done
+$P assets-src/heroine-shovel-sheet.png src/assets/heroine-shovel.png --frame-h 144 --rows-map 0,1,1m,2
+$P assets-src/sheep-sheet.png          src/assets/sheep.png       --frame-h 96 --sat 23 --min 128
+$P assets-src/lamb-sheet.png           src/assets/lamb.png        --frame-h 80 --sat 36 --min 128
+$P assets-src/heroine-sword-attack-sheet.png src/assets/heroine-sword-attack.png --alpha --largest --frame-h 144
+$P assets-src/heroine-axe-attack-sheet.png   src/assets/heroine-axe-attack.png   --alpha --largest --frame-h 144
+$P assets-src/heroine-hoe-attack-sheet.png   src/assets/heroine-hoe-attack.png   --alpha --largest --frame-h 144
+$P assets-src/heroine-shovel-attack-sheet.png src/assets/heroine-shovel-attack.png --alpha --largest --frame-h 144
+# Herói (assets-src/hero, refeito em 07/11): golpes e caminhada base já na ordem canônica; caminhadas com ferramenta não
+$P assets-src/hero/hero-sheet.png src/assets/hero.png --alpha --largest --frame-h 144
+for t in axe hoe sword pickaxe; do $P assets-src/hero/hero-$t-attack-sheet.png src/assets/hero-$t-attack.png --alpha --largest --frame-h 144; done
+$P assets-src/hero/hero-shovel-attack-sheet.png src/assets/hero-shovel-attack.png --alpha --largest --respace 40 --frame-h 144
+for t in sword axe; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+$P assets-src/hero/hero-hoe-sheet.png src/assets/hero-hoe.png --alpha --largest --respace 40 --frame-h 144 --rows-map 0,3,1,2
+for t in pickaxe shovel; do $P assets-src/hero/hero-$t-sheet.png src/assets/hero-$t.png --alpha --largest --frame-h 144 --rows-map 0,1,3,2; done
+# Hood (assets-src/hood): caminhadas transparentes com fileiras F, D, C, E; a da pá vem com os dois lados para a esquerda
+# Deusa isométrica (v0.93.135; prancha em vista isométrica: linhas baixo-direita, baixo-esquerda, cima-direita, cima-esquerda)
+for t in walk idle sit; do $P assets-src/goddess-iso/goddess-iso-$t-sheet.png src/assets/goddess-iso-$t.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+for t in sword axe hoe pickaxe shovel; do $P assets-src/goddess-iso/goddess-iso-$t-walk-sheet.png src/assets/goddess-iso-$t.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+for t in axe hoe pickaxe shovel; do $P assets-src/goddess-iso/goddess-iso-$t-attack-sheet.png src/assets/goddess-iso-$t-attack.png --alpha --largest --frame-h 144 --rows-map 1,3,0,2; done
+$P assets-src/goddess-iso/goddess-iso-sword-attack-sheet.png src/assets/goddess-iso-sword-attack.png --alpha --frame-h 144 --rows-map 1,3,0,2   # sem --largest: peças soltas do golpe de espada
+$P assets-src/hood/hood-sheet.png src/assets/hood.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
+for t in sword axe hoe pickaxe; do $P assets-src/hood/hood-$t-sheet.png src/assets/hood-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+$P assets-src/hood/hood-shovel-sheet.png src/assets/hood-shovel.png --alpha --largest --frame-h 144 --rows-map 0,3,3m,2
+# Gino (assets-src/gino): caminhadas com fileiras F, D, C, E; golpes já canônicos (picareta e pá passam da célula)
+$P assets-src/gino/gino-sheet.png src/assets/gino.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
+for t in sword axe hoe pickaxe shovel; do $P assets-src/gino/gino-$t-sheet.png src/assets/gino-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+for t in sword axe hoe; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --frame-h 144; done
+$P assets-src/gino/gino-sit-sheet.png src/assets/gino-sit.png --alpha --largest --frame-h 144   # sentar: sequência de frente
+$P assets-src/hero/hero-sit-sheet.png src/assets/hero-sit.png --alpha --largest --frame-h 144
+$P assets-src/hood/hood-sit-sheet.png src/assets/hood-sit.png --alpha --largest --frame-h 144
+$P assets-src/heroine-sit-sheet.png src/assets/heroine-sit.png --alpha --largest --respace 40 --frame-h 144   # botas passam da grade
+for t in pickaxe shovel; do $P assets-src/gino/gino-$t-attack-sheet.png src/assets/gino-$t-attack.png --alpha --largest --respace 40 --frame-h 144; done
+# golpe de espada do Hood (v0.93.66): prancha de 8 quadros × 8 direções (S, SE, L, NE, N, NO, O, SO); entram 4 direções (linhas 0,6,2,4 = frente, esquerda, direita, costas) e a folha de saída tem 8 colunas × 4 linhas:
+#   $P assets-src/hood/hood-sword-attack8-sheet.png /tmp/x.png --alpha --largest --cols 8 --rows 8 --rows-map 0,6,2,4 --frame-h 144  (e corte as 4 primeiras linhas: o script gera 8 linhas, 4 vazias)
+# golpe de espada da Mila (v0.93.68): mesma prancha 8×8 e o mesmo comando do Hood (sem `--largest`: o arco branco é um pedaço separado do corpo e some com ele), `assets-src/mila/mila-sword-attack8-sheet.png` → `src/assets/mila-sword-attack.png` (8 colunas × 4 linhas, cortando as 4 linhas vazias)
+# golpes do Hood: já na ordem canônica; a picareta erguida passa da célula
+for t in sword axe hoe shovel; do $P assets-src/hood/hood-$t-attack-sheet.png src/assets/hood-$t-attack.png --alpha --largest --frame-h 144; done
+$P assets-src/hood/hood-pickaxe-attack-sheet.png src/assets/hood-pickaxe-attack.png --alpha --largest --respace 40 --frame-h 144
+# Mila (assets-src/mila): caminhadas com fileiras F, D, C, E; golpes já canônicos (picareta e pá passam da célula)
+$P assets-src/mila/mila-sheet.png src/assets/mila.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2
+for t in sword axe hoe pickaxe shovel; do $P assets-src/mila/mila-$t-sheet.png src/assets/mila-$t.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2; done
+for t in sword axe hoe; do $P assets-src/mila/mila-$t-attack-sheet.png src/assets/mila-$t-attack.png --alpha --largest --frame-h 144; done
+for t in pickaxe shovel; do $P assets-src/mila/mila-$t-attack-sheet.png src/assets/mila-$t-attack.png --alpha --largest --respace 40 --frame-h 144; done
+$P assets-src/mila/mila-sit-sheet.png src/assets/mila-sit.png --alpha --largest --frame-h 144
+# lobos (assets-src/lobos): folha 4×4 já na ordem canônica (frente, esquerda, direita, costas)
+for c in marrom cinza branco; do $P assets-src/lobos/lobo-$c-sheet.png src/assets/wolf-$c.png --alpha --largest --frame-h 144; done
+python3 scripts/slice-icons.py assets-src/lobos/wolf-loot-icons-sheet.png 2 1 icon wolf-fang,wolf-pelt   # presa e pelagem do lobo
+# porta de carvalho (4×2, 0–3 abrindo, 4–7 fechando); geometria em textures.ts (DOOR_*)
+$P assets-src/oak-door-sheet.png src/assets/oak-door.png --alpha --largest --cols 4 --rows 2 --frame-h 120
+# picareta: quadros transbordam a grade (picareta erguida sobe, pés descem) → --respace
+$P assets-src/heroine-pickaxe-attack-sheet.png src/assets/heroine-pickaxe-attack.png --alpha --largest --respace 40 --frame-h 144
+$P assets-src/goddess-float-sheet.png  src/assets/goddess-float.png --cols 7 --rows 4 --region 130,0,1470,1000 --rows-map 0,3,1,2 --frame-h 160 --sat 16 --min 228
+```
+`--largest`: mantém só o maior pedaço por quadro (fragmentos de quadros vizinhos); `--alpha`: folha já transparente (usa o alfa); `--grid-offset-y`: sobe a grade quando o desenho invade a linha de cima
+(foi o caso da folha de caminhada da Deusa, hoje só referência: `--alpha --frame-h 160 --grid-offset-y 22`).
+
+**Cavalo**: `$P assets-src/horse-sheet.png src/assets/horse.png --alpha --largest --frame-h 112`
+
+**Vaca e galinha**: `$P assets-src/animals/cow.png src/assets/cow.png --alpha --largest --frame-h 112` e
+`$P assets-src/animals/chicken.png src/assets/chicken.png --alpha --largest --frame-h 96` (o ruído vermelho do fundo
+da galinha some com `--largest`).
+
+**Coraçõezinhos do namoro** (prancha 4×4 transparente, `assets-src/love-hearts-sheet.png`):
+`python3 scripts/extract-love.py` → `love-hearts.png` (16 quadros numa fileira, mesma janela para todos; clareia o rosa
+onde o desenho desbota) → `optimize-assets.py`.
+
+**Filhotes** (potro, bezerro, pintinho): `$P assets-src/animals/foal.png src/assets/foal.png --alpha --largest
+--frame-h 112`, `calf.png … --frame-h 104` e `chick.png … --frame-h 88` (o ruído vermelho/amarelo do fundo do bezerro
+tem alfa ~1 e some no recorte).
+
+**Árvores adultas** (v0.88.0, sem crescimento): `python3 scripts/process-trees.py <especie> img1.png img2.png … [--cut ALFA]` — uma ilustração por forma (PNG com alfa; `--cut` limpa halos de fundo semitransparentes) → guarda as fontes em `assets-src/arvores/<especie>/` e monta `src/assets/tree-<especie>.webp` (tira de quadros iguais; mesma escala para todas as formas). Os quadros por espécie estão em `TREE_FRAMES` (`render/textures.ts`): mude lá ao mudar a quantidade. Ícone de bloco de material novo: `python3 scripts/make-material-icons.py <material> <icone>`.
+
+**Prancha do cacto** (grade 4×2 transparente em `assets-src/trees/<nome>.png`; as outras árvores usavam esta prancha até a v0.87.0):
+`python3 scripts/extract-trees.py` → `tree-<nome>.png` (quadros de 192 px, mesma escala dentro da prancha, base no pé)
++ ícones das mudas e da maçã → `optimize-assets.py`. A grade da prancha não precisa ser exata: o script separa os 8
+desenhos por pedaços conectados (copas que cruzam a divisa vêm inteiras) e descarta o ruído do fundo.
+
+**Janela da loja:** `python3 scripts/make-shop-frame.py` (`assets-src/ui/shop-frame.png` → `src/assets/ui-shop.png`: apaga os textos que mudam; depois `optimize-assets.py`). **Interiores** (`assets-src/interiors/<id>.png`, imagem inteira = cômodo): `python3 scripts/extract-interiors.py
+[--grid <png>]` → `interior-<id>.png` a 64 px por célula (grade de `InteriorDef.map`) → `optimize-assets.py`. A prévia
+`--grid` pinta de vermelho as células bloqueadas e de azul o capacho, para conferir o mapa sobre a arte.
+
+**Atlas de paredes (W3):** `python3 scripts/build-wall-atlas.py tabuas` → `src/assets/walls-tabuas.webp` (lê `assets-src/paredes/<material>/`, 16 tampas + 4 frentes + 3 quadros de porta `door_*.png` (provisórios só se faltarem; Tábuas tem a arte final), só Tábuas); material novo = pasta com as 20 peças + entrada em `WALL_ART_MATERIALS` (`render/wallAtlas.ts`) e em `ArtPack.wallAtlases`.
+
+**Frentes entregues** (limpeza do alfa + largura): `python3 scripts/retarget-wall-fronts.py --entrada <pasta> --saida <pasta> [--de 38,83 --para 32,80]` (composição do alfa parcial sobre a cor de junta; pontas e poste esticados para a medida final). Usado em `assets-src/paredes/tabuas/`.
+
+**Tampas entregues em outra espessura:** `python3 scripts/retarget-wall-caps.py --entrada <pasta> --saida <pasta> [--de-x 45,83 --de-z 45,83 --para-x 48,80 --para-z 42,86]` reprojeta as 16 tampas esticando poste e braços (mantém topologia e emendas). Usado em `assets-src/paredes/tabuas/`.
+
+**Arte das paredes** (W1, ADR 0027; ainda sem pipeline de build — vem na W3): contrato e gabarito em `assets-src/paredes/` (`CONTRATO.md`, `gabarito.png`; `python3 scripts/make-wall-guide.py [--tx 1.0] [--tz 0.35] [--franja 16]` regera o gabarito **e** o `CONTRATO.md` (a partir de `CONTRATO.tpl.md`; não edite o contrato à mão)). Entrega por material em `assets-src/paredes/<material>/`: `front_mid`, `front_end_left`, `front_end_right`, `front_post`, `cap_00`…`cap_15` (PNG RGBA, 128 px por célula).
+
+**Ícone de item** (v0.93.7): `python3 scripts/make-item-icon.py assets-src/<item>.png src/assets/icon-<item>.webp [--size 64]` (recorta, centraliza e reduz; WebP sem perdas) → import e entrada em `itemIcons` de `render/art/principal.ts`.
+
+**Lobos** (v0.93.61; `assets-src/wolf-<brown|gray|white>/<estado>.png`, 4×4 transparentes): `python3 scripts/process-sprite.py <src> src/assets/wolf-<cor>-<estado>.png --alpha --largest --frame-h 160` (`alert` sem `--largest`; confira a ordem das linhas: a folha marrom de idle/run/alert/attack/hurt/death usa `--rows-map 0,2,1,3`) → `optimize-assets.py`. **Capivara** (`assets-src/capybara/`, `--frame-h 128`): só `walk` e `idle` entram (`src/assets/capybara*.webp`).
+
+**Homem-lagarto** (v0.93.60; `assets-src/lizard/<estado>.png`, 4×4 transparente, linhas frente/costas/esquerda/direita → `--rows-map 0,2,3,1`): mesmo comando do goblin (`--alpha --largest --frame-h 160`, `alert` sem `--largest`) com `src/assets/lizard-<estado>.png` → `optimize-assets.py` → imports em `render/art/principal.ts`.
+
+**Goblin** (v0.93.6; `assets-src/goblin/<estado>.png`, 4×4 transparente, ordem frente/esquerda/direita/costas, sem `--rows-map`): `python3 scripts/process-sprite.py assets-src/goblin/<estado>.png src/assets/goblin-<estado>.png --alpha --largest --frame-h 160` (no `alert` omita `--largest`, senão os "!" somem) → `optimize-assets.py` → imports `.webp` em `render/art/principal.ts`. Estados: idle, walk, run, alert, attack, hurt, death.
+
+**NPCs da cidade** (v0.92.0; `assets-src/npcs/<id>.png`, 4×4 transparente): `python3 scripts/process-sprite.py assets-src/npcs/<id>.png src/assets/npc-<id>.png --alpha --largest --frame-h 144 --rows-map 0,3,1,2` (as folhas chegam com as linhas frente, costas, direita, esquerda) → `optimize-assets.py`. Retratos da caixa de conversa: `python3 scripts/make-portraits.py [id ...]` → `portrait-<id>.png` (192×192, cabeça do quadro de frente) → `optimize-assets.py`. O Black (`black.png`) é a composição da folha antiga do ferreiro. Moldura: `assets-src/dialogo-moldura.png` (enviada pelo dono do produto; o nome e o rosto de exemplo foram apagados e o recorte vai a 1280 px de largura em `src/assets/dialogo-moldura.webp`).
+
+**Hortaliças** (pranchas 8×2 transparentes em `assets-src/crops/<nome>.png`): `python3 scripts/extract-crops.py` →
+`crop-<nome>.png` (4×4 quadros de 128 px, mesmo formato do trigo) → `optimize-assets.py`. Cultura nova: uma linha em
+`CROPS` (blocks), o item que planta (items) e a folha no pacote (`art/principal.ts` → `crops`).
+
+**Ferramentas por material**: a arte segue `assets-src/ferramentas/CONTRATO.md` (ficha em `catalogo.json`, prancha
+de ícones padronizada, camada de mão sobre pose-base). O motor só importa o que passou pela checagem da seção 5.
+
+**Efeitos de golpe** (pranchas 4 × 4 em `assets-src/efeitos/`: `buraco.png`, `corte-arvore.png`, `espada.png`): `python3 scripts/extract-fx.py` → `fx-dig`, `fx-tree`, `fx-slash` (+ `-up`, `-down`), `fx-rock`, `fx-soil`, `fx-till` `.webp` (quadros 128 × 128; limpa o RGB dos pixels transparentes; escolhe os quadros usados). Tocados por `three/spriteFx.ts`.
+
+**Floricultura** (v0.93.110): fachada `assets-src/town/florist.png` → `python3 scripts/extract-town.py --only florist` (+ `optimize-assets.py`) e interior `assets-src/interiors/florist.png` → `python3 scripts/extract-interiors.py` (a grade 24 × 13 vem de `FLORIST_INTERIOR`; `--grid prévia.png` confere o mapa). Os ícones das 15 flores saem de `scripts/extract-flowers.py` (`icon-flower-NN.webp`).
+
+**Flores fofas** (PNGs individuais transparentes em `assets-src/flores/NN-nome.png`, 360 × 320, base do caule em y = 278): `python3 scripts/extract-flowers.py` → `flowers.webp` (tira de quadros 96 × 96, mesma escala para todas). Sorteadas por célula como variantes de `Block.FLOWER`.
+
+**Pedregulhos** (prancha de pedras soltas em fileiras irregulares, `assets-src/rocks-sheet.png`):
+`python3 scripts/extract-rocks.py` → `rocks.png` (tira de quadros de 96 px, mesma escala, base no pé) →
+`optimize-assets.py`. Separa os desenhos por pedaços conectados e ordena por fileira (sem grade).
+
+**Cerca (v0.93.96)** — a partir do **modelo 3D** do Blockbench (`assets-src/cerca-betula/*.bbmodel`): `python3 scripts/extract-fence-model.py` (cerca + porteira; precisa de `node` + `playwright` global e `npm ci`) renderiza o modelo com Three.js na câmera do jogo e o reveste com as tábuas do `materials-v2` → `fence.webp` (Carvalho), `fence-betula.webp`, `fence-cerejeira.webp` (5 quadros 128 × 232: horizontal, vertical, estaca, braço norte, braço sul) e os ícones. Modelo novo com outros nomes de malha → ajuste `scripts/fence-model/render.html`. Mudou a âncora/quadro → `FENCE_FRAME` em `render/fence.ts`.
+
+**Porteira** — do modelo `portao-*.bbmodel` (mesma pasta), pelo mesmo `extract-fence-model.py`: `fence-gate.webp`, `fence-gate-betula.webp`, `fence-gate-cerejeira.webp` (5 poses 224 × 300; a folha gira em torno da dobradiça em x = −5,1; `buildGate` em `scripts/fence-model/render.html`) e `icon-block-fence-gate.webp`. `GATE_FRAME` em `render/fence.ts`. (Referências antigas em `assets-src/cerca/`; `extract-fence.py` é a versão antiga.)
+
+**Marcos do mundo** (entrada do covil, `assets-src/dungeon-cave.png`): `python3 scripts/extract-landmarks.py` →
+`dungeon-cave.png` (320 px de largura) → `optimize-assets.py`. Carrega com a arte do covil, em segundo plano.
+
+**Ícones soltos de itens** (`assets-src/items/<nome>.png`, desenho transparente): `python3 scripts/extract-items.py`
+→ `icon-item-<nome>.png` 64×64. A segmentação das pranchas (árvores e hortaliças) fica em `scripts/sprite_segments.py`.
+
+**Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
+`python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`
+
+**Ícones** (`--cols 1 --rows 1 --frame-h 64`):
+- Trigo (`wheat-icons-sheet.png`, `--sat 50 --min 190`): semente `45,210,310,402` · trigo `645,555,905,835`.
+- Ferramentas (`tool-icons-sheet.png`, `--sat 34 --min 175`): espada `75,105,455,490` · enxada `535,105,915,490` ·
+  picareta `995,105,1375,490` · pá `285,590,680,985` · machado `770,590,1165,985`.
+
+**Dungeon** (montanhas, pedras, blocos, 3 aranhas; fontes `assets-src/dungeon-*-sheet.png` e `spider-*-sheet.png`):
+`python3 scripts/extract-dungeon.py` e depois `optimize-assets.py` (gera também `dungeon-walls`, os cubos de parede). Caixas de cada prancha e modo de recorte
+(alpha/light/dark) estão no fim do script; a aranha gigante usa a prancha de 2172 px (o retrato à esquerda é ignorado). Também gera os ícones dos espólios
+(`spider-loot-icons-sheet.png` → `icon-silk/fang/queen-heart`) e as mortes (`spider-*-death-sheet.png` →
+`spider-*-death.png`; o script imprime a `ratio` que vai em `SheetSpec.death`).
+
+**Água** (`assets-src/water-block.png`, `water-flow-sheet.png`): `python3 scripts/extract-water.py` →
+`water-top` (chão) e `water-flow` (4 direções × 4 quadros, recortes do destino no fim do script) → `optimize-assets.py`.
+
+**Fogueira, caldeirão e forno** (`assets-src/campfire.png`, `cauldron.png`, `oven.png`, transparentes):
+`python3 scripts/extract-craftables.py` → `icon-block-<nome>` (64×64) + `<nome>` (sprite 128 px de largura; a largura em
+células fica em `CRAFT_PROPS`, `render/textures.ts`) → `optimize-assets.py`.
+
+**Interface, tenda e Tábua** (`assets-src/ui-*.png`, `tent.jpg`, `oak-planks-cube.png`): `python3 scripts/extract-ui.py`
+→ `icon-ui-character/skills/builder`, `icon-block-tent` + `tent`, e substitui a coluna da Tábua no `blocks-atlas`
+(rode **depois** de `extract-blocks.py`, que regeneraria a coluna antiga) → `optimize-assets.py`.
+
+**Variações de pedra** (`assets-src/stone-variants-34.png`, 4×2 transparente): `python3 scripts/extract-stones.py`
+→ ícones `icon-block-stone*` e colunas 5 (Pedra Bruta) e 8–14 do `blocks-atlas` (rode **depois** de
+`extract-blocks.py` e `extract-ui.py`) → `optimize-assets.py`. Ordem total: blocks → ui → stones → optimize.
+
+**Cidade — arte em imagem** (pranchas em `assets-src/town/*.png`, transparentes ou com fundo liso): `python3
+scripts/extract-town.py [--only nome1,nome2] [--preview arquivo.png]` → `src/assets/town-<nome>.png` → `optimize-assets.py`. Cada objeto é
+uma linha de `OBJECTS` (prancha, recorte em px, encaixe `('base', células, linha)` ou `('full', células)`, área,
+remover fundo). Escala única de 48 px/célula, centro da área no centro da imagem; legendas/setas somem (só ficam as
+partes grandes). A prévia desenha a área de cada objeto sob ele para conferir. Novo nome → registrar em
+`render/art/principal.ts` (`town`) e em `IMAGE_ART` de `render/townArt.ts`. Uma imagem **por tamanho** de construção.
+
+**Terra com Grama** (`assets-src/grass-variants-34.png`, 3 cubos lado a lado): `python3 scripts/extract-grass.py` →
+coluna 1 (variação 1) e colunas extras 15–16 do `blocks-atlas` + `icon-block-grass` (rode **depois** de
+`extract-blocks.py`, `extract-ui.py` e `extract-stones.py`) → `optimize-assets.py`. Ordem total: blocks → ui → stones →
+grass → optimize. Colunas extras de um material: `MATERIAL_VARIANT_COLS` em `render/textures.ts`.
+
+**Materiais V2** (ADR 0023, em validação): PNGs 128×128 em `assets-src/materiais/<material>/` (contrato na pasta) →
+`python3 scripts/build-materials.py --preview` → `src/assets/materials-v2.{webp,json}` (já sai em WebP; sem
+`optimize-assets.py`). O V2 é o padrão do jogo; `?blocos=legado` volta ao atlas antigo. (As cenas `?materiais=1` e `?escala=1` foram removidas nas v0.93.107 e v0.93.105.) A arte V2
+(ADR 0022, renderizador real). Arte provisória:
+`scripts/make-provisional-materials.py` (tira do atlas antigo; cria `PROVISORIO.txt`). Arte oficial:
+`python3 scripts/import-material.py <material> --top arq.png [--front arq.png] [--overlay arq.png [--fit-fringe]]`
+(reduz qualquer quadrado para 128 como ladrilho; sem `--front` a frente repete o topo; `--fit-fringe` guarda os 32 px de
+baixo de uma franja alta; apaga o `PROVISORIO.txt`).
+
+**Planificações de cubo** (v0.93.77, `assets-src/blocos-net/*.png`: topo no meio de cima, 4 laterais, base): recorta-se o topo e uma lateral (margem ~24 px contra o contorno), torna-se o ladrilho repetível (mistura com o deslocamento de meio ladrilho) e importa-se com `import-material.py` (`--top`, `--front`; a franja da grama sai da máscara de não-terra da lateral, 32 linhas); depois `build-materials.py --preview` e os ícones `icon-block-*` (topo + frente escurecida, 64×64).
+
+**Blocos**: `python3 scripts/extract-blocks.py` (prancha 3/4 `assets-src/blocks-sheet-34.png` → atlas + ícones).
+`--iso` usa a prancha isométrica antiga; `--out X.png` gera só o atlas (para comparar sem trocar os ícones).
+
+**PWA**: `python3 scripts/make-icons.py` (Pillow) gera, a partir do ícone oficial `assets-src/icone-orvalis.webp` (selo redondo, cantos transparentes), `public/icon-192.png`, `icon-512.png` (purpose "any"; o 192 também é o favicon), `icon-maskable-512.png` (selo a 80% sobre fundo `#120f2c`) e `apple-touch-icon.png` (180×180, fundo opaco). Trocar o ícone = substituir o `.webp` e rodar o script.
+
+**Cena de escala** (ADR 0022): foi removida junto com o Canvas 2D na v0.93.105 (`?escala=1`, `src/dev/scaleScene.ts`, `scaleLayout.ts`). A referência `docs/assets/escala-referencia.jpg` fica; para comparar arte nova, confira-a no jogo ao lado dos personagens e objetos existentes.
+
+## Medir o 3D em aparelho real (ADR 0031) — o 3D é o padrão do Mundo desde a v0.93.47
+1. **Mesma rede (rápido):** `npm run dev -- --host` e abrir `http://<IP-do-computador>:5173/?fps=1` no aparelho (o 3D é o único renderer); ou use o site/Artifact publicado com `?fps=1`.
+2. `?fps=1` mostra um painel (FPS, tempo de quadro e o pior, chamadas/triângulos/texturas/geometrias da GPU, memória do JS); **(desde a v0.95.3 o toque abre o relatório legível na tela, com Copiar JSON; o texto a seguir descreve o comportamento antigo) toque nele para copiar o
+   relatório** (JSON) e cole na conversa. O relatório traz a sessão inteira **e o regime estável** (depois de 8 s de carga), a fração de quadros acima de 33 ms
+   (< 30 FPS) e de 50 ms (engasgo), as **pausas do navegador** (aba em segundo plano, fora das médias) e o **tempo de JS do `draw`** (`jsDrawMs`, para separar
+   CPU de GPU). Faça duas coletas: ~1 min parado e ~1 min andando, pela cidade, pela floresta e à noite. Em HTTP na rede local o navegador não libera a
+   área de transferência: o painel abre então uma caixa de texto com o JSON já selecionado (copie à mão ou tire um print; toque na caixa para fechar). O dia
+   dura 8 min (`DAY_LENGTH_S` = 480) e o jogo começa de manhã (0,31): anoitece em ~3,5 min e é meia-noite em ~5,5 min; no teclado, **T** avança um quarto de dia.
+3. **Sem GPU** (CI, VM): `npm run perf:cpu:3d` (custo de JS por quadro) e
+   `npm run leak:3d` (vazamento ao atravessar o mapa). Os dois usam o Playwright do ambiente. (`parity:3d` e `docs/PARITY_3D.md`, da comparação 2D × 3D, foram removidos na v0.93.105.)
+4. **Física:** com o 3D o jogador não sobe em cubos sozinho; `&fisica=degrau` devolve a regra antiga para comparar.
+
+## Medir o Titã em aparelho real (v0.95.1)
+- **Vista isométrica (v0.172.0, ADR 0106):** botão **Visão** no menu, tecla **V**, ou `?visao=iso` / `?visao=pessoa` na URL (`&cena=texturas` mostra a vitrine em isométrica); ⟲ ⟳ ou Z / X giram a câmera; `window.__titan = { session, view }` e `view.screenOf(x, y, z)` (só no `npm run dev`) servem a testes de navegador. O atlas de terreno é gerado a 16 px e 8 px por `scripts/make-titan-atlas32.py` (`npm run texturas`).
+- **Testar texturas (dev, v0.170.0):** `npm run dev` e abrir `?mundo=orvalis3d&cena=texturas` (ou `?mundo=titan&cena=texturas`). Vitrine plana com cada bloco em cubo, massa 3 × 3 × 3 e parede 3 × 3 (fila 1 = Orvalis, fila 2 = Titã; a legenda na tela lista a ordem e o tile de cada um) e uma piscina de água; hora fixa à tarde (`&hora=noite`); nada é gravado. Pré-requisito: `pip3 install pillow` (em Mac com Python "externally managed": `python3 -m venv .venv && . .venv/bin/activate && pip install pillow`). Ciclo: editar o PNG em `assets-src/orvalis-voxel/texturas32/orvalis/` (32 px ou maior, quadrado: 64, 512, 2048…; é reduzido a 32 px ao montar o atlas e o arquivo original não muda) (a fonte; blocos do Titã em `assets-src/titan/texturas32/`) ou a água em `assets-src/orvalis-voxel/agua/agua_32px.png`, rodar `npm run texturas` (refaz ícones, água e os dois atlas **sem sobrescrever os PNGs**; `python3 scripts/make-orvalis-voxel-arte.py --force` volta tudo ao que sai dos Materiais V2) e recarregar a página (o Vite deve recarregar sozinho; se não, F5). Só em desenvolvimento (`import.meta.env.DEV`).
+- `?mundo=titan&fps=1`: o painel de desempenho de sempre (FPS, 5% piores, GPU, memória) **mais o tempo de cada etapa** do Titã em ms (média/p95): `luz` (recálculo do mapa de luz), `malha` (CPU de uma seção), `geo` (criar a geometria), `quadro+malha` (JS do desenho no quadro em que há malha nova, onde entra o envio à GPU). **Tocar no painel abre o relatório na tela** (v0.95.3; poucas linhas em fonte monoespaçada, cabem numa tela de celular em paisagem: FPS estável, 5% piores, quadros lentos, GPU, memória, tabela por etapa, aparelho e URL) para **tirar print**, com os botões **Atualizar**, **Copiar JSON** (sem permissão de área de transferência, o JSON aparece selecionado) e **Fechar**. Os primeiros 8 s de sessão não entram no "FPS estável": jogue uns 30 s antes de abrir. O relatório traz `extra.stages` (`light`, `mesh`, `geom`, `buildFrame` = malha + geometria de um quadro, `draw`, `drawAfterBuild`) com `n`, `avg`, `p95` e `max`, e `extra.counters` (`sections` = seções refeitas, `lanterns`).
+- `?mundo=titan&cena=lanternas&n=12` (1–64): **cena de desenvolvimento** com `n` lanternas e uma parede de areia ao lado de cada uma, seed 42 (ou `&seed=`); **nada é gravado** (armazenamento em memória, o save real não é tocado) e o botão **"Editar sem parar"** (canto superior direito) coloca e retira um bloco ao lado das lanternas a cada 120 ms para estressar luz e malha. Já liga o painel; o dia (20 min) corre normalmente e `&hora=manha|tarde|noite` congela a visualização. Existe em qualquer build (para testar no celular pela prévia do PR). A partida normal só tem 1 cápsula, por isso a cena.
+- Como ler: o gargalo é a etapa com p95 acima de ~4 ms por quadro ou `buildFrame` acima de ~16 ms nos quadros de edição. `draw` e `quadro+malha` são só o JS do desenho; o custo real da GPU aparece no FPS.
+
+## Rachaduras do Titã (v0.97.0)
+`python3 scripts/make-titan-cracks.py [--preview prancha.png]` gera `src/assets/titan-cracks-16px.webp` (10 estágios de 16 × 16 lado a lado, WebP **sem perdas**: não passa pelo `optimize-assets.py`, que comprimiria com perdas). A prévia mostra os estágios sobre areia, gelo e rocha escura. Trocar a arte = substituir o arquivo mantendo 160 × 16.
+
+`python3 -I scripts/extract-titan-lantern.py` converte o pacote da Lanterna da Margem (`assets-src/titan/lanterna/Lanterna_da_Margem.glb`, ADR 0043) em `src/assets/titan-lantern.json` (dois lotes: estrutura e núcleo âmbar) e `titan-lantern-atlas.webp` (32 × 32, sem perdas, fora do `optimize-assets.py`). O script confere 312 triângulos, 0,375 × 0,625 × 0,375 m e pivô na base; arte nova = trocar o GLB e rodar de novo.
+
+`python3 scripts/make-orvalis-mureta.py` (ADR 0110: tira topo | face da Mureta de Pedra a partir de `texturas32/mureta-pedra/`; o modelo sai de `render/muretaModel.ts`; roda no `npm run texturas`) e `python3 scripts/make-orvalis-degrau.py` (ADR 0109: tira de 3 tiles + modelo do Degrau de Pedra a partir de `texturas32/degrau-pedra/`; roda no `npm run texturas`) e `python3 scripts/make-orvalis-voxel-arte.py` (ADR 0105: só cria o que falta, a partir dos Materiais V2 de `assets-src/materiais/` gera os 15 tiles `orvalis/…` de 32 px em `assets-src/orvalis-voxel/texturas32/`, os 10 ícones de bloco em `assets-src/orvalis-voxel/icones32/` e `src/assets/orvalis-agua-32px.webp`; folhas procedurais provisórias). **Depois, nesta ordem:** `make-titan-atlas32.py` (atlas de terreno com os tiles do Orvalis no fim) e `make-titan-arte32.py` (atlas de itens 4 × 13 com os itens 42–51). Abrir: `?mundo=orvalis3d&seed=42` (`&hora=manha|tarde|crepusculo|noite` como no Titã).
+`python3 -I scripts/make-titan-veins.py [--preview prancha.png]` acrescenta (ou regrava) os tiles 8 e 9 (veio de rocha e de gelo) no atlas `src/assets/titan-atlas-16px.webp` (80 × 60, WebP **sem perdas**, fora do `optimize-assets.py`), partindo dos tiles 4 e 5; repetível. Os tiles 0–7 não são tocados.
+
+`python3 -I scripts/make-titan-porta.py` (ADR 0102: a partir de `assets-src/titan/junco/Porta-De-Junco_448x600.png` gera `src/assets/titan-porta.webp` e o ícone de 32 px; depois `make-titan-arte32.py` e `make-titan-item-masks.py`; o atlas de itens tem 4 × 11) e `python3 -I scripts/make-titan-junco.py` (ADR 0100: a partir de `assets-src/titan/junco/*_512.png` gera as texturas `21-bloco-de-junco` e `22-laje-de-junco`, o tile de 64 px dos modelos e os ícones de 32 px; depois `make-titan-atlas32.py`, `make-titan-arte32.py` e `make-titan-item-masks.py`) e `python3 -I scripts/make-titan-junco-modelos.py` (ADR 0101: `titan-degrau.json` e `titan-cadeira.json`, caixas com UV em metros). `python3 -I scripts/make-titan-sprites16.py` (ADR 0097: reduz as ilustrações de `assets-src/titan/sprites16/` ao 16 × 16 em `assets-src/titan/arte16/` e atualiza `itens.json`; depois `make-titan-arte32.py` e `make-titan-item-masks.py`; arma, ferramenta e item novos entram aqui). Obsoletos e removidos: `export-titan-adaga.py`, `export-titan-picareta.py`, `extract-titan-balde.py`, `make-titan-balde-icone.py`. (Texto antigo, só histórico:) `python3 -I scripts/extract-titan-balde.py` (precisa de `pip install bpy`; converte os dois GLB de jogo do Balde de Cobre, ADR 0095, nas malhas `titan-balde.json` e `titan-balde-cheio.json` com pivô no topo e no atlas de 256 × 320 px). `python3 -I scripts/extract-titan-bau.py` agora gera corpo (`titan-bau.json`) e tampa com a dobradiça (`titan-bau-tampa.json`), ADR 0093. `python3 -I scripts/extract-titan-braseiro.py` (precisa de `pip install bpy`; converte os dois GLB de jogo do Braseiro de Rocha, ADR 0092, em `titan-braseiro.json`, `titan-braseiro-aceso.json` e o atlas de 256 × 320 px; sem decimar). `python3 -I scripts/make-titan-balde-icone.py` (reduz a arte 2D do Balde de Cobre, vazio e cheio, a ícones de 32 px; ADR 0091; depois `make-titan-arte32.py` e `make-titan-item-masks.py`). `python3 -I scripts/extract-titan-cama.py` (precisa de `pip install bpy`; reduz o GLB de jogo da Cama de Junco, ADR 0090, a `titan-cama.json` — pé na origem e cabeceira em +z — e ao atlas de 256 px; o ícone sai de `make-titan-modelo-icone.py cama`). `python3 -I scripts/extract-titan-bau.py` (precisa de `pip install bpy`; reduz o GLB de jogo do Baú de Rocha e Junco, ADR 0089, a `titan-bau.json` e ao atlas de 256 px; o ícone sai de `make-titan-modelo-icone.py bau`). `python3 -I scripts/extract-titan-escada.py` (precisa de `pip install bpy`; reduz o GLB de jogo da Escada de Junco, ADR 0088, a `titan-escada.json` e ao atlas de 256 px) e `python3 -I scripts/make-titan-modelo-icone.py` (ícone provisório; depois `make-titan-arte32.py` e `make-titan-item-masks.py`). `python3 -I scripts/make-titan-item-masks.py` (máscaras de pixels dos ícones, `titan/itemMasks.json`, ADR 0087: rode **depois** de `make-titan-arte32.py` sempre que um ícone mudar). `python3 -I scripts/make-titan-esteira-icone.py` (ícone provisório da Esteira de Junco, item 31, ADR 0085; depois `make-titan-arte32.py` e, para os tiles novos, `make-titan-atlas32.py`). `python3 -I scripts/make-titan-noz-torrada.py` (ícone provisório da Noz Torrada, item 30, ADR 0084; depois `make-titan-arte32.py`). `python3 -I scripts/make-titan-cultivo32.py` (atlas de cultivo do junco de 128 × 32, ADR 0083, a partir de `assets-src/titan/cultivo/junco/`). `python3 -I scripts/make-titan-ambar.py` (arte provisória do Âmbar, ADR 0073: amplia o atlas de terreno de 80 × 80 para 80 × 100 e grava os tiles 16 e 17 e o ícone do bloco; rode depois de `make-titan-braseiro.py` e antes de `make-titan-arte32.py`, que monta o atlas de itens com o id 29). `python3 -I scripts/make-titan-atlas32.py` monta o atlas de terreno `src/assets/titan-atlas-32px.webp` (288 × 216, 41 tiles de 32 px com 2 px de borda) a partir de `assets-src/titan/texturas32/02-Texturas-PNG/` e da ordem em `src/titan/tiles.json` (ADR 0079); os scripts `make-titan-veins/veio-cobre/braseiro/ambar.py` editavam o atlas de 16 px legado e ficam só como histórico. `python3 scripts/export-titan-picareta.py --glb Picareta_de_Rocha.glb` (requer `pip install bpy` e Pillow; gera `src/assets/titan-picareta-rocha.glb`, 325 KB, só a malha e o BaseColor 1024 px em WebP; ADR 0078). `python3 scripts/export-titan-adaga.py --blend Adaga_de_Rocha_Rig.blend --base Adaga_BaseColor_4K.png` (requer `pip install bpy` e Pillow; fontes no Drive, não vão ao repositório) gera `src/assets/titan-adaga-rocha.glb` (338 KB: 3 peças, 6.272 triângulos, BaseColor 1024 px em WebP; limite de 2 MB, ADR 0071). `python3 -I scripts/extract-titan-margem.py` converte os GLB low-poly do Marco de Margem e do Painel de Junco (`assets-src/titan/margem/`) em `titan-marco.json`, `titan-painel.json` e `titan-margem-atlas.webp` (ADR 0058). `python3 -I scripts/make-titan-arte32.py` gera o atlas de itens de 128 × 128 (arte de 32 px de `assets-src/titan/arte32/` para todos os itens; só a cápsula legada vem da base de 16 px ampliada 2×) e o atlas do junco de 128 × 32 (ADR 0053; rode depois de `make-titan-fabricacao.py`). `python3 -I scripts/make-titan-fabricacao.py` gera, a partir de `assets-src/titan/fabricacao/` (pacote de arte da mesa e atlas 80 × 40), os sprites de item (atlas da hotbar 64 × 64: 8 = mesa, 9 = lente, 10 = brasa, 11 = junco, 12 = laje; a ilustração da laje está em `assets-src/titan/fabricacao/Laje_de_Rocha.png`), o tile 10 do terreno (depósito de brasa) e `src/assets/titan-reed-16px.webp` (junco), todos WebP **sem perdas**; repetível. `python3 -I scripts/extract-titan-workbench.py` converte o GLB da Mesa de Trabalho em `src/assets/titan-workbench.json` + `titan-workbench-atlas.webp` (confere 96 triângulos, 1 × 1 × 1 e pivô na base).
+`python3 -I scripts/extract-titan-noz.py` converte o GLB da planta da Noz de Duna (`assets-src/titan/noz/`, 3.008 triângulos) em `titan-noz-planta.json` (sem frutos), `titan-noz-frutos.json` e `titan-noz-atlas.webp`; `python3 -I scripts/make-titan-noz-icone.py` desenha o ícone provisório de 32 px (depois `make-titan-arte32.py`, que o põe na célula 16 do atlas de itens). ADR 0060.
+`python3 -I scripts/extract-titan-farejador.py` converte o GLB do Farejador de Duna (`assets-src/titan/farejador/`, 3.538 triângulos) em `titan-farejador.json` (7 partes com pivô) e `titan-farejador-atlas.webp` (224 × 36: atlas do pacote + 4 colunas de cor sólida). ADR 0061.
+`python3 -I scripts/extract-titan-farejador-rig.py` funde as 81 malhas skinadas do `Farejador_de_Duna_Rig.glb` (`assets-src/titan/farejador/`) numa só e reduz a Base Color para 1024² JPEG, gerando `src/assets/titan-farejador-rig.glb` (1,2 MB). ADR 0064.
+`python3 -I scripts/make-titan-icones-conceito.py` gera os ícones provisórios de 32 px dos itens do pacote "O que a duna guarda" (de `assets-src/titan/conceito/` para `assets-src/titan/arte32/`), `python3 -I scripts/make-titan-veio-cobre.py` grava o tile 11 do atlas de terreno (veio de cobre) e `make-titan-arte32.py` monta o atlas de itens de 128 × 256 (4 × 8). ADR 0063.
+`python3 -I scripts/make-titan-braseiro.py` estende o atlas de terreno para 80 × 80 e grava os tiles 12–14 (braseiro: lateral, topo apagado, topo aceso). ADR 0065.
+
+`python3 -I scripts/make-titan-basalt.py [--preview prancha.png]` gera o ladrilho de basalto da interface (`src/assets/titan-basalt-32px.webp`, 32 × 32 sem emenda, WebP **sem perdas**, determinístico). Ele entra nos painéis pela variável CSS `--basalt`.
+
+## Testes no navegador
+Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm run dev` em segundo plano,
+use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie
+`pkill` com outros comandos (ver `CLAUDE.md`).
