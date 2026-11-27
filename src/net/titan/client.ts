@@ -1,5 +1,6 @@
 import { chestFromData } from '../../titan/chest';
 import type { Farejador } from '../../titan/creature';
+import type { Boat } from '../../titan/boat';
 import { FAUNA_KINDS, type Fauna, maxHp } from '../../titan/fauna';
 import { BRAZIER_RULES, furnaceFromData, rulesOf } from '../../titan/furnace';
 import { Inventory } from '../../titan/inventory';
@@ -8,7 +9,7 @@ import { orvalisGeneratorFor } from '../../titan/orvalis/generator';
 import { generatorFor, resume, type TitanSession } from '../../titan/session';
 import { vitalsFromData, vitalsToData } from '../../titan/vitals';
 import type { TitanTransport } from './loopback';
-import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireCreature, type WireFauna, type WireHit } from './protocol';
+import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna, type WireHit } from './protocol';
 
 /**
  * Lado do aparelho numa sala do Titã (ADR 0104, fatia B). Sem DOM: recebe um `TitanTransport` (loopback nos testes, WebSocket no navegador).
@@ -29,6 +30,10 @@ export interface TitanClientEvents {
   onRespawn?: () => void;
   /** Baús ou braseiros mudaram (outro jogador mexeu, ou o braseiro andou). */
   onContainers?: () => void;
+  /** A boia de pesca mudou (lançada, recolhida, fisgada ou solta; ADR 0138, entrega C). */
+  onBobber?: (e?: 'bite' | 'lost') => void;
+  /** Os botes da sala mudaram (colocar, recolher, pilotar): o desenho os refaz. */
+  onBoats?: () => void;
   /** Conexão fechada ou erro da sala. */
   onClose?: (reason: string) => void;
 }
@@ -83,6 +88,14 @@ export class TitanClient {
   /** Golpe no animal de fazenda `id` com o item da mão; ou alimentá-lo com a comida da mão (ADR 0138). */
   strikeFauna(id: string): Promise<ApplyResult> { return this.act({ k: 'strikeFauna', id }); }
   feedFauna(id: string): Promise<ApplyResult> { return this.act({ k: 'feedFauna', id }); }
+  /** Embarca no bote `id` e desembarca (a sala confere o alcance e se o bote está vazio; ADR 0138, entrega C). */
+  mountBoat(id: string): Promise<ApplyResult> { return this.act({ k: 'mountBoat', id }); }
+  dismountBoat(): Promise<ApplyResult> { return this.act({ k: 'dismountBoat' }); }
+  /** Quem pilota manda a posição do bote em que está (a sala confere e repassa). */
+  sendBoat(): void {
+    const s = this.session, ride = s.boatRide, b = ride && s.boats.find((e) => e.id === ride.id);
+    if (b) this.transport.send(JSON.stringify({ t: 'boat', b: { x: +b.x.toFixed(3), z: +b.z.toFixed(3), r: +b.yaw.toFixed(4) } }));
+  }
   /** Golpe no Farejador `id`. */
   strike(id: string): Promise<ApplyResult> { return this.act({ k: 'strike', id }); }
   /** Morreu: manda a vida zerada e pede o renascer (a sala solta as pilhas). */
@@ -102,6 +115,21 @@ export class TitanClient {
     Object.assign(inv, next);
     inv.rev = rev; this.syncedRev = rev; // veio da sala: não é uma mexida da interface para devolver
     this.events.onBag?.();
+  }
+
+  /** Espelha os botes da sala (ADR 0138, entrega C): atualiza no lugar por id; o bote em que este jogador está segue a posição local, salvo se a sala o puxou para longe (recusou a posição). */
+  private mirrorBoats(list: WireBoat[]): void {
+    const s = this.session;
+    if (!s) return;
+    const byId = new Map(s.boats.map((b) => [b.id, b]));
+    const next: Boat[] = list.map((w) => {
+      const old = byId.get(w.id), mine = s.boatRide?.id === w.id;
+      if (old && mine && Math.hypot(old.x - w.x, old.z - w.z) <= 1.5) return old;
+      return { id: w.id, kind: w.k, x: w.x, y: w.y, z: w.z, yaw: w.r };
+    });
+    s.boats = next;
+    if (s.boatRide && !next.some((b) => b.id === s.boatRide!.id)) s.boatRide = null; // o bote sumiu
+    this.events.onBoats?.();
   }
 
   /** Espelha a fauna de fazenda de perto (ADR 0138): atualiza no lugar por id, cria os novos e tira os que sumiram; o relógio da animação segue sozinho entre as mensagens. */
@@ -148,7 +176,7 @@ export class TitanClient {
         s.body = newBody(m.you.x, m.you.y, m.you.z); s.yaw = m.you.yaw; s.pitch = m.you.pitch; s.selected = m.you.sel;
         s.vitals = vitalsFromData(m.you.vitals); s.spawn = m.you.spawn;
         Object.assign(s.inventory, Inventory.fromData(m.you.bag));
-        s.fauna = []; s.boats = []; s.boatRide = null; // a fauna chega pela mensagem `fauna` (entrega B); os botes e a pesca do Orvalis ainda não vão pela sala (ADR 0138)
+        s.fauna = []; s.boatRide = null; s.fishing = null; // a fauna chega pela mensagem `fauna`; os botes vêm no cabeçalho e depois por `boats`; a boia, por `bobber` (ADR 0138)
         s.creatures = []; s.respawn.clear(); // os bichos da sala chegam na fatia C; o aparelho não os simula
         this.session = s; this.id = m.id; this.syncedRev = s.inventory.rev;
         for (const p of m.players) this.remotes.set(p.id, p);
@@ -178,6 +206,8 @@ export class TitanClient {
       }
       case 'creatures': this.mirrorCreatures(m.list); return;
       case 'fauna': this.mirrorFauna(m.list); return;
+      case 'boats': this.mirrorBoats(m.list); return;
+      case 'bobber': if (this.session) { this.session.fishing = m.b ? { x: m.b.x, y: m.b.y, z: m.b.z, phase: m.b.bite ? 'bite' : 'wait', t: 0 } : null; this.events.onBobber?.(m.e); } return;
       case 'hurt': this.events.onHurt?.(m.damage, m.kind); return;
       case 'chest': if (this.session) { this.session.chests.set(m.key, chestFromData(m.data)); this.events.onContainers?.(); } return;
       case 'furnaces': {

@@ -1,4 +1,4 @@
-import { breakOrCollect, chestAt, chestMoveIn, chestTakeOut, collectNearby, dieAndRespawn, furnaceMoveIn, furnaceTakeOut, placeFromSlot, useBed, useDoor, type ActionResult } from '../../titan/actions';
+import { dismountBoat, mountBoat, breakOrCollect, chestAt, chestMoveIn, chestTakeOut, collectNearby, dieAndRespawn, furnaceMoveIn, furnaceTakeOut, placeFromSlot, useBed, useDoor, type ActionResult } from '../../titan/actions';
 import { ATTACK_REACH, ATTACK_COOLDOWN_S, attackCreature, attackFauna, tickRespawn } from '../../titan/combat';
 import { type Fauna, stepFauna, tickBreeding } from '../../titan/fauna';
 import { feedFaunaFromSlot } from '../../titan/faunaFeed';
@@ -7,9 +7,10 @@ import { stepFarejador, type Farejador } from '../../titan/creature';
 import { furnaceToData } from '../../titan/furnace';
 import { stepDrops } from '../../titan/drops';
 import { TitanGenerator } from '../../titan/generator';
+import { BOAT_MAX_SPEED, boatFits, boatSeat } from '../../titan/boat';
+import { stepFishing } from '../../titan/fishing';
 import { OrvalisGenerator, orvalisGeneratorFor } from '../../titan/orvalis/generator';
 import { stepCoral } from '../../titan/coral';
-import { isBoatItem, Item } from '../../titan/items';
 import type { VoxelWorld } from '../../titan/terrain';
 import { Inventory } from '../../titan/inventory';
 import { EYE_HEIGHT, newBody } from '../../titan/physics';
@@ -18,7 +19,7 @@ import { fresh, generatorFor, headerOf, isRaining, resume, tickCrops, tickFurnac
 import { advanceDay, canSleep } from '../../titan/sky';
 import { isDead, newVitals, vitalsFromData, vitalsToData, type PlayerVitals, type VitalsData } from '../../titan/vitals';
 import { isBed, isDoor } from '../../titan/voxel';
-import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireCreature, type WireFauna } from './protocol';
+import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna } from './protocol';
 
 /**
  * Sala do Titã (ADR 0104): mundo cooperativo de sobrevivência, **autoritativo**. Pura (sem DOM): roda o mesmo `TitanVolume` e as mesmas regras de `titan/actions.ts` que o jogo solo.
@@ -38,7 +39,7 @@ export const TITAN_FAUNA_SIM_RADIUS = 48, TITAN_FAUNA_SHOW_RADIUS = 64, TITAN_FA
 /** Distância máxima do olho ao centro do animal para um golpe valer (alcance do jogo + folga de rede). */
 export const TITAN_STRIKE_REACH = ATTACK_REACH + 2;
 
-interface Player { id: number; name: string; view: TitanSession; moved: boolean; /** Última vez (relógio da sala) que golpeou um animal. */ struckAt: number; /** Cama onde deitou esperando a noite passar (`null` = acordado). */ bed: { x: number; y: number; z: number } | null }
+interface Player { id: number; name: string; view: TitanSession; moved: boolean; /** Última vez (relógio da sala) que golpeou um animal. */ struckAt: number; /** Cama onde deitou esperando a noite passar (`null` = acordado). */ bed: { x: number; y: number; z: number } | null; /** Última mensagem `boat` de quem pilota (relógio da sala), para conferir a velocidade. */ lastBoatAt: number }
 interface SavedPlayer { x: number; y: number; z: number; yaw: number; pitch: number; sel: number; bag: unknown; vitals: VitalsData; spawn: { x: number; y: number; z: number } | null; known: string[] }
 export interface TitanRoomSnapshot { v: number; header: TitanHeader; chunks: ChunkRecord[]; players: Record<string, SavedPlayer>; /** 1 = a fauna do cabeçalho é a da sala (ADR 0138, entrega B); ausente = arquivo antigo, a fauna volta à da seed. */ fauna?: 1 }
 
@@ -69,6 +70,7 @@ export class TitanRoom {
   private clock = 0;
   private timeDirty = false;
   private sinceFauna = 0;
+  private lastBoatsSig = '[]';
   private sinceFaunaSave = 0;
   private readonly faunaMoving = new Map<string, boolean>();
   private readonly faunaCounter = { n: 0 };
@@ -105,9 +107,9 @@ export class TitanRoom {
     const inventory = sv ? Inventory.fromData(sv.bag) : Inventory.starting();
     const view = playerView(this.world, {
       body: newBody(sv?.x ?? a.x, sv?.y ?? a.y, sv?.z ?? a.z), yaw: sv?.yaw ?? a.yaw, pitch: sv?.pitch ?? -0.12, selected: sv?.sel ?? 0, inventory,
-      vitals: sv ? vitalsFromData(sv.vitals) : newVitals(), spawn: sv?.spawn ?? null, known: new Set(sv?.known ?? []),
+      vitals: sv ? vitalsFromData(sv.vitals) : newVitals(), spawn: sv?.spawn ?? null, known: new Set(sv?.known ?? []), fishing: null, boatRide: null, // a pesca e o bote em que se está são de cada jogador (ADR 0138, entrega C)
     });
-    const p: Player = { id: this.nextId++, name, view, moved: false, struckAt: -1e9, bed: null };
+    const p: Player = { id: this.nextId++, name, view, moved: false, struckAt: -1e9, bed: null, lastBoatAt: -1e9 };
     this.players.set(p.id, p);
     const header = headerOf(this.world);
     delete header.fauna; // a fauna chega pela mensagem `fauna`, só a de perto (ADR 0138)
@@ -122,6 +124,7 @@ export class TitanRoom {
   leave(id: number): TitanOutgoing[] {
     const p = this.players.get(id);
     if (!p) return [];
+    dismountBoat(p.view); // quem sai do jogo desce do bote (o bote fica)
     this.keep(p);
     this.dirty = true; // a bolsa e a posição de quem saiu vão para o arquivo
     this.players.delete(id);
@@ -147,6 +150,16 @@ export class TitanRoom {
         if (p.bed && Math.hypot(b.x - (p.bed.x + 0.5), b.z - (p.bed.z + 0.5)) > 3) p.bed = null; // saiu da cama: não conta mais para a noite
         return [];
       }
+      case 'boat': { // quem pilota manda a posição do bote: a sala confere o casco na água e a velocidade e só então a aceita (ADR 0138, entrega C)
+        const ride = p.view.boatRide, boat = ride ? this.world.boats.find((e) => e.id === ride.id) : undefined;
+        if (!ride || !boat) return [];
+        const dt = Math.max(0.02, Math.min(1, this.clock - p.lastBoatAt)); p.lastBoatAt = this.clock;
+        const { x, z, r } = m.b;
+        if (Math.hypot(x - boat.x, z - boat.z) > BOAT_MAX_SPEED * 1.5 * dt + 0.6 || !boatFits(this.world.volume, x, z, r)) { this.lastBoatsSig = ''; return []; } // recusado: o próximo tick manda a posição certa
+        boat.x = x; boat.z = z; boat.yaw = r;
+        const seat = boatSeat(boat), body = p.view.body; body.x = seat.x; body.y = seat.y; body.z = seat.z; p.moved = true;
+        return [];
+      }
       case 'bag': {
         p.view.inventory = Inventory.fromData(m.bag);
         this.dirty = true;
@@ -161,12 +174,13 @@ export class TitanRoom {
     const v = p.view, b = v.body, out: TitanOutgoing[] = [];
     const cell = 'hit' in a ? a.hit : 'x' in a ? a : null;
     let r: ActionResult = { ok: false, msg: 'Longe demais' };
+    const fishBefore = v.fishing ? { ...v.fishing } : null;
     const near = !cell || Math.hypot(cell.x + 0.5 - b.x, cell.y + 0.5 - (b.y + EYE_HEIGHT), cell.z + 0.5 - b.z) <= TITAN_ROOM_REACH;
     if (near) {
       r = { ok: false };
       switch (a.k) {
-        case 'place': { const held = v.inventory.get(a.slot)?.item; r = held === Item.VARA_PESCA || isBoatItem(held) ? { ok: false, msg: 'Ainda não disponível nas salas' } : placeFromSlot(v, a.hit, a.slot); break; } // pesca e botes: próximas entregas (ADR 0138)
-        case 'break': r = breakOrCollect(v, a.hit); break;
+        case 'place': r = placeFromSlot(v, a.hit, a.slot); break;
+        case 'break': r = this.boatRidden(a.hit.item) ? { ok: false, msg: 'Há alguém a bordo' } : breakOrCollect(v, a.hit); break; // o bote com piloto não se recolhe
         case 'use': r = this.useCell(p, a.x, a.y, a.z); break;
         case 'chest': {
           r = a.op === 'in' ? chestMoveIn(v, a.x, a.y, a.z, a.slot) : chestTakeOut(v, a.x, a.y, a.z, a.i);
@@ -180,11 +194,14 @@ export class TitanRoom {
           break;
         }
         case 'strike': r = this.strike(p, a.id); break;
+        case 'mountBoat': r = this.occupied(p, a.id) ? { ok: false, msg: 'Bote ocupado' } : mountBoat(v, a.id); if (r.ok) p.lastBoatAt = this.clock; break;
+        case 'dismountBoat': dismountBoat(v); r = { ok: true }; break;
         case 'strikeFauna': r = this.strikeFauna(p, a.id); break;
         case 'feedFauna': r = this.feedFauna(p, a.id); break;
         case 'die': r = this.die(p, out); break;
       }
     }
+    if (!!v.fishing !== !!fishBefore || v.fishing?.phase !== fishBefore?.phase) out.push(this.bobberMsg(p)); // a boia lançada ou recolhida: só o dono a vê (ADR 0138, entrega C)
     this.dirty = true;
     return [{ to: p.id, msg: { t: 'applied', seq, ok: r.ok, ...(r.msg ? { msg: r.msg } : {}), ...(r.open !== undefined ? { open: r.open } : {}), bag: v.inventory.toData() } }, ...out, ...this.flush()];
   }
@@ -215,6 +232,24 @@ export class TitanRoom {
     const r = attackCreature(p.view, idx);
     this.sinceCreatures = TITAN_CREATURES_EVERY; // o próximo tick manda a lista nova
     return { ok: r.ok, ...(r.msg ? { msg: r.msg } : {}) };
+  }
+
+  /** Alguém pilota o bote `id`? (O recolher e o embarcar de outro jogador valem só com o bote vazio.) */
+  private occupied(except: Player, id: string): boolean { for (const o of this.players.values()) if (o !== except && o.view.boatRide?.id === id) return true; return false; }
+  /** O alvo da ação é um bote (`bt:<id>`) com piloto? */
+  private boatRidden(item: string | undefined): boolean { return !!item && item.startsWith('bt:') && [...this.players.values()].some((o) => o.view.boatRide?.id === item.slice(3)); }
+
+  /** A boia do jogador (lançada, com ou sem fisgada) ou `null` quando não há; `e` diz o evento que a causou. */
+  private bobberMsg(p: Player, e?: 'bite' | 'lost'): TitanOutgoing {
+    const f = p.view.fishing;
+    return { to: p.id, msg: { t: 'bobber', b: f ? { x: f.x, y: f.y, z: f.z, bite: f.phase === 'bite' ? 1 : 0 } : null, ...(e ? { e } : {}) } };
+  }
+
+  /** Todos os botes da sala (com o id de quem pilota). */
+  private wireBoats(): WireBoat[] {
+    const rider = new Map<string, number>();
+    for (const o of this.players.values()) if (o.view.boatRide) rider.set(o.view.boatRide.id, o.id);
+    return this.world.boats.map((b) => ({ id: b.id, k: b.kind, x: Math.round(b.x * 100) / 100, y: Math.round(b.y * 100) / 100, z: Math.round(b.z * 100) / 100, r: Math.round(b.yaw * 100) / 100, d: rider.get(b.id) ?? 0 }));
   }
 
   /** Animal de fazenda pelo id, ao alcance de `p` (o olho até o centro do corpo). */
@@ -271,6 +306,8 @@ export class TitanRoom {
   private flush(): TitanOutgoing[] {
     const out: TitanOutgoing[] = [];
     if (this.pending.length) { out.push({ to: 'all', msg: { t: 'edits', cells: this.pending } }); this.pending = []; }
+    const boats = this.wireBoats(), sig = JSON.stringify(boats);
+    if (sig !== this.lastBoatsSig) { this.lastBoatsSig = sig; out.push({ to: 'all', msg: { t: 'boats', list: boats } }); this.dirty = true; } // os botes mudaram (colocar, recolher, embarcar, pilotar); vão ao disco com o snapshot
     if (this.world.dropsRev !== this.lastDropsRev) { this.lastDropsRev = this.world.dropsRev; out.push({ to: 'all', msg: { t: 'drops', drops: [...this.world.drops.values()] } }); }
     return out;
   }
@@ -305,6 +342,11 @@ export class TitanRoom {
         const ev = stepFarejador(f, w.volume, { x: near.view.body.x, y: near.view.body.y, z: near.view.body.z }, dt);
         if (ev.hit) out.push({ to: near.id, msg: { t: 'hurt', damage: ev.damage, kind: f.kind } });
       }
+    }
+    for (const p of list) { // pesca (ADR 0133, 0138): a espera e a fisgada correm no servidor; só o dono recebe a boia
+      if (!p.view.fishing) continue;
+      const ev = stepFishing(p.view, dt, this.rand);
+      if (ev === 'bite') out.push(this.bobberMsg(p, 'bite')); else if (ev === 'lost') out.push(this.bobberMsg(p, 'lost'));
     }
     if (list.length && w.fauna.length) { // fauna de fazenda (ADR 0124, 0138): passeia perto de algum jogador e foge ao ser ferida; nascer e crescer valem aqui
       for (const f of w.fauna) {

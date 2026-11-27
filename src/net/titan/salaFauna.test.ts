@@ -21,8 +21,8 @@ function stage(r: TitanRoom) {
 const give = (r: TitanRoom, id: number, item: number, n = 5): void => { const v = r.viewOf(id)!; v.inventory.add(item, n); const k = [...Array(36).keys()].find((i) => v.inventory.get(i)?.item === item)!; v.inventory.move(k, 0); };
 
 describe('fauna na sala do Orvalis (ADR 0138)', () => {
-  it('o protocolo é o 4 e o analisador aceita as duas ações novas, só com id válido', () => {
-    expect(TITAN_PROTOCOL_VERSION).toBe(4);
+  it('o protocolo é pelo menos o 4 e o analisador aceita as duas ações novas, só com id válido', () => {
+    expect(TITAN_PROTOCOL_VERSION).toBeGreaterThanOrEqual(4);
     for (const k of ['strikeFauna', 'feedFauna']) {
       expect(parseTitanClientMessage(JSON.stringify({ t: 'act', seq: 1, a: { k, id: 'f1' } }))).not.toBeNull();
       expect(parseTitanClientMessage(JSON.stringify({ t: 'act', seq: 1, a: { k, id: '' } }))).toBeNull();

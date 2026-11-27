@@ -229,3 +229,6 @@ Sala 102 "Orvalis 1" (seed 20261127) além da 101 do Titã; `TITAN_ROOMS[].world
 
 ### Entrega B (ADR 0138, v0.208.0)
 Protocolo 4: fauna de fazenda na sala. `TitanRoom` simula (`TITAN_FAUNA_SIM_RADIUS` 48), manda `fauna` (40 mais próximos a 64 m, 0,2 s) e trata `strikeFauna`/`feedFauna`; `TitanClient.mirrorFauna` espelha por id. Snapshot com `fauna: 1`.
+
+### Entrega C (ADR 0138, v0.209.0)
+Protocolo 5: pesca e botes na sala. `fishing`/`boatRide` por jogador (`playerView`); `bobber` só ao dono; `boats` a todos; o piloto manda `boat` e a sala confere (casco na água, velocidade). Ações `mountBoat`/`dismountBoat`; recolher por `break` com `bt:<id>`.

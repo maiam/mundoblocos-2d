@@ -6,7 +6,7 @@ import { TitanLoopbackServer } from './loopback';
 import { TITAN_PROTOCOL_VERSION, TITAN_ROOMS, titanRoomById, titanRoomsOf, type TitanServerMessage } from './protocol';
 import { TitanRoom } from './room';
 
-/** Orvalis em sala (ADR 0138): a sala 102 usa o gerador e as regras do Orvalis; entrega A = sala básica; entrega B = fauna de fazenda (`salaFauna.test.ts`); pesca e botes ainda não vão pela sala. */
+/** Orvalis em sala (ADR 0138): a sala 102 usa o gerador e as regras do Orvalis; entrega A = sala básica; entrega B = fauna de fazenda (`salaFauna.test.ts`); entrega C = pesca e botes (`salaPescaBotes.test.ts`). */
 const Y = 150;
 const orv = (): TitanRoom => new TitanRoom(102, 'Orvalis 1', 20261127, () => 0.5, 'orvalis');
 const hello = (name: string) => ({ t: 'hello' as const, v: TITAN_PROTOCOL_VERSION, name, room: 102 });
@@ -39,16 +39,6 @@ describe('sala do Orvalis (ADR 0138)', () => {
     expect(applied(out).ok).toBe(true); expect(r.world.volume.get(x, Y, z)).toBe(T.STONE);
     expect(out.find((o) => o.msg.t === 'edits')).toMatchObject({ to: 'all', msg: { cells: [[x, Y, z, T.STONE]] } });
     expect(r.viewOf(b)!.inventory.total(Item.STONE)).toBe(0);
-  });
-  it('pesca e botes ainda não vão pela sala (entrega C): a ação é recusada e nada é gasto', () => {
-    const r = orv(), { x, z } = floorAt(r), a = r.join(hello('Ana')).id!;
-    stand(r, a, x, z); give(r, a, Item.VARA_PESCA, 1); give(r, a, Item.BOTE_CARVALHO, 1);
-    for (const item of [Item.VARA_PESCA, Item.BOTE_CARVALHO]) {
-      const slot = [...Array(36).keys()].find((i) => r.viewOf(a)!.inventory.get(i)?.item === item)!;
-      const ap = applied(r.handle(a, { t: 'act', seq: 2, a: { k: 'place', hit: { x, y: Y - 1, z, nx: 0, ny: 1, nz: 0 }, slot } }));
-      expect(ap).toMatchObject({ ok: false, msg: 'Ainda não disponível nas salas' }); expect(r.viewOf(a)!.inventory.total(item)).toBe(1);
-    }
-    expect(r.world.boats).toHaveLength(0); expect(r.world.fishing).toBeNull();
   });
   it('o bloco de coral vivo sem água morre também na sala', () => {
     const r = orv(), { x, z } = floorAt(r);
