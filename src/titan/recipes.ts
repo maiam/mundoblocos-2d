@@ -7,7 +7,7 @@ import { Item } from './items';
  * (`craft`: confere estação e ingredientes, calcula a capacidade **depois** dos débitos e aplica consumo e resultado numa operação só).
  * A Laje de Rocha (3 blocos → 6 lajes, mesa) entrou na segunda entrega (ADR 0046), depois do aceite da mesa.
  */
-export type Station = 'personal' | 'workbench' | 'brazier';
+export type Station = 'personal' | 'workbench' | 'brazier' | 'furnace';
 export interface Stackable { item: number; count: number }
 /** Grupo do livro de receitas (faixa da esquerda): pelo tipo do item fabricado. */
 export type Group = 'construcao' | 'utilidades' | 'materiais' | 'ferramentas';
@@ -54,14 +54,14 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'mesa-carpintaria-cerejeira', name: 'Mesa de Carpintaria (tábuas de cerejeira)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 4 }], station: 'personal', world: 'orvalis' },
   { id: 'mesa-carpintaria-betula', name: 'Mesa de Carpintaria (tábuas de bétula)', group: 'utilidades', result: { item: Item.MESA_CARPINTARIA, count: 1 }, ingredients: [{ item: Item.TABUA_BETULA, count: 4 }], station: 'personal', world: 'orvalis' },
   // Pedra de obra do Orvalis em voxel (ADR 0108), na Mesa de Carpintaria (a fundição em Braseiro ainda não existe no Orvalis: o polimento é provisório)
-  { id: 'pedra-lisa', name: 'Pedra Lisa', group: 'construcao', result: { item: Item.PEDRA_LISA, count: 1 }, ingredients: [{ item: Item.STONE, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'pedra-lisa', name: 'Pedra Lisa', group: 'construcao', result: { item: Item.PEDRA_LISA, count: 1 }, ingredients: [{ item: Item.STONE, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'tijolo-pedra', name: 'Tijolo de Pedra', group: 'construcao', result: { item: Item.TIJOLO_PEDRA, count: 4 }, ingredients: [{ item: Item.STONE, count: 4 }], station: 'workbench', world: 'orvalis' },
   { id: 'degrau-pedra', name: 'Degrau de Pedra', group: 'construcao', result: { item: Item.DEGRAU_PEDRA, count: 4 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
   { id: 'mureta-pedra', name: 'Mureta de Pedra', group: 'construcao', result: { item: Item.MURETA_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 6 }], station: 'workbench', world: 'orvalis' },
   // Solo e cerâmica do Orvalis em voxel (ADR 0111): receitas PROVISÓRIAS até existirem a água do cultivo (E5), a argila no terreno e a fundição; terra arada e caminho agora vêm da enxada e da pá (ADR 0112)
   { id: 'terra-infertil', name: 'Terra Infértil', group: 'construcao', result: { item: Item.TERRA_INFERTIL, count: 2 }, ingredients: [{ item: Item.DIRT, count: 1 }, { item: Item.BEACH, count: 1 }], station: 'workbench', world: 'orvalis' },
   { id: 'bola-argila', name: 'Bola de Argila', group: 'materiais', result: { item: Item.BOLA_ARGILA, count: 2 }, ingredients: [{ item: Item.DIRT, count: 2 }, { item: Item.BEACH, count: 1 }], station: 'workbench', world: 'orvalis' },
-  { id: 'tijolo', name: 'Tijolo', group: 'materiais', result: { item: Item.TIJOLO, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 1 }], station: 'workbench', world: 'orvalis' },
+  { id: 'tijolo', name: 'Tijolo', group: 'materiais', result: { item: Item.TIJOLO, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'bloco-argila', name: 'Bloco de Argila', group: 'construcao', result: { item: Item.BLOCO_ARGILA, count: 1 }, ingredients: [{ item: Item.BOLA_ARGILA, count: 4 }], station: 'workbench', world: 'orvalis' },
   { id: 'bloco-tijolos', name: 'Bloco de Tijolos', group: 'construcao', result: { item: Item.BLOCO_TIJOLOS, count: 1 }, ingredients: [{ item: Item.TIJOLO, count: 4 }], station: 'workbench', world: 'orvalis' },
   // Ferramentas do Orvalis em voxel (ADR 0112), na Mesa de Carpintaria; a de madeira só de tábuas de carvalho por ora (pendência: "qualquer tábua")
@@ -75,11 +75,15 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'enxada-pedra', name: 'Enxada de Pedra', group: 'ferramentas', result: { item: Item.ENXADA_PEDRA, count: 1 }, ingredients: [{ item: Item.STONE, count: 2 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
   // Horta (ADR 0113): o trigo fecha o ciclo (a cenoura, a batata e o tomate se plantam com o próprio produto)
   { id: 'semente-trigo', name: 'Semente de Trigo', group: 'materiais', result: { item: Item.SEMENTE_TRIGO, count: 1 }, ingredients: [{ item: Item.TRIGO, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'fornalha', name: 'Fornalha', group: 'utilidades', result: { item: Item.FORNALHA, count: 1 }, ingredients: [{ item: Item.STONE, count: 8 }], station: 'workbench', world: 'orvalis' }, // Wiki: 8 pedras em anel (ADR 0120)
+  { id: 'carvao-carvalho', name: 'Carvão Vegetal (tora de carvalho)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_OAK, count: 1 }], station: 'furnace', world: 'orvalis' },
+  { id: 'carvao-cerejeira', name: 'Carvão Vegetal (tora de cerejeira)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_CHERRY, count: 1 }], station: 'furnace', world: 'orvalis' },
+  { id: 'carvao-betula', name: 'Carvão Vegetal (tora de bétula)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_BIRCH, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 
-export const STATION_NAMES: Record<Station, string> = { personal: 'Fabricação pessoal (mochila)', workbench: 'Mesa de Trabalho', brazier: 'Braseiro de Rocha aceso' };
+export const STATION_NAMES: Record<Station, string> = { personal: 'Fabricação pessoal (mochila)', workbench: 'Mesa de Trabalho', brazier: 'Braseiro de Rocha aceso', furnace: 'Fornalha' };
 
 /**
  * Prévia da receita na grade 3 × 3 (ADR 0050): **uma célula por unidade pedida** (4 rochas = 4 células com 1 ícone cada, o resto vazio) e, em cada célula, quanto do que o jogador tem cabe

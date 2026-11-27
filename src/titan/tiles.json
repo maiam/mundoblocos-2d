@@ -88,6 +88,10 @@
   "orvalis/caminho-lateral",
   "orvalis/terra-infertil",
   "orvalis/bloco-argila",
-  "orvalis/bloco-tijolos"
+  "orvalis/bloco-tijolos",
+  "orvalis/fornalha-topo",
+  "orvalis/fornalha-lateral",
+  "orvalis/fornalha-frente-apagada",
+  "orvalis/fornalha-frente-acesa"
  ]
 }

@@ -1,6 +1,6 @@
 import { chestFromData } from '../../titan/chest';
 import type { Farejador } from '../../titan/creature';
-import { furnaceFromData } from '../../titan/furnace';
+import { BRAZIER_RULES, furnaceFromData, rulesOf } from '../../titan/furnace';
 import { Inventory } from '../../titan/inventory';
 import { newBody } from '../../titan/physics';
 import { generatorFor, resume, type TitanSession } from '../../titan/session';
@@ -155,7 +155,7 @@ export class TitanClient {
       case 'furnaces': {
         if (!this.session) return;
         this.session.furnaces.clear();
-        for (const [k, d] of Object.entries(m.data)) this.session.furnaces.set(k, furnaceFromData(d));
+        for (const [k, d] of Object.entries(m.data)) { const [fx, fy, fz] = k.split(',').map(Number); this.session.furnaces.set(k, furnaceFromData(d, rulesOf(this.session.volume.get(fx, fy, fz)) ?? BRAZIER_RULES)); } // braseiro ou fornalha: as regras são do bloco
         this.events.onContainers?.();
         return;
       }

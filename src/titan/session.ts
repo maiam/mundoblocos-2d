@@ -4,7 +4,7 @@ import { HOTBAR, Inventory } from './inventory';
 import { isItem, Item } from './items';
 import { creatureSpecs, type Farejador, newFromSpec } from './creature';
 import { type ChestState, chestFromData, chestIsEmpty, chestToData } from './chest';
-import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isWorking } from './furnace';
+import { type FurnaceState, furnaceFromData, furnaceToData, rulesOf, showsLit, tickFurnace } from './furnace';
 import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
@@ -15,7 +15,7 @@ import { isHydrated } from './soil';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
 import { TitanVolume } from './volume';
-import { isBedFoot, isChest, isSolid, T, Y_MAX, Y_MIN } from './voxel';
+import { furnaceId, furnaceTurn, isBedFoot, isChest, isFurnace, isSolid, T, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Sessão solo do Titã: seed + versão do gerador + volume + jogador + gravação confirmada (ADR 0039). Sem DOM: o `titanGame.ts` só liga entrada e vídeo.
@@ -122,7 +122,8 @@ function validFurnaces(raw: unknown, vol: TitanVolume): Map<string, FurnaceState
     const m = /^(-?\d+),(-?\d+),(-?\d+)$/.exec(k);
     if (!m) continue;
     const b = vol.get(Number(m[1]), Number(m[2]), Number(m[3]));
-    if (b === T.BRAZIER || b === T.BRAZIER_LIT) out.set(k, furnaceFromData(v));
+    const rules = rulesOf(b);
+    if (rules) out.set(k, furnaceFromData(v, rules)); // braseiro (Titã) ou fornalha (Orvalis, ADR 0120)
   }
   return out;
 }
@@ -155,12 +156,14 @@ function validChests(raw: unknown, vol: TitanVolume): Map<string, ChestState> {
 export function tickFurnaces(s: TitanSession, dt: number): boolean {
   let any = false;
   for (const [k, f] of s.furnaces) {
-    const r = tickFurnace(f, dt);
+    const [x, y, z] = k.split(',').map(Number), cur = s.volume.get(x, y, z), rules = rulesOf(cur);
+    if (!rules) continue; // o bloco sumiu (a quebra apaga o estado): nada a fazer
+    const r = tickFurnace(f, dt, rules);
     if (!r.changed) continue;
     any = true; s.metaRev++;
-    const [x, y, z] = k.split(',').map(Number);
-    const want = isWorking(f) ? T.BRAZIER_LIT : T.BRAZIER, cur = s.volume.get(x, y, z);
-    if ((cur === T.BRAZIER || cur === T.BRAZIER_LIT) && cur !== want) s.volume.set(x, y, z, want);
+    const lit = showsLit(f, rules);
+    const want = isFurnace(cur) ? furnaceId(furnaceTurn(cur), lit) : lit ? T.BRAZIER_LIT : T.BRAZIER; // a fornalha acende e apaga sem perder o giro
+    if (cur !== want) s.volume.set(x, y, z, want);
   }
   return any;
 }
