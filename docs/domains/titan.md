@@ -223,3 +223,6 @@ Blocos 160–189 e itens 123–152 (coral, gorgônia, bloco; vivos e mortos; 5 f
 
 ## Botes do Orvalis (ADR 0137, v0.206.0)
 Itens 153–155; `titan/boat.ts` (puro) com `stepBoat` (8 m/s, só água, para na margem), `boatFits`, `boatAim`; ações em `actions.ts`; save em `header.boats` (`TITAN_SAVE_VERSION` 8); a bordo o corpo segue o assento e W/S/A/D pilotam, pular desembarca; modelos GLB em `render/boatView.ts`.
+
+## Orvalis em sala (ADR 0138, v0.207.0, entrega A)
+Sala 102 "Orvalis 1" (seed 20261127) além da 101 do Titã; `TITAN_ROOMS[].world`, `titanRoomsOf`; `TitanRoom(id, nome, seed, rand, kind)`; o cliente abre o `welcome` pelo gerador de `header.world`; fauna, pesca e botes seguem só no aparelho até as entregas B e C.

@@ -3,6 +3,7 @@ import type { Farejador } from '../../titan/creature';
 import { BRAZIER_RULES, furnaceFromData, rulesOf } from '../../titan/furnace';
 import { Inventory } from '../../titan/inventory';
 import { newBody } from '../../titan/physics';
+import { orvalisGeneratorFor } from '../../titan/orvalis/generator';
 import { generatorFor, resume, type TitanSession } from '../../titan/session';
 import { vitalsFromData, vitalsToData } from '../../titan/vitals';
 import type { TitanTransport } from './loopback';
@@ -116,12 +117,13 @@ export class TitanClient {
   private receive(m: TitanServerMessage): void {
     switch (m.t) {
       case 'welcome': {
-        const gen = generatorFor(m.header.seed, m.header.generatorVersion);
+        const gen = m.header.world === 'orvalis' ? orvalisGeneratorFor(m.header.seed, m.header.generatorVersion) : generatorFor(m.header.seed, m.header.generatorVersion);
         if (!gen) { this.failed?.('Esta versão do jogo não tem o gerador da sala.'); return; }
         const s = resume(gen, { header: m.header, chunks: m.chunks });
         s.body = newBody(m.you.x, m.you.y, m.you.z); s.yaw = m.you.yaw; s.pitch = m.you.pitch; s.selected = m.you.sel;
         s.vitals = vitalsFromData(m.you.vitals); s.spawn = m.you.spawn;
         Object.assign(s.inventory, Inventory.fromData(m.you.bag));
+        s.fauna = []; s.boats = []; s.boatRide = null; // a fauna, os botes e a pesca do Orvalis ainda não vão pela sala (ADR 0138)
         s.creatures = []; s.respawn.clear(); // os bichos da sala chegam na fatia C; o aparelho não os simula
         this.session = s; this.id = m.id; this.syncedRev = s.inventory.rev;
         for (const p of m.players) this.remotes.set(p.id, p);

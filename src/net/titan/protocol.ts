@@ -1,6 +1,7 @@
 import type { Drop, ChunkRecord, TitanHeader } from '../../titan/save';
 import type { InventoryData } from '../../titan/inventory';
 import type { VitalsData } from '../../titan/vitals';
+import type { VoxelWorld } from '../../titan/terrain';
 
 /**
  * Protocolo das salas do Titã (ADR 0104): paralelo ao do mundo principal (`net/protocol.ts`), porque o Titã tem motor próprio (`TitanVolume`).
@@ -10,7 +11,12 @@ export const TITAN_PROTOCOL_VERSION = 3;
 export const TITAN_MAX_PLAYERS = 10;
 export const TITAN_NAME_MIN = 2, TITAN_NAME_MAX = 16;
 /** Salas fixas do Titã (ids acima dos do mundo principal, que usam 1…). Cooperativas de sobrevivência: vida, fome, ar e morte valem. */
-export const TITAN_ROOMS: ReadonlyArray<{ id: number; name: string; seed: number }> = [{ id: 101, name: 'Titã 1', seed: 20261122 }];
+export const TITAN_ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; /** Mundo da sala: decide o gerador, os itens e as regras (ADR 0138). */ world: VoxelWorld }> = [
+  { id: 101, name: 'Titã 1', seed: 20261122, world: 'titan' },
+  { id: 102, name: 'Orvalis 1', seed: 20261127, world: 'orvalis' }, // Orvalis em sala (ADR 0138): o mesmo motor, o gerador e as regras do Orvalis
+];
+/** Salas de um mundo. */
+export const titanRoomsOf = (world: VoxelWorld): typeof TITAN_ROOMS => TITAN_ROOMS.filter((r) => r.world === world);
 export const titanRoomById = (id: number): (typeof TITAN_ROOMS)[number] | undefined => TITAN_ROOMS.find((r) => r.id === id);
 
 /** Alvo de uma ação: a célula, a face e, se for o caso, o ponto de altura (laje) ou o fragmento apontado. */

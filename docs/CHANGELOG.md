@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.207.0 — Orvalis em sala, entrega A: sala básica (27/11/2026)
+- **ADR 0138 (ciclo da ADR 0116; aprovada nos 7 pontos).** `TITAN_ROOMS` por mundo e a **sala 102 "Orvalis 1"** (seed 20261127, 10 jogadores): a `TitanRoom` aceita o mundo (gerador do Orvalis) e o cliente abre o `welcome` pelo mundo do cabeçalho; botão de salas religado no Orvalis; blocos, horta, fornalha, clima, sono, morte, flora e recifes já valem na sala; a morte do coral sem água roda no relógio da sala. Fauna, pesca e botes seguem fora (vara e bote recusados na sala), para as entregas B e C.
+- 776 testes passam (7 novos em `net/titan/salaOrvalis.test.ts`); conferido no navegador (`?sala=102&loopback=1`). Sem mudança de protocolo (3), de save nem de gerador. **O servidor precisa do pacote novo** (`build:net` + `sync-net`).
+
 ## Orvalis v0.206.0 — botes do Orvalis (auditoria #14 E4a, 27/11/2026)
 - **ADR 0137 (ciclo da ADR 0116; aprovada nos 5 pontos).** **Botes de carvalho, bétula e cerejeira** (itens 153–155; 5 tábuas da mesma madeira na Mesa de Carpintaria; **atlas de itens 4 × 39**): põem-se na superfície da água, embarca-se tocando, W e S remam, A e D giram o leme (8 m/s, só em água), pular desembarca e segurar recolhe. Modelo 3D do pacote (GLB, ~20 KB cada). **Os botes vão ao save** (`header.boats`, **`TITAN_SAVE_VERSION` 8**). Bote com baú fica para a E4b.
 - 769 testes passam (6 novos em `orvalis/botes.test.ts`); conferido no navegador (bote na água, remar e desembarcar). Sem mudança de protocolo nem de gerador.
