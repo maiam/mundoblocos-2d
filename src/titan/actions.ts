@@ -56,7 +56,13 @@ function collectCrop(s: TitanSession, id: string): ActionResult {
   s.inventory.add(h.item, h.count);
   crop.age = h.backTo;
   s.metaRev++;
-  return { ok: true, msg: `${h.count} ${h.label}` };
+  let extra = '';
+  if (h.extra) { // além do produto, sementes sorteadas (beterraba: 1–4, Wiki); sem lugar na mochila, caem no chão
+    const n = h.extra.min + Math.floor(hash2(s.seed, (Math.imul(crop.x, 73856093) ^ Math.imul(crop.z, 83492791)) | 0, crop.y + s.days * 1009 + Math.floor(s.time * 1000)) * (h.extra.max - h.extra.min + 1));
+    if (s.inventory.canAdd(h.extra.item, n)) s.inventory.add(h.extra.item, n); else restDrop(s, `seed:${crop.x},${crop.y},${crop.z}:s${s.days}:${Math.floor(s.time * 1000)}`, h.extra.item, crop.x, crop.y, crop.z, n);
+    extra = ` e ${n} ${n > 1 ? 'sementes' : 'semente'}`;
+  }
+  return { ok: true, msg: `${h.count} ${h.label}${extra}` };
 }
 
 /** A célula de cima do bloco apontado está livre para uma planta (ar, sem item, planta ou pilha solta)? */

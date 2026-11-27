@@ -46,7 +46,7 @@ export interface TitanHeader {
   /** Plantas de Noz de Duna colhidas (ADR 0060): id `nut:x,y,z` → segundos de jogo para rebrotar. Ausente = todas maduras. */
   regrow?: Record<string, number>;
   /** Plantas de junco cultivadas (ADR 0083): `x,y,z` → idade (0 muda … 2 adulto); a Noz plantada vai como `{ s: 'noz', a: idade }`. Campo opcional: saves sem ele abrem sem plantas. */
-  crops?: Record<string, number | { s: 'noz' | 'trigo' | 'cenoura' | 'batata' | 'tomate'; a: number }>;
+  crops?: Record<string, number | { s: 'noz' | 'trigo' | 'cenoura' | 'batata' | 'tomate' | 'beterraba'; a: number }>;
   /** Baús (ADR 0089): `x,y,z` → 18 espaços `[item, contagem]` ou `[item, contagem, desgaste]` (vazio = null). Campo opcional: saves sem ele abrem com baús vazios. */
   /** Ponto de retorno (ADR 0090): a célula do pé da cama. Campo opcional: sem ele (ou sem a cama) o jogador volta à chegada. */
   spawn?: { x: number; y: number; z: number };

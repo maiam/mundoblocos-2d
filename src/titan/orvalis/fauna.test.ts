@@ -196,7 +196,7 @@ describe('Itens 89–99, comida e receitas', () => {
   it('faixa do Orvalis, nomes, pilha 64 e atlas até o 99', () => {
     expect(Item.COURO).toBe(89); expect(Item.FRANGO_ASSADO).toBe(99);
     for (let i = 89; i <= 99; i++) { expect(isItem(i)).toBe(true); expect(ITEM_NAMES[i]).toBeTruthy(); expect(maxStack(i)).toBe(64); }
-    expect(isItem(100)).toBe(false);
+    expect(isItem(100) && isItem(101)).toBe(true); expect(isItem(102)).toBe(false); // 100–101 = beterraba (ADR 0127)
     expect(ITEM_NAMES[Item.BIFE]).toBe('Bife'); expect(ITEM_NAMES[Item.LA]).toBe('Lã');
   });
   it('comida da Wiki: carne crua e assada', () => {

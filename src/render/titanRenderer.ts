@@ -43,7 +43,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 25;
+const ITEM_ROWS = 26;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
