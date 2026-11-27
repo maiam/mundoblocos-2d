@@ -434,6 +434,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   if (direct && !s.inventory.canAdd(item, count)) return FULL;
   if (!s.volume.remove(x, y, z)) return { ok: false };
   if (direct) s.inventory.add(item, count);
+  else if (block === T.COAL_ORE && !isPick(s.inventory.get(s.selected)?.item)) { /* Wiki: o minério de carvão só dropa com picareta (qualquer uma, ADR 0122) */ }
   else spillBlock(s, item, count, x, y, z); // ADR 0082: o bloco comum cai no chão e é recolhido por proximidade
   if (block === T.GRASS) { const seed = wildSeedAt(x, y, z); if (seed !== null) spillBlock(s, seed, 1, x, y, z); } // semente silvestre da grama (ADR 0113)
   if (isBrazier(block) || isFurnace(block)) spillFurnace(s, x, y, z); // o conteúdo do braseiro ou da fornalha cai no chão

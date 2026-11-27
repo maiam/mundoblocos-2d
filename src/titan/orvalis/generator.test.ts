@@ -17,7 +17,7 @@ describe('Orvalis em voxel — gerador (ADR 0105)', () => {
 
   it('só devolve ids de bloco conhecidos e rocha-mãe no fundo', () => {
     const g = new OrvalisGenerator(42);
-    const ok = new Set<number>([T.AIR, T.LAKE, T.BEDROCK, T.GRASS, T.DIRT, T.STONE, T.BEACH, T.LOG_OAK, T.LEAVES_OAK, T.LOG_CHERRY, T.LEAVES_CHERRY, T.LOG_BIRCH, T.LEAVES_BIRCH]);
+    const ok = new Set<number>([T.AIR, T.LAKE, T.BEDROCK, T.GRASS, T.DIRT, T.STONE, T.BEACH, T.LOG_OAK, T.LEAVES_OAK, T.LOG_CHERRY, T.LEAVES_CHERRY, T.LOG_BIRCH, T.LEAVES_BIRCH, T.COAL_ORE]); // v2: minério de carvão (ADR 0122)
     for (let x = -64; x < 64; x += 3) for (let z = -64; z < 64; z += 3) for (let y = Y_MIN; y <= 130; y += 2) expect(ok.has(g.blockAt(x, y, z))).toBe(true);
     expect(g.blockAt(5, Y_MIN, 5)).toBe(T.BEDROCK);
     expect(g.blockAt(5, Y_MAX, 5)).toBe(T.AIR);

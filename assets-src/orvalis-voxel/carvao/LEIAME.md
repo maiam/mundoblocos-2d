@@ -11,4 +11,4 @@
 | `orvalis_bloco_carvao_icone_16x16.png`, `…_textura_16x16.png` | bloco de carvão | fila |
 
 ## Estado
-Só o ícone do Carvão Vegetal é usado. O **carvão mineral**, o **minério** (geração de veios, regra de mundo própria — ver `titan/ores.ts`) e o **bloco de carvão** (combustível de 800 s na Wiki) exigem regra de mundo pelo ciclo da ADR 0116; itens do Orvalis ficam na faixa 42+ (ADR 0114) e o atlas de itens 4 × 21 está cheio (o próximo item o amplia).
+**No jogo (v0.189.0, ADR 0122):** carvão vegetal (item 84), carvão mineral (item 87, ícone em `arte16/`), textura do minério (tile `orvalis/minerio-carvao`) e do bloco de carvão (tile e ícone, item 88). Só o minério em ardósia abissal (ícone e textura) e o ícone do minério/bloco pré-renderizados seguem em fila. O **carvão mineral**, o **minério** (geração de veios, regra de mundo própria — ver `titan/ores.ts`) e o **bloco de carvão** (combustível de 800 s na Wiki) exigem regra de mundo pelo ciclo da ADR 0116; itens do Orvalis ficam na faixa 42+ (ADR 0114) e o atlas de itens 4 × 21 está cheio (o próximo item o amplia).

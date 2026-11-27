@@ -3,6 +3,7 @@ import { hash2 } from '../../world/random';
 import type { Arrival, Column } from '../generator';
 import { derive } from '../generator';
 import type { TerrainGen } from '../terrain';
+import { attemptsFor, mulberry32, type OreRule, sampleOreY, veinCells } from '../ores';
 import { inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, Y_MIN } from '../voxel';
 
 /**
@@ -12,10 +13,18 @@ import { inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, Y_MIN } from '../voxe
  *
  * v1: região de 128 × 128 cercada de mar; **Campos** e **Bosque de Sakura**, colinas, montanhas de pedra, rios, praias e árvores (carvalho, bétula e cerejeira) de tora e folhas.
  * O líquido é `T.LAKE` (o do motor; a arte da água é a do Orvalis) com superfície em Y = 64, como no Titã, para que balde, pulo de saída e mergulho valham sem mudança.
+ * v2 (ADR 0122): **veios de minério de carvão** enterrados na pedra (regra da Minecraft Wiki adaptada, `ORVALIS_ORE_RULES`); o resto é a v1.
  */
-export const ORVALIS_GENERATOR_VERSION = 1;
+export const ORVALIS_GENERATOR_VERSION = 2;
 
-const PURPOSE = { relevo: 1, colinas: 2, mar: 3, rio: 4, montanha: 5, bioma: 6, bosque: 7, arvore: 8, chegada: 9 } as const;
+const PURPOSE = { relevo: 1, colinas: 2, mar: 3, rio: 4, montanha: 5, bioma: 6, bosque: 7, arvore: 8, chegada: 9, mina: 10 } as const;
+/**
+ * Veios do Orvalis (v2, ADR 0122), do Minecraft 1.18 adaptados: 20 tentativas por chunk, veios de 4 a 30 blocos (a Wiki fala em 0–37), altura triangular com pico no meio da pedra (Y 40; a Wiki pica em 96 num mundo
+ * de 192 de pedra) e descarte de metade dos blocos expostos ao ar. Só substituem a pedra (abaixo do subsolo de 3 blocos).
+ */
+export const ORVALIS_ORE_RULES: readonly OreRule[] = [
+  { blockId: T.COAL_ORE, veinsPerChunk: 20, veinSize: 4, veinSizeMax: 30, minY: -60, maxY: 90, peakY: 40, airDiscardChance: 0.5 },
+];
 const CLEARING = 6;
 /** Faixa de mar em volta da região: o relevo desce até o fundo do mar nas bordas (a parede invisível do motor fica dentro da água). */
 const SEA_BAND = 20;
@@ -55,6 +64,9 @@ export class OrvalisGenerator implements TerrainGen {
   private readonly cols = new Map<number, Column>();
   private readonly treeCells = new Map<number, Tree | null>();
   private readonly near = new Map<number, readonly Tree[]>();
+  private readonly ores = new Map<number, { id: number; pri: number }>();
+  private readonly oreDone = new Set<number>();
+  private readonly oreReady = new Set<number>();
 
   constructor(readonly seed: number, readonly version: number = ORVALIS_GENERATOR_VERSION) {
     this.nLand = new Noise(derive(seed, PURPOSE.relevo));
@@ -203,7 +215,38 @@ export class OrvalisGenerator implements TerrainGen {
     }
     if (y === c.top) return c.surface;
     if (y >= c.top - 3) return c.sub;
+    if (this.version >= 2) { const o = this.oreAt(x, y, z); if (o !== null) return o; } // v2: minério de carvão enterrado
     return T.STONE;
+  }
+
+  /** Minério da célula (v2), ou `null`. Garante que os 3 × 3 chunks em volta já foram gerados, porque um veio passa de um chunk para o vizinho (o resultado nunca depende da ordem de leitura). */
+  private oreAt(x: number, y: number, z: number): number | null {
+    const cx = x >> 4, cz = z >> 4, rk = (cx + 512) * 1024 + (cz + 512);
+    if (!this.oreReady.has(rk)) {
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) this.genOreChunk(cx + dx, cz + dz);
+      this.oreReady.add(rk);
+    }
+    return this.ores.get(((x + 4096) * 8192 + (z + 4096)) * 512 + (y + 64))?.id ?? null;
+  }
+
+  private genOreChunk(cx: number, cz: number): void {
+    const ck = (cx + 512) * 1024 + (cz + 512);
+    if (this.oreDone.has(ck)) return;
+    this.oreDone.add(ck);
+    if (!this.inRegion(cx * 16 + 8, cz * 16 + 8) && !this.inRegion(cx * 16, cz * 16) && !this.inRegion(cx * 16 + 15, cz * 16 + 15)) return;
+    const replaceable = (x: number, y: number, z: number): boolean => y > Y_MIN && this.inRegion(x, z) && y < this.column(x, z).top - 3;
+    const exposed = (x: number, y: number, z: number): boolean => [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([dx, dy, dz]) => y + dy > this.column(x + dx, z + dz).top && y + dy > LAKE_LAST_Y);
+    ORVALIS_ORE_RULES.forEach((rule, ri) => {
+      const rng = mulberry32((derive(this.seed, PURPOSE.mina) ^ Math.imul(ck + 1, 0x9e3779b1) ^ Math.imul(ri + 1, 0x85ebca6b)) >>> 0);
+      const n = attemptsFor(rng, rule.veinsPerChunk);
+      for (let k = 0; k < n; k++) {
+        const x = cx * 16 + Math.floor(rng() * 16), z = cz * 16 + Math.floor(rng() * 16), y = sampleOreY(rng, rule), pri = ri * 1e10 + ck * 1000 + k;
+        for (const [vx, vy, vz] of veinCells(rng, x, y, z, rule, replaceable, exposed)) {
+          const key = ((vx + 4096) * 8192 + (vz + 4096)) * 512 + (vy + 64), old = this.ores.get(key);
+          if (!old || pri < old.pri) this.ores.set(key, { id: rule.blockId, pri });
+        }
+      }
+    });
   }
 }
 
