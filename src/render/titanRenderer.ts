@@ -196,7 +196,7 @@ export class TitanRenderer {
     this.sun.visible = false;
     this.scene.add(this.sun);
     this.moon = new THREE.Sprite(new THREE.SpriteMaterial({ fog: false, transparent: true, depthWrite: false }));
-    this.moon.scale.set(11, 11, 1);
+    this.moon.scale.set(14, 14, 1);
     this.moon.visible = false;
     this.scene.add(this.moon);
     this.scene.add(this.rainLayer.mesh);
