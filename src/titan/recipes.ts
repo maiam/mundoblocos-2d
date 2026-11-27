@@ -100,6 +100,12 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'semente-abobora', name: 'Sementes de Abóbora', group: 'materiais', result: { item: Item.SEMENTE_ABOBORA, count: 4 }, ingredients: [{ item: Item.BLOCO_ABOBORA, count: 1 }], station: 'personal', world: 'orvalis' },
   { id: 'semente-melancia', name: 'Semente de Melancia', group: 'materiais', result: { item: Item.SEMENTE_MELANCIA, count: 1 }, ingredients: [{ item: Item.FATIA_MELANCIA, count: 1 }], station: 'personal', world: 'orvalis' },
   { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
+  { id: 'laje-carvalho', name: 'Laje de Carvalho', group: 'construcao', result: { item: Item.LAJE_CARVALHO, count: 6 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 3 }], station: 'workbench', world: 'orvalis' },
+  { id: 'degrau-carvalho', name: 'Degrau de Carvalho', group: 'construcao', result: { item: Item.DEGRAU_CARVALHO, count: 4 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 6 }], station: 'workbench', world: 'orvalis' }, // Wiki: laje 3 tábuas → 6; degrau 6 → 4 (ADR 0139)
+  { id: 'laje-cerejeira', name: 'Laje de Cerejeira', group: 'construcao', result: { item: Item.LAJE_CEREJEIRA, count: 6 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 3 }], station: 'workbench', world: 'orvalis' },
+  { id: 'degrau-cerejeira', name: 'Degrau de Cerejeira', group: 'construcao', result: { item: Item.DEGRAU_CEREJEIRA, count: 4 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 6 }], station: 'workbench', world: 'orvalis' }, // Wiki: laje 3 tábuas → 6; degrau 6 → 4 (ADR 0139)
+  { id: 'laje-betula', name: 'Laje de Bétula', group: 'construcao', result: { item: Item.LAJE_BETULA, count: 6 }, ingredients: [{ item: Item.TABUA_BETULA, count: 3 }], station: 'workbench', world: 'orvalis' },
+  { id: 'degrau-betula', name: 'Degrau de Bétula', group: 'construcao', result: { item: Item.DEGRAU_BETULA, count: 4 }, ingredients: [{ item: Item.TABUA_BETULA, count: 6 }], station: 'workbench', world: 'orvalis' }, // Wiki: laje 3 tábuas → 6; degrau 6 → 4 (ADR 0139)
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 

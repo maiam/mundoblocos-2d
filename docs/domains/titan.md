@@ -221,6 +221,10 @@ Vara de Pesca (106, 64 usos), boia (113, textura), peixes 107–112. `titan/fish
 ## Corais do Orvalis (ADR 0136, v0.205.0)
 Blocos 160–189 e itens 123–152 (coral, gorgônia, bloco; vivos e mortos; 5 famílias). Coral e gorgônia = plantas aquáticas (`isWaterPlant`); bloco de coral vivo sem água morre em 3 a 6 s (`titan/coral.ts`). Recifes: `reefInfo`/`reefBlock`, gerador v6, ruído `REEF.threshold` 0,3, profundidade 3–10. Quebrar solta o próprio item.
 
+## Famílias das madeiras do Orvalis (ADR 0139, v0.210.0)
+
+Lajes (190–195) e degraus (196–207) de carvalho, cerejeira e bétula; itens 156–161; funde na tábua da mesma madeira; degrau com 3 modelos numa tira de 9 tiles; mesher em `Uint16Array`. Detalhes e fila (W2 cerca e portão, W3 porta e alçapão): `docs/adr/0139-familia-das-madeiras-lajes-e-degraus-minecraft-wiki.md`.
+
 ## Botes do Orvalis (ADR 0137, v0.206.0)
 Itens 153–155; `titan/boat.ts` (puro) com `stepBoat` (8 m/s, só água, para na margem), `boatFits`, `boatAim`; ações em `actions.ts`; save em `header.boats` (`TITAN_SAVE_VERSION` 8); a bordo o corpo segue o assento e W/S/A/D pilotam, pular desembarca; modelos GLB em `render/boatView.ts`.
 

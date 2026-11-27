@@ -109,6 +109,12 @@
   "orvalis/coral-bloco-cerebro-morto",
   "orvalis/coral-bloco-bolha-morto",
   "orvalis/coral-bloco-fogo-morto",
-  "orvalis/coral-bloco-chifre-morto"
+  "orvalis/coral-bloco-chifre-morto",
+    "orvalis/laje-carvalho-topo",
+    "orvalis/laje-carvalho-face",
+    "orvalis/laje-cerejeira-topo",
+    "orvalis/laje-cerejeira-face",
+    "orvalis/laje-betula-topo",
+    "orvalis/laje-betula-face"
  ]
 }

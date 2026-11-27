@@ -5,7 +5,7 @@ import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
-import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanDegrauMadeiraModels, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -23,7 +23,7 @@ import { BoatView, type BoatDraw } from './boatView';
 import { FazendaView, type FazendaItem, type FazendaModels } from './fazenda';
 import type { FaunaKind } from '../titan/fauna';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
-import { DOOR_THICK, MURETA_KINDS, type ModelKindName, T } from '../titan/voxel';
+import { DOOR_THICK, MURETA_KINDS, WOOD_STAIR_KINDS, type ModelKindName, T } from '../titan/voxel';
 import { wallModelData } from './muretaModel';
 import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
 import { lidIdle, stepLid } from '../titan/lid';
@@ -46,7 +46,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 39;
+const ITEM_ROWS = 41;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
@@ -166,7 +166,7 @@ export class TitanRenderer {
   private avatar: THREE.Group | null = null;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal. */ fazenda?: Record<FaunaKind, HTMLImageElement>; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; degrauMadeira: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal. */ fazenda?: Record<FaunaKind, HTMLImageElement>; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -327,6 +327,16 @@ export class TitanRenderer {
     dtex.needsUpdate = true;
     const dmat = new THREE.MeshBasicMaterial({ map: dtex, vertexColors: true, fog: true });
     patchDayLight(dmat, this.ambient, { instGlow: true, instSky: true });
+    // Degrau de Madeira (ADR 0139): tira de 9 tiles (carvalho, cerejeira, bétula × topo | frente | perfil), uma vez por face
+    const wdtex = new THREE.Texture(extra.degrauMadeira);
+    wdtex.colorSpace = THREE.SRGBColorSpace;
+    wdtex.magFilter = THREE.NearestFilter;
+    wdtex.minFilter = THREE.NearestFilter;
+    wdtex.generateMipmaps = false;
+    wdtex.flipY = false;
+    wdtex.needsUpdate = true;
+    const wdmat = new THREE.MeshBasicMaterial({ map: wdtex, vertexColors: true, fog: true });
+    patchDayLight(wdmat, this.ambient, { instGlow: true, instSky: true });
     // Mureta de Pedra (ADR 0110): tira de 2 tiles de 16 px (topo | face); um modelo por máscara de conexão, gerado em `muretaModel.ts`
     const mtex2 = new THREE.Texture(extra.muretaPedra);
     mtex2.colorSpace = THREE.SRGBColorSpace;
@@ -355,7 +365,7 @@ export class TitanRenderer {
     const floraMat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(floraMat, this.ambient, { instGlow: true, instSky: true });
     const flora = (Object.keys(FLORA_CELLS) as ModelKind[]).map((k) => [k, floraModel(k, ITEM_ROWS), floraMat] as [ModelKind, ModelData, THREE.Material]);
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...WOOD_STAIR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanDegrauMadeiraModels[(['carvalho', 'cerejeira', 'betula'] as const)[i]], wdmat]), ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -492,7 +502,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...WOOD_STAIR_KINDS, ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
       const cells = this.volume.modelCells(kind);
       for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
         let mesh = this.modelMeshes[target];

@@ -19,7 +19,7 @@ BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
 SRC16 = 'assets-src/titan/arte16/'  # armas, ferramentas e itens de 16 × 16 px (ADR 0097): `itens.json` diz qual item usa qual arquivo
 SRC_ORV = 'assets-src/orvalis-voxel/icones32/'  # blocos do Orvalis em voxel (ADR 0105; `make-orvalis-voxel-arte.py`): itens 42–51
-ORV_ICONS = {42: 'terra_com_grama', 43: 'terra', 44: 'pedra', 45: 'areia_da_praia', 46: 'tora_de_carvalho', 47: 'folhas_de_carvalho', 48: 'tora_de_cerejeira', 49: 'folhas_de_cerejeira', 50: 'tora_de_betula', 51: 'folhas_de_betula', 52: 'tabuas_de_carvalho', 53: 'tabuas_de_cerejeira', 54: 'tabuas_de_betula', 56: 'mesa_de_carpintaria', 57: 'pedra_lisa', 58: 'tijolo_de_pedra', 59: 'laje_de_pedra', 60: 'degrau_de_pedra', 61: 'mureta_de_pedra', 62: 'terra_arada_seca', 63: 'terra_arada_umida', 64: 'caminho_de_terra', 65: 'terra_infertil', 66: 'bloco_de_argila', 67: 'bloco_de_tijolos', 83: 'fornalha', 88: 'bloco_de_carvao'}
+ORV_ICONS = {42: 'terra_com_grama', 43: 'terra', 44: 'pedra', 45: 'areia_da_praia', 46: 'tora_de_carvalho', 47: 'folhas_de_carvalho', 48: 'tora_de_cerejeira', 49: 'folhas_de_cerejeira', 50: 'tora_de_betula', 51: 'folhas_de_betula', 52: 'tabuas_de_carvalho', 53: 'tabuas_de_cerejeira', 54: 'tabuas_de_betula', 56: 'mesa_de_carpintaria', 57: 'pedra_lisa', 58: 'tijolo_de_pedra', 59: 'laje_de_pedra', 60: 'degrau_de_pedra', 61: 'mureta_de_pedra', 62: 'terra_arada_seca', 63: 'terra_arada_umida', 64: 'caminho_de_terra', 65: 'terra_infertil', 66: 'bloco_de_argila', 67: 'bloco_de_tijolos', 83: 'fornalha', 88: 'bloco_de_carvao', 156: 'laje_de_carvalho', 157: 'laje_de_cerejeira', 158: 'laje_de_betula', 159: 'degrau_de_carvalho', 160: 'degrau_de_cerejeira', 161: 'degrau_de_betula'}
 OUT_ITEMS, OUT_REED = 'src/assets/titan-itens-32px.webp', 'src/assets/titan-junco-variantes-32px.webp'
 OUT_LAKE = {16: 'src/assets/titan-lago-16px.webp', 8: 'src/assets/titan-lago-8px.webp'}  # a água do mundo: 16 px (padrão) e 8 px (isométrica), ADR 0106
 NEW = {  # id do item -> arte de 32 px
@@ -40,12 +40,12 @@ def main() -> None:
     if os.path.exists(BASE):
         base = Image.open(BASE).convert('RGBA')
         assert base.size == (64, 64), base.size
-        atlas = Image.new('RGBA', (128, 1248), (0, 0, 0, 0))  # 4 colunas × 39 linhas de 32 px (156 células, ids até 155, ADR 0133, 0135, 0136 e 0137: pesca, flora marinha, corais e botes; 113 e 119–122 são só texturas; antes 27 linhas, ids até 105; os de 89 a 99 são a fauna de fazenda, ADR 0124, 100–101 a beterraba, ADR 0127, e 102–105 a abóbora e a melancia, ADR 0128; 86 em uso: 85 = Tocha e 86 = textura da Tocha de parede, que não é item; o CSS lê `4 × 27`; ADR 0089, 0102, 0105, 0107, 0108, 0121)
+        atlas = Image.new('RGBA', (128, 1312), (0, 0, 0, 0))  # 4 colunas × 41 linhas de 32 px (164 células, ids até 161, lajes e degraus de madeira ADR 0139; antes 39 linhas, ids até 155, ADR 0133, 0135, 0136 e 0137: pesca, flora marinha, corais e botes; 113 e 119–122 são só texturas; antes 27 linhas, ids até 105; os de 89 a 99 são a fauna de fazenda, ADR 0124, 100–101 a beterraba, ADR 0127, e 102–105 a abóbora e a melancia, ADR 0128; 86 em uso: 85 = Tocha e 86 = textura da Tocha de parede, que não é item; o CSS lê `4 × 27`; ADR 0089, 0102, 0105, 0107, 0108, 0121)
         atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     else:  # a base de 16 px saiu com a arte do 2.5D (ADR 0115): o atlas já gravado (cápsula legada e demais células) passa a ser o ponto de partida
         old = Image.open(OUT_ITEMS).convert('RGBA')
-        assert old.size[0] == 128 and old.size[1] in (672, 704, 800, 832, 864, 928, 992, 1216, 1248), old.size  # 21 linhas (antes da Tocha) ou 22
-        atlas = Image.new('RGBA', (128, 1248), (0, 0, 0, 0))
+        assert old.size[0] == 128 and old.size[1] in (672, 704, 800, 832, 864, 928, 992, 1216, 1248, 1312), old.size  # 21 linhas (antes da Tocha) ou 22
+        atlas = Image.new('RGBA', (128, 1312), (0, 0, 0, 0))
         atlas.paste(old, (0, 0))
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')

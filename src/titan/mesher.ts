@@ -83,7 +83,7 @@ class Builder {
 export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number): SectionMesh {
   const x0 = cx * 16, z0 = cz * 16, y0 = Y_MIN + sy * SECTION;
   const N = SECTION + 2;
-  const cells = new Uint8Array(N * N * N); // índice ((ly+1) * N + (lz+1)) * N + (lx+1)
+  const cells = new Uint16Array(N * N * N); // ids passam de 255 (ADR 0139); índice ((ly+1) * N + (lz+1)) * N + (lx+1)
   let any = false;
   for (let ly = -1; ly <= SECTION; ly++) for (let lz = -1; lz <= SECTION; lz++) for (let lx = -1; lx <= SECTION; lx++) {
     const id = vol.get(x0 + lx, y0 + ly, z0 + lz);

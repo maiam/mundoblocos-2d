@@ -238,3 +238,4 @@
 | **Orvalis em sala, entrega A (27/11/2026):** salas por mundo, sala 102 "Orvalis 1" (seed 20261127), gerador pelo mundo da sala, botão de salas no Orvalis; fauna, pesca e botes nas entregas B e C | ADR 0138 |
 | **Orvalis em sala, entrega B (27/11/2026):** fauna de fazenda no servidor (simulação a 48 m, mensagem `fauna`, golpe e comida por ação, snapshot), protocolo 4 | ADR 0138 |
 | **Orvalis em sala, entrega C (27/11/2026):** pesca no servidor com a boia só do dono; botes compartilhados com piloto validado (só água, velocidade); protocolo 5 | ADR 0138 |
+| **Famílias das madeiras, W1 (27/11/2026):** lajes e degraus de carvalho, cerejeira e bétula (blocos 190–207, itens 156–161), receitas da Wiki, mesher em `Uint16Array` | ADR 0139 |
