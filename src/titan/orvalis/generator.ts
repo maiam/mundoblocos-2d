@@ -4,7 +4,9 @@ import type { Arrival, Column } from '../generator';
 import { derive } from '../generator';
 import type { TerrainGen } from '../terrain';
 import { attemptsFor, mulberry32, type OreRule, sampleOreY, veinCells } from '../ores';
-import { inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, Y_MIN } from '../voxel';
+import { fenceId, gateId, inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, WALL_E, WALL_N, WALL_S, WALL_W, Y_MIN } from '../voxel';
+import { COSTA_HEIGHT_B64, COSTA_MASK_B64, COSTA_PLAN } from './costaData';
+import type { FaunaKind } from '../fauna';
 
 /**
  * Gerador do Orvalis em voxel (ADR 0105): a ilha de florestas do mundo principal refeita em blocos de 1 m, com as regras do motor do Titã. Função pura de **seed + versão +
@@ -126,7 +128,7 @@ export class OrvalisGenerator implements TerrainGen {
     return col;
   }
 
-  private computeColumn(x: number, z: number): Column {
+  protected computeColumn(x: number, z: number): Column {
     const c = this.arrival.clearing;
     const inClear = x >= c.x0 && x < c.x0 + c.size && z >= c.z0 && z < c.z0 + c.size;
     const top = inClear ? this.arrival.y - 1 : this.rawTop(x, z);
@@ -140,7 +142,7 @@ export class OrvalisGenerator implements TerrainGen {
   // ---- Chegada ----
 
   /** Clareira plana de grama a que o jogador chega, e o olhar voltado para a água mais próxima (ou para o centro da ilha). */
-  private findArrival(): Arrival {
+  protected findArrival(): Arrival {
     const base = derive(this.seed, PURPOSE.chegada);
     const flat = (x0: number, z0: number): number | null => { // alvo = nível do centro; só vale se tudo é grama seca, plana e longe da pedra
       let lo = Infinity, hi = -Infinity;
@@ -194,7 +196,7 @@ export class OrvalisGenerator implements TerrainGen {
   }
 
   /** Árvores cujo tronco ou copa pode tocar a coluna (x, z): raiz a até 3 blocos de distância. */
-  private treesNear(x: number, z: number): readonly Tree[] {
+  protected treesNear(x: number, z: number): readonly Tree[] {
     const key = (x + 4096) * 8192 + (z + 4096), hit = this.near.get(key);
     if (hit) return hit;
     let out: Tree[] | null = null;
@@ -208,7 +210,7 @@ export class OrvalisGenerator implements TerrainGen {
   }
 
   /** Bloco (tora ou folha) que a árvore põe na célula, ou 0. */
-  private treeBlock(t: Tree, x: number, y: number, z: number): number {
+  protected treeBlock(t: Tree, x: number, y: number, z: number): number {
     const dx = x - t.x, dz = z - t.z, dy = y - t.top; // dy = 1 é a primeira tora, acima do chão
     if (dx === 0 && dz === 0 && dy >= 1 && dy <= t.h) return LOG[t.sp];
     const layer = dy - (t.h - 2);
@@ -308,5 +310,95 @@ export class OrvalisGenerator implements TerrainGen {
   }
 }
 
+/**
+ * **Aldeia da Costa** (ADR 0142, `COSTA_GENERATOR_VERSION` 100): o terreno **não é sorteado** — vem de um mapa feito à mão (`costaData.ts`, gerado de `assets-src/orvalis-voxel/cenarios/aldeia-da-costa/` por
+ * `make-orvalis-costa.py`): altura por coluna, material pela máscara, muro de pedra, cercas e porteiras de carvalho, árvores (só carvalho) e a chegada no portão da praia. É a sala 102; a partida individual segue
+ * com o relevo por ruído (`ORVALIS_GENERATOR_VERSION`). Herda do `OrvalisGenerator` o que continua valendo — flora marinha, recifes e veios de carvão (regras v6) — e a fauna espalhada de `faunaSpecs`; soma os animais dos
+ * cercados (`farmFauna`). Muda o mapa, o muro ou a regra → versão nova.
+ */
+export const COSTA_GENERATOR_VERSION = 100;
+const COSTA_N = 128, COSTA_MIN = -64;
+const b64 = (s: string): Uint8Array => {
+  const al = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', out: number[] = [];
+  let acc = 0, bits = 0;
+  for (const ch of s) { const v = al.indexOf(ch); if (v < 0) continue; acc = (acc << 6) | v; bits += 6; if (bits >= 8) { bits -= 8; out.push((acc >> bits) & 255); acc &= (1 << bits) - 1; } }
+  return Uint8Array.from(out);
+};
+const COSTA_H = b64(COSTA_HEIGHT_B64), COSTA_M = b64(COSTA_MASK_B64);
+const costaIdx = (x: number, z: number): number => (z - COSTA_MIN) * COSTA_N + (x - COSTA_MIN);
+const costaIn = (x: number, z: number): boolean => x >= COSTA_MIN && x < COSTA_MIN + COSTA_N && z >= COSTA_MIN && z < COSTA_MIN + COSTA_N;
+const cellKey = (x: number, z: number): number => (x + 256) * 1024 + (z + 256);
+const COSTA_WALL = new Set(COSTA_PLAN.muro.celulas.map(([x, z]) => cellKey(x, z)));
+const COSTA_FENCE = new Set(COSTA_PLAN.cercas.celulas.map(([x, z]) => cellKey(x, z)));
+const COSTA_GATES = new Map(COSTA_PLAN.cercados.map((c) => [cellKey(c.porteira[0], c.porteira[1]), c.porteira] as const)); // as porteiras ficam no vão da cerca
+const COSTA_GATE_X = (x: number, z: number): boolean => COSTA_FENCE.has(cellKey(x - 1, z)) || COSTA_FENCE.has(cellKey(x + 1, z)); // o painel corre em X se há cerca nos lados de leste e oeste
+/** Animais dos cercados (a Wiki põe os animais na criação; as espécies e as quantidades são escolha do mapa): cercado A = 3 galinhas e 1 porco; cercado B = 2 vacas e 2 ovelhas. */
+const COSTA_PENS: ReadonlyArray<{ pen: number; kind: FaunaKind; n: number }> = [{ pen: 0, kind: 'galinha', n: 3 }, { pen: 0, kind: 'porco', n: 1 }, { pen: 1, kind: 'vaca', n: 2 }, { pen: 1, kind: 'ovelha', n: 2 }];
+
+export class CostaGenerator extends OrvalisGenerator {
+  private costaTrees: Map<number, Tree[]> | null = null;
+
+  constructor(seed: number) { super(seed, COSTA_GENERATOR_VERSION); }
+
+  /** Chegada no portão da praia (vão do muro em Z = 35, X 5–9), de frente para a aldeia (norte). */
+  protected override findArrival(): Arrival {
+    const g = COSTA_PLAN.portoes[1], x = (g.x[0] + g.x[1] + 1) / 2, z = g.z + 0.5, top = COSTA_H[costaIdx(Math.floor(x), g.z)];
+    return { x, y: top + 1, z, yaw: 0, clearing: { x0: g.x[0], z0: g.z - 1, size: 3 } };
+  }
+
+  protected override computeColumn(x: number, z: number): Column {
+    if (!costaIn(x, z)) return { top: 44, surface: T.BEACH, sub: T.BEACH }; // fora do mapa: fundo do mar (a parede invisível do motor fica dentro da água)
+    const i = costaIdx(x, z), top = COSTA_H[i], m = COSTA_M[i];
+    if (top <= LAKE_LAST_Y || m === 0 || m === 1) return { top, surface: T.BEACH, sub: T.BEACH };
+    switch (m) {
+      case 4: return { top, surface: T.STONE, sub: T.STONE };
+      case 5: return { top, surface: T.PATH, sub: T.DIRT };
+      case 6: return { top, surface: T.FARMLAND_DRY, sub: T.DIRT }; // talhão arado, seco: a água é do jogador
+      case 8: return { top, surface: T.PLANKS_OAK, sub: T.DIRT }; // base edificável: só piso
+      default: return { top, surface: T.GRASS, sub: T.DIRT }; // grama, floresta e pasto
+    }
+  }
+
+  /** As árvores do mapa (só carvalho), indexadas pelas colunas que a copa ou o tronco pode tocar. */
+  protected override treesNear(x: number, z: number): readonly Tree[] {
+    if (!this.costaTrees) {
+      const m = new Map<number, Tree[]>();
+      COSTA_PLAN.arvores.forEach(([tx, tz], n) => {
+        const t: Tree = { x: tx, z: tz, top: this.column(tx, tz).top, h: 4 + Math.floor(hash2(this.seed, n, 31) * 3), sp: 'oak', seed: Math.floor(hash2(this.seed, n, 37) * 4294967296) };
+        for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) { const k = cellKey(tx + dx, tz + dz); (m.get(k) ?? m.set(k, []).get(k)!).push(t); }
+      });
+      this.costaTrees = m;
+    }
+    return this.costaTrees.get(cellKey(x, z)) ?? NO_TREES;
+  }
+
+  /** Muro de pedra lisa (4 blocos), cercas e porteiras de carvalho por cima do terreno; o resto é o da base. */
+  override blockAt(x: number, y: number, z: number): number {
+    const k = cellKey(x, z);
+    if (y >= COSTA_PLAN.muro.y[0] && y <= COSTA_PLAN.muro.y[1] && COSTA_WALL.has(k)) return T.STONE_SMOOTH;
+    if (y === COSTA_PLAN.cercas.yBase) {
+      if (COSTA_FENCE.has(k)) {
+        const link = (cx: number, cz: number, axisX: boolean): boolean => { const kk = cellKey(cx, cz); return COSTA_FENCE.has(kk) || (COSTA_GATES.has(kk) && COSTA_GATE_X(cx, cz) === axisX); };
+        return fenceId(0, (link(x, z - 1, false) ? WALL_N : 0) | (link(x + 1, z, true) ? WALL_E : 0) | (link(x, z + 1, false) ? WALL_S : 0) | (link(x - 1, z, true) ? WALL_W : 0));
+      }
+      if (COSTA_GATES.has(k)) return gateId(0, COSTA_GATE_X(x, z) ? 0 : 1, false);
+    }
+    return super.blockAt(x, y, z);
+  }
+
+  /** Animais da criação: dentro de cada cercado (a caixa do JSON sem a cerca), no pasto. */
+  get farmFauna(): ReadonlyArray<{ id: string; kind: FaunaKind; x: number; y: number; z: number }> {
+    const out: Array<{ id: string; kind: FaunaKind; x: number; y: number; z: number }> = [];
+    for (const { pen, kind, n } of COSTA_PENS) {
+      const [x0, z0, x1, z1] = COSTA_PLAN.cercados[pen].caixa, w = x1 - x0 - 1, d = z1 - z0 - 1; // o interior fica a 1 bloco da cerca
+      for (let i = 0; i < n; i++) {
+        const x = x0 + 1 + Math.floor(hash2(this.seed, pen * 97 + i, 41 + kind.length) * w), z = z0 + 1 + Math.floor(hash2(this.seed, pen * 97 + i, 43 + kind.length) * d);
+        out.push({ id: `fc${pen}_${kind}_${i}`, kind, x, y: this.column(x, z).top + 1, z });
+      }
+    }
+    return out;
+  }
+}
+
 export const orvalisGeneratorFor = (seed: number, version: number): OrvalisGenerator | null =>
-  Number.isInteger(version) && version >= 1 && version <= ORVALIS_GENERATOR_VERSION ? new OrvalisGenerator(seed, version) : null;
+  version === COSTA_GENERATOR_VERSION ? new CostaGenerator(seed) : Number.isInteger(version) && version >= 1 && version <= ORVALIS_GENERATOR_VERSION ? new OrvalisGenerator(seed, version) : null;

@@ -7,13 +7,13 @@ import type { VoxelWorld } from '../../titan/terrain';
  * Protocolo das salas do Titã (ADR 0104): paralelo ao do mundo principal (`net/protocol.ts`), porque o Titã tem motor próprio (`TitanVolume`).
  * Compartilhado com o servidor (`build:net`): sem DOM. Mudou uma mensagem de forma incompatível → suba `TITAN_PROTOCOL_VERSION` e o servidor junto.
  */
-export const TITAN_PROTOCOL_VERSION = 5; // 4 (ADR 0138, entrega B): fauna de fazenda do Orvalis pela sala (mensagem `fauna`, ações `strikeFauna` e `feedFauna`); 5 (entrega C): pesca (`bobber`) e botes (`boats`, `boat`, ações `mountBoat` e `dismountBoat`)
+export const TITAN_PROTOCOL_VERSION = 6; // 6 (ADR 0142): a sala 102 vira a Aldeia da Costa (gerador `COSTA_GENERATOR_VERSION` 100 no `welcome`): o cliente antigo não a abre; 5 (ADR 0138 C): // 4 (ADR 0138, entrega B): fauna de fazenda do Orvalis pela sala (mensagem `fauna`, ações `strikeFauna` e `feedFauna`); 5 (entrega C): pesca (`bobber`) e botes (`boats`, `boat`, ações `mountBoat` e `dismountBoat`)
 export const TITAN_MAX_PLAYERS = 10;
 export const TITAN_NAME_MIN = 2, TITAN_NAME_MAX = 16;
 /** Salas fixas do Titã (ids acima dos do mundo principal, que usam 1…). Cooperativas de sobrevivência: vida, fome, ar e morte valem. */
-export const TITAN_ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; /** Mundo da sala: decide o gerador, os itens e as regras (ADR 0138). */ world: VoxelWorld }> = [
+export const TITAN_ROOMS: ReadonlyArray<{ id: number; name: string; seed: number; /** Mundo da sala: decide o gerador, os itens e as regras (ADR 0138). */ world: VoxelWorld; /** Terreno feito à mão em vez do sorteado pela seed (ADR 0142): só `'costa'`. */ terrain?: 'costa' }> = [
   { id: 101, name: 'Titã 1', seed: 20261122, world: 'titan' },
-  { id: 102, name: 'Orvalis 1', seed: 20261127, world: 'orvalis' }, // Orvalis em sala (ADR 0138): o mesmo motor, o gerador e as regras do Orvalis
+  { id: 102, name: 'Orvalis 1', seed: 128064, world: 'orvalis', terrain: 'costa' }, // a Aldeia da Costa (ADR 0142); antes, seed 20261127 com relevo por ruído // Orvalis em sala (ADR 0138): o mesmo motor, o gerador e as regras do Orvalis
 ];
 /** Salas de um mundo. */
 export const titanRoomsOf = (world: VoxelWorld): typeof TITAN_ROOMS => TITAN_ROOMS.filter((r) => r.world === world);
