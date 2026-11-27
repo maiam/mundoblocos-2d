@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.194.0 — reprodução da fauna de fazenda (auditoria #36, 27/11/2026)
+- **ADR 0125 (ciclo da ADR 0116; aprovada nos 4 pontos).** Com a **comida da espécie na mão** (trigo: vaca e ovelha; cenoura ou batata: porco; semente de trigo: galinha) o toque curto **alimenta** o animal (qualquer outra coisa golpeia como antes). O adulto fica 30 s em amor; dois em amor, a até 8 m, se encontram e nasce um **filhote** (metade da caixa e da vida, modelo a ½ de escala, sem espólio, segue um adulto, cresce em 20 min; alimentar corta 10 % do que falta); os pais descansam 5 min. Sem XP; teto de 200 animais.
+- Lógica pura em `titan/fauna.ts` (`feedFauna`, `tickBreeding`, `newBaby`, `BREED_FOOD`), `titan/faunaFeed.ts` (gasta a comida só se tem efeito), `titanGame.ts` (gesto e laço), `render/fazenda.ts` (escala do filhote). **Dívida:** filhotes e estado de amor/descanso **não vão ao save**; beterraba e outras sementes ainda não são cultura. 688 testes passam (12 novos); conferido no navegador (duas vacas se encontram e nasce o filhote). Sem mudança de gerador, save nem protocolo.
+
 ## Orvalis v0.193.3 — arte: cultivos complemento na fila (27/11/2026)
 - Entra como **arte-fonte** (`assets-src/orvalis-voxel/cultivos/`, com LEIAME) o pacote `Cultivos — Minecraft Wiki` do Drive: 57 PNGs de 16 × 16 (trigo com as 8 idades, cenoura e batata idades 4–6, **beterraba** com 4 idades e semente, abóbora e melancia com caule de 8 alturas e faces do fruto, bagas doces fase 4, cacau, verruga do Nether, flor-tocha e planta-jarro) e a prancha. **Nada entra no jogo:** cada cultura passa pelo ciclo da ADR 0116; usar as 8 idades muda a horta de 3 para 8 fases (auditoria própria). Sem código, gerador, save nem protocolo.
 

@@ -9,7 +9,8 @@ import { canPlantNut, useDoor, chestAt, chestMoveIn, chestTakeOut, useBed, furna
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, attackFauna, tickRespawn } from './combat';
-import { FAUNA_KINDS, faunaAim, faunaPose, stepFauna, type FaunaKind } from './fauna';
+import { BABY_SCALE, FAUNA_KINDS, faunaAim, faunaPose, isBreedFood, maxHp, stepFauna, tickBreeding, type FaunaKind } from './fauna';
+import { feedFaunaFromSlot } from './faunaFeed';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, stationMet, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX, toolAdvantage } from './breaking';
@@ -842,7 +843,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (iso && aimFauna) { const c = session.fauna[aimFauna.index]; if (!c || Math.hypot(c.body.x - b.x, c.body.y - b.y, c.body.z - b.z) > ATTACK_REACH) aimFauna = null; }
       if (aimCreature && aimFauna) { if (aimFauna.dist < aimCreature.dist) aimCreature = null; else aimFauna = null; } // vence o mais perto
     }
-    const c = aimCreature ? session.creatures[aimCreature.index] : null, fa = aimFauna ? session.fauna[aimFauna.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : fa ? `${FAUNA_KINDS[fa.kind].name} · ${fa.hp}/${FAUNA_KINDS[fa.kind].hp}` : null;
+    const c = aimCreature ? session.creatures[aimCreature.index] : null, fa = aimFauna ? session.fauna[aimFauna.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : fa ? `${FAUNA_KINDS[fa.kind].name}${fa.baby ? ' (filhote)' : fa.love > 0 ? ' ♥' : ''} · ${fa.hp}/${maxHp(fa)}` : null;
     if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
   }
   /** Animal na mira (ADR 0069): vence o bloco que está atrás dele; o toque curto o golpeia. */
@@ -907,7 +908,12 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
-      if (t.kind === 'creature') return { ok: t.item?.startsWith('f:') ? strikeFauna(Number(t.item.slice(2))) : strike(Number(t.item)) };
+      if (t.kind === 'creature' && t.item?.startsWith('f:')) { // fauna de fazenda: comida da espécie na mão alimenta; qualquer outra coisa golpeia (ADR 0125)
+        const fi = Number(t.item.slice(2)), fa = session.fauna[fi], held = session.inventory.get(session.selected);
+        if (fa && held && isBreedFood(fa.kind, held.item)) { const r = feedFaunaFromSlot(session, fi); if (r.msg) notice(r.msg); if (r.consumed) { view.swingHand(); onEdited(); refresh(); } return { ok: r.ok }; }
+        return { ok: strikeFauna(fi) };
+      }
+      if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
       if (t.kind === 'block' && isDoor(vol.get(t.x, t.y, t.z)) && benchAimed()) { openStation(); return { ok: true }; } // tocar/clicar na porta (ao alcance) abre ou fecha, com qualquer coisa na mão (ADR 0102)
       if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
@@ -1009,7 +1015,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
   const steps = new FootstepClock();
   let lastAimText: string | null = null;
-  const fauna = { shown: false, moving: new Map<string, boolean>() }; // fauna de fazenda: o que está desenhado e quem anda (estado de execução, ADR 0124)
+  const fauna = { shown: false, counter: { n: 0 }, moving: new Map<string, boolean>() }; // fauna de fazenda: o que está desenhado e quem anda (estado de execução, ADR 0124)
   let nextScrape = 0; // instante do próximo raspar de pata de um Farejador em investida
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -1095,8 +1101,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         if (fa.phase === 'wander' && Math.hypot(fa.body.x - b.x, fa.body.z - b.z) > FAUNA_SIM_RADIUS) continue;
         fauna.moving.set(fa.id, stepFauna(fa, vol, dt).moving);
       }
+      if (active) { const born = tickBreeding(session.fauna, fauna.counter); if (born.length) notice('Nasceu um filhote'); }
       const near = session.fauna.filter((fa) => Math.hypot(fa.body.x - b.x, fa.body.z - b.z) <= FAUNA_SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, FAUNA_SHOW_MAX);
-      view.setFauna(near.map((fa) => ({ kind: fa.kind, x: fa.body.x, y: fa.body.y, z: fa.body.z, yaw: fa.yaw, pose: faunaPose(fa, fauna.moving.get(fa.id) ?? false) })));
+      view.setFauna(near.map((fa) => ({ kind: fa.kind, x: fa.body.x, y: fa.body.y, z: fa.body.z, yaw: fa.yaw, scale: fa.baby ? BABY_SCALE : 1, pose: faunaPose(fa, fauna.moving.get(fa.id) ?? false) })));
       fauna.shown = near.length > 0;
     }
     if (!client && playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
