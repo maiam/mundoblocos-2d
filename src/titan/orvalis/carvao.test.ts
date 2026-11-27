@@ -20,7 +20,7 @@ describe('carvão: blocos, itens e regras', () => {
     expect(T.COAL_ORE).toBe(150); expect(T.COAL_BLOCK).toBe(151);
     for (const id of [T.COAL_ORE, T.COAL_BLOCK]) { expect(isFull(id) && blocksLight(id)).toBe(true); expect(blockToolOf(id)).toBe('pick'); expect(surfaceOf(id)).toBe('rock'); }
     expect(tileFor(T.COAL_ORE, 'top')).toBe(tileIndex('orvalis/minerio-carvao')); expect(tileFor(T.COAL_BLOCK, 'side')).toBe(tileIndex('orvalis/bloco-carvao'));
-    expect(Item.CARVAO).toBe(87); expect(Item.BLOCO_CARVAO).toBe(88); expect(isItem(87) && isItem(88)).toBe(true); expect(isItem(86) || isItem(106)).toBe(false);
+    expect(Item.CARVAO).toBe(87); expect(Item.BLOCO_CARVAO).toBe(88); expect(isItem(87) && isItem(88)).toBe(true); expect(isItem(86) || isItem(113)).toBe(false);
     expect(ITEM_NAMES[87]).toBe('Carvão'); expect(ITEM_NAMES[88]).toBe('Bloco de Carvão'); expect(maxStack(87)).toBe(64);
     expect(blockOfItem(Item.BLOCO_CARVAO)).toBe(T.COAL_BLOCK); expect(blockOfItem(Item.CARVAO)).toBeNull();
     expect(itemOfBlock(T.COAL_ORE)).toBe(Item.CARVAO); expect(itemOfBlock(T.COAL_BLOCK)).toBe(Item.BLOCO_CARVAO); // o minério solta Carvão, nunca o bloco

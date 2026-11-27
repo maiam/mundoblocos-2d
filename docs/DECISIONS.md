@@ -230,3 +230,4 @@
 | **Inteligência dos NPCs (15/11/2026, ADR 0034):** plano em 4 níveis sem LLM (rotina → reativo → memória → objetivos), Utility AI + módulo puro `npcBrain`, memória no save do jogador, piloto no mercador Bento, "dormir" = entrar pela porta e sumir, mais moradores por recolor no shader + sorteio por seed | domains/npc, ADR 0034 |
 | **Itens soltos e coleta pela Wiki (27/11/2026, auditoria #18):** atraso 0,5 s, alcance 1,425, todo item solto some em 5 min (exceto pilha da morte), fusão na mesma célula | ADR 0131 |
 | **Água animada e correr nadando (27/11/2026, auditoria #14):** 8 quadros no lago do Orvalis, corrida nadando na direção do olhar, fluxo adiado, artes marinhas importadas | ADR 0132 |
+| **Pesca do Orvalis (27/11/2026, auditoria #14 E2):** vara, boia, espera 5–30 s, janela 1–2 s, peixes da Wiki, comida, receita da vara aguarda o fio | ADR 0133 |

@@ -79,6 +79,8 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'carvao-carvalho', name: 'Carvão Vegetal (tora de carvalho)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_OAK, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'carvao-cerejeira', name: 'Carvão Vegetal (tora de cerejeira)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_CHERRY, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'carvao-betula', name: 'Carvão Vegetal (tora de bétula)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_BIRCH, count: 1 }], station: 'furnace', world: 'orvalis' },
+  { id: 'assar-bacalhau', name: 'Bacalhau Assado', group: 'materiais', result: { item: Item.BACALHAU_ASSADO, count: 1 }, ingredients: [{ item: Item.BACALHAU_CRU, count: 1 }], station: 'furnace', world: 'orvalis' },
+  { id: 'assar-salmao', name: 'Salmão Assado', group: 'materiais', result: { item: Item.SALMAO_ASSADO, count: 1 }, ingredients: [{ item: Item.SALMAO_CRU, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'assar-porco', name: 'Carne de Porco Assada', group: 'materiais', result: { item: Item.PORCO_ASSADO, count: 1 }, ingredients: [{ item: Item.PORCO_CRU, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'assar-bife', name: 'Bife', group: 'materiais', result: { item: Item.BIFE, count: 1 }, ingredients: [{ item: Item.BOVINA_CRUA, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'assar-carneiro', name: 'Carneiro Assado', group: 'materiais', result: { item: Item.CARNEIRO_ASSADO, count: 1 }, ingredients: [{ item: Item.CARNEIRO_CRU, count: 1 }], station: 'furnace', world: 'orvalis' },

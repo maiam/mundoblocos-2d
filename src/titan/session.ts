@@ -1,6 +1,7 @@
 import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import type { TerrainGen } from './terrain';
 import { HOTBAR, Inventory } from './inventory';
+import type { Bobber } from './fishing';
 import { isItem, Item } from './items';
 import { creatureSpecs, type Farejador, newFromSpec } from './creature';
 import { type Fauna, faunaFromData, faunaSpecs, faunaToData, hasFauna, newFaunaFromSpecs } from './fauna';
@@ -65,6 +66,8 @@ export interface TitanSession {
   /** Lascas soltas por veios quebrados (v3, ADR 0044): recolhidas por proximidade; vão no cabeçalho do save. */
   drops: Map<string, Drop>;
   /** Relógio só de execução dos drops de bloco (ADR 0082): atraso de coleta e idade; fora do save (recarregar zera). */
+  /** Pescaria em curso (ADR 0133): a boia lançada; só de execução, fora do save. */
+  fishing: Bobber | null;
   dropFx: Map<string, { delay: number; age: number; /** Queda (ADR 0098): altura real em células e velocidade para baixo; ausentes = repousa. */ fy?: number; vy?: number }>;
   dropsRev: number;
   /** Receitas descobertas (`mesa`, `bancada`; ADR 0045) e adições localizadas de partida legada (a brasa dada uma vez). Vão no cabeçalho do save. */
@@ -81,7 +84,8 @@ export interface TitanSession {
 const stateRev = (s: TitanSession): number => s.inventory.rev + s.collectedRev + s.dropsRev + s.metaRev;
 /** Tudo o que está solto no mundo para desenhar: lascas legadas (v1/v2) ainda não recolhidas e as lascas dos veios (v3). */
 export function visibleItems(s: TitanSession): Array<{ id: string; item: number; x: number; y: number; z: number }> {
-  return [...s.items.remaining(), ...[...s.drops.values()].map((d) => { const fy = s.dropFx.get(d.id)?.fy; return fy === undefined ? d : { ...d, y: fy }; })]; // o item em queda desenha na altura real (ADR 0098)
+  const bobber = s.fishing ? [{ id: 'boia', item: Item.BOIA, x: s.fishing.x, y: s.fishing.y, z: s.fishing.z }] : []; // a boia da vara é desenhada como um item na superfície (ADR 0133)
+  return [...bobber, ...s.items.remaining(), ...[...s.drops.values()].map((d) => { const fy = s.dropFx.get(d.id)?.fy; return fy === undefined ? d : { ...d, y: fy }; })]; // o item em queda desenha na altura real (ADR 0098)
 }
 /** Há inventário/coleta ainda não confirmados no banco? */
 export const hasPendingState = (s: TitanSession): boolean => stateRev(s) !== s.savedStateRev;
@@ -257,7 +261,7 @@ export function fresh(gen: TerrainGen): TitanSession {
   const regrow = new Map<string, number>();
   const crops = new Map<string, Crop>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), fauna: faunaFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), fauna: faunaFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), fishing: null, dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
   return s;
 }
 
@@ -283,7 +287,7 @@ export function resume(gen: TerrainGen, save: TitanSave): TitanSession {
   const crops = validCrops(save.header.crops, volume, save.header.v);
   const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), fauna: faunaFromSave(save.header.fauna, gen, volume), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), fauna: faunaFromSave(save.header.fauna, gen, volume), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), fishing: null, dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);

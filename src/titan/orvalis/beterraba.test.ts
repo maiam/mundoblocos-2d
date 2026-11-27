@@ -14,7 +14,7 @@ const open = async () => openSession(new MemoryTitanStorage(), 42, () => 1, orva
 describe('Beterraba: itens, comida e porco', () => {
   it('itens 100 e 101, nomes, pilha 64 e comida da Wiki (1 de fome, 1,2 de saciedade)', () => {
     expect(Item.BETERRABA).toBe(100); expect(Item.SEMENTE_BETERRABA).toBe(101);
-    expect(isItem(100) && isItem(101)).toBe(true); expect(isItem(106)).toBe(false);
+    expect(isItem(100) && isItem(101)).toBe(true); expect(isItem(113)).toBe(false);
     expect(ITEM_NAMES[100]).toBe('Beterraba'); expect(ITEM_NAMES[101]).toBe('Semente de Beterraba'); expect(maxStack(100)).toBe(64);
     expect(foodOf(Item.BETERRABA)).toEqual({ hunger: 1, saturation: 1.2 }); expect(foodOf(Item.SEMENTE_BETERRABA)).toBeNull();
   });

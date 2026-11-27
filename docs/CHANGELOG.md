@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.202.0 — pesca do Orvalis (auditoria #14 E2, 27/11/2026)
+- **ADR 0133 (ciclo da ADR 0116; aprovada).** **Vara de Pesca** (64 usos), **boia**, espera de 5 a 30 s, fisgada com janela de 1 a 2 s e sorteio de peixes da Wiki (bacalhau 60 %, salmão 25 %, baiacu 13 %, tropical 2 %). Itens 106–112 (peixes crus, bacalhau e salmão assados na fornalha, comida pela Wiki; o baiacu não se come), **atlas de itens 4 × 29**. A receita da vara espera o fio (arte pendente); lixo e tesouro, baiacu com efeitos, balde com peixe e peixes como animais ficam para depois.
+- 749 testes passam (9 novos em `orvalis/pesca.test.ts`); conferido no navegador (lançar, fisgar e recolher). Sem mudança de save, de gerador nem de protocolo.
+
 ## Orvalis v0.201.0 — água animada e correr nadando (auditoria #14, 27/11/2026)
 - **ADR 0132 (ciclo da ADR 0116; aprovada).** **Água do lago do Orvalis com 8 quadros** (pacote "Água, rios e mares", `make-orvalis-agua.py`, 0,4 s por quadro; Lago do Titã intacto). **Correr nadando:** na água, correndo, o corpo segue a direção do olhar (`MoveInput.pitch`). Fluxo e fonte infinita adiados. Artes marinhas (pesca, navegação, recifes) importadas para `assets-src/orvalis-voxel/{agua,mar}/`, ainda sem uso.
 - 740 testes passam (5 novos); conferido no navegador (a água muda de quadro). Sem mudança de save, de gerador nem de protocolo.
