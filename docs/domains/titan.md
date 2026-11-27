@@ -217,3 +217,6 @@ Testes: `titan/orvalis/generator.test.ts` e `mundo.test.ts`. Pendências e próx
 
 ## Pesca do Orvalis (ADR 0133, v0.202.0)
 Vara de Pesca (106, 64 usos), boia (113, textura), peixes 107–112. `titan/fishing.ts` (puro): `newBobber`, `tickBobber`, `stepFishing`, `rollFish`, `FISH_TABLE` (60/25/13/2 %), espera 5–30 s, janela 1–2 s, `FISH_MAX_DISTANCE` 33. `actions.ts`: `useRod`/`reelIn`. Estado só em `session.fishing`. Linha (114) = 1 Lã → 4 (ADR 0134); vara = 3 Hastes + 2 Linhas (Mesa de Carpintaria).
+
+## Corais do Orvalis (ADR 0136, v0.205.0)
+Blocos 160–189 e itens 123–152 (coral, gorgônia, bloco; vivos e mortos; 5 famílias). Coral e gorgônia = plantas aquáticas (`isWaterPlant`); bloco de coral vivo sem água morre em 3 a 6 s (`titan/coral.ts`). Recifes: `reefInfo`/`reefBlock`, gerador v6, ruído `REEF.threshold` 0,3, profundidade 3–10. Quebrar solta o próprio item.

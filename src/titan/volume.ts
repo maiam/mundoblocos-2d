@@ -1,7 +1,7 @@
 import type { TerrainGen } from './terrain';
 import { LightEngine, lightKey } from './light';
 import { SkyLight, type SkyKind } from './skylight';
-import { isLeaves, isTorch, isWaterPlant, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { CORAL_KINDS, isLeaves, isTorch, isWaterPlant, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -222,7 +222,7 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), tocha: new Map(), tochaParede: new Map(), ervaMarinha: new Map(), ervaAlta: new Map(), ervaAltaTopo: new Map(), alga: new Map(), algaTopo: new Map(), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
+  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), tocha: new Map(), tochaParede: new Map(), ervaMarinha: new Map(), ervaAlta: new Map(), ervaAltaTopo: new Map(), alga: new Map(), algaTopo: new Map(), ...Object.fromEntries(CORAL_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
   /** Registra um modelo que vem do **gerador** (a flora marinha, ADR 0135), descoberto quando a seção é malhada: os modelos editados entram por `set` e pelo carregamento; os da base, só aqui. Idempotente. */

@@ -99,6 +99,16 @@
   "orvalis/abobora-lateral",
   "orvalis/melancia-topo",
   "orvalis/melancia-lateral",
-  "orvalis/alga-seca"
+  "orvalis/alga-seca",
+  "orvalis/coral-bloco-tubo-vivo",
+  "orvalis/coral-bloco-cerebro-vivo",
+  "orvalis/coral-bloco-bolha-vivo",
+  "orvalis/coral-bloco-fogo-vivo",
+  "orvalis/coral-bloco-chifre-vivo",
+  "orvalis/coral-bloco-tubo-morto",
+  "orvalis/coral-bloco-cerebro-morto",
+  "orvalis/coral-bloco-bolha-morto",
+  "orvalis/coral-bloco-fogo-morto",
+  "orvalis/coral-bloco-chifre-morto"
  ]
 }

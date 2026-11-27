@@ -1,5 +1,5 @@
 import { toolOf, type Tier, type ToolKind } from './items';
-import { isPickVein, isWall, T } from './voxel';
+import { isCoralBlock, isPickVein, isWall, T } from './voxel';
 
 /**
  * Tempos de quebra e estágios de rachadura do Titã (ADR 0042). Puro. Os tempos são **totais desde a pressão**: os primeiros 200 ms são a espera que
@@ -51,6 +51,7 @@ setH(LEGACY_SAND, T.REED_BLOCK);
 setH(LEGACY_SLAB, T.REED_SLAB, T.REED_SLAB_TOP, T.REED_STAIR, T.REED_STAIR_90, T.REED_STAIR_180, T.REED_STAIR_270, T.REED_CHAIR, T.REED_CHAIR_90, T.REED_CHAIR_180, T.REED_CHAIR_270);
 for (let d = T.DOOR; d <= T.DOOR_LAST; d++) HARDNESS.set(d, LEGACY_SLAB);
 setH(LEGACY_ICE, T.FROST, T.VEIN_FROST, T.EMBER);
+for (let i = 0; i < 10; i++) setH(1.5, T.CORAL_BLOCK + i); // blocos de coral (Wiki: dureza 1,5, ADR 0136)
 setH(0.5, T.DRIED_KELP_BLOCK); // bloco de alga seca (Wiki: dureza 0,5, ADR 0135)
 setH(1, T.MELON); setH(1, T.PUMPKIN); // melancia e abóbora (Wiki: dureza 1, machado, ADR 0128)
 setH(3, T.COAL_ORE); setH(5, T.COAL_BLOCK); // minério de carvão (3) e bloco de carvão (5): picareta (Wiki, ADR 0122)
@@ -85,6 +86,7 @@ export function blockToolOf(block: number | undefined): ToolKind | null {
   if (block === undefined) return null;
   if (ROCK_CLASS.has(block) || isPickVein(block) || isWall(block)) return 'pick';
   if (WOOD_CLASS.has(block) || block === T.MELON || block === T.PUMPKIN) return 'axe'; // melancia e abóbora: machado (Wiki, ADR 0128)
+  if (isCoralBlock(block)) return 'pick'; // coral: picareta (Wiki, ADR 0136)
   if (SOIL_CLASS.has(block)) return 'shovel';
   return null;
 }
