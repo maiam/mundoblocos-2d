@@ -1,7 +1,7 @@
 import { lanternBox, rayBox, type Box } from './lantern';
 import type { TitanVolume } from './volume';
 import { modelBox } from './models';
-import { blockBoxes, isBed, isBrazier, isSlab, isSlabBottom, isChest, isLadder, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
+import { blockBoxes, isBed, isBrazier, isTorch, isSlab, isSlabBottom, isChest, isLadder, isMarco, isOccupied, isPanel, isTarget, ladderFacing, ladderTurn, MAT_HEIGHT, T, Y_MAX, Y_MIN } from './voxel';
 
 /** Corpo do jogador: caixa de 0,6 × 1,8 × 0,6 m, olhos a 1,62 m dos pés. Pés em y (base do corpo). */
 export const BODY_HALF = 0.3;
@@ -251,7 +251,7 @@ export function raycast(v: TitanVolume, ox: number, oy: number, oz: number, dx: 
         // a lanterna é pequena: acerta só a caixa do objeto (com folga de toque); fora dela o raio segue e pega o que está atrás
         const box = lanternBox(x, y, z, pad), h = rayBox(ox, oy, oz, dx, dy, dz, box);
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, box: lanternBox(x, y, z) };
-      } else if (isMarco(id) || isPanel(id) || isLadder(id) || isChest(id) || isBed(id) || isBrazier(id)) {
+      } else if (isMarco(id) || isPanel(id) || isLadder(id) || isChest(id) || isBed(id) || isBrazier(id) || isTorch(id)) {
         // Marco e Painel: a mira acerta a caixa do modelo (com folga de toque); fora dela o raio segue e pega o que está atrás
         const h = rayBox(ox, oy, oz, dx, dy, dz, modelBox(id, x, y, z, pad));
         if (h && h.t <= reach) return { x, y, z, nx: h.nx, ny: h.ny, nz: h.nz, hy: oy + dy * h.t - y, box: modelBox(id, x, y, z) };

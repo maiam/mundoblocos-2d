@@ -79,6 +79,7 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'carvao-carvalho', name: 'Carvão Vegetal (tora de carvalho)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_OAK, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'carvao-cerejeira', name: 'Carvão Vegetal (tora de cerejeira)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_CHERRY, count: 1 }], station: 'furnace', world: 'orvalis' },
   { id: 'carvao-betula', name: 'Carvão Vegetal (tora de bétula)', group: 'materiais', result: { item: Item.CARVAO_VEGETAL, count: 1 }, ingredients: [{ item: Item.LOG_BIRCH, count: 1 }], station: 'furnace', world: 'orvalis' },
+  { id: 'tocha', name: 'Tocha', group: 'utilidades', result: { item: Item.TOCHA, count: 4 }, ingredients: [{ item: Item.CARVAO_VEGETAL, count: 1 }, { item: Item.HASTE, count: 1 }], station: 'personal', world: 'orvalis' }, // Wiki: carvão (vegetal) + graveto → 4 (ADR 0121)
   { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);

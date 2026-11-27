@@ -40,11 +40,13 @@ def main() -> None:
     if os.path.exists(BASE):
         base = Image.open(BASE).convert('RGBA')
         assert base.size == (64, 64), base.size
-        atlas = Image.new('RGBA', (128, 672), (0, 0, 0, 0))  # 4 colunas × 21 linhas de 32 px (84 ids, 84 em uso; o CSS lê `4 × 21`; ADR 0089, 0102, 0105, 0107, 0108)
+        atlas = Image.new('RGBA', (128, 704), (0, 0, 0, 0))  # 4 colunas × 22 linhas de 32 px (88 ids; 86 em uso: 85 = Tocha e 86 = textura da Tocha de parede, que não é item; o CSS lê `4 × 22`; ADR 0089, 0102, 0105, 0107, 0108, 0121)
         atlas.paste(base.resize((128, 128), Image.NEAREST), (0, 0))  # a base 2×, sem suavização
     else:  # a base de 16 px saiu com a arte do 2.5D (ADR 0115): o atlas já gravado (cápsula legada e demais células) passa a ser o ponto de partida
-        atlas = Image.open(OUT_ITEMS).convert('RGBA')
-        assert atlas.size == (128, 672), atlas.size
+        old = Image.open(OUT_ITEMS).convert('RGBA')
+        assert old.size[0] == 128 and old.size[1] in (672, 704), old.size  # 21 linhas (antes da Tocha) ou 22
+        atlas = Image.new('RGBA', (128, 704), (0, 0, 0, 0))
+        atlas.paste(old, (0, 0))
     for item, name in NEW.items():
         t = Image.open(SRC + name).convert('RGBA')
         assert t.size == (32, 32), (name, t.size)

@@ -22,15 +22,16 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106, STONE_SMOOTH: 107, STONE_BRICK: 108, STONE_SLAB: 109, STONE_SLAB_TOP: 110, STONE_STAIR: 111, STONE_STAIR_90: 112, STONE_STAIR_180: 113, STONE_STAIR_270: 114, STONE_WALL: 115, STONE_WALL_LAST: 130, FARMLAND_DRY: 131, FARMLAND_WET: 132, PATH: 133, DIRT_INFERTILE: 134, CLAY_BLOCK: 135, BRICK_BLOCK: 136, FURNACE: 137, FURNACE_90: 138, FURNACE_180: 139, FURNACE_270: 140, FURNACE_LIT: 141, FURNACE_LIT_90: 142, FURNACE_LIT_180: 143, FURNACE_LIT_270: 144 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106, STONE_SMOOTH: 107, STONE_BRICK: 108, STONE_SLAB: 109, STONE_SLAB_TOP: 110, STONE_STAIR: 111, STONE_STAIR_90: 112, STONE_STAIR_180: 113, STONE_STAIR_270: 114, STONE_WALL: 115, STONE_WALL_LAST: 130, FARMLAND_DRY: 131, FARMLAND_WET: 132, PATH: 133, DIRT_INFERTILE: 134, CLAY_BLOCK: 135, BRICK_BLOCK: 136, FURNACE: 137, FURNACE_90: 138, FURNACE_180: 139, FURNACE_270: 140, FURNACE_LIT: 141, FURNACE_LIT_90: 142, FURNACE_LIT_180: 143, FURNACE_LIT_270: 144, TORCH: 145, TORCH_WALL: 146, TORCH_WALL_90: 147, TORCH_WALL_180: 148, TORCH_WALL_270: 149 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.FURNACE_LIT_270;
+export const T_MAX = T.TORCH_WALL_270;
 export type TitanBlock = (typeof T)[keyof typeof T];
 
 export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco', 47: 'Bloco de Junco', 48: 'Laje de Junco', 49: 'Laje de Junco', 50: 'Degrau de Junco', 51: 'Degrau de Junco', 52: 'Degrau de Junco', 53: 'Degrau de Junco', 54: 'Cadeira de Junco', 55: 'Cadeira de Junco', 56: 'Cadeira de Junco', 57: 'Cadeira de Junco' };
 for (let id = T.DOOR; id <= T.DOOR_LAST; id++) BLOCK_NAMES[id] = 'Porta de Junco';
 /** Blocos do Orvalis em voxel (ADR 0105): terreno de floresta, praia e árvores. Água = `T.LAKE` (líquido do motor, com a arte da água do Orvalis). */
 for (let t = 0; t < 4; t++) { BLOCK_NAMES[T.FURNACE + t] = 'Fornalha'; BLOCK_NAMES[T.FURNACE_LIT + t] = 'Fornalha acesa'; }
+for (let id = T.TORCH; id <= T.TORCH_WALL_270; id++) BLOCK_NAMES[id] = 'Tocha';
 Object.assign(BLOCK_NAMES, { 90: 'Terra com Grama', 91: 'Terra', 92: 'Pedra', 93: 'Areia da Praia', 94: 'Tora de Carvalho', 95: 'Folhas de Carvalho', 96: 'Tora de Cerejeira', 97: 'Folhas de Cerejeira', 98: 'Tora de Bétula', 99: 'Folhas de Bétula' });
 /** Madeira básica do Orvalis em voxel (ADR 0107): tábuas de 3 madeiras e a Mesa de Carpintaria (4 ids, o giro no id; a frente fica voltada para quem a coloca, como o baú). */
 Object.assign(BLOCK_NAMES, { 100: 'Tábuas de Carvalho', 101: 'Tábuas de Cerejeira', 102: 'Tábuas de Bétula', 103: 'Mesa de Carpintaria', 104: 'Mesa de Carpintaria', 105: 'Mesa de Carpintaria', 106: 'Mesa de Carpintaria' });
@@ -42,6 +43,12 @@ export const isFurnace = (id: number): boolean => id >= T.FURNACE && id <= T.FUR
 export const isFurnaceLit = (id: number): boolean => id >= T.FURNACE_LIT && id <= T.FURNACE_LIT_270;
 export const furnaceTurn = (id: number): number => (isFurnace(id) ? (id - T.FURNACE) % 4 : 0);
 export const furnaceId = (turn: number, lit: boolean): number => (lit ? T.FURNACE_LIT : T.FURNACE) + (((turn % 4) + 4) % 4);
+/** Tocha do Orvalis (ADR 0121): 145 = em pé sobre a face de cima de um cubo; 146–149 = presa à lateral, com o giro no id (`ladderFacing`: a direção em que a chama aponta, para fora da parede). Não sólida, sem colisão, alvo da mira, luz 14. */
+export const isTorch = (id: number): boolean => id >= T.TORCH && id <= T.TORCH_WALL_270;
+export const isWallTorch = (id: number): boolean => id >= T.TORCH_WALL && id <= T.TORCH_WALL_270;
+export const wallTorchTurn = (id: number): number => (isWallTorch(id) ? id - T.TORCH_WALL : 0);
+export const wallTorchId = (turn: number): number => T.TORCH_WALL + (((turn % 4) + 4) % 4);
+export const TORCH_LIGHT = 14;
 export const carpentryId = (turn: number): number => T.CARPENTRY + (((turn % 4) + 4) % 4);
 /** Giro (0–3) que deixa a frente da mesa voltada para o jogador: o yaw arredondado ao eixo mais próximo (o mesmo do baú). */
 export const carpentryTurnFacing = (yaw: number): number => ((Math.round(yaw / (Math.PI / 2)) % 4) + 4) % 4;
@@ -57,9 +64,9 @@ export const isLeaves = (id: number): boolean => id === T.LEAVES_OAK || id === T
 export const isLog = (id: number): boolean => id === T.LOG_OAK || id === T.LOG_CHERRY || id === T.LOG_BIRCH;
 
 /** Sólido = colide e esconde as faces vizinhas. Ar, líquido e a lanterna (objeto pequeno que emite luz) não. */
-export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id);
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id) && !isTorch(id);
 /** Alvo da mira (e do "quebrar"): sólido, lanterna ou Marco de Margem. O líquido e o ar são atravessados. */
-export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id) || id === T.MAT || isLadder(id);
+export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id) || id === T.MAT || isLadder(id) || isTorch(id);
 /** Bloco que bloqueia a luz de lanterna: sólido, menos o Painel de Junco (a trama tem vãos: a luz atravessa). */
 /** Luz de bloco (ADR 0119, regra da Wiki): só o **cubo opaco** a bloqueia. Folhas, baú, cama, porta, laje, degrau, mureta, braseiro e Painel deixam a luz passar (a laje dupla é cubo e bloqueia). */
 export const blocksLight = (id: number): boolean => isFull(id) && !isLeaves(id);
@@ -167,7 +174,7 @@ export const isBrazier = (id: number): boolean => id === T.BRAZIER || id === T.B
 export const BRAZIER_HEIGHT = 0.774;
 /** Luz de bloco que cada emissor irradia (0–15; perde 1 por célula, ADR 0040): a lanterna 15 e o Braseiro aceso 13 (ADR 0094). Emissor novo entra aqui, nunca `id === …` solto na luz. */
 export const BRAZIER_LIGHT = 13;
-export const lightLevelOf = (id: number): number => (id === T.LANTERN ? 15 : id === T.BRAZIER_LIT || isFurnaceLit(id) ? BRAZIER_LIGHT : 0); // a fornalha acesa também emite 13 (Wiki)
+export const lightLevelOf = (id: number): number => (id === T.LANTERN ? 15 : isTorch(id) ? TORCH_LIGHT : id === T.BRAZIER_LIT || isFurnaceLit(id) ? BRAZIER_LIGHT : 0); // a fornalha acesa também emite 13 (Wiki)
 export const isCopperVein = (id: number): boolean => id === T.VEIN_COPPER;
 /** Veio de Âmbar (ADR 0073): só uma picareta o quebra; solta 1–2 Brasas de Âmbar, nunca o bloco. */
 export const isAmberVein = (id: number): boolean => id === T.EMBER_VEIN;
@@ -258,12 +265,13 @@ export function bedPartnerOffset(id: number): readonly [number, number] {
 /** Um modelo de mureta por máscara de conexão (ADR 0110): `mureta0` … `mureta15`. */
 export const MURETA_KINDS = ['mureta0', 'mureta1', 'mureta2', 'mureta3', 'mureta4', 'mureta5', 'mureta6', 'mureta7', 'mureta8', 'mureta9', 'mureta10', 'mureta11', 'mureta12', 'mureta13', 'mureta14', 'mureta15'] as const;
 export type MuretaKind = (typeof MURETA_KINDS)[number];
-export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'degrauPedra' | MuretaKind | 'cadeira' | 'porta';
+export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'degrauPedra' | MuretaKind | 'cadeira' | 'porta' | 'tocha' | 'tochaParede';
 export function modelOf(id: number): { kind: ModelKindName; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
   if (isPanel(id)) return { kind: 'painel', turn: id === T.PAINEL ? 0 : 1 };
   if (isLadder(id)) return { kind: 'escada', turn: ladderTurn(id) };
+  if (isTorch(id)) return id === T.TORCH ? { kind: 'tocha', turn: 0 } : { kind: 'tochaParede', turn: wallTorchTurn(id) }; // Tocha (ADR 0121)
   if (isChest(id)) return { kind: 'bau', turn: chestTurn(id) };
   if (isBedFoot(id)) return { kind: 'cama', turn: bedTurn(id) };
   if (isReedStair(id)) return { kind: 'degrau', turn: stairTurn(id) };

@@ -29,8 +29,8 @@ describe('Fornalha: blocos, itens e regras do bloco', () => {
     expect(isFurnace(T.BRICK_BLOCK) || isFurnace(T.FURNACE_LIT_270 + 1)).toBe(false);
     expect(blockOfItem(Item.FORNALHA)).toBe(T.FURNACE);
   });
-  it('itens 83 (Fornalha) e 84 (Carvão Vegetal): nomes, pilha de 64 e combustível de 80 s; 85 não existe', () => {
-    expect(Item.FORNALHA).toBe(83); expect(Item.CARVAO_VEGETAL).toBe(84); expect(isItem(84)).toBe(true); expect(isItem(85)).toBe(false);
+  it('itens 83 (Fornalha) e 84 (Carvão Vegetal): nomes, pilha de 64 e combustível de 80 s; 86 não é item (só a textura da Tocha de parede)', () => {
+    expect(Item.FORNALHA).toBe(83); expect(Item.CARVAO_VEGETAL).toBe(84); expect(isItem(84) && isItem(85)).toBe(true); expect(isItem(86)).toBe(false);
     expect(ITEM_NAMES[83]).toBe('Fornalha'); expect(ITEM_NAMES[84]).toBe('Carvão Vegetal'); expect(maxStack(83)).toBe(64); expect(maxStack(84)).toBe(64);
     expect(blockOfItem(Item.CARVAO_VEGETAL)).toBeNull();
   });

@@ -11,4 +11,4 @@
 | `fogueiras` | 8 | fogueira comum e das almas (apagada, brasas, chama, ícone) |
 
 ## Estado
-**Fila.** A primeira entrega natural é a **Tocha do Orvalis** (`tocha_vertical`, `tocha_parede`), que depende de uma regra de mundo própria (nível de luz 14 pela Wiki, receita e colocação), logo passa pelo ciclo da ADR 0116 — e de decidir a luz do céu (`docs/AUDITORIA_REGRAS.md`, #32). Itens do Orvalis ficam na faixa 42+ (ADR 0114). Como as demais entregas: tiles no fim de `titan/tiles.json` + `BLOCK_TILES`, item no atlas de itens, nunca índice solto.
+**Tocha: no jogo desde a v0.188.0** (ADR 0121: `tocha_vertical` e `tocha_parede` em `assets-src/titan/arte16/`, células 85 e 86 do atlas de itens). **O restante, em fila.** A primeira entrega natural é a **Tocha do Orvalis** (`tocha_vertical`, `tocha_parede`), que depende de uma regra de mundo própria (nível de luz 14 pela Wiki, receita e colocação), logo passa pelo ciclo da ADR 0116 — e de decidir a luz do céu (`docs/AUDITORIA_REGRAS.md`, #32). Itens do Orvalis ficam na faixa 42+ (ADR 0114). Como as demais entregas: tiles no fim de `titan/tiles.json` + `BLOCK_TILES`, item no atlas de itens, nunca índice solto.
