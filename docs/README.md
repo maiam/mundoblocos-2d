@@ -27,6 +27,8 @@ Para planejar mecânicas, consulte o [Guia de regras de mundo aberto](GUIA_REGRA
 
 ## Guias de produção
 
+- [Auditoria das regras de mundo](AUDITORIA_REGRAS.md) — **regra do dono do produto (ADR 0116):** Minecraft Wiki → estado atual → proposta → aprovação, antes de mudar qualquer regra; lista e estado de cada regra.
+
 - [Guia de itens e texturas](GUIA_ITENS_TEXTURAS.md) — catálogo de candidatos para Orvalis e Titã, prioridades e arte por tipo de peça.
 
 ## ADRs

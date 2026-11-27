@@ -1,5 +1,8 @@
 # Changelog
 
+## Documentação — regra de processo: auditoria das regras de mundo com a Minecraft Wiki (27/11/2026)
+- **ADR 0116 (regra do dono do produto).** Antes de implementar ou mudar qualquer regra de mundo, a IA consulta a Minecraft Wiki, apresenta o Orvalis/Titã atuais, formula a proposta (manter, adaptar ou retirar) e **espera a aprovação**. Vale também para as regras já implementadas: nada passou ainda por esse ciclo, então as 30 regras de `docs/AUDITORIA_REGRAS.md` estão **pendentes de auditoria**. Registrada no `CLAUDE.md` e no `CONVENTIONS.md`. Sem mudança de jogo, save nem protocolo.
+
 ## Orvalis v0.183.0 — Orvalis 2D/2.5D removido (etapa 3 da limpeza, 27/11/2026)
 - **ADR 0115, etapa 3.** O produto agora é **só o motor voxel**: o **Orvalis 3D** (padrão) e o **Titã** (`?mundo=titan`). Removidos o Orvalis 2D/2.5D (`World`, `Game`, render 2.5D, cidade, NPCs, dungeon, vila), a landing, a sala 2.5D do pacote de rede, a arte e os scripts do 2.5D e os benchmarks. `?mundo=principal` cai no Orvalis 3D. Documentação do 2.5D em `docs/archive/2d/`; documentos vivos reescritos para o voxel.
 - Novo `titan/worldId.ts` (escolha do mundo) e `net/titan/index.ts` (entrada do pacote do servidor; `build:net` só empacota a sala do Titã). `src/` de 404 para ~120 arquivos `.ts`; `src/assets` de ~28 para ~4 MB; "início" do Artifact ~4,5 MB (era ~13 MB). Testes: 75 arquivos (592) do voxel. O `orvalis-servidor` ganha PR própria (sem as salas 1 e 2). Sem mudança de gerador nem de protocolo do Titã.
