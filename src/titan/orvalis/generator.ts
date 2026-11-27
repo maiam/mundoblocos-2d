@@ -14,9 +14,10 @@ import { inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, Y_MIN } from '../voxe
  * v1: região de 128 × 128 cercada de mar; **Campos** e **Bosque de Sakura**, colinas, montanhas de pedra, rios, praias e árvores (carvalho, bétula e cerejeira) de tora e folhas.
  * O líquido é `T.LAKE` (o do motor; a arte da água é a do Orvalis) com superfície em Y = 64, como no Titã, para que balde, pulo de saída e mergulho valham sem mudança.
  * v2 (ADR 0122): **veios de minério de carvão** enterrados na pedra (regra da Minecraft Wiki adaptada, `ORVALIS_ORE_RULES`); o resto é a v1.
+ * v4 (ADR 0124): a fauna de fazenda passa à **probabilidade de grupo da Wiki** (0,1 por chunk; a v3 usava 0,4); terreno e blocos iguais.
  * v3 (ADR 0124): **fauna de fazenda** (`titan/fauna.ts`, `faunaSpecs`): o relevo, os blocos e os veios são os da v2; a versão só liga os grupos de porco, vaca, ovelha e galinha em grama.
  */
-export const ORVALIS_GENERATOR_VERSION = 3;
+export const ORVALIS_GENERATOR_VERSION = 4;
 
 const PURPOSE = { relevo: 1, colinas: 2, mar: 3, rio: 4, montanha: 5, bioma: 6, bosque: 7, arvore: 8, chegada: 9, mina: 10 } as const;
 /**
