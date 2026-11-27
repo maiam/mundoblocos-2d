@@ -112,6 +112,12 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'portao-cerejeira', name: 'Portão de Cerejeira', group: 'construcao', result: { item: Item.PORTAO_CEREJEIRA, count: 1 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 2 }, { item: Item.HASTE, count: 4 }], station: 'workbench', world: 'orvalis' }, // Wiki: cerca 4 tábuas + 2 hastes → 3; portão 2 + 4 → 1 (ADR 0140)
   { id: 'cerca-betula', name: 'Cerca de Bétula', group: 'construcao', result: { item: Item.CERCA_BETULA, count: 3 }, ingredients: [{ item: Item.TABUA_BETULA, count: 4 }, { item: Item.HASTE, count: 2 }], station: 'workbench', world: 'orvalis' },
   { id: 'portao-betula', name: 'Portão de Bétula', group: 'construcao', result: { item: Item.PORTAO_BETULA, count: 1 }, ingredients: [{ item: Item.TABUA_BETULA, count: 2 }, { item: Item.HASTE, count: 4 }], station: 'workbench', world: 'orvalis' }, // Wiki: cerca 4 tábuas + 2 hastes → 3; portão 2 + 4 → 1 (ADR 0140)
+  { id: 'porta-carvalho', name: 'Porta de Carvalho', group: 'construcao', result: { item: Item.PORTA_CARVALHO, count: 3 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 6 }], station: 'workbench', world: 'orvalis' },
+  { id: 'alcapao-carvalho', name: 'Alçapão de Carvalho', group: 'construcao', result: { item: Item.ALCAPAO_CARVALHO, count: 2 }, ingredients: [{ item: Item.TABUA_CARVALHO, count: 6 }], station: 'workbench', world: 'orvalis' }, // Wiki: porta 6 tábuas → 3; alçapão 6 → 2 (ADR 0141)
+  { id: 'porta-cerejeira', name: 'Porta de Cerejeira', group: 'construcao', result: { item: Item.PORTA_CEREJEIRA, count: 3 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 6 }], station: 'workbench', world: 'orvalis' },
+  { id: 'alcapao-cerejeira', name: 'Alçapão de Cerejeira', group: 'construcao', result: { item: Item.ALCAPAO_CEREJEIRA, count: 2 }, ingredients: [{ item: Item.TABUA_CEREJEIRA, count: 6 }], station: 'workbench', world: 'orvalis' }, // Wiki: porta 6 tábuas → 3; alçapão 6 → 2 (ADR 0141)
+  { id: 'porta-betula', name: 'Porta de Bétula', group: 'construcao', result: { item: Item.PORTA_BETULA, count: 3 }, ingredients: [{ item: Item.TABUA_BETULA, count: 6 }], station: 'workbench', world: 'orvalis' },
+  { id: 'alcapao-betula', name: 'Alçapão de Bétula', group: 'construcao', result: { item: Item.ALCAPAO_BETULA, count: 2 }, ingredients: [{ item: Item.TABUA_BETULA, count: 6 }], station: 'workbench', world: 'orvalis' }, // Wiki: porta 6 tábuas → 3; alçapão 6 → 2 (ADR 0141)
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.212.0 — Famílias das madeiras, W3: porta e alçapão (27/11/2026)
+- **ADR 0141 (aprovada na 0139).** Portas (ids 280–375, o mesmo sistema da Porta de Junco em três famílias novas: dobradiça automática, porta dupla, animação) e alçapões (376–423, metade pela face clicada) de carvalho, cerejeira e bétula; itens 168–173; receitas da Wiki (porta 6 tábuas → 3, alçapão 6 → 2). Atlas de itens 4 × 44. A arte da porta (16 × 16 = porta inteira) vai esticada em y; os pixels transparentes dela aparecem vazados.
+- Testes (4 novos em `orvalis/portaAlcapao.test.ts`, 2 ajustados); conferido no navegador. Sem mudança de gerador, save ou protocolo.
+
 ## Orvalis v0.211.0 — Famílias das madeiras, W2: cerca e portão (27/11/2026)
 - **ADR 0140 (aprovada na 0139).** Cercas (ids 208–255, conexão no id, liga a cubo, a outras cercas e ao portão pelo eixo) e portões (256–279, giro e abertura no id) de carvalho, cerejeira e bétula; itens 162–167; receitas da Wiki (cerca 4 tábuas + 2 hastes → 3, portão 2 + 4 → 1). **Colisão a 1,5 m** (`bodyBoxes` + `tallBoxes`; a mira segue em 1 m); portão aberto não colide, abre para longe de quem o usa e não abre com bloco no vão. Atlas de itens 4 × 42.
 - Testes (5 novos em `orvalis/cercaPortao.test.ts`, 3 ajustados); conferido no navegador. Sem mudança de gerador, save ou protocolo.

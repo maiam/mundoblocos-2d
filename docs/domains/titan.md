@@ -225,6 +225,10 @@ Blocos 160–189 e itens 123–152 (coral, gorgônia, bloco; vivos e mortos; 5 f
 
 Lajes (190–195) e degraus (196–207) de carvalho, cerejeira e bétula; itens 156–161; funde na tábua da mesma madeira; degrau com 3 modelos numa tira de 9 tiles; mesher em `Uint16Array`. Detalhes e fila (W2 cerca e portão, W3 porta e alçapão): `docs/adr/0139-familia-das-madeiras-lajes-e-degraus-minecraft-wiki.md`.
 
+## Porta e Alçapão de madeira do Orvalis (ADR 0141, v0.212.0)
+
+Portas 280–375 (sistema da Porta de Junco em três famílias) e alçapões 376–423; itens 168–173; `useTrapdoor`/`useDoor` em `actions.ts`. Detalhes: `docs/adr/0141-porta-e-alcapao-de-madeira-minecraft-wiki.md`.
+
 ## Cerca e Portão de madeira do Orvalis (ADR 0140, v0.211.0)
 
 Cercas 208–255 e portões 256–279; itens 162–167; colisão a 1,5 m (`bodyBoxes` + `tallBoxes`), mira em 1 m; portão aberto sem colisão; `useGate` em `actions.ts`. Detalhes: `docs/adr/0140-cerca-e-portao-de-madeira-minecraft-wiki.md`.

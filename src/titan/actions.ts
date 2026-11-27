@@ -10,7 +10,7 @@ import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, isWoodStair, woodOf, woodStairId, gateId, gateTurn, isGate, isGateOpen, isSolid as isSolidBlock, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, isWoodStair, woodOf, woodStairId, gateId, gateTurn, isGate, isGateOpen, isSolid as isSolidBlock, doorFamily, isTrapdoor, isTrapdoorOpen, trapdoorId, trapdoorToggled, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -232,7 +232,7 @@ export function doorHingeFor(v: TitanSession['volume'], x: number, y: number, z:
 }
 
 /** Porta de Junco (ADR 0102): ocupa a célula e a de cima; a frente fica voltada para quem a põe, a folha rente à borda dele; precisa de piso firme e das duas células livres. */
-function placeDoor(s: TitanSession, hit: Hit, slot: number): ActionResult {
+function placeDoor(s: TitanSession, hit: Hit, slot: number, family = 0): ActionResult {
   const x = hit.x + hit.nx, y = hit.y + hit.ny, z = hit.z + hit.nz, turn = marcoTurnFacing(s.yaw);
   if (!matSupported(s, x, y, z)) return { ok: false, msg: 'A porta precisa de piso firme' };
   if (!canPlaceAt(s.volume, s.body, x, y, z, s.items, [0, 1])) return { ok: false };
@@ -240,8 +240,8 @@ function placeDoor(s: TitanSession, hit: Hit, slot: number): ActionResult {
   const plan = planDisplace(s, [[x, y, z], [x, y + 1, z]]);
   if (!plan) return { ok: false, msg: 'Há um item no local e não há espaço ao lado para ele' };
   const hinge = doorHingeFor(s.volume, x, y, z, turn);
-  if (!s.volume.place(x, y, z, doorId(turn, hinge, false, false))) return { ok: false };
-  if (!s.volume.place(x, y + 1, z, doorId(turn, hinge, false, true))) { s.volume.remove(x, y, z); return { ok: false }; }
+  if (!s.volume.place(x, y, z, doorId(turn, hinge, false, false, family))) return { ok: false };
+  if (!s.volume.place(x, y + 1, z, doorId(turn, hinge, false, true, family))) { s.volume.remove(x, y, z); return { ok: false }; }
   applyDisplace(s, plan);
   s.inventory.consume(slot);
   return { ok: true };
@@ -253,7 +253,8 @@ function breakDoor(s: TitanSession, x: number, y: number, z: number): ActionResu
   if (!isDoor(id) || !s.volume.breakable(x, y, z)) return { ok: false };
   const ly = isDoorUpper(id) ? y - 1 : y;
   for (const yy of [ly, ly + 1]) if (isDoor(s.volume.get(x, yy, z))) s.volume.remove(x, yy, z);
-  spillBlock(s, Item.PORTA_JUNCO, 1, x, ly, z);
+  const fam = doorFamily(id);
+  spillBlock(s, fam === 0 ? Item.PORTA_JUNCO : Item.PORTA_CARVALHO + fam - 1, 1, x, ly, z);
   return { ok: true };
 }
 
@@ -277,9 +278,18 @@ function useGate(s: TitanSession, x: number, y: number, z: number, id: number): 
   return { ok: true, open: true };
 }
 
+/** Alçapão (ADR 0141): abre e fecha na hora; não troca de estado com o corpo dentro da caixa nova (o jogador não fica preso). */
+function useTrapdoor(s: TitanSession, x: number, y: number, z: number, id: number): ActionResult {
+  const next = trapdoorToggled(id), b = s.body;
+  for (const cb of blockBoxes(next) ?? []) if (b.x + BODY_HALF > x + cb[0] && b.x - BODY_HALF < x + cb[3] && b.z + BODY_HALF > z + cb[2] && b.z - BODY_HALF < z + cb[5] && b.y < y + cb[4] && b.y + BODY_HEIGHT > y + cb[1]) return { ok: false, msg: 'Tem alguém no caminho' };
+  s.volume.set(x, y, z, next);
+  return { ok: true, open: isTrapdoorOpen(next) };
+}
+
 export function useDoor(s: TitanSession, x: number, y: number, z: number): ActionResult {
   const id = s.volume.get(x, y, z);
   if (isGate(id)) return useGate(s, x, y, z, id);
+  if (isTrapdoor(id)) return useTrapdoor(s, x, y, z, id);
   if (!isDoor(id)) return { ok: false };
   const ly = isDoorUpper(id) ? y - 1 : y, lo = s.volume.get(x, ly, z);
   if (!isDoor(lo) || isDoorUpper(lo) || !isDoor(s.volume.get(x, ly + 1, z))) return { ok: false };
@@ -743,7 +753,7 @@ function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResul
   if (stack.item === Item.GLASS_REED) return plantCrop(s, hit, slot, 'junco'); // a muda se planta (ADR 0083)
   let block = blockOfItem(stack.item);
   if (block === null) return { ok: false, msg: 'Este item não se coloca' };
-  if (block === T.DOOR) return placeDoor(s, hit, slot); // a porta ocupa duas células na vertical (ADR 0102)
+  if (isDoor(block)) return placeDoor(s, hit, slot, doorFamily(block)); // a porta ocupa duas células na vertical (ADR 0102)
   if (block === T.BED) return placeBed(s, hit, slot); // a cama ocupa duas células (ADR 0090)
   if (block === T.LADDER) { // escada (ADR 0088): prende-se à lateral de um cubo inteiro e a frente aponta para fora dele
     if (hit.ny !== 0 || hit.item) return { ok: false, msg: 'A escada se prende à lateral de um bloco' };
@@ -760,6 +770,7 @@ function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResul
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   else if (block === T.REED_STAIR) block = stairId(marcoTurnFacing(s.yaw)); // a frente (o lado baixo) fica voltada para o jogador: giro 0 = frente em +Z (ADR 0101)
   else if (block === T.STONE_STAIR) block = stairId(marcoTurnFacing(s.yaw), true); // Degrau de Pedra: mesma regra do de junco (ADR 0109)
+  else if (isTrapdoor(block)) block = trapdoorId(woodOf(block), marcoTurnFacing(s.yaw), false, hit.ny < 0 || (hit.ny === 0 && (hit.hy ?? 0) >= 0.5)); // metade de cima: face de baixo de um bloco ou metade de cima de uma lateral (ADR 0141)
   else if (isGate(block)) block = gateId(woodOf(block), marcoTurnFacing(s.yaw), false); // o painel corre de través ao olhar; abre para longe de quem o usa (ADR 0140)
   else if (isWoodStair(block)) block = woodStairId(woodOf(block), marcoTurnFacing(s.yaw)); // Degrau de Madeira: mesma regra (ADR 0139)
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
