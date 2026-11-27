@@ -17,7 +17,7 @@ import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
 import { CROP_FRAMES, GARDEN_FRAMES } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
-import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterAmbient, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
+import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
 import { DOOR_THICK, MURETA_KINDS, type ModelKindName, T } from '../titan/voxel';
 import { wallModelData } from './muretaModel';
 import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
@@ -355,7 +355,7 @@ export class TitanRenderer {
     ntex.flipY = false;
     ntex.needsUpdate = true;
     const nmat = new THREE.MeshBasicMaterial({ map: ntex, vertexColors: true, fog: true, side: THREE.DoubleSide });
-    patchDayLight(nmat, this.ambient);
+    patchDayLight(nmat, this.ambient, { instSky: true });
     for (const [model, key] of [[titanNozPlantaModel, 'nutPlantMesh'], [titanNozFrutosModel, 'nutFruitMesh']] as const) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), nmat, 8);
       mesh.count = 0;
@@ -373,7 +373,7 @@ export class TitanRenderer {
     ftex.flipY = false;
     ftex.needsUpdate = true;
     const fmat = new THREE.MeshBasicMaterial({ map: ftex, vertexColors: true, fog: true });
-    patchDayLight(fmat, this.ambient);
+    patchDayLight(fmat, this.ambient, { instSky: true });
     this.farejadorMat = fmat;
     for (const [name, part] of Object.entries(titanFarejadorModel.parts)) this.farejadorGeos[name] = modelGeometry(part);
 
@@ -385,7 +385,7 @@ export class TitanRenderer {
     rtex.generateMipmaps = false;
     rtex.needsUpdate = true;
     const rmat = new THREE.MeshBasicMaterial({ map: rtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
-    patchDayLight(rmat, this.ambient, { time: this.timeU });
+    patchDayLight(rmat, this.ambient, { time: this.timeU, instSky: true });
     this.reedMat = rmat;
     for (let v = 0; v < REED_VARIANTS; v++) {
       const geo = reedGeometry(v);
@@ -405,7 +405,7 @@ export class TitanRenderer {
     ctex.generateMipmaps = false;
     ctex.needsUpdate = true;
     const cmat = new THREE.MeshBasicMaterial({ map: ctex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
-    patchDayLight(cmat, this.ambient, { time: this.timeU });
+    patchDayLight(cmat, this.ambient, { time: this.timeU, instSky: true });
     this.cropMat = cmat;
     for (let f = 0; f < CROP_FRAMES; f++) {
       const geo = reedGeometry(f, CROP_FRAMES);
@@ -424,7 +424,7 @@ export class TitanRenderer {
     gtex.generateMipmaps = false;
     gtex.needsUpdate = true;
     this.gardenMat = new THREE.MeshBasicMaterial({ map: gtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
-    patchDayLight(this.gardenMat, this.ambient, { time: this.timeU });
+    patchDayLight(this.gardenMat, this.ambient, { time: this.timeU, instSky: true });
     for (let f = 0; f < GARDEN_FRAMES; f++) {
       const geo = gardenGeometry(f, GARDEN_FRAMES);
       const mesh = new THREE.InstancedMesh(geo, this.gardenMat, 16);
@@ -591,8 +591,28 @@ export class TitanRenderer {
   get braseiroCount(): number { return this.modelMeshes.braseiro.count; }
   get braseiroAcesoCount(): number { return this.modelMeshes.braseiroAceso.count; }
 
+
+  // ---- Luz do céu das plantas (ADR 0123, fase 3) ----
+  private lastReeds: ReadonlyArray<{ x: number; y: number; z: number }> = [];
+  private lastCrops: ReadonlyArray<{ x: number; y: number; z: number; frame: number }> = [];
+  private lastNuts: ReadonlyArray<{ x: number; y: number; z: number; ripe: boolean; s?: number }> = [];
+  private skySeen = 0;
+  /** Luz do céu de cada instância de planta (a célula dela, 0–1): sob um teto ou numa caverna a planta escurece como o resto. */
+  private setInstSky(mesh: THREE.InstancedMesh, cells: ReadonlyArray<{ x: number; y: number; z: number }>): void {
+    const a = new Float32Array(mesh.instanceMatrix.count).fill(1);
+    cells.forEach((c, i) => { a[i] = this.volume.skyLight(c.x, c.y, c.z) / 15; });
+    mesh.geometry.setAttribute('iSky', new THREE.InstancedBufferAttribute(a, 1));
+  }
+  /** O céu mudou (uma edição abriu ou fechou luz): relê o céu das plantas desenhadas. */
+  private refreshPlantSky(): void {
+    if (this.skySeen === this.volume.skyRev) return;
+    this.skySeen = this.volume.skyRev;
+    this.setReeds(this.lastReeds); this.setCrops(this.lastCrops); this.setNuts(this.lastNuts);
+  }
+
   /** Juncos de vidro: `list` = células de ar sobre areia úmida (o jogo filtra as que foram construídas). Silhueta, rotação e tamanho por planta, determinísticos pela posição. */
   setReeds(list: ReadonlyArray<{ x: number; y: number; z: number }>): void {
+    this.lastReeds = list;
     const groups: Array<Array<{ x: number; y: number; z: number; f: number }>> = Array.from({ length: REED_VARIANTS }, () => []);
     for (const r of list) {
       const h = Math.sin(r.x * 12.9898 + r.z * 78.233) * 43758.5453, f = h - Math.floor(h);
@@ -616,11 +636,13 @@ export class TitanRenderer {
       });
       mesh.count = g.length;
       mesh.instanceMatrix.needsUpdate = true;
+      this.setInstSky(mesh, g);
     });
   }
 
   /** Plantas de junco cultivadas de pé (ADR 0083): `frame` = coluna do atlas de cultivo. Giro fixo pela posição; a lista vazia esconde todas. */
   setCrops(list: ReadonlyArray<{ x: number; y: number; z: number; frame: number }>): void {
+    this.lastCrops = list;
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
     for (let f = 0; f < CROP_FRAMES; f++) {
       const g = list.filter((c) => c.frame === f);
@@ -640,6 +662,7 @@ export class TitanRenderer {
       });
       mesh.count = g.length;
       mesh.instanceMatrix.needsUpdate = true;
+      this.setInstSky(mesh, g);
     }
     for (let f = 0; f < GARDEN_FRAMES; f++) { // a horta: os quadros `CROP_FRAMES + f` (sem giro por posição: as faixas em '#' são simétricas)
       const g = list.filter((c) => c.frame === CROP_FRAMES + f);
@@ -654,11 +677,13 @@ export class TitanRenderer {
       g.forEach((c, i) => { m.compose(p.set(c.x + 0.5, c.y, c.z + 0.5), q.identity(), sc); mesh.setMatrixAt(i, m); });
       mesh.count = g.length;
       mesh.instanceMatrix.needsUpdate = true;
+      this.setInstSky(mesh, g);
     }
   }
 
   /** Plantas de Noz de Duna de pé: a planta sempre, os frutos só nas maduras. Giro fixo pela posição. */
   setNuts(list: ReadonlyArray<{ x: number; y: number; z: number; ripe: boolean; s?: number }>): void {
+    this.lastNuts = list;
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
     const fill = (mesh: THREE.InstancedMesh, items: ReadonlyArray<{ x: number; y: number; z: number; s?: number }>): THREE.InstancedMesh => {
       if (items.length > mesh.instanceMatrix.count) {
@@ -671,6 +696,7 @@ export class TitanRenderer {
       items.forEach((n, i) => { q.setFromAxisAngle(up, nutTurn(n.x, n.z) * Math.PI * 2); m.compose(p.set(n.x + 0.5, n.y, n.z + 0.5), q, sc.setScalar(n.s ?? 1)); mesh.setMatrixAt(i, m); }); // `s` = tamanho do broto da noz plantada (ADR 0083)
       mesh.count = items.length;
       mesh.instanceMatrix.needsUpdate = true;
+      this.setInstSky(mesh, items);
       return mesh;
     };
     this.nutPlantMesh = fill(this.nutPlantMesh, list);
@@ -992,6 +1018,7 @@ export class TitanRenderer {
       this.camera.position.set(eye.x, eye.y, eye.z);
       this.camera.rotation.set(pitch, yaw, 0);
     }
+    this.refreshPlantSky();
     this.sky.mesh.position.copy(iso ? this.isoCam.position : this.camera.position);
     this.sky.setTime(time);
     this.fogToward(yaw);
@@ -1116,7 +1143,7 @@ export class TitanRenderer {
     fog.color.copy(bg);
     fog.near = RANGE * 0.7 + (UNDERWATER_FOG_NEAR - RANGE * 0.7) * mix;
     fog.far = RANGE * 0.97 + (underwaterFar(this.under.adapt) - RANGE * 0.97) * mix;
-    const f = 1 + (underwaterAmbient(this.underDepth) - 1) * mix; // só a parcela do dia; o brilho de lanterna (`glow`) fica de fora
+    const f = 1; // a luz por profundidade agora vem da luz do céu (a água filtra 1 por bloco, ADR 0123): atenuar de novo pela câmera escureceria duas vezes; o brilho de lanterna (`glow`) fica de fora
     this.ambient.value.copy(this.ambientBase).multiplyScalar(f);
     const fp = this.mode === 'fp';
     if (!fp) { fog.near = 1e5; fog.far = 2e5; } // isométrica: sem névoa de distância (o fundo é a cor do céu)

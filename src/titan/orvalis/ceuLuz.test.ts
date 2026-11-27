@@ -56,3 +56,15 @@ describe('luz do céu no desenho (fase 2, ADR 0123)', () => {
     expect(v.sectionRevision(cx + 3, sy, cz + 3)).toBe(0); // uma seção longe não se mexe
   });
 });
+
+describe('luz do céu: aviso para as plantas (fase 3)', () => {
+  it('`skyRev` sobe só quando uma edição muda o céu de verdade (não na primeira conta nem em edição sem efeito)', async () => {
+    const { s } = await open(), v = s.volume, a = v.gen.arrival, x = Math.floor(a.x) + 6, z = Math.floor(a.z) + 6, top = v.gen.column(x, z).top;
+    v.skyLight(x, top + 1, z); expect(v.skyRev).toBe(0); // ligou o motor
+    v.set(x, top + 2, z, T.TORCH); expect(v.skyRev).toBe(0); // tocha: transparente, não muda a classe da célula
+    for (let y = top; y >= top - 2; y--) v.set(x, y, z, T.AIR); // poço
+    const r1 = v.skyRev; expect(r1).toBeGreaterThan(0);
+    v.set(x, top + 1, z, T.STONE); // tampa
+    expect(v.skyRev).toBeGreaterThan(r1);
+  });
+});
