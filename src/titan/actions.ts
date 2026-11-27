@@ -1,6 +1,7 @@
 import { hoeResult, shovelResult } from './soil';
 import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import type { Drop } from './save';
+import { newBobber, rollFish } from './fishing';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
@@ -587,6 +588,33 @@ function useBucket(s: TitanSession, hit: Hit, slot: number): ActionResult {
   return { ok: true, msg: 'Líquido despejado' };
 }
 
+/**
+ * Vara de pesca (ADR 0133): sem linha, o toque na água lança a boia na superfície; com a linha lançada, o toque recolhe — se o peixe fisgou (`phase` = `bite`) ele vem para a mochila (ou cai ao lado da boia se não
+ * couber) e a vara gasta 1 uso; antes da fisgada só recolhe a linha, sem gasto (Wiki).
+ */
+export function reelIn(s: TitanSession, slot: number, rng: () => number = Math.random): ActionResult {
+  const f = s.fishing;
+  s.fishing = null;
+  s.dropsRev++; // a boia some do desenho
+  if (!f || f.phase !== 'bite') return { ok: true, msg: 'Linha recolhida' };
+  const fish = rollFish(rng);
+  if (s.inventory.canAdd(fish, 1)) s.inventory.add(fish, 1);
+  else { let n = 0; while (s.drops.has(`f:${f.x},${f.y},${f.z}:${n}`)) n++; restDrop(s, `f:${f.x},${f.y},${f.z}:${n}`, fish, f.x, f.y, f.z, 1); }
+  const w = s.inventory.damage(slot, 1);
+  return w?.broken ? { ok: true, broken: true, msg: `Pescou: ${ITEM_NAMES[fish]} · a vara quebrou` } : { ok: true, msg: `Pescou: ${ITEM_NAMES[fish]}` };
+}
+function useRod(s: TitanSession, hit: Hit, slot: number, rng: () => number = Math.random): ActionResult {
+  if (s.fishing) return reelIn(s, slot, rng);
+  const v = s.volume;
+  if (hit.item || v.get(hit.x, hit.y, hit.z) !== T.LAKE) return { ok: false, msg: 'Lance a vara na água' };
+  let y = hit.y;
+  while (v.get(hit.x, y + 1, hit.z) === T.LAKE) y++; // a boia fica na superfície da coluna
+  if (v.get(hit.x, y + 1, hit.z) !== T.AIR) return { ok: false, msg: 'Falta espaço livre sobre a água' };
+  s.fishing = newBobber(hit.x, y + 1, hit.z, rng);
+  s.dropsRev++; // a boia aparece no desenho
+  return { ok: true, msg: 'Vara lançada' };
+}
+
 /** Enxada e pá no toque sobre a face de cima do solo (ADR 0112): a enxada ara (terra, grama, caminho; úmida se há água ao alcance) e a pá abre caminho na grama e na terra; gasta 1 de durabilidade. */
 function useSoilTool(s: TitanSession, hit: Hit, hoe: boolean): ActionResult {
   const { x, y, z } = hit;
@@ -603,6 +631,7 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
   if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
+  if (stack.item === Item.VARA_PESCA) return useRod(s, hit, slot); // lançar e recolher a linha (ADR 0133)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)
   if (stack.item === Item.NOZ && canPlantNut(s, hit)) return plantCrop(s, hit, slot, 'noz'); // a noz se planta no topo da areia ocre (ADR 0083)
   const garden = gardenSpeciesOf(stack.item); // a horta (ADR 0113): semente de trigo, cenoura, batata e tomate se plantam no topo da terra arada; cenoura, batata e tomate, onde não dá para plantar, se comem

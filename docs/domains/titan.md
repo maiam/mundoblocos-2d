@@ -214,3 +214,6 @@ Testes: `titan/orvalis/generator.test.ts` e `mundo.test.ts`. Pendências e próx
 | Buffer | 1 px por px CSS, `image-rendering: pixelated`; sem céu, sol, névoa, mergulho nem mão | `TitanRenderer.setViewMode` |
 | Entrada | `Visão` no menu / V; ⟲ ⟳ / Z X; cursor livre; ação no ponto do mouse ou do dedo; alcance `ISO_REACH` = 6 | `titanGame.ts` (`setIso`, `computeAim`) |
 | Boneco | caixas provisórias + silhueta azul `GreaterDepth` atrás do terreno | `TitanRenderer.buildAvatar` |
+
+## Pesca do Orvalis (ADR 0133, v0.202.0)
+Vara de Pesca (106, 64 usos), boia (113, textura), peixes 107–112. `titan/fishing.ts` (puro): `newBobber`, `tickBobber`, `stepFishing`, `rollFish`, `FISH_TABLE` (60/25/13/2 %), espera 5–30 s, janela 1–2 s, `FISH_MAX_DISTANCE` 33. `actions.ts`: `useRod`/`reelIn`. Estado só em `session.fishing`. A vara não tem receita (aguarda o fio).

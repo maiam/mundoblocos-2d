@@ -21,7 +21,8 @@ import { isoCamera, isoQuarterOf, isoRay, isoYawOf, ISO_RAY_MAX, ISO_REACH, step
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { CHEST_SLOTS } from './chest';
-import { blockOfItem, foodOf, isBucket, Item, ITEM_NAMES } from './items';
+import { aimsLiquid, blockOfItem, foodOf, isBucket, Item, ITEM_NAMES } from './items';
+import { stepFishing } from './fishing';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -834,7 +835,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     } else ray = fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
     if (!ray) { target = null; aimCreature = null; aimFauna = null; } else {
       const [dx, dy, dz] = ray;
-      target = raycast(vol, o.x, o.y, o.z, dx, dy, dz, reach, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, isBucket(session.inventory.get(session.selected)?.item)); // balde na mão: a mira acerta o líquido (ADR 0091); cheio, é por ele que se olha a cavidade
+      target = raycast(vol, o.x, o.y, o.z, dx, dy, dz, reach, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, aimsLiquid(session.inventory.get(session.selected)?.item)); // balde ou vara na mão: a mira acerta o líquido (ADR 0091, 0133); cheio, é por ele que se olha a cavidade
       if (iso && target && Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5 > ISO_REACH) target = null; // longe demais para alcançar
       const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - o.x, target.y + 0.5 - o.y, target.z + 0.5 - o.z) - 0.5) : Infinity;
       aimCreature = creatureAim(session.creatures, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist);
@@ -929,7 +930,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (r.msg) notice(r.msg);
       if (r.ok) {
         const b = held ? blockOfItem(held.item) : null;
-        if (held && isBucket(held.item)) { if (held.item === Item.BALDE) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } // recolher e despejar têm som de água (ADR 0095)
+        if (held?.item === Item.VARA_PESCA) { if (session.fishing) gameAudio.playWaterPour(); else gameAudio.playWaterScoop(); view.setItems(visibleItems(session)); } // lançar e recolher a linha (ADR 0133)
+        else if (held && isBucket(held.item)) { if (held.item === Item.BALDE) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } // recolher e despejar têm som de água (ADR 0095)
         else if (b === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b ?? undefined) ?? 'rock');
         onEdited(); refresh();
       }
@@ -1097,6 +1099,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
+    if (active) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)
     if (session.fauna.length || fauna.shown) { // fauna de fazenda (ADR 0124): passeia perto do viajante e foge ao ser ferida
       for (const fa of session.fauna) {
         if (!active) break;

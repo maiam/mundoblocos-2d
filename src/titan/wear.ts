@@ -11,6 +11,7 @@ export const MAX_DURABILITY: Readonly<Record<number, number>> = {
   [Item.COPPER_PICK]: 190, [Item.COPPER_DAGGER]: 190,
   // Orvalis (ADR 0112), como o Minecraft: madeira 59, pedra 131
   [Item.PICARETA_MADEIRA]: 59, [Item.MACHADO_MADEIRA]: 59, [Item.PA_MADEIRA]: 59, [Item.ENXADA_MADEIRA]: 59,
+  [Item.VARA_PESCA]: 64, // Wiki (Java): 64 usos, 1 por captura (ADR 0133)
   [Item.PICARETA_PEDRA]: 131, [Item.MACHADO_PEDRA]: 131, [Item.PA_PEDRA]: 131, [Item.ENXADA_PEDRA]: 131,
 };
 export const maxDurability = (item: number): number | null => MAX_DURABILITY[item] ?? null;

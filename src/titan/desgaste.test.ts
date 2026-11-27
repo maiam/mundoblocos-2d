@@ -11,7 +11,7 @@ const slotOf = (s: { inventory: Inventory }, item: number): number => Array.from
 
 describe('durabilidade das ferramentas (ADR 0067)', () => {
   it('tabela e custos do Minecraft: picareta −1 no bloco e −2 no golpe; adaga −2 no bloco e −1 no golpe; recolhimento instantâneo não gasta', () => {
-    expect(maxDurability(Item.STONE_PICK)).toBe(131); expect(maxDurability(Item.COPPER_DAGGER)).toBe(190); expect(maxDurability(Item.NOZ)).toBeNull(); expect(Object.keys(MAX_DURABILITY)).toHaveLength(12); // as 4 do Titã e as 8 do Orvalis (ADR 0112)
+    expect(maxDurability(Item.STONE_PICK)).toBe(131); expect(maxDurability(Item.COPPER_DAGGER)).toBe(190); expect(maxDurability(Item.NOZ)).toBeNull(); expect(Object.keys(MAX_DURABILITY)).toHaveLength(13); // as 4 do Titã e as 8 do Orvalis (ADR 0112)
     for (const [tool, block, atk] of [[Item.STONE_PICK, 1, 2], [Item.COPPER_PICK, 1, 2], [Item.STONE_DAGGER, 2, 1], [Item.COPPER_DAGGER, 2, 1]] as const) {
       expect(wearCost(tool, { type: 'break_block', block: T.DARK_ROCK })).toBe(block); expect(wearCost(tool, { type: 'attack' })).toBe(atk);
     }
