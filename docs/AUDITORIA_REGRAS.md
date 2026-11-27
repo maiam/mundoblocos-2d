@@ -48,6 +48,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 38 | Fauna | Leite (balde na vaca) e tosquia (tesoura na ovelha, lã que volta pastando) | `titan/fauna.ts` (futuro) | **em aberto** — proposta enviada em 27/11/2026; o dono adiou: aguarda arte e itens (tesoura, balde, ferro) |
 | 39 | Cultivo | Abóbora e melancia do Orvalis: caule de 8 idades, fruto como bloco vizinho, caule conectado, 3–7 fatias, sementes | `titan/crops.ts`, `titan/session.ts`, `titan/actions.ts`, `render/titanRenderer.ts` | implementada (ADR 0128, v0.197.0) |
 | 41 | Pesca | Pesca do Orvalis: vara, boia, espera, fisgada, peixes e comida (parte da #14 E2) | `titan/fishing.ts`, `titan/actions.ts`, `titan/items.ts` | **implementada** (ADR 0133, v0.202.0; Linha e receita da vara na ADR 0134, v0.203.0) |
+| 42 | Flora marinha | Erva marinha, alga e alga seca no fundo da água do Orvalis (parte da #14 E3a) | `titan/voxel.ts`, `titan/orvalis/generator.ts`, `render/floraModel.ts`, `titan/actions.ts` | **implementada** (ADR 0135, v0.204.0; corais = E3b) |
 | 40 | Cultivo | Horta com 8 idades: trigo, cenoura e batata (idades, tempo, colheita da Wiki, migração do save) | `titan/crops.ts`, `titan/actions.ts`, `titan/session.ts`, `scripts/make-orvalis-horta.py` | implementada (ADR 0129, v0.198.0) |
 
 ## Registro das auditorias

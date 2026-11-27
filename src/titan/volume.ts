@@ -1,7 +1,7 @@
 import type { TerrainGen } from './terrain';
 import { LightEngine, lightKey } from './light';
 import { SkyLight, type SkyKind } from './skylight';
-import { isLeaves, isTorch, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { isLeaves, isTorch, isWaterPlant, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -128,7 +128,7 @@ export class TitanVolume {
   remove(x: number, y: number, z: number): boolean {
     const baseId = this.gen.blockAt(x, y, z), before = this.get(x, y, z);
     const floods = baseId !== T.LAKE && isSolid(before) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => this.get(x + dx, y, z + dz) === T.LAKE);
-    return this.set(x, y, z, baseId === T.LAKE || floods ? T.LAKE : T.AIR);
+    return this.set(x, y, z, baseId === T.LAKE || floods || isWaterPlant(before) ? T.LAKE : T.AIR); // planta aquática removida: a água ocupa o lugar (ADR 0135)
   }
 
   /** Coloca um sólido na célula (ar ou líquido; o líquido é deslocado, mas continua na base para voltar depois). */
@@ -222,9 +222,18 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), tocha: new Map(), tochaParede: new Map(), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
+  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), tocha: new Map(), tochaParede: new Map(), ervaMarinha: new Map(), ervaAlta: new Map(), ervaAltaTopo: new Map(), alga: new Map(), algaTopo: new Map(), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
+  /** Registra um modelo que vem do **gerador** (a flora marinha, ADR 0135), descoberto quando a seção é malhada: os modelos editados entram por `set` e pelo carregamento; os da base, só aqui. Idempotente. */
+  registerModelCell(x: number, y: number, z: number, id: number): void {
+    const md = modelOf(id);
+    if (!md) return;
+    const key = lightKey(x, y, z), m = this.models[md.kind];
+    if (m.has(key)) return;
+    m.set(key, [x, y, z, md.turn]);
+    this.modelVersion++;
+  }
   modelCells(kind: ModelKindName): Array<[number, number, number, number]> { return [...this.models[kind].values()]; }
   workbenchCells(): Array<[number, number, number, number]> { return this.modelCells('workbench'); }
   /** Há uma Mesa de Trabalho nesta célula? */
@@ -245,7 +254,7 @@ export class TitanVolume {
   private sky: SkyLight | null = null;
   /** Sobe a cada mudança real do céu depois de calculado: o renderer relê o céu das plantas (que não passam pelas instâncias de modelo). */
   skyRev = 0;
-  private static skyKind(id: number): SkyKind { return blocksLight(id) ? 2 : isLeaves(id) || id === T.LAKE ? 1 : 0; }
+  private static skyKind(id: number): SkyKind { return blocksLight(id) ? 2 : isLeaves(id) || id === T.LAKE || isWaterPlant(id) ? 1 : 0; }
   private buildSky(): SkyLight {
     const r = this.gen.region, sky = new SkyLight({ kind: (x, y, z) => TitanVolume.skyKind(this.get(x, y, z)), x0: r.min, x1: r.max, z0: r.min, z1: r.max, yMin: Y_MIN, yMax: Y_MAX });
     const edited: Array<[number, number, number]> = [];

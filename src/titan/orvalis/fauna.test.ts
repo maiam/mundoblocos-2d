@@ -74,7 +74,7 @@ describe('Geração: função pura da seed, só no Orvalis v3', () => {
 describe('Probabilidade de grupo: Wiki na v4, 0,4 preservado na v3', () => {
   it('a v4 usa 0,1 (Wiki) e a v3 segue com 0,4', () => {
     expect(GROUP_CHANCE).toBe(0.1); expect(GROUP_CHANCE_V3).toBe(0.4);
-    expect(groupChanceFor(3)).toBe(0.4); expect(groupChanceFor(4)).toBe(0.1); expect(ORVALIS_GENERATOR_VERSION).toBe(4);
+    expect(groupChanceFor(3)).toBe(0.4); expect(groupChanceFor(4)).toBe(0.1); expect(ORVALIS_GENERATOR_VERSION).toBeGreaterThanOrEqual(4);
   });
   it('a v4 tem bem menos animais que a v3, determinísticos, com o terreno da v3', () => {
     for (const seed of [42, 7, 1234]) {

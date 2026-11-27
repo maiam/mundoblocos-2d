@@ -232,3 +232,4 @@
 | **Água animada e correr nadando (27/11/2026, auditoria #14):** 8 quadros no lago do Orvalis, corrida nadando na direção do olhar, fluxo adiado, artes marinhas importadas | ADR 0132 |
 | **Pesca do Orvalis (27/11/2026, auditoria #14 E2):** vara, boia, espera 5–30 s, janela 1–2 s, peixes da Wiki, comida, receita da vara aguarda o fio | ADR 0133 |
 | **Linha e receita da vara (27/11/2026, auditoria #14 E2):** item 114 fabricado da Lã (1 → 4), vara de 3 Hastes + 2 Linhas | ADR 0134 |
+| **Flora marinha do Orvalis (27/11/2026, auditoria #14 E3a):** erva marinha, alga e alga seca; plantas contam como água; gerador v5; modelos instanciados; corais na E3b | ADR 0135 |

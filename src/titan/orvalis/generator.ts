@@ -17,7 +17,13 @@ import { inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, Y_MIN } from '../voxe
  * v4 (ADR 0124): a fauna de fazenda passa à **probabilidade de grupo da Wiki** (0,1 por chunk; a v3 usava 0,4); terreno e blocos iguais.
  * v3 (ADR 0124): **fauna de fazenda** (`titan/fauna.ts`, `faunaSpecs`): o relevo, os blocos e os veios são os da v2; a versão só liga os grupos de porco, vaca, ovelha e galinha em grama.
  */
-export const ORVALIS_GENERATOR_VERSION = 4;
+export const ORVALIS_GENERATOR_VERSION = 5;
+/**
+ * v5 (ADR 0135): **flora marinha** no fundo de areia da água (mar, baías, lagos e rios) com 2 ou mais blocos de água acima do piso — erva marinha (baixa; alta em duas células) e alga (colunas até a superfície menos 1), por
+ * regra pura da seed (`floraAt`); o terreno, os blocos e os veios são os da v4.
+ */
+/** Chances por coluna de fundo (Wiki: oceano morno-ameno tem erva marinha e alga; as densidades são adaptação): alga só com 5+ de água, erva marinha com 2+, alta com 3+. */
+export const FLORA = { kelp: 0.05, seagrass: 0.2, tallShare: 0.4, kelpMinDepth: 5, kelpBase: 3, kelpSpread: 10 } as const;
 
 const PURPOSE = { relevo: 1, colinas: 2, mar: 3, rio: 4, montanha: 5, bioma: 6, bosque: 7, arvore: 8, chegada: 9, mina: 10 } as const;
 /**
@@ -205,12 +211,30 @@ export class OrvalisGenerator implements TerrainGen {
     return LEAVES[t.sp];
   }
 
+  /** Planta aquática da célula `(x, y, z)` acima do piso `top` (0 = só água): erva marinha, erva alta ou alga, pela regra pura `FLORA` (v5, ADR 0135). */
+  private floraBlock(x: number, y: number, z: number, top: number): number {
+    const k = y - top, depth = LAKE_LAST_Y - top; // k = altura sobre o piso; depth = blocos de água acima do piso (top + 1 até a superfície)
+    if (k < 1 || k > 13 || depth < 2 || top > 61) return 0;
+    const c = this.column(x, z);
+    if (c.surface !== T.BEACH || this.arrival.clearing && x >= this.arrival.clearing.x0 && x < this.arrival.clearing.x0 + this.arrival.clearing.size && z >= this.arrival.clearing.z0 && z < this.arrival.clearing.z0 + this.arrival.clearing.size) return 0;
+    const r = hash2(this.seed ^ 0x51ea, x, z), r2 = hash2(this.seed ^ 0xa17, x, z);
+    if (depth >= FLORA.kelpMinDepth && r < FLORA.kelp) {
+      const h = Math.min(depth - 2, FLORA.kelpBase + Math.floor(r2 * FLORA.kelpSpread));
+      return k < h ? T.KELP : k === h ? T.KELP_TOP : 0;
+    }
+    if (r >= FLORA.kelp && r < FLORA.kelp + FLORA.seagrass) {
+      if (depth >= 3 && r2 < FLORA.tallShare) return k === 1 ? T.SEAGRASS_TALL : k === 2 ? T.SEAGRASS_TALL_TOP : 0;
+      return k === 1 ? T.SEAGRASS : 0;
+    }
+    return 0;
+  }
+
   /** Voxel da base (sem edições) em coordenadas globais. */
   blockAt(x: number, y: number, z: number): number {
     if (y <= Y_MIN) return T.BEDROCK;
     const c = this.column(x, z);
     if (y > c.top) {
-      if (y <= LAKE_LAST_Y) return T.LAKE;
+      if (y <= LAKE_LAST_Y) { const f = this.version >= 5 ? this.floraBlock(x, y, z, c.top) : 0; return f || T.LAKE; } // v5: flora marinha dentro da água
       const ts = this.treesNear(x, z);
       for (let i = 0; i < ts.length; i++) { const b = this.treeBlock(ts[i], x, y, z); if (b) return b; }
       return T.AIR;

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.204.0 — flora marinha: erva marinha, alga e alga seca (auditoria #14 E3a, 27/11/2026)
+- **ADR 0135 (ciclo da ADR 0116; aprovada nos 5 pontos).** Blocos 154–159 (erva marinha baixa e alta, alga, bloco de alga seca) e itens 115–118; **as plantas aquáticas contam como água** (física, mergulho, itens, luz, remoção); modelos de planos cruzados instanciados; **gerador v5** com erva marinha (20 %) e alga (5 %) sobre o fundo de areia; plantar na água, quebrar com cascata; alga assa em alga seca (comida 1, combustível 200 s) e o bloco (2000 s). **Atlas de itens 4 × 31.**
+- 756 testes passam (7 novos em `orvalis/floraMarinha.test.ts`); conferido no navegador (as plantas aparecem sob a água). Sem mudança de save nem de protocolo. Seeds novas mudam o fundo do mar (`ORVALIS_GENERATOR_VERSION` 5). Corais ficam para a E3b.
+
 ## Orvalis v0.203.0 — Linha e receita da vara de pesca (auditoria #14 E2, 27/11/2026)
 - **ADR 0134 (ciclo da ADR 0116; aprovada).** Item **114, Linha** (arte do pacote de espólio do Drive), fabricado da Lã (1 Lã → 4 Linhas, adaptação: sem aranhas); **Vara de Pesca** na Mesa de Carpintaria com 3 Hastes + 2 Linhas. A pesca já pode ser jogada do começo ao fim.
 - 749 testes passam (a receita entrou em `orvalis/pesca.test.ts`). Sem mudança de save, de gerador nem de protocolo.
