@@ -9,7 +9,7 @@ src/
   titan/                  o motor voxel: volume, gerador (contrato TerrainGen), malha, física, sessão, salvamento, ações, receitas, UI
     orvalis/              gerador e regras do Orvalis 3D (ADR 0105)
     worldId.ts            resolveWorldId: Orvalis 3D padrão; Titã só por ?mundo=titan (ADR 0115)
-  render/                 titanRenderer.ts (Three.js), titanSkyDome, farejadorRig, heldPose, muretaModel; art/titan.ts (único lugar que importa arte)
+  render/                 titanRenderer.ts (Three.js), titanSkyDome, farejadorRig, fazenda (fauna de fazenda, ADR 0124), heldPose, muretaModel; art/titan.ts (único lugar que importa arte)
   net/titan/              sala cooperativa do Titã: protocolo, TitanRoom, cliente, loopback, socket; index.ts = pacote do servidor
   net/socket.ts           endereço do servidor, hosts permitidos, contagem das salas
   world/noise.ts, random.ts  utilitários puros de seed (únicos restos de `src/world`)

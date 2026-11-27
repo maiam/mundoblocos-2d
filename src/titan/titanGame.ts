@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanMuretaPedraUrl, orvalisHortaUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanMuretaPedraUrl, orvalisHortaUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl, orvalisFazendaUrls } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
@@ -8,7 +8,8 @@ import { durabilityHue, durabilityRatio, maxDurability } from './wear';
 import { canPlantNut, useDoor, chestAt, chestMoveIn, chestTakeOut, useBed, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
-import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, tickRespawn } from './combat';
+import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, attackFauna, tickRespawn } from './combat';
+import { FAUNA_KINDS, faunaAim, faunaPose, stepFauna, type FaunaKind } from './fauna';
 import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, stationMet, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX, toolAdvantage } from './breaking';
@@ -52,6 +53,8 @@ const RETRY_MS = 3000;
 const SPRINT_HOLD_MS = 200; // ADR 0076
 let sprintOn = false;
 const SIM_RADIUS = 56, SHOW_RADIUS = 64, SHOW_MAX = 8;
+/** Fauna de fazenda (ADR 0124): só os animais a até `FAUNA_SIM_RADIUS` m passeiam; os `FAUNA_SHOW_MAX` mais próximos, a até `FAUNA_SHOW_RADIUS` m, vão para o desenho. */
+const FAUNA_SIM_RADIUS = 48, FAUNA_SHOW_RADIUS = 64, FAUNA_SHOW_MAX = 40;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?: HTMLElement, text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -137,7 +140,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const forcedHour = parseHora(q.get('hora')) ?? (texScene ? FIXED_HOURS.tarde : null); // a vitrine fica à tarde, para a cor não variar entre testes
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
+  const fazenda = orvalis ? (Object.fromEntries(await Promise.all((Object.keys(orvalisFazendaUrls) as FaunaKind[]).map(async (k) => [k, await loadImage(orvalisFazendaUrls[k])] as const))) as Record<FaunaKind, HTMLImageElement>) : undefined; // 4 atlas de 64 × 64 (ADR 0124)
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, fazenda, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
   if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view }; // só no dev (como o window.__game do mundo 2.5D): testes de navegador
   if (orvalis) view.setPalette('orvalis');
   const forcedRain = q.get('chuva') === '1'; // teste: força a chuva (só visual e som; não grava)
@@ -827,21 +831,26 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     else if (iso) {
       if (fingerNdc) { const r = isoRay(isoCamera([b.x, b.y + 0.9, b.z], session.yaw, canvas.clientWidth || 2, canvas.clientHeight || 1), fingerNdc.x, fingerNdc.y); o = { x: r.origin[0], y: r.origin[1], z: r.origin[2] }; ray = [r.dir[0], r.dir[1], r.dir[2]]; reach = creatureReach = ISO_RAY_MAX; } else ray = null;
     } else ray = fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
-    if (!ray) { target = null; aimCreature = null; } else {
+    if (!ray) { target = null; aimCreature = null; aimFauna = null; } else {
       const [dx, dy, dz] = ray;
       target = raycast(vol, o.x, o.y, o.z, dx, dy, dz, reach, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, isBucket(session.inventory.get(session.selected)?.item)); // balde na mão: a mira acerta o líquido (ADR 0091); cheio, é por ele que se olha a cavidade
       if (iso && target && Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5 > ISO_REACH) target = null; // longe demais para alcançar
       const blockDist = target ? Math.max(0, Math.hypot(target.x + 0.5 - o.x, target.y + 0.5 - o.y, target.z + 0.5 - o.z) - 0.5) : Infinity;
       aimCreature = creatureAim(session.creatures, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist);
       if (iso && aimCreature) { const c = session.creatures[aimCreature.index]; if (!c || Math.hypot(c.body.x - b.x, c.body.y - b.y, c.body.z - b.z) > ATTACK_REACH) aimCreature = null; } // animal na mira: mais perto que o bloco apontado (ADR 0069)
+      aimFauna = session.fauna.length ? faunaAim(session.fauna, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist) : null; // fauna de fazenda: a caixa de acerto da Wiki (ADR 0124)
+      if (iso && aimFauna) { const c = session.fauna[aimFauna.index]; if (!c || Math.hypot(c.body.x - b.x, c.body.y - b.y, c.body.z - b.z) > ATTACK_REACH) aimFauna = null; }
+      if (aimCreature && aimFauna) { if (aimFauna.dist < aimCreature.dist) aimCreature = null; else aimFauna = null; } // vence o mais perto
     }
-    const c = aimCreature ? session.creatures[aimCreature.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : null;
+    const c = aimCreature ? session.creatures[aimCreature.index] : null, fa = aimFauna ? session.fauna[aimFauna.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : fa ? `${FAUNA_KINDS[fa.kind].name} · ${fa.hp}/${FAUNA_KINDS[fa.kind].hp}` : null;
     if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
   }
   /** Animal na mira (ADR 0069): vence o bloco que está atrás dele; o toque curto o golpeia. */
   let aimCreature: { index: number; dist: number } | null = null;
+  let aimFauna: { index: number; dist: number } | null = null; // fauna de fazenda na mira (ADR 0124)
   let nextAttackAt = 0;
   const toTarget = (h: Hit | null): GestureTarget | null => {
+    if (aimFauna) { const c = session.fauna[aimFauna.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: `f:${aimFauna.index}` } : null; }
     if (aimCreature) { const c = session.creatures[aimCreature.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: String(aimCreature.index) } : null; }
     if (!h) return null;
     if (h.item) return { x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, hy: h.hy, kind: 'shard', item: h.item };
@@ -870,6 +879,21 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     onEdited(); refresh();
     return true;
   }
+  /** Golpe na fauna de fazenda (ADR 0124): mesma pausa e desgaste do golpe no Farejador; o espólio cai no chão. */
+  function strikeFauna(index: number): boolean {
+    const nowMs = performance.now();
+    if (nowMs < nextAttackAt) return false;
+    nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    const r = attackFauna(session, index);
+    if (!r.ok) return false;
+    gameAudio.playStrike();
+    view.swingHand();
+    if (r.broken) gameAudio.playToolBreak();
+    if (r.msg) notice(r.msg);
+    if (r.dead) view.setItems(visibleItems(session));
+    onEdited(); refresh();
+    return true;
+  }
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
   window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
   window.addEventListener('keydown', () => { gameAudio.unlock(); }, { capture: true, passive: true });
@@ -883,7 +907,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
-      if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
+      if (t.kind === 'creature') return { ok: t.item?.startsWith('f:') ? strikeFauna(Number(t.item.slice(2))) : strike(Number(t.item)) };
       if (t.kind === 'block' && isDoor(vol.get(t.x, t.y, t.z)) && benchAimed()) { openStation(); return { ok: true }; } // tocar/clicar na porta (ao alcance) abre ou fecha, com qualquer coisa na mão (ADR 0102)
       if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
@@ -985,6 +1009,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
   const steps = new FootstepClock();
   let lastAimText: string | null = null;
+  const fauna = { shown: false, moving: new Map<string, boolean>() }; // fauna de fazenda: o que está desenhado e quem anda (estado de execução, ADR 0124)
   let nextScrape = 0; // instante do próximo raspar de pata de um Farejador em investida
   const frame = (now: number): void => {
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -1063,6 +1088,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       }
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
+    }
+    if (session.fauna.length || fauna.shown) { // fauna de fazenda (ADR 0124): passeia perto do viajante e foge ao ser ferida
+      for (const fa of session.fauna) {
+        if (!active) break;
+        if (fa.phase === 'wander' && Math.hypot(fa.body.x - b.x, fa.body.z - b.z) > FAUNA_SIM_RADIUS) continue;
+        fauna.moving.set(fa.id, stepFauna(fa, vol, dt).moving);
+      }
+      const near = session.fauna.filter((fa) => Math.hypot(fa.body.x - b.x, fa.body.z - b.z) <= FAUNA_SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, FAUNA_SHOW_MAX);
+      view.setFauna(near.map((fa) => ({ kind: fa.kind, x: fa.body.x, y: fa.body.y, z: fa.body.z, yaw: fa.yaw, pose: faunaPose(fa, fauna.moving.get(fa.id) ?? false) })));
+      fauna.shown = near.length > 0;
     }
     if (!client && playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
     if (!client && playing && tickWeather(session, dt, Math.random)) playerDirty = true; // a chuva liga e desliga sozinha (ADR 0118); na sala é do servidor

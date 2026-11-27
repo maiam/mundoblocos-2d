@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.193.0 — fauna de fazenda: porco, vaca, ovelha e galinha (auditoria #35, 27/11/2026)
+- **ADR 0124 (ciclo da ADR 0116 cumprido; aprovada nos 4 pontos).** Animais passivos do Orvalis em `titan/fauna.ts`: vida da Wiki (10/10/8/4), **caixa de acerto da Wiki** (0,9×0,9; 0,9×1,4; 0,9×1,3; 0,4×0,7), grupos de 4 em grama pelos pesos 12/10/10/8, passeio e fuga ao ser ferido, espólio da Wiki. **Gerador do Orvalis v3** (só liga a fauna; terreno igual ao da v2); seed 42 = 66 animais.
+- **Itens 89–99:** couro, lã, pena e as carnes crua e assada de porco, vaca, ovelha e galinha (comida com os valores da Wiki; a Fornalha assa cada uma). Ícones de couro e lã do Drive; os demais **provisórios**. **Atlas de itens 4 × 25.**
+- **Arte:** texturas do pacote Mobs64px e modelos em caixas articuladas (`render/fazenda.ts`, `fazenda-modelos.json`); regra permanente: a caixa de mira e de golpe é a da Wiki, o desenho é livre.
+- Fora do escopo (dívidas): reprodução, leite, tosquia, ovos, geração contínua, abate no save, luz do céu nos animais. Sem mudança de protocolo nem de save; o servidor não precisa de `sync-net`. 676 testes passam; conferido no navegador (os quatro animais desenhados).
+
 ## Orvalis v0.192.0 — luz do céu, fase 3: plantas e mergulho (auditoria #32, 27/11/2026)
 - **ADR 0123, fase 3.** As **plantas** (junco, cultivo, horta e Noz de Duna) passam a escurecer sob tetos e em cavernas (`iSky` por instância, relido quando o céu muda: `TitanVolume.skyRev`). O **mergulho** não escurece mais a luz pela profundidade da câmera: isso agora vem do céu (a água filtra 1 por bloco), então não escurece duas vezes.
 - Ficam como dívida: itens soltos, animais, a mão e os outros jogadores da sala (sem céu). O `npm run bench` do plano não existe (saiu com o 2.5D); a nota foi tirada do `CLAUDE.md`. 649 testes passam. Conferido no navegador (trigo na boca e no fundo de um corredor coberto; vista submersa). Pacote da sala muda (volume): o servidor precisa do `sync-net`.

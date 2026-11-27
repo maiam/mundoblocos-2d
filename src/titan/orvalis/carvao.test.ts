@@ -20,7 +20,7 @@ describe('carvão: blocos, itens e regras', () => {
     expect(T.COAL_ORE).toBe(150); expect(T.COAL_BLOCK).toBe(151);
     for (const id of [T.COAL_ORE, T.COAL_BLOCK]) { expect(isFull(id) && blocksLight(id)).toBe(true); expect(blockToolOf(id)).toBe('pick'); expect(surfaceOf(id)).toBe('rock'); }
     expect(tileFor(T.COAL_ORE, 'top')).toBe(tileIndex('orvalis/minerio-carvao')); expect(tileFor(T.COAL_BLOCK, 'side')).toBe(tileIndex('orvalis/bloco-carvao'));
-    expect(Item.CARVAO).toBe(87); expect(Item.BLOCO_CARVAO).toBe(88); expect(isItem(87) && isItem(88)).toBe(true); expect(isItem(86) || isItem(89)).toBe(false);
+    expect(Item.CARVAO).toBe(87); expect(Item.BLOCO_CARVAO).toBe(88); expect(isItem(87) && isItem(88)).toBe(true); expect(isItem(86) || isItem(100)).toBe(false);
     expect(ITEM_NAMES[87]).toBe('Carvão'); expect(ITEM_NAMES[88]).toBe('Bloco de Carvão'); expect(maxStack(87)).toBe(64);
     expect(blockOfItem(Item.BLOCO_CARVAO)).toBe(T.COAL_BLOCK); expect(blockOfItem(Item.CARVAO)).toBeNull();
     expect(itemOfBlock(T.COAL_ORE)).toBe(Item.CARVAO); expect(itemOfBlock(T.COAL_BLOCK)).toBe(Item.BLOCO_CARVAO); // o minério solta Carvão, nunca o bloco
@@ -70,7 +70,7 @@ describe('carvão: geração (gerador v2)', () => {
     return { ore, stone, minY, maxY, shallow, air };
   };
   it('a v2 gera veios só dentro da pedra (abaixo do subsolo), na faixa da regra e com densidade parecida com a do Minecraft (~1 %); a v1 não tem minério', () => {
-    expect(ORVALIS_GENERATOR_VERSION).toBe(2); expect(ORVALIS_ORE_RULES[0]).toMatchObject({ blockId: T.COAL_ORE, veinsPerChunk: 20, minY: -60, maxY: 90, peakY: 40 });
+    expect(ORVALIS_GENERATOR_VERSION).toBeGreaterThanOrEqual(2); expect(ORVALIS_ORE_RULES[0]).toMatchObject({ blockId: T.COAL_ORE, veinsPerChunk: 20, minY: -60, maxY: 90, peakY: 40 });
     const g = new OrvalisGenerator(42, 2), r = sample(g), share = r.ore / (r.ore + r.stone);
     expect(r.ore).toBeGreaterThan(500); expect(share).toBeGreaterThan(0.003); expect(share).toBeLessThan(0.05);
     expect(r.shallow).toBe(0); expect(r.air).toBe(0); expect(r.minY).toBeGreaterThanOrEqual(-60); expect(r.maxY).toBeLessThanOrEqual(90 + 30); // um veio pode passar um pouco do limite de partida
