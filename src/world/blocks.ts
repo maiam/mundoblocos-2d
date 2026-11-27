@@ -1,5 +1,4 @@
 import { hash2 } from './random';
-import { RIO_CANAL, RIO_LAGO } from './rio';
 /**
  * Registro de blocos — fonte de verdade das PROPRIEDADES DE DOMÍNIO de cada bloco.
  * A aparência vive em `src/render/textures.ts`, indexada pelo mesmo id.
@@ -228,9 +227,6 @@ export const Block = {
   ISO_CARVALHO_S: 95, ISO_CARVALHO_M: 96, ISO_CARVALHO_L: 97,
   /** Bloco de Pedra isométrico (v0.93.143): a camada de baixo do terreno do Santuário. */
   ISO_STONE_BLOCK: 85,
-  /** Pincéis do Rio das Fadas (v0.93.147, `world/rio.ts`): a peça de água certa é escolhida na hora de desenhar, pelos vizinhos. */
-  ISO_RIO_CANAL: RIO_CANAL,
-  ISO_RIO_LAGO: RIO_LAGO,
 } as const;
 
 /** Árvores do Santuário (bétula, cerejeira, macieira, carvalho × pequena, média, grande): id e nome, na ordem da hotbar. */
@@ -441,8 +437,6 @@ const defs: BlockDef[] = [
   object(Block.ISO_G_DIRT, 'Piso de Terra'),
   object(Block.ISO_G_STONE, 'Piso de Pedra'),
   object(Block.ISO_STONE_BLOCK, 'Bloco de Pedra', { stone: true }),
-  object(Block.ISO_RIO_CANAL, 'Rio: Canal'),
-  object(Block.ISO_RIO_LAGO, 'Rio: Lago'),
   object(Block.ISO_TREE, 'Carvalho', { shape: 'rock' }),
   ...ISO_TREE_SET.map(([id, name]) => object(id, name, { shape: 'rock' })),
   object(Block.ISO_BUSH_L, 'Arbusto Grande', { shape: 'rock' }),

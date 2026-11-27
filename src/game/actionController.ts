@@ -60,7 +60,6 @@ export interface ActionContext {
   /** Materiais coletados (colocar gasta, quebrar solta o bloco) — perfil `collectBlocks`. */
   collectBlocks: boolean;
   /** Colocar cubos nas faces de outros (nível exato, sem exigir cubo embaixo): vista isométrica, só sozinho (o protocolo da sala não leva o nível). */
-  facePlacement?: boolean;
   /** Tempo fixo (s) para quebrar qualquer bloco, em vez de pela ferramenta (Santuário: 1 s). */
   breakSeconds?: number;
   /** Na sala: o que cai ao quebrar/colher é criado pelo servidor (itens da sala), não aqui. */
@@ -376,14 +375,6 @@ export class ActionController {
   private useTarget(sx: number, sy: number): CellTarget | null {
     const slot = this.slot;
     if (!slot || (slot.kind === 'tool' && !TOOLS[slot.tool].groundUse) || (slot.kind === 'item' && !ITEMS[slot.item].plants)) return null;
-    // Vista isométrica: apontar para a face de um cubo coloca o novo no vizinho daquela face, no mesmo nível (pode flutuar); o topo, em cima.
-    if (slot.kind === 'block' && this.ctx.facePlacement && blockDef(slot.block).shape === 'cube') {
-      const f = this.renderer.pickFace?.(this.camera, sx, sy);
-      if (f) {
-        const tx = f.up ? f.x : f.x + f.nx, ty = f.up ? f.y : f.y + f.ny, level = f.up ? f.level + 1 : f.level;
-        return { x: tx, y: ty, level, valid: this.inReach(tx, ty) && this.canUseAt(slot, tx, ty, level) };
-      }
-    }
     let [x, y] = this.groundCell(sx, sy);
     if (slot.kind === 'block') {
       const picked = this.renderer.pick(this.camera, sx, sy);

@@ -5,7 +5,6 @@ import { MONSTER_STATS } from '../world/progression';
 import { Item, ITEMS, monsterDrops, WOLF_FANG_CHANCE, WOLF_PELT_CHANCE } from '../world/items';
 import { mulberry32 } from '../world/random';
 import { grow } from '../world/town';
-import { WORLD_PROFILES } from '../world/profiles';
 import { World } from '../world/world';
 import { WOLF_ROAM, WOLF_TOWN_CLEARANCE, wolfPacks } from '../world/wolves';
 import { Entities } from './entities';
@@ -97,7 +96,6 @@ describe('Lobos: bandos pelo mapa', () => {
   });
 
   it('mundo sem cidade (Santuário) não tem lobos', () => {
-    expect(wolfPacks(new World(1, WORLD_PROFILES.santuario))).toEqual([]);
   });
 
   it('o jogo põe todos no mapa (e nenhum na dungeon); lobo é monstro com ficha e comportamento', () => {

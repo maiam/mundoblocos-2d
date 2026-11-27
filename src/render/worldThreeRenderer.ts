@@ -30,22 +30,20 @@ import type { RenderOptions } from './rendererContract';
 import type { GameRenderer, RendererStats } from './rendererContract';
 import { ChunkRenderer } from './chunkRenderer';
 import { addDungeonTextures, createBlockTextures, type BlockTextures } from './textures';
-import { getFxArt, getIsoCauldron, getIsoFence, getIsoGoblin, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
+import { getFxArt, getTownImages, getWaterArt, loadDungeonArt } from './blockArt';
 import { SpriteFx } from './three/spriteFx';
 import { TOOLS } from '../world/items';
 import { Block, blockDef, gateFence, isDoor, isGate, isGateOpen, joinsFence, isWaterPlant, type BlockId } from '../world/blocks';
 import type { World } from '../world/world';
 import type { Hit } from '../world/progression';
 import { OBLIQUE_K } from './sanctuaryObliqueView';
-import { actorScaleFor, cellsTallFromSearch, ISO_CELLS_TALL, objectScaleFor, WORLD_CELLS_TALL } from './worldScale';
+import { actorScaleFor, cellsTallFromSearch, objectScaleFor } from './worldScale';
 import { ChimneySmoke, chimneyWorldPos, type Chimney } from './three/chimneySmoke';
 import { chimneyMouths, isTownArt } from './townArt';
 import { hash2 } from '../world/random';
-import { isRioBrush, rioPieceAt, rioVirtualId } from '../world/rio';
 import { ChunkWalls } from './three/chunkWalls';
 import { DEFAULT_WALL_THICKNESS } from '../world/walls';
 import { ThreeStage } from './three/stage';
-import { SanctuaryCameraModes } from './sanctuaryCameraModes';
 import { ChunkFloor } from './three/chunkFloor';
 import { ChunkBlocks } from './three/chunkBlocks';
 import { BlockMaterials } from './three/blockMaterials';
@@ -60,17 +58,11 @@ import { Particles } from './particles';
 import { skyAt } from './daycycle';
 import { drawBreakingRing, drawFocusBrackets, drawHoverFrame } from './selectionFx';
 import { selectionRect3d } from './worldSelection';
-import { computeCutaway } from './three/cutaway';
-import { IsoCursor } from './three/isoCursor';
-import { IsoFences } from './three/isoFences';
-import { IsoCauldrons } from './three/isoCauldrons';
-import { IsoGoblins } from './three/isoGoblins';
 import { darkenOutside, drawBeacon } from './dungeonFx';
 import { worldBlockFaces } from './worldBlockFaces';
 import { worldSpriteArt } from './worldSpriteArt';
 import { ItemIcons, itemIconUrl, loadCropSprites } from './itemArt';
 import { type ItemId, stackBlock } from '../world/items';
-import { classifySanctuaryBlock, sanctuaryBlockTransform } from './sanctuaryThreeLayout';
 
 /** Margem de chunks além da tela: a vista oblíqua mostra mais ao sul/norte do que a antiga. */
 const FLOOR_MARGIN = 1;
@@ -92,21 +84,13 @@ function openWaterAt(world: World, x: number, y: number): boolean {
  */
 export class WorldThreeRenderer implements GameRenderer {
   /** Padrão 14; `?celulas=N` (experimento de escala, `worldScale.ts`) muda para comparar. */
-  /** Células visíveis na vertical: o padrão do Mundo (14 × SUBDIV) ou, no Santuário isométrico, `ISO_CELLS_TALL` (as peças da prancha são grandes). */
+  /** Células visíveis na vertical: o padrão do Mundo (14 × SUBDIV). */
   readonly preferredCellsTall: number;
   readonly textures: BlockTextures;
   private readonly stage: ThreeStage;
-  private readonly sanctuaryCameras: SanctuaryCameraModes | null;
-  private lastCameraPlayer: RenderOptions['player'] | null = null;
   private readonly chunks: ChunkRenderer;
   /** Tudo do mundo aberto (chão, cubos, objetos, portas, efeitos): escondido quando a personagem está num interior (M4.1). */
   private readonly worldLayer = new THREE.Group();
-  /** Cursor 3D da câmera isométrica (o 2D de seleção não projeta na vista isométrica). */
-  private readonly isoCursor: IsoCursor;
-  /** Cercas e portões como malhas 3D (Santuário isométrico); null nos outros mundos. */
-  private readonly isoFences: IsoFences | null;
-  private readonly isoCauldrons: IsoCauldrons | null;
-  private readonly isoGoblins: IsoGoblins | null;
   private readonly interiorLayer = new THREE.Group();
   private readonly room: InteriorRoom;
   private readonly skyColor: THREE.Color;
@@ -167,9 +151,8 @@ export class WorldThreeRenderer implements GameRenderer {
   });
   private disposed = false;
 
-  /** `sanctuaryRoom` = seletor das 3 câmeras (Sala 2); `isometric` = câmera isométrica fixa (Santuário solo, ADR 0036). */
-  constructor(canvas: HTMLCanvasElement, private readonly world: World, sanctuaryRoom = false, isometric = false) {
-    this.preferredCellsTall = isometric ? ISO_CELLS_TALL : cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
+  constructor(canvas: HTMLCanvasElement, private readonly world: World) {
+    this.preferredCellsTall = cellsTallFromSearch(typeof window === 'undefined' ? '' : window.location.search);
     this.stage = new ThreeStage(canvas, 'oblique', world.profile.sky[0], () => {
       this.actors?.reupload();
       this.drops?.reupload();
@@ -181,7 +164,6 @@ export class WorldThreeRenderer implements GameRenderer {
       this.gates?.reupload();
       this.room?.reupload();
     });
-    this.sanctuaryCameras = isometric ? new SanctuaryCameraModes(canvas, this.stage, true, 'isometrico') : sanctuaryRoom ? new SanctuaryCameraModes(canvas, this.stage, true) : null;
     this.textures = createBlockTextures({ town: !!world.town });
     this.chunks = new ChunkRenderer(world, this.textures);
     // Arte da dungeon em segundo plano (como no 2D): quando chega, o chão é repintado.
@@ -190,16 +172,8 @@ export class WorldThreeRenderer implements GameRenderer {
     this.stage.scene.add(this.worldLayer, this.interiorLayer);
     this.skyColor = new THREE.Color(world.profile.sky[0]);
     this.room = new InteriorRoom(this.interiorLayer, art().interiors ?? {});
-    this.isoCursor = new IsoCursor(this.worldLayer, world);
-    const fenceArt = getIsoFence();
-    this.isoFences = fenceArt ? new IsoFences(this.worldLayer, world, fenceArt.art) : null;
-    const cauldronArt = getIsoCauldron();
-    // Caldeirão 3D do Santuário: malha do dono do produto com a textura da Pedra Rachada do Mundo (sem sprite)
-    const goblinArt = getIsoGoblin();
-    this.isoGoblins = goblinArt ? new IsoGoblins(this.worldLayer, goblinArt) : null; // goblins 3D com pele do Vale (Santuário)
-    this.isoCauldrons = cauldronArt ? new IsoCauldrons(this.worldLayer, world, cauldronArt.model, () => this.textures.groundTop.get(Block.STONE_CRACKED)) : null;
     this.floor = new ChunkFloor(this.worldLayer, world, this.chunks);
-    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures, world.profile.view === 'isometric'), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
+    this.sprites = new ChunkSprites(this.worldLayer, world, { tile: TILE, k: OBLIQUE_K, art: worldSpriteArt(world, this.textures), animated: (id) => (id === Block.CAMPFIRE ? 'fire' : feelOn() ? (windKind(id) === 'grass' ? 'sway' : windKind(id) === 'tree' ? 'tree' : null) : null), swayRadius: SWAY_PUSH_RADIUS * SUBDIV, surfaceLevels: world.profile.surfaceObjects, felled: (c) => { for (let n = 0; n < 7; n++) this.leaves.emit(c); } });
     this.fireFx = new FireFx(this.worldLayer, OBLIQUE_K);
     this.dust = new FootDust(this.worldLayer, OBLIQUE_K);
     this.leaves = new TreeLeaves(this.worldLayer, TILE, OBLIQUE_K);
@@ -216,7 +190,7 @@ export class WorldThreeRenderer implements GameRenderer {
       tile: TILE, k: OBLIQUE_K,
       isDoor: (id) => isDoor(id), isOpen: (id) => id === Block.OAK_DOOR_OPEN,
       frames: () => this.textures.doorFrames,
-      surfaceLevels: world.profile.surfaceObjects, yaw: world.profile.view === 'isometric' ? Math.PI / 4 : 0,
+      surfaceLevels: world.profile.surfaceObjects, yaw: 0,
     });
     this.gates = new DoorSprites(this.worldLayer, world, {
       tile: TILE, k: OBLIQUE_K, steps: 5,
@@ -254,20 +228,16 @@ export class WorldThreeRenderer implements GameRenderer {
     this.blocks = new ChunkBlocks(this.worldLayer, world, {
       isCube: (id) => blockDef(id).shape === 'cube',
       // Mundo (blocos de 1/4, ADR 0033): sempre caixa cheia (sem a placa fina das "paredes horizontais"), `n` blocos iguais seguidos numa caixa só,
-      // do nível `level` até `level + n`, em células de altura (nível ÷ níveis por cubo). Santuário (1 nível por cubo) mantém o cálculo dele.
+      // do nível `level` até `level + n`, em células de altura (nível ÷ níveis por cubo).
       levelsPerCube: this.world.cubeLevels,
-      classify: (w, id, x, y, level) => (this.world.cubeLevels > 1 ? 'solid' : classifySanctuaryBlock(w, id, x, y, level)),
-      transform: (cell) => (this.world.cubeLevels > 1
-        ? { x: cell.x + 0.5, y: (cell.level + cell.n / 2) / this.world.cubeLevels, z: cell.y + 0.5 }
-        : sanctuaryBlockTransform(cell)),
-      // Rio das Fadas (Santuário): o mapa guarda só o pincel; a peça de água vem dos 4 vizinhos do mesmo nível.
-      variant: (w, id, x, y, level) => (isRioBrush(id) ? rioVirtualId(rioPieceAt((gx, gy, gl) => w.getLevel(gx, gy, gl), x, y, level)) : id),
+      classify: () => 'solid',
+      transform: (cell) => ({ x: cell.x + 0.5, y: (cell.level + cell.n / 2) / this.world.cubeLevels, z: cell.y + 0.5 }),
       material: (id) => this.blockMaterials.get(id).block,
     });
 
     // Atores (jogador, NPCs, animais, monstros), itens caídos e o anel da ovelha. Os personagens levam o fator de escala do mundo
     // (ADR 0028); o mundo mantém a escala em células. Provisório: o mesmo fator para todas as espécies.
-    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(isometric ? WORLD_CELLS_TALL : this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), sunShading: sunShadingOn(), sunShadow: sunShadowOn(), bob: feelOn() });
+    this.actors = new ActorBillboards(this.stage.scene, this.actorSprites, { scale: actorScaleFor(this.preferredCellsTall), k: OBLIQUE_K, echo: true, lit: actorLightOn(), sunShading: sunShadingOn(), sunShadow: sunShadowOn(), bob: feelOn() });
     this.drops = new DropSprites(this.stage.scene, this.itemIcons, OBLIQUE_K);
     this.ring = new HoverRing(this.stage.scene);
     this.overlay = new Overlay2D(canvas);
@@ -280,8 +250,7 @@ export class WorldThreeRenderer implements GameRenderer {
 
   draw(cam: Camera, opts: RenderOptions): void {
     if (this.disposed || this.stage.contextLost) return;
-    this.lastCameraPlayer = opts.player;
-    const activeCamera = this.sanctuaryCameras?.sync(cam, opts.player) ?? (this.stage.syncCamera(cam), this.stage.camera);
+    this.stage.syncCamera(cam);
     // Interior (ADR 0014): o cômodo isolado substitui o mundo — sem chão, céu, nuvens, noite nem partículas lá dentro.
     const inside = opts.interior ?? null;
     this.worldLayer.visible = !inside;
@@ -296,15 +265,11 @@ export class WorldThreeRenderer implements GameRenderer {
       const rect = cam.visibleChunks(FLOOR_MARGIN);
       this.floor.update(rect);
       this.blocks.update(rect);
-      this.updateCutaway(opts);
       if (this.textures.objects.size !== this.objectCount) { this.objectCount = this.textures.objects.size; this.sprites.invalidateAll(); }
       this.sprites.update(rect);
       this.walls.update(rect);
       this.doors.update(rect, opts.elapsed);
       this.gates.update(rect, opts.elapsed);
-      this.isoFences?.update(rect, opts.dt);
-      this.isoCauldrons?.update(rect);
-      this.isoGoblins?.sync(opts.goblins ?? [], opts.elapsed);
       this.groundFx.update(view, opts.elapsed);
       this.water?.update(rect, opts.elapsed, skyAt(opts.time).night);
     }
@@ -342,20 +307,15 @@ export class WorldThreeRenderer implements GameRenderer {
     if (!feelOn() || inside) this.smoke.clear(); else this.smoke.update(opts.dt, TILE * cam.zoom, view, opts.elapsed, skyAt(opts.time).night);
     if (inside) this.ripples?.clear();
     this.ripples?.update(opts.dt, skyAt(opts.time).night);
-    // Câmera isométrica (azimute 45°): os planos dos atores encaram a câmera (sem isso saem achatados em 0,71).
-    this.actors.setYaw(this.sanctuaryCameras?.current === 'isometrico' ? Math.PI / 4 : 0);
-    const isoOn = this.sanctuaryCameras?.current === 'isometrico';
-    const target = isoOn ? opts.hover ?? opts.focus : null;
-    const onObject = this.sprites.setHighlight(target && this.world.inBounds(target.x, target.y) ? target : null, opts.elapsed);
-    this.isoCursor.update(opts, isoOn, onObject);
+    this.actors.setYaw(0);
+    this.sprites.setHighlight(null, opts.elapsed);
     this.actors.setFires(this.fires);
     this.actors.setLight(actorLightAt(opts.time, inside ? 'interior' : opts.inDungeon ? 'dungeon' : 'world'));
     this.actors.update(view, opts.actors, opts.elapsed);
     this.drops.update(view, opts.drops, opts.elapsed);
     this.ring.update(opts.hoverSheep);
-    if (this.sanctuaryCameras) this.stage.renderWithCamera(activeCamera);
-    else this.stage.render();
-    if (!inside && (!this.sanctuaryCameras || this.sanctuaryCameras.current === 'atual')) this.drawLighting(cam, opts, view);
+    this.stage.render();
+    if (!inside) this.drawLighting(cam, opts, view);
     const ctx = this.overlay.begin(cam.width, cam.height, window.devicePixelRatio || 1);
     if (ctx) {
       // Dungeon (como no 2D: farol da entrada e escuro fora do labirinto, antes das partículas).
@@ -391,28 +351,12 @@ export class WorldThreeRenderer implements GameRenderer {
           hit: top ? this.textures.objects.get(top.id)?.hit ?? null : null,
         }, TILE, OBLIQUE_K);
       };
-      // Câmera isométrica: o cursor é o bloco-fantasma 3D (`IsoCursor`); os retângulos de tela abaixo só valem na vista oblíqua.
-      if (this.sanctuaryCameras?.current !== 'isometrico') {
-        if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
-        if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
-        if (opts.breaking) drawBreakingRing(ctx, rectFor(opts.breaking), opts.breaking.progress);
-      }
+      if (opts.focus) drawFocusBrackets(ctx, rectFor(opts.focus), cam.zoom, opts.focus.valid, opts.elapsed);
+      if (opts.hover) drawHoverFrame(ctx, rectFor(opts.hover), opts.hover.valid);
+      if (opts.breaking) drawBreakingRing(ctx, rectFor(opts.breaking), opts.breaking.progress);
       drawHurtVignette(ctx, cam.width, cam.height, opts.hurtFlash);
       drawFade(ctx, cam.width, cam.height, opts.fade);
     }
-  }
-
-  private cutawayAt = -1;
-  private cutawayKey = '';
-  /** Corte da casa (só no Santuário, cubos cheios): sob telhado, a construção perde o que passa do 1º nível de parede. Recalcula a cada 0,25 s ou ao mudar de célula. */
-  private updateCutaway(opts: RenderOptions): void {
-    if (!this.world.profile.surfaceObjects || this.world.cubeLevels !== 1) return;
-    const p = opts.player;
-    const key = p.cellX + ',' + p.cellY;
-    if (key === this.cutawayKey && opts.elapsed - this.cutawayAt < 0.25) return;
-    this.cutawayKey = key;
-    this.cutawayAt = opts.elapsed;
-    this.blocks.setCutaway(computeCutaway(this.world, p.cellX, p.cellY));
   }
 
   /** Escuridão com poças de luz pela hora do dia (`opts.time`) e pelo covil (`opts.inDungeon`); dia pleno: nada é desenhado. */
@@ -579,15 +523,10 @@ export class WorldThreeRenderer implements GameRenderer {
 
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean } {
     if (this.disposed) return { x: 0, y: 0, hasObject: false };
-    if (this.sanctuaryCameras && this.lastCameraPlayer) {
-      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
-      this.sanctuaryCameras.aim(cam, sx, sy);
-    } else {
-      this.stage.syncCamera(cam);
-      this.stage.aim(cam, sx, sy);
-    }
-    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes(), ...(this.isoFences?.meshes() ?? []), ...(this.isoCauldrons?.meshes() ?? [])])) {
-      const block = this.isoFences?.cellOf(hit.object) ?? this.isoCauldrons?.cellOf(hit.object) ?? this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
+    this.stage.syncCamera(cam);
+    this.stage.aim(cam, sx, sy);
+    if (this.worldLayer.visible) for (const hit of this.stage.hits([...this.blocks.meshes(), ...this.sprites.meshes(), ...this.walls.meshes(), ...this.doors.meshes(), ...this.gates.meshes()])) {
+      const block = this.blocks.cellOf(hit.object, hit.instanceId) ?? this.sprites.cellOf(hit) ?? this.walls.cellOf(hit.object, hit.instanceId) ?? this.doors.cellOf(hit) ?? this.gates.cellOf(hit);
       if (block) return { x: block.x, y: block.y, hasObject: true };
     }
     const cell = this.stage.groundCell();
@@ -599,13 +538,8 @@ export class WorldThreeRenderer implements GameRenderer {
   /** Chão visto sob o ponto da tela: o cubo atingido (qualquer nível) ou o ladrilho do chão; árvores e objetos de sprite não contam. */
   pickGround(cam: Camera, sx: number, sy: number): { x: number; y: number } | null {
     if (this.disposed) return null;
-    if (this.sanctuaryCameras && this.lastCameraPlayer) {
-      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
-      this.sanctuaryCameras.aim(cam, sx, sy);
-    } else {
-      this.stage.syncCamera(cam);
-      this.stage.aim(cam, sx, sy);
-    }
+    this.stage.syncCamera(cam);
+    this.stage.aim(cam, sx, sy);
     if (this.worldLayer.visible) {
       for (const hit of this.stage.hits(this.blocks.meshes())) {
         const block = this.blocks.cellOf(hit.object, hit.instanceId);
@@ -613,29 +547,6 @@ export class WorldThreeRenderer implements GameRenderer {
       }
     }
     return this.stage.groundCell();
-  }
-
-  /** Face de cubo sob o ponto da tela (cubo, nível e normal): o "colocar na face" da vista isométrica. */
-  pickFace(cam: Camera, sx: number, sy: number): { x: number; y: number; level: number; nx: number; ny: number; up: boolean } | null {
-    if (this.disposed || !this.worldLayer.visible) return null;
-    if (this.sanctuaryCameras && this.lastCameraPlayer) {
-      this.sanctuaryCameras.sync(cam, this.lastCameraPlayer);
-      this.sanctuaryCameras.aim(cam, sx, sy);
-    } else {
-      this.stage.syncCamera(cam);
-      this.stage.aim(cam, sx, sy);
-    }
-    const cl = this.world.cubeLevels;
-    for (const hit of this.stage.hits(this.blocks.meshes())) {
-      const cell = this.blocks.cellOf(hit.object, hit.instanceId);
-      const n = hit.face?.normal;
-      if (!cell || !n || n.y < -0.5) continue; // por baixo nunca se vê de cima
-      // Nível atingido: o ponto de impacto, um pouco para dentro do bloco (blocos de 1/4 vêm em sequências de `n` níveis).
-      const inside = (hit.point.y - n.y * 0.25 / cl) * cl;
-      const level = Math.max(cell.level, Math.min(cell.level + (cell.n ?? 1) - 1, Math.floor(inside)));
-      return { x: cell.x, y: cell.y, level, nx: Math.round(n.x), ny: Math.round(n.z), up: n.y > 0.5 };
-    }
-    return null;
   }
 
   addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void {
@@ -649,7 +560,6 @@ export class WorldThreeRenderer implements GameRenderer {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    this.sanctuaryCameras?.dispose();
     this.floor.dispose();
     this.blocks.dispose();
     this.sprites.dispose();
@@ -670,10 +580,6 @@ export class WorldThreeRenderer implements GameRenderer {
     this.groundFx.dispose();
     this.blockMaterials.dispose();
     this.actors.dispose();
-    this.isoCursor.dispose();
-    this.isoFences?.dispose();
-    this.isoCauldrons?.dispose();
-    this.isoGoblins?.dispose();
     this.drops.dispose();
     this.ring.dispose();
     this.overlay.dispose();

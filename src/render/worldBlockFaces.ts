@@ -23,8 +23,6 @@ function square(): [HTMLCanvasElement, CanvasRenderingContext2D] {
 export function worldBlockFaces(textures: BlockTextures): (id: number) => BlockFaces {
   return (id) => {
     const bid = id as BlockId;
-    const iso = textures.isoCube.get(bid);
-    if (iso) return { top: iso[2], front: iso[4], ground: iso[2], cube: iso }; // conjunto isométrico: faces próprias (sul e leste)
     const [top, tctx] = square();
     const src = textures.groundTop.get(bid);
     if (src) tctx.drawImage(src, 0, 0, RES, RES);

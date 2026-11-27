@@ -27,7 +27,6 @@ npm run build:artifact  # página + imagens em artifact/ (Artifact com arquivos 
 | Mundo | Como abrir | Jogável |
 |---|---|---|
 | Orvalis (principal) | `orvalis.pensamentos.online` | [Artifact](https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn) |
-| Santuário de Orvalis (mundo solo isométrico, criativo, com a Deusa) | `?mundo=santuario` (ou subdomínio `santuario.orvalis.pensamentos.online`) — abre um mundo solo, plano e vazio, em vista isométrica, com o conjunto de 26 peças (4 cubos, 16 objetos e 6 cercas/portões 3D) sobre terreno em camadas; sem servidor | mesma build do jogo |
 
 ## Celular
 
@@ -40,7 +39,6 @@ travada. Dá para instalar na tela inicial (abre em tela cheia).
 |---|---|
 | Andar | WASD / setas ou joystick na tela (direções da tela) |
 | Zoom | roda do mouse, Q / E |
-| Câmera livre (apenas Santuário) | botão **◉ Câmera** no canto superior direito; arrastar joystick para girar e inclinar, `+` / `−` para zoom, **Resetar** (67°), **Salvar** (neste aparelho); sliders de **Altura do bloco** e **Tamanho da célula** no Santuário (5 níveis de construção); fechar volta à vista padrão |
 | Tablet | joystick para andar; botão de ação como no celular; tocar no mundo também usa o item, segurar quebra (como o mouse) |
 | Botão de ação (celular) / Espaço (desktop) | toque: usa o selecionado no bloco à frente · segurar: quebra (2 s com a mão, 1 s com ferramenta) |
 | Soltar o item (mão vazia) | tocar de novo no espaço selecionado ou Esc |

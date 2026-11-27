@@ -10,10 +10,8 @@ let current: ArtPack | null = null;
  * Rollup elimina o pacote do outro mundo; sem ele (dev / build genérico), os dois ficam disponíveis e o mundo
  * escolhido em tempo de execução decide.
  */
-export async function loadArtPack(world: WorldId): Promise<ArtPack> {
-  const mod = import.meta.env.VITE_WORLD === 'principal'
-    ? await import('./principal')
-    : world === 'santuario' ? await import('./santuario') : await import('./principal');
+export async function loadArtPack(_world?: WorldId): Promise<ArtPack> {
+  const mod = await import('./principal');
   current = mod.default;
   return current;
 }

@@ -2,10 +2,6 @@ import { Block, type BlockId } from '../world/blocks';
 import type { FxKind } from './three/spriteFx';
 import { art } from './art';
 import { setMaterialsV2 } from './materialsV2';
-import type { IsoSetImages } from './isoSet';
-import type { IsoFenceArt } from './three/isoFences';
-import type { IsoCauldronModel } from './three/isoCauldrons';
-import type { IsoGoblinArt } from './three/isoGoblins';
 
 /**
  * Imagens de blocos carregadas antes do jogo começar (para chão e cubos já nascerem com a arte), a partir do
@@ -18,22 +14,6 @@ import type { IsoGoblinArt } from './three/isoGoblins';
 let atlas: HTMLImageElement | null = null;
 /** Porta de Carvalho: 8 quadros (4×2) — 0..3 abrindo, 4..7 fechando (scripts/process-sprite.py). */
 let oakDoor: HTMLImageElement | null = null;
-/** Conjunto isométrico do Santuário (null nos outros mundos). */
-let isoSet: { images: IsoSetImages; icons: Record<string, string> } | null = null;
-/** Goblin 3D do Vale (malha e imagem da cor base), ou null. */
-export function getIsoGoblin(): IsoGoblinArt | null {
-  return isoGoblin;
-}
-
-/** Caldeirão 3D do Santuário (malha e ícone), ou null. */
-export function getIsoCauldron(): { model: IsoCauldronModel; icon: string } | null {
-  return isoCauldron;
-}
-
-/** Cerca e portão 3D do Santuário (null nos outros mundos). */
-let isoFence: { art: IsoFenceArt; icons: Partial<Record<number, string>> } | null = null;
-let isoGoblin: IsoGoblinArt | null = null;
-let isoCauldron: { model: IsoCauldronModel; icon: string } | null = null;
 /** Dungeon (scripts/extract-dungeon.py): topos do chão, montanhas, pedras, blocos decorados e paredes. */
 export interface DungeonArt {
   ground: HTMLImageElement;
@@ -80,15 +60,6 @@ const maybe = (url: string | undefined) => (url ? load(url) : Promise.resolve(nu
 export async function loadBlockArt(): Promise<void> {
   const a = art();
   [atlas, oakDoor] = await Promise.all([maybe(a.blockAtlas), maybe(a.oakDoor)]);
-  isoSet = null;
-  isoFence = null;
-  isoCauldron = a.isoCauldron ?? null;
-  isoGoblin = a.isoGoblin ? { rig: a.isoGoblin.rig, image: await load(a.isoGoblin.texture), hair: await load(a.isoGoblin.hairTexture), dagger: a.isoGoblin.dagger } : null;
-  if (a.isoFence) isoFence = { art: { model: a.isoFence.model, wood: await load(a.isoFence.wood) }, icons: a.isoFence.icons };
-  if (a.isoSet) {
-    const [ground, cube, props, stone, rio, trees] = await Promise.all([load(a.isoSet.ground), load(a.isoSet.cube), load(a.isoSet.props), load(a.isoSet.stone), load(a.isoSet.rio), maybe(a.isoSet.trees)]);
-    isoSet = { images: { ground, cube, props, stone, rio, ...(trees ? { trees } : {}) }, icons: a.isoSet.icons };
-  }
   if (a.tent) tent = await load(a.tent.sprite);
   if (a.chest) chest = await load(a.chest.sprite);
   for (const [name, c] of Object.entries(a.craftables ?? {})) if (c) craftables.set(name, await load(c.sprite));
@@ -125,7 +96,7 @@ export async function loadBlockArt(): Promise<void> {
 
 /**
  * Atlas do Padrão de Materiais V2 (ADR 0023) e o das máscaras de transição: carregados antes do jogo (o V2 é o padrão;
- * `useInWorld` false = `?blocos=legado`, só para comparar). Sem o atlas no pacote (ex.: Santuário), nada acontece.
+ * `useInWorld` false = `?blocos=legado`, só para comparar). Sem o atlas no pacote, nada acontece.
  */
 export async function loadMaterialsV2(useInWorld: boolean): Promise<boolean> {
   const m = art().materialsV2;
@@ -152,16 +123,6 @@ export async function loadDungeonArt(): Promise<DungeonArt | null> {
 /** Atlas dos materiais (null se o mundo não tem materiais). */
 export function getBlockAtlas(): HTMLImageElement | null {
   return atlas;
-}
-
-/** Cerca e portão 3D do Santuário (modelo, tábuas e ícones), ou null. */
-export function getIsoFence(): { art: IsoFenceArt; icons: Partial<Record<number, string>> } | null {
-  return isoFence;
-}
-
-/** Conjunto isométrico do Santuário (imagens e ícones), ou null. */
-export function getIsoSet(): { images: IsoSetImages; icons: Record<string, string> } | null {
-  return isoSet;
 }
 
 export function getOakDoorSheet(): HTMLImageElement | null {

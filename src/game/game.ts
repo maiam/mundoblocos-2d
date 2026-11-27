@@ -15,7 +15,6 @@ import type { PlayerState } from '../net/protocol';
 import { RemotePlayers } from './remotePlayers';
 import { Drops } from './drops';
 import { canSit, Entities, HERO_NAMES, type HeroBody } from './entities';
-import { ValeGoblins } from './valeGoblins';
 import { CharacterWindow } from './characterWindow';
 import { exitDoorAt, type InteriorDoor, type InteriorLayout } from '../world/interiors';
 import { BAG_SLOTS, bagHasRoom, bagStacks, canCarry, Hotbar, type HotbarSlot, slotStack, stackSlot as stackSlotOf } from './hotbar';
@@ -29,7 +28,6 @@ import { Inventory } from './inventory';
 import { Joystick } from './joystick';
 import type { ScreenMode } from './screenMode';
 import { Player } from './player';
-import { configureSanctuaryThreeCollision } from './sanctuaryThreeCollision';
 import { ActionButton, HAND_ICON } from './actionButton';
 import { DialogueBox } from './dialogue';
 import { ShopWindow, type ShopStyle } from './shopWindow';
@@ -54,7 +52,6 @@ import { WorldMap, type WorldMapView } from '../render/worldMap';
 import { attackTimingFor } from './attackTiming';
 import { feelOn, LOOKAHEAD_PX, LOOKAHEAD_RATE } from './feel';
 import { Exploration } from './exploration';
-import { screenToWorldIso } from './isoInput';
 
 /** Duração de um dia completo em segundos. */
 /** Duração entre salvamentos automáticos (s). */
@@ -116,8 +113,6 @@ export class Game {
   private lastZoomPortrait: boolean | null = null;
   readonly player: Player;
   readonly entities: Entities;
-  /** Goblins do Vale Goblin (só no Santuário). */
-  readonly valeGoblins: ValeGoblins | null;
   readonly inventory: Inventory;
   /** Grade deste mundo: 8 espaços + bolsa (com coleta) ou lista fixa do perfil (Santuário). */
   readonly hotbar: Hotbar;
@@ -129,7 +124,6 @@ export class Game {
   /** Materiais precisam ser coletados neste mundo (perfil). */
   private readonly collect: boolean;
   /** O toque na tela age (colocar/quebrar) mesmo no celular: Santuário, área de criação. */
-  private readonly touchActs: boolean;
   /** Missões, carteira e painel do personagem ligados (`WorldProfile.progression`; desligado na Sala 2). */
   private readonly progression: boolean;
   readonly drops = new Drops();
@@ -146,8 +140,6 @@ export class Game {
   }
   private readonly hud: Hud;
   private readonly joystick: Joystick;
-  /** Vista isométrica: as direções de tela (teclado/joystick) viram o sentido do mundo girado em 45° (cima = para o fundo da tela, não para o norte). */
-  private readonly isoInput: boolean;
   private readonly keys = new Set<string>();
   private showChunkBorders = false;
   /** Espaço selecionado na hotbar; null = mão vazia. */
@@ -204,25 +196,14 @@ export class Game {
     this.world = new World(seed, profile);
     this.questDefs = questsFor(this.world);
     this.collect = profile.collectBlocks;
-    this.touchActs = profile.id === 'santuario';
-    this.isoInput = profile.view === 'isometric';
     this.progression = profile.progression;
     this.hotbar = new Hotbar(profile, (options.save?.hotbar ?? options.net?.bag?.hotbar ?? undefined) as (StackId | null)[] | undefined);
     // Sem cultivo nem coleta, não há itens contáveis (Santuário: só blocos infinitos).
     this.inventory = profile.collectBlocks || profile.farming ? new Inventory() : new Inventory({});
     const [sx, sy] = this.world.findSpawn();
     this.player = new Player(sx + 0.5, sy + 0.6);
-    // Only 3D Santuário: cubes are solid obstacles rather than automatic steps.
-    configureSanctuaryThreeCollision(this.player, profile.id, true, !!options.solidPhysics);
-    // A nova seed do Santuário não tem chão vazio: nasce sobre o topo da
-    // coluna inicial, nunca dentro dos cubos.
-    if (profile.id === 'santuario') {
-      this.player.z = this.world.standHeight(sx, sy) ?? 0;
-      this.player.visualZ = this.player.z / this.world.cubeLevels;
-    }
     this.player.hungerOn = profile.hunger;
     this.entities = new Entities(this.player, Math.random, profile.character);
-    this.valeGoblins = profile.id === 'santuario' ? new ValeGoblins(this.world) : null;
     if (options.body) this.entities.body = options.body;
     // Animais e monstros: na sala vêm do servidor (o aparelho só espelha); sozinho, nascem aqui pela seed.
     if (options.net) this.entities.remote = true;
@@ -246,7 +227,6 @@ export class Game {
       drops: this.drops, camera: this.camera, renderer: this.renderer,
       slot: () => this.slot,
       joystickActive: () => this.joystick.active,
-      facePlacement: profile.view === 'isometric' && !options.net,
       breakSeconds: profile.breakSeconds ?? undefined,
       collectBlocks: profile.collectBlocks,
       sharedLoot: !!options.net,
@@ -372,15 +352,6 @@ export class Game {
       // Salvo dentro de um interior: volta para a rua, diante da porta (o cômodo não guarda estado).
       const room = this.world.interiorAt(this.player.cellX, this.player.cellY);
       if (room) this.moveTo(this.roomExit(room), 'down');
-    }
-    // Saves anteriores à geração em camadas podem registrar a Deusa em z=0
-    // onde agora existe terreno: reposiciona os pés sobre o topo sem editar a seed.
-    if (profile.id === 'santuario') {
-      const support = this.world.standHeight(this.player.cellX, this.player.cellY);
-      if (support !== null && this.player.z < support) {
-        this.player.z = support;
-        this.player.visualZ = support / this.world.cubeLevels;
-      }
     }
     if (options.showcase) this.hud.root.style.display = 'none';
     this.resize();
@@ -820,7 +791,7 @@ export class Game {
     // No celular, a ação é pelo botão de ação (evita colocar/quebrar sem querer ao tocar na tela); no tablet e no Santuário, o toque
     // na tela age como o clique do computador e o botão de ação também fica.
     this.listen(c, 'pointerdown', (e) => {
-      if (e.pointerType === 'touch' && !this.screenMode?.isTablet && !this.touchActs) return; // Santuário (criação): o toque na tela também coloca/quebra no celular
+      if (e.pointerType === 'touch' && !this.screenMode?.isTablet) return;
       if (this.dialogue.isOpen) { this.dialogue.advance(); return; } // clique no mundo com a conversa aberta: avança
       if (!this.actions.pointerDown(e.pointerId, e.offsetX, e.offsetY)) return;
       try { c.setPointerCapture(e.pointerId); } catch { /* ponteiro já liberado */ }
@@ -1147,7 +1118,6 @@ export class Game {
     this.updateQuests(dt);
     this.entities.time = this.time;
     this.entities.update(dt, this.world);
-    this.valeGoblins?.update(dt, this.world);
     this.updateDialogue();
     this.updateNet(realDt);
     this.updateHealth(dt);
@@ -1193,7 +1163,6 @@ export class Game {
     this.renderer.draw(this.camera, {
       player: this.player,
       actors: this.remotes.size ? [...this.entities.actors, ...this.remotes.actors] : this.entities.actors,
-      goblins: this.valeGoblins?.views(this.world),
       showChunkBorders: this.showChunkBorders,
       // Vitrine: sem marcação de célula (ninguém está jogando).
       ...(this.options.showcase ? { hover: null, hoverSheep: null, focus: null, breaking: null } : this.actions.targets()),
@@ -1464,7 +1433,7 @@ export class Game {
     const z = Math.exp(0.3 * dt);
     if (k.has('KeyE') || k.has('Equal')) this.zoomByUser(z);
     if (k.has('KeyQ') || k.has('Minus')) this.zoomByUser(1 / z);
-    return this.isoInput ? screenToWorldIso(x, y) : [x, y];
+    return [x, y];
   }
 
 }

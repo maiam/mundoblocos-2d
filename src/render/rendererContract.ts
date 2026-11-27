@@ -2,7 +2,6 @@ import type { Camera } from '../game/camera';
 import type { ItemDrop } from '../game/drops';
 import type { Actor } from '../game/entities';
 import type { Player } from '../game/player';
-import type { GoblinView } from '../game/valeGoblins';
 import type { Rect } from '../world/dungeon';
 import type { InteriorLayout } from '../world/interiors';
 import type { Hit } from '../world/progression';
@@ -39,8 +38,6 @@ export interface RenderOptions {
   interior?: InteriorLayout | null;
   /** Escurecer ao passar por uma porta (1 → 0). */
   fade?: number;
-  /** Goblins do Vale Goblin (Santuário): posição, direção e fase de caminhada de cada um (v0.93.161). */
-  goblins?: readonly GoblinView[];
   /** Terrenos marcados por missão (contorno dourado no chão, em células inclusivas). */
   zones?: Rect[];
 }
@@ -64,11 +61,6 @@ export type GameRenderer = {
   draw(cam: Camera, opts: RenderOptions): void;
   /** Célula (e se há objeto nela) sob o ponto da tela. */
   pick(cam: Camera, sx: number, sy: number): { x: number; y: number; hasObject: boolean };
-  /**
-   * Face de cubo sob o ponto da tela (3D): a célula e o nível do cubo atingido e para onde a face aponta (`nx`, `ny` = passo em células; `up` = o topo). Base do
-   * "colocar na face" da vista isométrica. null = nenhum cubo ali (chão, sprite ou fora).
-   */
-  pickFace?(cam: Camera, sx: number, sy: number): { x: number; y: number; level: number; nx: number; ny: number; up: boolean } | null;
   /** Número de dano flutuante em (x, y) (células). */
   addDamage(x: number, y: number, hit: Hit, target: 'enemy' | 'player'): void;
   /** Ícone (URL) do bloco na grade e na bolsa. */
@@ -112,7 +104,6 @@ export const SANCTUARY_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport>
   interior: 'ignored',        // interiores (Fase 4)
   fade: 'ignored',
   zones: 'ignored',
-  goblins: 'ignored',
 };
 
 /**
@@ -138,5 +129,4 @@ export const WORLD_THREE_OPTIONS: Record<keyof RenderOptions, OptionSupport> = {
   interior: 'honored',        // M4.1: o cômodo isolado substitui o mundo
   fade: 'honored',            // M3.2: escurecer de porta na camada 2D
   zones: 'honored',           // contorno dourado de terreno de missão
-  goblins: 'honored',         // v0.93.161: os goblins 3D do Vale (só no Santuário; `IsoGoblins`)
 };

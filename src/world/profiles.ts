@@ -1,5 +1,4 @@
-import { RIO_BRUSHES } from './rio';
-import { Block, type BlockId, HOTBAR_BLOCKS, ISO_BLOCKS, WALL_BLOCKS, WORLD_BLOCKS_IN_SANCTUARY, WALL_DOOR_BLOCKS } from './blocks';
+import { type BlockId, HOTBAR_BLOCKS, WALL_BLOCKS, WALL_DOOR_BLOCKS } from './blocks';
 import type { ChunkRect } from './world';
 
 /**
@@ -7,7 +6,7 @@ import type { ChunkRect } from './world';
  * O motor (World, Game, Renderer) é o mesmo; o perfil decide terreno, limites,
  * personagem, blocos disponíveis e sistemas ativos.
  */
-export type WorldId = 'principal' | 'santuario' | 'titan' | 'orvalis3d';
+export type WorldId = 'principal' | 'titan' | 'orvalis3d';
 
 /** Personagens jogáveis (folhas de sprite em `render/character.ts`). */
 /** `goddess` = Deusa flutuante (Sala 2 online); `goddess-iso` = Deusa isométrica do Santuário solo (ADR 0036). */
@@ -81,33 +80,6 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
     view: 'oblique',
     sky: ['#1b1838', '#1b1838'],
   },
-  santuario: {
-    id: 'santuario',
-    name: 'Santuário de Orvalis',
-    // Santuário refeito do zero (ADR 0036): solo, vista isométrica, cubos cheios (1 nível = 1 célula). Terreno plano em **camadas** (v0.93.143): chão de grama,
-    // uma camada de Bloco de Pedra (nível 1) e uma de Grama (nível 2); a Deusa e tudo o mais ficam em cima (nível 3).
-    terrain: { kind: 'flat', ground: Block.ISO_G_GRASS, layers: [Block.ISO_STONE_BLOCK, Block.ISO_G_GRASS], landscape: true },
-    // 64 chunks: 8 × 8 (cx −2..5, cy −6..1): o Santuário original (cx −2..1, cy −2..1), a leste a Fazenda (cx 2..5, cy −2..1) e, ao norte do original, o Vale Goblin (cx −2..1, cy −6..−3); o canto cx 2..5, cy −6..−3 é céu aberto (VOID).
-    bounds: { cx0: -2, cy0: -6, cx1: 5, cy1: 1 },
-    character: 'goddess-iso',
-    // Materiais de construção do Mundo (lista única, na ordem aprovada pelo dono do produto); o chão (grama) não precisa estar na hotbar para existir.
-    blocks: [...ISO_BLOCKS, ...WORLD_BLOCKS_IN_SANCTUARY, ...RIO_BRUSHES],
-    tools: false,
-    farming: false,
-    crops: true,
-    sheep: false,
-    wolves: false,
-    dungeon: false,
-    town: false,
-    collectBlocks: false,
-    minimap: false,
-    progression: false,
-    hunger: false,
-    breakSeconds: 1, // quebrar qualquer bloco leva 1 s (pedido do dono do produto, 17/11/2026)
-    surfaceObjects: true,
-    view: 'isometric',
-    sky: ['#8fb8ff', '#f6d9ff'],
-  },
   /**
    * Titã (ADR 0039, v0.94.0): mundo voxel solo em primeira pessoa. Fica **fora** do motor de chão e pilhas (`World`/`Game`/`SUBDIV`): o perfil só
    * registra o mundo na resolução da URL (`?mundo=titan`) e `main.ts` abre `src/titan/` em vez do `Game`. Os campos do motor 2.5D ficam
@@ -163,8 +135,8 @@ export const WORLD_PROFILES: Record<WorldId, WorldProfile> = {
   },
 };
 
-/** Subdomínio que abre cada mundo (ex.: santuario.<domínio>). */
-export const SUBDOMAINS: Record<string, WorldId> = { santuario: 'santuario' };
+/** Subdomínio que abre cada mundo (nenhum por ora: o Santuário saiu, ADR 0115; o Titã só por `?mundo=titan`). */
+export const SUBDOMAINS: Record<string, WorldId> = {};
 
 /**
  * Escolhe o mundo: build fixo (VITE_WORLD, usado no artefato próprio) → subdomínio

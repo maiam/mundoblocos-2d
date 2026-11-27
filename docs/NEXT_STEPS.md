@@ -4,8 +4,8 @@ _Revisado em 2026-11-07 (v0.80.0 — Fases 0, 1, 2 e M concluídas até a Etapa 
 entregues, **XP/níveis ainda não**; Fases 3–6 em aberto)._ Fonte única do que falta fazer. Itens concluídos saem daqui e
 vão para o `CHANGELOG`; o que existe hoje está em `CURRENT_STATE.md`.
 
-## Limpeza: sair o Orvalis 2D, o Santuário e a isométrica 2.5D (ADR 0115) — etapa 1 feita (v0.181.0)
-**Feito:** Orvalis 3D é o padrão e o Titã só por `?mundo=titan`. **Falta:** **etapa 2** — remover o Santuário (perfil, `sanctuary*`, Fazenda, Vale Goblin, Rio, peças isométricas, arte, testes, docs); **etapa 3** — remover o 2.5D (`src/world`, `src/game`, render 2.5D, `src/landing`, partes de `src/net`) e **ajustar o `orvalis-servidor` junto** (`vendor/orvalis-net.cjs` passa a trazer só a sala do Titã; `PROTOCOL_VERSION`), limpar invariantes do `CLAUDE.md`, marcar ADRs substituídas, refazer o orçamento do Artifact (hoje ~13 MB de "início", meta 3 MB) e testar WebGL no iframe do Artifact. Um PR por etapa; o botão Visão do voxel fica.
+## Limpeza: sair o Orvalis 2D, o Santuário e a isométrica 2.5D (ADR 0115) — etapas 1 e 2 feitas (v0.181.0, v0.182.0)
+**Feito:** Orvalis 3D é o padrão, o Titã só por `?mundo=titan` e o **Santuário foi removido**. **Falta (etapa 3):** remover o 2.5D (`src/world`, `src/game`, render 2.5D, `src/landing`, partes de `src/net`, `Block.ISO_*`, `goddess-iso`, os `sanctuary*` herdados do 2.5D) e **ajustar o `orvalis-servidor` junto** (`vendor/orvalis-net.cjs` passa a trazer só a sala do Titã; `PROTOCOL_VERSION`), limpar os invariantes do `CLAUDE.md`, marcar ADRs substituídas, refazer o orçamento do Artifact (hoje ~11 MB de "início", meta 3 MB) e testar WebGL no iframe do Artifact. Um PR por etapa; o botão Visão do voxel fica.
 
 Para escolher o próximo lote de arte, consulte o [Guia de itens e texturas](GUIA_ITENS_TEXTURAS.md) (catálogo de candidatos). O **estado** das entregas do pacote Texturas16px está na seção abaixo e em `assets-src/orvalis-voxel/catalogo/LEIAME.md`.
 
@@ -94,24 +94,6 @@ Os 94 PNGs estão em `assets-src/orvalis-voxel/catalogo/` (mapa em `catalogo/LEI
 **Braseiro como fornalha (v0.125.0, ADR 0068):** aceite em aparelho do painel (entrada/combustível/saída a 360 px de altura) e do fluxo tocar-na-pilha → tocar-no-espaço; luz e partículas do braseiro aceso; Baú de Rocha (27 espaços) reaproveitando o mesmo padrão de bloco com estado; (a carne assada já entrou, v0.126.0).
 **Decisões do dono do produto (19/11/2026):** o jogador chega **de mãos vazias** (a cápsula saiu; id 7 reservado); a **lanterna fica acesa enquanto colocada**; **inventário sem descarte**; **worker de malha em espera**; ciclo de céu de 20 min (ADR 0041); **gesto: toque curto coloca e segurar quebra** (ADR 0042).
 
-## Santuário isométrico solo (ADR 0036, decisão do dono do produto, 17/11/2026)
-**Feito (v0.93.133, limpeza):** removidos `SanctuaryThreeRenderer`, protótipos de parede, joystick de câmera, pacotes de arte do laboratório, `?celestial=1`, `VITE_WORLD=santuario` e `build:artifact:santuario`. O Mundo principal não mudou.
-**Feito (v0.93.134):** perfil `santuario` refeito (plano vazio de grama, 4×4 chunks, 8 materiais do Mundo, Deusa), aberto **solo** e em câmera isométrica fixa (`main.ts`: sem Sala 2/portão; `WorldThreeRenderer` 4º parâmetro `isometric`); `SanctuarySeedGenerator` removido; testes reescritos.
-**Árvores do Santuário (v0.93.156):** 12 árvores novas (4 espécies × 3 tamanhos) na hotbar e na mata da Fazenda. Falta: o dono do produto validar tamanhos/escala e a limpeza da base; árvores estáticas (sem crescimento nem colheita de maçã); espalhar no bloco original se quiser.
-**Seleção do objeto (v0.93.154):** feito para sprites (flor, arbusto, pedra, árvore, casa…). Falta: cercas/portões 3D e portas ainda usam o cubo; conferir o contorno em árvores grandes e objetos de várias células (casa).
-**Corte da casa (v0.93.153):** feito (telhado e paredes altas somem quando a jogadora está sob telhado, só no Santuário). Falta: dono do produto validar com as casas dele; fade suave; esconder sprites/objetos sobre o telhado e as cercas 3D; decidir se vale no Mundo (blocos de 1/4).
-**Fazenda do Santuário (v0.93.152, ADR 0037):** feito o mundo 8×4 chunks com a Fazenda do heightmap (paisagem única, pilha de 8). **Falta:** o dono do produto validar a Fazenda no navegador (alturas, rio, objetos); cascata/curvas do canal (o rio usa só o pincel Lago e degraus de água); conferir desempenho e memória do mundo maior (32 chunks, até 7 cubos) em aparelho real; trocar/mover objetos e áreas se quiser (`FAZENDA_AREAS`); regerar `fazendaData.ts` se o heightmap mudar.
-**Terreno em camadas (v0.93.143):** conferir no aparelho o peso de 2 camadas de cubo em 64×64 células (muitas faces; se pesar, mesclar faces escondidas), cavar até o chão (hoje o chão vira buraco/céu aberto), blocos de 1/4 e a sala (Sala 2) não usam isso; o `World` ainda trata nível 0 como "objeto" para portas/baús (fora do Santuário).
-**Cercas e portões 3D (v0.93.142):** (a) escala: a estaca tem 1,44 célula de altura (12 u = 1 célula) e a Deusa 2,3 — avaliar se cerca/portão ficam grandes ou pequenos ao lado do carvalho 2× e da casa 4×; (b) portão de lado: confirmar a dobradiça/lado da folha na câmera isométrica; (c) cantos/T/cruz: hoje só estaca + braços (sem a travessa contínua de 12 u do modelo), conferir juntas; (d) sombras no chão; (e) a cerca de estacas da Vila e o portão da Vila não entram (são sprites da cidade).
-**Conjunto isométrico (v0.93.141):** 19 blocos no jogo (3 pisos + 16 objetos; casa 4× = 12×12 células, barraca 3× = 3×3, árvore 2×); se o "4×" era de **área** (2× linear), é só mudar `ISO_SCALE`/`ISO_BIG`. **A conferir/evoluir:** (a) os 19 pisos são **cubos cheios** de 1 célula (a prancha os desenha como lajes finas): avaliar blocos baixos (1/4) ou lajes para pisos/caminhos; (b) laterais dos pisos de caminho/transição reaproveitam as do Bloco de Grama (`SIDE` em `render/isoSet.ts`): pedir laterais próprias à arte; (c) caminhos e transições grama/pedra dispensados por ora (a prancha os tem; `extract-iso-set.py` → `GROUND`); (d) objetos andáveis vs. sólidos (`bush_s`, enfeites andam; árvore, arbustos G/M, barril, caixote, casa bloqueiam) e **colisão do personagem com o plano da árvore/casa**; (e) objetos vistos de trás atravessam cubos altos (ordem de profundidade por plano); (f) ícone e nome da casa na hotbar (`Casa de Feira`); (g) sombras no chão dos objetos (a prancha não traz); (h) levar o conjunto (ou parte) para a Sala 2 online: `PROTOCOL_VERSION`, ids no servidor, snapshot, **servidor primeiro**.
-**Deusa isométrica (v0.93.137):** as 13 pranchas revisadas estão importadas e registradas (caminhada, idle, sentar e as 5 ferramentas × caminhada/golpe). **Falta só decidir o uso:** dar ferramentas ao Santuário (`tools: true` no perfil liga a hotbar de ferramentas, mas o Santuário é construção; escolher quais ferramentas, se golpe quebra/cava blocos como no Mundo) e assento para a folha de sentar. Histórico do pedido à arte (atendido): **pendente da arte** (revisão pedida ao dono do produto, 17/11/2026) para importar as 10 folhas de ferramenta (04–13): enviar PNG original em **1280×1280** (a grade 1254 ÷ 4 não fecha), corpo (auréola → sola) uniforme em ~295 px por quadro de 320 (±2%; hoje varia de 274 a 300), **sola da bota na mesma linha** nos 4 quadros de cada fileira (oscila até 19 px na 01 e 16 na 04, 14–15 nas de uso de enxada e pá), **05** sem a névoa branca translúcida (≈65 mil px de alfa fraco e disco branco na auréola) e sem a espada tocando a divisa do quadro "cima-direita" (3º quadro), **09** e **05** foram recebidas em 843 px (menores), **08** com corpo 4% maior e **12/09/05** 4–5% menores. Fragmentos soltos (06, 08, 10, 12, 13) saem com `--largest`. Antes de usar as folhas de ferramenta: dar ferramentas à Deusa no perfil (hoje `tools: false`) e registrar os `ActorKind` `goddess-iso-<ferramenta>[-attack]`. **Sentar:** a folha existe, falta assento no Santuário.
-**v0.93.138:** entrada em tela (girada 45°) e cursor-fantasma 3D feitos; a Sala 2 online com câmera "Isométrica" ainda usa teclas em eixos do mundo e o cursor 2D só some dela quando a câmera isométrica está ativa (o fantasma 3D aparece nela também). Decidir se a Sala 2 deve girar a entrada na câmera isométrica. Sprites com as 4 diagonais: andar reto na tela alterna entre duas diagonais (histerese); considerar 8 direções de arte.
-**Colocar na face (v0.93.139):** só solo e isométrica; para a sala: nível na ação `place` (`world/actions.ts`, `PROTOCOL_VERSION`), snapshot e servidor primeiro. Pendente: colisão vertical sob blocos flutuantes (hoje atravessa por baixo), quebrar mirando a face/nível exato (hoje quebra o topo da coluna), gravidade/sustentação (não há), botão de ação em 8 direções.
-**Próximos passos:** 1) **dono do produto avalia** a vista (proporção, tamanho da Deusa, zoom, escala do cubo na grade 2); 2) giro da câmera em passos de 90° (decidir); 3) conferir seleção/raycast em bordas, ordem de profundidade de sprites/billboards e a Deusa (só 4 direções) com pilhas altas; 4) arte/proporção isométrica de texturas e sprites (hoje 3/4); 5) iluminação/ciclo dia-noite desligados na câmera isométrica (hoje só `atual` desenha luz); 6) **limpeza final do legado celestial:** `celestialArt.ts` (instaladores sem chamador), `art/santuario.ts`, ids 80–97 de `blocks.ts`, WATER_PURE e assets `santuario-*-512.jpg`/`celestial-*`; 7) reconectar à Sala 2 online só depois do visual aprovado (terreno da sala, `PROTOCOL_VERSION`, snapshot, **servidor primeiro**); 8) código morto em `main.ts`/`goOnline` ligado às regras da Sala 2 (`goddessOnly`/`allowCameraModes`) fica até lá. **Dívida:** `sanctuaryCameraModes`, `sanctuaryCameraRig` e `sanctuaryObliqueView` guardam constantes da câmera antiga.
-
-## Laboratório de câmera do Santuário (v0.93.65) — removido na v0.93.133 (histórico)
-**Implementado:** joystick orbital com azimute, elevação, zoom, reset e preferência local; Grama Celestial com seis faces reais (atlas 512×512); cinco níveis de pilha somente no Santuário, e sliders para reduzir altura do bloco e tamanho aparente da célula sem trocar a grade lógica. **Conferir visualmente em aparelhos reais:** rotação completa e inclinações extremas (especialmente sprite 2D da Deusa, paredes e portas), alcance da seleção por toque com câmera girada, iluminação e legibilidade da arte nas diferentes faces. Após a avaliação do dono do produto, fixar a direção artística e manter ou retirar o painel experimental. O Mundo principal não mudou.
-
 ## Mármore Celestial V2/V3 removido (W4, v0.93.28, ADR 0027)
 O comportamento especial do Mármore Celestial (82) no Santuário — dois níveis em um clique, formas adaptativas, âncora V3 de duas células, ordem de colocação, borda ornamental e cantos em L — foi **removido** (`sanctuaryMarbleAdaptive`, `sanctuaryV3Surfaces`, `World.marbleV3*`/`marblePlacement*`). O 82 é um cubo comum: empilha e quebra um nível por vez, e entra no autotile horizontal genérico (`render/adaptiveWalls.ts`, forma `thin`) como os demais celestiais. Paredes novas são só as autotile (`world/walls.ts`). Salvamento v15 descarta os campos antigos.
 
@@ -180,33 +162,6 @@ primeiro**. Cada fase fecha com `tsc`, testes, captura de tela, docs e PR de ver
 - **Implementação:** grupos de sete goblins por fogueira (`Block.CAMPFIRE`) em quatro acampamentos determinísticos, fora da cidade e do covil. HP 60, ataque-base 15, percepção de 3 células, IA e respawn de monstros já existentes; usa pranchas 4×4 com caminhada, repouso, corrida, alerta, ataque, dano e morte. Multiplayer autoritativo transmite os estados visuais e o salvamento preserva os monstros da dungeon, reconstruindo grupos externos pela seed.
 - **Servidor:** pacote de rede sincronizado na v0.93.4 (orvalis-servidor 0.27.1 com goblins e limite de 2 níveis); conferir `/saude` após o deploy.
 - **Validação visual pendente:** testar aparecimento no Mundo principal, animações por direção e estado, sete goblins no anel, fogueira como objeto real, ataque apenas quando a 3 células, dano, morte e retorno, celular e sala multiplayer. O espólio do goblin é fixo (2 Moedas de Cobre, v0.93.7); falta definir o uso da moeda (loja, troca) e outros espólios.
-
-## Teste de câmera do Santuário — 67° (PR #93)
-
-- **Alteração isolada:** câmera ortográfica superior ajustada de 80° para 67°; sem alteração da geometria, topologia de bordas do Mármore Celestial, plano vertical da Deusa ou Mundo principal.
-- **Conferência visual:** comparar largura aparente do topo, altura visível da frente dos pilares e paredes e oclusão da Deusa nos cantos. Core Keeper não tem ângulo público confirmado; validar 67° visualmente antes de outra mudança.
-
-## Teste de bordas adaptativas, Deusa vertical e câmera superior — PR #92
-
-- **Implementado no Santuário Three.js:** câmera ortográfica superior ~80° (sem yaw isométrico), plano vertical de sprite/eco da Deusa, mármore celestial ID 82 com nova textura de topo ornamentada e 64 máscaras possíveis de borda exposta. Parede de fechamento traseira encaixa na meia profundidade de trás dos pilares; fechamento frontal encaixa à frente. Os demais 17 materiais preservam sua arte e geometria anteriores.
-- **Conferência visual pendente:** testar linha de 3/5 blocos, sala 3×3/5×5 oca, canto com borda de meio pilar, dois níveis, textura de topo sem emendas, silhueta da Deusa e desempenho no Safari iOS. Física continua por célula inteira; nenhuma porta, câmera ou bloco novo fora do escopo.
-
-## Oclusão visual da Deusa no Three.js — PR #91
-
-- **Feito na branch:** separar sombra da textura vertical, alinhar o canvas ao ponto lógico dos pés, preservar o efeito de voo e usar silhueta etérea discreta quando uma parede está à frente. Regras físicas continuam as mesmas do PR #90.
-- **Pendente de validação visual no Safari iOS:** conferir movimento junto às paredes e blocos de 1/2 níveis, em frente e atrás, e posição da sombra. Comparar com `?mundo=santuario&render=2d` para observar a arte original sem alteração.
-
-## Colisão Santuário Three.js — PR #90
-
-- **Correção no perfil WebGL:** cubos/pilares de um nível deixam de funcionar como degrau automático (`stepHeight=0` somente neste renderizador); a caixa dos pés do `Walker` volta a barrar a entrada. Há testes com blocos, parede horizontal, pilar de dois níveis, nuvem livre e fallback Canvas2D.
-- **Validação visual pendente:** testar avanço contra um único cubo, parede fina e coluna, também no celular. **Subir paredes ou degraus futuramente exigirá mecânica explícita** de salto/escada, não caminhada automática. Colisões subcélula em paredes finas ficam fora deste hotfix.
-
-## Migração do Santuário oficial para Three.js — PR #89 (11/11/2026)
-
-- **Renderer Three.js oficial**: Santuário usa malhas tridimensionais reais e Deusa animada em billboard, com o mesmo `World`, UI, controles e salvamentos, sem importar o editor experimental de cinco níveis. Mantém limite de dois níveis e autotile herdado da base.
-- **Teste visual pendente**: conferir desktop e mobile, desempenho WebGL, altura da Deusa, alinhamento de topo e face, seleção precisa por raycast e construção/quebra com mundo salvo. `?mundo=santuario&render=2d` continua disponível como fallback.
-- O Mundo principal permanece no seu Canvas 2D; conferir que o build `VITE_WORLD=principal` não arrasta o módulo Three.js. Os seis materiais 80–85 estão versionados; não há pendência de importação de artes.
-
 
 ## 1. Panorama — o que temos
 
@@ -429,11 +384,6 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
    **renascer** na cidade da faixa do personagem (hoje: tenda ou Cidade 1).
 6. Arte por região carregada **sob demanda** ao se aproximar (ADR 0013) — o mundo maior não pesa no início.
 
-### Santuário Celestial (trilha paralela)
-- Subdomínio `santuario.orvalis.pensamentos.online` na mesma pasta do jogo (opcional; passos em `OPERATIONS`).
-- Definir ações da Deusa e se flutuar tem efeito de jogo (passar sobre buracos, subir 2 níveis).
-- (Arte) variação de nuvem feita para chão contínuo (elimina a repetição diagonal).
-
 ## 3. Decisões pendentes (do dono do produto)
 | Decisão | Afeta |
 |---|---|
@@ -478,31 +428,6 @@ longe, onde os personagens passam a se concentrar. Passos sugeridos (ordem de de
 - **Contas e login (casca pronta na landing, v0.93.128):** falta o **serviço de contas no backend do Orvalis** (repositório separado, ADR 0015): `POST /conta/entrar`, `POST /conta/cadastrar`, `POST /conta/sair`, `GET /conta/eu` (cookie de sessão, CORS/origens como a sala), e ligar `src/auth/session.ts`; depois vincular o salvamento e a bolsa da sala ao `id` da conta (hoje é o nome). Landing: textos e arte final podem ser trocados por pinturas do dono do produto (as molduras já aceitam qualquer imagem).
 - **Inteligência dos NPCs (ADR 0034, plano aprovado 15/11/2026):** ordem — (1) **feito v0.93.111:** agenda pura + rotina do **Bento** (abre, fecha, dorme pela porta dos fundos com fade); falta percepção/memória/utilidade no `npcBrain`; (2) loja fechada à noite (a janela avisa); (3) **feito v0.93.115:** memória no save v18 (conversas/compras, relação, faixas) + reencontro e saudação das lojas; faltam falas por condição mais ricas (hora do dia, última visita — exige contador de dias —, quest), relação influenciando preços; (4) **feito v0.93.113:** recolor no shader + 8 moradores sorteados na cidade e 5 na vila (rotina/dormir só o Bento ainda; sorteados passeiam o dia todo; retrato é o da folha-base); (5) reações (nível 2): **feito v0.93.114** o morador parado se vira para a jogadora (`NOTICE_RANGE`); faltam cumprimento (balão), fuga de lobo/perigo e aviso da Guarita; (6) objetivos e boatos (nível 4; **painel do personagem e carteira feitos v0.93.122**, faltam equipamento — 6 espaços — e sistema de XP/nível): **Capítulo 1 em andamento (ADR 0035, v0.93.121: motor + missões 01–03)**; faltam 04–10 e os contratos repetíveis; e **primeira missão feita v0.93.116** (Silvano, Ervas de cura: sinal, escolhas, acompanhante, recompensa); faltam mais missões (outros pedidos, missões da Guilda), diário de missões na interface, sons e aviso do acompanhante quando a jogadora entra em dungeon/outro mundo. **v0.93.117: a sala simula os moradores (protocolo 26)**; memória e missões seguem no salvamento do jogador. Falta medir banda/CPU na Hostinger com gente de verdade.
 
-## Santuário — blocos do Mundo (v0.93.146)
-- Paredes (`WALL_PLANKS`, `WALL_STONE`) e porta de parede ficaram fora: o autotile lê só o nível 0; adaptar para `surfaceObjects`.
-- Conferir a altura do `FireFx` (fogueira/forno) em cima do terreno em camadas e o visual da `FENCE_STAKE` (estaca) no Santuário.
-- Hotbar com 68 peças: avaliar categorias/abas se ficar pesada.
-
-## Santuário — Rio das Fadas (v0.93.147)
-- **Arte que falta para o autotile cobrir tudo** (hoje usa a peça de menor custo): canal — curvas sul–leste (`DCCD`) e sul–oeste (`DDCC`), os outros 3 Ts (`CCCD`, `CCDC`, `CDCC`) e a ponta `DDDC` (nascente oeste); lago — `DDDF`, `DFDD`, `FDDD`, `DFDF`, `FDFD`, `FFDF`.
-- Entram depois: **Prado** (seco liso), **Corredeira** e **Cascata baixa** (malhas de relevo 3D do `.bbmodel`; terminam na cota da borda) e as peças soltas (poça/ninfeias fixas) se o dono do produto quiser colocar à mão.
-- Ids de bloco são escassos (210–225 e 250–252 aposentados); o rio usa só 2 e ids virtuais no desenho.
-
 ## Dependências (17/11/2026)
 - `npm audit` acusa o `picomatch` (ReDoS, GHSA-fc5q-39xc-vjpf; vem de vite/vitest, sem versão corrigida no npm). O CI passou a auditar só dependências de produção (`--omit=dev`). Reverter para auditar tudo quando houver correção ou ao atualizar `vite`/`vitest`.
 
-## Santuário — paisagem da seed (v0.93.148)
-- O rio é reto porque faltam as curvas sul–leste/oeste e os Ts de canal; com essas peças ele pode meandrar (a lista completa está em "Rio das Fadas").
-- Outras seeds com paisagem: acrescentar a seed em `LANDSCAPE_SEEDS` reaproveita o mesmo desenho; para paisagens diferentes por seed, parametrizar `buildLandscape` (posições do lago, rio, casa).
-- Colocar/quebrar blocos nessa seed salva só os chunks editados; limpar o salvamento da seed para ver a paisagem intacta.
-
-## Santuário — Caldeirão 3D (v0.93.157)
-- O GLB veio sem animação, colisor e fogo: o caldeirão é só a malha (o brilho de fogo segue o `glow` do bloco). Fogo/fumaça ou líquido dentro dele são trabalho futuro.
-- Textura: a da Pedra Rachada do Mundo (projeção em caixa, 0,45 célula por repetição); se o dono do produto quiser a pintura do GLB, usar as texturas 2K do pacote.
-- O mesmo caminho (GLB → `extract-*.py` → malha por bloco) serve para a fogueira e o forno.
-
-## Santuário — Vale Goblin (v0.93.158, ADR 0038)
-- **Goblins (28 em 4 acampamentos desde a v0.93.169):** medir o desempenho em celular real (17 mil triângulos cada; talvez malha mais leve ou LOD à distância) e, se pesar, limitar quantos desenham de uma vez. Andam em volta da fogueira (v0.93.161, caminhada procedural), sem combate nem interação. Vida social e poses feitas na v0.93.165 (correr, sentar, agachar/cutucar a fogueira, conversar). Adaga, treino e duelo de treino com efeitos na v0.93.166. Falta: combate de verdade (dano, vida, reação à Deusa), reagir à Deusa (olhar, acenar, desviar — hoje atravessam-na), goblins sentando em objetos (hoje só no chão) e dormir à noite, e decidir se ganham combate (o Santuário é solo e sem monstros; `Entities` só cria goblins no Mundo).
-- **Canto VOID:** o canto ao norte da Fazenda (`cx 2..5`, `cy −6..−3`) está vazio (VOID); pode virar mais um espaço ou ganhar um fundo melhor que o escuro com grade.
-- **Relevo:** a compressão 3–14 → 2–6 e rocha → 7/8 perde a altura real das montanhas (até 32); se a pilha crescer, refazer `valeLevel`. Desempenho do mundo maior (192 × 64) a conferir em aparelho real.
-- **Acampamento:** o pacote só traz a fogueira; barracas, caixa e barris foram posicionados por mim (aproximados da prévia).

@@ -5,7 +5,6 @@ import { Block, BLOCKS, blockDef, FLOWER_BLOCKS, HOTBAR_BLOCKS, isFancyFlower } 
 import { blockDrops, blockStack, Item, toolCanBreak } from './items';
 import { FLORIST_PRICE, FLORIST_STOCK, buyOffer, CURRENCY } from './shop';
 import { FLORIST_INTERIOR, interiorLayouts, INTERIOR_DEFS } from './interiors';
-import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
 describe('15 Flores Fofas colocáveis (v0.93.110)', () => {
@@ -22,7 +21,6 @@ describe('15 Flores Fofas colocáveis (v0.93.110)', () => {
       expect(d.placeable).toBe(true);
       expect(isFancyFlower(id)).toBe(true);
       expect(HOTBAR_BLOCKS).toContain(id);
-      expect(WORLD_PROFILES.santuario.blocks).toContain(id); // também no Santuário (v0.93.146), como blocos novos
     }
     expect(isFancyFlower(Block.FLOWER)).toBe(false); // a Flor sorteada do mundo continua à parte
     expect(BLOCKS[Block.FLOWER_HONEY].name).toBe('Margarida de Mel');

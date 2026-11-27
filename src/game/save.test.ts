@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { Block } from '../world/blocks';
 import { mulberry32 } from '../world/random';
 import { World } from '../world/world';
-import { WORLD_PROFILES } from '../world/profiles';
 import { Entities } from './entities';
 import { Inventory } from './inventory';
 import { Player } from './player';
@@ -52,46 +51,7 @@ function memoryStorage(): Storage {
   };
 }
 
-/** Santuário sem as camadas de terreno: este teste conta os níveis a partir do chão. */
-const EMPTY_SANTUARIO = { ...WORLD_PROFILES.santuario, terrain: { kind: 'flat' as const, ground: Block.ISO_G_GRASS } };
-
 describe('Salvamento automático', () => {
-  it('o mármore V2/V3 saiu (v15); saves v12–v14 migram descartando os campos (o bloco legado vira cubo comum)', () => {
-    const world = new World(77, EMPTY_SANTUARIO);
-    const [sx,sy] = world.findSpawn();
-    const x=sx,y=sy; // chão plano vazio (Santuário, ADR 0036)
-    // Materiais antigos não são mais selecionáveis; continuam carregáveis em saves.
-    world.setObject(x,y,Block.STONE_BRICK);
-    expect(world.canPlace(x,y,Block.WALL_PLANKS)).toBe(false);
-    expect(world.getObject(x,y-1)).toBe(Block.AIR); // terreno plano e vazio
-    expect(world.placeBlock(x,y,Block.ISO_G_DIRT)).toBe(true); // empilha o novo bloco sobre legado
-    expect(world.getUpper(x,y)).toBe(Block.ISO_G_DIRT);
-    expect(world.breakBlock(x,y)).toBe(Block.ISO_G_DIRT); // quebra um nível por vez
-    expect(world.getObject(x,y)).toBe(Block.STONE_BRICK);
-
-    const player=new Player(sx+0.5,sy+0.6);
-    const state={world,player,entities:new Entities(player,mulberry32(7)),
-      inventory:new Inventory(),time:0.25,selected:null,hotbar:null};
-    const saved=captureSave(state);
-    expect(saved.v).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(22);
-    expect('marblePlacements' in saved).toBe(false);
-    expect('marbleV3Bases' in saved).toBe(false);
-
-    for(const v of [12,13,14]){
-      const old=migrate({...saved,v,world:'principal',marblePlacements:[[x,y,1]],marbleV3Bases:[[x,y]]}); // (do Santuário o v21 → v22 descarta: ver o teste próprio)
-      expect(old?.v).toBe(22); // ...e segue até a versão atual (v15 → v16: grade 1; v16 → v17: blocos de 1/4; v17 → v18: memória dos NPCs; v18 → v19: missões; v21 → v22: o Santuário recomeça)
-      expect(old?.sub).toBe(1);
-      expect(old && 'marblePlacements' in old).toBe(false);
-      expect(old && 'marbleV3Bases' in old).toBe(false);
-    }
-    const restored=new World(77,EMPTY_SANTUARIO);
-    const p2=new Player(sx+0.5,sy+0.6);
-    applySave(JSON.parse(JSON.stringify(saved)),{
-      ...state,world:restored,player:p2,entities:new Entities(p2,mulberry32(7)),
-    });
-    expect(restored.getObject(x,y)).toBe(Block.STONE_BRICK);
-  });
   it('limita a altura do personagem ao máximo da pilha (4 níveis = 1 célula)', () => {
     const a = session();
     const [x,y] = grassCells(a.world,a.sx,a.sy,1)[0];
@@ -181,7 +141,7 @@ describe('Salvamento automático', () => {
     expect(store.lastSeed()).toBe(7);
     expect(store.load(42)?.time).toBe(0.3);
     expect(store.load(7)?.selected).toBe(1);
-    expect(new SaveStore('santuario', storage).load(42)).toBeNull(); // outro mundo
+    expect(new SaveStore('titan', storage).load(42)).toBeNull(); // outro mundo
     store.clear(42);
     expect(store.load(42)).toBeNull();
     expect(store.load(7)).not.toBeNull();
@@ -292,15 +252,5 @@ describe('Salvamento na grade fina (ADR 0032, F6: v16)', () => {
     expect(storage.getItem(`mundoblocos:save:principal:${d.seed}`)).toBe(fine);
     // outra seed segue normal
     expect(store.save({ ...d, seed: d.seed + 1 })).toBe(true);
-  });
-});
-
-describe('Santuário em camadas (v21 → v22, ADR 0036)', () => {
-  it('um salvamento v21 do Santuário não abre (o terreno mudou: recomeça); o do Mundo principal migra', () => {
-    const world = new World(5, WORLD_PROFILES.santuario);
-    const player = new Player(0.5, 0.5);
-    const base = captureSave({ world, player, entities: new Entities(player, mulberry32(7)), inventory: new Inventory(), time: 0.25, selected: null, hotbar: null });
-    expect(migrate({ ...base, v: 21 })).toBeNull();
-    expect(migrate({ ...base, v: 21, world: 'principal' })?.v).toBe(22);
   });
 });

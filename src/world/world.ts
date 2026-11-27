@@ -1,5 +1,5 @@
 import { quarterLevel } from './quarters';
-import { CHUNK_SIZE, CUBE_LEVELS, DAY_LENGTH_S, MAX_STACK, SANCTUARY_MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
+import { CHUNK_SIZE, CUBE_LEVELS, DAY_LENGTH_S, MAX_STACK, SUBDIV, UNLOAD_MARGIN } from '../config';
 import { adultOfStage, Block, type BlockId, blockDef, CROP_STAGES, cropId, cropKind, type CropKind, cropStage, isCrop, isCropSeedling, isGrowingTree, isOpen, isOpenable, isWaterPlant, isRemovedBlock, ISO_BIG, isStackBlock, isWall, isWallLike, toggled, TREE_NEXT } from './blocks';
 import { type WallPiece, wallNeighbors, wallPiece } from './walls';
 import type { Biome } from './biomes';
@@ -9,8 +9,6 @@ import { grow, TOWN_MARGIN, TOWN_SOUTH_FIELD, TOWN_WALL, type TownBuilding, type
 import { chunkKey, toChunk, toLocal } from './coords';
 import { type InteriorDoor, type InteriorLayout, interiorLayouts, InteriorTerrain, tentLayout } from './interiors';
 import { FlatGenerator } from './flatGenerator';
-import { landscapeFor } from './sanctuaryLandscape';
-import { isRioBrush } from './rio';
 import { hash2 } from './random';
 import { WorldGenerator } from './generator';
 import { type FlowerPatch, FlowerPatchTerrain, planFlowerPatch } from './flowerPatch';
@@ -138,10 +136,10 @@ export class World {
 
   constructor(seed: number, profile: WorldProfile = WORLD_PROFILES.principal) {
     this.profile = profile;
-    this.maxStack = profile.id === 'santuario' ? SANCTUARY_MAX_STACK : MAX_STACK;
-    this.cubeLevels = profile.id === 'santuario' ? 1 : CUBE_LEVELS;
+    this.maxStack = MAX_STACK;
+    this.cubeLevels = CUBE_LEVELS;
     this.generator = profile.terrain.kind === 'flat'
-      ? (profile.terrain.landscape ? landscapeFor(seed, profile.terrain.ground) : null) ?? new FlatGenerator(seed, profile.terrain.ground, profile.terrain.layers)
+      ? new FlatGenerator(seed, profile.terrain.ground, profile.terrain.layers)
       : new WorldGenerator(seed);
     const baseTerrain = this.generator;
     const b = profile.bounds;
@@ -475,14 +473,6 @@ export class World {
     this.setLevel(x, y, 0, id);
   }
 
-  private touchChunkNeighbors(cx: number, cy: number, lx: number, ly: number): void {
-    const last = CHUNK_SIZE - 1;
-    if (lx === 0) this.getChunk(cx - 1, cy)?.touch();
-    if (lx === last) this.getChunk(cx + 1, cy)?.touch();
-    if (ly === 0) this.getChunk(cx, cy - 1)?.touch();
-    if (ly === last) this.getChunk(cx, cy + 1)?.touch();
-  }
-
   private setLevel(x: number, y: number, level: Level | 'ground', id: BlockId): void {
     const cx = toChunk(x);
     const cy = toChunk(y);
@@ -498,10 +488,7 @@ export class World {
       chunk.setGround(lx, ly, id);
     }
     else {
-      const prev = chunk.getLevel(lx, ly, level);
       chunk.setLevel(lx, ly, level, id);
-      // Rio das Fadas: a peça desenhada depende dos 4 vizinhos; na borda do chunk o vizinho mora noutro chunk, que também precisa redesenhar.
-      if (isRioBrush(id) || isRioBrush(prev)) this.touchChunkNeighbors(cx, cy, lx, ly);
     }
     if (level === 0 || (this.profile.surfaceObjects && typeof level === 'number' && isCrop(id))) {
       if (isCrop(id)) this.crops.add(chunkKey(x, y));
@@ -616,7 +603,7 @@ export class World {
     if (!def.placeable || def.layer !== 'object') return null;
     // Cada mundo só aceita os blocos do seu perfil (ex.: Santuário = só blocos celestiais).
     if (!this.profile.blocks.includes(id) || this.isProtected(x, y)) return null;
-    if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' && !isRioBrush(id) ? 'ground' : null; // a água do rio nunca vira piso do buraco
+    if (this.getGround(x, y) === Block.HOLE) return def.shape === 'cube' ? 'ground' : null;
     // Água não quebra, mas Terra, Pedra ou Tora a substituem (viram o chão da célula).
     if (this.getGround(x, y) === Block.WATER) return REPLACES_WATER.has(id) ? 'ground' : null;
     if (!this.isGroundStandable(x, y)) return null;

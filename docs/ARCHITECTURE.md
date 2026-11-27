@@ -64,7 +64,7 @@ src/
   world/   domínio — sem DOM, sem Math.random
     random.ts, noise.ts        PRNG/hash e Perlin + fBm com seed
     blocks.ts                  registro de blocos (MATERIALS, formas, camadas, trigo 60–75)
-    profiles.ts                perfis de mundo (principal, santuario) + resolveWorldId
+    profiles.ts                perfis de mundo (principal, titan, orvalis3d) + resolveWorldId (o Santuário saiu, ADR 0115)
     biomes.ts                  Campos, Sakura, Dunas, Celestial
     terrain.ts                 interface TerrainSource (cellAt, biomeAt, generateChunk)
     dungeon.ts                 dungeon: área pura da seed (buildDungeon/planDungeon) + DungeonTerrain (sobreposição)
@@ -87,7 +87,7 @@ src/
   dev/     só desenvolvimento, fora do build de produção: painel de desempenho (`?fps=1`; a cena dos materiais `?materiais=1` foi removida na v0.93.107)
   dev/perfHud.ts               painel de desempenho `?fps=1` (dev e piloto): FPS, GPU, memória; toque copia o relatório
   render/  apresentação — só lê o mundo
-    art/                       pacotes de arte por mundo (principal.ts, santuario.ts, types.ts) + loadArtPack/art()
+    art/                       pacotes de arte por mundo (principal.ts, types.ts) + loadArtPack/art()
     blockArt.ts                carrega do pacote os atlas, a folha da porta e a arte da dungeon antes do jogo
     textures.ts                materiais 3/4 (atlas), água, árvores, cacto, enfeites, ícones, composeCube
     materialsV2.ts             Padrão de Materiais V2 (o padrão do jogo): V2_BLOCKS, atlas V2 e de máscaras, massa contínua (`cubeEdges`) (ADR 0023)
@@ -102,8 +102,6 @@ src/
     doorAnim.ts                animação da porta (8 quadros, `DoorAnimator`): máquina de estados compartilhada pelo 2D e pelo 3D
     worldLight.ts              luz do Mundo (pura): brilho ambiente pela hora, cor da escuridão, luzes dos blocos que brilham (ADR 0031, M3.3)
     worldSpriteArt.ts          qual sprite 2D desenha cada objeto do Mundo no 3D (variações por célula, porta por estado, cerca emendada)
-    isoSet.ts                  conjunto isométrico do Santuário: topos, faces e sprites dos cubos e objetos a partir da prancha
-    three/isoFences.ts         cercas e portões 3D (malhas do modelo do Blockbench) do Santuário isométrico
     damageNumbers.ts           números de dano subindo na tela (apresentação)
     townArt.ts                 construções e enfeites da cidade pintados em canvas (sem imagens)
     chunkRenderer.ts           cache offscreen do chão por chunk (barrancas, espuma, buracos, sombras)

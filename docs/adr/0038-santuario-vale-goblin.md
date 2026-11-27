@@ -1,5 +1,7 @@
 # ADR 0038 — Santuário: Vale Goblin (terceiro bloco, ao norte do original)
 
+> **Removida (ADR 0115, etapa 2, v0.182.0):** o Santuário saiu do produto por decisão do dono do produto. Este registro fica só como histórico.
+
 **Status:** aceito (dono do produto, 18/11/2026). Estende o ADR 0037 (Fazenda a partir de heightmap) e o 0036 (Santuário isométrico solo).
 
 ## Contexto
