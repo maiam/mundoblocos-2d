@@ -216,4 +216,4 @@ Testes: `titan/orvalis/generator.test.ts` e `mundo.test.ts`. Pendências e próx
 | Boneco | caixas provisórias + silhueta azul `GreaterDepth` atrás do terreno | `TitanRenderer.buildAvatar` |
 
 ## Pesca do Orvalis (ADR 0133, v0.202.0)
-Vara de Pesca (106, 64 usos), boia (113, textura), peixes 107–112. `titan/fishing.ts` (puro): `newBobber`, `tickBobber`, `stepFishing`, `rollFish`, `FISH_TABLE` (60/25/13/2 %), espera 5–30 s, janela 1–2 s, `FISH_MAX_DISTANCE` 33. `actions.ts`: `useRod`/`reelIn`. Estado só em `session.fishing`. A vara não tem receita (aguarda o fio).
+Vara de Pesca (106, 64 usos), boia (113, textura), peixes 107–112. `titan/fishing.ts` (puro): `newBobber`, `tickBobber`, `stepFishing`, `rollFish`, `FISH_TABLE` (60/25/13/2 %), espera 5–30 s, janela 1–2 s, `FISH_MAX_DISTANCE` 33. `actions.ts`: `useRod`/`reelIn`. Estado só em `session.fishing`. Linha (114) = 1 Lã → 4 (ADR 0134); vara = 3 Hastes + 2 Linhas (Mesa de Carpintaria).

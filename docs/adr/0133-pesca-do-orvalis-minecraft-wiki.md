@@ -15,3 +15,5 @@ Sem encantamento: 85 % peixe, 10 % lixo, 5 % tesouro; entre os peixes bacalhau 6
 
 ## Consequências
 Sem mudança de save, de gerador nem de protocolo (a pesca é só do aparelho; a vara com desgaste já é lida pelo inventário). Pendentes: lixo e tesouro, fio e a receita da vara, baiacu com efeitos, balde com peixe, peixes como animais (E3), lançar além do alcance de mira. Teste: `orvalis/pesca.test.ts`; conferido no navegador (lançar, fisgar, recolher).
+
+**Atualização (v0.203.0, ADR 0134):** a vara agora tem receita (3 Hastes + 2 Linhas; a Linha se fabrica da Lã); o item 5 da decisão acima ficou superado.
