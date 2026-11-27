@@ -13,6 +13,6 @@ export function feedFaunaFromSlot(s: TitanSession, index: number): FeedAction {
   const r = feedFauna(f, stack.item);
   const name = FAUNA_KINDS[f.kind].name;
   if (!r.ok) return { ok: false, consumed: false, msg: r.reason === 'love' ? `${name} já está em amor` : r.reason === 'rest' ? `${name} ainda descansa` : undefined };
-  s.inventory.consume(s.selected);
+  s.inventory.consume(s.selected); s.metaRev++; // o amor não vai ao save, mas o filhote que crescer mais rápido, sim
   return { ok: true, consumed: true, msg: r.effect === 'love' ? `${name} com vontade de cruzar` : `${name} (filhote) cresce mais rápido` };
 }

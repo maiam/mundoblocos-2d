@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.195.0 — fauna de fazenda no save (27/11/2026)
+- **ADR 0126 (aprovada pelo dono).** Abates, filhotes, vida, crescimento e descanso dos animais passam a **persistir**: `header.fauna` opcional (id, espécie, posição, vida, filhote/crescimento, descanso), **`TITAN_SAVE_VERSION` 6**. Presente (mesmo vazio) vale no lugar da seed; ausente (saves antigos) vale a população da seed. Leitura cuidadosa (descarta inválidos, limita valores, teto de 200); o amor não persiste. Só o Orvalis (v ≥ 3).
+- 698 testes passam (7 novos em `faunaSave.test.ts`). Sem mudança de gerador nem de protocolo (o servidor não precisa de `sync-net`). Dívida: animais fora de 48 m não crescem nem se mexem.
+
 ## Orvalis v0.194.1 — fauna na probabilidade da Wiki: gerador do Orvalis v4 (27/11/2026)
 - **Decisão do dono:** a probabilidade de grupo da fauna de fazenda volta à da Wiki, **0,1 por chunk** (a v3 usava 0,4, adaptação por não haver geração contínua). Como muda a geração dos animais, sobe o **`ORVALIS_GENERATOR_VERSION` para 4**; a v3 mantém o 0,4 (`groupChanceFor`), terreno e blocos iguais (teste). Partidas novas têm bem menos animais: ~12 a ~31 nas seeds testadas (42: 12, sem galinha; 7: 31). Sem mudança de save nem de protocolo. 691 testes passam.
 
