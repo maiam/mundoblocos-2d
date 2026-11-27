@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block, BLOCKS, HOTBAR_BLOCKS } from './blocks';
 import { breakSeconds, RECIPES, toolCanBreak } from './items';
-import { WORLD_PROFILES } from './profiles';
 import { CHEST_SLOTS, World } from './world';
 
 function freeCell(w: World): [number, number] {
@@ -23,7 +22,6 @@ describe('Porta de Carvalho', () => {
     expect(HOTBAR_BLOCKS).toContain(Block.OAK_DOOR);
     expect(BLOCKS[Block.OAK_DOOR].organic).toBe('wood');
     expect(BLOCKS[Block.OAK_DOOR_OPEN].placeable).toBe(false);
-    expect(WORLD_PROFILES.santuario.blocks).toContain(Block.OAK_DOOR); // (Santuário, v0.93.146: como bloco novo, entre dois batentes no mesmo nível)
     expect(toolCanBreak('axe', Block.OAK_DOOR)).toBe(true);
     expect(toolCanBreak('pickaxe', Block.OAK_DOOR)).toBe(false);
   });

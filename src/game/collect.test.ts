@@ -85,14 +85,6 @@ describe('Coleta de materiais (Fase 3)', () => {
     expect(toolCanBreak('pickaxe', Block.CHEST)).toBe(false);
   });
 
-  it('Santuário continua infinito: grade fixa com as 87 peças (82 de construção + 5 sementes e vegetais), sem bolsa', () => {
-    const grid = new Hotbar(WORLD_PROFILES.santuario);
-    expect(grid.dynamic).toBe(false);
-    expect(grid.length).toBe(87);
-    grid.assign(0, null);
-    expect(grid.stack(0)).toBe(blockStack(Block.ISO_G_GRASS));
-  });
-
   it('bolsa com 12 espaços (4 × 3 à direita) + 9 na mão: tipo novo só entra se houver lugar', () => {
     expect(BAG_SLOTS).toBe(12);
     expect(CARRY_LIMIT).toBe(21); // 9 na mão + 12 na bolsa

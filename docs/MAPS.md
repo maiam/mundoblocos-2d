@@ -47,7 +47,7 @@ flowchart TD
     W[world.ts] --> G[generator.ts] --> N[noise + random]
     W --> C[chunk + coords]
     W --> B[blocks + biomes + items]
-    W --> PR[profiles: principal · santuario]
+    W --> PR[profiles: principal · titan · orvalis3d]
     W --> FG[flatGenerator]
   end
 ```

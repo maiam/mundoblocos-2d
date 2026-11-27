@@ -10,7 +10,7 @@
 
 ## Plano em etapas (um PR por etapa, merge se a Verificação passar)
 - **Etapa 1 (v0.181.0, feita):** esta ADR; o padrão passa a ser `orvalis3d`; `?mundo=titan` único caminho do Titã; `build:artifact` passa a `VITE_WORLD=orvalis3d`. O 2.5D e o Santuário seguem no código, alcançáveis só por `?mundo=principal|santuario` (e subdomínio `santuario.`), para serem removidos nas etapas seguintes.
-- **Etapa 2:** remover o **Santuário** (perfil, `sanctuary*`, Fazenda, Vale Goblin, Rio, peças isométricas, arte, testes, docs).
+- **Etapa 2 (v0.182.0, feita):** removido o **Santuário** (perfil, `sanctuary*`, Fazenda, Vale Goblin, Rio, peças isométricas, arte, testes, docs).
 - **Etapa 3:** remover o **2.5D** (`src/world`, `src/game`, `src/render` do 2.5D, `src/landing`, partes de `src/net` do 2.5D) e **ajustar o `orvalis-servidor` junto** (o pacote `vendor/orvalis-net.cjs` hoje traz a sala 2.5D; fica só a sala do Titã), com `PROTOCOL_VERSION` e docs; inclui limpar os invariantes do `CLAUDE.md`, ADRs obsoletas (marcar como substituídas) e o orçamento do Artifact.
 
 ## Consequências

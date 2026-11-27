@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { inRect } from './dungeon';
 import { exitDoorAt, INTERIOR_DEFS, interiorFloor, scaleInteriorDef, SMITHY_INTERIOR } from './interiors';
-import { WORLD_PROFILES } from './profiles';
 import { World } from './world';
 
 describe('Interiores (ADR 0014)', () => {
@@ -69,7 +68,6 @@ describe('Tenda (cômodo do objeto do jogador)', () => {
     expect(w.isWalkable(...room.entry)).toBe(true);
     expect(w.interiorAt(...room.entry)).toBe(room);
     expect(w.isProtected(...room.entry)).toBe(true);
-    expect(new World(7, WORLD_PROFILES.santuario).tentRoom).toBeNull();
     // Tenda colocada fora da cidade: as duas células da frente levam para dentro; as de trás e os lados, não.
     const [gx, gy] = w.outsideGate();
     const x = gx + 3;

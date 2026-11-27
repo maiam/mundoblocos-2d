@@ -9,7 +9,7 @@ import { loadArtPack } from './render/art';
 import { loadBlockArt, loadMaterialsV2 } from './render/blockArt';
 import { blocksV2FromSearch } from './render/materialsV2';
 import { resolveWorldId, WORLD_PROFILES } from './world/profiles';
-import { roomRules, roomsForWorld } from './net/protocol';
+import { roomsForWorld } from './net/protocol';
 import { useSolidPhysics } from './render/rendererChoice';
 import { ScreenMode } from './game/screenMode';
 import { seedFromString } from './world/random';
@@ -36,17 +36,12 @@ const baseProfile = WORLD_PROFILES[resolveWorldId(window.location.hostname, wind
 /** Protótipo da grade fina (ADR 0032; só dev, `?grade=2`): mesmo mundo, sem salvar e sem sala. */
 const gridProto = SUBDIV !== DEFAULT_SUBDIV && baseProfile.id === 'principal';
 const profile = baseProfile;
-/**
- * Santuário isométrico (ADR 0036, v0.93.134): a URL do Santuário (`?mundo=santuario` ou subdomínio) abre um mundo **solo**, de terreno plano e vazio, em câmera
- * isométrica fixa, com a Deusa — sem servidor. A Sala 2 online (v0.93.125) continua definida em `ROOM_RULES`/servidor, mas esta página não a oferece mais.
- */
-const sanctuarySolo = profile.id === 'santuario';
 document.title = profile.name;
 let game: Game | null = null;
-/** Renderer 2.5D em WebGL carregado sob demanda (Santuário e Mundo; o Canvas 2D foi removido na v0.93.105): sem Three.js no pacote inicial. */
+/** Renderer 2.5D em WebGL carregado sob demanda (o Canvas 2D foi removido na v0.93.105): sem Three.js no pacote inicial. */
 let threeRendererFactory: RendererFactory | undefined;
-let worldRendererCtor: (new (canvas: HTMLCanvasElement, world: import('./world/world').World, sanctuaryRoom?: boolean) => import('./render/rendererContract').GameRenderer) | null = null;
-/** Física sem degrau do jogador no Mundo (ADR 0031), a não ser com `?fisica=degrau`. O Santuário tem a regra dele. */
+let worldRendererCtor: (new (canvas: HTMLCanvasElement, world: import('./world/world').World) => import('./render/rendererContract').GameRenderer) | null = null;
+/** Física sem degrau do jogador no Mundo (ADR 0031), a não ser com `?fisica=degrau`. */
 const solidPhysics = (): boolean => profile.id === 'principal' && useSolidPhysics(window.location.search);
 /** Salvamento automático deste mundo (um por seed; o último jogado continua ao abrir sem ?seed=). */
 const store = new SaveStore(profile.id, gridProto ? null : undefined);
@@ -54,11 +49,11 @@ const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
 /** Mundo jogado sozinho (volta para ele ao sair da sala). */
 let soloSeed = 0;
 
-// ---- Multiplayer (ADR 0016): mundo normal e Santuário como salas independentes ----
+// ---- Multiplayer (ADR 0016): o mundo normal em salas ----
 const NAME_KEY = 'mundoblocos:nome';
 const savedName = (): string => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
 const titanWorld = profile.id === 'titan' || profile.id === 'orvalis3d'; // os dois mundos voxel (Titã e Orvalis em voxel, ADR 0105) abrem o motor `src/titan/`
-const online = !gridProto && !sanctuarySolo && !titanWorld ? {
+const online = !gridProto && !titanWorld ? {
   get name() { return savedName(); },
   // Artifact e prévias: o servidor recusa a conexão; o menu mostra o link do site em vez de botões que falhariam.
   available: onlineAvailable(window.location.hostname),
@@ -81,7 +76,7 @@ let connecting: { session: NetSession; timer: number } | null = null;
  * nada, avisa — a conexão nunca fica presa em "Conectando…".
  */
 function goOnline(name: string, room: number, attempt = 1): void {
-  // Cada página só entra nas suas salas: o Santuário (criativo, da Deusa) só pela URL do Santuário; o mundo normal nunca o oferece.
+  // Cada página só entra nas suas salas.
   if (!roomsForWorld(profile.id).some((r) => r.id === room)) { report('Esta sala não é acessível a partir daqui.'); return; }
   try { localStorage.setItem(NAME_KEY, name); } catch { /* sem armazenamento: só não lembra o nome */ }
   if (connecting) { clearTimeout(connecting.timer); connecting.session.onClose = null; connecting.session.leave(); }
@@ -101,7 +96,7 @@ function goOnline(name: string, room: number, attempt = 1): void {
   s.onError = (message) => {
     if (connecting?.session === s) { clearTimeout(connecting.timer); connecting = null; }
     if (net === s) { report(message); return; }
-    report(message); // entrada recusada: continua no mundo de antes (no Santuário, volta à porta com "Tentar de novo")
+    report(message); // entrada recusada: continua no mundo de antes
     s.onClose = null;
     s.leave();
   };
@@ -115,16 +110,8 @@ function goOnline(name: string, room: number, attempt = 1): void {
     // Mesmo personagem do jogo sozinho.
     const body = game?.entities.body;
     game?.destroy(); // salva o mundo de antes
-    // As regras da sala (`ROOM_RULES`, as mesmas do servidor) decidem tudo: a Sala 1 é sobrevivência; o Santuário é criativo (blocos infinitos = hotbar fixa com todos
-    // os blocos, sem material ao quebrar) e dá as três câmeras a cada jogador. Mesmo terreno procedural e mesma cidade, seed própria.
-    const rules = roomRules(room);
-    const roomProfile = rules.infiniteBlocks
-      ? { ...WORLD_PROFILES.principal, collectBlocks: false, progression: false, name: 'Santuário de Orvalis', ...(rules.goddessOnly ? { character: 'goddess' as const } : {}) }
-      : WORLD_PROFILES.principal;
-    const roomRenderer: RendererFactory = rules.allowCameraModes
-      ? (target, world) => new (worldRendererCtor!)(target, world, true)
-      : (target, world) => new (worldRendererCtor!)(target, world);
-    game = new Game(freshCanvas(), seed, screenMode, roomProfile, { net: s, online, body, rendererFactory: roomRenderer, solidPhysics: true, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
+    const roomRenderer: RendererFactory = (target, world) => new (worldRendererCtor!)(target, world);
+    game = new Game(freshCanvas(), seed, screenMode, WORLD_PROFILES.principal, { net: s, online, body, rendererFactory: roomRenderer, solidPhysics: true, notice: `${s.roomName} · tudo o que se faz aqui fica salvo` });
     if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
   };
   // Como os outros vão me ver: o mesmo personagem do jogo.
@@ -237,7 +224,7 @@ if (titanWorld) {
   document.getElementById('world')?.setAttribute('aria-label', profile.id === 'orvalis3d' ? 'Orvalis' : 'Titã');
   void import('./titan/titanGame').then((m) => m.startTitan(canvas, window.location.search, undefined, profile.id === 'orvalis3d' ? 'orvalis' : 'titan'));
 } else {
-  // Link direto para um mundo (?seed=), atalho de teste (?personagem=) ou outro mundo (Santuário): entra sem a tela.
+  // Link direto para um mundo (?seed=) ou atalho de teste (?personagem=): entra sem a tela.
   const skipTitle = !!param || query.has('personagem') || profile.id !== 'principal' || gridProto;
   // Padrão de Materiais V2 (ADR 0023): é o padrão do jogo desde 08/11; `?blocos=legado` volta ao atlas antigo (só para comparar).
   const blocksV2 = blocksV2FromSearch(window.location.search);
@@ -246,18 +233,13 @@ if (titanWorld) {
     .then(() => loadBlockArt())
     .then(() => loadMaterialsV2(blocksV2))
     .then(async () => {
-      // Renderer 2.5D em WebGL (Three.js), carregado sob demanda (chunks separados do Santuário e do Mundo). O Canvas 2D foi removido na v0.93.105:
+      // Renderer 2.5D em WebGL (Three.js), carregado sob demanda (chunk separado). O Canvas 2D foi removido na v0.93.105:
       // sem WebGL (ou se o módulo falhar) o jogo avisa em vez de abrir.
       const probe = document.createElement('canvas');
       const webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
       if (webgl) {
         try {
-          if (sanctuarySolo) {
-            // Santuário solo: renderer do Mundo com a câmera isométrica fixa (sem seletor).
-            const mod = await import('./render/worldThreeRenderer');
-            worldRendererCtor = mod.WorldThreeRenderer;
-            threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world, false, true);
-          } else if (profile.id === 'principal') {
+          if (profile.id === 'principal') {
             const mod = await import('./render/worldThreeRenderer');
             worldRendererCtor = mod.WorldThreeRenderer;
             threeRendererFactory = (target, world) => new mod.WorldThreeRenderer(target, world);

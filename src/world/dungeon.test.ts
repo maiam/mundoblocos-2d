@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Block } from './blocks';
 import { buildDungeon, buildMaze, dungeonEntry, dungeonSize, inRect, isDungeonExit, type Side, upsampleDungeon } from './dungeon';
-import { WORLD_PROFILES } from './profiles';
 import { SUBDIV } from '../config';
 import { World } from './world';
 
@@ -25,7 +24,6 @@ function reachable(w: World, sx: number, sy: number, box: { x0: number; y0: numb
 
 describe('Covil das Aranhas — labirinto procedural', () => {
   it('só no mundo principal; tamanho ~9× a versão anterior, sorteado pela seed; mesma seed → mesmo labirinto', () => {
-    expect(new World(7, WORLD_PROFILES.santuario).dungeon).toBeNull();
     const sizes = new Set<string>();
     for (const seed of SEEDS) {
       const [w, h] = dungeonSize(seed);

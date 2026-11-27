@@ -177,7 +177,7 @@ export function migrate(raw: unknown): SaveData | null {
   if (d.v === 15) d = { ...d, v: 16, sub: 1 };
   // v16 → v17 (blocos de 1/4, ADR 0033): a altura de apoio `z` do Mundo passa de cubos para blocos de 1/4 (× 4); os chunks no formato antigo
   // (2 níveis) são convertidos ao carregar (`World.restoreChunk`), cada cubo virando 4 blocos com a mesma altura.
-  if (d.v === 16) d = { ...d, v: 17, player: { ...d.player, z: d.world === 'santuario' ? d.player.z : d.player.z * 4 } };
+  if (d.v === 16) d = { ...d, v: 17, player: { ...d.player, z: (d.world as string) === 'santuario' ? d.player.z : d.player.z * 4 } };
   // v17 → v18 (memória dos NPCs, ADR 0034): ninguém conhece a jogadora ainda.
   if (d.v === 17) d = { ...d, v: 18, npcMemory: {} };
   // v18 → v19 (missões dos NPCs, ADR 0034): nenhuma missão aceita ainda.
@@ -194,7 +194,7 @@ export function migrate(raw: unknown): SaveData | null {
   // v21 → v22 (Santuário em camadas, ADR 0036, v0.93.143): o terreno do Santuário passa a nascer com 2 camadas de cubo (pedra e grama) e os objetos ficam em cima
   // delas; o que foi salvo no terreno plano e vazio de antes não serve mais — o Santuário recomeça (o Mundo principal segue igual).
   if (d.v === 21) {
-    if (d.world === 'santuario') return null;
+    if ((d.world as string) === 'santuario') return null;
     d = { ...d, v: 22 };
   }
   return d.v === SAVE_VERSION ? withoutRemovedBlocks(d) : null;

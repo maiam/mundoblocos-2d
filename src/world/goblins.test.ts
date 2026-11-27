@@ -1,7 +1,6 @@
 import { describe,expect,it } from 'vitest';
 import { World } from './world';
 import { Block } from './blocks';
-import { WORLD_PROFILES } from './profiles';
 import { CHUNK_SIZE, SUBDIV } from '../config';
 import { GOBLIN_PACK_SIZE, GOBLIN_CAMP_SLOTS, goblinRoam, LIZARD_PACK_SIZE, PACK_REGION } from './goblins';
 import { toChunk, toLocal } from './coords';
@@ -71,12 +70,5 @@ describe('Acampamentos goblins — mapa aberto de Orvalis',()=>{
       }
       expect(new World(seed).lizardPacks).toEqual(w.lizardPacks);
     }
-  });
-
-  it('Santuário não recebe acampamentos, goblins nem novas fogueiras',()=>{
-    const w=new World(42,WORLD_PROFILES.santuario);
-    expect(w.goblinCamps).toEqual([]);
-    expect(w.lizardPacks).toEqual([]);
-    expect(w.findSpawn()).toBeTruthy();
   });
 });

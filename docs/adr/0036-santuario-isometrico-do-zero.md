@@ -1,5 +1,7 @@
 # ADR 0036 — Santuário isométrico refeito do zero
 
+> **Removida (ADR 0115, etapa 2, v0.182.0):** o Santuário saiu do produto por decisão do dono do produto. Este registro fica só como histórico.
+
 **Status:** aceito (dono do produto, 17/11/2026). **Substitui parcialmente** os ADR 0026 (renderer próprio do Santuário), 0027 (paredes autotile do Santuário) e 0028 (escala do Santuário).
 
 ## Contexto

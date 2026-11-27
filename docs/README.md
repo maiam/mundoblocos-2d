@@ -25,7 +25,7 @@ Para planejar mecânicas, consulte o [Guia de regras de mundo aberto](GUIA_REGRA
 | Jogador: movimento, câmera, entrada, botão de ação, tela | `game/player.ts`, `game/walker.ts`, `game/game.ts`, `game/actionController.ts` | [player.md](domains/player.md) |
 | NPCs: ovelhas, reprodução | `game/sheep.ts`, `game/entities.ts` | [npc.md](domains/npc.md) |
 | Titã: mundo voxel solo, geração, save, malha (ADR 0039) | `src/titan/`, `render/titanRenderer.ts` | [titan.md](domains/titan.md) |
-| Mundos: perfis, Santuário Celestial, limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
+| Mundos: perfis e limites | `world/profiles.ts`, `World` | [worlds.md](domains/worlds.md) |
 | Cidade do Despertar: início, muralha, ruas, construções | `world/town.ts`, `render/townArt.ts`, `World` | [town.md](domains/town.md) |
 | Vila Camponesa: área fixa ao sul da cidade (arte recebida; código a fazer) | `world/village.ts` (a criar), `assets-src/vila-camponesa/` | [village.md](domains/village.md) |
 | Dungeon e monstros: área protegida, aranhas, chefe | `world/dungeon.ts`, `game/monster.ts`, `game/entities.ts` | [dungeon.md](domains/dungeon.md) |

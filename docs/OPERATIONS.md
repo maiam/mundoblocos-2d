@@ -19,9 +19,7 @@ Node 22+, npm. Para o pipeline de arte: Python 3 com Pillow (com WebP) e numpy. 
 | Mundo | URL | Atualizar |
 |---|---|---|
 | Principal | https://claude.ai/artifact/FKYk57NzSCjDA4rQH2RgLn | `npm run build:artifact` → publicar `artifact/mundoblocos.html` com `files` = conteúdo de `artifact/mundoblocos-files.json` |
-| ~~Santuário Celestial~~ | https://claude.ai/artifact/AMGLa2gvXUbqpvjCVWR4gb | **descontinuado (v0.93.133, ADR 0036)**: o build `build:artifact:santuario` foi removido; o link fica só como histórico |
-- No dev: `?mundo=santuario`.
-- Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`); o jogo reconhece o Santuário pelo hostname (`santuario.`).
+- Site próprio: ver "Hospedagem própria" abaixo (`orvalis.pensamentos.online`);.
 
 ## Hospedagem própria — `orvalis.pensamentos.online` (Hostinger)
 Endereço **provisório** até o domínio próprio do Orvalis (ADR 0015: sem maiamapps): subdomínio de `pensamentos.online`,
@@ -74,8 +72,6 @@ A Hostinger também lista vulnerabilidades das dependências do repositório: ma
    devem ficar direto na pasta, com `index.html` na raiz dela) → apagar o `.zip`.
 3. **Segurança** → **SSL**: conferir/instalar o certificado grátis para `orvalis.pensamentos.online` (pode levar
    alguns minutos até horas) e ativar **Forçar HTTPS**. HTTPS é necessário para instalar como app.
-4. Santuário (v0.93.125: abre direto na Sala 2 online, na mesma build do mundo normal): criar o subdomínio `santuario.orvalis` apontando para a **mesma** pasta (o jogo abre o
-   Santuário pelo primeiro nome do endereço). Sem ele, `https://orvalis.pensamentos.online/?mundo=santuario` funciona.
 5. Conferir: abrir no celular (deitado), jogar, recarregar (continua salvo), instalar na tela inicial.
 
 **Atualizar**: `npm run pack:site` → no Gerenciador de Arquivos, apagar a pasta `assets/` e o `index.html` antigos →
@@ -84,7 +80,7 @@ enviar e extrair o zip novo. (Arquivos velhos em `assets/` não atrapalham, só 
 **Testar antes de enviar**: `cd dist && python3 -m http.server` e abrir `http://localhost:8000` (e `?mundo=santuario`).
 
 ## Pipeline de arte
-**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=principal`): leva a arte do mundo em arquivos ao lado da página (ADR 0013). O artefato do Santuário (`build:artifact:santuario`) foi removido (ADR 0036).
+**Artefatos**: `npm run build:artifact` (fixa `VITE_WORLD=orvalis3d`): leva a arte do mundo em arquivos ao lado da página (ADR 0013). O artefato do Santuário (`build:artifact:santuario`) foi removido (ADR 0036).
 
 **Sprites** — `P="python3 scripts/process-sprite.py"`:
 ```bash
@@ -220,22 +216,6 @@ de ícones padronizada, camada de mão sobre pose-base). O motor só importa o q
 
 **Crescimento do trigo** (estágios de tamanhos diferentes, ancorados pela base):
 `python3 scripts/process-crop.py assets-src/wheat-growth-sheet-v2.png src/assets/wheat-crop.png 128`
-
-**Árvores do Santuário** (v0.93.156): `python3 scripts/extract-iso-trees.py` lê `assets-src/trees/iso-{betula,cerejeira,macieira,carvalho}.png` (3 tamanhos cada) e gera `src/assets/iso-trees.webp`, `src/render/isoTreesManifest.ts` e `icon-iso-<espécie>-<s|m|l>.webp`; a prévia fica em `assets-src/trees/_previa-arvores-iso.png`. Os cortes da base por árvore estão em `SPECIES` no script.
-
-**Goblin 3D do Vale**: `python3 scripts/extract-iso-goblin.py` (`assets-src/iso-set/goblin/Goblin_Orvalis_Musculoso.glb`, com 26 ossos (inclui as orelhas) e o atlas PBR 2K) → `src/assets/iso-goblin.{json,webp}` + `iso-goblin-hair.webp` (malha com pele em 4 grupos por material — atlas, cabelo, pele em cor de vértice —, ossos, cor base 1024 e cabelo 512); **Adaga do goblin**: `python3 scripts/extract-iso-dagger.py` (`assets-src/iso-set/goblin/Adaga_Goblin_Orvalis.glb`) → `src/assets/iso-dagger.json` (cor de vértice, sem textura). A animação de teste do GLB do goblin não é usada, a caminhada é procedural (`render/three/goblinPose.ts`).
-
-**Vale Goblin do Santuário** (ADR 0038): `python3 scripts/make-vale-goblin-data.py` lê `assets-src/santuario-vale-goblin/seed.json` → `src/world/valeGoblinData.ts` (alturas, superfícies, caverna, fogueira, goblins); a conversão para cubos é `world/sanctuaryValeGoblin.ts`.
-
-**Fazenda do Santuário** (heightmap, ADR 0037): `python3 scripts/make-fazenda-data.py` lê `assets-src/santuario-fazenda/{alturas_celulas,agua_superficie}_64x64.csv` e regrava `src/world/fazendaData.ts` (não edite à mão); o pacote original (script do heightmap, PNGs, LEIA-ME) fica na mesma pasta.
-
-**Caldeirão 3D** (Santuário): `python3 scripts/extract-iso-cauldron.py` (GLB em `assets-src/iso-set/caldeirao/`) → `src/assets/iso-cauldron.json`; o ícone (`icon-iso-cauldron.webp`) é um render da malha com fundo removido, refeito à mão quando o modelo muda.
-
-**Rio das Fadas** (Santuário): `python3 scripts/extract-iso-rio.py` (atlas `assets-src/iso-set/rio-atlas.png`, extraído do `.bbmodel`) → `src/assets/iso-rio.webp` + `icon-iso-rio-{canal,lago}.webp`; a ordem das peças em `TILES` deve ser a de `RIO_PIECES` (`world/rio.ts`).
-
-**Cerca e portão 3D do Santuário** (modelos `assets-src/cerca-betula/*.bbmodel`): `python3 scripts/extract-iso-fence.py` → `src/assets/iso-fence-model.json` (geometria) e `iso-wood.webp` (texturas de madeira do dono do produto, `assets-src/iso-set/madeira-*.png`); os sprites 3/4 do Mundo seguem em `extract-fence-model.py`.
-
-**Conjunto isométrico do Santuário** (prancha isométrica transparente, 36 peças; ordem fixa em `scripts/extract-iso-set.py`): `python3 scripts/extract-iso-set.py` → `iso-ground.webp`, `iso-cube.webp`, `iso-props.webp`, `icon-iso-*.webp` e `src/render/isoSetManifest.ts`; o script já grava WebP (não rode `optimize-assets.py` para eles). Outra prancha com as mesmas 36 peças na mesma ordem: troque `assets-src/iso-set/prancha-iso.png` e rode o script. `slice-icons.py` recorta ícones de qualquer prancha em grade, se precisar.
 
 **Ícones** (`--cols 1 --rows 1 --frame-h 64`):
 - Trigo (`wheat-icons-sheet.png`, `--sat 50 --min 190`): semente `45,210,310,402` · trigo `645,555,905,835`.

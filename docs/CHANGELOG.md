@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.182.0 — Santuário removido (etapa 2 da limpeza, 27/11/2026)
+- **ADR 0115, etapa 2.** O **Santuário** saiu do produto: perfil `santuario`, Rio das Fadas, Fazenda, Vale Goblin, conjunto isométrico, goblins/cercas/caldeirão 3D, câmera isométrica fixa do 2.5D e o cursor isométrico (`world/sanctuary{Landscape,Fazenda,ValeGoblin}`, `rio`, `render/isoSet*`, `three/iso*`, `game/valeGoblins`, `isoInput`, arte `iso-*`/`icon-iso-*`, scripts `extract-iso-*`, `assets-src/iso-set` e `santuario-*`). `?mundo=santuario` e o subdomínio caem no Orvalis 3D. Os ADRs 0036–0038 ficam como histórico (removidos).
+- Ficam, por serem do motor 2.5D compartilhado e saírem na etapa 3: `render/sanctuaryObliqueView|WallArt|Lighting|ThreeLayout|CameraRig|CameraJoystick`, a sala 2 em `net/protocol`, `Block.ISO_*` e o personagem `goddess-iso` (nomes herdados do Santuário). Testes só do Santuário removidos; `world/profiles.test.ts` cobre a escolha de mundo. Sem mudança de gerador, save do voxel nem protocolo.
+
 ## Orvalis v0.181.0 — Orvalis 3D é o mundo padrão; Titã só por ?mundo=titan (etapa 1 da limpeza, 26/11/2026)
 - **ADR 0115 (decisão do dono do produto).** A raiz do site abre o **Orvalis 3D**; o **Titã só abre com `?mundo=titan`** (nunca por subdomínio nem como padrão). `build:artifact` agora gera o Artifact do Orvalis 3D (`VITE_WORLD=orvalis3d`). **Orvalis 2D, Santuário e a isométrica do 2.5D vão sair** em duas etapas (2: Santuário; 3: 2.5D, landing e ajuste do `orvalis-servidor`); o botão **Visão** do voxel (ADR 0106) fica. Até a remoção, o 2.5D e o Santuário só abrem por `?mundo=principal|santuario`.
 - Teste de resolução de mundo atualizado (`world/santuario.test.ts`). Sem mudança de gerador, save do voxel nem protocolo. O "início" do Artifact está em ~13 MB (orçamento 3 MB) enquanto o 2.5D estiver no pacote.
