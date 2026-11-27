@@ -22,13 +22,13 @@ const slotOf = (s: Awaited<ReturnType<typeof pool>>['s'], item: number) => Array
 
 describe('corais (ADR 0136)', () => {
   it('30 blocos e 30 itens: tipos, vivos e mortos, nomes, modelos e regras', () => {
-    expect(T_MAX).toBe(189);
+    expect(T_MAX).toBeGreaterThanOrEqual(189); // lajes e degraus de madeira vieram depois (ADR 0139)
     for (let n = 0; n < 30; n++) {
       const item = 123 + n, block = blockOfItem(item)!, base = [T.CORAL, T.CORAL_FAN, T.CORAL_BLOCK][Math.floor(n / 10)];
       expect(block).toBe(base + (n % 10)); expect(isItem(item)).toBe(true); expect(itemOfBlock(block)).toBe(item); expect(ITEM_NAMES[item]).toBeTruthy();
       expect(isCoral(block)).toBe(true); expect(isCoralLive(block)).toBe(n % 10 < 5); expect(coralFamily(block)).toBe(n % 5);
     }
-    expect(isItem(156)).toBe(false); expect(isItem(122)).toBe(false);
+    expect(isItem(162)).toBe(false); expect(isItem(122)).toBe(false);
     expect(ITEM_NAMES[Item.CORAL_VIVO]).toBe('Coral de Tubo'); expect(ITEM_NAMES[Item.BLOCO_CORAL_MORTO + 4]).toBe('Bloco de Coral de Chifre Morto');
     expect(deadCoral(T.CORAL_BLOCK + 3)).toBe(T.CORAL_BLOCK + 8); expect(deadCoral(T.CORAL_BLOCK + 8)).toBe(T.CORAL_BLOCK + 8);
     for (let i = 0; i < 10; i++) {

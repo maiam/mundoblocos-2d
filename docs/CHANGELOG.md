@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.210.0 — Famílias das madeiras, W1: lajes e degraus (27/11/2026)
+- **ADR 0139 (aprovada).** Lajes e degraus de carvalho, cerejeira e bétula (blocos 190–207, itens 156–161; receitas da Wiki: laje 3 tábuas → 6, degrau 6 → 4, Mesa de Carpintaria). Duas lajes da mesma madeira viram a tábua dela; degrau gira pelo olhar; quebra como a tábua. Arte do pacote do Drive (catálogo `P1-02-vedacao-de-madeira`). **O mesher passou a `Uint16Array`** (ids acima de 255); atlas de itens 4 × 41.
+- 795 testes passam (7 novos em `orvalis/madeiraFamilia.test.ts`, 3 ajustados a limites antigos); conferido no navegador. Sem mudança de gerador, save ou protocolo.
+
 ## Orvalis v0.209.0 — Orvalis em sala, entrega C: pesca e botes (27/11/2026)
 - **ADR 0138, entrega C (aprovada nos 7 pontos).** **Protocolo 5:** mensagens `bobber` e `boats` (servidor) e `boat` (piloto), ações `mountBoat` e `dismountBoat`. A **pesca** corre no servidor (espera, fisgada, janela, distância) e a boia é só do dono; os **botes** são da sala (lista compartilhada, um piloto por bote, no snapshot), o piloto manda a posição e a sala confere (só água, velocidade) antes de repassar. Com isso a sala 102 leva tudo o que o Orvalis tem de mundo vivo.
 - 788 testes passam (5 novos em `net/titan/salaPescaBotes.test.ts`, 1 removido e 1 ajustado); conferido no navegador com a sala simulada. **Protocolo 5: jogo e servidor sobem juntos** (pacote novo no servidor).

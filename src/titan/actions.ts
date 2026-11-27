@@ -10,7 +10,7 @@ import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, isWoodStair, woodOf, woodStairId, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -743,6 +743,7 @@ function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResul
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   else if (block === T.REED_STAIR) block = stairId(marcoTurnFacing(s.yaw)); // a frente (o lado baixo) fica voltada para o jogador: giro 0 = frente em +Z (ADR 0101)
   else if (block === T.STONE_STAIR) block = stairId(marcoTurnFacing(s.yaw), true); // Degrau de Pedra: mesma regra do de junco (ADR 0109)
+  else if (isWoodStair(block)) block = woodStairId(woodOf(block), marcoTurnFacing(s.yaw)); // Degrau de Madeira: mesma regra (ADR 0139)
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
   else if (block === T.FURNACE) block = furnaceId(carpentryTurnFacing(s.yaw), false); // a frente da Fornalha fica voltada para o jogador, sempre apagada (ADR 0120)
   else if (block === T.CARPENTRY) block = carpentryId(carpentryTurnFacing(s.yaw)); // a frente da Mesa de Carpintaria fica voltada para o jogador (ADR 0107)

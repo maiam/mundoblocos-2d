@@ -29,7 +29,7 @@ describe('botes (ADR 0137)', () => {
       const r = RECIPES.find((x) => x.id === `bote-${BOAT_KINDS[i]}`)!;
       expect(r.station).toBe('workbench'); expect(r.world).toBe('orvalis'); expect(r.ingredients).toEqual([{ item: [Item.TABUA_CARVALHO, Item.TABUA_BETULA, Item.TABUA_CEREJEIRA][i], count: 5 }]); expect(r.result).toEqual({ item: w, count: 1 });
     }
-    expect(isItem(156)).toBe(false); expect(isBoatItem(Item.VARA_PESCA)).toBe(false);
+    expect(isItem(162)).toBe(false); expect(isBoatItem(Item.VARA_PESCA)).toBe(false);
   });
   it('põe o bote na superfície; recusa em terra, sem espaço e por cima de outro', async () => {
     const { s, cx, cz } = await lagoon();

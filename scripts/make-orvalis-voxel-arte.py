@@ -185,16 +185,20 @@ def main() -> None:
         'tora_de_betula': ('tora-betula-topo', 'tora-betula-lateral'), 'folhas_de_betula': ('folhas-betula', 'folhas-betula'),
         'tabuas_de_carvalho': ('tabua-carvalho', 'tabua-carvalho'), 'tabuas_de_cerejeira': ('tabua-cerejeira', 'tabua-cerejeira'), 'tabuas_de_betula': ('tabua-betula', 'tabua-betula'),
         'mesa_de_carpintaria': ('mesa-topo', 'mesa-lateral', 'mesa-frente'),
-        'pedra_lisa': ('pedra-lisa', 'pedra-lisa'), 'tijolo_de_pedra': ('tijolo-pedra', 'tijolo-pedra'), 'laje_de_pedra': ('laje-topo', 'laje-face'),
+        'pedra_lisa': ('pedra-lisa', 'pedra-lisa'), 'tijolo_de_pedra': ('tijolo-pedra', 'tijolo-pedra'), 'laje_de_pedra': ('laje-topo', 'laje-face'), 'laje_de_carvalho': ('laje-carvalho-topo', 'laje-carvalho-face'), 'laje_de_cerejeira': ('laje-cerejeira-topo', 'laje-cerejeira-face'), 'laje_de_betula': ('laje-betula-topo', 'laje-betula-face'),  # itens 156–158 (ADR 0139)
+       
         'terra_arada_seca': ('terra-arada-seca-topo', 'terra-arada-seca-lateral'), 'terra_arada_umida': ('terra-arada-umida-topo', 'terra-arada-umida-lateral'), 'caminho_de_terra': ('caminho-topo', 'caminho-lateral'),
         'bloco_de_carvao': ('bloco-carvao', 'bloco-carvao'),  # item 88 (ADR 0122)
         'fornalha': ('fornalha-topo', 'fornalha-lateral', 'fornalha-frente-apagada'),  # item 83 (ADR 0120)
         'terra_infertil': ('terra-infertil', 'terra-infertil'), 'bloco_de_argila': ('bloco-argila', 'bloco-argila'), 'bloco_de_tijolos': ('bloco-tijolos', 'bloco-tijolos'),  # ADR 0111
     }
     for name, spec in icons.items():
-        cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name == 'laje_de_pedra').save(f'{ICO}{name}.png')
+        cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name.startswith('laje_de_')).save(f'{ICO}{name}.png')
     dg = {nome: Image.open(f'{DEGRAU}{nome}.png').convert('RGBA') for nome in ('topo', 'frente', 'perfil')}
     stair_icon(dg['topo'], dg['frente'], dg['perfil']).save(f'{ICO}degrau_de_pedra.png')  # item 60 (ADR 0109)
+    for w in ('carvalho', 'cerejeira', 'betula'):  # degraus de madeira (itens 159–161, ADR 0139): topo = a tábua, frente = a lateral da laje (metade de baixo), perfil do pacote
+        pk = lambda n: Image.open(f'assets-src/orvalis-voxel/catalogo/P1-02-vedacao-de-madeira/orvalis_{w}_{n}_16x16.png').convert('RGBA')
+        stair_icon(pk('laje_topo'), pk('laje_face'), pk('degrau_perfil')).save(f'{ICO}degrau_de_{w}.png')
     mu = {nome: Image.open(f'{MURETA}{nome}.png').convert('RGBA') for nome in ('topo', 'face')}
     wall_icon(mu['topo'], mu['face']).save(f'{ICO}mureta_de_pedra.png')  # item 61 (ADR 0110)
     if force or not os.path.exists(WATER_SRC):

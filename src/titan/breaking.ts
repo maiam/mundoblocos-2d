@@ -44,7 +44,7 @@ setH(0.65, T.PATH);
 setH(STONE_H, T.STONE, T.STONE_BRICK, T.DARK_ROCK, T.VEIN_ROCK, T.CARAPACE, T.EMBER_BLOCK); // rocha do Titã: provisório = pedra
 setH(SMOOTH_H, T.STONE_SMOOTH, T.BRICK_BLOCK, T.STONE_SLAB, T.STONE_SLAB_TOP, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m));
 setH(3.5, T.BRAZIER, T.BRAZIER_LIT, ...Array.from({ length: 8 }, (_, t) => T.FURNACE + t)); // fornalha da Wiki (a do Orvalis, ADR 0120, e o braseiro do Titã)
-setH(HARD_PLANK, T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH);
+setH(HARD_PLANK, T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, ...Array.from({ length: 6 }, (_, i) => T.SLAB_OAK + i), ...Array.from({ length: 12 }, (_, i) => T.STAIR_OAK + i)); // lajes e degraus de madeira = dureza da tábua (Wiki: 2, ADR 0139)
 setH(2.5, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270); // bancada e baú da Wiki
 setH(0.2, T.LEAVES_OAK, T.LEAVES_CHERRY, T.LEAVES_BIRCH, T.BED, T.BED_90, T.BED_180, T.BED_270, T.BED_HEAD, T.BED_HEAD_90, T.BED_HEAD_180, T.BED_HEAD_270); // folhas e cama da Wiki
 setH(LEGACY_SAND, T.REED_BLOCK);
@@ -79,7 +79,7 @@ export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | bool
 
 const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, ...Array.from({ length: 8 }, (_, t) => T.FURNACE + t), T.CARAPACE, T.EMBER_BLOCK, T.COAL_ORE, T.COAL_BLOCK, T.STONE, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.BRICK_BLOCK, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m), T.STONE_SLAB, T.STONE_SLAB_TOP]);
 
-const WOOD_CLASS: ReadonlySet<number> = new Set([T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
+const WOOD_CLASS: ReadonlySet<number> = new Set([...Array.from({ length: 6 }, (_, i) => T.SLAB_OAK + i), ...Array.from({ length: 12 }, (_, i) => T.STAIR_OAK + i), T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
 const SOIL_CLASS: ReadonlySet<number> = new Set([T.GRASS, T.DIRT, T.BEACH, T.PATH, T.FARMLAND_DRY, T.FARMLAND_WET, T.DIRT_INFERTILE, T.CLAY_BLOCK, T.SAND, T.DAMP_SAND]);
 /** Que ferramenta é a certa para o bloco (como no Minecraft): picareta para rocha e veios, machado para madeira, pá para solo; `null` = nenhuma ajuda. */
 export function blockToolOf(block: number | undefined): ToolKind | null {
