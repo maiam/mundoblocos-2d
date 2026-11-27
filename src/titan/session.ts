@@ -8,7 +8,8 @@ import { type FurnaceState, furnaceFromData, furnaceToData, tickFurnace, isWorki
 import { maxDurability } from './wear';
 import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
-import { AFTERNOON, skyAt, validDay } from './sky';
+import { skyAt, START_FRAC, validDay } from './sky';
+import { hasWeather, newWeather, stepWeather, weatherFromData, weatherToData, type Weather } from './weather';
 import { CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, gardenFrame, GARDEN_SPECIES, isFarmland, isGarden, maxAgeOf, nutLook, plantableSoil, randomTick, type Species, soilKind, soilKindFor, spriteFrame, CROP_TICK_MEAN_S } from './crops';
 import { isHydrated } from './soil';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
@@ -35,6 +36,8 @@ export interface TitanSession {
   time: number;
   /** Dias completos vividos (ADR 0048). */
   days: number;
+  /** Clima (ADR 0118): só o Orvalis chove (`isRaining`); no Titã fica sempre limpo e fora do save. */
+  weather: Weather;
   /** Hotbar, mochila e grade (ADR 0040). */
   inventory: Inventory;
   /** Ids dos fragmentos de superfície já recolhidos (a base os recria; o save lembra quais sumiram). */
@@ -237,7 +240,7 @@ export function fresh(gen: TerrainGen): TitanSession {
   const regrow = new Map<string, number>();
   const crops = new Map<string, Crop>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: AFTERNOON, days: 0, inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
   return s;
 }
 
@@ -263,7 +266,7 @@ export function resume(gen: TerrainGen, save: TitanSave): TitanSession {
   const crops = validCrops(save.header.crops, volume);
   const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -342,11 +345,19 @@ export function standingCrops(s: TitanSession): Array<{ x: number; y: number; z:
   return out;
 }
 
-/** Luz (0–15) no bloco de cima da planta: o céu aberto vale `ambiente do dia × 15` (0,3 à noite … 1 à tarde) e a lanterna, o seu nível; vale o maior. */
+/** Chove agora neste mundo? (ADR 0118: só o Orvalis tem clima.) */
+export const isRaining = (s: TitanSession): boolean => s.weather.raining && hasWeather(s.volume.gen.world);
+/** Passa `dt` s de jogo ativo no clima; devolve se o marcador virou (o save e, na sala, os clientes precisam saber). */
+export function tickWeather(s: TitanSession, dt: number, rng: () => number): boolean { return hasWeather(s.volume.gen.world) && stepWeather(s.weather, dt, rng); }
+/** Nenhum bloco sólido acima da célula (x, y, z) até o topo do mundo: a chuva e a luz do céu chegam. */
+export function skyOpenAbove(s: TitanSession, x: number, y: number, z: number): boolean {
+  for (let yy = y + 1; yy <= Y_MAX; yy++) if (isSolid(s.volume.get(x, yy, z))) return false;
+  return true;
+}
+
+/** Luz (0–15) no bloco de cima da planta: o céu aberto vale `ambiente do dia × 15` (0,3 à noite … 1 à tarde; com chuva, até 12 em pleno dia) e a lanterna, o seu nível; vale o maior. */
 export function cropLight(s: TitanSession, x: number, y: number, z: number): number {
-  let open = true;
-  for (let yy = y + 1; yy <= Y_MAX; yy++) if (isSolid(s.volume.get(x, yy, z))) { open = false; break; }
-  return Math.max(open ? skyAt(s.time).ambient * 15 : 0, s.volume.light(x, y + 1, z));
+  return Math.max(skyOpenAbove(s, x, y, z) ? skyAt(s.time, 'titan', isRaining(s) ? 1 : 0).ambient * 15 : 0, s.volume.light(x, y + 1, z));
 }
 
 /**
@@ -360,7 +371,7 @@ export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: 
     if (Math.hypot(c.x + 0.5 - near.x, c.z + 0.5 - near.z) > CROP_SIM_RADIUS || rng() >= pTick) continue;
     const kindAt = (dx: number, dz: number): CropKind | null => soilKindFor(c.species, s.volume.get(c.x + dx, c.y - 1, c.z + dz)); // a horta só lê terra arada; o junco e a Noz, areia
     if (isGarden(c.species)) { // a terra arada seca ou umedece conforme a água ao alcance (ADR 0113): troca o bloco e só então cresce
-      const below = s.volume.get(c.x, c.y - 1, c.z), wet = isHydrated(s.volume, c.x, c.y - 1, c.z);
+      const below = s.volume.get(c.x, c.y - 1, c.z), wet = isHydrated(s.volume, c.x, c.y - 1, c.z) || (isRaining(s) && skyOpenAbove(s, c.x, c.y - 1, c.z)); // a chuva hidrata a terra arada a céu aberto (Wiki, ADR 0118)
       if (below === T.FARMLAND_DRY && wet) { s.volume.set(c.x, c.y - 1, c.z, T.FARMLAND_WET); changed = true; }
       else if (below === T.FARMLAND_WET && !wet) { s.volume.set(c.x, c.y - 1, c.z, T.FARMLAND_DRY); changed = true; }
     }
@@ -372,7 +383,7 @@ export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: 
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'junco' ? c.age : { s: c.species, a: c.age }])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, ...(hasWeather(s.volume.gen.world) ? { weather: weatherToData(s.weather) } : {}), inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'junco' ? c.age : { s: c.species, a: c.age }])) } : {}) };
 }
 
 /**

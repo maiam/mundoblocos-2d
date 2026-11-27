@@ -24,7 +24,8 @@ import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
 import { TitanPerf } from './perf';
-import { advanceDay, FIXED_HOURS, isNightTime, parseHora, phaseName, saturnVisibility } from './sky';
+import { smoothRain } from './weather';
+import { advanceDay, canSleep, FIXED_HOURS, parseHora, phaseName, saturnVisibility } from './sky';
 import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepCue, sleepVeil } from './sleep';
 import { lidSound } from './lid';
 import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isCraftingTable, T } from './voxel';
@@ -38,7 +39,7 @@ import { TitanClient } from '../net/titan/client';
 import { TitanLoopbackServer } from '../net/titan/loopback';
 import { TitanSocket } from '../net/titan/socket';
 import { TITAN_MAX_PLAYERS, TITAN_ROOMS, titanRoomById, type WireHit } from '../net/titan/protocol';
-import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, tickCrops, tickRegrow } from './session';
+import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, isRaining, tickWeather, tickCrops, tickRegrow } from './session';
 
 /**
  * Titã — jogo solo em primeira pessoa (ADR 0039): liga entrada (teclado/mouse/toque), laço de quadros, renderer, mira e gravação.
@@ -139,7 +140,9 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
   if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view }; // só no dev (como o window.__game do mundo 2.5D): testes de navegador
   if (orvalis) view.setPalette('orvalis');
-  view.setSky(forcedHour ?? session.time);
+  const forcedRain = q.get('chuva') === '1'; // teste: força a chuva (só visual e som; não grava)
+  let rainLevel = forcedRain || isRaining(session) ? 1 : 0;
+  view.setSky(forcedHour ?? session.time, rainLevel, session.days);
   view.setItems(visibleItems(session));
   view.setReeds(standingReeds(session));
   view.setNuts(standingNuts(session));
@@ -511,7 +514,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       return;
     }
     if (at.kind === 'bed') { // a cama não abre tela: marca o ponto de retorno e, à noite, dorme até o amanhecer (ADR 0090)
-      if (isNightTime(session.time)) { // à noite: o véu escurece, a noite passa com a tela preta e ele clareia (ADR 0093)
+      if (canSleep(session.time, isRaining(session))) { // à noite (ou na chuva, a partir do pôr do sol): o véu escurece, a noite passa com a tela preta e ele clareia (ADR 0093)
         if (sleepStart) return;
         sleepStart = performance.now(); sleepApplied = false; sleepPrevMs = -1; sleepBed = { x: at.x, y: at.y, z: at.z };
         keys.clear(); gesture.cancel();
@@ -1061,6 +1064,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
     if (!client && playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)
+    if (!client && playing && tickWeather(session, dt, Math.random)) playerDirty = true; // a chuva liga e desliga sozinha (ADR 0118); na sala é do servidor
     if (bagOpen) { paintFurnace(); paintChest(); }
     if (!client && active && session.respawn.size) tickRespawn(session, dt); // o animal abatido volta à toca depois de um tempo
     if (!client && active && session.crops.size && tickCrops(session, dt, Math.random, b)) { view.setCrops(standingCrops(session)); playerDirty = true; } // o junco cultivado cresce por sorteio (ADR 0083)
@@ -1072,9 +1076,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (c.full && !dropFull) notice('Mochila cheia');
       dropFull = c.full;
     }
-    view.setSky(forcedHour ?? session.time);
+    rainLevel = smoothRain(rainLevel, forcedRain || isRaining(session), dt);
+    view.setSky(forcedHour ?? session.time, rainLevel, session.days);
+    gameAudio.setRain(rainLevel);
     view.setSaturn(orvalis ? 0 : forcedSaturn ?? saturnVisibility(session.days, forcedHour ?? session.time, session.seed)); // raro: poucos dias, janela curta
-    skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time);
+    skyLine.textContent = forcedHour !== null ? `hora fixa: ${phaseName(forcedHour)} (teste, não é gravada)` : phaseName(session.time) + (isRaining(session) || forcedRain ? ' · chuva' : '');
     if (autoEdit && now > nextAuto) { nextAuto = now + 120; autoEditStep(session, spots, autoStep++); } // estresse de luz + malha (só na cena de teste)
     const eye = { x: b.x, y: b.y + EYE_HEIGHT + (b.stepSmooth ?? 0), z: b.z }; // só a câmera desliza ao subir degrau (ADR 0103); a mira segue a física
     computeAim();

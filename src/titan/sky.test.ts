@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceDay, AFTERNOON, DAY_SECONDS, DAY_TICKS, FIXED_HOURS, horizonAt, parseHora, PHASE_TICKS, phaseName, SATURN_DAY_CHANCE, saturnVisibility, skyAt, tickFrac, TICKS_PER_SECOND, validDay, type RGB } from './sky';
+import { advanceDay, AFTERNOON, canSleep, DAY_SECONDS, DAY_TICKS, FIXED_HOURS, horizonAt, parseHora, moonPhaseOf, PHASE_TICKS, phaseName, START_FRAC, SATURN_DAY_CHANCE, saturnVisibility, skyAt, tickFrac, TICKS_PER_SECOND, validDay, type RGB } from './sky';
 import { flush, headerOf, openSession } from './session';
 import { MemoryTitanStorage } from './save';
 import { TitanGenerator } from './generator';
@@ -37,11 +37,12 @@ describe('relógio do dia (ritmo do Minecraft)', () => {
       .toEqual(['manhã', 'manhã', 'tarde', 'tarde', 'pôr do sol', 'pôr do sol', 'noite', 'noite', 'noite', 'nascer do sol', 'nascer do sol']);
   });
 
-  it('começa à tarde (tick 9 000, a 2 min 30 s do pôr do sol): partida nova, hora ausente ou inválida', () => {
+  it('começa de manhã (tick 0, ADR 0118): partida nova, hora ausente ou inválida; a tarde segue existindo para `?hora=tarde`', () => {
+    expect(START_FRAC).toBe(0); expect(phaseName(START_FRAC)).toBe('manhã');
     expect(AFTERNOON).toBe(0.375);
     expect(phaseName(AFTERNOON)).toBe('tarde');
     expect((tickFrac(PHASE_TICKS.sunsetStart) - AFTERNOON) * DAY_SECONDS).toBe(150);
-    for (const bad of [undefined, null, NaN, -0.1, 1, 7, 'noite']) expect(validDay(bad)).toBe(AFTERNOON);
+    for (const bad of [undefined, null, NaN, -0.1, 1, 7, 'noite']) expect(validDay(bad)).toBe(START_FRAC);
     expect(validDay(0.8)).toBe(0.8);
   });
 
@@ -192,17 +193,17 @@ describe('céu direcional, estrelas e Saturno raro (ADR 0048)', () => {
 });
 
 describe('hora no save e luz sem remalhar', () => {
-  it('a hora vai no save e volta ao reabrir; save antigo sem hora e partida nova começam à tarde', async () => {
+  it('a hora vai no save e volta ao reabrir; save antigo sem hora e partida nova começam de manhã', async () => {
     const st = new MemoryTitanStorage();
     const s = await openSession(st, 42, () => 1);
-    expect(s.time).toBe(AFTERNOON);
+    expect(s.time).toBe(START_FRAC);
     s.time = 0.8125;
     await flush(st, s);
     expect((await openSession(st, null, () => 1)).time).toBeCloseTo(0.8125, 9);
     delete st.games.get(42)!.time; // save da entrega anterior
-    expect((await openSession(st, null, () => 1)).time).toBe(AFTERNOON);
+    expect((await openSession(st, null, () => 1)).time).toBe(START_FRAC);
     st.games.get(42)!.time = 3; // lixo
-    expect((await openSession(st, null, () => 1)).time).toBe(AFTERNOON);
+    expect((await openSession(st, null, () => 1)).time).toBe(START_FRAC);
   });
 
   it('a hora forçada de teste não entra no save: o cabeçalho leva sempre a hora corrida do jogo', async () => {
@@ -229,5 +230,36 @@ describe('hora no save e luz sem remalhar', () => {
     v.place(bx + 1, 150, bz, T.LANTERN);
     const lit = meshSection(v, Math.floor(bx / 16), 13, Math.floor(bz / 16)).opaque!;
     expect(Math.max(...lit.glow)).toBeGreaterThan(0.5); // o calor da lanterna é emissão própria, independente do dia
+  });
+});
+
+describe('cama pela Wiki (ADR 0118): tempo limpo 12 542–23 460, com chuva 12 010–23 992', () => {
+  it('janelas e bordas', () => {
+    const f = (t: number): number => t / DAY_TICKS;
+    expect(canSleep(f(12541), false)).toBe(false); expect(canSleep(f(12542), false)).toBe(true); expect(canSleep(f(23459), false)).toBe(true); expect(canSleep(f(23460), false)).toBe(false);
+    expect(canSleep(f(12009), true)).toBe(false); expect(canSleep(f(12010), true)).toBe(true); expect(canSleep(f(23991), true)).toBe(true); expect(canSleep(f(23992), true)).toBe(false);
+    expect(canSleep(f(12100), false)).toBe(false); expect(canSleep(f(12100), true)).toBe(true); // a chuva abre a cama mais cedo
+    expect(canSleep(f(6000), false)).toBe(false); expect(canSleep(f(6000), true)).toBe(false);
+  });
+});
+
+describe('lua e chuva no céu (ADR 0118)', () => {
+  it('a lua é oposta ao Sol: sobe quando ele se põe e some de dia; a fase cicla em 8 dias', () => {
+    expect(skyAt(tickFrac(6000)).moon.alpha).toBe(0); // meio-dia: lua abaixo do horizonte
+    expect(skyAt(tickFrac(18000)).moon.alpha).toBe(1); // meia-noite: lua a pino
+    expect(skyAt(tickFrac(18000)).moon.dir[1]).toBeGreaterThan(0.9);
+    expect(skyAt(tickFrac(18000)).sun.alpha).toBe(0);
+    expect([0, 1, 7, 8, 9, 15, 16].map(moonPhaseOf)).toEqual([0, 1, 7, 0, 1, 7, 0]);
+    expect(moonPhaseOf(-1)).toBe(0); expect(moonPhaseOf(1.5)).toBe(0);
+    expect(skyAt(tickFrac(18000), 'orvalis', 0, 4).moon.phase).toBe(4);
+  });
+  it('a chuva escurece a luz até 12/15, esconde astros e estrelas, tira a cor do céu e não muda sem chuva', () => {
+    const t = tickFrac(6000), dry = skyAt(t, 'orvalis'), wet = skyAt(t, 'orvalis', 1), half = skyAt(t, 'orvalis', 0.5);
+    expect(dry.ambient).toBe(1); expect(wet.ambient).toBeCloseTo(0.8, 9); expect(half.ambient).toBeGreaterThan(wet.ambient); expect(half.ambient).toBeLessThan(dry.ambient);
+    expect(wet.sun.alpha).toBe(0); expect(dry.sun.alpha).toBeGreaterThan(0);
+    const n = tickFrac(18000); expect(skyAt(n, 'orvalis', 1).moon.alpha).toBe(0); expect(skyAt(n, 'orvalis', 1).stars).toBe(0); expect(skyAt(n, 'orvalis', 0).stars).toBe(1);
+    const sat = (c: RGB): number => Math.max(...c) - Math.min(...c);
+    expect(sat(wet.zenith)).toBeLessThan(sat(dry.zenith)); expect(sat(wet.fog)).toBeLessThan(sat(dry.fog));
+    expect(skyAt(t, 'orvalis', 0, 3)).toEqual({ ...dry, moon: { ...dry.moon, phase: 3 } }); // chuva 0 = o céu de sempre
   });
 });

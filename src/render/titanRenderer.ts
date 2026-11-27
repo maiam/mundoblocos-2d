@@ -22,6 +22,8 @@ import { DOOR_THICK, MURETA_KINDS, type ModelKindName, T } from '../titan/voxel'
 import { wallModelData } from './muretaModel';
 import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
 import { lidIdle, stepLid } from '../titan/lid';
+import { moonTexture } from './titanMoon';
+import { RainLayer } from './titanRain';
 
 /**
  * Renderer do Titã (ADR 0039): Three.js, câmera em primeira pessoa, uma `BufferGeometry` por seção de 16³ para o terreno opaco e outra para o
@@ -57,6 +59,11 @@ export class TitanRenderer {
   private curSky!: Sky;
   private lastFogYaw = 1e9;
   private readonly sun: THREE.Sprite;
+  /** Lua (ADR 0118): sprite com a textura da fase; 8 texturas criadas na primeira vez que cada fase aparece. */
+  private readonly moon: THREE.Sprite;
+  private readonly moonTex: Array<THREE.DataTexture | null> = new Array(8).fill(null);
+  private readonly rainLayer = new RainLayer();
+  private rainLevel = 0;
   /** Sobreposição de rachaduras sobre o bloco em quebra: uma caixa só, reaproveitada (nenhuma malha de chunk muda). */
   private readonly crack: THREE.Mesh;
   private readonly crackTex: THREE.Texture;
@@ -188,6 +195,11 @@ export class TitanRenderer {
     this.sun.scale.set(16, 16, 1);
     this.sun.visible = false;
     this.scene.add(this.sun);
+    this.moon = new THREE.Sprite(new THREE.SpriteMaterial({ fog: false, transparent: true, depthWrite: false }));
+    this.moon.scale.set(11, 11, 1);
+    this.moon.visible = false;
+    this.scene.add(this.moon);
+    this.scene.add(this.rainLayer.mesh);
     this.setSky(0.375);
 
     // rachaduras: caixa do tamanho do bloco (um pouco maior, com polygonOffset, para não cintilar sobre as faces), atlas de 10 estágios deslocado por estágio
@@ -976,6 +988,8 @@ export class TitanRenderer {
     this.fogToward(yaw);
     if (!iso) this.updateUnderwater(eye, time); // na isométrica a câmera não está na água: sem mergulho
     this.sun.position.set(eye.x + this.sunDir[0] * 270, eye.y + this.sunDir[1] * 270, eye.z + this.sunDir[2] * 270);
+    this.moon.position.set(eye.x + this.moonDir[0] * 270, eye.y + this.moonDir[1] * 270, eye.z + this.moonDir[2] * 270);
+    this.rainLayer.update(eye, iso || this.under.mix > 0.6 ? 0 : this.rainLevel, time); // chuva só em primeira pessoa e fora d'água
     // edições aparecem no mesmo quadro (sem orçamento); só a geração inicial é repartida entre quadros
     this.built = 0;
     const tb = this.perf ? performance.now() : 0;
@@ -1045,10 +1059,11 @@ export class TitanRenderer {
   /** Paleta do céu do mundo (ADR 0105): o Orvalis tem céu azul. Troca-se antes do primeiro `setSky`. */
   private palette: SkyPalette = 'titan';
   setPalette(p: SkyPalette): void { this.palette = p; this.lastSky = -1; }
-  setSky(frac: number): void {
-    if (Math.abs(frac - this.lastSky) < 0.0005) return;
-    this.lastSky = frac;
-    const sky = skyAt(frac, this.palette);
+  /** `rain` 0–1 (intensidade já suavizada pelo jogo) e `days` (fase da lua) entram no mesmo recálculo do céu (ADR 0118). */
+  setSky(frac: number, rain = 0, days = 0): void {
+    if (Math.abs(frac - this.lastSky) < 0.0005 && Math.abs(rain - this.lastRain) < 0.01 && days === this.lastDays) return;
+    this.lastSky = frac; this.lastRain = rain; this.lastDays = days; this.rainLevel = rain;
+    const sky = skyAt(frac, this.palette, rain, days);
     this.curSky = sky;
     this.ambientBase.set(sky.ambient * sky.tint[0], sky.ambient * sky.tint[1], sky.ambient * sky.tint[2]); // luz do dia (quente de dia, fria de noite)
     this.sky.update(sky);
@@ -1056,6 +1071,12 @@ export class TitanRenderer {
     this.sun.visible = sky.sun.alpha > 0.01 && this.mode === 'fp';
     (this.sun.material as THREE.SpriteMaterial).opacity = sky.sun.alpha;
     this.sunDir = sky.sun.dir;
+    this.moonDir = sky.moon.dir;
+    const mat = this.moon.material as THREE.SpriteMaterial;
+    const tex = this.moonTex[sky.moon.phase] ??= moonTexture(sky.moon.phase);
+    if (mat.map !== tex) { mat.map = tex; mat.needsUpdate = true; }
+    mat.opacity = sky.moon.alpha;
+    this.moon.visible = sky.moon.alpha > 0.01 && this.mode === 'fp';
     // os fragmentos de superfície (sprites) escurecem com a noite, sem sumir
     const k = Math.max(0.4, sky.ambient);
     for (const m of Object.values(this.itemMats)) m.color.setScalar(k);
@@ -1092,6 +1113,7 @@ export class TitanRenderer {
     if (!fp) { fog.near = 1e5; fog.far = 2e5; } // isométrica: sem névoa de distância (o fundo é a cor do céu)
     this.sky.mesh.visible = fp && mix < 0.6; // a cúpula e o sol não passam pela névoa: somem ao mergulhar (e não existem na isométrica)
     this.sun.visible = fp && !!this.curSky && this.curSky.sun.alpha > 0.01 && mix < 0.6;
+    this.moon.visible = fp && !!this.curSky && this.curSky.moon.alpha > 0.01 && mix < 0.6;
   }
 
   /** Estado de imersão do quadro: olhos dentro do líquido (célula do olho), mistura de 150 ms e adaptação de 2 s. */
@@ -1108,6 +1130,9 @@ export class TitanRenderer {
   }
 
   private sunDir: [number, number, number] = [0, 1, 0];
+  private moonDir: [number, number, number] = [0, -1, 0];
+  private lastRain = -1;
+  private lastDays = -1;
   private itemDim = 1;
 
   /** Mostra as rachaduras (estágio 0–9) sobre a célula `cell`, ou as esconde (`null`): sai no mesmo quadro do cancelamento e não refaz malha. */

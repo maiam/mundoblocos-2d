@@ -8,8 +8,8 @@ import { TitanGenerator } from '../../titan/generator';
 import { Inventory } from '../../titan/inventory';
 import { EYE_HEIGHT, newBody } from '../../titan/physics';
 import type { ChunkRecord, TitanHeader } from '../../titan/save';
-import { fresh, generatorFor, headerOf, resume, tickCrops, tickFurnaces, tickRegrow, type TitanSession } from '../../titan/session';
-import { advanceDay, isNightTime } from '../../titan/sky';
+import { fresh, generatorFor, headerOf, isRaining, resume, tickCrops, tickFurnaces, tickRegrow, tickWeather, type TitanSession } from '../../titan/session';
+import { advanceDay, canSleep } from '../../titan/sky';
 import { isDead, newVitals, vitalsFromData, vitalsToData, type PlayerVitals, type VitalsData } from '../../titan/vitals';
 import { isBed, isDoor } from '../../titan/voxel';
 import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireCreature } from './protocol';
@@ -112,7 +112,7 @@ export class TitanRoom {
     this.dirty = true; // a bolsa e a posição de quem saiu vão para o arquivo
     this.players.delete(id);
     const rest = [...this.players.values()]; // quem ficou já estava todo na cama: a noite passa
-    if (rest.length && rest.every((o) => o.bed) && isNightTime(this.world.time)) { const o = rest[0]; useBed(o.view, o.bed!.x, o.bed!.y, o.bed!.z, true); for (const q of rest) q.bed = null; this.timeDirty = true; }
+    if (rest.length && rest.every((o) => o.bed) && canSleep(this.world.time, isRaining(this.world))) { const o = rest[0]; useBed(o.view, o.bed!.x, o.bed!.y, o.bed!.z, true); for (const q of rest) q.bed = null; this.timeDirty = true; }
     return [{ to: 'all', msg: { t: 'left', id } }];
   }
 
@@ -179,7 +179,7 @@ export class TitanRoom {
     if (isDoor(id)) return useDoor(p.view, x, y, z);
     if (!isBed(id)) return { ok: false };
     const r = useBed(p.view, x, y, z, false);
-    if (!isNightTime(this.world.time)) return r;
+    if (!canSleep(this.world.time, isRaining(this.world))) return r;
     p.bed = { x, y, z };
     const asleep = [...this.players.values()].filter((o) => o.bed).length, total = this.players.size;
     if (asleep < total) return { ok: true, msg: `Na cama: ${asleep} de ${total}. A noite passa quando todos dormirem.` };
@@ -231,6 +231,7 @@ export class TitanRoom {
     const before = w.time;
     w.time = advanceDay(w.time, dt);
     if (w.time < before) w.days++;
+    if (tickWeather(w, dt, this.rand)) { this.timeDirty = true; this.dirty = true; } // a chuva liga ou desliga: todos recebem na próxima mensagem de hora e o save guarda
     this.clock += dt;
     if (tickFurnaces(w, dt)) this.dirty = true;
     if (tickRegrow(w, dt)) this.dirty = true;
@@ -262,7 +263,7 @@ export class TitanRoom {
       out.push({ to: 'all', msg: { t: 'creatures', list: shown.map((f) => this.wire(f)) } });
     }
     if (this.sinceFurnaces >= TITAN_FURNACES_EVERY && w.furnaces.size) { this.sinceFurnaces = 0; out.push(this.furnacesMsg()); }
-    if (this.timeDirty) { this.timeDirty = false; out.push({ to: 'all', msg: { t: 'time', time: w.time, days: w.days } }); }
+    if (this.timeDirty) { this.timeDirty = false; out.push({ to: 'all', msg: { t: 'time', time: w.time, days: w.days, rain: isRaining(w) } }); }
     this.sincePlayers += dt; this.sinceTime += dt;
     if (this.sincePlayers >= TITAN_PLAYERS_EVERY && this.players.size) {
       this.sincePlayers = 0;
@@ -270,7 +271,7 @@ export class TitanRoom {
       for (const p of moved) p.moved = false;
       if (moved.length) out.push({ to: 'all', msg: { t: 'players', list: moved.map((p) => this.info(p)) } });
     }
-    if (this.sinceTime >= TITAN_TIME_EVERY) { this.sinceTime = 0; out.push({ to: 'all', msg: { t: 'time', time: w.time, days: w.days } }); }
+    if (this.sinceTime >= TITAN_TIME_EVERY) { this.sinceTime = 0; out.push({ to: 'all', msg: { t: 'time', time: w.time, days: w.days, rain: isRaining(w) } }); }
     return [...out, ...this.flush()];
   }
 

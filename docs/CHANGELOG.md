@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.185.0 — dia e noite, lua e chuva pela Minecraft Wiki (auditorias #10 e #31, 27/11/2026)
+- **ADR 0118 (aprovada pelo dono do produto, ciclo da ADR 0116).** A partida nova começa **de manhã** (tick 0); a **cama** vale de 12 542 a 23 460 (com chuva, de 12 010 a 23 992); a **lua** aparece à noite com as 8 fases da Wiki (visual, `days % 8`).
+- **Clima de chuva só no Orvalis** (`titan/weather.ts`): ligada 10–20 min e desligada 10 min–2,5 h, começa limpa; escurece a luz até 12/15, acinzenta céu e névoa, esconde sol, lua e estrelas, tem faixas de chuva e som, **hidrata a terra arada a céu aberto**; dormir limpa o tempo. Sem trovão nem neve. Save: `header.weather` opcional; sala: `rain` na mensagem `time` e **`TITAN_PROTOCOL_VERSION` 3** (servidor junto). Teste: `?chuva=1`. 607 testes passam.
+
 ## Orvalis v0.184.0 — quebra por dureza do bloco (auditoria #16, 27/11/2026)
 - **ADR 0117 (aprovada pelo dono do produto, ciclo da ADR 0116).** `titan/breaking.ts` troca os tempos fixos por classe pela **dureza por bloco da Minecraft Wiki**: tempo = dureza × 1,5 s ÷ velocidade (madeira 2, pedra 4, cobre 5 provisório); rocha sem picareta = dureza × 5 s; ferramenta errada não acelera; ticks de 50 ms; os 200 ms do gesto somam por fora. Mão nua na pedra: 7,5 s (antes 1,6 s); picareta de pedra: 0,6 s.
 - Bancada e baú passam a ter o machado como ferramenta certa; a cama sai da classe de rocha. Blocos próprios do Titã sem equivalente na Wiki ficam com dureza provisória que preserva o tempo de mão antigo. `BREAK_MS` e `PICK_FACTOR` removidos; testes ajustados (592 passam). Sem mudança de gerador nem de save.
