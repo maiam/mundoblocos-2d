@@ -17,7 +17,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 7 | Geração | Região finita (128 × 128, parede invisível) e versão do gerador | `titan/generator.ts` (`regionFor`), `titan/terrain.ts` | pendente |
 | 8 | Chunks e custo | Chunks 16 × 16, seções 16³, distância de desenho (`RANGE` 64) e de simulação (56 m) | `titan/volume.ts`, `titan/sections.ts`, `render/titanRenderer.ts` | pendente |
 | 9 | Luz | Luz de bloco (lanterna 15, braseiro 13), propagação e bloqueio | `titan/light.ts`, `titan/voxel.ts` | pendente |
-| 10 | Tempo | Ciclo de dia e noite (20 min), céu e relógio de jogo | `titan/sky.ts` | proposta enviada (27/11/2026) |
+| 10 | Tempo | Ciclo de dia e noite (20 min), céu e relógio de jogo | `titan/sky.ts` | implementada (ADR 0118, v0.185.0) |
 | 11 | Tempo | Random ticks e passo de simulação (cultivo, braseiro, respawn) | `titan/crops.ts`, `titan/session.ts` | pendente |
 | 12 | Física | Gravidade, pulo, corrida, velocidade e dano de queda | `titan/physics.ts`, `titan/vitals.ts` | pendente |
 | 13 | Física | Colisão por caixa, degrau automático (0,6 m), salto automático, escada | `titan/physics.ts`, `titan/voxel.ts` | pendente |
@@ -38,9 +38,10 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 28 | Interface de jogo | Gesto (toque curto coloca, segurar quebra), mira, alcance, vista isométrica | `titan/gesture.ts`, `titan/aim.ts`, `titan/iso.ts` | pendente |
 | 29 | Multiplayer | Salas cooperativas: autoridade do servidor, limites, ação confirmada (`applied`) | `net/titan/` | pendente |
 | 30 | Salvamento | Persistência do mundo editado, do inventário e do estado (chunks, `header`) | `titan/save.ts`, `titan/session.ts` | pendente |
-| 31 | Tempo | Clima: chuva e tempestade (hoje inexistente) | — (a criar; `titan/sky.ts`, `net/titan/room.ts`, `titan/soil.ts`) | proposta enviada (27/11/2026) |
+| 31 | Tempo | Clima: chuva e tempestade (hoje inexistente) | — `titan/weather.ts`, `titan/sky.ts`, `net/titan/room.ts` | implementada (ADR 0118, v0.185.0) |
 
 ## Registro das auditorias
 _(cada auditoria entra aqui com a data, a decisão e a ADR ou item do CHANGELOG que a implementou.)_
 
 - **#16 Quebra progressiva** — 27/11/2026: Wiki (fórmula dureza × 1,5 s ÷ velocidade) → proposta aprovada → implementada na v0.184.0 ([ADR 0117](adr/0117-quebra-por-dureza-do-bloco-minecraft-wiki.md)). Pendente: afinar as durezas provisórias dos blocos próprios do Titã e a velocidade do cobre.
+- **#10 Ciclo de dia e noite e #31 Clima** — 27/11/2026: Wiki ("Daylight cycle", "Weather") → proposta aprovada → implementadas na v0.185.0 ([ADR 0118](adr/0118-ciclo-de-dia-e-noite-lua-e-clima-minecraft-wiki.md)). Pendente: trovão/raios e neve (fora do combinado), oclusão da chuva sob telhado, hidratação da enxada com chuva.

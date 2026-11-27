@@ -6,7 +6,7 @@ import type { VitalsData } from '../../titan/vitals';
  * Protocolo das salas do Titã (ADR 0104): paralelo ao do mundo principal (`net/protocol.ts`), porque o Titã tem motor próprio (`TitanVolume`).
  * Compartilhado com o servidor (`build:net`): sem DOM. Mudou uma mensagem de forma incompatível → suba `TITAN_PROTOCOL_VERSION` e o servidor junto.
  */
-export const TITAN_PROTOCOL_VERSION = 2;
+export const TITAN_PROTOCOL_VERSION = 3;
 export const TITAN_MAX_PLAYERS = 10;
 export const TITAN_NAME_MIN = 2, TITAN_NAME_MAX = 16;
 /** Salas fixas do Titã (ids acima dos do mundo principal, que usam 1…). Cooperativas de sobrevivência: vida, fome, ar e morte valem. */
@@ -65,7 +65,8 @@ export type TitanServerMessage =
   | { t: 'respawn'; x: number; y: number; z: number; yaw: number; vitals: VitalsData }
   /** Bolsa nova (item coletado do chão ou devolvido por uma ação da sala). */
   | { t: 'bag'; bag: InventoryData }
-  | { t: 'time'; time: number; days: number }
+  /** Relógio da sala e se chove (ADR 0118; o clima só existe no Orvalis). */
+  | { t: 'time'; time: number; days: number; rain: boolean }
   | { t: 'drops'; drops: Drop[] }
   | { t: 'error'; code: 'bad' | 'version' | 'room' | 'full' | 'name'; message: string };
 

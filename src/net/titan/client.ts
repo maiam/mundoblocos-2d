@@ -167,7 +167,7 @@ export class TitanClient {
         this.events.onRespawn?.();
         return;
       }
-      case 'time': if (this.session) { this.session.time = m.time; this.session.days = m.days; } return;
+      case 'time': if (this.session) { this.session.time = m.time; this.session.days = m.days; this.session.weather.raining = m.rain; } return;
       case 'bag': if (this.session) this.setBag(m.bag); return;
       case 'applied': {
         if (this.session) this.setBag(m.bag);

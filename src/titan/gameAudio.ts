@@ -56,6 +56,24 @@ export class GameSoundSynthesizer {
     try { fn(now); } catch { /* sem som */ }
   }
 
+  // ---- Chuva (ADR 0118) ----
+  private rainGain: GainNode | null = null;
+  /** Ruído filtrado em laço, no volume da chuva (0–1). Só depois do primeiro gesto (`unlock`); mudo ou sem chuva = silêncio. */
+  setRain(level: number): void {
+    try {
+      if (!this.ctx || !this.noise || !this.master) return; // ainda sem gesto: sem som
+      if (!this.rainGain) {
+        if (level <= 0.001) return;
+        const src = this.ctx.createBufferSource(), hp = this.ctx.createBiquadFilter(), lp = this.ctx.createBiquadFilter();
+        this.rainGain = this.ctx.createGain(); this.rainGain.gain.value = 0;
+        src.buffer = this.noise; src.loop = true;
+        hp.type = 'highpass'; hp.frequency.value = 700; lp.type = 'lowpass'; lp.frequency.value = 7000;
+        src.connect(hp); hp.connect(lp); lp.connect(this.rainGain); this.rainGain.connect(this.master); src.start();
+      }
+      this.rainGain.gain.setTargetAtTime(this.muted ? 0 : Math.max(0, Math.min(1, level)) * 0.22, this.ctx.currentTime, 0.4);
+    } catch { /* sem som */ }
+  }
+
   // ---- Despacho por material ----
   playHit(material: SurfaceMaterial, progress = 0): void {
     if (material === 'sand') this.playSandHit(progress); else if (material === 'ice') this.playIceHit(progress); else this.playRockHit(progress);

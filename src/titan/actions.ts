@@ -4,7 +4,8 @@ import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace } from './furnace';
-import { isNightTime, tickFrac, WAKE_TICKS } from './sky';
+import { canSleep, tickFrac, WAKE_TICKS } from './sky';
+import { clearWeather, hasWeather } from './weather';
 import { carpentryId, carpentryTurnFacing, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
@@ -188,11 +189,12 @@ export function useBed(s: TitanSession, x: number, y: number, z: number, sleep =
   const [dx, dz] = bedPartnerOffset(id), footX = isBedFoot(id) ? x : x + dx, footZ = isBedFoot(id) ? z : z + dz;
   s.spawn = { x: footX, y, z: footZ };
   s.metaRev++;
-  if (!isNightTime(s.time)) return { ok: true, msg: 'Ponto de retorno marcado. Só se dorme à noite.' };
+  if (!canSleep(s.time, s.weather.raining && hasWeather(s.volume.gen.world))) return { ok: true, msg: 'Ponto de retorno marcado. Só se dorme à noite.' };
   if (!sleep) return { ok: true, msg: 'Ponto de retorno marcado.' }; // na sala a noite só passa com todos na cama (ADR 0104): quem deita só marca o ponto
   const wake = tickFrac(WAKE_TICKS);
   if (s.time > wake) s.days++;
   s.time = wake;
+  clearWeather(s.weather); // dormir limpa o tempo, sem mexer no cronômetro (Wiki)
   return { ok: true, msg: 'Você dormiu até o amanhecer. Ponto de retorno marcado.' };
 }
 

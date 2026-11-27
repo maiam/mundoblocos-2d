@@ -7,6 +7,8 @@
  * ADR 0048: a luz do céu é **direcional** (bruma e halo nascem do lado do Sol, o poente guarda a última claridade), a noite é mais escura e fria, ganha poucas
  * estrelas perto do zênite e, raramente, um trecho dos anéis de Saturno através da bruma (`saturnVisibility`).
  */
+import { RAIN_SKY_FACTOR } from './weather';
+
 export const DAY_TICKS = 24000;
 export const TICKS_PER_SECOND = 20;
 export const DAY_SECONDS = DAY_TICKS / TICKS_PER_SECOND; // 1 200
@@ -18,6 +20,15 @@ export const tickFrac = (ticks: number): number => ticks / DAY_TICKS;
 export const AFTERNOON = tickFrac(9000);
 /** Dormir na cama (ADR 0090): só da noite em diante (`PHASE_TICKS.nightStart`) e acorda logo depois do nascer do sol. */
 export const WAKE_TICKS = 600;
+/** Partida nova (e save sem hora) começa de manhã, no tick 0 (decisão do dono do produto, auditoria #10). */
+export const START_FRAC = 0;
+/** Dormir (Wiki, ADR 0118): com tempo limpo de 12 542 a 23 460; com chuva de 12 010 a 23 992 (ticks). */
+export const SLEEP_WINDOW = { clear: [12542, 23460], rain: [12010, 23992] } as const;
+export function canSleep(frac: number, raining: boolean): boolean {
+  const [from, to] = raining ? SLEEP_WINDOW.rain : SLEEP_WINDOW.clear;
+  const t = ((frac % 1) + 1) % 1 * DAY_TICKS;
+  return t >= from && t < to;
+}
 export const isNightTime = (frac: number): boolean => frac * DAY_TICKS >= PHASE_TICKS.nightStart;
 /** `?hora=` fixa a visualização nestas frações do dia (teste; não é gravada): manhã (tick 720), tarde (9 000), crepúsculo (12 900, o pôr do sol já avançado) e a meia-noite (18 000). */
 export const FIXED_HOURS: Readonly<Record<string, number>> = { manha: tickFrac(720), tarde: tickFrac(9000), crepusculo: tickFrac(12900), noite: tickFrac(18000) };
@@ -34,8 +45,8 @@ export function advanceDay(frac: number, dtSeconds: number): number {
   return f < 0 ? f + 1 : f;
 }
 
-/** Fração válida (finita, 0 ≤ f < 1) ou a tarde. */
-export function validDay(f: unknown): number { return typeof f === 'number' && Number.isFinite(f) && f >= 0 && f < 1 ? f : AFTERNOON; }
+/** Fração válida (finita, 0 ≤ f < 1) ou a manhã. */
+export function validDay(f: unknown): number { return typeof f === 'number' && Number.isFinite(f) && f >= 0 && f < 1 ? f : START_FRAC; }
 
 export type RGB = readonly [number, number, number];
 const hex = (n: number): RGB => [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
@@ -80,6 +91,20 @@ export interface Sky {
   cool: RGB; coolK: number;
   /** Faixas finas de bruma baixa (0–1) e estrelas (0 de dia … 1 de madrugada, só perto do zênite). */
   haze: number; stars: number;
+  /** Lua (ADR 0118): oposta ao Sol, com a fase do dia (0 = cheia … 4 = nova, ciclo de 8 dias da Wiki). Some com a chuva. */
+  moon: { dir: [number, number, number]; alpha: number; phase: number };
+  /** Chuva (0–1) já aplicada nas cores, na luz e nos astros. */
+  rain: number;
+}
+
+/** Fase da lua do dia `days` (0 cheia, 1 minguante gibosa, 2 quarto minguante, 3 minguante crescente, 4 nova, 5 crescente, 6 quarto crescente, 7 crescente gibosa). */
+export const moonPhaseOf = (days: number): number => (Number.isInteger(days) && days >= 0 ? days % 8 : 0);
+/** Posição do disco no céu para a fração do dia `frac`: nasce a leste, culmina a pino e se põe a oeste durante os 12 000 ticks em que está acima do horizonte. */
+function arcDir(frac: number): { dir: [number, number, number]; up: boolean; elev: number } {
+  const u = frac / tickFrac(PHASE_TICKS.sunsetStart), up = u >= 0 && u <= 1;
+  const elev = up ? Math.sin(Math.PI * u) : -0.2, az = Math.PI * Math.min(1, Math.max(0, u));
+  const d: [number, number, number] = [Math.cos(az), Math.max(elev, -0.2) + 0.05, -0.35], m = Math.hypot(d[0], d[1], d[2]);
+  return { dir: [d[0] / m, d[1] / m, d[2] / m], up, elev };
 }
 
 const unit = (x: number, y: number, z: number): [number, number, number] => { const m = Math.hypot(x, y, z); return [x / m, y / m, z / m]; };
@@ -92,7 +117,7 @@ const COOL: RGB = [0.86, 0.93, 1.06];
 const SUNSET = PHASE_TICKS.sunsetStart, NIGHT = PHASE_TICKS.nightStart, SUNRISE = PHASE_TICKS.sunriseStart;
 
 /** Aparência do céu na fração `frac` (0–1) do dia: interpolação suave e contínua, inclusive na virada da meia-noite. */
-export function skyAt(frac: number, palette: SkyPalette = 'titan'): Sky {
+export function skyAt(frac: number, palette: SkyPalette = 'titan', rain = 0, days = 0): Sky {
   const LOOKS = LOOKS_BY[palette];
   const f = ((frac % 1) + 1) % 1;
   // acha o par de momentos que cerca f (o último liga ao primeiro do dia seguinte)
@@ -117,11 +142,15 @@ export function skyAt(frac: number, palette: SkyPalette = 'titan'): Sky {
   else { glowK = 0.04 + 0.96 * smooth(SUNRISE, DAY_TICKS, T); glowDir = unit(1, -0.05, -0.35); glow = mix(COPPER, PEACH, smooth(SUNRISE, DAY_TICKS, T)); }
   const dayK = T < SUNSET ? 1 : T < NIGHT ? 1 - smooth(SUNSET, NIGHT, T) * 0.7 : T < SUNRISE ? 0.3 - 0.2 * smooth(NIGHT, 16500, T) : 0.1 + 0.9 * smooth(SUNRISE, DAY_TICKS, T);
   const stars = T < NIGHT ? 0 : T < 15600 ? smooth(NIGHT, 15600, T) : T < 21000 ? 1 : T < 22600 ? 1 - smooth(21000, 22600, T) : 0;
+  const r = clamp01(rain), moon = arcDir((f + 0.5) % 1);
+  const grey = (c: RGB, kk: number): RGB => { const l = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]; return mix(c, [l * 0.85, l * 0.88, l * 0.92], kk * r); }; // chuva: o céu perde a cor (cinza frio)
   return {
-    tint: mix(a.tint, b.tint, k), glowDir, glow, glowK, cool: COOL, coolK: 0.65 * dayK, haze: 0.45 + 0.55 * dayK, stars,
-    zenith: mix(a.zenith, b.zenith, k), mid: mix(a.mid, b.mid, k), horizon: mix(a.horizon, b.horizon, k), fog: mix(a.fog, b.fog, k),
-    ambient: a.ambient + (b.ambient - a.ambient) * k,
-    sun: { dir: [d[0] / m, d[1] / m, d[2] / m], alpha: up ? Math.min(1, Math.max(0, (elev - 0.55) / 0.2)) : 0 },
+    tint: mix(a.tint, b.tint, k), glowDir, glow: grey(glow, 0.4), glowK: glowK * (1 - 0.4 * r), cool: COOL, coolK: 0.65 * dayK, haze: 0.45 + 0.55 * dayK, stars: stars * (1 - r),
+    zenith: grey(mix(a.zenith, b.zenith, k), 0.8), mid: grey(mix(a.mid, b.mid, k), 0.8), horizon: grey(mix(a.horizon, b.horizon, k), 0.75), fog: grey(mix(a.fog, b.fog, k), 0.8),
+    ambient: (a.ambient + (b.ambient - a.ambient) * k) * (1 - (1 - RAIN_SKY_FACTOR) * r),
+    sun: { dir: [d[0] / m, d[1] / m, d[2] / m], alpha: (up ? Math.min(1, Math.max(0, (elev - 0.55) / 0.2)) : 0) * (1 - r) },
+    moon: { dir: moon.dir, alpha: (moon.up ? Math.min(1, Math.max(0, (moon.elev - 0.35) / 0.2)) : 0) * (1 - r), phase: moonPhaseOf(days) },
+    rain: r,
   };
 }
 
