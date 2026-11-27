@@ -1,5 +1,6 @@
 import { hoeResult, shovelResult } from './soil';
 import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
+import type { Drop } from './save';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
@@ -487,7 +488,7 @@ function dropShard(s: TitanSession, item: number, x: number, y: number, z: numbe
 }
 
 /** Atraso de coleta de um item recém-solto (ADR 0082) e tempo de vida de um drop de bloco, em segundos de jogo ativo. */
-export const PICKUP_DELAY_S = 0.45;
+export const PICKUP_DELAY_S = 0.5; // 10 ticks da Wiki (ADR 0131)
 export const DROP_LIFE_S = 300;
 
 /** O bloco quebrado cai como item solto no centro da célula (ADR 0082): id `b:x,y,z:n` único, atraso de coleta e relógio de vida só de execução (`session.dropFx`). */
@@ -500,19 +501,51 @@ function spillBlock(s: TitanSession, item: number, count: number, x: number, y: 
   s.dropsRev++;
 }
 
-const PICKUP_RADIUS = 1.45;
+/**
+ * Fusão (ADR 0131, adaptação da caixa 0,5 × 0,25 × 0,5 da Wiki ao um-item-por-célula): dois itens **iguais**, sem desgaste, **repousando na mesma célula** e da mesma classe de sumiço viram uma entrada só,
+ * se a soma couber na pilha máxima. Fica o de menos idade (mais tempo restante, como a Wiki) e o maior atraso de coleta. Devolve se algo se fundiu.
+ */
+export function mergeDrops(s: TitanSession): boolean {
+  const cells = new Map<string, Drop[]>();
+  for (const d of s.drops.values()) {
+    if (d.wear || s.dropFx.get(d.id)?.fy !== undefined) continue;
+    const k = `${d.x},${d.y},${d.z},${d.item},${everLasts(d.id) ? 1 : 0}`, l = cells.get(k);
+    if (l) l.push(d); else cells.set(k, [d]);
+  }
+  let merged = false;
+  for (const l of cells.values()) {
+    if (l.length < 2) continue;
+    const cap = maxStack(l[0].item), age = (d: Drop): number => s.dropFx.get(d.id)?.age ?? 0;
+    l.sort((a, b) => age(a) - age(b) || (a.id < b.id ? -1 : 1));
+    let keep = l[0];
+    for (let i = 1; i < l.length; i++) {
+      const o = l[i], sum = (keep.count ?? 1) + (o.count ?? 1);
+      if (sum > cap) { keep = o; continue; }
+      const kf = s.dropFx.get(keep.id), of = s.dropFx.get(o.id);
+      if (kf && of) kf.delay = Math.max(kf.delay, of.delay);
+      keep = { ...keep, count: sum };
+      s.drops.set(keep.id, keep);
+      s.drops.delete(o.id); s.dropFx.delete(o.id); s.dropsRev++; merged = true;
+    }
+  }
+  return merged;
+}
+const PICKUP_RADIUS = 1.425; // alcance da Wiki (página de discussão; ADR 0131)
+/** A pilha solta ao morrer (`d:`) é a exceção do sumiço de 5 min (ADR 0131): sem aviso de local nem perigos, sumir seria punitivo demais. */
+const everLasts = (id: string): boolean => id.startsWith('d:');
 /**
  * Coleta por proximidade (ADR 0044): toda lasca solta dentro de 1,25 m (horizontal) dos pés e a uma altura alcançável entra na mochila, uma a uma; se não couber,
  * fica no lugar e `full` avisa. Lascas sem apoio (o bloco de baixo foi quebrado) descem antes. Tudo muda inventário e lasca juntos (um único `dropsRev`).
  */
 export function collectNearby(s: TitanSession, px: number, py: number, pz: number, dt = 0): { collected: number; full: boolean; moved: boolean } {
   let collected = 0, full = false, moved = dt > 0 ? stepDrops(s, dt) : settleDrops(s); // gravidade (ADR 0098); sem dt (testes), pousa na hora
+  if (mergeDrops(s)) moved = true; // fusão de itens iguais na mesma célula (ADR 0131)
   for (const d of [...s.drops.values()]) {
     let fx = s.dropFx.get(d.id);
-    if (!fx && d.id.startsWith('b:')) { fx = { delay: 0, age: 0 }; s.dropFx.set(d.id, fx); } // drop de bloco vindo do save: sem atraso, vida de 5 min a contar daqui
-    if (fx) { // só drops recém-soltos têm relógio: atraso de coleta e, nos de bloco (`b:`), sumiço depois de 5 min
+    if (!fx && !everLasts(d.id)) { fx = { delay: 0, age: 0 }; s.dropFx.set(d.id, fx); } // item vindo do save: sem atraso, vida de 5 min a contar daqui (a Wiki pausa o relógio fora do jogo)
+    if (fx) { // todo item solto (menos a pilha da morte) tem relógio: atraso de coleta e sumiço depois de 5 min (ADR 0131)
       fx.delay = Math.max(0, fx.delay - dt); fx.age += dt;
-      if (d.id.startsWith('b:') && fx.age >= DROP_LIFE_S) { s.drops.delete(d.id); s.dropFx.delete(d.id); s.dropsRev++; moved = true; continue; }
+      if (!everLasts(d.id) && fx.age >= DROP_LIFE_S) { s.drops.delete(d.id); s.dropFx.delete(d.id); s.dropsRev++; moved = true; continue; }
       if (fx.delay > 0) continue;
     }
     const dd = s.drops.get(d.id)!;

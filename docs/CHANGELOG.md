@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.200.0 — itens soltos e coleta pela Wiki (auditoria #18, 27/11/2026)
+- **ADR 0131 (ciclo da ADR 0116; aprovada nos 4 pontos).** Atraso de coleta 0,5 s e alcance 1,425; **todo item solto some em 5 min** (antes só os de bloco), exceto a pilha da morte; **itens iguais na mesma célula se fundem** até a pilha máxima (`mergeDrops`). Jogar item (atraso de 2 s), lava, fogo e cacto ficam pendentes (não existem).
+- 735 testes passam (3 novos em `dropsWiki.test.ts`). Sem mudança de save, de gerador nem de protocolo.
+
 ## Orvalis v0.199.0 — vida e fome pela Wiki (auditoria #23, 27/11/2026)
 - **ADR 0130 (ciclo da ADR 0116; aprovada nos 5 pontos, nos dois mundos).** **Exaustão da Wiki:** andar 0, correr 0,1 por metro, pular 0,05 (correndo 0,2), quebrar bloco 0,005, atacar 0,1 e levar dano 0,1 (`hurt`); antes o jogo cobrava ~5 a 10× mais fome. **Corrida só com fome > 6** (`canSprint`). Mantidos: comer instantâneo (adaptação), inanição que para em 1 ponto e a regeneração rápida; queda, afogamento e a regeneração normal já eram os da Wiki.
 - 732 testes passam (5 novos em `vitaisWiki.test.ts`). Sem mudança de save, de gerador nem de protocolo (a sala não usa a exaustão). O bloqueio da corrida por fome foi coberto por teste de unidade; no navegador conferi só que o jogo abre sem erro e que andar não gasta exaustão.
