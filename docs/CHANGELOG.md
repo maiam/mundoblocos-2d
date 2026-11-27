@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.188.0 — Tocha pela Minecraft Wiki (auditoria #33, 27/11/2026)
+- **ADR 0121 (aprovada pelo dono do produto, ciclo da ADR 0116).** Nova **Tocha** (item 85) do Orvalis: **em pé** sobre o topo de um cubo ou **presa à lateral** de um cubo inteiro (a chama aponta para fora), **luz 14**, sem colisão, quebra instantânea e se solta quando o apoio some. Receita da Wiki: **1 Carvão Vegetal + 1 Haste → 4 Tochas**. Blocos 145–149; feita do sprite do pacote P2-11, extrudado (dois planos cruzados em pé, um plano na parede).
+- Atlas de itens **4 × 22** (a célula 86 guarda só a textura da tocha de parede; não é item). `releaseTorches` na cascata de quebra. 629 testes passam. Pacote da sala muda: o servidor precisa do `sync-net` (protocolo e save iguais).
+
 ## Orvalis v0.187.1 — ícone definitivo do Carvão Vegetal e família do carvão importada (27/11/2026)
 - O ícone do **Carvão Vegetal** (item 84) é agora o do pacote P2-09 do Drive (antes um provisório desenhado em código; `scripts/make-orvalis-carvao.py` removido). Atlas de itens e máscaras regerados.
 - **Família do carvão importada como fonte, sem uso no jogo** (`assets-src/orvalis-voxel/carvao/`, 8 PNGs de 16 × 16): carvão vegetal e mineral (ícones), minério de carvão e de carvão em ardósia abissal (textura e ícone), bloco de carvão (textura e ícone). Sem mudança de código nem de regra.

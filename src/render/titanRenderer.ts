@@ -23,6 +23,7 @@ import { wallModelData } from './muretaModel';
 import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
 import { lidIdle, stepLid } from '../titan/lid';
 import { moonTexture } from './titanMoon';
+import { tochaModels } from './tochaModel';
 import { RainLayer } from './titanRain';
 
 /**
@@ -40,7 +41,9 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 21;
+const ITEM_ROWS = 22;
+/** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
+const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
 const ITEM_HOP_S = 0.4, ITEM_FLY_S = 0.14;
 const MESH_BUDGET_MS = 6;
@@ -330,7 +333,11 @@ export class TitanRenderer {
     ptex.needsUpdate = true;
     const pmat = new THREE.MeshBasicMaterial({ map: ptex, vertexColors: true, fog: true, side: THREE.DoubleSide });
     patchDayLight(pmat, this.ambient, { instGlow: true });
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
+    // Tocha do Orvalis (ADR 0121): sprites extrudados com a textura do atlas de itens (a mesma `hotbarTex`), sem arquivo de modelo
+    const tmat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, fog: true });
+    patchDayLight(tmat, this.ambient, { instGlow: true });
+    const tocha = tochaModels(ITEM_ROWS);
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -466,7 +473,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...MURETA_KINDS, 'cadeira', 'porta'] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede'] as const) {
       const cells = this.volume.modelCells(kind);
       for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
         let mesh = this.modelMeshes[target];
@@ -491,7 +498,7 @@ export class TitanRenderer {
           else { mat.makeRotationY(turn * Math.PI / 2).setPosition(x + 0.5, y, z + 0.5); mesh.setMatrixAt(i, mat); }
           let lv = 0;
           for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
-          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : 0); // o braseiro aceso brilha sozinho, de dia e de noite
+          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : kind === 'tocha' || kind === 'tochaParede' ? TORCH_GLOW : 0); // o braseiro aceso e a tocha brilham sozinhos, de dia e de noite
           glow.set([w, w * 0.72, w * 0.38], i * 3);
         });
         mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));

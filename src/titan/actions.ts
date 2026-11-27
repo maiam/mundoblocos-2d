@@ -6,7 +6,7 @@ import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { carpentryId, carpentryTurnFacing, furnaceId, isFurnace, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -88,6 +88,20 @@ function releaseLadders(s: TitanSession, x: number, y: number, z: number): void 
   for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const id = s.volume.get(x + dx, y, z + dz), [fx, fz] = isLadder(id) ? ladderFacing(ladderTurn(id)) : [0, 0];
     if (isLadder(id) && fx === dx && fz === dz && s.volume.remove(x + dx, y, z + dz)) spillBlock(s, Item.ESCADA, 1, x + dx, y, z + dz);
+  }
+}
+
+/** A tocha em pé precisa do topo de um cubo (ou de uma laje superior) embaixo; a de parede, da lateral de um cubo inteiro. Folhas não servem (Wiki, ADR 0121). */
+export const torchTopSupport = (id: number): boolean => isSolid(id) && !isLeaves(id) && blockSpan(id)[1] >= 1;
+export const torchSideSupport = (id: number): boolean => isFull(id) && !isLeaves(id);
+
+/** O bloco de um apoio foi quebrado: a tocha em pé logo acima e as de parede presas a ele caem como item solto (Wiki: a tocha solta-se quando o apoio some). */
+function releaseTorches(s: TitanSession, x: number, y: number, z: number): void {
+  const drop = (tx: number, ty: number, tz: number): void => { if (s.volume.remove(tx, ty, tz)) spillBlock(s, Item.TOCHA, 1, tx, ty, tz); };
+  if (s.volume.get(x, y + 1, z) === T.TORCH) drop(x, y + 1, z);
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const id = s.volume.get(x + dx, y, z + dz);
+    if (isWallTorch(id)) { const [fx, fz] = ladderFacing(wallTorchTurn(id)); if (fx === dx && fz === dz) drop(x + dx, y, z + dz); } // a chama aponta para longe do apoio
   }
 }
 
@@ -431,6 +445,7 @@ function breakOrCollectBlock(s: TitanSession, hit: Hit): ActionResult {
   releaseCrop(s, x, y + 1, z);
   releaseMat(s, x, y + 1, z);
   releaseLadders(s, x, y, z);
+  releaseTorches(s, x, y, z);
   if (isBed(s.volume.get(x, y + 1, z))) breakBed(s, x, y + 1, z); // o piso da cama sumiu
   if (isDoor(s.volume.get(x, y + 1, z))) breakDoor(s, x, y + 1, z); // e o da porta (a metade de baixo está logo acima)
   return { ok: true };
@@ -559,6 +574,12 @@ export function placeFromSlot(s: TitanSession, hit: Hit, slot: number): ActionRe
     if (hit.ny !== 0 || hit.item) return { ok: false, msg: 'A escada se prende à lateral de um bloco' };
     if (!isFull(s.volume.get(hit.x, hit.y, hit.z))) return { ok: false, msg: 'A escada precisa de um bloco inteiro atrás' };
     block = ladderId(ladderTurnOf(hit.nx, hit.nz));
+  } else if (block === T.TORCH) { // Tocha (ADR 0121): em pé sobre o topo de um cubo ou presa à lateral de um cubo inteiro; de baixo e sobre folhas, não
+    const base = s.volume.get(hit.x, hit.y, hit.z);
+    if (hit.item || hit.ny < 0) return { ok: false, msg: 'A tocha não se prende por baixo' };
+    if (hit.ny > 0) { if (!torchTopSupport(base)) return { ok: false, msg: 'A tocha precisa de um apoio firme' }; }
+    else if (!torchSideSupport(base)) return { ok: false, msg: 'A tocha precisa de um bloco inteiro para se prender' };
+    else block = wallTorchId(ladderTurnOf(hit.nx, hit.nz));
   } else if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
   else if (block === T.MARCO) block = marcoId(marcoTurnFacing(s.yaw)); // idem o Marco de Margem (ADR 0058)
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar

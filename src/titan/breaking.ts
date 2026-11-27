@@ -51,6 +51,7 @@ setH(LEGACY_SAND, T.REED_BLOCK);
 setH(LEGACY_SLAB, T.REED_SLAB, T.REED_SLAB_TOP, T.REED_STAIR, T.REED_STAIR_90, T.REED_STAIR_180, T.REED_STAIR_270, T.REED_CHAIR, T.REED_CHAIR_90, T.REED_CHAIR_180, T.REED_CHAIR_270);
 for (let d = T.DOOR; d <= T.DOOR_LAST; d++) HARDNESS.set(d, LEGACY_SLAB);
 setH(LEGACY_ICE, T.FROST, T.VEIN_FROST, T.EMBER);
+setH(0, T.TORCH, T.TORCH_WALL, T.TORCH_WALL_90, T.TORCH_WALL_180, T.TORCH_WALL_270); // tocha: dureza 0, sai assim que o gesto de quebrar começa (Wiki: instantânea)
 setH(LEGACY_COLLECT, T.MARCO, T.MARCO_90, T.MARCO_180, T.MARCO_270, T.PAINEL, T.PAINEL_Z);
 
 /** Dureza do bloco (`null` = não quebra: rocha-mãe, líquido, ar). Veios de cobre/âmbar têm dureza própria (só picareta). */
