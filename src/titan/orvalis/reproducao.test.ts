@@ -16,7 +16,7 @@ const flat = (s: Awaited<ReturnType<typeof open>>) => { for (let y = 68; y <= 73
 describe('Comida e modo de amor (Wiki)', () => {
   it('vaca e ovelha: trigo; porco: cenoura e batata; galinha: semente de trigo', () => {
     expect(BREED_FOOD.vaca).toEqual([Item.TRIGO]); expect(BREED_FOOD.ovelha).toEqual([Item.TRIGO]);
-    expect(BREED_FOOD.porco).toEqual([Item.CENOURA, Item.BATATA]); expect(BREED_FOOD.galinha).toEqual([Item.SEMENTE_TRIGO]);
+    expect(BREED_FOOD.porco).toEqual([Item.CENOURA, Item.BATATA, Item.BETERRABA]); expect(BREED_FOOD.galinha).toEqual([Item.SEMENTE_TRIGO]);
     expect(isBreedFood('vaca', Item.CENOURA)).toBe(false); expect(isBreedFood('porco', Item.TRIGO)).toBe(false); expect(isBreedFood('galinha', Item.TRIGO)).toBe(false); expect(isBreedFood('porco', null)).toBe(false);
   });
   it('a comida certa põe o adulto em amor por 30 s; a errada não faz nada', () => {

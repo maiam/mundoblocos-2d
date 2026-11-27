@@ -9,9 +9,9 @@ import { T } from './voxel';
  */
 /** `umido`/`seco` = a areia sob a planta; a espécie é o que se plantou: o junco de vidro (a areia decide a variante) ou a Noz de Duna (só na areia ocre). */
 export type CropKind = 'umido' | 'seco';
-export type Species = 'junco' | 'noz' | 'trigo' | 'cenoura' | 'batata' | 'tomate';
+export type Species = 'junco' | 'noz' | 'trigo' | 'cenoura' | 'batata' | 'tomate' | 'beterraba';
 /** Horta do Orvalis em voxel (ADR 0113): cresce na terra arada (nunca na areia), 3 fases (0 broto, 1 crescendo, 2 madura). */
-export const GARDEN_SPECIES: readonly Species[] = ['trigo', 'cenoura', 'batata', 'tomate'];
+export const GARDEN_SPECIES: readonly Species[] = ['trigo', 'cenoura', 'batata', 'tomate', 'beterraba'];
 export const isGarden = (species: Species): boolean => GARDEN_SPECIES.includes(species);
 export interface Crop { x: number; y: number; z: number; age: number; species: Species }
 
@@ -36,10 +36,15 @@ export const soilKind = (block: number): CropKind | null => (block === T.DAMP_SA
 /** Idade da planta adulta: muda (0) → crescendo (1) → adulta (2); o ressecado tem muda (0) → ressecado (1). */
 export const maxAge = (kind: CropKind): number => (kind === 'umido' ? 2 : 1);
 /** Idade da planta adulta da espécie sobre a areia `soil`: a Noz tem 3 fases (broto, planta sem frutos, com frutos). */
-export const maxAgeOf = (species: Species, soil: CropKind): number => (species === 'noz' || isGarden(species) ? 2 : maxAge(soil));
+export const maxAgeOf = (species: Species, soil: CropKind): number => (species === 'beterraba' ? BEET_MAX_AGE : species === 'noz' || isGarden(species) ? 2 : maxAge(soil));
+/** Beterraba (ADR 0127, Wiki): 4 idades (0 a 3), cada sorteio de crescimento falha em 1/3 das vezes; madura rende 1 beterraba e 1–4 sementes. */
+export const BEET_MAX_AGE = 3;
+export const BEET_SKIP = 1 / 3;
+export const BEET_SEEDS = { min: 1, max: 4 } as const;
 export const isRipe = (species: Species, soil: CropKind, age: number): boolean => age >= maxAgeOf(species, soil);
 /** O que a colheita entrega e a idade para onde a planta recua. */
-export function harvestOf(species: Species, soil: CropKind): { item: number; count: number; backTo: number; label: string } {
+export function harvestOf(species: Species, soil: CropKind): { item: number; count: number; backTo: number; label: string; extra?: { item: number; min: number; max: number } } {
+  if (species === 'beterraba') return { item: Item.BETERRABA, count: 1, backTo: 0, label: 'beterraba', extra: { item: Item.SEMENTE_BETERRABA, ...BEET_SEEDS } }; // Wiki: 1 beterraba e 1–4 sementes (a planta volta a broto, como a horta do Orvalis)
   if (isGarden(species)) { const g = GARDEN_HARVEST[species]; return { item: g.item, count: GARDEN_YIELD, backTo: 0, label: g.label }; } // a planta volta a broto e rebrota (a planta-mãe nunca é arrancada, como no junco)
   if (species === 'noz') return { item: Item.NOZ, count: NUT_YIELD, backTo: 1, label: 'nozes' };
   return soil === 'umido' ? { item: Item.GLASS_REED, count: CROP_YIELD, backTo: 1, label: 'mudas de junco' } : { item: Item.DRY_REED, count: CROP_YIELD, backTo: 0, label: 'hastes secas' };
@@ -47,8 +52,8 @@ export function harvestOf(species: Species, soil: CropKind): { item: number; cou
 /** O item que volta ao chão quando o apoio da planta é quebrado (a muda ou a noz plantada). */
 export const seedOf = (species: Species): number => (isGarden(species) ? GARDEN_SEED[species] : species === 'noz' ? Item.NOZ : Item.GLASS_REED);
 /** O que cada planta da horta se planta e o que rende; a cenoura, a batata e o tomate se plantam com o próprio produto, o trigo com a semente (ADR 0113). */
-export const GARDEN_SEED: Readonly<Record<string, number>> = { trigo: Item.SEMENTE_TRIGO, cenoura: Item.CENOURA, batata: Item.BATATA, tomate: Item.TOMATE };
-const GARDEN_HARVEST: Readonly<Record<string, { item: number; label: string }>> = { trigo: { item: Item.TRIGO, label: 'trigo' }, cenoura: { item: Item.CENOURA, label: 'cenouras' }, batata: { item: Item.BATATA, label: 'batatas' }, tomate: { item: Item.TOMATE, label: 'tomates' } };
+export const GARDEN_SEED: Readonly<Record<string, number>> = { trigo: Item.SEMENTE_TRIGO, cenoura: Item.CENOURA, batata: Item.BATATA, tomate: Item.TOMATE, beterraba: Item.SEMENTE_BETERRABA };
+const GARDEN_HARVEST: Readonly<Record<string, { item: number; label: string }>> = { trigo: { item: Item.TRIGO, label: 'trigo' }, cenoura: { item: Item.CENOURA, label: 'cenouras' }, batata: { item: Item.BATATA, label: 'batatas' }, beterraba: { item: Item.BETERRABA, label: 'beterraba' }, tomate: { item: Item.TOMATE, label: 'tomates' } };
 export const GARDEN_YIELD = 2;
 /**
  * Semente silvestre (ADR 0113, provisório até haver plantas selvagens no gerador): quebrar um bloco de grama solta, pelo hash da célula (sempre o mesmo resultado), uma semente
@@ -56,7 +61,7 @@ export const GARDEN_YIELD = 2;
  */
 export function wildSeedAt(x: number, y: number, z: number): number | null {
   const h = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ Math.imul(z, 83492791)) >>> 0, r = h % 24;
-  return r < 4 ? Item.SEMENTE_TRIGO : r === 4 ? Item.CENOURA : r === 5 ? Item.BATATA : r === 6 ? Item.TOMATE : null;
+  return r < 4 ? Item.SEMENTE_TRIGO : r === 4 ? Item.CENOURA : r === 5 ? Item.BATATA : r === 6 ? Item.TOMATE : r === 7 ? Item.SEMENTE_BETERRABA : null; // semente de beterraba rara (ADR 0127: o Orvalis não tem os baús de vila da Wiki)
 }
 /** Que planta o item na mão semeia (null = nenhuma). */
 export const gardenSpeciesOf = (item: number | undefined | null): Species | null => (GARDEN_SPECIES.find((sp) => GARDEN_SEED[sp] === item) ?? null);
@@ -69,8 +74,8 @@ export const soilKindFor = (species: Species, block: number): CropKind | null =>
 export const nutLook = (age: number): { scale: number; ripe: boolean } => ({ scale: age <= 0 ? 0.4 : 1, ripe: age >= 2 });
 /** Coluna do atlas de cultivo (`titan-cultivo-32px.webp`): 0 muda, 1 crescendo, 2 adulto de duas mudas, 3 ressecado. */
 /** Coluna do atlas da horta (`orvalis-horta-16px.webp`): espécie × 3 fases, depois das 4 do atlas de cultivo. */
-export const GARDEN_FRAMES = 12;
-export const gardenFrame = (species: Species, age: number): number => CROP_FRAMES + GARDEN_SPECIES.indexOf(species) * 3 + Math.min(2, Math.max(0, age));
+export const GARDEN_FRAMES = 16;
+export const gardenFrame = (species: Species, age: number): number => (species === 'beterraba' ? CROP_FRAMES + 12 + Math.min(BEET_MAX_AGE, Math.max(0, age)) : CROP_FRAMES + GARDEN_SPECIES.indexOf(species) * 3 + Math.min(2, Math.max(0, age))); // a beterraba (4 idades) fica depois dos 12 quadros das outras
 export const spriteFrame = (kind: CropKind, age: number): number => (kind === 'umido' ? Math.min(2, age) : age >= 1 ? 3 : 0);
 export const CROP_FRAMES = 4;
 
@@ -112,6 +117,7 @@ export function randomTick(crop: Crop, ctx: CropContext, rng: () => number): boo
   if (!kind || (crop.species === 'noz' && kind !== 'seco') || crop.age >= maxAgeOf(crop.species, kind) || ctx.light < CROP_MIN_LIGHT) return false;
   let points = growthPoints(ctx.soilAt);
   if (crowded(ctx.sameAt)) points *= 0.5;
+  if (crop.species === 'beterraba' && rng() < BEET_SKIP) return false; // Wiki: 1/3 dos sorteios de crescimento da beterraba não avançam
   if (rng() < growChance(points)) { crop.age++; return true; }
   return false;
 }

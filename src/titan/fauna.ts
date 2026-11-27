@@ -62,9 +62,9 @@ export const MATE_RANGE = 8;
 export const MATE_TOUCH = 1.2;
 export const MAX_FAUNA = 200;
 export const BABY_SCALE = 0.5;
-/** Comida de cada espécie (Wiki: vaca e ovelha trigo; porco cenoura, batata ou beterraba; galinha sementes). Sem beterraba e sem as outras sementes: ainda não são cultura do Orvalis. */
+/** Comida de cada espécie (Wiki: vaca e ovelha trigo; porco cenoura, batata ou beterraba; galinha sementes). A beterraba entrou com a cultura (ADR 0127); as outras sementes da galinha (abóbora, melancia…) ainda não são cultura do Orvalis. */
 export const BREED_FOOD: Readonly<Record<FaunaKind, readonly number[]>> = {
-  porco: [Item.CENOURA, Item.BATATA],
+  porco: [Item.CENOURA, Item.BATATA, Item.BETERRABA],
   vaca: [Item.TRIGO],
   ovelha: [Item.TRIGO],
   galinha: [Item.SEMENTE_TRIGO],
