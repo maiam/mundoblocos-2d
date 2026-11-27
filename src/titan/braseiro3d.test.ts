@@ -14,7 +14,7 @@ describe('braseiro 3D: regras do bloco', () => {
     expect(modelOf(T.BRAZIER)).toEqual({ kind: 'braseiro', turn: 0 });
     expect(modelOf(T.BRAZIER_LIT)).toEqual({ kind: 'braseiroAceso', turn: 0 });
     for (const id of [T.BRAZIER, T.BRAZIER_LIT]) {
-      expect(isBrazier(id) && isSolid(id) && isTarget(id) && blocksLight(id) && isModelBlock(id)).toBe(true);
+      expect(isBrazier(id) && isSolid(id) && isTarget(id) && isModelBlock(id)).toBe(true); expect(blocksLight(id)).toBe(false); // deixa a luz passar (ADR 0119)
       expect(isFull(id)).toBe(false); expect(blockSpan(id)).toEqual([0, BRAZIER_HEIGHT]);
     }
     expect(BRAZIER_HEIGHT).toBeCloseTo(0.774, 3);

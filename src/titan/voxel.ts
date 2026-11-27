@@ -55,7 +55,8 @@ export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE &&
 /** Alvo da mira (e do "quebrar"): sólido, lanterna ou Marco de Margem. O líquido e o ar são atravessados. */
 export const isTarget = (id: number): boolean => isSolid(id) || id === T.LANTERN || isMarco(id) || id === T.MAT || isLadder(id);
 /** Bloco que bloqueia a luz de lanterna: sólido, menos o Painel de Junco (a trama tem vãos: a luz atravessa). */
-export const blocksLight = (id: number): boolean => isSolid(id) && !isPanel(id);
+/** Luz de bloco (ADR 0119, regra da Wiki): só o **cubo opaco** a bloqueia. Folhas, baú, cama, porta, laje, degrau, mureta, braseiro e Painel deixam a luz passar (a laje dupla é cubo e bloqueia). */
+export const blocksLight = (id: number): boolean => isFull(id) && !isLeaves(id);
 /** Célula ocupada: não aceita colocar nada (sólido ou lanterna). Líquido e ar aceitam. */
 export const isOccupied = isTarget;
 /** Altura do bloco dentro da célula (0–1): 1 = cubo inteiro, 0,5 = laje (ADR 0046), 0 = não sólido. A física e a mira usam esta altura. */
