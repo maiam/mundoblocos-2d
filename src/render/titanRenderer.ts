@@ -1,3 +1,4 @@
+import { liquidRowOffset, liquidRowsOf } from '../titan/liquidFrames';
 import * as THREE from 'three';
 import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
@@ -57,6 +58,9 @@ export class TitanRenderer {
   private readonly opaqueMat: THREE.MeshBasicMaterial;
   private readonly liquidMat: THREE.MeshBasicMaterial;
   private readonly liquidTex: THREE.Texture;
+  /** Quadros de animação do líquido (ADR 0132): o atlas da água do Orvalis tem uma linha de 4 células por quadro; o do Titã, uma só (2 quadros por deslocamento em U). */
+  private readonly liquidRows: number;
+  private readonly liquidRowsIso: number;
   private readonly sections = new Map<string, { opaque?: THREE.Mesh; liquid?: THREE.Mesh; rev: number }>();
   private readonly pending = new Set<string>();
   private readonly outline: THREE.LineSegments;
@@ -173,17 +177,19 @@ export class TitanRenderer {
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
     this.atlasTex = tex;
-    if (extra.iso) { this.atlasTexIso = pixelTexture(extra.iso.atlas); this.liquidTexIso = pixelTexture(extra.iso.lake); }
+    if (extra.iso) { this.atlasTexIso = pixelTexture(extra.iso.atlas); this.liquidTexIso = pixelTexture(extra.iso.lake); this.liquidTexIso.repeat.y = 1 / liquidRowsOf(extra.iso.lake); }
     this.opaqueMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true });
     patchDayLight(this.opaqueMat, this.ambient, { sky: true });
     // o líquido tem atlas próprio de 16 px (Lago Escuro V2, ADR 0057, reduzido na ADR 0106: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
+    this.liquidRows = liquidRowsOf(extra.lake); this.liquidRowsIso = extra.iso ? liquidRowsOf(extra.iso.lake) : 1;
     this.liquidTex = new THREE.Texture(extra.lake);
+    this.liquidTex.repeat.y = 1 / this.liquidRows;
     this.liquidTex.colorSpace = THREE.SRGBColorSpace;
     this.liquidTex.magFilter = THREE.NearestFilter;
     this.liquidTex.minFilter = THREE.NearestFilter;
     this.liquidTex.generateMipmaps = false;
     this.liquidTex.needsUpdate = true;
-    this.liquidMat = new THREE.MeshBasicMaterial({ map: this.liquidTex, vertexColors: true, fog: true, transparent: true, opacity: 0.94, side: THREE.DoubleSide });
+    this.liquidMat = new THREE.MeshBasicMaterial({ map: this.liquidTex, vertexColors: true, fog: true, transparent: true, opacity: this.liquidRows > 1 ? 1 : 0.94, /* a água animada do Orvalis já traz o alfa na arte */ side: THREE.DoubleSide });
     patchDayLight(this.liquidMat, this.ambient, { sky: true });
 
     const htex = new THREE.Texture(hotbarAtlas);
@@ -1068,8 +1074,12 @@ export class TitanRenderer {
       f.sprite.scale.setScalar(0.6 * (1 - 0.7 * t));
       if (t >= 1) { this.scene.remove(f.sprite); this.flying.splice(i, 1); }
     }
-    this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // dois quadros de ondulação
-    if (this.liquidTexIso) this.liquidTexIso.offset.x = this.liquidTex.offset.x;
+    if (this.liquidRows > 1) this.liquidTex.offset.y = liquidRowOffset(time, this.liquidRows); // água do Orvalis: 8 quadros em loop (ADR 0132)
+    else this.liquidTex.offset.x = (Math.floor(time / 0.7) % 2) * 0.25; // Lago do Titã: dois quadros de ondulação
+    if (this.liquidTexIso) {
+      if (this.liquidRowsIso > 1) this.liquidTexIso.offset.y = liquidRowOffset(time, this.liquidRowsIso);
+      else this.liquidTexIso.offset.x = this.liquidTex.offset.x;
+    }
     this.outline.visible = !!target;
     if (target) {
       // célula inteira (bloco) ou a caixa do objeto (lanterna), 2 mm maior para não cintilar sobre as faces

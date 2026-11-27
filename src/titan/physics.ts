@@ -13,6 +13,8 @@ const JUMP_SPEED = Math.sqrt(2 * GRAVITY * 1.25);
 const WALK_SPEED = 4.3;
 /** Fator da corrida sobre a caminhada (ADR 0076). */
 export const SPRINT_FACTOR = 1.3;
+/** Correr nadando (ADR 0132): na água, com `sprint` e o olhar (`pitch`), o corpo segue a direção do olhar a esta fração da caminhada (adaptação: a Wiki não traz o valor confirmado). */
+export const SWIM_SPRINT_FACTOR = 1;
 const TERMINAL = 20;
 /** Escada (ADR 0088): sobe a 2,3 m/s pulando ou empurrando para a parede; sem comando, escorrega a 1,2 m/s (soltar é descer); de lado o corpo anda a 60 %. */
 export const CLIMB_UP = 2.3, CLIMB_SLIDE = 1.2, LADDER_WALK = 0.6;
@@ -132,6 +134,8 @@ export interface MoveInput {
   jump: boolean;
   /** Corrida (ADR 0076): +30 % de velocidade fora d'água. */
   sprint?: boolean;
+  /** Inclinação do olhar (rad, > 0 olha para cima): com `sprint` na água, mergulha ou sobe nessa direção (ADR 0132). */
+  pitch?: number;
 }
 
 /** Um passo de física (dt em s; passos grandes são divididos): gravidade, salto de 1 bloco, colisão por eixo, líquido que freia. */
@@ -168,6 +172,12 @@ function stepOnce(v: TitanVolume, b: Body, input: MoveInput, dt: number): void {
   if (ladder) {
     const into = -(input.dirX * ladder[0] + input.dirZ * ladder[1]); // > 0: empurrando para a parede (a frente da escada aponta para fora dela)
     b.vy = input.jump || into > 0.3 ? CLIMB_UP : -CLIMB_SLIDE;
+  } else if (b.inLiquid && input.sprint && input.pitch !== undefined && (input.dirX !== 0 || input.dirZ !== 0) && !b.hop) {
+    // correr nadando (Wiki, ADR 0132): segue a direção do olhar, para cima e para baixo; o horizontal encolhe com o cosseno do olhar
+    const m = Math.min(1, Math.hypot(input.dirX, input.dirZ)), v = WALK_SPEED * SWIM_SPRINT_FACTOR * m, cp = Math.cos(input.pitch);
+    const k = m > 0 ? v * cp / m : 0;
+    b.vx = input.dirX * k; b.vz = input.dirZ * k;
+    b.vy = Math.sin(input.pitch) * v;
   } else if (b.inLiquid) {
     b.vy = Math.max(b.vy - GRAVITY * 0.25 * dt, b.hop ? -TERMINAL : -2.5);
     if (input.jump && !b.hop) {
