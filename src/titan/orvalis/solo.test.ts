@@ -39,9 +39,9 @@ describe('solo de cultivo e cerâmica (ADR 0111)', () => {
   });
 
   it('tempos e sons: solo e argila cedem como a terra; tijolos como a pedra', () => {
-    const sand = breakTotalMs('block', T.DIRT);
-    for (const b of [T.FARMLAND_DRY, T.FARMLAND_WET, T.PATH, T.DIRT_INFERTILE, T.CLAY_BLOCK]) { expect(breakTotalMs('block', b)).toBe(sand); expect(surfaceOf(b)).toBe('sand'); }
-    expect(breakTotalMs('block', T.BRICK_BLOCK)).toBe(breakTotalMs('block', T.STONE_BRICK)); expect(surfaceOf(T.BRICK_BLOCK)).toBe('rock');
+    // dureza da Wiki (ADR 0117): terra 0,5, terra arada/argila 0,6, caminho 0,65; tijolos 2 (a pedra de obra é 1,5)
+    for (const [b, ms] of [[T.DIRT_INFERTILE, 950], [T.FARMLAND_DRY, 1100], [T.FARMLAND_WET, 1100], [T.CLAY_BLOCK, 1100], [T.PATH, 1200]] as const) { expect(breakTotalMs('block', b)).toBe(ms); expect(surfaceOf(b)).toBe('sand'); }
+    expect(breakTotalMs('block', T.BRICK_BLOCK)).toBe(10200); expect(surfaceOf(T.BRICK_BLOCK)).toBe('rock');
   });
 
   it('receitas provisórias (mesa, só no Orvalis): terra + areia → infértil; argila → tijolo → blocos', async () => {

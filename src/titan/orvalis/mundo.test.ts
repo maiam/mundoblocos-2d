@@ -53,12 +53,12 @@ describe('Orvalis em voxel — mundo no motor do Titã', () => {
     expect(blockOfItem(Item.SAND)).toBe(T.SAND); // os itens do Titã seguem iguais
   });
 
-  it('tempos de quebra: terra e areia 0,6 s, tora 1 s, folha 0,4 s, pedra 1,6 s (0,96 s com picareta de rocha)', () => {
-    expect(breakTotalMs('block', T.DIRT)).toBe(600);
-    expect(breakTotalMs('block', T.LOG_OAK)).toBe(1000);
-    expect(breakTotalMs('block', T.LEAVES_OAK)).toBe(400);
-    expect(breakTotalMs('block', T.STONE)).toBe(1600);
-    expect(breakTotalMs('block', T.STONE, 'rock')).toBe(960);
+  it('tempos de quebra: dureza da Wiki: terra 0,75 s, tora 3 s, folha 0,3 s, pedra 7,5 s (0,6 s com picareta de pedra)', () => {
+    expect(breakTotalMs('block', T.DIRT)).toBe(950);
+    expect(breakTotalMs('block', T.LOG_OAK)).toBe(3200);
+    expect(breakTotalMs('block', T.LEAVES_OAK)).toBe(500);
+    expect(breakTotalMs('block', T.STONE)).toBe(7700);
+    expect(breakTotalMs('block', T.STONE, 'rock')).toBe(800);
   });
 
   it('salva com `world: orvalis` e reabre a mesma partida com o gerador do Orvalis (edições incluídas)', async () => {

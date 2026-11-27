@@ -13,25 +13,68 @@ export const DRAG_TOLERANCE_PX = 10;
 /** O que está na mira: bloco, lanterna instalada ou lasca solta (item de superfície). */
 export type TargetKind = 'block' | 'lantern' | 'shard' | 'creature';
 
-/** Tempos iniciais totais (ms), desde a pressão. */
-export const BREAK_MS = { sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350, wood: 1000, leaves: 400 } as const;
+/** Coleta de lanterna/lasca solta (não é bloco): tempo total fixo, desde a pressão. */
+export const COLLECT_MS = 350;
+
+/**
+ * Quebra por **dureza do bloco**, na fórmula da Minecraft Wiki (ADR 0117, auditoria #16): tempo = dureza × 1,5 s ÷ velocidade da ferramenta certa;
+ * bloco que exige ferramenta (rocha) sem ela = dureza × 5 s; arredondado para cima em ticks de 50 ms. Os `HOLD_MS` do gesto somam por fora.
+ */
+export const BASE_MS = 1500;
+export const NEEDS_TOOL_MS = 5000;
+export const TICK_MS = 50;
+/** Velocidade por nível da ferramenta certa (Wiki: madeira 2, pedra 4; cobre 5, entre a pedra e o ferro 6 — provisório). */
+export const TOOL_SPEED: Readonly<Record<Tier, number>> = { wood: 2, rock: 4, copper: 5 };
+
+/** Dureza por bloco (Wiki). Entradas marcadas `provisório` não têm equivalente na Wiki. */
+const SOIL_SOFT = 0.5; // terra, areia
+const SOIL = 0.6; // grama, argila, terra arada
+const HARD_PLANK = 2; // tábuas, toras, mureta
+const STONE_H = 1.5; // pedra, tijolo de pedra
+const SMOOTH_H = 2; // pedra lisa, lajes, degraus, tijolo, mureta
+/** Titã sem equivalente (provisório): a dureza que mantém o tempo líquido de mão antigo (÷ 1,5 s). */
+const LEGACY_SAND = 0.27, LEGACY_SLAB = 0.53, LEGACY_ICE = 0.53, LEGACY_COLLECT = 0.1;
+const COPPER_ORE = 3;
+
+const HARDNESS = new Map<number, number>();
+const setH = (h: number, ...ids: number[]) => ids.forEach((i) => HARDNESS.set(i, h));
+setH(SOIL_SOFT, T.DIRT, T.BEACH, T.DIRT_INFERTILE, T.SAND, T.DAMP_SAND);
+setH(SOIL, T.GRASS, T.FARMLAND_DRY, T.FARMLAND_WET, T.CLAY_BLOCK);
+setH(0.65, T.PATH);
+setH(STONE_H, T.STONE, T.STONE_BRICK, T.DARK_ROCK, T.VEIN_ROCK, T.CARAPACE, T.EMBER_BLOCK); // rocha do Titã: provisório = pedra
+setH(SMOOTH_H, T.STONE_SMOOTH, T.BRICK_BLOCK, T.STONE_SLAB, T.STONE_SLAB_TOP, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m));
+setH(3.5, T.BRAZIER, T.BRAZIER_LIT); // fornalha da Wiki
+setH(HARD_PLANK, T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH);
+setH(2.5, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270); // bancada e baú da Wiki
+setH(0.2, T.LEAVES_OAK, T.LEAVES_CHERRY, T.LEAVES_BIRCH, T.BED, T.BED_90, T.BED_180, T.BED_270, T.BED_HEAD, T.BED_HEAD_90, T.BED_HEAD_180, T.BED_HEAD_270); // folhas e cama da Wiki
+setH(LEGACY_SAND, T.REED_BLOCK);
+setH(LEGACY_SLAB, T.REED_SLAB, T.REED_SLAB_TOP, T.REED_STAIR, T.REED_STAIR_90, T.REED_STAIR_180, T.REED_STAIR_270, T.REED_CHAIR, T.REED_CHAIR_90, T.REED_CHAIR_180, T.REED_CHAIR_270);
+for (let d = T.DOOR; d <= T.DOOR_LAST; d++) HARDNESS.set(d, LEGACY_SLAB);
+setH(LEGACY_ICE, T.FROST, T.VEIN_FROST, T.EMBER);
+setH(LEGACY_COLLECT, T.MARCO, T.MARCO_90, T.MARCO_180, T.MARCO_270, T.PAINEL, T.PAINEL_Z);
+
+/** Dureza do bloco (`null` = não quebra: rocha-mãe, líquido, ar). Veios de cobre/âmbar têm dureza própria (só picareta). */
+export const hardnessOf = (block: number | undefined): number | null => (block === undefined ? null : block === T.VEIN_COPPER || block === T.EMBER_VEIN ? COPPER_ORE : HARDNESS.get(block) ?? null);
+
+const toTick = (ms: number): number => Math.ceil(ms / TICK_MS - 1e-9) * TICK_MS;
 
 /** Tempo total para concluir a ação sobre o alvo, ou `null` se não há o que quebrar (rocha-mãe, líquido). */
 export function breakTotalMs(kind: TargetKind, block?: number, pick: Tier | boolean | null = false): number | null {
   if (kind === 'creature') return null; // animal na mira: o toque curto golpeia, segurar não quebra nada (ADR 0069)
-  if (kind === 'lantern' || kind === 'shard') return BREAK_MS.collect;
+  if (kind === 'lantern' || kind === 'shard') return COLLECT_MS;
   const tier: Tier | null = pick === true ? 'rock' : pick || null;
-  if (block === T.VEIN_COPPER || block === T.EMBER_VEIN) return tier ? Math.round(BREAK_MS.rock * PICK_FACTOR[tier]) : null; // só uma picareta o quebra (ADR 0063)
-  const t = baseBreakMs(block);
-  return t !== null && tier && (pick === true ? blockToolOf(block) === 'pick' : blockToolOf(block) !== null) ? Math.round(t * PICK_FACTOR[tier]) : t; // quem decide se a ferramenta serve para o bloco é `toolAdvantage`
+  const h = hardnessOf(block);
+  if (h === null) return null;
+  if (block === T.VEIN_COPPER || block === T.EMBER_VEIN) return tier ? HOLD_MS + toTick((h * BASE_MS) / TOOL_SPEED[tier]) : null; // só uma picareta o quebra (ADR 0063)
+  const right = tier !== null && (pick === true ? blockToolOf(block) === 'pick' : blockToolOf(block) !== null); // quem decide se a ferramenta serve é `toolAdvantage`
+  const needsTool = blockToolOf(block) === 'pick';
+  const ms = right && tier ? (h * BASE_MS) / TOOL_SPEED[tier] : h * (needsTool ? NEEDS_TOOL_MS : BASE_MS);
+  return HOLD_MS + toTick(ms);
 }
 
-/** Com picareta, os blocos de rocha cedem nesta fração do tempo, por nível (provisório, ADR 0063 e 0065). */
-export const PICK_FACTOR: Readonly<Record<Tier, number>> = { wood: 0.8, rock: 0.6, copper: 0.4 }; // a madeira (Orvalis, ADR 0112) é a mais lenta
+const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.STONE, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.BRICK_BLOCK, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m), T.STONE_SLAB, T.STONE_SLAB_TOP]);
 
-const ROCK_CLASS: ReadonlySet<number> = new Set([T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE, T.BRAZIER, T.BRAZIER_LIT, T.CARAPACE, T.EMBER_BLOCK, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270, T.STONE, T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_STAIR, T.STONE_STAIR_90, T.STONE_STAIR_180, T.STONE_STAIR_270, T.BRICK_BLOCK, ...Array.from({ length: 16 }, (_, m) => T.STONE_WALL + m), T.STONE_SLAB, T.STONE_SLAB_TOP]);
-
-const WOOD_CLASS: ReadonlySet<number> = new Set([T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270]);
+const WOOD_CLASS: ReadonlySet<number> = new Set([T.LOG_OAK, T.LOG_CHERRY, T.LOG_BIRCH, T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270, T.CHEST, T.CHEST_90, T.CHEST_180, T.CHEST_270]);
 const SOIL_CLASS: ReadonlySet<number> = new Set([T.GRASS, T.DIRT, T.BEACH, T.PATH, T.FARMLAND_DRY, T.FARMLAND_WET, T.DIRT_INFERTILE, T.CLAY_BLOCK, T.SAND, T.DAMP_SAND]);
 /** Que ferramenta é a certa para o bloco (como no Minecraft): picareta para rocha e veios, machado para madeira, pá para solo; `null` = nenhuma ajuda. */
 export function blockToolOf(block: number | undefined): ToolKind | null {
@@ -45,31 +88,6 @@ export function blockToolOf(block: number | undefined): ToolKind | null {
 export function toolAdvantage(item: number | undefined | null, block: number | undefined): Tier | null {
   const t = toolOf(item);
   return t && blockToolOf(block) === t.kind ? t.tier : null;
-}
-
-function baseBreakMs(block?: number): number | null {
-  if (block !== undefined && isWall(block)) return BREAK_MS.slab; // a mureta de pedra (16 ids de conexão, ADR 0110) cede como a laje
-  if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return BREAK_MS.slab; // a porta cede como os móveis de junco (ADR 0102)
-  switch (block) {
-    case T.GRASS: case T.DIRT: case T.BEACH: return BREAK_MS.sand; // Orvalis em voxel (ADR 0105): terra, grama e areia da praia cedem como a areia
-    case T.PATH: case T.DIRT_INFERTILE: case T.FARMLAND_DRY: case T.FARMLAND_WET: return BREAK_MS.sand; // solo: cede como a terra (ADR 0111)
-    case T.CLAY_BLOCK: return BREAK_MS.sand;
-    case T.BRICK_BLOCK: return BREAK_MS.rock;
-    case T.STONE: case T.STONE_SMOOTH: case T.STONE_BRICK: return BREAK_MS.rock; // pedra de obra (ADR 0108)
-    case T.STONE_SLAB: case T.STONE_SLAB_TOP: case T.STONE_STAIR: case T.STONE_STAIR_90: case T.STONE_STAIR_180: case T.STONE_STAIR_270: return BREAK_MS.slab;
-    case T.LOG_OAK: case T.LOG_CHERRY: case T.LOG_BIRCH: case T.PLANKS_OAK: case T.PLANKS_CHERRY: case T.PLANKS_BIRCH: case T.CARPENTRY: case T.CARPENTRY_90: case T.CARPENTRY_180: case T.CARPENTRY_270: return BREAK_MS.wood; // tábuas e mesa (ADR 0107)
-    case T.LEAVES_OAK: case T.LEAVES_CHERRY: case T.LEAVES_BIRCH: return BREAK_MS.leaves;
-    case T.SAND: case T.DAMP_SAND: case T.REED_BLOCK: return BREAK_MS.sand; // o bloco de junco cede como a areia (ADR 0100)
-    case T.REED_SLAB: case T.REED_SLAB_TOP: return BREAK_MS.slab;
-    case T.REED_STAIR: case T.REED_STAIR_90: case T.REED_STAIR_180: case T.REED_STAIR_270: case T.REED_CHAIR: case T.REED_CHAIR_90: case T.REED_CHAIR_180: case T.REED_CHAIR_270: return BREAK_MS.slab; // móveis de junco: cedem como a laje
-    case T.FROST: case T.VEIN_FROST: return BREAK_MS.ice;
-    case T.DARK_ROCK: case T.VEIN_ROCK: case T.BRAZIER: case T.BRAZIER_LIT: case T.CARAPACE: case T.EMBER_BLOCK: case T.WORKBENCH: case T.WORKBENCH_90: case T.WORKBENCH_180: case T.WORKBENCH_270: case T.CHEST: case T.CHEST_90: case T.CHEST_180: case T.CHEST_270: case T.BED: case T.BED_90: case T.BED_180: case T.BED_270: case T.BED_HEAD: case T.BED_HEAD_90: case T.BED_HEAD_180: case T.BED_HEAD_270: return BREAK_MS.rock;
-    case T.MARCO: case T.MARCO_90: case T.MARCO_180: case T.MARCO_270: case T.PAINEL: case T.PAINEL_Z: return BREAK_MS.collect; // peças pequenas da margem: recolhidas como a lanterna
-    case T.SLAB_DOUBLE: return BREAK_MS.rock; // duas lajes juntas: como o cubo de rocha
-    case T.SLAB: case T.SLAB_TOP: return BREAK_MS.slab; // meio bloco de rocha: mais rápida que o cubo
-    case T.EMBER: return BREAK_MS.ice; // depósito de brasa: cristal em rocha mole, como o gelo
-    default: return null;
-  }
 }
 
 /** Progresso 0–1: `(tempoPressionado − 200 ms) / (tempoTotal − 200 ms)`, limitado. */

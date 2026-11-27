@@ -41,7 +41,7 @@ describe('laje superior e dupla: regras de colocação (ADR 0056)', () => {
     for (const id of [T.SLAB, T.SLAB_TOP, T.SLAB_DOUBLE]) { expect(isSolid(id)).toBe(true); expect(surfaceOf(id)).toBe('rock'); expect(itemOfBlock(id)).toBe(Item.SLAB); }
     expect(isSlab(T.SLAB) && isSlab(T.SLAB_TOP)).toBe(true); expect(isSlab(T.SLAB_DOUBLE)).toBe(false);
     expect(isFull(T.SLAB_DOUBLE)).toBe(true); expect(isFull(T.SLAB)).toBe(false); expect(isFull(T.SLAB_TOP)).toBe(false);
-    expect(breakTotalMs('block', T.SLAB_TOP)).toBe(1000); expect(breakTotalMs('block', T.SLAB_DOUBLE)).toBe(1600);
+    expect(breakTotalMs('block', T.SLAB_TOP)).toBe(10200); expect(breakTotalMs('block', T.SLAB_DOUBLE)).toBe(10200);
   });
 });
 

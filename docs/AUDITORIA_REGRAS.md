@@ -17,13 +17,13 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 7 | Geração | Região finita (128 × 128, parede invisível) e versão do gerador | `titan/generator.ts` (`regionFor`), `titan/terrain.ts` | pendente |
 | 8 | Chunks e custo | Chunks 16 × 16, seções 16³, distância de desenho (`RANGE` 64) e de simulação (56 m) | `titan/volume.ts`, `titan/sections.ts`, `render/titanRenderer.ts` | pendente |
 | 9 | Luz | Luz de bloco (lanterna 15, braseiro 13), propagação e bloqueio | `titan/light.ts`, `titan/voxel.ts` | pendente |
-| 10 | Tempo | Ciclo de dia e noite (20 min), céu e relógio de jogo | `titan/sky.ts` | pendente |
+| 10 | Tempo | Ciclo de dia e noite (20 min), céu e relógio de jogo | `titan/sky.ts` | proposta enviada (27/11/2026) |
 | 11 | Tempo | Random ticks e passo de simulação (cultivo, braseiro, respawn) | `titan/crops.ts`, `titan/session.ts` | pendente |
 | 12 | Física | Gravidade, pulo, corrida, velocidade e dano de queda | `titan/physics.ts`, `titan/vitals.ts` | pendente |
 | 13 | Física | Colisão por caixa, degrau automático (0,6 m), salto automático, escada | `titan/physics.ts`, `titan/voxel.ts` | pendente |
 | 14 | Física | Água: flutuar, sair da água, mergulho, balde (sem fluxo) | `titan/physics.ts`, `titan/underwater.ts`, `titan/actions.ts` | pendente |
 | 15 | Blocos e ações | Colocar bloco: alcance, apoio, colisão com o jogador, orientação | `titan/actions.ts`, `titan/aim.ts`, `titan/slabs.ts` | pendente |
-| 16 | Blocos e ações | Quebra progressiva: tempo por bloco, ferramenta certa, mão nua | `titan/breaking.ts`, `titan/gesture.ts` | pendente |
+| 16 | Blocos e ações | Quebra progressiva: tempo por bloco, ferramenta certa, mão nua | `titan/breaking.ts`, `titan/gesture.ts` | implementada (ADR 0117, v0.184.0) |
 | 17 | Blocos e ações | Durabilidade das ferramentas e custo por ação | `titan/wear.ts`, `titan/items.ts` | pendente |
 | 18 | Blocos e ações | Drops de bloco e coleta (itens soltos: gravidade, tempo de coleta, validade) | `titan/drops.ts`, `titan/actions.ts` (`spillBlock`) | pendente |
 | 19 | Blocos e ações | Formas especiais: laje, degrau, mureta, porta, cama, baú, escada, esteira | `titan/voxel.ts`, `titan/slabs.ts`, `titan/actions.ts` | pendente |
@@ -38,6 +38,9 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 28 | Interface de jogo | Gesto (toque curto coloca, segurar quebra), mira, alcance, vista isométrica | `titan/gesture.ts`, `titan/aim.ts`, `titan/iso.ts` | pendente |
 | 29 | Multiplayer | Salas cooperativas: autoridade do servidor, limites, ação confirmada (`applied`) | `net/titan/` | pendente |
 | 30 | Salvamento | Persistência do mundo editado, do inventário e do estado (chunks, `header`) | `titan/save.ts`, `titan/session.ts` | pendente |
+| 31 | Tempo | Clima: chuva e tempestade (hoje inexistente) | — (a criar; `titan/sky.ts`, `net/titan/room.ts`, `titan/soil.ts`) | proposta enviada (27/11/2026) |
 
 ## Registro das auditorias
-_(vazio: nenhuma regra auditada ainda; cada auditoria entra aqui com a data, a decisão e a ADR ou item do CHANGELOG que a implementou.)_
+_(cada auditoria entra aqui com a data, a decisão e a ADR ou item do CHANGELOG que a implementou.)_
+
+- **#16 Quebra progressiva** — 27/11/2026: Wiki (fórmula dureza × 1,5 s ÷ velocidade) → proposta aprovada → implementada na v0.184.0 ([ADR 0117](adr/0117-quebra-por-dureza-do-bloco-minecraft-wiki.md)). Pendente: afinar as durezas provisórias dos blocos próprios do Titã e a velocidade do cobre.

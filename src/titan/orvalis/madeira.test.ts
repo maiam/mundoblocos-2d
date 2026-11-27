@@ -86,7 +86,7 @@ describe('madeira básica (ADR 0107)', () => {
     expect(recipeById('mesa')!.world).toBeUndefined(); expect(recipeById('lanterna')!.world).toBeUndefined();
   });
 
-  it('tempos e som: tábuas e mesa cedem como a tora (1 s)', () => {
-    for (const b of [T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270]) { expect(breakTotalMs('block', b)).toBe(1000); expect(surfaceOf(b)).not.toBeNull(); }
+  it('tempos e som: tábuas e mesa por dureza da Wiki (tábuas 3 s, mesa 3,75 s na mão)', () => {
+    for (const b of [T.PLANKS_OAK, T.PLANKS_CHERRY, T.PLANKS_BIRCH, T.CARPENTRY, T.CARPENTRY_90, T.CARPENTRY_180, T.CARPENTRY_270]) { expect(breakTotalMs('block', b)).toBe(b === T.PLANKS_OAK || b === T.PLANKS_CHERRY || b === T.PLANKS_BIRCH ? 3200 : 3950); expect(surfaceOf(b)).not.toBeNull(); }
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { breakOrCollect, collectItem, collectNearby, COPPER_YIELD } from './actions';
-import { breakTotalMs, BREAK_MS, PICK_FACTOR } from './breaking';
+import { breakTotalMs, HOLD_MS } from './breaking';
 import { TitanGenerator } from './generator';
 import { isPick, isTool, Item, maxStack, toolOf } from './items';
 import { RECIPES } from './recipes';
@@ -69,9 +69,9 @@ describe('gerador v7: afloramentos de cobre e hastes secas (ADR 0063)', () => {
 describe('picareta e veio de cobre', () => {
   it('só picareta quebra o veio; com ela a rocha cede em 60% do tempo; ferramenta não empilha', () => {
     expect(isCopperVein(T.VEIN_COPPER)).toBe(true); expect(isSolid(T.VEIN_COPPER)).toBe(true);
-    expect(breakTotalMs('block', T.VEIN_COPPER)).toBeNull(); expect(breakTotalMs('block', T.VEIN_COPPER, true)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.rock));
-    expect(breakTotalMs('block', T.DARK_ROCK, true)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.rock));
-    expect(breakTotalMs('block', T.SAND, true)).toBe(BREAK_MS.sand); // areia não muda
+    expect(breakTotalMs('block', T.VEIN_COPPER)).toBeNull(); expect(breakTotalMs('block', T.VEIN_COPPER, true)).toBe(HOLD_MS + 1150);
+    expect(breakTotalMs('block', T.DARK_ROCK, true)).toBe(HOLD_MS + 600);
+    expect(breakTotalMs('block', T.SAND, true)).toBe(HOLD_MS + 750); // areia: pá é a ferramenta certa, `true` (picareta) não ajuda
     expect(isPick(Item.STONE_PICK)).toBe(true); expect(isPick(Item.NOZ)).toBe(false); expect(isTool(Item.STONE_PICK)).toBe(true);
     expect(toolOf(Item.STONE_PICK)).toEqual({ kind: 'pick', tier: 'rock' }); expect(maxStack(Item.STONE_PICK)).toBe(1);
   });

@@ -111,8 +111,8 @@ describe('veios: quebrar, soltar a lasca, coletar e salvar', () => {
   it('quebrar um veio devolve o bloco inteiro e solta uma lasca na célula; blocos comuns não soltam nada', async () => {
     const { s } = await open();
     const r = veinOf(s, 'rock');
-    expect(breakTotalMs('block', T.VEIN_ROCK)).toBe(1600);
-    expect(breakTotalMs('block', T.VEIN_FROST)).toBe(1200);
+    expect(breakTotalMs('block', T.VEIN_ROCK)).toBe(7700);
+    expect(breakTotalMs('block', T.VEIN_FROST)).toBe(1000);
     expect(breakOrCollect(s, hit(r)).ok).toBe(true); sweepBlocks(s);
     expect(s.volume.get(r.x, r.y, r.z)).toBe(T.AIR);
     expect(s.inventory.total(Item.DARK_ROCK)).toBe(1);

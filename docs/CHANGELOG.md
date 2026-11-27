@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.184.0 — quebra por dureza do bloco (auditoria #16, 27/11/2026)
+- **ADR 0117 (aprovada pelo dono do produto, ciclo da ADR 0116).** `titan/breaking.ts` troca os tempos fixos por classe pela **dureza por bloco da Minecraft Wiki**: tempo = dureza × 1,5 s ÷ velocidade (madeira 2, pedra 4, cobre 5 provisório); rocha sem picareta = dureza × 5 s; ferramenta errada não acelera; ticks de 50 ms; os 200 ms do gesto somam por fora. Mão nua na pedra: 7,5 s (antes 1,6 s); picareta de pedra: 0,6 s.
+- Bancada e baú passam a ter o machado como ferramenta certa; a cama sai da classe de rocha. Blocos próprios do Titã sem equivalente na Wiki ficam com dureza provisória que preserva o tempo de mão antigo. `BREAK_MS` e `PICK_FACTOR` removidos; testes ajustados (592 passam). Sem mudança de gerador nem de save.
+
 ## Documentação — regra de processo: auditoria das regras de mundo com a Minecraft Wiki (27/11/2026)
 - **ADR 0116 (regra do dono do produto).** Antes de implementar ou mudar qualquer regra de mundo, a IA consulta a Minecraft Wiki, apresenta o Orvalis/Titã atuais, formula a proposta (manter, adaptar ou retirar) e **espera a aprovação**. Vale também para as regras já implementadas: nada passou ainda por esse ciclo, então as 30 regras de `docs/AUDITORIA_REGRAS.md` estão **pendentes de auditoria**. Registrada no `CLAUDE.md` e no `CONVENTIONS.md`. Sem mudança de jogo, save nem protocolo.
 

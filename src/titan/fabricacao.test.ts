@@ -84,7 +84,7 @@ describe('Mesa de Trabalho no mundo', () => {
     expect(s.volume.get(bx, 65, bz)).toBe(T.WORKBENCH);
     expect(s.volume.workbenchCells()).toEqual([[bx, 65, bz, 0]]);
     expect(isSolid(T.WORKBENCH)).toBe(true);
-    expect(breakTotalMs('block', T.WORKBENCH)).toBe(1600);
+    expect(breakTotalMs('block', T.WORKBENCH)).toBe(3950);
     // inventário cheio: a quebra falha e a mesa fica
     let n = 0; while (s.inventory.canAdd(Item.SAND) && n++ < 5000) s.inventory.add(Item.SAND, 1);
     expect(breakOrCollect(s, hit({ x: bx, y: 65, z: bz })).ok).toBe(true); // ADR 0082: quebra e cai; cheia, não recolhe
@@ -136,7 +136,7 @@ describe('depósito de brasa: quebrar, soltar, coletar, não recriar', () => {
   it('quebrar rende só a brasa solta no chão; coleta por proximidade; recolocar bloco comum não recria o minério; persiste', async () => {
     const { st, s } = await open();
     const e = (s.volume.gen as TitanGenerator).emberSite!;
-    expect(breakTotalMs('block', T.EMBER)).toBe(1200);
+    expect(breakTotalMs('block', T.EMBER)).toBe(1000);
     expect(breakOrCollect(s, hit(e)).ok).toBe(true);
     expect(s.volume.get(e.x, e.y, e.z)).toBe(T.AIR);
     expect(s.inventory.total(Item.EMBER)).toBe(0); // vai para o chão, como a lasca do veio
