@@ -60,7 +60,7 @@ describe('Colheita da Wiki', () => {
 });
 
 describe('Migração do save (v6 → v7)', () => {
-  it('a versão do save é 7', () => expect(TITAN_SAVE_VERSION).toBe(7));
+  it('a versão do save é pelo menos 7', () => expect(TITAN_SAVE_VERSION).toBeGreaterThanOrEqual(7));
   it('plantas antigas de trigo, cenoura e batata: idade 0 → 0, 1 → 3, 2 → 7 (a madura continua madura); tomate e beterraba ficam', async () => {
     const st = new MemoryTitanStorage(); const { s } = await open(st);
     const cells: Array<[string, number, number]> = []; let dx = 6;

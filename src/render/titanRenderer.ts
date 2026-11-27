@@ -5,7 +5,7 @@ import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
-import { titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -19,6 +19,7 @@ import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
 import { CROP_FRAMES, GARDEN_FRAMES, GARDEN_MESHES, STEM_ATTACHED_COL } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
+import { BoatView, type BoatDraw } from './boatView';
 import { FazendaView, type FazendaItem, type FazendaModels } from './fazenda';
 import type { FaunaKind } from '../titan/fauna';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
@@ -45,7 +46,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 38;
+const ITEM_ROWS = 39;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
@@ -111,6 +112,8 @@ export class TitanRenderer {
   private farejadores: Array<{ group: THREE.Group; parts: Record<string, THREE.Mesh>; rig?: RigInstance }> = [];
   /** Rig do Farejador (ADR 0064): carrega em segundo plano na primeira vez que há animais; até lá valem as 7 partes. */
   private rigTemplate: RigTemplate | null = null;
+  /** Botes do Orvalis (ADR 0137): modelos 3D estáticos, um por madeira, carregados na primeira vez que há bote. */
+  private boatView: BoatView | null = null;
   private rigLoading = false;
   /** Fauna de fazenda do Orvalis (ADR 0124): só existe se o jogo passou as texturas (mundo do Orvalis). */
   private fazenda: FazendaView | null = null;
@@ -752,6 +755,14 @@ export class TitanRenderer {
 
   /** Fauna de fazenda: pés, giro e pose de cada animal visível (a lista vazia esconde todos). */
   setFauna(list: readonly FazendaItem[]): void { this.fazenda?.set(list); }
+  /** Desenha os botes (madeira, posição e giro); a luz do dia é a do resto do mundo (ADR 0137). */
+  setBoats(list: readonly BoatDraw[]): void {
+    if (!this.boatView) {
+      if (!list.length) return;
+      this.boatView = new BoatView(this.scene, orvalisBoatUrls, (map) => { const m = new THREE.MeshBasicMaterial({ map, vertexColors: true, fog: true, side: THREE.DoubleSide }); patchDayLight(m, this.ambient); return m; });
+    }
+    this.boatView.set(list);
+  }
 
   setFarejadores(list: ReadonlyArray<{ x: number; y: number; z: number; yaw: number; scale: number; pose: { bob: number; roll: number; headPitch: number; headYaw: number; tailYaw: number; legs: readonly number[] } }>): void {
     while (this.farejadores.length < list.length) {

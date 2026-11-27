@@ -234,3 +234,4 @@
 | **Linha e receita da vara (27/11/2026, auditoria #14 E2):** item 114 fabricado da Lã (1 → 4), vara de 3 Hastes + 2 Linhas | ADR 0134 |
 | **Flora marinha do Orvalis (27/11/2026, auditoria #14 E3a):** erva marinha, alga e alga seca; plantas contam como água; gerador v5; modelos instanciados; corais na E3b | ADR 0135 |
 | **Corais do Orvalis (27/11/2026, auditoria #14 E3b):** 5 famílias × coral, gorgônia e bloco × vivo e morto; recifes em manchas rasas (gerador v6); bloco vivo sem água morre; sem Toque de Seda | ADR 0136 |
+| **Botes do Orvalis (27/11/2026, auditoria #14 E4a):** 3 madeiras, só em água a 8 m/s, embarcar, remar, desembarcar, recolher, no save; com baú na E4b | ADR 0137 |
