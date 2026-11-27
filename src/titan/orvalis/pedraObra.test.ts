@@ -68,9 +68,9 @@ describe('pedra de obra (ADR 0108)', () => {
   });
 
   it('tempos, som e arte: cubos 1,6 s, laje 1 s; tile próprio de cada um; a lateral da laje é a de meia altura', () => {
-    for (const b of [T.STONE_SMOOTH, T.STONE_BRICK]) expect(breakTotalMs('block', b)).toBe(1600);
-    for (const b of [T.STONE_SLAB, T.STONE_SLAB_TOP]) expect(breakTotalMs('block', b)).toBe(1000);
-    expect(breakTotalMs('block', T.STONE_SMOOTH, 'rock')).toBe(960); // com picareta de rocha
+    expect(breakTotalMs('block', T.STONE_SMOOTH)).toBe(10200); expect(breakTotalMs('block', T.STONE_BRICK)).toBe(7700);
+    for (const b of [T.STONE_SLAB, T.STONE_SLAB_TOP]) expect(breakTotalMs('block', b)).toBe(10200);
+    expect(breakTotalMs('block', T.STONE_SMOOTH, 'rock')).toBe(950); // com picareta de rocha
     for (const b of [T.STONE_SMOOTH, T.STONE_BRICK, T.STONE_SLAB, T.STONE_SLAB_TOP]) expect(surfaceOf(b)).toBe('rock');
     expect(new Set([tileFor(T.STONE, 'top'), tileFor(T.STONE_SMOOTH, 'top'), tileFor(T.STONE_BRICK, 'top'), tileFor(T.STONE_SLAB, 'top')]).size).toBe(4);
     expect(tileFor(T.STONE_SLAB, 'side')).not.toBe(tileFor(T.STONE_SLAB, 'top'));
@@ -88,7 +88,7 @@ describe('degrau de pedra (ADR 0109)', () => {
       expect(blockBoxes(id)).toEqual(blockBoxes(stairId(t))); // a forma e a física são as do degrau de junco
       expect(isSolid(id) && !isFull(id)).toBe(true);
       expect(itemOfBlock(id)).toBe(Item.DEGRAU_PEDRA);
-      expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(1000);
+      expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(10200);
     }
     expect(modelOf(T.REED_STAIR)).toEqual({ kind: 'degrau', turn: 0 }); // o de junco segue com o modelo dele
     expect(blockOfItem(Item.DEGRAU_PEDRA)).toBe(T.STONE_STAIR); expect(ITEM_NAMES[Item.DEGRAU_PEDRA]).toBe('Degrau de Pedra');
@@ -124,7 +124,7 @@ describe('mureta de pedra (ADR 0110)', () => {
       expect(isWall(id) && wallMask(id) === m && isSolid(id) && !isFull(id)).toBe(true);
       expect(modelOf(id)).toEqual({ kind: `mureta${m}`, turn: 0 });
       expect(blockBoxes(id)).toEqual(wallBoxes(m)); expect(blockSpan(id)).toEqual([0, WALL_HEIGHT]);
-      expect(itemOfBlock(id)).toBe(Item.MURETA_PEDRA); expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(1000);
+      expect(itemOfBlock(id)).toBe(Item.MURETA_PEDRA); expect(surfaceOf(id)).toBe('rock'); expect(breakTotalMs('block', id)).toBe(10200);
     }
     expect(blockBoxes(wallId(0))).toHaveLength(1); expect(blockBoxes(wallId(15))).toHaveLength(5); // poste e braços
     expect(blockOfItem(Item.MURETA_PEDRA)).toBe(T.STONE_WALL); expect(ITEM_NAMES[Item.MURETA_PEDRA]).toBe('Mureta de Pedra'); expect(isItem(82) && !isItem(83)).toBe(true);

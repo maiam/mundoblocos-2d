@@ -6,6 +6,8 @@ Para escolher o próximo lote de arte, consulte o [Guia de itens e texturas](GUI
 
 ## Auditoria das regras de mundo (ADR 0116) — em andamento
 **Regra do dono do produto:** nenhuma regra de mundo é implementada ou alterada sem consultar a Minecraft Wiki, apresentar o estado atual, formular a proposta e receber a **aprovação**. As 30 regras de [`AUDITORIA_REGRAS.md`](AUDITORIA_REGRAS.md) estão **pendentes** (uma por vez, na ordem que o dono escolher). **Os "próximos passos recomendados" abaixo (Braseiro, cama, minério, fauna…) são regras de mundo: só entram depois do ciclo da regra correspondente.**
+**Feita:** #16 Quebra progressiva (ADR 0117, v0.184.0). **Próxima:** o dono escolhe a regra (uma por vez); durezas provisórias dos blocos do Titã e a velocidade do cobre seguem em aberto.
+
 
 ## Limpeza do 2.5D e do Santuário (ADR 0115) — feita (v0.181.0 a v0.183.0)
 **Feito:** Orvalis 3D é o padrão, o Titã só por `?mundo=titan`, e o Santuário e o Orvalis 2D/2.5D foram **removidos** do código, da arte-fonte e dos scripts (histórico no git e em `docs/archive/2d/`). **Falta:** (1) o **Artifact** está com ~4,5 MB de "início" (meta 3 MB): reduzir (atlas, modelos JSON no pacote de JS, WebP) e testar WebGL no iframe; (2) o **servidor** `orvalis-servidor` precisa do pacote novo (`npm run sync-net`: só a sala do Titã; o servidor deixa de oferecer as salas 1 e 2 do 2.5D) — PR do servidor; (3) pastas antigas de saves do 2D no navegador ficam órfãs (nada as abre); (4) `docs/archive/2d/` guarda a documentação do 2.5D (referência histórica).

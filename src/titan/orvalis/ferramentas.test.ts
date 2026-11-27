@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { placeFromSlot, breakOrCollect } from '../actions';
-import { blockToolOf, breakTotalMs, BREAK_MS, PICK_FACTOR, toolAdvantage } from '../breaking';
+import { blockToolOf, breakTotalMs, HOLD_MS, toolAdvantage } from '../breaking';
 import { damageOf } from '../combat';
 import { BAG, HOTBAR } from '../inventory';
 import { isAxe, isHoe, isItem, isPick, isShovel, isTool, Item, ITEM_NAMES, maxStack, toolOf } from '../items';
@@ -57,15 +57,15 @@ describe('ferramentas do Orvalis (ADR 0112)', () => {
     expect(blockToolOf(T.DIRT)).toBe('shovel'); expect(blockToolOf(T.GRASS)).toBe('shovel'); expect(blockToolOf(T.PATH)).toBe('shovel'); expect(blockToolOf(T.SAND)).toBe('shovel');
     expect(blockToolOf(T.LEAVES_OAK)).toBeNull(); expect(blockToolOf(T.LANTERN)).toBeNull();
     const ms = (item: number, block: number) => breakTotalMs('block', block, toolAdvantage(item, block));
-    expect(ms(Item.PICARETA_PEDRA, T.STONE)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.rock));
-    expect(ms(Item.PICARETA_MADEIRA, T.STONE)).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.wood));
+    expect(ms(Item.PICARETA_PEDRA, T.STONE)).toBe(HOLD_MS + 600); // Wiki: pedra com picareta de pedra 0,6 s
+    expect(ms(Item.PICARETA_MADEIRA, T.STONE)).toBe(HOLD_MS + 1150); // Wiki: 1,15 s
     expect(ms(Item.PICARETA_MADEIRA, T.STONE)!).toBeGreaterThan(ms(Item.PICARETA_PEDRA, T.STONE)!); // a de madeira é mais lenta
-    expect(ms(Item.MACHADO_PEDRA, T.LOG_OAK)).toBe(Math.round(BREAK_MS.wood * PICK_FACTOR.rock)); expect(ms(Item.PA_PEDRA, T.DIRT)).toBe(Math.round(BREAK_MS.sand * PICK_FACTOR.rock));
-    expect(ms(Item.PA_PEDRA, T.STONE)).toBe(BREAK_MS.rock); expect(ms(Item.MACHADO_PEDRA, T.DIRT)).toBe(BREAK_MS.sand); expect(ms(Item.PICARETA_PEDRA, T.LOG_OAK)).toBe(BREAK_MS.wood); // ferramenta errada: tempo da mão
-    expect(ms(Item.PICARETA_PEDRA, T.LEAVES_OAK)).toBe(BREAK_MS.leaves);
+    expect(ms(Item.MACHADO_PEDRA, T.LOG_OAK)).toBe(HOLD_MS + 750); expect(ms(Item.PA_PEDRA, T.DIRT)).toBe(HOLD_MS + 200); // Wiki: madeira dura 0,75 s com machado de pedra, terra 0,2 s com pá de pedra
+    expect(ms(Item.PA_PEDRA, T.STONE)).toBe(HOLD_MS + 7500); expect(ms(Item.MACHADO_PEDRA, T.DIRT)).toBe(HOLD_MS + 750); expect(ms(Item.PICARETA_PEDRA, T.LOG_OAK)).toBe(HOLD_MS + 3000); // ferramenta errada: tempo da mão
+    expect(ms(Item.PICARETA_PEDRA, T.LEAVES_OAK)).toBe(HOLD_MS + 300);
     expect(toolAdvantage(null, T.STONE)).toBeNull(); expect(toolAdvantage(Item.NOZ, T.STONE)).toBeNull();
     // a picareta de cobre do Titã agora vale o nível dela (antes toda picareta valia o nível de rocha)
-    expect(toolAdvantage(Item.COPPER_PICK, T.DARK_ROCK)).toBe('copper'); expect(breakTotalMs('block', T.VEIN_COPPER, toolAdvantage(Item.COPPER_PICK, T.VEIN_COPPER))).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.copper));
+    expect(toolAdvantage(Item.COPPER_PICK, T.DARK_ROCK)).toBe('copper'); expect(breakTotalMs('block', T.VEIN_COPPER, toolAdvantage(Item.COPPER_PICK, T.VEIN_COPPER))).toBe(HOLD_MS + 900);
     expect(breakTotalMs('block', T.VEIN_COPPER, toolAdvantage(Item.PA_PEDRA, T.VEIN_COPPER))).toBeNull(); // só uma picareta quebra o veio
   });
 

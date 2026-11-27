@@ -23,7 +23,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 13 | Física | Colisão por caixa, degrau automático (0,6 m), salto automático, escada | `titan/physics.ts`, `titan/voxel.ts` | pendente |
 | 14 | Física | Água: flutuar, sair da água, mergulho, balde (sem fluxo) | `titan/physics.ts`, `titan/underwater.ts`, `titan/actions.ts` | pendente |
 | 15 | Blocos e ações | Colocar bloco: alcance, apoio, colisão com o jogador, orientação | `titan/actions.ts`, `titan/aim.ts`, `titan/slabs.ts` | pendente |
-| 16 | Blocos e ações | Quebra progressiva: tempo por bloco, ferramenta certa, mão nua | `titan/breaking.ts`, `titan/gesture.ts` | proposta enviada (aguardando aprovação) |
+| 16 | Blocos e ações | Quebra progressiva: tempo por bloco, ferramenta certa, mão nua | `titan/breaking.ts`, `titan/gesture.ts` | implementada (ADR 0117, v0.184.0) |
 | 17 | Blocos e ações | Durabilidade das ferramentas e custo por ação | `titan/wear.ts`, `titan/items.ts` | pendente |
 | 18 | Blocos e ações | Drops de bloco e coleta (itens soltos: gravidade, tempo de coleta, validade) | `titan/drops.ts`, `titan/actions.ts` (`spillBlock`) | pendente |
 | 19 | Blocos e ações | Formas especiais: laje, degrau, mureta, porta, cama, baú, escada, esteira | `titan/voxel.ts`, `titan/slabs.ts`, `titan/actions.ts` | pendente |
@@ -42,4 +42,4 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 ## Registro das auditorias
 _(cada auditoria entra aqui com a data, a decisão e a ADR ou item do CHANGELOG que a implementou.)_
 
-- **#16 Quebra progressiva** — proposta enviada ao dono do produto; nenhuma alteração de código até a aprovação.
+- **#16 Quebra progressiva** — 27/11/2026: Wiki (fórmula dureza × 1,5 s ÷ velocidade) → proposta aprovada → implementada na v0.184.0 ([ADR 0117](adr/0117-quebra-por-dureza-do-bloco-minecraft-wiki.md)). Pendente: afinar as durezas provisórias dos blocos próprios do Titã e a velocidade do cobre.

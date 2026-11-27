@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BREAK_MS, breakProgress, breakTotalMs, crackStage, CRACK_STAGES, DRAG_TOLERANCE_PX, HOLD_MS } from './breaking';
+import { breakProgress, breakTotalMs, crackStage, CRACK_STAGES, DRAG_TOLERANCE_PX, HOLD_MS } from './breaking';
 import { type ActionOutcome, type GestureHooks, type GestureTarget, InteractionGesture } from './gesture';
 import { T } from './voxel';
 
@@ -13,7 +13,8 @@ function rig(opts: { placeOk?: boolean; completeOk?: boolean } = {}) {
   const log: string[] = [];
   const effects: Array<{ t: GestureTarget | null; p: number; stage: number }> = [];
   const hooks: GestureHooks = {
-    totalMs: (t) => breakTotalMs(t.kind, t.block),
+    // o gesto é testado com tempos fixos (areia 600, gelo 1 200, rocha 1 600 ms): a regra de quebra por dureza (ADR 0117) é testada em 'tempos de quebra'
+    totalMs: (t) => (t.block === T.SAND ? 600 : t.block === T.FROST ? 1200 : t.block === T.DARK_ROCK ? 1600 : breakTotalMs(t.kind, t.block)),
     place: (t): ActionOutcome => { log.push(`place@${t.x},${t.y},${t.z}`); return { ok: opts.placeOk ?? true }; },
     complete: (t): ActionOutcome => { log.push(`complete@${t.x},${t.y},${t.z}`); return { ok: opts.completeOk ?? true }; },
     effect: (t, p, stage) => effects.push({ t, p, stage }),
@@ -22,13 +23,14 @@ function rig(opts: { placeOk?: boolean; completeOk?: boolean } = {}) {
 }
 
 describe('tempos de quebra', () => {
-  it('areia 0,6 s, gelo 1,2 s, rocha 1,6 s; lanterna e lasca 0,35 s; rocha-mãe e líquido não quebram', () => {
-    expect(BREAK_MS).toEqual({ sand: 600, ice: 1200, rock: 1600, slab: 1000, collect: 350, wood: 1000, leaves: 400 });
-    expect(breakTotalMs('block', T.SAND)).toBe(600);
-    expect(breakTotalMs('block', T.DAMP_SAND)).toBe(600);
-    expect(breakTotalMs('block', T.FROST)).toBe(1200);
-    expect(breakTotalMs('block', T.DARK_ROCK)).toBe(1600);
-    expect(breakTotalMs('block', T.SLAB)).toBe(1000); // a laje (meio bloco de rocha) cede mais depressa
+  it('dureza por bloco (ADR 0117, fórmula da Wiki): terra 0,75 s, areia 0,75 s, rocha 7,5 s na mão; lanterna e lasca 0,35 s; rocha-mãe e líquido não quebram', () => {
+    expect(breakTotalMs('block', T.DIRT)).toBe(HOLD_MS + 750); expect(breakTotalMs('block', T.STONE)).toBe(HOLD_MS + 7500); expect(breakTotalMs('lantern')).toBe(350);
+    expect(breakTotalMs('block', T.SAND)).toBe(HOLD_MS + 750);
+    expect(breakTotalMs('block', T.DAMP_SAND)).toBe(HOLD_MS + 750);
+    expect(breakTotalMs('block', T.FROST)).toBe(HOLD_MS + 800); // provisório: mantém o tempo antigo de mão
+    expect(breakTotalMs('block', T.DARK_ROCK)).toBe(HOLD_MS + 7500);
+    expect(breakTotalMs('block', T.SLAB)).toBe(HOLD_MS + 10000); // laje: dureza 2 como a da Wiki
+    expect(breakTotalMs('block', T.LEAVES_OAK)).toBe(HOLD_MS + 300); expect(breakTotalMs('block', T.BED)).toBe(HOLD_MS + 300);
     expect(breakTotalMs('lantern')).toBe(350);
     expect(breakTotalMs('shard')).toBe(350);
     expect(breakTotalMs('block', T.BEDROCK)).toBeNull();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { breakOrCollect, collectItem, placeFromSlot } from './actions';
-import { BREAK_MS, breakTotalMs } from './breaking';
+import { breakTotalMs, HOLD_MS } from './breaking';
 import { TitanGenerator } from './generator';
 import { Inventory } from './inventory';
 import { blockOfItem, Item, itemOfBlock } from './items';
@@ -36,7 +36,7 @@ describe('gerador v8: abrigos com placa de carapaça (ADR 0066)', () => {
   });
   it('revestimento: tile e item, rocha no tempo de quebra, receita 1 placa + 1 rocha escura → 2 (mesa)', () => {
     expect(isSolid(T.CARAPACE)).toBe(true); expect(tileFor(T.CARAPACE, 'top')).toBe(tileIndex('12-revestimento-de-carapaca/topo')); expect(tileFor(T.CARAPACE, 'side')).toBe(tileIndex('12-revestimento-de-carapaca/lateral'));
-    expect(blockOfItem(Item.CARAPACE)).toBe(T.CARAPACE); expect(itemOfBlock(T.CARAPACE)).toBe(Item.CARAPACE); expect(breakTotalMs('block', T.CARAPACE)).toBe(BREAK_MS.rock);
+    expect(blockOfItem(Item.CARAPACE)).toBe(T.CARAPACE); expect(itemOfBlock(T.CARAPACE)).toBe(Item.CARAPACE); expect(breakTotalMs('block', T.CARAPACE)).toBe(HOLD_MS + 7500);
     const r = RECIPES.find((x) => x.id === 'revestimento')!;
     expect(r.station).toBe('workbench'); expect(r.group).toBe('construcao'); expect(r.result).toEqual({ item: Item.CARAPACE, count: 2 });
     expect(r.ingredients).toEqual([{ item: Item.PLATE, count: 1 }, { item: Item.DARK_ROCK, count: 1 }]);

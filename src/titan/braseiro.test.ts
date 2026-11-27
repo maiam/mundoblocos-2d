@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BREAK_MS, breakTotalMs, PICK_FACTOR } from './breaking';
+import { breakTotalMs, HOLD_MS, TOOL_SPEED } from './breaking';
 import { blockOfItem, isDagger, isPick, Item, itemOfBlock, maxStack, pickTier } from './items';
 import { craft, RECIPES, stationMet } from './recipes';
 import { isBrazier, isSolid, T, tileFor, tileIndex } from './voxel';
@@ -11,8 +11,8 @@ describe('Braseiro de Rocha e ferramentas de cobre (ADR 0065, 0068)', () => {
     expect(isBrazier(T.BRAZIER) && isBrazier(T.BRAZIER_LIT)).toBe(true); expect(isSolid(T.BRAZIER)).toBe(true);
     expect(tileFor(T.BRAZIER, 'top')).toBe(tileIndex('17-braseiro-de-rocha/topo-apagado')); expect(tileFor(T.BRAZIER_LIT, 'top')).toBe(tileIndex('17-braseiro-de-rocha/topo-aceso')); expect(tileFor(T.BRAZIER, 'side')).toBe(tileIndex('17-braseiro-de-rocha/lateral-comum')); expect(tileFor(T.BRAZIER_LIT, 'bottom')).toBe(tileIndex('17-braseiro-de-rocha/lateral-comum'));
     expect(blockOfItem(Item.BRAZIER)).toBe(T.BRAZIER); expect(itemOfBlock(T.BRAZIER_LIT)).toBe(Item.BRAZIER); expect(itemOfBlock(T.BRAZIER)).toBe(Item.BRAZIER);
-    expect(breakTotalMs('block', T.BRAZIER)).toBe(BREAK_MS.rock);
-    expect(breakTotalMs('block', T.VEIN_COPPER, 'copper')).toBe(Math.round(BREAK_MS.rock * PICK_FACTOR.copper)); expect(PICK_FACTOR.copper).toBeLessThan(PICK_FACTOR.rock);
+    expect(breakTotalMs('block', T.BRAZIER)).toBe(HOLD_MS + 17500);
+    expect(breakTotalMs('block', T.VEIN_COPPER, 'copper')).toBe(HOLD_MS + 900); expect(TOOL_SPEED.copper).toBeGreaterThan(TOOL_SPEED.rock);
     expect(isPick(Item.COPPER_PICK) && !isPick(Item.COPPER_DAGGER) && isDagger(Item.STONE_DAGGER) && isDagger(Item.COPPER_DAGGER)).toBe(true);
     expect(pickTier(Item.STONE_PICK)).toBe('rock'); expect(pickTier(Item.COPPER_PICK)).toBe('copper'); expect(pickTier(Item.STONE_DAGGER)).toBeNull();
     for (const i of [Item.STONE_DAGGER, Item.COPPER_PICK, Item.COPPER_DAGGER]) expect(maxStack(i)).toBe(1);
