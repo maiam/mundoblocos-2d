@@ -9,8 +9,13 @@
 export const HUNGER_ENABLED = true;
 /** Inanição (fome 0) tira vida só até este mínimo: passar fome nunca derruba o jogador. */
 export const STARVATION_FLOOR = 1;
-/** Exaustão (4 = 1 ponto de saturação, depois de fome) por atividade. Provisório, a calibrar em jogo: andar por bloco, pular, quebrar bloco. */
-export const EXHAUSTION = { walkPerBlock: 0.1, sprintPerBlock: 0.2, jump: 0.2, breakBlock: 0.05 } as const;
+/**
+ * Exaustão (4 = 1 ponto de saturação, depois de fome) por atividade, os valores da Minecraft Wiki (ADR 0130): andar não custa; correr 0,1 por metro; pular 0,05 (correndo, 0,2); quebrar bloco 0,005; atacar 0,1; levar dano 0,1.
+ * Regenerar custa 6 por ponto (mais abaixo). Valem nos dois mundos (o motor é o mesmo).
+ */
+export const EXHAUSTION = { walkPerBlock: 0, sprintPerBlock: 0.1, jump: 0.05, sprintJump: 0.2, breakBlock: 0.005, attack: 0.1, damageTaken: 0.1 } as const;
+/** Corrida só com fome acima disto (Wiki: acaba se a fome cai a 6 ou menos). */
+export const SPRINT_MIN_HUNGER = 6;
 export const MAX_HEALTH = 20, MAX_HUNGER = 20, MAX_AIR = 15;
 /** Sem comida no jogo: 1 ponto de vida a cada tanto (segundos). */
 export const REGEN_NO_FOOD_S = 1.5;
@@ -31,6 +36,10 @@ export const newVitals = (): PlayerVitals => ({ health: MAX_HEALTH, maxHealth: M
 export const isDead = (v: PlayerVitals): boolean => v.health <= 0;
 /** Dano em pontos de vida (nunca abaixo de 0). */
 export function damage(v: PlayerVitals, points: number): void { if (points > 0) v.health = Math.max(0, v.health - points); }
+/** Pode correr? Com a fome ligada, só com mais de `SPRINT_MIN_HUNGER` de fome (ADR 0130). */
+export const canSprint = (v: PlayerVitals, hungerEnabled: boolean = HUNGER_ENABLED): boolean => !hungerEnabled || v.hunger > SPRINT_MIN_HUNGER;
+/** Dano levado de um golpe ou de uma queda: tira vida e soma a exaustão de levar dano (a inanição e o afogamento usam `damage`, sem ela). */
+export function hurt(v: PlayerVitals, points: number, hungerEnabled: boolean = HUNGER_ENABLED): void { if (points > 0) { damage(v, points); addExhaustion(v, EXHAUSTION.damageTaken, hungerEnabled); } }
 /** Dano de uma queda de `height` blocos: ⌈altura − 3⌉ (0 se ≤ 3). */
 export const fallDamage = (height: number): number => (height > SAFE_FALL ? Math.ceil(height - SAFE_FALL - 1e-9) : 0);
 /** Cansaço da ação: soma exaustão (só com a fome ligada). */

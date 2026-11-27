@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.199.0 — vida e fome pela Wiki (auditoria #23, 27/11/2026)
+- **ADR 0130 (ciclo da ADR 0116; aprovada nos 5 pontos, nos dois mundos).** **Exaustão da Wiki:** andar 0, correr 0,1 por metro, pular 0,05 (correndo 0,2), quebrar bloco 0,005, atacar 0,1 e levar dano 0,1 (`hurt`); antes o jogo cobrava ~5 a 10× mais fome. **Corrida só com fome > 6** (`canSprint`). Mantidos: comer instantâneo (adaptação), inanição que para em 1 ponto e a regeneração rápida; queda, afogamento e a regeneração normal já eram os da Wiki.
+- 732 testes passam (5 novos em `vitaisWiki.test.ts`). Sem mudança de save, de gerador nem de protocolo (a sala não usa a exaustão). O bloqueio da corrida por fome foi coberto por teste de unidade; no navegador conferi só que o jogo abre sem erro e que andar não gasta exaustão.
+
 ## Orvalis v0.198.0 — as 8 idades da horta (auditoria #40, 27/11/2026)
 - **ADR 0129 (ciclo da ADR 0116; aprovada nos 4 pontos).** **Trigo, cenoura e batata passam a 8 idades** (Wiki), maduras na 7, amadurecem ~3,5× mais devagar (~10 min em terra bem úmida); o **tomate segue com 3 fases**. **Colheita da Wiki:** trigo 1 + 1–4 sementes; cenoura e batata 2–5 (batata venenosa fora). A planta volta a broto (convenção do Orvalis).
 - **Atlas da horta de 784 × 16** (49 colunas, `GARDEN_LAYOUT`), montado pelas regras do pacote Cultivos (sprites novos do trigo e aparência 03 da cenoura e da batata). **Migração do save:** `TITAN_SAVE_VERSION` 7; nos saves até a v6 as plantas de trigo, cenoura e batata trocam a idade (0 → 0, 1 → 3, 2 → 7), então a madura continua madura.

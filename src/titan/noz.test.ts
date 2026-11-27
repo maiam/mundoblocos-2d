@@ -94,7 +94,7 @@ describe('colher, rebrotar e comer', () => {
 describe('fome ligada (ADR 0060)', () => {
   it('andar, pular e quebrar gastam exaustão; a fome zerada tira vida só até o mínimo (não mata)', () => {
     const v = newVitals(); v.saturation = 0;
-    addExhaustion(v, 100 * EXHAUSTION.walkPerBlock, true); // 100 blocos andados = 10 de exaustão = 2,5 pontos de fome
+    addExhaustion(v, 100 * EXHAUSTION.sprintPerBlock, true); // 100 m correndo = 10 de exaustão = 2,5 pontos de fome (Wiki: correr 0,1 por metro)
     updatePlayerVitals(v, 0.01, false, true);
     expect(v.hunger).toBe(18); expect(v.exhaustion).toBeCloseTo(2, 5);
     const s = newVitals(); s.hunger = 0; s.saturation = 0;
