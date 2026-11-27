@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.191.0 — luz do céu, fase 2: cavernas e interiores escuros (auditoria #32, 27/11/2026)
+- **ADR 0123, fase 2.** O mesher grava a luz do céu da célula que cada face enxerga (`MeshData.sky`) e o shader passa a usar `luz do dia × céu^1,4`, com piso de ~5 % (o escuro total da Wiki) e a luz de bloco somando por cima: **túneis, poços, cômodos fechados e o fundo de escavações ficam escuros de dia, nos dois mundos**, e a lanterna, o braseiro, a fornalha e a tocha passam a fazer diferença. Hora, chuva e noite seguem pelo `uAmbient` (inalterados).
+- Uma edição que fecha ou abre luz refaz só as seções afetadas; as instâncias (mesa, baú, cama, porta, tocha…) leem o céu da vizinhança (`iSky`). O motor ficou mais rápido: **primeira conta ~220 ms e ~3 ms por edição** (eram ~540 e ~17). 648 testes passam. Conferido no navegador (corredor coberto com tocha).
+- **Ainda sem céu:** plantas, itens soltos, animais e a mão (fase 3). Pacote da sala muda (o servidor precisa do `sync-net`).
+
 ## Orvalis v0.190.0 — luz do céu, fase 1: o motor (auditoria #32, 27/11/2026)
 - **ADR 0123 (aprovada nos dois mundos, ciclo da ADR 0116).** Novo `titan/skylight.ts` (`SkyLight`) com as regras da Wiki — céu aberto 15, desce sem perder por blocos transparentes, folhas e água tiram 1 a mais, lados e para cima perdem 1 por célula — e `TitanVolume.skyLight(x, y, z)`, que mantém o céu **por edição** (`update` local, igual à conta inteira nos testes). **Sem efeito visível:** o mesher e o shader ainda não o usam (fase 2); nada o chama em jogo, então não custa nada.
 - Medido: primeira conta ~540 ms e ~17 ms por edição (a otimizar). 646 testes passam (novos: `skylight.test.ts` com 200 edições aleatórias contra a conta inteira, e `orvalis/ceuLuz.test.ts`). Sem mudança de gerador, de save nem de protocolo.

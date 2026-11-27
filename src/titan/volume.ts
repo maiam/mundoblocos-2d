@@ -275,7 +275,7 @@ export class TitanVolume {
     const wasLantern = before === T.LANTERN, isLantern = after === T.LANTERN;
     if (wasLantern && !isLantern) { this.lanterns.delete(key); this.lanternVersion++; }
     if (isLantern && !wasLantern) { this.lanterns.set(key, [x, y, z]); this.lanternVersion++; }
-    if (this.sky && TitanVolume.skyKind(before) !== TitanVolume.skyKind(after)) this.sky.update(x, y, z); // o céu só muda quando a célula muda de classe (ADR 0123)
+    if (this.sky && TitanVolume.skyKind(before) !== TitanVolume.skyKind(after)) { let moved = false; this.sky.update(x, y, z, (cx, cy, cz) => { moved = true; this.markLightCell(cx, cy, cz); }); this.flushLightTouched(); if (moved) this.modelVersion++; } // o céu só muda quando a célula muda de classe; as seções das células que mudaram refazem a malha (ADR 0123)
     const lvBefore = lightLevelOf(before), lvAfter = lightLevelOf(after);
     if (lvBefore !== lvAfter) { if (lvAfter) this.emitters.set(key, [x, y, z, lvAfter]); else this.emitters.delete(key); }
     if (!this.light$.ready) return;

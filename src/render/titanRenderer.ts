@@ -171,7 +171,7 @@ export class TitanRenderer {
     this.atlasTex = tex;
     if (extra.iso) { this.atlasTexIso = pixelTexture(extra.iso.atlas); this.liquidTexIso = pixelTexture(extra.iso.lake); }
     this.opaqueMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true });
-    patchDayLight(this.opaqueMat, this.ambient);
+    patchDayLight(this.opaqueMat, this.ambient, { sky: true });
     // o líquido tem atlas próprio de 16 px (Lago Escuro V2, ADR 0057, reduzido na ADR 0106: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
     this.liquidTex = new THREE.Texture(extra.lake);
     this.liquidTex.colorSpace = THREE.SRGBColorSpace;
@@ -180,7 +180,7 @@ export class TitanRenderer {
     this.liquidTex.generateMipmaps = false;
     this.liquidTex.needsUpdate = true;
     this.liquidMat = new THREE.MeshBasicMaterial({ map: this.liquidTex, vertexColors: true, fog: true, transparent: true, opacity: 0.94, side: THREE.DoubleSide });
-    patchDayLight(this.liquidMat, this.ambient);
+    patchDayLight(this.liquidMat, this.ambient, { sky: true });
 
     const htex = new THREE.Texture(hotbarAtlas);
     htex.colorSpace = THREE.SRGBColorSpace;
@@ -241,7 +241,7 @@ export class TitanRenderer {
     wtex.flipY = false;
     wtex.needsUpdate = true;
     const wmat = new THREE.MeshBasicMaterial({ map: wtex, vertexColors: true, fog: true });
-    patchDayLight(wmat, this.ambient, { instGlow: true });
+    patchDayLight(wmat, this.ambient, { instGlow: true, instSky: true });
     // Marco de Margem e Painel de Junco (ADR 0058): atlas de 144 × 72 px compartilhado; mesma luz de lanterna por instância (`iGlow`) e luz do dia por uniform
     const mtex = new THREE.Texture(extra.margemAtlas);
     mtex.colorSpace = THREE.SRGBColorSpace;
@@ -251,7 +251,7 @@ export class TitanRenderer {
     mtex.flipY = false;
     mtex.needsUpdate = true;
     const mmat = new THREE.MeshBasicMaterial({ map: mtex, vertexColors: true, fog: true });
-    patchDayLight(mmat, this.ambient, { instGlow: true });
+    patchDayLight(mmat, this.ambient, { instGlow: true, instSky: true });
     // Escada de Junco (ADR 0088): cor-base de 256 px própria; a trama de junco pede os dois lados (DoubleSide)
     const etex = new THREE.Texture(extra.escadaAtlas);
     etex.colorSpace = THREE.SRGBColorSpace;
@@ -261,7 +261,7 @@ export class TitanRenderer {
     etex.flipY = false;
     etex.needsUpdate = true;
     const emat = new THREE.MeshBasicMaterial({ map: etex, vertexColors: true, fog: true, side: THREE.DoubleSide });
-    patchDayLight(emat, this.ambient, { instGlow: true });
+    patchDayLight(emat, this.ambient, { instGlow: true, instSky: true });
     // Baú de Rocha e Junco (ADR 0089): cor-base de 256 px própria
     const btex = new THREE.Texture(extra.bauAtlas);
     btex.colorSpace = THREE.SRGBColorSpace;
@@ -271,7 +271,7 @@ export class TitanRenderer {
     btex.flipY = false;
     btex.needsUpdate = true;
     const bmat = new THREE.MeshBasicMaterial({ map: btex, vertexColors: true, fog: true });
-    patchDayLight(bmat, this.ambient, { instGlow: true });
+    patchDayLight(bmat, this.ambient, { instGlow: true, instSky: true });
     // Cama de Junco (ADR 0090): cor-base de 256 px própria; o modelo cobre as duas células
     const ctex2 = new THREE.Texture(extra.camaAtlas);
     ctex2.colorSpace = THREE.SRGBColorSpace;
@@ -281,7 +281,7 @@ export class TitanRenderer {
     ctex2.flipY = false;
     ctex2.needsUpdate = true;
     const camat = new THREE.MeshBasicMaterial({ map: ctex2, vertexColors: true, fog: true });
-    patchDayLight(camat, this.ambient, { instGlow: true });
+    patchDayLight(camat, this.ambient, { instGlow: true, instSky: true });
     // Braseiro de Rocha (ADR 0092): apagado e aceso dividem o atlas de 256 × 320 px; o aceso ganha brilho fixo (ver `syncModels`)
     const brtex = new THREE.Texture(extra.braseiroAtlas);
     brtex.colorSpace = THREE.SRGBColorSpace;
@@ -291,7 +291,7 @@ export class TitanRenderer {
     brtex.flipY = false;
     brtex.needsUpdate = true;
     const brmat = new THREE.MeshBasicMaterial({ map: brtex, vertexColors: true, fog: true });
-    patchDayLight(brmat, this.ambient, { instGlow: true });
+    patchDayLight(brmat, this.ambient, { instGlow: true, instSky: true });
     // Degrau e Cadeira de Junco (ADR 0101): a trama de 64 px repete por face (UV em metros)
     const jtex = new THREE.Texture(extra.juncoTile);
     jtex.colorSpace = THREE.SRGBColorSpace;
@@ -302,7 +302,7 @@ export class TitanRenderer {
     jtex.flipY = false;
     jtex.needsUpdate = true;
     const jmat = new THREE.MeshBasicMaterial({ map: jtex, vertexColors: true, fog: true });
-    patchDayLight(jmat, this.ambient, { instGlow: true });
+    patchDayLight(jmat, this.ambient, { instGlow: true, instSky: true });
     // Degrau de Pedra (ADR 0109): tira de 3 tiles de 16 px (topo | frente | perfil), uma vez por face (sem repetição)
     const dtex = new THREE.Texture(extra.degrauPedra);
     dtex.colorSpace = THREE.SRGBColorSpace;
@@ -312,7 +312,7 @@ export class TitanRenderer {
     dtex.flipY = false;
     dtex.needsUpdate = true;
     const dmat = new THREE.MeshBasicMaterial({ map: dtex, vertexColors: true, fog: true });
-    patchDayLight(dmat, this.ambient, { instGlow: true });
+    patchDayLight(dmat, this.ambient, { instGlow: true, instSky: true });
     // Mureta de Pedra (ADR 0110): tira de 2 tiles de 16 px (topo | face); um modelo por máscara de conexão, gerado em `muretaModel.ts`
     const mtex2 = new THREE.Texture(extra.muretaPedra);
     mtex2.colorSpace = THREE.SRGBColorSpace;
@@ -322,7 +322,7 @@ export class TitanRenderer {
     mtex2.flipY = false;
     mtex2.needsUpdate = true;
     const mumat = new THREE.MeshBasicMaterial({ map: mtex2, vertexColors: true, fog: true });
-    patchDayLight(mumat, this.ambient, { instGlow: true });
+    patchDayLight(mumat, this.ambient, { instGlow: true, instSky: true });
     // Porta de Junco (ADR 0102): a folha de 64 × 128 px, de frente; dois lados visíveis e a matriz espelha para a dobradiça à direita (por isso DoubleSide)
     const ptex = new THREE.Texture(extra.porta);
     ptex.colorSpace = THREE.SRGBColorSpace;
@@ -332,10 +332,10 @@ export class TitanRenderer {
     ptex.flipY = false;
     ptex.needsUpdate = true;
     const pmat = new THREE.MeshBasicMaterial({ map: ptex, vertexColors: true, fog: true, side: THREE.DoubleSide });
-    patchDayLight(pmat, this.ambient, { instGlow: true });
+    patchDayLight(pmat, this.ambient, { instGlow: true, instSky: true });
     // Tocha do Orvalis (ADR 0121): sprites extrudados com a textura do atlas de itens (a mesma `hotbarTex`), sem arquivo de modelo
     const tmat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, fog: true });
-    patchDayLight(tmat, this.ambient, { instGlow: true });
+    patchDayLight(tmat, this.ambient, { instGlow: true, instSky: true });
     const tocha = tochaModels(ITEM_ROWS);
     const batches: Array<[ModelKind, ModelData, THREE.Material]> = [['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
@@ -484,7 +484,7 @@ export class TitanRenderer {
           this.scene.add(n);
           mesh = this.modelMeshes[target] = n;
         }
-        const glow = new Float32Array(mesh.instanceMatrix.count * 3);
+        const glow = new Float32Array(mesh.instanceMatrix.count * 3), skyI = new Float32Array(mesh.instanceMatrix.count).fill(1);
         if (target === 'bauTampa') this.lidIndex.clear();
         if (target === 'porta') this.doorIndex.clear();
         cells.forEach(([x, y, z, turn], i) => {
@@ -496,12 +496,14 @@ export class TitanRenderer {
             this.setDoorMatrix(mesh, d, this.doorAmt.get(key)!);
           }
           else { mat.makeRotationY(turn * Math.PI / 2).setPosition(x + 0.5, y, z + 0.5); mesh.setMatrixAt(i, mat); }
-          let lv = 0;
-          for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz));
+          let lv = 0, sk = this.volume.skyLight(x, y, z);
+          for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz)); sk = Math.max(sk, this.volume.skyLight(x + dx, y + dy, z + dz)); }
+          skyI[i] = sk / 15; // a instância vive no céu da própria célula ou da vizinhança (a mesa, opaca, enxerga o ar em volta)
           const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : kind === 'tocha' || kind === 'tochaParede' ? TORCH_GLOW : 0); // o braseiro aceso e a tocha brilham sozinhos, de dia e de noite
           glow.set([w, w * 0.72, w * 0.38], i * 3);
         });
         mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));
+        mesh.geometry.setAttribute('iSky', new THREE.InstancedBufferAttribute(skyI, 1));
         mesh.count = cells.length;
         mesh.instanceMatrix.needsUpdate = true;
         if (target === 'porta') for (const k of [...this.doorAmt.keys()]) if (!this.doorIndex.has(k)) this.doorAmt.delete(k); // porta que saiu: a próxima nasce no estado dela
@@ -1263,6 +1265,7 @@ function toGeometry(d: MeshData): THREE.BufferGeometry {
   g.setAttribute('uv', new THREE.BufferAttribute(d.uv, 2));
   g.setAttribute('color', new THREE.BufferAttribute(d.col, 3));
   g.setAttribute('glow', new THREE.BufferAttribute(d.glow, 3));
+  g.setAttribute('sky', new THREE.BufferAttribute(d.sky, 1));
   g.setIndex(new THREE.BufferAttribute(d.idx, 1));
   g.computeBoundingSphere();
   return g;
@@ -1281,17 +1284,18 @@ function shadeHeld(geo: THREE.BufferGeometry, shade: (nx: number, ny: number, nz
   geo.setAttribute('glow', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
 }
 
-function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: THREE.Vector3 }, opts: { instGlow?: boolean; time?: { value: number } } = {}): void {
+function patchDayLight(mat: THREE.MeshBasicMaterial, ambient: { value: THREE.Vector3 }, opts: { instGlow?: boolean; time?: { value: number }; sky?: boolean; instSky?: boolean } = {}): void {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uAmbient = ambient;
     if (opts.time) sh.uniforms.uTime = opts.time;
     const sway = opts.time ? '\n#ifdef USE_INSTANCING\ntransformed.x += sin(uTime * 1.7 + instanceMatrix[3].x * 0.9 + instanceMatrix[3].z * 0.7) * 0.07 * position.y;\ntransformed.z += cos(uTime * 1.3 + instanceMatrix[3].z * 0.8) * 0.04 * position.y;\n#endif' : '';
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', `#include <common>\nattribute vec3 glow;\n${opts.instGlow ? 'attribute vec3 iGlow;\n' : ''}${opts.time ? 'uniform float uTime;\n' : ''}varying vec3 vGlow;`)
-      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvGlow = glow${opts.instGlow ? ' + iGlow' : ''};${sway}`);
+      .replace('#include <common>', `#include <common>\nattribute vec3 glow;\n${opts.instGlow ? 'attribute vec3 iGlow;\n' : ''}${opts.sky ? 'attribute float sky;\n' : ''}${opts.instSky ? 'attribute float iSky;\n' : ''}${opts.time ? 'uniform float uTime;\n' : ''}varying vec3 vGlow;${opts.sky || opts.instSky ? '\nvarying float vSky;' : ''}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvGlow = glow${opts.instGlow ? ' + iGlow' : ''};${opts.sky ? '\nvSky = sky;' : opts.instSky ? '\nvSky = iSky;' : ''}${sway}`);
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uAmbient;\nvarying vec3 vGlow;')
-      .replace('#include <color_fragment>', 'diffuseColor.rgb *= vColor.rgb * uAmbient + vGlow;');
+      .replace('#include <common>', `#include <common>\nuniform vec3 uAmbient;\nvarying vec3 vGlow;${opts.sky || opts.instSky ? '\nvarying float vSky;' : ''}`)
+      // luz do céu (ADR 0123): a luz do dia vale só onde o céu chega (curva suave) e nunca cai de ~5 % (o escuro total da Wiki); a luz de bloco (`vGlow`) soma por cima
+      .replace('#include <color_fragment>', opts.sky || opts.instSky ? 'diffuseColor.rgb *= vColor.rgb * max(uAmbient * pow(clamp(vSky, 0.0, 1.0), 1.4), vec3(0.05)) + vGlow;' : 'diffuseColor.rgb *= vColor.rgb * uAmbient + vGlow;');
   };
-  mat.customProgramCacheKey = () => `titan-daylight${opts.instGlow ? '-ig' : ''}${opts.time ? '-sway' : ''}`;
+  mat.customProgramCacheKey = () => `titan-daylight${opts.instGlow ? '-ig' : ''}${opts.time ? '-sway' : ''}${opts.sky ? '-sky' : ''}${opts.instSky ? '-isky' : ''}`;
 }
