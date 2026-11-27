@@ -2,6 +2,7 @@ import { GENERATOR_VERSION, TitanGenerator } from './generator';
 import type { TerrainGen } from './terrain';
 import { HOTBAR, Inventory } from './inventory';
 import type { Bobber } from './fishing';
+import { type Boat, boatsFromData, boatsToData } from './boat';
 import { isItem, Item } from './items';
 import { creatureSpecs, type Farejador, newFromSpec } from './creature';
 import { type Fauna, faunaFromData, faunaSpecs, faunaToData, hasFauna, newFaunaFromSpecs } from './fauna';
@@ -68,6 +69,9 @@ export interface TitanSession {
   /** Relógio só de execução dos drops de bloco (ADR 0082): atraso de coleta e idade; fora do save (recarregar zera). */
   /** Pescaria em curso (ADR 0133): a boia lançada; só de execução, fora do save. */
   fishing: Bobber | null;
+  /** Botes do Orvalis (ADR 0137): no save; `boatRide` = o bote em que o jogador está e a velocidade dele (só de execução). */
+  boats: Boat[];
+  boatRide: { id: string; speed: number } | null;
   /** Blocos de coral vivo sem água em volta, a caminho da morte (ADR 0136): só de execução, fora do save. */
   coralWatch: Map<string, { x: number; y: number; z: number; t: number }>;
   dropFx: Map<string, { delay: number; age: number; /** Queda (ADR 0098): altura real em células e velocidade para baixo; ausentes = repousa. */ fy?: number; vy?: number }>;
@@ -263,7 +267,7 @@ export function fresh(gen: TerrainGen): TitanSession {
   const regrow = new Map<string, number>();
   const crops = new Map<string, Crop>();
   const grants: TitanSession['grants'] = {};
-  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), fauna: faunaFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), fishing: null, coralWatch: new Map(), dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), fauna: faunaFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), fishing: null, coralWatch: new Map(), boats: [], boatRide: null, dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
   return s;
 }
 
@@ -289,7 +293,7 @@ export function resume(gen: TerrainGen, save: TitanSave): TitanSession {
   const crops = validCrops(save.header.crops, volume, save.header.v);
   const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
-  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), fauna: faunaFromSave(save.header.fauna, gen, volume), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), fishing: null, coralWatch: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
+  const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), fauna: faunaFromSave(save.header.fauna, gen, volume), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), fishing: null, coralWatch: new Map(), boats: boatsFromData(save.header.boats), boatRide: null, dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
   // partida de gerador antigo sem a fonte nova: adição localizada e determinística do depósito de brasa (respeita edições, construções e o que já foi consumido)
   const granted = gen.version < 4 && !grants.ember ? grantEmber(s) : false;
   discoverRecipes(s);
@@ -417,7 +421,7 @@ export function tickCrops(s: TitanSession, dt: number, rng: () => number, near: 
 }
 
 export function headerOf(s: TitanSession): TitanHeader {
-  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, ...(hasWeather(s.volume.gen.world) ? { weather: weatherToData(s.weather) } : {}), ...(hasFauna(s.volume.gen) ? { fauna: faunaToData(s.fauna) } : {}), inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'junco' ? c.age : { s: c.species, a: c.age, ...(c.dir !== undefined ? { d: c.dir } : {}) }])) } : {}) };
+  return { v: TITAN_SAVE_VERSION, world: s.volume.gen.world, seed: s.seed, generatorVersion: s.volume.gen.version, savedAt: Date.now(), player: { x: s.body.x, y: s.body.y, z: s.body.z, yaw: s.yaw, pitch: s.pitch }, selected: s.selected, time: s.time, days: s.days, ...(hasWeather(s.volume.gen.world) ? { weather: weatherToData(s.weather) } : {}), ...(hasFauna(s.volume.gen) ? { fauna: faunaToData(s.fauna) } : {}), ...(s.boats.length ? { boats: boatsToData(s.boats) } : {}), inventory: { bag: s.inventory.toData(), collected: [...s.collected].sort() }, recipes: [...s.known].sort(), grants: s.grants.ember ? { ember: s.grants.ember } : undefined, drops: [...s.drops.values()].sort((a, b) => (a.id < b.id ? -1 : 1)), vitals: vitalsToData(s.vitals), ...(s.respawn.size ? { respawn: Object.fromEntries(s.respawn) } : {}), ...(s.spawn ? { spawn: s.spawn } : {}), ...(s.chests.size ? { chests: Object.fromEntries([...s.chests].filter(([, c]) => !chestIsEmpty(c)).map(([k, c]) => [k, chestToData(c)])) } : {}), ...(s.furnaces.size ? { furnaces: Object.fromEntries([...s.furnaces].map(([k, f]) => [k, furnaceToData(f)])) } : {}), ...(s.regrow.size ? { regrow: Object.fromEntries([...s.regrow].map(([id, t]) => [id, Math.round(t * 10) / 10])) } : {}), ...(s.crops.size ? { crops: Object.fromEntries([...s.crops.values()].map((c) => [cropKey(c.x, c.y, c.z), c.species === 'junco' ? c.age : { s: c.species, a: c.age, ...(c.dir !== undefined ? { d: c.dir } : {}) }])) } : {}) };
 }
 
 /**

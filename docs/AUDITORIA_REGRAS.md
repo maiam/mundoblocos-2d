@@ -50,6 +50,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 41 | Pesca | Pesca do Orvalis: vara, boia, espera, fisgada, peixes e comida (parte da #14 E2) | `titan/fishing.ts`, `titan/actions.ts`, `titan/items.ts` | **implementada** (ADR 0133, v0.202.0; Linha e receita da vara na ADR 0134, v0.203.0) |
 | 42 | Flora marinha | Erva marinha, alga e alga seca no fundo da água do Orvalis (parte da #14 E3a) | `titan/voxel.ts`, `titan/orvalis/generator.ts`, `render/floraModel.ts`, `titan/actions.ts` | **implementada** (ADR 0135, v0.204.0; corais = E3b) |
 | 43 | Corais | Corais, gorgônias e blocos de coral do Orvalis, vivos e mortos; recifes (parte da #14 E3b) | `titan/voxel.ts`, `titan/coral.ts`, `titan/orvalis/generator.ts`, `titan/actions.ts` | **implementada** (ADR 0136, v0.205.0; gorgônias de parede pendentes) |
+| 44 | Botes | Botes do Orvalis: colocar, embarcar, remar na água, desembarcar, recolher, persistir (parte da #14 E4a) | `titan/boat.ts`, `titan/actions.ts`, `render/boatView.ts`, `titan/titanGame.ts` | **implementada** (ADR 0137, v0.206.0; com baú = E4b) |
 | 40 | Cultivo | Horta com 8 idades: trigo, cenoura e batata (idades, tempo, colheita da Wiki, migração do save) | `titan/crops.ts`, `titan/actions.ts`, `titan/session.ts`, `scripts/make-orvalis-horta.py` | implementada (ADR 0129, v0.198.0) |
 
 ## Registro das auditorias

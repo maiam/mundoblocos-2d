@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.206.0 — botes do Orvalis (auditoria #14 E4a, 27/11/2026)
+- **ADR 0137 (ciclo da ADR 0116; aprovada nos 5 pontos).** **Botes de carvalho, bétula e cerejeira** (itens 153–155; 5 tábuas da mesma madeira na Mesa de Carpintaria; **atlas de itens 4 × 39**): põem-se na superfície da água, embarca-se tocando, W e S remam, A e D giram o leme (8 m/s, só em água), pular desembarca e segurar recolhe. Modelo 3D do pacote (GLB, ~20 KB cada). **Os botes vão ao save** (`header.boats`, **`TITAN_SAVE_VERSION` 8**). Bote com baú fica para a E4b.
+- 769 testes passam (6 novos em `orvalis/botes.test.ts`); conferido no navegador (bote na água, remar e desembarcar). Sem mudança de protocolo nem de gerador.
+
 ## Orvalis v0.205.0 — corais e recifes do Orvalis (auditoria #14 E3b, 27/11/2026)
 - **ADR 0136 (ciclo da ADR 0116; aprovada na ADR 0135).** **Cinco famílias de coral** (tubo, cérebro, bolha, fogo, chifre) em coral, gorgônia e bloco, vivos e mortos: blocos 160–189 e itens 123–152 (**atlas de itens 4 × 38**, 10 tiles de terreno novos). Coral e gorgônia são plantas aquáticas (só na água, sobre piso firme); o **bloco vivo sem água morre em 3 a 6 s**; quebrar solta o próprio item (sem Toque de Seda). **Gerador v6** com recifes em manchas rasas do mar.
 - 763 testes passam (7 novos em `orvalis/corais.test.ts`); conferido no navegador (blocos e plantas de coral). Sem mudança de save nem de protocolo. Seeds novas mudam o fundo do mar (`ORVALIS_GENERATOR_VERSION` 6).

@@ -21,9 +21,11 @@ import { isoCamera, isoQuarterOf, isoRay, isoYawOf, ISO_RAY_MAX, ISO_REACH, step
 import { type GestureTarget, InteractionGesture } from './gesture';
 import { BENCH_OUT, BENCH_SLOTS, BENCH_START, HOTBAR, SLOTS } from './inventory';
 import { CHEST_SLOTS } from './chest';
-import { aimsLiquid, blockOfItem, foodOf, isBucket, Item, ITEM_NAMES } from './items';
+import { aimsLiquid, isBoatItem, blockOfItem, foodOf, isBucket, Item, ITEM_NAMES } from './items';
 import { stepFishing } from './fishing';
+import { dismountBoat, mountBoat } from './actions';
 import { stepCoral } from './coral';
+import { BOAT_NAMES, BOAT_REACH, boatAim, boatSeat, stepBoat } from './boat';
 import { LANTERN_PAD_MOUSE, LANTERN_PAD_TOUCH } from './lantern';
 import { EYE_HEIGHT, lookVector, raycast, stepBody, type Hit } from './physics';
 import { startPerfHud } from '../dev/perfHud';
@@ -844,14 +846,21 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       aimFauna = session.fauna.length ? faunaAim(session.fauna, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist) : null; // fauna de fazenda: a caixa de acerto da Wiki (ADR 0124)
       if (iso && aimFauna) { const c = session.fauna[aimFauna.index]; if (!c || Math.hypot(c.body.x - b.x, c.body.y - b.y, c.body.z - b.z) > ATTACK_REACH) aimFauna = null; }
       if (aimCreature && aimFauna) { if (aimFauna.dist < aimCreature.dist) aimCreature = null; else aimFauna = null; } // vence o mais perto
+      if (session.boats.length && !session.boatRide) { // bote na mira (ADR 0137): vence o bloco atrás dele e só perde para um animal mais perto; o toque embarca, segurar recolhe
+        const ba = boatAim(session.boats, o.x, o.y, o.z, dx, dy, dz, BOAT_REACH, blockDist), bt = ba ? session.boats[ba.index] : null;
+        if (ba && bt && (!aimCreature || ba.dist < aimCreature.dist) && (!aimFauna || ba.dist < aimFauna.dist)) { aimCreature = null; aimFauna = null; target = { x: Math.floor(bt.x), y: Math.floor(bt.y), z: Math.floor(bt.z), nx: 0, ny: 1, nz: 0, item: `bt:${bt.id}` }; }
+      }
     }
     const c = aimCreature ? session.creatures[aimCreature.index] : null, fa = aimFauna ? session.fauna[aimFauna.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : fa ? `${FAUNA_KINDS[fa.kind].name}${fa.baby ? ' (filhote)' : fa.love > 0 ? ' ♥' : ''} · ${fa.hp}/${maxHp(fa)}` : null;
-    if (txt !== lastAimText) { lastAimText = txt; if (txt) label.textContent = txt; else refresh(); }
+    const boatTxt = target?.item?.startsWith('bt:') ? (BOAT_NAMES[session.boats.find((e) => `bt:${e.id}` === target?.item)?.kind ?? 0]) : null, shown = txt ?? boatTxt;
+    if (shown !== lastAimText) { lastAimText = shown; if (shown) label.textContent = shown; else refresh(); }
   }
   /** Animal na mira (ADR 0069): vence o bloco que está atrás dele; o toque curto o golpeia. */
   let aimCreature: { index: number; dist: number } | null = null;
   let aimFauna: { index: number; dist: number } | null = null; // fauna de fazenda na mira (ADR 0124)
   let nextAttackAt = 0;
+  let boatsDrawn = false;
+  let boatJumpHeld = false; // borda do pulo para desembarcar (ADR 0137)
   const toTarget = (h: Hit | null): GestureTarget | null => {
     if (aimFauna) { const c = session.fauna[aimFauna.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: `f:${aimFauna.index}` } : null; }
     if (aimCreature) { const c = session.creatures[aimCreature.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: String(aimCreature.index) } : null; }
@@ -912,6 +921,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
+      if (t.kind === 'shard' && t.item?.startsWith('bt:')) { const r = mountBoat(session, t.item.slice(3)); if (r.msg) notice(r.msg); if (r.ok) { view.setBoats(session.boats); refresh(); } return { ok: r.ok }; } // tocar no bote embarca (ADR 0137)
       if (t.kind === 'creature' && t.item?.startsWith('f:')) { // fauna de fazenda: comida da espécie na mão alimenta; qualquer outra coisa golpeia (ADR 0125)
         const fi = Number(t.item.slice(2)), fa = session.fauna[fi], held = session.inventory.get(session.selected);
         if (fa && held && isBreedFood(fa.kind, held.item)) { const r = feedFaunaFromSlot(session, fi); if (r.msg) notice(r.msg); if (r.consumed) { view.swingHand(); onEdited(); refresh(); } return { ok: r.ok }; }
@@ -931,7 +941,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (r.msg) notice(r.msg);
       if (r.ok) {
         const b = held ? blockOfItem(held.item) : null;
-        if (held?.item === Item.VARA_PESCA) { if (session.fishing) gameAudio.playWaterPour(); else gameAudio.playWaterScoop(); view.setItems(visibleItems(session)); } // lançar e recolher a linha (ADR 0133)
+        if (isBoatItem(held?.item)) { gameAudio.playWaterPour(); view.setBoats(session.boats); } // bote na água (ADR 0137)
+        else if (held?.item === Item.VARA_PESCA) { if (session.fishing) gameAudio.playWaterPour(); else gameAudio.playWaterScoop(); view.setItems(visibleItems(session)); } // lançar e recolher a linha (ADR 0133)
         else if (held && isBucket(held.item)) { if (held.item === Item.BALDE) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } // recolher e despejar têm som de água (ADR 0095)
         else if (b === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b ?? undefined) ?? 'rock');
         onEdited(); refresh();
@@ -1052,11 +1063,18 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const dirZ = -Math.cos(session.yaw) * fx - Math.sin(session.yaw) * sx;
       const moved = dirX !== 0 || dirZ !== 0;
       if (iso && moved) facing = Math.atan2(-dirX, -dirZ); // o boneco olha para onde anda
-      const px = b.x, pz = b.z;
+      let px = b.x, pz = b.z;
       const wasOnGround = b.onGround;
       const sprint = canSprint(vitals) && fwdSince > 0 && now - fwdSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // com fome ≤ 6 não corre (Wiki, ADR 0130); // joystick todo à frente por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
       sprintOn = sprint; view.setSprint(sprint);
-      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint, pitch: iso ? undefined : session.pitch }, dt);
+      const ride = session.boatRide, boat = ride ? session.boats.find((e) => e.id === ride.id) : undefined, jumpNow = keys.has('Space') || input.jump;
+      if (ride && !boat) session.boatRide = null;
+      if (ride && boat) { // a bordo (ADR 0137): W e S remam, A e D giram o leme, pular desembarca; o corpo segue o assento (sem passos, sem queda, sem fôlego gasto na água)
+        if (jumpNow && !boatJumpHeld) { dismountBoat(session); notice('Desembarcou'); }
+        else { ride.speed = stepBoat(vol, boat, ride.speed, { forward: fx, turn: -sx }, dt); const p = boatSeat(boat); b.x = p.x; b.y = p.y; b.z = p.z; b.vx = b.vy = b.vz = 0; b.onGround = true; b.inLiquid = false; }
+        px = b.x; pz = b.z; playerDirty = true; view.setBoats(session.boats);
+      } else stepBody(vol, b, { dirX, dirZ, jump: jumpNow, sprint, pitch: iso ? undefined : session.pitch }, dt);
+      boatJumpHeld = jumpNow;
       if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, sprintOn ? EXHAUSTION.sprintJump : EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
       addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * (sprintOn ? EXHAUSTION.sprintPerBlock : EXHAUSTION.walkPerBlock));
       if (moved || !b.onGround) playerDirty = true;
@@ -1077,6 +1095,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         if (m) gameAudio.playFootstep(m);
       }
     } else { sprintOn = false; view.setSprint(false); if (b.y < 200) stepBody(vol, b, { dirX: 0, dirZ: 0, jump: false }, dt); } // parado: só assenta no chão
+    if (session.boats.length || boatsDrawn) { view.setBoats(session.boats); boatsDrawn = session.boats.length > 0; } // os botes acompanham a lista (ADR 0137)
     if (client && playing) { // posição ~10×/s e a bolsa mexida na interface a cada segundo
       if (now - lastStateAt >= 100) { lastStateAt = now; client.sendState(); }
       if (now - lastBagAt >= 1000) { lastBagAt = now; client.syncBag(); }

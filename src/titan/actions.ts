@@ -1,8 +1,9 @@
 import { hoeResult, shovelResult } from './soil';
-import { blockOfItem, dropCountOf, foodOf, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
+import { blockOfItem, dropCountOf, foodOf, isBoatItem, isBucket, isHoe, isPick, isShovel, Item, ITEM_NAMES, itemOfBlock, maxStack } from './items';
 import type { Drop } from './save';
 import { newBobber, rollFish } from './fishing';
 import { watchCoral } from './coral';
+import { BOAT_NAMES, BOAT_REACH, BOAT_Y, boatFits, boatSeat, boatWater, newBoatId } from './boat';
 import { hash2 } from '../world/random';
 import { NUT_REGROW_S, NUT_YIELD } from './nuts';
 import { resolveSlabPlacement } from './slabs';
@@ -32,6 +33,7 @@ export const amberYield = (x: number, y: number, z: number): 1 | 2 => (hash2(0xa
 
 /** Recolhe um fragmento de superfície à mão: 1 lasca = 1 fragmento. Mochila cheia: a lasca fica no lugar. */
 export function collectItem(s: TitanSession, id: string): ActionResult {
+  if (id.startsWith('bt:')) return pickBoat(s, id.slice(3)); // o bote vazio se recolhe segurando (ADR 0137)
   if (id.startsWith('reed:')) return collectReed(s, id);
   if (id.startsWith('nut:')) return collectNut(s, id);
   if (id.startsWith('crop:')) return collectCrop(s, id);
@@ -115,6 +117,51 @@ function releaseTorches(s: TitanSession, x: number, y: number, z: number): void 
     const id = s.volume.get(x + dx, y, z + dz);
     if (isWallTorch(id)) { const [fx, fz] = ladderFacing(wallTorchTurn(id)); if (fx === dx && fz === dz) drop(x + dx, y, z + dz); } // a chama aponta para longe do apoio
   }
+}
+
+/**
+ * Botes (ADR 0137). Com o bote na mão, o toque na superfície da água o põe lá (o casco precisa caber só em água, sem outro bote em cima); tocar no bote embarca; pular desembarca; segurar num bote vazio o recolhe como item.
+ */
+export function placeBoat(s: TitanSession, hit: Hit, slot: number, kind: number): ActionResult {
+  const v = s.volume, x = hit.x + 0.5, z = hit.z + 0.5;
+  if (hit.item || !boatWater(v, x, z)) return { ok: false, msg: 'O bote se põe na superfície da água' };
+  if (!boatFits(v, x, z, s.yaw)) return { ok: false, msg: 'Falta água para o bote' };
+  if (s.boats.length >= 64 || s.boats.some((b) => Math.hypot(b.x - x, b.z - z) < 1.6)) return { ok: false, msg: 'Já há um bote aqui' };
+  s.boats.push({ id: newBoatId(s.boats), kind, x, y: BOAT_Y, z, yaw: s.yaw });
+  s.inventory.consume(slot);
+  s.metaRev++;
+  return { ok: true, msg: BOAT_NAMES[kind] };
+}
+
+/** Embarca no bote `id`, se está ao alcance e o jogador não está em outro. */
+export function mountBoat(s: TitanSession, id: string): ActionResult {
+  const b = s.boats.find((e) => e.id === id);
+  if (!b || s.boatRide) return { ok: false };
+  if (Math.hypot(b.x - s.body.x, b.z - s.body.z) > BOAT_REACH + 1.5) return { ok: false, msg: 'Longe demais do bote' };
+  s.boatRide = { id, speed: 0 };
+  const p = boatSeat(b);
+  s.body.x = p.x; s.body.y = p.y; s.body.z = p.z; s.body.vx = s.body.vy = s.body.vz = 0; s.body.inLiquid = false; s.body.onGround = true;
+  return { ok: true, msg: 'A bordo · W e S remam, A e D giram, pular desembarca' };
+}
+
+/** Desembarca: o jogador sai da cabine para cima do bote (e cai na água, se for o caso). */
+export function dismountBoat(s: TitanSession): void {
+  const ride = s.boatRide, b = ride && s.boats.find((e) => e.id === ride.id);
+  s.boatRide = null;
+  if (b) { s.body.x = b.x; s.body.z = b.z; s.body.y = b.y + 0.6; s.body.vx = s.body.vy = s.body.vz = 0; }
+}
+
+/** Recolhe o bote vazio: volta como item (ou cai ao lado se a mochila está cheia). */
+export function pickBoat(s: TitanSession, id: string): ActionResult {
+  const i = s.boats.findIndex((e) => e.id === id), b = s.boats[i];
+  if (!b) return { ok: false };
+  if (s.boatRide?.id === id) return { ok: false, msg: 'Desça antes de recolher o bote' };
+  const item = Item.BOTE_CARVALHO + b.kind;
+  s.boats.splice(i, 1);
+  s.metaRev++;
+  if (s.inventory.canAdd(item, 1)) s.inventory.add(item, 1);
+  else { let n = 0; while (s.drops.has(`m:bote:${n}`)) n++; restDrop(s, `m:bote:${n}`, item, b.x, LAKE_LAST_Y + 1, b.z, 1); }
+  return { ok: true, msg: BOAT_NAMES[b.kind] };
 }
 
 /**
@@ -667,6 +714,7 @@ function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResul
   const stack = s.inventory.get(slot);
   if (!stack) return { ok: false };
   if (isHoe(stack.item) || isShovel(stack.item)) return useSoilTool(s, hit, isHoe(stack.item)); // arar e abrir caminho (ADR 0112)
+  if (isBoatItem(stack.item)) return placeBoat(s, hit, slot, stack.item - Item.BOTE_CARVALHO); // bote na água (ADR 0137)
   { const wp = blockOfItem(stack.item); if (wp !== null && (stack.item === Item.ERVA_MARINHA || stack.item === Item.ALGA || isCoralPlant(wp) || isCoralFan(wp))) return placeWaterPlant(s, hit, slot, wp === T.KELP ? T.KELP : wp); } // flora marinha e corais (ADR 0135, 0136)
   if (stack.item === Item.VARA_PESCA) return useRod(s, hit, slot); // lançar e recolher a linha (ADR 0133)
   if (isBucket(stack.item)) return useBucket(s, hit, slot); // o balde recolhe e despeja líquido (ADR 0091)

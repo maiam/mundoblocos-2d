@@ -9,7 +9,7 @@
  * v5 (ADR 0047): hotbar de 9 + mochila de 27; o inventário gravado vira `v: 2` (36 espaços); saves v1–v4 migram por seção ao abrir (`Inventory.fromData`).
  * v4 (ADR 0045): `recipes` (receitas descobertas) e `grants` (adição localizada de brasa em partida legada); a cápsula remanescente vira brasa uma única vez ao abrir um save < 4.
  */
-export const TITAN_SAVE_VERSION = 7;
+export const TITAN_SAVE_VERSION = 8;
 const DB_NAME = 'orvalis-titan';
 /** Banco de cada mundo voxel: o Orvalis tem o próprio (as seeds dos dois mundos nunca se misturam; ADR 0105). */
 const DB_NAMES: Record<VoxelWorld, string> = { titan: DB_NAME, orvalis: 'orvalis-voxel' };
@@ -56,9 +56,12 @@ export interface TitanHeader {
   weather?: { raining: boolean; timer: number };
   /** Fauna de fazenda do Orvalis (ADR 0126): a população da partida (inclui filhotes, vida, descanso). Ausente = a população da seed; presente, mesmo vazio, no lugar dela. */
   fauna?: FaunaData[];
+  /** Botes do Orvalis (ADR 0137): posição, giro e madeira de cada um (quem está a bordo não vai ao save). Ausente = nenhum. */
+  boats?: BoatData[];
 }
 /** Item solto no mundo: lasca (5 = fragmento de rocha, 6 = de gelo, 11 = brasa de âmbar, 12 = junco) ou pilha caída ao morrer (qualquer item, com `count`). A célula é onde pousa. */
 export interface Drop { id: string; item: number; /** Pilha solta ao morrer (ADR 0059): quantas unidades; ausente = 1 (as lascas). */ count?: number; /** Ferramenta desgastada caída na morte (ADR 0067): pontos de desgaste. */ wear?: number; x: number; y: number; z: number }
+import type { BoatData } from './boat';
 import type { FaunaData } from './fauna';
 import type { InventoryData } from './inventory';
 import type { VoxelWorld } from './terrain';
