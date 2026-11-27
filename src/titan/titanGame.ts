@@ -1053,7 +1053,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const wasOnGround = b.onGround;
       const sprint = canSprint(vitals) && fwdSince > 0 && now - fwdSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // com fome ≤ 6 não corre (Wiki, ADR 0130); // joystick todo à frente por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
       sprintOn = sprint; view.setSprint(sprint);
-      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint }, dt);
+      stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint, pitch: iso ? undefined : session.pitch }, dt);
       if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, sprintOn ? EXHAUSTION.sprintJump : EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
       addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * (sprintOn ? EXHAUSTION.sprintPerBlock : EXHAUSTION.walkPerBlock));
       if (moved || !b.onGround) playerDirty = true;

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.201.0 — água animada e correr nadando (auditoria #14, 27/11/2026)
+- **ADR 0132 (ciclo da ADR 0116; aprovada).** **Água do lago do Orvalis com 8 quadros** (pacote "Água, rios e mares", `make-orvalis-agua.py`, 0,4 s por quadro; Lago do Titã intacto). **Correr nadando:** na água, correndo, o corpo segue a direção do olhar (`MoveInput.pitch`). Fluxo e fonte infinita adiados. Artes marinhas (pesca, navegação, recifes) importadas para `assets-src/orvalis-voxel/{agua,mar}/`, ainda sem uso.
+- 740 testes passam (5 novos); conferido no navegador (a água muda de quadro). Sem mudança de save, de gerador nem de protocolo.
+
 ## Orvalis v0.200.0 — itens soltos e coleta pela Wiki (auditoria #18, 27/11/2026)
 - **ADR 0131 (ciclo da ADR 0116; aprovada nos 4 pontos).** Atraso de coleta 0,5 s e alcance 1,425; **todo item solto some em 5 min** (antes só os de bloco), exceto a pilha da morte; **itens iguais na mesma célula se fundem** até a pilha máxima (`mergeDrops`). Jogar item (atraso de 2 s), lava, fogo e cacto ficam pendentes (não existem).
 - 735 testes passam (3 novos em `dropsWiki.test.ts`). Sem mudança de save, de gerador nem de protocolo.

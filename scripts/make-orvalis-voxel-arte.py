@@ -199,17 +199,7 @@ def main() -> None:
     wall_icon(mu['topo'], mu['face']).save(f'{ICO}mureta_de_pedra.png')  # item 61 (ADR 0110)
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)
-    w1 = to_tile(Image.open(WATER_SRC).convert('RGBA'), WATER_SRC)
-    w2 = Image.new('RGBA', (32, 32))  # 2º quadro: a mesma água deslocada (a textura é seamless): a ondulação de 2 quadros do motor
-    for y in range(32):
-        for x in range(32):
-            w2.putpixel(((x + 11) % 32, (y + 7) % 32), w1.getpixel((x, y)))
-    lat = shade(w1, 0.9)
-    for px, out in WATER_OUT.items():  # 4 células por tamanho (topo 1, topo 2, lateral, lateral), reduzidas por média
-        sheet = Image.new('RGBA', (4 * px, px))
-        for i, c in enumerate((w1, w2, lat, lat)):
-            sheet.paste(c.resize((px, px), Image.BOX), (i * px, 0))
-        sheet.save(out, 'WEBP', lossless=True, method=6)
+    # a água animada (8 quadros) vem de `make-orvalis-agua.py` (ADR 0132); `agua_32px.png` segue só como fonte do ícone isométrico
     water = ', '.join(WATER_OUT.values())
     print(f'tiles: {made} criados de {len(tiles)} (os outros já existiam e foram mantidos) · ícones {len(icons)} · {water}')
 

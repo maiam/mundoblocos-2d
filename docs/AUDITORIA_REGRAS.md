@@ -21,7 +21,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 11 | Tempo | Random ticks e passo de simulação (cultivo, braseiro, respawn) | `titan/crops.ts`, `titan/session.ts` | pendente |
 | 12 | Física | Gravidade, pulo, corrida, velocidade e dano de queda | `titan/physics.ts`, `titan/vitals.ts` | pendente |
 | 13 | Física | Colisão por caixa, degrau automático (0,6 m), salto automático, escada | `titan/physics.ts`, `titan/voxel.ts` | pendente |
-| 14 | Física | Água: flutuar, sair da água, mergulho, balde (sem fluxo) | `titan/physics.ts`, `titan/underwater.ts`, `titan/actions.ts` | pendente |
+| 14 | Física | Água: flutuar, sair da água, mergulho, balde (sem fluxo) | `titan/physics.ts`, `titan/underwater.ts`, `titan/actions.ts` | **parcial** (ADR 0132, v0.201.0: correr nadando e água animada feitos; fluxo e fonte infinita adiados) |
 | 15 | Blocos e ações | Colocar bloco: alcance, apoio, colisão com o jogador, orientação | `titan/actions.ts`, `titan/aim.ts`, `titan/slabs.ts` | pendente |
 | 16 | Blocos e ações | Quebra progressiva: tempo por bloco, ferramenta certa, mão nua | `titan/breaking.ts`, `titan/gesture.ts` | implementada (ADR 0117, v0.184.0) |
 | 17 | Blocos e ações | Durabilidade das ferramentas e custo por ação | `titan/wear.ts`, `titan/items.ts` | pendente |
