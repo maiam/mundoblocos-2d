@@ -41,6 +41,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 31 | Tempo | Clima: chuva e tempestade (hoje inexistente) | — `titan/weather.ts`, `titan/sky.ts`, `net/titan/room.ts` | implementada (ADR 0118, v0.185.0) |
 | 32 | Luz | Luz do céu (sky light) e escuridão em cavernas e interiores (hoje inexistente: a luz do dia é um uniform global) | `titan/sky.ts`, `titan/mesher.ts`, `titan/light.ts` | proposta enviada (27/11/2026, detalhada após a Tocha) |
 | 33 | Luz | Tocha do Orvalis (fonte de luz 14: receita, colocação em topo e laterais, quebra instantânea) | `titan/voxel.ts`, `titan/actions.ts`, `render/tochaModel.ts` | implementada (ADR 0121, v0.188.0) |
+| 34 | Mineração | Carvão mineral: minério de carvão (geração, dureza, queda), Carvão e Bloco de Carvão (combustível, Tocha) | `titan/ores.ts`, `titan/orvalis/generator.ts`, `titan/furnace.ts` (a criar) | proposta enviada (27/11/2026) |
 
 ## Registro das auditorias
 _(cada auditoria entra aqui com a data, a decisão e a ADR ou item do CHANGELOG que a implementou.)_
