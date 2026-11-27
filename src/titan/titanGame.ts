@@ -44,7 +44,7 @@ import { fetchRoomCounts, onlineAvailable } from '../net/socket';
 import { TitanClient } from '../net/titan/client';
 import { TitanLoopbackServer } from '../net/titan/loopback';
 import { TitanSocket } from '../net/titan/socket';
-import { TITAN_MAX_PLAYERS, TITAN_ROOMS, titanRoomById, type WireHit } from '../net/titan/protocol';
+import { TITAN_MAX_PLAYERS, titanRoomById, titanRoomsOf, type WireHit } from '../net/titan/protocol';
 import { flush, hasPendingState, openSession, type TitanSession, UnsupportedVersionError, visibleItems, discoverRecipes, standingReeds, standingNuts, standingCrops, isRaining, tickWeather, tickCrops, tickRegrow } from './session';
 
 /**
@@ -76,7 +76,6 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   return img;
 }
 
-const TITAN_ROOMS_FIRST = TITAN_ROOMS[0];
 export async function startTitan(canvas: HTMLCanvasElement, search: string, storageArg?: TitanStorage, world: VoxelWorld = 'titan'): Promise<void> {
   const q = new URLSearchParams(search);
   const orvalis = world === 'orvalis'; // Orvalis em voxel (ADR 0105): o mesmo motor com outro gerador, outro banco, céu azul e a água do Orvalis; sem salas por enquanto
@@ -85,7 +84,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // `?cena=texturas` (só no `npm run dev`): vitrine plana de blocos para conferir a arte do atlas no motor; nada é gravado (ADR 0105)
   const texScene = import.meta.env.DEV && q.get('cena') === 'texturas';
   // `?sala=101`: entra numa sala cooperativa do servidor (ADR 0104); `&loopback=1` usa um servidor em memória na própria página (teste). Sala = nada é gravado neste aparelho.
-  const roomId = Number(q.get('sala')), room = orvalis ? null : titanRoomById(roomId) ?? null;
+  const firstRoom = titanRoomsOf(world)[0]; // a primeira sala do mundo (Titã 1 ou Orvalis 1, ADR 0138)
+  const roomId = Number(q.get('sala')), room = (() => { const r = titanRoomById(roomId); return r && r.world === world ? r : null; })(); // só vale a sala do mundo em que se joga
   const storage = storageArg ?? (scene || texScene || room ? new MemoryTitanStorage() : defaultTitanStorage(world));
   let client: TitanClient | null = null;
   // `?fps=1`: painel de desempenho (FPS, GPU, memória) com o tempo de cada etapa do Titã: luz, malha, geometria, desenho.
@@ -127,7 +127,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   } catch (e) {
     if (room) { // a sala recusou ou não respondeu: volta ao modo solo com um aviso (nada de página parada)
       const msg = e instanceof Error ? e.message : '';
-      const why = /não encontrada/i.test(msg) ? 'O servidor ainda não tem as salas do Titã.' : /versão/i.test(msg) ? 'O servidor está em outra versão do jogo.' : msg || 'Não foi possível entrar na sala.';
+      const why = /não encontrada/i.test(msg) ? `O servidor ainda não tem as salas do ${orvalis ? 'Orvalis' : 'Titã'}.` : /versão/i.test(msg) ? 'O servidor está em outra versão do jogo.' : msg || 'Não foi possível entrar na sala.';
       const u = new URL(window.location.href);
       u.searchParams.delete('sala'); u.searchParams.delete('loopback'); u.searchParams.set('aviso', `${why} Jogando sozinho.`);
       window.location.replace(u);
@@ -623,19 +623,19 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // Lista de salas (ADR 0104): o botão mostra quantos jogam agora (`GET /salas`, a cada 20 s); dentro da sala, quantos estão aqui; com a conexão perdida, oferece reconectar
   const roomBtn = el('button', 'titan-btn', menu);
   roomBtn.type = 'button';
-  roomBtn.hidden = scene || texScene || orvalis; // salas do Orvalis em voxel: ainda não (ADR 0105)
+  roomBtn.hidden = scene || texScene || !firstRoom; // salas por mundo (ADR 0104, 0138)
   let roomCount: { players: number; max: number } | null = null, roomLost = false, roomSupported = true;
   const paintRoomBtn = (): void => {
     const max = roomCount?.max ?? TITAN_MAX_PLAYERS;
     roomBtn.disabled = !room && !roomSupported;
-    roomBtn.textContent = !room && !roomSupported ? 'Salas do Titã: servidor sem suporte ainda' : roomLost ? 'Reconectar à sala' : room ? `Sair da sala (${(client?.remotes.size ?? 0) + 1}/${max})` : `Jogar na sala: ${TITAN_ROOMS_FIRST.name}${roomCount ? ` (${roomCount.players}/${roomCount.max})` : ''}`;
+    roomBtn.textContent = !room && !roomSupported ? `Salas do ${orvalis ? 'Orvalis' : 'Titã'}: servidor sem suporte ainda` : roomLost ? 'Reconectar à sala' : room ? `Sair da sala (${(client?.remotes.size ?? 0) + 1}/${max})` : `Jogar na sala: ${firstRoom.name}${roomCount ? ` (${roomCount.players}/${roomCount.max})` : ''}`;
   };
   paintRoomBtn();
   if (!scene && !room && onlineAvailable(window.location.hostname)) { // fora do site oficial o servidor recusa a conexão: não consulta
-    const poll = (): void => { void fetchRoomCounts().then((c) => { roomCount = c?.[TITAN_ROOMS_FIRST.id] ?? null; roomSupported = c === null || !!c[TITAN_ROOMS_FIRST.id]; paintRoomBtn(); }); }; // /salas respondeu sem a sala do Titã = o servidor ainda não a tem
+    const poll = (): void => { void fetchRoomCounts().then((c) => { roomCount = c?.[firstRoom.id] ?? null; roomSupported = c === null || !!c[firstRoom.id]; paintRoomBtn(); }); }; // /salas respondeu sem a sala do Titã = o servidor ainda não a tem
     poll(); window.setInterval(poll, 20000);
   }
-  roomBtn.addEventListener('click', () => { if (roomLost) { window.location.reload(); return; } const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(TITAN_ROOMS_FIRST.id)); window.location.assign(u); });
+  roomBtn.addEventListener('click', () => { if (roomLost) { window.location.reload(); return; } const u = new URL(window.location.href); if (room) { u.searchParams.delete('sala'); u.searchParams.delete('loopback'); } else u.searchParams.set('sala', String(firstRoom.id)); window.location.assign(u); });
   const newBtn = el('button', 'titan-btn', menu, 'Nova partida');
   if (scene || texScene || room) newBtn.hidden = true;
   newBtn.type = 'button';

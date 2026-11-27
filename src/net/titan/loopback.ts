@@ -15,7 +15,7 @@ export class TitanLoopbackServer {
   private readonly links = new Map<string, (m: TitanServerMessage) => void>();
 
   constructor(rand: () => number = Math.random) {
-    for (const r of TITAN_ROOMS) this.rooms.set(r.id, new TitanRoom(r.id, r.name, r.seed, rand));
+    for (const r of TITAN_ROOMS) this.rooms.set(r.id, new TitanRoom(r.id, r.name, r.seed, rand, r.world));
   }
 
   connect(): TitanTransport {

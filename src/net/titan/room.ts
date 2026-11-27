@@ -5,6 +5,10 @@ import { stepFarejador, type Farejador } from '../../titan/creature';
 import { furnaceToData } from '../../titan/furnace';
 import { stepDrops } from '../../titan/drops';
 import { TitanGenerator } from '../../titan/generator';
+import { OrvalisGenerator, orvalisGeneratorFor } from '../../titan/orvalis/generator';
+import { stepCoral } from '../../titan/coral';
+import { isBoatItem, Item } from '../../titan/items';
+import type { VoxelWorld } from '../../titan/terrain';
 import { Inventory } from '../../titan/inventory';
 import { EYE_HEIGHT, newBody } from '../../titan/physics';
 import type { ChunkRecord, TitanHeader } from '../../titan/save';
@@ -61,8 +65,10 @@ export class TitanRoom {
   private clock = 0;
   private timeDirty = false;
 
-  constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random) {
-    this.world = fresh(new TitanGenerator(seed));
+  /** `kind` = o mundo da sala (ADR 0138): o Titã ou o Orvalis em voxel, cada um com o gerador, os itens e as regras dele. A fauna, a pesca e os botes do Orvalis ainda não vão pela sala (próximas entregas). */
+  constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random, readonly kind: VoxelWorld = 'titan') {
+    this.world = fresh(kind === 'orvalis' ? new OrvalisGenerator(seed) : new TitanGenerator(seed));
+    if (kind === 'orvalis') this.world.fauna = [];
     this.hook();
   }
 
@@ -151,7 +157,7 @@ export class TitanRoom {
     if (near) {
       r = { ok: false };
       switch (a.k) {
-        case 'place': r = placeFromSlot(v, a.hit, a.slot); break;
+        case 'place': { const held = v.inventory.get(a.slot)?.item; r = held === Item.VARA_PESCA || isBoatItem(held) ? { ok: false, msg: 'Ainda não disponível nas salas' } : placeFromSlot(v, a.hit, a.slot); break; } // pesca e botes: próximas entregas (ADR 0138)
         case 'break': r = breakOrCollect(v, a.hit); break;
         case 'use': r = this.useCell(p, a.x, a.y, a.z); break;
         case 'chest': {
@@ -236,6 +242,7 @@ export class TitanRoom {
     if (tickFurnaces(w, dt)) this.dirty = true;
     if (tickRegrow(w, dt)) this.dirty = true;
     stepDrops(w, dt);
+    if (w.coralWatch.size && stepCoral(w, dt)) this.dirty = true; // o bloco de coral vivo sem água morre também na sala (ADR 0136)
     const n = Math.max(1, this.players.size);
     for (const p of this.players.values()) {
       const b = p.view.body;
@@ -285,9 +292,11 @@ export class TitanRoom {
   /** Restaura uma sala vazia a partir de um `snapshot`; devolve `false` (sem mudar nada) se a seed ou o gerador não batem. */
   restore(snap: TitanRoomSnapshot): boolean {
     if (!snap || snap.v !== TITAN_SNAPSHOT_VERSION || !snap.header || snap.header.seed !== this.seed || this.players.size) return false;
-    const gen = generatorFor(snap.header.seed, snap.header.generatorVersion);
+    if ((snap.header.world ?? 'titan') !== this.kind) return false; // o arquivo da sala é de outro mundo
+    const gen = this.kind === 'orvalis' ? orvalisGeneratorFor(snap.header.seed, snap.header.generatorVersion) : generatorFor(snap.header.seed, snap.header.generatorVersion);
     if (!gen) return false;
     this.world = resume(gen, { header: snap.header, chunks: snap.chunks });
+    if (this.kind === 'orvalis') this.world.fauna = []; // a fauna do Orvalis ainda não é da sala (ADR 0138)
     this.saved.clear();
     for (const [k, v] of Object.entries(snap.players ?? {})) this.saved.set(k, v);
     this.pending = [];
