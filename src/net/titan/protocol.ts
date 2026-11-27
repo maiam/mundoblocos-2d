@@ -7,7 +7,7 @@ import type { VoxelWorld } from '../../titan/terrain';
  * Protocolo das salas do Titã (ADR 0104): paralelo ao do mundo principal (`net/protocol.ts`), porque o Titã tem motor próprio (`TitanVolume`).
  * Compartilhado com o servidor (`build:net`): sem DOM. Mudou uma mensagem de forma incompatível → suba `TITAN_PROTOCOL_VERSION` e o servidor junto.
  */
-export const TITAN_PROTOCOL_VERSION = 3;
+export const TITAN_PROTOCOL_VERSION = 4; // 4 (ADR 0138, entrega B): fauna de fazenda do Orvalis pela sala (mensagem `fauna`, ações `strikeFauna` e `feedFauna`)
 export const TITAN_MAX_PLAYERS = 10;
 export const TITAN_NAME_MIN = 2, TITAN_NAME_MAX = 16;
 /** Salas fixas do Titã (ids acima dos do mundo principal, que usam 1…). Cooperativas de sobrevivência: vida, fome, ar e morte valem. */
@@ -34,6 +34,9 @@ export type TitanAction =
   | { k: 'furnace'; x: number; y: number; z: number; op: 'out'; kind: 'input' | 'fuel' | 'output' }
   /** Golpe no Farejador `id` com o item da mão (ADR 0069). */
   | { k: 'strike'; id: string }
+  /** Fauna de fazenda do Orvalis (ADR 0138): golpe no animal `id` com o item da mão; ou alimentá-lo com a comida da mão (a sala escolhe pelo item selecionado). */
+  | { k: 'strikeFauna'; id: string }
+  | { k: 'feedFauna'; id: string }
   /** Morte: a sala solta as pilhas onde o corpo está e devolve o renascer (vale com vida zerada no último `state`). */
   | { k: 'die' };
 
@@ -51,6 +54,8 @@ export type TitanClientMessage =
 export type Edit = [number, number, number, number];
 /** Farejador na rede: o que o aparelho precisa para desenhar, animar e mirar. */
 export interface WireCreature { id: string; kind: 'pequeno' | 'grande'; x: number; y: number; z: number; vx: number; vz: number; yaw: number; phase: 'wander' | 'charge' | 'stunned' | 'return'; t: number; hp: number; hurt: number; clock: number; aggro: number }
+/** Animal de fazenda na rede (ADR 0138): o que o aparelho precisa para desenhar, animar e mirar (`id` estável; `m` = anda; `l` = em amor; `b` = filhote; `hu` = segundos desde o último golpe; `c` = relógio da animação). */
+export interface WireFauna { id: string; k: 'porco' | 'vaca' | 'ovelha' | 'galinha'; x: number; y: number; z: number; yaw: number; ph: 'wander' | 'panic'; b: 0 | 1; hp: number; l: 0 | 1; m: 0 | 1; hu: number; c: number }
 /** Estado completo da sala para quem entra (o formato do cabeçalho do save local: o aparelho abre com `resume`). */
 export interface TitanWelcome { t: 'welcome'; id: number; header: TitanHeader; chunks: ChunkRecord[]; players: TitanPlayerInfo[]; you: TitanPlayerState & { bag: InventoryData; vitals: VitalsData; spawn: { x: number; y: number; z: number } | null } }
 export type TitanServerMessage =
@@ -62,6 +67,8 @@ export type TitanServerMessage =
   | { t: 'edits'; cells: Edit[] }
   /** Farejadores perto de algum jogador (estado de desenho e de mira). */
   | { t: 'creatures'; list: WireCreature[] }
+  /** Fauna de fazenda perto de quem recebe (os 40 mais próximos a até 64 m; ADR 0138). */
+  | { t: 'fauna'; list: WireFauna[] }
   /** Levou um golpe de Farejador: o aparelho tira a vida. */
   | { t: 'hurt'; damage: number; kind: 'pequeno' | 'grande' }
   /** Conteúdo novo de um baú (`x,y,z`) ou de todos os braseiros com estado. */
@@ -125,6 +132,7 @@ export function parseTitanAction(v: unknown): TitanAction | null {
     return null;
   }
   if (a.k === 'strike') return typeof o.id === 'string' && o.id.length > 0 && o.id.length <= 20 ? { k: 'strike', id: o.id } : null;
+  if (a.k === 'strikeFauna' || a.k === 'feedFauna') return typeof o.id === 'string' && o.id.length > 0 && o.id.length <= 40 ? { k: a.k, id: o.id } : null;
   if (a.k === 'die') return { k: 'die' };
   return null;
 }

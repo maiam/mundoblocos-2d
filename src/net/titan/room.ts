@@ -1,5 +1,7 @@
 import { breakOrCollect, chestAt, chestMoveIn, chestTakeOut, collectNearby, dieAndRespawn, furnaceMoveIn, furnaceTakeOut, placeFromSlot, useBed, useDoor, type ActionResult } from '../../titan/actions';
-import { ATTACK_REACH, ATTACK_COOLDOWN_S, attackCreature, tickRespawn } from '../../titan/combat';
+import { ATTACK_REACH, ATTACK_COOLDOWN_S, attackCreature, attackFauna, tickRespawn } from '../../titan/combat';
+import { type Fauna, stepFauna, tickBreeding } from '../../titan/fauna';
+import { feedFaunaFromSlot } from '../../titan/faunaFeed';
 import { chestToData } from '../../titan/chest';
 import { stepFarejador, type Farejador } from '../../titan/creature';
 import { furnaceToData } from '../../titan/furnace';
@@ -16,7 +18,7 @@ import { fresh, generatorFor, headerOf, isRaining, resume, tickCrops, tickFurnac
 import { advanceDay, canSleep } from '../../titan/sky';
 import { isDead, newVitals, vitalsFromData, vitalsToData, type PlayerVitals, type VitalsData } from '../../titan/vitals';
 import { isBed, isDoor } from '../../titan/voxel';
-import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireCreature } from './protocol';
+import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireCreature, type WireFauna } from './protocol';
 
 /**
  * Sala do Titã (ADR 0104): mundo cooperativo de sobrevivência, **autoritativo**. Pura (sem DOM): roda o mesmo `TitanVolume` e as mesmas regras de `titan/actions.ts` que o jogo solo.
@@ -31,12 +33,14 @@ export const TITAN_PLAYERS_EVERY = 0.1, TITAN_TIME_EVERY = 30;
 export const TITAN_SNAPSHOT_VERSION = 1;
 /** Farejadores (ADR 0074): só os a até `SIM_RADIUS` m de algum jogador (ou em ação) são simulados; os a até `SHOW_RADIUS` vão aos aparelhos (10×/s). */
 export const TITAN_SIM_RADIUS = 56, TITAN_SHOW_RADIUS = 64, TITAN_CREATURES_EVERY = 0.1, TITAN_FURNACES_EVERY = 1;
+/** Fauna de fazenda do Orvalis (ADR 0138): simula a até 48 m de algum jogador (a mesma distância do aparelho), manda a cada jogador os 40 mais próximos a até 64 m, a cada 0,2 s; a posição vai ao disco a cada minuto. */
+export const TITAN_FAUNA_SIM_RADIUS = 48, TITAN_FAUNA_SHOW_RADIUS = 64, TITAN_FAUNA_SHOW_MAX = 40, TITAN_FAUNA_EVERY = 0.2, TITAN_FAUNA_SAVE_EVERY = 60;
 /** Distância máxima do olho ao centro do animal para um golpe valer (alcance do jogo + folga de rede). */
 export const TITAN_STRIKE_REACH = ATTACK_REACH + 2;
 
 interface Player { id: number; name: string; view: TitanSession; moved: boolean; /** Última vez (relógio da sala) que golpeou um animal. */ struckAt: number; /** Cama onde deitou esperando a noite passar (`null` = acordado). */ bed: { x: number; y: number; z: number } | null }
 interface SavedPlayer { x: number; y: number; z: number; yaw: number; pitch: number; sel: number; bag: unknown; vitals: VitalsData; spawn: { x: number; y: number; z: number } | null; known: string[] }
-export interface TitanRoomSnapshot { v: number; header: TitanHeader; chunks: ChunkRecord[]; players: Record<string, SavedPlayer> }
+export interface TitanRoomSnapshot { v: number; header: TitanHeader; chunks: ChunkRecord[]; players: Record<string, SavedPlayer>; /** 1 = a fauna do cabeçalho é a da sala (ADR 0138, entrega B); ausente = arquivo antigo, a fauna volta à da seed. */ fauna?: 1 }
 
 /**
  * Visão de um jogador: herda o mundo da sessão da sala e tem corpo, bolsa, vida, seleção, ponto de retorno e receitas próprios. Os contadores que as ações incrementam (`time`, `days`,
@@ -64,11 +68,14 @@ export class TitanRoom {
   private sinceFurnaces = 0;
   private clock = 0;
   private timeDirty = false;
+  private sinceFauna = 0;
+  private sinceFaunaSave = 0;
+  private readonly faunaMoving = new Map<string, boolean>();
+  private readonly faunaCounter = { n: 0 };
 
-  /** `kind` = o mundo da sala (ADR 0138): o Titã ou o Orvalis em voxel, cada um com o gerador, os itens e as regras dele. A fauna, a pesca e os botes do Orvalis ainda não vão pela sala (próximas entregas). */
+  /** `kind` = o mundo da sala (ADR 0138): o Titã ou o Orvalis em voxel, cada um com o gerador, os itens e as regras dele. A fauna de fazenda é da sala (entrega B); a pesca e os botes ainda não (entrega C). */
   constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random, readonly kind: VoxelWorld = 'titan') {
     this.world = fresh(kind === 'orvalis' ? new OrvalisGenerator(seed) : new TitanGenerator(seed));
-    if (kind === 'orvalis') this.world.fauna = [];
     this.hook();
   }
 
@@ -103,6 +110,7 @@ export class TitanRoom {
     const p: Player = { id: this.nextId++, name, view, moved: false, struckAt: -1e9, bed: null };
     this.players.set(p.id, p);
     const header = headerOf(this.world);
+    delete header.fauna; // a fauna chega pela mensagem `fauna`, só a de perto (ADR 0138)
     const chunks: ChunkRecord[] = this.world.volume.dirtyChunks().map(({ cx, cz, edits }) => ({ cx, cz, edits }));
     const me = this.info(p);
     return { id: p.id, out: [
@@ -172,6 +180,8 @@ export class TitanRoom {
           break;
         }
         case 'strike': r = this.strike(p, a.id); break;
+        case 'strikeFauna': r = this.strikeFauna(p, a.id); break;
+        case 'feedFauna': r = this.feedFauna(p, a.id); break;
         case 'die': r = this.die(p, out); break;
       }
     }
@@ -205,6 +215,39 @@ export class TitanRoom {
     const r = attackCreature(p.view, idx);
     this.sinceCreatures = TITAN_CREATURES_EVERY; // o próximo tick manda a lista nova
     return { ok: r.ok, ...(r.msg ? { msg: r.msg } : {}) };
+  }
+
+  /** Animal de fazenda pelo id, ao alcance de `p` (o olho até o centro do corpo). */
+  private faunaNear(p: Player, id: string): { idx: number; f: Fauna } | null {
+    const idx = this.world.fauna.findIndex((e) => e.id === id), f = this.world.fauna[idx], b = p.view.body;
+    return f && Math.hypot(f.body.x - b.x, f.body.y - (b.y + EYE_HEIGHT), f.body.z - b.z) <= TITAN_STRIKE_REACH ? { idx, f } : null;
+  }
+
+  /** Golpe num animal de fazenda (ADR 0138): alcance, pausa entre golpes e `attackFauna` (o espólio cai no chão da sala). */
+  private strikeFauna(p: Player, id: string): ActionResult {
+    if (!this.world.fauna.some((e) => e.id === id)) return { ok: false };
+    const hit = this.faunaNear(p, id);
+    if (!hit) return { ok: false, msg: 'Longe demais' };
+    if (this.clock - p.struckAt < ATTACK_COOLDOWN_S - 0.05) return { ok: false };
+    p.struckAt = this.clock;
+    const r = attackFauna(p.view, hit.idx);
+    this.sinceFauna = TITAN_FAUNA_EVERY; // o próximo tick manda a lista nova
+    return { ok: r.ok, ...(r.msg ? { msg: r.msg } : {}) };
+  }
+
+  /** Alimenta um animal com a comida da mão (ADR 0125 e 0138): só gasta se tem efeito. */
+  private feedFauna(p: Player, id: string): ActionResult {
+    if (!this.world.fauna.some((e) => e.id === id)) return { ok: false };
+    const hit = this.faunaNear(p, id);
+    if (!hit) return { ok: false, msg: 'Longe demais' };
+    const r = feedFaunaFromSlot(p.view, hit.idx);
+    this.sinceFauna = TITAN_FAUNA_EVERY;
+    return { ok: r.ok, ...(r.msg ? { msg: r.msg } : {}) };
+  }
+
+  private wireFauna(f: Fauna): WireFauna {
+    const r2 = (v: number): number => Math.round(v * 100) / 100;
+    return { id: f.id, k: f.kind, x: r2(f.body.x), y: r2(f.body.y), z: r2(f.body.z), yaw: r2(f.yaw), ph: f.phase, b: f.baby ? 1 : 0, hp: f.hp, l: f.love > 0 ? 1 : 0, m: this.faunaMoving.get(f.id) ? 1 : 0, hu: Math.round(Math.min(f.hurt, 9) * 10) / 10, c: r2(f.clock) };
   }
 
   /** Morte: só vale com a vida zerada no último `state`; solta as pilhas, renasce e manda o renascer. */
@@ -263,6 +306,25 @@ export class TitanRoom {
         if (ev.hit) out.push({ to: near.id, msg: { t: 'hurt', damage: ev.damage, kind: f.kind } });
       }
     }
+    if (list.length && w.fauna.length) { // fauna de fazenda (ADR 0124, 0138): passeia perto de algum jogador e foge ao ser ferida; nascer e crescer valem aqui
+      for (const f of w.fauna) {
+        let nd = Infinity;
+        for (const p of list) nd = Math.min(nd, Math.hypot(f.body.x - p.view.body.x, f.body.z - p.view.body.z));
+        if (f.phase === 'wander' && nd > TITAN_FAUNA_SIM_RADIUS) continue;
+        this.faunaMoving.set(f.id, stepFauna(f, w.volume, dt).moving);
+      }
+      if (tickBreeding(w.fauna, this.faunaCounter).length) { this.dirty = true; w.metaRev++; }
+      this.sinceFaunaSave += dt;
+      if (this.sinceFaunaSave >= TITAN_FAUNA_SAVE_EVERY) { this.sinceFaunaSave = 0; this.dirty = true; } // a posição dos animais vai ao disco de minuto em minuto
+    }
+    this.sinceFauna += dt;
+    if (this.sinceFauna >= TITAN_FAUNA_EVERY && list.length && w.fauna.length) {
+      this.sinceFauna = 0;
+      for (const p of list) {
+        const near = w.fauna.map((f) => ({ f, d: Math.hypot(f.body.x - p.view.body.x, f.body.z - p.view.body.z) })).filter((e) => e.d <= TITAN_FAUNA_SHOW_RADIUS).sort((a, b) => a.d - b.d).slice(0, TITAN_FAUNA_SHOW_MAX);
+        out.push({ to: p.id, msg: { t: 'fauna', list: near.map((e) => this.wireFauna(e.f)) } });
+      }
+    }
     this.sinceCreatures += dt; this.sinceFurnaces += dt;
     if (this.sinceCreatures >= TITAN_CREATURES_EVERY && list.length) {
       this.sinceCreatures = 0;
@@ -286,7 +348,7 @@ export class TitanRoom {
   snapshot(): TitanRoomSnapshot {
     this.dirty = false;
     for (const p of this.players.values()) this.keep(p);
-    return { v: TITAN_SNAPSHOT_VERSION, header: headerOf(this.world), chunks: this.world.volume.dirtyChunks().map(({ cx, cz, edits }) => ({ cx, cz, edits })), players: Object.fromEntries(this.saved) };
+    return { v: TITAN_SNAPSHOT_VERSION, fauna: 1, header: headerOf(this.world), chunks: this.world.volume.dirtyChunks().map(({ cx, cz, edits }) => ({ cx, cz, edits })), players: Object.fromEntries(this.saved) };
   }
 
   /** Restaura uma sala vazia a partir de um `snapshot`; devolve `false` (sem mudar nada) se a seed ou o gerador não batem. */
@@ -296,7 +358,7 @@ export class TitanRoom {
     const gen = this.kind === 'orvalis' ? orvalisGeneratorFor(snap.header.seed, snap.header.generatorVersion) : generatorFor(snap.header.seed, snap.header.generatorVersion);
     if (!gen) return false;
     this.world = resume(gen, { header: snap.header, chunks: snap.chunks });
-    if (this.kind === 'orvalis') this.world.fauna = []; // a fauna do Orvalis ainda não é da sala (ADR 0138)
+    if (this.kind === 'orvalis' && !snap.fauna) this.world.fauna = fresh(gen).fauna; // arquivo da entrega A (sem fauna da sala): a fauna volta à da seed
     this.saved.clear();
     for (const [k, v] of Object.entries(snap.players ?? {})) this.saved.set(k, v);
     this.pending = [];

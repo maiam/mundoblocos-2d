@@ -898,6 +898,13 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     if (nowMs < nextAttackAt) return false;
     nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
     addExhaustion(vitals, EXHAUSTION.attack);
+    if (client) { // na sala o golpe vai ao servidor, que confere alcance, pausa e espólio (ADR 0138)
+      const id = session.fauna[index]?.id;
+      if (!id) return false;
+      gameAudio.playStrike(); view.swingHand();
+      void client.strikeFauna(id).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return true;
+    }
     const r = attackFauna(session, index);
     if (!r.ok) return false;
     gameAudio.playStrike();
@@ -924,6 +931,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (t.kind === 'shard' && t.item?.startsWith('bt:')) { const r = mountBoat(session, t.item.slice(3)); if (r.msg) notice(r.msg); if (r.ok) { view.setBoats(session.boats); refresh(); } return { ok: r.ok }; } // tocar no bote embarca (ADR 0137)
       if (t.kind === 'creature' && t.item?.startsWith('f:')) { // fauna de fazenda: comida da espécie na mão alimenta; qualquer outra coisa golpeia (ADR 0125)
         const fi = Number(t.item.slice(2)), fa = session.fauna[fi], held = session.inventory.get(session.selected);
+        if (fa && held && isBreedFood(fa.kind, held.item) && client) { void client.feedFauna(fa.id).then((r) => { if (r.msg) notice(r.msg); if (r.ok) view.swingHand(); refresh(); }); return { ok: true }; } // na sala o servidor alimenta (ADR 0138)
         if (fa && held && isBreedFood(fa.kind, held.item)) { const r = feedFaunaFromSlot(session, fi); if (r.msg) notice(r.msg); if (r.consumed) { view.swingHand(); onEdited(); refresh(); } return { ok: r.ok }; }
         return { ok: strikeFauna(fi) };
       }
@@ -1121,15 +1129,19 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     }
     if (active && session.coralWatch.size && stepCoral(session, dt)) onEdited(); // bloco de coral vivo sem água morre (ADR 0136)
     if (active) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)
-    if (session.fauna.length || fauna.shown) { // fauna de fazenda (ADR 0124): passeia perto do viajante e foge ao ser ferida
-      for (const fa of session.fauna) {
-        if (!active) break;
-        if (fa.phase === 'wander' && Math.hypot(fa.body.x - b.x, fa.body.z - b.z) > FAUNA_SIM_RADIUS) continue;
-        fauna.moving.set(fa.id, stepFauna(fa, vol, dt).moving);
+    if (session.fauna.length || fauna.shown) { // fauna de fazenda (ADR 0124): passeia perto do viajante e foge ao ser ferida; na sala o servidor simula (ADR 0138) e o aparelho só anima
+      const moving = client ? client.faunaMoving : fauna.moving;
+      if (client) { for (const fa of session.fauna) { fa.clock += dt; fa.hurt += dt; } }
+      else {
+        for (const fa of session.fauna) {
+          if (!active) break;
+          if (fa.phase === 'wander' && Math.hypot(fa.body.x - b.x, fa.body.z - b.z) > FAUNA_SIM_RADIUS) continue;
+          fauna.moving.set(fa.id, stepFauna(fa, vol, dt).moving);
+        }
+        if (active) { const born = tickBreeding(session.fauna, fauna.counter); if (born.length) { session.metaRev++; notice('Nasceu um filhote'); } }
       }
-      if (active) { const born = tickBreeding(session.fauna, fauna.counter); if (born.length) { session.metaRev++; notice('Nasceu um filhote'); } }
       const near = session.fauna.filter((fa) => Math.hypot(fa.body.x - b.x, fa.body.z - b.z) <= FAUNA_SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, FAUNA_SHOW_MAX);
-      view.setFauna(near.map((fa) => ({ kind: fa.kind, x: fa.body.x, y: fa.body.y, z: fa.body.z, yaw: fa.yaw, scale: fa.baby ? BABY_SCALE : 1, pose: faunaPose(fa, fauna.moving.get(fa.id) ?? false) })));
+      view.setFauna(near.map((fa) => ({ kind: fa.kind, x: fa.body.x, y: fa.body.y, z: fa.body.z, yaw: fa.yaw, scale: fa.baby ? BABY_SCALE : 1, pose: faunaPose(fa, moving.get(fa.id) ?? false) })));
       fauna.shown = near.length > 0;
     }
     if (!client && playing && session.furnaces.size && tickFurnaces(session, dt)) { onEdited(); if (bagOpen) refresh(); } // o braseiro corre com a tela aberta ou fechada (só não com o jogo parado)

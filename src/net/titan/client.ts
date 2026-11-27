@@ -1,5 +1,6 @@
 import { chestFromData } from '../../titan/chest';
 import type { Farejador } from '../../titan/creature';
+import { FAUNA_KINDS, type Fauna, maxHp } from '../../titan/fauna';
 import { BRAZIER_RULES, furnaceFromData, rulesOf } from '../../titan/furnace';
 import { Inventory } from '../../titan/inventory';
 import { newBody } from '../../titan/physics';
@@ -7,7 +8,7 @@ import { orvalisGeneratorFor } from '../../titan/orvalis/generator';
 import { generatorFor, resume, type TitanSession } from '../../titan/session';
 import { vitalsFromData, vitalsToData } from '../../titan/vitals';
 import type { TitanTransport } from './loopback';
-import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireCreature, type WireHit } from './protocol';
+import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireCreature, type WireFauna, type WireHit } from './protocol';
 
 /**
  * Lado do aparelho numa sala do Titã (ADR 0104, fatia B). Sem DOM: recebe um `TitanTransport` (loopback nos testes, WebSocket no navegador).
@@ -77,6 +78,11 @@ export class TitanClient {
   chestOut(x: number, y: number, z: number, i: number): Promise<ApplyResult> { return this.act({ k: 'chest', x, y, z, op: 'out', i }); }
   furnaceIn(x: number, y: number, z: number, kind: 'input' | 'fuel', slot: number): Promise<ApplyResult> { return this.act({ k: 'furnace', x, y, z, op: 'in', kind, slot }); }
   furnaceOut(x: number, y: number, z: number, kind: 'input' | 'fuel' | 'output'): Promise<ApplyResult> { return this.act({ k: 'furnace', x, y, z, op: 'out', kind }); }
+  /** Animais de fazenda que andam (da última mensagem `fauna`): o desenho usa para a pose (ADR 0138). */
+  readonly faunaMoving = new Map<string, boolean>();
+  /** Golpe no animal de fazenda `id` com o item da mão; ou alimentá-lo com a comida da mão (ADR 0138). */
+  strikeFauna(id: string): Promise<ApplyResult> { return this.act({ k: 'strikeFauna', id }); }
+  feedFauna(id: string): Promise<ApplyResult> { return this.act({ k: 'feedFauna', id }); }
   /** Golpe no Farejador `id`. */
   strike(id: string): Promise<ApplyResult> { return this.act({ k: 'strike', id }); }
   /** Morreu: manda a vida zerada e pede o renascer (a sala solta as pilhas). */
@@ -96,6 +102,25 @@ export class TitanClient {
     Object.assign(inv, next);
     inv.rev = rev; this.syncedRev = rev; // veio da sala: não é uma mexida da interface para devolver
     this.events.onBag?.();
+  }
+
+  /** Espelha a fauna de fazenda de perto (ADR 0138): atualiza no lugar por id, cria os novos e tira os que sumiram; o relógio da animação segue sozinho entre as mensagens. */
+  private mirrorFauna(list: WireFauna[]): void {
+    const s = this.session;
+    if (!s) return;
+    const byId = new Map(s.fauna.map((f) => [f.id, f]));
+    const next: Fauna[] = [];
+    this.faunaMoving.clear();
+    for (const w of list) {
+      let f = byId.get(w.id);
+      if (!f) f = { id: w.id, kind: w.k, body: newBody(w.x, w.y, w.z), yaw: w.yaw, phase: w.ph, t: 0, home: { x: w.x, z: w.z }, goal: { x: w.x, z: w.z }, pause: 0, stuck: 0, hp: w.hp, hurt: w.hu, from: { x: w.x, z: w.z }, clock: w.c, seed: ([...w.id].reduce((a, ch) => (Math.imul(a, 31) + ch.charCodeAt(0)) >>> 0, 7) % 628) / 100, baby: !!w.b, grow: 0, love: 0, rest: 0 };
+      f.body.x = w.x; f.body.y = w.y; f.body.z = w.z;
+      f.yaw = w.yaw; f.phase = w.ph; f.baby = !!w.b; f.hp = Math.min(w.hp, maxHp(f)); f.hurt = w.hu; f.love = w.l ? 1 : 0;
+      if (!FAUNA_KINDS[f.kind]) continue;
+      this.faunaMoving.set(f.id, !!w.m);
+      next.push(f);
+    }
+    s.fauna = next;
   }
 
   /** Espelha os Farejadores da sala: atualiza no lugar por id (a mira guarda o índice), cria os novos e tira os que sumiram. */
@@ -123,7 +148,7 @@ export class TitanClient {
         s.body = newBody(m.you.x, m.you.y, m.you.z); s.yaw = m.you.yaw; s.pitch = m.you.pitch; s.selected = m.you.sel;
         s.vitals = vitalsFromData(m.you.vitals); s.spawn = m.you.spawn;
         Object.assign(s.inventory, Inventory.fromData(m.you.bag));
-        s.fauna = []; s.boats = []; s.boatRide = null; // a fauna, os botes e a pesca do Orvalis ainda não vão pela sala (ADR 0138)
+        s.fauna = []; s.boats = []; s.boatRide = null; // a fauna chega pela mensagem `fauna` (entrega B); os botes e a pesca do Orvalis ainda não vão pela sala (ADR 0138)
         s.creatures = []; s.respawn.clear(); // os bichos da sala chegam na fatia C; o aparelho não os simula
         this.session = s; this.id = m.id; this.syncedRev = s.inventory.rev;
         for (const p of m.players) this.remotes.set(p.id, p);
@@ -152,6 +177,7 @@ export class TitanClient {
         return;
       }
       case 'creatures': this.mirrorCreatures(m.list); return;
+      case 'fauna': this.mirrorFauna(m.list); return;
       case 'hurt': this.events.onHurt?.(m.damage, m.kind); return;
       case 'chest': if (this.session) { this.session.chests.set(m.key, chestFromData(m.data)); this.events.onContainers?.(); } return;
       case 'furnaces': {

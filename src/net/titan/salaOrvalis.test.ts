@@ -6,7 +6,7 @@ import { TitanLoopbackServer } from './loopback';
 import { TITAN_PROTOCOL_VERSION, TITAN_ROOMS, titanRoomById, titanRoomsOf, type TitanServerMessage } from './protocol';
 import { TitanRoom } from './room';
 
-/** Orvalis em sala (ADR 0138, entrega A): a sala 102 usa o gerador e as regras do Orvalis; fauna, pesca e botes ainda não vão pela sala. */
+/** Orvalis em sala (ADR 0138): a sala 102 usa o gerador e as regras do Orvalis; entrega A = sala básica; entrega B = fauna de fazenda (`salaFauna.test.ts`); pesca e botes ainda não vão pela sala. */
 const Y = 150;
 const orv = (): TitanRoom => new TitanRoom(102, 'Orvalis 1', 20261127, () => 0.5, 'orvalis');
 const hello = (name: string) => ({ t: 'hello' as const, v: TITAN_PROTOCOL_VERSION, name, room: 102 });
@@ -26,10 +26,10 @@ describe('sala do Orvalis (ADR 0138)', () => {
     expect(titanRoomsOf('titan').map((r) => r.id)).toEqual([101]); expect(titanRoomsOf('orvalis').map((r) => r.id)).toEqual([102]);
     expect(titanRoomById(102)).toMatchObject({ name: 'Orvalis 1', seed: 20261127, world: 'orvalis' }); expect(TITAN_ROOMS.every((r) => r.world)).toBe(true);
   });
-  it('o welcome traz o mundo do Orvalis e sem fauna; o Titã segue com o dele', () => {
+  it('o welcome traz o mundo do Orvalis (sem a fauna, que vem pela mensagem `fauna`); o Titã segue com o dele', () => {
     const r = orv(), a = r.join(hello('Ana')), w = a.out[0].msg;
     expect(w.t === 'welcome' && w.header.world === 'orvalis' && w.header.seed === 20261127 && w.header.generatorVersion >= 6).toBe(true);
-    expect(r.world.volume.gen.world).toBe('orvalis'); expect(r.world.fauna).toEqual([]);
+    expect(r.world.volume.gen.world).toBe('orvalis'); expect(r.world.fauna.length).toBeGreaterThan(0); expect(w.t === 'welcome' && w.header.fauna).toBeUndefined();
     expect(new TitanRoom(101, 'Titã 1', 20261122, () => 0.5).world.volume.gen.world).toBe('titan');
   });
   it('colocar e quebrar valem como no aparelho e repassam a edição a todos', () => {
@@ -40,7 +40,7 @@ describe('sala do Orvalis (ADR 0138)', () => {
     expect(out.find((o) => o.msg.t === 'edits')).toMatchObject({ to: 'all', msg: { cells: [[x, Y, z, T.STONE]] } });
     expect(r.viewOf(b)!.inventory.total(Item.STONE)).toBe(0);
   });
-  it('pesca e botes ainda não vão pela sala: a ação é recusada e nada é gasto', () => {
+  it('pesca e botes ainda não vão pela sala (entrega C): a ação é recusada e nada é gasto', () => {
     const r = orv(), { x, z } = floorAt(r), a = r.join(hello('Ana')).id!;
     stand(r, a, x, z); give(r, a, Item.VARA_PESCA, 1); give(r, a, Item.BOTE_CARVALHO, 1);
     for (const item of [Item.VARA_PESCA, Item.BOTE_CARVALHO]) {
@@ -63,11 +63,11 @@ describe('sala do Orvalis (ADR 0138)', () => {
     r.handle(a, { t: 'act', seq: 1, a: { k: 'place', hit: { x, y: Y - 1, z, nx: 0, ny: 1, nz: 0 }, slot: 0 } });
     const snap = JSON.parse(JSON.stringify(r.snapshot()));
     const r2 = orv();
-    expect(r2.restore(snap)).toBe(true); expect(r2.world.volume.get(x, Y, z)).toBe(T.STONE); expect(r2.world.volume.gen.world).toBe('orvalis'); expect(r2.world.fauna).toEqual([]);
+    expect(r2.restore(snap)).toBe(true); expect(r2.world.volume.get(x, Y, z)).toBe(T.STONE); expect(r2.world.volume.gen.world).toBe('orvalis'); expect(r2.world.fauna.length).toBe(r.world.fauna.length);
     expect(new TitanRoom(102, 'x', 20261127, () => 0.5, 'titan').restore(snap)).toBe(false); // sala do Titã não abre arquivo do Orvalis
     expect(new TitanRoom(101, 'Titã 1', 20261122, () => 0.5).restore(JSON.parse(JSON.stringify(new TitanRoom(101, 'Titã 1', 20261122, () => 0.5).snapshot())))).toBe(true); // o Titã segue igual
   });
-  it('o cliente entra na sala 102 e abre a sessão do Orvalis, sem fauna nem botes locais', async () => {
+  it('o cliente entra na sala 102 e abre a sessão do Orvalis, sem botes locais e com a fauna só pelo fluxo da sala', async () => {
     const srv = new TitanLoopbackServer(() => 0.5);
     const c = new TitanClient(srv.connect()), s = await c.connect('Ana', 102);
     await flush();

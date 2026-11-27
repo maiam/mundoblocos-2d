@@ -226,3 +226,6 @@ Itens 153–155; `titan/boat.ts` (puro) com `stepBoat` (8 m/s, só água, para n
 
 ## Orvalis em sala (ADR 0138, v0.207.0, entrega A)
 Sala 102 "Orvalis 1" (seed 20261127) além da 101 do Titã; `TITAN_ROOMS[].world`, `titanRoomsOf`; `TitanRoom(id, nome, seed, rand, kind)`; o cliente abre o `welcome` pelo gerador de `header.world`; fauna, pesca e botes seguem só no aparelho até as entregas B e C.
+
+### Entrega B (ADR 0138, v0.208.0)
+Protocolo 4: fauna de fazenda na sala. `TitanRoom` simula (`TITAN_FAUNA_SIM_RADIUS` 48), manda `fauna` (40 mais próximos a 64 m, 0,2 s) e trata `strikeFauna`/`feedFauna`; `TitanClient.mirrorFauna` espelha por id. Snapshot com `fauna: 1`.

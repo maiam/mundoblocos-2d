@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.208.0 — Orvalis em sala, entrega B: fauna de fazenda (27/11/2026)
+- **ADR 0138, entrega B (aprovada nos 7 pontos).** **Protocolo 4:** mensagem `fauna` e ações `strikeFauna` e `feedFauna`. O servidor simula a fauna ao redor dos jogadores (48 m) com reprodução e crescimento, manda a cada jogador os 40 animais mais próximos (a cada 0,2 s) e a persiste no snapshot da sala; golpe e comida valem pelo servidor (alcance, pausa, espólio no chão da sala); o aparelho só espelha e anima. Arquivo da entrega A volta à fauna da seed.
+- 783 testes passam (7 novos em `net/titan/salaFauna.test.ts`, 2 ajustados); conferido no navegador com a sala simulada. **Protocolo 4: jogo e servidor sobem juntos** (pacote novo no servidor).
+
 ## Orvalis v0.207.0 — Orvalis em sala, entrega A: sala básica (27/11/2026)
 - **ADR 0138 (ciclo da ADR 0116; aprovada nos 7 pontos).** `TITAN_ROOMS` por mundo e a **sala 102 "Orvalis 1"** (seed 20261127, 10 jogadores): a `TitanRoom` aceita o mundo (gerador do Orvalis) e o cliente abre o `welcome` pelo mundo do cabeçalho; botão de salas religado no Orvalis; blocos, horta, fornalha, clima, sono, morte, flora e recifes já valem na sala; a morte do coral sem água roda no relógio da sala. Fauna, pesca e botes seguem fora (vara e bote recusados na sala), para as entregas B e C.
 - 776 testes passam (7 novos em `net/titan/salaOrvalis.test.ts`); conferido no navegador (`?sala=102&loopback=1`). Sem mudança de protocolo (3), de save nem de gerador. **O servidor precisa do pacote novo** (`build:net` + `sync-net`).
