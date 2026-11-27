@@ -69,10 +69,13 @@ describe('pesca (ADR 0133)', () => {
     s.body.z -= FISH_MAX_DISTANCE + 1; placeFromSlot(s, hitAt(x, Y - 1, z), s.selected);
     s.selected = (s.selected + 1) % 9; expect(stepFishing(s, 0.1)).toBe('lost');
   });
-  it('bacalhau e salmão assam na fornalha; a vara ainda não tem receita (espera o fio)', () => {
+  it('bacalhau e salmão assam na fornalha; a Linha vem da lã e a vara de 3 Hastes + 2 Linhas (ADR 0134)', () => {
     const ids = RECIPES.filter((r) => r.world === 'orvalis').map((r) => r.id);
     expect(ids).toContain('assar-bacalhau'); expect(ids).toContain('assar-salmao');
-    expect(RECIPES.some((r) => r.result.item === Item.VARA_PESCA)).toBe(false);
+    const linha = RECIPES.find((r) => r.id === 'linha-la')!, vara = RECIPES.find((r) => r.id === 'vara-pesca')!;
+    expect(linha.result).toEqual({ item: Item.LINHA, count: 4 }); expect(linha.ingredients).toEqual([{ item: Item.LA, count: 1 }]);
+    expect(vara.result.item).toBe(Item.VARA_PESCA); expect(vara.ingredients).toEqual([{ item: Item.HASTE, count: 3 }, { item: Item.LINHA, count: 2 }]);
+    expect(isItem(114)).toBe(true); expect(isItem(113)).toBe(false);
   });
   it('sem lugar na mochila, o peixe cai ao lado da boia', async () => {
     const { s, x, z } = await setup();

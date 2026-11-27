@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.203.0 — Linha e receita da vara de pesca (auditoria #14 E2, 27/11/2026)
+- **ADR 0134 (ciclo da ADR 0116; aprovada).** Item **114, Linha** (arte do pacote de espólio do Drive), fabricado da Lã (1 Lã → 4 Linhas, adaptação: sem aranhas); **Vara de Pesca** na Mesa de Carpintaria com 3 Hastes + 2 Linhas. A pesca já pode ser jogada do começo ao fim.
+- 749 testes passam (a receita entrou em `orvalis/pesca.test.ts`). Sem mudança de save, de gerador nem de protocolo.
+
 ## Orvalis v0.202.0 — pesca do Orvalis (auditoria #14 E2, 27/11/2026)
 - **ADR 0133 (ciclo da ADR 0116; aprovada).** **Vara de Pesca** (64 usos), **boia**, espera de 5 a 30 s, fisgada com janela de 1 a 2 s e sorteio de peixes da Wiki (bacalhau 60 %, salmão 25 %, baiacu 13 %, tropical 2 %). Itens 106–112 (peixes crus, bacalhau e salmão assados na fornalha, comida pela Wiki; o baiacu não se come), **atlas de itens 4 × 29**. A receita da vara espera o fio (arte pendente); lixo e tesouro, baiacu com efeitos, balde com peixe e peixes como animais ficam para depois.
 - 749 testes passam (9 novos em `orvalis/pesca.test.ts`); conferido no navegador (lançar, fisgar e recolher). Sem mudança de save, de gerador nem de protocolo.
