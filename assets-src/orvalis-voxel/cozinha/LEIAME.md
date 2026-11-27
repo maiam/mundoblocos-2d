@@ -10,6 +10,6 @@
 | Fornalha | `icone`, `topo`, `lateral`, `apagada_frente`, `acesa_frente` | **estação de fundição do Orvalis** (carvão vegetal, comida assada); o braseiro é do Titã (ADR 0114) |
 
 ## Estado
-**Fornalha: no jogo desde a v0.187.0** (ADR 0120; topo, lateral e frentes viraram tiles `orvalis/fornalha-*` e o ícone de cubo, item 83). Carvão Vegetal: ícone provisório gerado em `scripts/make-orvalis-carvao.py`. O restante (caldeirão, comidas, tigela) segue em **fila**.
+**Fornalha: no jogo desde a v0.187.0** (ADR 0120; topo, lateral e frentes viraram tiles `orvalis/fornalha-*` e o ícone de cubo, item 83). Carvão Vegetal: ícone definitivo do pacote P2-09 (v0.187.1; família em `../carvao/`). O restante (caldeirão, comidas, tigela) segue em **fila**.
 
 **Fila (o restante).** Entrar no jogo exige regra de mundo própria, pelo ciclo da ADR 0116: a **Fornalha** (auditoria #21, fundição/combustível/tempo, e a origem do carvão vegetal da Tocha, #33) e a **comida** (vida/fome, `foodOf`). Itens do Orvalis ficam na faixa 42+ (ADR 0114); bloco novo = tiles no fim de `titan/tiles.json` + `BLOCK_TILES`; ícone de item = atlas de itens (4 × N, hoje 4 × 21 com 82 dos 84 ids em uso).

@@ -1,6 +1,6 @@
 # ADR 0120 — Fornalha e Carvão Vegetal do Orvalis, pela Minecraft Wiki (auditoria #21)
 
-**Status:** Aceita e implementada (v0.187.0). Proposta enviada ao dono do produto e aprovada nos quatro pontos em 27/11/2026 ("Sim às quatro, ícone provisório").
+**Status:** Aceita e implementada (v0.187.0; ícone definitivo do Carvão Vegetal na v0.187.1). Proposta enviada ao dono do produto e aprovada nos quatro pontos em 27/11/2026 ("Sim às quatro, ícone provisório").
 
 ## Wiki (páginas "Furnace", "Smelting" e "Charcoal", edição Java)
 Fornalha = 8 blocos de pedra; dureza 3,5 (sem picareta não dropa); cubo; luz 13 acesa; 3 espaços (entrada, combustível, saída); uma preparação a cada 200 ticks (10 s); o combustível é gasto ao começar e **queima até o fim** mesmo sem entrada; sem queima o progresso regride 2× mais rápido. Combustíveis (s): carvão e carvão vegetal 80, tora, tábuas e Mesa de Carpintaria 15, haste 5. Tora vira carvão vegetal; bola de argila vira tijolo; pedra vira pedra lisa. O carvão vegetal também é ingrediente da Tocha.
@@ -11,7 +11,7 @@ Fornalha = 8 blocos de pedra; dureza 3,5 (sem picareta não dropa); cubo; luz 13
 - **Carvão Vegetal** (item 84, sem bloco): `carvao-carvalho`/`-cerejeira`/`-betula` (1 tora → 1 carvão) na estação `furnace`. **`pedra-lisa` e `tijolo` saem da bancada** (eram provisórias, ADR 0108/0111) e passam à Fornalha. Receitas de estação `furnace` têm um ingrediente só e ficam no painel da fornalha, não em cartões.
 - **Combustíveis do Orvalis** em `FUEL_TIME_S` (segundos de queima da Wiki): Carvão Vegetal 80; tora, tábuas e Mesa de Carpintaria 15; haste 5. Os itens dos dois mundos não se misturam (ADR 0114), então uma tabela única serve.
 - **Painel:** o do braseiro, com título "Fornalha" e a dica do combustível do Orvalis (estação `furnace` em `titanGame.ts`).
-- **Arte:** tiles `orvalis/fornalha-topo|lateral|frente-apagada|frente-acesa` (pacote Cozinha do Drive, 16 px) e ícone de cubo (item 83); **ícone do Carvão Vegetal provisório**, desenhado em código (`scripts/make-orvalis-carvao.py`, `assets-src/titan/arte16/`) porque nenhum pacote do Drive traz o carvão — trocar o PNG quando a arte chegar. Atlas de itens 4 × 21: **84 ids, todos em uso**; o próximo item amplia (`ITEM_ROWS`, CSS, `make-titan-arte32.py`).
+- **Arte:** tiles `orvalis/fornalha-topo|lateral|frente-apagada|frente-acesa` (pacote Cozinha do Drive, 16 px) e ícone de cubo (item 83); ícone do Carvão Vegetal: **provisório na v0.187.0** (desenhado em código), **trocado na v0.187.1 pelo definitivo** do pacote P2-09 do Drive (`assets-src/orvalis-voxel/carvao/`; o script provisório foi removido). Atlas de itens 4 × 21: **84 ids, todos em uso**; o próximo item amplia (`ITEM_ROWS`, CSS, `make-titan-arte32.py`).
 - **Fora desta entrega:** batata assada e vidro (faltam item e arte); Braseiro do Titã (mantido); a Tocha (#33) segue com o ciclo dela, agora com receita da Wiki possível (Carvão Vegetal + haste → 4).
 
 ## Consequências
