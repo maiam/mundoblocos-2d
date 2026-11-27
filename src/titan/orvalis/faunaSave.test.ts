@@ -10,7 +10,7 @@ const open = async (st: MemoryTitanStorage, seed = 42) => openSession(st, seed, 
 
 describe('Fauna no save', () => {
   it('a versão do save subiu e o cabeçalho leva a fauna', async () => {
-    expect(TITAN_SAVE_VERSION).toBe(6);
+    expect(TITAN_SAVE_VERSION).toBeGreaterThanOrEqual(6);
     const s = await open(new MemoryTitanStorage());
     const h = headerOf(s);
     expect(h.fauna).toHaveLength(s.fauna.length); expect(h.fauna!.length).toBeGreaterThan(0);

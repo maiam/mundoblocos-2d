@@ -17,6 +17,9 @@ export const isGarden = (species: Species): boolean => GARDEN_SPECIES.includes(s
 export interface Crop { x: number; y: number; z: number; age: number; species: Species; dir?: number }
 /** Caule de abóbora ou melancia (ADR 0128, Wiki): 8 idades (0 a 7); maduro, gera o fruto (bloco) numa célula vizinha. Não se colhe: o que rende é o fruto. */
 export const STEM_MAX_AGE = 7;
+/** Trigo, cenoura e batata (ADR 0129, Wiki): 8 idades (0 a 7), como o caule; o tomate (do Orvalis, fora da Wiki) segue com 3 fases e a beterraba com 4. */
+export const EIGHT_AGE_SPECIES: readonly Species[] = ['trigo', 'cenoura', 'batata'];
+export const isEightAge = (species: Species): boolean => EIGHT_AGE_SPECIES.includes(species);
 export const isStem = (species: Species): boolean => species === 'abobora' || species === 'melancia';
 export const STEM_DIRS: ReadonlyArray<readonly [number, number]> = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 export const FRUIT_BLOCK: Readonly<Record<string, number>> = { abobora: T.PUMPKIN, melancia: T.MELON };
@@ -44,16 +47,18 @@ export const soilKind = (block: number): CropKind | null => (block === T.DAMP_SA
 /** Idade da planta adulta: muda (0) → crescendo (1) → adulta (2); o ressecado tem muda (0) → ressecado (1). */
 export const maxAge = (kind: CropKind): number => (kind === 'umido' ? 2 : 1);
 /** Idade da planta adulta da espécie sobre a areia `soil`: a Noz tem 3 fases (broto, planta sem frutos, com frutos). */
-export const maxAgeOf = (species: Species, soil: CropKind): number => (isStem(species) ? STEM_MAX_AGE : species === 'beterraba' ? BEET_MAX_AGE : species === 'noz' || isGarden(species) ? 2 : maxAge(soil));
+export const maxAgeOf = (species: Species, soil: CropKind): number => (isStem(species) || isEightAge(species) ? STEM_MAX_AGE : species === 'beterraba' ? BEET_MAX_AGE : species === 'noz' || isGarden(species) ? 2 : maxAge(soil));
 /** Beterraba (ADR 0127, Wiki): 4 idades (0 a 3), cada sorteio de crescimento falha em 1/3 das vezes; madura rende 1 beterraba e 1–4 sementes. */
 export const BEET_MAX_AGE = 3;
 export const BEET_SKIP = 1 / 3;
 export const BEET_SEEDS = { min: 1, max: 4 } as const;
 export const isRipe = (species: Species, soil: CropKind, age: number): boolean => age >= maxAgeOf(species, soil);
 /** O que a colheita entrega e a idade para onde a planta recua. */
-export function harvestOf(species: Species, soil: CropKind): { item: number; count: number; backTo: number; label: string; extra?: { item: number; min: number; max: number } } {
+export function harvestOf(species: Species, soil: CropKind): { item: number; count: number; /** Sorteio de `count` a `countMax` (ADR 0129: cenoura e batata, 2–5). */ countMax?: number; backTo: number; label: string; extra?: { item: number; min: number; max: number } } {
   if (isStem(species)) return { item: seedOf(species), count: 0, backTo: STEM_MAX_AGE, label: '' }; // o caule não se colhe (o fruto rende), `collectCrop` o recusa
   if (species === 'beterraba') return { item: Item.BETERRABA, count: 1, backTo: 0, label: 'beterraba', extra: { item: Item.SEMENTE_BETERRABA, ...BEET_SEEDS } }; // Wiki: 1 beterraba e 1–4 sementes (a planta volta a broto, como a horta do Orvalis)
+  if (species === 'trigo') return { item: Item.TRIGO, count: 1, backTo: 0, label: 'trigo', extra: { item: Item.SEMENTE_TRIGO, min: 1, max: 4 } }; // Wiki: 1 trigo e 1–4 sementes (ADR 0129)
+  if (species === 'cenoura' || species === 'batata') return { item: GARDEN_HARVEST[species].item, count: 2, countMax: 5, backTo: 0, label: GARDEN_HARVEST[species].label }; // Wiki: 2–5 (a batata venenosa de 2 % fica fora: sem efeitos no Orvalis)
   if (isGarden(species)) { const g = GARDEN_HARVEST[species]; return { item: g.item, count: GARDEN_YIELD, backTo: 0, label: g.label }; } // a planta volta a broto e rebrota (a planta-mãe nunca é arrancada, como no junco)
   if (species === 'noz') return { item: Item.NOZ, count: NUT_YIELD, backTo: 1, label: 'nozes' };
   return soil === 'umido' ? { item: Item.GLASS_REED, count: CROP_YIELD, backTo: 1, label: 'mudas de junco' } : { item: Item.DRY_REED, count: CROP_YIELD, backTo: 0, label: 'hastes secas' };
@@ -83,13 +88,20 @@ export const soilKindFor = (species: Species, block: number): CropKind | null =>
 export const nutLook = (age: number): { scale: number; ripe: boolean } => ({ scale: age <= 0 ? 0.4 : 1, ripe: age >= 2 });
 /** Coluna do atlas de cultivo (`titan-cultivo-32px.webp`): 0 muda, 1 crescendo, 2 adulto de duas mudas, 3 ressecado. */
 /** Coluna do atlas da horta (`orvalis-horta-16px.webp`): espécie × 3 fases, depois das 4 do atlas de cultivo. */
-/** Colunas do atlas da horta (`orvalis-horta-16px.webp`, 34 de 16 px): 12 das 4 espécies de 3 fases, 4 da beterraba, 8 do caule de abóbora, 8 do de melancia e o caule conectado de cada uma. */
-export const GARDEN_FRAMES = 34;
-/** Malhas da horta: as 34 colunas e mais 8 do caule conectado (espécie × 4 direções: a mesma coluna, outra orientação da placa). */
-export const GARDEN_MESHES = 42;
+/**
+ * Atlas da horta (`orvalis-horta-16px.webp`, 49 colunas de 16 px, ADR 0129): trigo, cenoura e batata × 8 idades, tomate × 3, beterraba × 4, caule de abóbora × 8, caule de melancia × 8 e, no fim, o caule conectado
+ * de cada um (abóbora, melancia). `GARDEN_LAYOUT` dá a primeira coluna e o número de idades de cada espécie.
+ */
+export const GARDEN_LAYOUT: Readonly<Record<string, { start: number; count: number }>> = { trigo: { start: 0, count: 8 }, cenoura: { start: 8, count: 8 }, batata: { start: 16, count: 8 }, tomate: { start: 24, count: 3 }, beterraba: { start: 27, count: 4 }, abobora: { start: 31, count: 8 }, melancia: { start: 39, count: 8 } };
+/** Coluna do caule conectado da abóbora; a da melancia vem logo depois. */
+export const STEM_ATTACHED_COL = 47;
+export const GARDEN_FRAMES = 49;
+/** Malhas da horta: as 49 colunas e mais 8 do caule conectado (espécie × 4 direções: a mesma coluna, outra orientação da placa). */
+export const GARDEN_MESHES = 57;
 export const gardenFrame = (species: Species, age: number, dir?: number): number => {
-  if (isStem(species)) { const k = species === 'abobora' ? 0 : 1; return dir === undefined ? CROP_FRAMES + 16 + k * 8 + Math.min(STEM_MAX_AGE, Math.max(0, age)) : CROP_FRAMES + GARDEN_FRAMES + k * 4 + Math.min(3, Math.max(0, dir)); } // caule: 8 idades; conectado: a placa vira para o fruto
-  return species === 'beterraba' ? CROP_FRAMES + 12 + Math.min(BEET_MAX_AGE, Math.max(0, age)) : CROP_FRAMES + GARDEN_SPECIES.indexOf(species) * 3 + Math.min(2, Math.max(0, age)); // a beterraba (4 idades) fica depois dos 12 quadros das outras
+  if (isStem(species) && dir !== undefined) return CROP_FRAMES + GARDEN_FRAMES + (species === 'abobora' ? 0 : 1) * 4 + Math.min(3, Math.max(0, dir)); // conectado: a placa vira para o fruto
+  const l = GARDEN_LAYOUT[species];
+  return CROP_FRAMES + l.start + Math.min(l.count - 1, Math.max(0, age));
 };
 export const spriteFrame = (kind: CropKind, age: number): number => (kind === 'umido' ? Math.min(2, age) : age >= 1 ? 3 : 0);
 export const CROP_FRAMES = 4;

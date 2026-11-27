@@ -14,7 +14,7 @@ import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
-import { CROP_FRAMES, GARDEN_FRAMES, GARDEN_MESHES } from '../titan/crops';
+import { CROP_FRAMES, GARDEN_FRAMES, GARDEN_MESHES, STEM_ATTACHED_COL } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { FazendaView, type FazendaItem, type FazendaModels } from './fazenda';
@@ -431,7 +431,7 @@ export class TitanRenderer {
     this.gardenMat = new THREE.MeshBasicMaterial({ map: gtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(this.gardenMat, this.ambient, { time: this.timeU, instSky: true });
     for (let f = 0; f < GARDEN_MESHES; f++) {
-      const geo = f < GARDEN_FRAMES ? gardenGeometry(f, GARDEN_FRAMES) : attachedStemGeometry(32 + ((f - GARDEN_FRAMES) >> 2), (f - GARDEN_FRAMES) & 3, GARDEN_FRAMES); // caule conectado (ADR 0128): a placa aponta para o fruto
+      const geo = f < GARDEN_FRAMES ? gardenGeometry(f, GARDEN_FRAMES) : attachedStemGeometry(STEM_ATTACHED_COL + ((f - GARDEN_FRAMES) >> 2), (f - GARDEN_FRAMES) & 3, GARDEN_FRAMES); // caule conectado (ADR 0128): a placa aponta para o fruto
       const mesh = new THREE.InstancedMesh(geo, this.gardenMat, 16);
       mesh.count = 0;
       mesh.frustumCulled = false;

@@ -53,17 +53,19 @@ function collectCrop(s: TitanSession, id: string): ActionResult {
   if (isStem(crop.species)) return { ok: false, msg: crop.dir === undefined ? (crop.age >= STEM_MAX_AGE ? 'O caule está maduro: o fruto vem logo' : 'Ainda está crescendo') : 'O fruto está ao lado: quebre-o' }; // o caule não se colhe (ADR 0128)
   if (!isRipe(crop.species, kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
   const h = harvestOf(crop.species, kind);
-  if (!s.inventory.canAdd(h.item, h.count)) return FULL;
-  s.inventory.add(h.item, h.count);
+  const cell = (Math.imul(crop.x, 73856093) ^ Math.imul(crop.z, 83492791)) | 0, salt = crop.y + s.days * 1009 + Math.floor(s.time * 1000);
+  const count = h.countMax ? h.count + Math.floor(hash2(s.seed, cell, salt + 77) * (h.countMax - h.count + 1)) : h.count; // cenoura e batata: 2–5 (Wiki, ADR 0129)
+  if (!s.inventory.canAdd(h.item, count)) return FULL;
+  s.inventory.add(h.item, count);
   crop.age = h.backTo;
   s.metaRev++;
   let extra = '';
   if (h.extra) { // além do produto, sementes sorteadas (beterraba: 1–4, Wiki); sem lugar na mochila, caem no chão
-    const n = h.extra.min + Math.floor(hash2(s.seed, (Math.imul(crop.x, 73856093) ^ Math.imul(crop.z, 83492791)) | 0, crop.y + s.days * 1009 + Math.floor(s.time * 1000)) * (h.extra.max - h.extra.min + 1));
+    const n = h.extra.min + Math.floor(hash2(s.seed, cell, salt) * (h.extra.max - h.extra.min + 1));
     if (s.inventory.canAdd(h.extra.item, n)) s.inventory.add(h.extra.item, n); else restDrop(s, `seed:${crop.x},${crop.y},${crop.z}:s${s.days}:${Math.floor(s.time * 1000)}`, h.extra.item, crop.x, crop.y, crop.z, n);
     extra = ` e ${n} ${n > 1 ? 'sementes' : 'semente'}`;
   }
-  return { ok: true, msg: `${h.count} ${h.label}${extra}` };
+  return { ok: true, msg: `${count} ${h.label}${extra}` };
 }
 
 /** A célula de cima do bloco apontado está livre para uma planta (ar, sem item, planta ou pilha solta)? */

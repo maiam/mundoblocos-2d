@@ -11,7 +11,7 @@ import { NUT_REGROW_S, nutId, parseNutId } from './nuts';
 import { newVitals, type PlayerVitals, vitalsFromData, vitalsToData } from './vitals';
 import { skyAt, START_FRAC, validDay } from './sky';
 import { hasWeather, newWeather, stepWeather, weatherFromData, weatherToData, type Weather } from './weather';
-import { crowded, FRUIT_BLOCK, fruitGround, growthPoints, isStem, STEM_DIRS, STEM_MAX_AGE, stemFruitTick, CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, gardenFrame, GARDEN_SPECIES, isFarmland, isGarden, maxAgeOf, nutLook, plantableSoil, randomTick, type Species, soilKind, soilKindFor, spriteFrame, CROP_TICK_MEAN_S } from './crops';
+import { crowded, isEightAge, FRUIT_BLOCK, fruitGround, growthPoints, isStem, STEM_DIRS, STEM_MAX_AGE, stemFruitTick, CROP_SIM_RADIUS, CROP_FRAMES, type Crop, type CropKind, cropId, cropKey, gardenFrame, GARDEN_SPECIES, isFarmland, isGarden, maxAgeOf, nutLook, plantableSoil, randomTick, type Species, soilKind, soilKindFor, spriteFrame, CROP_TICK_MEAN_S } from './crops';
 import { isHydrated } from './soil';
 import { newBody, safePosition, type Body, type ItemLookup } from './physics';
 import { type ChunkRecord, type Drop, type TitanHeader, type TitanSave, type TitanStorage, TITAN_SAVE_VERSION } from './save';
@@ -180,15 +180,16 @@ function validRespawn(raw: unknown, ids: ReadonlySet<string>): Map<string, numbe
 }
 
 /** Plantas de junco gravadas (`x,y,z` → idade): só com areia sob a célula, ar nela e idade inteira dentro do limite da espécie; o resto é descartado. */
-function validCrops(raw: unknown, vol: TitanVolume): Map<string, Crop> {
+function validCrops(raw: unknown, vol: TitanVolume, saveVersion: number): Map<string, Crop> {
   const out = new Map<string, Crop>();
   if (!raw || typeof raw !== 'object') return out;
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
     const m = /^(-?\d+),(-?\d+),(-?\d+)$/.exec(k);
     const tag = v && typeof v === 'object' ? (v as { s?: unknown }).s : undefined, other = typeof tag === 'string' && (tag === 'noz' || (GARDEN_SPECIES as readonly string[]).includes(tag)); // junco = só a idade; os demais = { s: espécie, a: idade }
-    const age = other ? (v as { a?: unknown }).a : v;
-    if (!m || typeof age !== 'number' || !Number.isInteger(age) || age < 0) continue;
-    const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])], species: Species = other ? (tag as Species) : 'junco', below = vol.get(x, y - 1, z), kind = soilKindFor(species, below);
+    const age0 = other ? (v as { a?: unknown }).a : v;
+    if (!m || typeof age0 !== 'number' || !Number.isInteger(age0) || age0 < 0) continue;
+    const species0: Species = other ? (tag as Species) : 'junco', age = saveVersion < 7 && isEightAge(species0) && age0 <= 2 ? [0, 3, 7][age0] : age0; // saves até a v6: trigo, cenoura e batata tinham 3 fases (0 a 2); a planta madura continua madura (ADR 0129)
+    const [x, y, z] = [Number(m[1]), Number(m[2]), Number(m[3])], species: Species = species0, below = vol.get(x, y - 1, z), kind = soilKindFor(species, below);
     const d = other ? (v as { d?: unknown }).d : undefined, dir = isStem(species) && age >= STEM_MAX_AGE && typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 3 ? d : undefined; // a direção só vale no caule maduro
     if (kind && plantableSoil(species, below) && vol.get(x, y, z) === T.AIR && vol.gen.inRegion(x, z) && age <= maxAgeOf(species, kind)) out.set(k, { x, y, z, age, species, ...(dir !== undefined ? { dir } : {}) });
   }
@@ -279,7 +280,7 @@ export function resume(gen: TerrainGen, save: TitanSave): TitanSession {
   const g = save.header.grants?.ember;
   if (Array.isArray(g) && g.length === 3 && g.every(Number.isInteger)) grants.ember = [g[0], g[1], g[2]];
   const regrow = validRegrow(save.header.regrow);
-  const crops = validCrops(save.header.crops, volume);
+  const crops = validCrops(save.header.crops, volume, save.header.v);
   const respawn = validRespawn(save.header.respawn, new Set(creatureSpecs(gen).map((c) => c.id)));
   const known = new Set<string>((save.header.recipes ?? []).filter((x): x is string => typeof x === 'string'));
   const s: TitanSession = { seed: gen.seed, volume, body: newBody(safe.x, safe.y, safe.z), yaw: p.yaw, pitch: p.pitch, selected: Math.max(0, Math.min(HOTBAR - 1, save.header.selected | 0)), resumed: true, relocated: moved, time: validDay(save.header.time), days: Number.isInteger(save.header.days) && save.header.days! >= 0 ? save.header.days! : 0, weather: weatherFromData(save.header.weather, Math.random), inventory: inv, collected, collectedRev: 0, regrow, crops, furnaces: validFurnaces(save.header.furnaces, volume), chests: validChests(save.header.chests, volume), spawn: validSpawn(save.header.spawn, volume), respawn, creatures: creaturesFor(gen).filter((c) => !respawn.has(c.id)), fauna: faunaFromSave(save.header.fauna, gen, volume), savedStateRev: -1, drops: validDrops(save.header.drops, gen), dropFx: new Map(), dropsRev: 0, known, grants, metaRev: 0, vitals: vitalsFromData(save.header.vitals), items: makeItems({ volume, collected, grants, regrow, crops }) };
