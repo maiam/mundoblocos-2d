@@ -15,5 +15,6 @@
 | **P1-08** Fechamento de junco | portão (ícone, fechado, aberto), alçapão (ícone, fechado, aberto), cerca (ícone, poste, travessa), trama | E6 | fila |
 | **P1-09** Abrigo da margem | caixote raso, prateleira, cobertura de junco (topo, frente, trama, ícone) | E6 | fila |
 | **P2-11** Iluminação | tochas, lampiões, velas, lâmpadas, fontes naturais e fogueiras (262 PNGs, em `../iluminacao/`) | — | **só arte-fonte** (27/11/2026); a Tocha depende da regra de luz |
+| **P2-06** Cozinha | pão, ensopado de cogumelos, torta de abóbora, tigela; caldeirão (ícone, lateral, topo vazio e com água); fornalha (ícone, topo, lateral, frente apagada e acesa) — 13 PNGs, em `../cozinha/` | — | **só arte-fonte** (27/11/2026); a Fornalha depende da regra #21 |
 
 Regras que valem para todas as entregas: bloco novo = tiles no fim de `titan/tiles.json` + `BLOCK_TILES` (ids 100+ para o Orvalis em voxel), item novo no atlas de itens (4 × N), ícone de **bloco** = cubo isométrico gerado por `make-orvalis-voxel-arte.py` (decisão do dono do produto), ícone de **item** que não é bloco = o PNG do pacote (sprite 16 × 16 extrudado, ADR 0097); itens com `titan_` no nome são do Titã.

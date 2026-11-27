@@ -1,5 +1,8 @@
 # Changelog
 
+## Arte — pacote P2-06 Cozinha importado (27/11/2026)
+- 13 PNGs de 16 × 16 do Drive (`Banco de Assets/itens-de-minecraft/P2-06 — Cozinha`: pão, ensopado de cogumelos, torta de abóbora, tigela, caldeirão e fornalha em vários estados) em `assets-src/orvalis-voxel/cozinha/`, com `LEIAME.md`, folha de contato e linha no catálogo. **Só arte-fonte, sem uso no jogo e sem mudança de código.** A Fornalha é a candidata natural à fundição do Orvalis (regra #21) e à origem do carvão vegetal da Tocha (#33).
+
 ## Orvalis v0.186.0 — luz de bloco pela Minecraft Wiki e arte de iluminação (auditoria #9, 27/11/2026)
 - **ADR 0119 (aprovada pelo dono do produto, ciclo da ADR 0116).** `blocksLight` passa a ser só o **cubo opaco** (`isFull && !isLeaves`): a luz atravessa folhas, baú, cama, porta, laje, degrau, mureta, braseiro e Painel; a laje dupla e os cubos bloqueiam. Lanterna 15, braseiro 13 e a propagação (−1 por célula) não mudam. Testes novos em `light.test.ts`; 609 passam.
 - **Arte importada, sem uso no jogo:** pacote P2-11 Iluminação do Drive (262 PNGs de 16 × 16) em `assets-src/orvalis-voxel/iluminacao/` (`LEIAME.md`, catálogo atualizado). A Tocha do Orvalis e a luz do céu (#32) seguem pendentes de decisão.
