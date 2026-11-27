@@ -25,7 +25,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 15 | Blocos e ações | Colocar bloco: alcance, apoio, colisão com o jogador, orientação | `titan/actions.ts`, `titan/aim.ts`, `titan/slabs.ts` | pendente |
 | 16 | Blocos e ações | Quebra progressiva: tempo por bloco, ferramenta certa, mão nua | `titan/breaking.ts`, `titan/gesture.ts` | implementada (ADR 0117, v0.184.0) |
 | 17 | Blocos e ações | Durabilidade das ferramentas e custo por ação | `titan/wear.ts`, `titan/items.ts` | pendente |
-| 18 | Blocos e ações | Drops de bloco e coleta (itens soltos: gravidade, tempo de coleta, validade) | `titan/drops.ts`, `titan/actions.ts` (`spillBlock`) | pendente |
+| 18 | Blocos e ações | Drops de bloco e coleta (itens soltos: gravidade, tempo de coleta, validade) | `titan/drops.ts`, `titan/actions.ts` (`spillBlock`) | implementada (ADR 0131, v0.200.0) |
 | 19 | Blocos e ações | Formas especiais: laje, degrau, mureta, porta, cama, baú, escada, esteira | `titan/voxel.ts`, `titan/slabs.ts`, `titan/actions.ts` | pendente |
 | 20 | Fabricação | Receitas, bancada 3 × 3 e estações | `titan/recipes.ts`, `titan/inventory.ts` | pendente |
 | 21 | Fabricação | Braseiro (Titã) e **Fornalha do Orvalis**: fundição, combustível e tempo; carvão vegetal | `titan/furnace.ts` | implementada (ADR 0120, v0.187.0) |
