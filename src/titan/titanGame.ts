@@ -860,6 +860,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   let aimFauna: { index: number; dist: number } | null = null; // fauna de fazenda na mira (ADR 0124)
   let nextAttackAt = 0;
   let boatsDrawn = false;
+  let lastBoatAt = 0; // último envio da posição do bote à sala (ADR 0138, entrega C)
   let boatJumpHeld = false; // borda do pulo para desembarcar (ADR 0137)
   const toTarget = (h: Hit | null): GestureTarget | null => {
     if (aimFauna) { const c = session.fauna[aimFauna.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: `f:${aimFauna.index}` } : null; }
@@ -928,6 +929,11 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     },
     // as ações validam espaço antes de mudar mundo e inventário (tudo ou nada); mundo e inventário saem juntos no próximo save
     place: (t) => {
+      if (t.kind === 'shard' && t.item?.startsWith('bt:') && client) { // na sala o servidor confere o alcance e se o bote está vazio (ADR 0138, entrega C)
+        const id = t.item.slice(3);
+        void client.mountBoat(id).then((a) => { if (!a.ok) { if (a.msg) notice(a.msg); return; } const r = mountBoat(session, id); if (r.msg) notice(r.msg); view.setBoats(session.boats); refresh(); });
+        return { ok: true };
+      }
       if (t.kind === 'shard' && t.item?.startsWith('bt:')) { const r = mountBoat(session, t.item.slice(3)); if (r.msg) notice(r.msg); if (r.ok) { view.setBoats(session.boats); refresh(); } return { ok: r.ok }; } // tocar no bote embarca (ADR 0137)
       if (t.kind === 'creature' && t.item?.startsWith('f:')) { // fauna de fazenda: comida da espécie na mão alimenta; qualquer outra coisa golpeia (ADR 0125)
         const fi = Number(t.item.slice(2)), fa = session.fauna[fi], held = session.inventory.get(session.selected);
@@ -941,7 +947,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
       if (client && !(held && foodOf(held.item))) { // na sala a ação vai ao servidor e só vale com a resposta dele (ADR 0104)
         const b0 = held ? blockOfItem(held.item) : null, bucket = !!held && isBucket(held.item), bucketEmpty = held?.item === Item.BALDE;
-        void client.place(wireHit(t), session.selected).then((r) => { if (r.msg) notice(r.msg); if (!r.ok) return; if (bucket) { if (bucketEmpty) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } else if (b0 === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b0 ?? undefined) ?? 'rock'); refresh(); });
+        void client.place(wireHit(t), session.selected).then((r) => { if (r.msg) notice(r.msg); if (!r.ok) return; if (held && (held.item === Item.VARA_PESCA || isBoatItem(held.item))) gameAudio.playWaterPour(); else if (bucket) { if (bucketEmpty) gameAudio.playWaterScoop(); else gameAudio.playWaterPour(); } else if (b0 === T.LANTERN) gameAudio.playLanternPlace(); else gameAudio.playBlockPlace(surfaceOf(b0 ?? undefined) ?? 'rock'); refresh(); });
         return { ok: true };
       }
       if (held && foodOf(held.item) && !(held.item === Item.NOZ && t.kind === 'block' && canPlantNut(session, t))) { eatSelected(); return { ok: true }; } // comida na mão: o toque no mundo também come (a noz, só se não houver onde plantá-la)
@@ -988,6 +994,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       onPlayers: () => { view.setRemotePlayers([...client!.remotes.values()]); paintRoomBtn(); },
       onHurt: (d, kind) => { hurtVitals(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
       onRespawn: () => { dying = false; airTop = session.body.y; wasAir = false; steps.reset(); view.setItems(visibleItems(session)); paintVitals(false); refresh(); },
+      onBobber: (e) => { view.setItems(visibleItems(session)); if (e === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (e === 'lost') notice('A linha se soltou'); },
+      onBoats: () => { view.setBoats(session.boats); },
       onClose: (why) => { roomLost = true; paintRoomBtn(); toast(`Sala: ${why}. Use o ☰ para reconectar.`, 60000); },
     };
     view.setRemotePlayers([...client.remotes.values()]);
@@ -1078,9 +1086,10 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const ride = session.boatRide, boat = ride ? session.boats.find((e) => e.id === ride.id) : undefined, jumpNow = keys.has('Space') || input.jump;
       if (ride && !boat) session.boatRide = null;
       if (ride && boat) { // a bordo (ADR 0137): W e S remam, A e D giram o leme, pular desembarca; o corpo segue o assento (sem passos, sem queda, sem fôlego gasto na água)
-        if (jumpNow && !boatJumpHeld) { dismountBoat(session); notice('Desembarcou'); }
+        if (jumpNow && !boatJumpHeld) { if (client) void client.dismountBoat(); dismountBoat(session); notice('Desembarcou'); }
         else { ride.speed = stepBoat(vol, boat, ride.speed, { forward: fx, turn: -sx }, dt); const p = boatSeat(boat); b.x = p.x; b.y = p.y; b.z = p.z; b.vx = b.vy = b.vz = 0; b.onGround = true; b.inLiquid = false; }
         px = b.x; pz = b.z; playerDirty = true; view.setBoats(session.boats);
+        if (client && now - lastBoatAt >= 100) { lastBoatAt = now; client.sendBoat(); } // quem pilota manda a posição do bote 10×/s (a sala confere)
       } else stepBody(vol, b, { dirX, dirZ, jump: jumpNow, sprint, pitch: iso ? undefined : session.pitch }, dt);
       boatJumpHeld = jumpNow;
       if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, sprintOn ? EXHAUSTION.sprintJump : EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
@@ -1128,7 +1137,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
     if (active && session.coralWatch.size && stepCoral(session, dt)) onEdited(); // bloco de coral vivo sem água morre (ADR 0136)
-    if (active) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)
+    if (active && !client) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)
     if (session.fauna.length || fauna.shown) { // fauna de fazenda (ADR 0124): passeia perto do viajante e foge ao ser ferida; na sala o servidor simula (ADR 0138) e o aparelho só anima
       const moving = client ? client.faunaMoving : fauna.moving;
       if (client) { for (const fa of session.fauna) { fa.clock += dt; fa.hurt += dt; } }

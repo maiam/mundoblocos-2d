@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.209.0 — Orvalis em sala, entrega C: pesca e botes (27/11/2026)
+- **ADR 0138, entrega C (aprovada nos 7 pontos).** **Protocolo 5:** mensagens `bobber` e `boats` (servidor) e `boat` (piloto), ações `mountBoat` e `dismountBoat`. A **pesca** corre no servidor (espera, fisgada, janela, distância) e a boia é só do dono; os **botes** são da sala (lista compartilhada, um piloto por bote, no snapshot), o piloto manda a posição e a sala confere (só água, velocidade) antes de repassar. Com isso a sala 102 leva tudo o que o Orvalis tem de mundo vivo.
+- 788 testes passam (5 novos em `net/titan/salaPescaBotes.test.ts`, 1 removido e 1 ajustado); conferido no navegador com a sala simulada. **Protocolo 5: jogo e servidor sobem juntos** (pacote novo no servidor).
+
 ## Orvalis v0.208.0 — Orvalis em sala, entrega B: fauna de fazenda (27/11/2026)
 - **ADR 0138, entrega B (aprovada nos 7 pontos).** **Protocolo 4:** mensagem `fauna` e ações `strikeFauna` e `feedFauna`. O servidor simula a fauna ao redor dos jogadores (48 m) com reprodução e crescimento, manda a cada jogador os 40 animais mais próximos (a cada 0,2 s) e a persiste no snapshot da sala; golpe e comida valem pelo servidor (alcance, pausa, espólio no chão da sala); o aparelho só espelha e anima. Arquivo da entrega A volta à fauna da seed.
 - 783 testes passam (7 novos em `net/titan/salaFauna.test.ts`, 2 ajustados); conferido no navegador com a sala simulada. **Protocolo 4: jogo e servidor sobem juntos** (pacote novo no servidor).
