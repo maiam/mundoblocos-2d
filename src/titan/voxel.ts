@@ -22,9 +22,9 @@ export const REGION_MIN = REGION_LEGACY.min;
 export const REGION_MAX = REGION_LEGACY.max;
 
 /** Ids de bloco (um byte; 0 = ar). */
-export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106, STONE_SMOOTH: 107, STONE_BRICK: 108, STONE_SLAB: 109, STONE_SLAB_TOP: 110, STONE_STAIR: 111, STONE_STAIR_90: 112, STONE_STAIR_180: 113, STONE_STAIR_270: 114, STONE_WALL: 115, STONE_WALL_LAST: 130, FARMLAND_DRY: 131, FARMLAND_WET: 132, PATH: 133, DIRT_INFERTILE: 134, CLAY_BLOCK: 135, BRICK_BLOCK: 136, FURNACE: 137, FURNACE_90: 138, FURNACE_180: 139, FURNACE_270: 140, FURNACE_LIT: 141, FURNACE_LIT_90: 142, FURNACE_LIT_180: 143, FURNACE_LIT_270: 144, TORCH: 145, TORCH_WALL: 146, TORCH_WALL_90: 147, TORCH_WALL_180: 148, TORCH_WALL_270: 149, COAL_ORE: 150, COAL_BLOCK: 151, MELON: 152, PUMPKIN: 153, SEAGRASS: 154, SEAGRASS_TALL: 155, SEAGRASS_TALL_TOP: 156, KELP: 157, KELP_TOP: 158, DRIED_KELP_BLOCK: 159, CORAL: 160, CORAL_FAN: 170, CORAL_BLOCK: 180, SLAB_OAK: 190, SLAB_OAK_TOP: 191, SLAB_CHERRY: 192, SLAB_CHERRY_TOP: 193, SLAB_BIRCH: 194, SLAB_BIRCH_TOP: 195, STAIR_OAK: 196, STAIR_OAK_270: 199, STAIR_CHERRY: 200, STAIR_BIRCH: 204, STAIR_BIRCH_270: 207 } as const;
+export const T = { AIR: 0, SAND: 1, DAMP_SAND: 2, DARK_ROCK: 3, FROST: 4, LAKE: 5, BEDROCK: 6, LANTERN: 7, VEIN_ROCK: 8, VEIN_FROST: 9, WORKBENCH: 10, EMBER: 11, SLAB: 12, WORKBENCH_90: 13, WORKBENCH_180: 14, WORKBENCH_270: 15, SLAB_TOP: 16, SLAB_DOUBLE: 17, MARCO: 18, MARCO_90: 19, MARCO_180: 20, MARCO_270: 21, PAINEL: 22, PAINEL_Z: 23, VEIN_COPPER: 24, BRAZIER: 25, BRAZIER_LIT: 26, CARAPACE: 27, EMBER_VEIN: 28, EMBER_BLOCK: 29, MAT: 30, LADDER: 31, LADDER_90: 32, LADDER_180: 33, LADDER_270: 34, CHEST: 35, CHEST_90: 36, CHEST_180: 37, CHEST_270: 38, BED: 39, BED_90: 40, BED_180: 41, BED_270: 42, BED_HEAD: 43, BED_HEAD_90: 44, BED_HEAD_180: 45, BED_HEAD_270: 46, REED_BLOCK: 47, REED_SLAB: 48, REED_SLAB_TOP: 49, REED_STAIR: 50, REED_STAIR_90: 51, REED_STAIR_180: 52, REED_STAIR_270: 53, REED_CHAIR: 54, REED_CHAIR_90: 55, REED_CHAIR_180: 56, REED_CHAIR_270: 57, DOOR: 58, DOOR_LAST: 89, GRASS: 90, DIRT: 91, STONE: 92, BEACH: 93, LOG_OAK: 94, LEAVES_OAK: 95, LOG_CHERRY: 96, LEAVES_CHERRY: 97, LOG_BIRCH: 98, LEAVES_BIRCH: 99, PLANKS_OAK: 100, PLANKS_CHERRY: 101, PLANKS_BIRCH: 102, CARPENTRY: 103, CARPENTRY_90: 104, CARPENTRY_180: 105, CARPENTRY_270: 106, STONE_SMOOTH: 107, STONE_BRICK: 108, STONE_SLAB: 109, STONE_SLAB_TOP: 110, STONE_STAIR: 111, STONE_STAIR_90: 112, STONE_STAIR_180: 113, STONE_STAIR_270: 114, STONE_WALL: 115, STONE_WALL_LAST: 130, FARMLAND_DRY: 131, FARMLAND_WET: 132, PATH: 133, DIRT_INFERTILE: 134, CLAY_BLOCK: 135, BRICK_BLOCK: 136, FURNACE: 137, FURNACE_90: 138, FURNACE_180: 139, FURNACE_270: 140, FURNACE_LIT: 141, FURNACE_LIT_90: 142, FURNACE_LIT_180: 143, FURNACE_LIT_270: 144, TORCH: 145, TORCH_WALL: 146, TORCH_WALL_90: 147, TORCH_WALL_180: 148, TORCH_WALL_270: 149, COAL_ORE: 150, COAL_BLOCK: 151, MELON: 152, PUMPKIN: 153, SEAGRASS: 154, SEAGRASS_TALL: 155, SEAGRASS_TALL_TOP: 156, KELP: 157, KELP_TOP: 158, DRIED_KELP_BLOCK: 159, CORAL: 160, CORAL_FAN: 170, CORAL_BLOCK: 180, SLAB_OAK: 190, SLAB_OAK_TOP: 191, SLAB_CHERRY: 192, SLAB_CHERRY_TOP: 193, SLAB_BIRCH: 194, SLAB_BIRCH_TOP: 195, STAIR_OAK: 196, STAIR_OAK_270: 199, STAIR_CHERRY: 200, STAIR_BIRCH: 204, STAIR_BIRCH_270: 207, FENCE_OAK: 208, FENCE_BIRCH_LAST: 255, GATE_OAK: 256, GATE_BIRCH_LAST: 279 } as const;
 /** Maior id de bloco (o carregamento do save descarta ids acima disto). */
-export const T_MAX = T.STAIR_BIRCH_270; // lajes e degraus de madeira (ADR 0139) fecham a faixa; passa de 255: o mesher guarda as células em `Uint16Array`
+export const T_MAX = T.GATE_BIRCH_LAST; // lajes e degraus de madeira (ADR 0139) fecham a faixa; passa de 255: o mesher guarda as células em `Uint16Array`
 export type TitanBlock = (typeof T)[keyof typeof T];
 
 export const BLOCK_NAMES: Record<number, string> = { 1: 'Areia ocre', 2: 'Areia úmida', 3: 'Rocha escura', 4: 'Gelo fosco', 5: 'Lago escuro', 6: 'Rocha-mãe', 7: 'Lanterna da margem', 8: 'Rocha com veio', 9: 'Gelo com veio', 10: 'Mesa de Trabalho', 11: 'Brasa de âmbar', 12: 'Laje de rocha', 13: 'Mesa de Trabalho', 14: 'Mesa de Trabalho', 15: 'Mesa de Trabalho', 16: 'Laje de rocha', 17: 'Laje dupla de rocha', 18: 'Marco de Margem', 19: 'Marco de Margem', 20: 'Marco de Margem', 21: 'Marco de Margem', 22: 'Painel de Junco', 23: 'Painel de Junco', 24: 'Veio de Cobre de Duna', 25: 'Braseiro de Rocha', 26: 'Braseiro de Rocha (aceso)', 27: 'Revestimento de Carapaça', 28: 'Veio de Âmbar', 29: 'Bloco de Âmbar Compactado', 30: 'Esteira de Junco', 31: 'Escada de Junco', 32: 'Escada de Junco', 33: 'Escada de Junco', 34: 'Escada de Junco', 35: 'Baú de Rocha e Junco', 36: 'Baú de Rocha e Junco', 37: 'Baú de Rocha e Junco', 38: 'Baú de Rocha e Junco', 39: 'Cama de Junco', 40: 'Cama de Junco', 41: 'Cama de Junco', 42: 'Cama de Junco', 43: 'Cama de Junco', 44: 'Cama de Junco', 45: 'Cama de Junco', 46: 'Cama de Junco', 47: 'Bloco de Junco', 48: 'Laje de Junco', 49: 'Laje de Junco', 50: 'Degrau de Junco', 51: 'Degrau de Junco', 52: 'Degrau de Junco', 53: 'Degrau de Junco', 54: 'Cadeira de Junco', 55: 'Cadeira de Junco', 56: 'Cadeira de Junco', 57: 'Cadeira de Junco' };
@@ -40,6 +40,7 @@ for (let i = 0; i < 10; i++) { // corais (ADR 0136): coral, gorgônia e bloco, v
   BLOCK_NAMES[T.CORAL + i] = `Coral de ${nome}${morto}`; BLOCK_NAMES[T.CORAL_FAN + i] = `Gorgônia de ${nome}${morto}`; BLOCK_NAMES[T.CORAL_BLOCK + i] = `Bloco de Coral de ${nome}${morto}`;
 }
 for (const [i, w] of ['Carvalho', 'Cerejeira', 'Bétula'].entries()) { BLOCK_NAMES[T.SLAB_OAK + 2 * i] = `Laje de ${w}`; BLOCK_NAMES[T.SLAB_OAK + 2 * i + 1] = `Laje de ${w}`; for (let t = 0; t < 4; t++) BLOCK_NAMES[T.STAIR_OAK + 4 * i + t] = `Degrau de ${w}`; } // ADR 0139
+for (const [i, w] of ['Carvalho', 'Cerejeira', 'Bétula'].entries()) { for (let m = 0; m < 16; m++) BLOCK_NAMES[T.FENCE_OAK + 16 * i + m] = `Cerca de ${w}`; for (let t = 0; t < 8; t++) BLOCK_NAMES[T.GATE_OAK + 8 * i + t] = `Portão de ${w}`; } // ADR 0140
 BLOCK_NAMES[T.MELON] = 'Melancia'; BLOCK_NAMES[T.PUMPKIN] = 'Abóbora'; // frutos do caule (ADR 0128)
 Object.assign(BLOCK_NAMES, { 90: 'Terra com Grama', 91: 'Terra', 92: 'Pedra', 93: 'Areia da Praia', 94: 'Tora de Carvalho', 95: 'Folhas de Carvalho', 96: 'Tora de Cerejeira', 97: 'Folhas de Cerejeira', 98: 'Tora de Bétula', 99: 'Folhas de Bétula' });
 /** Madeira básica do Orvalis em voxel (ADR 0107): tábuas de 3 madeiras e a Mesa de Carpintaria (4 ids, o giro no id; a frente fica voltada para quem a coloca, como o baú). */
@@ -94,9 +95,9 @@ export const isCoralLive = (id: number): boolean => isCoral(id) && id - coralBas
 export const deadCoral = (id: number): number => (isCoralLive(id) ? id + 5 : id);
 /** A célula é água, com ou sem planta aquática dentro. */
 export const isLiquidCell = (id: number): boolean => id === T.LAKE || isWaterPlant(id);
-export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && !isWaterPlant(id) && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id) && !isTorch(id);
+export const isSolid = (id: number): boolean => id !== T.AIR && id !== T.LAKE && !isWaterPlant(id) && id !== T.LANTERN && !isMarco(id) && id !== T.MAT && !isLadder(id) && !isTorch(id) && !isGateOpen(id); // o portão aberto não colide (ADR 0140)
 /** Alvo da mira (e do "quebrar"): sólido, lanterna ou Marco de Margem. O líquido e o ar são atravessados. */
-export const isTarget = (id: number): boolean => isSolid(id) || isWaterPlant(id) || id === T.LANTERN || isMarco(id) || id === T.MAT || isLadder(id) || isTorch(id);
+export const isTarget = (id: number): boolean => isSolid(id) || isWaterPlant(id) || id === T.LANTERN || isMarco(id) || id === T.MAT || isLadder(id) || isTorch(id) || isGateOpen(id);
 /** Bloco que bloqueia a luz de lanterna: sólido, menos o Painel de Junco (a trama tem vãos: a luz atravessa). */
 /** Luz de bloco (ADR 0119, regra da Wiki): só o **cubo opaco** a bloqueia. Folhas, baú, cama, porta, laje, degrau, mureta, braseiro e Painel deixam a luz passar (a laje dupla é cubo e bloqueia). */
 export const blocksLight = (id: number): boolean => isFull(id) && !isLeaves(id);
@@ -108,7 +109,7 @@ export const blockHeight = (id: number): number => blockSpan(id)[1];
 /** Laje de madeira (ADR 0139): três madeiras × (inferior, superior) = 190–195; a inferior é par, a superior é o par dela. */
 export const isWoodSlab = (id: number): boolean => id >= T.SLAB_OAK && id <= T.SLAB_BIRCH_TOP;
 /** Madeira (0 carvalho, 1 cerejeira, 2 bétula) de uma laje ou de um degrau de madeira; -1 se não for. */
-export const woodOf = (id: number): number => (isWoodSlab(id) ? (id - T.SLAB_OAK) >> 1 : id >= T.STAIR_OAK && id <= T.STAIR_BIRCH_270 ? (id - T.STAIR_OAK) >> 2 : -1);
+export const woodOf = (id: number): number => (isWoodSlab(id) ? (id - T.SLAB_OAK) >> 1 : id >= T.STAIR_OAK && id <= T.STAIR_BIRCH_270 ? (id - T.STAIR_OAK) >> 2 : isFence(id) ? (id - T.FENCE_OAK) >> 4 : isGate(id) ? (id - T.GATE_OAK) >> 3 : -1);
 export const isSlab = (id: number): boolean => id === T.SLAB || id === T.SLAB_TOP || id === T.REED_SLAB || id === T.REED_SLAB_TOP || id === T.STONE_SLAB || id === T.STONE_SLAB_TOP || isWoodSlab(id); // a de rocha, a de junco (ADR 0100) e a de pedra (ADR 0108)
 /** Laje inferior (metade de baixo da célula)? A superior é o par dela: `slabPartner`. */
 export const isSlabBottom = (id: number): boolean => id === T.SLAB || id === T.REED_SLAB || id === T.STONE_SLAB || (isWoodSlab(id) && ((id - T.SLAB_OAK) & 1) === 0);
@@ -116,7 +117,7 @@ export const slabPartner = (id: number): number => (isWoodSlab(id) ? ((id - T.SL
 /** Faixa de altura que o bloco ocupa dentro da célula, `[baixo, topo]` em 0–1 (a laje superior ocupa [0,5, 1]; não sólido = [0, 0]). A física e a mira leem esta faixa. */
 export function blockSpan(id: number): readonly [number, number] {
   if (isWall(id)) return [0, WALL_HEIGHT]; // a mureta (ADR 0110): a caixa envolvente; a forma exata vem de `blockBoxes`
-  if (isStair(id) || isChair(id) || isDoor(id)) return [0, 1]; // a caixa envolvente (a forma exata vem de `blockBoxes`)
+  if (isStair(id) || isChair(id) || isDoor(id) || isFence(id) || (isGate(id) && !isGateOpen(id))) return [0, 1]; // a caixa envolvente (a forma exata vem de `blockBoxes`)
   if (isBrazier(id)) return [0, BRAZIER_HEIGHT]; // o braseiro 3D barra o corpo na altura dele (0,774 m), na célula inteira (ADR 0092)
   if (isChest(id)) return [0, CHEST_HEIGHT]; // o baú barra o corpo na altura dele (0,73 m), na célula inteira
   if (isBed(id)) return [0, BED_HEIGHT]; // a cama barra o corpo na altura dela (0,45 m), nas duas células
@@ -125,7 +126,7 @@ export function blockSpan(id: number): readonly [number, number] {
   return isSolid(id) ? [0, 1] : [0, 0];
 }
 /** Cubo inteiro: só ele esconde as faces vizinhas (a laje, inferior ou superior, deixa metade da célula aberta; a laje dupla é cubo). */
-export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id) && !isStair(id) && !isChair(id) && !isDoor(id) && !isWall(id);
+export const isFull = (id: number): boolean => isSolid(id) && !isSlab(id) && !isPanel(id) && !isChest(id) && !isBed(id) && !isBrazier(id) && !isStair(id) && !isChair(id) && !isDoor(id) && !isWall(id) && !isFence(id) && !isGate(id);
 /** Veio natural (rocha ou gelo com marca visível): quebrar devolve o bloco e solta uma lasca (ADR 0044). */
 export const isVein = (id: number): boolean => id === T.VEIN_ROCK || id === T.VEIN_FROST;
 /** Veio de cobre (ADR 0063): só uma picareta o quebra; solta fragmentos de cobre, nunca o bloco. */
@@ -144,6 +145,50 @@ export const stairId = (turn: number, stone = false): number => (stone ? T.STONE
 /** Degrau da madeira `wood` (0 carvalho, 1 cerejeira, 2 bétula) com o giro dado. */
 export const woodStairId = (wood: number, turn: number): number => T.STAIR_OAK + wood * 4 + (((turn % 4) + 4) % 4);
 export const chairId = (turn: number): number => T.REED_CHAIR + (((turn % 4) + 4) % 4);
+// ---- Cerca e Portão de madeira (ADR 0140): cerca com a conexão no id (como a mureta), portão com giro e abertura no id ----
+/** Cerca (ADR 0140): `FENCE_OAK + madeira × 16 + máscara` (208–255; bits `WALL_N/E/S/W`). Liga-se a outra cerca de madeira (qualquer madeira), a cubo inteiro (folhas não) e ao portão cujo eixo corre naquela direção. */
+export const isFence = (id: number): boolean => id >= T.FENCE_OAK && id <= T.FENCE_BIRCH_LAST;
+export const fenceMask = (id: number): number => (isFence(id) ? (id - T.FENCE_OAK) & 15 : 0);
+export const fenceId = (wood: number, mask: number): number => T.FENCE_OAK + wood * 16 + (mask & 15);
+/** Portão (ADR 0140): `GATE_OAK + madeira × 8 + (aberto ? 4 : 0) + giro` (256–279); o giro é a direção para onde ele abre (a frente, como o degrau): o painel corre de través a ela. */
+export const isGate = (id: number): boolean => id >= T.GATE_OAK && id <= T.GATE_BIRCH_LAST;
+export const gateTurn = (id: number): number => (isGate(id) ? (id - T.GATE_OAK) & 3 : 0);
+export const isGateOpen = (id: number): boolean => isGate(id) && ((id - T.GATE_OAK) & 4) !== 0;
+export const gateId = (wood: number, turn: number, open: boolean): number => T.GATE_OAK + wood * 8 + (open ? 4 : 0) + (((turn % 4) + 4) % 4);
+export const gateToggled = (id: number): number => (isGate(id) ? (isGateOpen(id) ? id - 4 : id + 4) : id);
+/** Porta ou portão: o toque abre e fecha (`useDoor`). */
+export const isOpenable = (id: number): boolean => isDoor(id) || isGate(id);
+/** O portão corre ao longo de X (giros pares) ou de Z (ímpares): as cercas só se ligam a ele por essas duas bordas. */
+const gateAxisX = (id: number): boolean => (gateTurn(id) & 1) === 0;
+/** A cerca em direção `bit` (WALL_N/E/S/W) liga-se ao vizinho `id`? */
+export function fenceConnects(id: number, bit: number): boolean {
+  if (isFence(id)) return true;
+  if (isGate(id)) return gateAxisX(id) ? bit === WALL_E || bit === WALL_W : bit === WALL_N || bit === WALL_S;
+  return isFull(id) && !isLeaves(id);
+}
+export function fenceMaskFor(get: (x: number, y: number, z: number) => number, x: number, y: number, z: number): number {
+  return (fenceConnects(get(x, y, z - 1), WALL_S) ? WALL_N : 0) | (fenceConnects(get(x + 1, y, z), WALL_W) ? WALL_E : 0) | (fenceConnects(get(x, y, z + 1), WALL_N) ? WALL_S : 0) | (fenceConnects(get(x - 1, y, z), WALL_E) ? WALL_W : 0);
+}
+/** Caixas da cerca pela máscara (colisão e mira): poste de 4 px e um braço de 4 px por vizinho ligado, de 1 m de altura (a colisão vai a 1,5 m por `tallBoxes`). */
+export function fenceBoxes(mask: number): readonly CellBox[] {
+  const out: CellBox[] = [[0.375, 0, 0.375, 0.625, 1, 0.625]];
+  if (mask & WALL_N) out.push([0.375, 0, 0, 0.625, 1, 0.375]);
+  if (mask & WALL_E) out.push([0.625, 0, 0.375, 1, 1, 0.625]);
+  if (mask & WALL_S) out.push([0.375, 0, 0.625, 0.625, 1, 1]);
+  if (mask & WALL_W) out.push([0, 0, 0.375, 0.375, 1, 0.625]);
+  return out;
+}
+/** Caixas do portão (giro 0 = abre para +Z): fechado = painel de 4 px de espessura de ponta a ponta; aberto = as duas folhas recolhidas para o lado do giro (só mira, sem colisão). */
+export function gateBoxes(turn: number, open: boolean): readonly CellBox[] {
+  const base: readonly CellBox[] = open ? [[0, 0, 0.4375, 0.125, 1, 1], [0.875, 0, 0.4375, 1, 1, 1]] : [[0, 0, 0.375, 1, 1, 0.625]];
+  return base.map((b) => rotateBox(b, turn));
+}
+/** A cerca e o portão fechado colidem até 1,5 m (como na Wiki: ninguém pula por cima): as caixas da célula de baixo, recortadas em [0, 0,5], valem também na célula de cima. */
+export function tallBoxes(belowId: number): readonly CellBox[] | null {
+  if (!isFence(belowId) && !(isGate(belowId) && !isGateOpen(belowId))) return null;
+  const bb = blockBoxes(belowId);
+  return bb ? bb.map((b): CellBox => [b[0], 0, b[2], b[3], 0.5, b[5]]) : null;
+}
 // ---- Mureta de Pedra (ADR 0110): poste central + braços para os vizinhos, a conexão vai no id ----
 /** Bits de conexão da mureta: norte (−Z) 1, leste (+X) 2, sul (+Z) 4, oeste (−X) 8. O id é `STONE_WALL + máscara` (115–130). */
 export const WALL_N = 1, WALL_E = 2, WALL_S = 4, WALL_W = 8;
@@ -204,6 +249,7 @@ function doorBox(hingeRight: boolean, open: boolean): CellBox {
 const BOXES = new Map<number, readonly CellBox[]>();
 for (let t = 0; t < 4; t++) for (const hr of [false, true]) for (const op of [false, true]) for (const up of [false, true]) BOXES.set(doorId(t, hr, op, up), [rotateBox(doorBox(hr, op), t)]);
 for (let m = 0; m < 16; m++) BOXES.set(T.STONE_WALL + m, wallBoxes(m));
+for (let w = 0; w < 3; w++) { for (let m = 0; m < 16; m++) BOXES.set(fenceId(w, m), fenceBoxes(m)); for (let t = 0; t < 4; t++) for (const op of [false, true]) BOXES.set(gateId(w, t, op), gateBoxes(t, op)); }
 for (let t = 0; t < 4; t++) { BOXES.set(T.REED_STAIR + t, STAIR_BASE.map((b) => rotateBox(b, t))); BOXES.set(T.STONE_STAIR + t, STAIR_BASE.map((b) => rotateBox(b, t))); for (let w = 0; w < 3; w++) BOXES.set(woodStairId(w, t), STAIR_BASE.map((b) => rotateBox(b, t))); BOXES.set(T.REED_CHAIR + t, CHAIR_BASE.map((b) => rotateBox(b, t))); }
 /** Caixas sólidas do bloco (degrau e cadeira) ou null se ele é cubo, laje ou tem outra forma. A física e a mira leem estas caixas. */
 export const blockBoxes = (id: number): readonly CellBox[] | null => BOXES.get(id) ?? null;
@@ -304,11 +350,16 @@ export function bedPartnerOffset(id: number): readonly [number, number] {
 export const MURETA_KINDS = ['mureta0', 'mureta1', 'mureta2', 'mureta3', 'mureta4', 'mureta5', 'mureta6', 'mureta7', 'mureta8', 'mureta9', 'mureta10', 'mureta11', 'mureta12', 'mureta13', 'mureta14', 'mureta15'] as const;
 export const WOOD_STAIR_KINDS = ['degrauCarvalho', 'degrauCerejeira', 'degrauBetula'] as const;
 export type WoodStairKind = (typeof WOOD_STAIR_KINDS)[number];
+/** Um modelo por madeira × máscara da cerca (`cerca<madeira*16+máscara>`, 48) e por madeira × estado do portão (6; o giro vai na instância). */
+export const FENCE_KINDS = Array.from({ length: 48 }, (_, i) => `cerca${i}` as const);
+export type FenceKind = `cerca${number}`;
+export const GATE_KINDS = ['portao0', 'portao0Aberto', 'portao1', 'portao1Aberto', 'portao2', 'portao2Aberto'] as const;
+export type GateKind = (typeof GATE_KINDS)[number];
 export type MuretaKind = (typeof MURETA_KINDS)[number];
 /** Um modelo por coral e por gorgônia, vivos e mortos (ADR 0136): `coral0`–`coral9` (plantas) e `coral10`–`coral19` (leques). */
 export const CORAL_KINDS = ['coral0', 'coral1', 'coral2', 'coral3', 'coral4', 'coral5', 'coral6', 'coral7', 'coral8', 'coral9', 'coral10', 'coral11', 'coral12', 'coral13', 'coral14', 'coral15', 'coral16', 'coral17', 'coral18', 'coral19'] as const;
 export type CoralKind = (typeof CORAL_KINDS)[number];
-export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'degrauPedra' | WoodStairKind | MuretaKind | 'cadeira' | 'porta' | 'tocha' | 'tochaParede' | 'ervaMarinha' | 'ervaAlta' | 'ervaAltaTopo' | 'alga' | 'algaTopo' | CoralKind;
+export type ModelKindName = 'workbench' | 'marco' | 'painel' | 'escada' | 'bau' | 'cama' | 'braseiro' | 'braseiroAceso' | 'degrau' | 'degrauPedra' | WoodStairKind | FenceKind | GateKind | MuretaKind | 'cadeira' | 'porta' | 'tocha' | 'tochaParede' | 'ervaMarinha' | 'ervaAlta' | 'ervaAltaTopo' | 'alga' | 'algaTopo' | CoralKind;
 export function modelOf(id: number): { kind: ModelKindName; turn: number } | null {
   if (isWorkbench(id)) return { kind: 'workbench', turn: workbenchTurn(id) };
   if (isMarco(id)) return { kind: 'marco', turn: marcoTurn(id) };
@@ -321,6 +372,8 @@ export function modelOf(id: number): { kind: ModelKindName; turn: number } | nul
   if (isWall(id)) return { kind: MURETA_KINDS[wallMask(id)], turn: 0 }; // Mureta de Pedra (ADR 0110): o modelo já é a forma da máscara
   if (isStoneStair(id)) return { kind: 'degrauPedra', turn: stairTurn(id) }; // Degrau de Pedra (ADR 0109): mesma forma, arte do pacote
   if (isWoodStair(id)) return { kind: WOOD_STAIR_KINDS[woodOf(id)], turn: stairTurn(id) }; // Degrau de Madeira (ADR 0139): forma do de pedra, tira de arte por madeira
+  if (isFence(id)) return { kind: FENCE_KINDS[id - T.FENCE_OAK], turn: 0 }; // Cerca (ADR 0140): o modelo já é a forma da máscara
+  if (isGate(id)) return { kind: GATE_KINDS[woodOf(id) * 2 + (isGateOpen(id) ? 1 : 0)], turn: gateTurn(id) };
   if (isChair(id)) return { kind: 'cadeira', turn: chairTurn(id) };
   if (isDoor(id) && !isDoorUpper(id)) return { kind: 'porta', turn: (id - T.DOOR) & 15 }; // só a metade de baixo tem instância; o `turn` leva giro, abertura e dobradiça
   if (isCoralPlant(id)) return { kind: CORAL_KINDS[id - T.CORAL], turn: 0 }; // corais (ADR 0136): planta e leque

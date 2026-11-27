@@ -10,7 +10,7 @@ import { resolveSlabPlacement } from './slabs';
 import { accepts, type FurnaceSlot, type FurnaceState, furnaceKey, newFurnace, rulesOf } from './furnace';
 import { canSleep, tickFrac, WAKE_TICKS } from './sky';
 import { clearWeather, hasWeather } from './weather';
-import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, isWoodStair, woodOf, woodStairId, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
+import { isCoralBlock, isCoralFan, isCoralPlant, isWaterPlant, carpentryId, carpentryTurnFacing, furnaceId, isFurnace, isLeaves, isWallTorch, wallTorchId, wallTorchTurn, blockBoxes, doorId, doorRight, doorToggled, doorTurn, isDoor, isDoorHingeRight, isDoorOpen, isDoorUpper, BED_HEIGHT, bedFootId, bedHeadId, bedPartnerOffset, bedTurn, bedTurnFacing, blockSpan, chestId, chestTurnFacing, isBed, isBedFoot, isBrazier, isChest, isFull, isLadder, isMat, isSlabBottom, isWoodStair, woodOf, woodStairId, gateId, gateTurn, isGate, isGateOpen, isSolid as isSolidBlock, stairId, chairId, ladderFacing, ladderId, ladderTurn, ladderTurnOf, isCopperVein, isAmberVein, isSolid, isVein, LAKE_LAST_Y, marcoId, marcoTurnFacing, panelIdFacing, T, workbenchId, workbenchTurnFacing, Y_MIN } from './voxel';
 import { BODY_HALF, BODY_HEIGHT, canPlaceAt, newBody, type Hit } from './physics';
 import type { TitanSession } from './session';
 import { eat, revive } from './vitals';
@@ -261,8 +261,25 @@ function breakDoor(s: TitanSession, x: number, y: number, z: number): ActionResu
  * Abrir ou fechar a porta (ADR 0102): troca as duas metades de uma vez; uma porta dupla (a vizinha do lado livre, mesmo giro e dobradiça oposta) acompanha. Fechar não vale com o corpo
  * dentro da faixa da folha (o jogador não fica preso na porta).
  */
+/** Portão de madeira (ADR 0140): abre **para longe** de quem o usa (o giro é a direção do vão) e não abre se algo sólido ocupa a célula para onde as folhas recolhem; fechado, o corpo não pode estar no painel. */
+function useGate(s: TitanSession, x: number, y: number, z: number, id: number): ActionResult {
+  const b = s.body, turn = gateTurn(id), wood = woodOf(id);
+  if (isGateOpen(id)) { // fechar: o painel de 4 px ocupa o meio da célula
+    const cb = blockBoxes(gateId(wood, turn, false))?.[0];
+    if (cb && b.x + BODY_HALF > x + cb[0] && b.x - BODY_HALF < x + cb[3] && b.z + BODY_HALF > z + cb[2] && b.z - BODY_HALF < z + cb[5] && b.y < y + 1.5 && b.y + BODY_HEIGHT > y) return { ok: false, msg: 'Tem alguém no caminho' };
+    s.volume.set(x, y, z, gateId(wood, turn, false));
+    return { ok: true, open: false };
+  }
+  const [fx, fz] = ladderFacing(turn), side = (b.x - (x + 0.5)) * fx + (b.z - (z + 0.5)) * fz; // quem está do lado do giro faz o portão abrir para o lado contrário
+  const t = side > 0 ? (turn + 2) % 4 : turn, [ox, oz] = ladderFacing(t);
+  if (isSolidBlock(s.volume.get(x + ox, y, z + oz))) return { ok: false, msg: 'O portão não abre: tem algo no caminho' }; // Wiki: não abre se há bloco na meia célula do vão
+  s.volume.set(x, y, z, gateId(wood, t, true));
+  return { ok: true, open: true };
+}
+
 export function useDoor(s: TitanSession, x: number, y: number, z: number): ActionResult {
   const id = s.volume.get(x, y, z);
+  if (isGate(id)) return useGate(s, x, y, z, id);
   if (!isDoor(id)) return { ok: false };
   const ly = isDoorUpper(id) ? y - 1 : y, lo = s.volume.get(x, ly, z);
   if (!isDoor(lo) || isDoorUpper(lo) || !isDoor(s.volume.get(x, ly + 1, z))) return { ok: false };
@@ -743,6 +760,7 @@ function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResul
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar
   else if (block === T.REED_STAIR) block = stairId(marcoTurnFacing(s.yaw)); // a frente (o lado baixo) fica voltada para o jogador: giro 0 = frente em +Z (ADR 0101)
   else if (block === T.STONE_STAIR) block = stairId(marcoTurnFacing(s.yaw), true); // Degrau de Pedra: mesma regra do de junco (ADR 0109)
+  else if (isGate(block)) block = gateId(woodOf(block), marcoTurnFacing(s.yaw), false); // o painel corre de través ao olhar; abre para longe de quem o usa (ADR 0140)
   else if (isWoodStair(block)) block = woodStairId(woodOf(block), marcoTurnFacing(s.yaw)); // Degrau de Madeira: mesma regra (ADR 0139)
   else if (block === T.REED_CHAIR) block = chairId(marcoTurnFacing(s.yaw));
   else if (block === T.FURNACE) block = furnaceId(carpentryTurnFacing(s.yaw), false); // a frente da Fornalha fica voltada para o jogador, sempre apagada (ADR 0120)

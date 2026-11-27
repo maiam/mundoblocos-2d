@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanDegrauMadeiraUrl, titanMuretaPedraUrl, orvalisHortaUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl, orvalisFazendaUrls } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanDegrauMadeiraUrl, titanCercaMadeiraUrl, titanMuretaPedraUrl, orvalisHortaUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl, orvalisFazendaUrls } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
@@ -34,7 +34,7 @@ import { smoothRain } from './weather';
 import { advanceDay, canSleep, FIXED_HOURS, parseHora, phaseName, saturnVisibility } from './sky';
 import { SLEEP_APPLY_MS, SLEEP_CONTROL_MS, SLEEP_TOTAL_MS, sleepCue, sleepVeil } from './sleep';
 import { lidSound } from './lid';
-import { isDoor, isBed, isBrazier, isChest, isCollectBlock, isCraftingTable, isFurnace, T } from './voxel';
+import { isOpenable, isBed, isBrazier, isChest, isCollectBlock, isCraftingTable, isFurnace, T } from './voxel';
 import { autoEditStep, buildLanternScene, SCENE_NOTE } from './scene';
 import { texturesCaption, texturesSession } from './texturas';
 import { defaultTitanStorage, MemoryTitanStorage, type TitanStorage } from './save';
@@ -136,7 +136,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     toast(e instanceof UnsupportedVersionError ? e.message : 'Não foi possível abrir a partida salva.', 60000);
     return;
   }
-  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, degrauPedraImg, degrauMadeiraImg, muretaPedraImg, hortaImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg, atlas8Img, lake8Img] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanDegrauPedraUrl), loadImage(titanDegrauMadeiraUrl), loadImage(titanMuretaPedraUrl), loadImage(orvalisHortaUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl), loadImage(titanAtlas8Url), loadImage(orvalis ? orvalisWater8Url : titanLake8Url)]);
+  const [atlas, hotbarAtlas, cracksAtlas, lanternAtlas, workbenchAtlas, escadaImg, bauImg, camaImg, braseiroImg, juncoImg, degrauPedraImg, degrauMadeiraImg, cercaMadeiraImg, muretaPedraImg, hortaImg, portaImg, reedImg, cultivoImg, lakeImg, margemImg, nozImg, farejadorImg, atlas8Img, lake8Img] = await Promise.all([loadImage(titanAtlasUrl), loadImage(titanHotbarUrl), loadImage(titanCracksUrl), loadImage(titanLanternAtlasUrl), loadImage(titanWorkbenchAtlasUrl), loadImage(titanEscadaAtlasUrl), loadImage(titanBauAtlasUrl), loadImage(titanCamaAtlasUrl), loadImage(titanBraseiroAtlasUrl), loadImage(titanJuncoTileUrl), loadImage(titanDegrauPedraUrl), loadImage(titanDegrauMadeiraUrl), loadImage(titanCercaMadeiraUrl), loadImage(titanMuretaPedraUrl), loadImage(orvalisHortaUrl), loadImage(titanPortaUrl), loadImage(titanReedUrl), loadImage(titanCultivoUrl), loadImage(orvalis ? orvalisWaterUrl : titanLakeUrl), loadImage(titanMargemAtlasUrl), loadImage(titanNozAtlasUrl), loadImage(titanFarejadorAtlasUrl), loadImage(titanAtlas8Url), loadImage(orvalis ? orvalisWater8Url : titanLake8Url)]);
   const vol = session.volume;
   const inv = session.inventory;
   const spots = scene ? buildLanternScene(session, Math.max(1, Math.min(64, Number(q.get('n')) || 12))) : [];
@@ -146,7 +146,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
   const fazenda = orvalis ? (Object.fromEntries(await Promise.all((Object.keys(orvalisFazendaUrls) as FaunaKind[]).map(async (k) => [k, await loadImage(orvalisFazendaUrls[k])] as const))) as Record<FaunaKind, HTMLImageElement>) : undefined; // 4 atlas de 64 × 64 (ADR 0124)
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, degrauMadeira: degrauMadeiraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, fazenda, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, degrauMadeira: degrauMadeiraImg, cercaMadeira: cercaMadeiraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, fazenda, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
   if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view }; // só no dev (como o window.__game do mundo 2.5D): testes de navegador
   if (orvalis) view.setPalette('orvalis');
   const forcedRain = q.get('chuva') === '1'; // teste: força a chuva (só visual e som; não grava)
@@ -428,7 +428,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   /** Estação na mira (Mesa de Trabalho ou Braseiro) ao alcance de uso. */
   const benchAimed = (): { x: number; y: number; z: number; kind: 'workbench' | 'brazier' | 'furnace' | 'chest' | 'bed' | 'door' } | null => {
     if (!target || target.item) return null;
-    const id = vol.get(target.x, target.y, target.z), kind = isCraftingTable(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isFurnace(id) ? 'furnace' : isChest(id) ? 'chest' : isBed(id) ? 'bed' : isDoor(id) ? 'door' : null;
+    const id = vol.get(target.x, target.y, target.z), kind = isCraftingTable(id) ? 'workbench' : isBrazier(id) ? 'brazier' : isFurnace(id) ? 'furnace' : isChest(id) ? 'chest' : isBed(id) ? 'bed' : isOpenable(id) ? 'door' : null;
     if (!kind) return null;
     return Math.hypot(target.x + 0.5 - session.body.x, target.y + 0.5 - (session.body.y + EYE_HEIGHT), target.z + 0.5 - session.body.z) <= USE_REACH ? { x: target.x, y: target.y, z: target.z, kind } : null;
   };
@@ -942,7 +942,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         return { ok: strikeFauna(fi) };
       }
       if (t.kind === 'creature') return { ok: strike(Number(t.item)) };
-      if (t.kind === 'block' && isDoor(vol.get(t.x, t.y, t.z)) && benchAimed()) { openStation(); return { ok: true }; } // tocar/clicar na porta (ao alcance) abre ou fecha, com qualquer coisa na mão (ADR 0102)
+      if (t.kind === 'block' && isOpenable(vol.get(t.x, t.y, t.z)) && benchAimed()) { openStation(); return { ok: true }; } // tocar/clicar na porta (ao alcance) abre ou fecha, com qualquer coisa na mão (ADR 0102)
       if (fingerMode() && t.kind === 'block' && benchAimed()) { openStation(); return { ok: true }; } // no toque, tocar na Mesa ou no Braseiro (ao alcance) abre a estação
       const held = session.inventory.get(session.selected); // antes de gastar a unidade: o som depende do que foi posto
       if (client && !(held && foodOf(held.item))) { // na sala a ação vai ao servidor e só vale com a resposta dele (ADR 0104)

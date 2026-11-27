@@ -1,7 +1,7 @@
 import type { TerrainGen } from './terrain';
 import { LightEngine, lightKey } from './light';
 import { SkyLight, type SkyKind } from './skylight';
-import { CORAL_KINDS, WOOD_STAIR_KINDS, isLeaves, isTorch, isWaterPlant, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
+import { CORAL_KINDS, FENCE_KINDS, GATE_KINDS, WOOD_STAIR_KINDS, fenceId, fenceMaskFor, isFence, isGateOpen, tallBoxes, woodOf, isLeaves, isTorch, isWaterPlant, isWall, MURETA_KINDS, wallId, wallMaskFor, blockBoxes, blockHeight, blockSpan, type CellBox, chunkKey, chunkOf, columnIndex, blocksLight, isLadder, isMarco, isOccupied, isSolid, isTarget, isWorkbench, localOf, lightLevelOf, modelOf, type ModelKindName, sectionOf, T, T_MAX, unpackIndex, Y_MAX, Y_MIN } from './voxel';
 
 /**
  * Volume do Titã: base gerada (pura) + edições do jogador por chunk (ADR 0039). Fonte de verdade da leitura, da colisão e da edição.
@@ -65,7 +65,12 @@ export class TitanVolume {
 
   /** Caixas sólidas da célula (degrau e cadeira, ADR 0101) para o corpo, ou null (a parede invisível em volta da região é cubo inteiro). */
   bodyBoxes(x: number, y: number, z: number): readonly CellBox[] | null {
-    return this.gen.inRegion(x, z) ? blockBoxes(this.get(x, y, z)) : null;
+    if (!this.gen.inRegion(x, z)) return null;
+    const id = this.get(x, y, z);
+    if (isGateOpen(id)) return null; // o portão aberto só é alvo da mira, não colide (ADR 0140)
+    const own = blockBoxes(id), tall = tallBoxes(this.get(x, y - 1, z)); // cerca e portão fechado colidem até 1,5 m: a célula de cima leva a metade de baixo das caixas
+    if (own) return tall ? [...own, ...tall] : own;
+    return tall && !isSolid(id) ? tall : null;
   }
 
   /** Faixa `[baixo, topo]` ocupada na célula para o corpo (a parede invisível em volta da região conta como cubo inteiro). */
@@ -91,6 +96,7 @@ export class TitanVolume {
   set(x: number, y: number, z: number, id: number): boolean {
     if (!this.editable(x, y, z)) return false;
     if (isWall(id)) id = wallId(wallMaskFor((a, b, c) => this.get(a, b, c), x, y, z)); // a mureta nasce já ligada aos vizinhos (ADR 0110)
+    if (isFence(id)) id = fenceId(woodOf(id), fenceMaskFor((a, b, c) => this.get(a, b, c), x, y, z)); // a cerca nasce já ligada aos vizinhos (ADR 0140)
     const cx = chunkOf(x), cz = chunkOf(z);
     const key = chunkKey(cx, cz);
     const idx = columnIndex(localOf(x), y, localOf(z));
@@ -118,6 +124,7 @@ export class TitanVolume {
     for (const [dx, dz] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
       const nx = x + dx, nz = z + dz, n = this.get(nx, y, nz);
       if (isWall(n) && n !== wallId(wallMaskFor((a, b, c) => this.get(a, b, c), nx, y, nz))) this.set(nx, y, nz, n); // `set` normaliza o id
+      else if (isFence(n) && n !== fenceId(woodOf(n), fenceMaskFor((a, b, c) => this.get(a, b, c), nx, y, nz))) this.set(nx, y, nz, n); // a cerca vizinha (também por portão que abre, gira ou some)
     }
   }
 
@@ -222,7 +229,7 @@ export class TitanVolume {
 
   // ---- Luz de lanterna ----
   /** Modelos 3D colocados (mesa, Marco de Margem, Painel de Junco): o renderer desenha uma instância por célula; `modelVersion` muda a cada peça posta, retirada ou carregada. */
-  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), tocha: new Map(), tochaParede: new Map(), ervaMarinha: new Map(), ervaAlta: new Map(), ervaAltaTopo: new Map(), alga: new Map(), algaTopo: new Map(), ...Object.fromEntries(CORAL_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(WOOD_STAIR_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
+  private readonly models: Record<ModelKindName, Map<number, [number, number, number, number]>> = { workbench: new Map(), marco: new Map(), painel: new Map(), escada: new Map(), bau: new Map(), cama: new Map(), braseiro: new Map(), braseiroAceso: new Map(), degrau: new Map(), degrauPedra: new Map(), cadeira: new Map(), porta: new Map(), tocha: new Map(), tochaParede: new Map(), ervaMarinha: new Map(), ervaAlta: new Map(), ervaAltaTopo: new Map(), alga: new Map(), algaTopo: new Map(), ...Object.fromEntries(CORAL_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(WOOD_STAIR_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(FENCE_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(GATE_KINDS.map((k) => [k, new Map()])), ...Object.fromEntries(MURETA_KINDS.map((k) => [k, new Map()])) } as Record<ModelKindName, Map<number, [number, number, number, number]>>;
   modelVersion = 0;
   /** Cada peça: `[x, y, z, giro]` (giro 0–3 em quartos de volta ao redor de Y; o painel usa 0 = ao longo de X e 1 = ao longo de Z). */
   /** Registra um modelo que vem do **gerador** (a flora marinha, ADR 0135), descoberto quando a seção é malhada: os modelos editados entram por `set` e pelo carregamento; os da base, só aqui. Idempotente. */

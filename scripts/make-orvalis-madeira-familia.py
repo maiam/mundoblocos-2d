@@ -4,6 +4,7 @@ Entradas : assets-src/orvalis-voxel/catalogo/P1-02-vedacao-de-madeira/orvalis_<m
            laje_face = a lateral da laje: só a metade de baixo do PNG tem arte (vira 16 × 8); no degrau o mesmo PNG é o espelho (a metade de baixo)
 Saídas   : assets-src/orvalis-voxel/texturas32/orvalis/laje-<madeira>-{topo,face}.png   16 × 16 e 16 × 8 (lidos por make-titan-atlas32.py; só criados se faltarem ou com --force)
            src/assets/titan-degrau-madeira.webp    144 × 16 (por madeira: topo | frente | perfil; carvalho, cerejeira, bétula)
+           src/assets/titan-cerca-madeira.webp     48 × 16 (tábuas de carvalho | cerejeira | bétula, de `texturas32/orvalis/tabua-*.png`; textura da Cerca e do Portão, ADR 0140; os modelos saem de `render/cercaModel.ts`)
            src/assets/titan-degrau-madeira.json    {carvalho, cerejeira, betula}: modelos no formato dos instanciados (as caixas de `STAIR_BASE`, UVs na tira de 9 tiles)
 O desenho é o do Degrau de Pedra (`make-orvalis-degrau.py`, ADR 0109): perfil em L, espelho na metade de baixo; a arte vai como desenhada, sem girar nem espelhar além da lateral −X.
 Uso: python3 scripts/make-orvalis-madeira-familia.py [--force]   (precisa do Pillow)
@@ -16,6 +17,7 @@ from PIL import Image
 
 PKG = 'assets-src/orvalis-voxel/catalogo/P1-02-vedacao-de-madeira/orvalis_%s_%s_16x16.png'
 TEX = 'assets-src/orvalis-voxel/texturas32/orvalis/'
+OUT_FENCE = 'src/assets/titan-cerca-madeira.webp'
 OUT_TEX, OUT_MODEL = 'src/assets/titan-degrau-madeira.webp', 'src/assets/titan-degrau-madeira.json'
 WOODS = ('carvalho', 'cerejeira', 'betula')
 STAIR = [(0, 0, 0, 1, 0.5, 1), (0, 0.5, 0, 1, 1, 0.5)]  # as mesmas caixas de STAIR_BASE
@@ -73,6 +75,11 @@ def main() -> None:
         for ti, name in enumerate(('laje_topo', 'laje_face', 'degrau_perfil')):  # topo | frente (o espelho) | perfil
             strip.paste(src(w, name), ((wi * 3 + ti) * 16, 0))
     strip.save(OUT_TEX, lossless=True, quality=100, method=6)
+    fence = Image.new('RGBA', (48, 16), (0, 0, 0, 0))
+    for wi, w in enumerate(WOODS):
+        t = Image.open(f'{TEX}tabua-{w}.png').convert('RGBA')
+        fence.paste(t if t.width == 16 else t.resize((16, 16), Image.BOX if t.width % 16 == 0 else Image.LANCZOS), (wi * 16, 0))
+    fence.save(OUT_FENCE, lossless=True, quality=100, method=6)
     json.dump({w: model(i) for i, w in enumerate(WOODS)}, open(OUT_MODEL, 'w'), separators=(',', ':'))
     print(f'tiles de laje criados: {made} · {OUT_TEX} · {OUT_MODEL}')
 
