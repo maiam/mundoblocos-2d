@@ -16,7 +16,7 @@ export interface FazendaPart {
   uvPx: Record<'+X' | '-X' | '+Y' | '-Y' | '+Z' | '-Z', [number, number, number, number]>;
 }
 export interface FazendaModels { textureSize: [number, number]; boxGeometryFaceOrder: string[]; mobs: Record<string, { parts: FazendaPart[] }> }
-export interface FazendaItem { kind: FaunaKind; x: number; y: number; z: number; yaw: number; pose: FaunaPose }
+export interface FazendaItem { kind: FaunaKind; x: number; y: number; z: number; yaw: number; pose: FaunaPose; /** Filhote: metade do tamanho (padrão 1). */ scale?: number }
 
 interface Rig { group: THREE.Group; joints: Map<string, THREE.Group> }
 const PX = 1 / 16;
@@ -80,6 +80,7 @@ export class FazendaView {
       rig.group.visible = true;
       rig.group.position.set(it.x, it.y + it.pose.bob, it.z);
       rig.group.rotation.y = it.yaw;
+      rig.group.scale.setScalar(it.scale ?? 1);
       this.pose(it.kind, rig, it.pose);
     }
     for (const kind of Object.keys(this.pool) as FaunaKind[]) for (let i = used[kind]; i < this.pool[kind].length; i++) this.pool[kind][i].group.visible = false;

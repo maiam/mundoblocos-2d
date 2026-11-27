@@ -47,6 +47,28 @@ const WALK_REF = 4.3; // a caminhada do jogador (physics.ts): o `stepBody` lê a
 const WANDER_RADIUS = 6;
 const SPAWN_MIN_Y = 64; // acima da água (superfície do lago em Y = 64)
 
+/**
+ * Reprodução (ADR 0125, Minecraft Wiki "Breeding"): alimentar um adulto com a comida da espécie o põe em **amor** por `LOVE_S` s; dois adultos da mesma espécie em amor a até `MATE_RANGE` m andam um até o outro e,
+ * ao se encostarem, nasce um **filhote** entre eles e os pais descansam `BREED_COOLDOWN_S` s. O filhote cresce em `GROW_S` s (alimentar corta 10 % do que falta), tem a metade da caixa e da vida e não solta espólio.
+ * Adaptações: sem XP (o Orvalis não tem) e teto de `MAX_FAUNA` animais vivos (a Wiki não tem).
+ */
+export const LOVE_S = 30;
+export const BREED_COOLDOWN_S = 300;
+export const GROW_S = 1200;
+export const GROW_FEED = 0.1;
+export const MATE_RANGE = 8;
+export const MATE_TOUCH = 1.2;
+export const MAX_FAUNA = 200;
+export const BABY_SCALE = 0.5;
+/** Comida de cada espécie (Wiki: vaca e ovelha trigo; porco cenoura, batata ou beterraba; galinha sementes). Sem beterraba e sem as outras sementes: ainda não são cultura do Orvalis. */
+export const BREED_FOOD: Readonly<Record<FaunaKind, readonly number[]>> = {
+  porco: [Item.CENOURA, Item.BATATA],
+  vaca: [Item.TRIGO],
+  ovelha: [Item.TRIGO],
+  galinha: [Item.SEMENTE_TRIGO],
+};
+export const isBreedFood = (kind: FaunaKind, item: number | undefined | null): boolean => !!item && BREED_FOOD[kind].includes(item);
+
 export interface FaunaSpec { id: string; kind: FaunaKind; x: number; y: number; z: number }
 interface FaunaSource { world: string; version: number; seed: number; inRegion(x: number, z: number): boolean; column(x: number, z: number): { top: number }; blockAt(x: number, y: number, z: number): number }
 
@@ -99,13 +121,21 @@ export interface Fauna {
   from: { x: number; z: number };
   clock: number;
   seed: number;
+  /** Filhote (ADR 0125): metade da caixa e da vida, sem espólio, cresce em `grow` s. */
+  baby: boolean;
+  /** Segundos que faltam para o filhote virar adulto (0 num adulto). */
+  grow: number;
+  /** Segundos que faltam do modo de amor (0 = não está em amor). */
+  love: number;
+  /** Segundos de descanso depois de cruzar (0 = pode cruzar). */
+  rest: number;
 }
 
 export const faunaYaw = (dx: number, dz: number): number => Math.atan2(-dx, -dz); // a frente do modelo é −Z
 
 export function newFauna(sp: FaunaSpec, seed: number): Fauna {
   const hx = sp.x + 0.5, hz = sp.z + 0.5, salt = [...sp.id].reduce((a, ch) => (Math.imul(a, 31) + ch.charCodeAt(0)) >>> 0, 7);
-  return { id: sp.id, kind: sp.kind, body: newBody(hx, sp.y, hz), yaw: hash2(seed, salt, 3) * Math.PI * 2, phase: 'wander', t: 0, home: { x: hx, z: hz }, goal: { x: hx, z: hz }, pause: 0.5 + 2 * hash2(seed, salt, 4), stuck: 0, hp: FAUNA_KINDS[sp.kind].hp, hurt: 99, from: { x: hx, z: hz }, clock: 0, seed: ((seed >>> 0) + salt) >>> 0 };
+  return { id: sp.id, kind: sp.kind, body: newBody(hx, sp.y, hz), yaw: hash2(seed, salt, 3) * Math.PI * 2, phase: 'wander', t: 0, home: { x: hx, z: hz }, goal: { x: hx, z: hz }, pause: 0.5 + 2 * hash2(seed, salt, 4), stuck: 0, hp: FAUNA_KINDS[sp.kind].hp, hurt: 99, from: { x: hx, z: hz }, clock: 0, seed: ((seed >>> 0) + salt) >>> 0, baby: false, grow: 0, love: 0, rest: 0 };
 }
 
 export const newFaunaFromSpecs = (specs: readonly FaunaSpec[], seed: number): Fauna[] => specs.map((sp) => newFauna(sp, seed));
@@ -124,6 +154,9 @@ function pickGoal(f: Fauna, vol: TitanVolume): { x: number; z: number } {
 export function stepFauna(f: Fauna, vol: TitanVolume, dt: number): { moving: boolean } {
   const K = FAUNA_KINDS[f.kind];
   f.clock += dt; f.t += dt; f.hurt += dt;
+  if (f.love > 0) f.love = Math.max(0, f.love - dt);
+  if (f.rest > 0) f.rest = Math.max(0, f.rest - dt);
+  if (f.baby) { f.grow -= dt; if (f.grow <= 0) { f.baby = false; f.grow = 0; f.hp = FAUNA_KINDS[f.kind].hp; } } // cresceu: vida de adulto
   const b = f.body;
   let dirX = 0, dirZ = 0, speed = 0;
   const walkTo = (tx: number, tz: number, mps: number): void => {
@@ -153,8 +186,8 @@ export function hurtFauna(f: Fauna, damage: number, fromX: number, fromZ: number
 
 /** Caixa de acerto da Wiki em volta do animal: centrada nos pés (x, z), de y a y + altura. */
 export const faunaBox = (f: Fauna): { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number } => {
-  const K = FAUNA_KINDS[f.kind], h = K.width / 2;
-  return { x0: f.body.x - h, y0: f.body.y, z0: f.body.z - h, x1: f.body.x + h, y1: f.body.y + K.height, z1: f.body.z + h };
+  const K = FAUNA_KINDS[f.kind], k = f.baby ? BABY_SCALE : 1, h = (K.width * k) / 2;
+  return { x0: f.body.x - h, y0: f.body.y, z0: f.body.z - h, x1: f.body.x + h, y1: f.body.y + K.height * k, z1: f.body.z + h };
 };
 
 /**
@@ -179,7 +212,8 @@ export function faunaAim(list: readonly Fauna[], ox: number, oy: number, oz: num
 }
 
 /** Espólio por espécie (Wiki): porco 1–3 carne; vaca 0–2 couro e 1–3 carne; ovelha 1 lã e 1–2 carneiro; galinha 0–2 penas e 1 frango. `roll` = qualquer inteiro estável do abate. */
-export function faunaLoot(kind: FaunaKind, seed: number, roll: number): Array<{ item: number; count: number }> {
+export function faunaLoot(kind: FaunaKind, seed: number, roll: number, baby = false): Array<{ item: number; count: number }> {
+  if (baby) return []; // o filhote não solta nada (Wiki)
   const r = (i: number, lo: number, hi: number): number => lo + Math.floor(hash2(seed, roll, 700 + i) * (hi - lo + 1));
   const out: Array<{ item: number; count: number }> = [];
   const add = (item: number, count: number): void => { if (count > 0) out.push({ item, count }); };
@@ -203,4 +237,56 @@ export function faunaPose(f: Fauna, moving: boolean): FaunaPose {
     wing: panic && f.kind === 'galinha' ? 0.9 + Math.sin(c * 30) * 0.5 : 0,
     bob: moving ? Math.abs(Math.sin(w)) * 0.02 : 0,
   };
+}
+
+/** Vida máxima do animal (o filhote tem a metade, arredondada para cima). */
+export const maxHp = (f: Fauna): number => (f.baby ? Math.ceil(FAUNA_KINDS[f.kind].hp / 2) : FAUNA_KINDS[f.kind].hp);
+
+/** Cria um filhote parado entre os pais. */
+export function newBaby(a: Fauna, b: Fauna, n: number): Fauna {
+  const x = (a.body.x + b.body.x) / 2, z = (a.body.z + b.body.z) / 2;
+  const f = newFauna({ id: `${a.id}~${n}`, kind: a.kind, x: Math.floor(x), y: a.body.y, z: Math.floor(z) }, a.seed);
+  f.body.x = x; f.body.z = z; f.body.y = Math.max(a.body.y, b.body.y);
+  f.baby = true; f.grow = GROW_S; f.hp = maxHp(f);
+  return f;
+}
+
+export type FeedResult = { ok: true; effect: 'love' | 'grow' } | { ok: false; reason: 'food' | 'love' | 'rest' | 'full' };
+/** Alimenta o animal com `item`. Filhote: corta 10 % do que falta para crescer. Adulto: entra em amor, se não está em amor nem descansando. Só consome a comida quem devolve `ok`. */
+export function feedFauna(f: Fauna, item: number): FeedResult {
+  if (!isBreedFood(f.kind, item)) return { ok: false, reason: 'food' };
+  if (f.baby) { f.grow = Math.max(0, f.grow * (1 - GROW_FEED)); return { ok: true, effect: 'grow' }; }
+  if (f.love > 0) return { ok: false, reason: 'love' };
+  if (f.rest > 0) return { ok: false, reason: 'rest' };
+  f.love = LOVE_S;
+  return { ok: true, effect: 'love' };
+}
+
+/**
+ * Passo da reprodução da lista: quem está em amor procura o parceiro da mesma espécie mais perto (até `MATE_RANGE` m) e vai até ele; ao se encostarem (`MATE_TOUCH`) nasce o filhote, os dois saem do amor
+ * e descansam. O filhote segue o adulto da espécie mais perto quando está a mais de 2,5 m. Devolve os recém-nascidos (já na lista); com `MAX_FAUNA` animais, não nasce mais ninguém.
+ */
+export function tickBreeding(list: Fauna[], counter: { n: number }): Fauna[] {
+  const born: Fauna[] = [];
+  const dist = (a: Fauna, b: Fauna): number => Math.hypot(a.body.x - b.body.x, a.body.z - b.body.z);
+  for (const a of list) {
+    if (a.baby || a.love <= 0 || a.phase === 'panic') continue;
+    let mate: Fauna | null = null;
+    for (const b of list) if (b !== a && !b.baby && b.kind === a.kind && b.love > 0 && b.phase !== 'panic' && Math.abs(b.body.y - a.body.y) < 2 && (!mate || dist(a, b) < dist(a, mate))) mate = b;
+    if (!mate || dist(a, mate) > MATE_RANGE) continue;
+    if (dist(a, mate) <= MATE_TOUCH) {
+      if (list.length + born.length >= MAX_FAUNA) continue;
+      const baby = newBaby(a, mate, counter.n++);
+      a.love = 0; mate.love = 0; a.rest = BREED_COOLDOWN_S; mate.rest = BREED_COOLDOWN_S;
+      born.push(baby);
+    } else { a.goal = { x: mate.body.x, z: mate.body.z }; a.pause = 0; a.stuck = 0; }
+  }
+  for (const f of list) {
+    if (!f.baby) continue;
+    let adult: Fauna | null = null;
+    for (const b of list) if (!b.baby && b.kind === f.kind && dist(f, b) <= 12 && (!adult || dist(f, b) < dist(f, adult))) adult = b;
+    if (adult && dist(f, adult) > 2.5) { f.goal = { x: adult.body.x, z: adult.body.z }; f.pause = 0; f.stuck = 0; }
+  }
+  list.push(...born);
+  return born;
 }

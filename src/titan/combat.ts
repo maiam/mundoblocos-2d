@@ -70,10 +70,10 @@ export function attackFauna(s: TitanSession, index: number): AttackResult {
   const broke = w.broken ? `${w.name} quebrou` : undefined;
   if (!r.dead) return { ok: true, damage, dead: false, broken: w.broken, toolName: w.name, msg: broke };
   s.fauna.splice(index, 1);
-  const loot = faunaLoot(f.kind, s.seed, Math.floor(f.clock * 10) + index * 7919), base = `m:${f.id}`;
+  const loot = faunaLoot(f.kind, s.seed, Math.floor(f.clock * 10) + index * 7919, f.baby), base = `m:${f.id}`;
   let n = 0;
   while (loot.some((_, i) => s.drops.has(`${base}:${n}:${i}`))) n++; // o animal volta ao reabrir: um espólio antigo ainda no chão não apaga o novo
   loot.forEach((l, i) => restDrop(s, `${base}:${n}:${i}`, l.item, f.body.x, f.body.y, f.body.z, l.count));
   const txt = loot.map((l) => `${l.count} ${ITEM_NAMES[l.item]}`).join(', ');
-  return { ok: true, damage, dead: true, broken: w.broken, toolName: w.name, msg: `${FAUNA_KINDS[f.kind].name} abatido${txt ? `: ${txt}` : ''}${broke ? `; ${broke}` : ''}` };
+  return { ok: true, damage, dead: true, broken: w.broken, toolName: w.name, msg: `${FAUNA_KINDS[f.kind].name}${f.baby ? ' (filhote)' : ''} abatido${txt ? `: ${txt}` : ''}${broke ? `; ${broke}` : ''}` };
 }
