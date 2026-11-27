@@ -52,6 +52,7 @@ import degrauPedraModel from '../../assets/titan-degrau-pedra.json';
 import degrauPedraTex from '../../assets/titan-degrau-pedra.webp';
 import degrauMadeiraModels from '../../assets/titan-degrau-madeira.json';
 import degrauMadeiraTex from '../../assets/titan-degrau-madeira.webp';
+import cercaMadeiraTex from '../../assets/titan-cerca-madeira.webp';
 import muretaPedraTex from '../../assets/titan-mureta-pedra.webp';
 import hortaTex from '../../assets/orvalis-horta-16px.webp';
 import fazendaPorco from '../../assets/orvalis-fazenda-porco.webp';
@@ -133,6 +134,7 @@ export const titanDegrauPedraModel = degrauPedraModel as ModelData;
 export const titanDegrauPedraUrl: string = degrauPedraTex;
 export const titanDegrauMadeiraModels = degrauMadeiraModels as Record<'carvalho' | 'cerejeira' | 'betula', ModelData>; // Degrau de Madeira (ADR 0139): uma malha por madeira na mesma tira de 9 tiles
 export const titanDegrauMadeiraUrl: string = degrauMadeiraTex;
+export const titanCercaMadeiraUrl: string = cercaMadeiraTex; // Cerca e Portão de madeira (ADR 0140): tira de 3 tábuas; os modelos saem de `render/cercaModel.ts`
 export const titanMuretaPedraUrl: string = muretaPedraTex; // Mureta de Pedra (ADR 0110): tira topo | face; o modelo sai de `render/muretaModel.ts`
 export const orvalisFazendaUrls = { porco: fazendaPorco, vaca: fazendaVaca, ovelha: fazendaOvelha, galinha: fazendaGalinha } as const; // fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal
 export const orvalisFazendaModelos = fazendaModelos; // caixas, pivôs e UV de cada parte (pacote Mobs64px)

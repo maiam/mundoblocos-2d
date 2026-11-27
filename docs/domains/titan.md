@@ -225,6 +225,10 @@ Blocos 160–189 e itens 123–152 (coral, gorgônia, bloco; vivos e mortos; 5 f
 
 Lajes (190–195) e degraus (196–207) de carvalho, cerejeira e bétula; itens 156–161; funde na tábua da mesma madeira; degrau com 3 modelos numa tira de 9 tiles; mesher em `Uint16Array`. Detalhes e fila (W2 cerca e portão, W3 porta e alçapão): `docs/adr/0139-familia-das-madeiras-lajes-e-degraus-minecraft-wiki.md`.
 
+## Cerca e Portão de madeira do Orvalis (ADR 0140, v0.211.0)
+
+Cercas 208–255 e portões 256–279; itens 162–167; colisão a 1,5 m (`bodyBoxes` + `tallBoxes`), mira em 1 m; portão aberto sem colisão; `useGate` em `actions.ts`. Detalhes: `docs/adr/0140-cerca-e-portao-de-madeira-minecraft-wiki.md`.
+
 ## Botes do Orvalis (ADR 0137, v0.206.0)
 Itens 153–155; `titan/boat.ts` (puro) com `stepBoat` (8 m/s, só água, para na margem), `boatFits`, `boatAim`; ações em `actions.ts`; save em `header.boats` (`TITAN_SAVE_VERSION` 8); a bordo o corpo segue o assento e W/S/A/D pilotam, pular desembarca; modelos GLB em `render/boatView.ts`.
 

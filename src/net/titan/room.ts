@@ -18,7 +18,7 @@ import type { ChunkRecord, TitanHeader } from '../../titan/save';
 import { fresh, generatorFor, headerOf, isRaining, resume, tickCrops, tickFurnaces, tickRegrow, tickWeather, type TitanSession } from '../../titan/session';
 import { advanceDay, canSleep } from '../../titan/sky';
 import { isDead, newVitals, vitalsFromData, vitalsToData, type PlayerVitals, type VitalsData } from '../../titan/vitals';
-import { isBed, isDoor } from '../../titan/voxel';
+import { isBed, isOpenable } from '../../titan/voxel';
 import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna } from './protocol';
 
 /**
@@ -209,7 +209,7 @@ export class TitanRoom {
   /** Porta abre/fecha; cama marca o ponto de retorno e, à noite, a noite só passa quando **todos** da sala estão na cama (o relógio é de todos). */
   private useCell(p: Player, x: number, y: number, z: number): ActionResult {
     const id = this.world.volume.get(x, y, z);
-    if (isDoor(id)) return useDoor(p.view, x, y, z);
+    if (isOpenable(id)) return useDoor(p.view, x, y, z);
     if (!isBed(id)) return { ok: false };
     const r = useBed(p.view, x, y, z, false);
     if (!canSleep(this.world.time, isRaining(this.world))) return r;

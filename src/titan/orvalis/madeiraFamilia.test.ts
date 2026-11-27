@@ -20,7 +20,7 @@ const WOODS = [
 
 describe('lajes e degraus de madeira (ADR 0139)', () => {
   it('ids novos passam de 255? não: 190–207; o volume e o mesher aceitam ids > 255 (Uint16)', () => {
-    expect(T_MAX).toBe(207);
+    expect(T_MAX).toBeGreaterThanOrEqual(207); // cercas e portões vieram depois (ADR 0140)
     expect(T.SLAB_OAK).toBe(190); expect(T.STAIR_BIRCH_270).toBe(207);
   });
 
@@ -32,7 +32,7 @@ describe('lajes e degraus de madeira (ADR 0139)', () => {
       expect(ls).toMatchObject({ world: 'orvalis', station: 'workbench', result: { item: k.slab, count: 6 }, ingredients: [{ item: k.planks, count: 3 }] });
       expect(ds).toMatchObject({ world: 'orvalis', station: 'workbench', result: { item: k.stair, count: 4 }, ingredients: [{ item: k.planks, count: 6 }] });
     }
-    expect(isItem(162)).toBe(false);
+    expect(isItem(168)).toBe(false);
   });
 
   it('itens ↔ blocos: laje inferior/superior devolvem a mesma laje; os 4 giros do degrau devolvem o degrau; meia altura e várias caixas', () => {

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.211.0 — Famílias das madeiras, W2: cerca e portão (27/11/2026)
+- **ADR 0140 (aprovada na 0139).** Cercas (ids 208–255, conexão no id, liga a cubo, a outras cercas e ao portão pelo eixo) e portões (256–279, giro e abertura no id) de carvalho, cerejeira e bétula; itens 162–167; receitas da Wiki (cerca 4 tábuas + 2 hastes → 3, portão 2 + 4 → 1). **Colisão a 1,5 m** (`bodyBoxes` + `tallBoxes`; a mira segue em 1 m); portão aberto não colide, abre para longe de quem o usa e não abre com bloco no vão. Atlas de itens 4 × 42.
+- Testes (5 novos em `orvalis/cercaPortao.test.ts`, 3 ajustados); conferido no navegador. Sem mudança de gerador, save ou protocolo.
+
 ## Orvalis v0.210.0 — Famílias das madeiras, W1: lajes e degraus (27/11/2026)
 - **ADR 0139 (aprovada).** Lajes e degraus de carvalho, cerejeira e bétula (blocos 190–207, itens 156–161; receitas da Wiki: laje 3 tábuas → 6, degrau 6 → 4, Mesa de Carpintaria). Duas lajes da mesma madeira viram a tábua dela; degrau gira pelo olhar; quebra como a tábua. Arte do pacote do Drive (catálogo `P1-02-vedacao-de-madeira`). **O mesher passou a `Uint16Array`** (ids acima de 255); atlas de itens 4 × 41.
 - 795 testes passam (7 novos em `orvalis/madeiraFamilia.test.ts`, 3 ajustados a limites antigos); conferido no navegador. Sem mudança de gerador, save ou protocolo.

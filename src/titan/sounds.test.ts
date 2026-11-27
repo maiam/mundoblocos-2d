@@ -7,7 +7,7 @@ describe('regras do som (ADR 0054)', () => {
     for (const id of [T.DARK_ROCK, T.VEIN_ROCK, T.SLAB, T.BEDROCK, T.WORKBENCH, T.WORKBENCH_90, T.WORKBENCH_180, T.WORKBENCH_270]) expect(surfaceOf(id)).toBe('rock');
     for (const id of [T.SAND, T.DAMP_SAND]) expect(surfaceOf(id)).toBe('sand');
     for (const id of [T.FROST, T.VEIN_FROST, T.EMBER]) expect(surfaceOf(id)).toBe('ice');
-    for (const id of [T.AIR, T.LAKE, T.LANTERN, undefined, 250]) expect(surfaceOf(id)).toBeNull();
+    for (const id of [T.AIR, T.LAKE, T.LANTERN, undefined, 400]) expect(surfaceOf(id)).toBeNull();
   });
 
   it('passos: um a cada ~2,4 blocos no chão; parado, no ar ou na água não soa', () => {
