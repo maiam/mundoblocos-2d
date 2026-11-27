@@ -87,6 +87,8 @@ export const RECIPES: readonly Recipe[] = [
   { id: 'tocha-carvao', name: 'Tocha (carvão)', group: 'utilidades', result: { item: Item.TOCHA, count: 4 }, ingredients: [{ item: Item.CARVAO, count: 1 }, { item: Item.HASTE, count: 1 }], station: 'personal', world: 'orvalis' }, // Wiki: carvão ou carvão vegetal (ADR 0122)
   { id: 'bloco-carvao', name: 'Bloco de Carvão', group: 'construcao', result: { item: Item.BLOCO_CARVAO, count: 1 }, ingredients: [{ item: Item.CARVAO, count: 9 }], station: 'workbench', world: 'orvalis' },
   { id: 'carvao-do-bloco', name: 'Carvão (do bloco)', group: 'materiais', result: { item: Item.CARVAO, count: 9 }, ingredients: [{ item: Item.BLOCO_CARVAO, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'semente-abobora', name: 'Sementes de Abóbora', group: 'materiais', result: { item: Item.SEMENTE_ABOBORA, count: 4 }, ingredients: [{ item: Item.BLOCO_ABOBORA, count: 1 }], station: 'personal', world: 'orvalis' },
+  { id: 'semente-melancia', name: 'Semente de Melancia', group: 'materiais', result: { item: Item.SEMENTE_MELANCIA, count: 1 }, ingredients: [{ item: Item.FATIA_MELANCIA, count: 1 }], station: 'personal', world: 'orvalis' },
   { id: 'laje-pedra', name: 'Laje de Pedra', group: 'construcao', result: { item: Item.LAJE_PEDRA, count: 6 }, ingredients: [{ item: Item.PEDRA_LISA, count: 3 }], station: 'workbench', world: 'orvalis' },
 ];
 export const recipeById = (id: string): Recipe | undefined => RECIPES.find((r) => r.id === id);

@@ -14,7 +14,7 @@ import { SkyDome } from './titanSkyDome';
 import type { TitanPerf } from '../titan/perf';
 import type { TitanVolume } from '../titan/volume';
 import { REED_COLUMNS, REED_VARIANTS, reedVariant } from '../titan/reeds';
-import { CROP_FRAMES, GARDEN_FRAMES } from '../titan/crops';
+import { CROP_FRAMES, GARDEN_FRAMES, GARDEN_MESHES } from '../titan/crops';
 import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { FazendaView, type FazendaItem, type FazendaModels } from './fazenda';
@@ -43,7 +43,7 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
   return t;
 }
 /** Linhas do atlas de itens (4 colunas × 11 linhas de 32 px = 44 ids; 41 em uso, ADR 0102). */
-const ITEM_ROWS = 26;
+const ITEM_ROWS = 27;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
@@ -430,8 +430,8 @@ export class TitanRenderer {
     gtex.needsUpdate = true;
     this.gardenMat = new THREE.MeshBasicMaterial({ map: gtex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(this.gardenMat, this.ambient, { time: this.timeU, instSky: true });
-    for (let f = 0; f < GARDEN_FRAMES; f++) {
-      const geo = gardenGeometry(f, GARDEN_FRAMES);
+    for (let f = 0; f < GARDEN_MESHES; f++) {
+      const geo = f < GARDEN_FRAMES ? gardenGeometry(f, GARDEN_FRAMES) : attachedStemGeometry(32 + ((f - GARDEN_FRAMES) >> 2), (f - GARDEN_FRAMES) & 3, GARDEN_FRAMES); // caule conectado (ADR 0128): a placa aponta para o fruto
       const mesh = new THREE.InstancedMesh(geo, this.gardenMat, 16);
       mesh.count = 0;
       mesh.frustumCulled = false;
@@ -669,7 +669,7 @@ export class TitanRenderer {
       mesh.instanceMatrix.needsUpdate = true;
       this.setInstSky(mesh, g);
     }
-    for (let f = 0; f < GARDEN_FRAMES; f++) { // a horta: os quadros `CROP_FRAMES + f` (sem giro por posição: as faixas em '#' são simétricas)
+    for (let f = 0; f < GARDEN_MESHES; f++) { // a horta: os quadros `CROP_FRAMES + f` (sem giro por posição: as faixas em '#' são simétricas)
       const g = list.filter((c) => c.frame === CROP_FRAMES + f);
       let mesh = this.gardenMeshes[f];
       if (g.length > mesh.instanceMatrix.count) {
@@ -1291,6 +1291,25 @@ function gardenGeometry(frame: number, columns: number): THREE.BufferGeometry {
   g.setAttribute('color', new THREE.Float32BufferAttribute(new Array(16 * 3).fill(0.95), 3));
   g.setAttribute('glow', new THREE.Float32BufferAttribute(new Array(16 * 3).fill(0.05), 3));
   g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15]);
+  return g;
+}
+
+/**
+ * Caule conectado de abóbora ou melancia (ADR 0128): uma placa vertical, dupla face, no plano que contém a direção do fruto (0 = +x, 1 = −x, 2 = +z, 3 = −z). O desenho (coluna `col`) mostra o caule com o braço
+ * para a direita; para a esquerda a placa se inverte e para ±z ela gira 90°. É a única exceção à regra de não girar textura por célula: é um sprite de planta, como o pacote de arte indica.
+ */
+function attachedStemGeometry(col: number, dir: number, columns: number): THREE.BufferGeometry {
+  const along = dir < 2 ? 'x' : 'z', sign = dir % 2 === 0 ? 1 : -1, h = 0.5;
+  const a = sign > 0 ? [-h, h] : [h, -h]; // o lado do braço do desenho cai do lado do fruto
+  const p = (u: number, y: number): number[] => (along === 'x' ? [u, y, 0] : [0, y, u]);
+  const pos = [...p(a[0], 0), ...p(a[1], 0), ...p(a[1], 1), ...p(a[0], 1)];
+  const u0 = col / columns, u1 = (col + 1) / columns;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([u0, 0, u1, 0, u1, 1, u0, 1], 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(new Array(4 * 3).fill(0.95), 3));
+  g.setAttribute('glow', new THREE.Float32BufferAttribute(new Array(4 * 3).fill(0.05), 3));
+  g.setIndex([0, 1, 2, 0, 2, 3]);
   return g;
 }
 

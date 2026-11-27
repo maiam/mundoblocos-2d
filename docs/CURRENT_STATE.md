@@ -1,13 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-27 — v0.196.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-27 — v0.197.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md). O estado do **Orvalis 2D/2.5D e do Santuário** (removidos na v0.183.0, ADR 0115) está em [`archive/2d/CURRENT_STATE.md`](archive/2d/CURRENT_STATE.md). A cada entrega: ajuste a seção afetada aqui (não acrescente uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.196.1 | `package.json` |
+| Versão do jogo | 0.197.0 | `package.json` |
 | `TITAN_PROTOCOL_VERSION` (salas do Titã) | ver `src/net/titan/protocol.ts` | `src/net/titan/protocol.ts` |
 | `TITAN_SAVE_VERSION` (salvamento local do voxel) | ver `src/titan/save.ts` | `src/titan/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |
@@ -17,7 +17,7 @@ Este documento descreve **só o que existe hoje**. O histórico por entrega est�
 ## Mundos
 - **Estado após a limpeza (ADR 0115, etapa 3, v0.183.0):** o produto é só o **motor voxel** (`src/titan/`): o **Orvalis 3D** (`?mundo=orvalis3d`, o padrão) e o **Titã** (só por `?mundo=titan`). O Orvalis 2D/2.5D (`World`, `Game`, cidade, NPCs, dungeon, vila, landing, sala 2.5D) e o Santuário **foram removidos** do código e da arte-fonte; ficam no histórico do git e em `docs/archive/2d/`.
 - **Titã e Orvalis em voxel: 16 px por face e vista isométrica (ADR 0106, v0.172.0):** o motor `src/titan/` renderiza o terreno a **16 px** (arte-fonte maior reduzida) e tem um botão **Visão** no menu (tecla V) para alternar entre a primeira pessoa e a **isométrica 2:1** (câmera ortográfica a 30°, blocos de 8 × 8 px de textura e topo de 16 × 8 px na tela, 4 vistas de 90° com ⟲ ⟳ / Z X, boneco provisório com silhueta atrás do terreno, mira no ponto do mouse). Ainda sem corte por altura, sem céu na isométrica, não testado em toque.
-- **Beterraba do Orvalis (ADR 0127, v0.196.0):** quinta cultura da horta (itens 100 Beterraba e 101 Semente de Beterraba, atlas de itens 4 × 26): 4 idades, 1/3 dos sorteios de crescimento não avança, madura rende 1 beterraba e 1–4 sementes; semente silvestre rara no capim; comida do porco na reprodução. Abóbora e melancia ficam para depois.
+- **Beterraba do Orvalis (ADR 0127, v0.196.0):** quinta cultura da horta (itens 100 Beterraba e 101 Semente de Beterraba, atlas de itens 4 × 26): 4 idades, 1/3 dos sorteios de crescimento não avança, madura rende 1 beterraba e 1–4 sementes; semente silvestre rara no capim; comida do porco na reprodução. **Abóbora e melancia (ADR 0128, v0.197.0):** caule de 8 idades que, maduro, gera o fruto (bloco Melancia 152 ou Abóbora 153) numa célula vizinha sobre terra e vira caule conectado; a melancia solta 3–7 fatias, a abóbora volta como bloco; itens 102–105 (atlas de itens 4 × 27); sementes silvestres raras; fabricações de semente; caule quebrado solta 0–3 sementes.
 - **Fauna de fazenda do Orvalis (ADR 0124, v0.193.0):** porco, vaca, ovelha e galinha (`titan/fauna.ts`; gerador do Orvalis v4: probabilidade de grupo da Wiki, 0,1 por chunk, ~12 a ~30 animais por seed (a v3 mantém 0,4 e ~66)): passeiam, fogem ao serem feridos e, abatidos, soltam couro, lã, pena e carnes (itens 89–99, assáveis na Fornalha, comida pelos valores da Wiki). Caixa de mira e golpe = a da Wiki; modelos em caixas do pacote Mobs64px (`render/fazenda.ts`). **A fauna vai ao save (ADR 0126, v0.195.0, `header.fauna`, `TITAN_SAVE_VERSION` 6):** abates, filhotes, vida e descanso persistem (o amor não); **reprodução (ADR 0125, v0.194.0):** a comida da espécie na mão (trigo para vaca e ovelha; cenoura ou batata para o porco; semente de trigo para a galinha) põe o adulto em amor por 30 s, dois em amor se encontram e nasce um filhote (metade da caixa e da vida, sem espólio, cresce em 20 min), pais descansam 5 min, teto de 200 animais; sem leite, tosquia, ovos nem luz do céu. Atlas de itens 4 × 25.
 - **Regra de itens por mundo (ADR 0114):** os itens do Titã e os do Orvalis em voxel não se compartilham (ids 1–41 Titã, 42+ Orvalis; receitas e bancadas separadas), com teste que a impõe.
 - **Horta do Orvalis em voxel (ADR 0113, v0.180.0):** trigo, cenoura, batata e tomate (itens 78–82) plantados na terra arada, 3 fases, crescem por random ticks como o junco, colhe 2 e rebrota; a terra arada seca/umedece conforme a água; semente silvestre provisória ao quebrar grama; atlas da horta de 12 quadros e de itens 4 × 21.

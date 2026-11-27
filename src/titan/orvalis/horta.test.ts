@@ -30,7 +30,7 @@ describe('horta do Orvalis (ADR 0113)', () => {
     expect(foodOf(Item.TRIGO)).toBeNull(); expect(foodOf(Item.SEMENTE_TRIGO)).toBeNull();
     for (const [sp, item] of SEEDS) { expect(gardenSpeciesOf(item)).toBe(sp); expect(seedOf(sp as never)).toBe(item); expect(maxAgeOf(sp as never, 'seco')).toBe(2); }
     expect(gardenSpeciesOf(Item.TRIGO)).toBeNull(); expect(gardenSpeciesOf(Item.NOZ)).toBeNull();
-    expect(GARDEN_SPECIES.filter((sp) => sp !== 'beterraba').flatMap((sp) => [0, 1, 2].map((a) => gardenFrame(sp, a)))).toEqual([...Array(12).keys()].map((n) => n + 4)); // atlas da horta depois das 4 do junco
+    expect(GARDEN_SPECIES.filter((sp) => ['trigo', 'cenoura', 'batata', 'tomate'].includes(sp)).flatMap((sp) => [0, 1, 2].map((a) => gardenFrame(sp, a)))).toEqual([...Array(12).keys()].map((n) => n + 4)); // atlas da horta depois das 4 do junco
   });
 
   it('solo: a horta só na terra arada (úmida ou seca), o junco só na areia; a terra arada conta como solo só para a horta', () => {
@@ -82,7 +82,7 @@ describe('horta do Orvalis (ADR 0113)', () => {
     expect(breakOrCollect(s, f.hit).ok).toBe(true);
     expect(s.crops.size).toBe(0); expect([...s.drops.values()].some((d) => d.item === Item.TOMATE)).toBe(true);
     const seen = new Set<number | null>(); for (let x = 0; x < 30; x++) for (let z = 0; z < 30; z++) seen.add(wildSeedAt(x, 70, z));
-    expect([...seen].sort()).toEqual([null, Item.SEMENTE_TRIGO, Item.CENOURA, Item.BATATA, Item.TOMATE, Item.SEMENTE_BETERRABA].sort());
+    expect([...seen].sort()).toEqual([null, Item.SEMENTE_TRIGO, Item.CENOURA, Item.BATATA, Item.TOMATE, Item.SEMENTE_BETERRABA, Item.SEMENTE_ABOBORA, Item.SEMENTE_MELANCIA].sort());
     expect(wildSeedAt(5, 70, 9)).toBe(wildSeedAt(5, 70, 9));
     s.inventory.add(Item.TRIGO, 1);
     expect(craft(s.inventory, recipeById('semente-trigo')!, null).ok).toBe(true); expect(s.inventory.total(Item.SEMENTE_TRIGO)).toBeGreaterThan(0);

@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.197.0 — abóbora e melancia (auditoria #39, 27/11/2026)
+- **ADR 0128 (ciclo da ADR 0116; aprovada nos 4 pontos).** **Caule de 8 idades** (abóbora e melancia, plantados com a semente na terra arada): maduro, com luz ≥ 9, gera o **fruto como bloco** numa das 4 células vizinhas sobre grama, terra ou terra arada, e vira **caule conectado** (a placa aponta para o fruto, girada em 90°); sem o fruto volta a tentar. **Blocos 152 Melancia e 153 Abóbora** (dureza 1, machado); a melancia solta **3–7 fatias**, a abóbora volta como bloco. O caule não se colhe; quebrar a terra sob ele solta 0–3 sementes.
+- **Itens 102 Semente de Abóbora, 103 Semente de Melancia, 104 Fatia de Melancia (comida 2/1,2) e 105 Bloco de Abóbora** (ícones do Drive; **atlas de itens 4 × 27**); fabricações Bloco de Abóbora → 4 sementes e Fatia → 1 semente; sementes silvestres raras no capim (1 de 24 cada; adaptação). Atlas da horta 544 × 16; `header.crops` ganha `d` (direção, opcional).
+- 719 testes passam (14 novos em `abobora.test.ts`); conferido no navegador (caules, frutos e caules conectados). Sem mudança de gerador, de versão do save nem de protocolo. Fora: abóbora esculpida, torta, as 8 idades da horta antiga.
+
 ## Orvalis v0.196.1 — leite e tosquia ficam em aberto (27/11/2026)
 - O dono **adiou** a regra #38 (leite e tosquia): fica registrada como **em aberto** em `AUDITORIA_REGRAS.md` e `NEXT_STEPS.md`, aguardando arte e itens (tesoura, balde, ferro). Nada foi implementado. Só documentação.
 
