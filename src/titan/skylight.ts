@@ -23,12 +23,15 @@ const REACH = 16;
 export class SkyLight {
   private readonly sx: number; private readonly sz: number; private readonly sy: number;
   private readonly lv: Uint8Array;
+  /** O resultado só da varredura vertical de cada coluna (antes da inundação): `update` refaz só a coluna editada e copia o resto daqui, em vez de varrer ±16 colunas de novo. */
+  private readonly base: Uint8Array;
   /** Altura do primeiro nível implícito: acima de `scanTop[col]` vale 15. */
   private readonly scanTop: Int16Array;
 
   constructor(private readonly w: SkyWorld) {
     this.sx = w.x1 - w.x0; this.sz = w.z1 - w.z0; this.sy = w.yMax - w.yMin + 1;
     this.lv = new Uint8Array(this.sx * this.sz * this.sy);
+    this.base = new Uint8Array(this.sx * this.sz * this.sy);
     this.scanTop = new Int16Array(this.sx * this.sz).fill(w.yMin);
   }
 
@@ -48,7 +51,7 @@ export class SkyLight {
    * blocos acima dele): cada uma sobe o `scanTop` da coluna até ela e entra como candidata de sombra.
    */
   compute(topHint: (x: number, z: number) => number, edited: Iterable<readonly [number, number, number]> = []): void {
-    this.lv.fill(0);
+    this.lv.fill(0); this.base.fill(0);
     for (let z = this.w.z0; z < this.w.z1; z++) for (let x = this.w.x0; x < this.w.x1; x++) this.scanTop[this.col(x, z)] = Math.min(this.w.yMax, Math.max(this.w.yMin, topHint(x, z)) + SCAN_MARGIN);
     for (const e of edited) {
       const [x, y, z] = e;
@@ -67,9 +70,9 @@ export class SkyLight {
     let level = SKY_MAX;
     for (let y = this.scanTop[this.col(x, z)]; y >= this.w.yMin; y--) {
       const k = this.w.kind(x, y, z);
-      if (k === 2) { this.lv[this.cell(x, y, z)] = 0; return; } // abaixo do primeiro opaco só chega luz de lado
+      if (k === 2) { this.lv[this.cell(x, y, z)] = 0; this.base[this.cell(x, y, z)] = 0; return; } // abaixo do primeiro opaco só chega luz de lado
       if (k === 1 && level > 0) level--;
-      if (y >= yLow) { this.lv[this.cell(x, y, z)] = level; if (level >= 2) queue.push(x, y, z); }
+      if (y >= yLow) { const i = this.cell(x, y, z); this.lv[i] = level; this.base[i] = level; if (level >= 2) queue.push(x, y, z); }
     }
   }
 
@@ -83,11 +86,12 @@ export class SkyLight {
         const nx = x + dx, ny = y + dy, nz = z + dz;
         if (!this.inside(nx, nz) || ny < this.w.yMin || ny > this.w.yMax || ny > this.scanTop[this.col(nx, nz)]) continue; // acima do scanTop é céu aberto (15)
         if (box && (nx < box.x0 || nx >= box.x1 || nz < box.z0 || nz >= box.z1 || ny < box.y0 || ny > box.y1)) continue;
+        let nv = dy === -1 && v === SKY_MAX ? SKY_MAX : v - 1;
+        const i = this.cell(nx, ny, nz);
+        if (nv <= this.lv[i]) continue; // já tem pelo menos isso: nem olha o bloco (quase todos os vizinhos de céu aberto)
         const k = this.w.kind(nx, ny, nz);
         if (k === 2) continue;
-        let nv = dy === -1 && v === SKY_MAX ? SKY_MAX : v - 1;
         if (k === 1 && nv > 0) nv -= 1;
-        const i = this.cell(nx, ny, nz);
         if (nv > this.lv[i]) { this.lv[i] = nv; queue.push(nx, ny, nz); }
       }
     }
@@ -97,16 +101,23 @@ export class SkyLight {
    * Refaz a vizinhança depois que **uma** célula `(x, y, z)` mudou de classe (opaco, filtro ou transparente). Recalcula as colunas a ±16 em x e z, da primeira célula opaca abaixo de
    * `y` (menos 16) até o topo, e re-propaga a luz de fora da caixa para dentro.
    */
-  update(x: number, y: number, z: number): void {
+  update(x: number, y: number, z: number, onChange?: (x: number, y: number, z: number) => void): void {
     if (!this.inside(x, z) || y < this.w.yMin || y > this.w.yMax) return;
     const c = this.col(x, z);
     if (y + SCAN_MARGIN > this.scanTop[c]) this.scanTop[c] = Math.min(this.w.yMax, y + SCAN_MARGIN); // bloco acima do topo conhecido
     let below = this.w.yMin;
     for (let yy = y - 1; yy >= this.w.yMin; yy--) if (this.w.kind(x, yy, z) === 2) { below = yy; break; }
     const box = { x0: Math.max(this.w.x0, x - REACH), x1: Math.min(this.w.x1, x + REACH + 1), z0: Math.max(this.w.z0, z - REACH), z1: Math.min(this.w.z1, z + REACH + 1), y0: Math.max(this.w.yMin, below - REACH), y1: this.w.yMax };
-    for (let zz = box.z0; zz < box.z1; zz++) for (let xx = box.x0; xx < box.x1; xx++) for (let yy = box.y0; yy <= Math.min(box.y1, this.scanTop[this.col(xx, zz)]); yy++) this.lv[this.cell(xx, yy, zz)] = 0;
+    const before = onChange ? this.snapshot(box) : null;
+    // só a coluna editada muda na vertical: refaz a varredura dela; nas outras, a base guardada vale
+    for (let yy = this.w.yMin; yy <= this.scanTop[c]; yy++) this.base[this.cell(x, yy, z)] = 0;
+    this.sweep(x, z, this.w.yMin, []);
     const queue: number[] = [];
-    for (let zz = box.z0; zz < box.z1; zz++) for (let xx = box.x0; xx < box.x1; xx++) this.sweep(xx, zz, box.y0, queue);
+    for (let zz = box.z0; zz < box.z1; zz++) for (let xx = box.x0; xx < box.x1; xx++) for (let yy = box.y0; yy <= Math.min(box.y1, this.scanTop[this.col(xx, zz)]); yy++) {
+      const i = this.cell(xx, yy, zz), b = this.base[i];
+      this.lv[i] = b;
+      if (b >= 2) queue.push(xx, yy, zz);
+    }
     // a luz que vem de fora da caixa (células a 1 de distância com nível ≥ 2) entra pela borda
     for (let zz = box.z0 - 1; zz <= box.z1; zz++) for (let xx = box.x0 - 1; xx <= box.x1; xx++) {
       if (!this.inside(xx, zz)) continue;
@@ -117,5 +128,18 @@ export class SkyLight {
       }
     }
     this.flood(queue, box);
+    if (before && onChange) { // avisa as células cujo nível mudou (o mesher remalha só as seções delas)
+      let i = 0;
+      for (let zz = box.z0; zz < box.z1; zz++) for (let xx = box.x0; xx < box.x1; xx++) for (let yy = box.y0; yy <= Math.min(box.y1, this.scanTop[this.col(xx, zz)]); yy++) if (before[i++] !== this.lv[this.cell(xx, yy, zz)]) onChange(xx, yy, zz);
+    }
+  }
+
+  /** Cópia dos níveis da caixa (na ordem em que `update` varre), para comparar depois. */
+  private snapshot(box: { x0: number; x1: number; z0: number; z1: number; y0: number; y1: number }): Uint8Array {
+    let n = 0;
+    for (let zz = box.z0; zz < box.z1; zz++) for (let xx = box.x0; xx < box.x1; xx++) n += Math.max(0, Math.min(box.y1, this.scanTop[this.col(xx, zz)]) - box.y0 + 1);
+    const out = new Uint8Array(n); let i = 0;
+    for (let zz = box.z0; zz < box.z1; zz++) for (let xx = box.x0; xx < box.x1; xx++) for (let yy = box.y0; yy <= Math.min(box.y1, this.scanTop[this.col(xx, zz)]); yy++) out[i++] = this.lv[this.cell(xx, yy, zz)];
+    return out;
   }
 }
