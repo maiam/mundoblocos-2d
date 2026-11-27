@@ -1,13 +1,13 @@
 # Estado atual
 
-_Atualizado em 2026-11-27 — v0.196.0 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
+_Atualizado em 2026-11-27 — v0.196.1 · jogo: **Orvalis** (`orvalis.pensamentos.online`)_
 
 Este documento descreve **só o que existe hoje**. O histórico por entrega está no [`CHANGELOG`](CHANGELOG.md). O estado do **Orvalis 2D/2.5D e do Santuário** (removidos na v0.183.0, ADR 0115) está em [`archive/2d/CURRENT_STATE.md`](archive/2d/CURRENT_STATE.md). A cada entrega: ajuste a seção afetada aqui (não acrescente uma seção por versão) e registre a mudança no `CHANGELOG`.
 
 ## Versões e números de referência
 | Item | Valor | Fonte |
 |---|---|---|
-| Versão do jogo | 0.196.0 | `package.json` |
+| Versão do jogo | 0.196.1 | `package.json` |
 | `TITAN_PROTOCOL_VERSION` (salas do Titã) | ver `src/net/titan/protocol.ts` | `src/net/titan/protocol.ts` |
 | `TITAN_SAVE_VERSION` (salvamento local do voxel) | ver `src/titan/save.ts` | `src/titan/save.ts` |
 | Testes | Vitest e verificação automática no GitHub Actions | `npm test` |

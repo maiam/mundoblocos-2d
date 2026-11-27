@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.196.1 — leite e tosquia ficam em aberto (27/11/2026)
+- O dono **adiou** a regra #38 (leite e tosquia): fica registrada como **em aberto** em `AUDITORIA_REGRAS.md` e `NEXT_STEPS.md`, aguardando arte e itens (tesoura, balde, ferro). Nada foi implementado. Só documentação.
+
 ## Orvalis v0.196.0 — beterraba (auditoria #37, 27/11/2026)
 - **ADR 0127 (ciclo da ADR 0116; aprovada nos 3 pontos).** A **beterraba** vira a quinta cultura da horta: **4 idades** (Wiki), 1/3 dos sorteios de crescimento não avança, madura rende **1 beterraba e 1–4 sementes** (sorteio por `hash2`; sem lugar, as sementes caem no chão). Itens **100 Beterraba** e **101 Semente de Beterraba** (ícones do Drive; **atlas de itens 4 × 26**), comida da Wiki (1; 1,2), **semente silvestre rara no capim** (1 de 24; adaptação) e **comida do porco** na reprodução. Atlas da horta 256 × 16 (os 4 quadros novos depois dos 12 existentes).
 - 706 testes passam (8 novos em `beterraba.test.ts`); conferido no navegador (as 4 idades desenhadas). Sem mudança de gerador, save nem protocolo. Fora: abóbora e melancia (entrega própria), as 8 idades do trigo (auditoria própria da horta).
