@@ -28,7 +28,7 @@ describe('cama: ids e regras do bloco', () => {
     for (let t = 0; t < 4; t++) {
       const foot = bedFootId(t), head = bedHeadId(t);
       expect(isBedFoot(foot)).toBe(true); expect(isBedHead(head)).toBe(true); expect(isBed(foot) && isBed(head)).toBe(true); expect(bedTurn(foot)).toBe(t); expect(bedTurn(head)).toBe(t);
-      for (const id of [foot, head]) { expect(isSolid(id)).toBe(true); expect(isFull(id)).toBe(false); expect(blockSpan(id)).toEqual([0, BED_HEIGHT]); expect(blocksLight(id)).toBe(true); expect(isTarget(id)).toBe(true); expect(isModelBlock(id)).toBe(true); expect(itemOfBlock(id)).toBe(Item.CAMA); }
+      for (const id of [foot, head]) { expect(isSolid(id)).toBe(true); expect(isFull(id)).toBe(false); expect(blockSpan(id)).toEqual([0, BED_HEIGHT]); expect(blocksLight(id)).toBe(false); expect(isTarget(id)).toBe(true); expect(isModelBlock(id)).toBe(true); expect(itemOfBlock(id)).toBe(Item.CAMA); }
       expect(modelOf(foot)).toEqual({ kind: 'cama', turn: t }); expect(modelOf(head)).toBeNull();
     }
     expect(blockOfItem(Item.CAMA)).toBe(T.BED);

@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.186.0 — luz de bloco pela Minecraft Wiki e arte de iluminação (auditoria #9, 27/11/2026)
+- **ADR 0119 (aprovada pelo dono do produto, ciclo da ADR 0116).** `blocksLight` passa a ser só o **cubo opaco** (`isFull && !isLeaves`): a luz atravessa folhas, baú, cama, porta, laje, degrau, mureta, braseiro e Painel; a laje dupla e os cubos bloqueiam. Lanterna 15, braseiro 13 e a propagação (−1 por célula) não mudam. Testes novos em `light.test.ts`; 609 passam.
+- **Arte importada, sem uso no jogo:** pacote P2-11 Iluminação do Drive (262 PNGs de 16 × 16) em `assets-src/orvalis-voxel/iluminacao/` (`LEIAME.md`, catálogo atualizado). A Tocha do Orvalis e a luz do céu (#32) seguem pendentes de decisão.
+
 ## Orvalis v0.185.0 — dia e noite, lua e chuva pela Minecraft Wiki (auditorias #10 e #31, 27/11/2026)
 - **ADR 0118 (aprovada pelo dono do produto, ciclo da ADR 0116).** A partida nova começa **de manhã** (tick 0); a **cama** vale de 12 542 a 23 460 (com chuva, de 12 010 a 23 992); a **lua** aparece à noite com as 8 fases da Wiki (visual, `days % 8`).
 - **Clima de chuva só no Orvalis** (`titan/weather.ts`): ligada 10–20 min e desligada 10 min–2,5 h, começa limpa; escurece a luz até 12/15, acinzenta céu e névoa, esconde sol, lua e estrelas, tem faixas de chuva e som, **hidrata a terra arada a céu aberto**; dormir limpa o tempo. Sem trovão nem neve. Save: `header.weather` opcional; sala: `rain` na mensagem `time` e **`TITAN_PROTOCOL_VERSION` 3** (servidor junto). Teste: `?chuva=1`. 607 testes passam.

@@ -3,7 +3,7 @@ import { computeLight, LightEngine, LightStore, lightKey } from './light';
 import { TitanGenerator } from './generator';
 import { TitanVolume } from './volume';
 import { mulberry32 } from '../world/random';
-import { T } from './voxel';
+import { blocksLight, T } from './voxel';
 
 describe('luz em 4 bits por célula', () => {
   it('guarda 0–15 por célula sem vazar para vizinhas, nas bordas de seção e em Y negativo', () => {
@@ -121,5 +121,21 @@ describe('invalidação cirúrgica (o ganho de desempenho)', () => {
     expect(e.get(0, 70, 0)).toBe(15);
     e.sourceAdded(5, 70, 0);
     expect(changes.length).toBeGreaterThan(0);
+  });
+});
+
+describe('o que bloqueia a luz de bloco (ADR 0119, regra da Wiki)', () => {
+  const blocks = (id: number): boolean => blocksLight(id);
+  it('só o cubo opaco bloqueia; folhas, baú, cama, porta, laje, degrau, mureta, braseiro e Painel deixam passar; a laje dupla é cubo e bloqueia', () => {
+    for (const id of [T.DARK_ROCK, T.STONE, T.PLANKS_OAK, T.WORKBENCH, T.GRASS, T.SLAB_DOUBLE, T.STONE_SMOOTH]) expect(blocks(id), `id ${id}`).toBe(true);
+    for (const id of [T.AIR, T.LAKE, T.LANTERN, T.LEAVES_OAK, T.LEAVES_CHERRY, T.LEAVES_BIRCH, T.CHEST, T.BED, T.BED_HEAD, T.DOOR, T.SLAB, T.SLAB_TOP, T.STONE_SLAB, T.STONE_STAIR, T.REED_STAIR, T.REED_CHAIR, T.STONE_WALL, T.BRAZIER, T.BRAZIER_LIT, T.PAINEL, T.MAT, T.LADDER]) expect(blocks(id), `id ${id}`).toBe(false);
+  });
+  it('a luz de uma lanterna atravessa folhas e baú com a perda normal de 1 por célula, mas não uma parede', () => {
+    const cells = new Map<string, number>(), set = (x: number, y: number, z: number, id: number) => cells.set(`${x},${y},${z}`, id), get = (x: number, y: number, z: number) => cells.get(`${x},${y},${z}`) ?? T.AIR;
+    set(1, 0, 0, T.LEAVES_OAK); set(0, 1, 0, T.CHEST); set(-1, 0, 0, T.DARK_ROCK);
+    const l = computeLight(get, [[0, 0, 0]]);
+    expect(l.get(lightKey(1, 0, 0))).toBe(14); expect(l.get(lightKey(2, 0, 0))).toBe(13); // atrás das folhas
+    expect(l.get(lightKey(0, 1, 0))).toBe(14); expect(l.get(lightKey(0, 2, 0))).toBe(13); // atrás do baú
+    expect(l.get(lightKey(-1, 0, 0))).toBeUndefined(); expect(l.get(lightKey(-2, 0, 0))!).toBeLessThan(13); // a rocha não recebe luz e atrás dela só chega a volta (11), não a reta (13)
   });
 });

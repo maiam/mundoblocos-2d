@@ -1,0 +1,28 @@
+P2-11 — Iluminação
+Banco de arte original com itens e fontes de luz da Minecraft Wiki, para Orvalis/MundoBlocos.
+
+Os sprites do lote têm 16 × 16 px em RGBA. Chamas, velas, vegetação e formas abertas
+usam alfa. As texturas sólidas preenchem o quadro. Para ampliar, use vizinho mais próximo.
+
+Tochas: as imagens verticais servem também como ícones. A tocha de redstone tem dois estados.
+Lampião: versões apoiada e suspensa. No lampião de cobre, o acabamento e a cor da luz
+variam conforme a oxidação e o enceramento. O ZIP inclui também as variantes enceradas.
+Lâmpada de cobre: 4 graus de oxidação, duas luzes e o indicador de sinal. As enceradas
+reutilizam as texturas do mesmo estágio de oxidação. Os níveis da Wiki acesa são 15/12/8/4.
+Velas: natural + 16 tingidas. 1 a 4 velas, acesas e apagadas (luz 3/6/9/12 ou 0).
+As imagens sobre bolo são camadas transparentes para compor sobre a arte de bolo.
+Pepino do mar: 1 a 4 por bloco, seco e submerso. Emite luz apenas submerso.
+Sinalizador e duto: textura base. Feixe, animações e funcionamento são do motor.
+Fogueiras: apague a chama, reutilize o sprite sem chama e componha as brasas quando necessário.
+A fogueira comum vem do lote P2-05 e foi incluída para reunir as fontes de luz.
+
+Este lote cobre itens e materiais usados como fontes luminosas. Portais, bloco de luz
+de comandos, luz do céu e emissões incidentais de bancadas, minérios e mecanismos
+pertencem aos respectivos sistemas. Os sprites não implementam iluminação no jogo.
+
+Referências de catálogo:
+https://pt.minecraft.wiki/w/Luz
+https://pt.minecraft.wiki/w/Vela
+https://pt.minecraft.wiki/w/L%C3%A2mpada_de_cobre
+https://pt.minecraft.wiki/w/The_Copper_Age
+https://minecraft.wiki/w/Lighting
