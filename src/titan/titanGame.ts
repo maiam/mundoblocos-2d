@@ -11,7 +11,7 @@ import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, attackFauna, tickRespawn } from './combat';
 import { BABY_SCALE, FAUNA_KINDS, faunaAim, faunaPose, isBreedFood, maxHp, stepFauna, tickBreeding, type FaunaKind } from './fauna';
 import { feedFaunaFromSlot } from './faunaFeed';
-import { addExhaustion, damage, EXHAUSTION, fallDamage, HUNGER_ENABLED, isDead, updatePlayerVitals } from './vitals';
+import { addExhaustion, canSprint, EXHAUSTION, fallDamage, HUNGER_ENABLED, hurt as hurtVitals, isDead, updatePlayerVitals } from './vitals';
 import { blockedReason, CRAFT_MESSAGES, craft, GROUP_NAMES, previewCells, RECIPES, stationMet, type Group, type Recipe, type Station } from './recipes';
 import { breakTotalMs, DRAG_TOLERANCE_PX, toolAdvantage } from './breaking';
 import { gameAudio, HIT_INTERVAL_MS } from './gameAudio';
@@ -863,6 +863,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const nowMs = performance.now();
     if (nowMs < nextAttackAt) return false;
     nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    addExhaustion(vitals, EXHAUSTION.attack); // atacar cansa (Wiki, ADR 0130)
     if (client) { // na sala o golpe vai ao servidor, que confere alcance, pausa e espólio (ADR 0104)
       const id = session.creatures[index]?.id;
       if (!id) return false;
@@ -885,6 +886,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     const nowMs = performance.now();
     if (nowMs < nextAttackAt) return false;
     nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    addExhaustion(vitals, EXHAUSTION.attack);
     const r = attackFauna(session, index);
     if (!r.ok) return false;
     gameAudio.playStrike();
@@ -962,7 +964,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       onWorld: () => { view.setItems(visibleItems(session)); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); view.setCrops(standingCrops(session)); },
       onBag: () => { if (inited) { gameAudio.playItemPickup(); refresh(); } },
       onPlayers: () => { view.setRemotePlayers([...client!.remotes.values()]); paintRoomBtn(); },
-      onHurt: (d, kind) => { damage(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
+      onHurt: (d, kind) => { hurtVitals(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
       onRespawn: () => { dying = false; airTop = session.body.y; wasAir = false; steps.reset(); view.setItems(visibleItems(session)); paintVitals(false); refresh(); },
       onClose: (why) => { roomLost = true; paintRoomBtn(); toast(`Sala: ${why}. Use o ☰ para reconectar.`, 60000); },
     };
@@ -1049,15 +1051,15 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       if (iso && moved) facing = Math.atan2(-dirX, -dirZ); // o boneco olha para onde anda
       const px = b.x, pz = b.z;
       const wasOnGround = b.onGround;
-      const sprint = fwdSince > 0 && now - fwdSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // joystick todo à frente por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
+      const sprint = canSprint(vitals) && fwdSince > 0 && now - fwdSince >= SPRINT_HOLD_MS && moved && (sprintOn || Math.hypot(b.vx, b.vz) > 1); // com fome ≤ 6 não corre (Wiki, ADR 0130); // joystick todo à frente por 0,2 s: corre enquanto estiver andando (parado ou preso numa parede, a corrida cai)
       sprintOn = sprint; view.setSprint(sprint);
       stepBody(vol, b, { dirX, dirZ, jump: keys.has('Space') || input.jump, sprint }, dt);
-      if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
+      if (wasOnGround && !b.onGround && b.vy > 0) addExhaustion(vitals, sprintOn ? EXHAUSTION.sprintJump : EXHAUSTION.jump); // cansaço: pular e andar gastam fome (ADR 0060)
       addExhaustion(vitals, Math.hypot(b.x - px, b.z - pz) * (sprintOn ? EXHAUSTION.sprintPerBlock : EXHAUSTION.walkPerBlock));
       if (moved || !b.onGround) playerDirty = true;
       // queda: dano = ⌈altura − 3⌉ ao pousar no chão; cair na água não machuca
       if (b.inLiquid || b.onLadder) { airTop = b.y; wasAir = false; } // a água e a escada amortecem
-      else if (b.onGround) { if (wasAir) { const d = fallDamage(airTop - b.y); if (d > 0) { damage(vitals, d); onHurt(); } } airTop = b.y; wasAir = false; }
+      else if (b.onGround) { if (wasAir) { const d = fallDamage(airTop - b.y); if (d > 0) { hurtVitals(vitals, d); onHurt(); } } airTop = b.y; wasAir = false; }
       else { wasAir = true; airTop = Math.max(airTop, b.y); }
       // ar, regeneração e (sem comida) vida: os olhos dentro do lago gastam o fôlego; sem ar, 1 coração por segundo
       const underwater = eyesSubmerged(b.y + EYE_HEIGHT, vol.get(Math.floor(b.x), Math.floor(b.y + EYE_HEIGHT), Math.floor(b.z)), T.LAKE);
@@ -1089,7 +1091,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         if (fj.phase === 'wander' && Math.hypot(fj.body.x - b.x, fj.body.z - b.z) > SIM_RADIUS) continue; // animal longe e sossegado: não gasta tempo de simulação
         if (client) continue; // na sala os bichos são da sala (mensagem `creatures`); aqui só se desenha
         const ev = stepFarejador(fj, vol, { x: b.x, y: b.y, z: b.z }, dt);
-        if (ev.hit) { damage(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
+        if (ev.hit) { hurtVitals(vitals, ev.damage); onHurt(); notice(fj.kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); }
         if (ev.phase === 'charge' || (fj.phase === 'charge' && now >= nextScrape)) { nextScrape = now + 520; gameAudio.playScrape(); }
       }
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
