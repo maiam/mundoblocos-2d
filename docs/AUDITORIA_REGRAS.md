@@ -51,7 +51,7 @@ Estados: **pendente** (nunca auditada) · **proposta enviada** (aguardando respo
 | 42 | Flora marinha | Erva marinha, alga e alga seca no fundo da água do Orvalis (parte da #14 E3a) | `titan/voxel.ts`, `titan/orvalis/generator.ts`, `render/floraModel.ts`, `titan/actions.ts` | **implementada** (ADR 0135, v0.204.0; corais = E3b) |
 | 43 | Corais | Corais, gorgônias e blocos de coral do Orvalis, vivos e mortos; recifes (parte da #14 E3b) | `titan/voxel.ts`, `titan/coral.ts`, `titan/orvalis/generator.ts`, `titan/actions.ts` | **implementada** (ADR 0136, v0.205.0; gorgônias de parede pendentes) |
 | 44 | Botes | Botes do Orvalis: colocar, embarcar, remar na água, desembarcar, recolher, persistir (parte da #14 E4a) | `titan/boat.ts`, `titan/actions.ts`, `render/boatView.ts`, `titan/titanGame.ts` | **implementada** (ADR 0137, v0.206.0; com baú = E4b) |
-| 45 | Multiplayer | Orvalis em sala: sala 102, gerador por mundo, dormir, relógio, clima (entrega A; fauna, pesca e botes = B e C) | `net/titan/room.ts`, `net/titan/protocol.ts`, `net/titan/client.ts` | **implementada** (entrega A, ADR 0138, v0.207.0) |
+| 45 | Multiplayer | Orvalis em sala: sala 102, gerador por mundo, dormir, relógio, clima (entrega A; fauna, pesca e botes = B e C) | `net/titan/room.ts`, `net/titan/protocol.ts`, `net/titan/client.ts` | **parcial** (ADR 0138: entrega A v0.207.0 e entrega B, fauna, v0.208.0; falta C, pesca e botes) |
 | 40 | Cultivo | Horta com 8 idades: trigo, cenoura e batata (idades, tempo, colheita da Wiki, migração do save) | `titan/crops.ts`, `titan/actions.ts`, `titan/session.ts`, `scripts/make-orvalis-horta.py` | implementada (ADR 0129, v0.198.0) |
 
 ## Registro das auditorias
