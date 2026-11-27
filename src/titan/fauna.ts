@@ -38,9 +38,11 @@ export const FAUNA_ORDER: readonly FaunaKind[] = ['ovelha', 'galinha', 'porco', 
 export const GROUP_SIZE = 4;
 export const GROUP_SPREAD = 4;
 /**
- * Probabilidade de grupo por chunk de 16 × 16: a Wiki dá 10 %, mas o Orvalis não repõe animais com o tempo (sem geração contínua), então a geração inicial usa 4× (adaptação registrada, ADR 0124).
+ * Probabilidade de grupo por chunk de 16 × 16. **v4 (ADR 0124, decisão do dono): 0,1, a da Wiki.** A v3 usou 0,4 (adaptação por não haver geração contínua) e segue assim nas partidas que a abriram na v3.
  */
-export const GROUP_CHANCE = 0.4;
+export const GROUP_CHANCE = 0.1;
+export const GROUP_CHANCE_V3 = 0.4;
+export const groupChanceFor = (version: number): number => (version >= 4 ? GROUP_CHANCE : GROUP_CHANCE_V3);
 /** Fuga depois do golpe (s). */
 export const PANIC_S = 5;
 const WALK_REF = 4.3; // a caminhada do jogador (physics.ts): o `stepBody` lê a entrada como fração dela
@@ -76,15 +78,15 @@ interface FaunaSource { world: string; version: number; seed: number; inRegion(x
 export const hasFauna = (g: { world: string; version: number }): boolean => g.world === 'orvalis' && g.version >= 3;
 
 /**
- * Animais da seed (função pura da seed): por chunk, enquanto o sorteio ficar abaixo de `GROUP_CHANCE` (até 3 grupos), um grupo de `GROUP_SIZE` da espécie sorteada pelos pesos; cada membro vale se está
+ * Animais da seed (função pura da seed): por chunk, enquanto o sorteio ficar abaixo de `groupChanceFor(versão)` (até 3 grupos), um grupo de `GROUP_SIZE` da espécie sorteada pelos pesos; cada membro vale se está
  * em grama, acima da água e com 2 blocos de ar em cima (sem árvore em cima). Nada depende da ordem de leitura.
  */
 export function faunaSpecs(g: FaunaSource & { region: { min: number; max: number } }): FaunaSpec[] {
   if (!hasFauna(g)) return [];
-  const out: FaunaSpec[] = [], total = FAUNA_ORDER.reduce((a, k) => a + FAUNA_KINDS[k].weight, 0);
+  const chance = groupChanceFor(g.version), out: FaunaSpec[] = [], total = FAUNA_ORDER.reduce((a, k) => a + FAUNA_KINDS[k].weight, 0);
   for (let cx = Math.floor(g.region.min / 16); cx < Math.ceil(g.region.max / 16); cx++) for (let cz = Math.floor(g.region.min / 16); cz < Math.ceil(g.region.max / 16); cz++) {
     const key = Math.imul(cx + 64, 4093) + (cz + 64);
-    for (let n = 0; n < 3 && hash2(g.seed, key, 9100 + n * 17) < GROUP_CHANCE; n++) {
+    for (let n = 0; n < 3 && hash2(g.seed, key, 9100 + n * 17) < chance; n++) {
       let pick = hash2(g.seed, key, 9101 + n * 17) * total, kind = FAUNA_ORDER[0];
       for (const k of FAUNA_ORDER) { pick -= FAUNA_KINDS[k].weight; if (pick < 0) { kind = k; break; } }
       const ox = cx * 16 + Math.floor(hash2(g.seed, key, 9102 + n * 17) * 16), oz = cz * 16 + Math.floor(hash2(g.seed, key, 9103 + n * 17) * 16);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { attackFauna } from '../combat';
-import { FAUNA_KINDS, FAUNA_ORDER, faunaAim, faunaBox, faunaLoot, faunaPose, faunaSpecs, faunaYaw, GROUP_SIZE, hasFauna, hurtFauna, newFauna, PANIC_S, stepFauna, type Fauna } from '../fauna';
+import { FAUNA_KINDS, FAUNA_ORDER, GROUP_CHANCE, GROUP_CHANCE_V3, groupChanceFor, faunaAim, faunaBox, faunaLoot, faunaPose, faunaSpecs, faunaYaw, GROUP_SIZE, hasFauna, hurtFauna, newFauna, PANIC_S, stepFauna, type Fauna } from '../fauna';
 import { foodOf, isItem, Item, ITEM_NAMES, maxStack } from '../items';
 import { craft, RECIPES } from '../recipes';
 import { MemoryTitanStorage } from '../save';
@@ -68,6 +68,26 @@ describe('Geração: função pura da seed, só no Orvalis v3', () => {
     expect(s3.fauna.length).toBe(faunaSpecs(new OrvalisGenerator(42, 3)).length); expect(s3.fauna.length).toBeGreaterThan(0);
     expect(s2.fauna).toHaveLength(0);
     for (const f of s3.fauna) expect(f.hp).toBe(FAUNA_KINDS[f.kind].hp);
+  });
+});
+
+describe('Probabilidade de grupo: Wiki na v4, 0,4 preservado na v3', () => {
+  it('a v4 usa 0,1 (Wiki) e a v3 segue com 0,4', () => {
+    expect(GROUP_CHANCE).toBe(0.1); expect(GROUP_CHANCE_V3).toBe(0.4);
+    expect(groupChanceFor(3)).toBe(0.4); expect(groupChanceFor(4)).toBe(0.1); expect(ORVALIS_GENERATOR_VERSION).toBe(4);
+  });
+  it('a v4 tem bem menos animais que a v3, determinísticos, com o terreno da v3', () => {
+    for (const seed of [42, 7, 1234]) {
+      const v3 = faunaSpecs(new OrvalisGenerator(seed, 3)), v4 = faunaSpecs(new OrvalisGenerator(seed, 4));
+      expect(v4.length).toBeLessThan(v3.length / 2); expect(v4.length).toBeGreaterThan(0);
+      expect(faunaSpecs(new OrvalisGenerator(seed, 4))).toEqual(v4);
+    }
+    const a = new OrvalisGenerator(42, 3), b = new OrvalisGenerator(42, 4);
+    for (let x = -60; x <= 60; x += 11) for (let z = -60; z <= 60; z += 13) for (const y of [40, 66, 70]) expect(b.blockAt(x, y, z)).toBe(a.blockAt(x, y, z));
+  });
+  it('a sessão nova (v4) traz a fauna da v4', async () => {
+    const s = await open(42, ORVALIS_GENERATOR_VERSION);
+    expect(s.fauna.length).toBe(faunaSpecs(new OrvalisGenerator(42, 4)).length);
   });
 });
 

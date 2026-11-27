@@ -1,5 +1,8 @@
 # Changelog
 
+## Orvalis v0.194.1 — fauna na probabilidade da Wiki: gerador do Orvalis v4 (27/11/2026)
+- **Decisão do dono:** a probabilidade de grupo da fauna de fazenda volta à da Wiki, **0,1 por chunk** (a v3 usava 0,4, adaptação por não haver geração contínua). Como muda a geração dos animais, sobe o **`ORVALIS_GENERATOR_VERSION` para 4**; a v3 mantém o 0,4 (`groupChanceFor`), terreno e blocos iguais (teste). Partidas novas têm bem menos animais: ~12 a ~31 nas seeds testadas (42: 12, sem galinha; 7: 31). Sem mudança de save nem de protocolo. 691 testes passam.
+
 ## Orvalis v0.194.0 — reprodução da fauna de fazenda (auditoria #36, 27/11/2026)
 - **ADR 0125 (ciclo da ADR 0116; aprovada nos 4 pontos).** Com a **comida da espécie na mão** (trigo: vaca e ovelha; cenoura ou batata: porco; semente de trigo: galinha) o toque curto **alimenta** o animal (qualquer outra coisa golpeia como antes). O adulto fica 30 s em amor; dois em amor, a até 8 m, se encontram e nasce um **filhote** (metade da caixa e da vida, modelo a ½ de escala, sem espólio, segue um adulto, cresce em 20 min; alimentar corta 10 % do que falta); os pais descansam 5 min. Sem XP; teto de 200 animais.
 - Lógica pura em `titan/fauna.ts` (`feedFauna`, `tickBreeding`, `newBaby`, `BREED_FOOD`), `titan/faunaFeed.ts` (gasta a comida só se tem efeito), `titanGame.ts` (gesto e laço), `render/fazenda.ts` (escala do filhote). **Dívida:** filhotes e estado de amor/descanso **não vão ao save**; beterraba e outras sementes ainda não são cultura. 688 testes passam (12 novos); conferido no navegador (duas vacas se encontram e nasce o filhote). Sem mudança de gerador, save nem protocolo.
