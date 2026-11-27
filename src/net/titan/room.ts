@@ -9,7 +9,7 @@ import { stepDrops } from '../../titan/drops';
 import { TitanGenerator } from '../../titan/generator';
 import { BOAT_MAX_SPEED, boatFits, boatSeat } from '../../titan/boat';
 import { stepFishing } from '../../titan/fishing';
-import { OrvalisGenerator, orvalisGeneratorFor } from '../../titan/orvalis/generator';
+import { CostaGenerator, COSTA_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from '../../titan/orvalis/generator';
 import { stepCoral } from '../../titan/coral';
 import type { VoxelWorld } from '../../titan/terrain';
 import { Inventory } from '../../titan/inventory';
@@ -76,8 +76,8 @@ export class TitanRoom {
   private readonly faunaCounter = { n: 0 };
 
   /** `kind` = o mundo da sala (ADR 0138): o Titã ou o Orvalis em voxel, cada um com o gerador, os itens e as regras dele. A fauna de fazenda é da sala (entrega B); a pesca e os botes ainda não (entrega C). */
-  constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random, readonly kind: VoxelWorld = 'titan') {
-    this.world = fresh(kind === 'orvalis' ? new OrvalisGenerator(seed) : new TitanGenerator(seed));
+  constructor(readonly id: number, readonly name: string, readonly seed: number, private readonly rand: () => number = Math.random, readonly kind: VoxelWorld = 'titan', readonly terrain?: 'costa') {
+    this.world = fresh(kind === 'orvalis' ? (terrain === 'costa' ? new CostaGenerator(seed) : new OrvalisGenerator(seed)) : new TitanGenerator(seed));
     this.hook();
   }
 
@@ -397,6 +397,7 @@ export class TitanRoom {
   restore(snap: TitanRoomSnapshot): boolean {
     if (!snap || snap.v !== TITAN_SNAPSHOT_VERSION || !snap.header || snap.header.seed !== this.seed || this.players.size) return false;
     if ((snap.header.world ?? 'titan') !== this.kind) return false; // o arquivo da sala é de outro mundo
+    if (this.kind === 'orvalis' && (snap.header.generatorVersion === COSTA_GENERATOR_VERSION) !== (this.terrain === 'costa')) return false; // arquivo de outro terreno (o da Aldeia da Costa só abre na sala dela, ADR 0142)
     const gen = this.kind === 'orvalis' ? orvalisGeneratorFor(snap.header.seed, snap.header.generatorVersion) : generatorFor(snap.header.seed, snap.header.generatorVersion);
     if (!gen) return false;
     this.world = resume(gen, { header: snap.header, chunks: snap.chunks });

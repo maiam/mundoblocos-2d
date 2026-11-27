@@ -22,9 +22,9 @@ const stand = (r: TitanRoom, id: number, x: number, z: number): void => { r.hand
 const applied = (out: Array<{ msg: TitanServerMessage }>) => out.find((o) => o.msg.t === 'applied')!.msg as Extract<TitanServerMessage, { t: 'applied' }>;
 
 describe('sala do Orvalis (ADR 0138)', () => {
-  it('as salas são por mundo: 101 do Titã e 102 do Orvalis (seed 20261127)', () => {
+  it('as salas são por mundo: 101 do Titã e 102 do Orvalis (a Aldeia da Costa, seed 128064)', () => {
     expect(titanRoomsOf('titan').map((r) => r.id)).toEqual([101]); expect(titanRoomsOf('orvalis').map((r) => r.id)).toEqual([102]);
-    expect(titanRoomById(102)).toMatchObject({ name: 'Orvalis 1', seed: 20261127, world: 'orvalis' }); expect(TITAN_ROOMS.every((r) => r.world)).toBe(true);
+    expect(titanRoomById(102)).toMatchObject({ name: 'Orvalis 1', seed: 128064, world: 'orvalis', terrain: 'costa' }); expect(TITAN_ROOMS.every((r) => r.world)).toBe(true);
   });
   it('o welcome traz o mundo do Orvalis (sem a fauna, que vem pela mensagem `fauna`); o Titã segue com o dele', () => {
     const r = orv(), a = r.join(hello('Ana')), w = a.out[0].msg;
@@ -61,7 +61,7 @@ describe('sala do Orvalis (ADR 0138)', () => {
     const srv = new TitanLoopbackServer(() => 0.5);
     const c = new TitanClient(srv.connect()), s = await c.connect('Ana', 102);
     await flush();
-    expect(s.volume.gen.world).toBe('orvalis'); expect(s.seed).toBe(20261127); expect(s.fauna).toEqual([]); expect(s.boats).toEqual([]);
+    expect(s.volume.gen.world).toBe('orvalis'); expect(s.seed).toBe(128064); expect(s.fauna).toEqual([]); expect(s.boats).toEqual([]);
     expect(s.volume.get(Math.floor(s.body.x), Math.floor(s.body.y) - 1, Math.floor(s.body.z))).not.toBe(T.AIR);
   });
 });

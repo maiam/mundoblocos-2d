@@ -225,6 +225,10 @@ Blocos 160–189 e itens 123–152 (coral, gorgônia, bloco; vivos e mortos; 5 f
 
 Lajes (190–195) e degraus (196–207) de carvalho, cerejeira e bétula; itens 156–161; funde na tábua da mesma madeira; degrau com 3 modelos numa tira de 9 tiles; mesher em `Uint16Array`. Detalhes e fila (W2 cerca e portão, W3 porta e alçapão): `docs/adr/0139-familia-das-madeiras-lajes-e-degraus-minecraft-wiki.md`.
 
+## Aldeia da Costa (ADR 0142, v0.213.0)
+
+Sala 102 = mapa feito à mão (`CostaGenerator`, versão 100); dados em `titan/orvalis/costaData.ts` (gerado). Detalhes e pendências: `docs/adr/0142-aldeia-da-costa-sala-1-minecraft-wiki.md`.
+
 ## Porta e Alçapão de madeira do Orvalis (ADR 0141, v0.212.0)
 
 Portas 280–375 (sistema da Porta de Junco em três famílias) e alçapões 376–423; itens 168–173; `useTrapdoor`/`useDoor` em `actions.ts`. Detalhes: `docs/adr/0141-porta-e-alcapao-de-madeira-minecraft-wiki.md`.

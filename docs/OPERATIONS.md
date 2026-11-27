@@ -104,4 +104,6 @@ Playwright e Chromium já estão no ambiente (`require('playwright')`). Com `npm
 use `window.__game` (ex.: `__game.select(9)`, `__game.startAction()`, `__game.player`). Não encadeie
 `pkill` com outros comandos (ver `CLAUDE.md`).
 
+Aldeia da Costa (ADR 0142): `python3 -I scripts/make-orvalis-costa.py` (Pillow e NumPy) lê o pacote em `assets-src/orvalis-voxel/cenarios/aldeia-da-costa/` (heightmap de 16 bits, máscara e implantação) e grava `src/titan/orvalis/costaData.ts` (não edite à mão); mapa novo = rodar o script e subir `COSTA_GENERATOR_VERSION`. No servidor: `npm run build:net` aqui e `npm run sync-net` lá; `src/app.js` passa `def.terrain` à `TitanRoom`.
+
 `python3 -I scripts/make-orvalis-fazenda.py` (Pillow) converte as 4 texturas dos animais de fazenda (`assets-src/orvalis-voxel/mobs/*_uv_64x64.png`) em `src/assets/orvalis-fazenda-*.webp`, extrai `fazenda-uv.json` para `src/render/art/fazenda-modelos.json` (os ícones do espólio vêm do Drive e ficam em `assets-src/titan/arte16/`, listados em `itens.json`); depois rode `make-titan-arte32.py` (atlas de itens 4 × 25) e `make-titan-item-masks.py` (ADR 0124).

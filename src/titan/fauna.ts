@@ -72,7 +72,7 @@ export const BREED_FOOD: Readonly<Record<FaunaKind, readonly number[]>> = {
 export const isBreedFood = (kind: FaunaKind, item: number | undefined | null): boolean => !!item && BREED_FOOD[kind].includes(item);
 
 export interface FaunaSpec { id: string; kind: FaunaKind; x: number; y: number; z: number }
-interface FaunaSource { world: string; version: number; seed: number; inRegion(x: number, z: number): boolean; column(x: number, z: number): { top: number }; blockAt(x: number, y: number, z: number): number }
+interface FaunaSource { world: string; version: number; seed: number; inRegion(x: number, z: number): boolean; column(x: number, z: number): { top: number }; blockAt(x: number, y: number, z: number): number; /** Animais fixos da criação (mapa feito à mão, ADR 0142). */ farmFauna?: ReadonlyArray<{ id: string; kind: FaunaKind; x: number; y: number; z: number }> }
 
 /** Só o Orvalis a partir da v3 tem fauna de fazenda. */
 export const hasFauna = (g: { world: string; version: number }): boolean => g.world === 'orvalis' && g.version >= 3;
@@ -99,6 +99,7 @@ export function faunaSpecs(g: FaunaSource & { region: { min: number; max: number
       }
     }
   }
+  for (const f of g.farmFauna ?? []) out.push({ id: f.id, kind: f.kind, x: f.x, y: f.y, z: f.z }); // a criação do mapa, além dos grupos espalhados
   return out;
 }
 

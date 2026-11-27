@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.213.0 — Aldeia da Costa: a sala 102 vira o mapa feito à mão (27/11/2026)
+- **ADR 0142 (aprovada nos pontos 1–6).** O pacote `REGION_V6 · Aldeia da Costa` do Drive (heightmap 128 × 128, máscara de superfícies e implantação) vira o `CostaGenerator` (`COSTA_GENERATOR_VERSION` 100): relevo, material, muro de Pedra Lisa em cubos, cercas e porteiras de carvalho, árvores só de carvalho, bases só com piso e a chegada no portão da praia; flora marinha, recifes, veios e a fauna espalhada continuam, e a criação dos cercados soma 8 animais. A **sala 102** passa a ser a aldeia (seed 128064, `terrain: 'costa'`): o mapa da sala muda e o arquivo antigo é recusado; **protocolo 6**. A partida individual não muda.
+- 813 testes passam (9 novos em `orvalis/costa.test.ts`, 2 ajustados em `salaOrvalis.test.ts`); conferido no navegador pela sala simulada. **Jogo e servidor sobem juntos** (pacote novo no servidor e `def.terrain`).
+
 ## Orvalis v0.212.0 — Famílias das madeiras, W3: porta e alçapão (27/11/2026)
 - **ADR 0141 (aprovada na 0139).** Portas (ids 280–375, o mesmo sistema da Porta de Junco em três famílias novas: dobradiça automática, porta dupla, animação) e alçapões (376–423, metade pela face clicada) de carvalho, cerejeira e bétula; itens 168–173; receitas da Wiki (porta 6 tábuas → 3, alçapão 6 → 2). Atlas de itens 4 × 44. A arte da porta (16 × 16 = porta inteira) vai esticada em y; os pixels transparentes dela aparecem vazados.
 - Testes (4 novos em `orvalis/portaAlcapao.test.ts`, 2 ajustados); conferido no navegador. Sem mudança de gerador, save ou protocolo.
