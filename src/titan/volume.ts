@@ -32,7 +32,9 @@ export class TitanVolume {
   /** Revisão de cada seção: sobe a cada edição (descarta malhas antigas). */
   private readonly rev = new Map<string, number>();
 
-  constructor(readonly gen: TerrainGen) {}
+  constructor(readonly gen: TerrainGen) {
+    for (const c of gen.camps ?? []) this.emitters.set(lightKey(c.x, c.y, c.z), [c.x, c.y, c.z, lightLevelOf(T.CAMPFIRE)]); // a Fogueira que o gerador põe em cada acampamento acende o mapa (ADR 0147); quebrá-la a apaga por `updateLight`
+  }
 
   get seed(): number { return this.gen.seed; }
 

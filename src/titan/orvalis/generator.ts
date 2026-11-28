@@ -1,3 +1,4 @@
+import type { GrunhoCamp } from '../grunho';
 import { Noise } from '../../world/noise';
 import { hash2 } from '../../world/random';
 import type { Arrival, Column } from '../generator';
@@ -316,7 +317,11 @@ export class OrvalisGenerator implements TerrainGen {
  * com o relevo por ruído (`ORVALIS_GENERATOR_VERSION`). Herda do `OrvalisGenerator` o que continua valendo — flora marinha, recifes e veios de carvão (regras v6) — e a fauna espalhada de `faunaSpecs`; soma os animais dos
  * cercados (`farmFauna`). Muda o mapa, o muro ou a regra → versão nova.
  */
-export const COSTA_GENERATOR_VERSION = 100;
+export const COSTA_GENERATOR_VERSION = 101; // 101 (ADR 0147): 4 acampamentos de goblins fora do muro; 100 era a aldeia sem eles (um arquivo salvo da sala 100 é recusado: a sala começa de novo, o antigo fica numa cópia `.bak` do servidor)
+export const COSTA_LEGACY_VERSION = 100;
+/** Acampamentos do Grunho (ADR 0147), fora do muro, em terreno quase plano (achados no mapa pela altura e pelo material): o gerador aplaina uma clareira de terra batida de `CAMP_FLAT_R` m (na altura mediana do local), com rampa até `CAMP_BLEND_R`, tira as árvores de perto e põe a Fogueira no centro e 12 lugares numa roda de `CAMP_RING_R` m. */
+export const COSTA_CAMP_SITES: ReadonlyArray<{ id: string; x: number; z: number }> = [{ id: 'oeste', x: -38, z: 4 }, { id: 'sudoeste', x: -32, z: 28 }, { id: 'nordeste', x: 35, z: -10 }, { id: 'sudeste', x: 37, z: 26 }];
+export const CAMP_SIZE = 12, CAMP_FLAT_R = 5.5, CAMP_BLEND_R = 12, CAMP_RING_R = 3.5, CAMP_TREE_R = 10;
 const COSTA_N = 128, COSTA_MIN = -64;
 const b64 = (s: string): Uint8Array => {
   const al = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', out: number[] = [];
@@ -340,7 +345,42 @@ const COSTA_PENS: ReadonlyArray<{ pen: number; kind: FaunaKind; n: number }> = [
 export class CostaGenerator extends OrvalisGenerator {
   private costaTrees: Map<number, Tree[]> | null = null;
 
-  constructor(seed: number) { super(seed, COSTA_GENERATOR_VERSION); }
+  private campList: GrunhoCamp[] | null = null;
+
+  constructor(seed: number, version: number = COSTA_GENERATOR_VERSION) { super(seed, version); }
+
+  /** Há acampamentos só a partir da versão 101. */
+  private get hasCamps(): boolean { return this.version >= 101; }
+
+  /** Altura mediana (Y do topo natural) num raio de 5 em volta do centro: a altura da clareira. */
+  private campBase(cx: number, cz: number): number {
+    const hs: number[] = [];
+    for (let dz = -5; dz <= 5; dz++) for (let dx = -5; dx <= 5; dx++) if (dx * dx + dz * dz <= 25 && costaIn(cx + dx, cz + dz)) hs.push(COSTA_H[costaIdx(cx + dx, cz + dz)]);
+    hs.sort((a, b) => a - b);
+    return hs[hs.length >> 1];
+  }
+
+  private campAround(x: number, z: number, r: number): { id: string; x: number; z: number; y: number } | null {
+    if (!this.hasCamps) return null;
+    for (const c of COSTA_CAMP_SITES) if (Math.hypot(x - c.x, z - c.z) <= r) return { ...c, y: this.campBase(c.x, c.z) };
+    return null;
+  }
+
+  /** Os acampamentos (ADR 0147): a Fogueira (`x, y, z` = a célula dela) e os `CAMP_SIZE` lugares dos goblins na roda, nos pés (sobre a clareira). */
+  get camps(): ReadonlyArray<GrunhoCamp> | undefined {
+    if (!this.hasCamps) return undefined;
+    if (!this.campList) {
+      this.campList = COSTA_CAMP_SITES.map((c) => {
+        const y = this.column(c.x, c.z).top + 1;
+        const slots = Array.from({ length: CAMP_SIZE }, (_, i) => {
+          const a = (i / CAMP_SIZE) * Math.PI * 2, sx = c.x + Math.round(Math.cos(a) * CAMP_RING_R), sz = c.z + Math.round(Math.sin(a) * CAMP_RING_R);
+          return { x: sx, y: this.column(sx, sz).top + 1, z: sz };
+        });
+        return { id: c.id, x: c.x, y, z: c.z, slots };
+      });
+    }
+    return this.campList;
+  }
 
   /** Chegada no portão da praia (vão do muro em Z = 35, X 5–9), de frente para a aldeia (norte). */
   protected override findArrival(): Arrival {
@@ -350,8 +390,15 @@ export class CostaGenerator extends OrvalisGenerator {
 
   protected override computeColumn(x: number, z: number): Column {
     if (!costaIn(x, z)) return { top: 44, surface: T.BEACH, sub: T.BEACH }; // fora do mapa: fundo do mar (a parede invisível do motor fica dentro da água)
-    const i = costaIdx(x, z), top = COSTA_H[i], m = COSTA_M[i];
+    const i = costaIdx(x, z), m = COSTA_M[i];
+    let top = COSTA_H[i], trodden = false;
+    const camp = m === 0 ? null : this.campAround(x, z, CAMP_BLEND_R); // clareira do acampamento (ADR 0147): plana e de terra batida no miolo, com rampa suave até o terreno natural
+    if (camp) {
+      const d = Math.hypot(x - camp.x, z - camp.z);
+      if (d <= CAMP_FLAT_R) { top = camp.y; trodden = true; } else top = Math.round(camp.y + (top - camp.y) * ((d - CAMP_FLAT_R) / (CAMP_BLEND_R - CAMP_FLAT_R)));
+    }
     if (top <= LAKE_LAST_Y || m === 0 || m === 1) return { top, surface: T.BEACH, sub: T.BEACH };
+    if (trodden) return { top, surface: T.PATH, sub: T.DIRT };
     switch (m) {
       case 4: return { top, surface: T.STONE, sub: T.STONE };
       case 5: return { top, surface: T.PATH, sub: T.DIRT };
@@ -366,6 +413,7 @@ export class CostaGenerator extends OrvalisGenerator {
     if (!this.costaTrees) {
       const m = new Map<number, Tree[]>();
       COSTA_PLAN.arvores.forEach(([tx, tz], n) => {
+        if (this.campAround(tx, tz, CAMP_TREE_R)) return; // sem árvore em volta do acampamento (a clareira é aberta)
         const t: Tree = { x: tx, z: tz, top: this.column(tx, tz).top, h: 4 + Math.floor(hash2(this.seed, n, 31) * 3), sp: 'oak', seed: Math.floor(hash2(this.seed, n, 37) * 4294967296) };
         for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) { const k = cellKey(tx + dx, tz + dz); (m.get(k) ?? m.set(k, []).get(k)!).push(t); }
       });
@@ -377,6 +425,7 @@ export class CostaGenerator extends OrvalisGenerator {
   /** Muro de pedra lisa (4 blocos), cercas e porteiras de carvalho por cima do terreno; o resto é o da base. */
   override blockAt(x: number, y: number, z: number): number {
     const k = cellKey(x, z);
+    if (this.hasCamps && COSTA_CAMP_SITES.some((c) => c.x === x && c.z === z) && y === this.column(x, z).top + 1) return T.CAMPFIRE; // a Fogueira do acampamento (ADR 0147)
     if (y >= COSTA_PLAN.muro.y[0] && y <= COSTA_PLAN.muro.y[1] && COSTA_WALL.has(k)) return T.STONE_SMOOTH;
     if (y === COSTA_PLAN.cercas.yBase) {
       if (COSTA_FENCE.has(k)) {
@@ -416,4 +465,4 @@ export class CostaGenerator extends OrvalisGenerator {
 }
 
 export const orvalisGeneratorFor = (seed: number, version: number): OrvalisGenerator | null =>
-  version === COSTA_GENERATOR_VERSION ? new CostaGenerator(seed) : Number.isInteger(version) && version >= 1 && version <= ORVALIS_GENERATOR_VERSION ? new OrvalisGenerator(seed, version) : null;
+  version === COSTA_GENERATOR_VERSION || version === COSTA_LEGACY_VERSION ? new CostaGenerator(seed, version) : Number.isInteger(version) && version >= 1 && version <= ORVALIS_GENERATOR_VERSION ? new OrvalisGenerator(seed, version) : null;

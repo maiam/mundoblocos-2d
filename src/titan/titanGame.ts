@@ -8,8 +8,8 @@ import { durabilityHue, durabilityRatio, maxDurability } from './wear';
 import { canPlantNut, useDoor, chestAt, chestMoveIn, chestTakeOut, useBed, furnaceAt, furnaceMoveIn, furnaceTakeOut, breakOrCollect, collectNearby, dieAndRespawn, eatFromSlot, placeFromSlot } from './actions';
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
-import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, attackFauna, tickRespawn } from './combat';
-import { grunhoAlive, grunhoPose, stepGrunho } from './grunho';
+import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, attackFauna, attackGrunho, tickRespawn } from './combat';
+import { GRUNHO, grunhoAim, grunhoAlive, grunhoPose, stepGrunho } from './grunho';
 import { BABY_SCALE, FAUNA_KINDS, faunaAim, faunaPose, isBreedFood, maxHp, stepFauna, tickBreeding, type FaunaKind } from './fauna';
 import { feedFaunaFromSlot } from './faunaFeed';
 import { addExhaustion, canSprint, EXHAUSTION, fallDamage, HUNGER_ENABLED, hurt as hurtVitals, isDead, updatePlayerVitals } from './vitals';
@@ -838,7 +838,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     else if (iso) {
       if (fingerNdc) { const r = isoRay(isoCamera([b.x, b.y + 0.9, b.z], session.yaw, canvas.clientWidth || 2, canvas.clientHeight || 1), fingerNdc.x, fingerNdc.y); o = { x: r.origin[0], y: r.origin[1], z: r.origin[2] }; ray = [r.dir[0], r.dir[1], r.dir[2]]; reach = creatureReach = ISO_RAY_MAX; } else ray = null;
     } else ray = fingerMode() ? (fingerNdc ? rayThrough(session.yaw, session.pitch, fingerNdc.x, fingerNdc.y, (canvas.clientWidth || 2) / (canvas.clientHeight || 1), view.fov) : null) : lookVector(session.yaw, session.pitch);
-    if (!ray) { target = null; aimCreature = null; aimFauna = null; } else {
+    if (!ray) { target = null; aimCreature = null; aimFauna = null; aimGrunho = null; } else {
       const [dx, dy, dz] = ray;
       target = raycast(vol, o.x, o.y, o.z, dx, dy, dz, reach, session.items, coarse ? LANTERN_PAD_TOUCH : LANTERN_PAD_MOUSE, aimsLiquid(session.inventory.get(session.selected)?.item)); // balde ou vara na mão: a mira acerta o líquido (ADR 0091, 0133); cheio, é por ele que se olha a cavidade
       if (iso && target && Math.hypot(target.x + 0.5 - eye.x, target.y + 0.5 - eye.y, target.z + 0.5 - eye.z) - 0.5 > ISO_REACH) target = null; // longe demais para alcançar
@@ -848,23 +848,28 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       aimFauna = session.fauna.length ? faunaAim(session.fauna, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist) : null; // fauna de fazenda: a caixa de acerto da Wiki (ADR 0124)
       if (iso && aimFauna) { const c = session.fauna[aimFauna.index]; if (!c || Math.hypot(c.body.x - b.x, c.body.y - b.y, c.body.z - b.z) > ATTACK_REACH) aimFauna = null; }
       if (aimCreature && aimFauna) { if (aimFauna.dist < aimCreature.dist) aimCreature = null; else aimFauna = null; } // vence o mais perto
+      aimGrunho = session.grunhos.length ? grunhoAim(session.grunhos, o.x, o.y, o.z, dx, dy, dz, creatureReach, blockDist) : null; // Grunho (ADR 0147): a caixa de acerto dele
+      if (aimGrunho) { const dBest = Math.min(aimCreature?.dist ?? Infinity, aimFauna?.dist ?? Infinity); if (aimGrunho.dist < dBest) { aimCreature = null; aimFauna = null; } else aimGrunho = null; } // vence o mais perto
       if (session.boats.length && !session.boatRide) { // bote na mira (ADR 0137): vence o bloco atrás dele e só perde para um animal mais perto; o toque embarca, segurar recolhe
         const ba = boatAim(session.boats, o.x, o.y, o.z, dx, dy, dz, BOAT_REACH, blockDist), bt = ba ? session.boats[ba.index] : null;
         if (ba && bt && (!aimCreature || ba.dist < aimCreature.dist) && (!aimFauna || ba.dist < aimFauna.dist)) { aimCreature = null; aimFauna = null; target = { x: Math.floor(bt.x), y: Math.floor(bt.y), z: Math.floor(bt.z), nx: 0, ny: 1, nz: 0, item: `bt:${bt.id}` }; }
       }
     }
     const c = aimCreature ? session.creatures[aimCreature.index] : null, fa = aimFauna ? session.fauna[aimFauna.index] : null, txt = c ? `${KINDS[c.kind].name} · ${c.hp}/${KINDS[c.kind].hp}` : fa ? `${FAUNA_KINDS[fa.kind].name}${fa.baby ? ' (filhote)' : fa.love > 0 ? ' ♥' : ''} · ${fa.hp}/${maxHp(fa)}` : null;
-    const boatTxt = target?.item?.startsWith('bt:') ? (BOAT_NAMES[session.boats.find((e) => `bt:${e.id}` === target?.item)?.kind ?? 0]) : null, shown = txt ?? boatTxt;
+    const gr = aimGrunho ? session.grunhos[aimGrunho.index] : null, grTxt = gr ? `Grunho Casca-Rachada · ${gr.hp}/${GRUNHO.hp}` : null;
+    const boatTxt = target?.item?.startsWith('bt:') ? (BOAT_NAMES[session.boats.find((e) => `bt:${e.id}` === target?.item)?.kind ?? 0]) : null, shown = grTxt ?? txt ?? boatTxt;
     if (shown !== lastAimText) { lastAimText = shown; if (shown) label.textContent = shown; else refresh(); }
   }
   /** Animal na mira (ADR 0069): vence o bloco que está atrás dele; o toque curto o golpeia. */
   let aimCreature: { index: number; dist: number } | null = null;
   let aimFauna: { index: number; dist: number } | null = null; // fauna de fazenda na mira (ADR 0124)
+  let aimGrunho: { index: number; dist: number } | null = null; // Grunho na mira (ADR 0147)
   let nextAttackAt = 0;
   let boatsDrawn = false;
   let lastBoatAt = 0; // último envio da posição do bote à sala (ADR 0138, entrega C)
   let boatJumpHeld = false; // borda do pulo para desembarcar (ADR 0137)
   const toTarget = (h: Hit | null): GestureTarget | null => {
+    if (aimGrunho) { const g = session.grunhos[aimGrunho.index]; return g ? { x: Math.floor(g.body.x), y: Math.floor(g.body.y), z: Math.floor(g.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: `g:${aimGrunho.index}` } : null; }
     if (aimFauna) { const c = session.fauna[aimFauna.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: `f:${aimFauna.index}` } : null; }
     if (aimCreature) { const c = session.creatures[aimCreature.index]; return c ? { x: Math.floor(c.body.x), y: Math.floor(c.body.y), z: Math.floor(c.body.z), nx: 0, ny: 1, nz: 0, kind: 'creature', item: String(aimCreature.index) } : null; }
     if (!h) return null;
@@ -918,6 +923,28 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
     onEdited(); refresh();
     return true;
   }
+  /** Golpe no Grunho (ADR 0147): mesma pausa e desgaste dos outros golpes; na sala o servidor confere e solta a Clava, se sair. */
+  function strikeGrunho(index: number): boolean {
+    const nowMs = performance.now();
+    if (nowMs < nextAttackAt) return false;
+    nextAttackAt = nowMs + ATTACK_COOLDOWN_S * 1000;
+    addExhaustion(vitals, EXHAUSTION.attack);
+    if (client) {
+      const id = session.grunhos[index]?.id;
+      if (!id) return false;
+      gameAudio.playStrike(); view.swingHand();
+      void client.strikeGrunho(id).then((r) => { if (r.msg) notice(r.msg); refresh(); });
+      return true;
+    }
+    const r = attackGrunho(session, index, 'eu');
+    if (!r.ok) return false;
+    gameAudio.playStrike(); view.swingHand();
+    if (r.broken) gameAudio.playToolBreak();
+    if (r.msg) notice(r.msg);
+    if (r.dead) view.setItems(visibleItems(session));
+    onEdited(); refresh();
+    return true;
+  }
   let hitAt = 0; // instante do último golpe de som durante a quebra (0 = nenhum)
   window.addEventListener('pointerdown', () => { gameAudio.unlock(); }, { capture: true, passive: true }); // iOS/Safari só liberam o som dentro de um gesto
   window.addEventListener('keydown', () => { gameAudio.unlock(); }, { capture: true, passive: true });
@@ -937,6 +964,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
         return { ok: true };
       }
       if (t.kind === 'shard' && t.item?.startsWith('bt:')) { const r = mountBoat(session, t.item.slice(3)); if (r.msg) notice(r.msg); if (r.ok) { view.setBoats(session.boats); refresh(); } return { ok: r.ok }; } // tocar no bote embarca (ADR 0137)
+      if (t.kind === 'creature' && t.item?.startsWith('g:')) return { ok: strikeGrunho(Number(t.item.slice(2))) }; // Grunho (ADR 0147): o toque curto golpeia
       if (t.kind === 'creature' && t.item?.startsWith('f:')) { // fauna de fazenda: comida da espécie na mão alimenta; qualquer outra coisa golpeia (ADR 0125)
         const fi = Number(t.item.slice(2)), fa = session.fauna[fi], held = session.inventory.get(session.selected);
         if (fa && held && isBreedFood(fa.kind, held.item) && client) { void client.feedFauna(fa.id).then((r) => { if (r.msg) notice(r.msg); if (r.ok) view.swingHand(); refresh(); }); return { ok: true }; } // na sala o servidor alimenta (ADR 0138)
@@ -994,7 +1022,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       onWorld: () => { view.setItems(visibleItems(session)); view.setReeds(standingReeds(session)); view.setNuts(standingNuts(session)); view.setCrops(standingCrops(session)); },
       onBag: () => { if (inited) { gameAudio.playItemPickup(); refresh(); } },
       onPlayers: () => { view.setRemotePlayers([...client!.remotes.values()]); paintRoomBtn(); },
-      onHurt: (d, kind) => { hurtVitals(vitals, d); onHurt(); notice(kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
+      onHurt: (d, kind) => { hurtVitals(vitals, d); onHurt(); notice(kind === 'grunho' ? 'O Grunho te acertou com a clava.' : kind === 'grande' ? 'O Farejador grande te acertou: 2 corações.' : 'O Farejador pequeno te acertou.'); },
       onRespawn: () => { dying = false; airTop = session.body.y; wasAir = false; steps.reset(); view.setItems(visibleItems(session)); paintVitals(false); refresh(); },
       onBobber: (e) => { view.setItems(visibleItems(session)); if (e === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (e === 'lost') notice('A linha se soltou'); },
       onBoats: () => { view.setBoats(session.boats); },
@@ -1049,6 +1077,7 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   }
   const steps = new FootstepClock();
   let lastAimText: string | null = null;
+  let grunhosShown = false; // há Grunho desenhado (para esconder quando some da lista)
   const fauna = { shown: false, counter: { n: 0 }, moving: new Map<string, boolean>() }; // fauna de fazenda: o que está desenhado e quem anda (estado de execução, ADR 0124)
   let nextScrape = 0; // instante do próximo raspar de pata de um Farejador em investida
   const frame = (now: number): void => {
@@ -1138,15 +1167,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
     }
-    if (session.grunhos.length) { // Grunhos (ADR 0147): sem sala, simula os que estão perto; na sala o servidor manda (aqui só se desenha)
+    if (session.grunhos.length || grunhosShown) { // Grunhos (ADR 0147): sem sala, simula os que estão perto; na sala o servidor manda (aqui só se desenha)
       const near = session.grunhos.filter((g) => Math.hypot(g.body.x - b.x, g.body.z - b.z) <= FAUNA_SHOW_RADIUS + 8);
-      const gmoving = new Map<string, boolean>();
+      const gmoving = client ? client.grunhoMoving : new Map<string, boolean>();
       if (active && !client) for (const g of near) {
         const ev = stepGrunho(g, vol, dt, [{ id: 'eu', x: b.x, y: b.y, z: b.z }]);
         gmoving.set(g.id, ev.moving);
         for (const h of ev.hits) { hurtVitals(vitals, h.damage); onHurt(); notice('O Grunho te acertou com a clava.'); }
       }
-      view.setGrunhos(near.filter(grunhoAlive).slice(0, 40).map((g) => ({ x: g.body.x, y: g.body.y, z: g.body.z, yaw: g.yaw, pose: grunhoPose(g, gmoving.get(g.id) ?? Math.hypot(g.body.vx, g.body.vz) > 0.05) })));
+      const drawn = near.filter(grunhoAlive).slice(0, 40); grunhosShown = drawn.length > 0;
+      view.setGrunhos(drawn.map((g) => ({ x: g.body.x, y: g.body.y, z: g.body.z, yaw: g.yaw, pose: grunhoPose(g, gmoving.get(g.id) ?? Math.hypot(g.body.vx, g.body.vz) > 0.05) })));
     }
     if (active && session.coralWatch.size && stepCoral(session, dt)) onEdited(); // bloco de coral vivo sem água morre (ADR 0136)
     if (active && !client) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)

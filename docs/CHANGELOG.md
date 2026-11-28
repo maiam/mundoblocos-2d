@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.227.0 — Grunhos na sala 102: 4 acampamentos de 12 (etapa 3, 28/11/2026)
+- **ADR 0147, etapa 3.** A **Aldeia da Costa v101** ganha **4 acampamentos de 12 Grunhos fora do muro** (oeste, sudoeste, nordeste e sudeste): clareira plana de terra batida, rampa suave, sem árvore perto, **Fogueira** no centro (luz 15) e os goblins numa roda de 3,5 m. **O arquivo salvo da sala 102 (versão 100) foi descartado** (autorizado pelo dono): a sala recusa a versão 100 e começa de novo; o servidor guarda o antigo numa cópia `.bak`.
+- **Protocolo 7:** mensagem `grunhos`, ação `strikeGrunho`, `hurt` do tipo `grunho`. A sala simula os goblins (perseguem, golpeiam, voltam e se curam), o aparelho espelha, mira e golpeia (vence o bloco e os bichos mais longe); abatido, o Grunho solta a Clava de Madeira com 25% de chance e volta em 10 min.
+- Conferido no navegador pela sala em memória (`?sala=102&loopback=1`): os acampamentos aparecem, os goblins perseguem e acertam ("O Grunho te acertou com a clava", corações caem). **Servidor: pacote novo** (`build:net` + `sync-net`) com protocolo 7 (também leva a Fogueira, as espadas, a Clava e o Grunho); o servidor precisa ser atualizado junto com o site.
+- 848 testes passam (`orvalis/acampamentos.test.ts` e `net/titan/salaGrunho.test.ts` novos, 10; os da Costa ajustados à v101 e ao protocolo 7).
+
 ## Orvalis v0.226.0 — Arte nova da Fogueira (28/11/2026)
 - **Arte (ADR 0146, adendo).** A fogueira acesa nova do dono (chama grande sobre três toras) vira o ícone do item 176 e o modelo do bloco (`make-orvalis-espadas.py`, 32 px, paleta de 48 cores). **Só a vista de frente, olhando de qualquer lado (pedido do dono):** o modelo deixa de ser dois planos cruzados e passa a **um plano só que o renderer gira para a câmera a cada quadro** (`faceCampfires`; só refaz a matriz se o giro mudou mais de 0,02 rad), a 0,85 de bloco, caixa de mira 0,8 × 0,8 e brilho `CAMPFIRE_GLOW` 0,9. Valem para a partida individual e para a sala 102 (mesmo código); o Titã não tem Fogueira (ADR 0114).
 - **Guardadas, sem uso:** a fogueira **apagada** (o jogo não tem estado apagado) e as **4 variações** de cada uma (quadros de chama animada), em `assets-src/orvalis-voxel/fogueira/`.

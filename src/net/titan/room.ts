@@ -1,6 +1,7 @@
 import { dismountBoat, mountBoat, breakOrCollect, chestAt, chestMoveIn, chestTakeOut, collectNearby, dieAndRespawn, furnaceMoveIn, furnaceTakeOut, placeFromSlot, useBed, useDoor, type ActionResult } from '../../titan/actions';
-import { ATTACK_REACH, ATTACK_COOLDOWN_S, attackCreature, attackFauna, tickRespawn } from '../../titan/combat';
+import { ATTACK_REACH, ATTACK_COOLDOWN_S, attackCreature, attackFauna, attackGrunho, tickRespawn } from '../../titan/combat';
 import { type Fauna, stepFauna, tickBreeding } from '../../titan/fauna';
+import { grunhoAlive, stepGrunho, type Grunho } from '../../titan/grunho';
 import { feedFaunaFromSlot } from '../../titan/faunaFeed';
 import { chestToData } from '../../titan/chest';
 import { stepFarejador, type Farejador } from '../../titan/creature';
@@ -19,7 +20,7 @@ import { fresh, generatorFor, headerOf, isRaining, resume, tickCrops, tickFurnac
 import { advanceDay, canSleep } from '../../titan/sky';
 import { isDead, newVitals, vitalsFromData, vitalsToData, type PlayerVitals, type VitalsData } from '../../titan/vitals';
 import { isBed, isOpenable } from '../../titan/voxel';
-import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna } from './protocol';
+import { sanitizeTitanName, TITAN_MAX_PLAYERS, TITAN_PROTOCOL_VERSION, type Edit, type TitanClientMessage, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna, type WireGrunho } from './protocol';
 
 /**
  * Sala do Titã (ADR 0104): mundo cooperativo de sobrevivência, **autoritativo**. Pura (sem DOM): roda o mesmo `TitanVolume` e as mesmas regras de `titan/actions.ts` que o jogo solo.
@@ -35,6 +36,8 @@ export const TITAN_SNAPSHOT_VERSION = 1;
 /** Farejadores (ADR 0074): só os a até `SIM_RADIUS` m de algum jogador (ou em ação) são simulados; os a até `SHOW_RADIUS` vão aos aparelhos (10×/s). */
 export const TITAN_SIM_RADIUS = 56, TITAN_SHOW_RADIUS = 64, TITAN_CREATURES_EVERY = 0.1, TITAN_FURNACES_EVERY = 1;
 /** Fauna de fazenda do Orvalis (ADR 0138): simula a até 48 m de algum jogador (a mesma distância do aparelho), manda a cada jogador os 40 mais próximos a até 64 m, a cada 0,2 s; a posição vai ao disco a cada minuto. */
+/** Grunhos (ADR 0147): simulam a até 48 m de algum jogador (ou em perseguição), vão a quem está a até 64 m (os 40 mais próximos), a cada 0,15 s. */
+export const TITAN_GRUNHO_SIM_RADIUS = 48, TITAN_GRUNHO_SHOW_RADIUS = 64, TITAN_GRUNHO_SHOW_MAX = 40, TITAN_GRUNHO_EVERY = 0.15;
 export const TITAN_FAUNA_SIM_RADIUS = 48, TITAN_FAUNA_SHOW_RADIUS = 64, TITAN_FAUNA_SHOW_MAX = 40, TITAN_FAUNA_EVERY = 0.2, TITAN_FAUNA_SAVE_EVERY = 60;
 /** Distância máxima do olho ao centro do animal para um golpe valer (alcance do jogo + folga de rede). */
 export const TITAN_STRIKE_REACH = ATTACK_REACH + 2;
@@ -73,6 +76,8 @@ export class TitanRoom {
   private lastBoatsSig = '[]';
   private sinceFaunaSave = 0;
   private readonly faunaMoving = new Map<string, boolean>();
+  private readonly grunhoMoving = new Map<string, boolean>();
+  private sinceGrunhos = 0;
   private readonly faunaCounter = { n: 0 };
 
   /** `kind` = o mundo da sala (ADR 0138): o Titã ou o Orvalis em voxel, cada um com o gerador, os itens e as regras dele. A fauna de fazenda é da sala (entrega B); a pesca e os botes ainda não (entrega C). */
@@ -197,6 +202,7 @@ export class TitanRoom {
         case 'mountBoat': r = this.occupied(p, a.id) ? { ok: false, msg: 'Bote ocupado' } : mountBoat(v, a.id); if (r.ok) p.lastBoatAt = this.clock; break;
         case 'dismountBoat': dismountBoat(v); r = { ok: true }; break;
         case 'strikeFauna': r = this.strikeFauna(p, a.id); break;
+        case 'strikeGrunho': r = this.strikeGrunho(p, a.id); break;
         case 'feedFauna': r = this.feedFauna(p, a.id); break;
         case 'die': r = this.die(p, out); break;
       }
@@ -253,6 +259,23 @@ export class TitanRoom {
   }
 
   /** Animal de fazenda pelo id, ao alcance de `p` (o olho até o centro do corpo). */
+  /** Golpe num Grunho (ADR 0147): alcance, pausa entre golpes e `attackGrunho` (a Clava de Madeira, se sair, cai no chão da sala; o goblin passa a perseguir quem bateu). */
+  private strikeGrunho(p: Player, id: string): ActionResult {
+    const idx = this.world.grunhos.findIndex((e) => e.id === id), g = this.world.grunhos[idx], b = p.view.body;
+    if (!g || !grunhoAlive(g)) return { ok: false };
+    if (Math.hypot(g.body.x - b.x, g.body.y + 0.7 - (b.y + EYE_HEIGHT), g.body.z - b.z) > TITAN_STRIKE_REACH) return { ok: false, msg: 'Longe demais' };
+    if (this.clock - p.struckAt < ATTACK_COOLDOWN_S - 0.05) return { ok: false };
+    p.struckAt = this.clock;
+    const r = attackGrunho(p.view, idx, String(p.id));
+    this.sinceGrunhos = TITAN_GRUNHO_EVERY; // o próximo tick manda a lista nova
+    return { ok: r.ok, ...(r.msg ? { msg: r.msg } : {}) };
+  }
+
+  private wireGrunho(g: Grunho): WireGrunho {
+    const r2 = (v: number): number => Math.round(v * 100) / 100;
+    return { id: g.id, x: r2(g.body.x), y: r2(g.body.y), z: r2(g.body.z), yaw: r2(g.yaw), ph: g.phase === 'dead' ? 'wander' : g.phase, hp: g.hp, sw: g.swing < 0 ? -1 : r2(g.swing), hu: Math.round(Math.min(g.hurt, 9) * 10) / 10, m: this.grunhoMoving.get(g.id) ? 1 : 0, c: r2(g.clock) };
+  }
+
   private faunaNear(p: Player, id: string): { idx: number; f: Fauna } | null {
     const idx = this.world.fauna.findIndex((e) => e.id === id), f = this.world.fauna[idx], b = p.view.body;
     return f && Math.hypot(f.body.x - b.x, f.body.y - (b.y + EYE_HEIGHT), f.body.z - b.z) <= TITAN_STRIKE_REACH ? { idx, f } : null;
@@ -358,6 +381,23 @@ export class TitanRoom {
       if (tickBreeding(w.fauna, this.faunaCounter).length) { this.dirty = true; w.metaRev++; }
       this.sinceFaunaSave += dt;
       if (this.sinceFaunaSave >= TITAN_FAUNA_SAVE_EVERY) { this.sinceFaunaSave = 0; this.dirty = true; } // a posição dos animais vai ao disco de minuto em minuto
+    }
+    if (list.length && w.grunhos.length) { // Grunhos (ADR 0147): simulam perto de algum jogador (ou em perseguição); quem é acertado recebe `hurt`
+      const targets = list.map((p) => ({ id: String(p.id), x: p.view.body.x, y: p.view.body.y, z: p.view.body.z }));
+      for (const g of w.grunhos) {
+        if (g.phase === 'wander' && !targets.some((t) => Math.hypot(g.body.x - t.x, g.body.z - t.z) <= TITAN_GRUNHO_SIM_RADIUS)) continue;
+        const ev = stepGrunho(g, w.volume, dt, targets);
+        this.grunhoMoving.set(g.id, ev.moving);
+        for (const h of ev.hits) out.push({ to: Number(h.target), msg: { t: 'hurt', damage: h.damage, kind: 'grunho' } });
+      }
+    }
+    this.sinceGrunhos += dt;
+    if (this.sinceGrunhos >= TITAN_GRUNHO_EVERY && list.length && w.grunhos.length) {
+      this.sinceGrunhos = 0;
+      for (const p of list) {
+        const near = w.grunhos.filter(grunhoAlive).map((g) => ({ g, d: Math.hypot(g.body.x - p.view.body.x, g.body.z - p.view.body.z) })).filter((e) => e.d <= TITAN_GRUNHO_SHOW_RADIUS).sort((a, b) => a.d - b.d).slice(0, TITAN_GRUNHO_SHOW_MAX);
+        out.push({ to: p.id, msg: { t: 'grunhos', list: near.map((e) => this.wireGrunho(e.g)) } });
+      }
     }
     this.sinceFauna += dt;
     if (this.sinceFauna >= TITAN_FAUNA_EVERY && list.length && w.fauna.length) {
