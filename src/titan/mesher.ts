@@ -1,7 +1,7 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
 import { SKY_MAX } from './skylight';
-import { isFull, isModelBlock, isWaterPlant, modelOf, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, tileForFace, type Face, Y_MIN } from './voxel';
+import { isFull, isGlass, blocksLight, isModelBlock, isWaterPlant, modelOf, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, tileForFace, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -14,7 +14,7 @@ import { isFull, isModelBlock, isWaterPlant, modelOf, isSlab, isSlabBottom, slab
  */
 /** `sky` = luz do céu da célula que a face enxerga, 0–1 (nível ÷ 15; ADR 0123): o shader multiplica a luz do dia por ela. */
 export interface MeshData { pos: Float32Array; uv: Float32Array; col: Float32Array; glow: Float32Array; sky: Float32Array; idx: Uint32Array }
-export interface SectionMesh { opaque: MeshData | null; liquid: MeshData | null }
+export interface SectionMesh { opaque: MeshData | null; liquid: MeshData | null; /** Vidro (ADR 0150): malha translúcida à parte, com o atlas de terreno. */ glass: MeshData | null }
 
 import tilesCfg from './tiles.json';
 
@@ -90,8 +90,8 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
     cells[((ly + 1) * N + (lz + 1)) * N + (lx + 1)] = id;
     if (id !== T.AIR && ly >= 0 && ly < SECTION && lx >= 0 && lx < SECTION && lz >= 0 && lz < SECTION) any = true;
   }
-  if (!any) return { opaque: null, liquid: null };
-  const op = new Builder(), lq = new Builder();
+  if (!any) return { opaque: null, liquid: null, glass: null };
+  const op = new Builder(), lq = new Builder(), gl = new Builder();
   const at = (lx: number, ly: number, lz: number): number => cells[((ly + 1) * N + (lz + 1)) * N + (lx + 1)];
   const lit = vol.hasLanterns;
   for (let ly = 0; ly < SECTION; ly++) for (let lz = 0; lz < SECTION; lz++) for (let lx = 0; lx < SECTION; lx++) {
@@ -108,20 +108,23 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
         // só a superfície (e bordas expostas ao ar). Atlas próprio do lago (ADR 0057, 128 × 32: topo, topo 2, lateral): o topo usa a célula 0; a lateral exposta, a célula 2, inteira na face que
         // encontra a superfície e sem a faixa clara de cima (75 % de baixo) nas faces de baixo, quando há líquido em cima.
         if (nb === T.AIR || nb === T.LANTERN) lq.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, 'top'), 1, level, 0, 0, fi === 2 || fi === 3 ? LAKE_TOP_UV : at(lx, ly + 1, lz) === T.LAKE ? LAKE_SIDE_DEEP_UV : LAKE_SIDE_UV, sky);
+      } else if (isGlass(id)) {
+        // vidro (ADR 0150): a face aparece quando o vizinho não é vidro nem cubo opaco (a folha e o ar deixam ver); a malha é translúcida e vai à parte
+        if (!isGlass(nb) && !blocksLight(nb)) gl.face(x0 + lx, y0 + ly, z0 + lz, fi, tileForFace(id, FACES[fi].f, FACES[fi].n as [number, number, number]), 1, level, 0, 0, undefined, sky);
       } else if (id === T.MAT) {
         // esteira (ADR 0085): fina, 1/16 m. O topo sempre aparece; a base nunca (há piso firme); as laterais só sem cubo inteiro nem outra esteira ao lado.
-        const show = fi === 2 || (fi !== 3 && !isFull(nb) && nb !== id);
+        const show = fi === 2 || (fi !== 3 && (!isFull(nb) || isGlass(nb)) && nb !== id);
         if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, 3, undefined, sky);
       } else if (isSlab(id)) {
         // laje inferior: o topo sempre aparece (fica em y + 0,5); a base some sob cubo inteiro ou laje superior; as laterais só sem cubo inteiro nem outra laje inferior ao lado.
         // laje superior: a base sempre aparece (y + 0,5); o topo some sob cubo inteiro ou laje inferior; as laterais só sem cubo inteiro nem outra laje superior ao lado.
         const bottom = isSlabBottom(id);
-        const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? !isFull(nb) && nb !== slabPartner(id) : !isFull(nb) && nb !== id);
+        const show = fi === (bottom ? 2 : 3) || (fi === (bottom ? 3 : 2) ? (!isFull(nb) || isGlass(nb)) && nb !== slabPartner(id) : (!isFull(nb) || isGlass(nb)) && nb !== id);
         if (show) op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileFor(id, FACES[fi].f), 1, level, 0, bottom ? 1 : 2, undefined, sky);
-      } else if (!isFull(nb)) {
+      } else if (!isFull(nb) || isGlass(nb)) { // o vizinho de vidro deixa a face aparecer (ADR 0150)
         op.face(x0 + lx, y0 + ly, z0 + lz, fi, tileForFace(id, FACES[fi].f, FACES[fi].n as [number, number, number]), TINT[id] ?? 1, level, glowOf(id), 0, undefined, sky); // o depósito de brasa brilha de dia e de noite
       }
     }
   }
-  return { opaque: op.done(), liquid: lq.done() };
+  return { opaque: op.done(), liquid: lq.done(), glass: gl.done() };
 }

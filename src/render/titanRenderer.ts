@@ -62,12 +62,13 @@ export class TitanRenderer {
   readonly camera: THREE.PerspectiveCamera;
   private readonly scene = new THREE.Scene();
   private readonly opaqueMat: THREE.MeshBasicMaterial;
+  private readonly glassMat: THREE.MeshBasicMaterial; // vidro (ADR 0150): o atlas de terreno, translúcido
   private readonly liquidMat: THREE.MeshBasicMaterial;
   private readonly liquidTex: THREE.Texture;
   /** Quadros de animação do líquido (ADR 0132): o atlas da água do Orvalis tem uma linha de 4 células por quadro; o do Titã, uma só (2 quadros por deslocamento em U). */
   private readonly liquidRows: number;
   private readonly liquidRowsIso: number;
-  private readonly sections = new Map<string, { opaque?: THREE.Mesh; liquid?: THREE.Mesh; rev: number }>();
+  private readonly sections = new Map<string, { opaque?: THREE.Mesh; liquid?: THREE.Mesh; glass?: THREE.Mesh; rev: number }>();
   private readonly pending = new Set<string>();
   private readonly outline: THREE.LineSegments;
   private readonly sky: SkyDome;
@@ -189,6 +190,8 @@ export class TitanRenderer {
     if (extra.iso) { this.atlasTexIso = pixelTexture(extra.iso.atlas); this.liquidTexIso = pixelTexture(extra.iso.lake); this.liquidTexIso.repeat.y = 1 / liquidRowsOf(extra.iso.lake); }
     this.opaqueMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true });
     patchDayLight(this.opaqueMat, this.ambient, { sky: true });
+    this.glassMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, fog: true, transparent: true, depthWrite: false });
+    patchDayLight(this.glassMat, this.ambient, { sky: true });
     // o líquido tem atlas próprio de 16 px (Lago Escuro V2, ADR 0057, reduzido na ADR 0106: topo 1, topo 2, lateral, lateral) e alterna o quadro deslocando o UV em 1 célula (0,25); a face de cima aparece também por baixo
     this.liquidRows = liquidRowsOf(extra.lake); this.liquidRowsIso = extra.iso ? liquidRowsOf(extra.iso.lake) : 1;
     this.liquidTex = new THREE.Texture(extra.lake);
@@ -972,6 +975,7 @@ export class TitanRenderer {
     this.renderer.setPixelRatio(iso ? 1 : Math.min(window.devicePixelRatio || 1, 2));
     this.canvas.style.imageRendering = iso ? 'pixelated' : '';
     this.opaqueMat.map = iso && this.atlasTexIso ? this.atlasTexIso : this.atlasTex;
+    this.glassMat.map = this.opaqueMat.map;
     this.liquidMat.map = iso && this.liquidTexIso ? this.liquidTexIso : this.liquidTex;
     if (iso) { this.under = { mix: 0, adapt: 0 }; this.underDepth = 0; }
     if (iso && !this.avatar) this.avatar = this.buildAvatar();
@@ -1071,12 +1075,12 @@ export class TitanRenderer {
     const m = meshSection(this.volume, cx, sy, cz);
     const t1 = this.perf ? performance.now() : 0;
     const entry = this.sections.get(key) ?? { rev: 0 };
-    for (const k of ['opaque', 'liquid'] as const) {
+    for (const k of ['opaque', 'liquid', 'glass'] as const) {
       const old = entry[k];
       if (old) { this.scene.remove(old); old.geometry.dispose(); entry[k] = undefined; }
       const data = m[k];
       if (!data) continue;
-      const mesh = new THREE.Mesh(toGeometry(data), k === 'opaque' ? this.opaqueMat : this.liquidMat);
+      const mesh = new THREE.Mesh(toGeometry(data), k === 'opaque' ? this.opaqueMat : k === 'glass' ? this.glassMat : this.liquidMat);
       mesh.frustumCulled = true;
       mesh.matrixAutoUpdate = false;
       this.scene.add(mesh);
@@ -1084,7 +1088,7 @@ export class TitanRenderer {
     }
     if (this.perf) { this.perf.record('mesh', t1 - t0); this.perf.record('geom', performance.now() - t1); this.perf.count('sections'); this.built++; }
     entry.rev = this.volume.sectionRevision(cx, sy, cz);
-    if (entry.opaque || entry.liquid) this.sections.set(key, entry); else this.sections.delete(key);
+    if (entry.opaque || entry.liquid || entry.glass) this.sections.set(key, entry); else this.sections.delete(key);
   }
 
   /** Um quadro: câmera, malhas pendentes (mais perto primeiro, com orçamento de tempo), contorno e desenho. */
@@ -1284,7 +1288,7 @@ export class TitanRenderer {
 
   dispose(): void {
     window.removeEventListener('resize', this.resize);
-    for (const e of this.sections.values()) { e.opaque?.geometry.dispose(); e.liquid?.geometry.dispose(); }
+    for (const e of this.sections.values()) { e.opaque?.geometry.dispose(); e.liquid?.geometry.dispose(); e.glass?.geometry.dispose(); }
     this.renderer.dispose();
   }
 }

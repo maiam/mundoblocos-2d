@@ -32,7 +32,7 @@ describe('lajes e degraus de madeira (ADR 0139)', () => {
       expect(ls).toMatchObject({ world: 'orvalis', station: 'workbench', result: { item: k.slab, count: 6 }, ingredients: [{ item: k.planks, count: 3 }] });
       expect(ds).toMatchObject({ world: 'orvalis', station: 'workbench', result: { item: k.stair, count: 4 }, ingredients: [{ item: k.planks, count: 6 }] });
     }
-    expect(isItem(178)).toBe(false);
+    expect(isItem(179)).toBe(false);
   });
 
   it('itens ↔ blocos: laje inferior/superior devolvem a mesma laje; os 4 giros do degrau devolvem o degrau; meia altura e várias caixas', () => {

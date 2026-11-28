@@ -23,7 +23,7 @@ describe('malha por seção', () => {
   });
   it('seção de ar não gera malha; a da superfície gera faces e o lago tem malha própria', () => {
     const g = new TitanGenerator(42), v = new TitanVolume(g);
-    expect(meshSection(v, 0, 20, 0)).toEqual({ opaque: null, liquid: null });
+    expect(meshSection(v, 0, 20, 0)).toEqual({ opaque: null, liquid: null, glass: null });
     const lk = g.lake;
     const m = meshSection(v, Math.floor(lk.x / 16), 7, Math.floor(lk.z / 16)); // y 48..63: topo do lago
     expect(m.liquid).not.toBeNull();
