@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.230.0 — Vidro (28/11/2026)
+- **ADR 0150.** Bloco **Vidro** (425) e item 178, com a arte de 32 px do Drive: cubo sólido e translúcido, **a luz passa**, dureza 0,3, **não solta nada** ao quebrar (Wiki), **1 Areia → 1 Vidro na Fornalha em 10 s**. Malha translúcida à parte no mesher (`SectionMesh.glass`) e `glassMat` no renderer; na mão vira item plano. O pacote inteiro (fosco, tingidos, vidraças) ficou guardado, sem uso.
+- Conferido no navegador: parede de vidro com o mundo visto através, faces entre vidros sem desenho, mão com o sprite. Sem mudança no mapa, no protocolo nem no save. 859 testes passam (`orvalis/vidro.test.ts` novo, 4).
+
 ## Orvalis v0.229.0 — Casas e Celeiro da Aldeia da Costa (28/11/2026)
 - **ADR 0149.** As 4 bases da sala 102 ganham construções de carvalho: toras nos cantos, paredes de tábua, **porta na entrada** (dupla no Celeiro), **alçapões nas janelas** e **telhado de degraus** com cumeeira e oitão (`titan/orvalis/casas.ts`, puro). **Costa v102** e **protocolo 8** (jogo e servidor juntos); a sala recusa o arquivo salvo da v101 (o servidor guarda a cópia `.bak`).
 - **Correção de arte:** a lateral −X do perfil dos degraus (madeira e pedra) caía na metade transparente do tile e saía preta nas pontas do telhado; `u = 1 − z` nas duas laterais (só os JSONs de modelo mudam).

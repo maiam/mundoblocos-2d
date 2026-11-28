@@ -56,6 +56,7 @@ for (let i = 0; i < 10; i++) setH(1.5, T.CORAL_BLOCK + i); // blocos de coral (W
 setH(0.5, T.DRIED_KELP_BLOCK); // bloco de alga seca (Wiki: dureza 0,5, ADR 0135)
 setH(1, T.MELON); setH(1, T.PUMPKIN); // melancia e abóbora (Wiki: dureza 1, machado, ADR 0128)
 setH(3, T.COAL_ORE); setH(5, T.COAL_BLOCK); // minério de carvão (3) e bloco de carvão (5): picareta (Wiki, ADR 0122)
+setH(0.3, T.GLASS); // vidro: dureza 0,3, qualquer ferramenta (Wiki, espelhos: a confirmar; ADR 0150)
 setH(2, T.CAMPFIRE); // fogueira: dureza 2, machado (Wiki, de memória: a confirmar; ADR 0146)
 setH(0, T.TORCH, T.TORCH_WALL, T.TORCH_WALL_90, T.TORCH_WALL_180, T.TORCH_WALL_270); // tocha: dureza 0, sai assim que o gesto de quebrar começa (Wiki: instantânea)
 setH(LEGACY_COLLECT, T.MARCO, T.MARCO_90, T.MARCO_180, T.MARCO_270, T.PAINEL, T.PAINEL_Z);

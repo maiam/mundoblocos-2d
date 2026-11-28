@@ -1,5 +1,5 @@
 import { blockOfItem, isTool } from './items';
-import { isFull, modelOf, T, tileFor } from './voxel';
+import { isFull, isGlass, modelOf, T, tileFor } from './voxel';
 
 /**
  * Categorias de exibição na mão (ADR 0087), no modelo do Minecraft: **mão vazia** (o braço), **bloco** (cubo 3D com as texturas do terreno), **item plano** (o sprite extrudado: comida,
@@ -8,10 +8,10 @@ import { isFull, modelOf, T, tileFor } from './voxel';
  */
 export type HeldCategory = 'hand' | 'block' | 'flat' | 'tool' | 'model';
 
-/** O bloco do item é um cubo inteiro que a mão pode mostrar com as texturas do terreno? (Laje, lanterna, Marco, Painel, Mesa e esteira não são: viram item plano.) */
+/** O bloco do item é um cubo inteiro que a mão pode mostrar com as texturas do terreno? (Laje, lanterna, Marco, Painel, Mesa, esteira e vidro não são: viram item plano.) */
 export function heldBlockOf(item: number): number | null {
   const b = blockOfItem(item);
-  return b !== null && b !== T.LANTERN && isFull(b) && modelOf(b) === null ? b : null;
+  return b !== null && b !== T.LANTERN && isFull(b) && !isGlass(b) && modelOf(b) === null ? b : null; // o vidro é translúcido: o cubo da mão (opaco) o desenharia preto, então vira item plano (ADR 0150)
 }
 
 /** Categoria do item na mão; `hasModel` = há GLB próprio para ele (a lista fica no renderer, que carrega os arquivos). `null` = mão vazia. */

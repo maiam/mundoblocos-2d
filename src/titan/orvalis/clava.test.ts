@@ -17,7 +17,7 @@ const hold = (s: S, item: number): void => { s.inventory.add(item, 1); const i =
 
 describe('clava de madeira (ADR 0148)', () => {
   it('item 177: nome, tipo clava (não espada nem adaga), nível madeira, pilha de 1, dano 5, durabilidade 59, desgaste como a espada', () => {
-    expect(Item.CLAVA_MADEIRA).toBe(177); expect(isItem(177) && !isItem(178)).toBe(true); expect(ITEM_NAMES[177]).toBe('Clava de Madeira');
+    expect(Item.CLAVA_MADEIRA).toBe(177); expect(isItem(177) && isItem(178) && !isItem(179)).toBe(true); expect(ITEM_NAMES[177]).toBe('Clava de Madeira');
     expect(isTool(177)).toBe(true); expect(toolOf(177)).toEqual({ kind: 'club', tier: 'wood' }); expect(isClub(177) && !isSword(177) && !isDagger(177)).toBe(true);
     expect(maxStack(177)).toBe(1); expect(maxDurability(177)).toBe(59); expect(damageOf(177)).toBe(5);
     expect(wearCost(177, { type: 'attack' })).toBe(1); expect(wearCost(177, { type: 'break_block', block: T.STONE })).toBe(2); expect(wearCost(177, { type: 'break_block', block: T.LANTERN })).toBe(0);
