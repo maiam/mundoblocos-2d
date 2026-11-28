@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.214.0 — Arte de 32 px quando houver (27–28/11/2026)
+- **ADR 0143 (regra do dono do produto).** O jogo usa a arte de **32 px quando ela existe** e a de **16 px como alternativa padrão** (dobrada, sem suavizar); substitui o ADR 0106 (mundo a 16 px). Importadas as **123** artes do pacote `Assets32px` do Drive que têm par no jogo (`assets-src/orvalis-voxel/assets32/`): o **atlas de terreno passa a 32 px** (41 tiles do Orvalis em arte nova, inclusive a tora de bétula; os do Titã voltam a 32 nativos), 22 ícones de item em 32 px, tiras de modelos (degrau e mureta de pedra; degrau, cerca, porta e alçapão de madeira) e a **horta** (49 quadros de 32 px, com os caules de abóbora e melancia) em 32 px.
+- 813 testes passam; conferido no navegador na Aldeia da Costa. Sem mudança de gerador, save ou protocolo (UVs são frações). A água segue em 16/8 px.
+
 ## Orvalis v0.213.0 — Aldeia da Costa: a sala 102 vira o mapa feito à mão (27/11/2026)
 - **ADR 0142 (aprovada nos pontos 1–6).** O pacote `REGION_V6 · Aldeia da Costa` do Drive (heightmap 128 × 128, máscara de superfícies e implantação) vira o `CostaGenerator` (`COSTA_GENERATOR_VERSION` 100): relevo, material, muro de Pedra Lisa em cubos, cercas e porteiras de carvalho, árvores só de carvalho, bases só com piso e a chegada no portão da praia; flora marinha, recifes, veios e a fauna espalhada continuam, e a criação dos cercados soma 8 animais. A **sala 102** passa a ser a aldeia (seed 128064, `terrain: 'costa'`): o mapa da sala muda e o arquivo antigo é recusado; **protocolo 6**. A partida individual não muda.
 - 813 testes passam (9 novos em `orvalis/costa.test.ts`, 2 ajustados em `salaOrvalis.test.ts`); conferido no navegador pela sala simulada. **Jogo e servidor sobem juntos** (pacote novo no servidor e `def.terrain`).

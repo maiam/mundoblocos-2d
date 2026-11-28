@@ -1,0 +1,57 @@
+{
+ "tiles": {
+  "abobora-lateral": "orvalis_abobora_lateral",
+  "abobora-topo": "orvalis_abobora_topo",
+  "areia": "orvalis_areia_praia",
+  "bloco-argila": "orvalis_bloco_argila_textura",
+  "bloco-tijolos": "orvalis_bloco_tijolos_textura",
+  "caminho-lateral": "orvalis_caminho_terra_lateral",
+  "caminho-topo": "orvalis_caminho_terra_topo",
+  "folhas-betula": "orvalis_folhas_betula",
+  "folhas-carvalho": "orvalis_folhas_carvalho",
+  "folhas-cerejeira": "orvalis_folhas_cerejeira",
+  "laje-face": {
+   "file": "orvalis_laje_pedra_face",
+   "crop": "baixo"
+  },
+  "laje-topo": "orvalis_laje_pedra_topo",
+  "laje-carvalho-face": {
+   "file": "orvalis_carvalho_laje_face",
+   "crop": "baixo"
+  },
+  "laje-carvalho-topo": "orvalis_carvalho_laje_topo",
+  "laje-cerejeira-face": {
+   "file": "orvalis_cerejeira_laje_face",
+   "crop": "baixo"
+  },
+  "laje-cerejeira-topo": "orvalis_cerejeira_laje_topo",
+  "laje-betula-face": {
+   "file": "orvalis_betula_laje_face",
+   "crop": "baixo"
+  },
+  "laje-betula-topo": "orvalis_betula_laje_topo",
+  "melancia-lateral": "orvalis_melancia_lateral",
+  "melancia-topo": "orvalis_melancia_topo",
+  "mesa-frente": "orvalis_mesa_carpintaria_frente",
+  "mesa-lateral": "orvalis_mesa_carpintaria_lateral",
+  "mesa-topo": "orvalis_mesa_carpintaria_topo",
+  "pedra-lateral": "orvalis_pedra_bruta",
+  "pedra-topo": "orvalis_pedra_bruta",
+  "pedra-lisa": "orvalis_pedra_lisa",
+  "tabua-betula": "orvalis_tabua_betula",
+  "tabua-carvalho": "orvalis_tabua_carvalho",
+  "tabua-cerejeira": "orvalis_tabua_cerejeira",
+  "terra-arada-seca-lateral": "orvalis_terra_arada_seca_lateral",
+  "terra-arada-seca-topo": "orvalis_terra_arada_seca_topo",
+  "terra-arada-umida-lateral": "orvalis_terra_arada_umida_lateral",
+  "terra-arada-umida-topo": "orvalis_terra_arada_umida_topo",
+  "terra-infertil": "orvalis_terra_infertil",
+  "tijolo-pedra": "orvalis_tijolo_pedra",
+  "tora-betula-lateral": "orvalis_betula_tora_lateral",
+  "tora-betula-topo": "orvalis_betula_tora_topo",
+  "tora-carvalho-lateral": "orvalis_tora_carvalho_lateral",
+  "tora-carvalho-topo": "orvalis_tora_carvalho_topo",
+  "tora-cerejeira-lateral": "orvalis_tora_cerejeira_lateral",
+  "tora-cerejeira-topo": "orvalis_tora_cerejeira_topo"
+ }
+}

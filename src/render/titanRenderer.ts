@@ -466,7 +466,7 @@ export class TitanRenderer {
       this.cropGeos.push(geo);
       this.cropMeshes.push(mesh);
     }
-    // horta do Orvalis (ADR 0113): atlas de 12 quadros de 16 px; faixas em '#' (como as plantações do Minecraft), sem repetição
+    // horta do Orvalis (ADR 0113): atlas de 49 quadros de 32 px (ADR 0143); faixas em '#' (como as plantações do Minecraft), sem repetição
     const gtex = new THREE.Texture(extra.horta);
     gtex.colorSpace = THREE.SRGBColorSpace;
     gtex.magFilter = THREE.NearestFilter;

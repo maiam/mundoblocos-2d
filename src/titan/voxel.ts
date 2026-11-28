@@ -416,7 +416,7 @@ export const isModelBlock = (id: number): boolean => id === T.LANTERN || modelOf
 
 export type Face = 'top' | 'side' | 'bottom';
 
-/** Os tiles do atlas de terreno (16 px por face, ADR 0106), na ordem do `tiles.json` (a mesma que o script do atlas lê). */
+/** Os tiles do atlas de terreno (32 px por face, ADR 0143; 16 px no ADR 0106), na ordem do `tiles.json` (a mesma que o script do atlas lê). */
 const TILE_NAMES: readonly string[] = tilesCfg.tiles;
 const TILE_INDEX = new Map(TILE_NAMES.map((n, i) => [n, i]));
 /** Índice de um tile pelo nome (`'03-rocha-escura/topo'`); falha cedo se o nome não existe. */
