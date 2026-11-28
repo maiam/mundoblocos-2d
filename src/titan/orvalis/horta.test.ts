@@ -46,10 +46,12 @@ describe('horta do Orvalis (ADR 0113)', () => {
     for (const [i, [sp, item]] of SEEDS.entries()) {
       const f = field(s, T.FARMLAND_WET, i * 3); hold(s, item);
       expect(placeFromSlot(s, f.hit, 0).ok).toBe(true);
-      const c = s.crops.get(cropKey(f.x, Y + 1, f.z))!; expect(c).toMatchObject({ age: 0, species: sp });
+      let c = s.crops.get(cropKey(f.x, Y + 1, f.z))!; expect(c).toMatchObject({ age: 0, species: sp });
       expect(standingCrops(s).find((q) => q.x === f.x)).toMatchObject({ frame: gardenFrame(sp as never, 0) });
       const id = cropId(f.x, Y + 1, f.z);
-      expect(collectItem(s, id)).toMatchObject({ ok: false, msg: 'Ainda está crescendo' });
+      const antes = s.inventory.total(item); // planta imatura (ADR 0144): colher a arranca e devolve 1 item da própria semente (a cenoura e a batata, o próprio produto)
+      expect(collectItem(s, id)).toMatchObject({ ok: true }); expect(s.crops.has(cropKey(f.x, Y + 1, f.z))).toBe(false); expect(s.inventory.total(item)).toBe(antes + 1);
+      hold(s, item); expect(placeFromSlot(s, f.hit, 0).ok).toBe(true); c = s.crops.get(cropKey(f.x, Y + 1, f.z))!; // replanta para seguir o ciclo
       const max = sp === 'tomate' ? 2 : 7;
       for (let k = 0; k < max + 1; k++) tickCrops(s, 1000, () => 0, near(f.x, f.z));
       expect(c.age).toBe(max); expect(standingCrops(s).find((q) => q.x === f.x)!.frame).toBe(gardenFrame(sp as never, max));

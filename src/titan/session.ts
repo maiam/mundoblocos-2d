@@ -266,6 +266,7 @@ export function fresh(gen: TerrainGen): TitanSession {
   const collected = new Set<string>();
   const regrow = new Map<string, number>();
   const crops = new Map<string, Crop>();
+  for (const c of gen.startCrops ?? []) crops.set(cropKey(c.x, c.y, c.z), { x: c.x, y: c.y, z: c.z, age: c.age, species: c.species }); // a horta inicial do mapa feito à mão (ADR 0144)
   const grants: TitanSession['grants'] = {};
   const s = { seed: gen.seed, volume, body: newBody(a.x, a.y, a.z), yaw: a.yaw, pitch: -0.12, selected: 0, resumed: false, relocated: false, time: START_FRAC, days: 0, weather: newWeather(Math.random), inventory: Inventory.starting(), collected, collectedRev: 0, regrow, crops, furnaces: new Map<string, FurnaceState>(), chests: new Map<string, ChestState>(), spawn: null, respawn: new Map<string, number>(), creatures: creaturesFor(gen), fauna: faunaFor(gen), savedStateRev: -1, drops: new Map(), dropFx: new Map(), fishing: null, coralWatch: new Map(), boats: [], boatRide: null, dropsRev: 0, vitals: newVitals(), known: new Set<string>(), grants, metaRev: 0, items: makeItems({ volume, collected, grants, regrow, crops }) };
   return s;

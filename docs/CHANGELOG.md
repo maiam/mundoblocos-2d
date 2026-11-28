@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.215.0 — Colher a planta imatura e a horta da aldeia (28/11/2026)
+- **ADR 0144 (aprovada).** Conferido na Wiki: cenoura e batata já se plantavam direto do alimento (ADR 0113). **Colher uma planta imatura da horta passa a arrancá-la e devolver 1 item da própria semente** (cenoura, batata, tomate, 1 semente de trigo ou beterraba); a madura segue rebrotando. A **Aldeia da Costa** nasce com cenoura (talhão 1) e batata (talhão 2) plantadas em xadrez, com idades sorteadas (`TerrainGen.startCrops`). A grama segue soltando cenoura e batata: tirá-las deixaria a partida individual sem fonte.
+- 817 testes passam (3 novos em `orvalis/colherImatura.test.ts`, 1 em `costa.test.ts`, 2 ajustados). **A sala 102 precisa do pacote novo no servidor.**
+
 ## Orvalis v0.214.0 — Arte de 32 px quando houver (27–28/11/2026)
 - **ADR 0143 (regra do dono do produto).** O jogo usa a arte de **32 px quando ela existe** e a de **16 px como alternativa padrão** (dobrada, sem suavizar); substitui o ADR 0106 (mundo a 16 px). Importadas as **123** artes do pacote `Assets32px` do Drive que têm par no jogo (`assets-src/orvalis-voxel/assets32/`): o **atlas de terreno passa a 32 px** (41 tiles do Orvalis em arte nova, inclusive a tora de bétula; os do Titã voltam a 32 nativos), 22 ícones de item em 32 px, tiras de modelos (degrau e mureta de pedra; degrau, cerca, porta e alçapão de madeira) e a **horta** (49 quadros de 32 px, com os caules de abóbora e melancia) em 32 px.
 - 813 testes passam; conferido no navegador na Aldeia da Costa. Sem mudança de gerador, save ou protocolo (UVs são frações). A água segue em 16/8 px.
