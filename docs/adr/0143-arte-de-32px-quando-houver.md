@@ -1,0 +1,19 @@
+# ADR 0143 — Arte de 32 px quando houver; 16 px como alternativa padrão (28/11/2026)
+
+**Estado:** aceita. **Regra do dono do produto** ("o projeto permite artes em 32 px quando houver e mantém 16 px como alternativa padrão"); **substitui a regra visual de resolução do ADR 0106** (mundo voxel a 16 px por face) e **estende o ADR 0097** (item = sprite extrudado de 16 × 16: com arte de 32 px, a grade da extrusão é a de 32, com a mesma espessura de 1/16). Não é regra de mundo (nada de mecânica muda): o ciclo da ADR 0116 não se aplica.
+
+## Regra
+1. **Cada arte usa a maior resolução disponível, em 32 px; sem arte de 32 px, vale a de 16 px, ampliada por vizinho mais próximo (dobra de pixel, sem suavizar).** O que o jogo renderiza para terreno, ícones, tiras de modelos e horta passa a ser sempre de 32 px por tile/célula; a fonte de 16 px continua guardada (`catalogo/`, `cultivos/`, `texturas32/`) como alternativa padrão.
+2. **O pacote do Drive** (Banco de Assets › itens-de-minecraft › `Assets32px`, 375 artes de 32 × 32) é a fonte das de 32 px. Importadas as **123** que têm correspondente no jogo, em `assets-src/orvalis-voxel/assets32/` (nome do Drive; `LEIAME.md` lista o uso e o que ficou de fora). Cada uma foi conferida contra o par de 16 px (reduzida a 16 px, coincide com a arte original) para garantir que o nome casa com a imagem.
+3. **Texturas "na direção desenhada" e o resto do ADR 0013 seguem valendo** (nada de girar, espelhar nem ler canvas).
+
+## O que mudou
+- **Atlas de terreno:** `titan-atlas-32px.webp` (320 × 560, tile 32 + 4 de borda: **a mesma proporção** do de 16 e do de 8, então os UVs do mesher não mudam) passa a ser o padrão; o de 8 px da vista isométrica é derivado; o de 16 px segue gerado como alternativa, sem uso. Os tiles do Titã, de fonte de 32 px (ADR 0079), voltam a 32 px nativos; os do Orvalis com arte no pacote (41 tiles, via manifesto `assets32/tiles.json`: tábuas, toras de carvalho, cerejeira e **bétula** — a provisória de 256 px saiu —, folhas, pedra, tijolo, laje, mesa, solos, argila, abóbora, melancia, praia) usam a de 32; o resto dobra os 16.
+- **Itens:** 22 ícones em 32 px (haste, bola de argila, tijolo, trigo, cenoura, batata, tomate, três botes, cerca, portão, porta e alçapão das três madeiras), `assets-src/titan/arte32/itens.json`; os 83 restantes seguem em 16. Ícones isométricos de bloco saem dos tiles de 32.
+- **Tiras e modelos:** degrau e mureta de pedra (96 × 32 e 64 × 32), degrau, cerca, porta e alçapão de madeira (288 × 32, 96 × 32, 384 × 32) e a **horta** (`orvalis-horta-32px.webp`, 49 quadros, inclusive os caules de abóbora e melancia). Os UVs são frações: os modelos não mudam.
+- **Scripts:** cada um prefere a arte de 32 px e cai para a de 16 (`make-titan-atlas32.py`, `make-orvalis-voxel-arte.py`, `make-titan-arte32.py`, `make-orvalis-degrau.py`, `make-orvalis-mureta.py`, `make-orvalis-madeira-familia.py`, `make-orvalis-porta-madeira.py`, `make-orvalis-horta.py`).
+
+## Consequências
+- Memória e peso sobem pouco (atlas de terreno 80 KB; horta e tiras, alguns KB); orçamento de download inalterado na prática.
+- Pendentes: a **água** do Orvalis e do Titã segue a 16/8 px (o pacote não traz água animada); os 252 arquivos do Drive sem uso no jogo (iluminação, velas, fogueiras, lã, vidros, barris, estantes, pedregulho, musgo…) entram com cada bloco ou item, na entrega dele; os 83 itens em 16 px e os tiles sem arte de 32 px (grama e terra de Materiais V2 saem direto do original; carvão, corais, fornalha, alga seca ficam em 16 dobrado) esperam arte nova.
+- Regra para arte nova: pedir/usar a de 32 px quando existir; registrar o par no manifesto (`tiles.json`) ou na lista de itens (`arte32/itens.json`), nunca trocar o arquivo de 16 px.

@@ -1,34 +1,39 @@
-"""Degrau de Pedra do Orvalis em voxel (ADR 0109): textura de 3 tiles e modelo 3D de duas caixas, a partir da arte do pacote Texturas16px.
+"""Degrau de Pedra do Orvalis em voxel (ADR 0109): textura de 3 tiles e modelo 3D de duas caixas, a partir da arte do pacote Texturas16px (e, desde o ADR 0143, da arte de 32 px do pacote Assets32px quando houver: a tira sai a 32 px por tile).
 
 Entradas : assets-src/orvalis-voxel/texturas32/degrau-pedra/{topo,frente,perfil}.png   quadrados (16 px ou maiores; reduzidos a 16 por face). Fonte editável: o script não os altera.
            topo   = o piso dos dois patamares (16 × 16, opaco)
            frente = o espelho: só a metade de baixo do PNG tem pedra (16 × 8 úteis)
            perfil = a lateral em L: patamar de baixo inteiro (metade de baixo) e o de cima só na metade de trás (quarto superior direito)
-Saídas   : src/assets/titan-degrau-pedra.webp   48 × 16 (topo | frente | perfil)
+Saídas   : src/assets/titan-degrau-pedra.webp   96 × 32 (topo | frente | perfil; tiles de 32 px: a arte de 16 px é ampliada por vizinho mais próximo)
            src/assets/titan-degrau-pedra.json    modelo no formato dos instanciados (`pos`, `nrm`, `uv`, `idx`, `size`; frente em +Z, giro 0; pivô no centro da base da célula)
 As UVs usam a arte **como desenhada**: o perfil cobre a lateral +X com u = 1 − z, v = 1 − y (o patamar alto atrás); na lateral −X vale u = z (a única inversão inevitável do desenho, ADR 0109).
 As caixas são as de `titan/voxel.ts` (`STAIR_BASE`). Uso: python3 scripts/make-orvalis-degrau.py   (precisa do Pillow: `pip3 install pillow`)
 """
 import json
+import os
 
 from PIL import Image
 
 SRC = 'assets-src/orvalis-voxel/texturas32/degrau-pedra/'
+A32 = 'assets-src/orvalis-voxel/assets32/orvalis_degrau_pedra_%s_32x32.png'  # a arte de 32 px do pacote (ADR 0143), quando existe
+T = 32  # px de cada tile da tira
 OUT_TEX, OUT_MODEL = 'src/assets/titan-degrau-pedra.webp', 'src/assets/titan-degrau-pedra.json'
 STAIR = [(0, 0, 0, 1, 0.5, 1), (0, 0.5, 0, 1, 1, 0.5)]  # as mesmas caixas de STAIR_BASE
-EPS = 0.5 / 48  # recuo de meio texel nas bordas dos tiles (sem sangrar para o vizinho da tira)
+EPS = 0.5 / (3 * T)  # recuo de meio texel nas bordas dos tiles (sem sangrar para o vizinho da tira)
 
 
 def tile(name: str) -> Image.Image:
-    im = Image.open(SRC + name + '.png').convert('RGBA')
+    im = Image.open(A32 % name if os.path.exists(A32 % name) else SRC + name + '.png').convert('RGBA')
     assert im.width == im.height, (name, im.size)
-    return im if im.width == 16 else im.resize((16, 16), Image.BOX if im.width % 16 == 0 else Image.LANCZOS)
+    if im.width == T:
+        return im
+    return im.resize((T, T), Image.NEAREST if im.width < T else Image.BOX if im.width % T == 0 else Image.LANCZOS)
 
 
 def strip() -> Image.Image:
-    out = Image.new('RGBA', (48, 16), (0, 0, 0, 0))
+    out = Image.new('RGBA', (3 * T, T), (0, 0, 0, 0))
     for i, n in enumerate(('topo', 'frente', 'perfil')):
-        out.paste(tile(n), (i * 16, 0))
+        out.paste(tile(n), (i * T, 0))
     out.save(OUT_TEX, lossless=True, quality=100, method=6)
     return out
 

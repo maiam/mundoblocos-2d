@@ -1,8 +1,8 @@
-import atlas from '../../assets/titan-atlas-16px.webp';
+import atlas from '../../assets/titan-atlas-32px.webp';
 import atlas8 from '../../assets/titan-atlas-8px.webp';
 
 /**
- * Arte do Titã (ADR 0010/0039): o atlas de terreno dos mundos voxel em **16 px por face** (ADR 0106; 160 × 160 px, 8 colunas com 2 px de borda duplicada), regra do Minecraft; a arte-fonte pode ser maior (`scripts/make-titan-atlas32.py`).
+ * Arte do Titã (ADR 0010/0039): o atlas de terreno dos mundos voxel em **32 px por face** (ADR 0143: arte de 32 px quando houver, a de 16 px como alternativa padrão; 320 × 560 px, 8 colunas com 4 px de borda duplicada; era 16 px, ADR 0106); a arte-fonte pode ser maior (`scripts/make-titan-atlas32.py`).
  * A vista isométrica usa a variante de **8 px** (`titanAtlas8Url`, 80 × 80, mesma proporção de borda: os mesmos UVs).
  * Fica em WebP **sem perdas** (pixel art; `optimize-assets.py` só converte PNG, então este arquivo não passa pela compressão com perdas).
  * Só o Titã importa esta imagem; o mapa de tiles está em `titan/voxel.ts` (`tileFor`) e `titan/mesher.ts` (`tileUV`).
@@ -56,7 +56,7 @@ import cercaMadeiraTex from '../../assets/titan-cerca-madeira.webp';
 import portaMadeiraModels from '../../assets/titan-porta-madeira.json';
 import portaMadeiraTex from '../../assets/titan-porta-madeira.webp';
 import muretaPedraTex from '../../assets/titan-mureta-pedra.webp';
-import hortaTex from '../../assets/orvalis-horta-16px.webp';
+import hortaTex from '../../assets/orvalis-horta-32px.webp';
 import fazendaPorco from '../../assets/orvalis-fazenda-porco.webp';
 import fazendaVaca from '../../assets/orvalis-fazenda-vaca.webp';
 import fazendaOvelha from '../../assets/orvalis-fazenda-ovelha.webp';
@@ -142,7 +142,7 @@ export const titanPortaMadeiraUrl: string = portaMadeiraTex; // tira 192 × 16: 
 export const titanMuretaPedraUrl: string = muretaPedraTex; // Mureta de Pedra (ADR 0110): tira topo | face; o modelo sai de `render/muretaModel.ts`
 export const orvalisFazendaUrls = { porco: fazendaPorco, vaca: fazendaVaca, ovelha: fazendaOvelha, galinha: fazendaGalinha } as const; // fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal
 export const orvalisFazendaModelos = fazendaModelos; // caixas, pivôs e UV de cada parte (pacote Mobs64px)
-export const orvalisHortaUrl: string = hortaTex; // horta do Orvalis (ADR 0113): 12 quadros de 16 px
+export const orvalisHortaUrl: string = hortaTex; // horta do Orvalis (ADR 0113): 49 quadros de 32 px (ADR 0143)
 export const titanCadeiraModel = cadeiraModel as ModelData;
 export const titanJuncoTileUrl: string = juncoTile;
 /** Folha da Porta de Junco (ADR 0102): 64 × 128 px, de frente, dobradiças à esquerda. */

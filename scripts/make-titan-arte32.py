@@ -17,6 +17,7 @@ from PIL import Image
 
 BASE = 'src/assets/titan-hotbar-sprites-16px.webp'
 SRC = 'assets-src/titan/arte32/'
+SRC32 = 'assets-src/titan/arte32/'  # itens com arte de 32 px (ADR 0143): `itens.json` id → arquivo em `assets-src/orvalis-voxel/assets32/`
 SRC16 = 'assets-src/titan/arte16/'  # armas, ferramentas e itens de 16 × 16 px (ADR 0097): `itens.json` diz qual item usa qual arquivo
 SRC_ORV = 'assets-src/orvalis-voxel/icones32/'  # blocos do Orvalis em voxel (ADR 0105; `make-orvalis-voxel-arte.py`): itens 42–51
 ORV_ICONS = {42: 'terra_com_grama', 43: 'terra', 44: 'pedra', 45: 'areia_da_praia', 46: 'tora_de_carvalho', 47: 'folhas_de_carvalho', 48: 'tora_de_cerejeira', 49: 'folhas_de_cerejeira', 50: 'tora_de_betula', 51: 'folhas_de_betula', 52: 'tabuas_de_carvalho', 53: 'tabuas_de_cerejeira', 54: 'tabuas_de_betula', 56: 'mesa_de_carpintaria', 57: 'pedra_lisa', 58: 'tijolo_de_pedra', 59: 'laje_de_pedra', 60: 'degrau_de_pedra', 61: 'mureta_de_pedra', 62: 'terra_arada_seca', 63: 'terra_arada_umida', 64: 'caminho_de_terra', 65: 'terra_infertil', 66: 'bloco_de_argila', 67: 'bloco_de_tijolos', 83: 'fornalha', 88: 'bloco_de_carvao', 156: 'laje_de_carvalho', 157: 'laje_de_cerejeira', 158: 'laje_de_betula', 159: 'degrau_de_carvalho', 160: 'degrau_de_cerejeira', 161: 'degrau_de_betula'}
@@ -67,6 +68,14 @@ def main() -> None:
         assert item not in {str(k) for k in NEW}, f'item {item} está nas duas tabelas'
         atlas.paste(Image.new('RGBA', (32, 32), (0, 0, 0, 0)), (x, y))
         atlas.paste(t.resize((32, 32), Image.NEAREST), (x, y))
+    for item, name in json.load(open(SRC32 + 'itens.json')).items():  # arte de 32 px do pacote Assets32px (ADR 0143): vale no lugar da de 16; a extrusão e a máscara leem a grade de 32 (`make-titan-item-masks.py`)
+        t = Image.open('assets-src/orvalis-voxel/assets32/' + name).convert('RGBA')
+        assert t.size == (32, 32), (name, t.size)
+        assert str(item) not in json.load(open(SRC16 + 'itens.json')), f'item {item} está nas duas listas (16 e 32)'
+        idx = int(item) - 1
+        x, y = (idx % 4) * 32, (idx // 4) * 32
+        atlas.paste(Image.new('RGBA', (32, 32), (0, 0, 0, 0)), (x, y))
+        atlas.paste(t, (x, y))
     atlas.save(OUT_ITEMS, lossless=True, quality=100, method=6)
     reed = Image.open(SRC + 'titan-junco-variantes-32px.png').convert('RGBA')
     assert reed.size == (128, 32), reed.size

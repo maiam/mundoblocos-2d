@@ -87,9 +87,9 @@ export const soilKindFor = (species: Species, block: number): CropKind | null =>
 /** Aparência da Noz plantada: o broto é pequeno, depois a planta inteira, e os frutos só na adulta (o modelo é o da Noz de Duna silvestre). */
 export const nutLook = (age: number): { scale: number; ripe: boolean } => ({ scale: age <= 0 ? 0.4 : 1, ripe: age >= 2 });
 /** Coluna do atlas de cultivo (`titan-cultivo-32px.webp`): 0 muda, 1 crescendo, 2 adulto de duas mudas, 3 ressecado. */
-/** Coluna do atlas da horta (`orvalis-horta-16px.webp`): espécie × 3 fases, depois das 4 do atlas de cultivo. */
+/** Coluna do atlas da horta (`orvalis-horta-32px.webp`): espécie × 3 fases, depois das 4 do atlas de cultivo. */
 /**
- * Atlas da horta (`orvalis-horta-16px.webp`, 49 colunas de 16 px, ADR 0129): trigo, cenoura e batata × 8 idades, tomate × 3, beterraba × 4, caule de abóbora × 8, caule de melancia × 8 e, no fim, o caule conectado
+ * Atlas da horta (`orvalis-horta-32px.webp`, 49 colunas de 16 px, ADR 0129): trigo, cenoura e batata × 8 idades, tomate × 3, beterraba × 4, caule de abóbora × 8, caule de melancia × 8 e, no fim, o caule conectado
  * de cada um (abóbora, melancia). `GARDEN_LAYOUT` dá a primeira coluna e o número de idades de cada espécie.
  */
 export const GARDEN_LAYOUT: Readonly<Record<string, { start: number; count: number }>> = { trigo: { start: 0, count: 8 }, cenoura: { start: 8, count: 8 }, batata: { start: 16, count: 8 }, tomate: { start: 24, count: 3 }, beterraba: { start: 27, count: 4 }, abobora: { start: 31, count: 8 }, melancia: { start: 39, count: 8 } };

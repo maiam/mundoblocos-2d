@@ -7,6 +7,7 @@ Saídas   : assets-src/orvalis-voxel/texturas32/orvalis/<tile>.png   32 × 32 (o
 **Os PNGs de `texturas32/` e `agua/` são a fonte editável (32 px ou maiores, quadrados — 64, 512, 2048…: a redução para 32 px é feita aqui e no atlas, sem alterar o arquivo):** o script só os cria quando faltam (ou com `--force`, que volta ao que sai dos Materiais V2) e **nunca sobrescreve** uma textura que você editou; ícones e água do jogo são sempre refeitos a partir deles.
 As folhas são PROVISÓRIAS (sorteio determinístico de 3 verdes/rosas): ainda não há arte de folhas nos Materiais V2. Repetível. Uso: python3 scripts/make-orvalis-voxel-arte.py [--force]  (precisa do Pillow: `pip3 install pillow`)
 """
+import json
 import os
 import random
 import sys
@@ -18,6 +19,16 @@ TEX = 'assets-src/orvalis-voxel/texturas32/orvalis/'
 ICO = 'assets-src/orvalis-voxel/icones32/'
 MURETA = 'assets-src/orvalis-voxel/texturas32/mureta-pedra/'  # topo e face da Mureta de Pedra (ADR 0110)
 DEGRAU = 'assets-src/orvalis-voxel/texturas32/degrau-pedra/'  # topo, frente, perfil do Degrau de Pedra (ADR 0109)
+A32 = 'assets-src/orvalis-voxel/assets32/'  # arte de 32 px do pacote Assets32px do Drive (ADR 0143): vale no lugar da de 16 px
+M32 = json.load(open(A32 + 'tiles.json'))['tiles']
+
+
+def a32(stem: str, fallback: str) -> Image.Image:
+    """A arte de 32 px `stem` do pacote; sem ela, a de 16 px em `fallback` (a alternativa padrão)."""
+    f = f'{A32}{stem}_32x32.png'
+    return Image.open(f if os.path.exists(f) else fallback).convert('RGBA')
+
+
 WATER_SRC = 'assets-src/orvalis-voxel/agua/agua_32px.png'  # 1º quadro do topo da água (32 × 32, seamless); editável
 WATER_OUT = {16: 'src/assets/orvalis-agua-16px.webp', 8: 'src/assets/orvalis-agua-8px.webp'}  # 16 px (padrão) e 8 px (isométrica), ADR 0106
 
@@ -177,7 +188,10 @@ def main() -> None:
         if force or not os.path.exists(f'{TEX}{name}.png'):  # nunca sobrescreve a textura editada
             im.save(f'{TEX}{name}.png')
             made += 1
-    disk = {f[:-4]: to_tile(Image.open(TEX + f).convert('RGBA'), f) for f in sorted(os.listdir(TEX)) if f.endswith('.png')}  # daqui para a frente vale o que está em disco (editado, do catálogo ou gerado): todo PNG da pasta
+    disk = {f[:-4]: to_tile(Image.open(TEX + f).convert('RGBA'), f) for f in sorted(os.listdir(TEX)) if f.endswith('.png')}
+    for tile, e in M32.items():  # a arte de 32 px do pacote passa na frente da de 16 (a lateral da laje: só a metade de baixo, 32 × 16)
+        im = Image.open(f"{A32}{e['file'] if isinstance(e, dict) else e}_32x32.png").convert('RGBA')
+        disk[tile] = im.crop((0, 16, 32, 32)) if isinstance(e, dict) and e.get('crop') == 'baixo' else im  # daqui para a frente vale o que está em disco (editado, do catálogo ou gerado): todo PNG da pasta
     icons = {  # nome do ícone -> (topo, lateral); a ordem dos itens 42–51 está em make-titan-arte32.py
         'terra_com_grama': ('grama-topo', 'grama-lateral'), 'terra': ('terra', 'terra'), 'pedra': ('pedra-topo', 'pedra-lateral'), 'areia_da_praia': ('areia', 'areia'),
         'tora_de_carvalho': ('tora-carvalho-topo', 'tora-carvalho-lateral'), 'folhas_de_carvalho': ('folhas-carvalho', 'folhas-carvalho'),
@@ -194,12 +208,12 @@ def main() -> None:
     }
     for name, spec in icons.items():
         cube_icon(disk[spec[0]], disk[spec[1]], disk[spec[2]] if len(spec) > 2 else None, half=name.startswith('laje_de_')).save(f'{ICO}{name}.png')
-    dg = {nome: Image.open(f'{DEGRAU}{nome}.png').convert('RGBA') for nome in ('topo', 'frente', 'perfil')}
+    dg = {nome: a32(f'orvalis_degrau_pedra_{nome}', f'{DEGRAU}{nome}.png') for nome in ('topo', 'frente', 'perfil')}
     stair_icon(dg['topo'], dg['frente'], dg['perfil']).save(f'{ICO}degrau_de_pedra.png')  # item 60 (ADR 0109)
     for w in ('carvalho', 'cerejeira', 'betula'):  # degraus de madeira (itens 159–161, ADR 0139): topo = a tábua, frente = a lateral da laje (metade de baixo), perfil do pacote
-        pk = lambda n: Image.open(f'assets-src/orvalis-voxel/catalogo/P1-02-vedacao-de-madeira/orvalis_{w}_{n}_16x16.png').convert('RGBA')
+        pk = lambda n: a32(f'orvalis_{w}_{n}', f'assets-src/orvalis-voxel/catalogo/P1-02-vedacao-de-madeira/orvalis_{w}_{n}_16x16.png')
         stair_icon(pk('laje_topo'), pk('laje_face'), pk('degrau_perfil')).save(f'{ICO}degrau_de_{w}.png')
-    mu = {nome: Image.open(f'{MURETA}{nome}.png').convert('RGBA') for nome in ('topo', 'face')}
+    mu = {nome: a32(f'orvalis_mureta_pedra_{nome}', f'{MURETA}{nome}.png') for nome in ('topo', 'face')}
     wall_icon(mu['topo'], mu['face']).save(f'{ICO}mureta_de_pedra.png')  # item 61 (ADR 0110)
     if force or not os.path.exists(WATER_SRC):
         small(load('agua/top')).save(WATER_SRC)

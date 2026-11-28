@@ -242,3 +242,4 @@
 | **Famílias das madeiras, W2 (27/11/2026):** cerca com conexão no id e portão com giro/abertura no id (blocos 208–279, itens 162–167), colisão a 1,5 m, abre para longe de quem usa | ADR 0140 |
 | **Famílias das madeiras, W3 (27/11/2026):** porta de madeira no sistema da de junco (3 famílias de 32 ids) e alçapão (376–423), itens 168–173 | ADR 0141 |
 | **Aldeia da Costa (27/11/2026):** a sala 102 vira o mapa feito à mão (gerador 100, heightmap do Drive); a partida individual não muda; protocolo 6 | ADR 0142 |
+| **Arte de 32 px quando houver (28/11/2026):** 32 px quando existe, 16 px como alternativa padrão; atlas de terreno a 32 px; pacote `Assets32px` do Drive importado | ADR 0143 |
