@@ -122,6 +122,7 @@ export const torchSideSupport = (id: number): boolean => isFull(id) && !isLeaves
 function releaseTorches(s: TitanSession, x: number, y: number, z: number): void {
   const drop = (tx: number, ty: number, tz: number): void => { if (s.volume.remove(tx, ty, tz)) spillBlock(s, Item.TOCHA, 1, tx, ty, tz); };
   if (s.volume.get(x, y + 1, z) === T.TORCH) drop(x, y + 1, z);
+  if (s.volume.get(x, y + 1, z) === T.CAMPFIRE) { if (s.volume.remove(x, y + 1, z)) spillBlock(s, Item.FOGUEIRA, 1, x, y + 1, z); } // a Fogueira também cai sem o apoio (ADR 0146)
   for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const id = s.volume.get(x + dx, y, z + dz);
     if (isWallTorch(id)) { const [fx, fz] = ladderFacing(wallTorchTurn(id)); if (fx === dx && fz === dz) drop(x + dx, y, z + dz); } // a chama aponta para longe do apoio
@@ -774,6 +775,9 @@ function placeFromSlotCore(s: TitanSession, hit: Hit, slot: number): ActionResul
     if (hit.ny > 0) { if (!torchTopSupport(base)) return { ok: false, msg: 'A tocha precisa de um apoio firme' }; }
     else if (!torchSideSupport(base)) return { ok: false, msg: 'A tocha precisa de um bloco inteiro para se prender' };
     else block = wallTorchId(ladderTurnOf(hit.nx, hit.nz));
+  } else if (block === T.CAMPFIRE) { // Fogueira (ADR 0146): só em pé sobre o topo de um cubo firme
+    const base = s.volume.get(hit.x, hit.y, hit.z);
+    if (hit.item || hit.ny <= 0 || !torchTopSupport(base)) return { ok: false, msg: 'A fogueira precisa de um chão firme' };
   } else if (block === T.WORKBENCH) block = workbenchId(workbenchTurnFacing(s.yaw)); // a frente da mesa fica voltada para o jogador (ADR 0052)
   else if (block === T.MARCO) block = marcoId(marcoTurnFacing(s.yaw)); // idem o Marco de Margem (ADR 0058)
   else if (block === T.PAINEL) block = panelIdFacing(s.yaw); // o painel corre de través ao olhar

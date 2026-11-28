@@ -29,7 +29,7 @@ import { wallModelData } from './muretaModel';
 import { doorAngle, doorMoving, doorPivot, DOOR_CLOSED_CENTER, stepDoor } from '../titan/doorPose';
 import { lidIdle, stepLid } from '../titan/lid';
 import { moonTexture } from './titanMoon';
-import { tochaModels } from './tochaModel';
+import { fogueiraModel, tochaModels } from './tochaModel';
 import { RainLayer } from './titanRain';
 
 /**
@@ -386,7 +386,7 @@ export class TitanRenderer {
     const floraMat = new THREE.MeshBasicMaterial({ map: this.hotbarTex, vertexColors: true, fog: true, alphaTest: 0.5, side: THREE.DoubleSide });
     patchDayLight(floraMat, this.ambient, { instGlow: true, instSky: true });
     const flora = (Object.keys(FLORA_CELLS) as ModelKind[]).map((k) => [k, floraModel(k, ITEM_ROWS), floraMat] as [ModelKind, ModelData, THREE.Material]);
-    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...WOOD_STAIR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanDegrauMadeiraModels[(['carvalho', 'cerejeira', 'betula'] as const)[i]], wdmat]), ...FENCE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, fenceModelData(i >> 4, i & 15), cemat]), ...GATE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, gateModelData(i >> 1, (i & 1) === 1), cemat]), ...WOOD_DOOR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanPortaMadeiraModels.portas[(['carvalho', 'cerejeira', 'betula'] as const)[i]], pwmat]), ...TRAPDOOR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanPortaMadeiraModels.alcapoes[(['carvalho', 'cerejeira', 'betula'] as const)[(i / 3) | 0]][(['baixo', 'cima', 'aberto'] as const)[i % 3]], pwmat]), ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
+    const batches: Array<[ModelKind, ModelData, THREE.Material]> = [...flora, ['tocha', tocha.standing, tmat], ['tochaParede', tocha.wall, tmat], ['fogueira', fogueiraModel(ITEM_ROWS), tmat], ['porta', doorModelData(), pmat], ['workbench', titanWorkbenchModel, wmat], ['marco', titanMarcoModel, mmat], ['painel', titanPainelModel, mmat], ['escada', titanEscadaModel, emat], ['bau', titanBauModel, bmat], ['bauTampa', titanBauTampaModel, bmat], ['cama', titanCamaModel, camat], ['braseiro', titanBraseiroModel, brmat], ['braseiroAceso', titanBraseiroAcesoModel, brmat], ['degrau', titanDegrauModel, jmat], ['degrauPedra', titanDegrauPedraModel, dmat], ...WOOD_STAIR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanDegrauMadeiraModels[(['carvalho', 'cerejeira', 'betula'] as const)[i]], wdmat]), ...FENCE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, fenceModelData(i >> 4, i & 15), cemat]), ...GATE_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, gateModelData(i >> 1, (i & 1) === 1), cemat]), ...WOOD_DOOR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanPortaMadeiraModels.portas[(['carvalho', 'cerejeira', 'betula'] as const)[i]], pwmat]), ...TRAPDOOR_KINDS.map((k, i): [ModelKind, ModelData, THREE.Material] => [k, titanPortaMadeiraModels.alcapoes[(['carvalho', 'cerejeira', 'betula'] as const)[(i / 3) | 0]][(['baixo', 'cima', 'aberto'] as const)[i % 3]], pwmat]), ...MURETA_KINDS.map((k, m): [ModelKind, ModelData, THREE.Material] => [k, wallModelData(m), mumat]), ['cadeira', titanCadeiraModel, jmat]];
     for (const [kind, model, material] of batches) {
       const mesh = new THREE.InstancedMesh(modelGeometry(model), material, 8);
       mesh.count = 0;
@@ -523,7 +523,7 @@ export class TitanRenderer {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
     const mat = new THREE.Matrix4();
-    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...WOOD_STAIR_KINDS, ...FENCE_KINDS, ...GATE_KINDS, ...WOOD_DOOR_KINDS, ...TRAPDOOR_KINDS, ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
+    for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...WOOD_STAIR_KINDS, ...FENCE_KINDS, ...GATE_KINDS, ...WOOD_DOOR_KINDS, ...TRAPDOOR_KINDS, ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', 'fogueira', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
       const cells = this.volume.modelCells(kind);
       for (const target of kind === 'bau' ? (['bau', 'bauTampa'] as const) : [kind]) { // a tampa do baú é outra malha nas mesmas células (ADR 0093)
         let mesh = this.modelMeshes[target];
@@ -549,7 +549,7 @@ export class TitanRenderer {
           let lv = 0, sk = this.volume.skyLight(x, y, z);
           for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz)); sk = Math.max(sk, this.volume.skyLight(x + dx, y + dy, z + dz)); }
           skyI[i] = sk / 15; // a instância vive no céu da própria célula ou da vizinhança (a mesa, opaca, enxerga o ar em volta)
-          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : kind === 'tocha' || kind === 'tochaParede' ? TORCH_GLOW : 0); // o braseiro aceso e a tocha brilham sozinhos, de dia e de noite
+          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : kind === 'tocha' || kind === 'tochaParede' || kind === 'fogueira' ? TORCH_GLOW : 0); // o braseiro aceso e a tocha brilham sozinhos, de dia e de noite
           glow.set([w, w * 0.72, w * 0.38], i * 3);
         });
         mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));

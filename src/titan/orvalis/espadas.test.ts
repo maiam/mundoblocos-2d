@@ -23,7 +23,7 @@ describe('espadas do Orvalis (ADR 0145)', () => {
       expect(toolOf(item)).toEqual({ kind: 'sword', tier }); expect(isSword(item)).toBe(true); expect(isDagger(item)).toBe(false);
       expect(maxStack(item)).toBe(1); expect(maxDurability(item)).toBe(dur); expect(damageOf(item)).toBe(dmg);
     }
-    expect(isItem(176)).toBe(false); expect(damageOf(Item.ESPADA_PEDRA)).toBeGreaterThan(FIST_DAMAGE);
+    expect(isItem(177)).toBe(false); expect(damageOf(Item.ESPADA_PEDRA)).toBeGreaterThan(FIST_DAMAGE);
   });
 
   it('desgaste: golpe −1, bloco que não quebra de uma vez −2, bloco de quebra instantânea 0', () => {

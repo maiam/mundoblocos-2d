@@ -46,5 +46,15 @@ export function tochaModels(rows: number): { standing: ModelData; wall: ModelDat
   return { standing: merge(a, b), wall };
 }
 
+/** Fogueira do Orvalis (ADR 0146): o ícone de 32 px (item 176) extrudado em dois planos cruzados a 90°, 1 bloco de largura, com a base na célula; lê-se de qualquer lado. */
+export function fogueiraModel(rows: number): ModelData {
+  const m = itemMask(Item.FOGUEIRA);
+  if (!m) throw new Error('máscara da Fogueira ausente (itemMasks.json)');
+  const b = bounds(m), e = extrudeMask(m.mask, m.w, m.h, DEPTH), S = 1, lift = -b.y0 * S;
+  const a = mapped(e, Item.FOGUEIRA, rows, (p) => [p[0] * S, p[1] * S + lift, p[2] * S], (n) => n);
+  const c = mapped(e, Item.FOGUEIRA, rows, (p) => [p[2] * S, p[1] * S + lift, -p[0] * S], (n) => [n[2], n[1], -n[0]]);
+  return merge(a, c);
+}
+
 /** Altura (m) do modelo em pé: a caixa de mira da tocha usa esta medida. */
 export const TORCH_HEIGHT = 0.7;
