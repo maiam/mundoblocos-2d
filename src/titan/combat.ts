@@ -3,7 +3,7 @@ import { Item, ITEM_NAMES } from './items';
 import type { TitanSession } from './session';
 import { restDrop, wearHeldTool } from './actions';
 import { FAUNA_KINDS, faunaLoot, hurtFauna } from './fauna';
-import { grunhoAlive, hurtGrunho } from './grunho';
+import { grunhoAlive, grunhoDrops, hurtGrunho } from './grunho';
 
 /**
  * Combate com os Farejadores de Duna (ADR 0069): o jogador golpeia o animal na mira (toque curto, alcance de 3 m, pausa de 0,6 s entre golpes). Dano pela arma na mão; a adaga é arma (desgasta −1), a
@@ -16,7 +16,7 @@ export const ATTACK_COOLDOWN_S = 0.6;
 export const FIST_DAMAGE = 1;
 export const WEAPON_DAMAGE: Readonly<Record<number, number>> = { [Item.STONE_DAGGER]: 4, [Item.COPPER_DAGGER]: 6, [Item.STONE_PICK]: 2, [Item.COPPER_PICK]: 3,
   [Item.PICARETA_MADEIRA]: 1, [Item.PICARETA_PEDRA]: 2, [Item.MACHADO_MADEIRA]: 2, [Item.MACHADO_PEDRA]: 3, [Item.PA_MADEIRA]: 1, [Item.PA_PEDRA]: 2, [Item.ENXADA_MADEIRA]: 1, [Item.ENXADA_PEDRA]: 1,
-  [Item.ESPADA_MADEIRA]: 4, [Item.ESPADA_PEDRA]: 5 }; // Orvalis (ADR 0112); espadas: dano da Java (ADR 0145, Fandom; a Wiki oficial não abriu na consulta)
+  [Item.ESPADA_MADEIRA]: 4, [Item.ESPADA_PEDRA]: 5, [Item.CLAVA_MADEIRA]: 5 }; // Orvalis (ADR 0112); espadas: dano da Java (ADR 0145, Fandom; a Wiki oficial não abriu na consulta)
 export const damageOf = (item: number | undefined | null): number => (item ? WEAPON_DAMAGE[item] ?? FIST_DAMAGE : FIST_DAMAGE);
 /** O que cada tamanho solta ao ser abatido: porções de carne crua e placas de carapaça. */
 export const LOOT: Readonly<Record<Kind, { meat: number; plate: number }>> = { pequeno: { meat: 1, plate: 1 }, grande: { meat: 2, plate: 1 } };
@@ -81,8 +81,8 @@ export function attackFauna(s: TitanSession, index: number): AttackResult {
 }
 
 /**
- * Golpe do jogador num Grunho (ADR 0147): dano pela arma da mão (`damageOf`), desgaste como em todo golpe, e o goblin passa a perseguir quem bateu. Abatido, não solta nada e
- * volta ao acampamento em `GRUNHO.respawnS` (decisão aprovada). `by` = id de quem bateu (na sala, o jogador; no aparelho, `null`).
+ * Golpe do jogador num Grunho (ADR 0147): dano pela arma da mão (`damageOf`), desgaste como em todo golpe, e o goblin passa a perseguir quem bateu. Abatido, solta a Clava de Madeira com 25% de chance (ADR 0148) e
+ * volta ao acampamento em `GRUNHO.respawnS`. `by` = id de quem bateu (na sala, o jogador; no aparelho, `null`).
  */
 export function attackGrunho(s: TitanSession, index: number, by: string | null = null): AttackResult {
   const g = s.grunhos[index];
@@ -91,5 +91,11 @@ export function attackGrunho(s: TitanSession, index: number, by: string | null =
   const w = wearHeldTool(s, { type: 'attack' });
   const r = hurtGrunho(g, damage, by);
   const broke = w.broken ? `${w.name} quebrou` : undefined;
-  return { ok: true, damage, dead: r.dead, broken: w.broken, toolName: w.name, msg: r.dead ? `Grunho abatido${broke ? `; ${broke}` : ''}` : broke };
+  if (!r.dead) return { ok: true, damage, dead: false, broken: w.broken, toolName: w.name, msg: broke };
+  const loot = grunhoDrops(g, s.seed), base = `m:${g.id}`;
+  let n = 0;
+  while (s.drops.has(`${base}:${n}`)) n++; // o goblin volta: um espólio antigo ainda no chão não apaga o novo
+  loot.forEach((l, i) => restDrop(s, `${base}:${n}:${i}`, l.item, g.body.x, g.body.y, g.body.z, l.count));
+  const txt = loot.map((l) => `${l.count} ${ITEM_NAMES[l.item]}`).join(', ');
+  return { ok: true, damage, dead: true, broken: w.broken, toolName: w.name, msg: `Grunho abatido${txt ? `: ${txt}` : ''}${broke ? `; ${broke}` : ''}` };
 }
