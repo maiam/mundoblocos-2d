@@ -2,6 +2,7 @@ import { chestFromData } from '../../titan/chest';
 import type { Farejador } from '../../titan/creature';
 import type { Boat } from '../../titan/boat';
 import { FAUNA_KINDS, type Fauna, maxHp } from '../../titan/fauna';
+import type { Grunho } from '../../titan/grunho';
 import { BRAZIER_RULES, furnaceFromData, rulesOf } from '../../titan/furnace';
 import { Inventory } from '../../titan/inventory';
 import { newBody } from '../../titan/physics';
@@ -9,7 +10,7 @@ import { orvalisGeneratorFor } from '../../titan/orvalis/generator';
 import { generatorFor, resume, type TitanSession } from '../../titan/session';
 import { vitalsFromData, vitalsToData } from '../../titan/vitals';
 import type { TitanTransport } from './loopback';
-import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna, type WireHit } from './protocol';
+import { TITAN_PROTOCOL_VERSION, type TitanAction, type TitanPlayerInfo, type TitanServerMessage, type WireBoat, type WireCreature, type WireFauna, type WireGrunho, type WireHit } from './protocol';
 
 /**
  * Lado do aparelho numa sala do Titã (ADR 0104, fatia B). Sem DOM: recebe um `TitanTransport` (loopback nos testes, WebSocket no navegador).
@@ -25,7 +26,7 @@ export interface TitanClientEvents {
   /** Lista de jogadores remotos mudou. */
   onPlayers?: () => void;
   /** Um Farejador acertou este jogador (o aparelho tira a vida). */
-  onHurt?: (damage: number, kind: 'pequeno' | 'grande') => void;
+  onHurt?: (damage: number, kind: 'pequeno' | 'grande' | 'grunho') => void;
   /** Renasceu depois de morrer (posição e vida já trocadas na sessão). */
   onRespawn?: () => void;
   /** Baús ou braseiros mudaram (outro jogador mexeu, ou o braseiro andou). */
@@ -85,8 +86,12 @@ export class TitanClient {
   furnaceOut(x: number, y: number, z: number, kind: 'input' | 'fuel' | 'output'): Promise<ApplyResult> { return this.act({ k: 'furnace', x, y, z, op: 'out', kind }); }
   /** Animais de fazenda que andam (da última mensagem `fauna`): o desenho usa para a pose (ADR 0138). */
   readonly faunaMoving = new Map<string, boolean>();
+  /** Quem anda entre os Grunhos espelhados (ADR 0147). */
+  readonly grunhoMoving = new Map<string, boolean>();
   /** Golpe no animal de fazenda `id` com o item da mão; ou alimentá-lo com a comida da mão (ADR 0138). */
   strikeFauna(id: string): Promise<ApplyResult> { return this.act({ k: 'strikeFauna', id }); }
+  /** Golpe num Grunho (ADR 0147): o servidor confere alcance e pausa, aplica o dano e solta a Clava, se sair. */
+  strikeGrunho(id: string): Promise<ApplyResult> { return this.act({ k: 'strikeGrunho', id }); }
   feedFauna(id: string): Promise<ApplyResult> { return this.act({ k: 'feedFauna', id }); }
   /** Embarca no bote `id` e desembarca (a sala confere o alcance e se o bote está vazio; ADR 0138, entrega C). */
   mountBoat(id: string): Promise<ApplyResult> { return this.act({ k: 'mountBoat', id }); }
@@ -151,6 +156,24 @@ export class TitanClient {
     s.fauna = next;
   }
 
+  /** Espelha os Grunhos de perto (ADR 0147): atualiza no lugar por id (a mira guarda o índice), cria os novos e tira os que sumiram (os abatidos não vão na lista). */
+  private mirrorGrunhos(list: WireGrunho[]): void {
+    const s = this.session;
+    if (!s) return;
+    const byId = new Map(s.grunhos.map((g) => [g.id, g]));
+    const next: Grunho[] = [];
+    this.grunhoMoving.clear();
+    for (const w of list) {
+      let g = byId.get(w.id);
+      if (!g) g = { id: w.id, camp: { x: w.x, z: w.z }, body: newBody(w.x, w.y, w.z), yaw: w.yaw, phase: w.ph, t: 0, home: { x: w.x, z: w.z }, goal: { x: w.x, z: w.z }, pause: 0, stuck: 0, hp: w.hp, hurt: w.hu, cooldown: 0, swing: w.sw, hitDone: true, target: null, deadFor: 0, clock: w.c, seed: [...w.id].reduce((a, ch) => (Math.imul(a, 31) + ch.charCodeAt(0)) >>> 0, 7) };
+      g.body.x = w.x; g.body.y = w.y; g.body.z = w.z;
+      g.yaw = w.yaw; g.phase = w.ph; g.hp = w.hp; g.swing = w.sw; g.hurt = w.hu; g.clock = w.c;
+      this.grunhoMoving.set(g.id, !!w.m);
+      next.push(g);
+    }
+    s.grunhos = next;
+  }
+
   /** Espelha os Farejadores da sala: atualiza no lugar por id (a mira guarda o índice), cria os novos e tira os que sumiram. */
   private mirrorCreatures(list: WireCreature[]): void {
     const s = this.session;
@@ -178,6 +201,7 @@ export class TitanClient {
         Object.assign(s.inventory, Inventory.fromData(m.you.bag));
         s.fauna = []; s.boatRide = null; s.fishing = null; // a fauna chega pela mensagem `fauna`; os botes vêm no cabeçalho e depois por `boats`; a boia, por `bobber` (ADR 0138)
         s.creatures = []; s.respawn.clear(); // os bichos da sala chegam na fatia C; o aparelho não os simula
+        s.grunhos = []; // os Grunhos são da sala: só chegam os de perto pela mensagem `grunhos` (ADR 0147)
         this.session = s; this.id = m.id; this.syncedRev = s.inventory.rev;
         for (const p of m.players) this.remotes.set(p.id, p);
         this.welcome?.(s); this.welcome = null; this.failed = null;
@@ -206,6 +230,7 @@ export class TitanClient {
       }
       case 'creatures': this.mirrorCreatures(m.list); return;
       case 'fauna': this.mirrorFauna(m.list); return;
+      case 'grunhos': this.mirrorGrunhos(m.list); return;
       case 'boats': this.mirrorBoats(m.list); return;
       case 'bobber': if (this.session) { this.session.fishing = m.b ? { x: m.b.x, y: m.b.y, z: m.b.z, phase: m.b.bite ? 'bite' : 'wait', t: 0 } : null; this.events.onBobber?.(m.e); } return;
       case 'hurt': this.events.onHurt?.(m.damage, m.kind); return;

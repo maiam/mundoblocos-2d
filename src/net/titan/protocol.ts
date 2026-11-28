@@ -7,7 +7,7 @@ import type { VoxelWorld } from '../../titan/terrain';
  * Protocolo das salas do Titã (ADR 0104): paralelo ao do mundo principal (`net/protocol.ts`), porque o Titã tem motor próprio (`TitanVolume`).
  * Compartilhado com o servidor (`build:net`): sem DOM. Mudou uma mensagem de forma incompatível → suba `TITAN_PROTOCOL_VERSION` e o servidor junto.
  */
-export const TITAN_PROTOCOL_VERSION = 6; // 6 (ADR 0142): a sala 102 vira a Aldeia da Costa (gerador `COSTA_GENERATOR_VERSION` 100 no `welcome`): o cliente antigo não a abre; 5 (ADR 0138 C): // 4 (ADR 0138, entrega B): fauna de fazenda do Orvalis pela sala (mensagem `fauna`, ações `strikeFauna` e `feedFauna`); 5 (entrega C): pesca (`bobber`) e botes (`boats`, `boat`, ações `mountBoat` e `dismountBoat`)
+export const TITAN_PROTOCOL_VERSION = 7; // 7 (ADR 0147): o Grunho (mob inimigo da sala 102): mensagem `grunhos` (os próximos de cada jogador), ação `strikeGrunho`, `hurt` com `kind: 'grunho'`, e a Costa v101 (acampamentos) — cliente e servidor juntos; 6 (ADR 0142): a sala 102 vira a Aldeia da Costa (gerador `COSTA_GENERATOR_VERSION` 100 no `welcome`): o cliente antigo não a abre; 5 (ADR 0138 C): // 4 (ADR 0138, entrega B): fauna de fazenda do Orvalis pela sala (mensagem `fauna`, ações `strikeFauna` e `feedFauna`); 5 (entrega C): pesca (`bobber`) e botes (`boats`, `boat`, ações `mountBoat` e `dismountBoat`)
 export const TITAN_MAX_PLAYERS = 10;
 export const TITAN_NAME_MIN = 2, TITAN_NAME_MAX = 16;
 /** Salas fixas do Titã (ids acima dos do mundo principal, que usam 1…). Cooperativas de sobrevivência: vida, fome, ar e morte valem. */
@@ -36,6 +36,7 @@ export type TitanAction =
   | { k: 'strike'; id: string }
   /** Fauna de fazenda do Orvalis (ADR 0138): golpe no animal `id` com o item da mão; ou alimentá-lo com a comida da mão (a sala escolhe pelo item selecionado). */
   | { k: 'strikeFauna'; id: string }
+  | { k: 'strikeGrunho'; id: string }
   | { k: 'feedFauna'; id: string }
   /** Botes do Orvalis (ADR 0138, entrega C): embarcar no bote `id` (ao alcance e vazio) e desembarcar. */
   | { k: 'mountBoat'; id: string }
@@ -63,6 +64,8 @@ export interface WireCreature { id: string; kind: 'pequeno' | 'grande'; x: numbe
 export interface WireBoat { id: string; k: number; x: number; y: number; z: number; r: number; d: number }
 /** Animal de fazenda na rede (ADR 0138): o que o aparelho precisa para desenhar, animar e mirar (`id` estável; `m` = anda; `l` = em amor; `b` = filhote; `hu` = segundos desde o último golpe; `c` = relógio da animação). */
 export interface WireFauna { id: string; k: 'porco' | 'vaca' | 'ovelha' | 'galinha'; x: number; y: number; z: number; yaw: number; ph: 'wander' | 'panic'; b: 0 | 1; hp: number; l: 0 | 1; m: 0 | 1; hu: number; c: number }
+/** Grunho na rede (ADR 0147): o que o aparelho precisa para desenhar, animar e mirar (`ph` = fase; `sw` = segundos desde o início do golpe, −1 sem golpe; `hu` = segundos desde o último golpe levado; `m` = anda; `c` = relógio da animação). Só os vivos vão. */
+export interface WireGrunho { id: string; x: number; y: number; z: number; yaw: number; ph: 'wander' | 'chase' | 'return'; hp: number; sw: number; hu: number; m: 0 | 1; c: number }
 /** Estado completo da sala para quem entra (o formato do cabeçalho do save local: o aparelho abre com `resume`). */
 export interface TitanWelcome { t: 'welcome'; id: number; header: TitanHeader; chunks: ChunkRecord[]; players: TitanPlayerInfo[]; you: TitanPlayerState & { bag: InventoryData; vitals: VitalsData; spawn: { x: number; y: number; z: number } | null } }
 export type TitanServerMessage =
@@ -76,12 +79,14 @@ export type TitanServerMessage =
   | { t: 'creatures'; list: WireCreature[] }
   /** Fauna de fazenda perto de quem recebe (os 40 mais próximos a até 64 m; ADR 0138). */
   | { t: 'fauna'; list: WireFauna[] }
+  /** Grunhos vivos perto de quem recebe (os 40 mais próximos a até 64 m; ADR 0147). */
+  | { t: 'grunhos'; list: WireGrunho[] }
   /** Todos os botes da sala (a cada mudança, no máximo 10×/s; ADR 0138, entrega C). */
   | { t: 'boats'; list: WireBoat[] }
   /** A boia de pesca de quem recebe: lançada (`b`, `bite` = o peixe fisgou), recolhida (`null`); `e` = o evento que causou a mensagem (ADR 0138, entrega C). */
   | { t: 'bobber'; b: { x: number; y: number; z: number; bite: 0 | 1 } | null; e?: 'bite' | 'lost' }
   /** Levou um golpe de Farejador: o aparelho tira a vida. */
-  | { t: 'hurt'; damage: number; kind: 'pequeno' | 'grande' }
+  | { t: 'hurt'; damage: number; kind: 'pequeno' | 'grande' | 'grunho' }
   /** Conteúdo novo de um baú (`x,y,z`) ou de todos os braseiros com estado. */
   | { t: 'chest'; key: string; data: unknown }
   | { t: 'furnaces'; data: Record<string, unknown> }
@@ -145,7 +150,7 @@ export function parseTitanAction(v: unknown): TitanAction | null {
   if (a.k === 'strike') return typeof o.id === 'string' && o.id.length > 0 && o.id.length <= 20 ? { k: 'strike', id: o.id } : null;
   if (a.k === 'dismountBoat') return { k: 'dismountBoat' };
   if (a.k === 'mountBoat') return typeof o.id === 'string' && o.id.length > 0 && o.id.length <= 20 ? { k: 'mountBoat', id: o.id } : null;
-  if (a.k === 'strikeFauna' || a.k === 'feedFauna') return typeof o.id === 'string' && o.id.length > 0 && o.id.length <= 40 ? { k: a.k, id: o.id } : null;
+  if (a.k === 'strikeFauna' || a.k === 'feedFauna' || a.k === 'strikeGrunho') return typeof o.id === 'string' && o.id.length > 0 && o.id.length <= 40 ? { k: a.k, id: o.id } : null;
   if (a.k === 'die') return { k: 'die' };
   return null;
 }

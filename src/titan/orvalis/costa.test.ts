@@ -7,7 +7,7 @@ import { MemoryTitanStorage } from '../save';
 import { openSession } from '../session';
 import { FENCE_KINDS, GATE_KINDS, fenceId, gateId, isFence, isGate, T, WALL_E, WALL_W } from '../voxel';
 import { meshSection } from '../mesher';
-import { COSTA_GENERATOR_VERSION, CostaGenerator, ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './generator';
+import { CAMP_TREE_R, COSTA_CAMP_SITES, COSTA_GENERATOR_VERSION, COSTA_LEGACY_VERSION, CostaGenerator, ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './generator';
 import { COSTA_PLAN } from './costaData';
 
 /** Aldeia da Costa (ADR 0142): o mapa feito à mão da sala 102. */
@@ -15,13 +15,13 @@ const gen = new CostaGenerator(128064);
 const top = (x: number, z: number): number => gen.column(x, z).top;
 
 describe('aldeia da costa (ADR 0142)', () => {
-  it('versão 100 abre o mapa da aldeia; as versões 1–6 seguem o relevo por ruído (a partida individual não muda)', () => {
-    expect(orvalisGeneratorFor(1, COSTA_GENERATOR_VERSION)).toBeInstanceOf(CostaGenerator);
+  it('as versões 101 e 100 abrem o mapa da aldeia; as versões 1–6 seguem o relevo por ruído (a partida individual não muda)', () => {
+    expect(orvalisGeneratorFor(1, COSTA_GENERATOR_VERSION)).toBeInstanceOf(CostaGenerator); expect(orvalisGeneratorFor(1, COSTA_LEGACY_VERSION)).toBeInstanceOf(CostaGenerator);
     expect(orvalisGeneratorFor(1, ORVALIS_GENERATOR_VERSION)).not.toBeInstanceOf(CostaGenerator);
     expect(orvalisGeneratorFor(1, ORVALIS_GENERATOR_VERSION)).toBeInstanceOf(OrvalisGenerator);
-    expect(orvalisGeneratorFor(1, 7)).toBeNull(); expect(orvalisGeneratorFor(1, 99)).toBeNull();
+    expect(orvalisGeneratorFor(1, 7)).toBeNull(); expect(orvalisGeneratorFor(1, 99)).toBeNull(); expect(orvalisGeneratorFor(1, 102)).toBeNull();
     expect(new OrvalisGenerator(1).version).toBe(ORVALIS_GENERATOR_VERSION);
-    expect(gen.version).toBe(100); expect(gen.world).toBe('orvalis');
+    expect(gen.version).toBe(COSTA_GENERATOR_VERSION); expect(gen.world).toBe('orvalis');
   });
 
   it('terreno do heightmap: mar em Y 63 em volta, platô da aldeia em Y 70, borda submersa, pedra ao norte, areia e trilha', () => {
@@ -59,8 +59,10 @@ describe('aldeia da costa (ADR 0142)', () => {
       if (b === T.LOG_OAK) logs++;
       else if (b === T.LOG_CHERRY || b === T.LOG_BIRCH || b === T.LEAVES_CHERRY || b === T.LEAVES_BIRCH) other++;
     }
-    expect(logs).toBeGreaterThanOrEqual(COSTA_PLAN.arvores.length * 4); expect(other).toBe(0);
-    for (const [x, z] of COSTA_PLAN.arvores.slice(0, 10)) expect(gen.blockAt(x, top(x, z) + 1, z)).toBe(T.LOG_OAK);
+    const kept = COSTA_PLAN.arvores.filter(([x, z]) => !COSTA_CAMP_SITES.some((c) => Math.hypot(x - c.x, z - c.z) <= CAMP_TREE_R)); // sem árvore em volta dos acampamentos (ADR 0147)
+    expect(kept.length).toBeLessThan(COSTA_PLAN.arvores.length); expect(kept.length).toBeGreaterThan(COSTA_PLAN.arvores.length - 30);
+    expect(logs).toBeGreaterThanOrEqual(kept.length * 4); expect(other).toBe(0);
+    for (const [x, z] of kept.slice(0, 10)) expect(gen.blockAt(x, top(x, z) + 1, z)).toBe(T.LOG_OAK);
   });
 
   it('chegada no portão da praia, de pé sobre o chão e voltada para o norte', () => {
@@ -82,13 +84,15 @@ describe('aldeia da costa (ADR 0142)', () => {
     expect(specs.length).toBeGreaterThan(8); // além dos da criação, os grupos espalhados pela regra atual
   });
 
-  it('sala 102: Aldeia da Costa (seed 128064, protocolo 6); só abre o próprio arquivo; a partida individual não muda', async () => {
+  it('sala 102: Aldeia da Costa (seed 128064, protocolo 7); só abre o próprio arquivo; a partida individual não muda', async () => {
     const def = TITAN_ROOMS.find((r) => r.id === 102)!;
     expect(def).toMatchObject({ seed: 128064, world: 'orvalis', terrain: 'costa' }); expect(TITAN_PROTOCOL_VERSION).toBeGreaterThanOrEqual(6);
     const room = new TitanRoom(def.id, def.name, def.seed, () => 0.5, def.world, def.terrain);
     expect(room.world.volume.gen.version).toBe(COSTA_GENERATOR_VERSION);
     const snap = JSON.parse(JSON.stringify(room.snapshot()));
-    expect(snap.header.generatorVersion).toBe(100);
+    expect(snap.header.generatorVersion).toBe(COSTA_GENERATOR_VERSION);
+    const v100 = JSON.parse(JSON.stringify(snap)); v100.header.generatorVersion = COSTA_LEGACY_VERSION; // o arquivo salvo da sala 102 sem acampamentos: recusado, a sala começa de novo (descarte aprovado pelo dono; o servidor guarda cópia .bak)
+    expect(new TitanRoom(102, 'x', 128064, () => 0.5, 'orvalis', 'costa').restore(v100)).toBe(false);
     expect(new TitanRoom(102, 'x', 128064, () => 0.5, 'orvalis', 'costa').restore(snap)).toBe(true);
     expect(new TitanRoom(102, 'x', 128064, () => 0.5, 'orvalis').restore(snap)).toBe(false); // sala por ruído não abre arquivo da aldeia
     const old = new TitanRoom(102, 'x', 20261127, () => 0.5, 'orvalis'); // o arquivo antigo da sala 102 (relevo por ruído) não abre na aldeia
