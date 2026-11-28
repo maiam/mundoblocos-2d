@@ -28,7 +28,7 @@ describe('corais (ADR 0136)', () => {
       expect(block).toBe(base + (n % 10)); expect(isItem(item)).toBe(true); expect(itemOfBlock(block)).toBe(item); expect(ITEM_NAMES[item]).toBeTruthy();
       expect(isCoral(block)).toBe(true); expect(isCoralLive(block)).toBe(n % 10 < 5); expect(coralFamily(block)).toBe(n % 5);
     }
-    expect(isItem(174)).toBe(false); expect(isItem(122)).toBe(false);
+    expect(isItem(176)).toBe(false); expect(isItem(122)).toBe(false);
     expect(ITEM_NAMES[Item.CORAL_VIVO]).toBe('Coral de Tubo'); expect(ITEM_NAMES[Item.BLOCO_CORAL_MORTO + 4]).toBe('Bloco de Coral de Chifre Morto');
     expect(deadCoral(T.CORAL_BLOCK + 3)).toBe(T.CORAL_BLOCK + 8); expect(deadCoral(T.CORAL_BLOCK + 8)).toBe(T.CORAL_BLOCK + 8);
     for (let i = 0; i < 10; i++) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.222.0 — Espadas de madeira e de pedra (28/11/2026)
+- **ADR 0145 (aprovada; auditoria #49).** Itens **174 (Espada de Madeira)** e **175 (Espada de Pedra)**, só do Orvalis (a adaga é do Titã, ADR 0114): novo `ToolKind` `'sword'` (`isSword`), **dano 4 e 5** (Java), **durabilidade 59 e 131**, desgaste como a adaga (golpe −1, bloco −2, instantâneo 0) e receitas na Mesa de Carpintaria (2 tábuas de carvalho ou 2 Pedras + 1 haste). **Ressalva:** a `minecraft.wiki` não abriu na sessão; os números vêm do espelho Fandom e ficam **a confirmar** na Wiki oficial.
+- **Arte.** As duas ilustrações do dono (1254 × 1254) viram o ícone de 32 px por `scripts/make-orvalis-espadas.py` (paleta pequena e cor mais frequente por célula) e entram em `arte32/itens.json`; na mão é o sprite extrudado de sempre. **Atlas de itens 4 × 44 cheio (176 células): o próximo item é o 176 e amplia de novo.**
+- Fora desta entrega: recarga de ataque (1,6/s), crítico, varredura, quebra rápida de teia/bambu.
+- 822 testes passam (`orvalis/espadas.test.ts` novo; seis testes antigos tiveram os limites de item/ferramenta subidos); conferido no navegador (ícone na barra e sprite na mão). Sem mudança de protocolo nem de save; o servidor precisa do pacote novo (`build:net` + `sync-net`) para a sala aceitar os itens 174 e 175.
+
 ## Orvalis v0.221.0 — Vaca, porco e galinha pelas pranchas ortográficas (28/11/2026)
 - **Arte (ADR 0143, adendo).** Os três animais que faltavam passam a vir das pranchas ortográficas (vaca "Broa", porco "Goiaba", galinha "Canela"), montadas por `make-orvalis-fazenda-prancha.py`: **os quatro animais de fazenda agora saem desse fluxo e nenhum atlas tem pixel transparente dentro de face** (o script recusa). As pranchas ficam em `assets-src/orvalis-voxel/mobs/pranchas/`; a v2 do Drive deixa de ser usada.
 - O script foi generalizado: as peças de mesmo tamanho (patas, asas, pernas, pés, chifres) pegam as cruzes na ordem frente → trás e esquerda (`_e`) → direita (`_d`), da esquerda para a direita na prancha; entre cruzes do mesmo tamanho vale a de menor escala (uma peça pequena não rouba a cruz de uma grande). Conferido: o número de cruzes bate com o de peças da ficha nos quatro animais (ovelha 6, vaca 9, galinha 11, porco 8), e o atlas da ovelha ficou idêntico.

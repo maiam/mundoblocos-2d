@@ -13,6 +13,7 @@ export const MAX_DURABILITY: Readonly<Record<number, number>> = {
   [Item.PICARETA_MADEIRA]: 59, [Item.MACHADO_MADEIRA]: 59, [Item.PA_MADEIRA]: 59, [Item.ENXADA_MADEIRA]: 59,
   [Item.VARA_PESCA]: 64, // Wiki (Java): 64 usos, 1 por captura (ADR 0133)
   [Item.PICARETA_PEDRA]: 131, [Item.MACHADO_PEDRA]: 131, [Item.PA_PEDRA]: 131, [Item.ENXADA_PEDRA]: 131,
+  [Item.ESPADA_MADEIRA]: 59, [Item.ESPADA_PEDRA]: 131, // espadas do Orvalis (ADR 0145): como as outras ferramentas de madeira e pedra
 };
 export const maxDurability = (item: number): number | null => MAX_DURABILITY[item] ?? null;
 
@@ -20,16 +21,16 @@ export type WearAction = { type: 'break_block'; block: number } | { type: 'attac
 
 /**
  * Pontos de desgaste de uma ação (regra do Minecraft):
- * - **uso correto** (−1): picareta quebrando bloco; adaga (lâmina) golpeando um inimigo;
- * - **uso impróprio** (−2): adaga quebrando bloco; picareta golpeando um inimigo;
+ * - **uso correto** (−1): picareta quebrando bloco; adaga ou espada (lâmina) golpeando um inimigo;
+ * - **uso impróprio** (−2): adaga ou espada quebrando bloco; picareta golpeando um inimigo;
  * - blocos de recolhimento instantâneo (lanterna, Marco, Painel: "dureza 0") não gastam nada.
  */
 export function wearCost(tool: number, action: WearAction): number {
   const t = toolOf(tool);
   if (!t) return 0;
   if (action.type === 'use') return 1; // arar com a enxada, abrir caminho com a pá (ADR 0112)
-  if (action.type === 'break_block') return isCollectBlock(action.block) ? 0 : t.kind === 'dagger' ? 2 : 1;
-  return t.kind === 'dagger' ? 1 : 2;
+  if (action.type === 'break_block') return isCollectBlock(action.block) ? 0 : t.kind === 'dagger' || t.kind === 'sword' ? 2 : 1;
+  return t.kind === 'dagger' || t.kind === 'sword' ? 1 : 2;
 }
 
 /** Fração de vida restante (1 = nova, 0 = quebrando), ou `null` se o item não se desgasta ou está intacto (a barra só aparece depois do primeiro desgaste). */
