@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.218.0 — Fauna de fazenda: atlas UV v2 (28/11/2026)
+- **Arte.** Os 4 animais de fazenda passam a usar a **v2** do atlas UV de 128 × 128 do Drive (`orvalis_mob_*_uv_128x128_v2.png`; vaca com manchas claras, porco rosado, ovelha de lã clara com a cara escura, galinha ruiva). Sobrescrevem os `*_uv_128x128.png` de `assets-src/orvalis-voxel/mobs/` (a v1 fica no histórico do git); a prévia 3D do Drive entrou como `animais_3d_previa_v2.png` (referência, sem uso). Mesmo desenho do atlas, UVs em fração, **modelos e caixas inalterados**.
+- **Atenção (arte):** na v2 há pixels totalmente transparentes dentro de faces das caixas (porco 74, vaca 406, ovelha 33, galinha 6 de ~5 000–9 000), contra 0–16 na v1; o material descarta alfa < 0,5, então ali pode aparecer um furo. Conferido no navegador de cima: vaca, porco e galinha sem furos visíveis; a ovelha **não pôde ser vista de perto** (caiu atrás de blocos nas capturas).
+- 818 testes passam; sem mudança de protocolo nem de save; o servidor não precisa de pacote novo.
+
 ## Orvalis v0.217.0 — Fauna de fazenda em 128 × 128 (28/11/2026)
 - **Arte (ADR 0143, adendo).** Regra do dono: **mobs, NPCs e personagens podem passar de 32 px**. Os 4 animais de fazenda (porco, vaca, ovelha, galinha) trocam o atlas UV de 64 × 64 pelo de **128 × 128** do Drive (`orvalis_mob_*_uv_128x128.png`, em `assets-src/orvalis-voxel/mobs/`). O desenho do atlas é o mesmo, só com o dobro de resolução, e os UVs da ficha são frações (`textureSize` 64): **`fazenda-modelos.json`, caixas, caixa de mira e de golpe não mudam**. `make-orvalis-fazenda.py` prefere o 128 × 128 e cai para o de 64 × 64.
 - As ilustrações de perfil `orvalis_mob_*_128x128.png` (sem `_uv`) **não são atlas** e ficam sem uso (não foram copiadas para o repositório).
