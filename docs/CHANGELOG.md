@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.216.0 — Correção: cercas e porteiras da aldeia invisíveis (28/11/2026)
+- **Correção.** As cercas e as porteiras que o **gerador** põe (a Aldeia da Costa, ADR 0142) existiam para a física mas **não eram desenhadas**: o mesher só registrava como instância de modelo a flora marinha do gerador (`isWaterPlant`), e os blocos de modelo (`isModelBlock`) ficam fora da malha do terreno. Agora `meshSection` registra qualquer modelo vindo do gerador (`modelOf(id)`); quebrar a peça tira a instância. Cerca e portão colocados por jogadores já apareciam (entram por `set`).
+- 818 testes passam (1 novo em `orvalis/costa.test.ts`); conferido no navegador: cercados e porteira visíveis com os animais dentro. **A sala 102 precisa do pacote novo no servidor** (o cliente é quem desenha, mas o pacote leva o mesmo `mesher`).
+
 ## Orvalis v0.215.0 — Colher a planta imatura e a horta da aldeia (28/11/2026)
 - **ADR 0144 (aprovada).** Conferido na Wiki: cenoura e batata já se plantavam direto do alimento (ADR 0113). **Colher uma planta imatura da horta passa a arrancá-la e devolver 1 item da própria semente** (cenoura, batata, tomate, 1 semente de trigo ou beterraba); a madura segue rebrotando. A **Aldeia da Costa** nasce com cenoura (talhão 1) e batata (talhão 2) plantadas em xadrez, com idades sorteadas (`TerrainGen.startCrops`). A grama segue soltando cenoura e batata: tirá-las deixaria a partida individual sem fonte.
 - 817 testes passam (3 novos em `orvalis/colherImatura.test.ts`, 1 em `costa.test.ts`, 2 ajustados). **A sala 102 precisa do pacote novo no servidor.**

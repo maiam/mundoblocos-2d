@@ -1,7 +1,7 @@
 import type { TitanVolume } from './volume';
 import { LIGHT_MAX } from './light';
 import { SKY_MAX } from './skylight';
-import { isFull, isModelBlock, isWaterPlant, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, tileForFace, type Face, Y_MIN } from './voxel';
+import { isFull, isModelBlock, isWaterPlant, modelOf, isSlab, isSlabBottom, slabPartner, MAT_HEIGHT, SECTION, T, tileFor, tileForFace, type Face, Y_MIN } from './voxel';
 
 /**
  * Malha de uma seção 16³ (ADR 0039): só faces expostas, lendo os vizinhos do outro lado das bordas (cópia com margem de 1 bloco), para a
@@ -97,7 +97,7 @@ export function meshSection(vol: TitanVolume, cx: number, sy: number, cz: number
   for (let ly = 0; ly < SECTION; ly++) for (let lz = 0; lz < SECTION; lz++) for (let lx = 0; lx < SECTION; lx++) {
     const id = at(lx, ly, lz);
     if (id === T.AIR) continue;
-    if (isWaterPlant(id)) vol.registerModelCell(x0 + lx, y0 + ly, z0 + lz, id); // flora marinha do gerador (ADR 0135): o renderer a desenha por instância
+    if (isWaterPlant(id) || modelOf(id)) vol.registerModelCell(x0 + lx, y0 + ly, z0 + lz, id); // modelo vindo do gerador (a flora marinha, ADR 0135; as cercas e porteiras da Aldeia da Costa, ADR 0142): o renderer o desenha por instância
     if (isModelBlock(id)) continue; // lanterna e mesa são modelos 3D do renderer (instâncias, ADR 0043/0045): não entram na malha do terreno (a mesa, sólida, ainda esconde as faces vizinhas)
     for (let fi = 0; fi < 6; fi++) {
       const n = FACES[fi].n;
