@@ -5,7 +5,8 @@ import { collides } from '../physics';
 import { faunaSpecs } from '../fauna';
 import { MemoryTitanStorage } from '../save';
 import { openSession } from '../session';
-import { fenceId, gateId, isFence, isGate, T, WALL_E, WALL_W } from '../voxel';
+import { FENCE_KINDS, GATE_KINDS, fenceId, gateId, isFence, isGate, T, WALL_E, WALL_W } from '../voxel';
+import { meshSection } from '../mesher';
 import { COSTA_GENERATOR_VERSION, CostaGenerator, ORVALIS_GENERATOR_VERSION, OrvalisGenerator, orvalisGeneratorFor } from './generator';
 import { COSTA_PLAN } from './costaData';
 
@@ -110,5 +111,17 @@ describe('horta da aldeia e planta imatura (ADR 0144)', () => {
     expect(s.crops.size).toBe(crops.length);
     const room = new TitanRoom(102, 'x', 128064, () => 0.5, 'orvalis', 'costa'); expect(room.world.crops.size).toBe(crops.length);
     expect((new OrvalisGenerator(1) as { startCrops?: unknown }).startCrops).toBeUndefined(); // a partida individual não traz horta pronta
+  });
+});
+
+describe('modelos do gerador na aldeia (cercas e porteiras visíveis)', () => {
+  it('malhar as seções da aldeia registra cada cerca e porteira como instância de modelo (antes ficavam invisíveis)', async () => {
+    const s = await openSession(new MemoryTitanStorage(), 128064, () => 1, orvalisGeneratorFor, COSTA_GENERATOR_VERSION, (sd) => new CostaGenerator(sd));
+    for (let cx = -1; cx <= 2; cx++) for (let cz = 0; cz <= 2; cz++) for (let sy = 7; sy <= 8; sy++) meshSection(s.volume, cx, sy, cz); // as seções Y 64–95 em volta dos cercados (X −16…47, Z 0…47)
+    const fences = FENCE_KINDS.flatMap((k) => s.volume.modelCells(k)), gates = GATE_KINDS.flatMap((k) => s.volume.modelCells(k));
+    expect(fences.length).toBe(COSTA_PLAN.cercas.celulas.length); expect(gates.length).toBe(COSTA_PLAN.cercados.length);
+    const [px, pz] = COSTA_PLAN.cercados[0].porteira; expect(gates.some((g) => g[0] === px && g[2] === pz)).toBe(true);
+    s.volume.remove(COSTA_PLAN.cercas.celulas[0][0], 71, COSTA_PLAN.cercas.celulas[0][1]); // quebrar uma cerca tira a instância
+    expect(FENCE_KINDS.flatMap((k) => s.volume.modelCells(k)).length).toBe(COSTA_PLAN.cercas.celulas.length - 1);
   });
 });
