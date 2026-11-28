@@ -60,7 +60,7 @@ def faces(b):
         ([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], (0, 0, 1), 1, lambda x, y, z: (x, 1 - (y - y0))),
         ([(x1, y0, z0), (x0, y0, z0), (x0, y1, z0), (x1, y1, z0)], (0, 0, -1), 1, lambda x, y, z: (1 - x, 1 - (y - y0))),
         ([(x1, y0, z1), (x1, y0, z0), (x1, y1, z0), (x1, y1, z1)], (1, 0, 0), 2, lambda x, y, z: (1 - z, 1 - y)),
-        ([(x0, y0, z0), (x0, y0, z1), (x0, y1, z1), (x0, y1, z0)], (-1, 0, 0), 2, lambda x, y, z: (z, 1 - y)),
+        ([(x0, y0, z0), (x0, y0, z1), (x0, y1, z1), (x0, y1, z0)], (-1, 0, 0), 2, lambda x, y, z: (1 - z, 1 - y)),  # perfil: o patamar alto (atrás, z 0–0,5) cai na metade desenhada do tile nas duas laterais (v0.229.0; antes a lateral −X caía na metade transparente e saía preta)
     ]
 
 

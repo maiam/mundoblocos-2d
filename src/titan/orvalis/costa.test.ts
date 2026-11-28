@@ -19,7 +19,7 @@ describe('aldeia da costa (ADR 0142)', () => {
     expect(orvalisGeneratorFor(1, COSTA_GENERATOR_VERSION)).toBeInstanceOf(CostaGenerator); expect(orvalisGeneratorFor(1, COSTA_LEGACY_VERSION)).toBeInstanceOf(CostaGenerator);
     expect(orvalisGeneratorFor(1, ORVALIS_GENERATOR_VERSION)).not.toBeInstanceOf(CostaGenerator);
     expect(orvalisGeneratorFor(1, ORVALIS_GENERATOR_VERSION)).toBeInstanceOf(OrvalisGenerator);
-    expect(orvalisGeneratorFor(1, 7)).toBeNull(); expect(orvalisGeneratorFor(1, 99)).toBeNull(); expect(orvalisGeneratorFor(1, 102)).toBeNull();
+    expect(orvalisGeneratorFor(1, 7)).toBeNull(); expect(orvalisGeneratorFor(1, 99)).toBeNull(); expect(orvalisGeneratorFor(1, 103)).toBeNull();
     expect(new OrvalisGenerator(1).version).toBe(ORVALIS_GENERATOR_VERSION);
     expect(gen.version).toBe(COSTA_GENERATOR_VERSION); expect(gen.world).toBe('orvalis');
   });

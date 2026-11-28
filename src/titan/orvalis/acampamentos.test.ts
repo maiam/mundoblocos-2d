@@ -12,7 +12,7 @@ const camps = gen.camps!;
 
 describe('acampamentos do Grunho na Aldeia da Costa (v101)', () => {
   it('4 acampamentos de 12 lugares, todos distintos, ids estáveis; a versão 101 os tem e a 100 não', () => {
-    expect(COSTA_GENERATOR_VERSION).toBe(101); expect(camps).toHaveLength(4); expect(COSTA_CAMP_SITES).toHaveLength(4);
+    expect(COSTA_GENERATOR_VERSION).toBe(102); expect(camps).toHaveLength(4); expect(COSTA_CAMP_SITES).toHaveLength(4);
     const specs = grunhoSpecs(gen);
     expect(specs).toHaveLength(48); expect(new Set(specs.map((s) => s.id)).size).toBe(48); expect(new Set(specs.map((s) => `${s.x},${s.z}`)).size).toBe(48);
     expect(specs[0].id).toBe('g:oeste:0'); expect(camps.every((c) => c.slots.length === CAMP_SIZE)).toBe(true);
