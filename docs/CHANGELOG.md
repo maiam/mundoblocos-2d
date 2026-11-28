@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.221.0 — Vaca, porco e galinha pelas pranchas ortográficas (28/11/2026)
+- **Arte (ADR 0143, adendo).** Os três animais que faltavam passam a vir das pranchas ortográficas (vaca "Broa", porco "Goiaba", galinha "Canela"), montadas por `make-orvalis-fazenda-prancha.py`: **os quatro animais de fazenda agora saem desse fluxo e nenhum atlas tem pixel transparente dentro de face** (o script recusa). As pranchas ficam em `assets-src/orvalis-voxel/mobs/pranchas/`; a v2 do Drive deixa de ser usada.
+- O script foi generalizado: as peças de mesmo tamanho (patas, asas, pernas, pés, chifres) pegam as cruzes na ordem frente → trás e esquerda (`_e`) → direita (`_d`), da esquerda para a direita na prancha; entre cruzes do mesmo tamanho vale a de menor escala (uma peça pequena não rouba a cruz de uma grande). Conferido: o número de cruzes bate com o de peças da ficha nos quatro animais (ovelha 6, vaca 9, galinha 11, porco 8), e o atlas da ovelha ficou idêntico.
+- Todas as pranchas estão a 1 px de arte por unidade (o detalhe do atlas de 64 × 64, dobrado); para mais detalhe, pranchas a 2 ou 4 px por unidade (o script já aceita).
+- Conferido no navegador: vaca (mancha na testa, focinho rosa, chifres, manchas), porco (focinho, cauda, manchas), galinha (bico, barbela, asas, cauda, pernas). 818 testes passam; sem mudança de protocolo nem de save; o servidor não precisa de pacote novo.
+
 ## Orvalis v0.220.0 — Ovelha "pipoca" (28/11/2026)
 - **Arte.** A ovelha troca a prancha lisa pela **"Ovelha Pipoca"** (lã em cachos, franja clara na testa), enviada em prancha ortográfica a 1 px de arte por unidade; atlas montado por `make-orvalis-fazenda-prancha.py` (sem furos: o script recusa face transparente). Conferido no navegador (rosto, franja, lã, cascos).
 - Guardadas em `assets-src/orvalis-voxel/mobs/pranchas/`: `ovelha_ortografica.png` (pipoca, em uso), `ovelha_lisa_ortografica.png` (a anterior) e **`ovelha_tosquiada_ortografica.png`** (ovelha tosquiada, **sem uso**: o jogo ainda não tem tosquia, pendência já registrada — leite, tosquia e lã que recresce).

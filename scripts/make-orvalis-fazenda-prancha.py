@@ -21,8 +21,9 @@ MOBS = 'assets-src/orvalis-voxel/mobs/'
 ATLAS = 128
 PX_UNIT = ATLAS // 64  # pixels do atlas por unidade do modelo
 
-# peça da ficha -> índice da planificação do mesmo tamanho, da esquerda para a direita (peças iguais: ordem da prancha)
-GRUPOS = {'ovelha': {'pata_frente_e': 0, 'pata_frente_d': 1, 'pata_tras_e': 2, 'pata_tras_d': 3}}
+def ordem(pid):
+    """Peças iguais (patas, asas, chifres…): frente antes de trás, esquerda (_e) antes de direita (_d); a prancha as traz nessa ordem, da esquerda para a direita."""
+    return (1 if 'tras' in pid else 0, 1 if pid.endswith('_d') else 0)
 
 
 def componentes(opaco):
@@ -77,16 +78,15 @@ def main(nome):
     ficha = json.load(open(MOBS + 'fazenda-uv.json'))['mobs'][nome]['parts']
     saida = np.zeros((ATLAS, ATLAS, 4), np.uint8)
     usadas = set()
-    grupos = GRUPOS.get(nome, {})
-    for p in ficha:
+    pecas = sorted(ficha, key=lambda p: ordem(p['id']))
+    for p in pecas:
         w, h, d = p['sizePx']
         # medidas da cruz em unidades × k (pixels de arte por unidade)
         alvo = (2 * d + 2 * w, 2 * d + h)
-        # planificações de exatamente esse tamanho (k pixels de arte por unidade), da esquerda para a direita; peças iguais usam a n-ésima
-        achadas = sorted([c for c in caixas if c[2] % alvo[0] == 0 and c[3] % alvo[1] == 0 and c[2] // alvo[0] == c[3] // alvo[1]], key=lambda c: c[0])
+        # planificações exatamente desse tamanho (k pixels de arte por unidade), em fileiras e da esquerda para a direita, ainda não usadas
+        achadas = sorted([c for c in caixas if c not in usadas and c[2] % alvo[0] == 0 and c[3] % alvo[1] == 0 and c[2] // alvo[0] == c[3] // alvo[1]], key=lambda c: (c[2] // alvo[0], c[1] // 40, c[0]))  # menor k primeiro: a cruz de uma peça pequena não rouba a de uma grande
         assert achadas, ('sem planificação para', p['id'], alvo)
-        c = achadas[grupos.get(p['id'], 0)]
-        assert c not in usadas, ('planificação repetida', p['id'])
+        c = achadas[0]
         usadas.add(c)
         k = c[2] // alvo[0]  # pixels de arte por unidade do modelo
         x0, y0 = c[0], c[1]
