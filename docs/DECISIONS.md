@@ -243,4 +243,5 @@
 | **Famílias das madeiras, W3 (27/11/2026):** porta de madeira no sistema da de junco (3 famílias de 32 ids) e alçapão (376–423), itens 168–173 | ADR 0141 |
 | **Aldeia da Costa (27/11/2026):** a sala 102 vira o mapa feito à mão (gerador 100, heightmap do Drive); a partida individual não muda; protocolo 6 | ADR 0142 |
 | **Arte de 32 px quando houver (28/11/2026):** 32 px quando existe, 16 px como alternativa padrão; atlas de terreno a 32 px; pacote `Assets32px` do Drive importado | ADR 0143 |
+| **Espadas de madeira e de pedra do Orvalis (28/11/2026, ADR 0145):** itens 174 e 175, dano 4 e 5 (Java), durabilidade 59 e 131, golpe −1 e bloco −2, receita na Mesa de Carpintaria; números dos espelhos da Wiki (a oficial não abriu), a confirmar | ADR 0145 |
 | **Colher planta imatura e horta da aldeia (28/11/2026):** arrancar a planta verde devolve 1 item da própria semente; a aldeia nasce com cenoura e batata plantadas; a grama segue soltando-as até haver outra fonte | ADR 0144 |
