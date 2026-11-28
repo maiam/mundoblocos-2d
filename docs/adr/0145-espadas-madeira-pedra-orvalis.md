@@ -9,7 +9,7 @@ Espada de madeira: dano **4** (Java; 5 na Bedrock), durabilidade **59**, velocid
 O Orvalis não tinha espada (a adaga é do Titã, itens 22 e 24, e a ADR 0114 proíbe compartilhar). Dano: punho 1; ferramentas do Orvalis abaixo da Wiki (machados 2 e 3, picaretas 1 e 2, pás 1 e 2, enxada 1: auditoria #25 pendente). Durabilidade 59 e 131 já eram a da Wiki. Sem recarga de ataque (cada toque é um golpe).
 
 ## Decisão
-1. **Itens 174 (Espada de Madeira) e 175 (Espada de Pedra)**, só do Orvalis; novo `ToolKind` `'sword'` em `TOOLS` (`isSword`, nunca ids soltos), pilha de 1, **atlas de itens 4 × 44 cheio (176 células): item novo é o 176 e amplia de novo**.
+1. **Itens 174 (Espada de Madeira) e 175 (Espada de Pedra)**, só do Orvalis; novo `ToolKind` `'sword'` em `TOOLS` (`isSword`, nunca ids soltos), pilha de 1, **atlas de itens 4 × 44 (176 células; o item N fica na célula N − 1): o 176 ainda cabia (virou a Fogueira, ADR 0146) e o 177 amplia de novo** (correção da contagem original, que dizia 176).
 2. **Dano 4 e 5** (Java) em `WEAPON_DAMAGE`; as demais ferramentas não mudam (ficam para a auditoria #25).
 3. **Durabilidade 59 e 131** em `MAX_DURABILITY`; **desgaste como a adaga:** golpe −1, bloco −2, bloco de quebra instantânea 0 (`wearCost`).
 4. **Receitas** na Mesa de Carpintaria, no padrão do jogo (ferramentas na bancada, sem a disposição em coluna): 2 tábuas de carvalho + 1 haste; 2 Pedras + 1 haste.

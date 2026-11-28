@@ -30,7 +30,7 @@ describe('cerca e portão de madeira (ADR 0140)', () => {
       for (let m = 0; m < 16; m++) { const id = fenceId(k.w, m); expect(isFence(id) && woodOf(id) === k.w && fenceMask(id) === m).toBe(true); expect(itemOfBlock(id)).toBe(k.fence); expect(modelOf(id)).toEqual({ kind: FENCE_KINDS[k.w * 16 + m], turn: 0 }); expect(surfaceOf(id)).toBe('rock'); }
       for (let t = 0; t < 4; t++) for (const op of [false, true]) { const id = gateId(k.w, t, op); expect(isGate(id) && woodOf(id) === k.w && gateTurn(id) === t && isGateOpen(id) === op).toBe(true); expect(itemOfBlock(id)).toBe(k.gate); expect(modelOf(id)).toEqual({ kind: GATE_KINDS[k.w * 2 + (op ? 1 : 0)], turn: t }); expect(gateToggled(gateToggled(id))).toBe(id); }
     }
-    expect(isItem(176)).toBe(false);
+    expect(isItem(177)).toBe(false);
   });
 
   it('forma: cerca e portão fechado são sólidos não cúbicos; o portão aberto é só alvo da mira; modelos têm geometria', () => {

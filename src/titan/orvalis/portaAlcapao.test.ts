@@ -24,7 +24,7 @@ const clear = (s: Awaited<ReturnType<typeof open>>) => {
 
 describe('porta e alçapão de madeira (ADR 0141)', () => {
   it('ids 280–423, itens 168–173, nomes e receitas da Wiki (porta 6 tábuas → 3; alçapão 6 → 2)', () => {
-    expect(T_MAX).toBe(423); expect(T.DOOR_WOOD).toBe(280); expect(T.TRAPDOOR).toBe(376);
+    expect(T_MAX).toBeGreaterThanOrEqual(423); expect(T.DOOR_WOOD).toBe(280); expect(T.TRAPDOOR).toBe(376);
     for (const k of WOODS) {
       expect(isItem(k.door) && isItem(k.trap)).toBe(true);
       expect(ITEM_NAMES[k.door]).toBe(`Porta de ${k.nome}`); expect(ITEM_NAMES[k.trap]).toBe(`Alçapão de ${k.nome}`);
@@ -45,7 +45,7 @@ describe('porta e alçapão de madeira (ADR 0141)', () => {
         expect(modelOf(id)).toEqual({ kind: TRAPDOOR_KINDS[k.w * 3 + (op ? 2 : top ? 1 : 0)], turn: t }); expect(trapdoorToggled(trapdoorToggled(id))).toBe(id);
       }
     }
-    expect(doorFamily(T.DOOR)).toBe(0); expect(itemOfBlock(T.DOOR)).toBe(Item.PORTA_JUNCO); expect(isItem(176)).toBe(false); // a porta de junco segue igual
+    expect(doorFamily(T.DOOR)).toBe(0); expect(itemOfBlock(T.DOOR)).toBe(Item.PORTA_JUNCO); expect(isItem(177)).toBe(false); // a porta de junco segue igual
   });
 
   it('alçapão: caixa fina embaixo, em cima ou de pé (aberto); o giro roda a placa aberta', () => {

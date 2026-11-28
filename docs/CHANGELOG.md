@@ -1,8 +1,13 @@
 # Changelog
 
+## Orvalis v0.223.0 — Fogueira (etapa 1 dos acampamentos do Grunho, 28/11/2026)
+- **ADR 0146 (aprovada; auditoria #50).** Bloco **`T.CAMPFIRE` (424)** e item **176 (Fogueira)**, só do Orvalis: modelo de dois planos cruzados do ícone de 32 px (`fogueiraModel`), **luz 15**, não sólida, alvo da mira, em pé sobre o topo de um cubo firme (sem o apoio, cai como item), quebrar devolve a Fogueira (machado, dureza 2), receita na Mesa de Carpintaria (3 hastes + 1 Carvão Vegetal + 3 troncos de carvalho). **Ressalva:** a `minecraft.wiki` não abriu; os números vêm de espelhos, a confirmar. Fora: cozinhar, dano por pisar, fumaça.
+- **Correção da contagem do atlas de itens:** o item N fica na célula N − 1, então o 176 ainda cabia no atlas de 4 × 44 (a ADR 0145 dizia que o 176 ampliava); **o 177 amplia**. Docs corrigidos.
+- 825 testes passam (`orvalis/fogueira.test.ts` novo; limites de item e de bloco subidos em seis testes antigos); conferido no navegador (modelo e brasas). **O servidor precisa do pacote novo** (`build:net` + `sync-net`) para a sala aceitar o bloco 424 e o item 176.
+
 ## Orvalis v0.222.0 — Espadas de madeira e de pedra (28/11/2026)
 - **ADR 0145 (aprovada; auditoria #49).** Itens **174 (Espada de Madeira)** e **175 (Espada de Pedra)**, só do Orvalis (a adaga é do Titã, ADR 0114): novo `ToolKind` `'sword'` (`isSword`), **dano 4 e 5** (Java), **durabilidade 59 e 131**, desgaste como a adaga (golpe −1, bloco −2, instantâneo 0) e receitas na Mesa de Carpintaria (2 tábuas de carvalho ou 2 Pedras + 1 haste). **Ressalva:** a `minecraft.wiki` não abriu na sessão; os números vêm do espelho Fandom e ficam **a confirmar** na Wiki oficial.
-- **Arte.** As duas ilustrações do dono (1254 × 1254) viram o ícone de 32 px por `scripts/make-orvalis-espadas.py` (paleta pequena e cor mais frequente por célula) e entram em `arte32/itens.json`; na mão é o sprite extrudado de sempre. **Atlas de itens 4 × 44 cheio (176 células): o próximo item é o 176 e amplia de novo.**
+- **Arte.** As duas ilustrações do dono (1254 × 1254) viram o ícone de 32 px por `scripts/make-orvalis-espadas.py` (paleta pequena e cor mais frequente por célula) e entram em `arte32/itens.json`; na mão é o sprite extrudado de sempre. **Atlas de itens 4 × 44 (176 células; o item N fica na célula N − 1, então o 176 ainda cabe): o próximo item novo depois dele (177) amplia.**
 - Fora desta entrega: recarga de ataque (1,6/s), crítico, varredura, quebra rápida de teia/bambu.
 - 822 testes passam (`orvalis/espadas.test.ts` novo; seis testes antigos tiveram os limites de item/ferramenta subidos); conferido no navegador (ícone na barra e sprite na mão). Sem mudança de protocolo nem de save; o servidor precisa do pacote novo (`build:net` + `sync-net`) para a sala aceitar os itens 174 e 175.
 

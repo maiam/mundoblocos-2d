@@ -1,4 +1,4 @@
-import { isFence, isFurnace, isGate, isTorch, isWall, T } from './voxel';
+import { isCampfire, isFence, isFurnace, isGate, isTorch, isWall, T } from './voxel';
 
 /**
  * Regras puras do som do Titã (ADR 0054; sem DOM, testável em Node): qual material soa em cada bloco e o relógio dos passos.
@@ -13,7 +13,7 @@ export function surfaceOf(block: number | undefined): SurfaceMaterial | null {
   if (block !== undefined && isWall(block)) return 'rock'; // mureta de pedra (ADR 0110)
   if (block !== undefined && isFurnace(block)) return 'rock'; // fornalha do Orvalis (ADR 0120)
   if (block === T.COAL_ORE || block === T.COAL_BLOCK) return 'rock'; // carvão do Orvalis (ADR 0122)
-  if (block !== undefined && isTorch(block)) return 'sand'; // tocha (ADR 0121): madeira leve, sem timbre próprio ainda
+  if (block !== undefined && (isTorch(block) || isCampfire(block))) return 'sand'; // tocha (ADR 0121): madeira leve, sem timbre próprio ainda
   if (block !== undefined && block >= T.DOOR && block <= T.DOOR_LAST) return 'sand'; // a porta de junco soa como o resto do junco (ADR 0102)
   switch (block) {
     case T.FARMLAND_DRY: case T.FARMLAND_WET: case T.PATH: case T.DIRT_INFERTILE: case T.CLAY_BLOCK: return 'sand'; // ADR 0111: sem timbre próprio ainda
