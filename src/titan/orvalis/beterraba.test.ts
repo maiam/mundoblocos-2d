@@ -53,14 +53,16 @@ describe('Beterraba na sessão', () => {
     const s = await open(); const f = field(s); hold(s, Item.SEMENTE_BETERRABA, 3);
     expect(placeFromSlot(s, f.hit, s.selected).ok).toBe(true);
     const c = s.crops.get(`${f.x},${f.y + 1},${f.z}`)!; expect(c.species).toBe('beterraba'); expect(c.age).toBe(0);
-    expect(collectItem(s, `crop:${f.x},${f.y + 1},${f.z}`)).toMatchObject({ ok: false, msg: 'Ainda está crescendo' }); // verde não colhe
-    c.age = 3;
+    expect(collectItem(s, `crop:${f.x},${f.y + 1},${f.z}`)).toMatchObject({ ok: true }); // verde: arranca e devolve 1 semente (Wiki, ADR 0144)
+    expect(s.crops.has(`${f.x},${f.y + 1},${f.z}`)).toBe(false);
+    expect(placeFromSlot(s, f.hit, s.selected).ok).toBe(true); const c2 = s.crops.get(`${f.x},${f.y + 1},${f.z}`)!; // replanta
+    c2.age = 3;
     const crop = { x: f.x, y: f.y + 1, z: f.z };
     const antes = s.inventory.total(Item.SEMENTE_BETERRABA);
     const r = collectItem(s, `crop:${crop.x},${crop.y},${crop.z}`);
     expect(r.ok).toBe(true); expect(s.inventory.total(Item.BETERRABA)).toBe(1);
     const ganhou = s.inventory.total(Item.SEMENTE_BETERRABA) - antes; expect(ganhou).toBeGreaterThanOrEqual(1); expect(ganhou).toBeLessThanOrEqual(4); expect(r.msg).toContain('beterraba');
-    expect(c.age).toBe(0);
+    expect(c2.age).toBe(0); expect(c.species).toBe('beterraba');
   });
   it('semente silvestre rara no capim (hash da célula) e sempre igual', () => {
     const seen = new Set<number | null>(); for (let x = 0; x < 40; x++) for (let z = 0; z < 40; z++) seen.add(wildSeedAt(x, 70, z));

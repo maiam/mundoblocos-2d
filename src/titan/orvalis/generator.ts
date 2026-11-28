@@ -333,6 +333,8 @@ const COSTA_FENCE = new Set(COSTA_PLAN.cercas.celulas.map(([x, z]) => cellKey(x,
 const COSTA_GATES = new Map(COSTA_PLAN.cercados.map((c) => [cellKey(c.porteira[0], c.porteira[1]), c.porteira] as const)); // as porteiras ficam no vão da cerca
 const COSTA_GATE_X = (x: number, z: number): boolean => COSTA_FENCE.has(cellKey(x - 1, z)) || COSTA_FENCE.has(cellKey(x + 1, z)); // o painel corre em X se há cerca nos lados de leste e oeste
 /** Animais dos cercados (a Wiki põe os animais na criação; as espécies e as quantidades são escolha do mapa): cercado A = 3 galinhas e 1 porco; cercado B = 2 vacas e 2 ovelhas. */
+/** Os talhões 1 e 2 da horta inicial (caixas do `implantacao.json`). */
+const COSTA_PLANTIO = [COSTA_PLAN.talhoes[0].caixa, COSTA_PLAN.talhoes[1].caixa] as const;
 const COSTA_PENS: ReadonlyArray<{ pen: number; kind: FaunaKind; n: number }> = [{ pen: 0, kind: 'galinha', n: 3 }, { pen: 0, kind: 'porco', n: 1 }, { pen: 1, kind: 'vaca', n: 2 }, { pen: 1, kind: 'ovelha', n: 2 }];
 
 export class CostaGenerator extends OrvalisGenerator {
@@ -384,6 +386,19 @@ export class CostaGenerator extends OrvalisGenerator {
       if (COSTA_GATES.has(k)) return gateId(0, COSTA_GATE_X(x, z) ? 0 : 1, false);
     }
     return super.blockAt(x, y, z);
+  }
+
+  /** A horta inicial (ADR 0144): cenoura no talhão 1 e batata no talhão 2, em xadrez (metade das células de terra arada), com idades sorteadas pela seed — umas maduras, outras crescendo. O talhão 3 fica livre. */
+  get startCrops(): ReadonlyArray<{ x: number; y: number; z: number; species: 'cenoura' | 'batata'; age: number }> {
+    const out: Array<{ x: number; y: number; z: number; species: 'cenoura' | 'batata'; age: number }> = [];
+    for (const [n, species] of [[0, 'cenoura'], [1, 'batata']] as const) {
+      const [x0, z0, x1, z1] = COSTA_PLANTIO[n];
+      for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+        if ((x + z) % 2 !== 0 || this.column(x, z).surface !== T.FARMLAND_DRY) continue;
+        out.push({ x, y: this.column(x, z).top + 1, z, species, age: Math.floor(hash2(this.seed, x * 131 + z, 53 + n) * 8) });
+      }
+    }
+    return out;
   }
 
   /** Animais da criação: dentro de cada cercado (a caixa do JSON sem a cerca), no pasto. */

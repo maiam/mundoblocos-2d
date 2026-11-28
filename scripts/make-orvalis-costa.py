@@ -30,6 +30,7 @@ def main() -> None:
         'portoes': [{'nome': p['nome'], 'x': p['x_incl'], 'z': p['z']} for p in a['portoes']],
         'cercas': {'yBase': a['cercas']['y_base'], 'celulas': a['cercas']['celulas_xz']},
         'cercados': [{'nome': c['nome'], 'caixa': c['limites_x0_z0_x1_z1'], 'porteira': c['porteira_xz']} for c in a['cercados']],
+        'talhoes': [{'nome': t['nome'], 'caixa': t['limites_x0_z0_x1_z1']} for t in a['talhoes']],
         'bases': [{'nome': b['nome'], 'caixa': b['limites_x0_z0_x1_z1']} for b in a['bases_edificaveis']],
         'arvores': imp['arvores_xz'],
         'soloY': a['solo_y'],

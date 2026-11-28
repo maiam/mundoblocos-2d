@@ -96,3 +96,19 @@ describe('aldeia da costa (ADR 0142)', () => {
     expect(s.volume.gen.version).toBe(ORVALIS_GENERATOR_VERSION); expect(s.volume.gen).not.toBeInstanceOf(CostaGenerator);
   });
 });
+
+describe('horta da aldeia e planta imatura (ADR 0144)', () => {
+  it('a partida nova da aldeia traz cenoura no talhão 1 e batata no talhão 2, em xadrez, com idades sorteadas; o talhão 3 fica livre', async () => {
+    const crops = gen.startCrops, [t1, t2, t3] = COSTA_PLAN.talhoes.map((t) => t.caixa);
+    const inBox = (c: { x: number; z: number }, b: readonly number[]): boolean => c.x >= b[0] && c.x <= b[2] && c.z >= b[1] && c.z <= b[3];
+    expect(crops.length).toBeGreaterThan(20);
+    expect(crops.every((c) => (c.x + c.z) % 2 === 0 && c.age >= 0 && c.age <= 7 && gen.column(c.x, c.z).surface === T.FARMLAND_DRY && c.y === gen.column(c.x, c.z).top + 1)).toBe(true);
+    expect(crops.filter((c) => inBox(c, t1)).every((c) => c.species === 'cenoura') && crops.filter((c) => inBox(c, t2)).every((c) => c.species === 'batata')).toBe(true);
+    expect(crops.some((c) => inBox(c, t3))).toBe(false);
+    expect(new Set(crops.map((c) => c.age)).size).toBeGreaterThan(3); // umas maduras, outras crescendo
+    const s = await openSession(new MemoryTitanStorage(), 128064, () => 1, orvalisGeneratorFor, COSTA_GENERATOR_VERSION, (sd) => new CostaGenerator(sd));
+    expect(s.crops.size).toBe(crops.length);
+    const room = new TitanRoom(102, 'x', 128064, () => 0.5, 'orvalis', 'costa'); expect(room.world.crops.size).toBe(crops.length);
+    expect((new OrvalisGenerator(1) as { startCrops?: unknown }).startCrops).toBeUndefined(); // a partida individual não traz horta pronta
+  });
+});

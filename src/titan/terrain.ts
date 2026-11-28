@@ -24,6 +24,8 @@ export interface TerrainGen {
   readonly reeds: ReadonlyArray<{ x: number; y: number; z: number }>;
   readonly nutPlants: ReadonlyArray<{ x: number; y: number; z: number }>;
   readonly den: { x: number; y: number; z: number } | null;
+  /** Plantas que a partida nova já traz plantadas (o mapa feito à mão da Aldeia da Costa, ADR 0144); ausente = nenhuma. A leitura de um save usa as do save. */
+  readonly startCrops?: ReadonlyArray<{ x: number; y: number; z: number; species: 'cenoura' | 'batata'; age: number }>;
   reedsFor(ex: number, ez: number): Array<{ x: number; y: number; z: number }>;
   planEmber(strict?: boolean): Array<{ x: number; z: number }>;
 }

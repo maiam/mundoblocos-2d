@@ -18,7 +18,7 @@ import { wearCost, type WearAction } from './wear';
 import { SLOTS } from './inventory';
 import { applyDisplace, planDisplace, settleDrops, stepDrops } from './drops';
 import { CHEST_SLOTS, type ChestState, chestPut, chestRoom, newChest } from './chest';
-import { isStem, STEM_MAX_AGE, type Species, cropKey, gardenSpeciesOf, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKindFor, wildSeedAt } from './crops';
+import { isGarden, isStem, STEM_MAX_AGE, type Species, cropKey, gardenSpeciesOf, harvestOf, isRipe, parseCropId, plantableSoil, seedOf, soilKindFor, wildSeedAt } from './crops';
 
 /**
  * Ações do jogador no mundo (ADR 0040): quebrar, colocar e recolher à mão. Sem DOM. Cada ação valida espaço **antes** de mudar qualquer coisa
@@ -56,7 +56,16 @@ function collectCrop(s: TitanSession, id: string): ActionResult {
   const kind = crop ? soilKindFor(crop.species, s.volume.get(crop.x, crop.y - 1, crop.z)) : null;
   if (!crop || !kind) return { ok: false };
   if (isStem(crop.species)) return { ok: false, msg: crop.dir === undefined ? (crop.age >= STEM_MAX_AGE ? 'O caule está maduro: o fruto vem logo' : 'Ainda está crescendo') : 'O fruto está ao lado: quebre-o' }; // o caule não se colhe (ADR 0128)
-  if (!isRipe(crop.species, kind, crop.age)) return { ok: false, msg: 'Ainda está crescendo' };
+  if (!isRipe(crop.species, kind, crop.age)) {
+    if (!isGarden(crop.species)) return { ok: false, msg: 'Ainda está crescendo' };
+    // planta imatura da horta (Wiki, ADR 0144): colher a arranca e rende 1 item da própria semente (1 cenoura, 1 batata, 1 semente de trigo…); só a madura rebrota
+    const back = seedOf(crop.species);
+    if (!s.inventory.canAdd(back, 1)) return FULL;
+    s.inventory.add(back, 1);
+    s.crops.delete(cropKey(crop.x, crop.y, crop.z));
+    s.metaRev++;
+    return { ok: true, msg: `Planta arrancada: 1 ${ITEM_NAMES[back]?.toLowerCase() ?? 'semente'}` };
+  }
   const h = harvestOf(crop.species, kind);
   const cell = (Math.imul(crop.x, 73856093) ^ Math.imul(crop.z, 83492791)) | 0, salt = crop.y + s.days * 1009 + Math.floor(s.time * 1000);
   const count = h.countMax ? h.count + Math.floor(hash2(s.seed, cell, salt + 77) * (h.countMax - h.count + 1)) : h.count; // cenoura e batata: 2–5 (Wiki, ADR 0129)
