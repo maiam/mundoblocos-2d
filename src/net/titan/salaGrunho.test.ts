@@ -13,8 +13,8 @@ const applied = (out: Array<{ msg: TitanServerMessage }>) => out.find((o) => o.m
 const at = (r: TitanRoom, id: number, x: number, y: number, z: number): void => { r.handle(id, { t: 'state', s: { x, y, z, yaw: 0, pitch: 0, sel: 0 } }); };
 
 describe('Grunho na sala do Orvalis (ADR 0147)', () => {
-  it('o protocolo é o 7 e o analisador aceita `strikeGrunho` só com id válido', () => {
-    expect(TITAN_PROTOCOL_VERSION).toBe(7);
+  it('o protocolo é o 8 e o analisador aceita `strikeGrunho` só com id válido', () => {
+    expect(TITAN_PROTOCOL_VERSION).toBe(8);
     expect(parseTitanClientMessage(JSON.stringify({ t: 'act', seq: 1, a: { k: 'strikeGrunho', id: 'g:oeste:0' } }))).not.toBeNull();
     expect(parseTitanClientMessage(JSON.stringify({ t: 'act', seq: 1, a: { k: 'strikeGrunho', id: '' } }))).toBeNull();
     expect(parseTitanClientMessage(JSON.stringify({ t: 'act', seq: 1, a: { k: 'strikeGrunho' } }))).toBeNull();

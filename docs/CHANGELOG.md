@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.229.0 — Casas e Celeiro da Aldeia da Costa (28/11/2026)
+- **ADR 0149.** As 4 bases da sala 102 ganham construções de carvalho: toras nos cantos, paredes de tábua, **porta na entrada** (dupla no Celeiro), **alçapões nas janelas** e **telhado de degraus** com cumeeira e oitão (`titan/orvalis/casas.ts`, puro). **Costa v102** e **protocolo 8** (jogo e servidor juntos); a sala recusa o arquivo salvo da v101 (o servidor guarda a cópia `.bak`).
+- **Correção de arte:** a lateral −X do perfil dos degraus (madeira e pedra) caía na metade transparente do tile e saía preta nas pontas do telhado; `u = 1 − z` nas duas laterais (só os JSONs de modelo mudam).
+- Conferido no navegador (sala em memória): portas, porta dupla do Celeiro, janelas e telhados de frente e do alto, sem quadrados pretos. 855 testes passam (`orvalis/casas.test.ts` novo, 7).
+
 ## Orvalis v0.228.0 — Arte nova das ferramentas (28/11/2026)
 - **Arte (ADR 0112/0143, adendo).** Picareta, machado, pá e enxada, de madeira e de pedra (itens 70–77), passam a usar a arte nova do dono: ícones de **32 px** (`make-orvalis-espadas.py`, que agora reduz as 8 fontes em `assets-src/orvalis-voxel/ferramentas/`) e `itemMasks.json` regenerado, então a mão extruda o desenho novo. Os 8 saíram de `arte16/itens.json` e entraram em `arte32/itens.json` (um item nunca está nas duas listas). Sem mudança de regra, de id nem de save; atlas de itens segue 4 × 45.
 - 848 testes passam; tsc limpo.

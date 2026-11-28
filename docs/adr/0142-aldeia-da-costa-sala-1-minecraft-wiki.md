@@ -13,4 +13,4 @@ Uma aldeia do Minecraft nasce por regra de estrutura (casas, poço, caminhos de 
 5. **A partida individual não muda:** `ORVALIS_GENERATOR_VERSION` segue 6 e o relevo por ruído é o mesmo; as versões 1–6 continuam abrindo como antes.
 
 ## Consequências
-Pendentes: casas e celeiro (só o piso); o pacote não traz poço nem bancos; talhões sem água (arados secos); a aldeia só existe na sala 102 (a partida individual não a abre); se o mapa mudar → `COSTA_GENERATOR_VERSION` nova. Servidor: sincronizar o pacote (`build:net` + `sync-net`) e passar `def.terrain` ao criar a sala.
+Pendentes: ~~casas e celeiro (só o piso)~~ (feitas na ADR 0149); o pacote não traz poço nem bancos; talhões sem água (arados secos); a aldeia só existe na sala 102 (a partida individual não a abre); se o mapa mudar → `COSTA_GENERATOR_VERSION` nova. Servidor: sincronizar o pacote (`build:net` + `sync-net`) e passar `def.terrain` ao criar a sala.

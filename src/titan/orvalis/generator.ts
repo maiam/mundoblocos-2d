@@ -6,6 +6,7 @@ import { derive } from '../generator';
 import type { TerrainGen } from '../terrain';
 import { attemptsFor, mulberry32, type OreRule, sampleOreY, veinCells } from '../ores';
 import { fenceId, gateId, inRegion, LAKE_LAST_Y, REGION_V6, type Region, T, WALL_E, WALL_N, WALL_S, WALL_W, Y_MIN } from '../voxel';
+import { buildingBlockAt, COSTA_BUILDINGS, type Building } from './casas';
 import { COSTA_HEIGHT_B64, COSTA_MASK_B64, COSTA_PLAN } from './costaData';
 import type { FaunaKind } from '../fauna';
 
@@ -317,8 +318,10 @@ export class OrvalisGenerator implements TerrainGen {
  * com o relevo por ruído (`ORVALIS_GENERATOR_VERSION`). Herda do `OrvalisGenerator` o que continua valendo — flora marinha, recifes e veios de carvão (regras v6) — e a fauna espalhada de `faunaSpecs`; soma os animais dos
  * cercados (`farmFauna`). Muda o mapa, o muro ou a regra → versão nova.
  */
-export const COSTA_GENERATOR_VERSION = 101; // 101 (ADR 0147): 4 acampamentos de goblins fora do muro; 100 era a aldeia sem eles (um arquivo salvo da sala 100 é recusado: a sala começa de novo, o antigo fica numa cópia `.bak` do servidor)
+export const COSTA_GENERATOR_VERSION = 102; // 102 (ADR 0149): Casa 1, 2, 3 e Celeiro (paredes de carvalho, telhado de degraus, alçapões nas janelas, portas na entrada); um arquivo salvo da v101 é recusado (a sala recomeça; o antigo fica na cópia `.bak` do servidor); 101 (ADR 0147): 4 acampamentos de goblins fora do muro; 100 era a aldeia sem eles (um arquivo salvo da sala 100 é recusado: a sala começa de novo, o antigo fica numa cópia `.bak` do servidor)
 export const COSTA_LEGACY_VERSION = 100;
+/** As construções da aldeia (ADR 0149), na ordem das bases do pacote; só a partir da v102. */
+const COSTA_BUILDS: readonly Building[] = COSTA_PLAN.bases.map((b, i) => ({ ...COSTA_BUILDINGS[i], caixa: b.caixa }));
 /** Acampamentos do Grunho (ADR 0147), fora do muro, em terreno quase plano (achados no mapa pela altura e pelo material): o gerador aplaina uma clareira de terra batida de `CAMP_FLAT_R` m (na altura mediana do local), com rampa até `CAMP_BLEND_R`, tira as árvores de perto e põe a Fogueira no centro e 12 lugares numa roda de `CAMP_RING_R` m. */
 export const COSTA_CAMP_SITES: ReadonlyArray<{ id: string; x: number; z: number }> = [{ id: 'oeste', x: -38, z: 4 }, { id: 'sudoeste', x: -32, z: 28 }, { id: 'nordeste', x: 35, z: -10 }, { id: 'sudeste', x: 37, z: 26 }];
 export const CAMP_SIZE = 12, CAMP_FLAT_R = 5.5, CAMP_BLEND_R = 12, CAMP_RING_R = 3.5, CAMP_TREE_R = 10;
@@ -426,6 +429,7 @@ export class CostaGenerator extends OrvalisGenerator {
   override blockAt(x: number, y: number, z: number): number {
     const k = cellKey(x, z);
     if (this.hasCamps && COSTA_CAMP_SITES.some((c) => c.x === x && c.z === z) && y === this.column(x, z).top + 1) return T.CAMPFIRE; // a Fogueira do acampamento (ADR 0147)
+    if (this.version >= 102 && y > COSTA_PLAN.soloY) for (const b of COSTA_BUILDS) { const id = buildingBlockAt(b, x, y, z); if (id) return id; } // casas e celeiro (ADR 0149)
     if (y >= COSTA_PLAN.muro.y[0] && y <= COSTA_PLAN.muro.y[1] && COSTA_WALL.has(k)) return T.STONE_SMOOTH;
     if (y === COSTA_PLAN.cercas.yBase) {
       if (COSTA_FENCE.has(k)) {
@@ -465,4 +469,4 @@ export class CostaGenerator extends OrvalisGenerator {
 }
 
 export const orvalisGeneratorFor = (seed: number, version: number): OrvalisGenerator | null =>
-  version === COSTA_GENERATOR_VERSION || version === COSTA_LEGACY_VERSION ? new CostaGenerator(seed, version) : Number.isInteger(version) && version >= 1 && version <= ORVALIS_GENERATOR_VERSION ? new OrvalisGenerator(seed, version) : null;
+  version === COSTA_GENERATOR_VERSION || version === COSTA_LEGACY_VERSION || version === 101 ? new CostaGenerator(seed, version) : Number.isInteger(version) && version >= 1 && version <= ORVALIS_GENERATOR_VERSION ? new OrvalisGenerator(seed, version) : null;

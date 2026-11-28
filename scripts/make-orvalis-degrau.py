@@ -6,7 +6,7 @@ Entradas : assets-src/orvalis-voxel/texturas32/degrau-pedra/{topo,frente,perfil}
            perfil = a lateral em L: patamar de baixo inteiro (metade de baixo) e o de cima só na metade de trás (quarto superior direito)
 Saídas   : src/assets/titan-degrau-pedra.webp   96 × 32 (topo | frente | perfil; tiles de 32 px: a arte de 16 px é ampliada por vizinho mais próximo)
            src/assets/titan-degrau-pedra.json    modelo no formato dos instanciados (`pos`, `nrm`, `uv`, `idx`, `size`; frente em +Z, giro 0; pivô no centro da base da célula)
-As UVs usam a arte **como desenhada**: o perfil cobre a lateral +X com u = 1 − z, v = 1 − y (o patamar alto atrás); na lateral −X vale u = z (a única inversão inevitável do desenho, ADR 0109).
+As UVs usam a arte **como desenhada**: o perfil cobre a lateral +X com u = 1 − z, v = 1 − y (o patamar alto atrás); a lateral −X usa a mesma u = 1 − z (v0.229.0: com u = z o patamar alto caía na metade transparente do tile e saía preto).
 As caixas são as de `titan/voxel.ts` (`STAIR_BASE`). Uso: python3 scripts/make-orvalis-degrau.py   (precisa do Pillow: `pip3 install pillow`)
 """
 import json
@@ -52,7 +52,7 @@ def faces(b):
         ([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], (0, 0, 1), 1, lambda x, y, z: (x, 1 - (y - y0))),
         ([(x1, y0, z0), (x0, y0, z0), (x0, y1, z0), (x1, y1, z0)], (0, 0, -1), 1, lambda x, y, z: (1 - x, 1 - (y - y0))),
         ([(x1, y0, z1), (x1, y0, z0), (x1, y1, z0), (x1, y1, z1)], (1, 0, 0), 2, lambda x, y, z: (1 - z, 1 - y)),
-        ([(x0, y0, z0), (x0, y0, z1), (x0, y1, z1), (x0, y1, z0)], (-1, 0, 0), 2, lambda x, y, z: (z, 1 - y)),
+        ([(x0, y0, z0), (x0, y0, z1), (x0, y1, z1), (x0, y1, z0)], (-1, 0, 0), 2, lambda x, y, z: (1 - z, 1 - y)),  # perfil: o patamar alto (atrás, z 0–0,5) cai na metade desenhada do tile nas duas laterais (v0.229.0; antes a lateral −X caía na metade transparente e saía preta)
     ]
 
 
