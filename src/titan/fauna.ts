@@ -193,22 +193,28 @@ export const faunaBox = (f: Fauna): { x0: number; y0: number; z0: number; x1: nu
   return { x0: f.body.x - h, y0: f.body.y, z0: f.body.z - h, x1: f.body.x + h, y1: f.body.y + K.height * k, z1: f.body.z + h };
 };
 
+export interface AabbBox { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number }
+/** Distância (m) em que o raio entra na caixa, ou `null` se não a acerta (método das lajes). Compartilhado com a mira do Grunho (ADR 0147). */
+export function rayAabb(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, bx: AabbBox): number | null {
+  let t0 = 0, t1 = Infinity;
+  for (const [o, d, lo, hi] of [[ox, dx, bx.x0, bx.x1], [oy, dy, bx.y0, bx.y1], [oz, dz, bx.z0, bx.z1]] as const) {
+    if (Math.abs(d) < 1e-9) { if (o < lo || o > hi) return null; continue; }
+    let a = (lo - o) / d, c = (hi - o) / d;
+    if (a > c) [a, c] = [c, a];
+    t0 = Math.max(t0, a); t1 = Math.min(t1, c);
+    if (t0 > t1) return null;
+  }
+  return t0;
+}
+
 /**
  * Animal na mira: o raio do olhar contra a caixa de acerto de cada animal até `reach` m, escondido por bloco mais perto (`blockDist`); vence o mais perto. Sem ajuda de mira: a caixa da Wiki é a regra.
  */
 export function faunaAim(list: readonly Fauna[], ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, reach: number, blockDist = Infinity): { index: number; dist: number } | null {
   let best: { index: number; dist: number } | null = null;
   list.forEach((f, index) => {
-    const bx = faunaBox(f);
-    let t0 = 0, t1 = Infinity;
-    for (const [o, d, lo, hi] of [[ox, dx, bx.x0, bx.x1], [oy, dy, bx.y0, bx.y1], [oz, dz, bx.z0, bx.z1]] as const) {
-      if (Math.abs(d) < 1e-9) { if (o < lo || o > hi) return; continue; }
-      let a = (lo - o) / d, c = (hi - o) / d;
-      if (a > c) [a, c] = [c, a];
-      t0 = Math.max(t0, a); t1 = Math.min(t1, c);
-      if (t0 > t1) return;
-    }
-    if (t0 > reach || t0 >= blockDist) return;
+    const t0 = rayAabb(ox, oy, oz, dx, dy, dz, faunaBox(f));
+    if (t0 === null || t0 > reach || t0 >= blockDist) return;
     if (!best || t0 < best.dist) best = { index, dist: t0 };
   });
   return best;

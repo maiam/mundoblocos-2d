@@ -2,7 +2,7 @@
 
 Entradas : assets-src/orvalis-voxel/mobs/{porco,vaca,ovelha,galinha}_uv_{128x128,64x64}.png  (Drive: atlas UV por animal; 128 × 128 preferido, 64 × 64 de reserva)
            assets-src/orvalis-voxel/mobs/fazenda-uv.json                          (as 4 fichas do `mobs64px-uv.json`: caixas, pivôs e UV; frente = −Z, 1 unidade = 1/16 de bloco)
-Saídas   : src/assets/orvalis-fazenda-{porco,vaca,ovelha,galinha}.webp            (WebP sem perdas, 128 × 128 ou 64 × 64)
+Saídas   : src/assets/orvalis-fazenda-{porco,vaca,ovelha,galinha}.webp e orvalis-grunho.webp (ADR 0147)            (WebP sem perdas, 128 × 128 ou 64 × 64)
            src/render/art/fazenda-modelos.json                                    (as fichas, sem o texto de referência)
 Repetível. Uso: python3 -I scripts/make-orvalis-fazenda.py (Pillow). Depois: `make-titan-arte32.py` e `make-titan-item-masks.py`.
 """
@@ -29,5 +29,12 @@ for mob in ficha['mobs'].values():
     mob.pop('atlas', None)
 with open('src/render/art/fazenda-modelos.json', 'w') as f:
     json.dump(ficha, f, ensure_ascii=False, separators=(',', ':'))
+
+# Grunho Casca-Rachada (ADR 0147): atlas de 128 × 128 (da prancha, por make-orvalis-fazenda-prancha.py grunho) e a ficha de caixas
+gi = Image.open(f'{MOBS}grunho_uv_128x128.png').convert('RGBA')
+assert gi.size == (128, 128), gi.size
+gi.save(f'{OUT}orvalis-grunho.webp', 'WEBP', lossless=True, method=6)
+with open('src/render/art/grunho-modelos.json', 'w') as f:
+    json.dump(json.load(open(MOBS + 'grunho-uv.json')), f, ensure_ascii=False, separators=(',', ':'))
 
 print('ok')

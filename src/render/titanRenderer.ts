@@ -5,7 +5,7 @@ import { FOV_DEG, SPRINT_FOV_DEG } from '../titan/aim';
 import { DIP_SINGLE, EquipAnim, HandAnim, type HandKind } from './heldPose';
 import { extrudeMask, itemMask } from '../titan/extrude';
 import { heldBlockTiles, heldCategory } from '../titan/heldKinds';
-import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanDegrauMadeiraModels, titanPortaMadeiraModels, titanBraseiroAcesoModel, orvalisFazendaModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
+import { orvalisBoatUrls, titanFarejadorRigUrl, titanFarejadorModel, titanNozFrutosModel, titanNozPlantaModel, titanLanternModel, titanMarcoModel, titanEscadaModel, titanBauModel, titanBauTampaModel, titanCamaModel, titanBraseiroModel, titanDegrauPedraModel, titanDegrauMadeiraModels, titanPortaMadeiraModels, titanBraseiroAcesoModel, orvalisFazendaModelos, orvalisGrunhoModelos, titanDegrauModel, titanCadeiraModel, titanPainelModel, titanWorkbenchModel, type LanternBatch, type ModelData } from './art/titan';
 import type { Box } from '../titan/lantern';
 import { meshSection, tileUV, type MeshData } from '../titan/mesher';
 import { EYE_HEIGHT } from '../titan/physics';
@@ -21,6 +21,7 @@ import { nutTurn } from '../titan/nuts';
 import { loadFarejadorRig, type RigInstance, type RigTemplate } from './farejadorRig';
 import { BoatView, type BoatDraw } from './boatView';
 import { FazendaView, type FazendaItem, type FazendaModels } from './fazenda';
+import { GrunhoView, type GrunhoItem, type GrunhoModels } from './grunhoView';
 import type { FaunaKind } from '../titan/fauna';
 import { eyeDepth, eyesSubmerged, stepUnderwater, underwaterFar, UNDERWATER_FOG_NEAR, type UnderwaterState } from '../titan/underwater';
 import { fenceModelData, gateModelData } from './cercaModel';
@@ -118,6 +119,7 @@ export class TitanRenderer {
   private rigLoading = false;
   /** Fauna de fazenda do Orvalis (ADR 0124): só existe se o jogo passou as texturas (mundo do Orvalis). */
   private fazenda: FazendaView | null = null;
+  private grunho: GrunhoView | null = null;
   /** Mão em primeira pessoa (ADR 0071): cena e câmera próprias, desenhadas por cima do mundo (a profundidade é limpa, a mão não entra em paredes). */
   private readonly handScene = new THREE.Scene();
   private readonly handCamera = new THREE.PerspectiveCamera(FOV_DEG, 1, 0.02, 10);
@@ -167,7 +169,7 @@ export class TitanRenderer {
   private avatar: THREE.Group | null = null;
   private readonly itemMats: Record<number, THREE.SpriteMaterial> = {};
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; degrauMadeira: HTMLImageElement; cercaMadeira: HTMLImageElement; portaMadeira: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal. */ fazenda?: Record<FaunaKind, HTMLImageElement>; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly volume: TitanVolume, atlas: HTMLImageElement, hotbarAtlas: HTMLImageElement, cracksAtlas: HTMLImageElement, lanternAtlas: HTMLImageElement, extra: { workbenchAtlas: HTMLImageElement; escadaAtlas: HTMLImageElement; bauAtlas: HTMLImageElement; camaAtlas: HTMLImageElement; braseiroAtlas: HTMLImageElement; juncoTile: HTMLImageElement; degrauPedra: HTMLImageElement; degrauMadeira: HTMLImageElement; cercaMadeira: HTMLImageElement; portaMadeira: HTMLImageElement; muretaPedra: HTMLImageElement; horta: HTMLImageElement; porta: HTMLImageElement; reed: HTMLImageElement; cultivo: HTMLImageElement; lake: HTMLImageElement; margemAtlas: HTMLImageElement; nozAtlas: HTMLImageElement; farejadorAtlas: HTMLImageElement; /** Fauna de fazenda do Orvalis (ADR 0124): um atlas UV de 64 × 64 por animal. */ fazenda?: Record<FaunaKind, HTMLImageElement>; grunho?: HTMLImageElement; /** Texturas de 8 px da vista isométrica (atlas de terreno e água; ADR 0106). */ iso?: { atlas: HTMLImageElement; lake: HTMLImageElement } }, private readonly perf: TitanPerf | null = null) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.scene.background = new THREE.Color(0xd2a066);
@@ -426,6 +428,7 @@ export class TitanRenderer {
     this.farejadorMat = fmat;
     for (const [name, part] of Object.entries(titanFarejadorModel.parts)) this.farejadorGeos[name] = modelGeometry(part);
     if (extra.fazenda) this.fazenda = new FazendaView(this.scene, orvalisFazendaModelos as unknown as FazendaModels, extra.fazenda, (m) => patchDayLight(m, this.ambient));
+    if (extra.grunho) this.grunho = new GrunhoView(this.scene, orvalisGrunhoModelos as unknown as GrunhoModels, extra.grunho, (m) => patchDayLight(m, this.ambient)); // o mob inimigo (ADR 0147)
 
     // junco de vidro: duas faixas cruzadas por planta, balanço leve no shader (uTime), sem colisão (não existe no volume)
     const rtex = new THREE.Texture(extra.reed);
@@ -786,6 +789,8 @@ export class TitanRenderer {
 
   /** Fauna de fazenda: pés, giro e pose de cada animal visível (a lista vazia esconde todos). */
   setFauna(list: readonly FazendaItem[]): void { this.fazenda?.set(list); }
+  /** Grunhos (mob inimigo, ADR 0147): pés, giro e pose de cada um visível (a lista vazia esconde todos). */
+  setGrunhos(list: readonly GrunhoItem[]): void { this.grunho?.set(list); }
   /** Desenha os botes (madeira, posição e giro); a luz do dia é a do resto do mundo (ADR 0137). */
   setBoats(list: readonly BoatDraw[]): void {
     if (!this.boatView) {

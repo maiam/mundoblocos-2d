@@ -1,5 +1,5 @@
 import './titan.css';
-import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanDegrauMadeiraUrl, titanCercaMadeiraUrl, titanPortaMadeiraUrl, titanMuretaPedraUrl, orvalisHortaUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl, orvalisFazendaUrls } from '../render/art/titan';
+import { titanAtlasUrl, titanCracksUrl, titanHotbarUrl, titanLanternAtlasUrl, titanReedUrl, titanCultivoUrl, titanWorkbenchAtlasUrl, titanBasaltUrl, titanLakeUrl, titanLake8Url, orvalisWaterUrl, orvalisWater8Url, titanAtlas8Url, titanMargemAtlasUrl, titanEscadaAtlasUrl, titanBauAtlasUrl, titanBraseiroAtlasUrl, titanJuncoTileUrl, titanDegrauPedraUrl, titanDegrauMadeiraUrl, titanCercaMadeiraUrl, titanPortaMadeiraUrl, titanMuretaPedraUrl, orvalisHortaUrl, titanPortaUrl, titanCamaAtlasUrl, titanHudUrl, titanNozAtlasUrl, titanFarejadorAtlasUrl, orvalisFazendaUrls, orvalisGrunhoUrl } from '../render/art/titan';
 import { TitanRenderer } from '../render/titanRenderer';
 import { seedFromString } from '../world/random';
 import { COOK_TIME_S, type FurnaceSlot, prepsLeft } from './furnace';
@@ -9,6 +9,7 @@ import { canPlantNut, useDoor, chestAt, chestMoveIn, chestTakeOut, useBed, furna
 import { eyesSubmerged } from './underwater';
 import { creatureAim, farejadorPose, KINDS, stepFarejador } from './creature';
 import { ATTACK_COOLDOWN_S, ATTACK_REACH, attackCreature, attackFauna, tickRespawn } from './combat';
+import { grunhoAlive, grunhoPose, stepGrunho } from './grunho';
 import { BABY_SCALE, FAUNA_KINDS, faunaAim, faunaPose, isBreedFood, maxHp, stepFauna, tickBreeding, type FaunaKind } from './fauna';
 import { feedFaunaFromSlot } from './faunaFeed';
 import { addExhaustion, canSprint, EXHAUSTION, fallDamage, HUNGER_ENABLED, hurt as hurtVitals, isDead, updatePlayerVitals } from './vitals';
@@ -146,7 +147,8 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
   // `?saturno=1`: força Saturno à vista (teste visual da imagem rara); nada é gravado
   const forcedSaturn = q.get('saturno') === '1' ? 1 : null;
   const fazenda = orvalis ? (Object.fromEntries(await Promise.all((Object.keys(orvalisFazendaUrls) as FaunaKind[]).map(async (k) => [k, await loadImage(orvalisFazendaUrls[k])] as const))) as Record<FaunaKind, HTMLImageElement>) : undefined; // 4 atlas de 64 × 64 (ADR 0124)
-  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, degrauMadeira: degrauMadeiraImg, cercaMadeira: cercaMadeiraImg, portaMadeira: portaMadeiraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, fazenda, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
+  const grunhoImg = orvalis ? await loadImage(orvalisGrunhoUrl) : undefined; // o mob inimigo (ADR 0147)
+  const view = new TitanRenderer(canvas, vol, atlas, hotbarAtlas, cracksAtlas, lanternAtlas, { workbenchAtlas, escadaAtlas: escadaImg, bauAtlas: bauImg, camaAtlas: camaImg, braseiroAtlas: braseiroImg, juncoTile: juncoImg, degrauPedra: degrauPedraImg, degrauMadeira: degrauMadeiraImg, cercaMadeira: cercaMadeiraImg, portaMadeira: portaMadeiraImg, muretaPedra: muretaPedraImg, horta: hortaImg, porta: portaImg, reed: reedImg, cultivo: cultivoImg, lake: lakeImg, margemAtlas: margemImg, nozAtlas: nozImg, farejadorAtlas: farejadorImg, fazenda, grunho: grunhoImg, iso: { atlas: atlas8Img, lake: lake8Img } }, perf);
   if (import.meta.env.DEV) (window as unknown as { __titan: unknown }).__titan = { session, view }; // só no dev (como o window.__game do mundo 2.5D): testes de navegador
   if (orvalis) view.setPalette('orvalis');
   const forcedRain = q.get('chuva') === '1'; // teste: força a chuva (só visual e som; não grava)
@@ -1135,6 +1137,16 @@ export async function startTitan(canvas: HTMLCanvasElement, search: string, stor
       }
       const shown = session.creatures.filter((fj) => Math.hypot(fj.body.x - b.x, fj.body.z - b.z) <= SHOW_RADIUS).sort((p, q) => Math.hypot(p.body.x - b.x, p.body.z - b.z) - Math.hypot(q.body.x - b.x, q.body.z - b.z)).slice(0, SHOW_MAX); // só os mais próximos vão para o desenho (cada rig tem ~24 mil triângulos)
       view.setFarejadores(shown.map((fj) => ({ x: fj.body.x, y: fj.body.y, z: fj.body.z, yaw: fj.yaw, scale: KINDS[fj.kind].scale, pose: farejadorPose(fj, Math.hypot(fj.body.vx, fj.body.vz) > 0.05) })));
+    }
+    if (session.grunhos.length) { // Grunhos (ADR 0147): sem sala, simula os que estão perto; na sala o servidor manda (aqui só se desenha)
+      const near = session.grunhos.filter((g) => Math.hypot(g.body.x - b.x, g.body.z - b.z) <= FAUNA_SHOW_RADIUS + 8);
+      const gmoving = new Map<string, boolean>();
+      if (active && !client) for (const g of near) {
+        const ev = stepGrunho(g, vol, dt, [{ id: 'eu', x: b.x, y: b.y, z: b.z }]);
+        gmoving.set(g.id, ev.moving);
+        for (const h of ev.hits) { hurtVitals(vitals, h.damage); onHurt(); notice('O Grunho te acertou com a clava.'); }
+      }
+      view.setGrunhos(near.filter(grunhoAlive).slice(0, 40).map((g) => ({ x: g.body.x, y: g.body.y, z: g.body.z, yaw: g.yaw, pose: grunhoPose(g, gmoving.get(g.id) ?? Math.hypot(g.body.vx, g.body.vz) > 0.05) })));
     }
     if (active && session.coralWatch.size && stepCoral(session, dt)) onEdited(); // bloco de coral vivo sem água morre (ADR 0136)
     if (active && !client) { const fe = stepFishing(session, dt); if (fe === 'bite') { notice('Fisgou! Toque para recolher'); gameAudio.playWaterPour(); } else if (fe === 'lost') { notice('A linha se soltou'); view.setItems(visibleItems(session)); } } // pescaria (ADR 0133)

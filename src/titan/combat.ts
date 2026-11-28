@@ -3,6 +3,7 @@ import { Item, ITEM_NAMES } from './items';
 import type { TitanSession } from './session';
 import { restDrop, wearHeldTool } from './actions';
 import { FAUNA_KINDS, faunaLoot, hurtFauna } from './fauna';
+import { grunhoAlive, hurtGrunho } from './grunho';
 
 /**
  * Combate com os Farejadores de Duna (ADR 0069): o jogador golpeia o animal na mira (toque curto, alcance de 3 m, pausa de 0,6 s entre golpes). Dano pela arma na mão; a adaga é arma (desgasta −1), a
@@ -77,4 +78,18 @@ export function attackFauna(s: TitanSession, index: number): AttackResult {
   loot.forEach((l, i) => restDrop(s, `${base}:${n}:${i}`, l.item, f.body.x, f.body.y, f.body.z, l.count));
   const txt = loot.map((l) => `${l.count} ${ITEM_NAMES[l.item]}`).join(', ');
   return { ok: true, damage, dead: true, broken: w.broken, toolName: w.name, msg: `${FAUNA_KINDS[f.kind].name}${f.baby ? ' (filhote)' : ''} abatido${txt ? `: ${txt}` : ''}${broke ? `; ${broke}` : ''}` };
+}
+
+/**
+ * Golpe do jogador num Grunho (ADR 0147): dano pela arma da mão (`damageOf`), desgaste como em todo golpe, e o goblin passa a perseguir quem bateu. Abatido, não solta nada e
+ * volta ao acampamento em `GRUNHO.respawnS` (decisão aprovada). `by` = id de quem bateu (na sala, o jogador; no aparelho, `null`).
+ */
+export function attackGrunho(s: TitanSession, index: number, by: string | null = null): AttackResult {
+  const g = s.grunhos[index];
+  if (!g || !grunhoAlive(g)) return { ok: false, damage: 0, dead: false, broken: false };
+  const damage = damageOf(s.inventory.get(s.selected)?.item);
+  const w = wearHeldTool(s, { type: 'attack' });
+  const r = hurtGrunho(g, damage, by);
+  const broke = w.broken ? `${w.name} quebrou` : undefined;
+  return { ok: true, damage, dead: r.dead, broken: w.broken, toolName: w.name, msg: r.dead ? `Grunho abatido${broke ? `; ${broke}` : ''}` : broke };
 }
