@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.220.0 — Ovelha "pipoca" (28/11/2026)
+- **Arte.** A ovelha troca a prancha lisa pela **"Ovelha Pipoca"** (lã em cachos, franja clara na testa), enviada em prancha ortográfica a 1 px de arte por unidade; atlas montado por `make-orvalis-fazenda-prancha.py` (sem furos: o script recusa face transparente). Conferido no navegador (rosto, franja, lã, cascos).
+- Guardadas em `assets-src/orvalis-voxel/mobs/pranchas/`: `ovelha_ortografica.png` (pipoca, em uso), `ovelha_lisa_ortografica.png` (a anterior) e **`ovelha_tosquiada_ortografica.png`** (ovelha tosquiada, **sem uso**: o jogo ainda não tem tosquia, pendência já registrada — leite, tosquia e lã que recresce).
+- 818 testes passam; sem mudança de protocolo nem de save; o servidor não precisa de pacote novo.
+
 ## Orvalis v0.219.0 — Ovelha montada pela prancha ortográfica (28/11/2026)
 - **Arte (ADR 0143, adendo).** Novo fluxo para os animais de fazenda: o dono envia a **prancha ortográfica** (planificação em cruz de cada peça, pixels inteiros, fundo transparente) e o atlas UV sai **por script**: `scripts/make-orvalis-fazenda-prancha.py <animal>` lê `assets-src/orvalis-voxel/mobs/pranchas/<animal>_ortografica.png` e a ficha (`fazenda-uv.json`), acha cada cruz pelo tamanho (2d+2w × 2d+h unidades), detecta o tamanho do pixel da arte e quantos pixels cabem em uma unidade, reamostra por vizinho mais próximo para 2 px/unidade e grava `<animal>_uv_128x128.png`; **o script falha se alguma face ficar com pixel transparente** (acaba o problema de furos da v2). Orientação pelo `BoxGeometry` (frente −Z; +Y e −Y girados 180° em relação à cruz).
 - **Ovelha** feita por esse fluxo (substitui o atlas v2 dela; as outras três seguem com a v2 do Drive até chegarem as pranchas). A prancha da ovelha está a **1 pixel de arte por unidade** (o detalhe do atlas antigo de 64 × 64, dobrado), então não ganha resolução; para ganhar, enviar a prancha com 2 ou 4 px por unidade (o script já aceita).
