@@ -1,5 +1,10 @@
 # Changelog
 
+## Orvalis v0.217.0 — Fauna de fazenda em 128 × 128 (28/11/2026)
+- **Arte (ADR 0143, adendo).** Regra do dono: **mobs, NPCs e personagens podem passar de 32 px**. Os 4 animais de fazenda (porco, vaca, ovelha, galinha) trocam o atlas UV de 64 × 64 pelo de **128 × 128** do Drive (`orvalis_mob_*_uv_128x128.png`, em `assets-src/orvalis-voxel/mobs/`). O desenho do atlas é o mesmo, só com o dobro de resolução, e os UVs da ficha são frações (`textureSize` 64): **`fazenda-modelos.json`, caixas, caixa de mira e de golpe não mudam**. `make-orvalis-fazenda.py` prefere o 128 × 128 e cai para o de 64 × 64.
+- As ilustrações de perfil `orvalis_mob_*_128x128.png` (sem `_uv`) **não são atlas** e ficam sem uso (não foram copiadas para o repositório).
+- 818 testes passam; conferido no navegador (vaca com manchas, chifres e úbere). Sem mudança de protocolo nem de save; **o servidor não precisa de pacote novo** (só o cliente desenha a textura).
+
 ## Orvalis v0.216.0 — Correção: cercas e porteiras da aldeia invisíveis (28/11/2026)
 - **Correção.** As cercas e as porteiras que o **gerador** põe (a Aldeia da Costa, ADR 0142) existiam para a física mas **não eram desenhadas**: o mesher só registrava como instância de modelo a flora marinha do gerador (`isWaterPlant`), e os blocos de modelo (`isModelBlock`) ficam fora da malha do terreno. Agora `meshSection` registra qualquer modelo vindo do gerador (`modelOf(id)`); quebrar a peça tira a instância. Cerca e portão colocados por jogadores já apareciam (entram por `set`).
 - 818 testes passam (1 novo em `orvalis/costa.test.ts`); conferido no navegador: cercados e porteira visíveis com os animais dentro. **A sala 102 precisa do pacote novo no servidor** (o cliente é quem desenha, mas o pacote leva o mesmo `mesher`).
