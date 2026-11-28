@@ -1,9 +1,9 @@
 # Changelog
 
 ## Orvalis v0.226.0 — Arte nova da Fogueira (28/11/2026)
-- **Arte (ADR 0146, adendo).** A fogueira acesa nova do dono (chama grande sobre três toras) vira o ícone do item 176 e o modelo do bloco (`make-orvalis-espadas.py`, 32 px, paleta de 48 cores); o modelo passa a 0,85 de bloco, a caixa de mira a 0,8 × 0,8 e o brilho a `CAMPFIRE_GLOW` 0,9. Valem para a partida individual e para a sala 102 (mesmo código); o Titã não tem Fogueira (ADR 0114).
+- **Arte (ADR 0146, adendo).** A fogueira acesa nova do dono (chama grande sobre três toras) vira o ícone do item 176 e o modelo do bloco (`make-orvalis-espadas.py`, 32 px, paleta de 48 cores). **Só a vista de frente, olhando de qualquer lado (pedido do dono):** o modelo deixa de ser dois planos cruzados e passa a **um plano só que o renderer gira para a câmera a cada quadro** (`faceCampfires`; só refaz a matriz se o giro mudou mais de 0,02 rad), a 0,85 de bloco, caixa de mira 0,8 × 0,8 e brilho `CAMPFIRE_GLOW` 0,9. Valem para a partida individual e para a sala 102 (mesmo código); o Titã não tem Fogueira (ADR 0114).
 - **Guardadas, sem uso:** a fogueira **apagada** (o jogo não tem estado apagado) e as **4 variações** de cada uma (quadros de chama animada), em `assets-src/orvalis-voxel/fogueira/`.
-- **Conferido no navegador:** a fogueira aparece e brilha, mas **no modelo em planos cruzados ela fica mais densa e escura que o ícone** (o contorno escuro e os vermelhos fundos pesam a 32 px); pendente decidir se se usa uma versão mais clara da arte ou os quadros animados.
+- **Conferido no navegador** de três lados (frente, direita e costas): sempre de frente e com a arte como foi desenhada (a primeira versão, em planos cruzados, ficava densa e escura).
 - 838 testes passam. Arte é só do cliente: **sem mudança no servidor nesta versão** (o pacote da sala com a Fogueira, a Clava e o Grunho segue pendente para a etapa 3).
 
 ## Orvalis v0.225.0 — Clava de Madeira (item do Grunho, fabricável; 28/11/2026)

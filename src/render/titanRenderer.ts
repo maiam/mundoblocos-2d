@@ -523,10 +523,26 @@ export class TitanRenderer {
     this.lanternStructure.instanceMatrix.needsUpdate = this.lanternCore.instanceMatrix.needsUpdate = true;
   }
 
+  /** Fogueira (ADR 0146): cada instância é um plano só, girado em Y para a câmera (a vista de frente, de qualquer lado); só remonta a matriz se o giro mudou. */
+  private campfireYaw: number[] = [];
+  private faceCampfires(): void {
+    const mesh = this.modelMeshes.fogueira;
+    if (!mesh || mesh.count === 0) return;
+    const cells = this.volume.modelCells('fogueira'), cam = (this.mode === 'iso' ? this.isoCam : this.camera).position, m = new THREE.Matrix4();
+    let dirty = false;
+    cells.forEach(([x, y, z], i) => {
+      const yaw = Math.atan2(cam.x - (x + 0.5), cam.z - (z + 0.5));
+      if (this.campfireYaw[i] !== undefined && Math.abs(yaw - this.campfireYaw[i]) < 0.02) return;
+      this.campfireYaw[i] = yaw; m.makeRotationY(yaw).setPosition(x + 0.5, y, z + 0.5); mesh.setMatrixAt(i, m); dirty = true;
+    });
+    if (dirty) mesh.instanceMatrix.needsUpdate = true;
+  }
+
   /** Refaz as instâncias dos modelos 3D (mesa, Marco, Painel: postos, retirados, carregados) e o brilho de cada uma (maior luz de lanterna nas 6 células vizinhas). */
   private syncModels(force: boolean): void {
     if (!force && this.modelSeen === this.volume.modelVersion) return;
     this.modelSeen = this.volume.modelVersion;
+    this.campfireYaw.length = 0; // as matrizes foram refeitas: a fogueira volta a se virar para a câmera no quadro
     const mat = new THREE.Matrix4();
     for (const kind of ['workbench', 'marco', 'painel', 'escada', 'bau', 'cama', 'braseiro', 'braseiroAceso', 'degrau', 'degrauPedra', ...WOOD_STAIR_KINDS, ...FENCE_KINDS, ...GATE_KINDS, ...WOOD_DOOR_KINDS, ...TRAPDOOR_KINDS, ...MURETA_KINDS, 'cadeira', 'porta', 'tocha', 'tochaParede', 'fogueira', ...(Object.keys(FLORA_CELLS) as ModelKindName[])] as const) {
       const cells = this.volume.modelCells(kind);
@@ -1115,6 +1131,7 @@ export class TitanRenderer {
     this.syncModels(this.built > 0);
     this.animateLids(time);
     this.animateDoors(time);
+    this.faceCampfires();
     this.timeU.value = time;
     let n = 0;
     this.clock = time;

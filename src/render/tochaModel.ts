@@ -46,14 +46,12 @@ export function tochaModels(rows: number): { standing: ModelData; wall: ModelDat
   return { standing: merge(a, b), wall };
 }
 
-/** Fogueira do Orvalis (ADR 0146): o ícone de 32 px (item 176) extrudado em dois planos cruzados a 90°, 0,85 de bloco de largura (a arte nova ocupa a célula inteira), com a base na célula; lê-se de qualquer lado. */
+/** Fogueira do Orvalis (ADR 0146): o ícone de 32 px (item 176) extrudado em **um plano só** (só a vista de frente), 0,85 de bloco de largura (a arte nova ocupa a célula inteira), com a base na célula. O renderer o **gira a cada quadro para a câmera** (`faceCampfires`), então se vê sempre de frente, de qualquer lado. */
 export function fogueiraModel(rows: number): ModelData {
   const m = itemMask(Item.FOGUEIRA);
   if (!m) throw new Error('máscara da Fogueira ausente (itemMasks.json)');
   const b = bounds(m), e = extrudeMask(m.mask, m.w, m.h, DEPTH), S = 0.85, lift = -b.y0 * S;
-  const a = mapped(e, Item.FOGUEIRA, rows, (p) => [p[0] * S, p[1] * S + lift, p[2] * S], (n) => n);
-  const c = mapped(e, Item.FOGUEIRA, rows, (p) => [p[2] * S, p[1] * S + lift, -p[0] * S], (n) => [n[2], n[1], -n[0]]);
-  return merge(a, c);
+  return mapped(e, Item.FOGUEIRA, rows, (p) => [p[0] * S, p[1] * S + lift, p[2] * S], (n) => n);
 }
 
 /** Altura (m) do modelo em pé: a caixa de mira da tocha usa esta medida. */
