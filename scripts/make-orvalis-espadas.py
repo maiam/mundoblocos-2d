@@ -1,4 +1,4 @@
-"""Espadas de madeira e de pedra (ADR 0145), Clava de Madeira (ADR 0148) e Fogueira (ADR 0146) do Orvalis: ícone de 32 × 32 a partir da arte grande enviada pelo dono.
+"""Espadas de madeira e de pedra (ADR 0145), Clava de Madeira (ADR 0148) e Fogueira (ADR 0146) e as 8 ferramentas de madeira e pedra (ADR 0112) do Orvalis: ícone de 32 × 32 a partir da arte grande enviada pelo dono.
 
 Entradas : assets-src/orvalis-voxel/espadas/{espada_madeira,espada_pedra,clava_madeira}_fonte.png  (1254 × 1254, pixel art ampliada e suavizada, fundo transparente)
 Saídas   : assets-src/orvalis-voxel/assets32/orvalis_{espada_madeira,espada_pedra,clava_madeira,fogueira_acesa}_32x32.png (a fogueira lê `assets-src/orvalis-voxel/fogueira/fogueira_acesa_fonte.png`)  (o item entra em assets-src/titan/arte32/itens.json; regra 32 px, ADR 0143)
@@ -54,3 +54,7 @@ for nome in ('espada_madeira', 'espada_pedra', 'clava_madeira'):
 # Fogueira do Orvalis (ADR 0146, arte nova de 28/11/2026): a chama tem degradê, então paleta maior; ocupa a célula inteira (o modelo é do tamanho de um bloco)
 reduz('fogueira_acesa_fonte.png', 'assets-src/orvalis-voxel/fogueira/', 48, 0).save(f'{OUT}orvalis_fogueira_acesa_32x32.png')
 print('ok fogueira_acesa')
+# Ferramentas do Orvalis (ADR 0112) com a arte nova do dono (28/11/2026): pá, enxada, picareta e machado, de madeira e de pedra, ícones de 32 px
+for nome in ('picareta_madeira', 'picareta_pedra', 'machado_madeira', 'machado_pedra', 'pa_madeira', 'pa_pedra', 'enxada_madeira', 'enxada_pedra'):
+    reduz(f'{nome}_fonte.png', 'assets-src/orvalis-voxel/ferramentas/').save(f'{OUT}orvalis_{nome}_32x32.png')
+    print('ok', nome)

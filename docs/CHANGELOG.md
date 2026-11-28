@@ -1,5 +1,9 @@
 # Changelog
 
+## Orvalis v0.228.0 — Arte nova das ferramentas (28/11/2026)
+- **Arte (ADR 0112/0143, adendo).** Picareta, machado, pá e enxada, de madeira e de pedra (itens 70–77), passam a usar a arte nova do dono: ícones de **32 px** (`make-orvalis-espadas.py`, que agora reduz as 8 fontes em `assets-src/orvalis-voxel/ferramentas/`) e `itemMasks.json` regenerado, então a mão extruda o desenho novo. Os 8 saíram de `arte16/itens.json` e entraram em `arte32/itens.json` (um item nunca está nas duas listas). Sem mudança de regra, de id nem de save; atlas de itens segue 4 × 45.
+- 848 testes passam; tsc limpo.
+
 ## Orvalis v0.227.0 — Grunhos na sala 102: 4 acampamentos de 12 (etapa 3, 28/11/2026)
 - **ADR 0147, etapa 3.** A **Aldeia da Costa v101** ganha **4 acampamentos de 12 Grunhos fora do muro** (oeste, sudoeste, nordeste e sudeste): clareira plana de terra batida, rampa suave, sem árvore perto, **Fogueira** no centro (luz 15) e os goblins numa roda de 3,5 m. **O arquivo salvo da sala 102 (versão 100) foi descartado** (autorizado pelo dono): a sala recusa a versão 100 e começa de novo; o servidor guarda o antigo numa cópia `.bak`.
 - **Protocolo 7:** mensagem `grunhos`, ação `strikeGrunho`, `hurt` do tipo `grunho`. A sala simula os goblins (perseguem, golpeiam, voltam e se curam), o aparelho espelha, mira e golpeia (vence o bloco e os bichos mais longe); abatido, o Grunho solta a Clava de Madeira com 25% de chance e volta em 10 min.
