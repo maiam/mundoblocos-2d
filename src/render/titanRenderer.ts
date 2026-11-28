@@ -51,6 +51,8 @@ function pixelTexture(img: HTMLImageElement): THREE.Texture {
 const ITEM_ROWS = 45;
 /** Brilho próprio da chama da tocha (0–1, antes do tom quente): a tocha também ilumina o que está em volta pelo motor de luz. */
 const TORCH_GLOW = 0.6;
+/** Brilho próprio da fogueira (ADR 0146): a arte tem contorno escuro e vermelhos fundos, então brilha mais que a tocha para a chama ler de dia. */
+const CAMPFIRE_GLOW = 0.9;
 /** Salto de um item recém-solto e voo até o jogador ao ser recolhido, em segundos (ADR 0082). */
 const ITEM_HOP_S = 0.4, ITEM_FLY_S = 0.14;
 const MESH_BUDGET_MS = 6;
@@ -552,7 +554,7 @@ export class TitanRenderer {
           let lv = 0, sk = this.volume.skyLight(x, y, z);
           for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { lv = Math.max(lv, this.volume.light(x + dx, y + dy, z + dz)); sk = Math.max(sk, this.volume.skyLight(x + dx, y + dy, z + dz)); }
           skyI[i] = sk / 15; // a instância vive no céu da própria célula ou da vizinhança (a mesa, opaca, enxerga o ar em volta)
-          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : kind === 'tocha' || kind === 'tochaParede' || kind === 'fogueira' ? TORCH_GLOW : 0); // o braseiro aceso e a tocha brilham sozinhos, de dia e de noite
+          const w = Math.max(lv > 0 ? Math.pow(lv / 15, 1.3) * 0.7 : 0, kind === 'braseiroAceso' ? EMBER_GLOW : kind === 'fogueira' ? CAMPFIRE_GLOW : kind === 'tocha' || kind === 'tochaParede' ? TORCH_GLOW : 0); // o braseiro aceso e a tocha brilham sozinhos, de dia e de noite
           glow.set([w, w * 0.72, w * 0.38], i * 3);
         });
         mesh.geometry.setAttribute('iGlow', new THREE.InstancedBufferAttribute(glow, 3));

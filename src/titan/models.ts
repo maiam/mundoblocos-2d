@@ -10,7 +10,7 @@ export const PANEL_SIZE = { w: 1, d: 0.224, h: PANEL_HEIGHT } as const;
 
 /** Placa da Escada de Junco (ADR 0088): 0,63 de largura, 1 m de altura e 0,12 m de fundo, encostada na borda da célula do lado do apoio. */
 /** Caixas de mira da Tocha (ADR 0121): em pé 0,25 × 0,72; de parede 0,25 de largura e 0,45 de alcance. */
-export const CAMPFIRE_BOX = { w: 0.8, h: 0.62 } as const;
+export const CAMPFIRE_BOX = { w: 0.8, h: 0.8 } as const;
 export const TORCH_BOX = { w: 0.25, h: 0.72, reach: 0.45 } as const;
 export const LADDER_SIZE = { w: 0.63, d: 0.12, h: 1 } as const;
 

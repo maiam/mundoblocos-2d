@@ -1,5 +1,11 @@
 # Changelog
 
+## Orvalis v0.226.0 — Arte nova da Fogueira (28/11/2026)
+- **Arte (ADR 0146, adendo).** A fogueira acesa nova do dono (chama grande sobre três toras) vira o ícone do item 176 e o modelo do bloco (`make-orvalis-espadas.py`, 32 px, paleta de 48 cores); o modelo passa a 0,85 de bloco, a caixa de mira a 0,8 × 0,8 e o brilho a `CAMPFIRE_GLOW` 0,9. Valem para a partida individual e para a sala 102 (mesmo código); o Titã não tem Fogueira (ADR 0114).
+- **Guardadas, sem uso:** a fogueira **apagada** (o jogo não tem estado apagado) e as **4 variações** de cada uma (quadros de chama animada), em `assets-src/orvalis-voxel/fogueira/`.
+- **Conferido no navegador:** a fogueira aparece e brilha, mas **no modelo em planos cruzados ela fica mais densa e escura que o ícone** (o contorno escuro e os vermelhos fundos pesam a 32 px); pendente decidir se se usa uma versão mais clara da arte ou os quadros animados.
+- 838 testes passam. Arte é só do cliente: **sem mudança no servidor nesta versão** (o pacote da sala com a Fogueira, a Clava e o Grunho segue pendente para a etapa 3).
+
 ## Orvalis v0.225.0 — Clava de Madeira (item do Grunho, fabricável; 28/11/2026)
 - **ADR 0148 (aprovada; auditoria #52).** Item **177, Clava de Madeira**, só do Orvalis: `ToolKind` `'club'` (`isClub`), **dano 5**, **durabilidade 59**, desgaste como a espada (golpe −1, bloco −2), receita na Mesa de Carpintaria (**3 tábuas de carvalho + 2 hastes**). **O Grunho a solta com 25% de chance** ao ser abatido (`GRUNHO.dropChance`, `grunhoDrops` determinístico; **revoga o "não solta nada" da ADR 0147**). **Ressalva:** números de espelhos da Wiki (a oficial não abriu; o Minecraft não tem clava), a confirmar.
 - **Arte:** a ilustração do dono vira o ícone de 32 px (`make-orvalis-espadas.py` agora cobre a clava) e o sprite extrudado na mão. **Atlas de itens 4 × 45 (180 células):** `ITEM_ROWS`, CSS e `make-titan-arte32.py` ampliados; **sobram os ids 178 a 180**.
