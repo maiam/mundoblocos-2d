@@ -1,4 +1,5 @@
 import type { Arrival, Column } from './generator';
+import type { GrunhoCamp } from './grunho';
 import type { Region } from './voxel';
 
 /**
@@ -26,6 +27,8 @@ export interface TerrainGen {
   readonly den: { x: number; y: number; z: number } | null;
   /** Plantas que a partida nova já traz plantadas (o mapa feito à mão da Aldeia da Costa, ADR 0144); ausente = nenhuma. A leitura de um save usa as do save. */
   readonly startCrops?: ReadonlyArray<{ x: number; y: number; z: number; species: 'cenoura' | 'batata'; age: number }>;
+  /** Acampamentos do Grunho (ADR 0147): a fogueira e os lugares dos goblins na roda (a Aldeia da Costa); ausente = nenhum. A partida individual não tem. */
+  readonly camps?: ReadonlyArray<GrunhoCamp>;
   reedsFor(ex: number, ez: number): Array<{ x: number; y: number; z: number }>;
   planEmber(strict?: boolean): Array<{ x: number; z: number }>;
 }

@@ -1,0 +1,17 @@
+# ADR 0147 — Grunho Casca-Rachada, o primeiro mob inimigo (auditoria #51, v0.224.0; etapa 2)
+
+**Estado:** aceita (28/11/2026). Ciclo da ADR 0116 cumprido; o dono aprovou: modelo 3D em caixas, comportamento "zumbi com coleira na fogueira", acampamentos fora do muro (etapa 3). **Ressalva de fonte:** a `minecraft.wiki` não abriu; os números do zumbi (vida 20, dano 3, velocidade) vêm de espelhos ([Zombie](https://minecraft.fandom.com/wiki/Zombie)) e ficam **a confirmar**. Goblin não existe no Minecraft: o zumbi é só a referência.
+
+## Estado antes
+O Orvalis só tinha animais passivos (fauna de fazenda, ADR 0124). O Farejador (hostil) é do Titã (ADR 0114: não se compartilha). Arte do Grunho no Drive: ficha, imagem mestre, prancha de vistas e sprites 2D de repouso em 8 direções (sem caminhada nem ataque).
+
+## Decisão (engine, modelo e combate; a sala e os acampamentos são a etapa 3)
+1. **`titan/grunho.ts` (puro)**: `GRUNHO` = vida 20, golpe de clava 3, **1,5 s** entre golpes (gesto de 0,5 s; a clava acerta aos 0,3 s se o alvo ainda está a 2 m), alcance para golpear 1,6 m, **aviso a 12 m**, **coleira de 25 m da fogueira**, passeio 1 m/s, perseguição 3 m/s (o jogador anda 4,3: dá para fugir), caixa de acerto 0,7 × 1,4 m, **volta em 10 min** depois de abatido, não queima ao sol. Fases `wander`/`chase`/`return`/`dead`; fora da coleira ou sem alvo volta à roda e **se cura**; ferido, persegue quem bateu.
+2. **Mapa:** `TerrainGen.camps?` (acampamento = fogueira + lugares dos goblins) → `grunhoSpecs` (ids `g:<acampamento>:<n>`) → `session.grunhos` (só de execução, fora do save). A partida individual não tem acampamento: nenhum goblin.
+3. **Combate:** `attackGrunho` (dano pela arma na mão, desgaste como todo golpe); **abatido não solta nada** (decisão aprovada); `grunhoAim` (caixa, barrada por bloco) reaproveita `rayAabb`, extraído de `faunaAim` em `fauna.ts`.
+4. **Modelo 3D em caixas (11 peças):** corpo 8 × 8 × 5, cabeça 9 × 8 × 8, orelhas 4 × 3 × 1 (×2), nariz 2 × 3 × 3, braços 3 × 8 × 3 (×2), pernas 3 × 6 × 3 (×2), cabo da clava 2 × 10 × 2 e cabeça da clava 4 × 5 × 4 (no braço direito); 22 unidades de altura (1,4 m). Ficha em `assets-src/orvalis-voxel/mobs/grunho-uv.json` (`make-orvalis-grunho-ficha.py`, planificações empacotadas em prateleiras no atlas de 64 × 64 unidades, 128 × 128 px), `render/grunhoView.ts` (`GrunhoView`, o mesmo esquema do `FazendaView`), pose pura `grunhoPose` (pernas e braço esquerdo andando, braço da clava no golpe: levanta, desce rápido, volta).
+5. **Arte provisória:** a prancha ortográfica **foi desenhada em código** com a paleta amostrada dos sprites aprovados (`make-orvalis-grunho-prancha-provisoria.py` → `pranchas/grunho_ortografica.png`, 2 px por unidade) e montada pelo mesmo `make-orvalis-fazenda-prancha.py grunho`, que recusa faces transparentes. Quando o dono enviar a prancha de verdade (cruzes de mesmo tamanho), ela entra no lugar do arquivo, sem mudar o código.
+6. **Sem sala ainda:** no aparelho sem sala o jogo simula os goblins de perto (só aparece se o mapa tiver acampamento, ou em teste); com sala (`client`) só se desenha. O servidor, o protocolo 7, os acampamentos e a mira/golpe do jogador pela sala são a **etapa 3**.
+
+## Fora desta etapa
+Protocolo 7 e simulação na sala, 4 acampamentos de 12 (`CostaGenerator` v101), golpe do jogador na mira, sons, caminhada e ataque desenhados à mão, espólio (a Clava de Madeira, item 177, está em proposta), noite/luz do acampamento.

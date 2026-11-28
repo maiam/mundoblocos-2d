@@ -62,6 +62,8 @@ import fazendaVaca from '../../assets/orvalis-fazenda-vaca.webp';
 import fazendaOvelha from '../../assets/orvalis-fazenda-ovelha.webp';
 import fazendaGalinha from '../../assets/orvalis-fazenda-galinha.webp';
 import fazendaModelos from './fazenda-modelos.json';
+import grunhoModelos from './grunho-modelos.json';
+import grunhoAtlas from '../../assets/orvalis-grunho.webp';
 import cadeiraModel from '../../assets/titan-cadeira.json';
 import juncoTile from '../../assets/titan-junco-tile.webp';
 import portaTex from '../../assets/titan-porta.webp';
@@ -141,6 +143,8 @@ export const titanPortaMadeiraModels = portaMadeiraModels as { portas: Record<'c
 export const titanPortaMadeiraUrl: string = portaMadeiraTex; // tira 192 × 16: por madeira, frente | verso | borda | alçapão
 export const titanMuretaPedraUrl: string = muretaPedraTex; // Mureta de Pedra (ADR 0110): tira topo | face; o modelo sai de `render/muretaModel.ts`
 export const orvalisFazendaUrls = { porco: fazendaPorco, vaca: fazendaVaca, ovelha: fazendaOvelha, galinha: fazendaGalinha } as const; // fauna de fazenda do Orvalis (ADR 0124): um atlas UV por animal (128 × 128; UVs em fração de 64 × 64)
+export const orvalisGrunhoUrl = grunhoAtlas; // Grunho Casca-Rachada (ADR 0147): atlas UV de 128 × 128
+export const orvalisGrunhoModelos = grunhoModelos; // ficha de caixas do Grunho
 export const orvalisFazendaModelos = fazendaModelos; // caixas, pivôs e UV de cada parte (pacote Mobs64px)
 export const orvalisHortaUrl: string = hortaTex; // horta do Orvalis (ADR 0113): 49 quadros de 32 px (ADR 0143)
 export const titanCadeiraModel = cadeiraModel as ModelData;

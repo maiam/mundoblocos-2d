@@ -21,6 +21,9 @@ MOBS = 'assets-src/orvalis-voxel/mobs/'
 ATLAS = 128
 PX_UNIT = ATLAS // 64  # pixels do atlas por unidade do modelo
 
+FICHAS = {'grunho': 'grunho-uv.json'}  # os animais de fazenda leem `fazenda-uv.json`; o Grunho (ADR 0147) tem a ficha dele
+
+
 def ordem(pid):
     """Peças iguais (patas, asas, chifres…): frente antes de trás, esquerda (_e) antes de direita (_d); a prancha as traz nessa ordem, da esquerda para a direita."""
     return (1 if 'tras' in pid else 0, 1 if pid.endswith('_d') else 0)
@@ -75,7 +78,7 @@ def main(nome):
     assert (chk == chk[:, :1, :, :1]).all(), 'os pixels da prancha não são blocos uniformes'
     opaco = art[..., 3] > 0
     caixas = componentes(opaco)
-    ficha = json.load(open(MOBS + 'fazenda-uv.json'))['mobs'][nome]['parts']
+    ficha = json.load(open(MOBS + FICHAS.get(nome, 'fazenda-uv.json')))['mobs'][nome]['parts']
     saida = np.zeros((ATLAS, ATLAS, 4), np.uint8)
     usadas = set()
     pecas = sorted(ficha, key=lambda p: ordem(p['id']))
