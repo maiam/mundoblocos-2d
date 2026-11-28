@@ -45,7 +45,7 @@ describe('porta e alçapão de madeira (ADR 0141)', () => {
         expect(modelOf(id)).toEqual({ kind: TRAPDOOR_KINDS[k.w * 3 + (op ? 2 : top ? 1 : 0)], turn: t }); expect(trapdoorToggled(trapdoorToggled(id))).toBe(id);
       }
     }
-    expect(doorFamily(T.DOOR)).toBe(0); expect(itemOfBlock(T.DOOR)).toBe(Item.PORTA_JUNCO); expect(isItem(177)).toBe(false); // a porta de junco segue igual
+    expect(doorFamily(T.DOOR)).toBe(0); expect(itemOfBlock(T.DOOR)).toBe(Item.PORTA_JUNCO); expect(isItem(178)).toBe(false); // a porta de junco segue igual
   });
 
   it('alçapão: caixa fina embaixo, em cima ou de pé (aberto); o giro roda a placa aberta', () => {

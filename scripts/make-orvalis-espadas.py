@@ -1,7 +1,7 @@
-"""Espadas de madeira e de pedra do Orvalis (ADR 0145): ícone de 32 × 32 a partir da arte grande enviada pelo dono.
+"""Espadas de madeira e de pedra (ADR 0145) e Clava de Madeira (ADR 0148) do Orvalis: ícone de 32 × 32 a partir da arte grande enviada pelo dono.
 
-Entradas : assets-src/orvalis-voxel/espadas/espada_{madeira,pedra}_fonte.png  (1254 × 1254, pixel art ampliada e suavizada, fundo transparente)
-Saídas   : assets-src/orvalis-voxel/assets32/orvalis_espada_{madeira,pedra}_32x32.png  (o item entra em assets-src/titan/arte32/itens.json; regra 32 px, ADR 0143)
+Entradas : assets-src/orvalis-voxel/espadas/{espada_madeira,espada_pedra,clava_madeira}_fonte.png  (1254 × 1254, pixel art ampliada e suavizada, fundo transparente)
+Saídas   : assets-src/orvalis-voxel/assets32/orvalis_{espada_madeira,espada_pedra,clava_madeira}_32x32.png  (o item entra em assets-src/titan/arte32/itens.json; regra 32 px, ADR 0143)
 Método   : recorta a caixa opaca, centraliza num quadrado, reduz as cores a uma paleta pequena (a suavização da ampliação some) e reduz a imagem a 32 × 32 pela cor MAIS
            FREQUENTE de cada célula (nada de média: sem cores novas nas bordas); a célula só é opaca se mais da metade dela for opaca. Repetível.
 Uso: python3 -I scripts/make-orvalis-espadas.py (Pillow + numpy). Depois: make-titan-arte32.py e make-titan-item-masks.py.
@@ -48,6 +48,6 @@ def reduz(arq):
     return Image.fromarray(saida)
 
 
-for nome in ('madeira', 'pedra'):
-    reduz(f'espada_{nome}_fonte.png').save(f'{OUT}orvalis_espada_{nome}_32x32.png')
+for nome in ('espada_madeira', 'espada_pedra', 'clava_madeira'):
+    reduz(f'{nome}_fonte.png').save(f'{OUT}orvalis_{nome}_32x32.png')
     print('ok', nome)

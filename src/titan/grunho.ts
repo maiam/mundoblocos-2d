@@ -1,6 +1,7 @@
 import { hash2 } from '../world/random';
 import { faunaYaw, rayAabb, type AabbBox } from './fauna';
 import { newBody, stepBody, type Body } from './physics';
+import { Item } from './items';
 import type { TitanVolume } from './volume';
 
 /**
@@ -25,6 +26,8 @@ export const GRUNHO = {
   width: 0.7, height: 1.4,
   /** Depois de abatido, volta em tantos segundos. */
   respawnS: 600,
+  /** Chance de soltar a Clava de Madeira ao ser abatido (ADR 0148; o sorteio é da seed, do goblin e do instante). */
+  dropChance: 0.25,
 } as const;
 
 const WALK_REF = 4.3; // a caminhada do jogador (physics.ts): o `stepBody` lê a entrada como fração dela
@@ -154,6 +157,9 @@ export function hurtGrunho(g: Grunho, damage: number, by: string | null = null):
   if (by) { g.target = by; if (g.phase !== 'chase') { g.phase = 'chase'; g.t = 0; } }
   return { dead: false };
 }
+
+/** Espólio do abate: a Clava de Madeira com `dropChance` (determinístico: seed, goblin e instante do abate); senão nada. */
+export const grunhoDrops = (g: Grunho, seed: number): Array<{ item: number; count: number }> => (hash2(seed, g.seed, Math.floor(g.clock * 10) + 17) < GRUNHO.dropChance ? [{ item: Item.CLAVA_MADEIRA, count: 1 }] : []);
 
 export const grunhoAlive = (g: Grunho): boolean => g.phase !== 'dead';
 

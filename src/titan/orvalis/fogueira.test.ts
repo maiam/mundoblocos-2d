@@ -17,7 +17,7 @@ const top = (x: number, y: number, z: number) => ({ x, y, z, nx: 0, ny: 1, nz: 0
 describe('fogueira do Orvalis (ADR 0146)', () => {
   it('bloco 424 e item 176: modelo, luz 15, não sólida, alvo da mira, não bloqueia luz, ida e volta item ↔ bloco', () => {
     expect(T.CAMPFIRE).toBe(424); expect(T_MAX).toBe(424); expect(Item.FOGUEIRA).toBe(176);
-    expect(isCampfire(T.CAMPFIRE)).toBe(true); expect(isItem(176) && !isItem(177)).toBe(true);
+    expect(isCampfire(T.CAMPFIRE)).toBe(true); expect(isItem(176) && isItem(177) && !isItem(178)).toBe(true);
     expect(ITEM_NAMES[176]).toBe('Fogueira'); expect(maxStack(176)).toBeGreaterThan(1);
     expect(modelOf(T.CAMPFIRE)).toEqual({ kind: 'fogueira', turn: 0 });
     expect(lightLevelOf(T.CAMPFIRE)).toBe(CAMPFIRE_LIGHT); expect(CAMPFIRE_LIGHT).toBe(15);
